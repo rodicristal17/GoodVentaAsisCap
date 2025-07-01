@@ -1560,10 +1560,97 @@ function ObtenerdatosAbmConsulta(elemento) {
 	buscarDetalleVentaConsulta(cod_ventaFKConsulta)
 	buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 	vercuotasatrazadas(cod_ventaFKConsulta)
-	
+	buscarPacienteConsulta()	
 	
 }
 
+function agregarObservacionConsulta(){
+	let descripcion = document.getElementById('inputObservacion').value;
+	if(descripcion ==''){
+		ver_vetana_informativa("FALTO INGRESAR LA OBSERVACIÓN");
+		return;
+	}
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_clienteConsulta": cod_clienteConsulta,
+		"descripcion": descripcion,
+		"funt": "agregar_observacion_consulta"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+          manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					ver_vetana_informativa('CARGADO CORRECTAMENTE');
+buscarPacienteConsulta()				
+document.getElementById('inputObservacion').value = '';	
+				}
+			} catch (error) {
+					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+function buscarPacienteConsulta(){
+	document.getElementById("divObservacionConsulta").innerHTML = '';
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_clienteConsulta": cod_clienteConsulta,
+		"funt": "buscar_observacion_consulta"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+          manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		  document.getElementById("divObservacionConsulta").innerHTML = '';
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					document.getElementById("divObservacionConsulta").innerHTML = datos[2];	 
+				}
+			} catch (error) {
+					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
 
 
 
@@ -1846,6 +1933,7 @@ function AbmConsulta(motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consul
 	datos.append("cod_estecialista", cod_especialista) 
 	datos.append("cod_agendamiento", cod_Agendamiento) 
 	datos.append("cod_venta", cod_ventaFKConsulta) 
+	datos.append("cod_clienteConsulta", cod_clienteConsulta) 
  
 	var OpAjax = $.ajax({
 		data: datos,

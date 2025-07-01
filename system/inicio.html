@@ -9755,6 +9755,9 @@ style='background-color: #b7b7b7;'>
   <div class="vista-consulta-header">
     <!-- <img src="/GoodVentaAsisCap/iconos/depCuenta.png" alt="Icono" class="icono-btn2" /> -->
     <h2 class="titulo-turnos pTitulo4"   >Listado de <strong>Pacientes</strong></h2>
+	<button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmClientes()">
+      <img src="/GoodVentaAsisCap/iconos/archivonuevo.png" class='iconoBtn' alt="Crear Cliente" />
+    </button>
     <button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmVistaConsulta()">
       <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class='iconoBtn' alt="Cerrar" />
     </button>
@@ -9859,7 +9862,7 @@ style='background-color: #b7b7b7;'>
     <!-- Input + Botón Agregar -->
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <input type="text" id="inputObservacion" class="inputText" placeholder="Escriba una observación..." style="flex: 1;" />
-      <button type="button" onclick="agregarObservacion()" class="btn btn-primary">Agregar</button>
+      <button type="button" onclick="agregarObservacionConsulta()" class="btn btn-primary">Agregar</button>
     </div>
 
     <!-- Contenedor de observaciones -->
@@ -9874,6 +9877,7 @@ style='background-color: #b7b7b7;'>
           <!-- Las observaciones se agregarán aquí -->
         </tbody>
       </table>
+	  <div class="div_cuerpo_table" id="divObservacionConsulta" style="height:380px;"></div>
     </div>
   </div>
 

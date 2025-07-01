@@ -85,7 +85,33 @@ if($operacion=="nuevo" || $operacion=="editar" )
 	$cod_venta=$_POST['cod_venta'];
     $cod_venta = utf8_decode($cod_venta); 
 	
-	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$operacion);
+	$cod_clienteFK=$_POST['cod_clienteConsulta'];
+    $cod_clienteFK = utf8_decode($cod_clienteFK); 
+	
+	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$operacion);
+}	
+
+
+
+if($operacion=="agregar_observacion_consulta" )
+{	
+	$cod_cliente=$_POST['cod_clienteConsulta'];
+    $cod_cliente = utf8_decode($cod_cliente); 
+	
+	$descripcion=$_POST['descripcion'];
+    $descripcion = utf8_decode($descripcion); 
+	
+	agregar_observacion_consulta($cod_cliente,$descripcion);
+}	
+
+if($operacion=="buscar_observacion_consulta" )
+{	
+	$cod_cliente=$_POST['cod_clienteConsulta'];
+    $cod_cliente = utf8_decode($cod_cliente); 
+	
+	
+	
+	buscar_observacion_consulta($cod_cliente);
 }	
 
 
@@ -169,7 +195,7 @@ $mysqli->close();
 
 
 
-function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$operacion)
+function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$operacion)
 {
     if ($trabajoreali == "") {
         $informacion = array("1" => "camposvacio");
@@ -182,23 +208,23 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
     if ($operacion == "nuevo") {
         $consulta1 = "INSERT INTO consulta (
             cod_ventaFK, fecha, cod_usuarioFK, cod_agendamientoFK, estado,
-            trabajo_realizado, proximo_trabajo, motivoconsulta, diagnostico) VALUES (?, ?, ?, ?, 'Activo', ?, ?, ?, ?)";
+            trabajo_realizado, proximo_trabajo, motivoconsulta, diagnostico,cod_clienteFK) VALUES (?, ?, ?, ?, 'Activo', ?, ?, ?, ?,?)";
 
         $stmt1 = $mysqli->prepare($consulta1);
-        $ss = 'ssssssss';
-        $stmt1->bind_param($ss, $cod_venta, $fecha, $cod_estecialista, $cod_agendamiento, $trabajoreali, $prxtrabajo, $motivo, $diagnostico);
+        $ss = 'sssssssss';
+        $stmt1->bind_param($ss, $cod_venta, $fecha, $cod_estecialista, $cod_agendamiento, $trabajoreali, $prxtrabajo, $motivo, $diagnostico,$cod_clienteFK);
     }
 
     if ($operacion == "editar") {
         $consulta1 = "UPDATE consulta SET
             cod_ventaFK = ?, fecha = ?, cod_usuarioFK = ?, cod_agendamientoFK = ?, 
-            trabajo_realizado = ?, proximo_trabajo = ?, motivoconsulta = ?, diagnostico = ?
+            trabajo_realizado = ?, proximo_trabajo = ?, motivoconsulta = ?, diagnostico = ?,cod_clienteFK = ?
             WHERE cod_consulta = ?";
         
         $stmt1 = $mysqli->prepare($consulta1);
-        $ss = 'sssssssss';
+        $ss = 'ssssssssss';
         $stmt1->bind_param($ss, $cod_venta, $fecha, $cod_estecialista, $cod_agendamiento, 
-                                $trabajoreali, $prxtrabajo, $motivo, $diagnostico, $cod_consulta);
+                                $trabajoreali, $prxtrabajo, $motivo, $diagnostico, $cod_clienteFK, $cod_consulta);
     }
 
     if (!$stmt1->execute()) {
@@ -217,6 +243,78 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
     mysqli_close($mysqli);
     echo json_encode($informacion);
     exit;
+}
+
+function agregar_observacion_consulta($cod_cliente,$descripcion)
+{
+    if ($cod_cliente == "" || $descripcion == "" ) {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);    
+        exit;
+    }
+
+    $mysqli = conectar_al_servidor();
+
+
+    $consulta1 = "INSERT INTO detalle_observacion_consulta (descripcion,cod_clienteFK) VALUES ('$descripcion','$cod_cliente')";
+
+    $stmt1 = $mysqli->prepare($consulta1);
+    
+
+    if (!$stmt1->execute()) {
+        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        exit;
+    }
+
+   
+
+    mysqli_close($mysqli);
+	$informacion =array("1" => "exito" );
+	echo json_encode($informacion);	
+	exit;
+}
+
+function  buscar_observacion_consulta($cod_clienteFK)
+{
+$mysqli=conectar_al_servidor();
+
+$sql= "SELECT descripcion FROM detalle_observacion_consulta WHERE cod_clienteFK = '$cod_clienteFK'";
+
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+ 
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+$styleName="tableRegistroSearch";
+$pagina="";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+$descripcion = utf8_encode($valor['descripcion']);   
+ 
+ 
+$styleName=CargarStyleTable($styleName);
+	  $pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro' >
+<td  id='td_datos_2' style='width:100%'>".$descripcion."</td>
+</tr>
+</table>";
+ 
+}
+}
+ 
+$informacion =array("1" => "exito","2" => $pagina );
+echo json_encode($informacion);	
+exit;
 }
 
 
