@@ -1,0 +1,29 @@
+.divTicketrecibo {width:870px;margin-left: 70px;}
+.pTituloTicket1{font-size: 17px;font-family: Arial;margin: 0px;}
+.pTituloTicket2{font-size: 12px;font-family: arial;line-height: 16px;margin: 0px;}
+.tableTicketrecibo {width:95%;font-family:arial;font-size: 11px;/* margin-top:2px; */line-height: 11px;}
+.divSeparadorTicket {width:95%;	height:1px;background-color:#cccc}
+
+  @page { 
+    margin-top: 0.5cm; 
+    margin-bottom: 0.5cm;
+    margin-left: 0.5cm;
+    margin-right: 0.5cm;
+}
+	@media screen {
+  @page { 
+   margin-top: 0.5cm; 
+    margin-bottom: 0.5cm;
+    margin-left: 0.5cm;
+    margin-right: 0.5cm;
+}
+}
+
+@media print {
+  @page { 
+   margin-top: 0.5cm; 
+    margin-bottom: 0.5cm;
+    margin-left: 0.5cm;
+    margin-right: 0.5cm;
+}
+}

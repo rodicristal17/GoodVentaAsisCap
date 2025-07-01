@@ -1,0 +1,1210 @@
+[28-Dec-2020 15:10:50 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/1203): User syscvxco_bremprendiemiento already has more than 'max_user_connections' active connections in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[28-Dec-2020 15:10:50 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 274
+[28-Dec-2020 15:10:50 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:276
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php(176): actualizarTotalCuota('300533', 465000, 0, 465000)
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(364): calcularintereses('9986', 0, 0, '2', '2', '2', 'si')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Jennifer ', 'null', 'null', 'cliente', '', '1', '5', '5')
+#3 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1706): ObtenerDatos('buscar')
+#4 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 276
+[15-Jan-2021 15:10:20 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:20 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:20 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:24 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:24 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:24 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:28 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:28 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:28 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:32 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:32 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:32 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:36 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:36 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:36 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:37 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:37 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:37 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:42 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:42 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:42 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:43 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:43 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:43 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:45 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:45 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:45 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:56 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:56 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:10:56 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:18 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:18 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:18 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:18 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:11:20 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:20 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:20 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:20 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:11:22 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:22 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:22 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:22 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:11:57 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:57 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:57 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:57 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:11:59 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:59 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:59 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:11:59 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:12:34 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:34 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:34 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:34 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:12:39 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:39 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:39 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:39 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:12:41 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:41 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:41 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:41 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:12:42 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:42 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:42 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:42 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:12:43 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:43 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:43 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:12:43 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:20:41 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:41 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:41 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:41 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:20:44 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:44 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:44 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:44 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:20:47 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:47 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:47 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:47 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:20:53 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:53 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:53 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:53 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:20:55 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:55 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:55 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:20:55 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:21:22 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:21:22 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:21:22 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:21:22 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1452) Cannot add or update a child row: a foreign key constraint fails (`syscvxco_bremprendiemiento`.`pago`, CONSTRAINT `fk_Pago_cobrador1` FOREIGN KEY (`cod_cobradorFK`) REFERENCES `cobrador` (`cod_cobrador`) ON DELETE NO ACTION ON UPDATE NO ACTION) in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 717
+[15-Jan-2021 15:48:05 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:05 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:05 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:13 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:13 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:13 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:26 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:26 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:48:26 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:01 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:01 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:01 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:04 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:04 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:04 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:06 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:06 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:49:06 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:50:54 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:50:54 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:50:54 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:48 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:48 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:48 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:50 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:50 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:50 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:56 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:56 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:52:56 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:53:05 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:53:05 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:53:05 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:54:35 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:54:35 America/New_York] PHP Warning:  include(buscar_nivel.php): failed to open stream: No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[15-Jan-2021 15:54:35 America/New_York] PHP Warning:  include(): Failed opening 'buscar_nivel.php' for inclusion (include_path='.:/opt/cpanel/ea-php72/root/usr/share/pear') in /home/syscvxco/public_html/GoodVentaByR/php/abmpagos.php on line 7
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/1203): User syscvxco_bremprendiemiento already has more than 'max_user_connections' active connections in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 277
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/1203): User syscvxco_bremprendiemiento already has more than 'max_user_connections' active connections in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 277
+[22-Feb-2021 15:09:03 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:279
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php(179): actualizarTotalCuota('618358', 380000, 0, 380000)
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(364): calcularintereses('18787', 0, 0, '2', '2', '2', 'si')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Andres palma ', 'null', 'null', 'cliente', '', '1', '', '5')
+#3 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1708): ObtenerDatos('buscar')
+#4 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 279
+[22-Feb-2021 15:09:03 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:279
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php(179): actualizarTotalCuota('618359', 380000, 0, 380000)
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(364): calcularintereses('18787', 0, 0, '2', '2', '2', 'si')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Andres palma ', 'null', 'null', 'cliente', '', '1', '', '5')
+#3 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1708): ObtenerDatos('buscar')
+#4 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 279
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/1203): User syscvxco_bremprendiemiento already has more than 'max_user_connections' active connections in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/1203): User syscvxco_bremprendiemiento already has more than 'max_user_connections' active connections in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 65
+[22-Feb-2021 15:09:03 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/verificar_navegador.php on line 10
+[22-Feb-2021 15:09:03 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaByR/php/verificar_navegador.php:15
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(18): verificar_navegador('5072', 'chrome', 'MzM0Ng++')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1708): ObtenerDatos('buscar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/verificar_navegador.php on line 15
+[22-Feb-2021 15:09:03 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on null in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:66
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(364): calcularintereses('18787', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Andres palma ', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1708): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 66
+[24-Mar-2021 16:35:43 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (0)  in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 170
+[08-Apr-2021 08:20:01 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (0)  in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 170
+[27-Apr-2021 10:21:51 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 10:21:51 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 10:24:25 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 10:24:25 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 10:27:29 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 10:27:29 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 10:27:38 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 10:27:38 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 10:43:17 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 10:43:17 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 13:16:23 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 13:16:23 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 13:49:54 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 13:49:54 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 14:03:45 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 14:03:45 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 14:03:55 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 14:03:55 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 14:23:47 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 14:23:47 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 14:31:19 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 14:31:19 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[27-Apr-2021 14:42:47 America/New_York] PHP Warning:  A non-numeric value encountered in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 362
+[27-Apr-2021 14:42:48 America/New_York] PHP Warning:  number_format() expects parameter 1 to be float, string given in /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php on line 437
+[01-Jun-2021 10:18:07 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/2002): No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[01-Jun-2021 10:18:07 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php on line 117
+[01-Jun-2021 10:18:07 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on bool in /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php:119
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php(17): BuscarRegistroEnPedidos('%4160%', '1')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php(370): ObtenerDatos('buscarporpedido')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php on line 119
+[01-Jun-2021 10:18:09 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/2002): No such file or directory in /home/syscvxco/public_html/GoodVentaByR/php/conexion.php on line 5
+[01-Jun-2021 10:18:09 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php on line 117
+[01-Jun-2021 10:18:09 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on bool in /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php:119
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php(17): BuscarRegistroEnPedidos('%4160%', '1')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php(370): ObtenerDatos('buscarporpedido')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/buscarProducto.php on line 119
+[20-Jul-2021 16:14:18 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22102', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Carballo', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:23 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:33 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Elena casco', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:45 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('3244173', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:50 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3512', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:53 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3512', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:57 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('3244173', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:14:57 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3512', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:01 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3512', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arie', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:15 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', '0', 'null', 'cliente', '', '2', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:18 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Casco miranda', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:39 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('4220', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Fonseca', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:48 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3512', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:15:58 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('3244173', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:02 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Rivero', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:04 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Rivero', 'null', 'null', 'cliente', '', '1', '8', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:13 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:17 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('4268', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ari', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:20 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel ri', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:33 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel rive', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:16:48 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:18:02 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel river', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:18:06 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel river', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:18:08 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel river', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:18:21 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel Rivero', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:18:34 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:05 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('23032', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Gaspar', 'null', 'null', 'cliente', '', '1', '', '5089')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:30 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '2', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:52 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:53 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:54 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:19:56 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:20:01 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '2', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:20:03 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '2', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:20:35 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:20:37 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('4627183', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:20:47 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel Rivero', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:22:26 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Nilsa elena', 'null', 'null', 'cliente', '', '1', '2', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:22:54 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel Rivero', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:24:17 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('3953', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel river', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:24:52 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22073', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Emilce', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:25:15 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22590', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel r', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:25:41 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('11919', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('3244173', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:25:56 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22590', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel r', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:25:58 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22590', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ariel r', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('20014', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Baez', 'null', 'null', 'cliente', '', '1', '4', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:16 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('20014', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Baez', 'null', 'null', 'cliente', '', '1', '4', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:24 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Isab', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:36 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Argue', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:41 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:44 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:46 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:49 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Isabel', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:53 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:26:54 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:03 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:07 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('20780', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ana', 'null', 'null', 'cliente', '', '1', '', '5094')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:09 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22276', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('DerliS and', 'null', 'null', 'cliente', '', '1', '', '3')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:15 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22276', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Derlis andr', 'null', 'null', 'cliente', '', '1', '', '3')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:24 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:24 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22276', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Derlis andres', 'null', 'null', 'cliente', '', '1', '4', '3')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:25 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:26 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:26 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:27 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:27 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:27 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:27 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:28 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:40 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:41 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:50 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10956', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Gimenez', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:27:51 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10956', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Gimenez', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:06 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('20503', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Isabel', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:07 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:08 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:09 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:09 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Isabel', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:11 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:11 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:28:18 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Isabelino', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:29:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Isabelino', '', '', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:29:29 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:29:30 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:29:37 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('7974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Mirian', '0', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:29:38 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('7974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Mirian', '0', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:01 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:02 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:03 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:03 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:04 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:05 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:10 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10956', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Gimenez', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:12 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10956', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Gimenez', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:17 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:18 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21974', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '4', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:22 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22099', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:23 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10956', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Gimenez', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:26 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('22099', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Arguello', '0', 'null', 'cliente', '', '2', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:37 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:46 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21086', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ana vic', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:30:47 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('21086', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Ana vic', 'null', 'null', 'cliente', '', '1', '', '1')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:31:02 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:31:03 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:31:04 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[20-Jul-2021 16:32:09 America/New_York] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: string * int in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php:127
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(366): calcularintereses('10887', 0, 0, '2', '2', '2', 'si')
+#1 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(67): buscarregistro('Freide', 'null', 'null', 'cliente', '', '1', '', '5')
+#2 /home/syscvxco/public_html/GoodVentaByR/php/abmcuentas.php(1733): ObtenerDatos('buscar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaByR/php/calcularintereses.php on line 127
+[09-Aug-2021 16:35:26 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:38:31 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:38:53 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:39:37 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:42:20 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:43:29 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:45:22 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:45:33 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:46:59 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:47:48 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:48:24 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:52:46 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 16:54:05 America/Anguilla] PHP Fatal error:  Call to a member function bind_param() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 139
+[09-Aug-2021 18:17:19 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaByR/php/AperturaCierreCaja.php on line 101
+[09-Aug-2021 18:17:23 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaByR/php/AperturaCierreCaja.php on line 101
+[09-Aug-2021 18:17:27 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaByR/php/AperturaCierreCaja.php on line 101
+[09-Aug-2021 18:17:33 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaByR/php/AperturaCierreCaja.php on line 101
+[02-Mar-2022 07:44:22 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:44:30 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:44:32 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:44:58 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:00 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:01 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:21 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:24 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:25 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:25 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:26 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:27 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:28 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:28 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:28 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:28 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:30 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:31 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:31 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:31 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:31 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:32 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:33 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:34 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:35 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:45:36 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[02-Mar-2022 07:46:08 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:22:45 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:22:54 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:23:30 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:23:33 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:24:51 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:26:00 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:26:03 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[03-Mar-2022 16:26:24 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:04:06 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:04:08 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:04:10 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:04:11 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:04:11 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:05:13 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:05:33 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 13:05:38 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 14:49:41 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-Mar-2022 14:49:45 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:01:50 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:01:57 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:02:02 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:02:12 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:03:12 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:03:57 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:03:57 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[29-Mar-2022 17:04:36 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:48:21 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:48:23 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:48:25 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:48:25 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:48:33 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:49:52 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:49:55 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[21-May-2022 11:49:56 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-May-2022 07:24:19 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[26-May-2022 07:24:43 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[05-Jul-2022 14:45:28 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[05-Jul-2022 14:45:31 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[12-Jul-2022 13:32:15 America/Anguilla] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 141
+[06-Sep-2022 22:46:54 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmImpago.php on line 95
+[07-Sep-2022 07:12:22 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 07:12:56 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 08:11:48 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 08:11:52 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 11:39:52 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 11:40:52 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 11:45:53 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 11:46:11 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 12:24:14 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 12:24:43 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:07:46 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:25:13 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:29 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:31 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:32 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:32 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:32 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:33 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:33 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:34 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:34 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:34 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:34 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:35 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:35 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:36 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:36 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:36 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:37 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:37 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:37 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:37 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:37 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:38 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:38 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[07-Sep-2022 13:26:38 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[08-Sep-2022 15:23:47 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[08-Sep-2022 15:24:13 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[09-Sep-2022 09:27:28 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[09-Sep-2022 09:27:34 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[10-Sep-2022 09:42:24 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 10:05:17 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 10:05:51 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 11:35:05 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 11:35:12 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 11:35:43 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 11:35:45 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277
+[12-Sep-2022 13:53:52 America/New_York] PHP Fatal error:  Call to a member function execute() on a non-object in /home/syscvxco/public_html/GoodVentaByR/php/abmclientes.php on line 277

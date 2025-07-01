@@ -1,0 +1,158 @@
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+   <meta name="theme-color" content="#000" />
+  <meta name="msapplicaction-navbutton-color" content="#000" />
+   <meta  name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
+    <title>GoodVenta</title>
+	<link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
+	<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/login.css?x=99839" />
+
+	
+
+   <!--jquery.js !-->
+   
+   <!--scrips!-->
+  
+  	 <script src="/GoodVentaAsisCap/js/jquery.js"></script>  
+  	 <script src="/GoodVentaAsisCap/js_system/login.js?x=99839"></script>  
+	
+
+	
+</head>
+<body >
+    <form enctype="multipart/form-data">
+		<img src='/GoodVentaAsisCap/iconos/fondoescritorio.png'  style='width:100%;height:100%;position:absolute;left:0px;top:0px;'/>
+        
+		<div class='principal'>
+		
+
+		
+		
+		<table style='width:100%;height:100%;text-align:center' >
+<tr>
+<td>
+<center>
+		<p class='h2Titulo' ><span style='color:#ff9f00'>Good</span><span style='color:#2682ff'>Venta</span><span style='color:#673ab7'>Soft</span></p>
+
+		<div id='divAcceso1' class='divVentanaPreLogin ' >
+<table style='height:100%;text-align:left' >
+<tr>
+<td >
+<img src='/GoodVentaAsisCap/iconos/usuariologin.png' class='imgAccederSistema' />
+<br>
+<input type='Button' value='Acceder al sistema' class='btn9' onclick='verCerrarIngresar()' />
+</td>
+<td>
+</tr>
+</table>
+</div>
+		
+<div class='divVentanaLogin' id='divAcceso2' style='display:none'>
+<img src='/GoodVentaAsisCap/iconos/usuariologin.png' class='imgAccederSistema2' />
+<br>
+<br>
+<table style='width:85%'>
+<tr>
+<td style='width:1%'>
+<img src='/GoodVentaAsisCap/iconos/etiquetauser.png' class='imgIconH' />
+</td>
+<td>
+<p class='pTitulo5' style='margin-left:-23px'  >Usuario :</p>
+<input type='text' placeholder='Usuario de acceso' class='input3' id='inpt_user' style='width:250px' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:85%'>
+<tr>
+<td style='width:1%'>
+<img src='/GoodVentaAsisCap/iconos/etiquetapass.png' class='imgIconH' />
+</td>
+<td>
+<p class='pTitulo5' style='margin-left:-23px'  >Contraseña :</p>
+<input type='password' placeholder='Contraseña de acceso' class='input3' style='width:250px' id='inpt_pass' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:85%'>
+<tr>
+<td style='width:1%'>
+<img src='/GoodVentaAsisCap/iconos/etiquetalocalidad.png' class='imgIconH' />
+</td>
+<td>
+<p class='pTitulo5' style='margin-left:-23px'  >Local :</p>
+<select class="input3" id="inptlocaluser" style='width:250px' onchange='buscarCajaOption()'  ></select>
+</td>
+</tr>
+</table>
+<br>
+<table style='width:85%'>
+<tr>
+<td style='width:1%'>
+<img src='/GoodVentaAsisCap/iconos/etiquetatexto.png' class='imgIconH' />
+</td>
+<td>
+<p class='pTitulo5' style='margin-left:-23px'  >Caja :</p>
+<select class="input3" id="inptcajauser" style='width:250px'  >
+<option value='001-001' >Caja 01</option>
+<option value='001-002' >Caja 02</option>
+<option value='' >Sin Especificar</option>
+</select>
+</td>
+</tr>
+</table>
+<br>
+
+
+<center>
+<input type='button' value='Ingresar' class='btnlogin' onclick='verificardatos()' id='btnAbmUsuario'  />
+</center>
+</div>
+<br>
+<br>
+<p class='pTitulo5'  >From <br>Good-Technology</p>
+</Center>
+</td>
+</tr>
+</table>
+
+		
+	
+		</div>
+
+	 </form>
+	  
+	  <div class='div_info_10' id='div_principal_info_carga' style='display:none'  onclick='ocultarmensaje()'>
+<center>
+
+<table class='table_info_2'>
+<tr>
+<td >
+<center>
+<img src='/GoodVentaAsisCap/iconos/cargando.gif' style='width:30px' />
+<label id='lbltitulomensaje_b' style='font-size: 14px; font-family: arial;' >Cargando...</label>
+</center>
+</td>
+</tr>
+</table>
+
+</center>
+</div>
+	
+	<div id='capa_informativa' class='div_info_2_1' style='display:none'>
+	<div class='div_info_3' title='click para cerrar' onclick='cerrar_ventanas(this)' id='vantana_info_001' style='display:none'>
+	<table style='width:100%;height:100%;padding:15px'>
+	<tr>
+	<td >
+	<label class='label_info_a'>Error en la conexión</label>
+	</td>
+	</tr>
+	</table>
+	</div>
+	</div>
+	  
+</body>
+</html>

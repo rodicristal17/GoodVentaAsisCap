@@ -1,0 +1,95 @@
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+   <meta name="theme-color" content="#000" />
+  <meta name="msapplicaction-navbutton-color" content="#000" />
+   <meta  name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
+    <title>IMPRIMIR</title>
+	<!-- <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" /> -->
+	<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=50" />
+<style type='text/css'> 
+	.divTicket {width:235px}
+	.pTituloTicket1{ font-size: 20px; font-family: Arial;}
+	.pTituloTicket2{font-size:14px; font-family: arial;line-height: 20px;}
+	.tableTicket {	width:95%;font-family:arial;font-size:14px;margin-top:2px}
+	.divSeparadorTicket {width:95%;	height:1px;background-color:#cccc}
+	 
+	</style>
+	
+	
+	<script>
+	 window.onload=function()
+
+		{
+			var pagina=localStorage.getItem("reporte");
+			var tipo=localStorage.getItem("tipo");
+			document.getElementById("divimpr").innerHTML=pagina
+			if(tipo=="factura" || tipo=='ticket'){
+			window.print();
+			}
+
+    }
+	
+	
+		function utf8_to_b64( str ) {
+  return window.btoa(unescape(encodeURIComponent( str )));
+}
+
+function b64_to_utf8( str ) {
+  return decodeURIComponent(escape(window.atob( str )));
+}
+	function obtener_datos(datos)
+		{
+		
+   var loc = datos;
+   if (loc.indexOf('?')>0)
+   {
+   
+   var getstring = loc.split('?')[1];
+   var GET= getstring.split('&');
+   var get ={};
+  
+   for (var i =0, l = GET.length; i < l;i++)
+   {
+   var tmp = GET[i].split('=');
+   get[tmp[0]]= unescape(decodeURI(tmp[1]));
+   
+   }
+   return get;
+   }
+	}
+	
+	function buscar_datos_url_usuario(datos){
+		try{
+			valores = document.location.href;
+		 valores = obtener_datos(valores);
+		 var  datos=valores[datos];
+		 return datos;
+		}catch(error){
+		return "";
+		}
+		 
+	}
+	
+	</script>
+
+	
+</head>
+<body >
+    <form enctype="multipart/form-data">
+	<div class='imgFondoapp'></div>
+
+	
+
+
+	
+	<div id='divimpr' >
+	
+
+	</div>
+
+	
+	  </form>
+</body>
+</html>

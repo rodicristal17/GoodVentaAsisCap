@@ -1,0 +1,149 @@
+
+
+/* latin-ext */
+@font-face {
+  font-family: 'Kaushan Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+ src: url(/GoodVentaAsisCap/css/KaushanScript-Regular.ttf) format('woff2');
+ unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Kaushan Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+ src: url(/GoodVentaAsisCap/css/KaushanScript-Regular.ttf) format('woff2');
+ unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+.tableRegistroSearch2 { width: 100%; height: 33px;    background-color: #f0f0f0; font-size: 9px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;     border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left;}
+
+.tableRegistroSearchRepor { width: 100%; height: 33px; background-color: rgb(255, 255, 255); font-size: 11px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer; }
+
+
+.pTituloC {
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #000;
+    margin: 0px;
+    margin-bottom: 5px;
+}
+
+.pTituloD {
+    font-size: 14px;
+    font-family: Arial;
+    font-stretch: condensed;
+    color: #000;
+    text-align: center;
+    margin: 0px;
+    font-weight: bold;
+    padding: 8px;
+}
+
+.tableCabeceraRegistro {
+    width: 98%;
+    padding: 3px;
+    height: 35px;
+    border: solid 1px #525252;
+    background-color: #525252;
+}
+
+.ptituloZ {
+    font-size: 12px;
+    font-family: Arial;
+    color: #fff;
+    background-color: #525252;
+    margin: 0px;
+    padding: 8px;
+}
+
+.tableRegistroSearch { width: 100%; height: 33px; background-color: rgb(255, 255, 255); font-size: 9px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;    border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left; }
+	
+	.tableRegistroSearch2 { width: 100%; height: 33px;    background-color: #f0f0f0; font-size: 9px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;     border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left;}
+
+.TableRepor0 {
+    width: 88%;
+    padding: 8px;
+    border-top: dashed 1px #ccc;
+    border-bottom: dashed 1px #ccc;
+    height: 100px;
+}
+.td_registro {
+    height: 100%;
+    font-size: 10px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #FFF;
+    text-align: center;
+    background-color: transparent;
+    font-weight: bold;
+}
+
+  @page { 
+    margin-top: 2cm; 
+    margin-bottom: 4cm;
+    margin-left: 1cm;
+    margin-right: 1cm;
+}
+	@media screen {
+  @page { 
+    margin-top: 2cm;  
+    margin-bottom: 4cm;
+    margin-left: 1cm;
+    margin-right: 1cm;
+}
+}
+
+@media print {
+  @page { 
+      margin-top: 2cm; 
+    margin-bottom: 4cm;
+    margin-left: 1cm;
+    margin-right: 1cm;
+}
+}

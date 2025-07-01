@@ -1,0 +1,306 @@
+@font-face { font-family: Jomhuria; font-style: normal; font-weight: 400; src: url("/GoodVentaAsisCap/css/Jomhuria-Regular.ttf") format("woff2"); unicode-range: U+100-24F, U+259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: Jomhuria; font-style: normal; font-weight: 400; src: url("/GoodVentaAsisCap/css/Jomhuria-Regular.ttf") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Merriweather Sans"; font-style: normal; font-weight: 300; font-display: swap; src: url("/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf") format("woff2"); unicode-range: U+460-52F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: "Merriweather Sans"; font-style: normal; font-weight: 300; font-display: swap; src: url("/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf") format("woff2"); unicode-range: U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Merriweather Sans"; font-style: normal; font-weight: 300; font-display: swap; src: url("/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf") format("woff2"); unicode-range: U+100-24F, U+259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Merriweather Sans"; font-style: normal; font-weight: 300; font-display: swap; src: url("/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+.principal { background-color: rgba(24, 18, 0, 0.87); width: 100%; height: 100%; top: 0px; left: 0px; position: absolute; overflow: auto; background-repeat: no-repeat; background-position: center center; background-size: cover; }
+.divMenu { width: 16%; cursor: pointer; float: left; margin: 2%; }
+.pTitulo5 { font-size: 15px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); margin: 0px 0px 5px; }
+.pTitulo8 { font-size: 11px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); margin: 0px 0px 5px; cursor: pointer; padding: 2px; width: 84px; justify-content: center; display: flex; align-items: center; }
+.inputReloj { text-align: center; border: none; padding: 10px; background-color: transparent; color: rgb(0, 0, 0); font-family: "Merriweather Sans", Arial; font-size: 24px; font-weight: bold; outline: none; width: 144px; }
+.inputReloj2 { text-align: center; border: none; padding: 10px; background-color: transparent; color: rgb(0, 34, 167); font-family: "Merriweather Sans", Arial; font-size: 30px; font-weight: bold; outline: none; width: 144px; }
+.imgIcons { width: 100px; padding: 10px; background-color: rgb(255, 255, 255); }
+.imgIcong { width: 25px; padding: 10px; border-radius: 5px; cursor: pointer; background-color: rgb(255, 255, 255); }
+.divCabecera_b { background-color: rgb(240, 215, 140); height: 70px; width: 100%; }
+.pTitulo2 { font-size: 20px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); font-weight: bold; padding: 8px; }
+.pTituloPanel { font-size: 30px; font-family: "Merriweather Sans", Arial; color: rgb(1, 1, 1); padding: 3px; margin: 0px; text-align: center; }
+.pTituloPanel2 { font-size: 20px; font-family: "Merriweather Sans", Arial; color: rgb(5, 5, 5); font-weight: bold; padding: 3px; margin: 0px; width: 30px; background-color: rgb(240, 215, 140); text-align: center; border-radius: 46px; }
+.pTituloPanel3 { font-size: 20px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); padding: 3px; text-align: left; margin: 0px 0px 0px 10px; }
+.tableMenupanel { width: 100%; background-color: rgb(240, 215, 140); height: 79px; }
+.tableMenupane2 { width: 100%; background-color: rgb(240, 215, 140); position: fixed; top: 0px; left: 0px; box-shadow: rgb(14, 14, 14) -1px 2px 5px; height: 79px; backdrop-filter: blur(7px); }
+.imgIconoMenu { width: 40px; padding: 5px; }
+.divMenub {border: solid 2px #ffff; width: 14%; cursor: pointer; float: left; margin: 1%; border-radius: 13px; height: 126px; color: rgb(255, 255, 255); transition: transform 2s ease 0s; background-color: rgba(240, 215, 140, 0.21); }
+.divMenub:hover { background-color: rgb(240, 215, 140); box-shadow: rgb(0, 0, 0) 0px 1px 5px; transform: scale(1.2); color: rgb(0, 0, 0); }
+.pTitulo4 { font-size: 12px; font-family: "Merriweather Sans", Arial; padding: 3px; margin: 0px; }
+.pTitulo1 { font-size: 14px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); font-weight: bold; padding: 8px; }
+.input3 { font-size: 11px; font-family: "Merriweather Sans", Arial; height: 30px; text-align: left; width: 100%; border: 1px solid rgb(211, 211, 211); outline: none; background-color: rgb(255, 255, 255); }
+.divMenu { width: 16%; cursor: pointer; float: left; margin: 2%; }
+.principal2 { background-color: rgba(0, 0, 0, 0.41); width: 100%; height: 100%; top: 0px; left: 0px; position: absolute; overflow: auto; backdrop-filter: blur(20px); }
+.divMenuA { width: 30%; height: 100%; position: fixed; top: 0px; left: 0px; backdrop-filter: blur(6px); background-color: rgba(255, 255, 255, 0.52); }
+.divCodigobarra {width: 45%; 
+/* height: 350px; */ background-color: rgb(255, 255, 255); padding: 3px; border: 1.5px dashed rgb(204, 204, 204); float: left; }
+.pTitulo6 { font-size: 10px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); margin: 0px; padding: 0px; font-weight: bold; }
+.input5 { font-size: 13px; font-family: "Merriweather Sans", Arial; height: 30px; text-align: center; width: 98%; border: 1px solid rgb(211, 211, 211); outline: none; background-color: rgb(255, 255, 255); }
+.principalMenu { background-color: rgba(10, 10, 10, 0.6); width: 100%; height: 100%; top: 0px; left: 0px; position: absolute; overflow: auto; backdrop-filter: blur(6px); }
+.principalMenu2 { background-color: rgba(24, 18, 0, 0.87); width: 100%; height: 100%; top: 0px; left: 0px; position: absolute; overflow: auto; backdrop-filter: blur(10px); }
+.principalMenub { background-color: rgba(10, 10, 10, 0.4); width: 100%; height: 100%; top: 0px; left: 0px; position: absolute; overflow: auto; backdrop-filter: blur(6px); }
+.imgIconoMenub { background-color: rgb(251, 250, 250); padding: 7px; border-radius: 39px; margin-top: -31px; cursor: pointer; }
+.imgIconoMenuc { border-width: 3px; border-style: solid; border-image: initial; border-color: rgb(255, 159, 0) rgb(38, 130, 255) rgb(103, 58, 183) rgb(255, 87, 34); background-color: rgb(255, 255, 255); padding: 4px; border-radius: 39px; cursor: pointer; width: 18px; position: relative; }
+.h2Titulo { font-family: Jomhuria; font-size: 75px; color: rgb(103, 58, 183); }
+.divVentanaMenu { width: 720px; height: 500px; border-width: 7px; border-style: solid; border-image: initial; border-color: rgb(255, 159, 0) rgb(38, 130, 255) rgb(103, 58, 183) rgb(255, 87, 34); background-color: rgb(255, 255, 255); border-radius: 20px; }
+.divVentanaMenub { width: 100%; height: 100%; position: absolute; top: 0px; overflow: auto; left: 0px; }
+.trBotonmenu { height: 100%; position: relative; width: 100%; background-color: rgba(255, 255, 255, 0); backdrop-filter: blur(6px); }
+/* .tableMenu { width: 90%; height: 120px; border: 2px solid rgb(125, 125, 125); background-color: rgb(255, 255, 255); } */
+.tableMenu {
+		
+width: 21%;
+		
+height: 40px;
+		
+border: solid 2px #7d7d7d;
+		
+background-color: #ffffff;
+		
+float: left;
+		
+margin: 4px;
+		
+border-radius: 44px;
+cursor:pointer;
+	}
+.iconMenu { background-color: rgb(59, 136, 245); width: 120px; height: 120px; background-repeat: no-repeat; background-position: center center; background-size: auto; }
+.iconMenuB { width: 100%; height: 120px; background-repeat: no-repeat; background-position: center center; background-size: auto; }
+.pTituloMenu { font-size: 18px; font-family: Arial; font-stretch: condensed; color: rgb(14, 69, 139); cursor: pointer; text-align: center; width: 100%; }
+.htitulo { font-size: 35px; font-family: fantasy; color: rgb(59, 136, 245); }
+.htituloC { font-size: 13px; font-family: arial; color: rgb(255, 255, 255); font-stretch: condensed; font-weight: bold; margin: 0px; padding: 10px; background-color: rgb(59, 136, 245); }
+.pTituloA { width: 250px; font-size: 20px; font-family: Arial; color: rgb(14, 69, 139); background-color: rgb(255, 255, 255); text-align: center; padding: 13px; border-radius: 25px; border: 2px solid rgb(14, 69, 139); }
+.pTituloLogo {
+      font-size:32px;
+	      margin-top: -3px;
+font-family: 'Magneto', Arial;
+color: #0022a7;
+ font-weight: bold; 
+padding: 8px;
+}
+.divOpciones1 { height: 85%; }
+.divOpciones2 { cursor: pointer; width: 28%; float: left; margin: 1.5%; background-color: rgba(255, 255, 255, 0); border: 3px solid rgb(59, 136, 245); backdrop-filter: blur(6px); }
+.divAbmsfloat1 { width: 30%; min-height: 620px; background-color: rgb(255, 255, 255); float: left; }
+.divAbmsfloat2 { width: 67%; min-height: 620px; background-color: rgb(255, 255, 255); float: right; }
+.divAbmsPrincipalFloat { width: 95%; background-color: rgb(255, 255, 255); border-radius: 20px; border: 7px solid rgb(255, 255, 255); overflow: auto; }
+.divMenuf1 { width: 95%; text-align: left; }
+.divMenuf2 { width: 95%; height: 550px; overflow: auto; padding: 5px; text-align: left; }
+.divAbms { width: 800px; min-height: 560px; border: 7px solid rgb(240, 215, 140); background-color: rgb(252, 241, 209); border-radius: 20px;     contain: content; }
+.divAbms_b { width: 400px; min-height: 500px; background-color: rgb(255, 255, 255); border-radius: 20px; border: 7px solid rgb(255, 255, 255); }
+.divMenuf { width: 90%; padding: 9px; background-color: rgb(248, 231, 181); border-radius: 10px; border: 1px solid rgb(215, 196, 140); margin-bottom: 1%; }
+.btn4 { height: 28px; border: none; color: rgb(255, 255, 255); background-color: rgb(76, 175, 80); font-family: "Merriweather Sans", Arial; font-size: 12px; width: 85px; cursor: pointer; border-radius: 2px; }
+.btn5 { height: 28px; border: none; color: rgb(255, 255, 255); background-color: rgb(33, 150, 243); font-family: "Merriweather Sans", Arial; font-size: 10px; width: 90px; cursor: pointer; border-radius: 2px; }
+.tableMenuZ { height: 46px; margin-bottom: 10px; padding: 3px; background-color: rgb(240, 215, 140); }
+.pTituloB { font-size: 20px; font-family: "Merriweather Sans", Arial; color: rgb(41, 41, 41); padding: 3px; margin: 0px; }
+.pTituloE { font-size: 13px; font-family: Arial; font-stretch: condensed; color: rgb(0, 4, 36); width: 95%; text-align: left; margin: 5px 0px 0px; padding: 9px; background-color: rgb(246, 245, 245); }
+.iconoBtn { background-color: rgb(255, 255, 255); padding: 7px; width: 17px; height: 17px; border-radius: 23px; cursor: pointer; }
+.iconoLimpiar { padding: 7px; width: 17px; height: 17px; border-radius: 23px; cursor: pointer; }
+.tableBuscar { width: 90%; }
+.tableabm { width: 90%; }
+.tableabmfloat { width: 29%; margin: 1.5%; }
+.pTituloC {font-size: 11px;font-family: "Merriweather Sans", Arial;color: #000;margin: 0px 0px 5px;}
+.pTituloF { font-size: 33px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); margin: 0px 0px 5px; }
+.pTituloF_1 { font-size: 14px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); margin: 0px 0px 5px; }
+.pTituloRepor_1 { background-color: rgb(255, 152, 0); font-size: 16px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); text-align: center; font-weight: bolder; padding: 10px; border-radius: 10px; width: 80%; }
+.pTituloD { font-size: 14px; font-family: Arial; font-stretch: condensed; color: rgb(0, 0, 0); text-align: center; margin: 0px; font-weight: bold; padding: 8px; }
+.inputText { font-size: 12px; font-family: "Merriweather Sans", Arial; width: 95%; border: 1px solid rgb(236, 236, 236); outline: none; background-color: rgb(255, 255, 255); border-radius: 3px; height: 30px; text-align: left; padding: 8px; }
+.inputText:focus { background-color: rgb(242, 247, 251); font-weight: bold; border: 2px solid rgb(210, 210, 210); }
+.inputTextDisable {font-size: 12px;font-family: "Merriweather Sans", Arial;height: 29px;text-align: left;padding: 8px;width: 100%;border: 1px solid rgb(252 241 209);outline: none;border-radius: 3px;background-color: rgb(252 241 209);}
+.inputSelect { font-size: 12px; font-family: "Merriweather Sans", Arial; height: 29px; text-align: left; width: 100%; border: 1px solid rgb(236, 236, 236); outline: none; background-color: rgb(255, 255, 255); border-radius: 5px; }
+.inputSelect:focus { background-color: rgb(242, 247, 251); font-weight: bold; border: 2px solid rgb(210, 210, 210); }
+.tableCabeceraRegistro { width: 98%; border: 1px solid rgb(252, 241, 209); background-color: rgb(152, 126, 47); }
+.td_registro { height: 100%; font-size: 11px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); padding: 5px; text-align: center; background-color: transparent; font-weight: bold; }
+.imgIcone { padding: 6px; width: 25px; cursor: pointer; }
+.div_cuerpo_table { margin-top: 3px; width: 97.5%; border: 1px solid rgb(223, 223, 223); background-color: #fffcfc; height: 250px; overflow: auto; }
+.div_cuerpo_table_d { margin-top: 3px; width: 97.5%; border: 1px solid rgb(223, 223, 223); background-color: rgba(252, 252, 252, 0.54); height: 380px; overflow: auto; }
+.div_cuerpo_table_c { margin-top: 3px; width: 97.5%; border: 1px solid rgb(223, 223, 223); background-color: rgba(252, 252, 252, 0.54); height: 250px; overflow: auto; }
+.tableRegistroSearch { width: 100%; height: 33px; background-color: rgb(255, 255, 255); font-size:10px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;    border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left; }
+		.tableRegistroSearch2 {
+    width: 100%;
+    height: 33px;
+    background-color: #f0f0f0;
+    font-size: 10px;
+    font-family: "Merriweather Sans", Arial;
+    color: rgb(27, 27, 27);
+    text-align: center;
+    border-left: 1px solid rgb(206, 206, 206);
+    border-right: 1px solid rgb(206, 206, 206);
+    border-bottom: 1px solid rgb(206, 206, 206);
+    cursor: pointer;
+    border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left;
+    }
+.tableRegistroSearch2:hover { background-color: rgb(220 239 253); border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); color: rgb(0, 0, 0); }
+.tableRegistroSearch1 { width: 100%; height: 33px; background-color: rgb(255, 255, 255); font-size: 11px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); padding: 5px; text-align: left; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer; margin-top: 5px; }
+.tableRegistroSearch_2 { width: 100%; padding: 5px; background-color: rgb(7, 114, 199); font-size: 11px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); text-align: left; line-height: 17px; cursor: pointer; }
+.tableRegistroSearch2 { width: 100%; height: 33px;    background-color: #f0f0f0; font-size: 10px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;     border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left;}
+.tableRegistroSearch2:hover { background-color: rgb(220 239 253); border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); color: rgb(0, 0, 0); }
+.tableRegistroSearch { width: 100%; height: 33px; background-color: rgb(255, 255, 255); font-size: 10px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;    border-collapse: collapse;
+    border-color: #ccc;
+    text-align: left; }
+	.tableRegistroSearch:hover { background-color: rgb(239, 237, 237); border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); color: rgb(0, 0, 0); }
+.tdRegistroSearch { padding: 5px; }
+.tdRegistroSearch1 { padding: 5px; background-color: rgb(255, 255, 255); }
+.tdRegistroSearch1:hover { background-color: rgb(245, 245, 245); }
+.tableExpediente { width: 98%; background-color: rgb(255, 255, 255); border: 1px solid rgb(226, 226, 226); cursor: pointer; margin-bottom: 5px; margin-top: 5px; }
+.tableCaberaRepor { height: 87px; width: 100%; background-color: rgb(255, 255, 255); border: 1px dashed rgb(204, 204, 204); cursor: pointer; margin-bottom: 5px; margin-top: 5px; padding: 5px; }
+
+.tableRegistroSelec { background-color: rgb(121, 121, 121); color: rgb(255, 255, 255); }
+.inputBtn { height: 35px; border: none; color: rgb(255, 255, 255); background-color: rgb(76, 175, 80); font-family: "Merriweather Sans", Arial; font-size: 12px; width: 90px; cursor: pointer; border-radius: 15px; }
+.divScroll::-webkit-scrollbar { }
+.divPrincipalrepor { width: 1150px; min-height: 560px; border: 7px solid rgb(240, 215, 140); background-color: rgb(252, 241, 209); border-radius: 20px; }
+.divMenuFloat1 { float: left; width: 45%; border-right: 1px solid rgb(204, 204, 204); text-align: left; padding: 5px; }
+.divMenuFloat2 { float: right; width: 45%; padding: 5px; }
+.divMenuFloat3 { float: left; width: 30%; padding: 3px; margin: 1%; }
+.divRepor1 { float: left; width: 28%; text-align: left; padding: 5px; }
+.divRepor2 { float: right; width: 70%; padding: 5px; }
+.divRepor0 { overflow: auto; width: 98%; }
+.TableRepor0 { width: 88%; padding: 8px; border-top: 1px dashed rgb(204, 204, 204); border-bottom: 1px dashed rgb(204, 204, 204); height: 100px; }
+.textarea1 { font-size: 11px; font-family: "Merriweather Sans", Arial; height: 94px; text-align: left; width: 95%; border: 1px solid rgb(211, 211, 211); outline: none; resize: none; background-color: rgb(255, 255, 255); border-radius: 4px;}
+.divTablesScrool { overflow: auto; height: 450px; border: 1px solid rgb(223, 223, 223); border-radius: 10px; margin-top: 5px; }
+.divScrollhideen::-webkit-scrollbar { width: 0px; height: 0px; }
+.divScroll::-webkit-scrollbar-thumb { background: rgb(134, 134, 134); border-radius: 10px; }
+.divScroll::-webkit-scrollbar-thumb:hover { background: rgb(179, 179, 179); box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 2px 1px; }
+.divScroll::-webkit-scrollbar-thumb:active { background-color: rgb(153, 153, 153); }
+.divScroll::-webkit-scrollbar-track { background: transparent; }
+.divUser { background-color: rgb(255, 255, 255); width: 88%; border: 2px solid rgb(125, 125, 125); }
+.imgUser { width: 25px; padding: 5px; background-color: rgb(232, 232, 232); border: 3px solid rgb(204, 204, 204); }
+.tituloUser { font-family: Arial; font-size: 13px; font-stretch: condensed; font-weight: bold; color: rgb(59, 136, 245); padding: 5px; margin: 0px; }
+.divSegundoplano { width: 15%; position: fixed; left: 85%; bottom: 0px; }
+.divVentanasSeg { height: 40px; width: 95%; margin-bottom: 1.5%; background-color: rgb(255, 255, 255); border: 2px solid rgb(204, 204, 204); cursor: pointer; }
+.imgSeg { height: 30px; }
+.pTituloSeg { margin: 0px; font-size: 12px; font-family: Arial; color: rgb(0, 0, 0); font-weight: bold; font-stretch: condensed; text-align: center; }
+.btnInput { height: 37px; width: 100%; background: rgb(76, 175, 80); border: none; font-weight: bold; outline: none; cursor: pointer; color: rgb(255, 255, 255); border-radius: 5px; }
+.ptituloZ { font-size: 12px; font-family: Arial; color: rgb(255, 255, 255); background-color: rgb(59, 136, 245); margin: 0px; padding: 8px; }
+.btnSelecct4 { height: 35px; border: none; background-color: transparent; font-family: "Merriweather Sans", Arial; font-size: 11px; cursor: pointer; outline: none; width: 130px; }
+.btnSelecct4:hover { background-color: rgb(255, 152, 0); color: rgb(255, 255, 255); }
+.btnSelecct5 { height: 30px; border: none; background-color: transparent; font-family: "Merriweather Sans", Arial; font-size: 11px; cursor: pointer; outline: none; width: 111px; }
+.btnSelecct5:hover { background-color: rgb(255, 152, 0); color: rgb(255, 255, 255); }
+.inputBtn2 { height: 30px; width: 100%; background: rgb(76, 175, 80); border: none; font-weight: bold; outline: none; cursor: pointer; color: rgb(255, 255, 255); border-radius: 5px; }
+
+.btn1 { width: 200px; height: 35px; font-size: 15px; font-family: "Merriweather Sans", Arial; border: none; color: rgb(255, 255, 255); background-color: rgb(121, 172, 211); cursor: pointer; border-radius: 2px; outline: none; }
+.btn1:hover { color: rgb(255, 255, 255); background-color: rgb(33, 150, 243); }
+.btn1:focus { border: 2px solid rgb(35, 122, 191); }
+.btn2 { width: 97%; height: 45px; font-size: 12px; font-family: "Merriweather Sans", Arial; border: none; color: rgb(255, 255, 255); background-color: rgb(33, 150, 243); cursor: pointer; outline: none; }
+.btn2:hover { }
+.pTitulo7 { text-align: center; font-size: 12px; font-family: "Merriweather Sans", Arial; padding: 5px; }
+.pTituloRepor { background-color: rgb(152, 126, 47); font-size: 12px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); text-align: center; font-weight: bolder; padding: 10px; border-radius: 2px; }
+.pTituloRepor2 { font-size: 19px; font-family: "Merriweather Sans", Arial; color: rgb(15, 15, 15); text-align: center; font-weight: bolder; padding: 5px; border-radius: 10px; width: 80%; }
+.divPrincipalRecibo { width: 812.5px; text-align: left; }
+.divCuerpoRecibo { width: 684px; height: 510.2px; margin-top: 37.7px; margin-left: 54px; }
+.divCabeceraRecibo { height: 113px; }
+.divTituloRecibo { height: 26.4px; }
+.divCuerpotitulo1 { float: left; width: 434.6px; height: 113px; }
+.divCuerpotitulo2 { float: right; width: 245px; height: 113px; }
+.divTituloDetalle { height: 34px; }
+.divCuerpoDetalle { height: 143.6px; width: 100%; }
+.divCuerpoDetalle2 { height: 22px; width: 100%; }
+.divCuerpoDetalle3 { height: 37.7px; width: 100%; }
+.pTituloRecibo { text-align: left; font-size: 10px; font-family: "Merriweather Sans", Arial; padding: 5px; margin: 0px; }
+.pTituloRecibo2 { text-align: left; font-size: 10px; font-family: "Merriweather Sans", Arial; padding: 3px; margin: 0px; }
+.tableReporRecibo { width: 100%; background-color: rgb(255, 255, 255); cursor: pointer; padding: 2px; font-size: 10px; font-family: "Merriweather Sans", Arial; }
+.inputText1 { font-family: "Merriweather Sans", Arial; border: 1px solid rgb(211, 211, 211); outline: none; width: 95%; text-align: center; font-weight: bolder; background-color: rgb(255, 255, 255); height: 110px; font-size: 43px; color: red; }
+.inputText1_2 { font-family: "Merriweather Sans", Arial; border: 1px solid rgb(211, 211, 211); outline: none; width: 95%; text-align: center; font-weight: bolder; background-color: rgb(255, 255, 255); color: rgb(19, 19, 19); height: 34px; font-size: 16px; }
+.inputText1_3 { font-family: "Merriweather Sans", Arial; border: 1px solid rgb(201, 198, 198); outline: none; width: 100%; text-align: center; font-weight: bolder; background-color: rgb(255, 255, 255); color: rgb(118, 118, 118); height: 68px; font-size: 37px; border-radius: 10px; }
+.imgVisor { max-width: 500px; }
+.imgPrintCi { float: left; width: 340px; background-color: rgb(204, 204, 204); height: 340px; margin-top: 2%; margin-left: 5%; cursor: pointer; background-repeat: no-repeat; background-position: center center; background-size: contain; }
+.divMenuLateral { width: 60px; height: 100%; background-color: rgb(255, 255, 255); position: fixed; top: 0px; left: 0px; }
+.imgsMenuLateral { width: 30px; border: 2px solid rgb(255, 255, 255); padding: 5px; }
+.imgsMenuLateralw { width: 30px; border-radius: 34px; padding: 5px; border-width: 2px; border-style: solid; border-image: initial; border-color: rgb(255, 159, 0) rgb(38, 130, 255) rgb(103, 58, 183) rgb(255, 87, 34); background-color: rgb(255, 255, 255); }
+.imgsMenuLateral:hover { border-width: 2px; border-style: solid; border-image: initial; border-color: rgb(255, 159, 0) rgb(38, 130, 255) rgb(103, 58, 183) rgb(255, 87, 34); background-color: rgb(255, 255, 255); border-radius: 34px; }
+.PtituloMenuLateral { margin: 0px 0px 0px 9px; position: absolute; background-color: rgb(5, 103, 181); color: rgb(255, 255, 255); padding: 7px; font-size: 12px; font-family: "Merriweather Sans", Arial; border-radius: 16px; width: 100px; }
+.divMenusLAteral { width: 300px; min-height: 170px; background-color: rgb(255, 255, 255); position: absolute; left: 9px; border-radius: 15px; top: -63px; }
+.imgIconoMenuLateral { width: 20px; padding: 5px; }
+.pTituloLateral { font-size: 10px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); font-weight: bold; padding: 3px; margin: 0px; }
+.divMenubLateral { width: 31%; cursor: pointer; float: left; margin: 1%; height: 70px; }
+.divMenubLateral:hover { background-color: rgb(249, 249, 249); }
+.btn7 { height: 42px; border: none; color: rgb(0, 0, 0); background-color: rgb(239, 239, 239); font-family: "Merriweather Sans", Arial; font-size: 11px; width: 95%; cursor: pointer; outline: none; margin-top: 5px; }
+.btn7:hover { background-color: rgb(33, 150, 243); color: rgb(255, 255, 255); }
+.table_info_2 { width: 100%; height: 100%; }
+.tableInfoA { width: 100%; height: 200px; text-align: center; }
+.div_info_3 { background-color: rgb(231, 231, 231); width: 90%; cursor: pointer; border-radius: 5px; position: fixed; box-shadow: rgb(191, 191, 191) 2px 3px 5px; left: 5%; top: 88%; }
+.label_info_a { font-family: "Merriweather Sans", Arial; font-size: 12px; color: rgb(0, 0, 0); }
+.divInfoA { position: fixed; width: 100%; height: 100%; top: 0px; left: 0px; background-color: rgba(0, 0, 0, 0.5); }
+.inptInfoA { height: 35px; background-color: rgb(122, 93, 8); border: none; color: rgb(255, 255, 255); font-size: 12px; width: 100px; font-family: "Merriweather Sans", Arial; }
+.divInfoB { width: 100%; bottom: 0px; position: fixed; margin-bottom: 50px; min-height: 200px; background: rgb(240, 215, 140); box-shadow: rgb(0, 0, 0) 6px 8px 20px 6px; }
+.imgIconH { padding: 4px; filter: opacity(0.5); margin-top: 23px; width: 18px; cursor: pointer; background-color: rgb(222, 222, 222); border-radius: 31px; border: 1px solid rgb(204, 204, 204); }
+.tableVenta1 { width: 100%; margin-bottom: 4px; padding: 5px; height: 99px; border: 1px solid rgb(152, 126, 47); border-radius: 12px; }
+.btnFiltros { height: 30px; border: none; outline: none; background-color: rgb(33, 150, 243); font-size: 11px; color: rgb(255, 255, 255); border-radius: 9px; font-family: "Merriweather Sans", Arial; cursor: pointer; }
+.btnFiltros:hover { }
+.divBarraAmin1 { position: relative; height: 30px; width: 98%; background-color: rgb(197, 251, 200); }
+.divBarraAmin2 { position: absolute; top: 0px; left: 0px; height: 30px; background-color: rgb(76, 175, 80); width: 50%; }
+.btnFinalizarAdmin { height: 30px; margin-top: 19px; border: none; background-color: rgb(3, 169, 244); color: rgb(255, 255, 255); font-family: "Merriweather Sans", Arial; cursor: pointer; font-size: 11px; }
+.pTituloConexion1 { margin: 0px; color: rgb(247, 247, 247); font-size: 10px; font-family: "Merriweather Sans", Arial; }
+.imgsMenuLateral3 { width: 15px; }
+.DivTotalVenta { border: 1px solid rgb(234, 234, 234); height: 114px; font-size: 32px; font-family: "Merriweather Sans", Arial; color: rgb(255, 87, 34); font-weight: bold; padding: 3px; margin: 3px 0px 0px; text-align: center; background-color: rgb(255, 255, 255); justify-content: center; align-items: center; display: flex; width: 94%; }
+.inputfiltro { font-size: 11px; font-family: "Merriweather Sans", Arial; height: 27px; text-align: center; padding: 2px; width: 90%; border: 1px solid rgb(236, 236, 236); outline: none; background-color: rgb(255, 255, 255); border-radius: 3px; }
+.inptLimpiarBP { height: 12px; width: 10px; margin-left: -10px; filter: invert(1); cursor: pointer; }
+.inputfiltro:focus { background-color: rgb(242, 247, 251); font-weight: bold; border: 1px solid rgb(210, 210, 210); }
+.divsperador1 { height: 1px; background-color: rgb(210, 210, 210); width: 91%; }
+.inputReloj2 { text-align: center; border: none; background-color: transparent; color: rgb(255, 255, 255); font-family: "Merriweather Sans", Arial; width: 99%; font-size: 50px; font-weight: bold; margin-bottom: 14px; outline: none; }
+.pTitulo16 { font-size: 30px; font-family: "Merriweather Sans", Arial; text-align: center; margin: 0px; color: rgb(255, 255, 255); font-weight: bold; width: 99%; }
+.imgsMenuLateral2 { width: 20px; padding: 6px; border-radius: 36px; background-color: rgb(238, 238, 238); }
+.imgsMenuLateral2:hover { }
+.iconomenuz { padding: 11px; width: 43px; background-color: rgb(234, 235, 235); border-radius: 36px; }
+.pTituloMinimizar { font-size: 30px; font-family: "Merriweather Sans", Arial; color: rgb(22, 22, 22); font-weight: bold; padding: 3px; margin: 0px; text-align: center; }
+.divPrincipalMinimizar { width: 280px; background-color: rgba(255, 255, 255, 0.86); border-radius: 15px; margin: 1%; box-shadow: rgb(219, 219, 219) 0px 0px 2px 2px inset; height: 236px; }
+.ptitulo2Minimizar { margin: 0px; padding: 5px; font-size: 13px; text-align: center; font-family: "Merriweather Sans", Arial; }
+.divMinimizado { width: 10px; height: 10px; background-color: red; border-radius: 10px; }
+.buttonMinimizado { background-color: rgb(240, 215, 140); padding: 5px; width: 151px; margin: 1%; border-radius: 5px; height: 112px; }
+.buttonMinimizado:focus { zoom: 1.2; }
+.buttonMinimizado:hover { zoom: 1.2; }
+.imgIconoMenuMinimizado { width: 58px; padding: 5px; }
+.imgIconoFinalizarTodo { cursor: pointer; padding: 5px; width: 40px; filter: invert(1); height: 40px; background-color: rgb(255, 255, 255); border-radius: 26px; }
+.pTitulo17 { font-size: 13px; font-family: "Merriweather Sans", Arial; color: rgb(0, 0, 0); padding: 3px; margin: 0px; }
+.tbTituloColor { width: 100%; margin-bottom: 4px; padding: 5px; height: 99px; border-radius: 12px; background-color: rgb(229, 197, 99); box-shadow: rgb(107, 106, 106) 4px 2px 5px; }
+.divScrollPrincipal { overflow: hidden scroll; }
+.btnTemas { width: 45%; height: 100px; border: 3px solid rgb(219, 219, 219); border-radius: 10px; float: left; margin: 1%; background-repeat: no-repeat; background-position: center center; background-size: cover; }
+.divInfoSaludo { width: 350px; position: fixed; bottom: 0px; padding: 5px; background-color: transparent; margin-bottom: 19px; }
+.tbInfoSaludo { width: 100%; background-color: rgb(240, 215, 140); color: rgb(0, 0, 0); border-radius: 21px; font-family: "Merriweather Sans"; box-shadow: rgb(0, 0, 0) 4px 6px 5px; font-size: 12px; padding: 10px; }
+.divprogreso1 {width: 100%;height: 25px;position: relative;background-color: rgb(150, 241, 154);}
+.divprogreso2 {width: 0px;height: 25px;background-color: rgb(76, 175, 80);position: absolute;top: 0px;box-shadow: inset -8px 0px 5px #000000;left: 0px;}
+
+
+.pTituloActualizacion { font-size: 15px; font-family: "Merriweather Sans", Arial; color: rgb(3, 169, 244); margin: 0px; cursor: pointer; padding: 10px; border-radius: 6px; text-align: center; width: 179px; border: 1px solid rgb(0, 168, 243); }
+
+.indicador_cod_barra{
+	background-color:gray;
+	width:15px;
+	height:15px;
+	display:inline-block;
+	border-radius:50%;
+}
+
+
+
+
+.SubTituloBuscador{
+
+/* border: 1px solid rgb(201, 199, 199); */
+
+box-shadow: 10px 10px 10px #888888bf;
+
+/* border: 1px solid rgb(201, 199, 199); */
+
+margin: 20px;
+
+padding: var(--padding-1);
+
+border-radius: 20px;
+
+background: var(--color-Green-dark);
+
+box-shadow: var(--box-shadow);
+
+box-shadow: rgb(53 57 67 / 48%) 3px 3px 8px;
+}	
+
+
+.imgFotoCi { width: 100%; height: 170px; background-color: rgb(240, 240, 240); border: 1px solid rgb(221, 221, 221); cursor: pointer; background-repeat: no-repeat; background-position: center center; background-size: contain; }
+
+.divFloat2 {
+	float:left;
+	margin:5px;
+	width: 16%;
+
+}

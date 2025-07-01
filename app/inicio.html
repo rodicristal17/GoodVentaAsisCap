@@ -1,0 +1,4362 @@
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+   <meta name="theme-color" content="#000" />
+  <meta name="msapplicaction-navbutton-color" content="#000" />
+   <meta  name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
+    <title>GoodVenta-App</title>
+	<link rel="stylesheet" href="/GoodVentaElim/css/info.css" />
+	<link rel="stylesheet" href="/GoodVentaElim/css/inicio.css?x=34553" />
+
+	 
+	<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.1/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.1/mapbox-gl-geocoder.css' type='text/css' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet' />
+
+   <!--jquery.js !-->
+   
+   <!--scrips!-->
+  
+  	 <script src="/GoodVentaElim/js/jquery.js"></script>  
+  	 <script src="/GoodVentaElim/js/inicio.js?x=9908"></script>  
+  	 <script src="/GoodVentaElim/js/datosUsuario.js"></script>  
+
+	<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"></script>
+	<script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+	<script type="text/javascript" src="/GoodVentaElim/js/html2canvas.min.js"></script>
+    <script type="text/javascript" src="/GoodVentaElim/js/canvas2image.js"></script>
+
+	 	 <!-- <script src="/GoodVentaElim/js/installpwa.js?x=50"></script>   -->
+	<link href="https://fonts.googleapis.com/css2?family=Ubuntu+Condensed&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Catamaran:wght@200&display=swap" rel="stylesheet">
+	
+</head>
+<body >
+    <form enctype="multipart/form-data">
+	<div class='imgFondoapp'></div>
+<div  class='principal'>
+	<center>
+	<div >
+	
+	<div   id='divMenuApp'>
+
+	<table id='divMenuCaja' class='tableMenu' onclick='verCerrarCaja("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/cajaapp.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu' id='lblAperturaCierreCaja1'></p>
+	<p class='PtituloInfo' id='lblAperturaCierreCaja2'></p>
+	</td>
+	</tr>
+	</table>
+
+	<table id='divMenuClientes' class='tableMenu' onclick='ver_cerrar_clientes("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/clientes.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Clientes</p>
+	<p class='PtituloInfo'>Añadir o ver datos del cliente</p>
+	</td>
+	</tr>
+	</table>
+	
+	<table id='divMenuProductos' class='tableMenu' onclick='ver_cerrar_vista_productos("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/productos.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Consultar Productos</p>
+	<p class='PtituloInfo'>Consultar Stock o precios</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_vista_pedidos("1")' style='display:none' >
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/pedidos.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Pedidos</p>
+	<p class='PtituloInfo'>Buscar Pedidos realizados</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_nuevo_pedido("1")' style='display:none' >
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/nuevopedido.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Nuevo Pedidos</p>
+	<p class='PtituloInfo'>Añadir nuevo pedido</p>
+	</td>
+	</tr>
+	</table>
+	<table id='divMenuCuentas'  class='tableMenu' onclick='ver_cerrar_nuevo_cuenta("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/pago.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Buscar cuentas</p>
+	<p class='PtituloInfo'>Añadir o consultar cuentas a cobrar</p>
+	</td>
+	</tr>
+	</table>
+	<table id='divMenuSinConexion'  class='tableMenu' onclick='vercerrarrmodosinconexion("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/sin-internet.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Modo sin conexión</p>
+	<p class='PtituloInfo'>Usar app en modo off-line</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_nuevo_offline("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/desconectado.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Pagos Off-line</p>
+	<p class='PtituloInfo'>Cuentas que se cargaron en forma off-line</p>
+	</td>
+	</tr>
+	</table>
+	
+	<table id='divMenuRecaudacion' class='tableMenu' onclick='ver_cerrar_mis_recaudaciones("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/misRecaudaciones.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Recaudaciones</p>
+	<p class='PtituloInfo'>Ver mis Racuadaciones</p>
+	</td>
+	</tr>
+	</table>
+	<table id='tdListado' class='tableMenu' onclick='ver_cerrar_listado("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/logistica.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Listado</p>
+	<p class='PtituloInfo'>Añadir o buscar listado de producto</p>
+	</td>
+	</tr>
+	</table>
+	
+	<table class='tableMenu' onclick='ver_cerrar_mi_listado("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/listadoparavender.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Mi Listado</p>
+	<p class='PtituloInfo'>Listado de productos</p>
+	</td>
+	</tr>
+	</table>
+	
+	
+	<table class='tableMenu' onclick='verCerrarAbmsolicotud()' >
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/listadoparavender.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Solicitud de Credito</p>
+	<p class='PtituloInfo'>Cargar y gestionar Solicitud de Credito</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_devoluciones("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/devoluciones.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Devolución</p>
+	<p class='PtituloInfo'>Devolver producto o realizar garantia</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='cerrarSesion()'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/cerrarsesion.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Cerrar Sesión</p>
+	<p class='PtituloInfo'>Salir de la app</p>
+	</td>
+	</tr>
+	</table>
+	<br>
+	<br>
+
+</div>	
+	
+
+	
+	<table class='tbCabecera' style='height:200px' >
+	<tr>
+		<td style='width:90%;text-align:center>;'>
+		<center>
+	<img class='imgUser' src='/GoodVentaElim/iconos/logoApp.png' />
+	<br>
+	<h1 class='pTituloPerfil2' ><span style='color:#ff9f00'>Good</span><span style='color:#2682ff'>Venta</span><span style='color:##673ab7'>Soft</span></h1>
+<br>
+	<p class='pTituloPerfil4' id='lbluser'>Cargando</p>
+	</center>
+	</td>
+	</tr>
+	</table>
+	<br>
+	<br>
+	</div>	
+	
+	
+	
+	
+	
+	</center>
+		
+
+
+
+
+
+</div>
+	
+
+<div class='divMenu' style='display:none' id='divMenuApp'>
+<div class='divCabecera_b'>
+	<table style='width:95%;height:100%;'><tr>
+	<td style='width:10%;text-align:center' onclick='vercerrarmenu("2")'><img src='/GoodVentaElim/iconos/cerrar.png'  class='imgIconb' /></td>
+	<td style='width:90%;text-align:left'></td>
+	</tr></table>
+	</div>
+
+	
+	<table class='tableMenu' onclick='ver_cerrar_clientes("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/clientes.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Clientes</p>
+	<p class='PtituloInfo'>Añadir o ver datos del cliente</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_vista_productos("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/productos.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Consultar Productos</p>
+	<p class='PtituloInfo'>Consultar Stock o precios</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_vista_pedidos("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/pedidos.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Pedidos</p>
+	<p class='PtituloInfo'>Buscar Pedidos realizados</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_nuevo_pedido("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/nuevopedido.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Nuevo Pedidos</p>
+	<p class='PtituloInfo'>Añadir nuevo pedido</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_nuevo_cuenta("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/pago.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Buscar cuentas</p>
+	<p class='PtituloInfo'>Añadir o consultar cuentas a cobrar</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_nuevo_offline("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/desconectado.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Pagos Off-line</p>
+	<p class='PtituloInfo'>Cuentas que se cargaron en forma off-line</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_mis_recaudaciones("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/misRecaudaciones.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Recaudaciones</p>
+	<p class='PtituloInfo'>Ver mis Racuadaciones</p>
+	</td>
+	</tr>
+	</table>
+	<table id='tdListado' class='tableMenu' onclick='ver_cerrar_listado("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/logistica.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Listado</p>
+	<p class='PtituloInfo'>Añadir o buscar listado de producto</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_mi_listado("1")'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/listadoparavender.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Mi Listado</p>
+	<p class='PtituloInfo'>Listado de productos</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='ver_cerrar_devoluciones("1")' style='display:none'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/devoluciones.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Devolución</p>
+	<p class='PtituloInfo'>Devolver producto o realizar garantia</p>
+	</td>
+	</tr>
+	</table>
+	<table class='tableMenu' onclick='cerrarSesion()'>
+	<tr>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconoMenu' src='/GoodVentaElim/iconos/cerrarsesion.png' />
+	</td>
+	<td style='width:90%;text-align:left;'>
+	<p class='pTituloMenu'>Cerrar Sesión</p>
+	<p class='PtituloInfo'>Salir de la app</p>
+	</td>
+	</tr>
+	</table>
+	<br>
+	<br>
+
+</div>	
+	
+
+<div class='principal_2' style='display:none' id='divPrincipalEnviarPedidos'>
+
+<div class='divSubCabecera' id='div_comodin_enviar_pedidos'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta' >
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_nuevo_pedido("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>CONSULTAR PRECIOS</p>
+</td>
+<td style='width:5%;text-align:center;display:none' onclick="ver_cerrar_vista_pedidos('1')"  title='Buscar datos'><img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' />
+</td>
+<td style='display:none' onclick="NuevoRegistroPedidos()" title='Limpiar Campos' ><img class='imgIconMenuA' src='/GoodVentaElim/iconos/limpiar.png' />
+</td>
+</tr>
+</table>
+<div>
+<br>
+<p class='pTituloAbm' >Producto</p>
+<table class='tbAbm' >
+<tr>
+<td style='width:65%;text-align:center;' >
+<input placeholder='Producto Selecc..' class='inputAbm' id='inptProductoPedido' disabled />
+</td>
+<td style='width:15%;text-align:center;'>
+<input class='inputBuscar' type='button' value='Buscar' onclick='ver_cerrar_vista_productos("1")' style='background-color: #FF9800;' />
+</td>
+</tr>
+</table>
+<br>
+<p class='pTituloAbm' >Marca</p>
+<input placeholder='0' class='inputAbm' id='inptProductoMarcaPedido' disabled />
+<br>
+<p class='pTituloAbm' >Precio Contado</p>
+<input placeholder='0' class='inputAbm' id='inptProductoCostoPedido' disabled />
+<br>
+<br>
+<p class="pTitulo1">PRECIOS A CREDITOS</p>
+<br>
+<br>
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:35%;">
+PRECIO
+</td>
+<td class="td_registro" style="width:10%;">
+DESCRIP
+</td>
+</tr>
+</tbody>
+</table>
+
+<div class="div_cuerpo_table" id="table_precios_creditos" style='height:400px'>
+</div>
+
+<br>
+<br>
+
+
+<div class="div_cuerpo_table" id='Photo' style='height:auto'>
+<center>
+
+<div style='width:97%'>
+	<table style='width: 100%;' >
+	<tr>
+	<td style='width:40%'>
+	 <center><img src='/GoodVentaElim/iconos/elim.jpg' style='width:100px;'/> </center>
+	</td>
+	<td style='width:60%'>
+	
+	<div style='border:1px solid rgb(57 57 57);border-radius: 10px; padding: 5px;width: 97%;'>
+	<b class='pTitulo2' style='font-size: 12px;padding: 5px;' > <u class='pTituloAbm' >PRODUCTO: </u>  </b><center>  <div id='inputNombreProductoVista'> </div> </center> </div>
+	
+	<div style='border:1px solid rgb(57 57 57);border-radius: 10px; padding: 5px;width: 97%;'> 
+	<b class='pTitulo2' style='font-size: 12px;padding: 5px;' > <u class='pTituloAbm' >CONTADO: </u>  </b><center>   <div id='inputContadoProductoVista'> </div> </center> </div>
+	
+	<div style='border:1px solid rgb(57 57 57);border-radius: 10px; padding: 5px;width: 97%;'> 
+	<b class='pTitulo2' style='font-size: 12px;padding: 5px;' > <u class='pTituloAbm' >EN CUOTAS: </u>  </b><center> <div id='inputCreditoProductoVista'> </div> </center> </div> 
+</td>
+	
+	</tr>
+	</table>
+
+</div>
+</center>
+
+<div id='capturar2' >
+</div>
+<br>
+<br>
+<br>
+<br>
+
+</div>
+
+
+
+<input type='button' value='Compartir Precio' href='javascript:void(0);' onclick='compartir()'  class='btnappA'  id='capturar' />
+<script type='text/javascript'>
+ function takeshot() {
+            let div = document.getElementById('photo');
+            html2canvas(div).then(
+                function (canvas) {
+                    document
+                 .getElementById('output')
+                   .appendChild(canvas);
+                })
+        }
+</script>
+
+<div style='display:none'>
+
+<p class='pTituloAbm' >Metodo de pago</p>
+<select class="inputAbm" id="inptSeleccPrecio" onchange='seleccionarestecosto()'>
+</select>
+<br>
+<p class='pTituloAbm' >Costo</p>
+<input placeholder='Producto Selecc..' class='inputAbm' id='inptSeleccPrecio2' disabled />
+
+<p class='pTituloAbm'  >Cantidad</p>
+<input placeholder='Cantidad pedido' class='inputAbm' id='inptCantidadPerdido'  />
+<br>
+<p class='pTituloAbm' >Cliente</p>
+<table class='tbAbm' >
+<tr>
+<td style='width:65%;text-align:center;'>
+<input placeholder='Selecc.' class='inputAbm'  id='inptDocClientePedido' disabled  />
+</td>
+<td style='width:15%;text-align:center;'>
+<input class='inputBuscar' type='button' value='Buscar' onclick='verclienteenpedidos()'  />
+</td>
+
+</tr>
+</table>
+</div>
+	
+
+	<input type='button' value='Guardar pedido' onclick='VerificarCampoPedidos()'  class='btnappA' style='display:none' />
+
+
+
+
+
+
+</div>
+
+</div>
+</center>
+</div>
+
+<div class='principal_2' style='display:none' id='divPrincipalListadoCamiones'>
+
+<div class='divSubCabecera' id='div_comodin_cliente'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_listado("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>CARGAR PRODUCTOS</p>
+</td>
+<td style='width:10%;text-align:center' onclick="verCerrarVentanaAbmListado('1')"  title='Buscar datos'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' />
+
+</td>
+
+</tr>
+</table>
+
+
+<div>
+		<p class='pTituloAbm' >Encargado</p>
+	<table style='width:100%' >
+	<tr>
+	
+	<td style='width:85%;text-align:center;' onclick='ver_cerrar_vista_productos_encargado("1")'>
+	<input placeholder='Seleccionar' class='inputAbm'  id='inptSeleccEncargadoProductoListado' disabled  />
+	</td>
+	<td style='width:15%;text-align:center;'>
+		<input type='button' value='Buscar' class='btn3'  onclick='ver_cerrar_vista_productos_encargado("1")' />
+	</td>
+	
+	</tr>
+	</table>
+	
+	<p class='pTituloAbm' >Fecha</p>
+	<input type='Date' class='inputAbm' id='inptFechaProductoListado'  />
+	
+	<p class='pTituloAbm' >Producto</p>
+	<table style='width:100%' >
+	<tr>
+
+	<td style='width:85%;text-align:center;' onclick='ver_cerrar_vista_productos_lista("1")'>
+	<input placeholder='Seleccionar' class='inputAbm' id='inptSeleccProductoListado' disabled />
+	</td>
+	<td style='width:15%;text-align:center;'>
+		
+<input type='button' value='Buscar' class='btn3'   onclick='ver_cerrar_vista_productos_lista("1")'/>
+	</td>
+	</tr>
+	</table>
+
+	<p class='pTituloAbm' >Cant.</p>
+	<input type='text' class='inputAbm' id='inptCantProductoListado'  />
+	
+	
+	<p class='pTituloAbm' >Cant. Venta</p>
+	<input type='text' class='inputAbm' id='inptCantVentaProductoListado'  />
+	
+		<p class='pTituloAbm' >Estado</p>
+		<select class="inputAbm" id="inptEstadoProductoListado" >
+<option value="Activo">ACTIVO</option>
+<option value="Eliminado">INACTIVO</option>
+</select>
+
+<p class='pTituloAbm' >Acceso</p>
+		<select class="inputAbm" id="inptAccesoProductoListado" >
+<option value="SI">Si</option>
+<option value="NO">No</option>
+</select>
+
+	
+	
+	<br>
+	<br>
+	<br>
+
+	<br>
+	
+<input type='button' value='Guardar Datos' onclick="verificarcamposListado()"  class='btnappA'/>
+
+	
+	
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divPrincipalVistaLista'>
+
+
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='verCerrarVentanaAbmListado("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR LISTADO</p>
+</td>
+</tr>
+</table>
+
+
+<div>
+	<p class='pTituloAbm' >Encargado</p>
+	<table style='width:100%' >
+	<tr>
+	<td style='width:80%;text-align:center;'onclick='buscarabmListado()' >
+	<input type='text' class='inputBuscador' placeholder='Encargado'  id='inptBuscarListado'  onkeyup="if(event.keyCode == 13){buscarabmListado()}" style='width:90%' />
+	</td>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' onclick='buscarabmListado()' />
+	</td>
+	</tr>
+	</table>
+	<p class='pTituloAbm' >Fecha</p>
+	<table style='width:100%' >
+	<tr>
+	<td style='width:80%;text-align:center;'>
+	<input type='date' class='inputBuscador'  id='inptBuscarListaF1'  style='width:90%' />
+	</td>
+	<td style='width:10%;text-align:center;'>
+	</td>
+	</tr>
+	</table>
+	
+		<br>
+		<br>
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:35%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:10%;">
+CANT.
+</td>
+<td class="td_registro" style="width:10%;">
+VEND.
+</td>
+<td class="td_registro" style="width:35%;">
+ENCARGADO
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="table_abm_listado" >
+</div>
+<br>
+</div>
+	<br>
+	<br>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+<div class='principal_2' style='display:none' id='divPrincipalMiLista'>
+
+
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_mi_listado("2")' />
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR LISTADO</p>
+</td>
+<td style='width:10%;text-align:center;position:relative'>
+<img src='/GoodVentaElim/iconos/carrito.png' class='imgIconMenuA'  />
+<p class='pTituloAbmarrito' id='lblidcarrito'>0</p>
+</td>
+</tr>
+</table>
+
+
+<div>
+<p class='pTituloAbm' >Buscar</p>
+	<table style='width:100%' >
+	<tr>
+	<td style='width:80%;text-align:center;' >
+	<input type='text' class='inputBuscador' placeholder='Producto'  id='inptBuscarMiListado'  onkeyup="if(event.keyCode == 13){buscaramiListado()}" style='width:90%' />
+	</td>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' onclick='buscaramiListado()' />
+	</td>
+	</tr>
+	</table>
+	<br>
+	
+	
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:33%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:33%;">
+CANT. DISP.
+</td>
+<td class="td_registro" style="width:33%;">
+P. CONTADO
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="table_mi_listado" style='height:450px'>
+</div>
+
+</div>
+	<br>
+	<br>
+	<br>
+	<input type='button' value='Ir a Venta' class='btnappA' onclick='verCerrarMiCarrito("1")'  />
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+<div class='principal_2' id='divPrincipalDetalles' style='display:none'  >
+<center>
+
+<div class='div_ventana' >
+
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='vercerrardetallesproducto("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>DETALLES DEL PRODUCTO</p>
+</td>
+</tr>
+</table>
+<br>
+<p class='pTituloAbm' >Producto</p>
+<table style='width:100%'  >
+	<tr>
+	<td style='width:75%;text-align:center;'>
+	<input  class='inputAbm' id='inptProductoDetalle' disabled />
+	</td>
+	</tr>
+	</table>
+	<p class='pTituloAbm' >Tipo de Venta</p>
+<table style='width:100%'  >
+	<tr>
+	
+	<td style='width:75%;text-align:center;'>
+	<select class="inputAbm" id="inptSelecCostoProductoDetalle" onchange='seleccionarcostodetalle(this)' >
+</select>
+	</td>
+	</tr>
+	</table>
+	
+	<p class='pTituloAbm' >Precio Venta</p>
+<table style='width:100%' >
+	<tr>
+
+	<td style='width:75%;text-align:center;'>
+		<input  class='inputAbm' id='inptCostoProductoDetalle' disabled />
+
+	</td>
+	</tr>
+	</table>
+	
+	<p class='pTituloAbm' >Cantida</p>
+	<table style='width:100%'  >
+	<tr>
+	
+	<td style='width:75%;text-align:center;'>
+	<input placeholder='Cantidad a vender'  class='inputAbm' id='inptCantProductoDetalle' />
+	</td>
+	</tr>
+	</table>
+	
+	<p class='pTituloAbm' >Comisión Vend.</p>
+	<table style='width:100%' >
+	<tr>
+	
+	<td style='width:75%;text-align:center;'>
+	<input placeholder='Cantidad a vender'  class='inputAbm' id='inptComisionProductoDetalle' disabled />
+	</td>
+	</tr>
+	</table>
+
+	
+	
+	<br>
+	<br>
+	<br>
+	<input type='button' value='Añadir al carrito' class='btnappA'  onclick='addProductoCarrito()' />
+	
+	
+	
+	</div>
+	
+	</center>
+
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divPrincipalDevoluciones'>
+
+<div class='divSubCabecera' id='div_comodin_enviar_credito'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_devoluciones("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>DEVOLUCIONES</p>
+</td>
+<td style='width:5%;text-align:center' onclick="VerificarCampoDevoluciones()"  title='Guardar Datos'><img class='imgIconMenuA' src='/GoodVentaElim/iconos/check.png' /></td>
+</tr>
+</table>
+<br>
+<br>
+<div>
+	<table class='tbAbm' >
+	<tr>
+	<td style='width:25%;text-align:center;'>
+	<p class='pTituloAbm' >Doc. Cliente</p>
+	</td>
+	<td style='width:65%;text-align:center;'>
+	<input placeholder='Seleccionar' class='inputAbm'  id='inptDocClienteDevoluciones' disabled  />
+	</td>
+	<td style='width:15%;text-align:center;'>
+			<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png'   onclick='verClienteDevoluciones()'/>
+
+	</td>
+	
+	</tr>
+	</table>
+	
+	<table class='tbAbm' >
+	<tr>
+	<td style='width:25%;text-align:center;'>
+	<p class='pTituloAbm' >Cliente</p>
+	</td>
+	<td style='width:75%;text-align:center;'>
+	<input placeholder='Nombre del Cliente' class='inputAbm' id='inptNombreClienteDevoluciones' disabled />
+	</td>
+	
+	</tr>
+	</table>
+	<table class='tbAbm' >
+	<tr>
+	<td style='width:25%;text-align:center;'>
+	<p class='pTituloAbm' >Producto</p>
+	</td>
+	<td style='width:65%;text-align:center;' onclick='verProductosDevoluciones()'>
+	<input placeholder='Seleccionar' class='inputAbm' id='inptProductoDevolucion' disabled />
+	</td>
+	<td style='width:15%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png'   onclick='verProductosDevoluciones()'/>
+	</td>
+	</tr>
+	</table>
+	<table class='tbAbm' >
+	<tr>
+	<td style='width:25%;text-align:center;'>
+	<p class='pTituloAbm' >Operación</p>
+	</td>
+	<td style='width:65%;text-align:center;'>
+	<select class="inputAbm" id="inptSeleccOperacion" >
+<option value="Devolucion">DEVOLVER</option>
+<option value="Garantia">USO DE GARANTIA</option>
+<option value="Retiro">RETIRO</option>
+</select>
+	</td>
+	<td style='width:15%;text-align:center;'>
+	</td>
+	</tr>
+	</table>
+	<table class='tbAbm' >
+	<tr>
+	<td style='width:25%;text-align:center;'>
+	<p class='pTituloAbm' >Fecha</p>
+	</td>
+	<td style='width:65%;text-align:center;'>
+	<input type='Date' placeholder='Seleccionar' class='inputAbm' id='inptFechaDevolucion'  />
+	</td>
+	<td style='width:15%;text-align:center;'>
+
+	</td>
+	</tr>
+	</table>
+	
+	<table class='tbAbm' >
+	<tr>
+	<td style='width:20%;text-align:center;'>
+	<p class='pTituloAbm' >Motivo</p>
+	</td>
+	<td style='width:80%;text-align:center;'>
+	<input placeholder='El motivo (Opcional)' class='inputAbm' id='inptProductoMotivoDevolucion'  />
+	</td>
+	</tr>
+	</table>
+	
+	<br>
+	<p class='pTitulo1' >Archivos o Historial</p>
+	<div>
+	<table class='tableA'><tr><td style='width:33%;text-align:center'>Producto</td><td  style='width:33%;text-align:center'>Fecha</td><td  style='width:33%;text-align:center'>Motivo</td></tr></table>
+	<div class='divTableA' id='divDetalleDevolucion' > </div>
+	</div>	
+	<br>
+	<br>
+	
+
+	
+	
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+<div class='principal_2' style='display:none' id='divPrincipalVistaProductos'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_productos'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_vista_productos("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR PRODUCTOS</p>
+</td>
+</tr>
+</table>
+<div>
+<br>
+
+<p class="pTitulo1">PARÁMETROS DE BUSQUEDAD</p>
+<br>
+<div class='divDetalles'>
+<br>
+	<p class='pTituloAbm' >Producto</p>
+	<input style='width:95%' type='text' class='inputBuscador' placeholder='Nombre del producto'  id='inptBuscarProductos'  onkeyup="if(event.keyCode == 13){buscarproductos()}" />
+    
+	<br>
+	<p class='pTituloAbm' >Local</p>
+	<select class="inputBuscador"  id='inputLocalProducto' style='width:95%;' ></select>
+    <br>
+    <br>
+	</div>
+    
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosProducto'>Registros encontrados</p>
+
+	
+	<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:85%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:15%;">
+STOCK
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divProductoBuscado" >
+</div>
+<br>
+</div>
+	<br>
+	<br>
+	<br>
+	<input type='button' value='Empezar a Buscar' class='btnappA'  onclick='buscarproductos()' />
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+<div class='principal_2' style='display:none' id='divPrincipalVistaEncargado'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_productos'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_vista_productos_encargado("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR ENCARGADOS</p>
+</td>
+</tr>
+</table>
+
+<div>
+<table class='tbAbm' >
+	<tr>
+	<td style='width:90%;text-align:center;'>
+<input type='text' class='inputBuscador' placeholder='Nombre del encargado'  id='inptBuscarVistaCobrador'  onkeyup="if(event.keyCode == 13){buscarvistacobrador()}" />
+
+	</td>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' onclick='buscarvistacobrador()' />
+	</td>
+	
+	
+	</tr>
+	</table>
+<br>
+	
+	<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:30%;">
+ENCARGADO
+</td>
+<td class="td_registro" style="width:30%;">
+NRO. TELEF
+</td>
+<td class="td_registro" style="width:30%;">
+ZONA
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="table_vista_cobrador" >
+</div>
+<br>
+</div>
+	<br>
+	<br>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divPrincipalVistaPedidos'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_pedidos'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_vista_pedidos("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR PEDIDOS</p>
+</td>
+
+</tr>
+</table>
+
+<div>
+    <p class='pTituloAbm' >Nombre o C.I. del Cliente</p>
+<table class='tbAbm' >
+	<tr>
+	<td style='width:90%;text-align:center;'>
+<input type='text' class='inputBuscador' placeholder='Cliente'  id='inptBuscarPedidos'  onkeyup="if(event.keyCode == 13){buscarpedidos()}" />
+
+
+	</td>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' onclick='buscarpedidos()' />
+	</td>
+	
+	
+	</tr>
+	</table>
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosPedidos'>Registros encontrados</p>
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:50%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:50%;">
+PRODUCTO
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divPedidosBuscado" >
+</div>
+<br>
+</div>
+	<br>
+	<br>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divPrincipalVistaCuentas'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_cuentas'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_nuevo_cuenta("2")' />
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR CUENTAS</p>
+</td>
+<td style='width:90%;text-align:left;display:none'>
+<img src='/GoodVentaElim/iconos/offline.png' class='imgIconMenuA' onclick='cargarlistaoffline("2")' />
+</td>
+</tr>
+</table>
+<div style='width:100%;overflow:auto;height:50px;display:none'>
+<table >
+<tr>
+<td>
+<input type='button' value='ClENTES' class='btnA' style='border-bottom: 1px solid #ccc;' onclick='buscar_cuenta_por("1")' id='btnOpcione1' />
+</td>
+<td>
+<input type='button' value='ENTRE FECHAS' class='btnA'  onclick='buscar_cuenta_por("5")' id='btnOpcione5'  />
+</td>
+<td style='display:none'>
+<input type='button' value='FECHA' class='btnA'  onclick='buscar_cuenta_por("2")' id='btnOpcione2'  />
+</td>
+<td style='display:none'>
+<input type='button' value='SOLO HOY' class='btnA'  onclick='buscar_cuenta_por("3")' id='btnOpcione3'  />
+</td>
+<td>
+<input type='button' value='VISITAS' class='btnA'  onclick='buscar_cuenta_por("4")' id='btnOpcione4'/>
+</td>
+</tr>
+</table>
+</div>
+
+
+<br>
+
+<p class="pTitulo1">PARÁMETROS DE BUSQUEDAD</p>
+<br>
+<div class='divDetalles'>
+<br>
+
+    <p class='pTituloAbm' id='tituloBuscarCuenta'>Nombre, C.I. o Telef. del Cliente</p>
+	<table style='width:100%'  >
+	<tr>
+	<td style='width:80%;text-align:center;'>
+	<input type='text' class='inputBuscador' placeholder='Cliente'  id='inptBuscarCuentas'  onkeyup="if(event.keyCode == 13){buscarcuentas()}" style='width:90%' />
+<input type='Date' class='inputBuscador'  id='inptBuscarFechaCuentas'   style='display:none;width:47%' /> 
+<input type='Date' class='inputBuscador'  id='inptBuscarFechaCuentas2'   style='display:none;width:47%;margin-top: 7px;' /> 
+	</td>
+
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/marcadorMap.png' onclick='verCerrarMapaCuentas("1")' />
+	</td>
+	
+	</tr>
+	</table>
+	 <p class='pTituloAbm' >Zona a Buscar</p>
+	<table style='width:100%' >
+	<tr>
+	<td style='width:100%;text-align:center;'>
+	<select class="inputBuscador"  id='inputBuscadorzona' style='width:95%;' ></select>
+	</td>
+	</tr>
+	</table>
+	<p class='pTituloAbm' >Tipo de Cuentas</p>
+	<table style='width:100%' >
+	<tr>
+	<td style='width:100%;text-align:center;'>
+	<select class="inputBuscador"  id='inputTipoCuenta' style='width:95%;' >
+	<option value="1">Pendientes</option>
+   <option value="2">Canceladas</option>
+   </select>
+	</td>
+	</tr>
+	</table>
+	<br>
+	</div>
+	
+	<p class='pTituloDatos2'  id='lblUbicacionActualizado'></p>
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosCuentas' style='display:none'>Registros encontrados</p>
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:75%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:25%;">
+T. VENTA
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divCuentasBuscado" >
+</div>
+<br>
+<input type='button' value='Guardar lista en offline' onclick='cargarListaCuentaOffline()'  class='btnappA' style='display:none'/>
+<input type='button' value='EMPEZAR A BUSCAR' onclick='buscarcuentas()'  class='btnappA' style=''/>
+<br>
+</div>
+<br>
+<br>
+
+</div>
+</center>
+
+</div>
+
+		
+<div class='principal_2' style='display:none' id='divPrincipalModoSinConexion'>
+
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='vercerrarrmodosinconexion("2")' />
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>MODO SIN CONEXIÓN</p>
+</td>
+<td id='tdOfflineOption' style='width:10%;text-align:left;'>
+<img src='/GoodVentaElim/iconos/salirappsinconexion.png' class='iconoCerrar' onclick='salirDelModoSinConexion("2")' />
+</td>
+</tr>
+</table>
+<br>
+<div style='width:100%;overflow:auto;height:50px;'>
+<table >
+<tr>
+<td>
+<input id='btnopcionsinconexion1' type='button' value='CREAR LISTA' class='btnA' style='border-bottom: 1px solid #ccc;' onclick='vercerraropcionesinconexion("1")' id='' />
+</td>
+<td>
+<input id='btnopcionsinconexion2' type='button' value='MI LISTA' class='btnA'  onclick='vercerraropcionesinconexion("2")'   />
+</td>
+<td>
+<input id='btnopcionsinconexion3' type='button' value='COBRADOS' class='btnA'  onclick='vercerraropcionesinconexion("3")' />
+</td>
+</tr>
+</table>
+</div>
+
+<div id='DivGenerarListaOffLine'>
+<br>
+<p class="pTitulo1">CREAR LISTA OFFLINE</p>
+<br>
+<div class='divDetalles'>
+<br>
+    <p class='pTituloAbm' id='tituloBuscarCuenta'>Rango de Fechas</p>
+	<table style='width:100%'  >
+	<tr>
+	<td style='width:100%;text-align:center;'>
+<input type='Date' class='inputBuscador'  id='inptBuscarFechaSinConexion1'   style='width:47%' /> 
+<input type='Date' class='inputBuscador'  id='inptBuscarFechaSinConexion2'   style='width:47%;margin-top: 7px;' /> 
+	</td>
+	</tr>
+	</table>
+	 <p class='pTituloAbm' >Zona a Buscar</p>
+	<table style='width:100%' >
+	<tr>
+	<td style='width:100%;text-align:center;'>
+	<select class="inputBuscador"  id='inputBuscadorzonaSinConexion' style='width:95%;' ></select>
+	</td>
+	</tr>
+	</table>
+	<br>
+	<br>
+	</div>
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosCuentasSinConexion' >Registros encontrados</p>
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:75%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:25%;">
+T. VENTA
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divCuentasBuscadoSinConexion" >
+</div>
+<br>
+<input type='button' value='Guardar lista en offline' onclick='cargarListaCuentaOffline()'  class='btnappA' style='display:none'/>
+<input type='button' value='GENERAR LISTA' onclick='buscarcuentasparasinconexion()'  class='btnappA' style=''/>
+<br>
+</div>
+<br>
+<br>
+</div>
+
+
+<div id='DivMiListaOffLine' style='display:none'>
+<br>
+
+<p class="pTitulo1">LISTADO OFFLINE</p>
+<br>
+<div class='divDetalles'>
+<br>
+    <p class='pTituloAbm' id='tituloBuscarCuenta'>Buscar Cliente</p>
+	<table style='width:100%'  >
+	<tr>
+	<td style='width:100%;text-align:center;'>
+<input type='text' class='inputBuscador'  id='inptBuscarClienteSinConexion1'   style='width:60%' /> 
+	<input class="inputBuscar" type="button" value="Buscar" onclick="buscarClienteEnListado()">
+
+	</td>
+	</tr>
+	</table>
+	
+	<br>
+	<br>
+	</div>
+	<br>
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:75%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:25%;">
+T. VENTA
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divCuentasBuscadoSinConexionListado" >
+</div>
+<br>
+
+<br>
+</div>
+<br>
+<br>
+</div>
+
+
+<div id='DivMiCobrosOffLine' style='display:none'>
+	
+	<br>
+	<input type='button' value='Imprimir listado' onclick='imprimirListaOffline()'  class='btn2' style='width:90%'/>
+	<br>
+	<br>
+	<input type='button' value='Vaciar' onclick='VaciarListado()'  class='btn2' style='width:90%'/>
+	<br>
+	<br>
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:33%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:33%;">
+MONTO
+</td>
+<td class="td_registro" style="width:33%;">
+FECHA / HORA
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divPagosBuscadoSinConexionListado" >
+</div>
+<br>
+<input type='button' value='SINCRONIZAR PAGOS' onclick='enviarpagosonline()'  class='btnappA' style=''/>
+<br>
+</div>
+<br>
+<br>
+</div>
+
+
+
+
+</div>
+</center>
+
+</div>
+
+<div class='principal_2' style='display:none;background-color: #0000005c;' id='divReeimprimirCobrados'>
+
+
+<table style='width:100%;height:100%'>
+<tr>
+<td>
+<center>
+<div class='div_ventana_opciones' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='verCerrarReimpresioncuentascobradas("2")' />
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>RE-IMPRIMIR</p>
+</td>
+<td style='width:10%;text-align:center'>
+</td>
+</tr>
+</table>
+<div>
+<br>
+<br>
+<br>
+<input type='button' value='RE-IMPRIMIR TIKECT' onclick='obtenerDatosReImpresionOffline()'  class='btn1' style=''/>
+	<br>
+	<br>
+	</div>
+	
+	</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divPrincipalVistaMisReacuadaciones'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_cuentas'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_mis_recaudaciones("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>MIS RECAUDACIONES</p>
+</td>
+</tr>
+</table>
+
+<br>
+<div>
+
+<p class="pTitulo1">PARÁMETROS DE BUSQUEDAD</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >Fecha del Arqueo</p>
+<input type='Date' class='inputBuscador'  id='inptBuscarFechaMisRecaudaciones'   style='width:90%' /> 
+<br>
+<br>
+</div>
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosMisRecaudaciones' style=''>Registros encontrados</p>
+
+
+		<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:25%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:25%;">
+FACTURA
+</td>
+<td class="td_registro" style="width:25%;">
+FECHA
+</td>
+<td class="td_registro" style="width:25%;">
+MONTO
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divMisRecaudacionesBuscado" >
+</div>
+<p class='pTituloAbm' >Total Recaudaciones</p>
+	<input  class='inputAbm' id='inptTotalRecaudado' disabled />
+
+		
+	<br>
+	<br>
+	<input type='button' value='Imprimir listado' onclick='imprimirListadePagod()'  class='btn2' style='width:90%'/>
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+	<input type='button' value='Empezar a Buscar 'onclick="buscarmisRecaudaciones()" class='btnappA'/>
+
+</div>
+
+
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalCreditos'>
+
+<div class='divSubCabecera' id='div_comodin_enviar_credito'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_abm_creditos("2")' />
+
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>CUENTAS</p>
+</td>
+<td style='width:10%;text-align:center;display:none'  >
+<img src='/GoodVentaElim/iconos/calendario.png' class='imgIconMenuA' onclick='vercerrarrecalendarizar("1")' />
+</td>
+<td style='width:10%;text-align:center;border: solid #bbb 3px;
+    border-radius: 10px;'>
+<img src='/GoodVentaElim/iconos/impago.png' class='iconoCerrar' onclick='ver_cerrar_clientesImpagoCliente("1")' />
+</td>
+</tr>
+</table>
+
+<br>
+<div>
+
+	<br>
+	<p class='pTitulo1' >DATOS DEL CLIENTE</p>	
+	<br>	
+	<div class='divDetalles'>
+	<br>
+
+	<p class='pTituloAbm' >Nro Documento</p>
+	<input placeholder='Nro Documento' class='inputAbm' id='inptDocClienteCredito' disabled  style='width:60%' />
+	<input class="inputBuscar" type="button" value="Ubic." onclick="verGoogleMapsOr()">
+	<br>
+	<p class='pTituloAbm' >Cliente</p>
+	<input placeholder='Nombre del Cliente' class='inputAbm' id='inptNombreClienteCredito' disabled />
+	<br>
+	<p class='pTituloAbm' >Dirección</p>
+	<input placeholder='Dirección del Cliente' class='inputAbm' id='inptDireccionClienteCredito' disabled />
+	<br>
+	<p class='pTituloAbm' >Referencia</p>
+	<input placeholder='Referencia del Cliente' class='inputAbm' id='inptReferenciaClienteCredito' disabled />
+	<br>
+	<p class='pTituloAbm' >Garante</p>
+	<input placeholder='Garante' class='inputAbm' id='inptGaranteClienteCredito' disabled />
+	<br>
+	<p class='pTituloAbm' >Telef.</p>
+	<input placeholder='' class='inputAbm' id='inptTelefClienteCredito' disabled style='width:60%'  />
+		<input class="inputBuscar" type="button" value="Llamar" onclick="IrALlamadas()">
+
+	<br>
+	<br>
+	</div>
+	<br>
+	<p class='pTitulo1' >DATOS DE LA VENTA</p>	
+	<br>	
+	<div class='divDetalles'>
+	<br>
+	<p class='pTituloAbm' >Nro. Factura</p>
+	<input placeholder='Nro Factura' class='inputAbm' id='inptNroVentaCredito' disabled />
+	<br>
+	<table style='width:100%'>
+	<tr>
+	<td style='width:50%'>
+	<p class='pTituloAbm' >Total Deuda</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalVentaCredito' disabled />
+	</td>
+	<td style='width:50%'>
+	<p class='pTituloAbm' >T. Descuento</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalDescuentoCredito' disabled />
+	</td>
+    </tr>
+    </table>	
+	<br>
+	<table style='width:100%'>
+	<tr>
+	<td style='width:50%'>
+	<p class='pTituloAbm' >T. Pagado</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalPagadoCredito' disabled />
+	</td>
+	<td style='width:50%'>
+	<p class='pTituloAbm' >Interes Pagado</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalInteresCredito' disabled />
+	</td>
+    </tr>
+    </table>
+	<br>
+	<table style='width:100%'>
+	<tr>
+	<td style='width:50%'>
+	<p class='pTituloAbm' >Interes Actual</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalInteresCreditoActual' disabled />
+	</td>
+	<td style='width:50%'>
+	<p class='pTituloAbm' >Deuda sin Interes</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalPendienteSinInteresCredito' disabled />
+	</td>
+    </tr>
+    </table>
+	<br>
+   <table style='width:100%'>
+	<tr>
+	<td style='width:50%'>
+<p class='pTituloAbm' >A Cobrar</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalPendienteCredito' disabled />
+	</td>
+	<td style='width:50%'>
+<p class='pTituloAbm' >Deuda Actual</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalDeudaCredito' disabled />
+	</td>
+    </tr>
+    </table>	
+	<br>	
+	<div id='divTotalPagoOffline' style='display:none'>
+	<p class='pTituloAbm' >T. Pago offline</p>
+	<input placeholder='0 Gs' class='inputAbm' id='inptTotalPagoOfflineCredito' disabled />
+	<br>	
+</div>
+
+	
+	<br>
+	<br>
+	</div>
+	<br>
+	<p class='pTitulo1' >CREDITOS</p>	
+	<br>
+
+		
+	<br>	
+	<div style='width:92%'>
+	
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td  class="td_registro" style='width:5%'>#</td>
+<td class="td_registro" style='width:18%'>F. COBRAR</td>
+<td class="td_registro"  style='width:10%'>A COBRAR</td>
+<td class="td_registro"  style='width:5%'>D/A</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="divDetalleCuenta" style='height:250px' >
+</div>
+<br>
+	<p class='pTitulo1' >PRODUCTOS</p>	
+	<br>
+	<br>
+	<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style='width:18%'>PRODUCTO</td>
+<td class="td_registro"  style='width:5%'>CANT.</td>
+<td class="td_registro"  style='width:10%'>COSTO</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="divProductosComprados" style='height:250px' >
+</div>
+<br>
+	<p class='pTitulo1' >PAGOS</p>	
+	<br>
+	<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style='width:10%'>NRO</td>
+<td class="td_registro"  style='width:10%'>FECHA</td>
+<td class="td_registro"  style='width:10%'>MONTO</td>
+<td class="td_registro"  style='width:5%'>#</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="divPagosRealizados" style='height:250px' >
+</div>
+<br>
+</div>
+	<br>
+	<br>
+	<br>
+	
+	<input id='btnCargarPagos1' type='button' value='Guardar Pagos' onclick="ver_cerrar_vista_opciones_pago('1')"  class='btnappA'/>
+	<input id='btnCargarPagos2' type='button' value='Guardar Pagos' onclick="ver_cerrar_vista_opciones_pago_offline('1')" class='btnappA' style='background-color:#3f51b5'/>
+	
+	
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divOpcionesCreditos'>
+
+<div class='divSubCabecera' id='div_comodin_enviar_creditos'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_abm_opciones_creditos("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>OPCIONES DE PAGO</p>
+</td>
+<td style='width:5%;text-align:center'   ></td>
+
+</tr>
+</table>
+
+<div>
+	<br>
+	<br>
+	<p class='pTitulo1' >Ingrese el monto a cobrar</p>
+	<br>
+	<p class='pTituloAbm' >Monto entrega</p>
+	<input placeholder='' class='inputAbm' id='inptMontoaPagar' onkeyup='separadordemiles(this)'  disabled />
+	<br>
+	<p class='pTituloAbm' >Nro de Recibo</p>
+	<input placeholder='Autocompletado' class='inputAbm'  id='inptReciboCobro'   />
+	<br>
+	<br>
+	<p class='pTitulo1' >Información del Credito</p>
+	<br>
+	<p class='pTituloAbm' >Cuota Nro</p>
+	<input placeholder='' class='inputAbm'  id='inptCuotaCobro' disabled  />
+	<br>
+	<p class='pTituloAbm' >D. Atra.</p>
+	<input class='inputAbm' id='inptDiasAtrazado' disabled />
+	<br>	
+	<br>
+	<p class='pTituloAbm' >Total cuota</p>
+	<input placeholder='' class='inputAbm' id='inptMontocrobrado' disabled />
+	<br>
+	<p class='pTituloAbm' >Total Pagado</p>
+	<input placeholder='' class='inputAbm' id='inptTotalPagadoCobro' disabled />
+	<br>
+	<p class='pTituloAbm' >Total Interes</p>
+	<input placeholder='' class='inputAbm' id='inptTotalInteresCobro' disabled />
+	<br>
+	<p class='pTituloAbm' >D. Actual</p>
+	<input placeholder='' class='inputAbm' id='inptDeudaActualCobro' disabled />
+		<br>
+	<p class='pTituloAbm' >Fecha </p>
+	<input type='Date' class='inputAbm' id='inptFechaPago'  disabled />
+	
+	
+	<br>
+	<br>
+	<br>
+	<br>
+	<br>
+	
+
+	
+	<input id='btnPagosDeCuotas1' type='button' value='Guardar Pagos'onclick="verificarPagos()" class='btnappA'/>
+	<input id='btnPagosDeCuotas2' type='button' value='Guardar Pago en modo sin conexión'onclick="cargarPagoSinConexion1()" class='btnappA' style='background-color:#3f51b5'/>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+<div class='principal_2' style='display:none' id='divReCalendarizar'>
+
+<div class='divSubCabecera' id='div_comodin_enviar_creditos'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='vercerrarrecalendarizar("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>CAMBIAR FECHA DE VISITA</p>
+</td>
+<td style='width:5%;text-align:center'   ></td>
+
+</tr>
+</table>
+
+<div>
+	<br>
+	<p class='pTituloAbm' >Seleccionar Fecha</p>
+	<input type='Date' class='inputAbm'  id='inptFechaDevisitas'  />
+	<br>
+	<br>
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosVisita'>Registros encontrados</p>
+<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:25%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:25%;">
+FECHA
+</td>
+<td class="td_registro" style="width:25%;">
+COBRADOR
+</td>
+<td class="td_registro" style="width:25%;">
+VISITADO
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divVisitasBuscado" >
+</div>
+<br>
+</div>
+	
+	
+	
+	<br>
+	<br>
+	<br>
+	
+
+	
+	<input type='button' value='Guardar 'onclick="verificarcamposvisita()" class='btnappA'/>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+		
+<div class='principal_2' style='display:none' id='divOpcionesPagos' >
+	<center>
+<div >
+<div class='divSubCabecera' id='div_comodin_enviar_creditos'></div>
+
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_vista_opciones_pago("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>CARGAR PAGO</p>
+</td>
+<td style='width:5%;text-align:center;display:none'   title='Guardar Datos'><img class='imgIconMenuA' src='/GoodVentaElim/iconos/check.png' /></td>
+
+</tr>
+</table>
+
+<br>
+<div>
+
+
+	<p class='pTituloAbm' >D. Atrasado</p>
+	<input class='inputAbm' id='inptDiasAtrazadoCargarPago' disabled />
+	<br>
+	<p class='pTituloAbm' >Monto</p>
+	<input placeholder='' class='inputAbm' id='inptMontoaCobrarPago' onkeyup='separadordemiles(this)' />
+	<br>
+	<p class='pTituloAbm' >Nro Recibo</p>
+	<input  class='inputAbm' id='inptNroRreciboPago' placeholder='Autocompletado' />
+	
+	
+	<table class='tbAbm' style='display:none' >
+	<tr>
+	<td style='width:25%;text-align:center;'>
+	<p class='pTituloAbm' >Fecha</p>
+	</td>
+	<td style='width:75%;text-align:center;'>
+	<input type='Date' class='inputAbm' id='inptFechaCobrarPago' />
+	</td>	
+	<td style='width:15%;text-align:center;'>
+	</td>
+	</tr>
+	</table>
+	
+	
+	
+	
+	<br>
+	<br>
+	<br>
+	<br>
+
+	
+	<input id='btnCargarPagosParcial1' type='button' value='Guardar Pagos' onclick="verificarCargarPagos('1')"  class='btnappA'/>
+	<input id='btnCargarPagosParcial2' type='button' value='Guardar Pagos en modo sin conexión' onclick="cargarPagoSinConexion2('1')" class='btnappA' style='background-color:#3f51b5'/>
+	
+	
+	<br>
+	<br>
+	
+	<br>
+	<br>
+	
+
+	
+	
+	</div>
+	
+	</div>
+	</div>
+	
+	</center>
+
+</div>
+
+	
+<div class='principal_2' style='display:none' id='divPrincipalCuentasoffline'>
+
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_nuevo_offline("2")' />
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>PAGOS OFFLINES</p>
+</td>
+<td style='width:10%;text-align:center'  >
+</td>
+
+</tr>
+</table>
+
+<div>
+	
+
+	
+	
+	<p class='pTitulo1' >Sincronizar Pagos</p>
+	<br>	
+	<div style='width:92%'>
+	
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td  class="td_registro" style='width:33%'>CLIENTE</td><td class="td_registro" style='width:33%'>MONTO</td><td class="td_registro"  style='width:33%'>FECHA</td><td class="td_registro"  style='width:33%'>HORA</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="divCuentasASincronizar" >
+</div>
+<br>
+<input type='button' value='Quitar de la lista' onclick='quitarPagooffline()'  class='btnapp' id='btnquitarPagooffline' />
+
+</div>
+	<br>
+	<br>
+	<br>
+	
+<input type='button' value='Cargar Pago offline' onclick="guardarEstePagoOffline()" class='btnappA' id='btnGuardarPagoOnline' style='display:none'/>
+	
+	
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+<div class='principal_2' style='display:none' id='divMiCarrito'>
+
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='verCerrarMiCarrito("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>CARRITO</p>
+</td>
+<td style='width:5%;text-align:center' >
+<img src='/GoodVentaElim/iconos/mas1.png' class='imgIconMenuA' onclick='limpiarCamposventa()' />
+</td>
+</tr>
+</table>
+
+<div style='overflow:auto'>
+<table style='width:300%;'><tr>
+<td style='width:33%'>
+<center>
+
+<p class='pTitulo1' >Datos de la Venta</p>
+<br>
+<p class='pTituloAbm' >Nro Venta</p>
+	<input placeholder='' class='inputAbm'  id='inptNroventa'   />
+	
+	<p class='pTituloAbm' >Cliente</p>
+	<table style='width:100%;' >
+	<tr>
+	<td style='width:65%;text-align:center;'>
+	<input placeholder='' class='inputAbm'  id='inptClienteVenta' disabled  />
+	</td>
+		<td style='width:15%;text-align:center;'>
+			
+<input type='button' value='Buscar' class='btn3' onclick='verclienteenventa()' />
+	</td>
+	</tr>
+	</table>
+	<p class='pTituloAbm' >Cobrador</p>
+	<input placeholder='' class='inputAbm'  id='inptCobradorVenta' disabled  />
+	
+	<p class='pTituloAbm' >Vendedor 1</p>
+	<table style='width:100%;' >
+	<tr>
+	<td style='width:65%;text-align:center;'>
+	<input placeholder='' class='inputAbm'  id='inptVendedor1Venta' disabled  />
+	</td>
+	<td style='width:15%;text-align:center;'>
+	
+<input type='button' value='Buscar' class='btn3'onclick='vercerrarvendedor(1,1)'/>
+	</td>
+	</tr>
+	</table>
+	<p class='pTituloAbm' >Vendedor 2</p>
+	<table style='width:100%;' >
+	<tr>
+	<td style='width:65%;text-align:center;'>
+	<input placeholder='' class='inputAbm'  id='inptVendedor2Venta' disabled  />
+	</td>
+	<td style='width:15%;text-align:center;'>
+			
+<input type='button' value='Buscar' class='btn3'onclick='vercerrarvendedor(1,2)'/>
+	</td>
+	</tr>
+	</table>
+		<p class='pTituloAbm' >Tipo Venta</p>
+	<select class="inputAbm" id="inptSeleccTipoVenta"  onchange='cambiartipoventa(this)' >
+		<option value="CREDITO">CREDITO</option>
+<option value="CONTADO">CONTADO</option>
+</select>
+	
+	<p class='pTituloAbm' >Total</p>
+	
+    <input type='text' class='inputAbm'   id='inptTotalVenta' disabled />
+	
+<p class='pTituloAbm' >Pago Inicial</p>
+	<input placeholder='' class='inputAbm'  id='inptPagoVentaPagosb'  onkeyup="separadordemiles(this)"   />
+	<br>
+	<br>
+	
+	
+	</center>
+	
+	</td>
+<td style='width:33%'>
+<center>
+<div style='height:650px'>
+<p class='pTitulo1' >Detalles de la Venta</p>
+<br>	
+<div style='width:92%'>
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:25%;">
+PROD.
+</td>
+<td class="td_registro" style="width:25%;">
+CANT.
+</td>
+<td class="td_registro" style="width:25%;">
+COSTO
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divVenta"  style='height:450px'>
+</div>
+
+
+<br>
+<br>
+</div>
+</div>
+	</center>
+	
+	</td>
+<td style='width:33%'>
+	<center>
+	<div style='height:650px'>
+
+	<p class='pTitulo1' >Datos del Credito</p>
+
+	<br>
+	<p class='pTituloAbm' >SubTotal</p>
+	<input placeholder='' class='inputAbm'  id='inptTotalVentaPagos' disabled />
+	
+	<p class='pTituloAbm' >Entrega</p>
+	<input placeholder='' class='inputAbm'  id='inptEntregaPapo'  onkeyup='calcular_total_con_entrega()' style='width:100%;'  />
+	<select class="inputAbm" id="inptEntregaCobrado" style='display:none' >
+			<option value="SI">SI</option>
+			<option value="NO">NO</option>
+			</select>
+	
+	<p class='pTituloAbm' >Total</p>
+	<input placeholder='' class='inputAbm'  id='inptTotalVentaPagosb'  disabled  />
+	
+	<p class='pTituloAbm' >Cuota Nro</p>
+	<input placeholder='' class='inputAbm'  id='inptNroCuotasPagos' onkeyup='calcular_cuota()'   />
+		
+	<p class='pTituloAbm' >Cuota</p>
+	<input placeholder='' class='inputAbm'  id='inptMontoPagoOpciones'   onkeyup='separadordemiles(this)'   />
+	
+	
+	<p class='pTituloAbm' >Fecha</p>
+	<input type='Date' class='inputAbm' id='inptFechaInicioPapo'   />
+	
+	
+	<p class='pTituloAbm' >Metodo</p>
+	
+	<select class="inputAbm" id="inputBuscadorMetodoCambio"  >
+			<option value="">SELECCIONAR</option>
+			<option value="Mensual">MENSUAL</option>
+			<option value="Quincenal">QUINCENAL</option>
+<option value="Semanal">SEMANAL</option>
+
+</select>
+	
+	</div>
+	</center>
+	</td>
+</tr></table>
+<br>
+<br>
+<br>
+		<input type='button' value='Guardar Venta' class='btnappA' onclick="verificarcamposVenta()"  />
+
+	
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalVistaCliente'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_cliente'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_vista_clientes("")' />
+</td>
+<td style='width:80%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR CLIENTES</p>
+</td>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/mas1.png' class='imgIconMenuA' onclick='ver_cerrar_clientes("1")' />
+</td>
+</tr>
+</table>
+<div>
+<br>
+
+<p class="pTitulo1">PARÁMETROS DE BUSQUEDAD</p>
+<br>
+<div class='divDetalles'>
+<br>
+<table class='tbAbm' >
+	<tr>
+	<td style='width:85%;text-align:center;'>
+	<input type='text' class='inputBuscador' placeholder='Nombre, Apellido o C.I. nro'  id='inptBuscarClientes'  onkeyup="if(event.keyCode == 13){buscarclientes()}" />
+
+	</td>
+	<td style='width:15%;text-align:center;'>
+<input class="inputBuscar" type="button" value="Buscar" onclick="buscarclientes()">
+	
+	</td>
+	
+	
+	</tr>
+	</table>
+<br>
+<br>
+</div>
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosClientes'>Registros encontrados</p>
+<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+
+<td class="td_registro" style="width:70%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:30%;">
+TELEF.
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divClienteBuscado" >
+</div>
+<br>
+</div>
+	
+	<br>
+	<br>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+<div class='principal_2' style='display:none' id='divPrincipalCliente'>
+
+<div class='divSubCabecera' id='div_comodin_cliente'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientes("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>CLIENTES</p>
+</td>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/mas1.png' class='imgIconMenuA' onclick='ver_cerrar_clientes("1")' />
+</td>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/rgb.png' class='imgIconMenuA' onclick='ver_cerrar_clientes_fotos("1","clientep")' />
+</td>
+<td style='width:10%;text-align:center' onclick="ver_cerrar_vista_clientes('1')"  title='Buscar datos'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' />
+</td>
+
+</tr>
+</table>
+
+<br>
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div style='height:1670px'>
+<center>
+<p class="pTitulo1">DATOS DEL CLIENTE</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >C.I.</p>
+<input placeholder='Obligatorio(*)' class='inputAbm' id='inptCiCliente'/>
+<br>
+<p class='pTituloAbm' >RUC</p>
+<input placeholder='' class='inputAbm' id='inptRucCliente'/>
+<br>	
+<p class='pTituloAbm' >Cliente</p>	
+<input placeholder='Obligatorio(*)' class='inputAbm' id='inptNombreApellidoCliente'/>
+<br>
+<br>
+<p class='pTituloAbm' >Foto C.I.</p>
+<center><div id='imgFotoCliente1' onclick='verCerrarVisorImagen("1","cliente1")' class='imgFotoCi'></div><input type='button' value='Explorar' class='btnSelecct3' onclick='ExploradorImagenCliente("foto1")' /></center>
+<br>
+<center><div id='imgFotoCliente2' onclick='verCerrarVisorImagen("1","cliente2")' class='imgFotoCi'></div><input type='button' value='Explorar' class='btnSelecct3' onclick='ExploradorImagenCliente("foto2")' /></center>
+<input type="file" id="file_1" name="file_1" style="display:none;" onchange='readFileCliente(this)'     />
+<br>
+<br>
+<p class='pTituloAbm' >Telef..</p>
+<input placeholder='' class='inputAbm'  id='inptTelefCliente' />
+<br>
+<p class='pTituloAbm' >Dirección</p>
+<input placeholder='' class='inputAbm' id='inptDireccionCliente'/>
+<br>
+<p class='pTituloAbm' >Referencia</p>
+<textarea class='textarea1' id='inptReferenciaCliente' style='height:100px' ></textarea>
+<br>
+<p class='pTituloAbm' >Zona</p>
+<select class="inputBuscador"  id='inputzonaCliente' style='width:95%;' ></select>
+<p class='pTituloAbm' >Ubicacion</p>
+<table style='width:100%' >
+<tr>
+<td style='width:90%;text-align:center;'>
+<input placeholder='Selecc.' class='inputAbm'  id='inptUbicacionCliente' disabled  />
+</td>
+<td style='width:10%;text-align:center;'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/marcadorMap.png' onclick='verCerrarMapa("1")' />
+</td>
+</tr>
+</table>
+<br>
+<br>
+</div>
+<br>
+<br>
+<br>
+<input type='button' value='Guardar Datos - PERSONAL'  onclick="VerificarCampoCliente()" class='btnappA'  />
+<br>
+<input type='button' value='Vaciar Campos' onclick="NuevoRegistroCliente()" style='display:none' />
+</center>
+</div>
+</td>
+
+</td>
+</tr>
+</table>
+</div>
+</div>
+	
+	
+
+</div>
+<div class='principal_2' style='display:none' id='divPrincipalClienteFotos'>
+
+<div class='divSubCabecera' id='div_comodin_cliente'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td id='fotos_vista' style='width:10%;text-align:center;display:none'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientes_fotos("","vista")' />
+</td>
+<td id='fotos_principal' style='width:10%;text-align:center;display:none'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientes_fotos("","clientep")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>FOTOS CLIENTE</p>
+</td>
+
+</tr>
+</table>
+
+<br>
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div style='height:1200px'>
+<center>
+<p class="pTitulo1">CARGAR MÁS FOTOS</p>
+<br>
+<div class='divDetalles'>
+<br>
+<br>
+<p class='pTituloAbm' >Seleccionar fotos:</p>
+<center>
+<span class='text_cargar_doc' id='text-carga' onclick='ExploradorArchivoClientes("file_2")' >Cargar Archivo</span>
+<span class='text_cargar_doc_2' style='display:none' id='text-carga-2' >Listo</span>
+<input type="file" id="file_2" name="file_2" style="display:none;" onchange='readFileDoc(this)'     />
+</center>
+<br>
+<p class='pTituloAbm' >Descripción</p>
+<input placeholder='' class='inputAbm'  id='inptDescripcionCargarFotosClientes' />
+<br>
+<p class='pTituloAbm' >Fecha</p>
+<input placeholder='' type='date' class='inputAbm' id='inptFechaCargarFotosCliente'/>
+<br><br>
+<input type='button' id='btnAddImagen' value='Añadir' class='btnSelecct3' onclick='AddCargarFotosCliente()' style="background-color:#d5d3d3" />
+<br><br><br>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:20%;">
+Archivo
+</td>
+<td class="td_registro" style="width:60%;">
+Descripción
+</td>
+<td class="td_registro" style="width:20%;">
+Fecha
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" style='height:400px' id="table_abm_imagen_clientes">
+</div>
+<!-- <p class='pTituloAbm' >Ubicacion</p>
+ <table style='width:100%' >
+<tr>
+<td style='width:90%;text-align:center;'>
+<input placeholder='Selecc.' class='inputAbm'  id='inptUbicacionCliente' disabled  />
+</td>
+<td style='width:10%;text-align:center;'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/marcadorMap.png' onclick='verCerrarMapa("1")' />
+</td>
+</tr>
+</table> -->
+<br>
+<input id="btnEliminarImagen" type="button" value="Eliminar" class="btn4" onclick="EliminarCargarFotosCliente()" style="background-color:#d5d3d3"/>
+<input id="btnVerImagenCliente" type="button" value="Ver" class="btn4" onclick='VerCargarFotosCliente("1")' style="background-color:#d5d3d3"/>
+<br>
+</div>
+</center>
+</div>
+</td>
+
+</td>
+</tr>
+</table>
+</div>
+</div>
+	
+	
+
+</div>
+
+
+
+
+<div class='principal_2' style='display:none' id='divAbmSolicitudCredito'>
+<table style='width:100%;height:100%;' id='tdEfectoAbmSolicitudCredito'>
+<tr>
+<td>
+<center>
+<div id='divAbmSolicitudCredito2' style='display:none;width:100%;' class='div_ventana'>
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloVentana'>Datos de <b>Solicitud Credito</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaElim/iconos/limpiarcampos.png' class='imgIconMenuA'
+title='Limpiar campos' onclick='limpiarcampossolicitudCredito()' />
+</td>
+
+<td style='width:5%;text-align:center'>
+<img  src='/GoodVentaElim/iconos/flechaderecha.png'
+class='imgIconMenuA' title='Volver Atras'
+onclick='verCerrarVentanaAbmSolicitudCredito("2","1")' />
+</td>
+</tr>
+</table>
+<center>
+<div style='overflow:auto;' class='divScroll'>
+<center>
+<table style="width:100%" class="divDetalles">
+<tr>
+<td>
+<div  class='divDetalles' style='width:98%;height:550px'>
+<br>
+<p class='pTitulo1' style="width:94%;text-align: center;">DATOS DEL CLIENTE</p>
+<br>
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+Nombre y Apellido :</p>
+<input class='inputBuscador' disabled type='text'
+placeholder='Obligatorio (*)'
+id='inptNombreSolicitudCredito'
+style='width:215px' />
+<input type="button" value="Buscar" class="btn4"
+onclick='vercerrarvistacliente("1","Credito")'>
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >Nro
+Documento :</p>
+<input class='inputBuscador' disabled type='text'
+placeholder='Obligatorio (*)'
+id='inptNroDocSolicitudCredito' style='width:150px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >R.U.C
+:</p>
+<input class='inputBuscador' disabled type='text' placeholder=''
+id='inptNroRucSolicitudCredito' style='width:220px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >Nro
+Telef. :</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptNroTelefSolicitudCredito' style='width:250px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+Whatsapp :</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptNrowhatsappSolicitudCredito'
+style='width:250px' />
+</td>
+</tr>
+</table>
+
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >Fecha Nac :</p>
+<input class='inputBuscador' disabled type='Date'
+id='inptFechaNacSolicitudCredito'
+style='width:150px' />
+</td>
+</tr>
+</table>
+
+
+</div>
+</td>
+</tr>
+
+<tr>
+<td>
+<div  class='divDetalles' style='width:98%;height:370px'>
+<br>
+<p class='pTitulo1' style="width:94%;text-align: center;">UBICACIÓN Y GARANTE.</p>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+Dirección particular :</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptDireccionSolicitudCredito' style='width:300px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+Referencia :</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptReferenciaSolicitudCredito'
+style='width:250px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >Zona</p>
+<select class="inputBuscador"  id='inptZonaSolicitudCredito' style='width:95%;' ></select>
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+GARANTE :</p>
+<input class='inputBuscador' disabled type='text'
+placeholder='Obligatorio (*)'
+id='inptGaranteSolicitudCredito'
+style='width:215px' />
+<input type="button" value="Buscar" class="btn4"
+onclick='vercerrarvistacliente("1","Solicitud_garante")'>
+</td>
+</tr>
+</table>
+
+</div>
+</td>
+</tr>
+<br>
+<tr>
+<td>
+<div  class='divDetalles' style='width:98%;height:530px'>
+<br>
+<p class='pTitulo1' style="width:94%;text-align: center;">DATOS LABORALES</p>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+Lugar de Trabajo :</p>
+<input class='inputBuscador' type='text'
+placeholder='Obligatorio (*)'
+id='inptLugrarTrabajoSolicitudCredito'
+style='width:250px' />
+</td>
+</tr>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >
+Dirección laboral :</p>
+<input class='inputBuscador' type='text' id='inptDireccionTrabajoSolicitudCredito'
+style='width:310px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >Salario :</p>
+<input class='inputBuscador' type='text' id='inptSalarioSolicitudCredito' style='width:220px' onkeyup='separadordemiles(this)' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloAbm' >Antiguedad :</p>
+<input class='inputBuscador' type='text' 
+id='inptAntiguedadSolicitudCredito' style='width:220px' />
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td style='width:50%'>
+<p class='pTituloAbm' >Telef. Empresa :</p>
+<input class='inputBuscador' type='text' 
+id='inptNroTelefTrabajoSolicitudCredito1' style='width:100px' />
+</td>
+</tr>
+</table>
+<table style='width:100%'>
+<tr>
+<td style='width:50%'>
+<p class='pTituloAbm' >Telef. Encargado :</p>
+<input class='inputBuscador' type='text' 
+id='inptNroTelefTrabajoSolicitudCredito2' style='width:100px' />
+</td>
+</tr>
+</table>
+
+</div>
+</td>
+</td>
+</tr>
+<tr>
+
+<td>
+<div class='divDetalles' style='width:98%;height:500px'>
+<br>
+<p class='pTitulo1' style='width:97%;text-align: center;'>MÁS REFERENCIAS</p>
+
+<table style='width:100%'>
+<tr>
+<td style='width:40%'>
+<p class='pTituloAbm' >
+TIPO :</p>
+<select class="inputBuscador" style='width:100px' id="inptTipoRefSolicitudCredito">
+<option value="">SELECCIONAR</option>
+<option value="COMERCIAL">COMERCIAL</option>
+<option value="PERSONAL">PERSONAL</option>
+</select>
+</td>
+
+<td style='width:60%'>
+<p class='pTituloAbm' >
+Dirección :</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptMasRefDireccionSolicitudCredito'
+style='width:160px' />
+</td>
+</tr>
+</table>
+
+
+<table style='width:100%'>
+<tr>
+<td style='width:60%'>
+<p class='pTituloAbm' >
+Referencia :</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptMasRefReferenciaSolicitudCredito'
+style='width:250px' />
+</td>
+<td style='width:40%'>
+<p class='pTituloAbm' >Telef.
+:</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptMasRefTelefSolicitudCredito'
+style='width:109px' />
+</td>
+
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+
+<td style='width:100%'>
+<p class='pTituloAbm' >Obs. :
+</p>
+<input class='inputBuscador' type='text' placeholder=''
+id='inptMasRefObservacionSolicitudCredito'
+style='width:250px' />
+
+<input id='btnAddRefSolicitudCredito1' type="button"
+value="Añadir" class="btn4"
+onclick='AnhadirMasReferenciasSolicitudCredito()'
+style='width:100px;  margin-top:8px;margin-bottom:8px;'>
+<input id='btnAddRefSolicitudCredito2' type="button"
+value="Editar" class="btn4"
+onclick='editarRefSolicitudCredito()'
+style='display:none;width:100px;margin-top:8px;margin-bottom:8px;'>
+</td>
+</tr>
+</table>
+
+<div style='overflow:auto;' class='divScrollhideen'
+id='TableScroollMasReferencias1'>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">OBS.
+</td>
+<td class="td_registro" style="width:10%;">
+TELEF.</td>
+<td class="td_registro" style="width:10%;">
+DIRECCION</td>
+<td class="td_registro" style="width:10%;">
+REFERENCIAS</td>
+<td class="td_registro" style="width:10%;">
+TIPO</td>
+
+</tr>
+</tbody>
+</table>
+</div>
+<div class='divTablesScrool' id='TableScroollMasReferencias2'
+style='height:150px'>
+<div class="div_cuerpo_table"
+id="table_mas_referenciasSolicitudCredito"
+style='height:auto;border:none;width:100%'></div>
+</div>
+<input id='btnAddRefSolicitudCredito3' type="button" value="Eliminar"
+class="btn4" onclick='EliminarRefSolicitudCredito()'
+style='display:none;background-color:#2196F3;width:47%;  margin-top:8px;margin-bottom:8px;'>
+<input id='btnAddRefSolicitudCredito4' type="button" value="Cancelar"
+class="btn4" onclick='CancelarRefSolicitudCredito()'
+style='display:none;background-color:#2196F3;width:47%;  margin-top:8px;margin-bottom:8px;'>
+
+
+</div>
+</td>
+</tr>
+
+</table>
+</center>
+
+</div>
+<br>
+<div style="width:100%">
+<input type="button"  style="width:80%;background-color: #056ec1;height: 40px;border-radius: 10px;" value="Cargar Productos"
+class="btn4" onclick="verCerrarAbmsolicotudProductos()">
+</div>
+<br>
+<div  class="divDetalles">
+<table style='width:98%;margin-bottom:3px'>
+<tr>
+<td>
+<br>
+	<p class='pTituloAbm' >Local</p>
+	<select class="inputBuscador"  id='inputLocalSolicitudCredito' style='width:95%;' ></select>
+    <br>
+</td>
+</tr>
+<tr>
+
+<td style='width:10%;display:none'>
+<p class='pTituloAbm' >Estado:</p>
+<select class="inputBuscador" id="inptEstadoSolicitudCredito">
+<option value="PENDIENTE">PENDIENTE</option>
+<option value="APROBADO">APROBADO</option>
+<option value="RECHAZADO">RECHAZADO</option>
+<option value="REVISION">REVISION</option>
+</select>
+</td>
+<td style='width:100%'>
+<p class='pTituloAbm' >Observacion :</p>
+<input class='inputBuscador'  type='text'  id='inptObservacionSolicitudCredito' style='width:90%' />
+</td>
+
+</tr>
+</table>
+</div>
+<input type="button" id='btnGuardarSolicitudCredito' style="margin-top: 17px;" value="Guardar Datos"
+class="btnappA" onclick="verificarcamposSolicitudCredito()">
+</center>
+<br>
+<br>
+<br><br>
+<br>
+<br>
+</div>
+
+<div id='divAbmSolicitudCredito1' style='width:90%;display:' class='div_ventana'>
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloVentana'>Buscar <b  >Solicitud credito</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaElim/iconos/add.png' class='imgIconMenuA' title='Añadir registro' onclick='verCerrarVentanaAbmSolicitudCredito("1","1")' />
+</td>
+
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaElim/iconos/botonCerrar.png' class='imgIconMenuA' title='Cerrar Ventana' onclick='verCerrarAbmsolicotud()' />
+</td>
+</tr>
+</table>
+<br>
+<div  class="divMenuf">
+<div class="divDetalles">
+<table style='width:98%;margin-bottom:3px'>
+<tr>
+
+<td style='width:50%;'>
+<p class='pTituloAbm' >Fecha inicio</p>
+<input class='inputBuscador' type='Date'
+id='inptBuscarsolicitudCredito1' style='width:135px' />
+</td>
+
+<td style='width:50%;'>
+<p class='pTituloAbm' >Fecha Fin</p>
+<input class='inputBuscador' type='Date'
+id='inptBuscarsolicitudCredito2' style='width:135px' />
+</td>
+
+<td style='display:none'>
+<p class='pTituloAbm' >Local</p>
+<select class="inputBuscador" id="inptlocalsolicitudCredito"
+style="width:130px"></select>
+</td>
+
+</tr>
+<tr>
+<td style="width:100%;">
+
+<input type="button" style="margin-top: 17px;" value="Buscar"
+class="btnappA" onclick="buscarSolicitudCredito()">
+
+</td>
+</tr>
+</table>
+<table style='width:100%'>
+<tr>
+<td style='display:none'>
+<input type="button" style="width:100px;background-color: rgb(58 58 58);" value="Imprimir"
+class="btn4" onclick="ordenimpresion('SolicitudCredito')">
+</td>
+<td style='width:50%;text-align:left'>
+<p class='pTituloAbm' style='width: 150px;font-size: 11px;' onclick='checkSolicitudCredito(1)'> 
+<input type='checkbox' id="inptSeleccSolicitudCredito1" > Rango de Fecha</p>
+</td>
+<td style='width:50%;text-align:left'>
+<p class='pTituloAbm'  style='width: 150px;font-size: 11px;'onclick='checkSolicitudCredito(2)'> 
+<input type='checkbox' id="inptSeleccSolicitudCredito2" checked> Todos </p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<br>
+<center>
+<div class='divMenuf'>
+
+<table>
+<tr>
+<td style='width:20%;'>
+<p class='pTituloDatos2' style='text-align: center;' id='inptRegistroNrosolicitudCredito' >Registros Encontrados
+</p>
+</td>
+</tr>
+</table>
+
+
+<table class="tableCabeceraRegistro" id='tbSolicitudCredito'>
+<tbody>
+<tr>
+<td class="td_registro" style="width:5%;">
+#
+</td>
+<td class="td_registro" style="width:75%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:20%;">
+NRO DOC.
+</td>
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro" style="display:none">
+<tbody>
+<tr>
+<td class="td_registro" style="width:4%;">
+
+</td>
+<td class="td_registro" style="width:1%;">
+</td>
+<td class="td_registro" style="width:9%;">
+<input class='inputBuscador' type='text' id='inptBuscarAbmsolicitudCredito2' onkeyup="if(event.keyCode == 13){buscarSolicitudCredito()}" placeholder='Igual a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmsolicitudCredito2')" />
+</td>
+<td class="td_registro" style="width:19%;">
+<input class='inputBuscador' type='text' id='inptBuscarAbmsolicitudCredito3' onkeyup="if(event.keyCode == 13){buscarSolicitudCredito()}" placeholder='Parecido' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmsolicitudCredito3')" />
+</td>
+<td class="td_registro" style="width:9%;">
+<select class="inputBuscador" id="inptBuscarAbmsolicitudCredito4"></select>
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmsolicitudCredito4')" />
+</td>
+<td class="td_registro" style="width:10%;">
+<select class="inputBuscador" id="inptBuscarAbmsolicitudCredito5">
+<option value="">SELECCIONAR</option>
+<option value="PENDIENTE">PENDIENTE</option>
+<option value="APROBADO">APROBADO</option>
+<option value="RECHAZADO">RECHAZADO</option>
+<option value="REVISION">REVISION</option>
+<option value="FINALIZADO">FINALIZADO</option>
+</select>
+</td>
+<td class="td_registro" style="width:30%;">
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="table_abm_solicitudCredito"></div>
+<table style='width:100%;height:50px;display:none' id='tbProcessClientes'>
+<tr>
+<td  style='width:90%'>
+<div class='divprogreso1'><div class='divprogreso2' id='divProgresssolicitudCredito'></div></div>
+</td>
+<td style='width:10%;text-align:center'>
+<input  type="button" value="Cancelar" class="btn4" onclick="cancelarCargaSolicitud()" style="width:100px;background-color:rgb(58 58 58)">
+</td>
+</tr>
+</table>
+</div>
+<div class='divMenuf'>
+<center>
+<p class='pTituloAbm' style='color: #ff5e00;font-size: 13px;' id='inpVentaSolicitudCredito' ></p>
+</center>
+
+<table style='width:100%'>
+<tr>
+
+
+<td style='width:100%;text-align:left'>
+<p class='pTituloAbm' >Registro Selecc..</p>
+<input class='inputBuscador' type='text' disabled id='inptRegistroSeleccsolicitudCredito' style='width:200px' />
+<input id='btnEditarSolicitudCredito' type='button' value='Editar' class='btnSelecct3' onclick='verVentanaEditarsolicitudCredito()' style='background-color:#b7b7b7;width: 120px;'>
+</td>
+
+</tr>
+</table>
+<br>
+<br>
+</div>
+</center>
+<br>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+
+<div class='principal_2' style='display:none' id='divVistaCliente'>
+<table style='width:100%;' id='tdEfectoVistaCliente'>
+<tr>
+<td>
+<center>
+<div  class='div_ventana'>
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloVentana'>Buscar  <b style='font-size: 15px;' >Cliente</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaElim/iconos/add.png' class='imgIconMenuA' title='Nuevo Cliente'
+onclick='vernuevoclientevista("1")' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaElim/iconos/botonCerrar.png' class='imgIconMenuA'
+title='Cerrar Ventana' onclick='vercerrarvistacliente("","")' />
+</td>
+</tr>
+</table>
+
+
+<br>
+
+<div class='divDetalles'>
+<br>
+<table class='tbAbm' >
+	<tr>
+	<td style='width:85%;text-align:center;'>
+	<input type='text' class='inputBuscador' placeholder='Nombre, Apellido o C.I. nro'  id='inptBuscarVistaClientes'  onkeyup="if(event.keyCode == 13){buscarvistacliente()}" />
+
+	</td>
+	<td style='width:15%;text-align:center;'>
+<input class="inputBuscar" type="button" value="Buscar" onclick="buscarvistacliente()">
+	
+	</td>
+	
+	
+	</tr>
+	</table>
+<br>
+<br>
+</div>
+
+<br>
+
+<div  class='divScroll' style='overflow:auto;'>
+<div class='' style='width:100%'>
+
+<p class='pTitulo1'>BUSCAR CLIENTES</p>
+<br>
+<center>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:60%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:40%;">
+NRO. TELEF.
+</td>
+</tr>
+</tbody>
+</table>
+
+<div class="div_cuerpo_table" id="table_vista_cliente" style='height:300px'>
+</div>
+
+<br>
+</center>
+</div>
+
+<input class='btn2' type='button' value=':: Seleccionar Registro ::' onclick='EnviarClienteDesde()' />
+</div>
+
+<br>
+
+
+</div>
+
+
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+
+
+<div class='principal_2' style='display:none' id='divVistaSoliproductos'>
+<center>
+<div class='div_ventana' >
+<table style="width: 100%;">
+<tr>
+<td>
+
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>PRODUCTOS</p>
+</td>
+<td style='width:10%;text-align:center' onclick="verCerrarAbmsolicotudProductos()"  title='Cerrar Ventana'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/botonCerrar.png' />
+</td> 
+</tr>
+</table>
+<br>
+<div class='divDetalles' style='width: 95%;height:900px'>
+<table style='width:100%'>
+<tr>
+<td style='width:75%'>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+
+<td class="td_registro" style="width:70%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:30%;">
+STOCK
+</td>
+
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table"
+id="table_vista_ProDuc_Solicitud_Credito" style='height:200px'>
+</div>
+</td>
+<td style='width:25%'>
+
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:100%;">
+TOTAL CREDITO
+</td>
+</tr>
+</tbody>
+</table>
+<div id='inptTotalSolicitudCredito' class='DivTotalVenta'>
+0
+</div>
+
+</td>
+</tr>
+</table>
+<table style='width:100%' >
+<tr>
+<td style='width:75%'>
+<center>
+<input type="button" value="VER PRECIOS" class="btn4" style="background-color: #2196f3;width: 60%;" onclick='verprecioProductoSoliCredi()' >
+</center>
+</td>
+<td style='width:25%'></td>
+</tr>
+</table>
+<br>
+<center>
+<table class="divDetalles">
+<tr>
+<td>
+	<p class='pTituloAbm' >Local</p>
+	<select class="inputBuscador"  id='inputLocalProductoSoliCredi' style='width:95%;' ></select>
+	</td>
+</tr>
+</table>
+</center>
+<br>
+
+<table style='width:100%' class="divDetalles" >
+<tr>
+<td style='width:30%'>
+<p class='pTituloAbm' >Codigo.
+:</p>
+<input class='inputBuscador' disabled type='text' placeholder=''
+id='inptRefCodProducto'
+style='width:90%' />
+</td>
+<td style='width:70%'>
+<p class='pTituloAbm' >
+Nombre :</p>
+<input class='inputBuscador' onkeyup="if(event.keyCode == 13){buscarvistaventaSolicitud()}"  type='text' placeholder=''
+id='inptRefNombreProducto'
+style='width:77%' />
+<input type="button" value="Buscar" class="btn4" style="background-color: #2196f3;    width: 20%;" onclick='buscarvistaventaSolicitud()' >
+</td>
+</tr>
+<tr>
+<td style='width:30%'>
+<p class='pTituloAbm' >
+Precio :</p>
+<input class='inputBuscador' type='text' placeholder=''id='inptRefproductoPrecio'style='width:80%' />
+<select class="inputBuscador" id="inpTPrecioSolicitud" style='width:18px;margin-left: -4px;'onchange='seleccionarsolicitudCredito(this)'></select>
+</td>
+<td style='width:70%'>
+<p class='pTituloAbm' >
+Cantidad :</p>
+<input class='inputBuscador' type='text' placeholder=''id='inptRefCantidadProducto'style='width:50%' />
+
+<input id='btnADDProductoSolicitudCredito' type="button" value="Añadir" class="btn4" onclick='anhadirProductoSolicitudCredito()' >
+</td>
+</tr>
+</table>
+<br>
+
+<div style='overflow:auto;' class='divScrollhideen'
+id='TableScroollMasReferencias1'>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:20%;">COD.
+</td>
+<td class="td_registro" style="width:40%;">
+PRODUCTO.</td>
+<td class="td_registro" style="width:10%;">
+CANTIDAD</td>
+<td class="td_registro" style="width:20%;">
+PRECIO</td>
+<td class="td_registro" style="width:10%;">
+CUOTA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='divTablesScrool' id='TableScroollMasReferencias2'
+style='height:250px'>
+<div class="div_cuerpo_table"
+id="table_Solicitud_Credito_Producto"
+style='height:auto;border:none;width:100%'></div>
+</div>
+<input id='btnAddCredito_Producto3' type="button" value="Eliminar"
+class="btn4" onclick='EliminarCredito_Producto()'
+style='display:none;background-color:#2196F3;width:47%;  margin-top:8px;margin-bottom:8px;'>
+<input id='btnAddCredito_Producto4' type="button" value="Cancelar"
+class="btn4" onclick='CancelarCredito_Producto()'
+style='display:none;background-color:#2196F3;width:47%;  margin-top:8px;margin-bottom:8px;'>
+
+
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+
+
+
+
+
+<div class='principal_2' style='display:none' id='divlistadePrecios'>
+
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta' >
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='verprecioProductoSoliCredi()' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>CONSULTAR PRECIOS</p>
+</td>
+</tr>
+</table>
+<div>
+<br>
+<p class='pTituloAbm' >Producto</p>
+<table class='tbAbm' >
+<tr>
+<td style='width:65%;text-align:center;' >
+<input placeholder='Producto Selecc..' class='inputAbm' id='inptProductoverprecioProductoSoliCredi' disabled />
+</td>
+</tr>
+</table>
+<br>
+<p class='pTituloAbm' >Marca</p>
+<input placeholder='0' class='inputAbm' id='inptProductoMarcaverprecioProductoSoliCredi' disabled />
+<br>
+<p class='pTituloAbm' >Precio Contado</p>
+<input placeholder='0' class='inputAbm' id='inptProductoCostoverprecioProductoSoliCredi' disabled />
+<br>
+<br>
+<p class="pTitulo1">PRECIOS A CREDITOS</p>
+<br>
+<br>
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:35%;">
+PRECIO
+</td>
+<td class="td_registro" style="width:10%;">
+DESCRIP
+</td>
+</tr>
+</tbody>
+</table>
+
+<div class="div_cuerpo_table" id="table_precios_verprecioProductoSoliCredi" style='height:400px'>
+</div>
+
+</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class='principal_2' style='display:none' id='divVistaDocumento'>
+<center>
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>VISOR</p>
+</td>
+<td style='width:10%;text-align:center' onclick="VerCargarFotosCliente('2')"  title='Buscar datos'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/botonCerrar.png' />
+</td> 
+
+</tr>
+</table>
+
+<br>
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div style='height:900px'>
+<center>
+<div class='divDetalles'>
+<center>
+<embed style='width:100%;height:534px' id='docVisor' type=''/>
+</center>
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</center>
+</div>
+
+<div class='principal_2' style='display:none' id='divPrincipalClienteVista'>
+
+<div class='divSubCabecera' id='div_comodin_clienteVista'></div>
+<center>
+
+<div class='div_ventana' >
+<table style='background-color: #4caf50;' class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientesVista("1")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>VISTA - CLIENTES</p>
+</td>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/mas1.png' class='imgIconMenuA' onclick='ver_cerrar_clientesVista("2")' />
+</td>
+<td style='width:10%;text-align:center' onclick="ver_cerrar_clientesFotoCi('1')"  title='Insertar CI'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/ci.png' />
+</td>
+<td style='width:10%;text-align:center' onclick="ver_cerrar_clientes2('1')"  title='Insertar Referencias'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/referencia.png' />
+</td>
+<td style="width:10%;text-align:center">
+<img src="/GoodVentaElim/iconos/rgb.png" class="imgIconMenuA" onclick="ver_cerrar_clientes_fotos('2','vista')">
+</td>
+</tr>
+</table>
+
+<br>
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div style='height:1670px'>
+<center>
+<p class="pTitulo1">DATOS DEL CLIENTE</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >C.I.</p>
+<input placeholder='Obligatorio(*)' class='inputAbm' id='inptCiClienteVista'/>
+<br>
+<p class='pTituloAbm' >RUC</p>
+<input placeholder='' class='inputAbm' id='inptRucClienteVista'/>
+<br>	
+<p class='pTituloAbm' >Cliente</p>	
+<input placeholder='Obligatorio(*)' class='inputAbm' id='inptNombreApellidoClienteVista'/>
+<br>
+<br>
+<p class='pTituloAbm' >Foto C.I.</p>
+<center><div id='imgFotoCliente1Vista' onclick='verCerrarVisorImagen("1","cliente1")' class='imgFotoCi'></div></center>
+<br>
+<center><div id='imgFotoCliente2Vista' onclick='verCerrarVisorImagen("1","cliente2")' class='imgFotoCi'></div></center>
+<input type="file" id="file_1Vista" name="file_1" style="display:none;" onchange='readFileCliente(this)'     />
+<br>
+<br>
+<p class='pTituloAbm' >Telef..</p>
+<input placeholder='' class='inputAbm'  id='inptTelefClienteVista' />
+<br>
+<p class='pTituloAbm' >Dirección</p>
+<input placeholder='' class='inputAbm' id='inptDireccionClienteVista'/>
+<br>
+<p class='pTituloAbm' >Referencia</p>
+<textarea class='textarea1' id='inptReferenciaClienteVista' style='height:100px' ></textarea>
+<br>
+<p class='pTituloAbm' >Zona</p>
+<select class="inputBuscador"  id='inputzonaClienteVista' style='width:95%;' ></select>
+<p class='pTituloAbm' >Ubicacion</p>
+<table style='width:100%' >
+<tr>
+<td style='width:90%;text-align:center;'>
+<input placeholder='Selecc.' class='inputAbm'  id='inptUbicacionClienteVista' disabled  />
+</td>
+<td style='width:10%;text-align:center;'>
+<img class='imgIconMenuA' src='/GoodVentaElim/iconos/marcadorMap.png' onclick='verCerrarMapa("1")' />
+</td>
+</tr>
+</table>
+<br>
+<br>
+</div>
+<br>
+
+</center>
+</div>
+</td>
+
+</tr>
+</table>
+</div>
+
+
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+
+<td style='width:100%'>
+<div >
+<center>
+<p class="pTitulo1">REFERENCIA</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >Telefono</p>
+<input placeholder='' class='inputAbm' id='inptMasRefTelefClienteVista'/>
+<br>
+<p class='pTituloAbm' >Dirección</p>
+<input placeholder='' class='inputAbm' id='inptMasRefDireccionClienteVista'/>
+<br>	
+<p class='pTituloAbm' >Referencia</p>	
+<input placeholder='' class='inputAbm' id='inptMasRefReferenciaClienteVista'/>
+<br>
+<p class='pTituloAbm' >Observacion</p>
+<input placeholder='' class='inputAbm'  id='inptMasRefObservacionClienteVista' />
+<br>
+
+<br>
+<div style='width:92%'>
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:35%;">
+Telef.
+</td>
+<td class="td_registro" style="width:65%;">
+Referencia
+</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="table_mas_referenciasClientesVista" style='height:250px'> </div>
+<br>
+</div>
+
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div >
+<center>
+<p class="pTitulo1">REFERENCIA LABORAL</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >Lugar de Trabajo</p>
+<input placeholder='' class='inputAbm' id='inptLugrarTrabajoClienteVista'/>
+<br>
+<p class='pTituloAbm' >Dirección de trabajo</p>
+<input placeholder='' class='inputAbm' id='inptDireccionTrabajoClienteVista'/>
+<br>	
+<p class='pTituloAbm' >Salario</p>	
+<input placeholder='' class='inputAbm' id='inptSalarioClienteVista'/>
+<br>
+<p class='pTituloAbm' >Antiguedad</p>
+<input placeholder='' class='inputAbm'  id='inptAntiguedadClienteVista' />
+<br>
+<p class='pTituloAbm' >Telefono del trab. 1</p>
+<input placeholder='' class='inputAbm' id='inptNroTelefTrabajoCliente1Vista'/>
+<br>
+<p class='pTituloAbm' >Telefono del trab. 2</p>
+<input placeholder='' class='inputAbm' id='inptNroTelefTrabajoCliente2Vista'/>
+<br>
+<br>
+<br>
+<br>
+<i class='pTituloAbm' id='pUltimaEdicionClienteReferenciaVista' ></i>
+<br>
+<br>
+
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+
+
+
+</div>
+	
+</center>
+
+	
+
+</div>
+
+
+
+
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalImpagoCliente'>
+
+
+<center>
+
+<div class='div_ventana' >
+<table  class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientesImpagoCliente("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana'>VISTA - CLIENTES</p>
+</td>
+</tr>
+</table>
+
+<br>
+
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div >
+<center>
+<p class="pTitulo1">VISITA IMPAGO</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >Motivo:</p>
+<textarea class='textarea1' id='inptMotivoImpagoCliente' style='height:100px' ></textarea> 
+<p class='pTituloAbm' >Fecha compromiso:</p>
+<input placeholder='' type='date' class='inputAbm' id='inptFechaImpagoCliente'/>
+<br>
+<br>
+<div style='width:92%'>
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:30%;">
+FECHA V.
+</td>
+<td class="td_registro" style="width:50%;">
+MOTIVO
+</td>
+<td class="td_registro" style="width:20%;">
+FECHA C.
+</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="table_Impago" style='height:250px'> </div>
+<br>
+</div>
+<br>
+<br>
+<input type='button' value='Guardar visita impago'  onclick="VerificarCampoImpago()" class='btnappA'  />
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+
+
+
+</div>
+	
+</center>
+
+	
+
+</div>
+
+
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalClienteReferenciaPersonal'>
+
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientes2("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>CLIENTES</p>
+</td>
+
+</tr>
+</table>
+
+<br>
+
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+
+<td style='width:100%'>
+<div >
+<center>
+<p class="pTitulo1">REFERENCIA</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >Telefono</p>
+<input placeholder='' class='inputAbm' id='inptMasRefTelefCliente'/>
+<br>
+<p class='pTituloAbm' >Dirección</p>
+<input placeholder='' class='inputAbm' id='inptMasRefDireccionCliente'/>
+<br>	
+<p class='pTituloAbm' >Referencia</p>	
+<input placeholder='' class='inputAbm' id='inptMasRefReferenciaCliente'/>
+<br>
+<p class='pTituloAbm' >Observacion</p>
+<input placeholder='' class='inputAbm'  id='inptMasRefObservacionCliente' />
+<br>
+<br>
+<input class="inputBuscar" id='btnAddMasReferencias1' type="button" value="Añadir" onclick="addReferenciaTable()" style='width:200px;background-color: #2196f3;'>
+<br>
+<input id='btnAddMasReferencias2' type="button"
+value="Editar" class="btn4"
+onclick='editarMasRefencia()'
+style='display:none;width:150px;margin-top:8px;margin-bottom:8px;'>
+
+<br>
+<div style='width:92%'>
+<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:35%;">
+Telef.
+</td>
+<td class="td_registro" style="width:65%;">
+Referencia
+</td>
+</tr>
+</tbody></table>
+<div class="div_cuerpo_table" id="table_mas_referenciasClientes" style='height:250px'> </div>
+<br>
+</div>
+
+<input id='btnAddMasReferencias3' type="button" value="Eliminar"
+class="btn4" onclick='EliminarMasReferencia()'
+style='display:none;background-color:#2196F3;width:47%;  margin-top:8px;margin-bottom:8px;'>
+<input id='btnAddMasReferencias4' type="button" value="Cancelar"
+class="btn4" onclick='CancelarMasReferencia()'
+style='display:none;background-color:#2196F3;width:47%;  margin-top:8px;margin-bottom:8px;'>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+
+
+</div>	
+
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalClienteFotoCi'>
+
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientesFotoCi("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>CLIENTES</p>
+</td>
+
+</tr>
+</table>
+
+<br>
+
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+
+<td style='width:100%'>
+<div >
+<center>
+<p class="pTitulo1">FOTO CI</p>
+<br>
+<div class='divDetalles'>
+<br>
+<br>
+<center><div id='imgFotoClienteEdit1'  class='imgFotoCi'></div><input type='button' value='Explorar' class='btnSelecct3' onclick='ExploradorImagenCliente2("foto1")' /></center>
+<br>
+<center><div id='imgFotoClienteEdit2'  class='imgFotoCi'></div><input type='button' value='Explorar' class='btnSelecct3' onclick='ExploradorImagenCliente2("foto2")' /></center>
+<input type="file" id="file_12" name="file_12" style="display:none;" onchange='readFileCliente2(this)'     />
+<br>
+<br>
+
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<br>
+<br>
+<br>
+<br>
+<input type='button' value='Guardar Datos - CI'  onclick="VerificarCampoClienteCI()" class='btnappA'  />
+
+</div>	
+
+
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalClienteReferenciaLaboral'>
+
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='ver_cerrar_clientes3("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>CLIENTES</p>
+</td>
+
+</tr>
+</table>
+
+<br>
+<div style='overflow:auto' >
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<div >
+<center>
+<p class="pTitulo1">REFERENCIA LABORAL</p>
+<br>
+<div class='divDetalles'>
+<br>
+<p class='pTituloAbm' >Lugar de Trabajo</p>
+<input placeholder='' class='inputAbm' id='inptLugrarTrabajoCliente'/>
+<br>
+<p class='pTituloAbm' >Dirección de trabajo</p>
+<input placeholder='' class='inputAbm' id='inptDireccionTrabajoCliente'/>
+<br>	
+<p class='pTituloAbm' >Salario</p>	
+<input placeholder='' class='inputAbm' id='inptSalarioCliente'/>
+<br>
+<p class='pTituloAbm' >Antiguedad</p>
+<input placeholder='' class='inputAbm'  id='inptAntiguedadCliente' />
+<br>
+<p class='pTituloAbm' >Telefono del trab. 1</p>
+<input placeholder='' class='inputAbm' id='inptNroTelefTrabajoCliente1'/>
+<br>
+<p class='pTituloAbm' >Telefono del trab. 2</p>
+<input placeholder='' class='inputAbm' id='inptNroTelefTrabajoCliente2'/>
+<br>
+<br>
+<br>
+<br>
+<i class='pTituloAbm' id='pUltimaEdicionClienteReferencia' ></i>
+<br>
+<br>
+<br>
+<input type='button' value='Guardar Datos- FINALIZAR'  onclick="VerificarDatosFinalizar()" class='btnappA'  />
+<br>
+
+</div>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+
+</div>
+
+		
+<div class='principal_2' style='display:none' id='divPrincipalVistaVendedor'>
+
+<div class='divSubCabecera' id='div_comodin_buscar_cliente'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='vercerrarvendedor("2")' />
+</td>
+<td style='width:90%;text-align:left'>
+<p class='pTituloVentana'>BUSCAR VENDEDOR</p>
+</td>
+</tr>
+</table>
+
+<div>
+<table class='tbAbm' >
+	<tr>
+	<td style='width:90%;text-align:center;'>
+	<input type='text' class='inputBuscador' placeholder='Nombre, Apellido o C.I. nro'  id='inptBuscarVendedor'  onkeyup="if(event.keyCode == 13){buscarvendedor()}" />
+
+	</td>
+	<td style='width:10%;text-align:center;'>
+	<img class='imgIconMenuA' src='/GoodVentaElim/iconos/buscar.png' onclick='buscarvendedor()' />
+	</td>
+	
+	
+	</tr>
+	</table>
+
+	<p class='pTituloDatos2'  id='lblRegistrosEncontradosvendedor'>Registros encontrados</p>
+<div style='width:92%'>
+		<table class="tableCabeceraRegistro">
+<tbody><tr>
+<td class="td_registro" style="width:8%;">
+#
+</td>
+<td class="td_registro" style="width:62%;">
+VENDEDOR
+</td>
+<td class="td_registro" style="width:30%;">
+TELEF.
+</td>
+</tr>
+</tbody></table>
+
+<div class="div_cuerpo_table" id="divVendedorBuscado" >
+</div>
+<br>
+</div>
+	
+	<br>
+	<br>
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+
+
+
+<div class='principal_2' style='display:none' id='divPrincipalAperturaCierreCaja'>
+
+<div class='divSubCabecera' id='div_comodin_cliente'></div>
+<center>
+
+<div class='div_ventana' >
+<table class='tbCabeceraVenta'>
+<tr>
+<td style='width:10%;text-align:center'>
+<img src='/GoodVentaElim/iconos/cerrar.png' class='iconoCerrar' onclick='verCerrarCaja("2")' />
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloVentana' id='ptituloaperturacierrecaja'></p>
+</td>
+
+</tr>
+</table>
+
+<br>
+<div>
+
+<p class="pTitulo1">DATOS DE LA CAJA</p>
+<br>
+    <div class='divDetalles'>
+    <br>
+	<p class='pTituloAbm' >COBRADOR</p>
+	<input  class='inputAbm' id='inptUsuarioCaja' disabled/>
+	<br>
+	
+	<p class='pTituloAbm' >FECHA APERTURA</p>
+	<input class='inputAbm' id='inptFechaAperturaCaja'/>
+	<br>
+  	
+	<div id='divFechaCierre'>
+	<p class='pTituloAbm' >FECHA CIERRE</p>	
+	<input  class='inputAbm' id='inptFechaCierreCaja'/>
+	<br>
+	<p class='pTituloAbm' >MONTO RECUADADO</p>	
+	<input  class='inputAbm' id='inptMontoCierreCaja'/>
+	<br>
+	<br>
+	<br>
+	<input type="button" value="Imprimir Reporte" onclick="imprimirBalanceArquep()" class="btn2" style="width:90%">
+    </div>
+	<br>
+	<br>
+	
+	</div>
+	
+	<br>
+	<br>
+<input id='btnAperturaCierreCaja' type='button' value='Guardar Datos'  onclick="abmaperturacierrecaja()" class='btnappA'  />
+
+	</div>
+	
+	</div>
+	
+	</center>
+
+</div>
+	
+
+
+	
+<div class='principal_2' id='cntPrincipaLugares' style='background-color: #000000b0;
+    background-image: none;'  >
+<center>
+<div  style='position:relative;overflow: auto;
+    width: 93%;
+    max-height: 400px;
+    background-color: #f9f9f9;
+    margin-top: 20%;
+    border: solid 3px #e8e8e8;
+    box-shadow: inset 0 0 2px #757;' >
+<table class='tableMenuB'>
+	  <tr>
+	  <td style='width:90%;padding:5px'>
+	  <label class='labelTituloB' id='lblMApp' >Seleccione o marque el lugar</label>
+	  </td>
+	 
+	  <td style='width:5%;padding:5px'>
+	  <img class='imgIconMenuA' src='/GoodVentaElim/iconos/check.png'  onclick='seleccionarEstaUbicacion()'  />
+	  </td>
+	  <td style='width:5%;padding:5px'>
+	  <img class='imgIconMenuA' src='/GoodVentaElim/iconos/botonCerrar.png'  onclick='verCerrarMapa("2")'  />
+	  </td>
+	  </tr>
+	 </table>
+<script>
+document.getElementById('cntPrincipaLugares').style.display=''
+</script>
+<style>
+#geocoder-container > div {
+    min-width:50%;
+    margin-left:25%;
+}
+
+        
+           	#map {  bottom: 0; width: 100%;height:350px }
+
+
+</style>
+<div id='map'></div>
+
+<script>
+
+
+mapboxgl.accessToken = 'pk.eyJ1IjoicmFtb245NSIsImEiOiJjazluNWN5cGUwMnAwM2duN3VxaWRpcXlqIn0.5IBjsjLUGZhRHh2lyjkhXw';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-56.43333, -25.75],
+   	minZoom: 10,
+   zoom: 12
+});
+document.getElementById('cntPrincipaLugares').style.display='none'
+var geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    marker: {
+        color: 'orange'
+	
+    },
+    mapboxgl: mapboxgl
+});
+map.addControl(geocoder);
+map.addControl(new mapboxgl.NavigationControl());
+
+var geolocate = new mapboxgl.GeolocateControl({
+ positionOptions: {
+   enableHighAccuracy: true
+ },
+ trackUserLocation: true
+});
+// Add the control to the map.
+map.addControl(geolocate);
+/*
+var geolocate = new mapboxgl.GeolocateControl();
+map.addControl(geolocate);
+*/
+
+geolocate.on('geolocate', function(e) {
+ /* map.flyTo({
+    center:[e.coords.longitude, e.coords.latitude], 
+    zoom:16 //set zoom 
+
+  });*/
+	
+  /* placenames=e.coords.longitude+","+e.coords.latitude;
+	document.getElementById('inptDireccion').value=placenames*/
+	latPago=e.coords.latitude
+	logPago=e.coords.longitude;
+});
+
+
+
+
+// After the map style has loaded on the page,
+// add a source layer and default styling for a single point
+map.on('load', function() {
+ geolocate.trigger();//Busca la ubicacion actual en forma automatica
+
+  map.addSource('single-point', {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: []
+    }
+  });
+
+  map.addLayer({
+    id: 'point',
+    source: 'single-point',
+    type: 'circle',
+    paint: {
+      'circle-radius': 10,
+      'circle-color': '#448ee4'
+    }
+  });
+
+  // Listen for the `result` event from the Geocoder
+  // `result` event is triggered when a user makes a selection
+  //  Add a marker at the result's coordinates
+  geocoder.on('result', function(e) {
+    //map.getSource('single-point').setData(e.result.geometry);
+	console.log(e.result)
+	//placenames=e.result["place_name"];
+	placenames=e.result["text"];
+	placenametodo=e.result["place_name"];
+	latitud=e.result["center"][0];
+	longitud=e.result["center"][1];
+  });
+  
+  
+   var marker = new mapboxgl.Marker()
+
+  map.on('click', function (e) {
+//[e.lngLat["lng"], e.lngLat["lat"]]
+console.log(e.lngLat);
+ marker.setLngLat([e.lngLat["lng"],e.lngLat["lat"]])
+  marker.addTo(map);
+  latitud=e.lngLat["lng"];
+	longitud=e.lngLat["lat"];
+ jQuery.ajax({
+      //url: 'https://api.mapbox.com/geocoding/v5/mapbox.places/'+e.lngLat["lat"]+','+e.lngLat["lng"]+'.json?access_token=pk.eyJ1IjoicmFtb245NSIsImEiOiJjazluNWN5cGUwMnAwM2duN3VxaWRpcXlqIn0.5IBjsjLUGZhRHh2lyjkhXw',
+      url: 'https://api.mapbox.com/geocoding/v5/mapbox.places/'+e.lngLat["lng"]+','+e.lngLat["lat"]+'.json?types=poi&access_token=pk.eyJ1IjoicmFtb245NSIsImEiOiJjazluNWN5cGUwMnAwM2duN3VxaWRpcXlqIn0.5IBjsjLUGZhRHh2lyjkhXw',
+      dataType: 'json',
+      error: function(xhr, textStatus, errorThrown) {
+          errorUbicacion();
+       },
+	   success: function(responseText)
+			{
+		
+			var Respuesta=responseText;
+			
+			try {
+			var e=Respuesta["features"]["0"]["place_name"];
+          console.log(Respuesta)
+		 placenames=Respuesta["features"]["0"]["text"];
+	placenametodo=Respuesta["features"]["0"]["place_name"];
+	 placenames=latitud+","+longitud;
+			 }catch(error){
+          //console.log(e)
+		 placenames=latitud+","+longitud;
+			}
+			
+			
+	
+          
+		
+			}
+   });
+});
+  
+  
+
+ 
+  
+});
+
+ function  cargarMap(longitude,latitude){
+
+map.flyTo({center:[longitude, latitude]});
+
+   var marker = new mapboxgl.Marker()
+ marker.setLngLat([longitude,latitude])
+  marker.addTo(map);
+  latitud=longitude;
+	longitud=latitude;
+ jQuery.ajax({
+      //url: 'https://api.mapbox.com/geocoding/v5/mapbox.places/'+e.lngLat["lat"]+','+e.lngLat["lng"]+'.json?access_token=pk.eyJ1IjoicmFtb245NSIsImEiOiJjazluNWN5cGUwMnAwM2duN3VxaWRpcXlqIn0.5IBjsjLUGZhRHh2lyjkhXw',
+      url: 'https://api.mapbox.com/geocoding/v5/mapbox.places/'+longitude+','+latitude+'.json?types=poi&access_token=pk.eyJ1IjoicmFtb245NSIsImEiOiJjazluNWN5cGUwMnAwM2duN3VxaWRpcXlqIn0.5IBjsjLUGZhRHh2lyjkhXw',
+      dataType: 'json',
+      error: function(xhr, textStatus, errorThrown) {
+          errorUbicacion();
+       },
+	   success: function(responseText)
+			{
+		
+			var Respuesta=responseText;
+			   console.log(Respuesta)
+			 placenames=longitude+","+latitude;
+	document.getElementById('inptDireccion').value=placenames
+          
+		
+			}
+   });
+
+}
+
+</script>
+
+
+
+
+</div>
+</center>
+</div>
+
+
+	
+	
+	
+
+	
+	<div id='capa_informativa' class='div_info_2' style='display:none'>
+	<div class='div_info_3' title='click para cerrar' onclick='cerrar_ventanas(this)' id='vantana_info_001' style='display:none'>
+	<table style='width:100%;height:100%;padding:15px'>
+	<tr>
+	<td >
+	<label class='label_info_a'>Error en la conexión</label>
+	</td>
+	</tr>
+	</table>
+	</div>
+	</div>
+	
+	<div id='divimpr' style='display:none' >
+	
+<center style='display:none'>
+<div class='divTicket' >
+<p class='pTituloTicket1' >COMPROBANTE DE VENTA</p>
+<p class='pTituloTicket2'>Dirección del local
+<br>Nro Telef.
+</p>
+<div class='divSeparadorTicket' style='margin-bottom:5px'></div>
+<table class='tableTicket'>
+<tr>
+<td style='width:60px'><b>Cliente:</b></td>
+<td style=''>Guillemo Caroni</td>
+</tr>
+</table>
+<table class='tableTicket'>
+<tr>
+<td style='width:60px'><b>Fecha:</b></td>
+<td style=''>20/05/2020</td>
+</tr>
+</table>
+<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>
+<table class='tableTicket'>
+<tr>
+<td style='width:30%'><b>Cod.</b></td>
+<td style='width:30%'><b>Costo</b></td>
+</tr>
+</table>
+<table class='tableTicket'>
+<tr>
+<td style='width:30%'><b>Producto</b></td>
+</tr>
+</table>
+<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>
+<table class='tableTicket'>
+<tr>
+<td style='width:80px'><b>SubTotal:</b></td>
+<td style=''>0 Gs.</td>
+</tr>
+</table>
+<table class='tableTicket'>
+<tr>
+<td style='width:80px'><b>Decuento:</b></td>
+<td style=''>0 Gs.</td>
+</tr>
+</table>
+<table class='tableTicket'>
+<tr>
+<td style='width:80px'><b>Total:</b></td>
+<td style=''>0 Gs.</td>
+</tr>
+</table>
+</div>
+</center>
+
+	
+	</div>
+	
+	<div class='div_info_10' id='div_principal_info_carga'  style='display:none;'  >
+<center>
+
+<table class='table_info_2'>
+<tr>
+<td >
+<center>
+<img src='/GoodVentaElim/iconos/cargando.gif' style='width:30px' />
+<br>
+<label id='lbltitulomensaje_b' style='font-size: 12px; font-family: arial;font-weight:bold;color:#fff' >Cargando...</label>
+</center>
+</td>
+</tr>
+</table>
+
+</center>
+</div>
+	
+	  </form>
+</body>
+</html>

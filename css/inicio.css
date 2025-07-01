@@ -1,0 +1,802 @@
+ 
+/* latin-ext */
+@font-face {
+  font-family: 'Kaushan Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+ src: url(/GoodVentaElim/css/KaushanScript-Regular.ttf) format('woff2');
+ unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Kaushan Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+ src: url(/GoodVentaElim/css/KaushanScript-Regular.ttf) format('woff2');
+ unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaElim/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaElim/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaElim/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaElim/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+ 
+ .principal {
+			
+	width:100%;
+	height:100%;
+	top:0px;
+	left:0px;
+	position:absolute;
+		overflow:auto;
+		padding-bottom:0px;
+ background-color:transparent;
+		   
+		 }
+		 .imgFondoapp {
+			padding-bottom:60px; 
+	width:100%;
+	height:100%;
+	top:0px;
+	left:0px;
+	position:fixed;
+		padding-bottom:0;
+					  background-repeat:no-repeat;
+   background-attachment:;
+   background-position:center;
+  background-size:cover;
+		
+	
+		   
+		 }
+		 
+		 .btn4 { height: 28px; border: none; color: rgb(255, 255, 255); background-color: rgb(76, 175, 80); font-family: "Merriweather Sans", Arial; font-size: 12px; width: 85px; cursor: pointer; border-radius: 2px; }
+		 
+		 
+		 
+		 .text_cargar_doc{
+	        font-size: 21px;
+    font-family: "Merriweather Sans", Arial;
+    color: #3ecb40;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-block;
+    border: 6px solid;
+    border-radius: 15px;
+    padding: 100px;
+	width:160px;
+	
+}
+.text_cargar_doc_2{
+	font-size: 21px;
+    font-family: "Merriweather Sans", Arial;
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-block;
+    border: 6px solid;
+    border-radius: 15px;
+    padding: 100px;
+	width:160px;
+	background-color:#2196F3;
+	
+}
+		 
+		 .ptituloZ{
+	font-size: 12px;
+    font-family: Arial;
+    color: #fff;
+    background-color: #3b88f5;
+    margin: 0px;
+    padding: 5px;
+}
+.imgFotoCi {
+	width: 250px;
+    height: 300px;
+    
+    background-color: #f0f0f0;
+    border: solid 1px #ddd;
+  cursor:pointer;
+  background-repeat:no-repeat;
+   background-attachment:;
+   background-position:center;
+  background-size:contain;
+}
+
+.btnSelecct3 {
+			    
+			    width: 250px;
+    height: 33px;
+    background: #4CAF50;
+    border: none;
+    color: #ffffff;
+    outline: none;
+    cursor: pointer;
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+
+
+		}
+		 
+		 	 .imgFondoappb {
+		    filter: blur(4px);
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    position: fixed;
+    padding-bottom: 0;
+    background-repeat: no-repeat;
+    background-attachment: ;
+    background-position: center;
+    background-size: cover;
+   /* background-image: url(/app/iconos/fondomobilb.PNG);*/
+   display:none;
+    /* opacity: 0.7; */
+    filter: brightness(0.5);
+		   
+		 }
+		   .principal_2 {
+	    
+    width: 100%;
+    height: 110%;
+    top: 0px;
+    left: 0px;
+    position: absolute;
+    overflow: auto;
+   			  background-repeat:no-repeat;
+   background-attachment:;
+   background-position:center;
+  background-size:cover;
+	background-color:#fff;
+		 }
+		 
+		 .divCabecera{
+			     
+    /* width: 90%; */
+    height: 100%;
+    background-color: #fff;; 
+		 }
+		.divMenu {
+			width:100%;
+			height:100%;
+			background-color:#fff;
+			 top: 0px;
+    left: 0px;
+    position: absolute;
+    overflow: auto;
+		}
+		 .divCabecera_b{
+			     
+   
+    height: 50px;
+    width: 100%;
+
+		 }
+		 .tbCabecera {
+			 width:100%;
+			 height:100%;
+		 }
+		 .imgUser{
+			  width: 60px;
+    height: 60px;
+    padding: 7px;
+   border-radius:60px;
+     border: solid 7px #d2d2d2;
+    border-top-color: #ff9f00;
+    background-color: #fff;
+    border-left-color: #FF5722;
+    border-right-color: #2682ff;
+    border-bottom-color: #673AB7;
+		 }
+		 .imgIconb {
+			 width:30px;
+		 }
+		 .imgIconMenuA{
+
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    background-color: #ffffff;
+    padding: 7px;
+    border-radius: 19px;
+    border: solid 0px #ccc;
+		 
+  
+  }
+		 .pTituloPerfil {
+			        font-size: 25px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #3c3c3c;
+		 }
+		  .pTituloPerfil2 {
+			   font-size: 40px;
+ font-family:Kaushan Script;
+    color: #ff415b;
+    font-weight: bold;
+		 }
+		 .pTituloPerfil3 {
+			   font-size: 16px;
+font-family: 'Catamaran', sans-serif;
+    color: #808080;
+    font-weight: bold;
+		 }
+		  .pTituloPerfil4 {
+			        font-size: 14px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #3c3c3c;
+	margin:0px;
+	padding:5px
+		 }
+		 .btn1 {
+			     width: 200px;
+    height: 45px;
+    font-size: 14px;
+   font-family: 'Merriweather Sans', Arial;
+    /* outline: none; */
+    border: none;
+   color: #ffffff;
+	background-color: #3f51b5;
+
+    cursor: pointer;
+  border-radius: 35px;
+  outline:none
+    }
+	.btn2 {
+			     width: 90%;
+    height: 40px;
+    font-size: 14px;
+   font-family: 'Merriweather Sans', Arial;
+    /* outline: none; */
+    border: none;
+   color: #ffffff;
+	background-color: #0c7ad2;
+
+    cursor: pointer;
+  outline:none
+    }
+	.btnappA {
+    width: 100%;
+    height: 50px;
+    font-size: 16px;
+    font-family: 'Merriweather Sans', Arial;
+    outline: none;
+    border: none;
+	
+    color: #fff;
+    background-color: #FF9800;
+    position: fixed;
+    left: 0px;
+    bottom: 0px;
+}
+		 .ptituloCarrito {
+			     margin: 0px;
+    position: absolute;
+    top: 40px;
+    text-align: center;
+    width: 25px;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    background-color: #2196F3;
+    padding: 5px;
+    border-radius: 32px;
+    color: #fff;
+		 }
+		 .tableMenu {
+			    width: 90%;
+    background-color: #ffffffb5;
+    padding: 5px;
+     border-top: solid 1px #f1f1f1;
+    margin: 2%;
+   
+    height: 85px;
+	
+		 }
+		 
+		 .tableRegistroSelec{
+			     width: 100%;
+    padding: 7px;
+    padding: 7;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: center;
+    cursor: pointer;
+    font-stretch: condensed;
+		 }
+		 .tableRegistroSearchB{
+			     width: 100%;
+    padding: 7px;
+    padding: 7;
+    border-radius: 20px;
+    background-color: #fff5a0;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: center;
+    cursor: pointer;
+    font-stretch: condensed;
+		 }
+		 .imgIconoMenu {
+			      width: 30px;
+    padding: 7px;
+    background-color: transparent;
+    border-radius: 5px;
+		 }
+		 .pTituloMenu {
+
+			  margin: 0px;
+    font-size: 20px;
+    color: #e50058;
+    font-family: 'Merriweather Sans', Arial;
+    font-weight: bold;
+  
+		 }
+		 .PtituloInfo {
+			 font-size: 11px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #000;
+	margin:0px;
+	padding:3px;
+		 }
+		 .divSubCabecera {
+			     height: 250px;
+   display:none
+   
+		 }
+		 
+		   .div_ventana {
+			  		     overflow: auto;
+    background-color: #ffffff96;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding-bottom: 0;
+ 
+		 } 
+		 .div_ventana_opciones {
+	overflow: auto;
+    background-color: #fff;
+    width: 85%;
+    height: 300px;
+    position: relative;
+    padding: 5px;
+	border-radius:10px
+ 
+		 } 
+		 .iconoCerrar {
+			 width:30px;
+		 }
+		 .pTituloVentana {
+			     font-size: 14px;
+    color: #fff;
+    font-family: 'Merriweather Sans', Arial;
+   
+    margin: 0px;
+		 }
+		 .tbCabeceraVenta{
+			    width: 96%;
+    padding: 5px;
+    height: 51px;
+    background-color: #056ec1;
+    border-radius: 48px;
+    margin-top: 5px;
+		 }
+		.pTituloAbm {
+    margin: 0px;
+    font-size: 14px;
+    color: #000;
+    font-family: 'Merriweather Sans', Arial;
+    padding: 10px;
+    text-align: left;
+	font-weight:bold;
+}
+
+.btn3 {
+    height: 38px;
+    border: none;
+    color: #fff;
+    background-color: #4CAF50;
+    font-family: 'Merriweather Sans', Arial;
+    outline: none;
+    width: 60px;
+    font-size: 16px;
+}
+		 .inputAbm {
+	    font-size: 13px;
+    text-align: center;
+    padding: 7px;
+    width: 95%;
+    border-radius: 5px;
+    border: solid 1px #c1bfbf;
+    outline: none;
+    height: 40px;
+    color: #000;
+    background: #fbf8f8;
+    font-family: 'Merriweather Sans', Arial;
+		 }
+		 .textarea1 {
+   font-size: 13px;
+    font-family: 'Merriweather Sans', Arial;
+    height: 94px;
+    text-align: left;
+    width: 95%;
+    border: solid 1px #d3d3d3;
+    outline: none;
+    resize: none;
+    background-color: #fff;
+}
+		 .tbAbm{
+			 width:95%;
+			 height:45px;
+		
+		 }
+		 
+		 .inputBtnA{
+			     font-size: 11px;
+    height: 43px;
+    background-color: #ccc;
+    border: solid 1px #ccc;
+    background-color: #a3a3a39e;
+    color: #c3c3c3;
+    font-family: 'Merriweather Sans', Arial;
+	width:100%;
+		 }
+		 .inputBuscador {
+			      width: 95%;
+    height: 35px;
+    border: solid 1px #cdcdcddd;
+    border-radius: 2px;
+    outline: none;
+    font-size: 12px;
+      font-family: 'Merriweather Sans', Arial;
+    text-align: center;
+	background: #fff;
+		 }
+		 .tableBuscado {
+			     width: 90%;
+    margin-top: 8px;
+        border-bottom: dotted 2px #d0d0d0;
+		 }
+		 .imgAbmBuscado{
+			     width: 20px;
+    padding: 8px;
+    background-color: #d0d0d0;
+		 }
+		 .pTituloDatos {
+			     font-size: 11px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #d0d0d0;
+    padding: 5px;
+    margin: 0px;
+	   line-height: 17px;
+		 }
+		 .pTituloDatos2 {
+			       font-size: 10px;
+        color: #000;
+    font-family: 'Merriweather Sans', Arial;
+    font-weight: bold;
+		 }
+		 .btnSelec {
+			     height: 40px;
+    font-size: 12px;
+    font-weight: 600;
+    width: 30px;
+		 }
+		 .pTitulo1 {
+			           font-size: 13px;
+    margin: 0px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #ffffff;
+    width: 220px;
+    /* font-stretch: condensed; */
+    background-color: #4caf50;
+    padding: 10px;
+    border-radius: 17px
+		 }
+		 
+		 .tableMenuB {
+			width: 100%;
+    height: 50px;
+    background-color: #ff415b;
+
+		}
+		.labelTituloB{
+			
+    font-family: 'Merriweather Sans', Arial;
+    color: #fbfbfb;
+    font-stretch: condensed;
+    font-weight: bold;
+    font-size: 14px;
+		}
+		.tableA{
+			    width: 95%;
+    font-size: 12px;
+    color: #004073;
+    font-family: 'Merriweather Sans', Arial;
+    padding: 7px;
+    font-weight: bold;
+    background-color: #ccc;
+    margin-top: 5%;
+		}
+		.tableB{
+			    width: 95%;
+    font-size: 12px;
+    color: #ccc;
+    font-family: 'Merriweather Sans', Arial;
+    padding: 7px;
+    font-weight: bold;
+    margin-top:2%;
+	border-bottom: dotted 2px #727272;
+		}
+		.divTableA{
+			    width: 95%;
+   
+		}
+		
+		.divTicket {
+			width:279px
+		}
+		.pTituloTicket1{
+			    font-size: 20px;
+    font-family: 'Merriweather Sans', Arial;
+		}
+		.pTituloTicket2{
+			font-size:14px;
+    font-family: 'Merriweather Sans', Arial;
+    line-height: 20px;
+		}
+		.tableTicket {
+			width:95%;
+			font-family:arial;
+			font-size:14px;
+			margin-top:2px
+		}
+		.divSeparadorTicket {
+			width:95%;
+			height:1px;
+			background-color:#cccc
+			
+		}
+		.btnA{
+			    width: 45%;
+    height: 38px;
+    background: transparent;
+    border: none;
+    width:110px;
+    font-size: 12px;
+    color: #616161;
+    outline: none;
+    font-family: 'Merriweather Sans', Arial;
+		}
+		.divLogin {
+		    width: 90%;
+    padding: 8px;
+;
+ 
+		}
+		.inputLoging {
+			
+    width: 80%;
+    text-align: center;
+    font-size: 14px;
+    font-family: 'Merriweather Sans', Arial;
+    height: 40px;
+    border: solid 2px #ccc;
+    outline: none;
+
+		}
+		.ptituloMenuB {
+			      margin: 0px;
+    padding: 5px;
+    font-size: 14px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #000;
+		}
+		.tableCabeceraRegistro {
+			    height: 40px;
+    width: 98%;
+    padding: 5px;
+    background-color: #656565;
+    border-radius: 20px;
+ 
+		}
+		.td_registro {
+       font-family: 'Merriweather Sans', Arial;
+    font-size: 10px;
+    color: #fff;
+    text-align: center;
+    font-stretch: condensed;
+    font-weight: bold;
+		}
+	
+		.div_cuerpo_table {
+    margin-top: 3px;
+    width: 97.5%;
+    border: solid 1px #cecece;
+    background-color: #fcfcfc8a;
+    height: 450px;
+    overflow: auto;
+    border-radius: 20px;;
+}
+		.div_cuerpo_table_b{
+			 margin-top:3px;
+			width:97.5%;
+			   border: solid 1px #cecece;
+    background-color: #f9f9f9;
+		
+
+		}
+		
+			.tableRegistroSearchC {
+     width: 100%;
+    min-height: 35px;
+    background-color: #fff5a0;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: center;
+    cursor: pointer;
+    border-radius: 16px;
+    font-stretch: condensed;
+}
+		.tableRegistroSearchD {
+    width: 100%;
+    padding:7px;
+    background-color: #fff;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: left;
+    cursor: pointer;
+    font-stretch: condensed;
+}
+.tableRegistroSearchE {
+    width: 100%;
+    padding:7px;
+	    padding: 7;
+    border-radius: 20px;
+    background-color: #e1ecf5;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: left;
+    cursor: pointer;
+    font-stretch: condensed;
+}
+.tableRegistroSearchF {
+    width: 100%;
+    
+    background-color: #fff;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: left;
+    cursor: pointer;
+    font-stretch: condensed;
+}
+	.tableRegistroSearch {
+    width: 100%;
+    min-height: 35px;
+    background-color: #fff;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #1b1b1b;
+    /* font-weight: bold; */
+    text-align: center;
+    border-left: solid 1px #cecece;
+    border-right: solid 1px #cecece;
+    border-bottom: solid 1px #cecece;
+    cursor: pointer;
+    font-stretch: condensed;
+	    padding: 5px;
+}
+		
+			.tableRegistroSearch:hover {
+			  
+		}
+		.tableRegistroSelec {
+	width: 100%;
+    height: 25px;
+    font-size: 12px;
+   font-family: 'Merriweather Sans', Arial;
+	font-weight:bold;
+	text-align:center;
+	border-left:solid 1px #cecece;
+	border-right:solid 1px #cecece;
+	border-bottom:solid 1px #cecece;
+	cursor:pointer;
+	    font-stretch: condensed;
+
+    padding: 5px;
+			    background-color: #2e70e8;
+
+			border-left:solid 1px #cecece;
+			border-right:solid 1px #cecece;
+			border-bottom:solid 1px #cecece;
+			color: #fff;
+		}
+		.td_search {
+			padding:5px;
+			text-align:left;
+		}
+		.btnapp {
+				    width: 100%;
+    height: 45px;
+    font-size: 14px;
+      font-family: 'Merriweather Sans', Arial;
+    outline: none;
+    border: none;
+      color: #fff;
+	      background-color: #2196F3;
+		}
+		.divDetalles {
+			    width: 87%;
+    padding: 5px;
+    border-radius: 20px;
+    border: solid 1px #ccc;
+		}
+		
+		.DivTotalVenta { border: 1px solid rgb(234, 234, 234); height: 114px; font-size: 32px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); font-weight: bold; padding: 3px; margin: 3px 0px 0px; text-align: center; background-color: rgb(33, 150, 243); justify-content: center; align-items: center; display: flex; width: 94%;border-radius: 10px; }
+		
+		
+		
+		 /*Mobiles 640 */
+               @media only screen and  (max-width: 1023px) and (min-width: 640px) {
+			
+			
+		}
+		
+		
+		  /*Mobiles 640 */
+            @media only screen and (max-width:639px) and (min-width: 320px)
+			{
+			
+		
+	}
+	
+	
+	

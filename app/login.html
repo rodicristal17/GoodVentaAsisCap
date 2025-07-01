@@ -1,0 +1,123 @@
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+   <meta name="theme-color" content="#000" />
+  <meta name="msapplicaction-navbutton-color" content="#000" />
+   <meta  name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
+    <title>GoodVenta-App</title>
+	<link rel="stylesheet" href="/GoodVentaElim/css/info.css" />
+	<link rel="stylesheet" href="/GoodVentaElim/css/inicio.css?x=0" />
+	
+   <!--jquery.js !-->
+   
+   <!--scrips!-->
+  
+  	 <script src="/GoodVentaElim/js/jquery.js"></script>  
+  	 <script src="/GoodVentaElim/js/login.js?x=09"></script>  
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu+Condensed&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Catamaran:wght@200&display=swap" rel="stylesheet">
+	
+</head>
+<body >
+    <form enctype="multipart/form-data">
+	<div class='imgFondoapp'></div>
+<div  class='principal'>
+	<center>
+	<div class='divCabecera'>
+	<table class='tbCabecera' >
+	<tr>
+		<td style='width:90%;text-align:center>;'>
+		<center>
+	<img class='imgUser' src='/GoodVentaElim/iconos/logoApp.png' />
+	<br>
+	<h1 class='pTituloPerfil2' ><span style='color:#ff9f00'>Good</span><span style='color:#2682ff'>Venta</span><span style='color:##673ab7'>Soft</span></h1>
+
+	</center>
+	</td>
+	</tr>
+	</table>
+	</div>	
+	<div style='margin-top: -76px;'>
+	<center>
+	<img src='/GoodVentaElim/iconos/subir.png' style='width:25px;' />
+	<p class='pTituloPerfil3'>Deslice hacia arriba</p>
+	</center>
+	</div>
+	
+	<table style='width:100%;height:100%;'>
+	<tr>
+	<td>
+	<center>
+	<div class='divLogin'>
+		<br>
+		<br>
+		<p class='pTituloPerfil'>Acceso</p>
+		<br>
+		<br>
+	<input type='text' placeholder='Usuario' class='inputLoging'  id='inpt_user' />
+	<br>
+	<br>
+	<input type='password' placeholder='Contraseña'  class='inputLoging' id='inpt_pass'  />
+	<br>
+	<br>
+	<br>
+	<br>
+	<input  type='button' value='Ingresar' class='btn1' onclick='verificardatos()' />
+	<br>
+	<br>
+	</div>
+	</center>
+	</td>
+	</tr>
+	</table>
+	
+	
+	
+	</center>
+		
+
+
+
+
+
+</div>
+	
+
+	
+<div class='div_info_10' id='div_principal_info_carga' style='display:none'  onclick='ocultarmensaje()'>
+<center>
+
+<table class='table_info_2'>
+<tr>
+<td >
+<center>
+<img src='/GoodVentaElim/iconos/cargando.gif' style='width:30px' />
+<label id='lbltitulomensaje_b' style='font-size: 14px; font-family: arial;' >INFORMACION</label>
+</center>
+</td>
+</tr>
+</table>
+
+</center>
+</div>
+	
+	<div id='capa_informativa' class='div_info_2' style='display:none'>
+	<div class='div_info_3' title='click para cerrar' onclick='cerrar_ventanas(this)' id='vantana_info_001' style='display:none'>
+	<table style='width:100%;height:100%;padding:15px'>
+	<tr>
+	<td >
+	<label class='label_info_a'>Error en la conexión</label>
+	</td>
+	</tr>
+	</table>
+	</div>
+	</div>
+	
+
+	
+	  </form>
+</body>
+</html>
+

@@ -1,0 +1,11 @@
+{"name": "APP-COBRADOR",
+ "short_name": "APP-COBRADOR",
+ "description": "APP-COBRADOR",
+ "start_url": "https://systemsrepository.com/GoodVentaByR/app/acceso.html",
+ "orientation": "portrait",
+ "display": "standalone", 
+ "background_color": "#ffffff",
+ "theme_color": "#ffffff", 
+ "prompt_message": " APP-COBRADOR ", 
+ "icons": [{"src": "/GoodVentaByR/iconos/icons-114.png", "sizes": "114x114", "type": "image/png"}, {"src":  "/GoodVentaByR/iconos/icons-144.png", "sizes": "144x144", "type": "image/png"}]
+ }

@@ -1,0 +1,223 @@
+
+@font-face { font-family: Jomhuria; font-style: normal; font-weight: 400; src: url("/GoodVentaAsisCap/css/Jomhuria-Regular.ttf") format("woff2"); unicode-range: U+100-24F, U+259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: Jomhuria; font-style: normal; font-weight: 400; src: url("/GoodVentaAsisCap/css/Jomhuria-Regular.ttf") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Merriweather Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+   src: url(/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+ .principal {
+			
+			
+ background-color:rgba(255,255,255,0.75);
+	width:100%;
+	height:100%;
+	top:0px;
+	left:0px;
+	position:absolute;
+	overflow:auto;
+	background-repeat:no-repeat;
+   background-attachment:;
+   background-position:center;
+  background-size:cover;
+		 } 
+		 	.divVentanaPreLogin {
+			   width: 650px;
+    height: 300px;
+    border:none;
+   background-color:transparent
+		 }
+		 .divVentanaPreLogin2 {
+			   width: 400px;
+    border:none;
+   background-color:transparent;
+   overflow:auto;
+		 }
+		 .imgAccederSistema {
+	      width: 80px;
+    padding: 12px;
+    background-color: #fff;
+    border-radius: 70px;
+	   border: solid 7px #d2d2d2;
+    border-top-color: #ff9f00;
+    background-color: #fff;
+    border-left-color: #FF5722;
+    border-right-color: #2682ff;
+    border-bottom-color: #673AB7;
+}
+ .imgAccederSistema2 {
+	         margin-top: -37px;
+    width: 39px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 70px;
+    border: solid 7px #ff9f00;
+    border-top-color: #ff9f00;
+    background-color: #fff;
+    border-left-color: #ff9f00;
+    border-right-color: #ff9f00;
+    border-bottom-color: #ff9f00;
+}
+.btn9 {
+         width: 117px;
+    height: 32px;
+    font-size: 12px;
+    font-family: 'Merriweather Sans', Arial;
+    /* outline: none; */
+    border: none;
+    color: #ffffff;
+    /* font-weight: bold; */
+    background-color: #2682ff;
+    cursor: pointer;
+    border-radius: 8px;
+    outline: none;
+    margin-top: 13px;
+}
+		 
+		  .pTitulo5{
+        font-size: 13px;
+    font-family: 'Merriweather Sans', Arial;
+    color: #000;
+	margin:0px;
+margin-bottom:5px;
+	
+}
+
+	 .input3 {
+		    font-size: 11px;
+        font-family: 'Merriweather Sans', Arial;
+    height: 30px;
+    text-align: left;
+      padding: 8px 8px 8px;
+    width: 100%;
+        border: solid 1px #ececec;
+    outline: none;   
+	background-color:#fff;
+	    border-radius: 3px;
+	}	
+	.input3:focus {
+		   
+	background-color: #f2f7fb;
+    font-weight: bold;
+    border: solid 2px #d2d2d2;
+	}
+.h2Titulo {
+	    font-family: Jomhuria;
+    font-size: 130px;
+    color: #673ab7;
+    margin: 0px;
+}
+
+		 
+			  .divVentanaLogin {
+			   width: 340px;
+			   height: 420px;
+			   border: solid 7px #d2d2d2;
+			   border-top-color: #ff9f00;
+			   background-color: #fff;
+			   border-left-color: #FF5722;
+			   border-right-color: #2682ff;
+			   border-bottom-color: #673AB7;
+			   border-radius: 20px;
+			}
+		 .btnlogin {
+          width: 175px;
+          height: 35px;
+          font-size: 11px;
+          font-family: 'Merriweather Sans', Arial;
+          /* outline: none; */
+          border: none;
+          color: #ffffff;
+          background-color: #2682ff;
+          cursor: pointer;
+          border-radius: 3px;
+          outline: none;
+}
+		 .pTitulo {
+			 font-size: 18px;
+    color: #ebebeb;
+    font-family: Arial;
+    font-stretch: condensed;
+       background-color: #0f6cb4;
+    /* width: 170px; */
+    padding: 17px;
+    /* border: solid 3px; */
+    /* border-radius: 15px; */
+    margin: 0px;
+}
+
+.tableAcceso {
+	width:90%;
+	height:40px;
+}
+.ptituloAcceso {
+	       font-size: 13px;
+    font-family: arial;
+    margin: 0px;
+    background-color: #efefef;
+    padding: 10px;
+    color: #171515;
+    font-stretch: condensed;
+    font-weight: bold;
+    width: 80px;
+    text-align: center;
+    border: solid 2px #8c8a8a;
+}
+	.inputText {
+		width: 90%;
+    height: 36px;
+    font-size: 12px;
+    font-family: Arial;
+    font-stretch: condensed;
+    text-align: center;
+    font-weight: bold;
+	}	
+	.inputButton {
+		height: 35px;
+    width: 120px;
+    font-weight: bold;
+    font-stretch: condensed;
+	}
+	   .imgIconH{
+		       padding: 4px;
+    filter: opacity(0.5);
+    margin-top: 23px;
+    width: 21px;
+    cursor: pointer;
+    background-color: #dedede;
+    border-radius: 31px;
+    border: solid 1px #ccc;
+	   }

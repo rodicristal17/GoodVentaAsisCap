@@ -1,0 +1,91 @@
+
+.pTituloRecibo {
+    text-align: left;
+    font-size: 10px;
+    font-family: Arial;
+}
+
+.pTituloRecibo2 {
+    text-align: left;
+    font-size: 10px;
+    font-family: Arial;
+    padding: 3px;
+    margin: 0px;
+}
+
+.divPrincipalRecibo {
+    width: 870px;
+    text-align: left;
+    margin-left: 20px;
+}
+.divCuerpoRecibo {
+    width: 870px;
+    height: 413px;
+    margin-top: 37.7px;
+    /* margin-left: 54px; */
+}
+.divCabeceraRecibo {
+    height: 54px;
+}
+.divTituloRecibo {
+    height: 25px;
+}
+.divCuerpotitulo1 {
+    float: left;
+    width: 580px;
+    height: 100px;
+	margin-top:3px
+}
+.divCuerpotitulo2 {
+    float: right;
+    width: 270px;
+    height: 100px;
+	margin-top:3px
+}
+.divTituloDetalle {
+    height: 34px;
+}
+.divCuerpoDetalle {
+    height: 148px;
+    width: 100%;
+}
+.tableReporRecibo {
+    width: 100%;
+    background-color: #fff;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 9px;
+    font-family:  Arial;
+}
+
+.divCuerpoDetalle2 {
+    height: 22px;
+    width: 100%;
+}
+.divCuerpoDetalle3 {
+    height: 15px;
+    width: 100%;
+}
+  @page { 
+    margin-top: 0cm; 
+    margin-bottom: 0cm;
+    margin-left: 0cm;
+    margin-right: 0cm;
+}
+	@media screen {
+  @page { 
+    margin-top: 0cm; 
+    margin-bottom: 0cm;
+    margin-left: 0cm;
+    margin-right: 0cm;
+}
+}
+
+@media print {
+  @page { 
+    margin-top: 0cm; 
+    margin-bottom: 0cm;
+    margin-left: 0cm;
+    margin-right: 0cm;
+}
+}
