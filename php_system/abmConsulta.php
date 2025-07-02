@@ -463,12 +463,14 @@ exit;
 	
 	$condicionPaciente="";
 	if($Paciente!=""){
-		$condicionPaciente=" and  concat(cl.ci_cliente,' ',cl.rut_cliente ,' ',pr.nombre_persona )   like '%".$Paciente."%' ";
+		$condicionPaciente=" and  concat(cl.ci_cliente,' ',cl.rut_cliente ,' ',p.nombre_persona )   like '%".$Paciente."%' ";
 	}
 	
 	
-		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente
-		from cliente cl inner join persona p on cod_cliente=cod_persona where cl.estado = 'Activo'".$condicionPaciente." limit 100;";
+		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta
+		from venta inner join cliente cl on cod_clienteFK=cod_cliente
+		inner join persona p on cod_cliente=cod_persona
+			 where cl.estado = 'Activo'".$condicionPaciente." limit 100;";
  
  // echo($sql);
  // exit;
@@ -490,14 +492,14 @@ if ( ! $stmt->execute()) {
 	  {
 		   
 		      $cod_agendamiento='';
-		  	  $num_factura='';
+		  	  $num_factura=utf8_encode($valor['num_factura']);
 		  	  $ci_cliente=utf8_encode($valor['ci_cliente']);
 			  $medico='';
 			  $paciente=utf8_encode($valor['paciente']);
 			  $cod_cliente=utf8_encode($valor['cod_cliente']);
 			   $fecha_con=''; 
 			   $decripcion=''; 
-			   $cod_ventaFK=''; 
+			   $cod_venta=utf8_encode($valor['cod_venta']);
 			    	 
 		  	  $pagina.="
 			  <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)'>
@@ -513,7 +515,7 @@ if ( ! $stmt->execute()) {
     <span id='td_datos_2' hidden>$ci_cliente</span>
     <span id='td_datos_3' hidden>$num_factura</span>
     <span id='td_datos_4' hidden>$cod_agendamiento</span> 
-    <span id='td_datos_5' hidden>$cod_ventaFK</span> 
+    <span id='td_datos_5' hidden>$cod_venta</span> 
     <span id='td_datos_6' hidden>$cod_cliente</span> 
   </div>
 </div>

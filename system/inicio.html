@@ -8619,7 +8619,7 @@ placeholder='Telef.' style='width:290px' />
 <p class='pTituloC' style='color:#fff'>Comprobante </p>
 <select class="inputSelect" id="inptSeleccTipoComprobanteVenta" style='width:150px;' onchange='SeleccTipoComprobanteVenta(this)'>
 <option value="NOTA DE VENTA">NOTA DE VENTA</option>
-<option value="FACTURA">FACTURA</option>
+<!-- <option value="FACTURA">FACTURA</option> -->
 </select>
 </td>
 <td style='width:12%'>
@@ -9756,7 +9756,7 @@ style='background-color: #b7b7b7;'>
     <!-- <img src="/GoodVentaAsisCap/iconos/depCuenta.png" alt="Icono" class="icono-btn2" /> -->
     <h2 class="titulo-turnos pTitulo4"   >Listado de <strong>Pacientes</strong></h2>
 	<button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmClientes()">
-      <img src="/GoodVentaAsisCap/iconos/archivonuevo.png" class='iconoBtn' alt="Crear Cliente" />
+      <img src="/GoodVentaAsisCap/iconos/add.png" class='iconoBtn' alt="Crear Cliente" />
     </button>
     <button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmVistaConsulta()">
       <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class='iconoBtn' alt="Cerrar" />
@@ -9786,7 +9786,7 @@ style='background-color: #b7b7b7;'>
       </div>
     </div>
 
-    <div id="table_frm_VistaConsulta" style='height: 60vh;' class="tabla-resultados tablaContanedorConsulta"></div>
+    <div id="table_frm_VistaConsulta" style='height: 70vh;' class="tabla-resultados tablaContanedorConsulta"></div>
   </div>
 </div>
 
@@ -9930,13 +9930,13 @@ style='background-color: #b7b7b7;'>
  
         <div style="flex: 1;">
           <p class="pTitulo5">Especialista:</p>
-		  <select class="inputfiltro" id="inptEspecialistaConsulta">  </select>
+		  <select class="inputTextDisable" id="inptEspecialistaConsulta" disabled>  </select>
           
         </div>
 		
         <div style="flex: 1;">
           <p class="pTitulo5">Fecha:</p>
-          <input type="date" class="inputText" style="width:200px;" id="inptFechaConsulta">
+          <input type="date" class="inputTextDisable" disabled style="width:200px;" id="inptFechaConsulta">
         </div>
       </div>
 

@@ -12731,7 +12731,7 @@ function limpiarcamposventa(ctrl) {
 		mes = "0" + mes;
 	}
 	controlVenta="1";
-	document.getElementById('inptSeleccTipoComprobanteVenta').value="FACTURA"
+	document.getElementById('inptSeleccTipoComprobanteVenta').value="NOTA DE VENTA"
 	document.getElementById('inptDescripcionPrVenta').value=""
 	document.getElementById('inptFechaVenta').value = f.getFullYear() + "-" + mes + "-" + dia;
 	document.getElementById('inptClienteVenta').value = "CLIENTE OCASIONAL";
