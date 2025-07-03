@@ -35,19 +35,14 @@ if($operacion=="buscarVistaConsulta")
     $fecha = utf8_decode($fecha);
 	buscarVistaConsulta($Cod_especialista,$Paciente,$fecha);
 }	
-
-
-
+ 
 if($operacion=="buscarDetalleCompradoConsulta")
 {	
 	$cod_venta=$_POST['cod_venta'];
     $cod_venta = utf8_decode($cod_venta); 
 	buscarDetalleCompradoConsulta($cod_venta);
 }	
-
-
-
-
+ 
 if($operacion=="buscarHistorialConsulta")
 {	
 	$cod_venta=$_POST['cod_venta'];
@@ -101,7 +96,13 @@ if($operacion=="agregar_observacion_consulta" )
 	$descripcion=$_POST['descripcion'];
     $descripcion = utf8_decode($descripcion); 
 	
-	agregar_observacion_consulta($cod_cliente,$descripcion);
+	$cod_venta=$_POST['cod_venta'];
+    $cod_venta = utf8_decode($cod_venta); 
+	
+	$user=$_POST['useru'];
+    $user = utf8_decode($user);
+	
+	agregar_observacion_consulta($cod_cliente,$descripcion,$cod_venta,$user);
 }	
 
 if($operacion=="buscar_observacion_consulta" )
@@ -109,9 +110,12 @@ if($operacion=="buscar_observacion_consulta" )
 	$cod_cliente=$_POST['cod_clienteConsulta'];
     $cod_cliente = utf8_decode($cod_cliente); 
 	
+	$cod_venta=$_POST['cod_venta'];
+    $cod_venta = utf8_decode($cod_venta); 
 	
 	
-	buscar_observacion_consulta($cod_cliente);
+	
+	buscar_observacion_consulta($cod_cliente,$cod_venta);
 }	
 
 
@@ -189,11 +193,7 @@ $mysqli->close();
     exit;
 	
 }
-
-
-
-
-
+ 
 
 function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$operacion)
 {
@@ -245,18 +245,24 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
     exit;
 }
 
-function agregar_observacion_consulta($cod_cliente,$descripcion)
+function agregar_observacion_consulta($cod_cliente,$descripcion,$cod_venta,$user)
 {
     if ($cod_cliente == "" || $descripcion == "" ) {
         $informacion = array("1" => "camposvacio");
         echo json_encode($informacion);    
         exit;
     }
+	
+	// Crear el objeto DateTime con la zona horaria de Paraguay
+$paraguayTime = new DateTime("now", new DateTimeZone("America/Asuncion"));
+
+// Obtener el string para guardar en base de datos (formato DATETIME)
+$fechaHora = $paraguayTime->format("Y-m-d H:i:s");
 
     $mysqli = conectar_al_servidor();
 
 
-    $consulta1 = "INSERT INTO detalle_observacion_consulta (descripcion,cod_clienteFK) VALUES ('$descripcion','$cod_cliente')";
+    $consulta1 = "INSERT INTO detalle_observacion_consulta (descripcion,cod_clienteFK,cod_venta,cod_usuarioFK,fecha_hora) VALUES ('$descripcion','$cod_cliente','$cod_venta','$user','$fechaHora')";
 
     $stmt1 = $mysqli->prepare($consulta1);
     
@@ -274,11 +280,11 @@ function agregar_observacion_consulta($cod_cliente,$descripcion)
 	exit;
 }
 
-function  buscar_observacion_consulta($cod_clienteFK)
+function  buscar_observacion_consulta($cod_clienteFK,$cod_ventaFK)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "SELECT descripcion FROM detalle_observacion_consulta WHERE cod_clienteFK = '$cod_clienteFK'";
+$sql= "SELECT descripcion,(select nombre_persona from persona where cod_persona=cod_usuarioFK) as usuario, fecha_hora FROM detalle_observacion_consulta WHERE cod_clienteFK = '$cod_clienteFK' and cod_venta = '$cod_ventaFK'";
 
  
 $stmt = $mysqli->prepare($sql);
@@ -299,15 +305,67 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 $descripcion = utf8_encode($valor['descripcion']);   
+$usuario = utf8_encode($valor['usuario']);   
+$fecha_hora = utf8_encode($valor['fecha_hora']);   
  
  
 $styleName=CargarStyleTable($styleName);
 	  $pagina.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' >
-<td  id='td_datos_2' style='width:100%'>".$descripcion."</td>
-</tr>
-</table>";
+<style>
+.timeline {
+  position: relative;
+  margin: 2px 0;
+  padding-left: 5px;
+  border-left: 3px solid #4a90e2;
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 2px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+}
+.timeline-content {
+  background-color: #f9f9f9;
+  padding: 5px 7px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.timeline-content .description {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+.timeline-content .meta {
+  font-size: 12px;
+  color: #666;
+  border-top: 1px solid #ddd;
+  margin-top: 2px;
+  padding-top: 2px;
+}
+</style>
+
+<div class='timeline'>
+  <div class='timeline-item'>
+    <div class='timeline-content'>
+      <div class='description'>
+         ".htmlspecialchars($descripcion)."
+      </div>
+      <div class='meta'>
+       ".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha_hora)."
+      </div>
+    </div>
+  </div>
+ 
+</div>
+
+"; 
  
 }
 }

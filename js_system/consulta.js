@@ -1577,6 +1577,7 @@ function agregarObservacionConsulta(){
 		"navegador": navegador,
 		"cod_clienteConsulta": cod_clienteConsulta,
 		"descripcion": descripcion,
+		"cod_venta": cod_ventaFKConsulta,
 		"funt": "agregar_observacion_consulta"
 	};
 	$.ajax({
@@ -1619,6 +1620,7 @@ function buscarPacienteConsulta(){
 		"passu": passuser,
 		"navegador": navegador,
 		"cod_clienteConsulta": cod_clienteConsulta,
+		"cod_venta": cod_ventaFKConsulta,
 		"funt": "buscar_observacion_consulta"
 	};
 	$.ajax({
