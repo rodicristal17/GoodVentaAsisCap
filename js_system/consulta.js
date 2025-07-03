@@ -1561,7 +1561,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 	buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 	vercuotasatrazadas(cod_ventaFKConsulta)
 	buscarPacienteConsulta()	
-	
+	buscarVistaGaleriaFoto();
 }
 
 function agregarObservacionConsulta(){

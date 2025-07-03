@@ -285,7 +285,6 @@ function buscarDocumentosGaleriaFoto($idcliente,$descripcion)
 		$sql= "SELECT *
 				FROM fotos_cliente where cod_clienteFK='$idcliente' ".$condicionDescripcion." order by idfotos_cliente asc ";
   
-   
    $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
    echo "Error";

@@ -11820,43 +11820,47 @@ $("input[id="+File+"]").click();
 var archivo="";
 var extension="";	
 var urlarchivopdf="";
-function readFileDoc(input){
-var file=$("input[name="+input.name+"]")[0].files[0];
-urlarchivopdf = URL.createObjectURL(file);
-var filename= file.name;
-var tamanho = file.size;
-if (tamanho > 5000000){
-ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 5Mb")
-return false
+function readFileDoc(input) {
+	var file = $("input[name=" + input.name + "]")[0].files[0];
+	var filename = file.name;
+	var tamanho = file.size;
+	if (tamanho > 5000000) {
+		ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 5Mb")
+		return false
+	}
+
+	file_extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+	
+	if (!(file_extension.toLowerCase() == "jpeg") || (file_extension.toLowerCase() == "jpg") || (file_extension.toLowerCase() == "png")) {
+		ver_vetana_informativa("LA IMAGEN SELECCIONADO DEBE TENER UNA EXTENSIÓN JPEG, JPG O PNG")
+		return false;
+	}
+
+	urlarchivopdf = URL.createObjectURL(file);
+	/*
+	var reader = new FileReader();
+	reader.onload = function (e) {
+		extension = file_extension;
+		archivo = e.target.result;
+		*/
+		document.getElementById("text-carga-2").style.display = ""
+		document.getElementById("text-carga").style.display = "none"
+
+		document.getElementById("btnAddImagen").style.backgroundColor = "";
+		document.getElementById("btnEliminarImagen").style.backgroundColor = "#d5d3d3";
+		document.getElementById("btnVerImagenCliente").style.backgroundColor = "#d5d3d3";
+		$("tr[id=tbSelecRegistroImagen]").each(function (i, td) {
+			td.className = ''
+		});
+
+		elementoimagenseleccionado = "";
+		document.getElementById("file_2").value = "";
+	/*
+	}
+	reader.readAsDataURL(input.files[0]);
+	*/
 }
-file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
-if ((file_extension.toLowerCase()=="jpeg") || (file_extension.toLowerCase()=="jpg") || (file_extension.toLowerCase()=="png")){
-}else{
-ver_vetana_informativa("LA IMAGEN SELECCIONADO DEBE TENER UNA EXTENSIÓN JPEG, JPG O PNG")
-return false;
-}
-var reader = new FileReader();
-reader.onload = function(e){
-	extension = file_extension;
-	archivo = e.target.result;
-	document.getElementById("text-carga-2").style.display=""
-	document.getElementById("text-carga").style.display="none"
-	
-	
-	document.getElementById("btnAddImagen").style.backgroundColor = "";
-	document.getElementById("btnEliminarImagen").style.backgroundColor = "#d5d3d3";
-	document.getElementById("btnVerImagenCliente").style.backgroundColor = "#d5d3d3";
-	$("tr[id=tbSelecRegistroImagen]").each(function(i, td){
-	td.className=''
-});
-	
-	elementoimagenseleccionado="";
-	
-	
-document.getElementById("file_2").value="";
-}
-reader.readAsDataURL(input.files[0]);
-}
+
 function AddCargarFotosCliente(){
   	var codigo=stringGenerador(5);
 	if(archivo ==""){
@@ -36735,15 +36739,26 @@ try {
 
 
 
-
+var ventanaControlCargarFotos= "";
 //ABM Imagenes Cliente Principal
-function verCerrarAbmCargarFotosClientePrincipal(d){
+function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 	if(d=="1"){
 		document.getElementById("divAbmCargarFotosClientePrincipal").style.display = "";
+		ventanaControlCargarFotos= ventanaLlamadora;
 		/* buscarAbmContratoDocumentos() */
-		
+		switch (ventanaControlCargarFotos) {
+			case 'AbmConsulta':
+				document.getElementById('inptNombreClientesFotoPrincipal').value= document.getElementById('inptCIConsulta').value + " - " + document.getElementById('inptPacienteConsulta').value;
+				ControlFotosCliente(document.getElementById('inptNombreClientesFotoPrincipal'));
+				break;
+		}
 	}else{
 		document.getElementById("divAbmCargarFotosClientePrincipal").style.display="none"
+		switch (ventanaControlCargarFotos) {
+			case 'AbmConsulta':
+				buscarVistaGaleriaFoto();
+				break;
+		}
 	}
 }
 function ExploradorArchivoClientesPrincipal(File){	
@@ -36911,9 +36926,8 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 	var datos = new FormData();
 	
 	var control=1
-	$("tr[name=tdDetalleItemImagenPrincipal]").each(function(i, elementohtml){
-			
-			if($(elementohtml).children('td[id="td_id_2"]').html()==""){
+	$("tr[name=tdDetalleItemImagenPrincipal]").each(function(i, elementohtml){	
+		if($(elementohtml).children('td[id="td_id_2"]').html()==""){
 			var archivo=$(elementohtml).children('td[id="td_datos_1"]').html();
 			datos.append("archivo"+control, archivo)
 			
@@ -36927,10 +36941,9 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 			datos.append("fecha"+control, fecha)
 
 			control=control+1;
-			}
-	   });
-	
-	
+		}
+	});
+		
 	 control=control-1;
 	 console.log("Cantidad registro:"+control);
 	 
@@ -36941,7 +36954,7 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 	datos.append("funt", accion)
 	datos.append("idclientefk", idAbmCliente)
 	datos.append("totalregistro", control)
-	
+
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
@@ -37244,10 +37257,9 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 }
  
 function buscarVistaGaleriaFoto(){
-	
+/*
 	var Cod_clienteFotoFK = ""
-	
-	
+		
 		$("input[id=inptBuscarFotoGaleriaCliente]").each(function (i, Elemento) {
       var $input = $(this),
           val = $input.val();
@@ -37264,12 +37276,11 @@ function buscarVistaGaleriaFoto(){
        }
 });
 
-
-if(Cod_clienteFotoFK == ""){
+	if(Cod_clienteFotoFK == ""){
 		ver_vetana_informativa("FALTO SELECCIONAR UN CLIENTE", "#")
 		return;
 	}
-
+*/
 	var descripcion = document.getElementById("inptBuscarFotoGaleriaDescripcion").value
 	
 	document.getElementById("table_frm_VistaGaleria").innerHTML = ''
@@ -37278,7 +37289,8 @@ if(Cod_clienteFotoFK == ""){
 		"useru": userid,
 		"passu": passuser,
 		"navegador": navegador,
-		"idcliente": Cod_clienteFotoFK,
+		//"idcliente": Cod_clienteFotoFK,
+		"idcliente": cod_clienteConsulta,
 		"descripcion": descripcion,
 		"funt": "buscarDocumentosGaleriaFoto"
 	};

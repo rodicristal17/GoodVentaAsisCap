@@ -9973,10 +9973,9 @@ style='background-color: #b7b7b7;'>
   </div>
 </div>
 
- 
-
       <!-- Botón Guardar -->
       <div style="text-align: center; margin-top: 20px;">
+        <input type="button" value="Subir imagen" class="btn1" onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')" id="btnSubirImagen">
         <input type="button" value="Guardar Consulta" class="btn1" onclick="VerificarAbmConsulta()" id="btnAbmConsulta">
       </div>
 
@@ -9986,8 +9985,7 @@ style='background-color: #b7b7b7;'>
   </div>
 
 </div>
- 
-
+<div class="div_cuerpo_table2" id="table_frm_VistaGaleria" style='min-height:280px;border:none;overflow:auto'></div>
 </div>
 
 </center>
@@ -20961,7 +20959,7 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <table class='tableArchivo'>
 <tr>
 <td style='width:25%;text-align:center' >
-<span class='text_cargar_doc' id='text-cargaPrincipal' onclick='ExploradorArchivoClientes("file_2Principal")' >Cargar Archivo</span>
+<span class='text_cargar_doc' id='text-cargaPrincipal' onclick='ExploradorArchivoClientes("file_2Principal")' style="display: inline-flex;justify-content: center;min-height: 250px;">Cargar Archivo</span>
 <span class='text_cargar_doc_2' style='display:none' id='text-carga-2Principal' >Listo</span>
 </td>
 </tr>
@@ -20976,7 +20974,7 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <tr>
 <td>
 <p class="pTitulo5">Cliente :</p>
-<input id='inptNombreClientesFotoPrincipal' list='ListCliente' style='width:350px' type='text' class='inputText' onkeyup='ControlFotosCliente(this)'
+<input id='inptNombreClientesFotoPrincipal' list='ListCliente' style='width:100%' type='text' class='inputText' onkeyup='ControlFotosCliente(this)'
 >
 
 
@@ -20989,34 +20987,16 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
  
 <br>
 
-<table style='width:100%'>
-<tr>
-<td>
-<table style="width:100%">
-<tbody>
-<tr>
-<td>
-<p class="pTitulo5">Descripción :</p>
-<input id='inptDescripcionCargarFotosClientesPrincipal' style='width:310px' type='text' class='inputText' >
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-<td>
-<table style="width:100%">
-<tbody>
-<tr>
-<td>
-<p class="pTitulo5">Fecha :</p>
-<input id='inptFechaCargarFotosClientePrincipal' type='date' class='inputText'>
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-</table>
+<div class="divMenuh">
+  <div class="divFloat2 panel-izquierdo" style="min-width: 125px;">
+    <p class="pTitulo5">Fecha :</p>
+    <input id='inptFechaCargarFotosClientePrincipal' type='date' class='inputText'>
+  </div>
+  <div class="divFloat2 panel-derecho" style="min-width: 0;">
+    <p class="pTitulo5">Descripción :</p>
+    <input id='inptDescripcionCargarFotosClientesPrincipal' style='width:100%;' type='text' class='inputText'>
+  </div>
+</div>
 
 <br>
 
@@ -21051,9 +21031,7 @@ Fecha
 <br>
 </div>
 
-<input  type="button" value="Ver Galeria" class="btn2" onclick="verCerrarAbmVistaGaleria()"  >
-<br>
-
+<!--input  type="button" value="Ver Galeria" class="btn2" onclick="verCerrarAbmVistaGaleria()" -->
 
 </div>
 </center>
@@ -26058,7 +26036,7 @@ style='color:#673ab7'  > Actualización</span></h1>
 </div>
 
 <div class='principal2' style='display:none;background-color:#fff'  id='divVistaDocumento' >
-		<center>
+		<center style="width: 100vw; height: 89vh;">
 	     <table class='tableMenuZ'>
 		<tr>
 		<td style='width:20%;text-align:left'><p class='pTituloB'>Visor de <b style='font-size:30px'>Imagen</b></p></td>
@@ -26066,7 +26044,7 @@ style='color:#673ab7'  > Actualización</span></h1>
 		<td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='VerCargarFotosCliente("2")' /></td>
 		</tr>
 		</table>
-		<embed style='width:100%;height:90%' id='docVisor' type='application/pdf'/>
+    <embed style='max-height:100%;max-width: 100%;object-fit: contain; width: auto; height: auto;' id='docVisor' type='application/pdf'/>
 		</center>
 		</div>
 
