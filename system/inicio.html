@@ -20822,115 +20822,107 @@ FECHA.
 
 
 <div class='principal2' style='display:none' id='divAbmCargarFotosCliente'>
-<table style='width:100%;height:100%'>
-<tr>
-<td>
-<center>
-<div class='divAbms'  style='display:;width: 500px;height:760px;'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Seleccionar Imagenes</p>
-</td>
-<td style='width:5%;text-align:center'> <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png'
-class='iconoBtn' title='Limpiar campos' onclick='LimpiarCamposCargarFotosCliente()' /></td>
-<td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/flechaderecha.png'
-class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosCliente("2")' /></td>
-</tr>
-</table>
-<div class='divMenuf'>
-<table style='width:100%;'>
-<tr>
-<td style='width:100%;text-align:center'>
-<center>
-<div class='divArhivos'>
-<table class='tableArchivo'>
-<tr>
-<td style='width:25%;text-align:center' >
-<span class='text_cargar_doc' id='text-carga' onclick='ExploradorArchivoClientes("file_2")' >Cargar Archivo</span>
-<span class='text_cargar_doc_2' style='display:none' id='text-carga-2' >Listo</span>
-</td>
-</tr>
-</table>
-<input type="file" id="file_2" name="file_2" style="display:none;" onchange='readFileDoc(this)'     />
-<table style='width:100%'>
-<tr>
-<td>
-<table style="width:100%">
-<tbody>
-<tr>
-<td>
-<p class="pTitulo5">Descripción :</p>
-<input id='inptDescripcionCargarFotosClientes' style='width:310px' type='text' class='inputText' >
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-<td>
-<table style="width:100%">
-<tbody>
-<tr>
-<td>
-<p class="pTitulo5">Fecha :</p>
-<input id='inptFechaCargarFotosCliente' type='date' class='inputText'>
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-</table>
+  <table style='width:100%;height:100%'>
+    <tr>
+      <td>
+        <center>
+          <div class='divAbms' style='display:;width: 500px;height:760px;'>
+            <table class='tableMenuZ'>
+              <tr>
+                <td style='width:100%;text-align:left'>
+                  <p class='pTituloB'>Seleccionar Imagenes</p>
+                </td>
+                <td style='width:5%;text-align:center'> <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png'
+                    class='iconoBtn' title='Limpiar campos' onclick='LimpiarCamposCargarFotosCliente()' /></td>
+                <td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/flechaderecha.png'
+                    class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosCliente("2")' /></td>
+              </tr>
+            </table>
+            <div class='divMenuf'>
+              <table style='width:100%;'>
+                <tr>
+                  <td style='width:100%;text-align:center'>
+                    <center>
+                      <div class='divArhivos'>
+                        <table class='tableArchivo'>
+                          <tr>
+                            <td style='width:25%;text-align:center'>
+                              <span class='text_cargar_doc' id='text-carga'
+                                onclick='ExploradorArchivoClientes("file_2")'>Cargar Archivo</span>
+                              <span class='text_cargar_doc_2' style='display:none' id='text-carga-2'>Listo</span>
+                            </td>
+                          </tr>
+                        </table>
+                        <input type="file" id="file_2" name="file_2" style="display:none;"
+                          onchange='readFileDoc(this)' />
+                        <table style='width:100%'>
+                          <tr>
+                            <td>
+                              <table style="width:100%">
+                                <tbody>
+                                  <tr>
+                                    <td>
+                                      <p class="pTitulo5">Descripción :</p>
+                                      <input id='inptDescripcionCargarFotosClientes' style='width:310px' type='text'
+                                        class='inputText'>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                            <td>
+                              <table style="width:100%">
+                                <tbody>
+                                  <tr>
+                                    <td>
+                                      <p class="pTitulo5">Fecha :</p>
+                                      <input id='inptFechaCargarFotosCliente' type='date' class='inputText'>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
 
-<input id="btnAddImagen" type="button" value="Añadir" class="btn5" onclick="AddCargarFotosCliente()" style="background-color:#d5d3d3">
-<br><br>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:20%;">
-Archivo
-</td>
-<td class="td_registro" style="width:60%;">
-Descripción
-</td>
-<td class="td_registro" style="width:20%;">
-Fecha
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_abm_imagen_clientes" style='height:149px'>
+                        <input id="btnAddImagen" type="button" value="Añadir" class="btn5"
+                          onclick="AddCargarFotosCliente()" style="background-color:#d5d3d3">
+                        <br><br>
+                        <table class="tableCabeceraRegistro">
+                          <tbody>
+                            <tr>
+                              <td class="td_registro" style="width:20%;">
+                                Archivo
+                              </td>
+                              <td class="td_registro" style="width:60%;">
+                                Descripción
+                              </td>
+                              <td class="td_registro" style="width:20%;">
+                                Fecha
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div class="div_cuerpo_table" id="table_abm_imagen_clientes" style='height:149px'>
+                        </div>
+                      </div>
+                      <br>
+                      <input id="btnEliminarImagen" type="button" value="Eliminar" class="btn5"
+                        onclick="EliminarCargarFotosCliente()" style="background-color:#d5d3d3">
+                      <input id="btnVerImagenCliente" type="button" value="Ver" class="btn5"
+                        onclick='VerCargarFotosCliente("1")' style="background-color:#d5d3d3">
+                      <br>
+                    </center>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div
+        </center>
+      </td>
+    </tr>
+  </table>
 </div>
-</div>
-<br>
-<input id="btnEliminarImagen" type="button" value="Eliminar" class="btn5" onclick="EliminarCargarFotosCliente()" style="background-color:#d5d3d3">
-<input id="btnVerImagenCliente" type="button" value="Ver" class="btn5" onclick='VerCargarFotosCliente("1")' style="background-color:#d5d3d3">
-<br>
-</center>
-</td>
-</tr>
-</table>
-</div>
-</div>
-
-
-
-
-</center>
-</td>
-</tr>
-</table>
-</div>
-
-
-
-
-
-
-
-
-
-
 
 <div class='principal2' style='display:none' id='divAbmCargarFotosClientePrincipal'>
 <table style='width:100%;height:100%'>
@@ -20955,7 +20947,7 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <td style='width:100%;text-align:center'>
 <center>
 <div class='divMenuf' style='  width: 97%; border: none; '>
-<div class='divArhivos' style='width:48%; float: left;  margin: 1%;'>
+<div class='divArhivos' style='margin: 1%;'>
 <table class='tableArchivo'>
 <tr>
 <td style='width:25%;text-align:center' >
@@ -21004,7 +20996,7 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <br>
 </div>
 
-<div class='divArhivos' style='width:48%; float: left;  margin: 1%;'>
+<div class='divArhivos' style='margin: 1%;'>
 
 
 <table class="tableCabeceraRegistro">
