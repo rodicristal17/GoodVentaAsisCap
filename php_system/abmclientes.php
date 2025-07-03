@@ -281,9 +281,12 @@ function buscarDocumentosGaleriaFoto($idcliente,$descripcion)
 		 $condicionDescripcion=" and descripcion like '%".$descripcion."%'";
 	 }
 	 
-	 
+	$condicionVenta= "";
+	if (isset($_POST['codVenta']) && !empty($_POST['codVenta'])) {
+		$condicionVenta= " and cod_ventaFK = ".$_POST['codVenta'];
+	}
 		$sql= "SELECT *
-				FROM fotos_cliente where cod_clienteFK='$idcliente' ".$condicionDescripcion." order by idfotos_cliente asc ";
+				FROM fotos_cliente where cod_clienteFK='$idcliente' ".$condicionDescripcion.$condicionVenta." order by idfotos_cliente asc ";
   
    $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
@@ -1812,8 +1815,16 @@ function insertardocumento($cod_detalle,$exte,$archivo,$descripcion,$fecha)
 	CargaDocumento($ruta,$cod_detalle,$descripcion,$fecha);
 }
 function CargaDocumento($Urldoc,$idcontratofk,$descripcion,$fecha){
+	$params= "url,cod_clienteFK,descripcion,fecha";
+	$valores= "'$Urldoc','$idcontratofk','$descripcion','$fecha'";
+
+	if (isset($_POST['codVenta']) && !empty($_POST['codVenta'])) {
+		$params .= ',cod_ventaFK';
+		$valores .= ", ".$_POST['codVenta'];
+	}
+
 	$mysqli=conectar_al_servidor();
-	$consulta="INSERT INTO fotos_cliente (url,cod_clienteFK,descripcion,fecha) VALUES ('$Urldoc','$idcontratofk','$descripcion','$fecha') ";
+	$consulta="INSERT INTO fotos_cliente ($params) VALUES ($valores)";
 	
 $stmt = $mysqli->prepare($consulta);
 

@@ -36871,7 +36871,7 @@ document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "#d5d3d
 
 document.getElementById('inptDescripcionCargarFotosClientesPrincipal').value=""
 document.getElementById('inptFechaCargarFotosClientePrincipal').value=""
-document.getElementById('text-cargaPrincipal').style.display=""
+document.getElementById('text-cargaPrincipal').style.display="inline-flex";
 document.getElementById('text-carga-2Principal').style.display="none"
 
 archivoPrincipal = "";
@@ -36946,7 +36946,7 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 		
 	 control=control-1;
 	 console.log("Cantidad registro:"+control);
-	 
+
 	obtener_datos_user();
 	datos.append("useru", userid)
 	datos.append("passu", passuser)
@@ -36954,6 +36954,8 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 	datos.append("funt", accion)
 	datos.append("idclientefk", idAbmCliente)
 	datos.append("totalregistro", control)
+	datos.append("codVenta", cod_ventaFKConsulta);
+	 console.warn(cod_ventaFKConsulta);
 
 	var OpAjax = $.ajax({
 		data: datos,
@@ -37107,7 +37109,7 @@ function LimpiarCamposCargarFotosClientePrincipal(){
 	document.getElementById("inptDescripcionCargarFotosClientesPrincipal").value=""
 	document.getElementById("inptNombreClientesFotoPrincipal").value = ""
 	document.getElementById("inptFechaCargarFotosClientePrincipal").value=""
-	document.getElementById("text-cargaPrincipal").style.display=""
+	document.getElementById("text-cargaPrincipal").style.display="inline-text";
 	document.getElementById("text-carga-2Principal").style.display="none"
 	elementoimagenseleccionadoPrincipal =""
 	archivoPrincipal="";
@@ -37292,6 +37294,7 @@ function buscarVistaGaleriaFoto(){
 		//"idcliente": Cod_clienteFotoFK,
 		"idcliente": cod_clienteConsulta,
 		"descripcion": descripcion,
+		"codVenta": cod_ventaFKConsulta,
 		"funt": "buscarDocumentosGaleriaFoto"
 	};
 	$.ajax({

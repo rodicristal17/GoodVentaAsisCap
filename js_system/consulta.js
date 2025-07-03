@@ -1862,14 +1862,8 @@ function limpiarcamposConsulta(){
 	document.getElementById("btnAbmConsulta").value="Guardar Datos"
  
 	cod_consulta=""
- 
-	
+ 	cod_ventaFKConsulta="";
 }
-
-
-
-
-
 
 let cod_consulta ="";
 function VerificarAbmConsulta() {
