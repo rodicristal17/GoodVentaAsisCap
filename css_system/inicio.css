@@ -1036,3 +1036,17 @@ label {
 .datos-ocultos {
   display: none;
 }
+
+.divArhivos {
+    flex: 1;
+    width: 48%;
+    min-width: 300px;
+    float: left;
+}
+
+@media (max-width: 815px) {
+    .divArhivos {
+        min-width: 100%;
+        float: none;
+    }
+}
