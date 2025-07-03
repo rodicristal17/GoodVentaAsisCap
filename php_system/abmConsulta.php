@@ -555,31 +555,54 @@ if ( ! $stmt->execute()) {
 			  $medico='';
 			  $paciente=utf8_encode($valor['paciente']);
 			  $cod_cliente=utf8_encode($valor['cod_cliente']);
-			   $fecha_con=''; 
 			   $decripcion=''; 
 			   $cod_venta=utf8_encode($valor['cod_venta']);
+			   
+			   $descripcion= detalleTratamiento($cod_venta);
 			    	 
-		  	  $pagina.="
-			  <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)'>
-  <h3 class='titulo'>DATOS PACIENTE</h3>
-  <p><span class='etiqueta'>NOMBRE:</span> <span class='valor'>$paciente</span></p>
-  <p><span class='etiqueta'>CI:</span> <span class='valor'>$ci_cliente</span></p>
-  <p><span class='etiqueta'>COD:</span> <span class='valor'>$num_factura</span></p>
-  <p><span class='etiqueta'>OBS:</span> <span class='valor'>$decripcion</span></p>
+		$pagina .= "
+<div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 10px 0;
+  height: auto;
+  padding: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+'>
+  <h3 style='
+    margin-top:0;
+    margin-bottom:10px;
+    font-size: 16px;
+    color: #333;
+  '>DATOS PACIENTE</h3>
+  
+  <p><strong>Nombre:</strong> $paciente</p>
+  <p><strong>CI:</strong> $ci_cliente</p>
+  <p><strong>Código venta:</strong> $num_factura</p>
 
+  <div style='
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+  '>
+    <strong>Tratamientos:</strong>
+    $descripcion
+  </div>
+  
   <!-- Datos ocultos -->
-  <div class='datos-ocultos'>
-    <span id='td_datos_1' hidden>$paciente</span>
-    <span id='td_datos_2' hidden>$ci_cliente</span>
-    <span id='td_datos_3' hidden>$num_factura</span>
-    <span id='td_datos_4' hidden>$cod_agendamiento</span> 
-    <span id='td_datos_5' hidden>$cod_venta</span> 
-    <span id='td_datos_6' hidden>$cod_cliente</span> 
+  <div style='display:none;'>
+    <span id='td_datos_1'>$paciente</span>
+    <span id='td_datos_2'>$ci_cliente</span>
+    <span id='td_datos_3'>$num_factura</span>
+    <span id='td_datos_4'>$cod_agendamiento</span> 
+    <span id='td_datos_5'>$cod_venta</span> 
+    <span id='td_datos_6'>$cod_cliente</span> 
   </div>
 </div>
 ";
-		// $pagina.=$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina;	  
-			  
+
+   
 	  }
  }
  
@@ -592,6 +615,47 @@ echo json_encode($informacion);
 exit;
 
 
+}
+ 
+function detalleTratamiento($buscar) {
+    $mysqli = conectar_al_servidor();
+
+    $sql = "SELECT pr.cod_producto, pr.nombre_producto 
+            FROM producto pr 
+            INNER JOIN detalle_venta dtv ON dtv.cod_productoFK = pr.cod_producto
+            WHERE dtv.cod_ventaFK = '$buscar'";
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt->execute()) {
+        trigger_error('Query error: '.$stmt->error, E_USER_ERROR);
+        exit;
+    }
+
+    $result = $stmt->get_result();
+    $valor = mysqli_num_rows($result);
+
+    $html = "<ul style='list-style-type:none; padding:0; margin:0;'>";
+
+    if ($valor > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $nombre_producto = utf8_encode($row['nombre_producto']);
+            $html .= "
+            <li style='
+                background-color:#f2f2f2;
+                margin-bottom:4px;
+                padding:5px 10px;
+                border-radius:4px;
+                font-size:13px;
+            '>
+            $nombre_producto
+            </li>";
+        }
+    } else {
+        $html .= "<li style='color:#999'>Sin tratamientos registrados</li>";
+    }
+    $html .= "</ul>";
+
+    return $html;
 }
 
 

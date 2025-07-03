@@ -460,15 +460,7 @@ box-shadow: rgb(53 57 67 / 48%) 3px 3px 8px;
   background-color: #0056b3;
 }
 
-.tabla-resultados {
-  margin-top: 10px;
-  background-color: #fff;
-  border-radius: 10px;
-  min-height: 280px;
-  overflow: auto;
-  padding: 10px;
-  border: 1px solid #ddd;
-}
+
 
 
 @media (max-width: 600px) {
@@ -623,17 +615,6 @@ box-shadow: rgb(53 57 67 / 48%) 3px 3px 8px;
 }
 
 
-
-.contenedor-formulario {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: flex-start;
-  /* border: 1px solid #a5a4a4; */
-    margin: 1%;
-    border-radius: 5px;
-	    padding: 10px;
-}
 
 .campo-form {
    flex: 1 1 250px;  
@@ -1049,4 +1030,88 @@ label {
         min-width: 100%;
         float: none;
     }
+}
+
+
+
+#table_frm_VistaConsulta {
+  max-height: 70vh;
+  overflow-y: auto;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+
+
+.tabla-resultados {
+  margin-top: 10px;
+  background-color: #fff;
+  border-radius: 10px;
+  min-height: 280px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+
+.contenedor-formulario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start;
+  /* border: 1px solid #a5a4a4; */
+    margin: 1%;
+    border-radius: 5px;
+	    padding: 10px;
+}
+#table_frm_VistaConsulta {
+  max-height: 70vh;
+  overflow-y: auto;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Grid adaptable */
+.tabla-resultados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 300px fijo mínimo */
+  gap: 16px;
+  margin-top: 10px;
+  background-color: #fff;
+  border-radius: 10px;
+  min-height: 280px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Tarjeta */
+.tarjeta-paciente {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+  width: 100%; /* para que ocupe su celda de grid */
+  box-sizing: border-box;
+}
+
+.tarjeta-paciente:hover {
+  transform: scale(1.02);
+  cursor: pointer;
+}
+
+.tarjeta-paciente h3 {
+  margin-top: 0;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.tarjeta-paciente p {
+  margin: 4px 0;
+  font-size: 14px;
 }

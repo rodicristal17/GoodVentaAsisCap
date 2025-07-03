@@ -1295,8 +1295,7 @@ $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
 $styleName="tableRegistroSearch";
-
-
+ 
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
