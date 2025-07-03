@@ -1066,12 +1066,13 @@ label {
 	    padding: 10px;
 }
 #table_frm_VistaConsulta {
-  max-height: 70vh;
+  height: calc(100vh - 70px);
   overflow-y: auto;
   width: 100%;
-  padding: 10px;
   box-sizing: border-box;
+  padding: 10px;
 }
+
 
 /* Grid adaptable */
 .tabla-resultados {
