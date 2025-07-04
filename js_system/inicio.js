@@ -12019,6 +12019,10 @@ function VerCargarFotosCliente(d){
 	if(d == "2"){
 		document.getElementById('divVistaDocumento').style.display = "none"
 		document.getElementById("docVisor").setAttribute('src',"");
+		let aumentados= document.getElementsByClassName("magnifier-class");
+		aumentados.forEach(element => {
+			element.remove();
+		});
 		return;
 	}
 	
@@ -37470,10 +37474,10 @@ try {
 
 /* Funciones de lupa */
 function enableMagnifier(imgSelector, zoom = 2) {
-  const container = document.querySelector(imgSelector);console.warn(container)
+  const container = document.querySelector(imgSelector);
   if (!container) return;
 
-  const img = container.querySelector("img");console.warn(img)
+  const img = container.querySelector("img");
   if (!img) return;
 
   // Creamos el vidrio lupa
@@ -37483,7 +37487,6 @@ function enableMagnifier(imgSelector, zoom = 2) {
 
   // Fondo del vidrio con la misma imagen
   glass.style.backgroundImage = `url(${img.src})`;
-  console.warn(`url(${img.src})`);
   glass.style.backgroundSize = (img.width * zoom) + "px " + (img.height * zoom) + "px";
 
   container.addEventListener("mousemove", moveMagnifier);
@@ -37491,37 +37494,41 @@ function enableMagnifier(imgSelector, zoom = 2) {
   container.addEventListener("mouseleave", () => glass.style.opacity = 0);
 
   function moveMagnifier(e) {
-    const rect = container.getBoundingClientRect();
+	const cRect = container.getBoundingClientRect();
+	const iRect = img.getBoundingClientRect();
 
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
+	// Coordenadas relativas a la esquina superior de la imagen
+	let x = e.clientX - iRect.left;
+	let y = e.clientY - iRect.top;
 
-    // Limitar posición del cursor para que la lupa no salga del contenedor
-    if (x < 0) x = 0;
-    if (x > rect.width) x = rect.width;
-    if (y < 0) y = 0;
-    if (y > rect.height) y = rect.height;
+	// Limitar a los bordes de la imagen
+	if (x < 0) x = 0;
+	if (x > iRect.width) x = iRect.width;
+	if (y < 0) y = 0;
+	if (y > iRect.height) y = iRect.height;
 
-    // Posición de la lupa (centrada en el cursor)
-    const glassWidth = glass.offsetWidth / 2;
-    const glassHeight = glass.offsetHeight / 2;
-    let glassX = x - glassWidth;
-    let glassY = y - glassHeight;
+	// Posicionar la lupa en el contenedor
+	const halfW = glass.offsetWidth / 2;
+	const halfH = glass.offsetHeight / 2;
+	// glassX/Y respecto al contenedor
+	let glassX = e.clientX - cRect.left - halfW;
+	let glassY = e.clientY - cRect.top  - halfH;
 
-    // Limitar la lupa para que no se salga fuera del contenedor
-    if (glassX < 0) glassX = 0;
-    if (glassY < 0) glassY = 0;
-    if (glassX > rect.width - glass.offsetWidth) glassX = rect.width - glass.offsetWidth;
-    if (glassY > rect.height - glass.offsetHeight) glassY = rect.height - glass.offsetHeight;
+	// Evitar que la lupa se salga del contenedor
+	if (glassX < 0) glassX = 0;
+	if (glassY < 0) glassY = 0;
+	if (glassX > cRect.width - glass.offsetWidth)
+		glassX = cRect.width - glass.offsetWidth;
+	if (glassY > cRect.height - glass.offsetHeight)
+		glassY = cRect.height - glass.offsetHeight;
 
-    glass.style.left = glassX + "px";
-    glass.style.top = glassY + "px";
+	glass.style.left = glassX + "px";
+	glass.style.top  = glassY + "px";
 
-    // Calcular la posición correcta del fondo del vidrio para sincronizar el zoom
-    // Movemos el fondo al contrario: pulse la lupa se mueve a x,y, la imagen de fondo se mueve a x*zoom menos el centro de la lupa
-    const bgX = -((x * zoom) - glassWidth);
-    const bgY = -((y * zoom) - glassHeight);
-
-    glass.style.backgroundPosition = bgX + "px " + bgY + "px";
-  }
+	// Fondo ajustado a la posición dentro de la imagen
+	const bgX = -((x * zoom) - halfW);
+	const bgY = -((y * zoom) - halfH);
+	glass.style.backgroundPosition = `${bgX}px ${bgY}px`;
+	glass.style.backgroundSize = `${img.width * zoom}px ${img.height * zoom}px`;
+	}
 }
