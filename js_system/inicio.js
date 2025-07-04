@@ -12031,8 +12031,10 @@ function VerCargarFotosCliente(d){
 	document.getElementById('divVistaDocumento').style.display = ""
 	if($(elementoimagenseleccionado).children('td[id="td_id_2"]').html()==""){
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionado).children('td[id="td_datos_3"]').html());
+		enableMagnifier(".magnifier-container");
 	}else{
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionado).children('td[id="td_datos_1"]').html());
+		enableMagnifier(".magnifier-container");
 	}
 	
 	}else{
@@ -37005,8 +37007,10 @@ function VerCargarFotosClientePrincipal(d){
 	document.getElementById('divVistaDocumento').style.display = ""
 	if($(elementoimagenseleccionadoPrincipal).children('td[id="td_id_2"]').html()==""){
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoPrincipal).children('td[id="td_datos_3"]').html());
+		enableMagnifier(".magnifier-container");
 	}else{
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoPrincipal).children('td[id="td_datos_1"]').html());
+		enableMagnifier(".magnifier-container");
 	}
 	
 	}else{
@@ -37359,8 +37363,10 @@ function SeleccionarItemImagenGaleriaFoto(datostr) {
 	document.getElementById('divVistaDocumento').style.display = ""
 	if($(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_id_2"]').html()==""){
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_datos_3"]').html());
+		enableMagnifier(".magnifier-container");
 	}else{
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_datos_1"]').html());
+		enableMagnifier(".magnifier-container");
 	}
 	
 	 
@@ -37462,3 +37468,60 @@ try {
 
 }
 
+/* Funciones de lupa */
+function enableMagnifier(imgSelector, zoom = 2) {
+  const container = document.querySelector(imgSelector);console.warn(container)
+  if (!container) return;
+
+  const img = container.querySelector("img");console.warn(img)
+  if (!img) return;
+
+  // Creamos el vidrio lupa
+  const glass = document.createElement("div");
+  glass.className = "magnifier-glass";
+  container.appendChild(glass);
+
+  // Fondo del vidrio con la misma imagen
+  glass.style.backgroundImage = `url(${img.src})`;
+  console.warn(`url(${img.src})`);
+  glass.style.backgroundSize = (img.width * zoom) + "px " + (img.height * zoom) + "px";
+
+  container.addEventListener("mousemove", moveMagnifier);
+  container.addEventListener("mouseenter", () => glass.style.opacity = 1);
+  container.addEventListener("mouseleave", () => glass.style.opacity = 0);
+
+  function moveMagnifier(e) {
+    const rect = container.getBoundingClientRect();
+
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    // Limitar posición del cursor para que la lupa no salga del contenedor
+    if (x < 0) x = 0;
+    if (x > rect.width) x = rect.width;
+    if (y < 0) y = 0;
+    if (y > rect.height) y = rect.height;
+
+    // Posición de la lupa (centrada en el cursor)
+    const glassWidth = glass.offsetWidth / 2;
+    const glassHeight = glass.offsetHeight / 2;
+    let glassX = x - glassWidth;
+    let glassY = y - glassHeight;
+
+    // Limitar la lupa para que no se salga fuera del contenedor
+    if (glassX < 0) glassX = 0;
+    if (glassY < 0) glassY = 0;
+    if (glassX > rect.width - glass.offsetWidth) glassX = rect.width - glass.offsetWidth;
+    if (glassY > rect.height - glass.offsetHeight) glassY = rect.height - glass.offsetHeight;
+
+    glass.style.left = glassX + "px";
+    glass.style.top = glassY + "px";
+
+    // Calcular la posición correcta del fondo del vidrio para sincronizar el zoom
+    // Movemos el fondo al contrario: pulse la lupa se mueve a x,y, la imagen de fondo se mueve a x*zoom menos el centro de la lupa
+    const bgX = -((x * zoom) - glassWidth);
+    const bgY = -((y * zoom) - glassHeight);
+
+    glass.style.backgroundPosition = bgX + "px " + bgY + "px";
+  }
+}
