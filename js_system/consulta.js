@@ -1438,29 +1438,9 @@ document.getElementById("divPieImpresiones").innerHTML=paginaPie
 
 
 
-function buscarVistaConsulta() {	
-	let especialista = document.getElementById("inptBuscarFrmPaciente").value 
-	let fecha = document.getElementById("inptBuscarFrmFechaPaciente").value 
-	
-	if(document.getElementById("inptBuscarFrmPaciente").value!=""){
-		
-			$("input[id=inptBuscarFrmPaciente]").each(function (i, Elemento) {
-			  var $input = $(this),
-				  val = $input.val();
-				 
-				  list = $input.attr('list'),
-				  match = $('#'+list + ' option').filter(function() {
-					  return ($(this).val() === val);			 
-				  });
-
-			   if(match.length > 0) {
-				 especialista=$(match).attr("id")
-			   } else {
-				   // value is not in list
-			   }
-		});
-	}
-		
+function buscarVistaConsulta() {	 
+	let local = document.getElementById("inptBuscarLocalPaciente").value 
+	 
 
 	let paciente =  document.getElementById("inptBuscarFrmPacienteVistaConsulta").value 
  // alert(paciente)
@@ -1468,10 +1448,9 @@ function buscarVistaConsulta() {
 	var datos = {
 		"useru": userid,
 		"passu": passuser,
-		"navegador": navegador, 
-		"Cod_especialista": especialista, 
+		"navegador": navegador,   
 		"Paciente": paciente, 
-		"fecha": fecha, 
+		"local": local, 
 		"funt": "buscarVistaConsulta"
 	};
 	$.ajax({

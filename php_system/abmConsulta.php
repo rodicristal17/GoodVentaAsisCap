@@ -26,14 +26,12 @@ exit;
 
 
 if($operacion=="buscarVistaConsulta")
-{	
-	$Cod_especialista=$_POST['Cod_especialista'];
-    $Cod_especialista = utf8_decode($Cod_especialista);
+{	 
 	$Paciente=$_POST['Paciente'];
     $Paciente = utf8_decode($Paciente);
-	$fecha=$_POST['fecha'];
-    $fecha = utf8_decode($fecha);
-	buscarVistaConsulta($Cod_especialista,$Paciente,$fecha);
+	$local=$_POST['local'];
+    $local = utf8_decode($local);
+	buscarVistaConsulta($Paciente,$local);
 }	
  
 if($operacion=="buscarDetalleCompradoConsulta")
@@ -504,19 +502,16 @@ exit;
 
  
 
- function buscarVistaConsulta($Cod_especialista,$Paciente,$fecha)
+ function buscarVistaConsulta($Paciente,$local)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
 	 
-	 $condicionCod_especialista="";
-	if($Cod_especialista!=""){
-		$condicionCod_especialista=" and  ag.cod_usuarioFK = '".$Cod_especialista."' ";
-	}
+ 
 	
-		$condicionfecha="";
-	if($fecha!=""){
-		$condicionfecha=" and  fecha_con= DATE_FORMAT('".$fecha."', '%Y-%m-%d') ";
+		$condicionlocal="";
+	if($local!=""){
+		$condicionlocal=" and  cod_local='".$local."' ";
 	}
 	
 	$condicionPaciente="";
@@ -528,7 +523,7 @@ exit;
 		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta
 		from venta inner join cliente cl on cod_clienteFK=cod_cliente
 		inner join persona p on cod_cliente=cod_persona
-			 where cl.estado = 'Activo'".$condicionPaciente." limit 100;";
+			 where cl.estado = 'Activo'".$condicionPaciente.$condicionlocal." limit 100;";
  
  // echo($sql);
  // exit;

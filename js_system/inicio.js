@@ -10154,6 +10154,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalsolicitudCredito").innerHTML ="";
 	document.getElementById("inptlocalContabilidad").innerHTML ="";
 	document.getElementById("inptlocalContabilidadCompra").innerHTML =""	
+	document.getElementById("inptBuscarLocalPaciente").innerHTML =""	
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10204,6 +10205,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
+					document.getElementById("inptBuscarLocalPaciente").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocaluser").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalsolicitudCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					
@@ -10337,6 +10339,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 
 function seleccionarLocalUSer(){
+			document.getElementById("inptBuscarLocalPaciente").value = cod_localFKUSer
 			document.getElementById("inptlocaluser").value = cod_localFKUSer
 			document.getElementById("inptlocalsolicitudCredito").value = cod_localFKUSer
 			
