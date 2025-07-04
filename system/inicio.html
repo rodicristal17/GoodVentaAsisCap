@@ -20948,17 +20948,36 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <center>
 <div class='divMenuf' style='  width: 97%; border: none; '>
 <div class='divArhivos' style='margin: 1%;'>
-<table class='tableArchivo'>
-<tr>
-<td style='width:25%;text-align:center' >
-<span class='text_cargar_doc' id='text-cargaPrincipal' onclick='ExploradorArchivoClientes("file_2Principal")' style="display: inline-flex;justify-content: center;min-height: 250px;display: inline-flex;">Cargar Archivo</span>
-<span class='text_cargar_doc_2' style='display:none' id='text-carga-2Principal' >Listo</span>
-</td>
-</tr>
+ 
+<table class="tableArchivo" style="width:100%;">
+  <tr>
+    <td style="width:25%; text-align:center;">
+      <div class="upload-area" onclick="document.getElementById('file_2Principal').click()">
+        <!-- Ícono SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+        </svg>
+        <span class="upload-text" id="text-cargaPrincipal">Haz clic para subir archivo (JPG)</span>
+        <span class="upload-success" id="text-carga-2Principal">✅ Archivo cargado con éxito</span>
+      </div>
+      <div class="file-name" id="nombreArchivo"></div>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-bar-inner" id="progressBarInner"></div>
+      </div>
+    </td>
+  </tr>
 </table>
 
-<input type="file" id="file_2Principal" name="file_2Principal" style="display:none;" onchange='readFileDocPrincipal(this)'     />
- 
+<input
+  type="file"
+  id="file_2Principal"
+  name="file_2Principal"
+  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+  style="display:none;"
+  onchange="readFileDocPrincipal(this)"
+/>
+
+
  <br>
  
 <table style="width:100%">
@@ -20966,10 +20985,7 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <tr>
 <td>
 <p class="pTitulo5">Cliente :</p>
-<select class="inputfiltro" id="inptNombreClientesFotoPrincipal"></select>
- 
- 
-
+<input id='inptNombreClientesFotoPrincipal' type='text' disabled class='inputTextDisable'>
 </td>
 </tr>
 </tbody>
@@ -20980,7 +20996,7 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <div class="divMenuh">
   <div class="divFloat2 panel-izquierdo" style="min-width: 125px;">
     <p class="pTitulo5">Fecha :</p>
-    <input id='inptFechaCargarFotosClientePrincipal' type='date' class='inputText'>
+    <input id='inptFechaCargarFotosClientePrincipal' type='date' disabled class='inputTextDisable'>
   </div>
   <div class="divFloat2 panel-derecho" style="min-width: 0;">
     <p class="pTitulo5">Descripción :</p>

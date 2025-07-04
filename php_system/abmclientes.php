@@ -251,7 +251,11 @@ if($operacion=="buscarDatalis")
 if($operacion=="buscarDocumentosPrincipal"){
 $idcliente=$_POST['idcliente'];
 $idcliente = utf8_decode($idcliente);
-buscarDocumentosPrincipal($idcliente);
+
+$cod_ventaFK=$_POST['cod_ventaFK'];
+$cod_ventaFK = utf8_decode($cod_ventaFK);
+
+buscarDocumentosPrincipal($idcliente,$cod_ventaFK);
 }
 
 
@@ -358,14 +362,14 @@ exit;
 
 
 
-function buscarDocumentosPrincipal($codigo)
+function buscarDocumentosPrincipal($codigo,$cod_ventaFK)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "SELECT *
-				FROM fotos_cliente where cod_clienteFK='$codigo'";
+		$sql= "SELECT * FROM fotos_cliente where cod_clienteFK='$codigo' and cod_ventaFK='$cod_ventaFK'";
   
-   
+   // echo($sql);
+   // exit;
    $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
    echo "Error";

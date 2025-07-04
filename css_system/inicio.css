@@ -1136,4 +1136,66 @@ label {
   background-size: cover;
   z-index: 10;
   transition: opacity 0.2s ease-in-out;
+ 
 }
+ 
+  
+ .upload-area {
+    border: 2px dashed #4a90e2;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f9f9f9;
+    position: relative;
+    color: #555;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  .upload-area:hover {
+    background-color: #eef6ff;
+    border-color: #007bff;
+    color: #007bff;
+  }
+  .upload-area svg {
+    width: 50px;
+    height: 50px;
+    fill: #4a90e2;
+  }
+  .upload-text {
+    margin-top: 15px;
+  }
+  .upload-success {
+    color: green;
+    margin-top: 15px;
+    font-weight: bold;
+    display: none;
+  }
+  .file-name {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+    word-break: break-all;
+  }
+  .progress-bar {
+    width: 100%;
+    background-color: #e0e0e0;
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 10px;
+    display: none;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    width: 0%;
+    background-color: #4a90e2;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+ 

@@ -36749,12 +36749,28 @@ var ventanaControlCargarFotos= "";
 //ABM Imagenes Cliente Principal
 function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 	if(d=="1"){
+		
+			var f = new Date();
+	var dia = f.getDate()
+	if (dia < 10) {
+		dia = "0" + dia;
+	}
+	var mes = f.getMonth() + 1
+	if (mes < 10) {
+		mes = "0" + mes;
+	}
+	
+ 
+	document.getElementById("file_2Principal").value = "";
+	document.getElementById('inptFechaCargarFotosClientePrincipal').value = f.getFullYear() + "-" + mes + "-" + dia; 
+		
 		document.getElementById("divAbmCargarFotosClientePrincipal").style.display = "";
 		ventanaControlCargarFotos= ventanaLlamadora;
 		/* buscarAbmContratoDocumentos() */
 		switch (ventanaControlCargarFotos) {
 			case 'AbmConsulta':
-				document.getElementById('inptNombreClientesFotoPrincipal').value= cod_clienteConsulta
+ 
+				document.getElementById('inptNombreClientesFotoPrincipal').value= document.getElementById('inptPacienteConsulta').value
 					buscarFotosClientePrincipal(cod_clienteConsulta)
 				break;
 		}
@@ -36773,6 +36789,8 @@ $("input[id="+File+"]").click();
 var archivoPrincipal="";
 var extensionPrincipal="";	
 var urlarchivopdfPrincipal="";
+
+
 function readFileDocPrincipal(input){
 var file=$("input[name="+input.name+"]")[0].files[0];
 urlarchivopdfPrincipal = URL.createObjectURL(file);
@@ -36783,11 +36801,49 @@ ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 5Mb")
 return false
 }
 file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
-if ((file_extension.toLowerCase()=="jpeg") || (file_extension.toLowerCase()=="jpg") || (file_extension.toLowerCase()=="png")){
-}else{
-ver_vetana_informativa("LA IMAGEN SELECCIONADO DEBE TENER UNA EXTENSIÓN JPEG, JPG O PNG")
-return false;
-}
+
+
+
+
+
+const allowedTypes = ['application/pdf', 
+                          'application/msword', 
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                          'image/jpeg', 'image/png'];
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      if (!allowedTypes.includes(file.type)) {
+        alert("Formato de archivo no permitido. Solo IMÁGENES.");
+        input.value = "";
+        return;
+      }
+
+      document.getElementById("text-cargaPrincipal").style.display = "none";
+      document.getElementById("text-carga-2Principal").style.display = "block";
+      document.getElementById("nombreArchivo").textContent = "Archivo seleccionado: " + file.name;
+		
+			document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "";
+			
+      // mostrar barra de progreso simulada
+      document.getElementById("progressBar").style.display = "block";
+      document.getElementById("progressBarInner").style.width = "0%";
+
+      // Simular la carga
+      setTimeout(() => {
+        document.getElementById("progressBarInner").style.width = "100%";
+      }, 100); // arranca casi de inmediato
+    }
+
+
+
+
+
+// if ((file_extension.toLowerCase()=="jpeg") || (file_extension.toLowerCase()=="jpg") || (file_extension.toLowerCase()=="png")){
+// }else{
+// ver_vetana_informativa("LA IMAGEN SELECCIONADO DEBE TENER UNA EXTENSIÓN JPEG, JPG O PNG")
+// return false;
+// }
 var readerPrincipal = new FileReader();
 readerPrincipal.onload = function(e){
 	extensionPrincipal = file_extension;
@@ -36810,6 +36866,21 @@ document.getElementById("file_2Principal").value="";
 }
 readerPrincipal.readAsDataURL(input.files[0]);
 }
+
+
+function limpiarArchivoFotos() {
+    // borrar selección de archivo
+    document.getElementById("file_2Principal").value = "";
+
+    // restaurar interfaz
+    document.getElementById("text-cargaPrincipal").style.display = "block";
+    document.getElementById("text-carga-2Principal").style.display = "none";
+    document.getElementById("nombreArchivo").textContent = "";
+    document.getElementById("progressBar").style.display = "none";
+    document.getElementById("progressBarInner").style.width = "0%"; 
+  }
+
+
 function AddCargarFotosClientePrincipal(){
   	var codigo=stringGenerador(5);
 	if(archivoPrincipal ==""){
@@ -36817,14 +36888,7 @@ function AddCargarFotosClientePrincipal(){
 		return;
 	}
  
-	var Cod_clienteFotoFK =  document.getElementById('inptNombreClientesFotoPrincipal').value
-  
-	
-	if(Cod_clienteFotoFK == ""){
-		ver_vetana_informativa("FALTÓ SELECCIONAR UN CLIENTE")
-		return;
-	}
-	
+
 	
 	let descripcion = document.getElementById('inptDescripcionCargarFotosClientesPrincipal').value
 	let fecha = document.getElementById('inptFechaCargarFotosClientePrincipal').value
@@ -36857,8 +36921,7 @@ function AddCargarFotosClientePrincipal(){
 document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML+=pagina;
 document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "#d5d3d3";
 
-document.getElementById('inptDescripcionCargarFotosClientesPrincipal').value=""
-document.getElementById('inptFechaCargarFotosClientePrincipal').value=""
+document.getElementById('inptDescripcionCargarFotosClientesPrincipal').value="" 
 document.getElementById('text-cargaPrincipal').style.display="inline-flex";
 document.getElementById('text-carga-2Principal').style.display="none"
 
@@ -36868,8 +36931,9 @@ $("tr[id=tbSelecRegistroImagen]").each(function(i, td){
 	td.className=''
 });
 
-VerificarCargarFotosClientePrincipal(Cod_clienteFotoFK);
+VerificarCargarFotosClientePrincipal(cod_clienteConsulta);
 
+limpiarArchivoFotos()
 
 }
 var elementoimagenseleccionadoPrincipal="";
@@ -36968,7 +37032,7 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					
-					buscarFotosClientePrincipal(idAbmCliente)
+					buscarFotosClientePrincipal(idAbmCliente,cod_ventaFKConsulta)
 				}
 				else {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
@@ -37097,17 +37161,32 @@ function LimpiarCamposCargarFotosClientePrincipal(){
 	document.getElementById("btnEliminarImagenPrincipal").style.backgroundColor="#d5d3d3";
 	document.getElementById("btnVerImagenClientePrincipal").style.backgroundColor="#d5d3d3";
 	document.getElementById("inptDescripcionCargarFotosClientesPrincipal").value=""
-	document.getElementById("inptNombreClientesFotoPrincipal").value = ""
-	document.getElementById("inptFechaCargarFotosClientePrincipal").value=""
+ 
+	var f = new Date();
+	var dia = f.getDate()
+	if (dia < 10) {
+		dia = "0" + dia;
+	}
+	var mes = f.getMonth() + 1
+	if (mes < 10) {
+		mes = "0" + mes;
+	}
+	
+ 
+	document.getElementById("file_2Principal").value = "";
+	document.getElementById('inptFechaCargarFotosClientePrincipal').value = f.getFullYear() + "-" + mes + "-" + dia; 
 	document.getElementById("text-cargaPrincipal").style.display="inline-text";
 	document.getElementById("text-carga-2Principal").style.display="none"
+	limpiarArchivoFotos()
 	elementoimagenseleccionadoPrincipal =""
 	archivoPrincipal="";
 	extensionPrincipal = "";
 	urlarchivopdfPrincipal="";
 }
+
+
 function buscarFotosClientePrincipal(cod_CLienteFOtoFK){
-	
+	 
 	document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = ''
 	obtener_datos_user();
 	var datos = {
@@ -37115,6 +37194,7 @@ function buscarFotosClientePrincipal(cod_CLienteFOtoFK){
 		"passu": passuser,
 		"navegador": navegador,
 		"idcliente": cod_CLienteFOtoFK,
+		"cod_ventaFK": cod_ventaFKConsulta,
 		"funt": "buscarDocumentosPrincipal"
 	};
 	$.ajax({
@@ -37152,9 +37232,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
  
 function buscarDataListCliente() {
 	
-	document.getElementById("inptNombreClientesFotoPrincipal").innerHTML = ""
-	// document.getElementById("ListClienteVistaGaleria").innerHTML = ""
-	
+ return false;
 	
 	verCerrarEfectoCargando("1")
 	obtener_datos_user();
@@ -37207,7 +37285,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					datos_buscados = datos["2"];
 					 
-					document.getElementById("inptNombreClientesFotoPrincipal").innerHTML  = datos["2"];		 
+					// document.getElementById("inptNombreClientesFotoPrincipal").innerHTML  = datos["2"];		 
 					// document.getElementById("ListClienteVistaGaleria").innerHTML  = datos["2"];		 
 					
 				}
