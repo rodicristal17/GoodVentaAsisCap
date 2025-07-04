@@ -456,7 +456,7 @@ where cl.estado='Activo' order by pr.nombre_persona ";
 		  	  $ci_cliente=utf8_encode($valor['ci_cliente']);
 		  	  $nombre_persona=utf8_encode($valor['nombre_persona']);			  
 		  	 
-			  $pagina.="<option id='$cod_persona' value='".$ci_cliente." - ".$nombre_persona."'></option>";		  	
+			  $pagina.="<option id='$cod_persona' > ".$ci_cliente." - ".$nombre_persona."</option>";		  	
 			  
 			  
 	  }

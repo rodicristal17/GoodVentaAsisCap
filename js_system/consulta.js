@@ -1,7 +1,4 @@
-
-
-
-
+ 
 /*
 ABM PRE CONSULTA
 */
@@ -1810,10 +1807,7 @@ function buscarabmConsultaParaConsulta(cod_ventaFKConsulta) {
 	});
 }
 
-
-
-
-
+ 
 
 function verCerrarAbmConsulta(){
 if(document.getElementById("divAbmConsulta").style.display==""){
@@ -1898,7 +1892,6 @@ function VerificarAbmConsulta() {
 		ver_vetana_informativa("Falto agregar proxima consulta")
 		return
 	}	
-	
  
 	var accion = "nuevo";
 	if(cod_consulta!=""){
@@ -2009,10 +2002,7 @@ function cerrarModal() {
   document.getElementById("modalConsulta").style.display = "none";
 }
 
-
-
-
-
+ 
 function vercuotasatrazadas(cod_ventaFKConsulta) {
 // if(controlacceso("BUSCARLISTADOCOBRADORES","accion")==false){return;}
  			

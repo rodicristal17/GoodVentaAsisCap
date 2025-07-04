@@ -36754,8 +36754,8 @@ function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 		/* buscarAbmContratoDocumentos() */
 		switch (ventanaControlCargarFotos) {
 			case 'AbmConsulta':
-				document.getElementById('inptNombreClientesFotoPrincipal').value= document.getElementById('inptCIConsulta').value + " - " + document.getElementById('inptPacienteConsulta').value;
-				ControlFotosCliente(document.getElementById('inptNombreClientesFotoPrincipal'));
+				document.getElementById('inptNombreClientesFotoPrincipal').value= cod_clienteConsulta
+					buscarFotosClientePrincipal(cod_clienteConsulta)
 				break;
 		}
 	}else{
@@ -36816,27 +36816,9 @@ function AddCargarFotosClientePrincipal(){
 		ver_vetana_informativa("FALTÓ SELECCIONAR UN ARCHIVO")
 		return;
 	}
-	
-	
-	var Cod_clienteFotoFK = ""
-	
-	
-		$("input[id=inptNombreClientesFotoPrincipal]").each(function (i, Elemento) {
-      var $input = $(this),
-          val = $input.val();
-		 
-          list = $input.attr('list'),
-          match = $('#'+list + ' option').filter(function() {
-              return ($(this).val() === val);			 
-          });
-
-       if(match.length > 0) {
-         Cod_clienteFotoFK=$(match).attr("id")
-       } else {
-           // value is not in list
-       }
-});
-	
+ 
+	var Cod_clienteFotoFK =  document.getElementById('inptNombreClientesFotoPrincipal').value
+  
 	
 	if(Cod_clienteFotoFK == ""){
 		ver_vetana_informativa("FALTÓ SELECCIONAR UN CLIENTE")
@@ -37167,38 +37149,11 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
  
-function ControlFotosCliente(inp){
-	
-	let cod = ""
-	$("input[id=inptNombreClientesFotoPrincipal]").each(function (i, Elemento) {
-      var $input = $(this),
-          val = $input.val();
-		 
-          list = $input.attr('list'),
-          match = $('#'+list + ' option').filter(function() {
-              return ($(this).val() === val);			 
-          });
-
-       if(match.length > 0) {
-         cod=$(match).attr("id")
-       } else {
-           // value is not in list
-       }
-});
-	
-	if(cod!=""){
-		buscarFotosClientePrincipal(cod)
-		
-	}
-	
-	
-	
-	}
  
 function buscarDataListCliente() {
 	
-	document.getElementById("ListCliente").innerHTML = ""
-	document.getElementById("ListClienteVistaGaleria").innerHTML = ""
+	document.getElementById("inptNombreClientesFotoPrincipal").innerHTML = ""
+	// document.getElementById("ListClienteVistaGaleria").innerHTML = ""
 	
 	
 	verCerrarEfectoCargando("1")
@@ -37252,8 +37207,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					datos_buscados = datos["2"];
 					 
-					document.getElementById("ListCliente").innerHTML  = datos["2"];		 
-					document.getElementById("ListClienteVistaGaleria").innerHTML  = datos["2"];		 
+					document.getElementById("inptNombreClientesFotoPrincipal").innerHTML  = datos["2"];		 
+					// document.getElementById("ListClienteVistaGaleria").innerHTML  = datos["2"];		 
 					
 				}
 				

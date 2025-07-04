@@ -328,8 +328,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub' id='divMenuImagenesCliente'
-onclick='verCerrarAbmCargarFotosClientePrincipal("1")' style='width:20%;text-align:center'>
+<table class='divMenub' id='divMenuImagenesCliente' onclick='verCerrarAbmCargarFotosClientePrincipal("1")' style='width:20%;text-align:center;display:none;'>
 <tr>
 <td>
 <img class='imgIconoMenu'
@@ -20967,11 +20966,9 @@ class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePri
 <tr>
 <td>
 <p class="pTitulo5">Cliente :</p>
-<input id='inptNombreClientesFotoPrincipal' list='ListCliente' style='width:100%' type='text' class='inputText' onkeyup='ControlFotosCliente(this)'
->
-
-
-<datalist id="ListCliente"></datalist>
+<select class="inputfiltro" id="inptNombreClientesFotoPrincipal"></select>
+ 
+ 
 
 </td>
 </tr>
@@ -21181,8 +21178,7 @@ onclick="vaciar('inptProveedorProductoCodBarra2')" />
 <td class="td_registro" style="width:10%;">
 </td>
 <td class="td_registro" style="width:10%;">
-<select class="inputfiltro"
-id="inptlocalProductoBuscarCodBarra"></select>
+<select class="inputfiltro" id="inptlocalProductoBuscarCodBarra"></select>
 </td>
 </tr>
 </tbody>
