@@ -251,11 +251,7 @@ if (codigopc == "undefined" || codigopc == "" || codigopc == "Null" || codigopc 
 			
 			
 			}
-			
-				
-			
-			
-
+ 
 			
 }
 function scrollevents(elemento) {
