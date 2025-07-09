@@ -770,10 +770,10 @@ $styleName=CargarStyleTable($styleName);
 <td  id='' style='width:5%'>".$ci."</td>
 <td  id='' style='width:10%'>".$cliente."</td>
 <td  id='' style='width:10%'>".$especialista."</td>
-<td  id='' style='width:20%'>".$motivoconsulta."</td>
-<td  id='' style='width:20%'>".$diagnostico."</td>
-<td  id='' style='width:10%'>".$trabajo_realizado."</td>
-<td  id='' style='width:10%'>".$proximo_trabajo."</td>
+<td  id='' style='width:15%'>".$motivoconsulta."</td>
+<td  id='' style='width:15%'>".$diagnostico."</td>
+<td  id='' style='width:15%'>".$trabajo_realizado."</td>
+<td  id='' style='width:15%'>".$proximo_trabajo."</td>
 <td  id='' style='width:5%'>".$local."</td>
 </tr>
 </table>";
