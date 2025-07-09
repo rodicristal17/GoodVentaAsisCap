@@ -4379,6 +4379,29 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
 }
 
 
+if (ventana == "historialConsulta") {
+	
+		pagina =
+"<table class='TableRepor0' style='width:100%'>"
++"<tr>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>Local:</b></p>"
++"<p class='pTituloC' >"+$("select[id=inptBuscarHistorialConsulta5]").children(":selected").text()+"</p>"
++"</td>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>Especialista:</b></p>"
++"<p class='pTituloC' >"+$("select[id=inptBuscarInfHistorialEspecialista]").children(":selected").text()+"</p>"
++"</td>"
+
++"<td style='width:80%;text-align:left'>"
++"</td>"
++"</tr>"
++"</table><br><br><center><h1 class='pTituloD' >HISTORIAL DE CONSULTAS</h1><br></center>"
+document.getElementById("divCabeceraImpresiones").innerHTML=pagina
+document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tbTituloImpreHistorialConsulta").innerHTML
+document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_historial_Consulta").innerHTML
+}
+
 	
 	var documento=document.getElementById("DivImpresiones").innerHTML;
 

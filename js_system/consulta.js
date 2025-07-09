@@ -676,10 +676,10 @@ function buscarhistorialConsulta() {
 	var documento = document.getElementById('inptBuscarHistorialConsulta2').value
 	var paciente = document.getElementById('inptBuscarHistorialConsulta3').value
 	var especialista = document.getElementById('inptBuscarHistorialConsulta4').value
-	var usuario = document.getElementById('inptBuscarHistorialConsulta6').value
-	var seguro = document.getElementById('inptBuscarHistorialConsulta7').value
 	var fecha1 = document.getElementById('inptBuscarInfHistorialConsultaF1').value
 	var fecha2 = document.getElementById('inptBuscarInfHistorialConsultaF2').value
+	var local = document.getElementById('inptBuscarHistorialConsulta5').value
+	var selectespecialista = document.getElementById('inptBuscarInfHistorialEspecialista').value
 	
 	
 	if(document.getElementById('inptCheckHistorialConsulta1').checked==true){
@@ -697,18 +697,18 @@ function buscarhistorialConsulta() {
 		var fecha2 = ""
 	}	
 	
-	if(controldebusquedadHistorialConsulta==true){
+/* 	if(controldebusquedadHistorialConsulta==true){
 		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
 	return
 }
-controldebusquedadHistorialConsulta=true
+controldebusquedadHistorialConsulta=true */
 
-	document.getElementById("tbProcessHistorialConsulta").style.display="none"
+	// document.getElementById("tbProcessHistorialConsulta").style.display="none"
 	document.getElementById("table_historial_Consulta").innerHTML = paginacargando
 	document.getElementById("inptRegistroNroHistorialConsulta").value = "";
-    document.getElementById("inptTotalHistorialConsulta").value = "";
-	document.getElementById("inptTotalComisionHistorialConsulta").value = "";
-	document.getElementById("inptTotalEvaluacionHistorialConsulta").value = "";
+    // document.getElementById("inptTotalHistorialConsulta").value = "";
+	// document.getElementById("inptTotalComisionHistorialConsulta").value = "";
+	// document.getElementById("inptTotalEvaluacionHistorialConsulta").value = "";
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -720,8 +720,8 @@ controldebusquedadHistorialConsulta=true
 		"documento": documento,
 		"paciente": paciente,
 		"especialista": especialista,
-		"seguro": seguro,
-		"usuario": usuario,
+		"local": local,
+		"selectespecialista": selectespecialista,
 		"funt": "historialConsulta"
 	};
 	$.ajax({
@@ -729,24 +729,7 @@ controldebusquedadHistorialConsulta=true
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
 		type: "post",
-		xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-		var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}         
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		} 
-        }, false);
-        return xhr;
-    },
+
 		
 		beforeSend: function () {
 
@@ -766,11 +749,11 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			  Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {				   
 					var datos_buscados = datos[2];
+					document.getElementById("table_historial_Consulta").innerHTML = datos_buscados
 					document.getElementById("inptRegistroNroHistorialConsulta").value = datos[3];
-					document.getElementById("inptTotalHistorialConsulta").value = datos[4];
+					/* document.getElementById("inptTotalHistorialConsulta").value = datos[4];
 					document.getElementById("inptTotalComisionHistorialConsulta").value = datos[5];
 					document.getElementById("inptTotalEvaluacionHistorialConsulta").value = datos[6];
-					document.getElementById("table_historial_Consulta").innerHTML = datos_buscados
 					registrocargadohistorialConsulta=datos[99];
 					totalregistrohistorialConsulta=datos[100];					
 						 if(totalregistrohistorialConsulta>registrocargadohistorialConsulta){
@@ -780,7 +763,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						  buscarMashistorialConsulta();
 					 }else{
 						 controldebusquedadHistorialConsulta=false
-					 }
+					 } */
 					
 					}
 			} catch (error) {
@@ -2052,6 +2035,7 @@ function buscarobtenermedicos(){
 	
 		 document.getElementById("ListConsultaAgendamiento").innerHTML="" 
 		 document.getElementById("inptEspecialistaConsulta").innerHTML=""
+		 document.getElementById("inptBuscarInfHistorialEspecialista").innerHTML=""
 		 
 			obtener_datos_user();
 				 var datos = {
@@ -2108,6 +2092,7 @@ function buscarobtenermedicos(){
 		   var datos_buscados=datos[2];		 
 			document.getElementById("ListConsultaAgendamiento").innerHTML=datos_buscados	 
 			document.getElementById("inptEspecialistaConsulta").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
+			document.getElementById("inptBuscarInfHistorialEspecialista").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			
  
 			}

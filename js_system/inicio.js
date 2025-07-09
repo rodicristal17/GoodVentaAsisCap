@@ -221,6 +221,7 @@ eventoScrollTable(document.getElementById('TableScroollHistorialGarantia2'));
 eventoScrollTable(document.getElementById('TableScroollCredito2'));
 eventoScrollTable(document.getElementById('TableScroollArqeo2'));
 eventoScrollTable(document.getElementById('TableScroollAudiProducto2'));
+eventoScrollTable(document.getElementById('TableScroollHistorialConsulta2'));
 scrollevents(document.getElementById('divMenuMantenimiento'));
 var controlactualizacion=0;
 var controlMensaje=0;
@@ -309,6 +310,10 @@ function eventoScrollTable(elemento){
 			}
 			if($(elemento).attr("id")=="TableScroollArqeo2"){
 			document.getElementById("TableScroollArqeo1").scrollLeft=desplamiento
+			}	
+			
+			if($(elemento).attr("id")=="TableScroollHistorialConsulta2"){
+			document.getElementById("TableScroollHistorialConsulta1").scrollLeft=desplamiento
 			}					
 			}); 
 }
@@ -497,7 +502,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.28"
+var codigodeactualizacion="X-GT-1-JMTG-V1.29"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -10151,6 +10156,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalContabilidad").innerHTML ="";
 	document.getElementById("inptlocalContabilidadCompra").innerHTML =""	
 	document.getElementById("inptBuscarLocalPaciente").innerHTML =""	
+	document.getElementById("inptBuscarHistorialConsulta5").innerHTML =""	
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10253,6 +10259,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptBuscarHistorialLocal").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalMoroso").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptLocalProductoListadoDespachar2").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+	               document.getElementById("inptBuscarHistorialConsulta5").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 				  seleccionarLocalUSer()
                  buscarOptionCaja();
 				}

@@ -10280,7 +10280,7 @@ Reg. Encontrados :</p>
 <tr>
 <td>
 <center>
-<div class='divPrincipalrepor' style='width:1250px'>
+<div class='divPrincipalrepor' style='width:1200px'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -10305,14 +10305,18 @@ title='Cerrar Ventana' onclick='verCerrarHistorialConsulta()' />
 <center>
 <table  class='divMenuf'  style='width:97%;margin-bottom:3px'>
 <tr>
-<td style='width:15%;'>
+<td style='width:10%;'>
 <p class='pTituloC' >Fecha inicio
 </p>
 <input class='inputText' type='Date' id='inptBuscarInfHistorialConsultaF1' style='width:135px' />
 </td>
-<td style='width:15%;'>
+<td style='width:10%;'>
 <p class='pTituloC' >Fecha Fin</p>
 <input class='inputText' type='Date' id='inptBuscarInfHistorialConsultaF2' style='width:135px' />
+</td>
+<td style='width:10%;'>
+<p class='pTituloC' >Especialista</p>
+<select class='inputfiltro' id='inptBuscarInfHistorialEspecialista' ></select>
 </td>
 <td style='width:15%;'>
 
@@ -10332,15 +10336,15 @@ onclick='buscarhistorialConsulta()'>
 <table style="width:98%">
 <tbody>
 <tr>
-<td style="width:80%;text-align:left">
+<td style="width:70%;text-align:left">
 </td>
 <td style='width:10%;text-align:left'>
 <p class="pTitulo8"
 onclick="checkfiltroshistorialConsulta(1)"
-style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1"> Rango de Fecha </p>
+style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1">Rango de Fecha</p>
 </td>
 <td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltroshistorialConsulta(2)" style='width: 100px;'> <input type="checkbox" id="inptCheckHistorialConsulta2" checked> Todos
+<p class="pTitulo8" onclick="checkfiltroshistorialConsulta(2)" style='width: 100px;'> <input type="checkbox" id="inptCheckHistorialConsulta2" checked>Todos
 </p>
 </td>
 </tr>
@@ -10359,21 +10363,22 @@ style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1"> 
 </table>
 
 <div style='overflow:auto;' class='divScrollhideen'id='TableScroollHistorialConsulta1'>
-<table class="tableCabeceraRegistro" style='width:1500px;'id='tbTituloImpreHistorialConsulta'>
+<table class="tableCabeceraRegistro" style='width:1800px;'id='tbTituloImpreHistorialConsulta'>
 <tbody>
 <tr>
-<td class="td_registro2" style="width:10%;">FECHA </td>
-<td class="td_registro2" style="width:10%;">NRO CI </td>
-<td class="td_registro2" style="width:10%;">PACIENTE</td>
-<td class="td_registro2" style="width:10%;">ESPECIALISTA</td>
-<td class="td_registro2" style="width:20%;">MOTIVO</td>
-<td class="td_registro2" style="width:20%;">DIAGNOSTICO</td>
-<td class="td_registro2" style="width:10%;">SEGURO</td>
-<td class="td_registro2" style="width:10%;">USUARIO</td>
+<td class="td_registro" style="width:10%;">FECHA </td>
+<td class="td_registro" style="width:5%;">NRO CI </td>
+<td class="td_registro" style="width:10%;">PACIENTE</td>
+<td class="td_registro" style="width:10%;">ESPECIALISTA</td>
+<td class="td_registro" style="width:20%;">MOTIVO</td>
+<td class="td_registro" style="width:20%;">DIAGNOSTICO</td>
+<td class="td_registro" style="width:10%;">T-REALIZADO</td>
+<td class="td_registro" style="width:10%;">PROX. TRABAJO</td>
+<td class="td_registro" style="width:5%;">LOCAL</td>
 </tr>
 </tbody>
 </table>
-<table class="tableCabeceraRegistro" style='width:1500px;'>
+<table class="tableCabeceraRegistro" style='width:1800px;'>
 <tbody>
 <tr>
 <td class="td_registro" style="width:9%;">
@@ -10382,7 +10387,7 @@ style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1"> 
 <td class="td_registro" style="width:1%;">
 <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta1')" />
 </td>
-<td class="td_registro" style="width:9%;">
+<td class="td_registro" style="width:4%;">
 <input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta2' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Parecido a' />
 </td>
 <td class="td_registro" style="width:1%;">
@@ -10400,21 +10405,14 @@ style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1"> 
 <td class="td_registro" style="width:1%;">
 <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta4')" />
 </td>
-<td class="td_registro" style="width:40%;"></td>
 
+<td class="td_registro2" style="width:20%;"></td>
+<td class="td_registro2" style="width:20%;"></td>
+<td class="td_registro2" style="width:10%;"></td>
+<td class="td_registro2" style="width:10%;"></td>
 
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta7' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta7')" />
-</td>
-
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta6' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta6')" />
+<td class="td_registro" style="width:5%;">
+<select class='inputfiltro' id='inptBuscarHistorialConsulta5' ></select>
 </td>
 
 </tr>
@@ -10423,7 +10421,7 @@ style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1"> 
 </div>
 
 <div class='divTablesScrool' id='TableScroollHistorialConsulta2' style='height:250px'>
-<div class="div_cuerpo_table" id="table_historial_Consulta" style='min-height:200px;height:auto;width:1500px;border:none;'>
+<div class="div_cuerpo_table" id="table_historial_Consulta" style='min-height:200px;height:auto;width:1800px;border:none;'>
 </div>
 </div>
 <table style='width:100%;height:50px;display:none' id='tbProcessHistorialConsulta'>
@@ -10444,20 +10442,7 @@ style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialConsulta1"> 
 Reg. Encontrados :</p>
 <input class='inputTextDisable' type='text' disabled  id='inptRegistroNroHistorialConsulta' style='width:80px;text-align:center' />
 </td>
-<td style='width:50%;text-align:left'> </td>
-<td style='width:10%;text-align:left'>
-<p class='pTituloC' >Total : </p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalHistorialConsulta' style='width:100px' />
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTituloC' > Comisión :</p>
-<input class='inputTextDisable' type='text' style='width:100px' disabled id='inptTotalComisionHistorialConsulta' />
-</td>
-
-<td style='width:10%;text-align:left'>
-<p class='pTituloC' >Total Evaluacion : </p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalEvaluacionHistorialConsulta' style='width:100px' />
-</td>
+<td style='width:90%;text-align:left'> </td>
 
 </tr>
 </table>

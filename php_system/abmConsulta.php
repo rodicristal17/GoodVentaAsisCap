@@ -46,6 +46,30 @@ if($operacion=="buscarHistorialConsulta")
 	$cod_venta=$_POST['cod_venta'];
     $cod_venta = utf8_decode($cod_venta); 
 	buscarHistorialConsulta($cod_venta);
+}
+
+	
+if($operacion=="historialConsulta")
+{	
+	$fecha1=$_POST['fecha1'];
+    $fecha1 = utf8_decode($fecha1);
+	$fecha2=$_POST['fecha2'];
+    $fecha2 = utf8_decode($fecha2);
+	$fechafiltro=$_POST['fechafiltro'];
+    $fechafiltro = utf8_decode($fechafiltro); 
+	$documento=$_POST['documento'];
+    $documento = utf8_decode($documento);
+	$paciente=$_POST['paciente'];
+    $paciente = utf8_decode($paciente);
+	$especialista=$_POST['especialista'];
+    $especialista = utf8_decode($especialista);
+	$local=$_POST['local'];
+    $local = utf8_decode($local);
+	$selectespecialista=$_POST['selectespecialista'];
+    $selectespecialista = utf8_decode($selectespecialista);
+
+
+	historialConsulta($fecha1,$fecha2,$fechafiltro,$documento,$paciente,$especialista,$local,$selectespecialista);
 }	
 
 
@@ -653,6 +677,116 @@ function detalleTratamiento($buscar) {
     return $html;
 }
 
+function historialConsulta($fecha1,$fecha2,$fechafiltro,$documento,$paciente,$especialista,$local,$selectespecialista)
+{
+$mysqli=conectar_al_servidor();
+
+$condicionfechas = '';
+if($fecha1!=''){
+	$condicionfechas = " and fecha between '$fecha1' and '$fecha2'";
+}
+
+$condicionfechafiltro = '';
+if($fechafiltro!=''){
+	$condicionfechafiltro = " and fecha = '$fechafiltro'";
+}
+
+$condicionLocal="";
+if($local!=""){
+$condicionLocal="and (SELECT cod_local FROM local WHERE cod_local = (SELECT cod_local FROM venta WHERE cod_venta = cod_ventaFK)) = '".$local."' ";
+}
+
+$condicionpaciente="";
+if($paciente!=""){
+$condicionpaciente=" and (select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$paciente."%' ";
+}
+
+$condicionespecialista="";
+if($especialista!=""){
+$condicionespecialista=" and (select nombre_persona from persona where cod_persona=cod_usuarioFK) like '%".$especialista."%' ";
+}
+
+$condicionselectespecialista="";
+if($selectespecialista!=""){
+$condicionselectespecialista=" and cod_usuarioFK = '".$selectespecialista."' ";
+}
+
+$condiciondocumento="";
+if($documento!=""){
+$condiciondocumento=" and (select ci_cliente from cliente where cod_cliente=cod_clienteFK) = '$documento' ";
+}
+
+$sql= "SELECT cod_consulta, cod_ventaFK, fecha, cod_usuarioFK, cod_agendamientoFK, estado, trabajo_realizado,
+proximo_trabajo, motivoconsulta, diagnostico, cod_clienteFK,
+(SELECT nombre FROM local WHERE cod_local = (SELECT cod_local FROM venta WHERE cod_venta = cod_ventaFK)) as local,
+(select nombre_persona from persona where cod_persona=cod_usuarioFK) as especialista,
+(select nombre_persona from persona where cod_persona=cod_clienteFK) as cliente,
+(select ci_cliente from cliente where cod_cliente=cod_clienteFK) as ci
+FROM consulta where estado= 'Activo' ".$condicionLocal.$condicionpaciente.$condicionespecialista.$condicionfechas.$condicionfechafiltro.$condiciondocumento.$condicionselectespecialista." order by cod_consulta desc limit 100 "; 	
+
+// echo $sql;
+// exit;
+
+
+$stmt = $mysqli->prepare($sql);
+$pagina = "";   
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+ $styleName="tableRegistroSearch";
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+
+$cod_consulta = utf8_encode($valor['cod_consulta']);
+$cod_ventaFK = utf8_encode($valor['cod_ventaFK']);
+$fecha = utf8_encode($valor['fecha']);
+$cod_usuarioFK = utf8_encode($valor['cod_usuarioFK']);
+$cod_agendamientoFK = utf8_encode($valor['cod_agendamientoFK']);
+$estado = utf8_encode($valor['estado']);
+$trabajo_realizado = utf8_encode($valor['trabajo_realizado']);
+$proximo_trabajo = utf8_encode($valor['proximo_trabajo']);
+$motivoconsulta = utf8_encode($valor['motivoconsulta']);
+$diagnostico = utf8_encode($valor['diagnostico']);
+$cod_clienteFK = utf8_encode($valor['cod_clienteFK']);
+$local = utf8_encode($valor['local']);
+$especialista = utf8_encode($valor['especialista']);
+$cliente = utf8_encode($valor['cliente']);
+$ci = utf8_encode($valor['ci']);
+
+
+$styleName=CargarStyleTable($styleName);
+	  $pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
+<tr id='tbSelecRegistro' >
+<td  id='' style='width:10%'>".$fecha."</td>
+<td  id='' style='width:5%'>".$ci."</td>
+<td  id='' style='width:10%'>".$cliente."</td>
+<td  id='' style='width:10%'>".$especialista."</td>
+<td  id='' style='width:20%'>".$motivoconsulta."</td>
+<td  id='' style='width:20%'>".$diagnostico."</td>
+<td  id='' style='width:10%'>".$trabajo_realizado."</td>
+<td  id='' style='width:10%'>".$proximo_trabajo."</td>
+<td  id='' style='width:5%'>".$local."</td>
+</tr>
+</table>";
+
+
+}
+}
+
+
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'));
+echo json_encode($informacion);	
+exit;
+}
 
 
 
