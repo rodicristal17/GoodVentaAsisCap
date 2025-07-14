@@ -85,6 +85,20 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
 	$idcliente=$_POST["idcliente"];
  	$idcliente=utf8_decode($idcliente);
  	addmasreferencias($totalCargado,$idcliente);
+ } 
+ 
+ 
+ if($operacion=="buscar_antecedente_consulta"){
+	$cod_clienteFK=$_POST["cod_clienteFK"];
+ 	$cod_clienteFK=utf8_decode($cod_clienteFK);
+ 	buscar_antecedente_consulta($cod_clienteFK);
+ }
+ 
+ 
+ if($operacion=="buscar_antecedente_resumen_consulta"){
+	$cod_clienteFK=$_POST["cod_clienteFK"];
+ 	$cod_clienteFK=utf8_decode($cod_clienteFK);
+ 	buscar_antecedente_resumen_consulta($cod_clienteFK);
  }
 
  if($operacion=="buscar"){
@@ -153,6 +167,17 @@ EliminarDocumento($idcontrato,$iddocumento,$urldocumento);
  	$buscar=utf8_decode($buscar);
  	buscarmasreferencias($buscar);
  }
+ 
+  if($operacion=="cargar_antecedente_paciente"){
+ 	$cod_ventaFK=$_POST["cod_ventaFK"];
+ 	$cod_ventaFK=utf8_decode($cod_ventaFK);
+	$cod_clienteFK=$_POST["cod_clienteFK"];
+ 	$cod_clienteFK=utf8_decode($cod_clienteFK);
+	$observacion=$_POST["observacion"];
+ 	$observacion=utf8_decode($observacion);
+ 	cargar_antecedente_paciente($cod_ventaFK,$cod_clienteFK,$observacion);
+ }
+
 
  if($operacion=="buscarvista"){
 	 
@@ -1938,6 +1963,156 @@ exit;
 
 }
 
+function  buscar_antecedente_consulta($cod_clienteFK)
+{
+$mysqli=conectar_al_servidor();
+
+$sql="SELECT observacion FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK'";
+
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+ 
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$pagina="";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+$observacion = utf8_encode($valor['observacion']);   
+ 
+ 
+
+	  $pagina.="
+<style>
+.timeline {
+  position: relative;
+  margin: 2px 0;
+  padding-left: 5px;
+  border-left: 3px solid #4a90e2;
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 2px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+}
+.timeline-content {
+  background-color: #f9f9f9;
+  padding: 5px 7px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.timeline-content .description {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+.timeline-content .meta {
+  font-size: 12px;
+  color: #666;
+  border-top: 1px solid #ddd;
+  margin-top: 2px;
+  padding-top: 2px;
+}
+</style>
+
+<div class='timeline'>
+  <div class='timeline-item'>
+    <div class='timeline-content'>
+      <div class='description'>
+         ".htmlspecialchars($observacion)."
+      </div>
+    </div>
+  </div>
+ 
+</div>
+
+"; 
+ 
+}
+}
+ 
+$informacion =array("1" => "exito","2" => $pagina );
+echo json_encode($informacion);	
+exit;
+}
+
+function cargar_antecedente_paciente($cod_ventaFK,$cod_clienteFK,$observacion){
+	
+
+
+	$mysqli=conectar_al_servidor();
+	$consulta="INSERT INTO antecedente_paciente (cod_ventaFK,cod_clienteFK,observacion) values ('$cod_ventaFK','$cod_clienteFK','$observacion')";
+	
+$stmt = $mysqli->prepare($consulta);
+
+
+
+if ( ! $stmt->execute()) {
+   echo "Error";
+}
+	
+	
+	
+	mysqli_close($mysqli);
+ $informacion =array("1" => "exito");
+echo json_encode($informacion);	
+exit;
+}
+
+
+function  buscar_antecedente_resumen_consulta($cod_clienteFK)
+{
+$mysqli=conectar_al_servidor();
+
+$sql="SELECT observacion FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK'";
+
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+ 
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$pagina="";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+$observacion = utf8_encode($valor['observacion']);   
+ 
+ 
+
+	  $pagina.="<p>
+         ".htmlspecialchars($observacion)."</p>
+
+"; 
+ 
+}
+}
+ 
+$informacion =array("1" => "exito","2" => $pagina );
+echo json_encode($informacion);	
+exit;
+}
 
 
 ObtenerDatos($operacion);

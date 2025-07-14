@@ -105,7 +105,10 @@ if($operacion=="nuevo" || $operacion=="editar" )
 	$cod_clienteFK=$_POST['cod_clienteConsulta'];
     $cod_clienteFK = utf8_decode($cod_clienteFK); 
 	
-	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$operacion);
+	$apodo=$_POST['apodo'];
+    $apodo = utf8_decode($apodo); 
+	
+	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion);
 }	
 
 
@@ -217,7 +220,7 @@ $mysqli->close();
 }
  
 
-function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$operacion)
+function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion)
 {
     if ($trabajoreali == "") {
         $informacion = array("1" => "camposvacio");
@@ -254,6 +257,19 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
         exit;
     }
 
+
+
+	$consulta1 = "UPDATE venta SET apodo = '$apodo' WHERE cod_venta = '$cod_venta'";
+
+    $stmt1 = $mysqli->prepare($consulta1);
+    
+
+    if (!$stmt1->execute()) {
+        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        exit;
+    }
+	
+	
     // Obtener el ID insertado si es nuevo
     if ($operacion == "nuevo") {
         $cod_consulta = $mysqli->insert_id;
@@ -544,13 +560,12 @@ exit;
 	}
 	
 	
-		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta
+		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo
 		from venta inner join cliente cl on cod_clienteFK=cod_cliente
 		inner join persona p on cod_cliente=cod_persona
 			 where cl.estado = 'Activo'".$condicionPaciente.$condicionlocal." limit 100;";
- 
- // echo($sql);
- // exit;
+
+
    
    $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
@@ -576,9 +591,12 @@ if ( ! $stmt->execute()) {
 			  $cod_cliente=utf8_encode($valor['cod_cliente']);
 			   $decripcion=''; 
 			   $cod_venta=utf8_encode($valor['cod_venta']);
+			   $apodo=utf8_encode($valor['apodo']);
 			   
 			   $descripcion= detalleTratamiento($cod_venta);
-			    	 
+			    	 if($apodo != ''){
+						 $paciente = $paciente." ($apodo)";
+					 }
 		$pagina .= "
 <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='
   border: 1px solid #ddd;
@@ -596,7 +614,7 @@ if ( ! $stmt->execute()) {
     color: #333;
   '>DATOS PACIENTE</h3>
   
-  <p><strong>Nombre:</strong> $paciente</p>
+  <p><strong>Nombre:</strong> $paciente </p>
   <p><strong>CI:</strong> $ci_cliente</p>
   <p><strong>Código venta:</strong> $num_factura</p>
 
@@ -617,6 +635,7 @@ if ( ! $stmt->execute()) {
     <span id='td_datos_4'>$cod_agendamiento</span> 
     <span id='td_datos_5'>$cod_venta</span> 
     <span id='td_datos_6'>$cod_cliente</span> 
+    <span id='td_datos_7'>$apodo</span> 
   </div>
 </div>
 ";

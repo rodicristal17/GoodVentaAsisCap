@@ -1510,6 +1510,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 	document.getElementById("inptPacienteConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
 	document.getElementById("inptCIConsulta").value= elemento.querySelector('#td_datos_2')?.textContent.trim();
 	document.getElementById("inptCodigoConsulta").value= elemento.querySelector('#td_datos_3')?.textContent.trim();
+	document.getElementById("inptApodoConsulta").value= elemento.querySelector('#td_datos_7')?.textContent.trim();
 	cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
 	
 	cod_clienteConsulta= elemento.querySelector('#td_datos_6')?.textContent.trim();
@@ -1521,6 +1522,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 	vercuotasatrazadas(cod_ventaFKConsulta)
 	buscarPacienteConsulta()	
 	buscarVistaGaleriaFoto();
+	buscarResumenAntecedenteConsulta()
 }
 
 function agregarObservacionConsulta(){
@@ -1778,9 +1780,9 @@ document.getElementById("tdEfectoAbmConsulta").className="magictime vanishOut"
 	cod_consulta = "";
  
 	limpiarcamposConsulta()
-
+document.getElementById('btn_flotante_consulta').style.display= 'none'
 }else{		
-	
+	document.getElementById('btn_flotante_consulta').style.display= ''
 	document.getElementById("divAbmConsulta").style.display=""
     document.getElementById("tdEfectoAbmConsulta").className="magictime slideDownReturn"
 }
@@ -1829,6 +1831,7 @@ function VerificarAbmConsulta() {
 	let inptTrabajoRealizadoConsulta  = document.getElementById("inptTrabajoRealizadoConsulta").value
 	let inptProximaConsultaConsulta  = document.getElementById("inptProximaConsultaConsulta").value
 	let inptFechaConsulta  = document.getElementById("inptFechaConsulta").value
+	let inptApodoConsulta  = document.getElementById("inptApodoConsulta").value
 	
 	var cod_especialista=  document.getElementById("inptEspecialistaConsulta").value
  
@@ -1860,12 +1863,12 @@ function VerificarAbmConsulta() {
 		accion = "editar";
 	}
 	
-	AbmConsulta(inptMotivoConsulta,inptDiagnosticoConsulta,inptTrabajoRealizadoConsulta,inptProximaConsultaConsulta,inptFechaConsulta,cod_consulta,cod_especialista,accion)
+	AbmConsulta(inptApodoConsulta,inptMotivoConsulta,inptDiagnosticoConsulta,inptTrabajoRealizadoConsulta,inptProximaConsultaConsulta,inptFechaConsulta,cod_consulta,cod_especialista,accion)
 
 }
 
 
-function AbmConsulta(motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consulta,cod_especialista,accion) {	
+function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consulta,cod_especialista,accion) {	
 		
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
@@ -1885,6 +1888,7 @@ function AbmConsulta(motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consul
 	datos.append("cod_agendamiento", cod_Agendamiento) 
 	datos.append("cod_venta", cod_ventaFKConsulta) 
 	datos.append("cod_clienteConsulta", cod_clienteConsulta) 
+	datos.append("apodo", apodo) 
  
 	var OpAjax = $.ajax({
 		data: datos,

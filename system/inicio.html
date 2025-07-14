@@ -18,12 +18,38 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 </td></tr></table>
 </div>
 
+<style>
+  .boton-flotante {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 60px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 1000;
+    transition: background-color 0.3s;
+	display: flex;
+	justify-content: center;
+	align-items: center;  
+  }
 
+  .boton-flotante:hover {
+    background-color: #0056b3;
+  }
+</style>
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 
 
@@ -45,6 +71,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 
 
 </head>
@@ -9790,7 +9817,7 @@ style='background-color: #b7b7b7;'>
 
 
 
-<div class='principal2 divMenuG' style='display:none' id='divAbmConsulta'>
+<div class='principal2 divMenuG' style='display:none;' id='divAbmConsulta'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmConsulta'>
 <tr>
 <td>
@@ -9833,10 +9860,24 @@ style='background-color: #b7b7b7;'>
     <input type="text" class="inputTextDisable" disabled id="inptCodigoConsulta">
   </div>
   
+  <div class="campo-form">
+    <p class="pTitulo5">Apodo:</p>
+	<input type="text" class="inputText" id="inptApodoConsulta">
+  </div>
+  
    <div class="campo-form">
     <p class="pTitulo5">Estado de cuenta:</p>
 	<textarea class="textarea1" placeholder="Obligatorio (*)" id="inptEstadoCuentaConsulta" style="height:80px;"></textarea>
   </div>
+  
+  <div class="campo-form">
+  <p class="pTitulo5">Observaciones:</p>
+    <div class="tarjeta-consulta consulta-item" style='border-left: 5px solid #db3434'>
+  <div class="consulta-body" id='resumen_antencedente_paciente'>
+  </div>
+</div>
+  </div>
+  
 
 </div>
 <!-- CONTENEDOR PRINCIPAL QUE ENVUELVE AMBOS -->
@@ -9987,9 +10028,66 @@ style='background-color: #b7b7b7;'>
 </td>
 </tr>
 </table>
+
+</div>
+<div class="boton-flotante" id='btn_flotante_consulta' onclick='verCerrarCargarAntecedenteCliente()' style='display:none' >
+  <i class="fa-solid fa-clipboard"></i>
+</div>
+<div class="principal2 divScrollPrincipal" style="display:none" id="divCargarAntecedenteCliente">
+<table style="width:100%;height:100%" id="" class="magictime slideDownReturn">
+<tbody><tr>
+<td>
+<center>
+<div style="width:80%;min-height: 400px;height:500pxdisplay:" class="divAbms">
+<table class="tableMenuZ">
+<tbody><tr>
+<td style="width:100%">
+<p class="pTituloB">Cargar Antecedente</p>
+</td>
+<td style="width:5%">
+<img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarCargarAntecedenteCliente()">
+</td>
+</tr>
+</tbody></table>
+
+<center>
+
+<div class="vista-consulta-body contenedorflex" style="gap: 1.5rem;">
+    <div class="formulario-agendamiento">
+     
+      <!-- OBSERVACIÓN -->
+      <div class="campo-form">
+        <label class="pTitulo5" >Observación:</label>
+        <textarea id="inptObservacionAntecedenteCliente" class="input textarea2" placeholder="Escribe una observación" style="height: 100px;"></textarea>
+      </div>
+
+      <div class="form-acciones">
+        <button class="btn btn-primario" onclick="verificarcamposCargarAntecedenteCliente()"  value="Guardar Datos">Guardar</button>
+      </div>
+    </div>
+
+    <!-- LISTADO DE TURNOS -->
+    <div class="listado-agendamiento">
+      <table class="tableCabeceraRegistro">
+        <thead>
+          <tr class="td_registro2">
+            <th style="width:100%;">OBSERVACIÓN</th>
+          </tr>
+        </thead>
+      </table>
+
+      <div class="div_cuerpo_table" id="divTable_AntecedentePaciente" style="height:60vh;"></div>
+	</div>
+
+</center>
 </div>
 
-
+</center>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 <!-- BOTÓN PARA ABRIR EL MODAL -->
 
 
