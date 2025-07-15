@@ -152,7 +152,43 @@ if($operacion=="vercuotasatrazadas")
 }
 
 
+if($operacion=="actualizarApodo")
+{	
+	$cod_venta=$_POST['cod_venta'];
+    $cod_venta = utf8_decode($cod_venta); 
+	
+	$apodo=$_POST['apodo'];
+    $apodo = utf8_decode($apodo); 
+	actualizarApodo($cod_venta,$apodo);
 }
+
+
+}
+
+
+function actualizarApodo($cod_venta,$apodo)
+{
+     $mysqli = conectar_al_servidor();
+ 
+	$consulta1 = "UPDATE venta SET apodo = '$apodo' WHERE cod_venta = '$cod_venta'";
+
+    $stmt1 = $mysqli->prepare($consulta1);
+    
+
+    if (!$stmt1->execute()) {
+        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        exit;
+    }
+ 
+    $informacion = array("1" => "exito");
+    mysqli_close($mysqli);
+    echo json_encode($informacion);
+    exit;
+}
+
+
+
+
 
 function vercuotasatrazadas($cod_venta){
 	
@@ -595,7 +631,7 @@ if ( ! $stmt->execute()) {
 			   
 			   $descripcion= detalleTratamiento($cod_venta);
 			    	 if($apodo != ''){
-						 $paciente = $paciente." ($apodo)";
+						 $paciente = $paciente." <b style='color:#8BC34A' >($apodo)</b>";
 					 }
 		$pagina .= "
 <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='

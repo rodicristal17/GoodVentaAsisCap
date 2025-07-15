@@ -1868,6 +1868,92 @@ function VerificarAbmConsulta() {
 }
 
 
+
+
+
+function VerificarAbmApodo() { 
+	let inptApodoConsulta  = document.getElementById("inptApodoConsulta").value 
+	actualizarApodo(inptApodoConsulta,"actualizarApodo")
+}
+
+
+function actualizarApodo(apodo,accion) {	
+		
+	verCerrarEfectoCargando("1")
+	var datos = new FormData();
+	obtener_datos_user();
+  
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", accion)
+	datos.append("cod_venta", cod_ventaFKConsulta) 
+	datos.append("apodo", apodo) 
+ 
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var porce= ~~((evt.loaded / evt.total) * 100); 
+		if(porce>90){
+		porce=Number(porce)-7				
+		}
+		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}       
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        }, false);
+        return xhr;
+    },
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			return false;
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("")
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					
+					buscarVistaConsulta()
+ 
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+
+
+
+
+
+
 function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consulta,cod_especialista,accion) {	
 		
 	verCerrarEfectoCargando("1")

@@ -91,14 +91,18 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
  if($operacion=="buscar_antecedente_consulta"){
 	$cod_clienteFK=$_POST["cod_clienteFK"];
  	$cod_clienteFK=utf8_decode($cod_clienteFK);
- 	buscar_antecedente_consulta($cod_clienteFK);
+	$cod_ventaFK=$_POST["cod_ventaFK"];
+ 	$cod_ventaFK=utf8_decode($cod_ventaFK);
+ 	buscar_antecedente_consulta($cod_clienteFK,$cod_ventaFK);
  }
  
  
  if($operacion=="buscar_antecedente_resumen_consulta"){
 	$cod_clienteFK=$_POST["cod_clienteFK"];
  	$cod_clienteFK=utf8_decode($cod_clienteFK);
- 	buscar_antecedente_resumen_consulta($cod_clienteFK);
+	$cod_ventaFK=$_POST["cod_ventaFK"];
+ 	$cod_ventaFK=utf8_decode($cod_ventaFK);
+ 	buscar_antecedente_resumen_consulta($cod_clienteFK,$cod_ventaFK);
  }
 
  if($operacion=="buscar"){
@@ -1963,11 +1967,11 @@ exit;
 
 }
 
-function  buscar_antecedente_consulta($cod_clienteFK)
+function  buscar_antecedente_consulta($cod_clienteFK,$cod_ventaFK)
 {
 $mysqli=conectar_al_servidor();
 
-$sql="SELECT observacion FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK'";
+$sql="SELECT observacion , estado ,(select nombre_persona from persona where cod_persona=cod_usuario) as usuario,  fecha FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK' and cod_ventaFK = '$cod_ventaFK'";
 
  
 $stmt = $mysqli->prepare($sql);
@@ -1986,7 +1990,9 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 $observacion = utf8_encode($valor['observacion']);   
- 
+$estado = utf8_encode($valor['estado']);   
+$usuario = utf8_encode($valor['usuario']);   
+$fecha = utf8_encode($valor['fecha']);   
  
 
 	  $pagina.="
@@ -2036,6 +2042,9 @@ $observacion = utf8_encode($valor['observacion']);
       <div class='description'>
          ".htmlspecialchars($observacion)."
       </div>
+	  <div class='meta'>
+       ".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha)."
+      </div>
     </div>
   </div>
  
@@ -2053,21 +2062,18 @@ exit;
 
 function cargar_antecedente_paciente($cod_ventaFK,$cod_clienteFK,$observacion){
 	
-
+	$user=$_POST['useru'];
+    $user = utf8_decode($user);
 
 	$mysqli=conectar_al_servidor();
-	$consulta="INSERT INTO antecedente_paciente (cod_ventaFK,cod_clienteFK,observacion) values ('$cod_ventaFK','$cod_clienteFK','$observacion')";
+	$consulta="INSERT INTO antecedente_paciente (cod_ventaFK,cod_clienteFK,observacion,cod_usuario,estado,fecha) values ('$cod_ventaFK','$cod_clienteFK','$observacion','$user','Activo',now())";
 	
 $stmt = $mysqli->prepare($consulta);
-
-
-
+ 
 if ( ! $stmt->execute()) {
    echo "Error";
 }
-	
-	
-	
+ 
 	mysqli_close($mysqli);
  $informacion =array("1" => "exito");
 echo json_encode($informacion);	
@@ -2075,11 +2081,11 @@ exit;
 }
 
 
-function  buscar_antecedente_resumen_consulta($cod_clienteFK)
+function  buscar_antecedente_resumen_consulta($cod_clienteFK,$cod_ventaFK)
 {
 $mysqli=conectar_al_servidor();
 
-$sql="SELECT observacion FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK'";
+$sql="SELECT observacion , estado ,(select nombre_persona from persona where cod_persona=cod_usuario) as usuario,  fecha FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK' and cod_ventaFK = '$cod_ventaFK' ";
 
  
 $stmt = $mysqli->prepare($sql);
@@ -2098,11 +2104,14 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 $observacion = utf8_encode($valor['observacion']);   
+$estado = utf8_encode($valor['estado']);   
+$usuario = utf8_encode($valor['usuario']);   
+$fecha = utf8_encode($valor['fecha']);   
  
  
 
-	  $pagina.="<p>
-         ".htmlspecialchars($observacion)."</p>
+	  $pagina.="<p class='tarjeta-consulta consulta-item' style='border-left: 5px solid #ff5722;'> <b> 
+         ".htmlspecialchars($observacion)." </b>  <br>".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha)." </p>
 
 "; 
  

@@ -17,33 +17,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <img style='width: 462px;' src='/GoodVentaAsisCap/iconos/recarga.gif'></center>
 </td></tr></table>
 </div>
-
-<style>
-  .boton-flotante {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background-color: #007bff;
-    color: white;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    text-align: center;
-    line-height: 60px;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    z-index: 1000;
-    transition: background-color 0.3s;
-	display: flex;
-	justify-content: center;
-	align-items: center;  
-  }
-
-  .boton-flotante:hover {
-    background-color: #0056b3;
-  }
-</style>
+ 
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=x-ios10v1" />
@@ -73,6 +47,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
 </head>
 
@@ -9842,101 +9817,126 @@ style='background-color: #b7b7b7;'>
 
 <div class='divMenuG' >
 
-
-<div class="contenedor-formulario">
-
-  <div class="campo-form">
-    <p class="pTitulo5">CI:</p>
-    <input type="text" class="inputTextDisable" disabled id="inptCIConsulta">
+<div class="card shadow-sm mb-3" style='border: solid 1px #bbb8b8;    padding: 10px;    margin-bottom: 10px;'>
+  <div class="card-header bg-secondary text-white fw-bold text-uppercase" style='text-align: justify;'>
+  <table class='tableCabeceraRegistro'>
+	<tbody>
+	<tr> 
+	<td class='td_registro' style='width:10%;'>Datos del Paciente</td>
+	</tr>
+	</tbody>
+	</table>   
   </div>
+  <br>
+  <div class="card-body">
+    <div class="contenedor-horizontal d-flex flex-wrap gap-3">
+      
+      <!-- CI -->
+      <div class="campo-item">
+        <label for="inptCIConsulta" class="form-label fw-bold">CI:</label>
+        <input type="text" class="form-control" id="inptCIConsulta" disabled>
+      </div>
 
-  <div class="campo-form">
-    <p class="pTitulo5">Paciente:</p>
-    <input type="text"   class="inputTextDisable" disabled id="inptPacienteConsulta">
-  </div>
+      <!-- Paciente -->
+      <div class="campo-item">
+        <label for="inptPacienteConsulta" class="form-label fw-bold">Paciente:</label>
+        <input type="text" class="form-control" id="inptPacienteConsulta" disabled>
+      </div>
 
-  <div class="campo-form">
-    <p class="pTitulo5">Codigo:</p>
-    <input type="text" class="inputTextDisable" disabled id="inptCodigoConsulta">
+      <!-- Código -->
+      <div class="campo-item">
+        <label for="inptCodigoConsulta" class="form-label fw-bold">Código:</label>
+        <input type="text" class="form-control" id="inptCodigoConsulta" disabled>
+      </div>
+
+      <!-- Apodo -->
+     <div class="campo-item d-flex align-items-end" style="max-width: 280px;">
+	 <label for="inptApodoConsulta" class="form-label fw-bold">Apodo:</label>
+  <div class="flex-grow-1">    
+    <input type="text" class="form-control" id="inptApodoConsulta" style='width: 65%;'>
+	<button class="btn btn-primary mt-4" type="button" onclick="VerificarAbmApodo()">
+    Guardar
+  </button>
   </div>
   
-  <div class="campo-form">
-    <p class="pTitulo5">Apodo:</p>
-	<input type="text" class="inputText" id="inptApodoConsulta">
-  </div>
-  
-   <div class="campo-form">
-    <p class="pTitulo5">Estado de cuenta:</p>
-	<textarea class="textarea1" placeholder="Obligatorio (*)" id="inptEstadoCuentaConsulta" style="height:80px;"></textarea>
-  </div>
-  
-  <div class="campo-form">
-  <p class="pTitulo5">Observaciones:</p>
-    <div class="tarjeta-consulta consulta-item" style='border-left: 5px solid #db3434'>
-  <div class="consulta-body" id='resumen_antencedente_paciente'>
+</div>
+
+
+    </div>
+
+    <!-- Estado de cuenta (debajo, ocupa ancho total) -->
+    <div class="mt-3">
+      <label for="inptEstadoCuentaConsulta" class="form-label fw-bold">Estado de cuenta:</label>
+      <textarea class="form-control" id="inptEstadoCuentaConsulta" placeholder="Obligatorio (*)" rows="3"></textarea>
+    </div>
   </div>
 </div>
-  </div>
+
+<!-- CONTENEDOR PRINCIPAL -->
+<div class="contenedor-principal container-fluid" style='    border: solid 1px #c1bcbc;    padding: 10px;    border-radius: 10px;'>
   
-
-</div>
-<!-- CONTENEDOR PRINCIPAL QUE ENVUELVE AMBOS -->
-<div class="contenedor-principal">
-
   <!-- BLOQUE 1: Observación Paciente -->
-  <div class="div_cuerpo_table" style="height: 50vh;">
-
-    <!-- Título -->
-    <table class="tableCabeceraRegistro">
-      <tbody>
-        <tr>
-          <td class="td_registro2" style="width:100%;">OBSERVACIÓN PACIENTE</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Input + Botón Agregar -->
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <input type="text" id="inputObservacion" class="inputText" placeholder="Escriba una observación..." style="flex: 1;" />
-      <button type="button" onclick="agregarObservacionConsulta()" class="btn btn-primary">Agregar</button>
+  <div class="card bloque" style="height: 290px;">
+    <div class="card-header bg-primary text-white fw-bold text-uppercase">
+	<table class='tableCabeceraRegistro'>
+	<tbody>
+	<tr> 
+	<td class='td_registro' style='width:10%;'>Observación Paciente</td>
+	</tr>
+	</tbody>
+	</table>    
     </div>
-
-    <!-- Contenedor de observaciones -->
-    <div class="div_cuerpo_table" id="divObservacionPaciente" style="height: 35vh; overflow-y: auto; margin-top: 10px;">
-      <table class="table table-bordered table-sm" id="tablaObservaciones" style="width: 100%;">
-        <thead>
-          <tr>
-            <th class="td_registro2" style="width: 100%;">DETALLE</th> 
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Las observaciones se agregarán aquí -->
-        </tbody>
-      </table>
-	  <div class="div_cuerpo_table" id="divObservacionConsulta" style="height:380px;"></div>
+	<br>
+    <div class="card-body">
+      <div class="d-flex gap-2 mb-3">
+        <input type="text" id="inputObservacion" style='width: 70%;' class="form-control" placeholder="Escriba una observación...">
+        <button type="button" onclick="agregarObservacionConsulta()" class="btn btn-success">
+          <i class="bi bi-plus-circle"></i> Guardar
+        </button>
+      </div>
+      <div class="table-responsive" id='divObservacionConsulta' style="height: 210px; overflow: auto;  padding: 10px;">
+       
+      </div>
     </div>
   </div>
 
-  <!-- BLOQUE 2: Historial de Consultas -->
-  <div class="contenedor-formulario " >
-
-    <table style="width:100%">
-      <tr>
-        <td>
-          <p class="pTitulo5">Historial de Consultas :</p>
-
-          <!-- Contenedor con scroll horizontal -->
-          <div class="div_cuerpo_table DivContenedorHC" id="divHistorial_Consulta"
-               style="height: 250px; overflow-x: auto; display: flex; flex-direction: row; gap: 10px; padding: 10px;">
-            <!-- Aquí se agregan las consultas -->
-          </div>
-        </td>
-      </tr>
-    </table>
-  </div>
-  
-</div>
+  <!-- BLOQUE 2: Perfil Clínico -->
+  <div class="card bloque" style="height: 290px;">
+    <div class="card-header bg-danger text-white fw-bold text-uppercase">
+	<table class='tableCabeceraRegistro'>
+	<tbody>
+	<tr> 
+	<td class='td_registro'  style='width:10%;background: #ff5722;'>Perfil Clínico</td>
+	</tr>
+	</tbody>
+	</table>      
+    </div>
+    <div class="card-body "   >
+	<div class="consulta-body" id="resumen_antencedente_paciente" style="height: 250px; overflow: auto;  padding: 10px;"></div>
  
+    </div>
+  </div>
+
+  <!-- BLOQUE 3: Historial de Consultas -->
+  <div class="card bloque" style="height: 290px;">
+    <div class="card-header bg-info text-white fw-bold text-uppercase">
+	<table class='tableCabeceraRegistro'>
+	<tbody>
+	<tr> 
+	<td class='td_registro' style='width:10%;'>Historial de Consultas</td>
+	</tr>
+	</tbody>
+	</table> 
+    </div>
+    <div class="card-body">
+      <div id="divHistorial_Consulta" class="d-flex flex-row gap-2 overflow-auto" style="height: 250px; overflow: auto;  padding: 10px;">
+        <!-- Consultas dinámicas -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
 
 <div class="divMenuh">
 
@@ -9959,7 +9959,7 @@ style='background-color: #b7b7b7;'>
 
   <!-- Panel Derecho -->
   <div class="divFloat2 panel-derecho">
-    <div class="div_ContenedorDatos">
+    <div class="div_ContenedorDatos card bloque" style='padding: 10px;'>
 
       <!-- Especialista y Fecha -->
       <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -10011,7 +10011,6 @@ style='background-color: #b7b7b7;'>
 
       <!-- Botón Guardar -->
       <div style="text-align: center; margin-top: 20px;">
-        <input type="button" value="Subir imagen" class="btn1" onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')" id="btnSubirImagen">
         <input type="button" value="Guardar Consulta" class="btn1" onclick="VerificarAbmConsulta()" id="btnAbmConsulta">
       </div>
 
@@ -10021,7 +10020,42 @@ style='background-color: #b7b7b7;'>
   </div>
 
 </div>
-<div class="div_cuerpo_table2" id="table_frm_VistaGaleria" style='min-height:280px;border:none;overflow:auto'></div>
+
+
+<div class="card shadow-sm mb-3" >
+  <div class="card-header bg-dark text-white fw-bold text-uppercase">
+  <table class='tableCabeceraRegistro'>
+	<tbody>
+	<tr> 
+	<td class='td_registro' style='width:10%;'> Galería del Paciente</td>
+	</tr>
+	</tbody>
+	</table>    
+  </div>
+  <br>
+  <div class="card-body d-flex flex-column gap-3">
+
+    <!-- Botón Subir Imagen -->
+    <button id="btnSubirImagen" class="btn btn-outline-primary w-100" 
+            onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')">
+      <i class="bi bi-cloud-upload"></i> Subir Imagen
+    </button>
+
+    <!-- Contenedor Galería -->
+    <div id="table_frm_VistaGaleria" 
+         class="border rounded p-2 bg-light" 
+         style="min-height: 280px; overflow: auto;">
+      <!-- Aquí se mostrarán las imágenes -->
+    </div>
+
+  </div>
+</div>
+
+
+
+
+ <!-- <input type="button" value="Subir imagen" class="btn1" onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')" id="btnSubirImagen"> -->
+<!-- <div class="div_cuerpo_table2" id="table_frm_VistaGaleria" style='min-height:280px;border:none;overflow:auto'></div> -->
 </div>
 
 </center>

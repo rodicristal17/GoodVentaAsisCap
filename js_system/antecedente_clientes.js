@@ -68,6 +68,7 @@ function abmAntecedentePaciente(observacion) {
 					ver_vetana_informativa("CARGADO CORRECTAMENTE");
 					limpiarcamposAntecedenteCliente()
 					buscarAbmAntecedenteConsulta()
+					buscarResumenAntecedenteConsulta()
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -86,6 +87,7 @@ function buscarAbmAntecedenteConsulta(){
 		"passu": passuser,
 		"navegador": navegador,
 		"cod_clienteFK": cod_clienteConsulta,
+		"cod_ventaFK": cod_ventaFKConsulta,
 		"funt": "buscar_antecedente_consulta"
 	};
 	$.ajax({
@@ -128,6 +130,7 @@ function buscarResumenAntecedenteConsulta(){
 		"passu": passuser,
 		"navegador": navegador,
 		"cod_clienteFK": cod_clienteConsulta,
+		"cod_ventaFK": cod_ventaFKConsulta,
 		"funt": "buscar_antecedente_resumen_consulta"
 	};
 	$.ajax({
