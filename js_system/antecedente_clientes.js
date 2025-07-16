@@ -120,6 +120,50 @@ function buscarAbmAntecedenteConsulta(){
 		}
 	});
 }
+function cambiarEstadoAntecedenteConsulta(datos){
+	
+	
+	// console.log(datos.id);
+	// return;
+	
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_antecedente_paciente": datos.id,
+		"funt": "cambiar_estado_antecedente_consulta"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
+		type: "post",
+
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+          manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					ver_vetana_informativa("CARGADO CORRECTAMENTE...");
+					buscarAbmAntecedenteConsulta()
+				}
+			} catch (error) {
+					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
 
 
 function buscarResumenAntecedenteConsulta(){

@@ -48,6 +48,15 @@ if($operacion=="buscarHistorialConsulta")
 	buscarHistorialConsulta($cod_venta);
 }
 
+if($operacion=="guardarPorcentajeProgreso")
+{	
+	$id_detalle_tratamientoConsulta=$_POST['id_detalle_tratamientoConsulta'];
+    $id_detalle_tratamientoConsulta = utf8_decode($id_detalle_tratamientoConsulta);
+	$porcentaje=$_POST['porcentaje'];
+    $porcentaje = utf8_decode($porcentaje); 
+	guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje);
+}
+
 	
 if($operacion=="historialConsulta")
 {	
@@ -187,7 +196,25 @@ function actualizarApodo($cod_venta,$apodo)
 }
 
 
+function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje)
+{
+     $mysqli = conectar_al_servidor();
+ 
+	$consulta1 = "UPDATE detalle_venta SET progreso_porcentaje = '$porcentaje' WHERE cod_detalle = '$id_detalle_tratamientoConsulta'";
 
+    $stmt1 = $mysqli->prepare($consulta1);
+    
+
+    if (!$stmt1->execute()) {
+        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        exit;
+    }
+ 
+    $informacion = array("1" => "exito");
+    mysqli_close($mysqli);
+    echo json_encode($informacion);
+    exit;
+}
 
 
 function vercuotasatrazadas($cod_venta){
@@ -524,7 +551,7 @@ function  buscarDetalleCompradoConsulta($cod_venta)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "select dtv.descripcion , pr.cod_producto,dtv.cantidad_detalle,pr.nombre_producto,dtv.cod_detalle ,estado_tratamiento
+$sql= "select dtv.descripcion , pr.cod_producto,dtv.cantidad_detalle,pr.nombre_producto,dtv.cod_detalle ,estado_tratamiento,progreso_porcentaje
  from  producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
  inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
 where dtv.cod_ventaFK='$cod_venta'";
@@ -552,6 +579,7 @@ $nombre_producto = utf8_encode($valor['nombre_producto']);
 $cod_detalle = utf8_encode($valor['cod_detalle']);          
 $cantidad_detalle = utf8_encode($valor['cantidad_detalle']);  
 $estado_tratamiento = utf8_encode($valor['estado_tratamiento']); 
+$progreso_porcentaje = utf8_encode($valor['progreso_porcentaje']); 
 
 $Style='';
 if($estado_tratamiento!=""){
@@ -562,9 +590,11 @@ if($estado_tratamiento!=""){
  $styleName=CargarStyleTable($styleName);
 $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro'> 
+<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)'> 
 <td  style='width:20%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
-<td  style='width:80%'>$nombre_producto   $descripcion </td> 
+<td  style='width:60%'>$nombre_producto   $descripcion </td> 
+<td id='td_datos_1' style='width:20%;text-align: center;'>$progreso_porcentaje </td> 
+<td id='td_id_1' style='display:none'> $cod_detalle </td> 
 </tr>
 </table>";
  

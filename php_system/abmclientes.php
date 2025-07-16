@@ -85,6 +85,14 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
 	$idcliente=$_POST["idcliente"];
  	$idcliente=utf8_decode($idcliente);
  	addmasreferencias($totalCargado,$idcliente);
+ }  
+ 
+ 
+ if($operacion=="cambiar_estado_antecedente_consulta"){
+ 	$cod_antecedente_paciente=$_POST["cod_antecedente_paciente"];
+ 	$cod_antecedente_paciente=utf8_decode($cod_antecedente_paciente);
+
+ 	cambiar_estado_antecedente_consulta($cod_antecedente_paciente);
  } 
  
  
@@ -815,6 +823,41 @@ exit;
 $control=$control+1;
 
 }
+
+
+ mysqli_close($mysqli);
+$informacion =array("1" => "exito");
+echo json_encode($informacion);	
+exit;
+
+}
+function cambiar_estado_antecedente_consulta($cod_antecedente_paciente)
+{
+
+if($cod_antecedente_paciente=="" ){
+$informacion =array("1" => "camposvacio");
+echo json_encode($informacion);	
+exit;
+}
+
+ $user=$_POST['useru'];
+    $user = utf8_decode($user);
+	
+date_default_timezone_set('America/Anguilla');    
+$fecha_inser_edit = date('Y-m-d | h:i:sa', time());	
+
+$mysqli=conectar_al_servidor(); 
+	
+$consulta= "UPDATE antecedente_paciente SET estado = 'Inactivo', cod_usuario ='$user', fecha='$fecha_inser_edit' WHERE idantecedente_paciente = '$cod_antecedente_paciente'";
+
+
+ 
+$stmt1 = $mysqli->prepare($consulta);
+if (!$stmt1->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+exit;
+}
+ 
 
 
  mysqli_close($mysqli);
@@ -1971,7 +2014,7 @@ function  buscar_antecedente_consulta($cod_clienteFK,$cod_ventaFK)
 {
 $mysqli=conectar_al_servidor();
 
-$sql="SELECT observacion , estado ,(select nombre_persona from persona where cod_persona=cod_usuario) as usuario,  fecha FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK' and cod_ventaFK = '$cod_ventaFK'";
+$sql="SELECT observacion, idantecedente_paciente , estado ,(select nombre_persona from persona where cod_persona=cod_usuario) as usuario,  fecha FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK' and cod_ventaFK = '$cod_ventaFK'";
 
  
 $stmt = $mysqli->prepare($sql);
@@ -1993,7 +2036,19 @@ $observacion = utf8_encode($valor['observacion']);
 $estado = utf8_encode($valor['estado']);   
 $usuario = utf8_encode($valor['usuario']);   
 $fecha = utf8_encode($valor['fecha']);   
+$idantecedente_paciente = utf8_encode($valor['idantecedente_paciente']);   
  
+ 
+
+	 $button ="<button class='btn btn-success' id='$idantecedente_paciente' onclick='cambiarEstadoAntecedenteConsulta(this)' value=''>X</button>";
+	 $styletext='';
+ 
+ 
+ if($estado =='Inactivo'){
+	$styletext="style='text-decoration: line-through;'";
+	$button = "";
+ }
+
 
 	  $pagina.="
 <style>
@@ -2006,6 +2061,9 @@ $fecha = utf8_encode($valor['fecha']);
 .timeline-item {
   position: relative;
   margin-bottom: 2px;
+  
+  display:flex;
+  justify-content: space-between;
 }
 .timeline-item::before {
   content: '';
@@ -2022,6 +2080,8 @@ $fecha = utf8_encode($valor['fecha']);
   padding: 5px 7px;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  
+  flex: 1;
 }
 .timeline-content .description {
   font-weight: bold;
@@ -2039,15 +2099,17 @@ $fecha = utf8_encode($valor['fecha']);
 <div class='timeline'>
   <div class='timeline-item'>
     <div class='timeline-content'>
-      <div class='description'>
+      <div class='description'  $styletext >
          ".htmlspecialchars($observacion)."
       </div>
 	  <div class='meta'>
        ".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha)."
       </div>
     </div>
+	
+	$button
+	
   </div>
- 
 </div>
 
 "; 
@@ -2085,7 +2147,7 @@ function  buscar_antecedente_resumen_consulta($cod_clienteFK,$cod_ventaFK)
 {
 $mysqli=conectar_al_servidor();
 
-$sql="SELECT observacion , estado ,(select nombre_persona from persona where cod_persona=cod_usuario) as usuario,  fecha FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK' and cod_ventaFK = '$cod_ventaFK' ";
+$sql="SELECT observacion , estado ,(select nombre_persona from persona where cod_persona=cod_usuario) as usuario,  fecha FROM antecedente_paciente WHERE cod_clienteFK = '$cod_clienteFK' and cod_ventaFK = '$cod_ventaFK' and estado = 'Activo'";
 
  
 $stmt = $mysqli->prepare($sql);

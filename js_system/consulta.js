@@ -2196,3 +2196,84 @@ function buscarobtenermedicos(){
 	
 }
 
+
+let id_detalle_tratamientoConsulta = '';
+/* PORCENTAJE DE TRATAMIENTOS */
+function obtenerdatostrConsultaTratamiento(datostr) {
+	$("tr[id=tbSelecRegistro]").each(function (i, td) {
+		td.className = ''
+
+	});
+	datostr.className = 'tableRegistroSelec'
+	id_detalle_tratamientoConsulta = $(datostr).children('td[id="td_id_1"]').html();
+	let porcentaje = $(datostr).children('td[id="td_datos_1"]').html()
+	mostrarValorSlider(parseInt(porcentaje))
+	verCerrarCargarPorcentajeProgreso()
+}
+
+function verCerrarCargarPorcentajeProgreso(){
+
+	if(document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display==""){
+	document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display="none"
+	mostrarValorSlider(0)
+	}else{		
+		
+		$("div[id=divCargarTratamientoPorcentajeProgreso]").fadeIn(500);
+	}
+}
+
+
+function mostrarValorSlider(valor) {
+	
+    document.getElementById("valor_slider_progreso_tratamiento").textContent = valor;
+    document.getElementById("porcentaje").value = valor;
+    document.getElementById("inpt_progreso_tratamiento_oculto").value = valor;
+  }
+
+function guardarPorcentajeProgreso(){
+		 let porcentaje = document.getElementById("inpt_progreso_tratamiento_oculto").value;
+			obtener_datos_user();
+				 var datos = {
+			 "useru":userid,
+			 "passu":passuser,
+			 "navegador": navegador, 
+			 "id_detalle_tratamientoConsulta": id_detalle_tratamientoConsulta, 
+			 "porcentaje": porcentaje, 
+			"funt": "guardarPorcentajeProgreso"
+			};
+	 $.ajax({
+			
+			data: datos,
+			url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+			type:"post",
+		
+			beforeSend: function(){			
+			
+			
+			},
+				error: function(jqXHR, textstatus, errorThrowm){
+	manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana") 
+			},
+			success: function(responseText)
+			{
+	
+			var Respuesta=responseText;
+     console.log(Respuesta) 
+			try{
+				var datos = $.parseJSON(Respuesta); 
+          Respuesta=datos["1"];  
+			
+			if (Respuesta == "exito") {
+				verCerrarCargarPorcentajeProgreso()
+		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
+ buscarDetalleVentaConsulta(cod_ventaFKConsulta);
+			}
+			}catch(error)
+				{
+					
+				}
+			}
+			});
+	
+	
+}

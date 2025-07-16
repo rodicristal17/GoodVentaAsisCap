@@ -10067,6 +10067,7 @@ style='background-color: #b7b7b7;'>
 <div class="boton-flotante" id='btn_flotante_consulta' onclick='verCerrarCargarAntecedenteCliente()' style='display:none' >
   <i class="fa-solid fa-clipboard"></i>
 </div>
+
 <div class="principal2 divScrollPrincipal" style="display:none" id="divCargarAntecedenteCliente">
 <table style="width:100%;height:100%" id="" class="magictime slideDownReturn">
 <tbody><tr>
@@ -10113,17 +10114,59 @@ style='background-color: #b7b7b7;'>
       <div class="div_cuerpo_table" id="divTable_AntecedentePaciente" style="height:60vh;"></div>
 	</div>
 
-</center>
 </div>
+</center>
 
+</div>
 </center>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-<!-- BOTÓN PARA ABRIR EL MODAL -->
 
+<div class="principal2 divScrollPrincipal" style="display:none" id="divCargarTratamientoPorcentajeProgreso">
+<table style="width:100%;height:100%" id="" class="magictime slideDownReturn">
+<tbody><tr>
+<td>
+<center>
+<div style="width:80%;min-height: 300px;" class="divAbms">
+<table class="tableMenuZ">
+<tbody><tr>
+<td style="width:100%">
+<p class="pTituloB">Porcentaje Progreso</p>
+</td>
+<td style="width:5%">
+<img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarCargarPorcentajeProgreso()">
+</td>
+</tr>
+</tbody></table>
+
+<center>
+
+<div class="vista-consulta-body contenedorflex" style="gap: 1.5rem;">
+    <div class="formulario-agendamiento">
+      <input type="range" id="porcentaje" class='inpt_range' name="porcentaje" min="0" max="100" value="0" oninput="mostrarValorSlider(this.value)">
+  <div class="value_slider"><span id="valor_slider_progreso_tratamiento">0</span>%</div>
+  <input id='inpt_progreso_tratamiento_oculto' type='text' style='display:none' />
+  
+  <br>
+  <br>
+  <button class="btn btn-primary" type="button" onclick="guardarPorcentajeProgreso()">
+    Guardar
+  </button>
+    
+    </div>
+</div>
+</center>
+
+</div>
+</center>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 
 <!-- MODAL -->
 <div id="modalConsulta" class="modal">
