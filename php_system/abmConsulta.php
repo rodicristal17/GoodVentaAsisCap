@@ -593,7 +593,17 @@ $pagina.="
 <tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)'> 
 <td  style='width:20%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
 <td  style='width:60%'>$nombre_producto   $descripcion </td> 
-<td id='td_datos_1' style='width:20%;text-align: center;'>$progreso_porcentaje </td> 
+<td   style='width:20%;text-align: center;'> <span style='
+            background: linear-gradient(135deg, #4CAF50, #81C784);
+    color: #fff;
+    padding: 8px 3px;
+    border-radius: 7px;
+    font-weight: bold;
+    font-size: 12px;
+    display: inline-block;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    '>  $progreso_porcentaje % </span></td> 
+<td id='td_datos_1' style='Display:none'>$progreso_porcentaje </td> 
 <td id='td_id_1' style='display:none'> $cod_detalle </td> 
 </tr>
 </table>";
@@ -626,10 +636,12 @@ exit;
 	}
 	
 	
-		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo
-		from venta inner join cliente cl on cod_clienteFK=cod_cliente
+		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo , 
+		(select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
+		(select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
+		from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
 		inner join persona p on cod_cliente=cod_persona
-			 where cl.estado = 'Activo'".$condicionPaciente.$condicionlocal." limit 100;";
+		  where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$condicionPaciente.$condicionlocal." limit 100;";
 
 
    
@@ -649,22 +661,36 @@ if ( ! $stmt->execute()) {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		   
-		      $cod_agendamiento='';
+		  
 		  	  $num_factura=utf8_encode($valor['num_factura']);
-		  	  $ci_cliente=utf8_encode($valor['ci_cliente']);
-			  $medico='';
+		  	  $ci_cliente=utf8_encode($valor['ci_cliente']); 
 			  $paciente=utf8_encode($valor['paciente']);
 			  $cod_cliente=utf8_encode($valor['cod_cliente']);
 			   $decripcion=''; 
 			   $cod_venta=utf8_encode($valor['cod_venta']);
 			   $apodo=utf8_encode($valor['apodo']);
 			   
+$porcentaje = $valor['porcentaje'];
+$totalporcentaje = $valor['totalporcentaje'];
+$totalporcentaje = $totalporcentaje * 100;
+
+ if ($totalporcentaje > 0) {
+    $resultadoPorcentaje = round(($porcentaje / $totalporcentaje) * 100);
+} else {
+    $resultadoPorcentaje = 0; // Evitar división por cero
+}
+			   
 			   $descripcion= detalleTratamiento($cod_venta);
 			    	 if($apodo != ''){
 						 $paciente = $paciente." <b style='color:#8BC34A' >($apodo)</b>";
 					 }
+$color=" #e53935; ";	
+if($resultadoPorcentaje=="100"){
+	$color=" #8bc34a; ";
+}			 
 		$pagina .= "
 <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='
+  position: relative; /* Necesario para posicionar el círculo */
   border: 1px solid #ddd;
   border-radius: 8px;
   margin: 10px 0;
@@ -673,6 +699,26 @@ if ( ! $stmt->execute()) {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   font-family: Arial, sans-serif;
 '>
+  <!-- Círculo del porcentaje -->
+  <div style='
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: $color /* Rojo */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  '>
+    $resultadoPorcentaje %
+  </div>
+
   <h3 style='
     margin-top:0;
     margin-bottom:10px;
@@ -680,7 +726,7 @@ if ( ! $stmt->execute()) {
     color: #333;
   '>DATOS PACIENTE</h3>
   
-  <p><strong>Nombre:</strong> $paciente </p>
+  <p><strong>Nombre:</strong> $paciente</p>
   <p><strong>CI:</strong> $ci_cliente</p>
   <p><strong>Código venta:</strong> $num_factura</p>
 
@@ -698,13 +744,13 @@ if ( ! $stmt->execute()) {
     <span id='td_datos_1'>$paciente</span>
     <span id='td_datos_2'>$ci_cliente</span>
     <span id='td_datos_3'>$num_factura</span>
-    <span id='td_datos_4'>$cod_agendamiento</span> 
+    <span id='td_datos_4'></span> 
     <span id='td_datos_5'>$cod_venta</span> 
     <span id='td_datos_6'>$cod_cliente</span> 
     <span id='td_datos_7'>$apodo</span> 
   </div>
-</div>
-";
+</div>";
+
 
    
 	  }

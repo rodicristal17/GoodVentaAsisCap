@@ -380,8 +380,8 @@ $cod_usuario=obtenerUltimaid();
 EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }else{
-// EliminarAccesos($cod_usuario);
-// generarKEYS($acceso,$cod_usuario,'Administrativo');
+EliminarAccesos($cod_usuario);
+generarKEYS($acceso,$cod_usuario,'Administrativo');
 }
 
 $informacion =array("1" => "exito");
