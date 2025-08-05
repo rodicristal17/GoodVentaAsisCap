@@ -1,6 +1,7 @@
 <?php
 require("conexion.php");
 include("verificar_navegador.php");
+include("subir_foto_base64.php");
 include("buscar_nivel.php");
 include("classTable.php");
 
@@ -384,11 +385,53 @@ EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }
 
+
+cargarFotos($cod_persona);
+
 $informacion =array("1" => "exito");
 echo json_encode($informacion);	
 exit;
 
 }
+
+
+function cargarFotos($cod_persona){
+	
+$ext=$_POST['ext'];
+$ext = utf8_decode($ext);
+ 
+
+if($ext!=""){
+	$foto=substr($_POST['foto'], strpos($_POST['foto'], ",") + 1);;
+$foto = base64_decode($foto);
+$id_foto="";		  
+		     $donde="../fotos/perfilUsuario/";
+			  $id_foto=$cod_persona;
+                $id_f=subir_imagen_base64($donde,$foto,$id_foto,$ext);
+$ruta="/GoodVentaAsisCap/fotos/perfilUsuario/".$cod_persona.$id_f.'.'.$ext;
+CargaFoto("url",$ruta,$cod_persona);
+}
+ 
+
+
+
+}
+
+function CargaFoto($tableName,$Urlfoto,$cod_cliente){
+	$mysqli=conectar_al_servidor();
+	$consulta="Update usuario set ".$tableName."=? where cod_usuario=? ";	
+
+	$stmt = $mysqli->prepare($consulta);
+$ss='ss';
+$stmt->bind_param($ss,$Urlfoto,$cod_cliente); 
+if ( ! $stmt->execute()) {
+   echo "Error";
+   exit;
+}
+	 mysqli_close($mysqli);
+}
+
+
 
 function obtenerUltimaid()
 {
@@ -446,7 +489,7 @@ if($usuario!=""){
 
 
 $sql= "select us.cod_usuario,us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
-(select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo
+(select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona where 
  us.estado=? and us.cod_localFK=? ".$condicioncodigo.$condiciondocumento.$condicionusuario;
  
@@ -480,6 +523,7 @@ $nombre_persona = utf8_encode($valor['nombre_persona']);
 $telefono = utf8_encode($valor['telefono']); 
 $local = utf8_encode($valor['local']); 
 $tipo = utf8_encode($valor['tipo']); 
+$url = utf8_encode($valor['url']); 
 
 
 	    	 $styleName=CargarStyleTable($styleName);
@@ -497,6 +541,7 @@ $tipo = utf8_encode($valor['tipo']);
 <td  id='td_datos_8' style='display:none'>".$telefono."</td>
 <td  id='td_datos_9' style='width:10%'>".$local."</td>
 <td  id='td_datos_10' style='display:none'>".$tipo."</td>
+<td  id='td_datos_11' style='display:none'>".$url."</td>
 </tr>
 </table>";
 

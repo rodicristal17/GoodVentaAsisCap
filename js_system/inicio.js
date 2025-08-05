@@ -243,13 +243,12 @@ if (codigopc == "undefined" || codigopc == "" || codigopc == "Null" || codigopc 
 			
 			if(controlMensaje==30){
 					controlMensaje=0;
+					buscarSugerencias()
 					// buscarproductosDescuento()
 
 				}
 			controlMensaje=controlMensaje+1;
-			
-			
-			
+ 
 			
 			}
  
@@ -432,6 +431,11 @@ buscarobtenermedicos()
 
 buscarobtenerPacientes()
 
+
+buscarSugerencias()
+
+
+
 var saludo=localStorage.getItem("saludo"+userid);
 if(saludo=="si"){
 	
@@ -502,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.32"
+var codigodeactualizacion="X-GT-1-JMTG-V1.35"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -956,6 +960,16 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptEstadoUser').value = $(datostr).children('td[id="td_datos_5"]').html();
 	document.getElementById('inptlocaluser').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptTipoUsuUser').value = $(datostr).children('td[id="td_datos_10"]').html();
+	
+	
+	
+		
+	fotocliente3= $(datostr).children('td[id="td_datos_11"]').html(); 
+	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
+    extcliente3=""; 
+	
+	
+	
 	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
     document.getElementById('btnEditarUsuario').style.backgroundColor="";
     document.getElementById('btnAbmUsuario').value = "Editar datos";
@@ -1018,6 +1032,8 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("cod_localFK", cod_localFK)
 	datos.append("acceso", acceso)
 	datos.append("tipo", tipo)
+	datos.append("foto", fotocliente3)
+	datos.append("ext", extcliente3)		
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
@@ -1259,6 +1275,13 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptClaveAcceso').value = ""
 	document.getElementById('inptContrasenhaUser').value = ""
 	document.getElementById('inptRegistroSeleccUser').value = ""
+	
+		$("div[id=imgFotoPerfil1]").css({"background-image":"url()"})
+		fotocliente3="";
+		extcliente3="";
+	
+	
+	
 	document.getElementById('inptEstadoUser').value = "Activo";
 	document.getElementById('btnAbmUsuario').value = "Guardar datos";
 	document.getElementById('btnEditarUsuario').style.backgroundColor="#b7b7b7";
@@ -3971,6 +3994,8 @@ function AbmCategoria(descripcion,Estado,idabm,accion) {
 		}
 	});
 }
+
+
 function BuscarAbmCategoria() {
 	var buscador = document.getElementById("inptBuscarAbmCategorias").value
 	var estado = "Activo"
@@ -8242,6 +8267,8 @@ function obtenerdatosVistaZona(datostr) {
 	}
 	document.getElementById("divVistaZona").style.display = "none"
 }
+
+
 function buscarabmZonaOption() {
 	document.getElementById("inputSelectZonaInfHistorialVenta").innerHTML = "";
 	document.getElementById("inptBuscarAbmCliente4").innerHTML = "";
@@ -10522,6 +10549,10 @@ var fotocliente1="";
 var extcliente1="";
 var fotocliente2="";
 var extcliente2="";
+
+ 
+var fotocliente3 = "";
+var extcliente3 = "";
 function readFileCliente2(input){		
 var file=$("input[name="+input.name+"]")[0].files[0];
 var filename= file.name;
@@ -10550,6 +10581,14 @@ fotocliente2=e.target.result;
  $("div[id=imgFotoCliente2]").css({"background-image":"url("+fotocliente2+")"})
 
 }
+
+
+		if (controlfotocliente == "Perfil") {
+			extcliente3 = file_extension;
+			fotocliente3 = e.target.result;
+			$("div[id=imgFotoPerfil1]").css({ "background-image": "url(" + fotocliente3 + ")" })
+
+		}
 
 
 }
@@ -14230,6 +14269,13 @@ function crearcreditodesdeventa() {
 		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA", "#")
 		return false;
 	}
+	
+	if (inptNroCuotasConfCredito >=100) {
+		ver_vetana_informativa("FAVOR VERIFIQUE EL NRO DE CUOTA", "#")
+		return false;
+	}
+	
+	
 	if (inptNroCuotasConfCredito == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA", "#")
 		return false;
@@ -28469,9 +28515,17 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
 function removeToMenu(){
 	
 	
-	/*MENU LISTADOS*/
-	var controllistado=0;
 
+	
+	var controlAgendamientos=0;
+	if( accesosuser["VERHISTORIALCONSULTA"]["accion"]!="SI")
+	{
+	$("table[id=divMenuHistorialConsulta]").remove()
+	controlAgendamientos=controlAgendamientos+1;		
+	}
+	
+		/*MENU LISTADOS*/
+	var controllistado=0;	
 	if( accesosuser["VERLISTADODELOCALES"]["accion"]!="SI")
 	{
 	$("table[id=divMenuAbmLocales]").remove()
@@ -37571,3 +37625,285 @@ function enableMagnifier(imgSelector, zoom = 2) {
 	glass.style.backgroundSize = `${img.width * zoom}px ${img.height * zoom}px`;
 	}
 }
+
+ 
+ 
+ function buscarSugerencias() {
+	document.getElementById("sugerenciasContainer").innerHTML = "";
+ 
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "buscar"
+	};
+	$.ajax({
+
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+
+
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+                Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+					document.getElementById("sugerenciasContainer").innerHTML = datos_buscados
+					document.getElementById("notificacionSugerencias").innerHTML =  datos[4];
+ 
+
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+
+
+}
+
+
+ 
+
+// Función para abrir el modal
+function abrirModalSugerencias() {
+  document.getElementById('modalSugerencias').style.display = 'block';
+}
+
+// Función para cerrar el modal
+function cerrarModalSugerencias() {
+  document.getElementById('modalSugerencias').style.display = 'none';
+}
+
+// Evento click en la "x"
+ 
+
+// Cerrar modal si haces click fuera del contenido
+window.addEventListener('click', function(event) {
+  if (event.target === document.getElementById('modalSugerencias')) {
+    cerrarModalSugerencias();
+  }
+});
+
+ 
+// Abrir modal y cargar datos
+
+var cod_sugerencias="";
+function abrirModalEditarComentario(comentario, descripcion, estado,idsugerencias) {
+  document.getElementById('comentarioActual').value = comentario || '';
+  document.getElementById('descripcionNueva').value = "";
+  document.getElementById('selectEstado').value = estado || 'Pendiente';
+	cod_sugerencias=idsugerencias
+	buscarDetalleSugerencia()
+  document.getElementById('modalEditarComentario').style.display = 'block';
+  document.getElementById('descripcionNueva').focus()
+}
+
+// Cerrar modal
+function cerrarModalEditar() {
+  document.getElementById('modalEditarComentario').style.display = 'none';
+}
+ 
+// Cerrar si se clickea fuera del contenido
+window.addEventListener('click', e => {
+  if (e.target === document.getElementById('modalEditarComentario')) cerrarModalEditar();
+});
+
+ 
+
+function VerificarActualizarSugerencia(){
+	var descripcionNueva = document.getElementById("descripcionNueva").value
+	var selectEstado = document.getElementById("selectEstado").value	
+	if(descripcionNueva==""){
+		document.getElementById("descripcionNueva").focus()
+		ver_vetana_informativa("Falto Ingresar la resolución")
+		return
+	}
+	if(selectEstado==""){
+		document.getElementById("selectEstado").focus()
+		ver_vetana_informativa("Falto seleccionar el estado del registro")
+		return
+	}	
+ 
+	ActualizarSugerencia(descripcionNueva,selectEstado,cod_sugerencias)
+}
+function ActualizarSugerencia(descripcion,Estado,idabm) {
+	verCerrarEfectoCargando("1")
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", "ActualizarSugerencia")
+	datos.append("idsugerencias", idabm)
+	datos.append("resolucion", descripcion)
+	datos.append("estado", Estado)
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var porce= ~~((evt.loaded / evt.total) * 100); 
+		if(porce>90){
+		porce=Number(porce)-7				
+		}
+		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			return false;
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("")
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				 Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) { 
+				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+				buscarSugerencias()
+				cerrarModalEditar()
+				}
+				else {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+						var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+
+ 
+ 
+ function buscarDetalleSugerencia() {
+	document.getElementById("tablaSeguimiento").innerHTML = "";
+ 
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idsugerencias": cod_sugerencias,
+		"funt": "buscarSugerencia"
+	};
+	$.ajax({
+
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+
+
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+                Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+					document.getElementById("tablaSeguimiento").innerHTML = datos_buscados
+ 
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+
+
+}
+

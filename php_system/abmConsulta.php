@@ -172,7 +172,115 @@ if($operacion=="actualizarApodo")
 }
 
 
+
+
+if($operacion=="verEvolucion")
+{	
+	$cod_venta=$_POST['cod_venta'];
+    $cod_venta = utf8_decode($cod_venta); 
+ 
+	verEvolucion($cod_venta);
 }
+
+
+}
+
+
+function  verEvolucion($cod_venta)
+{
+$mysqli=conectar_al_servidor();
+
+$sql= "SELECT nro,(select nombre_persona from persona where cod_persona=cod_usuraioFK) as usuario, fecha FROM evoluciontratamiento WHERE cod_detalle_venta = '$cod_venta'";
+
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+ 
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+$styleName="tableRegistroSearch";
+$pagina="";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+$nro = utf8_encode($valor['nro']);   
+$usuario = utf8_encode($valor['usuario']);   
+$fecha = utf8_encode($valor['fecha']);   
+ 
+ 
+$styleName=CargarStyleTable($styleName);
+	  $pagina.="
+<style>
+.timeline {
+  position: relative;
+  margin: 2px 0;
+  padding-left: 5px;
+  border-left: 3px solid #4a90e2;
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 2px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+}
+.timeline-content {
+  background-color: #f9f9f9;
+  padding: 5px 7px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.timeline-content .description {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+.timeline-content .meta {
+  font-size: 12px;
+  color: #666;
+  border-top: 1px solid #ddd;
+  margin-top: 2px;
+  padding-top: 2px;
+}
+</style>
+
+<div class='timeline'>
+  <div class='timeline-item'>
+    <div class='timeline-content'>
+      <div class='description'>
+         ".htmlspecialchars($nro)." %
+      </div>
+      <div class='meta'>
+       ".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha)."
+      </div>
+    </div>
+  </div>
+ 
+</div>
+
+"; 
+ 
+}
+}
+ 
+$informacion =array("1" => "exito","2" => $pagina );
+echo json_encode($informacion);	
+exit;
+}
+
 
 
 function actualizarApodo($cod_venta,$apodo)
@@ -209,6 +317,20 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje)
         echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
         exit;
     }
+	
+	$user=$_POST['useru'];
+    $user = utf8_decode($user);
+	
+	$consulta1 = "insert into evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha)VALUES('$id_detalle_tratamientoConsulta',$user,'$porcentaje',now()) ";
+
+    $stmt1 = $mysqli->prepare($consulta1);
+    
+
+    if (!$stmt1->execute()) {
+        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        exit;
+    }
+		
  
     $informacion = array("1" => "exito");
     mysqli_close($mysqli);

@@ -26,7 +26,6 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 
-
 <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.1/mapbox-gl-geocoder.min.js'></script>
     <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.1/mapbox-gl-geocoder.css' type='text/css' />
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
@@ -416,12 +415,12 @@ class='imgsMenuLateral2' title='Tema White' />
 </div>
 
 
-<div style='overflow:auto'>
+<div style='overflow:auto' >
 
  
-<div style='overflow:auto' id='divMenuConsultas'>
+<div style='overflow:auto' id='divMenuConsultas' >
 
-<table style='width:100%;'>
+<table style='width:100%;' >
 <tr>
 <td style='padding: 15px; padding-left: 33px;width:10%'>
 <p class='pTituloPanel2' style='width:160px'>Agendamientos</p>
@@ -436,7 +435,7 @@ class='imgsMenuLateral2' title='Tema White' />
 
 
 
-<table class='divMenub' id='divMenuVenta' title='Añadir, Modificar Agendamiento'  onclick='verCerrarAbmAgendamiento()' style='text-align:center'>
+<table class='divMenub' id='divMenuVenta' title='Añadir, Modificar Agendamiento'  onclick='verCerrarAbmAgendamiento()' style='text-align:center;display:none;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/agendamiento.png' />
@@ -456,7 +455,7 @@ style='display:none' class='divMinimizado'>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/consultamedica.png' />
 <p class='pTitulo4'  >Historial Clínico y Evolución</p>
 <center>
-<div id='divMinimizadoCuentasCobrar1'
+<div id='divMinimizadoHistorialClinico'
 style='display:none' class='divMinimizado'>
 </div>
 </center>
@@ -465,7 +464,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub'  id='divMenuHistorialAgendamiento1'   title='Buscar ordenes de trabajo'  onclick='verCerrarHistorialAgendamiento()'  style='text-align:center;'>
+<table class='divMenub' id='divMenuHistorialAgendamiento1' title='Buscar ordenes de trabajo' onclick='verCerrarHistorialAgendamiento()' style='text-align:center;display:none;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/historialAgenda.png' />
@@ -480,7 +479,29 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub'  id='divMenuHistorialConsulta1'   title='Buscar ordenes de trabajo'  onclick='verCerrarHistorialConsulta()'  style='text-align:center;'>
+
+<table class='divMenub' id='divMenuSugerenciasyCalificaciones' onclick='abrirModalSugerencias()' 
+  title='Sugerencias y Calificaciones' 
+  style='text-align:center; position: relative;'>
+  <tr>
+    <td style="position: relative;">
+      <!-- Burbuja de notificación flotante dentro del TD -->
+      <div id="notificacionSugerencias"  class='nronotificacion'>0</div>
+
+      <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/sugerencias.png' />
+      <p class='pTitulo4'>Sugerencias y Calificaciones</p>
+      <center>
+        <div id='divMinimizadoSugerenciasCalificaciones' style='display:none' class='divMinimizado'></div>
+      </center>
+    </td>
+  </tr>
+</table>
+
+
+
+
+
+<table class='divMenub'  id='divMenuHistorialConsulta'   title='Buscar ordenes de trabajo'  onclick='verCerrarHistorialConsulta()'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/historialConsuta.png' />
@@ -495,7 +516,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub'  id='divMenuCalendario1'   title='Buscar ordenes de trabajo'  onclick='verCerrarOpcionesCalendario()'  style='text-align:center;'>
+<table class='divMenub'  id='divMenuCalendario1'   title='Buscar ordenes de trabajo'  onclick='verCerrarOpcionesCalendario()'  style='text-align:center;display:none;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/calendarioAgenda.png' />
@@ -1687,11 +1708,28 @@ title='Volver Atras' onclick='verCerrarVentanaAbmUsuarios("2","")' />
 </td>
 </tr>
 </table>
-<br>
+
 <center>
 <div style='overflow:auto'>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:450px'>
-<br>
+<div class='divMenuf' style='float:left;margin:1%;width:45%;height:470px'>
+ 
+ 
+ <p class='pTituloC'>Foto Perfil</p>
+<table class='tableabm'>
+<tr>
+<td style='width:100%;'>
+<center>
+<div id='imgFotoPerfil1' 
+onclick='verCerrarVisorImagen("1","Perfil")'
+class='imgFotoCi' style='background-image: url(/GoodVentaAsisCap/iconos/sinperfil.png)'></div>
+<input type='button' value='Explorar' class='btn4' onclick='ExploradorImagenCliente("Perfil")' style='width:130px;' />
+
+</center>
+</td>
+</tr>
+</table>
+ 
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1701,7 +1739,7 @@ id='inptNombreApellidoUsuario' />
 </td>
 </tr>
 </table>
-<br>
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1711,7 +1749,7 @@ id='inptNroDocUsuario' />
 </td>
 </tr>
 </table>
-<br>
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1721,7 +1759,10 @@ id='inptNroTelefUsuario' style='width:200px;' />
 </td>
 </tr>
 </table>
-<br>
+
+</div>
+<div class='divMenuf' style='float:left;margin:1%;width:45%;height:470px'>
+  
 <table style='width:100%'>
 <tr>
 <td>
@@ -1731,7 +1772,7 @@ id='inptClaveAcceso' style='width:200px;' />
 </td>
 </tr>
 </table>
-<br>
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1741,10 +1782,7 @@ id='inptContrasenhaUser' style='width:200px;' />
 </td>
 </tr>
 </table>
-<br>
-</div>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:450px'>
-<br>
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1754,8 +1792,7 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
-<br>
-
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1768,8 +1805,7 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
-<br>
-
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1781,7 +1817,7 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
-<br>
+ 
 <table style='width:100%'>
 <tr>
 <td>
@@ -1793,19 +1829,14 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
-
-<br>
-<br><br><br>
  
+</div>
+</div>
+<br>
 <center>
 <input type='button' value='Guardar' class='btn1'
 onclick='verificarcamposusuario()' id='btnAbmUsuario' />
 </center>
-<br>
-
-</div>
-</div>
-<br>
 <br>
 </center>
 </div>
@@ -6687,6 +6718,105 @@ onclick='SeleccionarRegistroCategoria()' />
 </tr>
 </table>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Botón para abrir el modal -->
+<!-- <button id="btnVerSugerencias" class="btn-ver">Ver sugerencias</button> -->
+
+<!-- Modal -->
+<div id="modalSugerencias" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick='cerrarModalSugerencias()'>&times;</span>
+    <h2>Listado de Sugerencias</h2>
+    <div class="sugerencias-container" id="sugerenciasContainer">
+      <!-- Aquí se insertarán las sugerencias con JS -->
+    </div>
+  </div>
+</div>
+ 
+ 
+
+<div id="modalEditarComentario" class="modal">
+  <div class="modal-content">
+    <span class="close" id="cerrarEditarComentario" onclick='cerrarModalEditar()'>&times;</span>
+    <h2>Editar Comentario</h2>
+    
+      <div class="form-group">
+        <label for="comentarioActual">Comentario actual:</label>
+        <textarea id="comentarioActual" readonly rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="descripcionNueva">Resolución:</label>
+        <textarea id="descripcionNueva" rows="4" placeholder="Escribe la nueva descripción..."></textarea>
+      </div>
+      <div class="form-group" style='max-width: 300px;'>
+        <label for="selectEstado">Cambiar estado:</label>
+        <select id="selectEstado">
+          <option value="Pendiente">Pendiente</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="Resuelto">Resuelto</option>
+          <option value="Archivado">Archivado</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" onclick='VerificarActualizarSugerencia()' class="btn-primary">Guardar</button>
+        <button type="button" id="cancelarEditarComentario" onclick='cerrarModalEditar()' class="btn-secondary">Cancelar</button>
+      </div>
+	  
+	  <div class="form-group">
+  <label for="selectEstado" class="form-label">Seguimiento de la sugerencia:</label>
+
+  <div class="table-responsive mt-2 shadow-sm rounded">
+    <table class="table table-bordered table-hover table-striped " style='width: 100%;'>
+      <thead class="table-dark" style='    background: #2980b9;    color: aliceblue;'>
+        <tr>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Descripción</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody id="tablaSeguimiento">
+        <!-- Las filas se llenan dinámicamente con JS o PHP -->
+        <tr>
+          <td>2025-08-01</td>
+          <td>Resuelto</td>
+          <td>Se contactó con el paciente y se resolvió el reclamo.</td>
+          <td>admin</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+    
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
 <div class='principal2' style='display:none' id='divAbmMarca'>
 <table style='width:100%;height:100%'>
 <tr>
@@ -8613,7 +8743,7 @@ placeholder='Telef.' style='width:290px' />
 
 <div  style='width:98%padding:5px'>
 <div class='divMenuf' style='width:97%'>
-<div class='tbTituloColor' style='height: 105px;width: 98%;'>
+<div class='tbTituloColor' style='height: 130px;width: 98%;'>
 <table  style='width:100%' >
 <tr>
 <td style='width:12%'>
@@ -10149,12 +10279,13 @@ style='background-color: #b7b7b7;'>
       <input type="range" id="porcentaje" class='inpt_range' name="porcentaje" min="0" max="100" value="0" oninput="mostrarValorSlider(this.value)">
   <div class="value_slider"><span id="valor_slider_progreso_tratamiento">0</span>%</div>
   <input id='inpt_progreso_tratamiento_oculto' type='text' style='display:none' />
-  
-  <br>
-  <br>
+ 
   <button class="btn btn-primary" type="button" onclick="guardarPorcentajeProgreso()">
     Guardar
   </button>
+  
+   <div class="div_cuerpo_table" id="divTable_evolucionTratamiento" style="height:60vh;"></div>
+  
     
     </div>
 </div>
@@ -10200,7 +10331,7 @@ style='background-color: #b7b7b7;'>
 
       <div class="fila">
         <div class="col">
-          <label>Diagnóstico:</label>
+          <label>Zona de Trabajo:</label>
           <textarea  style='height: 100px;'id="modalDiagnostico" disabled></textarea>
         </div>
         <div class="col">
@@ -10862,7 +10993,7 @@ title='Cerrar Ventana' onclick='verCerrarOpcionesCalendario()' />
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTitulo5' >Diagnostico :</p>
+<p class='pTitulo5' >Zona de Trabajo :</p>
 
 <textarea class='textarea1'  id='inptDiagnosticoConsulta' disabled style='height:80px;width:100%'></textarea>
 </td>
@@ -26156,7 +26287,7 @@ id='vantana_info_001' style='display:none'>
 <img  src='/GoodVentaAsisCap/iconos/saludo.png' style='width:35px'/>
 </td>
 <td>
-<p > <span id='spanMensaje'>Un gusto volver a verte</span> <b style='font-size: 15px;' id='bNombreUser' >Guillermo Caroni</b>. <br><span id='spanSaludo'> Que tengas un lindo día</span></p>
+<p > <span id='spanMensaje'>Un gusto volver a verte</span> <b style='font-size: 15px;' id='bNombreUser' >Jorge Torres</b>. <br><span id='spanSaludo'> Que tengas un lindo día</span></p>
 </td>
 </tr>
 </table>
