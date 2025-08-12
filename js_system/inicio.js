@@ -402,7 +402,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("inptNombreMisDatos").value=nombre
 						
 						
-						if(cod_localFKUSer=="3" || cod_localFKUSer=="4"){
+						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
 							document.getElementById('divtdProducto').style.display = ""
 							document.getElementById('divtdCantidadProducto').style.display = ""
