@@ -8840,10 +8840,7 @@ style='background-color: #ff5900;'>
 
 <table style='width:100%' >
 <tr>
-<td>
-<p class='pTituloC'>Monto:</p>
-<input class='inputText' type='text' placeholder='' id='inptCostoProductoVenta' style='width:150px' onblur='controldecostoventa(this)' onkeyup='calcularTotalVentasCosto(this)' />
-</td>
+
 </tr>
 </table>
 <br>
@@ -8939,6 +8936,12 @@ onkeyup="if(event.keyCode == 13){buscarproductoporcodigo('venta')}" />
 
 <select class="inputSelect" id="inpTSeleccCosto" style='width:18px;margin-left: -4px;margin-top: 18px;'onchange='seleccionarprecios(this)'></select>
 </td>
+
+<td style=' display:none'>
+<p class='pTituloC'>Monto:</p>
+<input class='inputText' type='text' placeholder='' id='inptCostoProductoVenta' style='width:150px' onblur='controldecostoventa(this)' onkeyup='calcularTotalVentasCosto(this)' />
+</td>
+
 <td style='width:5%;display:none'>
 <p class='pTituloC'>Descuento</p>
 <input class='inputText' type='text' placeholder=''

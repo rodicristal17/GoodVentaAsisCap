@@ -3610,9 +3610,9 @@ function EnviarProductoDesde() {
 		document.getElementById('btnSolicitarDescuento').style.backgroundColor = "#4caf50";
 		document.getElementById("inptComisionVenta").value = $(datostr).children('td[id="td_datos_8"]').html();
 		if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
-		document.getElementById('inptObservacionDetalleVenta').value = "";
-		document.getElementById("inptCostoProductoVenta").value= $("#inpTSeleccCosto option:first").val();
-		preciocostocredito=QuitarSeparadorMilValor(document.getElementById("inptCostoProductoVenta").value)
+		// document.getElementById('inptObservacionDetalleVenta').value = "";
+		// document.getElementById("inptCostoProductoVenta").value= $("#inpTSeleccCosto option:first").val();
+		// preciocostocredito=QuitarSeparadorMilValor(document.getElementById("inptCostoProductoVenta").value)
 		}
 	}
 	
