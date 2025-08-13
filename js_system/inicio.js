@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.36"
+var codigodeactualizacion="X-GT-1-JMTG-V1.37"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -3197,23 +3197,23 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				var datos_buscados = datos[2];
 				if(datos_buscados!=""){
 				document.getElementById("table_vista_producto_venta").innerHTML = datos_buscados
-				if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
-			  $("td[id=td_datos_precio_contado]").each(function(i, elementohtml){  
-	         elementohtml.style.display="none"
-	          });
-	      $("td[id=td_datos_precios_creditos]").each(function(i, elementohtml){
-              elementohtml.style.display=""
-	     });  
+				// if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
+			  // $("td[id=td_datos_precio_contado]").each(function(i, elementohtml){  
+	         // elementohtml.style.display="none"
+	          // });
+	      // $("td[id=td_datos_precios_creditos]").each(function(i, elementohtml){
+              // elementohtml.style.display=""
+	     // });  
 	   
-	}else{
+	// }else{
 		
-	  $("td[id=td_datos_precio_contado]").each(function(i, elementohtml){  
-	   elementohtml.style.display=""
-	   });
-	$("td[id=td_datos_precios_creditos]").each(function(i, elementohtml){
-elementohtml.style.display="none"
-	   });
-	}
+	  // $("td[id=td_datos_precio_contado]").each(function(i, elementohtml){  
+	   // elementohtml.style.display=""
+	   // });
+	// $("td[id=td_datos_precios_creditos]").each(function(i, elementohtml){
+// elementohtml.style.display="none"
+	   // });
+	// }
 	
 				
 					document.getElementById('btnfocusProducto').focus();
@@ -3545,11 +3545,11 @@ StockVenta = $(datostr).children('td[id="td_datos_15"]').html();
 		document.getElementById('inptDescuentoProductoVenta').value = "0";
 		document.getElementById('inptComisionVenta').value = "0";
 		document.getElementById('inptObservacionDetalleVenta').value = "Contado";
-		if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
-		document.getElementById('inptObservacionDetalleVenta').value = "Credito";
-		document.getElementById("inptCostoProductoVenta").value= $("#inpTSeleccCosto option:first").val();
-		preciocostocredito=QuitarSeparadorMilValor(document.getElementById("inptCostoProductoVenta").value)
-		}
+		// if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
+		// document.getElementById('inptObservacionDetalleVenta').value = "Credito";
+		// document.getElementById("inptCostoProductoVenta").value= $("#inpTSeleccCosto option:first").val();
+		// preciocostocredito=QuitarSeparadorMilValor(document.getElementById("inptCostoProductoVenta").value)
+		// }
 		// document.getElementById('btnAddDetallesaVenta').style.backgroundColor = "#2196F3";
 		document.getElementById('btnSolicitarDescuento').style.backgroundColor = "#4caf50";
 		document.getElementById('inptCantProductoVenta').focus();

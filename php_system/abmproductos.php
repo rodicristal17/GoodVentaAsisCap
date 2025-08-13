@@ -2985,7 +2985,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_precios_creditos' style='width:10%;display:none;    line-height: 18px;    font-size: 9px;'>".$paginapreciosb."</td>
 <td  id='td_datos_4' style='display:none'>". number_format($precio_producto,'0',',','.')."</td>
 <td  id='td_datos_5' style='display:none'>".number_format($precio_compra,'0',',','.')."</td>
-<td  id='td_datos_6' style='width:10%'>".$stock_producto."</td>
+<td  id='td_datos_6' style='display:none'>".$stock_producto."</td>
 <td  id='td_datos_7' style='display:none'>".$cod_localFK."</td>
 <td  id='td_datos_8' style='display:none'>".$comision."</td>
 <td  id='td_datos_9' style='display:none'>".$estado."</td>
