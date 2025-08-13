@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.35"
+var codigodeactualizacion="X-GT-1-JMTG-V1.36"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -7976,11 +7976,11 @@ function verificarcamposZonaVista() {
 		return false;
 	}
 	var accion = "nuevo";
-	if(controlacceso("ZONA","insertar")==false){
+	// if(controlacceso("ZONA","insertar")==false){
 		
-	//SIN PERMISO
-	  return;
-		}
+	// SIN PERMISO
+	  // return;
+		// }
 	abmzonas(inptNombreZona, inptEstadoZona, idAbmZona, inptEncargadoZona , accion);
 }
 function abmzonas(nombre, estado, idzona, encargado , accion) {
