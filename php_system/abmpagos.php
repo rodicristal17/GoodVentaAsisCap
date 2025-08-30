@@ -3117,7 +3117,7 @@ $ControlMonto=0;
 
 $controlMontoCiclo=1;
 
-while($controlMontoCiclo<=$totalregistro){ 
+/* while($controlMontoCiclo<=$totalregistro){ 
 
 $monto=$_POST['monto'.$control];
 $monto = quitarseparadormiles($monto);
@@ -3126,7 +3126,7 @@ $monto = quitarseparadormiles($monto);
 				$ControlMonto = $monto;
 			}
 $controlMontoCiclo=$controlMontoCiclo+1;
-}
+} */
 
 
 $ControlRestaMonto=0;
@@ -3180,14 +3180,14 @@ $control=$control+1;
 $controlTipoPago = $controlTipoPago - 1;
 
 
-if($ControlMonto==$monto && $ControlRestaMonto==0 ){
+/* if($ControlMonto==$monto && $ControlRestaMonto==0 ){
 	
 	$monto = $monto  ;	
 	$CargoAdministrativo = $ControlGA;	
 	$ControlRestaMonto =1;	
 }else{
 	$CargoAdministrativo = "0";
-}
+} */
 
 
 
@@ -3305,7 +3305,8 @@ function buscarpagosTitulo($CodVenta,$NroFactura)
 $mysqli=conectar_al_servidor();
 
 
-$sql= "select cr.fechapago,cr.plazo,cr.Monto as montocredito,pg.idPago,pg.Fecha,pg.Monto,pg.nrofactura,pg.tipo,vt.TipoVenta,vt.total_venta
+$sql= "select cr.fechapago,cr.plazo,cr.Monto as montocredito,pg.idPago,pg.Fecha,pg.Monto,pg.nrofactura,pg.tipo,vt.TipoVenta,vt.total_venta,
+(SELECT nombre FROM tipopago where cod_tipoPago = pg.cod_tipoPagoFK) as tipopg
  from pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk
  inner join credito cr on cr.idcredito=pg.cod_creditoFK
  where pg.cod_venta_fk='$CodVenta' and pg.nrofactura='$NroFactura' order by pg.idPago  ";
@@ -3339,6 +3340,7 @@ $tipo = utf8_encode($valor['tipo']);
 $Monto = utf8_encode($valor['Monto']);  
 $Fecha = utf8_encode($valor['Fecha']); 
 $fechapago = utf8_encode($valor['fechapago']);  
+$tipopg = utf8_encode($valor['tipopg']);  
 
 if($plazo=="Contado"){
 	$tipo="";
@@ -3371,7 +3373,8 @@ $pagina2.="<table class='tableTicket' style='border: solid 1px #a1a1a1;'>
 <tr>
 <td style='width:20%'>".$Fecha."</td>
 <td style='width:20%'>".$fechapago."</td>
-<td style='width:40%'>".$tipo."</td>
+<td style='width:30%'>".$tipo."</td>
+<td style='width:10%'>".$tipopg."</td>
 <td style='width:20%'>".number_format($Monto,'0',',','.')."</td>
 </tr>
 </table>";

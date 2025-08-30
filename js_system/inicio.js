@@ -16030,7 +16030,18 @@ function verificarConfirmaciondepago() {
 
 	 controlInsercionPagos=true
 	if(control > 0){
-		abmcargaropcionespago(inptMontoCargoAdministrativo,MontoTarjeta,inptMontoAPagar,inptDescuentoAPagar, inptFechaPagoConfirmar, cobradorcredito, codCredito, inptInteresAPagar,inptNroReciboAPagar);
+		
+		if(controlVerificarPagosCredito <= 0){
+		ver_vetana_informativa("FALTA INGRESAR PAGOS");
+		return;
+		}
+		
+		
+		// abmcargaropcionespago(inptMontoCargoAdministrativo,MontoTarjeta,inptMontoAPagar,inptDescuentoAPagar, inptFechaPagoConfirmar, cobradorcredito, codCredito, inptInteresAPagar,inptNroReciboAPagar);
+		
+		abmcargaropcionespagoparcial(inptMontoCargoAdministrativo,MontoTarjeta,inptDescuentoAPagar, inptFechaPagoConfirmar, cobradorcredito, 1,inptNroReciboAPagar, 1);
+		
+		
 		return;
 	}
 	
@@ -16280,14 +16291,14 @@ function verCerrarCargarPago(d) {
 	}
 }
 var controldePagosParciales=false
-function verificarcargarpago() {
+function verificarcargarpagoTipoPago() {
     if(controldePagosParciales==true){
 		ver_vetana_informativa("PAGO EN PROCESO,NO PUEDE REALIZAR ESTA ACCIÓN", "#")
 		return
 	}
 	
 	var inptDeudaActualCargaPago = document.getElementById('inptDeudaActualCargaPago').value
-	var inptMontoCargaPago = document.getElementById('inptMontoCargaPago').value
+	var inpTotalPagadoCreditoParcial = document.getElementById('inpTotalPagadoCreditoParcial').value
 	var inptFechaPagoCargarPago = document.getElementById('inptFechaPagoCargarPago').value
 	var inputSelectFechaPago = document.getElementById('inputSelectFechaPago').value
 	var inptNroReciboCargaPago = document.getElementById('inptNroReciboCargaPago').value
@@ -16304,20 +16315,25 @@ function verificarcargarpago() {
 		// return false;
 	// }
 	// inptNroReciboCargaPago= inptSeleccNroReciboPagoParcial  + inptNroReciboCargaPago
+	if(inptMontoCargoAdministrativoCuotaPago==""){
+		inptMontoCargoAdministrativoCuotaPago=0;
+	}
 	
-	var montop1 = QuitarSeparadorMilValor(inptMontoCargaPago);
+	var montop4 = QuitarSeparadorMilValor(inptMontoCargoAdministrativoCuotaPago);
+	
+	var montop1 = QuitarSeparadorMilValor(inpTotalPagadoCreditoParcial);
 	var montop2 = QuitarSeparadorMilValor(inptMontoTarjetaCargaPago);
 	var montop3 = QuitarSeparadorMilValor(inptDeudaActualCargaPago);
 	
 	
-	if( (Number(montop1)+Number(montop2))  - 1  >= Number(montop3)    ){
+	if( (Number(montop1)+Number(montop2))  - 1  >= (Number(montop3) + Number(montop4)) ){
 		ver_vetana_informativa("LO SIENTO EL MONTO A PAGAR ES SUPERIOR A LA DEUDA.", "#")
-		document.getElementById('inptMontoCargaPago').value= inptDeudaActualCargaPago;
-		inptMontoCargaPago=inptDeudaActualCargaPago;
+		document.getElementById('inpTotalPagadoCreditoParcial').value= inptDeudaActualCargaPago;
+		inpTotalPagadoCreditoParcial=inptDeudaActualCargaPago;
 		return;
 	}
 	
-	if (inptMontoCargaPago == "" || inptMontoCargaPago == "0" ) {
+	if (inpTotalPagadoCreditoParcial == "" || inpTotalPagadoCreditoParcial == "0" ) {
 		ver_vetana_informativa("FALTO INGRESAR EL MONTO", "#")
 		return false;
 	}
@@ -16330,20 +16346,27 @@ function verificarcargarpago() {
 		return false;
 	}
 	
+	
 	let control = 0; 
 	$("tr[name=tdDetallePagoCreditoParcialOffline]").each(function(i, elementohtml){
 	control=control+1;
 	});
+	
+	if(control <= 0){
+		ver_vetana_informativa("FALTO INGRESAR LOS PAGOS", "#")
+		return;
+	}
+	
 	 controldePagosParciales=true
 	if(control > 0){
-		abmcargaropcionespagoparcial(inptMontoCargoAdministrativoCuotaPago,inptMontoTarjetaCargaPago,inptDescuentoCargaPago, inptFechaPagoCargarPago, cobradorcargarpagos, inputSelectFechaPago,inptNroReciboCargaPago);
+		abmcargaropcionespagoparcial(inptMontoCargoAdministrativoCuotaPago,inptMontoTarjetaCargaPago,inptDescuentoCargaPago, inptFechaPagoCargarPago, cobradorcargarpagos, inputSelectFechaPago,inptNroReciboCargaPago, 0);
+		
 		return;
 	}
 	
 	
-	
-	abmcargarpago(inptMontoCargoAdministrativoCuotaPago,inptMontoTarjetaCargaPago,inptDescuentoCargaPago,inptMontoCargaPago, inptFechaPagoCargarPago, cobradorcargarpagos, inputSelectFechaPago,inptNroReciboCargaPago);
 }
+
 function abmcargarpago(CargoAdministrativo,MontoTarjeta,Descuento,Monto, Fecha, cod_cobradorFK, controlfecha,nrofactura) {
 if(controlacceso("INSERTARPAGOSCREDITO","accion")==false){return;}
 	verCerrarEfectoCargando("1")
@@ -31521,13 +31544,20 @@ function verCerrarOpcionPagoCreditoParcial() {
 	document.getElementById('divOpcionPagoCreditoParcial').style.display="none";
 	 elementopagocreditoparcialseleccionado="";
 }
-function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento, Fecha, cod_cobradorFK, controlfecha,nrofactura){
+function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento, Fecha, cod_cobradorFK, controlfecha,nrofactura,desde){
 	
 	verCerrarEfectoCargando("")
 	var datos = new FormData();
 	var control=1;
 	var total = 0;
-	$("tr[name=tdDetallePagoCreditoParcialOffline]").each(function(i, elementohtml){
+	
+	let name = 'tr[name=tdDetallePagoCreditoParcialOffline]';
+	if(desde){
+		name = 'tr[name=tdDetallePagoCreditoOffline]';
+	}
+	
+	
+	$(name).each(function(i, elementohtml){
        var idtipopago=$(elementohtml).children('td[id="td_id_2"]').html();
 	   datos.append("idtipopago"+control, idtipopago)
 	   
@@ -31605,11 +31635,37 @@ function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
 				   controldePagosParciales=false
-				   limpiarCamposAnhadirPagosCreditoParcial()
+				   
+				   if(desde){
+						 limpiarCamposAnhadirPagosCredito()
+						verCerrarVentanaAnhadirPagoCredito("")
+						ver_vetana_informativa('Pagos cargados correctamente')
+					
+						vercerrarconfirmarpagos("2")
+					}else{
+					
+						
+					   limpiarCamposAnhadirPagosCreditoParcial()
+					   verCerrarVentanaAnhadirPagoCreditoParcial("")
+						ver_vetana_informativa('Pagos cargados correctamente')
+						
+						verCerrarCargarPago("2")
+						
+					}
+				   
+				  /*  limpiarCamposAnhadirPagosCreditoParcial()
 				   verCerrarVentanaAnhadirPagoCreditoParcial("")
 					ver_vetana_informativa('Pagos cargados correctamente')
 					
-					verCerrarCargarPago("2")
+					verCerrarCargarPago("2") */
+					
+					
+					
+					
+					
+					
+					
+					
 					buscarcreditos()
 					deudaActual=datos["4"];
 	paginaticket=datos["5"];
