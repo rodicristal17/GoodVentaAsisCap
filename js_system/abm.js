@@ -4318,9 +4318,7 @@ if (ventana == "Presupuesto") {
 		pagina =
 "<table class='TableRepor0' style='width:100%'>"
 +"<tr>"
-+"<td style='width:20%;text-align:left'>"
-+"<p class='pTituloC'><b>ENTREGA: :</b></p>"
-+"<p class='pTituloC' style='font-size: 20px;' >"+document.getElementById("inptEntregaPresupuesto").value+" Gs.</p>"
++"<td style='width:20%;text-align:left'>" 
 +"</td>"
 +"<td style='width:40%;text-align:left'>"
 +"</td>"
@@ -4347,6 +4345,18 @@ document.getElementById("tbTitulosImpresiones").innerHTML=""
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("tdTablaPresupuesto").innerHTML
 
 document.getElementById("divPieImpresiones").innerHTML=piedepagina
+
+	var documento=document.getElementById("DivImpresiones").innerHTML;
+	
+document.getElementById("divCabeceraImpresiones").innerHTML=""
+document.getElementById("tbDatosImpresiones").innerHTML=""
+document.getElementById("divPieImpresiones").innerHTML=""
+
+	 localStorage.setItem("reporte", documento);
+	   localStorage.setItem("tipo", "reporte");
+	 window.open("/GoodVentaAsisCap/system/reportInformes.html");
+	 
+	 return false
 
 }
 

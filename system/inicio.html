@@ -6312,206 +6312,328 @@ ACCION
 </div>
 
 
+<div class="principal2 presupuesto-container" id="divAbmDetallesPresupuesto" style="display:none;">
+  <header class="presupuesto-header">
+    <h2>Presupuesto Producto</h2>
+    <div class="header-actions">
+      <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar" onclick="limpirarPresupuesto()">
+      <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir" onclick='ordenimpresion("Presupuesto")'>
+      <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás" onclick='verCerrarAbmDetallesPresupuesto("2")'>
+    </div>
+  </header>
 
+  <!-- Productos -->
+  <section class="productos-section">
+    <div class="productos-lista">
+      <table class="tableCabeceraRegistro">
+        <thead>
+          <tr>
+            <th>CODIGO</th>
+            <th>DESCRIPCION</th> 
+            <th>PRECIO</th>
+          </tr>
+        </thead>
+      </table>
+      <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto"></div>
+    </div>
 
-<div class='principal2' style='display:none' id='divAbmDetallesPresupuesto'>
-<table style='width:100%;height:100%' id='tdEfectoAbmDetallePresupuesto'>
-<tr>
-<td>
-<center>
-<div class='divAbms' style='display:;width: 90%;'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>  <b style='font-size: 30px;' >Presuesto</b> <b style='font-size: 30px;' >Producto</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar' onclick='limpirarPresupuesto()' /></td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn' title='Imprimir'
-onclick='ordenimpresion("Presupuesto")' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmDetallesPresupuesto("2")' /></td>
-</tr>
-</table>
+    <div class="presupuesto-contado">
+      <table class="tableCabeceraRegistro">
+        <thead>
+          <tr><th>PRESUPUESTO CONTADO</th></tr>
+        </thead>
+      </table>
+      <div id="inptTotalPresupuesto2" class="DivTotalVenta">0</div>
+    </div>
+  </section>
 
+  <!-- Formulario de carga -->
+  <section class="form-section">
+    <div class="form-row" style='display:none;'>
+      <label>Entrega:</label>
+      <input type="text" class="inputText" id="inptEntregaPresupuesto" onkeyup="separadordemiles(this)">
+    </div>
 
-<center>
+    <div class="form-row">
+      <label>Código:</label>
+      <input type="text" class="inputText" id="inptCodigoPresupuesto" 
+             onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}">
+    </div>
 
-<div class='divMenuf' style="width: 97%;">
+    <div class="form-row flex-grow">
+      <label>Producto:</label>
+      <input type="text" class="inputText" id="inptProductoPresupuesto" 
+             onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}">
+    </div>
 
-<table style="width:100%;" >
-<tr>
-<td style="width:75%;">
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:12%;">
-CODIGO
-</td>
-<td class="td_registro" style="width:20%;">
-PRODUCTO
-</td>
-<td class="td_registro" style="width:10%;">
-MARCA
-</td>
-<td class="td_registro" style="width:10%;">
-PRECIO
-</td>
-<td class="td_registro" style="width:10%;">
-STOCK
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table"
-id="table_vista_producto_Presupuesto" style='height:150px'>
-</div>
+    <div class="form-row">
+      <label>Precio:</label>
+      <input type="text" class="inputText" id="inptPrecioPresupuesto" onkeyup="calcular_total_Presupuesto()">
+      <select id="inpTSeleccCostoPresupuesto" style='display:none;' class="inputSelect" onchange="seleccionarpreciospresupuesto(this)"></select>
+    </div>
 
-</td>
-<td  style="width:25%;">
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:100%;">
-PRESUPUESTO CONTADO
-</td>
-</tr>
-</tbody>
-</table>
-<div id='inptTotalPresupuesto2' class='DivTotalVenta'>
-0
-</div>
-</td>
-</tr>
-</table>
+    <div class="form-row">
+      <label>Cantidad:</label>
+      <input type="text" class="inputText" id="inptCantidadPresupuesto" 
+             onkeyup="if(event.keyCode == 13){focusSiguiente()}else{calcular_total_Presupuesto()}">
+    </div>
 
-<table >
-<tbody>
-<tr>
-<td style="width:10%;">
-<p class='pTituloC' >Entrega :</p>
-<input type="text" class="inputText" id="inptEntregaPresupuesto" onkeyup="separadordemiles(this)"  style='width:120px;background-color: #ffe8a7;'>
-</td>
-<td  style="width:10%;">
-<p class='pTituloC' >Codigo :</p>
-<input type="text" class="inputText"  id="inptCodigoPresupuesto" onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}"   style='width:120px'>
-</td>
-<td  style="width:30%;">
-<p class='pTituloC' >Producto :</p>
-<input type="text" class="inputText" id="inptProductoPresupuesto" onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}"  style='width:90%'>
-</td>
-<td  style="width:15%;">
-<p class='pTituloC' >Precio :</p>
-<input class='inputText' type='text' id='inptPrecioPresupuesto'
-style='width:100px' onkeyup='calcular_total_Presupuesto()'  />
-<select  class="inputSelect" id="inpTSeleccCostoPresupuesto"
-style='width:17px;display:none'
-onchange='seleccionarpreciospresupuesto(this)'></select>
-</td>
-<td  style="width:10%;">
-<p class='pTituloC' >Cantidad :</p>
-<input type="text" class="inputText" id="inptCantidadPresupuesto"  onkeyup="if(event.keyCode == 13){focusSiguiente()}else{calcular_total_Presupuesto()}"onkeyup= style='width:100px'>
-</td>
-<td  style="width:10%;">
-<p class='pTituloC' >Total :</p>
-<input type="text" class="inputTextDisable" disabled id="inptTotalPresupuesto"  style='width:120px'>
-</td>
-<td style="width:10%;">
-<input id='btnAddPreciosProductos3' type="button" value="Add Presupuesto"
-class="btn4" onclick='buscardetallespresupuesto()' onkeyup="if(event.keyCode == 13){buscardetallespresupuesto()}"  style='width:150px;margin-top: 20px;'>
-</td>
+    <div class="form-row">
+      <label>Total:</label>
+      <input type="text" class="inputTextDisable" disabled id="inptTotalPresupuesto">
+    </div>
+	
+	 <div class="form-row">
+      <label>Cuota Max:</label>
+		<select class="inputSelect" style='width:150px' id='inptTotalcuotasPresupuesto'>
+			<option value="18">18</option>
+			<option value="12">12</option> 
+		</select>
+    </div>
 
+    <div class="form-row">
+	<input id='btnAddPreciosProductos3' type="button" value="Add Presupuesto" class="btn4" onclick='anhadirPrPresupuesto()'   style='width:150px;margin-top: 20px;'> 
+    </div>
+  </section>
 
-</tr>
-</tbody>
-</table>
+  <!-- Detalles -->
+  <section class="detalles-section" id="tdTablaPresupuesto">
+    <div class="tabla-detalles">
+      <table class="tableCabeceraRegistro">
+        <thead>
+          <tr>
+            <th>COD.</th>
+            <th>PRODUCTO</th>
+            <th>CANTIDAD</th>
+            <th>PRECIO UNITARIO</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+      </table>
+      <div class="div_cuerpo_table"  id="table_vista_producto_presupuestoDetalle"></div>
+    </div>
 
+    <div class="tabla-cuotas">
+      <table class="tableCabeceraRegistro"  >
+        <thead>
+          <tr>
+            <th>CUOTAS</th>
+            <th>PLAN DE PAGO</th>
+            <th>DESCRIPCION</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+      </table>
+      <div class="div_cuerpo_table" style='height: 370px;' id="table_vista_detalles_presupuesto"></div>
+    </div>
+  </section>
 
-</div>
-
-<div class='divMenuf' style="width: 97%;" id="tdTablaPresupuesto">
-
-<table style="width:100%;">
-<tr>
-<td style="width:60%;">
-<table class="tableCabeceraRegistro" id="tdDatosTituloPresupuesto">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-COD.
-</td>
-<td class="td_registro" style="width:50%;">
-PRODUCTO.
-</td>
-<td class="td_registro" style="width:10%;">
-CANTIDAD.
-</td>
-<td class="td_registro" style="width:15%;">
-PRECIO UNITARIO
-</td>
-<td class="td_registro" style="width:15%;">
-TOTAL.
-</td>
-
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle" style='height:370px'>
-</div>
-
-</td>
-<td  style="width:40%;">
-<table class="tableCabeceraRegistro" id="tdDatosTituloPresupuesto">
-<tbody>
-<tr>
-<td class="td_registro" style="width:20%;">
-CUOTAS.
-</td>
-<td class="td_registro" style="width:20%;">
-PLAN DE PAGO.
-</td>
-<td class="td_registro" style="width:40%;">
-DESCRIPCION.
-</td>
-<td class="td_registro" style="width:20%;">
-TOTAL.
-</td>
-
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_vista_detalles_presupuesto" style='height:400px'>
-</div>
-</td>
-</tr>
-</table>
-
-
-
+  <!-- Total -->
+  <footer class="presupuesto-footer">
+    <label>TOTAL PRESUPUESTO:</label>
+    <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
+  </footer>
 </div>
 
 
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td  style="width:10%;">
-<p class='pTituloC' style='color: aliceblue;' >TOTAL PRESUPUESTO :</p>
-<input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)"  style='width:150px'>
-</td>
-</tr>
-</tbody>
-</table>
+<!-- <div class='principal2' style='display:none' id='divAbmDetallesPresupuesto'> -->
+<!-- <table style='width:100%;height:100%' id='tdEfectoAbmDetallePresupuesto'> -->
+<!-- <tr> -->
+<!-- <td> -->
+<!-- <center> -->
+<!-- <div class='divAbms' style='display:;width: 90%;'> -->
+<!-- <table class='tableMenuZ'> -->
+<!-- <tr> -->
+<!-- <td style='width:100%;text-align:left'> -->
+<!-- <p class='pTituloB'>  <b style='font-size: 30px;' >Presuesto</b> <b style='font-size: 30px;' >Producto</b></p> -->
+<!-- </td> -->
+<!-- <td style='width:5%;text-align:center'> -->
+<!-- <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar' onclick='limpirarPresupuesto()' /></td> -->
+<!-- <td style='width:5%;text-align:center'> -->
+<!-- <img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn' title='Imprimir' -->
+<!-- onclick='ordenimpresion("Presupuesto")' /> -->
+<!-- </td> -->
+<!-- <td style='width:5%;text-align:center'> -->
+<!-- <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmDetallesPresupuesto("2")' /></td> -->
+<!-- </tr> -->
+<!-- </table> -->
 
-</center>
-</div>
 
-</center>
-</td>
-</tr>
-</table>
-</div>
+<!-- <center> -->
+
+<!-- <div class='divMenuf' style="width: 97%;"> -->
+
+<!-- <table style="width:100%;" > -->
+<!-- <tr> -->
+<!-- <td style="width:75%;"> -->
+<!-- <table class="tableCabeceraRegistro"> -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td class="td_registro" style="width:12%;"> -->
+<!-- CODIGO -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:20%;"> -->
+<!-- PRODUCTO -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:10%;"> -->
+<!-- MARCA -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:10%;"> -->
+<!-- PRECIO -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:10%;"> -->
+<!-- STOCK -->
+<!-- </td> -->
+<!-- </tr> -->
+<!-- </tbody> -->
+<!-- </table> -->
+<!-- <div class="div_cuerpo_table" -->
+<!-- id="table_vista_producto_Presupuesto" style='height:150px'> -->
+<!-- </div> -->
+
+<!-- </td> -->
+<!-- <td  style="width:25%;"> -->
+<!-- <table class="tableCabeceraRegistro"> -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td class="td_registro" style="width:100%;"> -->
+<!-- PRESUPUESTO CONTADO -->
+<!-- </td> -->
+<!-- </tr> -->
+<!-- </tbody> -->
+<!-- </table> -->
+<!-- <div id='inptTotalPresupuesto2' class='DivTotalVenta'> -->
+<!-- 0 -->
+<!-- </div> -->
+<!-- </td> -->
+<!-- </tr> -->
+<!-- </table> -->
+
+<!-- <table > -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td style="width:10%;"> -->
+<!-- <p class='pTituloC' >Entrega :</p> -->
+<!-- <input type="text" class="inputText" id="inptEntregaPresupuesto" onkeyup="separadordemiles(this)"  style='width:120px;background-color: #ffe8a7;'> -->
+<!-- </td> -->
+<!-- <td  style="width:10%;"> -->
+<!-- <p class='pTituloC' >Codigo :</p> -->
+<!-- <input type="text" class="inputText"  id="inptCodigoPresupuesto" onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}"   style='width:120px'> -->
+<!-- </td> -->
+<!-- <td  style="width:30%;"> -->
+<!-- <p class='pTituloC' >Producto :</p> -->
+<!-- <input type="text" class="inputText" id="inptProductoPresupuesto" onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}"  style='width:90%'> -->
+<!-- </td> -->
+<!-- <td  style="width:15%;"> -->
+<!-- <p class='pTituloC' >Precio :</p> -->
+<!-- <input class='inputText' type='text' id='inptPrecioPresupuesto' -->
+<!-- style='width:100px' onkeyup='calcular_total_Presupuesto()'  /> -->
+<!-- <select  class="inputSelect" id="inpTSeleccCostoPresupuesto" -->
+<!-- style='width:17px;display:none' -->
+<!-- onchange='seleccionarpreciospresupuesto(this)'></select> -->
+<!-- </td> -->
+<!-- <td  style="width:10%;"> -->
+<!-- <p class='pTituloC' >Cantidad :</p> -->
+<!-- <input type="text" class="inputText" id="inptCantidadPresupuesto"  onkeyup="if(event.keyCode == 13){focusSiguiente()}else{calcular_total_Presupuesto()}"onkeyup= style='width:100px'> -->
+<!-- </td> -->
+<!-- <td  style="width:10%;"> -->
+<!-- <p class='pTituloC' >Total :</p> -->
+<!-- <input type="text" class="inputTextDisable" disabled id="inptTotalPresupuesto"  style='width:120px'> -->
+<!-- </td> -->
+<!-- <td style="width:10%;"> -->
+<!-- <input id='btnAddPreciosProductos3' type="button" value="Add Presupuesto" -->
+<!-- class="btn4" onclick='buscardetallespresupuesto()' onkeyup="if(event.keyCode == 13){buscardetallespresupuesto()}"  style='width:150px;margin-top: 20px;'> -->
+<!-- </td> -->
+
+
+<!-- </tr> -->
+<!-- </tbody> -->
+<!-- </table> -->
+
+
+<!-- </div> -->
+
+<!-- <div class='divMenuf' style="width: 97%;" id="tdTablaPresupuesto"> -->
+
+<!-- <table style="width:100%;"> -->
+<!-- <tr> -->
+<!-- <td style="width:60%;"> -->
+<!-- <table class="tableCabeceraRegistro" id="tdDatosTituloPresupuesto"> -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td class="td_registro" style="width:10%;"> -->
+<!-- COD. -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:50%;"> -->
+<!-- PRODUCTO. -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:10%;"> -->
+<!-- CANTIDAD. -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:15%;"> -->
+<!-- PRECIO UNITARIO -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:15%;"> -->
+<!-- TOTAL. -->
+<!-- </td> -->
+
+<!-- </tr> -->
+<!-- </tbody> -->
+<!-- </table> -->
+<!-- <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle" style='height:370px'> -->
+<!-- </div> -->
+
+<!-- </td> -->
+<!-- <td  style="width:40%;"> -->
+<!-- <table class="tableCabeceraRegistro" id="tdDatosTituloPresupuesto"> -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td class="td_registro" style="width:20%;"> -->
+<!-- CUOTAS. -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:20%;"> -->
+<!-- PLAN DE PAGO. -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:40%;"> -->
+<!-- DESCRIPCION. -->
+<!-- </td> -->
+<!-- <td class="td_registro" style="width:20%;"> -->
+<!-- TOTAL. -->
+<!-- </td> -->
+
+<!-- </tr> -->
+<!-- </tbody> -->
+<!-- </table> -->
+<!-- <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto" style='height:400px'> -->
+<!-- </div> -->
+<!-- </td> -->
+<!-- </tr> -->
+<!-- </table> -->
+
+
+
+<!-- </div> -->
+
+
+<!-- <table class="tableCabeceraRegistro"> -->
+<!-- <tbody> -->
+<!-- <tr> -->
+<!-- <td  style="width:10%;"> -->
+<!-- <p class='pTituloC' style='color: aliceblue;' >TOTAL PRESUPUESTO :</p> -->
+<!-- <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)"  style='width:150px'> -->
+<!-- </td> -->
+<!-- </tr> -->
+<!-- </tbody> -->
+<!-- </table> -->
+
+<!-- </center> -->
+<!-- </div> -->
+
+<!-- </center> -->
+<!-- </td> -->
+<!-- </tr> -->
+<!-- </table> -->
+<!-- </div> -->
 
 
 

@@ -580,6 +580,10 @@ $paginaprecios=buscardetallesprecios($cod_producto, $precio_producto,$comision);
 
 
 }
+}else{
+	$informacion =array("1" => "NoExiste");
+	echo json_encode($informacion);	
+	exit;
 }
     
 $informacion =array("1" => "exito","2" => $cod_producto,"3" => $nombre_producto,"4" => $precio_producto,"5" => $cod_barra);
@@ -3416,11 +3420,11 @@ $styleName=CargarStyleTable($styleName);
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
 <tr id='tbSelecRegistro' onclick='obtenerdatosvistaproductodesdePresupuesto(this)' name='trVistaProducto_".$cod_barra."' style='$styleProveedor' >
 <td id='td_datos_13' style='display:none'>".$cod_barra."</td>
-<td  style='width:12%; background-color: #efeded;color:red'>".$cod_barra."
+<td  style='width:10%; background-color: #efeded;color:red'>".$cod_barra."
 <br><input style='outline:none;height: 0px;padding: 0px;' type='button' class='$nroRegistro' value='$control' name='$cod_barra' id='btnfocusProducto' onfocus='recorrerFocusTableProductoVenta(this)' ></td>
 <td id='td_id' style='display:none'>".$cod_producto."</td>
-<td  id='td_datos_1' style='width:20%'>".$nombre_producto."</td>
-<td  id='' style='width:10%'>".$NombreMarca."</td>
+<td  id='td_datos_1' style='width:40%'>".$nombre_producto."</td>
+<td  id='' style='display:none'>".$NombreMarca."</td>
 <td  id='td_datos_2' style='display:none'>".$descripcion_producto."</td>
 <td  id='td_datos_12' style='display:none'>".$NombreCategoria."</td>
 <td  id='td_datos_3' style='display:none'>".$unidad_producto."</td>
@@ -3428,7 +3432,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_precios_creditos' style='width:10%;display:none;    line-height: 18px;    font-size: 9px;'>".$paginapreciosb."</td>
 <td  id='td_datos_4' style='display:none'>". number_format($precio_producto,'0',',','.')."</td>
 <td  id='td_datos_5' style='display:none'>".number_format($precio_compra,'0',',','.')."</td>
-<td  id='td_datos_6' style='width:10%'>".$stock_producto."</td>
+<td  id='td_datos_6' style='display:none'>".$stock_producto."</td>
 <td  id='td_datos_11' style='display:none'>".$paginaprecios."</td>
 </tr>
 </table>";
