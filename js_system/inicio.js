@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.37"
+var codigodeactualizacion="X-GT-1-JMTG-V1.38"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -16366,6 +16366,80 @@ function verificarcargarpagoTipoPago() {
 	
 	
 }
+
+function verificarcargarpago() {
+    if(controldePagosParciales==true){
+		ver_vetana_informativa("PAGO EN PROCESO,NO PUEDE REALIZAR ESTA ACCIÓN", "#")
+		return
+	}
+	
+	var inptDeudaActualCargaPago = document.getElementById('inptDeudaActualCargaPago').value
+	var inptMontoCargaPago = document.getElementById('inptMontoCargaPago').value
+	var inptFechaPagoCargarPago = document.getElementById('inptFechaPagoCargarPago').value
+	var inputSelectFechaPago = document.getElementById('inputSelectFechaPago').value
+	var inptNroReciboCargaPago = document.getElementById('inptNroReciboCargaPago').value
+	var inptSeleccNroReciboPagoParcial = document.getElementById('inptSeleccNroReciboPagoParcial').value
+	var inptDescuentoCargaPago = document.getElementById('inptDescuentoCargaPago').value
+	var inptMontoTarjetaCargaPago = document.getElementById('inptMontoTarjetaCargaPago').value
+	
+	
+	var inptMontoCargoAdministrativoCuotaPago = document.getElementById('inptMontoCargoAdministrativoCuotaPago').value
+   
+	
+	// if (inptNroReciboCargaPago == "") {
+		// ver_vetana_informativa("FALTO INGRESAR EL NRO DE BOLETA", "#")
+		// return false;
+	// }
+	// inptNroReciboCargaPago= inptSeleccNroReciboPagoParcial  + inptNroReciboCargaPago
+	if(inptMontoCargoAdministrativoCuotaPago==""){
+		inptMontoCargoAdministrativoCuotaPago=0;
+	}
+	
+	var montop4 = QuitarSeparadorMilValor(inptMontoCargoAdministrativoCuotaPago);
+	
+	var montop1 = QuitarSeparadorMilValor(inptMontoCargaPago);
+	var montop2 = QuitarSeparadorMilValor(inptMontoTarjetaCargaPago);
+	var montop3 = QuitarSeparadorMilValor(inptDeudaActualCargaPago);
+	
+	
+	if( (Number(montop1)+Number(montop2))  - 1  >= (Number(montop3) + Number(montop4)) ){
+		ver_vetana_informativa("LO SIENTO EL MONTO A PAGAR ES SUPERIOR A LA DEUDA.", "#")
+		document.getElementById('inptMontoCargaPago').value= inptDeudaActualCargaPago;
+		inptMontoCargaPago=inptDeudaActualCargaPago;
+		return;
+	}
+	
+	if (inptMontoCargaPago == "" || inptMontoCargaPago == "0" ) {
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO", "#")
+		return false;
+	}
+	if (inptFechaPagoCargarPago == "") {
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO", "#")
+		return false;
+	}
+	if (cobradorcargarpagos == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR", "#")
+		return false;
+	}
+	
+	let control = 0; 
+	$("tr[name=tdDetallePagoCreditoParcialOffline]").each(function(i, elementohtml){
+	control=control+1;
+	});
+	 controldePagosParciales=true
+	
+	// var imprimirOpcion = true;
+	// if(document.getElementById('inptSeleccImprimirTicketParcial2').checked){
+		// imprimirOpcion = false;
+	// }
+	
+	
+	
+	
+	abmcargarpago(inptMontoCargoAdministrativoCuotaPago,inptMontoTarjetaCargaPago,inptDescuentoCargaPago,inptMontoCargaPago, inptFechaPagoCargarPago, cobradorcargarpagos, inputSelectFechaPago,inptNroReciboCargaPago);
+}
+
+
 
 function abmcargarpago(CargoAdministrativo,MontoTarjeta,Descuento,Monto, Fecha, cod_cobradorFK, controlfecha,nrofactura) {
 if(controlacceso("INSERTARPAGOSCREDITO","accion")==false){return;}
