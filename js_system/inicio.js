@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.40"
+var codigodeactualizacion="X-GT-1-JMTG-V1.41"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -23879,6 +23879,8 @@ function limpiarcamposbuscadorConsultarCaja(){
 					document.getElementById("inptBuscarVistaApCie5").value = ""
 					document.getElementById("inptBuscarVistaApCie6").value = ""
 					document.getElementById("table_Consultar_caja").innerHTML = ""
+					document.getElementById('table_buscar_opciones_pago').innerHTML = "";
+					document.getElementById('table_buscar_opciones_pago').style.display = "none";
 }
 function minimizarconsultacaja(){
 	document.getElementById("tdEfectoConsultaCaja").className="magictime slideDown"
@@ -23953,7 +23955,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptTotalEgresoConsularCaja").value = datos[4]
 					document.getElementById("inptTotalConsularCaja").value = datos[5]
 					document.getElementById("inptTotalDesembolsoConsularCaja").value = datos[8]
-				
+					buscar_recaudo_opciones_pago()
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -23963,7 +23965,71 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 		}
 	});
 }
+function buscar_recaudo_opciones_pago() {
+	document.getElementById("table_buscar_opciones_pago").innerHTML = paginacargando
+	obtener_datos_user();
+	
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idArqeoFk1": idArqeoFk,
+		"funt": "buscar_recaudo_opciones_pago"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
 
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("table_buscar_opciones_pago").innerHTML = ''
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			document.getElementById("table_buscar_opciones_pago").innerHTML = ''
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   
+					var datos_buscados = datos[2];
+					document.getElementById("table_buscar_opciones_pago").innerHTML = datos_buscados
+					document.getElementById("table_buscar_opciones_pago").style.display = '';
+					
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
 /*
 PRODUCTOS VENDIDOS
 */

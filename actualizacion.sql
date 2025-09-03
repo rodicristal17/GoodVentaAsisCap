@@ -21,7 +21,10 @@ CREATE TABLE `antecedente_paciente` (
   PRIMARY KEY (`idantecedente_paciente`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
-  /* EJECUTAR EN LINEA */
+
 ALTER TABLE `syscvxco_ac`.`detalle_venta` 
 ADD COLUMN `progreso_porcentaje` INT(11) NULL DEFAULT 0 AFTER `estado_tratamiento`;
 
+
+  /* EJECUTAR EN LINEA */
+update pago set cod_tipoPagoFK = 1 where cod_tipoPagoFK = 0;

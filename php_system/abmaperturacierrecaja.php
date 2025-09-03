@@ -61,6 +61,15 @@ $Usuario = utf8_decode($Usuario);
 
 controldecaja($buscar,$cod_local,$Usuario);
 
+}
+
+if($operacion=="buscar_recaudo_opciones_pago")
+{
+$idArqeoFk1=$_POST['idArqeoFk1'];
+$idArqeoFk1 = utf8_decode($idArqeoFk1);
+
+buscar_recaudo_opciones_pago($idArqeoFk1);
+
 }	
 
 if($operacion=="buscarmoviemientocaja")
@@ -737,7 +746,87 @@ $totalPagado=($totalPagado+$datosdeIngreso[0]+$montoapertura)-($datosdeEgresos[0
 echo json_encode($informacion);	
 exit;
 }
+function buscar_recaudo_opciones_pago($idArqeoFk)
+{
+$mysqli=conectar_al_servidor();
 
+$sql= "SELECT * FROM tipopago;";
+
+$pagina = "<table style='width:98%'>
+<tr>";   
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+          
+
+$cod_tipoPago = utf8_encode($valor['cod_tipoPago']); 
+$nombre = utf8_encode($valor['nombre']); 
+
+$totalMonto = buscar_total_opcion_pago($idArqeoFk,$cod_tipoPago);
+
+
+	$pagina.="
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >".$nombre.":</p>
+<input class='inputTextDisable' type='text' disabled
+style='width:95%;' value='".number_format($totalMonto,'0',',','.')."' />
+</td>
+";
+
+}
+}
+
+$pagina.= "</tr>
+</table>";   
+
+$informacion =array("1" => "exito","2"=> $pagina);
+echo json_encode($informacion);	
+exit;
+}
+
+function buscar_total_opcion_pago($idArqeoFk,$idtipopago)
+{
+$mysqli=conectar_al_servidor();
+ 
+
+	
+$sql= "select  IFNULL(Monto,0) as Monto
+ from  pago pg
+ where pg.Monto>0 and pg.codApertura='$idArqeoFk' and pg.cod_tipoPagoFK='$idtipopago' ";	
+
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+$totalTipoPago=0;
+
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{
+$totalTipoPago+= utf8_encode($valor['Monto']); 
+}
+}
+  
+ mysqli_close($mysqli);
+return $totalTipoPago;
+}
 
 
 function datosdeDesembolso($idArqeoFk)
