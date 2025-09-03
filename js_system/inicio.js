@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.39"
+var codigodeactualizacion="X-GT-1-JMTG-V1.40"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -9273,6 +9273,13 @@ function buscarvistaaperturacierrecaja() {
 	var fechafin = document.getElementById('inptBuscarVistaCaja4').value
 	var usuario = document.getElementById('inptBuscarVistaCaja5').value
 	
+	document.getElementById("inptTotalAperturaArqueocierrecaja").value = ""
+	document.getElementById("inptTotalCierreArqueocierrecaja").value = ""
+	document.getElementById("inptCobradoArqueocierrecaja").value = ''
+	document.getElementById("inptTotalIngresoArqueocierrecaja").value = ''
+	document.getElementById("inptTotalEgresoArqueocierrecaja").value = ''
+	document.getElementById("inptTotalDiferenciaArqueocierrecaja").value = ''
+	
 	vercerrarfiltrosBuscarVistaAperturaCierre("2","2")
 	document.getElementById("table_vista_ap_cie").innerHTML = paginacargando
 	obtener_datos_user();
@@ -9329,6 +9336,14 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {	
 					var datos_buscados = datos[2];
 					document.getElementById("table_vista_ap_cie").innerHTML = datos_buscados
+					
+					document.getElementById("inptTotalAperturaArqueocierrecaja").value = datos[5];
+					document.getElementById("inptTotalCierreArqueocierrecaja").value = datos[6];
+					
+					document.getElementById("inptCobradoArqueocierrecaja").value = datos[9];
+					document.getElementById("inptTotalIngresoArqueocierrecaja").value = datos[7];
+					document.getElementById("inptTotalEgresoArqueocierrecaja").value = datos[8];
+					document.getElementById("inptTotalDiferenciaArqueocierrecaja").value = datos[4];
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

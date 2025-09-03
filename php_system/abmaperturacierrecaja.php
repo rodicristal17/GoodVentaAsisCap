@@ -377,6 +377,10 @@ $condicionUsuario=" and (Select nombre_persona from persona where cod_persona=co
 }
 
 $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertura, fechacierre, estado, codusuarioap, codusuarioce,cod_local,
+(Select cajanro from caja l where l.idcaja=caja_idcaja) as cajanro,
+(ifnull((Select sum(Monto) from pago where codApertura=idarqueocaja),0)) as cobros,
+(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and tipo='Egreso'),0)) as egreso,
+(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and tipo='Ingreso'),0)) as ingreso,
 (Select cajanro from caja l where l.idcaja=caja_idcaja) as cajanro,lote,
 (Select nombre_persona from persona where cod_persona=codusuarioap) as usuarioap,
 (Select nombre_persona from persona where cod_persona=codusuarioce) as usuariocie,
@@ -396,6 +400,14 @@ $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
 $styleName="tableRegistroSearch";
+
+$Totaldiferencia = 0;
+$TotalApertura = 0;
+$TotalCierre = 0;
+
+$TotalIngreso = 0;
+$TotalEgreso = 0;
+$TotalCobros = 0;
 
 if ($valor>0)
 {
@@ -417,6 +429,27 @@ $cajanro = utf8_encode($valor['cajanro']);
 $usuarioap = utf8_encode($valor['usuarioap']); 
 $usuariocie = utf8_encode($valor['usuariocie']); 
 
+
+$cobros = utf8_encode($valor['cobros']); 
+$egreso = utf8_encode($valor['egreso']); 
+$ingreso = utf8_encode($valor['ingreso']); 
+
+$TotalIngreso =  $TotalIngreso +$ingreso ;
+$TotalEgreso =$TotalEgreso +$egreso ;
+$TotalCobros = $TotalCobros + $cobros;
+
+$TotalApertura += $montoapertura;
+$TotalCierre += $montocierre;
+
+
+$diferencia = ($TotalCobros + $TotalIngreso) - $TotalEgreso;
+$diferencia = abs($diferencia);
+
+$fechaapertura2 = date("d-m-Y H:i:s", strtotime($fechaapertura));
+$fechacierre2="";
+if($fechacierre!=""){
+	$fechacierre2 = date("d-m-Y H:i:s", strtotime($fechacierre));
+}
 
 	    	  $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
@@ -446,7 +479,9 @@ $usuariocie = utf8_encode($valor['usuariocie']);
 }
 
 
-$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro);
+$Totaldiferencia = ($TotalCobros + $TotalIngreso) - $TotalEgreso;
+
+$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>number_format($Totaldiferencia,'0',',','.'),"5"=>number_format($TotalApertura,'0',',','.'),"6"=>number_format($TotalCierre,'0',',','.'),"7"=>number_format($TotalIngreso,'0',',','.'),"8"=>number_format($TotalEgreso,'0',',','.'),"9"=>number_format($TotalCobros,'0',',','.'));
 echo json_encode($informacion);	
 exit;
 }

@@ -19801,26 +19801,27 @@ style='height:250px;'></div>
 <div class='divMenuf' >
 <table style='width:98%'>
 <tr>
-<td style='width:15%;text-align:left'>
-<p class='pTituloC' >Total Efectivo
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Total Cobrado
 :</p>
 <input class='inputTextDisable' type='text' disabled
 id='inptTotalEfectivoConsultarCaja'
-style='width:140px;' />
+style='width:95%;' />
 </td>
-<td style='width:15%;text-align:left;display:none'>
-<p class='pTituloC' >Total Tarjeta
-:</p>
-<input class='inputTextDisable' type='text' disabled
-id='inptTotalTarjetaConsularCaja'
-style='width:140px;' />
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Total Deposito:</p>
+<input class='inputTextDisable' type='text' disabled id='inptTotalTarjetaConsularCaja' style='width:95%;' />
 </td>
-<td style='width:15%;text-align:left'>
+<td style='width:10%;text-align:left'>
 <p class='pTituloC' >Total Ingreso
 :</p>
 <input class='inputTextDisable' type='text' disabled
 id='inptTotalIngresoConsularCaja'
-style='width:140px;' />
+style='width:95%;' />
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Total Egreso :</p>
+<input class='inputTextDisable' type='text' disabled id='inptTotalEgresoConsularCaja' style='width:95%;' />
 </td>
 <td style='width:15%;text-align:left'>
 <p class='pTituloC' >Total Desembolso
@@ -19828,13 +19829,6 @@ style='width:140px;' />
 <input class='inputTextDisable' type='text' disabled
 id='inptTotalDesembolsoConsularCaja'
 style='width:140px;' />
-</td>
-
-<td style='width:15%;text-align:left'>
-<p class='pTituloC' >Total Egreso :
-</p>
-<input class='inputTextDisable' type='text' disabled
-id='inptTotalEgresoConsularCaja' style='width:140px;' />
 </td>
 <td style='width:15%;text-align:left'>
 <p class='pTituloC' >Total en caja:
@@ -19858,7 +19852,7 @@ id='inptTotalConsularCaja' style='width:140px;' />
 <tr>
 <td>
 <center>
-<div style='min-height:500px;width:90%;display:' class='divAbms'>
+<div style='min-height:550px;width:90%;display:' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -19913,7 +19907,7 @@ LOCAL
 <table class="tableCabeceraRegistro">
 <tbody>
 <tr>
-<td class="td_registro" style="width:10%;"><td>
+<td class="td_registro" style="width:10%;"></td>
 <td class="td_registro" style="width:10%;">
 <input placeholder="Igual a" class="inputfiltro" type="text"
 id="inptBuscarVistaCaja1"
@@ -19949,10 +19943,52 @@ onkeyup="if(event.keyCode == 13){buscarvistaaperturacierrecaja()}">
 </tr>
 </tbody>
 </table>
-<div class="div_cuerpo_table" id="table_vista_ap_cie"></div>
+<div class="div_cuerpo_table" id="table_vista_ap_cie" style='height:290px;'></div>
 <br>
 </center>
 </div>
+
+<div class="divMenuf">
+<table style="width:98%">
+<tbody>
+<tr>
+<td style="width:10%;text-align:left">
+<p class="pTituloC">Total Apertura:</p>
+<input class="inputTextDisable" type="text" disabled="" id="inptTotalAperturaArqueocierrecaja" style="width:140px;">
+</td>
+<td style="width:10%;text-align:left">
+<p class="pTituloC">Total Cierre:</p>
+<input class="inputTextDisable" type="text" disabled="" id="inptTotalCierreArqueocierrecaja" style="width:140px;">
+</td>
+ 
+<td style="width:10%;text-align:left">
+<p class="pTituloC">Total Cobrado:</p>
+<input class="inputTextDisable" type="text" disabled="" id="inptCobradoArqueocierrecaja" style="width:140px;">
+</td>
+
+<td style="width:10%;text-align:left">
+<p class="pTituloC">Total Ingreso:</p>
+<input class="inputTextDisable" type="text" disabled="" id="inptTotalIngresoArqueocierrecaja" style="width:140px;">
+</td>
+
+<td style="width:10%;text-align:left">
+<p class="pTituloC">Total egreso:</p>
+<input class="inputTextDisable" type="text" disabled="" id="inptTotalEgresoArqueocierrecaja" style="width:140px;">
+</td>
+
+<td style="width:50%;text-align:left"> 
+</td>
+
+<td style="width:20%;text-align:left">
+<p class="pTituloC">A Depositar:</p>
+<input class="inputTextDisable" type="text" disabled="" id="inptTotalDiferenciaArqueocierrecaja" style="width:140px;">
+</td>
+
+ </tr>
+</tbody>
+</table>
+</div>
+
 </center>
 <br>
 </div>

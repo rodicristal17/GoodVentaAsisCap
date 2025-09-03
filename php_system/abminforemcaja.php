@@ -96,6 +96,22 @@ $datosEgreso=datosdeEgresos($idArqeoFk);
 	}
 $totalegreso=$datosEgreso[1];
 
+//deposito
+$datosdeDeposito=datosdeDeposito($idArqeoFk);
+	
+	if($datosdeDeposito[0]==""){
+		$styleName=CargarStyleTable($styleName);
+	$pagina.="<p class='ptituloZ'>DEPOSITO</p>
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr >
+<td id='' style='width:30%' >NO SE ENCONTRARON REGISTROS</td>
+</tr>
+</table>";
+	}else{
+		$pagina.="<p class='ptituloZ'>DEPOSITO</p>".$datosdeDeposito[0];
+	}
+$totalDeposito=$datosdeDeposito[1];
+
 /////////////desde aca ya es desembolso
 
 $datosDesembolso=datosdeDesembolso($idArqeoFk);
@@ -476,6 +492,70 @@ $montoapertura = utf8_encode($valor['montoapertura']);
 }
 
 return $montoapertura;
+}
+
+function datosdeDeposito($idArqeoFk)
+{
+	$mysqli=conectar_al_servidor();
+	 $pagina='';
+	 
+		$sql= "Select monto,motivo,fecha,estado,cod_usuario,idgastos,personales,cod_local,
+		(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
+		 (Select Nombre from local l where l.cod_local=g.cod_local ) as nombrelocal
+		 from gastos g where codApertura='$idArqeoFk' and estado='Activo' and  tipo='Deposito' ";
+		
+   
+   $stmt = $mysqli->prepare($sql);
+ 
+if ( ! $stmt->execute()) {
+   echo "Error";
+   exit;
+}
+ 
+	$result = $stmt->get_result();
+ $valor= mysqli_num_rows($result);
+ $nroRegistro= $valor;
+ $totalGasto=0;
+ $styleName="tableRegistroSearch";
+ 
+ 
+ if ($valor>0)
+ {
+	  while ($valor= mysqli_fetch_assoc($result))
+	  {
+		  
+		  
+		      $idgastos=$valor['idgastos'];
+		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
+		  	  $monto=utf8_encode($valor['monto']);
+		  	  $motivo=utf8_encode($valor['motivo']);
+		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $personales=utf8_encode($valor['personales']);
+		  	  $estado=utf8_encode($valor['estado']);
+		  	  $cod_local=utf8_encode($valor['cod_local']);
+		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		  	 $totalGasto=$totalGasto+$monto;
+		  	 
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:60%;text-align:left;padding:5px' >".$motivo."</td>
+<td id='' style='width:20%'>". number_format($monto,'0',',','.')."</td>
+<td id='' style='width:20%'>". $nombrelocal."</td>
+</tr>
+</table>
+";
+			    	 
+		  	  
+			  
+			  
+	  }
+ }
+
+ $datos[0]= $pagina;
+ $datos[1]= $totalGasto;
+ return $datos;
 }
 
 
