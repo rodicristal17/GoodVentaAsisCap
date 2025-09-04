@@ -210,7 +210,7 @@ function datosdepagosventas($idArqeoFk)
 $mysqli=conectar_al_servidor();
  
 	
-$sql= "select  sum(pg.Monto) as Monto ,tipo,cod_venta_fk,descripcion,pg.tipopago,
+$sql= "select  sum(pg.Monto) as Monto ,tipo,cod_venta_fk,descripcion,(SELECT nombre FROM tipopago WHERE cod_tipoPago =pg.cod_tipoPagoFK) as tipopago,
 (Select Nombre from local l where l.cod_local=pg.codCaja) as nombrelocal,
 (Select nombre_persona from persona pr where pr.cod_persona=vt.cod_clienteFK) as cliente 
  from  pago pg inner join venta vt on cod_venta=pg.cod_venta_fk 

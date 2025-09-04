@@ -752,8 +752,7 @@ $mysqli=conectar_al_servidor();
 
 $sql= "SELECT * FROM tipopago;";
 
-$pagina = "<table style='width:98%'>
-<tr>";   
+$pagina = "<table style='width:98%'><tr>";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
@@ -764,6 +763,8 @@ $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
 
+$arrayIds = ["inptTotalEfectivoConsultaCaja","inptTotalTarjetaConsultaCaja","inptTotalDebitoConsultaCaja","inptTotalTransferenciaConsultaCaja","inptTotalBilleteraConsultaCaja","inptTotalGiroMovilConsultaCaja"];
+$contador = 0;
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
@@ -779,10 +780,12 @@ $totalMonto = buscar_total_opcion_pago($idArqeoFk,$cod_tipoPago);
 	$pagina.="
 <td style='width:10%;text-align:left'>
 <p class='pTituloC' >".$nombre.":</p>
-<input class='inputTextDisable' type='text' disabled
+<input class='inputTextDisable' id='".$arrayIds[$contador]."' type='text' disabled
 style='width:95%;' value='".number_format($totalMonto,'0',',','.')."' />
 </td>
 ";
+
+$contador++;
 
 }
 }
