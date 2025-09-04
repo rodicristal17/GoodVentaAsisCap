@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.42"
+var codigodeactualizacion="X-GT-1-JMTG-V1.43"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -13851,6 +13851,7 @@ function abmdetalleventa(caja,puntoexpedicion,tipo_comprobante,fecha_venta,comis
 	datos.append("totalRegistro", control)
 	datos.append("caja", caja)
 	datos.append("cod_aperturaCajaFK", idabmAperturacierrecaja)
+	datos.append("tipo", tipo)
 	var OpAjax = $.ajax({
 
 		data: datos,

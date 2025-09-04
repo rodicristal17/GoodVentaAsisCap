@@ -74,11 +74,14 @@ $puntoexpedicion = utf8_decode($puntoexpedicion);
 $codSolicitudCreditoFK=$_POST['codSolicitudCreditoFK'];
 $codSolicitudCreditoFK = utf8_decode($codSolicitudCreditoFK);
 
+$tipo=$_POST['tipo'];
+$tipo = utf8_decode($tipo);
+
 $datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$cod_local,$idGaranteFk);
 $cod_ventaFK=$datosventa[0];
 $num_factura=$datosventa[1];
 }
-abm($cod_ventaFK,$num_factura,$operacion);
+abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$operacion);
 
 }
 
@@ -498,7 +501,7 @@ exit;
 
 
 
-function abm($cod_ventaFK,$num_factura,$operacion)
+function abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$operacion)
 {
 	
 $mysqli=conectar_al_servidor(); 
@@ -574,11 +577,40 @@ $control=$control+1;
 $subtotal=obtenerTotal($cod_ventaFK);
 actualizarTotal($cod_ventaFK,$subtotal);
 
+funcionCrearCredito($tipo,$fecha_venta,$cod_ventaFK,$subtotal,0);
+
+
 $informacion =array("1" => "exito","2" => number_format($subtotal,'0',',','.'),"3" => $cod_ventaFK,"4" => $num_factura);
 echo json_encode($informacion);	
 exit;
 	
 }
+
+function funcionCrearCredito($tipo,$fecha_venta,$cod_venta,$Monto,$descuento){
+ 
+if($tipo == "1"){
+	
+	$mysqli=conectar_al_servidor(); 
+$consulta="delete from credito where  cod_venta='$cod_venta'";
+$stmt = $mysqli->prepare($consulta);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+
+$consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,descuento)
+			values('Contado','$fecha_venta','$cod_venta','$Monto','Pendiente','0','$descuento')";
+			
+$stmt = $mysqli->prepare($consulta);
+if ( ! $stmt->execute()) {
+   echo "Error";
+   exit;
+}
+}	
+	
+	
+}
+
 
 function cambiar($cod_detalle,$cod_ventaFK,$cantidaCambio,$CodProductoCambio,$metodopago,$cod_usuarioFK,$Local_FK)
 {

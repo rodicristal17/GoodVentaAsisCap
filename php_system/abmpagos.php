@@ -728,7 +728,7 @@ exit;
 
 }
 
-function abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$tipopago,$controlTipoPago,$controlTotal)
+/* function abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$tipopago,$controlTipoPago,$controlTotal)
 {
 if($cod_venta==""){
 $informacion =array("1" => "camposvacio");
@@ -808,7 +808,74 @@ exit;
 }
 
 }
+ */
+ 
+ function abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$tipopago,$controlTipoPago,$controlTotal)
+{
+if($cod_venta==""){
+$informacion =array("1" => "camposvacio");
+echo json_encode($informacion);	
+exit;
+}
 
+$datosventa=buscardatosventa($cod_venta);
+$nrofactura=buscarnrofactura();
+$descripcion="ventas";
+
+$mysqli=conectar_al_servidor(); 
+ 
+
+// if($controlTotal == "1"){
+// $consulta="delete from credito where  cod_venta='$cod_venta'";
+// $stmt = $mysqli->prepare($consulta);
+// if ( ! $stmt->execute()) {
+// echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+// exit;
+// }
+
+// $consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,descuento)
+			// values('Contado','$datosventa[0]','$cod_venta','$datosventa[1]','Pendiente','0','$descuento')";
+
+// $stmt = $mysqli->prepare($consulta);
+// if ( ! $stmt->execute()) {
+   // echo "Error";
+   // exit;
+// }
+// }
+ 
+if($monto>0){
+	
+$consulta1="Insert into pago (cod_creditoFK,Monto,Fecha,cod_cobradorFK,cod_venta_fk,comision,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK,nrofactura)
+values((select idcredito from credito where cod_venta='$cod_venta' and plazo='Contado' limit 1),'$monto',CURDATE(),'$datosventa[5]','$cod_venta','$datosventa[18]','Pago Cuota','Efectivo','$cajapredeterminada','$codApertura','$descripcion','$tipopago','$nrofactura')";
+
+
+
+$stmt1 = $mysqli->prepare($consulta1);
+
+if (!$stmt1->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+exit;
+
+}
+}
+ 
+
+
+editarDetallesVenta($cod_venta," *Contado ".$monto);
+actualizarMetodo($cod_venta,"Corrido");
+
+
+if($controlTipoPago == 0){
+	$titulopago=buscarpagosTitulo($cod_venta,$nrofactura);
+$paginaticket=buscar_detalles_venta($cod_venta);
+$informacion =array("1" => "exito","2" => number_format($datosventa[1],'0',',','.'),"3"=>$paginaticket,"4"=>$titulopago[2] );
+echo json_encode($informacion);	
+exit;
+}
+
+}
+
+ 
 function actualizarMetodo($cod_venta,$Metodo){
 	
 	$mysqli=conectar_al_servidor(); 
