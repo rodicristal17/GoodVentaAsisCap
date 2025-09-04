@@ -129,7 +129,39 @@ $datosDesembolso=datosdeDesembolso($idArqeoFk);
 	}
 $totalDesembolso=$datosDesembolso[1];
 
+//////Caja Migrado
 
+$datosdeCajaEnviado=datosdeCajaEnviado($idArqeoFk);
+	
+	if($datosdeCajaEnviado[0]==""){
+		$styleName=CargarStyleTable($styleName);
+	$pagina.="<p class='ptituloZ'>CAJA MIGRADO</p>
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr >
+<td id='' style='width:30%' >NO SE ENCONTRARON REGISTROS</td>
+</tr>
+</table>";
+	}else{
+		$pagina.="<p class='ptituloZ'>CAJA MIGRADO</p>".$datosdeCajaEnviado[0];
+	}
+$totalCajaEnviado=$datosdeCajaEnviado[1];
+
+//////Caja Recibido
+
+$datosdeCajaRecibir=datosdeCajaRecibir($idArqeoFk);
+	
+	if($datosdeCajaRecibir[0]==""){
+		$styleName=CargarStyleTable($styleName);
+	$pagina.="<p class='ptituloZ'>CAJA RECIBIDO</p>
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr >
+<td id='' style='width:30%' >NO SE ENCONTRARON REGISTROS</td>
+</tr>
+</table>";
+	}else{
+		$pagina.="<p class='ptituloZ'>CAJA RECIBIDO</p>".$datosdeCajaRecibir[0];
+	}
+$totalCajaRecibido=$datosdeCajaRecibir[1];
 
 
 $montoinicio=ObtenerTotalCaja($idArqeoFk);
@@ -558,7 +590,122 @@ if ( ! $stmt->execute()) {
  return $datos;
 }
 
+/*Buscar */
+function datosdeCajaEnviado($idArqeoFk)
+{
+$mysqli=conectar_al_servidor();
+ 
+	
+$sql= "select idmigrar_caja, obs, fecha, monto, cod_caja_desdeFK, cod_caja_hastaFK, estado, tipo, cod_usuRecibeFK, cod_UsuEnviaFK , 
+				(select nombre_persona from persona where cod_persona=cod_usuRecibeFK) as usuarioRecibe  ,
+				(select nombre_persona from persona where cod_persona=cod_UsuEnviaFK) as usuarioEnvia from  migrar_caja  where cod_caja_desdeFK='$idArqeoFk' ";	
 
+
+ $pagina="";
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+$totalCaja=0;
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+$styleName="tableRegistroSearch";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+ 
+$obs = utf8_encode($valor['obs']); 
+$fecha = utf8_encode($valor['fecha']); 
+$monto = utf8_encode($valor['monto']); 
+$usuarioRecibe = utf8_encode($valor['usuarioRecibe']); 
+
+$totalCaja= $totalCaja + $monto ;
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:60%;text-align:left;padding:5px;line-height: 18px;' >".$usuarioRecibe."<b> **$obs - $fecha**</b></td>
+<td id='' style='width:20%'>". number_format($monto,'0',',','.')." </td>
+<td id='' style='width:20%'> </td>
+</tr>
+</table>
+";
+
+
+
+
+}
+}
+   
+$datos[0]=$pagina;
+$datos[1]=$totalCaja;
+return $datos;
+}
+
+ 
+
+/*Buscar */
+function datosdeCajaRecibir($idArqeoFk)
+{
+$mysqli=conectar_al_servidor();
+ 
+	
+$sql= "select idmigrar_caja, obs, fecha, monto, cod_caja_desdeFK, cod_caja_hastaFK, estado, tipo, cod_usuRecibeFK, cod_UsuEnviaFK , 
+				(select nombre_persona from persona where cod_persona=cod_usuRecibeFK) as usuarioRecibe  ,
+				(select nombre_persona from persona where cod_persona=cod_UsuEnviaFK) as usuarioEnvia from  migrar_caja  where cod_caja_hastaFK='$idArqeoFk' ";	
+
+
+ $pagina="";
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+$totalCaja=0;
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+$styleName="tableRegistroSearch";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+
+
+$monto = utf8_encode($valor['monto']); 
+$usuarioEnvia = utf8_encode($valor['usuarioEnvia']); 
+
+$totalCaja= $totalCaja + $monto ;
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:60%;text-align:left;padding:5px;line-height: 18px;' >".$usuarioEnvia."</td>
+<td id='' style='width:20%'>". number_format($monto,'0',',','.')." </td>
+<td id='' style='width:20%'> </td>
+</tr>
+</table>
+";
+
+
+
+
+}
+}
+   
+$datos[0]=$pagina;
+$datos[1]=$totalCaja;
+return $datos;
+}
+ 
 
 verificar($operacion);
 ?>

@@ -428,7 +428,7 @@ buscaroptionBanco()
 BuscarSelecProductos()
 buscarDataListCliente()
 buscarobtenermedicos()
-
+BuscarOptionUsuario()
 buscarobtenerPacientes()
 
 
@@ -28708,6 +28708,18 @@ function removeToMenu(){
 	controlAgendamientos=controlAgendamientos+1;		
 	}
 	
+	if( accesosuser["VERMIGRARCAJA"]["accion"]!="SI")
+	{
+	$("table[id=divMenuMigrarCaja]").remove()
+	// controlAgendamientos=controlAgendamientos+1;		
+	}
+	
+	if( accesosuser["VERRECIBIRCAJA"]["accion"]!="SI")
+	{
+	$("table[id=divMenuRecibirCaja]").remove()
+	// controlAgendamientos=controlAgendamientos+1;		
+	}
+	
 		/*MENU LISTADOS*/
 	var controllistado=0;	
 	if( accesosuser["VERLISTADODELOCALES"]["accion"]!="SI")
@@ -28837,6 +28849,7 @@ function removeToMenu(){
 	$("table[id=divMenuControlDeposito]").remove()
 	controladministrativo=controladministrativo+1;		
 	}
+	
 	
 	if(controladministrativo==14){
 		document.getElementById("divMenuAdministrativo").style.display="none"
@@ -38132,3 +38145,466 @@ document.getElementById('inptCantidadPresupuesto').value = ""
 document.getElementById('inptTotalPresupuesto').value = ""
 
 }
+
+/*
+ABM MIGRAR CAJA
+*/
+function verCerrarAbmMigrarCaja(){
+	document.getElementById("divSegundoPlano").style.display="none";
+	if(document.getElementById("divAbmMigrarCaja").style.display==""){
+		document.getElementById("divMinimizadoMigrarCaja").style.display="none"
+	limpiarCamposBuscarMigrarCaja()
+		limpiarcamposMigrarCaja()
+ 
+	$("div[id=divAbmMigrarCaja]").fadeOut(500);	
+	
+	}else{			
+		if(controlacceso("VERMIGRARCAJA","accion")==false){return;}
+		
+		// mostrarSoloUno("divAbmMigrarCaja")	
+		document.getElementById("divAbmMigrarCaja").style.display=""
+ 
+	
+	}
+}
+function limpiarCamposBuscarMigrarCaja(){
+	document.getElementById("inptBuscarAbmMigrarCaja1").value=""
+	document.getElementById("inptBuscarAbmMigrarCaja2").value=""
+	document.getElementById("inptTotalRegistoMigrarCaja").value=""
+	document.getElementById("inptRegistroSeleccMigrarCaja").value=""
+	document.getElementById("table_abm_MigrarCaja").innerHTML=""
+}
+function minimizarMigrarCaja(){
+		document.getElementById("divMinimizadoMigrarCaja").style.display=""
+		// copiarBotonEnContenedor(document.getElementById("divMenuMigrarCaja"));
+ 
+	$("div[id=divAbmMigrarCaja]").fadeOut(500);	
+}
+function verCerrarVentanaAbmMigrarCaja(d, l) {
+	if (d == "1") {
+		if (l == "1") {
+			// if(controlacceso("INSERTARLISTADODELOCALES","accion")==false){return;}
+			limpiarcamposMigrarCaja()
+		}
+		$("div[id=divAbmMigrarCaja2]").fadeIn(250)
+		document.getElementById('divAbmMigrarCaja1').style.display = "none"
+	} else {
+		$("div[id=divAbmMigrarCaja1]").fadeIn(250)
+			document.getElementById('divAbmMigrarCaja2').style.display = "none"
+	}
+}
+function verVentanaEditarMigrarCaja() {
+	// if(controlacceso("EDITARLISTADODELOCALES","accion")==false){return;}
+	if (idAbmMigrarCaja == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		return;
+	}
+	verCerrarVentanaAbmMigrarCaja("1", "2")
+}
+var idAbmMigrarCaja = ""
+function obtenerdatosabmMigrarCaja(datostr) {
+	$("tr[id=tbSelecRegistro]").each(function (i, td) {
+		td.className = ''
+	});
+	datostr.className = 'tableRegistroSelec'
+	document.getElementById('inptMontoMigrarCaja').value = $(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById('inptObsMigrarCaja').value = $(datostr).children('td[id="td_datos_3"]').html();
+	document.getElementById('inptEnviarMigrarCaja').value = $(datostr).children('td[id="td_datos_5"]').html();
+	document.getElementById('inptRegistroSeleccMigrarCaja').value = $(datostr).children('td[id="td_datos_4"]').html();
+	document.getElementById('inptEstadoMigrarCaja').value = $(datostr).children('td[id="td_datos_6"]').html();
+	
+	document.getElementById('btnEditarMigrarCajas').style.backgroundColor="";
+	document.getElementById('btnAbmMigrarCaja').value = "Editar datos";
+	idAbmMigrarCaja = $(datostr).children('td[id="td_id"]').html();
+}
+function verificarcamposMigrarCaja() {
+	var inptMontoMigrarCaja = document.getElementById('inptMontoMigrarCaja').value
+	var inptObsMigrarCaja = document.getElementById('inptObsMigrarCaja').value
+	var inptEnviarMigrarCaja = document.getElementById('inptEnviarMigrarCaja').value
+	var inptEstadoMigrarCaja = document.getElementById('inptEstadoMigrarCaja').value
+	
+	if (inptMontoMigrarCaja == "") {
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO A MIGRAR", "#")
+		return false;
+	}
+	
+	if (inptEnviarMigrarCaja == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR EL USUARIO A ENVIAR", "#")
+		return false;
+	}
+	
+	
+	if (inptEnviarMigrarCaja == userid) {
+		ver_vetana_informativa("NO SE PUEDE MIGRAR CAJA A MISMO USUARIO, FAVOR SELECCIONE OTRO", "#")
+		return false;
+	}
+	
+	
+	
+	if (idabmAperturacierrecaja == "") {
+		ver_vetana_informativa("PARA COMPLETAR ESTA ACCION DEBE TENER UNA CAJA ABIERTA", "#")
+		return false;
+	}
+	
+	var accion = "";
+	if (idAbmMigrarCaja != "") {
+		accion = "editar";
+		// if(controlacceso("EDITARLISTADODELOCALES","accion")==false){return;}
+	} else {
+		accion = "nuevo";
+		// if(controlacceso("INSERTARLISTADODELOCALES","accion")==false){return;}
+	}
+	abmMigrarCaja(inptMontoMigrarCaja, inptObsMigrarCaja,inptEnviarMigrarCaja, inptEstadoMigrarCaja, idAbmMigrarCaja, accion);
+}
+function abmMigrarCaja(monto, obs, usu_RecibirFK , estado, cod_MigrarCaja, accion) {
+	verCerrarEfectoCargando("1")
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", accion)
+	datos.append("cod_MigrarCaja", cod_MigrarCaja)
+	datos.append("monto", monto)
+	datos.append("obs", obs)
+	datos.append("usu_RecibirFK", usu_RecibirFK)
+	datos.append("estado", estado)
+	datos.append("cod_cajaApertura", idabmAperturacierrecaja)
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+
+			return false;
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("")
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				 Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					limpiarcamposMigrarCaja()
+					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					idAbmMigrarCaja = ""
+					buscarabmMigrarCaja()
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+
+
+		}
+	});
+
+
+}
+function checkestadoMigrarCajas(d){
+	if(d=="1"){
+	document.getElementById('inptSeleccEstadoBuscarMigrarCaja1').checked=true
+		document.getElementById('inptSeleccEstadoBuscarMigrarCaja2').checked=false	
+	}else{
+		
+		document.getElementById('inptSeleccEstadoBuscarMigrarCaja1').checked=false
+		document.getElementById('inptSeleccEstadoBuscarMigrarCaja2').checked=true
+	}
+}
+function buscarabmMigrarCaja() {
+// if(controlacceso("BUSCARLISTADODELOCALES","accion")==false){return;}
+	var fecha = document.getElementById('inptBuscarAbmMigrarCaja1').value
+	var recibe = document.getElementById('inptBuscarAbmCasa2').value
+	var estado = ""
+	if(document.getElementById('inptSeleccEstadoBuscarMigrarCaja1').checked==true){
+		estado = "Activo"
+	}else{
+		estado = "Inactivo"
+	}
+	document.getElementById("table_abm_MigrarCaja").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha": fecha,
+		"recibe": recibe,
+		"estado": estado,
+		"funt": "buscar"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
+		type: "post",
+		 
+		
+		beforeSend: function () {
+
+
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("table_abm_MigrarCaja").innerHTML = ''
+		},
+		success: function (responseText) {
+
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			document.getElementById("table_abm_MigrarCaja").innerHTML = ''
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				 Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+					document.getElementById("table_abm_MigrarCaja").innerHTML = datos_buscados
+					document.getElementById("inptTotalRegistoMigrarCaja").value = datos[3];
+					
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+
+
+}
+function limpiarcamposMigrarCaja() {
+	document.getElementById('inptMontoMigrarCaja').value = "";
+	document.getElementById('inptObsMigrarCaja').value = "";
+	document.getElementById('inptEnviarMigrarCaja').value = "";
+	document.getElementById('inptRegistroSeleccMigrarCaja').value = "";
+	document.getElementById('btnEditarMigrarCajas').style.backgroundColor ="#b7b7b7";
+	document.getElementById('inptEstadoMigrarCaja').value = "Activo";
+	document.getElementById('btnAbmMigrarCaja').value = "Guardar datos";
+	idAbmMigrarCaja = "";
+}
+function BuscarOptionUsuario() {
+	document.getElementById("inptEnviarMigrarCaja").innerHTML = ""
+	// document.getElementById("inptBuscarInfAudiProducto3").innerHTML = ""
+
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "buscaroptionUsu"
+	};
+	$.ajax({
+		data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
+		type: "post",
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("inptEnviarMigrarCaja").innerHTML = ''
+			// document.getElementById("inptBuscarInfAudiProducto3").innerHTML = ''
+
+						},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			document.getElementById("inptEnviarMigrarCaja").innerHTML = ''
+			// document.getElementById("inptBuscarInfAudiProducto3").innerHTML = ''
+
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+					document.getElementById("inptEnviarMigrarCaja").innerHTML = "<option  value='' >SELECCIONAR</option>"+datos_buscados
+					// document.getElementById("inptBuscarInfAudiProducto3").innerHTML = "<option  value='' >SELECCIONAR</option>"+datos_buscados
+					
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+/*
+Migrar Caja
+*/
+var idAbmCajaEscritorio="";
+var ElementoSeleccCajaEscritorio="";
+function verCerrarFrmCajaEscritorio(d){
+	document.getElementById("divSegundoPlano").style.display="none";
+	if(document.getElementById("divAbmCajaEscritorio").style.display==""){ 
+		 
+		$("div[id=divAbmCajaEscritorio]").fadeOut(500);	
+		document.getElementById("divMinimizadoRecibirCaja").style.display="none"
+		LimpiarCamposCajaEscritorio()
+	}else{		
+	if(controlacceso("VERRECIBIRCAJA","accion")==false){return;	}
+	
+	// mostrarSoloUno("divAbmCajaEscritorio")	
+		document.getElementById("divAbmCajaEscritorio").style.display=""
+		 
+		BuscarAbmCajaEscritorio()
+	}
+}
+
+
+
+function minimizarCajaEscritorio(){
+ 	$("div[id=divAbmCajaEscritorio]").fadeOut(500);	
+	document.getElementById("divMinimizadoRecibirCaja").style.display=""
+	// copiarBotonEnContenedor(document.getElementById("divMenuRecibirCaja"));
+}
+
+ 
+function LimpiarCamposCajaEscritorio(){
+	 
+	 document.getElementById('btnCajaEscritorio').style.backgroundColor="#b1b2b3"
+	idAbmCajaEscritorio="";
+
+}
+function ObtenerdatosAbmCajaEscritorio(datostr) {
+	$("tr[id=tbSelecRegistro]").each(function (i, td) {
+		td.className = ''
+
+	});
+	datostr.className = 'tableRegistroSelec'
+	idAbmCajaEscritorio = $(datostr).children('td[id="td_id"]').html();
+	
+	document.getElementById('btnCajaEscritorio').style.backgroundColor=""
+	
+	
+	
+}
+function VerificarDatosCajaEscritorio(){
+	
+	
+	
+	
+	if(idabmAperturacierrecaja=="" || idabmAperturacierrecaja=="0" ){ 
+		ver_vetana_informativa("Falto Seleccionar una caja")
+		return
+	}
+ 
+	if(idAbmCajaEscritorio==""){ 
+		ver_vetana_informativa("Falto Seleccionar un registro")
+		return
+	}
+	 
+	 accion = "nuevoCajaEscritorio";
+	 
+	AbmCajaEscritorio( idAbmCajaEscritorio,accion)
+}
+function AbmCajaEscritorio( idabm,accion) {
+	verCerrarEfectoCargando("1")
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", accion)
+	datos.append("idabm", idabm) 
+	datos.append("codApertura", idabmAperturacierrecaja)
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+
+			return false;
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("")
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+
+               Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+
+					LimpiarCamposCajaEscritorio()
+					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")				
+					BuscarAbmCajaEscritorio()
+
+
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+
+
+		}
+	});
+
+}
+function BuscarAbmCajaEscritorio() {
+
+	document.getElementById("divBuscadorCajaEscritorio").innerHTML = paginacargando;
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "BuscarAbmCajaEscritorio"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
+		type: "post",
+		 
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("divBuscadorCajaEscritorio").innerHTML = ''
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			document.getElementById("divBuscadorCajaEscritorio").innerHTML = ''
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   
+					var datos_buscados = datos[2];
+					document.getElementById("divBuscadorCajaEscritorio").innerHTML = datos_buscados
+					
+				}
+				
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+	}
+
+
