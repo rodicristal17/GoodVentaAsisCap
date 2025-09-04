@@ -506,7 +506,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.43"
+var codigodeactualizacion="X-GT-1-JMTG-V1.44"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -30941,6 +30941,7 @@ function abmTipoPagosVentaContado(idVentaFK) {
 				   
 				   limpiarCamposAnhadirPagos()
 				   verCerrarVentanaAnhadirPagoVenta("")
+				   
 					ver_vetana_informativa('Pagos cargados correctamente')
 					document.getElementById('inptTotalPagado').value = datos["2"];
 	paginaticket=datos["3"];
@@ -30968,11 +30969,15 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 // guardarendriverimpresion(idabmVenta, tipo,"pendiente", caja, cod_localFKUSer, DiasAtrasado, subtotal,descuento,totalpagado,interespagado,totalInteres,saldointeres,DeudaActualRecibo,"CONTADO",monto,NroVentas,userid) 
 						
 		   
+					if(document.getElementById("inptSeleccTipoVenta").value=="CONTADO"){
+						buscarImprimirTicketVentaContado();
+						document.getElementById("divOpcionesImpresion").style.display=""
+					}
 		   
 		     if(document.getElementById("inptSeleccTipoComprobanteVenta").value=="FACTURA"){  
 					document.getElementById("inptSeleccPuntoExpedicionConfirmarNro").value=$("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text() 
 					document.getElementById("inptConfirmarNroFactura").value=document.getElementById("inptNroVenta").value
-					document.getElementById("divOpcionesImpresion").style.display="none"
+					// document.getElementById("divOpcionesImpresion").style.display="none"
 					document.getElementById("divConfirmarNroDeFactura").style.display=""
 					ImprimirFacrtura1()
 					limpiarcamposventa()

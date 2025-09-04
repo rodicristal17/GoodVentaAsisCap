@@ -3378,9 +3378,6 @@ $sql= "select cr.fechapago,cr.plazo,cr.Monto as montocredito,pg.idPago,pg.Fecha,
  inner join credito cr on cr.idcredito=pg.cod_creditoFK
  where pg.cod_venta_fk='$CodVenta' and pg.nrofactura='$NroFactura' order by pg.idPago  ";
  
- // echo($sql);
- // exit;
- 
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
@@ -3532,7 +3529,8 @@ $mysqli=conectar_al_servidor();
 
 
 $sql= "select cr.fechapago,cr.plazo,cr.Monto as montocredito,pg.idPago,pg.Fecha,pg.Monto,pg.nrofactura,pg.tipo,vt.TipoVenta,vt.total_venta
-,vt.fecha_venta
+,vt.fecha_venta,
+(SELECT nombre FROM tipopago where cod_tipoPago = pg.cod_tipoPagoFK) as tipopg
  from pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk
  inner join credito cr on cr.idcredito=pg.cod_creditoFK
  where pg.cod_venta_fk='$CodVenta'  order by pg.idPago  ";
@@ -3575,6 +3573,7 @@ $fechapago = utf8_encode($valor['fechapago']);
 $total_venta = utf8_encode($valor['total_venta']);  
 $fecha_venta = utf8_encode($valor['fecha_venta']);  
 $nrofactura = utf8_encode($valor['nrofactura']);  
+$tipopg = utf8_encode($valor['tipopg']);  
 
 
 if($tipo=="Interes"){
@@ -3606,7 +3605,8 @@ $pagina2.="<table class='tableTicket' style='border: solid 1px #a1a1a1;'>
 <tr>
 <td style='width:20%'>".$Fecha."</td>
 <td style='width:20%'>".$fechapago."</td>
-<td style='width:40%'>CONTADO</td>
+<td style='width:30%'>CONTADO</td>
+<td style='width:10%'>".$tipopg."</td>
 <td style='width:20%'>".number_format($Monto,'0',',','.')."</td>
 </tr>
 </table>";
