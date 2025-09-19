@@ -6354,15 +6354,23 @@ ACCION
   <!-- Productos -->
   <section class="productos-section">
     <div class="productos-lista">
-      <table class="tableCabeceraRegistro">
-        <thead>
-          <tr>
-            <th>CODIGO</th>
-            <th>DESCRIPCION</th> 
-            <th>PRECIO</th>
-          </tr>
-        </thead>
-      </table>
+ 
+	  <table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">
+CODIGO
+</td>
+<td class="td_registro" style="width:50%;">
+TRATAMIENTO
+</td> 
+<td class="td_registro" style="width:15%;">
+PRECIO
+</td> 
+</tr>
+</tbody>
+</table>	  
+	  
       <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto"></div>
     </div>
 
@@ -6427,34 +6435,55 @@ ACCION
 
   <!-- Detalles -->
   <section class="detalles-section" id="tdTablaPresupuesto">
-    <div style='display: flex; width: 95%;' >
+    <div style='display: flex; width: 100%;' >
     <div class="tabla-detalles" style='width: 45%;'>
-      <table class="tableCabeceraRegistro">
-        <thead>
-          <tr>
-            <th style='width: 10%;'>COD.</th>
-            <th style='width: 50%;'>TRATAMIENTO</th>
-            <th style='width: 10%;'>CANTIDAD</th>
-            <th style='width: 15%;'>PRECIO UNITARIO</th>
-            <th style='width: 15%;'>TOTAL</th>
-          </tr>
-        </thead>
-      </table>
-      <div class="div_cuerpo_table"  id="table_vista_producto_presupuestoDetalle"></div>
+ 
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">
+CODIGO
+</td>
+<td class="td_registro" style="width:50%;">
+TRATAMIENTO
+</td>
+<td class="td_registro" style="width:10%;">
+CANTIDAD
+</td>
+<td class="td_registro" style="width:15%;">
+PRECIO
+</td>
+<td class="td_registro" style="width:15%;">
+TOTAL
+</td>
+</tr>
+</tbody>
+</table>
+
+      <div class="div_cuerpo_table"  style='height: auto' id="table_vista_producto_presupuestoDetalle"></div>
     </div>
 
     <div class="tabla-cuotas"  style='width: 50%;'>
-      <table class="tableCabeceraRegistro"  >
-        <thead>
-          <tr>
-            <th style='width: 25%;'>CUOTAS</th>
-            <th style='width: 25%;'>PLAN DE PAGO</th>
-            <th style='width: 25%;'>DESCRIPCION</th>
-            <th style='width: 25%;'>TOTAL</th>
-          </tr>
-        </thead>
-      </table>
-      <div class="div_cuerpo_table" style='height: 370px;' id="table_vista_detalles_presupuesto"></div>
+ 
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:25%;">
+CUOTAS
+</td>
+<td class="td_registro" style="width:25%;">
+PLAN DE PAGO
+</td>
+<td class="td_registro" style="width:25%;">
+DESCRIPCION
+</td>
+<td class="td_registro" style="width:25%;">
+TOTAL
+</td> 
+</tr>
+</tbody>
+</table>
+      <div class="div_cuerpo_table" style='height: 400px;' id="table_vista_detalles_presupuesto"></div>
     </div>
     </div>
   </section>

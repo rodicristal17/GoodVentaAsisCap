@@ -506,7 +506,9 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.45"
+
+
+var codigodeactualizacion="X-GT-1-JMTG-V1.46"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -12880,7 +12882,7 @@ function limpiarcamposventa(ctrl) {
 					document.getElementById("inptMontoPagoConfCredito").value = "0"
 					document.getElementById("inptFechaInicioConfCredito").value = ""
 					
-	if(cod_localFKUSer=="3"){
+	if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 		document.getElementById("inptInteresConfCredito").value = "0"
 	}else{
 		document.getElementById("inptInteresConfCredito").value = "0,40"
