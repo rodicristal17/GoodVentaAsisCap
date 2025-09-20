@@ -652,37 +652,143 @@ $MontoIngreso=$MontoIngreso+$m;
 }
 }
 
+ 
+
+$datosdeCajaRecibir=datosdeCajaRecibir($idArqeoFk);
+$datosdeCajaEnviado=datosdeCajaEnviado($idArqeoFk);
 
 
-$sql= "SELECT  precio_producto  FROM detalle_venta where cod_aperturaCajaFK='$idArqeoFk' ";	
-$MontoDesembolso= "0";   
+
+$totalIngreso=$MontoIngreso+$Pagos+$montoInicio + $datosdeCajaRecibir[1];
+$Monto=$totalIngreso-($MontoEgresos  + $datosdeCajaEnviado[1]);
+ 
+
+return $Monto;
+}
+
+
+
+
+
+/*Buscar */
+function datosdeCajaEnviado($idArqeoFk)
+{
+$mysqli=conectar_al_servidor();
+ 
+	
+$sql= "select idmigrar_caja, obs, fecha, monto, cod_caja_desdeFK, cod_caja_hastaFK, estado, tipo, cod_usuRecibeFK, cod_UsuEnviaFK , 
+				(select nombre_persona from persona where cod_persona=cod_usuRecibeFK) as usuarioRecibe  ,
+				(select nombre_persona from persona where cod_persona=cod_UsuEnviaFK) as usuarioEnvia from  migrar_caja  where cod_caja_desdeFK='$idArqeoFk' ";	
+
+
+ $pagina="";
+ 
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
-
+$totalCaja=0;
 $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
+$styleName="tableRegistroSearch";
 
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-          
-$m = $valor['precio_producto'];          
-$MontoDesembolso=$MontoDesembolso+$m;
+
+
+
+$monto = utf8_encode($valor['monto']); 
+$usuarioRecibe = utf8_encode($valor['usuarioRecibe']); 
+
+$totalCaja= $totalCaja + $monto ;
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:30%;text-align:left;padding:5px;line-height: 18px;' >".$usuarioRecibe."</td>
+<td id='' style='width:20%'>". number_format($monto,'0',',','.')." </td>
+<td id='' style='width:20%'> </td>
+</tr>
+</table>
+";
+
+
+
 
 }
 }
-
-
-$totalIngreso=$MontoIngreso+$Pagos+$montoInicio;
-$Monto=$totalIngreso-($MontoEgresos + $MontoDesembolso );
-
-return $Monto;
+   
+$datos[0]=$pagina;
+$datos[1]=$totalCaja;
+return $datos;
 }
+
+
+
+/*Buscar */
+function datosdeCajaRecibir($idArqeoFk)
+{
+$mysqli=conectar_al_servidor();
+ 
+	
+$sql= "select idmigrar_caja, obs, fecha, monto, cod_caja_desdeFK, cod_caja_hastaFK, estado, tipo, cod_usuRecibeFK, cod_UsuEnviaFK , 
+				(select nombre_persona from persona where cod_persona=cod_usuRecibeFK) as usuarioRecibe  ,
+				(select nombre_persona from persona where cod_persona=cod_UsuEnviaFK) as usuarioEnvia from  migrar_caja  where cod_caja_hastaFK='$idArqeoFk' ";	
+
+
+ $pagina="";
+ 
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+$totalCaja=0;
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$nroRegistro=$valor;
+$styleName="tableRegistroSearch";
+
+if ($valor>0)
+{
+while ($valor= mysqli_fetch_assoc($result))
+{  
+
+
+
+$monto = utf8_encode($valor['monto']); 
+$usuarioEnvia = utf8_encode($valor['usuarioEnvia']); 
+
+$totalCaja= $totalCaja + $monto ;
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:30%;text-align:left;padding:5px;line-height: 18px;' >".$usuarioEnvia."</td>
+<td id='' style='width:20%'>". number_format($monto,'0',',','.')." </td>
+<td id='' style='width:20%'> </td>
+</tr>
+</table>
+";
+
+
+
+
+}
+}
+   
+$datos[0]=$pagina;
+$datos[1]=$totalCaja;
+return $datos;
+}
+
+
+
+
 
 
 function buscarmoviemientocaja($idArqeoFk)
@@ -737,11 +843,16 @@ if($descripcion=="ventas"){
 
 }
 }
+
+$datosdeCajaRecibir=datosdeCajaRecibir($idArqeoFk);
+$datosdeCajaEnviado=datosdeCajaEnviado($idArqeoFk);
+
+
 $montoapertura=Obtenermontoapertura($idArqeoFk);
+
 $datosdeEgresos=datosdeEgresos($idArqeoFk);
-$datosdeIngreso=datosdeIngreso($idArqeoFk);
-$datosdeDesembolso=datosdeDesembolso($idArqeoFk);
-$totalPagado=($totalPagado+$datosdeIngreso[0]+$montoapertura)-($datosdeEgresos[0]+ $datosdeDesembolso[0]);
+$datosdeIngreso=datosdeIngreso($idArqeoFk); 
+$totalPagado=($totalPagado+$datosdeIngreso[0]+$montoapertura + $datosdeCajaRecibir[1])-($datosdeEgresos[0] + $datosdeCajaEnviado[1] );
  $informacion =array("1" => "exito","2" =>  number_format($totalPagado,'0',',','.'),"3"=> $pagina);
 echo json_encode($informacion);	
 exit;
@@ -829,47 +940,6 @@ $totalTipoPago+= utf8_encode($valor['Monto']);
   
  mysqli_close($mysqli);
 return $totalTipoPago;
-}
-
-
-function datosdeDesembolso($idArqeoFk)
-{
-	$mysqli=conectar_al_servidor();
-	 $pagina='';
-	 
-		$sql= "SELECT concat('DESEMBOLSO - ',(select (select nombre_persona from persona where cod_clienteFK=cod_persona)
-  from venta where cod_venta=cod_ventaFK )) as motivo , precio_producto  FROM detalle_venta where cod_aperturaCajaFK='$idArqeoFk' ";
-		
-   
-   
-   $stmt = $mysqli->prepare($sql);
- 
-if ( ! $stmt->execute()) {
-   echo "Error";
-   exit;
-}
- 
-	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- $nroRegistro= $valor;
- $totalMonto=0;
- $styleName="tableRegistroSearch";
- 
- 
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-		   
-		  	  $precio_producto=utf8_encode($valor['precio_producto']);
-		  	  $motivo=utf8_encode($valor['motivo']);  
-		  	 $totalMonto=$totalMonto+$precio_producto;
-   
-	  }
- }
-
- $datos[0]= $totalMonto;
- return $datos;
 }
 
 

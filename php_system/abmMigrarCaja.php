@@ -505,7 +505,7 @@ exit;
 function buscaroptionUsu()
 {
 	 
-		$sql= "Select * from persona inner join usuario u on cod_persona=cod_usuario inner join local l on cod_localFK=cod_local where u.estado='Activo' and l.estado='Activo' ";
+		$sql= "Select * from persona inner join usuario u on cod_persona=cod_usuario inner join local l on cod_localFK=cod_local where u.estado='Activo' and u.tipo='ADMINISTRATIVO' and l.estado='Activo' ";
 	 	
 	$mysqli=conectar_al_servidor();
 	

@@ -112,22 +112,7 @@ $datosdeDeposito=datosdeDeposito($idArqeoFk);
 	}
 $totalDeposito=$datosdeDeposito[1];
 
-/////////////desde aca ya es desembolso
-
-$datosDesembolso=datosdeDesembolso($idArqeoFk);
-	
-	if($datosDesembolso[0]==""){
-		$styleName=CargarStyleTable($styleName);
-	$pagina.="<p class='ptituloZ'>DESEMBOLSOS A CLIENTE</p>
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr >
-<td id='' style='width:30%' >NO SE ENCONTRARON REGISTROS</td>
-</tr>
-</table>";
-	}else{
-		$pagina.="<p class='ptituloZ'>DESEMBOLSOS A CLIENTE</p>".$datosDesembolso[0];
-	}
-$totalDesembolso=$datosDesembolso[1];
+ 
 
 //////Caja Migrado
 
@@ -168,73 +153,16 @@ $montoinicio=ObtenerTotalCaja($idArqeoFk);
 
 $ingresos=$totalingreso;
 $egresos=$totalegreso;
-$Desembolso=$totalDesembolso;
-$total=($ingresos+$totalpagos)-($egresos+ $Desembolso);
+$Desembolso=0; 
+$total=($ingresos+$totalpagos+ $totalCajaRecibido)-($egresos + $totalCajaEnviado + $totalDeposito);
 $total=$montoinicio+$total;
 $informacion =array("1" => "exito","2" => $pagina,"3" => number_format($ingresos,'0',',','.'),"4" => number_format($egresos,'0',',','.')
-,"5" => number_format($total,'0',',','.'),"6" => number_format($totaltarjeta,'0',',','.'),"7" => number_format($totalefectivo,'0',',','.'),"8" => number_format($Desembolso,'0',',','.'));
+,"5" => number_format($total,'0',',','.'),"6" => number_format($totaltarjeta,'0',',','.'),"7" => number_format($totalefectivo,'0',',','.'),"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'));
 echo json_encode($informacion);	
 exit;
 }
 
-
-
-function datosdeDesembolso($idArqeoFk)
-{
-	$mysqli=conectar_al_servidor();
-	 $pagina='';
-	 
-		$sql= "SELECT concat('DESEMBOLSO - ',(select (select nombre_persona from persona where cod_clienteFK=cod_persona)
-  from venta where cod_venta=cod_ventaFK )) as motivo , precio_producto  FROM detalle_venta where cod_aperturaCajaFK='$idArqeoFk' ";
-		
-   
-   
-   $stmt = $mysqli->prepare($sql);
  
-if ( ! $stmt->execute()) {
-   echo "Error";
-   exit;
-}
- 
-	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- $nroRegistro= $valor;
- $totalMonto=0;
- $styleName="tableRegistroSearch";
- 
- 
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-		   
-		  	  $precio_producto=utf8_encode($valor['precio_producto']);
-		  	  $motivo=utf8_encode($valor['motivo']);  
-		  	 $totalMonto=$totalMonto+$precio_producto;
-		  	 
-	$styleName=CargarStyleTable($styleName);
-	$pagina.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro'>
-<td id='' style='width:30%;text-align:left;padding:5px' >".$motivo."</td>
-<td id='' style='width:20%'>". number_format($precio_producto,'0',',','.')."</td>
-<td id='' style='width:20%'> </td>
-</tr>
-</table>
-";
-			    	 
-		  	  
-			  
-			  
-	  }
- }
-
- $datos[0]= $pagina;
- $datos[1]= $totalMonto;
- return $datos;
-}
-
-
 
 /*Buscar */
 function datosdepagosventas($idArqeoFk)

@@ -508,7 +508,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 
 
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.46"
+var codigodeactualizacion="X-GT-1-JMTG-V1.47"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -23874,6 +23874,9 @@ function limpiarcamposbuscadorConsultarCaja(){
 					document.getElementById("inptTotalEfectivoConsultarCaja").value = ""
 					document.getElementById("inptTotalTarjetaConsularCaja").value = ""
 					
+					document.getElementById("inptTotalMigradoConsularCaja").value = ""
+					document.getElementById("inptTotalRecibidoConsularCaja").value = ""
+					
 					document.getElementById("inptBuscarVistaApCie1").value = ""
 					document.getElementById("inptBuscarVistaApCie7").value = ""
 					document.getElementById("inptBuscarVistaApCie2").value = ""
@@ -23899,6 +23902,8 @@ function buscarinformecaja() {
 					document.getElementById("inptTotalConsularCaja").value = "..."
 					document.getElementById("inptTotalEfectivoConsultarCaja").value = "..."
 					document.getElementById("inptTotalTarjetaConsularCaja").value = "..."
+					document.getElementById("inptTotalMigradoConsularCaja").value = "..."
+					document.getElementById("inptTotalRecibidoConsularCaja").value = "..."
 	document.getElementById("table_Consultar_caja").innerHTML = paginacargando
 	obtener_datos_user();
 	
@@ -23958,6 +23963,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptTotalEgresoConsularCaja").value = datos[4]
 					document.getElementById("inptTotalConsularCaja").value = datos[5]
 					document.getElementById("inptTotalDesembolsoConsularCaja").value = datos[8]
+					document.getElementById("inptTotalMigradoConsularCaja").value = datos[9]
+					document.getElementById("inptTotalRecibidoConsularCaja").value = datos[10]
 					buscar_recaudo_opciones_pago()
 				}
 			} catch (error) {
