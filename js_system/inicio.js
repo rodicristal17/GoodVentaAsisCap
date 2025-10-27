@@ -508,7 +508,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 
 
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.47"
+var codigodeactualizacion="X-GT-1-JMTG-V1.48"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -9368,6 +9368,7 @@ function obtenerdatosaperturacierrecaja(datostr) {
 	document.getElementById('inptBuscarVistaApCie5').value = $(datostr).children('td[id="td_datos_3"]').html();
 	document.getElementById('inptBuscarVistaApCie6').value = $(datostr).children('td[id="td_datos_4"]').html();
 	document.getElementById('inptBuscarVistaApCie7').value = $(datostr).children('td[id="td_datos_9"]').html();
+	document.getElementById('inptResumenAperturacaja').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptBuscarLoteVistaApCie').value = $(datostr).children('td[id="td_datos_10"]').html();
 	idArqeoFk = $(datostr).children('td[id="td_id_1"]').html();
 	buscarinformecaja()
@@ -23877,6 +23878,15 @@ function limpiarcamposbuscadorConsultarCaja(){
 					document.getElementById("inptTotalMigradoConsularCaja").value = ""
 					document.getElementById("inptTotalRecibidoConsularCaja").value = ""
 					
+					document.getElementById("inptResumenAperturacaja").value = ""
+					document.getElementById("inptResumenTotalIngreso").value = ""
+					document.getElementById("inptResumenTotalRecaudado").value = ""
+					document.getElementById("inptResumenCajaRecibido").value = ""
+					document.getElementById("inptResumenCajaMigrado").value = ""
+					document.getElementById("inptResumenTotalEgreso").value = "" 
+					document.getElementById("inptResumenTransferencia").value = ""
+					document.getElementById("inptResumenTotalCaja").value = ""
+					
 					document.getElementById("inptBuscarVistaApCie1").value = ""
 					document.getElementById("inptBuscarVistaApCie7").value = ""
 					document.getElementById("inptBuscarVistaApCie2").value = ""
@@ -23904,6 +23914,14 @@ function buscarinformecaja() {
 					document.getElementById("inptTotalTarjetaConsularCaja").value = "..."
 					document.getElementById("inptTotalMigradoConsularCaja").value = "..."
 					document.getElementById("inptTotalRecibidoConsularCaja").value = "..."
+					 
+					document.getElementById("inptResumenTotalIngreso").value = "..."
+					document.getElementById("inptResumenTotalRecaudado").value = "..."
+					document.getElementById("inptResumenCajaRecibido").value = "..."
+					document.getElementById("inptResumenCajaMigrado").value = "..."
+					document.getElementById("inptResumenTotalEgreso").value = "..."  
+					document.getElementById("inptResumenTotalCaja").value = "..."  
+					
 	document.getElementById("table_Consultar_caja").innerHTML = paginacargando
 	obtener_datos_user();
 	
@@ -23965,6 +23983,18 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptTotalDesembolsoConsularCaja").value = datos[8]
 					document.getElementById("inptTotalMigradoConsularCaja").value = datos[9]
 					document.getElementById("inptTotalRecibidoConsularCaja").value = datos[10]
+					
+					 
+					document.getElementById("inptResumenTotalCaja").value =  datos[5]
+					document.getElementById("inptResumenTotalIngreso").value =  datos[3]
+					document.getElementById("inptResumenTotalRecaudado").value = datos[7]
+					document.getElementById("inptResumenCajaRecibido").value = datos[10]
+					document.getElementById("inptResumenCajaMigrado").value = datos[9]
+					document.getElementById("inptResumenTotalEgreso").value = datos[4]
+					
+					
+					
+					
 					buscar_recaudo_opciones_pago()
 				}
 			} catch (error) {
@@ -24029,6 +24059,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			   if (Respuesta == true) {				   
 					var datos_buscados = datos[2];
 					document.getElementById("table_buscar_opciones_pago").innerHTML = datos_buscados
+					document.getElementById("inptResumenTransferencia").value = datos[3];
 					document.getElementById("table_buscar_opciones_pago").style.display = '';
 					
 				}

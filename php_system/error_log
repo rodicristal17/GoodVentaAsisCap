@@ -20465,3 +20465,260 @@ Stack trace:
 #1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(4640): verificar('cuentasacobrar')
 #2 {main}
   thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3252
+[01-Jul-2025 16:40:13 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '6230344', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[01-Jul-2025 16:40:21 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'camila', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[01-Jul-2025 16:40:38 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'camila', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[01-Jul-2025 19:28:02 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'camil', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[01-Jul-2025 19:28:31 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '4214554', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[01-Jul-2025 22:17:17 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'Jorg', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[01-Jul-2025 22:24:40 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'camil', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 07:08:36 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '4214554', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 07:08:37 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '4214554', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 07:08:39 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '4214554', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 07:20:25 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '6230344', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 08:23:19 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'Car', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 08:23:26 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'Car', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 08:40:18 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'Farao', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 08:40:27 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'faraone', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 08:40:35 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:477
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', 'faraone', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(542): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 477
+[02-Jul-2025 09:16:18 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php:479
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(36): buscarVistaConsulta('', '4214554', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php(544): ObtenerDatos('buscarVistaCons...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmConsulta.php on line 479
+[03-Jul-2025 10:28:05 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php:1110
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php(143): cargarpagos('', '200000', '0', '0', '2025-07-03', '7169', '3156', '1', '0008337', '8', '1186', 1, 0, '', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php(4461): ObtenerDatos('cargarpago')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php on line 1110
+[03-Jul-2025 10:28:08 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php:1110
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php(143): cargarpagos('', '200000', '0', '0', '2025-07-03', '7169', '3156', '1', '0008337', '8', '1186', 1, 0, '', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php(4461): ObtenerDatos('cargarpago')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php on line 1110
+[03-Jul-2025 10:28:16 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php:1110
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php(143): cargarpagos('', '200000', '0', '0', '2025-07-03', '7169', '3156', '1', '0008337', '8', '1186', 1, 0, '', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php(4461): ObtenerDatos('cargarpago')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php on line 1110
+[07-Jul-2025 13:19:50 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[07-Jul-2025 13:20:00 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[08-Jul-2025 07:54:48 America/New_York] PHP Warning:  Error while sending STMT_PREPARE packet. PID=108928 in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3251
+[08-Jul-2025 07:54:48 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php:3252
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(162): cuentasacobrar('', '', '', 'silv', '3877552', '0974864885', '', '', '', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(4640): verificar('cuentasacobrar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3252
+[08-Jul-2025 07:59:43 America/New_York] PHP Warning:  Error while sending STMT_PREPARE packet. PID=121716 in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3251
+[08-Jul-2025 07:59:43 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php:3252
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(162): cuentasacobrar('', '', '', '', '4216687', '0983036256', '', '', '', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(4640): verificar('cuentasacobrar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3252
+[11-Jul-2025 09:40:27 America/Anguilla] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php:3465
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php(1001): abmAuditoria('Extracci\xF3n dien...', '700000', '700000', '0', '198', '', '', '', '0', '', '2025-07-11', '5994', 'ABM Producto', '10222', '1')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php(107): abm('', '', '', '0', '', '', '', '', 'CREDITO', '10222', '198', '85', '467', '3', '0,0', 'Extracci\xF3n dien...', '', 'Unidad', '700000', '700000', '1', '', '0', 'Activo', 'editar')
+#2 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php(4074): ObtenerDatos('editar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php on line 3465
+[17-Jul-2025 10:04:06 America/New_York] PHP Warning:  Division by zero in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmAccesos.php on line 210
+[17-Jul-2025 10:04:10 America/New_York] PHP Warning:  Division by zero in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmAccesos.php on line 210
+[18-Jul-2025 21:47:16 America/New_York] PHP Warning:  Division by zero in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmAccesos.php on line 210
+[18-Jul-2025 21:47:22 America/New_York] PHP Warning:  Division by zero in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmAccesos.php on line 210
+[18-Jul-2025 21:47:25 America/New_York] PHP Warning:  Division by zero in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmAccesos.php on line 210
+[21-Jul-2025 19:02:24 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[21-Jul-2025 19:02:38 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[21-Jul-2025 19:02:58 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[23-Jul-2025 15:28:46 America/New_York] PHP Warning:  Error while sending STMT_PREPARE packet. PID=99088 in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3251
+[23-Jul-2025 15:28:46 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php:3252
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(162): cuentasacobrar('', '', '', 'silvio', '4216687', '0983036256', '', '', '4', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(4640): verificar('cuentasacobrar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3252
+[23-Jul-2025 15:33:31 America/New_York] PHP Warning:  Error while sending STMT_PREPARE packet. PID=121148 in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3251
+[23-Jul-2025 15:33:31 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php:3252
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(162): cuentasacobrar('', '', '', 'silvio', '4216687', '0983036256', '', '', '4', '')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php(4640): verificar('cuentasacobrar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmcreditos.php on line 3252
+[06-Aug-2025 10:01:14 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[06-Aug-2025 10:01:32 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 07:18:58 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 07:19:40 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 07:20:29 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 07:21:00 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 07:21:17 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 07:21:30 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[09-Aug-2025 10:46:09 America/Anguilla] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php:3465
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php(1001): abmAuditoria('Implante post e...', '4000000', '5500000', '0', '145', '', '', '', '0', '', '2025-08-09', '5994', 'ABM Producto', '10234', '1')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php(107): abm('', '', '', '0', '', '', '', '', 'CREDITO', '10234', '145', '92', '467', '3', '37,5', 'Implante post e...', '', 'Unidad', '5500000', '4000000', '1', '', '0', 'Activo', 'editar')
+#2 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php(4074): ObtenerDatos('editar')
+#3 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmproductos.php on line 3465
+[12-Aug-2025 11:17:13 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[12-Aug-2025 11:17:18 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[12-Aug-2025 11:18:14 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[12-Aug-2025 11:18:35 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[12-Aug-2025 11:22:39 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[12-Aug-2025 11:23:00 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 143
+[12-Aug-2025 13:18:00 America/New_York] PHP Fatal error:  Uncaught Error: Call to undefined function InsertarProductoStock() in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php:50
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php(8): Producto()
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php(85): verificar()
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php on line 50
+[12-Aug-2025 13:18:43 America/New_York] PHP Fatal error:  Uncaught Error: Call to undefined function InsertarProductoStock() in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php:50
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php(8): Producto()
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php(85): verificar()
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/importarDatos.php on line 50
+[03-Sep-2025 20:27:17 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1048) Column 'cod_creditoFK' cannot be null in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php on line 776
+[03-Sep-2025 20:31:47 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1048) Column 'cod_creditoFK' cannot be null in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php on line 776
+[04-Sep-2025 09:07:46 America/New_York] PHP Fatal error:  The query execution failed; MySQL said (1048) Column 'cod_creditoFK' cannot be null in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmpagos.php on line 776
+[12-Sep-2025 08:59:35 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 08:59:45 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 08:59:55 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:35:45 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:35:58 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:36:49 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:37:50 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:39:23 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:40:20 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 15:40:59 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[12-Sep-2025 17:17:55 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[13-Sep-2025 08:58:18 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[13-Sep-2025 10:06:32 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[13-Sep-2025 14:33:21 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[16-Sep-2025 09:05:19 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/2002): No such file or directory in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/conexion.php on line 8
+[16-Sep-2025 09:05:19 America/New_York] PHP Warning:  mysqli::set_charset(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/conexion.php on line 9
+[16-Sep-2025 09:05:19 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php on line 11
+[16-Sep-2025 09:05:19 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php:16
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/obtener_sugerencias.php(20): verificar_navegador('8386', 'chrome', 'ODA4')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/obtener_sugerencias.php(336): verificar('buscar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php on line 16
+[16-Sep-2025 09:05:19 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/2002): No such file or directory in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/conexion.php on line 8
+[16-Sep-2025 09:05:19 America/New_York] PHP Warning:  mysqli::set_charset(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/conexion.php on line 9
+[16-Sep-2025 09:05:19 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php on line 11
+[16-Sep-2025 09:05:19 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php:16
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/system.php(18): verificar_navegador('8386', 'chrome', 'ODA4')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/system.php(222): verificar('asistenciadeact...')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php on line 16
+[16-Sep-2025 09:05:29 America/New_York] PHP Warning:  mysqli::__construct(): (HY000/2002): No such file or directory in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/conexion.php on line 8
+[16-Sep-2025 09:05:29 America/New_York] PHP Warning:  mysqli::set_charset(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/conexion.php on line 9
+[16-Sep-2025 09:05:29 America/New_York] PHP Warning:  mysqli::prepare(): Couldn't fetch mysqli in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php on line 11
+[16-Sep-2025 09:05:29 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function bind_param() on null in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php:16
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/obtener_sugerencias.php(20): verificar_navegador('7833', 'chrome', 'MzA4MQ++')
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/obtener_sugerencias.php(336): verificar('buscar')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/verificar_navegador.php on line 16
+[19-Sep-2025 14:23:53 America/New_York] PHP Fatal error:  Uncaught Error: Call to a member function execute() on boolean in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmMigrarCaja.php:519
+Stack trace:
+#0 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmMigrarCaja.php(88): buscaroptionUsu()
+#1 /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmMigrarCaja.php(557): verificar('buscaroptionUsu')
+#2 {main}
+  thrown in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmMigrarCaja.php on line 519
+[20-Sep-2025 07:35:23 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[20-Sep-2025 07:35:29 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[24-Sep-2025 09:04:08 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[25-Sep-2025 08:05:32 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[25-Sep-2025 08:05:42 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[03-Oct-2025 09:07:12 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[03-Oct-2025 09:07:16 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[04-Oct-2025 09:39:55 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152
+[15-Oct-2025 07:47:33 America/New_York] PHP Fatal error:  The query execution failed; MySQL said ()  in /home/syscvxco/public_html/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php on line 152

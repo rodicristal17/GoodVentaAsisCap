@@ -1869,7 +1869,7 @@ onclick='verificarcamposusuario()' id='btnAbmUsuario' />
 <br>
 </center>
 </div>
-<div id='divAbmUsuario1' style='display:' class='divAbms'>
+<div id='divAbmUsuario1' style='width:95vw;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -1893,12 +1893,12 @@ title='Cerrar Ventana' onclick='verCerrarAbmUsuarios()' />
 </td>
 </tr>
 </table>
-<br>
+
 <center>
 <div class='divMenuf'>
 <table style='width:100%'>
 <tr>
-<td style='width:80%'>
+<td style='width:70%'>
 </td>
 <td style='width:10%;text-align:left'>
 <p class='pTitulo8' onclick='checkestadouser(1)'> <input type='checkbox'
@@ -1908,6 +1908,11 @@ id="inptSeleccEstadoBuscarUser1" checked> Activo</p>
 <p class='pTitulo8' onclick='checkestadouser(2)'> <input type='checkbox'
 id="inptSeleccEstadoBuscarUser2"> Inactivo</p>
 </td>
+
+<td style='width:10%;text-align:left'>
+<input type='button' value='Buscar' class='btn5' onclick='buscarabmusuario()' >
+</td>
+
 </tr>
 </table>
 
@@ -1965,7 +1970,7 @@ onclick="vaciar('inptBuscarUsuario3')" />
 </tr>
 </tbody>
 </table>
-<div class="div_cuerpo_table" id="table_abm_usuarios"></div>
+<div class="div_cuerpo_table" id="table_abm_usuarios" style='height:50vh;'></div>
 </div>
 
 <div class='divMenuf'>
@@ -2457,7 +2462,7 @@ NOMBRE DEL ACCESO
 <tr>
 <td>
 <center>
-<div class='divAbms' style='display:;width:500px'>
+<div class='divAbms' style='display:;width:800px'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -2469,8 +2474,7 @@ title='Cerrar Ventana' onclick='verCerrarAccesoUsuario("2")' />
 </td>
 </tr>
 </table>
-<br>
-<br>
+ 
 
 <center>
 <div class='divMenuf'>
@@ -2514,14 +2518,9 @@ ACCION
 </tr>
 </tbody>
 </table>
-<div class="div_cuerpo_table" id="table_abm_accesos_Abm"></div>
+<div class="div_cuerpo_table" id="table_abm_accesos_Abm" style='height:50vh;'></div>
 </center>
-
-<br>
-<br>
-
-<br>
-<br>
+ 
 </div>
 </center>
 </div>
@@ -10240,10 +10239,11 @@ style='background-color: #b7b7b7;'>
 	</tbody>
 	</table> 
     </div>
-    <div class="card-body">
-      <div id="divHistorial_Consulta" class="d-flex flex-row gap-2 overflow-auto" style="height: 250px; overflow: auto;  padding: 10px;">
-        <!-- Consultas dinámicas -->
-      </div>
+    <div class="card-body" >
+      <div id="divHistorial_Consulta" class="flex-column gap-2 overflow-auto" style="height: 230px; overflow: auto; padding: 10px;">
+  <!-- Consultas dinámicas -->
+</div>
+
     </div>
   </div>
 
@@ -10356,7 +10356,7 @@ style='background-color: #b7b7b7;'>
     <!-- Contenedor Galería -->
     <div id="table_frm_VistaGaleria" 
          class="border rounded p-2 bg-light" 
-         style="min-height: 280px; overflow: auto;">
+         style="min-height: 280px; overflow: auto;width: 100%;">
       <!-- Aquí se mostrarán las imágenes -->
     </div>
 
@@ -20143,6 +20143,76 @@ style='width:95%;' />
 </table>
 </div>
 
+<div class="timeline-container">
+  <h2 class="titulo">Resumen de Caja</h2>
+  <div class="timeline">
+
+    <!-- ENTRADAS -->
+	 <div class="timeline-item entrada">
+      <div class="timeline-content">
+        <h3 class='taentrada'>Apertura Caja</h3>
+        <input class='taentrada' id='inptResumenAperturacaja' type="text"  readonly>
+      </div>
+    </div>
+	
+	 <div class="timeline-item entrada">
+      <div class="timeline-content">
+        <h3 class='taentrada'>Total Ingreso</h3>
+        <input class='taentrada'  id='inptResumenTotalIngreso'  type="text"  readonly>
+      </div>
+    </div>	
+	
+    <div class="timeline-item entrada">
+      <div class="timeline-content">
+        <h3 class='taentrada' >Total Recaudado</h3>
+        <input class='taentrada' id='inptResumenTotalRecaudado'  type="text"  readonly>
+      </div>
+    </div>
+	
+	    <div class="timeline-item entrada">
+      <div class="timeline-content">
+        <h3 class='taentrada'>Caja Recibido</h3>
+        <input class='taentrada'  id='inptResumenCajaRecibido' type="text" readonly>
+      </div>
+    </div>
+ 
+
+    <!-- SALIDAS -->
+    <div class="timeline-item salida">
+      <div class="timeline-content">
+        <h3 class='taSalida'>Caja Migrado</h3>
+        <input class='taSalida' id='inptResumenCajaMigrado'  type="text"  readonly>
+      </div>
+    </div>
+
+    <div class="timeline-item salida">
+      <div class="timeline-content">
+        <h3  class='taSalida'>Total Egreso</h3>
+        <input class='taSalida' id='inptResumenTotalEgreso'  type="text"  readonly>
+      </div>
+    </div>
+ 
+ 
+    <div class="timeline-item salida">
+      <div class="timeline-content">
+        <h3 class='taSalida'>Transferencia</h3>
+        <input class='taSalida' id='inptResumenTransferencia'  type="text"  readonly>
+      </div>
+    </div>
+	
+	<div class="timeline-item neutro">
+  <div class="timeline-content">
+    <h3>Total Operaciones</h3>
+   <input style='Text-align:center;' id='inptResumenTotalCaja'  type="text"  readonly>
+  </div>
+</div>
+
+
+  </div>
+</div>
+
+
+
 </center>
 </div>
 </center>
@@ -24113,7 +24183,7 @@ style='height:146px'></div>
 
 
 
-<div class="div_cuerpo_table2" id="table_frm_VistaGaleria" style='min-height:280px;border:none;overflow:auto'></div>
+<div class="div_cuerpo_table2" id="table_frm_VistaGaleria" style='min-height:280px;border:none;overflow:auto;width: 100%;'></div>
 
 
 </div>

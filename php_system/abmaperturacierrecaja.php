@@ -876,6 +876,7 @@ $nroRegistro=$valor;
 
 $arrayIds = ["inptTotalEfectivoConsultaCaja","inptTotalTarjetaConsultaCaja","inptTotalDebitoConsultaCaja","inptTotalTransferenciaConsultaCaja","inptTotalBilleteraConsultaCaja","inptTotalGiroMovilConsultaCaja"];
 $contador = 0;
+$TotalEfectivo = 0;
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
@@ -896,6 +897,10 @@ style='width:95%;' value='".number_format($totalMonto,'0',',','.')."' />
 </td>
 ";
 
+if($nombre!="EFECTIVO"){
+	$TotalEfectivo += $totalMonto;
+}
+
 $contador++;
 
 }
@@ -904,7 +909,7 @@ $contador++;
 $pagina.= "</tr>
 </table>";   
 
-$informacion =array("1" => "exito","2"=> $pagina);
+$informacion =array("1" => "exito","2"=> $pagina,"3"=> number_format($TotalEfectivo,'0',',','.'));
 echo json_encode($informacion);	
 exit;
 }

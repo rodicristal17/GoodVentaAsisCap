@@ -3966,27 +3966,33 @@ if (ventana == "arqueocaja") {
 paginaPie =
 "<br><br><table class='TableRepor0' style='width:100%'>"
 +"<tr>"
-+"<td style='width:20%;text-align:left'>"
++"<td style='width:15%;text-align:left'>"
++"<p class='pTituloC'><b>Apertura Caja: </b></p>"
++"<p class='pTituloC' >"+ document.getElementById("inptBuscarVistaApCie3").value+"</p>"
++"</td>"
+
++"<td style='width:15%;text-align:left'>"
 +"<p class='pTituloC'><b>Total Recaudado </b></p>"
 +"<p class='pTituloC' >"+ document.getElementById("inptTotalEfectivoConsultarCaja").value+"</p>"
 +"</td>"
-+"<td style='width:20%;text-align:left'>"
+
++"<td style='width:15%;text-align:left'>"
 +"<p class='pTituloC'><b>Total Deposito</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalTarjetaConsularCaja").value+"</p>"
 +"</td>"
-+"<td style='width:20%;text-align:left'>"
++"<td style='width:15%;text-align:left'>"
 +"<p class='pTituloC'><b>Total Ingreso</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalIngresoConsularCaja").value+"</p>"
 +"</td>"
-+"<td style='width:20%;text-align:left'>"
++"<td style='width:15%;text-align:left'>"
 +"<p class='pTituloC'><b>Total Egreso</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalEgresoConsularCaja").value+"</p>"
 +"</td>"
-+"<td style='width:20%;text-align:left'>"
++"<td style='width:15%;text-align:left'>"
 +"<p class='pTituloC'><b>Total Desembolso</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalDesembolsoConsularCaja").value+"</p>"
 +"</td>"
-+"<td style='width:20%;text-align:left'>"
++"<td style='width:10%;text-align:left'>"
 +"<p class='pTituloC'><b>Total Caja</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalConsularCaja").value+"</p>"
 +"</td>"
@@ -5036,7 +5042,7 @@ let TituloRecibo="";
 function ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazado,NombreCliente,CiCliente,NroRecibo,tipoventa,totalInteres,deudaActual,totalpagado,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres){
 
 
-if(cod_localFKUSer =="3" || cod_localFKUSer =="4"){
+if(cod_localFKUSer =="3" || cod_localFKUSer =="4" || cod_localFKUSer =="5"){
 	TituloRecibo="CLINIDENT" ;
 }else{
 	TituloRecibo="ASISCAP";
