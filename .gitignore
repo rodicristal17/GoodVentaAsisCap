@@ -1,0 +1,6 @@
+fotos/
+php/conexion.php
+php_system/conexion.php
+*.pdf
+*.gz
+/archivoscheque
