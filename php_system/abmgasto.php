@@ -25,13 +25,6 @@ $informacion =array("1" => "UI");
 echo json_encode($informacion);	
 exit;
 }
-
-
-
-
-
-
-
 	
 if($operacion=="nuevo" || $operacion=="editar")
 {
@@ -68,7 +61,10 @@ $Arreglo = utf8_decode($Arreglo);
 $cod_usuario = $user;
 $personales = "";
 
-	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$operacion);
+$cod_motivo= $_POST['cod_motivoFK'];
+$cod_motivo= utf8_decode($cod_motivo);
+
+	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$operacion);
 
 }
 
@@ -92,7 +88,8 @@ $fecha = utf8_decode($fecha);
 $arreglo=$_POST['arreglo'];
 $arreglo = utf8_decode($arreglo);
 
-
+$cod_motivoFK= $_POST['cod_motivoFK'];
+$cod_motivoFK= utf8_decode($cod_motivoFK);
 
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
@@ -100,7 +97,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$cod_local=buscarlocaluser($user);
 	}
 }
-buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha);
+buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$cod_motivoFK);
 
 }	
 
@@ -179,12 +176,57 @@ $local = utf8_decode($local);
 }	
 
 
+if($operacion=="buscarabmmotivoingresoegreso")
+{
+
+
+$buscar=$_POST['buscar'];
+$buscar = utf8_decode($buscar);
+
+$estado=$_POST['estado'];
+$estado = utf8_decode($estado);
+
+	buscarabmmotivoingresoegreso($buscar,$estado);
+
 }
 
-function abm($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$operacion)
+
+if($operacion=="NuevoMotivo")
 {
-	
-	
+	$motivo=$_POST['motivo'];
+$motivo = utf8_decode($motivo);
+
+$estado=$_POST['estado'];
+$estado = utf8_decode($estado);
+
+	NuevoMotivo($motivo,$estado);
+
+}
+
+if($operacion=="editarMotivo")
+{
+	$motivo=$_POST['motivo'];
+$motivo = utf8_decode($motivo);
+
+$estado=$_POST['estado'];
+$estado = utf8_decode($estado);
+
+$idabm=$_POST['idabm'];
+$idabm = utf8_decode($idabm);
+
+	editarMotivo($motivo,$estado,$idabm);
+
+}	
+
+if($operacion=="buscaroption")
+{
+	buscaroption();
+}
+}
+
+function abm($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$operacion)
+{
+		
 if($monto==""   ){
 $informacion =array("1" => "camposvacio");
 echo json_encode($informacion);	
@@ -196,12 +238,12 @@ $mysqli=conectar_al_servidor();
 if($operacion=="nuevo")
 {
 
+$consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+$stmt = $mysqli->prepare($consulta1);
 
-$consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='ssssssssssssss';
-$stmt1->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta);
+$ss='sssssssssssssss';
+$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo);
 
 
 }
@@ -211,14 +253,14 @@ if($operacion=="editar")
 {
 
 $consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuario=?,
-personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=? where idgastos=?";
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='sssssssssssss';
-$stmt1->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$idgastos); 
+personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=? where idgastos=?";
+$stmt = $mysqli->prepare($consulta1);
+$ss='ssssssssssssss';
+$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$cod_motivo,$idgastos); 
 
 }
 
-if (!$stmt1->execute()) {
+if (!$stmt->execute()) {
 	
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
@@ -232,47 +274,40 @@ exit;
 	
 }
 
-function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha)
+function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$cod_motivoFK)
 {
 	$mysqli=conectar_al_servidor();
-	 $pagina='';
-	 $condicionCodLocal=" and g.cod_local='$cod_local' ";
-		 if($cod_local==""){
-			$condicionCodLocal=" "; 
-		 }
-		 $condiciontipo="";
-		 if($tipo!=""){
-			$condiciontipo=" and tipo='$tipo' "; 
-		 }
+	$pagina='';
+
+	$sqlFiltro= '';
+	if($cod_local != ""){
+	$sqlFiltro .= " and g.cod_local='$cod_local' ";
+	}
+	if($tipo!=""){
+		$sqlFiltro .= " and tipo='$tipo' "; 
+	}
+	if($arreglo!=""){
+		$sqlFiltro .=" and arreglo='$arreglo' "; 
+	}
+	if($fecha!=""){
+		$sqlFiltro=" and fecha='$fecha' "; 
+	}
+	if($usuario!=""){
+		$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=cod_usuario) like '%".$usuario."%' "; 
+	}
+	if($fecha1!="" && $fecha2!="" ){
+		$sqlFiltro .=" and fecha>='$fecha1' and fecha<='$fecha2' "; 
+	}
+	if ($cod_motivoFK != "") {
+		$sqlFiltro .= "and cod_motivoIngresoEgresoFK = $cod_motivoFK";
+	}
 		 
-		 
-		 $condicionarreglo="";
-		 if($arreglo!=""){
-			$condicionarreglo=" and arreglo='$arreglo' "; 
-		 }
-		 
-		 
-		 $condicionfecha="";
-		 if($fecha!=""){
-			$condicionfecha=" and fecha='$fecha' "; 
-		 }
-		 $condicionusuario="";
-		 if($usuario!=""){
-			$condicionusuario=" and (Select nombre_persona from persona where cod_persona=cod_usuario) like '%".$usuario."%' "; 
-		 }
-		 $condicionrangofechas="";
-		 if($fecha1!="" && $fecha2!="" ){
-			$condicionrangofechas=" and fecha>='$fecha1' and fecha<='$fecha2' "; 
-		 }
-		 
-		 
-		$sql= "Select arreglo,monto,motivo,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,
-		(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
-		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
-		from gastos g where  estado='$estado' ".$condicionCodLocal.$condicionarreglo.$condiciontipo.$condicionfecha.$condicionusuario.$condicionrangofechas;
-		
-   
-   
+	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,
+	(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
+	(Select descripcion from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS motivo,
+	(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
+	from gastos g where  estado='$estado' ".$sqlFiltro;
+
    $stmt = $mysqli->prepare($sql);
  
 if ( ! $stmt->execute()) {
@@ -296,6 +331,7 @@ if ( ! $stmt->execute()) {
 		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
 		  	  $monto=utf8_encode($valor['monto']);
 		  	  $motivo=utf8_encode($valor['motivo']);
+			  $descripcion=utf8_encode($valor['descripcion']);
 		  	  $fecha=utf8_encode($valor['fecha']);
 		  	  $tipo=utf8_encode($valor['tipo']);
 		  	  $estado=utf8_encode($valor['estado']);
@@ -314,7 +350,7 @@ if ( ! $stmt->execute()) {
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
 <td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-<td  id='td_datos_2' style='width:10%'>".$motivo."</td>
+<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
 <td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 <td  id='td_datos_6' style='width:10%'>".$tipo."</td>
 <td  id='td_datos_3' style='width:10%'>".$fecha."</td>
@@ -418,7 +454,7 @@ function buscarevaluacionGasto($fecha1,$fecha2,$cod_local)
 		$sql= "Select monto,motivo,fecha,estado,cod_usuario,idgastos,personales,cod_local,
 		(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
 		(Select Nombre from local l where l.cod_local=g.cod_local ) as nombrelocal
-		from gastos g where fecha>='$fecha1' and fecha<='$fecha2' and estado='Activo' ".$condicionCodLocal;
+		from gastos g where fecha>='$fecha1' and fecha<='$fecha2' and estado='activo' ".$condicionCodLocal;
 		
    
    
@@ -796,9 +832,161 @@ exit;
 }
 
 
+function buscarabmmotivoingresoegreso($buscar,$Estado)
+{
+	$mysqli=conectar_al_servidor();
+	 $pagina='';
+		$sql= "Select cod_motivo_ingreso_egreso,descripcion,Estado
+        from motivos_ingreso_egreso where descripcion like ?  and Estado=? order by descripcion asc ";
+		
+ 
+   
+   $stmt = $mysqli->prepare($sql);
+  	$s='ss';
+$buscar1="%".$buscar."%";
+$stmt->bind_param($s,$buscar1,$Estado);
+
+if ( ! $stmt->execute()) {
+   echo "Error";
+   exit;
+}
 
 
+	$result = $stmt->get_result();
+ $valor= mysqli_num_rows($result);
+ $totalresouesta= $valor;
+ $styleName="tableRegistroSearch";
+ 
+ if ($valor>0)
+ {
+	  while ($valor= mysqli_fetch_assoc($result))
+	  {		  
+		      $cod_motivo_ingreso_egreso=$valor['cod_motivo_ingreso_egreso'];
+		  	  $descripcion=utf8_encode($valor['descripcion']);
+		  	  $Estado=utf8_encode($valor['Estado']);
 
+		  	 
+			  $styleName=CargarStyleTable($styleName);
+			  $pagina.="
+			  <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+			  <tr id='tbSelecRegistro' onclick='ObtenerdatosAbmMotivoEgresoIngreso(this)'>
+			  <td id='td_id' style='display:none;'>".$cod_motivo_ingreso_egreso."</td>
+			  <td id='td_datos_1'style='width:25%' class='tdRegistroSearch' >".$descripcion."</td>
+			   <td  id='td_datos_2' style='display:none'>".$Estado."</td>
+			  </tr>
+			  </table>";
+	  }
+ }
+ 
+ 
+  $informacion =array("1" => "exito","2" => $pagina,"3"=> $totalresouesta);
+echo json_encode($informacion);	
+exit;
+}
+
+function NuevoMotivo($motivo,$estado)
+{
+	
+if($motivo==""   ){
+$informacion =array("1" => "camposvacio");
+echo json_encode($informacion);	
+exit;
+}
+
+$mysqli=conectar_al_servidor();
+
+$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado) values (upper(?),'$estado')";
+$stmt = $mysqli->prepare($consulta1);
+$ss='s';
+$stmt->bind_param($ss,$motivo);
+
+if (!$stmt->execute()) {
+	echo "$consulta1\n$motivo\n";
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+
+}
+$informacion =array("1" => "exito");
+echo json_encode($informacion);	
+exit;
+	
+}
+
+function editarMotivo($motivo,$estado,$idabm)
+{
+	
+if($motivo==""   ){
+$informacion =array("1" => "camposvacio");
+echo json_encode($informacion);	
+exit;
+}
+
+$mysqli=conectar_al_servidor();
+
+$consulta1="update motivos_ingreso_egreso SET descripcion = upper('$motivo'), estado ='$estado' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$stmt = $mysqli->prepare($consulta1);
+
+if (!$stmt->execute()) {
+	
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+
+}
+
+
+$informacion =array("1" => "exito");
+echo json_encode($informacion);	
+exit;
+	
+}
+
+function buscaroption()
+{
+	$mysqli=conectar_al_servidor();
+	
+		$sql= "Select * from motivos_ingreso_egreso where estado='activo' order by descripcion asc  ";
+		
+		
+		 $pagina="<option  value='' >SELECCIONAR</option>";       
+   $paginaList = "";
+   $stmt = $mysqli->prepare($sql);
+
+if ( ! $stmt->execute()) {
+   echo "Error";
+   exit;
+}
+ 
+	$result = $stmt->get_result();
+ $valor= mysqli_num_rows($result);
+ $nroRegistro= $valor;
+ 
+ if ($valor>0)
+ {
+	  while ($valor= mysqli_fetch_assoc($result))
+	  {
+		  
+		  
+		      $cod_motivo_ingreso_egreso=$valor['cod_motivo_ingreso_egreso'];
+		  	  $descripcion=utf8_encode($valor['descripcion']);
+				  	 
+		  	 
+			    	
+			  $pagina.="<option  value='$cod_motivo_ingreso_egreso' >".$descripcion."</option>";     
+			  
+			  
+			  $paginaList.="<option id='$cod_motivo_ingreso_egreso' value='".$descripcion."'></option>";	
+	  }
+ }
+ 
+ 
+
+ 
+ mysqli_close($mysqli);
+ $informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>$paginaList);
+echo json_encode($informacion);	
+exit;
+
+}
 
 verificar($operacion);
 ?>

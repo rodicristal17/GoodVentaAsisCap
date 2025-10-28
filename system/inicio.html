@@ -45,6 +45,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
+<script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -3525,8 +3526,21 @@ style='width:200px' />
 <tr>
 <td>
 <p class='pTituloC' >Motivo :</p>
+<!-- <select class="inputSelect" id="inptMotivoMisGastos" -->
+<!-- style='width:150px'></select> -->
+<input id='inptMotivoMisGastos' list='ListMotivoMisGastos' style='width:70%' type='text' class='inputText' />
+<datalist id="ListMotivoMisGastos"></datalist>
+<input  type="button" value="Add" class="btn5" onclick="verCerrarAbmNuevoMotivo()" >
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Descripcion :</p>
 <textarea class='textarea1' placeholder='Obligatorio (*)'
-id='inptMotivoGasto' style='height:120px'></textarea>
+id='inptDescripcionGasto' style='height:120px'></textarea>
 </td>
 </tr>
 </table>
@@ -3769,6 +3783,9 @@ LOCAL
 
 </td>
 <td class="td_registro" style="width:10%;">
+<!-- <select class="inputfiltro" id="inptBuscarIngresoEgreso3"></select> -->
+<input id="inptBuscarIngresoEgreso3" list="listBuscarIngresoEgreso3" style="width:70%" type="text" class="inputText">
+<datalist id="listBuscarIngresoEgreso3"></datalist>
 
 </td>
 <td class="td_registro" style="width:10%;">
@@ -3855,6 +3872,97 @@ id="inptlocalMisGastosBusca"></select>
 </div>
 </center>
 
+</td>
+</tr>
+</table>
+</div>
+
+<div class='principal2' style='display:none' id='divAbmNuevoMotivo'>
+<table style='width:100%;height:100%'>
+<tr>
+<td>
+<center>
+<div class='divAbms_b' style='width: 500px;'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Crear Motivo Egreso / Ingreso</p>
+</td>
+<td style='width:5%;text-align:center'><img
+src='/GoodVentaElectroGuai/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='limpiarcamposmotivoegresoingreso()' /></td>
+<td style='width:5%;text-align:center'><img
+src='/GoodVentaElectroGuai/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarAbmNuevoMotivo("2","")' /></td>
+</tr>
+</table>
+<br>
+<br>
+
+<center>
+<div class='divMenuf'>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Nombre :</p>
+<input type="text" class="inputText" id="inptNuevoMotivoEgresoIngreso"
+placeholder='Obligatorio(*)'>
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Estado del Registro :</p>
+<select class="inputSelect" style='width:250px' id='inptEstadoMotivoEgresoIngreso'>
+<option value="activo">Activo</option>
+<option value="inactivo">Inactivo</option>
+</select>
+</td>
+</tr>
+</table>
+
+<br>
+<center>
+<input class='btn1' type='button' value='Guardar Datos'
+onclick='VerificarDatosMotivoEgresoIngreso()' id='btnMotivoIngresoEgreso' />
+</center>
+
+<center>
+<table style='width:100%'>
+<tr>
+<td style='width:99%;text-align:left'>
+<p class='pTituloC' >Buscar :</p>
+<input class='inputText' type='text' placeholder='Descripción'
+id='inptBuscarAbmMotivoEgresoIngreso'
+onkeyup="if(event.keyCode == 13){BuscarAbmMotivoEgresoIngreso()}"
+style='width: 322px;' />
+<input type='button' value='Buscar' class='btn4'
+onclick='BuscarAbmMotivoEgresoIngreso()'>
+</td>
+<td>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:100%;">
+DESCRIPCION
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="divBuscadorMotivoEgresoIngreso" style='height:200px'></div>
+<p class='pTitulo7' id="lblNroRegistroMotivoEgresoIngreso"></p>
+</center>
+</div>
+</center>
+</div>
+
+</center>
 </td>
 </tr>
 </table>
@@ -25578,7 +25686,7 @@ style='width:120px;display: none;'>
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC' >Monto Cierre :</p>
+<p class='pTituloC' ><b>Monto Cierre</b></p>
 <div>
   <div>
     <p class="pTituloC">500 gs.</p>

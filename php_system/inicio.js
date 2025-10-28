@@ -17118,7 +17118,7 @@ function obtenerdatosabmGasto(datostr) {
 	datostr.className = 'tableRegistroSelec'
 	document.getElementById('inptMontoGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptRegistroSeleccGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptMotivoGasto').value = $(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_2"]').html();
 	document.getElementById('inptFechaGasto').value = $(datostr).children('td[id="td_datos_3"]').html();
 	document.getElementById('inptEstadoGasto').value = $(datostr).children('td[id="td_datos_5"]').html();
 	document.getElementById('inptlocalMisGastos').value = $(datostr).children('td[id="td_datos_7"]').html();
@@ -17129,7 +17129,7 @@ function obtenerdatosabmGasto(datostr) {
 }
 function verificarcamposGasto() {
 	var inptMontoGasto = document.getElementById('inptMontoGasto').value
-	var inptMotivoGasto = document.getElementById('inptMotivoGasto').value
+	var inptDescripcionGasto = document.getElementById('inptDescripcionGasto').value
 	var inptFechaGasto = document.getElementById('inptFechaGasto').value
 	var inptEstadoGasto = document.getElementById('inptEstadoGasto').value
 	var inptlocalMisGastos = document.getElementById('inptlocalMisGastos').value
@@ -17138,7 +17138,7 @@ function verificarcamposGasto() {
 		ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL GASTO", "#")
 		return false;
 	}
-	if (inptMotivoGasto == "") {
+	if (inptDescripcionGasto == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL MOTIVO DEL GASTO", "#")
 		return false;
 	}
@@ -17158,7 +17158,7 @@ function verificarcamposGasto() {
 		}
 		accion = "nuevo";
 	}
-	abmgastos(inptMontoGasto, inptMotivoGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, accion);
+	abmgastos(inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, accion);
 }
 function abmgastos(monto, motivo, fecha, estado, idgastos, tipo, cod_local, accion) {
 	verCerrarEfectoCargando("1")
@@ -17383,7 +17383,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 function limpiarcamposGasto() {
 	document.getElementById('inptMontoGasto').value = "";
 	document.getElementById('inptRegistroSeleccGasto').value = "";
-	document.getElementById('inptMotivoGasto').value = "";
+	document.getElementById('inptDescripcionGasto').value = "";
 	document.getElementById('inptFechaGasto').value = "";
 	document.getElementById('inptPersonalGasto').value = "";
 	document.getElementById('btnEditarGastos').style.backgroundColor="#b7b7b7";
