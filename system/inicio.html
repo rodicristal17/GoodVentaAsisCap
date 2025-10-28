@@ -25471,7 +25471,7 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
 <br>
 <center>
 <div style='overflow:auto'>
-<div class='divMenuf' style='float:left;width:45%;margin:1%;height:450px'>
+<div class='divMenuf' style='float:left;width:45%;margin:1%;'>
 <br>
 <table style='width:100%'>
 <tr>
@@ -25528,10 +25528,6 @@ id='inptFechaAperturaCierreCaja'
 </td>
 </tr>
 </table>
-<br>
-</div>
-<div class='divMenuf' style='float:left;width:45%;margin:1%;height:450px'>
-<br>
 <table style='width:100%'>
 <tr>
 <td>
@@ -25540,35 +25536,6 @@ id='inptFechaAperturaCierreCaja'
 type='datetime-local'
 id='inptFechaCierreAperturaCierreCaja'
 />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Monto Cierre :</p>
-<input class='inputText' type='text'
-placeholder='Obligatorio (*)'
-id='inptMontoCierreCierreCaja'
-style='width:150px'
-onkeyup='separadordemiles(this)' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p style="display: none;" class='pTituloC' >Movimiento de caja :</p>
-<input class='inputTextDisable'
-type='text'
-id='inptMontoRecaudadoCierreCaja'
-style='width:150px;display: none;' disabled />
-<input type='button'
-value='Ver Movimientos' class='btn5'
-onclick='ImprimirTicketDeCaja()'
-style='width:120px;display: none;'>
 </td>
 </tr>
 </table>
@@ -25589,6 +25556,66 @@ id="inptEstadoAperturaCierreCaja"
 </tr>
 </table>
 <br>
+<table style='width:100%'>
+<tr>
+<td>
+<p style="display: none;" class='pTituloC' >Movimiento de caja :</p>
+<input class='inputTextDisable'
+type='text'
+id='inptMontoRecaudadoCierreCaja'
+style='width:150px;display: none;' disabled />
+<input type='button'
+value='Ver Movimientos' class='btn5'
+onclick='ImprimirTicketDeCaja()'
+style='width:120px;display: none;'>
+</td>
+</tr>
+</table>
+<br>
+</div>
+<div class='divMenuf' style='float:left;width:45%;margin:1%;'>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Monto Cierre :</p>
+<div>
+  <div>
+    <p class="pTituloC">500 gs.</p>
+    <input id='inptMontoCierreCaja5' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">1.000 gs.</p>
+    <input id='inptMontoCierreCaja10' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">2.000 gs.</p>
+    <input id='inptMontoCierreCaja20' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">5.000 gs.</p>
+    <input id='inptMontoCierreCaja50' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">10.000 gs.</p>
+    <input id='inptMontoCierreCaja100' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">20.000 gs.</p>
+    <input id='inptMontoCierreCaja200' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">50.000 gs.</p>
+    <input id='inptMontoCierreCaja500' class="inputText" type="number" disabled/>
+  </div>
+  <div>
+    <p class="pTituloC">100.000 gs.</p>
+    <input id='inptMontoCierreCaja1000' class="inputText" type="number" disabled/>
+  </div>
+</div>
+</td>
+</tr>
+</table>
 <br>
 <center>
 <input type='button' value='Guardar'class='btn1'onclick='verificarcamposaperturacierredecaja()' id='btnAbmAperturaCierreCaja' />

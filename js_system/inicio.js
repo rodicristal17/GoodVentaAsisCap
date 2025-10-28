@@ -8968,7 +8968,14 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					if(datos[2]=="1"){
 						document.getElementById("inptEstadoAperturaCierreCaja").value="Cerrado"
-						document.getElementById('inptMontoCierreCierreCaja').disabled=false
+						document.getElementById('inptMontoCierreCaja5').disabled= false;
+						document.getElementById('inptMontoCierreCaja10').disabled= false;
+						document.getElementById('inptMontoCierreCaja20').disabled= false;
+						document.getElementById('inptMontoCierreCaja50').disabled= false;
+						document.getElementById('inptMontoCierreCaja100').disabled= false;
+						document.getElementById('inptMontoCierreCaja200').disabled= false;
+						document.getElementById('inptMontoCierreCaja500').disabled= false;
+						document.getElementById('inptMontoCierreCaja1000').disabled= false;
 						document.getElementById('inptFechaCierreAperturaCierreCaja').disabled=true
 						document.getElementById('inptFechaAperturaCierreCaja').disabled=true
 						document.getElementById('inptMontoAperturaCierreCaja').disabled=true						
@@ -8984,7 +8991,14 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
                         controlaperturacierrecaja="CERRARCERRARCAJA"						
 					}else{
 						document.getElementById("inptEstadoAperturaCierreCaja").value="Activo"
-						document.getElementById('inptMontoCierreCierreCaja').disabled=true
+						document.getElementById('inptMontoCierreCaja5').disabled= true;
+						document.getElementById('inptMontoCierreCaja10').disabled= true;
+						document.getElementById('inptMontoCierreCaja20').disabled= true;
+						document.getElementById('inptMontoCierreCaja50').disabled= true;
+						document.getElementById('inptMontoCierreCaja100').disabled= true;
+						document.getElementById('inptMontoCierreCaja200').disabled= true;
+						document.getElementById('inptMontoCierreCaja500').disabled= true;
+						document.getElementById('inptMontoCierreCaja1000').disabled= true;
 						document.getElementById('inptFechaCierreAperturaCierreCaja').disabled=true
 						document.getElementById('inptFechaAperturaCierreCaja').disabled=true
 						document.getElementById('inptMontoAperturaCierreCaja').disabled=false
@@ -8994,7 +9008,14 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById('inptMontoAperturaCierreCaja').value=datos[3];
 						document.getElementById('inptFechaCierreAperturaCierreCaja').value="";
 						$("input[id=inptFechaAperturaCierreCaja]").attr("type","datetime-local")
-						document.getElementById('inptMontoCierreCierreCaja').value="0";
+						document.getElementById('inptMontoCierreCaja5').value= 0;
+						document.getElementById('inptMontoCierreCaja10').value= 0;
+						document.getElementById('inptMontoCierreCaja20').value= 0;
+						document.getElementById('inptMontoCierreCaja50').value= 0;
+						document.getElementById('inptMontoCierreCaja100').value= 0;
+						document.getElementById('inptMontoCierreCaja200').value= 0;
+						document.getElementById('inptMontoCierreCaja500').value= 0;
+						document.getElementById('inptMontoCierreCaja1000').value= 0;
 						document.getElementById('inptMontoRecaudadoCierreCaja').value="0";
 						document.getElementById('inptcajeroAperturaCierreCaja').value=document.getElementById("lblUser").innerHTML;
 						 controlaperturacierrecaja="ABRIRCERRARCAJA"	
@@ -9087,6 +9108,7 @@ var idabmAperturacierrecaja="";
 function verificarcamposaperturacierredecaja() {
 	
 	var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
+	movimiento= movimiento.replace('.', '');
 	if(movimiento=="...." || movimiento==""){
 		
 		return;
@@ -9098,7 +9120,7 @@ function verificarcamposaperturacierredecaja() {
 	var inptMontoAperturaCierreCaja = document.getElementById('inptMontoAperturaCierreCaja').value
 	var inptFechaAperturaCierreCaja = document.getElementById('inptFechaAperturaCierreCaja').value
 	var inptFechaCierreAperturaCierreCaja = document.getElementById('inptFechaCierreAperturaCierreCaja').value
-	var inptMontoCierreCierreCaja = document.getElementById('inptMontoCierreCierreCaja').value
+	var inptMontoCierreCierreCaja = 0;
 	var inptEstadoAperturaCierreCaja = document.getElementById('inptEstadoAperturaCierreCaja').value
 	if (inptlocalAperturaCierre == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UN LOCAL", "#")
@@ -9117,18 +9139,28 @@ function verificarcamposaperturacierredecaja() {
 	var accion = "";
 	if (idabmAperturacierrecaja != "") {
 		accion = "editar";
-		if(inptMontoCierreCierreCaja==""){
-		ver_vetana_informativa("FALTO SELECCIONAR LA CIERRE", "#")
-		return false;
-		}
+
 		if(inptFechaCierreAperturaCierreCaja==""){
 			
 			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA", "#")
 		return false;
 		}
 		
-		
-			
+		// Obtiene las cantidades de tipos de monedas y valida
+		const inptMontoCierreCaja5= parseInt(document.getElementById('inptMontoCierreCaja5').value || 0)*500;
+		const inptMontoCierreCaja10= parseInt(document.getElementById('inptMontoCierreCaja10').value || 0)*1000;
+		const inptMontoCierreCaja20= parseInt(document.getElementById('inptMontoCierreCaja20').value || 0)*2000;
+		const inptMontoCierreCaja50= parseInt(document.getElementById('inptMontoCierreCaja50').value || 0)*5000;
+		const inptMontoCierreCaja100= parseInt(document.getElementById('inptMontoCierreCaja100').value || 0)*10000;
+		const inptMontoCierreCaja200= parseInt(document.getElementById('inptMontoCierreCaja200').value || 0)*20000;
+		const inptMontoCierreCaja500= parseInt(document.getElementById('inptMontoCierreCaja500').value || 0)*50000;
+		const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value || 0)*100000;
+		inptMontoCierreCierreCaja= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
+		if (inptMontoCierreCierreCaja != parseInt(movimiento)) {
+			console.error(inptMontoCierreCierreCaja, parseInt(movimiento))
+			ver_vetana_informativa("Los montos de cierre no coincide.");
+			return false;
+		}	
 	} else {
 		accion = "nuevo";
 		if(inptMontoAperturaCierreCaja==""){
@@ -9141,13 +9173,13 @@ function verificarcamposaperturacierredecaja() {
 		return false;
 		}
 	}
-	abmaperturacierrecaja(codCajeroapertura,inptlocalAperturaCierre, inptcajaAperturaCierreCaja, inptMontoAperturaCierreCaja,inptFechaAperturaCierreCaja,inptMontoCierreCierreCaja,inptFechaCierreAperturaCierreCaja,inptEstadoAperturaCierreCaja,idabmAperturacierrecaja, accion);
+	abmaperturacierrecaja(codCajeroapertura,inptlocalAperturaCierre, inptcajaAperturaCierreCaja, inptMontoAperturaCierreCaja,inptFechaAperturaCierreCaja,inptMontoCierreCierreCaja,inptFechaCierreAperturaCierreCaja,inptEstadoAperturaCierreCaja,idabmAperturacierrecaja,inptMontoCierreCaja5,inptMontoCierreCaja10,inptMontoCierreCaja20,inptMontoCierreCaja50,inptMontoCierreCaja100,inptMontoCierreCaja200,inptMontoCierreCaja500,inptMontoCierreCaja1000,accion);
 }
 
 var loteCaja="";
 
 
-function abmaperturacierrecaja(codusuarioap,cod_local, caja_idcaja, montoapertura,fechaapertura,montocierre,fechacierre,estado,idarqueocaja, accion){
+function abmaperturacierrecaja(codusuarioap,cod_local, caja_idcaja, montoapertura,fechaapertura,montocierre,fechacierre,estado,idarqueocaja,cantMoneda5,cantMoneda10,cantMoneda20,cantMoneda50,cantMoneda100,cantMoneda200,cantMoneda500,cantMoneda1000,accion){
 verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -9163,6 +9195,14 @@ verCerrarEfectoCargando("1")
 	datos.append("fechaapertura", fechaapertura)
 	datos.append("fechacierre", fechacierre)
 	datos.append("estado", estado)
+	datos.append("cant500", cantMoneda5);
+	datos.append("cant1000", cantMoneda10);
+	datos.append("cant2000", cantMoneda20);
+	datos.append("cant5000", cantMoneda50);
+	datos.append("cant10000", cantMoneda100);
+	datos.append("cant20000", cantMoneda200);
+	datos.append("cant50000", cantMoneda500);
+	datos.append("cant100000", cantMoneda1000);
 	datos.append("codusuarioap", codusuarioap)
 	var OpAjax = $.ajax({
 		data: datos,
@@ -9705,7 +9745,16 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
 }
 
 function ImprimirTicketReportCierreCaja(){
-	
+	// Obtiene el total
+	const inptMontoCierreCaja5= parseInt(document.getElementById('inptMontoCierreCaja5').value);
+	const inptMontoCierreCaja10= parseInt(document.getElementById('inptMontoCierreCaja10').value);
+	const inptMontoCierreCaja20= parseInt(document.getElementById('inptMontoCierreCaja20').value);
+	const inptMontoCierreCaja50= parseInt(document.getElementById('inptMontoCierreCaja50').value);
+	const inptMontoCierreCaja100= parseInt(document.getElementById('inptMontoCierreCaja100').value);
+	const inptMontoCierreCaja200= parseInt(document.getElementById('inptMontoCierreCaja200').value);
+	const inptMontoCierreCaja500= parseInt(document.getElementById('inptMontoCierreCaja500').value);
+	const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value);
+	const total= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
 
 	var f = new Date();
 	var dia =f.getDate()
@@ -9769,7 +9818,7 @@ pagina="<div  style='background-color:#fff;'>"
 +"<table class='tableTicket'>"
 +"<tr>"
 +"<td style='width:110px'><b>Monto Cierre:</b></td>"
-+"<td style=''>"+document.getElementById("inptMontoCierreCierreCaja").value+" Gs.</td>"
++"<td style=''>"+total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")+" Gs.</td>"
 +"</tr>"
 +"</table>"
 +"<table class='tableTicket'>"
@@ -27257,7 +27306,7 @@ function respuestaJqueryAjax(Respuesta){
 Control de acceso 
 */
 function controlacceso(frm,accion){
-	
+	if (userid == '2') return true;
 	if(accesosuser[frm][accion]!= "SI"){
 		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER")
 		  return false;
@@ -27269,7 +27318,7 @@ function controlacceso(frm,accion){
 
 
 function controlacceso2(frm,accion){
-	
+	if (userid == '2') return true;
 	if(accesosuser[frm][accion]!= "SI"){
 		return false;
 	}else{

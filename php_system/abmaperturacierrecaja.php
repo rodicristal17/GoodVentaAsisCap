@@ -137,11 +137,29 @@ $stmt1->bind_param($ss,$cod_local,$caja_idcaja,$montoapertura,$fechaapertura,$es
 
 if($operacion=="editar")
 {
+
+	// Obtiene los montos en cada tipo de moneda
+	$cant500= $_POST['cant500'];
+	$cant500= utf8_decode($cant500);
+	$cant1000= $_POST['cant1000'];
+	$cant1000= utf8_decode($cant1000);
+	$cant2000= $_POST['cant2000'];
+	$cant2000= utf8_decode($cant2000);
+	$cant5000= $_POST['cant5000'];
+	$cant5000= utf8_decode($cant5000);
+	$cant10000= $_POST['cant10000'];
+	$cant10000= utf8_decode($cant10000);
+	$cant20000= $_POST['cant20000'];
+	$cant20000= utf8_decode($cant20000);
+	$cant50000= $_POST['cant50000'];
+	$cant50000= utf8_decode($cant50000);
+	$cant100000= $_POST['cant100000'];
+	$cant100000= utf8_decode($cant100000);
 $lote=obternerLoteEdit($idarqueocaja);
-$consulta1="Update arqueocaja set codusuarioce=?,montocierre=?,fechacierre=?,estado='Cerrado' where idarqueocaja=?";	
+$consulta1="Update arqueocaja set codusuarioce=?,montocierre=?,fechacierre=?,estado='Cerrado',cant500= ?,cant1000= ?,cant2000= ?,cant5000= ?,cant10000= ?,cant20000= ?,cant50000= ?,cant100000= ? where idarqueocaja=?";	
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='ssss';
-$stmt1->bind_param($ss,$codusuarioce,$montocierre,$fechacierre,$idarqueocaja); 
+$ss='ssssssssssss';
+$stmt1->bind_param($ss,$codusuarioce,$montocierre,$fechacierre,$cant500,$cant1000,$cant2000,$cant5000,$cant10000,$cant20000,$cant50000,$cant100000,$idarqueocaja); 
 
 }
 
@@ -149,7 +167,7 @@ $stmt1->bind_param($ss,$codusuarioce,$montocierre,$fechacierre,$idarqueocaja);
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
