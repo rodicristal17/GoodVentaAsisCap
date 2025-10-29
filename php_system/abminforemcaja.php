@@ -111,7 +111,6 @@ $datosdeDeposito=datosdeDeposito($idArqeoFk);
 		$pagina.="<p class='ptituloZ'>DEPOSITO</p>".$datosdeDeposito[0];
 	}
 $totalDeposito=$datosdeDeposito[1];
-
  
 
 //////Caja Migrado
@@ -155,9 +154,11 @@ $ingresos=$totalingreso;
 $egresos=$totalegreso;
 $Desembolso=0; 
 $total=($ingresos+$totalpagos+ $totalCajaRecibido)-($egresos + $totalCajaEnviado + $totalDeposito);
+
 $total=$montoinicio+$total;
 $informacion =array("1" => "exito","2" => $pagina,"3" => number_format($ingresos,'0',',','.'),"4" => number_format($egresos,'0',',','.')
-,"5" => number_format($total,'0',',','.'),"6" => number_format($totaltarjeta,'0',',','.'),"7" => number_format($totalefectivo,'0',',','.'),"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'));
+,"5" => number_format($total,'0',',','.'),"6" => number_format($totaltarjeta,'0',',','.'),"7" => number_format($totalefectivo,'0',',','.'),
+"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'),"11" => number_format($totalpagos,'0',',','.'),"12" => number_format($montoinicio,'0',',','.'));
 echo json_encode($informacion);	
 exit;
 }
@@ -253,7 +254,6 @@ function datosdeEgresos($idArqeoFk)
 		(Select Nombre from local l where l.cod_local=g.cod_local ) as nombrelocal
 		from gastos g where codApertura='$idArqeoFk' and estado='Activo' and tipo='Egreso' ";
 		
-   
    
    $stmt = $mysqli->prepare($sql);
  

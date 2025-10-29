@@ -20078,12 +20078,13 @@ title='Cerrar Ventana' onclick='verCerrarInformeConsultaCaja()' />
 </tr>
 </table>
 <br>
-<center>
+<center style='display:flex;justify-content:space-between;'>
+  <div style="width: 75%;">
 <div class='divMenuf' >
 
 <table style='width:100%'>
 <tr>
-<td style='width:11%'>
+<td style='width:12%'>
 <p class='pTituloC' >Caja</p>
 <input class='inputTextDisable' type='text'
 placeholder='Seleccionar una caja'
@@ -20091,12 +20092,6 @@ id='inptBuscarVistaApCie1' style='width:87px'
 disabled />
 <input type='button' value='Buscar' class='btn4'
 onclick='vercerrarvistaapcie("1","1")'>
-</td>
-<td style='width:10%'>
-<p class='pTituloC' >Estado</p>
-<input class='inputTextDisable' type='text' placeholder=''
-id='inptBuscarVistaApCie7' 
-disabled />
 </td>
 <td style='width:10%'>
 <p class='pTituloC' >Monto Apertura
@@ -20137,8 +20132,13 @@ disabled />
 id='inptBuscarLoteVistaApCie' style='width:100%'
 disabled />
 </td>
-
-<td style='width:80%'>
+<td style='width:10%'>
+<p class='pTituloC' >Estado</p>
+<input class='inputTextDisable' type='text' placeholder=''
+id='inptBuscarVistaApCie7' 
+disabled />
+</td>
+<td style='width:70%'>
 <p class='pTituloC' >Usuario</p>
 <input class='inputTextDisable' type='text' placeholder=''
 id='inptBuscarVistaApCie2' style='width:100%'
@@ -20167,9 +20167,9 @@ disabled />
 </tbody>
 </table>
 <div class="div_cuerpo_table" id="table_Consultar_caja"
-style='height:250px;'></div>
+style='height:400px;'></div>
 </div>
-<div class='divMenuf' >
+<div class='divMenuf' style="display: none;">
 <table style='width:98%'>
 <tr>
 <td style='width:10%;text-align:left'>
@@ -20251,60 +20251,99 @@ style='width:95%;' />
 </table>
 </div>
 
+<div class='divMenuf' style='display:none;'>
+  <table style='width:98%'>
+    <tr>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>500 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant500ConsultarCaja' style='width:95%;' />
+      </td>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>1.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant1000ConsultarCaja' style='width:95%;' />
+      </td>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>2.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant2000ConsultarCaja' style='width:95%;' />
+      </td>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>5.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant5000ConsultarCaja' style='width:95%;' />
+      </td>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>10.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant10000ConsultarCaja' style='width:95%;' />
+      </td>
+    </tr><tr>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>20.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant20000ConsultarCaja' style='width:95%;' />
+      </td>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>50.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant50000ConsultarCaja' style='width:95%;' />
+      </td>
+      <td style='width:10%;text-align:left'>
+        <p class='pTituloC'>100.000 gs.:</p>
+        <input class='inputTextDisable' type='text' disabled id='inptTotalCant100000ConsultarCaja' style='width:95%;' />
+      </td>
+    </tr>
+  </table>
+</div>
+  </div>
+  <div style="width: 20%;">
 <div class="timeline-container">
-  <h2 class="titulo">Resumen de Caja</h2>
+  <h2 class="titulo" style='font-size: 1.5rem;'>Resumen de Caja</h2>
   <div class="timeline">
 
     <!-- ENTRADAS -->
 	 <div class="timeline-item entrada">
       <div class="timeline-content">
-        <h3 class='taentrada'>Apertura Caja</h3>
-        <input class='taentrada' id='inptResumenAperturacaja' type="text"  readonly>
+        <h3 class='taentrada' style="font-size: 0.8rem; margin: 0 0 5px;">Apertura Caja</h3>
+        <input class='taentrada' id='inptResumenAperturacaja' type="text"  readonly style="font-size: 0.8rem;">
       </div>
     </div>
 	
 	 <div class="timeline-item entrada">
       <div class="timeline-content">
-        <h3 class='taentrada'>Total Ingreso</h3>
-        <input class='taentrada'  id='inptResumenTotalIngreso'  type="text"  readonly>
+        <h3 class='taentrada' style="font-size: 0.8rem; margin: 0 0 5px;">Total Ingreso</h3>
+        <input class='taentrada'  id='inptResumenTotalIngreso'  type="text"  readonly style="font-size: 0.8rem;">
       </div>
     </div>	
 	
     <div class="timeline-item entrada">
       <div class="timeline-content">
-        <h3 class='taentrada' >Total Recaudado</h3>
-        <input class='taentrada' id='inptResumenTotalRecaudado'  type="text"  readonly>
+        <h3 class='taentrada' style="font-size: 0.8rem; margin: 0 0 5px;" >Total Recaudado</h3>
+        <input class='taentrada' id='inptResumenTotalRecaudado'  type="text"  readonly style="font-size: 0.8rem;">
       </div>
     </div>
 	
 	    <div class="timeline-item entrada">
       <div class="timeline-content">
-        <h3 class='taentrada'>Caja Recibido</h3>
-        <input class='taentrada'  id='inptResumenCajaRecibido' type="text" readonly>
+        <h3 class='taentrada' style="font-size: 0.8rem; margin: 0 0 5px;">Caja Recibido</h3>
+        <input class='taentrada'  id='inptResumenCajaRecibido' type="text" readonly style="font-size: 0.8rem;">
       </div>
     </div>
- 
+
+    <div class="timeline-item entrada">
+      <div class="timeline-content">
+        <h3 class='taSalida' style="font-size: 0.8rem; margin: 0 0 5px;">Transferencia</h3>
+        <input class='taSalida' id='inptResumenTransferencia'  type="text"  readonly style="font-size: 0.8rem;">
+      </div>
+    </div>
 
     <!-- SALIDAS -->
     <div class="timeline-item salida">
       <div class="timeline-content">
-        <h3 class='taSalida'>Caja Migrado</h3>
-        <input class='taSalida' id='inptResumenCajaMigrado'  type="text"  readonly>
+        <h3 class='taSalida' style="font-size: 0.8rem; margin: 0 0 5px;">Caja Migrado</h3>
+        <input class='taSalida' id='inptResumenCajaMigrado'  type="text"  readonly style="font-size: 0.8rem;">
       </div>
     </div>
 
     <div class="timeline-item salida">
       <div class="timeline-content">
-        <h3  class='taSalida'>Total Egreso</h3>
-        <input class='taSalida' id='inptResumenTotalEgreso'  type="text"  readonly>
-      </div>
-    </div>
- 
- 
-    <div class="timeline-item salida">
-      <div class="timeline-content">
-        <h3 class='taSalida'>Transferencia</h3>
-        <input class='taSalida' id='inptResumenTransferencia'  type="text"  readonly>
+        <h3  class='taSalida' style="font-size: 0.8rem; margin: 0 0 5px;">Total Egreso</h3>
+        <input class='taSalida' id='inptResumenTotalEgreso'  type="text"  readonly style="font-size: 0.8rem;">
       </div>
     </div>
 	
@@ -20315,11 +20354,10 @@ style='width:95%;' />
   </div>
 </div>
 
-
-  </div>
 </div>
 
-
+</div>
+</div>
 
 </center>
 </div>
@@ -25578,8 +25616,33 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
 </table>
 <br>
 <center>
-<div style='overflow:auto'>
-<div class='divMenuf' style='float:left;width:45%;margin:1%;'>
+<div style='overflow:auto; display: flex; justify-content: center;'>
+<div class='divMenuf' style='float:left;width:20%;margin:1%;'>
+  <div class="timeline-container">
+    <h2 class="titulo" style="font-size: 1.5rem;">Resumen</h2>
+    <div class="timeline">
+      <div class="timeline-item entrada" style="padding-top: 20px;">
+        <div class="timeline-content">
+          <h3 class='taentrada' style="font-size: 0.8rem">Apertura caja</h3>
+          <input class='taentrada' id='inptResumenInicialAperturaCierre' type="text"  readonly style="font-size: 0.8rem;">
+        </div>
+      </div>
+      <div class="timeline-item salida" style="padding-top: 20px;" id="divResumenCierreAperturaCierre">
+        <div class="timeline-content">
+          <h3 class='taentrada' style="font-size: 0.8rem">Monto de cierre</h3>
+          <input class='taentrada' id='inptResumenCierreAperturaCierre' type="text"  readonly style="font-size: 0.8rem;">
+        </div>
+      </div>
+      <div class="timeline-item neutro">
+        <div class="timeline-content">
+          <h3 style="font-size: 0.8rem">Total recaudado</h3>
+          <input style='Text-align:center;' id='inptResumenTotalAperturaCierre'  type="text"  readonly style="font-size: 0.8rem">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class='divMenuf' style='float:left;width:35%;margin:1%;'>
 <br>
 <table style='width:100%'>
 <tr>
@@ -25681,44 +25744,49 @@ style='width:120px;display: none;'>
 </table>
 <br>
 </div>
-<div class='divMenuf' style='float:left;width:45%;margin:1%;'>
+<div class='divMenuf' style='float:left;width:35%;margin:1%;'>
 <br>
 <table style='width:100%'>
 <tr>
 <td>
 <p class='pTituloC' ><b>Monto Cierre</b></p>
+<input class='inputText' type='text'
+placeholder='Obligatorio (*)'
+id='inptMontoCierreCierreCaja'
+style='width:150px; display: none;'
+onkeyup='separadordemiles(this)' />
 <div>
   <div>
     <p class="pTituloC">500 gs.</p>
-    <input id='inptMontoCierreCaja5' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja5' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">1.000 gs.</p>
-    <input id='inptMontoCierreCaja10' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja10' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">2.000 gs.</p>
-    <input id='inptMontoCierreCaja20' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja20' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">5.000 gs.</p>
-    <input id='inptMontoCierreCaja50' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja50' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">10.000 gs.</p>
-    <input id='inptMontoCierreCaja100' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja100' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">20.000 gs.</p>
-    <input id='inptMontoCierreCaja200' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja200' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">50.000 gs.</p>
-    <input id='inptMontoCierreCaja500' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja500' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
   <div>
     <p class="pTituloC">100.000 gs.</p>
-    <input id='inptMontoCierreCaja1000' class="inputText" type="number" disabled/>
+    <input id='inptMontoCierreCaja1000' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
   </div>
 </div>
 </td>

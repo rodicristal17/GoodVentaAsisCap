@@ -163,8 +163,6 @@ $stmt1->bind_param($ss,$codusuarioce,$montocierre,$fechacierre,$cant500,$cant100
 
 }
 
-
-
 if (!$stmt1->execute()) {
 	
 echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
@@ -411,10 +409,9 @@ $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertu
 (Select cajanro from caja l where l.idcaja=caja_idcaja) as cajanro,lote,
 (Select nombre_persona from persona where cod_persona=codusuarioap) as usuarioap,
 (Select nombre_persona from persona where cod_persona=codusuarioce) as usuariocie,
+ap.cant500, ap.cant1000, ap.cant2000, ap.cant5000, ap.cant10000, ap.cant20000, ap.cant50000, ap.cant100000,
 (Select Nombre from local l where l.cod_local=ap.cod_local) as nombrelocal
 from arqueocaja ap where  estado!='Cancelado' ".$condicionFechaInicio.$condicionFechaCierre.$condicionEstado.$condicionLocal.$condicionUsuario." order by idarqueocaja desc limit 100  ";
-
-
 
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
@@ -456,6 +453,22 @@ $cajanro = utf8_encode($valor['cajanro']);
 $usuarioap = utf8_encode($valor['usuarioap']); 
 $usuariocie = utf8_encode($valor['usuariocie']); 
 
+$cant500 = utf8_encode($valor['cant500']);
+if ($cant500 == "") {$cant500=0;}
+$cant1000 = utf8_encode($valor['cant1000']);
+if ($cant1000 == "") {$cant1000=0;}
+$cant2000 = utf8_encode($valor['cant2000']);
+if ($cant2000 == "") {$cant2000=0;}
+$cant5000 = utf8_encode($valor['cant5000']);
+if ($cant5000 == "") {$cant5000=0;}
+$cant10000 = utf8_encode($valor['cant10000']);
+if ($cant10000 == "") {$cant10000=0;}
+$cant20000 = utf8_encode($valor['cant20000']);
+if ($cant20000 == "") {$cant20000=0;}
+$cant50000 = utf8_encode($valor['cant50000']);
+if ($cant50000 == "") {$cant50000=0;}
+$cant100000 = utf8_encode($valor['cant100000']);
+if ($cant100000 == "") {$cant100000=0;}
 
 $cobros = utf8_encode($valor['cobros']); 
 $egreso = utf8_encode($valor['egreso']); 
@@ -467,7 +480,6 @@ $TotalCobros = $TotalCobros + $cobros;
 
 $TotalApertura += $montoapertura;
 $TotalCierre += $montocierre;
-
 
 $diferencia = ($TotalCobros + $TotalIngreso) - $TotalEgreso;
 $diferencia = abs($diferencia);
@@ -498,6 +510,14 @@ if($fechacierre!=""){
 <td id='td_datos_5' style='width:15%'>".$usuarioap."</td>
 <td id='td_datos_2' style='width:10%'>".$nombrelocal."</td>
 <td id='td_datos_6' style='display:none'>".$usuariocie."</td>
+<td id='td_datos_11' style='display: none;'>$cant500</td>
+<td id='td_datos_12' style='display: none;'>$cant1000</td>
+<td id='td_datos_13' style='display: none;'>$cant2000</td>
+<td id='td_datos_14' style='display: none;'>$cant5000</td>
+<td id='td_datos_15' style='display: none;'>$cant10000</td>
+<td id='td_datos_16' style='display: none;'>$cant20000</td>
+<td id='td_datos_17' style='display: none;'>$cant50000</td>
+<td id='td_datos_18' style='display: none;'>$cant100000</td>
 </tr>
 </table>";
 

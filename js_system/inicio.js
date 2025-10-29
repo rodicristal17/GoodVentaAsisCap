@@ -8983,6 +8983,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						$("input[id=inptFechaAperturaCierreCaja]").attr("type","text")
 						document.getElementById('inptFechaAperturaCierreCaja').value=datos[7];
 						document.getElementById('inptMontoAperturaCierreCaja').value=datos[5];
+						document.getElementById('inptResumenInicialAperturaCierre').value=datos[5];
 						document.getElementById('inptMontoRecaudadoCierreCaja').value=datos[10];
 						document.getElementById('inptcajeroAperturaCierreCaja').value=datos[12];
 						codCajeroapertura=datos[11];
@@ -9006,6 +9007,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 	         document.getElementById('inptMontoAperturaCierreCaja').disabled=true
 	         }
 						document.getElementById('inptMontoAperturaCierreCaja').value=datos[3];
+						document.getElementById('inptResumenInicialAperturaCierre').value=datos[3];
 						document.getElementById('inptFechaCierreAperturaCierreCaja').value="";
 						$("input[id=inptFechaAperturaCierreCaja]").attr("type","datetime-local")
 						document.getElementById('inptMontoCierreCaja5').value= 0;
@@ -9025,6 +9027,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						 idabmAperturacierrecaja="";
 
 					}
+					calcularMontoMovimientoAperturaCierreCaja();
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -9104,15 +9107,56 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 		}
 	});
 }
+
+function calcularMontoMovimientoAperturaCierreCaja() {
+	let total= 0;
+	// Obtiene las cantidades de tipos de monedas y valida
+	const inptMontoCierreCaja5= parseInt(document.getElementById('inptMontoCierreCaja5').value || 0)*500;
+	const inptMontoCierreCaja10= parseInt(document.getElementById('inptMontoCierreCaja10').value || 0)*1000;
+	const inptMontoCierreCaja20= parseInt(document.getElementById('inptMontoCierreCaja20').value || 0)*2000;
+	const inptMontoCierreCaja50= parseInt(document.getElementById('inptMontoCierreCaja50').value || 0)*5000;
+	const inptMontoCierreCaja100= parseInt(document.getElementById('inptMontoCierreCaja100').value || 0)*10000;
+	const inptMontoCierreCaja200= parseInt(document.getElementById('inptMontoCierreCaja200').value || 0)*20000;
+	const inptMontoCierreCaja500= parseInt(document.getElementById('inptMontoCierreCaja500').value || 0)*50000;
+	const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value || 0)*100000;
+
+	total= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
+	document.getElementById('inptResumenCierreAperturaCierre').value= total.toString();
+	separadordemiles(document.getElementById('inptResumenCierreAperturaCierre'));
+
+	document.getElementById('inptMontoCierreCierreCaja').value= total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+	var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
+	movimiento= movimiento.replace('.', '');
+	if(movimiento=="...." || movimiento==""){
+		movimiento = 0;
+	}
+	movimiento= parseInt(movimiento)
+
+	let montoApertura = document.getElementById("inptResumenInicialAperturaCierre").value.replace(/\./g, '');
+	montoApertura= parseInt(montoApertura);
+
+	document.getElementById('inptResumenTotalAperturaCierre').value= (total - montoApertura).toString();
+	separadordemiles(document.getElementById('inptResumenTotalAperturaCierre'));
+}
+
 var idabmAperturacierrecaja="";
 function verificarcamposaperturacierredecaja() {
 	
 	var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
 	movimiento= movimiento.replace('.', '');
 	if(movimiento=="...." || movimiento==""){
-		
 		return;
 	}
+
+	// Obtiene las cantidades de tipos de monedas y valida
+	const inptMontoCierreCaja5= document.getElementById('inptMontoCierreCaja5').value || 0;
+	const inptMontoCierreCaja10= document.getElementById('inptMontoCierreCaja10').value || 0;
+	const inptMontoCierreCaja20= document.getElementById('inptMontoCierreCaja20').value || 0;
+	const inptMontoCierreCaja50= document.getElementById('inptMontoCierreCaja50').value || 0;
+	const inptMontoCierreCaja100= document.getElementById('inptMontoCierreCaja100').value || 0;
+	const inptMontoCierreCaja200= document.getElementById('inptMontoCierreCaja200').value || 0;
+	const inptMontoCierreCaja500= document.getElementById('inptMontoCierreCaja500').value || 0;
+	const inptMontoCierreCaja1000= document.getElementById('inptMontoCierreCaja1000').value || 0;
 	
 	//var inptlocalAperturaCierre = document.getElementById('inptlocalAperturaCierre').value
 	var inptlocalAperturaCierre = cod_localFKUSer
@@ -9120,7 +9164,7 @@ function verificarcamposaperturacierredecaja() {
 	var inptMontoAperturaCierreCaja = document.getElementById('inptMontoAperturaCierreCaja').value
 	var inptFechaAperturaCierreCaja = document.getElementById('inptFechaAperturaCierreCaja').value
 	var inptFechaCierreAperturaCierreCaja = document.getElementById('inptFechaCierreAperturaCierreCaja').value
-	var inptMontoCierreCierreCaja = 0;
+	var inptMontoCierreCierreCaja = document.getElementById('inptMontoCierreCierreCaja').value;
 	var inptEstadoAperturaCierreCaja = document.getElementById('inptEstadoAperturaCierreCaja').value
 	if (inptlocalAperturaCierre == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UN LOCAL", "#")
@@ -9145,22 +9189,6 @@ function verificarcamposaperturacierredecaja() {
 			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA", "#")
 		return false;
 		}
-		
-		// Obtiene las cantidades de tipos de monedas y valida
-		const inptMontoCierreCaja5= parseInt(document.getElementById('inptMontoCierreCaja5').value || 0)*500;
-		const inptMontoCierreCaja10= parseInt(document.getElementById('inptMontoCierreCaja10').value || 0)*1000;
-		const inptMontoCierreCaja20= parseInt(document.getElementById('inptMontoCierreCaja20').value || 0)*2000;
-		const inptMontoCierreCaja50= parseInt(document.getElementById('inptMontoCierreCaja50').value || 0)*5000;
-		const inptMontoCierreCaja100= parseInt(document.getElementById('inptMontoCierreCaja100').value || 0)*10000;
-		const inptMontoCierreCaja200= parseInt(document.getElementById('inptMontoCierreCaja200').value || 0)*20000;
-		const inptMontoCierreCaja500= parseInt(document.getElementById('inptMontoCierreCaja500').value || 0)*50000;
-		const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value || 0)*100000;
-		inptMontoCierreCierreCaja= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
-		if (inptMontoCierreCierreCaja != parseInt(movimiento)) {
-			console.error(inptMontoCierreCierreCaja, parseInt(movimiento))
-			ver_vetana_informativa("Los montos de cierre no coincide.", "Tenga en cuenta el monto al iniciar.");
-			return false;
-		}	
 	} else {
 		accion = "nuevo";
 		if(inptMontoAperturaCierreCaja==""){
@@ -9252,8 +9280,13 @@ verCerrarEfectoCargando("1")
 				Respuesta = datos["1"];
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					montocierre= parseInt(montocierre.replace('.', ''));
+
+					if (montocierre > 500000) {
+						ver_vetana_informativa("SE RECOMIENDA DEPOSITAR EN LA CENTRAL PARA EVITAR EXCESOS.");
+					} else {
+						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					}
 					
 					 loteCaja=datos[2];
 					if(estado=="Activo"){
@@ -9410,6 +9443,16 @@ function obtenerdatosaperturacierrecaja(datostr) {
 	document.getElementById('inptBuscarVistaApCie7').value = $(datostr).children('td[id="td_datos_9"]').html();
 	document.getElementById('inptResumenAperturacaja').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptBuscarLoteVistaApCie').value = $(datostr).children('td[id="td_datos_10"]').html();
+
+	document.getElementById('inptTotalCant500ConsultarCaja').value= $(datostr).children('td[id="td_datos_11"]').html();
+	document.getElementById('inptTotalCant1000ConsultarCaja').value= $(datostr).children('td[id="td_datos_12"]').html();
+	document.getElementById('inptTotalCant2000ConsultarCaja').value= $(datostr).children('td[id="td_datos_13"]').html();
+	document.getElementById('inptTotalCant5000ConsultarCaja').value= $(datostr).children('td[id="td_datos_14"]').html();
+	document.getElementById('inptTotalCant10000ConsultarCaja').value= $(datostr).children('td[id="td_datos_15"]').html();
+	document.getElementById('inptTotalCant20000ConsultarCaja').value= $(datostr).children('td[id="td_datos_16"]').html();
+	document.getElementById('inptTotalCant50000ConsultarCaja').value= $(datostr).children('td[id="td_datos_17"]').html();
+	document.getElementById('inptTotalCant100000ConsultarCaja').value= $(datostr).children('td[id="td_datos_18"]').html();
+
 	idArqeoFk = $(datostr).children('td[id="td_id_1"]').html();
 	buscarinformecaja()
 	document.getElementById("divVistaArqueocierrecaja").style.display="none"
@@ -23492,7 +23535,7 @@ function minimizarconsultacaja(){
 	$("div[id=divConsultaCaja]").fadeOut(500);	
 	document.getElementById("divMinimizadoConsultarCaja").style.display=""
 }
-var cobradorarqueo = "";
+var cobradorarqueo = "";var elemento="";
 function buscarinformecaja() {
 	if(controlacceso("VERCONSULTADECAJA","accion")==false){return;}
 	document.getElementById("inptTotalIngresoConsularCaja").value = "..."
@@ -23580,9 +23623,6 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptResumenCajaRecibido").value = datos[10]
 					document.getElementById("inptResumenCajaMigrado").value = datos[9]
 					document.getElementById("inptResumenTotalEgreso").value = datos[4]
-					
-					
-					
 					
 					buscar_recaudo_opciones_pago()
 				}
