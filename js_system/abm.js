@@ -3962,12 +3962,16 @@ if (ventana == "arqueocaja") {
 +"</table><br><br><center><h1 class='pTituloD' >CONSULTAR CAJA</h1><br></center>"
 
 let paginaPie= "<br><div style='display: flex;justify-content: space-between;'>";
-let totalEgreso= parseInt(document.getElementById("inptResumenCajaMigrado").value.replace(/\./g, ''))
-	+ parseInt(document.getElementById("inptTotalConsularCaja").value.replace(/\./g, ''))
-	+ parseInt(document.getElementById("inptResumenTotalEgreso").value.replace(/\./g, ''));
-let totalIngreso= parseInt(document.getElementById("inptResumenAperturacaja").value.replace(/\./g, ''))
-	+ parseInt(document.getElementById("inptResumenTotalIngreso").value.replace(/\./g, ''))
-	+ parseInt(document.getElementById("inptResumenTotalRecaudado").value.replace(/\./g, ''));
+const migrado= parseInt(document.getElementById("inptResumenCajaMigrado").value.replace(/\./g, ''));
+const montoCierre= parseInt(document.getElementById("inptTotalConsularCaja").value.replace(/\./g, ''));
+const egreso= parseInt(document.getElementById("inptResumenTotalEgreso").value.replace(/\./g, ''));
+const apertura= parseInt(document.getElementById("inptResumenAperturacaja").value.replace(/\./g, ''));
+const ingreso= parseInt(document.getElementById("inptResumenTotalIngreso").value.replace(/\./g, ''));
+const recaudado= parseInt(document.getElementById("inptResumenTotalRecaudado").value.replace(/\./g, ''));
+const transferencia= parseInt(document.getElementById("inptResumenTransferencia").value.replace(/\./g, ''));
+
+const totalEgreso= migrado + montoCierre + egreso;
+const totalIngreso= apertura + ingreso + recaudado;
 
 paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style='width:100%'>"
 	+"<tr>"
@@ -4220,7 +4224,7 @@ paginaPie += "<div style='width: 20%;'>"
 +"</table>"
 +"</div>";
 
-const totalCaja= parseInt(document.getElementById("inptTotalConsularCaja").value.replace(/\./g, '')) - parseInt(document.getElementById("inptResumenTransferencia").value.replace(/\./g, ''));
+const totalCaja= (apertura + recaudado) - (migrado + transferencia + egreso);
 paginaPie += "</div>";
 paginaPie += "<div>"
 +"<p class='pTituloC' style='font-size: 1.5rem'><b>DIFERENCIA ENTRE MONTO DE CIERRE Y CANTIDAD MONETARIA: "+ (totalCaja - sumatoriaTipoMoneda).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') +" gs.</p>"
