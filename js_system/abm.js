@@ -4045,9 +4045,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC' >"+ document.getElementById("inptResumenTotalEgreso").value+"</p>"
 		+"</td>"
 	+"</tr>"
-	 
 +"</table>"
-
 +"<table class='tableRegistroSearch2' style='width:100%'>"
 +"<tr  style='background: #9b9d9c; ' >"
 		+"<td style='width:60%;text-align:left;border: 1px solid rgb(206, 206, 206);'>"
@@ -4058,8 +4056,10 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"</td>"
 	+"</tr>"
 +"</table>"
-
-+"</div>";
+if (limiteCajaMonto <= (sumatoriaTipoMoneda).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')) {
+	paginaPie =+"<p class='pTituloC' style='font-size: 1.5rem;bacground-color: red;'><b>MONTO EN CAJA EXCEDE EL PERMITIDO, FAVOR MIGRAR A CENTRAL.</p>";
+}
+paginaPie =+ "</div>";
 /*
 paginaPie += "<div style='width: 20%;'>"
 +"<table class='TableRepor0' style='width: 100%;'>"

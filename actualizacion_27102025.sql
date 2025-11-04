@@ -14,3 +14,14 @@ CREATE TABLE motivos_ingreso_egreso (
 );
 
 ALTER TABLE gastos ADD COLUMN cod_motivoIngresoEgresoFK INT;
+
+CREATE TABLE limite_caja (
+    cod_limite_caja INT PRIMARY KEY AUTO_INCREMENT,
+    cod_usuarioFK INT NOT NULL,
+    limite_monto INT NOT NULL,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
+);
+
+-- Agregar ppermisos::
+--CREARNUEVOMOTIVO, VERABMLIMITECAJA

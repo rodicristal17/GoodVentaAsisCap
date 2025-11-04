@@ -388,6 +388,10 @@ style='display:none' class='divMinimizado'>
 
 </td>
 <td style='width:35%;border-left: solid 1px #cacaca;'>
+  <div style="width:100%;display: grid;justify-items: center;">
+    <img id='fotoPerfilUsuario' style='height:200px;aspect-ratio: 1/1;object-fit: contain;border-radius:100px;'/>
+    <p class='pTitulo14' id='nombrePerfilUsuario' style="margin:0;margin-top: 5px"></p>    
+  </div>
 <input type='text' id='inptreloj2' class='inputReloj2' />
 <p class='pTitulo16' id='pfechaactual'></p>
 <br>
@@ -20165,7 +20169,7 @@ disabled />
 <td style="width:80%;text-align:left">
 </td>
 <td style="width:10%;text-align:left">
-<input type="button" value="Editar limite" class="btn4" onclick='vercerraropcioneimpresionapcie("1")'  style="width:100px;background-color: rgb(58 58 58);">
+<input type="button" value="Editar limite" class="btn4" onclick='verCerrarVentanaABMLimiteCaja(true)'  style="width:100px;background-color: rgb(58 58 58);">
 </td>
 </tr>
 </tbody>
@@ -20378,6 +20382,39 @@ style='width:95%;' />
 </td>
 </tr>
 </table>
+</div>
+
+<div class='principal2' style='display:none' id='divAbmLimiteCaja'>
+  <table style='width:100%;height:100%' id='tdEfectoArqueoCierroCaja'>
+    <tr>
+      <td>
+        <center>
+          <div style='min-height:200px;width:400px;' class='divAbms'>
+            <table class='tableMenuZ'>
+              <tr>
+                <td style='width:100%;text-align:left'>
+                  <p class='pTituloB'>Limitador de <b style='font-size: 30px;'>Caja</b></p>
+                </td>
+                <td style='width:5%;text-align:center'>
+                  <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
+                    onclick='verCerrarVentanaABMLimiteCaja(false)' />
+                </td>
+              </tr>
+            </table>
+            <center>
+              <div class="divmenuf">
+                <p class="pTituloC">Limite del monto para transferir a central: </p>
+                <input class="inputTextDisable" type="text" id="inptLimitecaja" style="width:90%;" onkeyup="separadordemiles(this)">
+              </div>
+              <div class="divmenuf">
+                <input type="button" value="Guardar" class="btn1" onclick="agregarLimiteCaja()">
+              </div>
+            </center>
+          </div>
+        </center>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <div class='principal2' style='display:none' id='divVistaArqueocierrecaja'>

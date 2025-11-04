@@ -175,6 +175,20 @@ $local = utf8_decode($local);
 
 }	
 
+if ($operacion == "agregarLimiteCaja") {
+	$limite_monto = $_POST['monto'];
+	$limite_monto = quitarseparadormiles($limite_monto);
+
+	agregarLimiteCaja($user, $limite_monto);
+}
+
+if ($operacion == "obtenerUltimoLimiteCaja") {
+	$registros= obtenerLimiteCaja();
+	$monto_limite = end($registros);
+
+	$informacion =array("1" => "exito","2" => $monto_limite['limite_monto']);
+	echo json_encode($informacion);
+}
 
 if($operacion=="buscarabmmotivoingresoegreso")
 {
@@ -986,6 +1000,48 @@ if ( ! $stmt->execute()) {
 echo json_encode($informacion);	
 exit;
 
+}
+
+function agregarLimiteCaja($cod_usuarioF, $limite_monto) {
+	$mysqli=conectar_al_servidor();
+
+	$consulta1="Insert into limite_caja (cod_usuarioFK, limite_monto) values (?, ?)";
+	$stmt = $mysqli->prepare($consulta1);
+	$ss='ss';
+	$stmt->bind_param($ss,$cod_usuarioF, $limite_monto);
+
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+
+	$mysqli->close();
+	$informacion =array("1" => "exito");
+	echo json_encode($informacion);	
+	exit;
+}
+
+function obtenerLimiteCaja() {
+	$mysqli=conectar_al_servidor();
+
+	$consulta1="SELECT * FROM limite_caja ORDER BY fecha_registro DESC LIMIT 1";
+	$stmt = $mysqli->prepare($consulta1);
+
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+
+	$registros=$stmt->get_result();
+	$registros= $registros->fetch_all(MYSQLI_ASSOC);
+
+	if (!($registros)) {
+		$registros= array();
+	}
+
+	$mysqli->close();
+
+	return $registros;
 }
 
 verificar($operacion);

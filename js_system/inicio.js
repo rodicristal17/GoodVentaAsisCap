@@ -207,7 +207,7 @@ document.getElementById("imgFondoSytem2").src=FondoUrl
 	}
 	mueveReloj()
 	
-	
+	obtenerUltimoLimiteCaja();
 	buscar_datos_del_usuario();
 eventoScrollTable(document.getElementById('TableScroollProductos2'));
 eventoScrollTable(document.getElementById('TableScroollHistorialVenta2'));
@@ -402,6 +402,8 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("bNombreUser").innerHTML=nombre	
 						document.getElementById("inptNombreMisDatos").value=nombre;
 						document.getElementById("imgFotoPerfilMisDatos").style.backgroundImage= "url("+fotocliente3+")";
+						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
+						document.getElementById("fotoPerfilUsuario").src= fotocliente3;
 						
 						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
@@ -9283,13 +9285,16 @@ verCerrarEfectoCargando("1")
 				if (Respuesta == true) {
 					montocierre= parseInt(montocierre.replace('.', ''));
 
-					if (montocierre > 500000) {
+					let limite= document.getElementById('inptLimitecaja').value;
+					limite= parseInt(limite.replace('.', ''));
+
+					if (montocierre > limite) {
 						ver_vetana_informativa("SE RECOMIENDA DEPOSITAR EN LA CENTRAL PARA EVITAR EXCESOS.");
 					} else {
 						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 					}
 					
-					 loteCaja=datos[2];
+					loteCaja=datos[2];
 					if(estado=="Activo"){
 						ImprimirTicketReportCaja()
 					}else{
