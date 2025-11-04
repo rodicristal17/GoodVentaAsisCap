@@ -3973,6 +3973,15 @@ const transferencia= parseInt(document.getElementById("inptResumenTransferencia"
 const totalEgreso= migrado + montoCierre + egreso;
 const totalIngreso= apertura + ingreso + recaudado;
 
+let sumatoriaTipoMoneda= (parseInt(document.getElementById("inptTotalCant500ConsultarCaja").value.replace(/\./g, ''))*500)
++ (parseInt(document.getElementById("inptTotalCant1000ConsultarCaja").value.replace(/\./g, ''))*1000)
++ (parseInt(document.getElementById("inptTotalCant2000ConsultarCaja").value.replace(/\./g, ''))*2000)
++ (parseInt(document.getElementById("inptTotalCant5000ConsultarCaja").value.replace(/\./g, ''))*5000)
++ (parseInt(document.getElementById("inptTotalCant10000ConsultarCaja").value.replace(/\./g, ''))*10000)
++ (parseInt(document.getElementById("inptTotalCant20000ConsultarCaja").value.replace(/\./g, ''))*20000)
++ (parseInt(document.getElementById("inptTotalCant50000ConsultarCaja").value.replace(/\./g, ''))*50000)
++ (parseInt(document.getElementById("inptTotalCant100000ConsultarCaja").value.replace(/\./g, ''))*100000);
+
 paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style='width:100%'>"
 	+"<tr>"
 		+"<td style='text-align:left;'>"
@@ -4055,11 +4064,12 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC' style=' font-size: 17px; font-weight: 800;' >"+ document.getElementById("inptTotalConsularCaja").value+"</p>"
 		+"</td>"
 	+"</tr>"
-+"</table>"
-if (limiteCajaMonto <= (sumatoriaTipoMoneda).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')) {
-	paginaPie =+"<p class='pTituloC' style='font-size: 1.5rem;bacground-color: red;'><b>MONTO EN CAJA EXCEDE EL PERMITIDO, FAVOR MIGRAR A CENTRAL.</p>";
++"</table>";
+
+if (limiteCajaMonto <= sumatoriaTipoMoneda) {
+	paginaPie +="<p class='pTituloC' style='font-size: 1.3rem;background-color: red;'><b>Monto en caja excede el permitido, favor migrar a Central.</p>";
 }
-paginaPie =+ "</div>";
+paginaPie += "</div>";
 /*
 paginaPie += "<div style='width: 20%;'>"
 +"<table class='TableRepor0' style='width: 100%;'>"
@@ -4144,15 +4154,6 @@ paginaPie += "<div style='width: 20%;'>"
 +"</tr>"
 +"</table>"
 +"</div>";
-
-let sumatoriaTipoMoneda= (parseInt(document.getElementById("inptTotalCant500ConsultarCaja").value.replace(/\./g, ''))*500)
-+ (parseInt(document.getElementById("inptTotalCant1000ConsultarCaja").value.replace(/\./g, ''))*1000)
-+ (parseInt(document.getElementById("inptTotalCant2000ConsultarCaja").value.replace(/\./g, ''))*2000)
-+ (parseInt(document.getElementById("inptTotalCant5000ConsultarCaja").value.replace(/\./g, ''))*5000)
-+ (parseInt(document.getElementById("inptTotalCant10000ConsultarCaja").value.replace(/\./g, ''))*10000)
-+ (parseInt(document.getElementById("inptTotalCant20000ConsultarCaja").value.replace(/\./g, ''))*20000)
-+ (parseInt(document.getElementById("inptTotalCant50000ConsultarCaja").value.replace(/\./g, ''))*50000)
-+ (parseInt(document.getElementById("inptTotalCant100000ConsultarCaja").value.replace(/\./g, ''))*100000);
 
 paginaPie += "<div style='width: 20%;'>"
 +"<table class='TableRepor0' style='width:100%'>"
