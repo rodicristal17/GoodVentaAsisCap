@@ -60,11 +60,12 @@ $acceso=$_POST['acceso'];
 
 $cod_localFK=$_POST['cod_localFK'];
 
+$foto=$_POST['foto'];
+$foto = utf8_decode($foto);
+$ext=$_POST['ext'];
+$ext = utf8_decode($ext);
 
-
-
-abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$operacion);
-
+abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$operacion);
 }
 
  
@@ -96,8 +97,6 @@ abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$logi
 	
 if($operacion=="editarMisDatos")
 {
-	
-	
 	$Cod_Usuario=$_POST['useru'];
     $Cod_Usuario = utf8_decode($Cod_Usuario);
 	$user=$_POST['user'];
@@ -108,7 +107,12 @@ if($operacion=="editarMisDatos")
     $local = utf8_decode($local); 
 	$nombre=$_POST['nombre'];
     $nombre = utf8_decode($nombre);   
-	editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre);
+	$foto=$_POST['foto'];
+	$foto = utf8_decode($foto);
+	$ext=$_POST['ext'];
+	$ext = utf8_decode($ext);   
+	
+	editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre, $foto, $ext);
 
 }
 
@@ -176,7 +180,7 @@ exit;
 
 
 
-function editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre)
+function editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre,$foto,$ext)
 {
 	
 	if($Cod_Usuario=="" || $user=="" || $pass==""|| $local==""|| $nombre=="" ){
@@ -239,6 +243,18 @@ if ( ! $stmt1->execute() ) {
 	exit;
 }
 
+// Copia la imagen al servidor y genera el enlace
+if (!(empty($ext))) {
+	$foto=substr($foto, strpos($foto, ",") + 1);
+	$foto = base64_decode($foto);
+	$id_foto="";		  
+	$donde="../fotos/perfilUsuario/";
+	$id_foto=$Cod_Usuario;
+	$id_f=subir_imagen_base64($donde,$foto,$id_foto,$ext);
+	$ruta="/GoodVentaAsisCap/fotos/perfilUsuario/".$Cod_Usuario.$id_f.'.'.$ext;
+	CargaFoto("url",$ruta,$Cod_Usuario);
+}
+
  mysqli_close($mysqli); 
 $informacion =array("1" => "exito");
 echo json_encode($informacion);	
@@ -251,7 +267,7 @@ exit;
 }
 
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$operacion)
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$operacion)
 {
 
 
@@ -291,8 +307,6 @@ if($valor>0)
 	echo json_encode($informacion);	
 	exit;
 }   
-	
-
 
 if($operacion=="nuevo") 
 {
@@ -340,9 +354,6 @@ $stmt2 = $mysqli->prepare($consulta2);
 $ss='ssssssss';
 $stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$cod_usuario);
 
-
-
-
 }
 
 
@@ -362,6 +373,9 @@ exit;
 
 }
 
+// Recupera la id del usuario de la ultima insercion
+$cod_usuario= empty($cod_usuario) ?  : $cod_usuario;
+
 if($operacion=="nuevo") 
 {
 	
@@ -374,6 +388,18 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt4->errno.') '
 exit;
 }
 
+}
+
+// Copia la imagen al servidor y genera el enlace
+if (!(empty($ext))) {
+	$foto=substr($_POST['foto'], strpos($_POST['foto'], ",") + 1);
+	$foto = base64_decode($foto);
+	$id_foto="";		  
+	$donde="../fotos/perfilUsuario/";
+	$id_foto=$cod_usuario;
+	$id_f=subir_imagen_base64($donde,$foto,$id_foto,$ext);
+	$ruta="/GoodVentaElim/fotos/perfilUsuario/".$cod_persona.$id_f.'.'.$ext;
+	CargaFoto("url",$ruta,$cod_persona);
 }
 
 if($operacion=="nuevo"){

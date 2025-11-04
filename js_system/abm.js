@@ -4235,6 +4235,7 @@ paginaPie += "<div>"
 + "</div>"
 + "<div style='display: flex;justify-content: center;'>"
 + "<p class='pTituloC' style='font-size: 1.5rem'><b>Firma del responsable</p>"
++ "</div>"
 + "</div>";
 
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina

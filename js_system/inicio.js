@@ -386,7 +386,8 @@ $("div[id=divPresentacion]").fadeOut(500);
 					 ControlCobradorUser = datos["6"];
 					codEncargadoSolicitud = userid;
 					CodCobradorUser = datos["7"];
- accesosuser=datos["5"];  
+ accesosuser=datos["5"];
+ fotocliente3= datos["8"];
       cajapredeterminada=buscar_datos_url_usuario('c');
 
 	 if(accesosuser["CAMBIARCAJA"]["accion"]!="SI"){
@@ -399,8 +400,8 @@ $("div[id=divPresentacion]").fadeOut(500);
 					document.getElementById('pUsuarioCabecera').innerHTML = nombre
 					document.getElementById('pCajeraVenta').innerHTML = "("+nombre+")"
 						document.getElementById("bNombreUser").innerHTML=nombre	
-						document.getElementById("inptNombreMisDatos").value=nombre
-						
+						document.getElementById("inptNombreMisDatos").value=nombre;
+						document.getElementById("imgFotoPerfilMisDatos").style.backgroundImage= "url("+fotocliente3+")";
 						
 						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
@@ -1096,11 +1097,9 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 			}
 		}
 	});
-
-
 }
+
 function AbmEditarMisDatos() {
-	
 	var nombre=document.getElementById("inptNombreMisDatos").value;
 	if(nombre==""){
 		ver_vetana_informativa("EL USUARIO NO PUEDE QUEDAR VACÍO")
@@ -1124,6 +1123,8 @@ function AbmEditarMisDatos() {
 	datos.append("pass", pass)
 	datos.append("nombre", nombre)
 	datos.append("local", cod_localFKUSer)
+	datos.append("foto", fotocliente3)
+	datos.append("ext", extcliente3)
 	var OpAjax = $.ajax({
 		
 		data: datos,
@@ -10663,57 +10664,60 @@ var extcliente2="";
  
 var fotocliente3 = "";
 var extcliente3 = "";
-function readFileCliente2(input){		
-var file=$("input[name="+input.name+"]")[0].files[0];
-var filename= file.name;
-var tamanho = file.size;
-if (tamanho > 5000000){
-ver_vetana_informativa("LA FOTO NO PUEDE EXCEDER LOS 5Mb")
-return false
-}
-file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
-if ((file_extension=="jpeg") || (file_extension=="jpg") || (file_extension=="png") ){
-}else{
-ver_vetana_informativa("LA FOTO SELECCIONADO NO ES JPEG")
-return false;
-}
-var reader = new FileReader();
-reader.onload = function(e){
-if(controlfotocliente=="foto1"){
-	extcliente1=file_extension;
-fotocliente1=e.target.result;
- $("div[id=imgFotoCliente1]").css({"background-image":"url("+fotocliente1+")"})
+function readFileCliente2(input) {
+	var file = $("input[name=" + input.name + "]")[0].files[0];
+	var filename = file.name;
+	file_extension = filename.split('.').pop();
+	var tamanho = file.size;
+	if (tamanho > 5000000) {
+		ver_vetana_informativa("LA FOTO NO PUEDE EXCEDER LOS 5Mb")
+		return false
+	}
+	//file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
+	if ((file_extension == "jpeg") || (file_extension == "jpg") || (file_extension == "png")) {
+	} else {
+		ver_vetana_informativa("LA FOTO SELECCIONADO NO ES JPEG")
+		return false;
+	}
+	var reader = new FileReader();
+	reader.onload = function (e) {
+		if (controlfotocliente == "foto1") {
+			extcliente1 = file_extension;
+			fotocliente1 = e.target.result;
+			$("div[id=imgFotoCliente1]").css({ "background-image": "url(" + fotocliente1 + ")" })
 
-}
-if(controlfotocliente=="foto2"){
-	extcliente2=file_extension;
-fotocliente2=e.target.result;
- $("div[id=imgFotoCliente2]").css({"background-image":"url("+fotocliente2+")"})
+		}
+		if (controlfotocliente == "foto2") {
+			extcliente2 = file_extension;
+			fotocliente2 = e.target.result;
+			$("div[id=imgFotoCliente2]").css({ "background-image": "url(" + fotocliente2 + ")" })
 
-}
-
-
+		}
 		if (controlfotocliente == "Perfil") {
 			extcliente3 = file_extension;
 			fotocliente3 = e.target.result;
+
 			$("div[id=imgFotoPerfil1]").css({ "background-image": "url(" + fotocliente3 + ")" })
-
+			$("div[id=imgFotoPerfilMisDatos]").css({ "background-image": "url(" + fotocliente3 + ")" })
 		}
-
-
-}
-reader.readAsDataURL(input.files[0]);
+	}
+	reader.readAsDataURL(input.files[0]);
 }
 function verCerrarVisorImagen(d,img){
 	document.getElementById('divVistaFoto').style.display = "none"
 	if (d == "1") {		
 		var urlsrc="";
-		if(img=="cliente1"){
-		urlsrc=	fotocliente1
+		switch (img) {
+			case "cliente1":
+				urlsrc = fotocliente1;
+				break;
+			case "cliente2":
+				urlsrc = fotocliente2;
+			case "usuario":
+				urlsrc = fotocliente3;
+				break;
 		}
-		if(img=="cliente2"){
-		urlsrc=	fotocliente2
-		}
+		
 		if(urlsrc==""){
 			 ver_vetana_informativa("NO SE ENCONTRO NINGUNA IMAGEN PARA VIZUALIZAR")
 
