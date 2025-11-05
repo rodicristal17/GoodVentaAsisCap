@@ -433,7 +433,7 @@ buscarDataListCliente()
 buscarobtenermedicos()
 BuscarOptionUsuario()
 buscarobtenerPacientes()
-
+obtenerAsistenciaUsuario();
 
 buscarSugerencias()
 
@@ -511,7 +511,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 
 
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.48"
+var codigodeactualizacion="X-GT-1-JMTG-V1.49"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();

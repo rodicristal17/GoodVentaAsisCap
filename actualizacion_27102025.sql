@@ -23,5 +23,15 @@ CREATE TABLE limite_caja (
     FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
 );
 
+CREATE TABLE asistencia (
+    cod_asistencia INT PRIMARY KEY AUTO_INCREMENT,
+    cod_usuarioFK INT NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    hora_entrada TIME NOT NULL,
+    hora_salida TIME,
+    direccion_ip VARCHAR(40),
+    FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
+);
+
 -- Agregar ppermisos::
 --CREARNUEVOMOTIVO, VERABMLIMITECAJA

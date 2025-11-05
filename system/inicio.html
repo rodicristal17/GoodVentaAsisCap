@@ -46,6 +46,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
+<script src="../js_system/abmAsistencia.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -183,7 +184,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
 <div style='margin-bottom:100px;margin-top:100px'>
 
-<table style='width:100%;'>
+<table style='width:100%;display: none;'>
 <tr>
 <td style='padding: 15px; padding-left: 33px;width:90%'>
 <p class='pTitulo16' id='ptituloUser2'
@@ -395,9 +396,9 @@ style='display:none' class='divMinimizado'>
 <input type='text' id='inptreloj2' class='inputReloj2' />
 <p class='pTitulo16' id='pfechaactual'></p>
 <br>
-<br>
 <center>
-<table style='width:290px'>
+  <input id="btnRegistrarAsistencia" type="button" value="Marcar entrada" class="btn4" style="width: 150px;" onclick="registrarAsistencia()">
+<table style='width:290px;display: none;'>
 <tr>
 <td style='width:33%;display:none'
 onclick='verCerrarAdministradorTareas("1")'>
