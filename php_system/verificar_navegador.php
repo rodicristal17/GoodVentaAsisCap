@@ -8,7 +8,7 @@ function verificar_navegador($usuario,$navegador,$contra)
 	
 	
 	
-$stmt = $mysqli->prepare('Select count(*) from seguridad where id_usuario=? and pass=? and navegador=?');
+$stmt = $mysqli->prepare('Select count(*) from seguridad s join usuario u on u.cod_usuario=s.id_usuario  where s.id_usuario=? and s.pass=? and s.navegador=? and u.estado= "Activo"');
 
 
 $ss='sss';

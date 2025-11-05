@@ -4914,7 +4914,9 @@ function QuitarSeparadorMilValor(inputs) {
 
 }
 function separadordemiles(input) {
-
+	if (input.value==""){
+		return;
+	}
 	var num = input.value.replace(/\./g, '');
 	if (!isNaN(num)) {
 		var num2 = num.toString().split('.');
