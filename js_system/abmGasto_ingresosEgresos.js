@@ -506,11 +506,16 @@ function verCerrarAbmNuevoMotivo(){
 	if(document.getElementById("divAbmNuevoMotivo").style.display==""){
 		
 		$("div[id=divAbmNuevoMotivo]").fadeOut(500);	
-		
+
+		// Se indica el motivo seleccionado si el estado es activo
+		if (idAbmMotivoEgresoIngreso && document.getElementById("inptEstadoMotivoEgresoIngreso").value == 'activo') {
+			document.getElementById('inptMotivoMisGastos').value= document.getElementById("inptNuevoMotivoEgresoIngreso").value;
+		} else {
+			document.getElementById('inptMotivoMisGastos').value= "";
+		}		
 	}else{		
-	
 		document.getElementById("divAbmNuevoMotivo").style.display=""
-BuscarAbmMotivoEgresoIngreso()
+		BuscarAbmMotivoEgresoIngreso();
 	}
 }
 function VerificarDatosMotivoEgresoIngreso() {
