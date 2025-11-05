@@ -133,11 +133,18 @@ function obtenerAsistenciaUsuario() {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
 					let registros= datos["registros"];
+					tablaRegistros= document.getElementById("tableRegistroEntrada");
 					if (registros.length > 0) {
 						cod_asistencia= registros[0][0];
 						document.getElementById("btnRegistrarAsistencia").value = "Marcar Salida";
+						tablaRegistros.style.display= '';
+						let fila= $(tablaRegistros).children('tbody');
+						fila= $(fila).children('tr')[0];
+						fila.innerHTML = "<td>"+registros[0][2].substring(0, 10)+"</td>"
+      						+"<td>"+registros[0][3]+"</td>";
 					} else {
 						cod_asistencia= "";
+						tablaRegistros.style.display= 'none';
 						document.getElementById("btnRegistrarAsistencia").value = "Marcar Entrada";
 					}
 				}
