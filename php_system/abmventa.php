@@ -1242,7 +1242,7 @@ if($cob_ex!="Local"){
 <td  id='td_datos_6'  style='width:5%'>". number_format($totalpagado,'0',',','.') ."</td>
 <td  id='td_datos_24' style='width:5%'>". number_format($totalintereses,'0',',','.') ."</td>
 <td  id='td_datos_7'  style='width:5%'>". number_format($deuda,'0',',','.') ."</td>
-<td  id=''            style='width:5%'>".$cuotas ."</td>
+<td  id=''            style='width:5%'>$cuotas</td>
 <td  id='td_datos_4'  style='width:5%'>".$cobradornombre."</td>
 <td  id=''            style='width:5%'>".$nombrelocal ."</td>
 <td  id='td_datos_15' style='width:5%'>".$nombrevendedor1."</td>
@@ -1545,7 +1545,7 @@ if($cob_ex!="Local"){
 <td  id='td_datos_6'  style='width:5%'>". number_format($totalpagado,'0',',','.') ."</td>
 <td  id='td_datos_24' style='width:5%'>". number_format($totalintereses,'0',',','.') ."</td>
 <td  id='td_datos_7'  style='width:5%'>". number_format($deuda,'0',',','.') ."</td>
-<td  id=''            style='width:5%'>".$cuotas ."</td>
+<td  id=''            style='width:5%'>$cuotas</td>
 <td  id='td_datos_4'  style='width:5%'>".$cobradornombre."</td>
 <td  id=''            style='width:5%'>".$nombrelocal ."</td>
 <td  id='td_datos_15' style='width:5%'>".$nombrevendedor1."</td>
@@ -3922,6 +3922,18 @@ function historialFiltroMorosos($buscar,$filtro,$zona,$Local){
 		IFNULL((Select sum(Monto) from pago where cod_creditoFK = idcredito and Tipo='Pago Cuota'),0)<(c.Monto - c.descuento) 
 		order by idcredito asc limit 1)<= '".$fechahoy."' ";
 		}
+		if($filtro=="5"){
+			$CondiciónFiltro=" and DATEDIFF('".$fechahoy."',(select (c.fechapago) from credito c  where vt.cod_venta=c.cod_venta and
+		IFNULL((Select sum(Monto) from pago where cod_creditoFK = idcredito and Tipo='Pago Cuota'),0)<(c.Monto - c.descuento) 
+		order by idcredito asc limit 1))>0 and  DATEDIFF('".$fechahoy."',(select (c.fechapago) from credito c  where vt.cod_venta=c.cod_venta and
+		IFNULL((Select sum(Monto) from pago where cod_creditoFK = idcredito and Tipo='Pago Cuota'),0)<(c.Monto - c.descuento) 
+		order by idcredito asc limit 1)) < 30";
+		}
+		if($filtro=="6"){
+			$CondiciónFiltro=" and DATEDIFF('".$fechahoy."',(select (c.fechapago) from credito c  where vt.cod_venta=c.cod_venta and
+		IFNULL((Select sum(Monto) from pago where cod_creditoFK = idcredito and Tipo='Pago Cuota'),0)<(c.Monto - c.descuento) 
+		order by idcredito asc limit 1))<=0";
+		}
 		
 
 		  $condicionZona=" ";
@@ -3958,8 +3970,7 @@ function historialFiltroMorosos($buscar,$filtro,$zona,$Local){
 		from  venta vt where (select count(*) from cancelaciones c where vt.cod_venta=c.cod_venta)=0 and  (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$buscar."%' ".$CondiciónFiltro.$condicionZona.$condicionCuenta.$condicionLocal." order by dias desc";
 	 
 		
-		  // echo($sql);
-		  // exit;
+		//echo($sql);exit;
    
    $stmt = $mysqli->prepare($sql);
   
@@ -4077,7 +4088,7 @@ if($condicion=="+"){
 <td id='td_datos_13' style='width:9%'>".$num_factura."</td>
 <td  id='td_datos_1' style='width:7%'>".$fecha_venta."</td>
 <td  id='td_datos_2' style='width:20%'>".$cicliente."-".$clientenombre." <br><b>".$Telefono."</b></td>
-<td  id='' style='width:5%'>".$plazo."</td>
+<td  id='' style='width:5%'>$plazo</td>
 <td  id='td_datos_5' style='width:7%'>". number_format($total_venta,'0',',','.') ."</td>
 <td  id='td_datos_6' style='width:7%'>". number_format($totalpagado,'0',',','.') ."</td>
 <td  id='td_datos_28' style='width:6%'>". number_format($totaldescuento,'0',',','.') ."</td>

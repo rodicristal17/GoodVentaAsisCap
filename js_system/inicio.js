@@ -14820,17 +14820,20 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 
 
 }
-function vercerrarvistaventas(d) {
+var ventanaAnteriorHistorialVenta= "";
+function vercerrarvistaventas(d, origen= 'venta') {
 	if (d == "1") {
 		document.getElementById("divVistaVentas").style.display=""
- document.getElementById("tdEfectoVistaVenta").className="magictime slideLeftReturn"
+ 		document.getElementById("tdEfectoVistaVenta").className="magictime slideLeftReturn"
+ 		ventanaAnteriorHistorialVenta= origen;
 	} else {
- document.getElementById('inptBuscarVistaVentas').value=""
-document.getElementById("table_vista_ventas").innerHTML = ""
-document.getElementById("tdEfectoVistaVenta").className="magictime slideRight"
+		document.getElementById('inptBuscarVistaVentas').value=""
+		document.getElementById("table_vista_ventas").innerHTML = ""
+		document.getElementById("tdEfectoVistaVenta").className="magictime slideRight"
 		$("div[id=divVistaVentas]").fadeOut(500)
 	}
 }
+
 function buscarvistaventa() {
 	var buscar = document.getElementById('inptBuscarVistaVentas').value
 	var filtro = document.getElementById('inptOpcionesdeBusquedaVenta').value	
@@ -14904,7 +14907,11 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 
 }
 function obtenerdatosvistaventa(datostr) {
-	limpiarcamposventa("1")
+	if (ventanaAnteriorHistorialVenta = 'mecanicoDental') {
+		idFkVenta = $(datostr).children('td[id="td_datos_8"]').html();
+		document.getElementById('inptPacienteMecanicoDental').value = $(datostr).children('td[id="td_datos_2"]').html();
+	} else {
+		limpiarcamposventa("1")
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
 	});
@@ -14963,11 +14970,12 @@ function obtenerdatosvistaventa(datostr) {
 	document.getElementById('btnAbmVenta').style.display = ""
 	document.getElementById('btnAbmVenta').value = "Editar datos"
 	buscardetallesventa()
-   document.getElementById("divVistaVentas").style.display='none'
-   document.getElementById("btnMasInfoClienteVenta").style.display='none'
 document.getElementById("btnNuevoClienteVenta").style.display=''
 document.getElementById("tdImprimirVenta").style.display=''
 SeleccTipoComprobanteVenta()
+	}
+	document.getElementById("divVistaVentas").style.display='none'
+   	document.getElementById("btnMasInfoClienteVenta").style.display='none'
 }
 
 var cantidaDetalleSelec = "";

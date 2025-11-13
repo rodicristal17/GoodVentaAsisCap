@@ -47,6 +47,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js"></script>
+<script src="../js_system/abmMecanicoDental.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -370,7 +371,6 @@ src='/GoodVentaAsisCap/iconos/transferir.png' />
 </td>
 </tr>
 </table>
-
 
 <table class='divMenub' id='divMenuRecibirCaja' onclick='verCerrarFrmCajaEscritorio()' style=' width:20%;text-align:center'>
 <tr>
@@ -786,6 +786,19 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuMecanicoDental' onclick='verCerrarVentanaMecanicoDental(true, false)' style='width:20%;text-align:center'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/listadodecarga.png' />
+<p class='pTitulo4'>Trabajos del Mecanico Dental</p>
+<center>
+<div id='divMinimizadoMecanicoDental' style='display:none' class='divMinimizado'>
+</div>
+</center>
+</td>
+</tr>
+</table>
 
 </div>
 
@@ -3497,6 +3510,332 @@ style='background-color:#5bc572'>
 </td>
 </tr>
 </table>
+</div>
+
+<div class='principal2' style='display:none;min-height: 400px;' id='divAbmMecanicoDental'>
+    <table style='width:100%;height:100%;' id='tdEfectoAbmMecanicoDental'>
+        <tr>
+            <td>
+                <center>
+                    <div id='divAbmMecanicoDental1' style='display:none;width:850px;min-height: 400px;' class='divAbms'>
+                        <table class='tableMenuZ'>
+                            <tr>
+                                <td style='width:100%;text-align:left'>
+                                    <p class='pTituloB'>Abm <b style='font-size: 30px;'>Mecanico Dental</b></p>
+                                </td>
+                                <td style='width:5%;text-align:center'>
+                                    <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+                                         title='Limpiar campos' onclick='limpiarFormularioMecanicoDental()' />
+                                </td>
+                                <td style='width:5%;text-align:center'>
+                                    <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+                                         title='Minimizar Ventana' onclick='minimizarVentanaMecanicoDental()' />
+                                </td>
+                                <td style='width:5%;text-align:center'>
+                                    <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+                                         title='Volver Atras' onclick='verCerrarVentanaMecanicoDental(false, true)' />
+                                </td>
+                            </tr>
+                        </table>
+                        <br>
+                        <center>
+                            <div style='overflow:auto;display: flex; justify-content: space-around;'>
+                                <div class='divMenuf' style='float:left;margin:1%;width:45%;height:350px'>
+                                    <br>
+                                    <table style="width:100%">
+                                      <tbody><tr>
+                                      <td>
+                                        <p class="pTituloC">Tipo de trabajo :</p>
+                                        <input id="inptTipoTrabajoMecanicoDental" list="ListTipoTrabajoMecanicoDental" style="width:70%" type="text" class="inputText">
+                                        <datalist id="ListTipoTrabajoMecanicoDental"></datalist>
+                                        <input type="button" value="Add" class="btn5" onclick="verCerrarVentanaTipoTrabajo(true)">
+                                      </td></tr></tbody>
+                                    </table>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td>
+                                                <p class='pTituloC'>Colorimetria:</p>
+                                                <input class='inputText' type='text' id='inptColorimetriaMecanicoDental' style='width:70%' />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td>
+                                                <p class='pTituloC'>Paciente:</p>
+                                                <input class='inputText' type='text' id='inptPacienteMecanicoDental' style='width:100%' disabled/>
+                                                <br>
+                                                <br>
+                                                <input type="button" value="Seleccionar Venta" class="btn5" onclick="vercerrarvistaventas('1', 'mecanicoDental')" style="width: fit-content;">
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <br>
+                                </div>
+                                <div class='divMenuf' style='float:left;margin:1%;width:45%;height:350px'>
+                                    <br>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td style="width: 50%;">
+                                                <p class='pTituloC'>Fecha de Retiro:</p>
+                                                <input class='inputText' type='date' id='inptFechaRetiroMecanicoDental' style='width:70%' />
+                                            </td>
+                                            <td style="width: 50%;">
+                                                <p class='pTituloC'>Fecha de Entrega:</p>
+                                                <input class='inputText' type='date' id='inptFechaEntregaMecanicoDental' style='width:70%' />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td>
+                                                <p class='pTituloC'>Costo:</p>
+                                                <input class='inputText' type='text' id='inptCostoMecanicoDental' style='width:70%' onkeyup='separadordemiles(this)'/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td>
+                                                <p class='pTituloC'>Observación:</p>
+                                                <textarea class='inputText' placeholder='Opcional' id='inptObservacionMecanicoDental' style='height: 80px;'></textarea>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <br>
+                                    <center>
+                                        <input type='button' value='Guardar datos' class='btn1'
+                                               onclick='verificarCamposMecanicoDental("nuevo")' id='btnAbmMecanicoDental' />
+                                    </center>
+                                    <br>
+                                </div>
+                            </div>
+                            <br>
+                        </center>
+                    </div>
+                    <div id='divAbmMecanicoDental2' style='width:1280px;display:none;' class='divAbms'>
+                        <table class='tableMenuZ'>
+                            <tr>
+                                <td style='width:100%;text-align:left'>
+                                    <p class='pTituloB'>Buscar <b style='font-size: 30px;'>Trabajos de mecanico dental</b> </p>
+                                </td>
+                                <td style='width:5%;text-align:center'>
+                                    <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
+                                         onclick='verCerrarVentanaMecanicoDental(true, true)' />
+                                </td>
+                                <td style='width:5%;text-align:center'>
+                                    <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+                                         title='Minimizar Ventana' onclick='minimizarVentanaMecanicoDental()' />
+                                </td>
+                                <td style='width:5%;text-align:center'>
+                                    <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+                                         title='Cerrar Ventana' onclick='verCerrarVentanaMecanicoDental(false, false)' />
+                                </td>
+                            </tr>
+                        </table>
+                        <center>
+                            <div class='divMenuf'>
+                                <div style='width: 98%;height:auto'>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td style='width:20%;'>
+                                                <p class='pTituloC'>Fecha inicio:</p>
+                                                <input class='inputText' type='date' id='inptFechaInicioListadoMecanicoDental' style='width:70%' />
+                                            </td>
+                                            <td style='width:20%;'>
+                                                <p class='pTituloC'>Fecha fin:</p>
+                                                <input class='inputText' type='date' id='inptFechaFinListadoMecanicoDental' style='width:70%' />
+                                            </td>
+                                            <td style='width:50%;'>
+                                            </td>
+                                            <td style='width:10%;'>
+                                              <input type='Button' value='Buscar' class='btn4' onclick='buscarMecanicosDentales()' />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class='divMenuf'>
+                                <table style='width:98%'>
+                                    <tr>
+                                        <td style='width:65%;text-align:left'>
+                                          <input type="button" value="Imprimir" class="btn4" onclick='ordenImpresion("tiposTrabajo")' style="width:100px;background-color: rgb(58 58 58);">
+                                        </td>
+                                        <td style="width:10%;text-align:left">
+                                          <p class="pTitulo8" style="width: 100%;" onclick="checkFechaMecanicoDental(1)"> 
+                                          <input type="checkbox" id="inptSeleccFiltroFechaTodosMecanicoDental" style="width: fit-content;">Todos</p>
+                                        </td>
+                                        <td style="width:10%;text-align:left">
+                                          <p class="pTitulo8" style="width: 100%;" onclick="checkFechaMecanicoDental(2)"> 
+                                          <input type="checkbox" id="inptSeleccFiltroFechaEntregaMecanicoDental" style="width: fit-content;">Fecha entrega</p>
+                                        </td>
+                                        <td style="width:10%;text-align:left">
+                                          <p class="pTitulo8" style="width: 100%;" onclick="checkFechaMecanicoDental(3)"> 
+                                          <input type="checkbox" id="inptSeleccFiltroFechaRetiroMecanicoDental" style="width: fit-content;">Fecha retiro</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <table class="tableCabeceraRegistro" id='tdTituloImpreMecanicoDental'>
+                                    <tbody>
+                                        <tr>
+                                            <td class="td_registro" style="width:10%;">
+                                                #
+                                            </td>
+                                            <td class="td_registro" style="width:45%;">
+                                                Paciente
+                                            </td>
+                                            <td class="td_registro" style="width:25%;">
+                                                Tipo de trabajo
+                                            </td>
+                                            <td class="td_registro" style="width:10%;">
+                                                Fecha entrega
+                                            </td>
+                                            <td class="td_registro" style="width:10%;">
+                                                Fecha retiro
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="tableCabeceraRegistro" id='tdTituloImpreMecanicoDental'>
+                                    <tbody>
+                                        <tr>
+                                            <td class="td_registro" style="width:7%;">
+                                              <input class='inputText' type='text' id='inptCodListadoMecanicoDental' onkeyup="if(event.keyCode == 13){buscarMecanicosDentales()}"/>
+                                            </td>
+                                            <td class="td_registro" style="width:3%;">
+                                              <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptCodListadoMecanicoDental')">
+                                            </td>
+                                            <td class="td_registro" style="width:42%;">
+                                              <input class='inputText' type='text' id='inptPacienteListadoMecanicoDental' onkeyup="if(event.keyCode == 13){buscarMecanicosDentales()}"/>
+                                            </td>
+                                            <td class="td_registro" style="width:3%;">
+                                              <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptPacienteListadoMecanicoDental')">
+                                            </td>
+                                            <td class="td_registro" style="width:22%;">
+                                              <input class='inputText' type='text' id='inptTipoTrabajoListadoMecanicoDental' onkeyup="if(event.keyCode == 13){buscarMecanicosDentales()}"/>
+                                            </td>
+                                            <td class="td_registro" style="width:3%;">
+                                              <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptTipoTrabajoMecanicoDental')">
+                                            </td>
+                                            <td class="td_registro" style="width:10%;">
+                                            </td>
+                                            <td class="td_registro" style="width:10%;">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="div_cuerpo_table" id="tablaTrabajoMecanicoDental" style="width: 100%;">
+                                </div>
+                            </div>
+                            <div class='divMenuf'>
+                                <table style='width:100%'>
+                                    <tr>
+                                        <td style='width:15%;'>
+                                            <p class='pTituloC'>Registros :</p>
+                                            <input class='inputTextDisable' type='text' disabled id='inptRegistroNroTiposTrabajo' style='width:150px;text-align:center' />
+                                        </td>
+                                        <td style='width:85%;'>
+                                            <p class='pTituloC'>Registro Selecc..</p>
+                                            <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccMecanicoDental' style='width:200px' />
+                                            <input id='btnEditarMecanicoDental' type="button" value="Editar" class="btn5" onclick="verCerrarVentanaMecanicoDental(true, true)" style='background-color:#b7b7b7'>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </center>
+                        <br>
+                    </div>
+                </center>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class='principal2' style='display:none' id='divAbmTipoTrabajo'>
+  <table style='width:100%;height:100%'>
+    <tr>
+      <td>
+        <center>
+          <div class='divAbms_b' style='width: 500px;'>
+            <table class='tableMenuZ'>
+              <tr>
+                <td style='width:100%;text-align:left'>
+                  <p class='pTituloB'>Crear tipo de trabajo para mecanico dental</p>
+                </td>
+                <td style='width:5%;text-align:center'><img src='/GoodVentaElectroGuai/iconos/limpiarcampos.png'
+                    class='iconoBtn' title='Limpiar campos' onclick='limpiarFormularioTipoTrabajo()' /></td>
+                <td style='width:5%;text-align:center'><img src='/GoodVentaElectroGuai/iconos/flechaderecha.png'
+                    class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaTipoTrabajo(false)' /></td>
+              </tr>
+            </table>
+            <br>
+            <br>
+
+            <center>
+              <div class='divMenuf'>
+
+                <table style='width:100%'>
+                  <tr>
+                    <td style='width:100%'>
+                      <p class='pTituloC'>Nombre :</p>
+                      <input type="text" class="inputText" id="inptNuevoTipoTrabajoMecanicoDental"
+                        placeholder='Obligatorio(*)'>
+                    </td>
+                  </tr>
+                </table>
+                <br>
+                <table style='width:100%'>
+                  <tr>
+                    <td style='width:100%'>
+                      <p class='pTituloC'>Estado del Registro :</p>
+                      <select class="inputSelect" style='width:250px' id='inptEstadoTipoTrabajoMecanicoDental'>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                      </select>
+                    </td>
+                  </tr>
+                </table>
+
+                <br>
+                <center>
+                  <input class='btn1' type='button' value='Guardar Datos' onclick='verificaCamposTipoTrabajoParaEditar()'
+                    id='btnTipoTrabajoMecanicoDental' />
+                </center>
+
+                <center>
+                  <table style='width:100%'>
+                    <tr>
+                      <td style='width:99%;text-align:left'>
+                        <p class='pTituloC'>Buscar :</p>
+                        <input class='inputText' type='text' placeholder='Descripción'
+                          id='inptBuscarAbmTipoTrabajoMecanicoDental'
+                          onkeyup="if(event.keyCode == 13){buscarTiposTrabajo()}" style='width: 322px;' />
+                        <input type='button' value='Buscar' class='btn4' onclick='buscarTiposTrabajo()'>
+                      </td>
+                      <td>
+                      </td>
+                    </tr>
+                  </table>
+                  <table class="tableCabeceraRegistro">
+                    <tbody>
+                      <tr>
+                        <td class="td_registro" style="width:100%;">
+                          DESCRIPCION
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="div_cuerpo_table" id="divBuscadorTipoTrabajoMecanicoDental" style='height:200px'></div>
+                  <p class='pTitulo7' id="lblNroRegistroTipoTrabajoMecanicoDental"></p>
+                </center>
+              </div>
+            </center>
+          </div>
+
+        </center>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <div class='principal2' style='display:none' id='divAbmGastos'>
@@ -17112,11 +17451,12 @@ title='Minimizar Ventana' onclick='minimizarInformeClieteMorosos()' />
 <td style="width:25%;">
 <p class="pTituloC" >Buscar:</p>
 <select class="inputSelect"  id='inputSelectTipoBuscarMoroso' style='width:90%;' >
+		<option value="6">Al dia</option>
+		<option value="5">DE 0 A 30 DIAS</option>
 		<option value="1">DE 30 A 60 DIAS</option>
 		<option value="2">DE 60 A 90 DIAS</option>
 		<option value="3">MAS DE 90 DIAS</option>
 		<option value="4">HASTA HOY</option>
-
 </select>
 </td>
 

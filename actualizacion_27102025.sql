@@ -33,5 +33,27 @@ CREATE TABLE asistencia (
     FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
 );
 
+
+CREATE TABLE tipo_trabajo_mecanico_dentaL (
+    cod_tipo_trabajo_mecanico_dental INT PRIMARY KEY AUTO_INCREMENT,
+    descripcion VARCHAR(100),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo'
+);
+
+CREATE TABLE mecanico_dental (
+    cod_mecanico_dental INT PRIMARY KEY AUTO_INCREMENT,
+    cod_ventaFK INT(11),
+    cod_tipo_trabajoFK INT(11),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    observacion VARCHAR(150),
+    colorimetro VARCHAR(12),
+    costo INT,
+    fecha_entrega DATE,
+    fecha_retiro DATE,
+    Foreign Key (cod_ventaFK) REFERENCES venta(cod_venta),
+    Foreign Key (cod_tipo_trabajoFK) REFERENCES tipo_trabajo_mecanico_dental(cod_tipo_trabajo_mecanico_dental)
+);
+
 -- Agregar ppermisos::
 --CREARNUEVOMOTIVO, VERABMLIMITECAJA
+--VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL
