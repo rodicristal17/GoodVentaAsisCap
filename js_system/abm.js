@@ -4221,7 +4221,7 @@ paginaPie += "<div style='width: 20%;'>"
 
 +"</table>"
 +"</div>";
-console.warn("totalCaja: ", totalCaja)
+
 const totalCaja= QuitarSeparadorMilValor(document.getElementById("inptTotalConsularCaja").value) ;
 
 paginaPie += "</div>";
