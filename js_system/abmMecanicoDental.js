@@ -3,6 +3,7 @@ var filtro_fecha_mecanico_dental= 1;
 
 function verCerrarVentanaMecanicoDental(mostrar, mostrarAbm) {
     if(controlacceso("VERLISTADOMECANICODENTAL","accion")==false){ return;}
+    document.getElementById('divMinimizadoMecanicoDental').style.display= 'none';
     if (mostrar) {
         $("div[id=divAbmMecanicoDental]").fadeIn(250);
         if (mostrarAbm) {
@@ -394,4 +395,9 @@ function ObtenerdatosTipoTrabajo(elemento) {
     document.getElementById('inptNuevoTipoTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_1"]').html();
     document.getElementById('inptEstadoTipoTrabajoMecanicoDental').value = $(elemento).children('td[id="td_datos_2"]').html();
     document.getElementById('btnTipoTrabajoMecanicoDental').value= 'Editar Datos';
+}
+
+function minimizarVentanaMecanicoDental() {
+    document.getElementById('divAbmMecanicoDental').style.display= 'none';
+    document.getElementById('divMinimizadoMecanicoDental').style.display= '';
 }
