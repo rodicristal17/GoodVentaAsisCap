@@ -38308,7 +38308,8 @@ function vercerrarAsignarLocal(){
 		document.getElementById("tdEfectoAsignarLocal").className="magictime vanishOut"
 		$("div[id=divAsignarLocal]").fadeOut(500);	  		
 	}else{	
-		if(controlacceso("ASIGNARLOCAL","accion")==false){return;}
+		if(controlacceso("ASIGNARLOCAL","accion")==false){return;} 
+		
 			if(idFkVenta==""){
 				ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#") 
 				return

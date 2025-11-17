@@ -374,16 +374,16 @@ function buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario)
 	
 $mysqli=conectar_al_servidor();
 
-$condicionFechaInicio="";
-if($fechaapertura!=""){
-$fechaapertura=$fechaapertura." 00:00:00";
-$condicionFechaInicio=" and fechaapertura>='$fechaapertura'";	
+$condicionFechaInicio = "";
+if ($fechaapertura != "") {
+    $condicionFechaInicio = " AND DATE_FORMAT(fechaapertura, '%Y-%m-%d') >= '$fechaapertura'";
 }
-$condicionFechaCierre="";
-if($fechafin!=""){
-$fechafin=$fechafin." 00:00:00";
-$condicionFechaCierre=" and fechacierre>='$fechafin'";	
+
+$condicionFechaCierre = "";
+if ($fechafin != "") {
+    $condicionFechaCierre = " AND DATE_FORMAT(fechacierre, '%Y-%m-%d') <= '$fechafin'";
 }
+
 $condicionCaja="";
 if($caja!=""){
 $condicionCaja=" and (Select cajanro from caja l where l.idcaja=caja_idcaja) like '%".$caja."%'";	
