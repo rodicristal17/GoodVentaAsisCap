@@ -8645,11 +8645,10 @@ title='Minimizar Ventana' onclick='minimizarcuentascobrar()' />
 title='Cerrar Ventana' onclick='verCerrarCuentasACobrar()' />
 </td>
 </tr>
-</table>
-<br>
+</table> 
 <center>
 
-<table class='divMenuf' style='width:92%;'>
+<table class='divMenuf' style='width:98%;'>
 <tr>
 <td style='width:13%;'>
 <p class='pTituloC' >Fecha inicio
@@ -8671,7 +8670,7 @@ onclick='buscarcuentaacobrar()'>
 </tr>
 </table>
 
-<div class='divMenuf' style='width:90%' >
+<div class='divMenuf' style='width:98%' >
 <table style="width:100%">
 <tbody><tr>
 <td style="width:50%;text-align:left">
@@ -8797,14 +8796,15 @@ style='height:250px'>
 </table>
 </div>
 
-<table class='divMenuf' style='width:92%'>
+<table class='divMenuf' style='width:98%'>
 <tr>
 <td style='width:35%;'>
 <p class='pTituloC'>Registro
 Selecc..</p>
-<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCuentasAcobrar' style='width:423px' />
-<input id='btnCuentasCobrar1' type="button" value="Cargar Pago" class="btn4" onclick='verCerrarCargarPagoDesdeCuentas("1")' style=" background-color: #ccc;">
-<input id='btnCuentasCobrar2' type="button" value="Mas detalles..." class="btn4" onclick='irAventaDesdeCuentas()' style=" background-color: #ccc;">
+<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCuentasAcobrar' style='width:50%' />
+<input id='btnCuentasCobrar1' type="button" value="Cargar Pago" class="btn4" onclick='verCerrarCargarPagoDesdeCuentas("1")' style=" background-color: #ccc;width:15%">
+<input id='btnCuentasCobrar2' type="button" value="Mas detalles..." class="btn4" onclick='irAventaDesdeCuentas()' style=" background-color: #ccc;width:15%">
+<input id='btnCuentasCobrar3' type="button" value="Asignar Local" class="btn4" onclick='vercerrarAsignarLocal()' style=" background-color: #ccc;width:15%">
 </td>
 
 <td style='width:5%;'>
@@ -12359,7 +12359,7 @@ style='width:80%;height: 40px;border-radius: 12px;' />
 <tr>
 <td>
 <center>
-<div style='width:1000px;display:;min-height: 500px;' class='divAbms'>
+<div style='width:98%;min-height: 500px;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -12487,12 +12487,9 @@ onclick='verificarcreditos()' id='btnAbmGenerarCuotas' />
 </div>
 
 
-<div class='divMenuf' style='width:95%' >
-
-
-<br>
+<div class='divMenuf' style='width:98%' >
+ 
 <center>
-
 
 <div style='overflow:auto;' class='divScrollhideen'
 id='TableScroollCredito1'>
@@ -12560,18 +12557,14 @@ onclick='vercerrarhistorialdepagorimprimir("1")'
 style='background-color: #4CAF50;width:130px' />
 </td>
 </tr>
-</table>
-<br>
+</table> 
 </center>
 </div>
 
 
 </div>
-</center>
-<br>
-</div>
-<br>
-<br>
+</center> 
+</div> 
 </center>
 </td>
 </tr>
@@ -23735,7 +23728,7 @@ style='width:150px' />
 <tr>
 <td>
 <center>
-<div style='min-height:450px;width:750px;display:' class='divAbms'>
+<div style='min-height:450px;width:90%;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -23746,9 +23739,7 @@ style='width:150px' />
 title='Cerrar Ventana' onclick='vercerrarhistorialdepagorimprimir("","")' />
 </td>
 </tr>
-</table>
-<br>
-<br>
+</table> 
 <center>
 <div class='divMenuf'>
 <table class="tableCabeceraRegistro">
@@ -23775,15 +23766,13 @@ COBRADOR
 </tr>
 </tbody>
 </table>
-<div class="div_cuerpo_table" id="table_historial_pagos_reimpresion"></div>
+<div class="div_cuerpo_table" id="table_historial_pagos_reimpresion" style='height:50vh;'></div>
 <BR>
 <input class='btn2' type='button' value=':: Re-Imprimir ticket ::'
 onclick='ReImprimirTicketPagos()' />
-<br>
+ 
 
-</div>
-<br>
-<br>
+</div> 
 </center>
 </div>
 </center>
@@ -23791,6 +23780,47 @@ onclick='ReImprimirTicketPagos()' />
 </tr>
 </table>
 </div>
+
+
+<div class='principal2' style='display:none' id='divAsignarLocal'>
+<table style='width:100%;height:100%' id='tdEfectoAsignarLocal'>
+<tr>
+<td>
+<center>
+<div style='min-height:450px;width:750px;display:' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'> <b style='font-size: 30px;' >Asignar</b> Local </p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='vercerrarAsignarLocal()' />
+</td>
+</tr>
+</table> 
+<center>
+<div class='divMenuf' style='height: 200px;'>
+
+<p class='pTituloC' >Local:</p>
+<select class="inputfiltro" id="inptlocalAsignarLocal"></select>
+<BR>
+ 
+
+ 
+
+</div> 
+<input class='btn2' type='button' value='Guardar cambio' onclick='VerificarDatosabmAsignarLocal()' />
+</center>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+
+
 
 <div class='principal2' style='display:none' id='divCargaPagos'>
 <table style='width:100%;height:100%' id='tdEfectoCargarPagosVenta'>

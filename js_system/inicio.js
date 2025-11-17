@@ -511,7 +511,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 
 
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.49"
+var codigodeactualizacion="X-GT-1-JMTG-V1.50"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -10300,6 +10300,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalContabilidadCompra").innerHTML =""	
 	document.getElementById("inptBuscarLocalPaciente").innerHTML =""	
 	document.getElementById("inptBuscarHistorialConsulta5").innerHTML =""	
+	document.getElementById("inptlocalAsignarLocal").innerHTML =""	
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10403,6 +10404,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptlocalMoroso").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptLocalProductoListadoDespachar2").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptBuscarHistorialConsulta5").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+	               document.getElementById("inptlocalAsignarLocal").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 				  seleccionarLocalUSer()
                  buscarOptionCaja();
 				}
@@ -19639,12 +19641,14 @@ function limpiarCamposCuentasAcobrar(){
 	document.getElementById("inptBuscarCuentasCobrar6").value = "";
 	document.getElementById("btnCuentasCobrar1").style.backgroundColor = "#ccc";
 	document.getElementById("btnCuentasCobrar2").style.backgroundColor = "#ccc";
+	document.getElementById("btnCuentasCobrar3").style.backgroundColor = "#ccc";
 	// document.getElementById("table_cuentas_a_cobrar").innerHTML=""
 	  document.getElementById("tbProcessInformeCuentaACobrar").style.display='none'
 }
 function verCerrarVentanasHistorialCuenta(d){
 	document.getElementById("btnCuentasCobrar1").style=""
 	document.getElementById("btnCuentasCobrar2").style=""
+	document.getElementById("btnCuentasCobrar3").style=""
 	document.getElementById("divCuentaACobrar1").style.display="none"
 	document.getElementById("divCuentaACobrar2").style.display="none"
 	if(d=="1"){
@@ -19963,6 +19967,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 var NombreClienteCreditoPagar ="";
 
 
+var cod_ventaAsignarCod_local="";
 function obtenerdatoscuentaacobrar(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
@@ -19972,6 +19977,7 @@ function obtenerdatoscuentaacobrar(datostr) {
 	NombreClienteCreditoPagar = "&nbsp;&nbsp;&nbsp;&nbsp;"+ ($(datostr).children('td[id="td_datos_25"]').html()) +"==>>"+ $(datostr).children('td[id="td_datos_24"]').html(); 
 	nrofacturaaeliminar = $(datostr).children('td[id="td_datos_2"]').html();
 	idFkVenta = $(datostr).children('td[id="td_datos_1"]').html();
+	cod_ventaAsignarCod_local = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById("inptCobradorCargarPago").value = $(datostr).children('td[id="td_datos_5"]').html();
 	document.getElementById("inptDiasAtrazadoCargarPago").value = $(datostr).children('td[id="td_datos_10"]').html();
 	document.getElementById("inptRegistroSeleccCuentasAcobrar").value = $(datostr).children('td[id="td_datos_2"]').html();
@@ -19986,6 +19992,7 @@ function obtenerdatoscuentaacobrar(datostr) {
 	document.getElementById("inptDescuentoCargaPago").value = "0";
 	document.getElementById("btnCuentasCobrar1").style.backgroundColor = "#2196F3";
 	document.getElementById("btnCuentasCobrar2").style.backgroundColor = "#4CAF50";
+	document.getElementById("btnCuentasCobrar3").style.backgroundColor = "#532a6d";
 }
 function verCerrarCargarPagoDesdeCuentas(d) {
 	if (d == "1") {		
@@ -38248,6 +38255,8 @@ function AbmCajaEscritorio( idabm,accion) {
 	});
 
 }
+
+
 function BuscarAbmCajaEscritorio() {
 
 	document.getElementById("divBuscadorCajaEscritorio").innerHTML = paginacargando;
@@ -38292,5 +38301,86 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 		}
 	});
 	}
+ 
 
+function vercerrarAsignarLocal(){ 
+	if(document.getElementById("divAsignarLocal").style.display==""){ 
+		document.getElementById("tdEfectoAsignarLocal").className="magictime vanishOut"
+		$("div[id=divAsignarLocal]").fadeOut(500);	  		
+	}else{	
+		if(controlacceso("ASIGNARLOCAL","accion")==false){return;}
+			if(idFkVenta==""){
+				ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#") 
+				return
+			} 
+		document.getElementById("divAsignarLocal").style.display=""
+		document.getElementById("tdEfectoAsignarLocal").className="magictime slideDownReturn"	
+	}
+}
+ 
+function VerificarDatosabmAsignarLocal(){
+	
+	var inptlocalAsignarLocal=  document.getElementById('inptlocalAsignarLocal').value 
+	if(cod_ventaAsignarCod_local=="" ){ 
+		ver_vetana_informativa("Falto Seleccionar un Registro")
+		return
+	}
+ 
+	if(inptlocalAsignarLocal==""){ 
+		ver_vetana_informativa("Falto Seleccionar un registro")
+		return
+	}
+	 
+	 accion = "abmAsignarLocal";
+	 
+	abmAsignarLocal( cod_ventaAsignarCod_local,inptlocalAsignarLocal,accion)
+}
+function abmAsignarLocal( cod_ventaAsignarCod_local,inptlocalAsignarLocal,accion) {
+	verCerrarEfectoCargando("1")
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", accion)
+	datos.append("cod_ventaAsignarCod_local", cod_ventaAsignarCod_local) 
+	datos.append("inptlocalAsignarLocal", inptlocalAsignarLocal)
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,	 
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+
+			return false;
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("")
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+
+               Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) { 
+					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")				
+					buscarcuentaacobrar()
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+
+
+		}
+	});
+
+}
 

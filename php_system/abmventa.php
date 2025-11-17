@@ -577,7 +577,54 @@ AsignarCobrador($cod_venta,$cobrador);
 
 
 
+
+
+
+if($operacion=="abmAsignarLocal")
+{
+
+$cod_ventaAsignarCod_local=$_POST['cod_ventaAsignarCod_local'];
+$cod_ventaAsignarCod_local = utf8_decode($cod_ventaAsignarCod_local);
+
+$inptlocalAsignarLocal =$_POST['inptlocalAsignarLocal'];
+$inptlocalAsignarLocal = utf8_decode($inptlocalAsignarLocal);
+
+abmAsignarLocal($cod_ventaAsignarCod_local,$inptlocalAsignarLocal);
+
 }
+
+
+}
+
+
+
+function abmAsignarLocal($cod_ventaAsignarCod_local,$inptlocalAsignarLocal)
+{
+	
+ 
+$mysqli=conectar_al_servidor(); 
+
+$consulta1="Update venta set cod_local=?  where cod_venta=?";
+$stmt1 = $mysqli->prepare($consulta1);
+$ss='ss';
+$stmt1->bind_param($ss,$inptlocalAsignarLocal,$cod_ventaAsignarCod_local);
+
+if (!$stmt1->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+
+}
+
+ mysqli_close($mysqli); 
+$informacion =array("1" => "exito");
+echo json_encode($informacion);	
+exit;
+	
+}
+
+
+
+
 
 
 function AsignarCobrador($cod_venta,$cobrador)

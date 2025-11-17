@@ -1789,7 +1789,7 @@ textarea:focus, select:focus {
 .tableCabeceraRegistro td {
   padding: 6px;
   text-align: center;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
 }
 
 .div_cuerpo_table {
@@ -2053,4 +2053,92 @@ text-align: justify;
   font-weight: bold;
   color: #222;
   margin: 5px 0 0;
+}
+
+ 
+
+/* --- Contenedor principal del modal --- */
+.divAbms {
+    /* background: #fff; */
+    width: 750px;
+    min-height: 450px;
+    border-radius: 18px;
+    /* padding: 25px; */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    animation: fadeIn 0.25s ease-out;
+}
+
+/* --- Cabecera --- */
+.tableMenuZ {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pTituloB {
+    font-size: 26px;
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.iconoBtn {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    transition: transform .2s;
+}
+
+.iconoBtn:hover {
+    transform: scale(1.12);
+}
+
+/* --- Sección central --- */
+.divMenuf { 
+    text-align: center;
+}
+ 
+/* --- Select mejorado --- */
+.inputfiltro {
+    width: 80%;
+    max-width: 400px;
+    /* padding: 12px 10px; */
+    border: 2px solid #d1d1d1;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.inputfiltro:focus {
+    border-color: #2196F3;
+    box-shadow: 0 0 5px rgba(33,150,243,0.4);
+}
+
+/* --- Botón moderno --- */
+.btn2 {
+    margin-top: 25px;
+    background: #2196F3;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 17px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 600;
+}
+
+.btn2:hover {
+    background: #0d7ad6;
+    transform: translateY(-2px);
+}
+
+.btn2:active {
+    transform: scale(0.97);
+}
+
+/* --- Animación suave de entrada --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
