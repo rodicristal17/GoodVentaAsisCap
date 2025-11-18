@@ -19718,7 +19718,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	var filtrofecha = document.getElementById("inptBuscarCuentasCobrar5").value
 	var codlocal = document.getElementById("inptBuscarCuentasCobrar6").value
 	var vendedor = document.getElementById("inptBuscarCuentasCobrar7").value
-	
+	const nro_venta = document.getElementById("inptBuscarCuentasCobrar4").value
 	
 	if(controldebusquedadInformeCuentaCobrar==true){
 		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
@@ -19746,7 +19746,8 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 		"codlocal": codlocal,
 		"filtro": filtro,
 		"vendedor": vendedor,
-		"funt": "cuentasacobrar"
+		"funt": "cuentasacobrar",
+		"nro_venta": nro_venta,
 	};
 	$.ajax({
 		data: datos,
@@ -19862,6 +19863,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	var filtrofecha = document.getElementById("inptBuscarCuentasCobrar5").value
 	var codlocal = document.getElementById("inptBuscarCuentasCobrar6").value
 	var vendedor = document.getElementById("inptBuscarCuentasCobrar7").value
+	const nro_venta = document.getElementById("inptBuscarCuentasCobrar4").value
 	if(c=="1"){
 		controldebusquedadInformeCuentaCobrar=true
 	}
@@ -19892,7 +19894,8 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 		"totaldeuda": totaldeuda,
 		"totalcobrar": totalcobrar,
 		"registrocargado": registrocargadoinformecuentasacobrar,
-		"funt": "mascuentasacobrar"
+		"funt": "mascuentasacobrar",
+		"nro_venta": nro_venta,
 	};
 	$.ajax({
 		data: datos,

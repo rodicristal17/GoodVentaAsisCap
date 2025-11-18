@@ -153,13 +153,16 @@ $filtro = utf8_decode($filtro);
 $vendedor=$_POST['vendedor'];
 $vendedor = utf8_decode($vendedor);
 
+$nro_venta=$_POST['nro_venta'];
+$nro_venta = utf8_decode($nro_venta);
+
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor);
+cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta);
 
 }
 	if($operacion=="mascuentasacobrar")
@@ -191,13 +194,16 @@ $registrocargado = utf8_decode($registrocargado);
 
 $vendedor=$_POST['vendedor'];
 $vendedor = utf8_decode($vendedor);
+
+$nro_venta=$_POST['nro_venta'];
+$nro_venta = utf8_decode($nro_venta);
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor);
+mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_venta);
 
 }
 
@@ -3050,7 +3056,7 @@ if($nroCancelado==0){
 }
 
 
-function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor)
+function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$num_factura)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
@@ -3078,7 +3084,10 @@ $condicionCodLocal=" and vt.cod_local='$codlocal' ";
 	if($telefono!=""){
 	  $condiciontelefono=" and  (Select telefono from persona where cod_persona=cod_clienteFK) like '%".$telefono."%' ";
 	}	
-	
+	$condicionFactura="";
+	if (!empty($num_factura)) {
+		$condicionFactura= " and vt.num_factura='$num_factura'";
+	}
 	$condicionfechafiltro=" ";
 	if($filtrofecha!=""){
 	 $condicionfechafiltro=" and  cr.fechapago='$filtrofecha' ";
@@ -3115,7 +3124,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 300 ";
+".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor.$condicionFactura."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 300 ";
  
 
 // echo($sql);
@@ -3247,7 +3256,7 @@ $sql= "select cr.plazo
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor."  group by cr.cod_venta order by cr.fechapago asc ";
+".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor.$condicionFactura."  group by cr.cod_venta order by cr.fechapago asc ";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
@@ -3263,7 +3272,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor)
+function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_factura)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
@@ -3295,7 +3304,10 @@ $condicionCodLocal=" and vt.cod_local='$codlocal' ";
 	if($filtrofecha!=""){
 	 $condicionfechafiltro=" and  cr.fechapago='$filtrofecha' ";
 	}
-
+	$condicionFactura="";
+	if (!empty($nro_factura)) {
+		$condicionFactura= " and vt.num_factura='$nro_factura'";
+	}
 $condicionFecha="";
 if($filtro=="1")
 {
@@ -3329,7 +3341,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 100 ";
+".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor.$condicionFactura."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 100 ";
  
 
 
