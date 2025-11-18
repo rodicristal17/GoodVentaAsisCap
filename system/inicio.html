@@ -1472,7 +1472,6 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
-
 <table  class='divMenub' id='divMenuContabilidadCompra'
 onclick='verCerrarInformeContabilidadCompra()' style='text-align:center;'>
 <tr>
@@ -1488,6 +1487,20 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table  class='divMenub' id='divMenuAsistencia'
+onclick='verCerrarInformeAsistencia(true)' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/report.png' />
+<p class='pTitulo4'>Informe de asistencia</p>
+<center>
+<div id='divMinimizadoInformeAsistencia' style='display:none'
+class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
 </div>
 
 <div style='overflow:auto'>
@@ -17610,9 +17623,164 @@ ZONA
 </table>
 </div>
 
+<div class="principal2" style="display: none;" id="divInformeAsistencia">
+  <table style="width:100%;height:100%" id="tdEfectoInformeAsistenca" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divPrincipalrepor">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Informe de <b style="font-size: 30px;">Asistencia</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
+                        onclick="ordenimpresion()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                        onclick="minimizarInformeAsistencia()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="verCerrarInformeAsistencia(false)">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <br>
+
+              <div class="divMenuf">
+                <table style="width:100%">
+                  <tbody>
+                    <tr>
+
+                      <td style="width:15%;">
+                        <p class="pTituloC">Fecha inicio</p>
+                        <input class="inputText" type="Date" id="inptBuscarInformeAsistenciaF1" style="width:135px">
+                      </td>
+
+                      <td style="width:15%;">
+                        <p class="pTituloC">Fecha Fin</p>
+                        <input class="inputText" type="Date" id="inptBuscaInformeAsistenciaF2" style="width:135px">
+                      </td>
+
+                      <td style="width:15%;">
+                        <p class="pTituloC">Local</p>
+                        <select class="inputSelect" id="inptLocalInformeAsistencia" style="width:270px">
+                          <option value="">SELECCIONAR</option>
+                        </select>
+                      </td>
+
+                      <td style="width:60%;text-align:right">
+                        <input type="button" style="margin-top: 17px;" value="Buscar" class="btn4"
+                          onclick="obtenerVistaInformeAsistencia()">
+                        <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion()"
+                          style="width:100px;background-color: rgb(58 58 58);">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="divMenuf" style="    width: 97%;">
+                <table class="tableCabeceraRegistro" id="tdTituloAudiProducto">
+                  <tbody>
+                    <tr>
+                      <td class="td_registro" style="width:10%;">
+                        #
+                      </td>
+                      <td class="td_registro" style="width:45%;">
+                        USUARIO
+                      </td>
+                      <td class="td_registro" style="width:15%;">
+                        FECHA
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        ENTRADA
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        SALIDA
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        IP
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="tableCabeceraRegistro" id="tdTituloAudiProducto">
+                  <tbody>
+                    <tr>
+                      <td class="td_registro" style="width:10%;">
+                        <input class="inputfiltro" type="number" id="inptInformeAsistencia1" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
+                      </td>
+                      <td><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia1')"></td>
+                      <td class="td_registro" style="width:45%;">
+                        <input class="inputfiltro" type="text" id="inptInformeAsistencia2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
+                      </td>
+                      <td><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia2')"></td>
+                      <td class="td_registro" style="width:15%;">
+                        <input class="inputfiltro" type="Date" id="inptInformeAsistencia3" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
+                      </td>
+                      <td><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia3')"></td>
+                      <td class="td_registro" style="width:10%;">
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="divTablesScrool" id="TableScroollAudiProducto2" style="height: 300px;">
+                  <div class="div_cuerpo_table" id="table_InformeAsistencia"
+                    style="height: auto;border:none;width: 100%;">
+                  </div>
+                  <table style='width:100%;height:50px;display:none' id='tbProcessInformeAsistencia'>
+                  <tr>
+                  <td  style='width:90%'>
+                  <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeAsistencia'></div></div>
+                  </td>
+                  <td style='width:10%;text-align:center'>
+                  <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeAsistencia()" style="width:100px;background-color:rgb(58 58 58)">
+                  </td>
+                  </tr>
+                  </table>
+                </div>
+                <br>
+                <div class="divMenuf" style="width:100%">
+                  <table style="width:98%">
+                    <tbody>
+                      <tr>
+                        <td style="width:15%;text-align:left">
+                          <p class="pTituloC">Total Registro:</p>
+                          <input class="inputTextDisable" type="text" disabled="" id="inptTotalRegistoInformeAsistencia"
+                            style="width:120px;text-align:center">
+                        </td>
+                        <td style="width:15%;text-align:left">
+                          <p class="pTituloC">Total minutos:</p>
+                          <input class="inputTextDisable" type="text" disabled="" id="inptTotalMinutosInformeAsistencia"
+                            style="width:120px;text-align:center">
+                        </td>
+                        <td style="width:85%;text-align:left"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <br>
+              </div>
+            </div>
+          </center>
 
 
-
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 <div class='principal2' style='display:none' id='divAudiProducto'>
 <table style='width:100%;height:100%' id='tdEfectoAudiProducto'>

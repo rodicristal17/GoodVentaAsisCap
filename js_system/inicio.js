@@ -10303,6 +10303,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptBuscarLocalPaciente").innerHTML =""	
 	document.getElementById("inptBuscarHistorialConsulta5").innerHTML =""	
 	document.getElementById("inptlocalAsignarLocal").innerHTML =""	
+	document.getElementById("inptLocalInformeAsistencia").innerHTML =""	
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10366,6 +10367,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptLocalProductoEnviarA").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptBuscarProducto7").innerHTML = datos_buscados
 					document.getElementById("inptlocalProductoBuscarVista").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
+					document.getElementById("inptLocalInformeAsistencia").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalMisGastos").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalCompra").innerHTML = datos_buscados
 					document.getElementById("inputSelectLocalVistaCompra").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados

@@ -52,6 +52,8 @@
                 $fecha_desde= isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
                 $fecha_hasta= isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
                 $sinSalida= isset($_POST['sinSalida']) ? utf8_decode($_POST['sinSalida']) : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
+                $cod_local= isset($_POST['cod_local']) ? utf8_decode($_POST['cod_local']) : null;
                 $filtros= array(
                     'hora_entrada'=> $hora_entrada,
                     'hora_salida'=> $hora_salida,
@@ -59,13 +61,55 @@
                     'cod_usuarioFK'=> $cod_usuario,
                     'fecha_desde'=> $fecha_desde,
                     'fecha_hasta'=> $fecha_hasta,
-                    'sinSalida'=> $sinSalida
+                    'sinSalida'=> $sinSalida,
+                    'cod_local'=> $cod_local,
+                    'nombre_usuario'=> $nombre_usuario,
                 );
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
 
                 $registros= obtenerAsistencias($filtros, $limite);
                 echo json_encode(array("1" => "exito", "registros" => $registros));
                 break;
+            case 'buscarVistaInforme':
+                $cod_usuario= isset($_POST['cod_usuario']) ? utf8_decode($_POST['cod_usuario']) : null;
+                $fecha_desde= isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
+                $fecha_hasta= isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
+                $cod_local= isset($_POST['cod_local']) ? utf8_decode($_POST['cod_local']) : null;
+                $cod_asistencia= isset($_POST['cod_asistencia']) ? utf8_decode($_POST['cod_asistencia']) : null;
+                $filtros= array(
+                    'cod_usuarioFK'=> $cod_usuario,
+                    'fecha_desde'=> $fecha_desde,
+                    'fecha_hasta'=> $fecha_hasta,
+                    'nombre_usuario'=> $nombre_usuario,
+                    'cod_local'=> $cod_local,
+                    'cod_asistencia'=> $cod_asistencia,
+                );
+                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+
+                obtenerVistaAsistencia($filtros, $limite);
+                break;
+            case 'buscarMasVistaInforme':
+                $cod_usuario= isset($_POST['cod_usuario']) ? utf8_decode($_POST['cod_usuario']) : null;
+                $fecha_desde= isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
+                $fecha_hasta= isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
+                $cod_local= isset($_POST['cod_local']) ? utf8_decode($_POST['cod_local']) : null;
+                $cod_asistencia= isset($_POST['cod_asistencia']) ? utf8_decode($_POST['cod_asistencia']) : null;
+                $filtros= array(
+                    'cod_usuarioFK'=> $cod_usuario,
+                    'fecha_desde'=> $fecha_desde,
+                    'fecha_hasta'=> $fecha_hasta,
+                    'nombre_usuario'=> $nombre_usuario,
+                    'cod_local'=> $cod_local,
+                    'cod_asistencia'=> $cod_asistencia,
+                );
+                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : "0";
+
+                obtenerVistaAsistencia($filtros, $limite);
+                break;
+            default:
+                echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
     }
 
@@ -75,6 +119,30 @@
         // Si es diferente, retorna error con mensaje
         // Si es igual, registra la salida
         abmAsistencia($cod_usuarioFK, null, $hora_salida, null, $cod_asistencia);
+    }
+
+    function obtenerVistaAsistencia($filtros, $limite= "0") {
+        $cantRegistros= obtenerAsistencias($filtros);
+        $cantRegistros= count($cantRegistros);
+
+        $registros= obtenerAsistencias($filtros, $limite);
+
+        $pagina= "";
+        $minutosTotales= 0;
+        foreach ($registros as $registro) {
+            $minutosTotales += intval($registro['diferencia_minutos']);
+
+            $pagina .= "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>
+            <td style='width: 10%;'>".$registro['cod_asistencia']."</td>
+            <td style='width: 45%;'>".$registro['nombre_persona']."</td>
+            <td style='width: 15%;'>".substr($registro['fecha'], 0, 10)."</td>
+            <td style='width: 10%;'>".$registro['hora_entrada']."</td>
+            <td style='width: 10%;'>".$registro['hora_salida']."</td>
+            <td style='width: 10%;'>".$registro['direccion_ip']."</td>
+            </tr></table>";
+        }
+
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $minutosTotales));
     }
 
     function obtenerAsistencias($filtros, $limite= 0) {
@@ -90,19 +158,25 @@
 
             switch ($key) {
                 case 'fecha_desde':
-                    $sqlFiltro .= "DATE(fecha) <= '$value'";
+                    $sqlFiltro .= "DATE(a.fecha) >= '$value'";
                     break;
                 case 'fecha_hasta':
-                    $sqlFiltro .= "DATE(fecha) >= '$value'";
+                    $sqlFiltro .= "DATE(a.fecha) <= '$value'";
                     break;
                 case 'sinSalida': 
-                    $sqlFiltro .= "hora_salida is null";
+                    $sqlFiltro .= "a.hora_salida is null";
+                    break;
+                case 'cod_local':
+                    $sqlFiltro .= "u.cod_localFK = '$value'";
+                    break;
+                case 'nombre_usuario':
+                    $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = a.cod_usuarioFK) LIKE '%$value%'";
                     break;
                 default:
                     if (is_numeric($value)) {
-                        $sqlFiltro .= "$key = $value";
+                        $sqlFiltro .= "a.$key = $value";
                     } else {
-                        $sqlFiltro .= "$key = '$value'";
+                        $sqlFiltro .= "a.$key = '$value'";
                     }
                     break;
             }
@@ -114,7 +188,10 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT * FROM asistencia $sqlFiltro ORDER BY fecha DESC $limite";
+        $sql= "SELECT *, 
+            IF(hora_salida IS NOT NULL,TIMESTAMPDIFF(MINUTE, hora_entrada, hora_salida),NULL) AS diferencia_minutos,
+            IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK),'') AS nombre_persona
+            FROM asistencia a JOIN usuario u ON u.cod_usuario = a.cod_usuarioFK $sqlFiltro ORDER BY fecha DESC $limite";
 
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
@@ -125,7 +202,7 @@
         }        
 
         $result = $stmt->get_result();
-        $result = mysqli_fetch_all($result);
+        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
         $stmt->close();
         return $result;

@@ -55,8 +55,12 @@ function verificarCamposMecanicoDental() {
         ver_vetana_informativa("Falta seleccionar el tipo de trabajo");
         return false;
     }
-    if (fecha_entrega == "") {
-        ver_vetana_informativa("Falta seleccionar la fecha de entrega");
+    if (fecha_retiro == "") {
+        ver_vetana_informativa("Falta seleccionar la fecha de retiro");
+        return false;
+    }
+    if (idFkVenta == "" || idFkVenta == null) {
+        ver_vetana_informativa("Falta seleccionar la venta");
         return false;
     }
     
