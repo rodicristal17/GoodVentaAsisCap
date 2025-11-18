@@ -33,8 +33,7 @@ CREATE TABLE asistencia (
     FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
 );
 
-
-CREATE TABLE tipo_trabajo_mecanico_dentaL (
+CREATE TABLE tipo_trabajo_mecanico_dental (
     cod_tipo_trabajo_mecanico_dental INT PRIMARY KEY AUTO_INCREMENT,
     descripcion VARCHAR(100),
     estado ENUM('activo', 'inactivo') DEFAULT 'activo'
@@ -57,3 +56,7 @@ CREATE TABLE mecanico_dental (
 -- Agregar ppermisos::
 --CREARNUEVOMOTIVO, VERABMLIMITECAJA
 --VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL
+
+SELECT md.*, t.descripcion as nombre_tipo_trabajo, 
+         (SELECT nombre_persona FROM persona JOIN venta v ON v.cod_clienteFK = cod_persona WHERE v.cod_venta = md.cod_ventaFK ) AS nombre_paciente
+         FROM mecanico_dental md JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = md.cod_tipo_trabajoFK  ORDER BY md.fecha_entrega DESC;

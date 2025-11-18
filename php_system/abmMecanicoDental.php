@@ -98,6 +98,8 @@
                 );
                 obtenerVistaTipoTrabajo($filtros);
                 break;
+            default:
+                echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
     }
 

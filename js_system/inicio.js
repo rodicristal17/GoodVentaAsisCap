@@ -404,6 +404,8 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("imgFotoPerfilMisDatos").style.backgroundImage= "url("+fotocliente3+")";
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
 						document.getElementById("fotoPerfilUsuario").src= fotocliente3;
+						document.getElementById('inptTelefonoMisDatos').value= datos["9"];
+						document.getElementById('inptCorreoMisDatos').value = datos["10"];
 						
 						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 							document.getElementById('DivVistaOdontologia').style.display = ""

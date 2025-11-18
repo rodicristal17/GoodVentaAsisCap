@@ -3,6 +3,9 @@ function registrarAsistencia() {
     // Obtiene la hora actual
     const fechaActual = new Date();
     const hora= fechaActual.toLocaleTimeString('es-PY', { hour12: false });
+	
+	// Deshabilita temporalmente el boton para marcar asistencia
+	document.getElementById("btnRegistrarAsistencia").disabled = true;
 
     obtener_datos_user()
 	var datos = new FormData();
@@ -124,6 +127,7 @@ function obtenerAsistenciaUsuario() {
 	        verCerrarEfectoCargando("");
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("Error de conexion al registrar asistencia");
+			document.getElementById("btnRegistrarAsistencia").disabled = false;
 		},
 		success: function (responseText) {
 			Respuesta = responseText;
@@ -134,6 +138,7 @@ function obtenerAsistenciaUsuario() {
 				if (Respuesta == "exito") {
 					let registros= datos["registros"];
 					tablaRegistros= document.getElementById("tableRegistroEntrada");
+					document.getElementById("btnRegistrarAsistencia").disabled = false;
 					if (registros.length > 0) {
 						cod_asistencia= registros[0][0];
 						document.getElementById("btnRegistrarAsistencia").value = "Marcar Salida";
