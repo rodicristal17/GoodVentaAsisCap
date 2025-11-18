@@ -55,8 +55,4 @@ CREATE TABLE mecanico_dental (
 
 -- Agregar ppermisos::
 --CREARNUEVOMOTIVO, VERABMLIMITECAJA
---VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL
-
-SELECT md.*, t.descripcion as nombre_tipo_trabajo, 
-         (SELECT nombre_persona FROM persona JOIN venta v ON v.cod_clienteFK = cod_persona WHERE v.cod_venta = md.cod_ventaFK ) AS nombre_paciente
-         FROM mecanico_dental md JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = md.cod_tipo_trabajoFK  ORDER BY md.fecha_entrega DESC;
+--VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA

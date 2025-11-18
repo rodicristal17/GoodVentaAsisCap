@@ -82,6 +82,8 @@ var registrocargadoinformeAsistencia=0;
 var totalregistroinformeAsistencia=0;
 var controldebusquedadInformeAsistencia= true;
 function obtenerVistaInformeAsistencia() {
+	if(controlacceso("VERLISTADOASISTENCIA","accion")==false){ return;}
+
 	// Obtiene los datos de filtros
 	let fecha_desde= document.getElementById("inptBuscarInformeAsistenciaF1").value;
 	let fecha_hasta= document.getElementById("inptBuscaInformeAsistenciaF2").value;
@@ -365,6 +367,7 @@ function obtenerAsistenciaUsuario() {
 }
 
 function verCerrarInformeAsistencia(mostrar) {
+	if(controlacceso("VERLISTADOASISTENCIA","accion")==false){ return;}
 	if (mostrar) {
 		document.getElementById("divInformeAsistencia").style.display = "";
 	} else {
