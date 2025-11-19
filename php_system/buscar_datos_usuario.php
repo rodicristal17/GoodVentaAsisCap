@@ -37,7 +37,7 @@ function buscardatos($user)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.email,
+		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,
 		IFNULL((Select cdu.cod_cobradorFk from cobradorusuario cdu where cdu.cod_usuarioFk=us.cod_usuario),0) as ControlCobra
 		from  persona pr inner join usuario us on us.cod_usuario=pr.cod_persona  where cod_persona=? ";
 
@@ -67,8 +67,23 @@ if ( ! $stmt->execute()) {
 		   $accesos=buscaracceso($user);
 		  $url= utf8_encode($valor['url']);
 		  $telefono= utf8_encode($valor['telefono']);
-		  $correo= utf8_encode($valor['email']);
-		  $informacion =array("1" =>"exito","2" => $nombre_persona,"3" => $acceso,"4" => $cod_localFK ,"5" => $accesos,"6" => $ControlCobra ,"7" => $ControlCobra, "8" => $url, "9" => $telefono, "10" => $correo );
+		  $direccion= utf8_encode($valor['direccion']);
+		  $telefono_referencia= utf8_encode($valor['telefono_referencia']);
+		  $tipo_relacion= utf8_encode($valor['tipo_relacion']);
+		  $informacion =array(
+			"1" =>"exito",
+		  	"2" => $nombre_persona,
+		  	"3" => $acceso,
+		  	"4" => $cod_localFK,
+		  	"5" => $accesos,
+		  	"6" => $ControlCobra,
+		  	"7" => $ControlCobra, 
+		  	"8" => $url, 
+		  	"9" => $telefono, 
+		  	"10" => $direccion, 
+		  	"11" => $tipo_relacion, 
+		  	"12" => $telefono_referencia 
+		);
 echo json_encode($informacion);	
 exit;
 		      

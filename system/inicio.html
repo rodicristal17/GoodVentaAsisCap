@@ -391,8 +391,8 @@ style='display:none' class='divMinimizado'>
 <td style='width:35%;border-left: solid 1px #cacaca;'>
   <div style="width:100%;display: grid;justify-items: center;">
     <div style="position:relative; display: inline-block;">
-      <img id='fotoPerfilUsuario' style='height:200px;aspect-ratio: 1/1;object-fit: contain;border-radius:100px;border-style: groove;border-width: 5px;'/>
-      <img src="../iconos/editar.png" alt="Icono" style="position: absolute; bottom: 20px; right: 10px; width: 40px; height: 40px;border-radius: 15px;padding: 5;background-color: #b7b7b7;" onclick="verCerrarMisDatos(1);"/>
+      <img id='fotoPerfilUsuario' style='height:200px;aspect-ratio: 1/1;object-fit: contain;border-radius:100px;border-style: solid;border-color: #6a6a6a;border-width: 3px;'/>
+      <img src="../iconos/editar.png" alt="Icono" style="position: absolute; bottom: 5px; right: 8px; width: 40px; height: 40px;border-radius: 15px;padding: 5;background-color: #b7b7b7;" onclick="verCerrarMisDatos(1);"/>
     </div>
     <p class='pTitulo14' id='nombrePerfilUsuario' style="margin:0;margin-top: 5px"></p>    
   </div>
@@ -1787,7 +1787,7 @@ title='Volver Atras' onclick='verCerrarVentanaAbmUsuarios("2","")' />
 
 <center>
 <div style='overflow:auto'>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:470px'>
+<div class='divMenuf' style='float:left;margin:1%;width:45%;height:500px'>
  
  
  <p class='pTituloC'>Foto Perfil</p>
@@ -1836,8 +1836,18 @@ id='inptNroTelefUsuario' style='width:200px;' />
 </tr>
 </table>
 
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Nro Telef. de Referencia :</p>
+<input class='inputText' type='text' placeholder=''
+id='inptNroTelefReferenciaUser' style='width:200px;' />
+</td>
+</tr>
+</table>
+
 </div>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:470px'>
+<div class='divMenuf' style='float:left;margin:1%;width:45%;height:500px'>
   
 <table style='width:100%'>
 <tr>
@@ -1886,7 +1896,7 @@ style='width:280px;'></select>
 <tr>
 <td>
 <p class='pTituloC' >Niveles de acceso :</p>
-<select class="inputSelect" id='inptTipoUser' style='width:200px;'>
+<select class="inputSelect" id='inptAccesoUser' style='width:200px;'>
 <option value="Administrador">ADMINISTRADOR</option>
 <option value="Vendedor">VENDEDOR</option>
 </select>
@@ -1905,7 +1915,27 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
- 
+
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Dereccion :</p>
+<textarea class="inputText" id="inptDireccionUser" style='height:80%;'>
+</textarea>
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Tipo de relacionamiento:</p>
+<textarea class="inputText" id="inptTipoRelacionamientoUser" style='height:80%;'>
+</textarea>
+</td>
+</tr>
+</table>
+
 </div>
 </div>
 <br>
@@ -2075,8 +2105,17 @@ style='background-color:#b7b7b7'>
 </tr>
 <tr>
 <td>
-<p class='pTituloC' >Usuario :</p>
+<p class='pTituloC' >Nombre completo :</p>
 <input type='text'  class='inputText' id='inptNombreMisDatos'  />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'  >Relacionamiento :</p>
+<input type='text' class='inputTextDisable' style='width:100%;' id='inptRelacionamientoMisDatos' disabled/>
 </td>
 </tr>
 </table>
@@ -2093,6 +2132,24 @@ style='background-color:#b7b7b7'>
 <table style='width:100%'>
 <tr>
 <td>
+<p class='pTituloC'   >Contraseña de acceso :</p>
+<input type='Password' placeholder='Obligatorio(*)' class='inputText' style='width:250px' id='inptPassMisDatos' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'  >Local :</p>
+<select class="inputSelect" id="inptLocalMisDatos" style="width:110px" disabled></select>
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
 <p class='pTituloC'  >Telefono :</p>
 <input type='text' class='inputText' style='width:250px' id='inptTelefonoMisDatos'/>
 </td>
@@ -2102,8 +2159,8 @@ style='background-color:#b7b7b7'>
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC'  >Correo :</p>
-<input type='text' class='inputText' style='width:250px' id='inptCorreoMisDatos'/>
+<p class='pTituloC'  >Direccion :</p>
+<input type='text' class='inputText' style='width:250px' id='inptDireccionMisDatos'/>
 </td>
 </tr>
 </table>
@@ -2111,8 +2168,8 @@ style='background-color:#b7b7b7'>
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC'   >Contraseña de acceso :</p>
-<input type='Password' placeholder='Obligatorio(*)' class='inputText' style='width:250px' id='inptPassMisDatos' />
+<p class='pTituloC'  >Contacto de referencia :</p>
+<input type='text' class='inputText' style='width:250px' id='inptContactoReferenciaMisDatos'/>
 </td>
 </tr>
 </table>

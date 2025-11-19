@@ -405,7 +405,12 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
 						document.getElementById("fotoPerfilUsuario").src= fotocliente3;
 						document.getElementById('inptTelefonoMisDatos').value= datos["9"];
-						document.getElementById('inptCorreoMisDatos').value = datos["10"];
+						document.getElementById('inptDireccionMisDatos').value = datos["10"];
+						document.getElementById('inptContactoReferenciaMisDatos').value = datos["12"];
+						document.getElementById('inptRelacionamientoMisDatos').value = datos["11"];
+						
+						// Se indica el local
+						//PENDIENTE document.getElementById('inptLocalMisDatos').value = 
 						
 						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
@@ -963,13 +968,13 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptNroTelefUsuario').value = $(datostr).children('td[id="td_datos_8"]').html();
 	document.getElementById('inptClaveAcceso').value = $(datostr).children('td[id="td_datos_3"]').html();
 	document.getElementById('inptContrasenhaUser').value = $(datostr).children('td[id="td_datos_4"]').html();
-	document.getElementById('inptTipoUser').value = $(datostr).children('td[id="td_datos_6"]').html();
+	document.getElementById('inptAccesoUser').value = $(datostr).children('td[id="td_datos_6"]').html();
 	document.getElementById('inptEstadoUser').value = $(datostr).children('td[id="td_datos_5"]').html();
 	document.getElementById('inptlocaluser').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptTipoUsuUser').value = $(datostr).children('td[id="td_datos_10"]').html();
-	
-	
-	
+	document.getElementById('inptTipoRelacionamientoUser').value = $(datostr).children('td[id="td_datos_14"]').html();
+	document.getElementById('inptNroTelefReferenciaUser').value = $(datostr).children('td[id="td_datos_12"]').html();
+	document.getElementById('inptDireccionUser').value = $(datostr).children('td[id="td_datos_13"]').html();
 		
 	fotocliente3= $(datostr).children('td[id="td_datos_11"]').html(); 
 	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
@@ -987,10 +992,13 @@ function verificarcamposusuario() {
 	var inptNroTelefUsuario = document.getElementById('inptNroTelefUsuario').value
 	var inptClaveAcceso = document.getElementById('inptClaveAcceso').value
 	var inptContrasenhaUser = document.getElementById('inptContrasenhaUser').value
-	var inptTipoUser = document.getElementById('inptTipoUser').value
+	var inptAccesoUser = document.getElementById('inptAccesoUser').value
 	var inptEstadoUser = document.getElementById('inptEstadoUser').value
 	var inptlocaluser = document.getElementById('inptlocaluser').value
 	var inptTipoUsuUser = document.getElementById('inptTipoUsuUser').value
+	const inptTipoRelacionamientoUser= document.getElementById('inptTipoRelacionamientoUser').value;
+	const inptNroTelefReferenciaUser= document.getElementById('inptNroTelefReferenciaUser').value;
+	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
 	if (inptNombreApellidoUsuario == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO", "#")
 		return false;
@@ -1019,9 +1027,9 @@ function verificarcamposusuario() {
 		accion = "nuevo";
 		if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
 	}
-	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptTipoUser, inptEstadoUser, inptlocaluser, idAbmUsuario, accion);
+	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,idAbmUsuario, accion);
 }
-function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, cod_persona, accion) {
+function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion, cod_persona, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1037,7 +1045,10 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("password", pass)
 	datos.append("estado", estado)
 	datos.append("cod_localFK", cod_localFK)
-	datos.append("acceso", acceso)
+	datos.append("tipo_relacion", tipo_relacionamiento);
+	datos.append("telefono_referencia", telefono_referencia);
+	datos.append("direccion", direccion);
+	datos.append("acceso", acceso);
 	datos.append("tipo", tipo)
 	datos.append("foto", fotocliente3)
 	datos.append("ext", extcliente3)		
@@ -1116,6 +1127,11 @@ function AbmEditarMisDatos() {
 	if(pass==""){
 		ver_vetana_informativa("EL CONTRASEÑA NO PUEDE QUEDAR VACÍO")
 	}
+	const telefono_referencia= document.getElementById("inptContactoReferenciaMisDatos").value;
+	const telefono= document.getElementById("inptTelefonoMisDatos").value;
+	// Se usa el campo de correo como direccion
+	const direccion= document.getElementById("inptDireccionMisDatos").value;
+
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1126,9 +1142,14 @@ function AbmEditarMisDatos() {
 	datos.append("user", user)
 	datos.append("pass", pass)
 	datos.append("nombre", nombre)
+	datos.append("telefono_referencia", telefono_referencia);
+	datos.append("telefono", telefono);
+	datos.append("direccion", direccion);
 	datos.append("local", cod_localFKUSer)
 	datos.append("foto", fotocliente3)
 	datos.append("ext", extcliente3)
+
+	/// Falta enviar datos y que guarde
 	var OpAjax = $.ajax({
 		
 		data: datos,
@@ -1287,8 +1308,9 @@ function limpiarcamposusuarios() {
 		fotocliente3="";
 		extcliente3="";
 	
-	
-	
+	document.getElementById('inptDireccionUser').value="";
+	document.getElementById('inptNroTelefReferenciaUser').value="";
+	document.getElementById('inptTipoRelacionamientoUser').value="";
 	document.getElementById('inptEstadoUser').value = "Activo";
 	document.getElementById('btnAbmUsuario').value = "Guardar datos";
 	document.getElementById('btnEditarUsuario').style.backgroundColor="#b7b7b7";
@@ -10254,6 +10276,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptLocalProductoEnviarA").innerHTML = "";
 	document.getElementById("inptlocalProductoBuscarVista").innerHTML = "";
 	document.getElementById("inptlocalVenta").innerHTML = "";
+	document.getElementById("inptLocalMisDatos").innerHTML = "";
 	document.getElementById("inptlocalAperturaCierre").innerHTML = "";
 	document.getElementById("inptlocalCaja").innerHTML = "";
 	document.getElementById("inptlocalCompra").innerHTML = "";
@@ -10370,6 +10393,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptLocalInformeAsistencia").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalMisGastos").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalCompra").innerHTML = datos_buscados
+					document.getElementById("inptLocalMisDatos").innerHTML = datos_buscados
 					document.getElementById("inputSelectLocalVistaCompra").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalNroFactura").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptBuscarHistorialVenta8").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
@@ -10498,6 +10522,7 @@ function seleccionarLocalUSer(){
 		
 		document.getElementById("inptBuscarUsuario4").value = cod_localFKUSer
 		document.getElementById("inptlocalVenta").value = cod_localFKUSer
+		document.getElementById("inptLocalMisDatos").value = cod_localFKUSer
 		document.getElementById("inptlocalAperturaCierre").value = cod_localFKUSer
 		document.getElementById("inptlocalCaja").value = cod_localFKUSer
 		document.getElementById("inptlocalProductoBuscarInventario").value = cod_localFKUSer
@@ -28322,7 +28347,7 @@ function abmaccesolistanivel(d) {
 }
 function BuscarNivelesSelect() {
 
-	document.getElementById("inptTipoUser").innerHTML = ""
+	document.getElementById("inptAccesoUser").innerHTML = ""
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -28362,13 +28387,13 @@ function BuscarNivelesSelect() {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
           manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("inptTipoUser").innerHTML = ''
+			document.getElementById("inptAccesoUser").innerHTML = ''
 		},
 		success: function (responseText) {
 
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("inptTipoUser").innerHTML = ''
+			document.getElementById("inptAccesoUser").innerHTML = ''
 			
 		
 			try {
@@ -28378,7 +28403,7 @@ function BuscarNivelesSelect() {
 		       if (Respuesta == true) {
 				   
 					var pagina = datos[2];
-					document.getElementById("inptTipoUser").innerHTML=pagina
+					document.getElementById("inptAccesoUser").innerHTML=pagina
 					
 				}
 			} catch (error) {

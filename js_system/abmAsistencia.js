@@ -16,11 +16,9 @@ function registrarAsistencia() {
     if (cod_asistencia === "") {
         // Registrar entrada
         datos.append("accion", "nuevo");
-        datos.append("hora_entrada", hora);
     } else {
         // Registrar salida
         datos.append("accion", "registrarSalida");
-        datos.append("hora_salida", hora);
         datos.append("cod_asistencia", cod_asistencia);
     }
 

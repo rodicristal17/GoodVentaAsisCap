@@ -4,6 +4,8 @@
     include("buscar_nivel.php");
     include("classTable.php");
 
+    date_default_timezone_set('America/Asuncion');
+
     function verificar($funt) {
         $user = $_POST['useru'];
         $user = utf8_decode($user);

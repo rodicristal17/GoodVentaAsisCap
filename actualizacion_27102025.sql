@@ -53,6 +53,9 @@ CREATE TABLE mecanico_dental (
     Foreign Key (cod_tipo_trabajoFK) REFERENCES tipo_trabajo_mecanico_dental(cod_tipo_trabajo_mecanico_dental)
 );
 
+ALTER TABLE persona ADD COLUMN tipo_relacion VARCHAR(100);
+ALTER TABLE persona ADD COLUMN telefono_referencia INT(13);
+
 -- Agregar ppermisos::
 --CREARNUEVOMOTIVO, VERABMLIMITECAJA
 --VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
