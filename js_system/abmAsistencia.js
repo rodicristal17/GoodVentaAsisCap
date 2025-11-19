@@ -19,6 +19,7 @@ function registrarAsistencia() {
     } else {
         // Registrar salida
         datos.append("accion", "registrarSalida");
+		datos.append("cod_local", cod_localFKUSer);
         datos.append("cod_asistencia", cod_asistencia);
     }
 
@@ -55,6 +56,7 @@ function registrarAsistencia() {
 	        verCerrarEfectoCargando("");
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("Error de conexion al registrar asistencia");
+			document.getElementById("btnRegistrarAsistencia").disabled = false;
 		},
 		success: function (responseText) {
 			Respuesta = responseText;
@@ -71,6 +73,7 @@ function registrarAsistencia() {
 				GuardarArchivosLog(titulo)
 			} finally {
                 verCerrarEfectoCargando("");
+				document.getElementById("btnRegistrarAsistencia").disabled = false;
             }
 		}
 	});

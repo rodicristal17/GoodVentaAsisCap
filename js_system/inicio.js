@@ -410,7 +410,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById('inptRelacionamientoMisDatos').value = datos["11"];
 						
 						// Se indica el local
-						//PENDIENTE document.getElementById('inptLocalMisDatos').value = 
+						document.getElementById('inptLocalMisDatos').value = cod_localFKUSer;
 						
 						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
