@@ -59,6 +59,11 @@ $estado = utf8_decode($estado);
 
 }	
 
+if ($operacion=="relacionarProductosLocal"){
+	$cod_local=$_POST['cod_local'];
+	$cod_local = utf8_decode($cod_local);
+	relacionar_productos_local($cod_local);
+}
 
 if($operacion=="buscaroption")
 {
@@ -294,8 +299,89 @@ exit;
 
 }
 
+function relacionar_productos_local($cod_local)
+{
+	$mysqli = conectar_al_servidor();
+
+	$sql = "SELECT cod_producto FROM producto";
+
+	$stmt = $mysqli->prepare($sql);
+	if (! $stmt->execute()) {
+		echo "Error";
+		exit;
+	}
+	$result = $stmt->get_result();
+	$valor = mysqli_num_rows($result);
+
+	mysqli_close($mysqli);
+	if ($valor > 0) {
+		while ($valor = mysqli_fetch_assoc($result)) {
+			$cod_producto = $valor['cod_producto'];
+			comprobar_relacion($cod_producto, $cod_local);
+		}
+	}
+
+	$informacion = array("1" => "exito");
+	echo json_encode($informacion);
+	exit;
+}
+
+function comprobar_relacion($cod_productoFK,$cod_local)
+{
+	$mysqli=conectar_al_servidor();
+	
+	
+	$sql= "Select * from stocklocales WHERE cod_productofk = '$cod_productoFK' and cod_localfk = '$cod_local' ";
+		
+   
+   
+   $stmt = $mysqli->prepare($sql);
+
+if ( ! $stmt->execute()) {
+   echo "Error";
+   exit;
+}
+  
+	$result = $stmt->get_result();
+ $valor= mysqli_num_rows($result);
+mysqli_close($mysqli);
+
+ if ($valor<=0)
+ {
+	  insert_stock_local($cod_productoFK,$cod_local);
+ }
+ 
+ return true;
+
+}
+
+function insert_stock_local($cod_productoFK,$cod_local)
+{
+if($cod_productoFK=="" || $cod_local == ''  ){
+$informacion =array("1" => "camposvacio");
+echo json_encode($informacion);	
+exit;
+}
+
+$mysqli=conectar_al_servidor();
 
 
+
+$consulta1="INSERT INTO stocklocales (cantidad,cod_productofk,cod_localfk) VALUES ('0','$cod_productoFK','$cod_local')";
+$stmt1 = $mysqli->prepare($consulta1);
+
+
+
+if (!$stmt1->execute()) {
+	
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+
+}
+
+mysqli_close($mysqli);
+return true;
+}
 
 verificar($operacion);
 ?>

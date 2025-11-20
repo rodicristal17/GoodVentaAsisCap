@@ -38417,3 +38417,50 @@ function abmAsignarLocal( cod_ventaAsignarCod_local,inptlocalAsignarLocal,accion
 
 }
 
+function relacionarProductosLocal() {
+	verCerrarEfectoCargando("1")
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", "relacionarProductosLocal")
+	datos.append("cod_local", idAbmCasa) 
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,	 
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+
+			return false;
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("")
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+
+               Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) { 
+					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")				
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+
+
+		}
+	});
+
+}
+
