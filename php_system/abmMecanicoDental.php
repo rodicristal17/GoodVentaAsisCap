@@ -193,10 +193,16 @@
         }
 
         $result = $stmt->get_result();
-        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $registros= array();
+        while ($row = $result->fetch_assoc()) {
+            foreach ($row as $key => $value) {
+                $reg[$key]= utf8_encode($value);
+            }
+            $registros[] = $reg;
+        }
 
         $stmt->close();
-        return $result;
+        return $registros;
     }
 
     function abmTipoTrabajo($cod_tipo_trabajo= null, $descripcion, $estado) {
@@ -310,10 +316,16 @@
         }
 
         $result = $stmt->get_result();
-        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $registros= array();
+        while ($row = $result->fetch_assoc()) {
+            foreach ($row as $key => $value) {
+                $reg[$key]= utf8_encode($value);
+            }
+            $registros[] = $reg;
+        }
 
         $stmt->close();
-        return $result;
+        return $registros;
     }
 
     function abmMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $cod_mecanico_dental) {

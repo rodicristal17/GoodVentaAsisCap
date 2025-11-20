@@ -70,7 +70,9 @@
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
 
                 $registros= obtenerAsistencias($filtros, $limite);
-                echo json_encode(array("1" => "exito", "registros" => $registros));
+                echo json_encode(array("1" => "exito", "registros" => $registros), JSON_UNESCAPED_UNICODE);
+                // imprimir error json encode
+                //echo json_last_error_msg();
                 break;
             case 'buscarVistaInforme':
                 $cod_usuario= isset($_POST['cod_usuario']) ? utf8_decode($_POST['cod_usuario']) : null;
@@ -204,10 +206,16 @@
         }        
 
         $result = $stmt->get_result();
-        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $registros= array();
+        while ($row = $result->fetch_assoc()) {
+            foreach ($row as $key => $value) {
+                $reg[$key]= utf8_encode($value);
+            }
+            $registros[] = $reg;
+        }
 
         $stmt->close();
-        return $result;
+        return $registros;
     }
 
     function abmAsistencia($cod_usuario, $hora_entrada, $hora_salida, $ip_publica, $cod_asistencia) {

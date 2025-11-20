@@ -412,7 +412,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						// Se indica el local
 						document.getElementById('inptLocalMisDatos').value = cod_localFKUSer;
 						
-						if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
+						if(cod_localFKUSer!="1" && cod_localFKUSer!="2"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
 							document.getElementById('divtdProducto').style.display = ""
 							document.getElementById('divtdCantidadProducto').style.display = ""
