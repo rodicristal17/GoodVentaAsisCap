@@ -412,14 +412,14 @@ $("div[id=divPresentacion]").fadeOut(500);
 						// Se indica el local
 						document.getElementById('inptLocalMisDatos').value = cod_localFKUSer;
 						
-						if(cod_localFKUSer!="1" && cod_localFKUSer!="2"){
+						// if(cod_localFKUSer!="1" && cod_localFKUSer!="2"){
 							document.getElementById('DivVistaOdontologia').style.display = ""
 							document.getElementById('divtdProducto').style.display = ""
 							document.getElementById('divtdCantidadProducto').style.display = ""
 							document.getElementById('divtdPrecioProducto').style.display = ""
-						}else{
-							document.getElementById('divVistaFinanciera').style.display = ""
-						}
+						// }else{
+							// document.getElementById('divVistaFinanciera').style.display = ""
+						// }
  
 			  document.cookie = "caja=" + cajapredeterminada  +";max-age=86400;path=/";			  
 	           
@@ -13015,11 +13015,11 @@ function limpiarcamposventa(ctrl) {
 					document.getElementById("inptMontoPagoConfCredito").value = "0"
 					document.getElementById("inptFechaInicioConfCredito").value = ""
 					
-	if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
+	// if(cod_localFKUSer=="3" || cod_localFKUSer=="4" || cod_localFKUSer=="5"){
 		document.getElementById("inptInteresConfCredito").value = "0"
-	}else{
-		document.getElementById("inptInteresConfCredito").value = "0,40"
-	}	
+	// }else{
+		// document.getElementById("inptInteresConfCredito").value = "0,40"
+	// }	
 					
 					
 					document.getElementById("inptDiasConfCredito").value = "0"

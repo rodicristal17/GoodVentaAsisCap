@@ -1314,18 +1314,19 @@ var documento= document.getElementById("divImpresionRecibo").innerHTML;
 	  localStorage.setItem("tipo", "factura");
 	  
 	  
-	  if(cod_localFKUSer=="1"){
-	 var URL= "/GoodVentaAsisCap/system/reportFacturas.html"
+	if(cod_localFKUSer=="1"){
+		var URL= "/GoodVentaAsisCap/system/reportFacturas.html"
         window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
-	  }
-		 if(cod_localFKUSer=="2"){
+	}else if(cod_localFKUSer=="2"){
+		 var URL= "/GoodVentaAsisCap/system/reportFacturasSucUno.html"
+         window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
+	}else if(cod_localFKUSer=="3"){
 		 var URL= "/GoodVentaAsisCap/system/reportFacturasSucUno.html"
         window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
-		 }
-	 if(cod_localFKUSer=="3"){
+	}else{
 		 var URL= "/GoodVentaAsisCap/system/reportFacturasSucUno.html"
-        window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
-		 }
+         window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
+	}
 
 }
 
@@ -5252,11 +5253,11 @@ let TituloRecibo="";
 function ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazado,NombreCliente,CiCliente,NroRecibo,tipoventa,totalInteres,deudaActual,totalpagado,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres){
 
 
-if(cod_localFKUSer =="3" || cod_localFKUSer =="4" || cod_localFKUSer =="5"){
+// if(cod_localFKUSer =="3" || cod_localFKUSer =="4" || cod_localFKUSer =="5"){
 	TituloRecibo="CLINIDENT" ;
-}else{
-	TituloRecibo="ASISCAP";
-}
+// }else{
+	// TituloRecibo="ASISCAP";
+// }
 
 
 pagina="<br><div style='background-color:#fff;'>"
