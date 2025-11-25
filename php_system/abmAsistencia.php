@@ -43,8 +43,10 @@
             case "registrarSalida":
                 $cod_asistencia= $_POST['cod_asistencia'];
                 $cod_asistencia = utf8_decode($cod_asistencia);
-                registrarSalida($user, $horaActual, $cod_asistencia);
-                echo json_encode(array("1" => "exito"));
+                $cod_local= $_POST['cod_local'];
+                $cod_local = utf8_decode($cod_local);
+                $fechaActual= date('Y-m-d');
+                registrarSalida($user, $horaActual, $cod_asistencia, $cod_local, $fechaActual);
                 break;
             case "buscar":
                 $hora_entrada = isset($_POST['hora_entrada']) ? utf8_decode($_POST['hora_entrada']) : null;
@@ -117,12 +119,28 @@
         }
     }
 
-    function registrarSalida($cod_usuarioFK, $hora_salida, $cod_asistencia) {
+    function registrarSalida($cod_usuarioFK, $hora_salida, $cod_asistencia, $cod_local, $fecha) {
         // Otiene la direccion de ip de la encargada
+        $administrador_local= obtenerAsistencias(array('cod_local' => $cod_local, 'acceso' => 1, "fecha_desde" => $fecha, "fecha_hasta" => $fecha));
+
         // Compara con la direccion ip del usuario que registrara su salida
-        // Si es diferente, retorna error con mensaje
-        // Si es igual, registra la salida
-        abmAsistencia($cod_usuarioFK, null, $hora_salida, null, $cod_asistencia);
+        $ip_valida = false;
+        foreach ($administrador_local as $key => $value) {
+            if ($value['direccion_ip'] == $_SERVER['REMOTE_ADDR']) {
+                $ip_valida = true;
+                break;
+            }
+        }
+        
+        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, null, $cod_asistencia);
+        
+        // Valida la ip y registra la salida o devuelve error
+        if (! $ip_valida) {
+            $informacion =array("1" => "error", "2" => "Se registro la asistencia pero la direccion IP de la salida no coincide con ningun administrador del local.", "3" => "Comunique si es un caso especial.", "4" => $_SERVER['REMOTE_ADDR'], "5" => $cod_asistencia);
+            echo json_encode($informacion);	
+            exit;
+        }
+        echo json_encode(array("1" => "exito", "2" => $cod_asistencia));
     }
 
     function obtenerVistaAsistencia($filtros, $limite= "0") {
@@ -172,6 +190,9 @@
                     break;
                 case 'cod_local':
                     $sqlFiltro .= "u.cod_localFK = '$value'";
+                    break;
+                case 'acceso':
+                    $sqlFiltro .= "u.acceso = '$value'";
                     break;
                 case 'nombre_usuario':
                     $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = a.cod_usuarioFK) LIKE '%$value%'";

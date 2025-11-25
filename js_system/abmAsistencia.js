@@ -65,7 +65,12 @@ function registrarAsistencia() {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-                    obtenerAsistenciaUsuario();
+					location.reload();
+                    //obtenerAsistenciaUsuario();
+				} else {
+					let mensaje= datos["2"];
+					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
+					ver_vetana_informativa(mensaje);
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
