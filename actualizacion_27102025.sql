@@ -56,6 +56,23 @@ CREATE TABLE mecanico_dental (
 ALTER TABLE persona ADD COLUMN tipo_relacion VARCHAR(100);
 ALTER TABLE persona ADD COLUMN telefono_referencia INT(13);
 
--- Agregar ppermisos::
---CREARNUEVOMOTIVO, VERABMLIMITECAJA
---VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
+CREATE TABLE insumos_local (
+    cod_insumo INT PRIMARY KEY AUTO_INCREMENT,
+    descripcion VARCHAR(100),
+    nombre VARCHAR(75) NOT NULL,
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cantidad INT,
+    costo BIGINT,
+    observacion VARCHAR(150),
+    fecha_edit DATETIME,
+    cod_localFK INT,
+    cod_usuarioFK_edit INT,
+    FOREIGN KEY (cod_localFK) REFERENCES local(cod_local),
+    FOREIGN KEY (cod_usuarioFK_edit) REFERENCES usuario(cod_usuario)
+);
+
+-- Agregar permisos::
+-- CREARNUEVOMOTIVO, VERABMLIMITECAJA
+-- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
+-- EDITARLISTADOINVENTARIOLOCAL, VERLISTADOINVENTARIOLOCAL

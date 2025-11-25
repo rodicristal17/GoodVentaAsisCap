@@ -169,10 +169,12 @@ function obtenerVistaInformeAsistencia() {
 					if(totalregistroinformeAsistencia>registrocargadoinformeAsistencia){
 						controldebusquedadInformeAsistencia=true;
 						var porce=((registrocargadoinformeAsistencia*100)/totalregistroinformeAsistencia).toFixed(0)
+						document.getElementById('tbProcessInformeAsistencia').style.display= ""
 						document.getElementById("divProgressInformeAsistencia").style.width=porce+"%"
 						//document.getElementById("table_InformeAsistencia").innerHTML += "<div id='table_mas_InformeAsistencia'></div>"
 						obtenermasVistaInformeAsistencia();
 					 }else{
+						document.getElementById('tbProcessInformeAsistencia').style.display= "none";
 						controldebusquedadInformeAsistencia=false
 					 }
 				}
@@ -270,6 +272,7 @@ function obtenermasVistaInformeAsistencia() {
 					 }else{
 						controldebusquedadInformeAsistencia=false;
 						document.getElementById("divProgressInformeAsistencia").style.display="none"
+						document.getElementById('tbProcessInformeAsistencia').style.display= "none";
 					 }
 				}
 			} catch (error) {

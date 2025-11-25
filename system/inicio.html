@@ -48,6 +48,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
+<script src="../js_system/abmInventarioLocal.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1089,8 +1090,6 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
-
-
 <table class='divMenub' id='divMenuCheque' onclick='verCerrarAbmCargarFotosClientePrincipal("1")' style='text-align:center'>
 <tr>
 <td>
@@ -1100,6 +1099,17 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuInventarioLocal' onclick='verCerrarAbmInventarioLocal(true, false)' style='text-align:center'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/home.png' />
+<p class='pTitulo4'>Inventario del local</p>
+<center>
+<div id='divMinimizadoInventarioLocal' style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
 
 </div>
 
@@ -25742,10 +25752,220 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
 </table>
 </div>
 
-
-
-
-
+<div class='principal2' style='display:none' id='divAbmInventarioLocal'>
+  <table id="tdEfectoAbmInventarioLocal" class="magictime slideDownReturn" style='width:100%;height:100%;'>
+    <tr><td>
+      <center>
+        <div id="divAbmInventarioLocal1" class="divAbms" style="width: 90%;">
+          <table class="tableMenuZ">
+            <tbody>
+              <tr>
+                <td style="width:100%;text-align:left">
+                  <p class="pTituloB">Listado de <b style="font-size: 30px;">Insumos del local</b></p>
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="limpiarcamposInventarioLocal();verCerrarAbmInventarioLocal(true, true)">
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                    onclick="minimizarabmInventarioLocal()">
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarAbmInventarioLocal(false, false)">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <br>
+          <center>
+            <div class="divMenuf">
+              <table class="tableCabeceraRegistro">
+                <tr>
+                <td class="td_registro" style="width:10%;">
+                #
+                </td>
+                <td class="td_registro" style="width:55%;">
+                NOMBRE
+                </td>
+                <td class="td_registro" style="width:20%;">
+                LOCAL
+                </td>
+                <td class="td_registro" style="width:15%;">
+                ESTADO
+                </td>
+                </tr>
+              </table>
+              <table class="tableCabeceraRegistro">
+                <tr>
+                <td class="td_registro" style="width:9%;">
+                <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal1" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Igual a">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal1')">
+                </td>
+                <td class="td_registro" style="width:54%;">
+                <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Parecido a">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal2')">
+                </td>
+                <td class="td_registro" style="width:20%;">
+                  <select class="inputfiltro" id="inptBuscarAbmInventarioLocal3">
+                  </select>
+                </td>
+                <td class="td_registro" style="width:15%;">
+                  <select class="inputfiltro" id="inptBuscarAbmInventarioLocal4">
+                    <option value=''>Todos</option>
+                    <option value='activo'>Activo</option>
+                    <option value='inactivo'>Inactivo</option>
+                  </select>
+                </td>
+                </tr>
+              </table>
+              <div class="divTablesScrool" style="height: 300px;">
+                <div id="table_abm_InventarioLocal" class="div_cuerpo_table" style="height: auto;border:none;width: 100%;"></div>
+                <table style="width:100%;height:50px;display:none" id="tbProcessInformeInsumoLocal">
+                  <tr>
+                  <td style="width:90%">
+                  <div class="divprogreso1"><div class="divprogreso2" id="divProgressInformeInventarioLocal"></div></div>
+                  </td>
+                  <td style="width:10%;text-align:center">
+                  <input type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInventarioLocal()" style="width:100px;background-color:rgb(58 58 58)">
+                  </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <br>
+            <div class="divMenuf">
+              <table style="width:95%">
+              <tbody><tr>
+              <td style="width:25%;text-align:left">
+              <p class="pTituloC">Registros :</p>
+              <input class="inputTextDisable" type="text" disabled="" id="inptTotalRegistoInventarioLocal" style="width:120px;text-align:center">
+              </td>
+              <td style="width:5%">
+              </td>
+              <td style="width:70%;text-align:left">
+              <p class="pTituloC">Registro Selecc..</p>
+              <input class="inputTextDisable" type="text" disabled="" id="inptRegistroSeleccInventarioLocal" style="width:200px">
+              <input id="btnEditarInventarioLocal" type="button" value="Editar" class="btn5" onclick="verCerrarAbmInventarioLocal(true, true)" style="background-color:#b7b7b7" disabled>
+              </td>
+              </tr>
+              </tbody></table>
+            </div>
+          </center>
+        </div>
+        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;width:500px;min-height: 300px;">
+          <table class="tableMenuZ">
+            <tbody>
+              <tr>
+                <td style="width:100%;text-align:left">
+                  <p class="pTituloB">Datos de <b style="font-size: 30px;">Insumos del local</b></p>
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar campos"
+                    onclick="limpiarcamposInventarioLocal()">
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                    onclick="minimizarabmInventarioLocal()">
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atras"
+                    onclick="verCerrarAbmInventarioLocal(false, true)">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <br>
+          <center>
+            <div class="divMenuf">
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Codigo :</p>
+                <input class="inputTextDisable" type="text" disabled id="inptCodigoInventarioInsumo">
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Nombre :</p>
+                <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptNombreInventarioInsumo">
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Descripcion :</p>
+                <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Cantidad :</p>
+                <input class="inputText" type="number" onchange="separadordemiles(this)" id="inptCantidadInventarioInsumo" value=1>
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Costo :</p>
+                <input class="inputText" type="text" min="0" id="inptCostoInventarioInsumo">
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td style="width: 50%;">
+                <p class="pTituloC">Local :</p>
+                <select class="inputSelect" id="inptLocalInventarioInsumo" style="width:130px">
+                </select>
+                </td>
+                <td style="width: 50%;">
+                <p class="pTituloC">Estado :</p>
+                <select class="inputSelect" id="inptEstadoInventarioInsumo" style="width:130px">
+                <option value="activo">ACTIVO</option>
+                <option value="inactivo">INACTIVO</option>
+                </select>
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Observacion :</p>
+                <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
+                </td>
+                </tr>
+              </table>
+            </div>
+            <div class="divMenuf">
+            <br>
+            <center>
+            <input type="button" value="Guardar datos" class="btn1" onclick="verificarCamposInventarioLocal()" id="btnAbmBanco">
+            </center>
+            <br>
+            </div>
+          </center>
+        </div>
+      </center>
+    </td></tr>
+  </table>
+</div>
 
 <div class='principal2' style='display:none' id='divAbmCheque'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmCheque'>
