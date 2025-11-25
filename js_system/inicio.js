@@ -14356,14 +14356,14 @@ function VerCerrarConfCredito(d){
 function SeleccEntregaInicial(datos){	
 	if(datos.value=="NO"){
 	document.getElementById("inptEntregaConfCredito").value="0";
-	document.getElementById("inptEntregaConfCredito").disabled=true
+	//document.getElementById("inptEntregaConfCredito").disabled=true
 	calcular_cuota_desde_venta()
 	}else{
 	document.getElementById("inptEntregaConfCredito").value="0";
 	calcular_cuota_desde_venta()
 	document.getElementById("inptEntregaConfCredito").value=document.getElementById("inptMontoPagoConfCredito").value
 	calcular_cuota_desde_venta()
-	document.getElementById("inptEntregaConfCredito").disabled=false
+	//document.getElementById("inptEntregaConfCredito").disabled=false
 	}
 }
 function calcular_cuota_desde_venta() {
@@ -14371,32 +14371,37 @@ function calcular_cuota_desde_venta() {
 	var PrecioListaTotal=0
 	var PorcentajeProducto=0
 	
-	var t = QuitarSeparadorMilValor(document.getElementById('inptTotalVenta').value);
-	var c = QuitarSeparadorMilValor(document.getElementById('inptNroCuotasConfCredito').value);
-	var e = QuitarSeparadorMilValor(document.getElementById('inptEntregaConfCredito').value);
-	if (isNaN(t) || t=="" ) {
-	 t = QuitarSeparadorMilValor(document.getElementById('inpTotalCostoVenta').value);
+	var total = QuitarSeparadorMilValor(document.getElementById('inptTotalVenta').value);
+	var cantidadCuota = QuitarSeparadorMilValor(document.getElementById('inptNroCuotasConfCredito').value);
+	var entrega = QuitarSeparadorMilValor(document.getElementById('inptEntregaConfCredito').value);
+	const tipoEntrega= document.getElementById('inptConfirmarPagoEntrega').value;
+
+	if (isNaN(total) || total=="" ) {
+	 total = QuitarSeparadorMilValor(document.getElementById('inpTotalCostoVenta').value);
 	}
-	if (isNaN(e)) {
+
+	if (isNaN(entrega)) {
 		document.getElementById('inptEntregaConfCredito').value = 0;	
-		e = 0;
+		entrega = 0;
 	}
-	if (isNaN(c)) {
+
+	if (isNaN(cantidadCuota)) {
 		document.getElementById('inptNroCuotasConfCredito').value = 1;
 		document.getElementById('inptMontoPagoConfCredito').value = document.getElementById('inptTotalVenta').value;
-		c = 0;
+		cantidadCuota = 0;
 	}else{
-		if(e>0){
-		c=c;	
+		if(entrega>0 && tipoEntrega=="SI"){
+		cantidadCuota=cantidadCuota;	
 		}		
-		if(c<0){
-		c=1;
+		if(cantidadCuota<0){
+		cantidadCuota=1;
 		}
 	}
+
 	var saldo =  QuitarSeparadorMilValor(document.getElementById('inptSaldoConfCredito').value);
-	t=Number(saldo) - Number(e);
-	var c = parseFloat(c);
-	var t = parseFloat(t);
+	total= (tipoEntrega=="SI") ? Number(saldo) - Number(entrega) : Number(saldo);
+	var c = parseFloat(cantidadCuota);
+	var t = parseFloat(total);
 	document.getElementById('inptMontoPagoConfCredito').value = Math.round(t / c);
 	separadordemiles(document.getElementById('inptMontoPagoConfCredito'))
 	separadordemiles(document.getElementById('inptEntregaConfCredito'))
@@ -14455,9 +14460,9 @@ function crearcreditodesdeventa() {
 		verificarcamposdetallesventacredito()
 		return
 	}
-    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, idabmVenta);
+    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, idFkVendedor1, idabmVenta);
 }
-function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, cod_venta) {
+function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, cod_vendedorFK, cod_venta) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -14475,6 +14480,7 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 	datos.append("entrega", entrega)
 	datos.append("pagoentrega", pagoentrega)
 	datos.append("idGaranteFk", idGaranteFk)
+	datos.append("cod_vendedorFK", cod_vendedorFK)
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",

@@ -930,251 +930,257 @@ exit;
 
 }
 
-function cargarpagos($CargoAdministrativo,$MontoEfectivo,$MontoTarjeta,$MontDescuento,$Fecha,$cod_cobradorFK,$cod_venta,$controlfecha,$nrofactura,$codCaja,$codApertura,$codTipoPago,$controlTipoPago){
-	$mysqli=conectar_al_servidor();
-	
-	
+function cargarpagos($CargoAdministrativo, $MontoEfectivo, $MontoTarjeta, $MontDescuento, $Fecha, $cod_cobradorFK, $cod_venta, $controlfecha, $nrofactura, $codCaja, $codApertura, $codTipoPago, $controlTipoPago)
+{
+	$mysqli = conectar_al_servidor();
 
 
-	$sql= "Select Monto,idcredito,cr.fechapago,total,plazo,(totalinteres + cr.deudaInteres) as interes,cr.descuento,vt.num_factura,vt.puntoexpedicion,
+
+
+	$sql = "Select Monto,idcredito,cr.fechapago,total,plazo,(totalinteres + cr.deudaInteres) as interes,cr.descuento,vt.num_factura,vt.puntoexpedicion,
 	(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as clientenombre,
 	(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as nrodocliente,
 	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Pago Cuota'),0) as totalPago,
 	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Interes'),0) as totalPagoInteres
 	from credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
 	where cr.cod_venta='$cod_venta' and IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Pago Cuota'),0) < (cr.Monto-cr.descuento)order by cr.idcredito asc";
-$pagado=$MontoTarjeta+$MontoEfectivo;		  
-$clientenombre="";
-$nrodocliente="";
-$stmt = $mysqli->prepare($sql);
+	$pagado = $MontoTarjeta + $MontoEfectivo;
+	$clientenombre = "";
+	$nrodocliente = "";
+	$stmt = $mysqli->prepare($sql);
 
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-}
- 
-	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- $nroRegistro=$valor;
- $montoDescuento=0;
-
-$ControlPagoCargoAdmin=0;
-
- $plazo='';
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-		  
-		     $idcredito=$valor['idcredito'];
-			  $Monto=utf8_encode($valor['Monto']);
-			  $totalinteres=utf8_encode($valor['interes']);
-			  $totalPago=utf8_encode($valor['totalPago']);
-			  $clientenombre=utf8_encode($valor['clientenombre']);
-			  $nrodocliente=utf8_encode($valor['nrodocliente']);
-			  $totalpagainteres=utf8_encode($valor['totalPagoInteres']);
-			  $descuento=utf8_encode($valor['descuento']);
-			  $num_factura=utf8_encode($valor['num_factura']);
-			  $puntoexpedicion=utf8_encode($valor['puntoexpedicion']);
-			  if($puntoexpedicion!=""){
-				  $nrof=$puntoexpedicion."-".$num_factura;
-				  }else{
-				  $nrof=$num_factura;
-			  }
-
-
-
-
-if($CargoAdministrativo==""){
-	$CargoAdministrativo="0";
-}
-
-if( $CargoAdministrativo!="0" && $pagado!="0" && $ControlPagoCargoAdmin==0){
-$descripcion="Pago de Cargo Administrativo, Factura Nro: *".$nrof."*";
-$consulta1="Insert into pago (cod_creditoFK,Monto,Fecha,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK)
-values(?,?,?,?,?,(select comision from venta where cod_venta='$cod_venta'),?,'CARGO ADMINISTRATIVO','Efectivo',?,?,?,'$codTipoPago')";
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='sssssssss';
-$stmt1->bind_param($ss,$idcredito,$CargoAdministrativo,$Fecha,$cod_cobradorFK,$cod_venta,$nrofactura,$codCaja,$codApertura,$descripcion);
-
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-}
-
-$pagado = $pagado - $CargoAdministrativo;
-$ControlPagoCargoAdmin=1;
-
-}
-
- 
-	 $montoDescuento=0;
-         	if($MontDescuento>0){
-				
-			  $controldescuento=($Monto+$totalinteres)-($totalPago+$descuento);
-			  if($controldescuento<0){
-			  $controldescuento=0;
-			  }
-			   if($MontDescuento>$controldescuento){
-                $sobrantedescuento=$MontDescuento-$controldescuento;
-				$MontDescuento=$sobrantedescuento;
-                $montoDescuento=($Monto+$totalinteres)-($totalPago+$descuento);
-                 }else{
-				$montoDescuento=$MontDescuento;
-				$MontDescuento=0;
-				 }
-				 
-				 }
-				 
-						  
-			  
-if($totalinteres>0){
-
-$totaldeudacontrol=($Monto+$totalinteres)-($totalPago+$descuento+$montoDescuento);	
-			
-	 
-if($totaldeudacontrol>($pagado+$MontDescuento)){
-// REGLA DE TRES PARA CALCULAR INTERES
-// deudacuota=totalInteres;
-// pagado=x
-$deudacuota=$Monto-$totalPago;
-if($totalinteres>=$pagado){
-	$interescobrar=$pagado;
-	
-	$MontoInteresGuardar=$totalinteres-$pagado;
-	
-	if($pagado!=0){
-	GuardarDeudaInteres($MontoInteresGuardar,$idcredito);
+	if (! $stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said (' . $stmt1->errno . ') ' . $stmt1->error, E_USER_ERROR);
+		exit;
 	}
-	
-}else{
-	$interescobrar=$totalinteres;
-	GuardarDeudaInteres("0",$idcredito);
-}
-//$interescobrar=($pagado*$totalinteres)/$deudacuota;
-$pago=$interescobrar;
-$pagado=$pagado-$pago;
-}else{
-$pago=$totalinteres;
-$pagado=$pagado-$pago;	
-}	
 
- $descripcion="Pago de intereses, Factura Nro: *".$nrof."*";
-// if( $MontoTarjeta>0){
-	
-// if($pago>$MontoTarjeta){
-	// $pago1=$MontoTarjeta;
-	// cargarPagosDeudas($pago1,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
-	// $pago2=$pago-$MontoTarjeta;
-	// cargarPagosDeudas($pago2,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Efectivo",$codCaja,$codApertura,$descripcion,$codTipoPago);
-	// }else{
-   // $MontoTarjeta=$MontoTarjeta-$pago;
-	// cargarPagosDeudas($pago,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
-	// }
-// }else{
-	cargarPagosDeudas($pago,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Efectivo",$codCaja,$codApertura,$descripcion,$codTipoPago);
-// }
+	$result = $stmt->get_result();
+	$valor = mysqli_num_rows($result);
+	$nroRegistro = $valor;
+	$montoDescuento = 0;
+
+	$ControlPagoCargoAdmin = 0;
+
+	$plazo = '';
+	if ($valor > 0) {
+		while ($valor = mysqli_fetch_assoc($result)) {
+
+			$idcredito = $valor['idcredito'];
+			$Monto = utf8_encode($valor['Monto']);
+			$totalinteres = utf8_encode($valor['interes']);
+			$totalPago = utf8_encode($valor['totalPago']);
+			$clientenombre = utf8_encode($valor['clientenombre']);
+			$nrodocliente = utf8_encode($valor['nrodocliente']);
+			$totalpagainteres = utf8_encode($valor['totalPagoInteres']);
+			$descuento = utf8_encode($valor['descuento']);
+			$num_factura = utf8_encode($valor['num_factura']);
+			$puntoexpedicion = utf8_encode($valor['puntoexpedicion']);
+			if ($puntoexpedicion != "") {
+				$nrof = $puntoexpedicion . "-" . $num_factura;
+			} else {
+				$nrof = $num_factura;
+			}
 
 
-	  $totalPago=$totalPago+$pago;
-				  
-			  }
-			   $deuda=($Monto+$totalinteres)-($totalPago+$descuento+$montoDescuento);
-				$c=1;
-			 if($pagado<=0){
-				  $c=0;
-				  $pago=0;
-			  }
-			  $control=$pagado-$deuda;
-			  if($control<=0){
-				 $pago=$pagado;
-				 $pagado=0;
-			  }else{
-				  $pago=$deuda;
-				  $pagado=$pagado-$deuda;
-			  }
-			  if($controlfecha=="2"){
-				  $Fecha=utf8_encode($valor['fechapago']);
-			  }
-			 
-					if($pago>0 && $c==1){
-						GuardarDeudaInteres("0",$idcredito);
-						 $descripcion="Pago de Cuotas, Factura Nro: *".$nrof."*";	
-// if( $MontoTarjeta>0){
-							
-						
-	// if($pago>$MontoTarjeta){
-	// $pago1=$MontoTarjeta;
-	 // cargarPagosDeudas($pago1,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
-	// $pago2=$pago-$MontoTarjeta;
-	 // cargarPagosDeudas($pago2,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Efectivo",$codCaja,$codApertura,$descripcion,$codTipoPago);
-	// }else{
-   // $MontoTarjeta=$MontoTarjeta-$pago;
-    // cargarPagosDeudas($pago,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
-	// }
-// }else{
-	 cargarPagosDeudas($pago,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Efectivo",$codCaja,$codApertura,$descripcion,$codTipoPago);
-// }
-							
-							
-						 if(($pago+$montoDescuento)>=$deuda){
-							 if($plazo!=""){
-							 $plazo.=", ".utf8_encode($valor['plazo']);
-							 }else{
-							 $plazo.=utf8_encode($valor['plazo']);
-							 }
-						 }else{
-							 if($plazo!=""){
-							 $plazo.=" y pago parcial en cuota ".utf8_encode($valor['plazo'])." ";
-							 }else{
-							$plazo.="Pago parcial en cuota ".utf8_encode($valor['plazo'])." ";
-							 }
-							
-							 
-						 }
-						  
-					}		 
-				 
-	      if($montoDescuento>0){
-		  actualizarDescuento($idcredito,$montoDescuento);
-		  }
-			  
-			  
-	  }
- }
- 
-		if($controlTipoPago == 0){
-			$datosTicket=calcularintereses2($cod_venta,0,0,"2","2","2","no");
 
-$totalDescuento=$datosTicket[0];
-$totalinteresespagado=$datosTicket[12];
-$totalpagado=$datosTicket[3];
-$acobrar=$datosTicket[4];
-$deuda=$datosTicket[4];
- $totalDeuda=$datosTicket[4];
- $totalVenta=$datosTicket[11];
- $InteresActual=$datosTicket[10];
- $totalsininteres=$datosTicket[7];
- 
-$totalPagado=buscartotalpagob($cod_venta);
-//$totalVenta=buscartotalventa($cod_venta);
-// $paginaticket=buscar_detalles_venta($cod_venta);
 
-$paginaticket= buscarDetalleVentaImprimir($cod_venta);
-$paginaticket2="Factura nro: ".$paginaticket[2];
+			if ($CargoAdministrativo == "") {
+				$CargoAdministrativo = "0";
+			}
 
-$titulopago=buscarpagosTitulo($cod_venta,$nrofactura);
+			if ($CargoAdministrativo != "0" && $pagado != "0" && $ControlPagoCargoAdmin == 0) {
+				$descripcion = "Pago de Cargo Administrativo, Factura Nro: *" . $nrof . "*";
+				$consulta1 = "Insert into pago (cod_creditoFK,Monto,Fecha,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK)
+values(?,?,?,?,?,(select comision from venta where cod_venta='$cod_venta'),?,'CARGO ADMINISTRATIVO','Efectivo',?,?,?,'$codTipoPago')";
+				$stmt1 = $mysqli->prepare($consulta1);
+				$ss = 'sssssssss';
+				$stmt1->bind_param($ss, $idcredito, $CargoAdministrativo, $Fecha, $cod_cobradorFK, $cod_venta, $nrofactura, $codCaja, $codApertura, $descripcion);
 
-$datoVenta=buscardatosventa($cod_venta);
-//addMasCuotas($cod_venta,$totalPagado);
-$informacion =array("1" => "exito","2" =>number_format($totalPagado,'0',',','.') ,"3" =>  number_format($totalVenta,'0',',','.') ,"4" =>  number_format($totalDeuda,'0',',','.'),"5"=> $paginaticket2
-,"6"=> $plazo,"7"=> $clientenombre,"8"=> $nrodocliente,"9"=> $nrofactura,"10"=>$datoVenta[6],"11"=>  number_format($totalinteresespagado,'0',',','.') ,
-"12"=>  number_format($deuda,'0',',','.') ,"13"=> number_format($totalpagado,'0',',','.') ,
-"14"=> number_format($totalDescuento,'0',',','.'),"15"=> number_format($InteresActual,'0',',','.'),
-"16"=> number_format($totalsininteres,'0',',','.') ,"17"=> $datoVenta[2] ,"18"=> $Fecha ,"19"=> $titulopago[2] );
-echo json_encode($informacion);	
-exit;
-		}		
+				if (!$stmt1->execute()) {
+					echo trigger_error('The query execution failed; MySQL said (' . $stmt1->errno . ') ' . $stmt1->error, E_USER_ERROR);
+					exit;
+				}
+
+				$pagado = $pagado - $CargoAdministrativo;
+				$ControlPagoCargoAdmin = 1;
+			}
+
+
+			$montoDescuento = 0;
+			if ($MontDescuento > 0) {
+
+				$controldescuento = ($Monto + $totalinteres) - ($totalPago + $descuento);
+				if ($controldescuento < 0) {
+					$controldescuento = 0;
+				}
+				if ($MontDescuento > $controldescuento) {
+					$sobrantedescuento = $MontDescuento - $controldescuento;
+					$MontDescuento = $sobrantedescuento;
+					$montoDescuento = ($Monto + $totalinteres) - ($totalPago + $descuento);
+				} else {
+					$montoDescuento = $MontDescuento;
+					$MontDescuento = 0;
+				}
+			}
+
+
+
+			if ($totalinteres > 0) {
+
+				$totaldeudacontrol = ($Monto + $totalinteres) - ($totalPago + $descuento + $montoDescuento);
+
+
+				if ($totaldeudacontrol > ($pagado + $MontDescuento)) {
+					// REGLA DE TRES PARA CALCULAR INTERES
+					// deudacuota=totalInteres;
+					// pagado=x
+					$deudacuota = $Monto - $totalPago;
+					if ($totalinteres >= $pagado) {
+						$interescobrar = $pagado;
+
+						$MontoInteresGuardar = $totalinteres - $pagado;
+
+						if ($pagado != 0) {
+							GuardarDeudaInteres($MontoInteresGuardar, $idcredito);
+						}
+					} else {
+						$interescobrar = $totalinteres;
+						GuardarDeudaInteres("0", $idcredito);
+					}
+					//$interescobrar=($pagado*$totalinteres)/$deudacuota;
+					$pago = $interescobrar;
+					$pagado = $pagado - $pago;
+				} else {
+					$pago = $totalinteres;
+					$pagado = $pagado - $pago;
+				}
+
+				$descripcion = "Pago de intereses, Factura Nro: *" . $nrof . "*";
+				// if( $MontoTarjeta>0){
+
+				// if($pago>$MontoTarjeta){
+				// $pago1=$MontoTarjeta;
+				// cargarPagosDeudas($pago1,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
+				// $pago2=$pago-$MontoTarjeta;
+				// cargarPagosDeudas($pago2,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Efectivo",$codCaja,$codApertura,$descripcion,$codTipoPago);
+				// }else{
+				// $MontoTarjeta=$MontoTarjeta-$pago;
+				// cargarPagosDeudas($pago,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Interes","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
+				// }
+				// }else{
+				cargarPagosDeudas($pago, $Fecha, $cod_cobradorFK, $idcredito, $cod_venta, $nrofactura, "Interes", "Efectivo", $codCaja, $codApertura, $descripcion, $codTipoPago);
+				// }
+
+
+				$totalPago = $totalPago + $pago;
+			}
+			$deuda = ($Monto + $totalinteres) - ($totalPago + $descuento + $montoDescuento);
+			$c = 1;
+			if ($pagado <= 0) {
+				$c = 0;
+				$pago = 0;
+			}
+			$control = $pagado - $deuda;
+			if ($control <= 0) {
+				$pago = $pagado;
+				$pagado = 0;
+			} else {
+				$pago = $deuda;
+				$pagado = $pagado - $deuda;
+			}
+			if ($controlfecha == "2") {
+				$Fecha = utf8_encode($valor['fechapago']);
+			}
+
+			if ($pago > 0 && $c == 1) {
+				GuardarDeudaInteres("0", $idcredito);
+				$descripcion = "Pago de Cuotas, Factura Nro: *" . $nrof . "*";
+				// if( $MontoTarjeta>0){
+
+
+				// if($pago>$MontoTarjeta){
+				// $pago1=$MontoTarjeta;
+				// cargarPagosDeudas($pago1,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
+				// $pago2=$pago-$MontoTarjeta;
+				// cargarPagosDeudas($pago2,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Efectivo",$codCaja,$codApertura,$descripcion,$codTipoPago);
+				// }else{
+				// $MontoTarjeta=$MontoTarjeta-$pago;
+				// cargarPagosDeudas($pago,$Fecha,$cod_cobradorFK,$idcredito,$cod_venta,$nrofactura,"Pago Cuota","Tarjeta",$codCaja,$codApertura,$descripcion,$codTipoPago);
+				// }
+				// }else{
+				cargarPagosDeudas($pago, $Fecha, $cod_cobradorFK, $idcredito, $cod_venta, $nrofactura, "Pago Cuota", "Efectivo", $codCaja, $codApertura, $descripcion, $codTipoPago);
+				// }
+
+
+				if (($pago + $montoDescuento) >= $deuda) {
+					if ($plazo != "") {
+						$plazo .= ", " . utf8_encode($valor['plazo']);
+					} else {
+						$plazo .= utf8_encode($valor['plazo']);
+					}
+				} else {
+					if ($plazo != "") {
+						$plazo .= " y pago parcial en cuota " . utf8_encode($valor['plazo']) . " ";
+					} else {
+						$plazo .= "Pago parcial en cuota " . utf8_encode($valor['plazo']) . " ";
+					}
+				}
+			}
+
+			if ($montoDescuento > 0) {
+				actualizarDescuento($idcredito, $montoDescuento);
+			}
+		}
+	}
+
+	if ($controlTipoPago == 0) {
+		$datosTicket = calcularintereses2($cod_venta, 0, 0, "2", "2", "2", "no");
+
+		$totalDescuento = $datosTicket[0];
+		$totalinteresespagado = $datosTicket[12];
+		$totalpagado = $datosTicket[3];
+		$acobrar = $datosTicket[4];
+		$deuda = $datosTicket[4];
+		$totalDeuda = $datosTicket[4];
+		$totalVenta = $datosTicket[11];
+		$InteresActual = $datosTicket[10];
+		$totalsininteres = $datosTicket[7];
+
+		$totalPagado = buscartotalpagob($cod_venta);
+		//$totalVenta=buscartotalventa($cod_venta);
+		// $paginaticket=buscar_detalles_venta($cod_venta);
+
+		$paginaticket = buscarDetalleVentaImprimir($cod_venta);
+		$paginaticket2 = "Factura nro: " . $paginaticket[2];
+
+		$titulopago = buscarpagosTitulo($cod_venta, $nrofactura);
+
+		$datoVenta = buscardatosventa($cod_venta);
+		//addMasCuotas($cod_venta,$totalPagado);
+		$informacion = array(
+			"1" => "exito",
+			"2" => number_format($totalPagado, '0', ',', '.'),
+			"3" =>  number_format($totalVenta, '0', ',', '.'),
+			"4" =>  number_format($totalDeuda, '0', ',', '.'),
+			"5" => $paginaticket2,
+			"6" => $plazo,
+			"7" => $clientenombre,
+			"8" => $nrodocliente,
+			"9" => $nrofactura,
+			"10" => $datoVenta[6],
+			"11" =>  number_format($totalinteresespagado, '0', ',', '.'),
+			"12" =>  number_format($deuda, '0', ',', '.'),
+			"13" => number_format($totalpagado, '0', ',', '.'),
+			"14" => number_format($totalDescuento, '0', ',', '.'),
+			"15" => number_format($InteresActual, '0', ',', '.'),
+			"16" => number_format($totalsininteres, '0', ',', '.'),
+			"17" => $datoVenta[2],
+			"18" => $Fecha,
+			"19" => $titulopago[2]
+		);
+		echo json_encode($informacion);
+		exit;
+	}
 }
 
 function actualizarDescuento($idcredito,$descuento){

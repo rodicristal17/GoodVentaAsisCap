@@ -410,8 +410,7 @@ $mysqli=conectar_al_servidor();
 $sql= "select (select sum(Monto) from pago pg where pg.cod_creditoFK=cr.idcredito) as totalPago
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
  where vt.cod_venta='$buscar' ";
- echo $sql;
- exit;
+ //echo $sql;exit;
  /*Sentencia para buscar registros*/
 $totalpago = 0;   
 $stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepare*/
