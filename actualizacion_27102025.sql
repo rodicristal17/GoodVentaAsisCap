@@ -72,6 +72,12 @@ CREATE TABLE insumos_local (
     FOREIGN KEY (cod_usuarioFK_edit) REFERENCES usuario(cod_usuario)
 );
 
+ALTER TABLE mecanico_dental MODIFY COLUMN estado
+    ENUM('pendiente', 'entregado', 'retirado', 'pagado', 'inactivo');
+
+ALTER TABLE mecanico_dental MODIFY COLUMN fecha_entrega
+    REMOVE DEFAULT;
+
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA

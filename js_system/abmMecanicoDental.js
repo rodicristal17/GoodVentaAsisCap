@@ -50,13 +50,14 @@ function verificarCamposMecanicoDental() {
     const costo= $("#inptCostoMecanicoDental").val()
     const fecha_entrega= $("#inptFechaEntregaMecanicoDental").val()
     const fecha_retiro= $("#inptFechaRetiroMecanicoDental").val()
+    const estado= $("#inptEstadoMecanicoDental").val();
 
     if (!inptTipoTrabajoMecanicoDental || inptTipoTrabajoMecanicoDental == "") {
         ver_vetana_informativa("Falta seleccionar el tipo de trabajo");
         return false;
     }
-    if (fecha_retiro == "") {
-        ver_vetana_informativa("Falta seleccionar la fecha de retiro");
+    if (!estado || estado == "") {
+        ver_vetana_informativa("Falta seleccionar el estado");
         return false;
     }
     if (idFkVenta == "" || idFkVenta == null) {
@@ -64,10 +65,10 @@ function verificarCamposMecanicoDental() {
         return false;
     }
     
-    abmMecanicoDental(inptTipoTrabajoMecanicoDental,observacion,colorimetro,costo,fecha_entrega,fecha_retiro)
+    abmMecanicoDental(inptTipoTrabajoMecanicoDental,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado)
 }
 
-function abmMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fecha_entrega,fecha_retiro) {
+function abmMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado) {
     obtener_datos_user();
     var datos = new FormData();
     datos.append("useru", userid);
@@ -79,6 +80,7 @@ function abmMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fech
     datos.append("cod_tipo_trabajoFK", cod_tipo_trabajoFK);
     datos.append("observacion", observacion);
     datos.append("colorimetro", colorimetro);
+    datos.append("estado", estado);
     datos.append("costo", costo);
     datos.append("fecha_entrega", fecha_entrega);
     datos.append("fecha_retiro", fecha_retiro);
@@ -231,6 +233,7 @@ function limpiarFormularioMecanicoDental() {
     document.getElementById('inptCostoMecanicoDental').value = "";
     document.getElementById('inptPacienteMecanicoDental').value= "";
     document.getElementById('inptObservacionMecanicoDental').value= "";
+    document.getElementById('inptEstadoMecanicoDental').value= "";
     document.getElementById('btnEditarMecanicoDental').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarMecanicoDental').disabled= true;
 }
@@ -246,6 +249,7 @@ function ObtenerdatosMecanicoDental(elemento) {
     document.getElementById('inptFechaRetiroMecanicoDental').value = $(elemento).children('td[id="td_datos_5"]').html();
     document.getElementById('inptCostoMecanicoDental').value = $(elemento).children('td[id="td_datos_7"]').html();
     document.getElementById('inptPacienteMecanicoDental').value= $(elemento).children('td[id="td_datos_1"]').html();
+    document.getElementById('inptEstadoMecanicoDental').value= $(elemento).children('td[id="td_datos_11"]').html();
 
     $("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''

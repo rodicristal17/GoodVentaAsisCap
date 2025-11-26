@@ -3672,6 +3672,22 @@ style='background-color:#5bc572'>
                                         </tr>
                                     </table>
                                     <br>
+                                    <table style='width:100%'>
+                                        <tr>
+                                            <td>
+                                                <p class='pTituloC'>Estado:</p>
+                                                <select class="inputSelect" id="inptEstadoMecanicoDental" style="width:200px">
+                                                <option value="">SELECCIONAR</option>
+                                                <option value="pendiente">PENDIENTE</option>
+                                                <option value="retirado">RETIRADO</option>
+                                                <option value="entregado">ENTREGADO</option>
+                                                <option value="pagado">PAGADO</option>
+                                                <option value="inactivo">INACTIVO</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <br>
                                 </div>
                                 <div class='divMenuf' style='float:left;margin:1%;width:45%;height:350px'>
                                     <br>
@@ -3764,7 +3780,7 @@ style='background-color:#5bc572'>
                                         </td>
                                         <td style="width:10%;text-align:left">
                                           <p class="pTitulo8" style="width: 100%;" onclick="checkFechaMecanicoDental(1)"> 
-                                          <input type="checkbox" id="inptSeleccFiltroFechaTodosMecanicoDental" style="width: fit-content;">Todos</p>
+                                          <input type="checkbox" id="inptSeleccFiltroFechaTodosMecanicoDental" style="width: fit-content;" checked>Todos</p>
                                         </td>
                                         <td style="width:10%;text-align:left">
                                           <p class="pTitulo8" style="width: 100%;" onclick="checkFechaMecanicoDental(2)"> 
@@ -3782,11 +3798,14 @@ style='background-color:#5bc572'>
                                             <td class="td_registro" style="width:10%;">
                                                 #
                                             </td>
-                                            <td class="td_registro" style="width:45%;">
+                                            <td class="td_registro" style="width:35%;">
                                                 Paciente
                                             </td>
                                             <td class="td_registro" style="width:25%;">
                                                 Tipo de trabajo
+                                            </td>
+                                            <td class="td_registro" style="width:10%;">
+                                                Estado
                                             </td>
                                             <td class="td_registro" style="width:10%;">
                                                 Fecha entrega
@@ -3806,7 +3825,7 @@ style='background-color:#5bc572'>
                                             <td class="td_registro" style="width:3%;">
                                               <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptCodListadoMecanicoDental')">
                                             </td>
-                                            <td class="td_registro" style="width:42%;">
+                                            <td class="td_registro" style="width:32%;">
                                               <input class='inputText' type='text' id='inptPacienteListadoMecanicoDental' onkeyup="if(event.keyCode == 13){buscarMecanicosDentales()}"/>
                                             </td>
                                             <td class="td_registro" style="width:3%;">
@@ -3819,6 +3838,16 @@ style='background-color:#5bc572'>
                                               <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptTipoTrabajoMecanicoDental')">
                                             </td>
                                             <td class="td_registro" style="width:10%;">
+                                            </td>
+                                            <td class="td_registro" style="width:10%;">
+                                              <select class="inputSelect" id="inptEstadoListadoMecanicoDental" style="width:200px">
+                                                <option value="todos">TODOS</option>
+                                                <option value="pendiente">PENDIENTE</option>
+                                                <option value="retirado">RETIRADO</option>
+                                                <option value="entregado">ENTREGADO</option>
+                                                <option value="pagado">PAGADO</option>
+                                                <option value="inactivo">INACTIVO</option>
+                                              </select>
                                             </td>
                                             <td class="td_registro" style="width:10%;">
                                             </td>

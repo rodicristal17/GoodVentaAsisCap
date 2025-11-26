@@ -104,7 +104,7 @@
                     if (is_numeric($value)) {
                         $sqlFiltro .= "il.$key = $value";
                     } else {
-                        $sqlFiltro .= "il.$key like '$value'";
+                        $sqlFiltro .= "il.$key like '%$value%'";
                     }
                     break;
             }
