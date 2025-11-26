@@ -235,6 +235,9 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptLocalInventarioInsumo').value= $(datostr).children('td[id="td_datos_8"]').html();
     document.getElementById('inptEstadoInventarioInsumo').value= $(datostr).children('td[id="td_datos_4"]').html().toLowerCase();
     document.getElementById('inptObservacionInventarioInsumo').innerHTML= $(datostr).children('td[id="td_datos_7"]').html();
+    document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+$(datostr).children('td[id="td_datos_10"]').html() +")";
+    document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+$(datostr).children('td[id="td_datos_11"]').html() +")";
+    document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+$(datostr).children('td[id="td_datos_12"]').html() +")";
     document.getElementById('btnEditarInventarioLocal').style.backgroundColor= "rgb(33, 150, 243)";
     document.getElementById('btnEditarInventarioLocal').disabled= false;
 }
@@ -287,7 +290,83 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
     datos.append("cantidad", cantidad);
     datos.append("costo", costo);
     datos.append("observacion", observacion);
-    datos.append("limite", "10 OFFSET "+registrocargadoInsumoLocal);
+
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInventarioLocal.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					subirImagenes();
+                    verCerrarAbmInventarioLocal(false, true);
+				} else {
+                    throw new Error("Error producido en abmInventarioLocal de JavaScript.");
+                }
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
+var fotoInventario1= "";
+var extInventario1= "";
+var fotoInventario2= "";
+var extInventario2= "";
+var fotoInventario3= "";
+var extInventario3= "";
+function subirImagenes() {
+    obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("accion", "cargar_imagen");
+    datos.append("cod_inventario", cod_inventarioLocal);
+    datos.append("fotos[]", fotoInventario1);
+    datos.append("exts[]", extInventario1);
+    datos.append("fotos[]", fotoInventario2);
+    datos.append("exts[]", extInventario2);
+    datos.append("fotos[]", fotoInventario3);
+    datos.append("exts[]", extInventario3);
 
     var OpAjax = $.ajax({
 		data: datos,
@@ -331,7 +410,7 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados exitosamente.");
 				} else {
-                    throw new Error("Error producido en abmInventarioLocal de JavaScript.");
+                    throw new Error("Error producido en subirImagenes de JavaScript.");
                 }
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

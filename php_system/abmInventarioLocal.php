@@ -3,6 +3,7 @@
     include("verificar_navegador.php");
     include("buscar_nivel.php");
     include("classTable.php");
+    include("subir_foto_base64.php");
 
     function verificar($funt) {
         $user = $_POST['useru'];
@@ -20,6 +21,18 @@
         }
 
         switch ($funt) {
+            case 'cargar_imagen':
+                $cod_inventario= utf8_decode($_POST['cod_inventario']);
+                $fotos= $_POST['fotos'];
+                $ext= $_POST['exts'];
+                for ($i= 0; $i < count($fotos); $i++) {
+                    if (!empty($ext[$i]) && !empty($fotos[$i])) {
+                        $campo= "url" . ($i+1);
+                        cargarImagenInventarioLocal($cod_inventario, $campo, $fotos[$i], $ext[$i]);
+                    }
+                }
+                echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
+                break;
             case 'nuevo/editar':
                 $cod_inventario= isset($_POST['cod_inventario']) ? utf8_decode($_POST['cod_inventario']) : null;
                 $nombre= isset($_POST['nombre']) ? utf8_decode($_POST['nombre']) : null;
@@ -77,6 +90,9 @@
             <td id='td_datos_7'style='display: none;'>".$value['observacion']."</td>
             <td id='td_datos_8'style='display: none;'>".$value['cod_localFK']."</td>
             <td id='td_datos_9'style='display: none;'>".$value['cod_usuarioFK_edit']."</td>
+            <td id='td_datos_10'style='display: none;'>".$value['url1']."</td>
+            <td id='td_datos_11'style='display: none;'>".$value['url2']."</td>
+            <td id='td_datos_12'style='display: none;'>".$value['url3']."</td>
             </tr></table>";
         }
 
@@ -138,6 +154,28 @@
 
         $stmt->close();
         return $registros;
+    }
+
+    function cargarImagenInventarioLocal($cod_inventario, $campo, $foto, $ext)
+    {
+        $foto = substr($foto, strpos($foto, ",") + 1);
+        $foto = base64_decode($foto);
+        $id_foto = "";
+        $donde = "../fotos/fotosInsumoLocal/";
+        $id_foto = $cod_inventario;
+        $id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
+        $ruta = "/GoodVentaAsisCap/fotos/fotosInsumoLocal/" . $cod_inventario . $id_f . '.' . $ext;
+
+        $mysqli=conectar_al_servidor();
+        $consulta="Update insumos_local set ".$campo."=? where cod_insumo=? ";	
+
+        $stmt = $mysqli->prepare($consulta);
+        $ss='ss';
+        $stmt->bind_param($ss,$ruta,$cod_inventario);
+        if ( ! $stmt->execute()) {
+            echo "Error";
+            exit;
+        }
     }
 
     function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuarioFK_edit) {

@@ -25885,7 +25885,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
             </div>
           </center>
         </div>
-        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;width:500px;min-height: 300px;">
+        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;min-height: 800px;">
           <table class="tableMenuZ">
             <tbody>
               <tr>
@@ -25907,87 +25907,120 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
               </tr>
             </tbody>
           </table>
-          <br>
           <center>
-            <div class="divMenuf">
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Codigo :</p>
-                <input class="inputTextDisable" type="text" disabled id="inptCodigoInventarioInsumo">
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Nombre :</p>
-                <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptNombreInventarioInsumo">
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Descripcion :</p>
-                <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Cantidad :</p>
-                <input class="inputText" type="number" onchange="separadordemiles(this)" id="inptCantidadInventarioInsumo" value=1>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Costo :</p>
-                <input class="inputText" type="text" min="0" id="inptCostoInventarioInsumo">
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td style="width: 50%;">
-                <p class="pTituloC">Local :</p>
-                <select class="inputSelect" id="inptLocalInventarioInsumo" style="width:130px">
-                </select>
-                </td>
-                <td style="width: 50%;">
-                <p class="pTituloC">Estado :</p>
-                <select class="inputSelect" id="inptEstadoInventarioInsumo" style="width:130px">
-                <option value="activo">ACTIVO</option>
-                <option value="inactivo">INACTIVO</option>
-                </select>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Observacion :</p>
-                <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
-                </td>
-                </tr>
-              </table>
+            <div class="divMenuFloat3" style="width: 45%;">
+              <div class="divMenuf">
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
+                  <p class="pTituloC">Codigo :</p>
+                  <input class="inputTextDisable" type="text" disabled id="inptCodigoInventarioInsumo">
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
+                  <p class="pTituloC">Nombre :</p>
+                  <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptNombreInventarioInsumo">
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
+                  <p class="pTituloC">Descripcion :</p>
+                  <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
+                  <p class="pTituloC">Cantidad :</p>
+                  <input class="inputText" type="number" onchange="separadordemiles(this)" id="inptCantidadInventarioInsumo" value=1>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
+                  <p class="pTituloC">Costo :</p>
+                  <input class="inputText" type="text" min="0" id="inptCostoInventarioInsumo">
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td style="width: 50%;">
+                  <p class="pTituloC">Local :</p>
+                  <select class="inputSelect" id="inptLocalInventarioInsumo" style="width:130px">
+                  </select>
+                  </td>
+                  <td style="width: 50%;">
+                  <p class="pTituloC">Estado :</p>
+                  <select class="inputSelect" id="inptEstadoInventarioInsumo" style="width:130px">
+                  <option value="activo">ACTIVO</option>
+                  <option value="inactivo">INACTIVO</option>
+                  </select>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
+                  <p class="pTituloC">Observacion :</p>
+                  <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
+                  </td>
+                  </tr>
+                </table>
+              </div>
             </div>
-            <div class="divMenuf">
-            <br>
-            <center>
-            <input type="button" value="Guardar datos" class="btn1" onclick="verificarCamposInventarioLocal()" id="btnAbmBanco">
-            </center>
-            <br>
+            <div class="divMenuFloat3" style="width: 45%;">
+              <div class="divMenuf">
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <center>
+                <div id="imgfotoInventarioLocal1" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal1')" style="background-image: url();"></div>
+                </center>
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <center>
+                <div id="imgfotoInventarioLocal2" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal2')" style="background-image: url();"></div>
+                </center>
+                </td>
+                </tr>
+              </table>
+              <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <center>
+                <div id="imgfotoInventarioLocal3" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal3')" style="background-image: url();"></div>
+                </center>
+                </td>
+                </tr>
+              </table>
+              <br>
+              <center>
+              <input type="button" value="Guardar datos" class="btn1" onclick="verificarCamposInventarioLocal()" id="btnAbmBanco">
+              </center>
+              <br>
+              </div>
             </div>
           </center>
         </div>
@@ -26316,10 +26349,48 @@ id='inptTotalRegistoCheque' style='width:150px;text-align:center' />
 </table>
 </div>
 
-
-
-
-
+<div class="principal2 divScrollPrincipal" style="display: none;z-index: 100;" id="divAddFotos">
+  <table style="width:100%;height:100%;" id="tdEfectoSeleccionarFoto">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div style="min-height:300px;width:500px;display:" class="divAbms_b">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Seleccionar <b style="font-size: 30px;">Fotos</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAutomotorMC/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="vercerrarcargadefotos(false)">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <br>
+              <center>
+                <div class="divMenuf" style="text-align: center;">
+                  <img style="max-width:90%" src="/GoodVentaAsisCap/iconos/imagenphoto.png" id="ImgFotoProductos">
+                  <br>
+                  <br>
+                  <input type="button" value="Seleccionar Archivo" class="btn1" onclick="ExploradorImagenProducto()"
+                    style="    color: #ffffff;    background-color: #79acd3;">
+                  <input type="button" value="Eliminar" class="btn1" onclick="eliminarfotoprodutos()"
+                    id="btnEliminarPhotoProducto" style="background-color: #ccc;">
+                  <input type="file" id="file_producto" name="file_producto" style="display:none;"
+                    onchange="readFileProducto(this)">
+                </div>
+              </center>
+              <br>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 <div class='principal2' style='display:none' id='divAbmdebaja'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmBaja'>

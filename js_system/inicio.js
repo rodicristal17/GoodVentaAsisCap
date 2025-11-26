@@ -38472,4 +38472,80 @@ function relacionarProductosLocal() {
 	});
 
 }
+var controlFoto= "";
+function ExploradorImagenProducto(){
+	$("input[name=file_producto]").click();
+}
 
+function readFileProducto(input) {
+	var file = $("input[name=" + input.name + "]")[0].files[0];
+	var filename = file.name;
+	var tamanho = file.size;
+	if (tamanho > 5000000) {
+		ver_vetana_informativa("LA FOTO NO PUEDE EXCEDER LOS 5Mb")
+		return false
+	}
+	file_extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+	if ((file_extension == "jpeg") || (file_extension == "jpg") || (file_extension == "png")) {
+	} else {
+		ver_vetana_informativa("LA FOTO SELECCIONADO NO ES JPEG")
+		return false;
+	}
+	var reader = new FileReader();
+	reader.onload = function (e) {
+		let elemento= "div[id=img" + controlFoto + "]";
+		switch (controlFoto) {
+			case 'fotoInventarioLocal1':
+				fotoInventario1= e.target.result;
+				extInventario1= file_extension;
+				break;
+			case 'fotoInventarioLocal2':
+				fotoInventario2= e.target.result;
+				extInventario2= file_extension;
+				break;
+			case 'fotoInventarioLocal3':
+				fotoInventario3= e.target.result;
+				extInventario3= file_extension;
+				break;
+		}
+ 		$(elemento).css({"background-image":"url("+e.target.result+")"})
+
+		document.getElementById("ImgFotoProductos").src = e.target.result
+		document.getElementById("btnEliminarPhotoProducto").style.backgroundColor = 'red'
+
+	}
+	reader.readAsDataURL(input.files[0]);
+}
+
+function eliminarFoto(opcion) {
+	switch (controlFoto) {
+		case 'fotoInventarioLocal1':
+			fotoInventario1= "";
+			extInventario1= "";
+			break;
+		case 'fotoInventarioLocal2':
+			fotoInventario2= "";
+			extInventario2= "";
+			break;
+		case 'fotoInventarioLocal3':
+			fotoInventario3= "";
+			extInventario3= "";
+			break;
+	}
+	const elemento= "div[id=img"+ opcion +"]";
+ 	$(elemento).css({"background-image":"url()"})
+}
+
+function vercerrarcargadefotos(opcion) {
+	document.getElementById('divAddFotos').style.display= "";
+	if (opcion != null && opcion != "") {
+		controlFoto= opcion;
+		// Obtiene la direccion de la imagen
+		const elemento= 'img' + opcion;
+		const ruta= document.getElementById(elemento).style.backgroundImage;
+		document.getElementById('ImgFotoProductos').src= ruta.slice(5, -2);
+	} else {
+		document.getElementById('ImgFotoProductos').src= "/GoodVentaAsisCap/iconos/imagenphoto.png";
+		document.getElementById('divAddFotos').style.display= "none";
+	}
+}

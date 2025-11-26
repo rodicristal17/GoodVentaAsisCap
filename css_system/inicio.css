@@ -2137,6 +2137,17 @@ text-align: justify;
     transform: scale(0.97);
 }
 
+.imgFotoProducto {
+  width: 140px;
+  height: 130px;
+  background-color: #f0f0f0;
+  border: solid 1px #ddd;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
 /* --- Animación suave de entrada --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.95); }
