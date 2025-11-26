@@ -73,7 +73,7 @@ CREATE TABLE insumos_local (
 );
 
 ALTER TABLE mecanico_dental MODIFY COLUMN estado
-    ENUM('pendiente', 'entregado', 'retirado', 'pagado', 'inactivo');
+    ENUM('pendiente', 'entregado', 'retirado', 'pagado', 'inactivo') DEFAULT 'pendiente';
 
 ALTER TABLE mecanico_dental MODIFY COLUMN fecha_entrega
     REMOVE DEFAULT;
