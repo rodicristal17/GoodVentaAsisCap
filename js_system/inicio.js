@@ -14949,7 +14949,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 function obtenerdatosvistaventa(datostr) {
 	if (ventanaAnteriorHistorialVenta = 'mecanicoDental') {
 		idFkVenta = $(datostr).children('td[id="td_datos_8"]').html();
-		document.getElementById('inptPacienteMecanicoDental').value = $(datostr).children('td[id="td_datos_2"]').html();
+		document.getElementById('inptPacienteTrabajoMecanicoDental').value = $(datostr).children('td[id="td_datos_2"]').html();
 	} else {
 		limpiarcamposventa("1")
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
@@ -38508,7 +38508,7 @@ function readFileProducto(input) {
 				extInventario3= file_extension;
 				break;
 		}
- 		$(elemento).css({"background-image":"url("+e.target.result+")"})
+ 		$(elemento).css({"background-image":"url('"+e.target.result+"')"})
 
 		document.getElementById("ImgFotoProductos").src = e.target.result
 		document.getElementById("btnEliminarPhotoProducto").style.backgroundColor = 'red'
@@ -38517,7 +38517,7 @@ function readFileProducto(input) {
 	reader.readAsDataURL(input.files[0]);
 }
 
-function eliminarFoto(opcion) {
+function eliminarFoto() {
 	switch (controlFoto) {
 		case 'fotoInventarioLocal1':
 			fotoInventario1= "";
@@ -38532,12 +38532,14 @@ function eliminarFoto(opcion) {
 			extInventario3= "";
 			break;
 	}
-	const elemento= "div[id=img"+ opcion +"]";
- 	$(elemento).css({"background-image":"url()"})
+	const elemento= "div[id=img"+ controlFoto +"]";
+ 	$(elemento).css({"background-image":"url('/GoodVentaAsisCap/iconos/imagenphoto.png')"})
+	document.getElementById("ImgFotoProductos").src = "/GoodVentaAsisCap/iconos/imagenphoto.png"
 }
 
 function vercerrarcargadefotos(opcion) {
 	document.getElementById('divAddFotos').style.display= "";
+	document.getElementById('btnEliminarPhotoProducto').style.backgroundColor= "rgb(245, 59, 59)";
 	if (opcion != null && opcion != "") {
 		controlFoto= opcion;
 		// Obtiene la direccion de la imagen
@@ -38547,5 +38549,6 @@ function vercerrarcargadefotos(opcion) {
 	} else {
 		document.getElementById('ImgFotoProductos').src= "/GoodVentaAsisCap/iconos/imagenphoto.png";
 		document.getElementById('divAddFotos').style.display= "none";
+		document.getElementById('btnEliminarPhotoProducto').style.backgroundColor= "#ccc";
 	}
 }

@@ -26,7 +26,7 @@
                 $fotos= $_POST['fotos'];
                 $ext= $_POST['exts'];
                 for ($i= 0; $i < count($fotos); $i++) {
-                    if (!empty($ext[$i]) && !empty($fotos[$i])) {
+                    if ((empty($ext[$i]) && empty($fotos[$i])) || (!empty($ext[$i]) && !empty($fotos[$i]))) {
                         $campo= "url" . ($i+1);
                         cargarImagenInventarioLocal($cod_inventario, $campo, $fotos[$i], $ext[$i]);
                     }
@@ -63,9 +63,34 @@
 
                 obtenerVistaInsumosLocal($filtros, $limite);
                 break;
+            case 'obtenerUltimoId':
+                $cod_inventario= obtenerUltimoId();
+                echo json_encode(array("1" => "exito", "2" => $cod_inventario));
+                break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
+    }
+
+    function obtenerUltimoId() {
+        $sql= "SELECT (MAX(cod_insumo) + 1) as max_cod_insumo FROM insumos_local";
+
+        $mysqli=conectar_al_servidor();
+        $stmt = $mysqli->prepare($sql);
+        if ( !$stmt->execute()) {
+            $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);	
+            exit;
+        }        
+
+        $result = $stmt->get_result();
+
+        // Obtiene el primer resultado
+        $row = $result->fetch_assoc();
+        $result= $row['max_cod_insumo'];
+
+        $stmt->close();
+        return $result;
     }
 
     function obtenerVistaInsumosLocal($filtros, $limite) {
@@ -80,7 +105,7 @@
             $pagina.="
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosInsumoLocal(this)'>
-            <td id='td_id' style='width:10%;'>".$value['cod_insumo']."</td>
+            <td id='td_id' style='width:10%;'>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)."</td>
             <td id='td_datos_1'style='width:55%;'>".$value['nombre']."</td>
             <td id='td_datos_2'style='display:none;'>".$value['descripcion']."</td>
             <td id='td_datos_3'style='width:20%;'>".$value['nombreLocal'].".</td>
@@ -158,14 +183,17 @@
 
     function cargarImagenInventarioLocal($cod_inventario, $campo, $foto, $ext)
     {
-        $foto = substr($foto, strpos($foto, ",") + 1);
-        $foto = base64_decode($foto);
-        $id_foto = "";
-        $donde = "../fotos/fotosInsumoLocal/";
-        $id_foto = $cod_inventario;
-        $id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
-        $ruta = "/GoodVentaAsisCap/fotos/fotosInsumoLocal/" . $cod_inventario . $id_f . '.' . $ext;
-
+        $ruta= NULL;
+        if (!empty($foto) || !empty($ext)) {
+            $foto = substr($foto, strpos($foto, ",") + 1);
+            $foto = base64_decode($foto);
+            $id_foto = "";
+            $donde = "../fotos/fotosInsumoLocal/";
+            $id_foto = $cod_inventario;
+            $id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
+            $ruta = "/GoodVentaAsisCap/fotos/fotosInsumoLocal/" . $cod_inventario . $id_f . '.' . $ext;
+        }
+        
         $mysqli=conectar_al_servidor();
         $consulta="Update insumos_local set ".$campo."=? where cod_insumo=? ";	
 

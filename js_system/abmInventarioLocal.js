@@ -8,7 +8,6 @@ function verCerrarAbmInventarioLocal(mostrar, abm) {
     if (mostrar) {
         document.getElementById("divAbmInventarioLocal").style.display="";
         if (abm) {
-            if(controlacceso("EDITARLISTADOINVENTARIOLOCAL","accion")==false){ return;}
             $("div[id=divAbmInventarioLocal1]").fadeOut(250);
             $("div[id=divAbmInventarioLocal2]").fadeIn(250);
         } else {
@@ -221,12 +220,23 @@ function cancelarInformeInventarioLocal() {
 }
 
 function obtenerDatosInsumoLocal(datostr) {
+    // Limpieza de clases de otros registros
     $("tr[id=tbSelecRegistro]").each(function(i, td){		
         td.className=''
     });
     datostr.className='tableRegistroSelec'
+
+    // Obtiene datos y asigna
+    let urlFoto1= $(datostr).children('td[id="td_datos_10"]').html();
+    let urlFoto2= $(datostr).children('td[id="td_datos_11"]').html();
+    let urlFoto3= $(datostr).children('td[id="td_datos_12"]').html();
+    
+    urlFoto1= (!urlFoto1) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto1;
+    urlFoto2= (!urlFoto2) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto2;
+    urlFoto3= (!urlFoto3) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto3;
+
     cod_inventarioLocal= $(datostr).children('td[id="td_id"]').html();
-    document.getElementById('inptCodigoInventarioInsumo').value= cod_inventarioLocal.toString().padStart(6, "0");
+    document.getElementById('inptCodigoInventarioInsumo').value= cod_inventarioLocal.toString().padStart(3, "0");
     document.getElementById('inptRegistroSeleccInventarioLocal').value= $(datostr).children('td[id="td_id"]').html();
     document.getElementById('inptNombreInventarioInsumo').value= $(datostr).children('td[id="td_datos_1"]').html();
     document.getElementById('inptDescripcionInventarioInsumo').value= $(datostr).children('td[id="td_datos_2"]').html();
@@ -235,16 +245,79 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptLocalInventarioInsumo').value= $(datostr).children('td[id="td_datos_8"]').html();
     document.getElementById('inptEstadoInventarioInsumo').value= $(datostr).children('td[id="td_datos_4"]').html().toLowerCase();
     document.getElementById('inptObservacionInventarioInsumo').innerHTML= $(datostr).children('td[id="td_datos_7"]').html();
-    document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+$(datostr).children('td[id="td_datos_10"]').html() +")";
-    document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+$(datostr).children('td[id="td_datos_11"]').html() +")";
-    document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+$(datostr).children('td[id="td_datos_12"]').html() +")";
+    document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ urlFoto1 +")";
+    document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ urlFoto2 +")";
+    document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ urlFoto3 +")";
     document.getElementById('btnEditarInventarioLocal').style.backgroundColor= "rgb(33, 150, 243)";
     document.getElementById('btnEditarInventarioLocal').disabled= false;
 }
 
+function consultarUltimoIdInventarioLocal() {
+    obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("accion", "obtenerUltimoId");
+
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInventarioLocal.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+                    document.getElementById('inptCodigoInventarioInsumo').value = datos["2"].toString().padStart(3, "0");
+				} else {
+                    throw new Error("Error producido en consultarUltimoIdInventarioLocal de JavaScript.");
+                }
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
 function limpiarcamposInventarioLocal() {
+    consultarUltimoIdInventarioLocal();
     cod_inventarioLocal= "";
-    document.getElementById('inptCodigoInventarioInsumo').value= "";
     document.getElementById('inptNombreInventarioInsumo').value= "";
     document.getElementById('inptDescripcionInventarioInsumo').value= "";
     document.getElementById('inptCantidadInventarioInsumo').value= 1;
@@ -252,9 +325,18 @@ function limpiarcamposInventarioLocal() {
     document.getElementById('inptLocalInventarioInsumo').value= "";
     document.getElementById('inptEstadoInventarioInsumo').value= "activo";
     document.getElementById('inptObservacionInventarioInsumo').innerHTML= "";
+    document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
+    document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
+    document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
 }
 
 function verificarCamposInventarioLocal() {
+    // Verifica los permisos
+    if (cod_inventarioLocal == "") {
+        if(controlacceso("CREARLISTADOINVENTARIOLOCAL","accion")==false){ return;}
+    } else {
+        if(controlacceso("EDITARLISTADOINVENTARIOLOCAL","accion")==false){ return;}
+    }
     const nombre= document.getElementById('inptNombreInventarioInsumo').value;
     const descripcion= document.getElementById('inptDescripcionInventarioInsumo').value;
     const estado= document.getElementById('inptEstadoInventarioInsumo').value;
@@ -332,6 +414,7 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
 					subirImagenes();
+                    obtenerVistaInformeInsumoLocal();
                     verCerrarAbmInventarioLocal(false, true);
 				} else {
                     throw new Error("Error producido en abmInventarioLocal de JavaScript.");
