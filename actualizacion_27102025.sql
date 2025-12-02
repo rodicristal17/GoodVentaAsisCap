@@ -41,17 +41,27 @@ CREATE TABLE tipo_trabajo_mecanico_dental (
 
 CREATE TABLE mecanico_dental (
     cod_mecanico_dental INT PRIMARY KEY AUTO_INCREMENT,
+    cod_personaFK INT(11),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    Foreign Key (cod_personaFK) REFERENCES persona(cod_persona)
+);
+
+CREATE TABLE trabajo_mecanico_dental (
+    cod_trabajo_mecanico_dental INT PRIMARY KEY AUTO_INCREMENT,
     cod_ventaFK INT(11),
     cod_tipo_trabajoFK INT(11),
-    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    cod_mecanicoDentalFK INT(11),
+    estado ENUM('pendiente', 'entregado', 'retirado', 'pagado', 'inactivo') DEFAULT 'pendiente',
     observacion VARCHAR(150),
     colorimetro VARCHAR(12),
     costo INT,
     fecha_entrega DATE,
     fecha_retiro DATE,
+    Foreign Key (cod_mecanicoDentalFK) REFERENCES mecanico_dental(cod_mecanico_dental),
     Foreign Key (cod_ventaFK) REFERENCES venta(cod_venta),
     Foreign Key (cod_tipo_trabajoFK) REFERENCES tipo_trabajo_mecanico_dental(cod_tipo_trabajo_mecanico_dental)
 );
+
 
 ALTER TABLE persona ADD COLUMN tipo_relacion VARCHAR(100);
 ALTER TABLE persona ADD COLUMN telefono_referencia INT(13);
@@ -72,17 +82,14 @@ CREATE TABLE insumos_local (
     FOREIGN KEY (cod_usuarioFK_edit) REFERENCES usuario(cod_usuario)
 );
 
-ALTER TABLE mecanico_dental MODIFY COLUMN estado
-    ENUM('pendiente', 'entregado', 'retirado', 'pagado', 'inactivo') DEFAULT 'pendiente';
-
-ALTER TABLE mecanico_dental MODIFY COLUMN fecha_entrega
-    REMOVE DEFAULT;
-
 ALTER TABLE insumos_local ADD COLUMN url1 VARCHAR(100);
 ALTER TABLE insumos_local ADD COLUMN url2 VARCHAR(100);
 ALTER TABLE insumos_local ADD COLUMN url3 VARCHAR(100);
 
+ALTER TABLE gastos ADD COLUMN url1 VARCHAR(100);
+ALTER TABLE gastos ADD COLUMN cod_motivo INT(11);
+
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
--- EDITARLISTADOINVENTARIOLOCAL, VERLISTADOINVENTARIOLOCAL
+-- EDITARLISTADOINVENTARIOLOCAL, VERLISTADOINVENTARIOLOCAL, CREARLISTADOINVENTARIOLOCAL

@@ -72,7 +72,8 @@ function obtenerdatosabmGasto(datostr) {
 	datostr.className = 'tableRegistroSelec'
 	document.getElementById('inptMontoGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptRegistroSeleccGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_13"]').html();
+	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_14"]').html();
 	document.getElementById('inptFechaGasto').value = $(datostr).children('td[id="td_datos_3"]').html();
 	document.getElementById('inptEstadoGasto').value = $(datostr).children('td[id="td_datos_5"]').html();
 	document.getElementById('inptlocalMisGastos').value = $(datostr).children('td[id="td_datos_7"]').html();
@@ -84,6 +85,11 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnAbmGastos').value = "Editar datos";
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
+	
+	// Carga la imagen
+	let imagen= $(datostr).children('td[id="td_datos_12"]').html();
+	imagen= imagen ? imagen : '/GoodVentaAsisCap/iconos/imagenphoto.png';
+    document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ imagen +")";
 }
 function verificarcamposGasto() {
 	var inptMontoGasto = document.getElementById('inptMontoGasto').value
@@ -214,11 +220,12 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
+					subirImagenGasto();
 				   if(accion=="nuevo"){
 						ImprimirTicketEgreso()
 					}
 					limpiarcamposGasto()
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+
 					idAbmGasto = ""
 					buscarabmGasto()
 					
@@ -228,6 +235,74 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
+		}
+	});
+}
+
+var fotoGasto= "";
+var extGasto= "";
+function subirImagenGasto() {
+    obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("funt", "cargar_imagen");
+    datos.append("idgastos", idAbmGasto);
+    datos.append("foto", fotoGasto);
+    datos.append("ext", extGasto);
+    
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					ver_vetana_informativa("Datos guardados exitosamente.");
+				} else {
+                    throw new Error("Error producido en subirImagenGasto de JavaScript.");
+                }
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
 		}
 	});
 }
@@ -498,6 +573,9 @@ function limpiarcamposGasto() {
 	document.getElementById('inptMotivoMisGastos').value ="";
 	idAbmGasto = "";
 	seleccionarLocalUSer()
+	fotoGasto= "";
+	extGasto= "";
+    document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
 }
 
 /* ABM MOTIVO EN EGRESO/INGRESO */
@@ -807,6 +885,482 @@ function obtenerUltimoLimiteCaja() {
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+/*
+INFORME DE EVALUACIÓN
+*/
+function verCerrarInformeDeEvaluacion(){
+	document.getElementById("divSegundoPlano").style.display="none";
+	if(document.getElementById("divInformeEvaluacion").style.display==""){
+limpiarcamposinformeevaluacion()
+		document.getElementById("divMinimizadoInformeEvaluacion").style.display="none"
+document.getElementById("tdEfectoInformeEvaluacion").className="magictime vanishOut"
+	$("div[id=divInformeEvaluacion]").fadeOut(500);	
+	}else{	
+if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+		document.getElementById("divInformeEvaluacion").style.display=""
+document.getElementById("tdEfectoInformeEvaluacion").className="magictime slideDownReturn"
+		
+	}
+}
+function minimizarinformeevaluacion(){
+	//document.getElementById("divInformeEvaluacion").style.display = "none";
+	 document.getElementById("divMinimizadoInformeEvaluacion").style.display = "";
+document.getElementById("tdEfectoInformeEvaluacion").className="magictime slideDown"
+	$("div[id=divInformeEvaluacion]").fadeOut(500);	
+}
+function limpiarcamposinformeevaluacion(){
+ document.getElementById("inptBuscarEvaluacionF1").value=""
+ document.getElementById("inptBuscarEvaluacionF2").value=""
+ document.getElementById("inptRegistroEvaluacionGastos").value=""
+ document.getElementById("inptTotalEvaluacionGastos").value=""
+ document.getElementById("table_evaluacion_gasto").innerHTML=""
+ document.getElementById("inptRegistroEvaluacionPagos").value=""
+ document.getElementById("inptTotalEvaluacionPagos").value=""
+ document.getElementById("table_evaluacion_pagos").innerHTML=""
+ document.getElementById("inptRegistroEvaluacionProductosVendidos").value=""
+ document.getElementById("inptTotalEvaluacionProductosVendidos").value=""
+ document.getElementById("table_evaluacion_producto_vendidos").innerHTML=""
+ document.getElementById("inptRegistroEvaluacionProductoComprados").value=""
+ document.getElementById("inptTotalEvaluacionProductosComprados").value=""
+ document.getElementById("table_evaluacion_producto_comprados").innerHTML=""
+ document.getElementById("inptRegistroEvaluacionPagosCompras").value=""
+ document.getElementById("inptTotalEvaluacionPagosCompras").value=""
+ document.getElementById("table_evaluacion_pagos_compras").innerHTML=""
+}
+function verCerrarVentanasEvaluacionInforme(d){
+	document.getElementById("btnHistoriaEvaluacion1").style=''
+	document.getElementById("btnHistoriaEvaluacion2").style=''
+	document.getElementById("btnHistoriaEvaluacion4").style=''
+	document.getElementById("btnHistoriaEvaluacion5").style=''
+	document.getElementById("btnHistoriaEvaluacion6").style=''
+	document.getElementById("divEvaluacionGastos").style.display='none'
+	document.getElementById("divEvaluacionPagoCuota").style.display='none'
+	document.getElementById("divEvualcionProductosComprados").style.display='none'
+	document.getElementById("divEvualcionProductosVendidos").style.display='none'
+	document.getElementById("divEvualcionPagosCompras").style.display='none'
+	if(d=="1"){
+		document.getElementById("btnHistoriaEvaluacion1").style='background-color:#ff9800;color:#fff'
+		document.getElementById("divEvaluacionGastos").style.display=''
+	}
+	if(d=="2"){		
+		 	document.getElementById("btnHistoriaEvaluacion2").style='background-color:#ff9800;color:#fff'
+		document.getElementById("divEvaluacionPagoCuota").style.display=''
+	}
+		if(d=="3"){		
+		document.getElementById("btnHistoriaEvaluacion3").style='background-color:#ff9800;color:#fff'
+			document.getElementById("divEvaluacionEntrega").style.display=''			
+		}
+		if(d=="4"){	
+		document.getElementById("btnHistoriaEvaluacion4").style='background-color:#ff9800;color:#fff'
+			document.getElementById("divEvualcionProductosComprados").style.display=''			
+		}
+		if(d=="5"){	
+		document.getElementById("btnHistoriaEvaluacion5").style='background-color:#ff9800;color:#fff'
+			document.getElementById("divEvualcionProductosVendidos").style.display=''			
+		}
+		if(d=="6"){	
+		document.getElementById("btnHistoriaEvaluacion6").style='background-color:#ff9800;color:#fff'
+			document.getElementById("divEvualcionPagosCompras").style.display=''			
+		}	
+}
+function buscarevaluacion(){
+	buscarevaluacionGasto()
+	buscarevaluacionPago()
+	buscarevaluacionProductosvendidos()
+	buscarevaluacionProductosComprados()
+	buscarevaluacionPagosCompra()		
+}
+function buscarevaluacionGasto() {
+	if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+	var fecha1 = document.getElementById("inptBuscarEvaluacionF1").value
+	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
+	var local = document.getElementById("inptlocalInformeEvaluacion").value
+	if (fecha1 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		return false;
+	}
+	if (fecha2 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		return false;
+	}
+	document.getElementById("table_evaluacion_gasto").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"local": local,
+		"funt": "evaluacionGasto"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("table_evaluacion_gasto").innerHTML = ""	
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+				document.getElementById("table_evaluacion_gasto").innerHTML = ""	
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];				
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+					var pagina = datos[2];
+					document.getElementById("table_evaluacion_gasto").innerHTML = pagina
+		document.getElementById("inptRegistroEvaluacionGastos").value = datos[3]
+	document.getElementById("inptTotalEvaluacionGastos").value = datos[4]	
+	
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+	}
+function buscarevaluacionPago() {
+	if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+	var fecha1 = document.getElementById("inptBuscarEvaluacionF1").value
+	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
+	var local = document.getElementById("inptlocalInformeEvaluacion").value
+	if (fecha1 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		return false;
+	}
+	if (fecha2 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		return false;
+	}
+	document.getElementById("table_evaluacion_pagos").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"local": local,
+		"funt": "evaluacionpagosventa"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+	document.getElementById("table_evaluacion_pagos").innerHTML = ""	
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)				
+	document.getElementById("table_evaluacion_pagos").innerHTML = ""	
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   
+					var pagina = datos[2];
+					document.getElementById("table_evaluacion_pagos").innerHTML = pagina	
+					document.getElementById("inptRegistroEvaluacionPagos").value = datos[3]
+					document.getElementById("inptTotalEvaluacionPagos").value = datos[4]	
+					
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+function buscarevaluacionProductosvendidos() {
+	if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+	var fecha1 = document.getElementById("inptBuscarEvaluacionF1").value
+	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
+	var local = document.getElementById("inptlocalInformeEvaluacion").value
+	if (fecha1 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		return false;
+	}
+	if (fecha2 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		return false;
+	}
+	document.getElementById("table_evaluacion_producto_vendidos").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"local": local,
+		"funt": "evaluacionproductodvendidos"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")			
+	document.getElementById("table_evaluacion_producto_vendidos").innerHTML = ""
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)				
+	document.getElementById("table_evaluacion_producto_vendidos").innerHTML = ""
+	try {	
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+			Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+					var pagina = datos[2];
+					document.getElementById("table_evaluacion_producto_vendidos").innerHTML = pagina
+	document.getElementById("inptRegistroEvaluacionProductosVendidos").value = datos[3]
+	document.getElementById("inptTotalEvaluacionProductosVendidos").value = datos[4]
+	
+				}				
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+function buscarevaluacionProductosComprados() {
+	if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+	var fecha1 = document.getElementById("inptBuscarEvaluacionF1").value
+	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
+	var local = document.getElementById("inptlocalInformeEvaluacion").value
+	if (fecha1 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		return false;
+	}
+	if (fecha2 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		return false;
+	}
+	document.getElementById("table_evaluacion_producto_comprados").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"local": local,
+		"funt": "evaluacionproductodcomprados"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")		
+	document.getElementById("table_evaluacion_producto_comprados").innerHTML = ""
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)				
+	document.getElementById("table_evaluacion_producto_comprados").innerHTML = ""
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   
+					var pagina = datos[2];
+				document.getElementById("table_evaluacion_producto_comprados").innerHTML = pagina		
+	document.getElementById("inptRegistroEvaluacionProductoComprados").value = datos[3]
+	document.getElementById("inptTotalEvaluacionProductosComprados").value = datos[4]
+	
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+function buscarevaluacionPagosCompra() {
+	if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+	var fecha1 = document.getElementById("inptBuscarEvaluacionF1").value
+	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
+	var local = document.getElementById("inptlocalInformeEvaluacion").value
+	if (fecha1 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		return false;
+	}
+	if (fecha2 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		return false;
+	}
+	document.getElementById("table_evaluacion_pagos_compras").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"local": local,
+		"funt": "evaluacionpagoscomprados"
+	};
+	$.ajax({
+
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+	document.getElementById("table_evaluacion_pagos_compras").innerHTML = ""
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)			
+	document.getElementById("table_evaluacion_pagos_compras").innerHTML = ""
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   			   
+					var paginaCompras = datos[2];
+					document.getElementById("table_evaluacion_pagos_compras").innerHTML = paginaCompras
+					document.getElementById("inptRegistroEvaluacionPagosCompras").value = datos[3]
+					document.getElementById("inptTotalEvaluacionPagosCompras").value = datos[4]	
+					
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+			var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
 		}

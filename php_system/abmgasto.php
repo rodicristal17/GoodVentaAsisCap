@@ -7,8 +7,7 @@ include("buscar_nivel.php");
 require("conexion.php");
 include("verificar_navegador.php");
 include("classTable.php");
-
-
+include("subir_foto_base64.php");
 
 function verificar($operacion)
 {
@@ -66,6 +65,15 @@ $cod_motivo= utf8_decode($cod_motivo);
 
 	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$operacion);
 
+}
+if ($operacion=='cargar_imagen') {
+	$idgastos=$_POST['idgastos'];
+	$idgastos = utf8_decode($idgastos);
+	$foto=$_POST['foto'];
+	$foto = utf8_decode($foto);
+	$ext=$_POST['ext'];
+	$ext = utf8_decode($ext);
+	subirImagenGasto($idgastos, $foto, $ext);
 }
 
 if($operacion=="buscar")
@@ -238,6 +246,33 @@ if($operacion=="buscaroption")
 }
 }
 
+function subirImagenGasto($idgastos, $foto, $ext) {
+	$ruta= NULL;
+	if (!empty($foto) || !empty($ext)) {
+		$foto = substr($foto, strpos($foto, ",") + 1);
+		$foto = base64_decode($foto);
+		$id_foto = "";
+		$donde = "../fotos/fotosGastos/";
+		$id_foto = $idgastos;
+		$id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
+		$ruta = "/GoodVentaAsisCap/fotos/fotosGastos/" . $idgastos . $id_f . '.' . $ext;
+	}
+	
+	$mysqli=conectar_al_servidor();
+	$consulta="Update gastos set url1=? where idgastos=? ";	
+
+	$stmt = $mysqli->prepare($consulta);
+	$ss='si';
+	$stmt->bind_param($ss,$ruta,$idgastos);
+	if ( ! $stmt->execute()) {
+		echo "Error";
+		exit;
+	}
+
+	echo json_encode(array("1" => "exito"));
+	exit;
+}
+
 function abm($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$operacion)
 {
 		
@@ -270,6 +305,9 @@ $consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_u
 personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=? where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
 $ss='ssssssssssssss';
+if (!$stmt) {
+	echo $mysqli->error;
+}
 $stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$cod_motivo,$idgastos); 
 
 }
@@ -316,7 +354,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 		$sqlFiltro .= "and cod_motivoIngresoEgresoFK = $cod_motivoFK";
 	}
 		 
-	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,
+	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,url1,
 	(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
 	(Select descripcion from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS motivo,
 	(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
@@ -355,6 +393,7 @@ if ( ! $stmt->execute()) {
 		  	  $banco=utf8_encode($valor['banco']);
 		  	  $nrocuenta=utf8_encode($valor['nrocuenta']);
 			  $arreglo=utf8_encode($valor['arreglo']);
+			  $url1=utf8_encode($valor['url1']);
 			  
 		  	 $totalGasto=$totalGasto+$monto;
 		  	 
@@ -376,6 +415,9 @@ if ( ! $stmt->execute()) {
 <td  id='' style='width:10%'>".$nombrelocal."</td>
 <td  id='td_datos_5' style='display:none'>".$estado."</td>
 <td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+<td  id='td_datos_12' style='display:none'>".$url1."</td>
+<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+<td  id='td_datos_14' style='display:none'>".$motivo."</td>
 </tr>
 </table>";
 			  
