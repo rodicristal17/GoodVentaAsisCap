@@ -70,8 +70,10 @@ $direccion= $_POST['direccion'];
 $direccion = utf8_decode($direccion);
 $tipo_relacion=$_POST['tipo_relacion'];
 $tipo_relacion = utf8_decode($tipo_relacion);
+$fecha_creacion = $_POST['fecha_creacion'];
+$fecha_creacion = utf8_decode($fecha_creacion);
 
-abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$operacion);
+abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$operacion);
 }
 
  
@@ -279,7 +281,7 @@ exit;
 }
 
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$operacion)
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$operacion)
 {
 
 
@@ -330,8 +332,8 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='sssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion);
 
-$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo)
-values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?)";
+$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion)
+values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW())";
 $stmt2 = $mysqli->prepare($consulta2);
 $ss='sssssss';
 $stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo);
@@ -360,10 +362,10 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion,$cod_persona);
 
-$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=? where cod_usuario=? ";
+$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=? where cod_usuario=? ";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='ssssssss';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$cod_usuario);
+$ss='sssssissi';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$cod_usuario);
 
 }
 
@@ -526,7 +528,7 @@ if($usuario!=""){
 
 
 $sql= "select us.cod_usuario,us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
-pr.tipo_relacion, pr.direccion,pr.telefono_referencia,
+pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona where 
  us.estado=? and us.cod_localFK=? ".$condicioncodigo.$condiciondocumento.$condicionusuario;
@@ -565,6 +567,7 @@ $url = utf8_encode($valor['url']);
 $telefono_referencia = utf8_encode($valor['telefono_referencia']);
 $direccion = utf8_encode($valor['direccion']);
 $tipo_relacion = utf8_encode($valor['tipo_relacion']);
+$fecha_creacion = utf8_encode($valor['fecha_creacion']);
 
 	    	 $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
@@ -585,6 +588,7 @@ $tipo_relacion = utf8_encode($valor['tipo_relacion']);
 <td  id='td_datos_12' style='display:none'>".$telefono_referencia."</td>
 <td  id='td_datos_13' style='display:none'>".$direccion."</td>
 <td  id='td_datos_14' style='display:none'>".$tipo_relacion."</td>
+<td  id='td_datos_15' style='display:none'>".$fecha_creacion."</td>
 </tr>
 </table>";
 

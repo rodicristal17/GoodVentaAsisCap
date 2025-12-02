@@ -37,7 +37,7 @@ function buscardatos($user)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,
+		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,us.fecha_creacion,
 		IFNULL((Select cdu.cod_cobradorFk from cobradorusuario cdu where cdu.cod_usuarioFk=us.cod_usuario),0) as ControlCobra
 		from  persona pr inner join usuario us on us.cod_usuario=pr.cod_persona  where cod_persona=? ";
 
@@ -70,6 +70,8 @@ if ( ! $stmt->execute()) {
 		  $direccion= utf8_encode($valor['direccion']);
 		  $telefono_referencia= utf8_encode($valor['telefono_referencia']);
 		  $tipo_relacion= utf8_encode($valor['tipo_relacion']);
+		  $fecha_creacion= utf8_encode($valor['fecha_creacion']);
+		  
 		  $informacion =array(
 			"1" =>"exito",
 		  	"2" => $nombre_persona,
@@ -82,7 +84,8 @@ if ( ! $stmt->execute()) {
 		  	"9" => $telefono, 
 		  	"10" => $direccion, 
 		  	"11" => $tipo_relacion, 
-		  	"12" => $telefono_referencia 
+		  	"12" => $telefono_referencia,
+			"13" => $fecha_creacion
 		);
 echo json_encode($informacion);	
 exit;

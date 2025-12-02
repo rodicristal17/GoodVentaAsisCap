@@ -65,6 +65,7 @@ CREATE TABLE trabajo_mecanico_dental (
 
 ALTER TABLE persona ADD COLUMN tipo_relacion VARCHAR(100);
 ALTER TABLE persona ADD COLUMN telefono_referencia INT(13);
+ALTER TABLE usuario ADD COLUMN fecha_creacion DATE;
 
 CREATE TABLE insumos_local (
     cod_insumo INT PRIMARY KEY AUTO_INCREMENT,

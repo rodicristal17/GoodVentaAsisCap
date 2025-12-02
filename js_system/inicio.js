@@ -408,6 +408,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById('inptDireccionMisDatos').value = datos["10"];
 						document.getElementById('inptContactoReferenciaMisDatos').value = datos["12"];
 						document.getElementById('inptRelacionamientoMisDatos').value = datos["11"];
+						document.getElementById('inptFechaCreacionMisDatos').value= datos["13"];
 						
 						// Se indica el local
 						document.getElementById('inptLocalMisDatos').value = cod_localFKUSer;
@@ -975,12 +976,11 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptTipoRelacionamientoUser').value = $(datostr).children('td[id="td_datos_14"]').html();
 	document.getElementById('inptNroTelefReferenciaUser').value = $(datostr).children('td[id="td_datos_12"]').html();
 	document.getElementById('inptDireccionUser').value = $(datostr).children('td[id="td_datos_13"]').html();
+	document.getElementById('inptFechaCreacionMUser').value = $(datostr).children('td[id="td_datos_15"]').html();
 		
 	fotocliente3= $(datostr).children('td[id="td_datos_11"]').html(); 
 	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
     extcliente3=""; 
-	
-	
 	
 	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
     document.getElementById('btnEditarUsuario').style.backgroundColor="";
@@ -999,6 +999,7 @@ function verificarcamposusuario() {
 	const inptTipoRelacionamientoUser= document.getElementById('inptTipoRelacionamientoUser').value;
 	const inptNroTelefReferenciaUser= document.getElementById('inptNroTelefReferenciaUser').value;
 	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
+	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
 	if (inptNombreApellidoUsuario == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO", "#")
 		return false;
@@ -1027,9 +1028,9 @@ function verificarcamposusuario() {
 		accion = "nuevo";
 		if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
 	}
-	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,idAbmUsuario, accion);
+	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,idAbmUsuario, accion);
 }
-function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion, cod_persona, accion) {
+function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,cod_persona, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1051,7 +1052,8 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("acceso", acceso);
 	datos.append("tipo", tipo)
 	datos.append("foto", fotocliente3)
-	datos.append("ext", extcliente3)		
+	datos.append("ext", extcliente3)
+	datos.append("fecha_creacion", fecha_creacion);
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
@@ -1129,7 +1131,6 @@ function AbmEditarMisDatos() {
 	}
 	const telefono_referencia= document.getElementById("inptContactoReferenciaMisDatos").value;
 	const telefono= document.getElementById("inptTelefonoMisDatos").value;
-	// Se usa el campo de correo como direccion
 	const direccion= document.getElementById("inptDireccionMisDatos").value;
 
 	verCerrarEfectoCargando("1")
@@ -1303,6 +1304,9 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptClaveAcceso').value = ""
 	document.getElementById('inptContrasenhaUser').value = ""
 	document.getElementById('inptRegistroSeleccUser').value = ""
+
+	const fecahActual= new Date();
+	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth()).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
 	
 		$("div[id=imgFotoPerfil1]").css({"background-image":"url()"})
 		fotocliente3="";
