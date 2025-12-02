@@ -4141,7 +4141,7 @@ function BuscarSelecCategoria() {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("inptCategoriaProductoBuscarInventario").innerHTML = ''
 			document.getElementById("inptCategoriaProductoInformeProductosVendidos").innerHTML = ''
-			document.getElementById("inptCategoriaInformeProductosComprados").innerHTML = ''
+			//document.getElementById("inptCategoriaInformeProductosComprados").innerHTML = ''
 			document.getElementById("inptCategoriaProductoBuscarVista").innerHTML = ''
 			document.getElementById("inptBuscarProducto4").innerHTML = ''
 						},
@@ -4150,7 +4150,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			console.log(Respuesta)
 			document.getElementById("inptCategoriaProductoBuscarInventario").innerHTML = ''
 			document.getElementById("inptCategoriaProductoInformeProductosVendidos").innerHTML = ''
-			document.getElementById("inptCategoriaInformeProductosComprados").innerHTML = ''
+			//document.getElementById("inptCategoriaInformeProductosComprados").innerHTML = ''
 			document.getElementById("inptCategoriaProductoBuscarVista").innerHTML = ''
 			document.getElementById("inptBuscarProducto4").innerHTML = ''
 			try {
@@ -4161,7 +4161,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					var datos_buscados = datos[2];
 					document.getElementById("inptCategoriaProductoBuscarInventario").innerHTML = datos_buscados
 					document.getElementById("inptCategoriaProductoInformeProductosVendidos").innerHTML = datos_buscados
-					document.getElementById("inptCategoriaInformeProductosComprados").innerHTML = datos_buscados
+					//document.getElementById("inptCategoriaInformeProductosComprados").innerHTML = datos_buscados
 					document.getElementById("inptCategoriaProductoBuscarVista").innerHTML = datos_buscados
 					document.getElementById("inptBuscarProducto4").innerHTML = datos_buscados
 				}
@@ -4384,7 +4384,7 @@ function BuscarSelectMarca() {
 	document.getElementById("inptMarcaProductoBuscarVista").innerHTML = paginacargando
 	document.getElementById("inptMarcaInformeProductosVendidos").innerHTML = paginacargando
 	document.getElementById("inptBuscarProducto3").innerHTML = paginacargando
-	document.getElementById("inptMarcaInformeProductosComprados").innerHTML = paginacargando
+	//document.getElementById("inptMarcaInformeProductosComprados").innerHTML = paginacargando
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -4425,7 +4425,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("inptMarcaProductoBuscarVista").innerHTML = ''
 			document.getElementById("inptMarcaInformeProductosVendidos").innerHTML = ''
 			document.getElementById("inptBuscarProducto3").innerHTML = ''
-			document.getElementById("inptMarcaInformeProductosComprados").innerHTML = ''
+			//document.getElementById("inptMarcaInformeProductosComprados").innerHTML = ''
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -4434,7 +4434,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("inptMarcaProductoBuscarVista").innerHTML = ''
 			document.getElementById("inptMarcaInformeProductosVendidos").innerHTML = ''
 			document.getElementById("inptBuscarProducto3").innerHTML = ''
-			document.getElementById("inptMarcaInformeProductosComprados").innerHTML = ''
+			//document.getElementById("inptMarcaInformeProductosComprados").innerHTML = ''
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -4445,7 +4445,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptMarcaProductoBuscarVista").innerHTML = datos_buscados
 					document.getElementById("inptMarcaInformeProductosVendidos").innerHTML = datos_buscados
 					document.getElementById("inptBuscarProducto3").innerHTML = datos_buscados
-					document.getElementById("inptMarcaInformeProductosComprados").innerHTML = datos_buscados
+					//document.getElementById("inptMarcaInformeProductosComprados").innerHTML = datos_buscados
 
 				}
 			} catch (error) {
@@ -10283,7 +10283,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptLocalMisDatos").innerHTML = "";
 	document.getElementById("inptlocalAperturaCierre").innerHTML = "";
 	document.getElementById("inptlocalCaja").innerHTML = "";
-	document.getElementById("inptlocalCompra").innerHTML = "";
+	//document.getElementById("inptlocalCompra").innerHTML = "";
 	document.getElementById("inputSelectLocalVistaCompra").innerHTML = "";
 	document.getElementById("inptBuscarUsuario4").innerHTML = "";
 	document.getElementById("inptlocalProductoBuscarInventario").innerHTML = "";
@@ -10301,7 +10301,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalArqueo").innerHTML = "";
 	document.getElementById("inptlocalMetas").innerHTML = "";
 	document.getElementById("inptlocalInformeDevoluciones").innerHTML = "";
-	document.getElementById("inptlocalInformeProductosComprados").innerHTML = "";
+	//document.getElementById("inptlocalInformeProductosComprados").innerHTML = "";
 	document.getElementById("inptlocalInformeProductosVendidos").innerHTML = "";
 	document.getElementById("inptlocalInformeGananciaporventa").innerHTML = "";
 	document.getElementById("inptlocalInformeVentaCanceladas").innerHTML = "";
@@ -10313,7 +10313,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalProductoBuscarCodBarra").innerHTML = ""
 	document.getElementById("inptlocalNroFactura").innerHTML = ""
 	document.getElementById("inptlocalCuentaApagar").innerHTML = ""
-	document.getElementById("inptlocalProductoGarantia").innerHTML = ""
+	//document.getElementById("inptlocalProductoGarantia").innerHTML = ""
 	document.getElementById("inptlocalVistaApCie").innerHTML = ""
 	document.getElementById("inptlocalCobrosRealizados3").innerHTML = ""
 	document.getElementById("inptAbmLocalVendedor").innerHTML = ""
@@ -10399,7 +10399,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptlocalProductoBuscarVista").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptLocalInformeAsistencia").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalMisGastos").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
-					document.getElementById("inptlocalCompra").innerHTML = datos_buscados
+					//document.getElementById("inptlocalCompra").innerHTML = datos_buscados
 					document.getElementById("inptLocalMisDatos").innerHTML = datos_buscados
 					document.getElementById("inputSelectLocalVistaCompra").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalNroFactura").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
@@ -10416,7 +10416,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptlocalImpago").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalClienteFiel").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalInformeDevoluciones").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
-					document.getElementById("inptlocalInformeProductosComprados").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
+					//document.getElementById("inptlocalInformeProductosComprados").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalInformeProductosVendidos").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalInformeGananciaporventa").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalInformeVentaCanceladas").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
@@ -10428,7 +10428,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inputSelectLocalClientesInactivos").innerHTML =  "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalCuentaApagar").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalProductoBuscarCodBarra").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
-					document.getElementById("inptlocalProductoGarantia").innerHTML = datos_buscados
+					//document.getElementById("inptlocalProductoGarantia").innerHTML = datos_buscados
 					document.getElementById("inptlocalVistaApCie").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalCobrosRealizados3").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptBuscarAbmCobrador3").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
@@ -10537,7 +10537,7 @@ function seleccionarLocalUSer(){
 		document.getElementById("inptLocalProductoEnviarA").value = cod_localFKUSer
 		document.getElementById("inptlocalProductoBuscarVista").value = cod_localFKUSer
 		document.getElementById("inptlocalMisGastos").value = cod_localFKUSer
-		document.getElementById("inptlocalCompra").value = cod_localFKUSer
+		//document.getElementById("inptlocalCompra").value = cod_localFKUSer
 		document.getElementById("inputSelectLocalVistaCompra").value = cod_localFKUSer
 		document.getElementById("inptBuscarHistorialVenta8").value = cod_localFKUSer
 		document.getElementById("inptlocalNroFactura").value = cod_localFKUSer
@@ -10549,7 +10549,7 @@ function seleccionarLocalUSer(){
 		document.getElementById("inptlocalMetas").value = cod_localFKUSer
 		document.getElementById("inptlocalArqueo").value = cod_localFKUSer
 		document.getElementById("inptlocalInformeDevoluciones").value = cod_localFKUSer
-		document.getElementById("inptlocalInformeProductosComprados").value = cod_localFKUSer
+		//document.getElementById("inptlocalInformeProductosComprados").value = cod_localFKUSer
 		document.getElementById("inptlocalInformeProductosVendidos").value = cod_localFKUSer
 		document.getElementById("inptlocalInformeGananciaporventa").value = cod_localFKUSer
 		document.getElementById("inptlocalInformeVentaCanceladas").value = cod_localFKUSer
@@ -32962,7 +32962,7 @@ function limpiarcamposBanco() {
 }
 
 function buscaroptionBanco() {
-
+return;
 	document.getElementById("inptBuscarAbmCheque7").innerHTML = ""
 	document.getElementById("inptNombreBancoCheque").innerHTML = ""
 

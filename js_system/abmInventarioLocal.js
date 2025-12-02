@@ -373,6 +373,7 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
     datos.append("costo", costo);
     datos.append("observacion", observacion);
 
+    verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInventarioLocal.php",
@@ -413,9 +414,8 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
+                    cod_inventarioLocal= datos["cod_inventario"];
 					subirImagenesInsumosLocal();
-                    obtenerVistaInformeInsumoLocal();
-                    verCerrarAbmInventarioLocal(false, true);
 				} else {
                     throw new Error("Error producido en abmInventarioLocal de JavaScript.");
                 }
@@ -423,9 +423,8 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
-			} finally {
                 verCerrarEfectoCargando("");
-            }
+			}
 		}
 	});
 }
@@ -492,16 +491,18 @@ function subirImagenesInsumosLocal() {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados exitosamente.");
+                    verCerrarAbmInventarioLocal(false, true);
+                    obtenerVistaInformeInsumoLocal();
 				} else {
                     throw new Error("Error producido en subirImagenesInsumosLocal de JavaScript.");
                 }
+                verCerrarEfectoCargando("");
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
-			} finally {
                 verCerrarEfectoCargando("");
-            }
+				GuardarArchivosLog(titulo)
+			}
 		}
 	});
 }
