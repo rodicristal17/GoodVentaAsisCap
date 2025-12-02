@@ -5998,6 +5998,571 @@ onclick="iracompra()">
 </table>
 </div>
 
+<div class='principal2' style='display:none' id='divProductoEnGarantia'>
+<table style='width:100%;height:100%' id='tdEfectoProductoEnGarantia'>
+<tr>
+<td>
+<center>
+<div class='divPrincipalrepor' style='width:1200px;'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Informe de <b style='font-size: 30px;' >productos</b> en <b style='font-size: 30px;' >garantía</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarproductogarantia()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarInformeProductoEnGarantia()' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+<div  class="divMenuf">
+
+<table style='width:98%'>
+<tr>
+<td style='width:20%;'>
+<p class='pTituloC' >Local</p>
+<select class="inputSelect" id="inptlocalProductoGarantia" style='width:130px'>
+</select>
+</td>
+<td style='width:20%;'>
+<p class='pTituloC' >Estado</p>
+<select class="inputfiltro" id="inptBuscarProductosGarantia6" style='width:130px'>
+<option value="">Todos</option>
+<option value="Pendiente a verificar">Pendiente a verificar</option>
+<option value="verificacion">En Verificación</option>
+<option value="listo">Listo</option>
+<option value="entregado">Entregado</option>
+</select>
+</td>
+<td style='width:60%;text-align:right'>
+<input type="button" style='margin-top: 17px;' value="Buscar" class="btn4" onclick='buscarHistorialGarantia()'>
+</td>
+</tr>
+</table>
+
+</div>
+<div  class="divMenuf">
+<div style='overflow:auto;' class='divScrollhideen'
+id='TableScroollHistorialGarantia1'>
+<table class="tableCabeceraRegistro" style='width:1800px;'
+id='tdTituloImpreProductoGarantia'>
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">NRO FACTURA</td>
+<td class="td_registro" style="width:10%;">DOCUMENTO</td>
+<td class="td_registro" style="width:10%;">CLIENTE</td>
+<td class="td_registro" style="width:10%;">TELEF.</td>
+<td class="td_registro" style="width:10%;">PRODUCTO</td>
+<td class="td_registro" style="width:10%;">OBS.</td>
+<td class="td_registro" style="width:10%;">ESTADO</td>
+<td class="td_registro" style="width:10%;">FECHAS</td>
+<td class="td_registro" style="width:10%;">USUARIO</td>
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro" style='width:1800px;'>
+<tbody>
+<tr>
+<td class="td_registro" style="width:9%;">
+<input placeholder="Parecido a" class="inputfiltro" type="text"
+id="inptBuscarProductosGarantia1"
+onkeyup="if(event.keyCode == 13){buscarHistorialGarantia()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarProductosGarantia1')" />
+</td>
+<td class="td_registro" style="width:10%;">
+<input placeholder="Igual a" class="inputfiltro" type="text"
+id="inptBuscarProductosGarantia2"
+onkeyup="if(event.keyCode == 13){buscarHistorialGarantia()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarProductosGarantia2')" />
+</td>
+<td class="td_registro" style="width:10%;">
+<input placeholder="Parecido a" class="inputfiltro" type="text"
+id="inptBuscarProductosGarantia3"
+onkeyup="if(event.keyCode == 13){buscarHistorialGarantia()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarProductosGarantia3')" />
+</td>
+<td class="td_registro" style="width:10%;"></td>
+<td class="td_registro" style="width:10%;"></td>
+<td class="td_registro" style="width:10%;"></td>
+<td class="td_registro" style="width:10%;"></td>
+<td class="td_registro" style="width:10%;"></td>
+<td class="td_registro" style="width:10%;"></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+<div class='divTablesScrool' id='TableScroollHistorialGarantia2'
+style='height:250px'>
+
+<div class="div_cuerpo_table" id="table_ProductoGarantia" style='min-height:200px;height:auto;width:1800px;border:none;'></div>
+
+</div>
+</div>
+<div  class="divMenuf">
+<table style='width:98%'>
+<tr>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Registro</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptTotalRegistoProductoGarantia'
+style='width:100px;text-align:center' />
+</td>
+<td style='width:5%;'>
+</td>
+<td style='width:85%;text-align:left'>
+<p class='pTituloC'>Registro Seleccionado
+</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptRegistroSeleccionadoProductoGarantia'
+style='width:150px;' />
+<input type="button" value="Editar" class="btn4"
+onclick="verCerrarHistorialProductoEnGarantia('1')">
+</td>
+</tr>
+</table>
+</div>
+
+
+</center>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+<div class='principal2' style='display:none' id='divGarantiaProductoHistorial'>
+<table style='width:100%;height:100%'>
+<tr>
+<td>
+<center>
+<div style='min-height:400px;width:320px;display:' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Modificar Garantias</p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarHistorialProductoEnGarantia("")' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+<div class='divMenuf'>
+
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Nro de Venta</p>
+<input class='inputTextDisable' type='text' id='inptNroVentaGarantiaHistorial' disabled style='width:230px' />
+</td>
+</tr>
+</table>
+<br>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Producto</p>
+<input class='inputTextDisable' type='text' id='inptProductoDevolucionGarantiaHistorial' disabled style='width:230px' />
+</td>
+</tr>
+</table>
+<br>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Estado Actual</p>
+<select class="inputSelect" id='inputSelectEstadoengarantiaHistorial' style='width:230px;' onchange='SeleccEstadoGarantia()'>
+<option value="verificacion">En Verificación</option>
+<option value="listo">Listo</option>
+<option value="entregado">Entregado</option>
+</select>
+</td>
+</tr>
+</table>
+<br>
+<br>
+<div id='divFechaEnvio'>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Fecha envío a reparación</p>
+<input class='inputText' type='date' id='inptFechaEnvioGarantiaHistorial' style='width:230px' />
+</td>
+</tr>
+</table>
+</div>
+<div id='divFechaDevuelto' style='display:none'>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Fecha devuelto al local</p>
+<input class='inputText' type='date' id='inptFechaDevueltaGarantiaHistorial' style='width:230px' />
+</td>
+</tr>
+</table>
+</div>
+<div id='divFechaEntrega' style='display:none'>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Fecha Entrega al cliente</p>
+<input class='inputText' type='date' id='inptFechaEntregaGarantiaHistorial' style='width:230px' />
+</td>
+</tr>
+</table>
+</div>
+<br>
+<br>
+<br>
+<input type='Button' value='Guardar' class='btn1' onclick='modificarRegistroGarantia()' style='width:85%' />
+<br>
+<br>
+</div>
+
+<br>
+</center>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+<div class='principal2' style='display:none' id='divAbmCompra'>
+<table style='width:100%;height:100%;' id='tdEfectoAbmCompra'>
+<tr>
+<td>
+<center>
+<div style='width:1200px;display:;' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Cargar  <b style='font-size: 30px;' >Compras</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar todos los campos' onclick='limpiarCompras()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/buscar.png' class='iconoBtn'
+title='Buscar Compras' onclick='vercerrarvistacompras("1")' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minizarventaCompras("1")' />
+</td>
+<td style='width:5%;text-align:center' id='TdCerrarCompras1'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarAbmCompra()' />
+</td>
+<td style='width:5%;text-align:center' id='TdCerrarCompras2'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarAbmCompra2()' />
+</td>
+</tr>
+</table>
+<center>
+
+<br>
+<div style='overflow:auto;' class='divMenuf'>
+<div class='divMenuFloat3' style='width:30%;display:none'>
+<p class='pTituloRepor'>DATOS DE LA COMPRA</p>
+<br>
+<div class='divMenuf' style='width:97%;overflow:auto;'>
+
+<input class='inputTextDisable' type='text' placeholder='Nro de compra '
+id='inpCodCompra' style='width: 184px;display:none' disabled />
+<input type="button" value="Más Detalles" class="btn5"
+onclick='verCerrarOpcionCompra("1")' style='display:none'>
+
+<br>
+<br>
+
+<div style='display:none'>
+<p class='pTituloC'>P. Efect.</p>
+<input class='inputText' type='text' id='inptPagadocompra1'
+onkeyup='separadordemiles(this)' style='width:250px' />
+<br>
+<br>
+<p class='pTituloC'>P. Cheque</p>
+<input class='inputText' type='text' id='inptPagadocompra2'
+onkeyup='separadordemiles(this)' style='width:250px' />
+</div>
+</div>
+<br>
+<center>
+<input type='button' value='Guardar' class='btn1'
+onclick='verificarcamposCompra()' id='btnAbmCompra'
+style='display:none' />
+</center>
+<br>
+</div>
+<div class='divMenuFloat3' style='width:98%'>
+
+<table class='tbTituloColor'>
+<tr>
+
+<td style='width:5%'>
+<p class='pTituloC' style='color:#fff'>Local</p>
+<select class="inputSelect" id="inptlocalCompra"
+style='width:130px'></select>
+</td>
+<td style='width:5%'>
+<p class='pTituloC'  style='color:#fff'>Nro Factura</p>
+<input class='inputText' type='text' id='inptNrocompra'
+style='width:130px' placeholder='Obligatorio (*)' />
+</td>
+
+<td style='width:5%'>
+<p class='pTituloC'  style='color:#fff'>Fecha</p>
+<input class='inputText' type='Date' id='inptFechaCompra'
+style='width:130px' />
+</td>
+
+<td style='width:20%'>
+
+<p class='pTituloC'   style='color:#fff'>Seleccionar un
+Proveedor</p>
+<input class='inputTextDisable' type='text'
+id='inptProveedorCompra' disabled
+placeholder='Obligatorio (*)' style='width:250px'  />
+<input type="button" value="Buscar" class="btn4" onclick='vercerrarvistaProveedor("1","compra")'style="background-color: #FF5722;">
+
+</td>
+
+<td style='width:5%'>
+<p class='pTituloC'  style='color:#fff'>Descuento</p>
+<input class='inputText' type='text' id='inptDescuentocompra'
+onkeyup='separadordemiles(this)' style='width:130px' />
+</td>
+</tr>
+</table>
+
+
+<table class='tbTituloColor'>
+<tr>
+
+<td style='width:5%'>
+<p class='pTituloC' style='color:#fff'>Tipo compra:</p>
+<select class="inputSelect" id="inptTipoCompra"style='width:130px'>
+<option value="CONTADO">CONTADO</option>
+<option value="CREDITO">CREDITO</option>
+</select>
+</td>
+<td style='width:10%'>
+<p class='pTituloC'  style='color:#fff'>Timbrado:</p>
+<input class='inputText' type='text' id='inptTimbradocompra'
+style='width:130px' placeholder='Obligatorio (*)' />
+</td>
+
+<td style='width:10%'>
+<p class='pTituloC' style='color:#fff'>Tipo Factura:</p>
+<select class="inputSelect" id="inptTipoFacturaCompra"style='width:130px'>
+<option value="FACTURA LEGAL">FACTURA LEGAL</option>
+<option value="CREDITO">CREDITO</option>
+</select>
+</td>
+
+<td style='width:10%'>
+
+
+</td>
+
+<td style='width:5%'>
+
+</td>
+</tr>
+</table>
+
+
+
+<div class='tableVenta1' style='margin-top:10px;height: auto;width: 99%'>
+<center>
+<div style='margin-left:7px;'>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:12%;">
+CODIGO
+</td>
+<td class="td_registro" style="width:20%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:10%;">
+MARCA
+</td>
+<td class="td_registro" style="width:10%;">
+CATEGORIA
+</td>
+<td class="td_registro" style="width:10%;">
+COSTO
+</td>
+<td class="td_registro" style="width:10%;">
+STOCK
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="table_vista_producto_compra"
+style='height:120px'></div>
+</div>
+<br>
+<table style='width:100%;'>
+<tr>
+
+<td style='width:53%;'>
+<p class='pTituloC' >
+Seleccionar un Producto</p>
+<input class='inputText' type='text'
+placeholder='Codigo del producto'
+id='inptCodProductoCompra' style='width:100px'
+onkeyup="if(event.keyCode == 13){buscarproductoporcodigo('compra')}" />
+<input class='inputText' type='text' placeholder='Nombre del producto' id='inptProductoCompra' style='width:240px' onkeyup="if(event.keyCode == 13){buscarvistaproductodesdecompra()}" />
+<input id='btneditarprecioscompras' type="button" value="Precios" class="btn4" onclick="verCerrarAbmDetallesPrecioCompra(1)" style="background-color: #ccc; ">
+<input id='btneditarproductocompras' type="button" value="Editar" class="btn4" onclick="EditarProductodesdecompra()" style="background-color: #ccc; ">
+</td>
+<td style='width:5%;text-align:left'>
+<p class='pTituloC'>Cant.</p>
+<input class='inputText' type='text'
+placeholder='Obligatorio (*)'
+id='inptCantProductoCompra' style='width:50px' />
+</td>
+<td
+style='width:1%;'>
+<p class='pTitulo8' onclick='EditarPrecioListaCompra()' style='width: 10px';> <input type='checkbox' style='margin-top: 25px;' id="inptSeleccCambiarPrecio"></p>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC'>Precio Lista.</p>
+<input class='inputTextDisable' type='text'
+placeholder='Obligatorio (*)'
+id='inptprecioListaProductoCompra' style='width:90px' />
+</td>
+<td style='width:40%;text-align:left'>
+<p class='pTituloC'>Precio Factura</p>
+<input class='inputText' type='text'
+placeholder='Obligatorio (*)'
+id='inptCostoProductoCompra' style='width:90px'
+onkeyup='separadordemiles(this)' />
+<input id='btnAddDetalleCompra' type="button"
+value="Añadir" class="btn4"
+onclick="verificarcamposDetallesCompra()"
+style="    background-color: #ccc; " >
+
+<input id='btnNuevoproductocompra' type="button"
+value="Crear Producto" class="btn4"
+onclick="CrearProductoCompra()" style='width:100px'>
+
+
+</td>
+</tr>
+</table>
+<br>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:10%;">
+COSTO
+</td>
+<td class="td_registro" style="width:10%;">
+CANT.
+</td>
+<td class="td_registro" style="width:10%;">
+TOTAL
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="table_abm_detalle_compra"
+style='height:205px'></div>
+<br>
+<table style='width:98%;'>
+<tr>
+
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Registro
+</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptTotalRegistro'
+style='width:90px;text-align:center' />
+</td>
+
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Descuento
+</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptDescuenCompra' style='width:120px;' />
+</td>
+
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Subtotal
+</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptSubTotalCompra' style='width:120px;' />
+</td>
+
+<td style='width:10%;text-align:left'>
+<p class='pTituloC' >Total</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptTotalCompra' style='width:120px;' />
+</td>
+<td style='width:2%;text-align:left'>
+
+</td>
+
+<td style='width:35%;text-align:left'>
+<p class='pTituloC' >Añadir
+Pagos</p>
+<input class='inputText' type='text' id='inptPagosRealizadoscompra' style='width:140px' disabled />
+<input id='btnAddPagosCompas' type="button" value="Añadir" class="btn4" onclick='verCerrarOpcionPagosCompra("1")'
+style='background-color:#ccc'>
+<input id='btnEliminarCompas' type="button" value="Eliminar Compra" class="btn4" onclick='verCerrarOpcionEliminarCompra("1")'
+style='background-color:#ccc;width:130px'>
+</td>
+</tr>
+</table>
+</center>
+</div>
+
+</div>
+</div>
+</center>
+<br>
+</div>
+<br>
+<br>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
 <div class='principal2' style='display:none' id='divAbmProducto'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmProductos'>
 <tr>
@@ -8868,6 +9433,271 @@ style='width:150px' />
 </tr>
 </table>
 </div>
+
+
+
+
+<div class='principal2' style='display:none' id='divAbmAgenda'>
+<table style='width:100%;height:100%;' id='tdEfectoAbmAgenda'>
+<tr>
+<td>
+<center>
+<div id='divAbmAgenda2' style='display:none;width:400px;min-height: 300px;' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Datos de <b style='font-size: 30px;' >Agenda</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='limpiarcamposAgenda()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarabmAgenda()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarVentanaAbmAgenda("2","")' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+<div class='divMenuf'>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Nombre Cliente :</p>
+<input class='inputTextDisable' type='text' style='width:60%' placeholder='Obligatorio (*)' id='inptClienteAgenda' />
+<input type='button' value='Buscar' class='btn5' onclick='vercerrarvistacliente("1","Agenda")'  />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Motivo :</p>
+<textarea class='textarea1' id='inptMotivoAgenda' ></textarea> 
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Fecha Compromiso :</p>
+<input class='inputText' type='Date' placeholder='Obligatorio (*)' id='inptCompromisoAgenda' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Estado :</p>
+<select class="inputSelect" id="inptEstadoAgenda" style='width:200px'>
+<option value="Activo">ACTIVO</option>
+<option value="Inactivo">INACTIVO</option>
+</select>
+</td>
+</tr>
+</table>
+<br>
+</div>
+<br>
+<div class='divMenuf'>
+<br>
+<center>
+<input type='button' value='Guardar' class='btn1'
+onclick='verificarcamposAgenda()' id='btnAbmAgenda' />
+</center>
+<br>
+</div>
+<br>
+<br>
+</center>
+</div>
+
+<div id='divAbmAgenda1' style='width:90%;display:' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Buscar <b style='font-size: 30px;' >Agenda</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
+onclick='verCerrarVentanaAbmAgenda("1","1")' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarabmAgenda()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarAbmAgenda()' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+
+<div class="divMenuf" style="    width: 97%;">
+<table style="width:100%">
+<tbody>
+<tr>
+<td style="width:15%;">
+<p class="pTituloC" >Fecha inicio</p>
+<input class="inputText" type="Date" id="inptBuscarAgendaF1" style="width:135px">
+</td>
+
+<td style="width:15%;">
+<p class="pTituloC" >Fecha Fin</p>
+<input class="inputText" type="Date" id="inptBuscarAgendaF2" style="width:135px">
+</td>
+
+
+
+<td style="display:none;">
+<p class="pTituloC" >Local</p>
+<select class="inputSelect" id="inptlocalAgenda" style='width:170px'></select>
+</td>
+<td style="width:10%;text-align:left">
+<p class="pTitulo8" onclick="checkHistorialAgenda(2)" style="width: 120px;"> <input type="checkbox" id="checkHistorialAgendaFV"> Fecha Visita </p>
+</td>
+<td style="width:10%;text-align:left">
+<p class="pTitulo8" onclick="checkHistorialAgenda(1)" style="width: 120px;"> <input type="checkbox" id="checkHistorialAgendaFC"
+checked=""> Fecha Compromiso</p>
+</td>
+
+<td style="width:10%;"></td>
+<td style="width:10%;text-align:left">
+<p class="pTitulo8" onclick="checkHistorialFechaAgenda(2)" style="width: 120px;"> <input type="checkbox" id="checkHistorialFechaAgenda2"> Rango de Fecha </p>
+</td>
+<td style="width:10%;text-align:left">
+<p class="pTitulo8" onclick="checkHistorialFechaAgenda(1)" style="width: 100px;"> <input type="checkbox" id="checkHistorialFechaAgenda1"
+checked=""> Todos</p>
+</td>
+
+
+<td style="width:20%;text-align:right">
+<input type="button" style="margin-top: 17px;" value="Buscar" class="btn4" onclick="buscarabmAgenda()">
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<br>
+
+
+<div class='divMenuf' style='width: 96%;'>
+<table style='width:100%'>
+<tr>
+<td style='width:80%'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTitulo8' onclick='checkestadoAgenda(1)'> <input type='checkbox'
+id="inptSeleccEstadoBuscarAgenda1" checked> Activo</p>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTitulo8' onclick='checkestadoAgenda(2)'> <input type='checkbox'
+id="inptSeleccEstadoBuscarAgenda2"> Inactivo</p>
+</td>
+</tr>
+</table>
+
+
+
+<table class="tableCabeceraRegistro" >
+<tbody>
+<tr>
+
+<td class="td_registro" style="width:15%;">
+FECHA VISITA
+</td>
+<td class="td_registro" style="width:25%;">
+CLIENTE
+</td>
+<td class="td_registro" style="width:30%;">
+MOTIVO
+</td>
+<td class="td_registro" style="width:20%;">
+COBRADOR
+</td>
+<td class="td_registro" style="width:15%;">
+FECHA COMPROMISO
+</td>
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:15%;"></td>
+
+
+<td class="td_registro" style="width:24%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmAgenda2' onkeyup="if(event.keyCode == 13){buscarabmAgenda()}" placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmAgenda2')">
+</td>
+
+<td class="td_registro" style="width:30%;"></td>
+
+<td class="td_registro" style="width:19%;">
+<input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarAbmAgenda3" onkeyup="if(event.keyCode == 13){buscarabmAgenda()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmAgenda3')">
+</td>
+<td class="td_registro" style="width:15%;"></td>
+</tr>
+</tbody>
+</table>
+
+
+
+<div class="div_cuerpo_table" id="table_abm_Agenda"></div>
+</div>
+<div class='divMenuf'>
+<table style='width:95%'>
+<tr>
+<td style='width:25%;text-align:left'>
+<p class='pTituloC' >Registros :</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptTotalRegistoAgenda' style='width:150px;text-align:center' />
+</td>
+<td style='width:5%'>
+
+</td>
+<td style='width:70%;text-align:left'>
+<p class='pTituloC' >Registro Selecc..</p>
+<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccAgenda' style='width:200px' />
+<input id='btnEditarDatosAgenda' type='button' value='Editar' class='btn5' onclick='verVentanaEditarAgenda()' style='background-color:#d5d3d3'>
+</td>
+</tr>
+</table>
+</div>
+</center>
+<br>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+
+
+
+
+
+
+
 
 <div class='principal2' style='display:none' id='divAbmVenta'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmVenta'>
@@ -19467,6 +20297,186 @@ style='width:150px;height:50px;background-color:#FF5722;color:#fff;;text-align:c
 </table>
 </div>
 
+<div class='principal2' style='display:none' id='divInformeProductosComprados'>
+<table style='width:100%;height:100%' id='tdEfectoInformeProductosComprados'>
+<tr>
+<td>
+<center>
+<div class='divPrincipalrepor' style='margin-left:40px'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Productos <b style='font-size: 30px;' >Comprados</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarventanaProductosComprados()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarInformeProductosComprados()' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+
+
+<div  class="divMenuf">
+
+<table style='width:98%'>
+<tr>
+<td style='width:13%;'>
+<p class='pTituloC' >Fecha inicio
+</p>
+<input class='inputText' type='Date' id='inptBuscarProductosCompradosF1' style='width:135px' />
+</td>
+<td style='width:13%;'>
+<p class='pTituloC' >Fecha Fin</p>
+<input class='inputText' type='Date' id='inptBuscarProductosCompradosF2' style='width:135px' />
+</td>
+
+<td style='width:70%;text-align:right'>
+<input type="button" style='margin-top: 17px;' value="Buscar" class="btn4" onclick='buscarproductoscomprados()'>
+</td>
+
+</tr>
+</table>
+
+</div>
+
+<div  class="divMenuf">
+<table style="width:98%">
+<tbody><tr>
+<td style="width:80%;text-align:left">
+<input type="button" value="Imprimir" class="btn4" onclick='ordenimpresion("productoscomprados")' style="width:100px;background-color: rgb(58 58 58);">
+</td><td style="width:10%;text-align:left">
+<p class="pTitulo8" onclick="checkHistorialProductoComprados(2)" style="width: 120px;"> <input type="checkbox" id="checkHistorialProductoComprados2"> Rango de Fecha </p>
+</td>
+<td style="width:10%;text-align:left">
+<p class="pTitulo8" onclick="checkHistorialProductoComprados(1)" style="width: 100px;"> <input type="checkbox" id="checkHistorialProductoComprados1" checked=""> Todos</p>
+</td>
+
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro" id='tdTituloImpreComprados'>
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">
+CODIGO
+</td>
+<td class="td_registro" style="width:20%;">
+PRODUCTO
+</td>
+<td class="td_registro" style="width:10%;">
+MARCA
+</td>
+<td class="td_registro" style="width:10%;">
+CATEGORIA
+</td>
+<td class="td_registro" style="width:10%;">
+CANT.
+</td>
+<td class="td_registro" style="width:10%;">
+TOTAL
+</td>
+<td class="td_registro" style="width:10%;">
+LOCAL
+</td>
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro" id='tdTituloImpreComprados'>
+<tbody>
+<tr>
+<td class="td_registro" style="width:9%;">
+<input placeholder="Igual a" class="inputfiltro" type="text"
+id="inptBuscarProductosComprados1"
+onkeyup="if(event.keyCode == 13){buscarproductoscomprados()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarProductosComprados1')" />
+</td>
+<td class="td_registro" style="width:19%;">
+<input placeholder="Igual a" class="inputfiltro" type="text"
+id="inptBuscarProductosComprados2"
+onkeyup="if(event.keyCode == 13){buscarproductoscomprados()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarProductosComprados2')" />
+</td>
+<td class="td_registro" style="width:14%;">
+<select class="inputfiltro"
+id="inptMarcaInformeProductosComprados"></select>
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptMarcaInformeProductosComprados')" />
+</td>
+<td class="td_registro" style="width:9%;">
+<select class="inputfiltro"
+id="inptCategoriaInformeProductosComprados"></select>
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptCategoriaInformeProductosComprados')" />
+</td>
+<td class="td_registro" style="width:10%;">
+</td>
+<td class="td_registro" style="width:10%;">
+
+</td>
+<td class="td_registro" style="width:10%;">
+<select class="inputfiltro"
+id="inptlocalInformeProductosComprados"></select>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="table_comision_productosComprados"></div>
+<table style='width:100%;height:50px;display:none' id='tbProcessProductosComprados'>
+<tr>
+<td  style='width:90%'>
+<div class='divprogreso1'><div class='divprogreso2' id='divProgressProductosComprados'></div></div>
+</td>
+<td style='width:10%;text-align:center'>
+<input  type="button" value="Cancelar" class="btn4" onclick="cancelarProductosComprados()" style="width:100px;background-color:rgb(58 58 58)">
+</td>
+</tr>
+</table>
+</div>
+
+<div  class="divMenuf">
+<table style='width:98%'>
+<tr>
+<td style='width:15%;text-align:left'>
+<p class='pTituloC' >Registro</p>
+<input class='inputTextDisable' type='text' disabled id='inptTotalRegistroProductoComprados' style='width:120px;text-align:center' />
+</td>
+<td style='width:17%;text-align:left'>
+<p class='pTituloC' >Total Compra</p>
+<input class='inputTextDisable' type='text' disabled id='inptTotalRegistroProductosComprados' style='width:150px' />
+</td>
+<td style='width:50%;text-align:left'></td>
+</tr>
+</table>
+</div>
+
+</center>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
 <div class='principal2' style='display:none' id='divInformeProductosVentas'>
 <table style='width:100%;height:100%' id='tdEfectoProductosVendidos'>
 <tr>
@@ -25259,6 +26269,326 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
       </center>
     </td></tr>
   </table>
+</div>
+
+<div class='principal2' style='display:none' id='divAbmCheque'>
+<table style='width:100%;height:100%;' id='tdEfectoAbmCheque'>
+<tr>
+<td>
+<center>
+<div id='divAbmCheque2' style='display:none;width:500px;min-height: 300px;' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Datos de <b style='font-size: 30px;' >Cheque</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='limpiarcamposCheque()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarabmCheque()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarVentanaAbmCheque("2","")' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+<div class='divMenuf'>
+<br>
+<table style='width:100%'>
+<tr>
+<td  style='width:50%'>
+<p class='pTituloC' >Fecha Emision :</p>
+<input class='inputText' type='date' id='inptFechEmiCheque' />
+</td>
+
+<td  style='width:50%'>
+<p class='pTituloC' >Fecha Vencimiento :</p>
+<input class='inputText' type='date' id='inptFechaVenCheque' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td  style='width:50%'>
+<p class='pTituloC' >Nro Cheque :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)'
+id='inptNroCheque' />
+</td>
+
+<td  style='width:50%'>
+<p class='pTituloC' >Orden :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)'
+id='inptOrdenCheque' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td  style='width:50%'>
+<p class='pTituloC' >Concepto :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)'
+id='inptConceptoCheque' />
+</td>
+
+<td  style='width:50%'>
+<p class='pTituloC' >Importe :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)'  onkeyup='separadordemiles(this)'
+id='inptImporteCheque' />
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td  style='width:50%'>
+<p class='pTituloC' >Banco :</p>
+<select class="inputSelect" id="inptNombreBancoCheque" style='width:200px'>
+</select>
+</td>
+
+<td  style='width:50%'>
+<p class='pTituloC' >Pagado :</p>
+<select class="inputSelect" id="inptPagadoCheque" style='width:200px'>
+<option value="PENDIENTE">PENDIENTE</option>
+<option value="PAGADO">PAGADO</option>
+
+</select>
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td  style='width:100%'>
+<p class='pTituloC' >Estado :</p>
+<select class="inputSelect" id="inptEstadoCheque" style='width:200px'>
+<option value="Activo">ACTIVO</option>
+<option value="Inactivo">INACTIVO</option>
+</select>
+</td>
+</tr>
+</table>
+<br>
+</div>
+<br>
+<div class='divMenuf'>
+<br>
+<center>
+<input type='button' value='Guardar' class='btn1'
+onclick='verificarcamposCheque()' id='btnAbmCheque' />
+</center>
+<br>
+</div>
+<br>
+<br>
+</center>
+</div>
+
+<div id='divAbmCheque1' style='width:90%;display:' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Buscar <b style='font-size: 30px;' >Cheque</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
+onclick='verCerrarVentanaAbmCheque("1","1")' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarabmCheque()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarAbmCheque()' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+<div class='divMenuf'  style="width: 97%;">
+<table style='width:98%;height: auto' >
+<tr>
+
+<td style='width:15%;text-align:left'>
+<p class='pTituloC' style=' width: 110px;'> Fecha Inicio:</p>
+<input class='inputText' type='Date' id="inptFechaCheque1"  />
+</td>
+<td style='width:15%;text-align:left'>
+<p class='pTituloC' style=' width: 110px;'> Fecha Fin :
+</p>
+<input class='inputText' type='Date' id="inptFechaCheque2"  />
+</td>
+<td style='width:70%;text-align:right'>
+<input type="Button" value="Buscar" style="margin-top: 18px;" class="btn4" onclick="buscarabmCheque()">
+</td>
+</tr>
+</table>
+</div>
+
+<div class='divMenuf' style="width: 97%;">
+<table style='width:100%'>
+<tr>
+<td style='width:75%;text-align:left'>
+<input type="button" value="Imprimir" class="btn4" onclick='ordenimpresion("cheque")' style="width:100px;background-color: rgb(58 58 58);">
+
+</td>
+<td style='width:15%;text-align:left'>
+<p class='pTitulo8' onclick='checkestadoCheque(2)' style="width: 120px;"> <input type='checkbox' 
+id="inptSeleccEstadoBuscarCheque2" > Rango de Fecha</p>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTitulo8' onclick='checkestadoCheque(1)' style="width: 100px;" > <input type='checkbox'
+id="inptSeleccEstadoBuscarCheque1" checked > Todos</p>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro" id="tablacabeceraCheque">
+<tbody>
+<tr>
+<td class="td_registro" style="width:5%;">
+#
+</td>
+<td class="td_registro" style="width:10%;">
+FECHA EMISION.
+</td>
+<td class="td_registro" style="width:10%;">
+NRO CHEQUE.
+</td>
+<td class="td_registro" style="width:10%;">
+FECHA VENCIMIENTO.
+</td>
+<td class="td_registro" style="width:15%;">
+ORDEN.
+</td>
+<td class="td_registro" style="width:15%;">
+CONCEPTO.
+</td>
+<td class="td_registro" style="width:10%;">
+IMPORTE.
+</td>
+<td class="td_registro" style="width:10%;">
+PAGADO.
+</td>
+<td class="td_registro" style="width:15%;">
+BANCO.
+</td>
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:5%;"></td>
+
+<td class="td_registro" style="width:9%;">
+<input class='inputfiltro' type='Date' id='inptBuscarAbmCheque1'
+onkeyup="if(event.keyCode == 13){buscarabmCheque()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmCheque1')" />
+</td>
+
+<td class="td_registro" style="width:9%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmCheque2'
+onkeyup="if(event.keyCode == 13){buscarabmCheque()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmCheque2')" />
+</td>
+
+<td class="td_registro" style="width:9%;">
+<input class='inputfiltro' type='Date' id='inptBuscarAbmCheque3'
+onkeyup="if(event.keyCode == 13){buscarabmCheque()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmCheque3')" />
+</td>
+
+<td class="td_registro" style="width:14%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmCheque4'
+onkeyup="if(event.keyCode == 13){buscarabmCheque()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmCheque4')" />
+</td>
+
+<td class="td_registro" style="width:14%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmCheque5'
+onkeyup="if(event.keyCode == 13){buscarabmCheque()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmCheque5')" />
+</td>
+
+<td class="td_registro" style="width:10%;"></td>
+
+<td class="td_registro" style="width:9%;">
+<select class="inputSelect" id="inptBuscarAbmCheque6" >
+<option value="">TODOS</option>
+<option value="PAGADO">PAGADOS</option>
+<option value="PENDIENTE">PENDIENTES</option>
+</select>
+</td>
+<td class="td_registro" style="width:15%;">
+<select class="inputSelect" id="inptBuscarAbmCheque7" >
+</select>
+</td>
+
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="table_abm_Cheque"></div>
+</div>
+<div class='divMenuf'>
+<table style='width:95%'>
+<tr>
+<td style='width:20%;text-align:left'>
+<p class='pTituloC' >Registros :</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptTotalRegistoCheque' style='width:150px;text-align:center' />
+</td>
+<td style='width:5%'>
+
+</td>
+<td style='width:55%;text-align:left'>
+<p class='pTituloC' >Registro Selecc..</p>
+<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCheque' style='width:200px' />
+<input id='btnEditarDatosCheque' type='button' value='Editar' class='btn5' onclick='verVentanaEditarCheque()' style='background-color:#d5d3d3'>
+
+</td>
+<td style='width:20%'>
+<p class='pTituloC' >Total Monto :</p>
+<input class='inputTextDisable' type='text' disabled id='inptTotalMontoRegistoCheque' style='width:150px;text-align:center' />
+</td>
+</tr>
+</table>
+</div>
+</center>
+<br>
+</div>
+</center>
+</td>
+</tr>
+</table>
 </div>
 
 <div class="principal2 divScrollPrincipal" style="display: none;z-index: 100;" id="divAddFotos">

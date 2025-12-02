@@ -413,7 +413,7 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					subirImagenes();
+					subirImagenesInsumosLocal();
                     obtenerVistaInformeInsumoLocal();
                     verCerrarAbmInventarioLocal(false, true);
 				} else {
@@ -436,7 +436,7 @@ var fotoInventario2= "";
 var extInventario2= "";
 var fotoInventario3= "";
 var extInventario3= "";
-function subirImagenes() {
+function subirImagenesInsumosLocal() {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -493,7 +493,7 @@ function subirImagenes() {
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados exitosamente.");
 				} else {
-                    throw new Error("Error producido en subirImagenes de JavaScript.");
+                    throw new Error("Error producido en subirImagenesInsumosLocal de JavaScript.");
                 }
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
