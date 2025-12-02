@@ -320,7 +320,7 @@ exit;
 }
 
 
-$informacion =array("1" => "exito");
+$informacion =array("1" => "exito", "2" => $idgastos);
 echo json_encode($informacion);	
 exit;
 	

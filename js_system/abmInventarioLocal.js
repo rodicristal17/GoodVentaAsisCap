@@ -414,8 +414,7 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-                    cod_inventarioLocal= datos["cod_inventario"];
-					subirImagenesInsumosLocal();
+					subirImagenesInsumosLocal(datos["cod_inventario"]);
 				} else {
                     throw new Error("Error producido en abmInventarioLocal de JavaScript.");
                 }
@@ -435,14 +434,14 @@ var fotoInventario2= "";
 var extInventario2= "";
 var fotoInventario3= "";
 var extInventario3= "";
-function subirImagenesInsumosLocal() {
+function subirImagenesInsumosLocal(cod_inventario) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", "cargar_imagen");
-    datos.append("cod_inventario", cod_inventarioLocal);
+    datos.append("cod_inventario", cod_inventario);
     datos.append("fotos[]", fotoInventario1);
     datos.append("exts[]", extInventario1);
     datos.append("fotos[]", fotoInventario2);

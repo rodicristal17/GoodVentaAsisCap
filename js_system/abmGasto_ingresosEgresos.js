@@ -220,13 +220,13 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-					subirImagenGasto();
+					subirImagenGasto(datos["2"]);
 				   if(accion=="nuevo"){
 						ImprimirTicketEgreso()
 					}
 					limpiarcamposGasto()
 
-					idAbmGasto = ""
+					idAbmGasto = "";
 					buscarabmGasto()
 					
 				}				
@@ -241,14 +241,14 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 
 var fotoGasto= "";
 var extGasto= "";
-function subirImagenGasto() {
+function subirImagenGasto(cod_abmGasto) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("funt", "cargar_imagen");
-    datos.append("idgastos", idAbmGasto);
+    datos.append("idgastos", cod_abmGasto);
     datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
     
