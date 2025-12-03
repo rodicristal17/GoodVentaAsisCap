@@ -246,6 +246,8 @@ function limpiarFormularioTrabajoMecanicoDental() {
     document.getElementById('inptMecanicoTrabajoMecanicoDental').value= "";
     document.getElementById('btnEditarTrabajoMecanicoDental').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarTrabajoMecanicoDental').disabled= true;
+    document.getElementById('btnAuditoriaTrabajoMecanicoMental').style.backgroundColor= "#b7b7b7";
+    document.getElementById('btnAuditoriaTrabajoMecanicoMental').disabled= true;
 }
 
 function ObtenerdatosTrabajoMecanicoDental(elemento) {
@@ -263,12 +265,20 @@ function ObtenerdatosTrabajoMecanicoDental(elemento) {
     document.getElementById('inptMecanicoTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_10"]').html();
     document.getElementById('inptRegistroSeleccTrabajoMecanicoDental').value= $(elemento).children('td[id="td_id"]').html();
 
+    // Datos de auditoria
+    document.getElementById('inptUsuarioInsertadoPor').value=$(elemento).children('td[id="td_datos_14"]').html()
+	document.getElementById('inptFechaInsertadoPor').value=$(elemento).children('td[id="td_datos_13"]').html()
+	document.getElementById('inptUsuarioEditadoPor').value=$(elemento).children('td[id="td_datos_16"]').html()
+	document.getElementById('inptFechaEditadoPor').value=$(elemento).children('td[id="td_datos_15"]').html()
+
     $("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
 	});
 	elemento.className = 'tableRegistroSelec'
-    document.getElementById('btnEditarTrabajoMecanicoDental').style.backgroundColor= "#416c8f";
+    document.getElementById('btnEditarTrabajoMecanicoDental').style.backgroundColor= "rgb(33, 150, 243)";
     document.getElementById('btnEditarTrabajoMecanicoDental').disabled= false;
+    document.getElementById("btnAuditoriaTrabajoMecanicoMental").style.backgroundColor="#673ab7";
+    document.getElementById('btnAuditoriaTrabajoMecanicoMental').disabled= false;
 }
 
 var cod_tipo_trabajo_selected = "";

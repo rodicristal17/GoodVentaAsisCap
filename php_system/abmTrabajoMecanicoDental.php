@@ -30,7 +30,7 @@
                 $fecha_retiro = isset($_POST['fecha_retiro']) ? utf8_decode($_POST['fecha_retiro']) : null;
                 $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'pendiente';
 
-                $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, null);
+                $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, $user, null);
                 echo json_encode(array("1" => "exito", "cod_trabajo_mecanico_dental" => $cod_trabajo_mecanico_dental));
                 break;
             case "editar":
@@ -131,6 +131,10 @@
             <td id='td_datos_8' style='display: none;' class='tdRegistroSearch' >".$value['observacion']."</td>
             <td id='td_datos_9' style='display: none;' class='tdRegistroSearch' >".$value['cod_ventaFK']."</td>
             <td id='td_datos_10' style='display: none;' class='tdRegistroSearch' >".$value['cod_mecanico_dental']."</td>
+            <td id='td_datos_13' style='display: none;' class='tdRegistroSearch' >".$value['fecha_creacion']."</td>
+            <td id='td_datos_14' style='display: none;' class='tdRegistroSearch' >".$value['nombre_usuario_creat']."</td>
+            <td id='td_datos_15' style='display: none;' class='tdRegistroSearch' >".$value['fecha_edit']."</td>
+            <td id='td_datos_16' style='display: none;' class='tdRegistroSearch' >".$value['nombre_usuario_edit']."</td>
             </tr>
             </table>";
         }
@@ -315,6 +319,8 @@
         }
 
         $sql = "SELECT tmd.*, t.descripcion as nombre_tipo_trabajo, p.nombre_persona AS nombre_mecanico, md.cod_mecanico_dental,
+        (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_usuarioFK_create) AS nombre_usuario_creat,
+        (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_usuarioFK_edit) AS nombre_usuario_edit,
          (SELECT nombre_persona FROM persona JOIN venta v ON v.cod_clienteFK = cod_persona WHERE v.cod_venta = tmd.cod_ventaFK $sqlFiltroPersona) AS nombre_paciente
          FROM trabajo_mecanico_dental tmd 
          JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = tmd.cod_tipo_trabajoFK 
@@ -342,17 +348,23 @@
         return $registros;
     }
 
-    function abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, $cod_trabajo_mecanico_dental) {
+    function abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$cod_usuario, $cod_trabajo_mecanico_dental) {
         $mysqli = conectar_al_servidor();
         if ($cod_trabajo_mecanico_dental == null) {
-            $sql = "INSERT INTO trabajo_mecanico_dental (cod_ventaFK, cod_tipo_trabajoFK, observacion, colorimetro, costo, fecha_entrega, fecha_retiro, estado) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?,?)";
+            $sql = "INSERT INTO trabajo_mecanico_dental (cod_ventaFK, cod_tipo_trabajoFK, observacion, colorimetro, costo, fecha_entrega, fecha_retiro, estado, cod_usuarioFK_create) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?,?,?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('iissssss', $cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro,$estado);
+            $stmt->bind_param('iisssssss', $cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro,$estado,$cod_usuario);
         } else {
             $atributos = "";
             $ss = "";
             $parametros = [];
+
+            // Agrega los datos de auditoria
+            $atributos .= " cod_usuarioFK_edit = ?";
+            $ss .= "i";
+            $parametros[] = $cod_usuario;
+            $atributos .= ", fecha_edit = NOW()";
 
             if ($cod_ventaFK != null) {$atributos .= ", cod_ventaFK = ?"; $ss .= "i"; $parametros[] = $cod_ventaFK;}
             if ($cod_tipo_trabajoFK != null) {$atributos .= ", cod_tipo_trabajoFK = ?"; $ss .= "i"; $parametros[] = $cod_tipo_trabajoFK;}

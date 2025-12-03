@@ -3756,10 +3756,16 @@ style='background-color:#5bc572'>
                                         </tr>
                                     </table>
                                     <br>
-                                    <center>
-                                        <input type='button' value='Guardar datos' class='btn1'
-                                               onclick='verificarCamposTrabajoMecanicoDental("nuevo")' id='btnAbmTrabajoMecanicoDental' />
-                                    </center>
+                                    <table><tr>
+                                      <td style="width: 50%;">
+                                        <input type='button' value='Guardar datos' class='btn4'
+                                          onclick='verificarCamposTrabajoMecanicoDental("nuevo")' id='btnAbmTrabajoMecanicoDental' style="width: fit-content;" />
+                                      </td>
+                                      <td style="width: 50%;">
+                                        <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('arqueo')"
+                                          style="width:100px;background-color: rgb(58 58 58);">
+                                      </td>
+                                    </tr></table>
                                     <br>
                                 </div>
                             </div>
@@ -3903,6 +3909,7 @@ style='background-color:#5bc572'>
                                             <p class='pTituloC'>Registro Selecc..</p>
                                             <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccTrabajoMecanicoDental' style='width:200px' />
                                             <input id='btnEditarTrabajoMecanicoDental' type="button" value="Editar" class="btn5" onclick="verCerrarVentanaTrabajoMecanicoDental(true, true)" style='background-color:#b7b7b7'>
+                                            <input id="btnAuditoriaTrabajoMecanicoMental" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: #b7b7b7;" disabled>
                                         </td>
                                     </tr>
                                 </table>

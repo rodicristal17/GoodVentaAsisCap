@@ -57,11 +57,14 @@ CREATE TABLE trabajo_mecanico_dental (
     costo INT,
     fecha_entrega DATE,
     fecha_retiro DATE,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_usuarioFK_create INT(11),
+    fecha_edit DATETIME,
+    cod_usuarioFK_edit INT(11),
     Foreign Key (cod_mecanicoDentalFK) REFERENCES mecanico_dental(cod_mecanico_dental),
     Foreign Key (cod_ventaFK) REFERENCES venta(cod_venta),
     Foreign Key (cod_tipo_trabajoFK) REFERENCES tipo_trabajo_mecanico_dental(cod_tipo_trabajo_mecanico_dental)
 );
-
 
 ALTER TABLE persona ADD COLUMN tipo_relacion VARCHAR(100);
 ALTER TABLE persona ADD COLUMN telefono_referencia INT(13);
