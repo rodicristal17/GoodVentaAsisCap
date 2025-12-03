@@ -20,91 +20,53 @@
         }
 
         switch ($funt) {
-            case "nuevo":
-                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
-                $observacion = isset($_POST['observacion']) ? utf8_decode($_POST['observacion']) : '';
-                $colorimetro = isset($_POST['colorimetro']) ? utf8_decode($_POST['colorimetro']) : '';
-                $costo = isset($_POST['costo']) ? utf8_decode($_POST['costo']) : 0.0;
-                $fecha_entrega = isset($_POST['fecha_entrega']) ? utf8_decode($_POST['fecha_entrega']) : null;
-                $fecha_retiro = isset($_POST['fecha_retiro']) ? utf8_decode($_POST['fecha_retiro']) : null;
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'pendiente';
-
-                $cod_mecanico_dental = abmMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, null);
-                echo json_encode(array("1" => "exito", "cod_mecanico_dental" => $cod_mecanico_dental));
-                break;
-            case "editar":
+            case "nuevo/editar":
                 $cod_mecanico_dental = $_POST['cod_mecanico_dental'];
                 $cod_mecanico_dental = utf8_decode($cod_mecanico_dental);
-                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
-                $observacion = isset($_POST['observacion']) ? utf8_decode($_POST['observacion']) : null;
-                $colorimetro = isset($_POST['colorimetro']) ? utf8_decode($_POST['colorimetro']) : null;
-                $costo = isset($_POST['costo']) ? utf8_decode($_POST['costo']) : null;
-                $fecha_entrega = isset($_POST['fecha_entrega']) ? utf8_decode($_POST['fecha_entrega']) : null;
-                $fecha_retiro = isset($_POST['fecha_retiro']) ? utf8_decode($_POST['fecha_retiro']) : null;
+                $nombre = utf8_decode($_POST['nombre']);
+                $telefono_referencia = isset($_POST['telefono_referencia']) ? utf8_decode($_POST['telefono_referencia']) : null;
+                $direccion = isset($_POST['direccion']) ? utf8_decode($_POST['direccion']) : null;
+                $telefono = isset($_POST['telefono']) ? utf8_decode($_POST['telefono']) : null;
                 $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
+                $cod_persona = isset($_POST['cod_personaFK']) ? utf8_decode($_POST['cod_personaFK']) : null;
 
-                $cod_mecanico_dental = abmMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$cod_mecanico_dental);
+                $cod_mecanico_dental = abmMecanicoDental($nombre,$telefono_referencia,$direccion,$telefono, $estado,$cod_persona,$cod_mecanico_dental);
                 echo json_encode(array("1" => "exito", "cod_mecanico_dental" => $cod_mecanico_dental));
                 break;
-            case "buscar":
+            case "buscarVista":
                 $cod_mecanico_dental = isset($_POST['cod_mecanico_dental']) ? utf8_decode($_POST['cod_mecanico_dental']) : null;
-                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
-                $tipo_trabajo = isset($_POST['tipo_trabajo']) ? utf8_decode($_POST['tipo_trabajo']) : null;
-                $nombre_paciente = isset($_POST['nombre_paciente']) ? utf8_decode($_POST['nombre_paciente']) : null;
+                $nombre = isset($_POST['estado']) ? utf8_decode($_POST['nombre']) : null;
                 $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
 
                 $filtros = array(
                     'cod_mecanico_dental' => $cod_mecanico_dental,
-                    'cod_ventaFK' => $cod_ventaFK,
-                    'cod_tipo_trabajoFK' => $cod_tipo_trabajoFK,
-                    'tipo_trabajo' => $tipo_trabajo,
-                    'estado' => $estado,
-                    'nombre_paciente' => $nombre_paciente
+                    'nombre' => $nombre,
+                    'estado' => $estado
                 );
-
-                $fecha_desde = isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
-                $fecha_hasta = isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
-                $filtro_fecha = isset($_POST['filtro_fecha']) ? utf8_decode($_POST['filtro_fecha']) : null;
-                if ($filtro_fecha == "2") {
-                    $filtros['fecha_entrega_desde'] = $fecha_desde;
-                    $filtros['fecha_entrega_hasta'] = $fecha_hasta;
-                } else if($filtro_fecha == "3") {
-                    $filtros['fecha_retiro_desde'] = $fecha_desde;
-                    $filtros['fecha_retiro_hasta'] = $fecha_hasta;
-                }
                 
                 $limite = isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
 
                 obtenerVistaMecanicoDental($filtros, $limite);
                 break;
-            case 'nuevo_tipo_trabajo':
-                $descripcion = utf8_decode($_POST['descripcion']);
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'activo';
-                $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo(null, $descripcion, $estado);
-                echo json_encode(array("1" => "exito", "cod_tipo_trabajo_mecanico_dental" => $cod_tipo_trabajo_mecanico_dental));
-                break;
-            case 'editar_tipo_trabajo':
-                $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? utf8_decode($_POST['cod_tipo_trabajo']) : null;
-                $descripcion = isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
-                $estado = utf8_decode($_POST['estado']);
-                $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo($cod_tipo_trabajo, $descripcion, $estado);
-                echo json_encode(array("1" => "exito", "cod_tipo_trabajo_mecanico_dental" => $cod_tipo_trabajo_mecanico_dental));
-                break;
-            case 'buscar_tipo_trabajo':
-                $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? utf8_decode($_POST['cod_tipo_trabajo']) : null;
-                $descripcion = isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
-                $filtros= array(
-                    'cod_tipo_trabajo'=> $cod_tipo_trabajo,
-                    'descripcion'=> $descripcion
-                );
-                obtenerVistaTipoTrabajo($filtros);
+            case 'buscarVistaOpciones':
+                obtenerVistaOpcionesMecanicoDental(array('estado' => 'activo'), 0);
                 break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
+    }
+
+    function obtenerVistaOpcionesMecanicoDental($filtros, $limite = 0) {
+        $registros = obtenerMecanicosDentales($filtros, $limite);
+
+        $pagina= "";
+        $styleName="tableRegistroSearch";
+        foreach($registros as $value) {
+            $styleName=CargarStyleTable($styleName);
+            $pagina.="<option value='".$value['cod_mecanico_dental']."'>".$value['nombre_persona']."</option>";
+        }
+        echo json_encode(array("1" => "exito", "2" => $pagina));
+        exit;
     }
 
     function obtenerVistaMecanicoDental($filtros, $limite = 0) {
@@ -118,142 +80,21 @@
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='ObtenerdatosMecanicoDental(this)'>
             <td id='td_id' style='width: 10%;'>".$value['cod_mecanico_dental']."</td>
-            <td id='td_datos_1'style='width:35%' class='tdRegistroSearch' >".$value['nombre_paciente']."</td>
-            <td id='td_datos_3'style='width:25%' class='tdRegistroSearch' >".$value['nombre_tipo_trabajo']."</td>
-            <td id='td_datos_11'style='width:10%' class='tdRegistroSearch' >".ucfirst($value['estado'])."</td>
-            <td id='td_datos_4'style='width:10%' class='tdRegistroSearch' >".$value['fecha_entrega']."</td>
-            <td id='td_datos_5'style='width:10%' class='tdRegistroSearch' >".$value['fecha_retiro']."</td>
-            <td id='td_datos_6'style='display: none;' class='tdRegistroSearch' >".$value['colorimetro']."</td>
-            <td id='td_datos_7'style='display: none;' class='tdRegistroSearch' >".$value['costo']."</td>
-            <td id='td_datos_8'style='display: none;' class='tdRegistroSearch' >".$value['observacion']."</td>
-            <td id='td_datos_9'style='display: none;' class='tdRegistroSearch' >".$value['cod_ventaFK']."</td>
-            <td id='td_datos_10'style='display: none;' class='tdRegistroSearch' >".$value['cod_tipo_trabajoFK']."</td>
+            <td id='td_datos_1'style='width:35%' class='tdRegistroSearch' >".$value['nombre_persona']."</td>
+            <td id='td_datos_2'style='width:10%' class='tdRegistroSearch' >".ucfirst($value['estado'])."</td>
+            <td id='td_datos_3'style='width:10%' class='tdRegistroSearch' >".$value['telefono']."</td>
+            <td id='td_datos_4'style='display: none;' class='tdRegistroSearch' >".$value['telefono_referencia']."</td>
+            <td id='td_datos_5'style='display: none;' class='tdRegistroSearch' >".$value['direccion']."</td>
+            <td id='td_datos_6'style='display: none;' class='tdRegistroSearch' >".$value['cod_personaFK']."</td>
             </tr>
             </table>";
         }
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => count($registros)));
         exit;
-    }
-
-    function obtenerVistaTipoTrabajo($filtros) {
-        $registros= obtenerTiposTrabajo($filtros, 0);
-                
-        $pagina= "";
-        $optionesHTML= "";
-        $styleName="tableRegistroSearch";
-        foreach ($registros as $key => $value) {
-            $styleName=CargarStyleTable($styleName);
-            $pagina.="
-                <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-                <tr id='tbSelecRegistro' onclick='ObtenerdatosTipoTrabajo(this)'>
-                <td id='td_id' style='display:none;'>".$value['cod_tipo_trabajo_mecanico_dental']."</td>
-                <td id='td_datos_1'style='width:25%' class='tdRegistroSearch' >".$value['descripcion']."</td>
-                <td  id='td_datos_2' style='display:none'>".$value['estado']."</td>
-                </tr>
-                </table>";
-            if ($value['estado'] == 'activo') {
-                $optionesHTML .= "<option id='".$value['cod_tipo_trabajo_mecanico_dental']."'>".$value['descripcion']."</option>";
-            }
-        }
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => $optionesHTML));
-    }
-
-    function obtenerTiposTrabajo($filtros, $limite= 0) {
-        $sqlFiltro = "";
-        foreach ($filtros as $key => $value) {
-            if (empty($value)) {
-                continue;
-            }
-            if ($sqlFiltro == "") {
-                $sqlFiltro .= "WHERE ";
-            } else {
-                $sqlFiltro .= " AND ";
-            }
-
-            switch ($key) {
-                default:
-                    if (is_numeric($value)) {
-                        $sqlFiltro .= "$key = $value";
-                    } else {
-                        $sqlFiltro .= "$key like '%$value%'";
-                    }
-                    break;
-            }
-        }
-
-        if ($limite == 0) {
-            $limite = '';
-        } else {
-            $limite = "LIMIT $limite";
-        }
-
-        $sql = "SELECT * FROM tipo_trabajo_mecanico_dental $sqlFiltro ORDER BY descripcion ASC $limite";
-
-        $mysqli = conectar_al_servidor();
-        $stmt = $mysqli->prepare($sql);
-        if (!$stmt->execute()) {
-            $informacion = array("1" => "error", "mensaje" => "Error al buscar: " . $stmt->error, "sql" => $sql);
-            echo json_encode($informacion);
-            exit;
-        }
-
-        $result = $stmt->get_result();
-        $registros= array();
-        while ($row = $result->fetch_assoc()) {
-            foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
-            }
-            $registros[] = $reg;
-        }
-
-        $stmt->close();
-        return $registros;
-    }
-
-    function abmTipoTrabajo($cod_tipo_trabajo= null, $descripcion, $estado) {
-        $mysqli = conectar_al_servidor();
-
-        if (empty($cod_tipo_trabajo)) {
-            $sql = "INSERT INTO tipo_trabajo_mecanico_dental (descripcion, estado) 
-                VALUES (?, ?)";
-            $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('ss', $descripcion, $estado);
-        } else {
-            $atributos = "";
-            $ss = "";
-            $parametros = [];
-
-            if ($descripcion != null) {$atributos .= ", descripcion = ?"; $ss .= "s"; $parametros[] = $descripcion;}
-            if ($estado != null) {$atributos .= ", estado = ?"; $ss .= "s"; $parametros[] = $estado;}
-
-            $atributos = substr($atributos, 2);
-            $parametros[] = $cod_tipo_trabajo;
-            $ss .= "i";
-
-            $sql = "UPDATE tipo_trabajo_mecanico_dental SET $atributos WHERE cod_tipo_trabajo_mecanico_dental = ?";
-            $stmt = $mysqli->prepare($sql);
-
-            $refs = [];
-            foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
-
-            call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
-        }
-
-        if (!$stmt->execute()) {
-            $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
-            echo json_encode($informacion);
-            exit;
-        }
-
-        $cod_tipo_trabajo_mecanico_dental = empty($cod_tipo_trabajo) ? $stmt->insert_id : $cod_tipo_trabajo;
-        
-        $stmt->close();
-        return $cod_tipo_trabajo_mecanico_dental;
     }
 
     function obtenerMecanicosDentales($filtros, $limite = 0) {
         $sqlFiltro = "";
-        $sqlFiltroPersona = '';
 
         foreach ($filtros as $key => $value) {
             if (empty($value)) {
@@ -267,30 +108,11 @@
             }
 
             switch ($key) {
-                case 'fecha_entrega_desde':
-                    $sqlFiltro .= "DATE(md.fecha_entrega) >= '$value'";
-                    break;
-                case 'fecha_entrega_hasta':
-                    $sqlFiltro .= "DATE(md.fecha_entrega) <= '$value'";
-                    break;
-                case 'fecha_retiro_desde':
-                    $sqlFiltro .= "DATE(md.fecha_retiro) >= '$value'";
-                    break;
-                case 'fecha_retiro_hasta':
-                    $sqlFiltro .= "DATE(md.fecha_retiro) <= '$value'";
-                    break;
-                case 'tipo_trabajo':
-                    $sqlFiltro .= "t.descripcion like '%$value%'";
-                    break;
                 case 'estado':
                     $sqlFiltro .= "md.estado = '$value'";
                     break;
-                case 'nombre_paciente':
-                    $sqlFiltro .= '(SELECT COUNT(*) 
-                        FROM persona 
-                        JOIN venta v ON v.cod_clienteFK = cod_persona 
-                        WHERE v.cod_venta = md.cod_ventaFK AND nombre_persona LIKE "%'.$value.'%") > 0';
-                    $sqlFiltroPersona = 'AND nombre_persona like "%'.$value.'%"';
+                case 'nombre':
+                    $sqlFiltro .= 'p.nombre_persona like "%'.$value.'%"';
                     break;
                 default:
                     if (is_numeric($value)) {
@@ -308,9 +130,8 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql = "SELECT md.*, t.descripcion as nombre_tipo_trabajo, 
-         (SELECT nombre_persona FROM persona JOIN venta v ON v.cod_clienteFK = cod_persona WHERE v.cod_venta = md.cod_ventaFK $sqlFiltroPersona) AS nombre_paciente
-         FROM mecanico_dental md JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = md.cod_tipo_trabajoFK $sqlFiltro ORDER BY md.fecha_entrega DESC $limite";
+        $sql = "SELECT md.*, p.*
+         FROM mecanico_dental md JOIN persona p ON p.cod_persona = md.cod_personaFK $sqlFiltro $limite";
 
         $mysqli = conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
@@ -333,32 +154,29 @@
         return $registros;
     }
 
-    function abmMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, $cod_mecanico_dental) {
+    function abmMecanicoDental($nombre,$telefono_referencia,$direccion,$telefono, $estado,$cod_persona,$cod_mecanico_dental) {
         $mysqli = conectar_al_servidor();
-        if ($cod_mecanico_dental == null) {
-            $sql = "INSERT INTO mecanico_dental (cod_ventaFK, cod_tipo_trabajoFK, observacion, colorimetro, costo, fecha_entrega, fecha_retiro, estado) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?,?)";
+
+        if (empty($cod_mecanico_dental)) {
+            // Primero se inserta los datos de la persona
+            $sql = "INSERT INTO persona (nombre_persona, telefono_referencia, direccion, telefono)
+                VALUES (?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('iissssss', $cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro,$estado);
+            $stmt->bind_param('ssss', $nombre,$telefono_referencia,$direccion,$telefono);
         } else {
             $atributos = "";
             $ss = "";
             $parametros = [];
 
-            if ($cod_ventaFK != null) {$atributos .= ", cod_ventaFK = ?"; $ss .= "i"; $parametros[] = $cod_ventaFK;}
-            if ($cod_tipo_trabajoFK != null) {$atributos .= ", cod_tipo_trabajoFK = ?"; $ss .= "i"; $parametros[] = $cod_tipo_trabajoFK;}
-            if ($observacion != null) {$atributos .= ", observacion = ?"; $ss .= "s"; $parametros[] = $observacion;}
-            if ($colorimetro != null) {$atributos .= ", colorimetro = ?"; $ss .= "s"; $parametros[] = $colorimetro;}
-            if ($costo != null) {$atributos .= ", costo = ?"; $ss .= "d"; $parametros[] = $costo;}
-            if ($fecha_entrega != null) {$atributos .= ", fecha_entrega = ?"; $ss .= "s"; $parametros[] = $fecha_entrega;}
-            if ($fecha_retiro != null) {$atributos .= ", fecha_retiro = ?"; $ss .= "s"; $parametros[] = $fecha_retiro;}
-            if ($estado != null) {$atributos .= ", estado = ?"; $ss .= "s"; $parametros[] = $estado;}
+            if ($nombre != null) {$atributos .= ", nombre_persona = ?"; $ss .= "s"; $parametros[] = $nombre;}
+            if ($telefono != null) {$atributos .= ", telefono = ?"; $ss .= "s"; $parametros[] = $telefono;}
+            if ($telefono_referencia != null) {$atributos .= ", telefono_referencia = ?"; $ss .= "s"; $parametros[] = $telefono_referencia;}
 
             $atributos = substr($atributos, 2);
-            $parametros[] = $cod_mecanico_dental;
+            $parametros[] = $cod_persona;
             $ss .= "i";
 
-            $sql = "UPDATE mecanico_dental SET $atributos WHERE cod_mecanico_dental = ?";
+            $sql = "UPDATE persona SET $atributos WHERE cod_persona = ?";
             $stmt = $mysqli->prepare($sql);
 
             $refs = [];
@@ -373,9 +191,43 @@
             exit;
         }
 
-        if ($cod_mecanico_dental == null) {
-            $cod_mecanico_dental = $stmt->insert_id;
+        // Obtiene el cod_persona si es que aun no se tiene
+        $cod_persona = empty($cod_persona) ? $stmt->insert_id : $cod_persona;
+
+        if (empty($cod_mecanico_dental)) {
+            $sql = "INSERT INTO mecanico_dental (cod_personaFK, estado) 
+                    VALUES (?, ?)";
+            $stmt = $mysqli->prepare($sql);
+            $stmt->bind_param('is', $cod_persona, $estado);
+        } else {
+            $atributos = "";
+            $ss = "";
+            $parametros = [];
+
+            $parametros[] = $cod_persona;
+            $ss .= "i";
+
+            if ($estado != null) {$atributos .= ", estado = ?"; $ss .= "s"; $parametros[] = $estado;}
+
+            $parametros[] = $cod_mecanico_dental;
+            $ss .= "i";
+
+            $sql = "UPDATE mecanico_dental SET cod_personaFK = ? $atributos WHERE cod_mecanico_dental = ?";
+            $stmt = $mysqli->prepare($sql);
+
+            $refs = [];
+            foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+
+            call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
         }
+
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $cod_mecanico_dental =  empty($cod_mecanico_dental) ? $stmt->insert_id : $cod_mecanico_dental;
 
         $stmt->close();
         return $cod_mecanico_dental;

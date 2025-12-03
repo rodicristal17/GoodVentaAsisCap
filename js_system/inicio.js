@@ -442,7 +442,7 @@ buscarobtenermedicos()
 BuscarOptionUsuario()
 buscarobtenerPacientes()
 obtenerAsistenciaUsuario();
-
+buscarOpcionesMecanicoDental();
 buscarSugerencias()
 
 
@@ -35869,3 +35869,5 @@ function vercerrarcargadefotos(opcion) {
 		document.getElementById('btnEliminarPhotoProducto').style.backgroundColor= "#ccc";
 	}
 }
+
+var cod_persona= "";
