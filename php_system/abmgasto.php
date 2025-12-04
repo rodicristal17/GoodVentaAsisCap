@@ -68,11 +68,8 @@ $cod_motivo= utf8_decode($cod_motivo);
 }
 if ($operacion=='cargar_imagen') {
 	$idgastos=$_POST['idgastos'];
-	$idgastos = utf8_decode($idgastos);
 	$foto=$_POST['foto'];
-	$foto = utf8_decode($foto);
 	$ext=$_POST['ext'];
-	$ext = utf8_decode($ext);
 	subirImagenGasto($idgastos, $foto, $ext);
 }
 

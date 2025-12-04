@@ -212,7 +212,6 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 			return false;
 		},
 		success: function (responseText) {
-			verCerrarEfectoCargando("")
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
@@ -224,11 +223,6 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 				   if(accion=="nuevo"){
 						ImprimirTicketEgreso()
 					}
-					limpiarcamposGasto()
-
-					idAbmGasto = "";
-					buscarabmGasto()
-					
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -293,16 +287,21 @@ function subirImagenGasto(cod_abmGasto) {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados exitosamente.");
+					limpiarcamposGasto()
+
+					idAbmGasto = "";
+					buscarabmGasto();
+					verCerrarVentanaAbmGasto("2","");
 				} else {
-                    throw new Error("Error producido en subirImagenGasto de JavaScript.");
+					throw new Error("Error producido en subirImagenGasto de JavaScript.");
                 }
+				verCerrarEfectoCargando("");
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
-			} finally {
-                verCerrarEfectoCargando("");
-            }
+				verCerrarEfectoCargando("");
+			}
 		}
 	});
 }
