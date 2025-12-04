@@ -3762,7 +3762,7 @@ style='background-color:#5bc572'>
                                           onclick='verificarCamposTrabajoMecanicoDental("nuevo")' id='btnAbmTrabajoMecanicoDental' style="width: fit-content;" />
                                       </td>
                                       <td style="width: 50%;">
-                                        <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('arqueo')"
+                                        <input type="button" value="Imprimir" class="btn4" onclick="imprimirTicketTrabajoMecanDental()"
                                           style="width:100px;background-color: rgb(58 58 58);">
                                       </td>
                                     </tr></table>
@@ -4511,29 +4511,29 @@ LOCAL
 <td class="td_registro" style="width:5%;">
 
 </td>
-<td class="td_registro" style="width:10%;">
+<td class="td_registro" style="width:9%;">
 <!-- <select class="inputfiltro" id="inptBuscarIngresoEgreso3"></select> -->
-<input id="inptBuscarIngresoEgreso3" list="listBuscarIngresoEgreso3" style="width:70%" type="text" class="inputText">
+<input id="inptBuscarIngresoEgreso3" list="listBuscarIngresoEgreso3" style="width:70%" type="text" class="inputText" onkeyup="if(event.keyCode == 13){buscarabmGasto()}">
 <datalist id="listBuscarIngresoEgreso3"></datalist>
 
-</td>
-<td class="td_registro" style="width:10%;">
-
-</td>
-<td class="td_registro" style="width:9%;">
-<select class="inputfiltro" id="inptSeleccTipoBuscarGasto">
-<option value="">TODOS</option>
-<option value="Ingreso">INGRESO</option>
-<option value="Egreso">EGRESOS</option>
-</select>
 </td>
 <td class="td_registro" style="width:1%;">
 <img class='inptLimpiarBP'
 src='/GoodVentaAsisCap/iconos/limpiar.png'
 onclick="vaciar('inptSeleccTipoBuscarGasto')" />
 </td>
+<td class="td_registro" style="width:10%;">
+
+</td>
+<td class="td_registro" style="width:10%;">
+<select class="inputfiltro" id="inptSeleccTipoBuscarGasto">
+<option value="">TODOS</option>
+<option value="Ingreso">INGRESO</option>
+<option value="Egreso">EGRESOS</option>
+</select>
+</td>
 <td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='Date' id='inptBuscarIngresoEgreso2' />
+<input class='inputfiltro' type='Date' id='inptBuscarIngresoEgreso2' onkeyup="if(event.keyCode == 13){buscarabmGasto()}"/>
 </td>
 <td class="td_registro" style="width:1%;">
 <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'onclick="vaciar('inptBuscarIngresoEgreso2')" />
@@ -4547,7 +4547,7 @@ onclick="vaciar('inptSeleccTipoBuscarGasto')" />
 <td class="td_registro" style="width:10%;">
 
 </td>
-<td class="td_registro" style="width:9%;">
+<td class="td_registro" style="width:10%;">
 <select class="inputfiltro" id="inptSeleccArregloBuscarGasto">
 <option value="">TODOS</option>
 <option value="INTERNO">INTERNO</option>

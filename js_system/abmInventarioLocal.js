@@ -44,7 +44,7 @@ function obtenerVistaInformeInsumoLocal() {
     datos.append("accion", "buscarVista");
     datos.append("cod_inventario", cod_inventario);
     datos.append("nombre", nombre);
-    datos.append("local", local);
+    datos.append("cod_localFK", local);
     datos.append("estado", estado);
     datos.append("limite", 10);
 
@@ -139,7 +139,7 @@ function obtenermasVistaInformeInsumoLocal() {
     datos.append("accion", "buscarVista");
     datos.append("cod_inventario", cod_inventario);
     datos.append("nombre", nombre);
-    datos.append("local", local);
+    datos.append("cod_localFK", local);
     datos.append("estado", estado);
     datos.append("limite", "10 OFFSET "+registrocargadoInsumoLocal);
 

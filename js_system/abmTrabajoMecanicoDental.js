@@ -254,6 +254,7 @@ function ObtenerdatosTrabajoMecanicoDental(elemento) {
     cod_trabajo_mecanico_dental = $(elemento).children('td[id="td_id"]').html();
     idFkVenta= $(elemento).children('td[id="td_datos_9"]').html();
     cod_tipo_trabajo_selected= $(elemento).children('td[id="td_datos_10"]').html();
+    cod_mecanico_dental= $(elemento).children('td[id="td_datos_10"]').html();
     document.getElementById('inptTipoTrabajoMecanicoDental').value = $(elemento).children('td[id="td_datos_3"]').html();
     document.getElementById('inptColorimetriaTrabajoMecanicoDental').value = $(elemento).children('td[id="td_datos_6"]').html();
     document.getElementById('inptObservacionTrabajoMecanicoDental').innerHTML = $(elemento).children('td[id="td_datos_8"]').html();
@@ -430,4 +431,92 @@ function ObtenerdatosTipoTrabajo(elemento) {
 function minimizarVentanaTrabajoMecanicoDental() {
     document.getElementById('divAbmTrabajoMecanicoDental').style.display= 'none';
     document.getElementById('divMinimizadoTrabajoMecanicoDental').style.display= '';
+}
+
+function imprimirTicketTrabajoMecanDental() {
+    const fecha_actual= new Date;
+    const selectMecanicosDentales= document.getElementById('inptMecanicoTrabajoMecanicoDental');
+
+    const tipo_trabajo= document.getElementById('inptTipoTrabajoMecanicoDental').value;
+    const fecha_retiro= document.getElementById('inptFechaRetiroTrabajoMecanicoDental').value;
+    const fecha_entrega= document.getElementById('inptFechaEntregaTrabajoMecanicoDental').value;
+    const nombre_cliente= document.getElementById('inptPacienteTrabajoMecanicoDental').value;
+    const colorimetria= document.getElementById('inptColorimetriaTrabajoMecanicoDental').value;
+    const costo= document.getElementById('inptCostoTrabajoMecanicoDental').value;
+    const estado= document.getElementById('inptEstadoTrabajoMecanicoDental').value;
+    const nombre_responsable= document.getElementById('inptUsuarioInsertadoPor').value;
+
+    pagina = "<br><div style='background-color:#fff;'>"
+        + "<center>"
+
+        + "<div class='divTicket' style='width: 90%;border: solid 1px;border-radius: 10px; min-height: 450px;' > "
+        + "<center><img src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' style='display: flex;  align-items: center;  justify-content: center;  margin: 45px 30px;   height: 30%;  width: 81%;  opacity: 0.15; position: absolute;' /></center>"
+        + "<p class='pTituloTicket1' style='font-size: 30px;font-weight: 700;background: #7d7c7b; color: #ffff; border-radius: 10px;' >" + TituloRecibo + "</p>"
+        + "<p class='pTituloTicket2'>Humaitá esq. Dr. Bottrel <br> Cel: (0982) 104 622   <br> Villarrica - Paraguay </p>"
+        + "<div class='divSeparadorTicket' style='margin-bottom:5px'></div>"
+
+        + "<p class='pTituloTicket1' style='font-size:12px;' ><b style='font-size: 15px;font-weight: 800;'>Orden de trabajo</b></p>"
+
+        + "<table style='width:100%; margin-left: 30px;'>"
+        + "<td style='width:50%'>"
+        + "<table class='tableTicket'> <tr>"
+        + "<td style='width:150px'><b>Codigo de trabajo :</b></td>"
+        + "<td style=''>" + cod_trabajo_mecanico_dental + "</td>"
+        + "</tr> </table>"
+        + "<table class='tableTicket'> <tr>"
+        + "<td style='width:150px'><b>Cliente:</b></td>"
+        + "<td style=''>" + nombre_cliente + "</td>"
+        + "</tr> </table>"
+        + "<table class='tableTicket'> <tr>"
+        + "<td style='width:150px'><b>Responsable:</b></td>"
+        + "<td style=''>" + nombre_responsable + "</td>"
+        + "</tr> </table>"
+        + "</td>"
+        + "<td style='width:50%'>"
+        + "<table class='tableTicket'> <tr>"
+        + "<td style='width:150px'><b>Fecha:</b></td>"
+        + "<td style=''>" + fecha_actual.getFullYear() +"-"+ String(fecha_actual.getMonth()).padStart(2) +"-"+ fecha_actual.getDate()+ "</td>"
+        + "</tr> </table>"
+        + "<table class='tableTicket'> <tr>"
+        + "<td style='width:150px'><b>Mecanico Dental :</b></td>"
+        + "<td style=''>" + selectMecanicosDentales.options[cod_mecanico_dental].text + "</td>"
+        + "</tr> </table>"
+        + "</td>"
+        + "</table> <br>"
+        + "<p class='pTituloTicket1' style='font-size: 15px;text-align: center;' ><b>Detalles del trabajo</p>"
+        + "<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
+        + "<br>"
+        + "<div style='width: 100%;'>"
+        + "<table class='tableTicket'  style='padding: 4px;border: solid 1px;background: #e1e1e182; font-size: 13px;'>"
+        + "<tr>"
+        + "<td style='width:50%'><b>TIPO DE TRABAJO: </b>"+ tipo_trabajo +"</td>"
+        + "<td style='width:50%'><b>COLORIMETRIA: </b>"+ colorimetria +"</td>"
+        + "</tr>"
+        + "</table><br><table class='tableTicket'  style='padding: 4px;border: solid 1px;background: #e1e1e182; font-size: 13px;'>"
+        + "<tr>"
+        + "<td style='width:50%'><b>ESTADO: </b>"+ estado.charAt(0).toUpperCase() + estado.slice(1) +"</td>"
+        + "<td style='width:50%'><b>COSTO: </b>"+ costo +"</td>"
+        + "</tr>"
+        + "</table>"
+        + "</table><br><table class='tableTicket'  style='padding: 4px;border: solid 1px;background: #e1e1e182; font-size: 13px;'>"
+        + "<tr>"
+        + "<td style='width:50%'><b>FECHA RETIRO: </b>"+ fecha_retiro +"</td>"
+        + "<td style='width:50%'><b>FECHA ENTREGA: </b>"+ fecha_entrega +"</td>"
+        + "</tr>"
+        + "</table>"
+        + "</div>"
+        + "<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
+        + "</div>"
+        + "</center>"
+        + "</div>"
+
+    // var ficha="<!DOCTYPE html><html><head></head><body>"+pagina+pagina+"</body></html>";
+    var ficha = pagina + "<br><br><br>" + pagina;
+    document.getElementById("DivImprimir").innerHTML = ficha;
+    var documento = document.getElementById("DivImprimir").innerHTML;
+    localStorage.setItem("reporte", documento);
+    localStorage.setItem("tipo", "ticket");
+    window.open("/GoodVentaAsisCap/system/reportTicket.html");
+    document.getElementById("DivImprimir").innerHTML = "";
+
 }
