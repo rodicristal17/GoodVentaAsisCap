@@ -173,6 +173,8 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("banco", banco)
 	datos.append("Arreglo", Arreglo)
 	datos.append("nrocuenta", nrocuenta)
+	datos.append("foto", fotoGasto);
+    datos.append("ext", extGasto);
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
@@ -213,16 +215,23 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 		},
 		success: function (responseText) {
 			Respuesta = responseText;
+			verCerrarEfectoCargando("")
 			console.log(Respuesta)
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-					subirImagenGasto(datos["2"]);
 				   if(accion=="nuevo"){
 						ImprimirTicketEgreso()
 					}
+					
+					ver_vetana_informativa("Datos guardados exitosamente.");
+					limpiarcamposGasto()
+
+					idAbmGasto = "";
+					buscarabmGasto();
+					verCerrarVentanaAbmGasto("2","");
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
