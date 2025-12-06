@@ -244,13 +244,15 @@ if($operacion=="buscaroption")
 }
 
 function subirImagenGasto($idgastos, $foto, $ext) {
+	$ruta= NULL;
+	if (!empty($foto) || !empty($ext)) {
 		$foto = substr($foto, strpos($foto, ",") + 1);
 		$foto = base64_decode($foto);
 		$donde = "../fotos/fotosGastos/";
 		$id_foto = $idgastos;
 		$id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
 		$ruta = "/GoodVentaAsisCap/fotos/fotosGastos/" . $idgastos . $id_f . "." . $ext;
-	
+	}
 	
 	$mysqli=conectar_al_servidor();
 	$consulta="Update gastos set url1='$ruta' where idgastos='$idgastos' ";	
@@ -313,21 +315,10 @@ exit;
 
 if($operacion=='nuevo'){
 	$idgastos = mysqli_insert_id($mysqli);
-	$ext=$_POST['ext'];
-	if($ext !=''){
-		$foto=$_POST['foto'];
-	$ext=$_POST['ext'];
-	subirImagenGasto($idgastos, $foto, $ext);
-	}
-	
-}else{
-	$ext=$_POST['ext'];
-	if($ext !=''){
-		$foto=$_POST['foto'];
-	$ext=$_POST['ext'];
-	subirImagenGasto($idgastos, $foto, $ext);
-	}
 }
+$foto=$_POST['foto'];
+$ext=$_POST['ext'];
+subirImagenGasto($idgastos, $foto, $ext);
 
 $informacion =array("1" => "exito", "2" => $idgastos);
 echo json_encode($informacion);	
