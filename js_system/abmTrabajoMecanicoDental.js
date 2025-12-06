@@ -12,7 +12,7 @@ function verCerrarVentanaTrabajoMecanicoDental(mostrar, mostrarAbm) {
             // Oculta el listado
             $("div[id=divAbmTrabajoMecanicoDental2]").fadeOut(250);
         } else {
-            buscarMecanicosDentales();
+            buscarTrabajoMecanicosDentales();
             buscarOpcionesMecanicoDental();
             $("div[id=divAbmTrabajoMecanicoDental2]").fadeIn(250);
         }
@@ -52,6 +52,8 @@ function verificarCamposTrabajoMecanicoDental() {
     const fecha_entrega= $("#inptFechaEntregaTrabajoMecanicoDental").val()
     const fecha_retiro= $("#inptFechaRetiroTrabajoMecanicoDental").val()
     const estado= $("#inptEstadoTrabajoMecanicoDental").val();
+    const especialista= $("#inptDoctorTrabajoMecanicoDental").val();
+    const mecanico_dental= $("#inptMecanicoTrabajoMecanicoDental").val();
 
     if (!inptTipoTrabajoMecanicoDental || inptTipoTrabajoMecanicoDental == "") {
         ver_vetana_informativa("Falta seleccionar el tipo de trabajo");
@@ -65,11 +67,15 @@ function verificarCamposTrabajoMecanicoDental() {
         ver_vetana_informativa("Falta seleccionar la venta");
         return false;
     }
-    
-    abmTrabajoMecanicoDental(inptTipoTrabajoMecanicoDental,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado)
+    if (especialista == "") {
+        ver_vetana_informativa("Falta seleccionar el especialista");
+        return false;
+    }
+
+    abmTrabajoMecanicoDental(inptTipoTrabajoMecanicoDental,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado,especialista, mecanico_dental)
 }
 
-function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado) {
+function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado,especialista,cod_mecanicoDentalFK) {
     obtener_datos_user();
     var datos = new FormData();
     datos.append("useru", userid);
@@ -83,6 +89,8 @@ function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,cos
     datos.append("colorimetro", colorimetro);
     datos.append("estado", estado);
     datos.append("costo", costo);
+    datos.append("cod_especialistaFK", especialista);
+    datos.append("cod_mecanicoDentalFK", cod_mecanicoDentalFK);
     datos.append("fecha_entrega", fecha_entrega);
     datos.append("fecha_retiro", fecha_retiro);
     datos.append("cod_ventaFK", idFkVenta);
@@ -126,10 +134,9 @@ function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,cos
             try {
                 var datos = $.parseJSON(Respuesta);
                 if (datos["1"] === "exito") {
+                    cod_trabajo_mecanico_dental= datos["cod_trabajo_mecanico_dental"];
+                    cod_mecanico_dental= datos["cod_mecanico_dental"];
                     ver_vetana_informativa("Datos guardados exitosamente.");
-                    limpiarFormularioTrabajoMecanicoDental();
-                    verCerrarVentanaTrabajoMecanicoDental(false, true);
-                    buscarMecanicosDentales();
                 } else if (datos["1"] === "UI") {
                     ver_vetana_informativa("Usuario o contraseña incorrectos.");
                 } else {
@@ -241,9 +248,11 @@ function limpiarFormularioTrabajoMecanicoDental() {
     document.getElementById('inptFechaRetiroTrabajoMecanicoDental').value = "";
     document.getElementById('inptCostoTrabajoMecanicoDental').value = "";
     document.getElementById('inptPacienteTrabajoMecanicoDental').value= "";
+    document.getElementById('inptPacienteCITrabajoMecanicoDental').value= "";
     document.getElementById('inptObservacionTrabajoMecanicoDental').value= "";
     document.getElementById('inptEstadoTrabajoMecanicoDental').value= "pendiente";
     document.getElementById('inptMecanicoTrabajoMecanicoDental').value= "";
+    document.getElementById('inptDoctorTrabajoMecanicoDental').value= "";
     document.getElementById('btnEditarTrabajoMecanicoDental').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarTrabajoMecanicoDental').disabled= true;
     document.getElementById('btnAuditoriaTrabajoMecanicoMental').style.backgroundColor= "#b7b7b7";
@@ -262,9 +271,11 @@ function ObtenerdatosTrabajoMecanicoDental(elemento) {
     document.getElementById('inptFechaRetiroTrabajoMecanicoDental').value = $(elemento).children('td[id="td_datos_5"]').html();
     document.getElementById('inptCostoTrabajoMecanicoDental').value = $(elemento).children('td[id="td_datos_7"]').html();
     document.getElementById('inptPacienteTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_1"]').html();
+    document.getElementById('inptPacienteCITrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_17"]').html();
     document.getElementById('inptEstadoTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_11"]').html().toLowerCase();
     document.getElementById('inptMecanicoTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_10"]').html();
     document.getElementById('inptRegistroSeleccTrabajoMecanicoDental').value= $(elemento).children('td[id="td_id"]').html();
+    document.getElementById('inptDoctorTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_18"]').html();
 
     // Datos de auditoria
     document.getElementById('inptUsuarioInsertadoPor').value=$(elemento).children('td[id="td_datos_14"]').html()
@@ -436,6 +447,7 @@ function minimizarVentanaTrabajoMecanicoDental() {
 function imprimirTicketTrabajoMecanDental() {
     const fecha_actual= new Date;
     const selectMecanicosDentales= document.getElementById('inptMecanicoTrabajoMecanicoDental');
+    const selectDoctor= document.getElementById('inptDoctorTrabajoMecanicoDental')
 
     const tipo_trabajo= document.getElementById('inptTipoTrabajoMecanicoDental').value;
     const fecha_retiro= document.getElementById('inptFechaRetiroTrabajoMecanicoDental').value;
@@ -443,75 +455,65 @@ function imprimirTicketTrabajoMecanDental() {
     const nombre_cliente= document.getElementById('inptPacienteTrabajoMecanicoDental').value;
     const colorimetria= document.getElementById('inptColorimetriaTrabajoMecanicoDental').value;
     const costo= document.getElementById('inptCostoTrabajoMecanicoDental').value;
-    const estado= document.getElementById('inptEstadoTrabajoMecanicoDental').value;
-    const nombre_responsable= document.getElementById('inptUsuarioInsertadoPor').value;
+    const observaciones= document.getElementById('inptObservacionTrabajoMecanicoDental').value;
+    const ci_cliente = document.getElementById('inptPacienteCITrabajoMecanicoDental').value;
+    const responsable= document.getElementById('inptUsuarioInsertadoPor').value;
 
     pagina = "<br><div style='background-color:#fff;'>"
         + "<center>"
-
         + "<div class='divTicket' style='width: 90%;border: solid 1px;border-radius: 10px; min-height: 450px;' > "
-        + "<center><img src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' style='display: flex;  align-items: center;  justify-content: center;  margin: 45px 30px;   height: 30%;  width: 81%;  opacity: 0.15; position: absolute;' /></center>"
-        + "<p class='pTituloTicket1' style='font-size: 30px;font-weight: 700;background: #7d7c7b; color: #ffff; border-radius: 10px;' >" + TituloRecibo + "</p>"
-        + "<p class='pTituloTicket2'>Humaitá esq. Dr. Bottrel <br> Cel: (0982) 104 622   <br> Villarrica - Paraguay </p>"
+        + "<table style='width:100%; margin-left: 30px;'><tr>"
+        + "<td style='width:150px'><b>CODIGO :</b></td>"
+        + "<td style='width: 40%;'>" + cod_trabajo_mecanico_dental + "</td>"
+        + "<td style='text-align: center;'>"
+        + "<center><img src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' style='height: 100px;' /></center>"
+        + "</td>"
+        + "</tr></table>"
         + "<div class='divSeparadorTicket' style='margin-bottom:5px'></div>"
-
-        + "<p class='pTituloTicket1' style='font-size:12px;' ><b style='font-size: 15px;font-weight: 800;'>Orden de trabajo</b></p>"
-
-        + "<table style='width:100%; margin-left: 30px;'>"
-        + "<td style='width:50%'>"
-        + "<table class='tableTicket'> <tr>"
-        + "<td style='width:150px'><b>Codigo de trabajo :</b></td>"
-        + "<td style=''>" + cod_trabajo_mecanico_dental + "</td>"
+        + "<table class='tableTicket' style='border: 1px solid black;border-collapse: collapse;'>"
+        + "<tr>"
+        + "<td style='width: 65%;border: 1px solid black;border-collapse: collapse;'><b>ENTREGA MECANICO DENTAL :</b></td>"
+        + "<td style='width: 45%;border: 1px solid black;border-collapse: collapse;'><b>COSTO :</b>" + costo + "</td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td style='width: 65%;border: 1px solid black;border-collapse: collapse;'><b>PACIENTE :</b>" + nombre_cliente + "</td>"
+        + "<td style='width: 45%;border: 1px solid black;border-collapse: collapse;'><b>FECHA RETIRO :</b>" + fecha_retiro + "</td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td style='width: 65%;border: 1px solid black;border-collapse: collapse;'><b>PACIENTE :</b>" + ci_cliente + "</td>"
+        + "<td style='width: 45%;border: 1px solid black;border-collapse: collapse;'><b>FECHA RETIRO :</b>" + fecha_entrega + "</td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td style='width: 65%;border: 1px solid black;border-collapse: collapse;'><b>TIPO DE TRABAJO :</b>" + tipo_trabajo + "</td>"
+        + "<td style='width: 45%;border: 1px solid black;border-collapse: collapse;'><b>COLORIMETRO :</b>" + colorimetria + "</td>"
+        + "</tr>"
+        + "</table>"
+        + "<table class='tableTicket' style='border: 1px solid black;min-height: 250px;border-collapse: collapse;'> <tr>"
+        + "<td style='display: flex;border: 1px solid black;border-collapse: collapse;'><b>OBSERVACIONES :</b>" + observaciones + "</td>"
         + "</tr> </table>"
-        + "<table class='tableTicket'> <tr>"
-        + "<td style='width:150px'><b>Cliente:</b></td>"
-        + "<td style=''>" + nombre_cliente + "</td>"
-        + "</tr> </table>"
-        + "<table class='tableTicket'> <tr>"
-        + "<td style='width:150px'><b>Responsable:</b></td>"
-        + "<td style=''>" + nombre_responsable + "</td>"
+        + "<table class='tableTicket' style='border: 1px solid black;border-collapse: collapse;min-height: 100px;'> <tr>"
+        + "<td style='width:33%;text-align: center;vertical-align: bottom;padding-bottom: 8px;border: 1px solid black;border-collapse: collapse;'>"
+        + "<b>FIRMA MECANICO</b>"
+        + "<br>"+ selectMecanicosDentales.options[cod_mecanico_dental].text +"</b>"
+        + "</td>"
+        + "<td style='width:33%;text-align: center;vertical-align: bottom;padding-bottom: 8px;border: 1px solid black;border-collapse: collapse;'>"
+        + "<b>FIRMA ENCARGADO</b>"
+        + "<br>"+ responsable +"</b>"
+        + "</td>"
+        + "<td style='width:33%;text-align: center;vertical-align: bottom;padding-bottom: 8px;border: 1px solid black;border-collapse: collapse;'>"
+        + "<b>FIRMA DOCTORA</b>"
+        + "<br>"+ selectDoctor.options[selectDoctor.selectedIndex].text +"</b>"
+        + "</td>"
         + "</tr> </table>"
         + "</td>"
-        + "<td style='width:50%'>"
-        + "<table class='tableTicket'> <tr>"
-        + "<td style='width:150px'><b>Fecha:</b></td>"
-        + "<td style=''>" + fecha_actual.getFullYear() +"-"+ String(fecha_actual.getMonth()).padStart(2) +"-"+ fecha_actual.getDate()+ "</td>"
-        + "</tr> </table>"
-        + "<table class='tableTicket'> <tr>"
-        + "<td style='width:150px'><b>Mecanico Dental :</b></td>"
-        + "<td style=''>" + selectMecanicosDentales.options[cod_mecanico_dental].text + "</td>"
-        + "</tr> </table>"
-        + "</td>"
-        + "</table> <br>"
-        + "<p class='pTituloTicket1' style='font-size: 15px;text-align: center;' ><b>Detalles del trabajo</p>"
-        + "<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
+        + "</tr></table>"
         + "<br>"
-        + "<div style='width: 100%;'>"
-        + "<table class='tableTicket'  style='padding: 4px;border: solid 1px;background: #e1e1e182; font-size: 13px;'>"
-        + "<tr>"
-        + "<td style='width:50%'><b>TIPO DE TRABAJO: </b>"+ tipo_trabajo +"</td>"
-        + "<td style='width:50%'><b>COLORIMETRIA: </b>"+ colorimetria +"</td>"
-        + "</tr>"
-        + "</table><br><table class='tableTicket'  style='padding: 4px;border: solid 1px;background: #e1e1e182; font-size: 13px;'>"
-        + "<tr>"
-        + "<td style='width:50%'><b>ESTADO: </b>"+ estado.charAt(0).toUpperCase() + estado.slice(1) +"</td>"
-        + "<td style='width:50%'><b>COSTO: </b>"+ costo +"</td>"
-        + "</tr>"
-        + "</table>"
-        + "</table><br><table class='tableTicket'  style='padding: 4px;border: solid 1px;background: #e1e1e182; font-size: 13px;'>"
-        + "<tr>"
-        + "<td style='width:50%'><b>FECHA RETIRO: </b>"+ fecha_retiro +"</td>"
-        + "<td style='width:50%'><b>FECHA ENTREGA: </b>"+ fecha_entrega +"</td>"
-        + "</tr>"
-        + "</table>"
-        + "</div>"
-        + "<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
         + "</div>"
         + "</center>"
         + "</div>"
 
     // var ficha="<!DOCTYPE html><html><head></head><body>"+pagina+pagina+"</body></html>";
-    var ficha = pagina + "<br><br><br>" + pagina;
+    var ficha = pagina;// + "<br><br><br>" + pagina;
     document.getElementById("DivImprimir").innerHTML = ficha;
     var documento = document.getElementById("DivImprimir").innerHTML;
     localStorage.setItem("reporte", documento);

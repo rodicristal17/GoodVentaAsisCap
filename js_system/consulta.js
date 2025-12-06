@@ -2125,6 +2125,7 @@ function buscarobtenermedicos(){
 	
 		 document.getElementById("ListConsultaAgendamiento").innerHTML="" 
 		 document.getElementById("inptEspecialistaConsulta").innerHTML=""
+		 document.getElementById("inptDoctorTrabajoMecanicoDental").innerHTML=""
 		 document.getElementById("inptBuscarInfHistorialEspecialista").innerHTML=""
 		 
 			obtener_datos_user();
@@ -2181,6 +2182,7 @@ function buscarobtenermedicos(){
 				
 		   var datos_buscados=datos[2];		 
 			document.getElementById("ListConsultaAgendamiento").innerHTML=datos_buscados	 
+			document.getElementById("inptDoctorTrabajoMecanicoDental").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			document.getElementById("inptEspecialistaConsulta").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			document.getElementById("inptBuscarInfHistorialEspecialista").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			

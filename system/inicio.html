@@ -3677,7 +3677,7 @@ style='background-color:#5bc572'>
                                     <table style="width:100%">
                                       <tbody><tr>
                                       <td>
-                                        <p class="pTituloC">Tipo de trabajo :</p>
+                                        <p class="pTituloC">Tipo de trabajo* :</p>
                                         <input id="inptTipoTrabajoMecanicoDental" list="ListTipoTrabajoMecanicoDental" style="width:70%" type="text" class="inputText">
                                         <datalist id="ListTipoTrabajoMecanicoDental"></datalist>
                                         <input type="button" value="Add" class="btn5" onclick="verCerrarVentanaTipoTrabajo(true)">
@@ -3694,19 +3694,26 @@ style='background-color:#5bc572'>
                                     <table style='width:100%'>
                                         <tr>
                                             <td>
-                                                <p class='pTituloC'>Paciente:</p>
-                                                <input class='inputText' type='text' id='inptPacienteTrabajoMecanicoDental' style='width:100%' disabled/>
-                                                <br>
-                                                <br>
+                                                <p class='pTituloC'>Paciente* :</p>
+                                                <input class='inputTextDisable' type='text' id='inptPacienteTrabajoMecanicoDental' style='width:70%' disabled/>
+                                                <input class='inputText' type='text' id='inptPacienteCITrabajoMecanicoDental' style='display: none;' disabled/>
                                                 <input type="button" value="Seleccionar Venta" class="btn5" onclick="vercerrarvistaventas('1', 'mecanicoDental')" style="width: fit-content;">
                                             </td>
                                         </tr>
                                     </table>
                                     <br>
+                                    <table style='width:100%;'>
+                                        <tr>
+                                            <td>
+                                                <p class='pTituloC'>Doctor* :</p>
+                                                <select class="inputText" id="inptDoctorTrabajoMecanicoDental"></select>
+                                            </td>
+                                        </tr>
+                                    </table>
                                     <table style='width:100%'>
                                         <tr>
                                             <td>
-                                              <p class='pTituloC'>Mecanico dental:</p>
+                                              <p class='pTituloC'>Mecanico dental* :</p>
                                               <select class="inputSelect" id="inptMecanicoTrabajoMecanicoDental">
                                               </select>
                                             </td>
@@ -3732,12 +3739,11 @@ style='background-color:#5bc572'>
                                         <tr>
                                             <td style="width: 50%;">
                                                 <p class='pTituloC'>Costo:</p>
-                                                <input class='inputText' type='text' id='inptCostoTrabajoMecanicoDental' onkeyup='separadordemiles(this)'/>
+                                                <input style="width: 70%;" class='inputText' type='text' id='inptCostoTrabajoMecanicoDental' onkeyup='separadordemiles(this)'/>
                                             </td>
                                             <td style="width: 50%;">
-                                                <p class='pTituloC'>Estado:</p>
-                                                <select class="inputSelect" id="inptEstadoTrabajoMecanicoDental">
-                                                <option value="">SELECCIONAR</option>
+                                                <p class='pTituloC'>Estado *:</p>
+                                                <select style="width: 70%;" class="inputSelect" id="inptEstadoTrabajoMecanicoDental">
                                                 <option value="pendiente">PENDIENTE</option>
                                                 <option value="retirado">RETIRADO</option>
                                                 <option value="entregado">ENTREGADO</option>
@@ -3756,12 +3762,13 @@ style='background-color:#5bc572'>
                                         </tr>
                                     </table>
                                     <br>
-                                    <table><tr>
-                                      <td style="width: 50%;">
+                                    <br>
+                                    <table style="width: 100%;"><tr>
+                                      <td style="width: 50%;text-align: center;">
                                         <input type='button' value='Guardar datos' class='btn4'
                                           onclick='verificarCamposTrabajoMecanicoDental("nuevo")' id='btnAbmTrabajoMecanicoDental' style="width: fit-content;" />
                                       </td>
-                                      <td style="width: 50%;">
+                                      <td style="width: 50%;text-align: center;">
                                         <input type="button" value="Imprimir" class="btn4" onclick="imprimirTicketTrabajoMecanDental()"
                                           style="width:100px;background-color: rgb(58 58 58);">
                                       </td>

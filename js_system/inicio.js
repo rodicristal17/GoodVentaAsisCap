@@ -14954,6 +14954,7 @@ function obtenerdatosvistaventa(datostr) {
 	if (ventanaAnteriorHistorialVenta = 'mecanicoDental') {
 		idFkVenta = $(datostr).children('td[id="td_datos_8"]').html();
 		document.getElementById('inptPacienteTrabajoMecanicoDental').value = $(datostr).children('td[id="td_datos_2"]').html();
+		document.getElementById('inptPacienteCITrabajoMecanicoDental').value = $(datostr).children('td[id="td_datos_5"]').html();
 	} else {
 		limpiarcamposventa("1")
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {

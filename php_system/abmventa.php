@@ -3586,7 +3586,7 @@ $subtotal=$totalventadetalle-$totaldescuentoaplicados;
 <td id='td_datos_13' style='display:none'>".$num_factura."</td>
 <td id='td_datos_12' style='width:5%'>".$TipoVenta."</td>
 <td  id='td_datos_2' style='width:20%'>".$clientenombre."</td>
-<td  id='td_datos_2' style='width:10%'>".$nrodocumento."</td>
+<td  id='td_datos_5' style='width:10%'>".$nrodocumento."</td>
 <td  id='td_datos_3' style='display:none'>".$Vendedor1."</td>
 <td  id='td_datos_14' style='display:none'>".$Vendedor2."</td>
 <td  id='td_datos_15' style='display:none'>".$nombrevendedor1."</td>
