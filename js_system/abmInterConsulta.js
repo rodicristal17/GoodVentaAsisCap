@@ -456,6 +456,78 @@ function buscarInterConsultasYContenido() {
 	});
 }
 
+function verMasMensajesInterconsulta(cod_interCon, offset) {
+    obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("accion", "buscarMasInterConsultasYContenido");
+    datos.append("cod_interConsulta", cod_interCon);
+    datos.append("limite", 10);
+    datos.append("offset", offset);
+
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+                    const contenedor= "contenedorMensajesInterConsulta"+cod_interCon;
+                    // Elimita el boton de ver mas
+                    const elemContenedor = document.getElementById(contenedor);
+                    elemContenedor.children[0].remove();
+                    
+                    // Asigna los mensajes anteriores
+                    document.getElementById(contenedor).innerHTML= datos["2"] + document.getElementById(contenedor).innerHTML;
+				} else {
+                    throw new Error("Error producido en buscarMasInterConsultas de JavaScript.");
+                }
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
 function buscarMasInterConsultas() {
     const asunto= document.getElementById("inptAsuntoInterConsulta").value;
     const paciente= document.getElementById("inptPacienteInterConsulta").value;

@@ -148,15 +148,41 @@
                 $cod_mencion= isset($_POST['cod_mencion']) ? utf8_decode($_POST['cod_mencion']) : null;
                 $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
                 $cod_mensajeFK= isset($_POST['cod_mensajeFK']) ? utf8_decode($_POST['cod_mensajeFK']) : null;
+                $isLeido= isset($_POST['isLeido']) ? utf8_decode($_POST['isLeido']) : null;
 
-                abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK);
-                break;            default:
+                abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido);
+                break;
+            case 'buscarMasInterConsultasYContenido':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
+                $offset= isset($_POST['offset']) ? utf8_decode($_POST['offset']) : null;
+                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+
+                $filtros= array(
+                    "cod_interConsultaFK" => $cod_interConsulta,
+                    "cod_usuarioFK" => $user
+                );
+                $vistaTarjetas= obtenerVistaTarjetaInterConsuta($filtros, $limite, $offset);
+
+                // Se calcula si agregar o no el boton de ver mas
+                $registrosMens= obtenerMensaje($filtros);
+                $botonVerMas= "";
+                if (count($registrosMens) > ($offset + $limite)) {
+                    $botonVerMas= "<div style='width: 100%; justify-content: center;'>
+                        <button class='btn btn-success' onclick='verMasMensajesInterconsulta(".$cod_interConsulta.", ".($offset + $limite).")'>Ver más mensajes...</button>
+                        </div>";
+                }
+                
+                $vistaTarjetas= $botonVerMas . $vistaTarjetas;
+                echo json_encode(array("1" => "exito", "2" => $vistaTarjetas));
+                break;
+            default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
     }
 
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
         $pagina = "";
+        $limiteMensajes= 10;
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
@@ -170,7 +196,7 @@
             // Se obtienen los mensajes
             $registrosMens= obtenerMensaje(array(
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta']
-            ), 10);
+            ));
             
             $paginaMensajes= "";
             foreach ($registrosMens as $key => $valueMens) {
@@ -192,43 +218,13 @@
                         $menciones[] = $valueMenc['nombre_persona'];
                     }
                 }
-
-                $posicion= 'flex-start';
-                $colorTarjeta="#e53935";
-                
-                if ($filtros['cod_usuarioFK'] == $valueMens['cod_usuarioFK']) {
-                    $posicion= 'flex-end';
-                    $colorTarjeta="#8bc34a";
-                }
-
-                $contenidoMensaje= $valueMens['contenido'];
-                // Transforma las menciones a elementos
-                $usuarios= buscarUsuarios();
-                foreach ($usuarios as $valueUsu) {
-                    $contenidoMensaje= str_replace(
-                        '@{'.$valueUsu['cod_usuario'].'}', 
-                        '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'">@'.$valueUsu['nombre_persona'].'</b>', 
-                        $contenidoMensaje
-                    );
-                }
-
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
-                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                          <span>'.$valueMens['nombre_persona'].'</span>
-                          <small class="text-secondary">
-                            <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
-                          </small>
-                      </div>
-                      <div class="card-body">
-                          <div style="display: flex;">
-                            <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
-                          </div>
-                      </div>
-                    </div>
-                  </div>';
             }
 
+            $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
+                    'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
+                    'cod_usuarioFK' => $filtros['cod_usuarioFK']
+                ), $limiteMensajes, 0);
+            
             // Se asigna el estilo para asuntos con mensajes sin leer
             $styleMensajeNoLeido= "";
             if (intval($valueInter['cantMensajesNoLeidos']) > 0) {
@@ -282,7 +278,14 @@
             </div>
             </div>
             </div>
-            <div id="contenedorMensajesInterConsulta'.$valueInter['cod_interConsulta'].'">'.$paginaMensajes;
+            <div id="contenedorMensajesInterConsulta'.$valueInter['cod_interConsulta'].'">';
+            
+            if (count($registrosMens) > ($limiteMensajes)) {
+                $pagina .= "<div style='width: 100%; justify-content: center;'>
+                    <button class='btn btn-success' onclick='verMasMensajesInterconsulta(".$valueInter['cod_interConsulta'].", $limiteMensajes)'>Ver más mensajes...</button>
+                    </div>";
+            }
+            $pagina .= $paginaMensajes;
 
             // Se agrega el espacio para enviar un mensaje
             $fechaActual= new DateTime();
@@ -439,7 +442,7 @@
             }
         }
 
-        if ($limite == 0) {
+        if ($limite === 0) {
             $limite = '';
         } else {
             $limite = "LIMIT $limite";
@@ -469,6 +472,56 @@
         return $registros;
     }
 
+    function obtenerVistaTarjetaInterConsuta($filtros= array(), $limite= 0, $offset= 0) {
+        $paginaMensajes= "";
+
+        // Reconstruye el limite si es necesario
+        if ($offset != 0){
+            $limite= "$limite OFFSET $offset";
+        }
+
+        // Obtiene todos los mensajes de la interConsulta
+        $regMensaje= obtenerMensaje($filtros, $limite);
+        foreach ($regMensaje as $key => $valueMens) {
+            $posicion= 'flex-start';
+            $colorTarjeta="#e53935";
+            
+            if ($filtros['cod_usuarioFK'] == $valueMens['cod_usuarioFK']) {
+                $posicion= 'flex-end';
+                $colorTarjeta="#8bc34a";
+            }
+
+            $contenidoMensaje= $valueMens['contenido'];
+            // Transforma las menciones a elementos
+            $usuarios= buscarUsuarios();
+            foreach ($usuarios as $valueUsu) {
+                $contenidoMensaje= str_replace(
+                    '@{'.$valueUsu['cod_usuario'].'}', 
+                    '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'">@'.$valueUsu['nombre_persona'].'</b>', 
+                    $contenidoMensaje
+                );
+            }
+            
+            $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
+                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
+                      <div class="card-header d-flex justify-content-between align-items-center">
+                          <span>'.$valueMens['nombre_persona'].'</span>
+                          <small class="text-secondary">
+                            <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
+                          </small>
+                      </div>
+                      <div class="card-body">
+                          <div style="display: flex;">
+                            <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
+                          </div>
+                      </div>
+                    </div>
+                  </div>';
+        }
+
+        return $paginaMensajes;
+    }
+
     function obtenerVistaInterConsulta($filtros= array(), $limite= 0) {
         $cantRegistros= obtenerInterConsulta($filtros);
         $cantRegistros= count($cantRegistros);
@@ -481,22 +534,13 @@
             $elementosInvolucrados= "";
             $involucrados= array();
 
-            // Obtiene todos los mensajes de la interConsulta
-            $regMensaje= obtenerMensaje(array(
-                "cod_interConsultaFK" => $value['cod_interConsulta']
-            ));
-            foreach ($regMensaje as $key => $valueMensj) {
-                $paginaMensajes .= '<div class="card my-3" style="border-left: 5px solid #ff5722;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span></span>
-                        <small class="text-secondary">'. $valueMensj['fecha_creacion'] .'</small>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">'. $valueMensj['nombre_persona'] .'</h5>
-                        <p class="card-text" style="text-align: justify;">'. $valueMensj['contenido'] .'</p>
-                    </div>
-                    </div>';
+            $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
+                    "cod_interConsultaFK" => $value['cod_interConsulta']
+                ), 10, 0);
 
+            // Obtiene todos los mensajes de la interConsulta
+            $regMensaje= obtenerMensaje($filtros);
+            foreach ($regMensaje as $key => $valueMensj) {
                 $elementosInvolucrados .= '<li style="
                     background-color:#f2f2f2;
                     margin-bottom:4px;
@@ -521,7 +565,6 @@
                     }
                 }
             }
-
             $styleName=CargarStyleTable($styleName);
             $pagina .= '<div class="card my-3" style="border-left: 5px solid #ff5722;">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -660,7 +703,7 @@
             }
         }
 
-        if ($limite == 0) {
+        if ($limite === 0) {
             $limite = '';
         } else {
             $limite = "LIMIT $limite";
@@ -758,7 +801,7 @@
             }
         }
 
-        if ($limite == 0) {
+        if ($limite === 0) {
             $limite = '';
         } else {
             $limite = "LIMIT $limite";
@@ -889,7 +932,7 @@
             }
         }
 
-        if ($limite == 0) {
+        if ($limite === 0) {
             $limite = '';
         } else {
             $limite = "LIMIT $limite";
@@ -1011,7 +1054,7 @@
                     $mensaje .= ' el campo '.$key.' de '.$interconsulta_original[0][$key].' a '.$value.', ';
                 }
             }
-            
+
             $mensaje = substr($mensaje, 0, -2).'.';
             abmMensaje(null, $mensaje, $cod_interConsulta, $cod_usuarioFK_edit);
         }
