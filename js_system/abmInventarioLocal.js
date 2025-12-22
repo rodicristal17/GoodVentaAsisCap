@@ -328,6 +328,14 @@ function limpiarcamposInventarioLocal() {
     document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
+
+    // Vacia los campos de las imagenes
+    fotoInventario1= "";
+    extInventario1= "";
+    fotoInventario2= "";
+    extInventario2= "";
+    fotoInventario3= "";
+    extInventario3= "";
 }
 
 function verificarCamposInventarioLocal() {

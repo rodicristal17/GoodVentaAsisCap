@@ -1379,7 +1379,6 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
-    margin-top: 15px;
   }
 
   .sugerencia-card {
@@ -1401,6 +1400,19 @@ textarea {
   .sugerencia-card p {
     margin: 5px 0;
     font-size: 14px;
+  }
+
+  .mensaje-interconsulta {
+    height: 70px;
+    width: 370px;
+    text-align: start;
+    border: 1px solid #aeaeae;
+    overflow-y: auto;
+  }
+
+  .menciones-mensaje {
+    color: blue;
+    border-bottom: 1px solid blue;
   }
 
   @media (max-width: 500px) {
@@ -1483,7 +1495,7 @@ textarea {
 
 /* Card header */
 .card-header {
-  padding: 1rem 1.25rem;
+  padding: 0 10px;
   border-bottom: 1px solid #e0e0e0;
   font-weight: 700;
   font-size: 1.15rem;
@@ -1557,6 +1569,10 @@ textarea {
 
 .badge-success {
   background-color: #28a745;
+}
+
+.badge-warning {
+  background-color: #ffc107;
 }
 
 .badge-danger {

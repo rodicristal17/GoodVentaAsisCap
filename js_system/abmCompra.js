@@ -11,7 +11,7 @@ function verCerrarAbmCompra(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmCompra").style.display==""){
 document.getElementById("tdEfectoAbmCompra").className="magictime vanishOut"
-	$("div[id=divAbmCompra]").fadeOut(500);	
+	$("div[id=divAbmCompra]").fadeOut(500);
 		document.getElementById("divMinimizadoCargarCompras1").style.display="none"
 		document.getElementById("divMinimizadoCargarCompras2").style.display="none"
 		limpiarCompras()

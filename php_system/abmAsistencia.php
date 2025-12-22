@@ -129,6 +129,10 @@
             if ($value['direccion_ip'] == $_SERVER['REMOTE_ADDR']) {
                 $ip_valida = true;
                 break;
+            } else if ($value['cod_usuarioFK'] == $cod_usuarioFK) {
+                // En caso de ser administrador no valida la ip
+                $ip_valida = true;
+                break;
             }
         }
         

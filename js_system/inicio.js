@@ -122,61 +122,61 @@ document.getElementById("tdEfectoCambiarTema").className="magictime vanishOut"
 
 
 window.onload = function () {
-obtener_datos_user();
-temaActual=localStorage.getItem("tema"+userid);
-if (temaActual == "undefined" || temaActual == "" || temaActual == "Null" || temaActual == null ) {		
-   temaActual="white";
-}
+	obtener_datos_user();
+	temaActual = localStorage.getItem("tema" + userid);
+	if (temaActual == "undefined" || temaActual == "" || temaActual == "Null" || temaActual == null) {
+		temaActual = "white";
+	}
 
-if(temaActual=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css")
-}
-if(temaActual=="black"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
-}
-if(temaActual=="azul"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioazul.css?X-IOSV.03")
-}
-if(temaActual=="crema"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioanaranjado.css?X-IOSV.03")
-}
-if(temaActual=="rosado"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/iniciorosado.css?X-IOSV.03")
-}
-if(temaActual=="iniciogrisazul"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/iniciogrisazul.css?X-IOSV.03")
-}
+	if (temaActual == "white") {
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css")
+	}
+	if (temaActual == "black") {
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
+	}
+	if (temaActual == "azul") {
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioazul.css?X-IOSV.03")
+	}
+	if (temaActual == "crema") {
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioanaranjado.css?X-IOSV.03")
+	}
+	if (temaActual == "rosado") {
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/iniciorosado.css?X-IOSV.03")
+	}
+	if (temaActual == "iniciogrisazul") {
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/iniciogrisazul.css?X-IOSV.03")
+	}
 
-FondoActual=localStorage.getItem("fondo"+userid);
-if (FondoActual == "undefined" || FondoActual == "" || FondoActual == "Null" || FondoActual == null ) {		
-   FondoActual="fondo";
-}
+	FondoActual = localStorage.getItem("fondo" + userid);
+	if (FondoActual == "undefined" || FondoActual == "" || FondoActual == "Null" || FondoActual == null) {
+		FondoActual = "fondo";
+	}
 
-if(FondoActual=="fondo"){
-document.getElementById("imgFondoSytem1").src="/GoodVentaAsisCap/iconos/fondo.jpg"
-document.getElementById("imgFondoSytem2").src="/GoodVentaAsisCap/iconos/fondo.jpg"
-	
-}
-if(FondoActual=="fondo2"){
-	
-	document.getElementById("imgFondoSytem1").src="/GoodVentaAsisCap/iconos/fondo2.jpg"
-document.getElementById("imgFondoSytem2").src="/GoodVentaAsisCap/iconos/fondo2.jpg"
-}
-if(FondoActual=="fondo3"){
-	
-document.getElementById("imgFondoSytem1").src="/GoodVentaAsisCap/iconos/fondo3.jpg"
-document.getElementById("imgFondoSytem2").src="/GoodVentaAsisCap/iconos/fondo3.jpg"
-}
+	if (FondoActual == "fondo") {
+		document.getElementById("imgFondoSytem1").src = "/GoodVentaAsisCap/iconos/fondo.jpg"
+		document.getElementById("imgFondoSytem2").src = "/GoodVentaAsisCap/iconos/fondo.jpg"
 
-var FondoUrl=localStorage.getItem("fondourl"+userid);
-if (FondoUrl == "undefined" || FondoUrl == "" || FondoUrl == "Null" || FondoUrl == null ) {		
-   FondoUrl="";
-}
-if(FondoUrl!=""){
-	document.getElementById("inptUrlFondo").value=FondoUrl;
-document.getElementById("imgFondoSytem1").src=FondoUrl
-document.getElementById("imgFondoSytem2").src=FondoUrl
-}
+	}
+	if (FondoActual == "fondo2") {
+
+		document.getElementById("imgFondoSytem1").src = "/GoodVentaAsisCap/iconos/fondo2.jpg"
+		document.getElementById("imgFondoSytem2").src = "/GoodVentaAsisCap/iconos/fondo2.jpg"
+	}
+	if (FondoActual == "fondo3") {
+
+		document.getElementById("imgFondoSytem1").src = "/GoodVentaAsisCap/iconos/fondo3.jpg"
+		document.getElementById("imgFondoSytem2").src = "/GoodVentaAsisCap/iconos/fondo3.jpg"
+	}
+
+	var FondoUrl = localStorage.getItem("fondourl" + userid);
+	if (FondoUrl == "undefined" || FondoUrl == "" || FondoUrl == "Null" || FondoUrl == null) {
+		FondoUrl = "";
+	}
+	if (FondoUrl != "") {
+		document.getElementById("inptUrlFondo").value = FondoUrl;
+		document.getElementById("imgFondoSytem1").src = FondoUrl
+		document.getElementById("imgFondoSytem2").src = FondoUrl
+	}
 
 	if (typeof history.pushState === "function") {
 		history.pushState("jibberish", null, null);
@@ -206,54 +206,70 @@ document.getElementById("imgFondoSytem2").src=FondoUrl
 		};
 	}
 	mueveReloj()
-	
-	obtenerUltimoLimiteCaja();
-	buscar_datos_del_usuario();
-eventoScrollTable(document.getElementById('TableScroollProductos2'));
-eventoScrollTable(document.getElementById('TableScroollHistorialVenta2'));
-eventoScrollTable(document.getElementById('TableScroollHistorialVentaExpediente2'));
-eventoScrollTable(document.getElementById('TableScroollHistorialVentaCanceladasExpediente2'));
-eventoScrollTable(document.getElementById('TableScroollHistorialCompra2'));
-eventoScrollTable(document.getElementById('TableScroollCuentasACobrar2'));
-eventoScrollTable(document.getElementById('TableScroollGananciaPorVenta2'));
-eventoScrollTable(document.getElementById('TableScroollMasReferencias2'));
-eventoScrollTable(document.getElementById('TableScroollHistorialGarantia2'));
-eventoScrollTable(document.getElementById('TableScroollCredito2'));
-eventoScrollTable(document.getElementById('TableScroollArqeo2'));
-eventoScrollTable(document.getElementById('TableScroollAudiProducto2'));
-eventoScrollTable(document.getElementById('TableScroollHistorialConsulta2'));
-scrollevents(document.getElementById('divMenuMantenimiento'));
-var controlactualizacion=0;
-var controlMensaje=0;
- var counter=setInterval(timer,1000);
-		function timer(){
-				if(controlactualizacion==60){
-			controlactualizacion=0;
-			var codigopc=localStorage.getItem("codpc");
 
-if (codigopc == "undefined" || codigopc == "" || codigopc == "Null" || codigopc == null ) {	
-   resgistrardispositivo()
-   vercerrarventanactualizacion("1")
-}else{
-	controldeactualizacion(codigopc)
-}
-				}
-			controlactualizacion=controlactualizacion+1;
-			
-			
-			if(controlMensaje==30){
-					controlMensaje=0;
-					buscarSugerencias()
-					// buscarproductosDescuento()
-
-				}
-			controlMensaje=controlMensaje+1;
- 
-			
+	// Listener para menciones en interconsulta
+	document.getElementById('table_abm_InterConsulta')
+		.addEventListener('keyup', function(e) {
+		if (e.target.matches('p.mensaje-interconsulta')) {
+			const valor = e.target.textContent;
+			const match = valor.match(/@(\w*)$/); // detecta @ + texto
+			if (match) {
+				const textoBusqueda = match[1].toLowerCase();
+				
+				// Filtrar usuarios
+				const sugerencias = Object.entries(registroUsuariosInterconsulta)
+					.filter(([id, nombre]) => nombre.toLowerCase().includes(textoBusqueda));
+				
+				// Aquí podrías renderizar un menú debajo del textarea
+				mostrarOpcionesUsuariosMenciones(e.target, sugerencias);
 			}
- 
-			
+		}
+	});
+
+	buscar_datos_del_usuario();
+	obtenerUltimoLimiteCaja();
+	eventoScrollTable(document.getElementById('TableScroollProductos2'));
+	eventoScrollTable(document.getElementById('TableScroollHistorialVenta2'));
+	eventoScrollTable(document.getElementById('TableScroollHistorialVentaExpediente2'));
+	eventoScrollTable(document.getElementById('TableScroollHistorialVentaCanceladasExpediente2'));
+	eventoScrollTable(document.getElementById('TableScroollHistorialCompra2'));
+	eventoScrollTable(document.getElementById('TableScroollCuentasACobrar2'));
+	eventoScrollTable(document.getElementById('TableScroollGananciaPorVenta2'));
+	eventoScrollTable(document.getElementById('TableScroollMasReferencias2'));
+	eventoScrollTable(document.getElementById('TableScroollHistorialGarantia2'));
+	eventoScrollTable(document.getElementById('TableScroollCredito2'));
+	eventoScrollTable(document.getElementById('TableScroollArqeo2'));
+	eventoScrollTable(document.getElementById('TableScroollAudiProducto2'));
+	eventoScrollTable(document.getElementById('TableScroollHistorialConsulta2'));
+	scrollevents(document.getElementById('divMenuMantenimiento'));
+	var controlactualizacion = 0;
+	var controlMensaje = 0;
+	var counter = setInterval(timer, 1000);
+	function timer() {
+		if (controlactualizacion == 60) {
+			controlactualizacion = 0;
+			var codigopc = localStorage.getItem("codpc");
+
+			if (codigopc == "undefined" || codigopc == "" || codigopc == "Null" || codigopc == null) {
+				resgistrardispositivo()
+				vercerrarventanactualizacion("1")
+			} else {
+				controldeactualizacion(codigopc)
+			}
+		}
+		controlactualizacion = controlactualizacion + 1;
+
+
+		if (controlMensaje == 30) {
+			controlMensaje = 0;
+			buscarSugerencias()
+			// buscarproductosDescuento()
+
+		}
+		controlMensaje = controlMensaje + 1;
+	}
 }
+
 function scrollevents(elemento) {
 			
 			
@@ -1220,8 +1236,10 @@ function checkestadouser(d){
 		document.getElementById('inptSeleccEstadoBuscarUser2').checked=true
 	}
 }
+
+var registroUsuariosInterconsulta= {};
 function buscarabmusuario() {
-if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
+	if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
 	var codigo = document.getElementById('inptBuscarUsuario1').value
 	var documento = document.getElementById('inptBuscarUsuario2').value
 	var usuario = document.getElementById('inptBuscarUsuario3').value
@@ -1232,6 +1250,9 @@ if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
 		estado='Inactivo'
 	}
 	document.getElementById("table_abm_usuarios").innerHTML = paginacargando
+	buscarabmusuario2(codigo, documento, usuario, estado, local)
+}
+function buscarabmusuario2(codigo, documento, usuario, estado, local) {
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -1245,7 +1266,6 @@ if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
 		"funt": "buscar"
 	};
 	$.ajax({
-
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
@@ -1284,9 +1304,15 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-				var datos_buscados = datos[2];
-                document.getElementById("table_abm_usuarios").innerHTML = datos_buscados
-				
+					var datos_buscados = datos[2];
+					document.getElementById("table_abm_usuarios").innerHTML = datos_buscados
+					
+					// Se completa la lista de usuarios para usar en interConsulta
+					registroUsuariosInterconsulta= {}
+					datos[4].forEach(element => {
+						let cod= element.cod_usuario
+						registroUsuariosInterconsulta[cod]= element.nombre_persona;
+					});
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -1485,6 +1511,7 @@ function abmacceso(d) {
 		}
 	});
 }
+
 //Abm DarBaja
 function MinimizardarDeBaja(){
 	
@@ -10276,6 +10303,8 @@ function limpiarcamposCasa() {
 function buscarabmCasaOption() {
 	document.getElementById("inptlocaluser").innerHTML = "";
 	document.getElementById("inptlocalProducto").innerHTML = "";
+	document.getElementById("inptCodLocalMecanicoDental").innerHTML = "";
+	document.getElementById("inptLocalTrabajoMecanicoDental").innerHTML = "";
 	document.getElementById("inptBuscarProducto7").innerHTML = "";
 	document.getElementById("inptLocalProductoEnviarA").innerHTML = "";
 	document.getElementById("inptlocalProductoBuscarVista").innerHTML = "";
@@ -10393,6 +10422,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptlocalVenta").innerHTML = datos_buscados
 					document.getElementById("inptlocalAperturaCierre").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalCaja").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
+					document.getElementById("inptCodLocalMecanicoDental").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
+					document.getElementById("inptLocalTrabajoMecanicoDental").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalProductoBuscarInventario").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptLocalProductoEnviarA").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptBuscarProducto7").innerHTML = datos_buscados
@@ -10575,6 +10606,7 @@ function seleccionarLocalUSer(){
 /*
 ABM CLIENTES
 */
+var cod_clienteFK= "";
 function verCerrarAbmClientes(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmCliente").style.display==""){
@@ -11759,14 +11791,16 @@ function EnviarClienteDesde() {
 		idFKZona =  $(datostr).children('td[id="td_datos_9"]').html();
 		
 		buscarmasreferenciasSolicitudCredito(idFkCliente)
-
 	}
 	
 	if (controlseleccvistacliente == "Solicitud_garante") {
 		cod_garanteFK = $(datostr).children('td[id="td_id"]').html();
 		document.getElementById('inptGaranteSolicitudCredito').value = $(datostr).children('td[id="td_datos_1"]').html();
 	}
-	
+	if (controlseleccvistacliente == "interConsulta") {
+		cod_clienteFK= $(datostr).children('td[id="td_id"]').html();
+		document.getElementById('inptNombreClienteAbmInterConsulta').value = $(datostr).children('td[id="td_datos_1"]').html();
+	}
 	
 	document.getElementById("divVistaCliente").style.display = "none"
 	document.getElementById("table_vista_cliente").innerHTML = ""

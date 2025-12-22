@@ -54,6 +54,7 @@ function verificarCamposTrabajoMecanicoDental() {
     const estado= $("#inptEstadoTrabajoMecanicoDental").val();
     const especialista= $("#inptDoctorTrabajoMecanicoDental").val();
     const mecanico_dental= $("#inptMecanicoTrabajoMecanicoDental").val();
+    const cod_local= $("#inptLocalTrabajoMecanicoDental").val();
 
     if (!inptTipoTrabajoMecanicoDental || inptTipoTrabajoMecanicoDental == "") {
         ver_vetana_informativa("Falta seleccionar el tipo de trabajo");
@@ -71,11 +72,15 @@ function verificarCamposTrabajoMecanicoDental() {
         ver_vetana_informativa("Falta seleccionar el especialista");
         return false;
     }
+    if (cod_local == "") {
+        ver_vetana_informativa("Falta seleccionar el local");
+        return false;
+    }
 
-    abmTrabajoMecanicoDental(inptTipoTrabajoMecanicoDental,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado,especialista, mecanico_dental)
+    abmTrabajoMecanicoDental(inptTipoTrabajoMecanicoDental,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado,especialista, mecanico_dental, cod_local)
 }
 
-function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado,especialista,cod_mecanicoDentalFK) {
+function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,costo,fecha_entrega,fecha_retiro,estado,especialista,cod_mecanicoDentalFK, cod_local) {
     obtener_datos_user();
     var datos = new FormData();
     datos.append("useru", userid);
@@ -94,6 +99,7 @@ function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,cos
     datos.append("fecha_entrega", fecha_entrega);
     datos.append("fecha_retiro", fecha_retiro);
     datos.append("cod_ventaFK", idFkVenta);
+    datos.append("cod_localFK", cod_local);
     if (cod_trabajo_mecanico_dental == "") {
         datos.append("accion", "nuevo");
     } else {
@@ -181,6 +187,8 @@ function buscarTrabajoMecanicosDentales() {
     const nombre_mecanico= document.getElementById('inptMecanicoListadoTrabajoMecanicoDental').value;
     const cod_trabajo= document.getElementById('inptCodListadoTrabajoMecanicoDental').value;
     const estado= document.getElementById('inptEstadoListadoTrabajoMecanicoDental').value;
+    const ocultar_Inactivo= document.getElementById('inptSeleccFiltroEstadoTrabajoMecanicoDental').checked;
+    const local= document.getElementById('inptCodLocalMecanicoDental').value;
 
     obtener_datos_user();
     let datos = new FormData();
@@ -193,6 +201,11 @@ function buscarTrabajoMecanicosDentales() {
     datos.append("nombre_mecanico", nombre_mecanico);
     datos.append("cod_trabajo_mecanico_dental", cod_trabajo);
     datos.append("estado", estado);
+    datos.append("cod_localFK", local);
+
+    if (ocultar_Inactivo) {
+        datos.append("ocultar_inactivo", ocultar_Inactivo);
+    }
 
     // Recopilar datos de los filtros
     if (filtro_fecha_trabajo_mecanico_dental == 2) {
@@ -253,6 +266,7 @@ function limpiarFormularioTrabajoMecanicoDental() {
     document.getElementById('inptEstadoTrabajoMecanicoDental').value= "pendiente";
     document.getElementById('inptMecanicoTrabajoMecanicoDental').value= "";
     document.getElementById('inptDoctorTrabajoMecanicoDental').value= "";
+    document.getElementById('inptLocalTrabajoMecanicoDental').value= "";
     document.getElementById('btnEditarTrabajoMecanicoDental').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarTrabajoMecanicoDental').disabled= true;
     document.getElementById('btnAuditoriaTrabajoMecanicoMental').style.backgroundColor= "#b7b7b7";
@@ -276,6 +290,7 @@ function ObtenerdatosTrabajoMecanicoDental(elemento) {
     document.getElementById('inptMecanicoTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_10"]').html();
     document.getElementById('inptRegistroSeleccTrabajoMecanicoDental').value= $(elemento).children('td[id="td_id"]').html();
     document.getElementById('inptDoctorTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_18"]').html();
+    document.getElementById('inptLocalTrabajoMecanicoDental').value= $(elemento).children('td[id="td_datos_21"]').html();
 
     // Datos de auditoria
     document.getElementById('inptUsuarioInsertadoPor').value=$(elemento).children('td[id="td_datos_14"]').html()
@@ -283,6 +298,7 @@ function ObtenerdatosTrabajoMecanicoDental(elemento) {
 	document.getElementById('inptUsuarioEditadoPor').value=$(elemento).children('td[id="td_datos_16"]').html()
 	document.getElementById('inptFechaEditadoPor').value=$(elemento).children('td[id="td_datos_15"]').html()
 
+    separadordemiles(document.getElementById('inptCostoTrabajoMecanicoDental'));
     $("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
 	});

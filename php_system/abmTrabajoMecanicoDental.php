@@ -31,8 +31,9 @@
                 $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'pendiente';
                 $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? utf8_decode($_POST['cod_especialistaFK']) : null;
                 $cod_mecanicoDentalFK = isset($_POST['cod_mecanicoDentalFK']) ? utf8_decode($_POST['cod_mecanicoDentalFK']) : null;
+                $cod_localFK = isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
 
-                $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, $user, $cod_especialistaFK,$cod_mecanicoDentalFK,null);
+                $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, $user, $cod_especialistaFK,$cod_mecanicoDentalFK,$cod_localFK,null);
                 echo json_encode(array("1" => "exito", "cod_trabajo_mecanico_dental" => $cod_trabajo_mecanico_dental, "cod_mecanico_dental" => $cod_mecanicoDentalFK));
                 break;
             case "editar":
@@ -48,8 +49,9 @@
                 $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? utf8_decode($_POST['cod_especialistaFK']) : null;
                 $cod_mecanicoDentalFK = isset($_POST['cod_mecanicoDentalFK']) ? utf8_decode($_POST['cod_mecanicoDentalFK']) : null;
+                $cod_localFK = isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
 
-                $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$user,$cod_especialistaFK,$cod_mecanicoDentalFK,$cod_trabajo_mecanico_dental);
+                $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$user,$cod_especialistaFK,$cod_mecanicoDentalFK,$cod_localFK,$cod_trabajo_mecanico_dental);
                 echo json_encode(array("1" => "exito", "cod_trabajo_mecanico_dental" => $cod_trabajo_mecanico_dental, "cod_mecanico_dental" => $cod_mecanicoDentalFK));
                 break;
             case "buscar":
@@ -57,10 +59,12 @@
                 $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
                 $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
                 $tipo_trabajo = isset($_POST['tipo_trabajo']) ? utf8_decode($_POST['tipo_trabajo']) : null;
+                $ocultar_inactivo = isset($_POST['ocultar_inactivo']) ? utf8_decode($_POST['ocultar_inactivo']) : null;
                 $nombre_paciente = isset($_POST['nombre_paciente']) ? utf8_decode($_POST['nombre_paciente']) : null;
                 $nombre_mecanico = isset($_POST['nombre_mecanico']) ? utf8_decode($_POST['nombre_mecanico']) : null;
                 $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? utf8_decode($_POST['cod_especialistaFK']) : null;
+                $cod_localFK = isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
 
                 $filtros = array(
                     'cod_trabajo_mecanico_dental' => $cod_trabajo_mecanico_dental,
@@ -69,7 +73,9 @@
                     'tipo_trabajo' => $tipo_trabajo,
                     'nombre_mecanico' => $nombre_mecanico,
                     'estado' => $estado,
+                    'ocultar_inactivo' => $ocultar_inactivo,
                     'nombre_paciente' => $nombre_paciente,
+                    'cod_localFK' => $cod_localFK,
                     'cod_especialistaFK' => $cod_especialistaFK
                 );
 
@@ -126,9 +132,10 @@
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='ObtenerdatosTrabajoMecanicoDental(this)'>
             <td id='td_id' style='width: 10%;'>".$value['cod_trabajo_mecanico_dental']."</td>
-            <td id='td_datos_1' style='width:30%' class='tdRegistroSearch' >".$value['nombre_paciente']."</td>
-            <td id='td_datos_12' style='width:30%' class='tdRegistroSearch' >".$value['nombre_mecanico']."</td>
+            <td id='td_datos_1' style='width:20%' class='tdRegistroSearch' >".$value['nombre_paciente']."</td>
+            <td id='td_datos_12' style='width:15%' class='tdRegistroSearch' >".$value['nombre_mecanico']."</td>
             <td id='td_datos_3' style='width:20%' class='tdRegistroSearch' >".$value['nombre_tipo_trabajo']."</td>
+            <td id='td_datos_20' style='width: 15%;' class='tdRegistroSearch' >".$value['nombre_local']."</td>
             <td id='td_datos_11' style='width:10%' class='tdRegistroSearch' >".ucfirst($value['estado'])."</td>
             <td id='td_datos_4' style='display: none;' class='tdRegistroSearch' >".$value['fecha_entrega']."</td>
             <td id='td_datos_5' style='display: none;' class='tdRegistroSearch' >".$value['fecha_retiro']."</td>
@@ -144,6 +151,7 @@
             <td id='td_datos_17' style='display: none;' class='tdRegistroSearch' >".$value['ci_cliente']."</td>
             <td id='td_datos_18' style='display: none;' class='tdRegistroSearch' >".$value['cod_especialistaFK']."</td>
             <td id='td_datos_19' style='display: none;' class='tdRegistroSearch' >".$value['nombre_especialista']."</td>
+            <td id='td_datos_21' style='display: none;' class='tdRegistroSearch' >".$value['cod_localFK']."</td>
             </tr>
             </table>";
         }
@@ -272,7 +280,7 @@
         $sqlFiltroPersona = '';
 
         foreach ($filtros as $key => $value) {
-            if (empty($value)) {
+            if (!$value) {
                 continue;
             }
 
@@ -283,6 +291,9 @@
             }
 
             switch ($key) {
+                case 'ocultar_inactivo':
+                    $sqlFiltro .= "tmd.estado != 'inactivo'";
+                    break;
                 case 'fecha_entrega_desde':
                     $sqlFiltro .= "DATE(tmd.fecha_entrega) >= '$value'";
                     break;
@@ -332,11 +343,12 @@
         (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_usuarioFK_create) AS nombre_usuario_creat,
         (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_usuarioFK_edit) AS nombre_usuario_edit,
         (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_especialistaFK) AS nombre_especialista,
+        (SELECT Nombre FROM local WHERE cod_local = tmd.cod_localFK) AS nombre_local,
          (SELECT nombre_persona FROM persona JOIN venta v ON v.cod_clienteFK = cod_persona WHERE v.cod_venta = tmd.cod_ventaFK $sqlFiltroPersona) AS nombre_paciente
          FROM trabajo_mecanico_dental tmd 
          JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = tmd.cod_tipo_trabajoFK 
-         JOIN mecanico_dental md ON md.cod_mecanico_dental = tmd.cod_trabajo_mecanico_dental 
-         JOIN persona p ON p.cod_persona = md.cod_personaFK $sqlFiltro ORDER BY tmd.fecha_entrega DESC $limite";
+         JOIN mecanico_dental md ON md.cod_mecanico_dental = tmd.cod_mecanicoDentalFK 
+         JOIN persona p ON p.cod_persona = md.cod_personaFK $sqlFiltro $limite";
 
         $mysqli = conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
@@ -359,13 +371,13 @@
         return $registros;
     }
 
-    function abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$cod_usuario,$cod_especialistaFK,$cod_mecanicoDentalFK,$cod_trabajo_mecanico_dental) {
+    function abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$cod_usuario,$cod_especialistaFK,$cod_mecanicoDentalFK,$cod_localFK,$cod_trabajo_mecanico_dental) {
         $mysqli = conectar_al_servidor();
         if ($cod_trabajo_mecanico_dental == null) {
-            $sql = "INSERT INTO trabajo_mecanico_dental (cod_ventaFK, cod_tipo_trabajoFK, observacion, colorimetro, costo, fecha_entrega, fecha_retiro, estado, cod_usuarioFK_create, cod_especialistaFK, cod_mecanicoDentalFK) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?,?, ?, ?,?)";
+            $sql = "INSERT INTO trabajo_mecanico_dental (cod_ventaFK, cod_tipo_trabajoFK, observacion, colorimetro, costo, fecha_entrega, fecha_retiro, estado, cod_usuarioFK_create, cod_especialistaFK, cod_localFK, cod_mecanicoDentalFK) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?,?, ?, ?,?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('iisssssssii', $cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro,$estado,$cod_usuario,$cod_especialistaFK,$cod_mecanicoDentalFK);
+            $stmt->bind_param('iisssssssiii', $cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro,$estado,$cod_usuario,$cod_especialistaFK,$cod_localFK,$cod_mecanicoDentalFK);
         } else {
             $atributos = "";
             $ss = "";
@@ -387,6 +399,7 @@
             if ($estado != null) {$atributos .= ", estado = ?"; $ss .= "s"; $parametros[] = $estado;}
             if ($cod_especialistaFK != null) {$atributos .= ", cod_especialistaFK = ?"; $ss .= "i"; $parametros[] = $cod_especialistaFK;}
             if ($cod_mecanicoDentalFK != null) {$atributos .= ", cod_mecanicoDentalFK = ?"; $ss .= "i"; $parametros[] = $cod_mecanicoDentalFK;}
+            if ($cod_localFK != null) {$atributos .= ", cod_localFK = ?"; $ss .= "i"; $parametros[] = $cod_localFK;}
 
             $parametros[] = $cod_trabajo_mecanico_dental;
             $ss .= "i";

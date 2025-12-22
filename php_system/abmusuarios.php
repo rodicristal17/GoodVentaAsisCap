@@ -509,35 +509,29 @@ function BuscarRegistro($codigo,$documento,$usuario,$estado,$local)
 {
 $mysqli=conectar_al_servidor();
 
-$condicioncodigo="";
+$sqlFiltro= "where us.estado= '$estado' ";
 if($codigo!=""){
-	$condicioncodigo=" and us.cod_usuario = '".$codigo."' ";
+	$sqlFiltro.= " and us.cod_usuario = '".$codigo."' ";
 }
-$condiciondocumento="";
 if($documento!=""){
-	$condiciondocumento=" and us.rut_usuario = '".$documento."' ";
+	$sqlFiltro.=" and us.rut_usuario = '".$documento."' ";
 }
-
-$condicionusuario="";
 if($usuario!=""){
-	$condicionusuario=" and pr.nombre_persona like '%".$usuario."%' ";
+	$sqlFiltro.=" and pr.nombre_persona like '%".$usuario."%' ";
 }
-
-
+if($local!=""){
+	$sqlFiltro.=" and us.cod_localFK = '".$local."' ";
+}
 
 
 
 $sql= "select us.cod_usuario,us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
 pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
- from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona where 
- us.estado=? and us.cod_localFK=? ".$condicioncodigo.$condiciondocumento.$condicionusuario;
- 
+ from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona ".$sqlFiltro;
  
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
-$s='ss';
-$stmt->bind_param($s,$estado,$local);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
@@ -547,6 +541,7 @@ $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
 $styleName="tableRegistroSearch";
+$registros= array();
 
 if ($valor>0)
 {
@@ -592,12 +587,29 @@ $fecha_creacion = utf8_encode($valor['fecha_creacion']);
 </tr>
 </table>";
 
-
+$registros[] = array(
+	'cod_usuario' => $cod_usuario,
+	'rut_usuario' => $rut_usuario,
+	'login' => $login,
+	//'password' => $password,
+	'estado' => $estado,
+	'acceso' => $acceso,
+	'cod_localFK' => $cod_localFK,
+	'nombre_persona' => $nombre_persona,
+	'telefono' => $telefono,
+	'local' => $local,
+	'tipo' => $tipo,
+	'url' => $url,
+	'telefono_referencia' => $telefono_referencia,
+	'direccion' => $direccion,
+	'tipo_relacion' => $tipo_relacion,
+	'fecha_creacion' => $fecha_creacion,
+);
 }
 }
 
 
-$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro);
+$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro, "4" => $registros);
 echo json_encode($informacion);	
 exit;
 }
