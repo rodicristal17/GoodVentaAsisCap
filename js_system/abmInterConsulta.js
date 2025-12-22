@@ -226,6 +226,8 @@ function buscarMensajes() {
 	});
 }
 
+var fotoMensajeInterconsulta= "";
+var extMensajeInterconsulta= "";
 function verificarCamposMensaje(codInterconsulta) {
     const fecha= document.getElementById('inptFechaAbmMensaje'+codInterconsulta).value;
     const contenido= document.getElementById('inptContenidoAbmMensaje'+codInterconsulta).innerHTML;
@@ -289,7 +291,7 @@ function abmMensaje(codInterconsulta,fecha, contenido) {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados exitosamente.");
-                    buscarInterConsultasYContenido();
+                    subirImagenMensajeInterconsulta(datos["2"]);
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -370,6 +372,77 @@ function limpiarcamposMensaje(codInterconsulta) {
     const fechaActual= new Date();
     document.getElementById('inptFechaAbmMensaje'+codInterconsulta).value= fechaActual.toISOString().slice(0,16);
     document.getElementById('inptContenidoAbmMensaje'+codInterconsulta).innerHTML= "";
+    fotoMensajeInterconsulta= "";
+    extMensajeInterconsulta= "";
+}
+
+function subirImagenMensajeInterconsulta(cod_mens) {
+    if (!(fotoMensajeInterconsulta && extMensajeInterconsulta)) {
+        buscarInterConsultasYContenido();
+        return false;
+    }
+    obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("accion", "subirImagenMensaje");
+    datos.append("cod_mensaje", cod_mens);
+    datos.append("foto", fotoMensajeInterconsulta);
+    datos.append("ext", extMensajeInterconsulta);
+
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+                buscarInterConsultasYContenido();
+				if (Respuesta != "exito") {
+                    throw new Error("Error producido en subirImagenMensajeIterconsulta de JavaScript.");
+                }
+                verCerrarEfectoCargando("");
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+                verCerrarEfectoCargando("");
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
 }
 
 function buscarInterConsultasYContenido() {

@@ -35843,6 +35843,10 @@ function readFileProducto(input) {
 				fotoInventario1= e.target.result;
 				extInventario1= file_extension;
 				break;
+			case 'fotoAnexoInterchat':
+				fotoMensajeInterconsulta= e.target.result;
+				extMensajeInterconsulta= file_extension;
+				break;
 			case 'fotoInventarioLocal2':
 				fotoInventario2= e.target.result;
 				extInventario2= file_extension;
@@ -35874,6 +35878,10 @@ function eliminarFoto() {
 		case 'fotoInventarioLocal2':
 			fotoInventario2= "";
 			extInventario2= "";
+			break;
+		case 'fotoAnexoInterchat':
+			fotoMensajeInterconsulta= "";
+			extMensajeInterconsulta= "";
 			break;
 		case 'fotoInventarioLocal3':
 			fotoInventario3= "";

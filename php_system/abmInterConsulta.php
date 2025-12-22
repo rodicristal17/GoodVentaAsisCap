@@ -56,7 +56,7 @@
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
-
+echo "Falta descomentar...";exit;
                 obtenerVistaInterConsulta($filtros, $limite);
                 break;
             case 'buscarInterConsultasYContenido':
@@ -128,6 +128,7 @@
                 $foto= isset($_POST['foto']) ? utf8_decode($_POST['foto']) : null;
                 $ext= isset($_POST['ext']) ? utf8_decode($_POST['ext']) : null;
                 subirImagenMensaje($cod_mensaje,$foto,$ext, 'url');
+                echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'obtenerMenciones':
                 $cod_mencion= isset($_POST['cod_mencion']) ? utf8_decode($_POST['cod_mencion']) : null;
@@ -301,6 +302,7 @@
                       </div>
                       <div class="card-body">
                           <div style="display: flex;">
+                            <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/imagenphoto.png\');width:100px; height: 90px;margin-right: 5px;"></div>
                             <p id="inptContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
                             <div style="width: 100px;margin-left: 10px;text-align: left;">
                               <input type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(76, 175, 80);width: 100%;">
@@ -501,6 +503,13 @@
                     $contenidoMensaje
                 );
             }
+
+            $miniatura_imagen= "";
+            if ($valueMens['url']) {
+                $miniatura_imagen= '<div id="imgfotoMensajeInterconsulta" class="imgFotoProducto" 
+                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta\')" style="background-image: url('.$valueMens['url'].');margin-right: 5px;">
+                    </div>';
+            }
             
             $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
                     <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
@@ -512,6 +521,7 @@
                       </div>
                       <div class="card-body">
                           <div style="display: flex;">
+                            '.$miniatura_imagen.'
                             <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
                           </div>
                       </div>
@@ -533,10 +543,6 @@
         foreach ($registros as $value) {
             $elementosInvolucrados= "";
             $involucrados= array();
-
-            $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
-                    "cod_interConsultaFK" => $value['cod_interConsulta']
-                ), 10, 0);
 
             // Obtiene todos los mensajes de la interConsulta
             $regMensaje= obtenerMensaje($filtros);
@@ -624,10 +630,6 @@
         return;
     }
 
-    function obtenerVistaMencion($filtros= array(), $limite= 0) {
-        echo "Pendiente de implementacion";
-    }
-
     function buscarUsuarios() {
         $mysqli=conectar_al_servidor();
 
@@ -654,8 +656,11 @@
 
     function subirImagenMensaje($cod_mensaje, $foto, $ext, $campo) {
         $ruta= NULL;
-        if (!empty($foto) || !empty($ext)) {
-            $foto = substr($foto, strpos($foto, ",") + 1);
+
+        if (!(empty($foto) || empty($ext))) {
+            if (strpos($foto, ",") !== false) {
+                $foto = substr($foto, strpos($foto, ",") + 1);
+            }
             $foto = base64_decode($foto);
             $id_foto = "";
             $donde = "../fotos/fotosMensaje/";
@@ -665,15 +670,17 @@
         }
         
         $mysqli=conectar_al_servidor();
-        $consulta="Update mensaje set ".$campo."=? where cod_insumo=? ";	
+        $consulta="Update mensaje set $campo=? where cod_mensaje=? ";	
 
         $stmt = $mysqli->prepare($consulta);
-        $ss='ss';
-        $stmt->bind_param($ss,$ruta,$cod_inventario);
+        $ss="si";
+        $stmt->bind_param($ss,$ruta,$cod_mensaje);
         if ( ! $stmt->execute()) {
             echo "Error";
             exit;
         }
+
+        return $cod_mensaje;
     }
 
     function obtenerMencion($filtros, $limite) {
@@ -914,7 +921,6 @@
             switch ($key) {
                 case 'cod_usuarioFK':
                     $sqlFiltro .= "EXISTS(select cod_mensaje from mensaje m where m.cod_usuarioFK = $value) OR EXISTS(select cod_mencion from menciones me where me.cod_usuarioFK = $value)";
-                    $filtroUsuarioMensaje .= " AND m.cod_usuarioFK = $value ";
                     break;
                 case 'cod_interConsulta':
                     $sqlFiltro .= "ic.cod_interConsulta = $value";
