@@ -78,10 +78,8 @@
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
                 $cod_clienteFK= isset($_POST['cod_clienteFK']) ? utf8_decode($_POST['cod_clienteFK']) : null;
-                $cod_usuarioFK_create= isset($_POST['cod_usuarioFK_create']) ? utf8_decode($_POST['cod_usuarioFK_create']) : null;
-                $cod_usuarioFK_edit= isset($_POST['cod_usuarioFK_edit']) ? utf8_decode($_POST['cod_usuarioFK_edit']) : null;
 
-                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_clienteFK, $user, $cod_usuarioFK_create, $cod_usuarioFK_edit);
+                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_clienteFK, $user, $user);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
@@ -251,7 +249,7 @@
             $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this)">
             <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
-            <h5 class="card-title" id="td_datos_1">'.$valueInter['asunto'].' - '.$valueInter['nombre_persona'].'</h5>
+            <h5 class="card-title">'.$valueInter['asunto'].' - '.$valueInter['nombre_persona'].'</h5>
             <div style="display: flex;">
             <div style="width: 50%;padding-top: 10px;border-top: 1px solid #ddd;">
             <strong>Mencionados</strong>
@@ -277,6 +275,7 @@
             </div>
             </div>
             <div style="display: none;">
+            <span id="td_datos_1">'.$valueInter['asunto'].'</span>
             <span id="td_datos_4">'.$valueInter['cod_interConsulta'].'</span>
             <span id="td_datos_5">'.$valueInter['cod_clienteFK'].'</span>
             </div>
@@ -937,6 +936,13 @@
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('sssii',$asunto, $estado, $tipo, $cod_clienteFK,$cod_usuarioFK_create);
         } else {
+            // Obtiene los datos de la interconsulta antes que sea modificada
+            $interconsulta_original= obtenerInterConsulta(array(
+                "cod_interConsulta" => $cod_interConsulta
+            ), 1);
+            // Una copia de los datos nuevos con su encabezado
+            $nuevos_datos= array();
+
             $parametros = array();
             $atributos = "";
             $ss = "";
@@ -944,6 +950,7 @@
             $atributos .= "asunto= ?";
             $ss .= "s";
             $parametros[] = $asunto;
+            $nuevos_datos['asunto'] = $asunto;
 
             // Datos para auditoria
             $fechaActual= new DateTime();
@@ -959,19 +966,21 @@
                 $atributos .= ", estado= ?";
                 $ss .= "s";
                 $parametros[] = $estado;
+                $nuevos_datos['estado'] = $estado;
             }
             if (!empty($tipo)) {
                 $atributos .= ", tipo= ?";
                 $ss .= "s";
                 $parametros[] = $tipo;
+                $nuevos_datos['tipo'] = $tipo;
             }
             if (!empty($cod_clienteFK)) {
                 $atributos .= ", cod_clienteFK= ?";
                 $ss .= "i";
                 $parametros[] = $cod_clienteFK;
+                $nuevos_datos['cod_clienteFK'] = $cod_clienteFK;
             }
             
-            $atributos = substr($atributos, 2);
             $parametros[] = $cod_interConsulta;
             $ss .= "i";
 
@@ -991,7 +1000,20 @@
         }
 
         if (empty($cod_interConsulta)) {
+            // Se inserto una nueva interconsulta
             $cod_interConsulta = $stmt->insert_id;
+        } else {
+            $mensaje = 'El usuario <b class="menciones-mensaje" id="'.$cod_usuarioFK_edit.'">@nombre</b>&nbsp; modifico';
+            // Se actualizo la interconsulta, se compara los datos para registrar los cambios en la tabla mensaje
+            foreach ($nuevos_datos as $key => $value) {
+                if ($interconsulta_original[0][$key] != $value) {
+                    // Registrar cambio en un mensaje
+                    $mensaje .= ' el campo '.$key.' de '.$interconsulta_original[0][$key].' a '.$value.', ';
+                }
+            }
+            
+            $mensaje = substr($mensaje, 0, -2).'.';
+            abmMensaje(null, $mensaje, $cod_interConsulta, $cod_usuarioFK_edit);
         }
 
         $stmt->close();

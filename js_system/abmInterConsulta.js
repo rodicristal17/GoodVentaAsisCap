@@ -93,6 +93,7 @@ function abmInterConsulta(asunto, estado, tipo) {
     datos.append("estado", estado);
     datos.append("asunto", asunto);
     datos.append("tipo", tipo);
+    datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("cod_clienteFK", cod_clienteFK);
 
     verCerrarEfectoCargando("1");
