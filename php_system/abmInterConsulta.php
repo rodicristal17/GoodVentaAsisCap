@@ -514,7 +514,10 @@ echo "Falta descomentar...";exit;
             $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
                     <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
                       <div class="card-header d-flex justify-content-between align-items-center">
-                          <span>'.$valueMens['nombre_persona'].'</span>
+                          <div>
+                            <img src="'.$valueMens['url_usuario'].'" style="max-height: 30px;max-width: 35px;"/>
+                            <span>'.$valueMens['nombre_persona'].'</span>
+                          </div>
                           <small class="text-secondary">
                             <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
                           </small>
@@ -815,7 +818,9 @@ echo "Falta descomentar...";exit;
         }
 
         $sql= "SELECT * FROM (
-                SELECT m.*, p.nombre_persona FROM mensaje m JOIN persona p ON p.cod_persona = m.cod_usuarioFK $sqlFiltro ORDER BY m.fecha_creacion DESC $limite
+                SELECT m.*, 
+                (SELECT url FROM usuario where cod_usuario = m.cod_usuarioFK) AS url_usuario,
+                p.nombre_persona FROM mensaje m JOIN persona p ON p.cod_persona = m.cod_usuarioFK $sqlFiltro ORDER BY m.fecha_creacion DESC $limite
             ) AS subquery ORDER BY fecha_creacion ASC";
 
         $mysqli=conectar_al_servidor();
