@@ -83,19 +83,20 @@ echo "Falta descomentar...";exit;
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $registrosInterc= obtenerInterConsulta(array(
-                    "cod_interConsulta" => $cod_interConsulta
-                ));
-                
-                foreach ($registrosInterc as $valueInter) {
-                    $registrosMens= obtenerMensaje(array(
-                        'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
-                        'cod_usuarioFK_create' => $user
+                $cod_interConsulta= utf8_decode($_POST['cod_interConsulta']);
+
+                $registrosMens= obtenerMensaje(array(
+                    'cod_interConsultaFK' => $cod_interConsulta,
+                ), 0);
+                foreach ($registrosMens as $valueMens) {
+                    $registrosMenc= obtenerMencion(array(
+                        "cod_mensajeFK" => $valueMens['cod_mensaje'],
+                        "cod_usuarioFK" => $user,
+                        "isLeido" => 0
                     ), 0);
 
-                    foreach ($registrosMens as $valueMens) {
-                        abmMensaje($valueMens['cod_mensaje'], null, null, null, true);
+                    foreach ($registrosMenc as $key => $valueMenc) {
+                        abmMencion($valueMenc['cod_mencion'], null, null, 1);
                     }
                 }
                 echo json_encode(array("1" => "exito"));
@@ -187,7 +188,8 @@ echo "Falta descomentar...";exit;
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
-            "cod_clienteFK" => $filtros['cod_clienteFK']
+            "cod_clienteFK" => $filtros['cod_clienteFK'],
+            "cod_usuarioFK" => $filtros['cod_usuarioFK']
         ), $limite);
 
         foreach ($registrosInterc as $valueInter) {
@@ -207,7 +209,7 @@ echo "Falta descomentar...";exit;
                 ), 0);
                 
                 foreach ($registrosMenc as $valueMenc) {
-                    if (!in_array($valueMenc['nombre_persona'], $menciones) && $valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) {
+                    if (!in_array($valueMenc['nombre_persona'], $menciones)) {
                         $mencionesElemento .= '<li style="
                             background-color:#f2f2f2;
                             text-align: left;
@@ -215,6 +217,7 @@ echo "Falta descomentar...";exit;
                             padding:5px 10px;
                             border-radius:4px;
                             font-size:13px;
+                            display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "" : "none").';
                         ">'.$valueMenc['nombre_persona'].'</li>';
                         $menciones[] = $valueMenc['nombre_persona'];
                     }
@@ -226,12 +229,6 @@ echo "Falta descomentar...";exit;
                     'cod_usuarioFK' => $filtros['cod_usuarioFK']
                 ), $limiteMensajes, 0);
             
-            // Se asigna el estilo para asuntos con mensajes sin leer
-            $styleMensajeNoLeido= "";
-            if (intval($valueInter['cantMensajesNoLeidos']) > 0) {
-                $styleMensajeNoLeido= "border: 10px solid #e1c247;";
-            }
-
             $colorTarjeta="#8bc34a;";
             $claseEstado= "badge-success";
             if ($valueInter['estado'] == 'proceso') {
@@ -241,10 +238,15 @@ echo "Falta descomentar...";exit;
                 $colorTarjeta=" #e1c247;";
                 $claseEstado= "badge-warning";
             }
-
+            // Se asigna el estilo para asuntos con mensajes sin leer
+            $styleMensajeNoLeido= "";
+            if (intval($valueInter['cantMensajesNoLeidos']) > 0) {
+                $styleMensajeNoLeido= "border: 10px solid $colorTarjeta";
+            }
+            
             // Se crea el encabezado
             $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this)">
-            <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
+                <div id="contenedorEncabezadoInterConsulta'.$valueInter['cod_interConsulta'].'" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
             <h5 class="card-title">'.$valueInter['asunto'].' - '.$valueInter['nombre_persona'].'</h5>
             <div style="display: flex;">
@@ -483,7 +485,9 @@ echo "Falta descomentar...";exit;
         }
 
         // Obtiene todos los mensajes de la interConsulta
-        $regMensaje= obtenerMensaje($filtros, $limite);
+        $regMensaje= obtenerMensaje(array(
+                "cod_interConsultaFK" => $filtros["cod_interConsultaFK"],
+            ), $limite);
         foreach ($regMensaje as $key => $valueMens) {
             $posicion= 'flex-start';
             $colorTarjeta="#e53935";
@@ -515,7 +519,7 @@ echo "Falta descomentar...";exit;
                     <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
                       <div class="card-header d-flex justify-content-between align-items-center">
                           <div>
-                            <img src="'.$valueMens['url_usuario'].'" style="max-height: 30px;max-width: 35px;"/>
+                            <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="max-height: 30px;max-width: 35px;"/>
                             <span>'.$valueMens['nombre_persona'].'</span>
                           </div>
                           <small class="text-secondary">
@@ -703,6 +707,9 @@ echo "Falta descomentar...";exit;
                 case 'estado':
                     $sqlFiltro .= "m.estado = '$value'";
                     break;
+                case 'isLeido':
+                    $sqlFiltro .= "m.isLeido = $value";
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "m.$key = $value";
@@ -763,11 +770,11 @@ echo "Falta descomentar...";exit;
         if ($cod_mencion) {
             $sql= "UPDATE menciones SET isLeido= ? WHERE cod_mencion = ?";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('s', $isLeido);
+            $stmt->bind_param('si', $isLeido, $cod_mencion);
         } else {
-            $sql = "INSERT INTO menciones (cod_usuarioFK, cod_mensajeFK) VALUES (?, ?)";
+            $sql = "INSERT INTO menciones (cod_usuarioFK, cod_mensajeFK, isLeido) VALUES (?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('ii', $cod_usuarioFK, $cod_mensajeFK);
+            $stmt->bind_param('iii', $cod_usuarioFK, $cod_mensajeFK, $isLeido);
         }
 
         if (!$stmt->execute()) {
@@ -900,11 +907,30 @@ echo "Falta descomentar...";exit;
             $cod_mensaje = $stmt->insert_id;
         }
 
-        // Guarda las menciones e incluye al creador
         $ids_menciones[] = $user;
+        // Obtiene todas las menciones anteriores asociadas a esta interconsulta
+        $registrosMens= obtenerMensaje(array(
+            'cod_interConsultaFK' => $cod_interConsulta,
+        ), 0);
+        foreach ($registrosMens as $valueMens) {
+            $registrosMenc= obtenerMencion(array(
+                "cod_mensajeFK" => $valueMens['cod_mensaje'],
+                "isLeido" => 0
+            ), 0);
+
+            foreach ($registrosMenc as $value) {
+                $ids_menciones[] = $value['cod_usuarioFK'];
+            }
+        }
+
+        // Guarda las menciones e incluye al creador
         $ids_menciones = array_unique($ids_menciones);
         foreach ($ids_menciones as $value) {
-            abmMencion(null, $value, $cod_mensaje, "false");
+            if ($value === $user) {
+                abmMencion(null, $user, $cod_mensaje, 1);
+            } else {
+                abmMencion(null, $value, $cod_mensaje, 0);
+            }
         }
         
         $stmt->close();        
@@ -914,6 +940,7 @@ echo "Falta descomentar...";exit;
 
     function obtenerInterConsulta($filtros= [], $limite= 0) {
         $sqlFiltro= "";
+        $sqlFiltroMenciones= "";
         foreach ($filtros as $key => $value) {
             if (empty($value)) {continue;}
 
@@ -925,7 +952,8 @@ echo "Falta descomentar...";exit;
 
             switch ($key) {
                 case 'cod_usuarioFK':
-                    $sqlFiltro .= "EXISTS(select cod_mensaje from mensaje m where m.cod_usuarioFK = $value) OR EXISTS(select cod_mencion from menciones me where me.cod_usuarioFK = $value)";
+                    $sqlFiltro .= "(ic.cod_usuarioFK_create = $value OR EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value))";
+                    $sqlFiltroMenciones = "AND mc.cod_usuarioFK = $value";
                     break;
                 case 'cod_interConsulta':
                     $sqlFiltro .= "ic.cod_interConsulta = $value";
@@ -953,7 +981,7 @@ echo "Falta descomentar...";exit;
             (SELECT nombre_persona from persona where cod_persona = ic.cod_clienteFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT ci_cliente from cliente where cod_cliente = ic.cod_clienteFK) as cedula,
-            (0) AS cantMensajesNoLeidos
+            (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) AS cantMensajesNoLeidos
             from interconsulta ic $sqlFiltro
             ORDER BY FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'), cod_interConsulta DESC $limite";
 

@@ -305,15 +305,14 @@ function abmMensaje(codInterconsulta,fecha, contenido) {
 }
 
 function marcarMensajeLeido(elemento) {
-    console.error("Implementacion pendiente");return;
-    const cod_interConsulta= elemento.id.substr(23);
+    const cod_interC= elemento.id.substr(23);
 
     let datos= new FormData();
     datos.append("useru", userid);
     datos.append("passu", passuser);
     datos.append("navegador", navegador);
     datos.append("accion", 'marcarMensajesLeido');
-    datos.append("cod_interConsulta", cod_interConsulta);
+    datos.append("cod_interConsulta", cod_interC);
     
     var OpAjax = $.ajax({
 		data: datos,
@@ -356,7 +355,13 @@ function marcarMensajeLeido(elemento) {
 				Respuesta = datos["1"];
 				if (Respuesta != "exito") {
 					ver_vetana_informativa("Error al marcar mensaje como leído.");
-				}
+				} else {
+                    // Actualiz la vista
+                    let color= document.getElementById("contenedorEncabezadoInterConsulta"+cod_interC).style.border;
+                    color= color.substring(11);
+                    document.getElementById("contenedorEncabezadoInterConsulta"+cod_interC).style.border= "none";
+                    document.getElementById("contenedorEncabezadoInterConsulta"+cod_interC).style.borderLeft= "10px solid "+color;
+                }
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
