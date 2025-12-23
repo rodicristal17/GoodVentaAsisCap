@@ -262,7 +262,8 @@ window.onload = function () {
 
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
-			buscarSugerencias()
+			buscarSugerencias();
+			buscarPacientesConInterConsultas2("", "", "", "", "", "");
 			// buscarproductosDescuento()
 
 		}

@@ -10,20 +10,24 @@ function buscarPacientesConInterConsultas() {
     const nombre_cliente= document.getElementById('inptBuscarInterConsulta3').value;
     const estado= document.getElementById('inptBuscarInterConsulta5').value;
     const tipo= document.getElementById('inptBuscarInterConsulta4').value;
+    
+    buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo);
+}
 
+function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarInterConsultas');
     datos.append("cod_interConsulta", cod_interConsulta);
+    datos.append("cod_usuarioFK", userid);
     datos.append("asunto", asunto);
     datos.append("nombre_responsable", nombre_responsable);
     datos.append("nombre_cliente", nombre_cliente);
     datos.append("estado", estado);
     datos.append("tipo", tipo);
 
-    verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -53,7 +57,6 @@ function buscarPacientesConInterConsultas() {
         return xhr;
     },
 		error: function (jqXHR, textstatus, errorThrowm) {
-	        verCerrarEfectoCargando("");
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
 		},
@@ -64,15 +67,18 @@ function buscarPacientesConInterConsultas() {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"]
+					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
+                    if (datos["6"] > 0) {
+                        document.getElementById('avisoMensajesPendientes').style.display= "";
+                    } else {
+                        document.getElementById('avisoMensajesPendientes').style.display= "none";
+                    }
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
-			} finally {
-                verCerrarEfectoCargando("");
-            }
+			}
 		}
 	});
 }
@@ -756,6 +762,15 @@ function obtenerDatosInterConsulta(elemento) {
 
     verCerrarVentanaInterConsulta(true, 'detalle');
     buscarInterConsultasYContenido();
+}
+
+function obtenerDetallesInterConsulta(elemento) {
+    cod_interConsulta= elemento.querySelector('#td_datos_4')?.textContent.trim();
+    document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
+    document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
+    document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
+
+    verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2');
 }
 
 function cancelarInformeInterConsulta() {

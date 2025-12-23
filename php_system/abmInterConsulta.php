@@ -537,13 +537,14 @@
         $registros= obtenerInterConsulta($filtros, $limite);
 
         $pagina= '';
-        $paginaMensajes= '';
+        $cant_mensajes_no_leidos= 0;
         $styleName="tableRegistroSearch";
         foreach ($registros as $value) {
             $styleName=CargarStyleTable($styleName);
             $style= "";
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'style= "background-color: #ff5050;  color: #ffffff;"';
+                $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
             }
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1" '.$style.'>
                 <tr onclick="obtenerDatosInterConsulta(this)">
@@ -559,7 +560,7 @@
             </table>';
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos));
     }
 
     function obtenerVistaMensaje($filtros= [], $limite= 0) {
