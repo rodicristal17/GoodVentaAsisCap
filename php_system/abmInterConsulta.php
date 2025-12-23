@@ -56,15 +56,17 @@
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
-echo "Falta descomentar...";exit;
+
                 obtenerVistaInterConsulta($filtros, $limite);
                 break;
             case 'buscarInterConsultasYContenido':
                 $cod_clienteFK= isset($_POST['cod_clienteFK']) ? utf8_decode($_POST['cod_clienteFK']) : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
                 $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
                 
                 $filtros= array(
                     "cod_clienteFK" => $cod_clienteFK,
+                    "cod_interConsulta" => $cod_interConsulta,
                     "cod_usuarioFK" => $user
                 );
 
@@ -131,21 +133,6 @@ echo "Falta descomentar...";exit;
                 subirImagenMensaje($cod_mensaje,$foto,$ext, 'url');
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
-            case 'obtenerMenciones':
-                $cod_mencion= isset($_POST['cod_mencion']) ? utf8_decode($_POST['cod_mencion']) : null;
-                $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
-                $cod_mensajeFK= isset($_POST['cod_mensajeFK']) ? utf8_decode($_POST['cod_mensajeFK']) : null;
-
-                $filtros= array(
-                    'cod_mencion'=> $cod_mencion,
-                    'cod_usuarioFK'=> $cod_usuarioFK,
-                    'cod_mensajeFK'=> $cod_mensajeFK
-                );
-
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
-                
-                obtenerVistaMencion($filtros, $limite);
-                break;
             case 'nuevo/editar mencion':
                 $cod_mencion= isset($_POST['cod_mencion']) ? utf8_decode($_POST['cod_mencion']) : null;
                 $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
@@ -189,7 +176,8 @@ echo "Falta descomentar...";exit;
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
             "cod_clienteFK" => $filtros['cod_clienteFK'],
-            "cod_usuarioFK" => $filtros['cod_usuarioFK']
+            "cod_usuarioFK" => $filtros['cod_usuarioFK'],
+            "cod_interConsulta" => $filtros['cod_interConsulta']
         ), $limite);
 
         foreach ($registrosInterc as $valueInter) {
@@ -270,6 +258,10 @@ echo "Falta descomentar...";exit;
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Tipo:</span>
             <span id="td_datos_3" class="badge badge-secondary text-uppercase">'.$valueInter['tipo'].'</span>
+            </div>
+            <div style="margin-bottom: 5px;">
+            <span class="fw-bold">Cod. Cliente:</span>
+            <span class="text-uppercase">'.$valueInter['cod_clienteFK'].'</span>
             </div>
             </div>
             </div>
@@ -548,67 +540,23 @@ echo "Falta descomentar...";exit;
         $paginaMensajes= '';
         $styleName="tableRegistroSearch";
         foreach ($registros as $value) {
-            $elementosInvolucrados= "";
-            $involucrados= array();
-
-            // Obtiene todos los mensajes de la interConsulta
-            $regMensaje= obtenerMensaje($filtros);
-            foreach ($regMensaje as $key => $valueMensj) {
-                $elementosInvolucrados .= '<li style="
-                    background-color:#f2f2f2;
-                    margin-bottom:4px;
-                    padding:5px 10px;
-                    border-radius:4px;
-                    font-size:13px;
-                ">'.$valueMensj['nombre_persona'].'</li>';
-                $involucrados[] = $valueMensj['nombre_persona'];
-
-                // Obtiene las menciones
-                $regMencion= obtenerMencion(array("cod_mensajeFK" => $value['cod_usuarioFK']), 0);
-                foreach ($regMencion as $valueMenc) {
-                    if (!in_array($valueMenc['nombre_persona'], $involucrados)) {
-                        $elementosInvolucrados = '<li style="
-                            background-color:#f2f2f2;
-                            margin-bottom:4px;
-                            padding:5px 10px;
-                            border-radius:4px;
-                            font-size:13px;
-                        ">'.$valueMenc['nombre_persona'].'</li>';
-                        $involucrados[] = $valueMenc['nombre_persona'];
-                    }
-                }
-            }
             $styleName=CargarStyleTable($styleName);
-            $pagina .= '<div class="card my-3" style="border-left: 5px solid #ff5722;">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span></span>
-                    <small class="text-secondary"><select class="inputSelect" id="inptTipoAbmInterConsulta" style="width:130px" value="'. $value['tipo'] .'">
-                        <option value="clinico">CLINICO</option>
-                        <option value="administrativo">ADMINISTRATIVO</option>
-                    </select></small>
-                    <span></span>
-                    <small class="text-secondary"><select class="inputSelect" id="inptEstadoAbmInterConsulta" style="width:130px" value="'. $value['estado'] .'">
-                        <option value="pendiente">PENDIENTE</option>
-                        <option value="proceso">EN PROCESO</option>
-                        <option value="finalizado">ADMINISTRATIVO</option>
-                        <option value="inactivo">INACTIVO</option>
-                    </select></small>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">'. $value['asunto'] .'</h5>
-                    <p class="card-text">
-                        <strong><ul style="list-style-type:none; padding:0; margin:0;">
-                            <li style="
-                                background-color:#f2f2f2;
-                                margin-bottom:4px;
-                                padding:5px 10px;
-                                border-radius:4px;
-                                font-size:13px;
-                            ">'. $involucrados .'</li>
-                        </ul></strong>
-                    </p>
-                </div>
-                </div>';
+            $style= "";
+            if (intval($value['cantMensajesNoLeidos']) > 0) {
+                $style = 'style= "background-color: #ff5050;  color: #ffffff;"';
+            }
+            $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1" '.$style.'>
+                <tr onclick="obtenerDatosInterConsulta(this)">
+                    <td id="td_id" style="width: 5%;">'.$value['cod_interConsulta'].'</td>
+                    <td id="td_datos_1" style="width: 30%;"><b style="font-size: 9pt;">'.$value['asunto'].'</b></td>
+                    <td id="td_datos_4" style="display: none;">'.$value['cod_clienteFK'].'</td>
+                    <td id="td_datos_5" style="width: 15%;">'.$value['nombre_persona'].'</td>
+                    <td id="td_datos_2" style="width: 10%;">'.$value['estado'].'</td>
+                    <td id="td_datos_6" style="width: 15%;">'.$value['tipo'].'</td>
+                    <td style="width: 10%;">'.$value['fecha_creacion'].'</td>
+                    <td style="width: 15%;">'.$value['nombre_persona_creador'].'</td>
+                </tr>
+            </table>';
         }
 
         echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros));
@@ -983,7 +931,8 @@ echo "Falta descomentar...";exit;
             (SELECT ci_cliente from cliente where cod_cliente = ic.cod_clienteFK) as cedula,
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) AS cantMensajesNoLeidos
             from interconsulta ic $sqlFiltro
-            ORDER BY FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'), cod_interConsulta DESC $limite";
+            ORDER BY (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) DESC,
+            FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'), cod_interConsulta DESC $limite";
 
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);

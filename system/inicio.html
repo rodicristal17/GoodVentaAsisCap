@@ -7241,32 +7241,71 @@ onclick='SeleccionarRegistroCategoria()' />
           <center>
             <div class="divMenuf">
               <div style="width: 98%;height:auto">
-                  <table style="width:100%">
-                      <tbody><tr>
-                          <td style="width:90%;">
-                              <label for="inptBuscarFrmPacienteVistaInterConsulta" class="pTitulo5">Paciente</label>
-                              <div class="busqueda-paciente">
-                                <input type="text" id="inptBuscarFrmPacienteVistaInterConsulta" class="input inputText" placeholder="Nro CI - Nombre" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
-                              </div>
-                          </td>
-                          <td style="width:10%;">
-                            <input type="Button" value="Buscar" class="btn4" onclick="buscarPacientesConInterConsultas()">
-                          </td>
-                      </tr>
-                  </tbody></table>
-                  <br>
-                  <div id="table_frm_VistaInterConsulta" class="tabla-resultados tablaContanedorConsulta">
+                <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
+                  <tr>
+                    <td class="td_registro" style="width:5%;">#</td>
+                    <td class="td_registro" style="width:25%;">ASUNTO</td>
+                    <td class="td_registro" style="width:15%;">CLIENTE</td>
+                    <td class="td_registro" style="width:15%;">ESTADO</td>
+                    <td class="td_registro" style="width:15%;">TIPO</td>
+                    <td class="td_registro" style="width:10%;">FECHA CREACION</td>
+                    <td class="td_registro" style="width:15%;">RESPONSABLE</td>
+                  </tr>
+                </table>
+                <table class="tableCabeceraRegistro">
+                  <tr>
+                    <td class="td_registro" style="width:5%;">
+                    <input class="inputfiltro" type="text" id="inptBuscarInterConsulta1" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                    </td>
+                    <td class="td_registro" style="width:24%;">
+                    <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta2" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                    </td>
+                    <td class="td_registro" style="width:1%;">
+                    <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta2')">
+                    </td>
+                    <td class="td_registro" style="width:14%;">
+                    <input class="inputfiltro" type="text" id="inptBuscarInterConsulta3" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                    </td>
+                    <td class="td_registro" style="width:1%;">
+                      <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta3')">
+                    </td>
+                    <td class="td_registro" style="width:15%;">
+                    <select class="inputfiltro" id="inptBuscarInterConsulta5">
+                    <option value="">Todos</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="proceso">Proceso</option>
+                    <option value="finalizado">Finalizado</option>
+                    <option value="inactivo">Inactivo</option>
+                    </select>
+                    </td>
+                    <td class="td_registro" style="width:15%;">
+                    <select class="inputfiltro" id="inptBuscarInterConsulta4">
+                    <option value="">Todos</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="clinico">Clinico</option>
+                    </select>
+                    </td>
+                    <td class="td_registro" style="width:10%;"></td>
+                    <td class="td_registro" style="width:14%;">
+                    <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                    </td>
+                    <td class="td_registro" style="width:1%;">
+                    <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta4')">
+                    </td>
+                  </tr>
+                </table>
+                <div id="table_frm_VistaInterConsulta">
 
-                  </div>
-                  </div>
+                </div>
               </div>
           </div>
+      </div>
       <div id="divAbmInterConsulta2" class="divAbms" style="width: 90%;display: none;">
         <table class="tableMenuZ">
             <tbody>
               <tr>
                 <td style="width:100%;text-align:left">
-                  <p class="pTituloB">Listado de <b style="font-size: 30px;" id="tituloInterConsultas">InterConsultas</b></p>
+                  <p class="pTituloB">Detalles de la <b style="font-size: 30px;" id="tituloInterConsultas">InterConsultas - </b></p>
                 </td>
                 <td style="width:5%;text-align:center">
                   <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2')">
@@ -7284,7 +7323,7 @@ onclick='SeleccionarRegistroCategoria()' />
             <div class="divMenuf">
               <div class="divTablesScrool" id="TableScroollInterConsulta" style="height: 700px;">
                   <div class="div_cuerpo_table" id="table_abm_InterConsulta"
-                    style="height: auto;border:none;width: 100%;">
+                    style="height: 100%;border:none;width: 100%;">
                   </div>
                   <table style='width:100%;height:50px;display:none' id='tbProcessInformeInterConsulta'>
                   <tr>

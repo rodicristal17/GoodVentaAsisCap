@@ -4,14 +4,24 @@ var registrocargadoInterConsulta= 0;
 var cod_interConsulta= "";
 
 function buscarPacientesConInterConsultas() {
-    const paciente= document.getElementById('inptBuscarFrmPacienteVistaInterConsulta').value;
+    const cod_interConsulta= document.getElementById('inptBuscarInterConsulta1').value;
+    const asunto= document.getElementById('inptBuscarInterConsulta2').value;
+    const nombre_responsable= document.getElementById('inptBuscarInterConsulta6').value;
+    const nombre_cliente= document.getElementById('inptBuscarInterConsulta3').value;
+    const estado= document.getElementById('inptBuscarInterConsulta5').value;
+    const tipo= document.getElementById('inptBuscarInterConsulta4').value;
 
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
-    datos.append("accion", 'buscarInterConsultaPorPaciente');
-    datos.append("paciente", paciente);
+    datos.append("accion", 'buscarInterConsultas');
+    datos.append("cod_interConsulta", cod_interConsulta);
+    datos.append("asunto", asunto);
+    datos.append("nombre_responsable", nombre_responsable);
+    datos.append("nombre_cliente", nombre_cliente);
+    datos.append("estado", estado);
+    datos.append("tipo", tipo);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -460,6 +470,7 @@ function buscarInterConsultasYContenido() {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", "buscarInterConsultasYContenido");
+    datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("cod_clienteFK", cod_clienteFK);
     datos.append("nombre_usuario", document.getElementById("lblUser").textContent);
     datos.append("limite", 10);
@@ -738,21 +749,13 @@ function mostrarOpcionesUsuariosMenciones(textarea, sugerencias) {
 }
 
 function obtenerDatosInterConsulta(elemento) {
-    cod_clienteFK= elemento.querySelector('#td_datos_1')?.textContent.trim();
+    cod_interConsulta= elemento.querySelector('#td_id')?.textContent.trim();
+    cod_clienteFK= elemento.querySelector('#td_datos_4')?.textContent.trim();
     document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
-    document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + elemento.querySelector('#td_datos_2')?.textContent.trim();
+    document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - "+elemento.querySelector('#td_datos_5')?.textContent.trim();
 
     verCerrarVentanaInterConsulta(true, 'detalle');
     buscarInterConsultasYContenido();
-}
-
-function obtenerDetallesInterConsulta(elemento) {
-    cod_interConsulta= elemento.querySelector('#td_datos_4')?.textContent.trim();
-    document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
-    document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
-    document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
-
-    verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2');
 }
 
 function cancelarInformeInterConsulta() {
