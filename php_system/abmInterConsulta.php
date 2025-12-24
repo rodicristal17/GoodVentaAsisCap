@@ -542,14 +542,17 @@
         foreach ($registros as $value) {
             $styleName=CargarStyleTable($styleName);
             $style= "";
+            $formatAsunto= $value['asunto'];
+                $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].'</p>';
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'style= "background-color: #ff5050;  color: #ffffff;"';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
+                $formatAsunto= '<b style="font-size: 9pt;">'.$value['asunto'].'</b>';
             }
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1" '.$style.'>
                 <tr onclick="obtenerDatosInterConsulta(this)">
                     <td id="td_id" style="width: 5%;">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 30%;"><b style="font-size: 9pt;">'.$value['asunto'].'</b></td>
+                    <td id="td_datos_1" style="width: 30%;">'.$formatAsunto.'</td>
                     <td id="td_datos_4" style="display: none;">'.$value['cod_clienteFK'].'</td>
                     <td id="td_datos_5" style="width: 15%;">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_2" style="width: 10%;">'.$value['estado'].'</td>

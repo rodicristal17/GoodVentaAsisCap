@@ -7242,6 +7242,11 @@ onclick='SeleccionarRegistroCategoria()' />
             </tbody>
           </table>
           <center>
+            <div class="divMenuf" style="display: flex; justify-content: space-between;">
+              <input type="button" value="Agregar" class="btn5" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta1');" style="background-color: rgb(76, 175, 80);">
+              <input type="button" value="Buscar" class="btn5" onclick="buscarPacientesConInterConsultas()">
+            </div>
+            <br>
             <div class="divMenuf">
               <div style="width: 98%;height:auto">
                 <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
