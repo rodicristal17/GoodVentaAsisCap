@@ -7243,8 +7243,13 @@ onclick='SeleccionarRegistroCategoria()' />
           </table>
           <center>
             <div class="divMenuf" style="display: flex; justify-content: space-between;">
-              <input type="button" value="Agregar" class="btn5" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta1');" style="background-color: rgb(76, 175, 80);">
-              <input type="button" value="Buscar" class="btn5" onclick="buscarPacientesConInterConsultas()">
+              <table><tr>
+                <td style="width:80%"></td>
+                <td style="width: 20%; text-align: end;">
+                  <input type="button" value="Agregar" class="btn5" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta1');" style="background-color: rgb(76, 175, 80);">
+                  <input type="button" value="Buscar" class="btn5" onclick="buscarPacientesConInterConsultas()">
+                </td>
+              </tr></table>
             </div>
             <br>
             <div class="divMenuf">
@@ -25524,10 +25529,12 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <img style="max-width:90%" src="/GoodVentaAsisCap/iconos/imagenphoto.png" id="ImgFotoProductos">
                   <br>
                   <br>
-                  <input type="button" value="Seleccionar Archivo" class="btn1" onclick="ExploradorImagenProducto()"
-                    style="    color: #ffffff;    background-color: #79acd3;">
-                  <input type="button" value="Eliminar" class="btn1" onclick="eliminarFoto()"
-                    id="btnEliminarPhotoProducto" style="background-color: #ccc;">
+                  <div id="opcionesFotos">
+                    <input type="button" value="Seleccionar Archivo" class="btn1" onclick="ExploradorImagenProducto()"
+                      style="    color: #ffffff;    background-color: #79acd3;">
+                    <input type="button" value="Eliminar" class="btn1" onclick="eliminarFoto()"
+                      id="btnEliminarPhotoProducto" style="background-color: #ccc;">
+                  </div>
                   <input type="file" id="file_producto" name="file_producto" style="display:none;"
                     onchange="readFileProducto(this)">
                 </div>

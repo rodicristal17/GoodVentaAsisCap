@@ -35898,7 +35898,7 @@ function eliminarFoto() {
 	document.getElementById("ImgFotoProductos").src = "/GoodVentaAsisCap/iconos/imagenphoto.png"
 }
 
-function vercerrarcargadefotos(opcion) {
+function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 	document.getElementById('divAddFotos').style.display= "";
 	document.getElementById('btnEliminarPhotoProducto').style.backgroundColor= "rgb(245, 59, 59)";
 	if (opcion != null && opcion != "") {
@@ -35907,6 +35907,12 @@ function vercerrarcargadefotos(opcion) {
 		const elemento= 'img' + opcion;
 		const ruta= document.getElementById(elemento).style.backgroundImage;
 		document.getElementById('ImgFotoProductos').src= ruta.slice(5, -2);
+		// Muestra o oculta las opciones de seleccionar y eliminar
+		if (mostrarOpciones) {
+			document.getElementById('opcionesFotos').style.display= "";
+		} else {
+			document.getElementById('opcionesFotos').style.display= "none";
+		}
 	} else {
 		document.getElementById('ImgFotoProductos').src= "/GoodVentaAsisCap/iconos/imagenphoto.png";
 		document.getElementById('divAddFotos').style.display= "none";

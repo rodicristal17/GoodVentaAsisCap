@@ -89,6 +89,7 @@
 
                 $registrosMens= obtenerMensaje(array(
                     'cod_interConsultaFK' => $cod_interConsulta,
+                    'fecha_creacion' => "<= NOW()",
                 ), 0);
                 foreach ($registrosMens as $valueMens) {
                     $registrosMenc= obtenerMencion(array(
@@ -107,11 +108,13 @@
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
                 $cod_mensaje= isset($_POST['cod_mensaje']) ? utf8_decode($_POST['cod_mensaje']) : null;
                 $contenido= isset($_POST['contenido']) ? utf8_decode($_POST['contenido']) : null;
+                $fecha_creacion= isset($_POST['fecha_creacion']) ? utf8_decode($_POST['fecha_creacion']) : "<= NOW()";
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
                     'cod_mensaje'=> $cod_mensaje,
-                    'contenido'=> $contenido
+                    'contenido'=> $contenido,
+                    'fecha_creacion' => $fecha_creacion,
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
@@ -122,8 +125,9 @@
                 $cod_mensaje= isset($_POST['cod_mensaje']) ? utf8_decode($_POST['cod_mensaje']) : null;
                 $contenido= isset($_POST['contenido']) ? utf8_decode($_POST['contenido']) : null;
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
+                $fecha_creacion= isset($_POST['fecha_creacion']) ? utf8_decode($_POST['fecha_creacion']) : 'NOW()';
                 
-                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $cod_interConsulta, $user);
+                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, 'NOW()', $fecha_creacion, $cod_interConsulta, $user);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'subirImagenMensaje':
@@ -148,7 +152,8 @@
 
                 $filtros= array(
                     "cod_interConsultaFK" => $cod_interConsulta,
-                    "cod_usuarioFK" => $user
+                    "cod_usuarioFK" => $user,
+                    'fecha_creacion' => "<= NOW()",
                 );
                 $vistaTarjetas= obtenerVistaTarjetaInterConsuta($filtros, $limite, $offset);
 
@@ -186,6 +191,7 @@
             
             // Se obtienen los mensajes
             $registrosMens= obtenerMensaje(array(
+                'fecha_creacion' => "<= NOW()",
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta']
             ));
             
@@ -296,7 +302,7 @@
                       </div>
                       <div class="card-body">
                           <div style="display: flex;">
-                            <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/imagenphoto.png\');width:100px; height: 90px;margin-right: 5px;"></div>
+                            <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/imagenphoto.png\', false);width:100px; height: 90px;margin-right: 5px;"></div>
                             <p id="inptContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
                             <div style="width: 100px;margin-left: 10px;text-align: left;">
                               <input type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(76, 175, 80);width: 100%;">
@@ -478,6 +484,7 @@
 
         // Obtiene todos los mensajes de la interConsulta
         $regMensaje= obtenerMensaje(array(
+                'fecha_creacion' => "<= NOW()",
                 "cod_interConsultaFK" => $filtros["cod_interConsultaFK"],
             ), $limite);
         foreach ($regMensaje as $key => $valueMens) {
@@ -503,7 +510,7 @@
             $miniatura_imagen= "";
             if ($valueMens['url']) {
                 $miniatura_imagen= '<div id="imgfotoMensajeInterconsulta" class="imgFotoProducto" 
-                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta\')" style="background-image: url('.$valueMens['url'].');margin-right: 5px;">
+                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta\', false)" style="background-image: url('.$valueMens['url'].');margin-right: 5px;">
                     </div>';
             }
             
@@ -542,8 +549,7 @@
         foreach ($registros as $value) {
             $styleName=CargarStyleTable($styleName);
             $style= "";
-            $formatAsunto= $value['asunto'];
-                $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].'</p>';
+            $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].'</p>';
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'style= "background-color: #ff5050;  color: #ffffff;"';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
@@ -760,6 +766,9 @@
                 case 'estado':
                     $sqlFiltro .= "m.estado = '$value'";
                     break;
+                case 'fecha_creacion':
+                    $sqlFiltro .= "m.fecha_creacion $value";
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "m.$key = $value";
@@ -803,7 +812,7 @@
         return $registros;
     }
 
-    function abmMensaje($cod_mensaje, $contenido, $cod_interConsulta, $user) {
+    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user) {
         $mysqli = conectar_al_servidor();
 
         // Convierte el contenido a html
@@ -840,9 +849,9 @@
         $contenidoLimpiado = str_replace("\xC2\xA0", " ", $contenidoLimpiado);
         
         if (empty($cod_mensaje)) {
-            $sql = "INSERT INTO mensaje (contenido, cod_interConsultaFK, cod_usuarioFK) VALUES (?, ?, ?)";
+            $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK) VALUES (?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('sii', $contenidoLimpiado, $cod_interConsulta, $user);
+            $stmt->bind_param('ssii', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user);
         } else {
             $sql= "UPDATE mensaje SET contenido= ? WHERE cod_mensaje = ?";
             $stmt = $mysqli->prepare($sql);
@@ -850,6 +859,7 @@
         }
         
         if (!$stmt->execute()) {
+            print_r(array($contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user));
             $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
             echo json_encode($informacion);
             exit;
@@ -863,6 +873,7 @@
         // Obtiene todas las menciones anteriores asociadas a esta interconsulta
         $registrosMens= obtenerMensaje(array(
             'cod_interConsultaFK' => $cod_interConsulta,
+            'fecha_creacion' => "<= NOW()",
         ), 0);
         foreach ($registrosMens as $valueMens) {
             $registrosMenc= obtenerMencion(array(
@@ -1048,7 +1059,7 @@
             }
 
             $mensaje = substr($mensaje, 0, -2).'.';
-            abmMensaje(null, $mensaje, $cod_interConsulta, $cod_usuarioFK_edit);
+            abmMensaje(null, $mensaje, 'NOW()', $cod_interConsulta, $cod_usuarioFK_edit);
         }
 
         $stmt->close();

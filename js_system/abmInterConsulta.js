@@ -261,7 +261,7 @@ function abmMensaje(codInterconsulta,fecha, contenido) {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'nuevo/editar mensaje');
-    datos.append("fecha", fecha);
+    datos.append("fecha_creacion", fecha);
     datos.append("contenido", contenido);
     datos.append("cod_interConsulta", codInterconsulta);
 
