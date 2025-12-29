@@ -11798,10 +11798,6 @@ function EnviarClienteDesde() {
 		cod_garanteFK = $(datostr).children('td[id="td_id"]').html();
 		document.getElementById('inptGaranteSolicitudCredito').value = $(datostr).children('td[id="td_datos_1"]').html();
 	}
-	if (controlseleccvistacliente == "interConsulta") {
-		cod_clienteFK= $(datostr).children('td[id="td_id"]').html();
-		document.getElementById('inptNombreClienteAbmInterConsulta').value = $(datostr).children('td[id="td_datos_1"]').html();
-	}
 	
 	document.getElementById("divVistaCliente").style.display = "none"
 	document.getElementById("table_vista_cliente").innerHTML = ""

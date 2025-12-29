@@ -519,7 +519,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
  
-<table class='divMenub'  id='divMenuHistorialClinicoEvolucion'   title='Consutas'  onclick='verCerrarAbmVistaConsulta()'  style='text-align:center;'>
+<table class='divMenub'  id='divMenuHistorialClinicoEvolucion'   title='Consutas'  onclick='verCerrarAbmVistaConsulta("consulta")'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/consultamedica.png' />
@@ -7300,13 +7300,23 @@ onclick='SeleccionarRegistroCategoria()' />
                     <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
                     </td>
                     <td class="td_registro" style="width:1%;">
-                    <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta4')">
+                    <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta6')">
                     </td>
                   </tr>
                 </table>
                 <div id="table_frm_VistaInterConsulta">
 
                 </div>
+                <table style="width:100%;height:50px;display:none" id="tbProcessInformeInterConsulta">
+                <tr>
+                <td style="width:90%">
+                <div class="divprogreso1"><div class="divprogreso2" id="divProgressInformeInterConsulta"></div></div>
+                </td>
+                <td style="width:10%;text-align:center">
+                <input type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
+                </td>
+                </tr>
+                </table>
               </div>
           </div>
       </div>
@@ -7375,7 +7385,7 @@ onclick='SeleccionarRegistroCategoria()' />
                   <td>
                   <p class="pTituloC">Cliente :</p>
                   <input class="inputTextDisable" type="text" placeholder="Seleccionar un cliente" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
-                  <input type="button" value="Seleccionar" class="btn4" onclick="vercerrarvistacliente('1','interConsulta')" style="background-color: #FF5722;">
+                  <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
                   </td></tr>
                 </table>
                 <table><tr>

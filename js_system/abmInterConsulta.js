@@ -92,8 +92,8 @@ function verificarCamposInterConsulta() {
         ver_vetana_informativa("El campo asunto es obligatorio para crear una nueva Interconsulta.");
         return false;
     }
-    if (!cod_clienteFK) {
-        ver_vetana_informativa("Falta seleccionar el cliente");
+    if (!cod_ventaFKConsulta) {
+        ver_vetana_informativa("Falta seleccionar la venta");
         return false;
     }
     
@@ -110,7 +110,7 @@ function abmInterConsulta(asunto, estado, tipo) {
     datos.append("asunto", asunto);
     datos.append("tipo", tipo);
     datos.append("cod_interConsulta", cod_interConsulta);
-    datos.append("cod_clienteFK", cod_clienteFK);
+    datos.append("cod_ventaFK", cod_ventaFKConsulta);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -769,6 +769,8 @@ function obtenerDetallesInterConsulta(elemento) {
     document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
     document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
     document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
+    cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
+    document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_7')?.textContent.trim();
 
     verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2');
 }
@@ -779,7 +781,7 @@ function cancelarInformeInterConsulta() {
 }
 
 function limpiarcamposInterconsulta() {
-    cod_clienteFK= "";
+    cod_ventaFKConsulta= "";
     cod_interConsulta= "";
     
     document.getElementById('inptAsuntoAbmInterConsulta').value= "";
@@ -802,6 +804,7 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
                 $("div[id=divAbmInterConsulta2]").fadeIn(500);
                 break;
             case 'listado':
+                buscarPacientesConInterConsultas();
                 $("div[id=divAbmInterConsulta1]").fadeIn(500);
                 break;
             case 'abm':
@@ -818,6 +821,7 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
     } else {
         switch (ventana) {
             case 'detalle':
+                buscarPacientesConInterConsultas();
                 $("div[id=divAbmInterConsulta2]").fadeOut(500);
                 document.getElementById("divAbmInterConsulta1").style.display="";
                 break;
@@ -826,6 +830,7 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
                 document.getElementById("divAbmInterConsulta").style.display="none";
                 break
             case 'abm':
+                buscarPacientesConInterConsultas();
                 $("div[id=divAbmInterConsulta3]").fadeOut(500);
                 break;
         }

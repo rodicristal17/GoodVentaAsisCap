@@ -99,17 +99,18 @@ ALTER TABLE trabajo_mecanico_dental ADD COLUMN cod_localFK INT(11);
 ALTER TABLE trabajo_mecanico_dental ADD CONSTRAINT fk_local_mecanico_dental
     FOREIGN KEY (cod_localFK) REFERENCES local(cod_local);
 
+
 CREATE TABLE interconsulta (
     cod_interConsulta INT PRIMARY KEY AUTO_INCREMENT,
     asunto VARCHAR(100),
     estado ENUM('pendiente', 'proceso', 'finalizado', 'inactivo') DEFAULT 'pendiente',
     tipo ENUM('clinico', 'administrativo'),
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    cod_usuairoFK_edit INT,
+    cod_usuarioFK_edit INT,
     fecha_edit DATETIME,
-    cod_clienteFK INT,
+    cod_ventaFK INT,
     cod_usuarioFK_create INT,
-    Foreign Key (cod_clienteFK) REFERENCES cliente(cod_cliente),
+    Foreign Key (cod_ventaFK) REFERENCES venta(cod_venta),
     Foreign Key (cod_usuarioFK_create) REFERENCES usuario(cod_usuario)
 );
 

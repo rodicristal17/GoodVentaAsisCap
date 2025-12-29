@@ -40,9 +40,10 @@
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
                 $mencion= isset($_POST['mencion']) ? utf8_decode($_POST['mencion']) : false;
-                $cod_clienteFK= isset($_POST['cod_clienteFK']) ? utf8_decode($_POST['cod_clienteFK']) : null;
+                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
                 $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
                 $nombre_cliente= isset($_POST['nombre_cliente']) ? utf8_decode($_POST['nombre_cliente']) : null;
+                $nombre_responsable= isset($_POST['nombre_responsable']) ? utf8_decode($_POST['nombre_responsable']) : null;
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -50,9 +51,10 @@
                     'estado'=> $estado,
                     'tipo'=> $tipo,
                     'mencion'=> $mencion,
-                    'cod_clienteFK'=> $cod_clienteFK,
+                    'cod_ventaFK'=> $cod_ventaFK,
                     'cod_usuarioFK'=> $cod_usuarioFK,
-                    'nombre_cliente'=> $nombre_cliente
+                    'nombre_cliente'=> $nombre_cliente,
+                    'nombre_responsable'=> $nombre_responsable
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
@@ -60,12 +62,12 @@
                 obtenerVistaInterConsulta($filtros, $limite);
                 break;
             case 'buscarInterConsultasYContenido':
-                $cod_clienteFK= isset($_POST['cod_clienteFK']) ? utf8_decode($_POST['cod_clienteFK']) : null;
+                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
                 $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
                 
                 $filtros= array(
-                    "cod_clienteFK" => $cod_clienteFK,
+                    "cod_ventaFK" => $cod_ventaFK,
                     "cod_interConsulta" => $cod_interConsulta,
                     "cod_usuarioFK" => $user
                 );
@@ -79,9 +81,9 @@
                 $asunto= isset($_POST['asunto']) ? utf8_decode($_POST['asunto']) : null;
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
-                $cod_clienteFK= isset($_POST['cod_clienteFK']) ? utf8_decode($_POST['cod_clienteFK']) : null;
+                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
 
-                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_clienteFK, $user, $user);
+                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
@@ -182,7 +184,7 @@
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
-            "cod_clienteFK" => $filtros['cod_clienteFK'],
+            "cod_ventaFK" => $filtros['cod_ventaFK'],
             "cod_usuarioFK" => $filtros['cod_usuarioFK'],
             "cod_interConsulta" => $filtros['cod_interConsulta']
         ), $limite);
@@ -270,14 +272,15 @@
             </div>
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Cod. Cliente:</span>
-            <span class="text-uppercase">'.$valueInter['cod_clienteFK'].'</span>
+            <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_clienteFK'].'</span>
             </div>
             </div>
             </div>
             <div style="display: none;">
             <span id="td_datos_1">'.$valueInter['asunto'].'</span>
             <span id="td_datos_4">'.$valueInter['cod_interConsulta'].'</span>
-            <span id="td_datos_5">'.$valueInter['cod_clienteFK'].'</span>
+            <span id="td_datos_5">'.$valueInter['cod_ventaFK'].'</span>
+            <span id="td_datos_7">'.$valueInter['nombre_persona'].'</span>
             </div>
             </div>
             </div>
@@ -330,7 +333,7 @@
             
             // Obtiene las interConsultas asociadas a este paciente
             $registrosInterconsulta= obtenerInterConsulta(array(
-                "cod_clienteFK" => $value['cod_cliente']
+                "cod_ventaFK" => $value['cod_cliente']
             ), 5);
 
             $cant_mensajes_no_leidos= 0;
@@ -435,7 +438,7 @@
                 case 'cod_usuarioFK':
                     $sqlFiltro .= "EXISTS (SELECT 1 FROM interconsulta ic INNER JOIN mensaje mj ON ic.cod_interConsulta = mj.cod_interConsultaFK
                                     INNER JOIN menciones mc ON mc.cod_mensajeFK = mj.cod_mensaje
-                                    WHERE ic.cod_clienteFK = cl.cod_cliente AND mc.cod_usuarioFK = $value)";
+                                    WHERE ic.cod_ventaFK = cl.cod_cliente AND mc.cod_usuarioFK = $value)";
                     break;
                 default:
                     if (is_numeric($value)) {
@@ -562,8 +565,8 @@
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1" '.$style.'>
                 <tr onclick="obtenerDatosInterConsulta(this)">
                     <td id="td_id" style="width: 5%;">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 30%;">'.$formatAsunto.'</td>
-                    <td id="td_datos_4" style="display: none;">'.$value['cod_clienteFK'].'</td>
+                    <td id="td_datos_1" style="width: 25%;">'.$formatAsunto.'</td>
+                    <td id="td_datos_4" style="display: none;">'.$value['cod_ventaFK'].'</td>
                     <td id="td_datos_5" style="width: 15%;">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_2" style="width: 10%;">'.$value['estado'].'</td>
                     <td id="td_datos_6" style="width: 15%;">'.$value['tipo'].'</td>
@@ -929,6 +932,16 @@
                 case 'estado':
                     $sqlFiltro .= "ic.estado = '$value'";
                     break;
+                case 'nombre_responsable':
+                    $sqlFiltro .= "(SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) LIKE '%$value%'";
+                    break;
+                case 'nombre_cliente':
+                    $sqlFiltro .= "CONCAT(
+                        (SELECT nombre_persona from persona where cod_persona = vt.cod_clienteFK), ' ',
+                        (SELECT ci_cliente from cliente where cod_cliente = vt.cod_clienteFK), ' ',
+                        vt.cod_clienteFK
+                    ) LIKE '%$value%'";
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "ic.$key = $value";
@@ -945,12 +958,12 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT ic.*, 
-            (SELECT nombre_persona from persona where cod_persona = ic.cod_clienteFK) as nombre_persona,
+        $sql= "SELECT ic.*, vt.cod_clienteFK,
+            (SELECT nombre_persona from persona where cod_persona = vt.cod_clienteFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
-            (SELECT ci_cliente from cliente where cod_cliente = ic.cod_clienteFK) as cedula,
+            (SELECT ci_cliente from cliente where cod_cliente = vt.cod_clienteFK) as cedula,
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) AS cantMensajesNoLeidos
-            from interconsulta ic $sqlFiltro
+            from interconsulta ic JOIN venta vt ON vt.cod_venta = ic.cod_ventaFK $sqlFiltro
             ORDER BY (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) DESC,
             FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'), cod_interConsulta DESC $limite";
 
@@ -979,13 +992,13 @@
         return $registros;
     }
 
-    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_clienteFK,$cod_usuarioFK_create, $cod_usuarioFK_edit) {
+    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_interConsulta)) {
-            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_clienteFK,cod_usuarioFK_create, fecha_creacion) VALUES (?, ?, ?, ?, ?, NOW())";
+            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion) VALUES (?, ?, ?, ?, ?, NOW())";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('sssii',$asunto, $estado, $tipo, $cod_clienteFK,$cod_usuarioFK_create);
+            $stmt->bind_param('sssii',$asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create);
         } else {
             // Obtiene los datos de la interconsulta antes que sea modificada
             $interconsulta_original= obtenerInterConsulta(array(
@@ -1025,11 +1038,11 @@
                 $parametros[] = $tipo;
                 $nuevos_datos['tipo'] = $tipo;
             }
-            if (!empty($cod_clienteFK)) {
-                $atributos .= ", cod_clienteFK= ?";
+            if (!empty($cod_ventaFK)) {
+                $atributos .= ", cod_ventaFK= ?";
                 $ss .= "i";
-                $parametros[] = $cod_clienteFK;
-                $nuevos_datos['cod_clienteFK'] = $cod_clienteFK;
+                $parametros[] = $cod_ventaFK;
+                $nuevos_datos['cod_ventaFK'] = $cod_ventaFK;
             }
             
             $parametros[] = $cod_interConsulta;
@@ -1055,16 +1068,19 @@
             $cod_interConsulta = $stmt->insert_id;
         } else {
             $mensaje = 'El usuario <b class="menciones-mensaje" id="'.$cod_usuarioFK_edit.'">@nombre</b>&nbsp; modifico';
+            $mensajeDatosCambiados= "";
             // Se actualizo la interconsulta, se compara los datos para registrar los cambios en la tabla mensaje
             foreach ($nuevos_datos as $key => $value) {
                 if ($interconsulta_original[0][$key] != $value) {
                     // Registrar cambio en un mensaje
-                    $mensaje .= ' el campo '.$key.' de '.$interconsulta_original[0][$key].' a '.$value.', ';
+                    $mensajeDatosCambiados .= ' el campo '.$key.' de '.$interconsulta_original[0][$key].' a '.$value.', ';
                 }
             }
 
-            $mensaje = substr($mensaje, 0, -2).'.';
-            abmMensaje(null, $mensaje, 'NOW()', $cod_interConsulta, $cod_usuarioFK_edit);
+            if ($mensajeDatosCambiados != "") {
+                $mensaje .= substr($mensajeDatosCambiados, 0, -2).'.';
+                abmMensaje(null, $mensaje, 'NOW()', $cod_interConsulta, $cod_usuarioFK_edit);
+            }
         }
 
         $stmt->close();

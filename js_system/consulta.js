@@ -579,23 +579,23 @@ function GuardarRegistroDetallePreCOnsulta(datos) {
 }
 
 
-
-function verCerrarAbmVistaConsulta() { 
+var controlVentanaConsulta="";
+function verCerrarAbmVistaConsulta(controlVentana) { 
 	if(document.getElementById("divFrmVistaConsulta").style.display==""){ 
-	$("div[id=divFrmVistaConsulta]").fadeOut(500);	
-	}else{
-		
-		 	var f = new Date();
-	var dia = f.getDate()
-	if (dia < 10) {
-		dia = "0" + dia;
-	}
-	var mes = f.getMonth() + 1
-	if (mes < 10) {
-		mes = "0" + mes;
-	} 
-	// document.getElementById('inptBuscarFrmFechaPaciente').value = f.getFullYear() + "-" + mes + "-" + dia;
-	
+		$("div[id=divFrmVistaConsulta]").fadeOut(500);	
+	}else{	
+		var f = new Date();
+		var dia = f.getDate()
+		if (dia < 10) {
+			dia = "0" + dia;
+		}
+		var mes = f.getMonth() + 1
+		if (mes < 10) {
+			mes = "0" + mes;
+		} 
+		// document.getElementById('inptBuscarFrmFechaPaciente').value = f.getFullYear() + "-" + mes + "-" + dia;
+
+		controlVentanaConsulta= controlVentana;
 		document.getElementById("divFrmVistaConsulta").style.display="" 
 	}
 }
@@ -1436,6 +1436,8 @@ function buscarVistaConsulta() {
 		"local": local, 
 		"funt": "buscarVistaConsulta"
 	};
+
+	verCerrarEfectoCargando("1");
 	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
@@ -1468,14 +1470,14 @@ function buscarVistaConsulta() {
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("table_frm_VistaConsulta").innerHTML = ''
- 
+	verCerrarEfectoCargando("");
 		},
 		success: function (responseText) {
 
 			var Respuesta = responseText;
 			console.log(Respuesta)
 			document.getElementById("table_frm_VistaConsulta").innerHTML = ''
-	 
+			verCerrarEfectoCargando("");
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -1505,24 +1507,32 @@ function ObtenerdatosAbmConsulta(elemento) {
 		td.className = ''
 	});		
 	
-	
 	cod_Agendamiento= elemento.querySelector('#td_datos_4')?.textContent.trim();
-	document.getElementById("inptPacienteConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
-	document.getElementById("inptCIConsulta").value= elemento.querySelector('#td_datos_2')?.textContent.trim();
-	document.getElementById("inptCodigoConsulta").value= elemento.querySelector('#td_datos_3')?.textContent.trim();
-	document.getElementById("inptApodoConsulta").value= elemento.querySelector('#td_datos_7')?.textContent.trim();
 	cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
-	
 	cod_clienteConsulta= elemento.querySelector('#td_datos_6')?.textContent.trim();
-	document.getElementById("inptEspecialistaConsulta").value = userid
- 
-	verCerrarAbmConsulta() 
-	buscarDetalleVentaConsulta(cod_ventaFKConsulta)
-	buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
-	vercuotasatrazadas(cod_ventaFKConsulta)
-	buscarPacienteConsulta()	
-	buscarVistaGaleriaFoto();
-	buscarResumenAntecedenteConsulta()
+	
+	switch (controlVentanaConsulta) {
+		case "consulta":
+			document.getElementById("inptEspecialistaConsulta").value = userid
+			document.getElementById("inptPacienteConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
+			document.getElementById("inptCIConsulta").value= elemento.querySelector('#td_datos_2')?.textContent.trim();
+			document.getElementById("inptCodigoConsulta").value= elemento.querySelector('#td_datos_3')?.textContent.trim();
+			document.getElementById("inptApodoConsulta").value= elemento.querySelector('#td_datos_7')?.textContent.trim();
+			buscarDetalleVentaConsulta(cod_ventaFKConsulta)
+			buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
+			vercuotasatrazadas(cod_ventaFKConsulta)
+			buscarPacienteConsulta()	
+			buscarVistaGaleriaFoto();
+			buscarResumenAntecedenteConsulta()
+			verCerrarAbmConsulta()
+			break;
+		case "interConsulta":
+			document.getElementById("inptNombreClienteAbmInterConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
+			break;
+		default:
+			break;
+	}
+	verCerrarAbmVistaConsulta();
 }
 
 function agregarObservacionConsulta(){
