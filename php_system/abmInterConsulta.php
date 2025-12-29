@@ -87,9 +87,10 @@
             case 'marcarMensajesLeido':
                 $cod_interConsulta= utf8_decode($_POST['cod_interConsulta']);
 
+                $fechaActual= new DateTime();
                 $registrosMens= obtenerMensaje(array(
                     'cod_interConsultaFK' => $cod_interConsulta,
-                    'fecha_creacion' => "<= NOW()",
+                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 ), 0);
                 foreach ($registrosMens as $valueMens) {
                     $registrosMenc= obtenerMencion(array(
@@ -127,7 +128,7 @@
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
                 $fecha_creacion= isset($_POST['fecha_creacion']) ? utf8_decode($_POST['fecha_creacion']) : 'NOW()';
                 
-                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, 'NOW()', $fecha_creacion, $cod_interConsulta, $user);
+                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'subirImagenMensaje':
@@ -150,10 +151,11 @@
                 $offset= isset($_POST['offset']) ? utf8_decode($_POST['offset']) : null;
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
 
+                $fechaActual= new DateTime();
                 $filtros= array(
                     "cod_interConsultaFK" => $cod_interConsulta,
                     "cod_usuarioFK" => $user,
-                    'fecha_creacion' => "<= NOW()",
+                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 );
                 $vistaTarjetas= obtenerVistaTarjetaInterConsuta($filtros, $limite, $offset);
 
@@ -190,8 +192,9 @@
             $menciones= array();
             
             // Se obtienen los mensajes
+            $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
-                'fecha_creacion' => "<= NOW()",
+                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta']
             ));
             
@@ -483,8 +486,9 @@
         }
 
         // Obtiene todos los mensajes de la interConsulta
+        $fechaActual= new DateTime();
         $regMensaje= obtenerMensaje(array(
-                'fecha_creacion' => "<= NOW()",
+                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 "cod_interConsultaFK" => $filtros["cod_interConsultaFK"],
             ), $limite);
         foreach ($regMensaje as $key => $valueMens) {
@@ -871,9 +875,10 @@
 
         $ids_menciones[] = $user;
         // Obtiene todas las menciones anteriores asociadas a esta interconsulta
+        $fechaActual= new DateTime();
         $registrosMens= obtenerMensaje(array(
             'cod_interConsultaFK' => $cod_interConsulta,
-            'fecha_creacion' => "<= NOW()",
+            'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
         ), 0);
         foreach ($registrosMens as $valueMens) {
             $registrosMenc= obtenerMencion(array(

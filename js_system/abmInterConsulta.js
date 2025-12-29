@@ -156,7 +156,7 @@ function abmInterConsulta(asunto, estado, tipo) {
 					ver_vetana_informativa("Datos guardados exitosamente.");
 
                     buscarInterConsultasYContenido();
-                    verCerrarVentanaInterConsulta(false, 'abm', 'divAbmInterConsulta2');
+                    verCerrarVentanaInterConsulta(false, 'abm');
 				} else {
 					// Si el servidor responde pero con un error de aplicación (ej: error en la BD)
 					const mensajeError = datos["mensaje"] || "El servidor no pudo procesar la solicitud.";
@@ -755,10 +755,10 @@ function mostrarOpcionesUsuariosMenciones(textarea, sugerencias) {
 }
 
 function obtenerDatosInterConsulta(elemento) {
-    cod_interConsulta= elemento.querySelector('#td_id')?.textContent.trim();
-    cod_clienteFK= elemento.querySelector('#td_datos_4')?.textContent.trim();
-    document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
-    document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - "+elemento.querySelector('#td_datos_5')?.textContent.trim();
+    cod_interConsulta= $(elemento).children('#td_id').html();
+    cod_clienteFK= $(elemento).children('#td_datos_4').html();
+    document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
+    document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - "+$(elemento).children('#td_datos_5').html();
 
     verCerrarVentanaInterConsulta(true, 'detalle');
     buscarInterConsultasYContenido();
@@ -780,8 +780,9 @@ function cancelarInformeInterConsulta() {
 
 function limpiarcamposInterconsulta() {
     cod_clienteFK= "";
+    cod_interConsulta= "";
     
-    document.getElementById('inptAsuntoAbmInterConsulta').innerHTML= "";
+    document.getElementById('inptAsuntoAbmInterConsulta').value= "";
     document.getElementById('inptNombreClienteAbmInterConsulta').value= "";
     document.getElementById('inptEstadoAbmInterConsulta').value= "pendiente";
 }
@@ -793,23 +794,23 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
         // Comprueba si estaba minimizado
         if (document.getElementById('divMinimizadoInterConsulta').style.display == "") {
             document.getElementById('divMinimizadoInterConsulta').style.display="none";
-        } else {
-            switch (ventana) {
-                case 'detalle':
-                    document.getElementById("divAbmInterConsulta1").style.display="none";
-                    document.getElementById("divAbmInterConsulta3").style.display="none";
-                    $("div[id=divAbmInterConsulta2]").fadeIn(500);
-                    break;
-                case 'listado':
-                    $("div[id=divAbmInterConsulta1]").fadeIn(500);
-                    break;
-                case 'abm':
-                    document.getElementById("divAbmInterConsulta1").style.display="none";
-                    document.getElementById("divAbmInterConsulta2").style.display="none";
-                    $("div[id=divAbmInterConsulta3]").fadeIn(500);
-                    break;
-            }
         }
+        switch (ventana) {
+            case 'detalle':
+                document.getElementById("divAbmInterConsulta1").style.display="none";
+                document.getElementById("divAbmInterConsulta3").style.display="none";
+                $("div[id=divAbmInterConsulta2]").fadeIn(500);
+                break;
+            case 'listado':
+                $("div[id=divAbmInterConsulta1]").fadeIn(500);
+                break;
+            case 'abm':
+                document.getElementById("divAbmInterConsulta1").style.display="none";
+                document.getElementById("divAbmInterConsulta2").style.display="none";
+                $("div[id=divAbmInterConsulta3]").fadeIn(500);
+                break;
+        }
+
         if (ventanaAnterior) {
             document.getElementById(ventanaAnterior).style.display= 'none';
             ventanaAnterior= '';
