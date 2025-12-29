@@ -263,7 +263,7 @@ window.onload = function () {
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
 			buscarSugerencias();
-			buscarPacientesConInterConsultas2("", "", "", "", "", "");
+			buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true);
 			// buscarproductosDescuento()
 
 		}
@@ -461,7 +461,7 @@ buscarobtenerPacientes()
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
 buscarSugerencias()
-
+buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true);
 
 
 var saludo=localStorage.getItem("saludo"+userid);

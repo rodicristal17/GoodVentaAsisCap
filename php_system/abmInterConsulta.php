@@ -44,6 +44,7 @@
                 $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
                 $nombre_cliente= isset($_POST['nombre_cliente']) ? utf8_decode($_POST['nombre_cliente']) : null;
                 $nombre_responsable= isset($_POST['nombre_responsable']) ? utf8_decode($_POST['nombre_responsable']) : null;
+                $ocultar_inactivos= isset($_POST['ocultar_inactivos']) ? utf8_decode($_POST['ocultar_inactivos']) : null;
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -54,7 +55,8 @@
                     'cod_ventaFK'=> $cod_ventaFK,
                     'cod_usuarioFK'=> $cod_usuarioFK,
                     'nombre_cliente'=> $nombre_cliente,
-                    'nombre_responsable'=> $nombre_responsable
+                    'nombre_responsable'=> $nombre_responsable,
+                    'ocultar_inactivos'=> $ocultar_inactivos
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
@@ -311,7 +313,7 @@
                             <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/imagenphoto.png\', false);width:100px; height: 90px;margin-right: 5px;"></div>
                             <p id="inptContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
                             <div style="width: 100px;margin-left: 10px;text-align: left;">
-                              <input type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(76, 175, 80);width: 100%;">
+                              <input id="btnEnviarContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(76, 175, 80);width: 100%;">
                               <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(245, 59, 59);width: 100%;">
                             </div>
                           </div>
@@ -552,8 +554,13 @@
 
         $pagina= '';
         $cant_mensajes_no_leidos= 0;
+        $cant_interConsulta_abierto= 0;
         $styleName="tableRegistroSearch";
         foreach ($registros as $value) {
+            if ($value['estado'] == 'pendiente' || $value['estado'] == 'proceso') {
+                $cant_interConsulta_abierto++;
+            }
+
             $styleName=CargarStyleTable($styleName);
             $style= "";
             $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].'</p>';
@@ -570,13 +577,14 @@
                     <td id="td_datos_5" style="width: 15%;">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_2" style="width: 10%;">'.$value['estado'].'</td>
                     <td id="td_datos_6" style="width: 15%;">'.$value['tipo'].'</td>
+                    <td id="td_datos_7" style="width: 15%;">'.$value['cod_clienteFK'].'</td>
                     <td style="width: 10%;">'.$value['fecha_creacion'].'</td>
                     <td style="width: 15%;">'.$value['nombre_persona_creador'].'</td>
                 </tr>
             </table>';
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto));
     }
 
     function obtenerVistaMensaje($filtros= [], $limite= 0) {
@@ -932,6 +940,9 @@
                 case 'estado':
                     $sqlFiltro .= "ic.estado = '$value'";
                     break;
+                case 'ocultar_inactivos':
+                    $sqlFiltro .= "ic.estado != 'inactivo'";
+                    break;
                 case 'nombre_responsable':
                     $sqlFiltro .= "(SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) LIKE '%$value%'";
                     break;
@@ -952,7 +963,7 @@
             }
         }
 
-        if ($limite === 0) {
+        if ($limite === 0 || $limite === '0') {
             $limite = '';
         } else {
             $limite = "LIMIT $limite";
@@ -970,7 +981,7 @@
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
-            echo $sql;
+            echo "$sql\n$limite\n";
             echo "Error: ". mysqli_error($mysqli);
         }
         if ( !$stmt->execute()) {

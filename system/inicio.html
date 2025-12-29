@@ -408,7 +408,10 @@ style='display:none' class='divMinimizado'>
   <div style="width:100%;display: grid;justify-items: center;">
     <div style="position:relative; display: inline-block;">
       <div>
-        <span id="avisoMensajesPendientes" class="badge badge-danger text-uppercase" style="margin-bottom: 10px;">Tiene mensajes sin leer.</span>
+        <span id="avisoMensajesPendientes" class="badge badge-danger text-uppercase" style="margin-bottom: 10px;display: none;">Tiene mensajes sin leer.</span>
+      </div>
+      <div>
+        <span id="avisoInterconsultasAbiertos" class="badge badge-warning text-uppercase" style="margin-bottom: 10px;display: none;">Tiene 0 interconsultas sin cerrar.</span>
       </div>
       <img id='fotoPerfilUsuario' style='height:200px;aspect-ratio: 1/1;object-fit: contain;border-radius:100px;border-style: solid;border-color: #6a6a6a;border-width: 3px;'/>
       <img src="../iconos/editar.png" alt="Icono" style="position: absolute; bottom: 5px; right: 8px; width: 40px; height: 40px;border-radius: 15px;padding: 5;background-color: #b7b7b7;" onclick="verCerrarMisDatos(1);"/>
@@ -7242,11 +7245,28 @@ onclick='SeleccionarRegistroCategoria()' />
           </table>
             <div class="divMenuf" style="display: flex; justify-content: space-between;">
               <table style="width:100%"><tr>
-                <td style="width:80%"></td>
+                <td style="width:20%;text-align: rigth;">
+                  <p class="pTitulo8" style="width: fit-content; text-align: start;"> 
+                  <input type="checkbox" id="inptSeleccFiltroEstadoInterConsulta" style="width: fit-content;" checked="">Ocultar inactivos</p>
+                </td>
+                <td style="width:60%"></td>
                 <td style="width: 20%; text-align: end;">
                   <input type="button" value="Agregar" class="btn5" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta1');" style="background-color: rgb(76, 175, 80);">
                   <input type="button" value="Buscar" class="btn5" onclick="buscarPacientesConInterConsultas()">
                 </td>
+              </tr></table>
+            </div>
+            <div class="divMenuf" style="display: flex; justify-content: space-between;">
+              <table style="width:100%"><tr>
+                <td style="width:10%;">
+                  <p class="pTituloC">Registro :</p>
+                  <input class="inputTextDisable" type="text" disabled="" id="inptRegistoCargadoInterConsulta" style="width:100px;text-align:center">
+                </td>
+                <td style="width:10%;">
+                  <p class="pTituloC">Consultas abiertas :</p>
+                  <input class="inputTextDisable" type="text" disabled="" id="inptRegistoInterConsultaAbierta" style="width:100px;text-align:center">
+                </td>
+                <td style="width:60%"></td>
               </tr></table>
             </div>
             <div class="divMenuf">
