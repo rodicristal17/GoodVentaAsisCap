@@ -9409,6 +9409,7 @@ function buscarvistaaperturacierrecaja() {
 	var fechaapertura = document.getElementById('inptBuscarVistaCaja3').value
 	var fechafin = document.getElementById('inptBuscarVistaCaja4').value
 	var usuario = document.getElementById('inptBuscarVistaCaja5').value
+	const lote= document.getElementById('inptBuscarVistaCaja6').value;
 	
 	document.getElementById("inptTotalAperturaArqueocierrecaja").value = ""
 	document.getElementById("inptTotalCierreArqueocierrecaja").value = ""
@@ -9430,6 +9431,7 @@ function buscarvistaaperturacierrecaja() {
 		"fechaapertura": fechaapertura,
 		"fechafin": fechafin,
 		"usuario": usuario,
+		"lote": lote,
 		"funt": "buscarvista"
 	};
 	$.ajax({

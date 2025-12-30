@@ -94,7 +94,10 @@ $fechafin=$_POST['fechafin'];
 $fechafin = utf8_decode($fechafin);
 $usuario=$_POST['usuario'];
 $usuario = utf8_decode($usuario);
-buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario);
+$lote = $_POST['lote'];
+$lote = utf8_decode($lote);
+
+buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote);
 
 }
 
@@ -369,36 +372,38 @@ if ( ! $stmt->execute()) {
 
 
 /*Buscar Registro*/
-function buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario)
+function buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote)
 {
+$sqlFiltro= "";
 	
 $mysqli=conectar_al_servidor();
 
-$condicionFechaInicio = "";
 if ($fechaapertura != "") {
-    $condicionFechaInicio = " AND DATE_FORMAT(fechaapertura, '%Y-%m-%d') >= '$fechaapertura'";
+    $sqlFiltro.= " AND DATE_FORMAT(fechaapertura, '%Y-%m-%d') >= '$fechaapertura'";
 }
 
-$condicionFechaCierre = "";
 if ($fechafin != "") {
-    $condicionFechaCierre = " AND DATE_FORMAT(fechacierre, '%Y-%m-%d') <= '$fechafin'";
+    $sqlFiltro.= " AND DATE_FORMAT(fechacierre, '%Y-%m-%d') <= '$fechafin'";
 }
 
-$condicionCaja="";
 if($caja!=""){
-$condicionCaja=" and (Select cajanro from caja l where l.idcaja=caja_idcaja) like '%".$caja."%'";	
+$sqlFiltro.=" and (Select cajanro from caja l where l.idcaja=caja_idcaja) like '%".$caja."%'";	
 }
-$condicionEstado="";
+
 if($estado!=""){
-$condicionEstado=" and estado='$estado' ";	
+$sqlFiltro.=" and estado='$estado' ";	
 }
-$condicionLocal="";
+
 if($local!=""){
-$condicionLocal=" and ap.cod_local='$local' ";	
+$sqlFiltro.=" and ap.cod_local='$local' ";	
 }
-$condicionUsuario="";
+
 if($usuario!=""){
-$condicionUsuario=" and (Select nombre_persona from persona where cod_persona=codusuarioap) like '%".$usuario."%'";		
+$sqlFiltro.=" and (Select nombre_persona from persona where cod_persona=codusuarioap) like '%".$usuario."%'";		
+}
+
+if ($lote != "") {
+    $sqlFiltro.= " AND lote like '%$lote'";
 }
 
 $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertura, fechacierre, estado, codusuarioap, codusuarioce,cod_local,
@@ -411,7 +416,7 @@ $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertu
 (Select nombre_persona from persona where cod_persona=codusuarioce) as usuariocie,
 ap.cant500, ap.cant1000, ap.cant2000, ap.cant5000, ap.cant10000, ap.cant20000, ap.cant50000, ap.cant100000,
 (Select Nombre from local l where l.cod_local=ap.cod_local) as nombrelocal
-from arqueocaja ap where  estado!='Cancelado' ".$condicionFechaInicio.$condicionFechaCierre.$condicionEstado.$condicionLocal.$condicionUsuario." order by idarqueocaja desc limit 100  ";
+from arqueocaja ap where  estado!='Cancelado' ".$sqlFiltro." order by idarqueocaja desc limit 100  ";
 
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
