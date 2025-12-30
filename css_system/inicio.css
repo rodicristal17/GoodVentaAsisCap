@@ -1573,6 +1573,7 @@ textarea {
 
 .badge-warning {
   background-color: #ffc107;
+  color: black;
 }
 
 .badge-danger {
