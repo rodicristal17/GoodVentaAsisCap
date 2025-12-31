@@ -182,7 +182,7 @@
 
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
         $pagina = "";
-        $limiteMensajes= 10;
+        $limiteMensajes= 5;
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
@@ -211,8 +211,12 @@
                 
                 foreach ($registrosMenc as $valueMenc) {
                     if (!in_array($valueMenc['nombre_persona'], $menciones)) {
+                        $color= "#f2f2f2";
+                        if ($valueMenc['isLeido'] == 1) {
+                            $color= "#0cdd23";
+                        }
                         $mencionesElemento .= '<li style="
-                            background-color:#f2f2f2;
+                            background-color:'.$color.';
                             text-align: left;
                             margin-bottom:4px;
                             padding:5px 10px;
@@ -249,7 +253,7 @@
             $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this)">
                 <div id="contenedorEncabezadoInterConsulta'.$valueInter['cod_interConsulta'].'" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
-            <h5 class="card-title">'.$valueInter['asunto'].' - '.$valueInter['nombre_persona'].'</h5>
+            <h5 class="card-title">'.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'</h5>
             <div style="display: flex;">
             <div style="width: 50%;padding-top: 10px;border-top: 1px solid #ddd;">
             <strong>Mencionados</strong>
@@ -310,7 +314,7 @@
                       </div>
                       <div class="card-body">
                           <div style="display: flex;">
-                            <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/imagenphoto.png\', false);width:100px; height: 90px;margin-right: 5px;"></div>
+                            <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/subir_imagen.png\');width:100px; height: 90px;margin-right: 5px;"></div>
                             <p id="inptContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
                             <div style="width: 100px;margin-left: 10px;text-align: left;">
                               <input id="btnEnviarContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(76, 175, 80);width: 100%;">
@@ -577,7 +581,7 @@
                     <td id="td_datos_5" style="width: 15%;">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_2" style="width: 10%;">'.$value['estado'].'</td>
                     <td id="td_datos_6" style="width: 15%;">'.$value['tipo'].'</td>
-                    <td id="td_datos_7" style="width: 15%;">'.$value['cod_clienteFK'].'</td>
+                    <td id="td_datos_7" style="display: none;">'.$value['cod_clienteFK'].'</td>
                     <td style="width: 10%;">'.$value['fecha_creacion'].'</td>
                     <td style="width: 15%;">'.$value['nombre_persona_creador'].'</td>
                 </tr>
@@ -804,7 +808,7 @@
                 SELECT m.*, 
                 (SELECT url FROM usuario where cod_usuario = m.cod_usuarioFK) AS url_usuario,
                 p.nombre_persona FROM mensaje m JOIN persona p ON p.cod_persona = m.cod_usuarioFK $sqlFiltro ORDER BY m.fecha_creacion DESC $limite
-            ) AS subquery ORDER BY fecha_creacion ASC";
+            ) AS subquery ORDER BY fecha_creacion ASC, cod_mensaje ASC";
 
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
@@ -872,7 +876,6 @@
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('si', $contenidoLimpiado, $cod_mensaje);
         }
-        
         if (!$stmt->execute()) {
             print_r(array($contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user));
             $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
@@ -969,12 +972,14 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT ic.*, vt.cod_clienteFK,
-            (SELECT nombre_persona from persona where cod_persona = vt.cod_clienteFK) as nombre_persona,
+        // Se separa la tabla venta de la interconsulta ya que este es opcional
+        $sql= "SELECT ic.*, 
+            (SELECT vt.cod_clienteFK from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS cod_clienteFK,
+            (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
-            (SELECT ci_cliente from cliente where cod_cliente = vt.cod_clienteFK) as cedula,
+            (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) AS cantMensajesNoLeidos
-            from interconsulta ic JOIN venta vt ON vt.cod_venta = ic.cod_ventaFK $sqlFiltro
+            from interconsulta ic $sqlFiltro
             ORDER BY (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) DESC,
             FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'), cod_interConsulta DESC $limite";
 
@@ -1090,7 +1095,9 @@
 
             if ($mensajeDatosCambiados != "") {
                 $mensaje .= substr($mensajeDatosCambiados, 0, -2).'.';
-                abmMensaje(null, $mensaje, 'NOW()', $cod_interConsulta, $cod_usuarioFK_edit);
+                $fechaActual = new DateTime();
+                $fechaActual = $fechaActual->format('Y-m-d H:i:s');
+                abmMensaje(null, $mensaje, $fechaActual, $cod_interConsulta, $cod_usuarioFK_edit);
             }
         }
 

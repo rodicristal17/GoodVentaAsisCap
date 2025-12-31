@@ -407,10 +407,10 @@ style='display:none' class='divMinimizado'>
 <td style='width:35%;border-left: solid 1px #cacaca;'>
   <div style="width:100%;display: grid;justify-items: center;">
     <div style="position:relative; display: inline-block;text-align: center;">
-      <div>
+      <div onclick="verCerrarVentanaInterConsulta(true, 'listado')">
         <span id="avisoMensajesPendientes" class="badge badge-danger text-uppercase" style="margin-bottom: 10px;display: none;">Tiene mensajes sin leer.</span>
       </div>
-      <div>
+      <div onclick="verCerrarVentanaInterConsulta(true, 'listado')">
         <span id="avisoInterconsultasAbiertos" class="badge badge-warning text-uppercase" style="margin-bottom: 10px;display: none;">Tiene 0 interconsultas sin cerrar.</span>
       </div>
       <img id='fotoPerfilUsuario' style='height:200px;aspect-ratio: 1/1;object-fit: contain;border-radius:100px;border-style: solid;border-color: #6a6a6a;border-width: 3px;'/>
@@ -7313,6 +7313,7 @@ onclick='SeleccionarRegistroCategoria()' />
                     <option value="">Todos</option>
                     <option value="administrativo">Administrativo</option>
                     <option value="clinico">Clinico</option>
+                    <option value="interno">Interno</option>
                     </select>
                     </td>
                     <td class="td_registro" style="width:10%;"></td>
@@ -7414,6 +7415,7 @@ onclick='SeleccionarRegistroCategoria()' />
                   <select class="inputSelect" id="inptTipoAbmInterConsulta" style="width:130px">
                     <option value="clinico">CLINICO</option>
                     <option value="administrativo">ADMINISTRATIVO</option>
+                    <option value="interno">INTERNO</option>
                   </select>
                   </td></tr>
                 </table>

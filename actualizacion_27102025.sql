@@ -135,7 +135,7 @@ CREATE TABLE menciones (
     FOREIGN KEY (cod_mensajeFK) REFERENCES mensaje(cod_mensaje)
 );
 
-
+ALTER TABLE interconsulta CHANGE tipo tipo ENUM('clinico','administrativo','interno'); 
 
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
