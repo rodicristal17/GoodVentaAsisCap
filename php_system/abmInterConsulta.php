@@ -211,12 +211,15 @@
                 
                 foreach ($registrosMenc as $valueMenc) {
                     if (!in_array($valueMenc['nombre_persona'], $menciones)) {
-                        $color= "#f2f2f2";
+                        $backColor= "#f2f2f2";
+                        $color= "inehrit";
                         if ($valueMenc['isLeido'] == 1) {
-                            $color= "#0cdd23";
+                            $backColor= "#0cdd23";
+                            $color= "black";
                         }
                         $mencionesElemento .= '<li style="
-                            background-color:'.$color.';
+                            background-color: '.$backColor.';
+                            color: '.$color.';
                             text-align: left;
                             margin-bottom:4px;
                             padding:5px 10px;
