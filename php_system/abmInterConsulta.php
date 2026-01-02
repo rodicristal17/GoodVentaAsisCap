@@ -570,23 +570,35 @@
 
             $styleName=CargarStyleTable($styleName);
             $style= "";
-            $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].'</p>';
-            if (intval($value['cantMensajesNoLeidos']) > 0) {
-                $style = 'style= "background-color: #ff5050;  color: #ffffff;"';
-                $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
-                $formatAsunto= '<b style="font-size: 9pt;">'.$value['asunto'].'</b>';
+
+            $styleInterno= "";
+            if ($value['tipo'] == 'interno') {
+                $styleInterno= "color: white; background-color: #08525f;";
             }
-            $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1" '.$style.'>
+            
+            $cantMensajesNoLeidosOtrosUsuarios= "";
+            if (intval($value['cantMensajesNoLeidosOtrosUsuarios']) > 0) {
+                $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
+            }
+            
+            $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
+            if (intval($value['cantMensajesNoLeidos']) > 0) {
+                $style = 'background-color: #ff5050;  color: #ffffff;';
+                $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
+                $formatAsunto= '<b style="font-size: 9pt;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
+            }
+            
+            $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">
                 <tr onclick="obtenerDatosInterConsulta(this)">
-                    <td id="td_id" style="width: 5%;">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 25%;">'.$formatAsunto.'</td>
-                    <td id="td_datos_4" style="display: none;">'.$value['cod_ventaFK'].'</td>
-                    <td id="td_datos_5" style="width: 15%;">'.$value['nombre_persona'].'</td>
-                    <td id="td_datos_2" style="width: 10%;">'.$value['estado'].'</td>
-                    <td id="td_datos_6" style="width: 15%;">'.$value['tipo'].'</td>
-                    <td id="td_datos_7" style="display: none;">'.$value['cod_clienteFK'].'</td>
-                    <td style="width: 10%;">'.$value['fecha_creacion'].'</td>
-                    <td style="width: 15%;">'.$value['nombre_persona_creador'].'</td>
+                    <td id="td_id" style="width: 5%;'.$styleInterno.'">'.$value['cod_interConsulta'].'</td>
+                    <td id="td_datos_1" style="width: 25%;'.$style.'">'.$formatAsunto.'</td>
+                    <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
+                    <td id="td_datos_5" style="width: 15%;'.$style.'">'.$value['nombre_persona'].'</td>
+                    <td id="td_datos_2" style="width: 10%;'.$style.'">'.$value['estado'].'</td>
+                    <td id="td_datos_6" style="width: 15%;'.$style.'">'.$value['tipo'].'</td>
+                    <td id="td_datos_7" style="display: none;'.$style.'">'.$value['cod_clienteFK'].'</td>
+                    <td style="width: 10%;'.$style.'">'.$value['fecha_creacion'].'</td>
+                    <td style="width: 15%;'.$style.'">'.$value['nombre_persona_creador'].'</td>
                 </tr>
             </table>';
         }
@@ -954,9 +966,9 @@
                     break;
                 case 'nombre_cliente':
                     $sqlFiltro .= "CONCAT(
-                        (SELECT nombre_persona from persona where cod_persona = vt.cod_clienteFK), ' ',
-                        (SELECT ci_cliente from cliente where cod_cliente = vt.cod_clienteFK), ' ',
-                        vt.cod_clienteFK
+                        (SELECT nombre_persona from persona join venta vt where cod_persona = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
+                        (SELECT ci_cliente from cliente join venta vt where cod_cliente = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
+                        (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK)
                     ) LIKE '%$value%'";
                     break;
                 default:
@@ -981,10 +993,40 @@
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
-            (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) AS cantMensajesNoLeidos
+            (SELECT COUNT(mc.cod_mencion)
+                FROM menciones mc
+                JOIN mensaje mj 
+                ON mc.cod_mensajeFK = mj.cod_mensaje
+                WHERE mc.isLeido = 0
+                AND mj.cod_interConsultaFK = ic.cod_interConsulta
+                AND mj.fecha_creacion = (
+                    SELECT MAX(mj2.fecha_creacion)
+                    FROM mensaje mj2
+                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+                )
+            ) AS cantMensajesNoLeidosOtrosUsuarios,
+            (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
+                SELECT MAX(mj2.fecha_creacion)
+                FROM mensaje mj2
+                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+            )) AS cantMensajesNoLeidos
             from interconsulta ic $sqlFiltro
-            ORDER BY (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta) DESC,
-            FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'), cod_interConsulta DESC $limite";
+            ORDER BY 
+            (SELECT COUNT(mc.cod_mencion)
+            FROM menciones mc
+            JOIN mensaje mj 
+                ON mc.cod_mensajeFK = mj.cod_mensaje
+            WHERE mc.isLeido = 0
+                AND mc.cod_usuarioFK = 2
+                AND mj.cod_interConsultaFK = ic.cod_interConsulta
+                AND mj.fecha_creacion = (
+                    SELECT MAX(mj2.fecha_creacion)
+                    FROM mensaje mj2
+                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+                )
+            ) DESC,
+            FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'),
+            cod_interConsulta DESC $limite";
 
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);

@@ -15,7 +15,7 @@ function buscarPacientesConInterConsultas() {
     
     buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, 10, ocultar_inactivos);
 }
-var e;
+
 function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos) {
     let datos= new FormData();
     datos.append("useru", userid);
@@ -608,6 +608,7 @@ function subirImagenMensajeInterconsulta(cod_mens) {
 }
 
 function buscarInterConsultasYContenido() {
+    verCerrarEfectoCargando("1");
     // Obtiene tambien el listado de usuario
     buscarabmusuario2('', '', '', 'Activo', '');
 
@@ -927,7 +928,7 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
         document.getElementById("divAbmInterConsulta1").style.display="none";
         document.getElementById("divAbmInterConsulta2").style.display="none";
         document.getElementById("divAbmInterConsulta3").style.display= "none";
-        
+
         switch (ventana) {
             case 'detalle':
                 document.getElementById("divAbmInterConsulta2").style.display= "";
