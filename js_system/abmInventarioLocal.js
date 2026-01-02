@@ -48,6 +48,11 @@ function obtenerVistaInformeInsumoLocal() {
     datos.append("estado", estado);
     datos.append("limite", 10);
 
+    const ocultar_inactivo= document.getElementById('inptSeleccFiltroEstadoInactivoArticuloLocal').checked;
+    if (ocultar_inactivo) {
+        datos.append("ocultar_inactivo", ocultar_inactivo);
+    }
+
     // Limpiar opciones de seleccionado
     document.getElementById('btnEditarInventarioLocal').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarInventarioLocal').disabled= true;
@@ -142,6 +147,11 @@ function obtenermasVistaInformeInsumoLocal() {
     datos.append("cod_localFK", local);
     datos.append("estado", estado);
     datos.append("limite", "10 OFFSET "+registrocargadoInsumoLocal);
+
+    const ocultar_inactivo= document.getElementById('inptSeleccFiltroEstadoInactivoArticuloLocal').checked;
+    if (ocultar_inactivo) {
+        datos.append("ocultar_inactivo", ocultar_inactivo);
+    }
 
     var OpAjax = $.ajax({
 		data: datos,

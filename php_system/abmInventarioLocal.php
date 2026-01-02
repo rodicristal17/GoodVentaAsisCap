@@ -51,11 +51,13 @@
                 $nombre= isset($_POST['nombre']) ? utf8_decode($_POST['nombre']) : null;
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $ocultar_inactivo= isset($_POST['ocultar_inactivo']) ? utf8_decode($_POST['ocultar_inactivo']) : null;
 
                 $filtros= array(
                     'cod_insumo'=> $cod_inventario,
                     'nombre'=> $nombre,
                     'estado'=> $estado,
+                    'ocultar_inactivo'=> $ocultar_inactivo,
                     'cod_localFK'=> $cod_localFK
                 );
 
@@ -140,6 +142,9 @@
                     break;
                 case 'estado':
                     $sqlFiltro .= "il.estado = '$value'";
+                    break;
+                case 'ocultar_inactivo':
+                    $sqlFiltro .= "il.estado != 'inactivo'";
                     break;
                 default:
                     if (is_numeric($value)) {
