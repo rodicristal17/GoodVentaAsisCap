@@ -211,22 +211,18 @@
                 
                 foreach ($registrosMenc as $valueMenc) {
                     if (!in_array($valueMenc['nombre_persona'], $menciones)) {
-                        $backColor= "#f2f2f2";
-                        $color= "inehrit";
-                        if ($valueMenc['isLeido'] == 1) {
-                            $backColor= "#0cdd23";
-                            $color= "black";
-                        }
                         $mencionesElemento .= '<li style="
-                            background-color: '.$backColor.';
-                            color: '.$color.';
+                            background-color: #f2f2f2;
                             text-align: left;
                             margin-bottom:4px;
                             padding:5px 10px;
                             border-radius:4px;
                             font-size:13px;
-                            display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "" : "none").';
-                        ">'.$valueMenc['nombre_persona'].'</li>';
+                            display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
+                            justify-content: space-between;
+                        ">'.$valueMenc['nombre_persona'].
+                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
+                        '</li>';
                         $menciones[] = $valueMenc['nombre_persona'];
                     }
                 }
