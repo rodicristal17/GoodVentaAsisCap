@@ -667,6 +667,11 @@ function buscarInterConsultasYContenido() {
 				} else {
                     throw new Error("Error producido en buscarInterConsultas de JavaScript.");
                 }
+
+                // Limpia campos
+                fotoMensajeInterconsulta= "";
+                extMensajeInterconsulta= "";
+
                 verCerrarEfectoCargando("");
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
