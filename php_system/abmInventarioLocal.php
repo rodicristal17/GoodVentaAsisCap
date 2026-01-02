@@ -158,7 +158,7 @@
         }
 
         $sql= "SELECT il.* , l.Nombre as nombreLocal FROM insumos_local il JOIN local l ON l.cod_local = il.cod_localFK
-            $sqlFiltro ORDER BY il.nombre ASC $limite";
+            $sqlFiltro ORDER BY il.cod_insumo ASC $limite";
 
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
