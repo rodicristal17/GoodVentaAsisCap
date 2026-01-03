@@ -45,6 +45,7 @@
                 $nombre_cliente= isset($_POST['nombre_cliente']) ? utf8_decode($_POST['nombre_cliente']) : null;
                 $nombre_responsable= isset($_POST['nombre_responsable']) ? utf8_decode($_POST['nombre_responsable']) : null;
                 $ocultar_inactivos= isset($_POST['ocultar_inactivos']) ? utf8_decode($_POST['ocultar_inactivos']) : null;
+                $usuario_vinculado= isset($_POST['usuario_vinculado']) ? utf8_decode($_POST['usuario_vinculado']) : null;
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -56,7 +57,8 @@
                     'cod_usuarioFK'=> $cod_usuarioFK,
                     'nombre_cliente'=> $nombre_cliente,
                     'nombre_responsable'=> $nombre_responsable,
-                    'ocultar_inactivos'=> $ocultar_inactivos
+                    'ocultar_inactivos'=> $ocultar_inactivos,
+                    'usuario_vinculado'=> $usuario_vinculado
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
@@ -306,7 +308,7 @@
             $pagina .= '<div class="sugerencias-container" style="display: grid;justify-content: flex-end;">
                     <div class="card my-3" style="border-left: 5px solid #8BC34A;width: 500px;">
                       <div class="card-header d-flex justify-content-between align-items-center">
-                          <span>'.$nombre_usuario.'</span>
+                          <span>'.utf8_encode($nombre_usuario).'</span>
                           <small class="text-secondary">
                             <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje'.$valueInter['cod_interConsulta'].'" value="'.$fechaActual.'" style="margin-bottom: 5px;">
                           </small>
@@ -324,7 +326,7 @@
                     </div>
                   </div>';
             $pagina .= '</div>';
-        }
+        }   
 
         echo json_encode(array("1" => "exito", "2" => $pagina));
     }
@@ -967,6 +969,9 @@
                         (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK)
                     ) LIKE '%$value%'";
                     break;
+                case 'usuario_vinculado':
+                    $sqlFiltro .= "EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)";
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "ic.$key = $value";
@@ -1031,7 +1036,7 @@
             echo "Error: ". mysqli_error($mysqli);
         }
         if ( !$stmt->execute()) {
-            $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);
+            $informacion =array("1" => "error", "mensaje" => "Error: " . $stmt->error, "sql" => $sql);
             echo json_encode($informacion);	
             exit;
         }        

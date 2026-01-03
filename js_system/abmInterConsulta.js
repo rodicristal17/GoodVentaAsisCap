@@ -12,11 +12,12 @@ function buscarPacientesConInterConsultas() {
     const estado= document.getElementById('inptBuscarInterConsulta5').value;
     const tipo= document.getElementById('inptBuscarInterConsulta4').value;
     const ocultar_inactivos= document.getElementById('inptSeleccFiltroEstadoInterConsulta').checked;
+    const usuario_vinculado= document.getElementById('inptUsuariosInterConsulta').value;
     
-    buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, 10, ocultar_inactivos);
+    buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, 10, ocultar_inactivos, usuario_vinculado);
 }
 
-function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos) {
+function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -29,6 +30,7 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
     datos.append("nombre_cliente", nombre_cliente);
     datos.append("estado", estado);
     datos.append("tipo", tipo);
+    datos.append("usuario_vinculado", usuario_vinculado);
     datos.append("limite", limite);
 
     // Evalua si se ocultan los inactivos
@@ -102,7 +104,7 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
                     if(totalregistroproductos>registrocargadoproductos){
                         var porce=((registrocargadoproductos*100)/totalregistroproductos).toFixed(0)
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
-                        buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos);
+                        buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
                     }else{
                         controldebusquedadInformeInterConsulta=false
                     }
@@ -120,7 +122,7 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
 	});
 }
 
-function buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos) {
+function buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -133,6 +135,7 @@ function buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_
     datos.append("nombre_cliente", nombre_cliente);
     datos.append("estado", estado);
     datos.append("tipo", tipo);
+    datos.append("usuario_vinculado", usuario_vinculado);
     datos.append("limite", limite);
 
     if (!controldebusquedadInformeInterConsulta) {
@@ -609,8 +612,6 @@ function subirImagenMensajeInterconsulta(cod_mens) {
 
 function buscarInterConsultasYContenido() {
     verCerrarEfectoCargando("1");
-    // Obtiene tambien el listado de usuario
-    buscarabmusuario2('', '', '', 'Activo', '');
 
     obtener_datos_user()
 	var datos = new FormData();
@@ -939,6 +940,9 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
                 document.getElementById("divAbmInterConsulta2").style.display= "";
                 break;
             case 'listado':
+                // Obtiene tambien el listado de usuario
+                buscarabmusuario2('', '', '', 'Activo', '');
+
                 document.getElementById("divAbmInterConsulta").style.display="";
                 buscarPacientesConInterConsultas();
                 document.getElementById("divAbmInterConsulta1").style.display= "";
@@ -960,7 +964,7 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
                 document.getElementById("divAbmInterConsulta2").style.display= "none";
                 break;
             case 'listado':
-			    buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true);
+			    buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
                 document.getElementById("divAbmInterConsulta").style.display="none";
                 document.getElementById("divAbmInterConsulta1").style.display= "none";
                 break
