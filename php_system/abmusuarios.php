@@ -530,7 +530,8 @@ pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona ".$sqlFiltro;
  
-$pagina = "";   
+$pagina = "";
+$paginaSelect= "";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
@@ -587,6 +588,8 @@ $fecha_creacion = utf8_encode($valor['fecha_creacion']);
 </tr>
 </table>";
 
+$paginaSelect .= '<option value="'.$cod_usuario.'">'.$nombre_persona.'</option>';
+
 $registros[] = array(
 	'cod_usuario' => $cod_usuario,
 	'rut_usuario' => $rut_usuario,
@@ -609,7 +612,7 @@ $registros[] = array(
 }
 
 
-$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro, "4" => $registros);
+$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro, "4" => $registros, "5" => $paginaSelect);
 echo json_encode($informacion);	
 exit;
 }

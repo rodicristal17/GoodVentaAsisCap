@@ -263,7 +263,7 @@ window.onload = function () {
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
 			buscarSugerencias();
-			buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true);
+			buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
 			// buscarproductosDescuento()
 
 		}
@@ -461,7 +461,7 @@ buscarobtenerPacientes()
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
 buscarSugerencias()
-buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true);
+buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
 
 
 var saludo=localStorage.getItem("saludo"+userid);
@@ -1300,6 +1300,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 		var Respuesta = responseText;
 		console.log(Respuesta)
 		document.getElementById("table_abm_usuarios").innerHTML = ''
+		document.getElementById("inptUsuariosInterConsulta").innerHTML = '';
 		try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -1307,6 +1308,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					document.getElementById("table_abm_usuarios").innerHTML = datos_buscados
+					document.getElementById("inptUsuariosInterConsulta").innerHTML = "<option value=''>Todos</option>"+datos[5];
 					
 					// Se completa la lista de usuarios para usar en interConsulta
 					registroUsuariosInterconsulta= {}
