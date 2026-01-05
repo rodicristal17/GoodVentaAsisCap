@@ -1,3 +1,24 @@
+function mostrarItemsZona(opcion) {
+	switch (opcion) {
+		case 'GastosOperativos':
+        	if(controlacceso("VERGASTOSZONAOPERATIVOS","accion")==false){return;}
+			break;
+		case 'CostosDirectos':
+			if(controlacceso("VERGASTOSZONACOSTOSDIRECTOS","accion")==false){return;}
+			break;
+		case 'Ingreso':
+			if(controlacceso("VERGASTOSZONAINGRESOS","accion")==false){return;}
+			break;
+		default:
+			return;
+			break;
+	}
+	const zona= document.getElementById('zonaGastos'+opcion);
+	
+	// Despliega o oculta segun el estado actual
+	bootstrap.Collapse.getOrCreateInstance(zona).toggle();
+}
+
 function verCerrarAbmGasto(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmGastos").style.display==""){
@@ -607,12 +628,16 @@ function verCerrarAbmNuevoMotivo(){
 function VerificarDatosMotivoEgresoIngreso() {
 	var inptNuevoMotivo = document.getElementById('inptNuevoMotivoEgresoIngreso').value
 	var inptEstadoMotivoEgresoIngreso = document.getElementById('inptEstadoMotivoEgresoIngreso').value
+	const inptCategoriaMotivoEgresoIngreso = document.getElementById('inptCategoriaMotivoEgresoIngreso').value;
 	
 	if (inptNuevoMotivo == "") {
 		ver_vetana_informativa("FALTO AGREGAR NUEVO MOTIVO", "#")
 		return false;
-	}	
-
+	}
+	if (!inptCategoriaMotivoEgresoIngreso) {
+		ver_vetana_informativa("FALTO SELECCIONAR LA CATEGORIA", "#");
+		return false;
+	}
 
 	if(idAbmMotivoEgresoIngreso != ''){
 		accion = "editarMotivo";
@@ -620,10 +645,9 @@ function VerificarDatosMotivoEgresoIngreso() {
 		accion = "NuevoMotivo";
 	}
 		
-	
-	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, accion);
+	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, accion);
 }
-function abmNuevoMotivo(motivo, estado , accion) {
+function abmNuevoMotivo(motivo, estado , categoria, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -633,8 +657,8 @@ function abmNuevoMotivo(motivo, estado , accion) {
 	datos.append("funt", accion)
 	datos.append("motivo", motivo)
 	datos.append("estado", estado)
+	datos.append("categoria", categoria);
 	datos.append("idabm", idAbmMotivoEgresoIngreso)
-
 
 	var OpAjax = $.ajax({
 		data: datos,
@@ -788,13 +812,15 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
 	datostr.className = 'tableRegistroSelec'
     document.getElementById("inptNuevoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_1"]').html();
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_2"]').html();
+    document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html();
 	idAbmMotivoEgresoIngreso= $(datostr).children('td[id="td_id"]').html();
      document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos"
 }
 
 function limpiarcamposmotivoegresoingreso(){
 	  document.getElementById("inptNuevoMotivoEgresoIngreso").value = ''
-    document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'Activo'
+	  document.getElementById("inptCategoriaMotivoEgresoIngreso").value = '';
+    document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'activo'
 	idAbmMotivoEgresoIngreso=''
      document.getElementById("btnMotivoIngresoEgreso").value="Guardar"
 }

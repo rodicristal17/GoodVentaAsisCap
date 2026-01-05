@@ -138,7 +138,26 @@ CREATE TABLE menciones (
 ALTER TABLE interconsulta CHANGE tipo tipo ENUM('clinico','administrativo','interno'); 
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.51', detalles='Implementacion Interconsulta', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
+
+
+-- Eliminar motivos duplicados
+UPDATE gastos SET cod_motivoIngresoEgresoFK= 17 WHERE cod_motivoIngresoEgresoFK = 13;
+UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 13;
+UPDATE gastos SET cod_motivoIngresoEgresoFK= 10 WHERE cod_motivoIngresoEgresoFK = 22;
+UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 22;
+UPDATE gastos SET cod_motivoIngresoEgresoFK= 29 WHERE cod_motivoIngresoEgresoFK = 30;
+UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 30;
+UPDATE gastos SET cod_motivoIngresoEgresoFK= 54 WHERE cod_motivoIngresoEgresoFK = 61;
+UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 61;
+UPDATE gastos SET cod_motivoIngresoEgresoFK= 26 WHERE cod_motivoIngresoEgresoFK = 69;
+UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 69;
+UPDATE gastos SET cod_motivoIngresoEgresoFK= 34 WHERE cod_motivoIngresoEgresoFK = 84;
+UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 84;
+
+ALTER TABLE motivos_ingreso_egreso ADD COLUMN categoria ENUM('directo', 'ingreso', 'operativo');
+
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
 -- EDITARLISTADOINVENTARIOLOCAL, VERLISTADOINVENTARIOLOCAL, CREARLISTADOINVENTARIOLOCAL
+-- VERGASTOSZONAOPERATIVOS, VERGASTOSZONACOSTOSDIRECTOS,VERGASTOSZONAINGRESOS

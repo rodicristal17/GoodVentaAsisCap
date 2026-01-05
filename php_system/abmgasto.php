@@ -218,7 +218,10 @@ $motivo = utf8_decode($motivo);
 $estado=$_POST['estado'];
 $estado = utf8_decode($estado);
 
-	NuevoMotivo($motivo,$estado);
+$categoria=$_POST['categoria'];
+$categoria = utf8_decode($categoria);
+
+	NuevoMotivo($motivo,$estado,$categoria);
 
 }
 
@@ -233,7 +236,10 @@ $estado = utf8_decode($estado);
 $idabm=$_POST['idabm'];
 $idabm = utf8_decode($idabm);
 
-	editarMotivo($motivo,$estado,$idabm);
+$categoria=$_POST['categoria'];
+$categoria = utf8_decode($categoria);
+
+	editarMotivo($motivo,$estado,$categoria,$idabm);
 
 }	
 
@@ -892,7 +898,7 @@ function buscarabmmotivoingresoegreso($buscar,$Estado)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select cod_motivo_ingreso_egreso,descripcion,Estado
+		$sql= "Select *
         from motivos_ingreso_egreso where descripcion like ?  and Estado=? order by descripcion asc ";
 		
  
@@ -919,16 +925,17 @@ if ( ! $stmt->execute()) {
 	  {		  
 		      $cod_motivo_ingreso_egreso=$valor['cod_motivo_ingreso_egreso'];
 		  	  $descripcion=utf8_encode($valor['descripcion']);
-		  	  $Estado=utf8_encode($valor['Estado']);
-
+		  	  $estado=utf8_encode($valor['estado']);
+			  $categoria= utf8_encode($valor['categoria']);
 		  	 
 			  $styleName=CargarStyleTable($styleName);
 			  $pagina.="
 			  <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 			  <tr id='tbSelecRegistro' onclick='ObtenerdatosAbmMotivoEgresoIngreso(this)'>
 			  <td id='td_id' style='display:none;'>".$cod_motivo_ingreso_egreso."</td>
-			  <td id='td_datos_1'style='width:25%' class='tdRegistroSearch' >".$descripcion."</td>
-			   <td  id='td_datos_2' style='display:none'>".$Estado."</td>
+			  <td id='td_datos_1'style='width:60%' class='tdRegistroSearch' >".$descripcion."</td>
+			   <td  id='td_datos_2' style='display:none'>".$estado."</td>
+			   <td id='td_datos_3' style='width:40%' class='tdRegistroSearch' >".ucfirst($categoria)."</td>
 			  </tr>
 			  </table>";
 	  }
@@ -940,7 +947,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function NuevoMotivo($motivo,$estado)
+function NuevoMotivo($motivo,$estado,$categoria)
 {
 	
 if($motivo==""   ){
@@ -951,10 +958,10 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado) values (upper(?),'$estado')";
+$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria) values (upper(?),?, ?)";
 $stmt = $mysqli->prepare($consulta1);
-$ss='s';
-$stmt->bind_param($ss,$motivo);
+$ss='sss';
+$stmt->bind_param($ss,$motivo,$estado,$categoria);
 
 if (!$stmt->execute()) {
 	echo "$consulta1\n$motivo\n";
@@ -968,7 +975,7 @@ exit;
 	
 }
 
-function editarMotivo($motivo,$estado,$idabm)
+function editarMotivo($motivo,$estado,$categoria,$idabm)
 {
 	
 if($motivo==""   ){
@@ -979,7 +986,7 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="update motivos_ingreso_egreso SET descripcion = upper('$motivo'), estado ='$estado' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$consulta1="update motivos_ingreso_egreso SET descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {
