@@ -835,6 +835,7 @@
             ) AS subquery ORDER BY fecha_creacion ASC, cod_mensaje ASC";
 
         $mysqli=conectar_al_servidor();
+
         $stmt = $mysqli->prepare($sql);
         if ( !$stmt->execute()) {
             $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);
@@ -844,12 +845,20 @@
 
         $result = $stmt->get_result();
         $registros= array();
+        // Reemplaza el bucle while en obtenerMensaje con esto SOLO si tienes datos mixtos:
         while ($row = $result->fetch_assoc()) {
+            $reg = array();
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                // Solo codificar si NO es UTF-8 válido
+                if (!mb_check_encoding($value, 'UTF-8')) {
+                    $reg[$key] = utf8_encode($value);
+                } else {
+                    $reg[$key] = $value;
+                }
             }
             $registros[] = $reg;
         }
+
 
         $stmt->close();
         return $registros;
@@ -986,7 +995,7 @@
                     $sqlFiltro .= "EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)";
                     break;
                 case 'fecha_limite':
-                    $sqlFiltroMenciones .= " AND DATE(mj.fecha_creacion) > '$value' ";
+                    $sqlFiltroMenciones .= " AND mj.fecha_creacion <= '$value' ";
                     break;
                 default:
                     if (is_numeric($value)) {
