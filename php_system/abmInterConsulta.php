@@ -22,6 +22,7 @@
             exit;
         }
 
+        $fechaActual= new DateTime();
         switch ($funt) {
             case 'buscarInterConsultaPorPaciente':
                 $paciente= isset($_POST['paciente']) ? utf8_decode($_POST['paciente']) : null;
@@ -58,7 +59,8 @@
                     'nombre_cliente'=> $nombre_cliente,
                     'nombre_responsable'=> $nombre_responsable,
                     'ocultar_inactivos'=> $ocultar_inactivos,
-                    'usuario_vinculado'=> $usuario_vinculado
+                    'usuario_vinculado'=> $usuario_vinculado,
+                    'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
                 $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
@@ -93,7 +95,6 @@
             case 'marcarMensajesLeido':
                 $cod_interConsulta= utf8_decode($_POST['cod_interConsulta']);
 
-                $fechaActual= new DateTime();
                 $registrosMens= obtenerMensaje(array(
                     'cod_interConsultaFK' => $cod_interConsulta,
                     'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
@@ -190,7 +191,7 @@
         $registrosInterc= obtenerInterConsulta(array(
             "cod_ventaFK" => $filtros['cod_ventaFK'],
             "cod_usuarioFK" => $filtros['cod_usuarioFK'],
-            "cod_interConsulta" => $filtros['cod_interConsulta']
+            "cod_interConsulta" => $filtros['cod_interConsulta'],
         ), $limite);
 
         foreach ($registrosInterc as $valueInter) {
@@ -939,16 +940,18 @@
         foreach ($filtros as $key => $value) {
             if (empty($value)) {continue;}
 
-            if ($sqlFiltro == "") {
-                $sqlFiltro .= "WHERE ";
-            } else {
-                $sqlFiltro .= " AND ";
+            if ($key != 'fecha_limite') {
+                if ($sqlFiltro == "") {
+                    $sqlFiltro .= "WHERE ";
+                } else {
+                    $sqlFiltro .= " AND ";
+                }
             }
 
             switch ($key) {
                 case 'cod_usuarioFK':
                     $sqlFiltro .= "(ic.cod_usuarioFK_create = $value OR EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value))";
-                    $sqlFiltroMenciones = "AND mc.cod_usuarioFK = $value";
+                    $sqlFiltroMenciones = " AND mc.cod_usuarioFK = $value ";
                     break;
                 case 'cod_interConsulta':
                     $sqlFiltro .= "ic.cod_interConsulta = $value";
@@ -971,6 +974,9 @@
                     break;
                 case 'usuario_vinculado':
                     $sqlFiltro .= "EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)";
+                    break;
+                case 'fecha_limite':
+                    $sqlFiltroMenciones .= " AND DATE(mj.fecha_creacion) > '$value' ";
                     break;
                 default:
                     if (is_numeric($value)) {
@@ -1013,19 +1019,11 @@
             )) AS cantMensajesNoLeidos
             from interconsulta ic $sqlFiltro
             ORDER BY 
-            (SELECT COUNT(mc.cod_mencion)
-            FROM menciones mc
-            JOIN mensaje mj 
-                ON mc.cod_mensajeFK = mj.cod_mensaje
-            WHERE mc.isLeido = 0
-                AND mc.cod_usuarioFK = 2
-                AND mj.cod_interConsultaFK = ic.cod_interConsulta
-                AND mj.fecha_creacion = (
-                    SELECT MAX(mj2.fecha_creacion)
-                    FROM mensaje mj2
-                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
-                )
-            ) DESC,
+            (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
+                SELECT MAX(mj2.fecha_creacion)
+                FROM mensaje mj2
+                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+            )) DESC,
             FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'),
             cod_interConsulta DESC $limite";
 

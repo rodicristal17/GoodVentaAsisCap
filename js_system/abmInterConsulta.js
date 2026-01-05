@@ -103,6 +103,7 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
                     totalregistroinformeInterConsulta= Number(datos["5"]);
                     if(totalregistroproductos>registrocargadoproductos){
                         var porce=((registrocargadoproductos*100)/totalregistroproductos).toFixed(0)
+                        document.getElementById("tbProcessInformeInterConsulta").style.display=""
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
                         buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
                     }else{

@@ -219,9 +219,13 @@ window.onload = function () {
 				// Filtrar usuarios
 				const sugerencias = Object.entries(registroUsuariosInterconsulta)
 					.filter(([id, nombre]) => nombre.toLowerCase().includes(textoBusqueda));
-				
+					
 				// Aquí podrías renderizar un menú debajo del textarea
 				mostrarOpcionesUsuariosMenciones(e.target, sugerencias);
+				document.getElementById('dropdown-menciones').style.display= "";
+			} else {
+				// Ocultar menú cuando no hay @ al final
+				document.getElementById('dropdown-menciones').style.display= "none";
 			}
 		}
 	});
@@ -536,7 +540,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 
 
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.50"
+var codigodeactualizacion="X-GT-1-JMTG-V1.51"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();

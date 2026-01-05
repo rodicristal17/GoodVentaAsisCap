@@ -116,7 +116,7 @@ CREATE TABLE interconsulta (
 
 CREATE TABLE mensaje (
     cod_mensaje INT PRIMARY KEY AUTO_INCREMENT,
-    contenido VARCHAR(255) NOT NULL,
+    contenido VARCHAR(500) NOT NULL,
     url VARCHAR(100),
     estado ENUM('activo', 'inactivo') DEFAULT 'activo',
     cod_interConsultaFK INT,
@@ -137,6 +137,7 @@ CREATE TABLE menciones (
 
 ALTER TABLE interconsulta CHANGE tipo tipo ENUM('clinico','administrativo','interno'); 
 
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.51', detalles='Implementacion Interconsulta', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
