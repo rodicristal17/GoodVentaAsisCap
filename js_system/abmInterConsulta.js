@@ -101,10 +101,12 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
                     registrocargadoInterConsulta= Number(datos["4"]);
                     registroInterConsultaAbierta= Number(datos["7"]);
                     totalregistroinformeInterConsulta= Number(datos["5"]);
-                    if(totalregistroproductos>registrocargadoproductos){
-                        var porce=((registrocargadoproductos*100)/totalregistroproductos).toFixed(0)
+                    if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
+                        var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                         document.getElementById("tbProcessInformeInterConsulta").style.display=""
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
+
+                        controldebusquedadInformeInterConsulta=true
                         buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
                     }else{
                         controldebusquedadInformeInterConsulta=false
@@ -184,30 +186,23 @@ function buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_
 		success: function (responseText) {
 			Respuesta = responseText;
 			console.log(Respuesta)
+            
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta) {
-					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
-                    if (datos["6"] > 0) {
-                        document.getElementById('avisoMensajesPendientes').style.display= "";
-                    } else {
-                        document.getElementById('avisoMensajesPendientes').style.display= "none";
-                    }
-
                     registrocargadoInterConsulta += Number(datos["4"]);
                     registroInterConsultaAbierta += Number(datos["7"]);
-                    if(totalregistroproductos>registrocargadoproductos){
-                        var porce=((registrocargadoproductos*100)/totalregistroproductos).toFixed(0)
+                    if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
+                        var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
-					    document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML . datos["2"];
-                        buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos);
-					 }else{
+					    document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML + datos["2"];
+                        buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
+                    }else{
                         document.getElementById("tbProcessInformeInterConsulta").style.display="none"
                         controldebusquedadInformeInterConsulta=false
-					 }
-
+                    }
                     // Completa los contadores
                     document.getElementById('inptRegistoCargadoInterConsulta').value= registrocargadoInterConsulta;
                     document.getElementById('inptRegistoInterConsultaAbierta').value= registroInterConsultaAbierta;
@@ -892,7 +887,10 @@ function obtenerDatosInterConsulta(elemento) {
     cod_interConsulta= $(elemento).children('#td_id').html();
     cod_ventaFKConsulta= $(elemento).children('#td_datos_7').html();
     document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
-    document.getElementById('tituloInterConsultas').innerHTML= cod_ventaFKConsulta ? "InterConsultas - "+$(elemento).children('#td_datos_5').html()+" - "+cod_clienteFK : "InterConsultas";
+    document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
+    if (cod_ventaFKConsulta) {
+        document.getElementById('tituloInterConsultas').innerHTML += " y " + cod_ventaFKConsulta;
+    }
 
     verCerrarVentanaInterConsulta(true, 'detalle');
     buscarInterConsultasYContenido();

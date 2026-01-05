@@ -279,10 +279,20 @@
             <span id="td_datos_3" class="badge badge-secondary text-uppercase">'.$valueInter['tipo'].'</span>
             </div>
             <div style="margin-bottom: 5px;">
-            <span class="fw-bold">Cod. Cliente:</span>
-            <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_clienteFK'].'</span>
-            </div>
-            </div>
+                <span class="fw-bold">Cod. InterConsulta:</span>
+                <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_interConsulta'].'</span>
+            </div>';
+            if ($valueInter['tipo'] != 'interno') {
+                $pagina .= '<div style="margin-bottom: 5px;">
+                <span class="fw-bold">Cod. Cliente:</span>
+                <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_clienteFK'].'</span>
+                </div>
+                <div style="margin-bottom: 5px;">
+                <span class="fw-bold">Cod. Venta:</span>
+                <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_ventaFK'].'</span>
+                </div>';
+            }
+            $pagina .= '</div>
             </div>
             <div style="display: none;">
             <span id="td_datos_1">'.$valueInter['asunto'].'</span>
@@ -329,7 +339,7 @@
             $pagina .= '</div>';
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta']));
     }
 
     function buscarVistaPacienteConInterConsulta($filtros= array(), $limite= 0) {
