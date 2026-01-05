@@ -524,8 +524,8 @@
 
             $miniatura_imagen= "";
             if ($valueMens['url']) {
-                $miniatura_imagen= '<div id="imgfotoMensajeInterconsulta" class="imgFotoProducto" 
-                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta\', false)" style="background-image: url('.$valueMens['url'].');margin-right: 5px;">
+                $miniatura_imagen= '<div id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto" 
+                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" style="background-image: url('.$valueMens['url'].');margin-right: 5px;">
                     </div>';
             }
             
