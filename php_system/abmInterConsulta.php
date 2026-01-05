@@ -205,29 +205,29 @@
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta']
             ));
             
+            $ultimoMensaje= end($registrosMens);
+
             $paginaMensajes= "";
-            foreach ($registrosMens as $key => $valueMens) {
-                // Obtiene todas las meciones
-                $registrosMenc= obtenerMencion(array(
-                    'cod_mensajeFK' => $valueMens['cod_mensaje']
-                ), 0);
-                
-                foreach ($registrosMenc as $valueMenc) {
-                    if (!in_array($valueMenc['nombre_persona'], $menciones)) {
-                        $mencionesElemento .= '<li style="
-                            background-color: #f2f2f2;
-                            text-align: left;
-                            margin-bottom:4px;
-                            padding:5px 10px;
-                            border-radius:4px;
-                            font-size:13px;
-                            display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
-                            justify-content: space-between;
-                        ">'.$valueMenc['nombre_persona'].
-                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
-                        '</li>';
-                        $menciones[] = $valueMenc['nombre_persona'];
-                    }
+            // Obtiene todas las menciones
+            $registrosMenc= obtenerMencion(array(
+                'cod_mensajeFK' => $ultimoMensaje['cod_mensaje']
+            ), 0);
+
+            foreach ($registrosMenc as $valueMenc) {
+                if (!in_array($valueMenc['nombre_persona'], $menciones)) {
+                    $mencionesElemento .= '<li style="
+                        background-color: #f2f2f2;
+                        text-align: left;
+                        margin-bottom:4px;
+                        padding:5px 10px;
+                        border-radius:4px;
+                        font-size:13px;
+                        display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
+                        justify-content: space-between;
+                    ">'.$valueMenc['nombre_persona'].
+                    (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
+                    '</li>';
+                    $menciones[] = $valueMenc['nombre_persona'];
                 }
             }
 
@@ -282,7 +282,7 @@
                 <span class="fw-bold">Cod. InterConsulta:</span>
                 <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_interConsulta'].'</span>
             </div>';
-            if ($valueInter['tipo'] != 'interno') {
+            if ($valueInter['tipo'] != 'interno' && $valueInter['tipo'] != 'resolucion') {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Cod. Cliente:</span>
                 <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_clienteFK'].'</span>
