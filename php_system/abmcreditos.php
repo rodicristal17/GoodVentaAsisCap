@@ -995,7 +995,7 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 	$fechaInicio = $iniciopago;
 	$cantidad = $nroCuota;
 	$pendiente = buscartotalventa($cod_venta);
-	$pendiente = $pendiente - $entrega;
+	$pendiente = ($pagoentrega == "SI") ? $pendiente - $entrega : $pendiente;
 	
 	$fecha = strtotime($iniciopago);
 	
@@ -1116,6 +1116,7 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 				echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 				exit;
 			}
+			$i++;
 		}
 	}
 	
