@@ -204,30 +204,32 @@
                 'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta']
             ));
-            
-            $ultimoMensaje= end($registrosMens);
 
-            $paginaMensajes= "";
-            // Obtiene todas las menciones
-            $registrosMenc= obtenerMencion(array(
-                'cod_mensajeFK' => $ultimoMensaje['cod_mensaje']
-            ), 0);
-
-            foreach ($registrosMenc as $valueMenc) {
-                if (!in_array($valueMenc['nombre_persona'], $menciones)) {
-                    $mencionesElemento .= '<li style="
-                        background-color: #f2f2f2;
-                        text-align: left;
-                        margin-bottom:4px;
-                        padding:5px 10px;
-                        border-radius:4px;
-                        font-size:13px;
-                        display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
-                        justify-content: space-between;
-                    ">'.$valueMenc['nombre_persona'].
-                    (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
-                    '</li>';
-                    $menciones[] = $valueMenc['nombre_persona'];
+            if (count($registrosMens) > 0) {
+                $ultimoMensaje= end($registrosMens);
+    
+                $paginaMensajes= "";
+                // Obtiene todas las menciones
+                $registrosMenc= obtenerMencion(array(
+                    'cod_mensajeFK' => $ultimoMensaje['cod_mensaje']
+                ), 0);
+    
+                foreach ($registrosMenc as $valueMenc) {
+                    if (!in_array($valueMenc['nombre_persona'], $menciones)) {
+                        $mencionesElemento .= '<li style="
+                            background-color: #f2f2f2;
+                            text-align: left;
+                            margin-bottom:4px;
+                            padding:5px 10px;
+                            border-radius:4px;
+                            font-size:13px;
+                            display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
+                            justify-content: space-between;
+                        ">'.$valueMenc['nombre_persona'].
+                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
+                        '</li>';
+                        $menciones[] = $valueMenc['nombre_persona'];
+                    }
                 }
             }
 
