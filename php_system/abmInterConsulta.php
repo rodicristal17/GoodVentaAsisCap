@@ -286,10 +286,6 @@
             </div>';
             if ($valueInter['tipo'] == 'clinico' || $valueInter['tipo'] == 'administrativo') {
                 $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Cod. Cliente:</span>
-                <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_clienteFK'].'</span>
-                </div>
-                <div style="margin-bottom: 5px;">
                 <span class="fw-bold">Cod. Venta:</span>
                 <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_ventaFK'].'</span>
                 </div>';
