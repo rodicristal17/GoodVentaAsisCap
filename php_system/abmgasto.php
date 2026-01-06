@@ -363,6 +363,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,url1,
 	(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
 	(Select descripcion from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS motivo,
+	(Select categoria from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS categoria,
 	(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
 	from gastos g where  estado='$estado' ".$sqlFiltro;
 
@@ -372,7 +373,16 @@ if ( ! $stmt->execute()) {
    echo "Error";
    exit;
 }
- 
+
+$totalZonaIngresos= 0;
+$totalZonaCostosDirectos= 0;
+$totalZonaGastosOperativos= 0;
+$totalZonaSinCategorizar= 0;
+
+$elementosZonaIngresos= "";
+$elementosZonaCostosDirectos= "";
+$elementosZonaGastosOperativos= "";
+
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
  $nroRegistro= $valor;
@@ -383,7 +393,6 @@ if ( ! $stmt->execute()) {
  {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
-		  
 		  
 		      $idgastos=$valor['idgastos'];
 		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
@@ -400,40 +409,132 @@ if ( ! $stmt->execute()) {
 		  	  $nrocuenta=utf8_encode($valor['nrocuenta']);
 			  $arreglo=utf8_encode($valor['arreglo']);
 			  $url1=utf8_encode($valor['url1']);
+			  $categoria=utf8_encode($valor['categoria']);
 			  
 		  	 $totalGasto=$totalGasto+$monto;
-		  	 
 			    	 
 		  	  $styleName=CargarStyleTable($styleName);
-			  $pagina.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
-<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
-<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
-<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
-<td  id='td_datos_9' style='width:10%'>".$banco."</td>
-<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
-<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
-<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
-<td  id='' style='width:10%'>".$nombrelocal."</td>
-<td  id='td_datos_5' style='display:none'>".$estado."</td>
-<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
-<td  id='td_datos_12' style='display:none'>".$url1."</td>
-<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
-<td  id='td_datos_14' style='display:none'>".$motivo."</td>
-</tr>
-</table>";
-			  
-			  
+		
+		switch ($categoria) {
+			case 'ingreso':
+				$totalZonaIngresos += $monto;
+				$elementosZonaIngresos .= "<li class='list-group-item'>
+					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
+					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='' style='width:10%'>".$nombrelocal."</td>
+					<td  id='td_datos_5' style='display:none'>".$estado."</td>
+					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					</tr>
+					</table>
+				</li>";
+				break;
+			case 'directo':
+				$totalZonaCostosDirectos += $monto;
+				$elementosZonaCostosDirectos .= "<li class='list-group-item'>
+					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
+					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='' style='width:10%'>".$nombrelocal."</td>
+					<td  id='td_datos_5' style='display:none'>".$estado."</td>
+					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					</tr>
+					</table>
+				</li>";
+				break;
+			case 'operativo':
+				$totalZonaGastosOperativos += $monto;
+				$elementosZonaGastosOperativos .= "<li class='list-group-item'>
+					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
+					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='' style='width:10%'>".$nombrelocal."</td>
+					<td  id='td_datos_5' style='display:none'>".$estado."</td>
+					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					</tr>
+					</table>
+				</li>";
+				break;
+			default:
+				$totalZonaSinCategorizar += $monto;
+				$pagina.="
+					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
+					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='' style='width:10%'>".$nombrelocal."</td>
+					<td  id='td_datos_5' style='display:none'>".$estado."</td>
+					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					<td  id='td_datos_15' style='display:none'>".$categoria."</td>
+					</tr>
+					</table>";
+				break;
+		}
 	  }
  }
  
  
 /*Retornamos los datos obtenidos mediante el JSON */      
-$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4" =>  number_format($totalGasto,'0',',','.'));
+$informacion =array(
+	"1" => "exito",
+	"2" => $pagina,
+	"3" => $nroRegistro,
+	"4" => number_format($totalGasto,'0',',','.'),
+	"5" => number_format($totalZonaIngresos, '0', ',', '.'),
+	"6" => number_format($totalZonaCostosDirectos, '0', ',', '.'),
+	"7" => number_format($totalZonaGastosOperativos, '0', ',', '.'),
+	"8" => $elementosZonaIngresos,
+	"9" => $elementosZonaCostosDirectos,
+	"10" => $elementosZonaGastosOperativos,
+	"11" => number_format($totalZonaSinCategorizar, '0', ',', '.'),
+);
 echo json_encode($informacion);	
 exit;
 

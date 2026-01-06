@@ -9,9 +9,6 @@ function mostrarItemsZona(opcion) {
 		case 'Ingreso':
 			if(controlacceso("VERGASTOSZONAINGRESOS","accion")==false){return;}
 			break;
-		default:
-			return;
-			break;
 	}
 	const zona= document.getElementById('zonaGastos'+opcion);
 	
@@ -506,7 +503,6 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
        }
     });
 	
-	document.getElementById("table_abm_gasto").innerHTML = paginacargando
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -553,12 +549,18 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("table_abm_gasto").innerHTML = ''
+			document.getElementById("zonaGastosSinCategorizar").innerHTML = '';
+			document.getElementById("zonaGastosIngreso").innerHTML= '';
+			document.getElementById("zonaGastosCostosDirectos").innerHTML= '';
+			document.getElementById("zonaGastosGastosOperativos").innerHTML= '';
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("table_abm_gasto").innerHTML = ''
+			document.getElementById("zonaGastosSinCategorizar").innerHTML = '';
+			document.getElementById("zonaGastosIngreso").innerHTML= '';
+			document.getElementById("zonaGastosCostosDirectos").innerHTML= '';
+			document.getElementById("zonaGastosGastosOperativos").innerHTML= '';
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -573,10 +575,17 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
                   }
 				if (Respuesta == "exito") {
 					var datos_buscados = datos[2];
-					document.getElementById("table_abm_gasto").innerHTML = datos_buscados
+					document.getElementById("zonaGastosSinCategorizar").innerHTML = datos_buscados;
+					document.getElementById("tituloTotalSinCategorizar").innerHTML= datos[11];
 					document.getElementById("inptTotalGasto").value = datos[4];
 					document.getElementById("inptRegistroNroGastos").value = datos[3];
 					
+					document.getElementById("tituloTotalIngreso").innerHTML= datos[5];
+					document.getElementById("zonaGastosIngreso").innerHTML= datos[8];
+					document.getElementById("tituloTotalCostosDirectos").innerHTML= datos[6];
+					document.getElementById("zonaGastosCostosDirectos").innerHTML= datos[9];
+					document.getElementById("tituloTotalGastosOperativos").innerHTML= datos[7];
+					document.getElementById("zonaGastosGastosOperativos").innerHTML= datos[10];
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

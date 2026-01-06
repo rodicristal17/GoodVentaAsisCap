@@ -4504,46 +4504,8 @@ Activo</p>
 </table>
 </div>
 </div>
-<div class='divMenuf' style="display: none;">
-  <div class="card" style="width: 100%;">
-    <div id="btnTotalIngreso" class="card-header" type="button" onclick="mostrarItemsZona('Ingreso')">
-      <h4>Ingresos: <span id="tituloTotalIngreso"></span> Gs.</h4>
-    </div>
-    <div class="collapse" id="zonaGastosIngreso">
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
-      </ul>
-    </div>
-  </div>
-  <div class="card" style="width: 100%;">
-    <div id="btnTotalIngreso" class="card-header" type="button" onclick="mostrarItemsZona('CostosDirectos')">
-      <h4>Costos directos: <span id="tituloTotalCostosDirectos"></span> Gs.</h4>
-    </div>
-    <div class="collapse" id="zonaGastosCostosDirectos">
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
-      </ul>
-    </div>
-  </div>
-  <div class="card" style="width: 100%;">
-    <div id="btnTotalGastosOperativos" class="card-header" type="button" onclick="mostrarItemsZona('GastosOperativos')">
-      <h4>Gastos operativos: <span id="tituloTotalGastosOperativos"></span> Gs.</h4>
-    </div>
-    <div class="collapse" id="zonaGastosGastosOperativos">
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
-      </ul>
-    </div>
-  </div>
-</div>
 <div class='divMenuf'>
-<table class="tableCabeceraRegistro" id='tdTituloImpreGastos'>
+  <table class="tableCabeceraRegistro" id='tdTituloImpreGastos'>
 <tbody>
 <tr>
 <td class="td_registro" style="width:5%;">
@@ -4650,7 +4612,54 @@ id="inptlocalMisGastosBusca"></select>
 </tr>
 </tbody>
 </table>
-<div class="div_cuerpo_table" id="table_abm_gasto"></div>
+  <div class="card" style="width: 100%;">
+    <div id="btnTotalSinCategorizar" class="card-header" type="button" onclick="mostrarItemsZona('SinCategorizar')">
+      <h4>Sin categorizar: <span id="tituloTotalSinCategorizar"></span> Gs.</h4>
+    </div>
+    <div class="collapse" id="zonaGastosSinCategorizar">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">An item</li>
+        <li class="list-group-item">A second item</li>
+        <li class="list-group-item">A third item</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="width: 100%;">
+    <div id="btnTotalIngreso" class="card-header" type="button" onclick="mostrarItemsZona('Ingreso')" style="background-color: #28a745">
+      <h4>Ingresos: <span id="tituloTotalIngreso"></span> Gs.</h4>
+    </div>
+    <div class="collapse" id="zonaGastosIngreso">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">An item</li>
+        <li class="list-group-item">A second item</li>
+        <li class="list-group-item">A third item</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="width: 100%;">
+    <div id="btnTotalCostosDirectos" class="card-header" type="button" onclick="mostrarItemsZona('CostosDirectos')" style="background-color: rgb(243 156 51)"">
+      <h4>Costos directos: <span id="tituloTotalCostosDirectos"></span> Gs.</h4>
+    </div>
+    <div class="collapse" id="zonaGastosCostosDirectos">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">An item</li>
+        <li class="list-group-item">A second item</li>
+        <li class="list-group-item">A third item</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="width: 100%;">
+    <div id="btnTotalGastosOperativos" class="card-header" style="background-color: rgb(218 72 72)" type="button" onclick="mostrarItemsZona('GastosOperativos')">
+      <h4>Gastos operativos: <span id="tituloTotalGastosOperativos"></span> Gs.</h4>
+    </div>
+    <div class="collapse" id="zonaGastosGastosOperativos">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">An item</li>
+        <li class="list-group-item">A second item</li>
+        <li class="list-group-item">A third item</li>
+      </ul>
+    </div>
+  </div>
 </div>
 <div class='divMenuf'>
 <table style='width:100%'>

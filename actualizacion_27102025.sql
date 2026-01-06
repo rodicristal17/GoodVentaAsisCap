@@ -153,6 +153,8 @@ UPDATE gastos SET cod_motivoIngresoEgresoFK= 26 WHERE cod_motivoIngresoEgresoFK 
 UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 69;
 UPDATE gastos SET cod_motivoIngresoEgresoFK= 34 WHERE cod_motivoIngresoEgresoFK = 84;
 UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 84;
+UPDATE motivos_ingreso_egreso SET estado= 'inactivo' WHERE estado= '';
+
 
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN categoria ENUM('directo', 'ingreso', 'operativo');
 
