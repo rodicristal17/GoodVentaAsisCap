@@ -156,6 +156,8 @@ UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 8
 
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN categoria ENUM('directo', 'ingreso', 'operativo');
 
+UPDATE interconsulta SET tipo='pagos' WHERE tipo='resolucion';
+
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA

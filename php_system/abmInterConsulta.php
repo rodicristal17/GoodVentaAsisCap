@@ -284,7 +284,7 @@
                 <span class="fw-bold">Cod. InterConsulta:</span>
                 <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_interConsulta'].'</span>
             </div>';
-            if ($valueInter['tipo'] != 'interno' && $valueInter['tipo'] != 'resolucion') {
+            if ($valueInter['tipo'] == 'clinico' || $valueInter['tipo'] == 'administrativo') {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Cod. Cliente:</span>
                 <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_clienteFK'].'</span>
