@@ -530,11 +530,16 @@ function marcarMensajeLeido(elemento) {
 }
 
 function limpiarcamposMensaje(codInterconsulta) {
-    const fechaActual= new Date();
-    document.getElementById('inptFechaAbmMensaje'+codInterconsulta).value= fechaActual.toISOString().slice(0,16);
-    document.getElementById('inptContenidoAbmMensaje'+codInterconsulta).innerHTML= "";
-    fotoMensajeInterconsulta= "";
-    extMensajeInterconsulta= "";
+    const fechaActual = new Date();
+    const offsetMinutos = fechaActual.getTimezoneOffset();    
+    const fechaLocal = new Date(fechaActual.getTime() - (offsetMinutos * 60000));
+
+    document.getElementById('inptFechaAbmMensaje' + codInterconsulta).value = fechaLocal.toISOString().slice(0, 16);
+
+    document.getElementById('inptContenidoAbmMensaje' + codInterconsulta).innerHTML = "";
+    document.getElementById('imgfotoAnexoInterchat').style.backgroundImage = "url('/GoodVentaAsisCap/iconos/subir_imagen.png')";
+    fotoMensajeInterconsulta = "";
+    extMensajeInterconsulta = "";
 }
 
 function subirImagenMensajeInterconsulta(cod_mens) {
