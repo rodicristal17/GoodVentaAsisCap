@@ -893,10 +893,7 @@ function obtenerDatosInterConsulta(elemento) {
     cod_ventaFKConsulta= $(elemento).children('#td_datos_7').html();
     document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
     document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
-    if (cod_ventaFKConsulta) {
-        document.getElementById('tituloInterConsultas').innerHTML += " y " + cod_ventaFKConsulta;
-    }
-
+    
     verCerrarVentanaInterConsulta(true, 'detalle');
     buscarInterConsultasYContenido();
 }

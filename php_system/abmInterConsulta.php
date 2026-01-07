@@ -287,7 +287,7 @@
             if ($valueInter['tipo'] == 'clinico' || $valueInter['tipo'] == 'administrativo') {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Cod. Venta:</span>
-                <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_ventaFK'].'</span>
+                <span class="text-uppercase" id="td_datos_6">'.$valueInter['num_factura'].'</span>
                 </div>';
             }
             $pagina .= '</div>
@@ -1012,8 +1012,7 @@
         }
 
         // Se separa la tabla venta de la interconsulta ya que este es opcional
-        $sql= "SELECT ic.*, 
-            (SELECT vt.cod_clienteFK from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS cod_clienteFK,
+        $sql= "SELECT ic.*, vt.cod_clienteFK, vt.num_factura,
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
@@ -1034,7 +1033,7 @@
                 FROM mensaje mj2
                 WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
             )) AS cantMensajesNoLeidos
-            from interconsulta ic $sqlFiltro
+            from interconsulta ic join venta vt on vt.cod_venta = ic.cod_ventaFK $sqlFiltro
             ORDER BY 
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
                 SELECT MAX(mj2.fecha_creacion)
