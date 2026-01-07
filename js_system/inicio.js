@@ -225,7 +225,9 @@ window.onload = function () {
 				document.getElementById('dropdown-menciones').style.display= "";
 			} else {
 				// Ocultar menú cuando no hay @ al final
-				document.getElementById('dropdown-menciones').style.display= "none";
+				if (document.getElementById('dropdown-menciones')) {
+					document.getElementById('dropdown-menciones').style.display= "none";
+				}
 			}
 		}
 	});
@@ -10315,6 +10317,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptCodLocalMecanicoDental").innerHTML = "";
 	document.getElementById("inptLocalTrabajoMecanicoDental").innerHTML = "";
 	document.getElementById("inptBuscarProducto7").innerHTML = "";
+	document.getElementById("inptAbmLocalGastoFijo").innerHTML = "";
 	document.getElementById("inptLocalProductoEnviarA").innerHTML = "";
 	document.getElementById("inptlocalProductoBuscarVista").innerHTML = "";
 	document.getElementById("inptlocalVenta").innerHTML = "";
@@ -10436,6 +10439,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptlocalProductoBuscarInventario").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptLocalProductoEnviarA").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptBuscarProducto7").innerHTML = datos_buscados
+					document.getElementById("inptAbmLocalGastoFijo").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados;
 					document.getElementById("inptlocalProductoBuscarVista").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptLocalInformeAsistencia").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalMisGastos").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados

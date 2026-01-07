@@ -168,6 +168,13 @@ function verificarcamposGasto() {
 		accion = "nuevo";
 	}
 	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion);
+
+	// Comprueba y registra en caso de ser gasto fijo
+	if (document.getElementById("inptCheckGastoFijoGasto").checked) {
+		const descripcion= document.getElementById('inptMotivoMisGastos').value;
+		const dia= document.getElementById('inptFechaGasto').value.substr(-2);
+		abmGastosFijos(descripcion, 'activo', dia, inptlocalMisGastos);
+	}
 }
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion) {
 	verCerrarEfectoCargando("1")
