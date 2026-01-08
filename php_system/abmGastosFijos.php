@@ -30,8 +30,9 @@
                 $dia= isset($_POST['dia']) ? utf8_decode($_POST['dia']) : null;
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $costo= isset($_POST['costo']) ? utf8_decode($_POST['costo']) : null;
 
-                $cod_gastos_fijos = abmGastosFijos($cod_gastos_fijos, $user, $fecha, $descripcion, $cod_interConsultaFK, $dia, $estado, $cod_localFK);
+                $cod_gastos_fijos = abmGastosFijos($cod_gastos_fijos, $user, $fecha, $descripcion, $cod_interConsultaFK, $dia, $estado, $costo, $cod_localFK);
 
                 echo json_encode(array(
                     "1" => "exito",
@@ -79,12 +80,13 @@
             $pagina .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosGastosFijos(this)'>
                 <td id='td_id' style='width:10%;'>".$value['cod_gastos_fijos']."</td>
-                <td id='td_datos_1'style='width:55%;'>".$value['descripcion']."</td>
-                <td id='td_datos_2'style='width:15%;'>".$value['dia']."</td>
-                <td id='td_datos_3'style='width:20%;'>".ucfirst($value['estado'])."</td>
-                <td id='td_datos_4'style='display:none'>".$value['cod_interConsultaFK']."</td>
-                <td id='td_datos_5'style='display:none'>".$value['cod_localFK']."</td>
-                <td id='td_datos_6'style='display:none'>".$value['asunto_interConsulta']."</td>
+                <td id='td_datos_1' style='width:55%;'>".$value['descripcion']."</td>
+                <td id='td_datos_2' style='width:15%;'>".$value['dia']."</td>
+                <td id='td_datos_3' style='width:20%;'>".ucfirst($value['estado'])."</td>
+                <td id='td_datos_4' style='display:none'>".$value['cod_interConsultaFK']."</td>
+                <td id='td_datos_5' style='display:none'>".$value['cod_localFK']."</td>
+                <td id='td_datos_6' style='display:none'>".$value['asunto_interConsulta']."</td>
+                <td id='td_datos_7' style='display:none'>".$value['costo']."</td>
             </tr></table>";
         }
         echo json_encode(array(
@@ -158,13 +160,13 @@
         return $registros;
     }
 
-    function abmGastosFijos($cod_gastos_fijos, $cod_usuarioFK, $fecha, $descripcion, $cod_interConsultaFK, $dia, $estado, $cod_localFK) {
+    function abmGastosFijos($cod_gastos_fijos, $cod_usuarioFK, $fecha, $descripcion, $cod_interConsultaFK, $dia, $estado, $costo, $cod_localFK) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_gastos_fijos)) {
-            $sql = "INSERT INTO gastos_fijos (cod_gastos_fijos, cod_usuarioFK_create, descripcion, cod_interconsultaFK, dia, estado, fecha_creacion, cod_localFK) VALUES (?,?,?,?,?,?,?,?)";
+            $sql = "INSERT INTO gastos_fijos (cod_gastos_fijos, cod_usuarioFK_create, descripcion, cod_interconsultaFK, dia, estado, fecha_creacion, cod_localFK, costo) VALUES (?,?,?,?,?,?,?,?,?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('iisiissi', $cod_gastos_fijos, $cod_usuarioFK, $descripcion, $cod_interConsultaFK, $dia, $estado, $fecha, $cod_localFK);
+            $stmt->bind_param('iisiissii', $cod_gastos_fijos, $cod_usuarioFK, $descripcion, $cod_interConsultaFK, $dia, $estado, $fecha, $cod_localFK, $costo);
         } else {
             $parametros = array();
 
@@ -202,6 +204,11 @@
                 $atributos .= ", cod_localFK= ?";
                 $ss .= "i";
                 $parametros[]= $cod_localFK;
+            }
+            if (!empty($costo)) {
+                $atributos .= ", costo= ?";
+                $ss .= "i";
+                $parametros[]= $costo;
             }
             
             $parametros[] = $cod_gastos_fijos;

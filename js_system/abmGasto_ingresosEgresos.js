@@ -173,7 +173,9 @@ function verificarcamposGasto() {
 	if (document.getElementById("inptCheckGastoFijoGasto").checked) {
 		const descripcion= document.getElementById('inptMotivoMisGastos').value;
 		const dia= document.getElementById('inptFechaGasto').value.substr(-2);
-		abmGastosFijos(descripcion, 'activo', dia, inptlocalMisGastos);
+		let costo= document.getElementById('inptMontoGasto').value;
+		costo= costo.replace('.','');
+		abmGastosFijos(descripcion, 'activo', dia, inptlocalMisGastos,costo);
 	}
 }
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion) {

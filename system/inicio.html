@@ -4839,22 +4839,31 @@ CATEGORIA
                 <br>
                 <table style='width:100%'>
                   <tr>
-                    <td style='width:30%'>
+                    <td style='width:40%'>
                       <p class='pTituloC'>Estado(*) :</p>
                       <select class="inputSelect" style='width:90%;' id='inptAbmEstadoGastoFijo'>
                         <option value="activo">Activo</option>
                         <option value="inactivo">Inactivo</option>
                       </select>
                     </td>
-                    <td style='width:40%'>
+                    <td style='width:50%'>
                       <p class='pTituloC'>Local(*) :</p>
                       <select class="inputSelect" style='width:90%;' id='inptAbmLocalGastoFijo'>
                       </select>
                     </td>
-                    <td style='width:20%'>
+                  </tr>
+                </table>
+                <br>
+                <table style='width:100%'>
+                  <tr>
+                    <td style='width:40%'>
                       <p class='pTituloC'>Dia(*) :</p>
                       <input type="number" min=1 max=30 class="inputText" id="inptAbmDiaGastoFijo"
                         placeholder='Obligatorio(*)'>
+                    </td>
+                    <td style='width:50%'>
+                      <p class='pTituloC'>Costo :</p>
+                      <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptAbmCostoGastoFijo" onkeyup="separadordemiles(this)" style="width:200px">
                     </td>
                   </tr>
                 </table>

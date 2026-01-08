@@ -93,6 +93,9 @@ function obtenerDatosGastosFijos(datostr) {
     document.getElementById("inptAbmEstadoGastoFijo").value= $(datostr).children('td[id="td_datos_3"]').html().toLowerCase();
     document.getElementById("inptAbmDiaGastoFijo").value= $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById("inptAbmLocalGastoFijo").value= $(datostr).children('td[id="td_datos_5"]').html();
+	document.getElementById("inptAbmCostoGastoFijo").value= $(datostr).children('td[id="td_datos_7"]').html();
+
+	separadordemiles(document.getElementById("inptAbmCostoGastoFijo"));
 
 	cod_interConsulta= $(datostr).children('td[id="td_datos_4"]').html();
 	document.getElementById("inptAbmInterConsultaGastoFijo").value= $(datostr).children('td[id="td_datos_6"]').html();
@@ -106,6 +109,7 @@ function limpiarCamposGastosFijos() {
     document.getElementById("inptAbmDiaGastoFijo").value= "";
     document.getElementById("inptAbmLocalGastoFijo").value= "";
 	document.getElementById("inptAbmInterConsultaGastoFijo").value= "";
+	document.getElementById("inptAbmCostoGastoFijo").value= "";
 }
 
 function verificarCamposGastosFijos() {
@@ -113,6 +117,7 @@ function verificarCamposGastosFijos() {
     const estado= document.getElementById("inptAbmEstadoGastoFijo").value;
     const dia= document.getElementById("inptAbmDiaGastoFijo").value;
     const cod_localFK= document.getElementById("inptAbmLocalGastoFijo").value;
+	const costo= document.getElementById("inptAbmCostoGastoFijo").value.replace('.', '');
 
     if (!descripcion) {
         ver_vetana_informativa("FALTO AGREGAR LA DESCRIPCION", "#");
@@ -129,10 +134,10 @@ function verificarCamposGastosFijos() {
 		return false;
 	}
 
-    abmGastosFijos(descripcion, estado, dia, cod_localFK);
+    abmGastosFijos(descripcion, estado, dia, cod_localFK, costo);
 }
 
-function abmGastosFijos(descripcion, estado, dia, cod_localFK) {
+function abmGastosFijos(descripcion, estado, dia, cod_localFK, costo) {
     verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -143,6 +148,7 @@ function abmGastosFijos(descripcion, estado, dia, cod_localFK) {
 	datos.append("descripcion", descripcion);
 	datos.append("estado", estado);
 	datos.append("dia", dia);
+	datos.append("costo", costo);
     datos.append("cod_localFK", cod_localFK);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
     if (cod_abmGastoFijo != "") {

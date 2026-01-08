@@ -164,6 +164,7 @@ CREATE TABLE gastos_fijos (
     descripcion VARCHAR(100) NOT NULL,
     estado ENUM('inactivo', 'activo') DEFAULT 'activo',
     dia int(2) NOT NULL,
+    costo int
     cod_interConsultaFK INT,
     cod_localFK INT,
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
