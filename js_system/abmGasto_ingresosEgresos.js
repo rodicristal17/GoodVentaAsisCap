@@ -557,6 +557,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("zonaGastosSinCategorizar").innerHTML = '';
+			document.getElementById("table_abm_gasto").innerHTML = '';
 			document.getElementById("zonaGastosIngreso").innerHTML= '';
 			document.getElementById("zonaGastosCostosDirectos").innerHTML= '';
 			document.getElementById("zonaGastosGastosOperativos").innerHTML= '';
@@ -566,6 +567,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			console.log(Respuesta)
 			document.getElementById("zonaGastosSinCategorizar").innerHTML = '';
 			document.getElementById("zonaGastosIngreso").innerHTML= '';
+			document.getElementById("table_abm_gasto").innerHTML = '';
 			document.getElementById("zonaGastosCostosDirectos").innerHTML= '';
 			document.getElementById("zonaGastosGastosOperativos").innerHTML= '';
 			try {
@@ -582,6 +584,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
                   }
 				if (Respuesta == "exito") {
 					var datos_buscados = datos[2];
+					document.getElementById("table_abm_gasto").innerHTML = datos[12];
 					document.getElementById("zonaGastosSinCategorizar").innerHTML = datos_buscados;
 					document.getElementById("tituloTotalSinCategorizar").innerHTML= datos[11];
 					document.getElementById("inptTotalGasto").value = datos[4];

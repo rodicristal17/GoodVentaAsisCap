@@ -382,6 +382,7 @@ $totalZonaSinCategorizar= 0;
 $elementosZonaIngresos= "";
 $elementosZonaCostosDirectos= "";
 $elementosZonaGastosOperativos= "";
+$paginaImprimir= "";
 
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
@@ -414,7 +415,27 @@ $elementosZonaGastosOperativos= "";
 		  	 $totalGasto=$totalGasto+$monto;
 			    	 
 		  	  $styleName=CargarStyleTable($styleName);
-		
+			$paginaImprimir .= "
+					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
+					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='' style='width:10%'>".$nombrelocal."</td>
+					<td  id='td_datos_5' style='display:none'>".$estado."</td>
+					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					</tr>
+					</table>";
 		switch ($categoria) {
 			case 'ingreso':
 				$totalZonaIngresos += $monto;
@@ -534,6 +555,7 @@ $informacion =array(
 	"9" => $elementosZonaCostosDirectos,
 	"10" => $elementosZonaGastosOperativos,
 	"11" => number_format($totalZonaSinCategorizar, '0', ',', '.'),
+	"12" => $paginaImprimir,
 );
 echo json_encode($informacion);	
 exit;

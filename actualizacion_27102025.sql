@@ -173,6 +173,8 @@ CREATE TABLE gastos_fijos (
     Foreign Key (cod_localFK) REFERENCES local(cod_local)
 );
 
+UPDATE migrar_caja SET cod_caja_hastaFK=1836 WHERE cod_caja_hastaFK= 0;
+
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
