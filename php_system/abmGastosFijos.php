@@ -23,7 +23,7 @@
         $fechaActual= new DateTime();
         switch ($funt) {
             case 'nuevo/editar':
-                $cod_gastos_fijos= isset($_POST['cod_gastos_fijos']) ? utf8_decode($_POST['cod_gastos_fijos']) : null;
+                $cod_gastos_fijos= !empty($_POST['cod_gastos_fijos']) ? utf8_decode($_POST['cod_gastos_fijos']) : null;
                 $fecha= $fechaActual->format('Y-m-d H:i:s');
                 $descripcion= isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
                 $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? utf8_decode($_POST['cod_interConsultaFK']) : null;
@@ -84,6 +84,7 @@
                 <td id='td_datos_3'style='width:20%;'>".ucfirst($value['estado'])."</td>
                 <td id='td_datos_4'style='display:none'>".$value['cod_interConsultaFK']."</td>
                 <td id='td_datos_5'style='display:none'>".$value['cod_localFK']."</td>
+                <td id='td_datos_6'style='display:none'>".$value['asunto_interConsulta']."</td>
             </tr></table>";
         }
         echo json_encode(array(
@@ -123,7 +124,9 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT * FROM gastos_fijos gf ORDER BY cod_gastos_fijos ASC";
+        $sql= "SELECT *,
+            (SELECT asunto FROM interConsulta WHERE cod_interConsulta = gf.cod_interConsultaFK) AS asunto_interConsulta
+            FROM gastos_fijos gf ORDER BY cod_gastos_fijos ASC";
 
         $mysqli=conectar_al_servidor();
 
@@ -171,7 +174,7 @@
             $parametros[]= $fecha;
 
             $atributos .= ", cod_usuarioFK_edit= ?";
-            $ss .= "s";
+            $ss .= "i";
             $parametros[] = $cod_usuarioFK;
             
             // Datos a modificar
@@ -198,6 +201,7 @@
             if (!empty($cod_localFK)) {
                 $atributos .= ", cod_localFK= ?";
                 $ss .= "i";
+                $parametros[]= $cod_localFK;
             }
             
             $parametros[] = $cod_gastos_fijos;

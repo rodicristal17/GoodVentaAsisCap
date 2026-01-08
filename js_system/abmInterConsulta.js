@@ -891,11 +891,20 @@ function mostrarOpcionesUsuariosMenciones(textarea, sugerencias) {
 function obtenerDatosInterConsulta(elemento) {
     cod_interConsulta= $(elemento).children('#td_id').html();
     cod_ventaFKConsulta= $(elemento).children('#td_datos_7').html();
-    document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
-    document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
-    
-    verCerrarVentanaDetalleInterConsulta(true);
-    buscarInterConsultasYContenido();
+
+    switch (ventanaAnterior) {
+        case 'divAbmGastosFijos':
+            document.getElementById('inptAbmInterConsultaGastoFijo').value= $(elemento).children('#td_datos_10').html();
+            verCerrarVentanaInterConsulta(false, 'listado');
+            break;
+        default:
+            document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
+            document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
+            
+            verCerrarVentanaDetalleInterConsulta(true);
+            buscarInterConsultasYContenido();
+            break;
+    }
 }
 
 function obtenerDetallesInterConsulta(elemento, origen) {
@@ -940,6 +949,13 @@ function verCerrarVentanaDetalleInterConsulta(mostrar, anterior= '') {
         document.getElementById("divAbmDetallesInterConsulta").style.display= "none";
 
         if (ventanaAnterior) {
+            switch (ventanaAnterior) {
+                case 'divAbmInterConsulta':
+                    buscarPacientesConInterConsultas();
+                    verCerrarVentanaInterConsulta(true, 'listado');
+                    break;
+            }
+            
             document.getElementById(ventanaAnterior).style.display= '';
             ventanaAnterior= '';
         }
@@ -963,9 +979,6 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
         document.getElementById("divAbmInterConsulta3").style.display= "none";
 
         switch (ventana) {
-            case 'detalle':
-                document.getElementById("divAbmInterConsulta2").style.display= "";
-                break;
             case 'listado':
                 // Obtiene tambien el listado de usuario
                 buscarabmusuario2('', '', '', 'Activo', '');
@@ -985,11 +998,6 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
         }
     } else {
         switch (ventana) {
-            case 'detalle':
-                buscarPacientesConInterConsultas();
-                document.getElementById("divAbmInterConsulta1").style.display="";
-                document.getElementById("divAbmInterConsulta2").style.display= "none";
-                break;
             case 'listado':
 			    buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
                 document.getElementById("divAbmInterConsulta").style.display="none";

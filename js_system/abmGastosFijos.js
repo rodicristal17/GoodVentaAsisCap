@@ -93,14 +93,19 @@ function obtenerDatosGastosFijos(datostr) {
     document.getElementById("inptAbmEstadoGastoFijo").value= $(datostr).children('td[id="td_datos_3"]').html().toLowerCase();
     document.getElementById("inptAbmDiaGastoFijo").value= $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById("inptAbmLocalGastoFijo").value= $(datostr).children('td[id="td_datos_5"]').html();
+
+	cod_interConsulta= $(datostr).children('td[id="td_datos_4"]').html();
+	document.getElementById("inptAbmInterConsultaGastoFijo").value= $(datostr).children('td[id="td_datos_6"]').html();
 }
 
 function limpiarCamposGastosFijos() {
 	cod_abmGastoFijo= "";
+	cod_interConsulta= "";
 	document.getElementById("inptAbmDescripcionGastoFijo").value= "";
     document.getElementById("inptAbmEstadoGastoFijo").value= "activo";
     document.getElementById("inptAbmDiaGastoFijo").value= "";
     document.getElementById("inptAbmLocalGastoFijo").value= "";
+	document.getElementById("inptAbmInterConsultaGastoFijo").value= "";
 }
 
 function verificarCamposGastosFijos() {
@@ -141,7 +146,7 @@ function abmGastosFijos(descripcion, estado, dia, cod_localFK) {
     datos.append("cod_localFK", cod_localFK);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
     if (cod_abmGastoFijo != "") {
-        datos.append("cod_gastos_fijos", idAbmMotivoEgresoIngreso)
+        datos.append("cod_gastos_fijos", cod_abmGastoFijo)
     }
 
 	var OpAjax = $.ajax({
