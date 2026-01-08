@@ -1012,7 +1012,9 @@
         }
 
         // Se separa la tabla venta de la interconsulta ya que este es opcional
-        $sql= "SELECT ic.*, vt.cod_clienteFK, vt.num_factura,
+        $sql= "SELECT ic.*, 
+            (SELECT vt.cod_clienteFK from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS cod_clienteFK,
+            (SELECT vt.num_factura from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS num_factura,
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
@@ -1033,7 +1035,7 @@
                 FROM mensaje mj2
                 WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
             )) AS cantMensajesNoLeidos
-            from interconsulta ic join venta vt on vt.cod_venta = ic.cod_ventaFK $sqlFiltro
+            from interconsulta ic $sqlFiltro
             ORDER BY 
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
                 SELECT MAX(mj2.fecha_creacion)
