@@ -254,7 +254,7 @@
             }
             
             // Se crea el encabezado
-            $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this)">
+            $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this, \'interConsulta\')">
                 <div id="contenedorEncabezadoInterConsulta'.$valueInter['cod_interConsulta'].'" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
             <h5 class="card-title">'.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'</h5>

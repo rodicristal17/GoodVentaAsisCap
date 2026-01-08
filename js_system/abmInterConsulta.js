@@ -894,19 +894,23 @@ function obtenerDatosInterConsulta(elemento) {
     document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
     document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
     
-    verCerrarVentanaInterConsulta(true, 'detalle');
+    verCerrarVentanaDetalleInterConsulta(true);
     buscarInterConsultasYContenido();
 }
 
-function obtenerDetallesInterConsulta(elemento) {
+function obtenerDetallesInterConsulta(elemento, origen) {
     cod_interConsulta= elemento.querySelector('#td_datos_4')?.textContent.trim();
-    document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
-    document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
-    document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
     cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
-    document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_7')?.textContent.trim();
-
-    verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2');
+    
+    switch (origen) {
+        case 'interConsulta':
+            document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_7')?.textContent.trim();
+            document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
+            document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
+            document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
+            verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2');
+            break;
+    }
 }
 
 function cancelarInformeInterConsulta() {
@@ -924,6 +928,29 @@ function limpiarcamposInterconsulta() {
 }
 
 var ventanaAnterior= '';
+function verCerrarVentanaDetalleInterConsulta(mostrar, anterior= '') {
+    if (mostrar) {
+        document.getElementById("divAbmDetallesInterConsulta").style.display= "";
+
+        if (ventanaAnterior) {
+            document.getElementById(ventanaAnterior).style.display= 'none';
+            ventanaAnterior= '';
+        }
+    } else {
+        document.getElementById("divAbmDetallesInterConsulta").style.display= "none";
+
+        if (ventanaAnterior) {
+            document.getElementById(ventanaAnterior).style.display= '';
+            ventanaAnterior= '';
+        }
+    }
+
+    // Guarda la ventanaAnterior
+    if (anterior) {
+        ventanaAnterior= anterior;
+    }
+}
+
 function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
     if (mostrar) {
         // Comprueba si estaba minimizado
@@ -933,7 +960,6 @@ function verCerrarVentanaInterConsulta(mostrar, ventana, anterior= '') {
 
         // Oculta todo
         document.getElementById("divAbmInterConsulta1").style.display="none";
-        document.getElementById("divAbmInterConsulta2").style.display="none";
         document.getElementById("divAbmInterConsulta3").style.display= "none";
 
         switch (ventana) {

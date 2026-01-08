@@ -4827,7 +4827,6 @@ CATEGORIA
 
             <center>
               <div class='divMenuf'>
-
                 <table style='width:100%'>
                   <tr>
                     <td style='width:100%'>
@@ -4856,6 +4855,16 @@ CATEGORIA
                       <p class='pTituloC'>Dia :</p>
                       <input type="number" min=1 max=30 class="inputText" id="inptAbmDiaGastoFijo"
                         placeholder='Obligatorio(*)'>
+                    </td>
+                  </tr>
+                </table>
+                <br>
+                <table style='width:100%'>
+                  <tr>
+                    <td style='width:100%'>
+                      <p class='pTituloC'>Nombre :</p>
+                      <input type="text" class="inputTextDisable" id="inptAbmDescripcionGastoFijo" disabled>
+                      <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
                     </td>
                   </tr>
                 </table>
@@ -7514,43 +7523,6 @@ onclick='SeleccionarRegistroCategoria()' />
               </div>
           </div>
       </div>
-      <div id="divAbmInterConsulta2" class="divAbms" style="width: 90%;display:none;">
-        <table class="tableMenuZ">
-            <tbody>
-              <tr>
-                <td style="width:100%;text-align:left">
-                  <p class="pTituloB">Detalles de la <b style="font-size: 30px;" id="tituloInterConsultas">InterConsulta - </b></p>
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaInterConsulta(true, 'abm', 'divAbmInterConsulta2')">
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana" onclick="minimizarabmInterConsulta()">
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaInterConsulta(false, 'detalle')">
-                </td>
-              </tr>
-            </tbody>
-          </table> 
-            <div class="divMenuf">
-              <div class="divTablesScrool" id="TableScroollInterConsulta" style="height: 700px;">
-                  <div class="div_cuerpo_table" id="table_abm_InterConsulta"
-                    style="height: 100%;border:none;width: 100%;">
-                  </div>
-                  <table style='width:100%;height:50px;display:none' id='tbProcessInformeInterConsulta'>
-                  <tr>
-                  <td  style='width:90%'>
-                  <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeInterConsulta'></div></div>
-                  </td>
-                  <td style='width:10%;text-align:center'>
-                  <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
-                  </td>
-                  </tr>
-                  </table>
-                </div>
-            </div>         
-      </div>
       <div id="divAbmInterConsulta3" class="divAbms" style="width: 400px;display:none;">
         <table class="tableMenuZ">
             <tbody>
@@ -7616,6 +7588,41 @@ onclick='SeleccionarRegistroCategoria()' />
                   </table>
                 </div>
                  
+      </div>
+  </center>
+</div>
+<div id="divAbmDetallesInterConsulta" class="principal2" style="display: none;">
+  <center>
+    <div id="divAbmDetallesInterConsulta" class="divAbms" style="width: 90%;">
+        <table class="tableMenuZ">
+            <tbody>
+              <tr>
+                <td style="width:100%;text-align:left">
+                  <p class="pTituloB">Detalles de la <b style="font-size: 30px;" id="tituloInterConsultas">InterConsulta - </b></p>
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaDetalleInterConsulta(false)">
+                </td>
+              </tr>
+            </tbody>
+          </table> 
+            <div class="divMenuf">
+              <div class="divTablesScrool" id="TableScroollInterConsulta" style="height: 700px;">
+                  <div class="div_cuerpo_table" id="table_abm_InterConsulta"
+                    style="height: 100%;border:none;width: 100%;">
+                  </div>
+                  <table style='width:100%;height:50px;display:none' id='tbProcessInformeInterConsulta'>
+                  <tr>
+                  <td  style='width:90%'>
+                  <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeInterConsulta'></div></div>
+                  </td>
+                  <td style='width:10%;text-align:center'>
+                  <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
+                  </td>
+                  </tr>
+                  </table>
+                </div>
+            </div>         
       </div>
   </center>
 </div>
