@@ -1425,7 +1425,7 @@ var fecha = new Date(vencimientopagare);
 +"Declaro (amos) expresamente con carácter irrevocable que la(s) firma(s) puestas al pie de este instrumento me(nos) obliga(n) al cumplimiento de todas y cada una de las cuotas establecidas y al condicionamiento general obrante en este pagaré.---------"
 +"<br>"
 +"<br>"
-+"Este pagaré se rige por la leyes de la República del Paraguay y en especial por los artículos 51, 53 siguientes y concordantes de la ley 489/95. El simple vencimiento de una cuota autoriza al acreedor de forma irrevocable a la consulta e inclusión a la base de datos de INFORMCONF u otra agencia de informaciones. A todos los efectos legales y procesales queda aceptada la jurisdicción y competencia de los juzgados en lo civil y comercial de la Circunscripción Judicial Guairá.---------"
++"Este pagaré se rige por la leyes de la República del Paraguay y en especial por los artículos 51, 53 siguientes y concordantes de la ley 489/95. El atraso igual o superior a 90 días en el pago de una cuota faculta al acreedor de forma irrevocable a la consulta e inclusión a la base de datos de INFORMCONF u otra agencia de informaciones. A todos los efectos legales y procesales queda aceptada la jurisdicción y competencia de los juzgados en lo civil y comercial de la Circunscripción Judicial Guairá.---------"
 +"</p>"
 +"</div>"
 +"<br>"

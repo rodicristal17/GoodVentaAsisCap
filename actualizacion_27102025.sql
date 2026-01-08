@@ -157,14 +157,16 @@ UPDATE motivos_ingreso_egreso SET estado= 'inactivo' WHERE estado= '';
 
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN categoria ENUM('directo', 'ingreso', 'operativo');
 
+
 UPDATE interconsulta SET tipo='pagos' WHERE tipo='resolucion';
+
 
 CREATE TABLE gastos_fijos (
     cod_gastos_fijos INT PRIMARY KEY AUTO_INCREMENT,
     descripcion VARCHAR(100) NOT NULL,
     estado ENUM('inactivo', 'activo') DEFAULT 'activo',
     dia int(2) NOT NULL,
-    costo int
+    costo int,
     cod_interConsultaFK INT,
     cod_localFK INT,
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
