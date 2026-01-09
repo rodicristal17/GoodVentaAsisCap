@@ -337,7 +337,12 @@
             $pagina .= '</div>';
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta']));
+        // Obtiene la cantidad total de mensajes
+        $totalCantMensaje= obtenerMensaje(array(
+            'cod_interConsultaFK' => $valueInter['cod_interConsulta']
+        ));
+        $totalCantMensaje = count($totalCantMensaje);
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje));
     }
 
     function buscarVistaPacienteConInterConsulta($filtros= array(), $limite= 0) {

@@ -611,6 +611,7 @@ function subirImagenMensajeInterconsulta(cod_mens) {
 	});
 }
 
+var totalRegistroMensaje= 0;
 function buscarInterConsultasYContenido() {
     verCerrarEfectoCargando("1");
 
@@ -666,6 +667,7 @@ function buscarInterConsultasYContenido() {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
                     document.getElementById("table_abm_InterConsulta").innerHTML= datos["2"];
+                    totalRegistroMensaje = datos["5"];
 				} else {
                     throw new Error("Error producido en buscarInterConsultas de JavaScript.");
                 }
@@ -693,8 +695,7 @@ function verMasMensajesInterconsulta(cod_interCon, offset) {
 	datos.append("navegador", navegador);
     datos.append("accion", "buscarMasInterConsultasYContenido");
     datos.append("cod_interConsulta", cod_interCon);
-    datos.append("limite", 10);
-    datos.append("offset", offset);
+    datos.append("limite", "10 offset "+ offset);
 
     var OpAjax = $.ajax({
 		data: datos,
@@ -737,12 +738,18 @@ function verMasMensajesInterconsulta(cod_interCon, offset) {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
                     const contenedor= "contenedorMensajesInterConsulta"+cod_interCon;
-                    // Elimita el boton de ver mas
                     const elemContenedor = document.getElementById(contenedor);
-                    elemContenedor.children[0].remove();
+
+                    // Prepara btn para cargar mensajes anteriores
+                    let btnMasMensajes= "";
+                    if ((parseInt(offset) + 10) < parseInt(totalRegistroMensaje)) {
+                        btnMasMensajes= "<div style='width: 100%; justify-content: center;'>"+
+                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+cod_interCon+", "+(offset + 10)+")'>Ver más mensajes...</button>"+
+                            "</div>";
+                    }
                     
-                    // Asigna los mensajes anteriores
-                    document.getElementById(contenedor).innerHTML= datos["2"] + document.getElementById(contenedor).innerHTML;
+                    // Agrega los mensajes anteriores
+                    document.getElementById(contenedor).innerHTML= btnMasMensajes + datos["2"] + document.getElementById(contenedor).innerHTML;
 				} else {
                     throw new Error("Error producido en buscarMasInterConsultas de JavaScript.");
                 }
