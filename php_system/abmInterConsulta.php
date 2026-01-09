@@ -238,6 +238,24 @@
                     'cod_usuarioFK' => $filtros['cod_usuarioFK']
                 ), $limiteMensajes, 0);
             
+            // Obtiene los mensajes programados
+            $registrosMens= obtenerMensaje(array(
+                'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
+                "cod_interConsultaFK" => $valueInter["cod_interConsulta"],
+            ));
+
+            foreach ($registrosMens as $valueMens) {
+                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: right;">
+                    <div class="card my-3" style="border-left: 5px solid gray;width: 500px;margin-left: 10px; margin-right: 10px;">
+                      <div class="card-body">
+                          <div style="display: flex;">
+                            <p class="card-text" style="text-align: justify;">Mensaje programado de '.$valueMens['nombre_persona'].' para el '.$valueMens['fecha_creacion'].'</p>
+                          </div>
+                      </div>
+                    </div>
+                  </div>';
+            }
+
             $colorTarjeta="#8bc34a;";
             $claseEstado= "badge-success";
             if ($valueInter['estado'] == 'proceso') {
