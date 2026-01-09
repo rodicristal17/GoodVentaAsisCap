@@ -740,7 +740,8 @@ function verMasMensajesInterconsulta(cod_interCon, offset) {
                     const contenedor= "contenedorMensajesInterConsulta"+cod_interCon;
                     const elemContenedor = document.getElementById(contenedor);
 
-                    // Prepara btn para cargar mensajes anteriores
+                    // Prepara btn para cargar mensajes anteriores y elimina el existente
+                    elemContenedor.children[0].remove();
                     let btnMasMensajes= "";
                     if ((parseInt(offset) + 10) < parseInt(totalRegistroMensaje)) {
                         btnMasMensajes= "<div style='width: 100%; justify-content: center;'>"+

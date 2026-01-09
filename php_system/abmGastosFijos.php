@@ -127,7 +127,7 @@
         }
 
         $sql= "SELECT *,
-            (SELECT asunto FROM interConsulta WHERE cod_interConsulta = gf.cod_interConsultaFK) AS asunto_interConsulta
+            (SELECT asunto FROM interconsulta WHERE cod_interConsulta = gf.cod_interConsultaFK) AS asunto_interConsulta
             FROM gastos_fijos gf ORDER BY cod_gastos_fijos ASC";
 
         $mysqli=conectar_al_servidor();

@@ -239,12 +239,12 @@
                 ), $limiteMensajes, 0);
             
             // Obtiene los mensajes programados
-            $registrosMens= obtenerMensaje(array(
+            $registrosMens2= obtenerMensaje(array(
                 'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
                 "cod_interConsultaFK" => $valueInter["cod_interConsulta"],
             ));
 
-            foreach ($registrosMens as $valueMens) {
+            foreach ($registrosMens2 as $valueMens) {
                 $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: right;">
                     <div class="card my-3" style="border-left: 5px solid gray;width: 500px;margin-left: 10px; margin-right: 10px;">
                       <div class="card-body">
