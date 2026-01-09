@@ -63,7 +63,10 @@ $personales = "";
 $cod_motivo= $_POST['cod_motivoFK'];
 $cod_motivo= utf8_decode($cod_motivo);
 
-	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$operacion);
+$cod_interConsultaFK= $_POST['cod_interConsultaFK'];
+$cod_interConsultaFK= utf8_decode($cod_interConsultaFK);
+
+	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
 
 }
 if ($operacion=='cargar_imagen') {
@@ -272,7 +275,7 @@ function subirImagenGasto($idgastos, $foto, $ext) {
 	return true;
 }
 
-function abm($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$operacion)
+function abm($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion)
 {
 		
 if($monto==""   ){
@@ -286,12 +289,12 @@ $mysqli=conectar_al_servidor();
 if($operacion=="nuevo")
 {
 
-$consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+$consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 $stmt = $mysqli->prepare($consulta1);
 
-$ss='sssssssssssssss';
-$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo);
+$ss='ssssssssssssssss';
+$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK);
 
 
 }
@@ -301,13 +304,13 @@ if($operacion=="editar")
 {
 
 $consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuario=?,
-personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=? where idgastos=?";
+personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsulta=? where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
-$ss='ssssssssssssss';
+$ss='sssssssssssssss';
 if (!$stmt) {
 	echo $mysqli->error;
 }
-$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$cod_motivo,$idgastos); 
+$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$cod_motivo,$cod_interConsultaFK,$idgastos); 
 
 }
 
@@ -360,7 +363,8 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 		$sqlFiltro .= "and cod_motivoIngresoEgresoFK = $cod_motivoFK";
 	}
 		 
-	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,url1,
+	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,url1,cod_interConsultaFK,
+	(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 	(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
 	(Select descripcion from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS motivo,
 	(Select categoria from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS categoria,
@@ -368,7 +372,6 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	from gastos g where  estado='$estado' ".$sqlFiltro;
 
    $stmt = $mysqli->prepare($sql);
- 
 if ( ! $stmt->execute()) {
    echo "Error";
    exit;
@@ -394,7 +397,8 @@ $paginaImprimir= "";
  {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
-		  
+		  	$interconsulta_nombre= utf8_encode($valor['interconsulta_nombre']);
+			$cod_interConsultaFK= utf8_encode($valor['cod_interConsultaFK']);
 		      $idgastos=$valor['idgastos'];
 		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
 		  	  $monto=utf8_encode($valor['monto']);
@@ -434,6 +438,8 @@ $paginaImprimir= "";
 					<td  id='td_datos_12' style='display:none'>".$url1."</td>
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
+					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 					</tr>
 					</table>";
 		switch ($categoria) {
@@ -458,6 +464,8 @@ $paginaImprimir= "";
 					<td  id='td_datos_12' style='display:none'>".$url1."</td>
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
+					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 					</tr>
 					</table>
 				</li>";
@@ -483,6 +491,8 @@ $paginaImprimir= "";
 					<td  id='td_datos_12' style='display:none'>".$url1."</td>
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
+					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 					</tr>
 					</table>
 				</li>";
@@ -508,6 +518,8 @@ $paginaImprimir= "";
 					<td  id='td_datos_12' style='display:none'>".$url1."</td>
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
+					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 					</tr>
 					</table>
 				</li>";
@@ -534,6 +546,8 @@ $paginaImprimir= "";
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
 					<td  id='td_datos_15' style='display:none'>".$categoria."</td>
+					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
+					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 					</tr>
 					</table>";
 				break;

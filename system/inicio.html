@@ -4323,21 +4323,26 @@ id='inptPersonalGasto' style='width:200px' />
 <br>
 <table style='width:100%'>
 <tr>
-<td>
+<td style="width: 40%;">
 <p class='pTituloC' >Fecha :</p>
 <input class='inputText' type='Date' id='inptFechaGasto'
 style='width:150px' />
+</td>
+<td style="width: 60%;">
+<p class='pTituloC' >Local :</p>
+<select class="inputSelect" id="inptlocalMisGastos"
+style='width:150px'></select>
 </td>
 </tr>
 </table>
 <br>
 <table style='width:100%'>
 <tr>
-<td>
-<p class='pTituloC' >Local :</p>
-<select class="inputSelect" id="inptlocalMisGastos"
-style='width:150px'></select>
-</td>
+  <td style="width:100%">
+    <p class="pTituloC">Interconsulta :</p>
+    <input type="text" class="inputTextDisable" id="inptAbmInterConsultaGasto" disabled="" style="width: 250px;">
+    <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarVentanaInterConsulta(true, 'listado', 'divAbmGastos')" style="background-color: #FF5722;">
+  </td>
 </tr>
 </table>
 <br>
@@ -4510,7 +4515,7 @@ Activo</p>
 </table>
 </div>
 </div>
-<div class='divMenuf'>
+<div class='divMenuf' style="max-height: 700px; overflow-y: auto;">
   <table class="tableCabeceraRegistro" id='tdTituloImpreGastos'>
 <tbody>
 <tr>
@@ -4624,9 +4629,6 @@ id="inptlocalMisGastosBusca"></select>
     </div>
     <div class="collapse" id="zonaGastosSinCategorizar">
       <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
       </ul>
     </div>
   </div>
@@ -4636,9 +4638,6 @@ id="inptlocalMisGastosBusca"></select>
     </div>
     <div class="collapse" id="zonaGastosIngreso">
       <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
       </ul>
     </div>
   </div>
@@ -4648,9 +4647,6 @@ id="inptlocalMisGastosBusca"></select>
     </div>
     <div class="collapse" id="zonaGastosCostosDirectos">
       <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
       </ul>
     </div>
   </div>

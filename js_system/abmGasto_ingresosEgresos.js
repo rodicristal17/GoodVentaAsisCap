@@ -202,6 +202,8 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("nrocuenta", nrocuenta)
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
+	datos.append("cod_interConsultaFK", cod_interConsulta);
+	
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
@@ -835,13 +837,19 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html();
 	idAbmMotivoEgresoIngreso= $(datostr).children('td[id="td_id"]').html();
+
+	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
+	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
+
      document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos"
 }
 
 function limpiarcamposmotivoegresoingreso(){
 	  document.getElementById("inptNuevoMotivoEgresoIngreso").value = ''
 	  document.getElementById("inptCategoriaMotivoEgresoIngreso").value = '';
-    document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'activo'
+    document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'activo';
+	cod_interConsulta= "";
+	document.getElementById("inptAbmInterConsultaGasto").value= "";
 	idAbmMotivoEgresoIngreso=''
      document.getElementById("btnMotivoIngresoEgreso").value="Guardar"
 }
