@@ -176,9 +176,10 @@ CREATE TABLE gastos_fijos (
     Foreign Key (cod_localFK) REFERENCES local(cod_local)
 );
 
-UPDATE migrar_caja SET cod_caja_hastaFK=1836 WHERE cod_caja_hastaFK= 0;
+-- Para limpiar las migraciones de cajas no aceptadas
+-- UPDATE migrar_caja SET cod_caja_hastaFK=1836 WHERE cod_caja_hastaFK= 0;
 
-ALTER TABLE gastos ADD COLUMN cod_interConsulta INT(11);
+ALTER TABLE gastos ADD COLUMN cod_interConsultaFK INT(11);
 
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA

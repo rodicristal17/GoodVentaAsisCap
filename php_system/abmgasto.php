@@ -304,7 +304,7 @@ if($operacion=="editar")
 {
 
 $consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuario=?,
-personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsulta=? where idgastos=?";
+personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsultaFK=? where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
 $ss='sssssssssssssss';
 if (!$stmt) {

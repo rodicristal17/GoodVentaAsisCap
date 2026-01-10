@@ -39,7 +39,7 @@ function limpiarcamposbuscadoregresoingreso(){
 	document.getElementById("inptRegistroNroGastos").value=""
 	document.getElementById("inptTotalGasto").value=""
 	document.getElementById("inptRegistroSeleccGasto").value=""
-	document.getElementById("table_abm_gasto").innerHTML=""
+	document.getElementById("table_abm_gasto").innerHTML="";
 }
 function minimizarventanaingresoegreso(){
 	document.getElementById("divMinimizadoEgresoIngreso").style.display=""
@@ -104,6 +104,9 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
 	
+	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
+	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
+
 	// Carga la imagen
 	let imagen= $(datostr).children('td[id="td_datos_12"]').html();
 	imagen= imagen ? imagen : '/GoodVentaAsisCap/iconos/imagenphoto.png';
@@ -623,6 +626,8 @@ function limpiarcamposGasto() {
 	document.getElementById('inptEstadoGasto').value = "Activo";
 	document.getElementById('btnAbmGastos').value = "Guardar datos";
 	document.getElementById('inptMotivoMisGastos').value ="";
+	document.getElementById('inptAbmInterConsultaGasto').value= "";
+	cod_interConsulta= "";
 	idAbmGasto = "";
 	seleccionarLocalUSer()
 	fotoGasto= "";
@@ -837,10 +842,6 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html();
 	idAbmMotivoEgresoIngreso= $(datostr).children('td[id="td_id"]').html();
-
-	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
-	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
-
      document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos"
 }
 

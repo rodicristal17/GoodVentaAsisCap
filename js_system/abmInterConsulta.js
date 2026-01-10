@@ -905,6 +905,10 @@ function obtenerDatosInterConsulta(elemento) {
             document.getElementById('inptAbmInterConsultaGastoFijo').value= $(elemento).children('#td_datos_10').html();
             verCerrarVentanaInterConsulta(false, 'listado');
             break;
+        case 'divAbmGastos':
+            document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            verCerrarVentanaInterConsulta(false, 'listado');
+            break;
         default:
             document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
             document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
