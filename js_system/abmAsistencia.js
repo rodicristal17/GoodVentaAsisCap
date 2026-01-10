@@ -71,6 +71,9 @@ function registrarAsistencia() {
 					let mensaje= datos["2"];
 					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
 					ver_vetana_informativa(mensaje);
+					if (Respuesta == 'red') {
+						obtenerAsistenciaUsuario();
+					}
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

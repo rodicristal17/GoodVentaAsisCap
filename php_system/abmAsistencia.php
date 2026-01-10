@@ -140,7 +140,7 @@
         
         // Valida la ip y registra la salida o devuelve error
         if (! $ip_valida) {
-            $informacion =array("1" => "error", "2" => "Se registro la asistencia pero la direccion IP de la salida no coincide con ningun administrador del local.", "3" => "Comunique si es un caso especial.", "4" => $_SERVER['REMOTE_ADDR'], "5" => $cod_asistencia);
+            $informacion =array("1" => "red", "2" => "Se registro la asistencia pero la direccion IP de la salida no coincide con ningun administrador del local.", "3" => "Comunique si es un caso especial.", "4" => $_SERVER['REMOTE_ADDR'], "5" => $cod_asistencia);
             echo json_encode($informacion);	
             exit;
         }
