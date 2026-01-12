@@ -12973,6 +12973,7 @@ $("div[id=divMasConfigVenta]").fadeOut(500);
 }
 var ControlVentanaVenta="0";
 function limpiarcamposventa(ctrl) {
+	elementoventa="";
 	idDetalleVenta = "";
 	idabmVenta = ""
 	idFkProducto = ""
@@ -15069,23 +15070,18 @@ SeleccTipoComprobanteVenta()
 var cantidaDetalleSelec = "";
 var codproductodetalleSelect = "";
 function obtenerdatosabmdetalleventa(datostr) {
+	$("tr[id=tbSelecRegistro]").each(function (i, td) {
+		td.className = ''
+	});
 
-
-	// $("tr[id=tbSelecRegistro]").each(function (i, td) {
-		// td.className = ''
-
-	// });
-
-	// datostr.className = 'tableRegistroSelec'
-	// document.getElementById('inptCodDetalle').value = $(datostr).children('td[id="td_id_2"]').html();
-	// document.getElementById('inptNombreProductoDetalleOpcion').value = $(datostr).children('td[id="td_datos_1"]').html();
-	// idDetalleVenta = $(datostr).children('td[id="td_id_2"]').html();
-	// cantidaDetalleSelec = $(datostr).children('td[id="td_datos_4"]').html();
-	// codproductodetalleSelect = $(datostr).children('td[id="td_id_1"]').html();
-	// vercerrarOpcionesDetalles("1")
-
-
-
+	datostr.className = 'tableRegistroSelec'
+	document.getElementById('inptCodDetalle').value = $(datostr).children('td[id="td_id_2"]').html();
+	document.getElementById('inptNombreProductoDetalleOpcion').value = $(datostr).children('td[id="td_datos_1"]').html();
+	document.getElementById('inptMontoDetallesVentaEliminar').value = $(datostr).children('td[id="td_datos_3"]').html();
+	idDetalleVenta = $(datostr).children('td[id="td_id_2"]').html();
+	cantidaDetalleSelec = $(datostr).children('td[id="td_datos_4"]').html();
+	codproductodetalleSelect = $(datostr).children('td[id="td_id_1"]').html();
+	vercerrarOpcionesDetalles("1")
 }
 function vercerrarOpcionesDetalles(d) {
 
@@ -15109,8 +15105,9 @@ function eliminardetalleventa() {
 		ver_vetana_informativa("FALTO SELCCIONAR UN REGITRO")
 		return false;
 	}
-	var operacion=document.getElementById("inptOpcionesDetallesVentaEliminar").value;
+	//var operacion=document.getElementById("inptOpcionesDetallesVentaEliminar").value;
 	var motivo=document.getElementById("inptMotivoDetallesVentaEliminar").value;
+	const monto= document.getElementById("inptMontoDetallesVentaEliminar").value;
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -15122,9 +15119,9 @@ function eliminardetalleventa() {
 	datos.append("cod_ventaFK", idabmVenta)
 	datos.append("cantida", cantidaDetalleSelec)
 	datos.append("codProducto", codproductodetalleSelect)
-	datos.append("operacion_stock", operacion)
 	datos.append("motivo", motivo)
 	datos.append("Local_FK", cod_localFKUSer)
+	datos.append("monto", monto);
 	var OpAjax = $.ajax({
 
 		data: datos,

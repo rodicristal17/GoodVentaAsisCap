@@ -170,24 +170,17 @@ editarusogarantia($idgarantia,$fecha,$estado,$user);
 if($operacion=="eliminar")
 {
 	
-	
 $cod_detalle=$_POST['cod_detalle'];
 $cod_detalle = utf8_decode($cod_detalle);
 $cod_ventaFK=$_POST['cod_ventaFK'];
 $cod_ventaFK = utf8_decode($cod_ventaFK);
-$cantida=$_POST['cantida'];
-$cantida = quitarseparadormiles($cantida);
 $codProducto=$_POST['codProducto'];
 $codProducto = utf8_decode($codProducto);
-$operacion=$_POST['operacion_stock'];
-$operacion = utf8_decode($operacion);
 $motivo=$_POST['motivo'];
 $motivo = utf8_decode($motivo);
-
-$Local_FK=$_POST['Local_FK'];
-$Local_FK = utf8_decode($Local_FK);
-
-quitarproducto($cod_detalle,$cod_ventaFK,$cantida,$codProducto,$operacion,$motivo,$Local_FK);
+$monto= $_POST['monto'];
+$monto = utf8_decode($monto);
+quitarproducto($cod_detalle,$cod_ventaFK,$codProducto,$motivo,$monto);
 
 
 }
@@ -918,58 +911,56 @@ exit;
 }
 
 
-function quitarproducto($cod_detalle,$cod_ventaFK,$cantida,$codProducto,$operacion,$motivo,$Local_FK)
+function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $monto)
 {
-	
-	
-if($cod_detalle=="" ||  $cod_ventaFK==""  ){
-$inforOacion =array("1" => "camposvacio");
-echo json_encode($informacion);	
-exit;
-}
+	if ($cod_detalle == "" ||  $cod_ventaFK == "") {
+		$informacion = array("1" => "camposvacio");
+		echo json_encode($informacion);
+		exit;
+	}
 
-$mysqli=conectar_al_servidor();
+	$mysqli = conectar_al_servidor();
 
-/*AUDITORIA*/
-date_default_timezone_set('America/Anguilla');    
-$fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
-$fecha = date('Y-m-d', time()); 
-$user=$_POST['useru'];
-$user = utf8_decode($user);
+	/*AUDITORIA*/
+	date_default_timezone_set('America/Anguilla');
+	$fecha_inser_edit = date('Y-m-d | h:i:sa', time());
+	$fecha = date('Y-m-d', time());
+	$user = $_POST['useru'];
+	$user = utf8_decode($user);
 
-$consulta="Insert into detallesventaeliminado (cod_producto,motivo,fecha,cod_user_insert,fecha_insert)
+	$consulta = "Insert into detallesventaeliminado (cod_producto,motivo,fecha,cod_user_insert,fecha_insert)
 values(?,?,?,?,?)";
-$stmt = $mysqli->prepare($consulta);
-$ss='sssss';
-$stmt->bind_param($ss,$codProducto,$motivo,$fecha,$user,$fecha_inser_edit);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
+	$stmt = $mysqli->prepare($consulta);
+	$ss = 'sssss';
+	$stmt->bind_param($ss, $codProducto, $motivo, $fecha, $user, $fecha_inser_edit);
+	if (! $stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
+		exit;
+	}
 
-
-$consulta1="delete from detalle_venta where cod_detalle=? ";
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='s';
-$stmt1->bind_param($ss,$cod_detalle);
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-
-}
-if($operacion=="1"){
-editar_cantidad($codProducto,$cantida,"suma",$Local_FK);
-}
-$subtotal=obtenerTotal($cod_ventaFK);
- eliminarestecreditos($cod_ventaFK);	
-actualizarTotal($cod_ventaFK,$subtotal); 
- 
-
-
-$informacion =array("1" => "exito","2" => number_format($subtotal,'0',',','.'),"3" => $cod_ventaFK);
-echo json_encode($informacion);	
-exit;
+	// Limpia el monto
+	$monto= str_replace('.','',$monto);
 	
+	$consulta1 = "update detalle_venta set estado='eliminado', descuento= ? where cod_detalle=? ";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss = 'ss';
+	$stmt1->bind_param($ss, $monto, $cod_detalle);
+	if (!$stmt1->execute()) {
+		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
+		exit;
+	}
+	/*
+	if ($operacion == "1") {
+		editar_cantidad($codProducto, $cantida, "suma", $Local_FK);
+	}
+	*/
+	$subtotal = obtenerTotal($cod_ventaFK);
+	eliminarestecreditos($cod_ventaFK);
+	actualizarTotal($cod_ventaFK, $subtotal);
+
+	$informacion = array("1" => "exito", "2" => number_format($subtotal, '0', ',', '.'), "3" => $cod_ventaFK);
+	echo json_encode($informacion);
+	exit;
 }
 
 
@@ -1412,17 +1403,19 @@ if($totalpagado>0){
 	$eventos="obtenerdatosabmdetalleventa(this)";
 }
 
-
+if ($estado == 'eliminado') {
+	$styleDetalle .= "text-decoration: line-through;";
+}
 
 	  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='$eventos' class='$styleDetalle'  name='tdDetalleVenta'>
+<tr id='tbSelecRegistro' onclick='$eventos' style='$styleDetalle'  name='tdDetalleVenta'>
 <td id='td_id_1' style='display:none'>".$cod_producto."</td>
 <td id='td_id_2' style='display:none'>".$cod_detalle."</td>
 <td  style='width:5%'>".$cod_barra."</td>
 <td  id='td_datos_1' style='width:20%;".$styleG."'>".$nombre_producto." *".$NombreMarca."*</td>
-<td  id='td_datos_3' style='width:10%'>".number_format($precio_producto,'0',',','.') ."</td>
+<td  id='td_datos_3' style='width:10%'>".number_format($subtotal,'0',',','.') ."</td>
 <td  id='td_datos_4' style='width:5%'>".number_format($cantidad_detalle,'2',',','.')."</td>
 <td  id='td_datos_5' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
 <td  id='td_datos_5' style='width:10%'>".number_format($subtotal,'0',',','.')."</td>
@@ -1430,6 +1423,22 @@ if($totalpagado>0){
 </tr>
 </table>";
 
+if ($estado == 'eliminado') {
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro' name='tdDetalleVenta'>
+<td id='td_id_1' style='display:none'>".$cod_producto."</td>
+<td id='td_id_2' style='display:none'>".$cod_detalle."</td>
+<td  style='width:5%'>".$cod_barra."</td>
+<td  id='td_datos_1' style='width:20%;".$styleG."'>Descuento por ".$nombre_producto."</td>
+<td  id='td_datos_3' style='width:10%'>".number_format($descuento,'0',',','.') ."</td>
+<td  id='td_datos_4' style='width:5%'>1</td>
+<td  id='td_datos_5' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
+<td  id='td_datos_5' style='width:10%'>".number_format($descuento,'0',',','.')."</td>
+<td  id='td_datos_6' style='display:none'>".number_format($comision,'0',',','.')."</td>
+</tr>
+</table>";
+}
 
 $descripcionDetalleVenta=buscardescripcionDetalleVenta($cod_detalle);
 
