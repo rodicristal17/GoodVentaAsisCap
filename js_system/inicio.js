@@ -15078,6 +15078,7 @@ function obtenerdatosabmdetalleventa(datostr) {
 	document.getElementById('inptCodDetalle').value = $(datostr).children('td[id="td_id_2"]').html();
 	document.getElementById('inptNombreProductoDetalleOpcion').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptMontoDetallesVentaEliminar').value = $(datostr).children('td[id="td_datos_3"]').html();
+	document.getElementById('inptMontoOriginalDetallesVentaEliminar').value = $(datostr).children('td[id="td_datos_3"]').html();
 	idDetalleVenta = $(datostr).children('td[id="td_id_2"]').html();
 	cantidaDetalleSelec = $(datostr).children('td[id="td_datos_4"]').html();
 	codproductodetalleSelect = $(datostr).children('td[id="td_id_1"]').html();
@@ -15108,6 +15109,7 @@ function eliminardetalleventa() {
 	//var operacion=document.getElementById("inptOpcionesDetallesVentaEliminar").value;
 	var motivo=document.getElementById("inptMotivoDetallesVentaEliminar").value;
 	const monto= document.getElementById("inptMontoDetallesVentaEliminar").value;
+	const monto_original= document.getElementById("inptMontoOriginalDetallesVentaEliminar").value;
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -15122,6 +15124,7 @@ function eliminardetalleventa() {
 	datos.append("motivo", motivo)
 	datos.append("Local_FK", cod_localFKUSer)
 	datos.append("monto", monto);
+	datos.append("monto_original", monto_original)
 	var OpAjax = $.ajax({
 
 		data: datos,

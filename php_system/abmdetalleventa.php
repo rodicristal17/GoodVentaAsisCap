@@ -180,7 +180,13 @@ $motivo=$_POST['motivo'];
 $motivo = utf8_decode($motivo);
 $monto= $_POST['monto'];
 $monto = utf8_decode($monto);
-quitarproducto($cod_detalle,$cod_ventaFK,$codProducto,$motivo,$monto);
+$monto_original= $_POST['monto_original'];
+$monto_original = utf8_decode($monto_original);
+// Limpia los numeros
+$monto = str_replace('.','',$monto);
+$monto_original = str_replace('.','',$monto_original);
+$monto= intval($monto_original) - intval($monto);
+quitarproducto($cod_detalle,$cod_ventaFK,$codProducto,$motivo,$monto,$monto_original);
 
 
 }
@@ -1424,6 +1430,7 @@ if ($estado == 'eliminado') {
 </table>";
 
 if ($estado == 'eliminado') {
+	$monto_total= intval($subtotal) - intval($descuento);
 	$pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' name='tdDetalleVenta'>
@@ -1431,10 +1438,10 @@ if ($estado == 'eliminado') {
 <td id='td_id_2' style='display:none'>".$cod_detalle."</td>
 <td  style='width:5%'>".$cod_barra."</td>
 <td  id='td_datos_1' style='width:20%;".$styleG."'>Descuento por ".$nombre_producto."</td>
-<td  id='td_datos_3' style='width:10%'>".number_format($descuento,'0',',','.') ."</td>
+<td  id='td_datos_3' style='width:10%'>-".number_format($descuento,'0',',','.') ."</td>
 <td  id='td_datos_4' style='width:5%'>1</td>
 <td  id='td_datos_5' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
-<td  id='td_datos_5' style='width:10%'>".number_format($descuento,'0',',','.')."</td>
+<td  id='td_datos_5' style='width:10%'>-".number_format($descuento,'0',',','.')."</td>
 <td  id='td_datos_6' style='display:none'>".number_format($comision,'0',',','.')."</td>
 </tr>
 </table>";
