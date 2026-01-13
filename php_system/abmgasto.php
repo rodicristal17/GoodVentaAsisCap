@@ -432,7 +432,12 @@ $paginaImprimir= "";
 			  $categoria=utf8_encode($valor['categoria']);
 			  
 		  	 $totalGasto=$totalGasto+$monto;
-			    	 
+			   
+			 $styleEstado = "";
+			 if ($estado == 'pendiente') {
+				$styleEstado= "background-color: #ff5050;color: #ffffff";
+			 }
+
 		  	  $styleName=CargarStyleTable($styleName);
 			$paginaImprimir .= "
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
@@ -462,7 +467,7 @@ $paginaImprimir= "";
 				$totalZonaIngresos += $monto;
 				$elementosZonaIngresos .= "<li class='list-group-item'>
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
@@ -489,7 +494,7 @@ $paginaImprimir= "";
 				$totalZonaCostosDirectos += $monto;
 				$elementosZonaCostosDirectos .= "<li class='list-group-item'>
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
@@ -516,7 +521,7 @@ $paginaImprimir= "";
 				$totalZonaGastosOperativos += $monto;
 				$elementosZonaGastosOperativos .= "<li class='list-group-item'>
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
@@ -543,7 +548,7 @@ $paginaImprimir= "";
 				$totalZonaSinCategorizar += $monto;
 				$pagina.="
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
