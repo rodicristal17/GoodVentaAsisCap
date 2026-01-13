@@ -15104,6 +15104,7 @@ function vercerrarOpcionesDetalles(d) {
 
 var control_elimino_producto= false;
 function eliminardetalleventa() {
+	if(controlacceso("ELIMINARDETALLEVENTA","accion")==false) {return false};
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
 		ver_vetana_informativa("NO SE PUEDE EDITAR EL DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
