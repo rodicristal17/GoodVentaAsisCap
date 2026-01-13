@@ -12933,7 +12933,12 @@ var idGaranteFk="";
 function verCerrarAbmVenta(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmVenta").style.display==""){
-		limpiarcamposventa()
+		if (control_elimino_producto) {
+			verCerrarquitardevolucionrefinanciamiento2("1");
+			control_elimino_producto= false;
+		} else {
+			limpiarcamposventa()
+		}
 		document.getElementById("tdEfectoAbmVenta").className="magictime vanishOut"
 		$("div[id=divAbmVenta]").fadeOut(500);	
 		// document.getElementById("divMinimizadoNuevaVenta2").style.display="none"
@@ -15096,6 +15101,8 @@ function vercerrarOpcionesDetalles(d) {
 
 
 }
+
+var control_elimino_producto= false;
 function eliminardetalleventa() {
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
@@ -15172,9 +15179,9 @@ function eliminardetalleventa() {
 
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 
-					document.getElementById("divOpcionesDetalles").style.display = "none"
+					document.getElementById("divOpcionesDetalles").style.display = "none";
 					buscardetallesventa()
-
+					control_elimino_producto= true;
 
 				}
 				else {
@@ -17549,7 +17556,8 @@ function obtenerelementohistroialventa(datos) {
 		document.getElementById("btnOpcionesHistorialVenta").style.backgroundColor="#4CAF50";
 		document.getElementById("btnAuditoriaVentas").style.backgroundColor="#673ab7";
 		
-		
+		document.getElementById('inptCuotaNroCambioRefinanciamiento2').value= $(datos).children('td[id="td_datos_104"]').html();
+		calcular_cuota_refinanciamiento(document.getElementById('inptCuotaNroCambioRefinanciamiento2'));
 		
 		document.getElementById("inptSeleccPuntoExpedicionConfirmarNro").value = $(datos).children('td[id="td_datos_36"]').html();
 	document.getElementById("inptConfirmarNroFactura").value = $(datos).children('td[id="td_datos_41"]').html();
@@ -17861,6 +17869,11 @@ function abmcancelarventa(stock,montodevuelto,motivo,fecha,cod_venta){
 			}
 			});	
 }
+
+function limpiarCamposRefinanciamiento2() {
+
+}
+
 function verCerrarquitardevolucionrefinanciamiento2(d){
 	if(d=="1"){
 		
@@ -17874,8 +17887,8 @@ function verCerrarquitardevolucionrefinanciamiento2(d){
 	}	
 	var datos=elementoventa;
 	document.getElementById("inptTotalCuotaRefinanciamiento2").value=$(datos).children('td[id="td_datos_37"]').html();
-	document.getElementById("inptCuotaNroCambioRefinanciamiento2").value=""
-	document.getElementById("inptMonotCambioRefinanciamiento2").value=""
+	//document.getElementById("inptCuotaNroCambioRefinanciamiento2").value=""
+	//document.getElementById("inptMonotCambioRefinanciamiento2").value=""
 	document.getElementById("inptFechaVentaCambioRefinanciamiento2").value=""
 	document.getElementById("inptDescuentoCambioRefinanciamiento2").value="0"
 	document.getElementById("inputSelectMetodoCambioRefinanciamiento2").value=$(datos).children('td[id="td_datos_18"]').html();	

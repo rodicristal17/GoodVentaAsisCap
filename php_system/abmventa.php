@@ -1331,6 +1331,7 @@ if($cob_ex!="Local"){
 <td  id='td_datos_101' style='display:none'>".$editadopor."</td>
 <td  id='td_datos_102' style='display:none'>".$fecha_insert."</td>
 <td  id='td_datos_103' style='display:none'>".$fecha_edit."</td>
+<td  id='td_datos_104' style='display:none'>".$nroCouta."</td>
 </tr>
 </table>";
 
