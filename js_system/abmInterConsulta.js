@@ -227,7 +227,7 @@ function verificarCamposInterConsulta() {
         ver_vetana_informativa("El campo asunto es obligatorio para crear una nueva Interconsulta.");
         return false;
     }
-    if ((tipo === 'administrativo' || tipo === 'clinico') && !cod_ventaFKConsulta) {
+    if ((tipo === 'administrativo' || tipo === 'clinico' || tipo == 'judicial') && !cod_ventaFKConsulta) {
         ver_vetana_informativa("Falta seleccionar la venta");
         return false;
     }
