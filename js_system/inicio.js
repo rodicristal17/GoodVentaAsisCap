@@ -17563,7 +17563,7 @@ function obtenerelementohistroialventa(datos) {
 		document.getElementById("inptSeleccPuntoExpedicionConfirmarNro").value = $(datos).children('td[id="td_datos_36"]').html();
 	document.getElementById("inptConfirmarNroFactura").value = $(datos).children('td[id="td_datos_41"]').html();
 	idFkVenta = $(datos).children('td[id="td_datos_8"]').html();
-	
+	codVentaCambio = $(datos).children('td[id="td_datos_8"]').html();
 }
 function limpiarcamposhistorialventa(){
 	
@@ -17893,7 +17893,7 @@ function verCerrarquitardevolucionrefinanciamiento2(d){
 	document.getElementById("inptFechaVentaCambioRefinanciamiento2").value=""
 	document.getElementById("inptDescuentoCambioRefinanciamiento2").value="0"
 	document.getElementById("inputSelectMetodoCambioRefinanciamiento2").value=$(datos).children('td[id="td_datos_18"]').html();	
-	codVentaCambio=$(datos).children('td[id="td_datos_8"]').html();;
+	//codVentaCambio=$(datos).children('td[id="td_datos_8"]').html();;
     vercerrarOpcionesDeRefinanciamiento2("1")
 	vercerrarOpcionesHistorialVenta("2")
 	limpiarcamposhistorialventa()

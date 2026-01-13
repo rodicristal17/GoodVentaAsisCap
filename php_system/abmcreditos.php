@@ -442,7 +442,7 @@ $interes=$_POST['interes'];
 $interes = quitarseparadormiles($interes);
 $descuento=$_POST['descuento'];
 $descuento = quitarseparadormiles($descuento);
-RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago);
+RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago,$user);
 
 }
 
@@ -546,7 +546,7 @@ exit;
 
 }
 
-function RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago){
+function RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago,$cod_usuarioFK){
 	$mysqli=conectar_al_servidor();
 			
 	
@@ -686,6 +686,18 @@ if($mescredito=="13"){$mescredito ="01";}
 			 
 			 actualizarMetodo($cod_venta,$metodopago);
 			 cambiarplazos($cod_venta);
+
+			// Datos de auditoria
+			$sql = "UPDATE venta SET cod_user_edit= ?, fecha_edit= ? WHERE num_factura= ?";
+			$stmt = $mysqli->prepare($sql);
+			$fechaActual = (new DateTime())->format('Y-m-d H:i:s');
+			$stmt->bind_param('isi', $cod_usuarioFK, $fechaActual, $cod_venta);
+
+			if ( ! $stmt->execute()) {
+				echo $mysqli->error;
+				exit;
+			}
+
 			  mysqli_close($mysqli);
 			 $informacion =array("1" => "exito" );
 echo json_encode($informacion);	
