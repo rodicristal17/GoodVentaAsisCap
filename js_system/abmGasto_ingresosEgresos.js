@@ -450,16 +450,6 @@ document.getElementById("DivImprimir").innerHTML=ficha;
      
 }
 
-function checkestadoGastos(d){
-	if(d=="1"){
-	document.getElementById('inptSeleccEstadoBuscarGasto1').checked=true
-		document.getElementById('inptSeleccEstadoBuscarGasto2').checked=false	
-	}else{
-		
-		document.getElementById('inptSeleccEstadoBuscarGasto1').checked=false
-		document.getElementById('inptSeleccEstadoBuscarGasto2').checked=true
-	}
-}
 function checkfiltroshistorialegresoingreso(d){
 	if(d=="1"){
 	document.getElementById('inptCheckingresoegreso1').checked=true
@@ -489,12 +479,8 @@ function buscarabmGasto() {
 if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}	
 	var fecha1 = document.getElementById('inptBuscarGastoF1').value
 	var fecha2 = document.getElementById('inptBuscarGastoF2').value
+	const ocultar_inactivos = document.getElementById("inptSeleccEstadoBuscarGasto2").checked;
 	var estado =""
-	if(document.getElementById('inptSeleccEstadoBuscarGasto1').checked==true){
-		estado="Activo"
-	}else{
-		estado="Inactivo"
-	}
 	var tipo = document.getElementById('inptSeleccTipoBuscarGasto').value
 	var arreglo = document.getElementById('inptSeleccArregloBuscarGasto').value
 	var cod_local = document.getElementById('inptlocalMisGastosBusca').value
@@ -525,6 +511,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		"fecha1": fecha1,
 		"fecha2": fecha2,
 		"estado": estado,
+		"ocultar_inactivos": ocultar_inactivos,
 		"cod_local": cod_local,
 		"tipo": tipo,
 		"usuario": usuario,
@@ -657,6 +644,7 @@ function VerificarDatosMotivoEgresoIngreso() {
 	var inptNuevoMotivo = document.getElementById('inptNuevoMotivoEgresoIngreso').value
 	var inptEstadoMotivoEgresoIngreso = document.getElementById('inptEstadoMotivoEgresoIngreso').value
 	const inptCategoriaMotivoEgresoIngreso = document.getElementById('inptCategoriaMotivoEgresoIngreso').value;
+	const inptAutorizacionMotivoEgresoIngreso= document.getElementById('inptAutorizacionMotivoEgresoIngreso').checked;
 	
 	if (inptNuevoMotivo == "") {
 		ver_vetana_informativa("FALTO AGREGAR NUEVO MOTIVO", "#")
@@ -673,9 +661,9 @@ function VerificarDatosMotivoEgresoIngreso() {
 		accion = "NuevoMotivo";
 	}
 		
-	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, accion);
+	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, inptAutorizacionMotivoEgresoIngreso, accion);
 }
-function abmNuevoMotivo(motivo, estado , categoria, accion) {
+function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -687,7 +675,8 @@ function abmNuevoMotivo(motivo, estado , categoria, accion) {
 	datos.append("estado", estado)
 	datos.append("categoria", categoria);
 	datos.append("idabm", idAbmMotivoEgresoIngreso)
-
+	datos.append("necesita_autorizacion", (necesita_autorizacion ? 1 : 0)); // El 1 es equivalente a true
+	
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmgasto.php",
@@ -841,6 +830,12 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
     document.getElementById("inptNuevoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_1"]').html();
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html();
+	const necesita_autorizacion= $(datostr).children('td[id="td_datos_4"]').html();
+	if (necesita_autorizacion == "1") {
+		document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = true;
+	} else {
+		document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = false;
+	}
 	idAbmMotivoEgresoIngreso= $(datostr).children('td[id="td_id"]').html();
      document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos"
 }

@@ -98,14 +98,15 @@ $arreglo = utf8_decode($arreglo);
 
 $cod_motivoFK= $_POST['cod_motivoFK'];
 $cod_motivoFK= utf8_decode($cod_motivoFK);
-
+$ocultar_inactivos= $_POST['ocultar_inactivos'];
+$ocultar_inactivos= utf8_decode($ocultar_inactivos);
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
 		$cod_local=buscarlocaluser($user);
 	}
 }
-buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$cod_motivoFK);
+buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK);
 
 }	
 
@@ -242,7 +243,10 @@ $idabm = utf8_decode($idabm);
 $categoria=$_POST['categoria'];
 $categoria = utf8_decode($categoria);
 
-	editarMotivo($motivo,$estado,$categoria,$idabm);
+$necesita_autorizacion= $_POST['necesita_autorizacion'];
+$necesita_autorizacion = utf8_decode($necesita_autorizacion);
+
+	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$idabm);
 
 }	
 
@@ -335,32 +339,43 @@ exit;
 	
 }
 
-function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$cod_motivoFK)
+function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK)
 {
 	$mysqli=conectar_al_servidor();
 	$pagina='';
 
 	$sqlFiltro= '';
 	if($cod_local != ""){
-	$sqlFiltro .= " and g.cod_local='$cod_local' ";
+		$sqlFiltro .= " and g.cod_local='$cod_local'";
 	}
 	if($tipo!=""){
-		$sqlFiltro .= " and tipo='$tipo' "; 
+		$sqlFiltro .= " and tipo='$tipo'";
 	}
 	if($arreglo!=""){
-		$sqlFiltro .=" and arreglo='$arreglo' "; 
+		$sqlFiltro .=" and arreglo='$arreglo'";
 	}
 	if($fecha!=""){
-		$sqlFiltro=" and fecha='$fecha' "; 
+		$sqlFiltro .=" and fecha='$fecha'";
 	}
 	if($usuario!=""){
-		$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=cod_usuario) like '%".$usuario."%' "; 
+		$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=cod_usuario) like '%".$usuario."%'";
 	}
 	if($fecha1!="" && $fecha2!="" ){
-		$sqlFiltro .=" and fecha>='$fecha1' and fecha<='$fecha2' "; 
+		$sqlFiltro .=" and fecha>='$fecha1' and fecha<='$fecha2'"; 
 	}
 	if ($cod_motivoFK != "") {
-		$sqlFiltro .= "and cod_motivoIngresoEgresoFK = $cod_motivoFK";
+		$sqlFiltro .= " and cod_motivoIngresoEgresoFK = $cod_motivoFK";
+	}
+	if ($ocultar_inactivos == "true") {
+		$sqlFiltro .= " and estado != 'Inactivo'";
+	}
+	if ($estado != "") {
+		$sqlFiltro .= " and estado='$estado'";
+	}
+
+	// Se limpia el primer ' and'
+	if (strlen($sqlFiltro) > 0) {
+		$sqlFiltro = "where" . substr($sqlFiltro, 4, strlen($sqlFiltro));
 	}
 		 
 	$sql= "Select arreglo,monto,motivo as descripcion,fecha,estado,cod_usuario,idgastos,tipo,cod_local,nroboleta,banco,nrocuenta,url1,cod_interConsultaFK,
@@ -369,7 +384,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	(Select descripcion from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS motivo,
 	(Select categoria from motivos_ingreso_egreso where cod_motivo_ingreso_egreso=cod_motivoIngresoEgresoFK) AS categoria,
 	(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
-	from gastos g where  estado='$estado' ".$sqlFiltro;
+	from gastos g ".$sqlFiltro;
 
    $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
@@ -1064,6 +1079,7 @@ if ( ! $stmt->execute()) {
 		  	  $descripcion=utf8_encode($valor['descripcion']);
 		  	  $estado=utf8_encode($valor['estado']);
 			  $categoria= utf8_encode($valor['categoria']);
+			  $necesita_autorizacion = utf8_encode($valor['necesita_autorizacion']);
 		  	 
 			  $styleName=CargarStyleTable($styleName);
 			  $pagina.="
@@ -1073,6 +1089,7 @@ if ( ! $stmt->execute()) {
 			  <td id='td_datos_1'style='width:60%' class='tdRegistroSearch' >".$descripcion."</td>
 			   <td  id='td_datos_2' style='display:none'>".$estado."</td>
 			   <td id='td_datos_3' style='width:40%' class='tdRegistroSearch' >".ucfirst($categoria)."</td>
+			   <td  id='td_datos_4' style='display:none'>".$necesita_autorizacion."</td>
 			  </tr>
 			  </table>";
 	  }
@@ -1084,7 +1101,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function NuevoMotivo($motivo,$estado,$categoria)
+function NuevoMotivo($motivo,$estado,$categoria, $necesita_autorizacion)
 {
 	
 if($motivo==""   ){
@@ -1095,10 +1112,10 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria) values (upper(?),?, ?)";
+$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion) values (upper(?),?, ?, ?)";
 $stmt = $mysqli->prepare($consulta1);
-$ss='sss';
-$stmt->bind_param($ss,$motivo,$estado,$categoria);
+$ss='ssss';
+$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion);
 
 if (!$stmt->execute()) {
 	echo "$consulta1\n$motivo\n";
@@ -1112,7 +1129,7 @@ exit;
 	
 }
 
-function editarMotivo($motivo,$estado,$categoria,$idabm)
+function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$idabm)
 {
 	
 if($motivo==""   ){
@@ -1123,7 +1140,7 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="update motivos_ingreso_egreso SET descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$consulta1="update motivos_ingreso_egreso SET descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {

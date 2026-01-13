@@ -4495,14 +4495,9 @@ Todos</p>
 <p class='pTituloC' >Fecha fin :</p>
 <input class='inputText' type='Date' id='inptBuscarGastoF2' style='width:130px' />
 </td>
-<td style="width:10%;text-align:left">
-<p class="pTitulo8" onclick="checkestadoGastos(1)"> 
-<input type="checkbox" id="inptSeleccEstadoBuscarGasto1" checked="">
-Activo</p>
-</td>
-<td style="width:10%;text-align:left">
-<p class="pTitulo8" onclick="checkestadoGastos(2)"> 
-<input type="checkbox" id="inptSeleccEstadoBuscarGasto2"> Inactivo
+<td style="width:20%;text-align:left">
+<p class="pTitulo8" style="width: 100%;"> 
+<input type="checkbox" id="inptSeleccEstadoBuscarGasto2" checked style="width: fit-content;margin-right: 5px;">Ocultar inactivos
 </p>
 </td>
 <td style="width:10%;"></td>
@@ -4732,15 +4727,20 @@ placeholder='Obligatorio(*)'>
 <br>
 <table style='width:100%'>
 <tr>
-<td style='width:100%'>
+<td style='width:60%'>
 <p class='pTituloC' >Estado del Registro :</p>
 <select class="inputSelect" style='width:250px' id='inptEstadoMotivoEgresoIngreso'>
 <option value="activo">Activo</option>
 <option value="inactivo">Inactivo</option>
 </select>
 </td>
+<td style='width:40%'>
+<p class="pTitulo8" style="width: 100%;"> 
+<input type="checkbox" id="inptAutorizacionMotivoEgresoIngreso" style="margin-right: 5px;width: fit-content;">
+Necesita autorizacion</p></td>
 </tr>
 </table>
+<br>
 <table style='width:100%'>
 <tr>
 <td style='width:100%'>
