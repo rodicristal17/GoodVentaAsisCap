@@ -673,7 +673,7 @@ function  buscarDetalleCompradoConsulta($cod_venta)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "select dtv.descripcion , pr.cod_producto,dtv.cantidad_detalle,pr.nombre_producto,dtv.cod_detalle ,estado_tratamiento,progreso_porcentaje
+$sql= "select dtv.descripcion , pr.cod_producto,dtv.cantidad_detalle,pr.nombre_producto,dtv.cod_detalle ,estado_tratamiento,progreso_porcentaje, dtv.estado
  from  producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
  inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
 where dtv.cod_ventaFK='$cod_venta'";
@@ -702,17 +702,21 @@ $cod_detalle = utf8_encode($valor['cod_detalle']);
 $cantidad_detalle = utf8_encode($valor['cantidad_detalle']);  
 $estado_tratamiento = utf8_encode($valor['estado_tratamiento']); 
 $progreso_porcentaje = utf8_encode($valor['progreso_porcentaje']); 
+$estado = utf8_encode($valor['estado']); 
 
 $Style='';
 if($estado_tratamiento!=""){
-	$Style=" style=' background-color: #8BC34A; color:#ffffff;' ";
+	//$Style=" style=' background-color: #8BC34A; color:#ffffff;' ";
+}
+if ($estado == "eliminado") {
+	$Style=" style=' text-decoration: line-through;' ";
 }
 
 // $descripcionDetalleVenta=buscardescripcionDetalleVenta($cod_detalle);
  $styleName=CargarStyleTable($styleName);
 $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)'> 
+<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' $Style> 
 <td  style='width:20%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
 <td  style='width:60%'>$nombre_producto   $descripcion </td> 
 <td   style='width:20%;text-align: center;'> <span style='
@@ -892,7 +896,7 @@ exit;
 function detalleTratamiento($buscar) {
     $mysqli = conectar_al_servidor();
 
-    $sql = "SELECT pr.cod_producto, pr.nombre_producto 
+    $sql = "SELECT pr.cod_producto, pr.nombre_producto, dtv.estado 
             FROM producto pr 
             INNER JOIN detalle_venta dtv ON dtv.cod_productoFK = pr.cod_producto
             WHERE dtv.cod_ventaFK = '$buscar'";
@@ -911,14 +915,17 @@ function detalleTratamiento($buscar) {
     if ($valor > 0) {
         while ($row = mysqli_fetch_assoc($result)) {
             $nombre_producto = utf8_encode($row['nombre_producto']);
+            $estado = utf8_encode($row['estado']);
+            
             $html .= "
             <li style='
                 background-color:#f2f2f2;
                 margin-bottom:4px;
                 padding:5px 10px;
                 border-radius:4px;
-                font-size:13px;
-            '>
+                font-size:13px;"
+                .($estado == 'eliminado' ? 'text-decoration: line-through;' : '').
+            "'>
             $nombre_producto
             </li>";
         }

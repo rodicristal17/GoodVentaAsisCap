@@ -3393,15 +3393,38 @@ function ImprimirExtracto() {
 		var nombre=$(elementohtml).children('td[id="td_datos_1"]').html();
 		var costo=$(elementohtml).children('td[id="td_datos_3"]').html();
 		var cantida=$(elementohtml).children('td[id="td_datos_4"]').html();
-		var total=$(elementohtml).children('td[id="td_datos_5"]').html();
-		 paginaProducto+="<table class='tableRegistroSearchRepor' border='0' cellspacing='0' cellpadding='0'>"
-+"<tr >"
-+"<td  style='width:10%' >"+nombre+"</td>"
-+"<td  style='width:10%' >"+costo+"</td>"
-+"<td  style='width:10%' >"+cantida+"</td>"
-+"<td  style='width:10%' >"+total+"</td>"
-+"</tr>"
-+"</table>";
+		const sub_total=$(elementohtml).children('td[id="td_datos_5"]').html();
+		const total=$(elementohtml).children('td[id="td_datos_3"]').html();
+		const estado = $(elementohtml).children('td[id="td_datos_8"]').html();
+		const descuento = $(elementohtml).children('td[id="td_datos_7"]').html();
+
+		if (estado == 'eliminado') {
+			paginaProducto+="<table class='tableRegistroSearchRepor' border='0' cellspacing='0' cellpadding='0'>"
+   +"<tr style='text-decoration: line-through;'>"
+   +"<td  style='width:10%' >"+nombre+"</td>"
+   +"<td  style='width:10%' >"+costo+"</td>"
+   +"<td  style='width:10%' >"+cantida+"</td>"
+   +"<td  style='width:10%' >"+total+"</td>"
+   +"</tr>"
+   +"</table>"
+   +"<table class='tableRegistroSearchRepor' border='0' cellspacing='0' cellpadding='0'>"
+   +"<tr >"
+   +"<td  style='width:10%' >Cancelacion por "+nombre+"</td>"
+   +"<td  style='width:10%' >"+costo+"</td>"
+   +"<td  style='width:10%' >"+cantida+"</td>"
+   +"<td  style='width:10%' >"+sub_total+"</td>"
+   +"</tr>"
+   +"</table>";
+		} else {
+			paginaProducto+="<table class='tableRegistroSearchRepor' border='0' cellspacing='0' cellpadding='0'>"
+   +"<tr >"
+   +"<td  style='width:10%' >"+nombre+"</td>"
+   +"<td  style='width:10%' >"+costo+"</td>"
+   +"<td  style='width:10%' >"+cantida+"</td>"
+   +"<td  style='width:10%' >"+sub_total+"</td>"
+   +"</tr>"
+   +"</table>";
+		}
 	   });
 		document.getElementById("tbExtProducto").innerHTML=DetalleVentaClienteImprimir
 	var documento=document.getElementById("DivImprimirExtr").innerHTML;

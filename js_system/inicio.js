@@ -12935,7 +12935,6 @@ function verCerrarAbmVenta(){
 	if(document.getElementById("divAbmVenta").style.display==""){
 		if (control_elimino_producto) {
 			verCerrarquitardevolucionrefinanciamiento2("1");
-			control_elimino_producto= false;
 		} else {
 			limpiarcamposventa()
 		}
@@ -14259,18 +14258,15 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						 document.getElementById("btnVerCreditos").style.display=""
 		                 AutoCompletarCamposCuotas()
 					}else{
-						 document.getElementById("btnVerCreditos").style.display="none"
+						if (!control_elimino_producto) {
+							document.getElementById("btnVerCreditos").style.display="none"
+						}
 					}
              		  
 				  document.getElementById("btnFinalizarVenta").style.display=""
-				  document.getElementById("btnCancelarVenta").style.display=""
+				  //document.getElementById("btnCancelarVenta").style.display=""
 					OpcionesTipoVenta();
 					
-					
-					
-					
-
-
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -15181,9 +15177,8 @@ function eliminardetalleventa() {
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 
 					document.getElementById("divOpcionesDetalles").style.display = "none";
-					buscardetallesventa()
 					control_elimino_producto= true;
-
+					buscardetallesventa()
 				}
 				else {
 
@@ -15439,7 +15434,8 @@ function vercerrarpagos(d,c) {
 		document.getElementById("inptTotalVentaPagosb").value = ""
 		buscarDatosOpcionesPagos()
 		buscarcreditos()
-	} else {		
+	} else {
+		console.error(c)
 if(c=="0"){			
 			limpiarcamposventa()
 		}		
@@ -16969,7 +16965,6 @@ document.getElementById("tdEfectoHistorialVenta").className="magictime slideDown
 	}
 }
 function minimizarHistorialVenta(){
-	//document.getElementById("divHistorialVenta").style.display='none'
 document.getElementById("tdEfectoHistorialVenta").className="magictime slideDown"
 	$("div[id=divHistorialVenta]").fadeOut(500);	
 	document.getElementById("divMinimizadoHistorialVenta2").style.display=''
@@ -17465,11 +17460,9 @@ function editarventaselecc() {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
 		return
 	}	
-   document.getElementById("divHistorialVenta").style.display='none'
 	ControlVentanaVenta="1"
 	obtenerdatoshistorialventa(elementoventa)
-	limpiarcamposhistorialventa()
-	vercerrarOpcionesHistorialVenta("2")
+	//limpiarcamposhistorialventa()
 	
 	}
 var elementoventa = ""
@@ -17896,7 +17889,6 @@ function verCerrarquitardevolucionrefinanciamiento2(d){
 	//codVentaCambio=$(datos).children('td[id="td_datos_8"]').html();;
     vercerrarOpcionesDeRefinanciamiento2("1")
 	vercerrarOpcionesHistorialVenta("2")
-	limpiarcamposhistorialventa()
 	}
 }
 function vercerrarOpcionesDeRefinanciamiento2(d){
@@ -17909,6 +17901,10 @@ function vercerrarOpcionesDeRefinanciamiento2(d){
         document.getElementById("inptInteresRefinanciamiento2").value="4"
         document.getElementById("inptDiasGraciaRefinanciamiento2").value="5"
 	}else{
+		if (control_elimino_producto) {
+			ver_vetana_informativa("DEBE REALIZAR EL REFINANCIAMIENTO PRIMERO");
+			return false;
+		}
 		$("div[id=divRefinanciarcuota]").fadeOut(250)
 	}
 }
@@ -18027,7 +18023,10 @@ function abmrefinacimientoCuota(interes,descuento,total,metodopago,nroCuota,Mont
 		 
 		   Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...");
+				buscarhistorialventa();
+				vercerrarOpcionesDeRefinanciamiento2("");
+				control_elimino_producto= false;
 				}			
 			}catch(error)
 				{
@@ -18095,6 +18094,7 @@ function irAExtractodesdeVenta() {
 		return
 	}
 	if(controlacceso("VEREXPEDIENTEDELCLIENTE","accion")==false){return;}		
+	console.error("Desde donde se llamo");
 		 document.getElementById("divHistorialVenta").style.display='none'
 	verCerrarInformeExpedientes()
 	document.getElementById('inptBuscarInfExpedientefiltro').value = $(elementoventa).children('td[id="td_datos_2"]').html();
@@ -32406,6 +32406,7 @@ if(confirm("Estas Seguro que quieres eliminar este solicitud")){
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {				   
 					ver_vetana_informativa("ELIMINADO CORRECTAMENTE...")
+					document.getElementById("inptTotalCuotaRefinanciamiento2").value= document.getElementById("inptTotalVenta2").innerText
 					buscarSolicitudCredito()
 			   }
 			} catch (error) {

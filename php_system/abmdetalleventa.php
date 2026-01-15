@@ -917,7 +917,7 @@ exit;
 }
 
 
-function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $monto)
+function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $descuento, $monto)
 {
 	if ($cod_detalle == "" ||  $cod_ventaFK == "") {
 		$informacion = array("1" => "camposvacio");
@@ -946,11 +946,13 @@ values(?,?,?,?,?)";
 
 	// Limpia el monto
 	$monto= str_replace('.','',$monto);
-	
-	$consulta1 = "update detalle_venta set estado='eliminado', descuento= ? where cod_detalle=? ";
+	$descuento= str_replace('.','',$descuento);
+	$monto= intval($monto) - intval($descuento);
+
+	$consulta1 = "update detalle_venta set estado='eliminado', descuento= ?, subtotal= ? where cod_detalle=? ";
 	$stmt1 = $mysqli->prepare($consulta1);
-	$ss = 'ss';
-	$stmt1->bind_param($ss, $monto, $cod_detalle);
+	$ss = 'sis';
+	$stmt1->bind_param($ss, $descuento, $sub_total, $cod_detalle);
 	if (!$stmt1->execute()) {
 		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
 		exit;
@@ -961,8 +963,8 @@ values(?,?,?,?,?)";
 	}
 	*/
 	$subtotal = obtenerTotal($cod_ventaFK);
-	eliminarestecreditos($cod_ventaFK);
 	actualizarTotal($cod_ventaFK, $subtotal);
+	eliminarestecreditos($cod_ventaFK);
 
 	$informacion = array("1" => "exito", "2" => number_format($subtotal, '0', ',', '.'), "3" => $cod_ventaFK);
 	echo json_encode($informacion);
@@ -1135,7 +1137,6 @@ function actualizarTotal($cod_venta,$total){
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='ss';
 $stmt1->bind_param($ss,$total,$cod_venta); 
-
 if (!$stmt1->execute()) {
 	
 
@@ -1412,6 +1413,8 @@ if($totalpagado>0){
 if ($estado == 'eliminado') {
 	$styleDetalle .= "text-decoration: line-through;";
 }
+	
+	$monto_total= intval($subtotal) + intval($descuento);
 
 	  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -1421,28 +1424,29 @@ if ($estado == 'eliminado') {
 <td id='td_id_2' style='display:none'>".$cod_detalle."</td>
 <td  style='width:5%'>".$cod_barra."</td>
 <td  id='td_datos_1' style='width:20%;".$styleG."'>".$nombre_producto." *".$NombreMarca."*</td>
-<td  id='td_datos_3' style='width:10%'>".number_format($subtotal,'0',',','.') ."</td>
+<td  id='td_datos_3' style='width:10%'>".number_format($monto_total,'0',',','.') ."</td>
 <td  id='td_datos_4' style='width:5%'>".number_format($cantidad_detalle,'2',',','.')."</td>
-<td  id='td_datos_5' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
-<td  id='td_datos_5' style='width:10%'>".number_format($subtotal,'0',',','.')."</td>
+<td  id='td_datos_7' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
+<td  id='td_datos_5' style='width:10%'>".number_format($monto_total,'0',',','.')."</td>
 <td  id='td_datos_6' style='display:none'>".number_format($comision,'0',',','.')."</td>
+<td  id='td_datos_8' style='display:none'>".$estado."</td>
 </tr>
 </table>";
 
 if ($estado == 'eliminado') {
-	$monto_total= intval($subtotal) - intval($descuento);
 	$pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' name='tdDetalleVenta'>
 <td id='td_id_1' style='display:none'>".$cod_producto."</td>
 <td id='td_id_2' style='display:none'>".$cod_detalle."</td>
 <td  style='width:5%'>".$cod_barra."</td>
-<td  id='td_datos_1' style='width:20%;".$styleG."'>Descuento por ".$nombre_producto."</td>
-<td  id='td_datos_3' style='width:10%'>-".number_format($descuento,'0',',','.') ."</td>
+<td  id='td_datos_1' style='width:20%;".$styleG."'>Cancelacion por ".$nombre_producto."</td>
+<td  id='td_datos_3' style='width:10%'>".number_format($subtotal,'0',',','.') ."</td>
 <td  id='td_datos_4' style='width:5%'>1</td>
 <td  id='td_datos_5' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
-<td  id='td_datos_5' style='width:10%'>-".number_format($descuento,'0',',','.')."</td>
+<td  id='td_datos_7' style='width:10%'>".number_format($subtotal,'0',',','.')."</td>
 <td  id='td_datos_6' style='display:none'>".number_format($comision,'0',',','.')."</td>
+<td  id='td_datos_8' style='display:none'>".$estado."</td>
 </tr>
 </table>";
 }

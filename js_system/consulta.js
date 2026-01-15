@@ -1680,10 +1680,8 @@ function buscarDetalleVentaConsulta(cod_ventaFKConsulta) {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = datos_buscados	
-				
+					document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = datos_buscados
 				// cod_personaFK="";
-				
 					
 					var f = new Date();
 	var dia =f.getDate()
