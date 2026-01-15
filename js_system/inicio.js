@@ -19107,7 +19107,6 @@ function verCerrarCargarPagoDesdeCuentas(d) {
 		document.getElementById("BClienteCredito").innerHTML = NombreClienteCreditoPagar
 		document.getElementById("divAbmOpcionesPagos").style.display=""
 		document.getElementById("tdEfectoOpcionesPagos").className="magictime slideLeftReturn"
-		document.getElementById("tdOpcionesVolverAtrasPagos").style.display="none"
 		document.getElementById("inpCodVentaPagos").value = document.getElementById("inpCodVenta").value
 		document.getElementById("inptTotalVentaPagos").value = document.getElementById("inptTotalVenta").value
 		document.getElementById("inptTotalVentaPagosb").value = ""
