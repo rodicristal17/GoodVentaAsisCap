@@ -17463,7 +17463,7 @@ function editarventaselecc() {
 	ControlVentanaVenta="1"
 	obtenerdatoshistorialventa(elementoventa)
 	//limpiarcamposhistorialventa()
-	
+	vercerrarOpcionesHistorialVenta("2");
 	}
 var elementoventa = ""
 var controltipoventa="";
@@ -18025,8 +18025,8 @@ function abmrefinacimientoCuota(interes,descuento,total,metodopago,nroCuota,Mont
 			   if (Respuesta == true) {
 				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...");
 				buscarhistorialventa();
-				vercerrarOpcionesDeRefinanciamiento2("");
 				control_elimino_producto= false;
+				vercerrarOpcionesDeRefinanciamiento2("");
 				}			
 			}catch(error)
 				{
