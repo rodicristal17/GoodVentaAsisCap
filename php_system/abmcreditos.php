@@ -1968,7 +1968,9 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito an
 </tr>
 </table>
 ";
-			$paginaextracto .= "
+
+if ($Esado != 'inactivo') {
+	$paginaextracto .= "
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr >
 <td id='td_datos_2' style='width:10%' >" . $plazo . "</td>
@@ -1983,6 +1985,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito an
 </tr>
 </table>
 ";
+}
 		}
 
 		if ($DeudaPendiente == 0) {
@@ -2134,9 +2137,9 @@ function buscarDetalleVentaImprimir($CodVenta)
 $mysqli=conectar_al_servidor();
 
 
-$sql= "select  cantidad_detalle , precio_producto,subtotal , puntoexpedicion , num_factura,
-(select nombre_producto from producto where cod_producto=cod_productoFK) as NombreProducto
-from detalle_venta inner join venta on cod_venta=cod_ventaFK
+$sql= "select  dv.cantidad_detalle , dv.precio_producto,dv.subtotal , v.puntoexpedicion , v.num_factura, dv.estado, dv.descuento,
+(select nombre_producto from producto where cod_producto=dv.cod_productoFK) as NombreProducto
+from detalle_venta dv inner join venta v on cod_venta=cod_ventaFK
  where cod_ventaFK='$CodVenta'  ";
  
 $pagina = "";   
@@ -2166,7 +2169,8 @@ $subtotal = utf8_encode($valor['subtotal']);
 $NombreProducto = utf8_encode($valor['NombreProducto']); 
 $puntoexpedicion = utf8_encode($valor['puntoexpedicion']); 
 $num_factura = utf8_encode($valor['num_factura']);  
-
+$estado= utf8_encode($valor['estado']);
+$descuento= utf8_encode($valor['descuento']);
 
 if($puntoexpedicion!=""){
 	$nroFactura=$puntoexpedicion."-".$num_factura;
@@ -2174,13 +2178,27 @@ if($puntoexpedicion!=""){
 	$nroFactura=$num_factura;
 }
 
-
-$pagina.="<table class='tableRegistroSearch2' style='border: solid 1px #a1a1a1;' >
-<tr>
-<td style='width:70%'>".$NombreProducto."</td>
-<td style='width:30%'>".number_format($subtotal,'0',',','.')."</td>
-</tr>
-</table>";
+if ($estado== "eliminado") {
+	$pagina.="<table class='tableRegistroSearch2' style='border: solid 1px #a1a1a1;' >
+		<tr style='text-decoration: line-through;'>
+		<td style='width:70%'>".$NombreProducto."</td>
+		<td style='width:30%'>".number_format($subtotal + $descuento,'0',',','.')."</td>
+		</tr>
+		</table>
+		<table class='tableRegistroSearch2' style='border: solid 1px #a1a1a1;' >
+		<tr>
+		<td style='width:70%'>Cancelacion por ".$NombreProducto."</td>
+		<td style='width:30%'>".number_format($subtotal,'0',',','.')."</td>
+		</tr>
+		</table>";
+} else {
+	$pagina.="<table class='tableRegistroSearch2' style='border: solid 1px #a1a1a1;' >
+		<tr>
+		<td style='width:70%'>".$NombreProducto."</td>
+		<td style='width:30%'>".number_format($subtotal,'0',',','.')."</td>
+		</tr>
+		</table>";
+}
 
 }
 }
