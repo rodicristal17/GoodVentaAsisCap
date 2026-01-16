@@ -14257,10 +14257,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
 						 document.getElementById("btnVerCreditos").style.display=""
 		                 AutoCompletarCamposCuotas()
-					}else{
-						if (!control_elimino_producto) {
-							document.getElementById("btnVerCreditos").style.display="none"
-						}
+					}
+					if (control_elimino_producto) {
+						document.getElementById("btnVerCreditos").style.display="none"
 					}
              		  
 				  document.getElementById("btnFinalizarVenta").style.display=""
@@ -15101,11 +15100,11 @@ function vercerrarOpcionesDetalles(d) {
 var control_elimino_producto= false;
 function eliminardetalleventa() {
 	if(controlacceso("ELIMINARDETALLEVENTA","accion")==false) {return false};
-	var inptTotalPagado = document.getElementById('inptTotalPagado').value
-	if (inptTotalPagado > 0) {
+	var inptTotalPagado = document.getElementById('inptTotalPagado').value;
+	/* if (inptTotalPagado > 0) {
 		ver_vetana_informativa("NO SE PUEDE EDITAR EL DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
 		return false;
-	}
+	}*/
 	if (idDetalleVenta == "") {
 		ver_vetana_informativa("FALTO SELCCIONAR UN REGITRO")
 		return false;
