@@ -546,185 +546,182 @@ exit;
 
 }
 
-function RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago,$cod_usuarioFK){
-	$mysqli=conectar_al_servidor();
-			
-	
-	$sql= "Select idcredito,Monto,descuento,
+function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, $Monto, $descuento, $interes, $dias, $metodopago, $cod_usuarioFK)
+{
+	$mysqli = conectar_al_servidor();
+
+
+	$sql = "Select idcredito,Monto,descuento,
 	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.Tipo='Pago Cuota'),0) as totalPago
 	from credito cr
 	where cr.cod_venta='$cod_venta' ";
-		
-		if($descuento>0){
-			$descuento=$descuento/$nroCuota;
-		}else{
-			$descuento=0;
-		}
-   
-$stmt = $mysqli->prepare($sql);
 
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-}
- 
+	if ($descuento > 0) {
+		$descuento = $descuento / $nroCuota;
+	} else {
+		$descuento = 0;
+	}
+
+	$stmt = $mysqli->prepare($sql);
+
+	if (! $stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said (' . $stmt1->errno . ') ' . $stmt1->error, E_USER_ERROR);
+		exit;
+	}
+
 	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- $F=0;
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-		  
-		     $idcredito=$valor['idcredito'];
-			  $totalPago=utf8_encode($valor['totalPago']);
-			 $cuota=utf8_encode($valor['Monto']);
-			  $descuentocuota=utf8_encode($valor['descuento']);
+	$valor = mysqli_num_rows($result);
+	$F = 0;
+	if ($valor > 0) {
+		while ($valor = mysqli_fetch_assoc($result)) {
+
+			$idcredito = $valor['idcredito'];
+			$totalPago = utf8_encode($valor['totalPago']);
+			$cuota = utf8_encode($valor['Monto']);
+			$descuentocuota = utf8_encode($valor['descuento']);
+			eliminarestecreditos($idcredito);
+			/*
 			if($totalPago<=0){
-				eliminarestecreditos($idcredito);
 			}else{
 				if($cuota>$totalPago){
 				$totalPago=$descuentocuota+$totalPago;
 				 editarestacuota($idcredito,$totalPago);
 				}
-				
 			}
-			  
-			  
-			  
-	  }
- }
-		
-
-		
-		 $a=0;
-			 $F=0;
-			 $fechaInicio=$iniciopago;
-		     $cantidad=$nroCuota;
-				$pendiente=$total;
-				
-	$fecha = strtotime($iniciopago);
-	$diacredito = date("d",$fecha);//dia
-	$anhocredito = date("Y",$fecha);//AÑO
-	$mescredito = date("m",$fecha) + 1;//mes
-if($mescredito=="13"){$mescredito ="01";}	
-			
-	$contarDias=UltimoDia($anhocredito,$mescredito);			
-				
-				
-				
-			 while ($a<$cantidad){
-		if($metodopago=="Mensual")	{
-			if($contarDias<$diacredito || $contarDias==""){
-				
-					if($F>=1){		
-						$RestarF= $F -1 ; 
-						$fecha = strtotime('+'.$RestarF." month",strtotime($fechaInicio));
-						
-						$fecha = strtotime('+'.$contarDias." day",strtotime(date("d-m-Y",$fecha)));
-					}else{
-						$fecha =  strtotime($fechaInicio) ;
-						// $fecha = strtotime('+ '.$contarDias." day",strtotime($fechaInicio));
-					}
-									
-				
-			}else{
-				$fecha = strtotime('+'.$F." month",strtotime($fechaInicio));
-				
-			}
-				$F=$F+1;
-				
-			$diacredito = date("d",$fecha);//dia
-			$anhocredito = date("Y",$fecha);//AÑO
-			$mescredito = date("m",$fecha) + 1;//mes
-			if($mescredito=="13"){$mescredito ="01";}
-			
-			$contarDias=UltimoDia($anhocredito,$mescredito);
+			*/
 		}
-		if($metodopago=="Semanal")	{
-			$fecha = strtotime('+'.$F." day",strtotime($fechaInicio));
-			$F=$F+7;
-		}
-		if($metodopago=="Quincenal")	{
-			$fecha = strtotime('+'.$F." day",strtotime($fechaInicio));
-			$F=$F+15;
-		}
-	
-	$fecha=date("Y-m-d H:i:s",$fecha);
-	 if($pendiente>$Monto){
-	$cuotaSobrante=$pendiente-$Monto;
-	$cuotaSobrante=$pendiente-$cuotaSobrante;
-	}else{
-	$cuotaSobrante=$pendiente;
 	}
 
-	insertarcuotas(($a+1)."/".$nroCuota,$fecha, $cod_venta, $cuotaSobrante, "Pendiente"," ",$descuento,$dias,$interes, $cuotaSobrante);
-	$pendiente=$pendiente-$cuotaSobrante;
-	
-				  $a++;
-			 
-			 }
-			 
-			 if($pendiente>0){
-				 if($metodopago=="Mensual")	{
-			$fecha = strtotime('+'.$F." month",strtotime($fechaInicio));
-			$F=$F+1;
-		}
-		if($metodopago=="Semanal")	{
-			$fecha = strtotime('+'.$F." day",strtotime($fechaInicio));
-			$F=$F+7;
-		}
-		if($metodopago=="Quincenal")	{
-			$fecha = strtotime('+'.$F." day",strtotime($fechaInicio));
-			$F=$F+15;
-		}
-		$fecha=date("Y-m-d H:i:s",$fecha);
-			
-				 insertarcuotas(($a+1)."/".($nroCuota+1),$fecha, $cod_venta, $pendiente, "Pendiente"," ",$descuento,$dias,$interes, $pendiente);
-			 }
-			 
-			 
-			 actualizarMetodo($cod_venta,$metodopago);
-			 cambiarplazos($cod_venta);
 
-			// Datos de auditoria
-			$sql = "UPDATE venta SET cod_user_edit= ?, fecha_edit= ? WHERE num_factura= ?";
-			$stmt = $mysqli->prepare($sql);
-			$fechaActual = (new DateTime())->format('Y-m-d H:i:s');
-			$stmt->bind_param('isi', $cod_usuarioFK, $fechaActual, $cod_venta);
 
-			if ( ! $stmt->execute()) {
-				echo $mysqli->error;
-				exit;
+	$a = 0;
+	$F = 0;
+	$fechaInicio = $iniciopago;
+	$cantidad = $nroCuota;
+	$pendiente = $total;
+
+	$fecha = strtotime($iniciopago);
+	$diacredito = date("d", $fecha); //dia
+	$anhocredito = date("Y", $fecha); //AÑO
+	$mescredito = date("m", $fecha) + 1; //mes
+	if ($mescredito == "13") {
+		$mescredito = "01";
+	}
+
+	$contarDias = UltimoDia($anhocredito, $mescredito);
+
+	while ($a < $cantidad) {
+		if ($metodopago == "Mensual") {
+			if ($contarDias < $diacredito || $contarDias == "") {
+
+				if ($F >= 1) {
+					$RestarF = $F - 1;
+					$fecha = strtotime('+' . $RestarF . " month", strtotime($fechaInicio));
+
+					$fecha = strtotime('+' . $contarDias . " day", strtotime(date("d-m-Y", $fecha)));
+				} else {
+					$fecha =  strtotime($fechaInicio);
+					// $fecha = strtotime('+ '.$contarDias." day",strtotime($fechaInicio));
+				}
+			} else {
+				$fecha = strtotime('+' . $F . " month", strtotime($fechaInicio));
+			}
+			$F = $F + 1;
+
+			$diacredito = date("d", $fecha); //dia
+			$anhocredito = date("Y", $fecha); //AÑO
+			$mescredito = date("m", $fecha) + 1; //mes
+			if ($mescredito == "13") {
+				$mescredito = "01";
 			}
 
-			  mysqli_close($mysqli);
-			 $informacion =array("1" => "exito" );
-echo json_encode($informacion);	
-exit;
-		
+			$contarDias = UltimoDia($anhocredito, $mescredito);
+		}
+		if ($metodopago == "Semanal") {
+			$fecha = strtotime('+' . $F . " day", strtotime($fechaInicio));
+			$F = $F + 7;
+		}
+		if ($metodopago == "Quincenal") {
+			$fecha = strtotime('+' . $F . " day", strtotime($fechaInicio));
+			$F = $F + 15;
+		}
+
+		$fecha = date("Y-m-d H:i:s", $fecha);
+		if ($pendiente > $Monto) {
+			$cuotaSobrante = $pendiente - $Monto;
+			$cuotaSobrante = $pendiente - $cuotaSobrante;
+		} else {
+			$cuotaSobrante = $pendiente;
+		}
+
+		insertarcuotas(($a + 1) . "/" . $nroCuota, $fecha, $cod_venta, $cuotaSobrante, "Pendiente", " ", $descuento, $dias, $interes, $cuotaSobrante);
+		$pendiente = $pendiente - $cuotaSobrante;
+
+		$a++;
+	}
+
+	if ($pendiente > 0) {
+		if ($metodopago == "Mensual") {
+			$fecha = strtotime('+' . $F . " month", strtotime($fechaInicio));
+			$F = $F + 1;
+		}
+		if ($metodopago == "Semanal") {
+			$fecha = strtotime('+' . $F . " day", strtotime($fechaInicio));
+			$F = $F + 7;
+		}
+		if ($metodopago == "Quincenal") {
+			$fecha = strtotime('+' . $F . " day", strtotime($fechaInicio));
+			$F = $F + 15;
+		}
+		$fecha = date("Y-m-d H:i:s", $fecha);
+
+		insertarcuotas(($a + 1) . "/" . ($nroCuota + 1), $fecha, $cod_venta, $pendiente, "Pendiente", " ", $descuento, $dias, $interes, $pendiente);
+	}
+
+	actualizarMetodo($cod_venta, $metodopago);
+	// Funcion para unificar los plazos de todas las cuotas existentes sin importar su estado
+	//cambiarplazos($cod_venta);
+
+	// Datos de auditoria
+	$sql = "UPDATE venta SET cod_user_edit= ?, fecha_edit= ? WHERE num_factura= ?";
+	$stmt = $mysqli->prepare($sql);
+	$fechaActual = (new DateTime())->format('Y-m-d H:i:s');
+	$stmt->bind_param('isi', $cod_usuarioFK, $fechaActual, $cod_venta);
+
+	if (! $stmt->execute()) {
+		echo $mysqli->error;
+		exit;
+	}
+
+	mysqli_close($mysqli);
+	$informacion = array("1" => "exito");
+	echo json_encode($informacion);
+	exit;
 }
 
-function eliminarestecreditos($idcredito){
-		$mysqli=conectar_al_servidor();
-			$consulta="delete from pago where  cod_creditoFK='$idcredito' ";	
+function eliminarestecreditos($idcredito)
+{
+	$mysqli = conectar_al_servidor();
+	/* No elimina ningun registro, solo actualiza el estado del credito
+	$consulta = "delete from pago where  cod_creditoFK='$idcredito' ";
 
 	$stmt = $mysqli->prepare($consulta);
 
-if ( ! $stmt->execute()) {
-echo $mysqli->error;
-exit;
-}
+	if (! $stmt->execute()) {
+		echo $mysqli->error;
+		exit;
+	}
 
-$consulta="delete from credito where  idcredito='$idcredito' ";	
-
+	$consulta = "delete from credito where  idcredito='$idcredito' ";
+*/
+	$consulta = "UPDATE credito SET Esado='inactivo' WHERE idcredito='$idcredito'";
 	$stmt = $mysqli->prepare($consulta);
 
-if ( ! $stmt->execute()) {
-echo $mysqli->error;
-exit;
-}
- mysqli_close($mysqli);
+	if (! $stmt->execute()) {
+		echo $mysqli->error;
+		exit;
+	}
+	mysqli_close($mysqli);
 }
 
 
@@ -1379,18 +1376,16 @@ exit;
 			  $totalPago=utf8_encode($valor['totalPago']);
 			 $cuota=utf8_encode($valor['Monto']);
 			  $descuentocuota=utf8_encode($valor['descuento']);
+			  eliminarestecreditos($idcredito);
+			  /*
 			if($totalPago<=0){
-				eliminarestecreditos($idcredito);
 			}else{
 				if($cuota>$totalPago){
 				$totalPago=$descuentocuota+$totalPago;
 				 editarestacuota($idcredito,$totalPago);
 				}
-				
 			}
-			  
-			  
-			  
+			*/
 	  }
  }
 		
@@ -1679,12 +1674,12 @@ exit;
 
 
 /*Buscar Registro en detalle*/
-function buscarcreditos($buscar, $llamado_desde_funcion= false)
+function buscarcreditos($buscar, $llamado_desde_funcion = false)
 {
-$mysqli=conectar_al_servidor();
-$fechahoy=date('Y-m-d');	
-$sql= "select vt.cod_clienteFK,cr.plazo,cr.deudaInteres,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,cr.Nro_recibo,
-datediff(cr.fechapago,'".$fechahoy."') as diff,vt.total_venta,interes,dias,vt.pago as entrega,
+	$mysqli = conectar_al_servidor();
+	$fechahoy = date('Y-m-d');
+	$sql = "select vt.cod_clienteFK,cr.plazo,cr.deudaInteres,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,cr.Nro_recibo,
+datediff(cr.fechapago,'" . $fechahoy . "') as diff,vt.total_venta,interes,dias,vt.pago as entrega,
 total,(totalinteres + deudaInteres) as totalinteres ,totaldeuda,cr.descuento,
 IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as nroCancelado,
 IFNULL((select (pg.Fecha) from pago pg where pg.cod_creditoFK=cr.idcredito and Monto!='0' order by pg.Fecha desc limit 1),0) as FechaUltimoPago,
@@ -1693,352 +1688,361 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota' ),0) as totalPagoCuota,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Interes'),0) as totalPagoInteres
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where vt.cod_venta='$buscar' "; 
-$pagina = "";  
-$paginaextracto = "";  
-$interes = "0";  
-$diasatrazado = "0";  
-$dias = "0";  
-$totalPagado = "0";  
-$total_venta = "0";  
-$deuda = "0";  
-$totalInteres = "0";  
-$totalDescuento = "0";  
-$entrega = "0";  
-$TotalCuotasPendientes = "0";   
-$TotalInteresActual = "0";   
-$MontoCuota = "0";   
-$MontoCuotas = "0";   
-$SubTotalAPagar = "0";  
-$DeudaPendiente = "0";  
-$TotalAPagar = "0";  
-$TotalPagoEnInteres = "0";  
-$TotalApagarSinInteres = "0";  
-$nrodecuotasatrazado = "0";  
-$TotalInteresApagar="0";
+ where vt.cod_venta='$buscar' ";
+	$pagina = "";
+	$paginaextracto = "";
+	$interes = "0";
+	$diasatrazado = "0";
+	$dias = "0";
+	$totalPagado = "0";
+	$total_venta = "0";
+	$deuda = "0";
+	$totalInteres = "0";
+	$totalDescuento = "0";
+	$entrega = "0";
+	$TotalCuotasPendientes = "0";
+	$TotalInteresActual = "0";
+	$MontoCuota = "0";
+	$MontoCuotas = "0";
+	$SubTotalAPagar = "0";
+	$DeudaPendiente = "0";
+	$TotalAPagar = "0";
+	$TotalPagoEnInteres = "0";
+	$TotalApagarSinInteres = "0";
+	$nrodecuotasatrazado = "0";
+	$TotalInteresApagar = "0";
 
 
 
 
-$paginaExtractoDetalle="";
+	$paginaExtractoDetalle = "";
 
 
-$diff2="0";
-$stmt = $mysqli->prepare($sql);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
-
-$result = $stmt->get_result();
-$valor= mysqli_num_rows($result);
-$nroRegistro=$valor;
-$controlStyle="";
-
-$nombreClienteImprimir="";
-	$NroVentaClienteImprimir="";
-	$DetalleVentaClienteImprimir="";
-	$TipoVentaClienteImprimir="";
-	$FechaClienteImprimir="";
-	
-	$cod_venta="";
-	$registros= array();
-if ($valor>0)
-{
-while ($valor= mysqli_fetch_assoc($result))
-{  
-
-$diff2="0";
-$FechaUltimoPago = utf8_encode($valor['FechaUltimoPago']);
-$idcredito = utf8_encode($valor['idcredito']);
-$deudaInteres = utf8_encode($valor['deudaInteres']);
-$plazo = utf8_encode($valor['plazo']);  
-$fechapago = utf8_encode($valor['fechapago']);          
-$cod_venta = utf8_encode($valor['cod_venta']);          
-$Monto = utf8_encode($valor['Monto']); 
-$totalPago = utf8_encode($valor['totalPago']); //TOTAL PAGO DEL CREDITO
-$Esado = utf8_encode($valor['Esado']);          
-$Nro_recibo = utf8_encode($valor['Nro_recibo']);
-$diff = utf8_encode($valor['diff']);
-$total_venta = utf8_encode($valor['total_venta']);
-$interes = utf8_encode($valor['interes']);
-$dias = utf8_encode($valor['dias']);
-$total = utf8_encode($valor['total']);
-$FechaPagoCredito = utf8_encode($valor['FechaPagoCredito']);  
-$tinteres = utf8_encode($valor['totalinteres']);
-$totaldeuda = utf8_encode($valor['totaldeuda']);
-$entrega = utf8_encode($valor['entrega']);
-$descuento = utf8_encode($valor['descuento']);// TOTAL DESCUENTO
-$nroCancelado = utf8_encode($valor['nroCancelado']);
-$cod_clienteFK = utf8_encode($valor['cod_clienteFK']);
-$totalPagoCredito = utf8_encode($valor['totalPagoCuota']);//TOTAL PAGADO DE CUOTAS
-$totalPagoInteres = utf8_encode($valor['totalPagoInteres']);// TOTAL PAGADO DE INTERES
-$MontoConDescuento=$Monto-$descuento;//OBTENEMOS EL MONTO CON DESCUENTO
-$totalDescuento=$totalDescuento+$descuento;//CALCULAMOS EL TOTAL DESCUENTO
-/*CALCULAMOS EL SOBRANTE*/
-$MontoSobrante=$Monto-$totalPagoCredito;
-if($MontoCuotas==0){
-$MontoCuotas=$Monto-$totalPagoCredito;
-}
-/*INICIALIZAMOS LAS VARIABLES*/
-$deudaActua=0;
-$total_interes=0;
-$TotalSinInteres=0;
-$deuda_Actual_interes=0;
-$stylecolor=" ";
-$event=" ";
-//CONDICION PARA SABER SI ESE UN CREDITO CANCELDADO
-if($nroCancelado==0){
-	//CONDICION PARA SABER SI YA SE PAGO TODO
-	if(($Monto+$totalPagoInteres)>($totalPago+$descuento)){
-	//ESTADO DEL PAGO
-	$Esado="Pendiente";
-	//CALCULAMOS EL TOTAL SIN INTERES 
-	$TotalSinInteres=$Monto-($totalPagoCredito+$descuento);	
-	//CONDICION PARA SABER SI HAY DIAS ATRAZADOS
-	if($diff<0){
-	$diff=$diff*-1;
-	editarDiasAtrazadosdesdecalcularcredito($cod_clienteFK,$diff);
-	actualizardiasatrazadocredito($idcredito,$diff);
-	$stylecolor=" background-color: #df4444;color:#ffffff";
-	}else{
-	$diff=0;
-    }
-	$control=verificar_fecha_expiracion($fechapago);
-	if($control=="si"){
-	//CALCULAMOS EL NRO DE CUOTAS ATRAZADAS
-	$nrodecuotasatrazado=$nrodecuotasatrazado+1;
-	//CONDICION PARA SABER SI HAY INTERESES EN %
-	if($interes!=0){
-		/*CALCULAMOS EL DIA DE GRACIA*/
-	$fechahoy=date('Y-m-d');	
-	$datetime1= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$fechahoy)))); 
-	$datetime3= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$fechapago))));	
-	$Fecha1=strtotime($FechaUltimoPago);
-	$Fecha2=strtotime($fechapago);
-	if($FechaPagoCredito=="0" ){
-		$datetime2= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$fechapago))));	
-	}else{
-		if($Fecha1 < $Fecha2){
-				$datetime2= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$fechapago))));		
-			}else{
-				$datetime2= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$FechaUltimoPago))));		
-			}		
+	$diff2 = "0";
+	$stmt = $mysqli->prepare($sql);
+	if (! $stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
+		exit;
 	}
-	$interval=$datetime2->diff($datetime1);
-    $diff=$interval->format('%a');
-	
-	
-	
-	$interval2=$datetime3->diff($datetime1);
-    $diff2=$interval2->format('%a');
 
-	
-	$diasGracia=$diff2-$dias;
-	if($diasGracia>0){
-	//CALCULAMOS EL MONTO SOBRANTE
-	$montoIn=$MontoConDescuento-$totalPagoCredito;	 
-	/*CALCULAMOS EL INTERES*/  
-	$i=($interes*($Monto - $totalPagoCredito))/100; //   	aca modifique para que me salga bien el interes
-	$total_interes=($i*$diff);
-	//CALCUMOS EL TOTAL A PAGAR
-	$total=$montoIn+$total_interes;
-	$deudaActua=$montoIn+$total_interes;
-	//CARGAMOS EL TOTAL DEUDA SIN INTERES
-	$deuda_Actual_interes=$total_interes;	
-	actualizarTotalCuota($idcredito,$total,$total_interes,$total);	
-	
-	
-	}else{
-	
-	$deudaActua=$MontoConDescuento-$totalPagoCredito;
-	$total=$deudaActua;	
-    actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento);
-	
-	}	
-	}else{
-	
-	$deudaActua=$MontoConDescuento-$totalPagoCredito;
-	$total=$deudaActua;	
-	 actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento);
-			
-	}
-			
-	}else{
-	
-	$deudaActua=$MontoConDescuento-$totalPagoCredito;
-	$total=$deudaActua;	
-	 actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento);
-	
-	}
-	
-	
-	
-	$DeudaPendiente=$DeudaPendiente+$deudaActua;
-	$event="obtenerdatosabmpagos(this)";
-	
-	}else{
-	$Esado="Pagado";
-	$stylecolor="background-color: #4caf50;color:#ffffff";
-	$deudaActua=0;
-	$total=0;
-	$diff=0;
-	$event="obtenerdatosabmpagosopciones(this)";
-	}
-	
-	
-	
-	}else{
-	
-	
-	if(($MontoConDescuento+$tinteres)>$totalPago){
-	 $Esado="Pendiente";
-	 $diff="0";
-     $deudaActua=($MontoConDescuento+$tinteres)-$totalPago;
-	 $total=$MontoConDescuento-$totalPago;
-	 $stylecolor="text-decoration: line-through;";
-	
-	}else{
-	$Esado="Pagado";
-	$stylecolor="background-color: #4caf50;color:#ffffff";
-	$deudaActua=0;
-	$diff=0;
-	$total=0;
-	}
-    	
-	
-}
+	$result = $stmt->get_result();
+	$valor = mysqli_num_rows($result);
+	$nroRegistro = $valor;
+	$controlStyle = "";
 
- 
-$totalInteres=$totalInteres+$totalPagoInteres+$total_interes;
-$TotalInteresActual=$TotalInteresActual+$total_interes;
-// $deuda=$deuda+$deudaActua;
-$diasatrazado=$diasatrazado+$diff;
-$totalPagado=$totalPagado+$totalPago;
-$styleName="tableRegistroSearch";
+	$nombreClienteImprimir = "";
+	$NroVentaClienteImprimir = "";
+	$DetalleVentaClienteImprimir = "";
+	$TipoVentaClienteImprimir = "";
+	$FechaClienteImprimir = "";
+
+	$cod_venta = "";
+	$registros = array();
+	if ($valor > 0) {
+		while ($valor = mysqli_fetch_assoc($result)) {
+
+			$diff2 = "0";
+			$FechaUltimoPago = utf8_encode($valor['FechaUltimoPago']);
+			$idcredito = utf8_encode($valor['idcredito']);
+			$deudaInteres = utf8_encode($valor['deudaInteres']);
+			$plazo = utf8_encode($valor['plazo']);
+			$fechapago = utf8_encode($valor['fechapago']);
+			$cod_venta = utf8_encode($valor['cod_venta']);
+			$Monto = utf8_encode($valor['Monto']);
+			$totalPago = utf8_encode($valor['totalPago']); //TOTAL PAGO DEL CREDITO
+			$Esado = utf8_encode($valor['Esado']);
+			$Nro_recibo = utf8_encode($valor['Nro_recibo']);
+			$diff = utf8_encode($valor['diff']);
+			$total_venta = utf8_encode($valor['total_venta']);
+			$interes = utf8_encode($valor['interes']);
+			$dias = utf8_encode($valor['dias']);
+			$total = utf8_encode($valor['total']);
+			$FechaPagoCredito = utf8_encode($valor['FechaPagoCredito']);
+			$tinteres = utf8_encode($valor['totalinteres']);
+			$totaldeuda = utf8_encode($valor['totaldeuda']);
+			$entrega = utf8_encode($valor['entrega']);
+			$descuento = utf8_encode($valor['descuento']); // TOTAL DESCUENTO
+			$nroCancelado = utf8_encode($valor['nroCancelado']);
+			$cod_clienteFK = utf8_encode($valor['cod_clienteFK']);
+			$totalPagoCredito = utf8_encode($valor['totalPagoCuota']); //TOTAL PAGADO DE CUOTAS
+			$totalPagoInteres = utf8_encode($valor['totalPagoInteres']); // TOTAL PAGADO DE INTERES
+			$MontoConDescuento = $Monto - $descuento; //OBTENEMOS EL MONTO CON DESCUENTO
+			$totalDescuento = $totalDescuento + $descuento; //CALCULAMOS EL TOTAL DESCUENTO
+			/*CALCULAMOS EL SOBRANTE*/
+			$MontoSobrante = $Monto - $totalPagoCredito;
+			if ($MontoCuotas == 0) {
+				$MontoCuotas = $Monto - $totalPagoCredito;
+			}
+			/*INICIALIZAMOS LAS VARIABLES*/
+			$deudaActua = 0;
+			$total_interes = 0;
+			$TotalSinInteres = 0;
+			$deuda_Actual_interes = 0;
+			$stylecolor = " ";
+			$event = " ";
+
+			// Evalua si el credito es inactivo
+			if ($Esado == 'inactivo') {
+				$stylecolor = "color: #ffffff; background-color: rgb(66, 66, 66);";
+				$diff = 0;
+			} else {
+				//CONDICION PARA SABER SI ESE UN CREDITO CANCELDADO
+				if ($nroCancelado == 0) {
+					//CONDICION PARA SABER SI YA SE PAGO TODO
+					if (($Monto + $totalPagoInteres) > ($totalPago + $descuento)) {
+						//ESTADO DEL PAGO
+						$Esado = "Pendiente";
+						//CALCULAMOS EL TOTAL SIN INTERES 
+						$TotalSinInteres = $Monto - ($totalPagoCredito + $descuento);
+						//CONDICION PARA SABER SI HAY DIAS ATRAZADOS
+						if ($diff < 0) {
+							$diff = $diff * -1;
+							editarDiasAtrazadosdesdecalcularcredito($cod_clienteFK, $diff);
+							actualizardiasatrazadocredito($idcredito, $diff);
+							$stylecolor = " background-color: #df4444;color:#ffffff";
+						} else {
+							$diff = 0;
+						}
+						$control = verificar_fecha_expiracion($fechapago);
+						if ($control == "si") {
+							//CALCULAMOS EL NRO DE CUOTAS ATRAZADAS
+							$nrodecuotasatrazado = $nrodecuotasatrazado + 1;
+							//CONDICION PARA SABER SI HAY INTERESES EN %
+							if ($interes != 0) {
+								/*CALCULAMOS EL DIA DE GRACIA*/
+								$fechahoy = date('Y-m-d');
+								$datetime1 = new DateTime(date('y-m-d', strtotime(str_replace('/', '-', $fechahoy))));
+								$datetime3 = new DateTime(date('y-m-d', strtotime(str_replace('/', '-', $fechapago))));
+								$Fecha1 = strtotime($FechaUltimoPago);
+								$Fecha2 = strtotime($fechapago);
+								if ($FechaPagoCredito == "0") {
+									$datetime2 = new DateTime(date('y-m-d', strtotime(str_replace('/', '-', $fechapago))));
+								} else {
+									if ($Fecha1 < $Fecha2) {
+										$datetime2 = new DateTime(date('y-m-d', strtotime(str_replace('/', '-', $fechapago))));
+									} else {
+										$datetime2 = new DateTime(date('y-m-d', strtotime(str_replace('/', '-', $FechaUltimoPago))));
+									}
+								}
+								$interval = $datetime2->diff($datetime1);
+								$diff = $interval->format('%a');
+	
+	
+	
+								$interval2 = $datetime3->diff($datetime1);
+								$diff2 = $interval2->format('%a');
+	
+	
+								$diasGracia = $diff2 - $dias;
+								if ($diasGracia > 0) {
+									//CALCULAMOS EL MONTO SOBRANTE
+									$montoIn = $MontoConDescuento - $totalPagoCredito;
+									/*CALCULAMOS EL INTERES*/
+									$i = ($interes * ($Monto - $totalPagoCredito)) / 100; //   	aca modifique para que me salga bien el interes
+									$total_interes = ($i * $diff);
+									//CALCUMOS EL TOTAL A PAGAR
+									$total = $montoIn + $total_interes;
+									$deudaActua = $montoIn + $total_interes;
+									//CARGAMOS EL TOTAL DEUDA SIN INTERES
+									$deuda_Actual_interes = $total_interes;
+									actualizarTotalCuota($idcredito, $total, $total_interes, $total);
+								} else {
+	
+									$deudaActua = $MontoConDescuento - $totalPagoCredito;
+									$total = $deudaActua;
+									actualizarTotalCuota($idcredito, $total, 0, $MontoConDescuento);
+								}
+							} else {
+	
+								$deudaActua = $MontoConDescuento - $totalPagoCredito;
+								$total = $deudaActua;
+								actualizarTotalCuota($idcredito, $total, 0, $MontoConDescuento);
+							}
+						} else {
+	
+							$deudaActua = $MontoConDescuento - $totalPagoCredito;
+							$total = $deudaActua;
+							actualizarTotalCuota($idcredito, $total, 0, $MontoConDescuento);
+						}
+	
+	
+	
+						$DeudaPendiente = $DeudaPendiente + $deudaActua;
+						$event = "obtenerdatosabmpagos(this)";
+					} else {
+						$Esado = "Pagado";
+						$stylecolor = "background-color: #4caf50;color:#ffffff";
+						$deudaActua = 0;
+						$total = 0;
+						$diff = 0;
+						$event = "obtenerdatosabmpagosopciones(this)";
+					}
+				} else {
+	
+	
+					if (($MontoConDescuento + $tinteres) > $totalPago) {
+						$Esado = "Pendiente";
+						$diff = "0";
+						$deudaActua = ($MontoConDescuento + $tinteres) - $totalPago;
+						$total = $MontoConDescuento - $totalPago;
+						$stylecolor = "text-decoration: line-through;";
+					} else {
+						$Esado = "Pagado";
+						$stylecolor = "background-color: #4caf50;color:#ffffff";
+						$deudaActua = 0;
+						$diff = 0;
+						$total = 0;
+					}
+				}
+			}
 
 
-//                                                                                        Este agregue yo ahora  y tambien agregue en el td
-$DeudaInteres= $total_interes + $deudaInteres;
+
+			$totalInteres = $totalInteres + $totalPagoInteres + $total_interes;
+			$TotalInteresActual = $TotalInteresActual + $total_interes;
+			// $deuda=$deuda+$deudaActua;
+			$diasatrazado = $diasatrazado + $diff;
+			$totalPagado = $totalPagado + $totalPago;
+			$styleName = "tableRegistroSearch";
 
 
-if($DeudaInteres<=0){
-	$DeudaInteres=0;
-}
-$TotalDeuda=$DeudaInteres+ $TotalSinInteres;
-$deuda=$deuda+$TotalDeuda;
-
-$TotalInteresApagar = $TotalInteresApagar + $DeudaInteres;
+			//                                                                                        Este agregue yo ahora  y tambien agregue en el td
+			$DeudaInteres = $total_interes + $deudaInteres;
 
 
-$styleName=CargarStyleTable($styleName);
+			if ($DeudaInteres <= 0) {
+				$DeudaInteres = 0;
+			}
+			$TotalDeuda = $DeudaInteres + $TotalSinInteres;
+			$deuda = $deuda + $TotalDeuda;
 
-$registros[] = array(
-	"idcredito" => $idcredito,
-	"plazo" => $plazo,
-	"fechapago" => $fechapago,
-	"diff2" => $diff2,
-	"diff" => $diff,
-	"Monto" => $Monto,
-	"cod_venta" => $cod_venta,
-	"totalPago" => $totalPago,
-	"total_interes" => $total_interes,
-	"descuento" => $descuento,
-	"total" => $total,
-	"totalPago" => $totalPago,
-	"totalPagoCredito" => $totalPagoCredito,
-	"totalPagoInteres" => $totalPagoInteres,
-	"DeudaInteres" => $DeudaInteres,
-	"TotalSinInteres" => $TotalSinInteres,
-	"TotalDeuda" => $TotalDeuda,
-	"Esado" => $Esado,
-	"Nro_recibo" => $Nro_recibo
-);
+			$TotalInteresApagar = $TotalInteresApagar + $DeudaInteres;
 
-$pagina.="
+			$styleName = CargarStyleTable($styleName);
+
+			$registros[] = array(
+				"idcredito" => $idcredito,
+				"plazo" => $plazo,
+				"fechapago" => $fechapago,
+				"diff2" => $diff2,
+				"diff" => $diff,
+				"Monto" => $Monto,
+				"cod_venta" => $cod_venta,
+				"totalPago" => $totalPago,
+				"total_interes" => $total_interes,
+				"descuento" => $descuento,
+				"total" => $total,
+				"totalPago" => $totalPago,
+				"totalPagoCredito" => $totalPagoCredito,
+				"totalPagoInteres" => $totalPagoInteres,
+				"DeudaInteres" => $DeudaInteres,
+				"TotalSinInteres" => $TotalSinInteres,
+				"TotalDeuda" => $TotalDeuda,
+				"Esado" => $Esado,
+				"Nro_recibo" => $Nro_recibo
+			);
+
+			$pagina .= "
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' onclick='$event' style='$stylecolor'>
-<td id='td_datos_1' style='display:none' >".$idcredito."</td>
-<td id='td_datos_2' style='width:5%' >".$plazo."</td>
-<td id='td_datos_3' style='width:5%'>".$fechapago."</td>
-<td id='td_datos_14' style='width:3%'>".$diff2."</td>
-<td id='td_datos_15' style='width:3%'>".$diff."</td>
-<td id='td_datos_5' style='width:5%'>". number_format($Monto,'0',',','.')."</td>
-<td id='td_datos_4' style='display:none'>".$cod_venta."</td>
-<td id='td_datos_10' style='display:none'>". number_format($totalPago,'0',',','.')."</td>
-<td id='td_datos_11' style='width:5%'>". number_format($total_interes,'0',',','.')."</td>
-<td id='td_datos_12' style='width:5%'>". number_format($descuento,'0',',','.')."</td>
-<td id='' style='display:none'>". number_format($total,'0',',','.')."</td>
-<td id='td_datos_13' style='width:5%'>". number_format($totalPago,'0',',','.')."</td>
-<td id='' style='width:5%'>". number_format($totalPagoCredito,'0',',','.')."</td>
-<td id='' style='width:5%'>". number_format($totalPagoInteres,'0',',','.')."</td>
-<td id='td_datos_20' style='width:5%'>". number_format($DeudaInteres,'0',',','.')."</td>
-<td id='' style='width:5%'>". number_format($TotalSinInteres,'0',',','.')."</td>
-<td id='td_datos_6' style='width:5%'>". number_format($TotalDeuda,'0',',','.')."</td>
-<td id='td_datos_7' style='width:5%'>".$Esado."</td>
-<td id='td_datos_8' style='display:none'>".$Nro_recibo."</td>
-<td id='td_datos_9' style='display:none'>".$diff."</td>
+<td id='td_datos_1' style='display:none' >" . $idcredito . "</td>
+<td id='td_datos_2' style='width:5%' >" . $plazo . "</td>
+<td id='td_datos_3' style='width:5%'>" . $fechapago . "</td>
+<td id='td_datos_14' style='width:3%'>" . $diff2 . "</td>
+<td id='td_datos_15' style='width:3%'>" . $diff . "</td>
+<td id='td_datos_5' style='width:5%'>" . number_format($Monto, '0', ',', '.') . "</td>
+<td id='td_datos_4' style='display:none'>" . $cod_venta . "</td>
+<td id='td_datos_10' style='display:none'>" . number_format($totalPago, '0', ',', '.') . "</td>
+<td id='td_datos_11' style='width:5%'>" . number_format($total_interes, '0', ',', '.') . "</td>
+<td id='td_datos_12' style='width:5%'>" . number_format($descuento, '0', ',', '.') . "</td>
+<td id='' style='display:none'>" . number_format($total, '0', ',', '.') . "</td>
+<td id='td_datos_13' style='width:5%'>" . number_format($totalPago, '0', ',', '.') . "</td>
+<td id='' style='width:5%'>" . number_format($totalPagoCredito, '0', ',', '.') . "</td>
+<td id='' style='width:5%'>" . number_format($totalPagoInteres, '0', ',', '.') . "</td>
+<td id='td_datos_20' style='width:5%'>" . number_format($DeudaInteres, '0', ',', '.') . "</td>
+<td id='' style='width:5%'>" . number_format($TotalSinInteres, '0', ',', '.') . "</td>
+<td id='td_datos_6' style='width:5%'>" . number_format($TotalDeuda, '0', ',', '.') . "</td>
+<td id='td_datos_7' style='width:5%'>" . ucfirst($Esado) . "</td>
+<td id='td_datos_8' style='display:none'>" . $Nro_recibo . "</td>
+<td id='td_datos_9' style='display:none'>" . $diff . "</td>
 </tr>
 </table>
 ";
-$paginaextracto.="
+			$paginaextracto .= "
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr >
-<td id='td_datos_2' style='width:10%' >".$plazo."</td>
-<td id='td_datos_3' style='width:10%'>".$fechapago."</td>
-<td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
-<td id='td_datos_11' style='width:10%'>". number_format($total_interes,'0',',','.')."</td>
-<td id='td_datos_12' style='width:10%'>". number_format($descuento,'0',',','.')."</td>
-<td id='' style='width:10%'>". number_format($total,'0',',','.')."</td>
-<td id='' style='width:10%'>". number_format($totalPago,'0',',','.')."</td>
-<td id='td_datos_6' style='width:10%'>". number_format($TotalDeuda,'0',',','.')."</td>
-<td id='td_datos_7' style='width:10%'>".$Esado."</td>
+<td id='td_datos_2' style='width:10%' >" . $plazo . "</td>
+<td id='td_datos_3' style='width:10%'>" . $fechapago . "</td>
+<td id='td_datos_5' style='width:10%'>" . number_format($Monto, '0', ',', '.') . "</td>
+<td id='td_datos_11' style='width:10%'>" . number_format($total_interes, '0', ',', '.') . "</td>
+<td id='td_datos_12' style='width:10%'>" . number_format($descuento, '0', ',', '.') . "</td>
+<td id='' style='width:10%'>" . number_format($total, '0', ',', '.') . "</td>
+<td id='' style='width:10%'>" . number_format($totalPago, '0', ',', '.') . "</td>
+<td id='td_datos_6' style='width:10%'>" . number_format($TotalDeuda, '0', ',', '.') . "</td>
+<td id='td_datos_7' style='width:10%'>" . $Esado . "</td>
 </tr>
 </table>
 ";
+		}
 
-}
-
-if($DeudaPendiente==0){
-	$SubTotalAPagar=$MontoCuotas;
-	$MontoCuota=$MontoCuotas;
-	$DeudaPendiente=$MontoCuotas;
-}
-
-
-}
+		if ($DeudaPendiente == 0) {
+			$SubTotalAPagar = $MontoCuotas;
+			$MontoCuota = $MontoCuotas;
+			$DeudaPendiente = $MontoCuotas;
+		}
+	}
 
 
-$paginaExtractoDetalle= buscarDetalleVentaImprimir($cod_venta) ;
+	$paginaExtractoDetalle = buscarDetalleVentaImprimir($cod_venta);
 
 
-//                                                                                     edite la matriz 7
+	//                                                                                     edite la matriz 7
 
 
-$DatosImprimir = BuscarDetalleVentaCredito($cod_venta);
+	$DatosImprimir = BuscarDetalleVentaCredito($cod_venta);
 
 
-	$nombreClienteImprimir=$DatosImprimir[0];
-	$NroVentaClienteImprimir=$DatosImprimir[1];
-	$DetalleVentaClienteImprimir=$DatosImprimir[2];
-	$TipoVentaClienteImprimir=$DatosImprimir[3];
-	$FechaClienteImprimir=$DatosImprimir[4];
+	$nombreClienteImprimir = $DatosImprimir[0];
+	$NroVentaClienteImprimir = $DatosImprimir[1];
+	$DetalleVentaClienteImprimir = $DatosImprimir[2];
+	$TipoVentaClienteImprimir = $DatosImprimir[3];
+	$FechaClienteImprimir = $DatosImprimir[4];
 
 
- mysqli_close($mysqli);
- 
-if ($llamado_desde_funcion) {
-	return $registros;
-} else {
-	$informacion =array("1" => "exito","2" => $pagina,"12" => $paginaextracto,"3" =>number_format($totalPagado,'0',',','.') ,"4" =>number_format($deuda,'0',',','.'),"5" =>number_format($interes,'2',',','.'),"6" =>$dias, "7" =>number_format($TotalInteresApagar,'0',',','.')
-	, "9" => number_format($entrega,'0',',','.'),"8" => $diasatrazado, "11" => number_format($totalDescuento,'0',',','.')
-	, "13" => number_format($SubTotalAPagar,'0',',','.'),"14" => number_format($TotalCuotasPendientes,'0',',','.') ,
-	"15" => number_format($MontoCuota,'0',',','.'),"16" => number_format($totalInteres,'0',',','.') 
-	,"17" => number_format($DeudaPendiente,'0',',','.') ,"18" => number_format($TotalInteresActual,'0',',','.'),"19" => number_format($TotalPagoEnInteres,'0',',','.') ,"20" => $nombreClienteImprimir ,"21" => $NroVentaClienteImprimir ,"22" => $paginaExtractoDetalle ,"23" => $TipoVentaClienteImprimir ,
-	"24" => $FechaClienteImprimir, "25" => $registros );
-	echo json_encode($informacion);	
-	exit;
-}
+	mysqli_close($mysqli);
+
+	if ($llamado_desde_funcion) {
+		return $registros;
+	} else {
+		$informacion = array(
+			"1" => "exito",
+			"2" => $pagina,
+			"12" => $paginaextracto,
+			"3" => number_format($totalPagado, '0', ',', '.'),
+			"4" => number_format($deuda, '0', ',', '.'),
+			"5" => number_format($interes, '2', ',', '.'),
+			"6" => $dias,
+			"7" => number_format($TotalInteresApagar, '0', ',', '.'),
+			"9" => number_format($entrega, '0', ',', '.'),
+			"8" => $diasatrazado,
+			"11" => number_format($totalDescuento, '0', ',', '.'),
+			"13" => number_format($SubTotalAPagar, '0', ',', '.'),
+			"14" => number_format($TotalCuotasPendientes, '0', ',', '.'),
+			"15" => number_format($MontoCuota, '0', ',', '.'),
+			"16" => number_format($totalInteres, '0', ',', '.'),
+			"17" => number_format($DeudaPendiente, '0', ',', '.'),
+			"18" => number_format($TotalInteresActual, '0', ',', '.'),
+			"19" => number_format($TotalPagoEnInteres, '0', ',', '.'),
+			"20" => $nombreClienteImprimir,
+			"21" => $NroVentaClienteImprimir,
+			"22" => $paginaExtractoDetalle,
+			"23" => $TipoVentaClienteImprimir,
+			"24" => $FechaClienteImprimir,
+			"25" => $registros
+		);
+		echo json_encode($informacion);
+		exit;
+	}
 }
 
 

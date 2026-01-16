@@ -974,7 +974,7 @@ values(?,?,?,?,?)";
 
 function eliminarestecreditos($cod_venta){
 		$mysqli=conectar_al_servidor();
-			$consulta="delete from credito where  cod_venta='$cod_venta' ";	
+			$consulta="UPDATE credito SET Esado='inactivo' where  cod_venta='$cod_venta' ";
 
 	$stmt = $mysqli->prepare($consulta);
 
@@ -1404,11 +1404,7 @@ $totalesExt=$totalesExt+$subtotalIvaext;
 
 $styleG=""; 
 $styleDetalle=""; 
-if($totalpagado>0){
-	$eventos="";
-}else{
-	$eventos="obtenerdatosabmdetalleventa(this)";
-}
+$eventos="obtenerdatosabmdetalleventa(this)";
 
 if ($estado == 'eliminado') {
 	$styleDetalle .= "text-decoration: line-through;";
