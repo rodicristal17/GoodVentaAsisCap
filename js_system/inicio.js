@@ -14188,10 +14188,14 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					 totalesReciboDetalleiva15 = datos[9];
 					 totalInteresRecibo = datos[36];
 					document.getElementById("table_abm_detalle_venta").innerHTML = datos_buscados
+
+					if (!control_elimino_producto){
+						document.getElementById("inptTotalVenta2").innerHTML = datos[3]
+					}
+					
 					document.getElementById("inptTotalVenta").value = datos[3]
 					document.getElementById("inptTotalDescuento").value = datos[37]
 					document.getElementById("inptSubTotalVenta").value = datos[38]
-					document.getElementById("inptTotalVenta2").innerHTML = datos[3]
 					totalesRecibo = datos[3]
 					ImportePagare = datos[3]
 					document.getElementById("inptTotalPagado").value = datos[4]
@@ -15178,6 +15182,7 @@ function eliminardetalleventa() {
 					document.getElementById("divOpcionesDetalles").style.display = "none";
 					control_elimino_producto= true;
 					buscardetallesventa()
+					document.getElementById('inptTotalVenta2').innerHTML= datos["2"];
 				}
 				else {
 
