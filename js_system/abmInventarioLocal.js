@@ -195,7 +195,7 @@ function obtenermasVistaInformeInsumoLocal() {
 				if (Respuesta == "exito") {
 					document.getElementById("table_abm_InventarioLocal").innerHTML += datos["2"];
 
-					registrocargadoInsumoLocal= parseInt(datos["4"]);
+					registrocargadoInsumoLocal += parseInt(datos["4"]);
 
                     // Controla el progreso de la busqueda
 					if(totalregistroinformeInsumoLocal>registrocargadoInsumoLocal){
