@@ -49,8 +49,7 @@ IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limi
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta where (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0
     ".$condicioncodigo.$condicionpago.$condicion." and estado != 'eliminado' order by cr.idcredito asc";
 	
-	// echo $sql;
-	// exit;
+	//echo $sql;exit;
 
 $pagina="";
 $totalEnDescuento=0;

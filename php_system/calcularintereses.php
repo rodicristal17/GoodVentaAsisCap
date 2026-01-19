@@ -47,7 +47,7 @@ IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limi
 (select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1) as fechapagado,
 (select count(pg.Fecha) from pago pg where pg.cod_creditoFK=cr.idcredito ) as cantidad
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta where (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0
-    ".$condicioncodigo.$condicionpago.$condicion." and estado != 'eliminado' order by cr.idcredito asc";
+    ".$condicioncodigo.$condicionpago.$condicion." and esado != 'eliminado' order by cr.idcredito asc";
 	
 	//echo $sql;exit;
 
