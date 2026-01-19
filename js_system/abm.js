@@ -1308,7 +1308,6 @@ document.getElementById("lblReciboPlazo1").innerHTML =  ""
 document.getElementById("lblReciboPlazo2").innerHTML = ""
 document.getElementById("lblReciboPlazo3").innerHTML = ""
 
-
 var documento= document.getElementById("divImpresionRecibo").innerHTML;
      localStorage.setItem("reporte", documento);
 	  localStorage.setItem("tipo", "factura");

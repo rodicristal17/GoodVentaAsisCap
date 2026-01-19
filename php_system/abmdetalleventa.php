@@ -1380,6 +1380,7 @@ $ivaexcentas=0;
 $subtotalIva5=0;
 $subtotalIva10=0;
 $subtotalIvaext=0;
+
 if($impuesto==11){
 	$iva10porciento= $subtotal;
 $subtotalIva10=($subtotal/$impuesto);
@@ -1401,16 +1402,19 @@ $subtotalIvaext=$subtotal;
 $totalesExt=$totalesExt+$subtotalIvaext;
 }
 
-
 $styleG=""; 
 $styleDetalle=""; 
 $eventos="obtenerdatosabmdetalleventa(this)";
 
+$monto_total= intval($subtotal) + intval($descuento);
 if ($estado == 'eliminado') {
 	$styleDetalle .= "text-decoration: line-through;";
+
+	// iva recibo
+	$iva10porciento= $monto_total;
+	$iva5porciento= $monto_total;
+	$ivaexcentas= $monto_total;
 }
-	
-	$monto_total= intval($subtotal) + intval($descuento);
 
 	  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -1426,6 +1430,21 @@ if ($estado == 'eliminado') {
 <td  id='td_datos_5' style='width:10%'>".number_format($monto_total,'0',',','.')."</td>
 <td  id='td_datos_6' style='display:none'>".number_format($comision,'0',',','.')."</td>
 <td  id='td_datos_8' style='display:none'>".$estado."</td>
+</tr>
+</table>";
+
+$descripcionDetalleVenta=buscardescripcionDetalleVenta($cod_detalle);
+
+$paginarecibo.="
+<table class='tableReporRecibo' >
+<tr style='$styleDetalle>
+<td  style='width:35px'>".$cod_barra."</td>
+<td  style='width:35px;text-aling:center'>".number_format($cantidad_detalle,'2',',','.')."</td>
+<td  style='width:355px'>$nombre_producto * $NombreMarca * $descripcion <br> $descripcionDetalleVenta</td>
+<td  style='width:75px'>".number_format($precio_producto,'0',',','.') ."</td>
+<td  style='width:50px;text-aling:center'>".number_format($ivaexcentas,'0',',','.') ."</td>
+<td  style='width:50px;text-aling:center'>".number_format($iva5porciento,'0',',','.') ."</td>
+<td  style='width:65px;text-aling:center'>".number_format($iva10porciento,'0',',','.') ."</td>
 </tr>
 </table>";
 
@@ -1445,23 +1464,24 @@ if ($estado == 'eliminado') {
 <td  id='td_datos_8' style='display:none'>".$estado."</td>
 </tr>
 </table>";
-}
 
-$descripcionDetalleVenta=buscardescripcionDetalleVenta($cod_detalle);
-
+$iva10porciento= $subtotal;
+	$iva5porciento= $subtotal;
+	$ivaexcentas= $subtotal;
 
 $paginarecibo.="
 <table class='tableReporRecibo' >
-<tr >
+<tr>
 <td  style='width:35px'>".$cod_barra."</td>
 <td  style='width:35px;text-aling:center'>".number_format($cantidad_detalle,'2',',','.')."</td>
-<td  style='width:355px'>$nombre_producto * $NombreMarca * $descripcion <br> $descripcionDetalleVenta</td>
-<td  style='width:75px'>".number_format($precio_producto,'0',',','.') ."</td>
+<td  style='width:355px'> Cancelacion <br> $nombre_producto * $NombreMarca</td>
+<td  style='width:75px'>".number_format($subtotal,'0',',','.') ."</td>
 <td  style='width:50px;text-aling:center'>".number_format($ivaexcentas,'0',',','.') ."</td>
 <td  style='width:50px;text-aling:center'>".number_format($iva5porciento,'0',',','.') ."</td>
 <td  style='width:65px;text-aling:center'>".number_format($iva10porciento,'0',',','.') ."</td>
 </tr>
 </table>";
+}
 
 // $paginatickect.="<table class='tableTicket'>
 // <tr>
@@ -1513,11 +1533,30 @@ if($totalCredito>0){
 $plazoPago = buscarpagosTitulo($cod_ventaFK);
 
 $cuotas=buscarcantidadcuotapagados($cod_venta)."/".$nroCouta;
-$informacion =array("1" => "exito","2" => $pagina,"5" => $paginarecibo,"14" => $paginatickect,"3" => number_format($totalventa,'0',',','.'),"4" => number_format($totalpagado,'0',',','.')
-,"6" => number_format($SubTotalestotalIva5,'0',',','.'),"7" => number_format($SubTotalestotalIva10,'0',',','.'),"8" => number_format($totales10,'0',',','.')
-,"9" => number_format($totales5,'0',',','.'),"10" =>$clientenombre ,"11" => $clientedireccion ,"12" => $clientetelefono ,"13" => $nrodocliente
-,"15" => $plazo ,"16" => $fechapago ,"23" => number_format($Monto,'0',',','.')  ,"18" => $Nro_recibo ,"19" => $nroCuota ,"20" =>$dias ,"21" => number_format($interes,'2',',','.')  ,"22" => $TipoPago ,"17" =>number_format($entrega,'0',',','.')
-,"24"=>$controlMonto,
+$informacion =array(
+	"1" => "exito","2" => $pagina,
+	"5" => $paginarecibo,
+	"14" => $paginatickect,
+	"3" => number_format($totalventa,'0',',','.'),
+	"4" => number_format($totalpagado,'0',',','.')
+,"6" => number_format($SubTotalestotalIva5,'0',',','.'),
+"7" => number_format($SubTotalestotalIva10,'0',',','.'),
+"8" => number_format($totales10,'0',',','.')
+,"9" => number_format($totales5,'0',',','.'),
+"10" =>$clientenombre ,
+"11" => $clientedireccion ,
+"12" => $clientetelefono ,
+"13" => $nrodocliente
+,"15" => $plazo ,
+"16" => $fechapago ,
+"23" => number_format($Monto,'0',',','.')  ,
+"18" => $Nro_recibo ,
+"19" => $nroCuota ,
+"20" =>$dias ,
+"21" => number_format($interes,'2',',','.')  ,
+"22" => $TipoPago ,
+"17" =>number_format($entrega,'0',',','.'),
+"24"=>$controlMonto,
 "25"=>$fac,
 "26"=>$ultimafechapago,
 "27"=>$zonaCliente,
@@ -1532,7 +1571,9 @@ $informacion =array("1" => "exito","2" => $pagina,"5" => $paginarecibo,"14" => $
 "36"=>number_format($totalesiva,'0',',','.'),
 "37"=>number_format($totalDescuentosAplicado,'0',',','.'),
 "38"=>number_format($Subttotalventa,'0',',','.'),
-"39"=>$nrodocgarante,"40"=>$TipoVenta ,"41"=>$plazoPago[2] );
+"39"=>$nrodocgarante,
+"40"=>$TipoVenta ,
+"41"=>$plazoPago[2] );
 echo json_encode($informacion);	
 exit;
 }

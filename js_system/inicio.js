@@ -17530,9 +17530,10 @@ function obtenerdatoshistorialventa(datostr) {
 	
 	
 	buscardetallesventa()
+/*
 document.getElementById("divAbmVenta").style.display=""
 document.getElementById("tdEfectoAbmVenta").className="magictime slideDownReturn"
-
+*/
    document.getElementById("btnMasInfoClienteVenta").style.display='none'
 SeleccTipoComprobanteVenta()
 
@@ -18027,9 +18028,13 @@ function abmrefinacimientoCuota(interes,descuento,total,metodopago,nroCuota,Mont
 		   Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
 				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...");
-				buscarhistorialventa();
+				//buscarhistorialventa();
 				control_elimino_producto= false;
 				vercerrarOpcionesDeRefinanciamiento2("");
+				//idabmVenta=cod_venta;
+				obtenerdatoshistorialventa(elementoventa)
+				buscardetallesventa();
+				vercerrarOpcionesImpresion("1");
 				}			
 			}catch(error)
 				{

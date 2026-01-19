@@ -1142,7 +1142,7 @@ function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$d
 		IFNULL((Select sum(precio_producto*cantidad_detalle) from detalle_venta where cod_ventaFK=vt.cod_venta limit 1),0) as totalventadetalle,
 		IFNULL((Select montodevuelto from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as montodevuelto,
 		IFNULL((Select Monto from credito where cod_venta=vt.cod_venta  limit 1),0) as Monto,
-		(Select count(fechapago) from credito where cod_venta=vt.cod_venta and plazo!='ENTREGA' ) as nroCouta,
+		(Select count(fechapago) from credito where cod_venta=vt.cod_venta and plazo!='ENTREGA' and esado != 'inactivo' ) as nroCouta,
 				IFNULL((Select sum(descuento) from detalle_venta where cod_ventaFK=vt.cod_venta limit 1),0) as totalDescuentodetalle,
 		(Select fechapago from credito where cod_venta=vt.cod_venta order by fechapago asc limit 1) as fechaprimerpago,vt.fecha_insert,vt.fecha_edit,
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_insert )as insertadopor,
