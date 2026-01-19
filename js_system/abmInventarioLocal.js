@@ -193,26 +193,26 @@ function obtenermasVistaInformeInsumoLocal() {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					document.getElementById("table_InformeAsistencia").innerHTML += datos["2"];
-					let totalMinutos= parseFloat(document.getElementById("inptTotalMinutosInformeAsistencia").value);
-					document.getElementById("inptTotalMinutosInformeAsistencia").value= parseFloat(datos["6"]) + totalMinutos;
-					registrocargadoinformeAsistencia += parseInt(datos["4"]);
+					document.getElementById("table_abm_InventarioLocal").innerHTML += datos["2"];
 
-					// Controla el progreso de la busqueda
-					if(totalregistroinformeAsistencia>registrocargadoinformeAsistencia){
-						var porce=((registrocargadoinformeAsistencia*100)/totalregistroinformeAsistencia).toFixed(0)
-						document.getElementById("divProgressInformeAsistencia").style.width=porce+"%"
-						//document.getElementById("table_InformeAsistencia").innerHTML += "<div id='table_mas_InformeAsistencia' style='width: 100%;'></div>"
-						obtenermasVistaInformeAsistencia();
-					 }else{
-						controldebusquedadInformeAsistencia=false;
-						document.getElementById("divProgressInformeAsistencia").style.display="none"
+					registrocargadoInsumoLocal= parseInt(datos["4"]);
+
+                    // Controla el progreso de la busqueda
+					if(totalregistroinformeInsumoLocal>registrocargadoInsumoLocal){
+						controldebusquedadInformeInsumoLocal=true;
+						var porce=((registrocargadoInsumoLocal*100)/totalregistroinformeInsumoLocal).toFixed(0)
+                        document.getElementById("tbProcessInformeInsumoLocal").style.display= "";
+						document.getElementById("divProgressInformeInventarioLocal").style.width=porce+"%";
+
+						obtenermasVistaInformeInsumoLocal();
+                    }else{
                         document.getElementById("tbProcessInformeInsumoLocal").style.display= "none";
-					 }
+						controldebusquedadInformeInsumoLocal=false
+                    }
 				}
 			} catch (error) {
-				controldebusquedadInformeAsistencia=false;
-				document.getElementById("divProgressInformeAsistencia").style.backgroundColor='#ff5722'
+				controldebusquedadInformeInsumoLocal=false;
+				document.getElementById("divProgressInformeInventarioLocal").style.backgroundColor='#ff5722'
 
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
