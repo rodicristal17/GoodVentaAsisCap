@@ -225,7 +225,10 @@ $estado = utf8_decode($estado);
 $categoria=$_POST['categoria'];
 $categoria = utf8_decode($categoria);
 
-	NuevoMotivo($motivo,$estado,$categoria);
+$necesita_autorizacion= $_POST['necesita_autorizacion'];
+$necesita_autorizacion = utf8_decode($necesita_autorizacion);
+
+	NuevoMotivo($motivo,$estado,$categoria,$necesita_autorizacion);
 
 }
 
