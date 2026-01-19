@@ -35951,3 +35951,13 @@ function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 }
 
 var cod_persona= "";
+
+
+function descargarImagen(imgElement, nombre= 'imagen') {
+	const enlace = document.createElement("a");
+    enlace.href = imgElement.src;
+    enlace.download = nombre + ".webp";
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace); 
+}
