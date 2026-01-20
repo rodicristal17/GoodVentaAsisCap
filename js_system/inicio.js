@@ -208,7 +208,7 @@ window.onload = function () {
 	mueveReloj()
 
 	// Listener para menciones en interconsulta
-	document.getElementById('table_abm_InterConsulta')
+	document.getElementById('inptContenidoAbmMensaje')
 		.addEventListener('keyup', function(e) {
 		if (e.target.matches('p.mensaje-interconsulta')) {
 			const valor = e.target.textContent;
