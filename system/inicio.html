@@ -7461,8 +7461,9 @@ onclick='SeleccionarRegistroCategoria()' />
                 <td class="td_registro" style="width:5%;">#</td>
                 <td class="td_registro" style="width:25%;">ASUNTO</td>
                 <td class="td_registro" style="width:15%;">CLIENTE</td>
-                <td class="td_registro" style="width:15%;">ESTADO</td>
-                <td class="td_registro" style="width:15%;">TIPO</td>
+                <td class="td_registro" style="width:10%;">LOCAL</td>
+                <td class="td_registro" style="width:10%;">ESTADO</td>
+                <td class="td_registro" style="width:10%;">TIPO</td>
                 <td class="td_registro" style="width:10%;">FECHA CREACION</td>
                 <td class="td_registro" style="width:15%;">RESPONSABLE</td>
               </tr>
@@ -7484,7 +7485,11 @@ onclick='SeleccionarRegistroCategoria()' />
                 <td class="td_registro" style="width:1%;">
                   <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta3')">
                 </td>
-                <td class="td_registro" style="width:15%;">
+                <td class="td_registro" style="width:10%;">
+                <select class="inputfiltro" id="inptBuscarInterConsulta7">
+                </select>
+                </td>
+                <td class="td_registro" style="width:10%;">
                 <select class="inputfiltro" id="inptBuscarInterConsulta5">
                 <option value="">Todos</option>
                 <option value="pendiente">Pendiente</option>
@@ -7493,7 +7498,7 @@ onclick='SeleccionarRegistroCategoria()' />
                 <option value="inactivo">Inactivo</option>
                 </select>
                 </td>
-                <td class="td_registro" style="width:15%;">
+                <td class="td_registro" style="width:10%;">
                 <select class="inputfiltro" id="inptBuscarInterConsulta4">
                 <option value="">Todos</option>
                 <option value="administrativo">Administrativo</option>
@@ -7582,7 +7587,6 @@ onclick='SeleccionarRegistroCategoria()' />
             </tbody>
           </table> 
             <div class="divMenuf">
-              <table style="width:100%" class="divMenuf"><tr><td>
                 <table><tr>
                   <td>
                   <p class="pTituloC">Asunto :</p>
@@ -7596,6 +7600,14 @@ onclick='SeleccionarRegistroCategoria()' />
                   <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
                   </td></tr>
                 </table>
+                <table><tr>
+                  <td>
+                  <p class="pTituloC">Local :</p>
+                  <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:130px">
+                  </select>
+                  </td></tr>
+                </table>
+              </td></tr></table>
                 <table><tr>
                   <td>
                   <p class="pTituloC">Tipo :</p>
@@ -7620,7 +7632,6 @@ onclick='SeleccionarRegistroCategoria()' />
                   </select>
                   </td></tr>
                 </table>
-              </td></tr></table>
               </div>
                 <br>
                 <div class="divMenuf">

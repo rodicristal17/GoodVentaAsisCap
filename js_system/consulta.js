@@ -1528,6 +1528,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 			break;
 		case "interConsulta":
 			document.getElementById("inptNombreClienteAbmInterConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
+			document.getElementById('inptLocalAbmInterConsulta').value= document.getElementById("inptBuscarLocalPaciente").value
 			break;
 		default:
 			break;

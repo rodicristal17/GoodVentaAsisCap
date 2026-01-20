@@ -47,6 +47,7 @@
                 $nombre_responsable= isset($_POST['nombre_responsable']) ? utf8_decode($_POST['nombre_responsable']) : null;
                 $ocultar_inactivos= isset($_POST['ocultar_inactivos']) ? utf8_decode($_POST['ocultar_inactivos']) : null;
                 $usuario_vinculado= isset($_POST['usuario_vinculado']) ? utf8_decode($_POST['usuario_vinculado']) : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -56,6 +57,7 @@
                     'mencion'=> $mencion,
                     'cod_ventaFK'=> $cod_ventaFK,
                     'cod_usuarioFK'=> $cod_usuarioFK,
+                    'cod_localFK'=> $cod_localFK,
                     'nombre_cliente'=> $nombre_cliente,
                     'nombre_responsable'=> $nombre_responsable,
                     'ocultar_inactivos'=> $ocultar_inactivos,
@@ -88,8 +90,9 @@
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
 
-                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user);
+                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
@@ -315,6 +318,7 @@
             <span id="td_datos_4">'.$valueInter['cod_interConsulta'].'</span>
             <span id="td_datos_5">'.$valueInter['cod_ventaFK'].'</span>
             <span id="td_datos_7">'.$valueInter['nombre_persona'].'</span>
+            <span id="td_datos_8">'.$valueInter['cod_localFK'].'</span>
             </div>
             </div>
             </div>
@@ -624,8 +628,10 @@
                     <td id="td_datos_1" style="width: 25%;'.$style.'">'.$formatAsunto.'</td>
                     <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
                     <td id="td_datos_5" style="width: 15%;'.$style.'">'.$value['nombre_persona'].'</td>
+                    <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cod_localFK'].'</td>
+                    <td id="td_datos_12" style="width: 10%;'.$style.'">'.$value['nombre_local'].'</td>
                     <td id="td_datos_2" style="width: 10%;'.$style.'">'.$value['estado'].'</td>
-                    <td id="td_datos_6" style="width: 15%;'.$style.'">'.$value['tipo'].'</td>
+                    <td id="td_datos_6" style="width: 10%;'.$style.'">'.$value['tipo'].'</td>
                     <td id="td_datos_7" style="display: none;'.$style.'">'.$value['cod_clienteFK'].'</td>
                     <td id="td_datos_8" style="width: 10%;'.$style.'">'.$value['fecha_creacion'].'</td>
                     <td id="td_datos_9" style="width: 15%;'.$style.'">'.$value['nombre_persona_creador'].'</td>
@@ -997,6 +1003,9 @@
                 case 'cod_interConsulta':
                     $sqlFiltro .= "ic.cod_interConsulta = $value";
                     break;
+                case 'cod_localFK':
+                    $sqlFiltro .= "ic.cod_localFK = $value";
+                    break;
                 case 'estado':
                     $sqlFiltro .= "ic.estado = '$value'";
                     break;
@@ -1037,6 +1046,7 @@
 
         // Se separa la tabla venta de la interconsulta ya que este es opcional
         $sql= "SELECT ic.*, 
+            (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) AS nombre_local,
             (SELECT vt.cod_clienteFK from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS cod_clienteFK,
             (SELECT vt.num_factura from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS num_factura,
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
@@ -1094,13 +1104,13 @@
         return $registros;
     }
 
-    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit) {
+    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit, $cod_localFK) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_interConsulta)) {
-            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion) VALUES (?, ?, ?, ?, ?, NOW())";
+            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion, cod_localFK) VALUES (?, ?, ?, ?, ?, NOW(), ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('sssii',$asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create);
+            $stmt->bind_param('sssiii',$asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK);
         } else {
             // Obtiene los datos de la interconsulta antes que sea modificada
             $interconsulta_original= obtenerInterConsulta(array(
@@ -1145,6 +1155,12 @@
                 $ss .= "i";
                 $parametros[] = $cod_ventaFK;
                 $nuevos_datos['cod_ventaFK'] = $cod_ventaFK;
+            }
+            if (!empty($cod_localFK)) {
+                $atributos .= ", cod_localFK= ?";
+                $ss .= "i";
+                $parametros[] = $cod_localFK;
+                $nuevos_datos['cod_localFK'] = $cod_localFK;
             }
             
             $parametros[] = $cod_interConsulta;

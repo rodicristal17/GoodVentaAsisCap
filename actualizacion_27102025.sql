@@ -182,6 +182,11 @@ CREATE TABLE gastos_fijos (
 ALTER TABLE gastos ADD COLUMN cod_interConsultaFK INT(11);
 
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN necesita_autorizacion BOOLEAN DEFAULT FALSE;
+ALTER TABLE interconsulta ADD COLUMN cod_localFK INT(11);
+
+UPDATE interConsulta i INNER JOIN venta v 
+    ON i.cod_ventaFK = v.cod_venta
+SET i.cod_localFK = v.cod_local WHERE i.cod_ventaFK IS NOT NULL;
 
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA

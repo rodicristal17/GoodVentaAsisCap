@@ -269,7 +269,7 @@ window.onload = function () {
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
 			buscarSugerencias();
-			buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
+			buscarPacientesConInterConsultas2("", "", "", "", "", "", "",0, true, "");
 			// buscarproductosDescuento()
 
 		}
@@ -467,7 +467,7 @@ buscarobtenerPacientes()
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
 buscarSugerencias()
-buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
+buscarPacientesConInterConsultas2("", "", "", "", "", "", "",0, true, "");
 
 
 var saludo=localStorage.getItem("saludo"+userid);
@@ -10438,6 +10438,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptLocalTrabajoMecanicoDental").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalProductoBuscarInventario").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptLocalProductoEnviarA").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
+					document.getElementById("inptBuscarInterConsulta7").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
+					document.getElementById("inptLocalAbmInterConsulta").innerHTML = datos_buscados
 					document.getElementById("inptBuscarProducto7").innerHTML = datos_buscados
 					document.getElementById("inptAbmLocalGastoFijo").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados;
 					document.getElementById("inptlocalProductoBuscarVista").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados

@@ -13,11 +13,12 @@ function buscarPacientesConInterConsultas() {
     const tipo= document.getElementById('inptBuscarInterConsulta4').value;
     const ocultar_inactivos= document.getElementById('inptSeleccFiltroEstadoInterConsulta').checked;
     const usuario_vinculado= document.getElementById('inptUsuariosInterConsulta').value;
+    const cod_localFK= document.getElementById('inptBuscarInterConsulta7').value;
     
-    buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, 10, ocultar_inactivos, usuario_vinculado);
+    buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, 10, ocultar_inactivos, usuario_vinculado);
 }
 
-function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos, usuario_vinculado) {
+function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -31,7 +32,7 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
     datos.append("estado", estado);
     datos.append("tipo", tipo);
     datos.append("usuario_vinculado", usuario_vinculado);
-    datos.append("limite", limite);
+    datos.append("cod_localFK", cod_localFK);
 
     // Evalua si se ocultan los inactivos
     if (ocultar_inactivos) {
@@ -222,6 +223,7 @@ function verificarCamposInterConsulta() {
     const asunto= document.getElementById('inptAsuntoAbmInterConsulta').value;
     const estado= document.getElementById('inptEstadoAbmInterConsulta').value;
     const tipo= document.getElementById('inptTipoAbmInterConsulta').value;
+    const local= document.getElementById('inptLocalAbmInterConsulta').value;
 
     if (!asunto) {
         ver_vetana_informativa("El campo asunto es obligatorio para crear una nueva Interconsulta.");
@@ -231,11 +233,15 @@ function verificarCamposInterConsulta() {
         ver_vetana_informativa("Falta seleccionar la venta");
         return false;
     }
+    if (!local) {
+        ver_vetana_informativa("Falta seleccionar un local");
+        return false;
+    }
     
-    abmInterConsulta(asunto, estado, tipo);
+    abmInterConsulta(asunto, estado, tipo, local);
 }
 
-function abmInterConsulta(asunto, estado, tipo) {
+function abmInterConsulta(asunto, estado, tipo, local) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -246,6 +252,7 @@ function abmInterConsulta(asunto, estado, tipo) {
     datos.append("tipo", tipo);
     datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("cod_ventaFK", cod_ventaFKConsulta);
+    datos.append("cod_localFK", local);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -359,8 +366,6 @@ function buscarMensajes() {
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados exitosamente.");
-
-                    
 				} else {
 					// Si el servidor responde pero con un error de aplicación (ej: error en la BD)
 					const mensajeError = datos["mensaje"] || "El servidor no pudo procesar la solicitud.";
@@ -930,6 +935,7 @@ function obtenerDetallesInterConsulta(elemento, origen) {
             document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
             document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
             document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
+            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_8')?.textContent.trim();
             verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');
             break;
     }
@@ -1014,7 +1020,7 @@ function verCerrarVentanaInterConsulta(mostrar, anterior= '') {
 
         switch (anterior) {
             case 'divListadoInterConsulta':
-			    buscarPacientesConInterConsultas2("", "", "", "", "", "", 0, true, "");
+			    buscarPacientesConInterConsultas2("", "", "", "", "", "", "",0, true, "");
                 break
             case 'divAbmDetallesInterConsulta':
                 buscarPacientesConInterConsultas();
