@@ -7643,21 +7643,29 @@ onclick='SeleccionarRegistroCategoria()' />
             </tbody>
           </table> 
             <div class="divMenuf">
-              <div class="divTablesScrool" id="TableScroollInterConsulta" style="height: 700px;">
-                  <div class="div_cuerpo_table" id="table_abm_InterConsulta"
-                    style="height: 100%;border:none;width: 100%;">
+              <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"
+                style="height: 100%;border:none;width: 100%;"></div>
+                <div class="sugerencias-container" style="display: grid;justify-content: flex-end;">
+                  <div class="card my-3" style="border-left: 5px solid #8BC34A;width: 500px;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Good - Technology</span>
+                        <small class="text-secondary">
+                          <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26" style="margin-bottom: 5px;">
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex;">
+                          <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoAnexoInterchat')" style="background-image: url('/GoodVentaAsisCap/iconos/subir_imagen.png');width:100px; height: 90px;margin-right: 5px;"></div>
+                          <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
+                          <div style="width: 100px;margin-left: 10px;text-align: left;">
+                            <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()" style="background-color: rgb(76, 175, 80);width: 100%;">
+                            <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()" style="background-color: rgb(245, 59, 59);width: 100%;">
+                          </div>
+                        </div>
+                    </div>
                   </div>
-                  <table style='width:100%;height:50px;display:none' id='tbProcessInformeInterConsulta'>
-                  <tr>
-                  <td  style='width:90%'>
-                  <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeInterConsulta'></div></div>
-                  </td>
-                  <td style='width:10%;text-align:center'>
-                  <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
-                  </td>
-                  </tr>
-                  </table>
                 </div>
+              </div>
             </div>         
       </div>
   </center>

@@ -5,7 +5,7 @@ var registroInterConsultaAbierta= 0;
 var cod_interConsulta= "";
 
 function buscarPacientesConInterConsultas() {
-    const cod_interConsulta= document.getElementById('inptBuscarInterConsulta1').value;
+    const cod_interC= document.getElementById('inptBuscarInterConsulta1').value;
     const asunto= document.getElementById('inptBuscarInterConsulta2').value;
     const nombre_responsable= document.getElementById('inptBuscarInterConsulta6').value;
     const nombre_cliente= document.getElementById('inptBuscarInterConsulta3').value;
@@ -15,16 +15,16 @@ function buscarPacientesConInterConsultas() {
     const usuario_vinculado= document.getElementById('inptUsuariosInterConsulta').value;
     const cod_localFK= document.getElementById('inptBuscarInterConsulta7').value;
     
-    buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, 10, ocultar_inactivos, usuario_vinculado);
+    buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, 10, ocultar_inactivos, usuario_vinculado);
 }
 
-function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, limite, ocultar_inactivos, usuario_vinculado) {
+function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarInterConsultas');
-    datos.append("cod_interConsulta", cod_interConsulta);
+    datos.append("cod_interConsulta", cod_interC);
     datos.append("cod_usuarioFK", userid);
     datos.append("asunto", asunto);
     datos.append("nombre_responsable", nombre_responsable);
@@ -126,13 +126,13 @@ function buscarPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_res
 	});
 }
 
-function buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos, usuario_vinculado) {
+function buscarMasPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarInterConsultas');
-    datos.append("cod_interConsulta", cod_interConsulta);
+    datos.append("cod_interConsulta", cod_interC);
     datos.append("cod_usuarioFK", userid);
     datos.append("asunto", asunto);
     datos.append("nombre_responsable", nombre_responsable);
@@ -384,21 +384,21 @@ function buscarMensajes() {
 
 var fotoMensajeInterconsulta= "";
 var extMensajeInterconsulta= "";
-function verificarCamposMensaje(codInterconsulta) {
-    const fecha= document.getElementById('inptFechaAbmMensaje'+codInterconsulta).value;
-    const contenido= document.getElementById('inptContenidoAbmMensaje'+codInterconsulta).innerHTML;
+function verificarCamposMensaje() {
+    const fecha= document.getElementById('inptFechaAbmMensaje').value;
+    const contenido= document.getElementById('inptContenidoAbmMensaje').innerHTML;
     if (!contenido) {
         ver_vetana_informativa("Falto ingresar un contenido");
         return false;
     }
 
     // Deshabilita temporalmente el boton de enviar
-    document.getElementById('btnEnviarContenidoAbmMensaje'+codInterconsulta).disabled= true;
+    document.getElementById('btnEnviarContenidoAbmMensaje').disabled= true;
 
-    abmMensaje(codInterconsulta, fecha, contenido);
+    abmMensaje(fecha, contenido);
 }
 
-function abmMensaje(codInterconsulta,fecha, contenido) {
+function abmMensaje(fecha, contenido) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -406,7 +406,7 @@ function abmMensaje(codInterconsulta,fecha, contenido) {
     datos.append("accion", 'nuevo/editar mensaje');
     datos.append("fecha_creacion", fecha);
     datos.append("contenido", contenido);
-    datos.append("cod_interConsulta", codInterconsulta);
+    datos.append("cod_interConsulta", cod_interConsulta);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -441,12 +441,12 @@ function abmMensaje(codInterconsulta,fecha, contenido) {
 	        verCerrarEfectoCargando("");
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
-            document.getElementById('btnEnviarContenidoAbmMensaje'+codInterconsulta).disabled= false;
+            document.getElementById('btnEnviarContenidoAbmMensaje').disabled= false;
 		},
 		success: function (responseText) {
 			Respuesta = responseText;
 			console.log(Respuesta)
-            document.getElementById('btnEnviarContenidoAbmMensaje'+codInterconsulta).disabled= false;
+            document.getElementById('btnEnviarContenidoAbmMensaje').disabled= false;
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -465,15 +465,13 @@ function abmMensaje(codInterconsulta,fecha, contenido) {
 	});
 }
 
-function marcarMensajeLeido(elemento) {
-    const cod_interC= elemento.id.substr(23);
-
+function marcarMensajeLeido() {
     let datos= new FormData();
     datos.append("useru", userid);
     datos.append("passu", passuser);
     datos.append("navegador", navegador);
     datos.append("accion", 'marcarMensajesLeido');
-    datos.append("cod_interConsulta", cod_interC);
+    datos.append("cod_interConsulta", cod_interConsulta);
     
     var OpAjax = $.ajax({
 		data: datos,
@@ -518,10 +516,10 @@ function marcarMensajeLeido(elemento) {
 					ver_vetana_informativa("Error al marcar mensaje como leído.");
 				} else {
                     // Actualiz la vista
-                    let color= document.getElementById("contenedorEncabezadoInterConsulta"+cod_interC).style.border;
+                    let color= document.getElementById("contenedorEncabezadoInterConsulta").style.border;
                     color= color.substring(11);
-                    document.getElementById("contenedorEncabezadoInterConsulta"+cod_interC).style.border= "none";
-                    document.getElementById("contenedorEncabezadoInterConsulta"+cod_interC).style.borderLeft= "10px solid "+color;
+                    document.getElementById("contenedorEncabezadoInterConsulta").style.border= "none";
+                    document.getElementById("contenedorEncabezadoInterConsulta").style.borderLeft= "10px solid "+color;
                 }
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -534,14 +532,14 @@ function marcarMensajeLeido(elemento) {
 	});
 }
 
-function limpiarcamposMensaje(codInterconsulta) {
+function limpiarcamposMensaje() {
     const fechaActual = new Date();
     const offsetMinutos = fechaActual.getTimezoneOffset();    
     const fechaLocal = new Date(fechaActual.getTime() - (offsetMinutos * 60000));
 
-    document.getElementById('inptFechaAbmMensaje' + codInterconsulta).value = fechaLocal.toISOString().slice(0, 16);
+    document.getElementById('inptFechaAbmMensaje').value = fechaLocal.toISOString().slice(0, 16);
 
-    document.getElementById('inptContenidoAbmMensaje' + codInterconsulta).innerHTML = "";
+    document.getElementById('inptContenidoAbmMensaje').innerHTML = "";
     document.getElementById('imgfotoAnexoInterchat').style.backgroundImage = "url('/GoodVentaAsisCap/iconos/subir_imagen.png')";
     fotoMensajeInterconsulta = "";
     extMensajeInterconsulta = "";
@@ -692,14 +690,14 @@ function buscarInterConsultasYContenido() {
 	});
 }
 
-function verMasMensajesInterconsulta(cod_interCon, offset) {
+function verMasMensajesInterconsulta(offset) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", "buscarMasInterConsultasYContenido");
-    datos.append("cod_interConsulta", cod_interCon);
+    datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("limite", "10 offset "+ offset);
 
     var OpAjax = $.ajax({
@@ -742,7 +740,7 @@ function verMasMensajesInterconsulta(cod_interCon, offset) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-                    const contenedor= "contenedorMensajesInterConsulta"+cod_interCon;
+                    const contenedor= "contenedorMensajesInterConsulta";
                     const elemContenedor = document.getElementById(contenedor);
 
                     // Prepara btn para cargar mensajes anteriores y elimina el existente
@@ -750,7 +748,7 @@ function verMasMensajesInterconsulta(cod_interCon, offset) {
                     let btnMasMensajes= "";
                     if ((parseInt(offset) + 10) < parseInt(totalRegistroMensaje)) {
                         btnMasMensajes= "<div style='width: 100%; justify-content: center;'>"+
-                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+cod_interCon+", "+(offset + 10)+")'>Ver más mensajes...</button>"+
+                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+(offset + 10)+")'>Ver más mensajes...</button>"+
                             "</div>";
                     }
                     
@@ -921,6 +919,7 @@ function obtenerDatosInterConsulta(elemento) {
             verCerrarVentanaListadoInterConsulta(false, 'divListadoInterConsulta');
             verCerrarVentanaDetalleInterConsulta(true, 'divAbmDetallesInterConsulta');
             buscarInterConsultasYContenido();
+            limpiarcamposMensaje();
             break;
     }
 }

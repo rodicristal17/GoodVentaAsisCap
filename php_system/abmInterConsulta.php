@@ -174,7 +174,7 @@
                 $botonVerMas= "";
                 if (count($registrosMens) > ($offset + $limite)) {
                     $botonVerMas= "<div style='width: 100%; justify-content: center;'>
-                        <button class='btn btn-success' onclick='verMasMensajesInterconsulta(".$cod_interConsulta.", ".($offset + $limite).")'>Ver más mensajes...</button>
+                        <button class='btn btn-success' onclick='verMasMensajesInterconsulta(".($offset + $limite).")'>Ver más mensajes...</button>
                         </div>";
                 }
                 
@@ -276,7 +276,7 @@
             
             // Se crea el encabezado
             $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this, \'interConsulta\')">
-                <div id="contenedorEncabezadoInterConsulta'.$valueInter['cod_interConsulta'].'" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
+                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
             <h5 class="card-title">'.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'</h5>
             <div style="display: flex;">
@@ -323,40 +323,14 @@
             </div>
             </div>
             </div>
-            <div id="contenedorMensajesInterConsulta'.$valueInter['cod_interConsulta'].'">';
+            <div id="contenedorMensajesInterConsulta">';
             
             if (count($registrosMens) > ($limiteMensajes)) {
                 $pagina .= "<div style='width: 100%; justify-content: center;'>
-                    <button class='btn btn-success' onclick='verMasMensajesInterconsulta(".$valueInter['cod_interConsulta'].", $limiteMensajes)'>Ver más mensajes...</button>
+                    <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes)'>Ver más mensajes...</button>
                     </div>";
             }
-            $pagina .= $paginaMensajes;
-
-            // Se agrega el espacio para enviar un mensaje
-            $fechaActual= new DateTime();
-            $fechaActual= $fechaActual->format('Y-m-d\TH:i');
-
-            $pagina .= '<div class="sugerencias-container" style="display: grid;justify-content: flex-end;">
-                    <div class="card my-3" style="border-left: 5px solid #8BC34A;width: 500px;">
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                          <span>'.utf8_encode($nombre_usuario).'</span>
-                          <small class="text-secondary">
-                            <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje'.$valueInter['cod_interConsulta'].'" value="'.$fechaActual.'" style="margin-bottom: 5px;">
-                          </small>
-                      </div>
-                      <div class="card-body">
-                          <div style="display: flex;">
-                            <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos(\'fotoAnexoInterchat\')" style="background-image: url(\'/GoodVentaAsisCap/iconos/subir_imagen.png\');width:100px; height: 90px;margin-right: 5px;"></div>
-                            <p id="inptContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
-                            <div style="width: 100px;margin-left: 10px;text-align: left;">
-                              <input id="btnEnviarContenidoAbmMensaje'.$valueInter['cod_interConsulta'].'" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(76, 175, 80);width: 100%;">
-                              <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje('.$valueInter['cod_interConsulta'].')" style="background-color: rgb(245, 59, 59);width: 100%;">
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  </div>';
-            $pagina .= '</div>';
+            $pagina .= $paginaMensajes. '</div>';
         }   
 
         // Obtiene la cantidad total de mensajes
@@ -622,13 +596,13 @@
                 $formatAsunto= '<b style="font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
             }
             if ($value["cantMensajesProgramados"]) {
-                $formatAsunto .= '<i class="fa-regular fa-clock" style="margin-left: 5px;font-size: 9pt;"></i>';
+                $formatAsunto .= '<i class="fa-regular fa-clock" style="padding-left: 5px;font-size: 9pt;"></i>';
             }
             
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">
                 <tr onclick="obtenerDatosInterConsulta(this)">
                     <td id="td_id" style="width: 5%;'.$styleInterno.'">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 25%;display: flex;'.$style.'">'.$formatAsunto.'</td>
+                    <td id="td_datos_1" style="width: 25%;'.$style.'"><div style="display: flex;">'.$formatAsunto.'</div></td>
                     <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
                     <td id="td_datos_5" style="width: 15%;'.$style.'">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cod_localFK'].'</td>
