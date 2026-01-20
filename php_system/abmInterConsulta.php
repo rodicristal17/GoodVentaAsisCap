@@ -615,17 +615,20 @@
                 $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
             }
             
-            $formatAsunto= '<p style="font-size: 9pt;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
+            $formatAsunto= '<p style="font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'background-color: #ff5050;  color: #ffffff;';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
-                $formatAsunto= '<b style="font-size: 9pt;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
+                $formatAsunto= '<b style="font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
+            }
+            if ($value["cantMensajesProgramados"]) {
+                $formatAsunto .= '<i class="fa-regular fa-clock" style="margin-left: 5px;font-size: 9pt;"></i>';
             }
             
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">
                 <tr onclick="obtenerDatosInterConsulta(this)">
                     <td id="td_id" style="width: 5%;'.$styleInterno.'">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 25%;'.$style.'">'.$formatAsunto.'</td>
+                    <td id="td_datos_1" style="width: 25%;display: flex;'.$style.'">'.$formatAsunto.'</td>
                     <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
                     <td id="td_datos_5" style="width: 15%;'.$style.'">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cod_localFK'].'</td>
@@ -636,6 +639,7 @@
                     <td id="td_datos_8" style="width: 10%;'.$style.'">'.$value['fecha_creacion'].'</td>
                     <td id="td_datos_9" style="width: 15%;'.$style.'">'.$value['nombre_persona_creador'].'</td>
                     <td id="td_datos_10" style="display: none;'.$style.'">'.$value['asunto'].'</td>
+                    <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cantMensajes'].'</td>
                 </tr>
             </table>';
         }
@@ -984,6 +988,7 @@
     function obtenerInterConsulta($filtros= [], $limite= 0) {
         $sqlFiltro= "";
         $sqlFiltroMenciones= "";
+        $sqlFiltroMensaje= "";
         foreach ($filtros as $key => $value) {
             if (empty($value)) {continue;}
 
@@ -1027,6 +1032,7 @@
                     break;
                 case 'fecha_limite':
                     $sqlFiltroMenciones .= " AND mj.fecha_creacion <= '$value' ";
+                    $sqlFiltroMensaje .= " AND mj.fecha_creacion > '$value' ";
                     break;
                 default:
                     if (is_numeric($value)) {
@@ -1052,6 +1058,8 @@
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
+            (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
+            (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroMensaje) AS cantMensajesProgramados,
             (SELECT COUNT(mc.cod_mencion)
                 FROM menciones mc
                 JOIN mensaje mj 
