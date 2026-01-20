@@ -916,7 +916,7 @@ function obtenerDatosInterConsulta(elemento) {
             break;
         default:
             document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
-            document.getElementById('tituloInterConsultas').innerHTML= "InterConsultas - " + cod_interConsulta;
+            document.getElementById('tituloInterConsultas').innerHTML= $(elemento).children('#td_datos_10').html() + " - " + cod_interConsulta;
             
             verCerrarVentanaListadoInterConsulta(false, 'divListadoInterConsulta');
             verCerrarVentanaDetalleInterConsulta(true, 'divAbmDetallesInterConsulta');
