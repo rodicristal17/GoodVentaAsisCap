@@ -102,16 +102,114 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('inptArregloGasto').value = $(datostr).children('td[id="td_datos_11"]').html();
 	document.getElementById('btnAbmGastos').value = "Editar datos";
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
+	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
 	
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
+
+	// Auditoria de autorizacion
+	document.getElementById("inptCodigoAutorizacionEgreso").value= $(datostr).children('td[id="td_id"]').html();
+	document.getElementById("inptMotivoAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_14"]').html();
+	document.getElementById('inptMontoAutorizacionEgreso').value = $(datostr).children('td[id="td_datos_1"]').html();
+	if ($(datostr).children('td[id="td_datos_5"]').html() == 'pendiente') {
+		document.getElementById("inptCodUsuarioAutorizacionEgreso").value= "";
+		document.getElementById("inptUsuarioAutorizacionEgreso").value= "";
+		document.getElementById("inptFechaAutorizacionEgreso").value= "";
+		document.getElementById('divbtnAprobarMovimiento').style.display= "";
+	} else {
+		document.getElementById("inptCodUsuarioAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_17"]').html();
+		document.getElementById("inptUsuarioAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_18"]').html();
+		document.getElementById("inptFechaAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_19"]').html();
+		document.getElementById('divbtnAprobarMovimiento').style.display= "none";
+	}
 
 	// Carga la imagen
 	let imagen= $(datostr).children('td[id="td_datos_12"]').html();
 	imagen= imagen ? imagen : '/GoodVentaAsisCap/iconos/imagenphoto.png';
     document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ imagen +")";
 }
+
+function verCerrarAutorizacionEgreso(mostrar) {
+	if(controlacceso("AUTORIZAREGRESOINGRESO","accion")==false){return;}
+	if (mostrar) {
+		document.getElementById('divAutorizacionEgreso').style.display= "";
+	} else {
+		document.getElementById('divAutorizacionEgreso').style.display= "none";
+	}
+}
+
+function aprobarMovimiento() {
+	const inptCodigoAutorizacionEgreso= document.getElementById('inptCodigoAutorizacionEgreso').value;
+	obtener_datos_user();
+
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", 'aprobarMovimiento');
+	datos.append("idgastos", inptCodigoAutorizacionEgreso);
+
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+			xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var porce= ~~((evt.loaded / evt.total) * 100); 
+		if(porce>90){
+		porce=Number(porce)-7				
+		}
+		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			return false;
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			verCerrarEfectoCargando("")
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+				   ver_vetana_informativa("Datos guardados exitosamente");
+				   verCerrarAutorizacionEgreso(false);
+				   buscarabmGasto();
+				}				
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 function verificarcamposGasto() {
 	var inptMontoGasto = document.getElementById('inptMontoGasto').value
 	var inptDescripcionGasto = document.getElementById('inptDescripcionGasto').value
@@ -138,11 +236,12 @@ function verificarcamposGasto() {
          inptMotivoMisGastos=$(match).attr("id")
        } else {
            // value is not in list
+		   inptMotivoMisGastos= '';
        }
     });
 
     if (inptMotivoMisGastos == '') {
-        ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO.");
+        ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO DE LA LISTA.");
         return false;
     }
 
@@ -206,6 +305,30 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
+
+	console.log("Datos a enviar: ", {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": accion,
+		"idgastos": idgastos,
+		"monto": monto,
+		"motivo": descripcion,
+		"cod_motivoFK": cod_motivoFK,
+		"fecha": fecha,
+		"estado": estado,
+		"tipo": tipo,
+		"cod_local": cod_local,
+		"codcaja": cajapredeterminada,
+		"idaperturacierrecaja": idabmAperturacierrecaja,
+		"nroboleta": nroboleta,
+		"banco": banco,
+		"Arreglo": Arreglo,
+		"nrocuenta": nrocuenta,
+		"foto": fotoGasto,
+		"ext": extGasto,
+		"cod_interConsultaFK": cod_interConsulta,
+	});
 	
 	var OpAjax = $.ajax({
 		data: datos,
@@ -610,6 +733,7 @@ function limpiarcamposGasto() {
 	document.getElementById('inptCuentaGasto').value = "";
 	document.getElementById('inptArregloGasto').value = "";
 	document.getElementById('btnEditarGastos').style.backgroundColor="#b7b7b7";
+	document.getElementById('btnAutorizarGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('inptEstadoGasto').value = "Activo";
 	document.getElementById('btnAbmGastos').value = "Guardar datos";
 	document.getElementById('inptMotivoMisGastos').value ="";

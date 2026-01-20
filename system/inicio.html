@@ -4565,7 +4565,7 @@ LOCAL
 <td class="td_registro" style="width:1%;">
 <img class='inptLimpiarBP'
 src='/GoodVentaAsisCap/iconos/limpiar.png'
-onclick="vaciar('inptSeleccTipoBuscarGasto')" />
+onclick="vaciar('inptBuscarIngresoEgreso3')" />
 </td>
 <td class="td_registro" style="width:10%;">
 
@@ -4651,9 +4651,6 @@ id="inptlocalMisGastosBusca"></select>
     </div>
     <div class="collapse" id="zonaGastosGastosOperativos">
       <ul class="list-group list-group-flush">
-        <li class="list-group-item">An item</li>
-        <li class="list-group-item">A second item</li>
-        <li class="list-group-item">A third item</li>
       </ul>
     </div>
   </div>
@@ -4675,6 +4672,7 @@ id="inptlocalMisGastosBusca"></select>
 </p>
 <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccGasto' style='width:200px' />
 <input id='btnEditarGastos' type="button" value="Editar" class="btn5" onclick="verVentanaEditarGasto()" style='background-color:#b7b7b7'>
+<input id='btnAutorizarGastos' type="button" value="Autorizacion" class="btn5" onclick="verCerrarAutorizacionEgreso(true)" style='background-color:#b7b7b7'>
 </td>
 </tr>
 </table>
@@ -4689,7 +4687,100 @@ id="inptlocalMisGastosBusca"></select>
 </tr>
 </table>
 </div>
+<div class="principal2" style="display: none;" id="divAutorizacionEgreso">
+  <table style="width:100%;height:100%" id="tdEfectoAutorizacionEgreso" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divAbms" style="display:;width: 368px;min-height:400px;">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%">
+                      <p class="pTituloB">Autorizacion de movimiento</p>
+                    </td>
+                    <td style="width:5%">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="verCerrarAutorizacionEgreso(false)">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <br>
 
+              <center>
+
+                <div class="divMenuf">
+                  <table style="width:100%">
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p class="pTituloC">Cod. movimiento:</p>
+                          <input type="text" class="inputTextDisable" style="width:250px" id="inptCodigoAutorizacionEgreso"
+                            disabled>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table style="width:100%">
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p class="pTituloC">Motivo:</p>
+                          <input type="text" class="inputTextDisable" style="width:250px" id="inptMotivoAutorizacionEgreso"
+                            disabled>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table style="width:100%">
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p class="pTituloC">Usuario:</p>
+                          <input type="text" class="inputTextDisable" style="width:250px" id="inptUsuarioAutorizacionEgreso"
+                            disabled>
+                          <input type="hidden" class="inputTextDisable" style="width:250px" id="inptCodUsuarioAutorizacionEgreso"
+                            disabled>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table style="width:100%">
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p class="pTituloC">Fecha Autoriz.:</p>
+                          <input type="text" class="inputTextDisable" style="width:250px" id="inptFechaAutorizacionEgreso"
+                            disabled>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <table style="width:100%">
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p class="pTituloC">Monto:</p>
+                          <input type="text" class="inputTextDisable" style="width:250px" id="inptMontoAutorizacionEgreso"
+                            disabled="">
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="divMenuf" id="divbtnAprobarMovimiento">
+                  <input class="btn1" type="button" value="Aprobar movimiento" onclick="aprobarMovimiento()">
+                </div>
+              </center>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 <div class='principal2' style='display:none' id='divAbmNuevoMotivo'>
 <table style='width:100%;height:100%'>
 <tr>
