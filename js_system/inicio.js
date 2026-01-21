@@ -208,8 +208,11 @@ window.onload = function () {
 	mueveReloj()
 
 	// Listener para menciones en interconsulta
+	var contadorLongitudMensaje= 0;
+	const limiteCaracteresMensaje = 750;
 	document.getElementById('inptContenidoAbmMensaje')
 		.addEventListener('keyup', function(e) {
+		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').innerText.length;
 		if (e.target.matches('p.mensaje-interconsulta')) {
 			const valor = e.target.textContent;
 			const match = valor.match(/@(\w*)$/); // detecta @ + texto
@@ -229,6 +232,53 @@ window.onload = function () {
 					document.getElementById('dropdown-menciones').style.display= "none";
 				}
 			}
+		}
+	});
+	document.getElementById('inptContenidoAbmMensaje').addEventListener('keydown', function(e) {
+		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').innerText.length;
+		
+		// Teclas que siempre se permiten (borrar, flechas, etc.)
+		const teclasPermitidas = [8, 46, 37, 38, 39, 40, 36, 35];
+		if (teclasPermitidas.includes(e.keyCode) || e.ctrlKey || e.metaKey) {
+			return;
+		}
+
+		// Permitir si hay texto seleccionado (se va a reemplazar)
+		const seleccion = window.getSelection();
+		if (seleccion.toString().length > 0) {
+			return;
+		}
+
+		// Prevenir si se supera el límite
+		if (contadorLongitudMensaje >= limiteCaracteresMensaje) {
+			e.preventDefault();
+    
+			const textoPegado = (e.clipboardData || window.clipboardData).getData('text');
+			const longitudActual = this.textContent.length;
+			const seleccion = window.getSelection();
+			const longitudSeleccion = seleccion.toString().length;
+			
+			const espacioDisponible = limiteCaracteresMensaje - (longitudActual - longitudSeleccion);
+
+			if (espacioDisponible > 0) {
+				const textoAInsertar = textoPegado.substring(0, espacioDisponible);
+				document.execCommand('insertText', false, textoAInsertar);
+			}
+		}
+	});
+	document.getElementById('inptContenidoAbmMensaje').addEventListener('paste', function(e) {
+    	e.preventDefault();
+
+    	const textoPegado = (e.clipboardData || window.clipboardData).getData('text');
+		const longitudActual = this.textContent.length;
+		const seleccion = window.getSelection();
+		const longitudSeleccion = seleccion.toString().length;
+		
+		const espacioDisponible = limiteCaracteresMensaje - (longitudActual - longitudSeleccion);
+
+		if (espacioDisponible > 0) {
+			const textoAInsertar = textoPegado.substring(0, espacioDisponible);
+			document.execCommand('insertText', false, textoAInsertar);
 		}
 	});
 
