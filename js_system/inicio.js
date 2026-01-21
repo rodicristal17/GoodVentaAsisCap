@@ -468,6 +468,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 	         }
 		 buscarVendedorSelec() 
 
+					document.getElementById('nombreUsuarioMensaje').innerHTML = nombre
 					document.getElementById('lblUser').innerHTML = nombre
 					document.getElementById('ptituloUser2').innerHTML = nombre
 					document.getElementById('pUsuarioCabecera').innerHTML = nombre
@@ -35992,6 +35993,7 @@ function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 		// Muestra o oculta las opciones de seleccionar y eliminar
 		if (mostrarOpciones) {
 			document.getElementById('opcionesFotos').style.display= "";
+			document.getElementById('ImgFotoProductos').onclick= "";
 		} else {
 			document.getElementById('opcionesFotos').style.display= "none";
 		}
