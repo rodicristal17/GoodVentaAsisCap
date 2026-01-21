@@ -90,7 +90,7 @@
                 $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
                 $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? utf8_decode($_POST['cod_localFK']) : null;
 
                 $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
@@ -1110,6 +1110,11 @@
             $parametros[] = $asunto;
             $nuevos_datos['asunto'] = $asunto;
 
+            $atributos .= ", cod_localFK= ?";
+            $ss .= "i";
+            $parametros[] = $cod_localFK;
+            $nuevos_datos['cod_localFK'] = $cod_localFK;
+
             // Datos para auditoria
             $fechaActual= new DateTime();
             $atributos .= ",cod_usuarioFK_edit= ?";
@@ -1137,12 +1142,6 @@
                 $ss .= "i";
                 $parametros[] = $cod_ventaFK;
                 $nuevos_datos['cod_ventaFK'] = $cod_ventaFK;
-            }
-            if (!empty($cod_localFK)) {
-                $atributos .= ", cod_localFK= ?";
-                $ss .= "i";
-                $parametros[] = $cod_localFK;
-                $nuevos_datos['cod_localFK'] = $cod_localFK;
             }
             
             $parametros[] = $cod_interConsulta;

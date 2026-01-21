@@ -233,10 +233,6 @@ function verificarCamposInterConsulta() {
         ver_vetana_informativa("Falta seleccionar la venta");
         return false;
     }
-    if (!local) {
-        ver_vetana_informativa("Falta seleccionar un local");
-        return false;
-    }
     
     abmInterConsulta(asunto, estado, tipo, local);
 }
@@ -543,6 +539,8 @@ function limpiarcamposMensaje() {
     document.getElementById('imgfotoAnexoInterchat').style.backgroundImage = "url('/GoodVentaAsisCap/iconos/subir_imagen.png')";
     fotoMensajeInterconsulta = "";
     extMensajeInterconsulta = "";
+
+    contadorLongitudMensaje= 0;
 }
 
 function subirImagenMensajeInterconsulta(cod_mens) {
@@ -604,6 +602,7 @@ function subirImagenMensajeInterconsulta(cod_mens) {
                     throw new Error("Error producido en subirImagenMensajeIterconsulta de JavaScript.");
                 }
                 verCerrarEfectoCargando("");
+                limpiarcamposMensaje();
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
@@ -934,7 +933,7 @@ function obtenerDetallesInterConsulta(elemento, origen) {
             document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
             document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
             document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
-            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_8')?.textContent.trim();
+            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_8')?.textContent.trim();;
             verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');
             break;
     }
