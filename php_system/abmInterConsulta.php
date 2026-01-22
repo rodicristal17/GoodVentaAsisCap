@@ -636,7 +636,7 @@
                     <td id="td_datos_8" style="width: 10%;'.$style.'">'.$value['fecha_creacion'].'</td>
                     <td id="td_datos_9" style="width: 15%;'.$style.'">'.$value['nombre_persona_creador'].'</td>
                     <td id="td_datos_10" style="display: none;'.$style.'">'.$value['asunto'].'</td>
-                    <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cantMensajes'].'</td>
+                    <td id="td_datos_13" style="display: none;'.$style.'">'.$value['cantMensajes'].'</td>
                 </tr>
             </table>';
         }

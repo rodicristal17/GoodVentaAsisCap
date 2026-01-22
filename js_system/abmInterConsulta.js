@@ -82,6 +82,15 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
 				if (Respuesta) {
 					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
 
+                    // Verifica si hay mensajes pendientes en una interconsulta abierta
+                    if (cod_interConsulta) {
+                        datos["3"].forEach(function(valor) {
+                            if (valor.cod_interConsulta == cod_interConsulta && parseInt(valor.cantMensajes) > totalRegistroMensaje) {
+                                document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "flex";
+                            }
+                        });
+                    }
+
                     // Una busqueda unica
                     if (limite == 0) {
                         if (datos["6"] > 0) {
@@ -89,7 +98,7 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                         } else {
                             document.getElementById('avisoMensajesPendientes').style.display= "none";
                         }
-    
+
                         // Evalua si existen interconsultas sin cerrar
                         if (Number(datos["7"]) > 0) {
                             document.getElementById('avisoInterconsultasAbiertos').style.display= "";
@@ -616,8 +625,6 @@ function subirImagenMensajeInterconsulta(cod_mens) {
 
 var totalRegistroMensaje= 0;
 function buscarInterConsultasYContenido() {
-    verCerrarEfectoCargando("1");
-
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -628,6 +635,9 @@ function buscarInterConsultasYContenido() {
     datos.append("cod_clienteFK", cod_clienteFK);
     datos.append("nombre_usuario", document.getElementById("lblUser").textContent);
     datos.append("limite", 5);
+    
+    verCerrarEfectoCargando("1");
+    document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "none";
 
     var OpAjax = $.ajax({
 		data: datos,
