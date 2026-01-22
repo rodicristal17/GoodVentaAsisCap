@@ -110,9 +110,27 @@
                     ), 0);
 
                     foreach ($registrosMenc as $key => $valueMenc) {
-                        abmMencion($valueMenc['cod_mencion'], null, null, 1);
+                        abmMencion($valueMenc['cod_mencion'], null, null, 1, 'activo');
                     }
                 }
+                echo json_encode(array("1" => "exito"));
+                break;
+            case 'eliminarMencionMensaje':
+                $cod_mencion= utf8_decode($_POST['cod_mencion']);
+                $cod_interConsulta= utf8_decode($_POST['cod_interConsulta']);
+
+                // Obtiene informacion extra de la mencion
+                $registroMenc= obtenerMencion(array(
+                    'cod_mencion' => $cod_mencion
+                ), 1)[0];
+
+                abmMencion($cod_mencion, null, null, null, 'inactivo');
+                
+                // Se registra el cambio por auditoria
+                $fechaActual= new DateTime();
+                $fechaActual= $fechaActual->format('Y-m-d H:i:s');
+                abmMensaje(null, 'Se quito la mencion de '.$registroMenc['nombre_persona'], $fechaActual, $cod_interConsulta, $user);
+
                 echo json_encode(array("1" => "exito"));
                 break;
             case 'buscarMensaje':
@@ -153,8 +171,9 @@
                 $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
                 $cod_mensajeFK= isset($_POST['cod_mensajeFK']) ? utf8_decode($_POST['cod_mensajeFK']) : null;
                 $isLeido= isset($_POST['isLeido']) ? utf8_decode($_POST['isLeido']) : null;
+                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'activo';
 
-                abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido);
+                abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido, $estado);
                 break;
             case 'buscarMasInterConsultasYContenido':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
@@ -218,7 +237,7 @@
                 ), 0);
     
                 foreach ($registrosMenc as $valueMenc) {
-                    if (!in_array($valueMenc['nombre_persona'], $menciones)) {
+                    if ($valueMenc['estado'] == 'activo' && !in_array($valueMenc['nombre_persona'], $menciones)) {
                         $mencionesElemento .= '<li style="
                             background-color: #f2f2f2;
                             text-align: left;
@@ -228,9 +247,10 @@
                             font-size:13px;
                             display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
                             justify-content: space-between;
-                        ">'.$valueMenc['nombre_persona'].
+                        "><div>'.$valueMenc['nombre_persona'].
                         (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
-                        '</li>';
+                        '</div>
+                        <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Eliminar" onclick="eliminarMencionMensaje('.$valueMenc["cod_mencion"].')"></li>';
                         $menciones[] = $valueMenc['nombre_persona'];
                     }
                 }
@@ -275,10 +295,13 @@
             }
             
             // Se crea el encabezado
-            $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;" onclick="obtenerDetallesInterConsulta(this, \'interConsulta\')">
+            $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;">
                 <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
-            <h5 class="card-title">'.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'</h5>
+            <h5 class="card-title">
+                '.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'
+                <img src="../iconos/editar.png" alt="Editar InterConsulta" style="height: 1.25rem;" onclick="obtenerDetallesInterConsulta(\'interConsulta\')">
+            </h5>
             <div style="display: flex;">
             <div style="width: 50%;padding-top: 10px;border-top: 1px solid #ddd;">
             <strong>Mencionados</strong>
@@ -756,7 +779,7 @@
         return $registros;
     }
 
-    function abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido) {
+    function abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido, $estado) {
         $mysqli = conectar_al_servidor();
         
         // Comprueba si la mencion ya existe
@@ -778,6 +801,33 @@
             $sql= "UPDATE menciones SET isLeido= ? WHERE cod_mencion = ?";
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('si', $isLeido, $cod_mencion);
+
+            $parametros = array();
+            $atributos = "";
+            $ss = "";
+
+            if (!empty($isLeido)) {
+                $atributos .= "isLeido = ?, ";
+                $parametros[] = $isLeido;
+                $ss .= "i";
+            }
+            if (!empty($estado)) {
+                $atributos .= "estado = ?, ";
+                $parametros[] = $estado;
+                $ss .= "s";
+            }
+            $atributos = substr($atributos, 0, -2);
+
+            $parametros[] = $cod_mencion;
+            $ss .= "i";
+
+            $sql= "UPDATE menciones SET $atributos WHERE cod_mencion = ?";
+            $stmt = $mysqli->prepare($sql);
+
+            $refs = [];
+            foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+
+            call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
         } else {
             $sql = "INSERT INTO menciones (cod_usuarioFK, cod_mensajeFK, isLeido) VALUES (?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
@@ -933,6 +983,8 @@
             'cod_interConsultaFK' => $cod_interConsulta,
             'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
         ), 0);
+        $valueMens= end($registrosMens);
+        $mencionesTemp= array();
         foreach ($registrosMens as $valueMens) {
             $registrosMenc= obtenerMencion(array(
                 "cod_mensajeFK" => $valueMens['cod_mensaje'],
@@ -940,7 +992,12 @@
             ), 0);
 
             foreach ($registrosMenc as $value) {
-                $ids_menciones[] = $value['cod_usuarioFK'];
+                $mencionesTemp[$value['cod_usuarioFK']] = $value['estado'];
+            }
+        }
+        foreach ($mencionesTemp as $key => $value) {
+            if ($value != 'inactivo') {
+                $ids_menciones[] = $key;
             }
         }
 
@@ -948,9 +1005,9 @@
         $ids_menciones = array_unique($ids_menciones);
         foreach ($ids_menciones as $value) {
             if ($value === $user) {
-                abmMencion(null, $user, $cod_mensaje, 1);
+                abmMencion(null, $user, $cod_mensaje, 1, 'activo');
             } else {
-                abmMencion(null, $value, $cod_mensaje, 0);
+                abmMencion(null, $value, $cod_mensaje, 0, 'activo');
             }
         }
         

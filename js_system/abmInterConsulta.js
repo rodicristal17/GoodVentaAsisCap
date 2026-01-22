@@ -546,6 +546,7 @@ function limpiarcamposMensaje() {
 function subirImagenMensajeInterconsulta(cod_mens) {
     if (!(fotoMensajeInterconsulta && extMensajeInterconsulta)) {
         buscarInterConsultasYContenido();
+        limpiarcamposMensaje();
         return false;
     }
     obtener_datos_user()
@@ -789,7 +790,7 @@ function buscarMasInterConsultas() {
 
     var OpAjax = $.ajax({
 		data: datos,
-		url: "../php_system/abmInventarioLocal.php",
+		url: "../php_system/abmInterConsulta.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -850,6 +851,76 @@ function buscarMasInterConsultas() {
 				controldebusquedadInformeAsistencia=false;
 				document.getElementById("divProgressInformeAsistencia").style.backgroundColor='#ff5722'
 
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
+function eliminarMencionMensaje(cod_mencion) {
+    // Mostrar dialogo de advertencia antes de continuar
+    if (!confirm("¿Está seguro de que desea eliminar esta mencion?")) {
+        return;
+    }
+    
+    let datos= new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", 'eliminarMencionMensaje');
+    datos.append("cod_mencion", cod_mencion);
+    datos.append("cod_interConsulta", cod_interConsulta);
+
+    verCerrarEfectoCargando("1");
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta);
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					buscarInterConsultasYContenido();
+				} else {
+                    throw new Error("Error producido en eliminarMencionMensaje de JavaScript.");
+                }
+			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
@@ -923,7 +994,9 @@ function obtenerDatosInterConsulta(elemento) {
     }
 }
 
-function obtenerDetallesInterConsulta(elemento, origen) {
+function obtenerDetallesInterConsulta(origen) {
+    const elemento= document.getElementById('contenedorEncabezadoInterConsulta').parentElement;
+
     cod_interConsulta= elemento.querySelector('#td_datos_4')?.textContent.trim();
     cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
     
