@@ -142,6 +142,11 @@ function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,cos
                 if (datos["1"] === "exito") {
                     cod_trabajo_mecanico_dental= datos["cod_trabajo_mecanico_dental"];
                     cod_mecanico_dental= datos["cod_mecanico_dental"];
+
+                    // Completa tambien los datos de la auditoria
+                    document.getElementById('inptUsuarioInsertadoPor').value= document.getElementById('nombrePerfilUsuario').innerText;
+
+                    //document.getElementById('').value = ;
                     ver_vetana_informativa("Datos guardados exitosamente.");
                 } else if (datos["1"] === "UI") {
                     ver_vetana_informativa("Usuario o contraseña incorrectos.");
@@ -461,6 +466,10 @@ function minimizarVentanaTrabajoMecanicoDental() {
 }
 
 function imprimirTicketTrabajoMecanDental() {
+    if (!cod_trabajo_mecanico_dental) {
+        ver_vetana_informativa("Primero debe guardar el trabajo para poder imprimir el ticket.");
+        return false;
+    }
     const fecha_actual= new Date;
     const selectMecanicosDentales= document.getElementById('inptMecanicoTrabajoMecanicoDental');
     const selectDoctor= document.getElementById('inptDoctorTrabajoMecanicoDental')
