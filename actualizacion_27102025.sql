@@ -137,7 +137,7 @@ CREATE TABLE menciones (
 
 ALTER TABLE interconsulta CHANGE tipo tipo VARCHAR(14) NOT NULL;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.55', detalles='Modificaciones en egreso / ingreso', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.56', detalles='Modificaciones en egreso / ingreso', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
 
 
 -- Eliminar motivos duplicados
@@ -189,6 +189,8 @@ UPDATE interConsulta i INNER JOIN venta v
 SET i.cod_localFK = v.cod_local WHERE i.cod_ventaFK IS NOT NULL;
 ALTER TABLE gastos ADD COLUMN cod_usuario_autoriz INT(11);
 ALTER TABLE gastos ADD COLUMN fecha_autoriz DATETIME;
+ALTER TABLE menciones add column estado enum('activo', 'inactivo') DEFAULT 'activo';
+ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;
 
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
@@ -197,6 +199,3 @@ ALTER TABLE gastos ADD COLUMN fecha_autoriz DATETIME;
 -- VERGASTOSZONAOPERATIVOS, VERGASTOSZONACOSTOSDIRECTOS,VERGASTOSZONAINGRESOS, 
 -- ELIMINARDETALLEVENTA
 -- AUTORIZAREGRESOINGRESO
-
-ALTER TABLE menciones add column estado enum('activo', 'inactivo') DEFAULT 'activo';
-ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;
