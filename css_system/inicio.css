@@ -20,7 +20,7 @@
 .tableMenupanel { width: 100%; background-color: rgb(255, 255, 255); height: 79px; }
 .tableMenupane2 { width: 100%; background-color: rgb(255, 255, 255); position: fixed; top: 0px; left: 0px; box-shadow: rgb(191, 191, 191) -1px 2px 5px; height: 79px; backdrop-filter: blur(7px); }
 .imgIconoMenu { width: 40px; padding: 5px; }
-.divMenub {border: solid 2px #ffff; width: 14%; cursor: pointer; float: left; margin: 1%; border-radius: 25px; height: 126px; color: rgb(0, 0, 0); transition: transform 2s ease 0s; background-color: rgba(255, 255, 255, 0.37);
+.divMenub {width: 14%; cursor: pointer; float: left; margin: 1%; border-radius: 25px; height: 126px; color: rgb(0, 0, 0); transition: transform 2s ease 0s; background-color: rgba(255, 255, 255, 0.37);
 box-shadow: #838383 3px 3px 8px; }
 .divMenub:hover { background-color: rgb(255, 255, 255); box-shadow: rgb(235, 235, 235) 0px 1px 5px; transform: scale(1.2); color: rgb(12, 116, 198); }
 .pTitulo4 { font-size: 12px; font-family: "Merriweather Sans", Arial; padding: 3px; margin: 0px; }

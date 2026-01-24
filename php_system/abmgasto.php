@@ -28,9 +28,7 @@ exit;
 }
 	
 if($operacion=="nuevo" || $operacion=="editar")
-{
-	
-	
+{	
 	$idgastos=$_POST['idgastos'];
 $idgastos = utf8_decode($idgastos);
 $monto=$_POST['monto'];
@@ -67,6 +65,24 @@ $cod_motivo= utf8_decode($cod_motivo);
 
 $cod_interConsultaFK= $_POST['cod_interConsultaFK'];
 $cod_interConsultaFK= utf8_decode($cod_interConsultaFK);
+
+
+// Comprueba si esta dentro del presupuesto
+	$fechaActual= new DateTime();
+	$primerDiaMes= $fechaActual->format('Y-m-01');
+	$ultimoDiaMes= $fechaActual->format('Y-m-t');
+
+	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
+	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
+
+	if ($informacion["4"]["presupuesto"] && $informacion["4"]["presupuesto"] != '0')
+	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
+	$limite_presupuesto= intval(str_replace('.', '', $informacion["4"]["presupuesto"]));
+	if ($limite_presupuesto > 0 && $totalGasto > $limite_presupuesto) {
+		$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido.");
+		echo json_encode($informacion);	
+		exit;
+	}
 
 	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
 
@@ -108,9 +124,26 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$cod_local=buscarlocaluser($user);
 	}
 }
-buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK);
-
+$informacion = buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK);
+echo json_encode($informacion);
+exit;
 }	
+
+if ($operacion == "verficiarLimiteMotivo") {
+	$cod_motivo = $_POST['cod_motivo'];
+	$cod_local = $_POST['cod_local'];
+	
+	// Obtiene las fechas del primer y ultimo dia del mes
+	$fechaActual= new DateTime();
+	$primerDiaMes= $fechaActual->format('Y-m-01');
+	$ultimoDiaMes= $fechaActual->format('Y-m-t');
+
+	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
+	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
+
+	echo json_encode(array("1" => "exito", "2" => $informacion["4"]["presupuesto"], "3" => $informacion2["4"]));	
+	exit;
+}
 
 if($operacion=="evaluacionGasto")
 {
@@ -231,7 +264,10 @@ $categoria = utf8_decode($categoria);
 $necesita_autorizacion= $_POST['necesita_autorizacion'];
 $necesita_autorizacion = utf8_decode($necesita_autorizacion);
 
-	NuevoMotivo($motivo,$estado,$categoria,$necesita_autorizacion);
+$presupuesto= $_POST['presupuesto'];
+$presupuesto = utf8_decode($presupuesto);
+
+	NuevoMotivo($motivo,$estado,$categoria,$necesita_autorizacion, $presupuesto);
 
 }
 
@@ -252,7 +288,10 @@ $categoria = utf8_decode($categoria);
 $necesita_autorizacion= $_POST['necesita_autorizacion'];
 $necesita_autorizacion = utf8_decode($necesita_autorizacion);
 
-	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$idabm);
+$presupuesto= $_POST['presupuesto'];
+$presupuesto = utf8_decode($presupuesto);
+
+	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto, $idabm);
 
 }	
 
@@ -652,10 +691,7 @@ $informacion =array(
 	"11" => number_format($totalZonaSinCategorizar, '0', ',', '.'),
 	"12" => $paginaImprimir,
 );
-echo json_encode($informacion);	
-exit;
-
-
+return $informacion;
 }
 
 
@@ -1153,6 +1189,7 @@ if ( ! $stmt->execute()) {
 		  	  $estado=utf8_encode($valor['estado']);
 			  $categoria= utf8_encode($valor['categoria']);
 			  $necesita_autorizacion = utf8_encode($valor['necesita_autorizacion']);
+			  $presupuesto= intval(utf8_encode($valor['presupuesto']));
 		  	 
 			  $styleName=CargarStyleTable($styleName);
 			  $pagina.="
@@ -1163,6 +1200,7 @@ if ( ! $stmt->execute()) {
 			   <td  id='td_datos_2' style='display:none'>".$estado."</td>
 			   <td id='td_datos_3' style='width:40%' class='tdRegistroSearch' >".ucfirst($categoria)."</td>
 			   <td  id='td_datos_4' style='display:none'>".$necesita_autorizacion."</td>
+			   <td  id='td_datos_5' style='display:none'>".number_format($presupuesto, 0, ',','.')."</td>
 			  </tr>
 			  </table>";
 			
@@ -1172,6 +1210,7 @@ if ( ! $stmt->execute()) {
 				"estado" => $estado,
 				"categoria" => $categoria,
 				"necesita_autorizacion" => $necesita_autorizacion,
+				"presupuesto" => $presupuesto
 			);
 	  }
  }
@@ -1192,10 +1231,10 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion) values (upper(?),?, ?, ?)";
+$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion,presupuesto) values (upper(?),?, ?, ?, ?)";
 $stmt = $mysqli->prepare($consulta1);
-$ss='ssss';
-$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion);
+$ss='ssssi';
+$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto);
 
 if (!$stmt->execute()) {
 	echo "$consulta1\n$motivo\n";
@@ -1209,7 +1248,7 @@ exit;
 	
 }
 
-function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$idabm)
+function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto,$idabm)
 {
 	
 if($motivo==""   ){
@@ -1220,7 +1259,7 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="update motivos_ingreso_egreso SET descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$consulta1="update motivos_ingreso_egreso SET presupuesto= $presupuesto, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {

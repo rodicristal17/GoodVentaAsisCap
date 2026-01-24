@@ -199,3 +199,4 @@ ALTER TABLE gastos ADD COLUMN fecha_autoriz DATETIME;
 -- AUTORIZAREGRESOINGRESO
 
 ALTER TABLE menciones add column estado enum('activo', 'inactivo') DEFAULT 'activo';
+ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;

@@ -27,6 +27,7 @@ function verCerrarAbmGasto(){
 	}else{	
         if(controlacceso("VERLISTADOEGRESOINGRESO","accion")==false){return;}
         buscaroptionMotivoEgresoIngreso()
+		buscarabmGasto();
 		document.getElementById("divAbmGastos").style.display=""
         document.getElementById("tdEfectoAbmGasto").className="magictime slideDownReturn"
 	}
@@ -305,30 +306,6 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
-
-	console.log("Datos a enviar: ", {
-		"useru": userid,
-		"passu": passuser,
-		"navegador": navegador,
-		"funt": accion,
-		"idgastos": idgastos,
-		"monto": monto,
-		"motivo": descripcion,
-		"cod_motivoFK": cod_motivoFK,
-		"fecha": fecha,
-		"estado": estado,
-		"tipo": tipo,
-		"cod_local": cod_local,
-		"codcaja": cajapredeterminada,
-		"idaperturacierrecaja": idabmAperturacierrecaja,
-		"nroboleta": nroboleta,
-		"banco": banco,
-		"Arreglo": Arreglo,
-		"nrocuenta": nrocuenta,
-		"foto": fotoGasto,
-		"ext": extGasto,
-		"cod_interConsultaFK": cod_interConsulta,
-	});
 	
 	var OpAjax = $.ajax({
 		data: datos,
@@ -377,6 +354,10 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
+					if (Number.isNaN(parseInt(datos["2"]))) {
+						ver_vetana_informativa(datos["2"]);
+						return false;
+					}
 				   if(accion=="nuevo"){
 						ImprimirTicketEgreso()
 					}
@@ -387,6 +368,82 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 					idAbmGasto = "";
 					buscarabmGasto();
 					verCerrarVentanaAbmGasto("2","");
+					comprobarLimiteMotivo(cod_motivoFK, cod_local);
+				}				
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+function comprobarLimiteMotivo(cod_motivo, cod_local) {
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("funt", 'verficiarLimiteMotivo')
+    datos.append("cod_motivo", cod_motivo)
+    datos.append("cod_local", cod_local)
+	
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+			xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var porce= ~~((evt.loaded / evt.total) * 100); 
+		if(porce>90){
+		porce=Number(porce)-7				
+		}
+		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			return false;
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			verCerrarEfectoCargando("")
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+				   const limite = parseInt(datos["2"]);
+				   const total = parseInt(datos["3"].replace('.',''));
+
+				   if (!(Number.isNaN(limite)) && total >= limite) {
+					   ver_vetana_informativa("Ha superado el limite permitido para este motivo de gasto.");
+				   } else if (total >= (limite * 0.9)) {
+					   ver_vetana_informativa("Esta llegando al limite presupuestado para este motivo de gasto.");
+				   }
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -769,6 +826,8 @@ function VerificarDatosMotivoEgresoIngreso() {
 	var inptEstadoMotivoEgresoIngreso = document.getElementById('inptEstadoMotivoEgresoIngreso').value
 	const inptCategoriaMotivoEgresoIngreso = document.getElementById('inptCategoriaMotivoEgresoIngreso').value;
 	const inptAutorizacionMotivoEgresoIngreso= document.getElementById('inptAutorizacionMotivoEgresoIngreso').checked;
+	const inptPresupuestoIngresoEgreso= document.getElementById('inptPresupuestoIngresoEgreso').value.replace('.', '');
+	let accion = "";
 	
 	if (inptNuevoMotivo == "") {
 		ver_vetana_informativa("FALTO AGREGAR NUEVO MOTIVO", "#")
@@ -785,9 +844,10 @@ function VerificarDatosMotivoEgresoIngreso() {
 		accion = "NuevoMotivo";
 	}
 		
-	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, inptAutorizacionMotivoEgresoIngreso, accion);
+	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, inptAutorizacionMotivoEgresoIngreso, inptPresupuestoIngresoEgreso, accion);
 }
-function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, accion) {
+
+function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, presupuesto, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -799,6 +859,7 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, accio
 	datos.append("estado", estado)
 	datos.append("categoria", categoria);
 	datos.append("idabm", idAbmMotivoEgresoIngreso)
+	datos.append("presupuesto", presupuesto);
 	datos.append("necesita_autorizacion", (necesita_autorizacion ? 1 : 0)); // El 1 es equivalente a true
 	
 	var OpAjax = $.ajax({
@@ -823,7 +884,6 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, accio
 				Respuesta = datos["1"];
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 					buscaroptionMotivoEgresoIngreso()
 					// verCerrarAbmNuevoMotivo()
@@ -953,7 +1013,8 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
 	datostr.className = 'tableRegistroSelec'
     document.getElementById("inptNuevoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_1"]').html();
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_2"]').html();
-    document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html();
+    document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html().toLowerCase();
+    document.getElementById("inptPresupuestoIngresoEgreso").value = $(datostr).children('td[id="td_datos_5"]').html();
 	const necesita_autorizacion= $(datostr).children('td[id="td_datos_4"]').html();
 	if (necesita_autorizacion == "1") {
 		document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = true;
@@ -968,6 +1029,8 @@ function limpiarcamposmotivoegresoingreso(){
 	  document.getElementById("inptNuevoMotivoEgresoIngreso").value = ''
 	  document.getElementById("inptCategoriaMotivoEgresoIngreso").value = '';
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'activo';
+    document.getElementById("inptPresupuestoIngresoEgreso").value = '';
+	document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = false;
 	cod_interConsulta= "";
 	document.getElementById("inptAbmInterConsultaGasto").value= "";
 	idAbmMotivoEgresoIngreso=''
