@@ -248,7 +248,7 @@
                             display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
                             justify-content: space-between;
                         "><div>'.$valueMenc['nombre_persona'].
-                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
+                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-business-time" style="color: #0cdd23;"></i>' : '').
                         '</div>
                         <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Eliminar" onclick="eliminarMencionMensaje('.$valueMenc["cod_mencion"].')"></li>';
                         $menciones[] = $valueMenc['nombre_persona'];
@@ -611,12 +611,17 @@
             if (intval($value['cantMensajesNoLeidosOtrosUsuarios']) > 0) {
                 $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
             }
-            
-            $formatAsunto= '<p style="font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
+
+            $colorText= "";
+            if ($value['cantAsociadoGastos'] > 0) {
+                $colorText= "color: rgb(14, 194, 32);";
+            }
+
+            $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
             if (intval($value['cantMensajesNoLeidos']) > 0) {
-                $style = 'background-color: #ff5050;  color: #ffffff;';
+                $style = 'background-color: rgb(140, 8, 8, 0.7);  color: #ffffff;';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
-                $formatAsunto= '<b style="font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
+                $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
             }
             if ($value["cantMensajesProgramados"]) {
                 $formatAsunto .= '<i class="fa-regular fa-clock" style="padding-left: 5px;font-size: 9pt;"></i>';
@@ -1020,6 +1025,7 @@
         $sqlFiltro= "";
         $sqlFiltroMenciones= "";
         $sqlFiltroMensaje= "";
+        $sqlFiltroFechaLimite= "";
         foreach ($filtros as $key => $value) {
             if (empty($value)) {continue;}
 
@@ -1064,6 +1070,7 @@
                 case 'fecha_limite':
                     $sqlFiltroMenciones .= " AND mj.fecha_creacion <= '$value' ";
                     $sqlFiltroMensaje .= " AND mj.fecha_creacion > '$value' ";
+                    $sqlFiltroFechaLimite .= " AND mj2.fecha_creacion <= '$value'";
                     break;
                 default:
                     if (is_numeric($value)) {
@@ -1089,6 +1096,7 @@
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
+            (SELECT COUNT(idgastos) FROM gastos g WHERE g.cod_interConsultaFK = ic.cod_interConsulta) AS cantAsociadoGastos,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroMensaje) AS cantMensajesProgramados,
             (SELECT COUNT(mc.cod_mencion)
@@ -1100,13 +1108,13 @@
                 AND mj.fecha_creacion = (
                     SELECT MAX(mj2.fecha_creacion)
                     FROM mensaje mj2
-                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta  $sqlFiltroFechaLimite
                 )
             ) AS cantMensajesNoLeidosOtrosUsuarios,
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
                 SELECT MAX(mj2.fecha_creacion)
                 FROM mensaje mj2
-                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroFechaLimite
             )) AS cantMensajesNoLeidos
             from interconsulta ic $sqlFiltro
             ORDER BY 

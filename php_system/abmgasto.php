@@ -354,7 +354,7 @@ if ($estado == 'Activo' && !empty($cod_usuario_autoriz)) {
 $consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuario=?,
 personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsultaFK=?, cod_usuario_autoriz=? where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
-$ss='sssssssssssssss';
+$ss='sssssssssssssssi';
 if (!$stmt) {
 	echo $mysqli->error;
 }
