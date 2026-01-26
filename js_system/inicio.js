@@ -212,7 +212,12 @@ window.onload = function () {
 	const limiteCaracteresMensaje = 750;
 	document.getElementById('inptContenidoAbmMensaje')
 		.addEventListener('keyup', function(e) {
-		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').innerText.length;
+		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').textContent.length;
+
+		// Actualizar el contador de pantalla
+		document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
+		console.log(contadorLongitudMensaje)
+		
 		if (e.target.matches('p.mensaje-interconsulta')) {
 			const valor = e.target.textContent;
 			const match = valor.match(/@(\w*)$/); // detecta @ + texto

@@ -248,7 +248,7 @@
                             display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
                             justify-content: space-between;
                         "><div>'.$valueMenc['nombre_persona'].
-                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-business-time" style="color: #0cdd23;"></i>' : '').
+                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
                         '</div>
                         <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Eliminar" onclick="eliminarMencionMensaje('.$valueMenc["cod_mencion"].')"></li>';
                         $menciones[] = $valueMenc['nombre_persona'];
@@ -624,7 +624,7 @@
                 $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
             }
             if ($value["cantMensajesProgramados"]) {
-                $formatAsunto .= '<i class="fa-regular fa-clock" style="padding-left: 5px;font-size: 9pt;"></i>';
+                $formatAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>';
             }
             
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">

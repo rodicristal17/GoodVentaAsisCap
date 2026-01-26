@@ -7653,7 +7653,7 @@ onclick='SeleccionarRegistroCategoria()' />
           </table> 
             <div class="divMenuf">
               <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"
-                style="height: 100%;border:none;width: 100%;"></div>
+                style="height: 100%;border:1px solid rgb(209, 209, 209);width: 100%;"></div>
                 <div class="sugerencias-container" style="display: grid;justify-content: flex-end;">
                   <div class="card my-3" style="border-left: 5px solid #8BC34A;width: 500px;">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -7669,10 +7669,11 @@ onclick='SeleccionarRegistroCategoria()' />
                     <div class="card-body">
                         <div style="display: flex;">
                           <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoAnexoInterchat')" style="background-image: url('/GoodVentaAsisCap/iconos/subir_imagen.png');width:100px; height: 90px;margin-right: 5px;"></div>
-                          <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
+                          <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);" style= "margin: 0px; height: 90px;"></p>
                           <div style="width: 100px;margin-left: 10px;text-align: left;">
-                            <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()" style="background-color: rgb(76, 175, 80);width: 100%;">
-                            <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()" style="background-color: rgb(245, 59, 59);width: 100%;">
+                            <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
+                            <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()" style="background-color: rgb(76, 175, 80);width: 100%;height: 30px;">
+                            <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()" style="background-color: rgb(245, 59, 59);width: 100%;height: 30px;">
                           </div>
                         </div>
                     </div>

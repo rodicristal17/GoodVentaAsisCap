@@ -550,6 +550,7 @@ function limpiarcamposMensaje() {
     extMensajeInterconsulta = "";
 
     contadorLongitudMensaje= 0;
+    document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
 }
 
 function subirImagenMensajeInterconsulta(cod_mens) {
