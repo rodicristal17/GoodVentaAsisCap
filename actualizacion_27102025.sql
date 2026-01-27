@@ -137,7 +137,7 @@ CREATE TABLE menciones (
 
 ALTER TABLE interconsulta CHANGE tipo tipo VARCHAR(14) NOT NULL;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.56', detalles='Modificaciones en egreso / ingreso', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.57', detalles='Modificaciones en egreso / ingreso', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
 
 
 -- Eliminar motivos duplicados
