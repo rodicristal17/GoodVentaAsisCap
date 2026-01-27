@@ -7629,7 +7629,7 @@ onclick='SeleccionarRegistroCategoria()' />
             </table>
           </div>
       </div>
-      <div class="divMenuF">
+      <div class="divMenuF" style="display: inline-flex;">
         <div style="background-color: rgb(14, 194, 32);height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
         <p class="pTitulo8" style="width: fit-content; text-align: start;color: rgb(14, 194, 32);">Asociado a Egreso / Ingreso</p>
       </div>
@@ -7686,7 +7686,7 @@ onclick='SeleccionarRegistroCategoria()' />
 </div>
 <div id="divAbmInterConsulta" class="principal2" style="display: none;">
 <center>
-      <div id="divAbmInterConsulta3" class="divAbms" style="width: 400px;">
+      <div id="divAbmInterConsulta3" class="divAbms" style="width: 650px;min-height: 100px;height: fit-content;">
         <table class="tableMenuZ">
             <tbody>
               <tr>
@@ -7700,29 +7700,50 @@ onclick='SeleccionarRegistroCategoria()' />
             </tbody>
           </table> 
             <div class="divMenuf">
-                <table><tr>
-                  <td>
+              <table><tr>
+                <td>
+                <p class="pTituloC">Cliente :</p>
+                <input class="inputTextDisable" type="text" placeholder="Seleccionar un cliente" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
+                <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
+                </td></tr>
+              </table>
+              <table class="tableCabeceraRegistro">
+              <tbody>
+              <tr>
+                <td class="td_registro" style="width:10%;">
+                COD. VENTA
+                </td>
+                <td class="td_registro" style="width:40%;">
+                ASUNTO
+                </td>
+                <td class="td_registro" style="width:15%;">
+                ESTADO
+                </td>
+                <td class="td_registro" style="width:35%;">
+                CREADOR
+                </td>
+              </tr>
+              </tbody>
+              </table>
+              <div id="list_abm_interConsulta_asoc" style="max-height: 300px;overflow-y: auto;">
+
+              </div>
+            </div>
+            <div class="divMenuf">
+                <table style="width: 100%;"><tr>
+                  <td style="width: 50%;">
                   <p class="pTituloC">Asunto :</p>
                   <input class="inputText" type="text" id="inptAsuntoAbmInterConsulta">
-                  </td></tr>
-                </table>
-                <table><tr>
-                  <td>
-                  <p class="pTituloC">Cliente :</p>
-                  <input class="inputTextDisable" type="text" placeholder="Seleccionar un cliente" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
-                  <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
-                  </td></tr>
-                </table>
-                <table><tr>
-                  <td>
+                  </td>
+                  <td style="width: 50%;">
                   <p class="pTituloC">Local :</p>
                   <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:130px">
                   </select>
                   </td></tr>
                 </table>
               </td></tr></table>
-                <table><tr>
-                  <td>
+                <table style="width: 100%;"><tr>
+                  <td style="width: 50%;">
                   <p class="pTituloC">Tipo :</p>
                   <select class="inputSelect" id="inptTipoAbmInterConsulta" style="width:130px">
                     <option value="clinico">CLINICO</option>
@@ -7732,10 +7753,8 @@ onclick='SeleccionarRegistroCategoria()' />
                     <option value="pagos">PAGOS</option>
                     <option value="judicial">JUDICIAL</option>
                   </select>
-                  </td></tr>
-                </table>
-                <table><tr>
-                  <td>
+                  </td>
+                  <td style="width: 50%;">
                   <p class="pTituloC">Estado :</p>
                   <select class="inputSelect" id="inptEstadoAbmInterConsulta" style="width:130px">
                     <option value="pendiente">PENDIENTE</option>
@@ -7746,10 +7765,9 @@ onclick='SeleccionarRegistroCategoria()' />
                   </td></tr>
                 </table>
               </div>
-                <br>
                 <div class="divMenuf">
-                  <table style="width:100%" class="divMenuf">
-                    <tr><td>
+                  <table style="width:100%">
+                    <tr><td style="text-align: center;">
                         <input type="button" value="Guardar" class="btn4" onclick="verificarCamposInterConsulta()">
                     </td></tr>
                   </table>

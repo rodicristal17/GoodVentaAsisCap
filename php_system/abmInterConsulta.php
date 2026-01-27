@@ -187,18 +187,34 @@
                     'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 );
                 $vistaTarjetas= obtenerVistaTarjetaInterConsuta($filtros, $limite, $offset);
-
-                // Se calcula si agregar o no el boton de ver mas
-                $registrosMens= obtenerMensaje($filtros);
-                $botonVerMas= "";
-                if (count($registrosMens) > ($offset + $limite)) {
-                    $botonVerMas= "<div style='width: 100%; justify-content: center;'>
-                        <button class='btn btn-success' onclick='verMasMensajesInterconsulta(".($offset + $limite).")'>Ver más mensajes...</button>
-                        </div>";
-                }
-                
-                $vistaTarjetas= $botonVerMas . $vistaTarjetas;
                 echo json_encode(array("1" => "exito", "2" => $vistaTarjetas));
+                break;
+            case 'buscarVistaAsociadoPaciente':
+                $cod_cliente= isset($_POST['cod_cliente']) ? utf8_decode($_POST['cod_cliente']) : null;
+                
+                $registros= obtenerInterConsulta(array(
+                    'cod_clienteFK' => $cod_cliente,
+                    'ocultar_inactivos' => TRUE
+                ), 0);
+
+                $pagina= "";
+                foreach ($registros as $key => $value) {
+                    $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding= "5"><tr onclick="obtenerDatosInterConsulta(this)">
+                        <td id="td_id" style="width: 5%;display: none;">'.$value['cod_interConsulta'].'</td>
+                        <td id="td_datos_5" style="display: none;">'.$value['nombre_persona'].'</td>
+                        <td id="td_datos_11" style="display: none;">'.$value['cod_localFK'].'</td>
+                        <td id="td_datos_12" style=display: none;">'.$value['nombre_local'].'</td>
+                        <td id="td_datos_6" style="display: none;">'.$value['tipo'].'</td>
+                        <td id="td_datos_7" style="display: none;">'.$value['cod_clienteFK'].'</td>
+                        <td id="td_datos_8" style="display: none;">'.$value['fecha_creacion'].'</td>
+                        <td id="td_datos_13" style="display: none;">'.$value['cantMensajes'].'</td>
+                        <td id="td_datos_4" class="tdRegistroSearch" style="width: 10%;">'.$value['cod_ventaFK'].'</td>
+                        <td id="td_datos_10" class="tdRegistroSearch" style="width: 40%;">'.$value['asunto'].'</td>
+                        <td id="td_datos_2" class="tdRegistroSearch" style="width: 15%;">'.$value['estado'].'</td>
+                        <td id="td_datos_9" class="tdRegistroSearch" style="width: 35%;">'.$value['nombre_persona_creador'].'</td>
+                    </tr></table>';
+                }
+                echo json_encode(array("1" => "exito", "2" => $pagina));
                 break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
@@ -208,6 +224,7 @@
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
         $pagina = "";
         $limiteMensajes= 5;
+        $totalCantMensaje= 0;
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
@@ -215,6 +232,11 @@
             "cod_usuarioFK" => $filtros['cod_usuarioFK'],
             "cod_interConsulta" => $filtros['cod_interConsulta'],
         ), $limite);
+
+        if (count($registrosInterc) == 0) {
+            echo json_encode(array("1" => "NI", "2" => "Usted no tiene acceso a esta conversacion."));
+            return false;
+        }
 
         foreach ($registrosInterc as $valueInter) {
             $mencionesElemento= "";
@@ -342,6 +364,7 @@
             <span id="td_datos_5">'.$valueInter['cod_ventaFK'].'</span>
             <span id="td_datos_7">'.$valueInter['nombre_persona'].'</span>
             <span id="td_datos_8">'.$valueInter['cod_localFK'].'</span>
+            <span id="td_datos_9">'.$valueInter['cod_clienteFK'].'</span>
             </div>
             </div>
             </div>
@@ -354,13 +377,14 @@
                     </div>";
             }
             $pagina .= $paginaMensajes. '</div>';
+            
+            // Obtiene la cantidad total de mensajes
+            $totalCantMensaje2= obtenerMensaje(array(
+                'cod_interConsultaFK' => $valueInter['cod_interConsulta']
+            ));
+            $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        // Obtiene la cantidad total de mensajes
-        $totalCantMensaje= obtenerMensaje(array(
-            'cod_interConsultaFK' => $valueInter['cod_interConsulta']
-        ));
-        $totalCantMensaje = count($totalCantMensaje);
         echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje));
     }
 
@@ -1063,6 +1087,9 @@
                         (SELECT ci_cliente from cliente join venta vt where cod_cliente = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
                         (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK)
                     ) LIKE '%$value%'";
+                    break;
+                case 'cod_clienteFK':
+                    $sqlFiltro .= "(SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK) = $value";
                     break;
                 case 'usuario_vinculado':
                     $sqlFiltro .= "EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)";
