@@ -191,19 +191,21 @@
                 break;
             case 'buscarVistaAsociadoPaciente':
                 $cod_cliente= isset($_POST['cod_cliente']) ? utf8_decode($_POST['cod_cliente']) : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
                 
                 $registros= obtenerInterConsulta(array(
                     'cod_clienteFK' => $cod_cliente,
-                    'ocultar_inactivos' => TRUE
+                    'ocultar_inactivos' => TRUE,
+                    'id_interConsulta_distinto' => $cod_interConsulta,
                 ), 0);
 
                 $pagina= "";
                 foreach ($registros as $key => $value) {
                     $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding= "5"><tr onclick="obtenerDatosInterConsulta(this)">
-                        <td id="td_id" style="width: 5%;display: none;">'.$value['cod_interConsulta'].'</td>
+                        <td id="td_id" style="display: none;">'.$value['cod_interConsulta'].'</td>
                         <td id="td_datos_5" style="display: none;">'.$value['nombre_persona'].'</td>
                         <td id="td_datos_11" style="display: none;">'.$value['cod_localFK'].'</td>
-                        <td id="td_datos_12" style=display: none;">'.$value['nombre_local'].'</td>
+                        <td id="td_datos_12" style="display: none;">'.$value['nombre_local'].'</td>
                         <td id="td_datos_6" style="display: none;">'.$value['tipo'].'</td>
                         <td id="td_datos_7" style="display: none;">'.$value['cod_clienteFK'].'</td>
                         <td id="td_datos_8" style="display: none;">'.$value['fecha_creacion'].'</td>
@@ -1080,6 +1082,9 @@
                     break;
                 case 'nombre_responsable':
                     $sqlFiltro .= "(SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) LIKE '%$value%'";
+                    break;
+                case 'id_interConsulta_distinto':
+                    $sqlFiltro .= "ic.cod_interConsulta <> $value";
                     break;
                 case 'nombre_cliente':
                     $sqlFiltro .= "CONCAT(

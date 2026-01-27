@@ -1058,6 +1058,7 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
     datos.append("navegador", navegador);
     datos.append("accion", 'buscarVistaAsociadoPaciente');
     datos.append("cod_cliente", cod_cliente);
+    datos.append("cod_interConsulta", cod_interConsulta);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -1123,6 +1124,7 @@ function cancelarInformeInterConsulta() {
 function limpiarcamposInterconsulta() {
     cod_ventaFKConsulta= "";
     cod_interConsulta= "";
+    cod_clienteConsulta= "";
     
     document.getElementById('inptAsuntoAbmInterConsulta').value= "";
     document.getElementById('inptNombreClienteAbmInterConsulta').value= "";
