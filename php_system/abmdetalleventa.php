@@ -1424,7 +1424,7 @@ if ($estado == 'eliminado') {
 <td id='td_id_2' style='display:none'>".$cod_detalle."</td>
 <td  style='width:5%'>".$cod_barra."</td>
 <td  id='td_datos_1' style='width:20%;".$styleG."'>".$nombre_producto." *".$NombreMarca."*</td>
-<td  id='td_datos_3' style='width:10%'>".number_format($monto_total,'0',',','.') ."</td>
+<td  id='td_datos_3' style='width:10%'>".number_format($precio_producto,'0',',','.') ."</td>
 <td  id='td_datos_4' style='width:5%'>".number_format($cantidad_detalle,'2',',','.')."</td>
 <td  id='td_datos_7' style='width:10%;display:none'>".number_format($descuento,'0',',','.')."</td>
 <td  id='td_datos_5' style='width:10%'>".number_format($monto_total,'0',',','.')."</td>
