@@ -953,6 +953,50 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 
+function combinarMotivoEgresoIngreso() {
+	// Verifica si posee el permiso
+	if (!controlacceso("COMBINARMOTIVOSEGRESOINGRESO", "accion")) {return false;}
+
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_motivo_ingreso_egreso": document.getElementById('inptCodAbmMotivoEgresoIngreso1').value,
+		"cod_motivo_ingreso_egreso_destino": document.getElementById('inptCodAbmMotivoEgresoIngreso2').value,
+		"funt": "combinarmotivoingresoegreso"
+	};
+	$.ajax({
+		data: datos,
+        url: "../php_system/abmgasto.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("divBuscadorMotivoEgresoIngreso").innerHTML = ''
+			document.getElementById("lblNroRegistroMotivoEgresoIngreso").innerHTML = ''
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					limpiarcamposmotivoegresoingreso();
+					BuscarAbmMotivoEgresoIngreso();
+					ver_vetana_informativa("Datos guardados exitosamente", "#");
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 function BuscarAbmMotivoEgresoIngreso() {
 	var buscador = document.getElementById("inptBuscarAbmMotivoEgresoIngreso").value
 	var estado = "Activo"
@@ -1002,7 +1046,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 			}
 		}
 	});
-	}
+}
 
 var idAbmMotivoEgresoIngreso = "";
 function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
@@ -1022,7 +1066,16 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
 		document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = false;
 	}
 	idAbmMotivoEgresoIngreso= $(datostr).children('td[id="td_id"]').html();
-     document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos"
+     document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos";
+
+	// DAtos para combinacion de motivos
+	if (!(document.getElementById('inptCodAbmMotivoEgresoIngreso1').value)) {
+		document.getElementById('inptCodAbmMotivoEgresoIngreso1').value= $(datostr).children('td[id="td_id"]').html();
+		document.getElementById('inptNombreAbmMotivoEgresoIngreso1').value= $(datostr).children('td[id="td_datos_1"]').html();
+	} else {
+		document.getElementById('inptCodAbmMotivoEgresoIngreso2').value= $(datostr).children('td[id="td_id"]').html();
+		document.getElementById('inptNombreAbmMotivoEgresoIngreso2').value= $(datostr).children('td[id="td_datos_1"]').html();
+	}
 }
 
 function limpiarcamposmotivoegresoingreso(){
@@ -1035,6 +1088,12 @@ function limpiarcamposmotivoegresoingreso(){
 	document.getElementById("inptAbmInterConsultaGasto").value= "";
 	idAbmMotivoEgresoIngreso=''
      document.getElementById("btnMotivoIngresoEgreso").value="Guardar"
+
+	 // DAtos para combinacion de motivos
+	 document.getElementById('inptCodAbmMotivoEgresoIngreso1').value= "";
+	 document.getElementById('inptNombreAbmMotivoEgresoIngreso1').value= "";
+	 document.getElementById('inptCodAbmMotivoEgresoIngreso2').value= "";
+	 document.getElementById('inptNombreAbmMotivoEgresoIngreso2').value= "";
 }
 
 function verCerrarVentanaABMLimiteCaja(mostrar) {

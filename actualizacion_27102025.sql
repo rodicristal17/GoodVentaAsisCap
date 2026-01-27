@@ -191,6 +191,8 @@ ALTER TABLE gastos ADD COLUMN cod_usuario_autoriz INT(11);
 ALTER TABLE gastos ADD COLUMN fecha_autoriz DATETIME;
 ALTER TABLE menciones add column estado enum('activo', 'inactivo') DEFAULT 'activo';
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;
+ALTER TABLE motivos_ingreso_egreso ADD COLUMN cod_usuarioFK INT(11);
+ALTER TABLE motivos_ingreso_egreso ADD COLUMN fecha_edit DATETIME;
 
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
@@ -199,3 +201,4 @@ ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;
 -- VERGASTOSZONAOPERATIVOS, VERGASTOSZONACOSTOSDIRECTOS,VERGASTOSZONAINGRESOS, 
 -- ELIMINARDETALLEVENTA
 -- AUTORIZAREGRESOINGRESO
+-- COMBINARMOTIVOSEGRESOINGRESO

@@ -291,7 +291,7 @@ $necesita_autorizacion = utf8_decode($necesita_autorizacion);
 $presupuesto= $_POST['presupuesto'];
 $presupuesto = utf8_decode($presupuesto);
 
-	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto, $idabm);
+	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto, $user, $idabm);
 
 }	
 
@@ -305,6 +305,42 @@ if ($operacion == "aprobarMovimiento") {
 	$idgastos= utf8_decode($idgastos);
 	aprobarMovimiento($idgastos, $user);
 }
+if ($operacion == "combinarmotivoingresoegreso") {
+	$cod_motivoIngresoEgreso= utf8_decode($_POST['cod_motivo_ingreso_egreso']);
+	$cod_motivoIngresoEgreso_dest= utf8_decode($_POST['cod_motivo_ingreso_egreso_destino']);
+
+	combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngresoEgreso_dest, $user);
+}
+}
+
+function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngresoEgreso_dest, $cod_usuarioFK) {
+	$fechaActual= new DateTime();
+	$fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
+
+	$mysqli=conectar_al_servidor();
+
+	// Se actualiza todos los registros de gastos con el motivo anterior
+	$sql= "UPDATE gastos SET cod_motivoIngresoEgresoFK= ? WHERE cod_motivoIngresoEgresoFK = ?";
+	$stmt = $mysqli->prepare($sql);
+	$stmt->bind_param('ii',$cod_motivoIngresoEgreso_dest,$cod_motivoIngresoEgreso);
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+
+	// SE cambia a inactivo el motivo original
+	$sql= "UPDATE motivos_ingreso_egreso SET estado= '', cod_usuarioFK= ?, fecha_edit= ? WHERE cod_motivo_ingreso_egreso = ?";
+	$stmt = $mysqli->prepare($sql);
+	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$cod_motivoIngresoEgreso);
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+
+	mysqli_close($mysqli);
+	$informacion =array("1" => "exito", "2" => $cod_motivoIngresoEgreso_dest);
+	echo json_encode($informacion);	
+	exit;
 }
 
 function aprobarMovimiento($idgastos, $cod_usuarioFK) {
@@ -1248,7 +1284,7 @@ exit;
 	
 }
 
-function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto,$idabm)
+function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto,$cod_usuarioFK,$idabm)
 {
 	
 if($motivo==""   ){
@@ -1257,9 +1293,12 @@ echo json_encode($informacion);
 exit;
 }
 
+$fechaActual= new DateTime();
+$fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
+
 $mysqli=conectar_al_servidor();
 
-$consulta1="update motivos_ingreso_egreso SET presupuesto= $presupuesto, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$consulta1="update motivos_ingreso_egreso SET fecha_edit= $fechaActual, cod_usuarioFK= $cod_usuarioFK, presupuesto= $presupuesto, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {

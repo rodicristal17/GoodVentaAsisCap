@@ -4800,9 +4800,6 @@ src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
 title='Volver Atras' onclick='verCerrarAbmNuevoMotivo("2","")' /></td>
 </tr>
 </table>
-<br>
-<br>
-
 <center>
 <div class='divMenuf'>
 
@@ -4856,7 +4853,8 @@ Necesita autorizacion</p></td>
 <input class='btn1' type='button' value='Guardar Datos'
 onclick='VerificarDatosMotivoEgresoIngreso()' id='btnMotivoIngresoEgreso' />
 </center>
-
+</div>
+<div class="divMenuf" >
 <center>
 <table style='width:100%'>
 <tr>
@@ -4868,6 +4866,28 @@ onkeyup="if(event.keyCode == 13){BuscarAbmMotivoEgresoIngreso()}"
 style='width: 322px;' />
 <input type='button' value='Buscar' class='btn4'
 onclick='BuscarAbmMotivoEgresoIngreso()'>
+<table style='width:100%'>
+<tr>
+<td style='width:39%'>
+<p class='pTituloC' >Reemplazar :</p>
+<input class="inputTextDisable" disabled type="hidden" 
+    id="inptCodAbmMotivoEgresoIngreso1">
+  <input class="inputTextDisable" disabled type="text" 
+    id="inptNombreAbmMotivoEgresoIngreso1" style="width: 100%;">
+</td>
+<td style="width: 39%;">
+  <p class='pTituloC' >Por :</p>
+  <input class="inputTextDisable" disabled type="hidden" 
+    id="inptCodAbmMotivoEgresoIngreso2">
+  <input class="inputTextDisable" disabled type="text" 
+    id="inptNombreAbmMotivoEgresoIngreso2" style="width: 100%;">
+</td>
+<td style="vertical-align: bottom;">
+<input type='button' value='Reemplazar' class='btn4' style="width: 100%;"
+  onclick='combinarMotivoEgresoIngreso()'>
+</td>
+</tr>
+</table>
 </td>
 <td>
 </td>
