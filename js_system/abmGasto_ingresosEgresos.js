@@ -662,7 +662,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 	const ocultar_inactivos = document.getElementById("inptSeleccEstadoBuscarGasto2").checked;
 	var estado =""
 	var tipo = document.getElementById('inptSeleccTipoBuscarGasto').value
-	var arreglo = document.getElementById('inptSeleccArregloBuscarGasto').value
+	var arreglo = ""; //document.getElementById('inptSeleccArregloBuscarGasto').value
 	var cod_local = document.getElementById('inptlocalMisGastosBusca').value
 	var fecha = document.getElementById('inptBuscarIngresoEgreso1').value
 	var usuario = document.getElementById('inptBuscarIngresoEgreso2').value

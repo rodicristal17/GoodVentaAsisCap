@@ -567,15 +567,16 @@ $paginaImprimir= "";
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  style='width:25%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
-					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
-					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
-					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
-					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
+					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -596,15 +597,16 @@ $paginaImprimir= "";
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  style='width:25%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
-					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
-					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
-					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
-					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
+					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -626,15 +628,16 @@ $paginaImprimir= "";
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  style='width:25%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
-					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
-					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
-					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
-					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
+					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -656,15 +659,16 @@ $paginaImprimir= "";
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  style='width:25%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
-					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
-					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
-					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
-					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
+					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -686,15 +690,16 @@ $paginaImprimir= "";
 					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:10%'>".(empty($motivo) ? $descripcion : $motivo)."</td>
+					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  style='width:25%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-					<td  id='td_datos_3' style='width:10%'>".$nroboleta."</td>
-					<td  id='td_datos_9' style='width:10%'>".$banco."</td>
-					<td  id='td_datos_10' style='width:10%'>".$nrocuenta."</td>
-					<td  id='td_datos_11' style='width:10%'>".$arreglo."</td>
-					<td  id='td_datos_8' style='width:10%'>".$usuarionombre."</td>
+					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
+					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
