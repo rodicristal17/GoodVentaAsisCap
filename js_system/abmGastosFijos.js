@@ -138,6 +138,8 @@ function verificarCamposGastosFijos() {
 }
 
 function abmGastosFijos(descripcion, estado, dia, cod_localFK, costo) {
+	if(controlacceso("ABMGASTOSFIJOS","accion")==false){return;}	
+
     verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
