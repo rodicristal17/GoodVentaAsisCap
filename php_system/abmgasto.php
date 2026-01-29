@@ -391,7 +391,7 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	}
 
 	// SE cambia a inactivo el motivo original
-	$sql= "UPDATE motivos_ingreso_egreso SET estado= '', cod_usuarioFK= ?, fecha_edit= ? WHERE cod_motivo_ingreso_egreso = ?";
+	$sql= "UPDATE motivos_ingreso_egreso SET estado= 'inactivo', cod_usuarioFK= ?, fecha_edit= ? WHERE cod_motivo_ingreso_egreso = ?";
 	$stmt = $mysqli->prepare($sql);
 	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$cod_motivoIngresoEgreso);
 	if (!$stmt->execute()) {
@@ -660,10 +660,10 @@ $paginaImprimir= "";
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-					<td  style='width:25%'>".$descripcion."</td>
+					<td  style='width:15%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
@@ -691,10 +691,10 @@ $paginaImprimir= "";
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-					<td  style='width:25%'>".$descripcion."</td>
+					<td  style='width:15%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
@@ -722,10 +722,10 @@ $paginaImprimir= "";
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-					<td  style='width:25%'>".$descripcion."</td>
+					<td  style='width:15%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
@@ -753,10 +753,10 @@ $paginaImprimir= "";
 					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-					<td  style='width:25%'>".$descripcion."</td>
+					<td  style='width:15%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
