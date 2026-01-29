@@ -821,6 +821,7 @@ function verCerrarAbmNuevoMotivo(){
 		BuscarAbmMotivoEgresoIngreso();
 	}
 }
+
 function VerificarDatosMotivoEgresoIngreso() {
 	var inptNuevoMotivo = document.getElementById('inptNuevoMotivoEgresoIngreso').value
 	var inptEstadoMotivoEgresoIngreso = document.getElementById('inptEstadoMotivoEgresoIngreso').value
@@ -899,9 +900,66 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, presu
 
 		}
 	});
-
-
 }
+
+function verCerrarResumenGastosMotivos(mostrar) {
+	if (mostrar) {
+		// Obtiene las fechas
+		const fechaActual= new Date();
+		const primerDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
+		const ultimoDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
+		buscarResumenGastosMotivo();
+		
+		// Asigna las fechas a los input
+		document.getElementById('inptFecha1ResumenGastosMotivo').value= primerDiaMes.toISOString().slice(0, 10);
+		document.getElementById('inptFecha2ResumenGastosMotivo').value= ultimoDiaMes.toISOString().slice(0, 10);
+		document.getElementById('divAbmResumenGastosMotivos').style.display= "";
+	} else {
+		document.getElementById('divAbmResumenGastosMotivos').style.display= "none";
+	}
+}
+
+function buscarResumenGastosMotivo() {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "buscarResumenGastosMotivo",
+		"fecha_inicio": document.getElementById('inptFecha1ResumenGastosMotivo').value,
+		"fecha_fin": document.getElementById('inptFecha2ResumenGastosMotivo').value,
+	};
+	$.ajax({
+		data: datos,
+		url: "../php_system/abmgasto.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("divResumenGastosMotivo").innerHTML = ""
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			document.getElementById("divResumenGastosMotivo").innerHTML = ''
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+				   	var datos_buscados = datos[2];
+					document.getElementById("divResumenGastosMotivo").innerHTML = datos_buscados;
+					document.getElementById("inptTotalResumenGastoMotivo").value= datos["3"];
+					document.getElementById("inptCantResumenGastoMotivo").value= datos["4"];
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 function buscaroptionMotivoEgresoIngreso() {
 
 	document.getElementById("ListMotivoMisGastos").innerHTML = ""

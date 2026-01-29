@@ -311,6 +311,62 @@ if ($operacion == "combinarmotivoingresoegreso") {
 
 	combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngresoEgreso_dest, $user);
 }
+if ($operacion == "buscarResumenGastosMotivo") {
+	$fecha_inicio= utf8_decode($_POST['fecha_inicio']);
+	$fecha_fin= utf8_decode($_POST['fecha_fin']);
+
+	buscarResumenGastosMotivo($fecha_inicio, $fecha_fin);
+}
+}
+
+function buscarResumenGastosMotivo($fecha_inicio, $fecha_fin) {
+	$sqlFiltro = "";
+	if ($fecha_inicio) {
+		$sqlFiltro .= " and fecha >= '$fecha_inicio'";
+	}
+	if ($fecha_fin) {
+		$sqlFiltro .= " and fecha <= '$fecha_fin'";
+	}
+
+	$mysqli=conectar_al_servidor();
+	
+	$sql= "SELECT 
+		(SELECT sum(monto) FROM gastos where cod_motivoIngresoEgresoFK = m.cod_motivo_ingreso_egreso $sqlFiltro) as monto,
+		m.cod_motivo_ingreso_egreso, m.descripcion 
+	 FROM motivos_ingreso_egreso m where estado='activo'";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+	$pagina= "";
+	$monto_total= 0;
+	$result = $stmt->get_result();
+	$valor= mysqli_num_rows($result);
+	$nroRegistro= $valor;
+	$styleName="tableRegistroSearch";
+ 
+ 	if ($valor>0) {
+	  while ($valor= mysqli_fetch_assoc($result)) {
+		  $styleName=CargarStyleTable($styleName);
+		  $cod_motivo_ingreso_egreso=utf8_encode($valor['cod_motivo_ingreso_egreso']);
+		  $descripcion=utf8_encode($valor['descripcion']);
+		  $monto=utf8_encode($valor['monto']);
+
+		  $pagina .= '<table class="'.$styleName.'" border="1" cellspacing="1" cellpadding="5"><tr>
+		 	<td style="width: 10%;">'.$cod_motivo_ingreso_egreso.'</td> 
+		 	<td style="width: 65%;">'.$descripcion.'</td> 
+		 	<td style="width: 25%;">'.number_format(intval($monto), 0, ',', '.').'</td> 
+		  </tr></table>';
+
+		  $monto_total += intval($monto);
+	  }
+	}
+
+	mysqli_close($mysqli);
+	$informacion =array("1" => "exito", "2" => $pagina, "3" => number_format($monto_total, 0, ',', '.'), "4" => $nroRegistro);
+	echo json_encode($informacion);	
+	exit;
 }
 
 function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngresoEgreso_dest, $cod_usuarioFK) {
