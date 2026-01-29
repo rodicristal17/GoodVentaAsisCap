@@ -668,6 +668,7 @@
                     <td id="td_datos_9" style="width: 15%;'.$style.'">'.$value['nombre_persona_creador'].'</td>
                     <td id="td_datos_10" style="display: none;'.$style.'">'.$value['asunto'].'</td>
                     <td id="td_datos_13" style="display: none;'.$style.'">'.$value['cantMensajes'].'</td>
+                    <td id="td_datos_14" style="display: none;'.$style.'">'.$value['cantMensajesNoLeidos'].'</td>
                 </tr>
             </table>';
         }
@@ -1153,7 +1154,7 @@
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
                 SELECT MAX(mj2.fecha_creacion)
                 FROM mensaje mj2
-                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta
+                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroFechaLimite
             )) DESC,
             FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'),
             cod_interConsulta DESC $limite";
