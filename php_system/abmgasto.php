@@ -341,6 +341,7 @@ function buscarResumenGastosMotivo($fecha_inicio, $fecha_fin) {
 	}
 	$pagina= "";
 	$monto_total= 0;
+	$registros= array();
 	$result = $stmt->get_result();
 	$valor= mysqli_num_rows($result);
 	$nroRegistro= $valor;
@@ -360,11 +361,16 @@ function buscarResumenGastosMotivo($fecha_inicio, $fecha_fin) {
 		  </tr></table>';
 
 		  $monto_total += intval($monto);
+		  $registros[] = array(
+			'cod_motivo_ingreso_egreso' => $cod_motivo_ingreso_egreso,
+			'descripcion' => $descripcion,
+			'monto' => $monto,
+		  );
 	  }
 	}
 
 	mysqli_close($mysqli);
-	$informacion =array("1" => "exito", "2" => $pagina, "3" => number_format($monto_total, 0, ',', '.'), "4" => $nroRegistro);
+	$informacion =array("1" => "exito", "2" => $pagina, "3" => $monto_total, "4" => $nroRegistro, "5" => $registros);
 	echo json_encode($informacion);	
 	exit;
 }

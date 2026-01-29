@@ -949,7 +949,47 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				   	var datos_buscados = datos[2];
 					document.getElementById("divResumenGastosMotivo").innerHTML = datos_buscados;
 					document.getElementById("inptTotalResumenGastoMotivo").value= datos["3"];
+					separadordemiles(document.getElementById("inptTotalResumenGastoMotivo"));
 					document.getElementById("inptCantResumenGastoMotivo").value= datos["4"];
+					
+					// Construye el grafico
+					const canvas = document.getElementById('chartResumenGastosMOtivos');
+					const ctx = canvas.getContext('2d');
+					
+					const data = datos["5"];
+					const formattedData = data.map(item => ({
+						label: item.descripcion,
+						value: (() => {
+							const monto = parseInt((item.monto || "0").replace(/\./g, ''), 10);
+							const divisor = parseInt(datos["3"] || "0", 10);
+
+							// valida el numero
+							if (!divisor || isNaN(divisor)) return 0;
+							if (isNaN(monto)) return 0;
+
+							return (monto / divisor) * 100;
+						})(),
+						color: '#' + Math.floor(Math.random()*16777215).toString(16)
+					}));
+
+					let startAngle = 0;
+					let total = 100;
+
+					formattedData.forEach(item => {
+						const sliceAngle = 2 * Math.PI * item.value / total;
+						ctx.fillStyle = item.color;
+						ctx.beginPath();
+						ctx.moveTo(canvas.width / 2, canvas.height / 2);
+						ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width / 2, canvas.height / 2), startAngle, startAngle + sliceAngle);
+						ctx.closePath();
+						ctx.fill();
+						startAngle += sliceAngle;
+
+						document.getElementById('leyendResumenGastosMOtivos').innerHTML += '<div style="width: fit-content; display: inline-flex;margin-inline: 10px;">'+
+							'<div style="background-color: '+item.color+';height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>'+
+							'<p class="pTitulo8" style="width: fit-content; text-align: start;color: '+item.color+';">'+item.label+'('+item.value.toFixed(1)+')</p>'+
+						'</div>';
+					});
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

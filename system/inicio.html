@@ -4500,12 +4500,11 @@ Todos</p>
 <input type="checkbox" id="inptSeleccEstadoBuscarGasto2" checked style="width: fit-content;margin-right: 5px;">Ocultar inactivos
 </p>
 </td>
-<td style="width:10%;"></td>
-<td style='width:20%;text-align: left;'>
+<td style='width:30%;text-align: right;'>
   <input type='Button' value='Buscar' class='btn4' onclick='buscarabmGasto()' />
   <input type='Button' value='Gastos Fijos' class='btn4' onclick='verCerrarVentanaGastosFijos(true)' style="width:100px;background-color: #416c8f;"/>
   <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('gastos')" style="width:100px;background-color: rgb(58 58 58);">
-  <input type="button" value="Resumir por motivos" class="btn4" onclick="verCerrarResumenGastosMotivos(true)" style="width:100px;background-color: rgb(58 58 58);">
+  <input type="button" value="Resumir por motivos" class="btn4" onclick="verCerrarResumenGastosMotivos(true)" style="width:fit-content;background-color: rgb(58 58 58);">
 </td>
 </tr>
 </table>
@@ -5020,7 +5019,7 @@ CATEGORIA
     <tr>
       <td>
         <center>
-          <div class='divAbms_b' style='width: 500px;'>
+          <div class='divAbms_b' style='width: 800px;'>
             <table class='tableMenuZ'>
               <tr>
                 <td style='width:100%;text-align:left'>
@@ -5052,39 +5051,52 @@ CATEGORIA
                   </tr>
                 </table>
               </div>
-              <div class="divMenuf">
-                <center>
-                  <table class="tableCabeceraRegistro">
-                    <tbody>
-                      <tr>
-                        <td class="td_registro" style="width:10%;">
-                          #
-                        </td>
-                        <td class="td_registro" style="width:65%;">
-                          MOTIVO
-                        </td>
-                        <td class="td_registro" style="width:25%;">
-                          MONTO
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div class="div_cuerpo_table" id="divResumenGastosMotivo" style='height:200px; width: 100%;'></div>
-                </center>
-              </div>
-              <div class="divMenuf">
-                <table style="width: 100%;"><tr>
-                  <td style="width:15%;">
-                    <p class="pTituloC">Cant. registros :</p>
-                    <input class="inputTextDisable" type="text" disabled="" id="inptCantResumenGastoMotivo" style="width:150px">
-                  </td>
-                  <td style="width:15%;">
-                    <p class="pTituloC">Total :</p>
-                    <input class="inputTextDisable" type="text" disabled="" id="inptTotalResumenGastoMotivo" style="width:150px">
-                  </td>
-                  <td></td>
-                </tr></table>
-              </div>
+              <table style="width: 100%;"><tr>
+                <td style="width: 30%;">
+                  <div class="divMenuf">
+                    <center>
+                      <table class="tableCabeceraRegistro">
+                        <tbody>
+                          <tr>
+                            <td class="td_registro" style="width:10%;">
+                              #
+                            </td>
+                            <td class="td_registro" style="width:65%;">
+                              MOTIVO
+                            </td>
+                            <td class="td_registro" style="width:25%;">
+                              MONTO
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div class="div_cuerpo_table" id="divResumenGastosMotivo" style='height:200px; width: 100%;'></div>
+                    </center>
+                  </div>
+                  <div class="divMenuf">
+                    <table style="width: 100%;"><tr>
+                      <td style="width:15%;">
+                        <p class="pTituloC">Cant. registros :</p>
+                        <input class="inputTextDisable" type="text" disabled="" id="inptCantResumenGastoMotivo" style="width:150px">
+                      </td>
+                      <td style="width:15%;">
+                        <p class="pTituloC">Total :</p>
+                        <input class="inputTextDisable" type="text" disabled="" id="inptTotalResumenGastoMotivo" style="width:150px">
+                      </td>
+                      <td></td>
+                    </tr></table>
+                  </div>
+                </td>
+                <td style="width: 70%;">
+                  <div class="divMenuf pie-chart-container">
+                    <canvas id="chartResumenGastosMOtivos" width="200" height="200"></canvas>
+                    <div id="leyendResumenGastosMOtivos">
+
+                    </div>
+                  </div>
+                </td>
+              </tr></table>
+              
             </center>
           </div>
 
