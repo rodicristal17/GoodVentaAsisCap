@@ -1980,11 +1980,15 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 /*
 INFO
 */
-function ver_vetana_informativa(titulo, detalle= "", tipo="info") {
+function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 	titulo= titulo.toLowerCase();
 
 	// Comprueba si es informacion ya predefinida
-	if ()
+	if (!detalle && tipo == "info") {
+		detalle= titulo.toString();
+		titulo= "Atencion";
+		tipo= "advertencia";
+	}
 	document.getElementById('lbltitulomensaje').innerHTML = titulo;
 	document.getElementById('lbltitulomensajedetalle').innerHTML = detalle;
 
@@ -1994,6 +1998,9 @@ function ver_vetana_informativa(titulo, detalle= "", tipo="info") {
 			break;
 		case 'info':
 			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= "#416c8f";
+			break;
+		case 'advertencia':
+			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= "#ff9f00";
 			break;
 		default:
 			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= '#b1b1b1a1';
