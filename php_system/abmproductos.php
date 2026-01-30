@@ -2650,13 +2650,15 @@ function  buscardetallesprecios($buscar,$preciocontado,$comisioncontado)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "select (select porcentaje from producto p where p.cod_producto=dt.cod_producto) as porcentajeContado , precio,Porcentaje as porcen,descripcion,cod_producto,iddetallesprecio,comision,Cuota
+$sql= "select (select porcentaje from producto p where p.cod_producto=dt.cod_producto) as porcentajeContado, 
+	(select precio_producto from producto where cod_producto= ?) as precio_contado,
+	precio,Porcentaje as porcen,descripcion,cod_producto,iddetallesprecio,comision,Cuota
  from  detallesprecio dt
 where cod_producto=? ";
  $pagina="";  
 $stmt = $mysqli->prepare($sql);
-$s='s';
-$stmt->bind_param($s,$buscar);
+$s='ss';
+$stmt->bind_param($s,$buscar,$buscar);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
@@ -2677,11 +2679,16 @@ while ($valor= mysqli_fetch_assoc($result))
 $porcentajeContado = utf8_encode($valor['porcentajeContado']);  
 $Porcentaje = utf8_encode($valor['porcen']);  
 $precio = utf8_encode($valor['precio']);     
+$precio_contado = utf8_encode($valor['precio_contado']);     
 $descripcion = utf8_encode($valor['descripcion']);          
 $iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
 $comision = utf8_encode($valor['comision']);          
 $Cuota = utf8_encode($valor['Cuota']);          
 
+// Parche para usar solo el precio al contado
+	$precio= intval($precio_contado) / intval($Cuota);
+	$precio= round($precio);
+	$descripcion= "$Cuota x ".number_format($precio, 0, ',', '.');
 
 	  $pagina.="<option id='$Cuota' style='$porcentajeContado' class='$Porcentaje' url='$preciocontado' name='$comision' value='".number_format($precio,'0',',','.')."'>".$descripcion."</option>";
 
@@ -2698,13 +2705,15 @@ function  buscardetallespreciosb($buscar)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "select precio,Porcentaje,descripcion,cod_producto,iddetallesprecio,comision,Cuota
+$sql= "select 
+	(select precio_producto from producto where cod_producto= ?) as precio_contado,
+precio,Porcentaje,descripcion,cod_producto,iddetallesprecio,comision,Cuota
  from  detallesprecio 
 where cod_producto=? ";
  $pagina="";  
 $stmt = $mysqli->prepare($sql);
-$s='s';
-$stmt->bind_param($s,$buscar);
+$s='ss';
+$stmt->bind_param($s,$buscar,$buscar);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
@@ -2725,7 +2734,10 @@ $descripcion = utf8_encode($valor['descripcion']);
 $iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
 $comision = utf8_encode($valor['comision']);          
 $Cuota = utf8_encode($valor['Cuota']);          
+$precio_contado = utf8_encode($valor['precio_contado']);          
 
+// Usa temporalmente el precio al contado como base total
+$precio = $precio_contado;
 
 	  $pagina.="Cuota Nro: ".$Cuota." =<b>".number_format($precio,'0',',','.')."Gs</b><br>";
 
