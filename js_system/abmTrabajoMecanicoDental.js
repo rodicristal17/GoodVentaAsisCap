@@ -147,14 +147,14 @@ function abmTrabajoMecanicoDental(cod_tipo_trabajoFK,observacion,colorimetro,cos
                     document.getElementById('inptUsuarioInsertadoPor').value= document.getElementById('nombrePerfilUsuario').innerText;
 
                     //document.getElementById('').value = ;
-                    ver_vetana_informativa("Datos guardados exitosamente.");
+                    ver_vetana_informativa("Datos guardados.", "", "info");
                 } else if (datos["1"] === "UI") {
                     ver_vetana_informativa("Usuario o contraseña incorrectos.");
                 } else {
                     ver_vetana_informativa("Ha ocurrido un error: " + (datos["mensaje"] || ""));
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             } finally {
@@ -248,7 +248,7 @@ function buscarTrabajoMecanicosDentales() {
                     document.getElementById('inptRegistroNroTiposTrabajo').value= datos["3"];
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             }
@@ -372,7 +372,7 @@ function abmTipoTrabajo(descripcion, estado) {
                     ver_vetana_informativa("Ha ocurrido un error: " + (datos["mensaje"] || ""));
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             } finally {
@@ -416,7 +416,7 @@ function buscarTiposTrabajo() {
                     document.getElementById('ListTipoTrabajoMecanicoDental').innerHTML = datos["4"];
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             }

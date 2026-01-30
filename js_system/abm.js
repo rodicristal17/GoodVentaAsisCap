@@ -200,13 +200,13 @@ function abmlistado(cant, fecha, estado, cod_producto, cod_cobrador, cantvendido
 				else {
 
 
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 				}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -480,13 +480,13 @@ function cambiarcomisioncobrador() {
 				else {
 
 
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 				}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -786,14 +786,14 @@ function abmrefinaciartotalventa(cod_ventaFK,Total) {
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -922,14 +922,14 @@ function eliminarcreditorefinanciar() {
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -1143,14 +1143,14 @@ function abmcreditorefin(dias,cuotaNro,interes,Monto,descuento,fecha,idcredito,o
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -2310,13 +2310,13 @@ function quitarDevolucion(cod_productoFK, cod_detalle, cod_ventaFK, motivo, cant
 				else {
 
 
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 				}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -2769,13 +2769,13 @@ function quitardegarantia() {
 				else {
 
 
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 				}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -3010,13 +3010,13 @@ if(pendiente<0){
 				else {
 
 
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 				}
 try {
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -4875,17 +4875,6 @@ function imprimirDiv() {
 /*
 INFO
 */
-
-
-
-function ver_vetana_informativa(titulo) {
-
-	document.getElementById('lbltitulomensaje').innerHTML = titulo
-	document.getElementById('div_principal_info').style.display = ''
-    document.getElementById("btnocultarinfo").focus()
-}
-
-
 function ocultarmensaje() {
 
 	document.getElementById('lbltitulomensaje').innerHTML = ""

@@ -300,7 +300,7 @@ function abmInterConsulta(asunto, estado, tipo, local) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					ver_vetana_informativa("Datos guardados exitosamente.");
+					ver_vetana_informativa("Datos guardados.", "", "info");
 
                     // Busca el cod_interConsulta recien creado
                     document.getElementById('inptBuscarInterConsulta1').value= datos["2"];
@@ -373,7 +373,7 @@ function buscarMensajes() {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					ver_vetana_informativa("Datos guardados exitosamente.");
+					ver_vetana_informativa("Datos guardados.", "", "info");
 				} else {
 					// Si el servidor responde pero con un error de aplicación (ej: error en la BD)
 					const mensajeError = datos["mensaje"] || "El servidor no pudo procesar la solicitud.";
@@ -459,7 +459,7 @@ function abmMensaje(fecha, contenido) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					ver_vetana_informativa("Datos guardados exitosamente.");
+					ver_vetana_informativa("Datos guardados.", "", "info");
                     subirImagenMensajeInterconsulta(datos["2"]);
 				}
 			} catch (error) {

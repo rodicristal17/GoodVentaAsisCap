@@ -27958,26 +27958,35 @@ style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
 </center>
 </div>
 
-<div class="divInfoA" id="div_principal_info" style="display:none"
-onclick="ocultarmensaje()">
-<center>
-<div class="divInfoB">
-<table class="tableInfoA">
-<tbody>
-<tr>
-<td>
-<label id="lbltitulomensaje"
-class="label_info_a">INFORMACION</label>
-<br>
-<br>
-<input id="btnocultarinfo" type="button" value="CERRAR"
-onclick="ocultarmensaje()" class="inptInfoA" />
-</td>
-</tr>
-</tbody>
-</table>
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header" style="color: white;">
+      <strong class="me-auto" id="lbltitulomensaje" style="text-transform: capitalize;">Informacion</strong>
+      <button type="button" class="btn-close rounded" data-bs-dismiss="toast" aria-label="Close" style="color: red;"></button>
+    </div>
+    <div class="toast-body" id="lbltitulomensajedetalle" >
+      
+    </div>
+  </div>
 </div>
-</center>
+
+<div class="divInfoA" id="div_principal_info" style="display:none" onclick="ocultarmensaje()">
+  <center>
+    <div class="divInfoB">
+      <table class="tableInfoA">
+        <tbody>
+          <tr>
+            <td>
+              <label id="lbltitulomensaje" class="label_info_a">INFORMACION</label>
+              <br>
+              <br>
+              <input id="btnocultarinfo" type="button" value="CERRAR" onclick="ocultarmensaje()" class="inptInfoA" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </center>
 </div>
 
 <div id='capa_informativa' class='div_info_2_1' style='display:none'>

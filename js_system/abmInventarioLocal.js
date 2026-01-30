@@ -507,7 +507,7 @@ function subirImagenesInsumosLocal(cod_inventario) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					ver_vetana_informativa("Datos guardados exitosamente.");
+					ver_vetana_informativa("Datos guardados.", "", "info");
                     verCerrarAbmInventarioLocal(false, true);
                     obtenerVistaInformeInsumoLocal();
 				} else {

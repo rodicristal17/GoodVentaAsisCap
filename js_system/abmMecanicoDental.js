@@ -96,7 +96,7 @@ function abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,esta
             try {
                 var datos = $.parseJSON(Respuesta);
                 if (datos["1"] === "exito") {
-                    ver_vetana_informativa("Datos guardados exitosamente.");
+                    ver_vetana_informativa("Datos guardados.", "", "info");
                     limpiarFormularioMecanicoDental();
                     verCerrarVentanaMecanicoDental(false, true);
                     buscarMecanicosDentales(); // Recargar la lista
@@ -106,7 +106,7 @@ function abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,esta
                     ver_vetana_informativa("Ha ocurrido un error: " + (datos["mensaje"] || ""));
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             } finally {
@@ -146,7 +146,7 @@ function buscarOpcionesMecanicoDental() {
                     document.getElementById('inptMecanicoTrabajoMecanicoDental').innerHTML= "<option value=''>Seleccionar</option>" + datos["2"];
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             }
@@ -193,7 +193,7 @@ function buscarMecanicosDentales() {
                     document.getElementById('inptRegistroNroMecanicoDenta').value= datos["3"];
                 }
             } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
             }

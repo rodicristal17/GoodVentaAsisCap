@@ -281,14 +281,14 @@ verCerrarVentanaCargando("2")
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			 }catch(error){
 					
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 					
 				}
 		 
@@ -376,14 +376,14 @@ verCerrarVentanaCargando("2")
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			 }catch(error){
 					
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 					
 				}
 		 
@@ -1286,7 +1286,7 @@ function AbmCliente(referencia,ci_cliente,rut_cliente,nombre_persona,telefono,di
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 NuevoRegistroCliente();				
              
 		
@@ -1790,7 +1790,7 @@ function AbmPedidos(cod_clienteFK,cod_productoFK,costo,cantidad,idpedidos){
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			
              
 		
@@ -2545,7 +2545,7 @@ try{
 			{	
 
 ver_cerrar_abm_opciones_creditos("2"); 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			
              ver_cerrar_abm_opciones_creditos("2");
 			 	document.getElementById('inptTotalVentaCredito').value=datos["3"]
@@ -2705,7 +2705,7 @@ controlInsercionsPagosParciales=true;
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			ver_cerrar_vista_opciones_pago("2")
 			 	document.getElementById('inptTotalVentaCredito').value=datos["3"]
 	document.getElementById('inptTotalPagadoCredito').value=datos["2"];
@@ -3396,7 +3396,7 @@ function AbmDevoluciones(idAbmCliente,cod_detalleFK,Fecha,estado,Motivo,cod_vent
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			document.getElementById('inptProductoMotivoDevolucion').value="";
 			document.getElementById('inptFechaDevolucion').value="";
 			document.getElementById('inptProductoDevolucion').value="";
@@ -3924,14 +3924,14 @@ function abmlistado(acceso,cant,fecha,estado,cod_producto,cod_cobrador,cantvendi
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -4459,14 +4459,14 @@ function abmVentas(idclienteVenta,cod_cobrador,idvendedor1,idvendedor2,tipoventa
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -6368,14 +6368,14 @@ function  abmvisita(fecha,accion){
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					

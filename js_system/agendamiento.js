@@ -507,11 +507,11 @@ function AbmAgendamiento(MedicoFK,idPaciente,FechaRecepcion,FechaConsulta,obs,id
 
 				}
 				else {
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 

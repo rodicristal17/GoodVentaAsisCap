@@ -198,7 +198,7 @@ function aprobarMovimiento() {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   ver_vetana_informativa("Datos guardados exitosamente");
+				   ver_vetana_informativa("Datos guardados.", "", "info");
 				   verCerrarAutorizacionEgreso(false);
 				   buscarabmGasto();
 				}				
@@ -362,7 +362,7 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 						ImprimirTicketEgreso()
 					}
 					
-					ver_vetana_informativa("Datos guardados exitosamente.");
+					ver_vetana_informativa("Datos guardados.", "", "info");
 					limpiarcamposGasto()
 
 					idAbmGasto = "";
@@ -507,7 +507,7 @@ function subirImagenGasto(cod_abmGasto) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					ver_vetana_informativa("Datos guardados exitosamente.");
+					ver_vetana_informativa("Datos guardados.", "", "info");
 					limpiarcamposGasto()
 
 					idAbmGasto = "";
@@ -1084,7 +1084,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					limpiarcamposmotivoegresoingreso();
 					BuscarAbmMotivoEgresoIngreso();
-					ver_vetana_informativa("Datos guardados exitosamente", "#");
+					ver_vetana_informativa("Datos guardados.", "", "info");
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

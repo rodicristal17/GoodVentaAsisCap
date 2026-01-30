@@ -1280,7 +1280,7 @@ function AbmEditarMisDatos() {
 					}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -1980,11 +1980,31 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 /*
 INFO
 */
-function ver_vetana_informativa(titulo) {
+function ver_vetana_informativa(titulo, detalle= "", tipo="info") {
+	titulo= titulo.toLowerCase();
 
-	document.getElementById('lbltitulomensaje').innerHTML = titulo
-	document.getElementById('div_principal_info').style.display = ''
+	// Comprueba si es informacion ya predefinida
+	if ()
+	document.getElementById('lbltitulomensaje').innerHTML = titulo;
+	document.getElementById('lbltitulomensajedetalle').innerHTML = detalle;
+
+	switch (tipo) {
+		case 'error':
+			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= "rgb(245, 59, 59)";
+			break;
+		case 'info':
+			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= "#416c8f";
+			break;
+		default:
+			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= '#b1b1b1a1';
+			break;
+	}
+//	document.getElementById('div_principal_info').style.display = ''
     document.getElementById("btnocultarinfo").focus()
+
+	const toastLiveExample = document.getElementById('liveToast');
+	const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample);
+	toastBootstrap.show();
 }
 var idFkCobrador = ""
 var idFkVendedor = ""
@@ -4107,7 +4127,7 @@ function AbmCategoria(descripcion,Estado,idabm,accion) {
 				BuscarSelecCategoria()
 				}
 				else {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -12305,7 +12325,7 @@ function AbmCargarFotosCliente(accion,idAbmCliente){
 					buscarFotosCliente()
 				}
 				else {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -15243,13 +15263,13 @@ function eliminardetalleventa() {
 				else {
 
 
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 				}
 
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -25671,7 +25691,7 @@ function AbmListaNombreAccesos(nombre,idabm, accion) {
 					
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -25744,7 +25764,7 @@ function guardarordenlistadoacceso(datos) {
 					
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -25831,7 +25851,7 @@ function AbmListaFormularioAccesos(nombre,idabm, accion) {
 					
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -25911,7 +25931,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				   }
 				}
 			} catch (error) {
-ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -26035,7 +26055,7 @@ function AbmAddAccesos(formulario,orden,codigo,nombre,acceso, accion) {
 					
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -26225,7 +26245,7 @@ function AbmListaNiveles(nombre,estado, idabm, accion) {
 					BuscarNivelesSelect()
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -26319,7 +26339,7 @@ if(datos_buscados==""){
 				   }
 				}
 			} catch (error) {
-ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -26413,7 +26433,7 @@ if(datos_buscados==""){
 				   }
 				}
 			} catch (error) {
-ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -26560,7 +26580,7 @@ function BuscarNivelesSelect() {
 					
 				}
 			} catch (error) {
-ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -27751,7 +27771,7 @@ function addprecio() {
 				
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
@@ -33453,7 +33473,7 @@ function AbmGeoLocalizacion(fecha,descripcion,cod_persona){
 		
 		if (Respuesta=="exito")
 			{					 
-			ver_vetana_informativa("DATOS GUARDADOS...","alert")
+			ver_vetana_informativa("Datos guardados.", "", "info")
 			limpiarGeoLocalizacion()
 			buscarGeolocalizacion()
 			}
@@ -34320,7 +34340,7 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 					buscarFotosClientePrincipal(idAbmCliente,cod_ventaFKConsulta)
 				}
 				else {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -35050,7 +35070,7 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 				cerrarModalEditar()
 				}
 				else {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

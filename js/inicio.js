@@ -313,14 +313,14 @@ verCerrarVentanaCargando("2")
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			 }catch(error){
 					
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 					
 				}
 		 
@@ -408,14 +408,14 @@ verCerrarVentanaCargando("2")
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			 }catch(error){
 					
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 					
 				}
 		 
@@ -1441,7 +1441,7 @@ function AbmCargarFotosCliente(accion,idAbmCliente){
 					buscarFotosCliente()
 				}
 				else {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -2104,7 +2104,7 @@ function AbmCliente(lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,t
 		
 		if (Respuesta=="exito")
 			{					 
-			ver_vetana_informativa("DATOS GUARDADOS...","alert")
+			ver_vetana_informativa("Datos guardados.", "", "info")
 				idAbmCliente=datos["2"];
 				
 				var control=0;
@@ -2706,7 +2706,7 @@ function AbmPedidos(cod_clienteFK,cod_productoFK,costo,cantidad,idpedidos){
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			
              
 		
@@ -3471,7 +3471,7 @@ try{
 			{	
 
 ver_cerrar_abm_opciones_creditos("2"); 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			
              ver_cerrar_abm_opciones_creditos("2");
 			 	document.getElementById('inptTotalVentaCredito').value=datos["3"]
@@ -3638,7 +3638,7 @@ controlInsercionsPagosParciales=true;
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			ver_cerrar_vista_opciones_pago("2")
 			 	document.getElementById('inptTotalVentaCredito').value=datos["3"]
 	document.getElementById('inptTotalPagadoCredito').value=datos["2"];
@@ -4329,7 +4329,7 @@ function AbmDevoluciones(idAbmCliente,cod_detalleFK,Fecha,estado,Motivo,cod_vent
 		
 		if (Respuesta=="exito")
 			{					 
-				ver_vetana_informativa("DATOS GUARDADOS...","alert")
+				ver_vetana_informativa("Datos guardados.", "", "info")
 			document.getElementById('inptProductoMotivoDevolucion').value="";
 			document.getElementById('inptFechaDevolucion').value="";
 			document.getElementById('inptProductoDevolucion').value="";
@@ -4857,14 +4857,14 @@ function abmlistado(acceso,cant,fecha,estado,cod_producto,cod_cobrador,cantvendi
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -5392,14 +5392,14 @@ function abmVentas(idclienteVenta,cod_cobrador,idvendedor1,idvendedor2,tipoventa
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -7444,14 +7444,14 @@ function  abmvisita(fecha,accion){
 			{
 			
 	
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 				}
 		 
 					
@@ -7816,12 +7816,12 @@ function EliminarMasReferencia() {
 				LimpiarMasReferencia()
 
 				}else {
-					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+					ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 
 				}
 try {
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR")
+				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
 			}
 
 
@@ -8051,7 +8051,7 @@ function AbmCliente2(lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,
 		
 		if (Respuesta=="exito")
 			{					 
-			ver_vetana_informativa("DATOS GUARDADOS...","alert")
+			ver_vetana_informativa("Datos guardados.", "", "info")
 				idAbmCliente=datos["2"];
 			 // abmmasreferenciascliente(datos["2"])
              // NuevoRegistroCliente();				
@@ -8167,7 +8167,7 @@ function AbmImpago(fecha,motivo,cod_cobrador,cod_cliente){
 		
 		if (Respuesta=="exito")
 			{					 
-			ver_vetana_informativa("DATOS GUARDADOS...","alert")
+			ver_vetana_informativa("Datos guardados.", "", "info")
 			document.getElementById('inptMotivoImpagoCliente').value=""
 				ver_cerrar_clientesImpagoCliente("2")
 
@@ -8398,7 +8398,7 @@ function AbmClienteCI(){
 		if (Respuesta=="exito")
 			{					 
 		
-			ver_vetana_informativa("DATOS GUARDADOS...","alert")	
+			ver_vetana_informativa("Datos guardados.", "", "info")	
              obtenerDatosClientes()
 				ver_cerrar_clientesFotoCi("2")
 
