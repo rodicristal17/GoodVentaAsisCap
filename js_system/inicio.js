@@ -2003,11 +2003,10 @@ function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= "#ff9f00";
 			break;
 		default:
-			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= '#b1b1b1a1';
+			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= '#646363';
 			break;
 	}
 //	document.getElementById('div_principal_info').style.display = ''
-    document.getElementById("btnocultarinfo").focus()
 
 	const toastLiveExample = document.getElementById('liveToast');
 	const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample);
