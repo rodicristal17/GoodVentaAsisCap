@@ -1,3 +1,4 @@
+-- Active: 1729509467780@@127.0.0.1@3306@syscvxco_ac
 ALTER TABLE arqueocaja ADD COLUMN cant500 INT, 
     ADD COLUMN cant1000 INT, 
     ADD COLUMN cant2000 INT, 
@@ -110,7 +111,6 @@ CREATE TABLE interconsulta (
     fecha_edit DATETIME,
     cod_ventaFK INT,
     cod_usuarioFK_create INT,
-    Foreign Key (cod_ventaFK) REFERENCES venta(cod_venta),
     Foreign Key (cod_usuarioFK_create) REFERENCES usuario(cod_usuario)
 );
 
@@ -141,18 +141,6 @@ UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.57', detalles='Modifica
 
 
 -- Eliminar motivos duplicados
-UPDATE gastos SET cod_motivoIngresoEgresoFK= 17 WHERE cod_motivoIngresoEgresoFK = 13;
-UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 13;
-UPDATE gastos SET cod_motivoIngresoEgresoFK= 10 WHERE cod_motivoIngresoEgresoFK = 22;
-UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 22;
-UPDATE gastos SET cod_motivoIngresoEgresoFK= 29 WHERE cod_motivoIngresoEgresoFK = 30;
-UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 30;
-UPDATE gastos SET cod_motivoIngresoEgresoFK= 54 WHERE cod_motivoIngresoEgresoFK = 61;
-UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 61;
-UPDATE gastos SET cod_motivoIngresoEgresoFK= 26 WHERE cod_motivoIngresoEgresoFK = 69;
-UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 69;
-UPDATE gastos SET cod_motivoIngresoEgresoFK= 34 WHERE cod_motivoIngresoEgresoFK = 84;
-UPDATE motivos_ingreso_egreso SET estado= '' WHERE cod_motivo_ingreso_egreso = 84;
 UPDATE motivos_ingreso_egreso SET estado= 'inactivo' WHERE estado= '';
 
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN categoria ENUM('directo', 'ingreso', 'operativo');
@@ -194,6 +182,55 @@ ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN cod_usuarioFK INT(11);
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN fecha_edit DATETIME;
 
+-- Evento para generar mensaje cerca de fecha de pago
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS generar_mensajes_gastos_fijos;
+
+DELIMITER $$
+CREATE EVENT IF NOT EXISTS generar_mensajes_gastos_fijos
+ON SCHEDULE EVERY 1 DAY
+STARTS TIMESTAMP(CURDATE() + INTERVAL 1 DAY)
+DO
+BEGIN
+    DECLARE last_msg_id INT;
+    DECLARE last_interconsulta INT;
+
+    -- 1. Insertar el nuevo mensaje
+    INSERT INTO mensaje (contenido, url, estado, cod_interConsultaFK, cod_usuarioFK)
+    SELECT 
+        CONCAT('Recordatorio: La cuenta de "', descripcion, '" vence mañana (día ', dia, ')'),
+        NULL,
+        'activo',
+        cod_interConsultaFK,
+        2
+    FROM gastos_fijos
+    WHERE dia = DAY(CURDATE()) + 1
+      AND estado = 'activo';
+
+    -- 2. Obtener el último mensaje insertado
+    SET last_msg_id = LAST_INSERT_ID();
+
+    -- 3. Obtener la interconsulta asociada a ese mensaje
+    SELECT cod_interConsultaFK INTO last_interconsulta
+    FROM mensaje
+    WHERE cod_mensaje = last_msg_id;
+
+    -- 4. Insertar menciones copiando las del último mensaje de esa interconsulta
+    INSERT INTO menciones (cod_usuarioFK, cod_mensajeFK, isLeido, estado)
+    SELECT 
+        m.cod_usuarioFK,
+        last_msg_id,
+        0,
+        'activo'
+    FROM menciones m
+    INNER JOIN mensaje msg ON msg.cod_mensaje = m.cod_mensajeFK
+    WHERE msg.cod_interConsultaFK = last_interconsulta
+    ORDER BY msg.fecha_creacion DESC;
+END$$
+
+DELIMITER ;
+
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
 -- VERLISTADOTIPOTRABAJOMECANICODENTAL, VERLISTADOMECANICODENTAL, VERLISTADOASISTENCIA
@@ -202,3 +239,4 @@ ALTER TABLE motivos_ingreso_egreso ADD COLUMN fecha_edit DATETIME;
 -- ELIMINARDETALLEVENTA
 -- AUTORIZAREGRESOINGRESO
 -- COMBINARMOTIVOSEGRESOINGRESO
+-- ABMGASTOSFIJOS
