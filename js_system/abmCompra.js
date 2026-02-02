@@ -65,15 +65,15 @@ function verificarcamposCompra() {
 	var inptPagadocompra2 = document.getElementById('inptPagadocompra2').value
 	var inptDescuentocompra = document.getElementById('inptDescuentocompra').value
 	if (inptNrocompra == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COMPRA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COMPRA")
 		return false;
 	}
 	if (inptProveedorCompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL PROVEEDOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL PROVEEDOR")
 		return false;
 	}
 	if (inptFechaCompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE COMPRA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE COMPRA")
 		return false;
 	}
 	var accion = "";
@@ -168,7 +168,7 @@ function verificarcamposDetallesCompra() {
 	var inptCantProductoCompra = document.getElementById('inptCantProductoCompra').value
 	var inptCostoProductoCompra = document.getElementById('inptCostoProductoCompra').value
 	if (idFkProductocompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}	
 	var inptprecioListaProductoCompra = document.getElementById('inptprecioListaProductoCompra').value
@@ -194,25 +194,25 @@ function verificarcamposDetallesCompra() {
 	}
 	
 	if (inptCantProductoCompra == "" || inptCantProductoCompra == "0") {
-		ver_vetana_informativa("FALTO INGRESAR LA CANTIDAD", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA CANTIDAD")
 		return false;
 	}
 	
 	if (inptprecioListaProductoCompra == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL PRECIO DE LISTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL PRECIO DE LISTA")
 		return false;
 	}
 	
 	if (inptNrocompra == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COMPRA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COMPRA")
 		return false;
 	}
 	if (inptProveedorCompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL PROVEEDOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL PROVEEDOR")
 		return false;
 	}
 	if (inptFechaCompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE COMPRA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE COMPRA")
 		return false;
 	}
     document.getElementById('inptlocalCompra').disabled=true
@@ -549,7 +549,7 @@ function verificarpagoscompras() {
 	var inptFechadelPagoCompra = document.getElementById('inptFechadelPagoCompra').value
 	var inptNroChequePagoCompra = document.getElementById('inptNroChequePagoCompra').value
    if(inptMontoPagoCompra==""){
-	   ver_vetana_informativa("FALTO INGRESAR UN MONTO", "#")
+	   ver_vetana_informativa("FALTO INGRESAR UN MONTO")
 		return false;
    }
    
@@ -559,15 +559,15 @@ function verificarpagoscompras() {
 	    var inptTipoPagoCompra="Cheque";
    }
    if(inptTipoPagoCompra==""){
-	   ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE PAGO", "#")
+	   ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE PAGO")
 		return false;
    }
    if(inptFechadelPagoCompra==""){
-	   ver_vetana_informativa("FALTO SELECCIONAR LA FECHA A PAGO", "#")
+	   ver_vetana_informativa("FALTO SELECCIONAR LA FECHA A PAGO")
 		return false;
    }
    if(inptFechadelPagoCompra==""){
-	   ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE PAGO", "#")
+	   ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE PAGO")
 		return false;
    }
 	var accion = "";
@@ -788,7 +788,7 @@ function obtenerdatosabmdetallecompra(datostr) {
 }
 function eliminarDetalleCompra() {
 	if (idDetalleCompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 		if(controlacceso("EDITARCARGADECOMPRAS","accion")==false){return;}
@@ -1026,11 +1026,11 @@ function buscarproductoscomprados() {
 	var producto = document.getElementById('inptBuscarProductosComprados2').value
 	if(document.getElementById('checkHistorialProductoComprados2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	}else{
@@ -1138,11 +1138,11 @@ function buscarmasproductoscomprados(c) {
 	var producto = document.getElementById('inptBuscarProductosComprados2').value
 	if(document.getElementById('checkHistorialProductoComprados2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	}else{

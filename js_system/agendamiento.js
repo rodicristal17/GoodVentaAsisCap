@@ -698,11 +698,11 @@ function buscarhistorialAgendamiento() {
 	
 	if(document.getElementById('inptCheckHistorialAgendamiento1').checked==true){
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}
@@ -826,11 +826,11 @@ function buscarMashistorialAgendamiento() {
 	
 	if(document.getElementById('inptCheckHistorialAgendamiento1').checked==true){
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}

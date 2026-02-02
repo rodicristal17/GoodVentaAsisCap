@@ -143,7 +143,7 @@ function obtenerdatosvistaproductosgarantia(datostr) {
 function verCerrarHistorialProductoEnGarantia(d){
 	if(d=="1"){
 		if(idGarantiaModificar==""){
-			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 			return
 		}
 		
@@ -180,11 +180,11 @@ function modificarRegistroGarantia() {
 		fecha=document.getElementById("inptFechaEntregaGarantiaHistorial").value
 	}	 
 	if (idGarantiaModificar == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	if (inptFechaEntregaGarantiaHistorial == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN FECHA ", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN FECHA ")
 		return false;
 	}
 	verCerrarEfectoCargando("1")

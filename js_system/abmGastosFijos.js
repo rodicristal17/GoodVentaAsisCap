@@ -120,17 +120,17 @@ function verificarCamposGastosFijos() {
 	const costo= document.getElementById("inptAbmCostoGastoFijo").value.replace('.', '');
 
     if (!descripcion) {
-        ver_vetana_informativa("FALTO AGREGAR LA DESCRIPCION", "#");
+        ver_vetana_informativa("FALTO AGREGAR LA DESCRIPCION");
         return false;
     }
 
     if (!dia) {
-        ver_vetana_informativa("FALTO INDICAR EL DIA", "#");
+        ver_vetana_informativa("FALTO INDICAR EL DIA");
         return false;
     }
 
 	if (!cod_localFK) {
-		ver_vetana_informativa("FALTO SELECCIONAR EL LOCAL", "#");
+		ver_vetana_informativa("FALTO SELECCIONAR EL LOCAL");
 		return false;
 	}
 

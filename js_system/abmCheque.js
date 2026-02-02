@@ -57,7 +57,7 @@ document.getElementById("tdEfectoAbmCheque").className="magictime slideDown"
 
 function verVentanaEditarCheque() {
 	if (idAbmCheque == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	// if(controlacceso("EDITARLISTADODECAJA","accion")==false){return;}
@@ -97,38 +97,38 @@ function verificarcamposCheque() {
 	var inptPagadoCheque = document.getElementById('inptPagadoCheque').value
 	
 	if (inptFechEmiCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE EMISION", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE EMISION")
 		return false;
 	}
 	
 	if (inptFechaVenCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE VENCIMIENTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE VENCIMIENTO")
 		return false;
 	}
 	
 	if (inptNroCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NUMERO DE CHEQUE", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NUMERO DE CHEQUE")
 		return false;
 	}
 	
 	if (inptOrdenCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE ", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE ")
 		return false;
 	}
 	if (inptConceptoCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL CONCEPTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL CONCEPTO")
 		return false;
 	}
 	if (inptImporteCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL IMPORTE", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL IMPORTE")
 		return false;
 	}
 	if (inptNombreBancoCheque == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL BANCO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL BANCO")
 		return false;
 	}
 	if (inptEstadoCheque == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO")
 		return false;
 	}
 	

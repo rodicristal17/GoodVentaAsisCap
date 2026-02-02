@@ -15,7 +15,7 @@ function verCerrarVentanaAbmListado(d, l) {
 }
 function verVentanaEditarListado() {
 	if (idAbmListado == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmListado("1", "2")
@@ -59,19 +59,19 @@ function verificarcamposListado() {
 
 
 	if (inptSeleccEncargadoProductoListado == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN ENCARGADO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN ENCARGADO")
 		return false;
 	}
 	if (inptSeleccProductoListado == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}
 	if (inptCantProductoListado == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CANTIDAD", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA CANTIDAD")
 		return false;
 	}
 	if (inptFechaProductoListado == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA")
 		return false;
 	}
 
@@ -367,14 +367,14 @@ function vercerrarcambiarporcomision(d) {
 function cambiarcomisioncobrador() {
 	if (idPagoComision == "") {
 
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return
 
 	}
 	var comision = document.getElementById('inptComisionCobradorupdate').value
 	if (comision == "") {
 
-		ver_vetana_informativa("FALTO INGRESAR LA COMISION", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA COMISION")
 		return
 
 	}
@@ -2116,7 +2116,7 @@ document.getElementById("DivImprimir").innerHTML=ficha;
 function verCerrarquitardevolucion(d) {
 	if (d == "1") {
 		if (elementoDevolucion == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 			return false;
 
 		}
@@ -2147,7 +2147,7 @@ function verCerrarquitardevolucion(d) {
 function verCerrarquitardevolucionx(d) {
 	if (d == "1") {
 		if (elementoventa == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 			return false;
 
 		}
@@ -2188,17 +2188,17 @@ function verificarquitardevolucion() {
 
 
 	if (codDetalleCambiio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO 1", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO 1")
 		return false;
 	}
 
 	if (CodProductocompraCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO 2", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO 2")
 		return false;
 	}
 
 	if (codVentaCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO 3", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO 3")
 		return false;
 	}
 
@@ -2855,32 +2855,32 @@ function verificarcreditos() {
 
 
 	if (inptTotalPagadoOpcionesPago > 0) {
-		ver_vetana_informativa("NO SE PUEDE MODIFCAR LAS CUOTAS POR QUE ESTE YA CUENTA CON UN PAGO", "#")
+		ver_vetana_informativa("NO SE PUEDE MODIFCAR LAS CUOTAS POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}
 	if (inptNroCuotasPagos == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA")
 		return false;
 	}
 
 	if (inptMontoPagoOpciones == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO DE PAGO")
 		return false;
 	}
 	if (inptFechaInicioPapo == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO DE PAGO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO DE PAGO")
 		return false;
 	}
 	if (inputSelectMetodo == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL METODO DE PAGO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL METODO DE PAGO")
 		return false;
 	}
 	if (inptInteresPagoOpciones == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL INTERES DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL INTERES DE PAGO")
 		return false;
 	}
 	if (inptDiasGraciaPapo == "") {
-		ver_vetana_informativa("FALTO INGRESAR LOS DIAS DE GRACIA", "#")
+		ver_vetana_informativa("FALTO INGRESAR LOS DIAS DE GRACIA")
 		return false;
 	}
 
@@ -3823,7 +3823,7 @@ if (ventana == "gastos") {
 +"</table><br><br><center><h1 class='pTituloD' >GASTOS REALIZADOS</h1><br></center>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloImpreGastos").innerHTML
-document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_gasto").innerHTML
+document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_gasto_imprimir").innerHTML
 }
 if (ventana == "productovendidos") {
 	

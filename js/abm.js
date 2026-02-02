@@ -3545,7 +3545,7 @@ if (ventana == "gastos") {
 +"</table><br><br><center><h1 class='pTituloD' >GASTOS REALIZADOS</h1><br></center>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloImpreGastos").innerHTML
-document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_gasto").innerHTML
+document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_gasto_imprimir").innerHTML
 }
 if (ventana == "productovendidos") {
 	

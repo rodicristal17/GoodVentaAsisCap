@@ -52,7 +52,7 @@ document.getElementById("tdEfectoAbmTipoPago").className="magictime slideDown"
 
 function verVentanaEditarAgenda() {
 	if (idAbmAgenda == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	// if(controlacceso("EDITARLISTADODECAJA","accion")==false){return;}
@@ -82,12 +82,12 @@ function verificarcamposAgenda() {
 	var inptEstadoAgenda = document.getElementById('inptEstadoAgenda').value
 	
 	if (inptMotivoAgenda == "") {
-		ver_vetana_informativa("FALTO INGRESAR UN MOTIVO", "#")
+		ver_vetana_informativa("FALTO INGRESAR UN MOTIVO")
 		return false;
 	}
 	
 	if (cod_clienteAgenda == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR CLIENTE", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR CLIENTE")
 		return false;
 	}
 	
@@ -209,11 +209,11 @@ function buscarabmAgenda() {
 
 	if(document.getElementById('checkHistorialFechaAgenda2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{

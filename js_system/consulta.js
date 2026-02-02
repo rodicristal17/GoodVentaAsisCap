@@ -36,7 +36,7 @@ function verCerrarVentanaDetallePreConsulta(d) {
 		// if(controlacceso("INSERTARLISTADOCOBRADORES","accion")==false){return;}
 		
 		if(cod_preConsultaFK ==""){
-			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 			return false;
 		}
 		limpiarcamposDetallePreConsulta()
@@ -67,7 +67,7 @@ function verCerrarVentanaAbmPreConsulta(d, l) {
 function verVentanaEditarPreConsulta() {
 	// if(controlacceso("EDITARLISTADOCOBRADORES","accion")==false){return;}
 	if (cod_preConsultaFK == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmPreConsulta("1", "2")
@@ -118,7 +118,7 @@ function verificarcamposPreConsulta() {
 });
 	}
 	if (inptFechaPreConsulta == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 		return false;
 	}
 
@@ -337,17 +337,17 @@ function verificarcamposDetallePreConsulta() {
 	var inptRespuestaSignosVitales = document.getElementById('inptRespuestaSignosVitales').value
 	
 	if (inptDescripcionSignosVitales == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN SIGNO VITAL", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN SIGNO VITAL")
 		return false;
 	}
 	
 	if (inptRespuestaSignosVitales == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL PARAMETRO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL PARAMETRO")
 		return false;
 	}
 	
 	if (cod_preConsultaFK == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO3", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO3")
 		return false;
 	}
 	
@@ -366,7 +366,7 @@ function verificarcamposDetallePreConsulta() {
 
 function verificarcamposEliminarDetallePreConsulta() {
 	if (idAbmDetallePreConsulta == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 		// if(controlacceso("EDITARLISTADOCOBRADORES","accion")==false){return;}
 	}
@@ -557,12 +557,12 @@ function GuardarRegistroDetallePreCOnsulta(datos) {
 	
 	
 	if (respuesta == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL PARAMETRO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL PARAMETRO")
 		return false;
 	}
 	
 	if (cod_preConsultaFK == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	
@@ -684,11 +684,11 @@ function buscarhistorialConsulta() {
 	
 	if(document.getElementById('inptCheckHistorialConsulta1').checked==true){
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}
@@ -789,11 +789,11 @@ function buscarMashistorialConsulta() {
 	
 	if(document.getElementById('inptCheckHistorialConsulta1').checked==true){
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}
@@ -1406,7 +1406,7 @@ paginaPie =
 +"</table>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloImpreGIAdmin1").innerHTML
-document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_gasto_ingresoAdmin").innerHTML
+document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_gasto_imprimir_ingresoAdmin").innerHTML
 document.getElementById("divPieImpresiones").innerHTML=paginaPie
 }
 

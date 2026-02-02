@@ -1027,7 +1027,7 @@ function verCerrarVentanaAbmUsuarios(d, l) {
 }
 function verVentanaEditarUsuario() {
 	if (idAbmUsuario == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
@@ -1078,23 +1078,23 @@ function verificarcamposusuario() {
 	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
 	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
 	if (inptNombreApellidoUsuario == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO")
 		return false;
 	}
 	if (inptNroDocUsuario == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE DOCUMENTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE DOCUMENTO")
 		return false;
 	}
 	if (inptTipoUsuUser == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE USUARIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE USUARIO")
 		return false;
 	}
 	if (inptClaveAcceso == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CLAVE DE ACCESO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA CLAVE DE ACCESO")
 		return false;
 	}
 	if (inptContrasenhaUser == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA")
 		return false;
 	}
 	var accion = "";
@@ -1620,7 +1620,7 @@ $("div[id=divAbmbajaproducto2]").fadeOut(500);
 		
 		document.getElementById('inptNombreProductobaja').value =nombreProducto;
 		}else{
-			ver_vetana_informativa("DEBES SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("DEBES SELECCIONAR UN REGISTRO")
 		}
 	}
 }
@@ -1630,17 +1630,17 @@ function verificarcamposProductobaja() {
 	var inptNombreProductobaja = document.getElementById('inptNombreProductobaja').value
 
 	if (inptNombreProductobaja == "") {
-		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO")
 		return false;
 	}
 
 	if (inptcantidadProductobaja == "") {
-		ver_vetana_informativa("FALTO INGRESAR UNA CANTIDAD", "#")
+		ver_vetana_informativa("FALTO INGRESAR UNA CANTIDAD")
 		return false;
 	}
 
 	if (inptMotivoProductobaja == "") {
-		ver_vetana_informativa("FALTO INGRESAR UN MOTIVO", "#")
+		ver_vetana_informativa("FALTO INGRESAR UN MOTIVO")
 		return false;
 	}
 
@@ -1651,7 +1651,7 @@ function verificarcamposProductobaja() {
 		abmProductobaja(inptcantidadProductobaja, inptMotivoProductobaja , idAbmProducto, accion);
 		
 	} else {
-		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO")
 		
 	}
 	
@@ -1983,8 +1983,11 @@ INFO
 function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 	titulo= titulo.toLowerCase();
 
-	// Comprueba si es informacion ya predefinida
-	if (!detalle && tipo == "info") {
+	// Comprueba si es informacion ya predefinida o con error
+	if (titulo.includes('error') && !tipo) {
+		tipo= "error";
+	}
+	if (!detalle && !tipo) {
 		detalle= titulo.toString();
 		titulo= "Atencion";
 		tipo= "advertencia";
@@ -2156,11 +2159,11 @@ function verificarcamposProveedorVista() {
 	var inptCorreoProveedor = document.getElementById('inptCorreoProveedorVista').value
 	var inptEstadoProveedor = "Activo"
 	if (inptNombreApellidoProveedor == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PROVEEDOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PROVEEDOR")
 		return false;
 	}
 	if (inptNroDocProveedor == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE R.U.C", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE R.U.C")
 		return false;
 	}
 	var accion = "nuevo";
@@ -2183,7 +2186,7 @@ function verCerrarVentanaAbmProveedor(d, l) {
 function verVentanaEditarProveedor() {
 	if(controlacceso("EDITARLISTADOPROVEEDORES","accion")==false){return;}
 	if (idAbmProveedor == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmProveedor("1", "2")
@@ -2218,11 +2221,11 @@ function verificarcamposProveedor() {
 	var inptCorreoProveedor = document.getElementById('inptCorreoProveedor').value
 	var inptEstadoProveedor = document.getElementById('inptEstadoProveedor').value
 	if (inptNombreApellidoProveedor == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PROVEEDOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PROVEEDOR")
 		return false;
 	}
 	if (inptNroDocProveedor == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE R.U.C", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE R.U.C")
 		return false;
 	}
 	var accion = "";
@@ -2572,7 +2575,7 @@ function verCerrarVentanaAbmProducto(d, l) {
 function verVentanaEditarProducto() {
 	if(controlacceso("EDITARLISTADOPRODUCTOS","accion")==false){return;}
 	if (idAbmProducto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmProducto("1", "2")
@@ -2732,23 +2735,23 @@ function verificarcamposProducto() {
 		return false;
 	}	
 	if (inptNombreProducto == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PRODUCTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PRODUCTO")
 		return false;
 	}
 	if (idFkProductoCategoria == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA CATEGORIA DEL PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA CATEGORIA DEL PRODUCTO")
 		return false;
 	}
 	if (idFkProductoMarca == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA MARCAR DEL PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA MARCAR DEL PRODUCTO")
 		return false;
 	}
 	if (idFkProductoTipoImpuesto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DEL PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DEL PRODUCTO")
 		return false;
 	}
 	if (inptEstadoProducto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO")
 		return false;
 	}
 	var accion = "";
@@ -6085,23 +6088,23 @@ function verificarcamposdetallesprecio() {
 	var inptDetalleCuotaPrecio = document.getElementById('inptDetalleCuotaPrecio').value
 	var inptNroCuotaDetallesPrecio = document.getElementById('inptNroCuotaDetallesPrecio').value
 	if (idAbmProducto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO O GUARDAR EL PRODUCTO QUE QUIERES AÑADIR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO O GUARDAR EL PRODUCTO QUE QUIERES AÑADIR")
 		return false;
 	}
 	if (inptNroCuotaDetallesPrecio == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COUTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COUTA")
 		return false;
 	}
 	if (inptDetallePrecio == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL PRECIO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL PRECIO")
 		return false;
 	}
 	if (inptDetalleDescrip == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA DESCRIPCION", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA DESCRIPCION")
 		return false;
 	}
 	if (inptComisionDetallesPrecio == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN")
 		return false;
 	}
 	var accion = "";
@@ -6119,7 +6122,7 @@ function eliminardetallesprecio() {
 	var inptDetalleDescrip = "XX"
 	var inptComisionDetallesPrecio = "XX"
 	if (idAbmDetallePrecio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR REGISTRO")
 		return false;
 	}
 	var accion = "eliminar";
@@ -6582,23 +6585,23 @@ function verificarcamposdetallesprecioCompra() {
 	var inptDetalleCuotaPrecio = document.getElementById('inptDetalleCuotaPrecioCompra').value
 	var inptNroCuotaDetallesPrecio = document.getElementById('inptNroCuotaDetallesPrecioCompra').value
 	if (idFkProductocompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO O GUARDAR EL PRODUCTO QUE QUIERES AÑADIR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO O GUARDAR EL PRODUCTO QUE QUIERES AÑADIR")
 		return false;
 	}
 	if (inptNroCuotaDetallesPrecio == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COUTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE COUTA")
 		return false;
 	}
 	if (inptDetallePrecio == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL PRECIO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL PRECIO")
 		return false;
 	}
 	if (inptDetalleDescrip == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA DESCRIPCION", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA DESCRIPCION")
 		return false;
 	}
 	if (inptComisionDetallesPrecio == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN")
 		return false;
 	}
 	var accion = "";
@@ -6616,7 +6619,7 @@ function eliminardetallesprecioCompra() {
 	var inptDetalleDescrip = "XX"
 	var inptComisionDetallesPrecio = "XX"
 	if (idAbmDetallePrecioCompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR REGISTRO")
 		return false;
 	}
 	var accion = "eliminar";
@@ -7018,19 +7021,19 @@ function verificarcamposCobradorvista() {
 	var inptZonaCobrador = document.getElementById('inptZonaCobradorVista').value
 	var inptEstadoCobrador = "Activo"
 	if (inptNombreApellidoCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE COBRADOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE COBRADOR")
 		return false;
 	}
 	if (inptUsuarioCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL USUARIO DE ACCESO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL USUARIO DE ACCESO")
 		return false;
 	}
 	if (inptPassCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA DEL COBRADOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA DEL COBRADOR")
 		return false;
 	}
 	if (idFKZona == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA")
 		return false;
 	}
 	var accion = "nuevo";
@@ -7053,7 +7056,7 @@ function verCerrarVentanaAbmCobrador(d, l) {
 function verVentanaEditarCobrador() {
 	if(controlacceso("EDITARLISTADOCOBRADORES","accion")==false){return;}
 	if (idAbmCobrador == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmCobrador("1", "2")
@@ -7145,19 +7148,19 @@ function verificarcamposCobrador() {
 	inptSeleccAccesoRealizarCobranzas="si"
 	}
 	if (inptNombreApellidoCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE COBRADOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE COBRADOR")
 		return false;
 	}
 	if (inptUsuarioCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL USUARIO DE ACCESO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL USUARIO DE ACCESO")
 		return false;
 	}
 	if (inptPassCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA DEL COBRADOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA DEL COBRADOR")
 		return false;
 	}
 	if (idFKZona == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA")
 		return false;
 	}
 	var accion = "";
@@ -7515,7 +7518,7 @@ function verificarcamposVendedorVista() {
 
 
 	if (inptNombreApellidoVendedor == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL VENDEDOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL VENDEDOR")
 		return false;
 	}
 
@@ -7551,7 +7554,7 @@ function verCerrarVentanaAbmVendedor(d, l) {
 function verVentanaEditarVendedor() {
 	if(controlacceso("EDITARLISTADOVENDEDORES","accion")==false){return;}	
 	if (idAbmVendedor == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmVendedor("1", "2")
@@ -7587,17 +7590,17 @@ function verificarcamposVendedor() {
 
 
 	if (inptNombreApellidoVendedor == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL VENDEDOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL VENDEDOR")
 		return false;
 	}
 
 if (inptAbmLocalVendedor == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL LOCAL", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL LOCAL")
 		return false;
 	}
 
 if (inptEstadoVendedor == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO")
 		return false;
 	}
 
@@ -8065,7 +8068,7 @@ function verCerrarVentanaAbmZona(d, l) {
 function verVentanaEditarZona() {
 	if(controlacceso("EDITARLISTADODEZONAS","accion")==false){return;}
 	if (idAbmZona == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmZona("1", "2")
@@ -8095,11 +8098,11 @@ function verificarcamposZona() {
 	var inptEstadoZona = document.getElementById('inptEstadoZona').value
 	var inptEncargadoZona = document.getElementById('inptEncargadoZona').value
 	if (inptEncargadoZona == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL ENCARGADO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL ENCARGADO")
 		return false;
 	}
 	if (inptNombreZona == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA ZONA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA ZONA")
 		return false;
 	}
 	var accion = "";
@@ -8117,11 +8120,11 @@ function verificarcamposZonaVista() {
 	var inptEncargadoZona= document.getElementById('inptEncargadoZonaVista').value
 	var inptEstadoZona = "Activo"
 	if (inptEncargadoZona == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL ENCARGADO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL ENCARGADO")
 		return false;
 	}
 	if (inptNombreZona == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA ZONA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA ZONA")
 		return false;
 	}
 	var accion = "nuevo";
@@ -8551,7 +8554,7 @@ function verCerrarVentanaAbmCaja(d, l) {
 }
 function verVentanaEditarCaja() {
 	if (idAbmCaja == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	if(controlacceso("EDITARLISTADODECAJA","accion")==false){return;}
@@ -8584,7 +8587,7 @@ function verificarcamposCaja() {
 	var inptlocalCaja = document.getElementById('inptlocalCaja').value
 	var inptEstadoCaja = document.getElementById('inptEstadoCaja').value
 	if (inptNombreCaja == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA CAJA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA CAJA")
 		return false;
 	}
 
@@ -9314,11 +9317,11 @@ function verificarcamposaperturacierredecaja() {
 	var inptMontoCierreCierreCaja = document.getElementById('inptMontoCierreCierreCaja').value;
 	var inptEstadoAperturaCierreCaja = document.getElementById('inptEstadoAperturaCierreCaja').value
 	if (inptlocalAperturaCierre == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN LOCAL", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN LOCAL")
 		return false;
 	}
 	if (codCajeroapertura == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR")
 		return false;
 	}
 
@@ -9333,18 +9336,18 @@ function verificarcamposaperturacierredecaja() {
 
 		if(inptFechaCierreAperturaCierreCaja==""){
 			
-			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA", "#")
+			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA")
 		return false;
 		}
 	} else {
 		accion = "nuevo";
 		if(inptMontoAperturaCierreCaja==""){
-			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA", "#")
+			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA")
 		return false;
 		}
 		
 		if(inptFechaAperturaCierreCaja==""){
-			ver_vetana_informativa("FALTO SELECCIONAR LA APERTURA", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA APERTURA")
 		return false;
 		}
 	}
@@ -10181,7 +10184,7 @@ function verCerrarVentanaAbmCasa(d, l) {
 function verVentanaEditarCasa() {
 	if(controlacceso("EDITARLISTADODELOCALES","accion")==false){return;}
 	if (idAbmCasa == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmCasa("1", "2")
@@ -10203,7 +10206,7 @@ function verificarcamposCasa() {
 	var inptNombreCasa = document.getElementById('inptNombreCasa').value
 	var inptEstadoCasa = document.getElementById('inptEstadoCasa').value
 	if (inptNombreCasa == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL LOCAL", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL LOCAL")
 		return false;
 	}
 	var accion = "";
@@ -10785,15 +10788,15 @@ function verificarcamposClienteVista() {
 	var inptAccesoCreditoCliente = document.getElementById('inptAccesoCreditoCliente').value
 	var inptEstadoCliente = "Activo"
 	if (inptNombreApellidoCliente == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL CLIENTE", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL CLIENTE")
 		return false;
 	}
 	if (inptNroDocCliente == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE DOCUMENTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE DOCUMENTO")
 		return false;
 	}
 	if (idFKZona == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA")
 		return false;
 	}
 	var accion = "nuevo";
@@ -10816,7 +10819,7 @@ function verCerrarVentanaAbmCliente(d, l) {
 function verVentanaEditarCliente() {
 	if(controlacceso("EDITARLISTADODECLIENTES","accion")==false){return;}
 	if (idAbmCliente == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmCliente("1", "2")
@@ -11824,7 +11827,7 @@ function obtenerdatosvistacliente(datostr) {
 }
 function EnviarClienteDesde() {
 	if(elementoCliente==""){
-	ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+	ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 	return;
 	}
 	var datostr=elementoCliente
@@ -12354,7 +12357,7 @@ function VerCargarFotosCliente(d){
 	}
 	
 	if(elementoimagenseleccionado == ""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN DOCUMENTO PARA VISUALIZAR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN DOCUMENTO PARA VISUALIZAR")
 		return;
 	}
 	
@@ -12388,7 +12391,7 @@ if(control == 0){
 	
 	//Comprobar si existen algun elemento seleccionado
 	if(elementoimagenseleccionado == ""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN ARCHIVO PARA ELIMINAR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN ARCHIVO PARA ELIMINAR")
 		return;
 	}
 	
@@ -13027,7 +13030,7 @@ function verCerrarAbmVenta(){
 	}else{	
 		if(controlacceso("VERVENTA","accion")==false){return;}
 		if(idabmAperturacierrecaja==""){
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
@@ -13467,7 +13470,7 @@ function controldecostoventa(datos){
 		if(Number(precionuevo)<Number(preciocostocontado)){	
 		
 			if(controlacceso2("HACERDESCUENTO","accion")==false){
-				ver_vetana_informativa("EL PRECIO ESTA FUERA DE RANGO", "#")
+				ver_vetana_informativa("EL PRECIO ESTA FUERA DE RANGO")
 				document.getElementById("inptCostoProductoVenta").value=separadordemilesnumero(preciocostocontado)
 				document.getElementById("inpTotalCostoVenta").value=separadordemilesnumero(preciocostocontado)
 				calcular_total_venta()		
@@ -13483,7 +13486,7 @@ function controldecostoventa(datos){
 		if(Number(precionuevo)<Number(preciocostocredito)){
 
 			if(controlacceso2("HACERDESCUENTO","accion")==false){
-			ver_vetana_informativa("EL PRECIO ESTA FUERA DE RANGO", "#")
+			ver_vetana_informativa("EL PRECIO ESTA FUERA DE RANGO")
 			document.getElementById("inptCostoProductoVenta").value=separadordemilesnumero(preciocostocredito)
 			document.getElementById("inpTotalCostoVenta").value=separadordemilesnumero(preciocostocredito)
 			calcular_total_venta()		
@@ -13517,7 +13520,7 @@ function anhadirProductoEnDetalleVenta(){
 	
 	var entrega= document.getElementById('inptEntregaVenta').value
 	if(entrega==""){
-		ver_vetana_informativa("FALTO AGREGAR ENTREGA", "#")
+		ver_vetana_informativa("FALTO AGREGAR ENTREGA")
 		return false;
 	}
 	
@@ -13527,20 +13530,20 @@ ContadoranhadirVenta= ContadoranhadirVenta +1 ;
 	   });
 	   
 	   if(ContadoranhadirVenta!=0){
-		   ver_vetana_informativa("NO ES POSIBLE AGREGAR UN PRODUCTO A UNA VENTA FINALIZADO", "#")
+		   ver_vetana_informativa("NO ES POSIBLE AGREGAR UN PRODUCTO A UNA VENTA FINALIZADO")
 		 
 		   return false;
 	   }
 	
 	if(idabmAperturacierrecaja==""){
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
 	DatosAutoCompleteCredito=new Array ();
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
-		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
+		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}
 	
@@ -13548,7 +13551,7 @@ ContadoranhadirVenta= ContadoranhadirVenta +1 ;
 	if(acceso=="Denegado"){
 		var estado=document.getElementById("inptSeleccTipoVenta").value;
 		if(estado=="CREDITO"){
-			ver_vetana_informativa("EL CLIENTE NO ESTA AUTORIZADO PARA VENTAS A CREDITOS", "#")
+			ver_vetana_informativa("EL CLIENTE NO ESTA AUTORIZADO PARA VENTAS A CREDITOS")
 		return false;
 		}
 	}
@@ -13557,7 +13560,7 @@ ContadoranhadirVenta= ContadoranhadirVenta +1 ;
 	
 	var monto= document.getElementById('inptCostoProductoVenta').value
 	if(monto=="" || monto=="0" ){
-		ver_vetana_informativa("FALTO AGREGAR EL MONTO", "#")
+		ver_vetana_informativa("FALTO AGREGAR EL MONTO")
 		return false;
 	}
 	
@@ -13608,7 +13611,7 @@ ContadoranhadirVenta= ContadoranhadirVenta +1 ;
 	 inptDetallesVentaProductos =inptDetallesVentaProductos.replace(new RegExp("\n","g"), "<br>")
 	var CuotaNro =$("select[id=inpTSeleccCosto]").children(":selected").attr("id")
 	if (idFkProducto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}
 	var nroid=Math.floor((Math.random() * 1000) + 1);
@@ -13736,7 +13739,7 @@ if(totalVenta==0){
 function guardaryfinalizarventa(){
 	
 	if(idabmAperturacierrecaja==""){
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
@@ -13748,12 +13751,12 @@ function guardaryfinalizarventa(){
 
 	   // if(TipoVentaCtrl=="CREDITO"){
 		   // if(SolicirudCtrl==""){
-			// ver_vetana_informativa("FALTO SELECCIONAR SOLICITUD DE CREDITO", "#")		 
+			// ver_vetana_informativa("FALTO SELECCIONAR SOLICITUD DE CREDITO")		 
 		   // return
 		   // }
 		   
 		    // if(clienteCtrl!=SolicirudCtrl){
-			// ver_vetana_informativa("SOLICITUD DE CREDITO Y NOMBRE DE CLIENTE NO COINCIDEN", "#")		 
+			// ver_vetana_informativa("SOLICITUD DE CREDITO Y NOMBRE DE CLIENTE NO COINCIDEN")		 
 		   // return
 		   // }
 		   
@@ -13768,7 +13771,7 @@ controlDetalle=1;
 	   });
 	   
 	   if(controlDetalle=="0"){
-		ver_vetana_informativa("FALTA DETALLES A LA VENTA", "#")
+		ver_vetana_informativa("FALTA DETALLES A LA VENTA")
 		return false;
 	}
 	if(controlDetalle=="1"){
@@ -13785,7 +13788,7 @@ controlDetalle=1;
 		// alert(Entrega+"-"+TotalVenta)
 	
 		if(Number(Entrega)>=Number(TotalVenta)){
-			ver_vetana_informativa("LO SIENTO LA ENTREGA TIENE UN VALOR SUPERIOR A LA VENTA", "#")
+			ver_vetana_informativa("LO SIENTO LA ENTREGA TIENE UN VALOR SUPERIOR A LA VENTA")
 			return false;
 		}
 		document.getElementById("inptSaldoConfCredito").value = separadordemilesnumero(resultado)
@@ -13809,7 +13812,7 @@ var idDetalleVenta = "";
 function verificarcamposdetallesventa() {
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
-		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
+		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}
 	var controldetalle=0;
@@ -13817,7 +13820,7 @@ function verificarcamposdetallesventa() {
 controldetalle=controldetalle+1;
 	   });
 	if(controldetalle=="0"){
-		ver_vetana_informativa("FALTO AÑADIR DETALLES", "#")
+		ver_vetana_informativa("FALTO AÑADIR DETALLES")
 		return false;
 	}
 	var vendedor1 = document.getElementById('inptVendedorVenta1').value
@@ -13839,11 +13842,11 @@ controldetalle=controldetalle+1;
 	}
 
 	if (idFkVendedor1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR")
 		return false;
 	}
 	if (inptFechaVenta == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA")
 		return false;
 	}
 
@@ -13873,7 +13876,7 @@ controldetalle=controldetalle+1;
 	}
 	if(inptSeleccTipoVenta=="CREDITO"){
 	 if((document.getElementById('inptClienteVenta').value == "CLIENTE OCASIONAL")|| (document.getElementById('inptClienteVenta').value == "")){
-		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO", "#")
+		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO")
 		return
 	}
 	verCerrarConfigCredito("1")
@@ -13920,7 +13923,7 @@ function VerificarCamposVentaContago(){
 	controlVenta="2";
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
-		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
+		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}
 	var controldetalle=0;
@@ -13928,7 +13931,7 @@ function VerificarCamposVentaContago(){
 controldetalle=controldetalle+1;
 	   });
 	if(controldetalle=="0"){
-		ver_vetana_informativa("FALTO AÑADIR DETALLES", "#")
+		ver_vetana_informativa("FALTO AÑADIR DETALLES")
 		return false;
 	}
 	var vendedor1 = document.getElementById('inptVendedorVenta1').value
@@ -13950,11 +13953,11 @@ controldetalle=controldetalle+1;
 	}
 
 	if (idFkVendedor1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR")
 		return false;
 	}
 	if (inptFechaVenta == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA")
 		return false;
 	}
 
@@ -13984,7 +13987,7 @@ controldetalle=controldetalle+1;
 	}
 	if(inptSeleccTipoVenta=="CREDITO"){
 	 if((document.getElementById('inptClienteVenta').value == "CLIENTE OCASIONAL")|| (document.getElementById('inptClienteVenta').value == "")){
-		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO", "#")
+		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO")
 		return
 	}
 	verCerrarConfigCredito("1")
@@ -14008,7 +14011,7 @@ controldetalle=controldetalle+1;
 function verificarcamposdetallesventacredito() {
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
-		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
+		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}
 	var controldetalle=0;
@@ -14016,7 +14019,7 @@ function verificarcamposdetallesventacredito() {
 controldetalle=controldetalle+1;
 	   });
 	if(controldetalle=="0"){
-		ver_vetana_informativa("FALTO AÑADIR DETALLES", "#")
+		ver_vetana_informativa("FALTO AÑADIR DETALLES")
 		return false;
 	}
 	var inptFechaVenta = document.getElementById('inptFechaVenta').value
@@ -14038,7 +14041,7 @@ controldetalle=controldetalle+1;
 	}
 
 	if (inptFechaVenta == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA")
 		return false;
 	}
 
@@ -14068,7 +14071,7 @@ controldetalle=controldetalle+1;
 	}
 	if(inptSeleccTipoVenta=="CREDITO"){
 	 if((document.getElementById('inptClienteVenta').value == "CLIENTE OCASIONAL")|| (document.getElementById('inptClienteVenta').value == "")){
-		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO", "#")
+		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO")
 		return
 	}
 	
@@ -14369,7 +14372,7 @@ function verCerrarConfigCredito(d){
 	if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
 	
     if((document.getElementById('inptClienteVenta').value == "CLIENTE OCASIONAL")|| (document.getElementById('inptClienteVenta').value == "")){
-		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO", "#")
+		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO")
 		return
 	}	
 		document.getElementById("tdEfectoFinalizarVentaCredito").className=""
@@ -14559,38 +14562,38 @@ function crearcreditodesdeventa() {
 	return false;
 	}
 	if (inptNroCuotasConfCredito <=0) {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA")
 		return false;
 	}
 	
 	if (inptNroCuotasConfCredito >=100) {
-		ver_vetana_informativa("FAVOR VERIFIQUE EL NRO DE CUOTA", "#")
+		ver_vetana_informativa("FAVOR VERIFIQUE EL NRO DE CUOTA")
 		return false;
 	}
 	
 	
 	if (inptNroCuotasConfCredito == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA")
 		return false;
 	}
 	if (inptMontoPagoConfCredito == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO DE PAGO")
 		return false;
 	}
 	if (inptFechaInicioConfCredito == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO DE PAGO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO DE PAGO")
 		return false;
 	}
 	if (inputSelectMetodoConfCredito == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL METODO DE PAGO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL METODO DE PAGO")
 		return false;
 	}
 	if (inptInteresConfCredito == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL INTERES DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL INTERES DE PAGO")
 		return false;
 	}
 	if (inptDiasConfCredito == "") {
-		ver_vetana_informativa("FALTO INGRESAR LOS DIAS DE GRACIA", "#")
+		ver_vetana_informativa("FALTO INGRESAR LOS DIAS DE GRACIA")
 		return false;
 	}
 	if(idabmVenta==""){
@@ -14839,7 +14842,7 @@ try {
 					
 					 document.getElementById("divConfirmarNroDeFactura").style.display="none"
 					 
-ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE", "#")
+ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE")
 		return false;
 
 				}
@@ -14874,15 +14877,15 @@ var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComp
 		inpCodVenta = "";
 	}
 	if (nrocaja == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA CAJA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA CAJA")
 		return false;
 	}
 	if (inptFechaVenta == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA")
 		return false;
 	}
 	if (inptComisionVentaCobrador == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN DEL COBRADOR", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN DEL COBRADOR")
 		return false;
 	}
 	if (idFkCliente == "") {
@@ -15188,7 +15191,7 @@ function eliminardetalleventa() {
 	if(controlacceso("ELIMINARDETALLEVENTA","accion")==false) {return false};
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value;
 	/* if (inptTotalPagado > 0) {
-		ver_vetana_informativa("NO SE PUEDE EDITAR EL DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO", "#")
+		ver_vetana_informativa("NO SE PUEDE EDITAR EL DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}*/
 	if (idDetalleVenta == "") {
@@ -15503,7 +15506,7 @@ function vercerrarpagos(d,c) {
 	if (d == "1") {		
     if(controlacceso("VERPAGOSCREDITO","accion")==false){return;}
 		if (idabmVenta == "") {
-			ver_vetana_informativa("FALTO INICIAR UNA VENTA", "#")
+			ver_vetana_informativa("FALTO INICIAR UNA VENTA")
 			return false;
 		}		
 		if (document.getElementById("inptSeleccTipoVenta").value == "CONTADO") {
@@ -16104,7 +16107,7 @@ function abmeliminarestepagohistorial() {
 		}
 if(confirm("Estas Seguro que quieres eliminar este pago")){
 	if (idHistorialPago == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	verCerrarEfectoCargando("1")
@@ -16192,7 +16195,7 @@ var TotalPagarEsteCredito ="";
 function obtenerdatosabmpagos(datostr) {
 	
 	 if(idabmAperturacierrecaja==""){
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
@@ -16278,7 +16281,7 @@ function verificarConfirmaciondepago() {
 	}
 	
    if(controlInsercionPagos==true){
-	   ver_vetana_informativa("TIENES UN PAGO EN PROCESO AGUARDE UN MOMENTO", "#")
+	   ver_vetana_informativa("TIENES UN PAGO EN PROCESO AGUARDE UN MOMENTO")
 	   return 
    }
    
@@ -16303,7 +16306,7 @@ function verificarConfirmaciondepago() {
 		
 	}
 	// if (inptNroReciboAPagar == "") {
-		// ver_vetana_informativa("LO SIENTO DEBE INGRESAR EL NRO DE BOLETA!", "#")
+		// ver_vetana_informativa("LO SIENTO DEBE INGRESAR EL NRO DE BOLETA!")
 		
 		// return;		
 	// }
@@ -16312,19 +16315,19 @@ function verificarConfirmaciondepago() {
   
 	
 	if (MontoCobrado == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO A COBRAR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO A COBRAR")
 		return false;
 	}
 	if (inptMontoAPagar == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO")
 		return false;
 	}
 	if (inptFechaPagoConfirmar == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO")
 		return false;
 	}
 	if (cobradorcredito == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	
@@ -16475,11 +16478,11 @@ function verificareditarpago() {
 	var inptDescuentoCuotaModificar = document.getElementById('inptDescuentoCuotaModificar').value
 	var inptOpcionesCuotaModificar = document.getElementById('inptOpcionesCuotaModificar').value
 	if (idCreditoEditarCuota == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	if (inptFechaCuotaModificar == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO")
 		return false;
 	}
 	abmeditarcuota(idCreditoEditarCuota,inptDescuentoCuotaModificar, idVentaEditarCuota, inptFechaCuotaModificar, inptOpcionesCuotaModificar);
@@ -16564,7 +16567,7 @@ function verCerrarCargarPago(d) {
 	if (d == "1") {		
 		  if(controlacceso("INSERTARPAGOSCREDITO","accion")==false){return;}
 		 if(idabmAperturacierrecaja==""){
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
@@ -16598,7 +16601,7 @@ function verCerrarCargarPago(d) {
 var controldePagosParciales=false
 function verificarcargarpagoTipoPago() {
     if(controldePagosParciales==true){
-		ver_vetana_informativa("PAGO EN PROCESO,NO PUEDE REALIZAR ESTA ACCIÓN", "#")
+		ver_vetana_informativa("PAGO EN PROCESO,NO PUEDE REALIZAR ESTA ACCIÓN")
 		return
 	}
 	
@@ -16616,7 +16619,7 @@ function verificarcargarpagoTipoPago() {
    
 	
 	// if (inptNroReciboCargaPago == "") {
-		// ver_vetana_informativa("FALTO INGRESAR EL NRO DE BOLETA", "#")
+		// ver_vetana_informativa("FALTO INGRESAR EL NRO DE BOLETA")
 		// return false;
 	// }
 	// inptNroReciboCargaPago= inptSeleccNroReciboPagoParcial  + inptNroReciboCargaPago
@@ -16632,22 +16635,22 @@ function verificarcargarpagoTipoPago() {
 	
 	
 	if( (Number(montop1)+Number(montop2))  - 1  >= (Number(montop3) + Number(montop4)) ){
-		ver_vetana_informativa("LO SIENTO EL MONTO A PAGAR ES SUPERIOR A LA DEUDA.", "#")
+		ver_vetana_informativa("LO SIENTO EL MONTO A PAGAR ES SUPERIOR A LA DEUDA.")
 		document.getElementById('inpTotalPagadoCreditoParcial').value= inptDeudaActualCargaPago;
 		inpTotalPagadoCreditoParcial=inptDeudaActualCargaPago;
 		return;
 	}
 	
 	if (inpTotalPagadoCreditoParcial == "" || inpTotalPagadoCreditoParcial == "0" ) {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO")
 		return false;
 	}
 	if (inptFechaPagoCargarPago == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO")
 		return false;
 	}
 	if (cobradorcargarpagos == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR")
 		return false;
 	}
 	
@@ -16658,7 +16661,7 @@ function verificarcargarpagoTipoPago() {
 	});
 	
 	if(control <= 0){
-		ver_vetana_informativa("FALTO INGRESAR LOS PAGOS", "#")
+		ver_vetana_informativa("FALTO INGRESAR LOS PAGOS")
 		return;
 	}
 	
@@ -16674,7 +16677,7 @@ function verificarcargarpagoTipoPago() {
 
 function verificarcargarpago() {
     if(controldePagosParciales==true){
-		ver_vetana_informativa("PAGO EN PROCESO,NO PUEDE REALIZAR ESTA ACCIÓN", "#")
+		ver_vetana_informativa("PAGO EN PROCESO,NO PUEDE REALIZAR ESTA ACCIÓN")
 		return
 	}
 	
@@ -16692,7 +16695,7 @@ function verificarcargarpago() {
    
 	
 	// if (inptNroReciboCargaPago == "") {
-		// ver_vetana_informativa("FALTO INGRESAR EL NRO DE BOLETA", "#")
+		// ver_vetana_informativa("FALTO INGRESAR EL NRO DE BOLETA")
 		// return false;
 	// }
 	// inptNroReciboCargaPago= inptSeleccNroReciboPagoParcial  + inptNroReciboCargaPago
@@ -16708,22 +16711,22 @@ function verificarcargarpago() {
 	
 	
 	if( (Number(montop1)+Number(montop2))  - 1  >= (Number(montop3) + Number(montop4)) ){
-		ver_vetana_informativa("LO SIENTO EL MONTO A PAGAR ES SUPERIOR A LA DEUDA.", "#")
+		ver_vetana_informativa("LO SIENTO EL MONTO A PAGAR ES SUPERIOR A LA DEUDA.")
 		document.getElementById('inptMontoCargaPago').value= inptDeudaActualCargaPago;
 		inptMontoCargaPago=inptDeudaActualCargaPago;
 		return;
 	}
 	
 	if (inptMontoCargaPago == "" || inptMontoCargaPago == "0" ) {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO")
 		return false;
 	}
 	if (inptFechaPagoCargarPago == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO")
 		return false;
 	}
 	if (cobradorcargarpagos == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN COBRADOR")
 		return false;
 	}
 	
@@ -17107,11 +17110,11 @@ function buscarhistorialventa() {
 	
 	if(document.getElementById('inptCheckHistorialVenta1').checked==true){
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}
@@ -17242,11 +17245,11 @@ function buscarMashistorialventa(c) {
 	
 	if(document.getElementById('inptCheckHistorialVenta1').checked==true){
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}
@@ -17386,7 +17389,7 @@ function verCerrarVentanasHistorialVenta(d){
 	}
 	if(d=="2"){
 		if (codVentaVentanas == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA")
 			verCerrarVentanasHistorialVenta("1")
 			return
 		}
@@ -17396,7 +17399,7 @@ function verCerrarVentanasHistorialVenta(d){
 	}		
 		if(d=="6"){
 		if (codVentaVentanas == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA")
 			verCerrarVentanasHistorialVenta("1")
 			return
 		}
@@ -17409,7 +17412,7 @@ var codVentaVentanas="";
 var codVentaClienteVentanas="";
 function buscarcreditosHistorialVenta() {	
 		if (codVentaVentanas == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA")
 			return
 		}
 	document.getElementById("table_historial_venta_pagos").innerHTML = paginacargando
@@ -17475,7 +17478,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 }
 function buscarDetallesHistorialVenta() {	
 		if (codVentaVentanas == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA")
 			return
 		}
 	document.getElementById("table_historial_venta_detalle").innerHTML = paginacargando
@@ -17542,7 +17545,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 }
 function editarventaselecc() {
 	if (document.getElementById("inptRegistroSeleccHistorialVenta").value == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return
 	}	
 	ControlVentanaVenta="1"
@@ -18180,7 +18183,7 @@ function minimizarexpedientecliente(){
 }
 function irAExtractodesdeVenta() {
 	if (document.getElementById("inptRegistroSeleccHistorialVenta").value == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return
 	}
 	if(controlacceso("VEREXPEDIENTEDELCLIENTE","accion")==false){return;}		
@@ -18869,11 +18872,11 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	if(document.getElementById('checkfiltrosCuentasACobrar2').checked==true){
 		var filtro="1"
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN")
 			return
 		}
 	}
@@ -18885,14 +18888,14 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	if(document.getElementById('checkfiltrosCuentasACobrar3').checked==true){
 		var filtro="3"
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 	}
 	if(document.getElementById('checkfiltrosCuentasACobrar4').checked==true){
 		var filtro="4"
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 	}
@@ -19014,11 +19017,11 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	if(document.getElementById('checkfiltrosCuentasACobrar2').checked==true){
 		var filtro="1"
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN")
 			return
 		}
 	}
@@ -19030,14 +19033,14 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	if(document.getElementById('checkfiltrosCuentasACobrar3').checked==true){
 		var filtro="3"
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 	}
 	if(document.getElementById('checkfiltrosCuentasACobrar4').checked==true){
 		var filtro="4"
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 	}
@@ -19187,7 +19190,7 @@ function obtenerdatoscuentaacobrar(datostr) {
 function verCerrarCargarPagoDesdeCuentas(d) {
 	if (d == "1") {		
 			if (idFkVenta == "") {
-			ver_vetana_informativa("FALTO INICIAR UNA VENTA", "#")
+			ver_vetana_informativa("FALTO INICIAR UNA VENTA")
 			return false;
 		}
 		if(controlacceso("VERPAGOSCREDITO","accion")==false){	   
@@ -19211,7 +19214,7 @@ $("div[id=divAbmOpcionesPagos]").fadeOut(500);
 }
 function irACargarPagodesdeCuentasACobrar() {
 	if (document.getElementById("inptRegistroSeleccCuentasAcobrar").value == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	verCerrarCargarPago("1")
@@ -19231,7 +19234,7 @@ function verCerrarAbmVentaVerMasDetalle(){
 	}else{	
 		if(controlacceso("VERVENTA","accion")==false){return;}
 			if(idabmAperturacierrecaja==""){
-				ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+				ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 				verCerrarVentanaAbmAperturaCierreCaja1()
 				return
 			}
@@ -19249,7 +19252,7 @@ function irAventaDesdeCuentas()
 {
 	if(controlacceso("VERVENTA","accion")==false){return;}		
 if(idFkVenta==""){
-	ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+	ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	return
 }
@@ -19442,11 +19445,11 @@ function buscarcuentaacobrarinforme() {
 	var cliente = document.getElementById("inptNombreClienteCuentasAcobrainforme").value
 
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN")
 			return
 		}
 	
@@ -19557,11 +19560,11 @@ function buscarmascuentaacobrarinforme(c) {
 	var cliente = document.getElementById("inptNombreClienteCuentasAcobrainforme").value
 	
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN", "#")
+			ver_vetana_informativa("FALTO INGRESAR LA FECHA DE FIN")
 			return
 		}
 	if(c=="1"){
@@ -20029,7 +20032,7 @@ function verCerrarVentanasHistorialCompra(d){
 	}	
 	if(d=="2"){
 			if (elementocompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		verCerrarVentanasHistorialCompra("1")
 		return false;
 	}	
@@ -20039,7 +20042,7 @@ function verCerrarVentanasHistorialCompra(d){
 	}
 	if(d=="3"){
 			if (elementocompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		verCerrarVentanasHistorialCompra("1")
 		return false;
 	}	
@@ -20050,7 +20053,7 @@ function verCerrarVentanasHistorialCompra(d){
 }
 function buscarDetallesHistorialCompra() {	
 			if (elementocompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	var codCompra = $(elementocompra).children('td[id="td_datos_5"]').html();
@@ -20231,7 +20234,7 @@ var MetodoPagoCambio = ""
 function verCerrarGarantias(d) {
 	if (d == "1") {
 		if (elementoDevolucion == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 			return false;
 		}
 		
@@ -20277,19 +20280,19 @@ function verificargarantiaproducto() {
      var inptFechaRecibidoGarantia=document.getElementById("inptFechaRecibidoGarantia").value
      var inptTelefonoAvisoGarantia=document.getElementById("inptTelefonoAvisoGarantia").value
 	if (codDetalleCambiio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	if (CodProductocompraCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	if (inptObservacionGarantia == "") {
-		ver_vetana_informativa("FALTO INGRESAR UNA OBSERVACIÓN ", "#")
+		ver_vetana_informativa("FALTO INGRESAR UNA OBSERVACIÓN ")
 		return false;
 	}
 	if (inptFechaRecibidoGarantia == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN FECHA ", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN FECHA ")
 		return false;
 	}
 	abmgarantia(inptTelefonoAvisoGarantia,inptObservacionGarantia,inptFechaRecibidoGarantia,codDetalleCambiio, CodProductocompraCambio, codVentaCambio, cantidaCambio, "NuevoGarantia")
@@ -20388,7 +20391,7 @@ function abmgarantia(telefonoaviso,observacion,fecharecibido,cod_detalle, cod_pr
 function verCerrarCambio(d) {
 	if (d == "1") {
 		if (elementoDevolucion == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 			return false;
 		}
 			
@@ -20455,7 +20458,7 @@ function anhadirProductoEnDetalleCambio(){
 	var inptObservacionDetalleVenta = document.getElementById('inptObservacionCambio').value
 	var inptDescuentoProductoVenta = document.getElementById('inptDescuentoCambio').value
 	if (idFkProductocompraCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}	
 	var pagina="<table class='tableRegistroSearch' border='0' cellspacing='0' cellpadding='0'>"
@@ -20516,7 +20519,7 @@ function eleminarDetallesCambios(d){
 // var TotalVentaActual=Number(TotalVentaActual)+Number(totalProductoCambios)	   
 // document.getElementById("inptTotalVentaCambioActual").value=separadordemilesnumero(TotalVentaActual);
 limpiarCamposProductosCambios()
-	ver_vetana_informativa("DETALLE ELIMINADO", "#")	
+	ver_vetana_informativa("DETALLE ELIMINADO")	
 }
 function limpiarCamposProductosCambios(){
 	document.getElementById('inptProductoSeleccCambio').value = ""
@@ -20533,15 +20536,15 @@ $("tr[name=tdDetalleCambioOffline]").each(function(i, elementohtml){
 controlDetalle=Number(controlDetalle)+Number(1)
 	   });
 if(controlDetalle==0){
-	ver_vetana_informativa("FALTO AÑADIR PRODUCTOS", "#")
+	ver_vetana_informativa("FALTO AÑADIR PRODUCTOS")
 	return
 }
 	if (codDetalleCambiio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}   
    if (codVentaCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	if(controlacceso("INSERTARCAMBIOSYGARANTIAS","accion")==false){	   
@@ -20573,7 +20576,7 @@ function abmcambio(cod_detalle, cod_ventaFK,MetodoPagoCambio) {
 	   });
 	control=control-1;	
 	if(control<0){
-	ver_vetana_informativa("FALTO AÑADIR PRODUCTOS", "#")
+	ver_vetana_informativa("FALTO AÑADIR PRODUCTOS")
 	return
 }	
 	obtener_datos_user();
@@ -20667,23 +20670,23 @@ if(controlacceso("REFINANCIARCUOTARESTANTE","accion")==false){
 	var inptInteresVentaCambio = document.getElementById('inptInteresVentaCambio').value
 	var inptDiasVentaCambio = document.getElementById('inptDiasVentaCambio').value
 	if (codVentaCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}
 	if (inptPendienteVentaRefinanciadoCambio == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL TOTAL FINANCIADO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL TOTAL FINANCIADO")
 		return false;
 	}
 	if (inputSelectMetodoCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL METODO DEL PAGO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL METODO DEL PAGO")
 		return false;
 	}
 	if (inptCuotaNroCambio == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA")
 		return false;
 	}
 	if (inptFechaVentaCambio == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO PAGO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO PAGO")
 		return false;
 	}
 	if (inptInteresVentaCambio == "") {
@@ -20824,7 +20827,7 @@ function verCerrarVentanaAbmSueldo(d, l) {
 function verVentanaEditarSueldo() {
 	if(controlacceso("EDITARCARGARSUELDO","accion")==false){return;}
 	if (idAbmSueldo == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmSueldo("1", "2")
@@ -20860,15 +20863,15 @@ function verificarcamposSueldo() {
 	var inptSeleccTipoSueldo = document.getElementById('inptSeleccTipoSueldo').value
 	
 	if (inptMontoSueldo == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL SUELDO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL SUELDO")
 		return false;
 	}
 	if (inptFechaSueldo == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA FECHA DEL SUELDO", "#")
+		ver_vetana_informativa("FALTO INGRESAR LA FECHA DEL SUELDO")
 		return false;
 	}
 	if (CodPersonaSueldo == "") {
-		ver_vetana_informativa("FALTO INGRESAR SELECCIONAR EL FUNCIONARIO", "#")
+		ver_vetana_informativa("FALTO INGRESAR SELECCIONAR EL FUNCIONARIO")
 		return false;
 	}
 	var accion = "";
@@ -22320,11 +22323,11 @@ function buscarcuentasapagar() {
 	var cod_local = document.getElementById('inptlocalCuentaApagar').value
 	if(document.getElementById('checkHistorialCuentaPagar2').checked==true){
 		 if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	
@@ -22415,7 +22418,7 @@ if(controlacceso("EDITARCARGADECOMPRAS","accion")==false){
 		}
 		
 if (elementocompra == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return false;
 	}
 	datos = elementocompra
@@ -22751,11 +22754,11 @@ if(controlacceso("VERINFORMEDEPRODUCTOSVENDIDOS","accion")==false){return;}
 	var producto = document.getElementById('inptBuscarProductosVendidos2').value
 	if (document.getElementById('checkHistorialProductoVendido2').checked==true) {
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	}else{
@@ -22866,11 +22869,11 @@ if(controlacceso("VERINFORMEDEPRODUCTOSVENDIDOS","accion")==false){return;}
 	var producto = document.getElementById('inptBuscarProductosVendidos2').value
 	if (document.getElementById('checkHistorialProductoVendido2').checked==true) {
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	}else{
@@ -23133,11 +23136,11 @@ if(controlacceso("VERINFORMEDECOMISIONCOBRADOR","accion")==false){return;}
 	var fechafiltro = document.getElementById('inptBuscarComisionCobrador2').value
 	if(document.getElementById('checkHistorialComisionCobrador2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -23239,11 +23242,11 @@ if(controlacceso("VERINFORMEDECOMISIONCOBRADOR","accion")==false){return;}
 	var fechafiltro = document.getElementById('inptBuscarComisionCobrador2').value
 	if(document.getElementById('checkHistorialComisionCobrador2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -23435,11 +23438,11 @@ if(controlacceso("VERINFORMEDECOMISIONVENDEDOR","accion")==false){return;}
 	
 	if(document.getElementById('checkHistorialComisionVendedor2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -23559,11 +23562,11 @@ if(controlacceso("VERINFORMEDECOMISIONVENDEDOR","accion")==false){return;}
 	var cliente = document.getElementById('inptBuscarComisionVendedorCliente').value
 	if(document.getElementById('checkHistorialComisionVendedor2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -23749,11 +23752,11 @@ if(controlacceso("VERINFORMEDEPAGOSELIMINADOS","accion")==false){return;}
 
 	if(document.getElementById('checkHistorialPagosEliminados2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -23886,11 +23889,11 @@ if(controlacceso("VERINFORMEDECOMPRASELIMINADO","accion")==false){return;}
 
 	if(document.getElementById('checkHistorialComprasEliminados2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -24029,11 +24032,11 @@ function buscarhistorialdevoluciones() {
 	var cod_local = document.getElementById("inptlocalInformeDevoluciones").value
 	if (document.getElementById('checkHistorialDevoluciones2').checked==true) {
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return false;
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 			return false;
 		}
 	}else{
@@ -24494,11 +24497,11 @@ function buscargananciaventa() {
 	
 	if (document.getElementById('checkHistorialGananciaVenta2').checked==true) {
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}else{
@@ -24624,11 +24627,11 @@ function buscarmasgananciaventa(c) {
 	var SumaVenta = document.getElementById('inptTotalVentaGananciasVenta').value
 	if (document.getElementById('checkHistorialGananciaVenta2').checked==true) {
 		if (fecha1 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 			return
 		}
 		if (fecha2 == "") {
-			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 			return
 		}
 	}else{
@@ -27109,11 +27112,11 @@ function buscarMetasVendedores() {
 
 	if(document.getElementById('checkHistorialMetas2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -27859,7 +27862,7 @@ document.getElementById("tdEfectoAbmTipoPago").className="magictime slideDown"
 
 function verVentanaEditarTipoPago() {
 	if (idAbmTipoPago == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	if(controlacceso("EDITARLISTADODECAJA","accion")==false){return;}
@@ -27885,7 +27888,7 @@ function verificarcamposTipoPago() {
 	var inptDatosTipoPago =  $("select[id=inptDatosTipoPago]").children(":selected").attr("value")
 	var inptEstadoTipoPago = document.getElementById('inptEstadoTipoPago').value
 	if (inptNombreTipoPago == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA CAJA", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE LA CAJA")
 		return false;
 	}
 	
@@ -28160,11 +28163,11 @@ function buscarcuentaImpago() {
 
 	if(document.getElementById('checkHistorialClieteImpago2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -28297,11 +28300,11 @@ function buscarAudiProducto() {
 
 	if(document.getElementById('checkHistorialAudiProducto2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -28438,11 +28441,11 @@ function buscarClienteFiel() {
 
 	if(document.getElementById('checkHistorialClienteFiel2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -29921,7 +29924,7 @@ function anhadirProductoSolicitudCredito(){
 
 	var CuotaNro =$("select[id=inpTSeleccCosto]").children(":selected").attr("id")
 	if (idFkProducto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}
 	
@@ -30713,11 +30716,11 @@ function buscarSolicitudCredito(){
 
 	if(document.getElementById('inptSeleccSolicitudCredito1').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -30887,7 +30890,7 @@ function obtenerdatosSolicitudCredito(datostr){
 function verVentanaEditarsolicitudCredito() {
 	// if(controlacceso("EDITARLISTADODECLIENTES","accion")==false){return;}
 	if (idFkCliente == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmSolicitudCredito("1", "2")
@@ -31067,7 +31070,7 @@ function BuscarImprimirSolicitudCredito(){
  DivReferenciaSC =""
  
  if(idSolicitudCredito==""){
-	 ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+	 ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
  }
 
@@ -31845,11 +31848,11 @@ function buscarSoliDescuento() {
 
 	if(document.getElementById('checkHistorialSoliDescuento2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -32061,11 +32064,11 @@ function buscarContabilidad() {
 
 	if(document.getElementById('checkHistorialContabilidad2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -32199,11 +32202,11 @@ function buscarContabilidadCompra() {
 
 	if(document.getElementById('checkHistorialContabilidadCompra2').checked==true){
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA FIN")
 		return
 	}
 	}else{
@@ -32900,7 +32903,7 @@ document.getElementById("tdEfectoAbmBanco").className="magictime slideDown"
 
 function verVentanaEditarBanco() {
 	if (idAbmBanco == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	// if(controlacceso("EDITARLISTADODECAJA","accion")==false){return;}
@@ -32924,7 +32927,7 @@ function verificarcamposBanco() {
 	var inptNombreBanco = document.getElementById('inptNombreBanco').value
 	var inptEstadoBanco = document.getElementById('inptEstadoBanco').value
 	if (inptNombreBanco == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL BANCO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL BANCO")
 		return false;
 	}
 	
@@ -33455,25 +33458,25 @@ function AbmGeoLocalizacion(fecha,descripcion,cod_persona){
 		  if (Respuesta=="usuarioincorrecto")
 			{
 				window.location="/GoodVentaAsisCap/system/login.html";
-				ver_vetana_informativa("USUARIO INCORRECTO VUELVA A INICIAR SESION...","alert")
+				ver_vetana_informativa("USUARIO INCORRECTO VUELVA A INICIAR SESION...","advertencia")
 						return false;
 				} 
 			if (Respuesta=="bajonivel")
 			{
 		
-				ver_vetana_informativa("NO PUEDES REALIZAR ESTA ACCIÓN...","alert")
+				ver_vetana_informativa("NO PUEDES REALIZAR ESTA ACCIÓN...","error")
 						return false;
 					} 
 			
 			if (Respuesta=="camposvacio")
 			{
 		
-				ver_vetana_informativa("FALTO INGRESAR ALGUNOS CAMPOS...","alert")
+				ver_vetana_informativa("FALTO INGRESAR ALGUNOS CAMPOS...","advertencia")
 						return false;
 				}
 			if (Respuesta=="duplicado")
 			{
-						ver_vetana_informativa("YA EXISTE UN REGISTRO SIMILAR...","alert")
+						ver_vetana_informativa("YA EXISTE UN REGISTRO SIMILAR...","advertencia")
 						return false;
 			}
 		
@@ -33486,7 +33489,7 @@ function AbmGeoLocalizacion(fecha,descripcion,cod_persona){
 			else
 			{
 			
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR","alert")
+					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR","error")
 
 			}
 			
@@ -33575,7 +33578,7 @@ function EliminarGeoLocalizacion(){
 			contentType: false,
 			processData: false,
 				error: function(jqXHR, textstatus, errorThrowm){
-					 ver_vetana_informativa("ERROR DE CONEXIÓN","error")
+					 ver_vetana_informativa("ERROR DE CONEXIÓN","", "error")
 
 					 return false;
 			},
@@ -33593,38 +33596,38 @@ function EliminarGeoLocalizacion(){
 		  if (Respuesta=="usuarioincorrecto")
 			{
 				window.location="/GoodVentaAsisCap/system/login.html";
-				ver_vetana_informativa("USUARIO INCORRECTO VUELVA A INICIAR SESION...","alert")
+				ver_vetana_informativa("Usuario incorrecto", "Vuelva a iniciar sesion...","error")
 						return false;
 				} 
 			if (Respuesta=="bajonivel")
 			{
 		
-				ver_vetana_informativa("NO PUEDES REALIZAR ESTA ACCIÓN...","alert")
+				ver_vetana_informativa("Acceso no autorizado", "No puedes realizar esta accion.","error")
 						return false;
 					} 
 			
 			if (Respuesta=="camposvacio")
 			{
 		
-				ver_vetana_informativa("FALTO INGRESAR ALGUNOS CAMPOS...","alert")
+				ver_vetana_informativa("Campos faltantes", "Falto ingresar algunos campos","advertencia")
 						return false;
 				}
 			if (Respuesta=="duplicado")
 			{
-						ver_vetana_informativa("YA EXISTE UN REGISTRO SIMILAR...","alert")
+						ver_vetana_informativa("Registro duplicado.", "Ya existe un registro similar.","error")
 						return false;
 			}
 		
 		if (Respuesta=="exito")
 			{					 
-			ver_vetana_informativa("DATO ELIMINADO CON EXITO...","alert")
+			ver_vetana_informativa("DATO ELIMINADO CON EXITO","", "info")
 			limpiarGeoLocalizacion()
 			buscarGeolocalizacion()
 			}
 			else
 			{
 			
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR","alert")
+					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR","error")
 
 			}
 			
@@ -34035,7 +34038,7 @@ try {
 						buscarhistorialventa()
 						document.getElementById("divConfirmarActualizarVenta").style.display="none"
 					 
-						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE", "#")
+						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE")
 						return false;
 
 				}
@@ -34360,7 +34363,7 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 function VerCargarFotosClientePrincipal(d){
 	
 	if(elementoimagenseleccionadoPrincipal == ""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN DOCUMENTO PARA VISUALIZAR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN DOCUMENTO PARA VISUALIZAR")
 		return;
 	}
 	
@@ -34396,7 +34399,7 @@ if(control == 0){
 	
 	//Comprobar si existen algun elemento seleccionado
 	if(elementoimagenseleccionadoPrincipal == ""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN ARCHIVO PARA ELIMINAR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN ARCHIVO PARA ELIMINAR")
 		return;
 	}
 	
@@ -34631,7 +34634,7 @@ function buscarVistaGaleriaFoto(){
 });
 
 	if(Cod_clienteFotoFK == ""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN CLIENTE", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN CLIENTE")
 		return;
 	}
 */
@@ -34704,7 +34707,7 @@ function SeleccionarItemImagenGaleriaFoto(datostr) {
 	
 	
 	if(elementoimagenseleccionadoGaleriaFoto == ""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN DOCUMENTO PARA VISUALIZAR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN DOCUMENTO PARA VISUALIZAR")
 		return;
 	}
 	 
@@ -34799,7 +34802,7 @@ try {
 						buscarhistorialventa()
 						document.getElementById("divConfirmarCobrador").style.display="none"
 					 
-						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE", "#")
+						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE")
 						return false;
 
 				}
@@ -35387,7 +35390,7 @@ function verCerrarVentanaAbmMigrarCaja(d, l) {
 function verVentanaEditarMigrarCaja() {
 	// if(controlacceso("EDITARLISTADODELOCALES","accion")==false){return;}
 	if (idAbmMigrarCaja == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmMigrarCaja("1", "2")
@@ -35415,25 +35418,25 @@ function verificarcamposMigrarCaja() {
 	var inptEstadoMigrarCaja = document.getElementById('inptEstadoMigrarCaja').value
 	
 	if (inptMontoMigrarCaja == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO A MIGRAR", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO A MIGRAR")
 		return false;
 	}
 	
 	if (inptEnviarMigrarCaja == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL USUARIO A ENVIAR", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR EL USUARIO A ENVIAR")
 		return false;
 	}
 	
 	
 	if (inptEnviarMigrarCaja == userid) {
-		ver_vetana_informativa("NO SE PUEDE MIGRAR CAJA A MISMO USUARIO, FAVOR SELECCIONE OTRO", "#")
+		ver_vetana_informativa("NO SE PUEDE MIGRAR CAJA A MISMO USUARIO, FAVOR SELECCIONE OTRO")
 		return false;
 	}
 	
 	
 	
 	if (idabmAperturacierrecaja == "") {
-		ver_vetana_informativa("PARA COMPLETAR ESTA ACCION DEBE TENER UNA CAJA ABIERTA", "#")
+		ver_vetana_informativa("PARA COMPLETAR ESTA ACCION DEBE TENER UNA CAJA ABIERTA")
 		return false;
 	}
 	
@@ -35809,7 +35812,7 @@ function vercerrarAsignarLocal(){
 		if(controlacceso("ASIGNARLOCAL","accion")==false){return;} 
 		
 			if(idFkVenta==""){
-				ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#") 
+				ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO") 
 				return
 			} 
 		document.getElementById("divAsignarLocal").style.display=""
