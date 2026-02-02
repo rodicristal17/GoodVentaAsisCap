@@ -1,19 +1,19 @@
-function mostrarItemsZona(opcion) {
-	switch (opcion) {
-		case 'GastosOperativos':
+function mostrarItems(id_elemento) {
+	switch (id_elemento) {
+		case 'zonaGastosGastosOperativos':
         	if(controlacceso("VERGASTOSZONAOPERATIVOS","accion")==false){return;}
 			break;
-		case 'CostosDirectos':
+		case 'zonaGastosCostosDirectos':
 			if(controlacceso("VERGASTOSZONACOSTOSDIRECTOS","accion")==false){return;}
 			break;
-		case 'Ingreso':
+		case 'zonaGastosIngreso':
 			if(controlacceso("VERGASTOSZONAINGRESOS","accion")==false){return;}
 			break;
 	}
-	const zona= document.getElementById('zonaGastos'+opcion);
+	const elemento= document.getElementById(id_elemento);
 	
 	// Despliega o oculta segun el estado actual
-	bootstrap.Collapse.getOrCreateInstance(zona).toggle();
+	bootstrap.Collapse.getOrCreateInstance(elemento).toggle();
 }
 
 function verCerrarAbmGasto(){
@@ -40,7 +40,7 @@ function limpiarcamposbuscadoregresoingreso(){
 	document.getElementById("inptRegistroNroGastos").value=""
 	document.getElementById("inptTotalGasto").value=""
 	document.getElementById("inptRegistroSeleccGasto").value=""
-	document.getElementById("table_abm_gasto").innerHTML="";
+	document.getElementById("table_abm_gasto_imprimir").innerHTML="";
 }
 function minimizarventanaingresoegreso(){
 	document.getElementById("divMinimizadoEgresoIngreso").style.display=""
@@ -51,7 +51,7 @@ function verCerrarVentanaAbmGasto(d, l) {
 	if (d == "1") {
 		if(idabmAperturacierrecaja==""){
 			document.getElementById("divAbmGastos").style.display="none"
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
@@ -73,12 +73,12 @@ function verVentanaEditarGasto() {
 		if(controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}	
 		if(idabmAperturacierrecaja==""){
 			document.getElementById("divAbmGastos").style.display="none"
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA", "#")
+		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
 	   }
 	if (idAbmGasto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
 	verCerrarVentanaAbmGasto("1", "2")
@@ -247,19 +247,19 @@ function verificarcamposGasto() {
     }
 
     if (inptArregloGasto == "" && inptTipoGasto=="Egreso") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN ARREGLO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR UN ARREGLO")
 		return false;
 	}
 	if (inptMontoGasto == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL GASTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL GASTO")
 		return false;
 	}
 	if (inptDescripcionGasto == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MOTIVO DEL GASTO", "#")
+		ver_vetana_informativa("FALTO INGRESAR EL MOTIVO DEL GASTO")
 		return false;
 	}
 	if (inptFechaGasto == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO")
 		return false;
 	}
 	var accion = "";
@@ -730,20 +730,14 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("zonaGastosSinCategorizar").innerHTML = '';
+			document.getElementById("table_abm_gasto_imprimir").innerHTML = '';
 			document.getElementById("table_abm_gasto").innerHTML = '';
-			document.getElementById("zonaGastosIngreso").innerHTML= '';
-			document.getElementById("zonaGastosCostosDirectos").innerHTML= '';
-			document.getElementById("zonaGastosGastosOperativos").innerHTML= '';
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("zonaGastosSinCategorizar").innerHTML = '';
-			document.getElementById("zonaGastosIngreso").innerHTML= '';
+			document.getElementById("table_abm_gasto_imprimir").innerHTML = '';
 			document.getElementById("table_abm_gasto").innerHTML = '';
-			document.getElementById("zonaGastosCostosDirectos").innerHTML= '';
-			document.getElementById("zonaGastosGastosOperativos").innerHTML= '';
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -758,19 +752,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
                   }
 				if (Respuesta == "exito") {
 					var datos_buscados = datos[2];
-					document.getElementById("table_abm_gasto").innerHTML = datos[12];
-					document.getElementById("zonaGastosSinCategorizar").innerHTML = datos_buscados;
-					document.getElementById("tituloTotalSinCategorizar").innerHTML= datos[11];
+					document.getElementById("table_abm_gasto_imprimir").innerHTML = datos[12];
+					document.getElementById("table_abm_gasto").innerHTML = datos[2];
 					document.getElementById("inptTotalGasto").value = datos[4];
-					document.getElementById("inptRegistroNroGastos").value = datos[3];
-					
-					document.getElementById("tituloTotalIngreso").innerHTML= datos[5];
-					document.getElementById("zonaGastosIngreso").innerHTML= datos[8];
-					document.getElementById("tituloTotalCostosDirectos").innerHTML= datos[6];
-					document.getElementById("zonaGastosCostosDirectos").innerHTML= datos[9];
-					document.getElementById("tituloTotalGastosOperativos").innerHTML= datos[7];
-					document.getElementById("zonaGastosGastosOperativos").innerHTML= datos[10];
-				}
+									}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
@@ -831,11 +816,11 @@ function VerificarDatosMotivoEgresoIngreso() {
 	let accion = "";
 	
 	if (inptNuevoMotivo == "") {
-		ver_vetana_informativa("FALTO AGREGAR NUEVO MOTIVO", "#")
+		ver_vetana_informativa("FALTO AGREGAR NUEVO MOTIVO")
 		return false;
 	}
 	if (!inptCategoriaMotivoEgresoIngreso) {
-		ver_vetana_informativa("FALTO SELECCIONAR LA CATEGORIA", "#");
+		ver_vetana_informativa("FALTO SELECCIONAR LA CATEGORIA");
 		return false;
 	}
 
@@ -1206,7 +1191,7 @@ function verCerrarVentanaABMLimiteCaja(mostrar) {
 function agregarLimiteCaja() {
 	let inptLimiteCaja = document.getElementById("inptLimitecaja").value;
 	if (inptLimiteCaja === "") {
-		ver_vetana_informativa("FALTO INGRESAR EL LIMITE DE CAJA", "#");
+		ver_vetana_informativa("FALTO INGRESAR EL LIMITE DE CAJA");
 		return false;
 	}
 
@@ -1384,11 +1369,11 @@ function buscarevaluacionGasto() {
 	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
 	var local = document.getElementById("inptlocalInformeEvaluacion").value
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	document.getElementById("table_evaluacion_gasto").innerHTML = paginacargando
@@ -1462,11 +1447,11 @@ function buscarevaluacionPago() {
 	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
 	var local = document.getElementById("inptlocalInformeEvaluacion").value
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	document.getElementById("table_evaluacion_pagos").innerHTML = paginacargando
@@ -1540,11 +1525,11 @@ function buscarevaluacionProductosvendidos() {
 	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
 	var local = document.getElementById("inptlocalInformeEvaluacion").value
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	document.getElementById("table_evaluacion_producto_vendidos").innerHTML = paginacargando
@@ -1618,11 +1603,11 @@ function buscarevaluacionProductosComprados() {
 	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
 	var local = document.getElementById("inptlocalInformeEvaluacion").value
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	document.getElementById("table_evaluacion_producto_comprados").innerHTML = paginacargando
@@ -1696,11 +1681,11 @@ function buscarevaluacionPagosCompra() {
 	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
 	var local = document.getElementById("inptlocalInformeEvaluacion").value
 	if (fecha1 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
 	}
 	if (fecha2 == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN", "#")
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
 		return false;
 	}
 	document.getElementById("table_evaluacion_pagos_compras").innerHTML = paginacargando
