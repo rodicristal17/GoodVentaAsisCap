@@ -759,9 +759,9 @@ $pagina= "";
 				</table>
 			</li>";
 		}
- 		$pagina .= '<li class="list-group-item" style="padding: 0;"><div class="card" style="width: 100%; margin: 0; margin-top: 10px;">'.
-			'<div class="card-header" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
-				'<h4><b>'.$titulo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h4>'.
+ 		$pagina .= '<li class="list-group-item" style="padding: 0;"><div class="card" style="width: 100%; margin: 0;">'.
+			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
+				'<h6><b>'.$titulo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
 				'<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$motivo.'\';">'.
 			'</div>'.
 			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
