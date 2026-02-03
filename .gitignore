@@ -5,3 +5,5 @@ php_system/conexion.php
 *.gz
 /archivoscheque
 syscvxco_ac.sql
+
+.vscode/

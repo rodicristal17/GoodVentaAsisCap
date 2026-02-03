@@ -137,7 +137,7 @@ CREATE TABLE menciones (
 
 ALTER TABLE interconsulta CHANGE tipo tipo VARCHAR(14) NOT NULL;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.57', detalles='Modificaciones en egreso / ingreso', fecha='2026-01-05' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.58', detalles='Rediseño de mensajes de errores', fecha='2026-02-03' WHERE idhistorialactualizacion= 2;
 
 
 -- Eliminar motivos duplicados
@@ -181,55 +181,6 @@ ALTER TABLE menciones add column estado enum('activo', 'inactivo') DEFAULT 'acti
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN presupuesto BIGINT;
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN cod_usuarioFK INT(11);
 ALTER TABLE motivos_ingreso_egreso ADD COLUMN fecha_edit DATETIME;
-
--- Evento para generar mensaje cerca de fecha de pago
-SET GLOBAL event_scheduler = ON;
-
-DROP EVENT IF EXISTS generar_mensajes_gastos_fijos;
-
-DELIMITER $$
-CREATE EVENT IF NOT EXISTS generar_mensajes_gastos_fijos
-ON SCHEDULE EVERY 1 DAY
-STARTS TIMESTAMP(CURDATE() + INTERVAL 1 DAY)
-DO
-BEGIN
-    DECLARE last_msg_id INT;
-    DECLARE last_interconsulta INT;
-
-    -- 1. Insertar el nuevo mensaje
-    INSERT INTO mensaje (contenido, url, estado, cod_interConsultaFK, cod_usuarioFK)
-    SELECT 
-        CONCAT('Recordatorio: La cuenta de "', descripcion, '" vence mañana (día ', dia, ')'),
-        NULL,
-        'activo',
-        cod_interConsultaFK,
-        2
-    FROM gastos_fijos
-    WHERE dia = DAY(CURDATE()) + 1
-      AND estado = 'activo';
-
-    -- 2. Obtener el último mensaje insertado
-    SET last_msg_id = LAST_INSERT_ID();
-
-    -- 3. Obtener la interconsulta asociada a ese mensaje
-    SELECT cod_interConsultaFK INTO last_interconsulta
-    FROM mensaje
-    WHERE cod_mensaje = last_msg_id;
-
-    -- 4. Insertar menciones copiando las del último mensaje de esa interconsulta
-    INSERT INTO menciones (cod_usuarioFK, cod_mensajeFK, isLeido, estado)
-    SELECT 
-        m.cod_usuarioFK,
-        last_msg_id,
-        0,
-        'activo'
-    FROM menciones m
-    INNER JOIN mensaje msg ON msg.cod_mensaje = m.cod_mensajeFK
-    WHERE msg.cod_interConsultaFK = last_interconsulta
-    ORDER BY msg.fecha_creacion DESC;
-END$$
-
-DELIMITER ;
 
 -- Agregar permisos::
 -- CREARNUEVOMOTIVO, VERABMLIMITECAJA
