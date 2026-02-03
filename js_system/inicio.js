@@ -26730,6 +26730,7 @@ function removeToMenu(){
 	if( accesosuser["VERLISTADOEGRESOINGRESO"]["accion"]!="SI")
 	{
 	$("table[id=divMenuEgreso_Ingreso]").remove()
+	$("table[id=divMenuEgreso_Ingreso2]").remove()
 	controladministrativo=controladministrativo+1;		
 	}
 	if( accesosuser["VEREXPEDIENTEDELCLIENTE"]["accion"]!="SI")

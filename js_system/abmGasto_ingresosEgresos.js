@@ -246,11 +246,6 @@ function verificarcamposGasto() {
         ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO DE LA LISTA.");
         return false;
     }
-
-    if (inptArregloGasto == "" && inptTipoGasto=="Egreso") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN ARREGLO")
-		return false;
-	}
 	if (inptMontoGasto == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL GASTO")
 		return false;
