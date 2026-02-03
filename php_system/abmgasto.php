@@ -587,7 +587,7 @@ $pagina= "";
  $valor= mysqli_num_rows($result);
  $nroRegistro= $valor;
  $totalGasto=0;
- $registrosZona = array();
+ $registroZona = array();
 
  $styleName="tableRegistroSearch";
  
@@ -625,7 +625,6 @@ $pagina= "";
 	  }
  }
  
- $pagina .= '<div class="card" style="width: 100%;">';
  foreach ($registroZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
@@ -658,14 +657,16 @@ $pagina= "";
 			break;
 	}
 
-	$pagina .= '<div class="card-header" type="button" onclick="mostrarItems(zonaGastos'.$idZona.')" style="background-color: '.$styleColor.';">'.
-      '<h4>'.$titulo.': <span>'.$totalZona.'</span> Gs.</h4>'.
-	  '<div class="collapse show" id="zonaGastos'.$idZona.'" style="disply:none;"><ul class="list-group list-group-flush">';
+	$pagina .= '<div class="card" style="width: 100%; margin: 0;">'.
+	  '<div class="card-header" type="button" onclick="mostrarItems(\'zonaGastos'.$idZona.'\')" style="background-color: '.$styleColor.'">'.
+      	'<h4><b>'.$titulo.'</b>: <span>'.number_format($totalZona, 0, ',', '.').'</span> Gs.</h4>'.
+	  '</div>'.
+	  '<div class="collapse" id="zonaGastos'.$idZona.'" style=""><ul class="list-group list-group-flush">';
 
 	$totalMonto= 0;
 	$paginaMotivo= "";
-	$titulo= "";
 	foreach ($cod_motivos as $cod_motivo => $gastos) {
+		$titulo= "";
 		foreach ($gastos as $valor) {
 			$idgastos=$valor['idgastos'];
 			$interconsulta_nombre= utf8_encode($valor['interconsulta_nombre']);
@@ -689,6 +690,8 @@ $pagina= "";
 			$fecha_autoriz = utf8_encode($valor['fecha_autoriz']);
 			$usuario_autoriz_nombre= utf8_encode($valor['usuario_autoriz_nombre']);
 			$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
+
+			$titulo= $motivo;
 	
 			$totalMonto += intval($monto);
 			$styleEstado = "";
@@ -727,7 +730,7 @@ $pagina= "";
 				</tr>
 				</table>";
 	
-			$paginaMotivo .= "<li class='list-group-item'>
+			$paginaMotivo .= "<li class='list-group-item' style='padding: 0;'>
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
@@ -756,21 +759,21 @@ $pagina= "";
 				</table>
 			</li>";
 		}
- 		/* $pagina .= '<div class="card" style="width: 100%;">'.
-			'<div class="card-header" type="button" onclick="mostrarItems(zonaMotivos'.$cod_motivo.')">'.
-				'<h4>'.$titulo.': <span>'.$totalMonto.'</span> Gs.</h4>'.
-				'<div class="collapse show" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
-					$paginaMotivo.
-				'</ul></div>'.
+ 		$pagina .= '<li class="list-group-item" style="padding: 0;"><div class="card" style="width: 100%; margin: 0; margin-top: 10px;">'.
+			'<div class="card-header" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
+				'<h4><b>'.$titulo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h4>'.
+				'<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$motivo.'\';">'.
 			'</div>'.
-		'</div>'; */
+			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
+				$paginaMotivo.
+			'</ul></div>'.
+		'</div></li>';
 	}
 
 	$pagina .= '</ul></div>'.
-		'</div>';
+		'</div>'.
+	'</div>';
  }
- $pagina .= '</div>';
-
  
 /*Retornamos los datos obtenidos mediante el JSON */      
 $informacion =array(
@@ -1350,7 +1353,7 @@ $fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="update motivos_ingreso_egreso SET fecha_edit= $fechaActual, cod_usuarioFK= $cod_usuarioFK, presupuesto= $presupuesto, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$consulta1="update motivos_ingreso_egreso SET fecha_edit= '$fechaActual', cod_usuarioFK= $cod_usuarioFK, presupuesto= $presupuesto, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {

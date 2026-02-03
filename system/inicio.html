@@ -4282,7 +4282,7 @@ title='Volver Atras' onclick='verCerrarVentanaAbmGasto("2","")' />
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC' >Monto :</p>
+<p class='pTituloC' >Monto* :</p>
 <input class='inputText' type='text' placeholder='Obligatorio (*)'
 id='inptMontoGasto' onkeyup='separadordemiles(this)'
 style='width:200px' />
@@ -4293,7 +4293,7 @@ style='width:200px' />
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC' >Motivo :</p>
+<p class='pTituloC' >Motivo* :</p>
 <!-- <select class="inputSelect" id="inptMotivoMisGastos" -->
 <!-- style='width:150px'></select> -->
 <input id='inptMotivoMisGastos' list='ListMotivoMisGastos' style='width:70%' type='text' class='inputText' />
@@ -4306,7 +4306,7 @@ style='width:200px' />
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC' >Descripcion :</p>
+<p class='pTituloC' >Descripcion* :</p>
 <textarea class='textarea1' placeholder='Obligatorio (*)'
 id='inptDescripcionGasto' style='height:120px'></textarea>
 </td>
@@ -4325,12 +4325,12 @@ id='inptPersonalGasto' style='width:200px' />
 <table style='width:100%'>
 <tr>
 <td style="width: 40%;">
-<p class='pTituloC' >Fecha :</p>
+<p class='pTituloC' >Fecha* :</p>
 <input class='inputText' type='Date' id='inptFechaGasto'
 style='width:150px' />
 </td>
 <td style="width: 60%;">
-<p class='pTituloC' >Local :</p>
+<p class='pTituloC' >Local* :</p>
 <select class="inputSelect" id="inptlocalMisGastos"
 style='width:150px'></select>
 </td>
@@ -4350,7 +4350,7 @@ style='width:150px'></select>
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC' >Tipo :</p>
+<p class='pTituloC'>Tipo* :</p>
 <select class="inputSelect" id="inptTipoGasto" style='width:150px'>
 <option value="Ingreso">INGRESO</option>
 <option value="Egreso">EGRESOS</option>
@@ -4392,7 +4392,7 @@ style='width:150px'></select>
 </tr>
 </table>
 <br>
-<table style='width:100%'>
+<table style='width:100%; display: none;'>
 <tr>
 <td>
 <p class='pTituloC' >Arreglo :</p>
@@ -4404,7 +4404,6 @@ style='width:150px'></select>
 </td>
 </tr>
 </table>
-<br>
 <table style='width:100%'>
 <tr>
 <td>
@@ -4595,7 +4594,7 @@ id="inptlocalMisGastosBusca"></select>
 </tr>
 </tbody>
 </table>
-  <div class="div_cuerpo_table" id="table_abm_gasto" style="max-height: 1000px;"></div>
+  <div class="div_cuerpo_table" id="table_abm_gasto" style="max-height: 1000px; width: 100%;"></div>
   <div class="div_cuerpo_table" id="table_abm_gasto_imprimir" style="display: none;"></div>
 </div>
 <div class='divMenuf'>
@@ -27933,7 +27932,7 @@ style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
         <i class="fa-solid fa-xmark text-danger" style="font-size: 16pt;"></i>
       </button>
     </div>
-    <div class="toast-body" id="lbltitulomensajedetalle" >
+    <div class="toast-body" id="lbltitulomensajedetalle">
       
     </div>
   </div>

@@ -596,7 +596,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.57"
+var codigodeactualizacion="X-GT-1-JMTG-V1.58"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -1981,6 +1981,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 INFO
 */
 function ver_vetana_informativa(titulo, detalle= "", tipo="") {
+	document.getElementById('lbltitulomensajedetalle').style.display = "";
 	titulo= titulo.toLowerCase();
 
 	// Comprueba si es informacion ya predefinida o con error
@@ -1993,7 +1994,12 @@ function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 		tipo= "advertencia";
 	}
 	document.getElementById('lbltitulomensaje').innerHTML = titulo;
-	document.getElementById('lbltitulomensajedetalle').innerHTML = detalle;
+	document.getElementById('lbltitulomensajedetalle').innerHTML = detalle.charAt(0).toUpperCase() + detalle.slice(1);
+	
+	// Oculta la ventana de detalles en caso de no tener informacion
+	if (!detalle) {
+		document.getElementById('lbltitulomensajedetalle').style.display = "none";
+	}
 
 	switch (tipo) {
 		case 'error':
@@ -2009,6 +2015,7 @@ function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 			document.getElementById('lbltitulomensaje').parentElement.style.backgroundColor= '#646363';
 			break;
 	}
+	
 //	document.getElementById('div_principal_info').style.display = ''
 
 	const toastLiveExample = document.getElementById('liveToast');

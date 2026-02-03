@@ -10,6 +10,7 @@ function mostrarItems(id_elemento) {
 			if(controlacceso("VERGASTOSZONAINGRESOS","accion")==false){return;}
 			break;
 	}
+
 	const elemento= document.getElementById(id_elemento);
 	
 	// Despliega o oculta segun el estado actual
