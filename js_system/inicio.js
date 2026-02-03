@@ -8440,7 +8440,7 @@ function buscarabmZonaOption() {
 	document.getElementById("inptZonaImpago").innerHTML = "";
 	document.getElementById("inptZonaClienteFiel").innerHTML = "";
 	document.getElementById("inptZonaCumpleCliente").innerHTML = "";
-	document.getElementById("inptBuscarAbmsolicitudCredito4").innerHTML = "";
+	//document.getElementById("inptBuscarAbmsolicitudCredito4").innerHTML = "";
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -8502,7 +8502,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptZonaImpago").innerHTML = datos_buscados;
 					document.getElementById("inptZonaClienteFiel").innerHTML = datos_buscados;
 					document.getElementById("inptZonaCumpleCliente").innerHTML = datos_buscados;
-					document.getElementById("inptBuscarAbmsolicitudCredito4").innerHTML = datos_buscados;
+					//document.getElementById("inptBuscarAbmsolicitudCredito4").innerHTML = datos_buscados;
 
 				}
 			} catch (error) {
@@ -10457,7 +10457,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptLocalProductoListadoDespachar2").innerHTML = ""
 	document.getElementById("inptlocalMoroso").innerHTML = ""
 	document.getElementById("inptlocalClienteFiel").innerHTML = ""
-	document.getElementById("inptlocalsolicitudCredito").innerHTML ="";
+	//document.getElementById("inptlocalsolicitudCredito").innerHTML ="";
 	document.getElementById("inptlocalContabilidad").innerHTML ="";
 	document.getElementById("inptlocalContabilidadCompra").innerHTML =""	
 	document.getElementById("inptBuscarLocalPaciente").innerHTML =""	
@@ -10516,7 +10516,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					var datos_buscados = datos[2];
 					document.getElementById("inptBuscarLocalPaciente").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocaluser").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
-					document.getElementById("inptlocalsolicitudCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+					//document.getElementById("inptlocalsolicitudCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptBuscarAbmInventarioLocal3").innerHTML = datos_buscados
 					document.getElementById("inptLocalInventarioInsumo").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalProducto").innerHTML = datos_buscados
@@ -10660,7 +10660,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 function seleccionarLocalUSer(){
 			document.getElementById("inptBuscarLocalPaciente").value = cod_localFKUSer
 			document.getElementById("inptlocaluser").value = cod_localFKUSer
-			document.getElementById("inptlocalsolicitudCredito").value = cod_localFKUSer
+			//document.getElementById("inptlocalsolicitudCredito").value = cod_localFKUSer
 			
 		
 		document.getElementById("inptBuscarUsuario4").value = cod_localFKUSer
@@ -32366,7 +32366,7 @@ function obtenerdatosvistaproductodesdeSolicitudCredito(datostr) {
 
 function buscarCobradorSelec() {
 
-	document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = ""
+	//document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = ""
 	document.getElementById("inptBuscarHistorialVentaAgenteCredito").innerHTML = ""
 	document.getElementById("inptBuscarActualizarAgenteCredito").innerHTML = ""
 
@@ -32409,7 +32409,7 @@ function buscarCobradorSelec() {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = ''
+			//document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = ''
 			document.getElementById("inptBuscarHistorialVentaAgenteCredito").innerHTML = ""
 			document.getElementById("inptBuscarActualizarAgenteCredito").innerHTML = ""
 		},
@@ -32417,7 +32417,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = ''
+			//document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = ''
 			document.getElementById("inptBuscarHistorialVentaAgenteCredito").innerHTML = ""
 			document.getElementById("inptBuscarActualizarAgenteCredito").innerHTML = ""
 			try {
@@ -32426,7 +32426,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 				   var datos_buscados = datos[2];
-					document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = datos_buscados
+					//document.getElementById("inptBuscarAbmsolicitudCredito6").innerHTML = datos_buscados
 					document.getElementById("inptBuscarHistorialVentaAgenteCredito").innerHTML = datos_buscados
 					document.getElementById("inptBuscarActualizarAgenteCredito").innerHTML = datos_buscados
 				}
