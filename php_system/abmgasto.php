@@ -1281,6 +1281,18 @@ if ( ! $stmt->execute()) {
 			  $categoria= utf8_encode($valor['categoria']);
 			  $necesita_autorizacion = utf8_encode($valor['necesita_autorizacion']);
 			  $presupuesto= intval(utf8_encode($valor['presupuesto']));
+
+			  switch ($categoria) {
+				case 'operativo':
+					$categoria= "Costo fijo";
+					break;
+				case 'directo':
+					$categoria= "Gasto Variable";
+					break;
+				case 'ingreso':
+					$categoria= "Ingreso";
+					break;
+			  }
 		  	 
 			  $styleName=CargarStyleTable($styleName);
 			  $pagina.="
