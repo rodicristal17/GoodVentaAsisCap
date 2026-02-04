@@ -1157,7 +1157,7 @@
                 WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroFechaLimite
             )) DESC,
             FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'),
-            cod_interConsulta DESC $limite";
+            ic.cod_interConsulta DESC $limite";
 
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);

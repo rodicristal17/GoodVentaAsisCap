@@ -39,6 +39,10 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
         datos.append("ocultar_inactivos", ocultar_inactivos);
     }
 
+    if (limite != 0) {
+        document.getElementById('table_frm_VistaInterConsulta').innerHTML= paginacargando;
+        datos.append("limite", limite);
+    }
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -80,8 +84,6 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta) {
-					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
-
                     // Verifica si hay mensajes pendientes en una interconsulta abierta
                     if (cod_interConsulta) {
                         datos["3"].forEach(function(valor) {
@@ -106,25 +108,27 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                         } else {
                             document.getElementById('avisoInterconsultasAbiertos').style.display= "none";
                         }
+                    } else {
+    					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
+
+                        registrocargadoInterConsulta= Number(datos["4"]);
+                        registroInterConsultaAbierta= Number(datos["7"]);
+                        totalregistroinformeInterConsulta= Number(datos["5"]);
+                        if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
+                            var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
+                            document.getElementById("tbProcessInformeInterConsulta").style.display=""
+                            document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
+    
+                            controldebusquedadInformeInterConsulta=true
+                            buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
+                        }else{
+                            controldebusquedadInformeInterConsulta=false
+                        }
+    
+                        // Completa los contadores
+                        document.getElementById('inptRegistoCargadoInterConsulta').value= registrocargadoInterConsulta;
+                        document.getElementById('inptRegistoInterConsultaAbierta').value= registroInterConsultaAbierta;
                     }
-
-                    registrocargadoInterConsulta= Number(datos["4"]);
-                    registroInterConsultaAbierta= Number(datos["7"]);
-                    totalregistroinformeInterConsulta= Number(datos["5"]);
-                    if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
-                        var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
-                        document.getElementById("tbProcessInformeInterConsulta").style.display=""
-                        document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
-
-                        controldebusquedadInformeInterConsulta=true
-                        buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
-                    }else{
-                        controldebusquedadInformeInterConsulta=false
-                    }
-
-                    // Completa los contadores
-                    document.getElementById('inptRegistoCargadoInterConsulta').value= registrocargadoInterConsulta;
-                    document.getElementById('inptRegistoInterConsultaAbierta').value= registroInterConsultaAbierta;
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
