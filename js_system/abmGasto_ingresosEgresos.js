@@ -27,7 +27,8 @@ function verCerrarAbmGasto(){
 	limpiarcamposbuscadoregresoingreso()
 	}else{	
         if(controlacceso("VERLISTADOEGRESOINGRESO","accion")==false){return;}
-        buscaroptionMotivoEgresoIngreso()
+		checkfiltroshistorialegresoingreso(1);
+        buscaroptionMotivoEgresoIngreso();
 		buscarabmGasto();
 		document.getElementById("divAbmGastos").style.display=""
         document.getElementById("tdEfectoAbmGasto").className="magictime slideDownReturn"

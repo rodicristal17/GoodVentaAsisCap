@@ -151,6 +151,7 @@ if($operacion=="editar")
  	$valor= mysqli_num_rows($result);
 	if ($valor > 0) {
 		echo json_encode(array("1" => "error", "2" => "No se puede cerrar la caja", "3" => "Existen $valor Egresos / Ingresos que necesitan aprobacion."));
+		exit;
 	}
 
 	// Obtiene los montos en cada tipo de moneda

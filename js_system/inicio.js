@@ -9457,6 +9457,7 @@ verCerrarEfectoCargando("1")
 					controldecaja()
 				} else {
 					ver_vetana_informativa(datos[2], datos[3]);
+					return false;
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
