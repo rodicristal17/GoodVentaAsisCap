@@ -114,7 +114,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById("inptCodigoAutorizacionEgreso").value= $(datostr).children('td[id="td_id"]').html();
 	document.getElementById("inptMotivoAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_14"]').html();
 	document.getElementById('inptMontoAutorizacionEgreso').value = $(datostr).children('td[id="td_datos_1"]').html();
-	if ($(datostr).children('td[id="td_datos_5"]').html() == 'pendiente') {
+	if ($(datostr).children('td[id="td_datos_5"]').html() == 'solicitado') {
 		document.getElementById("inptCodUsuarioAutorizacionEgreso").value= "";
 		document.getElementById("inptUsuarioAutorizacionEgreso").value= "";
 		document.getElementById("inptFechaAutorizacionEgreso").value= "";

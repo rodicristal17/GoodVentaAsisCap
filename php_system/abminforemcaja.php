@@ -319,7 +319,6 @@ function datosdeIngreso($idArqeoFk)
 		from gastos g where codApertura='$idArqeoFk' and estado='Activo' and tipo='Ingreso' ";
 		
    
-   
    $stmt = $mysqli->prepare($sql);
  
 if ( ! $stmt->execute()) {

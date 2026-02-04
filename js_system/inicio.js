@@ -9455,6 +9455,8 @@ verCerrarEfectoCargando("1")
 						ImprimirTicketReportCierreCaja()
 					}
 					controldecaja()
+				} else {
+					ver_vetana_informativa(datos[2], datos[3]);
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -25097,7 +25099,7 @@ function respuestaJqueryAjax(Respuesta){
 	return false;
 	}
     if (Respuesta == "NI") {
-	ver_vetana_informativa("NO TIENES PERMISO PARA CONTINUA")
+	ver_vetana_informativa("NO TIENES PERMISO PARA CONTINUA", "", "error")
 	return false;
     }
 	if (Respuesta == "CI") {
@@ -25122,10 +25124,9 @@ function respuestaJqueryAjax(Respuesta){
     }
 	
 	if(Respuesta == "NoExiste") {
-    ver_vetana_informativa("EL REGISTRO NO EXISTE")
+    ver_vetana_informativa("EL REGISTRO NO EXISTE", "", "error")
 	return false;
     }
-	
 }
 /*
 Control de acceso 
