@@ -141,7 +141,7 @@ if ($operacion == "verficiarLimiteMotivo") {
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
 	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
 
-	echo json_encode(array("1" => "exito", "2" => $informacion["4"]["presupuesto"], "3" => $informacion2["4"]));	
+	echo json_encode(array("1" => "exito", "2" => $informacion["4"]["presupuesto"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));	
 	exit;
 }
 
@@ -780,6 +780,7 @@ $informacion =array(
 	"1" => "exito",
 	"2" => $pagina,
 	"3" => $nroRegistro,
+	"4" => $totalGasto,
 	"12" => $paginaImprimir,
 );
 return $informacion;
