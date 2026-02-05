@@ -296,6 +296,7 @@
                     <div class="card my-3" style="border-left: 5px solid gray;width: 500px;margin-left: 10px; margin-right: 10px;">
                       <div class="card-body">
                           <div style="display: flex;">
+                            <span style="display: none;">'.$valueMens['cod_mensaje'].'</span>
                             <p class="card-text" style="text-align: justify;">Mensaje programado de '.$valueMens['nombre_persona'].' para el '.$valueMens['fecha_creacion'].'</p>
                           </div>
                       </div>
@@ -589,6 +590,7 @@
             
             $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
                     <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
+                      <span></span>
                       <div class="card-header d-flex justify-content-between align-items-center">
                           <div>
                             <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="max-height: 30px;max-width: 35px;"/>
@@ -1036,8 +1038,15 @@
         // Guarda las menciones e incluye al creador
         $ids_menciones = array_unique($ids_menciones);
         foreach ($ids_menciones as $value) {
-            if ($value === $user) {
-                abmMencion(null, $user, $cod_mensaje, 1, 'activo');
+            // Marca al creador como leido solo si no es mensaje programado
+            $fechaActualObj = new DateTime();
+            $fechaCreacionObj = new DateTime($fecha_creacion);
+            // Verifica si la diferencia en minutos es menor a 10
+            $intervalo = $fechaActualObj->diff($fechaCreacionObj);
+            $minutosDiferencia = ($intervalo->days * 24 * 60) + ($intervalo->h * 60) + $intervalo->i;
+
+            if ($value === $user && ($minutosDiferencia < 10)) {
+                abmMencion(null, $value, $cod_mensaje, 1, 'activo');
             } else {
                 abmMencion(null, $value, $cod_mensaje, 0, 'activo');
             }
