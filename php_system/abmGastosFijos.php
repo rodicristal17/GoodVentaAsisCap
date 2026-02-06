@@ -108,13 +108,13 @@
 
             switch ($key) {
                 case 'estado':
-                    $sqlFiltro .= "m.estado = '$value'";
+                    $sqlFiltro .= "gf.estado = '$value'";
                     break;
                 default:
                     if (is_numeric($value)) {
-                        $sqlFiltro .= "m.$key = $value";
+                        $sqlFiltro .= "gf.$key = $value";
                     } else {
-                        $sqlFiltro .= "m.$key like '%$value%'";
+                        $sqlFiltro .= "gf.$key like '%$value%'";
                     }
                     break;
             }
@@ -128,7 +128,7 @@
 
         $sql= "SELECT *,
             (SELECT asunto FROM interconsulta WHERE cod_interConsulta = gf.cod_interConsultaFK) AS asunto_interConsulta
-            FROM gastos_fijos gf ORDER BY cod_gastos_fijos ASC";
+            FROM gastos_fijos gf $sqlFiltro ORDER BY cod_gastos_fijos ASC";
 
         $mysqli=conectar_al_servidor();
 
