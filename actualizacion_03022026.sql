@@ -54,3 +54,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+UPDATE gastos_fijos SET estado="inactivo" WHERE cod_gastos_fijos IS NOT NULL;
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.59', detalles='Rediseño de ventana de egreso / ingreso', fecha='2026-02-06' WHERE idhistorialactualizacion= 2;

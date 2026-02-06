@@ -596,7 +596,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.58"
+var codigodeactualizacion="X-GT-1-JMTG-V1.59"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
