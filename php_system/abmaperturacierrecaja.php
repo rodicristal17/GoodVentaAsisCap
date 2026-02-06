@@ -2,11 +2,11 @@
 
 $operacion = $_POST['funt'];
 $operacion = utf8_decode($operacion);
-include('quitarseparadormiles.php');
-include("buscar_nivel.php");
-require("conexion.php");
-include("verificar_navegador.php");
-include("classTable.php");
+include_once('quitarseparadormiles.php');
+include_once("buscar_nivel.php");
+require_once("conexion.php");
+include_once("verificar_navegador.php");
+include_once("classTable.php");
 
 function verificar($operacion)
 {
@@ -97,8 +97,9 @@ $usuario = utf8_decode($usuario);
 $lote = $_POST['lote'];
 $lote = utf8_decode($lote);
 
-buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote);
-
+$informacion = buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote);
+echo json_encode($informacion);	
+exit;
 }
 
 if($operacion=="buscarcajaapp")
@@ -451,6 +452,8 @@ $TotalIngreso = 0;
 $TotalEgreso = 0;
 $TotalCobros = 0;
 
+$registros = array();
+
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
@@ -539,16 +542,31 @@ if($fechacierre!=""){
 </tr>
 </table>";
 
-
+$registros[]= array(
+	'lote' => utf8_encode($valor['lote']),
+	'idarqueocaja' => utf8_encode($valor['idarqueocaja']),
+	'caja_idcaja' => utf8_encode($valor['caja_idcaja']),
+	'montoapertura' => utf8_encode($valor['montoapertura']),
+	'montocierre' => utf8_encode($valor['montocierre']),
+	'fechaapertura' => utf8_encode($valor['fechaapertura']),
+	'fechacierre' => utf8_encode($valor['fechacierre']),
+	'estado' => utf8_encode($valor['estado']),
+	'codusuarioap' => utf8_encode($valor['codusuarioap']),
+	'codusuarioce' => utf8_encode($valor['codusuarioce']),
+	'cod_local' => utf8_encode($valor['cod_local']),
+	'nombrelocal' => utf8_encode($valor['nombrelocal']),
+	'cajanro' => utf8_encode($valor['cajanro']),
+	'usuarioap' => utf8_encode($valor['usuarioap']),
+	'usuariocie' => utf8_encode($valor['usuariocie']),
+	'diferencia' => $diferencia,
+);
 }
 }
 
 
 $Totaldiferencia = ($TotalCobros + $TotalIngreso) - $TotalEgreso;
 
-$informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>number_format($Totaldiferencia,'0',',','.'),"5"=>number_format($TotalApertura,'0',',','.'),"6"=>number_format($TotalCierre,'0',',','.'),"7"=>number_format($TotalIngreso,'0',',','.'),"8"=>number_format($TotalEgreso,'0',',','.'),"9"=>number_format($TotalCobros,'0',',','.'));
-echo json_encode($informacion);	
-exit;
+return array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>number_format($Totaldiferencia,'0',',','.'),"5"=>number_format($TotalApertura,'0',',','.'),"6"=>number_format($TotalCierre,'0',',','.'),"7"=>number_format($TotalIngreso,'0',',','.'),"8"=>number_format($TotalEgreso,'0',',','.'),"9"=>number_format($TotalCobros,'0',',','.'), "10" => $registros);
 }
 
 function buscarcajaapp($fecha1,$fecha2,$cobrador,$estado)

@@ -2,16 +2,17 @@
 
 $operacion = $_POST['funt'];
 $operacion = utf8_decode($operacion);
-include('quitarseparadormiles.php');
-include("buscar_nivel.php");
-require("conexion.php");
-include("verificar_navegador.php");
-include("classTable.php");
-include("subir_foto_base64.php");
+include_once('quitarseparadormiles.php');
+include_once("buscar_nivel.php");
+require_once("conexion.php");
+include_once("verificar_navegador.php");
+include_once("classTable.php");
+include_once("subir_foto_base64.php");
+include_once("abmaperturacierrecaja.php");
 
 date_default_timezone_set('America/Asuncion');
 
-function verificar($operacion)
+function verificarOperacionGasto($operacion)
 {
 	
  $user=$_POST['useru'];
@@ -84,7 +85,7 @@ $cod_interConsultaFK= utf8_decode($cod_interConsultaFK);
 		exit;
 	}
 
-	abm($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
+	abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
 
 }
 if ($operacion=='cargar_imagen') {
@@ -449,7 +450,7 @@ function subirImagenGasto($idgastos, $foto, $ext) {
 	return true;
 }
 
-function abm($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion)
+function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion)
 {
 		
 if($monto==""   ){
@@ -641,6 +642,40 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 			}
 		}
 	}
+
+	// Agrega el ingreso de los cierres de caja
+	$registroCierreCaja= buscarVista($fecha1, $fecha2, "", "Cerrado", $cod_local, $usuario, "")[10];
+
+	$registrosZona['ingreso'][-1]= array();
+	foreach ($registroCierreCaja as $key => $value) {
+		// Crea un registro ficticio
+		$valor= array(
+			'idgastos' => "",
+			'interconsulta_nombre' => "",
+			'cod_interConsultaFK' => "",
+			'usuarionombre' => $value['usuariocie'],
+			'monto' => $value['diferencia'],
+			'motivo' => "Movimiento de caja",
+			'descripcion' => "Diferencia entre apertura y cierra de caja con lote ".$value['lote'],
+			'fecha' => $value['fechacierre'],
+			'tipo' => "Ingreso",
+			'estado' => "activo",
+			'cod_local' => $value['cod_local'],
+			'nombrelocal' => $value['nombrelocal'],
+			'nroboleta' => "",
+			'banco' => "",
+			'nrocuenta' => "",
+			'arreglo' => "",
+			'url1' => "",
+			'categoria' => "ingreso",
+			'cod_usuario_autoriz' => "",
+			'fecha_autoriz' => "",
+			'usuario_autoriz_nombre' => "",
+			'cod_motivoIngresoEgresoFK' => -1,
+		);
+		$registrosZona['ingreso'][-1][]= $valor;
+		$totalZonaIngresos += intval($value['diferencia']);
+	}
  
  foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
@@ -688,7 +723,11 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 		$totalMonto= 0;
 		$paginaMotivo= "";
 		// Obtiene el nombre del motivo
-		$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
+		if ($cod_motivo == -1) {
+			$titulo_motivo= "Movimiento de caja";
+		} else {
+			$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
+		}
 		foreach ($gastos as $valor) {
 			$idgastos=$valor['idgastos'];
 			$interconsulta_nombre= utf8_encode($valor['interconsulta_nombre']);
@@ -713,6 +752,11 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 			$usuario_autoriz_nombre= utf8_encode($valor['usuario_autoriz_nombre']);
 			$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
 	
+			$funcion= "obtenerdatosabmGasto(this)";
+			if ($idgastos == "") {
+				$funcion= "";
+			}
+
 			$totalMonto += intval($monto);
 			$styleEstado = "";
 			if ($estado == 'solicitado') {
@@ -753,7 +797,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	
 			$paginaMotivo .= "<li class='list-group-item' style='padding: 0; padding-left: 0.5rem;'>
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+				<tr id='tbSelecRegistro' onclick='$funcion'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
 				<td  style='width:15%'>".$descripcion."</td>
@@ -784,7 +828,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
  		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;">'.
 			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
 				'<h6><b>'.$titulo_motivo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
-				'<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">'.
+				($cod_motivo == -1 ? '' : '<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">').
 			'</div>'.
 			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
 				$paginaMotivo.
@@ -1497,5 +1541,5 @@ function obtenerLimiteCaja() {
 	return $registros;
 }
 
-verificar($operacion);
+verificarOperacionGasto($operacion);
 ?>
