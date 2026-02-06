@@ -436,7 +436,7 @@ function comprobarLimiteMotivo(cod_motivo, cod_local) {
 				   const limite = parseInt(datos["2"]);
 				   const total = parseInt(datos["3"].replace('.',''));
 
-				   if (!(Number.isNaN(limite)) && total >= limite) {
+				   if (!(Number.isNaN(limite)) && total >= limite && limite > 0) {
 					   ver_vetana_informativa("Ha superado el limite permitido para este motivo de gasto.");
 				   } else if (total >= (limite * 0.9)) {
 					   ver_vetana_informativa("Esta llegando al limite presupuestado para este motivo de gasto.");
@@ -680,6 +680,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
        }
     });
 	
+	document.getElementById("table_abm_gasto").innerHTML = paginacargando;
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,

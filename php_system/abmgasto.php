@@ -75,9 +75,9 @@ $cod_interConsultaFK= utf8_decode($cod_interConsultaFK);
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
 	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
 
-	if ($informacion["4"]["presupuesto"] && $informacion["4"]["presupuesto"] != '0')
+	if ($informacion["4"][0]["presupuesto"] && $informacion["4"][0]["presupuesto"] != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
-	$limite_presupuesto= intval(str_replace('.', '', $informacion["4"]["presupuesto"]));
+	$limite_presupuesto= intval(str_replace('.', '', $informacion["4"][0]["presupuesto"]));
 	if ($limite_presupuesto > 0 && $totalGasto > $limite_presupuesto) {
 		$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido.");
 		echo json_encode($informacion);	
@@ -141,7 +141,7 @@ if ($operacion == "verficiarLimiteMotivo") {
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
 	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
 
-	echo json_encode(array("1" => "exito", "2" => $informacion["4"]["presupuesto"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));	
+	echo json_encode(array("1" => "exito", "2" => $informacion["4"][0]["presupuesto"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));	
 	exit;
 }
 
@@ -461,12 +461,12 @@ exit;
 $mysqli=conectar_al_servidor();
 
 // Identifica si el motivo necesita autorizacion
-$registros_motivos= buscarabmmotivoingresoegreso('%', 'activo',$cod_motivo);
+$registros_motivos= buscarabmmotivoingresoegreso('', 'activo',$cod_motivo);
 
 if($operacion=="nuevo")
 {
 
-if ($estado == 'Activo' && $registros_motivos['4']['necesita_autorizacion'] == '1') {
+if ($estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] == '1') {
 	$estado = "solicitado";
 }
 
@@ -522,110 +522,127 @@ exit;
 
 function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK)
 {
-	$mysqli=conectar_al_servidor();
-	$pagina='';
+	$totalZonaIngresos= 0;
+	$totalZonaCostosDirectos= 0;
+	$totalZonaGastosOperativos= 0;
+	$totalZonaSinCategorizar= 0;
+	$totalGasto=0;
 
-	$sqlFiltro= '';
-	if($cod_local != ""){
-		$sqlFiltro .= " and g.cod_local='$cod_local'";
-	}
-	if($tipo!=""){
-		$sqlFiltro .= " and g.tipo='$tipo'";
-	}
-	if($arreglo!=""){
-		$sqlFiltro .=" and g.arreglo='$arreglo'";
-	}
-	if($fecha!=""){
-		$sqlFiltro .=" and g.fecha='$fecha'";
-	}
-	if($usuario!=""){
-		$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=g.cod_usuario) like '%".$usuario."%'";
-	}
-	if($fecha1!="" && $fecha2!="" ){
-		$sqlFiltro .=" and g.fecha>='$fecha1' and g.fecha<='$fecha2'"; 
-	}
-	if ($cod_motivoFK != "") {
-		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = $cod_motivoFK";
-	}
-	if ($ocultar_inactivos == "true") {
-		$sqlFiltro .= " and g.estado != 'Inactivo'";
-	}
-	if ($estado != "") {
-		$sqlFiltro .= " and g.estado='$estado'";
-	}
+	$paginaImprimir= "";
+	$pagina= "";
 
-	// Se limpia el primer ' and'
-	if (strlen($sqlFiltro) > 0) {
-		$sqlFiltro = "where" . substr($sqlFiltro, 4, strlen($sqlFiltro));
-	}
-		 
-	$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
-	g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,
-	g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK,
-	(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
-	(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
-	(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
-	m.descripcion AS motivo, m.categoria,
-	(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
-	from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY necesita_autorizacion DESC, g.idgastos DESC";
+	$registrosZona= array();
 
-   $stmt = $mysqli->prepare($sql);
-if ( ! $stmt->execute()) {
-   echo "Error";
-   exit;
-}
+	// Primero obtenemos todos los motivos del sistema
+	$registrosMotivos= buscarabmmotivoingresoegreso('', 'activo')[4];
 
-$totalZonaIngresos= 0;
-$totalZonaCostosDirectos= 0;
-$totalZonaGastosOperativos= 0;
-$totalZonaSinCategorizar= 0;
+	// Recorremos los motivos y armamos la tabla base
+	foreach($registrosMotivos as $mot) {
+		// Se normaliza la categoria
+		$categoria= $mot['categoria'];
+		if (empty($categoria) || $categoria == 'NULL' || $categoria == null) {
+			$categoria= "sinCategoria";
+		}
 
-$paginaImprimir= "";
-$pagina= "";
+		// Se crea la zona si no existe
+		if (!isset($registrosZona[$categoria])) {
+			$registrosZona[$categoria]= array();
+		}
 
-	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- $nroRegistro= $valor;
- $totalGasto=0;
- $registroZona = array();
+		// Se crea un codigo de motivo si es que no exite
+		if (!isset($registrosZona[$categoria][$mot['cod_motivo_ingreso_egreso']])) {
+			$registrosZona[$categoria][$mot['cod_motivo_ingreso_egreso']]= array();
+		}
 
- $styleName="tableRegistroSearch";
- 
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-			$monto=utf8_encode($valor['monto']);
-			$categoria=utf8_encode($valor['categoria']);
-			$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
-			  
-			if (!isset($registroZona[$categoria])) {
-				$registroZona[$categoria]= array();
-				if (!isset($registroZona[$categoria][$cod_motivoIngresoEgresoFK])) {
-					$registroZona[$categoria][$cod_motivoIngresoEgresoFK]= array();
+		// Busca por motivo
+		$mysqli=conectar_al_servidor();
+
+		$sqlFiltro= '';
+		if($cod_local != ""){
+			$sqlFiltro .= " and g.cod_local='$cod_local'";
+		}
+		if($tipo!=""){
+			$sqlFiltro .= " and g.tipo='$tipo'";
+		}
+		if($arreglo!=""){
+			$sqlFiltro .=" and g.arreglo='$arreglo'";
+		}
+		if($fecha!=""){
+			$sqlFiltro .=" and g.fecha='$fecha'";
+		}
+		if($usuario!=""){
+			$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=g.cod_usuario) like '%".$usuario."%'";
+		}
+		if($fecha1!="" && $fecha2!="" ){
+			$sqlFiltro .=" and g.fecha>='$fecha1' and g.fecha<='$fecha2'"; 
+		}
+		if ($cod_motivoFK != "") {
+			$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = $cod_motivoFK";
+		}
+		if ($ocultar_inactivos == "true") {
+			$sqlFiltro .= " and g.estado != 'Inactivo'";
+		}
+		if ($estado != "") {
+			$sqlFiltro .= " and g.estado='$estado'";
+		}
+		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = ".$mot['cod_motivo_ingreso_egreso'];
+
+		// Se limpia el primer ' and'
+		if (strlen($sqlFiltro) > 0) {
+			$sqlFiltro = "where" . substr($sqlFiltro, 4, strlen($sqlFiltro));
+		}
+			
+		$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
+		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,
+		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK,
+		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
+		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
+		(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
+		m.descripcion AS motivo, m.categoria,
+		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
+		from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY necesita_autorizacion DESC, g.idgastos DESC";
+
+		$stmt = $mysqli->prepare($sql);
+		if ( ! $stmt->execute()) {
+			echo "Error";
+			exit;
+		}
+
+		$result = $stmt->get_result();
+		$valor= mysqli_num_rows($result);
+		$nroRegistro= $valor;
+		$registroZona = array();
+
+		$styleName="tableRegistroSearch";
+		
+		if ($valor>0) {
+			while ($valor= mysqli_fetch_assoc($result)) {
+				$monto=utf8_encode($valor['monto']);
+				$categoria=utf8_encode($valor['categoria']);
+				$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
+				
+				$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
+				$totalGasto=$totalGasto+$monto;
+				
+				switch ($categoria) {
+					case 'ingreso':
+						$totalZonaIngresos += $monto;
+						break;
+					case 'directo':
+						$totalZonaCostosDirectos += $monto;
+						break;
+					case 'operativo':
+						$totalZonaGastosOperativos += $monto;
+						break;
+					default:
+						$totalZonaSinCategorizar += $monto;
+						break;
 				}
 			}
-			$registroZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
-			$totalGasto=$totalGasto+$monto;
-				
-			switch ($categoria) {
-				case 'ingreso':
-					$totalZonaIngresos += $monto;
-					break;
-				case 'directo':
-					$totalZonaCostosDirectos += $monto;
-					break;
-				case 'operativo':
-					$totalZonaGastosOperativos += $monto;
-					break;
-				default:
-					$totalZonaSinCategorizar += $monto;
-					break;
-			}
-	  }
- }
+		}
+	}
  
- foreach ($registroZona as $zona => $cod_motivos) {
+ foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
 	$idZona= "";
@@ -635,25 +652,29 @@ $pagina= "";
 			$idZona= "Ingreso";
 			$titulo= "Ingresos";
 			$totalZona= $totalZonaIngresos;
-			$styleColor= "#28a745;";
+			$styleColor= "#75B59D;";
+			$styleRegistroColor= "#8cac9c;";
 			break;
 		case 'directo':
 			$idZona= "CostosDirectos";
 			$titulo= "Costos Directos";
 			$totalZona= $totalZonaCostosDirectos;
-			$styleColor= "rgb(243 156 51);";
+			$styleColor= "#EABA4C;";
+			$styleRegistroColor= "#F4CB8D;";
 			break;
 		case 'operativo':
 			$idZona= "GastosOperativos";
 			$titulo= "Gastos Operativos";
 			$totalZona= $totalZonaGastosOperativos;
-			$styleColor= "rgb(218 72 72);";
+			$styleColor= "#DE7258;";
+			$styleRegistroColor= "#EDB5A4;";
 			break;
 		default:
 			$idZona= "SinCategorizar";
 			$titulo= "Sin Categorizar";
 			$totalZona= $totalZonaSinCategorizar;
-			$styleColor= "";
+			$styleColor= "#C4C4C4";
+			$styleRegistroColor= "";
 			break;
 	}
 
@@ -661,12 +682,13 @@ $pagina= "";
 	  '<div class="card-header" type="button" onclick="mostrarItems(\'zonaGastos'.$idZona.'\')" style="background-color: '.$styleColor.'">'.
       	'<h4><b>'.$titulo.'</b>: <span>'.number_format($totalZona, 0, ',', '.').'</span> Gs.</h4>'.
 	  '</div>'.
-	  '<div class="collapse" id="zonaGastos'.$idZona.'" style=""><ul class="list-group list-group-flush">';
+	  '<div class="collapse show" id="zonaGastos'.$idZona.'" style=""><ul class="list-group list-group-flush">';
 
-	$totalMonto= 0;
-	$paginaMotivo= "";
-	foreach ($cod_motivos as $cod_motivo => $gastos) {
-		$titulo= "";
+	  foreach ($cod_motivos as $cod_motivo => $gastos) {
+		$totalMonto= 0;
+		$paginaMotivo= "";
+		// Obtiene el nombre del motivo
+		$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
 		foreach ($gastos as $valor) {
 			$idgastos=$valor['idgastos'];
 			$interconsulta_nombre= utf8_encode($valor['interconsulta_nombre']);
@@ -690,8 +712,6 @@ $pagina= "";
 			$fecha_autoriz = utf8_encode($valor['fecha_autoriz']);
 			$usuario_autoriz_nombre= utf8_encode($valor['usuario_autoriz_nombre']);
 			$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
-
-			$titulo= $motivo;
 	
 			$totalMonto += intval($monto);
 			$styleEstado = "";
@@ -727,13 +747,14 @@ $pagina= "";
 				<td  id='td_datos_17' style='display:none'>".$cod_usuario_autoriz."</td>
 				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
+				<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
 				</tr>
 				</table>";
 	
-			$paginaMotivo .= "<li class='list-group-item' style='padding: 0;'>
+			$paginaMotivo .= "<li class='list-group-item' style='padding: 0; padding-left: 0.5rem;'>
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)' style='$styleEstado'>
-				<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
@@ -755,14 +776,15 @@ $pagina= "";
 				<td  id='td_datos_17' style='display:none'>".$cod_usuario_autoriz."</td>
 				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
+				<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
 				</tr>
 				</table>
 			</li>";
 		}
- 		$pagina .= '<li class="list-group-item" style="padding: 0;"><div class="card" style="width: 100%; margin: 0;">'.
-			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
-				'<h6><b>'.$titulo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
-				'<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$motivo.'\';">'.
+ 		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;">'.
+			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
+				'<h6><b>'.$titulo_motivo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
+				'<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">'.
 			'</div>'.
 			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
 				$paginaMotivo.
@@ -1251,7 +1273,7 @@ function buscarabmmotivoingresoegreso($buscar,$Estado,$cod_motivo= 0)
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
 		$sql= "Select *
-        from motivos_ingreso_egreso where $sqlFiltro order by descripcion asc ";
+        from motivos_ingreso_egreso where $sqlFiltro order by FIELD(categoria, 'ingreso', 'directo','operativo'), categoria IS NULL,descripcion asc ";
 
    $stmt = $mysqli->prepare($sql);
 $buscar1="%".$buscar."%";
@@ -1283,6 +1305,15 @@ if ( ! $stmt->execute()) {
 			  $necesita_autorizacion = utf8_encode($valor['necesita_autorizacion']);
 			  $presupuesto= intval(utf8_encode($valor['presupuesto']));
 
+			  $registros[] = array(
+					"cod_motivo_ingreso_egreso" => $cod_motivo_ingreso_egreso,
+					"descripcion" => $descripcion,
+					"estado" => $estado,
+					"categoria" => $categoria,
+					"necesita_autorizacion" => $necesita_autorizacion,
+					"presupuesto" => $presupuesto
+			  );
+
 			  switch ($categoria) {
 				case 'operativo':
 					$categoria= "Costo fijo";
@@ -1308,14 +1339,7 @@ if ( ! $stmt->execute()) {
 			  </tr>
 			  </table>";
 			
-			$registros = array(
-				"cod_motivo_ingreso_egreso" => $cod_motivo_ingreso_egreso,
-				"descripcion" => $descripcion,
-				"estado" => $estado,
-				"categoria" => $categoria,
-				"necesita_autorizacion" => $necesita_autorizacion,
-				"presupuesto" => $presupuesto
-			);
+			
 	  }
  }
  
