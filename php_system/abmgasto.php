@@ -803,6 +803,10 @@ $informacion =array(
 	"2" => $pagina,
 	"3" => $nroRegistro,
 	"4" => $totalGasto,
+	"5" => $totalZonaIngresos,
+	"6" => $totalZonaCostosDirectos,
+	"7" => $totalZonaGastosOperativos,
+	"8" => $totalZonaSinCategorizar,
 	"12" => $paginaImprimir,
 );
 return $informacion;
