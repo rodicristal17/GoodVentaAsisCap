@@ -199,7 +199,8 @@ function buscarCajaOption(){
 function verificardatos(){
 	var user=document.getElementById('inpt_user').value
 	var pass=document.getElementById('inpt_pass').value
-	var inptlocaluser=document.getElementById('inptlocaluser').value
+	var inptlocaluser=document.getElementById('inptlocaluser').value;
+	const inptcajauser= document.getElementById('inptcajauser').value;
 	 if(user==""){
 	  ver_vetana_informativa("FALTO INGRESAR EL USUARIO","#")
 	  return false;
@@ -213,6 +214,10 @@ function verificardatos(){
 	  ver_vetana_informativa("FALTO SELECCIONAR EL LOCAL","#")
 	  return false;
 	  
+  }
+  if (!inptcajauser) {
+	ver_vetana_informativa("FALTO SELECCIONAR UNA CAJA", "#");
+	return false;
   }
 	entrar_al_sistema(user,pass,inptlocaluser);
 }
