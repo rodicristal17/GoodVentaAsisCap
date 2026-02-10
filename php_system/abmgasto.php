@@ -1,14 +1,12 @@
 <?php
 
-$operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
 require_once("conexion.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("subir_foto_base64.php");
-include_once("abmaperturacierrecaja.php");
+include_once("abmpagos.php");
 
 date_default_timezone_set('America/Asuncion');
 
@@ -27,7 +25,7 @@ $informacion =array("1" => "UI");
 echo json_encode($informacion);	
 exit;
 }
-	
+
 if($operacion=="nuevo" || $operacion=="editar")
 {	
 	$idgastos=$_POST['idgastos'];
@@ -644,20 +642,19 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	}
 
 	// Agrega el ingreso de los cierres de caja
-	$registroCierreCaja= buscarVista($fecha1, $fecha2, "", "Cerrado", $cod_local, $usuario, "")[10];
-
+	$registroMontosCobrados= Arqueo($fecha1,$fecha2,$cod_local,"","","","","","","")[7];
 	$registrosZona['ingreso'][-1]= array();
-	foreach ($registroCierreCaja as $key => $value) {
+	foreach ($registroMontosCobrados as $key => $value) {
 		// Crea un registro ficticio
 		$valor= array(
 			'idgastos' => "",
 			'interconsulta_nombre' => "",
 			'cod_interConsultaFK' => "",
-			'usuarionombre' => $value['usuariocie'],
-			'monto' => $value['diferencia'],
+			'usuarionombre' => $value['cod_cobradorFK'],
+			'monto' => $value['Monto'],
 			'motivo' => "Movimiento de caja",
-			'descripcion' => "Diferencia entre apertura y cierra de caja con lote ".$value['lote'],
-			'fecha' => $value['fechacierre'],
+			'descripcion' => "Cobro realizado a ".$value['nombrecliente'] . " en formato ".$value['tipopago'],
+			'fecha' => $value['Fecha'],
 			'tipo' => "Ingreso",
 			'estado' => "activo",
 			'cod_local' => $value['cod_local'],
@@ -674,7 +671,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 			'cod_motivoIngresoEgresoFK' => -1,
 		);
 		$registrosZona['ingreso'][-1][]= $valor;
-		$totalZonaIngresos += intval($value['diferencia']);
+		$totalZonaIngresos += intval($value['Monto']);
 	}
  
  foreach ($registrosZona as $zona => $cod_motivos) {
@@ -1541,5 +1538,9 @@ function obtenerLimiteCaja() {
 	return $registros;
 }
 
-verificarOperacionGasto($operacion);
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	$operacion = $_POST['funt'];
+	$operacion = utf8_decode($operacion);
+	verificarOperacionGasto($operacion);
+}
 ?>

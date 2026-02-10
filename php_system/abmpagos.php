@@ -1,14 +1,11 @@
 <?php
-require("conexion.php");
-include('quitarseparadormiles.php');
-include("verificar_navegador.php");
-$operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
-include("buscar_nivel.php");
-include("calcularintereses.php");
-// include("calcularInteresDirecto.php");
-include("classTable.php");
-
+require_once("conexion.php");
+include_once('quitarseparadormiles.php');
+include_once("verificar_navegador.php");
+include_once("buscar_nivel.php");
+include_once("calcularintereses.php");
+// include_once("calcularInteresDirecto.php");
+include_once("classTable.php");
 
 function ObtenerDatos($operacion)
 {
@@ -285,8 +282,9 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 }
 }
 
-Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$fechafija,$cobrador,$metodo,$codCaja,$condicion);
-
+$informacion =Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$fechafija,$cobrador,$metodo,$codCaja,$condicion);
+echo json_encode($informacion);	
+exit;
 }
 if($operacion=="reeimpresionrecibo" )
 {
@@ -2029,6 +2027,7 @@ $mysqli=conectar_al_servidor();
 
 	
 			$sql= "select  vt.TipoVenta,vt.puntoexpedicion,vt.tipo_comprobante,pg.idPago,pg.tipo, pg.Fecha, sum(pg.Monto) as Monto,pg.cod_venta_fk,pg.tipopago,
+			vt.cod_local, pg.cod_cobradorFK,
 			pg.comision,pg.nrofactura,pg.lot, pg.lat,(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
 			(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as documento,
 			(Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK) as cobradornombre,date_format(hora ,'%H:%i' ) as hora,
@@ -2041,7 +2040,7 @@ $mysqli=conectar_al_servidor();
 			where pg.Monto>0 ".$condicioncajaCobrador.$condicionmetodo.$condicionfecha.$condicionfechafiltro.$condicionfactura.$condicionlocal.$condicioncliente.$condicioncobrador.$condicioncajacondicion." group by  pg.idPago limit 2500";/*Sentencia para buscar registros*/	
 	
 
-
+$registros= array();
  $pagina = "";   
  $paginaentrega = "";   
  $paginacuota = "";   
@@ -2071,6 +2070,7 @@ $num_factura = utf8_encode($valor['num_factura']);
 $Monto = utf8_encode($valor['Monto']);      
 $Fecha = utf8_encode($valor['Fecha']);      
 $cobradornombre = utf8_encode($valor['cobradornombre']);      
+$cod_cobradorFK = utf8_encode($valor['cod_cobradorFK']);      
 $cod_venta = utf8_encode($valor['cod_venta_fk']);      
 $nombrezona = utf8_encode($valor['nombrezona']);      
 $hora = utf8_encode($valor['hora']);      
@@ -2079,6 +2079,7 @@ $lot = utf8_encode($valor['lot']);
 $lat = utf8_encode($valor['lat']);      
 $nombrecliente = utf8_encode($valor['nombrecliente']);      
 $nombrelocal = utf8_encode($valor['nombrelocal']);      
+$cod_local = utf8_encode($valor['cod_local']);      
 $nrofactura = utf8_encode($valor['nrofactura']);      
 $plazo = utf8_encode($valor['plazo']);      
 $tipo_comprobante = utf8_encode($valor['tipo_comprobante']);      
@@ -2088,6 +2089,35 @@ $tipo=utf8_encode($valor['tipo']);
 $nroCancelado=utf8_encode($valor['nroCancelado']);
 $tipopago=utf8_encode($valor['tipopago']);
 $documento=utf8_encode($valor['documento']);
+
+$registros[]= array(
+	'TipoVenta' => utf8_encode($valor['TipoVenta']),
+	'idPago' => utf8_encode($valor['idPago']),
+	'num_factura' => utf8_encode($valor['num_factura']),
+	'Monto' => utf8_encode($valor['Monto']),
+	'Fecha' => utf8_encode($valor['Fecha']),
+	'cobradornombre' => utf8_encode($valor['cobradornombre']),
+	'cod_cobradorFK' => utf8_encode($valor['cod_cobradorFK']),
+	'cod_venta' => utf8_encode($valor['cod_venta_fk']),
+	'nombrezona' => utf8_encode($valor['nombrezona']),
+	'hora' => utf8_encode($valor['hora']),
+	'comision' => utf8_encode($valor['comision']),
+	'lot' => utf8_encode($valor['lot']),
+	'lat' => utf8_encode($valor['lat']),
+	'nombrecliente' => utf8_encode($valor['nombrecliente']),
+	'nombrelocal' => utf8_encode($valor['nombrelocal']),
+	'cod_local' => utf8_encode($valor['cod_local']),
+	'nrofactura' => utf8_encode($valor['nrofactura']),
+	'plazo' => utf8_encode($valor['plazo']),
+	'tipo_comprobante' => utf8_encode($valor['tipo_comprobante']),
+	'puntoexpedicion' => utf8_encode($valor['puntoexpedicion']),
+	'tipo_comprobante'=>utf8_encode($valor['tipo_comprobante']),
+	'tipo'=>utf8_encode($valor['tipo']),
+	'nroCancelado'=>utf8_encode($valor['nroCancelado']),
+	'tipopago'=>utf8_encode($valor['tipopago']),
+	'documento'=>utf8_encode($valor['documento']),
+);
+
 if($tipopago=="Efectivo"){
 	$totalPagadoEfectivo=$totalPagadoEfectivo+$Monto;
 }else{
@@ -2174,10 +2204,8 @@ if($paginaentrega=="" && $paginacuota!=""){
 	$pagina="<p class='ptituloZ'>Cobros de Cuotas</p>".$paginacuota;
 }
    
-$informacion =array("1" => "exito","2" => $pagina,"3" =>number_format($totalPagado,'0',',','.'),"4"=>$nroRegistro
-,"5"=>number_format($totalPagadoEfectivo,'0',',','.'),"6"=>number_format($totalPagadoTarjeta,'0',',','.') );
-echo json_encode($informacion);	
-exit;
+return array("1" => "exito","2" => $pagina,"3" =>number_format($totalPagado,'0',',','.'),"4"=>$nroRegistro
+,"5"=>number_format($totalPagadoEfectivo,'0',',','.'),"6"=>number_format($totalPagadoTarjeta,'0',',','.'), "7" => $registros);
 }
 
 function reeimpresionrecibo($fecha1,$fecha2,$local,$factura,$cliente,$fechafiltro,$cobrador,$metodo)
@@ -3733,11 +3761,10 @@ return $datos;
 
 }
 
-
-
-
-
-
-ObtenerDatos($operacion);
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	$operacion = $_POST['funt'];
+	$operacion = utf8_decode($operacion);
+	ObtenerDatos($operacion);
+}
 
 ?>

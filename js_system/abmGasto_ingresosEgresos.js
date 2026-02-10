@@ -755,15 +755,6 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 					document.getElementById("inptTotalGasto").value = datos[4];
 					separadordemiles(document.getElementById("inptTotalGasto"));
-
-					document.getElementById("inptResumenIngreso").value = datos[5];
-					separadordemiles(document.getElementById("inptResumenIngreso"));
-					document.getElementById("inptResumenGastoOperativo").value = datos[6];
-					separadordemiles(document.getElementById("inptResumenGastoOperativo"));
-					document.getElementById("inptResumenCostoDirecto").value = datos[7];
-					separadordemiles(document.getElementById("inptResumenCostoDirecto"));
-					document.getElementById("inptResumenTotalMovimientoEgreso").value = parseInt(datos[5]) - parseInt(datos[6]) - parseInt(datos[7]);
-					separadordemiles(document.getElementById("inptResumenTotalMovimientoEgreso"));
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
