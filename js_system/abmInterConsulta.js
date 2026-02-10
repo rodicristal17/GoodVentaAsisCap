@@ -5,6 +5,7 @@ var registroInterConsultaAbierta= 0;
 var cod_interConsulta= "";
 
 function buscarPacientesConInterConsultas() {
+    cod_interConsulta= "";
     const cod_interC= document.getElementById('inptBuscarInterConsulta1').value;
     const asunto= document.getElementById('inptBuscarInterConsulta2').value;
     const nombre_responsable= document.getElementById('inptBuscarInterConsulta6').value;
@@ -40,6 +41,8 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
     }
 
     if (limite != 0) {
+        registrocargadoInterConsulta= 0;
+        registroInterConsultaAbierta= 0;
         document.getElementById('table_frm_VistaInterConsulta').innerHTML= paginacargando;
         datos.append("limite", limite);
     }
