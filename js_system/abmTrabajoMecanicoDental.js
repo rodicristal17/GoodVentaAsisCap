@@ -263,6 +263,7 @@ function buscarTrabajoMecanicosDentales() {
                         controldebusquedadTrabajoMecanicoDental=true
                         buscarMasTrabajoMecanicosDentales(inptTipoTrabajoListadoTrabajoMecanicoDental,nombre_paciente,nombre_mecanico,cod_trabajo,estado,ocultar_Inactivo,local);
                     }else{
+                        document.getElementById("tbProcessTrabajoMecanicoDental").style.display="none"
                         controldebusquedadTrabajoMecanicoDental=false
                     }
                 }

@@ -279,7 +279,6 @@
 
     function obtenerTrabajoMecanicosDentales($filtros, $limite = 0) {
         $sqlFiltro = "";
-        $sqlFiltroPersona = '';
 
         foreach ($filtros as $key => $value) {
             if (!$value) {
@@ -317,9 +316,7 @@
                 case 'nombre_paciente':
                     $sqlFiltro .= '(SELECT COUNT(*) 
                         FROM persona 
-                        JOIN venta v ON v.cod_clienteFK = cod_persona 
-                        WHERE v.cod_venta = tmd.cod_ventaFK AND nombre_persona LIKE "%'.$value.'%") > 0';
-                    $sqlFiltroPersona = 'AND nombre_persona like "%'.$value.'%"';
+                        WHERE cod_persona = cl.cod_cliente AND (nombre_persona LIKE "%'.$value.'%" OR cl.ci_cliente LIKE "%'.$value.'%")) > 0';
                     break;
                 case 'nombre_mecanico':
                     $sqlFiltro .= 'p.nombre_persona like "%'.$value.'%"';
@@ -341,17 +338,18 @@
         }
 
         $sql = "SELECT tmd.*, t.descripcion as nombre_tipo_trabajo, p.nombre_persona AS nombre_mecanico, md.cod_mecanico_dental,
-        (SELECT ci_cliente FROM cliente WHERE p.cod_persona = cod_cliente) AS ci_cliente,
         (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_usuarioFK_create) AS nombre_usuario_creat,
         (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_usuarioFK_edit) AS nombre_usuario_edit,
         (SELECT nombre_persona FROM persona WHERE cod_persona = tmd.cod_especialistaFK) AS nombre_especialista,
         (SELECT Nombre FROM local WHERE cod_local = tmd.cod_localFK) AS nombre_local,
-         (SELECT nombre_persona FROM persona JOIN venta v ON v.cod_clienteFK = cod_persona WHERE v.cod_venta = tmd.cod_ventaFK $sqlFiltroPersona) AS nombre_paciente
+        cl.ci_cliente, (SELECT nombre_persona FROM persona WHERE cod_persona = cl.cod_cliente) AS nombre_paciente
          FROM trabajo_mecanico_dental tmd 
          JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = tmd.cod_tipo_trabajoFK 
          JOIN mecanico_dental md ON md.cod_mecanico_dental = tmd.cod_mecanicoDentalFK 
-         JOIN persona p ON p.cod_persona = md.cod_personaFK $sqlFiltro ORDER BY tmd.cod_trabajo_mecanico_dental DESC $limite";
-
+         JOIN persona p ON p.cod_persona = md.cod_personaFK 
+         JOIN venta vt ON vt.cod_venta = tmd.cod_ventaFK
+         JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK $sqlFiltro ORDER BY tmd.cod_trabajo_mecanico_dental DESC $limite";
+        
         $mysqli = conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
         if (!$stmt->execute()) {
