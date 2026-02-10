@@ -186,6 +186,9 @@ function checkFechaTrabajoMecanicoDental(opcion) {
     }
 }
 
+var controldebusquedadTrabajoMecanicoDental= true;
+var totalregistroTrabajoMecanicoDental= 0;
+var registrocargadoTrabajoMecanicoDental= 0;
 function buscarTrabajoMecanicosDentales() {
     let inptTipoTrabajoListadoTrabajoMecanicoDental= document.getElementById('inptTipoTrabajoListadoTrabajoMecanicoDental').value;
     const nombre_paciente= document.getElementById('inptPacienteListadoTrabajoMecanicoDental').value;
@@ -195,12 +198,15 @@ function buscarTrabajoMecanicosDentales() {
     const ocultar_Inactivo= document.getElementById('inptSeleccFiltroEstadoTrabajoMecanicoDental').checked;
     const local= document.getElementById('inptCodLocalMecanicoDental').value;
 
+    document.getElementById('tablaTrabajoMecanicoDental').innerHTML= paginacargando;
+
     obtener_datos_user();
     let datos = new FormData();
     datos.append("useru", userid);
     datos.append("passu", passuser);
     datos.append("navegador", navegador);
     datos.append("accion", "buscar");
+    datos.append("limite", 10);
     datos.append("tipo_trabajo", inptTipoTrabajoListadoTrabajoMecanicoDental);
     datos.append("nombre_paciente", nombre_paciente);
     datos.append("nombre_mecanico", nombre_mecanico);
@@ -245,7 +251,93 @@ function buscarTrabajoMecanicosDentales() {
                 var datos = $.parseJSON(responseText);
                 if (datos["1"] === "exito") {
                     document.getElementById('tablaTrabajoMecanicoDental').innerHTML= datos["2"];
-                    document.getElementById('inptRegistroNroTiposTrabajo').value= datos["3"];
+                    document.getElementById('inptRegistroNroTiposTrabajo').value= datos["4"];
+
+                    registrocargadoTrabajoMecanicoDental= Number(datos["3"]);
+                    totalregistroTrabajoMecanicoDental= Number(datos["4"]);
+                    if(totalregistroTrabajoMecanicoDental>registrocargadoTrabajoMecanicoDental){
+                        var porce=((registrocargadoTrabajoMecanicoDental*100)/totalregistroTrabajoMecanicoDental).toFixed(0)
+                        document.getElementById("tbProcessTrabajoMecanicoDental").style.display=""
+                        document.getElementById("divProgressTrabajoMecanicoDental").style.width=porce+"%"
+
+                        controldebusquedadTrabajoMecanicoDental=true
+                        buscarMasTrabajoMecanicosDentales(inptTipoTrabajoListadoTrabajoMecanicoDental,nombre_paciente,nombre_mecanico,cod_trabajo,estado,ocultar_Inactivo,local);
+                    }else{
+                        controldebusquedadTrabajoMecanicoDental=false
+                    }
+                }
+            } catch (error) {
+                ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");
+                var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+            }
+        }
+    });
+}
+
+function buscarMasTrabajoMecanicosDentales(tipo_trabajo,nombre_paciente,nombre_mecanico,cod_trabajo,estado,ocultar_Inactivo,local) {
+    const limite = "10 OFFSET " + registrocargadoTrabajoMecanicoDental;
+    obtener_datos_user();
+    let datos = new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "buscar");
+    datos.append("limite", limite);
+    datos.append("tipo_trabajo", tipo_trabajo);
+    datos.append("nombre_paciente", nombre_paciente);
+    datos.append("nombre_mecanico", nombre_mecanico);
+    datos.append("cod_trabajo_mecanico_dental", cod_trabajo);
+    datos.append("estado", estado);
+    datos.append("cod_localFK", local);
+
+    if (ocultar_Inactivo) {
+        datos.append("ocultar_inactivo", ocultar_Inactivo);
+    }
+
+    // Recopilar datos de los filtros
+    if (filtro_fecha_trabajo_mecanico_dental == 2) {
+        datos.append("fecha_entrega_desde", $("#filtro_fecha_desde").val());
+        datos.append("fecha_entrega_hasta", $("#filtro_fecha_hasta").val());    
+        datos.append("filtro_fecha", 'fecha_entrega');
+    } else if(filtro_fecha_trabajo_mecanico_dental == 3) {
+        datos.append("fecha_retiro_desde", $("#filtro_fecha_desde").val());
+        datos.append("fecha_retiro_hasta", $("#filtro_fecha_hasta").val());
+        datos.append('filtro_fecha', 'fecha_retiro');
+    }
+    
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmTrabajoMecanicoDental.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function (jqXHR, textstatus, errorThrowm) {
+            verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            ver_vetana_informativa("Error de conexión al buscar registros.");
+            document.getElementById('tablaTrabajoMecanicoDental').innerHTML= "";
+        },
+        success: function (responseText) {
+            console.log(responseText);
+            try {
+                var datos = $.parseJSON(responseText);
+                if (datos["1"] === "exito") {
+                    document.getElementById('tablaTrabajoMecanicoDental').innerHTML += datos["2"];
+
+                    registrocargadoTrabajoMecanicoDental += Number(datos["3"]);
+                    if(totalregistroTrabajoMecanicoDental>registrocargadoTrabajoMecanicoDental){
+                        var porce=((registrocargadoTrabajoMecanicoDental*100)/totalregistroTrabajoMecanicoDental).toFixed(0)
+                        document.getElementById("tbProcessTrabajoMecanicoDental").style.display=""
+                        document.getElementById("divProgressTrabajoMecanicoDental").style.width=porce+"%"
+
+                        controldebusquedadTrabajoMecanicoDental=true
+                        buscarMasTrabajoMecanicosDentales(tipo_trabajo,nombre_paciente,nombre_mecanico,cod_trabajo,estado,ocultar_Inactivo,local);
+                    }else{
+                        document.getElementById("tbProcessTrabajoMecanicoDental").style.display="none"
+                        controldebusquedadTrabajoMecanicoDental=false
+                    }
                 }
             } catch (error) {
                 ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error");

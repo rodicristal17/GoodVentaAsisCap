@@ -122,6 +122,8 @@
     }
 
     function obtenerVistaTrabajoMecanicoDental($filtros, $limite = 0) {
+        $registros = obtenerTrabajoMecanicosDentales($filtros);
+        $totalRegistros = count($registros);
         $registros = obtenerTrabajoMecanicosDentales($filtros, $limite);
 
         $pagina= "";
@@ -155,7 +157,7 @@
             </tr>
             </table>";
         }
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => count($registros)));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => count($registros), "4" => $totalRegistros));
         exit;
     }
 
@@ -348,7 +350,7 @@
          FROM trabajo_mecanico_dental tmd 
          JOIN tipo_trabajo_mecanico_dental t ON t.cod_tipo_trabajo_mecanico_dental = tmd.cod_tipo_trabajoFK 
          JOIN mecanico_dental md ON md.cod_mecanico_dental = tmd.cod_mecanicoDentalFK 
-         JOIN persona p ON p.cod_persona = md.cod_personaFK $sqlFiltro $limite";
+         JOIN persona p ON p.cod_persona = md.cod_personaFK $sqlFiltro ORDER BY tmd.cod_trabajo_mecanico_dental DESC $limite";
 
         $mysqli = conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
