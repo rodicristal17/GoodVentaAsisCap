@@ -72,7 +72,7 @@ $cod_interConsultaFK= utf8_decode($cod_interConsultaFK);
 	$ultimoDiaMes= $fechaActual->format('Y-m-t');
 
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
-	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '');
 
 	if ($informacion["4"][0]["presupuesto"] && $informacion["4"][0]["presupuesto"] != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -112,6 +112,8 @@ $fecha = utf8_decode($fecha);
 
 $arreglo=$_POST['arreglo'];
 $arreglo = utf8_decode($arreglo);
+$cod_interConsultaFK=$_POST['cod_interConsultaFK'];
+$cod_interConsultaFK = utf8_decode($cod_interConsultaFK);
 
 $cod_motivoFK= $_POST['cod_motivoFK'];
 $cod_motivoFK= utf8_decode($cod_motivoFK);
@@ -123,7 +125,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$cod_local=buscarlocaluser($user);
 	}
 }
-$informacion = buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK);
+$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK);
 echo json_encode($informacion);
 exit;
 }	
@@ -138,7 +140,7 @@ if ($operacion == "verficiarLimiteMotivo") {
 	$ultimoDiaMes= $fechaActual->format('Y-m-t');
 
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
-	$informacion2 = buscar('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo);
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '');
 
 	echo json_encode(array("1" => "exito", "2" => $informacion["4"][0]["presupuesto"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));	
 	exit;
@@ -519,7 +521,7 @@ exit;
 	
 }
 
-function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK)
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK)
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -531,6 +533,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	$pagina= "";
 
 	$registrosZona= array();
+	$registros= array();
 
 	// Primero obtenemos todos los motivos del sistema
 	$registrosMotivos= buscarabmmotivoingresoegreso('', 'activo')[4];
@@ -584,6 +587,9 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 		if ($estado != "") {
 			$sqlFiltro .= " and g.estado='$estado'";
 		}
+		if ($cod_interConsultaFK != "") {
+			$sqlFiltro .= " and g.cod_interConsultaFK= $cod_interConsultaFK ";
+		}
 		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = ".$mot['cod_motivo_ingreso_egreso'];
 
 		// Se limpia el primer ' and'
@@ -623,6 +629,31 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 				$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
 				$totalGasto=$totalGasto+$monto;
 				
+				$registros[] = array(
+					'idgastos' =>utf8_encode($valor['idgastos']),
+					'interconsulta_nombre' => utf8_encode($valor['interconsulta_nombre']),
+					'cod_interConsultaFK' => utf8_encode($valor['cod_interConsultaFK']),
+					'usuarionombre' => utf8_encode($valor['usuarionombre']),
+					'monto' => utf8_encode($valor['monto']),
+					'motivo' => utf8_encode($valor['motivo']),
+					'descripcion' => utf8_encode($valor['descripcion']),
+					'fecha' => utf8_encode($valor['fecha']),
+					'tipo' => utf8_encode($valor['tipo']),
+					'estado' => utf8_encode($valor['estado']),
+					'cod_local' => utf8_encode($valor['cod_local']),
+					'nombrelocal' => utf8_encode($valor['nombrelocal']),
+					'nroboleta' => utf8_encode($valor['nroboleta']),
+					'banco' => utf8_encode($valor['banco']),
+					'nrocuenta' => utf8_encode($valor['nrocuenta']),
+					'arreglo' => utf8_encode($valor['arreglo']),
+					'url1' => utf8_encode($valor['url1']),
+					'categoria' => utf8_encode($valor['categoria']),
+					'cod_usuario_autoriz' => utf8_encode($valor['cod_usuario_autoriz']),
+					'fecha_autoriz' => utf8_encode($valor['fecha_autoriz']),
+					'usuario_autoriz_nombre' => utf8_encode($valor['usuario_autoriz_nombre']),
+					'cod_motivoIngresoEgresoFK' => utf8_encode($valor['cod_motivoIngresoEgresoFK']),
+				);
+
 				switch ($categoria) {
 					case 'ingreso':
 						$totalZonaIngresos += $monto;
@@ -673,7 +704,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 		$registrosZona['ingreso'][-1][]= $valor;
 		$totalZonaIngresos += intval($value['Monto']);
 	}
- 
+ print_r($registrosZona);exit;
  foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
@@ -719,6 +750,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 	  foreach ($cod_motivos as $cod_motivo => $gastos) {
 		$totalMonto= 0;
 		$paginaMotivo= "";
+		$registro_autorizacion_necesario= false;
 		// Obtiene el nombre del motivo
 		if ($cod_motivo == -1) {
 			$titulo_motivo= "Movimiento de caja";
@@ -726,7 +758,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 			$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
 		}
 		foreach ($gastos as $valor) {
-			$idgastos=$valor['idgastos'];
+			$idgastos=utf8_encode($valor['idgastos']);
 			$interconsulta_nombre= utf8_encode($valor['interconsulta_nombre']);
 			$cod_interConsultaFK= utf8_encode($valor['cod_interConsultaFK']);
 			$usuarionombre=utf8_encode($valor['usuarionombre']);
@@ -748,7 +780,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 			$fecha_autoriz = utf8_encode($valor['fecha_autoriz']);
 			$usuario_autoriz_nombre= utf8_encode($valor['usuario_autoriz_nombre']);
 			$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
-	
+
 			$funcion= "obtenerdatosabmGasto(this)";
 			if ($idgastos == "") {
 				$funcion= "";
@@ -758,6 +790,7 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 			$styleEstado = "";
 			if ($estado == 'solicitado') {
 				$styleEstado= "background-color: #ff5050;color: #ffffff";
+				$registro_autorizacion_necesario= true;
 			} else if ($estado == 'pendiente') {
 				$styleEstado= "background-color: #b1b1b1a1;";
 			}
@@ -822,8 +855,14 @@ function buscar($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fech
 				</table>
 			</li>";
 		}
+
+		$styleRegistroColor2= $styleRegistroColor;
+		if ($registro_autorizacion_necesario) {
+			$styleRegistroColor2= "#ff5050;color: #ffffff";
+		}
+
  		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;">'.
-			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
+			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
 				'<h6><b>'.$titulo_motivo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
 				($cod_motivo == -1 ? '' : '<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">').
 			'</div>'.
@@ -848,6 +887,7 @@ $informacion =array(
 	"6" => $totalZonaCostosDirectos,
 	"7" => $totalZonaGastosOperativos,
 	"8" => $totalZonaSinCategorizar,
+	"9" => $registros,
 	"12" => $paginaImprimir,
 );
 return $informacion;
@@ -1318,7 +1358,7 @@ function buscarabmmotivoingresoegreso($buscar,$Estado,$cod_motivo= 0)
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
 		$sql= "Select *
-        from motivos_ingreso_egreso where $sqlFiltro order by FIELD(categoria, 'ingreso', 'directo','operativo'), categoria IS NULL,descripcion asc ";
+        from motivos_ingreso_egreso where $sqlFiltro order by FIELD(estado, 'activo','inactivo'), FIELD(categoria, 'ingreso', 'directo','operativo'), categoria IS NULL,descripcion asc ";
 
    $stmt = $mysqli->prepare($sql);
 $buscar1="%".$buscar."%";

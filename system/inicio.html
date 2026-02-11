@@ -4253,6 +4253,291 @@ style='background-color:#5bc572'>
     </table>
 </div>
 
+<!-- InterConsulta -->
+<div id="divListadoInterConsulta" class="principal2" style="display: none;">
+  <center>
+    <div id="divAbmInterConsulta1" class="divAbms" style="width: 90%;">
+      <table class="tableMenuZ">
+        <tbody>
+          <tr>
+            <td style="width:100%;text-align:left">
+              <p class="pTituloB"><b style="font-size: 30px;">Hilos - InterConsultas</b></p>
+            </td>
+            <td style="width:5%;text-align:center">
+              <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
+            </td>
+            <td style="width:5%;text-align:center">
+              <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana" onclick="minimizarabmInterConsulta()">
+            </td>
+            <td style="width:5%;text-align:center">
+              <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaListadoInterConsulta(false)">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+        <div class="divMenuf" style="display: flex; justify-content: space-between;">
+          <table style="width:100%"><tr>
+            <td style="width:20%;text-align: rigth;">
+              <p class="pTitulo8" style="width: fit-content; text-align: start;"> 
+              <input type="checkbox" id="inptSeleccFiltroEstadoInterConsulta" style="width: fit-content;" checked="">Ocultar inactivos</p>
+            </td>
+            <td style="width:60%"></td>
+            <td style="width: 20%; text-align: end;">
+              <input type="button" value="Agregar" class="btn5" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');" style="background-color: rgb(76, 175, 80);">
+              <input type="button" value="Buscar" class="btn5" onclick="buscarPacientesConInterConsultas()">
+            </td>
+          </tr></table>
+        </div>
+        <div class="divMenuf" style="display: flex; justify-content: space-between;">
+          <table style="width:100%"><tr>
+            <td style="width:10%;">
+              <p class="pTituloC">Registro :</p>
+              <input class="inputTextDisable" type="text" disabled="" id="inptRegistoCargadoInterConsulta" style="width:100px;text-align:center">
+            </td>
+            <td style="width:10%;">
+              <p class="pTituloC">Consultas abiertas :</p>
+              <input class="inputTextDisable" type="text" disabled="" id="inptRegistoInterConsultaAbierta" style="width:100px;text-align:center">
+            </td>
+            <td style="width:45%"></td>
+            <td style="width:15%;">
+              <p class="pTituloC">Interconsultas con:</p>
+              <select class="inputSelect" id="inptUsuariosInterConsulta" style="width:125px"></select>
+            </td>
+          </tr></table>
+        </div>
+        <div class="divMenuf">
+          <div style="width: 98%;height:auto">
+            <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
+              <tr>
+                <td class="td_registro" style="width:5%;">#</td>
+                <td class="td_registro" style="width:25%;">ASUNTO</td>
+                <td class="td_registro" style="width:15%;">CLIENTE</td>
+                <td class="td_registro" style="width:10%;">LOCAL</td>
+                <td class="td_registro" style="width:10%;">ESTADO</td>
+                <td class="td_registro" style="width:10%;">TIPO</td>
+                <td class="td_registro" style="width:10%;">FECHA CREACION</td>
+                <td class="td_registro" style="width:15%;">RESPONSABLE</td>
+              </tr>
+            </table>
+            <table class="tableCabeceraRegistro">
+              <tr>
+                <td class="td_registro" style="width:5%;">
+                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta1" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                </td>
+                <td class="td_registro" style="width:24%;">
+                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta2" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta2')">
+                </td>
+                <td class="td_registro" style="width:14%;">
+                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta3" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                  <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta3')">
+                </td>
+                <td class="td_registro" style="width:10%;">
+                <select class="inputfiltro" id="inptBuscarInterConsulta7">
+                </select>
+                </td>
+                <td class="td_registro" style="width:10%;">
+                <select class="inputfiltro" id="inptBuscarInterConsulta5">
+                <option value="">Todos</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="proceso">Proceso</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="inactivo">Inactivo</option>
+                </select>
+                </td>
+                <td class="td_registro" style="width:10%;">
+                <select class="inputfiltro" id="inptBuscarInterConsulta4">
+                <option value="">Todos</option>
+                <option value="administrativo">Administrativo</option>
+                <option value="clinico">Clinico</option>
+                <option value="interno">Interno</option>
+                <option value="compras">Compras</option>
+                <option value="pagos">Pagos</option>
+                <option value="judicial">Judicial</option>
+                </select>
+                </td>
+                <td class="td_registro" style="width:10%;"></td>
+                <td class="td_registro" style="width:14%;">
+                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta6')">
+                </td>
+              </tr>
+            </table>
+            <div id="table_frm_VistaInterConsulta" style= "max-height: 400px;overflow-y: auto;">
+
+            </div>
+            <table style="width:100%;height:50px;display:none" id="tbProcessInformeInterConsulta">
+            <tr>
+            <td style="width:90%">
+            <div class="divprogreso1"><div class="divprogreso2" id="divProgressInformeInterConsulta"></div></div>
+            </td>
+            <td style="width:10%;text-align:center">
+            <input type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
+            </td>
+            </tr>
+            </table>
+          </div>
+      </div>
+      <div class="divMenuF" style="display: inline-flex;">
+        <div style="background-color: rgb(14, 194, 32);height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
+        <p class="pTitulo8" style="width: fit-content; text-align: start;color: rgb(14, 194, 32);">Asociado a Egreso / Ingreso</p>
+      </div>
+    </div>
+  </center>
+</div>
+<div id="divAbmDetallesInterConsulta" class="principal2" style="display: none;">
+  <center>
+    <div id="divAbmDetallesInterConsulta" class="divAbms" style="width: 90%;">
+        <table class="tableMenuZ">
+            <tbody>
+              <tr>
+                <td style="width:100%;text-align:left">
+                  <p class="pTituloB">Detalles de <b style="font-size: 30px;" id="tituloInterConsultas">InterConsulta - </b></p>
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaDetalleInterConsulta(false)">
+                </td>
+              </tr>
+            </tbody>
+          </table> 
+            <div class="divMenuf">
+              <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"
+                style="height: 100%;border:1px solid rgb(209, 209, 209);width: 100%;"></div>
+                <div class="sugerencias-container" style="display: flex;justify-content: flex-end;">
+                  <div class="card my-3" style="border-left: 5px solid #8BC34A;flex: 0.95;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span id="nombreUsuarioMensaje">Usuario</span>
+                        <small class="text-secondary">
+                          <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26" style="margin-bottom: 5px;">
+                        </small>
+                    </div>
+                    <div id="avisoMensajesPendientesInterConsulta" class="card-subtitle justify-content-between align-items-center" style="display: none;">
+                      <h6 class="mb-2 text-muted" style="margin-left: 5px;margin-top: auto;">Tiene mensajes pendientes...</h6>
+                        <input type="button" style="width: fit-content;margin-top: 5px;" value="Cargar" class="btn1" onclick="buscarInterConsultasYContenido()">
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex;">
+                          <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoAnexoInterchat')" style="background-image: url('/GoodVentaAsisCap/iconos/subir_imagen.png');width:100px; height: 90px;margin-right: 5px;"></div>
+                          <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);" style= "margin: 0px; height: 90px;"></p>
+                          <div style="width: 100px;margin-left: 10px;text-align: left;">
+                            <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
+                            <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()" style="background-color: rgb(76, 175, 80);width: 100%;height: 30px;">
+                            <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()" style="background-color: rgb(245, 59, 59);width: 100%;height: 30px;">
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>         
+      </div>
+  </center>
+</div>
+<div id="divAbmInterConsulta" class="principal2" style="display: none;">
+<center>
+      <div id="divAbmInterConsulta3" class="divAbms" style="width: 650px;min-height: 100px;height: fit-content;">
+        <table class="tableMenuZ">
+            <tbody>
+              <tr>
+                <td style="width:100%;text-align:left">
+                  <p class="pTituloB">Abm de <b style="font-size: 30px;">Inter-consultas</b></p>
+                </td>
+                <td style="width:5%;text-align:center">
+                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaInterConsulta(false)">
+                </td>
+              </tr>
+            </tbody>
+          </table> 
+            <div class="divMenuf">
+              <table><tr>
+                <td>
+                <p class="pTituloC">Cliente :</p>
+                <input class="inputTextDisable" type="text" placeholder="Seleccionar un cliente" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
+                <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
+                </td></tr>
+              </table>
+              <p class="pTituloC" style="text-align: start;">Otros Hilos :</p>
+              <table class="tableCabeceraRegistro">
+              <tbody>
+              <tr>
+                <td class="td_registro" style="width:10%;">
+                COD. VENTA
+                </td>
+                <td class="td_registro" style="width:40%;">
+                ASUNTO
+                </td>
+                <td class="td_registro" style="width:15%;">
+                ESTADO
+                </td>
+                <td class="td_registro" style="width:35%;">
+                CREADOR
+                </td>
+              </tr>
+              </tbody>
+              </table>
+              <div id="list_abm_interConsulta_asoc" style="max-height: 300px;overflow-y: auto;">
+
+              </div>
+            </div>
+            <div class="divMenuf">
+                <table style="width: 100%;"><tr>
+                  <td style="width: 50%;">
+                  <p class="pTituloC">Asunto :</p>
+                  <input class="inputText" type="text" id="inptAsuntoAbmInterConsulta">
+                  </td>
+                  <td style="width: 50%;">
+                  <p class="pTituloC">Local :</p>
+                  <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:130px">
+                  </select>
+                  </td></tr>
+                </table>
+              </td></tr></table>
+                <table style="width: 100%;"><tr>
+                  <td style="width: 25%;">
+                  <p class="pTituloC">Tipo :</p>
+                  <select class="inputSelect" id="inptTipoAbmInterConsulta" style="width:130px">
+                    <option value="clinico">CLINICO</option>
+                    <option value="administrativo">ADMINISTRATIVO</option>
+                    <option value="interno">INTERNO</option>
+                    <option value="compras">COMPRAS</option>
+                    <option value="pagos">PAGOS</option>
+                    <option value="judicial">JUDICIAL</option>
+                  </select>
+                  </td>
+                  <td style="width: 25%;">
+                  <p class="pTituloC">Estado :</p>
+                  <select class="inputSelect" id="inptEstadoAbmInterConsulta" style="width:130px">
+                    <option value="pendiente">PENDIENTE</option>
+                    <option value="proceso">EN PROCESO</option>
+                    <option value="finalizado">TERMINADO</option>
+                    <option value="inactivo">INACTIVO</option>
+                  </select>
+                  </td>
+                  <td style="width: 50%;">
+                    <p class="pTitulo8" style="width: fit-content; text-align: start;"> 
+                    <input type="checkbox" id="inptVincularGastoAbmInterConsulta" style="width: fit-content;" checked="">Vincular con ingreso / egreso</p>
+                  </td>
+                </tr>
+                </table>
+              </div>
+                <div class="divMenuf">
+                  <table style="width:100%">
+                    <tr><td style="text-align: center;">
+                        <input type="button" value="Guardar" class="btn4" onclick="verificarCamposInterConsulta()">
+                    </td></tr>
+                  </table>
+                </div>
+                 
+      </div>
+  </center>
+</div>
+
 <div class='principal2' style='display:none' id='divAbmGastos'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmGasto'>
 <tr>
@@ -4307,7 +4592,7 @@ style='width:200px' />
 </tr>
 </table>
 <br>
-<table style='width:100%'>
+<table style='width:100%;'>
 <tr>
 <td>
 <p class='pTituloC' >Descripcion* :</p>
@@ -4344,7 +4629,7 @@ style='width:150px'></select>
 <table style='width:100%'>
 <tr>
   <td style="width:100%">
-    <p class="pTituloC">Interconsulta :</p>
+    <p class="pTituloC">Interconsulta* :</p>
     <input type="text" class="inputTextDisable" id="inptAbmInterConsultaGasto" disabled="" style="width: 250px;">
     <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmGastos')" style="background-color: #FF5722;">
   </td>
@@ -7868,287 +8153,6 @@ onclick='SeleccionarRegistroCategoria()' />
 </tr>
 </table>
 </div>
-
-<!-- InterConsulta -->
-<div id="divListadoInterConsulta" class="principal2" style="display: none;">
-  <center>
-    <div id="divAbmInterConsulta1" class="divAbms" style="width: 90%;">
-      <table class="tableMenuZ">
-        <tbody>
-          <tr>
-            <td style="width:100%;text-align:left">
-              <p class="pTituloB"><b style="font-size: 30px;">Hilos - InterConsultas</b></p>
-            </td>
-            <td style="width:5%;text-align:center">
-              <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
-            </td>
-            <td style="width:5%;text-align:center">
-              <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana" onclick="minimizarabmInterConsulta()">
-            </td>
-            <td style="width:5%;text-align:center">
-              <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaListadoInterConsulta(false)">
-            </td>
-          </tr>
-        </tbody>
-      </table>
-        <div class="divMenuf" style="display: flex; justify-content: space-between;">
-          <table style="width:100%"><tr>
-            <td style="width:20%;text-align: rigth;">
-              <p class="pTitulo8" style="width: fit-content; text-align: start;"> 
-              <input type="checkbox" id="inptSeleccFiltroEstadoInterConsulta" style="width: fit-content;" checked="">Ocultar inactivos</p>
-            </td>
-            <td style="width:60%"></td>
-            <td style="width: 20%; text-align: end;">
-              <input type="button" value="Agregar" class="btn5" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');" style="background-color: rgb(76, 175, 80);">
-              <input type="button" value="Buscar" class="btn5" onclick="buscarPacientesConInterConsultas()">
-            </td>
-          </tr></table>
-        </div>
-        <div class="divMenuf" style="display: flex; justify-content: space-between;">
-          <table style="width:100%"><tr>
-            <td style="width:10%;">
-              <p class="pTituloC">Registro :</p>
-              <input class="inputTextDisable" type="text" disabled="" id="inptRegistoCargadoInterConsulta" style="width:100px;text-align:center">
-            </td>
-            <td style="width:10%;">
-              <p class="pTituloC">Consultas abiertas :</p>
-              <input class="inputTextDisable" type="text" disabled="" id="inptRegistoInterConsultaAbierta" style="width:100px;text-align:center">
-            </td>
-            <td style="width:45%"></td>
-            <td style="width:15%;">
-              <p class="pTituloC">Interconsultas con:</p>
-              <select class="inputSelect" id="inptUsuariosInterConsulta" style="width:125px"></select>
-            </td>
-          </tr></table>
-        </div>
-        <div class="divMenuf">
-          <div style="width: 98%;height:auto">
-            <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
-              <tr>
-                <td class="td_registro" style="width:5%;">#</td>
-                <td class="td_registro" style="width:25%;">ASUNTO</td>
-                <td class="td_registro" style="width:15%;">CLIENTE</td>
-                <td class="td_registro" style="width:10%;">LOCAL</td>
-                <td class="td_registro" style="width:10%;">ESTADO</td>
-                <td class="td_registro" style="width:10%;">TIPO</td>
-                <td class="td_registro" style="width:10%;">FECHA CREACION</td>
-                <td class="td_registro" style="width:15%;">RESPONSABLE</td>
-              </tr>
-            </table>
-            <table class="tableCabeceraRegistro">
-              <tr>
-                <td class="td_registro" style="width:5%;">
-                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta1" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
-                </td>
-                <td class="td_registro" style="width:24%;">
-                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta2" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
-                </td>
-                <td class="td_registro" style="width:1%;">
-                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta2')">
-                </td>
-                <td class="td_registro" style="width:14%;">
-                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta3" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
-                </td>
-                <td class="td_registro" style="width:1%;">
-                  <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta3')">
-                </td>
-                <td class="td_registro" style="width:10%;">
-                <select class="inputfiltro" id="inptBuscarInterConsulta7">
-                </select>
-                </td>
-                <td class="td_registro" style="width:10%;">
-                <select class="inputfiltro" id="inptBuscarInterConsulta5">
-                <option value="">Todos</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="proceso">Proceso</option>
-                <option value="finalizado">Finalizado</option>
-                <option value="inactivo">Inactivo</option>
-                </select>
-                </td>
-                <td class="td_registro" style="width:10%;">
-                <select class="inputfiltro" id="inptBuscarInterConsulta4">
-                <option value="">Todos</option>
-                <option value="administrativo">Administrativo</option>
-                <option value="clinico">Clinico</option>
-                <option value="interno">Interno</option>
-                <option value="compras">Compras</option>
-                <option value="pagos">Pagos</option>
-                <option value="judicial">Judicial</option>
-                </select>
-                </td>
-                <td class="td_registro" style="width:10%;"></td>
-                <td class="td_registro" style="width:14%;">
-                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
-                </td>
-                <td class="td_registro" style="width:1%;">
-                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta6')">
-                </td>
-              </tr>
-            </table>
-            <div id="table_frm_VistaInterConsulta" style= "max-height: 400px;overflow-y: auto;">
-
-            </div>
-            <table style="width:100%;height:50px;display:none" id="tbProcessInformeInterConsulta">
-            <tr>
-            <td style="width:90%">
-            <div class="divprogreso1"><div class="divprogreso2" id="divProgressInformeInterConsulta"></div></div>
-            </td>
-            <td style="width:10%;text-align:center">
-            <input type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
-            </td>
-            </tr>
-            </table>
-          </div>
-      </div>
-      <div class="divMenuF" style="display: inline-flex;">
-        <div style="background-color: rgb(14, 194, 32);height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
-        <p class="pTitulo8" style="width: fit-content; text-align: start;color: rgb(14, 194, 32);">Asociado a Egreso / Ingreso</p>
-      </div>
-    </div>
-  </center>
-</div>
-<div id="divAbmDetallesInterConsulta" class="principal2" style="display: none;">
-  <center>
-    <div id="divAbmDetallesInterConsulta" class="divAbms" style="width: 90%;">
-        <table class="tableMenuZ">
-            <tbody>
-              <tr>
-                <td style="width:100%;text-align:left">
-                  <p class="pTituloB">Detalles de <b style="font-size: 30px;" id="tituloInterConsultas">InterConsulta - </b></p>
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaDetalleInterConsulta(false)">
-                </td>
-              </tr>
-            </tbody>
-          </table> 
-            <div class="divMenuf">
-              <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"
-                style="height: 100%;border:1px solid rgb(209, 209, 209);width: 100%;"></div>
-                <div class="sugerencias-container" style="display: grid;justify-content: flex-end;">
-                  <div class="card my-3" style="border-left: 5px solid #8BC34A;width: 500px;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span id="nombreUsuarioMensaje">Usuario</span>
-                        <small class="text-secondary">
-                          <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26" style="margin-bottom: 5px;">
-                        </small>
-                    </div>
-                    <div id="avisoMensajesPendientesInterConsulta" class="card-subtitle justify-content-between align-items-center" style="display: none;">
-                      <h6 class="mb-2 text-muted" style="margin-left: 5px;margin-top: auto;">Tiene mensajes pendientes...</h6>
-                        <input type="button" style="width: fit-content;margin-top: 5px;" value="Cargar" class="btn1" onclick="buscarInterConsultasYContenido()">
-                    </div>
-                    <div class="card-body">
-                        <div style="display: flex;">
-                          <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoAnexoInterchat')" style="background-image: url('/GoodVentaAsisCap/iconos/subir_imagen.png');width:100px; height: 90px;margin-right: 5px;"></div>
-                          <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);" style= "margin: 0px; height: 90px;"></p>
-                          <div style="width: 100px;margin-left: 10px;text-align: left;">
-                            <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
-                            <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()" style="background-color: rgb(76, 175, 80);width: 100%;height: 30px;">
-                            <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()" style="background-color: rgb(245, 59, 59);width: 100%;height: 30px;">
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>         
-      </div>
-  </center>
-</div>
-<div id="divAbmInterConsulta" class="principal2" style="display: none;">
-<center>
-      <div id="divAbmInterConsulta3" class="divAbms" style="width: 650px;min-height: 100px;height: fit-content;">
-        <table class="tableMenuZ">
-            <tbody>
-              <tr>
-                <td style="width:100%;text-align:left">
-                  <p class="pTituloB">Abm de <b style="font-size: 30px;">Inter-consultas</b></p>
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaInterConsulta(false)">
-                </td>
-              </tr>
-            </tbody>
-          </table> 
-            <div class="divMenuf">
-              <table><tr>
-                <td>
-                <p class="pTituloC">Cliente :</p>
-                <input class="inputTextDisable" type="text" placeholder="Seleccionar un cliente" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
-                <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
-                </td></tr>
-              </table>
-              <p class="pTituloC" style="text-align: start;">Otros Hilos :</p>
-              <table class="tableCabeceraRegistro">
-              <tbody>
-              <tr>
-                <td class="td_registro" style="width:10%;">
-                COD. VENTA
-                </td>
-                <td class="td_registro" style="width:40%;">
-                ASUNTO
-                </td>
-                <td class="td_registro" style="width:15%;">
-                ESTADO
-                </td>
-                <td class="td_registro" style="width:35%;">
-                CREADOR
-                </td>
-              </tr>
-              </tbody>
-              </table>
-              <div id="list_abm_interConsulta_asoc" style="max-height: 300px;overflow-y: auto;">
-
-              </div>
-            </div>
-            <div class="divMenuf">
-                <table style="width: 100%;"><tr>
-                  <td style="width: 50%;">
-                  <p class="pTituloC">Asunto :</p>
-                  <input class="inputText" type="text" id="inptAsuntoAbmInterConsulta">
-                  </td>
-                  <td style="width: 50%;">
-                  <p class="pTituloC">Local :</p>
-                  <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:130px">
-                  </select>
-                  </td></tr>
-                </table>
-              </td></tr></table>
-                <table style="width: 100%;"><tr>
-                  <td style="width: 50%;">
-                  <p class="pTituloC">Tipo :</p>
-                  <select class="inputSelect" id="inptTipoAbmInterConsulta" style="width:130px">
-                    <option value="clinico">CLINICO</option>
-                    <option value="administrativo">ADMINISTRATIVO</option>
-                    <option value="interno">INTERNO</option>
-                    <option value="compras">COMPRAS</option>
-                    <option value="pagos">PAGOS</option>
-                    <option value="judicial">JUDICIAL</option>
-                  </select>
-                  </td>
-                  <td style="width: 50%;">
-                  <p class="pTituloC">Estado :</p>
-                  <select class="inputSelect" id="inptEstadoAbmInterConsulta" style="width:130px">
-                    <option value="pendiente">PENDIENTE</option>
-                    <option value="proceso">EN PROCESO</option>
-                    <option value="finalizado">TERMINADO</option>
-                    <option value="inactivo">INACTIVO</option>
-                  </select>
-                  </td></tr>
-                </table>
-              </div>
-                <div class="divMenuf">
-                  <table style="width:100%">
-                    <tr><td style="text-align: center;">
-                        <input type="button" value="Guardar" class="btn4" onclick="verificarCamposInterConsulta()">
-                    </td></tr>
-                  </table>
-                </div>
-                 
-      </div>
-  </center>
-</div>
-
 <!-- Botón para abrir el modal -->
 <!-- <button id="btnVerSugerencias" class="btn-ver">Ver sugerencias</button> -->
 

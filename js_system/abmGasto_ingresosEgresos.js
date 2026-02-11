@@ -49,6 +49,7 @@ function minimizarventanaingresoegreso(){
     document.getElementById("tdEfectoAbmGasto").className="magictime slideDown"
 	$("div[id=divAbmGastos]").fadeOut(500);
 }
+
 function verCerrarVentanaAbmGasto(d, l) {
 	if (d == "1") {
 		if(idabmAperturacierrecaja==""){
@@ -68,21 +69,31 @@ function verCerrarVentanaAbmGasto(d, l) {
 	} else {
 		$("div[id=divAbmGasto1]").fadeIn(250)
 		document.getElementById('divAbmGasto2').style.display = "none"
+		
+		const ultimaVentana = ventanaAnterior.pop();
+		switch (ultimaVentana) {
+			case 'divAbmDetallesInterConsulta':
+				verCerrarAbmGasto();
+				break;
+		}
 	}
 }
 
-function verVentanaEditarGasto() {
-		if(controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}	
-		if(idabmAperturacierrecaja==""){
-			document.getElementById("divAbmGastos").style.display="none"
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
-		   verCerrarVentanaAbmAperturaCierreCaja1()
-		   return
-	   }
+function verVentanaEditarGasto(vent_anterior= "") {
+	if(controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}
+	if(idabmAperturacierrecaja==""){
+		document.getElementById("divAbmGastos").style.display="none"
+		ver_vetana_informativa("FALTO INICIAR UNA CAJA")
+		verCerrarVentanaAbmAperturaCierreCaja1()
+		return
+	}
+	
 	if (idAbmGasto == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
+	
+	ventanaAnterior.push(vent_anterior);
 	verCerrarVentanaAbmGasto("1", "2")
 }
 var idAbmGasto = ""
@@ -696,6 +707,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		"fecha": fecha,
 		"arreglo": arreglo,
         "cod_motivoFK": cod_motivoFK,
+		"cod_interConsultaFK": "",
 		"funt": "buscar"
 	};
 	$.ajax({
@@ -1082,7 +1094,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 
 function BuscarAbmMotivoEgresoIngreso() {
 	var buscador = document.getElementById("inptBuscarAbmMotivoEgresoIngreso").value
-	var estado = "Activo"
+
 	document.getElementById("divBuscadorMotivoEgresoIngreso").innerHTML = paginacargando
     document.getElementById("lblNroRegistroMotivoEgresoIngreso").innerHTML="";
 	obtener_datos_user();
@@ -1091,7 +1103,7 @@ function BuscarAbmMotivoEgresoIngreso() {
 		"passu": passuser,
 		"navegador": navegador,
 		"buscar": buscador,
-		"estado": estado,
+		"estado": "",
 		"funt": "buscarabmmotivoingresoegreso"
 	};
 	$.ajax({

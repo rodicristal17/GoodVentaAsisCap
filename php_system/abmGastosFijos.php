@@ -128,7 +128,7 @@
 
         $sql= "SELECT *,
             (SELECT asunto FROM interconsulta WHERE cod_interConsulta = gf.cod_interConsultaFK) AS asunto_interConsulta
-            FROM gastos_fijos gf $sqlFiltro ORDER BY cod_gastos_fijos ASC";
+            FROM gastos_fijos gf $sqlFiltro ORDER BY FIELD(estado, 'activo', 'inactivo'), cod_gastos_fijos ASC";
 
         $mysqli=conectar_al_servidor();
 

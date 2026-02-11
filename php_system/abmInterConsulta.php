@@ -1,13 +1,14 @@
 <?php
-    require("conexion.php");
-    include("verificar_navegador.php");
-    include("buscar_nivel.php");
-    include("classTable.php");
-    include("subir_foto_base64.php");
+    require_once("conexion.php");
+    include_once("verificar_navegador.php");
+    include_once("buscar_nivel.php");
+    include_once("classTable.php");
+    include_once("subir_foto_base64.php");
+    include_once("abmgasto.php");
 
     date_default_timezone_set('America/Asuncion');
 
-    function verificar($funt) {
+    function verificarOperacionInterConsulta($funt) {
         $user = $_POST['useru'];
         $user = utf8_decode($user);
         $pass = $_POST['passu'];
@@ -244,6 +245,40 @@
             $mencionesElemento= "";
             $menciones= array();
             
+            // Genera el listado de ventas
+            $ventasElemento= "";
+            $registrosGastos = buscarGasto("","","",'Activo','','','','','true','', $valueInter['cod_interConsulta'])[9];
+            foreach ($registrosGastos as $gasto) {
+                $ventasElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
+				<tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');">
+                    <td id="td_id" style="width:25%;">'.$gasto["idgastos"].'</td>
+                    <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
+                    <td  style="width: 50%">'.$gasto["descripcion"].'</td>
+                    <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
+                    <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
+                    <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
+                    <td  id="td_datos_3" style="display: none;">'.$gasto["nroboleta"].'</td>
+                    <td  id="td_datos_9" style="display: none;">'.$gasto["banco"].'</td>
+                    <td  id="td_datos_10" style="display: none;">'.$gasto["nrocuenta"].'</td>
+                    <td  id="td_datos_11" style="display: none;">'.$gasto["arreglo"].'</td>
+                    <td  id="td_datos_8" style="display: none">'.$gasto["usuarionombre"].'</td>
+                    <td  id="td_datos_5" style="display:none">'.$gasto["estado"].'</td>
+                    <td  id="td_datos_7" style="display:none">'.$gasto["cod_local"].'</td>
+                    <td  id="td_datos_12" style="display:none">'.$gasto["url1"].'</td>
+                    <td  id="td_datos_13" style="display:none">'.$gasto["descripcion"].'</td>
+                    <td  id="td_datos_14" style="display:none">'.$gasto["motivo"].'</td>
+                    <td  id="td_datos_15" style="display:none">'.$gasto["cod_interConsultaFK"].'</td>
+                    <td  id="td_datos_16" style="display:none">'.$gasto["interconsulta_nombre"].'</td>
+                    <td  id="td_datos_17" style="display:none">'.$gasto["cod_usuario_autoriz"].'</td>
+                    <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
+                    <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
+                    <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
+                    <td class="td_registroSearch" style="width: 25%">'.$gasto["idgastos"].'</td>
+                    <td class="td_registroSearch" style="width: 50%">'.$gasto["descripcion"].'</td>
+                    <td class="td_registroSearch" style="width: 25%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
+                </tr></table>';
+            }
+
             // Se obtienen los mensajes
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
@@ -321,18 +356,20 @@
             
             // Se crea el encabezado
             $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;">
-                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;'.$styleMensajeNoLeido.'">
+                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.'; width: 1200px;'.$styleMensajeNoLeido.'">
             <div class="card-body">
             <h5 class="card-title">
                 '.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'
                 <img src="../iconos/editar.png" alt="Editar InterConsulta" style="height: 1.25rem;" onclick="obtenerDetallesInterConsulta(\'interConsulta\')">
             </h5>
             <div style="display: flex;">
-            <div style="width: 50%;padding-top: 10px;border-top: 1px solid #ddd;">
+            <div style="flex: 0.5;padding-top: 10px;border-top: 1px solid #ddd;">
             <strong>Mencionados</strong>
+            <ul style="overflow-y: auto; height: 150px;">
             '.$mencionesElemento.'
+            </ul>
             </div>
-            <div style="width: 50%;">
+            <div style="flex: 0.5;">
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Usuario creador:</span>
             <span class="text-uppercase">'.$valueInter['nombre_persona_creador'].'</span>
@@ -359,8 +396,31 @@
                 <span class="text-uppercase" id="td_datos_6">'.$valueInter['num_factura'].'</span>
                 </div>';
             }
+            if ($valueInter['nombre_motivo_asociado']) {
+                $pagina .= '<div style="margin-bottom: 5px;">
+                <span class="fw-bold">Motivo Asociado:</span>
+                <span class="text-uppercase" id="td_datos_6">'.$valueInter['nombre_motivo_asociado'].'</span>
+                </div>';
+            }
+            $pagina .= '</div>';
+
+            if ($ventasElemento) {
+                $pagina .= '<div style="flex: 0.5;">
+                <strong>Ventas asociadas</strong>
+                <table class="tableCabeceraRegistro">
+                    <tr>
+                        <td class="td_registro" style="width: 25%;">Cod.</td>
+                        <td class="td_registro" style="width: 50%;">Descripcion</td>
+                        <td class="td_registro" style= "width: 25%;">Monto</td>
+                    </tr>
+                </table>
+                <div style="overflow-y: auto; height: 150px;">
+                    '.$ventasElemento.'
+                </div>
+                </div>';
+            }
+
             $pagina .= '</div>
-            </div>
             <div style="display: none;">
             <span id="td_datos_1">'.$valueInter['asunto'].'</span>
             <span id="td_datos_4">'.$valueInter['cod_interConsulta'].'</span>
@@ -1138,6 +1198,7 @@
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
+            (SELECT descripcion FROM gastos_fijos gf WHERE gf.cod_interConsultaFK = ic.cod_interConsulta ORDER BY gf.cod_gastos_fijos DESC LIMIT 1) AS nombre_motivo_asociado,
             (SELECT COUNT(idgastos) FROM gastos g WHERE g.cod_interConsultaFK = ic.cod_interConsulta) AS cantAsociadoGastos,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroMensaje) AS cantMensajesProgramados,
@@ -1295,8 +1356,9 @@
         return $cod_interConsulta;
     }
 
-    // Validacion e identificacion de funcion
-    $operacion = $_POST['accion'];
-    $operacion = utf8_decode($operacion);
-    verificar($operacion);
+    if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+        $operacion = $_POST['accion'];
+        $operacion = utf8_decode($operacion);
+        verificarOperacionInterConsulta($operacion);
+    }
 ?>
