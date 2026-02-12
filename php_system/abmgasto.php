@@ -626,6 +626,10 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				$categoria=utf8_encode($valor['categoria']);
 				$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
 				
+				if (empty($categoria)) {
+					$categoria= "sinCategoria";
+				}
+				
 				$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
 				$totalGasto=$totalGasto+$monto;
 				
@@ -704,7 +708,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		$registrosZona['ingreso'][-1][]= $valor;
 		$totalZonaIngresos += intval($value['Monto']);
 	}
- print_r($registrosZona);exit;
+ 
  foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
