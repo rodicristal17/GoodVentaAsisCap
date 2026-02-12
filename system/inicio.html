@@ -4491,9 +4491,9 @@ style='background-color:#5bc572'>
                   <p class="pTituloC">Asunto :</p>
                   <input class="inputText" type="text" id="inptAsuntoAbmInterConsulta">
                   </td>
-                  <td style="width: 50%;">
+                  <td style="width: 50%;padding-left: 10px;">
                   <p class="pTituloC">Local :</p>
-                  <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:130px">
+                  <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:100%;">
                   </select>
                   </td></tr>
                 </table>
@@ -4519,9 +4519,16 @@ style='background-color:#5bc572'>
                     <option value="inactivo">INACTIVO</option>
                   </select>
                   </td>
-                  <td style="width: 50%;">
-                    <p class="pTitulo8" style="width: fit-content; text-align: start;"> 
-                    <input type="checkbox" id="inptVincularGastoAbmInterConsulta" style="width: fit-content;" checked="">Vincular con ingreso / egreso</p>
+                  <td style="width: 50%;padding-left: 10px;">
+                  <p class="pTituloC">Fecha Vencimiento :</p>
+                  <input class="inputText" type="date" id="inptFechaVencimientoAbmInterConsulta">
+                  </td>
+                </tr>
+                </table>
+                <table style="width: 100%;"><tr>
+                  <td style="width: 100%;">
+                  <p class="pTituloC">Monto limite :</p>
+                  <input class="inputText" type="text" id="inptMontoLimiteAbmInterConsulta" onkeyup="separadordemiles(this)">
                   </td>
                 </tr>
                 </table>

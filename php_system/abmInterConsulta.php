@@ -92,8 +92,10 @@
                 $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
                 $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? utf8_decode($_POST['cod_localFK']) : null;
+                $monto_limite= isset($_POST['monto_limite']) ? utf8_decode($_POST['monto_limite']) : null;
+                $fecha_vencimiento= isset($_POST['fecha_vencimiento']) ? utf8_decode($_POST['fecha_vencimiento']) : null;
 
-                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK);
+                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK, $monto_limite, $fecha_vencimiento);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
@@ -273,8 +275,6 @@
                     <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
                     <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
                     <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
-                    <td class="td_registroSearch" style="width: 25%">'.$gasto["idgastos"].'</td>
-                    <td class="td_registroSearch" style="width: 50%">'.$gasto["descripcion"].'</td>
                     <td class="td_registroSearch" style="width: 25%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
                 </tr></table>';
             }
@@ -369,7 +369,7 @@
             '.$mencionesElemento.'
             </ul>
             </div>
-            <div style="flex: 0.5;">
+            <div style="flex: 0.5; text-align: left; padding-left: 15px;">
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Usuario creador:</span>
             <span class="text-uppercase">'.$valueInter['nombre_persona_creador'].'</span>
@@ -380,26 +380,42 @@
             </div>
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Estado:</span>
-            <span id="td_datos_2" class="badge '.$claseEstado.' text-uppercase">'.$valueInter['estado'].'</span>
+            <span id="td_datos_32" class="badge '.$claseEstado.' text-uppercase">'.$valueInter['estado'].'</span>
             </div>
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Tipo:</span>
-            <span id="td_datos_3" class="badge badge-secondary text-uppercase">'.$valueInter['tipo'].'</span>
+            <span id="td_datos_33" class="badge badge-secondary text-uppercase">'.$valueInter['tipo'].'</span>
             </div>
             <div style="margin-bottom: 5px;">
                 <span class="fw-bold">Cod. InterConsulta:</span>
-                <span class="text-uppercase" id="td_datos_6">'.$valueInter['cod_interConsulta'].'</span>
+                <span class="text-uppercase" id="td_datos_36">'.$valueInter['cod_interConsulta'].'</span>
+            </div>
+            <div style="margin-bottom: 5px;">
+            <span class="fw-bold">Local:</span>
+            <span id="td_datos_33" class="text-uppercase">'.$valueInter['nombre_local'].'</span>
             </div>';
             if ($valueInter['tipo'] == 'clinico' || $valueInter['tipo'] == 'administrativo') {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Cod. Venta:</span>
-                <span class="text-uppercase" id="td_datos_6">'.$valueInter['num_factura'].'</span>
+                <span class="text-uppercase">'.$valueInter['num_factura'].'</span>
+                </div>';
+            }
+            if ($valueInter['fecha_vencimiento']) {
+                $pagina .= '<div style="margin-bottom: 5px;">
+                <span class="fw-bold">Fecha Vencimiento:</span>
+                <span class="text-uppercase">'.$valueInter['fecha_vencimiento'].'</span>
                 </div>';
             }
             if ($valueInter['nombre_motivo_asociado']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Motivo Asociado:</span>
-                <span class="text-uppercase" id="td_datos_6">'.$valueInter['nombre_motivo_asociado'].'</span>
+                <span class="text-uppercase">'.$valueInter['nombre_motivo_asociado'].'</span>
+                </div>';
+            }
+            if ($ventasElemento && $valueInter['monto_limite']) {
+                $pagina .= '<div style="margin-bottom: 5px;">
+                <span class="fw-bold">Monto Limite:</span>
+                <span class="text-uppercase">'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
                 </div>';
             }
             $pagina .= '</div>';
@@ -409,9 +425,9 @@
                 <strong>Ventas asociadas</strong>
                 <table class="tableCabeceraRegistro">
                     <tr>
-                        <td class="td_registro" style="width: 25%;">Cod.</td>
-                        <td class="td_registro" style="width: 50%;">Descripcion</td>
-                        <td class="td_registro" style= "width: 25%;">Monto</td>
+                        <td class="td_registro" style="width: 25%;text-align: left;">Cod.</td>
+                        <td class="td_registro" style="width: 50%;text-align: left;">Descripcion</td>
+                        <td class="td_registro" style= "width: 25%;text-align: left;">Monto</td>
                     </tr>
                 </table>
                 <div style="overflow-y: auto; height: 150px;">
@@ -422,12 +438,14 @@
 
             $pagina .= '</div>
             <div style="display: none;">
-            <span id="td_datos_1">'.$valueInter['asunto'].'</span>
-            <span id="td_datos_4">'.$valueInter['cod_interConsulta'].'</span>
-            <span id="td_datos_5">'.$valueInter['cod_ventaFK'].'</span>
-            <span id="td_datos_7">'.$valueInter['nombre_persona'].'</span>
-            <span id="td_datos_8">'.$valueInter['cod_localFK'].'</span>
-            <span id="td_datos_9">'.$valueInter['cod_clienteFK'].'</span>
+            <span id="td_datos_31">'.$valueInter['asunto'].'</span>
+            <span id="td_datos_34">'.$valueInter['cod_interConsulta'].'</span>
+            <span id="td_datos_35">'.$valueInter['cod_ventaFK'].'</span>
+            <span id="td_datos_37">'.$valueInter['nombre_persona'].'</span>
+            <span id="td_datos_38">'.$valueInter['cod_localFK'].'</span>
+            <span id="td_datos_39">'.$valueInter['cod_clienteFK'].'</span>
+            <span id="td_datos_40">'.$valueInter['fecha_vencimiento'].'</span>
+            <span id="td_datos_41">'.$valueInter['monto_limite'].'</span>
             </div>
             </div>
             </div>
@@ -532,7 +550,6 @@
                 <div style='
                     margin-top: 10px;
                     padding-top: 10px;
-                    border-top: 1px solid #ddd;
                 '>
                     <strong>Ultimas conversaciones:</strong>
                     $interConsultas
@@ -1254,13 +1271,12 @@
         return $registros;
     }
 
-    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit, $cod_localFK) {
+    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit, $cod_localFK, $monto_limite, $fecha_vencimiento) {
         $mysqli = conectar_al_servidor();
-
         if (empty($cod_interConsulta)) {
-            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion, cod_localFK) VALUES (?, ?, ?, ?, ?, NOW(), ?)";
+            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion, cod_localFK, monto_limite, fecha_vencimiento) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('sssiii',$asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK);
+            $stmt->bind_param('sssiiiis',$asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK, $monto_limite, $fecha_vencimiento);
         } else {
             // Obtiene los datos de la interconsulta antes que sea modificada
             $interconsulta_original= obtenerInterConsulta(array(
@@ -1310,6 +1326,18 @@
                 $ss .= "i";
                 $parametros[] = $cod_ventaFK;
                 $nuevos_datos['cod_ventaFK'] = $cod_ventaFK;
+            }
+            if (!empty($fecha_vencimiento)) {
+                $atributos .= ", fecha_vencimiento= ?";
+                $ss .= "s";
+                $parametros[] = $fecha_vencimiento;
+                $nuevos_datos['fecha_vencimiento'] = $fecha_vencimiento;
+            }
+            if (!empty($monto_limite)) {
+                $atributos .= ", monto_limite= ?";
+                $ss .= "i";
+                $parametros[] = $monto_limite;
+                $nuevos_datos['monto_limite'] = $monto_limite;
             }
             
             $parametros[] = $cod_interConsulta;

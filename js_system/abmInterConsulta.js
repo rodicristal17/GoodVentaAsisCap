@@ -240,6 +240,8 @@ function verificarCamposInterConsulta() {
     const estado= document.getElementById('inptEstadoAbmInterConsulta').value;
     const tipo= document.getElementById('inptTipoAbmInterConsulta').value;
     const local= document.getElementById('inptLocalAbmInterConsulta').value;
+    const fecha_vencimiento= document.getElementById('inptFechaVencimientoAbmInterConsulta').value;
+    const monto_limite= document.getElementById('inptMontoLimiteAbmInterConsulta').value;
 
     if (!asunto) {
         ver_vetana_informativa("El campo asunto es obligatorio para crear una nueva Interconsulta.");
@@ -250,10 +252,13 @@ function verificarCamposInterConsulta() {
         return false;
     }
     
-    abmInterConsulta(asunto, estado, tipo, local);
+    abmInterConsulta(asunto, estado, tipo, local, fecha_vencimiento, monto_limite);
 }
 
-function abmInterConsulta(asunto, estado, tipo, local) {
+function abmInterConsulta(asunto, estado, tipo, local, fecha_vencimiento, monto_limite) {
+    // Limpia el formato del monto_limite
+    monto_limite= monto_limite.replace(".", "");
+
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -265,6 +270,8 @@ function abmInterConsulta(asunto, estado, tipo, local) {
     datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("cod_ventaFK", cod_ventaFKConsulta);
     datos.append("cod_localFK", local);
+    datos.append("fecha_vencimiento", fecha_vencimiento);
+    datos.append("monto_limite", monto_limite);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -1019,6 +1026,7 @@ function obtenerDatosInterConsulta(elemento) {
         case 'divAbmGastos':
             document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
             verCerrarVentanaListadoInterConsulta(false);
+            verCerrarAbmGasto();
             break;
         case 'divAbmDetallesInterConsulta':
             buscarInterConsultasYContenido(elemento);
@@ -1035,17 +1043,20 @@ function obtenerDatosInterConsulta(elemento) {
 function obtenerDetallesInterConsulta(origen) {
     const elemento= document.getElementById('contenedorEncabezadoInterConsulta').parentElement;
 
-    cod_interConsulta= elemento.querySelector('#td_datos_4')?.textContent.trim();
-    cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
-    cod_clienteConsulta= elemento.querySelector('#td_datos_9')?.textContent.trim();
+    cod_interConsulta= elemento.querySelector('#td_datos_34')?.textContent.trim();
+    cod_ventaFKConsulta= elemento.querySelector('#td_datos_35')?.textContent.trim();
+    cod_clienteConsulta= elemento.querySelector('#td_datos_39')?.textContent.trim();
     
     switch (origen) {
         case 'interConsulta':
-            document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_7')?.textContent.trim();
-            document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_1')?.textContent.trim();
-            document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_3')?.textContent.trim();
-            document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_2')?.textContent.trim();
-            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_8')?.textContent.trim();;
+            document.getElementById('inptNombreClienteAbmInterConsulta').value= elemento.querySelector('#td_datos_37')?.textContent.trim();
+            document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_31')?.textContent.trim();
+            document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_33')?.textContent.trim();
+            document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_32')?.textContent.trim();
+            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_38')?.textContent.trim();;
+            document.getElementById('inptFechaVencimientoAbmInterConsulta').value= elemento.querySelector('#td_datos_40')?.textContent.trim();;
+            document.getElementById('inptMontoLimiteAbmInterConsulta').value= elemento.querySelector('#td_datos_41')?.textContent.trim();
+            separadordemiles(document.getElementById('inptMontoLimiteAbmInterConsulta'));
             verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');
             buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);
             break;
@@ -1186,6 +1197,10 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
         buscarPacientesConInterConsultas();
 
         document.getElementById("divListadoInterConsulta").style.display= "";
+
+        if (anterior) {
+            document.getElementById(anterior).style.display= "none";
+        }
     } else {
         document.getElementById("divListadoInterConsulta").style.display= "none";
     }
