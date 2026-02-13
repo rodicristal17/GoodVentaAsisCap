@@ -1141,6 +1141,7 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
                     document.getElementById('divListDetallesInterconsultasAsoc').style.display= "";
                     document.getElementById('list_abm_interConsulta_asoc').innerHTML= datos["2"];
                     document.getElementById('list_detalles_interconsultas_asoc').innerHTML= datos["2"];
+                    document.getElementById('localDetalleInterConsulta').innerHTML= datos["3"]
                 } else {
                     throw new Error("Error producido en eliminarMencionMensaje de JavaScript.");
                 }

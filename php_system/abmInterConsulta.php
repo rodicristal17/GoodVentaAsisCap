@@ -203,7 +203,9 @@
                 ), 0);
 
                 $pagina= "";
+                $locales= array();
                 foreach ($registros as $key => $value) {
+                    $locales[]= $value['nombre_local'];
                     $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding= "5"><tr onclick="obtenerDatosInterConsulta(this)">
                         <td id="td_id" style="display: none;">'.$value['cod_interConsulta'].'</td>
                         <td id="td_datos_5" style="display: none;">'.$value['nombre_persona'].'</td>
@@ -219,7 +221,12 @@
                         <td id="td_datos_9" class="tdRegistroSearch" style="width: 35%;">'.$value['nombre_persona_creador'].'</td>
                     </tr></table>';
                 }
-                echo json_encode(array("1" => "exito", "2" => $pagina));
+                
+                // Formatea los locales
+                $locales= array_unique($locales);
+                $nombre_local= implode(" / ", $locales);
+
+                echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $nombre_local));
                 break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
@@ -392,7 +399,7 @@
             </div>
             <div style="margin-bottom: 5px;">
             <span class="fw-bold">Local:</span>
-            <span id="td_datos_33" class="text-uppercase">'.$valueInter['nombre_local'].'</span>
+            <span id="localDetalleInterConsulta" class="text-uppercase">'.$valueInter['nombre_local'].'</span>
             </div>';
             if ($valueInter['tipo'] == 'clinico' || $valueInter['tipo'] == 'administrativo') {
                 $pagina .= '<div style="margin-bottom: 5px;">
