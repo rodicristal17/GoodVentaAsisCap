@@ -5,7 +5,7 @@ DROP EVENT IF EXISTS generar_mensajes_gastos_fijos;
 
 DELIMITER $$
 CREATE EVENT generar_mensajes_gastos_fijos
-ON SCHEDULE EVERY 1 DAY
+ON SCHEDULE EVERY 1 Day
 STARTS CURDATE()
 DO
 BEGIN
@@ -57,7 +57,42 @@ DELIMITER ;
 
 UPDATE gastos_fijos SET estado="inactivo" WHERE cod_gastos_fijos IS NOT NULL;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.59', detalles='Rediseño de ventana de egreso / ingreso', fecha='2026-02-06' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.60', detalles='Unificacion entre interconsulta y gastos', fecha='2026-02-13' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE interconsulta ADD COLUMN fecha_vencimiento DATE;
-ALTER TABLE interConsulta ADD COLUMN monto_limite INT;
+ALTER TABLE interconsulta ADD COLUMN monto_limite INT;
+
+SET GLOBAL event_scheduler = ON;
+
+DELIMITER $$
+
+DROP EVENT IF EXISTS generar_mensajes_interconsulta_vencimiento$$
+CREATE EVENT generar_mensajes_interconsulta_vencimiento
+ON SCHEDULE EVERY 1 DAY
+STARTS CURDATE()
+DO
+BEGIN
+    -- Marcar como no leídas las menciones del último mensaje
+    UPDATE menciones m
+    JOIN mensaje msg ON m.cod_mensajeFK = msg.cod_mensaje
+    JOIN (
+        -- Subconsulta que obtiene el cod_mensaje del último mensaje de cada interconsulta vencida
+        SELECT 
+            ic.cod_interConsulta,
+            MAX(msg_inner.cod_mensaje) AS ultimo_cod_mensaje
+        FROM interconsulta ic
+        JOIN mensaje msg_inner ON msg_inner.cod_interConsultaFK = ic.cod_interConsulta
+        WHERE ic.fecha_vencimiento = CURDATE()
+        AND msg_inner.fecha_creacion <= NOW()
+        GROUP BY ic.cod_interConsulta
+        HAVING MAX(msg_inner.fecha_creacion) = (
+            SELECT MAX(msg_max.fecha_creacion)
+            FROM mensaje msg_max
+            WHERE msg_max.cod_interConsultaFK = ic.cod_interConsulta
+            AND msg_max.fecha_creacion <= NOW()
+        )
+    ) ultimos ON msg.cod_mensaje = ultimos.ultimo_cod_mensaje
+    SET m.isLeido = 0;
+END$$
+
+DELIMITER ;
