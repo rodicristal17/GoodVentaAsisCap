@@ -36030,7 +36030,13 @@ function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 		controlFoto= opcion;
 		// Obtiene la direccion de la imagen
 		const elemento= 'img' + opcion;
-		const ruta= document.getElementById(elemento).style.backgroundImage;
+		let ruta= document.getElementById(elemento).style.backgroundImage;
+
+		// En caso de que no tenga imagen cargada
+		if (ruta.includes('subir_imagen.png')) {
+			ruta= 'url("/GoodVentaAsisCap/iconos/guia_fotos.jpeg")';
+		}
+		
 		document.getElementById('ImgFotoProductos').src= ruta.slice(5, -2);
 		// Muestra o oculta las opciones de seleccionar y eliminar
 		if (mostrarOpciones) {
