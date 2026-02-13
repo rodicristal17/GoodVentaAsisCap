@@ -247,11 +247,11 @@
             $mencionesElemento= "";
             $menciones= array();
             
-            // Genera el listado de ventas
-            $ventasElemento= "";
+            // Genera el listado de Gastos
+            $gastosElemento= "";
             $registrosGastos = buscarGasto("","","",'Activo','','','','','true','', $valueInter['cod_interConsulta'])[9];
             foreach ($registrosGastos as $gasto) {
-                $ventasElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
+                $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
 				<tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');">
                     <td id="td_id" style="width:25%;">'.$gasto["idgastos"].'</td>
                     <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
@@ -412,7 +412,7 @@
                 <span class="text-uppercase">'.$valueInter['nombre_motivo_asociado'].'</span>
                 </div>';
             }
-            if ($ventasElemento && $valueInter['monto_limite']) {
+            if ($gastosElemento && $valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Monto Limite:</span>
                 <span class="text-uppercase">'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
@@ -420,9 +420,9 @@
             }
             $pagina .= '</div>';
 
-            if ($ventasElemento) {
+            if ($gastosElemento) {
                 $pagina .= '<div style="flex: 0.5;">
-                <strong>Ventas asociadas</strong>
+                <strong>Gastos asociados</strong>
                 <table class="tableCabeceraRegistro">
                     <tr>
                         <td class="td_registro" style="width: 25%;text-align: left;">Cod.</td>
@@ -431,7 +431,7 @@
                     </tr>
                 </table>
                 <div style="overflow-y: auto; height: 150px;">
-                    '.$ventasElemento.'
+                    '.$gastosElemento.'
                 </div>
                 </div>';
             }

@@ -1014,24 +1014,33 @@ function mostrarOpcionesUsuariosMenciones(textarea, sugerencias) {
 }
 
 function obtenerDatosInterConsulta(elemento) {
-    cod_interConsulta= $(elemento).children('#td_id').html();
-    cod_ventaFKConsulta= $(elemento).children('#td_datos_4').html();
-    cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
-
     switch (ventanaAnterior[ventanaAnterior.length - 1]) {
         case 'divAbmGastosFijos':
+            cod_interConsulta= $(elemento).children('#td_id').html();
+            cod_ventaFKConsulta= $(elemento).children('#td_datos_4').html();
+            cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
             document.getElementById('inptAbmInterConsultaGastoFijo').value= $(elemento).children('#td_datos_10').html();
             verCerrarVentanaListadoInterConsulta(false);
             break;
         case 'divAbmGastos':
-            document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
-            verCerrarVentanaListadoInterConsulta(false);
-            verCerrarAbmGasto();
+            cod_ventaFKConsulta= "";
+            cod_clienteConsulta= "";
+            //document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            ventanaAnterior.pop();
+            document.getElementById('divAbmGastos').style.display= "none";
+            verCerrarVentanaDetalleInterConsulta(true, 'divAbmGastos');
+            buscarInterConsultasYContenido();
             break;
         case 'divAbmDetallesInterConsulta':
+            cod_interConsulta= $(elemento).children('#td_id').html();
+            cod_ventaFKConsulta= $(elemento).children('#td_datos_4').html();
+            cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
             buscarInterConsultasYContenido(elemento);
             break;
         default:
+            cod_interConsulta= $(elemento).children('#td_id').html();
+            cod_ventaFKConsulta= $(elemento).children('#td_datos_4').html();
+            cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
             verCerrarVentanaListadoInterConsulta(false);
             verCerrarVentanaDetalleInterConsulta(true, 'divListadoInterConsulta');
             buscarInterConsultasYContenido(elemento);

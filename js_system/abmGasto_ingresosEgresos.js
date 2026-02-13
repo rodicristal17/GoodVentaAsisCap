@@ -117,6 +117,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnAbmGastos').value = "Editar datos";
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
+	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
 	
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
@@ -788,6 +789,7 @@ function limpiarcamposGasto() {
 	document.getElementById('inptArregloGasto').value = "";
 	document.getElementById('btnEditarGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#b7b7b7";
+	document.getElementById('btnInterConsultaGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('inptEstadoGasto').value = "Activo";
 	document.getElementById('btnAbmGastos').value = "Guardar datos";
 	document.getElementById('inptMotivoMisGastos').value ="";
