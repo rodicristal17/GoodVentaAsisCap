@@ -4409,8 +4409,27 @@ style='background-color:#5bc572'>
             <div class="divMenuf">
               <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"
                 style="height: 100%;border:1px solid rgb(209, 209, 209);width: 100%;"></div>
-                <div class="sugerencias-container" style="display: flex;justify-content: flex-end;">
-                  <div class="card my-3" style="border-left: 5px solid #8BC34A;flex: 0.95;">
+                <div class="sugerencias-container" style="display: flex;justify-content: center;">
+                  <div style="flex: 0.55; margin-bottom: 1rem; margin-top: 1rem;display: none;" id="divListDetallesInterconsultasAsoc">
+                    <table class="tableCabeceraRegistro">
+                      <tr>
+                        <td class="td_registro" style="width:10%;">
+                        COD. VENTA
+                        </td>
+                        <td class="td_registro" style="width:40%;">
+                        ASUNTO
+                        </td>
+                        <td class="td_registro" style="width:15%;">
+                        ESTADO
+                        </td>
+                        <td class="td_registro" style="width:35%;">
+                        CREADOR
+                        </td>
+                      </tr>
+                    </table>
+                    <div id="list_detalles_interconsultas_asoc" style="overflow-y: auto; height: 150px;"></div>
+                  </div>
+                  <div class="card my-3" style="border-left: 5px solid #8BC34A;flex: 0.90; margin: 0;">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span id="nombreUsuarioMensaje">Usuario</span>
                         <small class="text-secondary">
@@ -4419,7 +4438,7 @@ style='background-color:#5bc572'>
                     </div>
                     <div id="avisoMensajesPendientesInterConsulta" class="card-subtitle justify-content-between align-items-center" style="display: none;">
                       <h6 class="mb-2 text-muted" style="margin-left: 5px;margin-top: auto;">Tiene mensajes pendientes...</h6>
-                        <input type="button" style="width: fit-content;margin-top: 5px;" value="Cargar" class="btn1" onclick="buscarInterConsultasYContenido()">
+                        <input type="button" style="width: fit-content;margin-top: 5px;" value="Cargar" class="btn1" onclick="buscarInterConsultasYContenido(cod_interConsulta)">
                     </div>
                     <div class="card-body">
                         <div style="display: flex;">
