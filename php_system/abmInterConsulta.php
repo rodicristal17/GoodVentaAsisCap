@@ -236,6 +236,7 @@
         $pagina = "";
         $limiteMensajes= 5;
         $totalCantMensaje= 0;
+        $totalGastos= 0;
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
@@ -664,26 +665,48 @@
                     </div>';
             }
             
-            $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
+            if (!$valueMens['cod_usuarioFK'] || $valueMens['cod_usuarioFK'] == "NULL") {
+                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
                     <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
-                      <span></span>
-                      <div class="card-header d-flex justify-content-between align-items-center">
-                          <div>
-                            <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="max-height: 30px;max-width: 35px;"/>
-                            <span>'.$valueMens['nombre_persona'].'</span>
-                          </div>
-                          <small class="text-secondary">
+                        <span></span>
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                            <span>SISTEMA</span>
+                            </div>
+                            <small class="text-secondary">
                             <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
-                          </small>
-                      </div>
-                      <div class="card-body">
-                          <div style="display: flex;">
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex;">
                             '.$miniatura_imagen.'
                             <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
-                          </div>
-                      </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>';
+                </div>';
+            } else {
+                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
+                        <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
+                          <span></span>
+                          <div class="card-header d-flex justify-content-between align-items-center">
+                              <div>
+                                <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="max-height: 30px;max-width: 35px;"/>
+                                <span>'.$valueMens['nombre_persona'].'</span>
+                              </div>
+                              <small class="text-secondary">
+                                <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
+                              </small>
+                          </div>
+                          <div class="card-body">
+                              <div style="display: flex;">
+                                '.$miniatura_imagen.'
+                                <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
+                              </div>
+                          </div>
+                        </div>
+                      </div>';
+            }
         }
 
         return $paginaMensajes;
@@ -997,7 +1020,8 @@
         $sql= "SELECT * FROM (
                 SELECT m.*, 
                 (SELECT url FROM usuario where cod_usuario = m.cod_usuarioFK) AS url_usuario,
-                p.nombre_persona FROM mensaje m JOIN persona p ON p.cod_persona = m.cod_usuarioFK $sqlFiltro ORDER BY m.fecha_creacion DESC $limite
+                (SELECT nombre_persona FROM persona where cod_persona = m.cod_usuarioFK) AS nombre_persona
+                FROM mensaje m $sqlFiltro ORDER BY m.fecha_creacion DESC $limite
             ) AS subquery ORDER BY fecha_creacion ASC, cod_mensaje ASC";
 
         $mysqli=conectar_al_servidor();
