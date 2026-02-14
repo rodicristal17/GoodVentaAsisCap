@@ -29,8 +29,7 @@ if($operacion=="buscarVistaConsulta")
 {	 
 	$Paciente=$_POST['Paciente'];
     $Paciente = utf8_decode($Paciente);
-	$local=$_POST['local'];
-    $local = utf8_decode($local);
+	$local= (isset($_POST['local']) ? utf8_decode($_POST['local']) : "");
 	buscarVistaConsulta($Paciente,$local);
 }	
  
@@ -764,6 +763,7 @@ exit;
 	
 		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo , 
 		(select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
+		(select Nombre from local where cod_local=vt.cod_local) as nombre_local , 
 		(select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
 		from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
 		inner join persona p on cod_cliente=cod_persona
@@ -795,6 +795,7 @@ if ( ! $stmt->execute()) {
 			   $decripcion=''; 
 			   $cod_venta=utf8_encode($valor['cod_venta']);
 			   $apodo=utf8_encode($valor['apodo']);
+			   $nombre_local=utf8_encode($valor['nombre_local']);
 			   
 $porcentaje = $valor['porcentaje'];
 $totalporcentaje = $valor['totalporcentaje'];
@@ -855,6 +856,7 @@ if($resultadoPorcentaje=="100"){
   <p><strong>Nombre:</strong> $paciente</p>
   <p><strong>CI:</strong> $ci_cliente</p>
   <p><strong>Código venta:</strong> $num_factura</p>
+  <p><strong>Local:</strong> $nombre_local</p>
 
   <div style='
     margin-top: 10px;
