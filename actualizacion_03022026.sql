@@ -96,3 +96,5 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+ALTER TABLE interconsulta DROP COLUMN fecha_vencimiento;

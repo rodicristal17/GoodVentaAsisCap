@@ -10532,7 +10532,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptlocalProductoBuscarInventario").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptLocalProductoEnviarA").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptBuscarInterConsulta7").innerHTML = "<option value=''>TODOS</option>" +datos_buscados
-					document.getElementById("inptLocalAbmInterConsulta").innerHTML = "<option value=''>TODOS</option>" +datos_buscados;
+					document.getElementById("inptLocalAbmInterConsulta").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados;
 					document.getElementById("inptBuscarProducto7").innerHTML = datos_buscados
 					document.getElementById("inptAbmLocalGastoFijo").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados;
 					document.getElementById("inptlocalProductoBuscarVista").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
