@@ -416,7 +416,6 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 
 	$sql= "UPDATE gastos SET cod_usuario_autoriz= ?, fecha_autoriz= ?, estado='$decision' WHERE idgastos= ?";
 	$stmt = $mysqli->prepare($sql);
-
 	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$idgastos);
 
 	if (!$stmt->execute()) {

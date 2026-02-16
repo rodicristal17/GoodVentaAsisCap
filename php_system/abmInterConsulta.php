@@ -256,15 +256,18 @@
             
             // Genera el listado de Gastos
             $gastosElemento= "";
-            $registrosGastos = buscarGasto("","","",'Activo','','','','','true','', $valueInter['cod_interConsulta'])[9];
+            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'])[9];
             foreach ($registrosGastos as $gasto) {
                 $estadoClassGasto= 'text-bg-success';
-                switch ($gasto["estado"]) {
+                $aprobarElemento= "";
+                switch (strtolower($gasto["estado"])) {
                     case 'rechazado':
                         $estadoClassGasto= 'text-bg-danger';
                         break;
                     case 'solicitado': 
                         $estadoClassGasto= 'text-bg-warning';
+                        $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
+                        <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
                         break;
                     default:
                         $estadoClassGasto= 'text-bg-success';
@@ -273,10 +276,10 @@
 
                 $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
 				<tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');">
-                    <td id="td_id" style="width:25%;">'.$gasto["idgastos"].'</td>
-                    <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'">'.$gasto["estado"].'</span></td>
+                    <td id="td_id" style="width:10%;">'.$gasto["idgastos"].'</td>
+                    <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$gasto["estado"].'</span></td>
                     <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
-                    <td  style="width: 50%">'.$gasto["descripcion"].'</td>
+                    <td  style="width: 30%">'.$gasto["descripcion"].'</td>
                     <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
                     <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
                     <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
@@ -296,7 +299,10 @@
                     <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
                     <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
                     <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
-                    <td class="td_registroSearch" style="width: 25%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
+                    <td class="td_registroSearch" style="width: 20%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
+                    <td class="td_registroSearch" style="width: 20%">
+                        '.$aprobarElemento.'
+                    </td>
                 </tr></table>';
             }
 
@@ -437,13 +443,14 @@
 
             if ($gastosElemento) {
                 $pagina .= '<div style="flex: 0.5;">
-                <strong>Gastos asociados</strong>
+                <span><strong>Gastos asociados</strong></span>
                 <table class="tableCabeceraRegistro">
                     <tr>
-                        <td class="td_registro" style="width: 25%;text-align: left;">Cod.</td>
+                        <td class="td_registro" style="width: 10%;text-align: left;">Cod.</td>
                         <td class="td_registro" style="width: 25%;text-align: left;">Estado</td>
-                        <td class="td_registro" style="width: 50%;text-align: left;">Descripcion</td>
-                        <td class="td_registro" style= "width: 25%;text-align: left;">Monto</td>
+                        <td class="td_registro" style="width: 30%;text-align: left;">Descripcion</td>
+                        <td class="td_registro" style= "width: 20%;text-align: left;">Monto</td>
+                        <td class="td_registro" style= "width: 25%;text-align: left;"></td>
                     </tr>
                 </table>
                 <div style="overflow-y: auto; height: 150px;">
@@ -1054,8 +1061,16 @@
         while ($row = $result->fetch_assoc()) {
             $reg = array();
             foreach ($row as $key => $value) {
-                // Solo codificar si NO es UTF-8 válido
-                $reg[$key] = mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+                if (is_string($value)) {
+                    // Verificar si es UTF-8 válido (PHP 8 compatible)
+                    if (!mb_check_encoding($value, 'UTF-8')) {
+                        $reg[$key] = mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+                    } else {
+                        $reg[$key] = $value; // Ya es UTF-8
+                    }
+                } else {
+                    $reg[$key] = $value; // NULL, números, etc.
+                }
             }
             $registros[] = $reg;
         }

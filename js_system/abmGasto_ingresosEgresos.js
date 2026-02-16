@@ -154,7 +154,11 @@ function verCerrarAutorizacionEgreso(mostrar) {
 	}
 }
 
-function aprobarMovimiento(opcion) {
+function aprobarMovimiento(opcion, elemento= null) {
+	if (elemento != null) {
+		obtenerdatosabmGasto(elemento);
+	}
+
 	const inptCodigoAutorizacionEgreso= document.getElementById('inptCodigoAutorizacionEgreso').value;
 	obtener_datos_user();
 
