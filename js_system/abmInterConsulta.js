@@ -1037,9 +1037,19 @@ function obtenerDatosInterConsulta(elemento) {
         case 'divAbmGastos':
             cod_ventaFKConsulta= "";
             cod_clienteConsulta= "";
-            //document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
-            ventanaAnterior.pop();
+            document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            verCerrarVentanaListadoInterConsulta(false);
+            //ventanaAnterior.pop();
             document.getElementById('divAbmGastos').style.display= "none";
+            //verCerrarVentanaDetalleInterConsulta(true, 'divAbmGastos');
+            //buscarInterConsultasYContenido(cod_interConsulta);
+            break;
+        case 'divAbmGasto1':
+            cod_ventaFKConsulta= "";
+            cod_clienteConsulta= "";
+            document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            ventanaAnterior.pop();
+            document.getElementById('divAbmGastos').style.display= "";
             verCerrarVentanaDetalleInterConsulta(true, 'divAbmGastos');
             buscarInterConsultasYContenido(cod_interConsulta);
             break;
