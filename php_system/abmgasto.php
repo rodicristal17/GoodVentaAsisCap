@@ -304,7 +304,9 @@ if($operacion=="buscaroption")
 if ($operacion == "aprobarMovimiento") {
 	$idgastos= $_POST['idgastos'];
 	$idgastos= mb_convert_encoding((string)($idgastos), 'ISO-8859-1', 'UTF-8');
-	aprobarMovimiento($idgastos, $user);
+	$decision= $_POST['decision'];
+	$decision= mb_convert_encoding((string)($decision), 'ISO-8859-1', 'UTF-8');
+	aprobarMovimiento($idgastos, $user, $decision);
 }
 if ($operacion == "combinarmotivoingresoegreso") {
 	$cod_motivoIngresoEgreso= mb_convert_encoding((string)($_POST['cod_motivo_ingreso_egreso']), 'ISO-8859-1', 'UTF-8');
@@ -406,13 +408,13 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	exit;
 }
 
-function aprobarMovimiento($idgastos, $cod_usuarioFK) {
+function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	$fechaActual= new DateTime();
 	$fechaActual= $fechaActual->format('Y-m-d H:i:s');
-
+	$decision= ($decision == 'true' ? 'Activo' : 'Rechazado');
 	$mysqli=conectar_al_servidor();
 
-	$sql= "UPDATE gastos SET cod_usuario_autoriz= ?, fecha_autoriz= ?, estado='Activo' WHERE idgastos= ?";
+	$sql= "UPDATE gastos SET cod_usuario_autoriz= ?, fecha_autoriz= ?, estado='$decision' WHERE idgastos= ?";
 	$stmt = $mysqli->prepare($sql);
 
 	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$idgastos);
@@ -631,7 +633,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				}
 				
 				$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
-				$totalGasto=$totalGasto+$monto;
+				if ($valor['estado'] == 'Activo') {
+					$totalGasto += $monto;
+				}
 				
 				$registros[] = array(
 					'idgastos' =>mb_convert_encoding((string)($valor['idgastos']), 'UTF-8', 'ISO-8859-1'),
@@ -658,19 +662,21 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
 				);
 
-				switch ($categoria) {
-					case 'ingreso':
-						$totalZonaIngresos += $monto;
-						break;
-					case 'directo':
-						$totalZonaCostosDirectos += $monto;
-						break;
-					case 'operativo':
-						$totalZonaGastosOperativos += $monto;
-						break;
-					default:
-						$totalZonaSinCategorizar += $monto;
-						break;
+				if ($valor['estado'] == 'Activo') {
+					switch ($categoria) {
+						case 'ingreso':
+							$totalZonaIngresos += $monto;
+							break;
+						case 'directo':
+							$totalZonaCostosDirectos += $monto;
+							break;
+						case 'operativo':
+							$totalZonaGastosOperativos += $monto;
+							break;
+						default:
+							$totalZonaSinCategorizar += $monto;
+							break;
+					}
 				}
 			}
 		}
@@ -706,7 +712,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			'cod_motivoIngresoEgresoFK' => -1,
 		);
 		$registrosZona['ingreso'][-1][]= $valor;
-		$totalZonaIngresos += intval($value['Monto']);
+		if ($valor['estado'] == 'Activo') {
+			$totalZonaIngresos += intval($valor['monto']);
+		}
 	}
  
  foreach ($registrosZona as $zona => $cod_motivos) {
@@ -790,7 +798,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				$funcion= "";
 			}
 
-			$totalMonto += intval($monto);
+			if ($estado == 'Activo') {
+				$totalMonto += intval($monto);
+			}
 			$styleEstado = "";
 			if ($estado == 'solicitado') {
 				$styleEstado= "background-color: #ff5050;color: #ffffff";
@@ -800,38 +810,40 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			}
 	
 			$styleName=CargarStyleTable($styleName);
-			$paginaImprimir .= "
-				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
-				<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-				<td  style='width:25%'>".$descripcion."</td>
-				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-				<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-				<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
-				<td  id='td_datos_9' style='display: none;'>".$banco."</td>
-				<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
-				<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
-				<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
-				<td  id='' style='width:10%'>".$nombrelocal."</td>
-				<td  id='td_datos_5' style='display:none'>".$estado."</td>
-				<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
-				<td  id='td_datos_12' style='display:none'>".$url1."</td>
-				<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
-				<td  id='td_datos_14' style='display:none'>".$motivo."</td>
-				<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
-				<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
-				<td  id='td_datos_17' style='display:none'>".$cod_usuario_autoriz."</td>
-				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
-				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
-				<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
-				</tr>
-				</table>";
+			if ($estado == 'Activo') {
+				$paginaImprimir .= "
+					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
+					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  style='width:25%'>".$descripcion."</td>
+					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
+					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
+					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
+					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
+					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
+					<td  id='' style='width:10%'>".$nombrelocal."</td>
+					<td  id='td_datos_5' style='display:none'>".$estado."</td>
+					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
+					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
+					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
+					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
+					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
+					<td  id='td_datos_17' style='display:none'>".$cod_usuario_autoriz."</td>
+					<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
+					<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
+					<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
+					</tr>
+					</table>";
+			}
 	
 			$paginaMotivo .= "<li class='list-group-item' style='padding: 0; padding-left: 0.5rem;'>
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-				<tr id='tbSelecRegistro' onclick='$funcion'>
+				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
 				<td  style='width:15%'>".$descripcion."</td>

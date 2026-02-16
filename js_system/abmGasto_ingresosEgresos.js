@@ -154,7 +154,7 @@ function verCerrarAutorizacionEgreso(mostrar) {
 	}
 }
 
-function aprobarMovimiento() {
+function aprobarMovimiento(opcion) {
 	const inptCodigoAutorizacionEgreso= document.getElementById('inptCodigoAutorizacionEgreso').value;
 	obtener_datos_user();
 
@@ -164,6 +164,7 @@ function aprobarMovimiento() {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", 'aprobarMovimiento');
+	datos.append("decision", opcion);
 	datos.append("idgastos", inptCodigoAutorizacionEgreso);
 
 	var OpAjax = $.ajax({

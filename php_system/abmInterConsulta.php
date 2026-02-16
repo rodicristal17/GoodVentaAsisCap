@@ -258,9 +258,23 @@
             $gastosElemento= "";
             $registrosGastos = buscarGasto("","","",'Activo','','','','','true','', $valueInter['cod_interConsulta'])[9];
             foreach ($registrosGastos as $gasto) {
+                $estadoClassGasto= 'text-bg-success';
+                switch ($gasto["estado"]) {
+                    case 'rechazado':
+                        $estadoClassGasto= 'text-bg-danger';
+                        break;
+                    case 'solicitado': 
+                        $estadoClassGasto= 'text-bg-warning';
+                        break;
+                    default:
+                        $estadoClassGasto= 'text-bg-success';
+                        break;
+                }
+
                 $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
 				<tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');">
                     <td id="td_id" style="width:25%;">'.$gasto["idgastos"].'</td>
+                    <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'">'.$gasto["estado"].'</span></td>
                     <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
                     <td  style="width: 50%">'.$gasto["descripcion"].'</td>
                     <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
@@ -427,6 +441,7 @@
                 <table class="tableCabeceraRegistro">
                     <tr>
                         <td class="td_registro" style="width: 25%;text-align: left;">Cod.</td>
+                        <td class="td_registro" style="width: 25%;text-align: left;">Estado</td>
                         <td class="td_registro" style="width: 50%;text-align: left;">Descripcion</td>
                         <td class="td_registro" style= "width: 25%;text-align: left;">Monto</td>
                     </tr>

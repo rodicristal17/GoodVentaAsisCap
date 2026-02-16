@@ -18,8 +18,7 @@ BEGIN
                 CONCAT('Recordatorio: La cuenta de "', CAST(gf.descripcion AS CHAR CHARACTER SET utf8mb4), '" vence mañana (día ', gf.dia, ')'),
                 NULL,
                 'activo',
-                gf.cod_interConsultaFK,
-                2
+                gf.cod_interConsultaFK
         FROM gastos_fijos gf
         WHERE gf.dia = DAY(CURDATE()) + 1
             AND gf.estado = 'activo'
