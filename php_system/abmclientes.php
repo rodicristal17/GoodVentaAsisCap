@@ -5,17 +5,17 @@ include("subir_foto_base64.php");
 include("quitarseparadormiles.php");
 include("classTable.php");
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 function ObtenerDatos($operacion)
 {
 
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -30,48 +30,48 @@ if($operacion=="nuevo" || $operacion=="editar" )
 
 
 $sms=$_POST['sms'];
-$sms = utf8_decode($sms);
+$sms = mb_convert_encoding((string)($sms), 'ISO-8859-1', 'UTF-8');
 
 $FechaNac=$_POST['FechaNac'];
-$FechaNac = utf8_decode($FechaNac);
+$FechaNac = mb_convert_encoding((string)($FechaNac), 'ISO-8859-1', 'UTF-8');
 
 $cod_persona=$_POST['cod_persona'];
-$cod_persona = utf8_decode($cod_persona);
+$cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 $nombre_persona=$_POST['nombre_persona'];
-$nombre_persona = utf8_decode($nombre_persona);
+$nombre_persona = mb_convert_encoding((string)($nombre_persona), 'ISO-8859-1', 'UTF-8');
 $direccion=$_POST['direccion'];
-$direccion = utf8_decode($direccion);
+$direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 $telefono=$_POST['telefono'];
-$telefono = utf8_decode($telefono);
+$telefono = mb_convert_encoding((string)($telefono), 'ISO-8859-1', 'UTF-8');
 $email=$_POST['email'];
-$email = utf8_decode($email);
+$email = mb_convert_encoding((string)($email), 'ISO-8859-1', 'UTF-8');
 $cod_cliente=$cod_persona;
 $rut_cliente=$_POST['rut_cliente'];
-$rut_cliente = utf8_decode($rut_cliente);
+$rut_cliente = mb_convert_encoding((string)($rut_cliente), 'ISO-8859-1', 'UTF-8');
 $ci_cliente=$_POST['ci_cliente'];
-$ci_cliente = utf8_decode($ci_cliente);
+$ci_cliente = mb_convert_encoding((string)($ci_cliente), 'ISO-8859-1', 'UTF-8');
 $Calificacion=$_POST['Calificacion'];
-$Calificacion = utf8_decode($Calificacion);
+$Calificacion = mb_convert_encoding((string)($Calificacion), 'ISO-8859-1', 'UTF-8');
 $whapp=$_POST['whapp'];
-$whapp = utf8_decode($whapp);
+$whapp = mb_convert_encoding((string)($whapp), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $idzonaFk=$_POST['idzonaFk'];
-$idzonaFk = utf8_decode($idzonaFk);
+$idzonaFk = mb_convert_encoding((string)($idzonaFk), 'ISO-8859-1', 'UTF-8');
 $lugardetrabajo=$_POST['lugardetrabajo'];
-$lugardetrabajo = utf8_decode($lugardetrabajo);
+$lugardetrabajo = mb_convert_encoding((string)($lugardetrabajo), 'ISO-8859-1', 'UTF-8');
 $salario=$_POST['salario'];
 $salario = quitarseparadormiles($salario);
 $antiguedad=$_POST['antiguedad'];
-$antiguedad = utf8_decode($antiguedad);
+$antiguedad = mb_convert_encoding((string)($antiguedad), 'ISO-8859-1', 'UTF-8');
 $teleftrab1=$_POST['teleftrab1'];
-$teleftrab1 = utf8_decode($teleftrab1);
+$teleftrab1 = mb_convert_encoding((string)($teleftrab1), 'ISO-8859-1', 'UTF-8');
 $teleftrab2=$_POST['teleftrab2'];
-$teleftrab2 = utf8_decode($teleftrab2);
+$teleftrab2 = mb_convert_encoding((string)($teleftrab2), 'ISO-8859-1', 'UTF-8');
 $direcciontrab=$_POST['direcciontrab'];
-$direcciontrab = utf8_decode($direcciontrab);
+$direcciontrab = mb_convert_encoding((string)($direcciontrab), 'ISO-8859-1', 'UTF-8');
 $accesocredito=$_POST['accesocredito'];
-$accesocredito = utf8_decode($accesocredito);
+$accesocredito = mb_convert_encoding((string)($accesocredito), 'ISO-8859-1', 'UTF-8');
 
 abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_persona,$direccion,$telefono,$email,$cod_cliente,$rut_cliente,$ci_cliente,$Calificacion,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$operacion);
 
@@ -81,16 +81,16 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
  
  if($operacion=="addmasreferencias"){
  	$totalCargado=$_POST["totalCargado"];
- 	$totalCargado=utf8_decode($totalCargado);
+ 	$totalCargado=mb_convert_encoding((string)($totalCargado), 'ISO-8859-1', 'UTF-8');
 	$idcliente=$_POST["idcliente"];
- 	$idcliente=utf8_decode($idcliente);
+ 	$idcliente=mb_convert_encoding((string)($idcliente), 'ISO-8859-1', 'UTF-8');
  	addmasreferencias($totalCargado,$idcliente);
  }  
  
  
  if($operacion=="cambiar_estado_antecedente_consulta"){
  	$cod_antecedente_paciente=$_POST["cod_antecedente_paciente"];
- 	$cod_antecedente_paciente=utf8_decode($cod_antecedente_paciente);
+ 	$cod_antecedente_paciente=mb_convert_encoding((string)($cod_antecedente_paciente), 'ISO-8859-1', 'UTF-8');
 
  	cambiar_estado_antecedente_consulta($cod_antecedente_paciente);
  } 
@@ -98,18 +98,18 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
  
  if($operacion=="buscar_antecedente_consulta"){
 	$cod_clienteFK=$_POST["cod_clienteFK"];
- 	$cod_clienteFK=utf8_decode($cod_clienteFK);
+ 	$cod_clienteFK=mb_convert_encoding((string)($cod_clienteFK), 'ISO-8859-1', 'UTF-8');
 	$cod_ventaFK=$_POST["cod_ventaFK"];
- 	$cod_ventaFK=utf8_decode($cod_ventaFK);
+ 	$cod_ventaFK=mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
  	buscar_antecedente_consulta($cod_clienteFK,$cod_ventaFK);
  }
  
  
  if($operacion=="buscar_antecedente_resumen_consulta"){
 	$cod_clienteFK=$_POST["cod_clienteFK"];
- 	$cod_clienteFK=utf8_decode($cod_clienteFK);
+ 	$cod_clienteFK=mb_convert_encoding((string)($cod_clienteFK), 'ISO-8859-1', 'UTF-8');
 	$cod_ventaFK=$_POST["cod_ventaFK"];
- 	$cod_ventaFK=utf8_decode($cod_ventaFK);
+ 	$cod_ventaFK=mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
  	buscar_antecedente_resumen_consulta($cod_clienteFK,$cod_ventaFK);
  }
 
@@ -117,17 +117,17 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
 	 
 
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$documento=$_POST["documento"];
- 	$documento=utf8_decode($documento);
+ 	$documento=mb_convert_encoding((string)($documento), 'ISO-8859-1', 'UTF-8');
 	$cliente=$_POST["cliente"];
- 	$cliente=utf8_decode($cliente);
+ 	$cliente=mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
 	$zona=$_POST["zona"];
- 	$zona=utf8_decode($zona);
+ 	$zona=mb_convert_encoding((string)($zona), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$accesocredito=$_POST["accesocredito"];
- 	$accesocredito=utf8_decode($accesocredito);
+ 	$accesocredito=mb_convert_encoding((string)($accesocredito), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistro($codigo,$documento,$cliente,$zona,$estado,$accesocredito);
  }
  
@@ -135,58 +135,58 @@ abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_
 	 
 
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$documento=$_POST["documento"];
- 	$documento=utf8_decode($documento);
+ 	$documento=mb_convert_encoding((string)($documento), 'ISO-8859-1', 'UTF-8');
 	$cliente=$_POST["cliente"];
- 	$cliente=utf8_decode($cliente);
+ 	$cliente=mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
 	$zona=$_POST["zona"];
- 	$zona=utf8_decode($zona);
+ 	$zona=mb_convert_encoding((string)($zona), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$accesocredito=$_POST["accesocredito"];
- 	$accesocredito=utf8_decode($accesocredito);
+ 	$accesocredito=mb_convert_encoding((string)($accesocredito), 'ISO-8859-1', 'UTF-8');
 	$registrocargado=$_POST["registrocargado"];
- 	$registrocargado=utf8_decode($registrocargado);
+ 	$registrocargado=mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
  	BuscarMasRegistro($codigo,$documento,$cliente,$zona,$estado,$accesocredito,$registrocargado);
  }
 
 if($operacion=="addImagenes"){
 $idclientefk=$_POST['idclientefk'];
-$idclientefk = utf8_decode($idclientefk);
+$idclientefk = mb_convert_encoding((string)($idclientefk), 'ISO-8859-1', 'UTF-8');
 addImagenes($idclientefk);
 }
 
 if($operacion=="buscarDocumentos"){
 $idcontrato=$_POST['idcliente'];
-$idcontrato = utf8_decode($idcontrato);
+$idcontrato = mb_convert_encoding((string)($idcontrato), 'ISO-8859-1', 'UTF-8');
 buscarDocumentos($idcontrato);
 }
 
 if($operacion=="eliminardocumento"){
 $idcontrato=$_POST['idcliente'];
-$idcontrato = utf8_decode($idcontrato);
+$idcontrato = mb_convert_encoding((string)($idcontrato), 'ISO-8859-1', 'UTF-8');
 $iddocumento=$_POST['iddocumento'];
-$iddocumento = utf8_decode($iddocumento);
+$iddocumento = mb_convert_encoding((string)($iddocumento), 'ISO-8859-1', 'UTF-8');
 $urldocumento=$_POST['urldocumento'];
-$urldocumento = utf8_decode($urldocumento);
+$urldocumento = mb_convert_encoding((string)($urldocumento), 'ISO-8859-1', 'UTF-8');
 EliminarDocumento($idcontrato,$iddocumento,$urldocumento);
 
 }
 
  if($operacion=="buscarmasreferencias"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscarmasreferencias($buscar);
  }
  
   if($operacion=="cargar_antecedente_paciente"){
  	$cod_ventaFK=$_POST["cod_ventaFK"];
- 	$cod_ventaFK=utf8_decode($cod_ventaFK);
+ 	$cod_ventaFK=mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
 	$cod_clienteFK=$_POST["cod_clienteFK"];
- 	$cod_clienteFK=utf8_decode($cod_clienteFK);
+ 	$cod_clienteFK=mb_convert_encoding((string)($cod_clienteFK), 'ISO-8859-1', 'UTF-8');
 	$observacion=$_POST["observacion"];
- 	$observacion=utf8_decode($observacion);
+ 	$observacion=mb_convert_encoding((string)($observacion), 'ISO-8859-1', 'UTF-8');
  	cargar_antecedente_paciente($cod_ventaFK,$cod_clienteFK,$observacion);
  }
 
@@ -195,74 +195,74 @@ EliminarDocumento($idcontrato,$iddocumento,$urldocumento);
 	 
 	
  	$ruc=$_POST["ruc"];
- 	$ruc=utf8_decode($ruc);
+ 	$ruc=mb_convert_encoding((string)($ruc), 'ISO-8859-1', 'UTF-8');
 	$documento=$_POST["documento"];
- 	$documento=utf8_decode($documento);
+ 	$documento=mb_convert_encoding((string)($documento), 'ISO-8859-1', 'UTF-8');
 	$cliente=$_POST["cliente"];
- 	$cliente=utf8_decode($cliente);
+ 	$cliente=mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
 	$telef=$_POST["telef"];
- 	$telef=utf8_decode($telef);
+ 	$telef=mb_convert_encoding((string)($telef), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnVista($ruc,$documento,$cliente,$telef);
  }
 
  if($operacion=="buscarporci"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscarporci($buscar);
  }
 
  if($operacion=="buscarmensajes"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscarmensajes($buscar);
  }
 
  if($operacion=="buscarcumpleCliente"){
  	$Fecha=$_POST["Fecha"];
- 	$Fecha=utf8_decode($Fecha);
+ 	$Fecha=mb_convert_encoding((string)($Fecha), 'ISO-8859-1', 'UTF-8');
 	$Zona=$_POST["Zona"];
- 	$Zona=utf8_decode($Zona);
+ 	$Zona=mb_convert_encoding((string)($Zona), 'ISO-8859-1', 'UTF-8');
  	 buscarcumpleCliente($Fecha,$Zona);
  }
  
  if($operacion=="buscarcuentaImpago"){
  	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);	
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');	
 	$zona=$_POST["zona"];
- 	$zona=utf8_decode($zona);
+ 	$zona=mb_convert_encoding((string)($zona), 'ISO-8859-1', 'UTF-8');
 	$cliente=$_POST["cliente"];
- 	$cliente=utf8_decode($cliente);
+ 	$cliente=mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
 	$cobrador=$_POST["cobrador"];
- 	$cobrador=utf8_decode($cobrador);
+ 	$cobrador=mb_convert_encoding((string)($cobrador), 'ISO-8859-1', 'UTF-8');
 	
 	$tipo=$_POST["tipo"];
- 	$tipo=utf8_decode($tipo);
+ 	$tipo=mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 	
  	buscarcuentaImpago($tipo,$fecha1,$fecha2,$local,$zona,$cliente,$cobrador);
  }
  
 if($operacion=="buscarGeolocalizacion"){
 $idcontrato=$_POST['idcliente'];
-$idcontrato = utf8_decode($idcontrato);
+$idcontrato = mb_convert_encoding((string)($idcontrato), 'ISO-8859-1', 'UTF-8');
 buscarGeolocalizacion($idcontrato);
 }
 
 if($operacion=="InsertarGeo"){
 $cod_persona=$_POST['cod_persona'];
-$cod_persona = utf8_decode($cod_persona);
+$cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 $fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 $descripcion=$_POST['descripcion'];
-$descripcion = utf8_decode($descripcion);
+$descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
 
 $latitudGeo=$_POST['latitudGeo'];
-$latitudGeo = utf8_decode($latitudGeo);
+$latitudGeo = mb_convert_encoding((string)($latitudGeo), 'ISO-8859-1', 'UTF-8');
 $longitudGeo=$_POST['longitudGeo'];
-$longitudGeo = utf8_decode($longitudGeo);
+$longitudGeo = mb_convert_encoding((string)($longitudGeo), 'ISO-8859-1', 'UTF-8');
 
 InsertarGeo($cod_persona,$fecha,$descripcion,$latitudGeo,$longitudGeo);
 
@@ -270,7 +270,7 @@ InsertarGeo($cod_persona,$fecha,$descripcion,$latitudGeo,$longitudGeo);
 
 if($operacion=="EliminarGeo"){
 $CodGeoLocalizacion=$_POST['CodGeoLocalizacion'];
-$CodGeoLocalizacion = utf8_decode($CodGeoLocalizacion);
+$CodGeoLocalizacion = mb_convert_encoding((string)($CodGeoLocalizacion), 'ISO-8859-1', 'UTF-8');
 
 EliminarGeo($CodGeoLocalizacion);
 
@@ -287,10 +287,10 @@ if($operacion=="buscarDatalis")
 
 if($operacion=="buscarDocumentosPrincipal"){
 $idcliente=$_POST['idcliente'];
-$idcliente = utf8_decode($idcliente);
+$idcliente = mb_convert_encoding((string)($idcliente), 'ISO-8859-1', 'UTF-8');
 
 $cod_ventaFK=$_POST['cod_ventaFK'];
-$cod_ventaFK = utf8_decode($cod_ventaFK);
+$cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
 
 buscarDocumentosPrincipal($idcliente,$cod_ventaFK);
 }
@@ -299,10 +299,10 @@ buscarDocumentosPrincipal($idcliente,$cod_ventaFK);
 
 if($operacion=="buscarDocumentosGaleriaFoto"){
 $idcliente=$_POST['idcliente'];
-$idcliente = utf8_decode($idcliente);
+$idcliente = mb_convert_encoding((string)($idcliente), 'ISO-8859-1', 'UTF-8');
 
 $descripcion=$_POST['descripcion'];
-$descripcion = utf8_decode($descripcion);
+$descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
 buscarDocumentosGaleriaFoto($idcliente,$descripcion);
 }
 
@@ -346,9 +346,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $iddocumento=$valor['idfotos_cliente'];
-		  	  $archivourl=utf8_encode($valor['url']);
-		  	  $descripcion=utf8_encode($valor['descripcion']);
-		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $archivourl=mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1');
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
 		  	  $idcontratoFK=$valor['cod_clienteFK'];
 		  	 
 		  	 
@@ -424,9 +424,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $iddocumento=$valor['idfotos_cliente'];
-		  	  $archivourl=utf8_encode($valor['url']);
-		  	  $descripcion=utf8_encode($valor['descripcion']);
-		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $archivourl=mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1');
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
 		  	  $idcontratoFK=$valor['cod_clienteFK'];
 		  	 
 		  	 
@@ -494,8 +494,8 @@ where cl.estado='Activo' order by pr.nombre_persona ";
 		  
 		  
 		      $cod_persona=$valor['cod_persona'];
-		  	  $ci_cliente=utf8_encode($valor['ci_cliente']);
-		  	  $nombre_persona=utf8_encode($valor['nombre_persona']);			  
+		  	  $ci_cliente=mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre_persona=mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');			  
 		  	 
 			  $pagina.="<option id='$cod_persona' > ".$ci_cliente." - ".$nombre_persona."</option>";		  	
 			  
@@ -610,9 +610,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idubicaciones=$valor['idubicaciones'];
-		  	  $lat=utf8_encode($valor['lat']);
-		  	  $lot=utf8_encode($valor['lot']);
-		  	  $descripcion=utf8_encode($valor['descripcion']);
+		  	  $lat=mb_convert_encoding((string)($valor['lat']), 'UTF-8', 'ISO-8859-1');
+		  	  $lot=mb_convert_encoding((string)($valor['lot']), 'UTF-8', 'ISO-8859-1');
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
 		  	  $fecha=$valor['fecha'];
 		  	 
 		  	
@@ -691,7 +691,7 @@ if($valor>=1)
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 if($operacion=="nuevo") 
 {
@@ -790,19 +790,19 @@ exit;
 while($control<=$totalCargado){
 
 $observacion=$_POST['observacion'.$control];
-$observacion = utf8_decode($observacion);
+$observacion = mb_convert_encoding((string)($observacion), 'ISO-8859-1', 'UTF-8');
 
 $telef=$_POST['telefono'.$control];
-$telef = utf8_decode($telef);
+$telef = mb_convert_encoding((string)($telef), 'ISO-8859-1', 'UTF-8');
 
 $direccion=$_POST['direccion'.$control];
-$direccion = utf8_decode($direccion);
+$direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 
 $referencias=$_POST['referencia'.$control];
-$referencias = utf8_decode($referencias);
+$referencias = mb_convert_encoding((string)($referencias), 'ISO-8859-1', 'UTF-8');
 
 $Tipo=$_POST['Tipo'.$control];
-$Tipo = utf8_decode($Tipo);
+$Tipo = mb_convert_encoding((string)($Tipo), 'ISO-8859-1', 'UTF-8');
 
 $consulta="Insert into referenciascliente ( telef, direccion, referencias, observacion, cod_clienteFk, tipo)
 values(?,?,?,?,?,?)";
@@ -841,7 +841,7 @@ exit;
 }
 
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time());	
@@ -952,13 +952,13 @@ function obtenerUltimaId()
 function cargarFotos($cod_persona){
 	
 $ext1=$_POST['ext1'];
-$ext1 = utf8_decode($ext1);
+$ext1 = mb_convert_encoding((string)($ext1), 'ISO-8859-1', 'UTF-8');
 
 $ext2=$_POST['ext2'];
-$ext2 = utf8_decode($ext2);
+$ext2 = mb_convert_encoding((string)($ext2), 'ISO-8859-1', 'UTF-8');
 
 $ext2=$_POST['ext2'];
-$ext2 = utf8_decode($ext2);
+$ext2 = mb_convert_encoding((string)($ext2), 'ISO-8859-1', 'UTF-8');
 
 if($ext1!=""){
 	$foto1=substr($_POST['foto1'], strpos($_POST['foto1'], ",") + 1);;
@@ -1057,33 +1057,33 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$fechanac = utf8_encode($valor['fechanac']); 
-$sms = utf8_encode($valor['sms']);  
-$cod_persona = utf8_encode($valor['cod_persona']);     
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$direccion = utf8_encode($valor['direccion']);          
-$telefono = utf8_encode($valor['telefono']); 
-$email = utf8_encode($valor['email']); 
-$rut_cliente = utf8_encode($valor['rut_cliente']); 
-$Calificacion = utf8_encode($valor['Calificacion']); 
-$whapp = utf8_encode($valor['whapp']); 
-$estado = utf8_encode($valor['estado']); 
-$idzonaFk = utf8_encode($valor['idzonaFk']); 
-$zona = utf8_encode($valor['zona']); 
-$foto1 = utf8_encode($valor['foto1']); 
-$foto2 = utf8_encode($valor['foto2']); 
-$ci_cliente = utf8_encode($valor['ci_cliente']); 
-$lugardetrabajo = utf8_encode($valor['lugardetrabajo']); 
-$salario = utf8_encode($valor['salario']); 
-$antiguedad = utf8_encode($valor['antiguedad']); 
-$teleftrab1 = utf8_encode($valor['teleftrab1']); 
-$teleftrab2 = utf8_encode($valor['teleftrab2']); 
-$direcciontrab = utf8_encode($valor['direcciontrab']); 
-$insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
-$accesocredito = utf8_encode($valor['accesocredito']); 
+$fechanac = mb_convert_encoding((string)($valor['fechanac']), 'UTF-8', 'ISO-8859-1'); 
+$sms = mb_convert_encoding((string)($valor['sms']), 'UTF-8', 'ISO-8859-1');  
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');     
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$email = mb_convert_encoding((string)($valor['email']), 'UTF-8', 'ISO-8859-1'); 
+$rut_cliente = mb_convert_encoding((string)($valor['rut_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$Calificacion = mb_convert_encoding((string)($valor['Calificacion']), 'UTF-8', 'ISO-8859-1'); 
+$whapp = mb_convert_encoding((string)($valor['whapp']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$idzonaFk = mb_convert_encoding((string)($valor['idzonaFk']), 'UTF-8', 'ISO-8859-1'); 
+$zona = mb_convert_encoding((string)($valor['zona']), 'UTF-8', 'ISO-8859-1'); 
+$foto1 = mb_convert_encoding((string)($valor['foto1']), 'UTF-8', 'ISO-8859-1'); 
+$foto2 = mb_convert_encoding((string)($valor['foto2']), 'UTF-8', 'ISO-8859-1'); 
+$ci_cliente = mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$lugardetrabajo = mb_convert_encoding((string)($valor['lugardetrabajo']), 'UTF-8', 'ISO-8859-1'); 
+$salario = mb_convert_encoding((string)($valor['salario']), 'UTF-8', 'ISO-8859-1'); 
+$antiguedad = mb_convert_encoding((string)($valor['antiguedad']), 'UTF-8', 'ISO-8859-1'); 
+$teleftrab1 = mb_convert_encoding((string)($valor['teleftrab1']), 'UTF-8', 'ISO-8859-1'); 
+$teleftrab2 = mb_convert_encoding((string)($valor['teleftrab2']), 'UTF-8', 'ISO-8859-1'); 
+$direcciontrab = mb_convert_encoding((string)($valor['direcciontrab']), 'UTF-8', 'ISO-8859-1'); 
+$insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
+$accesocredito = mb_convert_encoding((string)($valor['accesocredito']), 'UTF-8', 'ISO-8859-1'); 
  $styleName=CargarStyleTable($styleName);
  
 $StyleFoto="";
@@ -1204,32 +1204,32 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$sms = utf8_encode($valor['sms']); 
-$cod_persona = utf8_encode($valor['cod_persona']);     
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$direccion = utf8_encode($valor['direccion']);          
-$telefono = utf8_encode($valor['telefono']); 
-$email = utf8_encode($valor['email']); 
-$rut_cliente = utf8_encode($valor['rut_cliente']); 
-$Calificacion = utf8_encode($valor['Calificacion']); 
-$whapp = utf8_encode($valor['whapp']); 
-$estado = utf8_encode($valor['estado']); 
-$idzonaFk = utf8_encode($valor['idzonaFk']); 
-$zona = utf8_encode($valor['zona']); 
-$foto1 = utf8_encode($valor['foto1']); 
-$foto2 = utf8_encode($valor['foto2']); 
-$ci_cliente = utf8_encode($valor['ci_cliente']); 
-$lugardetrabajo = utf8_encode($valor['lugardetrabajo']); 
-$salario = utf8_encode($valor['salario']); 
-$antiguedad = utf8_encode($valor['antiguedad']); 
-$teleftrab1 = utf8_encode($valor['teleftrab1']); 
-$teleftrab2 = utf8_encode($valor['teleftrab2']); 
-$direcciontrab = utf8_encode($valor['direcciontrab']); 
-$insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$accesocredito = utf8_encode($valor['accesocredito']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+$sms = mb_convert_encoding((string)($valor['sms']), 'UTF-8', 'ISO-8859-1'); 
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');     
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$email = mb_convert_encoding((string)($valor['email']), 'UTF-8', 'ISO-8859-1'); 
+$rut_cliente = mb_convert_encoding((string)($valor['rut_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$Calificacion = mb_convert_encoding((string)($valor['Calificacion']), 'UTF-8', 'ISO-8859-1'); 
+$whapp = mb_convert_encoding((string)($valor['whapp']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$idzonaFk = mb_convert_encoding((string)($valor['idzonaFk']), 'UTF-8', 'ISO-8859-1'); 
+$zona = mb_convert_encoding((string)($valor['zona']), 'UTF-8', 'ISO-8859-1'); 
+$foto1 = mb_convert_encoding((string)($valor['foto1']), 'UTF-8', 'ISO-8859-1'); 
+$foto2 = mb_convert_encoding((string)($valor['foto2']), 'UTF-8', 'ISO-8859-1'); 
+$ci_cliente = mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$lugardetrabajo = mb_convert_encoding((string)($valor['lugardetrabajo']), 'UTF-8', 'ISO-8859-1'); 
+$salario = mb_convert_encoding((string)($valor['salario']), 'UTF-8', 'ISO-8859-1'); 
+$antiguedad = mb_convert_encoding((string)($valor['antiguedad']), 'UTF-8', 'ISO-8859-1'); 
+$teleftrab1 = mb_convert_encoding((string)($valor['teleftrab1']), 'UTF-8', 'ISO-8859-1'); 
+$teleftrab2 = mb_convert_encoding((string)($valor['teleftrab2']), 'UTF-8', 'ISO-8859-1'); 
+$direcciontrab = mb_convert_encoding((string)($valor['direcciontrab']), 'UTF-8', 'ISO-8859-1'); 
+$insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$accesocredito = mb_convert_encoding((string)($valor['accesocredito']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 
 
 $StyleFoto="";
@@ -1311,12 +1311,12 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$tipo = utf8_encode($valor['tipo']); 
-$telef = utf8_encode($valor['telef']);     
-$direccion = utf8_encode($valor['direccion']);          
-$referencias = utf8_encode($valor['referencias']);          
-$observacion = utf8_encode($valor['observacion']); 
-$cod_clienteFk = utf8_encode($valor['cod_clienteFk']); 
+$tipo = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'); 
+$telef = mb_convert_encoding((string)($valor['telef']), 'UTF-8', 'ISO-8859-1');     
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$referencias = mb_convert_encoding((string)($valor['referencias']), 'UTF-8', 'ISO-8859-1');          
+$observacion = mb_convert_encoding((string)($valor['observacion']), 'UTF-8', 'ISO-8859-1'); 
+$cod_clienteFk = mb_convert_encoding((string)($valor['cod_clienteFk']), 'UTF-8', 'ISO-8859-1'); 
 
  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -1390,29 +1390,29 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$fechanac = utf8_encode($valor['fechanac']);  
-$cod_persona = utf8_encode($valor['cod_persona']);     
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$direccion = utf8_encode($valor['direccion']);          
-$telefono = utf8_encode($valor['telefono']); 
-$email = utf8_encode($valor['email']); 
-$rut_cliente = utf8_encode($valor['rut_cliente']); 
-$Calificacion = utf8_encode($valor['Calificacion']); 
-$whapp = utf8_encode($valor['whapp']); 
-$estado = utf8_encode($valor['estado']); 
-$idzonaFk = utf8_encode($valor['idzonaFk']); 
-$zona = utf8_encode($valor['zona']); 
-$foto1 = utf8_encode($valor['foto1']); 
-$foto2 = utf8_encode($valor['foto2']); 
-$ci_cliente = utf8_encode($valor['ci_cliente']); 
-$accesocredito = utf8_encode($valor['accesocredito']); 
+$fechanac = mb_convert_encoding((string)($valor['fechanac']), 'UTF-8', 'ISO-8859-1');  
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');     
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$email = mb_convert_encoding((string)($valor['email']), 'UTF-8', 'ISO-8859-1'); 
+$rut_cliente = mb_convert_encoding((string)($valor['rut_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$Calificacion = mb_convert_encoding((string)($valor['Calificacion']), 'UTF-8', 'ISO-8859-1'); 
+$whapp = mb_convert_encoding((string)($valor['whapp']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$idzonaFk = mb_convert_encoding((string)($valor['idzonaFk']), 'UTF-8', 'ISO-8859-1'); 
+$zona = mb_convert_encoding((string)($valor['zona']), 'UTF-8', 'ISO-8859-1'); 
+$foto1 = mb_convert_encoding((string)($valor['foto1']), 'UTF-8', 'ISO-8859-1'); 
+$foto2 = mb_convert_encoding((string)($valor['foto2']), 'UTF-8', 'ISO-8859-1'); 
+$ci_cliente = mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$accesocredito = mb_convert_encoding((string)($valor['accesocredito']), 'UTF-8', 'ISO-8859-1'); 
 
-$lugardetrabajo = utf8_encode($valor['lugardetrabajo']); 
-$salario = utf8_encode($valor['salario']); 
-$antiguedad = utf8_encode($valor['antiguedad']); 
-$teleftrab1 = utf8_encode($valor['teleftrab1']); 
-$teleftrab2 = utf8_encode($valor['teleftrab2']); 
-$direcciontrab = utf8_encode($valor['direcciontrab']); 
+$lugardetrabajo = mb_convert_encoding((string)($valor['lugardetrabajo']), 'UTF-8', 'ISO-8859-1'); 
+$salario = mb_convert_encoding((string)($valor['salario']), 'UTF-8', 'ISO-8859-1'); 
+$antiguedad = mb_convert_encoding((string)($valor['antiguedad']), 'UTF-8', 'ISO-8859-1'); 
+$teleftrab1 = mb_convert_encoding((string)($valor['teleftrab1']), 'UTF-8', 'ISO-8859-1'); 
+$teleftrab2 = mb_convert_encoding((string)($valor['teleftrab2']), 'UTF-8', 'ISO-8859-1'); 
+$direcciontrab = mb_convert_encoding((string)($valor['direcciontrab']), 'UTF-8', 'ISO-8859-1'); 
 
 $stylefondo="";
 if($accesocredito=="Denegado"){
@@ -1497,29 +1497,29 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$fechanac = utf8_encode($valor['fechanac']);  
-$totaldias = utf8_encode($valor['totaldias']);  
-$lugardetrabajo = utf8_encode($valor['lugardetrabajo']);  
-$salario = utf8_encode($valor['salario']);  
-$antiguedad = utf8_encode($valor['antiguedad']);  
-$teleftrab1 = utf8_encode($valor['teleftrab1']);  
-$teleftrab2 = utf8_encode($valor['teleftrab2']);  
-$direcciontrab = utf8_encode($valor['direcciontrab']);  
-$cod_persona = utf8_encode($valor['cod_persona']);     
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$direccion = utf8_encode($valor['direccion']);          
-$telefono = utf8_encode($valor['telefono']); 
-$email = utf8_encode($valor['email']); 
-$rut_cliente = utf8_encode($valor['rut_cliente']); 
-$Calificacion = utf8_encode($valor['Calificacion']); 
-$whapp = utf8_encode($valor['whapp']); 
-$estado = utf8_encode($valor['estado']); 
-$idzonaFk = utf8_encode($valor['idzonaFk']); 
-$zona = utf8_encode($valor['zona']); 
-$foto1 = utf8_encode($valor['foto1']); 
-$foto2 = utf8_encode($valor['foto2']); 
-$ci_cliente = utf8_encode($valor['ci_cliente']); 
-$accesocredito = utf8_encode($valor['accesocredito']); 
+$fechanac = mb_convert_encoding((string)($valor['fechanac']), 'UTF-8', 'ISO-8859-1');  
+$totaldias = mb_convert_encoding((string)($valor['totaldias']), 'UTF-8', 'ISO-8859-1');  
+$lugardetrabajo = mb_convert_encoding((string)($valor['lugardetrabajo']), 'UTF-8', 'ISO-8859-1');  
+$salario = mb_convert_encoding((string)($valor['salario']), 'UTF-8', 'ISO-8859-1');  
+$antiguedad = mb_convert_encoding((string)($valor['antiguedad']), 'UTF-8', 'ISO-8859-1');  
+$teleftrab1 = mb_convert_encoding((string)($valor['teleftrab1']), 'UTF-8', 'ISO-8859-1');  
+$teleftrab2 = mb_convert_encoding((string)($valor['teleftrab2']), 'UTF-8', 'ISO-8859-1');  
+$direcciontrab = mb_convert_encoding((string)($valor['direcciontrab']), 'UTF-8', 'ISO-8859-1');  
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');     
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$email = mb_convert_encoding((string)($valor['email']), 'UTF-8', 'ISO-8859-1'); 
+$rut_cliente = mb_convert_encoding((string)($valor['rut_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$Calificacion = mb_convert_encoding((string)($valor['Calificacion']), 'UTF-8', 'ISO-8859-1'); 
+$whapp = mb_convert_encoding((string)($valor['whapp']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$idzonaFk = mb_convert_encoding((string)($valor['idzonaFk']), 'UTF-8', 'ISO-8859-1'); 
+$zona = mb_convert_encoding((string)($valor['zona']), 'UTF-8', 'ISO-8859-1'); 
+$foto1 = mb_convert_encoding((string)($valor['foto1']), 'UTF-8', 'ISO-8859-1'); 
+$foto2 = mb_convert_encoding((string)($valor['foto2']), 'UTF-8', 'ISO-8859-1'); 
+$ci_cliente = mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
+$accesocredito = mb_convert_encoding((string)($valor['accesocredito']), 'UTF-8', 'ISO-8859-1'); 
  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
@@ -1584,8 +1584,8 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$fecha = utf8_encode($valor['fecha']);     
-$hora = utf8_encode($valor['hora']); 
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');     
+$hora = mb_convert_encoding((string)($valor['hora']), 'UTF-8', 'ISO-8859-1'); 
 
  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -1661,12 +1661,12 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$Motivo = utf8_encode($valor['Motivo']);     
-$fecha = utf8_encode($valor['fecha']); 
-$cliente = utf8_encode($valor['cliente']);     
-$zona = utf8_encode($valor['zona']); 
-$cobrador = utf8_encode($valor['cobrador']);  
-$fechaCompro = utf8_encode($valor['fechaCompro']);    
+$Motivo = mb_convert_encoding((string)($valor['Motivo']), 'UTF-8', 'ISO-8859-1');     
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'); 
+$cliente = mb_convert_encoding((string)($valor['cliente']), 'UTF-8', 'ISO-8859-1');     
+$zona = mb_convert_encoding((string)($valor['zona']), 'UTF-8', 'ISO-8859-1'); 
+$cobrador = mb_convert_encoding((string)($valor['cobrador']), 'UTF-8', 'ISO-8859-1');  
+$fechaCompro = mb_convert_encoding((string)($valor['fechaCompro']), 'UTF-8', 'ISO-8859-1');    
 
 
  $styleName=CargarStyleTable($styleName);
@@ -1744,17 +1744,17 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$FechaNac = utf8_encode($valor['FechaNac']);
-$accesocredito = utf8_encode($valor['accesocredito']);
-$mesNacimiento = utf8_encode($valor['mesNacimiento']); 
-$Nombrecliente = utf8_encode($valor['Nombrecliente']);     
-$cumple = utf8_encode($valor['cumple']);          
-$fechanac = utf8_encode($valor['fechanac']);          
-$Zona = utf8_encode($valor['Zona']); 
-$Venta1 = utf8_encode($valor['Venta1']); 
-$Venta2 = utf8_encode($valor['Venta2']); 
-$Telefono = utf8_encode($valor['Telefono']); 
-$sms = utf8_encode($valor['sms']); 
+$FechaNac = mb_convert_encoding((string)($valor['FechaNac']), 'UTF-8', 'ISO-8859-1');
+$accesocredito = mb_convert_encoding((string)($valor['accesocredito']), 'UTF-8', 'ISO-8859-1');
+$mesNacimiento = mb_convert_encoding((string)($valor['mesNacimiento']), 'UTF-8', 'ISO-8859-1'); 
+$Nombrecliente = mb_convert_encoding((string)($valor['Nombrecliente']), 'UTF-8', 'ISO-8859-1');     
+$cumple = mb_convert_encoding((string)($valor['cumple']), 'UTF-8', 'ISO-8859-1');          
+$fechanac = mb_convert_encoding((string)($valor['fechanac']), 'UTF-8', 'ISO-8859-1');          
+$Zona = mb_convert_encoding((string)($valor['Zona']), 'UTF-8', 'ISO-8859-1'); 
+$Venta1 = mb_convert_encoding((string)($valor['Venta1']), 'UTF-8', 'ISO-8859-1'); 
+$Venta2 = mb_convert_encoding((string)($valor['Venta2']), 'UTF-8', 'ISO-8859-1'); 
+$Telefono = mb_convert_encoding((string)($valor['Telefono']), 'UTF-8', 'ISO-8859-1'); 
+$sms = mb_convert_encoding((string)($valor['sms']), 'UTF-8', 'ISO-8859-1'); 
 
 
 		if($Telefono!=""){
@@ -1848,22 +1848,22 @@ exit;
 function addImagenes($idcontratofk){
 $control=1;
 $totalregistrodoc=$_POST['totalregistro'];
-$totalregistrodoc = utf8_decode($totalregistrodoc);
+$totalregistrodoc = mb_convert_encoding((string)($totalregistrodoc), 'ISO-8859-1', 'UTF-8');
 
 $mysqli=conectar_al_servidor();
 while($control<=$totalregistrodoc){
 
 $archivo=$_POST['archivo'.$control];
-$archivo = utf8_decode($archivo);
+$archivo = mb_convert_encoding((string)($archivo), 'ISO-8859-1', 'UTF-8');
 
 $ext=$_POST['ext'.$control];
-$ext = utf8_decode($ext);
+$ext = mb_convert_encoding((string)($ext), 'ISO-8859-1', 'UTF-8');
 
 $descripcion=$_POST['descripcion'.$control];
-$descripcion = utf8_decode($descripcion);
+$descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
 
 $fecha=$_POST['fecha'.$control];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 
 $control++;
 
@@ -1939,9 +1939,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $iddocumento=$valor['idfotos_cliente'];
-		  	  $archivourl=utf8_encode($valor['url']);
-		  	  $descripcion=utf8_encode($valor['descripcion']);
-		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $archivourl=mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1');
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
 		  	  $idcontratoFK=$valor['cod_clienteFK'];
 		  	 
 		  	 
@@ -2032,11 +2032,11 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$observacion = utf8_encode($valor['observacion']);   
-$estado = utf8_encode($valor['estado']);   
-$usuario = utf8_encode($valor['usuario']);   
-$fecha = utf8_encode($valor['fecha']);   
-$idantecedente_paciente = utf8_encode($valor['idantecedente_paciente']);   
+$observacion = mb_convert_encoding((string)($valor['observacion']), 'UTF-8', 'ISO-8859-1');   
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');   
+$usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');   
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');   
+$idantecedente_paciente = mb_convert_encoding((string)($valor['idantecedente_paciente']), 'UTF-8', 'ISO-8859-1');   
  
  
 
@@ -2125,7 +2125,7 @@ exit;
 function cargar_antecedente_paciente($cod_ventaFK,$cod_clienteFK,$observacion){
 	
 	$user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 	$mysqli=conectar_al_servidor();
 	$consulta="INSERT INTO antecedente_paciente (cod_ventaFK,cod_clienteFK,observacion,cod_usuario,estado,fecha) values ('$cod_ventaFK','$cod_clienteFK','$observacion','$user','Activo',now())";
@@ -2165,10 +2165,10 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$observacion = utf8_encode($valor['observacion']);   
-$estado = utf8_encode($valor['estado']);   
-$usuario = utf8_encode($valor['usuario']);   
-$fecha = utf8_encode($valor['fecha']);   
+$observacion = mb_convert_encoding((string)($valor['observacion']), 'UTF-8', 'ISO-8859-1');   
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');   
+$usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');   
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');   
  
  
 

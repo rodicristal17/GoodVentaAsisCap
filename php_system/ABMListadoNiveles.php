@@ -1,6 +1,6 @@
 <?php
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -15,12 +15,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -55,11 +55,11 @@ if($funt=="nuevo" || $funt=="editar")
 	
 	
 	$cod_niveles=$_POST['idabm'];
-    $cod_niveles = utf8_decode($cod_niveles);
+    $cod_niveles = mb_convert_encoding((string)($cod_niveles), 'ISO-8859-1', 'UTF-8');
 	$nombre=$_POST['nombre'];
-    $nombre = utf8_decode($nombre);
+    $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
-    $estado = utf8_decode($estado);
+    $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	abm($cod_niveles,$nombre,$estado,$funt);
 
 }
@@ -67,9 +67,9 @@ if($funt=="nuevo" || $funt=="editar")
 if($funt=="buscar")
 {
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 buscar($buscar,$estado);
 
 }
@@ -77,9 +77,9 @@ buscar($buscar,$estado);
 if($funt=="buscardetalles")
 {
 $idAbmListaNiveles=$_POST['idAbmListaNiveles'];
-$idAbmListaNiveles = utf8_decode($idAbmListaNiveles);
+$idAbmListaNiveles = mb_convert_encoding((string)($idAbmListaNiveles), 'ISO-8859-1', 'UTF-8');
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 buscardetalles($idAbmListaNiveles,$buscar);
 
 }
@@ -87,9 +87,9 @@ buscardetalles($idAbmListaNiveles,$buscar);
 if($funt=="editaracceso")
 {
 $iddetallesniveles=$_POST['idabm'];
-$iddetallesniveles = utf8_decode($iddetallesniveles);
+$iddetallesniveles = mb_convert_encoding((string)($iddetallesniveles), 'ISO-8859-1', 'UTF-8');
 $acciones=$_POST['acciones'];
-$acciones = utf8_decode($acciones);
+$acciones = mb_convert_encoding((string)($acciones), 'ISO-8859-1', 'UTF-8');
 editaracceso($iddetallesniveles,$acciones);
 
 }
@@ -333,8 +333,8 @@ $totales=0;
 		  
 		  
 		      $cod_niveles=$valor['cod_niveles'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	
 		  	
 			  $styleName=CargarStyleTable($styleName);
@@ -390,11 +390,11 @@ $controltitulo="";
 		  
 		  
 		     $iddetallesniveles=$valor['iddetallesniveles'];
-		  	  $nro=utf8_encode($valor['nro']);
-		  	  $formulario=utf8_encode($valor['formulario']);
-		  	  $codigo=utf8_encode($valor['codigo']);
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $accion=utf8_encode($valor['accion']);
+		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
+		  	  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
+		  	  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			   $tituloacceso="";
 			 if($controltitulo!=$formulario){
@@ -460,8 +460,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_niveles=$valor['cod_niveles'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $tipo=utf8_encode($valor['tipo']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 			  if($tipo=="Administrativo"){
 		  	   $pagina.="<option value='$cod_niveles' >$nombre</option>";
 			  }

@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 require("conexion.php");
 include("verificar_navegador.php");
@@ -11,11 +11,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -34,15 +34,15 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$idvendedor=$_POST['idvendedor'];
-$idvendedor = utf8_decode($idvendedor);
+$idvendedor = mb_convert_encoding((string)($idvendedor), 'ISO-8859-1', 'UTF-8');
 $nombre=$_POST['nombre'];
-$nombre = utf8_decode($nombre);
+$nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	$nrotelef=$_POST['nrotelef'];
-$nrotelef = utf8_decode($nrotelef);
+$nrotelef = mb_convert_encoding((string)($nrotelef), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $cod_localfk=$_POST['cod_localfk'];
-$cod_localfk = utf8_decode($cod_localfk);
+$cod_localfk = mb_convert_encoding((string)($cod_localfk), 'ISO-8859-1', 'UTF-8');
 	abm($nombre,$nrotelef,$estado,$idvendedor,$cod_localfk,$operacion);
 
 }
@@ -50,13 +50,13 @@ $cod_localfk = utf8_decode($cod_localfk);
 if($operacion=="buscar")
 {
 	$codigo=$_POST['codigo'];
-$codigo = utf8_decode($codigo);
+$codigo = mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 $vendedor=$_POST['vendedor'];
-$vendedor = utf8_decode($vendedor);
+$vendedor = mb_convert_encoding((string)($vendedor), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -74,9 +74,9 @@ buscarselect();
 if($operacion=="buscarvista")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$codlocal=$_POST['codlocal'];
-$codlocal = utf8_decode($codlocal);
+$codlocal = mb_convert_encoding((string)($codlocal), 'ISO-8859-1', 'UTF-8');
 if($codlocal==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -94,9 +94,9 @@ if( $operacion=="editarAcceso")
 	
 	
 	$idMetas=$_POST['idMetas'];
-    $idMetas = utf8_decode($idMetas);
+    $idMetas = mb_convert_encoding((string)($idMetas), 'ISO-8859-1', 'UTF-8');
 	$nro=$_POST['nro'];
-    $nro = utf8_decode($nro);    
+    $nro = mb_convert_encoding((string)($nro), 'ISO-8859-1', 'UTF-8');    
 	abmAccesoMetas($nro,$idMetas,$operacion);
 
 }
@@ -104,7 +104,7 @@ if( $operacion=="editarAcceso")
 if($operacion=="buscarVendedor")
 {
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	buscarLoteamientoVendedor($cod_local);
 
 }	
@@ -114,11 +114,11 @@ $cod_local = utf8_decode($cod_local);
 if($operacion=="buscarMetas")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 buscarMetas($fecha1,$fecha2,$local);
 
 }
@@ -221,10 +221,10 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idvendedor=$valor['idvendedor'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $nrotelef=utf8_encode($valor['nrotelef']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $local=utf8_encode($valor['local']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $nrotelef=mb_convert_encoding((string)($valor['nrotelef']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $local=mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	 
@@ -277,10 +277,10 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idvendedor=$valor['idvendedor'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $nrotelef=utf8_encode($valor['nrotelef']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $local=utf8_encode($valor['local']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $nrotelef=mb_convert_encoding((string)($valor['nrotelef']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $local=mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	 
@@ -332,9 +332,9 @@ if ( ! $stmt->execute()) {
 	  {
 		  
 		  $idvendedor=$valor['idvendedor'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $nrotelef=utf8_encode($valor['nrotelef']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $nrotelef=mb_convert_encoding((string)($valor['nrotelef']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	 
@@ -401,8 +401,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idvendedor=$valor['idvendedor'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 			 
 			  $AccionContador=buscarAccionContador($idvendedor);
 			  if($AccionContador=="0"){
@@ -620,9 +620,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idvendedor=$valor['idvendedor'];
-		      $nombre=utf8_encode($valor['nombre']);
-		  	  $nrotelef=utf8_encode($valor['nrotelef']);
-		  	  $local=utf8_encode($valor['local']);
+		      $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $nrotelef=mb_convert_encoding((string)($valor['nrotelef']), 'UTF-8', 'ISO-8859-1');
+		  	  $local=mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1');
 			  
 			  $Accion=buscarAccion($idvendedor);
 		  	 $NroMetas=$Accion[0];

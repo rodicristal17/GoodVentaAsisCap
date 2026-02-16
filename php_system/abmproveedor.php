@@ -4,16 +4,16 @@ include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 function ObtenerDatos($operacion)
 {
 
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -30,27 +30,27 @@ if($operacion=="nuevo" || $operacion=="editar" )
 
 
 $cod_persona=$_POST['cod_persona'];
-$cod_persona = utf8_decode($cod_persona);
+$cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 
 $nombre_persona=$_POST['nombre_persona'];
-$nombre_persona = utf8_decode($nombre_persona);
+$nombre_persona = mb_convert_encoding((string)($nombre_persona), 'ISO-8859-1', 'UTF-8');
 
 $direccion=$_POST['direccion'];
-$direccion = utf8_decode($direccion);
+$direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 
 $telefono=$_POST['telefono'];
-$telefono = utf8_decode($telefono);
+$telefono = mb_convert_encoding((string)($telefono), 'ISO-8859-1', 'UTF-8');
 
 $email=$_POST['email'];
-$email = utf8_decode($email);
+$email = mb_convert_encoding((string)($email), 'ISO-8859-1', 'UTF-8');
 
 $cod_proveedor=$cod_persona;
 
 $rut_proveedor=$_POST['rut_proveedor'];
-$rut_proveedor = utf8_decode($rut_proveedor);
+$rut_proveedor = mb_convert_encoding((string)($rut_proveedor), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 abm($estado,$cod_persona,$nombre_persona,$direccion,$telefono,$email,$cod_proveedor,$rut_proveedor,$operacion);
 
@@ -60,18 +60,18 @@ abm($estado,$cod_persona,$nombre_persona,$direccion,$telefono,$email,$cod_provee
  
  if($operacion=="buscar"){
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$ruc=$_POST["ruc"];
- 	$ruc=utf8_decode($ruc);
+ 	$ruc=mb_convert_encoding((string)($ruc), 'ISO-8859-1', 'UTF-8');
 	$proveedor=$_POST["proveedor"];
- 	$proveedor=utf8_decode($proveedor);
+ 	$proveedor=mb_convert_encoding((string)($proveedor), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistro($codigo,$ruc,$proveedor,$estado);
  } 
  if($operacion=="buscarvista"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnVista($buscar);
  }
 
@@ -97,7 +97,7 @@ $mysqli=conectar_al_servidor();
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 if($operacion=="nuevo") 
 {
 $consulta1="Insert into persona (nombre_persona,direccion,telefono,email)
@@ -196,17 +196,17 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_persona = utf8_encode($valor['cod_persona']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$direccion = utf8_encode($valor['direccion']);          
-$telefono = utf8_encode($valor['telefono']); 
-$email = utf8_encode($valor['email']); 
-$rut_proveedor = utf8_encode($valor['rut_proveedor']); 
-$estado = utf8_encode($valor['estado']); 
-$insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$email = mb_convert_encoding((string)($valor['email']), 'UTF-8', 'ISO-8859-1'); 
+$rut_proveedor = mb_convert_encoding((string)($valor['rut_proveedor']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 
 	  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -268,13 +268,13 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_persona = utf8_encode($valor['cod_persona']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$direccion = utf8_encode($valor['direccion']);          
-$telefono = utf8_encode($valor['telefono']); 
-$email = utf8_encode($valor['email']); 
-$rut_proveedor = utf8_encode($valor['rut_proveedor']); 
-$estado = utf8_encode($valor['estado']); 
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');          
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$email = mb_convert_encoding((string)($valor['email']), 'UTF-8', 'ISO-8859-1'); 
+$rut_proveedor = mb_convert_encoding((string)($valor['rut_proveedor']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
 
 	  $styleName=CargarStyleTable($styleName);
 	  $pagina.="

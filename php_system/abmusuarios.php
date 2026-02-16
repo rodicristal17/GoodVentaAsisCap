@@ -6,17 +6,17 @@ include("buscar_nivel.php");
 include("classTable.php");
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 function ObtenerDatos($operacion)
 {
 
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -31,28 +31,28 @@ if($operacion=="nuevo" || $operacion=="editar" || $operacion=="eliminar")
 
 
 $cod_persona=$_POST['cod_persona'];
-$cod_persona = utf8_decode($cod_persona);
+$cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 
 $nombre_persona=$_POST['nombre_persona'];
-$nombre_persona = utf8_decode($nombre_persona);
+$nombre_persona = mb_convert_encoding((string)($nombre_persona), 'ISO-8859-1', 'UTF-8');
 
 $telefono=$_POST['telefono'];
-$telefono = utf8_decode($telefono);
+$telefono = mb_convert_encoding((string)($telefono), 'ISO-8859-1', 'UTF-8');
 
 $rut_usuario=$_POST['rut_usuario'];
-$rut_usuario = utf8_decode($rut_usuario);
+$rut_usuario = mb_convert_encoding((string)($rut_usuario), 'ISO-8859-1', 'UTF-8');
 
 $cod_usuario=$cod_persona;
 
 $login=$_POST['login'];
-$login = utf8_decode($login);
+$login = mb_convert_encoding((string)($login), 'ISO-8859-1', 'UTF-8');
 
 $password=$_POST['password'];
-$password = utf8_decode($password);
+$password = mb_convert_encoding((string)($password), 'ISO-8859-1', 'UTF-8');
 
 
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
 
@@ -61,17 +61,17 @@ $acceso=$_POST['acceso'];
 $cod_localFK=$_POST['cod_localFK'];
 
 $foto=$_POST['foto'];
-$foto = utf8_decode($foto);
+$foto = mb_convert_encoding((string)($foto), 'ISO-8859-1', 'UTF-8');
 $ext=$_POST['ext'];
-$ext = utf8_decode($ext);
+$ext = mb_convert_encoding((string)($ext), 'ISO-8859-1', 'UTF-8');
 $telefono_referencia= $_POST['telefono_referencia'];
-$telefono_referencia = utf8_decode($telefono_referencia);
+$telefono_referencia = mb_convert_encoding((string)($telefono_referencia), 'ISO-8859-1', 'UTF-8');
 $direccion= $_POST['direccion'];
-$direccion = utf8_decode($direccion);
+$direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 $tipo_relacion=$_POST['tipo_relacion'];
-$tipo_relacion = utf8_decode($tipo_relacion);
+$tipo_relacion = mb_convert_encoding((string)($tipo_relacion), 'ISO-8859-1', 'UTF-8');
 $fecha_creacion = $_POST['fecha_creacion'];
-$fecha_creacion = utf8_decode($fecha_creacion);
+$fecha_creacion = mb_convert_encoding((string)($fecha_creacion), 'ISO-8859-1', 'UTF-8');
 
 abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$operacion);
 }
@@ -80,23 +80,23 @@ abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$logi
  
  if($operacion=="buscar"){
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$documento=$_POST["documento"];
- 	$documento=utf8_decode($documento);
+ 	$documento=mb_convert_encoding((string)($documento), 'ISO-8859-1', 'UTF-8');
 	$usuario=$_POST["usuario"];
- 	$usuario=utf8_decode($usuario);
+ 	$usuario=mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistro($codigo,$documento,$usuario,$estado,$local);
  }
 
  if($operacion=="buscarfuncionario"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$tipo=$_POST["tipo"];
- 	$tipo=utf8_decode($tipo);
+ 	$tipo=mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 
  	buscarfuncionario($buscar,$tipo);
  }
@@ -106,25 +106,25 @@ abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$logi
 if($operacion=="editarMisDatos")
 {
 	$Cod_Usuario=$_POST['useru'];
-    $Cod_Usuario = utf8_decode($Cod_Usuario);
+    $Cod_Usuario = mb_convert_encoding((string)($Cod_Usuario), 'ISO-8859-1', 'UTF-8');
 	$user=$_POST['user'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
     $pass=$_POST['pass'];
-    $pass = utf8_decode($pass);  
+    $pass = mb_convert_encoding((string)($pass), 'ISO-8859-1', 'UTF-8');  
 	$local=$_POST['local'];
-    $local = utf8_decode($local); 
+    $local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8'); 
 	$nombre=$_POST['nombre'];
-    $nombre = utf8_decode($nombre);   
+    $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');   
 	$foto=$_POST['foto'];
-	$foto = utf8_decode($foto);
+	$foto = mb_convert_encoding((string)($foto), 'ISO-8859-1', 'UTF-8');
 	$ext=$_POST['ext'];
-	$ext = utf8_decode($ext); 
+	$ext = mb_convert_encoding((string)($ext), 'ISO-8859-1', 'UTF-8'); 
 	$telefono_referencia=$_POST['telefono_referencia'];
-	$telefono_referencia = utf8_decode($telefono_referencia);
+	$telefono_referencia = mb_convert_encoding((string)($telefono_referencia), 'ISO-8859-1', 'UTF-8');
 	$telefono=$_POST['telefono'];
-	$telefono = utf8_decode($telefono);
+	$telefono = mb_convert_encoding((string)($telefono), 'ISO-8859-1', 'UTF-8');
 	$direccion=$_POST['direccion'];
-	$direccion = utf8_decode($direccion);
+	$direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 	
 	editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre, $foto, $ext, $telefono, $direccion,$telefono_referencia);
 
@@ -133,7 +133,7 @@ if($operacion=="editarMisDatos")
 
  if($operacion=="obtenermedicos"){ 
     $cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
  	obtenermedicos($cod_venta);
  }
 
@@ -172,7 +172,7 @@ if ( ! $stmt->execute()) {
 		   
 		  
 		      $cod_usuario=$valor['cod_usuario'];
-		  	  $nombre_persona=utf8_encode($valor['nombre_persona']); 
+		  	  $nombre_persona=mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1'); 
 		  	 		  	 
 			  $pagina.="<option id='$cod_usuario' name='".$nombre_persona."' value='".$cod_usuario."' >$nombre_persona</option>";
 			
@@ -437,7 +437,7 @@ exit;
 function cargarFotos($cod_persona){
 	
 $ext=$_POST['ext'];
-$ext = utf8_decode($ext);
+$ext = mb_convert_encoding((string)($ext), 'ISO-8859-1', 'UTF-8');
  
 
 if($ext!=""){
@@ -548,22 +548,22 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$cod_usuario = utf8_encode($valor['cod_usuario']); 
-$rut_usuario = utf8_encode($valor['rut_usuario']);          
-$login = utf8_encode($valor['login']);          
-$password = utf8_encode($valor['password']); 
-$estado = utf8_encode($valor['estado']); 
-$acceso = utf8_encode($valor['acceso']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$nombre_persona = utf8_encode($valor['nombre_persona']); 
-$telefono = utf8_encode($valor['telefono']); 
-$local = utf8_encode($valor['local']); 
-$tipo = utf8_encode($valor['tipo']); 
-$url = utf8_encode($valor['url']); 
-$telefono_referencia = utf8_encode($valor['telefono_referencia']);
-$direccion = utf8_encode($valor['direccion']);
-$tipo_relacion = utf8_encode($valor['tipo_relacion']);
-$fecha_creacion = utf8_encode($valor['fecha_creacion']);
+$cod_usuario = mb_convert_encoding((string)($valor['cod_usuario']), 'UTF-8', 'ISO-8859-1'); 
+$rut_usuario = mb_convert_encoding((string)($valor['rut_usuario']), 'UTF-8', 'ISO-8859-1');          
+$login = mb_convert_encoding((string)($valor['login']), 'UTF-8', 'ISO-8859-1');          
+$password = mb_convert_encoding((string)($valor['password']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$acceso = mb_convert_encoding((string)($valor['acceso']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1'); 
+$telefono = mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$tipo = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'); 
+$url = mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1'); 
+$telefono_referencia = mb_convert_encoding((string)($valor['telefono_referencia']), 'UTF-8', 'ISO-8859-1');
+$direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');
+$tipo_relacion = mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
+$fecha_creacion = mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
 
 	    	 $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
@@ -656,8 +656,8 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod = utf8_encode($valor['cod']);
-$nombre = utf8_encode($valor['nombre']);          
+$cod = mb_convert_encoding((string)($valor['cod']), 'UTF-8', 'ISO-8859-1');
+$nombre = mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');          
 
 $styleName=CargarStyleTable($styleName);
  $pagina.="
@@ -704,12 +704,12 @@ $controltitulo="";
 		  
 		  
 		     $iddetallesniveles=$valor['iddetallesniveles'];
-		  	  $nro=utf8_encode($valor['nro']);
-		  	  $formulario=utf8_encode($valor['formulario']);
-		  	  $codigo=utf8_encode($valor['codigo']);
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $accion=utf8_encode($valor['accion']);
-		  	  $idlistadodeacceso=utf8_encode($valor['idlistadodeacceso']);		  	 
+		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
+		  	  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
+		  	  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
+		  	  $idlistadodeacceso=mb_convert_encoding((string)($valor['idlistadodeacceso']), 'UTF-8', 'ISO-8859-1');		  	 
 			  generarAccesos($idlistadodeacceso,$accion,$usuarios_idusario,$tipo);
 			    	 
 		  	

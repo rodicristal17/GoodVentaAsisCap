@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include('quitarseparadormiles.php');
 require("conexion.php");
 include("verificar_navegador.php");
@@ -12,11 +12,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -34,7 +34,7 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$idsueldo=$_POST['idsueldo'];
-$idsueldo = utf8_decode($idsueldo);
+$idsueldo = mb_convert_encoding((string)($idsueldo), 'ISO-8859-1', 'UTF-8');
 $comision=$_POST['comision'];
 $comision = quitarseparadormiles($comision);
 $totalrecaudado=$_POST['totalrecaudado'];
@@ -42,15 +42,15 @@ $totalrecaudado = quitarseparadormiles($totalrecaudado);
 $sueldo=$_POST['sueldo'];
 $sueldo = quitarseparadormiles($sueldo);
 	$fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	$cod_persona=$_POST['cod_persona'];
-$cod_persona = utf8_decode($cod_persona);
+$cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 $tipouser=$_POST['tipouser'];
-$tipouser = utf8_decode($tipouser);
+$tipouser = mb_convert_encoding((string)($tipouser), 'ISO-8859-1', 'UTF-8');
 
 
 	abm($idsueldo,$comision,$totalrecaudado,$sueldo,$fecha,$cod_persona,$estado,$tipo,$tipouser,$operacion);
@@ -60,15 +60,15 @@ $tipouser = utf8_decode($tipouser);
 if($operacion=="buscar")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 	buscar($fecha1,$fecha2,$estado,$buscar,$tipo);
 
 }	
@@ -174,14 +174,14 @@ if ( ! $stmt->execute()) {
 		  
 		      $idsueldo=$valor['idsueldo'];
 		      $comision=$valor['comision'];
-		  	  $totalrecaudado=utf8_encode($valor['totalrecaudado']);
-		  	  $sueldo=utf8_encode($valor['sueldo']);
-		  	  $cod_persona=utf8_encode($valor['codpersona']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $tipo=utf8_encode($valor['tipo']);
-		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
-		  	  $tipouser=utf8_encode($valor['tipouser']);
+		  	  $totalrecaudado=mb_convert_encoding((string)($valor['totalrecaudado']), 'UTF-8', 'ISO-8859-1');
+		  	  $sueldo=mb_convert_encoding((string)($valor['sueldo']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_persona=mb_convert_encoding((string)($valor['codpersona']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  	  $usuarionombre=mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipouser=mb_convert_encoding((string)($valor['tipouser']), 'UTF-8', 'ISO-8859-1');
 			  
 		  	 $total=$total+$sueldo;
 		  	 

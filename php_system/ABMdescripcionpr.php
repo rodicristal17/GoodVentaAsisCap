@@ -2,7 +2,7 @@
 
 
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -14,12 +14,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -35,11 +35,11 @@ if($funt=="nuevo" || $funt=="editar")
 	
 	
 	$cod_categoria=$_POST['idabm'];
-    $cod_categoria = utf8_decode($cod_categoria);
+    $cod_categoria = mb_convert_encoding((string)($cod_categoria), 'ISO-8859-1', 'UTF-8');
 	$descripcion=$_POST['descripcion'];
-    $descripcion = utf8_decode($descripcion);
+    $descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
 	$Estado=$_POST['Estado'];
-    $Estado = utf8_decode($Estado);
+    $Estado = mb_convert_encoding((string)($Estado), 'ISO-8859-1', 'UTF-8');
 
     
     
@@ -50,11 +50,11 @@ if($funt=="nuevo" || $funt=="editar")
 if($funt=="buscar")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $monto=$_POST['monto'];
-$monto = utf8_decode($monto);
+$monto = mb_convert_encoding((string)($monto), 'ISO-8859-1', 'UTF-8');
 $nroid=$_POST['nroid'];
-$nroid = utf8_decode($nroid);
+$nroid = mb_convert_encoding((string)($nroid), 'ISO-8859-1', 'UTF-8');
 	buscar($buscar,$monto,$nroid);
 
 }	
@@ -196,8 +196,8 @@ $asignarValor=0;
 		  
 				$iddescripcionpr=$valor['iddescripcionpr']; 
 		      $nombre=$valor['nombre'];
-		  	  $porcentaje=utf8_encode($valor['porcentaje']);
-		  	  $impuesto=utf8_encode($valor['impuesto']);
+		  	  $porcentaje=mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1');
+		  	  $impuesto=mb_convert_encoding((string)($valor['impuesto']), 'UTF-8', 'ISO-8859-1');
 			  
 			  $ResultadoCalculo= $monto * $porcentaje;
 			  

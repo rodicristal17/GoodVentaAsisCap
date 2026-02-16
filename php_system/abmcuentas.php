@@ -2,19 +2,19 @@
 require("conexion.php");
 include("verificar_navegador.php");
 $operacion = $_POST['funt'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$operacion = utf8_decode($operacion);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 /*Función principal del php que se ejecutal cargar todo el archivo php y llamado al final de php.*/
 function ObtenerDatos($operacion)
 {
 
 
 		$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -31,16 +31,16 @@ if($operacion=="nuevo" || $operacion=="editar" || $operacion=="eliminar")
 
 
 $idpedidos=$_POST['idpedidos'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$idpedidos = utf8_decode($idpedidos);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$idpedidos = mb_convert_encoding((string)($idpedidos), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 
 $cod_productoFK=$_POST['cod_productoFK'];
-$cod_productoFK = utf8_decode($cod_productoFK);
+$cod_productoFK = mb_convert_encoding((string)($cod_productoFK), 'ISO-8859-1', 'UTF-8');
 
 $costo=$_POST['costo'];
-$costo = utf8_decode($costo);
+$costo = mb_convert_encoding((string)($costo), 'ISO-8859-1', 'UTF-8');
 
 $cod_clienteFK=$_POST['cod_clienteFK'];
-$cod_clienteFK = utf8_decode($cod_clienteFK);
+$cod_clienteFK = mb_convert_encoding((string)($cod_clienteFK), 'ISO-8859-1', 'UTF-8');
 
 
 
@@ -56,15 +56,15 @@ abm($idpedidos,$cod_productoFK,$costo,$cod_clienteFK,$operacion);
  	$lat=$_POST["lat"];
  	$lot=$_POST["lot"];
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	$buscarpor=$_POST["buscarpor"];
- 	$buscarpor=utf8_decode($buscarpor);
+ 	$buscarpor=mb_convert_encoding((string)($buscarpor), 'ISO-8859-1', 'UTF-8');
  	buscarregistro($buscar,$lat,$lot,$buscarpor,$user);
  }
 
  if($operacion=="buscarDetalle"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscardetalle($buscar);
  }
 
@@ -201,17 +201,17 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_venta = utf8_encode($valor['cod_venta']);/*Obtenemos el registro mediante el nombre del atributo */      
-$cod_persona = utf8_encode($valor['cod_persona']);  
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$ci_cliente = utf8_encode($valor['ci_cliente']);          
-$total = utf8_encode($valor['total']); 
-$total_venta = utf8_encode($valor['total_venta']);          
-$descuento = utf8_encode($valor['descuento']); 
-$pago = utf8_encode($valor['totalpagado']); 
-$lat = utf8_encode($valor['lat']); 
-$long = utf8_encode($valor['lot']); 
-$fechaPago = utf8_encode($valor['fechaPago']); 
+$cod_venta = mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');  
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$ci_cliente = mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1');          
+$total = mb_convert_encoding((string)($valor['total']), 'UTF-8', 'ISO-8859-1'); 
+$total_venta = mb_convert_encoding((string)($valor['total_venta']), 'UTF-8', 'ISO-8859-1');          
+$descuento = mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1'); 
+$pago = mb_convert_encoding((string)($valor['totalpagado']), 'UTF-8', 'ISO-8859-1'); 
+$lat = mb_convert_encoding((string)($valor['lat']), 'UTF-8', 'ISO-8859-1'); 
+$long = mb_convert_encoding((string)($valor['lot']), 'UTF-8', 'ISO-8859-1'); 
+$fechaPago = mb_convert_encoding((string)($valor['fechaPago']), 'UTF-8', 'ISO-8859-1'); 
 if($sqlcoordenads!=""){
 $distance = number_format($valor['distance'],'2',',','.');
 }else{
@@ -287,15 +287,15 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$idcredito = utf8_encode($valor['idcredito']);/*Obtenemos el registro mediante el nombre del atributo */      
-$plazo = utf8_encode($valor['plazo']);  
-$fechapago = utf8_encode($valor['fechapago']);          
-$cod_venta = utf8_decode($valor['cod_venta']);          
-$Monto = utf8_encode($valor['Monto']); 
-$totalPago = utf8_encode($valor['totalPago']); 
-$Esado = utf8_encode($valor['Esado']);          
-$Nro_recibo = utf8_encode($valor['Nro_recibo']);
-$diff = utf8_encode($valor['diff']);
+$idcredito = mb_convert_encoding((string)($valor['idcredito']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$plazo = mb_convert_encoding((string)($valor['plazo']), 'UTF-8', 'ISO-8859-1');  
+$fechapago = mb_convert_encoding((string)($valor['fechapago']), 'UTF-8', 'ISO-8859-1');          
+$cod_venta = mb_convert_encoding((string)($valor['cod_venta']), 'ISO-8859-1', 'UTF-8');          
+$Monto = mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1'); 
+$totalPago = mb_convert_encoding((string)($valor['totalPago']), 'UTF-8', 'ISO-8859-1'); 
+$Esado = mb_convert_encoding((string)($valor['Esado']), 'UTF-8', 'ISO-8859-1');          
+$Nro_recibo = mb_convert_encoding((string)($valor['Nro_recibo']), 'UTF-8', 'ISO-8859-1');
+$diff = mb_convert_encoding((string)($valor['diff']), 'UTF-8', 'ISO-8859-1');
 $deudaActua=$Monto-$totalPago;
 /*$diff=0;
 
@@ -384,7 +384,7 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 {  
 
 
-$diff = utf8_decode($valor['diff']);          
+$diff = mb_convert_encoding((string)($valor['diff']), 'ISO-8859-1', 'UTF-8');          
 if($diff<0){
 	$diff=$diff*-1;
 }else{
@@ -432,7 +432,7 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$totalpago = utf8_decode($valor['totalPago']);/*Obtenemos el registro mediante el nombre del atributo */      
+$totalpago = mb_convert_encoding((string)($valor['totalPago']), 'ISO-8859-1', 'UTF-8');/*Obtenemos el registro mediante el nombre del atributo */      
 
 
 

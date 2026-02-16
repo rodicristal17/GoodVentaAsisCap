@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -13,11 +13,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 
 
@@ -32,11 +32,11 @@ if($operacion=="nuevo" )
 	
 	
 	$CodUsu=$_POST['CodUsu'];
-	$CodUsu = utf8_decode($CodUsu);
+	$CodUsu = mb_convert_encoding((string)($CodUsu), 'ISO-8859-1', 'UTF-8');
 	$cod_ProductoFK=$_POST['cod_ProductoFK'];
-	$cod_ProductoFK = utf8_decode($cod_ProductoFK);
+	$cod_ProductoFK = mb_convert_encoding((string)($cod_ProductoFK), 'ISO-8859-1', 'UTF-8');
 	$cantidad=$_POST['cantidad'];
-	$cantidad = utf8_decode($cantidad);
+	$cantidad = mb_convert_encoding((string)($cantidad), 'ISO-8859-1', 'UTF-8');
 	$precio=$_POST['precio'];
 	$precio = quitarseparadormiles($precio);
 	
@@ -58,15 +58,15 @@ if($operacion=="buscarDescuento")
 if($operacion=="buscarSoliDescuento")
 {
 	$fecha1=$_POST['fecha1'];
-	$fecha1 = utf8_decode($fecha1);
+	$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST['fecha2'];
-	$fecha2 = utf8_decode($fecha2);
+	$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$UsuSoli=$_POST['UsuSoli'];
-	$UsuSoli = utf8_decode($UsuSoli);
+	$UsuSoli = mb_convert_encoding((string)($UsuSoli), 'ISO-8859-1', 'UTF-8');
 	$UsuApro=$_POST['UsuApro'];
-	$UsuApro = utf8_decode($UsuApro);
+	$UsuApro = mb_convert_encoding((string)($UsuApro), 'ISO-8859-1', 'UTF-8');
 	$producto=$_POST['producto'];
-	$producto = utf8_decode($producto);
+	$producto = mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	buscarSoliDescuento($fecha1,$fecha2,$UsuSoli,$UsuApro,$producto);
 
 }	
@@ -75,9 +75,9 @@ if($operacion=="buscarDescuentovista")
 {
 	
 	$buscar=$_POST['buscar'];
-	$buscar = utf8_decode($buscar);
+	$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$UsuarioFK=$_POST['UsuarioFK'];
-	$UsuarioFK = utf8_decode($UsuarioFK);
+	$UsuarioFK = mb_convert_encoding((string)($UsuarioFK), 'ISO-8859-1', 'UTF-8');
 	buscarvistaVenta($buscar,$UsuarioFK);
 
 }	
@@ -86,7 +86,7 @@ if($operacion=="buscarDescuentovista")
 if($operacion=="EditarAprobado")
 {
 	$idABM=$_POST['idABM'];
-	$idABM = utf8_decode($idABM);
+	$idABM = mb_convert_encoding((string)($idABM), 'ISO-8859-1', 'UTF-8');
 	EditarAprobado($idABM);
 
 }	
@@ -97,17 +97,17 @@ if($operacion=="Editar" )
 	
 	
 	$CodUsu=$_POST['CodUsu'];
-	$CodUsu = utf8_decode($CodUsu);
+	$CodUsu = mb_convert_encoding((string)($CodUsu), 'ISO-8859-1', 'UTF-8');
 	$cod_ProductoFK=$_POST['cod_ProductoFK'];
-	$cod_ProductoFK = utf8_decode($cod_ProductoFK);
+	$cod_ProductoFK = mb_convert_encoding((string)($cod_ProductoFK), 'ISO-8859-1', 'UTF-8');
 	$cantidad=$_POST['cantidad'];
-	$cantidad = utf8_decode($cantidad);
+	$cantidad = mb_convert_encoding((string)($cantidad), 'ISO-8859-1', 'UTF-8');
 	$precio=$_POST['precio'];
 	$precio = quitarseparadormiles($precio);
 	$estado=$_POST['estado'];
-	$estado = utf8_decode($estado);
+	$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$idABM=$_POST['idABM'];
-	$idABM = utf8_decode($idABM);	
+	$idABM = mb_convert_encoding((string)($idABM), 'ISO-8859-1', 'UTF-8');	
 	
 	
 	Editar($CodUsu,$cod_ProductoFK,$cantidad,$precio,$estado,$idABM,$operacion);
@@ -265,14 +265,14 @@ if ( ! $stmt->execute()) {
 			  $codBarra=$valor['codBarra'];
 		      $cod_productoFK=$valor['cod_productoFK'];
 			  $producto=$valor['producto'];
-		  	  $idsolicituddescuendo=utf8_encode($valor['idsolicituddescuendo']);
-		  	  $estado=utf8_encode($valor['estado']);
-			  $fecha=utf8_encode($valor['fecha']);
-			  $cod_UsuAprobado=utf8_encode($valor['cod_UsuAprobado']);
-			  $cantidad=utf8_encode($valor['cantidad']);
-			  $precioDescuento=utf8_encode($valor['precioDescuento']);
-			  $cod_usuarioFK=utf8_encode($valor['cod_usuarioFK']);
-			  $usuario=utf8_encode($valor['usuario']);
+		  	  $idsolicituddescuendo=mb_convert_encoding((string)($valor['idsolicituddescuendo']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+			  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+			  $cod_UsuAprobado=mb_convert_encoding((string)($valor['cod_UsuAprobado']), 'UTF-8', 'ISO-8859-1');
+			  $cantidad=mb_convert_encoding((string)($valor['cantidad']), 'UTF-8', 'ISO-8859-1');
+			  $precioDescuento=mb_convert_encoding((string)($valor['precioDescuento']), 'UTF-8', 'ISO-8859-1');
+			  $cod_usuarioFK=mb_convert_encoding((string)($valor['cod_usuarioFK']), 'UTF-8', 'ISO-8859-1');
+			  $usuario=mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');
 			  
 			  if($estado=="Aprobado"){
 				  $estadoSoli="SI";
@@ -390,15 +390,15 @@ if ( ! $stmt->execute()) {
 			  $codBarra=$valor['codBarra'];
 		      $cod_productoFK=$valor['cod_productoFK'];
 			  $producto=$valor['producto'];
-		  	  $idsolicituddescuendo=utf8_encode($valor['idsolicituddescuendo']);
-		  	  $estado=utf8_encode($valor['estado']);
-			  $fecha=utf8_encode($valor['fecha']);
-			  $cod_UsuAprobado=utf8_encode($valor['cod_UsuAprobado']);
-			  $cantidad=utf8_encode($valor['cantidad']);
-			  $precioDescuento=utf8_encode($valor['precioDescuento']);
-			  $cod_usuarioFK=utf8_encode($valor['cod_usuarioFK']);
-			  $usuariosoli=utf8_encode($valor['usuariosoli']);
-			  $usuarioapro=utf8_encode($valor['usuarioapro']);
+		  	  $idsolicituddescuendo=mb_convert_encoding((string)($valor['idsolicituddescuendo']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+			  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+			  $cod_UsuAprobado=mb_convert_encoding((string)($valor['cod_UsuAprobado']), 'UTF-8', 'ISO-8859-1');
+			  $cantidad=mb_convert_encoding((string)($valor['cantidad']), 'UTF-8', 'ISO-8859-1');
+			  $precioDescuento=mb_convert_encoding((string)($valor['precioDescuento']), 'UTF-8', 'ISO-8859-1');
+			  $cod_usuarioFK=mb_convert_encoding((string)($valor['cod_usuarioFK']), 'UTF-8', 'ISO-8859-1');
+			  $usuariosoli=mb_convert_encoding((string)($valor['usuariosoli']), 'UTF-8', 'ISO-8859-1');
+			  $usuarioapro=mb_convert_encoding((string)($valor['usuarioapro']), 'UTF-8', 'ISO-8859-1');
 			
 		  	 
 			 $styleName=CargarStyleTable($styleName);
@@ -498,24 +498,24 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$idsolicituddescuendo = utf8_encode($valor['idsolicituddescuendo']); 
-$est = utf8_encode($valor['est']); 
-$fecha = utf8_encode($valor['fecha']); 
-$aprobadoPor = utf8_encode($valor['aprobadoPor']); 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precioDescuento = utf8_encode($valor['precioDescuento']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
-$cantidad = utf8_encode($valor['cantidad']); 
+$idsolicituddescuendo = mb_convert_encoding((string)($valor['idsolicituddescuendo']), 'UTF-8', 'ISO-8859-1'); 
+$est = mb_convert_encoding((string)($valor['est']), 'UTF-8', 'ISO-8859-1'); 
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'); 
+$aprobadoPor = mb_convert_encoding((string)($valor['aprobadoPor']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precioDescuento = mb_convert_encoding((string)($valor['precioDescuento']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
+$cantidad = mb_convert_encoding((string)($valor['cantidad']), 'UTF-8', 'ISO-8859-1'); 
 
 $styleName=CargarStyleTable($styleName);
 	  $pagina.="

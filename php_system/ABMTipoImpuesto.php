@@ -2,7 +2,7 @@
 
 
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -15,12 +15,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -42,13 +42,13 @@ if($funt=="nuevo" || $funt=="editar")
 	
 	
 	$cod_Impuesto=$_POST['idabm'];
-    $cod_Impuesto = utf8_decode($cod_Impuesto);
+    $cod_Impuesto = mb_convert_encoding((string)($cod_Impuesto), 'ISO-8859-1', 'UTF-8');
 	$descripcion=$_POST['descripcion'];
-    $descripcion = utf8_decode($descripcion);
+    $descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
 	$monto_impuesto=$_POST['monto_impuesto'];
-    $monto_impuesto = utf8_decode($monto_impuesto);
+    $monto_impuesto = mb_convert_encoding((string)($monto_impuesto), 'ISO-8859-1', 'UTF-8');
 	$Estado=$_POST['Estado'];
-    $Estado = utf8_decode($Estado);
+    $Estado = mb_convert_encoding((string)($Estado), 'ISO-8859-1', 'UTF-8');
 
     
     
@@ -59,9 +59,9 @@ if($funt=="nuevo" || $funt=="editar")
 if($funt=="buscar")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $Estado=$_POST['estado'];
-$Estado = utf8_decode($Estado);
+$Estado = mb_convert_encoding((string)($Estado), 'ISO-8859-1', 'UTF-8');
 	buscar($buscar,$Estado);
 
 }	
@@ -195,9 +195,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_Impuesto=$valor['cod_Impuesto'];
-		  	  $descripcion=utf8_encode($valor['descripcion']);
-		  	  $monto_impuesto=utf8_encode($valor['monto_impuesto']);
-		  	  $Estado=utf8_encode($valor['Estado']);
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		  	  $monto_impuesto=mb_convert_encoding((string)($valor['monto_impuesto']), 'UTF-8', 'ISO-8859-1');
+		  	  $Estado=mb_convert_encoding((string)($valor['Estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			  
 		  	 

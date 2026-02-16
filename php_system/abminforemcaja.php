@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -16,11 +16,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -35,7 +35,7 @@ if($operacion=="buscarinformecaja")
 {
 	
 $idArqeoFk=$_POST['idArqeoFk1'];
-$idArqeoFk = utf8_decode($idArqeoFk);
+$idArqeoFk = mb_convert_encoding((string)($idArqeoFk), 'ISO-8859-1', 'UTF-8');
 generarinforme($idArqeoFk);
 
 }
@@ -202,13 +202,13 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cliente = utf8_encode($valor['cliente']); 
-$Monto = utf8_encode($valor['Monto']); 
-$nombrelocal = utf8_encode($valor['nombrelocal']); 
-$cod_venta_fk = utf8_encode($valor['cod_venta_fk']); 
-$tipo = utf8_encode($valor['tipo']); 
-$descripcion = utf8_encode($valor['descripcion']); 
-$tipopago = utf8_encode($valor['tipopago']); 
+$cliente = mb_convert_encoding((string)($valor['cliente']), 'UTF-8', 'ISO-8859-1'); 
+$Monto = mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1'); 
+$nombrelocal = mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1'); 
+$cod_venta_fk = mb_convert_encoding((string)($valor['cod_venta_fk']), 'UTF-8', 'ISO-8859-1'); 
+$tipo = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'); 
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1'); 
+$tipopago = mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1'); 
 
 	if($tipo=="Tarjeta"){
 $totaltarjeta=$totaltarjeta+$Monto;
@@ -276,14 +276,14 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idgastos=$valor['idgastos'];
-		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
-		  	  $monto=utf8_encode($valor['monto']);
-		  	  $motivo=utf8_encode($valor['motivo']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $personales=utf8_encode($valor['personales']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		  	  $usuarionombre=mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+		  	  $motivo=mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $personales=mb_convert_encoding((string)($valor['personales']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 		  	 $totalGasto=$totalGasto+$monto;
 		  	 
 	$styleName=CargarStyleTable($styleName);
@@ -339,14 +339,14 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idgastos=$valor['idgastos'];
-		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
-		  	  $monto=utf8_encode($valor['monto']);
-		  	  $motivo=utf8_encode($valor['motivo']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $personales=utf8_encode($valor['personales']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		  	  $usuarionombre=mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+		  	  $motivo=mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $personales=mb_convert_encoding((string)($valor['personales']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 		  	 $totalGasto=$totalGasto+$monto;
 			 
 			 
@@ -402,10 +402,10 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$nombre_producto = utf8_encode($valor['nombre_producto']);       
-$cantidad_detalle = utf8_encode($valor['cantidad_detalle']);       
-$detalleproducto = utf8_encode($valor['detalleproducto']);       
-$subtotal = utf8_decode($valor['subtotal']);      
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');       
+$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'UTF-8', 'ISO-8859-1');       
+$detalleproducto = mb_convert_encoding((string)($valor['detalleproducto']), 'UTF-8', 'ISO-8859-1');       
+$subtotal = mb_convert_encoding((string)($valor['subtotal']), 'ISO-8859-1', 'UTF-8');      
 if($pagina==""){
 	$pagina.=$a.") &nbsp".$nombre_producto.",&nbsp&nbsp".number_format($cantidad_detalle,'2',',','.')."(".$detalleproducto.")";	
 	}else{
@@ -442,7 +442,7 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
           
-$montoapertura = utf8_encode($valor['montoapertura']);          
+$montoapertura = mb_convert_encoding((string)($valor['montoapertura']), 'UTF-8', 'ISO-8859-1');          
 
 	    	 
 
@@ -485,14 +485,14 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idgastos=$valor['idgastos'];
-		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
-		  	  $monto=utf8_encode($valor['monto']);
-		  	  $motivo=utf8_encode($valor['motivo']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $personales=utf8_encode($valor['personales']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		  	  $usuarionombre=mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+		  	  $motivo=mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $personales=mb_convert_encoding((string)($valor['personales']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 		  	 $totalGasto=$totalGasto+$monto;
 		  	 
 	$styleName=CargarStyleTable($styleName);
@@ -546,10 +546,10 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
  
-$obs = utf8_encode($valor['obs']); 
-$fecha = utf8_encode($valor['fecha']); 
-$monto = utf8_encode($valor['monto']); 
-$usuarioRecibe = utf8_encode($valor['usuarioRecibe']); 
+$obs = mb_convert_encoding((string)($valor['obs']), 'UTF-8', 'ISO-8859-1'); 
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'); 
+$monto = mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1'); 
+$usuarioRecibe = mb_convert_encoding((string)($valor['usuarioRecibe']), 'UTF-8', 'ISO-8859-1'); 
 
 $totalCaja= $totalCaja + $monto ;
 	$styleName=CargarStyleTable($styleName);
@@ -607,8 +607,8 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$monto = utf8_encode($valor['monto']); 
-$usuarioEnvia = utf8_encode($valor['usuarioEnvia']); 
+$monto = mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1'); 
+$usuarioEnvia = mb_convert_encoding((string)($valor['usuarioEnvia']), 'UTF-8', 'ISO-8859-1'); 
 
 $totalCaja= $totalCaja + $monto ;
 	$styleName=CargarStyleTable($styleName);

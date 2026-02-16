@@ -2,7 +2,7 @@
 
 
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -14,12 +14,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -35,11 +35,11 @@ if($funt=="nuevo" || $funt=="editar")
 	
 	
 	$cod_Banco=$_POST['cod_Banco'];
-    $cod_Banco = utf8_decode($cod_Banco);
+    $cod_Banco = mb_convert_encoding((string)($cod_Banco), 'ISO-8859-1', 'UTF-8');
 	$nombre=$_POST['nombre'];
-    $nombre = utf8_decode($nombre);
+    $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
-    $estado = utf8_decode($estado);
+    $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
     
     
@@ -50,9 +50,9 @@ if($funt=="nuevo" || $funt=="editar")
 if($funt=="buscar")
 {
 	$nombre=$_POST['nombre'];
-$nombre = utf8_decode($nombre);
+$nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 $Estado=$_POST['estado'];
-$Estado = utf8_decode($Estado);
+$Estado = mb_convert_encoding((string)($Estado), 'ISO-8859-1', 'UTF-8');
 	buscar($nombre,$Estado);
 
 }	
@@ -180,8 +180,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idbanco=$valor['idbanco'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			  
 		  	 $styleName=CargarStyleTable($styleName);
@@ -232,8 +232,8 @@ if ( ! $stmt->execute()) {
 		   
 		  
 		      $idbanco=$valor['idbanco'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  // $Estado=utf8_encode($valor['Estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  // $Estado=mb_convert_encoding((string)($valor['Estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			    $pagina.="<option value='$idbanco' >$nombre</option>";
 		  	 

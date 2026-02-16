@@ -4,18 +4,18 @@ include("verificar_navegador.php");
 include("classTable.php");
 
 $operacion = $_POST['funt'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$operacion = utf8_decode($operacion);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 /*Función principal del php que se ejecutal cargar todo el archivo php y llamado al final de php.*/
 function ObtenerDatos($operacion)
 {
 
 		$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -32,24 +32,24 @@ if($operacion=="nuevo" || $operacion=="editar" )
 
 
 $Cod_Garantia=$_POST['Cod_Garantia'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$Cod_Garantia = utf8_decode($Cod_Garantia);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$Cod_Garantia = mb_convert_encoding((string)($Cod_Garantia), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 
 $Fecha=$_POST['Fecha'];
-$Fecha = utf8_decode($Fecha);
+$Fecha = mb_convert_encoding((string)($Fecha), 'ISO-8859-1', 'UTF-8');
 
 $Motivo=$_POST['Motivo'];
-$Motivo = utf8_decode($Motivo);
+$Motivo = mb_convert_encoding((string)($Motivo), 'ISO-8859-1', 'UTF-8');
 
 $cod_detalleFK=$_POST['cod_detalleFK'];
-$cod_detalleFK = utf8_decode($cod_detalleFK);
+$cod_detalleFK = mb_convert_encoding((string)($cod_detalleFK), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 
 
 $cod_ventaFK=$_POST['cod_ventaFK'];
-$cod_ventaFK = utf8_decode($cod_ventaFK);
+$cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
 
 
 
@@ -61,7 +61,7 @@ abm($Cod_Garantia,$Fecha,$Motivo,$cod_detalleFK,$estado,$cod_ventaFK,$operacion)
  
  if($operacion=="buscarporvista"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnVista($buscar);
  }
 
@@ -170,14 +170,14 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$cod_detalle = utf8_encode($valor['cod_detalle']);          
-$cod_venta = utf8_encode($valor['cod_venta']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$Motivo = utf8_encode($valor['Motivo']); 
-$Fecha = utf8_encode($valor['Fecha']); 
-$estado = utf8_encode($valor['estado']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$cod_detalle = mb_convert_encoding((string)($valor['cod_detalle']), 'UTF-8', 'ISO-8859-1');          
+$cod_venta = mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$Motivo = mb_convert_encoding((string)($valor['Motivo']), 'UTF-8', 'ISO-8859-1'); 
+$Fecha = mb_convert_encoding((string)($valor['Fecha']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
 if($estado=='Garantia'){
 	$nombre_producto="<b style='color:red'> ".$nombre_producto."<br>(EN GARANTIA)</b>";
 }

@@ -72,7 +72,7 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		  $Cod_Nro=$valor['Cod_Nro'];
-		  	  $nro=utf8_encode($valor['nro']);
+		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
 		  	 $datos[0]=$Cod_Nro;
 			$datos[1]=$nro;
 			    	 

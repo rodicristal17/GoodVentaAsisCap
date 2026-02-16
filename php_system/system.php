@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -10,11 +10,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok" && $operacion!="buscaroption"){
 $informacion =array("1" => "UI");
@@ -32,9 +32,9 @@ exit;
 if($operacion=="asistenciadeactualizacion")
 {
 	$codigopc=$_POST['codigopc'];
-$codigopc = utf8_decode($codigopc);
+$codigopc = mb_convert_encoding((string)($codigopc), 'ISO-8859-1', 'UTF-8');
 $codigodeactualizacion=$_POST['codigodeactualizacion'];
-$codigodeactualizacion = utf8_decode($codigodeactualizacion);
+$codigodeactualizacion = mb_convert_encoding((string)($codigodeactualizacion), 'ISO-8859-1', 'UTF-8');
 	asistenciadeactualizacion($codigopc,$codigodeactualizacion);
 
 }	
@@ -42,7 +42,7 @@ $codigodeactualizacion = utf8_decode($codigodeactualizacion);
 if($operacion=="registrardispositivo")
 {
 	$codigopc=$_POST['codigopc'];
-$codigopc = utf8_decode($codigopc);
+$codigopc = mb_convert_encoding((string)($codigopc), 'ISO-8859-1', 'UTF-8');
 	registrardispositivo($codigopc);
 
 }	
@@ -50,7 +50,7 @@ $codigopc = utf8_decode($codigopc);
 if($operacion=="registraractualizacion")
 {
 	$codigopc=$_POST['codigopc'];
-$codigopc = utf8_decode($codigopc);
+$codigopc = mb_convert_encoding((string)($codigopc), 'ISO-8859-1', 'UTF-8');
 	registraractualizacion($codigopc);
 
 }	

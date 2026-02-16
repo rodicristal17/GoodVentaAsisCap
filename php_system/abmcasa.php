@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -12,13 +12,13 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);	
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');	
 if($user!=""){
 
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok" && $operacion!="buscaroption"){
 $informacion =array("1" => "UI");
@@ -38,11 +38,11 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$nombre=$_POST['nombre'];
-$nombre = utf8_decode($nombre);
+$nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	abm($nombre,$estado,$cod_local,$operacion);
 
 }
@@ -50,18 +50,18 @@ $cod_local = utf8_decode($cod_local);
 if($operacion=="buscar")
 {
 	$codigo=$_POST['codigo'];
-$codigo = utf8_decode($codigo);
+$codigo = mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 $nombre=$_POST['nombre'];
-$nombre = utf8_decode($nombre);
+$nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	buscar($codigo,$nombre,$estado);
 
 }	
 
 if ($operacion=="relacionarProductosLocal"){
 	$cod_local=$_POST['cod_local'];
-	$cod_local = utf8_decode($cod_local);
+	$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	relacionar_productos_local($cod_local);
 }
 
@@ -168,8 +168,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_local=$valor['cod_local'];
-		  	  $nombre=utf8_encode($valor['Nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['Nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			  $styleName=CargarStyleTable($styleName);
@@ -232,8 +232,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_local=$valor['cod_local'];
-		  	  $nombre=utf8_encode($valor['Nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['Nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	
@@ -280,8 +280,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_local=$valor['cod_local'];
-		  	  $nombre=utf8_encode($valor['Nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['Nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	

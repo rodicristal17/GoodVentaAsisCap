@@ -5,16 +5,16 @@ include('quitarseparadormiles.php');
 include("buscar_nivel.php");
 include("classTable.php");
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 function ObtenerDatos($operacion)
 {
 
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -30,17 +30,17 @@ if($operacion=="nuevo" || $operacion=="editar" )
 
 
 $cod_producto=$_POST['cod_producto'];
-$cod_producto = utf8_decode($cod_producto);
+$cod_producto = mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
 
 $nombre_producto=$_POST['nombre_producto'];
-$nombre_producto = utf8_decode($nombre_producto);
+$nombre_producto = mb_convert_encoding((string)($nombre_producto), 'ISO-8859-1', 'UTF-8');
 
 
 $descripcion_producto=$_POST['descripcion_producto'];
-$descripcion_producto = utf8_decode($descripcion_producto);
+$descripcion_producto = mb_convert_encoding((string)($descripcion_producto), 'ISO-8859-1', 'UTF-8');
 
 $unidad_producto=$_POST['unidad_producto'];
-$unidad_producto = utf8_decode($unidad_producto);
+$unidad_producto = mb_convert_encoding((string)($unidad_producto), 'ISO-8859-1', 'UTF-8');
 
 $precio_producto=$_POST['precio_producto'];
 $precio_producto = quitarseparadormiles($precio_producto);
@@ -49,47 +49,47 @@ $precio_compra=$_POST['precio_compra'];
 $precio_compra = quitarseparadormiles($precio_compra);
 
 $cod_localFK=$_POST['cod_localFK'];
-$cod_localFK = utf8_decode($cod_localFK);
+$cod_localFK = mb_convert_encoding((string)($cod_localFK), 'ISO-8859-1', 'UTF-8');
 
 $comision=$_POST['comision'];
-$comision = utf8_decode($comision);
+$comision = mb_convert_encoding((string)($comision), 'ISO-8859-1', 'UTF-8');
 
 $stock_producto=$_POST['stock_producto'];
 $stock_producto = quitarseparadormiles($stock_producto);
 
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 $cod_categoriaFK=$_POST['cod_categoriaFK'];
-$cod_categoriaFK = utf8_decode($cod_categoriaFK);
+$cod_categoriaFK = mb_convert_encoding((string)($cod_categoriaFK), 'ISO-8859-1', 'UTF-8');
 
 $cod_marcasFK=$_POST['cod_marcasFK'];
-$cod_marcasFK = utf8_decode($cod_marcasFK);
+$cod_marcasFK = mb_convert_encoding((string)($cod_marcasFK), 'ISO-8859-1', 'UTF-8');
 
 $cod_ImpuestoFK=$_POST['cod_ImpuestoFK'];
-$cod_ImpuestoFK = utf8_decode($cod_ImpuestoFK);
+$cod_ImpuestoFK = mb_convert_encoding((string)($cod_ImpuestoFK), 'ISO-8859-1', 'UTF-8');
 
 
 $porcentaje=$_POST['porcentaje'];
-$porcentaje = utf8_decode($porcentaje);
+$porcentaje = mb_convert_encoding((string)($porcentaje), 'ISO-8859-1', 'UTF-8');
 
 $codBarras=$_POST['codBarras'];
-$codBarras = utf8_decode($codBarras);
+$codBarras = mb_convert_encoding((string)($codBarras), 'ISO-8859-1', 'UTF-8');
 
 $tipoproducto=$_POST['tipoproducto'];
-$tipoproducto = utf8_decode($tipoproducto);
+$tipoproducto = mb_convert_encoding((string)($tipoproducto), 'ISO-8859-1', 'UTF-8');
 
 $CodProveedorFK=$_POST['CodProveedorFK'];
-$CodProveedorFK = utf8_decode($CodProveedorFK);
+$CodProveedorFK = mb_convert_encoding((string)($CodProveedorFK), 'ISO-8859-1', 'UTF-8');
 
 $codFabricaFK=$_POST['codFabricaFK'];
-$codFabricaFK = utf8_decode($codFabricaFK);
+$codFabricaFK = mb_convert_encoding((string)($codFabricaFK), 'ISO-8859-1', 'UTF-8');
 
 $linkproducto=$_POST['linkproducto'];
-$linkproducto = utf8_decode($linkproducto);
+$linkproducto = mb_convert_encoding((string)($linkproducto), 'ISO-8859-1', 'UTF-8');
 
 $nombredescripcionAnt=$_POST['nombredescripcionAnt'];
-$nombredescripcionAnt = utf8_decode($nombredescripcionAnt);
+$nombredescripcionAnt = mb_convert_encoding((string)($nombredescripcionAnt), 'ISO-8859-1', 'UTF-8');
 
 $precio_compraAnt=$_POST['precio_compraAnt'];
 $precio_compraAnt = quitarseparadormiles($precio_compraAnt);
@@ -101,7 +101,7 @@ $stockAnt=$_POST['stockAnt'];
 $stockAnt = quitarseparadormiles($stockAnt);
 
 $cod_barraAnt=$_POST['cod_barraAnt'];
-$cod_barraAnt = utf8_decode($cod_barraAnt);
+$cod_barraAnt = mb_convert_encoding((string)($cod_barraAnt), 'ISO-8859-1', 'UTF-8');
 
 
 abm($nombredescripcionAnt,$precio_compraAnt,$precio_ventaAnt,$stockAnt,$cod_barraAnt,$linkproducto,$codFabricaFK,$CodProveedorFK,$tipoproducto,$cod_producto,$codBarras,$cod_categoriaFK,$cod_marcasFK,$cod_ImpuestoFK,$porcentaje,$nombre_producto,$descripcion_producto,$unidad_producto,$precio_producto,$precio_compra,$cod_localFK,$comision,$stock_producto,$estado,$operacion);
@@ -116,15 +116,15 @@ abm($nombredescripcionAnt,$precio_compraAnt,$precio_ventaAnt,$stockAnt,$cod_barr
  	$stock=$_POST["stock"];
  	$stock=quitarseparadormiles($stock);
 	$cod_local_a=$_POST["cod_local_a"];
- 	$cod_local_a=utf8_decode($cod_local_a);
+ 	$cod_local_a=mb_convert_encoding((string)($cod_local_a), 'ISO-8859-1', 'UTF-8');
 	$cod_local_de=$_POST["cod_local_de"];
- 	$cod_local_de=utf8_decode($cod_local_de);
+ 	$cod_local_de=mb_convert_encoding((string)($cod_local_de), 'ISO-8859-1', 'UTF-8');
 	$fecha=$_POST["fecha"];
- 	$fecha=utf8_decode($fecha);
+ 	$fecha=mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	$cod_producto_fk=$_POST["cod_producto_fk"];
- 	$cod_producto_fk=utf8_decode($cod_producto_fk);
+ 	$cod_producto_fk=mb_convert_encoding((string)($cod_producto_fk), 'ISO-8859-1', 'UTF-8');
 	$cod_ext=$_POST["cod_ext"];
- 	$cod_ext=utf8_decode($cod_ext);
+ 	$cod_ext=mb_convert_encoding((string)($cod_ext), 'ISO-8859-1', 'UTF-8');
 	
  	EnviarProductoA($stock,$cod_local_a,$cod_local_de,$fecha,$cod_producto_fk,$cod_ext,$user);
  }
@@ -134,25 +134,25 @@ abm($nombredescripcionAnt,$precio_compraAnt,$precio_ventaAnt,$stockAnt,$cod_barr
  	$stock=$_POST["stock"];
  	$stock=quitarseparadormiles($stock);
 	$cod_local_deposito=$_POST["cod_local_deposito"];
- 	$cod_local_deposito=utf8_decode($cod_local_deposito);
+ 	$cod_local_deposito=mb_convert_encoding((string)($cod_local_deposito), 'ISO-8859-1', 'UTF-8');
 	$fecha=$_POST["fecha"];
- 	$fecha=utf8_decode($fecha);
+ 	$fecha=mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	$cod_producto_fk=$_POST["cod_producto_fk"];
- 	$cod_producto_fk=utf8_decode($cod_producto_fk);
+ 	$cod_producto_fk=mb_convert_encoding((string)($cod_producto_fk), 'ISO-8859-1', 'UTF-8');
 	$cod_ext=$_POST["cod_ext"];
- 	$cod_ext=utf8_decode($cod_ext);
+ 	$cod_ext=mb_convert_encoding((string)($cod_ext), 'ISO-8859-1', 'UTF-8');
 	
  	SalidaDeposito($stock,$cod_local_deposito,$fecha,$cod_producto_fk,$cod_ext,$user);
  }
 
  if($operacion=="anulardespacho"){
 	$cod_ext=$_POST["cod_ext"];
- 	$cod_ext=utf8_decode($cod_ext);
+ 	$cod_ext=mb_convert_encoding((string)($cod_ext), 'ISO-8859-1', 'UTF-8');
 	anulardespacho($cod_ext);
  }
  if($operacion=="anularsalidaProducto"){
 	$cod_ext=$_POST["cod_ext"];
- 	$cod_ext=utf8_decode($cod_ext);
+ 	$cod_ext=mb_convert_encoding((string)($cod_ext), 'ISO-8859-1', 'UTF-8');
 	anularsalidaProducto($cod_ext);
  }
 
@@ -160,24 +160,24 @@ abm($nombredescripcionAnt,$precio_compraAnt,$precio_ventaAnt,$stockAnt,$cod_barr
 	 
 	 
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	$marca=$_POST["marca"];
- 	$marca=utf8_decode($marca);
+ 	$marca=mb_convert_encoding((string)($marca), 'ISO-8859-1', 'UTF-8');
 	$categoria=$_POST["categoria"];
- 	$categoria=utf8_decode($categoria);
+ 	$categoria=mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 	$stock=$_POST["stock"];
- 	$stock=utf8_decode($stock);
+ 	$stock=mb_convert_encoding((string)($stock), 'ISO-8859-1', 'UTF-8');
 	$proveedor=$_POST["proveedor"];
- 	$proveedor=utf8_decode($proveedor);
+ 	$proveedor=mb_convert_encoding((string)($proveedor), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	
 	$ConStock=$_POST["ConStock"];
- 	$ConStock=utf8_decode($ConStock);
+ 	$ConStock=mb_convert_encoding((string)($ConStock), 'ISO-8859-1', 'UTF-8');
 	
 	if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
@@ -191,26 +191,26 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	 
 	 
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	$marca=$_POST["marca"];
- 	$marca=utf8_decode($marca);
+ 	$marca=mb_convert_encoding((string)($marca), 'ISO-8859-1', 'UTF-8');
 	$categoria=$_POST["categoria"];
- 	$categoria=utf8_decode($categoria);
+ 	$categoria=mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 	$stock=$_POST["stock"];
- 	$stock=utf8_decode($stock);
+ 	$stock=mb_convert_encoding((string)($stock), 'ISO-8859-1', 'UTF-8');
 	$proveedor=$_POST["proveedor"];
- 	$proveedor=utf8_decode($proveedor);
+ 	$proveedor=mb_convert_encoding((string)($proveedor), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$ConStock=$_POST["ConStock"];
- 	$ConStock=utf8_decode($ConStock);
+ 	$ConStock=mb_convert_encoding((string)($ConStock), 'ISO-8859-1', 'UTF-8');
 	
 	$registrocargado=$_POST["registrocargado"];
- 	$registrocargado=utf8_decode($registrocargado);
+ 	$registrocargado=mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
 	if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -222,121 +222,121 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 
  if($operacion=="buscarporcodigoeditar"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscarporcodigoeditar($buscar);
  }
 
 
  if($operacion=="buscarvista"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$Categoria=$_POST["Categoria"];
- 	$Categoria=utf8_decode($Categoria);
+ 	$Categoria=mb_convert_encoding((string)($Categoria), 'ISO-8859-1', 'UTF-8');
 	$Marca=$_POST["Marca"];
- 	$Marca=utf8_decode($Marca);
+ 	$Marca=mb_convert_encoding((string)($Marca), 'ISO-8859-1', 'UTF-8');
 	$codProveedor=$_POST["codProveedor"];
- 	$codProveedor=utf8_decode($codProveedor);
+ 	$codProveedor=mb_convert_encoding((string)($codProveedor), 'ISO-8859-1', 'UTF-8');
 	buscarvista($buscar,$local,$Categoria,$Marca,$codProveedor);
  }
  
   if($operacion=="AuditoriaProducto"){
  	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$usuario=$_POST["usuario"];
- 	$usuario=utf8_decode($usuario);
+ 	$usuario=mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
 	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	AuditoriaProducto($fecha1,$fecha2,$local,$usuario,$producto);
  }
  
    if($operacion=="buscarvistaventa"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarvistaVenta($buscar,$local);
  }
  
     if($operacion=="buscarvistaventaSolicitud"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarvistaventaSolicitud($buscar,$local);
  }
  
  
  if($operacion=="buscarvistacompras"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarvistacompras($buscar,$local);
  }
  if($operacion=="buscarvistalistadodespacho"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarvistalistadodespacho($buscar,$local);
  }
  if($operacion=="buscarvistasalidadeposito"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarvistasalidadeposito($buscar,$local);
  }
  
  if($operacion=="buscarporcodigo"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
  	buscarporcodigo($buscar,$local);
  }
  
  if($operacion=="buscarconsultarprecios"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$categoria=$_POST["categoria"];
- 	$categoria=utf8_decode($categoria);
+ 	$categoria=mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 	$marca=$_POST["marca"];
- 	$marca=utf8_decode($marca);
+ 	$marca=mb_convert_encoding((string)($marca), 'ISO-8859-1', 'UTF-8');
  	buscarconsultarprecios($buscar,$local,$categoria,$marca);
  }
 
  if($operacion=="buscarcodBarra"){
  	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
  	buscarcodBarra($producto,$codigo,$local);
  }
 
  if($operacion=="buscarInventario"){
  	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	$codproducto=$_POST["codproducto"];
- 	$codproducto=utf8_decode($codproducto);
+ 	$codproducto=mb_convert_encoding((string)($codproducto), 'ISO-8859-1', 'UTF-8');
 	$stock=$_POST["stock"];
- 	$stock=utf8_decode($stock);
+ 	$stock=mb_convert_encoding((string)($stock), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$Categoria=$_POST['Categoria'];
-	$Categoria = utf8_decode($Categoria);
+	$Categoria = mb_convert_encoding((string)($Categoria), 'ISO-8859-1', 'UTF-8');
 	$Marcas=$_POST['Marcas'];
-	$Marcas = utf8_decode($Marcas);
+	$Marcas = mb_convert_encoding((string)($Marcas), 'ISO-8859-1', 'UTF-8');
 	if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -348,21 +348,21 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
  
  if($operacion=="buscarMasInventario"){
  	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 	$codproducto=$_POST["codproducto"];
- 	$codproducto=utf8_decode($codproducto);
+ 	$codproducto=mb_convert_encoding((string)($codproducto), 'ISO-8859-1', 'UTF-8');
 	$stock=$_POST["stock"];
- 	$stock=utf8_decode($stock);
+ 	$stock=mb_convert_encoding((string)($stock), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$Categoria=$_POST['Categoria'];
-	$Categoria = utf8_decode($Categoria);
+	$Categoria = mb_convert_encoding((string)($Categoria), 'ISO-8859-1', 'UTF-8');
 	$Marcas=$_POST['Marcas'];
-	$Marcas = utf8_decode($Marcas);
+	$Marcas = mb_convert_encoding((string)($Marcas), 'ISO-8859-1', 'UTF-8');
 	$totalcostos=$_POST['totalcostos'];
 	$totalcostos = quitarseparadormiles($totalcostos);
 	$registrocargados=$_POST['registrocargados'];
-	$registrocargados = utf8_decode($registrocargados);
+	$registrocargados = mb_convert_encoding((string)($registrocargados), 'ISO-8859-1', 'UTF-8');
 	if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -374,19 +374,19 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 
  if($operacion=="buscarCatalogo"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
  	buscarCatalogo($buscar,$local);
  }
 
  if($operacion=="buscarMasCatalogo"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$registrocargado=$_POST["registrocargado"];
- 	$registrocargado=utf8_decode($registrocargado);
+ 	$registrocargado=mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
  	buscarMasCatalogo($buscar,$local,$registrocargado);
  }
 
@@ -396,7 +396,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	$Porcentaje=$_POST["Porcentaje"];
  	$Porcentaje=quitarseparadormiles($Porcentaje);
 	$cod_producto=$_POST["cod_producto"];
- 	$cod_producto=utf8_decode($cod_producto);
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
  	editarpreciocontado($precioventa,$Porcentaje,$cod_producto);
  }
 
@@ -405,51 +405,51 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	 
 	 
  	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$codlocal1=$_POST["codlocal1"];
- 	$codlocal1=utf8_decode($codlocal1);
+ 	$codlocal1=mb_convert_encoding((string)($codlocal1), 'ISO-8859-1', 'UTF-8');
 	$codlocal2=$_POST["codlocal2"];
- 	$codlocal2=utf8_decode($codlocal2);
+ 	$codlocal2=mb_convert_encoding((string)($codlocal2), 'ISO-8859-1', 'UTF-8');
 	$cod_producto=$_POST["cod_producto"];
- 	$cod_producto=utf8_decode($cod_producto);
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
 	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);	
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');	
  	historialdespachado($fecha1,$fecha2,$codlocal1,$codlocal2,$cod_producto,$producto);
  }
  if($operacion=="historialmasdespachado"){
 	 
 	 
  	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$codlocal1=$_POST["codlocal1"];
- 	$codlocal1=utf8_decode($codlocal1);
+ 	$codlocal1=mb_convert_encoding((string)($codlocal1), 'ISO-8859-1', 'UTF-8');
 	$codlocal2=$_POST["codlocal2"];
- 	$codlocal2=utf8_decode($codlocal2);
+ 	$codlocal2=mb_convert_encoding((string)($codlocal2), 'ISO-8859-1', 'UTF-8');
 	$cod_producto=$_POST["cod_producto"];
- 	$cod_producto=utf8_decode($cod_producto);
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
 	$producto=$_POST["producto"];
- 	$producto=utf8_decode($producto);	
+ 	$producto=mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');	
 	$registrocargado=$_POST["registrocargado"];
- 	$registrocargado=utf8_decode($registrocargado);	
+ 	$registrocargado=mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');	
  	historialmasdespachado($fecha1,$fecha2,$codlocal1,$codlocal2,$cod_producto,$producto,$registrocargado);
  }
 
  if($operacion=="comprobar_codigo"){
  	$codigo=$_POST["codigo"];
- 	$codigo=utf8_decode($codigo);
+ 	$codigo=mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
  	comprobarduplicado($codigo);
  }
 
 
    if($operacion=="buscarpresupuesto"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarpresupuesto($buscar,$local);
  }
 
@@ -457,22 +457,22 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 
 if($operacion=="ContabilidadVenta"){
  	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	ContabilidadVenta($fecha1,$fecha2,$local);
 
 }
 
 if($operacion=="ContabilidadCompra"){
  	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	ContabilidadCompra($fecha1,$fecha2,$local);
 
 }
@@ -494,7 +494,7 @@ nuevoTablaDetallePrecio($cod_producto,$contado,$porcentaje);
  
   if($operacion=="EliminarProducto"){
 	$cod_producto=$_POST["cod_producto"];
- 	$cod_producto=utf8_decode($cod_producto);
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
 	EliminarProducto($cod_producto);
  }
  
@@ -502,7 +502,7 @@ nuevoTablaDetallePrecio($cod_producto,$contado,$porcentaje);
  
    if($operacion=="buscaroption"){
 	$local=$_POST["local"];
- 	$local=utf8_decode($local);
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscaroption($local);
  }
  
@@ -510,7 +510,7 @@ nuevoTablaDetallePrecio($cod_producto,$contado,$porcentaje);
   
    if($operacion=="buscarporcodigoPresupuesto"){
 	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	buscarporcodigoPresupuesto($buscar);
  }
  
@@ -560,22 +560,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);
-$cod_barra = utf8_encode($valor['cod_barra']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$porcentaje = utf8_encode($valor['porcentaje']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$porcentaje = mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1'); 
 $paginaprecios=buscardetallesprecios($cod_producto, $precio_producto,$comision);
 
 
@@ -832,16 +832,16 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$preciocuota = utf8_encode($valor['preciocuota']); 
-$porcentajeContado = utf8_encode($valor['porcentajeContado']);  
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1'); 
+$porcentajeContado = mb_convert_encoding((string)($valor['porcentajeContado']), 'UTF-8', 'ISO-8859-1');  
 
-$precio_compra = utf8_encode($valor['precio_compra']);  
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1');  
 
 
 $Resultado=$Porcentaje;
@@ -903,7 +903,7 @@ exit;
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 $mysqli=conectar_al_servidor(); 
 
@@ -1024,7 +1024,7 @@ exit;
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 $mysqli=conectar_al_servidor(); 
 
@@ -1178,34 +1178,34 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$link = utf8_encode($valor['link']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['cod_localFK']); 
-$localnombre = utf8_encode($valor['localnombre']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$cod_categoriaFK = utf8_encode($valor['cod_categoriaFK']); 
-$cod_marcasFK = utf8_encode($valor['cod_marcasFK']); 
-$cod_ImpuestoFK = utf8_encode($valor['cod_ImpuestoFK']); 
-$porcentaje = utf8_encode($valor['porcentaje']); 
-$cod_barra = utf8_encode($valor['cod_barra']); 
-$tipo = utf8_encode($valor['tipo']); 
-$CodProveedorFK = utf8_encode($valor['CodProveedor']); 
-$proveedor = utf8_encode($valor['proveedor']); 
-$insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+$link = mb_convert_encoding((string)($valor['link']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$localnombre = mb_convert_encoding((string)($valor['localnombre']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$cod_categoriaFK = mb_convert_encoding((string)($valor['cod_categoriaFK']), 'UTF-8', 'ISO-8859-1'); 
+$cod_marcasFK = mb_convert_encoding((string)($valor['cod_marcasFK']), 'UTF-8', 'ISO-8859-1'); 
+$cod_ImpuestoFK = mb_convert_encoding((string)($valor['cod_ImpuestoFK']), 'UTF-8', 'ISO-8859-1'); 
+$porcentaje = mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1'); 
+$tipo = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'); 
+$CodProveedorFK = mb_convert_encoding((string)($valor['CodProveedor']), 'UTF-8', 'ISO-8859-1'); 
+$proveedor = mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1'); 
+$insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 //anhadirStockA($stock_producto,$cod_producto,$cod_localFK);
 $totalcostos=$precio_compra*$stock_producto;
 $styleName=CargarStyleTable($styleName);
@@ -1337,33 +1337,33 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['cod_localFK']); 
-$localnombre = utf8_encode($valor['localnombre']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$cod_categoriaFK = utf8_encode($valor['cod_categoriaFK']); 
-$cod_marcasFK = utf8_encode($valor['cod_marcasFK']); 
-$cod_ImpuestoFK = utf8_encode($valor['cod_ImpuestoFK']); 
-$porcentaje = utf8_encode($valor['porcentaje']); 
-$cod_barra = utf8_encode($valor['cod_barra']); 
-$tipo = utf8_encode($valor['tipo']); 
-$CodProveedorFK = utf8_encode($valor['CodProveedor']); 
-$proveedor = utf8_encode($valor['proveedor']); 
-$insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$localnombre = mb_convert_encoding((string)($valor['localnombre']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$cod_categoriaFK = mb_convert_encoding((string)($valor['cod_categoriaFK']), 'UTF-8', 'ISO-8859-1'); 
+$cod_marcasFK = mb_convert_encoding((string)($valor['cod_marcasFK']), 'UTF-8', 'ISO-8859-1'); 
+$cod_ImpuestoFK = mb_convert_encoding((string)($valor['cod_ImpuestoFK']), 'UTF-8', 'ISO-8859-1'); 
+$porcentaje = mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1'); 
+$tipo = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'); 
+$CodProveedorFK = mb_convert_encoding((string)($valor['CodProveedor']), 'UTF-8', 'ISO-8859-1'); 
+$proveedor = mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1'); 
+$insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 //anhadirStockA($stock_producto,$cod_producto,$cod_localFK);
 $totalcostos=$precio_compra*$stock_producto;
 $styleName=CargarStyleTable($styleName);
@@ -1556,29 +1556,29 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['cod_localFK']); 
-$localnombre = utf8_encode($valor['localnombre']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$cod_categoriaFK = utf8_encode($valor['cod_categoriaFK']); 
-$cod_marcasFK = utf8_encode($valor['cod_marcasFK']); 
-$cod_ImpuestoFK = utf8_encode($valor['cod_ImpuestoFK']); 
-$porcentaje = utf8_encode($valor['porcentaje']); 
-$cod_barra = utf8_encode($valor['cod_barra']); 
-$tipo = utf8_encode($valor['tipo']); 
-$CodProveedorFK = utf8_encode($valor['CodProveedor']); 
-$proveedor = utf8_encode($valor['proveedor']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$localnombre = mb_convert_encoding((string)($valor['localnombre']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$cod_categoriaFK = mb_convert_encoding((string)($valor['cod_categoriaFK']), 'UTF-8', 'ISO-8859-1'); 
+$cod_marcasFK = mb_convert_encoding((string)($valor['cod_marcasFK']), 'UTF-8', 'ISO-8859-1'); 
+$cod_ImpuestoFK = mb_convert_encoding((string)($valor['cod_ImpuestoFK']), 'UTF-8', 'ISO-8859-1'); 
+$porcentaje = mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1'); 
+$tipo = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'); 
+$CodProveedorFK = mb_convert_encoding((string)($valor['CodProveedor']), 'UTF-8', 'ISO-8859-1'); 
+$proveedor = mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1'); 
 
 $totalcostos=$precio_compra*$stock_producto;
 
@@ -1688,20 +1688,20 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_barra']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$ganancia = utf8_encode($valor['ganancia']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$ganancia = mb_convert_encoding((string)($valor['ganancia']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
 $totalcostos=$precio_compra*$stock_producto;
 $costototales=$costototales+$totalcostos;
 $styleFondo="";
@@ -1797,20 +1797,20 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_barra']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$ganancia = utf8_encode($valor['ganancia']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$ganancia = mb_convert_encoding((string)($valor['ganancia']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
 $totalcostos=$precio_compra*$stock_producto;
 $costototales=$costototales+$totalcostos;
 $styleFondo="";
@@ -1861,11 +1861,11 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$idhistorialdespacho = utf8_encode($valor['idhistorialdespacho']);
-$stock = utf8_encode($valor['stock']);          
-$cod_local_de = utf8_encode($valor['cod_local_de']); 
-$cod_local_a = utf8_encode($valor['cod_local_a']); 
-$cod_producto_fk = utf8_encode($valor['cod_producto_fk']); 
+$idhistorialdespacho = mb_convert_encoding((string)($valor['idhistorialdespacho']), 'UTF-8', 'ISO-8859-1');
+$stock = mb_convert_encoding((string)($valor['stock']), 'UTF-8', 'ISO-8859-1');          
+$cod_local_de = mb_convert_encoding((string)($valor['cod_local_de']), 'UTF-8', 'ISO-8859-1'); 
+$cod_local_a = mb_convert_encoding((string)($valor['cod_local_a']), 'UTF-8', 'ISO-8859-1'); 
+$cod_producto_fk = mb_convert_encoding((string)($valor['cod_producto_fk']), 'UTF-8', 'ISO-8859-1'); 
 SumarRestarStockA($stock,$cod_producto_fk,$cod_local_a,"restar");
 SumarRestarStockA($stock,$cod_producto_fk,$cod_local_de,"suma");
 EditarHistorialDespacho($idhistorialdespacho);
@@ -1886,7 +1886,7 @@ $mysqli=conectar_al_servidor();
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 $mysqli=conectar_al_servidor();
 $consulta1="update historialsalidadeposito set estado='Inactivo',cod_anulado_por='$user',fecha_anulacion='$fecha_inser_edit' where cod_ext='$cod_ext'";
 
@@ -1907,7 +1907,7 @@ function EditarHistorialDespacho($idhistorialdespacho)
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 $mysqli=conectar_al_servidor();
 $consulta1="update historialdespacho set estado='Inactivo',cod_anulado_por='$user',fecha_anulacion='$fecha_inser_edit' where idhistorialdespacho='$idhistorialdespacho'";
 
@@ -1968,18 +1968,18 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$idhistorialdespacho = utf8_encode($valor['idhistorialdespacho']);
-$stock = utf8_encode($valor['stock']);          
-$fecha = utf8_encode($valor['fecha']);          
-$cod_local_de = utf8_encode($valor['cod_local_de']); 
-$cod_local_a = utf8_encode($valor['cod_local_a']); 
-$cod_producto_fk = utf8_encode($valor['cod_producto_fk']); 
-$cod_usuario_fk = utf8_encode($valor['cod_usuario_fk']); 
-$nombre_producto = utf8_encode($valor['nombre_producto']); 
-$cod_barra = utf8_encode($valor['cod_barra']); 
-$localde = utf8_encode($valor['localde']); 
-$locala = utf8_encode($valor['locala']); 
-$usuarionombre = utf8_encode($valor['usuarionombre']); 
+$idhistorialdespacho = mb_convert_encoding((string)($valor['idhistorialdespacho']), 'UTF-8', 'ISO-8859-1');
+$stock = mb_convert_encoding((string)($valor['stock']), 'UTF-8', 'ISO-8859-1');          
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');          
+$cod_local_de = mb_convert_encoding((string)($valor['cod_local_de']), 'UTF-8', 'ISO-8859-1'); 
+$cod_local_a = mb_convert_encoding((string)($valor['cod_local_a']), 'UTF-8', 'ISO-8859-1'); 
+$cod_producto_fk = mb_convert_encoding((string)($valor['cod_producto_fk']), 'UTF-8', 'ISO-8859-1'); 
+$cod_usuario_fk = mb_convert_encoding((string)($valor['cod_usuario_fk']), 'UTF-8', 'ISO-8859-1'); 
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1'); 
+$localde = mb_convert_encoding((string)($valor['localde']), 'UTF-8', 'ISO-8859-1'); 
+$locala = mb_convert_encoding((string)($valor['locala']), 'UTF-8', 'ISO-8859-1'); 
+$usuarionombre = mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1'); 
 $styleName=CargarStyleTable($styleName);
 	  $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
@@ -2067,18 +2067,18 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$idhistorialdespacho = utf8_encode($valor['idhistorialdespacho']);
-$stock = utf8_encode($valor['stock']);          
-$fecha = utf8_encode($valor['fecha']);          
-$cod_local_de = utf8_encode($valor['cod_local_de']); 
-$cod_local_a = utf8_encode($valor['cod_local_a']); 
-$cod_producto_fk = utf8_encode($valor['cod_producto_fk']); 
-$cod_usuario_fk = utf8_encode($valor['cod_usuario_fk']); 
-$nombre_producto = utf8_encode($valor['nombre_producto']); 
-$cod_barra = utf8_encode($valor['cod_barra']); 
-$localde = utf8_encode($valor['localde']); 
-$locala = utf8_encode($valor['locala']); 
-$usuarionombre = utf8_encode($valor['usuarionombre']); 
+$idhistorialdespacho = mb_convert_encoding((string)($valor['idhistorialdespacho']), 'UTF-8', 'ISO-8859-1');
+$stock = mb_convert_encoding((string)($valor['stock']), 'UTF-8', 'ISO-8859-1');          
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');          
+$cod_local_de = mb_convert_encoding((string)($valor['cod_local_de']), 'UTF-8', 'ISO-8859-1'); 
+$cod_local_a = mb_convert_encoding((string)($valor['cod_local_a']), 'UTF-8', 'ISO-8859-1'); 
+$cod_producto_fk = mb_convert_encoding((string)($valor['cod_producto_fk']), 'UTF-8', 'ISO-8859-1'); 
+$cod_usuario_fk = mb_convert_encoding((string)($valor['cod_usuario_fk']), 'UTF-8', 'ISO-8859-1'); 
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1'); 
+$localde = mb_convert_encoding((string)($valor['localde']), 'UTF-8', 'ISO-8859-1'); 
+$locala = mb_convert_encoding((string)($valor['locala']), 'UTF-8', 'ISO-8859-1'); 
+$usuarionombre = mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1'); 
 $styleName=CargarStyleTable($styleName);
 	  $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
@@ -2137,18 +2137,18 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$ganancia = utf8_encode($valor['ganancia']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$ganancia = mb_convert_encoding((string)($valor['ganancia']), 'UTF-8', 'ISO-8859-1'); 
 
 $paginaprecios=buscardetallespreciosb($cod_producto);
 $styleName=CargarStyleTable($styleName);
@@ -2221,18 +2221,18 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$ganancia = utf8_encode($valor['ganancia']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$ganancia = mb_convert_encoding((string)($valor['ganancia']), 'UTF-8', 'ISO-8859-1'); 
 
 $paginaprecios=buscardetallespreciosb($cod_producto);
 $styleName=CargarStyleTable($styleName);
@@ -2311,22 +2311,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 if($codProveedorFK==$codProveedor && $codProveedorFK!=""){
 $styleProveedor="background-color: #efeded;color:#000";	
@@ -2404,22 +2404,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);
-$cod_barra = utf8_encode($valor['cod_barra']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$porcentaje = utf8_encode($valor['porcentaje']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$porcentaje = mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1'); 
 $paginaprecios=buscardetallesprecios($cod_producto, $precio_producto,$comision);
 if($cod_producto=="13603"){
 	$stock_producto = "1";
@@ -2505,18 +2505,18 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$cod_barra = utf8_encode($valor['cod_barra']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1'); 
 
 $paginaprecios=buscardetallespreciosimprimir($cod_producto, $precio_producto,$comision);
 
@@ -2597,21 +2597,21 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
 
 $styleName=CargarStyleTable($styleName);
 
@@ -2676,14 +2676,14 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$porcentajeContado = utf8_encode($valor['porcentajeContado']);  
-$Porcentaje = utf8_encode($valor['porcen']);  
-$precio = utf8_encode($valor['precio']);     
-$precio_contado = utf8_encode($valor['precio_contado']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Cuota = utf8_encode($valor['Cuota']);          
+$porcentajeContado = mb_convert_encoding((string)($valor['porcentajeContado']), 'UTF-8', 'ISO-8859-1');  
+$Porcentaje = mb_convert_encoding((string)($valor['porcen']), 'UTF-8', 'ISO-8859-1');  
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$precio_contado = mb_convert_encoding((string)($valor['precio_contado']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
 
 // Parche para usar solo el precio al contado
 	$precio= intval($precio_contado) / intval($Cuota);
@@ -2728,13 +2728,13 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$Porcentaje = utf8_encode($valor['Porcentaje']); 
-$precio = utf8_encode($valor['precio']);
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$precio_contado = utf8_encode($valor['precio_contado']);          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1'); 
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$precio_contado = mb_convert_encoding((string)($valor['precio_contado']), 'UTF-8', 'ISO-8859-1');          
 
 // Usa temporalmente el precio al contado como base total
 $precio = $precio_contado;
@@ -2821,22 +2821,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 if($cod_producto=="13603"){
 	$stock_producto = "1";
@@ -2959,22 +2959,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 if($cod_producto=="13603"){
 	$stock_producto = "1";
@@ -3071,22 +3071,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 if($cod_producto=="13603"){
 	$stock_producto = "1";
@@ -3172,22 +3172,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 if($cod_producto=="13603"){
 	$stock_producto = "1";
@@ -3273,23 +3273,23 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
-$porcentaje = utf8_encode($valor['porcentaje']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
+$porcentaje = mb_convert_encoding((string)($valor['porcentaje']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 
 $paginaprecios=buscardetallesprecios($cod_producto, $precio_producto,$comision);
@@ -3402,22 +3402,22 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$cod_barra = utf8_encode($valor['cod_barra']);
-$cod_producto = utf8_encode($valor['cod_producto']);
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$descripcion_producto = utf8_encode($valor['descripcion_producto']);          
-$unidad_producto = utf8_encode($valor['unidad_producto']); 
-$precio_producto = utf8_encode($valor['precio_producto']); 
-$precio_compra = utf8_encode($valor['precio_compra']); 
-$stock_producto = utf8_encode($valor['stock_producto']); 
-$cod_localFK = utf8_encode($valor['cod_localFK']); 
-$comision = utf8_encode($valor['comision']); 
-$estado = utf8_encode($valor['estado']); 
-$local = utf8_encode($valor['local']); 
-$NombreCategoria = utf8_encode($valor['NombreCategoria']); 
-$NombreImpuesto = utf8_encode($valor['NombreImpuesto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
-$codProveedorFK = utf8_encode($valor['codProveedor']); 
+$cod_barra = mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
+$unidad_producto = mb_convert_encoding((string)($valor['unidad_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'UTF-8', 'ISO-8859-1'); 
+$cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$NombreCategoria = mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1'); 
+$NombreImpuesto = mb_convert_encoding((string)($valor['NombreImpuesto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
+$codProveedorFK = mb_convert_encoding((string)($valor['codProveedor']), 'UTF-8', 'ISO-8859-1'); 
 $styleProveedor="";
 if($cod_producto=="13603"){
 	$stock_producto = "1";
@@ -3546,20 +3546,20 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$nombre_descripcion = utf8_encode($valor['nombre_producto']);
-$precio_compra = utf8_encode($valor['precio_compra']);
-$precio_venta = utf8_encode($valor['precio_venta']);          
-$stock = utf8_encode($valor['stock']);          
-$cod_barra = utf8_encode($valor['cod_barrap']); 
-$nombredescripcionAnt = utf8_encode($valor['nombredescripcionAnt']); 
-$precio_compraAnt = utf8_encode($valor['precio_compraAnt']); 
-$precio_ventaAnt = utf8_encode($valor['precio_ventaAnt']); 
-$stockAnt = utf8_encode($valor['stockAnt']); 
-$cod_barraAnt = utf8_encode($valor['cod_barraAnt']); 
-$fecha = utf8_encode($valor['fecha']); 
-$local = utf8_encode($valor['local']); 
-$accion = utf8_encode($valor['accion']); 
-$usuario = utf8_encode($valor['usuario']); 
+$nombre_descripcion = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1');
+$precio_venta = mb_convert_encoding((string)($valor['precio_venta']), 'UTF-8', 'ISO-8859-1');          
+$stock = mb_convert_encoding((string)($valor['stock']), 'UTF-8', 'ISO-8859-1');          
+$cod_barra = mb_convert_encoding((string)($valor['cod_barrap']), 'UTF-8', 'ISO-8859-1'); 
+$nombredescripcionAnt = mb_convert_encoding((string)($valor['nombredescripcionAnt']), 'UTF-8', 'ISO-8859-1'); 
+$precio_compraAnt = mb_convert_encoding((string)($valor['precio_compraAnt']), 'UTF-8', 'ISO-8859-1'); 
+$precio_ventaAnt = mb_convert_encoding((string)($valor['precio_ventaAnt']), 'UTF-8', 'ISO-8859-1'); 
+$stockAnt = mb_convert_encoding((string)($valor['stockAnt']), 'UTF-8', 'ISO-8859-1'); 
+$cod_barraAnt = mb_convert_encoding((string)($valor['cod_barraAnt']), 'UTF-8', 'ISO-8859-1'); 
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'); 
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1'); 
+$accion = mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1'); 
+$usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1'); 
 
 if($precio_compra!="0"){
 	$precio_compra=number_format($precio_compra,'0',',','.');
@@ -3648,12 +3648,12 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$Porcentaje = utf8_encode($valor['Porcentaje']); 
-$precio = utf8_encode($valor['precio']);
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Cuota = utf8_encode($valor['Cuota']);          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1'); 
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
 
 
 	  $pagina.=" ".$Cuota." *<b>".number_format($precio,'0',',','.')."Gs</b><br>";
@@ -3692,7 +3692,7 @@ if($valor>=1)
 	while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$contador = utf8_encode($valor['contador']);
+$contador = mb_convert_encoding((string)($valor['contador']), 'UTF-8', 'ISO-8859-1');
 }
 	$control = $contador;
 }
@@ -3758,22 +3758,22 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$RUC1 = utf8_encode($valor['RUC1']); 
-$CI = utf8_encode($valor['CI']); 
-$nombreCliente = utf8_encode($valor['nombreCliente']);
-$fecha = utf8_encode($valor['fecha']);          
-$timbrado = utf8_encode($valor['timbrado']);          
-$num_factura = utf8_encode($valor['num_factura']);          
-$totalIva10 = utf8_encode($valor['totalIva10']);  
-$totalIva5 = utf8_encode($valor['totalIva5']);  
-$Excentas = utf8_encode($valor['Excentas']);  
-$total_venta = utf8_encode($valor['total_venta']);  
-$TipoVenta = utf8_encode($valor['TipoVenta']);  
-$puntoexpedicion = utf8_encode($valor['puntoexpedicion']);  
+$RUC1 = mb_convert_encoding((string)($valor['RUC1']), 'UTF-8', 'ISO-8859-1'); 
+$CI = mb_convert_encoding((string)($valor['CI']), 'UTF-8', 'ISO-8859-1'); 
+$nombreCliente = mb_convert_encoding((string)($valor['nombreCliente']), 'UTF-8', 'ISO-8859-1');
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');          
+$timbrado = mb_convert_encoding((string)($valor['timbrado']), 'UTF-8', 'ISO-8859-1');          
+$num_factura = mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');          
+$totalIva10 = mb_convert_encoding((string)($valor['totalIva10']), 'UTF-8', 'ISO-8859-1');  
+$totalIva5 = mb_convert_encoding((string)($valor['totalIva5']), 'UTF-8', 'ISO-8859-1');  
+$Excentas = mb_convert_encoding((string)($valor['Excentas']), 'UTF-8', 'ISO-8859-1');  
+$total_venta = mb_convert_encoding((string)($valor['total_venta']), 'UTF-8', 'ISO-8859-1');  
+$TipoVenta = mb_convert_encoding((string)($valor['TipoVenta']), 'UTF-8', 'ISO-8859-1');  
+$puntoexpedicion = mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF-8', 'ISO-8859-1');  
 
-$iva = utf8_encode($valor['iva']);  
-$ire = utf8_encode($valor['ire']);  
-$irp = utf8_encode($valor['irp']);  
+$iva = mb_convert_encoding((string)($valor['iva']), 'UTF-8', 'ISO-8859-1');  
+$ire = mb_convert_encoding((string)($valor['ire']), 'UTF-8', 'ISO-8859-1');  
+$irp = mb_convert_encoding((string)($valor['irp']), 'UTF-8', 'ISO-8859-1');  
  if ($iva=="SI") {
 		$iva = "S";
      } else {
@@ -3896,18 +3896,18 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$RUC1 = utf8_encode($valor['RUC1']); 
-// $CI = utf8_encode($valor['CI']); 
-$nombreProveedor = utf8_encode($valor['nombreProveedor']);
-$fecha = utf8_encode($valor['fecha']);          
-$timbrado = utf8_encode($valor['timbrado']);          
-$tipoFactura = utf8_encode($valor['tipoFactura']);          
-$totalIva10 = utf8_encode($valor['totalIva10']);  
-$totalIva5 = utf8_encode($valor['totalIva5']);  
-$Excentas = utf8_encode($valor['Excentas']);  
-$total_compra = utf8_encode($valor['total_compra']);  
-$tipo_compra = utf8_encode($valor['tipo_compra']);  
-$num_comprobante = utf8_encode($valor['num_comprobante']);  
+$RUC1 = mb_convert_encoding((string)($valor['RUC1']), 'UTF-8', 'ISO-8859-1'); 
+// $CI = mb_convert_encoding((string)($valor['CI']), 'UTF-8', 'ISO-8859-1'); 
+$nombreProveedor = mb_convert_encoding((string)($valor['nombreProveedor']), 'UTF-8', 'ISO-8859-1');
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');          
+$timbrado = mb_convert_encoding((string)($valor['timbrado']), 'UTF-8', 'ISO-8859-1');          
+$tipoFactura = mb_convert_encoding((string)($valor['tipoFactura']), 'UTF-8', 'ISO-8859-1');          
+$totalIva10 = mb_convert_encoding((string)($valor['totalIva10']), 'UTF-8', 'ISO-8859-1');  
+$totalIva5 = mb_convert_encoding((string)($valor['totalIva5']), 'UTF-8', 'ISO-8859-1');  
+$Excentas = mb_convert_encoding((string)($valor['Excentas']), 'UTF-8', 'ISO-8859-1');  
+$total_compra = mb_convert_encoding((string)($valor['total_compra']), 'UTF-8', 'ISO-8859-1');  
+$tipo_compra = mb_convert_encoding((string)($valor['tipo_compra']), 'UTF-8', 'ISO-8859-1');  
+$num_comprobante = mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');  
 
 $iva ="S";  
 $ire ="N"; 
@@ -4004,13 +4004,13 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$porcentajeContado = utf8_encode($valor['porcentajeContado']);  
-$Porcentaje = utf8_encode($valor['porcen']);  
-$preciocuota = utf8_encode($valor['preciocuota']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Cuota = utf8_encode($valor['Cuota']);          
+$porcentajeContado = mb_convert_encoding((string)($valor['porcentajeContado']), 'UTF-8', 'ISO-8859-1');  
+$Porcentaje = mb_convert_encoding((string)($valor['porcen']), 'UTF-8', 'ISO-8859-1');  
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
 
 
 $styleName=CargarStyleTable($styleName);
@@ -4062,9 +4062,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_producto=$valor['cod_producto'];
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $descripcion_producto=utf8_encode($valor['descripcion_producto']);
-			  $cod_barra=utf8_encode($valor['cod_barra']);
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $descripcion_producto=mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');
+			  $cod_barra=mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	

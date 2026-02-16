@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -12,11 +12,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok" && $operacion!="buscaroptionlogin"){
 $informacion =array("1" => "UI");
@@ -30,15 +30,15 @@ if($operacion=="nuevo" || $operacion=="editar")
 {
 	
 $idcaja=$_POST['idcaja'];
-$idcaja = utf8_decode($idcaja);
+$idcaja = mb_convert_encoding((string)($idcaja), 'ISO-8859-1', 'UTF-8');
 $cajanro=$_POST['cajanro'];
-$cajanro = utf8_decode($cajanro);
+$cajanro = mb_convert_encoding((string)($cajanro), 'ISO-8859-1', 'UTF-8');
 $puntoexpedicion=$_POST['puntoexpedicion'];
-$puntoexpedicion = utf8_decode($puntoexpedicion);
+$puntoexpedicion = mb_convert_encoding((string)($puntoexpedicion), 'ISO-8859-1', 'UTF-8');
 $cod_localFK=$_POST['cod_localFK'];
-$cod_localFK = utf8_decode($cod_localFK);
+$cod_localFK = mb_convert_encoding((string)($cod_localFK), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 	abm($idcaja,$cajanro,$puntoexpedicion,$cod_localFK,$estado,$operacion);
 
@@ -47,11 +47,11 @@ $estado = utf8_decode($estado);
 if($operacion=="buscar")
 {
 	$codigo=$_POST['codigo'];
-$codigo = utf8_decode($codigo);
+$codigo = mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 $descrip=$_POST['descrip'];
-$descrip = utf8_decode($descrip);
+$descrip = mb_convert_encoding((string)($descrip), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	buscar($codigo,$descrip,$estado);
 
 }	
@@ -60,7 +60,7 @@ $estado = utf8_decode($estado);
 if($operacion=="buscaroption")
 {
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	buscaroption($cod_local);
 
 }	
@@ -68,7 +68,7 @@ $cod_local = utf8_decode($cod_local);
 if($operacion=="buscaroptionlogin")
 {
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	buscaroptionlogin($cod_local);
 
 }	
@@ -90,7 +90,7 @@ $mysqli=conectar_al_servidor();
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	
 if($operacion=="nuevo")
 {
@@ -172,15 +172,15 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idcaja=$valor['idcaja'];
-		  	  $cajanro=utf8_encode($valor['cajanro']);
-		  	  $puntoexpedicion=utf8_encode($valor['puntoexpedicion']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_localFK=utf8_encode($valor['cod_localFK']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	 $insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+		  	  $cajanro=mb_convert_encoding((string)($valor['cajanro']), 'UTF-8', 'ISO-8859-1');
+		  	  $puntoexpedicion=mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_localFK=mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	 $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 		  	 
 			  $styleName=CargarStyleTable($styleName);  	 
 		  	  $pagina.="
@@ -240,8 +240,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idcaja=$valor['idcaja'];
-		  	  $cajanro=utf8_encode($valor['cajanro']);
-		  	  $puntoexpedicion=utf8_encode($valor['puntoexpedicion']);
+		  	  $cajanro=mb_convert_encoding((string)($valor['cajanro']), 'UTF-8', 'ISO-8859-1');
+		  	  $puntoexpedicion=mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF-8', 'ISO-8859-1');
 				  	 
 		  	 
 			    	
@@ -287,7 +287,7 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idcaja=$valor['idcaja'];
-		  	  $cajanro=utf8_encode($valor['cajanro']);
+		  	  $cajanro=mb_convert_encoding((string)($valor['cajanro']), 'UTF-8', 'ISO-8859-1');
 				  	 
 		  	 
 			    	

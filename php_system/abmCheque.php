@@ -2,7 +2,7 @@
 
 
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -15,12 +15,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -35,34 +35,34 @@ if($funt=="nuevo" || $funt=="editar")
 {
 	
 $idAbmCheque=$_POST['idAbmCheque'];
-    $idAbmCheque = utf8_decode($idAbmCheque);
+    $idAbmCheque = mb_convert_encoding((string)($idAbmCheque), 'ISO-8859-1', 'UTF-8');
 	
 $fechaemi=$_POST['fechaemi'];
-    $fechaemi = utf8_decode($fechaemi);
+    $fechaemi = mb_convert_encoding((string)($fechaemi), 'ISO-8859-1', 'UTF-8');
 
 $fechaven=$_POST['fechaven'];
-    $fechaven = utf8_decode($fechaven);
+    $fechaven = mb_convert_encoding((string)($fechaven), 'ISO-8859-1', 'UTF-8');
 
 $nroCheque=$_POST['nroCheque'];
-    $nroCheque = utf8_decode($nroCheque);
+    $nroCheque = mb_convert_encoding((string)($nroCheque), 'ISO-8859-1', 'UTF-8');
 
 $orden=$_POST['orden'];
-    $orden = utf8_decode($orden);
+    $orden = mb_convert_encoding((string)($orden), 'ISO-8859-1', 'UTF-8');
 
 $concepto=$_POST['concepto'];
-    $concepto = utf8_decode($concepto);
+    $concepto = mb_convert_encoding((string)($concepto), 'ISO-8859-1', 'UTF-8');
 
 $importe=$_POST['importe'];
     $importe = quitarseparadormiles($importe);
 
 $banco=$_POST['banco'];
-    $banco = utf8_decode($banco);
+    $banco = mb_convert_encoding((string)($banco), 'ISO-8859-1', 'UTF-8');
 	
 $estado=$_POST['estado'];
-    $estado = utf8_decode($estado);
+    $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	
 $pagado=$_POST['pagado'];
-    $pagado = utf8_decode($pagado);
+    $pagado = mb_convert_encoding((string)($pagado), 'ISO-8859-1', 'UTF-8');
 
 	abm($idAbmCheque,$pagado,$fechaemi,$fechaven,$nroCheque,$orden,$concepto,$importe,$banco,$estado,$funt);
 	
@@ -73,23 +73,23 @@ $pagado=$_POST['pagado'];
 if($funt=="buscar")
 {
 	$fechaEmi=$_POST['fechaEmi'];
-$fechaEmi = utf8_decode($fechaEmi);
+$fechaEmi = mb_convert_encoding((string)($fechaEmi), 'ISO-8859-1', 'UTF-8');
 	$NroCheque=$_POST['NroCheque'];
-$NroCheque = utf8_decode($NroCheque);
+$NroCheque = mb_convert_encoding((string)($NroCheque), 'ISO-8859-1', 'UTF-8');
 	$fechaven=$_POST['fechaven'];
-$fechaven = utf8_decode($fechaven);
+$fechaven = mb_convert_encoding((string)($fechaven), 'ISO-8859-1', 'UTF-8');
 	$orden=$_POST['orden'];
-$orden = utf8_decode($orden);
+$orden = mb_convert_encoding((string)($orden), 'ISO-8859-1', 'UTF-8');
 	$concepto=$_POST['concepto'];
-$concepto = utf8_decode($concepto);
+$concepto = mb_convert_encoding((string)($concepto), 'ISO-8859-1', 'UTF-8');
 	$pago=$_POST['pago'];
-$pago = utf8_decode($pago);
+$pago = mb_convert_encoding((string)($pago), 'ISO-8859-1', 'UTF-8');
 	$banco=$_POST['banco'];
-$banco = utf8_decode($banco);
+$banco = mb_convert_encoding((string)($banco), 'ISO-8859-1', 'UTF-8');
 	$Fecha1=$_POST['Fecha1'];
-$Fecha1 = utf8_decode($Fecha1);
+$Fecha1 = mb_convert_encoding((string)($Fecha1), 'ISO-8859-1', 'UTF-8');
 	$Fecha2=$_POST['Fecha2'];
-$Fecha2 = utf8_decode($Fecha2);
+$Fecha2 = mb_convert_encoding((string)($Fecha2), 'ISO-8859-1', 'UTF-8');
 	buscar($fechaEmi,$NroCheque,$fechaven,$orden,$concepto,$pago,$banco,$Fecha1,$Fecha2);
 	
 }	
@@ -235,14 +235,14 @@ if ( ! $stmt->execute()) {
 	  {
 		  
 		      $idcheque=$valor['idcheque'];
-		  	  $fecemi=utf8_encode($valor['fecemi']);
-		  	  $nroche=utf8_encode($valor['nroche']);
+		  	  $fecemi=mb_convert_encoding((string)($valor['fecemi']), 'UTF-8', 'ISO-8859-1');
+		  	  $nroche=mb_convert_encoding((string)($valor['nroche']), 'UTF-8', 'ISO-8859-1');
 			  $fecven=$valor['fecven'];
-		  	  $orden=utf8_encode($valor['orden']);
-		  	  $concep=utf8_encode($valor['concep']);
+		  	  $orden=mb_convert_encoding((string)($valor['orden']), 'UTF-8', 'ISO-8859-1');
+		  	  $concep=mb_convert_encoding((string)($valor['concep']), 'UTF-8', 'ISO-8859-1');
 			  $importe=$valor['importe'];
-		  	  $pagado=utf8_encode($valor['pagado']);
-		  	  $cod_bancoFK=utf8_encode($valor['cod_bancoFK']);
+		  	  $pagado=mb_convert_encoding((string)($valor['pagado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_bancoFK=mb_convert_encoding((string)($valor['cod_bancoFK']), 'UTF-8', 'ISO-8859-1');
 			  $banco=$valor['banco'];
 			  $estado=$valor['estado'];
 	if($pagado=="0"){
@@ -311,8 +311,8 @@ if ( ! $stmt->execute()) {
 		   
 		  
 		      $idbanco=$valor['idbanco'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  // $Estado=utf8_encode($valor['Estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  // $Estado=mb_convert_encoding((string)($valor['Estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			    $pagina.="<option value='$idbanco' >$nombre</option>";
 		  	 

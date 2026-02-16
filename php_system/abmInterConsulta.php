@@ -10,12 +10,12 @@
 
     function verificarOperacionInterConsulta($funt) {
         $user = $_POST['useru'];
-        $user = utf8_decode($user);
+        $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
         $pass = $_POST['passu'];
 
         $pass = str_replace("=", "+", $pass);
         $navegador = $_POST['navegador'];
-        $navegador = utf8_decode($navegador);
+        $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
             $informacion = array("1" => "UI");
@@ -26,29 +26,29 @@
         $fechaActual= new DateTime();
         switch ($funt) {
             case 'buscarInterConsultaPorPaciente':
-                $paciente= isset($_POST['paciente']) ? utf8_decode($_POST['paciente']) : null;
+                $paciente= isset($_POST['paciente']) ? mb_convert_encoding((string)($_POST['paciente']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(
                     "paciente" => $paciente,
                     "cod_usuarioFK" => $user
                 );
                 
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 buscarVistaPacienteConInterConsulta($filtros, $limite);
                 break;
             case 'buscarInterConsultas':
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $asunto= isset($_POST['asunto']) ? utf8_decode($_POST['asunto']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
-                $mencion= isset($_POST['mencion']) ? utf8_decode($_POST['mencion']) : false;
-                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
-                $nombre_cliente= isset($_POST['nombre_cliente']) ? utf8_decode($_POST['nombre_cliente']) : null;
-                $nombre_responsable= isset($_POST['nombre_responsable']) ? utf8_decode($_POST['nombre_responsable']) : null;
-                $ocultar_inactivos= isset($_POST['ocultar_inactivos']) ? utf8_decode($_POST['ocultar_inactivos']) : null;
-                $usuario_vinculado= isset($_POST['usuario_vinculado']) ? utf8_decode($_POST['usuario_vinculado']) : null;
-                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $tipo= isset($_POST['tipo']) ? mb_convert_encoding((string)($_POST['tipo']), 'ISO-8859-1', 'UTF-8') : null;
+                $mencion= isset($_POST['mencion']) ? mb_convert_encoding((string)($_POST['mencion']), 'ISO-8859-1', 'UTF-8') : false;
+                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_cliente= isset($_POST['nombre_cliente']) ? mb_convert_encoding((string)($_POST['nombre_cliente']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_responsable= isset($_POST['nombre_responsable']) ? mb_convert_encoding((string)($_POST['nombre_responsable']), 'ISO-8859-1', 'UTF-8') : null;
+                $ocultar_inactivos= isset($_POST['ocultar_inactivos']) ? mb_convert_encoding((string)($_POST['ocultar_inactivos']), 'ISO-8859-1', 'UTF-8') : null;
+                $usuario_vinculado= isset($_POST['usuario_vinculado']) ? mb_convert_encoding((string)($_POST['usuario_vinculado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -66,14 +66,14 @@
                     'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 obtenerVistaInterConsulta($filtros, $limite);
                 break;
             case 'buscarInterConsultasYContenido':
-                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
+                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
                 
                 $filtros= array(
                     "cod_ventaFK" => $cod_ventaFK,
@@ -81,24 +81,24 @@
                     "cod_usuarioFK" => $user
                 );
 
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario);
                 break;
             case 'nuevo/editar interconsulta':
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $asunto= isset($_POST['asunto']) ? utf8_decode($_POST['asunto']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $tipo= isset($_POST['tipo']) ? utf8_decode($_POST['tipo']) : null;
-                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? utf8_decode($_POST['cod_localFK']) : null;
-                $monto_limite= isset($_POST['monto_limite']) ? utf8_decode($_POST['monto_limite']) : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $tipo= isset($_POST['tipo']) ? mb_convert_encoding((string)($_POST['tipo']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $monto_limite= isset($_POST['monto_limite']) ? mb_convert_encoding((string)($_POST['monto_limite']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK, $monto_limite);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
-                $cod_interConsulta= utf8_decode($_POST['cod_interConsulta']);
+                $cod_interConsulta= mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8');
 
                 $registrosMens= obtenerMensaje(array(
                     'cod_interConsultaFK' => $cod_interConsulta,
@@ -118,8 +118,8 @@
                 echo json_encode(array("1" => "exito"));
                 break;
             case 'eliminarMencionMensaje':
-                $cod_mencion= utf8_decode($_POST['cod_mencion']);
-                $cod_interConsulta= utf8_decode($_POST['cod_interConsulta']);
+                $cod_mencion= mb_convert_encoding((string)($_POST['cod_mencion']), 'ISO-8859-1', 'UTF-8');
+                $cod_interConsulta= mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8');
 
                 // Obtiene informacion extra de la mencion
                 $registroMenc= obtenerMencion(array(
@@ -136,10 +136,10 @@
                 echo json_encode(array("1" => "exito"));
                 break;
             case 'buscarMensaje':
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $cod_mensaje= isset($_POST['cod_mensaje']) ? utf8_decode($_POST['cod_mensaje']) : null;
-                $contenido= isset($_POST['contenido']) ? utf8_decode($_POST['contenido']) : null;
-                $fecha_creacion= isset($_POST['fecha_creacion']) ? utf8_decode($_POST['fecha_creacion']) : "<= NOW()";
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_mensaje= isset($_POST['cod_mensaje']) ? mb_convert_encoding((string)($_POST['cod_mensaje']), 'ISO-8859-1', 'UTF-8') : null;
+                $contenido= isset($_POST['contenido']) ? mb_convert_encoding((string)($_POST['contenido']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_creacion= isset($_POST['fecha_creacion']) ? mb_convert_encoding((string)($_POST['fecha_creacion']), 'ISO-8859-1', 'UTF-8') : "<= NOW()";
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -148,39 +148,39 @@
                     'fecha_creacion' => $fecha_creacion,
                 );
 
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
                 
                 obtenerVistaMensaje($filtros, $limite);
                 break;
             case 'nuevo/editar mensaje':
-                $cod_mensaje= isset($_POST['cod_mensaje']) ? utf8_decode($_POST['cod_mensaje']) : null;
-                $contenido= isset($_POST['contenido']) ? utf8_decode($_POST['contenido']) : null;
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $fecha_creacion= isset($_POST['fecha_creacion']) ? utf8_decode($_POST['fecha_creacion']) : 'NOW()';
+                $cod_mensaje= isset($_POST['cod_mensaje']) ? mb_convert_encoding((string)($_POST['cod_mensaje']), 'ISO-8859-1', 'UTF-8') : null;
+                $contenido= isset($_POST['contenido']) ? mb_convert_encoding((string)($_POST['contenido']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_creacion= isset($_POST['fecha_creacion']) ? mb_convert_encoding((string)($_POST['fecha_creacion']), 'ISO-8859-1', 'UTF-8') : 'NOW()';
                 
                 $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'subirImagenMensaje':
-                $cod_mensaje= isset($_POST['cod_mensaje']) ? utf8_decode($_POST['cod_mensaje']) : null;
-                $foto= isset($_POST['foto']) ? utf8_decode($_POST['foto']) : null;
-                $ext= isset($_POST['ext']) ? utf8_decode($_POST['ext']) : null;
+                $cod_mensaje= isset($_POST['cod_mensaje']) ? mb_convert_encoding((string)($_POST['cod_mensaje']), 'ISO-8859-1', 'UTF-8') : null;
+                $foto= isset($_POST['foto']) ? mb_convert_encoding((string)($_POST['foto']), 'ISO-8859-1', 'UTF-8') : null;
+                $ext= isset($_POST['ext']) ? mb_convert_encoding((string)($_POST['ext']), 'ISO-8859-1', 'UTF-8') : null;
                 subirImagenMensaje($cod_mensaje,$foto,$ext, 'url');
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'nuevo/editar mencion':
-                $cod_mencion= isset($_POST['cod_mencion']) ? utf8_decode($_POST['cod_mencion']) : null;
-                $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? utf8_decode($_POST['cod_usuarioFK']) : null;
-                $cod_mensajeFK= isset($_POST['cod_mensajeFK']) ? utf8_decode($_POST['cod_mensajeFK']) : null;
-                $isLeido= isset($_POST['isLeido']) ? utf8_decode($_POST['isLeido']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'activo';
+                $cod_mencion= isset($_POST['cod_mencion']) ? mb_convert_encoding((string)($_POST['cod_mencion']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuarioFK= isset($_POST['cod_usuarioFK']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_mensajeFK= isset($_POST['cod_mensajeFK']) ? mb_convert_encoding((string)($_POST['cod_mensajeFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $isLeido= isset($_POST['isLeido']) ? mb_convert_encoding((string)($_POST['isLeido']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : 'activo';
 
                 abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido, $estado);
                 break;
             case 'buscarMasInterConsultasYContenido':
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
-                $offset= isset($_POST['offset']) ? utf8_decode($_POST['offset']) : null;
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $offset= isset($_POST['offset']) ? mb_convert_encoding((string)($_POST['offset']), 'ISO-8859-1', 'UTF-8') : null;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 $fechaActual= new DateTime();
                 $filtros= array(
@@ -192,8 +192,8 @@
                 echo json_encode(array("1" => "exito", "2" => $vistaTarjetas));
                 break;
             case 'buscarVistaAsociadoPaciente':
-                $cod_cliente= isset($_POST['cod_cliente']) ? utf8_decode($_POST['cod_cliente']) : null;
-                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? utf8_decode($_POST['cod_interConsulta']) : null;
+                $cod_cliente= isset($_POST['cod_cliente']) ? mb_convert_encoding((string)($_POST['cod_cliente']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 
                 $registros= obtenerInterConsulta(array(
                     'cod_clienteFK' => $cod_cliente,
@@ -615,7 +615,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -815,7 +815,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -903,7 +903,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -1041,7 +1041,7 @@
             foreach ($row as $key => $value) {
                 // Solo codificar si NO es UTF-8 válido
                 if (!mb_check_encoding($value, 'UTF-8')) {
-                    $reg[$key] = utf8_encode($value);
+                    $reg[$key] = mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
                 } else {
                     $reg[$key] = $value;
                 }
@@ -1285,7 +1285,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -1403,7 +1403,7 @@
 
     if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
         $operacion = $_POST['accion'];
-        $operacion = utf8_decode($operacion);
+        $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
         verificarOperacionInterConsulta($operacion);
     }
 ?>

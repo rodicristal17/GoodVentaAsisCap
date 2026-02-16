@@ -2,7 +2,7 @@
 include('quitarseparadormiles.php');
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include("buscar_nivel.php");
 require("conexion.php");
 include("verificar_navegador.php");
@@ -14,11 +14,11 @@ function verificar($operacion)
 	
 	
 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -42,16 +42,16 @@ $precio_producto = quitarseparadormiles($precio_producto);
 $subTotal=$_POST['subTotal'];
 $subTotal = quitarseparadormiles($subTotal);
 $cod_productoFK=$_POST['cod_productoFK'];
-$cod_productoFK = utf8_decode($cod_productoFK);
+$cod_productoFK = mb_convert_encoding((string)($cod_productoFK), 'ISO-8859-1', 'UTF-8');
 $cod_compraFK=$_POST['cod_compraFK'];
-$cod_compraFK = utf8_decode($cod_compraFK);
+$cod_compraFK = mb_convert_encoding((string)($cod_compraFK), 'ISO-8859-1', 'UTF-8');
 $cod_detalle_compra=$_POST['cod_detalle_compra'];
-$cod_detalle_compra = utf8_decode($cod_detalle_compra);
+$cod_detalle_compra = mb_convert_encoding((string)($cod_detalle_compra), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 
 $editPrecioLista=$_POST['editPrecioLista'];
-$editPrecioLista = utf8_decode($editPrecioLista);
+$editPrecioLista = mb_convert_encoding((string)($editPrecioLista), 'ISO-8859-1', 'UTF-8');
 
 $precioLista=$_POST['precioLista'];
 $precioLista = quitarseparadormiles($precioLista);
@@ -66,20 +66,20 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 if($cod_compraFK==""){
 	
 	$tipocompra=$_POST['tipocompra'];
-$tipocompra = utf8_decode($tipocompra);
+$tipocompra = mb_convert_encoding((string)($tipocompra), 'ISO-8859-1', 'UTF-8');
 
 $timbrado=$_POST['timbrado'];
-$timbrado = utf8_decode($timbrado);
+$timbrado = mb_convert_encoding((string)($timbrado), 'ISO-8859-1', 'UTF-8');
 
 $tipofactura=$_POST['tipofactura'];
-$tipofactura = utf8_decode($tipofactura);
+$tipofactura = mb_convert_encoding((string)($tipofactura), 'ISO-8859-1', 'UTF-8');
 
 $fecha_compra=$_POST['fecha_compra'];
-$fecha_compra = utf8_decode($fecha_compra);
+$fecha_compra = mb_convert_encoding((string)($fecha_compra), 'ISO-8859-1', 'UTF-8');
 $cod_proveedorFK=$_POST['cod_proveedorFK'];
-$cod_proveedorFK = utf8_decode($cod_proveedorFK);
+$cod_proveedorFK = mb_convert_encoding((string)($cod_proveedorFK), 'ISO-8859-1', 'UTF-8');
 $num_comprobante=$_POST['num_comprobante'];
-$num_comprobante = utf8_decode($num_comprobante);
+$num_comprobante = mb_convert_encoding((string)($num_comprobante), 'ISO-8859-1', 'UTF-8');
 
 $descuento=$_POST['descuento'];
 $descuento = quitarseparadormiles($descuento);
@@ -100,7 +100,7 @@ $cod_compraFK=insertarDatosCompras($tipocompra,$timbrado,$tipofactura,$fecha_com
 if($operacion=="buscar")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	buscar($buscar);
 
 }	
@@ -108,7 +108,7 @@ $buscar = utf8_decode($buscar);
 if($operacion=="detalleenhistorial")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	detalleenhistorial($buscar);
 
 }	
@@ -116,19 +116,19 @@ $buscar = utf8_decode($buscar);
 if($operacion=="buscarproductocomprados")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $marca=$_POST['marca'];
-$marca = utf8_decode($marca);
+$marca = mb_convert_encoding((string)($marca), 'ISO-8859-1', 'UTF-8');
 	$cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $categoria=$_POST['categoria'];
-$categoria = utf8_decode($categoria);
+$categoria = mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 $codigo=$_POST['codigo'];
-$codigo = utf8_decode($codigo);
+$codigo = mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 $producto=$_POST['producto'];
-$producto = utf8_decode($producto);
+$producto = mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -140,23 +140,23 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 if($operacion=="buscarmasproductocomprados")
 {
 $fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $marca=$_POST['marca'];
-$marca = utf8_decode($marca);
+$marca = mb_convert_encoding((string)($marca), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $categoria=$_POST['categoria'];
-$categoria = utf8_decode($categoria);
+$categoria = mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 $codigo=$_POST['codigo'];
-$codigo = utf8_decode($codigo);
+$codigo = mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 $producto=$_POST['producto'];
-$producto = utf8_decode($producto);
+$producto = mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
 $registrocargado=$_POST['registrocargado'];
-$registrocargado = utf8_decode($registrocargado);
+$registrocargado = mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
 $totalcompra=$_POST['totalcompra'];
-$totalcompra = utf8_decode($totalcompra);
+$totalcompra = mb_convert_encoding((string)($totalcompra), 'ISO-8859-1', 'UTF-8');
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -183,7 +183,7 @@ $mysqli=conectar_al_servidor();
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 $user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 $consulta1="Insert into compra (fecha_compra,cod_proveedorFK,num_comprobante,cod_local,descuento,pagado1,pagado2,cod_user_insert,fecha_insert,estado,tipo_compra,timbrado,tipoFactura)
 values(?,?,?,?,?,?,?,?,?,'Activo',?,?,?)";
@@ -333,16 +333,16 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$preciocuota = utf8_encode($valor['preciocuota']); 
-$porcentajeContado = utf8_encode($valor['porcentajeContado']);  
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1'); 
+$porcentajeContado = mb_convert_encoding((string)($valor['porcentajeContado']), 'UTF-8', 'ISO-8859-1');  
 
-$PrecioContado = utf8_encode($valor['PrecioContado']);  
+$PrecioContado = mb_convert_encoding((string)($valor['PrecioContado']), 'UTF-8', 'ISO-8859-1');  
 
 
 $Resultado=$Porcentaje-$porcentajeContado;
@@ -518,13 +518,13 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_detalle_compra=$valor['cod_detalle_compra'];
-		  	  $cantidad_detalle_compra=utf8_encode($valor['cantidad_detalle_compra']);
-		  	  $precio_producto=utf8_encode($valor['precio_producto']);
-		  	  $subTotal=utf8_encode($valor['subTotal']);
-		  	  $cod_productoFK=utf8_encode($valor['cod_productoFK']);
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $cod_compraFK=utf8_encode($valor['cod_compraFK']);
-		  	  $descuento=utf8_encode($valor['descuento']);
+		  	  $cantidad_detalle_compra=mb_convert_encoding((string)($valor['cantidad_detalle_compra']), 'UTF-8', 'ISO-8859-1');
+		  	  $precio_producto=mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $subTotal=mb_convert_encoding((string)($valor['subTotal']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_productoFK=mb_convert_encoding((string)($valor['cod_productoFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_compraFK=mb_convert_encoding((string)($valor['cod_compraFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
 		  	 if($controlDescuento!=$cod_compraFK){
 				  
 				  $controlDescuento=$cod_compraFK;
@@ -600,13 +600,13 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_detalle_compra=$valor['cod_detalle_compra'];
-		  	  $cantidad_detalle_compra=utf8_encode($valor['cantidad_detalle_compra']);
-		  	  $precio_producto=utf8_encode($valor['precio_producto']);
-		  	  $subTotal=utf8_encode($valor['subTotal']);
-		  	  $cod_productoFK=utf8_encode($valor['cod_productoFK']);
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $cod_compraFK=utf8_encode($valor['cod_compraFK']);
-		  	  $descuento=utf8_encode($valor['descuento']);
+		  	  $cantidad_detalle_compra=mb_convert_encoding((string)($valor['cantidad_detalle_compra']), 'UTF-8', 'ISO-8859-1');
+		  	  $precio_producto=mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $subTotal=mb_convert_encoding((string)($valor['subTotal']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_productoFK=mb_convert_encoding((string)($valor['cod_productoFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_compraFK=mb_convert_encoding((string)($valor['cod_compraFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
 		  	 if($controlDescuento!=$cod_compraFK){
 				  
 				  $controlDescuento=$cod_compraFK;
@@ -704,11 +704,11 @@ if ( ! $stmt->execute()) {
 		  
 		      $totalCantidad=$valor['totalCantidad'];
 		      $totalCompra=$valor['totalCompra'];
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $cod_producto=utf8_encode($valor['cod_barra']);
-		  	  $NombreMarca=utf8_encode($valor['NombreMarca']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	  $NombreCategoria=utf8_encode($valor['NombreCategoria']);
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_producto=mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+		  	  $NombreMarca=mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	  $NombreCategoria=mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1');
 		  	
 		  	
 		  	 $total_compra=$totalCompra+$total_compra;
@@ -816,11 +816,11 @@ if ( ! $stmt->execute()) {
 		  
 		      $totalCantidad=$valor['totalCantidad'];
 		      $totalCompra=$valor['totalCompra'];
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $cod_producto=utf8_encode($valor['cod_barra']);
-		  	  $NombreMarca=utf8_encode($valor['NombreMarca']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	  $NombreCategoria=utf8_encode($valor['NombreCategoria']);
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_producto=mb_convert_encoding((string)($valor['cod_barra']), 'UTF-8', 'ISO-8859-1');
+		  	  $NombreMarca=mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	  $NombreCategoria=mb_convert_encoding((string)($valor['NombreCategoria']), 'UTF-8', 'ISO-8859-1');
 		  	
 		  	
 		  	 $total_compra=$totalCompra+$total_compra;

@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -12,11 +12,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok" && $operacion!="buscaroptionlogin"){
 $informacion =array("1" => "UI");
@@ -38,11 +38,11 @@ if($operacion=="ActualizarSugerencia")
  
  	
 $idsugerencias=$_POST['idsugerencias'];
-$idsugerencias= utf8_decode($idsugerencias);
+$idsugerencias= mb_convert_encoding((string)($idsugerencias), 'ISO-8859-1', 'UTF-8');
 $resolucion=$_POST['resolucion'];
-$resolucion= utf8_decode($resolucion);
+$resolucion= mb_convert_encoding((string)($resolucion), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado= utf8_decode($estado);
+$estado= mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 
 	ActualizarSugerencia($idsugerencias,$resolucion,$estado);
@@ -56,7 +56,7 @@ if($operacion=="buscarSugerencia")
 {
 
 $idsugerencias=$_POST['idsugerencias'];
-$idsugerencias= utf8_decode($idsugerencias); 
+$idsugerencias= mb_convert_encoding((string)($idsugerencias), 'ISO-8859-1', 'UTF-8'); 
 	buscarSugerencia($idsugerencias);
 
 }
@@ -91,10 +91,10 @@ if ( ! $stmt->execute()) {
   while ($valor= mysqli_fetch_assoc($result))
 	  {
   
-$fecha = utf8_encode($valor['fecha']);
-$estado= utf8_encode($valor['estado']);
-$descripcion = utf8_encode($valor['descripcion']);
-$usuario = utf8_encode($valor['usuario']); 
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+$estado= mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+$usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1'); 
  
  
 $vacio="";
@@ -132,7 +132,7 @@ $mysqli=conectar_al_servidor();
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
  
 $consulta1="Update sugerencias set resolucion='".$resolucion."',estado='".$estado."',cod_usuFK_resol='".$user."'  where idsugerencias='".$idsugerencias."'";	
 $stmt1 = $mysqli->prepare($consulta1);
@@ -206,18 +206,18 @@ if ( ! $stmt->execute()) {
  
 
 $idsugerencias = $valor['idsugerencias'];
-$fecha = utf8_encode($valor['fecha']);
-$cedula = utf8_encode($valor['cedula']);
-$nombre_persona = utf8_encode($valor['nombre_persona']);
-$descripcion_su = utf8_encode($valor['descripcion_su']);
-$escliente = utf8_encode($valor['escliente']);
-$cod_usuarioFK_Doc = utf8_encode($valor['cod_usuarioFK_Doc']);
-$calif = (int)utf8_encode($valor['calif']); // Calificación numérica
-$comentarioDoc = utf8_encode($valor['comentarioDoc']);
-$estado = utf8_encode($valor['estado']);
-$doctor = utf8_encode($valor['doctor']);
-$resolucion = utf8_encode($valor['resolucion']);
-$UsuResolucion = utf8_encode($valor['UsuResolucion']);
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+$cedula = mb_convert_encoding((string)($valor['cedula']), 'UTF-8', 'ISO-8859-1');
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');
+$descripcion_su = mb_convert_encoding((string)($valor['descripcion_su']), 'UTF-8', 'ISO-8859-1');
+$escliente = mb_convert_encoding((string)($valor['escliente']), 'UTF-8', 'ISO-8859-1');
+$cod_usuarioFK_Doc = mb_convert_encoding((string)($valor['cod_usuarioFK_Doc']), 'UTF-8', 'ISO-8859-1');
+$calif = (int)mb_convert_encoding((string)($valor['calif']), 'UTF-8', 'ISO-8859-1'); // Calificación numérica
+$comentarioDoc = mb_convert_encoding((string)($valor['comentarioDoc']), 'UTF-8', 'ISO-8859-1');
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+$doctor = mb_convert_encoding((string)($valor['doctor']), 'UTF-8', 'ISO-8859-1');
+$resolucion = mb_convert_encoding((string)($valor['resolucion']), 'UTF-8', 'ISO-8859-1');
+$UsuResolucion = mb_convert_encoding((string)($valor['UsuResolucion']), 'UTF-8', 'ISO-8859-1');
 
 if($resolucion!=""){
 $resolucion = "<p><strong>Resolución:</strong> $resolucion <br><span style='color: #555;'>Por: <strong>$UsuResolucion</strong></span></p>";

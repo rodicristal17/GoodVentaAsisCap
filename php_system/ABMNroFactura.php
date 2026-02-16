@@ -1,6 +1,6 @@
 <?php
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -14,12 +14,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -42,15 +42,15 @@ if($funt=="nuevo" || $funt=="editar")
 	
 	
 	$Cod_Nro=$_POST['idabm'];
-    $Cod_Nro = utf8_decode($Cod_Nro);
+    $Cod_Nro = mb_convert_encoding((string)($Cod_Nro), 'ISO-8859-1', 'UTF-8');
 	$nro=$_POST['nro'];
     $nro = quitarseparadormiles($nro);
 	$fecha=$_POST['fecha'];
-    $fecha = utf8_decode($fecha);
+    $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	$cod_localfk=$_POST['cod_localfk'];
-    $cod_localfk = utf8_decode($cod_localfk);
+    $cod_localfk = mb_convert_encoding((string)($cod_localfk), 'ISO-8859-1', 'UTF-8');
 	$nrocaja=$_POST['nrocaja'];
-    $nrocaja = utf8_decode($nrocaja);
+    $nrocaja = mb_convert_encoding((string)($nrocaja), 'ISO-8859-1', 'UTF-8');
 
     
     
@@ -152,10 +152,10 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $Cod_Nro=$valor['Cod_Nro'];
-		  	  $nro=utf8_encode($valor['nro']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	  $nrocaja=utf8_encode($valor['nrocaja']);
+		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	  $nrocaja=mb_convert_encoding((string)($valor['nrocaja']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			  
 		  	 $styleName=CargarStyleTable($styleName);

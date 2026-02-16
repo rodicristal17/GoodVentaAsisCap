@@ -6,12 +6,12 @@
 
     function verificar($funt) {
         $user = $_POST['useru'];
-        $user = utf8_decode($user);
+        $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
         $pass = $_POST['passu'];
 
         $pass = str_replace("=", "+", $pass);
         $navegador = $_POST['navegador'];
-        $navegador = utf8_decode($navegador);
+        $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
             $informacion = array("1" => "UI");
@@ -22,21 +22,21 @@
         switch ($funt) {
             case "nuevo/editar":
                 $cod_mecanico_dental = $_POST['cod_mecanico_dental'];
-                $cod_mecanico_dental = utf8_decode($cod_mecanico_dental);
-                $nombre = utf8_decode($_POST['nombre']);
-                $telefono_referencia = isset($_POST['telefono_referencia']) ? utf8_decode($_POST['telefono_referencia']) : null;
-                $direccion = isset($_POST['direccion']) ? utf8_decode($_POST['direccion']) : null;
-                $telefono = isset($_POST['telefono']) ? utf8_decode($_POST['telefono']) : null;
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cod_persona = isset($_POST['cod_personaFK']) ? utf8_decode($_POST['cod_personaFK']) : null;
+                $cod_mecanico_dental = mb_convert_encoding((string)($cod_mecanico_dental), 'ISO-8859-1', 'UTF-8');
+                $nombre = mb_convert_encoding((string)($_POST['nombre']), 'ISO-8859-1', 'UTF-8');
+                $telefono_referencia = isset($_POST['telefono_referencia']) ? mb_convert_encoding((string)($_POST['telefono_referencia']), 'ISO-8859-1', 'UTF-8') : null;
+                $direccion = isset($_POST['direccion']) ? mb_convert_encoding((string)($_POST['direccion']), 'ISO-8859-1', 'UTF-8') : null;
+                $telefono = isset($_POST['telefono']) ? mb_convert_encoding((string)($_POST['telefono']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_persona = isset($_POST['cod_personaFK']) ? mb_convert_encoding((string)($_POST['cod_personaFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $cod_mecanico_dental = abmMecanicoDental($nombre,$telefono_referencia,$direccion,$telefono, $estado,$cod_persona,$cod_mecanico_dental);
                 echo json_encode(array("1" => "exito", "cod_mecanico_dental" => $cod_mecanico_dental));
                 break;
             case "buscarVista":
-                $cod_mecanico_dental = isset($_POST['cod_mecanico_dental']) ? utf8_decode($_POST['cod_mecanico_dental']) : null;
-                $nombre = isset($_POST['estado']) ? utf8_decode($_POST['nombre']) : null;
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
+                $cod_mecanico_dental = isset($_POST['cod_mecanico_dental']) ? mb_convert_encoding((string)($_POST['cod_mecanico_dental']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['nombre']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros = array(
                     'cod_mecanico_dental' => $cod_mecanico_dental,
@@ -44,7 +44,7 @@
                     'estado' => $estado
                 );
                 
-                $limite = isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite = isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 obtenerVistaMecanicoDental($filtros, $limite);
                 break;
@@ -145,7 +145,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -235,6 +235,6 @@
 
     // Validacion e identificacion de funcion
     $operacion = $_POST['accion'];
-    $operacion = utf8_decode($operacion);
+    $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
     verificar($operacion);
 ?>

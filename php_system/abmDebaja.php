@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -12,11 +12,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 
 
@@ -31,13 +31,13 @@ if($operacion=="nuevo" )
 	
 	
 	$Cantidad=$_POST['Cantidad'];
-	$Cantidad = utf8_decode($Cantidad);
+	$Cantidad = mb_convert_encoding((string)($Cantidad), 'ISO-8859-1', 'UTF-8');
 	$Motivo=$_POST['Motivo'];
-	$Motivo = utf8_decode($Motivo);
+	$Motivo = mb_convert_encoding((string)($Motivo), 'ISO-8859-1', 'UTF-8');
 	$Cod_usuarioFK=$_POST['Cod_usuarioFK'];
-	$Cod_usuarioFK = utf8_decode($Cod_usuarioFK);
+	$Cod_usuarioFK = mb_convert_encoding((string)($Cod_usuarioFK), 'ISO-8859-1', 'UTF-8');
 	$Cod_productoFK=$_POST['Cod_productoFK'];
-	$Cod_productoFK = utf8_decode($Cod_productoFK);
+	$Cod_productoFK = mb_convert_encoding((string)($Cod_productoFK), 'ISO-8859-1', 'UTF-8');
 	abm($Cantidad,$Motivo,$Cod_usuarioFK,$Cod_productoFK,$operacion);
 
 }
@@ -45,17 +45,17 @@ if($operacion=="nuevo" )
 if($operacion=="buscar")
 {
 $Fecha1=$_POST['Fecha1'];
-$Fecha1 = utf8_decode($Fecha1);
+$Fecha1 = mb_convert_encoding((string)($Fecha1), 'ISO-8859-1', 'UTF-8');
 $Fechafijo=$_POST['Fechafijo'];
-$Fechafijo = utf8_decode($Fechafijo);
+$Fechafijo = mb_convert_encoding((string)($Fechafijo), 'ISO-8859-1', 'UTF-8');
 $Fecha2=$_POST['Fecha2'];
-$Fecha2 = utf8_decode($Fecha2);
+$Fecha2 = mb_convert_encoding((string)($Fecha2), 'ISO-8859-1', 'UTF-8');
 $Nombre=$_POST['Nombre'];
-$Nombre = utf8_decode($Nombre);
+$Nombre = mb_convert_encoding((string)($Nombre), 'ISO-8859-1', 'UTF-8');
 $Usuario=$_POST['Usuario'];
-$Usuario = utf8_decode($Usuario);
+$Usuario = mb_convert_encoding((string)($Usuario), 'ISO-8859-1', 'UTF-8');
 $Cod_productoFK=$_POST['Cod_productoFK'];
-$Cod_productoFK = utf8_decode($Cod_productoFK);
+$Cod_productoFK = mb_convert_encoding((string)($Cod_productoFK), 'ISO-8859-1', 'UTF-8');
 	buscar($Fechafijo,$Fecha1,$Fecha2,$Nombre,$Usuario,$Cod_productoFK);
 
 }	
@@ -63,19 +63,19 @@ $Cod_productoFK = utf8_decode($Cod_productoFK);
 if($operacion=="buscarmas")
 {
 $Fecha1=$_POST['Fecha1'];
-$Fecha1 = utf8_decode($Fecha1);
+$Fecha1 = mb_convert_encoding((string)($Fecha1), 'ISO-8859-1', 'UTF-8');
 $Fechafijo=$_POST['Fechafijo'];
-$Fechafijo = utf8_decode($Fechafijo);
+$Fechafijo = mb_convert_encoding((string)($Fechafijo), 'ISO-8859-1', 'UTF-8');
 $Fecha2=$_POST['Fecha2'];
-$Fecha2 = utf8_decode($Fecha2);
+$Fecha2 = mb_convert_encoding((string)($Fecha2), 'ISO-8859-1', 'UTF-8');
 $Nombre=$_POST['Nombre'];
-$Nombre = utf8_decode($Nombre);
+$Nombre = mb_convert_encoding((string)($Nombre), 'ISO-8859-1', 'UTF-8');
 $Cod_productoFK=$_POST['Cod_productoFK'];
-$Cod_productoFK = utf8_decode($Cod_productoFK);
+$Cod_productoFK = mb_convert_encoding((string)($Cod_productoFK), 'ISO-8859-1', 'UTF-8');
 $Usuario=$_POST['Usuario'];
-$Usuario = utf8_decode($Usuario);
+$Usuario = mb_convert_encoding((string)($Usuario), 'ISO-8859-1', 'UTF-8');
 $registrocargado=$_POST['registrocargado'];
-$registrocargado = utf8_decode($registrocargado);
+$registrocargado = mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
 buscarmas($Fechafijo,$Fecha1,$Fecha2,$Nombre,$Usuario,$Cod_productoFK,$registrocargado);
 
 }	
@@ -210,10 +210,10 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_productoFK=$valor['cod_productoFK'];
 			  $producto=$valor['producto'];
-		  	  $Cantidad=utf8_encode($valor['Cantidad']);
-		  	  $Motivo=utf8_encode($valor['Motivo']);
-			  $Fecha=utf8_encode($valor['Fecha']);
-			  $Usuario=utf8_encode($valor['Usuario']);
+		  	  $Cantidad=mb_convert_encoding((string)($valor['Cantidad']), 'UTF-8', 'ISO-8859-1');
+		  	  $Motivo=mb_convert_encoding((string)($valor['Motivo']), 'UTF-8', 'ISO-8859-1');
+			  $Fecha=mb_convert_encoding((string)($valor['Fecha']), 'UTF-8', 'ISO-8859-1');
+			  $Usuario=mb_convert_encoding((string)($valor['Usuario']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			 $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
@@ -307,10 +307,10 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_productoFK=$valor['cod_productoFK'];
 			  $producto=$valor['producto'];
-		  	  $Cantidad=utf8_encode($valor['Cantidad']);
-		  	  $Motivo=utf8_encode($valor['Motivo']);
-			  $Fecha=utf8_encode($valor['Fecha']);
-			  $Usuario=utf8_encode($valor['Usuario']);
+		  	  $Cantidad=mb_convert_encoding((string)($valor['Cantidad']), 'UTF-8', 'ISO-8859-1');
+		  	  $Motivo=mb_convert_encoding((string)($valor['Motivo']), 'UTF-8', 'ISO-8859-1');
+			  $Fecha=mb_convert_encoding((string)($valor['Fecha']), 'UTF-8', 'ISO-8859-1');
+			  $Usuario=mb_convert_encoding((string)($valor['Usuario']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			 $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="

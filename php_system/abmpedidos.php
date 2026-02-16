@@ -2,19 +2,19 @@
 require("conexion.php");
 include("verificar_navegador.php");
 $operacion = $_POST['funt'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$operacion = utf8_decode($operacion);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 /*Función principal del php que se ejecutal cargar todo el archivo php y llamado al final de php.*/
 function ObtenerDatos($operacion)
 {
 
 
 		$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -31,16 +31,16 @@ if($operacion=="nuevo" || $operacion=="editar" || $operacion=="eliminar")
 
 
 $idpedidos=$_POST['idpedidos'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$idpedidos = utf8_decode($idpedidos);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$idpedidos = mb_convert_encoding((string)($idpedidos), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 
 $cod_productoFK=$_POST['cod_productoFK'];
-$cod_productoFK = utf8_decode($cod_productoFK);
+$cod_productoFK = mb_convert_encoding((string)($cod_productoFK), 'ISO-8859-1', 'UTF-8');
 
 $costo=$_POST['costo'];
-$costo = utf8_decode($costo);
+$costo = mb_convert_encoding((string)($costo), 'ISO-8859-1', 'UTF-8');
 
 $cod_clienteFK=$_POST['cod_clienteFK'];
-$cod_clienteFK = utf8_decode($cod_clienteFK);
+$cod_clienteFK = mb_convert_encoding((string)($cod_clienteFK), 'ISO-8859-1', 'UTF-8');
 
 
 
@@ -54,7 +54,7 @@ abm($idpedidos,$cod_productoFK,$costo,$cod_clienteFK,$operacion);
  
  if($operacion=="buscarporvista"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnVista($buscar);
  }
 
@@ -166,21 +166,21 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$idpedidos = utf8_encode($valor['idpedidos']);/*Obtenemos el registro mediante el nombre del atributo */      
-$cod_productoFK = utf8_encode($valor['cod_productoFK']);  
-$cod_persona = utf8_encode($valor['cod_persona']);  
-$nombre_persona = utf8_encode($valor['nombre_persona']);          
-$ci_cliente = utf8_encode($valor['ci_cliente']);          
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$costo = utf8_encode($valor['costo']); 
-$precio_producto = utf8_encode($valor['precio_producto']);          
-$precio_producto2 = utf8_encode($valor['precio_producto2']); 
-$precio_producto4 = utf8_encode($valor['precio_producto4']); 
-$precio_producto5 = utf8_encode($valor['precio_producto5']); 
-$precio_producto6 = utf8_encode($valor['precio_producto6']); 
-$precio_producto9 = utf8_encode($valor['precio_producto9']); 
-$precio_producto10 = utf8_encode($valor['precio_producto10']); 
-$precio_producto12 = utf8_encode($valor['precio_producto12']); 
+$idpedidos = mb_convert_encoding((string)($valor['idpedidos']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$cod_productoFK = mb_convert_encoding((string)($valor['cod_productoFK']), 'UTF-8', 'ISO-8859-1');  
+$cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');  
+$nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
+$ci_cliente = mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1');          
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$costo = mb_convert_encoding((string)($valor['costo']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1');          
+$precio_producto2 = mb_convert_encoding((string)($valor['precio_producto2']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto4 = mb_convert_encoding((string)($valor['precio_producto4']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto5 = mb_convert_encoding((string)($valor['precio_producto5']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto6 = mb_convert_encoding((string)($valor['precio_producto6']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto9 = mb_convert_encoding((string)($valor['precio_producto9']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto10 = mb_convert_encoding((string)($valor['precio_producto10']), 'UTF-8', 'ISO-8859-1'); 
+$precio_producto12 = mb_convert_encoding((string)($valor['precio_producto12']), 'UTF-8', 'ISO-8859-1'); 
 
 $pagina.="
 <table class='tableBuscado' >

@@ -86,7 +86,7 @@ if ( ! $stmt->execute()) {
 	  {
 		
 		  	 
-		  	  $cod_localFK=utf8_encode($valor['cod_localFK']);
+		  	  $cod_localFK=mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1');
 		  	
 		      
 			  

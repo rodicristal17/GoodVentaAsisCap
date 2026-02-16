@@ -6,16 +6,16 @@ include("buscar_nivel.php");
 include("classTable.php");
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 function ObtenerDatos($operacion)
 {
 
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -31,23 +31,23 @@ if($operacion=="nuevo" || $operacion=="editar" || $operacion=="eliminar" )
 
 
 $iddetallesprecio=$_POST['iddetallesprecio'];
-$iddetallesprecio = utf8_decode($iddetallesprecio);
+$iddetallesprecio = mb_convert_encoding((string)($iddetallesprecio), 'ISO-8859-1', 'UTF-8');
 
 $precio=$_POST['precio'];
 $precio = quitarseparadormiles($precio);
 
 
 $descripcion=$_POST['descripcion'];
-$descripcion = utf8_decode($descripcion);
+$descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
 
 $cod_producto=$_POST['cod_producto'];
-$cod_producto = utf8_decode($cod_producto);
+$cod_producto = mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
 
 $Porcentaje=$_POST['Porcentaje'];
 $Porcentaje = quitarseparadormiles($Porcentaje);
 
 $Cuota=$_POST['Cuota'];
-$Cuota = utf8_decode($Cuota);
+$Cuota = mb_convert_encoding((string)($Cuota), 'ISO-8859-1', 'UTF-8');
 
 $preciocuota=$_POST['preciocuota'];
 $preciocuota = quitarseparadormiles($preciocuota);
@@ -61,7 +61,7 @@ $precio_ventaDetalle=$_POST['precio_ventaDetalle'];
 $precio_ventaDetalle = quitarseparadormiles($precio_ventaDetalle);
 
 $userid=$_POST['userid'];
-$userid = utf8_decode($userid);
+$userid = mb_convert_encoding((string)($userid), 'ISO-8859-1', 'UTF-8');
 
 
 
@@ -75,37 +75,37 @@ abm($userid,$precio_ventaDetalle,$iddetallesprecio,$precio,$descripcion,$cod_pro
  
  if($operacion=="buscar"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistro($buscar);
  }
  
  if($operacion=="editarestePrecio"){
  	$codDetalle=$_POST["codDetalle"];
- 	$codDetalle=utf8_decode($codDetalle);
+ 	$codDetalle=mb_convert_encoding((string)($codDetalle), 'ISO-8859-1', 'UTF-8');
 	
 	$porcentaje=$_POST["porcentaje"];
- 	$porcentaje=utf8_decode($porcentaje);
+ 	$porcentaje=mb_convert_encoding((string)($porcentaje), 'ISO-8859-1', 'UTF-8');
 	
 	$precioCompra=$_POST["precioCompra"];
- 	$precioCompra=utf8_decode($precioCompra);
+ 	$precioCompra=mb_convert_encoding((string)($precioCompra), 'ISO-8859-1', 'UTF-8');
 	
 	$cuotas=$_POST["cuotas"];
- 	$cuotas=utf8_decode($cuotas);
+ 	$cuotas=mb_convert_encoding((string)($cuotas), 'ISO-8859-1', 'UTF-8');
 	
 	$PrecioContado=$_POST["PrecioContado"];
- 	$PrecioContado=utf8_decode($PrecioContado);
+ 	$PrecioContado=mb_convert_encoding((string)($PrecioContado), 'ISO-8859-1', 'UTF-8');
 	
 	$PorcenContado=$_POST["PorcenContado"];
- 	$PorcenContado=utf8_decode($PorcenContado);
+ 	$PorcenContado=mb_convert_encoding((string)($PorcenContado), 'ISO-8859-1', 'UTF-8');
 	
 		$precio_ventaDetalle=$_POST['precio_ventaDetalle'];
 		$precio_ventaDetalle = quitarseparadormiles($precio_ventaDetalle);
 
 		$userid=$_POST['userid'];
-		$userid = utf8_decode($userid);
+		$userid = mb_convert_encoding((string)($userid), 'ISO-8859-1', 'UTF-8');
 		
 		$Cod_producto=$_POST['Cod_producto'];
-		$Cod_producto = utf8_decode($Cod_producto);
+		$Cod_producto = mb_convert_encoding((string)($Cod_producto), 'ISO-8859-1', 'UTF-8');
 	
 	EditarDetallePrecio($Cod_producto,$userid,$precio_ventaDetalle,$codDetalle,$porcentaje,$cuotas,$precioCompra,$PrecioContado,$PorcenContado);
 }
@@ -114,7 +114,7 @@ abm($userid,$precio_ventaDetalle,$iddetallesprecio,$precio,$descripcion,$cod_pro
  
   if($operacion=="buscarTabla"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroTabla($buscar);
  }
  
@@ -123,19 +123,19 @@ abm($userid,$precio_ventaDetalle,$iddetallesprecio,$precio,$descripcion,$cod_pro
  
  if($operacion=="buscarvistacompra"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscarvistacompra($buscar);
  }
 
  if($operacion=="buscarvista"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnVista($buscar);
  }
 
  if($operacion=="buscarabmproductos"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	buscarabmproductos($buscar);
  }
  
@@ -144,9 +144,9 @@ abm($userid,$precio_ventaDetalle,$iddetallesprecio,$precio,$descripcion,$cod_pro
   if($operacion=="buscarTablapresupuesto"){
 	  
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $entrega=$_POST['entrega'];
-$entrega = utf8_decode($entrega);
+$entrega = mb_convert_encoding((string)($entrega), 'ISO-8859-1', 'UTF-8');
 
 
 $Total=$_POST['Total'];
@@ -532,13 +532,13 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$preciocuota = utf8_encode($valor['preciocuota']);          
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1');          
 
 	  $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -591,13 +591,13 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$preciocuota = utf8_encode($valor['preciocuota']);          
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1');          
 
 	 $styleName=CargarStyleTable($styleName);
 	  $pagina.="
@@ -651,11 +651,11 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);          
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');          
 
 
 	  $styleName=CargarStyleTable($styleName);
@@ -710,11 +710,11 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);             
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');             
 
 
 	  $styleName=CargarStyleTable($styleName);
@@ -766,17 +766,17 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$cod_producto = utf8_encode($valor['cod_producto']); 
-$precio = utf8_encode($valor['precio']);     
-$descripcion = utf8_encode($valor['descripcion']);          
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$Porcentaje = utf8_encode($valor['Porcentaje']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$preciocuota = utf8_encode($valor['preciocuota']);     
-$precio_compra = utf8_encode($valor['precio_compra']);   
-$precio_producto = utf8_encode($valor['precio_producto']);   
-$porcentaje = utf8_encode($valor['porcen']);  
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1'); 
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');     
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');          
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$Porcentaje = mb_convert_encoding((string)($valor['Porcentaje']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1');     
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1');   
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1');   
+$porcentaje = mb_convert_encoding((string)($valor['porcen']), 'UTF-8', 'ISO-8859-1');  
 
 
 $ImputCuotas="<input id='inptCuotas_$iddetallesprecio' type='text' value='$Cuota' class='inputText'  />";  
@@ -851,15 +851,15 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
-$precio = utf8_encode($valor['precio']);             
-$iddetallesprecio = utf8_encode($valor['iddetallesprecio']);          
-$comision = utf8_encode($valor['comision']);          
-$porcenta = utf8_encode($valor['porcenta']);          
-$Cuota = utf8_encode($valor['Cuota']);          
-$preciocuota = utf8_encode($valor['preciocuota']);     
-$precio_compra = utf8_encode($valor['precio_compra']);   
+$precio = mb_convert_encoding((string)($valor['precio']), 'UTF-8', 'ISO-8859-1');             
+$iddetallesprecio = mb_convert_encoding((string)($valor['iddetallesprecio']), 'UTF-8', 'ISO-8859-1');          
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');          
+$porcenta = mb_convert_encoding((string)($valor['porcenta']), 'UTF-8', 'ISO-8859-1');          
+$Cuota = mb_convert_encoding((string)($valor['Cuota']), 'UTF-8', 'ISO-8859-1');          
+$preciocuota = mb_convert_encoding((string)($valor['preciocuota']), 'UTF-8', 'ISO-8859-1');     
+$precio_compra = mb_convert_encoding((string)($valor['precio_compra']), 'UTF-8', 'ISO-8859-1');   
 $precio_producto = $Total;
-$porcen = utf8_encode($valor['porcen']);  
+$porcen = mb_convert_encoding((string)($valor['porcen']), 'UTF-8', 'ISO-8859-1');  
 
 $Entrega = quitarseparadormiles($Entrega);
 
@@ -908,7 +908,7 @@ function abmAuditoria($nombre_descripcion,$precio_compra,$precio_venta,$stock,$c
 {
 	
 	$cod_local=$_POST["cod_local"];
- 	$cod_local=utf8_decode($cod_local);
+ 	$cod_local=mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	
 	
 	if($nombre_descripcion=="" && $precio_compra=="0" && $precio_venta==0 && $stock=="0" && $cod_barra==""){

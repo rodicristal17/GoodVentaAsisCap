@@ -6,12 +6,12 @@
 
     function verificar($funt) {
         $user = $_POST['useru'];
-        $user = utf8_decode($user);
+        $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
         $pass = $_POST['passu'];
 
         $pass = str_replace("=", "+", $pass);
         $navegador = $_POST['navegador'];
-        $navegador = utf8_decode($navegador);
+        $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
             $informacion = array("1" => "UI");
@@ -21,50 +21,50 @@
 
         switch ($funt) {
             case "nuevo":
-                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
-                $observacion = isset($_POST['observacion']) ? utf8_decode($_POST['observacion']) : '';
-                $colorimetro = isset($_POST['colorimetro']) ? utf8_decode($_POST['colorimetro']) : '';
-                $costo = isset($_POST['costo']) ? utf8_decode($_POST['costo']) : 0.0;
-                $fecha_entrega = isset($_POST['fecha_entrega']) ? utf8_decode($_POST['fecha_entrega']) : null;
-                $fecha_retiro = isset($_POST['fecha_retiro']) ? utf8_decode($_POST['fecha_retiro']) : null;
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'pendiente';
-                $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? utf8_decode($_POST['cod_especialistaFK']) : null;
-                $cod_mecanicoDentalFK = isset($_POST['cod_mecanicoDentalFK']) ? utf8_decode($_POST['cod_mecanicoDentalFK']) : null;
-                $cod_localFK = isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? mb_convert_encoding((string)($_POST['cod_tipo_trabajoFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $observacion = isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : '';
+                $colorimetro = isset($_POST['colorimetro']) ? mb_convert_encoding((string)($_POST['colorimetro']), 'ISO-8859-1', 'UTF-8') : '';
+                $costo = isset($_POST['costo']) ? mb_convert_encoding((string)($_POST['costo']), 'ISO-8859-1', 'UTF-8') : 0.0;
+                $fecha_entrega = isset($_POST['fecha_entrega']) ? mb_convert_encoding((string)($_POST['fecha_entrega']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_retiro = isset($_POST['fecha_retiro']) ? mb_convert_encoding((string)($_POST['fecha_retiro']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : 'pendiente';
+                $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? mb_convert_encoding((string)($_POST['cod_especialistaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_mecanicoDentalFK = isset($_POST['cod_mecanicoDentalFK']) ? mb_convert_encoding((string)($_POST['cod_mecanicoDentalFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK = isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado, $user, $cod_especialistaFK,$cod_mecanicoDentalFK,$cod_localFK,null);
                 echo json_encode(array("1" => "exito", "cod_trabajo_mecanico_dental" => $cod_trabajo_mecanico_dental, "cod_mecanico_dental" => $cod_mecanicoDentalFK));
                 break;
             case "editar":
                 $cod_trabajo_mecanico_dental = $_POST['cod_trabajo_mecanico_dental'];
-                $cod_trabajo_mecanico_dental = utf8_decode($cod_trabajo_mecanico_dental);
-                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
-                $observacion = isset($_POST['observacion']) ? utf8_decode($_POST['observacion']) : null;
-                $colorimetro = isset($_POST['colorimetro']) ? utf8_decode($_POST['colorimetro']) : null;
-                $costo = isset($_POST['costo']) ? utf8_decode($_POST['costo']) : null;
-                $fecha_entrega = isset($_POST['fecha_entrega']) ? utf8_decode($_POST['fecha_entrega']) : null;
-                $fecha_retiro = isset($_POST['fecha_retiro']) ? utf8_decode($_POST['fecha_retiro']) : null;
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? utf8_decode($_POST['cod_especialistaFK']) : null;
-                $cod_mecanicoDentalFK = isset($_POST['cod_mecanicoDentalFK']) ? utf8_decode($_POST['cod_mecanicoDentalFK']) : null;
-                $cod_localFK = isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_trabajo_mecanico_dental = mb_convert_encoding((string)($cod_trabajo_mecanico_dental), 'ISO-8859-1', 'UTF-8');
+                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? mb_convert_encoding((string)($_POST['cod_tipo_trabajoFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $observacion = isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : null;
+                $colorimetro = isset($_POST['colorimetro']) ? mb_convert_encoding((string)($_POST['colorimetro']), 'ISO-8859-1', 'UTF-8') : null;
+                $costo = isset($_POST['costo']) ? mb_convert_encoding((string)($_POST['costo']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_entrega = isset($_POST['fecha_entrega']) ? mb_convert_encoding((string)($_POST['fecha_entrega']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_retiro = isset($_POST['fecha_retiro']) ? mb_convert_encoding((string)($_POST['fecha_retiro']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? mb_convert_encoding((string)($_POST['cod_especialistaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_mecanicoDentalFK = isset($_POST['cod_mecanicoDentalFK']) ? mb_convert_encoding((string)($_POST['cod_mecanicoDentalFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK = isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $cod_trabajo_mecanico_dental = abmTrabajoMecanicoDental($cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro, $estado,$user,$cod_especialistaFK,$cod_mecanicoDentalFK,$cod_localFK,$cod_trabajo_mecanico_dental);
                 echo json_encode(array("1" => "exito", "cod_trabajo_mecanico_dental" => $cod_trabajo_mecanico_dental, "cod_mecanico_dental" => $cod_mecanicoDentalFK));
                 break;
             case "buscar":
-                $cod_trabajo_mecanico_dental = isset($_POST['cod_trabajo_mecanico_dental']) ? utf8_decode($_POST['cod_trabajo_mecanico_dental']) : null;
-                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? utf8_decode($_POST['cod_ventaFK']) : null;
-                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? utf8_decode($_POST['cod_tipo_trabajoFK']) : null;
-                $tipo_trabajo = isset($_POST['tipo_trabajo']) ? utf8_decode($_POST['tipo_trabajo']) : null;
-                $ocultar_inactivo = isset($_POST['ocultar_inactivo']) ? utf8_decode($_POST['ocultar_inactivo']) : null;
-                $nombre_paciente = isset($_POST['nombre_paciente']) ? utf8_decode($_POST['nombre_paciente']) : null;
-                $nombre_mecanico = isset($_POST['nombre_mecanico']) ? utf8_decode($_POST['nombre_mecanico']) : null;
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? utf8_decode($_POST['cod_especialistaFK']) : null;
-                $cod_localFK = isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_trabajo_mecanico_dental = isset($_POST['cod_trabajo_mecanico_dental']) ? mb_convert_encoding((string)($_POST['cod_trabajo_mecanico_dental']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_ventaFK = isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_tipo_trabajoFK = isset($_POST['cod_tipo_trabajoFK']) ? mb_convert_encoding((string)($_POST['cod_tipo_trabajoFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $tipo_trabajo = isset($_POST['tipo_trabajo']) ? mb_convert_encoding((string)($_POST['tipo_trabajo']), 'ISO-8859-1', 'UTF-8') : null;
+                $ocultar_inactivo = isset($_POST['ocultar_inactivo']) ? mb_convert_encoding((string)($_POST['ocultar_inactivo']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_paciente = isset($_POST['nombre_paciente']) ? mb_convert_encoding((string)($_POST['nombre_paciente']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_mecanico = isset($_POST['nombre_mecanico']) ? mb_convert_encoding((string)($_POST['nombre_mecanico']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_especialistaFK = isset($_POST['cod_especialistaFK']) ? mb_convert_encoding((string)($_POST['cod_especialistaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK = isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros = array(
                     'cod_trabajo_mecanico_dental' => $cod_trabajo_mecanico_dental,
@@ -79,9 +79,9 @@
                     'cod_especialistaFK' => $cod_especialistaFK
                 );
 
-                $fecha_desde = isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
-                $fecha_hasta = isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
-                $filtro_fecha = isset($_POST['filtro_fecha']) ? utf8_decode($_POST['filtro_fecha']) : null;
+                $fecha_desde = isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_hasta = isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
+                $filtro_fecha = isset($_POST['filtro_fecha']) ? mb_convert_encoding((string)($_POST['filtro_fecha']), 'ISO-8859-1', 'UTF-8') : null;
                 if ($filtro_fecha == "2") {
                     $filtros['fecha_entrega_desde'] = $fecha_desde;
                     $filtros['fecha_entrega_hasta'] = $fecha_hasta;
@@ -90,26 +90,26 @@
                     $filtros['fecha_retiro_hasta'] = $fecha_hasta;
                 }
                 
-                $limite = isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite = isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 obtenerVistaTrabajoMecanicoDental($filtros, $limite);
                 break;
             case 'nuevo_tipo_trabajo':
-                $descripcion = utf8_decode($_POST['descripcion']);
-                $estado = isset($_POST['estado']) ? utf8_decode($_POST['estado']) : 'activo';
+                $descripcion = mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8');
+                $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : 'activo';
                 $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo(null, $descripcion, $estado);
                 echo json_encode(array("1" => "exito", "cod_tipo_trabajo_mecanico_dental" => $cod_tipo_trabajo_mecanico_dental));
                 break;
             case 'editar_tipo_trabajo':
-                $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? utf8_decode($_POST['cod_tipo_trabajo']) : null;
-                $descripcion = isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
-                $estado = utf8_decode($_POST['estado']);
+                $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? mb_convert_encoding((string)($_POST['cod_tipo_trabajo']), 'ISO-8859-1', 'UTF-8') : null;
+                $descripcion = isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado = mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8');
                 $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo($cod_tipo_trabajo, $descripcion, $estado);
                 echo json_encode(array("1" => "exito", "cod_tipo_trabajo_mecanico_dental" => $cod_tipo_trabajo_mecanico_dental));
                 break;
             case 'buscar_tipo_trabajo':
-                $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? utf8_decode($_POST['cod_tipo_trabajo']) : null;
-                $descripcion = isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
+                $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? mb_convert_encoding((string)($_POST['cod_tipo_trabajo']), 'ISO-8859-1', 'UTF-8') : null;
+                $descripcion = isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(
                     'cod_tipo_trabajo'=> $cod_tipo_trabajo,
                     'descripcion'=> $descripcion
@@ -227,7 +227,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -362,7 +362,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -429,6 +429,6 @@
 
     // Validacion e identificacion de funcion
     $operacion = $_POST['accion'];
-    $operacion = utf8_decode($operacion);
+    $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
     verificar($operacion);
 ?>

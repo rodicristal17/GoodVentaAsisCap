@@ -5,16 +5,16 @@ include("buscar_nivel.php");
 include("classTable.php");
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 function ObtenerDatos($operacion)
 {
 	
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -30,21 +30,21 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$Cod_Agendamiento=$_POST['idabm'];
-    $Cod_Agendamiento = utf8_decode($Cod_Agendamiento);
+    $Cod_Agendamiento = mb_convert_encoding((string)($Cod_Agendamiento), 'ISO-8859-1', 'UTF-8');
 	$Cod_PacienteFK=$_POST['idPaciente'];
-    $Cod_PacienteFK = utf8_decode($Cod_PacienteFK); 
+    $Cod_PacienteFK = mb_convert_encoding((string)($Cod_PacienteFK), 'ISO-8859-1', 'UTF-8'); 
 	$obs=$_POST['obs'];
-    $obs = utf8_decode($obs);
+    $obs = mb_convert_encoding((string)($obs), 'ISO-8859-1', 'UTF-8');
     $FechaRecepcion=$_POST['FechaRecepcion'];
-    $FechaRecepcion = utf8_decode($FechaRecepcion);
+    $FechaRecepcion = mb_convert_encoding((string)($FechaRecepcion), 'ISO-8859-1', 'UTF-8');
     $FechaConsulta=$_POST['FechaConsulta'];
-    $FechaConsulta = utf8_decode($FechaConsulta);  
+    $FechaConsulta = mb_convert_encoding((string)($FechaConsulta), 'ISO-8859-1', 'UTF-8');  
 	
 	$useru=$_POST['useru'];
-    $useru = utf8_decode($useru);
+    $useru = mb_convert_encoding((string)($useru), 'ISO-8859-1', 'UTF-8');
 	
 	$MedicoFK=$_POST['MedicoFK'];
-    $MedicoFK = utf8_decode($MedicoFK);
+    $MedicoFK = mb_convert_encoding((string)($MedicoFK), 'ISO-8859-1', 'UTF-8');
     
     
 	abm($MedicoFK,$useru,$Cod_Agendamiento,$Cod_PacienteFK,$FechaRecepcion,$FechaConsulta,$obs,$operacion);
@@ -62,11 +62,11 @@ if($operacion=="nuevo" || $operacion=="editar")
 if($operacion=="buscardatosdeAgendamientoBuscador")
 {
 	$paciente=$_POST['paciente'];
-    $paciente = utf8_decode($paciente);
+    $paciente = mb_convert_encoding((string)($paciente), 'ISO-8859-1', 'UTF-8');
 	$medico=$_POST['medico'];
-    $medico = utf8_decode($medico);
+    $medico = mb_convert_encoding((string)($medico), 'ISO-8859-1', 'UTF-8');
 	$fecha=$_POST['fecha'];
-    $fecha = utf8_decode($fecha);
+    $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	buscardatosdeAgendamientoBuscador($paciente,$medico,$fecha);
 
 }
@@ -76,9 +76,9 @@ if($operacion=="buscardatosdeAgendamientoBuscador")
 if($operacion=="EliminarAgendamiento")
 {
 	$cod_agen=$_POST['cod_agen'];
-    $cod_agen = utf8_decode($cod_agen);
+    $cod_agen = mb_convert_encoding((string)($cod_agen), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
-    $estado = utf8_decode($estado);
+    $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	CambiarEstadoAgendamiento($cod_agen,$estado);
 
 }
@@ -161,12 +161,12 @@ if ( ! $stmt->execute()) {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		      $cod_agendamiento=$valor['cod_agendamiento'];
-		  	  $num_factura=utf8_encode($valor['num_factura']);
-		  	  $medico=utf8_encode($valor['medico']);
-		  	  $paciente=utf8_encode($valor['paciente']); 		  	 
-		  	  $fecha_con=utf8_encode($valor['fecha_con']); 		  	 
-		  	  $ci_cliente=utf8_encode($valor['ci_cliente']); 		  	 
-		  	  $estado=utf8_encode($valor['estado']); 		  	 
+		  	  $num_factura=mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');
+		  	  $medico=mb_convert_encoding((string)($valor['medico']), 'UTF-8', 'ISO-8859-1');
+		  	  $paciente=mb_convert_encoding((string)($valor['paciente']), 'UTF-8', 'ISO-8859-1'); 		  	 
+		  	  $fecha_con=mb_convert_encoding((string)($valor['fecha_con']), 'UTF-8', 'ISO-8859-1'); 		  	 
+		  	  $ci_cliente=mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 		  	 
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 		  	 
 			  
 		  	 
 			  $pagina.="
@@ -278,9 +278,9 @@ if ( ! $stmt->execute()) {
 		   
 		  
 		      $cod_venta=$valor['cod_venta'];
-		  	  $nombre_persona=utf8_encode($valor['nombre_persona']); 
-		  	  $num_factura=utf8_encode($valor['num_factura']); 
-		  	  $ci=utf8_encode($valor['ci']); 
+		  	  $nombre_persona=mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1'); 
+		  	  $num_factura=mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1'); 
+		  	  $ci=mb_convert_encoding((string)($valor['ci']), 'UTF-8', 'ISO-8859-1'); 
 		  	 		  	 
 			  $pagina.="<option id='$cod_venta'  >$ci / $nombre_persona / $num_factura</option>";
 			

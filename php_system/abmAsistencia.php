@@ -8,12 +8,12 @@
 
     function verificar($funt) {
         $user = $_POST['useru'];
-        $user = utf8_decode($user);
+        $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
         $pass = $_POST['passu'];
 
         $pass = str_replace("=", "+", $pass);
         $navegador = $_POST['navegador'];
-        $navegador = utf8_decode($navegador);
+        $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
             $informacion = array("1" => "UI");
@@ -25,39 +25,39 @@
         switch ($funt) {
             case "nuevo":
                 $cod_usuario= $user;
-                $hora_entrada= isset($_POST['hora_entrada']) ? utf8_decode($_POST['hora_entrada']) : $horaActual;
-                $hora_salida = isset($_POST['hora_salida']) ? utf8_decode($_POST['hora_salida']) : null;
+                $hora_entrada= isset($_POST['hora_entrada']) ? mb_convert_encoding((string)($_POST['hora_entrada']), 'ISO-8859-1', 'UTF-8') : $horaActual;
+                $hora_salida = isset($_POST['hora_salida']) ? mb_convert_encoding((string)($_POST['hora_salida']), 'ISO-8859-1', 'UTF-8') : null;
                 $ip_publica = $_SERVER['REMOTE_ADDR'];
                 $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, null, $ip_publica, null);
                 echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
                 break;
             case "editar";
                 $cod_asistencia= $_POST['cod_asistencia'];
-                $cod_asistencia = utf8_decode($cod_asistencia);
+                $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
                 $cod_usuario= $user;
-                $hora_entrada = isset($_POST['hora_entrada']) ? utf8_decode($_POST['hora_entrada']) : null;
-                $hora_salida= isset($_POST['hora_salida']) ? utf8_decode($_POST['hora_salida']) : null;
+                $hora_entrada = isset($_POST['hora_entrada']) ? mb_convert_encoding((string)($_POST['hora_entrada']), 'ISO-8859-1', 'UTF-8') : null;
+                $hora_salida= isset($_POST['hora_salida']) ? mb_convert_encoding((string)($_POST['hora_salida']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, $hora_salida, null, $cod_asistencia);
                 echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
                 break;
             case "registrarSalida":
                 $cod_asistencia= $_POST['cod_asistencia'];
-                $cod_asistencia = utf8_decode($cod_asistencia);
+                $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
                 $cod_local= $_POST['cod_local'];
-                $cod_local = utf8_decode($cod_local);
+                $cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
                 $fechaActual= date('Y-m-d');
                 registrarSalida($user, $horaActual, $cod_asistencia, $cod_local, $fechaActual);
                 break;
             case "buscar":
-                $hora_entrada = isset($_POST['hora_entrada']) ? utf8_decode($_POST['hora_entrada']) : null;
-                $hora_salida= isset($_POST['hora_salida']) ? utf8_decode($_POST['hora_salida']) : null;
-                $cod_asistencia= isset($_POST['cod_asistencia']) ? utf8_decode($_POST['cod_asistencia']) : null;
-                $cod_usuario= isset($_POST['cod_usuario']) ? utf8_decode($_POST['cod_usuario']) : null;
-                $fecha_desde= isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
-                $fecha_hasta= isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
-                $sinSalida= isset($_POST['sinSalida']) ? utf8_decode($_POST['sinSalida']) : null;
-                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
-                $cod_local= isset($_POST['cod_local']) ? utf8_decode($_POST['cod_local']) : null;
+                $hora_entrada = isset($_POST['hora_entrada']) ? mb_convert_encoding((string)($_POST['hora_entrada']), 'ISO-8859-1', 'UTF-8') : null;
+                $hora_salida= isset($_POST['hora_salida']) ? mb_convert_encoding((string)($_POST['hora_salida']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_asistencia= isset($_POST['cod_asistencia']) ? mb_convert_encoding((string)($_POST['cod_asistencia']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuario= isset($_POST['cod_usuario']) ? mb_convert_encoding((string)($_POST['cod_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_desde= isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_hasta= isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
+                $sinSalida= isset($_POST['sinSalida']) ? mb_convert_encoding((string)($_POST['sinSalida']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(
                     'hora_entrada'=> $hora_entrada,
                     'hora_salida'=> $hora_salida,
@@ -69,7 +69,7 @@
                     'cod_local'=> $cod_local,
                     'nombre_usuario'=> $nombre_usuario,
                 );
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 $registros= obtenerAsistencias($filtros, $limite);
                 echo json_encode(array("1" => "exito", "registros" => $registros), JSON_UNESCAPED_UNICODE);
@@ -77,12 +77,12 @@
                 //echo json_last_error_msg();
                 break;
             case 'buscarVistaInforme':
-                $cod_usuario= isset($_POST['cod_usuario']) ? utf8_decode($_POST['cod_usuario']) : null;
-                $fecha_desde= isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
-                $fecha_hasta= isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
-                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
-                $cod_local= isset($_POST['cod_local']) ? utf8_decode($_POST['cod_local']) : null;
-                $cod_asistencia= isset($_POST['cod_asistencia']) ? utf8_decode($_POST['cod_asistencia']) : null;
+                $cod_usuario= isset($_POST['cod_usuario']) ? mb_convert_encoding((string)($_POST['cod_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_desde= isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_hasta= isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_asistencia= isset($_POST['cod_asistencia']) ? mb_convert_encoding((string)($_POST['cod_asistencia']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(
                     'cod_usuarioFK'=> $cod_usuario,
                     'fecha_desde'=> $fecha_desde,
@@ -91,17 +91,17 @@
                     'cod_local'=> $cod_local,
                     'cod_asistencia'=> $cod_asistencia,
                 );
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 obtenerVistaAsistencia($filtros, $limite);
                 break;
             case 'buscarMasVistaInforme':
-                $cod_usuario= isset($_POST['cod_usuario']) ? utf8_decode($_POST['cod_usuario']) : null;
-                $fecha_desde= isset($_POST['fecha_desde']) ? utf8_decode($_POST['fecha_desde']) : null;
-                $fecha_hasta= isset($_POST['fecha_hasta']) ? utf8_decode($_POST['fecha_hasta']) : null;
-                $nombre_usuario= isset($_POST['nombre_usuario']) ? utf8_decode($_POST['nombre_usuario']) : null;
-                $cod_local= isset($_POST['cod_local']) ? utf8_decode($_POST['cod_local']) : null;
-                $cod_asistencia= isset($_POST['cod_asistencia']) ? utf8_decode($_POST['cod_asistencia']) : null;
+                $cod_usuario= isset($_POST['cod_usuario']) ? mb_convert_encoding((string)($_POST['cod_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_desde= isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_hasta= isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_asistencia= isset($_POST['cod_asistencia']) ? mb_convert_encoding((string)($_POST['cod_asistencia']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(
                     'cod_usuarioFK'=> $cod_usuario,
                     'fecha_desde'=> $fecha_desde,
@@ -110,7 +110,7 @@
                     'cod_local'=> $cod_local,
                     'cod_asistencia'=> $cod_asistencia,
                 );
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : "0";
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : "0";
 
                 obtenerVistaAsistencia($filtros, $limite);
                 break;
@@ -234,7 +234,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -303,6 +303,6 @@
 
     // Validacion e identificacion de funcion
     $operacion= $_POST['accion'];
-    $operacion = utf8_decode($operacion);
+    $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
     verificar($operacion);
 ?>

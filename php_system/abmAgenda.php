@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -21,11 +21,11 @@ function verificar($operacion)
 }else {	
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -43,17 +43,17 @@ exit;
 if($operacion=="nuevo" || $operacion=="editar")
 {
 	$idAgenda=$_POST['idAgenda'];
-$idAgenda = utf8_decode($idAgenda);
+$idAgenda = mb_convert_encoding((string)($idAgenda), 'ISO-8859-1', 'UTF-8');
 	$motivo=$_POST['motivo'];
-$motivo = utf8_decode($motivo);
+$motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
 	$fechaCompromiso=$_POST['fechaCompromiso'];
-$fechaCompromiso = utf8_decode($fechaCompromiso);
+$fechaCompromiso = mb_convert_encoding((string)($fechaCompromiso), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$Cod_cobrador=$_POST['Cod_cobrador'];
-$Cod_cobrador = utf8_decode($Cod_cobrador);
+$Cod_cobrador = mb_convert_encoding((string)($Cod_cobrador), 'ISO-8859-1', 'UTF-8');
 	$cod_clienteAgenda=$_POST['cod_clienteAgenda'];
-$cod_clienteAgenda = utf8_decode($cod_clienteAgenda);
+$cod_clienteAgenda = mb_convert_encoding((string)($cod_clienteAgenda), 'ISO-8859-1', 'UTF-8');
 
 abm($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,$operacion);
 
@@ -63,18 +63,18 @@ abm($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,
 if($operacion=="buscar")
 {
 	$fecha1=$_POST["fecha1"];
- 	$fecha1=utf8_decode($fecha1);
+ 	$fecha1=mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST["fecha2"];
- 	$fecha2=utf8_decode($fecha2);
+ 	$fecha2=mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	
 	$cliente=$_POST["cliente"];
- 	$cliente=utf8_decode($cliente);
+ 	$cliente=mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
 	$cobrador=$_POST["cobrador"];
- 	$cobrador=utf8_decode($cobrador);
+ 	$cobrador=mb_convert_encoding((string)($cobrador), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST["estado"];
- 	$estado=utf8_decode($estado);
+ 	$estado=mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	$tipo=$_POST["tipo"];
- 	$tipo=utf8_decode($tipo);
+ 	$tipo=mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 	
  	buscar($estado,$tipo,$fecha1,$fecha2,$cliente,$cobrador);
 
@@ -82,7 +82,7 @@ if($operacion=="buscar")
 if($operacion=="buscarvista")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	buscarvista($buscar);
 
 }
@@ -189,15 +189,15 @@ if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-$estado = utf8_encode($valor['estado']);  
-$cod_clienteFK = utf8_encode($valor['cod_clienteFK']);
-$cod_VisitasCliente = utf8_encode($valor['cod_VisitasCliente']);
-$Motivo = utf8_encode($valor['Motivo']);     
-$fecha = utf8_encode($valor['fecha']); 
-$cliente = utf8_encode($valor['cliente']);     
-$zona = utf8_encode($valor['zona']); 
-$cobrador = utf8_encode($valor['cobrador']);  
-$fechaCompro = utf8_encode($valor['fechaCompro']);    
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');  
+$cod_clienteFK = mb_convert_encoding((string)($valor['cod_clienteFK']), 'UTF-8', 'ISO-8859-1');
+$cod_VisitasCliente = mb_convert_encoding((string)($valor['cod_VisitasCliente']), 'UTF-8', 'ISO-8859-1');
+$Motivo = mb_convert_encoding((string)($valor['Motivo']), 'UTF-8', 'ISO-8859-1');     
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'); 
+$cliente = mb_convert_encoding((string)($valor['cliente']), 'UTF-8', 'ISO-8859-1');     
+$zona = mb_convert_encoding((string)($valor['zona']), 'UTF-8', 'ISO-8859-1'); 
+$cobrador = mb_convert_encoding((string)($valor['cobrador']), 'UTF-8', 'ISO-8859-1');  
+$fechaCompro = mb_convert_encoding((string)($valor['fechaCompro']), 'UTF-8', 'ISO-8859-1');    
   
 
 
@@ -258,8 +258,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idzona=$valor['idzona'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	 $styleName=CargarStyleTable($styleName);  
@@ -311,8 +311,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idzona=$valor['idzona'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	

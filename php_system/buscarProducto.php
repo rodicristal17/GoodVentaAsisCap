@@ -1,7 +1,7 @@
 <?php
 require("conexion.php");
 $operacion = $_POST['funt'];/*Función para capturar datos enviados desde la función de AJAX desde el javascript*/
-$operacion = utf8_decode($operacion);/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');/*Función para cambiar letras que esten codificadas por la cadificación de caracteres */
 /*Función principal del php que se ejecutal cargar todo el archivo php y llamado al final de php.*/
 function ObtenerDatos($operacion)
 {
@@ -11,15 +11,15 @@ function ObtenerDatos($operacion)
  
  if($operacion=="buscarporpedido"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnPedidos($buscar);
  }
 
  if($operacion=="buscarpordevolucion"){
  	$buscar=$_POST["buscar"];
- 	$buscar=utf8_decode($buscar);
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$idCliente=$_POST["idCliente"];
- 	$idCliente=utf8_decode($idCliente);
+ 	$idCliente=mb_convert_encoding((string)($idCliente), 'ISO-8859-1', 'UTF-8');
  	BuscarRegistroEnDevoluciones($buscar,$idCliente);
  }
 
@@ -61,17 +61,17 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_producto = utf8_decode($valor['cod_producto']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_producto = utf8_decode($valor['nombre_producto']);          
-$precio_producto = utf8_decode($valor['precio_producto']);          
-$precio_producto2 = utf8_decode($valor['precio_producto2']); 
-$precio_producto4 = utf8_decode($valor['precio_producto4']); 
-$precio_producto5 = utf8_decode($valor['precio_producto5']); 
-$precio_producto6 = utf8_decode($valor['precio_producto6']); 
-$precio_producto9 = utf8_decode($valor['precio_producto9']); 
-$precio_producto10 = utf8_decode($valor['precio_producto10']); 
-$precio_producto12 = utf8_decode($valor['precio_producto12']); 
-$stock_producto = utf8_decode($valor['stock_producto']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'ISO-8859-1', 'UTF-8');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'ISO-8859-1', 'UTF-8');          
+$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'ISO-8859-1', 'UTF-8');          
+$precio_producto2 = mb_convert_encoding((string)($valor['precio_producto2']), 'ISO-8859-1', 'UTF-8'); 
+$precio_producto4 = mb_convert_encoding((string)($valor['precio_producto4']), 'ISO-8859-1', 'UTF-8'); 
+$precio_producto5 = mb_convert_encoding((string)($valor['precio_producto5']), 'ISO-8859-1', 'UTF-8'); 
+$precio_producto6 = mb_convert_encoding((string)($valor['precio_producto6']), 'ISO-8859-1', 'UTF-8'); 
+$precio_producto9 = mb_convert_encoding((string)($valor['precio_producto9']), 'ISO-8859-1', 'UTF-8'); 
+$precio_producto10 = mb_convert_encoding((string)($valor['precio_producto10']), 'ISO-8859-1', 'UTF-8'); 
+$precio_producto12 = mb_convert_encoding((string)($valor['precio_producto12']), 'ISO-8859-1', 'UTF-8'); 
+$stock_producto = mb_convert_encoding((string)($valor['stock_producto']), 'ISO-8859-1', 'UTF-8'); 
 
 
 $pagina.="
@@ -140,12 +140,12 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_producto = utf8_decode($valor['cod_producto']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_producto = utf8_decode($valor['nombre_producto']);          
-$cod_detalle = utf8_decode($valor['cod_detalle']);          
-$cod_venta = utf8_decode($valor['cod_venta']); 
-$total_venta = utf8_decode($valor['precio_producto']); 
-$fecha_venta = utf8_decode($valor['fecha_venta']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'ISO-8859-1', 'UTF-8');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'ISO-8859-1', 'UTF-8');          
+$cod_detalle = mb_convert_encoding((string)($valor['cod_detalle']), 'ISO-8859-1', 'UTF-8');          
+$cod_venta = mb_convert_encoding((string)($valor['cod_venta']), 'ISO-8859-1', 'UTF-8'); 
+$total_venta = mb_convert_encoding((string)($valor['precio_producto']), 'ISO-8859-1', 'UTF-8'); 
+$fecha_venta = mb_convert_encoding((string)($valor['fecha_venta']), 'ISO-8859-1', 'UTF-8'); 
 
 $pagina.="
 <table class='tableBuscado' >

@@ -14,11 +14,11 @@ function verificarOperacionGasto($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -29,41 +29,41 @@ exit;
 if($operacion=="nuevo" || $operacion=="editar")
 {	
 	$idgastos=$_POST['idgastos'];
-$idgastos = utf8_decode($idgastos);
+$idgastos = mb_convert_encoding((string)($idgastos), 'ISO-8859-1', 'UTF-8');
 $monto=$_POST['monto'];
 $monto = quitarseparadormiles($monto);
 	$motivo=$_POST['motivo'];
-$motivo = utf8_decode($motivo);
+$motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
 	$fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $codcaja=$_POST['codcaja'];
-$codcaja = utf8_decode($codcaja);
+$codcaja = mb_convert_encoding((string)($codcaja), 'ISO-8859-1', 'UTF-8');
 $idaperturacierrecaja=$_POST['idaperturacierrecaja'];
-$idaperturacierrecaja = utf8_decode($idaperturacierrecaja);
+$idaperturacierrecaja = mb_convert_encoding((string)($idaperturacierrecaja), 'ISO-8859-1', 'UTF-8');
 $nroboleta=$_POST['nroboleta'];
-$nroboleta = utf8_decode($nroboleta);
+$nroboleta = mb_convert_encoding((string)($nroboleta), 'ISO-8859-1', 'UTF-8');
 $banco=$_POST['banco'];
-$banco = utf8_decode($banco);
+$banco = mb_convert_encoding((string)($banco), 'ISO-8859-1', 'UTF-8');
 $nrocuenta=$_POST['nrocuenta'];
-$nrocuenta = utf8_decode($nrocuenta);
+$nrocuenta = mb_convert_encoding((string)($nrocuenta), 'ISO-8859-1', 'UTF-8');
 
 $Arreglo=$_POST['Arreglo'];
-$Arreglo = utf8_decode($Arreglo);
+$Arreglo = mb_convert_encoding((string)($Arreglo), 'ISO-8859-1', 'UTF-8');
 
 $cod_usuario = $user;
 $personales = "";
 
 $cod_motivo= $_POST['cod_motivoFK'];
-$cod_motivo= utf8_decode($cod_motivo);
+$cod_motivo= mb_convert_encoding((string)($cod_motivo), 'ISO-8859-1', 'UTF-8');
 
 $cod_interConsultaFK= $_POST['cod_interConsultaFK'];
-$cod_interConsultaFK= utf8_decode($cod_interConsultaFK);
+$cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 
 
 // Comprueba si esta dentro del presupuesto
@@ -96,29 +96,29 @@ if ($operacion=='cargar_imagen') {
 if($operacion=="buscar")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 $usuario=$_POST['usuario'];
-$usuario = utf8_decode($usuario);
+$usuario = mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
 $fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 
 $arreglo=$_POST['arreglo'];
-$arreglo = utf8_decode($arreglo);
+$arreglo = mb_convert_encoding((string)($arreglo), 'ISO-8859-1', 'UTF-8');
 $cod_interConsultaFK=$_POST['cod_interConsultaFK'];
-$cod_interConsultaFK = utf8_decode($cod_interConsultaFK);
+$cod_interConsultaFK = mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 
 $cod_motivoFK= $_POST['cod_motivoFK'];
-$cod_motivoFK= utf8_decode($cod_motivoFK);
+$cod_motivoFK= mb_convert_encoding((string)($cod_motivoFK), 'ISO-8859-1', 'UTF-8');
 $ocultar_inactivos= $_POST['ocultar_inactivos'];
-$ocultar_inactivos= utf8_decode($ocultar_inactivos);
+$ocultar_inactivos= mb_convert_encoding((string)($ocultar_inactivos), 'ISO-8859-1', 'UTF-8');
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -149,11 +149,11 @@ if ($operacion == "verficiarLimiteMotivo") {
 if($operacion=="evaluacionGasto")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 
 	buscarevaluacionGasto($fecha1,$fecha2,$local);
 
@@ -161,11 +161,11 @@ $local = utf8_decode($local);
 if($operacion=="evaluacionpagosventa")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 
 	evaluacionpagosventa($fecha1,$fecha2,$local);
 
@@ -173,11 +173,11 @@ $local = utf8_decode($local);
 if($operacion=="evaluacionproductodcomprados")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 
 	evaluacionproductodcomprados($fecha1,$fecha2,$local);
 
@@ -185,11 +185,11 @@ $local = utf8_decode($local);
 if($operacion=="evaluacionproductodvendidos")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 
 	evaluacionproductodvendidos($fecha1,$fecha2,$local);
 
@@ -197,11 +197,11 @@ $local = utf8_decode($local);
 if($operacion=="evaluacionpagoscomprados")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 
 	evaluacionpagoscomprados($fecha1,$fecha2,$local);
 
@@ -210,11 +210,11 @@ $local = utf8_decode($local);
 if($operacion=="evaluacion")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 
 	buscarevaluacion($fecha1,$fecha2,$local);
 
@@ -240,10 +240,10 @@ if($operacion=="buscarabmmotivoingresoegreso")
 
 
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 	$informacion = buscarabmmotivoingresoegreso($buscar,$estado);
 	echo json_encode($informacion);	
@@ -254,19 +254,19 @@ $estado = utf8_decode($estado);
 if($operacion=="NuevoMotivo")
 {
 	$motivo=$_POST['motivo'];
-$motivo = utf8_decode($motivo);
+$motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 $categoria=$_POST['categoria'];
-$categoria = utf8_decode($categoria);
+$categoria = mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 
 $necesita_autorizacion= $_POST['necesita_autorizacion'];
-$necesita_autorizacion = utf8_decode($necesita_autorizacion);
+$necesita_autorizacion = mb_convert_encoding((string)($necesita_autorizacion), 'ISO-8859-1', 'UTF-8');
 
 $presupuesto= $_POST['presupuesto'];
-$presupuesto = utf8_decode($presupuesto);
+$presupuesto = mb_convert_encoding((string)($presupuesto), 'ISO-8859-1', 'UTF-8');
 
 	NuevoMotivo($motivo,$estado,$categoria,$necesita_autorizacion, $presupuesto);
 
@@ -275,22 +275,22 @@ $presupuesto = utf8_decode($presupuesto);
 if($operacion=="editarMotivo")
 {
 	$motivo=$_POST['motivo'];
-$motivo = utf8_decode($motivo);
+$motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 $idabm=$_POST['idabm'];
-$idabm = utf8_decode($idabm);
+$idabm = mb_convert_encoding((string)($idabm), 'ISO-8859-1', 'UTF-8');
 
 $categoria=$_POST['categoria'];
-$categoria = utf8_decode($categoria);
+$categoria = mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 
 $necesita_autorizacion= $_POST['necesita_autorizacion'];
-$necesita_autorizacion = utf8_decode($necesita_autorizacion);
+$necesita_autorizacion = mb_convert_encoding((string)($necesita_autorizacion), 'ISO-8859-1', 'UTF-8');
 
 $presupuesto= $_POST['presupuesto'];
-$presupuesto = utf8_decode($presupuesto);
+$presupuesto = mb_convert_encoding((string)($presupuesto), 'ISO-8859-1', 'UTF-8');
 
 	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto, $user, $idabm);
 
@@ -303,18 +303,18 @@ if($operacion=="buscaroption")
 
 if ($operacion == "aprobarMovimiento") {
 	$idgastos= $_POST['idgastos'];
-	$idgastos= utf8_decode($idgastos);
+	$idgastos= mb_convert_encoding((string)($idgastos), 'ISO-8859-1', 'UTF-8');
 	aprobarMovimiento($idgastos, $user);
 }
 if ($operacion == "combinarmotivoingresoegreso") {
-	$cod_motivoIngresoEgreso= utf8_decode($_POST['cod_motivo_ingreso_egreso']);
-	$cod_motivoIngresoEgreso_dest= utf8_decode($_POST['cod_motivo_ingreso_egreso_destino']);
+	$cod_motivoIngresoEgreso= mb_convert_encoding((string)($_POST['cod_motivo_ingreso_egreso']), 'ISO-8859-1', 'UTF-8');
+	$cod_motivoIngresoEgreso_dest= mb_convert_encoding((string)($_POST['cod_motivo_ingreso_egreso_destino']), 'ISO-8859-1', 'UTF-8');
 
 	combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngresoEgreso_dest, $user);
 }
 if ($operacion == "buscarResumenGastosMotivo") {
-	$fecha_inicio= utf8_decode($_POST['fecha_inicio']);
-	$fecha_fin= utf8_decode($_POST['fecha_fin']);
+	$fecha_inicio= mb_convert_encoding((string)($_POST['fecha_inicio']), 'ISO-8859-1', 'UTF-8');
+	$fecha_fin= mb_convert_encoding((string)($_POST['fecha_fin']), 'ISO-8859-1', 'UTF-8');
 
 	buscarResumenGastosMotivo($fecha_inicio, $fecha_fin);
 }
@@ -351,9 +351,9 @@ function buscarResumenGastosMotivo($fecha_inicio, $fecha_fin) {
  	if ($valor>0) {
 	  while ($valor= mysqli_fetch_assoc($result)) {
 		  $styleName=CargarStyleTable($styleName);
-		  $cod_motivo_ingreso_egreso=utf8_encode($valor['cod_motivo_ingreso_egreso']);
-		  $descripcion=utf8_encode($valor['descripcion']);
-		  $monto=utf8_encode($valor['monto']);
+		  $cod_motivo_ingreso_egreso=mb_convert_encoding((string)($valor['cod_motivo_ingreso_egreso']), 'UTF-8', 'ISO-8859-1');
+		  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		  $monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
 
 		  $pagina .= '<table class="'.$styleName.'" border="1" cellspacing="1" cellpadding="5"><tr>
 		 	<td style="width: 10%;">'.$cod_motivo_ingreso_egreso.'</td> 
@@ -622,9 +622,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		
 		if ($valor>0) {
 			while ($valor= mysqli_fetch_assoc($result)) {
-				$monto=utf8_encode($valor['monto']);
-				$categoria=utf8_encode($valor['categoria']);
-				$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
+				$monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+				$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
+				$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
 				
 				if (empty($categoria)) {
 					$categoria= "sinCategoria";
@@ -634,28 +634,28 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				$totalGasto=$totalGasto+$monto;
 				
 				$registros[] = array(
-					'idgastos' =>utf8_encode($valor['idgastos']),
-					'interconsulta_nombre' => utf8_encode($valor['interconsulta_nombre']),
-					'cod_interConsultaFK' => utf8_encode($valor['cod_interConsultaFK']),
-					'usuarionombre' => utf8_encode($valor['usuarionombre']),
-					'monto' => utf8_encode($valor['monto']),
-					'motivo' => utf8_encode($valor['motivo']),
-					'descripcion' => utf8_encode($valor['descripcion']),
-					'fecha' => utf8_encode($valor['fecha']),
-					'tipo' => utf8_encode($valor['tipo']),
-					'estado' => utf8_encode($valor['estado']),
-					'cod_local' => utf8_encode($valor['cod_local']),
-					'nombrelocal' => utf8_encode($valor['nombrelocal']),
-					'nroboleta' => utf8_encode($valor['nroboleta']),
-					'banco' => utf8_encode($valor['banco']),
-					'nrocuenta' => utf8_encode($valor['nrocuenta']),
-					'arreglo' => utf8_encode($valor['arreglo']),
-					'url1' => utf8_encode($valor['url1']),
-					'categoria' => utf8_encode($valor['categoria']),
-					'cod_usuario_autoriz' => utf8_encode($valor['cod_usuario_autoriz']),
-					'fecha_autoriz' => utf8_encode($valor['fecha_autoriz']),
-					'usuario_autoriz_nombre' => utf8_encode($valor['usuario_autoriz_nombre']),
-					'cod_motivoIngresoEgresoFK' => utf8_encode($valor['cod_motivoIngresoEgresoFK']),
+					'idgastos' =>mb_convert_encoding((string)($valor['idgastos']), 'UTF-8', 'ISO-8859-1'),
+					'interconsulta_nombre' => mb_convert_encoding((string)($valor['interconsulta_nombre']), 'UTF-8', 'ISO-8859-1'),
+					'cod_interConsultaFK' => mb_convert_encoding((string)($valor['cod_interConsultaFK']), 'UTF-8', 'ISO-8859-1'),
+					'usuarionombre' => mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1'),
+					'monto' => mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1'),
+					'motivo' => mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1'),
+					'descripcion' => mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1'),
+					'fecha' => mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'),
+					'tipo' => mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'),
+					'estado' => mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'),
+					'cod_local' => mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1'),
+					'nombrelocal' => mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1'),
+					'nroboleta' => mb_convert_encoding((string)($valor['nroboleta']), 'UTF-8', 'ISO-8859-1'),
+					'banco' => mb_convert_encoding((string)($valor['banco']), 'UTF-8', 'ISO-8859-1'),
+					'nrocuenta' => mb_convert_encoding((string)($valor['nrocuenta']), 'UTF-8', 'ISO-8859-1'),
+					'arreglo' => mb_convert_encoding((string)($valor['arreglo']), 'UTF-8', 'ISO-8859-1'),
+					'url1' => mb_convert_encoding((string)($valor['url1']), 'UTF-8', 'ISO-8859-1'),
+					'categoria' => mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1'),
+					'cod_usuario_autoriz' => mb_convert_encoding((string)($valor['cod_usuario_autoriz']), 'UTF-8', 'ISO-8859-1'),
+					'fecha_autoriz' => mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1'),
+					'usuario_autoriz_nombre' => mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1'),
+					'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
 				);
 
 				switch ($categoria) {
@@ -762,28 +762,28 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
 		}
 		foreach ($gastos as $valor) {
-			$idgastos=utf8_encode($valor['idgastos']);
-			$interconsulta_nombre= utf8_encode($valor['interconsulta_nombre']);
-			$cod_interConsultaFK= utf8_encode($valor['cod_interConsultaFK']);
-			$usuarionombre=utf8_encode($valor['usuarionombre']);
-			$monto=utf8_encode($valor['monto']);
-			$motivo=utf8_encode($valor['motivo']);
-			$descripcion=utf8_encode($valor['descripcion']);
-			$fecha=utf8_encode($valor['fecha']);
-			$tipo=utf8_encode($valor['tipo']);
-			$estado=utf8_encode($valor['estado']);
-			$cod_local=utf8_encode($valor['cod_local']);
-			$nombrelocal=utf8_encode($valor['nombrelocal']);
-			$nroboleta=utf8_encode($valor['nroboleta']);
-			$banco=utf8_encode($valor['banco']);
-			$nrocuenta=utf8_encode($valor['nrocuenta']);
-			$arreglo=utf8_encode($valor['arreglo']);
-			$url1=utf8_encode($valor['url1']);
-			$categoria=utf8_encode($valor['categoria']);
-			$cod_usuario_autoriz = utf8_encode($valor['cod_usuario_autoriz']);
-			$fecha_autoriz = utf8_encode($valor['fecha_autoriz']);
-			$usuario_autoriz_nombre= utf8_encode($valor['usuario_autoriz_nombre']);
-			$cod_motivoIngresoEgresoFK= utf8_encode($valor['cod_motivoIngresoEgresoFK']);
+			$idgastos=mb_convert_encoding((string)($valor['idgastos']), 'UTF-8', 'ISO-8859-1');
+			$interconsulta_nombre= mb_convert_encoding((string)($valor['interconsulta_nombre']), 'UTF-8', 'ISO-8859-1');
+			$cod_interConsultaFK= mb_convert_encoding((string)($valor['cod_interConsultaFK']), 'UTF-8', 'ISO-8859-1');
+			$usuarionombre=mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1');
+			$monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+			$motivo=mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1');
+			$descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+			$fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+			$tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+			$estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+			$cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+			$nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+			$nroboleta=mb_convert_encoding((string)($valor['nroboleta']), 'UTF-8', 'ISO-8859-1');
+			$banco=mb_convert_encoding((string)($valor['banco']), 'UTF-8', 'ISO-8859-1');
+			$nrocuenta=mb_convert_encoding((string)($valor['nrocuenta']), 'UTF-8', 'ISO-8859-1');
+			$arreglo=mb_convert_encoding((string)($valor['arreglo']), 'UTF-8', 'ISO-8859-1');
+			$url1=mb_convert_encoding((string)($valor['url1']), 'UTF-8', 'ISO-8859-1');
+			$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
+			$cod_usuario_autoriz = mb_convert_encoding((string)($valor['cod_usuario_autoriz']), 'UTF-8', 'ISO-8859-1');
+			$fecha_autoriz = mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1');
+			$usuario_autoriz_nombre= mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1');
+			$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
 
 			$funcion= "obtenerdatosabmGasto(this)";
 			if ($idgastos == "") {
@@ -997,14 +997,14 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idgastos=$valor['idgastos'];
-		  	  $usuarionombre=utf8_encode($valor['usuarionombre']);
-		  	  $monto=utf8_encode($valor['monto']);
-		  	  $motivo=utf8_encode($valor['motivo']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $personales=utf8_encode($valor['personales']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		  	  $usuarionombre=mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+		  	  $motivo=mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $personales=mb_convert_encoding((string)($valor['personales']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 		  	 $totalGasto=$totalGasto+$monto;
 		  	 
 			    	 
@@ -1075,22 +1075,22 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$idPago = utf8_encode($valor['idPago']);    
-$num_factura = utf8_encode($valor['num_factura']);    
-$Monto = utf8_encode($valor['Monto']);      
-$Fecha = utf8_encode($valor['Fecha']);      
-$cobradornombre = utf8_encode($valor['cobradornombre']);      
-$cod_venta = utf8_encode($valor['cod_venta_fk']);      
-$nombrezona = utf8_encode($valor['nombrezona']);      
-$hora = utf8_encode($valor['hora']);      
-$comision = utf8_encode($valor['comision']);      
-$lot = utf8_encode($valor['lot']);      
-$lat = utf8_encode($valor['lat']);      
-$nombrecliente = utf8_encode($valor['nombrecliente']);      
-$nombrelocal = utf8_encode($valor['nombrelocal']);      
-$nrofactura = utf8_encode($valor['nrofactura']);      
+$idPago = mb_convert_encoding((string)($valor['idPago']), 'UTF-8', 'ISO-8859-1');    
+$num_factura = mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');    
+$Monto = mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1');      
+$Fecha = mb_convert_encoding((string)($valor['Fecha']), 'UTF-8', 'ISO-8859-1');      
+$cobradornombre = mb_convert_encoding((string)($valor['cobradornombre']), 'UTF-8', 'ISO-8859-1');      
+$cod_venta = mb_convert_encoding((string)($valor['cod_venta_fk']), 'UTF-8', 'ISO-8859-1');      
+$nombrezona = mb_convert_encoding((string)($valor['nombrezona']), 'UTF-8', 'ISO-8859-1');      
+$hora = mb_convert_encoding((string)($valor['hora']), 'UTF-8', 'ISO-8859-1');      
+$comision = mb_convert_encoding((string)($valor['comision']), 'UTF-8', 'ISO-8859-1');      
+$lot = mb_convert_encoding((string)($valor['lot']), 'UTF-8', 'ISO-8859-1');      
+$lat = mb_convert_encoding((string)($valor['lat']), 'UTF-8', 'ISO-8859-1');      
+$nombrecliente = mb_convert_encoding((string)($valor['nombrecliente']), 'UTF-8', 'ISO-8859-1');      
+$nombrelocal = mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');      
+$nrofactura = mb_convert_encoding((string)($valor['nrofactura']), 'UTF-8', 'ISO-8859-1');      
 $totalPagado=$Monto+$totalPagado;
- 	$puntoexpedicion = utf8_encode($valor['puntoexpedicion']);   
+ 	$puntoexpedicion = mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF-8', 'ISO-8859-1');   
 			
 			   if($puntoexpedicion!=""){
 	$nrof=$puntoexpedicion."-".$num_factura;
@@ -1160,11 +1160,11 @@ if ( ! $stmt->execute()) {
 		  
 		      $totalCantidad=$valor['totalCantidad'];
 		      $totalCompra=$valor['totalCompra'];
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $cod_producto=utf8_encode($valor['cod_producto']);
-		  	  $NombreMarca=utf8_encode($valor['NombreMarca']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	  $precio_producto=utf8_encode($valor['precio_producto']);
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_producto=mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $NombreMarca=mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	  $precio_producto=mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1');
 		  	
 		  	
 		  	 $total_compra=$totalCompra+$total_compra;
@@ -1233,11 +1233,11 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $monto=$valor['monto'];
-		      $fechadelpago=utf8_encode($valor['fechadelpago']);
-		  	  $fechaapagar=utf8_encode($valor['fechaapagar']);
-		  	  $tipo=utf8_encode($valor['tipo']);
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		      $fechadelpago=mb_convert_encoding((string)($valor['fechadelpago']), 'UTF-8', 'ISO-8859-1');
+		  	  $fechaapagar=mb_convert_encoding((string)($valor['fechaapagar']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 		  	
 		  	
 		  	
@@ -1318,13 +1318,13 @@ while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas
 
 
 
-$cod_producto = utf8_encode($valor['cod_producto']);/*Obtenemos el registro mediante el nombre del atributo */      
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$totalCantidad = utf8_encode($valor['totalCantidad']);          
-$totalVenta = utf8_encode($valor['totalVenta']); 
-$nombrelocal = utf8_encode($valor['nombrelocal']); 
-$totalCosto = utf8_encode($valor['totalCosto']); 
-$NombreMarca = utf8_encode($valor['NombreMarca']); 
+$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');/*Obtenemos el registro mediante el nombre del atributo */      
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$totalCantidad = mb_convert_encoding((string)($valor['totalCantidad']), 'UTF-8', 'ISO-8859-1');          
+$totalVenta = mb_convert_encoding((string)($valor['totalVenta']), 'UTF-8', 'ISO-8859-1'); 
+$nombrelocal = mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1'); 
+$totalCosto = mb_convert_encoding((string)($valor['totalCosto']), 'UTF-8', 'ISO-8859-1'); 
+$NombreMarca = mb_convert_encoding((string)($valor['NombreMarca']), 'UTF-8', 'ISO-8859-1'); 
 
 $totalventas=$totalVenta+$totalventas;
 $totalinvertido=$totalinvertido+$totalCosto;
@@ -1388,11 +1388,11 @@ if ( ! $stmt->execute()) {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {		  
 		      $cod_motivo_ingreso_egreso=$valor['cod_motivo_ingreso_egreso'];
-		  	  $descripcion=utf8_encode($valor['descripcion']);
-		  	  $estado=utf8_encode($valor['estado']);
-			  $categoria= utf8_encode($valor['categoria']);
-			  $necesita_autorizacion = utf8_encode($valor['necesita_autorizacion']);
-			  $presupuesto= intval(utf8_encode($valor['presupuesto']));
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+			  $categoria= mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
+			  $necesita_autorizacion = mb_convert_encoding((string)($valor['necesita_autorizacion']), 'UTF-8', 'ISO-8859-1');
+			  $presupuesto= intval(mb_convert_encoding((string)($valor['presupuesto']), 'UTF-8', 'ISO-8859-1'));
 
 			  $registros[] = array(
 					"cod_motivo_ingreso_egreso" => $cod_motivo_ingreso_egreso,
@@ -1522,7 +1522,7 @@ if ( ! $stmt->execute()) {
 	  {
 		  
 		      $cod_motivo_ingreso_egreso=$valor['cod_motivo_ingreso_egreso'];
-		  	  $descripcion=utf8_encode($valor['descripcion']);
+		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
 			    	
 			  $pagina.="<option  value='$cod_motivo_ingreso_egreso' >".$descripcion."</option>";     
 			  
@@ -1584,7 +1584,7 @@ function obtenerLimiteCaja() {
 
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 	$operacion = $_POST['funt'];
-	$operacion = utf8_decode($operacion);
+	$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 	verificarOperacionGasto($operacion);
 }
 ?>

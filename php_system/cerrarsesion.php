@@ -10,7 +10,7 @@ function verificar()
 	
 	
 		$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 	cerrar_sesion($user);
 

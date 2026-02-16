@@ -12,12 +12,12 @@ function verificar()
 	
 	
 	$user=$_POST['user'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['pass'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 
 if($resp=="ok"){
@@ -60,17 +60,17 @@ if ( ! $stmt->execute()) {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		
-		  	  $nombre_persona=utf8_encode($valor['nombre_persona']);
-		  	  $acceso=utf8_encode($valor['acceso']);
-		  	  $cod_localFK=utf8_encode($valor['cod_localFK']);
-		  	  $ControlCobra=utf8_encode($valor['ControlCobra']);
+		  	  $nombre_persona=mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');
+		  	  $acceso=mb_convert_encoding((string)($valor['acceso']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_localFK=mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $ControlCobra=mb_convert_encoding((string)($valor['ControlCobra']), 'UTF-8', 'ISO-8859-1');
 		   $accesos=buscaracceso($user);
-		  $url= utf8_encode($valor['url']);
-		  $telefono= utf8_encode($valor['telefono']);
-		  $direccion= utf8_encode($valor['direccion']);
-		  $telefono_referencia= utf8_encode($valor['telefono_referencia']);
-		  $tipo_relacion= utf8_encode($valor['tipo_relacion']);
-		  $fecha_creacion= utf8_encode($valor['fecha_creacion']);
+		  $url= mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1');
+		  $telefono= mb_convert_encoding((string)($valor['telefono']), 'UTF-8', 'ISO-8859-1');
+		  $direccion= mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');
+		  $telefono_referencia= mb_convert_encoding((string)($valor['telefono_referencia']), 'UTF-8', 'ISO-8859-1');
+		  $tipo_relacion= mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
+		  $fecha_creacion= mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
 		  
 		  $informacion =array(
 			"1" =>"exito",
@@ -131,9 +131,9 @@ if ( ! $stmt->execute()) {
 	  {
 		  
 		     $idaccesosUser=$valor['idaccesosUser'];
-			  $accion=utf8_encode($valor['accion']);
-			  $usuarios_idusario=utf8_encode($valor['usuarios_idusario']);
-			  $codigo=utf8_encode($valor['codigo']);
+			  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
+			  $usuarios_idusario=mb_convert_encoding((string)($valor['usuarios_idusario']), 'UTF-8', 'ISO-8859-1');
+			  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
 		  	 $datos[$codigo]['accion']=$accion;
 			    	 
 		  	 

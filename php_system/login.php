@@ -10,13 +10,13 @@ function verificar()
 	
 	
 	$user=$_POST['user'];
-$user = utf8_decode($user);	
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');	
 	$local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['pass'];
-$pass = utf8_decode($pass);
+$pass = mb_convert_encoding((string)($pass), 'ISO-8859-1', 'UTF-8');
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 
 	login($user,$pass,$local,$navegador);
 

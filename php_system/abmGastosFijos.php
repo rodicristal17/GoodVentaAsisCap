@@ -7,12 +7,12 @@
 
     function verificar($funt) {
         $user = $_POST['useru'];
-        $user = utf8_decode($user);
+        $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
         $pass = $_POST['passu'];
 
         $pass = str_replace("=", "+", $pass);
         $navegador = $_POST['navegador'];
-        $navegador = utf8_decode($navegador);
+        $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
             $informacion = array("1" => "UI");
@@ -23,14 +23,14 @@
         $fechaActual= new DateTime();
         switch ($funt) {
             case 'nuevo/editar':
-                $cod_gastos_fijos= !empty($_POST['cod_gastos_fijos']) ? utf8_decode($_POST['cod_gastos_fijos']) : null;
+                $cod_gastos_fijos= !empty($_POST['cod_gastos_fijos']) ? mb_convert_encoding((string)($_POST['cod_gastos_fijos']), 'ISO-8859-1', 'UTF-8') : null;
                 $fecha= $fechaActual->format('Y-m-d H:i:s');
-                $descripcion= isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
-                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? utf8_decode($_POST['cod_interConsultaFK']) : null;
-                $dia= isset($_POST['dia']) ? utf8_decode($_POST['dia']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
-                $costo= isset($_POST['costo']) ? utf8_decode($_POST['costo']) : null;
+                $descripcion= isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $dia= isset($_POST['dia']) ? mb_convert_encoding((string)($_POST['dia']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $costo= isset($_POST['costo']) ? mb_convert_encoding((string)($_POST['costo']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $cod_gastos_fijos = abmGastosFijos($cod_gastos_fijos, $user, $fecha, $descripcion, $cod_interConsultaFK, $dia, $estado, $costo, $cod_localFK);
 
@@ -40,14 +40,14 @@
                 ));
                 break;
             case "buscarVista":
-                $cod_gastos_fijos= isset($_POST['cod_gastos_fijos']) ? utf8_decode($_POST['cod_gastos_fijos']) : null;
-                $descripcion= isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
-                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? utf8_decode($_POST['cod_interConsultaFK']) : null;
-                $dia= isset($_POST['dia']) ? utf8_decode($_POST['dia']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_gastos_fijos= isset($_POST['cod_gastos_fijos']) ? mb_convert_encoding((string)($_POST['cod_gastos_fijos']), 'ISO-8859-1', 'UTF-8') : null;
+                $descripcion= isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $dia= isset($_POST['dia']) ? mb_convert_encoding((string)($_POST['dia']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
 
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : null;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(
                     'cod_gastos_fijos' => $cod_gastos_fijos,
                     'descripcion' => $descripcion,
@@ -147,7 +147,7 @@
             foreach ($row as $key => $value) {
                 // Solo codificar si NO es UTF-8 válido
                 if (!mb_check_encoding($value, 'UTF-8')) {
-                    $reg[$key] = utf8_encode($value);
+                    $reg[$key] = mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
                 } else {
                     $reg[$key] = $value;
                 }
@@ -239,6 +239,6 @@
 
     // Validacion e identificacion de funcion
     $operacion = $_POST['accion'];
-    $operacion = utf8_decode($operacion);
+    $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
     verificar($operacion);
 ?>

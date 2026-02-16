@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 require("conexion.php");
 include("verificar_navegador.php");
 include('quitarseparadormiles.php');
@@ -12,11 +12,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -33,15 +33,15 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$cod_compra=$_POST['cod_compra'];
-$cod_compra = utf8_decode($cod_compra);
+$cod_compra = mb_convert_encoding((string)($cod_compra), 'ISO-8859-1', 'UTF-8');
 $fecha_compra=$_POST['fecha_compra'];
-$fecha_compra = utf8_decode($fecha_compra);
+$fecha_compra = mb_convert_encoding((string)($fecha_compra), 'ISO-8859-1', 'UTF-8');
 	$cod_proveedorFK=$_POST['cod_proveedorFK'];
-$cod_proveedorFK = utf8_decode($cod_proveedorFK);
+$cod_proveedorFK = mb_convert_encoding((string)($cod_proveedorFK), 'ISO-8859-1', 'UTF-8');
 	$num_comprobante=$_POST['num_comprobante'];
-$num_comprobante = utf8_decode($num_comprobante);
+$num_comprobante = mb_convert_encoding((string)($num_comprobante), 'ISO-8859-1', 'UTF-8');
 	$cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	$descuento=$_POST['descuento'];
 $descuento = quitarseparadormiles($descuento);
 	$pagado1=$_POST['pagado1'];
@@ -55,32 +55,32 @@ $pagado2 = quitarseparadormiles($pagado2);
 if($operacion=="eliminarcompra")
 {
 	$idAbmCompra=$_POST['idAbmCompra'];
-$idAbmCompra = utf8_decode($idAbmCompra);
+$idAbmCompra = mb_convert_encoding((string)($idAbmCompra), 'ISO-8859-1', 'UTF-8');
 $motivo=$_POST['motivo'];
-$motivo = utf8_decode($motivo);
+$motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
 eliminarcompra($idAbmCompra,$motivo);
 
 }
 if($operacion=="buscarpagoscompra")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 buscarpagoscompra($buscar);
 
 }
 if($operacion=="buscarpagoscomprahistorial")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 buscarpagoscomprahistorial($buscar);
 
 }
 if($operacion=="buscarcod")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 buscarcod($buscar,$cod_local);
 
 }
@@ -88,21 +88,21 @@ buscarcod($buscar,$cod_local);
 if($operacion=="nuevopago" || $operacion=="editarpago" || $operacion=="eliminarpago")
 {
 	$codpago=$_POST['codpago'];
-$codpago = utf8_decode($codpago);
+$codpago = mb_convert_encoding((string)($codpago), 'ISO-8859-1', 'UTF-8');
 	$monto=$_POST['monto'];
 $monto = quitarseparadormiles($monto);
 	$fechaapagar=$_POST['fechaapagar'];
-$fechaapagar = utf8_decode($fechaapagar);
+$fechaapagar = mb_convert_encoding((string)($fechaapagar), 'ISO-8859-1', 'UTF-8');
 $fechadelpago=$_POST['fechadelpago'];
-$fechadelpago = utf8_decode($fechadelpago);
+$fechadelpago = mb_convert_encoding((string)($fechadelpago), 'ISO-8859-1', 'UTF-8');
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $nrocheque=$_POST['nrocheque'];
-$nrocheque = utf8_decode($nrocheque);
+$nrocheque = mb_convert_encoding((string)($nrocheque), 'ISO-8859-1', 'UTF-8');
 $cod_compraFk=$_POST['cod_compraFk'];
-$cod_compraFk = utf8_decode($cod_compraFk);
+$cod_compraFk = mb_convert_encoding((string)($cod_compraFk), 'ISO-8859-1', 'UTF-8');
 
 addPagos($codpago,$nrocheque,$monto,$fechaapagar,$fechadelpago,$tipo,$estado,$cod_compraFk,$operacion);
 
@@ -111,19 +111,19 @@ addPagos($codpago,$nrocheque,$monto,$fechaapagar,$fechadelpago,$tipo,$estado,$co
 if($operacion=="buscar")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $nrocompra=$_POST['nrocompra'];
-$nrocompra = utf8_decode($nrocompra);
+$nrocompra = mb_convert_encoding((string)($nrocompra), 'ISO-8859-1', 'UTF-8');
 $filtrofecha=$_POST['filtrofecha'];
-$filtrofecha = utf8_decode($filtrofecha);
+$filtrofecha = mb_convert_encoding((string)($filtrofecha), 'ISO-8859-1', 'UTF-8');
 $proveedor=$_POST['proveedor'];
-$proveedor = utf8_decode($proveedor);
+$proveedor = mb_convert_encoding((string)($proveedor), 'ISO-8859-1', 'UTF-8');
 $estadopago=$_POST['estadopago'];
-$estadopago = utf8_decode($estadopago);
+$estadopago = mb_convert_encoding((string)($estadopago), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 
 if($cod_local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
@@ -138,11 +138,11 @@ buscar($fecha1,$fecha2,$nrocompra,$filtrofecha,$proveedor,$estadopago,$cod_local
 if($operacion=="buscarcompraseliminados")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $nrocompra=$_POST['nrocompra'];
-$nrocompra = utf8_decode($nrocompra);
+$nrocompra = mb_convert_encoding((string)($nrocompra), 'ISO-8859-1', 'UTF-8');
 buscarcompraseliminados($fecha1,$fecha2,$nrocompra);
 
 }
@@ -150,21 +150,21 @@ buscarcompraseliminados($fecha1,$fecha2,$nrocompra);
 if($operacion=="buscarmas")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $nrocompra=$_POST['nrocompra'];
-$nrocompra = utf8_decode($nrocompra);
+$nrocompra = mb_convert_encoding((string)($nrocompra), 'ISO-8859-1', 'UTF-8');
 $filtrofecha=$_POST['filtrofecha'];
-$filtrofecha = utf8_decode($filtrofecha);
+$filtrofecha = mb_convert_encoding((string)($filtrofecha), 'ISO-8859-1', 'UTF-8');
 $proveedor=$_POST['proveedor'];
-$proveedor = utf8_decode($proveedor);
+$proveedor = mb_convert_encoding((string)($proveedor), 'ISO-8859-1', 'UTF-8');
 $estadopago=$_POST['estadopago'];
-$estadopago = utf8_decode($estadopago);
+$estadopago = mb_convert_encoding((string)($estadopago), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $registrocargado=$_POST['registrocargado'];
-$registrocargado = utf8_decode($registrocargado);
+$registrocargado = mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
 $totalCompra=$_POST['totalCompra'];
 $totalCompra = quitarseparadormiles($totalCompra);
 $totalDescuento=$_POST['totalDescuento'];
@@ -186,19 +186,19 @@ buscarmas($fecha1,$fecha2,$nrocompra,$filtrofecha,$proveedor,$estadopago,$cod_lo
 if($operacion=="buscarcuentasapagar")
 {
 $fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $proveedor=$_POST['proveedor'];
-$proveedor = utf8_decode($proveedor);
+$proveedor = mb_convert_encoding((string)($proveedor), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $nrofactura=$_POST['nrofactura'];
-$nrofactura = utf8_decode($nrofactura);
+$nrofactura = mb_convert_encoding((string)($nrofactura), 'ISO-8859-1', 'UTF-8');
 $filtrofecha=$_POST['filtrofecha'];
-$filtrofecha = utf8_decode($filtrofecha);
+$filtrofecha = mb_convert_encoding((string)($filtrofecha), 'ISO-8859-1', 'UTF-8');
 $nrocheque=$_POST['nrocheque'];
-$nrocheque = utf8_decode($nrocheque);
+$nrocheque = mb_convert_encoding((string)($nrocheque), 'ISO-8859-1', 'UTF-8');
 buscarcuentasapagar($fecha1,$fecha2,$proveedor,$cod_local,$nrofactura,$filtrofecha,$nrocheque);
 
 }	
@@ -206,9 +206,9 @@ buscarcuentasapagar($fecha1,$fecha2,$proveedor,$cod_local,$nrofactura,$filtrofec
 if($operacion=="buscarvista")
 {
 	$buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
-$local = utf8_decode($local);
+$local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
@@ -243,7 +243,7 @@ $mysqli=conectar_al_servidor();
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 $user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 if($operacion=="nuevo")
 {
@@ -296,7 +296,7 @@ $mysqli=conectar_al_servidor();
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 $user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 
 $consulta1="Update compra set motivoeliminar=?,cod_user_edit=?,fecha_edit=?,estado='Inactivo' where cod_compra=?";	
@@ -336,7 +336,7 @@ $mysqli=conectar_al_servidor();
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 $user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 
 if($operacion=="nuevopago")
@@ -473,16 +473,16 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_compra=$valor['cod_compra'];
 		      $fecha_compra=$valor['fecha_compra'];
-		  	  $cod_proveedorFK=utf8_encode($valor['cod_proveedorFK']);
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $proveedor=utf8_encode($valor['proveedor']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $descuento=utf8_encode($valor['descuento']);
-		  	  $pagado1=utf8_encode($valor['pagado1']);
-		  	  $pagado2=utf8_encode($valor['pagado2']);
-		  	  $pagosencheque=utf8_encode($valor['pagosencheque']);
-		  	  $pagosenefectivo=utf8_encode($valor['pagosenefectivo']);
-		  	  $totalpagados=utf8_encode($valor['totalpagados']);
+		  	  $cod_proveedorFK=mb_convert_encoding((string)($valor['cod_proveedorFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $proveedor=mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagado1=mb_convert_encoding((string)($valor['pagado1']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagado2=mb_convert_encoding((string)($valor['pagado2']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagosencheque=mb_convert_encoding((string)($valor['pagosencheque']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagosenefectivo=mb_convert_encoding((string)($valor['pagosenefectivo']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalpagados=mb_convert_encoding((string)($valor['totalpagados']), 'UTF-8', 'ISO-8859-1');
 		  	  
 		
 		  	 
@@ -544,11 +544,11 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_compra=$valor['cod_compra'];
 		      $fecha_compra=$valor['fecha_compra'];
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $motivoeliminar=utf8_encode($valor['motivoeliminar']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	  $fecha_edit=utf8_encode($valor['fecha_edit']);
-		  	  $editadopor=utf8_encode($valor['editadopor']);
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $motivoeliminar=mb_convert_encoding((string)($valor['motivoeliminar']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha_edit=mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1');
+		  	  $editadopor=mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1');
 				
 				$styleName=CargarStyleTable($styleName);
 		  	   $pagina.="
@@ -657,20 +657,20 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_compra=$valor['cod_compra'];
 		      $fecha_compra=$valor['fecha_compra'];
-		  	  $cod_proveedorFK=utf8_encode($valor['cod_proveedorFK']);
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $proveedor=utf8_encode($valor['proveedor']);
-		  	  $subtotalcompra=utf8_encode($valor['totalcompra']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	 $descuento=utf8_encode($valor['descuento']);
-			  $totalpagado=utf8_encode($valor['totalpagado']);
-		  	  $totalPendiente=utf8_encode($valor['totalPendiente']);
-		  	  $totalpagos=utf8_encode($valor['totalpagos']);
-			  $insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+		  	  $cod_proveedorFK=mb_convert_encoding((string)($valor['cod_proveedorFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $proveedor=mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1');
+		  	  $subtotalcompra=mb_convert_encoding((string)($valor['totalcompra']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	 $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
+			  $totalpagado=mb_convert_encoding((string)($valor['totalpagado']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalPendiente=mb_convert_encoding((string)($valor['totalPendiente']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalpagos=mb_convert_encoding((string)($valor['totalpagos']), 'UTF-8', 'ISO-8859-1');
+			  $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 		  	  $totalcompra=$subtotalcompra-$descuento;
 		  	  
 
@@ -808,20 +808,20 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_compra=$valor['cod_compra'];
 		      $fecha_compra=$valor['fecha_compra'];
-		  	  $cod_proveedorFK=utf8_encode($valor['cod_proveedorFK']);
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $proveedor=utf8_encode($valor['proveedor']);
-		  	  $subtotalcompra=utf8_encode($valor['totalcompra']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	 $descuento=utf8_encode($valor['descuento']);
-			  $totalpagado=utf8_encode($valor['totalpagado']);
-		  	  $totalPendiente=utf8_encode($valor['totalPendiente']);
-		  	  $totalpagos=utf8_encode($valor['totalpagos']);
-			  $insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+		  	  $cod_proveedorFK=mb_convert_encoding((string)($valor['cod_proveedorFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $proveedor=mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1');
+		  	  $subtotalcompra=mb_convert_encoding((string)($valor['totalcompra']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	 $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
+			  $totalpagado=mb_convert_encoding((string)($valor['totalpagado']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalPendiente=mb_convert_encoding((string)($valor['totalPendiente']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalpagos=mb_convert_encoding((string)($valor['totalpagos']), 'UTF-8', 'ISO-8859-1');
+			  $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 		  	  $totalcompra=$subtotalcompra-$descuento;
 		  	  
 
@@ -912,16 +912,16 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_compra=$valor['cod_compra'];
 		      $fecha_compra=$valor['fecha_compra'];
-		  	  $cod_proveedorFK=utf8_encode($valor['cod_proveedorFK']);
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $proveedor=utf8_encode($valor['proveedor']);
-		  	  $subtotalcompra=utf8_encode($valor['totalcompra']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	 $descuento=utf8_encode($valor['descuento']);
-		  	 $pagado1=utf8_encode($valor['pagado1']);
-		  	  $pagado2=utf8_encode($valor['pagado2']);
-		  	  $totalpagados=utf8_encode($valor['totalpagados']);
+		  	  $cod_proveedorFK=mb_convert_encoding((string)($valor['cod_proveedorFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $proveedor=mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1');
+		  	  $subtotalcompra=mb_convert_encoding((string)($valor['totalcompra']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	 $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
+		  	 $pagado1=mb_convert_encoding((string)($valor['pagado1']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagado2=mb_convert_encoding((string)($valor['pagado2']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalpagados=mb_convert_encoding((string)($valor['totalpagados']), 'UTF-8', 'ISO-8859-1');
 		  	  $totalcompra=$subtotalcompra-$descuento;
 		  	  
 		 $totalCompas=$totalCompas+$totalcompra;
@@ -999,16 +999,16 @@ if ( ! $stmt->execute()) {
 		  
 		      $codpago=$valor['codpago'];
 		      $monto=$valor['monto'];
-		  	  $fechaapagar=utf8_encode($valor['fechaapagar']);
-		  	  $fechadelpago=utf8_encode($valor['fechadelpago']);
-		  	  $tipo=utf8_encode($valor['tipo']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_compraFk=utf8_encode($valor['cod_compraFk']);
-		  	  $nrocheque=utf8_encode($valor['nrocheque']);
-		  $insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+		  	  $fechaapagar=mb_convert_encoding((string)($valor['fechaapagar']), 'UTF-8', 'ISO-8859-1');
+		  	  $fechadelpago=mb_convert_encoding((string)($valor['fechadelpago']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_compraFk=mb_convert_encoding((string)($valor['cod_compraFk']), 'UTF-8', 'ISO-8859-1');
+		  	  $nrocheque=mb_convert_encoding((string)($valor['nrocheque']), 'UTF-8', 'ISO-8859-1');
+		  $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 		  	  $Totales=$Totales+$monto;
 			  if($estado=="Pagado"){
 				   $TotalPagado=$TotalPagado+$monto;
@@ -1111,26 +1111,26 @@ if ( ! $stmt->execute()) {
 		      $codpago=$valor['codpago'];
 		      $cod_compra=$valor['cod_compra'];
 		      $monto=$valor['monto'];
-		  	  $fechaapagar=utf8_encode($valor['fechaapagar']);
-		  	  $fechadelpago=utf8_encode($valor['fechadelpago']);
-		  	  $tipo=utf8_encode($valor['tipo']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_compraFk=utf8_encode($valor['cod_compraFk']);
-		  	  $fecha_compra=utf8_encode($valor['fecha_compra']);
-		  	  $cod_proveedorFK=utf8_encode($valor['cod_proveedorFK']);
-		  	  $num_comprobante=utf8_encode($valor['num_comprobante']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $descuento=utf8_encode($valor['descuento']);
-		  	  $pagado1=utf8_encode($valor['pagado1']);
-		  	  $pagado2=utf8_encode($valor['pagado2']);
-		  	  $proveedor=utf8_encode($valor['proveedor']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
-		  	  $totalcompra=utf8_encode($valor['totalcompra']);
-		  	  $totalpagado=utf8_encode($valor['totalpagado']);
-		  	  $totalPendiente=utf8_encode($valor['totalPendiente']);
-		  	  $totalpagos=utf8_encode($valor['totalpagos']);
-			  $subtotalcompra=utf8_encode($valor['totalcompra']);
-			  $nrocheque=utf8_encode($valor['nrocheque']);
+		  	  $fechaapagar=mb_convert_encoding((string)($valor['fechaapagar']), 'UTF-8', 'ISO-8859-1');
+		  	  $fechadelpago=mb_convert_encoding((string)($valor['fechadelpago']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_compraFk=mb_convert_encoding((string)($valor['cod_compraFk']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha_compra=mb_convert_encoding((string)($valor['fecha_compra']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_proveedorFK=mb_convert_encoding((string)($valor['cod_proveedorFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $descuento=mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagado1=mb_convert_encoding((string)($valor['pagado1']), 'UTF-8', 'ISO-8859-1');
+		  	  $pagado2=mb_convert_encoding((string)($valor['pagado2']), 'UTF-8', 'ISO-8859-1');
+		  	  $proveedor=mb_convert_encoding((string)($valor['proveedor']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalcompra=mb_convert_encoding((string)($valor['totalcompra']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalpagado=mb_convert_encoding((string)($valor['totalpagado']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalPendiente=mb_convert_encoding((string)($valor['totalPendiente']), 'UTF-8', 'ISO-8859-1');
+		  	  $totalpagos=mb_convert_encoding((string)($valor['totalpagos']), 'UTF-8', 'ISO-8859-1');
+			  $subtotalcompra=mb_convert_encoding((string)($valor['totalcompra']), 'UTF-8', 'ISO-8859-1');
+			  $nrocheque=mb_convert_encoding((string)($valor['nrocheque']), 'UTF-8', 'ISO-8859-1');
 		  
 		  	  $Totales=$Totales+$monto;
 			  if($estado=="Pagado"){
@@ -1212,15 +1212,15 @@ if ( ! $stmt->execute()) {
 		  
 		      $codpago=$valor['codpago'];
 		      $monto=$valor['monto'];
-		  	  $fechaapagar=utf8_encode($valor['fechaapagar']);
-		  	  $fechadelpago=utf8_encode($valor['fechadelpago']);
-		  	  $tipo=utf8_encode($valor['tipo']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_compraFk=utf8_encode($valor['cod_compraFk']);
-		  	 $insertadopor = utf8_encode($valor['insertadopor']); 
-$editadopor = utf8_encode($valor['editadopor']); 
-$fecha_insert = utf8_encode($valor['fecha_insert']); 
-$fecha_edit = utf8_encode($valor['fecha_edit']); 
+		  	  $fechaapagar=mb_convert_encoding((string)($valor['fechaapagar']), 'UTF-8', 'ISO-8859-1');
+		  	  $fechadelpago=mb_convert_encoding((string)($valor['fechadelpago']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_compraFk=mb_convert_encoding((string)($valor['cod_compraFk']), 'UTF-8', 'ISO-8859-1');
+		  	 $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', 'ISO-8859-1'); 
+$editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
+$fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
 		  	  $Totales=$Totales+$monto;
 			  if($estado=="Pagado"){
 				   $TotalPagado=$TotalPagado+$monto;
@@ -1325,13 +1325,13 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_detalle_compra=$valor['cod_detalle_compra'];
-		  	  $cantidad_detalle_compra=utf8_encode($valor['cantidad_detalle_compra']);
-		  	  $precio_producto=utf8_encode($valor['precio_producto']);
-		  	  $subTotal=utf8_encode($valor['subTotal']);
-		  	  $cod_productoFK=utf8_encode($valor['cod_productoFK']);
-		  	  $nombre_producto=utf8_encode($valor['nombre_producto']);
-		  	  $cod_compraFK=utf8_encode($valor['cod_compraFK']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
+		  	  $cantidad_detalle_compra=mb_convert_encoding((string)($valor['cantidad_detalle_compra']), 'UTF-8', 'ISO-8859-1');
+		  	  $precio_producto=mb_convert_encoding((string)($valor['precio_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $subTotal=mb_convert_encoding((string)($valor['subTotal']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_productoFK=mb_convert_encoding((string)($valor['cod_productoFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre_producto=mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_compraFK=mb_convert_encoding((string)($valor['cod_compraFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
 		  	  editar_cantidad($cod_productoFK,$cantidad_detalle_compra,"resta",$cod_local);
 			 
 			  

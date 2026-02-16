@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include('quitarseparadormiles.php');
 require("conexion.php");
 include("verificar_navegador.php");
@@ -10,11 +10,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -32,23 +32,23 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$idsolicitud=$_POST['idsolicitud'];
-$idsolicitud = utf8_decode($idsolicitud);
+$idsolicitud = mb_convert_encoding((string)($idsolicitud), 'ISO-8859-1', 'UTF-8');
 $cant=$_POST['cant'];
 $cant = quitarseparadormiles($cant);
 	$fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $cod_producto1=$_POST['cod_producto1'];
-$cod_producto1 = utf8_decode($cod_producto1);
+$cod_producto1 = mb_convert_encoding((string)($cod_producto1), 'ISO-8859-1', 'UTF-8');
 $cod_producto2=$_POST['cod_producto2'];
-$cod_producto2 = utf8_decode($cod_producto2);
+$cod_producto2 = mb_convert_encoding((string)($cod_producto2), 'ISO-8859-1', 'UTF-8');
 $cod_persona=$_POST['cod_persona'];
-$cod_persona = utf8_decode($cod_persona);
+$cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 $local1=$_POST['local1'];
-$local1 = utf8_decode($local1);
+$local1 = mb_convert_encoding((string)($local1), 'ISO-8859-1', 'UTF-8');
 $local2=$_POST['local2'];
-$local2 = utf8_decode($local2);
+$local2 = mb_convert_encoding((string)($local2), 'ISO-8859-1', 'UTF-8');
 
 
 	abm($idsolicitud,$cant,$fecha,$estado,$cod_producto1,$cod_producto2,$cod_persona,$local1,$local2,$operacion);
@@ -58,15 +58,15 @@ $local2 = utf8_decode($local2);
 if($operacion=="buscar")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 buscar($fecha1,$fecha2,$estado,$buscar,$cod_local);
 
 }	
@@ -255,19 +255,19 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idsolicitud=$valor['idsolicitud'];
-				$producto1=utf8_encode($valor['producto1']);
-				$producto2=utf8_encode($valor['producto2']);
-		  	  $Encargado=utf8_encode($valor['Encargado']);
-		  	  $cant=utf8_encode($valor['cant']);
-				$cod_producto1=utf8_encode($valor['cod_producto1']);
-				$cod_producto2=utf8_encode($valor['cod_producto2']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_persona=utf8_encode($valor['cod_persona']);
-		  	  $local1=utf8_encode($valor['local1']);
-		  	  $local2=utf8_encode($valor['local2']);
-		  	  $nombrelocal1=utf8_encode($valor['nombrelocal1']);
-              $nombrelocal2=utf8_encode($valor['nombrelocal2']);
+				$producto1=mb_convert_encoding((string)($valor['producto1']), 'UTF-8', 'ISO-8859-1');
+				$producto2=mb_convert_encoding((string)($valor['producto2']), 'UTF-8', 'ISO-8859-1');
+		  	  $Encargado=mb_convert_encoding((string)($valor['Encargado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cant=mb_convert_encoding((string)($valor['cant']), 'UTF-8', 'ISO-8859-1');
+				$cod_producto1=mb_convert_encoding((string)($valor['cod_producto1']), 'UTF-8', 'ISO-8859-1');
+				$cod_producto2=mb_convert_encoding((string)($valor['cod_producto2']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_persona=mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');
+		  	  $local1=mb_convert_encoding((string)($valor['local1']), 'UTF-8', 'ISO-8859-1');
+		  	  $local2=mb_convert_encoding((string)($valor['local2']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal1=mb_convert_encoding((string)($valor['nombrelocal1']), 'UTF-8', 'ISO-8859-1');
+              $nombrelocal2=mb_convert_encoding((string)($valor['nombrelocal2']), 'UTF-8', 'ISO-8859-1');
 			$eventos='obtenerdatosabmSolicitud(this)';
 			if($estado=="Atendido" || $estado=="Cancelado"){
 				$eventos="";

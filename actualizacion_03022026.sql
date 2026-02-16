@@ -57,7 +57,7 @@ DELIMITER ;
 
 UPDATE gastos_fijos SET estado="inactivo" WHERE cod_gastos_fijos IS NOT NULL;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.60', detalles='Unificacion entre interconsulta y gastos', fecha='2026-02-13' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.61', detalles='Actualizacion php', fecha='2026-02-16' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE interconsulta ADD COLUMN fecha_vencimiento DATE;
 ALTER TABLE interconsulta ADD COLUMN monto_limite INT;

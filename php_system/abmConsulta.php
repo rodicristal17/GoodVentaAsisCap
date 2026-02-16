@@ -5,16 +5,16 @@ include("buscar_nivel.php");
 include("classTable.php");
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 function ObtenerDatos($operacion)
 {
 	
    $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");
@@ -28,31 +28,31 @@ exit;
 if($operacion=="buscarVistaConsulta")
 {	 
 	$Paciente=$_POST['Paciente'];
-    $Paciente = utf8_decode($Paciente);
-	$local= (isset($_POST['local']) ? utf8_decode($_POST['local']) : "");
+    $Paciente = mb_convert_encoding((string)($Paciente), 'ISO-8859-1', 'UTF-8');
+	$local= (isset($_POST['local']) ? mb_convert_encoding((string)($_POST['local']), 'ISO-8859-1', 'UTF-8') : "");
 	buscarVistaConsulta($Paciente,$local);
 }	
  
 if($operacion=="buscarDetalleCompradoConsulta")
 {	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	buscarDetalleCompradoConsulta($cod_venta);
 }	
  
 if($operacion=="buscarHistorialConsulta")
 {	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	buscarHistorialConsulta($cod_venta);
 }
 
 if($operacion=="guardarPorcentajeProgreso")
 {	
 	$id_detalle_tratamientoConsulta=$_POST['id_detalle_tratamientoConsulta'];
-    $id_detalle_tratamientoConsulta = utf8_decode($id_detalle_tratamientoConsulta);
+    $id_detalle_tratamientoConsulta = mb_convert_encoding((string)($id_detalle_tratamientoConsulta), 'ISO-8859-1', 'UTF-8');
 	$porcentaje=$_POST['porcentaje'];
-    $porcentaje = utf8_decode($porcentaje); 
+    $porcentaje = mb_convert_encoding((string)($porcentaje), 'ISO-8859-1', 'UTF-8'); 
 	guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje);
 }
 
@@ -60,21 +60,21 @@ if($operacion=="guardarPorcentajeProgreso")
 if($operacion=="historialConsulta")
 {	
 	$fecha1=$_POST['fecha1'];
-    $fecha1 = utf8_decode($fecha1);
+    $fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 	$fecha2=$_POST['fecha2'];
-    $fecha2 = utf8_decode($fecha2);
+    $fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 	$fechafiltro=$_POST['fechafiltro'];
-    $fechafiltro = utf8_decode($fechafiltro); 
+    $fechafiltro = mb_convert_encoding((string)($fechafiltro), 'ISO-8859-1', 'UTF-8'); 
 	$documento=$_POST['documento'];
-    $documento = utf8_decode($documento);
+    $documento = mb_convert_encoding((string)($documento), 'ISO-8859-1', 'UTF-8');
 	$paciente=$_POST['paciente'];
-    $paciente = utf8_decode($paciente);
+    $paciente = mb_convert_encoding((string)($paciente), 'ISO-8859-1', 'UTF-8');
 	$especialista=$_POST['especialista'];
-    $especialista = utf8_decode($especialista);
+    $especialista = mb_convert_encoding((string)($especialista), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST['local'];
-    $local = utf8_decode($local);
+    $local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$selectespecialista=$_POST['selectespecialista'];
-    $selectespecialista = utf8_decode($selectespecialista);
+    $selectespecialista = mb_convert_encoding((string)($selectespecialista), 'ISO-8859-1', 'UTF-8');
 
 
 	historialConsulta($fecha1,$fecha2,$fechafiltro,$documento,$paciente,$especialista,$local,$selectespecialista);
@@ -84,37 +84,37 @@ if($operacion=="historialConsulta")
 if($operacion=="nuevo" || $operacion=="editar" )
 {	
 	$cod_consulta=$_POST['cod_consulta'];
-    $cod_consulta = utf8_decode($cod_consulta); 
+    $cod_consulta = mb_convert_encoding((string)($cod_consulta), 'ISO-8859-1', 'UTF-8'); 
 	
 	$motivo=$_POST['motivo'];
-    $motivo = utf8_decode($motivo); 
+    $motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8'); 
 	
 	$diagnostico=$_POST['diagnostico'];
-    $diagnostico = utf8_decode($diagnostico); 
+    $diagnostico = mb_convert_encoding((string)($diagnostico), 'ISO-8859-1', 'UTF-8'); 
 	
 	$prxtrabajo=$_POST['prxtrabajo'];
-    $prxtrabajo = utf8_decode($prxtrabajo); 
+    $prxtrabajo = mb_convert_encoding((string)($prxtrabajo), 'ISO-8859-1', 'UTF-8'); 
 	
 	$trabajoreali=$_POST['trabajoreali'];
-    $trabajoreali = utf8_decode($trabajoreali); 
+    $trabajoreali = mb_convert_encoding((string)($trabajoreali), 'ISO-8859-1', 'UTF-8'); 
 	
 	$fecha=$_POST['fecha'];
-    $fecha = utf8_decode($fecha); 
+    $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8'); 
 	
 	$cod_estecialista=$_POST['cod_estecialista'];
-    $cod_estecialista = utf8_decode($cod_estecialista); 
+    $cod_estecialista = mb_convert_encoding((string)($cod_estecialista), 'ISO-8859-1', 'UTF-8'); 
 	
 	$cod_agendamiento=$_POST['cod_agendamiento'];
-    $cod_agendamiento = utf8_decode($cod_agendamiento); 
+    $cod_agendamiento = mb_convert_encoding((string)($cod_agendamiento), 'ISO-8859-1', 'UTF-8'); 
 	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	
 	$cod_clienteFK=$_POST['cod_clienteConsulta'];
-    $cod_clienteFK = utf8_decode($cod_clienteFK); 
+    $cod_clienteFK = mb_convert_encoding((string)($cod_clienteFK), 'ISO-8859-1', 'UTF-8'); 
 	
 	$apodo=$_POST['apodo'];
-    $apodo = utf8_decode($apodo); 
+    $apodo = mb_convert_encoding((string)($apodo), 'ISO-8859-1', 'UTF-8'); 
 	
 	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion);
 }	
@@ -124,16 +124,16 @@ if($operacion=="nuevo" || $operacion=="editar" )
 if($operacion=="agregar_observacion_consulta" )
 {	
 	$cod_cliente=$_POST['cod_clienteConsulta'];
-    $cod_cliente = utf8_decode($cod_cliente); 
+    $cod_cliente = mb_convert_encoding((string)($cod_cliente), 'ISO-8859-1', 'UTF-8'); 
 	
 	$descripcion=$_POST['descripcion'];
-    $descripcion = utf8_decode($descripcion); 
+    $descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8'); 
 	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	
 	$user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	
 	agregar_observacion_consulta($cod_cliente,$descripcion,$cod_venta,$user);
 }	
@@ -141,10 +141,10 @@ if($operacion=="agregar_observacion_consulta" )
 if($operacion=="buscar_observacion_consulta" )
 {	
 	$cod_cliente=$_POST['cod_clienteConsulta'];
-    $cod_cliente = utf8_decode($cod_cliente); 
+    $cod_cliente = mb_convert_encoding((string)($cod_cliente), 'ISO-8859-1', 'UTF-8'); 
 	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	
 	
 	
@@ -155,7 +155,7 @@ if($operacion=="buscar_observacion_consulta" )
 if($operacion=="vercuotasatrazadas")
 {	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	vercuotasatrazadas($cod_venta);
 }
 
@@ -163,10 +163,10 @@ if($operacion=="vercuotasatrazadas")
 if($operacion=="actualizarApodo")
 {	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
 	
 	$apodo=$_POST['apodo'];
-    $apodo = utf8_decode($apodo); 
+    $apodo = mb_convert_encoding((string)($apodo), 'ISO-8859-1', 'UTF-8'); 
 	actualizarApodo($cod_venta,$apodo);
 }
 
@@ -176,7 +176,7 @@ if($operacion=="actualizarApodo")
 if($operacion=="verEvolucion")
 {	
 	$cod_venta=$_POST['cod_venta'];
-    $cod_venta = utf8_decode($cod_venta); 
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
  
 	verEvolucion($cod_venta);
 }
@@ -209,9 +209,9 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$nro = utf8_encode($valor['nro']);   
-$usuario = utf8_encode($valor['usuario']);   
-$fecha = utf8_encode($valor['fecha']);   
+$nro = mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');   
+$usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');   
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');   
  
  
 $styleName=CargarStyleTable($styleName);
@@ -318,7 +318,7 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje)
     }
 	
 	$user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	
 	$consulta1 = "insert into evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha)VALUES('$id_detalle_tratamientoConsulta',$user,'$porcentaje',now()) ";
 
@@ -526,9 +526,9 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$descripcion = utf8_encode($valor['descripcion']);   
-$usuario = utf8_encode($valor['usuario']);   
-$fecha_hora = utf8_encode($valor['fecha_hora']);   
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');   
+$usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');   
+$fecha_hora = mb_convert_encoding((string)($valor['fecha_hora']), 'UTF-8', 'ISO-8859-1');   
  
  
 $styleName=CargarStyleTable($styleName);
@@ -625,13 +625,13 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$cod_consulta = utf8_encode($valor['cod_consulta']);   
-$fecha = utf8_encode($valor['fecha']);          
-$trabajo_realizado = utf8_encode($valor['trabajo_realizado']);          
-$proximo_trabajo = utf8_encode($valor['proximo_trabajo']);  
-$motivoconsulta = utf8_encode($valor['motivoconsulta']);  
-$diagnostico = utf8_encode($valor['diagnostico']);  
-$especialista = utf8_encode($valor['especialista']);  
+$cod_consulta = mb_convert_encoding((string)($valor['cod_consulta']), 'UTF-8', 'ISO-8859-1');   
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');          
+$trabajo_realizado = mb_convert_encoding((string)($valor['trabajo_realizado']), 'UTF-8', 'ISO-8859-1');          
+$proximo_trabajo = mb_convert_encoding((string)($valor['proximo_trabajo']), 'UTF-8', 'ISO-8859-1');  
+$motivoconsulta = mb_convert_encoding((string)($valor['motivoconsulta']), 'UTF-8', 'ISO-8859-1');  
+$diagnostico = mb_convert_encoding((string)($valor['diagnostico']), 'UTF-8', 'ISO-8859-1');  
+$especialista = mb_convert_encoding((string)($valor['especialista']), 'UTF-8', 'ISO-8859-1');  
  
 $pagina .= "
 <div 
@@ -695,13 +695,13 @@ if ($valor>0)
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
-$descripcion = utf8_encode($valor['descripcion']);   
-$nombre_producto = utf8_encode($valor['nombre_producto']);          
-$cod_detalle = utf8_encode($valor['cod_detalle']);          
-$cantidad_detalle = utf8_encode($valor['cantidad_detalle']);  
-$estado_tratamiento = utf8_encode($valor['estado_tratamiento']); 
-$progreso_porcentaje = utf8_encode($valor['progreso_porcentaje']); 
-$estado = utf8_encode($valor['estado']); 
+$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');   
+$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
+$cod_detalle = mb_convert_encoding((string)($valor['cod_detalle']), 'UTF-8', 'ISO-8859-1');          
+$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'UTF-8', 'ISO-8859-1');  
+$estado_tratamiento = mb_convert_encoding((string)($valor['estado_tratamiento']), 'UTF-8', 'ISO-8859-1'); 
+$progreso_porcentaje = mb_convert_encoding((string)($valor['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1'); 
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
 
 $Style='';
 if($estado_tratamiento!=""){
@@ -788,14 +788,14 @@ if ( ! $stmt->execute()) {
 	  {
 		   
 		  
-		  	  $num_factura=utf8_encode($valor['num_factura']);
-		  	  $ci_cliente=utf8_encode($valor['ci_cliente']); 
-			  $paciente=utf8_encode($valor['paciente']);
-			  $cod_cliente=utf8_encode($valor['cod_cliente']);
+		  	  $num_factura=mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');
+		  	  $ci_cliente=mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
+			  $paciente=mb_convert_encoding((string)($valor['paciente']), 'UTF-8', 'ISO-8859-1');
+			  $cod_cliente=mb_convert_encoding((string)($valor['cod_cliente']), 'UTF-8', 'ISO-8859-1');
 			   $decripcion=''; 
-			   $cod_venta=utf8_encode($valor['cod_venta']);
-			   $apodo=utf8_encode($valor['apodo']);
-			   $nombre_local=utf8_encode($valor['nombre_local']);
+			   $cod_venta=mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1');
+			   $apodo=mb_convert_encoding((string)($valor['apodo']), 'UTF-8', 'ISO-8859-1');
+			   $nombre_local=mb_convert_encoding((string)($valor['nombre_local']), 'UTF-8', 'ISO-8859-1');
 			   
 $porcentaje = $valor['porcentaje'];
 $totalporcentaje = $valor['totalporcentaje'];
@@ -916,8 +916,8 @@ function detalleTratamiento($buscar) {
 
     if ($valor > 0) {
         while ($row = mysqli_fetch_assoc($result)) {
-            $nombre_producto = utf8_encode($row['nombre_producto']);
-            $estado = utf8_encode($row['estado']);
+            $nombre_producto = mb_convert_encoding((string)($row['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+            $estado = mb_convert_encoding((string)($row['estado']), 'UTF-8', 'ISO-8859-1');
             
             $html .= "
             <li style='
@@ -1007,21 +1007,21 @@ while ($valor= mysqli_fetch_assoc($result))
 {  
 
 
-$cod_consulta = utf8_encode($valor['cod_consulta']);
-$cod_ventaFK = utf8_encode($valor['cod_ventaFK']);
-$fecha = utf8_encode($valor['fecha']);
-$cod_usuarioFK = utf8_encode($valor['cod_usuarioFK']);
-$cod_agendamientoFK = utf8_encode($valor['cod_agendamientoFK']);
-$estado = utf8_encode($valor['estado']);
-$trabajo_realizado = utf8_encode($valor['trabajo_realizado']);
-$proximo_trabajo = utf8_encode($valor['proximo_trabajo']);
-$motivoconsulta = utf8_encode($valor['motivoconsulta']);
-$diagnostico = utf8_encode($valor['diagnostico']);
-$cod_clienteFK = utf8_encode($valor['cod_clienteFK']);
-$local = utf8_encode($valor['local']);
-$especialista = utf8_encode($valor['especialista']);
-$cliente = utf8_encode($valor['cliente']);
-$ci = utf8_encode($valor['ci']);
+$cod_consulta = mb_convert_encoding((string)($valor['cod_consulta']), 'UTF-8', 'ISO-8859-1');
+$cod_ventaFK = mb_convert_encoding((string)($valor['cod_ventaFK']), 'UTF-8', 'ISO-8859-1');
+$fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+$cod_usuarioFK = mb_convert_encoding((string)($valor['cod_usuarioFK']), 'UTF-8', 'ISO-8859-1');
+$cod_agendamientoFK = mb_convert_encoding((string)($valor['cod_agendamientoFK']), 'UTF-8', 'ISO-8859-1');
+$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+$trabajo_realizado = mb_convert_encoding((string)($valor['trabajo_realizado']), 'UTF-8', 'ISO-8859-1');
+$proximo_trabajo = mb_convert_encoding((string)($valor['proximo_trabajo']), 'UTF-8', 'ISO-8859-1');
+$motivoconsulta = mb_convert_encoding((string)($valor['motivoconsulta']), 'UTF-8', 'ISO-8859-1');
+$diagnostico = mb_convert_encoding((string)($valor['diagnostico']), 'UTF-8', 'ISO-8859-1');
+$cod_clienteFK = mb_convert_encoding((string)($valor['cod_clienteFK']), 'UTF-8', 'ISO-8859-1');
+$local = mb_convert_encoding((string)($valor['local']), 'UTF-8', 'ISO-8859-1');
+$especialista = mb_convert_encoding((string)($valor['especialista']), 'UTF-8', 'ISO-8859-1');
+$cliente = mb_convert_encoding((string)($valor['cliente']), 'UTF-8', 'ISO-8859-1');
+$ci = mb_convert_encoding((string)($valor['ci']), 'UTF-8', 'ISO-8859-1');
 
 
 $styleName=CargarStyleTable($styleName);

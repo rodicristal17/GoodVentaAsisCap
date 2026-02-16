@@ -11,12 +11,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -33,20 +33,20 @@ if($funt=="editar")
 {
 
 $acciones=$_POST['acciones'];
-$acciones = utf8_decode($acciones);
+$acciones = mb_convert_encoding((string)($acciones), 'ISO-8859-1', 'UTF-8');
 $idAbmUsuario=$_POST['idAbmUsuario'];
-$idAbmUsuario = utf8_decode($idAbmUsuario);
+$idAbmUsuario = mb_convert_encoding((string)($idAbmUsuario), 'ISO-8859-1', 'UTF-8');
 $idabm=$_POST['idabm'];
-$idabm = utf8_decode($idabm);
+$idabm = mb_convert_encoding((string)($idabm), 'ISO-8859-1', 'UTF-8');
 abm($acciones,$idabm,$funt,$idAbmUsuario);
 }
 
 if($funt=="buscar")
 {
 $buscador=$_POST['buscador'];
-$buscador = utf8_decode($buscador);
+$buscador = mb_convert_encoding((string)($buscador), 'ISO-8859-1', 'UTF-8');
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 buscar($buscar,$buscador);
 }
 
@@ -123,7 +123,7 @@ if ( ! $stmt->execute()) {
  {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
-		  $accion=utf8_encode($valor['accion']);
+		  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
 		   if($accion=="SI"){
 			  $nrodeactivos=$nrodeactivos+1;	
           	
@@ -177,11 +177,11 @@ $styleName="tableRegistroSearch";
 		  
 		  
 		      $idaccesosUser=$valor['idaccesosUser'];
-			  $accion=utf8_encode($valor['accion']);
-			  $usuarios_idusario=utf8_encode($valor['usuarios_idusario']);
-			  $nombre=utf8_encode($valor['nombre']);
-			  $codigo=utf8_encode($valor['codigo']);
-			  $formulario=utf8_encode($valor['formulario']);
+			  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
+			  $usuarios_idusario=mb_convert_encoding((string)($valor['usuarios_idusario']), 'UTF-8', 'ISO-8859-1');
+			  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+			  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
+			  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
 			  $tituloacceso="";
 			 if($controltitulo!=$formulario){
 				   $tituloacceso="<p class='ptituloZ'>".$formulario."</p>";

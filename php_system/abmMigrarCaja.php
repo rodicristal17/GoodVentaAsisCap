@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -13,13 +13,13 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);	
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');	
 if($user!=""){
 
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok" && $operacion!="buscaroption"){
 $informacion =array("1" => "UI");
@@ -38,25 +38,25 @@ if($operacion=="nuevo" || $operacion=="editar")
 {
 	
 	$cod_MigrarCaja=$_POST['cod_MigrarCaja'];
-$cod_MigrarCaja = utf8_decode($cod_MigrarCaja);
+$cod_MigrarCaja = mb_convert_encoding((string)($cod_MigrarCaja), 'ISO-8859-1', 'UTF-8');
 
 	$monto=$_POST['monto'];
 $monto = quitarseparadormiles($monto);
 
 	$obs=$_POST['obs'];
-$obs = utf8_decode($obs);
+$obs = mb_convert_encoding((string)($obs), 'ISO-8859-1', 'UTF-8');
 
 	$usu_RecibirFK=$_POST['usu_RecibirFK'];
-$usu_RecibirFK = utf8_decode($usu_RecibirFK);
+$usu_RecibirFK = mb_convert_encoding((string)($usu_RecibirFK), 'ISO-8859-1', 'UTF-8');
 
 	$estado=$_POST['estado'];
-$estado = utf8_decode($estado);	
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');	
 
 	$user=$_POST['useru'];
-$user = utf8_decode($user);	
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');	
 
 	$cod_cajaApertura=$_POST['cod_cajaApertura'];
-$cod_cajaApertura = utf8_decode($cod_cajaApertura);	
+$cod_cajaApertura = mb_convert_encoding((string)($cod_cajaApertura), 'ISO-8859-1', 'UTF-8');	
 
 
 	abm($cod_MigrarCaja,$monto,$obs,$usu_RecibirFK,$estado,$user,$cod_cajaApertura,$operacion);
@@ -69,14 +69,14 @@ $cod_cajaApertura = utf8_decode($cod_cajaApertura);
 if($operacion=="buscar")
 {
 	$fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 $recibe=$_POST['recibe'];
-$recibe = utf8_decode($recibe);
+$recibe = mb_convert_encoding((string)($recibe), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 $user=$_POST['useru'];
-$user = utf8_decode($user);	
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');	
 	buscar($fecha,$recibe,$user,$estado);
 
 }	
@@ -96,7 +96,7 @@ if($operacion=="BuscarAbmCajaEscritorio")
 {
 
 $user=$_POST['useru'];
-$user = utf8_decode($user);	
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');	
 	BuscarAbmCajaEscritorio( $user,"Activo");
 
 }	
@@ -106,10 +106,10 @@ if($operacion=="nuevoCajaEscritorio")
 {
 
 $idabm=$_POST['idabm'];
-$idabm = utf8_decode($idabm);	
+$idabm = mb_convert_encoding((string)($idabm), 'ISO-8859-1', 'UTF-8');	
 
 $codApertura=$_POST['codApertura'];
-$codApertura = utf8_decode($codApertura);	
+$codApertura = mb_convert_encoding((string)($codApertura), 'ISO-8859-1', 'UTF-8');	
 	nuevoCajaEscritorio( $idabm,$codApertura);
 
 }	
@@ -120,19 +120,19 @@ $codApertura = utf8_decode($codApertura);
 if($operacion=="buscarInforme")
 {
 	$fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 $recibe=$_POST['recibe'];
-$recibe = utf8_decode($recibe);
+$recibe = mb_convert_encoding((string)($recibe), 'ISO-8859-1', 'UTF-8');
 $usuario=$_POST['usuario'];
-$usuario = utf8_decode($usuario);
+$usuario = mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
 
 $fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 
 $tipo=$_POST['tipo'];
-$tipo = utf8_decode($tipo);	
+$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');	
 	buscarInforme($fecha,$recibe,$tipo,$usuario,$fecha1,$fecha2);
 
 }	
@@ -227,15 +227,15 @@ if ( ! $stmt->execute()) {
 	  {	  
 		  
 		      $idmigrar_caja=$valor['idmigrar_caja'];
-		  	  $obs=utf8_encode($valor['obs']);
-		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $obs=mb_convert_encoding((string)($valor['obs']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
 			  
 			  $monto=$valor['monto']; 
 			  
-			  $estado=utf8_encode($valor['estado']);
+			  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 			  
-			  $usuarioRecibe=utf8_encode($valor['usuarioRecibe']);
-			  $usuarioEnvia=utf8_encode($valor['usuarioEnvia']);
+			  $usuarioRecibe=mb_convert_encoding((string)($valor['usuarioRecibe']), 'UTF-8', 'ISO-8859-1');
+			  $usuarioEnvia=mb_convert_encoding((string)($valor['usuarioEnvia']), 'UTF-8', 'ISO-8859-1');
    	 
 		 $totalMonto= $totalMonto + $monto; 
 		 
@@ -324,19 +324,19 @@ if ( ! $stmt->execute()) {
 	  {	  
 		  
 		      $idmigrar_caja=$valor['idmigrar_caja'];
-		  	  $obs=utf8_encode($valor['obs']);
-		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $obs=mb_convert_encoding((string)($valor['obs']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
 			  
 			  $monto=$valor['monto'];
-		  	  $cod_caja_desdeFK=utf8_encode($valor['cod_caja_desdeFK']);
-		  	  $cod_caja_hastaFK=utf8_encode($valor['cod_caja_hastaFK']);
-			  $estado=utf8_encode($valor['estado']);
-			  $tipo=utf8_encode($valor['tipo']);
-			  $cod_usuRecibeFK=utf8_encode($valor['cod_usuRecibeFK']);
-			  $cod_UsuEnviaFK=utf8_encode($valor['cod_UsuEnviaFK']);
+		  	  $cod_caja_desdeFK=mb_convert_encoding((string)($valor['cod_caja_desdeFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_caja_hastaFK=mb_convert_encoding((string)($valor['cod_caja_hastaFK']), 'UTF-8', 'ISO-8859-1');
+			  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+			  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+			  $cod_usuRecibeFK=mb_convert_encoding((string)($valor['cod_usuRecibeFK']), 'UTF-8', 'ISO-8859-1');
+			  $cod_UsuEnviaFK=mb_convert_encoding((string)($valor['cod_UsuEnviaFK']), 'UTF-8', 'ISO-8859-1');
 			  
-			  $usuarioRecibe=utf8_encode($valor['usuarioRecibe']);
-			  $usuarioEnvia=utf8_encode($valor['usuarioEnvia']);
+			  $usuarioRecibe=mb_convert_encoding((string)($valor['usuarioRecibe']), 'UTF-8', 'ISO-8859-1');
+			  $usuarioEnvia=mb_convert_encoding((string)($valor['usuarioEnvia']), 'UTF-8', 'ISO-8859-1');
 			  
  
 		  	 
@@ -455,19 +455,19 @@ if ( ! $stmt->execute()) {
 	  {	  
 		  
 		      $idmigrar_caja=$valor['idmigrar_caja'];
-		  	  $obs=utf8_encode($valor['obs']);
-		  	  $fecha=utf8_encode($valor['fecha']);
+		  	  $obs=mb_convert_encoding((string)($valor['obs']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
 			  
 			  $monto=$valor['monto'];
-		  	  $cod_caja_desdeFK=utf8_encode($valor['cod_caja_desdeFK']);
-		  	  $cod_caja_hastaFK=utf8_encode($valor['cod_caja_hastaFK']);
-			  $estado=utf8_encode($valor['estado']);
-			  $tipo=utf8_encode($valor['tipo']);
-			  $cod_usuRecibeFK=utf8_encode($valor['cod_usuRecibeFK']);
-			  $cod_UsuEnviaFK=utf8_encode($valor['cod_UsuEnviaFK']);
+		  	  $cod_caja_desdeFK=mb_convert_encoding((string)($valor['cod_caja_desdeFK']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_caja_hastaFK=mb_convert_encoding((string)($valor['cod_caja_hastaFK']), 'UTF-8', 'ISO-8859-1');
+			  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+			  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+			  $cod_usuRecibeFK=mb_convert_encoding((string)($valor['cod_usuRecibeFK']), 'UTF-8', 'ISO-8859-1');
+			  $cod_UsuEnviaFK=mb_convert_encoding((string)($valor['cod_UsuEnviaFK']), 'UTF-8', 'ISO-8859-1');
 			  
-			  $usuarioRecibe=utf8_encode($valor['usuarioRecibe']);
-			  $usuarioEnvia=utf8_encode($valor['usuarioEnvia']);
+			  $usuarioRecibe=mb_convert_encoding((string)($valor['usuarioRecibe']), 'UTF-8', 'ISO-8859-1');
+			  $usuarioEnvia=mb_convert_encoding((string)($valor['usuarioEnvia']), 'UTF-8', 'ISO-8859-1');
 			  
 $Evento="";
 if($cod_caja_hastaFK=="0" ){
@@ -532,8 +532,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_usuario=$valor['cod_usuario'];
-		  	  $nombre_persona=utf8_encode($valor['nombre_persona']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre_persona=mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			    	

@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
@@ -12,11 +12,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok" && $operacion!="buscaroptionlogin"){
 $informacion =array("1" => "UI");
@@ -30,13 +30,13 @@ if($operacion=="nuevo" || $operacion=="editar")
 {
 	
 $cod_tipoPago=$_POST['cod_tipoPago'];
-$cod_tipoPago = utf8_decode($cod_tipoPago);
+$cod_tipoPago = mb_convert_encoding((string)($cod_tipoPago), 'ISO-8859-1', 'UTF-8');
 $nombre=$_POST['nombre'];
-$nombre = utf8_decode($nombre);
+$nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 $datos=$_POST['datos'];
-$datos = utf8_decode($datos);
+$datos = mb_convert_encoding((string)($datos), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
 	abm($cod_tipoPago,$nombre,$datos,$estado,$operacion);
 
@@ -46,9 +46,9 @@ if($operacion=="buscar")
 {
 
 $nombre=$_POST['nombre'];
-$nombre = utf8_decode($nombre);
+$nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 	buscar($nombre,$estado);
 
 }	
@@ -150,9 +150,9 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $cod_tipoPago=$valor['cod_tipoPago'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $datos=utf8_encode($valor['datos']);
-		  	  $estado=utf8_encode($valor['estado']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $datos=mb_convert_encoding((string)($valor['datos']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	 
 		  	 
 			  $styleName=CargarStyleTable($styleName);  	 
@@ -206,8 +206,8 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $codPago=$valor['cod_tipoPago'];
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $datos=utf8_encode($valor['datos']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $datos=mb_convert_encoding((string)($valor['datos']), 'UTF-8', 'ISO-8859-1');
 				  	 
 		  	 
 			    	

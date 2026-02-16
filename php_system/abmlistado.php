@@ -1,7 +1,7 @@
 <?php
 
 $operacion = $_POST['funt'];
-$operacion = utf8_decode($operacion);
+$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include('quitarseparadormiles.php');
 //cargar achivos importantes
 require("conexion.php");
@@ -10,11 +10,11 @@ function verificar($operacion)
 {
 	
  $user=$_POST['useru'];
-    $user = utf8_decode($user);
+    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 $informacion =array("1" => "UI");/*Retornamos una respuesta exito con el Array JSON si todo esta correcto al final de nuestra funcion*/
@@ -33,21 +33,21 @@ if($operacion=="nuevo" || $operacion=="editar")
 	
 	
 	$idlistado=$_POST['idlistado'];
-$idlistado = utf8_decode($idlistado);
+$idlistado = mb_convert_encoding((string)($idlistado), 'ISO-8859-1', 'UTF-8');
 $cant=$_POST['cant'];
 $cant = quitarseparadormiles($cant);
 	$fecha=$_POST['fecha'];
-$fecha = utf8_decode($fecha);
+$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $cod_producto=$_POST['cod_producto'];
-$cod_producto = utf8_decode($cod_producto);
+$cod_producto = mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
 $cod_cobrador=$_POST['cod_cobrador'];
-$cod_cobrador = utf8_decode($cod_cobrador);
+$cod_cobrador = mb_convert_encoding((string)($cod_cobrador), 'ISO-8859-1', 'UTF-8');
 $cantvendido=$_POST['cantvendido'];
 $cantvendido = quitarseparadormiles($cantvendido);
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 	abm($idlistado,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantvendido,$cod_local,$operacion);
 
 }
@@ -55,15 +55,15 @@ $cod_local = utf8_decode($cod_local);
 if($operacion=="buscar")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = utf8_decode($fecha1);
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
-$fecha2 = utf8_decode($fecha2);
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
-$estado = utf8_decode($estado);
+$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
-$cod_local = utf8_decode($cod_local);
+$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 buscar($fecha1,$fecha2,$estado,$buscar,$cod_local);
 
 }	
@@ -170,16 +170,16 @@ if ( ! $stmt->execute()) {
 		  
 		  
 		      $idlistado=$valor['idlistado'];
-		  	  $nombreproducto=utf8_encode($valor['nombreproducto']);
-		  	  $cobrador=utf8_encode($valor['cobrador']);
-		  	  $cant=utf8_encode($valor['cant']);
-		  	  $cod_producto=utf8_encode($valor['cod_producto']);
-		  	  $fecha=utf8_encode($valor['fecha']);
-		  	  $estado=utf8_encode($valor['estado']);
-		  	  $cod_cobrador=utf8_encode($valor['cod_cobrador']);
-		  	  $cantvendido=utf8_encode($valor['cantvendido']);
-		  	  $cod_local=utf8_encode($valor['cod_local']);
-		  	  $nombrelocal=utf8_encode($valor['nombrelocal']);
+		  	  $nombreproducto=mb_convert_encoding((string)($valor['nombreproducto']), 'UTF-8', 'ISO-8859-1');
+		  	  $cobrador=mb_convert_encoding((string)($valor['cobrador']), 'UTF-8', 'ISO-8859-1');
+		  	  $cant=mb_convert_encoding((string)($valor['cant']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_producto=mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+		  	  $fecha=mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');
+		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_cobrador=mb_convert_encoding((string)($valor['cod_cobrador']), 'UTF-8', 'ISO-8859-1');
+		  	  $cantvendido=mb_convert_encoding((string)($valor['cantvendido']), 'UTF-8', 'ISO-8859-1');
+		  	  $cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 		  	
 			    	 
 		  	  $pagina.="

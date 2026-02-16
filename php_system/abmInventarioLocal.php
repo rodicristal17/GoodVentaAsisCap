@@ -7,12 +7,12 @@
 
     function verificar($funt) {
         $user = $_POST['useru'];
-        $user = utf8_decode($user);
+        $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
         $pass = $_POST['passu'];
 
         $pass = str_replace("=", "+", $pass);
         $navegador = $_POST['navegador'];
-        $navegador = utf8_decode($navegador);
+        $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
             $informacion = array("1" => "UI");
@@ -22,7 +22,7 @@
 
         switch ($funt) {
             case 'cargar_imagen':
-                $cod_inventario= utf8_decode($_POST['cod_inventario']);
+                $cod_inventario= mb_convert_encoding((string)($_POST['cod_inventario']), 'ISO-8859-1', 'UTF-8');
                 $fotos= $_POST['fotos'];
                 $ext= $_POST['exts'];
                 for ($i= 0; $i < count($fotos); $i++) {
@@ -34,24 +34,24 @@
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
             case 'nuevo/editar':
-                $cod_inventario= isset($_POST['cod_inventario']) ? utf8_decode($_POST['cod_inventario']) : null;
-                $nombre= isset($_POST['nombre']) ? utf8_decode($_POST['nombre']) : null;
-                $descripcion= isset($_POST['descripcion']) ? utf8_decode($_POST['descripcion']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cantidad= isset($_POST['cantidad']) ? utf8_decode($_POST['cantidad']) : null;
-                $costo= isset($_POST['costo']) ? utf8_decode($_POST['costo']) : null;
-                $observacion= isset($_POST['observacion']) ? utf8_decode($_POST['observacion']) : null;
-                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
+                $cod_inventario= isset($_POST['cod_inventario']) ? mb_convert_encoding((string)($_POST['cod_inventario']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre= isset($_POST['nombre']) ? mb_convert_encoding((string)($_POST['nombre']), 'ISO-8859-1', 'UTF-8') : null;
+                $descripcion= isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cantidad= isset($_POST['cantidad']) ? mb_convert_encoding((string)($_POST['cantidad']), 'ISO-8859-1', 'UTF-8') : null;
+                $costo= isset($_POST['costo']) ? mb_convert_encoding((string)($_POST['costo']), 'ISO-8859-1', 'UTF-8') : null;
+                $observacion= isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
                 
                 $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $user);
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
             case 'buscarVista':
-                $cod_inventario= isset($_POST['cod_inventario']) ? utf8_decode($_POST['cod_inventario']) : null;
-                $nombre= isset($_POST['nombre']) ? utf8_decode($_POST['nombre']) : null;
-                $estado= isset($_POST['estado']) ? utf8_decode($_POST['estado']) : null;
-                $cod_localFK= isset($_POST['cod_localFK']) ? utf8_decode($_POST['cod_localFK']) : null;
-                $ocultar_inactivo= isset($_POST['ocultar_inactivo']) ? utf8_decode($_POST['ocultar_inactivo']) : null;
+                $cod_inventario= isset($_POST['cod_inventario']) ? mb_convert_encoding((string)($_POST['cod_inventario']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre= isset($_POST['nombre']) ? mb_convert_encoding((string)($_POST['nombre']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $ocultar_inactivo= isset($_POST['ocultar_inactivo']) ? mb_convert_encoding((string)($_POST['ocultar_inactivo']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'cod_insumo'=> $cod_inventario,
@@ -61,7 +61,7 @@
                     'cod_localFK'=> $cod_localFK
                 );
 
-                $limite= isset($_POST['limite']) ? utf8_decode($_POST['limite']) : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
                 obtenerVistaInsumosLocal($filtros, $limite);
                 break;
@@ -177,7 +177,7 @@
         $registros= array();
         while ($row = $result->fetch_assoc()) {
             foreach ($row as $key => $value) {
-                $reg[$key]= utf8_encode($value);
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
             $registros[] = $reg;
         }
@@ -295,6 +295,6 @@
 
     // Validacion e identificacion de funcion
     $operacion = $_POST['accion'];
-    $operacion = utf8_decode($operacion);
+    $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
     verificar($operacion);
 ?>

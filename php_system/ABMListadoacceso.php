@@ -1,7 +1,7 @@
 <?php
 
 $funt = $_POST['funt'];
-$funt = utf8_decode($funt);
+$funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
@@ -16,12 +16,12 @@ function verificar($funt)
 	
 	
 	$user=$_POST['useru'];
-$user = utf8_decode($user);
+$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];
 	
 	  $pass = str_replace("=","+",$pass);
 $navegador=$_POST['navegador'];
-$navegador = utf8_decode($navegador);
+$navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
 $resp=verificar_navegador($user,$navegador,$pass);
 if($resp!="ok"){
 
@@ -56,9 +56,9 @@ if($funt=="editarnombreacceso" )
 	
 	
 	$idlistadodeacceso=$_POST['idabm'];
-    $idlistadodeacceso = utf8_decode($idlistadodeacceso);
+    $idlistadodeacceso = mb_convert_encoding((string)($idlistadodeacceso), 'ISO-8859-1', 'UTF-8');
 	$nombre=$_POST['nombre'];
-    $nombre = utf8_decode($nombre);
+    $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	editarnombreacceso($idlistadodeacceso,$nombre,$funt);
 
 }
@@ -67,9 +67,9 @@ if($funt=="editarnombreformulario" )
 	
 	
 	$idlistadodeacceso=$_POST['idabm'];
-    $idlistadodeacceso = utf8_decode($idlistadodeacceso);
+    $idlistadodeacceso = mb_convert_encoding((string)($idlistadodeacceso), 'ISO-8859-1', 'UTF-8');
 	$nombre=$_POST['nombre'];
-    $nombre = utf8_decode($nombre);
+    $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	editarnombreformulario($idlistadodeacceso,$nombre,$funt);
 
 }
@@ -78,9 +78,9 @@ if($funt=="editarorden" )
 	
 	
 	$idlistadodeacceso=$_POST['idabm'];
-    $idlistadodeacceso = utf8_decode($idlistadodeacceso);
+    $idlistadodeacceso = mb_convert_encoding((string)($idlistadodeacceso), 'ISO-8859-1', 'UTF-8');
 	$orden=$_POST['orden'];
-    $orden = utf8_decode($orden);
+    $orden = mb_convert_encoding((string)($orden), 'ISO-8859-1', 'UTF-8');
 	editarorden($idlistadodeacceso,$orden);
 
 }
@@ -90,15 +90,15 @@ if($funt=="addAcceso" )
 	
 	
 	$codigo=$_POST['codigo'];
-    $codigo = utf8_decode($codigo);
+    $codigo = mb_convert_encoding((string)($codigo), 'ISO-8859-1', 'UTF-8');
 	$nombre=$_POST['nombre'];
-    $nombre = utf8_decode($nombre);
+    $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	$acceso=$_POST['acceso'];
-    $acceso = utf8_decode($acceso);
+    $acceso = mb_convert_encoding((string)($acceso), 'ISO-8859-1', 'UTF-8');
 	$orden=$_POST['orden'];
-    $orden = utf8_decode($orden);
+    $orden = mb_convert_encoding((string)($orden), 'ISO-8859-1', 'UTF-8');
 	$formulario=$_POST['formulario'];
-    $formulario = utf8_decode($formulario);
+    $formulario = mb_convert_encoding((string)($formulario), 'ISO-8859-1', 'UTF-8');
 	addAcceso($codigo,$nombre,$acceso,$orden,$formulario);
 
 }
@@ -106,7 +106,7 @@ if($funt=="addAcceso" )
 if($funt=="buscar")
 {
 $buscar=$_POST['buscar'];
-$buscar = utf8_decode($buscar);
+$buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 buscar($buscar);
 
 }
@@ -281,12 +281,12 @@ $controltitulo="";
 		  
 		  
 		     $iddetallesniveles=$valor['iddetallesniveles'];
-		  	  $nro=utf8_encode($valor['nro']);
-		  	  $formulario=utf8_encode($valor['formulario']);
-		  	  $codigo=utf8_encode($valor['codigo']);
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $accion=utf8_encode($valor['accion']);
-		  	  $idlistadodeacceso=utf8_encode($valor['idlistadodeacceso']);		  	 
+		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
+		  	  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
+		  	  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
+		  	  $idlistadodeacceso=mb_convert_encoding((string)($valor['idlistadodeacceso']), 'UTF-8', 'ISO-8859-1');		  	 
 			  guardaraccesouser($idlistadodeacceso,$accion,$usuarios_idusario);
 			    	 
 		  	
@@ -479,13 +479,13 @@ $controltitulo="";
 		  
 		  
 		      $idlistadodeacceso=$valor['idlistadodeacceso'];
-		  	  $nro=utf8_encode($valor['nro']);
-		  	  $formulario=utf8_encode($valor['formulario']);
-		  	  $codigo=utf8_encode($valor['codigo']);
-		  	  $nombre=utf8_encode($valor['nombre']);
-		  	  $accion=utf8_encode($valor['accion']);
-		  	  $tipo=utf8_encode($valor['tipo']);
-		  	  $orden=utf8_encode($valor['orden']);
+		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
+		  	  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
+		  	  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
+		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
+		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  	  $orden=mb_convert_encoding((string)($valor['orden']), 'UTF-8', 'ISO-8859-1');
 			  $tituloPagina="";
 		  	  if($controltitulo==""){
 				   $tituloPagina="<p class='ptituloZ'>".$formulario."</p>"  ;
@@ -551,7 +551,7 @@ $totales=0;
 		  
 		  
 		      $cod_listafacultad=$valor['cod_listafacultad'];
-		  	  $nombre=utf8_encode($valor['nombre']);
+		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
 		  	  
 		  	
 		  	$pagina.="<option id='$cod_listafacultad' value='$nombre'  ></option>";
