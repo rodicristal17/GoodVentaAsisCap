@@ -320,7 +320,7 @@ function abmInterConsulta(asunto, estado, tipo, local, monto_limite) {
 
                     // Busca el cod_interConsulta recien creado
                     document.getElementById('inptBuscarInterConsulta1').value= datos["2"];
-                    buscarInterConsultasYContenido(cod_interConsulta);
+                    buscarInterConsultasYContenido(datos["2"]);
                     document.getElementById('inptBuscarInterConsulta1').value= "";
                     verCerrarVentanaInterConsulta(false);
 				} else {
@@ -647,7 +647,7 @@ function subirImagenMensajeInterconsulta(cod_mens) {
 
 var totalRegistroMensaje= 0;
 function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
-    obtener_datos_user()
+    obtener_datos_user();
 	var datos = new FormData();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
