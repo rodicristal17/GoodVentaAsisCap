@@ -7,6 +7,7 @@ include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("subir_foto_base64.php");
 include_once("abmpagos.php");
+include_once("abmInterConsulta.php");
 
 date_default_timezone_set('America/Asuncion');
 
@@ -72,7 +73,7 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 	$ultimoDiaMes= $fechaActual->format('Y-m-t');
 
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '');
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
 
 	if ($informacion["4"][0]["presupuesto"] && $informacion["4"][0]["presupuesto"] != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -125,7 +126,9 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$cod_local=buscarlocaluser($user);
 	}
 }
-$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK);
+$idgastos= "";
+
+$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $idgastos);
 echo json_encode($informacion);
 exit;
 }	
@@ -140,7 +143,7 @@ if ($operacion == "verficiarLimiteMotivo") {
 	$ultimoDiaMes= $fechaActual->format('Y-m-t');
 
 	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '');
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
 
 	echo json_encode(array("1" => "exito", "2" => $informacion["4"][0]["presupuesto"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));	
 	exit;
@@ -486,11 +489,14 @@ $stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$perso
 if($operacion=="editar")
 {
 
+// Obtiene los datos actuales del gasto
+$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', $idgastos)[9];
+
 if ($estado == 'Activo' && !empty($cod_usuario_autoriz)) {
 	$estado = "pendiente";
 }
 
-$consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuario=?,
+$consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
 personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsultaFK=?, cod_usuario_autoriz=? where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
 $ss='sssssssssssssssi';
@@ -516,13 +522,32 @@ $foto=$_POST['foto'];
 $ext=$_POST['ext'];
 subirImagenGasto($idgastos, $foto, $ext);
 
+if($operacion=="editar")
+{
+	// Obtiene los datos actuales del gasto
+	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', $idgastos)[9][0];
+
+	// Compara los datos anteriores con los nuevos y prepara el mensaje
+	$mensaje= "";
+	foreach ($datos_gasto[0] as $key => $value) {
+		if ($datos_gasto_nuevo[$key] != $value) {
+			$mensaje .= ", el campo $key cambió de '".$value."' a '".$datos_gasto_nuevo[$key]."'";
+		}
+	}
+
+	if ($mensaje && $datos_gasto_nuevo['cod_interConsultaFK']) {
+		$fechaActual = new DateTime();
+		$mensaje= $datos_gasto_nuevo['nombre_usuario_edit'] ." modifico ". substr($mensaje, 2) . " en el movimiento con descripcion $motivo, el ".$fechaActual->format('d-m-Y H:i:s');
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "");
+	}
+}
 $informacion =array("1" => "exito", "2" => $idgastos);
 echo json_encode($informacion);	
 exit;
 	
 }
 
-function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK)
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $idgastos)
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -591,6 +616,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		if ($cod_interConsultaFK != "") {
 			$sqlFiltro .= " and g.cod_interConsultaFK= $cod_interConsultaFK ";
 		}
+		if ($idgastos != "") {
+			$sqlFiltro .= " and g.idgastos= $idgastos ";
+		}
 		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = ".$mot['cod_motivo_ingreso_egreso'];
 
 		// Se limpia el primer ' and'
@@ -603,6 +631,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK,
 		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
+		(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
 		m.descripcion AS motivo, m.categoria,
 		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
@@ -659,6 +688,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					'fecha_autoriz' => mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1'),
 					'usuario_autoriz_nombre' => mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1'),
 					'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
+					'nombre_usuario_edit' => mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1'),
 				);
 
 				if ($valor['estado'] == 'Activo') {
@@ -709,6 +739,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			'fecha_autoriz' => "",
 			'usuario_autoriz_nombre' => "",
 			'cod_motivoIngresoEgresoFK' => -1,
+			'nombre_usuario_edit' => "",
 		);
 		$registrosZona['ingreso'][-1][]= $valor;
 		if ($valor['estado'] == 'Activo') {
@@ -791,6 +822,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$fecha_autoriz = mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1');
 			$usuario_autoriz_nombre= mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1');
 			$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
+			$nombre_usuario_edit= mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1');
 
 			$funcion= "obtenerdatosabmGasto(this)";
 			if ($idgastos == "") {
@@ -819,11 +851,11 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
-					<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+					<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
 					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
-					<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
+					<td  id='td_datos_21' style='width:20%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -836,6 +868,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 					<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 					<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
+					<td  id='td_datos_22' style='display:none'>".$nombre_usuario_edit."</td>
 					</tr>
 					</table>";
 			}
@@ -849,11 +882,11 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 				<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
-				<td  id='td_datos_3' style='display: none;'>".$nroboleta."</td>
+				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
 				<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 				<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
 				<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
-				<td  id='td_datos_8' style='width:20%'>".$usuarionombre."</td>
+				<td  id='td_datos_21' style='width:20%'>".$usuarionombre."</td>
 				<td  id='' style='width:10%'>".$nombrelocal."</td>
 				<td  id='td_datos_5' style='display:none'>".$estado."</td>
 				<td  id='td_datos_7' style='display:none'>".$cod_local."</td>

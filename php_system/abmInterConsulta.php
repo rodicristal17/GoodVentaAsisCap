@@ -256,7 +256,7 @@
             
             // Genera el listado de Gastos
             $gastosElemento= "";
-            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'])[9];
+            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'], '')[9];
 
             // Se arma el array de categorias
             $zona= array();
@@ -302,11 +302,11 @@
 
                 foreach($motivos as $cod_mot => $gastos) {
 			        $titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_mot)[4][0]["descripcion"];
-                    $gastosElemento .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;">'.
+                    $gastosElemento .= '<li class="list-group-item" style="padding: 0;"><div class="card" style="width: 100%; margin: 0;">'.
                         '<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'">'.
                             '<h6><b>'.$titulo_motivo.'</b></h6>'.
                         '</div>'.
-                        '<div class="collapse show" style=""><ul class="list-group list-group-flush">';
+                        '<div class="collapse show" style=""><ul class="list-group list-group-flush" style=" padding-left: 0.3rem;">';
 
                     foreach ($gastos as $gasto) {
                         $estadoClassGasto= 'text-bg-success';
@@ -1180,6 +1180,7 @@
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('si', $contenidoLimpiado, $cod_mensaje);
         }
+        
         if (!$stmt->execute()) {
             print_r(array($contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user));
             $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
@@ -1219,6 +1220,7 @@
         // Guarda las menciones e incluye al creador
         $ids_menciones = array_unique($ids_menciones);
         foreach ($ids_menciones as $value) {
+            if (empty($value)) {continue;}
             // Marca al creador como leido solo si no es mensaje programado
             $fechaActualObj = new DateTime();
             $fechaCreacionObj = new DateTime($fecha_creacion);

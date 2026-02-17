@@ -99,3 +99,5 @@ DELIMITER ;
 ALTER TABLE interconsulta DROP COLUMN fecha_vencimiento;
 
 ALTER TABLE mensaje DROP FOREIGN KEY mensaje_ibfk_2;
+
+ALTER TABLE gastos ADD COLUMN cod_usuarioFK_edit INT;
