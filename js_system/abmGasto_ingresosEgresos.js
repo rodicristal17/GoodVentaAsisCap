@@ -900,8 +900,6 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, presu
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
-
-
 		}
 	});
 }

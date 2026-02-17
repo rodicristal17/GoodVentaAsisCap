@@ -257,55 +257,110 @@
             // Genera el listado de Gastos
             $gastosElemento= "";
             $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'])[9];
+
+            // Se arma el array de categorias
+            $zona= array();
+            $montoTotal= 0;
+            
+            // Se recorre el registro de gastos y se va cargando por motivo
             foreach ($registrosGastos as $gasto) {
-                $estadoClassGasto= 'text-bg-success';
-                $aprobarElemento= "";
-                switch (strtolower($gasto["estado"])) {
-                    case 'rechazado':
-                        $estadoClassGasto= 'text-bg-danger';
+                $categoria= $gasto['categoria']; 
+				if (empty($categoria)) {
+					$categoria= "sinCategoria";
+				}
+
+                if (!isset($zona[$categoria])) {
+                    $zona[$categoria] = array();
+                }
+
+                if (!isset($zona[$categoria][$gasto['cod_motivoIngresoEgresoFK']])) {
+                    $zona[$categoria][$gasto['cod_motivoIngresoEgresoFK']] = array();
+                }
+
+                $zona[$categoria][$gasto['cod_motivoIngresoEgresoFK']][] = $gasto;
+                
+                $montoTotal += intval($gasto['monto']);
+            }
+
+            // Se construye la vista
+            foreach ($zona as $cat => $motivos) {
+                $colorCategoria= "";
+                switch ($cat) {
+                    case 'ingreso':
+                        $colorCategoria= "#8cac9c";
+                        $styleRegistroColor2= "#75B59D;";
                         break;
-                    case 'solicitado': 
-                        $estadoClassGasto= 'text-bg-warning';
-                        $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
-                        <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+                    case 'directo':
+                        $colorCategoria= "#F4CB8D";
+                        $styleRegistroColor2= "#EABA4C;";
                         break;
-                    default:
-                        $estadoClassGasto= 'text-bg-success';
+                    case 'operativo':
+                        $colorCategoria= "#EDB5A4";
+                        $styleRegistroColor2= "#DE7258;";
                         break;
                 }
 
-                $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
-				<tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');">
-                    <td id="td_id" style="width:10%;">'.$gasto["idgastos"].'</td>
-                    <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$gasto["estado"].'</span></td>
-                    <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
-                    <td  style="width: 30%">'.$gasto["descripcion"].'</td>
-                    <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
-                    <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
-                    <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
-                    <td  id="td_datos_3" style="display: none;">'.$gasto["nroboleta"].'</td>
-                    <td  id="td_datos_9" style="display: none;">'.$gasto["banco"].'</td>
-                    <td  id="td_datos_10" style="display: none;">'.$gasto["nrocuenta"].'</td>
-                    <td  id="td_datos_11" style="display: none;">'.$gasto["arreglo"].'</td>
-                    <td  id="td_datos_8" style="display: none">'.$gasto["usuarionombre"].'</td>
-                    <td  id="td_datos_5" style="display:none">'.$gasto["estado"].'</td>
-                    <td  id="td_datos_7" style="display:none">'.$gasto["cod_local"].'</td>
-                    <td  id="td_datos_12" style="display:none">'.$gasto["url1"].'</td>
-                    <td  id="td_datos_13" style="display:none">'.$gasto["descripcion"].'</td>
-                    <td  id="td_datos_14" style="display:none">'.$gasto["motivo"].'</td>
-                    <td  id="td_datos_15" style="display:none">'.$gasto["cod_interConsultaFK"].'</td>
-                    <td  id="td_datos_16" style="display:none">'.$gasto["interconsulta_nombre"].'</td>
-                    <td  id="td_datos_17" style="display:none">'.$gasto["cod_usuario_autoriz"].'</td>
-                    <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
-                    <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
-                    <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
-                    <td class="td_registroSearch" style="width: 20%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
-                    <td class="td_registroSearch" style="width: 20%">
-                        '.$aprobarElemento.'
-                    </td>
-                </tr></table>';
-            }
+                foreach($motivos as $cod_mot => $gastos) {
+			        $titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_mot)[4][0]["descripcion"];
+                    $gastosElemento .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;">'.
+                        '<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'">'.
+                            '<h6><b>'.$titulo_motivo.'</b></h6>'.
+                        '</div>'.
+                        '<div class="collapse show" style=""><ul class="list-group list-group-flush">';
 
+                    foreach ($gastos as $gasto) {
+                        $estadoClassGasto= 'text-bg-success';
+                        $aprobarElemento= "";
+                        switch (strtolower($gasto["estado"])) {
+                            case 'rechazado':
+                                $estadoClassGasto= 'text-bg-danger';
+                                break;
+                            case 'solicitado': 
+                                $estadoClassGasto= 'text-bg-warning';
+                                $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
+                                <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+                                break;
+                            default:
+                                $estadoClassGasto= 'text-bg-success';
+                                break;
+                        }
+
+                        $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
+                        <tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');" style="background-color: '.$colorCategoria.';">
+                            <td id="td_id" style="width:10%;">'.$gasto["idgastos"].'</td>
+                            <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$gasto["estado"].'</span></td>
+                            <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
+                            <td  style="width: 30%">'.$gasto["descripcion"].'</td>
+                            <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
+                            <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
+                            <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
+                            <td  id="td_datos_3" style="display: none;">'.$gasto["nroboleta"].'</td>
+                            <td  id="td_datos_9" style="display: none;">'.$gasto["banco"].'</td>
+                            <td  id="td_datos_10" style="display: none;">'.$gasto["nrocuenta"].'</td>
+                            <td  id="td_datos_11" style="display: none;">'.$gasto["arreglo"].'</td>
+                            <td  id="td_datos_8" style="display: none">'.$gasto["usuarionombre"].'</td>
+                            <td  id="td_datos_5" style="display:none">'.$gasto["estado"].'</td>
+                            <td  id="td_datos_7" style="display:none">'.$gasto["cod_local"].'</td>
+                            <td  id="td_datos_12" style="display:none">'.$gasto["url1"].'</td>
+                            <td  id="td_datos_13" style="display:none">'.$gasto["descripcion"].'</td>
+                            <td  id="td_datos_14" style="display:none">'.$gasto["motivo"].'</td>
+                            <td  id="td_datos_15" style="display:none">'.$gasto["cod_interConsultaFK"].'</td>
+                            <td  id="td_datos_16" style="display:none">'.$gasto["interconsulta_nombre"].'</td>
+                            <td  id="td_datos_17" style="display:none">'.$gasto["cod_usuario_autoriz"].'</td>
+                            <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
+                            <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
+                            <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
+                            <td class="td_registroSearch" style="width: 20%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
+                            <td class="td_registroSearch" style="width: 20%">
+                                '.$aprobarElemento.'
+                            </td>
+                        </tr></table>';
+                    }
+                    $gastosElemento .= '</ul></div>'.
+                    '</div></li>';
+                }
+            }
+            
             // Se obtienen los mensajes
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
@@ -390,8 +445,8 @@
                 <img src="../iconos/editar.png" alt="Editar InterConsulta" style="height: 1.25rem;" onclick="obtenerDetallesInterConsulta(\'interConsulta\')">
             </h5>
             <div style="display: flex;">
-            <div style="flex: 0.5;padding-top: 10px;border-top: 1px solid #ddd;">
-            <strong>Mencionados</strong>
+            <div style="flex: 0.5;padding-top: 10px;">
+            <strong style="font-size: 14pt;">Mencionados</strong>
             <ul style="overflow-y: auto; height: 150px;">
             '.$mencionesElemento.'
             </ul>
@@ -435,15 +490,15 @@
             }
             if ($gastosElemento && $valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Monto Limite:</span>
-                <span class="text-uppercase">'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
+                <span class="fw-bold">Monto del flujo: </span>
+                <span class="text-uppercase"> '.number_format($montoTotal, 0, ',', '.').' / '.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
                 </div>';
             }
             $pagina .= '</div>';
 
             if ($gastosElemento) {
                 $pagina .= '<div style="flex: 0.5;">
-                <span><strong>Gastos asociados</strong></span>
+                <span onclick="verCerrarAbmGasto()" style="font-size: 14pt;"><strong>Flujo de gastos: </strong><i class="fa-solid fa-scale-balanced"></i></span>
                 <table class="tableCabeceraRegistro">
                     <tr>
                         <td class="td_registro" style="width: 10%;text-align: left;">Cod.</td>
