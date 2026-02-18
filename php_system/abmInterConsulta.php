@@ -1135,9 +1135,9 @@
         return $registros;
     }
 
-    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user) {
+    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user, $visto_creador= FALSE) {
         $mysqli = conectar_al_servidor();
-echo $contenido;
+
         // Convierte el contenido a html
         $dom = new DOMDocument();
         libxml_use_internal_errors(true); // evitar warnings por HTML incompleto
@@ -1166,7 +1166,7 @@ echo $contenido;
 
         // Obtener el texto plano resultante
         $contenidoLimpiado = $dom->textContent;
-echo $contenidoLimpiado;
+
         // Limpiar espacios y entidades
         $contenidoLimpiado = trim(html_entity_decode($contenidoLimpiado));
         $contenidoLimpiado = str_replace("\xC2\xA0", " ", $contenidoLimpiado);
@@ -1228,7 +1228,7 @@ echo $contenidoLimpiado;
             $intervalo = $fechaActualObj->diff($fechaCreacionObj);
             $minutosDiferencia = ($intervalo->days * 24 * 60) + ($intervalo->h * 60) + $intervalo->i;
 
-            if ($value === $user && ($minutosDiferencia < 10)) {
+            if (($value === $user && ($minutosDiferencia < 10) || $visto_creador)) {
                 abmMencion(null, $value, $cod_mensaje, 1, 'activo');
             } else {
                 abmMencion(null, $value, $cod_mensaje, 0, 'activo');

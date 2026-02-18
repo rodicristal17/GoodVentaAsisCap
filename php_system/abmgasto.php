@@ -432,7 +432,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
-		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $registroGasto['cod_interConsultaFK'], "");
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $registroGasto['cod_interConsultaFK'], "", TRUE);
 	}
 
 	$informacion =array("1" => "exito", "2" => $idgastos);
@@ -547,7 +547,7 @@ if($operacion=="editar")
 		$fechaActual = new DateTime();
 		$mensaje= "@{". $datos_gasto_nuevo['cod_usuarioFK_edit'] ."} modifico ". substr($mensaje, 2) . " en el movimiento con descripcion $motivo.";
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
-		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "");
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "", TRUE);
 	}
 }
 $informacion =array("1" => "exito", "2" => $idgastos);

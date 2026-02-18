@@ -386,7 +386,14 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 					limpiarcamposGasto()
 
 					idAbmGasto = "";
-					buscarabmGasto();
+					switch (ventanaAnterior[ventanaAnterior.length - 1]) {
+						case 'divListadoInterConsulta':
+							buscarInterConsultasYContenido(cod_interConsulta);
+							break;
+						default: 
+							buscarabmGasto();
+							break;
+					}
 					verCerrarVentanaAbmGasto("2","");
 					comprobarLimiteMotivo(cod_motivoFK, cod_local);
 				}				
