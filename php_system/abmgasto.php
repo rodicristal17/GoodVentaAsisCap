@@ -426,6 +426,15 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		exit;
 	}
 
+	// Se registra el cambio
+	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', $idgastos)[9][0];
+	if (!empty($registroGasto['cod_interConsultaFK'])) {
+		$fechaActual = new DateTime();
+		$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
+		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $registroGasto['cod_interConsultaFK'], "");
+	}
+
 	$informacion =array("1" => "exito", "2" => $idgastos);
 	echo json_encode($informacion);	
 	exit;
@@ -534,10 +543,10 @@ if($operacion=="editar")
 			$mensaje .= ", el campo $key cambió de '".$value."' a '".$datos_gasto_nuevo[$key]."'";
 		}
 	}
-
 	if ($mensaje && $datos_gasto_nuevo['cod_interConsultaFK']) {
 		$fechaActual = new DateTime();
-		$mensaje= $datos_gasto_nuevo['nombre_usuario_edit'] ." modifico ". substr($mensaje, 2) . " en el movimiento con descripcion $motivo, el ".$fechaActual->format('d-m-Y H:i:s');
+		$mensaje= "@{". $datos_gasto_nuevo['cod_usuarioFK_edit'] ."} modifico ". substr($mensaje, 2) . " en el movimiento con descripcion $motivo.";
+		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
 		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "");
 	}
 }
@@ -628,7 +637,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			
 		$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
 		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,
-		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK,
+		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,
 		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
@@ -655,6 +664,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				$monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
 				$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
 				$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
+				$cod_usuarioFK_edit= mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1');
 				
 				if (empty($categoria)) {
 					$categoria= "sinCategoria";
@@ -689,6 +699,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					'usuario_autoriz_nombre' => mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1'),
 					'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
 					'nombre_usuario_edit' => mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1'),
+					'cod_usuarioFK_edit' => mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1'),
 				);
 
 				if ($valor['estado'] == 'Activo') {

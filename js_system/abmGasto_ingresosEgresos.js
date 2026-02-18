@@ -128,12 +128,10 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById("inptMotivoAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_14"]').html();
 	document.getElementById('inptMontoAutorizacionEgreso').value = $(datostr).children('td[id="td_datos_1"]').html();
 	if ($(datostr).children('td[id="td_datos_5"]').html() == 'solicitado') {
-		document.getElementById("inptCodUsuarioAutorizacionEgreso").value= "";
 		document.getElementById("inptUsuarioAutorizacionEgreso").value= "";
 		document.getElementById("inptFechaAutorizacionEgreso").value= "";
 		document.getElementById('divbtnAprobarMovimiento').style.display= "";
 	} else {
-		document.getElementById("inptCodUsuarioAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_17"]').html();
 		document.getElementById("inptUsuarioAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_18"]').html();
 		document.getElementById("inptFechaAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_19"]').html();
 		document.getElementById('divbtnAprobarMovimiento').style.display= "none";
@@ -171,6 +169,7 @@ function aprobarMovimiento(opcion, elemento= null) {
 	datos.append("decision", opcion);
 	datos.append("idgastos", inptCodigoAutorizacionEgreso);
 
+	verCerrarEfectoCargando("1")
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
@@ -218,8 +217,15 @@ function aprobarMovimiento(opcion, elemento= null) {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
 				   ver_vetana_informativa("Datos guardados.", "", "info");
-				   verCerrarAutorizacionEgreso(false);
-				   buscarabmGasto();
+				   switch (ventanaAnterior[ventanaAnterior.length - 1]) {
+					case 'divListadoInterConsulta':
+						buscarInterConsultasYContenido(cod_interConsulta);
+						break;
+					default: 
+						verCerrarAutorizacionEgreso(false);
+						buscarabmGasto();
+						break;
+				   }
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

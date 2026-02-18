@@ -317,8 +317,8 @@
                                 break;
                             case 'solicitado': 
                                 $estadoClassGasto= 'text-bg-warning';
-                                $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
-                                <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+                                $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
+                                <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
                                 break;
                             default:
                                 $estadoClassGasto= 'text-bg-success';
@@ -1137,7 +1137,7 @@
 
     function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user) {
         $mysqli = conectar_al_servidor();
-
+echo $contenido;
         // Convierte el contenido a html
         $dom = new DOMDocument();
         libxml_use_internal_errors(true); // evitar warnings por HTML incompleto
@@ -1166,7 +1166,7 @@
 
         // Obtener el texto plano resultante
         $contenidoLimpiado = $dom->textContent;
-
+echo $contenidoLimpiado;
         // Limpiar espacios y entidades
         $contenidoLimpiado = trim(html_entity_decode($contenidoLimpiado));
         $contenidoLimpiado = str_replace("\xC2\xA0", " ", $contenidoLimpiado);
