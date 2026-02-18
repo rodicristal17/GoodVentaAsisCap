@@ -743,22 +743,12 @@
             }
             
             if (!$valueMens['cod_usuarioFK'] || $valueMens['cod_usuarioFK'] == "NULL") {
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
-                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
+                $colorTarjeta= "#EABA4C";
+                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: center;">
+                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;margin-left: 10px; margin-right: 10px;">
                         <span></span>
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <div>
-                            <span>SISTEMA</span>
-                            </div>
-                            <small class="text-secondary">
-                            <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
-                            </small>
-                        </div>
-                        <div class="card-body">
-                            <div style="display: flex;">
-                            '.$miniatura_imagen.'
-                            <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
-                            </div>
+                            <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.' el '.$valueMens['fecha_creacion'].'</p>
                         </div>
                     </div>
                 </div>';
