@@ -18042,7 +18042,8 @@ function verificarrefinanciamientoenCuota(){
 	ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA","#")
 	  return false;
   }
-  if(inptMonotCambioRefinanciamiento2==""){
+
+  if(inptMonotCambioRefinanciamiento2=="" || !(Number(inptMonotCambioRefinanciamiento2) < 0)){
 	ver_vetana_informativa("FALTO INGRESAR EL MONTO A PAGAR","#")
 	  return false;
   }
