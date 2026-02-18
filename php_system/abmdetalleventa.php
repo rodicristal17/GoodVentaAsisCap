@@ -934,11 +934,11 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 	$user = $_POST['useru'];
 	$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
-	$consulta = "Insert into detallesventaeliminado (cod_producto,motivo,fecha,cod_user_insert,fecha_insert)
-values(?,?,?,?,?)";
+	$consulta = "Insert into detallesventaeliminado (cod_producto,motivo,fecha,cod_user_insert,fecha_insert, cod_ventaFK)
+values(?,?,?,?,?,?)";
 	$stmt = $mysqli->prepare($consulta);
-	$ss = 'sssss';
-	$stmt->bind_param($ss, $codProducto, $motivo, $fecha, $user, $fecha_inser_edit);
+	$ss = 'sssssi';
+	$stmt->bind_param($ss, $codProducto, $motivo, $fecha, $user, $fecha_inser_edit, $cod_ventaFK);
 	if (! $stmt->execute()) {
 		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
 		exit;
