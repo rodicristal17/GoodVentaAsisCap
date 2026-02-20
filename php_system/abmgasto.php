@@ -1408,23 +1408,41 @@ exit;
 
 function buscarabmmotivoingresoegreso($buscar,$Estado,$cod_motivo= 0)
 {
-  	$s='ss';
-	$sqlFiltro = "descripcion like ?  and estado=?";
-	if (!empty($cod_motivo) && $cod_motivo > 0) {
-		$sqlFiltro .= " and cod_motivo_ingreso_egreso = ?";
-		$s .= 's';
+  	$ss='';
+	$sqlFiltro = "";
+	$parametros= array();
+	$ss= "";
+	if (!empty($Estado)) {
+		$sqlFiltro .= " estado=? and";
+		$ss .= 's';
+		$parametros[] = $Estado;
 	}
+	if (!empty($buscar)) {
+		$sqlFiltro .= " descripcion like ? and";
+		$ss .= 's';
+		$parametros[] = "%".$buscar."%";
+	}
+	if (!empty($cod_motivo) && $cod_motivo > 0) {
+		$sqlFiltro .= " cod_motivo_ingreso_egreso = ? and";
+		$ss .= 'i';
+		$parametros[] = $cod_motivo;
+	}
+
+	// Limpia el filtro sql
+	if ($sqlFiltro != "") {
+		$sqlFiltro = "where ". substr($sqlFiltro, 0, -3);
+	}
+
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
 		$sql= "Select *
-        from motivos_ingreso_egreso where $sqlFiltro order by FIELD(estado, 'activo','inactivo'), FIELD(categoria, 'ingreso', 'directo','operativo'), categoria IS NULL,descripcion asc ";
+        from motivos_ingreso_egreso $sqlFiltro order by FIELD(estado, 'activo','inactivo'), FIELD(categoria, 'ingreso', 'directo','operativo'), categoria IS NULL,descripcion asc ";
+	$stmt = $mysqli->prepare($sql);
 
-   $stmt = $mysqli->prepare($sql);
-$buscar1="%".$buscar."%";
-if (!empty($cod_motivo) && $cod_motivo > 0) {
-	$stmt->bind_param($s,$buscar1,$Estado, $cod_motivo);
-} else {
-	$stmt->bind_param($s,$buscar1,$Estado);
+if ($ss != "") {
+	$refs = [];
+	foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+	call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
 }
 
 if ( ! $stmt->execute()) {
