@@ -153,6 +153,8 @@ function verCerrarAutorizacionEgreso(mostrar) {
 }
 
 function aprobarMovimiento(opcion, elemento= null) {
+	if(controlacceso("AUTORIZAREGRESOINGRESO","accion")==false){return;}
+
 	if (elemento != null) {
 		obtenerdatosabmGasto(elemento);
 	}
