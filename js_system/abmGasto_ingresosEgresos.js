@@ -398,6 +398,8 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 					}
 					verCerrarVentanaAbmGasto("2","");
 					comprobarLimiteMotivo(cod_motivoFK, cod_local);
+				} else {
+					ver_vetana_informativa(datos["2"]);
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

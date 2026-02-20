@@ -454,6 +454,19 @@ echo json_encode($informacion);
 exit;
 }
 
+// Se evalua si el monto no supera el presupuesto establecido para la interconsulta
+if ($cod_interConsultaFK) {
+	$registroInterConsulta= obtenerInterConsulta(array(
+		'cod_interConsulta' => $cod_interConsultaFK,
+	))[0];
+	$totalMonto= intval($registroInterConsulta['total_gastos']) + intval($monto);
+	if (intval($registroInterConsulta['monto_limite']) && $totalMonto > intval($registroInterConsulta['monto_limite'])) {
+		$informacion =array("1" => "error", "2" => "El gasto supera el monto limite establecido para esta interconsulta.");
+		echo json_encode($informacion);	
+		exit;
+	}
+}
+
 $mysqli=conectar_al_servidor();
 
 // Identifica si el motivo necesita autorizacion
@@ -727,7 +740,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			'descripcion' => "Cobro realizado a ".$value['nombrecliente'] . " en formato ".$value['tipopago'],
 			'fecha' => $value['Fecha'],
 			'tipo' => "Ingreso",
-			'estado' => "activo",
+			'estado' => "Activo",
 			'cod_local' => $value['cod_local'],
 			'nombrelocal' => $value['nombrelocal'],
 			'nroboleta' => "",
