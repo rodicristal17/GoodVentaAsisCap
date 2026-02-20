@@ -915,7 +915,10 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, accio
 						let monto_limite= $(datostr).children('td[id="td_datos_2"]').children('input').val() || "";
 						monto_limite= monto_limite.replace('.','');
 						const cod_motivo_ingreso_egreso= $(datostr).children('td[id="td_datos_4"]').html();
-						abmLimiteMotivoGasto(cod_monto_limite_gasto_motivo, monto_limite, cod_localFK, cod_motivo_ingreso_egreso);
+
+						if (monto_limite && monto_limite != "0") {
+							abmLimiteMotivoGasto(cod_monto_limite_gasto_motivo, monto_limite, cod_localFK, cod_motivo_ingreso_egreso);
+						}
 					}
 					
 					// Busca los datos

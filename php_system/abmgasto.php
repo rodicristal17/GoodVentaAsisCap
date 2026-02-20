@@ -76,7 +76,7 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 	$monto_limite = obtenerPresupuestoMotivoGasto(array(
 		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
 		'cod_localFK' => $cod_local,
-	))[0];
+	))[0]["monto_limite"];
 	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
 
 	if ($monto_limite && $monto_limite != '0')

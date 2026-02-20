@@ -6,6 +6,7 @@
     include_once("classTable.php");
     include_once("subir_foto_base64.php");
     include_once("abmpagos.php");
+    include_once("abmgasto.php");
 
     date_default_timezone_set('America/Asuncion');
 
@@ -24,7 +25,7 @@
         }
 
         switch ($operacion) {
-            case 'verificarLimite':
+            case 'verficiarLimiteMotivo':
                 $cod_motivo = $_POST['cod_motivo'];
                 $cod_local = $_POST['cod_local'];
                 
@@ -32,14 +33,18 @@
                 $fechaActual= new DateTime();
                 $primerDiaMes= $fechaActual->format('Y-m-01');
                 $ultimoDiaMes= $fechaActual->format('Y-m-t');
-
+                
+                $informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
                 $informacion = obtenerPresupuestoMotivoGasto(array(
                     'cod_motivo_ingreso_egresoFK' => $cod_motivo,
                     'cod_localFK' => $cod_local
                 ));
-                $informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
+                if (count($informacion) > 0) {
+                    echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));
+                } else {
+                    echo json_encode(array("1" => "exito", "2" => 0, "3" => 0));
+                }
 
-                echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));
                 break;
             case 'buscarVista':
                 $cod_motivo_ingreso_egresoFK= mb_convert_encoding((string)($_POST['cod_motivo_ingreso_egresoFK']), 'ISO-8859-1', 'UTF-8');
