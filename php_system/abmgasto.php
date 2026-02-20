@@ -531,6 +531,14 @@ if($operacion=="editar")
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
 		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "", TRUE);
 	}
+} else {
+	// Si es nuevo, se registra la creación
+	if ($cod_interConsultaFK) {
+		$fechaActual = new DateTime();
+		$mensaje= " @{".$cod_usuario."} creo un nuevo movimiento con descripcion ".$motivo.".";
+		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsultaFK, "", TRUE);
+	}
 }
 $informacion =array("1" => "exito", "2" => $idgastos);
 echo json_encode($informacion);	

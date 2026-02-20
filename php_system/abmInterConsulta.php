@@ -495,24 +495,22 @@
                 </div>';
             }
             $pagina .= '</div>';
-
-            if ($gastosElemento) {
-                $pagina .= '<div style="flex: 0.5;">
-                <span onclick="verCerrarAbmGasto()" style="font-size: 14pt;"><strong>Flujo de gastos: </strong><i class="fa-solid fa-scale-balanced"></i></span>
-                <table class="tableCabeceraRegistro">
-                    <tr>
-                        <td class="td_registro" style="width: 10%;text-align: left;">Cod.</td>
-                        <td class="td_registro" style="width: 25%;text-align: left;">Estado</td>
-                        <td class="td_registro" style="width: 30%;text-align: left;">Descripcion</td>
-                        <td class="td_registro" style= "width: 20%;text-align: left;">Monto</td>
-                        <td class="td_registro" style= "width: 25%;text-align: left;"></td>
-                    </tr>
-                </table>
-                <div style="overflow-y: auto; height: 150px;">
-                    '.$gastosElemento.'
-                </div>
-                </div>';
-            }
+            
+            $pagina .= '<div style="flex: 0.5;">
+            <span onclick="verCerrarAbmGasto()" style="font-size: 14pt;"><strong>Flujo de gastos: </strong><i class="fa-solid fa-scale-balanced"></i></span>
+            <table class="tableCabeceraRegistro">
+                <tr>
+                    <td class="td_registro" style="width: 10%;text-align: left;">Cod.</td>
+                    <td class="td_registro" style="width: 25%;text-align: left;">Estado</td>
+                    <td class="td_registro" style="width: 30%;text-align: left;">Descripcion</td>
+                    <td class="td_registro" style= "width: 20%;text-align: left;">Monto</td>
+                    <td class="td_registro" style= "width: 25%;text-align: left;"></td>
+                </tr>
+            </table>
+            <div style="overflow-y: auto; height: 150px;">
+                '.$gastosElemento.'
+            </div>
+            </div>';
 
             $pagina .= '</div>
             <div style="display: none;">
