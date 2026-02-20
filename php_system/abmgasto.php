@@ -8,6 +8,7 @@ include_once("classTable.php");
 include_once("subir_foto_base64.php");
 include_once("abmpagos.php");
 include_once("abmInterConsulta.php");
+include_once("abmPresupuestoMotivoGasto.php");
 
 date_default_timezone_set('America/Asuncion');
 
@@ -72,13 +73,16 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 	$primerDiaMes= $fechaActual->format('Y-m-01');
 	$ultimoDiaMes= $fechaActual->format('Y-m-t');
 
-	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
+	$monto_limite = obtenerPresupuestoMotivoGasto(array(
+		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
+		'cod_localFK' => $cod_local,
+	))[0];
 	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
 
-	if ($informacion["4"][0]["presupuesto"] && $informacion["4"][0]["presupuesto"] != '0')
+	if ($monto_limite && $monto_limite != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
-	$limite_presupuesto= intval(str_replace('.', '', $informacion["4"][0]["presupuesto"]));
-	if ($limite_presupuesto > 0 && $totalGasto > $limite_presupuesto) {
+	$monto_limite= intval($monto_limite);
+	if ($monto_limite > 0 && $totalGasto > $monto_limite) {
 		$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido.");
 		echo json_encode($informacion);	
 		exit;
@@ -132,23 +136,6 @@ $informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$us
 echo json_encode($informacion);
 exit;
 }	
-
-if ($operacion == "verficiarLimiteMotivo") {
-	$cod_motivo = $_POST['cod_motivo'];
-	$cod_local = $_POST['cod_local'];
-	
-	// Obtiene las fechas del primer y ultimo dia del mes
-	$fechaActual= new DateTime();
-	$primerDiaMes= $fechaActual->format('Y-m-01');
-	$ultimoDiaMes= $fechaActual->format('Y-m-t');
-
-	$informacion = buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
-
-	echo json_encode(array("1" => "exito", "2" => $informacion["4"][0]["presupuesto"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));	
-	exit;
-}
-
 if($operacion=="evaluacionGasto")
 {
 	$fecha1=$_POST['fecha1'];
@@ -268,10 +255,7 @@ $categoria = mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 $necesita_autorizacion= $_POST['necesita_autorizacion'];
 $necesita_autorizacion = mb_convert_encoding((string)($necesita_autorizacion), 'ISO-8859-1', 'UTF-8');
 
-$presupuesto= $_POST['presupuesto'];
-$presupuesto = mb_convert_encoding((string)($presupuesto), 'ISO-8859-1', 'UTF-8');
-
-	NuevoMotivo($motivo,$estado,$categoria,$necesita_autorizacion, $presupuesto);
+	NuevoMotivo($motivo,$estado,$categoria,$necesita_autorizacion);
 
 }
 
@@ -292,10 +276,8 @@ $categoria = mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
 $necesita_autorizacion= $_POST['necesita_autorizacion'];
 $necesita_autorizacion = mb_convert_encoding((string)($necesita_autorizacion), 'ISO-8859-1', 'UTF-8');
 
-$presupuesto= $_POST['presupuesto'];
-$presupuesto = mb_convert_encoding((string)($presupuesto), 'ISO-8859-1', 'UTF-8');
 
-	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto, $user, $idabm);
+	editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion, $user, $idabm);
 
 }	
 
@@ -1465,7 +1447,6 @@ if ( ! $stmt->execute()) {
 		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 			  $categoria= mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
 			  $necesita_autorizacion = mb_convert_encoding((string)($valor['necesita_autorizacion']), 'UTF-8', 'ISO-8859-1');
-			  $presupuesto= intval(mb_convert_encoding((string)($valor['presupuesto']), 'UTF-8', 'ISO-8859-1'));
 
 			  $registros[] = array(
 					"cod_motivo_ingreso_egreso" => $cod_motivo_ingreso_egreso,
@@ -1473,7 +1454,6 @@ if ( ! $stmt->execute()) {
 					"estado" => $estado,
 					"categoria" => $categoria,
 					"necesita_autorizacion" => $necesita_autorizacion,
-					"presupuesto" => $presupuesto
 			  );
 
 			  switch ($categoria) {
@@ -1497,7 +1477,6 @@ if ( ! $stmt->execute()) {
 			   <td  id='td_datos_2' style='display:none'>".$estado."</td>
 			   <td id='td_datos_3' style='width:40%' class='tdRegistroSearch' >".ucfirst($categoria)."</td>
 			   <td  id='td_datos_4' style='display:none'>".$necesita_autorizacion."</td>
-			   <td  id='td_datos_5' style='display:none'>".number_format($presupuesto, 0, ',','.')."</td>
 			  </tr>
 			  </table>";
 			
@@ -1521,10 +1500,10 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion,presupuesto) values (upper(?),?, ?, ?, ?)";
+$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion) values (upper(?),?, ?, ?, ?)";
 $stmt = $mysqli->prepare($consulta1);
-$ss='ssssi';
-$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto);
+$ss='ssss';
+$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion,);
 
 if (!$stmt->execute()) {
 	echo "$consulta1\n$motivo\n";
@@ -1538,7 +1517,7 @@ exit;
 	
 }
 
-function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$presupuesto,$cod_usuarioFK,$idabm)
+function editarMotivo($motivo,$estado,$categoria,$necesita_autorizacion,$cod_usuarioFK,$idabm)
 {
 	
 if($motivo==""   ){
@@ -1552,7 +1531,7 @@ $fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="update motivos_ingreso_egreso SET fecha_edit= '$fechaActual', cod_usuarioFK= $cod_usuarioFK, presupuesto= $presupuesto, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
+$consulta1="update motivos_ingreso_egreso SET fecha_edit= '$fechaActual', cod_usuarioFK= $cod_usuarioFK, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {

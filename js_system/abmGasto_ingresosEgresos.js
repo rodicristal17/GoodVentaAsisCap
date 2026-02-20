@@ -420,7 +420,7 @@ function comprobarLimiteMotivo(cod_motivo, cod_local) {
 	
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		url: "/GoodVentaAsisCap/php_system/abmPresupuestoMotivoGasto.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -846,7 +846,6 @@ function VerificarDatosMotivoEgresoIngreso() {
 	var inptEstadoMotivoEgresoIngreso = document.getElementById('inptEstadoMotivoEgresoIngreso').value
 	const inptCategoriaMotivoEgresoIngreso = document.getElementById('inptCategoriaMotivoEgresoIngreso').value;
 	const inptAutorizacionMotivoEgresoIngreso= document.getElementById('inptAutorizacionMotivoEgresoIngreso').checked;
-	const inptPresupuestoIngresoEgreso= document.getElementById('inptPresupuestoIngresoEgreso').value.replace('.', '');
 	let accion = "";
 	
 	if (inptNuevoMotivo == "") {
@@ -864,10 +863,10 @@ function VerificarDatosMotivoEgresoIngreso() {
 		accion = "NuevoMotivo";
 	}
 		
-	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, inptAutorizacionMotivoEgresoIngreso, inptPresupuestoIngresoEgreso, accion);
+	abmNuevoMotivo(inptNuevoMotivo,inptEstadoMotivoEgresoIngreso, inptCategoriaMotivoEgresoIngreso, inptAutorizacionMotivoEgresoIngreso, accion);
 }
 
-function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, presupuesto, accion) {
+function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -879,7 +878,6 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, presu
 	datos.append("estado", estado)
 	datos.append("categoria", categoria);
 	datos.append("idabm", idAbmMotivoEgresoIngreso)
-	datos.append("presupuesto", presupuesto);
 	datos.append("necesita_autorizacion", (necesita_autorizacion ? 1 : 0)); // El 1 es equivalente a true
 	
 	var OpAjax = $.ajax({
@@ -905,6 +903,22 @@ function abmNuevoMotivo(motivo, estado , categoria, necesita_autorizacion, presu
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					
+					// Se actualizan los presupuestos de los locales
+					const tabla= document.getElementById("divPresupuestoLocalMotivoEgresoIngreso").children;
+					for (let i = 0; i < tabla.length; i++) {
+						const datostr = $(tabla[i]).children('tbody').children('tr');
+
+						// Captura los datos
+						const cod_monto_limite_gasto_motivo= $(datostr).children('td[id="td_id"]').html();
+						const cod_localFK= $(datostr).children('td[id="td_datos_3"]').html();
+						let monto_limite= $(datostr).children('td[id="td_datos_2"]').children('input').val() || "";
+						monto_limite= monto_limite.replace('.','');
+						const cod_motivo_ingreso_egreso= $(datostr).children('td[id="td_datos_4"]').html();
+						abmLimiteMotivoGasto(cod_monto_limite_gasto_motivo, monto_limite, cod_localFK, cod_motivo_ingreso_egreso);
+					}
+					
+					// Busca los datos
 					buscaroptionMotivoEgresoIngreso()
 					// verCerrarAbmNuevoMotivo()
 					BuscarAbmMotivoEgresoIngreso()
@@ -1163,6 +1177,85 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 
+function abmLimiteMotivoGasto(cod_monto_limite_gasto_motivo, monto_limite, cod_localFK, cod_motivoFK) {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_monto_limite_gasto_motivo": cod_monto_limite_gasto_motivo,
+		"monto_limite": monto_limite,
+		"cod_localFK": cod_localFK,
+		"cod_motivo_ingreso_egresoFK": cod_motivoFK,
+		"funt": "nuevo/editar"
+	};
+	
+	$.ajax({
+        data: datos,
+        url: "../php_system/abmPresupuestoMotivoGasto.php",
+        type: "post",
+        error: function (jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+        },
+        success: function (responseText) {
+            var Respuesta = responseText;
+            console.log(Respuesta)
+            try {
+                var datos = $.parseJSON(Respuesta);
+                Respuesta = datos["1"];
+                Respuesta=respuestaJqueryAjax(Respuesta)
+                if (Respuesta == true) {
+                    ver_vetana_informativa("Datos guardados.", "", "info");
+                }
+            } catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+                GuardarArchivosLog(titulo)
+            }
+        }
+    });
+}
+
+function buscarLimitesMotivoEgresoIngreso(cod_motivos) {
+	obtener_datos_user();
+	var datos= {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "buscarVista",
+		"cod_motivo_ingreso_egresoFK": cod_motivos
+	}
+	document.getElementById("divPresupuestoLocalMotivoEgresoIngreso").innerHTML = paginacargando;
+
+	$.ajax({
+		data: datos,
+        url: "../php_system/abmPresupuestoMotivoGasto.php",
+		type: "post",
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					document.getElementById("divPresupuestoLocalMotivoEgresoIngreso").innerHTML = datos[2];
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 var idAbmMotivoEgresoIngreso = "";
 function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
@@ -1173,7 +1266,6 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
     document.getElementById("inptNuevoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_1"]').html();
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById("inptCategoriaMotivoEgresoIngreso").value = $(datostr).children('td[id="td_datos_3"]').html().toLowerCase();
-    document.getElementById("inptPresupuestoIngresoEgreso").value = $(datostr).children('td[id="td_datos_5"]').html();
 	const necesita_autorizacion= $(datostr).children('td[id="td_datos_4"]').html();
 	if (necesita_autorizacion == "1") {
 		document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = true;
@@ -1183,7 +1275,7 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
 	idAbmMotivoEgresoIngreso= $(datostr).children('td[id="td_id"]').html();
      document.getElementById("btnMotivoIngresoEgreso").value="Editar Datos";
 
-	// DAtos para combinacion de motivos
+	// Datos para combinacion de motivos
 	if (!(document.getElementById('inptCodAbmMotivoEgresoIngreso1').value)) {
 		document.getElementById('inptCodAbmMotivoEgresoIngreso1').value= $(datostr).children('td[id="td_id"]').html();
 		document.getElementById('inptNombreAbmMotivoEgresoIngreso1').value= $(datostr).children('td[id="td_datos_1"]').html();
@@ -1191,13 +1283,14 @@ function ObtenerdatosAbmMotivoEgresoIngreso(datostr) {
 		document.getElementById('inptCodAbmMotivoEgresoIngreso2').value= $(datostr).children('td[id="td_id"]').html();
 		document.getElementById('inptNombreAbmMotivoEgresoIngreso2').value= $(datostr).children('td[id="td_datos_1"]').html();
 	}
+
+	buscarLimitesMotivoEgresoIngreso(idAbmMotivoEgresoIngreso);
 }
 
 function limpiarcamposmotivoegresoingreso(){
 	  document.getElementById("inptNuevoMotivoEgresoIngreso").value = ''
 	  document.getElementById("inptCategoriaMotivoEgresoIngreso").value = '';
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'activo';
-    document.getElementById("inptPresupuestoIngresoEgreso").value = '';
 	document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = false;
 	cod_interConsulta= "";
 	document.getElementById("inptAbmInterConsultaGasto").value= "";

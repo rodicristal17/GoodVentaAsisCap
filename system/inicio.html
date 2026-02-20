@@ -5070,23 +5070,28 @@ placeholder='Obligatorio(*)'>
 <br>
 <table style='width:100%'>
 <tr>
-<td style='width:60%'>
+<td style='width:50%'>
 <p class='pTituloC' >Estado del Registro :</p>
 <select class="inputSelect" style='width:250px' id='inptEstadoMotivoEgresoIngreso'>
 <option value="activo">Activo</option>
 <option value="inactivo">Inactivo</option>
 </select>
 </td>
-<td style='width:40%'>
-<p class="pTitulo8" style="width: 100%;"> 
-<input type="checkbox" id="inptAutorizacionMotivoEgresoIngreso" style="margin-right: 5px;width: fit-content;">
-Necesita autorizacion</p></td>
-</tr>
+<td style='width:50%' rowspan="3">
+<p class='pTituloC' >Presupuesto por local :</p>
+<table class="tableCabeceraRegistro">
+  <tr>
+    <td class="td_registro" style="width:60%;">
+      Local
+    </td>
+    <td class="td_registro" style="width:40%;">
+      Presupuesto
+    </td>
 </table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style='width:60%'>
+<div id="divPresupuestoLocalMotivoEgresoIngreso"></div>
+</td>
+</tr><tr>
+<td style='width:50%'>
 <p class='pTituloC' >Categoria :</p>
 <select class="inputSelect" style='width:250px' id='inptCategoriaMotivoEgresoIngreso'>
 <option value="">Seleccionar</option>
@@ -5095,14 +5100,15 @@ Necesita autorizacion</p></td>
 <option value="ingreso">Ingresos</option>
 </select>
 </td>
-<td style="width: 40%;">
-  <p class='pTituloC' >Presupuesto :</p>
-  <input class="inputText" type="text" id="inptPresupuestoIngresoEgreso" 
-  onkeyup="separadordemiles(this)" style="width:200px">
+</tr><tr>
+<td style='width:50%'>
+<br>
+<p class="pTitulo8" style="width: 100%;"> 
+<input type="checkbox" id="inptAutorizacionMotivoEgresoIngreso" style="margin-right: 5px;width: fit-content;">
+Necesita autorizacion</p>
 </td>
 </tr>
 </table>
-
 <br>
 <center>
 <input class='btn1' type='button' value='Guardar Datos'

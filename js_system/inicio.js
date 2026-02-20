@@ -18031,24 +18031,24 @@ function verificarrefinanciamientoenCuota(){
 	var inptDiasGraciaRefinanciamiento2=document.getElementById('inptDiasGraciaRefinanciamiento2').value
 	var inptInteresRefinanciamiento2=document.getElementById('inptInteresRefinanciamiento2').value	
   if(codVentaCambio==""){
-	ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO","#")
-	  return false;
+	ver_vetana_informativa("Faltan datos", "FALTO SELECCIONAR UN PRODUCTO","#")
+	  return faladvertenciae;;
   }
   if(inptTotalCuotaRefinanciamiento2==""){
-	ver_vetana_informativa("FALTO INGRESAR EL TOTAL FINANCIADO","#")
+	ver_vetana_informativa("Faltan datos", "FALTO INGRESAR EL TOTAL FINANCIADO","advertencia");
 	  return false;
   }
    if(inptCuotaNroCambioRefinanciamiento2==""){
-	ver_vetana_informativa("FALTO INGRESAR EL NRO DE CUOTA","#")
+	ver_vetana_informativa("Faltan datos", "FALTO INGRESAR EL NRO DE CUOTA","advertencia");
 	  return false;
   }
 
-  if(inptMonotCambioRefinanciamiento2=="" || !(Number(inptMonotCambioRefinanciamiento2) < 0)){
-	ver_vetana_informativa("FALTO INGRESAR EL MONTO A PAGAR","#")
+  if(inptMonotCambioRefinanciamiento2=="" || !(Number(inptMonotCambioRefinanciamiento2.replace('.', '')) > 0)){
+	ver_vetana_informativa("Faltan datos", "FALTO INGRESAR EL MONTO A PAGAR","advertencia");
 	  return false;
   }
   if(inptFechaVentaCambioRefinanciamiento2==""){
-	ver_vetana_informativa("FALTO INGRESAR LA FECHA DE PAGO","#")
+	ver_vetana_informativa("Faltan datos", "FALTO INGRESAR LA FECHA DE PAGO","advertencia");
 	  return false;
   }
  abmrefinacimientoCuota(inptInteresRefinanciamiento2,inptDescuentoCambioRefinanciamiento2,inptTotalCuotaRefinanciamiento2,inputSelectMetodoCambioRefinanciamiento2,inptCuotaNroCambioRefinanciamiento2,inptMonotCambioRefinanciamiento2,inptFechaVentaCambioRefinanciamiento2,inptDiasGraciaRefinanciamiento2,codVentaCambio)

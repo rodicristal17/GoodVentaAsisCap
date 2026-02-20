@@ -104,3 +104,35 @@ ALTER TABLE gastos ADD COLUMN cod_usuarioFK_edit INT;
 
 ALTER TABLE detallesventaeliminado ADD COLUMN cod_ventaFK INT;
 
+ALTER TABLE motivos_ingreso_egreso DROP COLUMN presupuesto;
+
+CREATE TABLE montos_limites_gasto_motivo (
+    cod_monto_limite_gasto_motivo INT PRIMARY KEY AUTO_INCREMENT,
+    monto_limite INT,
+    cod_motivo_ingreso_egresoFK INT,
+    cod_localFK INT,
+    cod_usuarioFK_edit INT,
+    fecha_edit DATETIME,
+    Foreign Key (cod_localFK) REFERENCES local(cod_local),
+    Foreign Key (cod_motivo_ingreso_egresoFK) REFERENCES motivos_ingreso_egreso(cod_motivo_ingreso_egreso)
+);
+
+INSERT INTO montos_limites_gasto_motivo (
+    monto_limite,
+    cod_motivo_ingreso_egresoFK,
+    cod_localFK,
+    fecha_edit,
+    cod_usuarioFK_edit
+)
+SELECT 
+    NULL,
+    m.cod_motivo_ingreso_egreso,
+    l.cod_local,
+    NULL,
+    NULL
+FROM motivos_ingreso_egreso m
+CROSS JOIN local l
+LEFT JOIN montos_limites_gasto_motivo ml
+    ON ml.cod_motivo_ingreso_egresoFK = m.cod_motivo_ingreso_egreso
+   AND ml.cod_localFK = l.cod_local
+WHERE ml.cod_monto_limite_gasto_motivo IS NULL;
