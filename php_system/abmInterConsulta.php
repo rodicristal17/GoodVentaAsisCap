@@ -806,7 +806,7 @@
 
             $colorText= "";
             if ($value['cantAsociadoGastos'] > 0) {
-                $colorText= "color: rgb(14, 194, 32);";
+                $colorText= "color: #2ea3c0;";
             }
 
             $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
