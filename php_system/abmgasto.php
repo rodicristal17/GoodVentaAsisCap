@@ -776,14 +776,14 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			break;
 		case 'directo':
 			$idZona= "CostosDirectos";
-			$titulo= "Costos Directos";
+			$titulo= "Costos Variables";
 			$totalZona= $totalZonaCostosDirectos;
 			$styleColor= "#EABA4C;";
 			$styleRegistroColor= "#F4CB8D;";
 			break;
 		case 'operativo':
 			$idZona= "GastosOperativos";
-			$titulo= "Gastos Operativos";
+			$titulo= "Gastos Fijos";
 			$totalZona= $totalZonaGastosOperativos;
 			$styleColor= "#DE7258;";
 			$styleRegistroColor= "#EDB5A4;";

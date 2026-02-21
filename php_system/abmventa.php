@@ -1150,7 +1150,6 @@ function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$d
 		(Select accesocredito from cliente where cod_cliente=cod_clienteFK) as accesocredito , cob_ex
 		from  venta vt where cod_venta!='0' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  ".$condicionfecha.$condicionAgenteCredito.$condiciontipoComprobante.$condicionfechafiltro.$condicionnroventa.$condiciondocumento.$condicioncliente.$condiciontelef.$condicionCuenta.$condiciontipoventa.$condicionCodLocal.$condicionVendedor."  order by vt.cod_venta asc limit 50" ;
 	
-		
    $stmt = $mysqli->prepare($sql);
   
 if ( ! $stmt->execute()) {
