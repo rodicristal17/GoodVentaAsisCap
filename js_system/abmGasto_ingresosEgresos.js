@@ -698,6 +698,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 	var fecha = document.getElementById('inptBuscarIngresoEgreso1').value
 	var usuario = document.getElementById('inptBuscarIngresoEgreso2').value
     let cod_motivoFK= '';
+	const interConsulta= document.getElementById('inptBuscarIngresoEgreso4').value;
     $("input[id=inptBuscarIngresoEgreso3]").each(function (i, Elemento) {
       var $input = $(this),
           val = $input.val();
@@ -731,6 +732,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		"arreglo": arreglo,
         "cod_motivoFK": cod_motivoFK,
 		"cod_interConsultaFK": "",
+		"nombre_interConsulta": interConsulta,
 		"funt": "buscar"
 	};
 	$.ajax({

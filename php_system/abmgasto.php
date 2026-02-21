@@ -77,7 +77,7 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
 		'cod_localFK' => $cod_local,
 	))[0]["monto_limite"];
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '');
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '', '');
 
 	if ($monto_limite && $monto_limite != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -101,40 +101,41 @@ if ($operacion=='cargar_imagen') {
 if($operacion=="buscar")
 {
 	$fecha1=$_POST['fecha1'];
-$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
-$fecha2=$_POST['fecha2'];
-$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
-$estado=$_POST['estado'];
-$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
-$cod_local=$_POST['cod_local'];
-$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
-$tipo=$_POST['tipo'];
-$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
-$usuario=$_POST['usuario'];
-$usuario = mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
-$fecha=$_POST['fecha'];
-$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
+	$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
+	$fecha2=$_POST['fecha2'];
+	$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
+	$estado=$_POST['estado'];
+	$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
+	$cod_local=$_POST['cod_local'];
+	$cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
+	$tipo=$_POST['tipo'];
+	$tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
+	$usuario=$_POST['usuario'];
+	$usuario = mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
+	$fecha=$_POST['fecha'];
+	$fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 
-$arreglo=$_POST['arreglo'];
-$arreglo = mb_convert_encoding((string)($arreglo), 'ISO-8859-1', 'UTF-8');
-$cod_interConsultaFK=$_POST['cod_interConsultaFK'];
-$cod_interConsultaFK = mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
-
-$cod_motivoFK= $_POST['cod_motivoFK'];
-$cod_motivoFK= mb_convert_encoding((string)($cod_motivoFK), 'ISO-8859-1', 'UTF-8');
-$ocultar_inactivos= $_POST['ocultar_inactivos'];
-$ocultar_inactivos= mb_convert_encoding((string)($ocultar_inactivos), 'ISO-8859-1', 'UTF-8');
-if($cod_local==""){
-$controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
-	if($controllocal==0){
-		$cod_local=buscarlocaluser($user);
+	$arreglo=$_POST['arreglo'];
+	$arreglo = mb_convert_encoding((string)($arreglo), 'ISO-8859-1', 'UTF-8');
+	$cod_interConsultaFK=$_POST['cod_interConsultaFK'];
+	$cod_interConsultaFK = mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
+	$nombre_interConsulta=$_POST['nombre_interConsulta'];
+	$nombre_interConsulta = mb_convert_encoding((string)($nombre_interConsulta), 'ISO-8859-1', 'UTF-8');
+	$cod_motivoFK= $_POST['cod_motivoFK'];
+	$cod_motivoFK= mb_convert_encoding((string)($cod_motivoFK), 'ISO-8859-1', 'UTF-8');
+	$ocultar_inactivos= $_POST['ocultar_inactivos'];
+	$ocultar_inactivos= mb_convert_encoding((string)($ocultar_inactivos), 'ISO-8859-1', 'UTF-8');
+	if($cod_local==""){
+	$controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
+		if($controllocal==0){
+			$cod_local=buscarlocaluser($user);
+		}
 	}
-}
-$idgastos= "";
+	$idgastos= "";
 
-$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $idgastos);
-echo json_encode($informacion);
-exit;
+	$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $idgastos);
+	echo json_encode($informacion);
+	exit;
 }	
 if($operacion=="evaluacionGasto")
 {
@@ -409,7 +410,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	}
 
 	// Se registra el cambio
-	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', $idgastos)[9][0];
+	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9][0];
 	if (!empty($registroGasto['cod_interConsultaFK'])) {
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
@@ -494,7 +495,7 @@ if($operacion=="editar")
 {
 
 // Obtiene los datos actuales del gasto
-$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', $idgastos)[9];
+$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9];
 
 if ($estado == 'Activo' && !empty($cod_usuario_autoriz)) {
 	$estado = "pendiente";
@@ -529,7 +530,7 @@ subirImagenGasto($idgastos, $foto, $ext);
 if($operacion=="editar")
 {
 	// Obtiene los datos actuales del gasto
-	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', $idgastos)[9][0];
+	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9][0];
 
 	// Compara los datos anteriores con los nuevos y prepara el mensaje
 	$mensaje= "";
@@ -559,7 +560,7 @@ exit;
 	
 }
 
-function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $idgastos)
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $idgastos)
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -627,6 +628,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		}
 		if ($cod_interConsultaFK != "") {
 			$sqlFiltro .= " and g.cod_interConsultaFK= $cod_interConsultaFK ";
+		}
+		if ($nombre_interConsulta != "") {
+			$sqlFiltro .= " and (Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) like '%".$nombre_interConsulta."%'";
 		}
 		if ($idgastos != "") {
 			$sqlFiltro .= " and g.idgastos= $idgastos ";
@@ -857,11 +861,12 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$styleName=CargarStyleTable($styleName);
 			if ($estado == 'Activo') {
 				$paginaImprimir .= "
-					<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-					<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
+				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
 					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-					<td  style='width:25%'>".$descripcion."</td>
+					<td  id='td_datos_16' style='width:15%'>".$interconsulta_nombre."</td>
+					<td  style='width:2%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
@@ -877,7 +882,6 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
 					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
-					<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 					<td  id='td_datos_17' style='display:none'>".$cod_usuario_autoriz."</td>
 					<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 					<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
@@ -892,23 +896,23 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+				<td  id='td_datos_16' style='width: 15%;'>".$interconsulta_nombre."</td>
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
-				<td  id='td_datos_6' style='width:10%'>".$tipo."</td>
+				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
 				<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 				<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
 				<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
-				<td  id='td_datos_21' style='width:20%'>".$usuarionombre."</td>
-				<td  id='' style='width:10%'>".$nombrelocal."</td>
+				<td  id='td_datos_21' style='width:10%'>".$usuarionombre."</td>
+				<td  id='' style='width:15%'>".$nombrelocal."</td>
 				<td  id='td_datos_5' style='display:none'>".$estado."</td>
 				<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
 				<td  id='td_datos_12' style='display:none'>".$url1."</td>
 				<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 				<td  id='td_datos_14' style='display:none'>".$motivo."</td>
 				<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
-				<td  id='td_datos_16' style='display:none'>".$interconsulta_nombre."</td>
 				<td  id='td_datos_17' style='display:none'>".$cod_usuario_autoriz."</td>
 				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
