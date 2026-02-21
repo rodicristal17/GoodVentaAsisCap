@@ -1798,27 +1798,28 @@ function historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente
 
 	 $totalRegistro=0;
 	 $pagina="";
-	 $condicionfecha="";
+	 $sqlFiltro= "";
 	if($fecha1!="" && $fecha2!=""){
-		 $condicionfecha=" and cl.fecha>='$fecha1' and cl.fecha<='$fecha2'";
+		$sqlFiltro .=" and cl.fecha>='$fecha1' and cl.fecha<='$fecha2'";
 	}
-	$condicionfiltrofecha="";
 	if($filtrofecha!=""){
-		$condicionfiltrofecha="and cl.fecha='$fecha1'";
+		$sqlFiltro .="and cl.fecha='$fecha1'";
 	}
-	$condicioncodlocal="";
 	if($codlocal!=""){
-		$condicioncodlocal="and vt.cod_local='$codlocal'";
+		$sqlFiltro .="and vt.cod_local='$codlocal'";
 	}
-	$condicionnroventa="";
 	if($nroventa!=""){
-		$condicionnroventa="and vt.num_factura like '%".$nroventa."%'";
+		$sqlFiltro .="and vt.num_factura like '%".$nroventa."%'";
 	}
-	$condicioncliente="";
 	if($cliente!=""){
-		$condicioncliente="and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%'";
+		$sqlFiltro .="and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%'";
 	}
-		 $sql= "Select vt.puntoexpedicion,vt.fecha_venta,vt.total_venta,vt.cod_usuarioFK,vt.cod_clienteFK,vt.num_factura,vt.cod_cobradorFK,vt.TipoVenta,vt.TipoPago,vt.cod_venta,vt.comision,vt.pago,
+
+	if ($sqlFiltro) {
+		$sqlFiltro = 'where ' . substr($sqlFiltro, 3, strlen($sqlFiltro)-3);
+	}
+
+	$sql= "Select vt.puntoexpedicion,vt.fecha_venta,vt.total_venta,vt.cod_usuarioFK,vt.cod_clienteFK,vt.num_factura,vt.cod_cobradorFK,vt.TipoVenta,vt.TipoPago,vt.cod_venta,vt.comision,vt.pago,
 		 (Select nombre from vendedor where idvendedor=vt.Vendedor1) as nombrevendedor1,
 		(Select nombre from vendedor where idvendedor=vt.Vendedor2) as nombrevendedor2,
 		(Select nombre_persona from persona where cod_persona=vt.cod_usuarioFK) as usuarionombre,
@@ -1836,12 +1837,8 @@ function historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente
 		IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0) as totaldescuento,
 		cl.montodevuelto,cl.motivo,cl.fecha as fechacancelacion,
 		IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado
-		from venta vt inner join cancelaciones cl on cl.cod_venta=vt.cod_venta 
-		where vt.fecha_venta!='0' ".$condicioncliente.$condicionnroventa.$condicioncodlocal.$condicionfiltrofecha.$condicionfecha." limit 50 ";
-	
-
-
-   
+		from venta vt inner join cancelaciones cl on cl.cod_venta=vt.cod_venta $sqlFiltro limit 50 ";
+	   
    $stmt = $mysqli->prepare($sql);
   
 if ( ! $stmt->execute()) {
@@ -1923,19 +1920,16 @@ if ( ! $stmt->execute()) {
 				  	   $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
 <tr id='tbSelecRegistro'>
-<td  id='' style='width:10%'>".$fecha_venta."</td>
-<td id='' style='width:10%'>".$nrof."</td>
-<td  id='' style='width:10%'>".$clientenombre ."</td>
-<td  id='' style='width:10%'>".$cuotas ."</td>
-<td  id='' style='width:10%'>".$fechacancelacion."</td>
-
-
-<td  id='' style='width:10%'>". number_format($total_venta,'0',',','.') ."</td>
-<td  id='' style='width:10%'>". number_format($totalpagado,'0',',','.') ."</td>
-
-<td  id='' style='width:10%'>". number_format($montodevuelto,'0',',','.') ."</td>
-<td  id='' style='width:10%'>".$motivo."</td>
-<td  id='' style='width:10%'>".$nombrelocal."</td>
+	<td  id='' style='width:15%'>".$fecha_venta."</td>
+	<td id='' style='width:10%'>".$nrof."</td>
+	<td  id='' style='width:10%'>".$clientenombre ."</td>
+	<td  id='' style='width:5%'>".$cuotas ."</td>
+	<td  id='' style='width:15%'>".$fechacancelacion."</td>
+	<td  id='' style='width:10%'>". number_format($total_venta,'0',',','.') ."</td>
+	<td  id='' style='width:10%'>". number_format($totalpagado,'0',',','.') ."</td>
+	<td  id='' style='width:5%'>". number_format($montodevuelto,'0',',','.') ."</td>
+	<td  id='' style='width:10%'>".$motivo."</td>
+	<td  id='' style='width:10%'>".$nombrelocal."</td>
 </tr>
 </table>";
 
@@ -1964,9 +1958,8 @@ if ( ! $stmt->execute()) {
 		IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0) as totaldescuento,
 		cl.montodevuelto,cl.motivo,cl.fecha as fechacancelacion,
 		IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado
-		from venta vt inner join cancelaciones cl on cl.cod_venta=vt.cod_venta 
-		where vt.fecha_venta!='0' ".$condicioncliente.$condicionnroventa.$condicioncodlocal.$condicionfiltrofecha.$condicionfecha;
-	  $stmt = $mysqli->prepare($sql);  
+		from venta vt inner join cancelaciones cl on cl.cod_venta=vt.cod_venta $sqlFiltro";
+	  $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
    echo "Error";
    exit;
@@ -1987,26 +1980,27 @@ function mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$clie
 
 	 $totalRegistro=0;
 	 $pagina="";
-	 $condicionfecha="";
+	 	 $sqlFiltro= "";
 	if($fecha1!="" && $fecha2!=""){
-		 $condicionfecha=" and cl.fecha>='$fecha1' and cl.fecha<='$fecha2'";
+		$sqlFiltro .=" and cl.fecha>='$fecha1' and cl.fecha<='$fecha2'";
 	}
-	$condicionfiltrofecha="";
 	if($filtrofecha!=""){
-		$condicionfiltrofecha="and cl.fecha='$fecha1'";
+		$sqlFiltro .="and cl.fecha='$fecha1'";
 	}
-	$condicioncodlocal="";
 	if($codlocal!=""){
-		$condicioncodlocal="and vt.cod_local='$codlocal'";
+		$sqlFiltro .="and vt.cod_local='$codlocal'";
 	}
-	$condicionnroventa="";
 	if($nroventa!=""){
-		$condicionnroventa="and vt.num_factura like '%".$nroventa."%'";
+		$sqlFiltro .="and vt.num_factura like '%".$nroventa."%'";
 	}
-	$condicioncliente="";
 	if($cliente!=""){
-		$condicioncliente="and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%'";
+		$sqlFiltro .="and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%'";
 	}
+
+	if ($sqlFiltro) {
+		$sqlFiltro = 'where ' . substr($sqlFiltro, 3, strlen($sqlFiltro)-3);
+	}
+
 		 $sql= "Select vt.puntoexpedicion,vt.fecha_venta,vt.total_venta,vt.cod_usuarioFK,vt.cod_clienteFK,vt.num_factura,vt.cod_cobradorFK,vt.TipoVenta,vt.TipoPago,vt.cod_venta,vt.comision,vt.pago,
 		 (Select nombre from vendedor where idvendedor=vt.Vendedor1) as nombrevendedor1,
 		(Select nombre from vendedor where idvendedor=vt.Vendedor2) as nombrevendedor2,
@@ -2026,10 +2020,7 @@ function mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$clie
 		cl.montodevuelto,cl.motivo,cl.fecha as fechacancelacion,
 		IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado
 		from venta vt inner join cancelaciones cl on cl.cod_venta=vt.cod_venta 
-		where vt.fecha_venta!='0' ".$condicioncliente.$condicionnroventa.$condicioncodlocal.$condicionfiltrofecha.$condicionfecha." limit ".$registrocargado.", 50 ";
-	
-
-
+		$sqlFiltro limit $registrocargado, 50 ";
    
    $stmt = $mysqli->prepare($sql);
   
@@ -2110,19 +2101,16 @@ if ( ! $stmt->execute()) {
 				  	   $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
 <tr id='tbSelecRegistro'>
-<td  id='' style='width:10%'>".$fecha_venta."</td>
-<td id='' style='width:10%'>".$nrof."</td>
-<td  id='' style='width:10%'>".$clientenombre ."</td>
-<td  id='' style='width:10%'>".$cuotas ."</td>
-<td  id='' style='width:10%'>".$fechacancelacion."</td>
-
-
-<td  id='' style='width:10%'>". number_format($total_venta,'0',',','.') ."</td>
-<td  id='' style='width:10%'>". number_format($totalpagado,'0',',','.') ."</td>
-
-<td  id='' style='width:10%'>". number_format($montodevuelto,'0',',','.') ."</td>
-<td  id='' style='width:10%'>".$motivo."</td>
-<td  id='' style='width:10%'>".$nombrelocal."</td>
+	<td  id='' style='width:15%'>".$fecha_venta."</td>
+	<td id='' style='width:10%'>".$nrof."</td>
+	<td  id='' style='width:10%'>".$clientenombre ."</td>
+	<td  id='' style='width:5%'>".$cuotas ."</td>
+	<td  id='' style='width:15%'>".$fechacancelacion."</td>
+	<td  id='' style='width:10%'>". number_format($total_venta,'0',',','.') ."</td>
+	<td  id='' style='width:10%'>". number_format($totalpagado,'0',',','.') ."</td>
+	<td  id='' style='width:5%'>". number_format($montodevuelto,'0',',','.') ."</td>
+	<td  id='' style='width:10%'>".$motivo."</td>
+	<td  id='' style='width:10%'>".$nombrelocal."</td>
 </tr>
 </table>";
 

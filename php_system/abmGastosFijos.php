@@ -146,7 +146,7 @@
             $reg = array();
             foreach ($row as $key => $value) {
                 // Solo codificar si NO es UTF-8 válido
-                if (!mb_check_encoding($value, 'UTF-8')) {
+                if (is_string($value) && !mb_check_encoding($value, 'UTF-8')) {
                     $reg[$key] = mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
                 } else {
                     $reg[$key] = $value;
