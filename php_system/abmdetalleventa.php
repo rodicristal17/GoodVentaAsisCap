@@ -929,8 +929,8 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 
 	/*AUDITORIA*/
 	date_default_timezone_set('America/Anguilla');
-	$fecha_inser_edit = date('Y-m-d | h:i:sa', time());
-	$fecha = date('Y-m-d', time());
+	$fecha_inser_edit = date('Y-m-d H:i:s');
+	$fecha = date('Y-m-d H:i:s');
 	$user = $_POST['useru'];
 	$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
