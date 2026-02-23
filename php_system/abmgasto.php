@@ -896,7 +896,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-				<td  id='td_datos_16' style='width: 15%;'><div style='width: fit-content' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_nombre."</div></td>
+				<td  id='td_datos_16' style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_nombre."</div></td>
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
@@ -1525,10 +1525,10 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
-$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion) values (upper(?),?, ?, ?, ?)";
+$consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion) values (upper(?),?, ?, ?)";
 $stmt = $mysqli->prepare($consulta1);
 $ss='ssss';
-$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion,);
+$stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion);
 
 if (!$stmt->execute()) {
 	echo "$consulta1\n$motivo\n";

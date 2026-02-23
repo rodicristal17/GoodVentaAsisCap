@@ -240,7 +240,7 @@ function verificarCamposInterConsulta() {
     const estado= document.getElementById('inptEstadoAbmInterConsulta').value;
     const tipo= document.getElementById('inptTipoAbmInterConsulta').value;
     const local= document.getElementById('inptLocalAbmInterConsulta').value;
-    const monto_limite= document.getElementById('inptMontoLimiteAbmInterConsulta').value;
+    const monto_limite= document.getElementById('inptMontoLimiteAbmInterConsulta').value.replace('.', '');
 
     if (!asunto) {
         ver_vetana_informativa("Faltan datos", "El campo asunto es obligatorio para crear una nueva Interconsulta.", "advertencia");
