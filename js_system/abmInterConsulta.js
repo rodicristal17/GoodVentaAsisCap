@@ -259,6 +259,13 @@ function verificarCamposInterConsulta() {
 }
 
 function abmInterConsulta(asunto, estado, tipo, local, monto_limite) {
+    // Verificar si se crea o se edita la interconsulta
+    if (cod_interConsulta) {
+        if(controlacceso("EDITARINTERCONSULTA","accion")==false){ return;}
+    } else {
+        if(controlacceso("CREARINTERCONSULTA","accion")==false){ return;}
+    }
+
     // Limpia el formato del monto_limite
     monto_limite= monto_limite.replace(".", "");
 

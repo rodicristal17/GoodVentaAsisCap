@@ -138,3 +138,6 @@ LEFT JOIN montos_limites_gasto_motivo ml
 WHERE ml.cod_monto_limite_gasto_motivo IS NULL;
 
 ALTER TABLE cancelaciones ADD COLUMN cod_usuarioFK INT;
+
+-- Cargar permisos
+-- EDITARINTERCONSULTA, CREARINTERCONSULTA
