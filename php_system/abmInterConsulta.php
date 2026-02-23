@@ -488,10 +488,10 @@
                 <span class="text-uppercase">'.$valueInter['nombre_motivo_asociado'].'</span>
                 </div>';
             }
-            if ($gastosElemento && $valueInter['monto_limite']) {
+            if ($valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Monto del flujo: </span>
-                <span class="text-uppercase"> '.number_format($montoTotal, 0, ',', '.').' / '.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
+                <span class="text-uppercase"> Gastado '.number_format($montoTotal, 0, ',', '.').' de '.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
                 </div>';
             }
             $pagina .= '</div>';
@@ -816,7 +816,19 @@
                 $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
             }
             if ($value["cantMensajesProgramados"]) {
-                $formatAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>';
+                // Obtiene los mensajes programados
+                $registrosMens= obtenerMensaje(array(
+                    'fecha_creacion' => "> '".(new DateTime())->format('Y-m-d H:i:s')."'",
+                    "cod_interConsultaFK" => $value["cod_interConsulta"],
+                ));
+                foreach ($registrosMens as $valueMens) {
+                    if ($valueMens['estado'] == 'activo') {
+                        $fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));
+                        $fechaActual = new DateTime();
+                        $diasRestantes = $fechaMensaje->diff($fechaActual->setTime(0, 0, 0));
+                        $formatAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').') ';
+                    }
+                }
             }
             
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">

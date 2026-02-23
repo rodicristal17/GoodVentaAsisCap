@@ -858,6 +858,23 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				$styleEstado= "background-color: #b1b1b1a1;";
 			}
 	
+			// Se formate el nombre de la interconsulta
+			$interconsulta_element= $interconsulta_nombre;
+			if ($cod_interConsultaFK) {
+				$registrosMens= obtenerMensaje(array(
+					'fecha_creacion' => "> '".(new DateTime())->format('Y-m-d H:i:s')."'",
+					"cod_interConsultaFK" => $cod_interConsultaFK,
+				));
+				foreach ($registrosMens as $valueMens) {
+					if ($valueMens['estado'] == 'activo') {
+						$fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));
+						$fechaActual = new DateTime();
+						$diasRestantes = $fechaMensaje->diff($fechaActual->setTime(0, 0, 0));
+						$interconsulta_element .= ' <i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').')';
+					}
+				}
+			}
+
 			$styleName=CargarStyleTable($styleName);
 			if ($estado == 'Activo') {
 				$paginaImprimir .= "
@@ -896,7 +913,8 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
-				<td  id='td_datos_16' style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_nombre."</div></td>
+				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
+				<td  id='td_datos_16' style='display: none;'>".$interconsulta_nombre."</td>
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
