@@ -24846,7 +24846,8 @@ function buscarhistorialventaCancelada(){
   var filtrofecha=document.getElementById('inptBuscarInfVentasCanceladas1').value
  var nroventa=document.getElementById('inptBuscarInfVentasCanceladas2').value
  var cliente=document.getElementById('inptBuscarInfVentasCanceladas3').value
- var codlocal=document.getElementById('inptlocalInformeVentaCanceladas').value
+ var codlocal=document.getElementById('inptlocalInformeVentaCanceladas').value;
+ const usuario_nombre= ''//document.getElementById('inptBuscarInfVentasCanceladas4').value;
  var fecha1=document.getElementById('inptBuscarInfVentasCanceladasF1').value
  var fecha2=document.getElementById('inptBuscarInfVentasCanceladasF2').value
  if(document.getElementById('checkHistorialVentasCanceladas2').checked==true){
@@ -24880,6 +24881,7 @@ function buscarhistorialventaCancelada(){
 			"nroventa": nroventa,
 			"cliente": cliente,
 			"codlocal": codlocal,
+			"usuario_nombre": usuario_nombre,
 			"funt": "historialventacancelado"
 			};
 	 $.ajax({

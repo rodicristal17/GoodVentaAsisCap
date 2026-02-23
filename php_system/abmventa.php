@@ -434,7 +434,7 @@ $fecha=$_POST['fecha'];
 $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 $cod_venta=$_POST['cod_venta'];
 $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8');
-abmcancelarventa($montodevuelto,$motivo,$fecha,$cod_venta,"nuevo");
+abmcancelarventa($montodevuelto,$motivo,$fecha,$cod_venta,$user,"nuevo");
 
 }
 if($operacion=="refinanciartotalventa")
@@ -470,6 +470,8 @@ $nroventa=$_POST['nroventa'];
 $nroventa = mb_convert_encoding((string)($nroventa), 'ISO-8859-1', 'UTF-8');
 $cliente=$_POST['cliente'];
 $cliente = mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
+$nombre_usuario=$_POST['usuario_nombre'];
+$nombre_usuario = mb_convert_encoding((string)($nombre_usuario), 'ISO-8859-1', 'UTF-8');
 $codlocal=$_POST['codlocal'];
 $codlocal = mb_convert_encoding((string)($codlocal), 'ISO-8859-1', 'UTF-8');
 if($codlocal==""){
@@ -478,7 +480,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$codlocal=buscarlocaluser($user);
 	}
 }
-	historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal);
+	historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal,$nombre_usuario);
 
 }
 if($operacion=="mashistorialventacancelado")
@@ -494,6 +496,8 @@ $nroventa=$_POST['nroventa'];
 $nroventa = mb_convert_encoding((string)($nroventa), 'ISO-8859-1', 'UTF-8');
 $cliente=$_POST['cliente'];
 $cliente = mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
+$nombre_usuario=$_POST['usuario_nombre'];
+$nombre_usuario = mb_convert_encoding((string)($nombre_usuario), 'ISO-8859-1', 'UTF-8');
 $codlocal=$_POST['codlocal'];
 $codlocal = mb_convert_encoding((string)($codlocal), 'ISO-8859-1', 'UTF-8');
 $registrocargado=$_POST['registrocargado'];
@@ -504,7 +508,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$codlocal=buscarlocaluser($user);
 	}
 }
-mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal,$registrocargado);
+mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal,$nombre_usuario,$registrocargado);
 
 }
 
@@ -807,7 +811,7 @@ exit;
 	
 }
 
-function abmcancelarventa($montodevuelto,$motivo,$fecha,$cod_venta,$operacion)
+function abmcancelarventa($montodevuelto,$motivo,$fecha,$cod_venta,$cod_usuarioFK,$operacion)
 {
 	
 	
@@ -820,15 +824,15 @@ exit;
 $mysqli=conectar_al_servidor(); 
 if($operacion=="nuevo") 
 {
-$consulta1="Insert into cancelaciones (montodevuelto,motivo,fecha,cod_venta)
-values(?,?,?,?)";
+$consulta1="Insert into cancelaciones (montodevuelto,motivo,fecha,cod_venta,cod_usuarioFK)
+values(?,?,?,?,?)";
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='ssss';
-$stmt1->bind_param($ss,$montodevuelto,$motivo,$fecha,$cod_venta);
+$ss='sssss';
+$stmt1->bind_param($ss,$montodevuelto,$motivo,$fecha,$cod_venta,$cod_usuarioFK);
 }
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 }
  buscardetalleventacancelaciones($cod_venta);
@@ -1793,7 +1797,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal){
+function historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal,$nombre_usuario){
 	$mysqli=conectar_al_servidor();
 
 	 $totalRegistro=0;
@@ -1814,6 +1818,9 @@ function historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente
 	if($cliente!=""){
 		$sqlFiltro .="and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%'";
 	}
+	if ($nombre_usuario) {
+		$sqlFiltro .= " and (Select nombre_persona from persona where cod_persona=cod_usuarioFK) like '%" . $nombre_usuario . "%'";
+	}
 
 	if ($sqlFiltro) {
 		$sqlFiltro = 'where ' . substr($sqlFiltro, 3, strlen($sqlFiltro)-3);
@@ -1822,6 +1829,7 @@ function historialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente
 	$sql= "Select vt.puntoexpedicion,vt.fecha_venta,vt.total_venta,vt.cod_usuarioFK,vt.cod_clienteFK,vt.num_factura,vt.cod_cobradorFK,vt.TipoVenta,vt.TipoPago,vt.cod_venta,vt.comision,vt.pago,
 		 (Select nombre from vendedor where idvendedor=vt.Vendedor1) as nombrevendedor1,
 		(Select nombre from vendedor where idvendedor=vt.Vendedor2) as nombrevendedor2,
+		(Select nombre_persona from persona where cod_persona=cl.cod_usuarioFK) as nombre_usuario_cancelo,
 		(Select nombre_persona from persona where cod_persona=vt.cod_usuarioFK) as usuarionombre,
 		(Select Calificacion from cliente where cod_cliente=vt.cod_clienteFK) as Calificacion,
 		(Select Nombre from local l where l.cod_local=vt.cod_local) as nombrelocal,
@@ -1888,6 +1896,7 @@ if ( ! $stmt->execute()) {
 			    $fechacancelacion=mb_convert_encoding((string)($valor['fechacancelacion']), 'UTF-8', 'ISO-8859-1');
 			    $puntoexpedicion=mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF-8', 'ISO-8859-1');
 			    $nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
+			    $nombre_usuario_cancelo=mb_convert_encoding((string)($valor['nombre_usuario_cancelo']), 'UTF-8', 'ISO-8859-1');
 			$totalRegistro=$totalRegistro+1;
 			$totalpagado=$totalpagado+$pago;
 			
@@ -1918,7 +1927,7 @@ if ( ! $stmt->execute()) {
 
  $styleName=CargarStyleTable($styleName);
 				  	   $pagina.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5' style='width: 110%;table-layout: fixed;' >
 <tr id='tbSelecRegistro'>
 	<td  id='' style='width:15%'>".$fecha_venta."</td>
 	<td id='' style='width:10%'>".$nrof."</td>
@@ -1930,6 +1939,7 @@ if ( ! $stmt->execute()) {
 	<td  id='' style='width:5%'>". number_format($montodevuelto,'0',',','.') ."</td>
 	<td  id='' style='width:10%'>".$motivo."</td>
 	<td  id='' style='width:10%'>".$nombrelocal."</td>
+	<td  id='' style='width:10%'>".$nombre_usuario_cancelo."</td>
 </tr>
 </table>";
 
@@ -1975,7 +1985,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal,$registrocargado){
+function mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$cliente,$codlocal,$nombre_usuario,$registrocargado){
 	$mysqli=conectar_al_servidor();
 
 	 $totalRegistro=0;
@@ -1995,6 +2005,9 @@ function mashistorialventacancelado($filtrofecha,$fecha1,$fecha2,$nroventa,$clie
 	}
 	if($cliente!=""){
 		$sqlFiltro .="and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%'";
+	}
+	if ($nombre_usuario) {
+		$sqlFiltro .= " and (Select nombre_persona from persona where cod_persona=cod_usuarioFK) like '%" . $nombre_usuario . "%'";
 	}
 
 	if ($sqlFiltro) {

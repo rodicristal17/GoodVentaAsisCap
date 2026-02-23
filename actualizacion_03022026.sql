@@ -136,3 +136,5 @@ LEFT JOIN montos_limites_gasto_motivo ml
     ON ml.cod_motivo_ingreso_egresoFK = m.cod_motivo_ingreso_egreso
    AND ml.cod_localFK = l.cod_local
 WHERE ml.cod_monto_limite_gasto_motivo IS NULL;
+
+ALTER TABLE cancelaciones ADD COLUMN cod_usuarioFK INT;

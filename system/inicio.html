@@ -15341,7 +15341,8 @@ onclick="buscarhistorialventaCancelada()">
 </tr>
 </tbody>
 </table>
-<table class="tableCabeceraRegistro" >
+<div style="overflow-x: auto;">
+<table class="tableCabeceraRegistro" style="width: 110%;table-layout: fixed;">
 <tbody>
 <tr>
 <td class="td_registro" style="width:15%;">
@@ -15375,10 +15376,13 @@ MOTIVO
 <td class="td_registro" style="width:10%;">
 LOCAL
 </td>
+<td class="td_registro" style="width:10%;">
+USUARIO CANCELO
+</td>
 </tr>
 </tbody>
 </table>
-<table class="tableCabeceraRegistro">
+<table class="tableCabeceraRegistro" style="width: 110%;table-layout: fixed;">
 <tbody>
 <tr>
 <td class="td_registro" style="width:14%;">
@@ -15428,10 +15432,20 @@ onclick="vaciar('inptBuscarInfVentasCanceladas3')" />
 <select class="inputfiltro"
 id="inptlocalInformeVentaCanceladas"></select>
 </td>
+<td class="td_registro" style="width:9%;">
+<input placeholder="Parecido a" class="inputfiltro" type="text"
+id="inptBuscarInfVentasCanceladas4"
+onkeyup="if(event.keyCode == 13){buscarhistorialventaCancelada()}">
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP'
+src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarInfVentasCanceladas4')" />
+</td>
 </tr>
 </tbody>
-</table>
-<div class="div_cuerpo_table" id="table_historial_venta_cancelado" style="width: 100%;"></div>
+</table></div>
+<div class="div_cuerpo_table" id="table_historial_venta_cancelado" style="width: 100%; overflow-x: auto;"></div>
 <table style='width:100%;height:50px;display:none' id='tbProcessVentasCanceladas'>
 <tr>
 <td  style='width:90%'>
