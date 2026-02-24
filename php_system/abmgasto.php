@@ -40,6 +40,7 @@ $motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
 $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 $estado=$_POST['estado'];
 $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
+$estado = ($estado == '' ? 'solicitado' : $estado);
 $tipo=$_POST['tipo'];
 $tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
@@ -472,13 +473,14 @@ $mysqli=conectar_al_servidor();
 
 // Identifica si el motivo necesita autorizacion
 $registros_motivos= buscarabmmotivoingresoegreso('', 'activo',$cod_motivo);
-
-if($operacion=="nuevo")
-{
+//var_dump($registros_motivos['4'][0]['necesita_autorizacion']);exit;
 
 if ($estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] == '1') {
 	$estado = "solicitado";
 }
+
+if($operacion=="nuevo")
+{
 
 $consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";

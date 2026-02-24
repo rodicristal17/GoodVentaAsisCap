@@ -107,7 +107,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_14"]').html();
 	document.getElementById('inptFechaGasto').value = $(datostr).children('td[id="td_datos_3"]').html();
-	document.getElementById('inptEstadoGasto').value = $(datostr).children('td[id="td_datos_5"]').html();
+	document.getElementById('inptEstadoGasto').value = ($(datostr).children('td[id="td_datos_5"]').html() == 'Inactivo' ? 'Inactivo' : 'Activo');
 	document.getElementById('inptlocalMisGastos').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptNroBoletaGasto').value = $(datostr).children('td[id="td_datos_8"]').html();
 	document.getElementById('inptBancoGasto').value = $(datostr).children('td[id="td_datos_9"]').html();
