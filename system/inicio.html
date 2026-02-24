@@ -4665,10 +4665,6 @@ style='width:150px'></select>
 <option value="Egreso">EGRESOS</option>
 </select>
 </td>
-<td>
-  <p class="pTitulo8">
-  <input type="checkbox" id="inptCheckGastoFijoGasto" style="width: fit-content;margin-inline: 5px;">Gasto periodico</p>
-</td>
 </tr>
 </table>
 </div>
@@ -4685,16 +4681,11 @@ style='width:150px'></select>
 <br>
 <table style='width:100%'>
 <tr>
-<td>
+<td style="width: 50%;">
 <p class='pTituloC' >Banco :</p>
 <input class='inputText' type='text' id='inptBancoGasto' />
 </td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
+<td style="width: 50%;">
 <p class='pTituloC' >Cuenta :</p>
 <input class='inputText' type='text' id='inptCuentaGasto' style='width:200px' />
 </td>
@@ -4720,6 +4711,24 @@ style='width:150px'></select>
 <select class="inputSelect" id="inptEstadoGasto" style='width:200px'>
 <option value="Activo">ACTIVO</option>
 <option value="Inactivo">INACTIVO</option>
+</select>
+</td>
+</tr>
+</table>
+<table style='width:100%'>
+<tr>
+<td style="width: 50%;">
+<p class='pTituloC' >Cantidad de cuotas :</p>
+<input class='inputText' type='number' id='inptCantCuotaGasto' style='width:200px' />
+</td>
+<td style="width: 50%;">
+<p class='pTituloC' >Periodicidad :</p>
+<select class="inputSelect" id="inptPeriodicidadGasto" style='width:200px'>
+<option value="">SELECCIONAR</option>
+<option value="mensual">MENSUAL</option>
+<option value="quincenal">QUINCENAL</option>
+<option value="semanal">SEMANAL</option>
+<option value="anual">ANUAL</option>
 </select>
 </td>
 </tr>

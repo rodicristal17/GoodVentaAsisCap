@@ -89,8 +89,9 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 		exit;
 	}
 
-	abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
-
+	$informacion= abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
+	echo json_encode($informacion);	
+	exit;
 }
 if ($operacion=='cargar_imagen') {
 	$idgastos=$_POST['idgastos'];
@@ -447,6 +448,71 @@ function subirImagenGasto($idgastos, $foto, $ext) {
 	return true;
 }
 
+function sumarMesesRespetandoDia($fechaBase, $mesesASumar, $diaObjetivo) {
+	$anioBase = (int)$fechaBase->format('Y');
+	$mesBase = (int)$fechaBase->format('n');
+	$mesTotal = $mesBase + $mesesASumar;
+
+	$nuevoAnio = $anioBase + intdiv($mesTotal - 1, 12);
+	$nuevoMes = (($mesTotal - 1) % 12) + 1;
+	$ultimoDiaMes = cal_days_in_month(CAL_GREGORIAN, $nuevoMes, $nuevoAnio);
+	$diaFinal = min($diaObjetivo, $ultimoDiaMes);
+
+	return DateTime::createFromFormat('Y-n-j', $nuevoAnio . '-' . $nuevoMes . '-' . $diaFinal);
+}
+
+function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
+	$fechaCuota = clone $fechaBase;
+	$diaObjetivo = (int)$fechaBase->format('j');
+
+	switch ($periodicidad) {
+		case 'semanal':
+			$fechaCuota->modify('+' . (7 * $indice) . ' day');
+			return $fechaCuota;
+		case 'quincenal':
+			$fechaCuota->modify('+' . (15 * $indice) . ' day');
+			return $fechaCuota;
+		case 'mensual':
+			return sumarMesesRespetandoDia($fechaBase, $indice, $diaObjetivo);
+		case 'anual':
+			return sumarMesesRespetandoDia($fechaBase, 12 * $indice, $diaObjetivo);
+		default:
+			return null;
+	}
+}
+
+function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas, $periodicidad, $fechaBaseStr, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK) {
+	$estado= 'pendiente';
+	if ($cantCuotas <= 1 || !in_array($periodicidad, array('semanal', 'quincenal', 'mensual', 'anual'))) {
+		return;
+	}
+
+	$fechaBase = DateTime::createFromFormat('Y-m-d', $fechaBaseStr);
+	if ($fechaBase === false) {
+		return;
+	}
+
+	$motivoCuota = trim($motivo) . ' cuota base:' . intval($idBaseSerie);
+
+	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK)
+	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	$stmtRecurrente = $mysqli->prepare($consultaRecurrente);
+	$ssRecurrente = 'ssssssssssssssss';
+
+	for ($i = 1; $i < $cantCuotas; $i++) {
+		$fechaCuota = calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $i);
+		if ($fechaCuota == null) {
+			continue;
+		}
+
+		$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
+		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK);
+		$stmtRecurrente->execute();
+	}
+
+	$stmtRecurrente->close();
+}
+
 function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion)
 {
 		
@@ -468,6 +534,9 @@ if ($cod_interConsultaFK) {
 		exit;
 	}
 }
+
+$cantCuotas = isset($_POST['cantCuotas']) ? intval($_POST['cantCuotas']) : 0;
+$periodicidad = isset($_POST['periodicidad']) ? mb_convert_encoding((string)$_POST['periodicidad'], 'ISO-8859-1', 'UTF-8') : '';
 
 $mysqli=conectar_al_servidor();
 
@@ -524,6 +593,28 @@ exit;
 
 if($operacion=='nuevo'){
 	$idgastos = mysqli_insert_id($mysqli);
+	registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+}
+
+if($operacion=='editar'){
+	if ($cantCuotas > 0) {
+		$idBaseSerie = intval($idgastos);
+		$motivoAnterior = isset($datos_gasto[0]['descripcion']) ? trim((string)$datos_gasto[0]['descripcion']) : trim($motivo);
+		if (preg_match('/\s+cuota\s+base:\s*(\d+)$/i', $motivoAnterior, $matchesSerie)) {
+			$idBaseSerie = intval($matchesSerie[1]);
+			$motivoAnterior = trim(preg_replace('/\s+cuota\s+base:\s*\d+$/i', '', $motivoAnterior));
+		}
+
+		$motivoCuotaLike = '% cuota base:' . $idBaseSerie;
+		$sql = "UPDATE gastos SET estado='Inactivo' WHERE motivo LIKE ? AND cod_local = ? AND (estado like 'pendiente' OR estado like 'activo')";
+		$stmt = $mysqli->prepare($sql);
+		$stmt->bind_param('si', $motivoCuotaLike, $cod_local);
+		$stmt->execute();
+		$stmt->close();
+		
+		if ($estado != 'Inactivo')
+		registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+	}
 }
 $foto=$_POST['foto'];
 $ext=$_POST['ext'];
@@ -556,10 +647,7 @@ if($operacion=="editar")
 		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsultaFK, "", TRUE);
 	}
 }
-$informacion =array("1" => "exito", "2" => $idgastos);
-echo json_encode($informacion);	
-exit;
-	
+return array("1" => "exito", "2" => $idgastos);	
 }
 
 function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $idgastos)
@@ -653,7 +741,8 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
 		m.descripcion AS motivo, m.categoria,
 		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
-		from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY necesita_autorizacion DESC, g.idgastos DESC";
+		from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY 
+		FIELD(m.categoria,'','ingreso','directo','operativo'),necesita_autorizacion DESC, g.idgastos DESC";
 
 		$stmt = $mysqli->prepare($sql);
 		if ( ! $stmt->execute()) {
@@ -918,7 +1007,8 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
 				<td  id='td_datos_16' style='display: none;'>".$interconsulta_nombre."</td>
 				<td  style='width:15%'>".$descripcion."</td>
-				<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
+				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
+				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.')."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>

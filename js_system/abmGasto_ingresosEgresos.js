@@ -249,6 +249,8 @@ function verificarcamposGasto() {
 	var inptNroBoletaGasto = document.getElementById('inptNroBoletaGasto').value
 	var inptBancoGasto = document.getElementById('inptBancoGasto').value
 	var inptCuentaGasto = document.getElementById('inptCuentaGasto').value
+	var inptCantCuotaGasto = Number(document.getElementById('inptCantCuotaGasto').value || 0)
+	var inptPeriodicidadGasto = document.getElementById('inptPeriodicidadGasto').value
 
     let inptMotivoMisGastos= '';
     $("input[id=inptMotivoMisGastos]").each(function (i, Elemento) {
@@ -284,6 +286,10 @@ function verificarcamposGasto() {
 		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO")
 		return false;
 	}
+	if (inptCantCuotaGasto > 1 && inptPeriodicidadGasto == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
+		return false;
+	}
 	var accion = "";
 	if (idAbmGasto != "") {
 		accion = "editar";
@@ -292,9 +298,8 @@ function verificarcamposGasto() {
 		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
 		accion = "nuevo";
 	}
-	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion);
-
-	// Comprueba y registra en caso de ser gasto fijo
+	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto);
+	/*
 	if (document.getElementById("inptCheckGastoFijoGasto").checked) {
 		const descripcion= document.getElementById('inptMotivoMisGastos').value;
 		const dia= document.getElementById('inptFechaGasto').value.substr(-2);
@@ -302,8 +307,9 @@ function verificarcamposGasto() {
 		costo= costo.replace('.','');
 		abmGastosFijos(descripcion, 'activo', dia, inptlocalMisGastos,costo);
 	}
+	*/
 }
-function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion) {
+function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "") {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -328,6 +334,8 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
+	datos.append("cantCuotas", cantCuotas);
+	datos.append("periodicidad", periodicidad);
 	
 	var OpAjax = $.ajax({
 		data: datos,
