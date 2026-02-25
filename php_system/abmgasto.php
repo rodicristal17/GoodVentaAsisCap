@@ -474,16 +474,19 @@ function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
 			return $fechaCuota;
 		case 'mensual':
 			return sumarMesesRespetandoDia($fechaBase, $indice, $diaObjetivo);
+		case 'semestral':
+			return sumarMesesRespetandoDia($fechaBase, 6 * $indice, $diaObjetivo);
 		case 'anual':
 			return sumarMesesRespetandoDia($fechaBase, 12 * $indice, $diaObjetivo);
 		default:
+			echo "No ese encontro la $periodicidad";exit;
 			return null;
 	}
 }
 
 function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas, $periodicidad, $fechaBaseStr, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK) {
 	$estado= 'pendiente';
-	if ($cantCuotas <= 1 || !in_array($periodicidad, array('semanal', 'quincenal', 'mensual', 'anual'))) {
+	if ($cantCuotas <= 1) {
 		return;
 	}
 
@@ -498,7 +501,7 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 	$ssRecurrente = 'ssssssssssssssss';
 		
 	for ($i = 1; $i < $cantCuotas; $i++) {
-		$motivoCuota = trim($motivo) . ' cuota '.($i + 1).' con gasto base cod.:' . intval($idBaseSerie);
+		$motivoCuota = 'Cuota '.($i + 1).' de '.trim($motivo).' (' . intval($idBaseSerie).')';
 		$fechaCuota = calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $i);
 		if ($fechaCuota == null) {
 			continue;
@@ -615,7 +618,7 @@ if($operacion=='editar'){
 			$motivoAnterior = trim(preg_replace('/\s+cuota\s+base:\s*\d+$/i', '', $motivoAnterior));
 		}
 
-		$motivoCuotaLike = '% cuota % con gasto base cod.:' . $idBaseSerie;
+		$motivoCuotaLike = 'Cuota % de % (' . $idBaseSerie.')';
 		$sql = "UPDATE gastos SET estado='Inactivo' WHERE motivo LIKE ? AND cod_local = ? AND (estado like 'pendiente' OR estado like 'activo')";
 		$stmt = $mysqli->prepare($sql);
 		$stmt->bind_param('si', $motivoCuotaLike, $cod_local);
