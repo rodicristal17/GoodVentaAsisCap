@@ -51,7 +51,6 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
-<script src="../js_system/abmGastosFijos.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
@@ -4387,6 +4386,10 @@ style='background-color:#5bc572'>
       <div class="divMenuF" style="display: inline-flex;">
         <div style="background-color: #2ea3c0;height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
         <p class="pTitulo8" style="width: fit-content; text-align: start;color: #2ea3c0;">Asociado a Egreso / Ingreso</p>
+        <div style="background-color: #762424;height: 10px; margin-inline: 5px;width: 10px;margin-top: 5px;"></div>
+        <p class="pTitulo8" style="width: fit-content; text-align: start;color: #762424;">Gastos pendientes de aprobacion</p>
+        <div style="background-color: #585f08;height: 10px; margin-inline: 5px;width: 10px;margin-top: 5px;"></div>
+        <p class="pTitulo8" style="width: fit-content; text-align: start;color: #585f08;">Tipo interno</p>
       </div>
     </div>
   </center>
@@ -4821,7 +4824,6 @@ Todos</p>
 </td>
 <td style='width:30%;text-align: right;'>
   <input type='Button' value='Buscar' class='btn4' onclick='buscarabmGasto()' />
-  <input type='Button' value='Gastos Fijos' class='btn4' onclick='verCerrarVentanaGastosFijos(true)' style="width:100px;background-color: #416c8f;"/>
   <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('gastos')" style="width:100px;background-color: rgb(58 58 58);">
   <input type="button" value="Resumir por motivos" class="btn4" onclick="verCerrarResumenGastosMotivos(true)" style="width:fit-content;background-color: rgb(58 58 58);">
 </td>
@@ -5201,127 +5203,6 @@ CATEGORIA
 </td>
 </tr>
 </table>
-</div>
-<div class='principal2' style='display:none' id='divAbmGastosFijos'>
-  <table style='width:100%;height:100%'>
-    <tr>
-      <td>
-        <center>
-          <div class='divAbms_b' style='width: 500px;'>
-            <table class='tableMenuZ'>
-              <tr>
-                <td style='width:100%;text-align:left'>
-                  <p class='pTituloB'>Gastos mensuales</p>
-                </td>
-                <td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/limpiarcampos.png'
-                    class='iconoBtn' title='Limpiar campos' onclick='limpiarCamposGastosFijos()' /></td>
-                <td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/flechaderecha.png'
-                    class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaGastosFijos(false)' /></td>
-              </tr>
-            </table>
-            <br>
-            <br>
-
-            <center>
-              <div class='divMenuf'>
-                <table style='width:100%'>
-                  <tr>
-                    <td style='width:100%'>
-                      <p class='pTituloC'>Nombre :</p>
-                      <input type="text" class="inputText" id="inptAbmDescripcionGastoFijo"
-                        placeholder='Obligatorio(*)'>
-                    </td>
-                  </tr>
-                </table>
-                <br>
-                <table style='width:100%'>
-                  <tr>
-                    <td style='width:40%'>
-                      <p class='pTituloC'>Estado(*) :</p>
-                      <select class="inputSelect" style='width:90%;' id='inptAbmEstadoGastoFijo'>
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                      </select>
-                    </td>
-                    <td style='width:50%'>
-                      <p class='pTituloC'>Local(*) :</p>
-                      <select class="inputSelect" style='width:90%;' id='inptAbmLocalGastoFijo'>
-                      </select>
-                    </td>
-                  </tr>
-                </table>
-                <br>
-                <table style='width:100%'>
-                  <tr>
-                    <td style='width:40%'>
-                      <p class='pTituloC'>Dia(*) :</p>
-                      <input type="number" min=1 max=30 class="inputText" id="inptAbmDiaGastoFijo"
-                        placeholder='Obligatorio(*)'>
-                    </td>
-                    <td style='width:50%'>
-                      <p class='pTituloC'>Costo :</p>
-                      <input class="inputText" type="text" id="inptAbmCostoGastoFijo" onkeyup="separadordemiles(this)" style="width:200px">
-                    </td>
-                  </tr>
-                </table>
-                <br>
-                <table style='width:100%'>
-                  <tr>
-                    <td style='width:100%'>
-                      <p class='pTituloC'>Interconsulta :</p>
-                      <input type="text" class="inputTextDisable" id="inptAbmInterConsultaGastoFijo" disabled style="width: 250px;">
-                      <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmGastosFijos')" style="background-color: #FF5722;">
-                    </td>
-                  </tr>
-                </table>
-                <br>
-                <center>
-                  <input class='btn1' type='button' value='Guardar Datos' onclick='verificarCamposGastosFijos()'
-                    id='btnAbmGastosFijos' />
-                </center>
-
-                <center>
-                  <table style='width:100%'>
-                    <tr>
-                      <td style='width:99%;text-align:left'>
-                        <p class='pTituloC'>Buscar :</p>
-                        <input class='inputText' type='text' placeholder='Descripción'
-                          id='inptBuscarAbmGastosFijos'
-                          onkeyup="if(event.keyCode == 13){buscarGastosFijos()}" style='width: 322px;' />
-                        <input type='button' value='Buscar' class='btn4' onclick='buscarGastosFijos()'>
-                      </td>
-                      <td>
-                      </td>
-                    </tr>
-                  </table>
-                  <table class="tableCabeceraRegistro">
-                    <tbody>
-                      <tr>
-                        <td class="td_registro" style="width:10%;">
-                          #
-                        </td>
-                        <td class="td_registro" style="width:55%;">
-                          DESCRIPCION
-                        </td>
-                        <td class="td_registro" style="width:15%;">
-                          DIA
-                        </td>
-                        <td class="td_registro" style="width:20%;">
-                          ESTADO
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div class="div_cuerpo_table" id="divBuscadorGastosFijos" style='height:200px; width: 100%;'></div>
-                </center>
-              </div>
-            </center>
-          </div>
-
-        </center>
-      </td>
-    </tr>
-  </table>
 </div>
 <div class='principal2' style='display:none' id='divAbmResumenGastosMotivos'>
   <table style='width:100%;height:100%'>
