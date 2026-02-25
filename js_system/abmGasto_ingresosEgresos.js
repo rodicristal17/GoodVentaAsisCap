@@ -299,15 +299,6 @@ function verificarcamposGasto() {
 		accion = "nuevo";
 	}
 	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto);
-	/*
-	if (document.getElementById("inptCheckGastoFijoGasto").checked) {
-		const descripcion= document.getElementById('inptMotivoMisGastos').value;
-		const dia= document.getElementById('inptFechaGasto').value.substr(-2);
-		let costo= document.getElementById('inptMontoGasto').value;
-		costo= costo.replace('.','');
-		abmGastosFijos(descripcion, 'activo', dia, inptlocalMisGastos,costo);
-	}
-	*/
 }
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "") {
 	verCerrarEfectoCargando("1")

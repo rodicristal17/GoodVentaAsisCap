@@ -487,12 +487,6 @@
                 <span class="text-uppercase">'.$valueInter['num_factura'].'</span>
                 </div>';
             }
-            if ($valueInter['nombre_motivo_asociado']) {
-                $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Motivo Asociado:</span>
-                <span class="text-uppercase">'.$valueInter['nombre_motivo_asociado'].'</span>
-                </div>';
-            }
             if ($valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Monto del flujo: </span>
@@ -800,8 +794,17 @@
             $style= "";
 
             $styleInterno= "";
+            $colorText= "";
             if ($value['tipo'] == 'interno') {
+                $styleInterno= "color: white; background-color: #585f08;";
+            }
+            if ($value['cantAsociadoGastos'] > 0) {
                 $styleInterno= "color: white; background-color: #08525f;";
+                $colorText= "color: #2ea3c0;";
+            }
+            // Marca la interconsulta si tiene gastos pendientes
+            if (intval($value['cantGastosPendientes']) > 0) {
+                $styleInterno= "color: white; background-color: #762424;";
             }
             
             $cantMensajesNoLeidosOtrosUsuarios= "";
@@ -809,12 +812,7 @@
                 $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
             }
 
-            $colorText= "";
-            if ($value['cantAsociadoGastos'] > 0) {
-                $colorText= "color: #2ea3c0;";
-            }
-
-            $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</p>';
+            $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios;
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'background-color: rgb(140, 8, 8, 0.7);  color: #ffffff;';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
@@ -835,6 +833,7 @@
                     }
                 }
             }
+            $formatAsunto .= '</p>';
             
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">
                 <tr onclick="obtenerDatosInterConsulta(this)">
@@ -1327,7 +1326,7 @@
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
-            (SELECT descripcion FROM gastos_fijos gf WHERE gf.cod_interConsultaFK = ic.cod_interConsulta ORDER BY gf.cod_gastos_fijos DESC LIMIT 1) AS nombre_motivo_asociado,
+            (SELECT COUNT(*) FROM gastos WHERE estado = 'solicitado' AND cod_interConsultaFK = ic.cod_interConsulta) AS cantGastosPendientes,
             (SELECT COUNT(idgastos) FROM gastos g WHERE g.cod_interConsultaFK = ic.cod_interConsulta) AS cantAsociadoGastos,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta and estado = 'activo' $sqlFiltroMensaje) AS cantMensajesProgramados,
