@@ -491,15 +491,14 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 	if ($fechaBase === false) {
 		return;
 	}
-
-	$motivoCuota = trim($motivo) . ' cuota base:' . intval($idBaseSerie);
-
+		
 	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK)
 	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	$stmtRecurrente = $mysqli->prepare($consultaRecurrente);
 	$ssRecurrente = 'ssssssssssssssss';
-
+		
 	for ($i = 1; $i < $cantCuotas; $i++) {
+		$motivoCuota = trim($motivo) . ' cuota '.($i + 1).' con gasto base cod.:' . intval($idBaseSerie);
 		$fechaCuota = calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $i);
 		if ($fechaCuota == null) {
 			continue;
@@ -508,6 +507,17 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
 		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK);
 		$stmtRecurrente->execute();
+		$idgastos = mysqli_insert_id($mysqli);
+
+		// Programa tambien el mensaje de recordatorio
+		$cod_mensaje= abmMensaje("", "El gasto $motivoCuota vence hoy ",$fechaCuotaFormat, $cod_interConsultaFK, "", TRUE);
+
+		// Actualiza el cod_mensaje del gasto ingresado
+		$sql = "UPDATE gastos SET cod_mensajeFK = ? WHERE idgastos = ?";
+		$stmt = $mysqli->prepare($sql);
+		$stmt->bind_param('ii', $cod_mensaje, $idgastos);
+		$stmt->execute();
+		$stmt->close();
 	}
 
 	$stmtRecurrente->close();
@@ -605,7 +615,7 @@ if($operacion=='editar'){
 			$motivoAnterior = trim(preg_replace('/\s+cuota\s+base:\s*\d+$/i', '', $motivoAnterior));
 		}
 
-		$motivoCuotaLike = '% cuota base:' . $idBaseSerie;
+		$motivoCuotaLike = '% cuota % con gasto base cod.:' . $idBaseSerie;
 		$sql = "UPDATE gastos SET estado='Inactivo' WHERE motivo LIKE ? AND cod_local = ? AND (estado like 'pendiente' OR estado like 'activo')";
 		$stmt = $mysqli->prepare($sql);
 		$stmt->bind_param('si', $motivoCuotaLike, $cod_local);

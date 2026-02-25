@@ -139,5 +139,23 @@ WHERE ml.cod_monto_limite_gasto_motivo IS NULL;
 
 ALTER TABLE cancelaciones ADD COLUMN cod_usuarioFK INT;
 
+ALTER TABLE gastos ADD COLUMN cod_mensajeFK INT;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_gastos_inactivo
+AFTER UPDATE ON gastos
+FOR EACH ROW
+BEGIN
+    -- Validamos que el nuevo estado sea 'Inactivo'
+    IF NEW.estado = 'Inactivo' THEN
+        -- Actualizamos el mensaje asociado
+        UPDATE mensaje
+        SET estado = 'inactivo'
+        WHERE cod_mensaje = NEW.cod_mensajeFK;
+    END IF;
+END$$
+
+DELIMITER ;
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA

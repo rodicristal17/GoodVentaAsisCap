@@ -278,8 +278,9 @@
                 }
 
                 $zona[$categoria][$gasto['cod_motivoIngresoEgresoFK']][] = $gasto;
-                
-                $montoTotal += intval($gasto['monto']);
+                if ($gasto['estado'] == 'Activo') {
+                    $montoTotal += intval($gasto['monto']);
+                }
             }
 
             // Se construye la vista
@@ -320,6 +321,9 @@
                                 $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
                                 <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
                                 break;
+                            case 'pendiente':
+                                $estadoClassGasto= 'text-bg-secondary';
+                                break;
                             default:
                                 $estadoClassGasto= 'text-bg-success';
                                 break;
@@ -350,7 +354,7 @@
                             <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
                             <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
                             <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
-                            <td class="td_registroSearch" style="width: 20%">'.number_format($gasto["monto"], 0, ",", ".").'</td>
+                            <td class="td_registroSearch" style="width: 20%">'.(strtolower($gasto["estado"]) == 'pendiente' ? 0 : number_format($gasto["monto"], 0, ",", ".")).'</td>
                             <td class="td_registroSearch" style="width: 20%">
                                 '.$aprobarElemento.'
                             </td>
@@ -406,6 +410,7 @@
             $registrosMens2= obtenerMensaje(array(
                 'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
                 "cod_interConsultaFK" => $valueInter["cod_interConsulta"],
+                "estado" => 'activo'
             ));
 
             foreach ($registrosMens2 as $valueMens) {
@@ -414,7 +419,7 @@
                       <div class="card-body">
                           <div style="display: flex;">
                             <span style="display: none;">'.$valueMens['cod_mensaje'].'</span>
-                            <p class="card-text" style="text-align: justify;">Mensaje programado de '.$valueMens['nombre_persona'].' para el '.$valueMens['fecha_creacion'].'</p>
+                            <p class="card-text" style="text-align: justify;">Mensaje programado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'por el sistema').' para el '.$valueMens['fecha_creacion'].'</p>
                           </div>
                       </div>
                     </div>
@@ -491,7 +496,7 @@
             if ($valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Monto del flujo: </span>
-                <span class="text-uppercase"> Gastado '.number_format($montoTotal, 0, ',', '.').' de '.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
+                <span> Gastado '.number_format($montoTotal, 0, ',', '.').' de '.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
                 </div>';
             }
             $pagina .= '</div>';
@@ -1325,7 +1330,7 @@
             (SELECT descripcion FROM gastos_fijos gf WHERE gf.cod_interConsultaFK = ic.cod_interConsulta ORDER BY gf.cod_gastos_fijos DESC LIMIT 1) AS nombre_motivo_asociado,
             (SELECT COUNT(idgastos) FROM gastos g WHERE g.cod_interConsultaFK = ic.cod_interConsulta) AS cantAsociadoGastos,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
-            (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroMensaje) AS cantMensajesProgramados,
+            (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta and estado = 'activo' $sqlFiltroMensaje) AS cantMensajesProgramados,
             (SELECT COUNT(mc.cod_mencion)
                 FROM menciones mc
                 JOIN mensaje mj 
@@ -1335,13 +1340,13 @@
                 AND mj.fecha_creacion = (
                     SELECT MAX(mj2.fecha_creacion)
                     FROM mensaje mj2
-                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta  $sqlFiltroFechaLimite
+                    WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta AND estado = 'activo' $sqlFiltroFechaLimite
                 )
             ) AS cantMensajesNoLeidosOtrosUsuarios,
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
                 SELECT MAX(mj2.fecha_creacion)
                 FROM mensaje mj2
-                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta $sqlFiltroFechaLimite
+                WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta AND estado = 'activo' $sqlFiltroFechaLimite
             )) AS cantMensajesNoLeidos
             from interconsulta ic $sqlFiltro
             ORDER BY 
