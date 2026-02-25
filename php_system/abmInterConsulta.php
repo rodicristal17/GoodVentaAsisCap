@@ -782,6 +782,7 @@
         $registros= obtenerInterConsulta($filtros, $limite);
 
         $pagina= '';
+        $datalist= '';
         $cant_mensajes_no_leidos= 0;
         $cant_interConsulta_abierto= 0;
         $styleName="tableRegistroSearch";
@@ -853,9 +854,11 @@
                     <td id="td_datos_14" style="display: none;'.$style.'">'.$value['cantMensajesNoLeidos'].'</td>
                 </tr>
             </table>';
+
+            $datalist .= '<option value="'.$value['asunto'].'">';
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist));
     }
 
     function obtenerVistaMensaje($filtros= [], $limite= 0) {
@@ -1259,7 +1262,7 @@
                     $sqlFiltro .= " AND ";
                 }
             }
-
+            
             switch ($key) {
                 case 'cod_usuarioFK':
                     $sqlFiltro .= "(ic.cod_usuarioFK_create = $value OR EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value))";

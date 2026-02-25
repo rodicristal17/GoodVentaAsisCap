@@ -4512,7 +4512,8 @@ style='background-color:#5bc572'>
                 <table style="width: 100%;"><tr>
                   <td style="width: 50%;">
                   <p class="pTituloC">Asunto :</p>
-                  <input class="inputText" type="text" id="inptAsuntoAbmInterConsulta">
+                  <input class="inputText" type="text" id="inptAsuntoAbmInterConsulta" list="listAsuntoAbmInterConsulta">
+                  <datalist id="listAsuntoAbmInterConsulta"></datalist>
                   </td>
                   <td style="width: 50%;padding-left: 10px;">
                   <p class="pTituloC">Local :</p>
@@ -27165,6 +27166,23 @@ style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
     </div>
     <div class="toast-body" id="lbltitulomensajedetalle">
       
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="alertConfirmDialog" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="titleAlertConfirmMensaje">Atencion</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="bodyAlertConfirmMensaje">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success">Continuar</button>
+      </div>
     </div>
   </div>
 </div>

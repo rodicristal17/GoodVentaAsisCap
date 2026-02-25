@@ -16,17 +16,17 @@ function buscarPacientesConInterConsultas() {
     const usuario_vinculado= document.getElementById('inptUsuariosInterConsulta').value;
     const cod_localFK= document.getElementById('inptBuscarInterConsulta7').value;
     
-    buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, 10, ocultar_inactivos, usuario_vinculado);
+    buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, userid, 10, ocultar_inactivos, usuario_vinculado);
 }
 
-function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, limite, ocultar_inactivos, usuario_vinculado) {
+function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, cod_usuarioFK, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarInterConsultas');
     datos.append("cod_interConsulta", cod_interC);
-    datos.append("cod_usuarioFK", userid);
+    datos.append("cod_usuarioFK", cod_usuarioFK);
     datos.append("asunto", asunto);
     datos.append("nombre_responsable", nombre_responsable);
     datos.append("nombre_cliente", nombre_cliente);
@@ -46,6 +46,8 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
         document.getElementById('table_frm_VistaInterConsulta').innerHTML= paginacargando;
         datos.append("limite", limite);
     }
+
+    verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -78,10 +80,12 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
             controldebusquedadInformeInterConsulta= false;
+            verCerrarEfectoCargando("");
 		},
 		success: function (responseText) {
-			Respuesta = responseText;
+            Respuesta = responseText;
 			console.log(Respuesta)
+            verCerrarEfectoCargando("");
 			try {
                 var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -98,18 +102,22 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
 
                     // Una busqueda unica
                     if (limite == 0) {
-                        if (datos["6"] > 0) {
-                            document.getElementById('avisoMensajesPendientes').style.display= "";
+                        if (!cod_usuarioFK) {
+                            document.getElementById('listAsuntoAbmInterConsulta').innerHTML= datos[8];
                         } else {
-                            document.getElementById('avisoMensajesPendientes').style.display= "none";
-                        }
-
-                        // Evalua si existen interconsultas sin cerrar
-                        if (Number(datos["7"]) > 0) {
-                            document.getElementById('avisoInterconsultasAbiertos').style.display= "";
-                            document.getElementById('avisoInterconsultasAbiertos').innerHTML= "Tienes "+datos[7]+" interconsultas sin cerrar.";
-                        } else {
-                            document.getElementById('avisoInterconsultasAbiertos').style.display= "none";
+                            if (datos["6"] > 0) {
+                                document.getElementById('avisoMensajesPendientes').style.display= "";
+                            } else {
+                                document.getElementById('avisoMensajesPendientes').style.display= "none";
+                            }
+    
+                            // Evalua si existen interconsultas sin cerrar
+                            if (Number(datos["7"]) > 0) {
+                                document.getElementById('avisoInterconsultasAbiertos').style.display= "";
+                                document.getElementById('avisoInterconsultasAbiertos').innerHTML= "Tienes "+datos[7]+" interconsultas sin cerrar.";
+                            } else {
+                                document.getElementById('avisoInterconsultasAbiertos').style.display= "none";
+                            }
                         }
                     } else {
     					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
@@ -122,8 +130,9 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                             document.getElementById("tbProcessInformeInterConsulta").style.display=""
                             document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
     
-                            controldebusquedadInformeInterConsulta=true
-                            buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
+                            controldebusquedadInformeInterConsulta=true;
+
+                            buscarMasPacientesConInterConsultas2(cod_interConsulta, cod_usuarioFK, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, ("10 OFFSET "+registrocargadoInterConsulta), ocultar_inactivos, usuario_vinculado);
                         }else{
                             controldebusquedadInformeInterConsulta=false
                         }
@@ -142,14 +151,15 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
 	});
 }
 
-function buscarMasPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, limite, ocultar_inactivos, usuario_vinculado) {
+function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, limite, ocultar_inactivos, usuario_vinculado) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarInterConsultas');
     datos.append("cod_interConsulta", cod_interC);
-    datos.append("cod_usuarioFK", userid);
+    datos.append("cod_usuarioFK", cod_usuarioFK);
+    datos.append("cod_localFK", cod_localFK);
     datos.append("asunto", asunto);
     datos.append("nombre_responsable", nombre_responsable);
     datos.append("nombre_cliente", nombre_cliente);
@@ -214,8 +224,8 @@ function buscarMasPacientesConInterConsultas2(cod_interC, asunto, nombre_respons
                     if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
                         var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
-					    document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML + datos["2"];
-                        buscarMasPacientesConInterConsultas2(cod_interConsulta, asunto, nombre_responsable, nombre_cliente, estado, tipo, "10 OFFSET "+registrocargadoInterConsulta, ocultar_inactivos, usuario_vinculado);
+                        document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML + datos["2"];
+                        buscarMasPacientesConInterConsultas2(cod_interConsulta, cod_usuarioFK, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, ("10 OFFSET "+registrocargadoInterConsulta), ocultar_inactivos, usuario_vinculado);
                     }else{
                         document.getElementById("tbProcessInformeInterConsulta").style.display="none"
                         controldebusquedadInformeInterConsulta=false
@@ -253,6 +263,16 @@ function verificarCamposInterConsulta() {
     if (!local) {
         ver_vetana_informativa("Faltan datos", "Falto seleccionar el local", "advertencia");
         return false;
+    }
+
+    // Verificar si el asunto es uno seleccionado del datalist o no
+    const datalist = document.getElementById('listAsuntoAbmInterConsulta');
+    if (datalist) {
+        const options = datalist.querySelectorAll('option');
+        const validAsuntos = Array.from(options).map(opt => opt.value);
+        if (validAsuntos.includes(asunto) && !alert("Ya existe una interconsulta con ese nombre, desea crearlo de todos modos?")) {
+            return false;
+        }
     }
     
     abmInterConsulta(asunto, estado, tipo, local, monto_limite);
@@ -1265,13 +1285,15 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
 
 function verCerrarVentanaInterConsulta(mostrar, anterior= '') {
     if (mostrar) {
+        // Busca las interconsultas ya creadas
+        buscarPacientesConInterConsultas2("", "", "", "", "", "", "", "",0, true, "");
         document.getElementById('divAbmInterConsulta').style.display= "";
     } else {
         document.getElementById('divAbmInterConsulta').style.display= "none";
 
         switch (anterior) {
             case 'divListadoInterConsulta':
-			    buscarPacientesConInterConsultas2("", "", "", "", "", "", "",0, true, "");
+			    buscarPacientesConInterConsultas2("", "", "", "", "", "", userid, "",0, true, "");
                 break
             case 'divAbmDetallesInterConsulta':
                 buscarPacientesConInterConsultas();

@@ -324,7 +324,7 @@ window.onload = function () {
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
 			buscarSugerencias();
-			buscarPacientesConInterConsultas2("", "", "", "", "", "", "",0, true, "");
+			buscarPacientesConInterConsultas2("", "", "", "", "", "", userid, "",0, true, "");
 			// buscarproductosDescuento()
 
 		}
@@ -523,7 +523,7 @@ buscarobtenerPacientes()
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
 buscarSugerencias()
-buscarPacientesConInterConsultas2("", "", "", "", "", "", "",0, true, "");
+buscarPacientesConInterConsultas2("", "", "", "", "", "", userid, "",0, true, "");
 
 
 var saludo=localStorage.getItem("saludo"+userid);
@@ -2022,6 +2022,15 @@ function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 	const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample);
 	toastBootstrap.show();
 }
+
+function ver_ventana_confirmacion(detalle, titulo="Atencion") {
+	document.getElementById('titleAlertConfirmMensaje').innerHTML= titulo;
+	document.getElementById('bodyAlertConfirmMensaje').innerHTML= detalle;
+	const modalEl = document.getElementById('alertConfirmDialog');
+	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+	modal.show();
+}
+
 var idFkCobrador = ""
 var idFkVendedor = ""
 var controlseleccvistaCobrador = ""
