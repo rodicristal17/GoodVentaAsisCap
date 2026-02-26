@@ -227,6 +227,14 @@
 
                 echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $nombre_local));
                 break;
+            case 'solicitarAcceso':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
+                $contenido= "El usuario $nombre_usuario solicito el acceso a esta conversacion.";
+                
+                $cod_mensaje= abmMensaje("", $contenido, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta, "", FALSE);
+                echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
+                break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
@@ -855,7 +863,7 @@
                 </tr>
             </table>';
 
-            $datalist .= '<option value="'.$value['asunto'].'">';
+            $datalist .= '<option data-id="'.$value['cod_interConsulta'].'" value="'.$value['asunto'].'">';
         }
 
         echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist));

@@ -103,6 +103,7 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                     // Una busqueda unica
                     if (limite == 0) {
                         if (!cod_usuarioFK) {
+                            console.error("buscando con: ", cod_usuarioFK);
                             document.getElementById('listAsuntoAbmInterConsulta').innerHTML= datos[8];
                         } else {
                             if (datos["6"] > 0) {
@@ -245,6 +246,69 @@ function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto,
 	});
 }
 
+function solicitarMencionInterConsulta(cod_interC) {
+    let datos= new FormData();
+    datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("accion", 'solicitarAcceso');
+    datos.append("nombre_usuario", document.getElementById("lblUser").textContent);
+    datos.append("cod_interConsulta", cod_interC);
+    
+    verCerrarEfectoCargando("1");
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					ver_vetana_informativa("Solicitud enviada.", "", "info");
+				}
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
 function verificarCamposInterConsulta() {
     const asunto= document.getElementById('inptAsuntoAbmInterConsulta').value;
     const estado= document.getElementById('inptEstadoAbmInterConsulta').value;
@@ -268,9 +332,13 @@ function verificarCamposInterConsulta() {
     // Verificar si el asunto es uno seleccionado del datalist o no
     const datalist = document.getElementById('listAsuntoAbmInterConsulta');
     if (datalist) {
-        const options = datalist.querySelectorAll('option');
-        const validAsuntos = Array.from(options).map(opt => opt.value);
-        if (validAsuntos.includes(asunto) && !alert("Ya existe una interconsulta con ese nombre, desea crearlo de todos modos?")) {
+        const optionCoincidente = Array.from(datalist.options).find(opt => opt.value === asunto);
+
+        if (optionCoincidente && !confirm("Ya existe una interconsulta con ese nombre, desea crearlo de todos modos?")) {
+            if (confirm(`¿Desea solicitar ingresar a la conversación de ${asunto}?`)) {
+                solicitarMencionInterConsulta(optionCoincidente.dataset.id);
+                verCerrarVentanaInterConsulta(false);
+            }
             return false;
         }
     }
@@ -1286,14 +1354,14 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
 function verCerrarVentanaInterConsulta(mostrar, anterior= '') {
     if (mostrar) {
         // Busca las interconsultas ya creadas
-        buscarPacientesConInterConsultas2("", "", "", "", "", "", "", "",0, true, "");
+        buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
         document.getElementById('divAbmInterConsulta').style.display= "";
     } else {
         document.getElementById('divAbmInterConsulta').style.display= "none";
 
         switch (anterior) {
             case 'divListadoInterConsulta':
-			    buscarPacientesConInterConsultas2("", "", "", "", "", "", userid, "",0, true, "");
+			    buscarPacientesConInterConsultas2("", "", "", "", "", "", "", userid, 0, true, "");
                 break
             case 'divAbmDetallesInterConsulta':
                 buscarPacientesConInterConsultas();
