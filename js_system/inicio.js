@@ -13743,6 +13743,7 @@ SubtotalVenta=Number(totalVenta)+Number(totalDescuento)
 document.getElementById("inptSubTotalVenta").value=separadordemilesnumero(SubtotalVenta);
 document.getElementById("inptTotalVenta").value=separadordemilesnumero(totalVenta);
 document.getElementById("inptTotalVenta2").innerHTML=separadordemilesnumero(totalVenta);
+document.getElementById("inptTotalCuotaRefinanciamiento2").value= separadordemilesnumero(totalVenta);
 document.getElementById("inptTotalDescuento").value=separadordemilesnumero(totalDescuento);
 if(totalVenta==0){
 	document.getElementById("btnFinalizarVenta").style.display="none"
@@ -14295,7 +14296,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById("inptTotalVenta2").innerHTML = datos[3]
 					}
 					
-					document.getElementById("inptTotalVenta").value = datos[3]
+					document.getElementById("inptTotalVenta").value = datos[3];
+					document.getElementById("inptTotalCuotaRefinanciamiento2").value = datos[3];
 					document.getElementById("inptTotalDescuento").value = datos[37]
 					document.getElementById("inptSubTotalVenta").value = datos[38]
 					totalesRecibo = datos[3]
@@ -15183,8 +15185,8 @@ function obtenerdatosabmdetalleventa(datostr) {
 	datostr.className = 'tableRegistroSelec'
 	document.getElementById('inptCodDetalle').value = $(datostr).children('td[id="td_id_2"]').html();
 	document.getElementById('inptNombreProductoDetalleOpcion').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptMontoDetallesVentaEliminar').value = $(datostr).children('td[id="td_datos_3"]').html();
-	document.getElementById('inptMontoOriginalDetallesVentaEliminar').value = $(datostr).children('td[id="td_datos_3"]').html();
+	document.getElementById('inptMontoDetallesVentaEliminar').value = "";
+	document.getElementById('inptMontoOriginalDetallesVentaEliminar').value = $(datostr).children('td[id="td_datos_5"]').html();
 	idDetalleVenta = $(datostr).children('td[id="td_id_2"]').html();
 	cantidaDetalleSelec = $(datostr).children('td[id="td_datos_4"]').html();
 	codproductodetalleSelect = $(datostr).children('td[id="td_id_1"]').html();
@@ -15218,6 +15220,10 @@ function eliminardetalleventa() {
 	//var operacion=document.getElementById("inptOpcionesDetallesVentaEliminar").value;
 	var motivo=document.getElementById("inptMotivoDetallesVentaEliminar").value;
 	const monto= document.getElementById("inptMontoDetallesVentaEliminar").value;
+	if (!monto) {
+		ver_vetana_informativa("Faltan datos", "Debe ingresar el nuevo monto total", "advertencia");
+		return;
+	}
 	const monto_original= document.getElementById("inptMontoOriginalDetallesVentaEliminar").value;
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
@@ -17986,13 +17992,16 @@ function verCerrarquitardevolucionrefinanciamiento2(d){
 	  return false;	
 	}	
 	var datos=elementoventa;
-	document.getElementById("inptTotalCuotaRefinanciamiento2").value=$(datos).children('td[id="td_datos_37"]').html();
-	//document.getElementById("inptCuotaNroCambioRefinanciamiento2").value=""
-	//document.getElementById("inptMonotCambioRefinanciamiento2").value=""
-	document.getElementById("inptFechaVentaCambioRefinanciamiento2").value=""
-	document.getElementById("inptDescuentoCambioRefinanciamiento2").value="0"
-	document.getElementById("inputSelectMetodoCambioRefinanciamiento2").value=$(datos).children('td[id="td_datos_18"]').html();	
-	//codVentaCambio=$(datos).children('td[id="td_datos_8"]').html();;
+	// Se verifica si esta vacio y solo asi se carga y limpia
+	if (!document.getElementById("inptTotalCuotaRefinanciamiento2").value) {
+		document.getElementById("inptTotalCuotaRefinanciamiento2").value=$(datos).children('td[id="td_datos_37"]').html();
+		//document.getElementById("inptCuotaNroCambioRefinanciamiento2").value=""
+		//document.getElementById("inptMonotCambioRefinanciamiento2").value=""
+		document.getElementById("inptFechaVentaCambioRefinanciamiento2").value=""
+		document.getElementById("inptDescuentoCambioRefinanciamiento2").value="0"
+		document.getElementById("inputSelectMetodoCambioRefinanciamiento2").value=$(datos).children('td[id="td_datos_18"]').html();	
+		//codVentaCambio=$(datos).children('td[id="td_datos_8"]').html();;
+	}
     vercerrarOpcionesDeRefinanciamiento2("1")
 	vercerrarOpcionesHistorialVenta("2")
 	}

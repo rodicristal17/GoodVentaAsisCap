@@ -952,7 +952,7 @@ values(?,?,?,?,?,?)";
 	$consulta1 = "update detalle_venta set estado='eliminado', descuento= ?, subtotal= ? where cod_detalle=? ";
 	$stmt1 = $mysqli->prepare($consulta1);
 	$ss = 'sis';
-	$stmt1->bind_param($ss, $descuento, $sub_total, $cod_detalle);
+	$stmt1->bind_param($ss, $descuento, $monto, $cod_detalle);
 	if (!$stmt1->execute()) {
 		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
 		exit;

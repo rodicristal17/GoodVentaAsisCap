@@ -47,7 +47,6 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
         datos.append("limite", limite);
     }
 
-    verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -1354,6 +1353,7 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
 function verCerrarVentanaInterConsulta(mostrar, anterior= '') {
     if (mostrar) {
         // Busca las interconsultas ya creadas
+        verCerrarEfectoCargando("1");
         buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
         document.getElementById('divAbmInterConsulta').style.display= "";
     } else {
