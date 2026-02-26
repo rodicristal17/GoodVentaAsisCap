@@ -596,7 +596,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.63"
+var codigodeactualizacion="X-GT-1-JMTG-V1.64"
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -13036,7 +13036,7 @@ function verCerrarAbmVenta(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmVenta").style.display==""){
 		if (control_elimino_producto) {
-			verCerrarquitardevolucionrefinanciamiento2("1");
+			verCerrarquitardevolucionrefinanciamiento2("1", false);
 		} else {
 			limpiarcamposventa()
 		}
@@ -17980,7 +17980,7 @@ function limpiarCamposRefinanciamiento2() {
 
 }
 
-function verCerrarquitardevolucionrefinanciamiento2(d){
+function verCerrarquitardevolucionrefinanciamiento2(d, limpiar= true){
 	if(d=="1"){
 		
 		if(controlacceso("REFINANCIARVENTA","accion")==false){	   
@@ -17993,7 +17993,7 @@ function verCerrarquitardevolucionrefinanciamiento2(d){
 	}	
 	var datos=elementoventa;
 	// Se verifica si esta vacio y solo asi se carga y limpia
-	if (!document.getElementById("inptTotalCuotaRefinanciamiento2").value) {
+	if (limpiar) {
 		document.getElementById("inptTotalCuotaRefinanciamiento2").value=$(datos).children('td[id="td_datos_37"]').html();
 		//document.getElementById("inptCuotaNroCambioRefinanciamiento2").value=""
 		//document.getElementById("inptMonotCambioRefinanciamiento2").value=""
