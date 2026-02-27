@@ -159,5 +159,7 @@ END$$
 DELIMITER ;
 
 DROP TABLE gastos_fijos;
+
+ALTER TABLE gastos ADD COLUMN modalidad ENUM('contado', 'credito') DEFAULT 'contado'; 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA

@@ -555,6 +555,7 @@ if ($cod_interConsultaFK) {
 
 $cantCuotas = isset($_POST['cantCuotas']) ? intval($_POST['cantCuotas']) : 0;
 $periodicidad = isset($_POST['periodicidad']) ? mb_convert_encoding((string)$_POST['periodicidad'], 'ISO-8859-1', 'UTF-8') : '';
+$modalidad= (($cantCuotas > 0) ? 'credito' : 'contado');
 
 $mysqli=conectar_al_servidor();
 
@@ -569,12 +570,12 @@ if ($estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] =
 if($operacion=="nuevo")
 {
 
-$consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+$consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 $stmt = $mysqli->prepare($consulta1);
 
-$ss='ssssssssssssssss';
-$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK);
+$ss='sssssssssssssssss';
+$stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,$modalidad);
 
 
 }
@@ -711,6 +712,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			'usuario_autoriz_nombre' => "",
 			'cod_motivoIngresoEgresoFK' => -1,
 			'nombre_usuario_edit' => "",
+			'modalidad' => "contado"
 		);
 		$registrosZona['ingreso'][-1][]= $valor;
 		if ($valor['estado'] == 'Activo') {
@@ -787,7 +789,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		}
 			
 		$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
-		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,
+		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,
 		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,
 		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
@@ -852,6 +854,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
 					'nombre_usuario_edit' => mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1'),
 					'cod_usuarioFK_edit' => mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1'),
+					'modalidad' => mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'),
 				);
 
 				if ($valor['estado'] == 'Activo') {
@@ -950,6 +953,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$usuario_autoriz_nombre= mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1');
 			$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
 			$nombre_usuario_edit= mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1');
+			$modalidad= ucfirst(mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'));
 
 			$funcion= "obtenerdatosabmGasto(this)";
 			if ($idgastos == "") {
@@ -1021,12 +1025,13 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
-				<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+				<td  id='td_datos_2' style='width:10%'>".$motivo."</td>
 				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
 				<td  id='td_datos_16' style='display: none;'>".$interconsulta_nombre."</td>
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
 				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.')."</td>
+				<td  id='td_datos_21' style='width:5%'>".$modalidad."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
