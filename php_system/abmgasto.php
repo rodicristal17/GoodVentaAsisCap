@@ -682,7 +682,43 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 	$registrosZona= array();
 	$registros= array();
 
-	// Primero obtenemos todos los motivos del sistema
+	// Agrega el ingreso de los cierres de caja
+	$registroMontosCobrados= Arqueo($fecha1,$fecha2,$cod_local,"","","","","","","")[7];
+	$registrosZona['ingreso'][-1]= array();
+	foreach ($registroMontosCobrados as $key => $value) {
+		// Crea un registro ficticio
+		$valor= array(
+			'idgastos' => "",
+			'interconsulta_nombre' => "",
+			'cod_interConsultaFK' => "",
+			'usuarionombre' => $value['cod_cobradorFK'],
+			'monto' => $value['Monto'],
+			'motivo' => "Movimiento de caja",
+			'descripcion' => "Cobro realizado a ".$value['nombrecliente'] . " en formato ".$value['tipopago'],
+			'fecha' => $value['Fecha'],
+			'tipo' => "Ingreso",
+			'estado' => "Activo",
+			'cod_local' => $value['cod_local'],
+			'nombrelocal' => $value['nombrelocal'],
+			'nroboleta' => "",
+			'banco' => "",
+			'nrocuenta' => "",
+			'arreglo' => "",
+			'url1' => "",
+			'categoria' => "ingreso",
+			'cod_usuario_autoriz' => "",
+			'fecha_autoriz' => "",
+			'usuario_autoriz_nombre' => "",
+			'cod_motivoIngresoEgresoFK' => -1,
+			'nombre_usuario_edit' => "",
+		);
+		$registrosZona['ingreso'][-1][]= $valor;
+		if ($valor['estado'] == 'Activo') {
+			$totalZonaIngresos += intval($valor['monto']);
+		}
+	}
+
+	// Obtenemos todos los motivos del sistema
 	$registrosMotivos= buscarabmmotivoingresoegreso('', 'activo')[4];
 
 	// Recorremos los motivos y armamos la tabla base
@@ -760,7 +796,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		m.descripcion AS motivo, m.categoria,
 		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
 		from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY 
-		FIELD(m.categoria,'','ingreso','directo','operativo'),necesita_autorizacion DESC, g.idgastos DESC";
+		FIELD(m.categoria,'','ingreso','directo','operativo'), necesita_autorizacion DESC, g.idgastos DESC";
 
 		$stmt = $mysqli->prepare($sql);
 		if ( ! $stmt->execute()) {
@@ -838,42 +874,6 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		}
 	}
 
-	// Agrega el ingreso de los cierres de caja
-	$registroMontosCobrados= Arqueo($fecha1,$fecha2,$cod_local,"","","","","","","")[7];
-	$registrosZona['ingreso'][-1]= array();
-	foreach ($registroMontosCobrados as $key => $value) {
-		// Crea un registro ficticio
-		$valor= array(
-			'idgastos' => "",
-			'interconsulta_nombre' => "",
-			'cod_interConsultaFK' => "",
-			'usuarionombre' => $value['cod_cobradorFK'],
-			'monto' => $value['Monto'],
-			'motivo' => "Movimiento de caja",
-			'descripcion' => "Cobro realizado a ".$value['nombrecliente'] . " en formato ".$value['tipopago'],
-			'fecha' => $value['Fecha'],
-			'tipo' => "Ingreso",
-			'estado' => "Activo",
-			'cod_local' => $value['cod_local'],
-			'nombrelocal' => $value['nombrelocal'],
-			'nroboleta' => "",
-			'banco' => "",
-			'nrocuenta' => "",
-			'arreglo' => "",
-			'url1' => "",
-			'categoria' => "ingreso",
-			'cod_usuario_autoriz' => "",
-			'fecha_autoriz' => "",
-			'usuario_autoriz_nombre' => "",
-			'cod_motivoIngresoEgresoFK' => -1,
-			'nombre_usuario_edit' => "",
-		);
-		$registrosZona['ingreso'][-1][]= $valor;
-		if ($valor['estado'] == 'Activo') {
-			$totalZonaIngresos += intval($valor['monto']);
-		}
-	}
- 
  foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
