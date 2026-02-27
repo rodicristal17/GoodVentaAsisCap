@@ -79,12 +79,10 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
             controldebusquedadInformeInterConsulta= false;
-            verCerrarEfectoCargando("");
 		},
 		success: function (responseText) {
             Respuesta = responseText;
 			console.log(Respuesta)
-            verCerrarEfectoCargando("");
 			try {
                 var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -1352,9 +1350,6 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
 
 function verCerrarVentanaInterConsulta(mostrar, anterior= '') {
     if (mostrar) {
-        // Busca las interconsultas ya creadas
-        verCerrarEfectoCargando("1");
-        buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
         document.getElementById('divAbmInterConsulta').style.display= "";
     } else {
         document.getElementById('divAbmInterConsulta').style.display= "none";

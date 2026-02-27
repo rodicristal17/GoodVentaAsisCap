@@ -324,7 +324,10 @@ window.onload = function () {
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
 			buscarSugerencias();
+			// Busca las interconsultas donde el usuario fue mencionado
 			buscarPacientesConInterConsultas2("", "", "", "", "", "", "", userid, 0, true, "");
+			// Busca todas las interconsultas existentes con estado pendiente o proceso
+        	buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
 			// buscarproductosDescuento()
 
 		}
@@ -524,6 +527,8 @@ obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
 buscarSugerencias()
 buscarPacientesConInterConsultas2("", "", "", "", "", "", "", userid,0, true, "");
+// Busca todas las interconsultas existentes con estado pendiente o proceso
+buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
 
 
 var saludo=localStorage.getItem("saludo"+userid);
