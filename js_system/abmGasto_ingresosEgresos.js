@@ -279,7 +279,7 @@ function verificarcamposGasto() {
 		return false;
 	}
 	if (inptDescripcionGasto == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL MOTIVO DEL GASTO")
+		ver_vetana_informativa("FALTO INGRESAR LA DESCRIPCION DEL GASTO")
 		return false;
 	}
 	if (inptFechaGasto == "") {
@@ -470,9 +470,9 @@ function comprobarLimiteMotivo(cod_motivo, cod_local) {
 				   const total = parseInt(datos["3"].replace('.',''));
 
 				   if (!(Number.isNaN(limite)) && total >= limite && limite > 0) {
-					   ver_vetana_informativa("Ha superado el limite permitido para este motivo de gasto.");
+					   ver_vetana_informativa("Ha llegado al limite permitido para el "+datos[4]+" motivo de gasto.");
 				   } else if (total >= (limite * 0.9)) {
-					   ver_vetana_informativa("Esta llegando al limite presupuestado para este motivo de gasto.");
+					   ver_vetana_informativa("Esta llegando al limite presupuestado para el "+datos[4]+" motivo de gasto.");
 				   }
 				}				
 			} catch (error) {

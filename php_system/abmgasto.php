@@ -69,10 +69,10 @@ $cod_interConsultaFK= $_POST['cod_interConsultaFK'];
 $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 
 
-// Comprueba si esta dentro del presupuesto
-	$fechaActual= new DateTime();
-	$primerDiaMes= $fechaActual->format('Y-m-01');
-	$ultimoDiaMes= $fechaActual->format('Y-m-t');
+	// Comprueba si esta dentro del presupuesto
+	$fechaRango= DateTime::createFromFormat('Y-m-d', $fecha);
+	$primerDiaMes= $fechaRango->format('Y-m-01');
+	$ultimoDiaMes= $fechaRango->format('Y-m-t');
 
 	$monto_limite = obtenerPresupuestoMotivoGasto(array(
 		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
@@ -88,7 +88,7 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
 	$monto_limite= intval($monto_limite);
 	if ($monto_limite > 0 && $totalGasto > $monto_limite) {
-		$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido.");
+		$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido para el motivo.");
 		echo json_encode($informacion);	
 		exit;
 	}
@@ -547,7 +547,7 @@ if ($cod_interConsultaFK) {
 	
 	$totalMonto= intval($registroInterConsulta['total_gastos']) + intval($monto);
 	if (intval($registroInterConsulta['monto_limite']) && $totalMonto > intval($registroInterConsulta['monto_limite'])) {
-		$informacion =array("1" => "error", "2" => "El gasto supera el monto limite establecido para esta interconsulta.");
+		$informacion =array("1" => "error", "2" => "El gasto supera el monto limite establecido por la interconsulta.");
 		echo json_encode($informacion);	
 		exit;
 	}

@@ -40,9 +40,9 @@
                     'cod_localFK' => $cod_local
                 ));
                 if (count($informacion) > 0) {
-                    echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.')));
+                    echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.'), "4" => $informacion[9][0]["motivo"]));
                 } else {
-                    echo json_encode(array("1" => "exito", "2" => 0, "3" => 0));
+                    echo json_encode(array("1" => "exito", "2" => 0, "3" => 0, "4" => $informacion[9][0]["motivo"]));
                 }
 
                 break;
