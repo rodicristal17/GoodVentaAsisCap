@@ -555,7 +555,7 @@ if ($cod_interConsultaFK) {
 
 $cantCuotas = isset($_POST['cantCuotas']) ? intval($_POST['cantCuotas']) : 0;
 $periodicidad = isset($_POST['periodicidad']) ? mb_convert_encoding((string)$_POST['periodicidad'], 'ISO-8859-1', 'UTF-8') : '';
-$modalidad= (($cantCuotas > 0) ? 'credito' : 'contado');
+$modalidad= (($cantCuotas > 1) ? 'credito' : 'contado');
 
 $mysqli=conectar_al_servidor();
 
@@ -616,7 +616,7 @@ if($operacion=='nuevo'){
 }
 
 if($operacion=='editar'){
-	if ($cantCuotas > 0) {
+	if ($cantCuotas > 1) {
 		$idBaseSerie = intval($idgastos);
 		$motivoAnterior = isset($datos_gasto[0]['descripcion']) ? trim((string)$datos_gasto[0]['descripcion']) : trim($motivo);
 		if (preg_match('/\s+cuota\s+base:\s*(\d+)$/i', $motivoAnterior, $matchesSerie)) {
@@ -632,7 +632,7 @@ if($operacion=='editar'){
 		$stmt->close();
 		
 		if ($estado != 'Inactivo')
-		registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+		registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas-1, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
 	}
 }
 $foto=$_POST['foto'];
