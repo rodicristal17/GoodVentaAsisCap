@@ -78,7 +78,11 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
 		'cod_localFK' => $cod_local,
 	))[0]["monto_limite"];
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '', '');
+	$estado= "Activo";
+	if ($operacion == 'editar') {
+		$estado= "Activo and g.idgastos != $idgastos";
+	}
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, $estado, $cod_local, '', '', '','true', $cod_motivo, '', '', '');
 
 	if ($monto_limite && $monto_limite != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -540,6 +544,7 @@ if ($cod_interConsultaFK) {
 	$registroInterConsulta= obtenerInterConsulta(array(
 		'cod_interConsulta' => $cod_interConsultaFK,
 	))[0];
+	
 	$totalMonto= intval($registroInterConsulta['total_gastos']) + intval($monto);
 	if (intval($registroInterConsulta['monto_limite']) && $totalMonto > intval($registroInterConsulta['monto_limite'])) {
 		$informacion =array("1" => "error", "2" => "El gasto supera el monto limite establecido para esta interconsulta.");
