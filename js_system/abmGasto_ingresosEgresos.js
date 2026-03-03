@@ -810,6 +810,8 @@ function limpiarcamposGasto() {
 	document.getElementById('inptBancoGasto').value = "";
 	document.getElementById('inptCuentaGasto').value = "";
 	document.getElementById('inptArregloGasto').value = "";
+	document.getElementById('inptCantCuotaGasto').value = "";
+	document.getElementById('inptPeriodicidadGasto').value = "";
 	document.getElementById('btnEditarGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor="#b7b7b7";
