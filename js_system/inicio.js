@@ -10480,6 +10480,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptBuscarHistorialConsulta5").innerHTML =""	
 	document.getElementById("inptlocalAsignarLocal").innerHTML =""	
 	document.getElementById("inptLocalInformeAsistencia").innerHTML =""	
+	document.getElementById("inptlocalProximoPago").innerHTML =""	
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10591,6 +10592,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 	               document.getElementById("inptLocalProductoListadoDespachar2").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptBuscarHistorialConsulta5").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptlocalAsignarLocal").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+	               document.getElementById("inptlocalProximoPago").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 				  seleccionarLocalUSer()
                  buscarOptionCaja();
 				}
@@ -26647,6 +26649,14 @@ function removeToMenu(){
 	$("table[id=divMenuHistorialConsulta]").remove()
 	controlAgendamientos=controlAgendamientos+1;		
 	}
+	
+	
+	if( accesosuser["VERPAGOPROGRAMADO"]["accion"]!="SI")
+	{
+	$("table[id=divMenuProximosPagos]").remove()
+	controlAgendamientos=controlAgendamientos+1;		
+	}
+	
 	
 	if( accesosuser["VERMIGRARCAJA"]["accion"]!="SI")
 	{

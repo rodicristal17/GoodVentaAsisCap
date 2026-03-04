@@ -1900,3 +1900,131 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 		}
 	});
 }
+
+
+/*
+INFORME PROXIMOSPAGOS
+*/
+function verCerrarInformeProximosPagos(){
+	document.getElementById("divSegundoPlano").style.display="none";
+	if(document.getElementById("divVistaPagoInterconsulta").style.display==""){  
+		document.getElementById("divVistaPagoInterconsulta").style.display="none" 
+	}else{
+		
+			var f = new Date();
+	var dia = f.getDate()
+	if (dia < 10) {
+		dia = "0" + dia;
+	}
+	var mes = f.getMonth() + 1
+	if (mes < 10) {
+		mes = "0" + mes;
+	}
+	document.getElementById('inpFechaProximoPagoF1').value = f.getFullYear() + "-" + mes + "-" + "01";
+	document.getElementById('inpFechaProximoPagoF2').value = f.getFullYear() + "-" + mes + "-" + dia;
+		
+		
+			buscarProximosPagos() 	 	
+			document.getElementById("divVistaPagoInterconsulta").style.display="" 
+		}
+}
+
+
+
+
+
+
+function buscarProximosPagos() {
+	// if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
+	var fecha1 = document.getElementById("inpFechaProximoPagoF1").value
+	var fecha2 = document.getElementById("inpFechaProximoPagoF2").value
+	var local = document.getElementById("inptlocalProximoPago").value
+	var descripcion = document.getElementById("inpDescripcionProximoPago").value
+	if (fecha1 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
+		return false;
+	}
+	if (fecha2 == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE FIN")
+		return false;
+	}
+	document.getElementById("DivontenedorProximoPago").innerHTML = paginacargando
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"local": local,
+		"descripcion": descripcion,
+		"funt": "buscarProximosPagos"
+	};
+	$.ajax({
+
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+	document.getElementById("DivontenedorProximoPago").innerHTML = ""
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)			
+	document.getElementById("DivontenedorProximoPago").innerHTML = ""
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   			   
+					var paginaCompras = datos[2];
+					document.getElementById("DivontenedorProximoPago").innerHTML = paginaCompras
+					
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+			var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+
+
+
+
+
+function checProximoPago(d){
+	if(d=="1"){
+	document.getElementById('checProximoPago1').checked=true
+	document.getElementById('checProximoPago2').checked=false	
+	}else{
+	document.getElementById('checProximoPago1').checked=false
+	document.getElementById('checProximoPago2').checked=true
+	}
+}

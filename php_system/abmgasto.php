@@ -309,7 +309,335 @@ if ($operacion == "buscarResumenGastosMotivo") {
 
 	buscarResumenGastosMotivo($fecha_inicio, $fecha_fin);
 }
+
+
+
+if ($operacion == "buscarProximosPagos") {
+	$fecha_inicio= mb_convert_encoding((string)($_POST['fecha1']), 'ISO-8859-1', 'UTF-8');
+	$fecha_fin= mb_convert_encoding((string)($_POST['fecha2']), 'ISO-8859-1', 'UTF-8');
+	$local= mb_convert_encoding((string)($_POST['local']), 'ISO-8859-1', 'UTF-8');
+	$descripcion= mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8');
+
+	buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion);
 }
+
+
+
+}
+
+
+ 
+
+function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion)
+{
+    date_default_timezone_set('America/Asuncion');
+
+	$fechahoy = date("Y-m-d");
+
+    $mysqli = conectar_al_servidor();
+	
+	$condicionFecha="";
+	if($fecha_inicio!=""  && $fecha_fin!=""){
+		$condicionFecha=" and g.fecha between '$fecha_inicio' and '$fecha_fin' ";
+	}
+	
+	$condicionLocal="";
+	if($local!="" ){
+		$condicionLocal=" and cod_localFK = '$local'  ";
+	}
+	$condiciondescripcion="";
+	if($descripcion!="" ){
+		$condiciondescripcion=" and asunto like '%$descripcion%'  ";
+	}
+	
+	
+
+    // ✅ NO TOCO TU SQL
+    $sql = "
+    SELECT 
+        g.monto,
+        g.fecha,
+        g.motivo AS detalle,
+        g.estado,
+        g.modalidad,
+        asunto AS titulo,
+        (SELECT Nombre FROM local WHERE cod_local = cod_localFK) AS Nombrelocal
+    FROM gastos g
+    INNER JOIN interconsulta ic 
+        ON g.cod_interConsultaFK = ic.cod_interConsulta
+    WHERE g.monto!='' $condicionFecha $condicionLocal $condiciondescripcion
+    ORDER BY g.fecha ASC limit 100 ";
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt->execute()) {
+        echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
+        exit;
+    }
+
+    $result = $stmt->get_result();
+    $valor = mysqli_num_rows($result);
+
+    $pagina = "";
+
+    // =========================
+    // CONTENEDOR
+    // =========================
+    $pagina .= " <div class='hilosWrap'> ";
+
+    if ($valor <= 0) {
+        $pagina .= "
+          <div class='section today'>
+            <div class='section-head'>
+              <div>
+                <h3 class='section-title'>Hilos - InterConsultas</h3>
+                <p class='section-sub'>Sin registros</p>
+              </div>
+              <div class='section-meta'>0</div>
+            </div>
+            <div class='grid'>
+              <div class='card empty'><div class='card-body'><b>No hay datos para mostrar.</b></div></div>
+            </div>
+          </div>
+        </div>
+        ";
+        $informacion = array('1' => 'exito', '2' => $pagina);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    // =========================
+    // Separar registros
+    // =========================
+    $hoy = new DateTime("today");
+    $pasados = array();
+    $hoyList = array();
+    $proximos = array();
+    $totalHoy = 0;
+    while ($row = mysqli_fetch_assoc($result)) {
+
+        // 🔤 Encoding como tu ejemplo
+        $monto = mb_convert_encoding((string)$row['monto'], 'UTF-8', 'ISO-8859-1');
+        $fecha = mb_convert_encoding((string)$row['fecha'], 'UTF-8', 'ISO-8859-1');
+        $detalle = mb_convert_encoding((string)$row['detalle'], 'UTF-8', 'ISO-8859-1');
+        $estado = mb_convert_encoding((string)$row['estado'], 'UTF-8', 'ISO-8859-1');
+        $modalidad = mb_convert_encoding((string)$row['modalidad'], 'UTF-8', 'ISO-8859-1');
+        $titulo = mb_convert_encoding((string)$row['titulo'], 'UTF-8', 'ISO-8859-1');
+        $Nombrelocal = mb_convert_encoding((string)$row['Nombrelocal'], 'UTF-8', 'ISO-8859-1');
+		
+
+        // normalizar fecha día
+        $f = new DateTime($fecha);
+        $fDia = new DateTime($f->format("Y-m-d"));
+
+        // total hoy
+        $montoNum = (int)preg_replace('/[^\d]/', '', (string)$monto);
+
+        $item = array(
+            'monto' => $monto,
+            'fecha' => $fecha,
+            'detalle' => $detalle,
+            'estado' => $estado,
+            'modalidad' => $modalidad,
+            'titulo' => $titulo,
+            'Nombrelocal' => $Nombrelocal
+        );
+
+        if ($fDia < $hoy) {
+            $pasados[] = $item;
+        } elseif ($fDia == $hoy) {
+            $hoyList[] = $item;
+            $totalHoy += $montoNum;
+        } else {
+            $proximos[] = $item;
+        }
+    }
+
+    // =========================
+    // helpers internos
+    // =========================
+    $gs = function($n){
+        $num = (int)preg_replace('/[^\d]/', '', (string)$n);
+        return "Gs. " . number_format($num, 0, ",", ".");
+    };
+
+    $fmtFecha = function($f){
+        return date("d-m-Y", strtotime($f));
+    };
+
+    // ✅ Agrupar por día (sin tocar SQL)
+    $groupByDay = function($items){
+        $out = array();
+        foreach ($items as $r) {
+            $key = date("Y-m-d", strtotime($r['fecha']));
+            if (!isset($out[$key])) $out[$key] = array();
+            $out[$key][] = $r;
+        }
+        ksort($out); // ordena por fecha asc
+        return $out;
+    };
+
+    $groupTitle = function($ymd){
+        return date("d-m-Y", strtotime($ymd));
+    };
+
+    // Render cards
+    $renderCard = function($r, $ponerBadgeVencido = false) use ($gs, $fmtFecha) {
+
+        $titulo = htmlspecialchars($r['titulo'], ENT_QUOTES, 'UTF-8');
+        $detalle = htmlspecialchars($r['detalle'], ENT_QUOTES, 'UTF-8');
+        $estado = htmlspecialchars($r['estado'], ENT_QUOTES, 'UTF-8');
+        $modalidad = htmlspecialchars($r['modalidad'], ENT_QUOTES, 'UTF-8');
+        $local = htmlspecialchars($r['Nombrelocal'], ENT_QUOTES, 'UTF-8');
+        $fecha = htmlspecialchars($fmtFecha($r['fecha']), ENT_QUOTES, 'UTF-8');
+        $monto = htmlspecialchars($gs($r['monto']), ENT_QUOTES, 'UTF-8');
+
+        // $badge = $ponerBadgeVencido ? "<span class='badge'>Vencido</span>" : "";
+        $badge = "";
+		
+		$claseEstado = "";
+
+		$estadoLower = mb_strtolower($estado,'UTF-8');
+
+		if($estadoLower == "rechazado"){
+			$claseEstado = "card-rechazado";
+		}
+
+		if($estadoLower == "pendiente"){
+			$claseEstado = "card-pendiente";
+		}
+
+		if($estadoLower == "solicitado"){
+			$claseEstado = "card-solicitado";
+		}
+		if($estadoLower == "activo"){
+			$claseEstado = "card-activo";
+		}
+
+        return "
+          <article class='card'>
+            <div class='card-body {$claseEstado}'  >
+              <div class='card-top'>
+                <div>
+                  <p class='card-title'>{$titulo} - <span>{$modalidad}</span></p>
+                </div>
+              </div>
+
+              <div class='lines'>
+                <div class='line'><b>Fecha:</b> {$fecha}</div>
+                <div class='line'><b>Monto:</b> {$monto}</div>
+                <div class='line'><b>Detalle:</b> {$detalle}</div>
+                <div class='line'><b>Estado:</b> {$estado}</div>
+                <div class='line'><b>Local:</b> {$local}</div>
+                <div class='line'><b>Modalidad:</b> {$modalidad}</div>
+              </div>
+            </div>
+            {$badge}
+          </article>
+        ";
+    };
+
+    // =========================
+    // CSS (si ya lo tenés en otro lado, podés borrar el <style>)
+    // =========================
+    $pagina .= " ";
+
+    // =========================
+    // ARMAR HTML FINAL (AGRUPADO POR FECHA)
+    // =========================
+
+    // PASADOS
+    $pagina .= "
+      <section class='section past'>
+        <div class='section-head'>
+          <div>
+            <h3 class='section-title'>Vencimientos Pasados</h3>
+            <p class='section-sub'>Elementos vencidos (requieren acción)</p>
+          </div>
+          <div class='section-meta'>".count($pasados)." vencidos</div>
+        </div>
+        <div class='grid'>
+    ";
+
+    if (count($pasados) == 0) {
+        $pagina .= "<div class='card empty'><div class='card-body'><b>No hay vencimientos pasados.</b></div></div>";
+    } else {
+        $pasadosG = $groupByDay($pasados);
+        foreach ($pasadosG as $dia => $lista) {
+            $pagina .= "<div class='group-date'>".htmlspecialchars($groupTitle($dia), ENT_QUOTES, 'UTF-8')."</div>";
+            foreach ($lista as $r) {
+                $pagina .= $renderCard($r, true);
+            }
+        }
+    }
+    $pagina .= "</div></section>";
+
+    // HOY
+    $pagina .= "
+      <section class='section today'>
+        <div class='section-head'>
+          <div>
+            <h3 class='section-title'>Vencimientos de HOY</h3>
+            <p class='section-sub'>Vencimientos de Hoy: <b>".count($hoyList)."</b> | Total Proyectado: <b>".$gs($totalHoy)."</b></p>
+          </div>
+          <div class='section-meta'>Hoy</div>
+        </div>
+        <div class='grid'>
+    ";
+
+    if (count($hoyList) == 0) {
+        $pagina .= "<div class='card empty'><div class='card-body'><b>No hay vencimientos para hoy.</b></div></div>";
+    } else {
+        $hoyG = $groupByDay($hoyList);
+        foreach ($hoyG as $dia => $lista) {
+            $pagina .= "<div class='group-date'>".htmlspecialchars($groupTitle($dia), ENT_QUOTES, 'UTF-8')."</div>";
+            foreach ($lista as $r) {
+                $pagina .= $renderCard($r, false);
+            }
+        }
+    }
+    $pagina .= "</div></section>";
+
+    // PROXIMOS
+    $pagina .= "
+      <section class='section next'>
+        <div class='section-head'>
+          <div>
+            <h3 class='section-title'>Próximos Vencimientos</h3>
+            <p class='section-sub'>Fechas futuras</p>
+          </div>
+          <div class='section-meta'>".count($proximos)." futuros</div>
+        </div>
+        <div class='grid'>
+    ";
+
+    if (count($proximos) == 0) {
+        $pagina .= "<div class='card empty'><div class='card-body'><b>No hay vencimientos futuros.</b></div></div>";
+    } else {
+        $proxG = $groupByDay($proximos);
+        foreach ($proxG as $dia => $lista) {
+            $pagina .= "<div class='group-date'>".htmlspecialchars($groupTitle($dia), ENT_QUOTES, 'UTF-8')."</div>";
+            foreach ($lista as $r) {
+                $pagina .= $renderCard($r, false);
+            }
+        }
+    }
+    $pagina .= "</div></section>";
+
+    $pagina .= "</div>"; // .hilosWrap
+
+    // =========================
+    // RESPUESTA JSON como tu estilo
+    // =========================
+    $informacion = array("1" => "exito", "2" => $pagina);
+    echo json_encode($informacion);
+    exit;
+}
+
+
+
+
+
+
 
 function buscarResumenGastosMotivo($fecha_inicio, $fecha_fin) {
 	$sqlFiltro = "";

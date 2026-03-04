@@ -570,6 +570,23 @@ style='display:none' class='divMinimizado'>
 
 
 
+<table class='divMenub'  id='divMenuProximosPagos'   title='Buscar ordenes de trabajo'  onclick='verCerrarInformeProximosPagos()'  style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/proximopago.png' />
+<p class='pTitulo4'  >Pagos Programados</p>
+<center>
+<div id='divMinimizadoHistorialConsulta'
+style='display:none' class='divMinimizado'>
+</div>
+</center>
+</td>
+</tr>
+</table>
+
+
+
+
 <table class='divMenub'  id='divMenuHistorialConsulta'   title='Buscar ordenes de trabajo'  onclick='verCerrarHistorialConsulta()'  style='text-align:center;'>
 <tr>
 <td>
@@ -24269,6 +24286,98 @@ id='inptNroTelefVendedorVista' style='width:200px' />
 </tr>
 </table>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+  <div class="principal2 app" style='display:none' id='divVistaPagoInterconsulta'  >
+    <div class="window">
+      <div class="titlebar">
+        <div class="title-left">
+          <div class="traffic">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="title">Hilos - Pagos Programados</div>
+        </div>
+
+        <div class="top-actions">
+		<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarInformeProximosPagos()' /> 
+        </div>
+      </div>
+	  
+	  <div class="divFiltroTitulo">
+		<div> 
+			<p class='pTituloC' >Descripcion:</p>
+			<input style='width:150px' class='inpFiltroFechas' type='text'   id='inpDescripcionProximoPago'/>
+		</div>
+		
+		<div> 
+			<p class='pTituloC' >Fecha Inio:</p>
+			<input style='width:150px' class='inpFiltroFechas' type='date'   id='inpFechaProximoPagoF1'/>
+		</div>
+		
+		<div> 
+			<p class='pTituloC' >Fecha Inio:</p>
+			<input style='width:150px' class='inpFiltroFechas' type='date'   id='inpFechaProximoPagoF2'/>
+		</div>
+		
+		<div> 
+			<p class='pTituloC' >Local:</p>
+			<select style='width:150px' class="inpFiltroFechas" id="inptlocalProximoPago"></select>
+		</div>
+		
+		<div> 
+			<p class='pTitulo8' onclick='checProximoPago(1)'> <input type='checkbox' id="checProximoPago1" checked> Todos</p>
+			<p class='pTitulo8' onclick='checProximoPago(2)'> <input type='checkbox' id="checProximoPago2" > Pendientes</p>
+		</div>
+		
+		<div> 
+			<input class='btn5' type='button' value='Buscar' onclick='buscarProximosPagos()' />
+		</div>
+		
+      </div>
+
+      <div class="content" id='DivontenedorProximoPago'>
+
+      </div>
+    </div>
+  </div>
+ 
+
+
+
+
+
+
+
+
+
+ 
+
+
 
 <div class='principal2' style='display:none' id='divVistaProducto'>
 <table style='width:100%;height:100%;' id='tdEfectoVistaProductos'>
