@@ -970,11 +970,15 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				$totalMonto += intval($monto);
 			}
 			$styleEstado = "";
-			if ($estado == 'solicitado') {
+			$fechaHoy = new DateTime();
+			$fechaGasto = DateTime::createFromFormat('Y-m-d', $fecha);
+			if ($estado == 'solicitado' && $fechaGasto <= $fechaHoy) {
 				$styleEstado= "background-color: #ff5050;color: #ffffff";
 				$registro_autorizacion_necesario= true;
-			} else if ($estado == 'pendiente') {
-				$styleEstado= "background-color: #b1b1b1a1;";
+			} else if ($estado == 'pendiente' || ($estado == 'solicitado' && $fechaGasto > $fechaHoy)) {
+				$styleEstado= "background-color: #585f08;color: #ffffff;";
+			} else if ($estado == 'Activo') {
+				$styleEstado= "background-color: #085f1c;color: #ffffff;";
 			}
 	
 			// Se formate el nombre de la interconsulta
