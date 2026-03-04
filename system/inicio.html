@@ -4550,14 +4550,25 @@ style='background-color:#5bc572'>
                 </tr>
               </table>
               </div>
-                <div class="divMenuf">
-                  <table style="width:100%">
-                    <tr><td style="text-align: center;">
-                        <input type="button" value="Guardar" class="btn4" onclick="verificarCamposInterConsulta()">
-                    </td></tr>
-                  </table>
-                </div>
-                 
+              <div class="divMenuf">
+                <table style="width: 100%;"><tr>
+                  <td style="width: 60%;">
+                  <p class="pTituloC">Hilo principal :</p>
+                  <input class="inputTextDisable" type="text" id="inptInterc1AbmInterConsulta">
+                  <input type="hidden" id="inptCodInterc1AbmInterConsulta">
+                  </td>
+                  <td style="width: 40%;padding-left: 10px;">
+                  <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmInterConsulta');">
+                  </td></tr>
+                </table>
+              </div>
+              <div class="divMenuf">
+                <table style="width:100%">
+                  <tr><td style="text-align: center;">
+                      <input type="button" value="Guardar" class="btn4" onclick="verificarCamposInterConsulta()">
+                  </td></tr>
+                </table>
+              </div>
       </div>
   </center>
 </div>

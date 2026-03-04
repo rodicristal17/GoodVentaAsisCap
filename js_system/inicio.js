@@ -36057,7 +36057,7 @@ function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 		let ruta= document.getElementById(elemento).style.backgroundImage;
 
 		// En caso de que no tenga imagen cargada
-		if (ruta.includes('subir_imagen.png')) {
+		if (ruta.includes('subir_imagen.png') || ruta.includes('imagenphoto.png')) {
 			ruta= 'url("/GoodVentaAsisCap/iconos/guia_fotos.jpeg")';
 		}
 		

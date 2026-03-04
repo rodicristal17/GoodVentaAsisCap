@@ -235,9 +235,97 @@
                 $cod_mensaje= abmMensaje("", $contenido, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta, "", FALSE);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
+            case 'fusionarInterConsultas':
+                $cod_interConsulta= mb_convert_encoding((string)($_POST['cod_interConsulta']), "ISO-8859-1", "UTF-8");
+                $cod_interConsulta_destino= mb_convert_encoding((string)($_POST['cod_interConsulta_destino']), "ISO-8859-1", "UTF-8");
+                fusionarInterconsultas($cod_interConsulta, $cod_interConsulta_destino, $user);
+                echo json_encode(array("1"=> "exito", "2" => $cod_interConsulta, "3" => $cod_interConsulta_destino));
+                break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
+    }
+
+    function fusionarInterconsultas($cod_interConsulta, $cod_interConsulta_destino, $cod_usuarioFK) {
+        if (empty($cod_interConsulta) || empty($cod_interConsulta_destino)) {
+            echo json_encode(array("1" => "error", "2" => "Campos vacios."));
+            exit;
+        }
+        $ids_menciones= [];
+        set_time_limit(300);
+        
+        // Obtiene la informacion de la interconsulta
+        $registroInterc= obtenerInterConsulta(array(
+            "cod_interConsulta" => $cod_interConsulta_destino
+        ), 0)[0];
+        
+        // Obtiene las menciones de la interconsulta origen
+        $fechaActual= new DateTime();
+        $registrosMens= obtenerMensaje(array(
+            'cod_interConsultaFK' => $cod_interConsulta,
+        ), 0);
+        $valueMens= end($registrosMens);
+        $mencionesTemp= array();
+        foreach ($registrosMens as $valueMens) {
+            $registrosMenc= obtenerMencion(array(
+                "cod_mensajeFK" => $valueMens['cod_mensaje'],
+            ), 0);
+
+            foreach ($registrosMenc as $value) {
+                $mencionesTemp[$value['cod_usuarioFK']] = $value['estado'];
+            }
+        }
+        foreach ($mencionesTemp as $key => $value) {
+            if ($value != 'inactivo') {
+                $ids_menciones[] = $key;
+            }
+        }
+        $ids_menciones = array_unique($ids_menciones);
+        
+        // Genera un mensaje del sistema
+        $fechaActual= new Datetime();
+        $cod_mensaje= abmMensaje("", "esta y la interconsulta ".$registroInterc['asunto']." por @{$cod_usuarioFK}", $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta_destino, "", FALSE);
+
+        // Pasa todos los mensajes al interconsulta destino
+        foreach ($registrosMens as $mensj) {
+            abmMensaje($mensj['cod_mensaje'], NULL, NULL, $cod_interConsulta_destino, NULL);
+        }
+        
+        // Agrega las menciones faltantes al mensaje del sistema
+        foreach ($ids_menciones as $value) {
+            if (empty($value)) {continue;}
+            abmMencion(null, $value, $cod_mensaje, 0, 'activo');
+        }
+
+        // Agrega las menciones a los mensajes futuros del sistema
+        $registrosMens= obtenerMensaje(array(
+            'cod_interConsultaFK' => $cod_interConsulta_destino,
+            'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
+        ), 0);
+
+        foreach ($registrosMens as $mensj) {
+            $registroMenc = obtenerMencion(array(
+                "cod_mensajeFK" => $mensj['cod_mensaje'],
+            ), 0);
+            
+            // Construir array de usuarios mencionados existentes para evitar consultas frecuentes
+            $usuariosMencionadosExistentes = array();
+            foreach ($registroMenc as $mencion) {
+                $usuariosMencionadosExistentes[] = $mencion['cod_usuarioFK'];
+            }
+            
+            foreach ($ids_menciones as $value) {
+                if (empty($value)) {continue;}
+                
+                // Verificar si la mención ya existe en el array de menciones existentes
+                if (!in_array($value, $usuariosMencionadosExistentes)) {
+                    abmMencion(null, $value, $mensj['cod_mensaje'], 0, 'activo');
+                }
+            }
+        }
+
+        // Actualiza el estado de la interconsulta
+        abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], 'inactivo', '', '', '', $cod_usuarioFK, $registroInterc['cod_localFK'], '');
     }
 
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
@@ -451,7 +539,7 @@
             
             // Se crea el encabezado
             $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;">
-                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.'; width: 1200px;'.$styleMensajeNoLeido.'">
+                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.'; width: 100%;'.$styleMensajeNoLeido.'">
             <div class="card-body">
             <h5 class="card-title">
                 '.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'
@@ -1145,59 +1233,83 @@
             $registros[] = $reg;
         }
 
-
         $stmt->close();
         return $registros;
     }
 
     function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user, $visto_creador= FALSE) {
         $mysqli = conectar_al_servidor();
-
-        // Convierte el contenido a html
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true); // evitar warnings por HTML incompleto
-        $dom->loadHTML($contenido);
-
-        // Obtiene todas las menciones
-        $spans = $dom->getElementsByTagName('b');
-        $ids_menciones = [];
-        foreach ($spans as $span) {
-            if ($span->hasAttribute('id')) {
-                $ids_menciones[] = $span->getAttribute('id');
-            }
-        }
-
-        // Limpia el contenido del mensaje
         $contenidoLimpiado= "";
-        $xpath = new DOMXPath($dom);
 
-        // Reemplazar cada <b> con su id
-        foreach ($xpath->query('//b[@id]') as $b) {
-            $id = $b->getAttribute('id');
-            // Crear nodo de texto con la notación @{id}
-            $nuevoTexto = $dom->createTextNode("@{" . $id . "}");
-            $b->parentNode->replaceChild($nuevoTexto, $b);
+        if ($contenido) {
+            // Convierte el contenido a html
+            $dom = new DOMDocument();
+            libxml_use_internal_errors(true); // evitar warnings por HTML incompleto
+            $dom->loadHTML($contenido);
+    
+            // Obtiene todas las menciones
+            $spans = $dom->getElementsByTagName('b');
+            $ids_menciones = [];
+            foreach ($spans as $span) {
+                if ($span->hasAttribute('id')) {
+                    $ids_menciones[] = $span->getAttribute('id');
+                }
+            }
+    
+            // Limpia el contenido del mensaje
+            $contenidoLimpiado= "";
+            $xpath = new DOMXPath($dom);
+    
+            // Reemplazar cada <b> con su id
+            foreach ($xpath->query('//b[@id]') as $b) {
+                $id = $b->getAttribute('id');
+                // Crear nodo de texto con la notación @{id}
+                $nuevoTexto = $dom->createTextNode("@{" . $id . "}");
+                $b->parentNode->replaceChild($nuevoTexto, $b);
+            }
+            
+            // Obtener el texto plano resultante
+            $contenidoLimpiado = $dom->textContent;
+    
+            // Limpiar espacios y entidades
+            $contenidoLimpiado = trim(html_entity_decode($contenidoLimpiado));
+            $contenidoLimpiado = str_replace("\xC2\xA0", " ", $contenidoLimpiado);
         }
-
-        // Obtener el texto plano resultante
-        $contenidoLimpiado = $dom->textContent;
-
-        // Limpiar espacios y entidades
-        $contenidoLimpiado = trim(html_entity_decode($contenidoLimpiado));
-        $contenidoLimpiado = str_replace("\xC2\xA0", " ", $contenidoLimpiado);
         
         if (empty($cod_mensaje)) {
             $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK) VALUES (?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('ssii', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user);
         } else {
-            $sql= "UPDATE mensaje SET contenido= ? WHERE cod_mensaje = ?";
+            $parametros= array();
+            $atributos= "";
+            $ss= "";
+
+            // Datos a modificar
+            if (!empty($contenidoLimpiado)) {
+                $atributos .= ", contenido= ?";
+                $ss .= "s";
+                $parametros[] = $contenidoLimpiado;
+            }
+            if (!empty($cod_interConsulta)) {
+                $atributos .= ", cod_interConsultaFK= ?";
+                $ss .= "i";
+                $parametros[] = $cod_interConsulta;
+            }
+            $parametros[] = $cod_mensaje;
+            $ss .= "i";
+
+            $atributos = substr($atributos, 2);
+            $sql= "UPDATE mensaje SET $atributos WHERE cod_mensaje = ?";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('si', $contenidoLimpiado, $cod_mensaje);
+            
+            $refs = [];
+            foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+
+            call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
         }
         
         if (!$stmt->execute()) {
-            print_r(array($contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user));
             $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
             echo json_encode($informacion);
             exit;
@@ -1205,52 +1317,52 @@
         
         if (empty($cod_mensaje)) {
             $cod_mensaje = $stmt->insert_id;
-        }
-
-        $ids_menciones[] = $user;
-        // Obtiene todas las menciones anteriores asociadas a esta interconsulta
-        $fechaActual= new DateTime();
-        $registrosMens= obtenerMensaje(array(
-            'cod_interConsultaFK' => $cod_interConsulta,
-            'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
-        ), 0);
-        $valueMens= end($registrosMens);
-        $mencionesTemp= array();
-        foreach ($registrosMens as $valueMens) {
-            $registrosMenc= obtenerMencion(array(
-                "cod_mensajeFK" => $valueMens['cod_mensaje'],
-                "isLeido" => 0
+            
+            $ids_menciones[] = $user;
+            // Obtiene todas las menciones anteriores asociadas a esta interconsulta
+            $fechaActual= new DateTime();
+            $registrosMens= obtenerMensaje(array(
+                'cod_interConsultaFK' => $cod_interConsulta,
+                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
             ), 0);
-
-            foreach ($registrosMenc as $value) {
-                $mencionesTemp[$value['cod_usuarioFK']] = $value['estado'];
+            $valueMens= end($registrosMens);
+            $mencionesTemp= array();
+            foreach ($registrosMens as $valueMens) {
+                $registrosMenc= obtenerMencion(array(
+                    "cod_mensajeFK" => $valueMens['cod_mensaje'],
+                    "isLeido" => 0
+                ), 0);
+    
+                foreach ($registrosMenc as $value) {
+                    $mencionesTemp[$value['cod_usuarioFK']] = $value['estado'];
+                }
             }
-        }
-        foreach ($mencionesTemp as $key => $value) {
-            if ($value != 'inactivo') {
-                $ids_menciones[] = $key;
+            foreach ($mencionesTemp as $key => $value) {
+                if ($value != 'inactivo') {
+                    $ids_menciones[] = $key;
+                }
             }
-        }
-
-        // Guarda las menciones e incluye al creador
-        $ids_menciones = array_unique($ids_menciones);
-        foreach ($ids_menciones as $value) {
-            if (empty($value)) {continue;}
-            // Marca al creador como leido solo si no es mensaje programado
-            $fechaActualObj = new DateTime();
-            $fechaCreacionObj = new DateTime($fecha_creacion);
-            // Verifica si la diferencia en minutos es menor a 10
-            $intervalo = $fechaActualObj->diff($fechaCreacionObj);
-            $minutosDiferencia = ($intervalo->days * 24 * 60) + ($intervalo->h * 60) + $intervalo->i;
-
-            if (($value === $user && ($minutosDiferencia < 10) || $visto_creador)) {
-                abmMencion(null, $value, $cod_mensaje, 1, 'activo');
-            } else {
-                abmMencion(null, $value, $cod_mensaje, 0, 'activo');
+    
+            // Guarda las menciones e incluye al creador
+            $ids_menciones = array_unique($ids_menciones);
+            foreach ($ids_menciones as $value) {
+                if (empty($value)) {continue;}
+                // Marca al creador como leido solo si no es mensaje programado
+                $fechaActualObj = new DateTime();
+                $fechaCreacionObj = new DateTime($fecha_creacion);
+                // Verifica si la diferencia en minutos es menor a 10
+                $intervalo = $fechaActualObj->diff($fechaCreacionObj);
+                $minutosDiferencia = ($intervalo->days * 24 * 60) + ($intervalo->h * 60) + $intervalo->i;
+    
+                if (($value === $user && ($minutosDiferencia < 10) || $visto_creador)) {
+                    abmMencion(null, $value, $cod_mensaje, 1, 'activo');
+                } else {
+                    abmMencion(null, $value, $cod_mensaje, 0, 'activo');
+                }
             }
+            
+            $stmt->close();        
         }
-        
-        $stmt->close();        
 
         return $cod_mensaje;
     }
