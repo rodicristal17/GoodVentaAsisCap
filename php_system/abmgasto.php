@@ -317,8 +317,9 @@ if ($operacion == "buscarProximosPagos") {
 	$fecha_fin= mb_convert_encoding((string)($_POST['fecha2']), 'ISO-8859-1', 'UTF-8');
 	$local= mb_convert_encoding((string)($_POST['local']), 'ISO-8859-1', 'UTF-8');
 	$descripcion= mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8');
+	$estadoFiltroPagoprogrtamado= mb_convert_encoding((string)($_POST['estadoFiltroPagoprogrtamado']), 'ISO-8859-1', 'UTF-8');
 
-	buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion);
+	buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estadoFiltroPagoprogrtamado);
 }
 
 
@@ -328,7 +329,7 @@ if ($operacion == "buscarProximosPagos") {
 
  
 
-function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion)
+function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estadoFiltroPagoprogrtamado)
 {
     date_default_timezone_set('America/Asuncion');
 
@@ -350,7 +351,11 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion)
 		$condiciondescripcion=" and asunto like '%$descripcion%'  ";
 	}
 	
-	
+	$condicionestadoFiltroPagoprogrtamado="";
+	if($estadoFiltroPagoprogrtamado!="Todo"){
+		$condicionestadoFiltroPagoprogrtamado=" and g.estado!='Activo'";
+	}
+	 
 
     // ✅ NO TOCO TU SQL
     $sql = "
@@ -365,8 +370,8 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion)
     FROM gastos g
     INNER JOIN interconsulta ic 
         ON g.cod_interConsultaFK = ic.cod_interConsulta
-    WHERE g.monto!='' $condicionFecha $condicionLocal $condiciondescripcion
-    ORDER BY g.fecha ASC limit 100 ";
+    WHERE g.monto!='' $condicionFecha $condicionLocal $condiciondescripcion $condicionestadoFiltroPagoprogrtamado
+    ORDER BY g.fecha ASC ";
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt->execute()) {

@@ -41,9 +41,19 @@
                 ));
 
                 if (count($informacion) > 0) {
-                    echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.'), "4" => $informacion2[9][0]["motivo"] ?? ""));
+                   echo json_encode(array(
+					"1" => "exito",
+					"2" => isset($informacion[0]["monto_limite"]) ? $informacion[0]["monto_limite"] : "",
+					"3" => isset($informacion2["4"]) ? number_format(intval($informacion2["4"]), 0, ',', '.') : "0",
+					"4" => isset($informacion2[9][0]["motivo"]) ? $informacion2[9][0]["motivo"] : ""
+				));
                 } else {
-                    echo json_encode(array("1" => "exito", "2" => 0, "3" => 0, "4" => $informacion[9][0]["motivo"] ?? ""));
+                   echo json_encode(array(
+					"1" => "exito",
+					"2" => 0,
+					"3" => 0,
+					"4" => isset($informacion[9][0]["motivo"]) ? $informacion[9][0]["motivo"] : ""
+				));
                 }
 
                 break;

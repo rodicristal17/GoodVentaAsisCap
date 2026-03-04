@@ -1821,11 +1821,17 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 		}
 	});
 }
+
+
 function buscarevaluacionPagosCompra() {
 	if(controlacceso("VERINFORMEEVALUACION","accion")==false){return;}	
 	var fecha1 = document.getElementById("inptBuscarEvaluacionF1").value
 	var fecha2 = document.getElementById("inptBuscarEvaluacionF2").value
 	var local = document.getElementById("inptlocalInformeEvaluacion").value
+	
+	
+	
+	
 	if (fecha1 == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
@@ -1940,6 +1946,20 @@ function buscarProximosPagos() {
 	var fecha2 = document.getElementById("inpFechaProximoPagoF2").value
 	var local = document.getElementById("inptlocalProximoPago").value
 	var descripcion = document.getElementById("inpDescripcionProximoPago").value
+	
+	
+	var estadoFiltroPagoprogrtamado="";
+	if(document.getElementById('checProximoPago1').checked==true){
+		estadoFiltroPagoprogrtamado="Todo"
+	}else{
+		estadoFiltroPagoprogrtamado="Pendiente"
+	}
+	
+	
+	
+	
+	
+	
 	if (fecha1 == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE INICIO")
 		return false;
@@ -1958,6 +1978,7 @@ function buscarProximosPagos() {
 		"fecha2": fecha2,
 		"local": local,
 		"descripcion": descripcion,
+		"estadoFiltroPagoprogrtamado": estadoFiltroPagoprogrtamado,
 		"funt": "buscarProximosPagos"
 	};
 	$.ajax({
