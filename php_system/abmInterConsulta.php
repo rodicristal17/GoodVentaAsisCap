@@ -909,12 +909,20 @@
                 $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
             }
 
-            $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios;
+            $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'
+                .$value['asunto']
+                .(($value['cantAsociadoGastos'] > 0) ? ' <i class="fa-regular fa-circle-check"></i>' : '')
+                .$cantMensajesNoLeidosOtrosUsuarios;
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'background-color: rgb(140, 8, 8, 0.7);  color: #ffffff;';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
-                $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'.$value['asunto'].$cantMensajesNoLeidosOtrosUsuarios.'</b>';
+                $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'
+                    .$value['asunto']
+                    .(($value['cantAsociadoGastos'] > 0) ? ' <i class="fa-regular fa-circle-check"></i>' : '')
+                    .$cantMensajesNoLeidosOtrosUsuarios
+                    .'</b>';
             }
+
             if ($value["cantMensajesProgramados"]) {
                 // Obtiene los mensajes programados
                 $registrosMens= obtenerMensaje(array(
