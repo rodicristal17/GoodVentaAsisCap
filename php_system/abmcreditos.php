@@ -1688,7 +1688,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota' ),0) as totalPagoCuota,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Interes'),0) as totalPagoInteres
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where vt.cod_venta='$buscar' ";
+ where vt.cod_venta='$buscar' order by FIELD(Esado, 'PAGADO', 'PENDIENTE', 'inactivo'), idcredito";
 	$pagina = "";
 	$paginaextracto = "";
 	$interes = "0";
