@@ -587,12 +587,18 @@ if($operacion=="editar")
 // Obtiene los datos actuales del gasto
 $datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9];
 
-if ($estado == 'Activo' && !empty($cod_usuario_autoriz)) {
-	$estado = "pendiente";
+$estado = "solicitado";
+$cod_usuario_autoriz= NULL;
+
+$atributos= "arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
+personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsultaFK=?, cod_usuario_autoriz=?";
+
+// Se verifica si se cambio el monto y se requiere cambio de caja
+if ($datos_gasto[0]['monto'] != $monto && $_POST['actualizar_caja'] == "true") {
+	$atributos .= ", codCaja =$codcaja ,codApertura = $idaperturacierrecaja";
 }
 
-$consulta1="Update gastos set arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
-personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsultaFK=?, cod_usuario_autoriz=? where idgastos=?";
+$consulta1="Update gastos set $atributos where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
 $ss='sssssssssssssssi';
 if (!$stmt) {

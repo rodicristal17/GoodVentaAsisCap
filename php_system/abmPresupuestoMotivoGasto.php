@@ -33,16 +33,17 @@
                 $fechaActual= new DateTime();
                 $primerDiaMes= $fechaActual->format('Y-m-01');
                 $ultimoDiaMes= $fechaActual->format('Y-m-t');
-                
+
                 $informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '', '');
                 $informacion = obtenerPresupuestoMotivoGasto(array(
                     'cod_motivo_ingreso_egresoFK' => $cod_motivo,
                     'cod_localFK' => $cod_local
                 ));
+
                 if (count($informacion) > 0) {
-                    echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.'), "4" => $informacion[9][0]["motivo"]));
+                    echo json_encode(array("1" => "exito", "2" => $informacion[0]["monto_limite"], "3" => number_format(intval($informacion2["4"]), 0, ',', '.'), "4" => $informacion2[9][0]["motivo"] ?? ""));
                 } else {
-                    echo json_encode(array("1" => "exito", "2" => 0, "3" => 0, "4" => $informacion[9][0]["motivo"]));
+                    echo json_encode(array("1" => "exito", "2" => 0, "3" => 0, "4" => $informacion[9][0]["motivo"] ?? ""));
                 }
 
                 break;
