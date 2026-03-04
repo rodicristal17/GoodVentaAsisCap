@@ -592,7 +592,7 @@
             $pagina .= '</div>';
             
             $pagina .= '<div style="flex: 0.5;">
-            <span onclick="verCerrarAbmGasto()" style="font-size: 14pt;"><strong>Flujo de gastos: </strong><i class="fa-solid fa-scale-balanced"></i></span>
+            <span onclick="verCerrarAbmGasto()"><strong style="font-size: 14pt; cursor: pointer;" onmouseover="this.style.color=\'#0066cc\'; this.style.textDecoration=\'underline\';" onmouseout="this.style.color=\'black\'; this.style.textDecoration=\'none\';">Flujo de gastos: </strong><img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true); document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\';cod_interConsulta= '.$valueInter['cod_interConsulta'].'"></span>
             <table class="tableCabeceraRegistro">
                 <tr>
                     <td class="td_registro" style="width: 10%;text-align: left;">Cod.</td>

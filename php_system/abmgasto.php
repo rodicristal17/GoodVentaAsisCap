@@ -1069,7 +1069,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
  		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;">'.
 			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
 				'<h6><b>'.$titulo_motivo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
-				($cod_motivo == -1 ? '' : '<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(\'1\',\'1\');document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">').
+				($cod_motivo == -1 ? '' : '<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true);document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">').
 			'</div>'.
 			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
 				$paginaMotivo.

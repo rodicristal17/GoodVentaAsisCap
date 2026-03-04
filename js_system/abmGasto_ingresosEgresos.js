@@ -20,11 +20,11 @@ function mostrarItems(id_elemento) {
 function verCerrarAbmGasto(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmGastos").style.display==""){
-	document.getElementById("divMinimizadoEgresoIngreso").style.display="none"
-     document.getElementById("tdEfectoAbmGasto").className="magictime vanishOut"
-	$("div[id=divAbmGastos]").fadeOut(500);	
-	limpiarcamposGasto()
-	limpiarcamposbuscadoregresoingreso()
+		document.getElementById("divMinimizadoEgresoIngreso").style.display="none"
+		document.getElementById("tdEfectoAbmGasto").className="magictime vanishOut"
+		$("div[id=divAbmGastos]").fadeOut(500);	
+		limpiarcamposGasto()
+		limpiarcamposbuscadoregresoingreso()
 	}else{	
         if(controlacceso("VERLISTADOEGRESOINGRESO","accion")==false){return;}
 		checkfiltroshistorialegresoingreso(1);
@@ -50,8 +50,8 @@ function minimizarventanaingresoegreso(){
 	$("div[id=divAbmGastos]").fadeOut(500);
 }
 
-function verCerrarVentanaAbmGasto(d, l) {
-	if (d == "1") {
+function verCerrarVentanaAbmGasto(mostrar, limpiar= false) {
+	if (mostrar) {
 		if(idabmAperturacierrecaja==""){
 			document.getElementById("divAbmGastos").style.display="none"
 		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
@@ -59,7 +59,7 @@ function verCerrarVentanaAbmGasto(d, l) {
 		   return
 	   }
 		
-		if (l == "1") {
+		if (limpiar) {
 			limpiarcamposGasto();
             BuscarAbmMotivoEgresoIngreso();
 			if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
@@ -73,6 +73,9 @@ function verCerrarVentanaAbmGasto(d, l) {
 		const ultimaVentana = ventanaAnterior.pop();
 		switch (ultimaVentana) {
 			case 'divAbmDetallesInterConsulta':
+				verCerrarAbmGasto();
+				break;
+			case 'divListadoInterConsulta':
 				verCerrarAbmGasto();
 				break;
 		}
@@ -94,7 +97,7 @@ function verVentanaEditarGasto(vent_anterior= "") {
 	}
 	
 	ventanaAnterior.push(vent_anterior);
-	verCerrarVentanaAbmGasto("1", "2")
+	verCerrarVentanaAbmGasto(true, true)
 }
 var idAbmGasto = "";
 var montoActualGasto= "";
@@ -399,12 +402,13 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 					switch (ventanaAnterior[ventanaAnterior.length - 1]) {
 						case 'divListadoInterConsulta':
 							buscarInterConsultasYContenido(cod_interConsulta);
+							document.getElementById('divAbmGastos').style.display= "none";
 							break;
 						default: 
 							buscarabmGasto();
+							verCerrarVentanaAbmGasto(false, false);
 							break;
 					}
-					verCerrarVentanaAbmGasto("2","");
 					comprobarLimiteMotivo(cod_motivoFK, cod_local);
 				} else {
 					ver_vetana_informativa(datos["2"]);
@@ -551,7 +555,7 @@ function subirImagenGasto(cod_abmGasto) {
 
 					idAbmGasto = "";
 					buscarabmGasto();
-					verCerrarVentanaAbmGasto("2","");
+					verCerrarVentanaAbmGasto(false, false);
 				} else {
 					throw new Error("Error producido en subirImagenGasto de JavaScript.");
                 }
