@@ -161,5 +161,7 @@ DELIMITER ;
 DROP TABLE gastos_fijos;
 
 ALTER TABLE gastos ADD COLUMN modalidad ENUM('contado', 'credito') DEFAULT 'contado'; 
+
+UPDATE gastos SET estado="Activo" WHERE estado like 'Activo and g.idgastos%';
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA

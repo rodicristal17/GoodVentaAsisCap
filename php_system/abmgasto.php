@@ -79,10 +79,7 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 		'cod_localFK' => $cod_local,
 	))[0]["monto_limite"];
 	$estado= "Activo";
-	if ($operacion == 'editar') {
-		$estado= "Activo and g.idgastos != $idgastos";
-	}
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, $estado, $cod_local, '', '', '','true', $cod_motivo, '', '', '');
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '', '');
 
 	if ($monto_limite && $monto_limite != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
