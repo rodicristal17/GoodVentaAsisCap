@@ -1401,7 +1401,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 
 		$styleRegistroColor2= $styleRegistroColor;
 		if ($registro_autorizacion_necesario) {
-			$styleRegistroColor2= "#ff5050;color: #ffffff";
+			$styleRegistroColor2= "#ff5050;color: #ffffff;";
 		}
 
  		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;gap: 0;min-height: 0;">'.
