@@ -14420,7 +14420,7 @@ function verCerrarConfigCredito(d) {
 			const totalventa = QuitarSeparadorMilValor(document.getElementById('inptTotalVentaTerminar').value);
 
 			// Calcula un descuento del 10%
-			document.getElementById('inptDescuentoVentaTerminar').value = totalventa * 0.1;
+			document.getElementById('inptDescuentoVentaTerminar').value = 0//totalventa * 0.1;
 			separadordemiles(document.getElementById('inptDescuentoVentaTerminar'));
 			calcularDescuento();
 			
