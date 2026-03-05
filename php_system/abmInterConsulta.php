@@ -911,14 +911,14 @@
 
             $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'
                 .$value['asunto']
-                .(($value['cantAsociadoGastos'] > 0) ? ' <i class="fa-regular fa-circle-check"></i>' : '')
+                .(($value['cantAsociadoGastos'] > 0) ? ' <img src="/GoodVentaAsisCap/iconos/checklist.png" style="color:green; height: 20px; margin-inline: 5px;"/>' : '')
                 .$cantMensajesNoLeidosOtrosUsuarios;
             if (intval($value['cantMensajesNoLeidos']) > 0) {
                 $style = 'background-color: rgb(140, 8, 8, 0.7);  color: #ffffff;';
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
                 $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'
                     .$value['asunto']
-                    .(($value['cantAsociadoGastos'] > 0) ? ' <i class="fa-regular fa-circle-check"></i>' : '')
+                    .(($value['cantAsociadoGastos'] > 0) ? ' <img src="/GoodVentaAsisCap/iconos/checklist.png" style="color:green; height: 20px; margin-inline: 5px;"/>' : '')
                     .$cantMensajesNoLeidosOtrosUsuarios
                     .'</b>';
             }
@@ -943,7 +943,7 @@
             $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">
                 <tr onclick="obtenerDatosInterConsulta(this)">
                     <td id="td_id" style="width: 5%;'.$styleInterno.'">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 25%;'.$style.'"><div style="display: flex;">'.$formatAsunto.'</div></td>
+                    <td id="td_datos_1" style="width: 25%;'.$style.'"><div>'.$formatAsunto.'</div></td>
                     <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
                     <td id="td_datos_5" style="width: 15%;'.$style.'">'.$value['nombre_persona'].'</td>
                     <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cod_localFK'].'</td>
