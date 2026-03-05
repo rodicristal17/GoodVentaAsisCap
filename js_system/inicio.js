@@ -14389,55 +14389,62 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 			}
 		}
 	});
-
-
 }
-function verCerrarConfigCredito(d){
-	controlVenta="1";
-	if(d=="1"){		
-	if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
-	
-    if((document.getElementById('inptClienteVenta').value == "CLIENTE OCASIONAL")|| (document.getElementById('inptClienteVenta').value == "")){
-		ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO")
-		return
-	}	
-		document.getElementById("tdEfectoFinalizarVentaCredito").className=""
-	document.getElementById("divFinalizarVentaAcredito").style.display="";
-	var inptTotalPagado = document.getElementById('inptTotalPagado').value
-	if (inptTotalPagado!="0" && inptTotalPagado!="") {
-	document.getElementById("btnConfCredito").style.display='none'
-	}else{	
-	AutoCompletarCamposCuotas()
-	document.getElementById("btnConfCredito").style.display=''
-	}	
-		}else{
-			var inptTotalPagado = document.getElementById('inptTotalPagado').value	
-	if (inptTotalPagado!="0" && inptTotalPagado!="") {
-	return
-	}
-	document.getElementById('inptTotalVentaTerminar').value=document.getElementById('inptTotalVenta').value
-	document.getElementById('inptDescuentoVentaTerminar').value="0"
-	document.getElementById('inptMontoVentaTerminarEfectivo').value=document.getElementById('inptTotalVenta').value;
-	document.getElementById('inptVueltoVentaTerminar').value="0"
-	document.getElementById('inptMontoVentaTerminarTarjeta').value="0"
-	document.getElementById("tdEfectoFinalizarVentaContado").className=""
-		document.getElementById("divFinalizarVentaAContado").style.display="";	
-			document.getElementById('inptMontoVentaTerminarEfectivo').focus()			
+
+function verCerrarConfigCredito(d) {
+	controlVenta = "1";
+	if (d == "1") {
+		if (document.getElementById("inptSeleccTipoVenta").value == "CREDITO") {
+
+			if ((document.getElementById('inptClienteVenta').value == "CLIENTE OCASIONAL") || (document.getElementById('inptClienteVenta').value == "")) {
+				ver_vetana_informativa("EL CLIENTE NO ES VÁLIDO")
+				return
+			}
+			document.getElementById("tdEfectoFinalizarVentaCredito").className = ""
+			document.getElementById("divFinalizarVentaAcredito").style.display = "";
+			var inptTotalPagado = document.getElementById('inptTotalPagado').value
+			if (inptTotalPagado != "0" && inptTotalPagado != "") {
+				document.getElementById("btnConfCredito").style.display = 'none'
+			} else {
+				AutoCompletarCamposCuotas()
+				document.getElementById("btnConfCredito").style.display = ''
+			}
+		} else {
+			var inptTotalPagado = document.getElementById('inptTotalPagado').value
+			if (inptTotalPagado != "0" && inptTotalPagado != "") {
+				return
+			}
+			
+			// Calcula y aplica un descuento del 10%
+			document.getElementById('inptTotalVentaTerminar').value = document.getElementById('inptTotalVenta').value
+			const totalventa = QuitarSeparadorMilValor(document.getElementById('inptTotalVentaTerminar').value);
+
+			// Calcula un descuento del 10%
+			document.getElementById('inptDescuentoVentaTerminar').value = totalventa * 0.1;
+			separadordemiles(document.getElementById('inptDescuentoVentaTerminar'));
+			calcularDescuento();
+			
+			//document.getElementById('inptMontoVentaTerminarEfectivo').value = document.getElementById('inptTotalVenta').value;
+			document.getElementById('inptVueltoVentaTerminar').value = "0"
+			document.getElementById('inptMontoVentaTerminarTarjeta').value = "0"
+			document.getElementById("tdEfectoFinalizarVentaContado").className = ""
+			document.getElementById("divFinalizarVentaAContado").style.display = "";
+			document.getElementById('inptMontoVentaTerminarEfectivo').focus()
 			$("#inptMontoVentaTerminarEfectivo").select();
 		}
-	}else{
-		if(document.getElementById("inptSeleccTipoVenta").value=="CREDITO"){
-		//document.getElementById("divFinalizarVentaAcredito").style.display="none";
-		document.getElementById("tdEfectoFinalizarVentaCredito").className="magictime vanishOut"
-	$("div[id=divFinalizarVentaAcredito]").fadeOut(500);	
-		}else{
-		//document.getElementById("divFinalizarVentaAContado").style.display="none";
-		document.getElementById("tdEfectoFinalizarVentaContado").className="magictime vanishOut"
-	$("div[id=divFinalizarVentaAContado]").fadeOut(500);	
+	} else {
+		if (document.getElementById("inptSeleccTipoVenta").value == "CREDITO") {
+			//document.getElementById("divFinalizarVentaAcredito").style.display="none";
+			document.getElementById("tdEfectoFinalizarVentaCredito").className = "magictime vanishOut"
+			$("div[id=divFinalizarVentaAcredito]").fadeOut(500);
+		} else {
+			//document.getElementById("divFinalizarVentaAContado").style.display="none";
+			document.getElementById("tdEfectoFinalizarVentaContado").className = "magictime vanishOut"
+			$("div[id=divFinalizarVentaAContado]").fadeOut(500);
 		}
-		
 	}
 }
+
 function AutoCompletarCamposCuotas(){
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if(DatosAutoCompleteCredito[0]!=undefined && (inptTotalPagado=="0" || inptTotalPagado=="")){
@@ -15343,12 +15350,21 @@ function minimizarEntregaCobrador(){
 document.getElementById("tdEfectoEntregaCobrador").className="magictime slideDown"
 	$("div[id=divEntregaCobrador]").fadeOut(500);
 }
+
+function calcularDescuento() {
+	const totalventa = QuitarSeparadorMilValor(document.getElementById('inptTotalVentaTerminar').value);
+	const totaldescuento = QuitarSeparadorMilValor(document.getElementById('inptDescuentoVentaTerminar').value);
+	document.getElementById('inptMontoVentaTerminarEfectivo').value= totalventa - totaldescuento;
+	console.info("Calculo: ", totalventa - totaldescuento)
+	separadordemiles(document.getElementById('inptMontoVentaTerminarEfectivo'));
+}
+
 /*PAGOS AL CONTADO*/
 function calcularVuelto(){
 	var totalventa = QuitarSeparadorMilValor(document.getElementById('inptTotalVentaTerminar').value);
 	var totaldescuento = QuitarSeparadorMilValor(document.getElementById('inptDescuentoVentaTerminar').value);
 	var inptMontoVentaTerminarEfectivo = QuitarSeparadorMilValor(document.getElementById('inptMontoVentaTerminarEfectivo').value);
-	console.log(inptMontoVentaTerminarEfectivo)
+
 	if (isNaN(totalventa)) {
        ver_vetana_informativa("ERROR, TOTAL INVALIDO")
 		return 
