@@ -97,7 +97,7 @@ function verVentanaEditarGasto(vent_anterior= "") {
 	}
 	
 	ventanaAnterior.push(vent_anterior);
-	verCerrarVentanaAbmGasto(true, true)
+	verCerrarVentanaAbmGasto(true, false)
 }
 var idAbmGasto = "";
 var montoActualGasto= "";
@@ -124,7 +124,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
-	
+	console.info("Selecciondado: ", datostr);
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
 
@@ -313,6 +313,11 @@ function verificarcamposGasto() {
 }
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, actualizar_caja, cantCuotas= 0, periodicidad= "") {
 	verCerrarEfectoCargando("1")
+	let editar_cuotas= true;
+
+	if (accion == "editar") {
+		editar_cuotas= confirm("¿Modificar tambien las cuotas asociadas?");
+	}
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("useru", userid)
@@ -339,6 +344,7 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("cod_interConsultaFK", cod_interConsulta);
 	datos.append("cantCuotas", cantCuotas);
 	datos.append("periodicidad", periodicidad);
+	datos.append("editar_cuotas", (editar_cuotas ? "true" : "false"));
 	
 	var OpAjax = $.ajax({
 		data: datos,

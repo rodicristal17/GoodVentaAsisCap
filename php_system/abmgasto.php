@@ -68,6 +68,8 @@ $cod_motivo= mb_convert_encoding((string)($cod_motivo), 'ISO-8859-1', 'UTF-8');
 $cod_interConsultaFK= $_POST['cod_interConsultaFK'];
 $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 
+$editar_cuotas= $_POST['editar_cuotas'];
+$editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF-8');
 
 	// Comprueba si esta dentro del presupuesto
 	$fechaRango= DateTime::createFromFormat('Y-m-d', $fecha);
@@ -90,7 +92,7 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 		exit;
 	}
 
-	$informacion= abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion);
+	$informacion= abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas);
 	echo json_encode($informacion);	
 	exit;
 }
@@ -846,21 +848,23 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		$stmtRecurrente->execute();
 		$idgastos = mysqli_insert_id($mysqli);
 
-		// Programa tambien el mensaje de recordatorio
-		$cod_mensaje= abmMensaje("", "El gasto $motivoCuota vence hoy ",$fechaCuotaFormat, $cod_interConsultaFK, "", TRUE);
-
-		// Actualiza el cod_mensaje del gasto ingresado
-		$sql = "UPDATE gastos SET cod_mensajeFK = ? WHERE idgastos = ?";
-		$stmt = $mysqli->prepare($sql);
-		$stmt->bind_param('ii', $cod_mensaje, $idgastos);
-		$stmt->execute();
-		$stmt->close();
+		// Programa tambien el mensaje de recordatorio si tiene una interconsulta asociada
+		if (!empty($cod_interConsultaFK)) {
+			$cod_mensaje= abmMensaje("", "El gasto $motivoCuota vence hoy ",$fechaCuotaFormat, $cod_interConsultaFK, "", TRUE);
+			
+			// Actualiza el cod_mensaje del gasto ingresado
+			$sql = "UPDATE gastos SET cod_mensajeFK = ? WHERE idgastos = ?";
+			$stmt = $mysqli->prepare($sql);
+			$stmt->bind_param('ii', $cod_mensaje, $idgastos);
+			$stmt->execute();
+			$stmt->close();
+		}
 	}
 
 	$stmtRecurrente->close();
 }
 
-function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion)
+function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas= "true")
 {
 		
 if($monto==""   ){
@@ -951,7 +955,7 @@ if($operacion=='nuevo'){
 	registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
 }
 
-if($operacion=='editar'){
+if($operacion=='editar' && $editar_cuotas == "true"){
 	if ($cantCuotas > 1) {
 		$idBaseSerie = intval($idgastos);
 		$motivoAnterior = isset($datos_gasto[0]['descripcion']) ? trim((string)$datos_gasto[0]['descripcion']) : trim($motivo);
@@ -995,7 +999,7 @@ if($operacion=="editar")
 	}
 } else {
 	// Si es nuevo, se registra la creación
-	if ($cod_interConsultaFK) {
+	if (!empty($cod_interConsultaFK)) {
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuario."} creo un nuevo movimiento con descripcion ".$motivo.".";
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
