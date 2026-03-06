@@ -132,6 +132,9 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('divGastoAsociadosGastos').style.display= "none";
 	obtenerGastosAsociados();
 
+	// Ocultar datos de periodicidad
+	document.getElementById('tablePeriodicidad').style.display= "none";
+
 	// Auditoria de autorizacion
 	document.getElementById("inptCodigoAutorizacionEgreso").value= $(datostr).children('td[id="td_id"]').html();
 	document.getElementById("inptMotivoAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_14"]').html();
@@ -913,6 +916,7 @@ function limpiarcamposGasto() {
 	document.getElementById('inptMotivoMisGastos').value ="";
 	document.getElementById('inptAbmInterConsultaGasto').value= "";
 	document.getElementById('divGastoAsociadosGastos').style.display= "none";
+	document.getElementById('tablePeriodicidad').style.display= "";
 	cod_interConsulta= "";
 	idAbmGasto = "";
 	seleccionarLocalUSer()
