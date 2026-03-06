@@ -492,7 +492,7 @@
                                 $esCuotaDelGrupo = (
                                     strtolower($cuota['modalidad']) === 'credito' &&
                                     stripos((string)$cuota['descripcion'], 'cuota ') === 0 &&
-                                    str_contains((string)$cuota['descripcion'], "($grupoKey)")
+                                    !strpos((string)$cuota['descripcion'], "($grupoKey)")
                                 );
 
                                 if ($esCuotaDelGrupo && empty($cuota['mostrado'])) {
