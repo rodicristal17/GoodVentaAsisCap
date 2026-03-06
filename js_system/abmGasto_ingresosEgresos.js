@@ -490,6 +490,7 @@ function obtenerGastosAsociados() {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true && datos["2"]) {
 					document.getElementById('divGastoAsociadosGastos').style.display= "";
+					document.getElementById('divNombreProyectoGasto').innerHTML= datos["4"];
 					document.getElementById('divTableProyecto').innerHTML= datos["2"];
 				}				
 			} catch (error) {

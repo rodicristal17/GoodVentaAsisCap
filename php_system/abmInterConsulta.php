@@ -352,11 +352,12 @@
             
             // Genera el listado de Gastos
             $gastosElemento= "";
-            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'], '', '','')[9];
+            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'], '', '','');
+            $total_gastos_estado= $registrosGastos[10];
+            $registrosGastos= $registrosGastos[9];
 
             // Se arma el array de categorias
             $zona= array();
-            $montoTotal= 0;
             
             // Se recorre el registro de gastos y se va cargando por motivo
             foreach ($registrosGastos as $gasto) {
@@ -375,8 +376,8 @@
                 }
 
                 $zona[$categoria][$gasto['cod_motivoIngresoEgresoFK']][] = $gasto;
-                if ($gasto['estado'] == 'Activo') {
-                    $montoTotal += intval($gasto['monto']);
+                if ($gasto['estado'] != 'Rechazado' && $gasto['estado'] != 'Inactivo') {
+                    $totalGastos += intval($gasto['monto']);
                 }
             }
 
@@ -412,8 +413,6 @@
                         }
 
                         if ($gasto['modalidad'] == 'credito') {
-                            // Usamos cod_interConsultaFK como clave de agrupación
-                            // Evita que una cuota se pinte como grupo padre cuando se lista por id DESC.
                             $descripcionGasto = isset($gasto['descripcion']) ? (string)$gasto['descripcion'] : '';
                             if (
                                 stripos($descripcionGasto, 'cuota ') === 0 &&
@@ -741,10 +740,10 @@
             }
             if ($valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Monto del flujo: </span>
-                <span> Gastado '.number_format($montoTotal, 0, ',', '.').' de '.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
+                <span class="fw-bold">Monto limite: </span>
+                <span>'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
                 </div>';
-            }
+            };
             $pagina .= '</div>';
             
             $pagina .= '<div style="flex: 0.5;">
@@ -765,7 +764,25 @@
                 '.$gastosElemento.'
             </div>
             </div>';
-
+            
+            $pagina .= '<div style="flex: 0.5;text-align: left;margin-left: 5px;">
+            <div style="margin-bottom: 5px;">
+                <span class="fw-bold">Total programado:</span>
+                <span class="text-uppercase">'.number_format($total_gastos_estado['pendiente'],0,",",".").' Gs.</span>
+            </div>
+            <div style="margin-bottom: 5px;">
+                <span class="fw-bold">Total pendiente a aprobacion:</span>
+                <span class="text-uppercase">'.number_format($total_gastos_estado['solicitado'],0,",",".").' Gs.</span>
+            </div>
+            <div style="margin-bottom: 5px;">
+                <span class="fw-bold">Total rechazado:</span>
+                <span class="text-uppercase">'.number_format($total_gastos_estado['Rechazado'],0,",",".").' Gs.</span>
+            </div>
+            <div style="margin-bottom: 5px;">
+                <span class="fw-bold">Total aprobado:</span>
+                <span class="text-uppercase">'.number_format($total_gastos_estado['Activo'],0,",",".").' Gs.</span>
+            </div>
+            </div>';
             $pagina .= '</div>
             <div style="display: none;">
             <span id="td_datos_31">'.$valueInter['asunto'].'</span>

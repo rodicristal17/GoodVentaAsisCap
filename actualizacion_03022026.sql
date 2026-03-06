@@ -164,6 +164,6 @@ ALTER TABLE gastos ADD COLUMN modalidad ENUM('contado', 'credito') DEFAULT 'cont
 
 UPDATE gastos SET estado="Activo" WHERE estado like 'Activo and g.idgastos%';
 
-UPDATE gastos SET modalidad= 'credito' WHERE motivo like 'Cuota % de % (%)';
+UPDATE gastos SET modalidad= 'credito', estado= 'pendiente' WHERE motivo like 'Cuota % de % (%)';
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA

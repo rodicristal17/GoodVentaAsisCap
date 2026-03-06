@@ -79,17 +79,20 @@ $editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF
 	$monto_limite = obtenerPresupuestoMotivoGasto(array(
 		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
 		'cod_localFK' => $cod_local,
-	))[0]["monto_limite"];
-	$estado= "Activo";
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '');
-
-	if ($monto_limite && $monto_limite != '0')
-	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
-	$monto_limite= intval($monto_limite);
-	if ($monto_limite > 0 && $totalGasto > $monto_limite) {
-		$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido para el motivo.");
-		echo json_encode($informacion);	
-		exit;
+	));
+	if (count($monto_limite) > 0) {
+		$monto_limite= $monto_limite[0]["monto_limite"];
+		$estado= "Activo";
+		$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '');
+	
+		if ($monto_limite && $monto_limite != '0')
+		$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
+		$monto_limite= intval($monto_limite);
+		if ($monto_limite > 0 && $totalGasto > $monto_limite) {
+			$informacion =array("1" => "exito", "2" => "El gasto supera el presupuesto establecido para el motivo.");
+			echo json_encode($informacion);	
+			exit;
+		}
 	}
 
 	$informacion= abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas);
@@ -337,12 +340,15 @@ if ($operacion == "obtenerGastosAsociados") {
 		$styleName=CargarStyleTable("tableRegistroSearch");
 		$pagina .= '<table class="'.$styleName.'" border="1" cellspacing="1" cellpadding="5"><tr>
 		 	<td style="width: 10%;">'.$gasto["idgastos"].'</td> 
-		 	<td style="width: 30%;">'.$gasto['monto'].'</td> 
+		 	<td style="width: 30%;">'.number_format($gasto['monto'], 0, ",", ".").'</td> 
 		 	<td style="width: 50%;">'.$gasto['fecha'].'</td> 
 		 	<td style="width: 20%;">'.$gasto['estado'].'</td> 
 		</tr></table>';
 	}
-	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $informacion));
+
+	$informacion = buscarGasto('','','','','','','','','','','','','',$idgastos)[9][0];
+
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $informacion, "4" => $informacion['motivo']));
 	exit;
 }
 
@@ -854,7 +860,8 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad)
 	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	$stmtRecurrente = $mysqli->prepare($consultaRecurrente);
-	$ssRecurrente = 'sssssssssssssssss';
+	$ssRecurrente = str_repeat('s', 17);
+	$modalidadCredito = 'credito';
 		
 	for ($i = 1; $i < $cantCuotas; $i++) {
 		$motivoCuota = 'Cuota '.($i + 1).' de '.trim($motivo).' (' . intval($idBaseSerie).')';
@@ -864,7 +871,7 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		}
 
 		$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
-		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,'credito');
+		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,$modalidadCredito);
 		$stmtRecurrente->execute();
 		$idgastos = mysqli_insert_id($mysqli);
 
@@ -1036,6 +1043,13 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 	$totalZonaGastosOperativos= 0;
 	$totalZonaSinCategorizar= 0;
 	$totalGasto=0;
+
+	$totalEstado= array();
+	$totalEstado['Activo']= 0;
+	$totalEstado['Inactivo']= 0;
+	$totalEstado['Rechazado']= 0;
+	$totalEstado['pendiente']= 0;
+	$totalEstado['solicitado']= 0;
 
 	$paginaImprimir= "";
 	$pagina= "";
@@ -1326,6 +1340,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			if ($estado == 'Activo') {
 				$totalMonto += intval($monto);
 			}
+			if (isset($totalEstado[$estado])) {$totalEstado[$estado] += intval($monto);}
 			$styleEstado = "";
 			$fechaHoy = new DateTime();
 			$fechaGasto = DateTime::createFromFormat('Y-m-d', $fecha);
@@ -1454,6 +1469,7 @@ $informacion =array(
 	"7" => $totalZonaGastosOperativos,
 	"8" => $totalZonaSinCategorizar,
 	"9" => $registros,
+	"10" => $totalEstado,
 	"12" => $paginaImprimir,
 );
 return $informacion;
