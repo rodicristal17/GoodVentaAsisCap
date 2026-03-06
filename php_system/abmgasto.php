@@ -851,10 +851,10 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		return;
 	}
 		
-	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK)
-	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad)
+	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	$stmtRecurrente = $mysqli->prepare($consultaRecurrente);
-	$ssRecurrente = 'ssssssssssssssss';
+	$ssRecurrente = 'sssssssssssssssss';
 		
 	for ($i = 1; $i < $cantCuotas; $i++) {
 		$motivoCuota = 'Cuota '.($i + 1).' de '.trim($motivo).' (' . intval($idBaseSerie).')';
@@ -864,7 +864,7 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		}
 
 		$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
-		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK);
+		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,'credito');
 		$stmtRecurrente->execute();
 		$idgastos = mysqli_insert_id($mysqli);
 

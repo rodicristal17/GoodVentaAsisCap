@@ -360,6 +360,7 @@
             
             // Se recorre el registro de gastos y se va cargando por motivo
             foreach ($registrosGastos as $gasto) {
+                $gasto['mostrado'] = false;
                 $categoria= $gasto['categoria']; 
 				if (empty($categoria)) {
 					$categoria= "sinCategoria";
@@ -405,57 +406,212 @@
                         '</div>'.
                         '<div class="collapse show" style=""><ul class="list-group list-group-flush" style=" padding-left: 0.3rem;">';
 
-                    foreach ($gastos as $gasto) {
-                        $estadoClassGasto= 'text-bg-success';
-                        $aprobarElemento= "";
-                        switch (strtolower($gasto["estado"])) {
-                            case 'rechazado':
-                                $estadoClassGasto= 'text-bg-danger';
-                                break;
-                            case 'solicitado': 
-                                $estadoClassGasto= 'text-bg-warning';
-                                $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
-                                <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
-                                break;
-                            case 'pendiente':
-                                $estadoClassGasto= 'text-bg-secondary';
-                                break;
-                            default:
-                                $estadoClassGasto= 'text-bg-success';
-                                break;
+                    foreach ($gastos as &$gasto) {
+                        if ($gasto['mostrado']) {
+                            continue;
                         }
 
-                        $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
-                        <tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');" style="background-color: '.$colorCategoria.';">
-                            <td id="td_id" style="width:10%;">'.$gasto["idgastos"].'</td>
-                            <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$gasto["estado"].'</span></td>
-                            <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
-                            <td  style="width: 30%">'.$gasto["descripcion"].'</td>
-                            <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
-                            <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
-                            <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
-                            <td  id="td_datos_3" style="display: none;">'.$gasto["nroboleta"].'</td>
-                            <td  id="td_datos_9" style="display: none;">'.$gasto["banco"].'</td>
-                            <td  id="td_datos_10" style="display: none;">'.$gasto["nrocuenta"].'</td>
-                            <td  id="td_datos_11" style="display: none;">'.$gasto["arreglo"].'</td>
-                            <td  id="td_datos_8" style="display: none">'.$gasto["usuarionombre"].'</td>
-                            <td  id="td_datos_5" style="display:none">'.$gasto["estado"].'</td>
-                            <td  id="td_datos_7" style="display:none">'.$gasto["cod_local"].'</td>
-                            <td  id="td_datos_12" style="display:none">'.$gasto["url1"].'</td>
-                            <td  id="td_datos_13" style="display:none">'.$gasto["descripcion"].'</td>
-                            <td  id="td_datos_14" style="display:none">'.$gasto["motivo"].'</td>
-                            <td  id="td_datos_15" style="display:none">'.$gasto["cod_interConsultaFK"].'</td>
-                            <td  id="td_datos_16" style="display:none">'.$gasto["interconsulta_nombre"].'</td>
-                            <td  id="td_datos_17" style="display:none">'.$gasto["cod_usuario_autoriz"].'</td>
-                            <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
-                            <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
-                            <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
-                            <td class="td_registroSearch" style="width: 20%">'.(strtolower($gasto["estado"]) == 'pendiente' ? 0 : number_format($gasto["monto"], 0, ",", ".")).'</td>
-                            <td class="td_registroSearch" style="width: 20%">
-                                '.$aprobarElemento.'
-                            </td>
-                        </tr></table>';
+                        if ($gasto['modalidad'] == 'credito') {
+                            // Usamos cod_interConsultaFK como clave de agrupación
+                            // Evita que una cuota se pinte como grupo padre cuando se lista por id DESC.
+                            $descripcionGasto = isset($gasto['descripcion']) ? (string)$gasto['descripcion'] : '';
+                            if (
+                                stripos($descripcionGasto, 'cuota ') === 0 &&
+                                preg_match('/\((\d+)\)\s*$/', $descripcionGasto) === 1
+                            ) {
+                                continue;
+                            }
+
+                            $grupoKey = $gasto["idgastos"];
+
+                            $estadoClassGasto = 'text-bg-success';
+                            switch (strtolower($gasto["estado"])) {
+                                case 'rechazado': $estadoClassGasto = 'text-bg-danger'; break;
+                                case 'solicitado': $estadoClassGasto = 'text-bg-warning'; break;
+                                case 'pendiente': $estadoClassGasto = 'text-bg-secondary'; break;
+                            }
+
+                            $aprobarElemento= "";
+                            switch (strtolower($gasto["estado"])) {
+                                case 'rechazado':
+                                    $estadoClassGasto= 'text-bg-danger';
+                                    break;
+                                case 'solicitado': 
+                                    $estadoClassGasto= 'text-bg-warning';
+                                    $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
+                                    <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+                                    break;
+                                case 'pendiente':
+                                    $estadoClassGasto= 'text-bg-secondary';
+                                    break;
+                                default:
+                                    $estadoClassGasto= 'text-bg-success';
+                                    break;
+                            }
+
+                            $gastosElemento .= '<li class="list-group-item" style="padding:0;">
+                                <div class="card" style="width:100%;margin:0;gap:0;min-height:0px;">
+                                    <div class="card-header" style="padding:0;background-color:#5878DE;">
+                                        <h6><b>'.$gasto["descripcion"].'</b></h6>
+                                    </div>
+                                    <div class="collapse show"><ul class="list-group list-group-flush" style="padding-left:0.3rem;">';
+
+                            $gasto['mostrado'] = true;
+                            $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
+                                <tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');" style="background-color: '.$colorCategoria.';">
+                                    <td id="td_id" style="width:10%;">'.$gasto["idgastos"].'</td>
+                                    <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$gasto["estado"].'</span></td>
+                                    <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
+                                    <td  style="width: 30%">'.$gasto["descripcion"].'</td>
+                                    <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
+                                    <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
+                                    <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
+                                    <td  id="td_datos_3" style="display: none;">'.$gasto["nroboleta"].'</td>
+                                    <td  id="td_datos_9" style="display: none;">'.$gasto["banco"].'</td>
+                                    <td  id="td_datos_10" style="display: none;">'.$gasto["nrocuenta"].'</td>
+                                    <td  id="td_datos_11" style="display: none;">'.$gasto["arreglo"].'</td>
+                                    <td  id="td_datos_8" style="display: none">'.$gasto["usuarionombre"].'</td>
+                                    <td  id="td_datos_5" style="display:none">'.$gasto["estado"].'</td>
+                                    <td  id="td_datos_7" style="display:none">'.$gasto["cod_local"].'</td>
+                                    <td  id="td_datos_12" style="display:none">'.$gasto["url1"].'</td>
+                                    <td  id="td_datos_13" style="display:none">'.$gasto["descripcion"].'</td>
+                                    <td  id="td_datos_14" style="display:none">'.$gasto["motivo"].'</td>
+                                    <td  id="td_datos_15" style="display:none">'.$gasto["cod_interConsultaFK"].'</td>
+                                    <td  id="td_datos_16" style="display:none">'.$gasto["interconsulta_nombre"].'</td>
+                                    <td  id="td_datos_17" style="display:none">'.$gasto["cod_usuario_autoriz"].'</td>
+                                    <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
+                                    <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
+                                    <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
+                                    <td class="td_registroSearch" style="width: 20%">'.(strtolower($gasto["estado"]) == 'pendiente' ? 0 : number_format($gasto["monto"], 0, ",", ".")).'</td>
+                                    <td class="td_registroSearch" style="width: 20%">
+                                        '.$aprobarElemento.'
+                                    </td>
+                                </tr></table>';
+
+                            // Recorremos todas las cuotas asociadas al mismo grupo
+                            foreach ($gastos as &$cuota) {
+                                $esCuotaDelGrupo = (
+                                    strtolower($cuota['modalidad']) === 'credito' &&
+                                    stripos((string)$cuota['descripcion'], 'cuota ') === 0 &&
+                                    str_contains((string)$cuota['descripcion'], "($grupoKey)")
+                                );
+
+                                if ($esCuotaDelGrupo && empty($cuota['mostrado'])) {
+                                    $estadoClassGasto = 'text-bg-success';
+                                    switch (strtolower($cuota["estado"])) {
+                                        case 'rechazado': $estadoClassGasto = 'text-bg-danger'; break;
+                                        case 'solicitado': $estadoClassGasto = 'text-bg-warning'; break;
+                                        case 'pendiente': $estadoClassGasto = 'text-bg-secondary'; break;
+                                    }
+
+                                    $aprobarElemento= "";
+                                    switch (strtolower($cuota["estado"])) {
+                                        case 'rechazado':
+                                            $estadoClassGasto= 'text-bg-danger';
+                                            break;
+                                        case 'solicitado': 
+                                            $estadoClassGasto= 'text-bg-warning';
+                                            $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
+                                            <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+                                            break;
+                                        case 'pendiente':
+                                            $estadoClassGasto= 'text-bg-secondary';
+                                            break;
+                                        default:
+                                            $estadoClassGasto= 'text-bg-success';
+                                            break;
+                                    }
+                                        
+                                    $cuota['mostrado'] = true;
+                                    $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
+                                        <tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');" style="background-color: '.$colorCategoria.';">
+                                            <td id="td_id" style="width:10%;">'.$cuota["idgastos"].'</td>
+                                            <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$cuota["estado"].'</span></td>
+                                            <td  id="td_datos_2" style="display: none">'.$cuota["motivo"].'</td>
+                                            <td  style="width: 30%">'.$cuota["descripcion"].'</td>
+                                            <td  id="td_datos_1" style="display: none">'. number_format($cuota["monto"],0,',','.').'</td>
+                                            <td  id="td_datos_6" style="display: none">'.$cuota["tipo"].'</td>
+                                            <td  id="td_datos_3" style="display: none;">'.$cuota["fecha"].'</td>
+                                            <td  id="td_datos_3" style="display: none;">'.$cuota["nroboleta"].'</td>
+                                            <td  id="td_datos_9" style="display: none;">'.$cuota["banco"].'</td>
+                                            <td  id="td_datos_10" style="display: none;">'.$cuota["nrocuenta"].'</td>
+                                            <td  id="td_datos_11" style="display: none;">'.$cuota["arreglo"].'</td>
+                                            <td  id="td_datos_8" style="display: none">'.$cuota["usuarionombre"].'</td>
+                                            <td  id="td_datos_5" style="display:none">'.$cuota["estado"].'</td>
+                                            <td  id="td_datos_7" style="display:none">'.$cuota["cod_local"].'</td>
+                                            <td  id="td_datos_12" style="display:none">'.$cuota["url1"].'</td>
+                                            <td  id="td_datos_13" style="display:none">'.$cuota["descripcion"].'</td>
+                                            <td  id="td_datos_14" style="display:none">'.$cuota["motivo"].'</td>
+                                            <td  id="td_datos_15" style="display:none">'.$cuota["cod_interConsultaFK"].'</td>
+                                            <td  id="td_datos_16" style="display:none">'.$cuota["interconsulta_nombre"].'</td>
+                                            <td  id="td_datos_17" style="display:none">'.$cuota["cod_usuario_autoriz"].'</td>
+                                            <td  id="td_datos_18" style="display:none">'.$cuota["usuario_autoriz_nombre"].'</td>
+                                            <td  id="td_datos_19" style="display:none">'.$cuota["fecha_autoriz"].'</td>
+                                            <td  id="td_datos_20" style="display:none">'.$cuota["cod_motivoIngresoEgresoFK"].'</td>
+                                            <td class="td_registroSearch" style="width: 20%">'.(strtolower($cuota["estado"]) == 'pendiente' ? 0 : number_format($cuota["monto"], 0, ",", ".")).'</td>
+                                            <td class="td_registroSearch" style="width: 20%">
+                                                '.$aprobarElemento.'
+                                            </td>
+                                        </tr></table>';
+                                }
+                            }
+                            unset($cuota);
+
+                            $gastosElemento .= '</ul></div></div></li>';
+                        } else {
+                            $estadoClassGasto= 'text-bg-success';
+                            $aprobarElemento= "";
+                            switch (strtolower($gasto["estado"])) {
+                                case 'rechazado':
+                                    $estadoClassGasto= 'text-bg-danger';
+                                    break;
+                                case 'solicitado': 
+                                    $estadoClassGasto= 'text-bg-warning';
+                                    $aprobarElemento= '<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;"></i>
+                                    <i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+                                    break;
+                                case 'pendiente':
+                                    $estadoClassGasto= 'text-bg-secondary';
+                                    break;
+                                default:
+                                    $estadoClassGasto= 'text-bg-success';
+                                    break;
+                            }
+    
+                            $gasto['mostrado'] = true;
+                            $gastosElemento .= '<table class="tableRegistroSearch" border="1" cellspacing="1" cellpadding="5">
+                            <tr id="tbSelecRegistro" onclick="obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\'divAbmDetallesInterConsulta\');" style="background-color: '.$colorCategoria.';">
+                                <td id="td_id" style="width:10%;">'.$gasto["idgastos"].'</td>
+                                <td style="width: 25%;"><span class="badge '.$estadoClassGasto.'" style="font-size: 7pt;">'.$gasto["estado"].'</span></td>
+                                <td  id="td_datos_2" style="display: none">'.$gasto["motivo"].'</td>
+                                <td  style="width: 30%">'.$gasto["descripcion"].'</td>
+                                <td  id="td_datos_1" style="display: none">'. number_format($gasto["monto"],0,',','.').'</td>
+                                <td  id="td_datos_6" style="display: none">'.$gasto["tipo"].'</td>
+                                <td  id="td_datos_3" style="display: none;">'.$gasto["fecha"].'</td>
+                                <td  id="td_datos_3" style="display: none;">'.$gasto["nroboleta"].'</td>
+                                <td  id="td_datos_9" style="display: none;">'.$gasto["banco"].'</td>
+                                <td  id="td_datos_10" style="display: none;">'.$gasto["nrocuenta"].'</td>
+                                <td  id="td_datos_11" style="display: none;">'.$gasto["arreglo"].'</td>
+                                <td  id="td_datos_8" style="display: none">'.$gasto["usuarionombre"].'</td>
+                                <td  id="td_datos_5" style="display:none">'.$gasto["estado"].'</td>
+                                <td  id="td_datos_7" style="display:none">'.$gasto["cod_local"].'</td>
+                                <td  id="td_datos_12" style="display:none">'.$gasto["url1"].'</td>
+                                <td  id="td_datos_13" style="display:none">'.$gasto["descripcion"].'</td>
+                                <td  id="td_datos_14" style="display:none">'.$gasto["motivo"].'</td>
+                                <td  id="td_datos_15" style="display:none">'.$gasto["cod_interConsultaFK"].'</td>
+                                <td  id="td_datos_16" style="display:none">'.$gasto["interconsulta_nombre"].'</td>
+                                <td  id="td_datos_17" style="display:none">'.$gasto["cod_usuario_autoriz"].'</td>
+                                <td  id="td_datos_18" style="display:none">'.$gasto["usuario_autoriz_nombre"].'</td>
+                                <td  id="td_datos_19" style="display:none">'.$gasto["fecha_autoriz"].'</td>
+                                <td  id="td_datos_20" style="display:none">'.$gasto["cod_motivoIngresoEgresoFK"].'</td>
+                                <td class="td_registroSearch" style="width: 20%">'.(strtolower($gasto["estado"]) == 'pendiente' ? 0 : number_format($gasto["monto"], 0, ",", ".")).'</td>
+                                <td class="td_registroSearch" style="width: 20%">
+                                    '.$aprobarElemento.'
+                                </td>
+                            </tr></table>';
+                        }
                     }
+                    unset($gasto);
                     $gastosElemento .= '</ul></div>'.
                     '</div></li>';
                 }

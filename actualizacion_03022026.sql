@@ -163,5 +163,7 @@ DROP TABLE gastos_fijos;
 ALTER TABLE gastos ADD COLUMN modalidad ENUM('contado', 'credito') DEFAULT 'contado'; 
 
 UPDATE gastos SET estado="Activo" WHERE estado like 'Activo and g.idgastos%';
+
+UPDATE gastos SET modalidad= 'credito' WHERE motivo like 'Cuota % de % (%)';
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA
