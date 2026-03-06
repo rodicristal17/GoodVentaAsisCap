@@ -352,7 +352,7 @@
             
             // Genera el listado de Gastos
             $gastosElemento= "";
-            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'], '', '')[9];
+            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'], '', '','')[9];
 
             // Se arma el array de categorias
             $zona= array();

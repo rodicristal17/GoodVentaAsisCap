@@ -4595,7 +4595,7 @@ style='background-color:#5bc572'>
 <tr>
 <td>
 <center>
-<div id='divAbmGasto2' style='display:none;width:850px' class='divAbms'>
+<div id='divAbmGasto2' style='display:none;width: fit-content;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -4615,10 +4615,9 @@ title='Volver Atras' onclick='verCerrarVentanaAbmGasto(false, false)' />
 </td>
 </tr>
 </table>
-<br>
 <center>
-<div style='overflow:auto'>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:600px;'>
+<div style="display: flex;">
+<div class='divMenuf' style='margin:1%;width: 350px;'>
 <br>
 <table style='width:100%'>
 <tr>
@@ -4700,7 +4699,7 @@ style='width:150px'></select>
 </tr>
 </table>
 </div>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:600px;'>
+<div class='divMenuf' style='margin:1%;width: 350px;'>
 <br>
 <table style='width:100%'>
 <tr>
@@ -4747,6 +4746,7 @@ style='width:150px'></select>
 </td>
 </tr>
 </table>
+<br>
 <table style='width:100%'>
 <tr>
 <td style="width: 50%;">
@@ -4781,11 +4781,23 @@ style='width:150px'></select>
 <center>
 <input type='button' value='Guardar datos' class='btn1' onclick='verificarcamposGasto()' id='btnAbmGastos' />
 </center>
-<br>
-
+</div>
+<div class='divMenuf' style='float:left;margin:1%;width: 250px;display: none;' id="divGastoAsociadosGastos">
+  <table style='width:100%'><tr>
+    <td style="width: 50%;text-align: center;">
+    <strong id="divNombreProyectoGasto">Nombre proyecto</strong>
+  </tr></table>
+  <table class="tableCabeceraRegistro">
+    <tr>
+      <td class="td_registro" style="width: 10%;">Cod.</td>
+      <td class="td_registro" style="width: 30%;">Monto</td>
+      <td class="td_registro" style="width: 40%;">Fecha</td>
+      <td class="td_registro" style="width: 20%;">Estado</td>
+    </tr>
+  </table>
+  <div id="divTableProyecto"></div>
 </div>
 </div>
-<br>
 </center>
 </div>
 <div id='divAbmGasto1' style='width:90%;display:' class='divAbms'>

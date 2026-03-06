@@ -81,7 +81,7 @@ $editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF
 		'cod_localFK' => $cod_local,
 	))[0]["monto_limite"];
 	$estado= "Activo";
-	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '', '');
+	$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '');
 
 	if ($monto_limite && $monto_limite != '0')
 	$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -138,7 +138,7 @@ if($operacion=="buscar")
 	}
 	$idgastos= "";
 
-	$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $idgastos);
+	$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, '', $idgastos);
 	echo json_encode($informacion);
 	exit;
 }	
@@ -324,7 +324,27 @@ if ($operacion == "buscarProximosPagos") {
 	buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estadoFiltroPagoprogrtamado);
 }
 
+if ($operacion == "obtenerGastosAsociados") {
+	$idgastos= mb_convert_encoding((string)($_POST['idgastos']), 'ISO-8859-1', 'UTF-8');
+	// Prepara el motivo para usar en el filtro
+	$motivo= "Cuota % de %($idgastos)";
 
+	$informacion = buscarGasto('','','','','','','','','','','','',$motivo,'')[9];
+
+	// Formatea la informacion
+	$pagina= "";
+	foreach ($informacion as $gasto) {
+		$styleName=CargarStyleTable("tableRegistroSearch");
+		$pagina .= '<table class="'.$styleName.'" border="1" cellspacing="1" cellpadding="5"><tr>
+		 	<td style="width: 10%;">'.$gasto["idgastos"].'</td> 
+		 	<td style="width: 30%;">'.$gasto['monto'].'</td> 
+		 	<td style="width: 50%;">'.$gasto['fecha'].'</td> 
+		 	<td style="width: 20%;">'.$gasto['estado'].'</td> 
+		</tr></table>';
+	}
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $informacion));
+	exit;
+}
 
 }
 
@@ -748,7 +768,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	}
 
 	// Se registra el cambio
-	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9][0];
+	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9][0];
 	if (!empty($registroGasto['cod_interConsultaFK'])) {
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
@@ -919,7 +939,7 @@ if($operacion=="editar")
 {
 
 // Obtiene los datos actuales del gasto
-$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9];
+$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9];
 
 $estado = "solicitado";
 $cod_usuario_autoriz= NULL;
@@ -982,7 +1002,7 @@ subirImagenGasto($idgastos, $foto, $ext);
 if($operacion=="editar")
 {
 	// Obtiene los datos actuales del gasto
-	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', $idgastos)[9][0];
+	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9][0];
 
 	// Compara los datos anteriores con los nuevos y prepara el mensaje
 	$mensaje= "";
@@ -1009,7 +1029,7 @@ if($operacion=="editar")
 return array("1" => "exito", "2" => $idgastos);	
 }
 
-function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $idgastos)
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $idgastos)
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -1120,6 +1140,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		}
 		if ($idgastos != "") {
 			$sqlFiltro .= " and g.idgastos= $idgastos ";
+		}
+		if ($motivo != "") {
+			$sqlFiltro .= " and g.motivo like '%$motivo%' ";
 		}
 		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = ".$mot['cod_motivo_ingreso_egreso'];
 
