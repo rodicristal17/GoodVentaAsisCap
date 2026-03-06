@@ -56,8 +56,6 @@ DELIMITER ;
 
 UPDATE gastos_fijos SET estado="inactivo" WHERE cod_gastos_fijos IS NOT NULL;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.64', detalles='Periodicidad agregada a gastos', fecha='2026-02-26' WHERE idhistorialactualizacion= 2;
-
 ALTER TABLE interconsulta ADD COLUMN fecha_vencimiento DATE;
 ALTER TABLE interconsulta ADD COLUMN monto_limite INT;
 
@@ -165,5 +163,6 @@ ALTER TABLE gastos ADD COLUMN modalidad ENUM('contado', 'credito') DEFAULT 'cont
 UPDATE gastos SET estado="Activo" WHERE estado like 'Activo and g.idgastos%';
 
 UPDATE gastos SET modalidad= 'credito', estado= 'pendiente' WHERE motivo like 'Cuota % de % (%)';
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.65', detalles='Periodicidad agregada a gastos', fecha='2026-02-26' WHERE idhistorialactualizacion= 2;
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA
