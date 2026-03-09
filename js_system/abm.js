@@ -1418,7 +1418,7 @@ var fecha = new Date(vencimientopagare);
 +"<b>&nbsp&nbsp"+totaletrasRecibo+"&nbsp&nbsp</b>.---------"
 +"<br>"
 +"<br>"
-+"Queda expresamente convenido entre ____________________________________ (el acreedor) y el(los) deudor(es), que la falta de pago a su vencimiento de éste pagaré, producirá la caducidad automática y el decaimiento anticipado de los plazos establecidos en todos los demás pagarés o documentos cualquiera sea su naturaleza, causa u origen y causará de pleno derecho el vencimiento anticipado de los pagarés o documentos no vencidos, facultando al acreedor irrevocablemente a exigir el pago inmediato del saldo total de la deuda. La mora se producirá por el mero vencimiento del plazo, sin necesidad de protesto ni de ningún requerimiento judicial o extrajudicial por parte del acreedor.---------"
++"Queda expresamente convenido entre (el acreedor) y el(los) deudor(es), que la falta de pago a su vencimiento de éste pagaré, producirá la caducidad automática y el decaimiento anticipado de los plazos establecidos en todos los demás pagarés o documentos cualquiera sea su naturaleza, causa u origen y causará de pleno derecho el vencimiento anticipado de los pagarés o documentos no vencidos, facultando al acreedor irrevocablemente a exigir el pago inmediato del saldo total de la deuda. La mora se producirá por el mero vencimiento del plazo, sin necesidad de protesto ni de ningún requerimiento judicial o extrajudicial por parte del acreedor.---------"
 +"<br>"
 +"<br>"
 +"Declaro (amos) expresamente con carácter irrevocable que la(s) firma(s) puestas al pie de este instrumento me(nos) obliga(n) al cumplimiento de todas y cada una de las cuotas establecidas y al condicionamiento general obrante en este pagaré.---------"
