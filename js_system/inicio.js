@@ -18082,7 +18082,7 @@ function verificarrefinanciamientoenCuota(){
 	  return false;
   }
 
-  if(inptMonotCambioRefinanciamiento2=="" || !(Number(inptMonotCambioRefinanciamiento2.replace('.', '')) > 0)){
+  if(inptMonotCambioRefinanciamiento2=="" || !(Number(inptMonotCambioRefinanciamiento2.replace('.', '').replace(',', '.')) > 0)){
 	ver_vetana_informativa("Faltan datos", "FALTO INGRESAR EL MONTO A PAGAR","advertencia");
 	  return false;
   }
