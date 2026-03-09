@@ -1414,7 +1414,7 @@ var fecha = new Date(vencimientopagare);
 +"</table>"
 +"<br>"
 +"<div style='width:82%' style='text-align:left'>"
-+"<p class='pTituloC' style='text-align:left;    text-align: justify; line-height: 15px;'>El día _______________________________________  por este PAGARÉ A LA ORDEN, me(nos) obligo(amos) a PAGAR A LA VISTA, a _____________________________________ , o a su orden, en su domicilio _______________________________________________________, sin protesto, la cantidad de guaraníes:"
++"<p class='pTituloC' style='text-align:left;    text-align: justify; line-height: 15px;'>El día _______________________________________  por este PAGARÉ A LA ORDEN, me(nos) obligo(amos) a PAGAR A LA VISTA, a <strong>FARAONE CAPITAL S.A. </strong> , o a su orden, en su domicilio _______________________________________________________, sin protesto, la cantidad de guaraníes:"
 +"<b>&nbsp&nbsp"+totaletrasRecibo+"&nbsp&nbsp</b>.---------"
 +"<br>"
 +"<br>"
