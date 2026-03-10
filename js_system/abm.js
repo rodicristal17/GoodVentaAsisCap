@@ -4923,27 +4923,23 @@ function QuitarSeparadorMilValor(inputs) {
 
 }
 function separadordemiles(input) {
-	let valor = input.value.trim();
-	if (!valor) return;
-
-	let partes= "";
-	// Se evalua cual es el separador decimal que tiene
-	if (valor.split('.').length == 2) {
-		partes = valor.split('.');
-	} else {
-		valor = valor.replace(/\./g, '').replace(/[^\d,]/g, '');
-		partes = valor.split(',');
-	}
-
-	const entero = (partes[0] || '').replace(/\D/g, '');
-	const decimal = (partes[1] || '').replace(/\D/g, '');
-	if (!entero) {
-		input.value = '';
+	if (input.value==""){
 		return;
 	}
+	var num = input.value.replace(/\./g, '');
+	if (!isNaN(num)) {
+		var num2 = num.toString().split('.');
+		var thousands = num2[0].split('').reverse().join('').match(/.{1,3}/g).join('.');
+		var decimals = (num2[1]) ? ',' + num2[1] : '';
 
-	const miles = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-	input.value = decimal ? `${miles},${decimal}` : miles;
+		var answer = thousands.split('').reverse().join('') + decimals;
+		input.value = answer
+	} else {
+		/*alert('Esto no es un número')
+		//input.value=input.value.replace(/[˄\d\.]*g,'');
+		 asi va antes de la /g */
+
+	}
 }
 
 function separadordemilesnumero(input) {

@@ -18056,7 +18056,7 @@ function calcular_cuota_refinanciamiento() {
 	}
 	var c = parseFloat(c);
 	var t = parseFloat(t);
-	document.getElementById('inptMonotCambioRefinanciamiento2').value = t / c;
+	document.getElementById('inptMonotCambioRefinanciamiento2').value = (t / c).toFixed();
 	//separadordemiles(document.getElementById('inpt_interes_pago_venta'))
 	separadordemiles(document.getElementById('inptMonotCambioRefinanciamiento2'))
 }
