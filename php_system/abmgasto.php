@@ -329,33 +329,105 @@ if ($operacion == "buscarProximosPagos") {
 
 if ($operacion == "obtenerGastosAsociados") {
 	$idgastos= mb_convert_encoding((string)($_POST['idgastos']), 'ISO-8859-1', 'UTF-8');
-	// Prepara el motivo para usar en el filtro
-	$motivo= "Cuota % de %($idgastos)";
-
-	$informacion = buscarGasto('','','','','','','','','','','','',$motivo,'')[9];
-
-	// Formatea la informacion
+	
+	$gastos= obtenerGastosAsociados($idgastos);
+	// Prepara la vista
 	$pagina= "";
-	foreach ($informacion as $gasto) {
-		$styleName=CargarStyleTable("tableRegistroSearch");
-		$pagina .= '<table class="'.$styleName.'" border="1" cellspacing="1" cellpadding="5"><tr>
-		 	<td style="width: 10%;">'.$gasto["idgastos"].'</td> 
-		 	<td style="width: 30%;">'.number_format($gasto['monto'], 0, ",", ".").'</td> 
-		 	<td style="width: 50%;">'.$gasto['fecha'].'</td> 
-		 	<td style="width: 20%;">'.$gasto['estado'].'</td> 
-		</tr></table>';
+	foreach ($gastos as $key => $gast) {
+		$estado= '<span style="text-transform: capitalize;" class="badge bg-';
+		switch ($gast['estado']) {
+			case 'Activo':
+				$estado .= 'primary';
+				break;
+			case 'Rechazado':
+				$estado .= 'secondary';
+				break;
+			case 'pendiente':
+				$estado .= 'warning';
+				break;
+			case 'solicitado':
+				$estado .= 'danger';
+				break;
+		}
+		$estado .='">'.$gast['estado'].'</span>';
+		$pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='obtenerdatosabmGasto(this);verCerrarAbmGasto();verVentanaEditarGasto(\"divAbmDetallesInterConsulta\");' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
+			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$idgastos."</td>
+			<td  id='td_datos_3' style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
+			<td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>
+			<td  style='border: none;'>".$gast['descripcion']."</td>
+			<td  id='td_datos_5' style='width: 10%;border: none;'>".$estado."</td>
+			<td  id='td_datos_1' style='width: 15%;border: none;'>". number_format($gast['monto'],'0',',','.')."</td>
+			<td  id='td_datos_2' style='width:10%; display: none;'>".$gast['motivo']."</td>
+			<td  id='td_datos_16' style='display: none;'>".$gast['interconsulta_nombre']."</td>
+			<td  id='td_datos_21' style='display: none;'>".$gast['modalidad']."</td>
+			<td  id='td_datos_6' style='display: none;'>".$gast['tipo']."</td>
+			<td  id='td_datos_8' style='display: none;'>".$gast['nroboleta']."</td>
+			<td  id='td_datos_9' style='display: none;'>".$gast['banco']."</td>
+			<td  id='td_datos_10' style='display: none;'>".$gast['nrocuenta']."</td>
+			<td  id='td_datos_11' style='display: none;'>".$gast['arreglo']."</td>
+			<td  id='td_datos_21' style='display: none;'>".$gast['usuarionombre']."</td>
+			<td  id='' style='display: none;'>".$gast['nombrelocal']."</td>
+			<td  id='td_datos_7' style='display:none;'>".$gast['cod_local']."</td>
+			<td  id='td_datos_12' style='display:none;'>".$gast['url1']."</td>
+			<td  id='td_datos_13' style='display:none;'>".$gast['descripcion']."</td>
+			<td  id='td_datos_14' style='display:none;'>".$gast['motivo']."</td>
+			<td  id='td_datos_15' style='display:none;'>".$gast['cod_interConsultaFK']."</td>
+			<td  id='td_datos_17' style='display:none;'>".$gast['cod_usuario_autoriz']."</td>
+			<td  id='td_datos_18' style='display:none;'>".$gast['usuario_autoriz_nombre']."</td>
+			<td  id='td_datos_19' style='display:none;'>".$gast['fecha_autoriz']."</td>
+			<td  id='td_datos_20' style='display:none;'>".$gast['cod_motivoIngresoEgresoFK']."</td>
+		</tr>";
 	}
 
-	$informacion = buscarGasto('','','','','','','','','','','','','',$idgastos)[9][0];
-
-	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $informacion, "4" => $informacion['motivo']));
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $gastos[0], "4" => $gastos[0]['descripcion']));
 	exit;
 }
 
 }
 
 
- 
+function obtenerGastosAsociados($idgastos) {
+	$result= array();
+	$gastos = buscarGasto('','','','','','','','','','','','','',$idgastos)[9];
+	if (empty($gastos)) {
+		return $result;
+	}
+
+	$idBaseSerie = intval($idgastos);
+	$descripcion = isset($gastos[0]['descripcion']) ? trim((string)$gastos[0]['descripcion']) : "";
+
+	// Si el registro recibido ya es una cuota, primero identificamos su ID base.
+	if (preg_match('/^Cuota\s+\d+\s+de\s+.+\((\d+)\)\s*$/iu', $descripcion, $matchBase)) {
+		$idBaseSerie = intval($matchBase[1]);
+		$baseSerie = buscarGasto('','','','','','','','','','','','','',$idBaseSerie)[9];
+		if (!empty($baseSerie)) {
+			$result[] = $baseSerie[0];
+		}
+	} else {
+		$result[] = $gastos[0];
+	}
+
+	// Siempre buscamos las cuotas con el ID base de la serie.
+	$motivo= "Cuota % de %(".$idBaseSerie.")";
+	$cuotas = buscarGasto('','','','','','','','','','','','',$motivo,'')[9];
+	foreach ($cuotas as $gasto) {
+		$result[] = $gasto;
+	}
+
+	// Evita retornos duplicados cuando la consulta trae registros repetidos.
+	$resultUnico = array();
+	$idsVistos = array();
+	foreach ($result as $gasto) {
+		$idActual = isset($gasto['idgastos']) ? (string)$gasto['idgastos'] : '';
+		if ($idActual === '' || isset($idsVistos[$idActual])) {
+			continue;
+		}
+		$idsVistos[$idActual] = true;
+		$resultUnico[] = $gasto;
+	}
+
+	return $resultUnico;
+}
 
 function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estadoFiltroPagoprogrtamado)
 {
@@ -823,6 +895,51 @@ function sumarMesesRespetandoDia($fechaBase, $mesesASumar, $diaObjetivo) {
 	return DateTime::createFromFormat('Y-n-j', $nuevoAnio . '-' . $nuevoMes . '-' . $diaFinal);
 }
 
+function calcularFechaQuincenalPorCortes($fechaBase, $indice) {
+	if ($indice <= 0) {
+		return clone $fechaBase;
+	}
+
+	$anio = (int)$fechaBase->format('Y');
+	$mes = (int)$fechaBase->format('n');
+	$dia = (int)$fechaBase->format('j');
+	$ultimoDiaMes = cal_days_in_month(CAL_GREGORIAN, $mes, $anio);
+
+	if ($dia < 15) {
+		$fechaCuota = DateTime::createFromFormat('Y-n-j', $anio . '-' . $mes . '-15');
+	} elseif ($dia < $ultimoDiaMes) {
+		$fechaCuota = DateTime::createFromFormat('Y-n-j', $anio . '-' . $mes . '-' . $ultimoDiaMes);
+	} else {
+		$mes++;
+		if ($mes > 12) {
+			$mes = 1;
+			$anio++;
+		}
+		$fechaCuota = DateTime::createFromFormat('Y-n-j', $anio . '-' . $mes . '-15');
+	}
+
+	for ($paso = 1; $paso < $indice; $paso++) {
+		$anioActual = (int)$fechaCuota->format('Y');
+		$mesActual = (int)$fechaCuota->format('n');
+		$diaActual = (int)$fechaCuota->format('j');
+
+		if ($diaActual === 15) {
+			$ultimoDiaMesActual = cal_days_in_month(CAL_GREGORIAN, $mesActual, $anioActual);
+			$fechaCuota = DateTime::createFromFormat('Y-n-j', $anioActual . '-' . $mesActual . '-' . $ultimoDiaMesActual);
+		} else {
+			$mesSiguiente = $mesActual + 1;
+			$anioSiguiente = $anioActual;
+			if ($mesSiguiente > 12) {
+				$mesSiguiente = 1;
+				$anioSiguiente++;
+			}
+			$fechaCuota = DateTime::createFromFormat('Y-n-j', $anioSiguiente . '-' . $mesSiguiente . '-15');
+		}
+	}
+
+	return $fechaCuota;
+}
+
 function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
 	$fechaCuota = clone $fechaBase;
 	$diaObjetivo = (int)$fechaBase->format('j');
@@ -832,8 +949,7 @@ function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
 			$fechaCuota->modify('+' . (7 * $indice) . ' day');
 			return $fechaCuota;
 		case 'quincenal':
-			$fechaCuota->modify('+' . (15 * $indice) . ' day');
-			return $fechaCuota;
+			return calcularFechaQuincenalPorCortes($fechaBase, $indice);
 		case 'mensual':
 			return sumarMesesRespetandoDia($fechaBase, $indice, $diaObjetivo);
 		case 'semestral':

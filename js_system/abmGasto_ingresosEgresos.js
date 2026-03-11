@@ -124,13 +124,12 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
-	console.info("Selecciondado: ", datostr);
+
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
 
 	// Revisa si existe gastos asociados
-	document.getElementById('divGastoAsociadosGastos').style.display= "none";
-	obtenerGastosAsociados();
+	obtenerGastosAsociados(idAbmGasto);
 
 	// Ocultar datos de periodicidad
 	document.getElementById('tablePeriodicidad').style.display= "none";
@@ -435,14 +434,14 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	});
 }
 
-function obtenerGastosAsociados() {
+function obtenerGastosAsociados(id_gasto) {
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", 'obtenerGastosAsociados');
-    datos.append("idgastos", idAbmGasto);
+    datos.append("idgastos", id_gasto);
 	document.getElementById('divTableProyecto').innerHTML= paginacargando;
 	
 	var OpAjax = $.ajax({
@@ -491,11 +490,130 @@ function obtenerGastosAsociados() {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
-			   if (Respuesta == true && datos["2"]) {
-					document.getElementById('divGastoAsociadosGastos').style.display= "";
-					document.getElementById('divNombreProyectoGasto').innerHTML= datos["4"];
-					document.getElementById('divTableProyecto').innerHTML= datos["2"];
+			   if (Respuesta == true) {
+					if (datos["2"]) {
+						document.getElementById('divGastoAsociadosGastos').style.display= "";
+						document.getElementById('divNombreProyectoGasto').innerHTML= datos["4"];
+						document.getElementById('divTableProyecto').innerHTML= datos["2"];
+					} else {
+						document.getElementById('divGastoAsociadosGastos').style.display= "none";
+					}
 				}				
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+var extractoActual= null;
+var bsExtracto = null;
+var botonExtractoActivo = null;
+
+function limpiarBotonExtractoActivo() {
+	document.querySelectorAll(".btn-menu-extracto.active").forEach(function (btn) {
+		btn.classList.remove("active");
+	});
+	botonExtractoActivo = null;
+}
+
+function establecerBotonExtractoActivo(id_gastos) {
+	limpiarBotonExtractoActivo();
+	botonExtractoActivo = document.querySelector('.btn-menu-extracto[data-id="' + id_gastos + '"]');
+	if (botonExtractoActivo) {
+		botonExtractoActivo.classList.add("active");
+	}
+}
+
+function inicializarEventosExtracto(panelExtracto) {
+	
+}
+
+function mostrarExtractoGasto(id_gastos) {
+	const panelExtracto = document.getElementById("collapseExtracto");
+	if (!panelExtracto) {
+		return;
+	}
+
+	panelExtracto.addEventListener("hidden.bs.collapse", function () {
+		limpiarBotonExtractoActivo();
+		extractoActual = null;
+	});
+
+	bsExtracto = bootstrap.Collapse.getOrCreateInstance(panelExtracto, { toggle: false });
+    const panelAbierto = panelExtracto.classList.contains("show");
+	if (extractoActual === id_gastos && panelAbierto) {
+      bsExtracto.hide();
+      return;
+    }
+
+	extractoActual = id_gastos;
+	establecerBotonExtractoActivo(id_gastos);
+	bsExtracto.show();
+
+	document.getElementById('tableExtractoGastosInterConsulta').innerHTML= paginacargando;
+	document.getElementById('tituloExtractoGastosInterconsulta').innerHTML= "Cargando...";
+
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", 'obtenerGastosAsociados');
+    datos.append("idgastos", id_gastos);
+
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+			xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var porce= ~~((evt.loaded / evt.total) * 100); 
+		if(porce>90){
+		porce=Number(porce)-7				
+		}
+		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			return false;
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			verCerrarEfectoCargando("")
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+				   document.getElementById('tituloExtractoGastosInterconsulta').innerHTML= "Extracto de " + datos["4"];
+				   document.getElementById('tableExtractoGastosInterConsulta').innerHTML= datos["2"];
+				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText

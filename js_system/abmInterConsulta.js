@@ -880,6 +880,9 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 
                     document.getElementById("table_abm_InterConsulta").innerHTML= datos["2"];
                     totalRegistroMensaje = datos["5"];
+
+                    // Actualiza los campos en gastos
+                    bsExtracto = new bootstrap.Collapse(document.getElementById("collapseExtracto"), { toggle: false });
                     
                     // Busca las interconsulta de un cliente si esta asociado
                     if (cod_clienteConsulta) {
