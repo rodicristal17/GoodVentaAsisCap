@@ -1038,10 +1038,13 @@ $mysqli=conectar_al_servidor();
 
 // Identifica si el motivo necesita autorizacion
 $registros_motivos= buscarabmmotivoingresoegreso('', 'activo',$cod_motivo);
-//var_dump($registros_motivos['4'][0]['necesita_autorizacion']);exit;
 
+// Variable para evaluar la fecha del gasto y asignar su estado correspondiente
+$fechaGasto = DateTime::createFromFormat('!Y-m-d', substr((string)$fecha, 0, 10));
+$pasadoManana = new DateTime('today');
+$pasadoManana->modify('+1 day');
 if ($estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] == '1') {
-	$estado = "solicitado";
+	$estado = ($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado';
 }
 
 if($operacion=="nuevo")
@@ -1063,7 +1066,7 @@ if($operacion=="editar")
 
 // Obtiene los datos actuales del gasto
 $datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9];
-$estado = ($estado == 'Inactivo' ? "Inactivo" : 'solicitado');
+$estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
 $cod_usuario_autoriz= NULL;
 
 $atributos= "arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
@@ -1173,7 +1176,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 	$registros= array();
 
 	// Agrega el ingreso de los cierres de caja
-	$registroMontosCobrados= Arqueo($fecha1,$fecha2,$cod_local,"","","","","","","")[7];
+	$registroMontosCobrados= Arqueo($fecha1,$fecha2,$cod_local,"","","","","","","","")[7];
 	$registrosZona['ingreso'][-1]= array();
 	foreach ($registroMontosCobrados as $key => $value) {
 		// Crea un registro ficticio
