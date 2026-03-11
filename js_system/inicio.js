@@ -25306,6 +25306,7 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 	var local = document.getElementById('inptlocalCobrosRealizados3').value
 	var metodo = document.getElementById('inptBuscarCobrosRealizados5').value
 	var condicion = document.getElementById('inptBuscarCobrosRealizados6').value
+	var cedula = document.getElementById('inptBuscarCobrosRealizados7').value
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
    idHistorialPago = "";
 	document.getElementById("table_arqeo").innerHTML = paginacargando
@@ -25318,6 +25319,7 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 		"fecha2": fecha2,
 		"cobrador": cobrador,
 		"cliente": cliente,
+		"cedula": cedula,
 		"factura": factura,
 		"fechafija": fechafija,
 		"metodo": metodo,

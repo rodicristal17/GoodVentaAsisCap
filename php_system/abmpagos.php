@@ -247,7 +247,8 @@ buscarpagoseliminados($fecha1,$fecha2);
 if($operacion=="arqueo" )
 {
 
-
+$cedula=$_POST['cedula'];
+$cedula = mb_convert_encoding((string)($cedula), 'ISO-8859-1', 'UTF-8');
 $fecha1=$_POST['fecha1'];
 $fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
@@ -282,7 +283,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 }
 }
 
-$informacion =Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$fechafija,$cobrador,$metodo,$codCaja,$condicion);
+$informacion =Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion);
 echo json_encode($informacion);	
 exit;
 }
@@ -1977,67 +1978,59 @@ exit;
 
 
 /*Buscar */
-function Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$fechafija,$cobrador,$metodo,$codCaja,$condicion)
+function Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion)
 {
 
 $mysqli=conectar_al_servidor();
 
  $totalRegistro=0;
 	 $pagina="";
-	  $condicionfecha="";
+
+	 $sqlFiltro= "";
 	 if($fecha1!="" && $fecha2!=""){
-		 $condicionfecha=" and pg.Fecha between'".$fecha1."' and '".$fecha2."'";
+		 $sqlFiltro .=" and pg.Fecha between'".$fecha1."' and '".$fecha2."'";
 	 }
-	 $condicionfechafiltro="";
 	 if($fechafija!=""){
-	   $condicionfechafiltro=" and pg.Fecha='".$fechafija."'";		
+	   $sqlFiltro .=" and pg.Fecha='".$fechafija."'";		
 	 }
-	 $condicionfactura="";
 	 if($factura!=""){
-	   $condicionfactura=" and vt.num_factura like '%".$factura."%'";		
+	   $sqlFiltro .=" and vt.num_factura like '%".$factura."%'";		
 	 }
-	 $condicionmetodo="";
 	 if($metodo!=""){
-	   $condicionmetodo=" and pg.tipopago = '".$metodo."'";		
+	   $sqlFiltro .=" and pg.tipopago = '".$metodo."'";		
 	 }
-	 $condicionlocal="";
 	 if($local!=""){
-	   $condicionlocal=" and (Select l.cod_local from local l  where l.cod_local= vt.cod_local limit 1)='".$local."'";		
+	   $sqlFiltro .=" and (Select l.cod_local from local l  where l.cod_local= vt.cod_local limit 1)='".$local."'";		
 	 }
-	 $condicioncliente="";
 	 if($cliente!=""){
-	   $condicioncliente=" and (Select nombre_persona from persona where cod_persona=cod_clienteFK limit 1) like '%".$cliente."%'";		
+	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=cod_clienteFK limit 1) like '%".$cliente."%'";		
 	 }
-	 $condicioncobrador="";
 	 if($cobrador!=""){
-	   $condicioncobrador=" and (Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK limit 1) like '%".$cobrador."%'";		
+	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK limit 1) like '%".$cobrador."%'";		
 	 }
-	 $condicioncajaCobrador="";
 	 if($codCaja!=""){
-	   $condicioncajaCobrador=" and codAperturaApp = '".$codCaja."'";		
+	   $sqlFiltro .=" and codAperturaApp = '".$codCaja."'";		
 	 }
-
-
+	 if($cedula) {
+	   $sqlFiltro .=" and (Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK limit 1) like '%".$cedula."%'";
+	 };
  
-	 $condicioncajacondicion="";
 	 if($condicion!=""){
-	   $condicioncajacondicion=" and vt.TipoVenta = '".$condicion."'";		
+	   $sqlFiltro .=" and vt.TipoVenta = '".$condicion."'";		
 	 }
 
-
-	
-			$sql= "select  vt.TipoVenta,vt.puntoexpedicion,vt.tipo_comprobante,pg.idPago,pg.tipo, pg.Fecha, sum(pg.Monto) as Monto,pg.cod_venta_fk,pg.tipopago,
-			vt.cod_local, pg.cod_cobradorFK,
-			pg.comision,pg.nrofactura,pg.lot, pg.lat,(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
-			(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as documento,
-			(Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK) as cobradornombre,date_format(hora ,'%H:%i' ) as hora,
-			(Select Nombre from local l where l.cod_local=vt.cod_local) as nombrelocal,
-			(Select plazo from credito l where l.idcredito=pg.cod_creditoFK) as plazo,
-			IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as nroCancelado,
-			vt.num_factura,
-			(Select nombre from zona z where z.idzona=(Select idzonaFk from cliente pr inner join venta vt on vt.cod_clienteFK=pr.cod_cliente where vt.cod_venta=pg.cod_venta_fk)) as nombrezona
-			from  pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk  
-			where pg.Monto>0 ".$condicioncajaCobrador.$condicionmetodo.$condicionfecha.$condicionfechafiltro.$condicionfactura.$condicionlocal.$condicioncliente.$condicioncobrador.$condicioncajacondicion." group by  pg.idPago limit 2500";/*Sentencia para buscar registros*/	
+	$sql= "select  vt.TipoVenta,vt.puntoexpedicion,vt.tipo_comprobante,pg.idPago,pg.tipo, pg.Fecha, sum(pg.Monto) as Monto,pg.cod_venta_fk,pg.tipopago,
+	vt.cod_local, pg.cod_cobradorFK,
+	pg.comision,pg.nrofactura,pg.lot, pg.lat,(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
+	(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as documento,
+	(Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK) as cobradornombre,date_format(hora ,'%H:%i' ) as hora,
+	(Select Nombre from local l where l.cod_local=vt.cod_local) as nombrelocal,
+	(Select plazo from credito l where l.idcredito=pg.cod_creditoFK) as plazo,
+	IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as nroCancelado,
+	vt.num_factura,
+	(Select nombre from zona z where z.idzona=(Select idzonaFk from cliente pr inner join venta vt on vt.cod_clienteFK=pr.cod_cliente where vt.cod_venta=pg.cod_venta_fk)) as nombrezona
+	from  pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk  
+	where pg.Monto>0 ".$sqlFiltro." group by  pg.idPago limit 2500";
 	
 
 $registros= array();
@@ -2143,7 +2136,9 @@ $paginacuota.="
 <tr id='tbSelecRegistro'onclick='obtenerdatospagos(this)' style='$style'  >
 <td id='td_datos_1' style='display:none' >".$idPago."</td>
 <td id='td_datos_3' style='display:none'>".$num_factura."</td>
+
 <td id='td_datos_9' style='width:15%'>*".$documento."*<br>".$nombrecliente." </td>
+<td style='width:15%'>".$documento." </td>
 <td id=''			 style='width:10%'>".$nrof."</td>
 <td id='td_datos_2' style='display:none' >".$Fecha."</td>
 <td id='' 			style='width:10%' >".$Fecha." ".$hora."</td>
@@ -2172,6 +2167,7 @@ $paginacuota.="
 <td id='' style='width:10%'>".$nrof."</td>
 <td id='td_datos_3' style='display:none'>".$num_factura."</td>
 <td id='td_datos_9' style='width:15%'>".$nombrecliente."</td>
+<td style='width:15%'>".$documento."</td>
 <td id='td_datos_2' style='display:none' >".$Fecha."</td>
 <td id='' style='width:10%' >".$Fecha." ".$hora."</td>
 <td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
