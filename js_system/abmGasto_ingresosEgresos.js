@@ -249,6 +249,16 @@ function aprobarMovimiento(opcion, elemento= null) {
 	});
 }
 
+function seleccionarGastosAsociados(element) {
+	obtenerdatosabmGasto(element);
+	
+	// Identifica si no se esta presente en la ventana de abm
+	if (document.getElementById('divAbmGasto2').style.display == "none") {
+		verCerrarAbmGasto();
+		verVentanaEditarGasto("divAbmDetallesInterConsulta");
+	}
+}
+
 function verificarcamposGasto() {
 	var inptMontoGasto = document.getElementById('inptMontoGasto').value
 	var inptDescripcionGasto = document.getElementById('inptDescripcionGasto').value
@@ -442,6 +452,7 @@ function obtenerGastosAsociados(id_gasto) {
 	datos.append("navegador", navegador);
 	datos.append("funt", 'obtenerGastosAsociados');
     datos.append("idgastos", id_gasto);
+	document.getElementById('divGastoAsociadosGastos').style.display= "";
 	document.getElementById('divTableProyecto').innerHTML= paginacargando;
 	
 	var OpAjax = $.ajax({
