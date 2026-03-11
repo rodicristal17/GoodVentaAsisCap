@@ -349,7 +349,7 @@ if ($operacion == "obtenerGastosAsociados") {
 				$estado .= 'danger';
 				break;
 		}
-		$estado .='">'.$gast['estado'].'</span>';
+		$estado .='">'.($gast['estado'] == 'Activo' ? 'Pagado' : $gast['estado'] == 'Activo').'</span>';
 		$pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$idgastos."</td>
 			<td  id='td_datos_3' style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
@@ -409,7 +409,7 @@ function obtenerGastosAsociados($idgastos) {
 
 	// Siempre buscamos las cuotas con el ID base de la serie.
 	$motivo= "Cuota % de %(".$idBaseSerie.")";
-	$cuotas = buscarGasto('','','','','','','','','','','','',$motivo,'')[9];
+	$cuotas = buscarGasto('','','','','','','','','','','','',$motivo,'','ASC')[9];
 	foreach ($cuotas as $gasto) {
 		$result[] = $gasto;
 	}
@@ -1153,7 +1153,7 @@ if($operacion=="editar")
 return array("1" => "exito", "2" => $idgastos);	
 }
 
-function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $idgastos)
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $idgastos, $fechaOrder= 'DESC')
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -1292,7 +1292,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		m.descripcion AS motivo, m.categoria,
 		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
 		from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY 
-		FIELD(m.categoria,'','ingreso','directo','operativo'), necesita_autorizacion DESC, g.idgastos DESC";
+		FIELD(m.categoria,'','ingreso','directo','operativo'), necesita_autorizacion DESC, g.fecha $fechaOrder, g.idgastos DESC";
 
 		$stmt = $mysqli->prepare($sql);
 		if ( ! $stmt->execute()) {
