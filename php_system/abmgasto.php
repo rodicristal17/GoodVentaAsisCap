@@ -1070,7 +1070,7 @@ $estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : 
 $cod_usuario_autoriz= NULL;
 
 $atributos= "arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
-personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivo=?, cod_interConsultaFK=?, cod_usuario_autoriz=?";
+personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivoIngresoEgresoFK=?, cod_interConsultaFK=?, cod_usuario_autoriz=?";
 
 // Se verifica si se cambio el monto y se requiere cambio de caja
 if ($datos_gasto[0]['monto'] != $monto && $_POST['actualizar_caja'] == "true") {
@@ -1084,7 +1084,7 @@ if (!$stmt) {
 	echo $mysqli->error;
 }
 $stmt->bind_param($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$cod_motivo,$cod_interConsultaFK,$cod_usuario_autoriz,$idgastos); 
-
+print_r(array($ss,$Arreglo,$monto,$motivo,$fecha,$estado,$cod_usuario,$personales,$cod_local,$tipo,$nroboleta,$banco,$nrocuenta,$cod_motivo,$cod_interConsultaFK,$cod_usuario_autoriz,$idgastos));echo "\n$consulta1\n";
 }
 
 if (!$stmt->execute()) {
