@@ -881,6 +881,9 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     document.getElementById("table_abm_InterConsulta").innerHTML= datos["2"];
                     totalRegistroMensaje = datos["5"];
 
+                    // Carga diferida de secciones pesadas para acelerar el primer render.
+                    cargarFlujoGastosInterConsulta(codInterConsulta);
+
                     // Actualiza los campos en gastos
                     bsExtracto = new bootstrap.Collapse(document.getElementById("collapseExtracto"), { toggle: false });
                     
@@ -914,6 +917,47 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 			}
 		}
 	});
+}
+
+function cargarFlujoGastosInterConsulta(codInterConsulta) {
+    const contenedor = document.getElementById("contenedorFlujoGastosInterConsulta");
+    if (!contenedor) {return;}
+    contenedor.innerHTML = '<div class="text-secondary" style="padding: 8px;">Cargando gastos...</div>';
+
+    obtener_datos_user();
+    var datos = new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "buscarFlujoGastosInterConsulta");
+    datos.append("cod_interConsulta", codInterConsulta);
+
+    $.ajax({
+        data: datos,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function () {
+            if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
+            contenedor.innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
+        },
+        success: function (responseText) {
+            try {
+                const respuesta = $.parseJSON(responseText);
+                if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
+                if (respuesta["1"] === "exito") {
+                    contenedor.innerHTML = respuesta["2"] || '<div class="text-secondary" style="padding: 8px;">Sin gastos asociados.</div>';
+                } else {
+                    contenedor.innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
+                }
+            } catch (error) {
+                if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
+                contenedor.innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
+            }
+        }
+    });
 }
 
 function verMasMensajesInterconsulta(offset) {

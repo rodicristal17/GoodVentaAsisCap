@@ -85,6 +85,19 @@
 
                 obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario);
                 break;
+            case 'buscarFlujoGastosInterConsulta':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $registrosInterc= obtenerInterConsulta(array(
+                    "cod_interConsulta" => $cod_interConsulta,
+                    "cod_usuarioFK" => $user
+                ), 1);
+                if (count($registrosInterc) == 0) {
+                    echo json_encode(array("1" => "NI", "2" => "Usted no tiene acceso a esta conversacion."));
+                    break;
+                }
+                $paginaGastos= obtenerVistaFlujoGastosInterConsulta($cod_interConsulta);
+                echo json_encode(array("1" => "exito", "2" => $paginaGastos));
+                break;
             case 'nuevo/editar interconsulta':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
@@ -332,7 +345,6 @@
         $pagina = "";
         $limiteMensajes= 5;
         $totalCantMensaje= 0;
-        $totalGastos= 0;
         
         // Se obtienen las interconsultas
         $registrosInterc= obtenerInterConsulta(array(
@@ -349,37 +361,6 @@
         foreach ($registrosInterc as $valueInter) {
             $mencionesElemento= "";
             $menciones= array();
-            
-            // Genera el listado de Gastos
-            $gastosElemento= "";
-            $registrosGastos = buscarGasto("","","",'','','','','','true','', $valueInter['cod_interConsulta'], '', '','');
-            $total_gastos_estado= $registrosGastos[10];
-            $registrosGastos= $registrosGastos[9];
-            foreach ($registrosGastos as $key => $gast) {
-                $gasto= $gast;
-                if (!empty($registrosGastos[$key]['mostrado'])) {continue;}
-
-                $registrosGastos[$key]['mostrado'] = true;
-
-                if ($gasto['modalidad'] == 'credito') {
-                    // Evalua si tiene gastos asociados y obtiene el principal
-                    $gastos_asociados= obtenerGastosAsociados($gasto["idgastos"]);
-                    if (empty($gastos_asociados)) {continue;}
-                    
-                    foreach ($gastos_asociados as $value) {
-                        foreach ($registrosGastos as &$value2) {
-                            if ($value['idgastos'] == $value2['idgastos']) {
-                                $value2['mostrado'] = true;
-                            }
-                        }
-                        unset($value2);
-                    }
-
-                    $gasto= $gastos_asociados[0];
-                }
-
-                $gastosElemento.= '<button class="btn-menu-extracto w-100" data-id="'.$gasto['idgastos'].'" onclick="mostrarExtractoGasto('.$gasto['idgastos'].')">'.$gasto['descripcion'].'</button>';
-            }
             
             // Se obtienen los mensajes
             $fechaActual= new DateTime();
@@ -421,7 +402,7 @@
                     'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
                     'cod_usuarioFK' => $filtros['cod_usuarioFK']
                 ), $limiteMensajes, 0);
-            
+
             // Obtiene los mensajes programados
             $registrosMens2= obtenerMensaje(array(
                 'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
@@ -516,8 +497,8 @@
                     <strong style="font-size: 14pt; cursor: pointer;" onmouseover="this.style.color=\'#0066cc\'; this.style.textDecoration=\'underline\';" onmouseout="this.style.color=\'black\'; this.style.textDecoration=\'none\';">Flujo de gastos: </strong>
                     <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true); document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\';cod_interConsulta= '.$valueInter['cod_interConsulta'].'">
                 </span>
-                <div style="overflow-y: auto; height: 150px;">
-                    '.$gastosElemento.'
+                <div id="contenedorFlujoGastosInterConsulta" style="overflow-y: auto; height: 150px;">
+                    <div class="text-secondary" style="padding: 8px;">Cargando gastos...</div>
                 </div>
             </div>';
             
@@ -562,7 +543,7 @@
                     </div>";
             }
             $pagina .= $paginaMensajes. '</div>';
-            
+
             // Obtiene la cantidad total de mensajes
             $totalCantMensaje2= obtenerMensaje(array(
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta']
@@ -571,6 +552,47 @@
         }   
 
         echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje));
+    }
+
+    function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {
+        if (empty($cod_interConsulta)) {
+            return '<div class="text-secondary" style="padding: 8px;">Sin gastos asociados.</div>';
+        }
+
+        $gastosElemento= "";
+        $registrosGastos = buscarGasto("","","",'','','','','','true','', $cod_interConsulta, '', '','');
+        $registrosGastos= $registrosGastos[9];
+        foreach ($registrosGastos as $key => $gast) {
+            $gasto= $gast;
+            if (!empty($registrosGastos[$key]['mostrado'])) {continue;}
+
+            $registrosGastos[$key]['mostrado'] = true;
+
+            if ($gasto['modalidad'] == 'credito') {
+                // Evita mostrar cuotas repetidas y conserva el gasto principal.
+                $gastos_asociados= obtenerGastosAsociados($gasto["idgastos"]);
+                if (empty($gastos_asociados)) {continue;}
+                
+                foreach ($gastos_asociados as $value) {
+                    foreach ($registrosGastos as &$value2) {
+                        if ($value['idgastos'] == $value2['idgastos']) {
+                            $value2['mostrado'] = true;
+                        }
+                    }
+                    unset($value2);
+                }
+
+                $gasto= $gastos_asociados[0];
+            }
+
+            $gastosElemento.= '<button class="btn-menu-extracto w-100" data-id="'.$gasto['idgastos'].'" onclick="mostrarExtractoGasto('.$gasto['idgastos'].')">'.$gasto['descripcion'].'</button>';
+        }
+
+        if (empty($gastosElemento)) {
+            return '<div class="text-secondary" style="padding: 8px;">Sin gastos asociados.</div>';
+        }
+        
+        return $gastosElemento;
     }
 
     function buscarVistaPacienteConInterConsulta($filtros= array(), $limite= 0) {
