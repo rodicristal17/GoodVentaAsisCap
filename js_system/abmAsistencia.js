@@ -64,8 +64,9 @@ function registrarAsistencia() {
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
+				console.log(datos);
 				if (Respuesta == "exito") {
-					location.reload();
+					//location.reload();
                     //obtenerAsistenciaUsuario();
 				} else {
 					let mensaje= datos["2"];

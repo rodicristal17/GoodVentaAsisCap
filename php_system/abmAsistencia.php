@@ -126,7 +126,7 @@
         // Compara con la direccion ip del usuario que registrara su salida
         $ip_valida = false;
         foreach ($administrador_local as $key => $value) {
-            if ($value['direccion_ip'] == $_SERVER['REMOTE_ADDR']) {
+            if (strcmp($value['direccion_ip'], $_SERVER['REMOTE_ADDR']) == 0) {
                 $ip_valida = true;
                 break;
             } else if ($value['cod_usuarioFK'] == $cod_usuarioFK) {
@@ -135,8 +135,7 @@
                 break;
             }
         }
-        
-        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, null, $cod_asistencia);
+        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, ($ip_valida ? $value['direccion_ip'] : NULL), $cod_asistencia);
         
         // Valida la ip y registra la salida o devuelve error
         if (! $ip_valida) {
@@ -265,11 +264,9 @@
                 $ss .= "s";
                 $parametros[] = $hora_salida;
             }
-            if ($ip_publica != null) {
-                $atributos .= ", direccion_ip = ?";
-                $ss .= "s";
-                $parametros[] = $ip_publica;
-            }
+            $atributos .= ", direccion_ip = ?";
+            $ss .= "s";
+            $parametros[] = $ip_publica;
 
             $atributos = substr($atributos, 2);
             $parametros[] = $cod_asistencia;
