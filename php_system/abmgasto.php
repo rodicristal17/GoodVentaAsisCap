@@ -82,7 +82,7 @@ $editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF
 	));
 	if (count($monto_limite) > 0) {
 		$monto_limite= $monto_limite[0]["monto_limite"];
-		$estado= "Activo";
+		$estado= ($estado == "Inactivo" ? "Inactivo" : "Activo");
 		$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '');
 	
 		if ($monto_limite && $monto_limite != '0')
@@ -1063,8 +1063,7 @@ if($operacion=="editar")
 
 // Obtiene los datos actuales del gasto
 $datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9];
-
-$estado = "solicitado";
+$estado = ($estado == 'Inactivo' ? "Inactivo" : 'solicitado');
 $cod_usuario_autoriz= NULL;
 
 $atributos= "arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
