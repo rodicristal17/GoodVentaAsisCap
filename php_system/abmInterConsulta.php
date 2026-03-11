@@ -783,6 +783,7 @@
                     $contenidoMensaje
                 );
             }
+            $contenidoMensaje = nl2br($contenidoMensaje, false);
 
             $miniatura_imagen= "";
             if ($valueMens['url']) {
@@ -1232,12 +1233,24 @@
                 $b->parentNode->replaceChild($nuevoTexto, $b);
             }
             
+            // Extrae HTML del body y preserva saltos de linea de contenteditable.
+            $body = $dom->getElementsByTagName('body')->item(0);
+            $contenidoHtml = $body ? $dom->saveHTML($body) : $dom->saveHTML();
+            $contenidoHtml = preg_replace('/^<body[^>]*>|<\/body>$/i', '', $contenidoHtml);
+            $contenidoHtml = preg_replace('/<br\\s*\\/?>/i', "\n", $contenidoHtml);
+            $contenidoHtml = preg_replace('/<\\/(div|p|li|tr|h[1-6])>/i', "\n", $contenidoHtml);
+
             // Obtener el texto plano resultante
-            $contenidoLimpiado = $dom->textContent;
-    
+            $contenidoLimpiado = strip_tags($contenidoHtml);
+
             // Limpiar espacios y entidades
-            $contenidoLimpiado = trim(html_entity_decode($contenidoLimpiado));
+            $contenidoLimpiado = html_entity_decode($contenidoLimpiado, ENT_QUOTES | ENT_HTML5, 'UTF-8');
             $contenidoLimpiado = str_replace("\xC2\xA0", " ", $contenidoLimpiado);
+            $contenidoLimpiado = preg_replace("/[ \t]+\n/u", "\n", $contenidoLimpiado);
+            $contenidoLimpiado = preg_replace("/\n[ \t]+/u", "\n", $contenidoLimpiado);
+            $contenidoLimpiado = preg_replace("/\R/u", "\n", $contenidoLimpiado);
+            $contenidoLimpiado = preg_replace("/\n{3,}/", "\n\n", $contenidoLimpiado);
+            $contenidoLimpiado = trim($contenidoLimpiado);
         }
         
         if (empty($cod_mensaje)) {
