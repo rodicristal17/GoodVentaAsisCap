@@ -943,7 +943,7 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
             if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
             contenedor.innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
         },
-        success: function (responseText) {
+        success: function (responseText) {console.log(responseText);
             try {
                 const respuesta = $.parseJSON(responseText);
                 if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}

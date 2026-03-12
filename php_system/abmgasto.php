@@ -337,19 +337,25 @@ if ($operacion == "obtenerGastosAsociados") {
 		$estado= '<span style="text-transform: capitalize;" class="badge bg-';
 		switch ($gast['estado']) {
 			case 'Activo':
-				$estado .= 'primary';
+				$estado .= 'primary">Pagado';
 				break;
 			case 'Rechazado':
-				$estado .= 'secondary';
+				$estado .= 'secondary">'.$gast['estado'];
 				break;
 			case 'pendiente':
-				$estado .= 'warning';
+				$estado .= 'warning">'.$gast['estado'];
 				break;
 			case 'solicitado':
-				$estado .= 'danger';
+				$fechaActual = date('Y-m-d');
+				$fechaGasto = date('Y-m-d', strtotime($gast['fecha']));
+				if ($fechaActual >= $fechaGasto) {
+					$estado .= 'danger">'.$gast['estado'];
+				} else {
+					$estado .= 'warning">Pendiente';
+				}
 				break;
 		}
-		$estado .='">'.($gast['estado'] == 'Activo' ? 'Pagado' : $gast['estado']).'</span>';
+		$estado .= '</span>';
 		$pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$idgastos."</td>
 			<td  id='td_datos_3' style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>

@@ -562,6 +562,7 @@
         $gastosElemento= "";
         $registrosGastos = buscarGasto("","","",'','','','','','true','', $cod_interConsulta, '', '','');
         $registrosGastos= $registrosGastos[9];
+        $colorFondo= "";
         foreach ($registrosGastos as $key => $gast) {
             $gasto= $gast;
             if (!empty($registrosGastos[$key]['mostrado'])) {continue;}
@@ -573,19 +574,25 @@
                 $gastos_asociados= obtenerGastosAsociados($gasto["idgastos"]);
                 if (empty($gastos_asociados)) {continue;}
                 
+                $colorFondo= "background-color: #6c757d";
                 foreach ($gastos_asociados as $value) {
                     foreach ($registrosGastos as &$value2) {
                         if ($value['idgastos'] == $value2['idgastos']) {
                             $value2['mostrado'] = true;
                         }
                     }
+                    if (($value['estado'] != 'Activo' && $value['estado'] != 'Rechazado')) {
+                        $colorFondo= '';
+                    }
                     unset($value2);
                 }
 
                 $gasto= $gastos_asociados[0];
+            } else {
+                $colorFondo= "background-color: #6c757d";
             }
 
-            $gastosElemento.= '<button class="btn-menu-extracto w-100" data-id="'.$gasto['idgastos'].'" onclick="mostrarExtractoGasto('.$gasto['idgastos'].')">'.$gasto['descripcion'].'</button>';
+            $gastosElemento.= '<button class="btn-menu-extracto w-100" style="'.$colorFondo.'" data-id="'.$gasto['idgastos'].'" onclick="mostrarExtractoGasto('.$gasto['idgastos'].')">'.$gasto['descripcion'].'</button>';
         }
 
         if (empty($gastosElemento)) {
