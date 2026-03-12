@@ -349,7 +349,7 @@ if ($operacion == "obtenerGastosAsociados") {
 				$estado .= 'danger';
 				break;
 		}
-		$estado .='">'.($gast['estado'] == 'Activo' ? 'Pagado' : $gast['estado'] == 'Activo').'</span>';
+		$estado .='">'.($gast['estado'] == 'Activo' ? 'Pagado' : $gast['estado']).'</span>';
 		$pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$idgastos."</td>
 			<td  id='td_datos_3' style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
