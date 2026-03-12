@@ -3696,7 +3696,32 @@ document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tablacabeceraCheque").innerHTML
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_Cheque").innerHTML
 }
- 
+if (ventana == "asistencia") {
+	pagina =
+"<table class='TableRepor0' style='width:100%'>"
++"<tr>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>FECHA INICIO:</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptBuscarInformeAsistenciaF1").value+"</p>"
++"</td>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>FECHA FIN:</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptBuscaInformeAsistenciaF2").value+"</p>"
++"</td>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>LOCAL:</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptLocalInformeAsistencia").selectedOptions[0].textContent+"</p>"
++"</td>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>Fecha de impresión</b></p>"
++"<p class='pTituloC' >"+fechaimpresion+"</p>"
++"</td>"
++"</tr>"
++"</table><br><br><center><h1 class='pTituloD' >INFORME DE ASISTENCIA</h1><br></center>"
+document.getElementById("divCabeceraImpresiones").innerHTML=pagina
+document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloInformeAsistencia").innerHTML
+document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_InformeAsistencia").innerHTML
+}
 if (ventana == "Agenda") {
 
 		pagina =

@@ -272,7 +272,7 @@ function obtenermasVistaInformeAsistencia() {
 						var porce=((registrocargadoinformeAsistencia*100)/totalregistroinformeAsistencia).toFixed(0)
 						document.getElementById("divProgressInformeAsistencia").style.width=porce+"%"
 						//document.getElementById("table_InformeAsistencia").innerHTML += "<div id='table_mas_InformeAsistencia' style='width: 100%;'></div>"
-						obtenermasVistaInformeAsistencia();
+						if(controldebusquedadInformeAsistencia) {obtenermasVistaInformeAsistencia();}
 					 }else{
 						controldebusquedadInformeAsistencia=false;
 						document.getElementById("divProgressInformeAsistencia").style.display="none"

@@ -17422,7 +17422,7 @@ ZONA
                       <td style="width:60%;text-align:right">
                         <input type="button" style="margin-top: 17px;" value="Buscar" class="btn4"
                           onclick="obtenerVistaInformeAsistencia()">
-                        <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion()"
+                        <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('asistencia')"
                           style="width:100px;background-color: rgb(58 58 58);">
                       </td>
                     </tr>
@@ -17431,7 +17431,7 @@ ZONA
               </div>
 
               <div class="divMenuf" style="    width: 97%;">
-                <table class="tableCabeceraRegistro" id="tdTituloAudiProducto">
+                <table class="tableCabeceraRegistro" id="tdTituloInformeAsistencia">
                   <tbody>
                     <tr>
                       <td class="td_registro" style="width:10%;">
@@ -17483,17 +17483,17 @@ ZONA
                   <div class="div_cuerpo_table" id="table_InformeAsistencia"
                     style="height: auto;border:none;width: 100%;">
                   </div>
-                  <table style='width:100%;height:50px;display:none' id='tbProcessInformeAsistencia'>
-                  <tr>
-                  <td  style='width:90%'>
-                  <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeAsistencia'></div></div>
-                  </td>
-                  <td style='width:10%;text-align:center'>
-                  <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeAsistencia()" style="width:100px;background-color:rgb(58 58 58)">
-                  </td>
-                  </tr>
-                  </table>
                 </div>
+                <table style='width:100%;height:50px;display:none' id='tbProcessInformeAsistencia'>
+                <tr>
+                <td  style='width:90%'>
+                <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeAsistencia'></div></div>
+                </td>
+                <td style='width:10%;text-align:center'>
+                <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeAsistencia()" style="width:100px;background-color:rgb(58 58 58)">
+                </td>
+                </tr>
+                </table>
                 <br>
                 <div class="divMenuf" style="width:100%">
                   <table style="width:98%">
