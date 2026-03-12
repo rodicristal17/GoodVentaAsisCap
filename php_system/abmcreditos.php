@@ -552,7 +552,12 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 
 
 	$sql = "Select idcredito,Monto,descuento,
-	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.Tipo='Pago Cuota'),0) as totalPago
+	(SELECT count(*) FROM credito where cr.cod_venta='$cod_venta' AND NOT cr.Esado = 'inactivo') AS cantTotalActivo,
+	(SELECT cod_cobradorFK FROM pago WHERE cod_creditoFK= cr.idcredito ORDER BY idPago DESC LIMIT 1) AS cod_cobradorFK,
+	(SELECT codCaja FROM pago WHERE cod_creditoFK= cr.idcredito ORDER BY idPago DESC LIMIT 1) AS codCaja,
+	(SELECT codApertura FROM pago WHERE cod_creditoFK= cr.idcredito ORDER BY idPago DESC LIMIT 1) AS codApertura,
+	(SELECT num_factura FROM venta WHERE cr.cod_venta = cod_venta) AS num_factura,
+	IFNULL((select sum(pg.Monto) from pago pg where cod_creditoFK=cr.idcredito and pg.Tipo='Pago Cuota'),0) as totalPago
 	from credito cr
 	where cr.cod_venta='$cod_venta' ";
 
@@ -572,14 +577,27 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 	$result = $stmt->get_result();
 	$valor = mysqli_num_rows($result);
 	$F = 0;
+	$totalPagado= 0;
+	$cod_cobradorFK= '';
+	$codCaja= '';
+	$codApertura= '';
 	if ($valor > 0) {
-		while ($valor = mysqli_fetch_assoc($result)) {
-
+		while ($valor = mysqli_fetch_assoc($result)) {		
 			$idcredito = $valor['idcredito'];
 			$totalPago = mb_convert_encoding((string)($valor['totalPago']), 'UTF-8', 'ISO-8859-1');
 			$cuota = mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1');
 			$descuentocuota = mb_convert_encoding((string)($valor['descuento']), 'UTF-8', 'ISO-8859-1');
 			eliminarestecreditos($idcredito);
+			$cod_cobradorFK = empty($cod_cobradorFK) ? mb_convert_encoding((string)($valor['cod_cobradorFK']), 'UTF-8', 'ISO-8859-1') : $cod_cobradorFK;
+			$codCaja = empty($codCaja) ? mb_convert_encoding((string)($valor['codCaja']), 'UTF-8', 'ISO-8859-1') : $codCaja;
+			$codApertura = empty($codApertura) ? mb_convert_encoding((string)($valor['codApertura']), 'UTF-8', 'ISO-8859-1') : $codApertura;
+			$num_factura = mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');
+
+			// Se evalua la cantidad de credito para detectar si es una venta modificada 
+			$cantTotalActivo= mb_convert_encoding((string)($valor['cantTotalActivo']), 'UTF-8', 'ISO-8859-1');
+			if (intval($cantTotalActivo) <= 0) {
+				$totalPagado += $totalPago;
+			}
 			/*
 			if($totalPago<=0){
 			}else{
@@ -591,8 +609,6 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 			*/
 		}
 	}
-
-
 
 	$a = 0;
 	$F = 0;
@@ -681,6 +697,11 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 	actualizarMetodo($cod_venta, $metodopago);
 	// Funcion para unificar los plazos de todas las cuotas existentes sin importar su estado
 	//cambiarplazos($cod_venta);
+
+	// Se evalua si existe total pagado para cargar
+	if ($totalPagado > 0) {
+		cargarpagos($totalPagado, $cod_venta);
+	}
 
 	// Datos de auditoria
 	$sql = "UPDATE venta SET cod_user_edit= ?, fecha_edit= ? WHERE num_factura= ?";
@@ -1450,80 +1471,60 @@ function cargarpagos($pagado,$cod_venta){
 	(select cod_cobradorFK from venta where cr.cod_venta=venta.cod_venta) as cod_cobradorFK,
 	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) as totalPago
 	from credito cr
-	where cr.cod_venta='$cod_venta' and IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) < Monto order by cr.idcredito asc";
-		
-		
-   
-$stmt = $mysqli->prepare($sql);
-
-if ( ! $stmt->execute()) {
- /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-}
- 
+	where cr.cod_venta='$cod_venta' and IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) < Monto AND NOT Esado LIKE 'inactivo' order by cr.idcredito asc";
+	
+	$stmt = $mysqli->prepare($sql);
+	if ( ! $stmt->execute()) {
+		/*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+		exit;
+	}
+	
 	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- 
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-		  
-		     $idcredito=$valor['idcredito'];
-			  $Monto=mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1');
-			  $totalPago=mb_convert_encoding((string)($valor['totalPago']), 'UTF-8', 'ISO-8859-1');
-			  $cod_cobradorFK=mb_convert_encoding((string)($valor['cod_cobradorFK']), 'UTF-8', 'ISO-8859-1');
-			  $fechapago=mb_convert_encoding((string)($valor['fechapago']), 'UTF-8', 'ISO-8859-1');
-			  $deuda=$Monto-$totalPago;
-			 
-				$c=1;
-			 if($pagado<=0){
-				  $c=0;
-				  $pago=0;
-			  }
-			  $control=$pagado-$deuda;
-			  if($control<=0){
-				 $pago=$pagado;
-				 $pagado=0;
-			  }else{
-				  $pago=$deuda;
-				  $pagado=$pagado-$deuda;
-			  }
-			  
-					if($pago>0 && $c==1){
-						 cargarPagosDeudas($pago,$fechapago,$cod_cobradorFK,$idcredito,$cod_venta);
-					}		 
-				 
-			  
-			  
-			  
-			  
-	  }
- }
-		
- mysqli_close($mysqli);
-
-		
+	$valor= mysqli_num_rows($result);
+	
+	if ($valor>0) {
+		while ($valor= mysqli_fetch_assoc($result)) {
+			$idcredito=$valor['idcredito'];
+			$Monto=mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1');
+			$totalPago=mb_convert_encoding((string)($valor['totalPago']), 'UTF-8', 'ISO-8859-1');
+			$cod_cobradorFK=mb_convert_encoding((string)($valor['cod_cobradorFK']), 'UTF-8', 'ISO-8859-1');
+			$fechapago=mb_convert_encoding((string)($valor['fechapago']), 'UTF-8', 'ISO-8859-1');
+			$deuda=$Monto-$totalPago;
+			
+			if($pagado<=0){break;}
+			$control=$pagado-$deuda;
+			if($control<=0){
+				$pago=$pagado;
+				$pagado=0;
+			}else{
+				$pago=$deuda;
+				$pagado=$pagado-$deuda;
+			}
+			
+			if($pago>0){
+				cargarPagosDeudas($pago,$fechapago,$cod_cobradorFK,$idcredito,$cod_venta);
+			}
+		}
+	}
+			
+	mysqli_close($mysqli);
 }
 
 function  cargarPagosDeudas($Monto,$Fecha,$cod_cobradorFK,$cod_creditoFK,$cod_venta){
-	  
-	  
-	 if($Monto!="0"){
-	$mysqli=conectar_al_servidor();
-	$consulta="Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,tipo) 
-	values('$Monto','$Fecha','$cod_creditoFK','$cod_cobradorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'Pago Cuota')";	
-	$stmt = $mysqli->prepare($consulta);
-	
+	if($Monto!="0"){
+		$mysqli=conectar_al_servidor();
+		$consulta="Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,tipo) 
+		values('$Monto','$Fecha','$cod_creditoFK','$cod_cobradorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'Pago Cuota')";	
+		$stmt = $mysqli->prepare($consulta);
 
-if ( ! $stmt->execute()) {
-   /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
- mysqli_close($mysqli);
-		 }
+		if ( ! $stmt->execute()) {
+			/*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
+			echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+			exit;
+		}
+		mysqli_close($mysqli);
+	}
 }
 
 function actualizarTotal($cod_venta,$total){

@@ -18066,9 +18066,9 @@ function verificarrefinanciamientoenCuota(){
 	var inptCuotaNroCambioRefinanciamiento2=document.getElementById('inptCuotaNroCambioRefinanciamiento2').value
 	var inptMonotCambioRefinanciamiento2=document.getElementById('inptMonotCambioRefinanciamiento2').value
 	var inptFechaVentaCambioRefinanciamiento2=document.getElementById('inptFechaVentaCambioRefinanciamiento2').value
-	var inptDescuentoCambioRefinanciamiento2=document.getElementById('inptDescuentoCambioRefinanciamiento2').value
-	var inptDiasGraciaRefinanciamiento2=document.getElementById('inptDiasGraciaRefinanciamiento2').value
-	var inptInteresRefinanciamiento2=document.getElementById('inptInteresRefinanciamiento2').value	
+	var inptDescuentoCambioRefinanciamiento2=document.getElementById('inptDescuentoCambioRefinanciamiento2').value || 0;
+	var inptDiasGraciaRefinanciamiento2=document.getElementById('inptDiasGraciaRefinanciamiento2').value || 0;
+	var inptInteresRefinanciamiento2=document.getElementById('inptInteresRefinanciamiento2').value || 0;
   if(codVentaCambio==""){
 	ver_vetana_informativa("Faltan datos", "FALTO SELECCIONAR UN PRODUCTO","#")
 	  return faladvertenciae;;
@@ -18088,6 +18088,10 @@ function verificarrefinanciamientoenCuota(){
   }
   if(inptFechaVentaCambioRefinanciamiento2==""){
 	ver_vetana_informativa("Faltan datos", "FALTO INGRESAR LA FECHA DE PAGO","advertencia");
+	  return false;
+  }
+  if(inputSelectMetodoCambioRefinanciamiento2==""){
+	ver_vetana_informativa("Faltan datos", "FALTO SELECCIONAR EL METODO DE PAGO","advertencia");
 	  return false;
   }
  abmrefinacimientoCuota(inptInteresRefinanciamiento2,inptDescuentoCambioRefinanciamiento2,inptTotalCuotaRefinanciamiento2,inputSelectMetodoCambioRefinanciamiento2,inptCuotaNroCambioRefinanciamiento2,inptMonotCambioRefinanciamiento2,inptFechaVentaCambioRefinanciamiento2,inptDiasGraciaRefinanciamiento2,codVentaCambio)
