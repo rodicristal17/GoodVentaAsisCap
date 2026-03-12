@@ -1338,127 +1338,335 @@ var facturanroPagare=0;
 var ImportePagare=0;
 
 var EntregaPagare=0;
-function imprimirPagare(){
+// function imprimirPagare(){
 	
-	if(EntregaPagare==""){
-		EntregaPagare="0";
-	}
+	// if(EntregaPagare==""){
+		// EntregaPagare="0";
+	// }
 	
-	var t=QuitarSeparadorMilValor(totalesRecibo);
+	// var t=QuitarSeparadorMilValor(totalesRecibo);
 	
-	EntregaPagare=QuitarSeparadorMilValor(EntregaPagare);
+	// EntregaPagare=QuitarSeparadorMilValor(EntregaPagare);
 	
-	let totalpagare = Number(t) - Number(EntregaPagare)
+	// let totalpagare = Number(t) - Number(EntregaPagare)
 	
 	
-  var totaletrasRecibo=numeroALetras(totalpagare, {
-  plural: 'GUARANIES',
-  singular: 'GUARANIES',
-  centPlural: 'GUARANIES',
-  centSingular: 'GUARANIES'
-});
+  // var totaletrasRecibo=numeroALetras(totalpagare, {
+  // plural: 'GUARANIES',
+  // singular: 'GUARANIES',
+  // centPlural: 'GUARANIES',
+  // centSingular: 'GUARANIES'
+// });
 
-var f = new Date();
-	var dia =f.getDate()
-	if(dia<10){
-		dia="0"+dia;
-	}
-	var mes =f.getMonth()+1
-	if(mes<10){
-		mes="0"+mes;
-	}
-	var anho =f.getFullYear()
+// var f = new Date();
+	// var dia =f.getDate()
+	// if(dia<10){
+		// dia="0"+dia;
+	// }
+	// var mes =f.getMonth()+1
+	// if(mes<10){
+		// mes="0"+mes;
+	// }
+	// var anho =f.getFullYear()
 	
-	var emision= f.getFullYear()+"-"+mes+"-"+dia;
+	// var emision= f.getFullYear()+"-"+mes+"-"+dia;
 	
 	
 	
-var fecha = new Date(vencimientopagare);
-	fecha.setDate(fecha.getDate() + 1);
+// var fecha = new Date(vencimientopagare);
+	// fecha.setDate(fecha.getDate() + 1);
 	
-	var dia =fecha.getDate() ;
-	if(dia<10){
-		dia="0"+dia;
-	}
-	var mes =fecha.getMonth()+1
-	var mesletras=obtenerMes(mes);
-	if(mes<10){
-		mes="0"+mes;
-	}
+	// var dia =fecha.getDate() ;
+	// if(dia<10){
+		// dia="0"+dia;
+	// }
+	// var mes =fecha.getMonth()+1
+	// var mesletras=obtenerMes(mes);
+	// if(mes<10){
+		// mes="0"+mes;
+	// }
 	
-	var hora =fecha.getHours()
+	// var hora =fecha.getHours()
 	
-	if(hora<10){
-		hora="0"+hora;
-	}
-	var min =fecha.getMinutes()
-	if(min<10){
-		min="0"+min;
-	}
+	// if(hora<10){
+		// hora="0"+hora;
+	// }
+	// var min =fecha.getMinutes()
+	// if(min<10){
+		// min="0"+min;
+	// }
 	
-	var anhoVencimiendo =fecha.getFullYear()
+	// var anhoVencimiendo =fecha.getFullYear()
 
-	ImportePagare=totalpagare
-	var pagina="<table style='width:92%'>"
-+"<tr>"
-+"<td style='width:50%;text-align:left'>"
-+"<p class='pTituloC'><b>Pagaré Nro:</b>&nbsp&nbsp"+nroPagare+"</p>"
-+"<p class='pTituloC'><b>Fecha de Emisión:</b>&nbsp&nbsp_ _ _ _ _ _ _ _ _ _ _ _</p>"
-+"<p class='pTituloC'><b>Vencimiento:</b>&nbsp&nbsp_ _ _ _ _ _ _ _ _ _ _ _ _ _</p>"
-+"</td>"
-+"<td style='width:50%;text-align:left'>"
-+"<p class='pTituloC'><b>Factura Nro:</b>&nbsp&nbsp"+facturanroPagare+"</p>"
-+"<p class='pTituloC'><b>Importe:</b>&nbsp&nbsp"+separadordemilesnumero(ImportePagare)+"</p>"
-+"</td>"
-+"</tr>"
-+"</table>"
-+"<br>"
-+"<div style='width:92%; text-align:justify; text-justify:inter-word; ' >"
-+"<p class='pTituloC' style='line-height: 17px;'>El día _______________________________________  por este PAGARÉ A LA ORDEN, me(nos) obligo(amos) a PAGAR A LA VISTA, a <strong>FARAONE CAPITAL S.A. </strong> , o a su orden,  sin protesto, la cantidad de guaraníes:"
-+"<b>&nbsp&nbsp"+totaletrasRecibo+"&nbsp&nbsp</b>.-----------------"
-+"<br>"
-+"<br>"
-+"Queda expresamente convenido entre (el acreedor) y el(los) deudor(es), que la falta de pago a su vencimiento de éste pagaré, producirá la caducidad automática y el decaimiento anticipado de los plazos establecidos en todos los demás pagarés o documentos cualquiera sea su naturaleza, causa u origen y causará de pleno derecho el vencimiento anticipado de los pagarés o documentos no vencidos, facultando al acreedor irrevocablemente a exigir el pago inmediato del saldo total de la deuda. La mora se producirá por el mero vencimiento del plazo, sin necesidad de protesto ni de ningún requerimiento judicial o extrajudicial por parte del acreedor.-------------------------------"
-+"<br>"
-+"<br>"
-+"Declaro (amos) expresamente con carácter irrevocable que la(s) firma(s) puestas al pie de este instrumento me(nos) obliga(n) al cumplimiento de todas y cada una de las cuotas establecidas y al condicionamiento general obrante en este pagaré.---------------------------------------"
-+"<br>"
-+"<br>"
-+"Este pagaré se rige por la leyes de la República del Paraguay y en especial por los artículos 51, 53 siguientes y concordantes de la ley 489/95. El atraso igual o superior a 90 días en el pago de una cuota faculta al acreedor de forma irrevocable a la consulta e inclusión a la base de datos de INFORMCONF u otra agencia de informaciones. A todos los efectos legales y procesales queda aceptada la jurisdicción y competencia de los juzgados en lo civil y comercial de la Circunscripción Judicial Guairá.---------"
-+"</p>"
-+"</div>"
-+"<br>"
-+"<br>"
-+"<br>"
-+"<br>"
-+"<table style='width:92%'>"
-+"<tr>"
-+"<td style='width:50%;text-align:left'>"
-+"<p class='pTituloC' style='text-align:center'><b>-------------------------------------</b></p>"
-+"<p class='pTituloC' style='text-align:center'><b>DEUDOR</b></p>"
-+"<p class='pTituloC'><b>NOMBRE:</b>&nbsp&nbsp"+document.getElementById("inptClienteVenta").value+"</p>"
-+"<p class='pTituloC'><b>C.I.:</b>&nbsp&nbsp"+document.getElementById("inptDocClienteVenta").value+"</p>"
-+"<p class='pTituloC'><b>DIRECCIÓN:</b>&nbsp&nbsp"+ZonaRecibo+"</p>"
-+"<p class='pTituloC'><b>TELEF.:</b>&nbsp&nbsp"+telefonoRecino+"</p>"
-+"</td>"
-+"<td style='width:50%;text-align:left'>"
-+"<p class='pTituloC' style='text-align:center'><b>-------------------------------------</b></p>"
-+"<p class='pTituloC' style='text-align:center'><b>CODEUDOR</b></p>"
-+"<p class='pTituloC'><b>NOMBRE:</b>&nbsp&nbsp"+document.getElementById("inptGaranteVenta").value+"</p>"
-+"<p class='pTituloC'><b>C.I.:</b>&nbsp&nbsp"+document.getElementById("inptDocGaranteVenta").value+"</p>"
-+"<p class='pTituloC'><b>DIRECCIÓN:</b>&nbsp&nbsp"+ZonaReciboGarante+"</p>"
-+"<p class='pTituloC'><b>TELEF.:</b>&nbsp&nbsp"+telefonoRecinoGarante+"</p>"
-+"</td>"
-+"</tr>"
-+"</table>"
-document.getElementById("divpagare").innerHTML=pagina;
- var documento= document.getElementById("DivImprimirPagares").innerHTML;
-     localStorage.setItem("reporte", documento);
-	   localStorage.setItem("tipo", "reporte");
+	// ImportePagare=totalpagare
+	// var pagina="<table style='width:92%'>"
+// +"<tr>"
+// +"<td style='width:50%;text-align:left'>"
+// +"<p class='pTituloC'><b>Pagaré Nro:</b>&nbsp&nbsp"+nroPagare+"</p>"
+// +"<p class='pTituloC'><b>Fecha de Emisión:</b>&nbsp&nbsp_ _ _ _ _ _ _ _ _ _ _ _</p>"
+// +"<p class='pTituloC'><b>Vencimiento:</b>&nbsp&nbsp_ _ _ _ _ _ _ _ _ _ _ _ _ _</p>"
+// +"</td>"
+// +"<td style='width:50%;text-align:left'>"
+// +"<p class='pTituloC'><b>Factura Nro:</b>&nbsp&nbsp"+facturanroPagare+"</p>"
+// +"<p class='pTituloC'><b>Importe:</b>&nbsp&nbsp"+separadordemilesnumero(ImportePagare)+"</p>"
+// +"</td>"
+// +"</tr>"
+// +"</table>"
+// +"<br>"
+// +"<div style='width:92%; text-align:justify; text-justify:inter-word; ' >"
+// +"<p class='pTituloC' style='line-height: 17px;'>El día _______________________________________  por este PAGARÉ A LA ORDEN, me(nos) obligo(amos) a PAGAR A LA VISTA, a <strong>FARAONE CAPITAL S.A. </strong> , o a su orden,  sin protesto, la cantidad de guaraníes:"
+// +"<b>&nbsp&nbsp"+totaletrasRecibo+"&nbsp&nbsp</b>.-----------------"
+// +"<br>"
+// +"<br>"
+// +"Queda expresamente convenido entre (el acreedor) y el(los) deudor(es), que la falta de pago a su vencimiento de éste pagaré, producirá la caducidad automática y el decaimiento anticipado de los plazos establecidos en todos los demás pagarés o documentos cualquiera sea su naturaleza, causa u origen y causará de pleno derecho el vencimiento anticipado de los pagarés o documentos no vencidos, facultando al acreedor irrevocablemente a exigir el pago inmediato del saldo total de la deuda. La mora se producirá por el mero vencimiento del plazo, sin necesidad de protesto ni de ningún requerimiento judicial o extrajudicial por parte del acreedor.-------------------------------"
+// +"<br>"
+// +"<br>"
+// +"Declaro (amos) expresamente con carácter irrevocable que la(s) firma(s) puestas al pie de este instrumento me(nos) obliga(n) al cumplimiento de todas y cada una de las cuotas establecidas y al condicionamiento general obrante en este pagaré.---------------------------------------"
+// +"<br>"
+// +"<br>"
+// +"Este pagaré se rige por la leyes de la República del Paraguay y en especial por los artículos 51, 53 siguientes y concordantes de la ley 489/95. El atraso igual o superior a 90 días en el pago de una cuota faculta al acreedor de forma irrevocable a la consulta e inclusión a la base de datos de INFORMCONF u otra agencia de informaciones. A todos los efectos legales y procesales queda aceptada la jurisdicción y competencia de los juzgados en lo civil y comercial de la Circunscripción Judicial Guairá.---------"
+// +"</p>"
+// +"</div>"
+// +"<br>"
+// +"<br>"
+// +"<br>"
+// +"<br>"
+// +"<table style='width:92%'>"
+// +"<tr>"
+// +"<td style='width:50%;text-align:left'>"
+// +"<p class='pTituloC' style='text-align:center'><b>-------------------------------------</b></p>"
+// +"<p class='pTituloC' style='text-align:center'><b>DEUDOR</b></p>"
+// +"<p class='pTituloC'><b>NOMBRE:</b>&nbsp&nbsp"+document.getElementById("inptClienteVenta").value+"</p>"
+// +"<p class='pTituloC'><b>C.I.:</b>&nbsp&nbsp"+document.getElementById("inptDocClienteVenta").value+"</p>"
+// +"<p class='pTituloC'><b>DIRECCIÓN:</b>&nbsp&nbsp"+ZonaRecibo+"</p>"
+// +"<p class='pTituloC'><b>TELEF.:</b>&nbsp&nbsp"+telefonoRecino+"</p>"
+// +"</td>"
+// +"<td style='width:50%;text-align:left'>"
+// +"<p class='pTituloC' style='text-align:center'><b>-------------------------------------</b></p>"
+// +"<p class='pTituloC' style='text-align:center'><b>CODEUDOR</b></p>"
+// +"<p class='pTituloC'><b>NOMBRE:</b>&nbsp&nbsp"+document.getElementById("inptGaranteVenta").value+"</p>"
+// +"<p class='pTituloC'><b>C.I.:</b>&nbsp&nbsp"+document.getElementById("inptDocGaranteVenta").value+"</p>"
+// +"<p class='pTituloC'><b>DIRECCIÓN:</b>&nbsp&nbsp"+ZonaReciboGarante+"</p>"
+// +"<p class='pTituloC'><b>TELEF.:</b>&nbsp&nbsp"+telefonoRecinoGarante+"</p>"
+// +"</td>"
+// +"</tr>"
+// +"</table>"
+// document.getElementById("divpagare").innerHTML=pagina;
+ // var documento= document.getElementById("DivImprimirPagares").innerHTML;
+     // localStorage.setItem("reporte", documento);
+	   // localStorage.setItem("tipo", "reporte");
 	
-	  var URL= "/GoodVentaAsisCap/system/report.html"
-        window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
+	  // var URL= "/GoodVentaAsisCap/system/report.html"
+        // window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
+// }
+
+function imprimirPagare() {
+
+    if (EntregaPagare == "") {
+        EntregaPagare = "0";
+    }
+
+    var t = QuitarSeparadorMilValor(totalesRecibo);
+    EntregaPagare = QuitarSeparadorMilValor(EntregaPagare);
+
+    var totalpagare = Number(t) - Number(EntregaPagare);
+
+    var totaletrasRecibo = numeroALetras(totalpagare, {
+        plural: 'GUARANIES',
+        singular: 'GUARANIES',
+        centPlural: 'GUARANIES',
+        centSingular: 'GUARANIES'
+    });
+
+    var f = new Date();
+    var dia = f.getDate();
+    if (dia < 10) {
+        dia = "0" + dia;
+    }
+
+    var mes = f.getMonth() + 1;
+    if (mes < 10) {
+        mes = "0" + mes;
+    }
+
+    var anho = f.getFullYear();
+    var emision = dia + "/" + mes + "/" + anho;
+
+    var fecha = new Date(vencimientopagare);
+    fecha.setDate(fecha.getDate() + 1);
+
+    var diaV = fecha.getDate();
+    if (diaV < 10) {
+        diaV = "0" + diaV;
+    }
+
+    var mesV = fecha.getMonth() + 1;
+    if (mesV < 10) {
+        mesV = "0" + mesV;
+    }
+
+    var anhoVencimiendo = fecha.getFullYear();
+    var vencimientoTexto = diaV + "/" + mesV + "/" + anhoVencimiendo;
+
+    ImportePagare = totalpagare;
+
+    function armarParrafoConGuion(texto) {
+        return '<p class="parrafo-guion">' + texto + ' <span class="guion-final">- - - - - - - - -</span></p>';
+    }
+	
+	function armarParrafoConGuion2(texto) {
+        return '<p class="parrafo-guion">' + texto + ' <span class="guion-final">- - - - - - - - - - - - - - - - -</span></p>';
+    }
+
+    var lineaDia = '<span class="linea-llenado" style="width:280px;"></span>';
+    var lineaFecha = '<span class="linea-llenado" style="width:170px;"></span>';
+    var lineaVenc = '<span class="linea-llenado" style="width:170px;"></span>';
+
+    var textoInicial = 'El día ' + lineaDia + ' por este PAGARÉ A LA ORDEN, me(nos) obligo(amos) a PAGAR A LA VISTA, a <strong>FARAONE CAPITAL S.A.</strong>, o a su orden, sin protesto, la cantidad de guaraníes: <span class="monto">' + totaletrasRecibo + '</span>';
+
+    var texto1 = 'Queda expresamente convenido entre el acreedor y el(los) deudor(es), que la falta de pago a su vencimiento de este pagaré producirá la caducidad automática y el decaimiento anticipado de los plazos establecidos en todos los demás pagarés o documentos, cualquiera sea su naturaleza, causa u origen, y causará de pleno derecho el vencimiento anticipado de los pagarés o documentos no vencidos, facultando al acreedor irrevocablemente a exigir el pago inmediato del saldo total de la deuda. La mora se producirá por el mero vencimiento del plazo, sin necesidad de protesto ni de ningún requerimiento judicial o extrajudicial por parte del acreedor.';
+
+    var texto2 = 'Declaro(amos) expresamente con carácter irrevocable que la(s) firma(s) puestas al pie de este instrumento me(nos) obliga(n) al cumplimiento de todas y cada una de las cuotas establecidas y al condicionamiento general obrante en este pagaré.';
+
+    var texto3 = 'Este pagaré se rige por las leyes de la República del Paraguay y en especial por los artículos 51, 53 siguientes y concordantes de la Ley 489/95. El atraso igual o superior a 90 días en el pago de una cuota faculta al acreedor de forma irrevocable a la consulta e inclusión a la base de datos de INFORMCONF u otra agencia de informaciones. A todos los efectos legales y procesales queda aceptada la jurisdicción y competencia de los juzgados en lo civil y comercial de la Circunscripción Judicial de Guairá.';
+
+    var pagina = ''
+    + '<style>'
+    + '   .pagare-wrap{'
+    + '       width:92%;'
+    + '       margin:0 auto;'
+    + '       padding:0 8px;'
+    + '       box-sizing:border-box;'
+    + '       font-family:Arial, sans-serif;'
+    + '       color:#000;'
+    + '   }'
+    + '   .pagare-table{'
+    + '       width:100%;'
+    + '       border-collapse:collapse;'
+    + '   }'
+    + '   .pagare-table td{'
+    + '       vertical-align:top;'
+    + '   }'
+    + '   .pagare-texto{'
+    + '       width:100%;'
+    + '       display:block;'
+    + '   }'
+    + '   .parrafo-guion{'
++ '       width:100%;'
++ '       margin:0 0 18px 0;'
++ '       font-size:12px;'
++ '       line-height:1.2;'
++ '       text-align:justify;'
++ '       text-align-last:justify;'
++ '       -moz-text-align-last:justify;'
++ '       text-justify:inter-word;'
++ '       white-space:normal;'
++ '       word-break:normal;'
++ '       overflow-wrap:break-word;'
++ '       hyphens:auto;'
++ '       -webkit-hyphens:auto;'
++ '       -ms-hyphens:auto;'
++ '   }'
+    + '   .guion-final{'
+    + '       white-space:nowrap;'
+    + '       letter-spacing:1px;'
+    + '   }'
+    + '   .monto{'
+    + '       font-weight:bold;'
+    + '   }'
+    + '   .linea-llenado{'
+    + '       display:inline-block;'
+    + '       border-bottom:1px dashed  #000;'
+    + '       height:14px;'
+    + '       vertical-align:middle;'
+    + '   }'
+    + '   .firma-linea{'
+    + '       width:220px;'
+    + '       margin:0 auto 8px auto;'
+    + '       border-top:1px dashed  #000;'
+    + '       height:1px;'
+    + '   }'
+    + '   .centrado{'
+    + '       text-align:center;'
+    + '   }'
+    + '   .pTituloC{'
+    + '       margin:4px 0;'
+    + '       font-size:11px;'
+    + '       line-height:1.4;'
+    + '       color: #232323;'
+    + '   }'
+    + '</style>'
+
+    + '<div class="pagare-wrap">'
+
+    + '    <table class="pagare-table">'
+    + '        <tr>'
+    + '            <td style="width:50%; text-align:left;">'
+    + '                <p class="pTituloC"><b>Pagaré Nro:</b>&nbsp;&nbsp;' + nroPagare + '</p>'
+    + '                <p class="pTituloC"><b>Fecha de Emisión:</b>&nbsp;&nbsp;' + lineaFecha + '</p>'
+    + '                <p class="pTituloC"><b>Vencimiento:</b>&nbsp;&nbsp;' + lineaVenc + '</p>'
+    + '            </td>'
+    + '            <td style="width:50%; text-align:left;">'
+    + '                <p class="pTituloC"><b>Factura Nro:</b>&nbsp;&nbsp;' + facturanroPagare + '</p>'
+    + '                <p class="pTituloC"><b>Importe:</b>&nbsp;&nbsp;' + separadordemilesnumero(ImportePagare) + '</p>'
+    + '            </td>'
+    + '        </tr>'
+    + '    </table>'
+
+    + '    <br>'
+
+    + '    <div class="pagare-texto">'
+    +          armarParrafoConGuion2(textoInicial)
+    +          armarParrafoConGuion2(texto1)
+    +          armarParrafoConGuion2(texto2)
+    +          armarParrafoConGuion(texto3)
+    + '    </div>'
+
+    + '    <br><br><br><br>'
+
+    + '    <table class="pagare-table">'
+    + '        <tr>'
+    + '            <td style="width:50%; text-align:left;">'
+    + '                <div class="firma-linea"></div>'
+    + '                <p class="pTituloC centrado"><b>DEUDOR</b></p>'
+    + '                <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + document.getElementById("inptClienteVenta").value + '</p>'
+    + '                <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + document.getElementById("inptDocClienteVenta").value + '</p>'
+    + '                <p class="pTituloC"><b>DIRECCIÓN:</b>&nbsp;&nbsp;' + ZonaRecibo + '</p>'
+    + '                <p class="pTituloC"><b>TELEF.:</b>&nbsp;&nbsp;' + telefonoRecino + '</p>'
+    + '            </td>'
+    + '            <td style="width:50%; text-align:left;">'
+    + '                <div class="firma-linea"></div>'
+    + '                <p class="pTituloC centrado"><b>CODEUDOR</b></p>'
+    + '                <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + document.getElementById("inptGaranteVenta").value + '</p>'
+    + '                <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + document.getElementById("inptDocGaranteVenta").value + '</p>'
+    + '                <p class="pTituloC"><b>DIRECCIÓN:</b>&nbsp;&nbsp;' + ZonaReciboGarante + '</p>'
+    + '                <p class="pTituloC"><b>TELEF.:</b>&nbsp;&nbsp;' + telefonoRecinoGarante + '</p>'
+    + '            </td>'
+    + '        </tr>'
+    + '    </table>'
+
+    + '</div>';
+
+    document.getElementById("divpagare").innerHTML = pagina;
+
+    var documento = document.getElementById("DivImprimirPagares").innerHTML;
+    localStorage.setItem("reporte", documento);
+    localStorage.setItem("tipo", "reporte");
+
+    var URL = "/GoodVentaAsisCap/system/report.html";
+    window.open(URL, "Imprimir", "toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left=0");
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 function obtenerMes(m){
