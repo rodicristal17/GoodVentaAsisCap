@@ -3613,7 +3613,7 @@ $subtotal=$totalventadetalle-$totaldescuentoaplicados;
 <td  id='td_datos_32' style='display:none'>".$tipo_comprobante ."</td>
 <td  id='td_datos_33' style='display:none'>".$puntoexpedicion ."</td>
 <td  id='td_datos_34' style='display:none'>".$accesocredito ."</td>
-<td  id='td_datos_35' style='display:none'>".number_format($entrega,'0',',','.')."</td>
+<td  id='td_datos_35' style='display:none'>".number_format($entrega || 0,'0',',','.')."</td>
 </tr>
 </table>";
 

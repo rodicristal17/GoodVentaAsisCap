@@ -4783,20 +4783,21 @@ style='width:150px'></select>
 <input type='button' value='Guardar datos' class='btn1' onclick='verificarcamposGasto()' id='btnAbmGastos' />
 </center>
 </div>
-<div class='divMenuf' style='float:left;margin:1%;width: 320px;display: none;' id="divGastoAsociadosGastos">
+<div class='divMenuf' style='float:left;margin:1%;width: 470px;display: none;' id="divGastoAsociadosGastos">
   <table style='width:100%'><tr>
     <td style="width: 50%;text-align: center;">
     <strong id="divNombreProyectoGasto">Nombre proyecto</strong>
   </tr></table>
   <table class="tableCabeceraRegistro">
     <tr>
-      <td class="td_registro" style="width: 10%;">Cod.</td>
-      <td class="td_registro" style="width: 30%;">Monto</td>
-      <td class="td_registro" style="width: 40%;">Fecha</td>
-      <td class="td_registro" style="width: 20%;">Estado</td>
+      <td class="td_registro" style="width: 10%;">#</td>
+      <td class="td_registro" style="width: 15%;">Fecha</td>
+      <td class="td_registro" style="">Descripcion</td>
+      <td class="td_registro" style="width: 10%;">Estado</td>
+      <td class="td_registro" style="width: 15%;">Monto</td>
     </tr>
   </table>
-  <table border="1" cellspacing="1" cellpadding="5" id="divTableProyecto"></table>
+  <table border="1" cellspacing="1" cellpadding="5" id="divTableProyecto" style="max-height: 450px;display: flex;overflow-y: auto;"></table>
 </div>
 </div>
 </center>
