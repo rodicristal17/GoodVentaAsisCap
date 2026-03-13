@@ -233,14 +233,14 @@ function aprobarMovimiento(opcion, elemento= null) {
 			   if (Respuesta == true) {
 				   ver_vetana_informativa("Datos guardados.", "", "info");
 				   switch (ventanaAnterior[ventanaAnterior.length - 1]) {
-					case 'divListadoInterConsulta':
-						buscarInterConsultasYContenido(cod_interConsulta);
-						break;
-					default: 
-						verCerrarAutorizacionEgreso(false);
-						buscarabmGasto();
-						break;
-				   }
+						case 'divListadoInterConsulta':
+							buscarInterConsultasYContenido(cod_interConsulta);
+							break;
+						default: 
+							buscarabmGasto();
+							break;
+					}
+					verCerrarAutorizacionEgreso(false);
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

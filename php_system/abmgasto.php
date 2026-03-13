@@ -340,31 +340,33 @@ if ($operacion == "obtenerGastosAsociados") {
 		$estado= '<span style="text-transform: capitalize;" class="badge bg-';
 		switch ($gast['estado']) {
 			case 'Activo':
-				$estado .= 'primary">Pagado';
+				$estado .= 'primary">Pagado</span>';
 				break;
 			case 'Rechazado':
-				$estado .= 'secondary">'.$gast['estado'];
+				$estado .= 'secondary">'.$gast['estado'].'</span>';
 				break;
 			case 'pendiente':
-				$estado .= 'warning">'.$gast['estado'];
+				$estado .= 'warning">'.$gast['estado'].'</span>';
 				break;
 			case 'solicitado':
 				$fechaActual = date('Y-m-d');
 				$fechaGasto = date('Y-m-d', strtotime($gast['fecha']));
 				if ($fechaActual >= $fechaGasto) {
-					$estado .= 'danger">'.$gast['estado'];
+					$estado .= 'danger">'.$gast['estado'].'</span>'
+					.'<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;margin-left: 5px;"></i>'
+					.'<i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
 				} else {
-					$estado .= 'warning">Pendiente';
+					$estado .= 'warning">Pendiente</span>';
 				}
 				break;
 		}
-		$estado .= '</span>';
+
 		$pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$idgastos."</td>
 			<td  style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
 			<td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>
 			<td  style='border: none;'>".$gast['descripcion']."</td>
-			<td  id='td_datos_5' style='width: 10%;border: none;'>".$estado."</td>
+			<td  id='td_datos_5' style='width: 20%;border: none;'>".$estado."</td>
 			<td  id='td_datos_1' style='width: 15%;border: none;'>". number_format($gast['monto'],'0',',','.')."</td>
 			<td  id='td_datos_2' style='width:10%; display: none;'>".$gast['motivo']."</td>
 			<td  id='td_datos_16' style='display: none;'>".$gast['interconsulta_nombre']."</td>
