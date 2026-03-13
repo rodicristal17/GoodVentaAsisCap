@@ -530,6 +530,10 @@
                                 </tr>
                             </thead>
                             <tbody id="tableExtractoGastosInterConsulta"></tbody>
+                            <tfoot style="border-top: 1px solid #dee2e6;border-button: hidden;"><tr>
+                                <th colspan="4">Monto pendiente:</th>
+                                <th id="tableExtractoGastosInterConsultaTotal">0</th>
+                            </tr></tfoot>
                             </table>
                         </div>
                     </div>
@@ -551,7 +555,7 @@
             $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta']));
     }
 
     function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {

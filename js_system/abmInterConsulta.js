@@ -920,9 +920,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 }
 
 function cargarFlujoGastosInterConsulta(codInterConsulta) {
-    const contenedor = document.getElementById("contenedorFlujoGastosInterConsulta");
-    if (!contenedor) {return;}
-    contenedor.innerHTML = '<div class="text-secondary" style="padding: 8px;">Cargando gastos...</div>';
+    document.getElementById("contenedorFlujoGastosInterConsulta").innerHTML = '<div class="text-secondary" style="padding: 8px;">Cargando gastos...</div>';
 
     obtener_datos_user();
     var datos = new FormData();
@@ -948,13 +946,13 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
                 const respuesta = $.parseJSON(responseText);
                 if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
                 if (respuesta["1"] === "exito") {
-                    contenedor.innerHTML = respuesta["2"] || '<div class="text-secondary" style="padding: 8px;">Sin gastos asociados.</div>';
+                    document.getElementById("contenedorFlujoGastosInterConsulta").innerHTML = respuesta["2"] || '<div class="text-secondary" style="padding: 8px;">Sin gastos asociados.</div>';
                 } else {
-                    contenedor.innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
+                    document.getElementById("contenedorFlujoGastosInterConsulta").innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
                 }
             } catch (error) {
                 if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
-                contenedor.innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
+                document.getElementById("contenedorFlujoGastosInterConsulta").innerHTML = '<div class="text-danger" style="padding: 8px;">No se pudo cargar el flujo de gastos.</div>';
             }
         }
     });

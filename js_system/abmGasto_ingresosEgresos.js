@@ -568,6 +568,7 @@ function mostrarExtractoGasto(id_gastos) {
 
 	document.getElementById('tableExtractoGastosInterConsulta').innerHTML= paginacargando;
 	document.getElementById('tituloExtractoGastosInterconsulta').innerHTML= "Cargando...";
+	document.getElementById('tableExtractoGastosInterConsultaTotal').innerHTML= "0";
 
 	var datos = new FormData();
 	obtener_datos_user();
@@ -626,6 +627,7 @@ function mostrarExtractoGasto(id_gastos) {
 			   if (Respuesta == true) {
 				   document.getElementById('tituloExtractoGastosInterconsulta').innerHTML= "Extracto de " + datos["4"];
 				   document.getElementById('tableExtractoGastosInterConsulta').innerHTML= datos["2"];
+				   document.getElementById('tableExtractoGastosInterConsultaTotal').innerHTML= datos["5"];
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

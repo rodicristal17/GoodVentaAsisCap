@@ -331,9 +331,12 @@ if ($operacion == "obtenerGastosAsociados") {
 	$idgastos= mb_convert_encoding((string)($_POST['idgastos']), 'ISO-8859-1', 'UTF-8');
 	
 	$gastos= obtenerGastosAsociados($idgastos);
+
+	$total_pendiente= 0;
 	// Prepara la vista
 	$pagina= "";
 	foreach ($gastos as $key => $gast) {
+		$total_pendiente += $gast['monto'];
 		$estado= '<span style="text-transform: capitalize;" class="badge bg-';
 		switch ($gast['estado']) {
 			case 'Activo':
@@ -385,7 +388,7 @@ if ($operacion == "obtenerGastosAsociados") {
 		</tr>";
 	}
 
-	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $gastos[0], "4" => $gastos[0]['descripcion']));
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $gastos[0], "4" => $gastos[0]['descripcion'], "5" => number_format($total_pendiente, 0, ',', '.')));
 	exit;
 }
 
