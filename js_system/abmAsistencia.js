@@ -66,8 +66,8 @@ function registrarAsistencia() {
 				Respuesta = datos["1"];
 				console.log(datos);
 				if (Respuesta == "exito") {
-					//location.reload();
                     //obtenerAsistenciaUsuario();
+					location.reload();
 				} else {
 					let mensaje= datos["2"];
 					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
@@ -294,6 +294,8 @@ function obtenermasVistaInformeAsistencia() {
 }
 
 function obtenerAsistenciaUsuario() {
+	// Bloquea el boton para evitar multiples marcas
+	document.getElementById("btnRegistrarAsistencia").disabled = true;
 	let fechaActual= new Date();
 	
 	obtener_datos_user()

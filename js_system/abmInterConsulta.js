@@ -379,6 +379,7 @@ function verificarCamposInterConsulta() {
     const tipo= document.getElementById('inptTipoAbmInterConsulta').value;
     const local= document.getElementById('inptLocalAbmInterConsulta').value;
     const monto_limite= document.getElementById('inptMontoLimiteAbmInterConsulta').value.replace('.', '');
+    const observacion= document.getElementById('inptObservacionAbmInterConsulta').value;
 
     // Verifica si el campo para fusionar esta vacio
     const id_interconsulta_destino = document.getElementById('inptCodInterc1AbmInterConsulta').value;
@@ -403,7 +404,7 @@ function verificarCamposInterConsulta() {
 
     // Verificar si el asunto es uno seleccionado del datalist o no
     const datalist = document.getElementById('listAsuntoAbmInterConsulta');
-    if (datalist) {
+    if (datalist && !cod_interConsulta) {
         const optionCoincidente = Array.from(datalist.options).find(opt => opt.value === asunto);
 
         if (optionCoincidente && !confirm("Ya existe una interconsulta con ese nombre, desea crearlo de todos modos?")) {
@@ -415,10 +416,10 @@ function verificarCamposInterConsulta() {
         }
     }
     
-    abmInterConsulta(asunto, estado, tipo, local, monto_limite);
+    abmInterConsulta(asunto, estado, tipo, local, monto_limite, observacion);
 }
 
-function abmInterConsulta(asunto, estado, tipo, local, monto_limite) {
+function abmInterConsulta(asunto, estado, tipo, local, monto_limite, observacion) {
     // Verificar si se crea o se edita la interconsulta
     if (cod_interConsulta) {
         if(controlacceso("EDITARINTERCONSULTA","accion")==false){ return;}
@@ -436,6 +437,7 @@ function abmInterConsulta(asunto, estado, tipo, local, monto_limite) {
     datos.append("accion", 'nuevo/editar interconsulta');
     datos.append("estado", estado);
     datos.append("asunto", asunto);
+    datos.append("observacion", observacion);
     datos.append("tipo", tipo);
     datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("cod_ventaFK", cod_ventaFKConsulta);
@@ -1307,8 +1309,9 @@ function obtenerDetallesInterConsulta(origen) {
             document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_31')?.textContent.trim();
             document.getElementById('inptTipoAbmInterConsulta').value= elemento.querySelector('#td_datos_33')?.textContent.trim();
             document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_32')?.textContent.trim();
-            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_38')?.textContent.trim();;
+            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_38')?.textContent.trim();
             document.getElementById('inptMontoLimiteAbmInterConsulta').value= elemento.querySelector('#td_datos_41')?.textContent.trim();
+            document.getElementById('inptObservacionAbmInterConsulta').value= elemento.querySelector('#td_datos_41')?.textContent.trim();
             separadordemiles(document.getElementById('inptMontoLimiteAbmInterConsulta'));
             verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');
             buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);

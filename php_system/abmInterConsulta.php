@@ -101,13 +101,14 @@
             case 'nuevo/editar interconsulta':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
+                $observacion= isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
                 $tipo= isset($_POST['tipo']) ? mb_convert_encoding((string)($_POST['tipo']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $monto_limite= isset($_POST['monto_limite']) ? mb_convert_encoding((string)($_POST['monto_limite']), 'ISO-8859-1', 'UTF-8') : null;
 
-                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK, $monto_limite);
+                $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $observacion, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK, $monto_limite);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
                 break;
             case 'marcarMensajesLeido':
@@ -338,7 +339,7 @@
         }
 
         // Actualiza el estado de la interconsulta
-        abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], 'inactivo', '', '', '', $cod_usuarioFK, $registroInterc['cod_localFK'], '');
+        abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], '', 'inactivo', '', '', '', $cod_usuarioFK, $registroInterc['cod_localFK'], '');
     }
 
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
@@ -449,7 +450,7 @@
             <div style="display: flex;">
             <div style="flex: 0.5;padding-top: 10px;">
             <strong style="font-size: 14pt;">Mencionados</strong>
-            <ul style="overflow-y: auto; height: 150px;">
+            <ul style="overflow-y: auto; height: 190px;">
             '.$mencionesElemento.'
             </ul>
             </div>
@@ -487,7 +488,13 @@
             if ($valueInter['monto_limite']) {
                 $pagina .= '<div style="margin-bottom: 5px;">
                 <span class="fw-bold">Monto limite: </span>
-                <span>'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
+                <span id="td_datos_42">'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
+                </div>';
+            };
+            if ($valueInter['observacion']) {
+                $pagina .= '<div style="margin-bottom: 5px;">
+                <span class="fw-bold">Observaciones: </span>
+                <span>'.$valueInter['observacion'].'</span>
                 </div>';
             };
             $pagina .= '</div>';
@@ -497,7 +504,7 @@
                     <strong style="font-size: 14pt; cursor: pointer;" onmouseover="this.style.color=\'#0066cc\'; this.style.textDecoration=\'underline\';" onmouseout="this.style.color=\'black\'; this.style.textDecoration=\'none\';">Flujo de gastos: </strong>
                     <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true); document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\';cod_interConsulta= '.$valueInter['cod_interConsulta'].'">
                 </span>
-                <div id="contenedorFlujoGastosInterConsulta" style="overflow-y: auto; height: 150px;">
+                <div id="contenedorFlujoGastosInterConsulta" style="overflow-y: auto; height: 190px;">
                     <div class="text-secondary" style="padding: 8px;">Cargando gastos...</div>
                 </div>
             </div>';
@@ -1493,12 +1500,12 @@
         return $registros;
     }
 
-    function abmInterConsulta($cod_interConsulta, $asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit, $cod_localFK, $monto_limite) {
+    function abmInterConsulta($cod_interConsulta, $asunto, $observacion, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit, $cod_localFK, $monto_limite) {
         $mysqli = conectar_al_servidor();
         if (empty($cod_interConsulta)) {
-            $sql = "INSERT INTO interconsulta (asunto, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion, cod_localFK, monto_limite) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)";
+            $sql = "INSERT INTO interconsulta (asunto, observacion, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion, cod_localFK, monto_limite) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('sssiiii',$asunto, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK, $monto_limite);
+            $stmt->bind_param('ssssiiii',$asunto, $observacion, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK, $monto_limite);
         } else {
             // Obtiene los datos de la interconsulta antes que sea modificada
             $interconsulta_original= obtenerInterConsulta(array(
@@ -1536,6 +1543,12 @@
                 $ss .= "s";
                 $parametros[] = $estado;
                 $nuevos_datos['estado'] = $estado;
+            }
+            if (!empty($observacion)) {
+                $atributos .= ", observacion= ?";
+                $ss .= "s";
+                $parametros[] = $observacion;
+                $nuevos_datos['observacion'] = $observacion;
             }
             if (!empty($tipo)) {
                 $atributos .= ", tipo= ?";

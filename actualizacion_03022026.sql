@@ -164,5 +164,8 @@ UPDATE gastos SET estado="Activo" WHERE estado like 'Activo and g.idgastos%';
 
 UPDATE gastos SET modalidad= 'credito', estado= 'pendiente' WHERE motivo like 'Cuota % de % (%)';
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.68', detalles='Periodicidad agregada a gastos', fecha='2026-02-26' WHERE idhistorialactualizacion= 2;
+
+ALTER TABLE interconsulta ADD COLUMN observacion VARCHAR(255);
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
