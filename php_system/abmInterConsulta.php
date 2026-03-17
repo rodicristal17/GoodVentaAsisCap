@@ -1503,7 +1503,7 @@
     function abmInterConsulta($cod_interConsulta, $asunto, $observacion, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_usuarioFK_edit, $cod_localFK, $monto_limite) {
         $mysqli = conectar_al_servidor();
         if (empty($cod_interConsulta)) {
-            $sql = "INSERT INTO interconsulta (asunto, observacion, estado, tipo, cod_ventaFK,cod_usuarioFK_create, fecha_creacion, cod_localFK, monto_limite) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)";
+            $sql = "INSERT INTO interconsulta (asunto, observacion, estado, tipo, cod_ventaFK, cod_usuarioFK_create, fecha_creacion, cod_localFK, monto_limite) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)";
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('ssssiiii',$asunto, $observacion, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK, $monto_limite);
         } else {
