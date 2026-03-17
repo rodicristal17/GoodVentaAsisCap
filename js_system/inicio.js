@@ -601,7 +601,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.68";
+var codigodeactualizacion="X-GT-1-JMTG-V1.69";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -1427,7 +1427,7 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptMartesUser').value = "";
 	document.getElementById('inptMiercolesUser').value = "";
 	document.getElementById('inptJuevesUser').value = "";
-	document.getElementById('inptViernesUse').value = "";
+	document.getElementById('inptViernesUser').value = "";
 	document.getElementById('inptSabadoUser').value = "";
 
 	const fecahActual= new Date();
