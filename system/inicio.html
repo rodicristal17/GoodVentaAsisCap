@@ -1845,7 +1845,7 @@ title='Volver Atras' onclick='verCerrarVentanaAbmUsuarios("2","")' />
 
 <center>
 <div style='overflow:auto'>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:550px'>
+<div class='divMenuf' style='float:left;margin:1%;width:45%;height:615px'>
  
  
  <p class='pTituloC'>Foto Perfil</p>
@@ -1911,8 +1911,30 @@ id='inptNroTelefReferenciaUser' style='width:200px;' />
 </td>
 </tr>
 </table>
+ 
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Estado:</p>
+<select class="inputSelect" id="inptEstadoUser" style='width:200px;'>
+<option value="Activo">ACTIVO</option>
+<option value="Inactivo">INACTIVO</option>
+</select>
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Direccion :</p>
+<textarea class="inputText" id="inptDireccionUser" style='height:80%;'>
+</textarea>
+</td>
+</tr>
+</table>
 </div>
-<div class='divMenuf' style='float:left;margin:1%;width:45%;height:550px'>
+<div class='divMenuf' style='float:left;margin:1%;width:45%;height:615px'>
   
 <table style='width:100%'>
 <tr>
@@ -1943,7 +1965,8 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
- 
+
+
 <table style='width:100%'>
 <tr>
 <td>
@@ -1968,28 +1991,6 @@ style='width:280px;'></select>
 </td>
 </tr>
 </table>
- 
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Estado:</p>
-<select class="inputSelect" id="inptEstadoUser" style='width:200px;'>
-<option value="Activo">ACTIVO</option>
-<option value="Inactivo">INACTIVO</option>
-</select>
-</td>
-</tr>
-</table>
-
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Dereccion :</p>
-<textarea class="inputText" id="inptDireccionUser" style='height:80%;'>
-</textarea>
-</td>
-</tr>
-</table>
 
 <table style='width:100%'>
 <tr>
@@ -1997,6 +1998,50 @@ style='width:280px;'></select>
 <p class='pTituloC' >Tipo de relacionamiento:</p>
 <textarea class="inputText" id="inptTipoRelacionamientoUser" style='height:80%;'>
 </textarea>
+</td>
+</tr>
+</table>
+
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Dias laborales:</p>
+<table class="tableCabeceraRegistro">
+<tr>
+<td class="td_registro" style="width:40%;">
+DIA
+</td>
+<td class="td_registro">
+HORA ENTRADA
+</td>
+</tr>
+</table>
+<table>
+  <tr>
+    <td style="width: 40%;">Lunes</td>
+    <td><input type="time" class="inputText" id="inptLunesUser"/></td>
+  </tr>
+  <tr>
+    <td style="width: 40%;">Martes</td>
+    <td><input type="time" class="inputText" id="inptMartesUser"/></td>
+  </tr>
+  <tr>
+    <td style="width: 40%;">Miercoles</td>
+    <td><input type="time" class="inputText" id="inptMiercolesUser"/></td>
+  </tr>
+  <tr>
+    <td style="width: 40%;">Jueves</td>
+    <td><input type="time" class="inputText" id="inptJuevesUser"/></td>
+  </tr>
+  <tr>
+    <td style="width: 40%;">Viernes</td>
+    <td><input type="time" class="inputText" id="inptViernesUser"/></td>
+  </tr>
+  <tr>
+    <td style="width: 40%;">Sabado</td>
+    <td><input type="time" class="inputText" id="inptSabadoUser"/></td>
+  </tr>
+</table>
 </td>
 </tr>
 </table>
@@ -17378,6 +17423,69 @@ ZONA
 </table>
 </div>
 
+<div class="principal2" style="display: none;" id="divJustificacionAsistencia">
+  <center>
+<div class="divAbms" style="width: 350px;">
+<table id="tdEfectoJustificacionAsistencia" class="magictime slideDownReturn" style="width:100%;">
+  <tr><td><center>
+    <table class="tableMenuZ"><tr>
+      <td style="width:100%;text-align:left">
+      <p class="pTituloB"><b style="font-size: 30px;">Justificar Entrada Tardia</b></p>
+      </td>
+    </tr></table>
+    <br>
+    <center>
+      <div class="divMenuf">
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td>
+                <p class="pTituloC">Usuario:</p>
+                <input type="text" class="inputTextDisable" style="width:250px" id="inptNombreUsuarioJustificacionAsistencia" disabled="">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td>
+                <p class="pTituloC">Hora de entrada:</p>
+                <input type="text" class="inputTextDisable" style="width:250px" id="inptHoraEntradaJustificacionAsistencia" disabled="">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td>
+                <p class="pTituloC">Hora registrada:</p>
+                <input type="text" class="inputTextDisable" style="width:250px" id="inptHoraRegistradaJustificacionAsistencia" disabled="">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td>
+                <p class="pTituloC">Justificacion* :</p>
+                <textarea class="textarea1" placeholder="Obligatorio (*)" id="inptJustificacionJustificacionAsistencia" style="height:120px"></textarea>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="divMenuf">
+        <input class="btn1" type="button" style="width: fit-content;" value="Guardar" onclick="justificarAsistencia()">
+      </div>
+    </center>
+  </center></td></tr>
+</table>
+</div>
+</center>
+</div>
 <div class="principal2" style="display: none;" id="divInformeAsistencia">
   <table style="width:100%;height:100%" id="tdEfectoInformeAsistenca" class="magictime slideDownReturn">
     <tbody>
@@ -17444,7 +17552,7 @@ ZONA
                       <td class="td_registro" style="width:10%;">
                         #
                       </td>
-                      <td class="td_registro" style="width:45%;">
+                      <td class="td_registro" style="width:20%;">
                         USUARIO
                       </td>
                       <td class="td_registro" style="width:15%;">
@@ -17459,29 +17567,34 @@ ZONA
                       <td class="td_registro" style="width:10%;">
                         IP
                       </td>
+                      <td class="td_registro" style="width:25%;">
+                        JUSTIFICACION
+                      </td>
                     </tr>
                   </tbody>
                 </table>
                 <table class="tableCabeceraRegistro" id="tdTituloAudiProducto">
                   <tbody>
                     <tr>
-                      <td class="td_registro" style="width:10%;">
+                      <td class="td_registro" style="width:9%;">
                         <input class="inputfiltro" type="number" id="inptInformeAsistencia1" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
                       </td>
-                      <td><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia1')"></td>
-                      <td class="td_registro" style="width:45%;">
+                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia1')"></td>
+                      <td class="td_registro" style="width:19%;">
                         <input class="inputfiltro" type="text" id="inptInformeAsistencia2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
                       </td>
-                      <td><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia2')"></td>
-                      <td class="td_registro" style="width:15%;">
+                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia2')"></td>
+                      <td class="td_registro" style="width:19%;">
                         <input class="inputfiltro" type="Date" id="inptInformeAsistencia3" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
                       </td>
-                      <td><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia3')"></td>
+                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia3')"></td>
                       <td class="td_registro" style="width:10%;">
                       </td>
                       <td class="td_registro" style="width:10%;">
                       </td>
                       <td class="td_registro" style="width:10%;">
+                      </td>
+                      <td class="td_registro" style="width:20%;">
                       </td>
                     </tr>
                   </tbody>
@@ -17521,7 +17634,6 @@ ZONA
                     </tbody>
                   </table>
                 </div>
-                <br>
               </div>
             </div>
           </center>

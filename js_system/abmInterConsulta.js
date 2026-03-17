@@ -1414,6 +1414,7 @@ function limpiarcamposInterconsulta() {
     document.getElementById('inptMontoLimiteAbmInterConsulta').value= "";
     document.getElementById('inptInterc1AbmInterConsulta').value= "";
     document.getElementById('inptCodInterc1AbmInterConsulta').value= "";
+    document.getElementById('inptObservacionAbmInterConsulta').value= "";
 
     document.getElementById('list_abm_interConsulta_asoc').innerHTML= "";
     document.getElementById('list_detalles_interconsultas_asoc').innerHTML= "";

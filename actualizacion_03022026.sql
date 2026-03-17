@@ -167,5 +167,13 @@ UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.68', detalles='Periodic
 
 ALTER TABLE interconsulta ADD COLUMN observacion VARCHAR(255);
 
+ALTER TABLE asistencia ADD COLUMN justificacion VARCHAR(255);
+ALTER TABLE usuario ADD COLUMN hora_entrada_lunes TIME;
+ALTER TABLE usuario ADD COLUMN hora_entrada_martes TIME;
+ALTER TABLE usuario ADD COLUMN hora_entrada_miercoles TIME;
+ALTER TABLE usuario ADD COLUMN hora_entrada_jueves TIME;
+ALTER TABLE usuario ADD COLUMN hora_entrada_viernes TIME;
+ALTER TABLE usuario ADD COLUMN hora_entrada_sabado TIME;
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

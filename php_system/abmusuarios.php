@@ -73,7 +73,14 @@ $tipo_relacion = mb_convert_encoding((string)($tipo_relacion), 'ISO-8859-1', 'UT
 $fecha_creacion = $_POST['fecha_creacion'];
 $fecha_creacion = mb_convert_encoding((string)($fecha_creacion), 'ISO-8859-1', 'UTF-8');
 
-abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$operacion);
+$hora_entrada_lunes= (isset($_POST['hora_entrada_lunes']) && !empty($_POST['hora_entrada_lunes'])) ? mb_convert_encoding((string)($_POST['hora_entrada_lunes']), 'ISO-8859-1', 'UTF-8') : NULL;
+$hora_entrada_martes= (isset($_POST['hora_entrada_martes']) && !empty($_POST['hora_entrada_martes'])) ? mb_convert_encoding((string)($_POST['hora_entrada_martes']), 'ISO-8859-1', 'UTF-8') : NULL;
+$hora_entrada_miercoles= (isset($_POST['hora_entrada_miercoles']) && !empty($_POST['hora_entrada_miercoles'])) ? mb_convert_encoding((string)($_POST['hora_entrada_miercoles']), 'ISO-8859-1', 'UTF-8') : NULL;
+$hora_entrada_jueves= (isset($_POST['hora_entrada_jueves']) && !empty($_POST['hora_entrada_jueves'])) ? mb_convert_encoding((string)($_POST['hora_entrada_jueves']), 'ISO-8859-1', 'UTF-8') : NULL;
+$hora_entrada_viernes= (isset($_POST['hora_entrada_viernes']) && !empty($_POST['hora_entrada_viernes'])) ? mb_convert_encoding((string)($_POST['hora_entrada_viernes']), 'ISO-8859-1', 'UTF-8') : NULL;
+$hora_entrada_sabado= (isset($_POST['hora_entrada_sabado']) && !empty($_POST['hora_entrada_sabado'])) ? mb_convert_encoding((string)($_POST['hora_entrada_sabado']), 'ISO-8859-1', 'UTF-8') : NULL;
+
+abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$hora_entrada_lunes, $hora_entrada_martes, $hora_entrada_miercoles, $hora_entrada_jueves, $hora_entrada_viernes, $hora_entrada_sabado, $operacion);
 }
 
  
@@ -281,7 +288,7 @@ exit;
 }
 
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$operacion)
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves, $hora_entrada_viernes,$hora_entrada_sabado,$operacion)
 {
 
 
@@ -332,11 +339,11 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='sssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion);
 
-$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion)
-values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW())";
+$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion,hora_entrada_lunes,hora_entrada_martes,hora_entrada_miercoles,hora_entrada_jueves,hora_entrada_viernes,hora_entrada_sabado)
+values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW(),?,?,?,?,?,?)";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssss';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo);
+$ss='sssssssSSSSSS';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves,$hora_entrada_viernes,$hora_entrada_sabado);
 
 $con=rand(5, 1500);
 
@@ -362,10 +369,10 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion,$cod_persona);
 
-$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=? where cod_usuario=? ";
+$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=?,hora_entrada_lunes=?, hora_entrada_martes=?, hora_entrada_miercoles=?, hora_entrada_jueves=?, hora_entrada_viernes=? , hora_entrada_sabado=? where cod_usuario=? ";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssissi';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$cod_usuario);
+$ss='sssssissssssssi';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves,$hora_entrada_viernes,$hora_entrada_sabado,$cod_usuario);
 
 }
 
@@ -526,7 +533,7 @@ if($local!=""){
 
 
 $sql= "select us.cod_usuario,us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
-pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
+pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,us.hora_entrada_lunes,us.hora_entrada_martes,us.hora_entrada_miercoles,us.hora_entrada_jueves,us.hora_entrada_viernes,us.hora_entrada_sabado,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona ".$sqlFiltro;
  
@@ -565,6 +572,13 @@ $direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-88
 $tipo_relacion = mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
 $fecha_creacion = mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
 
+$hora_entrada_lunes = mb_convert_encoding((string)($valor['hora_entrada_lunes']), 'UTF-8', 'ISO-8859-1');
+$hora_entrada_martes = mb_convert_encoding((string)($valor['hora_entrada_martes']), 'UTF-8', 'ISO-8859-1');
+$hora_entrada_miercoles = mb_convert_encoding((string)($valor['hora_entrada_miercoles']), 'UTF-8', 'ISO-8859-1');
+$hora_entrada_jueves = mb_convert_encoding((string)($valor['hora_entrada_jueves']), 'UTF-8', 'ISO-8859-1');
+$hora_entrada_viernes = mb_convert_encoding((string)($valor['hora_entrada_viernes']), 'UTF-8', 'ISO-8859-1');
+$hora_entrada_sabado = mb_convert_encoding((string)($valor['hora_entrada_sabado']), 'UTF-8', 'ISO-8859-1');
+
 	    	 $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
@@ -585,6 +599,12 @@ $fecha_creacion = mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8
 <td  id='td_datos_13' style='display:none'>".$direccion."</td>
 <td  id='td_datos_14' style='display:none'>".$tipo_relacion."</td>
 <td  id='td_datos_15' style='display:none'>".$fecha_creacion."</td>
+<td id='td_datos_16' style='display: none'>".$hora_entrada_lunes."</td>
+<td id='td_datos_17' style='display: none'>".$hora_entrada_martes."</td>
+<td id='td_datos_18' style='display: none'>".$hora_entrada_miercoles."</td>
+<td id='td_datos_19' style='display: none'>".$hora_entrada_jueves."</td>
+<td id='td_datos_20' style='display: none'>".$hora_entrada_viernes."</td>
+<td id='td_datos_21' style='display: none'>".$hora_entrada_sabado."</td>
 </tr>
 </table>";
 

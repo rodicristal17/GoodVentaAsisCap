@@ -66,8 +66,18 @@ function registrarAsistencia() {
 				Respuesta = datos["1"];
 				console.log(datos);
 				if (Respuesta == "exito") {
-                    //obtenerAsistenciaUsuario();
-					location.reload();
+					// Se evalua si es entrada y si esta en hora para pedir justificacion
+					if (!cod_asistencia && datos['llegada_tardia'] == 1) {
+						cod_asistencia= datos['cod_asistencia'];
+						document.getElementById('divJustificacionAsistencia').style.display= "";
+						document.getElementById('inptNombreUsuarioJustificacionAsistencia').value= document.getElementById('nombrePerfilUsuario').innerHTML;
+						document.getElementById('inptHoraEntradaJustificacionAsistencia').value= datos['hora_entrada_usuario'];
+						document.getElementById('inptHoraRegistradaJustificacionAsistencia').value= datos['hora_entrada'];
+						document.getElementById('inptJustificacionJustificacionAsistencia').value= "";
+					} else {
+						//obtenerAsistenciaUsuario();
+						location.reload();
+					}
 				} else {
 					let mensaje= datos["2"];
 					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
@@ -75,6 +85,83 @@ function registrarAsistencia() {
 					if (Respuesta == 'red') {
 						obtenerAsistenciaUsuario();
 					}
+				}
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+				document.getElementById("btnRegistrarAsistencia").disabled = false;
+            }
+		}
+	});
+}
+
+function justificarAsistencia() {
+	const inptJustificacionJustificacionAsistencia= document.getElementById('inptJustificacionJustificacionAsistencia').value
+
+	obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("accion", "registrarJustificacion");
+	datos.append("justificacion", inptJustificacionJustificacionAsistencia);
+	datos.append("cod_asistencia", cod_asistencia);
+
+	verCerrarEfectoCargando("1")
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("Error de conexion al registrar asistencia");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta);
+			verCerrarEfectoCargando("")
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				console.log(datos);
+				if (Respuesta == "exito") {
+					//obtenerAsistenciaUsuario();
+					ver_vetana_informativa("Datos guardados correctamente");
+					setTimeout(() => {
+						location.reload();
+					}, 1000);
+				} else {
+					let mensaje= datos["2"];
+					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
+					ver_vetana_informativa(mensaje);
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -100,7 +187,7 @@ function obtenerVistaInformeAsistencia() {
 	const usuario= document.getElementById("inptInformeAsistencia2").value;
 	const local= document.getElementById('inptLocalInformeAsistencia').value;
 	const fecha= document.getElementById('inptInformeAsistencia3').value;
-	const cod_asistencia= document.getElementById('inptInformeAsistencia1').value;
+	const cod_asistencia_filtro= document.getElementById('inptInformeAsistencia1').value;
 
 	// Prioriza la fecha individual de la tabla
 	if (fecha != "") {
@@ -118,7 +205,7 @@ function obtenerVistaInformeAsistencia() {
 	datos.append("fecha_hasta", fecha_hasta);
 	datos.append("nombre_usuario", usuario);
 	datos.append("cod_local", local);
-	datos.append("cod_asistencia", cod_asistencia);
+	datos.append("cod_asistencia", cod_asistencia_filtro);
 	datos.append("limite", 10);
 
 	verCerrarEfectoCargando("1")
@@ -171,6 +258,8 @@ function obtenerVistaInformeAsistencia() {
 
 					// Controla el progreso de la busqueda
 					if(totalregistroinformeAsistencia>registrocargadoinformeAsistencia){
+						document.getElementById("divProgressInformeAsistencia").style.backgroundColor='';
+						
 						controldebusquedadInformeAsistencia=true;
 						var porce=((registrocargadoinformeAsistencia*100)/totalregistroinformeAsistencia).toFixed(0)
 						document.getElementById('tbProcessInformeAsistencia').style.display= ""
@@ -200,7 +289,7 @@ function obtenermasVistaInformeAsistencia() {
 	const usuario= document.getElementById("inptInformeAsistencia2").value;
 	const local= document.getElementById('inptLocalInformeAsistencia').value;
 	const fecha= document.getElementById('inptInformeAsistencia3').value;
-	const cod_asistencia= document.getElementById('inptInformeAsistencia1').value;
+	const cod_asistencia_filtro= document.getElementById('inptInformeAsistencia1').value;
 
 	// Prioriza la fecha individual de la tabla
 	if (fecha != "") {
@@ -218,7 +307,7 @@ function obtenermasVistaInformeAsistencia() {
 	datos.append("fecha_hasta", fecha_hasta);
 	datos.append("nombre_usuario", usuario);
 	datos.append("cod_local", local);
-	datos.append("cod_asistencia", cod_asistencia);
+	datos.append("cod_asistencia", cod_asistencia_filtro);
 	datos.append("limite", "10 OFFSET "+registrocargadoinformeAsistencia);
 
 	verCerrarEfectoCargando("1")

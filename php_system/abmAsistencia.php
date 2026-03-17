@@ -28,8 +28,56 @@
                 $hora_entrada= isset($_POST['hora_entrada']) ? mb_convert_encoding((string)($_POST['hora_entrada']), 'ISO-8859-1', 'UTF-8') : $horaActual;
                 $hora_salida = isset($_POST['hora_salida']) ? mb_convert_encoding((string)($_POST['hora_salida']), 'ISO-8859-1', 'UTF-8') : null;
                 $ip_publica = $_SERVER['REMOTE_ADDR'];
-                $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, null, $ip_publica, null);
-                echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
+                $justificacion = isset($_POST['justificacion']) ? mb_convert_encoding((string)($_POST['justificacion']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, null, $ip_publica, $justificacion, null);
+
+                // Obtiene la hora de entrada del usuario
+                $diaActual= getdate()['wday'];
+                switch ($diaActual) {
+                    case 1:
+                        $diaActual= "lunes";
+                        break;
+                    case 2:
+                        $diaActual= "martes";
+                        break;
+                    case 3:
+                        $diaActual= "miercoles";
+                        break;
+                    case 4:
+                        $diaActual= "jueves";
+                        break;
+                    case 5:
+                        $diaActual= "viernes";
+                        break;
+                    case 6:
+                        $diaActual= "sabado";
+                        break;
+                }
+                $sql= "SELECT hora_entrada_$diaActual FROM usuario WHERE cod_usuario= $cod_usuario";
+
+                $mysqli=conectar_al_servidor();
+                $stmt = $mysqli->prepare($sql);
+                if ( !$stmt->execute()) {
+                    $informacion =array("1" => "error", "mensaje" => "Error al obtener la hora_entrada: " . $stmt->error, "sql" => $sql);
+                    echo json_encode($informacion);	
+                    exit;
+                }        
+
+                $result = $stmt->get_result();
+                $registros= array();
+                $hora_entrada_usuario= "";
+                while ($row = $result->fetch_assoc()) {
+                    foreach ($row as $key => $value) {
+                        $hora_entrada_usuario= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+                    }
+                }
+
+                $stmt->close();
+
+                // Compara si la hora_entrada_usuario es mayor que la hora_entrada por 10 min.
+                $llegada_tardia = ((strtotime($hora_entrada) - strtotime($hora_entrada_usuario)) > 600) ? 1 : 0;
+
+                echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia, "llegada_tardia" => $llegada_tardia, 'hora_entrada' => $hora_entrada, 'hora_entrada_usuario' => $hora_entrada_usuario));
                 break;
             case "editar";
                 $cod_asistencia= $_POST['cod_asistencia'];
@@ -37,9 +85,17 @@
                 $cod_usuario= $user;
                 $hora_entrada = isset($_POST['hora_entrada']) ? mb_convert_encoding((string)($_POST['hora_entrada']), 'ISO-8859-1', 'UTF-8') : null;
                 $hora_salida= isset($_POST['hora_salida']) ? mb_convert_encoding((string)($_POST['hora_salida']), 'ISO-8859-1', 'UTF-8') : null;
-                $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, $hora_salida, null, $cod_asistencia);
+                $justificacion = isset($_POST['justificacion']) ? mb_convert_encoding((string)($_POST['justificacion']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, $hora_salida, null, $justificacion, $cod_asistencia);
                 echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
                 break;
+            case 'registrarJustificacion':
+                $cod_asistencia= $_POST['cod_asistencia'];
+                $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
+                $justificacion = mb_convert_encoding((string)($_POST['justificacion']), 'ISO-8859-1', 'UTF-8');
+                $cod_asistencia = abmAsistencia(null, null, null, null, $justificacion, $cod_asistencia);
+                echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
+                break;                
             case "registrarSalida":
                 $cod_asistencia= $_POST['cod_asistencia'];
                 $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
@@ -135,7 +191,7 @@
                 break;
             }
         }
-        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, ($ip_valida ? $value['direccion_ip'] : NULL), $cod_asistencia);
+        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, ($ip_valida ? $value['direccion_ip'] : NULL), NULL, $cod_asistencia);
         
         // Valida la ip y registra la salida o devuelve error
         if (! $ip_valida) {
@@ -143,7 +199,7 @@
             echo json_encode($informacion);	
             exit;
         }
-        echo json_encode(array("1" => "exito", "2" => $cod_asistencia));
+        echo json_encode(array("1" => "exito", "2" => $cod_asistencia, "3" => $hora_salida));
     }
 
     function obtenerVistaAsistencia($filtros, $limite= "0") {
@@ -159,11 +215,12 @@
 
             $pagina .= "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>
             <td style='width: 10%;'>".$registro['cod_asistencia']."</td>
-            <td style='width: 45%;'>".$registro['nombre_persona']."</td>
-            <td style='width: 15%;'>".substr($registro['fecha'], 0, 10)."</td>
-            <td style='width: 10%;'>".$registro['hora_entrada']."</td>
-            <td style='width: 10%;'>".$registro['hora_salida']."</td>
-            <td style='width: 10%;'>".$registro['direccion_ip']."</td>
+            <td style='width: 20%;'>".$registro['nombre_persona']."</td>
+            <td style='width: 15%;text-align: center;'>".substr($registro['fecha'], 0, 10)."</td>
+            <td style='width: 10%;text-align: center;'>".$registro['hora_entrada']."</td>
+            <td style='width: 10%;text-align: center;'>".$registro['hora_salida']."</td>
+            <td style='width: 10%;text-align: center;'>".$registro['direccion_ip']."</td>
+            <td style='width: 25%;'>".$registro['justificacion']."</td>
             </tr></table>";
         }
 
@@ -242,7 +299,7 @@
         return $registros;
     }
 
-    function abmAsistencia($cod_usuario, $hora_entrada, $hora_salida, $ip_publica, $cod_asistencia) {
+    function abmAsistencia($cod_usuario, $hora_entrada, $hora_salida, $ip_publica, $justificacion, $cod_asistencia) {
     	$mysqli=conectar_al_servidor();
         if ($cod_asistencia == null) {
             $sql = "INSERT INTO asistencia (cod_usuarioFK, hora_entrada, direccion_ip) 
@@ -264,9 +321,16 @@
                 $ss .= "s";
                 $parametros[] = $hora_salida;
             }
-            $atributos .= ", direccion_ip = ?";
-            $ss .= "s";
-            $parametros[] = $ip_publica;
+            if ($justificacion != null) {
+                $atributos .= ", justificacion = ?";
+                $ss .= "s";
+                $parametros[] = $justificacion;
+            }
+            if ($ip_publica != null) {
+                $atributos .= ", direccion_ip = ?";
+                $ss .= "s";
+                $parametros[] = $ip_publica;
+            }
 
             $atributos = substr($atributos, 2);
             $parametros[] = $cod_asistencia;
