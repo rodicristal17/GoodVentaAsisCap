@@ -175,5 +175,7 @@ ALTER TABLE usuario ADD COLUMN hora_entrada_jueves TIME;
 ALTER TABLE usuario ADD COLUMN hora_entrada_viernes TIME;
 ALTER TABLE usuario ADD COLUMN hora_entrada_sabado TIME;
 
+ALTER TABLE insumos_local ADD COLUMN cod_usuario_responsableFK INT(11);
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

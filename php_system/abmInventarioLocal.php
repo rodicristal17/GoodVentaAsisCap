@@ -42,8 +42,9 @@
                 $costo= isset($_POST['costo']) ? mb_convert_encoding((string)($_POST['costo']), 'ISO-8859-1', 'UTF-8') : null;
                 $observacion= isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuario_responsableFK= isset($_POST['cod_usuario_responsableFK']) ? mb_convert_encoding((string)($_POST['cod_usuario_responsableFK']), 'ISO-8859-1', 'UTF-8') : null;
                 
-                $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $user);
+                $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuario_responsableFK, $user);
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
             case 'buscarVista':
@@ -52,13 +53,15 @@
                 $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $ocultar_inactivo= isset($_POST['ocultar_inactivo']) ? mb_convert_encoding((string)($_POST['ocultar_inactivo']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_usuario_responsable= isset($_POST['nombre_usuario_responsable']) ? mb_convert_encoding((string)($_POST['nombre_usuario_responsable']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'cod_insumo'=> $cod_inventario,
                     'nombre'=> $nombre,
                     'estado'=> $estado,
                     'ocultar_inactivo'=> $ocultar_inactivo,
-                    'cod_localFK'=> $cod_localFK
+                    'cod_localFK'=> $cod_localFK,
+                    'nombre_usuario_responsable'=> $nombre_usuario_responsable,
                 );
 
                 $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
@@ -108,9 +111,10 @@
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosInsumoLocal(this)'>
             <td id='td_id' style='width:10%;'>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)."</td>
-            <td id='td_datos_1'style='width:55%;'>".$value['nombre']."</td>
+            <td id='td_datos_1'style='width:40%;'>".$value['nombre']."</td>
             <td id='td_datos_2'style='display:none;'>".$value['descripcion']."</td>
             <td id='td_datos_3'style='width:20%;'>".$value['nombreLocal'].".</td>
+            <td id='td_datos_4'style='width:15%;'>".$value['nombre_usuario_responsable']."</td>
             <td id='td_datos_4'style='width:15%;'>".ucfirst($value['estado'])."</td>
             <td id='td_datos_5'style='display: none;'>".$value['cantidad']."</td>
             <td id='td_datos_6'style='display: none;'>".$value['costo']."</td>
@@ -120,6 +124,7 @@
             <td id='td_datos_10'style='display: none;'>".$value['url1']."</td>
             <td id='td_datos_11'style='display: none;'>".$value['url2']."</td>
             <td id='td_datos_12'style='display: none;'>".$value['url3']."</td>
+            <td id='td_datos_13'style='display: none;'>".$value['cod_usuario_responsableFK']."</td>
             </tr></table>";
         }
 
@@ -146,6 +151,9 @@
                 case 'ocultar_inactivo':
                     $sqlFiltro .= "il.estado != 'inactivo'";
                     break;
+                case 'nombre_usuario_responsable':
+                    $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuario_responsableFK) like '%$value%'";
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "il.$key = $value";
@@ -162,7 +170,10 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT il.* , l.Nombre as nombreLocal FROM insumos_local il JOIN local l ON l.cod_local = il.cod_localFK
+        $sql= "SELECT 
+            il.* ,
+            (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuario_responsableFK) as nombre_usuario_responsable,
+            l.Nombre as nombreLocal FROM insumos_local il JOIN local l ON l.cod_local = il.cod_localFK
             $sqlFiltro ORDER BY il.cod_insumo ASC $limite";
 
         $mysqli=conectar_al_servidor();
@@ -211,13 +222,13 @@
         }
     }
 
-    function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuarioFK_edit) {
+    function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuario_responsableFK,$cod_usuarioFK_edit) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_inventario)) {
-            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, cod_localFK, cod_usuarioFK_edit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, cod_localFK, cod_usuario_responsableFK, cod_usuarioFK_edit) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('isssiisii', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuarioFK_edit);
+            $stmt->bind_param('isssiisiii', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK,$cod_usuario_responsableFK, $cod_usuarioFK_edit);
         } else {
             $parametros = array();
 
@@ -265,6 +276,11 @@
                 $atributos .= ", cod_localFK= ?";
                 $ss .= "s";
                 $parametros[] = $cod_localFK;
+            }
+            if (!empty($cod_usuario_responsableFK)) {
+                $atributos .= ", cod_usuario_responsableFK= ?";
+                $ss .= "s";
+                $parametros[] = $cod_usuario_responsableFK;
             }
             
             $parametros[] = $cod_inventario;

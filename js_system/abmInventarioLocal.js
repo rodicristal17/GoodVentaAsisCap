@@ -11,6 +11,7 @@ function verCerrarAbmInventarioLocal(mostrar, abm) {
             $("div[id=divAbmInventarioLocal1]").fadeOut(250);
             $("div[id=divAbmInventarioLocal2]").fadeIn(250);
         } else {
+            buscarabmusuario2('', '', '', 'Activo', '');
             $("div[id=divAbmInventarioLocal1]").fadeIn(250);
         }
     } else {
@@ -35,6 +36,7 @@ function obtenerVistaInformeInsumoLocal() {
     const nombre= document.getElementById('inptBuscarAbmInventarioLocal2').value;
     const local= document.getElementById('inptBuscarAbmInventarioLocal3').value;
     const estado= document.getElementById('inptBuscarAbmInventarioLocal4').value;
+    const usuario_responsable= document.getElementById('inptBuscarAbmInventarioLocal5').value;
 
     obtener_datos_user()
 	var datos = new FormData();
@@ -46,6 +48,7 @@ function obtenerVistaInformeInsumoLocal() {
     datos.append("nombre", nombre);
     datos.append("cod_localFK", local);
     datos.append("estado", estado);
+    datos.append("nombre_usuario_responsable", usuario_responsable)
     datos.append("limite", 10);
 
     const ocultar_inactivo= document.getElementById('inptSeleccFiltroEstadoInactivoArticuloLocal').checked;
@@ -255,6 +258,7 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptLocalInventarioInsumo').value= $(datostr).children('td[id="td_datos_8"]').html();
     document.getElementById('inptEstadoInventarioInsumo').value= $(datostr).children('td[id="td_datos_4"]').html().toLowerCase();
     document.getElementById('inptObservacionInventarioInsumo').innerHTML= $(datostr).children('td[id="td_datos_7"]').html();
+    document.getElementById('inptUsuarioResponsableInventarioInsumo').value= $(datostr).children('td[id="td_datos_13"]').html();
     document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ urlFoto1 +")";
     document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ urlFoto2 +")";
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ urlFoto3 +")";
@@ -338,6 +342,7 @@ function limpiarcamposInventarioLocal() {
     document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
+    document.getElementById('inptUsuarioResponsableInventarioInsumo').value= "";
 
     // Vacia los campos de las imagenes
     fotoInventario1= "";
@@ -362,6 +367,7 @@ function verificarCamposInventarioLocal() {
     const costo= document.getElementById('inptCostoInventarioInsumo').value;
     const observacion= document.getElementById('inptObservacionInventarioInsumo').value;
     const cod_localFK= document.getElementById('inptLocalInventarioInsumo').value;
+    const usuario_responsable= document.getElementById('inptUsuarioResponsableInventarioInsumo').value;
 
     if (!cod_localFK) {
         ver_vetana_informativa("Falto seleccionar un local");
@@ -372,10 +378,10 @@ function verificarCamposInventarioLocal() {
         return false;
     }
 
-    abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,cod_localFK);
+    abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,cod_localFK);
 }
 
-function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,cod_localFK) {
+function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,cod_localFK) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -390,6 +396,7 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
     datos.append("cantidad", cantidad);
     datos.append("costo", costo);
     datos.append("observacion", observacion);
+    datos.append("cod_usuario_responsableFK", usuario_responsable)
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({

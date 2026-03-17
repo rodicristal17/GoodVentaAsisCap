@@ -1388,6 +1388,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 		console.log(Respuesta)
 		document.getElementById("table_abm_usuarios").innerHTML = ''
 		document.getElementById("inptUsuariosInterConsulta").innerHTML = '';
+		document.getElementById("inptUsuarioResponsableInventarioInsumo").innerHTML = '';
 		try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -1396,6 +1397,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					var datos_buscados = datos[2];
 					document.getElementById("table_abm_usuarios").innerHTML = datos_buscados
 					document.getElementById("inptUsuariosInterConsulta").innerHTML = "<option value=''>Todos</option>"+datos[5];
+					document.getElementById("inptUsuarioResponsableInventarioInsumo").innerHTML = "<option value=''>Seleccionar</option>"+datos[5];
 					
 					// Se completa la lista de usuarios para usar en interConsulta
 					registroUsuariosInterconsulta= {}

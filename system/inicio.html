@@ -25491,11 +25491,14 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:10%;">
                 #
                 </td>
-                <td class="td_registro" style="width:55%;">
+                <td class="td_registro" style="width:40%;">
                 NOMBRE
                 </td>
                 <td class="td_registro" style="width:20%;">
                 LOCAL
+                </td>
+                <td class="td_registro" style="width:15%;">
+                USUARIO RESPONSABLE
                 </td>
                 <td class="td_registro" style="width:15%;">
                 ESTADO
@@ -25510,7 +25513,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal1')">
                 </td>
-                <td class="td_registro" style="width:54%;">
+                <td class="td_registro" style="width:39%;">
                 <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Parecido a">
                 </td>
                 <td class="td_registro" style="width:1%;">
@@ -25519,6 +25522,12 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:20%;">
                   <select class="inputfiltro" id="inptBuscarAbmInventarioLocal3">
                   </select>
+                </td>
+                <td class="td_registro" style="width:14%;">
+                  <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal5" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Parecido a">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal2')">
                 </td>
                 <td class="td_registro" style="width:15%;">
                   <select class="inputfiltro" id="inptBuscarAbmInventarioLocal4">
@@ -25611,23 +25620,18 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <tr>
                   <td>
                   <p class="pTituloC">Descripcion :</p>
-                  <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
+                  <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:80px"></textarea>
                   </td>
                   </tr>
                 </table>
                 <br>
                 <table style="width:100%">
                   <tr>
-                  <td>
+                  <td style="width: 40%">
                   <p class="pTituloC">Cantidad :</p>
                   <input class="inputText" type="number" onchange="separadordemiles(this)" id="inptCantidadInventarioInsumo" value=1>
                   </td>
-                  </tr>
-                </table>
-                <br>
-                <table style="width:100%">
-                  <tr>
-                  <td>
+                  <td style="width: 60%">
                   <p class="pTituloC">Costo :</p>
                   <input class="inputText" type="text" min="0" id="inptCostoInventarioInsumo">
                   </td>
@@ -25654,8 +25658,17 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <table style="width:100%">
                   <tr>
                   <td>
+                  <p class="pTituloC">Usuario responsable :</p>
+                  <select class="inputSelect" id="inptUsuarioResponsableInventarioInsumo" style="width:125px"></select>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td>
                   <p class="pTituloC">Observacion :</p>
-                  <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:100px"></textarea>
+                  <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:50px"></textarea>
                   </td>
                   </tr>
                 </table>
