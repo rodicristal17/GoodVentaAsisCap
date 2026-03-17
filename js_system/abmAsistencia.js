@@ -100,6 +100,10 @@ function registrarAsistencia() {
 
 function justificarAsistencia() {
 	const inptJustificacionJustificacionAsistencia= document.getElementById('inptJustificacionJustificacionAsistencia').value
+	if (!inptJustificacionJustificacionAsistencia) {
+		ver_vetana_informativa("Faltan Datos", "Debe ingresar una justificacion", "error");
+		return false;
+	}
 
 	obtener_datos_user()
 	var datos = new FormData();
