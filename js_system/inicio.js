@@ -1059,6 +1059,13 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptNroTelefReferenciaUser').value = $(datostr).children('td[id="td_datos_12"]').html();
 	document.getElementById('inptDireccionUser').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptFechaCreacionMUser').value = $(datostr).children('td[id="td_datos_15"]').html();
+
+	document.getElementById('inptLunesUser').value = $(datostr).children('td[id="td_datos_16"]').html();
+	document.getElementById('inptMartesUser').value = $(datostr).children('td[id="td_datos_17"]').html();
+	document.getElementById('inptMiercolesUser').value = $(datostr).children('td[id="td_datos_18"]').html();
+	document.getElementById('inptJuevesUser').value = $(datostr).children('td[id="td_datos_19"]').html();
+	document.getElementById('inptViernesUser').value = $(datostr).children('td[id="td_datos_20"]').html();
+	document.getElementById('inptSabadoUser').value = $(datostr).children('td[id="td_datos_21"]').html();
 		
 	fotocliente3= $(datostr).children('td[id="td_datos_11"]').html(); 
 	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
@@ -1082,6 +1089,14 @@ function verificarcamposusuario() {
 	const inptNroTelefReferenciaUser= document.getElementById('inptNroTelefReferenciaUser').value;
 	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
 	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
+
+	const inptLunesUser= document.getElementById('inptLunesUser').value;
+	const inptMartesUser= document.getElementById('inptMartesUser').value;
+	const inptMiercolesUser= document.getElementById('inptMiercolesUser').value;
+	const inptJuevesUser= document.getElementById('inptJuevesUser').value;
+	const inptViernesUse= document.getElementById('inptViernesUser').value;
+	const inptSabadoUser= document.getElementById('inptSabadoUser').value;
+
 	if (inptNombreApellidoUsuario == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO")
 		return false;
@@ -1110,9 +1125,10 @@ function verificarcamposusuario() {
 		accion = "nuevo";
 		if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
 	}
-	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,idAbmUsuario, accion);
+	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,inptLunesUser, inptMartesUser, inptMiercolesUser, inptJuevesUser, inptViernesUse, inptSabadoUser,idAbmUsuario, accion);
 }
-function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,cod_persona, accion) {
+function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,hora_entrada_lunes, hora_entrada_martes, hora_entrada_miercoles, hora_entrada_jueves, hora_entrada_viernes,
+hora_entrada_sabado,cod_persona, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1135,6 +1151,12 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("tipo", tipo)
 	datos.append("foto", fotocliente3)
 	datos.append("ext", extcliente3)
+	datos.append("hora_entrada_lunes", hora_entrada_lunes);
+	datos.append("hora_entrada_martes", hora_entrada_martes);
+	datos.append("hora_entrada_miercoles", hora_entrada_miercoles);
+	datos.append("hora_entrada_jueves", hora_entrada_jueves);
+	datos.append("hora_entrada_viernes", hora_entrada_viernes);
+	datos.append("hora_entrada_sabado", hora_entrada_sabado);
 	datos.append("fecha_creacion", fecha_creacion);
 	var OpAjax = $.ajax({
 		data: datos,
@@ -1398,6 +1420,13 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptClaveAcceso').value = ""
 	document.getElementById('inptContrasenhaUser').value = ""
 	document.getElementById('inptRegistroSeleccUser').value = ""
+	
+	document.getElementById('inptLunesUser').value = "";
+	document.getElementById('inptMartesUser').value = "";
+	document.getElementById('inptMiercolesUser').value = "";
+	document.getElementById('inptJuevesUser').value = "";
+	document.getElementById('inptViernesUse').value = "";
+	document.getElementById('inptSabadoUser').value = "";
 
 	const fecahActual= new Date();
 	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth()).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
@@ -9468,6 +9497,12 @@ verCerrarEfectoCargando("1")
 					}else{
 						ImprimirTicketReportCierreCaja()
 					}
+
+					// Recargar pagina
+					setTimeout(() => {
+						location.reload();
+					}, 1000);
+					
 					controldecaja()
 				} else {
 					ver_vetana_informativa(datos[2], datos[3]);
