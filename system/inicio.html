@@ -9886,8 +9886,8 @@ onclick='verOpcionesDeConfigVenta("nro")'  >001-001-000001</b>
 title='Limpiar todos los campos' onclick='limpiarcamposventa()' />
 </td>
 <td id='tdImprimirVenta' style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
-title='Imprimir Venta' onclick='vercerrarOpcionesImpresion("1")' />
+<!--img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
+title='Imprimir Venta' onclick='vercerrarOpcionesImpresion("1")' /-->
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/buscar.png' class='iconoBtn' title='Buscar Venta'
@@ -13785,11 +13785,11 @@ onclick="ActualizarNroFacturaVenta()">
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'>Opciones de Impresión</p>
+<p class='pTituloB'>Opciones de Post-Venta</p>
 </td>
 <td style='width:5%'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='vercerrarOpcionesImpresion("2")' />
+title='Cerrar Ventana' onclick='vercerrarOpcionesImpresion(false)' />
 </td>
 </tr>
 </table>
@@ -13797,20 +13797,36 @@ title='Cerrar Ventana' onclick='vercerrarOpcionesImpresion("2")' />
 <br>
 
 <center>
-
-<input id='btnImprimirticket' type="button" value="Imprimir Ticket" id='btnTicket' class="btn1"
-onclick="imprimirDivticketFactura()">
+  <div class="divMenuf">
+    <table>
+      <tr>
+        <td style='width:100%'>
+          <p class='pTituloC' >Nro de Factura :</p>
+          <input class='inputText' type='text' id='inptNroFacturaManualVenta'
+          style='width:200px' />
+          <br>
+          <input type="button" value="Guardar Cambios" class="btn1"
+            onclick="guardarNroFactura()"/>
+        </td>
+      </tr>
+    </table>
+  </div>
 <br>
-<br>
-<input id='btnImprimirFactura' type="button" value="Imprimir Factura" id='btnfactura' class="btn1"
-onclick="ImprimirFacrtura1()">
-<br>
-<br>
-<input id='btnImprimirPagare' type="button" value="Imprimir Pagaré" class="btn1"
-onclick="imprimirPagare()">
-<br>
-<br>
-
+<div class="divMenuf">
+  <div style="display: none;">
+  <input id='btnImprimirticket' type="button" value="Imprimir Ticket" id='btnTicket' class="btn1"
+  onclick="imprimirDivticketFactura()">
+  <br>
+  <br>
+  <input id='btnImprimirFactura' type="button" value="Imprimir Factura" id='btnfactura' class="btn1"
+  onclick="ImprimirFacrtura1()">
+  </div>
+  <br>
+  <br>
+  <input id='btnImprimirPagare' type="button" value="Imprimir Pagaré" class="btn1"
+  onclick="imprimirPagare()">
+  <br>
+</div>
 
 </center>
 </div>

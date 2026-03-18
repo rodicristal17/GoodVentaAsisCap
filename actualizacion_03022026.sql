@@ -163,7 +163,6 @@ ALTER TABLE gastos ADD COLUMN modalidad ENUM('contado', 'credito') DEFAULT 'cont
 UPDATE gastos SET estado="Activo" WHERE estado like 'Activo and g.idgastos%';
 
 UPDATE gastos SET modalidad= 'credito', estado= 'pendiente' WHERE motivo like 'Cuota % de % (%)';
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.69', detalles='Horarios de entrada agregado a los usuarios.', fecha='2026-03-17' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE interconsulta ADD COLUMN observacion VARCHAR(255);
 
@@ -176,6 +175,9 @@ ALTER TABLE usuario ADD COLUMN hora_entrada_viernes TIME;
 ALTER TABLE usuario ADD COLUMN hora_entrada_sabado TIME;
 
 ALTER TABLE insumos_local ADD COLUMN cod_usuario_responsableFK INT(11);
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.69', detalles='Horarios de entrada agregado a los usuarios.', fecha='2026-03-17' WHERE idhistorialactualizacion= 2;
+
+ALTER TABLE venta ADD COLUMN num_comprobante VARCHAR(15);
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

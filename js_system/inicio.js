@@ -14428,6 +14428,68 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 
+function guardarNroFactura() {
+	const num_comprobante= document.getElementById('inptNroFacturaManualVenta').value;
+
+	if (!num_comprobante) {
+		ver_vetana_informativa("Faltan datos", "Falta completar el numero de comprobante de la factura escrita a mano")
+	}
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_venta": idFkVenta,
+		"num_comprobante": num_comprobante,
+		"funt": "guardarNroComprobante"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
+		type: "post",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			//Uload progress
+			xhr.upload.addEventListener("progress" ,function (evt) {
+			var kb=((evt.loaded*1)/1000).toFixed(1)
+			if(kb=="0.0"){
+			kb=0.1;
+			}
+			cargarConectividad("enviado",kb,"0")           
+			}, false);
+	//Download progress
+			xhr.addEventListener("progress", function (evt) {
+			var kb=((evt.loaded*1)/1000).toFixed(1)
+			if(kb=="0.0"){
+			kb=0.1;
+			}
+			cargarConectividad("recibido","0",kb)  
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   	if (Respuesta == true) {
+					ver_vetana_informativa("Datos guardado exitosamente");
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 function verCerrarConfigCredito(d) {
 	controlVenta = "1";
 	if (d == "1") {
@@ -14817,7 +14879,7 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 
 
 }
-function vercerrarOpcionesImpresion(d) {
+function vercerrarOpcionesImpresion(mostrar) {
 	
 	var tipoventa=document.getElementById("inptSeleccTipoComprobanteVenta").value
 	
@@ -14828,7 +14890,7 @@ function vercerrarOpcionesImpresion(d) {
 		// document.getElementById('btnTicket').style.display = ""
 		// document.getElementById('btnfactura').style.display = "none"
 	}
-	if (d == "1") {
+	if (mostrar) {
 		if(idabmVenta==""){
 			return;
 		}
@@ -18210,7 +18272,7 @@ function abmrefinacimientoCuota(interes,descuento,total,metodopago,nroCuota,Mont
 				//idabmVenta=cod_venta;
 				obtenerdatoshistorialventa(elementoventa)
 				buscardetallesventa();
-				vercerrarOpcionesImpresion("1");
+				vercerrarOpcionesImpresion(mostrar);
 				}			
 			}catch(error)
 				{
