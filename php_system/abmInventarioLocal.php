@@ -26,7 +26,8 @@
                 $fotos= $_POST['fotos'];
                 $ext= $_POST['exts'];
                 for ($i= 0; $i < count($fotos); $i++) {
-                    if ((empty($ext[$i]) && empty($fotos[$i])) || (!empty($ext[$i]) && !empty($fotos[$i]))) {
+                    // Solo actualiza la imagen cuando realmente se envia una nueva foto.
+                    if (!empty($ext[$i]) && !empty($fotos[$i])) {
                         $campo= "url" . ($i+1);
                         cargarImagenInventarioLocal($cod_inventario, $campo, $fotos[$i], $ext[$i]);
                     }
@@ -114,7 +115,7 @@
             <td id='td_datos_1'style='width:40%;'>".$value['nombre']."</td>
             <td id='td_datos_2'style='display:none;'>".$value['descripcion']."</td>
             <td id='td_datos_3'style='width:20%;'>".$value['nombreLocal'].".</td>
-            <td id='td_datos_4'style='width:15%;'>".$value['nombre_usuario_responsable']."</td>
+            <td id='td_datos_14'style='width:15%;'>".$value['nombre_usuario_responsable']."</td>
             <td id='td_datos_4'style='width:15%;'>".ucfirst($value['estado'])."</td>
             <td id='td_datos_5'style='display: none;'>".$value['cantidad']."</td>
             <td id='td_datos_6'style='display: none;'>".$value['costo']."</td>
