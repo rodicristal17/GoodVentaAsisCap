@@ -420,7 +420,7 @@ function obtenerGastosAsociados($idgastos) {
 
 	// Siempre buscamos las cuotas con el ID base de la serie.
 	$motivo= "Cuota % de %(".$idBaseSerie.")";
-	$cuotas = buscarGasto('','','','','','','','','','','','',$motivo,'','ASC')[9];
+	$cuotas = buscarGasto('','','','','','','','',TRUE,'','','',$motivo,'','ASC')[9];
 	foreach ($cuotas as $gasto) {
 		$result[] = $gasto;
 	}
@@ -1111,25 +1111,23 @@ if($operacion=='nuevo'){
 }
 
 if($operacion=='editar' && $editar_cuotas == "true"){
-	if ($cantCuotas > 1) {
-		$idBaseSerie = intval($idgastos);
-		$motivoAnterior = isset($datos_gasto[0]['descripcion']) ? trim((string)$datos_gasto[0]['descripcion']) : trim($motivo);
-		if (preg_match('/\s+cuota\s+base:\s*(\d+)$/i', $motivoAnterior, $matchesSerie)) {
-			$idBaseSerie = intval($matchesSerie[1]);
-			$motivoAnterior = trim(preg_replace('/\s+cuota\s+base:\s*\d+$/i', '', $motivoAnterior));
+	$gastos_asociados= obtenerGastosAsociados($idgastos);
+	$idBaseSerie= $gastos_asociados[0]['idgastos'];
+	foreach ($gastos_asociados as $key => $value) {
+		if ($key != 0 && ($value['estado'] != 'Activo')) {
+			$sql = "UPDATE gastos SET estado='Inactivo' WHERE idgastos= ?";
+			$stmt = $mysqli->prepare($sql);
+			$stmt->bind_param('i', $value['idgastos']);
+			$stmt->execute();
 		}
-
-		$motivoCuotaLike = 'Cuota % de % (' . $idBaseSerie.')';
-		$sql = "UPDATE gastos SET estado='Inactivo' WHERE motivo LIKE ? AND cod_local = ? AND (estado like 'pendiente' OR estado like 'activo')";
-		$stmt = $mysqli->prepare($sql);
-		$stmt->bind_param('si', $motivoCuotaLike, $cod_local);
-		$stmt->execute();
-		$stmt->close();
-		
-		if ($estado != 'Inactivo')
-		registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas-1, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
 	}
-}
+	
+	if (count($gastos_asociados) > 1 && $estado != 'Inactivo') {
+		registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, count($gastos_asociados), $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+	}
+	$stmt->close();
+	}
+
 $foto=$_POST['foto'];
 $ext=$_POST['ext'];
 subirImagenGasto($idgastos, $foto, $ext);
