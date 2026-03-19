@@ -227,7 +227,7 @@
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_inventario)) {
-            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, cod_localFK, cod_usuario_responsableFK, cod_usuarioFK_edit) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)";
+            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, cod_localFK, cod_usuario_responsableFK, cod_usuarioFK_create) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)";
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('isssiisiii', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK,$cod_usuario_responsableFK, $cod_usuarioFK_edit);
         } else {
