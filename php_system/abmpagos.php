@@ -7,7 +7,7 @@ include_once("calcularintereses.php");
 // include_once("calcularInteresDirecto.php");
 include_once("classTable.php");
 
-function ObtenerDatos($operacion)
+function verificarOperacionPagos($operacion)
 {
 
 
@@ -490,7 +490,7 @@ function buscarImprimirTicketVentaContado($cod_venta)
 {
 $pagina="";
 
-$detalleVenta= buscar_detalles_venta($cod_venta) ;
+$detalleVenta= buscar_detalles_venta($cod_venta)['´pagina'];
 $Pagos=buscarpagosTituloContado($cod_venta);
 
 /*Retornamos los datos obtenidos mediante el JSON */      
@@ -800,7 +800,7 @@ actualizarMetodo($cod_venta,"Corrido");
 
 if($controlTipoPago == 0){
 	$titulopago=buscarpagosTitulo($cod_venta,$nrofactura);
-$paginaticket=buscar_detalles_venta($cod_venta);
+$paginaticket=buscar_detalles_venta($cod_venta)['pagina'];
 $informacion =array("1" => "exito","2" => number_format($datosventa[1],'0',',','.'),"3"=>$paginaticket,"4"=>$titulopago[2] );
 echo json_encode($informacion);	
 exit;
@@ -866,7 +866,7 @@ actualizarMetodo($cod_venta,"Corrido");
 
 if($controlTipoPago == 0){
 	$titulopago=buscarpagosTitulo($cod_venta,$nrofactura);
-$paginaticket=buscar_detalles_venta($cod_venta);
+$paginaticket=buscar_detalles_venta($cod_venta)['pagina'];
 $informacion =array("1" => "exito","2" => number_format($datosventa[1],'0',',','.'),"3"=>$paginaticket,"4"=>$titulopago[2] );
 echo json_encode($informacion);	
 exit;
@@ -1147,7 +1147,7 @@ values(?,?,?,?,?,(select comision from venta where cod_venta='$cod_venta'),?,'CA
 
 		$totalPagado = buscartotalpagob($cod_venta);
 		//$totalVenta=buscartotalventa($cod_venta);
-		// $paginaticket=buscar_detalles_venta($cod_venta);
+		// $paginaticket=buscar_detalles_venta($cod_venta)['pagina'];
 
 		$paginaticket = buscarDetalleVentaImprimir($cod_venta);
 		$paginaticket2 = "Factura nro: " . $paginaticket[2];
@@ -3495,61 +3495,62 @@ return $datos;
 
 
 /*Buscar */
-function buscar_detalles_venta($buscar)
-{
-$mysqli=conectar_al_servidor();
+function buscar_detalles_venta($buscar) {
+	$mysqli=conectar_al_servidor();
 
-$sql= "select pr.nombre_producto,
-dtv.cantidad_detalle,dtv.cod_productoFK,dtv.precio_producto,dtv.cod_ventaFK,dtv.subtotal,dtv.subPrecioCompra,dtv.detalleproducto,
- IFNULL((Select count(fecha) from cambios where coddetalleventa=dtv.cod_detalle and motivo='Devolucion' limit 1),0) as nroDevoluciones,
-IFNULL((Select count(fecha) from cambios where coddetalleventa=dtv.cod_detalle and motivo='Cambio' limit 1),0) as nroCambios,
-IFNULL((Select count(fecha) from cambios where coddetalleventa=dtv.cod_detalle and motivo='Garantia' limit 1),0) as nroGarantia
- from
- venta vt inner join detalle_venta dtv on vt.cod_venta=dtv.cod_ventaFK 
- inner join producto pr on pr.cod_producto=dtv.cod_productoFK
- where vt.cod_venta='$buscar' ";/*Sentencia para buscar registros*/
-$pagina = "";   
-$stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepare*/
-/*Función para ejecutar sentencias sql*/
-if ( ! $stmt->execute()) {
-/*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
+	$sql= "select pr.nombre_producto,
+	dtv.cantidad_detalle,dtv.cod_productoFK,dtv.precio_producto,dtv.cod_ventaFK,dtv.subtotal,dtv.subPrecioCompra,dtv.detalleproducto,
+	IFNULL((Select count(fecha) from cambios where coddetalleventa=dtv.cod_detalle and motivo='Devolucion' limit 1),0) as nroDevoluciones,
+	IFNULL((Select count(fecha) from cambios where coddetalleventa=dtv.cod_detalle and motivo='Cambio' limit 1),0) as nroCambios,
+	IFNULL((Select count(fecha) from cambios where coddetalleventa=dtv.cod_detalle and motivo='Garantia' limit 1),0) as nroGarantia
+	from
+	venta vt inner join detalle_venta dtv on vt.cod_venta=dtv.cod_ventaFK 
+	inner join producto pr on pr.cod_producto=dtv.cod_productoFK
+	where vt.cod_venta='$buscar' ";/*Sentencia para buscar registros*/
+	$pagina = "";   
+	$stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepare*/
+	/*Función para ejecutar sentencias sql*/
+	if ( ! $stmt->execute()) {
+		/*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
 
-$result = $stmt->get_result();
-$valor= mysqli_num_rows($result);/*Utilizado para cargar variables tipo resultset que nos permite recorrer las fila o filas obtenida mendiante el nombre del atributo*/
-$nroRegistro=$valor;
+	$result = $stmt->get_result();
+	$valor= mysqli_num_rows($result);/*Utilizado para cargar variables tipo resultset que nos permite recorrer las fila o filas obtenida mendiante el nombre del atributo*/
+	$nroRegistro=$valor;
+	$a=1;
+	$pagina_listado= "";
+	if ($valor>0) {
+		while ($valor= mysqli_fetch_assoc($result)) {  
+		$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');      
+		$nroDevoluciones = mb_convert_encoding((string)($valor['nroDevoluciones']), 'ISO-8859-1', 'UTF-8');      
+		$nroCambios = mb_convert_encoding((string)($valor['nroCambios']), 'ISO-8859-1', 'UTF-8');      
+		$nroGarantia = mb_convert_encoding((string)($valor['nroGarantia']), 'ISO-8859-1', 'UTF-8');      
+		$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'ISO-8859-1', 'UTF-8');      
+		$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'ISO-8859-1', 'UTF-8');      
+		$detalleproducto = mb_convert_encoding((string)($valor['detalleproducto']), 'ISO-8859-1', 'UTF-8');      
+		$subtotal = mb_convert_encoding((string)($valor['subtotal']), 'ISO-8859-1', 'UTF-8');      
+		if($nroDevoluciones==0 && $nroCambios==0){
+			$pagina.="<table class='tableTicket' style='border: solid 1px #a1a1a1;' >
+			<tr>
+			<td style='width:10%'>".$cantidad_detalle."</td>
+			<td style='width:50%'>".$nombre_producto."</td>
+			<td style='width:15%'>".number_format($precio_producto,'0',',','.')."</td>
+			<td style='width:25%'>".number_format($subtotal,'0',',','.')."</td>
+			</tr>
+			</table>";
+		}
 
-if ($valor>0)
-{
-while ($valor= mysqli_fetch_assoc($result))/*bucle para recorrer la fila o filas obtenidas*/
-{  
+		if($pagina_listado==""){
+			$pagina_listado .=$a.") &nbsp".$nombre_producto.",&nbsp&nbsp".number_format($cantidad_detalle,'2',',','.')."(".$detalleproducto.")";
+		}else{
+			$pagina_listado .="<br>".$a.") &nbsp".$nombre_producto.",&nbsp&nbsp".number_format($cantidad_detalle,'2',',','.')."(".$detalleproducto.")";
+		}
+		}
+	}
 
-
-$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');      
-$nroDevoluciones = mb_convert_encoding((string)($valor['nroDevoluciones']), 'ISO-8859-1', 'UTF-8');      
-$nroCambios = mb_convert_encoding((string)($valor['nroCambios']), 'ISO-8859-1', 'UTF-8');      
-$nroGarantia = mb_convert_encoding((string)($valor['nroGarantia']), 'ISO-8859-1', 'UTF-8');      
-$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'ISO-8859-1', 'UTF-8');      
-$precio_producto = mb_convert_encoding((string)($valor['precio_producto']), 'ISO-8859-1', 'UTF-8');      
-$detalleproducto = mb_convert_encoding((string)($valor['detalleproducto']), 'ISO-8859-1', 'UTF-8');      
-$subtotal = mb_convert_encoding((string)($valor['subtotal']), 'ISO-8859-1', 'UTF-8');      
-if($nroDevoluciones==0 && $nroCambios==0){
- $pagina.="<table class='tableTicket' style='border: solid 1px #a1a1a1;' >
-<tr>
-<td style='width:10%'>".$cantidad_detalle."</td>
-<td style='width:50%'>".$nombre_producto."</td>
-<td style='width:15%'>".number_format($precio_producto,'0',',','.')."</td>
-<td style='width:25%'>".number_format($subtotal,'0',',','.')."</td>
-</tr>
-</table>";
-}
-
-}
-}
-
-return $pagina;
+	return array('pagina' => $pagina, 'listado' => $pagina_listado);
 }
 
 
@@ -3760,7 +3761,7 @@ return $datos;
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 	$operacion = $_POST['funt'];
 	$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
-	ObtenerDatos($operacion);
+	verificarOperacionPagos($operacion);
 }
 
 ?>

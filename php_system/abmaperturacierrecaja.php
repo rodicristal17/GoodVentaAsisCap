@@ -1,7 +1,4 @@
 <?php
-
-$operacion = $_POST['funt'];
-$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
 require_once("conexion.php");
@@ -46,7 +43,7 @@ $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $codusuarioap=$_POST['codusuarioap'];
 $codusuarioap = mb_convert_encoding((string)($codusuarioap), 'ISO-8859-1', 'UTF-8');
 $codusuarioce = $user;
-abm($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,$montocierre,$fechaapertura,$fechacierre,$estado,$codusuarioap,$codusuarioce,$operacion);
+abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,$montocierre,$fechaapertura,$fechacierre,$estado,$codusuarioap,$codusuarioce,$operacion);
 
 }
 
@@ -59,8 +56,9 @@ $cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 $Usuario=$_POST['Usuario'];
 $Usuario = mb_convert_encoding((string)($Usuario), 'ISO-8859-1', 'UTF-8');
 
-controldecaja($buscar,$cod_local,$Usuario);
-
+$informacion= controldecaja($buscar,$cod_local,$Usuario);
+echo json_encode($informacion);
+exit;
 }
 
 if($operacion=="buscar_recaudo_opciones_pago")
@@ -118,7 +116,7 @@ buscarcajaapp($fecha1,$fecha2,$cobrador,$estado);
 
 }
 
-function abm($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,$montocierre,$fechaapertura,$fechacierre,$estado,$codusuarioap,$codusuarioce,$operacion)
+function abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,$montocierre,$fechaapertura,$fechacierre,$estado,$codusuarioap,$codusuarioce,$operacion)
 {
 	
 	
@@ -329,15 +327,13 @@ if ( ! $stmt->execute()) {
 	  $informacion =array("1" => "exito","2" =>"1","3"=>$idarqueocaja,"4"=>$caja_idcaja,"5"=>  number_format($montoapertura,'0',',','.')
 	  ,"6"=>  number_format($montocierre,'0',',','.'),"7"=>$fechaapertura,"8"=>$fechacierre,"9"=>$estado,"10"=>  number_format($totalRecaudado,'0',',','.')
 	  ,"11"=>$codusuarioap ,"12"=>$usuarioap);
-echo json_encode($informacion);	
-exit;
  }else{
 	 $totalRecaudado=obternerultimacajauser($cod_local,$user,$buscar);
 	$informacion =array("1" => "exito","2" =>"0","3"=> number_format($totalRecaudado,'0',',','.'));
-echo json_encode($informacion);	
-exit;
  
  }
+
+ return $informacion;
   
 }
 
@@ -900,7 +896,7 @@ $descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'IS
 
 $totalPagado=$totalPagado+$Monto;
 if($descripcion=="ventas"){
-	$descripcion=buscar_detalles_venta($cod_venta_fk);
+	$descripcion=buscar_detalles_venta($cod_venta_fk)['listado'];
 }
 	$pagina.="
 <table class='tableTicket' border='0' cellspacing='0' cellpadding='0'>
@@ -1020,56 +1016,6 @@ $totalTipoPago+= mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-88
  mysqli_close($mysqli);
 return $totalTipoPago;
 }
-
-
-
-
-/*Buscar */
-function buscar_detalles_venta($buscar)
-{
-$mysqli=conectar_al_servidor();
-
-$sql= "select pr.nombre_producto,
-dtv.cantidad_detalle,dtv.cod_productoFK,dtv.precio_producto,dtv.cod_ventaFK,dtv.subtotal,dtv.subPrecioCompra,dtv.detalleproducto
- from
- venta vt inner join detalle_venta dtv on vt.cod_venta=dtv.cod_ventaFK 
- inner join producto pr on pr.cod_producto=dtv.cod_productoFK
- where vt.cod_venta='$buscar' ";
-$pagina = "";   
-$stmt = $mysqli->prepare($sql);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
-
-$result = $stmt->get_result();
-$valor= mysqli_num_rows($result);
-$nroRegistro=$valor;
-$a=1;
-if ($valor>0)
-{
-while ($valor= mysqli_fetch_assoc($result))
-{  
-
-
-
-$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');       
-$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'UTF-8', 'ISO-8859-1');       
-$detalleproducto = mb_convert_encoding((string)($valor['detalleproducto']), 'UTF-8', 'ISO-8859-1');       
-$subtotal = mb_convert_encoding((string)($valor['subtotal']), 'ISO-8859-1', 'UTF-8');      
-if($pagina==""){
-	$pagina.=$a.") &nbsp".$nombre_producto.",&nbsp&nbsp".number_format($cantidad_detalle,'2',',','.')."(".$detalleproducto.")";	
-	}else{
-		$pagina.="<br>".$a.") &nbsp".$nombre_producto.",&nbsp&nbsp".number_format($cantidad_detalle,'2',',','.')."(".$detalleproducto.")";	
-	}
-
-
-}
-}
-
-return $pagina;
-}
-
 
 function datosdeEgresos($idArqeoFk)
 {
@@ -1191,7 +1137,9 @@ $montoapertura = mb_convert_encoding((string)($valor['montoapertura']), 'UTF-8',
 return $montoapertura;
 }
 
-
-
-verificar($operacion);
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	$operacion = $_POST['funt'];
+	$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+	verificar($operacion);
+}
 ?>

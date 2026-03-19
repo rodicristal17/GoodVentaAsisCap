@@ -100,14 +100,12 @@ function verVentanaEditarGasto(vent_anterior= "") {
 	verCerrarVentanaAbmGasto(true, false)
 }
 var idAbmGasto = "";
-var montoActualGasto= "";
 function obtenerdatosabmGasto(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
 	});
 	datostr.className = 'tableRegistroSelec'
 	document.getElementById('inptMontoGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
-	montoActualGasto= $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptRegistroSeleccGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_14"]').html();
@@ -318,18 +316,13 @@ function verificarcamposGasto() {
 	if (idAbmGasto != "") {
 		accion = "editar";
 		if(controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}	
-
-		// Comprueba si es necesario renovar la caja
-		if (montoActualGasto != inptMontoGasto && confirm("¿Desea actualizar tambien los datos en la caja?")) {
-			actualizar_caja= true;
-		}
 	} else {
 		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
 		accion = "nuevo";
 	}
-	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, actualizar_caja, inptCantCuotaGasto, inptPeriodicidadGasto);
+	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto);
 }
-function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, actualizar_caja, cantCuotas= 0, periodicidad= "") {
+function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "") {
 	verCerrarEfectoCargando("1")
 	let editar_cuotas= true;
 
@@ -358,7 +351,6 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("nrocuenta", nrocuenta)
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
-	datos.append("actualizar_caja", actualizar_caja)
 	datos.append("cod_interConsultaFK", cod_interConsulta);
 	datos.append("cantCuotas", cantCuotas);
 	datos.append("periodicidad", periodicidad);

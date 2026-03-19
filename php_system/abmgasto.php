@@ -9,12 +9,12 @@ include_once("subir_foto_base64.php");
 include_once("abmpagos.php");
 include_once("abmInterConsulta.php");
 include_once("abmPresupuestoMotivoGasto.php");
+include_once("abmaperturacierrecaja.php");
 
 date_default_timezone_set('America/Asuncion');
 
 function verificarOperacionGasto($operacion)
 {
-	
  $user=$_POST['useru'];
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	$pass=$_POST['passu'];	
@@ -842,14 +842,26 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 }
 
 function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
+	// Obtiene los datos del gasto
+	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9][0];
+	$cod_aperturaFK= $registroGasto['codApertura'];
+	$cod_cajaFK= $registroGasto['codCaja'];
+
+	// Se verifica si la caja sigue abierta, en caso contrario se actualiza
+	$result_caja = controldecaja($registroGasto['codCaja'],$registroGasto['cod_local'],$registroGasto['cod_usuario']);
+	if ($result_caja["2"] == "0" || $result_caja["3"] != $registroGasto['codApertura']) {
+		$cod_aperturaFK = $result_caja["3"];
+		$cod_cajaFK= $result_caja["4"];
+	}
+
 	$fechaActual= new DateTime();
 	$fechaActual= $fechaActual->format('Y-m-d H:i:s');
 	$decision= ($decision == 'true' ? 'Activo' : 'Rechazado');
 	$mysqli=conectar_al_servidor();
 
-	$sql= "UPDATE gastos SET cod_usuario_autoriz= ?, fecha_autoriz= ?, estado='$decision' WHERE idgastos= ?";
+	$sql= "UPDATE gastos SET cod_usuario_autoriz= ?, fecha_autoriz= ?, codApertura= ?, codCaja= ?, estado='$decision' WHERE idgastos= ?";
 	$stmt = $mysqli->prepare($sql);
-	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$idgastos);
+	$stmt->bind_param('isiii',$cod_usuarioFK,$fechaActual,$cod_aperturaFK,$cod_cajaFK,$idgastos);
 
 	if (!$stmt->execute()) {
 		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
@@ -857,7 +869,6 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	}
 
 	// Se registra el cambio
-	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9][0];
 	if (!empty($registroGasto['cod_interConsultaFK'])) {
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
@@ -1084,7 +1095,7 @@ $atributos= "arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
 personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivoIngresoEgresoFK=?, cod_interConsultaFK=?, cod_usuario_autoriz=?";
 
 // Se verifica si se cambio el monto y se requiere cambio de caja
-if ($datos_gasto[0]['monto'] != $monto && $_POST['actualizar_caja'] == "true") {
+if ($datos_gasto[0]['monto'] != $monto) {
 	$atributos .= ", codCaja =$codcaja ,codApertura = $idaperturacierrecaja";
 }
 
@@ -1202,6 +1213,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			'cod_local' => $value['cod_local'],
 			'nombrelocal' => $value['nombrelocal'],
 			'nroboleta' => "",
+			'cod_usuario' => "",
+			'codCaja' => "",
+			'codApertura' => "",
 			'banco' => "",
 			'nrocuenta' => "",
 			'arreglo' => "",
@@ -1292,7 +1306,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		}
 			
 		$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
-		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,
+		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
 		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,
 		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
@@ -1344,6 +1358,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					'tipo' => mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'),
 					'estado' => mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'),
 					'cod_local' => mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1'),
+					'cod_usuario' => mb_convert_encoding((string)($valor['cod_usuario']), 'UTF-8', 'ISO-8859-1'),
+					'codCaja' => mb_convert_encoding((string)($valor['codCaja']), 'UTF-8', 'ISO-8859-1'),
+					'codApertura' => mb_convert_encoding((string)($valor['codApertura']), 'UTF-8', 'ISO-8859-1'),
 					'nombrelocal' => mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1'),
 					'nroboleta' => mb_convert_encoding((string)($valor['nroboleta']), 'UTF-8', 'ISO-8859-1'),
 					'banco' => mb_convert_encoding((string)($valor['banco']), 'UTF-8', 'ISO-8859-1'),
@@ -1444,6 +1461,8 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 			$estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 			$cod_local=mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1');
+			$cod_usuario=mb_convert_encoding((string)($valor['cod_usuario']), 'UTF-8', 'ISO-8859-1');
+			$codCaja=mb_convert_encoding((string)($valor['codCaja']), 'UTF-8', 'ISO-8859-1');
 			$nombrelocal=mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1');
 			$nroboleta=mb_convert_encoding((string)($valor['nroboleta']), 'UTF-8', 'ISO-8859-1');
 			$banco=mb_convert_encoding((string)($valor['banco']), 'UTF-8', 'ISO-8859-1');
