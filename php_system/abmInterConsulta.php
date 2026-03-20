@@ -562,7 +562,7 @@
             $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta']));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje));
     }
 
     function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {
@@ -1215,7 +1215,6 @@
             }
             $registros[] = $reg;
         }
-
         $stmt->close();
         return $registros;
     }
