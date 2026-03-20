@@ -346,7 +346,15 @@ if ($operacion == "obtenerGastosAsociados") {
 				$estado .= 'secondary">'.$gast['estado'].'</span>';
 				break;
 			case 'pendiente':
-				$estado .= 'warning">'.$gast['estado'].'</span>';
+				$fechaActual = date('Y-m-d');
+				$fechaGasto = date('Y-m-d', strtotime($gast['fecha']));
+				if ($fechaActual >= $fechaGasto) {
+					$estado .= 'danger">solicitado</span>'
+					.'<i class="fa-solid fa-check" onclick="event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: green; padding: 2px;border-radius: 5px;margin-left: 5px;"></i>'
+					.'<i class="fa-solid fa-xmark" onclick="event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)" style="font-size: 14pt; color: white; background-color: red; padding: 2px;border-radius: 5px;"></i>';
+				} else {
+					$estado .= 'warning">'.$gast['estado'].'</span>';
+				}
 				break;
 			case 'solicitado':
 				$fechaActual = date('Y-m-d');
