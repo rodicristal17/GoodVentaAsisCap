@@ -491,12 +491,6 @@
                 <span id="td_datos_42">'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
                 </div>';
             };
-            if ($valueInter['observacion']) {
-                $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Observaciones: </span>
-                <span>'.$valueInter['observacion'].'</span>
-                </div>';
-            };
             $pagina .= '</div>';
             
             $pagina .= '<div style="flex: 0.4;" class="panel-flujo-gastos">
@@ -562,7 +556,7 @@
             $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje, "6" => $valueInter['observacion']));
     }
 
     function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {

@@ -880,6 +880,13 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                         document.getElementById('tituloInterConsultas').innerHTML= $(elemento).children('#td_datos_10').html() + " - " + cod_interConsulta;
                     }
 
+                    // Carga las observaciones en caso de existir
+                    if (datos["6"]) {
+                        document.getElementById('divObservacionDetallesInterconsultas').style.display= "";
+                        document.getElementById('divObservacionDetallesInterconsultas').innerHTML= '<span style="text-decoration: underline;"><b>Observaciones: </b></span><br>'
+                        +'<span style= "font-size: 14dp;"><b>'+ datos["6"] + '</b></span>';
+                    }
+
                     document.getElementById("table_abm_InterConsulta").innerHTML= datos["2"];
                     totalRegistroMensaje = datos["5"];
 
