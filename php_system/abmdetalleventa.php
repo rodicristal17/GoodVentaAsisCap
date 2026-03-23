@@ -43,6 +43,9 @@ $cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8'
 $num_factura=$_POST['num_factura'];
 $num_factura = mb_convert_encoding((string)($num_factura), 'ISO-8859-1', 'UTF-8');
 
+$nro_comprobante= $_POST['nro_comprobante'];
+$nro_comprobante = mb_convert_encoding((string)($nro_comprobante), 'ISO-8859-1', 'UTF-8');
+
 if($cod_ventaFK==""){
 $fecha_venta=$_POST['fecha_venta'];
 $fecha_venta = mb_convert_encoding((string)($fecha_venta), 'ISO-8859-1', 'UTF-8');
@@ -81,7 +84,7 @@ $datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comproban
 $cod_ventaFK=$datosventa[0];
 $num_factura=$datosventa[1];
 }
-abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$operacion);
+abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$nro_comprobante,$operacion);
 
 }
 
@@ -500,7 +503,7 @@ exit;
 
 
 
-function abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$operacion)
+function abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$nro_comprobante,$operacion)
 {
 	
 $mysqli=conectar_al_servidor(); 
@@ -576,7 +579,7 @@ $control=$control+1;
 $subtotal=obtenerTotal($cod_ventaFK);
 actualizarTotal($cod_ventaFK,$subtotal);
 
-funcionCrearCredito($tipo,$fecha_venta,$cod_ventaFK,$subtotal,0);
+funcionCrearCredito($tipo,$fecha_venta,$cod_ventaFK,$subtotal,0,$nro_comprobante);
 
 
 $informacion =array("1" => "exito","2" => number_format($subtotal,'0',',','.'),"3" => $cod_ventaFK,"4" => $num_factura);
@@ -585,7 +588,7 @@ exit;
 	
 }
 
-function funcionCrearCredito($tipo,$fecha_venta,$cod_venta,$Monto,$descuento){
+function funcionCrearCredito($tipo,$fecha_venta,$cod_venta,$Monto,$descuento,$nro_comprobante){
  
 if($tipo == "1"){
 	

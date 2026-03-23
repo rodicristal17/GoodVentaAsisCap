@@ -10678,6 +10678,16 @@ id='inptTotalVentaTerminar'/>
 </table>
 <br>
 
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloF_1'>Nro comprobante :</p>
+<input class='inputText1_2' type='text'
+id='inptNroComprobanteVentaTerminarEfectivo'/>
+</td>
+</tr>
+</table>
+
 <table style='width:100%;'>
 <tr>
 <td style='width:100%'>
@@ -13799,21 +13809,6 @@ title='Cerrar Ventana' onclick='vercerrarOpcionesImpresion(false)' />
 <br>
 
 <center>
-  <div class="divMenuf">
-    <table>
-      <tr>
-        <td style='width:100%'>
-          <p class='pTituloC' >Nro de Factura :</p>
-          <input class='inputText' type='text' id='inptNroFacturaManualVenta'
-          style='width:200px' />
-          <br>
-          <input type="button" value="Guardar Cambios" class="btn1"
-            onclick="guardarNroFactura()"/>
-        </td>
-      </tr>
-    </table>
-  </div>
-<br>
 <div class="divMenuf">
   <div style="display: none;">
   <input id='btnImprimirticket' type="button" value="Imprimir Ticket" id='btnTicket' class="btn1"
@@ -15804,6 +15799,7 @@ RESPONSABLE
 <input class='inputTextDisable' type='text' disabled id='inptTotalTarjetaArqueo' style='width:150px;' />
 </td>
 <td style='width:30%;text-align:right'>
+<input type="button" value="Cargar Nro factura" class="btn4" onclick="verCerrarVentanaCargarNroFactura(true)" style="background-color: rgb(33, 150, 243); width: 40%;">
 <input type="button" value="Eliminar" class="btn4"  id='btnEliminarCobros1'  style="width:100px;background-color: #ccc;" onclick='abmeliminarestepagohistorial()' >
 
 </td>
@@ -15818,7 +15814,37 @@ RESPONSABLE
 </table>
 </div>
 
-
+<div class='principal2' style='display:none' id='divAbmNroFacturaVenta'>
+  <center style="height: 100%;align-content: center;">
+    <div class="divAbms" style="width: 300px;height: fit-content; min-height: 0;">
+      <table class="tableMenuZ"><tr>
+      <td style="width:100%;text-align:left">
+      <p class="pTituloB"><b style="font-size: 30px;">Nro de factura</b></p>
+      </td>
+      <td style="width:5%;text-align:center">
+      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaCargarNroFactura(false)">
+      </td>
+      </tr></table>
+      <br>
+      <center>
+        <div class="divMenuf">
+          <table>
+            <tr>
+              <td style='width:100%'>
+                <p class='pTituloC' >Nro de Factura :</p>
+                <input class='inputText' type='text' id='inptNroFacturaManualCobro'
+                style='width:200px' />
+                <br>
+                <input type="button" value="Guardar Cambios" class="btn1"
+                  onclick="guardarNroFactura(document.getElementById('inptNroFacturaManualCobro').value)"/>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </center>
+    </div>
+  </center>
+</div>
 <div class='principal2' style='display:none' id='divVistaCajaApp'>
 <table style='width:100%;height:100%' id='tdEfectoVistaCajaApp'>
 <tr>

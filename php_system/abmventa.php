@@ -258,12 +258,6 @@ buscarmasclientesincativos($buscar,$documento,$cliente,$nrotelefono,$registrocar
 
 }
 
-if($operacion=="guardarNroComprobante") {
-	$cod_venta = mb_convert_encoding((string)($_POST['cod_venta']), 'ISO-8859-1', 'UTF-8');
-	$num_comprobante = mb_convert_encoding((string)($_POST['num_comprobante']), 'ISO-8859-1', 'UTF-8');
-	guardarNroComprobante($cod_venta, $num_comprobante);
-}
-
 if($operacion=="cuentasMoroso")
 {
 
@@ -604,31 +598,6 @@ abmAsignarLocal($cod_ventaAsignarCod_local,$inptlocalAsignarLocal);
 }
 
 
-}
-
-function guardarNroComprobante($cod_venta, $num_comprobante) {
-	if($cod_venta=="" || $num_comprobante==""){
-		$informacion =array("1" => "camposvacio", "2" => $cod_venta, "3" => $num_comprobante);
-		echo json_encode($informacion);	
-		exit;
-	}
-
-	$mysqli=conectar_al_servidor(); 
-
-	$consulta1="Update venta set num_comprobante=? where cod_venta=?";
-	$stmt1 = $mysqli->prepare($consulta1);
-	$ss='ss';
-	$stmt1->bind_param($ss,$num_comprobante,$cod_venta);
-
-	if (!$stmt1->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-		exit;
-	}
-
-	mysqli_close($mysqli); 
-	$informacion =array("1" => "exito");
-	echo json_encode($informacion);	
-	exit;
 }
 
 function abmAsignarLocal($cod_ventaAsignarCod_local,$inptlocalAsignarLocal)

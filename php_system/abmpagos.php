@@ -467,6 +467,14 @@ addPagosCredito($CargoAdministrativo,$cajapredeterminada,$codApertura,$cod_credi
 
 }
 
+if ($operacion == "guardarNroComprobante") {
+	$cod_pago=$_POST['cod_pago'];
+	$cod_pago = mb_convert_encoding((string)($cod_pago), 'ISO-8859-1', 'UTF-8');
+	$nro_comprobante=$_POST['nro_comprobante'];
+	$nro_comprobante = mb_convert_encoding((string)($nro_comprobante), 'ISO-8859-1', 'UTF-8');
+
+	guardarNroComprobante($cod_pago, $nro_comprobante);
+}
 
 
 if($operacion=="buscarImprimirTicketVentaContado" )
@@ -490,7 +498,7 @@ function buscarImprimirTicketVentaContado($cod_venta)
 {
 $pagina="";
 
-$detalleVenta= buscar_detalles_venta($cod_venta)['´pagina'];
+$detalleVenta= buscar_detalles_venta($cod_venta)['pagina'];
 $Pagos=buscarpagosTituloContado($cod_venta);
 
 /*Retornamos los datos obtenidos mediante el JSON */      
@@ -501,7 +509,30 @@ exit;
 
 
 
+function guardarNroComprobante($cod_pago, $num_comprobante) {
+	if($cod_pago=="" || $num_comprobante==""){
+		$informacion =array("1" => "camposvacio", "2" => $cod_venta, "3" => $num_comprobante);
+		echo json_encode($informacion);	
+		exit;
+	}
 
+	$mysqli=conectar_al_servidor(); 
+
+	$consulta1="Update pago set num_comprobante=? where idpago=?";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss='ss';
+	$stmt1->bind_param($ss,$num_comprobante,$cod_pago);
+
+	if (!$stmt1->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+		exit;
+	}
+
+	mysqli_close($mysqli); 
+	$informacion =array("1" => "exito");
+	echo json_encode($informacion);	
+	exit;
+}
 
 /*Funcion para insertar,modificar o eliminar registros*/
 function abm($CargoAdministrativo,$codCaja,$codApertura,$cod_creditoFK,$Fecha,$cod_cobradorFK,$cod_venta,$totalDeudaCuota,$totalInteres,$MontoCobrado,$MontoTarjeta,$descuento,$nrofactura,$operacion,$cod_TipoPago,$controlTipoPago)
@@ -820,6 +851,7 @@ exit;
 $datosventa=buscardatosventa($cod_venta);
 $nrofactura=buscarnrofactura();
 $descripcion="ventas";
+$idpago= "";
 
 $mysqli=conectar_al_servidor(); 
  
@@ -856,9 +888,10 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '
 exit;
 
 }
+// Recupera la id del pago
+$idpago= $mysqli->insert_id;
 }
  
-
 
 editarDetallesVenta($cod_venta," *Contado ".$monto);
 actualizarMetodo($cod_venta,"Corrido");
@@ -867,7 +900,7 @@ actualizarMetodo($cod_venta,"Corrido");
 if($controlTipoPago == 0){
 	$titulopago=buscarpagosTitulo($cod_venta,$nrofactura);
 $paginaticket=buscar_detalles_venta($cod_venta)['pagina'];
-$informacion =array("1" => "exito","2" => number_format($datosventa[1],'0',',','.'),"3"=>$paginaticket,"4"=>$titulopago[2] );
+$informacion =array("1" => "exito","2" => number_format($datosventa[1],'0',',','.'),"3"=>$paginaticket,"4"=>$titulopago[2],"5"=>$idpago);
 echo json_encode($informacion);	
 exit;
 }

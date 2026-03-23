@@ -13073,6 +13073,8 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 
 
 }
+
+
 /*ABM NUEVA VENTA*/
 var idabmVenta = ""
 var idGaranteFk="";
@@ -14062,10 +14064,10 @@ controldetalle=controldetalle+1;
 	var tipo="1"
 	
 	
+	const inptNroComprobanteVentaTerminarEfectivo= document.getElementById('inptNroComprobanteVentaTerminarEfectivo').value;
 	
 	
-	
-    abmdetalleventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, accion,tipo);
+    abmdetalleventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, inptNroComprobanteVentaTerminarEfectivo, accion,tipo);
 	
 }
 
@@ -14141,9 +14143,9 @@ controldetalle=controldetalle+1;
 
     var accion = "nuevo";
 	var tipo="2"
-    abmdetalleventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, accion,tipo);
+    abmdetalleventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, '', accion,tipo);
 }
-function abmdetalleventa(caja,puntoexpedicion,tipo_comprobante,fecha_venta,comisioncobrador,cod_clienteFK,idGaranteFk,TipoVenta,cod_cobradorFK,idFkVendedor1, idFkVendedor2,cod_ventaFK, num_factura, cod_local, accion,tipo) {
+function abmdetalleventa(caja,puntoexpedicion,tipo_comprobante,fecha_venta,comisioncobrador,cod_clienteFK,idGaranteFk,TipoVenta,cod_cobradorFK,idFkVendedor1, idFkVendedor2,cod_ventaFK, num_factura, cod_local, nro_comprobante, accion,tipo) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -14187,6 +14189,7 @@ function abmdetalleventa(caja,puntoexpedicion,tipo_comprobante,fecha_venta,comis
 	datos.append("codSolicitudCreditoFK", codSolcirudFK)
 	datos.append("totalRegistro", control)
 	datos.append("caja", caja)
+	datos.append("nro_comprobante", nro_comprobante);
 	datos.append("cod_aperturaCajaFK", idabmAperturacierrecaja)
 	datos.append("tipo", tipo)
 	var OpAjax = $.ajax({
@@ -14428,9 +14431,15 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 
-function guardarNroFactura() {
-	const num_comprobante= document.getElementById('inptNroFacturaManualVenta').value;
+function verCerrarVentanaCargarNroFactura(mostrar) {
+	if (mostrar) {
+		document.getElementById('divAbmNroFacturaVenta').style.display = "";
+	} else {
+		document.getElementById('divAbmNroFacturaVenta').style.display = "none";
+	}
+}
 
+function guardarNroFactura(num_comprobante) {
 	if (!num_comprobante) {
 		ver_vetana_informativa("Faltan datos", "Falta completar el numero de comprobante de la factura escrita a mano")
 	}
@@ -14439,13 +14448,13 @@ function guardarNroFactura() {
 		"useru": userid,
 		"passu": passuser,
 		"navegador": navegador,
-		"cod_venta": idFkVenta,
-		"num_comprobante": num_comprobante,
+		"cod_pago": idHistorialPago,
+		"nro_comprobante": num_comprobante,
 		"funt": "guardarNroComprobante"
 	};
 	$.ajax({
 		data: datos,
-		url: "/GoodVentaAsisCap/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
 			var xhr = new window.XMLHttpRequest();
@@ -14480,6 +14489,7 @@ function guardarNroFactura() {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   	if (Respuesta == true) {
 					ver_vetana_informativa("Datos guardado exitosamente");
+					verCerrarVentanaCargarNroFactura(false)
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -15574,8 +15584,8 @@ function abmconfirmarPagoContado() {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   
-					
+				   idHistorialPago= datos[5];
+				   guardarNroFactura(document.getElementById('inptNroComprobanteVentaTerminarEfectivo').value);
 					document.getElementById('inptTotalPagado').value = datos["2"];
 	paginaticket=datos["3"];
 	CuotasNro= datos["4"];
@@ -15604,7 +15614,7 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 
 
 					if(document.getElementById("inptSeleccTipoVenta").value=="CONTADO"){
-						buscarImprimirTicketVentaContado();
+						//buscarImprimirTicketVentaContado();
 						document.getElementById("divOpcionesImpresion").style.display=""
 					}
 		   
