@@ -25491,15 +25491,16 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <p class="pTitulo8" style="width: 100%;"> 
                   <input type="checkbox" id="inptSeleccFiltroEstadoInactivoArticuloLocal" style="width: fit-content;" checked="">Ocultar inactivos</p>
                 </td>
-                <td style="width: 75%;"></td>
-                <td style="width: 10%;">
+                <td style="width: 65%;"></td>
+                <td style="width: 20%;text-align: end;">
                   <input type="Button" value="Buscar" style="margin-top: 18px;" class="btn4" onclick="obtenerVistaInformeInsumoLocal()">
+                  <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('insumosLocal')" style="width:100px;background-color: rgb(58 58 58);">
                 </td>
               </tr></table>
             </div>
             <br>
             <div class="divMenuf">
-              <table class="tableCabeceraRegistro">
+              <table class="tableCabeceraRegistro" id="tbTitulosArticulosLocal">
                 <tr>
                 <td class="td_registro" style="width:10%;">
                 #

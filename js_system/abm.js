@@ -3813,7 +3813,37 @@ document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementByI
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_historial_pagos").innerHTML
 }
 
-
+if (ventana == "insumosLocal") {
+	pagina =
+"<table class='TableRepor0' style='width:100%'>"
++"<tr>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>Local</b></p>"
++"<p class='pTituloC' >"+ $("select[id=inptBuscarAbmInventarioLocal3]").children(":selected").text()+"</p>"
++"</td>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>Fecha de Impresión</b></p>"
++"<p class='pTituloC' >"+fechaimpresion+"</p>"
++"</td>"
++"<td></td>"
++"</tr>"
++"</table><br><br><center><h1 class='pTituloD' >Activos fijos de la empresa</h1><br></center>"
+paginaPie =
+"<br><br><table class='TableRepor0' style='width:100%'>"
++"<tr>"
++"<td style='width:20%;text-align:left'>"
++"<p class='pTituloC'><b>Registro Cargado</b></p>"
++"<p class='pTituloC' >"+ document.getElementById("inptTotalRegistoInventarioLocal").value+"</p>"
++"</td>"
++"<td style='width:80%;text-align:left'>"
++"</td>"
++"</tr>"
++"</table>"
+document.getElementById("divCabeceraImpresiones").innerHTML=pagina
+document.getElementById("divPieImpresiones").innerHTML=paginaPie
+document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tbTitulosArticulosLocal").innerHTML
+document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_InventarioLocal").innerHTML
+}
 if (ventana == "historialventa") {
 		
 		pagina =
