@@ -18272,7 +18272,7 @@ function abmrefinacimientoCuota(interes,descuento,total,metodopago,nroCuota,Mont
 				//idabmVenta=cod_venta;
 				obtenerdatoshistorialventa(elementoventa)
 				buscardetallesventa();
-				vercerrarOpcionesImpresion(mostrar);
+				vercerrarOpcionesImpresion(false);
 				}			
 			}catch(error)
 				{

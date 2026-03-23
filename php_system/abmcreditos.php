@@ -616,6 +616,9 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 	$cantidad = $nroCuota;
 	$pendiente = $total;
 
+	// Se evalua cuantas cuotas seran cubiertas
+	$cuotas_pagadas= intval($totalPagado / $Monto);
+
 	$fecha = strtotime($iniciopago);
 	$diacredito = date("d", $fecha); //dia
 	$anhocredito = date("Y", $fecha); //AÑO
@@ -629,12 +632,8 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 	while ($a < $cantidad) {
 		if ($metodopago == "Mensual") {
 			if ($contarDias < $diacredito || $contarDias == "") {
-
-				if ($F >= 1) {
-					$RestarF = $F - 1;
-					$fecha = strtotime('+' . $RestarF . " month", strtotime($fechaInicio));
-
-					$fecha = strtotime('+' . $contarDias . " day", strtotime(date("d-m-Y", $fecha)));
+				if ($cuotas_pagadas >= 1) {
+					$fecha = strtotime('-' . $cuotas_pagadas . " month", strtotime($fechaInicio));
 				} else {
 					$fecha =  strtotime($fechaInicio);
 					// $fecha = strtotime('+ '.$contarDias." day",strtotime($fechaInicio));
@@ -654,10 +653,16 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 			$contarDias = UltimoDia($anhocredito, $mescredito);
 		}
 		if ($metodopago == "Semanal") {
+			if ($cuotas_pagadas >= 1) {
+				$fecha = strtotime('-' . $contarDias . " day", strtotime(date("d-m-Y", $fecha)));
+			}
 			$fecha = strtotime('+' . $F . " day", strtotime($fechaInicio));
 			$F = $F + 7;
 		}
 		if ($metodopago == "Quincenal") {
+			if ($cuotas_pagadas >= 1) {
+				$fecha = strtotime('-' . ($contarDias*15) . " day", strtotime(date("d-m-Y", $fecha)));
+			}
 			$fecha = strtotime('+' . $F . " day", strtotime($fechaInicio));
 			$F = $F + 15;
 		}
