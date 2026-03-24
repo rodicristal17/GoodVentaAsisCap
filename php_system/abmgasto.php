@@ -370,7 +370,7 @@ if ($operacion == "obtenerGastosAsociados") {
 		}
 
 		$pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
-			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$idgastos."</td>
+			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$gast['idgastos']."</td>
 			<td  style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
 			<td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>
 			<td  style='border: none;'>".$gast['descripcion']."</td>
@@ -1497,8 +1497,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$styleEstado = "";
 			$fechaHoy = new DateTime();
 			$fechaGasto = DateTime::createFromFormat('Y-m-d', $fecha);
-			if ($estado == 'solicitado' && $fechaGasto <= $fechaHoy) {
+			if (($estado == 'solicitado' || $estado == 'pendiente') && $fechaGasto <= $fechaHoy) {
 				$styleEstado= "background-color: #ff5050;color: #ffffff";
+				$estado= 'solicitado';
 				$registro_autorizacion_necesario= true;
 			} else if ($estado == 'pendiente' || ($estado == 'solicitado' && $fechaGasto > $fechaHoy)) {
 				$styleEstado= "background-color: #585f08;color: #ffffff;";
