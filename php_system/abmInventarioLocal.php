@@ -32,6 +32,12 @@
                         cargarImagenInventarioLocal($cod_inventario, $campo, $fotos[$i], $ext[$i]);
                     }
                 }
+                // Actualliza la foto de la factura solo si este se envia
+                $fotoFactura= $_POST['fotoFactura'];
+                $extFactura= $_POST['extFactura'];
+                if (!empty($fotoFactura) || !empty($extFactura)) {
+                    cargarImagenInventarioLocal($cod_inventario, 'url_Factura', $fotoFactura, $extFactura);
+                }
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
             case 'nuevo/editar':
@@ -44,8 +50,11 @@
                 $observacion= isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_usuario_responsableFK= isset($_POST['cod_usuario_responsableFK']) ? mb_convert_encoding((string)($_POST['cod_usuario_responsableFK']), 'ISO-8859-1', 'UTF-8') : null;
-                
-                $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuario_responsableFK, $user);
+                $cod_marcaFK= isset($_POST['cod_usuario_responsableFK']) ? mb_convert_encoding((string)($_POST['cod_marcaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $modelo= isset($_POST['modelo']) ? mb_convert_encoding((string)($_POST['modelo']), 'ISO-8859-1', 'UTF-8') : null;
+                $nro_serie= isset($_POST['nro_serie']) ? mb_convert_encoding((string)($_POST['nro_serie']), 'ISO-8859-1', 'UTF-8') : null;
+
+                $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK, $user);
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
             case 'buscarVista':
@@ -112,7 +121,9 @@
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosInsumoLocal(this)'>
             <td id='td_id' style='width:10%;'>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)."</td>
-            <td id='td_datos_1'style='width:40%;'>".$value['nombre']."</td>
+            <td id='td_datos_1'style='width:20%;'>".$value['nombre']."</td>
+            <td id='td_datos_18'style='width:10%;'>".$value['nombre_marca']."</td>
+            <td id='td_datos_19'style='width:10%;'>".$value['nro_serie']."</td>
             <td id='td_datos_2'style='display:none;'>".$value['descripcion']."</td>
             <td id='td_datos_3'style='width:20%;'>".$value['nombreLocal'].".</td>
             <td id='td_datos_14'style='width:15%;'>".$value['nombre_usuario_responsable']."</td>
@@ -126,6 +137,13 @@
             <td id='td_datos_11'style='display: none;'>".$value['url2']."</td>
             <td id='td_datos_12'style='display: none;'>".$value['url3']."</td>
             <td id='td_datos_13'style='display: none;'>".$value['cod_usuario_responsableFK']."</td>
+            <td id='td_datos_14'style='display: none;'>".$value['nombre_usuarioFK_create']."</td>
+            <td id='td_datos_15'style='display: none;'>".$value['fecha_creacion']."</td>
+            <td id='td_datos_16'style='display: none;'>".$value['nombre_usuarioFK_edit']."</td>
+            <td id='td_datos_17'style='display: none;'>".$value['fecha_edit']."</td>
+            <td id='td_datos_20'style='display: none;'>".$value['modelo']."</td>
+            <td id='td_datos_21'style='display: none;'>".$value['cod_marcaFK']."</td>
+            <td id='td_datos_22'style='display: none;'>".$value['url_factura']."</td>
             </tr></table>";
         }
 
@@ -174,6 +192,9 @@
         $sql= "SELECT 
             il.* ,
             (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuario_responsableFK) as nombre_usuario_responsable,
+            (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK_create) as nombre_usuarioFK_create,
+            (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK_edit) as nombre_usuarioFK_edit,
+            (SELECT descripcion FROM marcas WHERE cod_marcas = il.cod_marcaFK) as nombre_marca,
             l.Nombre as nombreLocal FROM insumos_local il JOIN local l ON l.cod_local = il.cod_localFK
             $sqlFiltro ORDER BY il.cod_insumo ASC $limite";
 
@@ -223,13 +244,13 @@
         }
     }
 
-    function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK, $cod_usuario_responsableFK,$cod_usuarioFK_edit) {
+    function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie,$cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK,$cod_usuarioFK_edit) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_inventario)) {
-            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, cod_localFK, cod_usuario_responsableFK, cod_usuarioFK_create) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)";
+            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, modelo, nro_serie,cod_localFK, cod_marcaFK, cod_usuario_responsableFK, cod_usuarioFK_create) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('isssiisiii', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $cod_localFK,$cod_usuario_responsableFK, $cod_usuarioFK_edit);
+            $stmt->bind_param('isssiisssiiii', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK,$cod_marcaFK,$cod_usuario_responsableFK, $cod_usuarioFK_edit);
         } else {
             $parametros = array();
 
@@ -247,6 +268,21 @@
                 $atributos .= ", nombre= ?";
                 $ss .= "s";
                 $parametros[] = $nombre;
+            }
+            if (!empty($modelo)) {
+                $atributos .= ", modelo= ?";
+                $ss .= "s";
+                $parametros[] = $modelo;
+            }
+            if (!empty($nro_serie)) {
+                $atributos .= ", nro_serie= ?";
+                $ss .= "s";
+                $parametros[] = $nro_serie;
+            }
+            if (!empty($cod_marcaFK)) {
+                $atributos .= ", cod_marcaFK= ?";
+                $ss .= "i";
+                $parametros[] = $cod_marcaFK;
             }
             if (!empty($descripcion)) {
                 $atributos .= ", descripcion= ?";

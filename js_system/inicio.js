@@ -961,16 +961,13 @@ function menu(d) {
 /*
 AUDITORIA
 */
-function verCerrarAuditoria(d){
-	
-	
-	if(d=="1"){
-	document.getElementById("divAuditoria").style.display="";	
-	  document.getElementById("tdEfectoAuditoria").className="magictime slideDownReturn"
+function verCerrarAuditoria(mostrar){
+	if(mostrar){
+		document.getElementById("divAuditoria").style.display="";	
+	  	document.getElementById("tdEfectoAuditoria").className="magictime slideDownReturn"
 	}else{
-	document.getElementById("tdEfectoAuditoria").className="magictime vanishOut"
-	$("div[id=divAuditoria]").fadeOut(500);	
-	
+		document.getElementById("tdEfectoAuditoria").className="magictime vanishOut"
+		$("div[id=divAuditoria]").fadeOut(500);	
 	}
 }
 
@@ -4382,10 +4379,18 @@ function SeleccionarRegistroMarca(){
 		ver_vetana_informativa("Falto Seleccionar un registro")
 		return;
 	}
-    if(VentanaMarca=="abmproducto"){
-	 document.getElementById("inptMarcaProducto").value = $(ElementoSeleccMarca).children('td[id="td_datos_1"]').html();
-	 idFkProductoMarca = $(ElementoSeleccMarca).children('td[id="td_id"]').html();
-	}	
+	switch (VentanaMarca) {
+		case "abmproducto":
+			document.getElementById("inptMarcaProducto").value = $(ElementoSeleccMarca).children('td[id="td_datos_1"]').html();
+			idFkProductoMarca = $(ElementoSeleccMarca).children('td[id="td_id"]').html();
+			break;
+		case "abminventarioInsumo":
+			document.getElementById("inptMarcaInventarioInsumo").value = $(ElementoSeleccMarca).children('td[id="td_datos_1"]').html();
+			idFkProductoMarca = $(ElementoSeleccMarca).children('td[id="td_id"]').html();
+			break;
+		default:
+			break;
+	}
 	 document.getElementById("divAbmMarca").style.display="none";
 	 LimpiarCamposMarca()
 }
@@ -36145,6 +36150,10 @@ function readFileProducto(input) {
 			case 'fotoInventarioLocal3':
 				fotoInventario3= e.target.result;
 				extInventario3= file_extension;
+				break;
+			case 'facturaInventarioLocal':
+				fotoFacturaInventario= e.target.result;
+				extFacturaInventario= file_extension;
 				break;
 			case 'fotoGasto':
 				fotoGasto= e.target.result;

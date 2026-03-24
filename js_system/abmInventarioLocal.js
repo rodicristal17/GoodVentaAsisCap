@@ -243,10 +243,12 @@ function obtenerDatosInsumoLocal(datostr) {
     let urlFoto1= $(datostr).children('td[id="td_datos_10"]').html();
     let urlFoto2= $(datostr).children('td[id="td_datos_11"]').html();
     let urlFoto3= $(datostr).children('td[id="td_datos_12"]').html();
+    let urlFotoFactura= $(datostr).children('td[id="td_datos_22"]').html();
     
     urlFoto1= (!urlFoto1) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto1;
     urlFoto2= (!urlFoto2) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto2;
     urlFoto3= (!urlFoto3) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto3;
+    urlFotoFactura= (!urlFotoFactura) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFotoFactura;
 
     cod_inventarioLocal= $(datostr).children('td[id="td_id"]').html();
     document.getElementById('inptCodigoInventarioInsumo').value= cod_inventarioLocal.toString().padStart(3, "0");
@@ -255,15 +257,28 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptDescripcionInventarioInsumo').value= $(datostr).children('td[id="td_datos_2"]').html();
     document.getElementById('inptCantidadInventarioInsumo').value= $(datostr).children('td[id="td_datos_5"]').html();
     document.getElementById('inptCostoInventarioInsumo').value= $(datostr).children('td[id="td_datos_6"]').html();
+    separadordemiles(document.getElementById('inptCostoInventarioInsumo'));
     document.getElementById('inptLocalInventarioInsumo').value= $(datostr).children('td[id="td_datos_8"]').html();
     document.getElementById('inptEstadoInventarioInsumo').value= $(datostr).children('td[id="td_datos_4"]').html().toLowerCase();
     document.getElementById('inptObservacionInventarioInsumo').innerHTML= $(datostr).children('td[id="td_datos_7"]').html();
     document.getElementById('inptUsuarioResponsableInventarioInsumo').value= $(datostr).children('td[id="td_datos_13"]').html();
+    document.getElementById('inptNroSerieInventarioInsumo').value= $(datostr).children('td[id="td_datos_19"]').html();
+    document.getElementById('inptModeloInventarioInsumo').value= $(datostr).children('td[id="td_datos_20"]').html();
+    document.getElementById('inptMarcaInventarioInsumo').value= $(datostr).children('td[id="td_datos_18"]').html();
+    idFkProductoMarca= $(datostr).children('td[id="td_datos_21"]').html();
     document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ urlFoto1 +")";
     document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ urlFoto2 +")";
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ urlFoto3 +")";
+    document.getElementById('imgfacturaInventarioLocal').style.backgroundImage= "url("+ urlFotoFactura +")";
     document.getElementById('btnEditarInventarioLocal').style.backgroundColor= "rgb(33, 150, 243)";
     document.getElementById('btnEditarInventarioLocal').disabled= false;
+
+    // Datos auditoria
+    document.getElementById('inptUsuarioInsertadoPor').value= $(datostr).children('td[id="td_datos_14"]').html();
+    document.getElementById('inptFechaInsertadoPor').value= $(datostr).children('td[id="td_datos_15"]').html();
+    document.getElementById('inptUsuarioEditadoPor').value= $(datostr).children('td[id="td_datos_16"]').html();
+    document.getElementById('inptFechaEditadoPor').value= $(datostr).children('td[id="td_datos_17"]').html();
+    document.getElementById('btnAuditoriaInventarioLocal').style.backgroundColor= '';
 }
 
 function consultarUltimoIdInventarioLocal() {
@@ -343,6 +358,8 @@ function limpiarcamposInventarioLocal() {
     document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('inptUsuarioResponsableInventarioInsumo').value= "";
+    document.getElementById("inptMarcaInventarioInsumo").value = "";
+    idFkProductoMarca= "";
 
     // Vacia los campos de las imagenes
     fotoInventario1= "";
@@ -351,6 +368,15 @@ function limpiarcamposInventarioLocal() {
     extInventario2= "";
     fotoInventario3= "";
     extInventario3= "";
+    fotoFacturaInventario= "";
+    extFacturaInventario= "";
+
+    // Campos de auditoria
+    document.getElementById('inptUsuarioInsertadoPor').value= '';
+    document.getElementById('inptFechaInsertadoPor').value= '';
+    document.getElementById('inptUsuarioEditadoPor').value= '';
+    document.getElementById('inptFechaEditadoPor').value= '';
+    document.getElementById('btnAuditoriaInventarioLocal').style.backgroundColor= '#d5d3d3';
 }
 
 function verificarCamposInventarioLocal() {
@@ -367,21 +393,30 @@ function verificarCamposInventarioLocal() {
     const costo= document.getElementById('inptCostoInventarioInsumo').value;
     const observacion= document.getElementById('inptObservacionInventarioInsumo').value;
     const cod_localFK= document.getElementById('inptLocalInventarioInsumo').value;
+    const modelo= document.getElementById('inptModeloInventarioInsumo').value;
+    const nro_serie= document.getElementById('inptNroSerieInventarioInsumo').value;
     const usuario_responsable= document.getElementById('inptUsuarioResponsableInventarioInsumo').value;
 
     if (!cod_localFK) {
-        ver_vetana_informativa("Falto seleccionar un local");
+        ver_vetana_informativa("Faltan datos.","Falto seleccionar un local");
+        return false;
+    }
+    if (!cantidad) {
+        ver_vetana_informativa("Faltan datos.","Falto seleccionar un local");
         return false;
     }
     if (!nombre) {
-        ver_vetana_informativa("Falto ingresar un nombre");
+        ver_vetana_informativa("Faltan datos.","Falto ingresar un nombre");
         return false;
     }
+    if (!idFkProductoMarca) {
+        ver_vetana_informativa("Falta seleccionar su marca", "En caso de no tener marca seleccionar el registro 'Sin Marca0")
+    }
 
-    abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,cod_localFK);
+    abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,modelo, nro_serie,cod_localFK, idFkProductoMarca);
 }
 
-function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,cod_localFK) {
+function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,modelo,nro_serie,cod_localFK,cod_marcaFK) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -397,6 +432,9 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
     datos.append("costo", costo);
     datos.append("observacion", observacion);
     datos.append("cod_usuario_responsableFK", usuario_responsable)
+    datos.append("cod_marcaFK", cod_marcaFK);
+    datos.append("modelo", modelo);
+    datos.append("nro_serie", nro_serie);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -459,6 +497,8 @@ var fotoInventario2= "";
 var extInventario2= "";
 var fotoInventario3= "";
 var extInventario3= "";
+var fotoFacturaInventario= "";
+var extFacturaInventario= "";
 function subirImagenesInsumosLocal(cod_inventario) {
     obtener_datos_user()
 	var datos = new FormData();
@@ -473,7 +513,9 @@ function subirImagenesInsumosLocal(cod_inventario) {
     datos.append("exts[]", extInventario2);
     datos.append("fotos[]", fotoInventario3);
     datos.append("exts[]", extInventario3);
-
+    datos.append("fotoFactura", fotoFacturaInventario);
+    datos.append("extFactura", extFacturaInventario);
+console.warn(extFacturaInventario);
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInventarioLocal.php",

@@ -179,10 +179,16 @@ ALTER TABLE insumos_local ADD COLUMN cod_usuarioFK_create INT(11);
 UPDATE insumos_local
 SET cod_usuarioFK_edit = cod_usuarioFK_create;
 
-
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.69', detalles='Horarios de entrada agregado a los usuarios.', fecha='2026-03-17' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE pago ADD COLUMN num_comprobante VARCHAR(15);
+
+ALTER TABLE insumos_local ADD COLUMN modelo VARCHAR(100);
+ALTER TABLE insumos_local ADD COLUMN nro_serie VARCHAR(100);
+ALTER TABLE insumos_local ADD COLUMN cod_marcaFK INT(11);
+ALTER TABLE insumos_local ADD CONSTRAINT fk_insumos_local_marca
+    FOREIGN KEY (cod_marcaFK) REFERENCES marcas(cod_marcas);
+ALTER TABLE insumos_local ADD COLUMN url_factura VARCHAR(255);
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

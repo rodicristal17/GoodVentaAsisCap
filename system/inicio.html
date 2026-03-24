@@ -2992,7 +2992,7 @@ id='inptRegistroSeleccProveedor' style='width:200px' />
 <input type='button' value='Editar' class='btn5'
 onclick='verVentanaEditarProveedor()' id='btnEditarProveedores'
 style='background-color: #b7b7b7;'>
-<input id="btnAuditoriaProveedor" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: rgb(183, 183, 183);">
+<input id="btnAuditoriaProveedor" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: rgb(183, 183, 183);">
 </td>
 <td style='width:30%;text-align:left'></td>
 </tr>
@@ -4022,7 +4022,7 @@ style='background-color:#5bc572'>
                                             <p class='pTituloC'>Registro Selecc..</p>
                                             <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccTrabajoMecanicoDental' style='width:200px' />
                                             <input id='btnEditarTrabajoMecanicoDental' type="button" value="Editar" class="btn5" onclick="verCerrarVentanaTrabajoMecanicoDental(true, true)" style='background-color:#b7b7b7'>
-                                            <input id="btnAuditoriaTrabajoMecanicoMental" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: #b7b7b7;" disabled>
+                                            <input id="btnAuditoriaTrabajoMecanicoMental" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #b7b7b7;" disabled>
                                         </td>
                                     </tr>
                                 </table>
@@ -6342,7 +6342,7 @@ style='width:130px' />
 <input type="button" value="Ver más Detalles..."
 class="btn5" onclick="iracompra()"
 style='width:110px'>
-<input id="btnAuditoriaCompras" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: #d5d3d3">
+<input id="btnAuditoriaCompras" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #d5d3d3">
 </td>
 </tr>
 </table>
@@ -6432,7 +6432,7 @@ Pendiente</p>
 <input class='inputTextDisable' type='text' disabled
 id='inptTotalPendientePagoCompraHist'
 style='width:150px;' />
-<input id="btnAuditoriaPagosCompras" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: #d5d3d3">
+<input id="btnAuditoriaPagosCompras" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #d5d3d3">
 </td>
 
 </tr>
@@ -7404,7 +7404,7 @@ style='background-color: #FF5722;'>
 <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccProducto' style='width:200px' />
 <input id='btnEnviarProductos' type='button' value='Despachar' class='btn5' onclick='verCerrarDespacharProducto("1")' style='background-color:#b7b7b7;'>
 <input id='btnEditarProductos' type='button' value='Editar' class='btn5' onclick='verVentanaEditarProducto()' style='background-color:#b7b7b7;'>
-<input id='btnAuditoriaProducto' type='button' value='Auditoria' class='btn5' onclick='verCerrarAuditoria(1)' style='background-color:#b7b7b7'>
+<input id='btnAuditoriaProducto' type='button' value='Auditoria' class='btn5' onclick='verCerrarAuditoria(true)' style='background-color:#b7b7b7'>
 <input id='btnBajaDatosProductos' type='button' value='Dar de Baja' class='btn5' onclick='verCerrarVentanaAbmdarDeBaja(1)' style='background-color:#b7b7b7 ;'>
 <input id='btnLinkProductos' type='button' value='Link' class='btn5' onclick='iraUrlProducto()' style='background-color:#b7b7b7;'>
 <input id='btnBajaDatosProductos' type='button' value='precio' class='btn5' onclick='' style='display:none;'>
@@ -8257,213 +8257,6 @@ onclick='SeleccionarRegistroCategoria()' />
   </div>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-<div class='principal2' style='display:none' id='divAbmMarca'>
-<table style='width:100%;height:100%'>
-<tr>
-<td>
-<center>
-<div class='divAbms' style='display:;width: 500px;'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Seleccionar Marca</p>
-</td>
-<td style='width:5%;text-align:center'><img
-src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
-title='Limpiar campos' onclick='limpiarcamposproducto()' /></td>
-<td style='width:5%;text-align:center'><img
-src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
-title='Volver Atras' onclick='verCerrarFrmMarca("2","")' /></td>
-</tr>
-</table>
-<br>
-<br>
-
-<center>
-<div class='divMenuf'>
-
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloC' >Nombre :</p>
-<input type="text" class="inputText" id="inptNombreMarca"
-placeholder='Obligatorio(*)'>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloC' >Estado del Registro :</p>
-<select class="inputSelect" style='width:250px' id='inptEstadoMarca'>
-<option value="">Seleccionar</option>
-<option value="Activo">Activo</option>
-<option value="Inactivo">Inactivo</option>
-</select>
-</td>
-</tr>
-</table>
-
-<br>
-<center>
-<input class='btn1' type='button' value='Guardar Datos'
-onclick='VerificarDatosMarca()' id='btnMarca1' />
-</center>
-
-<center>
-<table style='width:100%'>
-<tr>
-<td style='width:99%;text-align:left'>
-<p class='pTituloC' >Buscar :</p>
-<input class='inputText' type='text' placeholder='Descripción'
-id='inptBuscarAbmMarcas'
-onkeyup="if(event.keyCode == 13){BuscarAbmMarca()}"
-style='width: 322px;' />
-<input type='button' value='Buscar' class='btn4'
-onclick='BuscarAbmMarca()'>
-</td>
-<td>
-</td>
-</tr>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:100%;">
-DESCRIPCION
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="divBuscadorMarca" style='height:200px'></div>
-<p class='pTitulo7' id="lblNroRegistroMarca"></p>
-</center>
-
-
-<center>
-<input class='btn2' type='button' value=':: Seleccionar Registro ::'
-onclick='SeleccionarRegistroMarca()' />
-</center>
-<br>
-<br>
-</div>
-</center>
-</div>
-
-</center>
-</td>
-</tr>
-</table>
-</div>
-<div class='principal2' style='display:none' id='divAbmTipoImpuesto'>
-<table style='width:100%;height:100%'>
-<tr>
-<td>
-<center>
-<div class='divAbms' style='display:;width: 500px;'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Seleccionar Tipo Impuesto</p>
-</td>
-<td style='width:5%;text-align:center'><img
-src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
-title='Limpiar campos' onclick='limpiarcamposproducto()' /></td>
-<td style='width:5%;text-align:center'><img
-src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
-title='Volver Atras' onclick='verCerrarFrmTipoImpuesto("2","")' /></td>
-</tr>
-</table>
-<br>
-<br>
-
-<center>
-<div class='divMenuf'>
-
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloC' >Nombre :</p>
-<input type="text" class="inputText" id="inptNombreTipoImpuesto"
-placeholder='Obligatorio(*)'>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloC' >Porcentaje :</p>
-<input type="text" class="inputText" id="inptPorcentajeTipoImpuesto"
-placeholder='Obligatorio(*)'>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>inptBuscarAbmMarcas
-<td style='width:100%'>
-<p class='pTituloC' >Estado del Registro :</p>
-<select class="inputSelect" style='width:250px'
-id='inptEstadoTipoImpuesto'>
-<option value="">Seleccionar</option>
-<option value="Activo">Activo</option>
-<option value="Inactivo">Inactivo</option>
-</select>
-</td>
-</tr>
-</table>
-<br>
-<center>
-<input class='btn1' type='button' value='Guardar Datos'
-onclick='VerificarDatosTipoImpuesto()' id='btnTipoImpuesto1' />
-</center>
-
-<center>
-<p class='pTitulo7' id="lblNroRegistroTipoImpuesto"></p>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:50%;">
-DESCRIPCION
-</td>
-<td class="td_registro" style="width:50%;">
-PORCENTAJE
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="divBuscadorTipoImpuesto" style='height:200px'>
-</div>
-</center>
-<br>
-
-<center>
-<input class='btn2' type='button' value=':: Seleccionar Registro ::'
-onclick='SeleccionarRegistroTipoImpuesto()' />
-</center>
-<br>
-<br>
-</div>
-</center>
-</div>
-
-</center>
-</td>
-</tr>
-</table>
-</div>
 <div class='principal2' style='display:none' id='divAbmDespacharProducto'>
 <table style='width:100%;height:100%'>
 <tr>
@@ -9147,7 +8940,7 @@ id="inptBuscarHistorialVenta7">
 <p class='pTituloC' >Registro Seleccionado :</p>
 <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccHistorialVenta' style='width:130px;text-align:center' />
 <input id='btnOpcionesHistorialVenta' type="button" value="Mas Opciones" class="btn4" onclick='vercerrarOpcionesHistorialVenta("1")' style="background-color:#ccc;width:105px">
-<input id="btnAuditoriaVentas" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: #d5d3d3">
+<input id="btnAuditoriaVentas" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #d5d3d3">
 </td>
 <td style='width:15%;text-align:left'>
 <p class='pTituloC' >
@@ -21756,7 +21549,7 @@ CREDITO
 <p class='pTituloC' >Registro Selecc..</p>
 <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCliente' style='width:200px' />
 <input id='btnEditarClientes' type='button' value='Editar' class='btn5' onclick='verVentanaEditarCliente()' style='background-color:#b7b7b7'>
-<input id='btnAuditoriaClientes' type='button' value='Auditoria' class='btn5' onclick='verCerrarAuditoria(1)' style='background-color:#b7b7b7'>
+<input id='btnAuditoriaClientes' type='button' value='Auditoria' class='btn5' onclick='verCerrarAuditoria(true)' style='background-color:#b7b7b7'>
 
 
 <input id='btnUbiClientes' type='button' value='Ubicacion' class='btn5' onclick='ver_cerrar_Geolocalizacion(1)' style='background-color:#b7b7b7'>
@@ -25115,7 +24908,7 @@ id='inptTotalRegistoCaja' style='width:150px;text-align:center' />
 id='inptRegistroSeleccCaja' style='width:200px' />
 <input id='btnEditarDatosCaja' type='button' value='Editar' class='btn5'
 onclick='verVentanaEditarCaja()' style='background-color:#d5d3d3'>
-<input id="btnAuditoriaCajas" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(1)" style="background-color: #d5d3d3">
+<input id="btnAuditoriaCajas" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #d5d3d3">
 </td>
 </tr>
 </table>
@@ -25531,8 +25324,14 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:10%;">
                 #
                 </td>
-                <td class="td_registro" style="width:40%;">
+                <td class="td_registro" style="width:20%;">
                 NOMBRE
+                </td>
+                <td class="td_registro" style="width:10%;">
+                MARCA
+                </td>
+                <td class="td_registro" style="width:10%;">
+                MODELO
                 </td>
                 <td class="td_registro" style="width:20%;">
                 LOCAL
@@ -25553,11 +25352,23 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal1')">
                 </td>
-                <td class="td_registro" style="width:39%;">
+                <td class="td_registro" style="width:19%;">
                 <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Parecido a">
                 </td>
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal2')">
+                </td>
+                <td class="td_registro" style="width:9%;">
+                <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal6" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Igual a">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal6')">
+                </td>
+                <td class="td_registro" style="width:9%;">
+                <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal7" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Igual a">
+                </td>
+                <td class="td_registro" style="width:1%;">
+                <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal7')">
                 </td>
                 <td class="td_registro" style="width:20%;">
                   <select class="inputfiltro" id="inptBuscarAbmInventarioLocal3">
@@ -25606,13 +25417,14 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
               <p class="pTituloC">Registro Selecc..</p>
               <input class="inputTextDisable" type="text" disabled="" id="inptRegistroSeleccInventarioLocal" style="width:200px">
               <input id="btnEditarInventarioLocal" type="button" value="Editar" class="btn5" onclick="verCerrarAbmInventarioLocal(true, true)" style="background-color:#b7b7b7" disabled>
+              <input id="btnAuditoriaInventarioLocal" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #d5d3d3">
               </td>
               </tr>
               </tbody></table>
             </div>
           </center>
         </div>
-        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;min-height: 800px;">
+        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;min-height: 900px;">
           <table class="tableMenuZ">
             <tbody>
               <tr>
@@ -25635,8 +25447,9 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
             </tbody>
           </table>
           <center>
-            <div class="divMenuFloat3" style="width: 45%;">
-              <div class="divMenuf">
+            <div style="display:flex;align-items:stretch;justify-content:center;gap:2%;width:100%;flex-wrap:wrap;">
+            <div class="divMenuFloat3" style="width:45%;float:none;display:flex;margin:0;">
+              <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
                 <br>
                 <table style="width:100%">
                   <tr>
@@ -25650,11 +25463,33 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <table style="width:100%">
                   <tr>
                   <td>
-                  <p class="pTituloC">Nombre :</p>
+                  <p class="pTituloC">Nombre* :</p>
                   <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptNombreInventarioInsumo">
                   </td>
                   </tr>
                 </table>
+                <br>
+                <table style="width:100%"><tr>
+                <td>
+                <p class="pTituloC">Marca* :</p>
+                <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptMarcaInventarioInsumo" style="width:65%" disabled="">
+                <input type="button" value="Buscar" class="btn4" onclick="verCerrarFrmMarca('1','abminventarioInsumo')" style="background-color: #FF5722;">
+                </td>
+                </tr></table>
+                <br>
+                <table style="width:100%"><tr>
+                <td>
+                <p class="pTituloC">Modelo :</p>
+                <input class="inputText" type="text"id="inptModeloInventarioInsumo">
+                </td>
+                </tr></table>
+                <br>
+                <table style="width:100%"><tr>
+                <td>
+                <p class="pTituloC">Nro. serie :</p>
+                <input class="inputText" type="text" id="inptNroSerieInventarioInsumo">
+                </td>
+                </tr></table>
                 <br>
                 <table style="width:100%">
                   <tr>
@@ -25668,12 +25503,12 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <table style="width:100%">
                   <tr>
                   <td style="width: 40%">
-                  <p class="pTituloC">Cantidad :</p>
+                  <p class="pTituloC">Cantidad* :</p>
                   <input class="inputText" type="number" onchange="separadordemiles(this)" id="inptCantidadInventarioInsumo" value=1>
                   </td>
                   <td style="width: 60%">
                   <p class="pTituloC">Costo :</p>
-                  <input class="inputText" type="text" min="0" id="inptCostoInventarioInsumo">
+                  <input class="inputText" type="text" id="inptCostoInventarioInsumo" onkeyup="separadordemiles(this)">
                   </td>
                   </tr>
                 </table>
@@ -25681,12 +25516,12 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <table style="width:100%">
                   <tr>
                   <td style="width: 50%;">
-                  <p class="pTituloC">Local :</p>
+                  <p class="pTituloC">Local* :</p>
                   <select class="inputSelect" id="inptLocalInventarioInsumo" style="width:130px">
                   </select>
                   </td>
                   <td style="width: 50%;">
-                  <p class="pTituloC">Estado :</p>
+                  <p class="pTituloC">Estado* :</p>
                   <select class="inputSelect" id="inptEstadoInventarioInsumo" style="width:130px">
                   <option value="activo">ACTIVO</option>
                   <option value="inactivo">INACTIVO</option>
@@ -25714,8 +25549,15 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 </table>
               </div>
             </div>
-            <div class="divMenuFloat3" style="width: 45%;">
-              <div class="divMenuf">
+            <div class="divMenuFloat3" style="width:45%;float:none;display:flex;margin:0;">
+              <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Fotos del articulo :</p>
+                </td>
+                </tr>
+              </table>
               <br>
               <table style="width:100%">
                 <tr>
@@ -25747,17 +25589,233 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 </tr>
               </table>
               <br>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <p class="pTituloC">Foto de la factura :</p>
+                </td>
+                </tr>
+              </table>
+              <table style="width:100%">
+                <tr>
+                <td>
+                <center>
+                <div id="imgfacturaInventarioLocal" class="imgFotoProducto" onclick="vercerrarcargadefotos('facturaInventarioLocal')" style="background-image: url(&quot;/GoodVentaAsisCap/iconos/imagenphoto.png&quot;);"></div>
+                </center>
+                </td>
+                </tr>
+              </table>
+              <br>
               <center>
               <input type="button" value="Guardar datos" class="btn1" onclick="verificarCamposInventarioLocal()" id="btnAbmBanco">
               </center>
               <br>
               </div>
             </div>
+            </div>
           </center>
         </div>
       </center>
     </td></tr>
   </table>
+</div>
+
+<div class='principal2' style='display:none' id='divAbmMarca'>
+<table style='width:100%;height:100%'>
+<tr>
+<td>
+<center>
+<div class='divAbms' style='display:;width: 500px;'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Seleccionar Marca</p>
+</td>
+<td style='width:5%;text-align:center'><img
+src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='limpiarcamposproducto()' /></td>
+<td style='width:5%;text-align:center'><img
+src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarFrmMarca("2","")' /></td>
+</tr>
+</table>
+<br>
+<br>
+
+<center>
+<div class='divMenuf'>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Nombre :</p>
+<input type="text" class="inputText" id="inptNombreMarca"
+placeholder='Obligatorio(*)'>
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Estado del Registro :</p>
+<select class="inputSelect" style='width:250px' id='inptEstadoMarca'>
+<option value="">Seleccionar</option>
+<option value="Activo">Activo</option>
+<option value="Inactivo">Inactivo</option>
+</select>
+</td>
+</tr>
+</table>
+
+<br>
+<center>
+<input class='btn1' type='button' value='Guardar Datos'
+onclick='VerificarDatosMarca()' id='btnMarca1' />
+</center>
+
+<center>
+<table style='width:100%'>
+<tr>
+<td style='width:99%;text-align:left'>
+<p class='pTituloC' >Buscar :</p>
+<input class='inputText' type='text' placeholder='Descripción'
+id='inptBuscarAbmMarcas'
+onkeyup="if(event.keyCode == 13){BuscarAbmMarca()}"
+style='width: 322px;' />
+<input type='button' value='Buscar' class='btn4'
+onclick='BuscarAbmMarca()'>
+</td>
+<td>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:100%;">
+DESCRIPCION
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="divBuscadorMarca" style='height:200px'></div>
+<p class='pTitulo7' id="lblNroRegistroMarca"></p>
+</center>
+
+
+<center>
+<input class='btn2' type='button' value=':: Seleccionar Registro ::'
+onclick='SeleccionarRegistroMarca()' />
+</center>
+<br>
+<br>
+</div>
+</center>
+</div>
+
+</center>
+</td>
+</tr>
+</table>
+</div>
+<div class='principal2' style='display:none' id='divAbmTipoImpuesto'>
+<table style='width:100%;height:100%'>
+<tr>
+<td>
+<center>
+<div class='divAbms' style='display:;width: 500px;'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Seleccionar Tipo Impuesto</p>
+</td>
+<td style='width:5%;text-align:center'><img
+src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='limpiarcamposproducto()' /></td>
+<td style='width:5%;text-align:center'><img
+src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarFrmTipoImpuesto("2","")' /></td>
+</tr>
+</table>
+<br>
+<br>
+
+<center>
+<div class='divMenuf'>
+
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Nombre :</p>
+<input type="text" class="inputText" id="inptNombreTipoImpuesto"
+placeholder='Obligatorio(*)'>
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Porcentaje :</p>
+<input type="text" class="inputText" id="inptPorcentajeTipoImpuesto"
+placeholder='Obligatorio(*)'>
+</td>
+</tr>
+</table>
+<br>
+<table style='width:100%'>
+<tr>inptBuscarAbmMarcas
+<td style='width:100%'>
+<p class='pTituloC' >Estado del Registro :</p>
+<select class="inputSelect" style='width:250px'
+id='inptEstadoTipoImpuesto'>
+<option value="">Seleccionar</option>
+<option value="Activo">Activo</option>
+<option value="Inactivo">Inactivo</option>
+</select>
+</td>
+</tr>
+</table>
+<br>
+<center>
+<input class='btn1' type='button' value='Guardar Datos'
+onclick='VerificarDatosTipoImpuesto()' id='btnTipoImpuesto1' />
+</center>
+
+<center>
+<p class='pTitulo7' id="lblNroRegistroTipoImpuesto"></p>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:50%;">
+DESCRIPCION
+</td>
+<td class="td_registro" style="width:50%;">
+PORCENTAJE
+</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="divBuscadorTipoImpuesto" style='height:200px'>
+</div>
+</center>
+<br>
+
+<center>
+<input class='btn2' type='button' value=':: Seleccionar Registro ::'
+onclick='SeleccionarRegistroTipoImpuesto()' />
+</center>
+<br>
+<br>
+</div>
+</center>
+</div>
+
+</center>
+</td>
+</tr>
+</table>
 </div>
 
 <div class="principal2 divScrollPrincipal" style="display: none;z-index: 100;" id="divAddFotos">
@@ -26602,7 +26660,7 @@ class='btnFinalizarAdmin'>
 <p class='pTituloB'  >Auditoria</p>
 </td>
 <td style='width:5%'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarAuditoria("2")' />
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarAuditoria(false)' />
 </td>
 </tr>
 </table>
