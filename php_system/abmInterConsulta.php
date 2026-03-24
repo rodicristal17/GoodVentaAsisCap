@@ -338,6 +338,17 @@
             }
         }
 
+        // Actualizar el cod_interconsulta de los gastos
+        $sql= "UPDATE gastos SET cod_interConsultaFK= ? WHERE cod_interConsultaFK= ?";
+        $mysqli = conectar_al_servidor();
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('ii',$registroInterc['cod_interConsulta'], $cod_interConsulta);
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
         // Actualiza el estado de la interconsulta
         abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], '', 'inactivo', '', '', '', $cod_usuarioFK, $registroInterc['cod_localFK'], '');
     }

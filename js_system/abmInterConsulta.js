@@ -126,6 +126,7 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                             var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                             document.getElementById("tbProcessInformeInterConsulta").style.display=""
                             document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
+	    					document.getElementById("divProgressInformeInterConsulta").style.backgroundColor="rgb(76, 175, 80)";
     
                             controldebusquedadInformeInterConsulta=true;
 
@@ -216,12 +217,12 @@ function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto,
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta) {
-                    console.warn("aumentando ", registrocargadoInterConsulta, " en ", Number(datos["4"]));
                     registrocargadoInterConsulta += Number(datos["4"]);
                     registroInterConsultaAbierta += Number(datos["7"]);
                     if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
                         var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
+						document.getElementById("divProgressInformeInterConsulta").style.backgroundColor="rgb(76, 175, 80)";
                         document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML + datos["2"];
                         buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, ("10 OFFSET "+registrocargadoInterConsulta), ocultar_inactivos, usuario_vinculado);
                     }else{
@@ -1117,6 +1118,7 @@ function buscarMasInterConsultas() {
 						var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                         document.getElementById("tbProcessInformeInterConsulta").style.display= "";
 						document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%";
+						document.getElementById("divProgressInformeInterConsulta").style.backgroundColor="rgb(76, 175, 80)";
 
                         buscarMasInterConsultas();
                     }else{
@@ -1250,6 +1252,7 @@ function mostrarOpcionesUsuariosMenciones(textarea, sugerencias) {
 
 function obtenerDatosInterConsulta(elemento) {
     controldebusquedadInformeInterConsulta= false;
+    document.getElementById("divProgressInformeInterConsulta").style.width="0%";
     switch (ventanaAnterior[ventanaAnterior.length - 1]) {
         case 'divAbmGastosFijos':
             cod_interConsulta= $(elemento).children('#td_id').html();
