@@ -10,7 +10,6 @@ function verCerrarAbmInventarioLocal(mostrar, abm) {
         if (abm) {
             $("div[id=divAbmInventarioLocal1]").fadeOut(250);
             $("div[id=divAbmInventarioLocal2]").fadeIn(250);
-            buscarHistorialResponsablesAnteriores(cod_inventarioLocal);
         } else {
             buscarabmusuario2('', '', '', 'Activo', '');
             $("div[id=divAbmInventarioLocal1]").fadeIn(250);
@@ -135,6 +134,9 @@ function obtenerVistaInformeInsumoLocal() {
 }
 
 function obtenermasVistaInformeInsumoLocal() {
+    if (!controldebusquedadInformeInsumoLocal) {
+        return false;
+    }
     const cod_inventario= document.getElementById('inptBuscarAbmInventarioLocal1').value;
     const nombre= document.getElementById('inptBuscarAbmInventarioLocal2').value;
     const local= document.getElementById('inptBuscarAbmInventarioLocal3').value;
@@ -203,7 +205,6 @@ function obtenermasVistaInformeInsumoLocal() {
 
                     // Controla el progreso de la busqueda
 					if(totalregistroinformeInsumoLocal>registrocargadoInsumoLocal){
-						controldebusquedadInformeInsumoLocal=true;
 						var porce=((registrocargadoInsumoLocal*100)/totalregistroinformeInsumoLocal).toFixed(0)
                         document.getElementById("tbProcessInformeInsumoLocal").style.display= "";
 						document.getElementById("divProgressInformeInventarioLocal").style.width=porce+"%";
@@ -280,6 +281,8 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptUsuarioEditadoPor').value= $(datostr).children('td[id="td_datos_16"]').html();
     document.getElementById('inptFechaEditadoPor').value= $(datostr).children('td[id="td_datos_17"]').html();
     document.getElementById('btnAuditoriaInventarioLocal').style.backgroundColor= '';
+
+    buscarHistorialResponsablesAnteriores(cod_inventarioLocal);
 }
 
 function consultarUltimoIdInventarioLocal() {
