@@ -82,6 +82,20 @@
                 $cod_inventario= obtenerUltimoId();
                 echo json_encode(array("1" => "exito", "2" => $cod_inventario));
                 break;
+            case 'buscarHistorialResponsablesAnteriores':
+                $cod_inventario= isset($_POST['cod_inventario']) ? mb_convert_encoding((string)($_POST['cod_inventario']), 'ISO-8859-1', 'UTF-8') : null;
+                $result= obtenerHistorialResponsablesAnteriores(array('cod_insumoFK' => $cod_inventario));
+
+                $pagina= "";
+                foreach ($result as $key => $valor) {
+                    $pagina .= '<tr>
+                        <td style="width: 10%;">'.$valor["id"].'</td>
+                        <td style="width: 60%;">'.$valor["nombre_usuarioFK_responsable_anterior"].'</td>
+                        <td style="width: 30%;">'.$valor["fecha_creacion"].'</td>
+                    </tr>';
+                }
+                echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $result));
+                break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
@@ -209,6 +223,64 @@
         $result = $stmt->get_result();
         $registros= array();
         while ($row = $result->fetch_assoc()) {
+            foreach ($row as $key => $value) {
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+            }
+            $registros[] = $reg;
+        }
+
+        $stmt->close();
+        return $registros;
+    }
+
+    function obtenerHistorialResponsablesAnteriores($filtros= array()) {
+        $sqlFiltro= "";
+        foreach ($filtros as $key => $value) {
+            if ($value === null || $value === "") {continue;}
+            if ($sqlFiltro == "") {
+                $sqlFiltro .= "WHERE ";
+            } else {
+                $sqlFiltro .= " AND ";
+            }
+
+            switch ($key) {
+                case 'nombre_usuario_responsable_anterior':
+                    $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = hil.cod_usuarioFK_responsable_anterior) like '%$value%'";
+                    break;
+                case 'nombre_usuarioFK_edit':
+                    $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = hil.cod_usuarioFK_edit) like '%$value%'";
+                    break;
+                default:
+                    if (is_numeric($value)) {
+                        $sqlFiltro .= "hil.$key = $value";
+                    } else {
+                        $sqlFiltro .= "hil.$key like '%$value%'";
+                    }
+                    break;
+            }
+        }
+
+        $sql= "SELECT
+            hil.*,
+            (SELECT nombre_persona FROM persona WHERE cod_persona = hil.cod_usuarioFK_responsable_anterior) as nombre_usuarioFK_responsable_anterior,
+            (SELECT nombre_persona FROM persona WHERE cod_persona = hil.cod_usuarioFK_edit) as nombre_usuarioFK_edit,
+            (SELECT nombre FROM insumos_local WHERE cod_insumo = hil.cod_insumoFK) as nombre_insumo
+            FROM historial_insumo_local hil
+            $sqlFiltro
+            ORDER BY hil.fecha_creacion DESC, hil.id DESC";
+
+        $mysqli=conectar_al_servidor();
+        $stmt = $mysqli->prepare($sql);
+        if ( !$stmt->execute()) {
+            $informacion =array("1" => "error", "mensaje" => "Error al obtener historial de responsables: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $result = $stmt->get_result();
+        $registros= array();
+        while ($row = $result->fetch_assoc()) {
+            $reg= array();
             foreach ($row as $key => $value) {
                 $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }

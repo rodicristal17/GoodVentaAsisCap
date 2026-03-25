@@ -25424,7 +25424,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
             </div>
           </center>
         </div>
-        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;min-height: 900px;">
+        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;min-height: 900px;width: 900px;">
           <table class="tableMenuZ">
             <tbody>
               <tr>
@@ -25448,8 +25448,8 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
           </table>
           <center>
             <div style="display:flex;align-items:stretch;justify-content:center;gap:2%;width:100%;flex-wrap:wrap;">
-            <div class="divMenuFloat3" style="width:45%;float:none;display:flex;margin:0;">
-              <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
+            <div class="divMenuFloat3" style="flex:0.7;float:none;display:flex;margin:0;">
+              <div class="divMenuf" style="flex:0.6;height:100%;box-sizing:border-box;">
                 <br>
                 <table style="width:100%">
                   <tr>
@@ -25549,7 +25549,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 </table>
               </div>
             </div>
-            <div class="divMenuFloat3" style="width:45%;float:none;display:flex;margin:0;">
+            <div class="divMenuFloat3" style="flex:0.5;float:none;display:flex;margin:0;">
               <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
               <table style="width:100%">
                 <tr>
@@ -25610,6 +25610,25 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
               <input type="button" value="Guardar datos" class="btn1" onclick="verificarCamposInventarioLocal()" id="btnAbmBanco">
               </center>
               <br>
+              </div>
+            </div>
+            <div class="divMenuFloat3" style="flex:0.5;float:none;display:flex;margin:0;" id="divHistorialResponsableInsumosLocal">
+              <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
+              <table style="width:100%">
+                <tbody><tr>
+                <td>
+                <strong>Responsables anteriores :</strong>
+                </td>
+                </tr>
+              </tbody></table>
+              <br>
+              <table class="tableCabeceraRegistro"><tr>
+                  <td class="td_registro" style="width: 10%;">#</td>
+                  <td class="td_registro" style="width: 60%;">Anterior</td>
+                  <td class="td_registro" style="width: 30%;">Fecha</td>
+              </tr></table>
+              <table id="divTableHistorialResponsableInsumosLocal" border="1" cellspacing="1" cellpadding="5" style="max-height: 450px;display: flex; overflow-y: auto;">
+              </table>
               </div>
             </div>
             </div>

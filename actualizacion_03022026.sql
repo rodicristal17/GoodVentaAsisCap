@@ -190,5 +190,39 @@ ALTER TABLE insumos_local ADD CONSTRAINT fk_insumos_local_marca
     FOREIGN KEY (cod_marcaFK) REFERENCES marcas(cod_marcas);
 ALTER TABLE insumos_local ADD COLUMN url_factura VARCHAR(255);
 
+CREATE TABLE historial_insumo_local (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cod_usuarioFK_responsable_anterior INT(11),
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_insumoFK INT(11) NOT NULL,
+    cod_usuarioFK_edit INT(11),
+    FOREIGN KEY (cod_insumoFK) REFERENCES insumos_local(cod_insumo),
+    FOREIGN KEY (cod_usuarioFK_responsable_anterior) REFERENCES usuario(cod_usuario),
+    FOREIGN KEY (cod_usuarioFK_edit) REFERENCES usuario(cod_usuario)
+);
+
+DROP TRIGGER IF EXISTS trg_historial_responsable_insumo_local;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_historial_responsable_insumo_local
+AFTER UPDATE ON insumos_local
+FOR EACH ROW
+BEGIN
+    IF OLD.cod_usuario_responsableFK IS NOT NULL AND NOT (OLD.cod_usuario_responsableFK <=> NEW.cod_usuario_responsableFK) THEN
+        INSERT INTO historial_insumo_local (
+            cod_usuarioFK_responsable_anterior,
+            cod_insumoFK,
+            cod_usuarioFK_edit
+        ) VALUES (
+            OLD.cod_usuario_responsableFK,
+            NEW.cod_insumo,
+            NEW.cod_usuarioFK_edit
+        );
+    END IF;
+END$$
+
+DELIMITER ;
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

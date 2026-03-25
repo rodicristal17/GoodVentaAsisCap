@@ -10,6 +10,7 @@ function verCerrarAbmInventarioLocal(mostrar, abm) {
         if (abm) {
             $("div[id=divAbmInventarioLocal1]").fadeOut(250);
             $("div[id=divAbmInventarioLocal2]").fadeIn(250);
+            buscarHistorialResponsablesAnteriores(cod_inventarioLocal);
         } else {
             buscarabmusuario2('', '', '', 'Activo', '');
             $("div[id=divAbmInventarioLocal1]").fadeIn(250);
@@ -361,6 +362,9 @@ function limpiarcamposInventarioLocal() {
     document.getElementById("inptMarcaInventarioInsumo").value = "";
     idFkProductoMarca= "";
 
+    document.getElementById('divTableHistorialResponsableInsumosLocal').innerHTML= "";
+    document.getElementById('divHistorialResponsableInsumosLocal').style.display= "none";
+
     // Vacia los campos de las imagenes
     fotoInventario1= "";
     extInventario1= "";
@@ -515,7 +519,7 @@ function subirImagenesInsumosLocal(cod_inventario) {
     datos.append("exts[]", extInventario3);
     datos.append("fotoFactura", fotoFacturaInventario);
     datos.append("extFactura", extFacturaInventario);
-console.warn(extFacturaInventario);
+
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInventarioLocal.php",
@@ -559,6 +563,76 @@ console.warn(extFacturaInventario);
 					ver_vetana_informativa("Datos guardados.", "", "info");
                     verCerrarAbmInventarioLocal(false, true);
                     obtenerVistaInformeInsumoLocal();
+				} else {
+                    throw new Error("Error producido en subirImagenesInsumosLocal de JavaScript.");
+                }
+                verCerrarEfectoCargando("");
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+                verCerrarEfectoCargando("");
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+function buscarHistorialResponsablesAnteriores(cod_inventario) {
+    document.getElementById('divHistorialResponsableInsumosLocal').style.display= "";
+    document.getElementById('divTableHistorialResponsableInsumosLocal').innerHTML= paginacargando;
+    obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+    datos.append("accion", "buscarHistorialResponsablesAnteriores");
+    datos.append("cod_inventario", cod_inventario);
+
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "../php_system/abmInventarioLocal.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+                    if (datos["2"]) {
+                        document.getElementById('divTableHistorialResponsableInsumosLocal').innerHTML= datos["2"];
+                    } else {
+                        document.getElementById('divHistorialResponsableInsumosLocal').style.display= "none";
+                    }
 				} else {
                     throw new Error("Error producido en subirImagenesInsumosLocal de JavaScript.");
                 }
