@@ -253,6 +253,10 @@ $fecha1=$_POST['fecha1'];
 $fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
 $fecha2=$_POST['fecha2'];
 $fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
+$fecha_facturacion1=$_POST['fecha_facturacion1'];
+$fecha_facturacion1 = mb_convert_encoding((string)($fecha_facturacion1), 'ISO-8859-1', 'UTF-8');
+$fecha_facturacion2=$_POST['fecha_facturacion2'];
+$fecha_facturacion2 = mb_convert_encoding((string)($fecha_facturacion2), 'ISO-8859-1', 'UTF-8');
 $local=$_POST['local'];
 $local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 $factura=$_POST['factura'];
@@ -283,7 +287,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 }
 }
 
-$informacion =Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion);
+$informacion =Arqueo($fecha1,$fecha2,$fecha_facturacion1, $fecha_facturacion2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion);
 echo json_encode($informacion);	
 exit;
 }
@@ -472,8 +476,10 @@ if ($operacion == "guardarNroComprobante") {
 	$cod_pago = mb_convert_encoding((string)($cod_pago), 'ISO-8859-1', 'UTF-8');
 	$nro_comprobante=$_POST['nro_comprobante'];
 	$nro_comprobante = mb_convert_encoding((string)($nro_comprobante), 'ISO-8859-1', 'UTF-8');
+	$fecha_facturado=$_POST['fecha_facturado'];
+	$fecha_facturado = mb_convert_encoding((string)($fecha_facturado), 'ISO-8859-1', 'UTF-8');
 
-	guardarNroComprobante($cod_pago, $nro_comprobante);
+	guardarNroComprobante($cod_pago, $nro_comprobante, $fecha_facturado);
 }
 
 
@@ -509,7 +515,7 @@ exit;
 
 
 
-function guardarNroComprobante($cod_pago, $num_comprobante) {
+function guardarNroComprobante($cod_pago, $num_comprobante, $fecha_facturado) {
 	if($cod_pago=="" || $num_comprobante==""){
 		$informacion =array("1" => "camposvacio", "2" => $cod_venta, "3" => $num_comprobante);
 		echo json_encode($informacion);	
@@ -518,10 +524,10 @@ function guardarNroComprobante($cod_pago, $num_comprobante) {
 
 	$mysqli=conectar_al_servidor(); 
 
-	$consulta1="Update pago set num_comprobante=? where idpago=?";
+	$consulta1="Update pago set num_comprobante=?, fecha_facturado= ? where idpago=?";
 	$stmt1 = $mysqli->prepare($consulta1);
-	$ss='ss';
-	$stmt1->bind_param($ss,$num_comprobante,$cod_pago);
+	$ss='sss';
+	$stmt1->bind_param($ss,$num_comprobante, $fecha_facturado ,$cod_pago);
 
 	if (!$stmt1->execute()) {
 		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
@@ -2011,7 +2017,7 @@ exit;
 
 
 /*Buscar */
-function Arqueo($fecha1,$fecha2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion)
+function Arqueo($fecha1,$fecha2,$fecha_facturacion1, $fecha_facturacion2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion)
 {
 
 $mysqli=conectar_al_servidor();
@@ -2020,7 +2026,7 @@ $mysqli=conectar_al_servidor();
 	 $pagina="";
 
 	 $sqlFiltro= "";
-	 if($fecha1!="" && $fecha2!=""){
+	 if($fecha1!="" || $fecha2!=""){
 		 $sqlFiltro .=" and pg.Fecha between'".$fecha1."' and '".$fecha2."'";
 	 }
 	 if($fechafija!=""){
@@ -2047,13 +2053,19 @@ $mysqli=conectar_al_servidor();
 	 if($cedula) {
 	   $sqlFiltro .=" and (Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK limit 1) like '%".$cedula."%'";
 	 };
+	 if($fecha_facturacion1!=""){
+		$sqlFiltro .=" and pg.fecha_facturado >= '".$fecha_facturacion1;
+	 }	
+	 if($fecha_facturacion2!=""){
+		$sqlFiltro .=" and pg.fecha_facturado <= '".$fecha_facturacion2;
+	 }
  
 	 if($condicion!=""){
 	   $sqlFiltro .=" and vt.TipoVenta = '".$condicion."'";		
 	 }
 
 	$sql= "select  vt.TipoVenta,vt.puntoexpedicion,vt.tipo_comprobante,pg.idPago,pg.tipo, pg.Fecha, sum(pg.Monto) as Monto,pg.cod_venta_fk,pg.tipopago,
-	vt.cod_local, pg.cod_cobradorFK,
+	vt.cod_local, pg.cod_cobradorFK, pg.fecha_facturado,
 	pg.comision,pg.nrofactura,pg.lot, pg.lat,(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
 	(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as documento,
 	(Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK) as cobradornombre,date_format(hora ,'%H:%i' ) as hora,
@@ -2115,6 +2127,7 @@ $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 $nroCancelado=mb_convert_encoding((string)($valor['nroCancelado']), 'UTF-8', 'ISO-8859-1');
 $tipopago=mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1');
 $documento=mb_convert_encoding((string)($valor['documento']), 'UTF-8', 'ISO-8859-1');
+$fecha_facturado=mb_convert_encoding((string)($valor['fecha_facturado']), 'UTF-8', 'ISO-8859-1');
 
 $registros[]= array(
 	'TipoVenta' => mb_convert_encoding((string)($valor['TipoVenta']), 'UTF-8', 'ISO-8859-1'),
@@ -2142,6 +2155,7 @@ $registros[]= array(
 	'nroCancelado'=>mb_convert_encoding((string)($valor['nroCancelado']), 'UTF-8', 'ISO-8859-1'),
 	'tipopago'=>mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1'),
 	'documento'=>mb_convert_encoding((string)($valor['documento']), 'UTF-8', 'ISO-8859-1'),
+	'fecha_facturado'=>mb_convert_encoding((string)($valor['fecha_facturado']), 'UTF-8', 'ISO-8859-1'),
 );
 
 if($tipopago=="Efectivo"){
@@ -2169,9 +2183,9 @@ $paginacuota.="
 <tr id='tbSelecRegistro'onclick='obtenerdatospagos(this)' style='$style'  >
 <td id='td_datos_1' style='display:none' >".$idPago."</td>
 <td id='td_datos_3' style='display:none'>".$num_factura."</td>
-
 <td id='td_datos_9' style='width:15%'>*".$documento."*<br>".$nombrecliente." </td>
 <td style='width:15%'>".$documento." </td>
+<td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
 <td id=''			 style='width:10%'>".$nrof."</td>
 <td id='td_datos_2' style='display:none' >".$Fecha."</td>
 <td id='' 			style='width:10%' >".$Fecha." ".$hora."</td>
@@ -2201,6 +2215,7 @@ $paginacuota.="
 <td id='td_datos_3' style='display:none'>".$num_factura."</td>
 <td id='td_datos_9' style='width:15%'>".$nombrecliente."</td>
 <td style='width:15%'>".$documento."</td>
+<td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
 <td id='td_datos_2' style='display:none' >".$Fecha."</td>
 <td id='' style='width:10%' >".$Fecha." ".$hora."</td>
 <td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>

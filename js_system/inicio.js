@@ -14439,12 +14439,16 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 function verCerrarVentanaCargarNroFactura(mostrar) {
 	if (mostrar) {
 		document.getElementById('divAbmNroFacturaVenta').style.display = "";
+
+		// Limpiar campos
+		document.getElementById('inptNroFacturaManualCobro').value= "";
+		document.getElementById('inptFechaFacturaManualCobro').value= "";
 	} else {
 		document.getElementById('divAbmNroFacturaVenta').style.display = "none";
 	}
 }
 
-function guardarNroFactura(num_comprobante) {
+function guardarNroFactura(num_comprobante, fecha_facturado) {
 	if (!num_comprobante) {
 		ver_vetana_informativa("Faltan datos", "Falta completar el numero de comprobante de la factura escrita a mano")
 	}
@@ -14455,6 +14459,7 @@ function guardarNroFactura(num_comprobante) {
 		"navegador": navegador,
 		"cod_pago": idHistorialPago,
 		"nro_comprobante": num_comprobante,
+		"fecha_facturado": fecha_facturado,
 		"funt": "guardarNroComprobante"
 	};
 	$.ajax({
@@ -15589,8 +15594,10 @@ function abmconfirmarPagoContado() {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   idHistorialPago= datos[5];
-				   guardarNroFactura(document.getElementById('inptNroComprobanteVentaTerminarEfectivo').value);
+					idHistorialPago= datos[5];
+					const hoy = new Date();
+					const fechaActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+					guardarNroFactura(document.getElementById('inptNroComprobanteVentaTerminarEfectivo').value, fechaActual);
 					document.getElementById('inptTotalPagado').value = datos["2"];
 	paginaticket=datos["3"];
 	CuotasNro= datos["4"];
@@ -25420,6 +25427,8 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 	var fechafija = document.getElementById('inptBuscarCobrosRealizados3').value
 	var fecha1 = document.getElementById('inptBuscarCobrosRealizadosF1').value
 	var fecha2 = document.getElementById('inptBuscarCobrosRealizadosF2').value
+	const fecha_facturacion1 = document.getElementById('inptBuscarCobrosRealizadosFF1').value;
+	const fecha_facturacion2 = document.getElementById('inptBuscarCobrosRealizadosFF2').value;
 	var factura = document.getElementById('inptBuscarCobrosRealizados2').value
 	var local = document.getElementById('inptlocalCobrosRealizados3').value
 	var metodo = document.getElementById('inptBuscarCobrosRealizados5').value
@@ -25435,6 +25444,8 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 		"navegador": navegador,
 		"fecha1": fecha1,
 		"fecha2": fecha2,
+		"fecha_facturacion1": fecha_facturacion1,
+		"fecha_facturacion2": fecha_facturacion2,
 		"cobrador": cobrador,
 		"cliente": cliente,
 		"cedula": cedula,

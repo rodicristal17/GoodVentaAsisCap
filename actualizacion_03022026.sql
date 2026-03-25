@@ -182,6 +182,7 @@ SET cod_usuarioFK_edit = cod_usuarioFK_create;
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.69', detalles='Horarios de entrada agregado a los usuarios.', fecha='2026-03-17' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE pago ADD COLUMN num_comprobante VARCHAR(15);
+ALTER TABLE pago ADD COLUMN fecha_facturado DATE;
 
 ALTER TABLE insumos_local ADD COLUMN modelo VARCHAR(100);
 ALTER TABLE insumos_local ADD COLUMN nro_serie VARCHAR(100);

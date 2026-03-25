@@ -15460,7 +15460,6 @@ RESPONSABLE
 <td style='width:10%;' >
 <p class='pTituloC'   >Fecha Fin</p>
 <input class='inputText' type='Date' id='inptBuscarCobrosRealizadosF2' style='width:135px' />
-
 </td>
 <td style='width:3%;' >
 </td>
@@ -15470,7 +15469,17 @@ RESPONSABLE
 
 </select>
 </td>
-<td style='width:35%;' >
+<td style='width:10%;' >
+<p class='pTituloC' >Fecha facturacion inicio</p>
+<input class='inputText' type='Date' id='inptBuscarCobrosRealizadosFF1' style='width:135px' />
+</td>
+<td style='width:3%;' >
+</td>
+<td style='width:10%;' >
+<p class='pTituloC'   >Fecha facturacion fin</p>
+<input class='inputText' type='Date' id='inptBuscarCobrosRealizadosFF2' style='width:135px' />
+</td>
+<td style='' >
 <input type="button" style='margin-top: 17px;' value="Buscar" class="btn4" onclick='buscararqueo2()' >
 <input type="button" style='margin-top: 17px;width:125px;background-color:#ff5722' value="Cajas de Cobradores" class="btn4" onclick='verCerrarVistaCajaApp()' >
 </td>
@@ -15497,6 +15506,7 @@ RESPONSABLE
 <tr >
   <td class="td_registro" style="width:15%;">CLIENTE</td>
   <td class="td_registro" style="width:15%;">DOCUMENTO</td>
+<td class="td_registro" style="width:15%;">FECHA FACTURADO</td>
 <td class="td_registro" style="width:10%;">NRO FACTURA</td>
 <td class="td_registro" style="width:10%;">FECHA PAGO</td>
 <td class="td_registro" style="width:10%;">MONTO</td>
@@ -15523,6 +15533,7 @@ RESPONSABLE
 <td class="td_registro" style="width:1%;">
 <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados7')" />
 </td>
+<td class="td_registro" style="width: 15%;"></td>
 <td class="td_registro" style="width:9%;">
 <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados2' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
 </td>
@@ -15568,7 +15579,7 @@ RESPONSABLE
 </tbody>
 </table>
 </div>
-<div class='divTablesScrool' id='TableScroollArqeo2' style='height:260px;width:98%'>
+<div class='divTablesScrool' id='TableScroollArqeo2' style='height:260px;'>
 <div class="div_cuerpo_table" id="table_arqeo" style='min-height:200px;height:auto;border:none;;width:100%'></div>
 </div>
 
@@ -15627,9 +15638,25 @@ RESPONSABLE
                 <p class='pTituloC' >Nro de Factura :</p>
                 <input class='inputText' type='text' id='inptNroFacturaManualCobro'
                 style='width:200px' />
-                <br>
+              </td>
+            </tr>
+          </table>
+          <br>
+          <table>
+            <tr>
+              <td style='width:100%'>
+                <p class='pTituloC' >Fecha en Factura :</p>
+                <input class='inputText' type='date' id='inptFechaFacturaManualCobro'
+                style='width:200px' />
+              </td>
+            </tr>
+          </table>
+          <br>
+          <table>
+            <tr>
+              <td style='width:100%'>
                 <input type="button" value="Guardar Cambios" class="btn1"
-                  onclick="guardarNroFactura(document.getElementById('inptNroFacturaManualCobro').value)"/>
+                  onclick="guardarNroFactura(document.getElementById('inptNroFacturaManualCobro').value, document.getElementById('inptFechaFacturaManualCobro').value)"/>
               </td>
             </tr>
           </table>
