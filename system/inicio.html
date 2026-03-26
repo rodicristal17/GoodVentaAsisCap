@@ -25464,37 +25464,28 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
             </div>
           </center>
         </div>
-        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;min-height: 900px;width: 900px;">
-          <table class="tableMenuZ">
-            <tbody>
-              <tr>
-                <td style="width:100%;text-align:left">
-                  <p class="pTituloB">Datos de <b style="font-size: 30px;">Activos fijos</b></p>
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
-                    onclick="imprimirCartaCompromiso('divAbmInventarioLocal')">
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar campos"
-                    onclick="limpiarcamposInventarioLocal()">
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
-                    onclick="minimizarabmInventarioLocal()">
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atras"
-                    onclick="verCerrarAbmInventarioLocal(false, true)">
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;width: 1200px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(15,23,42,0.08);">
+            <div style="min-width:240px;flex:1 1 320px;text-align:left;">
+              <p class="pTituloB">Datos de <b style="font-size:32px;">Activos fijos</b></p>
+              <p class="pTituloC" style="margin:6px 0 0 0;color:#5b6472;">Registro general del activo, soporte visual y responsables asociados.</p>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;">
+              <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
+                onclick="imprimirCartaCompromiso('divAbmInventarioLocal')">
+              <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar campos"
+                onclick="limpiarcamposInventarioLocal()">
+              <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                onclick="minimizarabmInventarioLocal()">
+              <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atras"
+                onclick="verCerrarAbmInventarioLocal(false, true)">
+            </div>
+          </div>
           <center>
-            <div style="display:flex;align-items:stretch;justify-content:center;gap:2%;width:100%;flex-wrap:wrap;">
-            <div class="divMenuFloat3" style="flex:0.7;float:none;display:flex;margin:0;">
-              <div class="divMenuf" style="flex:0.6;height:100%;box-sizing:border-box;">
-                <br>
+            <div style="display:flex;align-items:stretch;justify-content:center;gap:18px;width:100%;flex-wrap:wrap;box-sizing:border-box;">
+            <div class="divMenuFloat3" style="flex:1 1 460px;max-width:560px;">
+              <div class="divMenuf">
+                <p class="pTituloC"><b>Informacion general</b></p>
                 <table style="width:100%">
                   <tr>
                   <td>
@@ -25516,15 +25507,17 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <table style="width:100%"><tr>
                 <td>
                 <p class="pTituloC">Marca* :</p>
-                <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptMarcaInventarioInsumo" style="width:65%" disabled="">
-                <input type="button" value="Buscar" class="btn4" onclick="verCerrarFrmMarca('1','abminventarioInsumo')" style="background-color: #FF5722;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <input class="inputText" type="text" placeholder="Obligatorio (*)" id="inptMarcaInventarioInsumo" style="flex:1 1 220px;min-width:0;" disabled="">
+                <input type="button" value="Buscar" class="btn4" onclick="verCerrarFrmMarca('1','abminventarioInsumo')" style="background-color:#FF5722;">
+                </div>
                 </td>
                 </tr></table>
                 <br>
                 <table style="width:100%"><tr>
                 <td>
                 <p class="pTituloC">Modelo :</p>
-                <input class="inputText" type="text"id="inptModeloInventarioInsumo">
+                <input class="inputText" type="text" id="inptModeloInventarioInsumo">
                 </td>
                 </tr></table>
                 <br>
@@ -25539,18 +25532,18 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <tr>
                   <td>
                   <p class="pTituloC">Descripcion :</p>
-                  <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:80px"></textarea>
+                  <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:92px;"></textarea>
                   </td>
                   </tr>
                 </table>
                 <br>
                 <table style="width:100%">
                   <tr>
-                  <td style="width: 40%">
+                  <td style="width:40%;padding-right:8px;box-sizing:border-box;">
                   <p class="pTituloC">Cantidad* :</p>
                   <input class="inputText" type="number" onchange="separadordemiles(this)" id="inptCantidadInventarioInsumo" value=1>
                   </td>
-                  <td style="width: 60%">
+                  <td style="width:60%;padding-left:8px;box-sizing:border-box;">
                   <p class="pTituloC">Costo :</p>
                   <input class="inputText" type="text" id="inptCostoInventarioInsumo" onkeyup="separadordemiles(this)">
                   </td>
@@ -25559,14 +25552,14 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <br>
                 <table style="width:100%">
                   <tr>
-                  <td style="width: 50%;">
+                  <td style="width:50%;padding-right:8px;box-sizing:border-box;">
                   <p class="pTituloC">Local* :</p>
-                  <select class="inputSelect" id="inptLocalInventarioInsumo" style="width:130px">
+                  <select class="inputSelect" id="inptLocalInventarioInsumo">
                   </select>
                   </td>
-                  <td style="width: 50%;">
+                  <td style="width:50%;padding-left:8px;box-sizing:border-box;">
                   <p class="pTituloC">Estado* :</p>
-                  <select class="inputSelect" id="inptEstadoInventarioInsumo" style="width:130px">
+                  <select class="inputSelect" id="inptEstadoInventarioInsumo">
                   <option value="activo">ACTIVO</option>
                   <option value="inactivo">INACTIVO</option>
                   </select>
@@ -25578,7 +25571,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <tr>
                   <td>
                   <p class="pTituloC">Usuario responsable :</p>
-                  <select class="inputSelect" id="inptUsuarioResponsableInventarioInsumo" style="width:125px"></select>
+                  <select class="inputSelect" id="inptUsuarioResponsableInventarioInsumo"></select>
                   <input class="inputText" type="hidden" id="inptUsuarioResponsableCIInventarioInsumo">
                   <input class="inputText" type="hidden" id="inptUsuarioResponsableTelInventarioInsumo">
                   </td>
@@ -25589,107 +25582,74 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <tr>
                   <td>
                   <p class="pTituloC">Observacion :</p>
-                  <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:50px"></textarea>
+                  <textarea id="inptObservacionInventarioInsumo" class="textarea1" style="height:72px;"></textarea>
                   </td>
                   </tr>
                 </table>
               </div>
             </div>
-            <div class="divMenuFloat3" style="flex:0.5;float:none;display:flex;margin:0;">
-              <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Fotos del articulo :</p>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <center>
-                <div id="imgfotoInventarioLocal1" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal1')" style="background-image: url();"></div>
-                </center>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <center>
-                <div id="imgfotoInventarioLocal2" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal2')" style="background-image: url();"></div>
-                </center>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <center>
-                <div id="imgfotoInventarioLocal3" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal3')" style="background-image: url();"></div>
-                </center>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <p class="pTituloC">Foto de la factura :</p>
-                </td>
-                </tr>
-              </table>
-              <table style="width:100%">
-                <tr>
-                <td>
-                <center>
-                <div id="imgfacturaInventarioLocal" class="imgFotoProducto" onclick="vercerrarcargadefotos('facturaInventarioLocal')" style="background-image: url(&quot;/GoodVentaAsisCap/iconos/imagenphoto.png&quot;);"></div>
-                </center>
-                </td>
-                </tr>
-              </table>
-              <br>
-              <table style="width:100%">
-                <tbody><tr>
-                <td>
-                <p class="pTituloC">Foto del compromiso :</p>
-                </td>
-                </tr>
-              </tbody></table>
-              <table style="width:100%">
-                <tbody><tr>
-                <td>
-                <center>
-                <div id="imgCompromisoInventarioLocal" class="imgFotoProducto" onclick="vercerrarcargadefotos('CompromisoInventarioLocal')" style="background-image: url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></div>
-                </center>
-                </td>
-                </tr>
-              </tbody></table>
+            <div class="divMenuFloat3" style="flex:1 1 300px;max-width:360px;">
+              <div class="divMenuf">
+              <p class="pTituloC"><b>Soporte visual</b></p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;">
+                <div class="contenedor-imagen">
+                  <p class="pTituloC" style="margin:0 0 8px 0;">Foto 1</p>
+                  <center>
+                  <div id="imgfotoInventarioLocal1" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal1')" style="background-image:url();"></div>
+                  </center>
+                </div>
+                <div class="contenedor-imagen">
+                  <p class="pTituloC" style="margin:0 0 8px 0;">Foto 2</p>
+                  <center>
+                  <div id="imgfotoInventarioLocal2" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal2')" style="background-image:url();"></div>
+                  </center>
+                </div>
+                <div class="contenedor-imagen">
+                  <p class="pTituloC" style="margin:0 0 8px 0;">Foto 3</p>
+                  <center>
+                  <div id="imgfotoInventarioLocal3" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoInventarioLocal3')" style="background-image:url();"></div>
+                  </center>
+                </div>
+              </div>
+              <div style="height:1px;background:rgba(148,163,184,0.25);margin:18px 0;"></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;">
+                <div class="contenedor-imagen">
+                  <p class="pTituloC" style="margin:0 0 8px 0;">Foto de la factura</p>
+                  <center>
+                  <div id="imgfacturaInventarioLocal" class="imgFotoProducto" onclick="vercerrarcargadefotos('facturaInventarioLocal')" style="background-image:url(&quot;/GoodVentaAsisCap/iconos/imagenphoto.png&quot;);"></div>
+                  </center>
+                </div>
+                <div class="contenedor-imagen">
+                  <p class="pTituloC" style="margin:0 0 8px 0;">Foto del compromiso</p>
+                  <center>
+                  <div id="imgCompromisoInventarioLocal" class="imgFotoProducto" onclick="vercerrarcargadefotos('CompromisoInventarioLocal')" style="background-image:url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></div>
+                  </center>
+                </div>
+              </div>
               <center>
               <input type="button" value="Guardar datos" class="btn1" onclick="verificarCamposInventarioLocal()" id="btnAbmBanco">
               </center>
-              <br>
               </div>
             </div>
-            <div class="divMenuFloat3" style="flex:0.5;float:none;display:flex;margin:0;" id="divHistorialResponsableInsumosLocal">
-              <div class="divMenuf" style="width:100%;height:100%;box-sizing:border-box;">
+            <div class="divMenuFloat3" style="flex:1 1 300px;max-width:360px;" id="divHistorialResponsableInsumosLocal">
+              <div class="divMenuf">
               <table style="width:100%">
                 <tbody><tr>
                 <td>
-                <strong>Responsables anteriores :</strong>
+                <strong style="font-size:15px;color:#334155;">Responsables anteriores</strong>
+                <p class="pTituloC" style="margin:6px 0 0 0;color:#64748b;">Historial de asignaciones del activo.</p>
                 </td>
                 </tr>
               </tbody></table>
               <br>
-              <table class="tableCabeceraRegistro"><tr>
-                  <td class="td_registro" style="width: 10%;">#</td>
-                  <td class="td_registro" style="width: 60%;">Anterior</td>
-                  <td class="td_registro" style="width: 30%;">Fecha</td>
-              </tr></table>
-              <table id="divTableHistorialResponsableInsumosLocal" border="1" cellspacing="1" cellpadding="5" style="max-height: 450px;display: flex; overflow-y: auto;">
+              <table class="tableCabeceraRegistro">
+                <tr>
+                  <td class="td_registro" style="width:10%;">#</td>
+                  <td class="td_registro" style="width:60%;">Anterior</td>
+                  <td class="td_registro" style="width:30%;">Fecha</td>
+                </tr>
+              </table>
+              <table id="divTableHistorialResponsableInsumosLocal" border="1" cellspacing="1" cellpadding="5" style="width:100%;max-height:450px;display:block;overflow-y:auto;box-sizing:border-box;border:1px solid rgba(148,163,184,0.18);border-radius:0 0 14px 14px;background:#fff;">
               </table>
               </div>
             </div>
