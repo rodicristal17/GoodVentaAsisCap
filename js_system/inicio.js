@@ -485,6 +485,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("inptNombreMisDatos").value=nombre;
 						document.getElementById("imgFotoPerfilMisDatos").style.backgroundImage= "url("+fotocliente3+")";
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
+						document.getElementById("inptCedulaMisDatos").value= datos["14"];
 						document.getElementById("fotoPerfilUsuario").src= fotocliente3;
 						document.getElementById('inptTelefonoMisDatos').value= datos["9"];
 						document.getElementById('inptDireccionMisDatos').value = datos["10"];
@@ -1232,6 +1233,7 @@ function AbmEditarMisDatos() {
 	}
 	const telefono_referencia= document.getElementById("inptContactoReferenciaMisDatos").value;
 	const telefono= document.getElementById("inptTelefonoMisDatos").value;
+	const cedula= document.getElementById("inptCedulaMisDatos").value;
 	const direccion= document.getElementById("inptDireccionMisDatos").value;
 
 	verCerrarEfectoCargando("1")
@@ -1247,6 +1249,7 @@ function AbmEditarMisDatos() {
 	datos.append("telefono_referencia", telefono_referencia);
 	datos.append("telefono", telefono);
 	datos.append("direccion", direccion);
+	datos.append("cedula", cedula);
 	datos.append("local", cod_localFKUSer)
 	datos.append("foto", fotocliente3)
 	datos.append("ext", extcliente3)
@@ -36166,6 +36169,10 @@ function readFileProducto(input) {
 				fotoFacturaInventario= e.target.result;
 				extFacturaInventario= file_extension;
 				break;
+			case 'CompromisoInventarioLocal':
+				fotoCompromisoInventario= e.target.result;
+				extCompromisoInventario= file_extension;
+				break;
 			case 'fotoGasto':
 				fotoGasto= e.target.result;
 				extGasto= file_extension;
@@ -36197,6 +36204,14 @@ function eliminarFoto() {
 		case 'fotoInventarioLocal3':
 			fotoInventario3= "";
 			extInventario3= "";
+			break;
+		case 'facturaInventarioLocal':
+			fotoFacturaInventario= "";
+			extFacturaInventario= "";
+			break;
+		case 'compromisoInventarioLocal':
+			fotoCompromisoInventario= "";
+			extCompromisoInventario= "";
 			break;
 		case 'fotoGasto':
 			fotoGasto= "";

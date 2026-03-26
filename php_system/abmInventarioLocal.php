@@ -36,7 +36,13 @@
                 $fotoFactura= $_POST['fotoFactura'];
                 $extFactura= $_POST['extFactura'];
                 if (!empty($fotoFactura) || !empty($extFactura)) {
-                    cargarImagenInventarioLocal($cod_inventario, 'url_Factura', $fotoFactura, $extFactura);
+                    cargarImagenInventarioLocal($cod_inventario, 'url_factura', $fotoFactura, $extFactura);
+                }
+                // Carga la factura
+                $fotoCompromiso= $_POST['fotoCompromiso'];
+                $extCompromiso= $_POST['extCompromiso'];
+                if (!empty($fotoCompromiso) || !empty($extCompromiso)) {
+                    cargarImagenInventarioLocal($cod_inventario, 'url_compromiso', $fotoCompromiso, $extCompromiso);
                 }
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
@@ -158,6 +164,9 @@
             <td id='td_datos_17'style='display: none;'>".$value['fecha_edit']."</td>
             <td id='td_datos_21'style='display: none;'>".$value['cod_marcaFK']."</td>
             <td id='td_datos_22'style='display: none;'>".$value['url_factura']."</td>
+            <td id='td_datos_23'style='display: none;'>".$value['ci_usuario_responsable']."</td>
+            <td id='td_datos_24'style='display: none;'>".$value['tel_usuario_responsable']."</td>
+            <td id='td_datos_25'style='display: none;'>".$value['url_compromiso']."</td>
             </tr></table>";
         }
 
@@ -206,6 +215,8 @@
         $sql= "SELECT 
             il.* ,
             (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuario_responsableFK) as nombre_usuario_responsable,
+            (SELECT rut_usuario FROM usuario WHERE cod_usuario = cod_usuario_responsableFK) as ci_usuario_responsable,
+            (SELECT telefono FROM persona WHERE cod_persona = cod_usuario_responsableFK) as tel_usuario_responsable,
             (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK_create) as nombre_usuarioFK_create,
             (SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK_edit) as nombre_usuarioFK_edit,
             (SELECT descripcion FROM marcas WHERE cod_marcas = il.cod_marcaFK) as nombre_marca,

@@ -1647,6 +1647,8 @@ function imprimirPagare() {
 
     + '</div>';
 
+	let tituloImpresion = document.querySelector("#DivImprimirPagares h1");
+	tituloImpresion.innerHTML = 'PAGAR&Eacute; A LA ORDEN';
     document.getElementById("divpagare").innerHTML = pagina;
 
     var documento = document.getElementById("DivImprimirPagares").innerHTML;
@@ -1657,17 +1659,290 @@ function imprimirPagare() {
     window.open(URL, "Imprimir", "toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left=0");
 }
 
+function imprimirCartaCompromiso(ventanaOrigen) {
+	let nombre= "";
+	let ci= "";
+	let telefono= "";
+	switch (ventanaOrigen) {
+		case 'divAbmInventarioLocal':
+			nombre= document.getElementById("inptUsuarioResponsableInventarioInsumo").selectedOptions[0].text;
+			ci= document.getElementById("inptUsuarioResponsableCIInventarioInsumo").value;
+			telefono= document.getElementById("inptUsuarioResponsableTelInventarioInsumo").value;
+			break;
+		default:
+			console.error(ventanaOrigen, " no implementado.");
+			return false;
+			break;
+	}
+    if (EntregaPagare == "") {
+        EntregaPagare = "0";
+    }
 
+    var t = QuitarSeparadorMilValor(totalesRecibo);
+    EntregaPagare = QuitarSeparadorMilValor(EntregaPagare);
 
+    var totalcompromiso = Number(t) - Number(EntregaPagare);
 
+    var totaletrasRecibo = numeroALetras(totalcompromiso, {
+        plural: 'GUARANIES',
+        singular: 'GUARANIES',
+        centPlural: 'GUARANIES',
+        centSingular: 'GUARANIES'
+    });
 
+    var f = new Date();
+    var dia = f.getDate();
+    if (dia < 10) {
+        dia = "0" + dia;
+    }
 
+    var mes = f.getMonth() + 1;
+    if (mes < 10) {
+        mes = "0" + mes;
+    }
 
+    var anho = f.getFullYear();
+    var emision = dia + "/" + mes + "/" + anho;
 
+    var fecha = new Date(vencimientopagare);
+    fecha.setDate(fecha.getDate() + 1);
 
+    var diaV = fecha.getDate();
+    if (diaV < 10) {
+        diaV = "0" + diaV;
+    }
 
+    var mesV = fecha.getMonth() + 1;
+    if (mesV < 10) {
+        mesV = "0" + mesV;
+    }
 
+    var anhoVencimiendo = fecha.getFullYear();
+    var vencimientoTexto = diaV + "/" + mesV + "/" + anhoVencimiendo;
 
+    var pagina = ''
+    + '<style>'
+    + '   .carta-wrap{'
+    + '       width:92%;'
+    + '       margin:0 auto;'
+    + '       padding:0 8px;'
+    + '       box-sizing:border-box;'
+    + '       font-family:Arial, sans-serif;'
+    + '       color:#000;'
+    + '   }'
+    + '   .carta-header{'
+    + '       width:100%;'
+    + '       text-align:center;'
+    + '       margin-bottom:18px;'
+    + '   }'
+    + '   .carta-titulo{'
+    + '       margin:0;'
+    + '       font-size:20px;'
+    + '       font-weight:bold;'
+    + '       letter-spacing:0.5px;'
+    + '       text-transform:uppercase;'
+    + '   }'
+    + '   .carta-subtitulo{'
+    + '       margin:4px 0 0 0;'
+    + '       font-size:12px;'
+    + '   }'
+    + '   .carta-table{'
+    + '       width:100%;'
+    + '       border-collapse:collapse;'
+    + '       margin-bottom:14px;'
+    + '   }'
+    + '   .carta-table td{'
+    + '       vertical-align:top;'
+    + '       padding:4px 6px;'
+    + '       font-size:12px;'
+    + '       line-height:1.4;'
+    + '   }'
+    + '   .tabla-equipo{'
+    + '       width:100%;'
+    + '       border-collapse:collapse;'
+    + '       margin-top:10px;'
+    + '       margin-bottom:18px;'
+    + '   }'
+    + '   .tabla-equipo td{'
+    + '       border:1px solid #000;'
+    + '       padding:8px;'
+    + '       font-size:12px;'
+    + '       line-height:1.4;'
+    + '   }'
+    + '   .tabla-equipo .label{'
+    + '       width:30%;'
+    + '       font-weight:bold;'
+    + '       background:#f3f3f3;'
+    + '   }'
+    + '   .carta-texto{'
+    + '       width:100%;'
+    + '       display:block;'
+    + '   }'
+    + '   .parrafo-guion{'
+    + '       width:100%;'
+    + '       margin:0 0 14px 0;'
+    + '       font-size:12px;'
+    + '       line-height:1.5;'
+    + '       text-align:justify;'
+    + '       text-align-last:auto;'
+    + '       white-space:normal;'
+    + '       word-break:normal;'
+    + '       overflow-wrap:break-word;'
+    + '   }'
+    + '   .seccion-titulo{'
+    + '       margin:16px 0 8px 0;'
+    + '       font-size:13px;'
+    + '       font-weight:bold;'
+    + '       text-transform:uppercase;'
+    + '   }'
+    + '   .lista-condiciones{'
+    + '       margin:0 0 14px 18px;'
+    + '       padding:0;'
+    + '       font-size:12px;'
+    + '       line-height:1.6;'
+    + '   }'
+    + '   .lista-condiciones li{'
+    + '       margin-bottom:6px;'
+    + '       text-align:justify;'
+    + '   }'
+    + '   .observaciones{'
+    + '       width:100%;'
+    + '       min-height:80px;'
+    + '       border:1px solid #000;'
+    + '       padding:10px;'
+    + '       box-sizing:border-box;'
+    + '       font-size:12px;'
+    + '       line-height:1.5;'
+    + '       margin-bottom:25px;'
+    + '   }'
+    + '   .firma-table{'
+    + '       width:100%;'
+    + '       border-collapse:collapse;'
+    + '       margin-top:40px;'
+    + '   }'
+    + '   .firma-table td{'
+    + '       width:50%;'
+    + '       vertical-align:top;'
+    + '       padding:10px 15px;'
+    + '   }'
+    + '   .firma-linea{'
+    + '       width:220px;'
+    + '       margin:0 auto 8px auto;'
+    + '       border-top:1px dashed #000;'
+    + '       height:1px;'
+    + '   }'
+    + '   .centrado{'
+    + '       text-align:center;'
+    + '   }'
+    + '   .pTituloC{'
+    + '       margin:4px 0;'
+    + '       font-size:11px;'
+    + '       line-height:1.4;'
+    + '       color:#232323;'
+    + '   }'
+    + '</style>'
+
+    + '<div class="carta-wrap">'
+
+    + '   <div class="carta-header">'
+    + '       <p class="carta-titulo">Carta Compromiso de Responsabilidad por Entrega de Equipo</p>'
+    + '       <p class="carta-subtitulo"><b>GOODTECHNOLOGY S.A.</b></p>'
+    + '   </div>'
+
+    + '   <table class="carta-table">'
+    + '       <tr>'
+    + '           <td style="width:50%; text-align:left;">'
+    + '               <p class="pTituloC"><b>Fecha de Emisi&oacute;n:</b>&nbsp;&nbsp;' + emision + '</p>'
+    + '           </td>'
+    + '           <td style="width:50%; text-align:left;">'
+    + '               <p class="pTituloC"><b>Responsable:</b>&nbsp;&nbsp;' + nombre + '</p>'
+    + '               <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + ci + '</p>';
+	if (ventanaOrigen == "divAbmInventarioLocal") {
+		pagina += '               <p class="pTituloC"><b>Local:</b>&nbsp;&nbsp;' + document.getElementById('inptLocalMisDatos').selectedOptions[0].text + '</p>'
+	}
+    pagina += '           </td>'
+    + '       </tr>'
+    + '   </table>'
+
+    + '   <div class="carta-texto">'
+    + '       <p class="parrafo-guion">Yo, <strong>' + nombre + '</strong>, con C.I. Nro <strong>' + ci + '</strong>, declaro ';
+	switch (ventanaOrigen) {
+		case 'divAbmInventarioLocal':
+			pagina += 'haber recibido en conformidad el equipo detallado en el presente documento, en las condiciones especificadas al momento de la entrega.</p>'
+    + '       <p class="parrafo-guion">Por medio de esta carta, dejo constancia de que el equipo recibido queda bajo mi responsabilidad, comprometi&eacute;ndome a utilizarlo correctamente, conservarlo en buen estado y velar por su cuidado durante todo el tiempo que permanezca a mi cargo.</p>'
+    + '   </div>';
++ '   <p class="seccion-titulo">Detalle del equipo</p>'
+
+    + '   <table class="tabla-equipo">'
+    + '       <tr>'
+    + '           <td class="label">Marca</td>'
+    + '           <td>' + document.getElementById('inptMarcaInventarioInsumo').value + '</td>'
+    + '       </tr>'
+    + '       <tr>'
+    + '           <td class="label">Modelo</td>'
+    + '           <td>' + document.getElementById('inptModeloInventarioInsumo').value + '</td>'
+    + '       </tr>'
+    + '       <tr>'
+    + '           <td class="label">N&uacute;mero de Serie</td>'
+    + '           <td>' + document.getElementById('inptNroSerieInventarioInsumo').value + '</td>'
+    + '       </tr>'
+	+ '       <tr>'
+    + '           <td class="label">Descripcion</td>'
+    + '           <td>' + document.getElementById('inptDescripcionInventarioInsumo').value + '</td>'
+    + '       </tr>'
+    + '   </table>'
+	
+    + '   <p class="seccion-titulo">Condiciones y responsabilidades</p>'
+
+    + '   <ol class="lista-condiciones">'
+    + '       <li>Recibo el equipo en buen estado de funcionamiento, conforme a lo detallado en esta carta compromiso.</li>'
+    + '       <li>Me comprometo a utilizar el equipo de forma responsable, evitando cualquier uso indebido, negligente o contrario a las disposiciones establecidas.</li>'
+    + '       <li>Asumo la obligaci&oacute;n de cuidar, resguardar y conservar el equipo y sus accesorios mientras se encuentren bajo mi custodia.</li>'
+    + '       <li>Reconozco que cualquier da&ntilde;o, deterioro, p&eacute;rdida, extrav&iacute;o o robo del equipo ocurrido durante el tiempo en que est&eacute; a mi cargo ser&aacute; de mi exclusiva responsabilidad, salvo prueba en contrario.</li>'
+    + '       <li>Me comprometo a informar de inmediato cualquier falla, incidente o situaci&oacute;n que afecte el estado o disponibilidad del equipo.</li>'
+    + '       <li>En caso de devoluci&oacute;n, entregar&eacute; el equipo en condiciones similares a aquellas en las que fue recibido, salvo el desgaste normal por el uso adecuado.</li>'
+    + '   </ol>'
+
+    + '   <p class="seccion-titulo">Observaciones</p>'
+    + '   <div class="observaciones">' + document.getElementById('inptObservacionInventarioInsumo').value + '</div>'
+			break;	
+		default:
+			console.error(ventanaOrigen, " no implementado.");
+			break;
+	}
+    
+	pagina += '   <table class="firma-table">'
+    + '       <tr>'
+    /*+ '           <td>'
+    + '               <div class="firma-linea"></div>'
+    + '               <p class="pTituloC centrado"><b>ENTREGADO POR</b></p>'
+    + '               <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + entregadoPor + '</p>'
+    + '               <p class="pTituloC"><b>CARGO:</b>&nbsp;&nbsp;' + cargoEntrega + '</p>'
+    + '               <p class="pTituloC"><b>FIRMA:</b>&nbsp;&nbsp;__________________________</p>'
+    + '           </td>'
+    */+ '           <td>'
+    + '               <p class="pTituloC centrado"><b>RECIBIDO POR</b></p>'
+    + '               <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + nombre + '</p>'
+    + '               <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + ci + '</p>'
+    + '               <p class="pTituloC"><b>TELEF.:</b>&nbsp;&nbsp;' + telefono + '</p>'
+    + '               <p class="pTituloC"><b>FIRMA:</b>&nbsp;&nbsp;__________________________</p>'
+    + '           </td>'
+    + '       </tr>'
+    + '   </table>'
+
+    + '</div>';
+
+    let tituloImpresion = document.querySelector("#DivImprimirPagares h1");
+	tituloImpresion.innerHTML = 'CARTA DE COMPROMISO';
+    document.getElementById("divpagare").innerHTML = pagina;
+
+    var documento = document.getElementById("DivImprimirPagares").innerHTML;
+    localStorage.setItem("reporte", documento);
+    localStorage.setItem("tipo", "reporte");
+
+    var URL = "/GoodVentaAsisCap/system/report.html";
+    window.open(URL, "Imprimir", "toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left=0");
+}
 
 function obtenerMes(m){
 	if(m=="1"){

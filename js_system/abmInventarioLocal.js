@@ -59,6 +59,10 @@ function obtenerVistaInformeInsumoLocal() {
     // Limpiar opciones de seleccionado
     document.getElementById('btnEditarInventarioLocal').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarInventarioLocal').disabled= true;
+    document.getElementById('btnAuditoriaInventarioLocal').style.backgroundColor= "#b7b7b7";
+    document.getElementById('btnAuditoriaInventarioLocal').disabled= true;
+    document.getElementById('btnImprimirCompromisoInventarioLocal').style.backgroundColor= "#b7b7b7";
+    document.getElementById('btnImprimirCompromisoInventarioLocal').disabled= true;
     document.getElementById('inptRegistroSeleccInventarioLocal').value= "";
 
 	verCerrarEfectoCargando("1");
@@ -246,11 +250,13 @@ function obtenerDatosInsumoLocal(datostr) {
     let urlFoto2= $(datostr).children('td[id="td_datos_11"]').html();
     let urlFoto3= $(datostr).children('td[id="td_datos_12"]').html();
     let urlFotoFactura= $(datostr).children('td[id="td_datos_22"]').html();
+    let urlFotoCompromiso= $(datostr).children('td[id="td_datos_25"]').html();
     
     urlFoto1= (!urlFoto1) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto1;
     urlFoto2= (!urlFoto2) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto2;
     urlFoto3= (!urlFoto3) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFoto3;
     urlFotoFactura= (!urlFotoFactura) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFotoFactura;
+    urlFotoCompromiso= (!urlFotoCompromiso) ? '/GoodVentaAsisCap/iconos/imagenphoto.png' : urlFotoCompromiso;
 
     cod_inventarioLocal= $(datostr).children('td[id="td_id"]').html();
     document.getElementById('inptCodigoInventarioInsumo').value= cod_inventarioLocal.toString().padStart(3, "0");
@@ -264,6 +270,9 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptEstadoInventarioInsumo').value= $(datostr).children('td[id="td_datos_4"]').html().toLowerCase();
     document.getElementById('inptObservacionInventarioInsumo').innerHTML= $(datostr).children('td[id="td_datos_7"]').html();
     document.getElementById('inptUsuarioResponsableInventarioInsumo').value= $(datostr).children('td[id="td_datos_13"]').html();
+    document.getElementById('inptUsuarioResponsableCIInventarioInsumo').value= $(datostr).children('td[id="td_datos_23"]').html();
+    separadordemiles(document.getElementById('inptUsuarioResponsableCIInventarioInsumo'));
+    document.getElementById('inptUsuarioResponsableTelInventarioInsumo').value= $(datostr).children('td[id="td_datos_24"]').html();
     document.getElementById('inptNroSerieInventarioInsumo').value= $(datostr).children('td[id="td_datos_19"]').html();
     document.getElementById('inptModeloInventarioInsumo').value= $(datostr).children('td[id="td_datos_20"]').html();
     document.getElementById('inptMarcaInventarioInsumo').value= $(datostr).children('td[id="td_datos_18"]').html();
@@ -272,8 +281,13 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('imgfotoInventarioLocal2').style.backgroundImage= "url("+ urlFoto2 +")";
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ urlFoto3 +")";
     document.getElementById('imgfacturaInventarioLocal').style.backgroundImage= "url("+ urlFotoFactura +")";
+    document.getElementById('imgCompromisoInventarioLocal').style.backgroundImage= "url("+ urlFotoCompromiso +")";
     document.getElementById('btnEditarInventarioLocal').style.backgroundColor= "rgb(33, 150, 243)";
     document.getElementById('btnEditarInventarioLocal').disabled= false;
+    document.getElementById('btnImprimirCompromisoInventarioLocal').style.backgroundColor= "rgb(33, 150, 243)";
+    document.getElementById('btnImprimirCompromisoInventarioLocal').disabled= false;
+    document.getElementById('btnAuditoriaInventarioLocal').style.backgroundColor= "rgb(33, 150, 243)";
+    document.getElementById('btnAuditoriaInventarioLocal').disabled= false;
 
     // Datos auditoria
     document.getElementById('inptUsuarioInsertadoPor').value= $(datostr).children('td[id="td_datos_14"]').html();
@@ -377,6 +391,8 @@ function limpiarcamposInventarioLocal() {
     extInventario3= "";
     fotoFacturaInventario= "";
     extFacturaInventario= "";
+    fotoCompromisoInventario= "";
+    extCompromisoInventario= "";
 
     // Campos de auditoria
     document.getElementById('inptUsuarioInsertadoPor').value= '';
@@ -506,6 +522,8 @@ var fotoInventario3= "";
 var extInventario3= "";
 var fotoFacturaInventario= "";
 var extFacturaInventario= "";
+var fotoCompromisoInventario= "";
+var extCompromisoInventario= "";
 function subirImagenesInsumosLocal(cod_inventario) {
     obtener_datos_user()
 	var datos = new FormData();
@@ -522,6 +540,8 @@ function subirImagenesInsumosLocal(cod_inventario) {
     datos.append("exts[]", extInventario3);
     datos.append("fotoFactura", fotoFacturaInventario);
     datos.append("extFactura", extFacturaInventario);
+    datos.append("fotoCompromiso", fotoCompromisoInventario);
+    datos.append("extCompromiso", extCompromisoInventario);
 
     var OpAjax = $.ajax({
 		data: datos,

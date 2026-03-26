@@ -122,6 +122,8 @@ if($operacion=="editarMisDatos")
     $local = mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8'); 
 	$nombre=$_POST['nombre'];
     $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');   
+	$cedula=$_POST['cedula'];
+	$cedula = mb_convert_encoding((string)($cedula), 'ISO-8859-1', 'UTF-8');
 	$foto=$_POST['foto'];
 	$foto = mb_convert_encoding((string)($foto), 'ISO-8859-1', 'UTF-8');
 	$ext=$_POST['ext'];
@@ -133,7 +135,7 @@ if($operacion=="editarMisDatos")
 	$direccion=$_POST['direccion'];
 	$direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 	
-	editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre, $foto, $ext, $telefono, $direccion,$telefono_referencia);
+	editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre, $foto, $ext, $telefono, $direccion,$telefono_referencia,$cedula);
 
 }
 
@@ -201,7 +203,7 @@ exit;
 
 
 
-function editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre,$foto,$ext,$telefono,$direccion,$telefono_referencia)
+function editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre,$foto,$ext,$telefono,$direccion,$telefono_referencia,$cedula)
 {
 	
 	if($Cod_Usuario=="" || $user=="" || $pass==""|| $local==""|| $nombre=="" ){
@@ -240,10 +242,10 @@ if($valor>0)
         
         
     
-    $consulta="Update usuario set  login=?, password=?	where Cod_Usuario=?";	
+    $consulta="Update usuario set  login=?, password=?, rut_usuario=?	where Cod_Usuario=?";	
 	$stmt = $mysqli->prepare($consulta);
-    $ss='sss';        
-    $stmt->bind_param($ss,$user,$pass,$Cod_Usuario);        
+    $ss='ssss';        
+    $stmt->bind_param($ss,$user,$pass,$cedula,$Cod_Usuario);        
 	
 	
 if ( ! $stmt->execute() ) {

@@ -37,7 +37,7 @@ function buscardatos($user)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,us.fecha_creacion,
+		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,us.fecha_creacion,us.rut_usuario,
 		IFNULL((Select cdu.cod_cobradorFk from cobradorusuario cdu where cdu.cod_usuarioFk=us.cod_usuario),0) as ControlCobra
 		from  persona pr inner join usuario us on us.cod_usuario=pr.cod_persona  where cod_persona=? ";
 
@@ -59,7 +59,6 @@ if ( ! $stmt->execute()) {
  {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
-		
 		  	  $nombre_persona=mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');
 		  	  $acceso=mb_convert_encoding((string)($valor['acceso']), 'UTF-8', 'ISO-8859-1');
 		  	  $cod_localFK=mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1');
@@ -71,6 +70,7 @@ if ( ! $stmt->execute()) {
 		  $telefono_referencia= mb_convert_encoding((string)($valor['telefono_referencia']), 'UTF-8', 'ISO-8859-1');
 		  $tipo_relacion= mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
 		  $fecha_creacion= mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
+		  $rut_usuario= mb_convert_encoding((string)($valor['rut_usuario']), 'UTF-8', 'ISO-8859-1');
 		  
 		  $informacion =array(
 			"1" =>"exito",
@@ -85,7 +85,8 @@ if ( ! $stmt->execute()) {
 		  	"10" => $direccion, 
 		  	"11" => $tipo_relacion, 
 		  	"12" => $telefono_referencia,
-			"13" => $fecha_creacion
+			"13" => $fecha_creacion,
+			"14" => $rut_usuario
 		);
 echo json_encode($informacion);	
 exit;
