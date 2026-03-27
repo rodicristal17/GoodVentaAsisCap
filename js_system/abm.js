@@ -1846,7 +1846,7 @@ function imprimirCartaCompromiso(ventanaOrigen) {
 
     + '   <div class="carta-header">'
     + '       <p class="carta-titulo">Carta Compromiso de Responsabilidad por Entrega de Equipo</p>'
-    + '       <p class="carta-subtitulo"><b>CLINIDENT S.A.</b></p>'
+    + '       <p class="carta-subtitulo"><b>FARAONE CAPITAL S.A.</b></p>'
     + '   </div>'
 
     + '   <table class="carta-table">'
@@ -1889,6 +1889,10 @@ function imprimirCartaCompromiso(ventanaOrigen) {
     + '       <tr>'
     + '           <td class="label">N&uacute;mero de Serie</td>'
     + '           <td>' + document.getElementById('inptNroSerieInventarioInsumo').value + '</td>'
+    + '       </tr>'
+	+ '       <tr>'
+    + '           <td class="label">Costo</td>'
+    + '           <td>' + document.getElementById('inptCostoInventarioInsumo').value + ' Gs.</td>'
     + '       </tr>'
 	+ '       <tr>'
     + '           <td class="label">Descripcion</td>'

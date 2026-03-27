@@ -106,7 +106,7 @@
                 $tipo= isset($_POST['tipo']) ? mb_convert_encoding((string)($_POST['tipo']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
-                $monto_limite= isset($_POST['monto_limite']) ? mb_convert_encoding((string)($_POST['monto_limite']), 'ISO-8859-1', 'UTF-8') : null;
+                $monto_limite= (isset($_POST['monto_limite']) ? mb_convert_encoding((string)($_POST['monto_limite']), 'ISO-8859-1', 'UTF-8') : null);
 
                 $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $observacion, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK, $monto_limite);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
@@ -350,7 +350,7 @@
         }
 
         // Actualiza el estado de la interconsulta
-        abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], '', 'inactivo', '', '', '', $cod_usuarioFK, $registroInterc['cod_localFK'], '');
+        abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], NULL, 'inactivo', NULL, NULL, NULL, $cod_usuarioFK, $registroInterc['cod_localFK'], NULL);
     }
 
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
@@ -1543,31 +1543,31 @@
             $parametros[] = $fechaActual->format('Y-m-d H:i:s');
 
             // Datos a modificar
-            if (!empty($estado)) {
+            if ($estado != NULL) {
                 $atributos .= ", estado= ?";
                 $ss .= "s";
                 $parametros[] = $estado;
                 $nuevos_datos['estado'] = $estado;
             }
-            if (!empty($observacion)) {
+            if ($observacion != NULL) {
                 $atributos .= ", observacion= ?";
                 $ss .= "s";
                 $parametros[] = $observacion;
                 $nuevos_datos['observacion'] = $observacion;
             }
-            if (!empty($tipo)) {
+            if ($tipo != NULL) {
                 $atributos .= ", tipo= ?";
                 $ss .= "s";
                 $parametros[] = $tipo;
                 $nuevos_datos['tipo'] = $tipo;
             }
-            if (!empty($cod_ventaFK)) {
+            if ($cod_ventaFK != NULL) {
                 $atributos .= ", cod_ventaFK= ?";
                 $ss .= "i";
                 $parametros[] = $cod_ventaFK;
                 $nuevos_datos['cod_ventaFK'] = $cod_ventaFK;
             }
-            if (!empty($monto_limite)) {
+            if ($monto_limite != NULL) {
                 $atributos .= ", monto_limite= ?";
                 $ss .= "i";
                 $parametros[] = $monto_limite;
