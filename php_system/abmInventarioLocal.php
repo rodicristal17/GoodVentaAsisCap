@@ -346,6 +346,11 @@
     function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie,$cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK,$cod_usuarioFK_edit, $estado_fisico, $categoria) {
         $mysqli = conectar_al_servidor();
 
+        //Limpia el campo de monto
+        if ($costo) {
+            $costo= str_replace('.', '', $costo);
+        }
+
         if (empty($cod_inventario)) {
             $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, modelo, nro_serie,cod_localFK, cod_marcaFK, cod_usuario_responsableFK, cod_usuarioFK_create, estado_fisico, categoria) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
             $stmt = $mysqli->prepare($sql);
