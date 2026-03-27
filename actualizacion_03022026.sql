@@ -266,5 +266,8 @@ DELIMITER ;
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.70', detalles='Historial de Articulos del local cambiado.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
+ALTER TABLE insumos_local ADD COLUMN estado_fisico ENUM('excelente', 'mantenimiento', 'dañado');
+ALTER TABLE insumos_local ADD COLUMN categoria ENUM('mobiliario', 'medico');
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

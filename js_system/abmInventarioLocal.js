@@ -281,6 +281,8 @@ function obtenerDatosInsumoLocal(datostr) {
     document.getElementById('inptUsuarioResponsableTelInventarioInsumo').value= $(datostr).children('td[id="td_datos_24"]').html();
     document.getElementById('inptNroSerieInventarioInsumo').value= $(datostr).children('td[id="td_datos_19"]').html();
     document.getElementById('inptModeloInventarioInsumo').value= $(datostr).children('td[id="td_datos_20"]').html();
+    document.getElementById('inptCategoriaInventarioInsumo').value= $(datostr).children('td[id="td_datos_28"]').html();
+    document.getElementById('inptEstadoFisicoInventarioInsumo').value= $(datostr).children('td[id="td_datos_26"]').html();
     document.getElementById('inptMarcaInventarioInsumo').value= $(datostr).children('td[id="td_datos_18"]').html();
     idFkProductoMarca= $(datostr).children('td[id="td_datos_21"]').html();
     document.getElementById('imgfotoInventarioLocal1').style.backgroundImage= "url("+ urlFoto1 +")";
@@ -383,6 +385,8 @@ function limpiarcamposInventarioLocal() {
     document.getElementById('imgfotoInventarioLocal3').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('inptUsuarioResponsableInventarioInsumo').value= "";
     document.getElementById("inptMarcaInventarioInsumo").value = "";
+    document.getElementById("inptEstadoFisicoInventarioInsumo").value = "";
+    document.getElementById("inptCategoriaInventarioInsumo").value = "";
     idFkProductoMarca= "";
 
     document.getElementById('divTableHistorialResponsableInsumosLocal').innerHTML= "";
@@ -425,6 +429,8 @@ function verificarCamposInventarioLocal() {
     const modelo= document.getElementById('inptModeloInventarioInsumo').value;
     const nro_serie= document.getElementById('inptNroSerieInventarioInsumo').value;
     const usuario_responsable= document.getElementById('inptUsuarioResponsableInventarioInsumo').value;
+    const categoria= document.getElementById('inptCategoriaInventarioInsumo').value;
+    const estado_fisico= document.getElementById('inptEstadoFisicoInventarioInsumo').value;
 
     if (!cod_localFK) {
         ver_vetana_informativa("Faltan datos.","Falto seleccionar un local");
@@ -439,13 +445,22 @@ function verificarCamposInventarioLocal() {
         return false;
     }
     if (!idFkProductoMarca) {
-        ver_vetana_informativa("Falta seleccionar su marca", "En caso de no tener marca seleccionar el registro 'Sin Marca0")
+        ver_vetana_informativa("Falta seleccionar su marca", "En caso de no tener marca seleccionar el registro 'Clinident'")
+        return false;
+    }
+    if (!categoria) {
+        ver_vetana_informativa("Faltan datos", "Falta indicar una categoria", "error");
+        return false;
+    }
+    if (!estado_fisico) {
+        ver_vetana_informativa("Faltan datos", "Falta seleccionar el estado fisico del articulo.", "error");
+        return false;
     }
 
-    abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,modelo, nro_serie,cod_localFK, idFkProductoMarca);
+    abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,modelo, nro_serie,cod_localFK, idFkProductoMarca, estado_fisico, categoria);
 }
 
-function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,modelo,nro_serie,cod_localFK,cod_marcaFK) {
+function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion,usuario_responsable,modelo,nro_serie,cod_localFK,cod_marcaFK, estado_fisico, categoria) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -464,6 +479,8 @@ function abmInventarioLocal(nombre,descripcion,estado,cantidad,costo,observacion
     datos.append("cod_marcaFK", cod_marcaFK);
     datos.append("modelo", modelo);
     datos.append("nro_serie", nro_serie);
+    datos.append("estado_fisico", estado_fisico);
+    datos.append("categoria", categoria);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({

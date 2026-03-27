@@ -1413,6 +1413,7 @@ function cancelarInformeInterConsulta() {
 function limpiarCamposDetallesInterConsulta() {
     document.getElementById('table_abm_InterConsulta').innerHTML= "";
     document.getElementById('divListDetallesInterconsultasAsoc').style.display= "none";
+    document.getElementById('divObservacionDetallesInterconsultas').style.display= "none";
 }
 
 function limpiarcamposInterconsulta() {

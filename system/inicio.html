@@ -25329,11 +25329,14 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:15%;">
                 USUARIO RESPONSABLE
                 </td>
-                <td class="td_registro" style="width:10%;">
+                <td class="td_registro" style="width:5%;">
                 ESTADO
                 </td>
-                <td class="td_registro" style="width:15%;">
-                USUARIO CREADOR
+                <td class="td_registro" style="width:5%;">
+                ESTADO FISICO
+                </td>
+                <td class="td_registro" style="width:10%;">
+                ULTIMA AUDITORIA
                 </td>
                 </tr>
               </table>
@@ -25371,14 +25374,22 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal2')">
                 </td>
-                <td class="td_registro" style="width:15%;">
+                <td class="td_registro" style="width:5%;">
                   <select class="inputfiltro" id="inptBuscarAbmInventarioLocal4">
                     <option value=''>Todos</option>
                     <option value='activo'>Activo</option>
                     <option value='inactivo'>Inactivo</option>
                   </select>
                 </td>
-                <td style="width: 15%;"></td>
+                <td class="td_registro" style="width:5%;">
+                  <select class="inputfiltro" id="inptBuscarAbmInventarioLocal5">
+                    <option value=''>Todos</option>
+                    <option value='excelente'>Excelente</option>
+                    <option value='mantenimiento'>Mantenimiento</option>
+                    <option value='dañado'>Dañado</option>
+                  </select>
+                </td>
+                <td style="width: 10%;"></td>
                 </tr>
               </table>
               <div class="divTablesScrool" style="height: 350px;display: grid;">
@@ -25492,6 +25503,28 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   <td>
                   <p class="pTituloC">Descripcion :</p>
                   <textarea id="inptDescripcionInventarioInsumo" class="textarea1" style="height:92px;"></textarea>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td style="width:40%;padding-right:8px;box-sizing:border-box;">
+                  <p class="pTituloC">Categoria* :</p>
+                  <select class="inputSelect" id="inptCategoriaInventarioInsumo">
+                  <option value="">Seleccionar</option>
+                  <option value="mobiliario">Mobiliario</option>
+                  <option value="medico">Medico</option>
+                  </select>
+                  </td>
+                  <td style="width:60%;padding-left:8px;box-sizing:border-box;">
+                  <p class="pTituloC">Estado del articulo* :</p>
+                  <select class="inputSelect" id="inptEstadoFisicoInventarioInsumo">
+                  <option value="">Seleccionar</option>
+                  <option value="excelente">Excelente</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="dañado">Dañado</option>
+                  </select>
                   </td>
                   </tr>
                 </table>

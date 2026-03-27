@@ -59,8 +59,10 @@
                 $cod_marcaFK= isset($_POST['cod_usuario_responsableFK']) ? mb_convert_encoding((string)($_POST['cod_marcaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $modelo= isset($_POST['modelo']) ? mb_convert_encoding((string)($_POST['modelo']), 'ISO-8859-1', 'UTF-8') : null;
                 $nro_serie= isset($_POST['nro_serie']) ? mb_convert_encoding((string)($_POST['nro_serie']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado_fisico= isset($_POST['estado_fisico']) ? mb_convert_encoding((string)($_POST['estado_fisico']), 'ISO-8859-1', 'UTF-8') : null;
+                $categoria= isset($_POST['categoria']) ? mb_convert_encoding((string)($_POST['categoria']), 'ISO-8859-1', 'UTF-8') : null;
 
-                $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK, $user);
+                $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK, $user, $estado_fisico, $categoria);
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));
                 break;
             case 'buscarVista':
@@ -137,38 +139,50 @@
         $monto_total= 0;
         $styleName="tableRegistroSearch";
         foreach($registros as $value) {
+            // Calcula la diferencia de dias entre hoy y la ultima edicion
+            $cant_ultima_edicion= 0;
+            $fecha_ultima_edicion = !empty($value['fecha_edit']) ? $value['fecha_edit'] : $value['fecha_creacion'];
+            if (!empty($fecha_ultima_edicion)) {
+                $fechaUltimaEdicion = (new DateTime($fecha_ultima_edicion))->setTime(0, 0, 0);
+                $fechaHoy = (new DateTime())->setTime(0, 0, 0);
+                $cant_ultima_edicion = intval($fechaUltimaEdicion->diff($fechaHoy)->format('%a'));
+            }
+
             $monto_total += $value["costo"];
             $styleName=CargarStyleTable($styleName);
             $pagina.="
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosInsumoLocal(this)'>
             <td id='td_id' style='width:5%;'>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)."</td>
-            <td id='td_datos_1'style='width:15%;'>".$value['nombre']."</td>
-            <td id='td_datos_18'style='width:10%;'>".$value['nombre_marca']."</td>
-            <td id='td_datos_20'style='width: 10%;'>".$value['modelo']."</td>
-            <td id='td_datos_6'style='width: 5%;'>".number_format($value['costo'], 0, ",", ".")."</td>
-            <td id='td_datos_19'style='display:none;'>".$value['nro_serie']."</td>
-            <td id='td_datos_2'style='display:none;'>".$value['descripcion']."</td>
-            <td id='td_datos_3'style='width:20%;'>".$value['nombreLocal'].".</td>
-            <td id='td_datos_14'style='width:15%;'>".$value['nombre_usuario_responsable']."</td>
-            <td id='td_datos_4'style='width: 10%;'>".ucfirst($value['estado'])."</td>
-            <td id='td_datos_14'style='width: 15%;'>".$value['nombre_usuarioFK_create']."</td>
-            <td id='td_datos_5'style='display: none;'>".$value['cantidad']."</td>
-            <td id='td_datos_7'style='display: none;'>".$value['observacion']."</td>
-            <td id='td_datos_8'style='display: none;'>".$value['cod_localFK']."</td>
-            <td id='td_datos_9'style='display: none;'>".$value['cod_usuarioFK_edit']."</td>
-            <td id='td_datos_10'style='display: none;'>".$value['url1']."</td>
-            <td id='td_datos_11'style='display: none;'>".$value['url2']."</td>
-            <td id='td_datos_12'style='display: none;'>".$value['url3']."</td>
-            <td id='td_datos_13'style='display: none;'>".$value['cod_usuario_responsableFK']."</td>
-            <td id='td_datos_15'style='display: none;'>".$value['fecha_creacion']."</td>
-            <td id='td_datos_16'style='display: none;'>".$value['nombre_usuarioFK_edit']."</td>
-            <td id='td_datos_17'style='display: none;'>".$value['fecha_edit']."</td>
-            <td id='td_datos_21'style='display: none;'>".$value['cod_marcaFK']."</td>
-            <td id='td_datos_22'style='display: none;'>".$value['url_factura']."</td>
-            <td id='td_datos_23'style='display: none;'>".$value['ci_usuario_responsable']."</td>
-            <td id='td_datos_24'style='display: none;'>".$value['tel_usuario_responsable']."</td>
-            <td id='td_datos_25'style='display: none;'>".$value['url_compromiso']."</td>
+            <td id='td_datos_1' style='width:15%;'>".$value['nombre']."</td>
+            <td id='td_datos_18' style='width:10%;'>".$value['nombre_marca']."</td>
+            <td id='td_datos_20' style='width: 10%;'>".$value['modelo']."</td>
+            <td id='td_datos_6' style='width: 5%;'>".number_format($value['costo'], 0, ",", ".")."</td>
+            <td id='td_datos_19' style='display:none;'>".$value['nro_serie']."</td>
+            <td id='td_datos_2' style='display:none;'>".$value['descripcion']."</td>
+            <td id='td_datos_3' style='width:20%;'>".$value['nombreLocal'].".</td>
+            <td id='td_datos_14' style='width:15%;'>".$value['nombre_usuario_responsable']."</td>
+            <td id='td_datos_4' style='width: 5%;'>".ucfirst($value['estado'])."</td>
+            <td id='td_datos_14' style='dislay:none;'>".$value['nombre_usuarioFK_create']."</td>
+            <td id='td_datos_5' style='display: none;'>".$value['cantidad']."</td>
+            <td id='td_datos_7' style='display: none;'>".$value['observacion']."</td>
+            <td id='td_datos_8' style='display: none;'>".$value['cod_localFK']."</td>
+            <td id='td_datos_9' style='display: none;'>".$value['cod_usuarioFK_edit']."</td>
+            <td id='td_datos_10' style='display: none;'>".$value['url1']."</td>
+            <td id='td_datos_11' style='display: none;'>".$value['url2']."</td>
+            <td id='td_datos_12' style='display: none;'>".$value['url3']."</td>
+            <td id='td_datos_13' style='display: none;'>".$value['cod_usuario_responsableFK']."</td>
+            <td id='td_datos_15' style='display: none;'>".$value['fecha_creacion']."</td>
+            <td id='td_datos_16' style='display: none;'>".$value['nombre_usuarioFK_edit']."</td>
+            <td id='td_datos_17' style='display: none;'>".$value['fecha_edit']."</td>
+            <td id='td_datos_21' style='display: none;'>".$value['cod_marcaFK']."</td>
+            <td id='td_datos_22' style='display: none;'>".$value['url_factura']."</td>
+            <td id='td_datos_23' style='display: none;'>".$value['ci_usuario_responsable']."</td>
+            <td id='td_datos_24' style='display: none;'>".$value['tel_usuario_responsable']."</td>
+            <td id='td_datos_25' style='display: none;'>".$value['url_compromiso']."</td>
+            <td id='td_datos_26' style='width: 5%;'>".$value['estado_fisico']."</td>
+            <td id='td_datos_27' style='width: 15%;'>hace ".$cant_ultima_edicion." d.</td>
+            <td id='td_datos_28' style='display: none;'>".$value['categoria']."</td>
             </tr></table>";
         }
 
@@ -329,13 +343,13 @@
         }
     }
 
-    function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie,$cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK,$cod_usuarioFK_edit) {
+    function abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie,$cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK,$cod_usuarioFK_edit, $estado_fisico, $categoria) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_inventario)) {
-            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, modelo, nro_serie,cod_localFK, cod_marcaFK, cod_usuario_responsableFK, cod_usuarioFK_create) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            $sql = "INSERT INTO insumos_local (cod_insumo, nombre, descripcion, estado, cantidad, costo, observacion, modelo, nro_serie,cod_localFK, cod_marcaFK, cod_usuario_responsableFK, cod_usuarioFK_create, estado_fisico, categoria) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('isssiisssiiii', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK,$cod_marcaFK,$cod_usuario_responsableFK, $cod_usuarioFK_edit);
+            $stmt->bind_param('isssiisssiiiiss', $cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK,$cod_marcaFK,$cod_usuario_responsableFK, $cod_usuarioFK_edit,$estado_fisico,$categoria);
         } else {
             $parametros = array();
 
@@ -347,60 +361,65 @@
             $parametros[] = $cod_usuarioFK_edit;
             
             // Datos a modificar
-            if (!empty($nombre)) {
+            if ($nombre != NULL) {
                 $atributos .= ", nombre= ?";
                 $ss .= "s";
                 $parametros[] = $nombre;
             }
-            if (!empty($modelo)) {
+            if ($modelo != NULL) {
                 $atributos .= ", modelo= ?";
                 $ss .= "s";
                 $parametros[] = $modelo;
             }
-            if (!empty($nro_serie)) {
+            if ($nro_serie != NULL) {
                 $atributos .= ", nro_serie= ?";
                 $ss .= "s";
                 $parametros[] = $nro_serie;
             }
-            if (!empty($cod_marcaFK)) {
+            if ($cod_marcaFK != NULL) {
                 $atributos .= ", cod_marcaFK= ?";
                 $ss .= "i";
                 $parametros[] = $cod_marcaFK;
             }
-            if (!empty($descripcion)) {
+            if ($descripcion != NULL) {
                 $atributos .= ", descripcion= ?";
                 $ss .= "s";
                 $parametros[] = $descripcion;
             }
-            if (!empty($estado)) {
+            if ($estado != NULL) {
                 $atributos .= ", estado= ?";
                 $ss .= "s";
                 $parametros[] = $estado;
             }
-            if (!empty($cantidad)) {
+            if ($cantidad != NULL) {
                 $atributos .= ", cantidad= ?";
                 $ss .= "s";
                 $parametros[] = $cantidad;
             }
-            if (!empty($costo)) {
+            if ($costo != NULL) {
                 $atributos .= ", costo= ?";
                 $ss .= "s";
                 $parametros[] = $costo;
             }
-            if (!empty($observacion)) {
+            if ($observacion != NULL) {
                 $atributos .= ", observacion= ?";
                 $ss .= "s";
                 $parametros[] = $observacion;
             }
-            if (!empty($cod_localFK)) {
+            if ($cod_localFK != NULL) {
                 $atributos .= ", cod_localFK= ?";
                 $ss .= "s";
                 $parametros[] = $cod_localFK;
             }
-            if (!empty($cod_usuario_responsableFK)) {
-                $atributos .= ", cod_usuario_responsableFK= ?";
+            if ($categoria != NULL) {
+                $atributos .= ", categoria= ?";
                 $ss .= "s";
-                $parametros[] = $cod_usuario_responsableFK;
+                $parametros[] = $categoria;
+            }
+            if ($estado_fisico != NULL) {
+                $atributos .= ", estado_fisico= ?";
+                $ss .= "s";
+                $parametros[] = $estado_fisico;
             }
             
             $parametros[] = $cod_inventario;
