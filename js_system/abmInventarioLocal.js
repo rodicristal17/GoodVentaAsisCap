@@ -112,6 +112,7 @@ function obtenerVistaInformeInsumoLocal() {
 					
                     totalregistroinformeInsumoLocal= parseInt(datos["5"]);
 					registrocargadoInsumoLocal= parseInt(datos["4"]);
+                    document.getElementById("inptTotalCostoInventarioLocal").value= datos["6"];
 
 					// Controla el progreso de la busqueda
 					if(totalregistroinformeInsumoLocal>registrocargadoInsumoLocal){
@@ -122,6 +123,7 @@ function obtenerVistaInformeInsumoLocal() {
 
 						obtenermasVistaInformeInsumoLocal();
 					 }else{
+                        separadordemiles(document.getElementById("inptTotalCostoInventarioLocal"));
                         document.getElementById("tbProcessInformeInsumoLocal").style.display= "none";
 						controldebusquedadInformeInsumoLocal=false
 					 }
@@ -206,6 +208,9 @@ function obtenermasVistaInformeInsumoLocal() {
 					document.getElementById("table_abm_InventarioLocal").innerHTML += datos["2"];
 
 					registrocargadoInsumoLocal += parseInt(datos["4"]);
+                    // Obtiene el monto
+                    let total= document.getElementById("inptTotalCostoInventarioLocal").value;
+                    document.getElementById("inptTotalCostoInventarioLocal").value= Number(total) + Number(datos["6"]);
 
                     // Controla el progreso de la busqueda
 					if(totalregistroinformeInsumoLocal>registrocargadoInsumoLocal){
@@ -215,6 +220,7 @@ function obtenermasVistaInformeInsumoLocal() {
 
 						obtenermasVistaInformeInsumoLocal();
                     }else{
+                        separadordemiles(document.getElementById("inptTotalCostoInventarioLocal"));
                         document.getElementById("tbProcessInformeInsumoLocal").style.display= "none";
 						controldebusquedadInformeInsumoLocal=false
                     }

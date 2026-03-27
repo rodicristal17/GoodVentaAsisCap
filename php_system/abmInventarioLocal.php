@@ -134,8 +134,10 @@
         $registros= obtenerInventarioLocal($filtros, $limite);
 
         $pagina= "";
+        $monto_total= 0;
         $styleName="tableRegistroSearch";
         foreach($registros as $value) {
+            $monto_total += $value["costo"];
             $styleName=CargarStyleTable($styleName);
             $pagina.="
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
@@ -144,7 +146,7 @@
             <td id='td_datos_1'style='width:15%;'>".$value['nombre']."</td>
             <td id='td_datos_18'style='width:10%;'>".$value['nombre_marca']."</td>
             <td id='td_datos_20'style='width: 10%;'>".$value['modelo']."</td>
-            <td id='td_datos_6'style='width: 5%;'>".$value['costo']."</td>
+            <td id='td_datos_6'style='width: 5%;'>".number_format($value['costo'], 0, ",", ".")."</td>
             <td id='td_datos_19'style='display:none;'>".$value['nro_serie']."</td>
             <td id='td_datos_2'style='display:none;'>".$value['descripcion']."</td>
             <td id='td_datos_3'style='width:20%;'>".$value['nombreLocal'].".</td>
@@ -170,7 +172,7 @@
             </tr></table>";
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $monto_total));
     }
 
     function obtenerInventarioLocal($filtros= array(), $limite= 0) {
