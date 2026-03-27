@@ -1324,8 +1324,8 @@ function obtenerDetallesInterConsulta(origen) {
             document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_32')?.textContent.trim();
             document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_38')?.textContent.trim();
             document.getElementById('inptMontoLimiteAbmInterConsulta').value= elemento.querySelector('#td_datos_41')?.textContent.trim();
-            document.getElementById('inptObservacionAbmInterConsulta').value= elemento.querySelector('#td_datos_41')?.textContent.trim();
             separadordemiles(document.getElementById('inptMontoLimiteAbmInterConsulta'));
+            document.getElementById('inptObservacionAbmInterConsulta').value= elemento.querySelector('#td_datos_43')?.textContent.trim();
             verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');
             buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);
             break;

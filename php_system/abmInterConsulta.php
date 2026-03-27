@@ -523,6 +523,7 @@
             <span id="td_datos_38">'.$valueInter['cod_localFK'].'</span>
             <span id="td_datos_39">'.$valueInter['cod_clienteFK'].'</span>
             <span id="td_datos_41">'.$valueInter['monto_limite'].'</span>
+            <span id="td_datos_43">'.$valueInter['observacion'].'</span>
             </div>
             </div>
             </div>
