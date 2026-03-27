@@ -1846,7 +1846,7 @@ function imprimirCartaCompromiso(ventanaOrigen) {
 
     + '   <div class="carta-header">'
     + '       <p class="carta-titulo">Carta Compromiso de Responsabilidad por Entrega de Equipo</p>'
-    + '       <p class="carta-subtitulo"><b>GOODTECHNOLOGY S.A.</b></p>'
+    + '       <p class="carta-subtitulo"><b>CLINIDENT S.A.</b></p>'
     + '   </div>'
 
     + '   <table class="carta-table">'
@@ -1870,10 +1870,14 @@ function imprimirCartaCompromiso(ventanaOrigen) {
 		case 'divAbmInventarioLocal':
 			pagina += 'haber recibido en conformidad el equipo detallado en el presente documento, en las condiciones especificadas al momento de la entrega.</p>'
     + '       <p class="parrafo-guion">Por medio de esta carta, dejo constancia de que el equipo recibido queda bajo mi responsabilidad, comprometi&eacute;ndome a utilizarlo correctamente, conservarlo en buen estado y velar por su cuidado durante todo el tiempo que permanezca a mi cargo.</p>'
-    + '   </div>';
-+ '   <p class="seccion-titulo">Detalle del equipo</p>'
+    + '   </div>'
+	+ '   <p class="seccion-titulo">Detalle del equipo</p>'
 
     + '   <table class="tabla-equipo">'
+	+ '       <tr>'
+    + '           <td class="label">Nombre</td>'
+    + '           <td>' + document.getElementById('inptNombreInventarioInsumo').value + '</td>'
+    + '       </tr>'
     + '       <tr>'
     + '           <td class="label">Marca</td>'
     + '           <td>' + document.getElementById('inptMarcaInventarioInsumo').value + '</td>'

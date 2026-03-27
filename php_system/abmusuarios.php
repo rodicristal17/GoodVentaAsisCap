@@ -138,7 +138,24 @@ if($operacion=="editarMisDatos")
 	editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre, $foto, $ext, $telefono, $direccion,$telefono_referencia,$cedula);
 
 }
+if ($operacion == "obtenerHistorialUsuario" || $operacion == "obtenerHistorialUsuarios") {
+	$cod_usuarioFK=$_POST['cod_usuarioFK'];
+    $cod_usuarioFK = mb_convert_encoding((string)($cod_usuarioFK), 'ISO-8859-1', 'UTF-8');
 
+	$result= obtenerUsuariosAnteriores(array('cod_usuarioFK' => $cod_usuarioFK));
+	$pagina= "";
+	foreach ($result as $valor) {
+		$pagina .= '<tr>
+			<td style="width: 10%;">'.$valor["id"].'</td>
+			<td style="width: 50%;">'.$valor["nombre_persona"].'</td>
+			<td style="width: 40%;">'.$valor["telefono"].'</td>
+			<td style="width: 40%;">'.$valor["fecha_cambio"].'</td>
+		</tr>';
+	}
+
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $result));
+	exit;
+}
 
  if($operacion=="obtenermedicos"){ 
     $cod_venta=$_POST['cod_venta'];
@@ -637,6 +654,52 @@ $registros[] = array(
 $informacion =array("1" => "exito","2" => $pagina,"3" => $nroRegistro, "4" => $registros, "5" => $paginaSelect);
 echo json_encode($informacion);	
 exit;
+}
+
+function obtenerUsuariosAnteriores($filtros = array())
+{
+	$mysqli=conectar_al_servidor();
+
+	$sqlFiltro= "";
+	foreach ($filtros as $key => $value) {
+		if ($value === null || $value === "") {continue;}
+		if ($sqlFiltro == "") {
+			$sqlFiltro .= "WHERE ";
+		} else {
+			$sqlFiltro .= " AND ";
+		}
+
+		if (is_numeric($value)) {
+			$sqlFiltro .= "hpu.$key = $value";
+		} else {
+			$sqlFiltro .= "hpu.$key like '%$value%'";
+		}
+	}
+
+	$sql= "SELECT
+		hpu.*
+		FROM historial_personas_usuario hpu
+		$sqlFiltro
+		ORDER BY hpu.fecha_cambio DESC, hpu.id DESC";
+
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt->execute()) {
+		echo json_encode(array("1" => "error", "2" => "Error al obtener historial de usuarios", "sql" => $sql, "detalle" => $stmt->error));
+		exit;
+	}
+
+	$result = $stmt->get_result();
+	$registros= array();
+	while ($row = $result->fetch_assoc()) {
+		$reg= array();
+		foreach ($row as $key => $value) {
+			$reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+		}
+		$registros[] = $reg;
+	}
+
+	$stmt->close();
+	return $registros;
 }
 
 function buscarfuncionario($buscar,$tipo)

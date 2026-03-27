@@ -1072,6 +1072,8 @@ function obtenerdatosabmusuario(datostr) {
 	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
     document.getElementById('btnEditarUsuario').style.backgroundColor="";
     document.getElementById('btnAbmUsuario').value = "Editar datos";
+
+	buscarHistorialUsuariosAnteriores(idAbmUsuario);
 }
 function verificarcamposusuario() {
 	var inptNombreApellidoUsuario = document.getElementById('inptNombreApellidoUsuario').value
@@ -1443,9 +1445,72 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptEstadoUser').value = "Activo";
 	document.getElementById('btnAbmUsuario').value = "Guardar datos";
 	document.getElementById('btnEditarUsuario').style.backgroundColor="#b7b7b7";
+	document.getElementById('divTableHistorialPersonasUsuarios').innerHTML="";
 	idAbmUsuario = "";
 	seleccionarLocalUSer()
 }
+
+function buscarHistorialUsuariosAnteriores(cod_usuario) {
+	document.getElementById('divTableHistorialPersonasUsuarios').innerHTML= paginacargando;
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("cod_usuarioFK", cod_usuario);
+	datos.append("funt", "obtenerHistorialUsuario");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		cache:false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("divTableHistorialPersonasUsuarios").innerHTML = ''
+		},
+		success: function (responseText) {
+		var Respuesta = responseText;
+		console.log(Respuesta)
+		try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+                Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					document.getElementById("divTableHistorialPersonasUsuarios").innerHTML = datos[2];
+				}
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 function verCerrarAccesoUsuario(d) {
    
     if (d == "1") {

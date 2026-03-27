@@ -223,8 +223,48 @@ END$$
 
 DELIMITER ;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.70', detalles='Historial de Articulos del local cambiado.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 ALTER TABLE insumos_local ADD COLUMN url_compromiso VARCHAR(255);
+
+CREATE TABLE historial_personas_usuario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_persona VARCHAR(255),
+    telefono VARCHAR(25),
+    fecha_creacion DATE,
+    fecha_cambio DATE,
+    cod_usuarioFK INT(11),
+    FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
+);
+
+DROP TRIGGER IF EXISTS trg_historial_personas_usuario;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_historial_personas_usuario
+AFTER UPDATE ON usuario
+FOR EACH ROW
+BEGIN
+    IF NOT (OLD.rut_usuario <=> NEW.rut_usuario) THEN
+        INSERT INTO historial_personas_usuario (
+            nombre_persona,
+            telefono,
+            fecha_creacion,
+            fecha_cambio,
+            cod_usuarioFK
+        )
+        SELECT
+            p.nombre_persona,
+            p.telefono,
+            OLD.fecha_creacion,
+            CURDATE(),
+            NEW.cod_usuario
+        FROM persona p
+        WHERE p.cod_persona = NEW.cod_usuario;
+    END IF;
+END$$
+
+DELIMITER ;
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.70', detalles='Historial de Articulos del local cambiado.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
