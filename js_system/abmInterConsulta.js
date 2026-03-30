@@ -832,7 +832,17 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     
     verCerrarEfectoCargando("1");
     document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "none";
-
+    
+    document.getElementById('tituloInterConsultas').innerHTML= 'Cargando...';
+    document.getElementById('listadoMencionados').innerHTML= '';
+    document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= '';
+    document.getElementById('txtFechaCreadorInterConsulta').innerHTML= '';
+    document.getElementById('txtEstadoInterConsulta').innerHTML= '';
+    document.getElementById('txtTipoInterConsulta').innerHTML= '';
+    document.getElementById('txtCodInterConsulta').innerHTML= '';
+    document.getElementById('localDetalleInterConsulta').innerHTML= '';
+    document.getElementById('txtCodVenta').innerHTML= '';
+    document.getElementById('txtMontoLimite').innerHTML= '';
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -877,6 +887,33 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     // Se valida la nueva variable
                     cod_interConsulta= codInterConsulta;
 
+                    // Se asignan los datos del encabezado
+                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'] + (datos['4']['cod_ventaFK'] ? ' - ' + datos['4']['nombre_persona'] : '');
+                    document.getElementById('listadoMencionados').innerHTML= datos['6'];
+                    document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= datos["4"]['nombre_persona_creador'];
+                    document.getElementById('txtFechaCreadorInterConsulta').innerHTML= datos["4"]['fecha_creacion'];
+                    document.getElementById('txtEstadoInterConsulta').innerHTML= datos["4"]['estado'];
+                    document.getElementById('txtTipoInterConsulta').innerHTML= datos["4"]['tipo'];
+                    document.getElementById('txtCodInterConsulta').innerHTML= datos["4"]['cod_interConsulta'];
+                    document.getElementById('localDetalleInterConsulta').innerHTML= datos["4"]['nombre_local'];
+                    document.getElementById('txtCodVenta').innerHTML= datos["4"]['num_factura'];
+                    document.getElementById('txtMontoLimite').innerHTML= datos["4"]['monto_limite'];
+
+                    // Asigna loc colores
+                    let colorTarjeta= "#8bc34a;";
+                    let claseEstado= 'badge-success';
+                    if (datos["4"]['estado'] == 'proceso') {
+                        colorTarjeta=" #e53935; ";
+                        claseEstado = "badge-danger";
+                    } else if (datos["4"]['estado'] == 'pendiente') {
+                        colorTarjeta=" #e1c247;";
+                        claseEstado= "badge-warning";
+                    }
+
+                    document.getElementById('txtEstadoInterConsulta').className= "badge text-uppercase "+claseEstado;
+                    // Evalua si existen mensajes sin leer
+                    document.getElementById('contenedorEncabezadoInterConsulta').style.border= "10px solid "+colorTarjeta;
+
                     // Se evalua si se recibio los elementos para el titulo y otros detalles
                     if (elemento) {
                         document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
@@ -884,10 +921,10 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     }
 
                     // Carga las observaciones en caso de existir
-                    if (datos["6"]) {
+                    if (datos["4"]['observacion']) {
                         document.getElementById('divObservacionDetallesInterconsultas').style.display= "";
                         document.getElementById('divObservacionDetallesInterconsultas').innerHTML= '<span style="text-decoration: underline;"><b>Observaciones: </b></span><br>'
-                        +'<span style= "font-size: 14dp;"><b>'+ datos["6"] + '</b></span>';
+                        +'<span style= "font-size: 14dp;"><b>'+ datos["4"]['observacion'] + '</b></span>';
                     }
 
                     document.getElementById("table_abm_InterConsulta").innerHTML= datos["2"];
@@ -923,7 +960,8 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                 verCerrarEfectoCargando("");
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-                var titulo="Error: "+error+" \r\n Consola: "+responseText
+                var titulo="Error: "+error+" \r\n Consola: "+responseText;
+                console.error(error);
                 verCerrarEfectoCargando("");
 				GuardarArchivosLog(titulo)
 			}

@@ -2767,7 +2767,7 @@ text-align: justify;
 
 .extracto-floating-panel{
   position:absolute;
-  top:45%;
+  top:8%;
   left: 15%;
   transform:translateY(-38%);
   width:min(760px,70vw);

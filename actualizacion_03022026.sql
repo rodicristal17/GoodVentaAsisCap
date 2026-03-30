@@ -270,18 +270,17 @@ ALTER TABLE insumos_local ADD COLUMN categoria ENUM('mobiliario', 'medico');
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.70', detalles='Historial de Articulos del local cambiado.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
-CREATE TABLE dictamen (
+CREATE TABLE dictamenes (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    resultado VARCHAR(750) NOT NULL,
-    estado ENUM('solicitado', 'aprobado', 'ejecutado', 'inactivo') DEFAULT 'solicitado',
+    asunto VARCHAR(150) NOT NULL,
+    dictamen VARCHAR(750) NOT NULL,
+    estado VARCHAR(15) DEFAULT 'solicitada',
     fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
-    cod_usuarioFK_create INT,
-    fecha_autoriz DATETIME,
-    cod_usuarioFK_autoriz INT,
-    fecha_ejecut DATETIME,
-    cod_usuarioFK_ejecut INT,
-    cod_interConsultaFK INT,
-    FOREIGN KEY (cod_interConsultaFK) REFERENCES interconsulta(cod_interConsulta)
+    cod_usuarioFK_create INT(11),
+    fecha_edit DATETIME,
+    cod_usuarioFK_edit INT(11),
+    fecha_aprobacion DATETIME,
+    cod_usuarioFK_aprobacion INT(11)
 );
 
 -- Cargar permisos

@@ -493,108 +493,7 @@
             }
             
             // Se crea el encabezado
-            $pagina.= '<div class="sugerencias-container" style="display: grid;justify-content: center;">
-                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.'; width: 100%;'.$styleMensajeNoLeido.'">
-            <div class="card-body">
-            <h5 class="card-title">
-                '.$valueInter['asunto'].(empty($valueInter['cod_ventaFK']) ? '' : ' - '.$valueInter['nombre_persona']).'
-                <img src="../iconos/editar.png" alt="Editar InterConsulta" style="height: 1.25rem;" onclick="obtenerDetallesInterConsulta(\'interConsulta\')">
-            </h5>
-            <div style="display: flex;">
-            <div style="flex: 0.5;padding-top: 10px;">
-            <strong style="font-size: 14pt;">Mencionados</strong>
-            <ul style="overflow-y: auto; height: 190px;">
-            '.$mencionesElemento.'
-            </ul>
-            </div>
-            <div style="flex: 0.5; text-align: left; padding-left: 15px;">
-            <div style="margin-bottom: 5px;">
-            <span class="fw-bold">Usuario creador:</span>
-            <span class="text-uppercase">'.$valueInter['nombre_persona_creador'].'</span>
-            </div>
-            <div style="margin-bottom: 5px;">
-            <span class="fw-bold">Fecha creacion:</span>
-            <span class="text-uppercase">'.$valueInter['fecha_creacion'].'</span>
-            </div>
-            <div style="margin-bottom: 5px;">
-            <span class="fw-bold">Estado:</span>
-            <span id="td_datos_32" class="badge '.$claseEstado.' text-uppercase">'.$valueInter['estado'].'</span>
-            </div>
-            <div style="margin-bottom: 5px;">
-            <span class="fw-bold">Tipo:</span>
-            <span id="td_datos_33" class="badge badge-secondary text-uppercase">'.$valueInter['tipo'].'</span>
-            </div>
-            <div style="margin-bottom: 5px;">
-                <span class="fw-bold">Cod. InterConsulta:</span>
-                <span class="text-uppercase" id="td_datos_36">'.$valueInter['cod_interConsulta'].'</span>
-            </div>
-            <div style="margin-bottom: 5px;">
-            <span class="fw-bold">Local:</span>
-            <span id="localDetalleInterConsulta" class="text-uppercase">'.$valueInter['nombre_local'].'</span>
-            </div>';
-            if ($valueInter['tipo'] == 'clinico' || $valueInter['tipo'] == 'administrativo') {
-                $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Cod. Venta:</span>
-                <span class="text-uppercase">'.$valueInter['num_factura'].'</span>
-                </div>';
-            }
-            if ($valueInter['monto_limite']) {
-                $pagina .= '<div style="margin-bottom: 5px;">
-                <span class="fw-bold">Monto limite: </span>
-                <span id="td_datos_42">'.number_format($valueInter['monto_limite'], 0, ',', '.').' Gs.</span>
-                </div>';
-            };
-            $pagina .= '</div>';
-            
-            $pagina .= '<div style="flex: 0.4;" class="panel-flujo-gastos">
-                <span onclick="verCerrarAbmGasto()">
-                    <strong style="font-size: 14pt; cursor: pointer;" onmouseover="this.style.color=\'#0066cc\'; this.style.textDecoration=\'underline\';" onmouseout="this.style.color=\'black\'; this.style.textDecoration=\'none\';">Flujo de gastos: </strong>
-                    <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true); document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\';cod_interConsulta= '.$valueInter['cod_interConsulta'].'">
-                </span>
-                <div id="contenedorFlujoGastosInterConsulta" style="overflow-y: auto; height: 190px;">
-                    <div class="text-secondary" style="padding: 8px;">Cargando gastos...</div>
-                </div>
-            </div>';
-            
-            $pagina .= '</div>
-            <div style="display: none;">
-            <span id="td_datos_31">'.$valueInter['asunto'].'</span>
-            <span id="td_datos_34">'.$valueInter['cod_interConsulta'].'</span>
-            <span id="td_datos_35">'.$valueInter['cod_ventaFK'].'</span>
-            <span id="td_datos_37">'.$valueInter['nombre_persona'].'</span>
-            <span id="td_datos_38">'.$valueInter['cod_localFK'].'</span>
-            <span id="td_datos_39">'.$valueInter['cod_clienteFK'].'</span>
-            <span id="td_datos_41">'.$valueInter['monto_limite'].'</span>
-            <span id="td_datos_43">'.$valueInter['observacion'].'</span>
-            </div>
-            </div>
-            </div>
-            </div>
-            <div class="collapse extracto-floating-panel" id="collapseExtracto">
-                <div class="card extracto-floating-card">
-                    <div class="card-header" id="tituloExtractoGastosInterconsulta" style="background-color: #0b7a7f;color: white;"></div>
-                    <div class="card-body" style="padding: 5px; padding-top: 0px;">
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0"><thead>
-                                <tr>
-                                    <th style="width: 10%;">Cuota</th>
-                                    <th style="width: 15%;">Vencimiento</th>
-                                    <th>Concepto</th>
-                                    <th style="width: 20%;">Estado</th>
-                                    <th style="width: 15%;">Monto</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableExtractoGastosInterConsulta"></tbody>
-                            <tfoot style="border-top: 1px solid #dee2e6;border-button: hidden;"><tr>
-                                <th colspan="4">Monto pendiente:</th>
-                                <th id="tableExtractoGastosInterConsultaTotal">0</th>
-                            </tr></tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="contenedorMensajesInterConsulta">';
+            $pagina.= '<div id="contenedorMensajesInterConsulta">';
             
             if (count($registrosMens) > ($limiteMensajes)) {
                 $pagina .= "<div style='width: 100%; justify-content: center;'>
@@ -610,7 +509,7 @@
             $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $filtros['cod_interConsulta'], "5" => $totalCantMensaje, "6" => $valueInter['observacion']));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $valueInter, "5" => $totalCantMensaje, "6" => $mencionesElemento));
     }
 
     function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {
