@@ -191,6 +191,46 @@
 
                 abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido, $estado);
                 break;
+            case 'buscarDictamen':
+                $id= isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;
+                $resultado= isset($_POST['resultado']) ? mb_convert_encoding((string)($_POST['resultado']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuarioFK_create= isset($_POST['cod_usuarioFK_create']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_create']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuarioFK_autoriz= isset($_POST['cod_usuarioFK_autoriz']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_autoriz']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_usuarioFK_ejecut= isset($_POST['cod_usuarioFK_ejecut']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_ejecut']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_persona_create= isset($_POST['nombre_persona_create']) ? mb_convert_encoding((string)($_POST['nombre_persona_create']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_persona_autoriz= isset($_POST['nombre_persona_autoriz']) ? mb_convert_encoding((string)($_POST['nombre_persona_autoriz']), 'ISO-8859-1', 'UTF-8') : null;
+                $nombre_persona_ejecut= isset($_POST['nombre_persona_ejecut']) ? mb_convert_encoding((string)($_POST['nombre_persona_ejecut']), 'ISO-8859-1', 'UTF-8') : null;
+                $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
+
+                $filtros= array(
+                    'id' => $id,
+                    'resultado' => $resultado,
+                    'estado' => $estado,
+                    'cod_interConsultaFK' => $cod_interConsultaFK,
+                    'cod_usuarioFK_create' => $cod_usuarioFK_create,
+                    'cod_usuarioFK_autoriz' => $cod_usuarioFK_autoriz,
+                    'cod_usuarioFK_ejecut' => $cod_usuarioFK_ejecut,
+                    'nombre_persona_create' => $nombre_persona_create,
+                    'nombre_persona_autoriz' => $nombre_persona_autoriz,
+                    'nombre_persona_ejecut' => $nombre_persona_ejecut,
+                    'asunto' => $asunto,
+                );
+
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
+                $registros= obtenerDictamen($filtros, $limite);
+                echo json_encode(array("1" => "exito", "2" => $registros));
+                break;
+            case 'nuevo/editar dictamen':
+                $id= isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;
+                $resultado= isset($_POST['resultado']) ? mb_convert_encoding((string)($_POST['resultado']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
+
+                $id= abmDictamen($id, $resultado, $estado, $cod_interConsultaFK, $user, $user, $user);
+                echo json_encode(array("1" => "exito", "2" => $id));
+                break;
             case 'buscarMasInterConsultasYContenido':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $offset= isset($_POST['offset']) ? mb_convert_encoding((string)($_POST['offset']), 'ISO-8859-1', 'UTF-8') : null;
@@ -300,7 +340,7 @@
         
         // Genera un mensaje del sistema
         $fechaActual= new Datetime();
-        $cod_mensaje= abmMensaje("", "esta y la interconsulta ".$registroInterc['asunto']." por @{$cod_usuarioFK}", $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta_destino, "", FALSE);
+        $cod_mensaje= abmMensaje("", "esta y la interconsulta ".$registroInterc['asunto']." fueron unidas por @{$cod_usuarioFK}", $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta_destino, "", FALSE);
 
         // Pasa todos los mensajes al interconsulta destino
         foreach ($registrosMens as $mensj) {
@@ -1081,6 +1121,223 @@
 
         $stmt->close();
         return $registros;
+    }
+
+    function obtenerDictamen($filtros= array(), $limite= 0) {
+        $sqlFiltro= "";
+        foreach ($filtros as $key => $value) {
+            if ($value === null || $value === "") {continue;}
+            if ($sqlFiltro == "") {
+                $sqlFiltro .= "WHERE ";
+            } else {
+                $sqlFiltro .= " AND ";
+            }
+
+            switch ($key) {
+                case 'estado':
+                    $sqlFiltro .= "d.estado = '$value'";
+                    break;
+                case 'cod_interConsultaFK':
+                    $sqlFiltro .= "d.cod_interConsultaFK = $value";
+                    break;
+                case 'asunto':
+                    $sqlFiltro .= "ic.asunto like '%$value%'";
+                    break;
+                case 'nombre_persona_create':
+                    $sqlFiltro .= "pcreate.nombre_persona like '%$value%'";
+                    break;
+                case 'nombre_persona_autoriz':
+                    $sqlFiltro .= "paut.nombre_persona like '%$value%'";
+                    break;
+                case 'nombre_persona_ejecut':
+                    $sqlFiltro .= "peje.nombre_persona like '%$value%'";
+                    break;
+                case 'fecha_create':
+                    $sqlFiltro .= "d.fecha_create $value";
+                    break;
+                case 'fecha_autoriz':
+                    $sqlFiltro .= "d.fecha_autoriz $value";
+                    break;
+                case 'fecha_ejecut':
+                    $sqlFiltro .= "d.fecha_ejecut $value";
+                    break;
+                default:
+                    if (is_numeric($value)) {
+                        $sqlFiltro .= "d.$key = $value";
+                    } else {
+                        $sqlFiltro .= "d.$key like '%$value%'";
+                    }
+                    break;
+            }
+        }
+
+        if ($limite === 0 || $limite === '0') {
+            $limite = '';
+        } else {
+            $limite = "LIMIT $limite";
+        }
+
+        $sql= "SELECT d.*, ic.asunto,
+                pcreate.nombre_persona AS nombre_persona_create,
+                paut.nombre_persona AS nombre_persona_autoriz,
+                peje.nombre_persona AS nombre_persona_ejecut
+            FROM dictamen d
+            LEFT JOIN persona pcreate ON pcreate.cod_persona = d.cod_usuarioFK_create
+            LEFT JOIN persona paut ON paut.cod_persona = d.cod_usuarioFK_autoriz
+            LEFT JOIN persona peje ON peje.cod_persona = d.cod_usuarioFK_ejecut
+            LEFT JOIN interconsulta ic ON ic.cod_interConsulta = d.cod_interConsultaFK
+            $sqlFiltro
+            ORDER BY FIELD(d.estado, 'solicitado', 'aprobado', 'ejecutado', 'inactivo'), d.id DESC
+            $limite";
+
+        $mysqli=conectar_al_servidor();
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt->execute()) {
+            $informacion =array("1" => "error", "mensaje" => "Error al obtener dictamen: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $result = $stmt->get_result();
+        $registros= array();
+        while ($row = $result->fetch_assoc()) {
+            $reg = array();
+            foreach ($row as $key => $value) {
+                $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+            }
+            $registros[] = $reg;
+        }
+
+        $stmt->close();
+        return $registros;
+    }
+
+    function abmDictamen($id, $resultado, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null) {
+        $mysqli = conectar_al_servidor();
+        $fechaActual= new DateTime();
+        $fechaActual= $fechaActual->format('Y-m-d H:i:s');
+
+        if (empty($id)) {
+            if (empty($resultado) || empty($cod_interConsultaFK) || empty($cod_usuarioFK_create)) {
+                echo json_encode(array("1" => "error", "2" => "Faltan datos para registrar el dictamen."));
+                exit;
+            }
+
+            if (empty($estado)) {
+                $estado = 'solicitado';
+            }
+
+            $fecha_autoriz = null;
+            $fecha_ejecut = null;
+
+            if ($estado == 'aprobado' || $estado == 'ejecutado') {
+                if (empty($cod_usuarioFK_autoriz)) {
+                    $cod_usuarioFK_autoriz = $cod_usuarioFK_create;
+                }
+                $fecha_autoriz = $fechaActual;
+            }
+            if ($estado == 'ejecutado') {
+                if (empty($cod_usuarioFK_ejecut)) {
+                    $cod_usuarioFK_ejecut = !empty($cod_usuarioFK_autoriz) ? $cod_usuarioFK_autoriz : $cod_usuarioFK_create;
+                }
+                $fecha_ejecut = $fechaActual;
+            }
+
+            $sql = "INSERT INTO dictamen (
+                resultado, estado, fecha_create, cod_usuarioFK_create,
+                fecha_autoriz, cod_usuarioFK_autoriz, fecha_ejecut, cod_usuarioFK_ejecut, cod_interConsultaFK
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $mysqli->prepare($sql);
+            $stmt->bind_param(
+                'sssisisii',
+                $resultado,
+                $estado,
+                $fechaActual,
+                $cod_usuarioFK_create,
+                $fecha_autoriz,
+                $cod_usuarioFK_autoriz,
+                $fecha_ejecut,
+                $cod_usuarioFK_ejecut,
+                $cod_interConsultaFK
+            );
+        } else {
+            $dictamen_original= obtenerDictamen(array(
+                "id" => $id
+            ), 1);
+
+            if (count($dictamen_original) == 0) {
+                echo json_encode(array("1" => "error", "2" => "Dictamen no encontrado."));
+                exit;
+            }
+
+            $dictamen_original= $dictamen_original[0];
+            $parametros = array();
+            $atributos = "";
+            $ss = "";
+
+            if ($resultado !== null) {
+                $atributos .= "resultado = ?, ";
+                $parametros[] = $resultado;
+                $ss .= "s";
+            }
+            if ($estado !== null) {
+                $atributos .= "estado = ?, ";
+                $parametros[] = $estado;
+                $ss .= "s";
+
+                if (($estado == 'aprobado' || $estado == 'ejecutado') && empty($dictamen_original['fecha_autoriz'])) {
+                    if (empty($cod_usuarioFK_autoriz)) {
+                        $cod_usuarioFK_autoriz = $cod_usuarioFK_create;
+                    }
+                    $atributos .= "fecha_autoriz = ?, cod_usuarioFK_autoriz = ?, ";
+                    $parametros[] = $fechaActual;
+                    $parametros[] = $cod_usuarioFK_autoriz;
+                    $ss .= "si";
+                }
+                if ($estado == 'ejecutado' && empty($dictamen_original['fecha_ejecut'])) {
+                    if (empty($cod_usuarioFK_ejecut)) {
+                        $cod_usuarioFK_ejecut = !empty($cod_usuarioFK_autoriz) ? $cod_usuarioFK_autoriz : $cod_usuarioFK_create;
+                    }
+                    $atributos .= "fecha_ejecut = ?, cod_usuarioFK_ejecut = ?, ";
+                    $parametros[] = $fechaActual;
+                    $parametros[] = $cod_usuarioFK_ejecut;
+                    $ss .= "si";
+                }
+            }
+            if ($cod_interConsultaFK !== null) {
+                $atributos .= "cod_interConsultaFK = ?, ";
+                $parametros[] = $cod_interConsultaFK;
+                $ss .= "i";
+            }
+
+            if ($atributos == "") {
+                return $id;
+            }
+
+            $atributos = substr($atributos, 0, -2);
+            $parametros[] = $id;
+            $ss .= "i";
+
+            $sql= "UPDATE dictamen SET $atributos WHERE id = ?";
+            $stmt = $mysqli->prepare($sql);
+
+            $refs = [];
+            foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+            call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
+        }
+
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al guardar dictamen: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        if (empty($id)) {
+            $id = $stmt->insert_id;
+        }
+
+        $stmt->close();
+        return $id;
     }
 
     function abmMencion($cod_mencion, $cod_usuarioFK, $cod_mensajeFK, $isLeido, $estado) {

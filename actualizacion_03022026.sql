@@ -264,10 +264,25 @@ END$$
 
 DELIMITER ;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.70', detalles='Historial de Articulos del local cambiado.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE insumos_local ADD COLUMN estado_fisico ENUM('excelente', 'mantenimiento', 'dañado');
 ALTER TABLE insumos_local ADD COLUMN categoria ENUM('mobiliario', 'medico');
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.70', detalles='Historial de Articulos del local cambiado.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
+
+CREATE TABLE dictamen (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    resultado VARCHAR(750) NOT NULL,
+    estado ENUM('solicitado', 'aprobado', 'ejecutado', 'inactivo') DEFAULT 'solicitado',
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_usuarioFK_create INT,
+    fecha_autoriz DATETIME,
+    cod_usuarioFK_autoriz INT,
+    fecha_ejecut DATETIME,
+    cod_usuarioFK_ejecut INT,
+    cod_interConsultaFK INT,
+    FOREIGN KEY (cod_interConsultaFK) REFERENCES interconsulta(cod_interConsulta)
+);
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
