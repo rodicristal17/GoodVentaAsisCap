@@ -145,8 +145,51 @@
                 // Se registra el cambio por auditoria
                 $fechaActual= new DateTime();
                 $fechaActual= $fechaActual->format('Y-m-d H:i:s');
-                abmMensaje(null, 'Se quito la mencion de '.$registroMenc['nombre_persona'], $fechaActual, $cod_interConsulta, $user);
+                abmMensaje(null, 'Se quito la mencion de '.$registroMenc['nombre_persona'], $fechaActual, $cod_interConsulta, $user, NULL);
 
+                echo json_encode(array("1" => "exito"));
+                break;
+            case 'buscarVistaMensajesSeleccionar':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
+
+                $registrosMens= obtenerMensaje(array(
+                    'cod_interConsultaFK'=> $cod_interConsulta,
+                ), $limite);
+                
+                $pagina= "";
+                foreach ($registrosMens as $regMens) {
+                    $contenidoMensaje= $regMens['contenido'];
+                    // Transforma las menciones a elementos
+                    $usuarios= buscarUsuarios();
+                    foreach ($usuarios as $valueUsu) {
+                        $contenidoMensaje= str_replace(
+                            '@{'.$valueUsu['cod_usuario'].'}', 
+                            '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'">@'.$valueUsu['nombre_persona'].'</b>', 
+                            $contenidoMensaje
+                        );
+                    }
+                    $contenidoMensaje = nl2br($contenidoMensaje, false);
+                    $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding= "5"><tr onclick="obtenerDatosMensajeSeleccionar(this)">
+                        <td id="td_id" style="display: none;">'.$regMens['cod_mensaje'].'</td>
+                        <td id="td_datos_1" class="tdRegistroSearch" style="width: 10%;"><input type="checkbox"/></td>
+                        <td id="td_datos_2" class="tdRegistroSearch" style="width: 65%;">'.$contenidoMensaje.'</td>
+                        <td id="td_datos_3" class="tdRegistroSearch" style="width: 15%;">'.$regMens['fecha_creacion'].'</td>
+                        <td id="td_datos_4" class="tdRegistroSearch" style="width: 10%;">'.$regMens['nombre_persona'].'</td>
+                    </tr></table>';
+                }
+
+                echo json_encode(array("1" => "exito", "2" => $registrosMens, "3" => $pagina));
+                break;
+            case 'asignarMensajesDictamen':
+                $cod_dictamen= mb_convert_encoding((string)($_POST['cod_dictamen']), 'ISO-8859-1', 'UTF-8');
+                $cod_mensajeFK= mb_convert_encoding((string)($_POST['cod_mensajeFK']), 'ISO-8859-1', 'UTF-8');
+
+                $cod_mensajeFK= explode(';', $cod_mensajeFK);
+                foreach ($cod_mensajeFK as $cod_mensj) {
+                    abmMensaje($cod_mensj, NULL, NULL, NULL, NULL, $cod_dictamen);
+                }
+                
                 echo json_encode(array("1" => "exito"));
                 break;
             case 'buscarMensaje':
@@ -171,8 +214,9 @@
                 $contenido= isset($_POST['contenido']) ? mb_convert_encoding((string)($_POST['contenido']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $fecha_creacion= isset($_POST['fecha_creacion']) ? mb_convert_encoding((string)($_POST['fecha_creacion']), 'ISO-8859-1', 'UTF-8') : 'NOW()';
+                $cod_dictamenFK= isset($_POST['cod_dictamenFK']) ? mb_convert_encoding((string)($_POST['cod_dictamenFK']), 'ISO-8859-1', 'UTF-8') : 'NOW()';
                 
-                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user);
+                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'subirImagenMensaje':
@@ -288,7 +332,7 @@
                 $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
                 $contenido= "El usuario $nombre_usuario solicito el acceso a esta conversacion.";
                 
-                $cod_mensaje= abmMensaje("", $contenido, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta, "", FALSE);
+                $cod_mensaje= abmMensaje("", $contenido, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta, NULL, NULL, FALSE);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'fusionarInterConsultas':
@@ -340,11 +384,11 @@
         
         // Genera un mensaje del sistema
         $fechaActual= new Datetime();
-        $cod_mensaje= abmMensaje("", "esta y la interconsulta ".$registroInterc['asunto']." fueron unidas por @{$cod_usuarioFK}", $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta_destino, "", FALSE);
+        $cod_mensaje= abmMensaje("", "esta y la interconsulta ".$registroInterc['asunto']." fueron unidas por @{$cod_usuarioFK}", $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta_destino, NULL, NULL, FALSE);
 
         // Pasa todos los mensajes al interconsulta destino
         foreach ($registrosMens as $mensj) {
-            abmMensaje($mensj['cod_mensaje'], NULL, NULL, $cod_interConsulta_destino, NULL);
+            abmMensaje($mensj['cod_mensaje'], NULL, NULL, $cod_interConsulta_destino, NULL, NULL);
         }
         
         // Agrega las menciones faltantes al mensaje del sistema
@@ -413,6 +457,9 @@
         }
 
         foreach ($registrosInterc as $valueInter) {
+            // Se crea el encabezado
+            $pagina.= '<div id="contenedorMensajesInterConsulta">';
+            
             $mencionesElemento= "";
             $menciones= array();
             
@@ -452,9 +499,29 @@
                 }
             }
 
+            // Se obtienen primero los dictamenes relacionados a esta interconsulta
+            $registros_dictamenes= obtenerDictamen(array('cod_interConsultaFK' => $valueInter['cod_interConsulta']), 0);
+            $paginaOpciones= "";
+            foreach ($registros_dictamenes as $dictamen) {
+                $paginaOpciones .= '<option value="'.$dictamen['id'].'">'.$dictamen['asunto'].'</option>';
+                $pagina .= '<div class="card" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">
+                    <div class="card-header" type="button" onClick="mostrarItems(\'zonaDictamen'.$dictamen['id'].'\')" style="background-color: gray;">
+                        <h4>'.$dictamen['asunto'].'</h4>
+                    </div>';
+                
+                $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
+                    'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
+                    'cod_usuarioFK' => $filtros['cod_usuarioFK'],
+                    'cod_dictamenFK' => $dictamen['id']
+                ), $limiteMensajes, 0);
+
+                $pagina .= '<div id="zonaDictamen'.$dictamen['id'].'" class="collapse show" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">'.$paginaMensajes.'</div></div>';
+            }
+
             $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
                     'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
-                    'cod_usuarioFK' => $filtros['cod_usuarioFK']
+                    'cod_usuarioFK' => $filtros['cod_usuarioFK'],
+                    'sin_dictamen' => TRUE
                 ), $limiteMensajes, 0);
 
             // Obtiene los mensajes programados
@@ -476,24 +543,6 @@
                     </div>
                   </div>';
             }
-
-            $colorTarjeta="#8bc34a;";
-            $claseEstado= "badge-success";
-            if ($valueInter['estado'] == 'proceso') {
-                $colorTarjeta=" #e53935; ";
-                $claseEstado = "badge-danger";
-            } else if ($valueInter['estado'] == 'pendiente') {
-                $colorTarjeta=" #e1c247;";
-                $claseEstado= "badge-warning";
-            }
-            // Se asigna el estilo para asuntos con mensajes sin leer
-            $styleMensajeNoLeido= "";
-            if (intval($valueInter['cantMensajesNoLeidos']) > 0) {
-                $styleMensajeNoLeido= "border: 10px solid $colorTarjeta";
-            }
-            
-            // Se crea el encabezado
-            $pagina.= '<div id="contenedorMensajesInterConsulta">';
             
             if (count($registrosMens) > ($limiteMensajes)) {
                 $pagina .= "<div style='width: 100%; justify-content: center;'>
@@ -509,7 +558,7 @@
             $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $valueInter, "5" => $totalCantMensaje, "6" => $mencionesElemento));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $valueInter, "5" => $totalCantMensaje, "6" => $mencionesElemento, "7" => $paginaOpciones));
     }
 
     function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {
@@ -728,6 +777,8 @@
         $regMensaje= obtenerMensaje(array(
                 'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 "cod_interConsultaFK" => $filtros["cod_interConsultaFK"],
+                "cod_dictamenFK" => isset($filtros['cod_dictamenFK']) ? $filtros['cod_dictamenFK'] : NULL,
+                "sin_dictamen" => isset($filtros['sin_dictamen']) ? $filtros['sin_dictamen'] : NULL,
             ), $limite);
         foreach ($regMensaje as $key => $valueMens) {
             $posicion= 'flex-start';
@@ -878,6 +929,8 @@
                     <td id="td_datos_10" style="display: none;'.$style.'">'.$value['asunto'].'</td>
                     <td id="td_datos_13" style="display: none;'.$style.'">'.$value['cantMensajes'].'</td>
                     <td id="td_datos_14" style="display: none;'.$style.'">'.$value['cantMensajesNoLeidos'].'</td>
+                    <td id="td_datos_15" style="display: none;'.$style.'">'.$value['monto_limite'].'</td>
+                    <td id="td_datos_16" style="display: none;'.$style.'">'.$value['observacion'].'</td>
                 </tr>
             </table>';
 
@@ -1080,7 +1133,7 @@
                 pcreate.nombre_persona AS nombre_persona_create,
                 paut.nombre_persona AS nombre_persona_autoriz,
                 peje.nombre_persona AS nombre_persona_ejecut
-            FROM dictamen d
+            FROM dictamenes d
             LEFT JOIN persona pcreate ON pcreate.cod_persona = d.cod_usuarioFK_create
             LEFT JOIN persona paut ON paut.cod_persona = d.cod_usuarioFK_autoriz
             LEFT JOIN persona peje ON peje.cod_persona = d.cod_usuarioFK_ejecut
@@ -1111,13 +1164,13 @@
         return $registros;
     }
 
-    function abmDictamen($id, $resultado, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null) {
+    function abmDictamen($id, $dictamen, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null) {
         $mysqli = conectar_al_servidor();
         $fechaActual= new DateTime();
         $fechaActual= $fechaActual->format('Y-m-d H:i:s');
 
         if (empty($id)) {
-            if (empty($resultado) || empty($cod_interConsultaFK) || empty($cod_usuarioFK_create)) {
+            if (empty($dictamen) || empty($cod_interConsultaFK) || empty($cod_usuarioFK_create)) {
                 echo json_encode(array("1" => "error", "2" => "Faltan datos para registrar el dictamen."));
                 exit;
             }
@@ -1142,14 +1195,14 @@
                 $fecha_ejecut = $fechaActual;
             }
 
-            $sql = "INSERT INTO dictamen (
-                resultado, estado, fecha_create, cod_usuarioFK_create,
+            $sql = "INSERT INTO dictamenes (
+                dictamen, estado, fecha_create, cod_usuarioFK_create,
                 fecha_autoriz, cod_usuarioFK_autoriz, fecha_ejecut, cod_usuarioFK_ejecut, cod_interConsultaFK
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param(
                 'sssisisii',
-                $resultado,
+                $dictamen,
                 $estado,
                 $fechaActual,
                 $cod_usuarioFK_create,
@@ -1217,7 +1270,7 @@
             $parametros[] = $id;
             $ss .= "i";
 
-            $sql= "UPDATE dictamen SET $atributos WHERE id = ?";
+            $sql= "UPDATE dictamenes SET $atributos WHERE id = ?";
             $stmt = $mysqli->prepare($sql);
 
             $refs = [];
@@ -1328,6 +1381,9 @@
                 case 'fecha_creacion':
                     $sqlFiltro .= "m.fecha_creacion $value";
                     break;
+                case 'sin_dictamen':
+                    $sqlFiltro .= "m.cod_dictamenFK IS NULL";
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "m.$key = $value";
@@ -1383,7 +1439,7 @@
         return $registros;
     }
 
-    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user, $visto_creador= FALSE) {
+    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK, $visto_creador= FALSE) {
         $mysqli = conectar_al_servidor();
         $contenidoLimpiado= "";
 
@@ -1435,9 +1491,9 @@
         }
         
         if (empty($cod_mensaje)) {
-            $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK) VALUES (?, ?, ?, ?)";
+            $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK) VALUES (?, ?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('ssii', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user);
+            $stmt->bind_param('ssiii', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user, $cod_dictamenFK);
         } else {
             $parametros= array();
             $atributos= "";
@@ -1449,10 +1505,15 @@
                 $ss .= "s";
                 $parametros[] = $contenidoLimpiado;
             }
-            if (!empty($cod_interConsulta)) {
+            if ($cod_interConsulta !== NULL) {
                 $atributos .= ", cod_interConsultaFK= ?";
                 $ss .= "i";
                 $parametros[] = $cod_interConsulta;
+            }
+            if ($cod_dictamenFK !== NULL) {
+                $atributos .= ", cod_dictamenFK= ?";
+                $ss .= "i";
+                $parametros[] = $cod_dictamenFK;
             }
             $parametros[] = $cod_mensaje;
             $ss .= "i";
@@ -1768,7 +1829,7 @@
                 $mensaje .= substr($mensajeDatosCambiados, 0, -2).'.';
                 $fechaActual = new DateTime();
                 $fechaActual = $fechaActual->format('Y-m-d H:i:s');
-                abmMensaje(null, $mensaje, $fechaActual, $cod_interConsulta, $cod_usuarioFK_edit);
+                abmMensaje(null, $mensaje, $fechaActual, $cod_interConsulta, $cod_usuarioFK_edit, NULL);
             }
         }
 

@@ -336,7 +336,9 @@ if ($operacion == "obtenerGastosAsociados") {
 	// Prepara la vista
 	$pagina= "";
 	foreach ($gastos as $key => $gast) {
-		$total_pendiente += $gast['monto'];
+		if ($gast['estado'] == 'pendiente' || $gast['estado'] == 'solicitado') {
+			$total_pendiente += $gast['monto'];
+		}
 		$estado= '<span style="text-transform: capitalize;" class="badge bg-';
 		switch ($gast['estado']) {
 			case 'Activo':
@@ -881,7 +883,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
-		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $registroGasto['cod_interConsultaFK'], "", TRUE);
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $registroGasto['cod_interConsultaFK'], "", NULL, TRUE);
 	}
 
 	$informacion =array("1" => "exito", "2" => $idgastos);
@@ -1023,7 +1025,7 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 
 		// Programa tambien el mensaje de recordatorio si tiene una interconsulta asociada
 		if (!empty($cod_interConsultaFK)) {
-			$cod_mensaje= abmMensaje("", "El gasto $motivoCuota vence hoy ",$fechaCuotaFormat, $cod_interConsultaFK, "", TRUE);
+			$cod_mensaje= abmMensaje("", "El gasto $motivoCuota vence hoy ",$fechaCuotaFormat, $cod_interConsultaFK, "", NULL,TRUE);
 			
 			// Actualiza el cod_mensaje del gasto ingresado
 			$sql = "UPDATE gastos SET cod_mensajeFK = ? WHERE idgastos = ?";
@@ -1167,7 +1169,7 @@ if($operacion=="editar")
 		$fechaActual = new DateTime();
 		$mensaje= "@{". $datos_gasto_nuevo['cod_usuarioFK_edit'] ."} modifico ". substr($mensaje, 2) . " en el movimiento con descripcion $motivo.";
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
-		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "", TRUE);
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $datos_gasto_nuevo['cod_interConsultaFK'], "", NULL, TRUE);
 	}
 } else {
 	// Si es nuevo, se registra la creación
@@ -1175,7 +1177,7 @@ if($operacion=="editar")
 		$fechaActual = new DateTime();
 		$mensaje= " @{".$cod_usuario."} creo un nuevo movimiento con descripcion ".$motivo.".";
 		$mensaje = mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
-		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsultaFK, "", TRUE);
+		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsultaFK, "", NULL, TRUE);
 	}
 }
 return array("1" => "exito", "2" => $idgastos);	

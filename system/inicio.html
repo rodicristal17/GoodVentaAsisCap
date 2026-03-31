@@ -4545,6 +4545,7 @@ style='background-color:#5bc572'>
                 <div class="card my-3" style="border-left: 5px solid #8BC34A;flex: 0.90; margin: 0;">
                   <div class="card-header d-flex justify-content-between align-items-center">
                       <span id="nombreUsuarioMensaje">Usuario</span>
+                      <select id="dictamenAbmMensaje"></select>
                       <small class="text-secondary">
                         <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26" style="margin-bottom: 5px;">
                       </small>
@@ -4560,6 +4561,7 @@ style='background-color:#5bc572'>
                         <div style="width: 100px;margin-left: 10px;text-align: left;">
                           <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
                           <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()" style="background-color: rgb(76, 175, 80);width: 100%;height: 30px;">
+                          <input id="btnDictamenContenidoAbmMensaje" type="button" value="Dictaminar" class="btn1" onclick="verificarCamposDictamen()" style="background-color: rgb(76, 175, 80);width: 100%;height: 30px;">
                           <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()" style="background-color: rgb(245, 59, 59);width: 100%;height: 30px;">
                         </div>
                       </div>
@@ -4687,6 +4689,53 @@ style='background-color:#5bc572'>
               </div>
       </div>
   </center>
+</div>
+<div class='principal2' style='display:none' id='divSeleccionDictamenInterConsulta'>
+<table style='width:100%;height:100%;' id='tdEfectoSeleccionDictamenInterConsulta'>
+<tr>
+<td>
+<center>
+<div style='width: fit-content;' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Listado de <b style='font-size: 30px;' >Mensaje</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='buscarListadoInterConsultas()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
+</td>
+</tr>
+</table>
+<center>
+  <div class="divMenuf">
+    <center>
+      <table class="tableCabeceraRegistro">
+        <tr>
+          <td class="td_registro" style="width: 10%;"></td>
+          <td class="td_registro" style="width: 65%;">Contenido</td>
+          <td class="td_registro" style="width: 15%;">Fecha</td>
+          <td class="td_registro" style="width: 10%;">Creador</td>
+        </tr>
+      </table>
+      <div id="divMensajesSelectDictamenInterConsulta"></div>
+    </center>
+  </div>
+  <div class="divMenuF">
+    <center>
+      <input class="btn1" type="button" value="Asignar al dictamen" onclick="asignarMensajesDictamen()" id="btnMotivoIngresoEgreso">
+    </center>
+  </div>
+</center>
+</div>
+</center>
+</td>
+</tr>
+</table>
 </div>
 
 <div class='principal2' style='display:none' id='divAbmGastos'>

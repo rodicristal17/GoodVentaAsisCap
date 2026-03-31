@@ -277,11 +277,14 @@ CREATE TABLE dictamenes (
     estado VARCHAR(15) DEFAULT 'solicitada',
     fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
     cod_usuarioFK_create INT(11),
-    fecha_edit DATETIME,
-    cod_usuarioFK_edit INT(11),
-    fecha_aprobacion DATETIME,
-    cod_usuarioFK_aprobacion INT(11)
+    fecha_ejecut DATETIME,
+    cod_usuarioFK_ejecut INT(11),
+    fecha_autoriz DATETIME,
+    cod_usuarioFK_autoriz INT(11),
+    cod_interConsultaFK INT(11),
+    FOREIGN KEY (cod_interConsultaFK) REFERENCES interconsulta(cod_interConsulta)
 );
 
+ALTER TABLE mensaje ADD COLUMN cod_dictamenFK INT(11);
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
