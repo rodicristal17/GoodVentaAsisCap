@@ -7720,7 +7720,8 @@ ACCION
 </div>
 
 
-<div class="principal2 presupuesto-container" id="divAbmDetallesPresupuesto" style="display:none;">
+<div class="principal2" id="divAbmDetallesPresupuesto" style="display:none;width: 100%;">
+  <center class="presupuesto-container">
   <header class="presupuesto-header">
     <h2>Presupuesto Producto</h2>
     <div class="header-actions">
@@ -7732,7 +7733,8 @@ ACCION
 
   <!-- Productos -->
   <section class="productos-section">
-    <div class="productos-lista">
+    <div class="productos-lista presupuesto-panel">
+      <div class="panel-title">Tratamientos Disponibles</div>
  
 	  <table class="tableCabeceraRegistro">
 <tbody>
@@ -7753,18 +7755,15 @@ PRECIO
       <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto"></div>
     </div>
 
-    <div class="presupuesto-contado">
-      <table class="tableCabeceraRegistro">
-        <thead>
-          <tr><th>PRESUPUESTO CONTADO</th></tr>
-        </thead>
-      </table>
+    <div class="presupuesto-contado presupuesto-panel">
+      <div class="panel-title">Presupuesto Contado</div>
       <div id="inptTotalPresupuesto2" class="DivTotalVenta">0</div>
     </div>
   </section>
 
   <!-- Formulario de carga -->
-  <section class="form-section">
+  <section class="form-section presupuesto-panel">
+    <div class="panel-title" style="width:100%;">Carga del Presupuesto</div>
     <div class="form-row" style='display:none;'>
       <label>Entrega:</label>
       <input type="text" class="inputText" id="inptEntregaPresupuesto" onkeyup="separadordemiles(this)">
@@ -7776,7 +7775,7 @@ PRECIO
              onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}">
     </div>
 
-    <div class="form-row flex-grow">
+    <div class="form-row flex-grow" style="flex: 0 0 80%;">
       <label>Producto:</label>
       <input type="text" class="inputText" id="inptProductoPresupuesto" 
              onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}">
@@ -7814,8 +7813,8 @@ PRECIO
 
   <!-- Detalles -->
   <section class="detalles-section" id="tdTablaPresupuesto">
-    <div style='display: flex; width: 100%;' >
-    <div class="tabla-detalles" style='width: 45%;'>
+    <div class="tabla-detalles presupuesto-panel">
+      <div class="panel-title">Detalle del Tratamiento</div>
  
 <table class="tableCabeceraRegistro">
 <tbody>
@@ -7839,10 +7838,11 @@ TOTAL
 </tbody>
 </table>
 
-      <div class="div_cuerpo_table"  style='height: auto' id="table_vista_producto_presupuestoDetalle"></div>
+      <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle"></div>
     </div>
 
-    <div class="tabla-cuotas"  style='width: 50%;'>
+    <div class="tabla-cuotas presupuesto-panel">
+      <div class="panel-title">Plan de Cuotas</div>
  
 <table class="tableCabeceraRegistro">
 <tbody>
@@ -7862,8 +7862,7 @@ TOTAL
 </tr>
 </tbody>
 </table>
-      <div class="div_cuerpo_table" style='height: 400px;' id="table_vista_detalles_presupuesto"></div>
-    </div>
+      <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto"></div>
     </div>
   </section>
 
@@ -7873,6 +7872,7 @@ TOTAL
     <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
   </footer>
 </div>
+</center>
 
 
 <!-- <div class='principal2' style='display:none' id='divAbmDetallesPresupuesto'> -->

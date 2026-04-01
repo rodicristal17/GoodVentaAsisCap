@@ -208,8 +208,7 @@
 
 .div_cuerpo_table {
   border: 1px solid #ddd;
-  height: 150px;
-  overflow-y: auto;
+  height: auto;
   background: white;
 }
 
