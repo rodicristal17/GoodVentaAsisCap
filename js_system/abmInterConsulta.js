@@ -1391,11 +1391,12 @@ function verificarCamposDictamen() {
         return false;
     }
 
+    const asunto_dictamen= document.getElementById("inptAsuntoAbmInterConsulta").value;
     document.getElementById('btnDictamenContenidoAbmMensaje').disabled= true;
-    abmDictamen(resultado, 'solicitado');
+    abmDictamen(resultado, asunto_dictamen, 'solicitado');
 }
 
-function abmDictamen(resultado, estado= 'solicitado') {
+function abmDictamen(resultado, asunto, estado= 'solicitado') {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -1403,6 +1404,7 @@ function abmDictamen(resultado, estado= 'solicitado') {
     datos.append("accion", 'nuevo/editar dictamen');
     datos.append("id", cod_dictamenSeleccionado);
     datos.append("resultado", resultado);
+    datos.append("asunto", asunto);
     datos.append("estado", estado);
     datos.append("cod_interConsultaFK", cod_interConsulta);
 
@@ -1492,8 +1494,8 @@ function asignarMensajesDictamen() {
     }
 
     const asunto_dictamen= document.getElementById('inptAsuntoDictamenInterConsulta').value;
-    if (asunto_dictamen) {
-        ver_ventana_informativa("Faltan datos", "El asunto del dictamen se asignará a los mensajes seleccionados. Si desea mantener el asunto actual de los mensajes, deje el campo de asunto vacío.", "advertencia");
+    if (!asunto_dictamen) {
+        ver_vetana_informativa("Faltan datos", "El asunto del dictamen se asignará a los mensajes seleccionados. Si desea mantener el asunto actual de los mensajes, deje el campo de asunto vacío.", "advertencia");
         return false;
     }
     
@@ -1624,18 +1626,18 @@ function obtenerDatosInterConsulta(elemento) {
             limpiarCamposDetallesInterConsulta();
             buscarInterConsultasYContenido($(elemento).children('#td_id').html(), elemento);
             limpiarcamposMensaje();
-
-            // Datos para editar
-            document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_5').html();
-            cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
-            document.getElementById('inptAsuntoAbmInterConsulta').value= $(elemento).children('#td_datos_10').html();
-            document.getElementById('inptLocalAbmInterConsulta').value= $(elemento).children('#td_datos_11').html();
-            document.getElementById('inptTipoAbmInterConsulta').value= $(elemento).children('#td_datos_6').html();
-            document.getElementById('inptEstadoAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
-            document.getElementById('inptMontoLimiteAbmInterConsulta').value= $(elemento).children('#td_datos_15').html();
-            document.getElementById('inptObservacionAbmInterConsulta').value= $(elemento).children('#td_datos_16').html();
             break;
     }
+
+    // Datos para editar
+    document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_5').html();
+    cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
+    document.getElementById('inptAsuntoAbmInterConsulta').value= $(elemento).children('#td_datos_10').html();
+    document.getElementById('inptLocalAbmInterConsulta').value= $(elemento).children('#td_datos_11').html();
+    document.getElementById('inptTipoAbmInterConsulta').value= $(elemento).children('#td_datos_6').html();
+    document.getElementById('inptEstadoAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
+    document.getElementById('inptMontoLimiteAbmInterConsulta').value= $(elemento).children('#td_datos_15').html();
+    document.getElementById('inptObservacionAbmInterConsulta').value= $(elemento).children('#td_datos_16').html();
 }
 
 function obtenerDetallesInterConsulta(origen) {

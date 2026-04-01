@@ -4435,11 +4435,11 @@ style='background-color:#5bc572'>
           </table> 
             <div class="divMenuf">
               <div class="sugerencias-container" style="display: grid; justify-content;">
-                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.'; width: 100%;'.$styleMensajeNoLeido.'">
+                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.'; width: 100%;">
                   <div class="card-body">
                     <h5 class="card-title">
                         <span id="tituloInterConsultas2">Cargando...</span>
-                        <img src="../iconos/editar.png" alt="Editar InterConsulta" style="height: 1.25rem;" onclick="obtenerDetallesInterConsulta('interConsulta')">
+                        <img src="../iconos/editar.png" alt="Editar InterConsulta" style="height: 1.25rem;" onclick="verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);">
                     </h5>
                     <div style="display: flex;">
                       <div style="flex: 0.5;padding-top: 10px;">

@@ -184,6 +184,10 @@
             case 'asignarMensajesDictamen':
                 $cod_dictamen= mb_convert_encoding((string)($_POST['cod_dictamen']), 'ISO-8859-1', 'UTF-8');
                 $cod_mensajeFK= mb_convert_encoding((string)($_POST['cod_mensajeFK']), 'ISO-8859-1', 'UTF-8');
+                $asunto= mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8');
+
+                // Actualiza el asunto del dictamen
+                abmDictamen($cod_dictamen, $asunto, NULL, NULL, NULL, NULL );
 
                 $cod_mensajeFK= explode(';', $cod_mensajeFK);
                 foreach ($cod_mensajeFK as $cod_mensj) {
@@ -271,8 +275,9 @@
                 $resultado= isset($_POST['resultado']) ? mb_convert_encoding((string)($_POST['resultado']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $asunto= mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8');
 
-                $id= abmDictamen($id, $resultado, $estado, $cod_interConsultaFK, $user, $user, $user);
+                $id= abmDictamen($id, $asunto, $resultado, $estado, $cod_interConsultaFK, $user, $user, $user);
                 echo json_encode(array("1" => "exito", "2" => $id));
                 break;
             case 'buscarMasInterConsultasYContenido':
@@ -508,9 +513,127 @@
             $paginaOpciones= "";
             foreach ($registros_dictamenes as $dictamen) {
                 $paginaOpciones .= '<option value="'.$dictamen['id'].'">'.$dictamen['asunto'].'</option>';
+                $nombreAutor = !empty($dictamen['nombre_persona_create']) ? $dictamen['nombre_persona_create'] : 'Sin autor';
+                $fechaDictamen = !empty($dictamen['fecha_create']) ? date('d/m/Y H:i', strtotime($dictamen['fecha_create'])) : '';
+                $fechaId = !empty($dictamen['fecha_create']) ? date('Y', strtotime($dictamen['fecha_create'])) : date('Y');
+                $idDocumento = 'RES-'.$fechaId.'-'.$valueInter['cod_interConsulta'].'-'.str_pad($dictamen['id'], 2, '0', STR_PAD_LEFT);
+                $estadoDictamen = !empty($dictamen['estado']) ? strtoupper($dictamen['estado']) : 'SOLICITADO';
+                $estadoColor = '#b8860b';
+                if ($dictamen['estado'] == 'aprobado') {
+                    $estadoColor = '#2f6f3e';
+                } else if ($dictamen['estado'] == 'ejecutado') {
+                    $estadoColor = '#1f4e79';
+                } else if ($dictamen['estado'] == 'inactivo') {
+                    $estadoColor = '#7a7a7a';
+                }
+                $urlAutor = !empty($dictamen['url_create']) ? $dictamen['url_create'] : '/GoodVentaAsisCap/iconos/user.png';
+
                 $pagina .= '<div class="card" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">
-                    <div class="card-header" type="button" onClick="mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\')" style="background-color: gray;">
-                        <h4>'.$dictamen['asunto'].'</h4>
+                    <div class="card-header" type="button" onClick="mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\')" style="
+                        background: linear-gradient(180deg, #f6f0df 0%, #efe5cf 100%);
+                        border: 1px solid #d8ccb2;
+                        border-radius: 12px 12px 0 0;
+                        padding: 0;
+                        overflow: hidden;
+                        cursor: pointer;
+                        display: block;
+                        box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+                    ">
+                        <div style="
+                            display: flex;
+                            align-items: stretch;
+                            justify-content: space-between;
+                            flex-wrap: wrap;
+                            border-bottom: 1px solid #d9ceb6;
+                            background: rgba(255,255,255,0.25);
+                        ">
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                gap: 14px;
+                                padding: 14px 18px;
+                                flex: 1 1 360px;
+                            ">
+                                <div style="
+                                    font-size: 18px;
+                                    font-weight: 800;
+                                    color: #1f5f96;
+                                    letter-spacing: 0.4px;
+                                    white-space: nowrap;
+                                ">NRO: '.$dictamen['id'].'</div>
+                                <div style="
+                                    width: 1px;
+                                    align-self: stretch;
+                                    background-color: #d7ccb7;
+                                "></div>
+                                <div style="
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: #4d4a43;
+                                    letter-spacing: 0.2px;
+                                ">ID: '.$idDocumento.'</div>
+                            </div>
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                text-align: end;
+                                gap: 12px;
+                                padding: 10px 18px;
+                                border-left: 1px solid #d9ceb6;
+                                justify-content: flex-end;
+                                background: rgba(255,255,255,0.18);
+                            ">
+                                <img src="'.$urlAutor.'" alt="Foto de '.$nombreAutor.'" style="
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 8px;
+                                    object-fit: cover;
+                                    background: #d8d8d8;
+                                    border: 1px solid rgba(0,0,0,0.08);
+                                    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+                                ">
+                                <div>
+                                    <div style="
+                                        font-size: 16px;
+                                        font-weight: 700;
+                                        color: #2b2b2b;
+                                        line-height: 1.1;
+                                        width: fit-content;
+                                    ">'.$nombreAutor.'</div>
+                                    <div style="
+                                        font-size: 12px;
+                                        color: #6a6358;
+                                        margin-top: 4px;
+                                        width: fit-content;
+                                    ">'.$fechaDictamen.'</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="
+                            padding: 14px 20px 16px 20px;
+                            color: #2d2a24;
+                            text-align: start;
+                            background: linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.08) 100%);
+                        ">
+                            <div style="
+                                font-size: 15px;
+                                margin-bottom: 6px;
+                                line-height: 1.35;
+                            ">
+                                <span style="font-weight: 800; color: #2f2a20;">Asunto:</span>
+                                <span>'.$dictamen['asunto'].'</span>
+                            </div>
+                            <div style="
+                                font-size: 15px;
+                                line-height: 1.4;
+                            ">
+                                <span style="font-weight: 800; color: #2f2a20;">Dictamen:</span>
+                                <span>'.$dictamen['dictamen'].'</span>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px solid #d9ceb6;text-align: start;padding: 10px;">
+                            <span style="color: '.$estadoColor.';line-height: 1.1;font-weight: 800;">'.$estadoDictamen.'<span>
+                        </div>
                     </div>';
                 
                 $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
@@ -1149,8 +1272,9 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT d.*, ic.asunto,
+        $sql= "SELECT d.*,
                 pcreate.nombre_persona AS nombre_persona_create,
+                (SELECT url FROM usuario WHERE cod_usuario = pcreate.cod_persona) AS url_create,
                 paut.nombre_persona AS nombre_persona_autoriz,
                 peje.nombre_persona AS nombre_persona_ejecut
             FROM dictamenes d
@@ -1184,7 +1308,7 @@
         return $registros;
     }
 
-    function abmDictamen($id, $dictamen, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null) {
+    function abmDictamen($id, $asunto, $dictamen, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null) {
         $mysqli = conectar_al_servidor();
         $fechaActual= new DateTime();
         $fechaActual= $fechaActual->format('Y-m-d H:i:s');
@@ -1216,12 +1340,13 @@
             }
 
             $sql = "INSERT INTO dictamenes (
-                dictamen, estado, fecha_create, cod_usuarioFK_create,
+                asunto, dictamen, estado, fecha_create, cod_usuarioFK_create,
                 fecha_autoriz, cod_usuarioFK_autoriz, fecha_ejecut, cod_usuarioFK_ejecut, cod_interConsultaFK
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param(
-                'sssisisii',
+                'ssssisisii',
+                $asunto,
                 $dictamen,
                 $estado,
                 $fechaActual,
@@ -1247,9 +1372,14 @@
             $atributos = "";
             $ss = "";
 
-            if ($resultado !== null) {
-                $atributos .= "resultado = ?, ";
-                $parametros[] = $resultado;
+            if ($asunto !== null) {
+                $atributos .= "asunto = ?, ";
+                $parametros[] = $asunto;
+                $ss .= "s";
+            }
+            if ($dictamen !== null) {
+                $atributos .= "dictamen = ?, ";
+                $parametros[] = $dictamen;
                 $ss .= "s";
             }
             if ($estado !== null) {
