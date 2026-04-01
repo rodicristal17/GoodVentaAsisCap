@@ -583,6 +583,7 @@ var extMensajeInterconsulta= "";
 function verificarCamposMensaje() {
     const fecha= document.getElementById('inptFechaAbmMensaje').value;
     const contenido= document.getElementById('inptContenidoAbmMensaje').innerHTML;
+    const cod_dictamenFK= document.getElementById('dictamenAbmMensaje').value;
     if (!contenido) {
         ver_vetana_informativa("Falto ingresar un contenido");
         return false;
@@ -591,10 +592,10 @@ function verificarCamposMensaje() {
     // Deshabilita temporalmente el boton de enviar
     document.getElementById('btnEnviarContenidoAbmMensaje').disabled= true;
 
-    abmMensaje(fecha, contenido);
+    abmMensaje(fecha, contenido, cod_dictamenFK);
 }
 
-function abmMensaje(fecha, contenido) {
+function abmMensaje(fecha, contenido, cod_dictamenFK) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -603,6 +604,7 @@ function abmMensaje(fecha, contenido) {
     datos.append("fecha_creacion", fecha);
     datos.append("contenido", contenido);
     datos.append("cod_interConsulta", cod_interConsulta);
+    datos.append("cod_dictamenFK", cod_dictamenFK);
 
     verCerrarEfectoCargando("1");
     var OpAjax = $.ajax({
@@ -888,7 +890,10 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     cod_interConsulta= codInterConsulta;
 
                     // Se asignan los datos del encabezado
-                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'] + (datos['4']['cod_ventaFK'] ? ' - ' + datos['4']['nombre_persona'] : '');
+                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'];
+                    if (datos['4']['cod_ventaFK']) {
+                        document.getElementById('tituloInterConsultas2').innerHTML += ' - ' + datos['4']['nombre_persona'];
+                    }
                     document.getElementById('listadoMencionados').innerHTML= datos['6'];
                     document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= datos["4"]['nombre_persona_creador'];
                     document.getElementById('txtFechaCreadorInterConsulta').innerHTML= datos["4"]['fecha_creacion'];
@@ -921,7 +926,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     }
 
                     // Asigna los dictamenes al select de mensajes
-                    document.getElementById('dictamenAbmMensaje').innerHTML= "<option>Ninguna</option>" + datos["7"];
+                    document.getElementById('dictamenAbmMensaje').innerHTML= "<option value=''>Ninguna</option>" + datos["7"];
 
                     // Carga las observaciones en caso de existir
                     if (datos["4"]['observacion']) {
@@ -1010,7 +1015,7 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
     });
 }
 
-function verMasMensajesInterconsulta(offset) {
+function verMasMensajesInterconsulta(offset, cod_dictamen) {
     obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -1019,6 +1024,7 @@ function verMasMensajesInterconsulta(offset) {
     datos.append("accion", "buscarMasInterConsultasYContenido");
     datos.append("cod_interConsulta", cod_interConsulta);
     datos.append("limite", "10 offset "+ offset);
+    datos.append("cod_dictamenFK", cod_dictamen);
 
     var OpAjax = $.ajax({
 		data: datos,
@@ -1060,7 +1066,7 @@ function verMasMensajesInterconsulta(offset) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-                    const contenedor= "contenedorMensajesInterConsulta";
+                    const contenedor= "contenedorMensajesInterConsulta"+cod_dictamen;
                     const elemContenedor = document.getElementById(contenedor);
 
                     // Prepara btn para cargar mensajes anteriores y elimina el existente
@@ -1068,7 +1074,7 @@ function verMasMensajesInterconsulta(offset) {
                     let btnMasMensajes= "";
                     if ((parseInt(offset) + 10) < parseInt(totalRegistroMensaje)) {
                         btnMasMensajes= "<div style='width: 100%; justify-content: center;'>"+
-                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+(offset + 10)+")'>Ver más mensajes...</button>"+
+                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+(offset + 10)+", "+cod_dictamen+")'>Ver más mensajes...</button>"+
                             "</div>";
                     }
                     
@@ -1107,6 +1113,7 @@ function buscarMasInterConsultas() {
     datos.append("tipo", tipo);
     datos.append("estado", estado);
     datos.append("limite", "10 OFFSET "+registrocargadoInterConsulta);
+    datos.append("cod_dictamenFK", cod_dictamen);
 
     var OpAjax = $.ajax({
 		data: datos,
@@ -1484,12 +1491,19 @@ function asignarMensajesDictamen() {
         return false;
     }
 
+    const asunto_dictamen= document.getElementById('inptAsuntoDictamenInterConsulta').value;
+    if (asunto_dictamen) {
+        ver_ventana_informativa("Faltan datos", "El asunto del dictamen se asignará a los mensajes seleccionados. Si desea mantener el asunto actual de los mensajes, deje el campo de asunto vacío.", "advertencia");
+        return false;
+    }
+    
     obtener_datos_user();
     var datos = new FormData();
     datos.append("useru", userid);
     datos.append("passu", passuser);
     datos.append("navegador", navegador);
     datos.append("accion", "asignarMensajesDictamen");
+    datos.append("asunto", asunto_dictamen);
     datos.append("cod_mensajeFK", mensajesSeleccionados.join(";"));
     datos.append("cod_dictamen", cod_dictamenSeleccionado);
 

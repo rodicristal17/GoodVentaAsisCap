@@ -214,8 +214,8 @@
                 $contenido= isset($_POST['contenido']) ? mb_convert_encoding((string)($_POST['contenido']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $fecha_creacion= isset($_POST['fecha_creacion']) ? mb_convert_encoding((string)($_POST['fecha_creacion']), 'ISO-8859-1', 'UTF-8') : 'NOW()';
-                $cod_dictamenFK= isset($_POST['cod_dictamenFK']) ? mb_convert_encoding((string)($_POST['cod_dictamenFK']), 'ISO-8859-1', 'UTF-8') : 'NOW()';
-                
+                $cod_dictamenFK= isset($_POST['cod_dictamenFK']) && !empty($_POST['cod_dictamenFK']) ? mb_convert_encoding((string)($_POST['cod_dictamenFK']), 'ISO-8859-1', 'UTF-8') : NULL;
+
                 $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
@@ -277,6 +277,7 @@
                 break;
             case 'buscarMasInterConsultasYContenido':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_dictamenFK= isset($_POST['cod_dictamenFK']) ? mb_convert_encoding((string)($_POST['cod_dictamenFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $offset= isset($_POST['offset']) ? mb_convert_encoding((string)($_POST['offset']), 'ISO-8859-1', 'UTF-8') : null;
                 $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
@@ -285,6 +286,8 @@
                     "cod_interConsultaFK" => $cod_interConsulta,
                     "cod_usuarioFK" => $user,
                     'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    "cod_dictamenFK" => $cod_dictamenFK,
+                    "sin_dictamen" => ($cod_dictamenFK == null || $cod_dictamenFK == "") ? true : NULL
                 );
                 $vistaTarjetas= obtenerVistaTarjetaInterConsuta($filtros, $limite, $offset);
                 echo json_encode(array("1" => "exito", "2" => $vistaTarjetas));
@@ -458,7 +461,7 @@
 
         foreach ($registrosInterc as $valueInter) {
             // Se crea el encabezado
-            $pagina.= '<div id="contenedorMensajesInterConsulta">';
+            $pagina.= '<div>';
             
             $mencionesElemento= "";
             $menciones= array();
@@ -467,7 +470,8 @@
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
                 'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
-                'cod_interConsultaFK' => $valueInter['cod_interConsulta']
+                'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
+                'sin_dictamen' => TRUE
             ));
 
             if (count($registrosMens) > 0) {
@@ -505,7 +509,7 @@
             foreach ($registros_dictamenes as $dictamen) {
                 $paginaOpciones .= '<option value="'.$dictamen['id'].'">'.$dictamen['asunto'].'</option>';
                 $pagina .= '<div class="card" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">
-                    <div class="card-header" type="button" onClick="mostrarItems(\'zonaDictamen'.$dictamen['id'].'\')" style="background-color: gray;">
+                    <div class="card-header" type="button" onClick="mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\')" style="background-color: gray;">
                         <h4>'.$dictamen['asunto'].'</h4>
                     </div>';
                 
@@ -515,7 +519,21 @@
                     'cod_dictamenFK' => $dictamen['id']
                 ), $limiteMensajes, 0);
 
-                $pagina .= '<div id="zonaDictamen'.$dictamen['id'].'" class="collapse show" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">'.$paginaMensajes.'</div></div>';
+                $registrosMens2= obtenerMensaje(array(
+                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
+                    'cod_dictamenFK' => $dictamen['id']
+                ));
+
+                $pagina .= '<div id="contenedorMensajesInterConsulta'.$dictamen['id'].'" class="collapse show" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">';
+                
+                if (count($registrosMens2) > ($limiteMensajes)) {
+                    $pagina .= "<div style='width: 100%; justify-content: center;'>
+                        <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes, ".$dictamen['id'].")'>Ver más mensajes...</button>
+                        </div>";
+                }
+
+                $pagina .= $paginaMensajes.'</div></div>';
             }
 
             $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
@@ -544,12 +562,14 @@
                   </div>';
             }
             
+            $pagina .= '<div id="contenedorMensajesInterConsulta" class="collapse show" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">';
+
             if (count($registrosMens) > ($limiteMensajes)) {
                 $pagina .= "<div style='width: 100%; justify-content: center;'>
-                    <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes)'>Ver más mensajes...</button>
+                    <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes, \"\")'>Ver más mensajes...</button>
                     </div>";
             }
-            $pagina .= $paginaMensajes. '</div>';
+            $pagina .= $paginaMensajes. '</div></div>';
 
             // Obtiene la cantidad total de mensajes
             $totalCantMensaje2= obtenerMensaje(array(
@@ -1489,11 +1509,11 @@
             $contenidoLimpiado = preg_replace("/\n{3,}/", "\n\n", $contenidoLimpiado);
             $contenidoLimpiado = trim($contenidoLimpiado);
         }
-        
+
         if (empty($cod_mensaje)) {
             $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK) VALUES (?, ?, ?, ?, ?)";
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('ssiii', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user, $cod_dictamenFK);
+            $stmt->bind_param('ssiis', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user, $cod_dictamenFK);
         } else {
             $parametros= array();
             $atributos= "";
