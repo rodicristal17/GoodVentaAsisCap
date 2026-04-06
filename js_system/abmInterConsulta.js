@@ -1069,7 +1069,34 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                     const contenedor= "contenedorMensajesInterConsulta"+cod_dictamen;
                     const elemContenedor = document.getElementById(contenedor);
 
-                    // Prepara btn para cargar mensajes anteriores y elimina el existente
+                    if (!elemContenedor) {
+                        throw new Error("No se encontró el contenedor de mensajes.");
+                    }
+
+                    const panelMensajes = elemContenedor.querySelector('[data-role="dictamen-chat-panel"]') || elemContenedor;
+                    const listaMensajes = elemContenedor.querySelector('[data-role="dictamen-mensajes"]');
+                    const botonExistente = elemContenedor.querySelector('[data-role="dictamen-boton-mas"]');
+                    if (botonExistente) {
+                        botonExistente.remove();
+                    }
+
+                    const totalMensajesContenedor = parseInt(elemContenedor.dataset.totalMensajes || totalRegistroMensaje, 10);
+                    const siguienteOffset = parseInt(offset, 10) + 10;
+                    let btnMasMensajes= "";
+                    if (siguienteOffset < totalMensajesContenedor) {
+                        btnMasMensajes= "<div data-role='dictamen-boton-mas' style='width: 100%; display: flex; justify-content: center; margin-bottom: 12px;'>"+
+                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+siguienteOffset+", "+JSON.stringify(String(cod_dictamen ?? ""))+")'>Ver más mensajes...</button>"+
+                            "</div>";
+                    }
+                    
+                    if (listaMensajes) {
+                        listaMensajes.innerHTML = datos["2"] + listaMensajes.innerHTML;
+                        if (btnMasMensajes) {
+                            panelMensajes.insertAdjacentHTML("afterbegin", btnMasMensajes);
+                        }
+                    } else {
+                        elemContenedor.innerHTML = btnMasMensajes + datos["2"] + elemContenedor.innerHTML;
+                    } /*
                     elemContenedor.children[0].remove();
                     let btnMasMensajes= "";
                     if ((parseInt(offset) + 10) < parseInt(totalRegistroMensaje)) {
@@ -1079,7 +1106,7 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                     }
                     
                     // Agrega los mensajes anteriores
-                    document.getElementById(contenedor).innerHTML= btnMasMensajes + datos["2"] + document.getElementById(contenedor).innerHTML;
+                    */
 				} else {
                     throw new Error("Error producido en buscarMasInterConsultas de JavaScript.");
                 }

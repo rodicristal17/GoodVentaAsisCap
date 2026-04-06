@@ -447,6 +447,82 @@
         abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], NULL, 'inactivo', NULL, NULL, NULL, $cod_usuarioFK, $registroInterc['cod_localFK'], NULL);
     }
 
+    function escaparHtmlInterconsulta($texto) {
+        return htmlspecialchars((string)($texto ?? ''), ENT_QUOTES, 'UTF-8');
+    }
+
+    function convertirTextoDocumentoInterconsulta($texto) {
+        $texto = trim((string)($texto ?? ''));
+        if ($texto === '') {
+            return '<span style="color: #8b7b5c;">Sin contenido cargado.</span>';
+        }
+
+        return nl2br(escaparHtmlInterconsulta($texto), false);
+    }
+
+    function obtenerBotonMasMensajesInterconsulta($offset, $cod_dictamen = '') {
+        $cod_dictamen = $cod_dictamen === null ? '' : (string)$cod_dictamen;
+        $codDictamenJs = htmlspecialchars(json_encode($cod_dictamen), ENT_QUOTES, 'UTF-8');
+
+        return '<div data-role="dictamen-boton-mas" style="width: 100%; display: flex; justify-content: center; margin-bottom: 12px;">'
+            . '<button class="btn btn-success" onclick="verMasMensajesInterconsulta('.intval($offset).', '.$codDictamenJs.')">Ver más mensajes...</button>'
+            . '</div>';
+    }
+
+    function obtenerVistaDocumentoDictamenInterconsulta($dictamen, $interconsulta, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor) {
+        $estadoFondo = 'rgba(184, 134, 11, 0.14)';
+        if (($dictamen['estado'] ?? '') == 'aprobado') {
+            $estadoFondo = 'rgba(47, 111, 62, 0.14)';
+        } else if (($dictamen['estado'] ?? '') == 'ejecutado') {
+            $estadoFondo = 'rgba(31, 78, 121, 0.14)';
+        } else if (($dictamen['estado'] ?? '') == 'inactivo') {
+            $estadoFondo = 'rgba(122, 122, 122, 0.16)';
+        }
+
+        $asunto = escaparHtmlInterconsulta($dictamen['asunto']);
+        $contenido = convertirTextoDocumentoInterconsulta($dictamen['dictamen']);
+        $idDocumento = escaparHtmlInterconsulta($idDocumento);
+        $nombreAutor = escaparHtmlInterconsulta($nombreAutor);
+        $fechaDictamen = escaparHtmlInterconsulta($fechaDictamen);
+        $estadoDictamen = escaparHtmlInterconsulta($estadoDictamen);
+        $codInterconsulta = escaparHtmlInterconsulta($interconsulta['cod_interConsulta']);
+        $nombreAutoriza = !empty($dictamen['nombre_persona_autoriz']) ? escaparHtmlInterconsulta($dictamen['nombre_persona_autoriz']) : '';
+        $nombreEjecuta = !empty($dictamen['nombre_persona_ejecut']) ? escaparHtmlInterconsulta($dictamen['nombre_persona_ejecut']) : '';
+        $fechaAutoriz = !empty($dictamen['fecha_autoriz']) ? escaparHtmlInterconsulta(date('d/m/Y H:i', strtotime($dictamen['fecha_autoriz']))) : '';
+        $fechaEjecut = !empty($dictamen['fecha_ejecut']) ? escaparHtmlInterconsulta(date('d/m/Y H:i', strtotime($dictamen['fecha_ejecut']))) : '';
+
+        $metaExtra = '';
+        if ($nombreAutoriza !== '') {
+            $metaExtra .= '<div><strong>Autorizado por:</strong> '.$nombreAutoriza.($fechaAutoriz !== '' ? ' el '.$fechaAutoriz : '').'</div>';
+            $metaExtra .= '<div><strong>Fecha autorizado:</strong> '.$fechaAutoriz.'</div>';
+        }
+        if ($nombreEjecuta !== '') {
+            $metaExtra .= '<div><strong>Ejecución registrada:</strong> '.$nombreEjecuta.'</div>';
+            $metaExtra .= '<div><strong>Fecha ejecutado:</strong> '.$fechaEjecut.'</div>';
+        }
+
+        return '<div class="interc-dictamen-document-shell">
+            <div class="interc-dictamen-document">
+                <div class="interc-dictamen-band">
+                    <span>Resolución administrativa</span>
+                    <span>Hilo #'.$codInterconsulta.'</span>
+                </div>
+                <div class="interc-dictamen-kicker">Registro oficial del dictamen</div>
+                <h3 class="interc-dictamen-doc-title">'.$asunto.'</h3>
+                <div class="interc-dictamen-doc-subtitle">
+                    <div><strong>Documento:</strong> '.$idDocumento.'</div>
+                    <div><strong>Emitido:</strong> '.$fechaDictamen.'</div>
+                    <div><strong>Responsable:</strong> '.$nombreAutor.'</div>
+                    '.$metaExtra.'
+                </div>
+                <div class="interc-dictamen-doc-content">'.$contenido.'</div>
+                <div class="interc-dictamen-doc-footer">
+                    <div class="interc-dictamen-doc-status" style="color: '.$estadoColor.'; background-color: '.$estadoFondo.';">'.$estadoDictamen.'</div>
+                </div>
+            </div>
+        </div>';
+    }
+
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
         $pagina = "";
         $limiteMensajes= 5;
@@ -648,15 +724,23 @@
                     'cod_dictamenFK' => $dictamen['id']
                 ));
 
-                $pagina .= '<div id="contenedorMensajesInterConsulta'.$dictamen['id'].'" class="collapse show" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">';
+                $pagina .= '<div id="contenedorMensajesInterConsulta'.$dictamen['id'].'" class="collapse show interc-dictamen-body" data-total-mensajes="'.count($registrosMens2).'">
+                    <div class="interc-dictamen-layout">
+                        <div class="interc-dictamen-chat-pane" data-role="dictamen-chat-panel" style="height: 500px;overflow-y: auto;">';
                 
-                if (count($registrosMens2) > ($limiteMensajes)) {
-                    $pagina .= "<div style='width: 100%; justify-content: center;'>
+                if (count($registrosMens2) > $limiteMensajes) {
+                    $pagina .= obtenerBotonMasMensajesInterconsulta($limiteMensajes, $dictamen['id']); /*
                         <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes, ".$dictamen['id'].")'>Ver más mensajes...</button>
                         </div>";
-                }
+                */ }
 
-                $pagina .= $paginaMensajes.'</div></div>';
+                $pagina .= '<div data-role="dictamen-mensajes">'.$paginaMensajes.'</div>
+                        </div>
+                        <div class="interc-dictamen-preview-pane">'
+                            .obtenerVistaDocumentoDictamenInterconsulta($dictamen, $valueInter, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor).
+                        '</div>
+                    </div>
+                </div></div>';
             }
 
             $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
@@ -685,9 +769,10 @@
                   </div>';
             }
             
-            $pagina .= '<div id="contenedorMensajesInterConsulta" class="collapse show" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">';
+            $pagina .= '<div id="contenedorMensajesInterConsulta" class="collapse show" data-total-mensajes="'.count($registrosMens).'">
+                <div data-role="dictamen-chat-panel">';
 
-            if (count($registrosMens) > ($limiteMensajes)) {
+            if (count($registrosMens) > $limiteMensajes) {
                 $pagina .= "<div style='width: 100%; justify-content: center;'>
                     <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes, \"\")'>Ver más mensajes...</button>
                     </div>";
@@ -1275,12 +1360,10 @@
         $sql= "SELECT d.*,
                 pcreate.nombre_persona AS nombre_persona_create,
                 (SELECT url FROM usuario WHERE cod_usuario = pcreate.cod_persona) AS url_create,
-                paut.nombre_persona AS nombre_persona_autoriz,
-                peje.nombre_persona AS nombre_persona_ejecut
+                (SELECT nombre_persona FROM persona WHERE cod_persona = d.cod_usuarioFK_autoriz) AS nombre_persona_autoriz,
+                (SELECT nombre_persona FROM persona WHERE cod_persona = d.cod_usuarioFK_ejecut) AS nombre_persona_ejecut
             FROM dictamenes d
             LEFT JOIN persona pcreate ON pcreate.cod_persona = d.cod_usuarioFK_create
-            LEFT JOIN persona paut ON paut.cod_persona = d.cod_usuarioFK_autoriz
-            LEFT JOIN persona peje ON peje.cod_persona = d.cod_usuarioFK_ejecut
             LEFT JOIN interconsulta ic ON ic.cod_interConsulta = d.cod_interConsultaFK
             $sqlFiltro
             ORDER BY FIELD(d.estado, 'solicitado', 'aprobado', 'ejecutado', 'inactivo'), d.id DESC
@@ -1323,8 +1406,10 @@
                 $estado = 'solicitado';
             }
 
-            $fecha_autoriz = null;
-            $fecha_ejecut = null;
+            $fecha_autoriz = NULL;
+            $fecha_ejecut = NULL;
+            $cod_usuarioFK_autoriz = NULL;
+            $cod_usuarioFK_ejecut = NULL;
 
             if ($estado == 'aprobado' || $estado == 'ejecutado') {
                 if (empty($cod_usuarioFK_autoriz)) {
