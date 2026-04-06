@@ -1096,17 +1096,7 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                         }
                     } else {
                         elemContenedor.innerHTML = btnMasMensajes + datos["2"] + elemContenedor.innerHTML;
-                    } /*
-                    elemContenedor.children[0].remove();
-                    let btnMasMensajes= "";
-                    if ((parseInt(offset) + 10) < parseInt(totalRegistroMensaje)) {
-                        btnMasMensajes= "<div style='width: 100%; justify-content: center;'>"+
-                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+(offset + 10)+", "+cod_dictamen+")'>Ver más mensajes...</button>"+
-                            "</div>";
                     }
-                    
-                    // Agrega los mensajes anteriores
-                    */
 				} else {
                     throw new Error("Error producido en buscarMasInterConsultas de JavaScript.");
                 }
@@ -1424,6 +1414,11 @@ function verificarCamposDictamen() {
 }
 
 function abmDictamen(resultado, asunto, estado= 'solicitado') {
+    if (cod_dictamenSeleccionado) {
+        if(controlacceso("CREARDICTAMEN","accion")==false){ return;}
+    } else {
+        if(controlacceso("EDITARDICTAMEN","accion")==false){ return;}
+    }
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
