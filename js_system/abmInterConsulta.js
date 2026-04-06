@@ -1478,10 +1478,15 @@ function abmDictamen(resultado, asunto, estado= 'solicitado') {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-                    cod_dictamenSeleccionado= datos["2"];
+                    // Se evalua si se edito o se creo
+                    if (cod_dictamenSeleccionado) {
+                        buscarInterConsultasYContenido(cod_interConsulta);
+                    } else {
+                        cod_dictamenSeleccionado= datos["2"];
+                        buscarListadoInterConsultas();
+                        verCerrarVentanaSeleccionDictamen(true);
+                    }
                     ver_vetana_informativa("Dictamen guardado.", "", "info");
-                    buscarListadoInterConsultas();
-                    verCerrarVentanaSeleccionDictamen(true);
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

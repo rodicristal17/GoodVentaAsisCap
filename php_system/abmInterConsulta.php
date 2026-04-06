@@ -493,7 +493,7 @@
 
         $metaExtra = '';
         if ($nombreAutoriza !== '') {
-            $metaExtra .= '<div><strong>Autorizado por:</strong> '.$nombreAutoriza.($fechaAutoriz !== '' ? ' el '.$fechaAutoriz : '').'</div>';
+            $metaExtra .= '<div><strong>Autorizado por:</strong> '.$nombreAutoriza.'</div>';
             $metaExtra .= '<div><strong>Fecha autorizado:</strong> '.$fechaAutoriz.'</div>';
         }
         if ($nombreEjecuta !== '') {
@@ -708,7 +708,11 @@
                             </div>
                         </div>
                         <div style="border-top: 1px solid #d9ceb6;text-align: start;padding: 10px;">
-                            <span style="color: '.$estadoColor.';line-height: 1.1;font-weight: 800;">'.$estadoDictamen.'<span>
+                            <select class="form-select form-select-sm" style="width: 25%;" aria-label="Seleccionar dictamen" onchange="cod_dictamenSeleccionado='.$dictamen['id'].';abmDictamen(\'\',\'\',this.selectedOptions[0].value);">
+                                <option value="solicitado" '.($dictamen["estado"] == "solicitado" ? "selected" : "").'>SOLICITADO</option>
+                                <option value="autorizado" '.($dictamen["estado"] == "autorizado" ? "selected" : "").'>AUTORIZADO</option>
+                                <option value="ejecutado" '.($dictamen["estado"] == "ejecutado" ? "selected" : "").'>EJECUTADO</option>
+                            </select>
                         </div>
                     </div>';
                 
@@ -1396,6 +1400,11 @@
         $fechaActual= new DateTime();
         $fechaActual= $fechaActual->format('Y-m-d H:i:s');
 
+        $fecha_autoriz = NULL;
+        $fecha_ejecut = NULL;
+        $cod_usuarioFK_autoriz = NULL;
+        $cod_usuarioFK_ejecut = NULL;
+
         if (empty($id)) {
             if (empty($dictamen) || empty($cod_interConsultaFK) || empty($cod_usuarioFK_create)) {
                 echo json_encode(array("1" => "error", "2" => "Faltan datos para registrar el dictamen."));
@@ -1406,12 +1415,7 @@
                 $estado = 'solicitado';
             }
 
-            $fecha_autoriz = NULL;
-            $fecha_ejecut = NULL;
-            $cod_usuarioFK_autoriz = NULL;
-            $cod_usuarioFK_ejecut = NULL;
-
-            if ($estado == 'aprobado' || $estado == 'ejecutado') {
+            if ($estado == 'aprobado') {
                 if (empty($cod_usuarioFK_autoriz)) {
                     $cod_usuarioFK_autoriz = $cod_usuarioFK_create;
                 }
@@ -1457,12 +1461,12 @@
             $atributos = "";
             $ss = "";
 
-            if ($asunto !== null) {
+            if ($asunto !== null && !empty($asunto)) {
                 $atributos .= "asunto = ?, ";
                 $parametros[] = $asunto;
                 $ss .= "s";
             }
-            if ($dictamen !== null) {
+            if ($dictamen !== null && !empty($dictamen)) {
                 $atributos .= "dictamen = ?, ";
                 $parametros[] = $dictamen;
                 $ss .= "s";
@@ -1472,7 +1476,7 @@
                 $parametros[] = $estado;
                 $ss .= "s";
 
-                if (($estado == 'aprobado' || $estado == 'ejecutado') && empty($dictamen_original['fecha_autoriz'])) {
+                if ($estado == 'autorizado') {
                     if (empty($cod_usuarioFK_autoriz)) {
                         $cod_usuarioFK_autoriz = $cod_usuarioFK_create;
                     }
@@ -1481,7 +1485,7 @@
                     $parametros[] = $cod_usuarioFK_autoriz;
                     $ss .= "si";
                 }
-                if ($estado == 'ejecutado' && empty($dictamen_original['fecha_ejecut'])) {
+                if ($estado == 'ejecutado') {
                     if (empty($cod_usuarioFK_ejecut)) {
                         $cod_usuarioFK_ejecut = !empty($cod_usuarioFK_autoriz) ? $cod_usuarioFK_autoriz : $cod_usuarioFK_create;
                     }
