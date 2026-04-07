@@ -2930,9 +2930,8 @@ text-align: justify;
 }
 
 .extracto-floating-panel{
-  position:absolute;
-  top:8%;
-  left: 15%;
+  position:relative;
+  left: 8%;
   transform:translateY(-38%);
   width:min(760px,70vw);
   z-index:2000;

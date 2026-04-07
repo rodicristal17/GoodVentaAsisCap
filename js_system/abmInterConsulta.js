@@ -894,7 +894,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     cod_interConsulta= codInterConsulta;
 
                     // Se asignan los datos del encabezado
-                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'];console.info(datos['4'])
+                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'];
                     if (datos['4']['cod_ventaFK'] && datos['4']['cod_ventaFK'] != 0) {
                         document.getElementById('tituloInterConsultas2').innerHTML += ' - ' + datos['4']['nombre_persona'];
                     }

@@ -17905,7 +17905,14 @@ ZONA
                 <table style="width:100%">
                   <tbody>
                     <tr>
-                      <td style="width:100%;text-align:right">
+                      <td style="width:15%;">
+                        <p class="pTituloC">Fecha Inicio</p>
+                        <input class="inputText" type="Date" id="inptBuscarInfDictamenF1" style="width:135px">
+                      </td><td style="width:15%;">
+                        <p class="pTituloC">Fecha Fin</p>
+                        <input class="inputText" type="Date" id="inptBuscarInfDictamenF2" style="width:135px">
+                      </td>
+                      <td style="width:70%;text-align:right">
                         <input type="button" style="margin-top: 17px;" value="Buscar" class="btn4"
                           onclick="buscarInformeDictamenVista()">
                       </td>
@@ -17924,13 +17931,16 @@ ZONA
                       <td class="td_registro" style="width:20%;">
                         ASUNTO
                       </td>
-                      <td class="td_registro" style="width:20%;">
+                      <td class="td_registro" style="width:15%;">
                         INTERCONSULTA
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        LOCAL
                       </td>
                       <td class="td_registro" style="width:10%;">
                         ESTADO
                       </td>
-                      <td class="td_registro" style="width:40%;">
+                      <td class="td_registro" style="width:35%;">
                         DICTAMEN
                       </td>
                     </tr>
@@ -17940,17 +17950,20 @@ ZONA
                   <tbody>
                     <tr>
                       <td class="td_registro" style="width:9%;">
-                        <input class="inputfiltro" type="number" id="inptInformeDictamen1" onkeyup="if(event.keyCode == 13){obtenerVistaInformeDictamen()}">
+                        <input class="inputfiltro" type="number" id="inptInformeDictamen1" onkeyup="if(event.keyCode == 13){buscarInformeDictamenVista()}">
                       </td>
                       <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeDictamen1')"></td>
                       <td class="td_registro" style="width:19%;">
-                        <input class="inputfiltro" type="text" id="inptInformeDictamen2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeDictamen()}">
+                        <input class="inputfiltro" type="text" id="inptInformeDictamen2" onkeyup="if(event.keyCode == 13){buscarInformeDictamenVista()}">
                       </td>
                       <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeDictamen2')"></td>
-                      <td class="td_registro" style="width:19%;">
-                        <input class="inputfiltro" type="text" id="inptInformeDictamen3" onkeyup="if(event.keyCode == 13){obtenerVistaInformeDictamen()}">
+                      <td class="td_registro" style="width:14%;">
+                        <input class="inputfiltro" type="text" id="inptInformeDictamen3" onkeyup="if(event.keyCode == 13){buscarInformeDictamenVista()}">
                       </td>
                       <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeDictamen3')"></td>
+                      <td class="td_registro" style="width:10%;">
+                        <select id="inptInformeDictamen5"></select>
+                      </td>
                       <td class="td_registro" style="width:10%;">
                         <select id="inptInformeDictamen4">
                               <option value="">SELECCIONAR</option>
@@ -17959,7 +17972,7 @@ ZONA
                               <option value="ejecutado">EJECUTADO</option>
                           </select>
                       </td>
-                      <td class="td_registro" style="width:40%;">
+                      <td class="td_registro" style="width:35%;">
                       </td>
                     </tr>
                   </tbody>

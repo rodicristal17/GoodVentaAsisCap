@@ -712,8 +712,8 @@
             ));
 
             foreach ($registrosMens2 as $valueMens) {
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: right;">
-                    <div class="card my-3" style="border-left: 5px solid gray;width: 500px;margin-left: 10px; margin-right: 10px;">
+                $paginaMensajes .= '<div class="sugerencias-container" style="justify-content: right;">
+                    <div class="card my-3" style="border-left: 5px solid gray;width: 80%;margin-left: 10px; margin-right: 10px;">
                       <div class="card-body">
                           <div style="display: flex;">
                             <span style="display: none;">'.$valueMens['cod_mensaje'].'</span>
@@ -999,8 +999,8 @@
                     </div>
                 </div>';
             } else {
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';margin: 0;">
-                        <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin: 4px 10px;display: flex;flex-direction: column;gap: 0;min-height: auto;">
+                $paginaMensajes .= '<div class="sugerencias-container" style="justify-content: '.$posicion.';margin: 0;">
+                        <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 80%;margin: 4px 10px;display: flex;flex-direction: column;gap: 0;min-height: auto;">
                           <div class="card-header d-flex justify-content-between align-items-center" style="padding: 6px 10px 4px 10px;gap: 10px;min-height: auto;">
                               <div style="display: flex;align-items: center;gap: 8px;">
                                 <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="height: 30px;width: 30px;border-radius: 50%;object-fit: cover;"/>

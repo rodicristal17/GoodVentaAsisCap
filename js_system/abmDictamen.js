@@ -251,29 +251,36 @@ function cancelarInformeInterConsulta() {
 
 function buscarInformeDictamenVista() {
     // Filtros
-    const cod_dictamen= document.getElementById('inptInformeDictamen1').value;
+    const cod_completo_dictamen= document.getElementById('inptInformeDictamen1').value;
     const asunto= document.getElementById('inptInformeDictamen2').value;
     const nombre_interconsulta= document.getElementById('inptInformeDictamen3').value;
     const estado= document.getElementById('inptInformeDictamen4').value;
+    const local= document.getElementById('inptInformeDictamen5').value;
+    const fecha_inicio= document.getElementById('inptBuscarInfDictamenF1').value;
+    const fecha_fin= document.getElementById('inptBuscarInfDictamenF2').value;
     
     // Limpia variables y tabla
     registrocargadoInterConsulta= 0;
     registroInterConsultaAbierta= 0;
     document.getElementById('table_frm_VistaInterConsulta').innerHTML= paginacargando;
     
-    buscarInformeDictamen(cod_dictamen, asunto, nombre_interconsulta, estado, 10)
+    buscarInformeDictamen("", cod_completo_dictamen, asunto, fecha_inicio, fecha_fin, nombre_interconsulta,local,estado, 10)
 }
 
-function buscarInformeDictamen(cod_dictamen, asunto, interconsulta, estado, limite) {
+function buscarInformeDictamen(cod_dictamen, cod_completo_dictamen, asunto, fecha_inicio, fecha_fin,interconsulta,cod_local,estado, limite) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarDictamen');
     datos.append("cod_dictamen", cod_dictamen);
+    datos.append("cod_completo_dictamen", cod_completo_dictamen);
     datos.append("asunto", asunto);
     datos.append("interconsulta", interconsulta);
+    datos.append("cod_local", cod_local);
     datos.append("estado", estado);
+    datos.append("fecha_inicio", fecha_inicio);
+    datos.append("fecha_fin", fecha_fin);
     datos.append("limite", limite);
 
     var OpAjax = $.ajax({
@@ -330,7 +337,7 @@ function buscarInformeDictamen(cod_dictamen, asunto, interconsulta, estado, limi
 
                         controldebusquedadInformeDictamen=true;
                         limite= Number(limite) + 10;
-                        buscarMasInformeDictamen(cod_dictamen, asunto, interconsulta, estado, ("10 OFFSET "+registrocargadoDictamen))
+                        buscarMasInformeDictamen(cod_dictamen,cod_completo_dictamen, asunto, fecha_inicio, fecha_fin,interconsulta, estado, ("10 OFFSET "+registrocargadoDictamen))
                     }else{
                         controldebusquedadInformeDictamen=false
                     }
@@ -344,15 +351,18 @@ function buscarInformeDictamen(cod_dictamen, asunto, interconsulta, estado, limi
 	});
 }
 
-function buscarMasInformeDictamen(cod_dictamen, asunto, interconsulta, estado, limite) {
+function buscarMasInformeDictamen(cod_dictamen,cod_dictamen_completo, asunto, fecha_inicio, fecha_fin, interconsulta, estado, limite) {
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
     datos.append("accion", 'buscarDictamen');
     datos.append("cod_dictamen", cod_dictamen);
+    datos.append("cod_dictamen_completo", cod_dictamen_completo);
     datos.append("asunto", asunto);
     datos.append("interconsulta", interconsulta);
+    datos.append("fecha_inicio", fecha_inicio);
+    datos.append("fecha_fin", fecha_fin);
     datos.append("estado", estado);
     datos.append("limite", limite);
 
@@ -413,7 +423,7 @@ function buscarMasInformeDictamen(cod_dictamen, asunto, interconsulta, estado, l
 
                         controldebusquedadInformeDictamen=true;
 
-                        buscarMasInformeDictamen(cod_dictamen, asunto, interconsulta, estado, ocultar_inactivos, ("10 OFFSET "+registrocargadoDictamen))
+                        buscarMasInformeDictamen(cod_dictamen,cod_dictamen_completo, asunto, fecha_inicio, fecha_fin, interconsulta, estado, ocultar_inactivos, ("10 OFFSET "+registrocargadoDictamen))
                     }else{
                         document.getElementById("tbProcessInformeDictamen").style.display="none"
                         controldebusquedadInformeDictamen=false

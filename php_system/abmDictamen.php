@@ -54,6 +54,9 @@
                 $nombre_persona_ejecut= isset($_POST['nombre_persona_ejecut']) ? mb_convert_encoding((string)($_POST['nombre_persona_ejecut']), 'ISO-8859-1', 'UTF-8') : null;
                 $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_completo_dictamen= isset($_POST['cod_completo_dictamen']) ? mb_convert_encoding((string)($_POST['cod_completo_dictamen']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_inicio= isset($_POST['fecha_inicio']) ? mb_convert_encoding((string)($_POST['fecha_inicio']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_fin= isset($_POST['fecha_fin']) ? mb_convert_encoding((string)($_POST['fecha_fin']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'id' => $id,
@@ -69,6 +72,9 @@
                     'nombre_persona_ejecut' => $nombre_persona_ejecut,
                     'asunto' => $asunto,
                     'cod_localFK' => $cod_localFK,
+                    'cod_completo_dictamen' => $cod_completo_dictamen,
+                    'fecha_inicio' => $fecha_inicio,
+                    'fecha_fin' => $fecha_fin,
                 );
 
                 $registros= obtenerDictamen($filtros);
@@ -81,17 +87,18 @@
                 foreach ($registros as $reg) {
                     $pagina .= "<table class='tableRegistroSearch2' border='1' cellspacing='1' cellpadding= '5'>";
                     $pagina .= "<tr id='tbSelecRegistro' onclick='obtenerDatosDictamen(this)'>";
-                    $pagina .= "<td class='tdRegistroSearch' style='width: 10%;' id='td_id'>" . $reg['id'] . "</td>";
+                    $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_id'>" . $reg['id'] . "</td>";
+                    $pagina .= "<td class='tdRegistroSearch' style='width: 10%;' id='td_id2'>" . $reg['cod_completo_dictamen'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='width: 20%;' id='td_datos_1'>" . $reg['asunto'] . "</td>";
-                    $pagina .= "<td class='tdRegistroSearch' style='width: 20%;'><div style='width: fit-content; text-decoration: underline; color: blue;' 
+                    $pagina .= "<td class='tdRegistroSearch' style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' 
                         onclick='ventanaAnterior.push(\"divInformeDictamen\");obtenerDatosInterConsulta(this.parentElement.parentElement)'>" 
                     . $reg['asunto_interConsulta'] 
                     . "</div></td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_10'>" . $reg['asunto_interConsulta'] . "</td>";
-                    $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_24'>" . $reg['asunto_interConsulta'] . "</td>";
+                    $pagina .= "<td class='tdRegistroSearch' style='display: 10%;' id='td_datos_24'>" . $reg['nombre_local'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_22'>" . $reg['cod_interConsultaFK'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='width: 10%;' id='td_datos_23'>" . $reg['estado'] . "</td>";
-                    $pagina .= "<td class='tdRegistroSearch' style='width: 40%;' id='td_datos_3'>" . $reg['dictamen'] . "</td>";
+                    $pagina .= "<td class='tdRegistroSearch' style='width: 35%;' id='td_datos_3'>" . $reg['dictamen'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_4'>" . $reg['fecha_create'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_2'>" . $reg['estado_interConsulta'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_5'>" . $reg['nombre_cliente_interConsulta'] . "</td>";
@@ -167,6 +174,15 @@
                 case 'fecha_ejecut':
                     $sqlFiltro .= "d.fecha_ejecut $value";
                     break;
+                case 'cod_completo_dictamen':
+                    $sqlFiltro .= "CONCAT('RES-',YEAR(d.fecha_create),'-',ic.cod_interConsulta,'-',d.id) LIKE '%$value%'";
+                    break;
+                case 'fecha_inicio':
+                    $sqlFiltro .= "d.fecha_create >= $value"; 
+                    break;
+                case 'fecha_fin':
+                    $sqlFiltro .= "d.fecha_create <= $value"; 
+                    break;
                 default:
                     if (is_numeric($value)) {
                         $sqlFiltro .= "d.$key = $value";
@@ -190,6 +206,7 @@
                 (SELECT nombre_persona FROM cliente JOIN venta v WHERE v.cod_clienteFK = cod_persona AND v.cod_venta = ic.cod_ventaFK) as nombre_cliente_interConsulta,
                 (SELECT v.cod_clienteFK FROM venta v WHERE v.cod_venta = ic.cod_ventaFK) as cod_clienteFK_interConsulta,
                 (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) AS nombre_local,
+                CONCAT('RES-',YEAR(d.fecha_create),'-',ic.cod_interConsulta,'-',d.id) AS cod_completo_dictamen,
                 ic.cod_ventaFK AS cod_venta_interConsulta,
                 (SELECT url FROM usuario WHERE cod_usuario = pcreate.cod_persona) AS url_create,
                 (SELECT nombre_persona FROM persona WHERE cod_persona = d.cod_usuarioFK_autoriz) AS nombre_persona_autoriz,
