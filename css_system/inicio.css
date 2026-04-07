@@ -108,7 +108,7 @@ border-radius: 50%;
 .divAbmsPrincipalFloat { width: 95%; background-color: rgb(255, 255, 255); border-radius: 20px; border: 7px solid rgb(255, 255, 255); overflow: auto; }
 .divMenuf1 { width: 95%; text-align: left; }
 .divMenuf2 { width: 95%; height: 550px; overflow: auto; padding: 5px; text-align: left; }
-.divAbms { width: 800px; min-height: 560px; border: 7px solid rgb(253, 253, 253); background-color: rgb(248, 248, 248); border-radius: 20px; box-shadow: rgb(169, 169, 169) 0px 0px 2px inset; }
+.divAbms { width: 100vw; min-height: 100vh; border: 7px solid rgb(253, 253, 253); background-color: rgb(248, 248, 248);   box-shadow: rgb(169, 169, 169) 0px 0px 2px inset; }
 .divAbms_b { width: 400px; min-height: 500px; background-color: rgb(255, 255, 255); border-radius: 20px; border: 7px solid rgb(255, 255, 255); }
 .divMenuf { width: 97%; padding: 9px; background-color: rgb(255, 255, 255); border-radius: 5px; border: 1px solid rgb(209, 209, 209); margin-bottom: 1%; }
 .btn4 { height: 28px; border: none; color: rgb(255, 255, 255); background-color: rgb(76, 175, 80); font-family: "Merriweather Sans", Arial; font-size: 12px; width: 85px; cursor: pointer; border-radius: 2px; }
@@ -129,12 +129,12 @@ border-radius: 50%;
 .inputText { font-size: 12px; font-family: "Merriweather Sans", Arial; width: 95%; border: 1px solid rgb(201, 201, 201); outline: none; background-color: rgb(255, 255, 255); border-radius: 3px; height: 30px; text-align: left; padding: 8px; }
 .inputText:focus { background-color: rgb(242, 247, 251); font-weight: bold; border: 2px solid rgb(210, 210, 210); }
 .inputTextDisable { font-size: 11px; font-family: "Merriweather Sans", Arial; height: 29px; text-align: left; padding: 8px; width: 100%; border: 1px solid rgb(209, 209, 209); outline: none; border-radius: 3px; background-color: rgb(234, 234, 234); }
-.inputSelect { font-size: 12px; font-family: "Merriweather Sans", Arial; height: 29px; text-align: left; width: 100%; border: 1px solid rgb(201, 201, 201); outline: none; background-color: rgb(255, 255, 255); border-radius: 2px; }
+.inputSelect { font-size: 12px; font-family: "Merriweather Sans", Arial; height: 29px; text-align: left; width: 100%; border: 1px solid rgb(201, 201, 201); outline: none; background-color: rgb(255, 255, 255); border-radius: 5px; }
 .inputSelect:focus { background-color: rgb(242, 247, 251); font-weight: bold; border: 2px solid rgb(210, 210, 210); }
 .tableCabeceraRegistro { width: 98%; background-color: rgb(33, 150, 243); }
 .td_registro { height: 100%; font-size: 10px; font-family: "Merriweather Sans", Arial; color: rgb(255, 255, 255); padding: 5px; text-align: center; background-color: transparent; }
 .imgIcone { padding: 6px; width: 25px; cursor: pointer; }
-.div_cuerpo_table { margin-top: 3px; width: 97.5%; border: 1px solid rgb(217, 215, 215); background-color: #fffcfc; height: 250px; overflow: auto; }
+.div_cuerpo_table { margin-top: 3px; width: 100%; border: 1px solid rgb(217, 215, 215); background-color: #fffcfc; height: 250px; overflow: auto; }
 .div_cuerpo_table_d { margin-top: 3px; width: 97.5%; border: 1px solid rgb(223, 223, 223); background-color: rgba(252, 252, 252, 0.54); height: 380px; overflow: auto; }
 .div_cuerpo_table_c { margin-top: 3px; width: 97.5%; border: 1px solid rgb(223, 223, 223); background-color: rgba(252, 252, 252, 0.54); height: 250px; overflow: auto; }
 .tableRegistroSearch { width: 100%; height: 33px; background-color: rgb(255, 255, 255); font-size: 9px; font-family: "Merriweather Sans", Arial; color: rgb(27, 27, 27); text-align: center; border-left: 1px solid rgb(206, 206, 206); border-right: 1px solid rgb(206, 206, 206); border-bottom: 1px solid rgb(206, 206, 206); cursor: pointer;    border-collapse: collapse;
@@ -1652,7 +1652,7 @@ textarea {
 textarea, select {
   width: 100%;
   font-size: 1rem;
-  padding: 8px 10px;
+  padding: 5px  ;
   border: 1.5px solid #ccc;
   border-radius: 8px;
   box-sizing: border-box;
@@ -2243,11 +2243,7 @@ text-align: justify;
 
 /* --- Contenedor principal del modal --- */
 .divAbms {
-    /* background: #fff; */
-    width: 750px;
-    min-height: 450px;
-    border-radius: 18px;
-    /* padding: 25px; */
+  
     box-shadow: 0 10px 25px rgba(0,0,0,0.25);
     animation: fadeIn 0.25s ease-out;
 }

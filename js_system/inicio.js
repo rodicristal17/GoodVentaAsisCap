@@ -10290,6 +10290,8 @@ document.getElementById("tdEfectoAbmCasa").className="magictime slideDownReturn"
 	
 	}
 }
+
+
 function limpiarCamposBuscarCasa(){
 	document.getElementById("inptBuscarAbmCasa1").value=""
 	document.getElementById("inptBuscarAbmCasa2").value=""
@@ -10591,6 +10593,8 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalAsignarLocal").innerHTML =""	
 	document.getElementById("inptLocalInformeAsistencia").innerHTML =""	
 	document.getElementById("inptlocalProximoPago").innerHTML =""	
+	document.getElementById("inptBuscarAbmConsultorio4").innerHTML =""	
+	document.getElementById("inptLocalConsultorio").innerHTML =""	
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10641,6 +10645,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
+					document.getElementById("inptLocalConsultorio").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+					document.getElementById("inptBuscarAbmConsultorio4").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptBuscarLocalPaciente").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocaluser").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					//document.getElementById("inptlocalsolicitudCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados

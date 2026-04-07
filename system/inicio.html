@@ -22,6 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -45,6 +46,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
@@ -61,9 +64,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <body id='divdody'>
 
-
-
-
+  
 <img  src='/GoodVentaAsisCap/iconos/fondo.jpg'
 style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoSytem1' />
 
@@ -603,14 +604,13 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub'  id='divMenuCalendario1'   title='Buscar ordenes de trabajo'  onclick='verCerrarOpcionesCalendario()'  style='text-align:center;display:none;'>
+<table class='divMenub'  id='divMenuCalendario1'   title='Buscar ordenes de trabajo'  onclick='AbrirAgendaConsultorios()'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/calendarioAgenda.png' />
 <p class='pTitulo4'  >Calendario</p>
 <center>
-<div id='divMinimizadoCuentasCobrar1'
-style='display:none' class='divMinimizado'>
+<div id='divMinimizadoCalendario' style='display:none' class='divMinimizado'>
 </div>
 </center>
 </td>
@@ -631,10 +631,6 @@ style='display:none' class='divMinimizado'>
 </div>
 
 
-
- 
-
-
 <div style='overflow:auto' id='divMenuListados'>
 
 <table style='width:100%;'>
@@ -648,9 +644,19 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuAbmLocales' onclick='verCerrarAbmConsultorio()' style='text-align:center'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/odontologia.png' />
+<p class='pTitulo4'>Listado de Consultorios</p>
+<center>
+<div id='divMinimizadoListadoDeConsultorios' style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
 
-<table class='divMenub' id='divMenuAbmLocales'
-onclick='verCerrarAbmCasa()' style='text-align:center'>
+<table class='divMenub' id='divMenuAbmLocales' onclick='verCerrarAbmCasa()' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/casa.png' />
@@ -5768,7 +5774,7 @@ style='background-color:#b7b7b7'>
 <tr>
 <td>
 <center>
-<div id='divAbmCasa2' style='display:none;width:400px;min-height: 200px;' class='divAbms'>
+<div id='divAbmCasa2' style='display:none;min-height: 200px;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:80%;text-align:left'>
@@ -5832,7 +5838,7 @@ onclick='verificarcamposCasa()' id='btnAbmCasa' />
 </center>
 </div>
 
-<div id='divAbmCasa1' style='width:700px;display:' class='divAbms'>
+<div id='divAbmCasa1' style='display:' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -5936,6 +5942,247 @@ onclick='verVentanaEditarCasa()' style='background-color:#b7b7b7'>
 </tr>
 </table>
 </div>
+
+
+
+<div class='principal2' style='display:none' id='divAbmConsultorio'>
+ 
+<center>
+<div id='divAbmConsultorio2' style='display:none;  height: 100vh;' class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:80%;text-align:left'>
+<p class='pTituloB'>Datos de <b style='font-size: 30px;' >Consultorios</b></p>
+</td> 
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+title='Limpiar campos' onclick='limpiarcamposConsultorio()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarConsultorio()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+title='Volver Atras' onclick='verCerrarVentanaAbmConsultorio("2","")' />
+</td>
+</tr>
+</table>
+<br>
+<center>
+<div class='divMenuf'>
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Nombre :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNombreConsultorio' />
+</td>
+</tr>
+</table>
+
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Descripcion :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptDescripcionConsultorio' />
+</td>
+</tr>
+</table>
+
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Local :</p>
+<select class="inputSelect" id="inptLocalConsultorio"  > 
+</select>
+</td>
+</tr>
+</table>
+
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC'>Color:</p>
+
+<div style="display:flex; gap:10px; align-items:center;">
+    
+    <!-- Selector de color -->
+    <input type="color" id="inptColorConsultorio" value="#3b82f6"
+        style="
+            width:50px;
+            height:40px;
+            border:none;
+            cursor:pointer;
+            background:none;
+        ">
+
+    <!-- Input texto para ver HEX -->
+    <input class="inputText" type="text"
+        id="inptColorConsultorioHex"
+        placeholder="#000000"
+        style="width:120px"
+    >
+
+</div>
+
+</td>
+</tr>
+</table>
+
+<br>
+<table style='width:100%'>
+<tr>
+<td>
+<p class='pTituloC' >Estado :</p>
+<select class="inputSelect" id="inptEstadoConsultorio" style='width:200px'>
+<option value="ACTIVO">ACTIVO</option>
+<option value="INACTIVO">INACTIVO</option>
+</select>
+</td>
+</tr>
+</table>
+<br>
+</div>
+<div class='divMenuf'>
+<br>
+<center>
+<input type='button' value='Guardar' class='btn1'
+onclick='verificarcamposConsultorio()' id='btnAbmConsultorio' />
+</center>
+<br>
+</div>
+<br>
+<br>
+</center>
+</div>
+
+<div id='divAbmConsultorio1'  class='divAbms'>
+<table class='tableMenuZ'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Buscar <b style='font-size: 30px;' >Consultorio</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
+onclick='verCerrarVentanaAbmConsultorio("1","1")' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
+title='Minimizar Ventana' onclick='minimizarConsultorio()' />
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarAbmConsultorio()' />
+</td>
+</tr>
+</table> 
+<center>
+<div class='divMenuf'>
+<table style='width:100%'>
+<tr>
+<td style='width:80%'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTitulo8' onclick='checkestadoConsultorios(1)'> <input
+type='checkbox' id="inptSeleccEstadoBuscarConsultorio1" checked> Activo
+</p>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTitulo8' onclick='checkestadoConsultorios(2)'> <input
+type='checkbox' id="inptSeleccEstadoBuscarConsultorio2"> Inactivo</p>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">
+#
+</td>
+<td class="td_registro" style="width:30%;">
+CONSULTORIO
+</td>
+<td class="td_registro" style="width:30%;">
+DESCRIPCION
+</td>
+<td class="td_registro" style="width:30%;">
+LOCAL
+</td>
+</tr>
+</tbody>
+</table>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:9%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmConsultorio1'
+onkeyup="if(event.keyCode == 13){buscarabmConsultorio()}"
+placeholder='Igual a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmConsultorio1')" />
+</td>
+<td class="td_registro" style="width:29%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmConsultorio2'
+onkeyup="if(event.keyCode == 13){buscarabmConsultorio()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmConsultorio2')" />
+</td>
+<td class="td_registro" style="width:29%;">
+<input class='inputfiltro' type='text' id='inptBuscarAbmConsultorio3'
+onkeyup="if(event.keyCode == 13){buscarabmConsultorio()}"
+placeholder='Parecido a' />
+</td>
+<td class="td_registro" style="width:1%;">
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+onclick="vaciar('inptBuscarAbmConsultorio3')" />
+</td>
+<td class="td_registro" style="width:29%;">
+<select class="inputSelect" id="inptBuscarAbmConsultorio4"  > 
+</select>
+</td> 
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" style='height: 55vh;' id="table_abm_Consultorio"></div>
+</div>
+<div class='divMenuf'>
+<table style='width:95%'>
+<tr>
+<td style='width:25%;text-align:left'>
+<p class='pTituloC' >Registros :</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptTotalRegistoConsultorio' style='width:150px;text-align:center' />
+</td>
+<td style='width:5%'>
+</td>
+<td style='width:70%;text-align:left'>
+<p class='pTituloC' >Registro Selecc..</p>
+<input class='inputTextDisable' type='text' disabled
+id='inptRegistroSeleccConsultorio' style='width:200px' />
+<input id='btnEditarConsultorios' type='button' value='Editar' class='btn5'
+onclick='verVentanaEditarConsultorio()' style='background-color:#b7b7b7'>
+</td>
+</tr>
+</table>
+</div>
+</center>
+ 
+</div>
+</center>
+ 
+</div>
+
+
+
 
 <div class='principal2' style='display:none' id='divAbmZona'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmZona'>
@@ -11886,77 +12133,246 @@ Reg. Encontrados :</p>
 
 
 
+<div id='divAgendaConsultorios' class='divAbms agenda-ventana' style='width:100%;height:100vh;position: absolute;display:none;'>
+    <div class='catalogo-header'>
+        <div class='catalogo-header-left'>
+            <div>
+                <p class='pTituloB titulo-agenda'>Agenda de <b>Consultorios</b></p>
+                <span class='subtitulo-agenda'>Gestión visual de turnos, pacientes y consultorios</span>
+            </div>
+        </div>
 
-<!-- <div class='principal2 divScrollPrincipal' style='display:none' id='divCalendario'>
-<table style='width:100%;height:100%' id='tdEfectoOpcionesCalendario'>
-<tr>
-<td>
-<center>
-<div style='width:80%;min-height: 400px;height:500pxdisplay:' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloB'>CALENDARIO</p>
-</td>
-<td style='width:5%'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='verCerrarOpcionesCalendario()' />
-</td>
-</tr>
-</table>
-<br>
+        <div class='catalogo-header-right'>
+            <button class='btn-icon' onclick='abrirModalFiltrosAgenda()' title='Filtros'>
+                <img src='/GoodVentaElectroGuai/iconos/etiquetafiltrar.png' class='iconoBtn' />
+            </button>
+            <button class='btn-icon' onclick='abrirModalNuevaCita()' title='Nueva cita'>
+                <img src='/GoodVentaElectroGuai/iconos/add.png' class='iconoBtn' />
+            </button>
+            <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
+                <img src='/GoodVentaElectroGuai/iconos/minimizar2.png' class='iconoBtn' />
+            </button>
+            <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios()' title='Cerrar'>
+                <img src='/GoodVentaElectroGuai/iconos/botonCerrar.png' class='iconoBtn' />
+            </button>
+        </div>
+    </div>
 
-<center>
+    <div class='catalogo-toolbar'>
+        <div class='agenda-nav-fecha'>
+            <button class='btn-filtro' onclick='cambiarFechaAgenda(-1)'>&lt;</button>
+            <input type='date' id='inptFechaAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultorios()' />
+            <button class='btn-filtro' onclick='cambiarFechaAgenda(1)'>&gt;</button>
+            <button class='btn-filtro btn-hoy' onclick='irHoyAgenda()'>Hoy</button>
+        </div>
 
-<br>
-		<div id="calendario"></div>
-			
-			<script>
-  $(document).ready(function() {
-    // Configuración del calendario
-    $('#calendario').fullCalendar({
-      // Opciones del calendario
-      header: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'month,agendaWeek,agendaDay'
-      },
-      defaultView: 'month', // Vista predeterminada
-      editable: true, // Permite arrastrar y soltar eventos
-      events: [ // Evento de ejemplo
-        {
-          title: 'Mi Evento',
-          start: '2023-12-09T10:00:00',
-          end: '2023-12-09T12:00:00'
-        }
-      ],
-	  dayClick: function(date, jsEvent, view) {
-          // date contiene la fecha en la que se hizo clic
-          // jsEvent contiene la información del evento de clic
-          // view contiene información sobre la vista actual del calendario
+        <div class='agenda-buscadores'>
+            <input type='text' id='inptBuscarPacienteAgenda' class='catalogo-selectBuscador' placeholder='Buscar paciente...' onkeyup='filtrarAgendaLocal()' />
+            <select id='inptEstadoAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultorios()'>
+                <option value=''>Todos los estados</option>
+                <option value='AGENDADO'>Agendado</option>
+                <option value='CONFIRMADO'>Confirmado</option>
+                <option value='ATENDIDO'>Atendido</option>
+                <option value='CANCELADO'>Cancelado</option>
+            </select>
+        </div>
 
-          // Muestra un mensaje de alerta con la fecha
-          alert('Fecha seleccionada: ' + date.format());
-        }
-    });
-  });
-</script>
+        <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
+            <span class='chip-filtro'>Fecha: hoy</span>
+            <span class='chip-filtro'>Consultorios: todos</span>
+        </div>
+    </div>
 
+    <div class='agenda-layout'>
+        <div class='agenda-sidebar'>
+            <div class='agenda-card'>
+                <p class='agenda-card-title'>Resumen del día</p>
+                <div class='agenda-resumen-item'>
+                    <span>Total citas</span>
+                    <b id='lblTotalCitasAgenda'>0</b>
+                </div>
+                <div class='agenda-resumen-item'>
+                    <span>Confirmadas</span>
+                    <b id='lblConfirmadasAgenda'>0</b>
+                </div>
+                <div class='agenda-resumen-item'>
+                    <span>Pendientes</span>
+                    <b id='lblPendientesAgenda'>0</b>
+                </div>
+                <div class='agenda-resumen-item'>
+                    <span>Canceladas</span>
+                    <b id='lblCanceladasAgenda'>0</b>
+                </div>
+            </div>
 
+            <div class='agenda-card'>
+                <p class='agenda-card-title'>Consultorios</p>
+                <div id='listaConsultoriosAgenda' class='agenda-consultorios-lista'></div>
+            </div>
+        </div>
 
-<br>
-<br>
-</center>
+        <div class='agenda-main'>
+            <div class='agenda-grid-wrapper'>
+                <div class='agenda-grid' id='agendaGridConsultorios'>
+                    <!-- Se genera por JS -->
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-</center>
-</td>
-</tr>
-</table>
+<div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='cerrarModalFiltrosAgenda()' style='display:none;'></div>
+<div class='modal-filtros-catalogo' id='modalFiltrosAgenda' style='display:none;'>
+    <div class='modal-filtros-box'>
+        <div class='modal-filtros-header'>
+            <h3>Filtros de agenda</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalFiltrosAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body'>
+            <div class='filtro-grupo'>
+                <label>Consultorio</label>
+                <select id='inptConsultorioAgendaFiltro' class='catalogo-selectBuscador'>
+                    <option value=''>Todos</option>
+                </select>
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Profesional</label>
+                <select id='inptProfesionalAgendaFiltro' class='catalogo-selectBuscador'>
+                    <option value=''>Todos</option>
+                </select>
+            </div>
+
+            <div class='filtro-checks'>
+                <label><input type='checkbox' id='chkAgendaAgendado' checked /> Agendado</label>
+                <label><input type='checkbox' id='chkAgendaConfirmado' checked /> Confirmado</label>
+                <label><input type='checkbox' id='chkAgendaAtendido' checked /> Atendido</label>
+                <label><input type='checkbox' id='chkAgendaCancelado' /> Cancelado</label>
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='limpiarFiltrosAgenda()'>Limpiar</button>
+            <button class='btn-accion-principal' onclick='aplicarFiltrosAgenda()'>Aplicar filtros</button>
+        </div>
+    </div>
 </div>
 
- -->
+<div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='cerrarModalNuevaCita()' style='display:none;'></div>
+<div class='modal-filtros-catalogo' id='modalNuevaCita' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Nueva cita</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevaCita()'>×</button>
+        </div>
 
+        <div class='modal-filtros-body modal-cita-grid'>
+            <div class='filtro-grupo'>
+                <label>Paciente</label>
+                <input type='text' id='inptPacienteAgenda' class='catalogo-selectBuscador' placeholder='Nombre del paciente' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Consultorio</label>
+                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador'></select>
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Fecha</label>
+                <input type='date' id='inptFechaNuevaCita' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Hora inicio</label>
+                <input type='time' id='inptHoraInicioAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Hora fin</label>
+                <input type='time' id='inptHoraFinAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Estado</label>
+                <select id='inptEstadoNuevaCita' class='catalogo-selectBuscador'>
+                    <option value='AGENDADO'>Agendado</option>
+                    <option value='CONFIRMADO'>Confirmado</option>
+                    <option value='ATENDIDO'>Atendido</option>
+                    <option value='CANCELADO'>Cancelado</option>
+                </select>
+            </div>
+
+            <div class='filtro-grupo filtro-grupo-full'>
+                <label>Motivo</label>
+                <textarea id='inptMotivoAgenda' class='textarea-agenda' placeholder='Motivo de la consulta'></textarea>
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='cerrarModalNuevaCita()'>Cancelar</button>
+            <button class='btn-accion-principal' onclick='guardarCitaAgenda()'>Guardar cita</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda()' style='display:none;'></div>
+<div class='modal-filtros-catalogo' id='modalDetalleAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-detalle-agenda-box'>
+        <div class='modal-filtros-header'>
+            <h3>Detalle del agendamiento</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body'>
+            <div class='detalle-agenda-grid'>
+                <div class='detalle-item'>
+                    <span class='detalle-label'>ID</span>
+                    <div class='detalle-valor' id='detAgendaId'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Estado</span>
+                    <div class='detalle-valor' id='detAgendaEstado'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Paciente</span>
+                    <div class='detalle-valor' id='detAgendaPaciente'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Consultorio</span>
+                    <div class='detalle-valor' id='detAgendaConsultorio'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Fecha</span>
+                    <div class='detalle-valor' id='detAgendaFecha'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Horario</span>
+                    <div class='detalle-valor' id='detAgendaHorario'></div>
+                </div>
+
+                <div class='detalle-item detalle-item-full'>
+                    <span class='detalle-label'>Motivo</span>
+                    <div class='detalle-valor' id='detAgendaMotivo'></div>
+                </div>
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' style='background:#32c782; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADO")'>Confirmado</button>
+            <button class='btn-filtro' style='background:#007bff; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ATENDIDO")'>Atendido</button>
+            <button class='btn-filtro' style='background:#858585; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CANCELADO")'>Cancelado</button>
+        </div>
+    </div>
+</div>
 
 <div class='principal2' style='display:none' id='divAbmVistaConsulta'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmVistaConsulta'>
