@@ -436,11 +436,11 @@ function obtenerDatosDictamen(elemento) {
     elemento.className= "tableRegistroSelec";
 
     // Datos de auditoria
-    document.getElementById('inptDictamenUsuarioEmitidoPor').value= $(elemento).children('#td_datos_4').html();
-    document.getElementById('inptDictamenFechaEmitidoPor').value= $(elemento).children('#td_datos_17').html();
-    document.getElementById('inptDictamenUsuarioAutorizadoPor').value= $(elemento).children('#td_datos_18').html();
-    document.getElementById('inptDictamenFechaAutorizadoPor').value= $(elemento).children('#td_datos_19').html();
-    document.getElementById('inptDictamenUsuarioEjecutadoPor').value= $(elemento).children('#td_datos_20').html();
-    document.getElementById('inptDictamenFechaEjecutadoPor').value= $(elemento).children('#td_datos_21').html();
+    document.getElementById('inptDictamenFechaEmitidoPor').value= $(elemento).children('#td_datos_4').html();
+    document.getElementById('inptDictamenUsuarioEmitidoPor').value= $(elemento).children('#td_datos_17').html();
+    document.getElementById('inptDictamenFechaAutorizadoPor').value= $(elemento).children('#td_datos_18').html();
+    document.getElementById('inptDictamenUsuarioAutorizadoPor').value= $(elemento).children('#td_datos_19').html();
+    document.getElementById('inptDictamenFechaEjecutadoPor').value= $(elemento).children('#td_datos_20').html();
+    document.getElementById('inptDictamenUsuarioEjecutadoPor').value= $(elemento).children('#td_datos_21').html();
     document.getElementById('btnAuditoriaInformeDictamen').style.backgroundColor= "";
 }

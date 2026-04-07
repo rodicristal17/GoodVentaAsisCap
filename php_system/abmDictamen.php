@@ -53,6 +53,7 @@
                 $nombre_persona_autoriz= isset($_POST['nombre_persona_autoriz']) ? mb_convert_encoding((string)($_POST['nombre_persona_autoriz']), 'ISO-8859-1', 'UTF-8') : null;
                 $nombre_persona_ejecut= isset($_POST['nombre_persona_ejecut']) ? mb_convert_encoding((string)($_POST['nombre_persona_ejecut']), 'ISO-8859-1', 'UTF-8') : null;
                 $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'id' => $id,
@@ -67,6 +68,7 @@
                     'nombre_persona_autoriz' => $nombre_persona_autoriz,
                     'nombre_persona_ejecut' => $nombre_persona_ejecut,
                     'asunto' => $asunto,
+                    'cod_localFK' => $cod_localFK,
                 );
 
                 $registros= obtenerDictamen($filtros);
@@ -86,6 +88,7 @@
                     . $reg['asunto_interConsulta'] 
                     . "</div></td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_10'>" . $reg['asunto_interConsulta'] . "</td>";
+                    $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_24'>" . $reg['asunto_interConsulta'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='display: none;' id='td_datos_22'>" . $reg['cod_interConsultaFK'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='width: 10%;' id='td_datos_23'>" . $reg['estado'] . "</td>";
                     $pagina .= "<td class='tdRegistroSearch' style='width: 40%;' id='td_datos_3'>" . $reg['dictamen'] . "</td>";
@@ -186,6 +189,7 @@
                 ic.monto_limite AS monto_limite_interConsulta, ic.observacion AS observacion_interConsulta,
                 (SELECT nombre_persona FROM cliente JOIN venta v WHERE v.cod_clienteFK = cod_persona AND v.cod_venta = ic.cod_ventaFK) as nombre_cliente_interConsulta,
                 (SELECT v.cod_clienteFK FROM venta v WHERE v.cod_venta = ic.cod_ventaFK) as cod_clienteFK_interConsulta,
+                (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) AS nombre_local,
                 ic.cod_ventaFK AS cod_venta_interConsulta,
                 (SELECT url FROM usuario WHERE cod_usuario = pcreate.cod_persona) AS url_create,
                 (SELECT nombre_persona FROM persona WHERE cod_persona = d.cod_usuarioFK_autoriz) AS nombre_persona_autoriz,

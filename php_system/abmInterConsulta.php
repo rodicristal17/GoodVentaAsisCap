@@ -492,12 +492,11 @@
             $mencionesElemento= "";
             $menciones= array();
             
-            // Se obtienen los mensajes
+            // Se obtienen todas las menciones
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
                 'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
-                'sin_dictamen' => TRUE
             ));
 
             if (count($registrosMens) > 0) {
@@ -506,7 +505,8 @@
                 $paginaMensajes= "";
                 // Obtiene todas las menciones
                 $registrosMenc= obtenerMencion(array(
-                    'cod_mensajeFK' => $ultimoMensaje['cod_mensaje']
+                    'cod_mensajeFK' => $ultimoMensaje['cod_mensaje'],
+                    'estado' => 'activo'
                 ), 0);
     
                 foreach ($registrosMenc as $valueMenc) {
@@ -528,6 +528,14 @@
                     }
                 }
             }
+
+            // Se obtienen los mensajes sin dictamenes
+            $fechaActual= new DateTime();
+            $registrosMens= obtenerMensaje(array(
+                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
+                'sin_dictamen' => TRUE
+            ));
 
             // Se obtienen primero los dictamenes relacionados a esta interconsulta
             $registros_dictamenes= obtenerDictamen(array('cod_interConsultaFK' => $valueInter['cod_interConsulta']), 0);
@@ -678,10 +686,8 @@
                         <div class="interc-dictamen-chat-pane" data-role="dictamen-chat-panel" style="height: 500px;overflow-y: auto;">';
                 
                 if (count($registrosMens2) > $limiteMensajes) {
-                    $pagina .= obtenerBotonMasMensajesInterconsulta($limiteMensajes, $dictamen['id']); /*
-                        <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes, ".$dictamen['id'].")'>Ver más mensajes...</button>
-                        </div>";
-                */ }
+                    $pagina .= obtenerBotonMasMensajesInterconsulta($limiteMensajes, $dictamen['id']);
+                }
 
                 $pagina .= '<div data-role="dictamen-mensajes">'.$paginaMensajes.'</div>
                         </div>
@@ -722,9 +728,7 @@
                 <div data-role="dictamen-chat-panel">';
 
             if (count($registrosMens) > $limiteMensajes) {
-                $pagina .= "<div style='width: 100%; justify-content: center;'>
-                    <button class='btn btn-success' onclick='verMasMensajesInterconsulta($limiteMensajes, \"\")'>Ver más mensajes...</button>
-                    </div>";
+                $pagina .= obtenerBotonMasMensajesInterconsulta($limiteMensajes, "");
             }
             $pagina .= $paginaMensajes. '</div></div>';
 
@@ -981,37 +985,35 @@
             $miniatura_imagen= "";
             if ($valueMens['url']) {
                 $miniatura_imagen= '<div id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto" 
-                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" style="background-image: url('.$valueMens['url'].');margin-right: 5px;">
+                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" style="background-image: url('.$valueMens['url'].');margin-right: 0;flex-shrink: 0;">
                     </div>';
             }
             
             if (!$valueMens['cod_usuarioFK'] || $valueMens['cod_usuarioFK'] == "NULL") {
                 $colorTarjeta= "#EABA4C";
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: center;">
-                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;margin-left: 10px; margin-right: 10px;">
-                        <span></span>
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.' el '.$valueMens['fecha_creacion'].'</p>
+                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: center;margin: 0;">
+                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;margin: 4px 10px;display: flex;flex-direction: column;gap: 0;min-height: auto;">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="padding: 6px 10px;border-bottom: none;min-height: auto;">
+                            <p class="card-text" style="text-align: justify;margin: 0;line-height: 1.35;">'.$contenidoMensaje.' el '.$valueMens['fecha_creacion'].'</p>
                         </div>
                     </div>
                 </div>';
             } else {
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';">
-                        <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin-left: 10px; margin-right: 10px;">
-                          <span></span>
-                          <div class="card-header d-flex justify-content-between align-items-center">
-                              <div>
-                                <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="max-height: 30px;max-width: 35px;"/>
-                                <span>'.$valueMens['nombre_persona'].'</span>
+                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: '.$posicion.';margin: 0;">
+                        <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 500px;margin: 4px 10px;display: flex;flex-direction: column;gap: 0;min-height: auto;">
+                          <div class="card-header d-flex justify-content-between align-items-center" style="padding: 6px 10px 4px 10px;gap: 10px;min-height: auto;">
+                              <div style="display: flex;align-items: center;gap: 8px;">
+                                <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="height: 30px;width: 30px;border-radius: 50%;object-fit: cover;"/>
+                                <span style="font-size: 1rem;line-height: 1.15;">'.$valueMens['nombre_persona'].'</span>
                               </div>
-                              <small class="text-secondary">
-                                <input class="inputText" type="datetime-local" value="'.$valueMens['fecha_creacion'].'" disabled style="border: none;">
+                              <small class="text-secondary" style="display: block;line-height: 1.2;text-align: right;white-space: nowrap;">
+                                '.$valueMens['fecha_creacion'].'
                               </small>
                           </div>
-                          <div class="card-body">
-                              <div style="display: flex;">
+                          <div class="card-body" style="padding: 4px 10px 8px 10px;">
+                              <div style="display: flex;align-items: flex-start;gap: 8px;">
                                 '.$miniatura_imagen.'
-                                <p class="card-text" style="text-align: justify;">'.$contenidoMensaje.'</p>
+                                <p class="card-text" style="text-align: justify;margin: 0;line-height: 1.35;">'.$contenidoMensaje.'</p>
                               </div>
                           </div>
                         </div>

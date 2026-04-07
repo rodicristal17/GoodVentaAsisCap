@@ -744,6 +744,10 @@ function limpiarcamposMensaje() {
 
     contadorLongitudMensaje= 0;
     document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
+
+    // Limpiar campos dictamen
+    document.getElementById('dictamenAbmMensaje').value= "";
+    document.getElementById('inptAsuntoDictamenInterConsulta').value= "";
 }
 
 function subirImagenMensajeInterconsulta(cod_mens) {
@@ -890,8 +894,8 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     cod_interConsulta= codInterConsulta;
 
                     // Se asignan los datos del encabezado
-                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'];
-                    if (datos['4']['cod_ventaFK']) {
+                    document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'];console.info(datos['4'])
+                    if (datos['4']['cod_ventaFK'] && datos['4']['cod_ventaFK'] != 0) {
                         document.getElementById('tituloInterConsultas2').innerHTML += ' - ' + datos['4']['nombre_persona'];
                     }
                     document.getElementById('listadoMencionados').innerHTML= datos['6'];
@@ -1076,6 +1080,7 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                     const panelMensajes = elemContenedor.querySelector('[data-role="dictamen-chat-panel"]') || elemContenedor;
                     const listaMensajes = elemContenedor.querySelector('[data-role="dictamen-mensajes"]');
                     const botonExistente = elemContenedor.querySelector('[data-role="dictamen-boton-mas"]');
+                    console.info("botonExistente: ",botonExistente);
                     if (botonExistente) {
                         botonExistente.remove();
                     }
@@ -1539,9 +1544,11 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-                    document.getElementById('divListDetallesInterconsultasAsoc').style.display= "";
-                    document.getElementById('list_abm_interConsulta_asoc').innerHTML= datos["2"];
-                    document.getElementById('list_detalles_interconsultas_asoc').innerHTML= datos["2"];
+                    if (datos["2"]) {
+                        document.getElementById('divListDetallesInterconsultasAsoc').style.display= "";
+                        document.getElementById('list_abm_interConsulta_asoc').innerHTML= datos["2"];
+                        document.getElementById('list_detalles_interconsultas_asoc').innerHTML= datos["2"];
+                    }
                 } else {
                     throw new Error("Error producido en eliminarMencionMensaje de JavaScript.");
                 }
