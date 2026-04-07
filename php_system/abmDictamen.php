@@ -105,7 +105,7 @@
                     $pagina .= "</table>";
                 }
 
-                echo json_encode(array("1" => "exito", "2" => $registros, "3" => $pagina, "4" => $limite, "5" => $totalRegistros));
+                echo json_encode(array("1" => "exito", "2" => $registros, "3" => $pagina, "4" => count($registros), "5" => $totalRegistros));
                 break;
             case 'nuevo/editar dictamen':
                 $id= isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;

@@ -268,8 +268,6 @@ DELIMITER ;
 ALTER TABLE insumos_local ADD COLUMN estado_fisico ENUM('excelente', 'mantenimiento', 'dañado');
 ALTER TABLE insumos_local ADD COLUMN categoria ENUM('mobiliario', 'medico');
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.71', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
-
 CREATE TABLE dictamenes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     asunto VARCHAR(150) NOT NULL,
@@ -286,6 +284,8 @@ CREATE TABLE dictamenes (
 );
 
 ALTER TABLE mensaje ADD COLUMN cod_dictamenFK INT(11);
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.71', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

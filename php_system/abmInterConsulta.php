@@ -599,7 +599,7 @@
                                 align-items: center;
                                 text-align: end;
                                 gap: 12px;
-                                padding: 10px 18px;
+                                padding: 5px 18px;
                                 border-left: 1px solid #d9ceb6;
                                 justify-content: flex-end;
                                 background: rgba(255,255,255,0.18);
@@ -631,7 +631,7 @@
                             </div>
                         </div>
                         <div style="
-                            padding: 14px 20px 16px 20px;
+                            padding: 0px 5px 0px 5px;
                             color: #2d2a24;
                             text-align: start;
                             background: linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.08) 100%);
@@ -652,7 +652,7 @@
                                 <span>'.$dictamen['dictamen'].'</span>
                             </div>
                         </div>
-                        <div style="border-top: 1px solid #d9ceb6;text-align: start;padding: 10px;">
+                        <div style="border-top: 1px solid #d9ceb6;text-align: start;padding: 5px;">
                             <select class="form-select form-select-sm" style="width: 25%;" aria-label="Seleccionar dictamen" onchange="cod_dictamenSeleccionado='.$dictamen['id'].';abmDictamen(\'\',\'\',this.selectedOptions[0].value);">
                                 <option value="solicitado" '.($dictamen["estado"] == "solicitado" ? "selected" : "").'>SOLICITADO</option>
                                 <option value="autorizado" '.($dictamen["estado"] == "autorizado" ? "selected" : "").'>AUTORIZADO</option>
