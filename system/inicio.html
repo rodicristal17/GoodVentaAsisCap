@@ -52,6 +52,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmInterConsulta.js"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
+<script src="../js_system/abmDictamen.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -1554,6 +1555,21 @@ src='/GoodVentaAsisCap/iconos/report.png' />
 <p class='pTitulo4'>Informe de asistencia</p>
 <center>
 <div id='divMinimizadoInformeAsistencia' style='display:none'
+class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
+<table  class='divMenub' id='divMenuDictamenes'
+onclick='verCerrarInformeDictamen(true)' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/report.png' />
+<p class='pTitulo4'>Informe de dictamenes</p>
+<center>
+<div id='divMinimizadoInformeDictamen' style='display:none'
 class='divMinimizado'></div>
 </center>
 </td>
@@ -17442,6 +17458,221 @@ ZONA
 </table>
 </div>
 </center>
+</div>
+<div class="principal2" style="display: none;" id="divInformeDictamen">
+  <table style="width:100%;height:100%" id="tdEfectoInformeDictamen" class="magictime slideDownReturn">
+      <tr>
+        <td>
+          <center>
+            <div class="divPrincipalrepor">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Informe de <b style="font-size: 30px;">Dictamenes</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                        onclick="minimizarInformeDictamen()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="verCerrarInformeDictamen(false, false)">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <br>
+              <div class="divMenuf">
+                <table style="width:100%">
+                  <tbody>
+                    <tr>
+                      <td style="width:100%;text-align:right">
+                        <input type="button" style="margin-top: 17px;" value="Buscar" class="btn4"
+                          onclick="buscarInformeDictamenVista()">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="divMenuf" style="    width: 97%;">
+                <table class="tableCabeceraRegistro" id="tdTituloInformeDictamen">
+                  <tbody>
+                    <tr>
+                      <td class="td_registro" style="width:10%;">
+                        #
+                      </td>
+                      <td class="td_registro" style="width:20%;">
+                        ASUNTO
+                      </td>
+                      <td class="td_registro" style="width:20%;">
+                        INTERCONSULTA
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        ESTADO
+                      </td>
+                      <td class="td_registro" style="width:40%;">
+                        DICTAMEN
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="tableCabeceraRegistro">
+                  <tbody>
+                    <tr>
+                      <td class="td_registro" style="width:9%;">
+                        <input class="inputfiltro" type="number" id="inptInformeDictamen1" onkeyup="if(event.keyCode == 13){obtenerVistaInformeDictamen()}">
+                      </td>
+                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeDictamen1')"></td>
+                      <td class="td_registro" style="width:19%;">
+                        <input class="inputfiltro" type="text" id="inptInformeDictamen2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeDictamen()}">
+                      </td>
+                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeDictamen2')"></td>
+                      <td class="td_registro" style="width:19%;">
+                        <input class="inputfiltro" type="text" id="inptInformeDictamen3" onkeyup="if(event.keyCode == 13){obtenerVistaInformeDictamen()}">
+                      </td>
+                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeDictamen3')"></td>
+                      <td class="td_registro" style="width:10%;">
+                        <select id="inptInformeDictamen4">
+                              <option value="">SELECCIONAR</option>
+                              <option value="solicitado">SOLICITADO</option>
+                              <option value="autorizado">AUTORIZADO</option>
+                              <option value="ejecutado">EJECUTADO</option>
+                          </select>
+                      </td>
+                      <td class="td_registro" style="width:40%;">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="divTablesScrool" style="height: 300px;">
+                  <div class="div_cuerpo_table" id="table_InformeDictamen"
+                    style="height: auto;border:none;width: 100%;">
+                  </div>
+                </div>
+                <table style='width:100%;height:50px;display:none' id='tbProcessInformeDictamen'>
+                <tr>
+                <td  style='width:90%'>
+                <div class='divprogreso1'><div class='divprogreso2' id='divProgressInformeDictamen'></div></div>
+                </td>
+                <td style='width:10%;text-align:center'>
+                <input  type="button" value="Cancelar" class="btn4" onclick="cancelarInformeDictamen()" style="width:100px;background-color:rgb(58 58 58)">
+                </td>
+                </tr>
+                </table>
+                <br>
+                <div class="divMenuf" style="width:100%">
+                  <table style="width:98%">
+                    <tbody>
+                      <tr>
+                        <td style="width:15%;text-align:left">
+                          <p class="pTituloC">Total Registro:</p>
+                          <input class="inputTextDisable" type="text" disabled="" id="inptTotalRegistoInformeDictamen"
+                            style="width:120px;text-align:center">
+                        </td>
+                        <td style="width:85%;text-align:left">
+                          <input id="btnAuditoriaInformeDictamen" type="button" value="Auditoria" class="btn5" onclick="verCerrarInformeDictamen(true, true)" style="background-color: rgb(204, 204, 204);">
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </center>
+          <center>
+            <div class="principal2" style="display: none;" id="divInformeAuditoriaDictamen">
+              <table style="width:100%;height:100%" id="tdEfectoInformeAuditoriaDictamen" class="magictime slideDownReturn">
+                  <tr>
+                    <td>
+                      <center>
+                        <div class="divAbms" style="width: 368px;min-height:400px;">
+                          <table class="tableMenuZ">
+                              <tr>
+                                <td style="width:100%">
+                                  <p class="pTituloB">Auditoria</p>
+                                </td>
+                                <td style="width:5%">
+                                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                                    onclick="verCerrarInformeDictamen(false, true)">
+                                </td>
+                              </tr>
+                          </table>
+                          <br>    
+                          <center>
+                            <div class="divMenuf">
+                              <table style="width:100%">
+                                <tr>
+                                  <td>
+                                    <p class="pTituloC">Emitido por:</p>
+                                    <input type="text" class="inputTextDisable" style="width:250px" id="inptDictamenUsuarioEmitidoPor"
+                                      disabled="">
+                                  </td>
+                                </tr>
+                              </table>
+                              <br>
+                              <table style="width:100%">
+                                <tr>
+                                  <td>
+                                    <p class="pTituloC">Fecha Emitido :</p>
+                                    <input type="text" class="inputTextDisable" style="width:250px" id="inptDictamenFechaEmitidoPor"
+                                      disabled="">
+                                  </td>
+                                </tr>
+                              </table>
+                              <br>
+                              <table style="width:100%">
+                                <tr>
+                                  <td>
+                                    <p class="pTituloC">Autorizado por:</p>
+                                    <input type="text" class="inputTextDisable" style="width:250px" id="inptDictamenUsuarioAutorizadoPor"
+                                      disabled="">
+                                  </td>
+                                </tr>
+                              </table>
+                              <br>
+                              <table style="width:100%">
+                                <tr>
+                                  <td>
+                                    <p class="pTituloC">Fecha Autorizado :</p>
+                                    <input type="text" class="inputTextDisable" style="width:250px" id="inptDictamenFechaAutorizadoPor"
+                                      disabled="">
+                                  </td>
+                                </tr>
+                              </table>
+                              <br>
+                              <table style="width:100%">
+                                <tr>
+                                  <td>
+                                    <p class="pTituloC">Ejecutado por:</p>
+                                    <input type="text" class="inputTextDisable" style="width:250px" id="inptDictamenUsuarioEjecutadoPor"
+                                      disabled="">
+                                  </td>
+                                </tr>
+                              </table>
+                              <br>
+                              <table style="width:100%">
+                                <tr>
+                                  <td>
+                                    <p class="pTituloC">Fecha Ejecutado :</p>
+                                    <input type="text" class="inputTextDisable" style="width:250px" id="inptDictamenFechaEjecutadoPor"
+                                      disabled="">
+                                  </td>
+                                </tr>
+                              </table>
+                            </div>
+                          </center>    
+                        </div>
+                      </center>
+                    </td>
+                  </tr>
+              </table>
+            </div>
+          </center>
+        </td>
+      </tr>
+  </table>
 </div>
 <div class="principal2" style="display: none;" id="divInformeAsistencia">
   <table style="width:100%;height:100%" id="tdEfectoInformeAsistenca" class="magictime slideDownReturn">
