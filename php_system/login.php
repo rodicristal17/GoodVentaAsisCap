@@ -1,8 +1,8 @@
 <?php
 
-
 //cargar achivos importantes
-require("conexion.php");
+require_once("conexion.php");
+require_once("eventos_iniciales.php");
 
 function verificar()
 {
@@ -43,9 +43,8 @@ if ( ! $stmt->execute()) {
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		   $iduser=$valor['cod_usuario'];
+		   ejecutarManualmenteEvento('actualizar_gastos_pendientes');
 		  cargar_datos_de_seguridad($iduser,$navegador);
-		  
-		      
 			  
 	  }
  }else{

@@ -4,6 +4,7 @@
     include_once("buscar_nivel.php");
     include_once("classTable.php");
     include_once("subir_foto_base64.php");
+    include_once("abmInterConsulta.php");
 
     date_default_timezone_set('America/Asuncion');
 

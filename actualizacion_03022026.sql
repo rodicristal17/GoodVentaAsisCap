@@ -59,41 +59,6 @@ UPDATE gastos_fijos SET estado="inactivo" WHERE cod_gastos_fijos IS NOT NULL;
 ALTER TABLE interconsulta ADD COLUMN fecha_vencimiento DATE;
 ALTER TABLE interconsulta ADD COLUMN monto_limite INT;
 
-SET GLOBAL event_scheduler = ON;
-
-DELIMITER $$
-
-DROP EVENT IF EXISTS generar_mensajes_interconsulta_vencimiento$$
-CREATE EVENT generar_mensajes_interconsulta_vencimiento
-ON SCHEDULE EVERY 1 DAY
-STARTS CURDATE()
-DO
-BEGIN
-    -- Marcar como no leídas las menciones del último mensaje
-    UPDATE menciones m
-    JOIN mensaje msg ON m.cod_mensajeFK = msg.cod_mensaje
-    JOIN (
-        -- Subconsulta que obtiene el cod_mensaje del último mensaje de cada interconsulta vencida
-        SELECT 
-            ic.cod_interConsulta,
-            MAX(msg_inner.cod_mensaje) AS ultimo_cod_mensaje
-        FROM interconsulta ic
-        JOIN mensaje msg_inner ON msg_inner.cod_interConsultaFK = ic.cod_interConsulta
-        WHERE ic.fecha_vencimiento = CURDATE()
-        AND msg_inner.fecha_creacion <= NOW()
-        GROUP BY ic.cod_interConsulta
-        HAVING MAX(msg_inner.fecha_creacion) = (
-            SELECT MAX(msg_max.fecha_creacion)
-            FROM mensaje msg_max
-            WHERE msg_max.cod_interConsultaFK = ic.cod_interConsulta
-            AND msg_max.fecha_creacion <= NOW()
-        )
-    ) ultimos ON msg.cod_mensaje = ultimos.ultimo_cod_mensaje
-    SET m.isLeido = 0;
-END$$
-
-DELIMITER ;
-
 ALTER TABLE interconsulta DROP COLUMN fecha_vencimiento;
 
 ALTER TABLE mensaje DROP FOREIGN KEY mensaje_ibfk_2;
@@ -286,6 +251,63 @@ CREATE TABLE dictamenes (
 ALTER TABLE mensaje ADD COLUMN cod_dictamenFK INT(11);
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.71', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS generar_mensajes_interconsulta_vencimiento$$
+CREATE PROCEDURE generar_mensajes_interconsulta_vencimiento()
+BEGIN
+    -- Marcar como no leídas las menciones del último mensaje
+    UPDATE menciones m
+    JOIN mensaje msg ON m.cod_mensajeFK = msg.cod_mensaje
+    JOIN (
+        SELECT 
+            ic.cod_interConsulta,
+            MAX(msg_inner.cod_mensaje) AS ultimo_cod_mensaje
+        FROM interconsulta ic
+        JOIN mensaje msg_inner ON msg_inner.cod_interConsultaFK = ic.cod_interConsulta
+        WHERE ic.fecha_vencimiento = CURDATE()
+        AND msg_inner.fecha_creacion <= NOW()
+        GROUP BY ic.cod_interConsulta
+        HAVING MAX(msg_inner.fecha_creacion) = (
+            SELECT MAX(msg_max.fecha_creacion)
+            FROM mensaje msg_max
+            WHERE msg_max.cod_interConsultaFK = ic.cod_interConsulta
+            AND msg_max.fecha_creacion <= NOW()
+        )
+    ) ultimos ON msg.cod_mensaje = ultimos.ultimo_cod_mensaje
+    SET m.isLeido = 0;
+END$$
+
+DELIMITER ;
+SET GLOBAL event_scheduler = ON;
+DROP EVENT IF EXISTS generar_mensajes_interconsulta_vencimiento_evento;
+CREATE EVENT generar_mensajes_interconsulta_vencimiento_evento
+ON SCHEDULE EVERY 1 DAY
+STARTS CURDATE()
+DO
+    CALL generar_mensajes_interconsulta_vencimiento();
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS actualizar_gastos_pendientes$$
+CREATE PROCEDURE actualizar_gastos_pendientes()
+BEGIN
+    UPDATE gastos
+    SET estado = 'solicitado'
+    WHERE fecha <= CURDATE()
+      AND estado = 'pendiente';
+END$$
+
+DELIMITER ;
+
+DROP EVENT IF EXISTS actualizar_estado_gastos_by_fecha;
+CREATE EVENT actualizar_estado_gastos_by_fecha
+ON SCHEDULE EVERY 1 DAY
+STARTS CURDATE()
+DO
+    CALL actualizar_gastos_pendientes();
+
+DELIMITER $$
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
