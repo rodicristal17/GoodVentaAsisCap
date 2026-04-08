@@ -47,6 +47,15 @@ switch ($funt) {
 	case 'actualizarEstadoCita':
 		actualizarEstadoCita($mysqli, $useru);
 		break;
+		
+	case 'buscarPacientesAgenda':
+		buscarPacientesAgenda($mysqli);
+		break;
+
+	case 'guardarPacienteAgenda':
+		guardarPacienteAgenda($mysqli, $useru);
+		break;
+		
 
     default:
         echo json_encode(array("1" => "Función inválida"));
@@ -58,6 +67,237 @@ exit;
 /* =========================================================
    FUNCIONES
 ========================================================= */
+
+
+function buscarPacientesAgenda($mysqli){
+    $buscar = isset($_POST['buscar']) ? limpiar($mysqli, $_POST['buscar']) : '';
+
+    $condicion = "";
+    if($buscar != ''){
+        $condicion = " AND (
+            p.nombre_persona LIKE '%".$buscar."%' OR
+            c.ci_cliente LIKE '%".$buscar."%' OR
+            p.telefono LIKE '%".$buscar."%'
+        )";
+    }
+
+    $sql = "SELECT
+                p.cod_persona,
+                p.nombre_persona,
+                IFNULL(c.ci_cliente,'') AS documento,
+                IFNULL(p.telefono,'') AS telefono
+            FROM persona p inner join cliente c on cod_persona=cod_cliente
+            WHERE 1=1
+            ".$condicion."
+            ORDER BY p.nombre_persona ASC
+            LIMIT 100";
+
+    $result = $mysqli->query($sql);
+
+    if(!$result){
+        echo json_encode(array(
+            "1" => "Error",
+            "2" => $mysqli->error
+        ));
+        exit;
+    }
+
+    $html = "<table class='tableRegistroSearch' style='width:100%;'>";
+    $html .= "<tr class='td_registro2'>
+                <td style='width:15%;'>ID</td>
+                <td style='width:45%;'>PACIENTE</td>
+                <td style='width:20%;'>DOCUMENTO</td>
+                <td style='width:20%;'>TELÉFONO</td>
+              </tr>";
+
+    while($row = $result->fetch_assoc()){
+        $nombre = utf8_encode($row["nombre_persona"]);
+
+        $html .= "<tr class='tr_registro' style='cursor:pointer;' onclick=\"seleccionarPacienteAgenda('".$row["cod_persona"]."', '".addslashes($nombre)."')\">";
+        $html .= "<td>".$row["cod_persona"]."</td>";
+        $html .= "<td>".$nombre."</td>";
+        $html .= "<td>".$row["documento"]."</td>";
+        $html .= "<td>".$row["telefono"]."</td>";
+        $html .= "</tr>";
+    }
+
+    $html .= "</table>";
+
+    echo json_encode(array(
+        "1" => "exito",
+        "2" => $html
+    ));
+    exit;
+}
+
+ 
+function guardarPacienteAgenda($mysqli, $useru){
+    $nombre = isset($_POST['nombre']) ? limpiar($mysqli, $_POST['nombre']) : '';
+    $documento = isset($_POST['documento']) ? limpiar($mysqli, $_POST['documento']) : '';
+    $telefono = isset($_POST['telefono']) ? limpiar($mysqli, $_POST['telefono']) : '';
+    $direccion = isset($_POST['direccion']) ? limpiar($mysqli, $_POST['direccion']) : '';
+
+    if($nombre == ''){
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "Debe cargar el nombre del paciente"
+        ));
+        exit;
+    }
+	 
+    if($documento != ''){
+        $sqlVerificar = "SELECT cod_cliente 
+                         FROM cliente
+                         WHERE ci_cliente = '".$documento."'
+                         LIMIT 1";
+
+        $resultVerificar = $mysqli->query($sqlVerificar);
+
+        if(!$resultVerificar){
+            echo json_encode(array(
+                "1" => "Error",
+                "mensaje" => "No se pudo verificar si el paciente ya existe",
+                "sql" => $sqlVerificar,
+                "mysql" => $mysqli->error
+            ));
+            exit;
+        }
+
+        if($resultVerificar->num_rows > 0){
+            $rowExiste = $resultVerificar->fetch_assoc();
+
+            echo json_encode(array(
+                "1" => "Error",
+                "mensaje" => "Ya existe un paciente con ese documento",
+                "id_paciente" => $rowExiste["cod_cliente"] 
+            ));
+            exit;
+        }
+    }
+
+	
+	
+
+    mysqli_begin_transaction($mysqli);
+
+    try {
+        $sqlPersona = "INSERT INTO persona (
+                            nombre_persona, 
+                            telefono,
+                            direccion 
+                        ) VALUES (
+                            '".$nombre."', 
+                            '".$telefono."',
+                            '".$direccion."' 
+                        )";
+
+        if(!$mysqli->query($sqlPersona)){
+            throw new Exception("Error al guardar en persona: ".$mysqli->error);
+        }
+
+        $idPersona = $mysqli->insert_id;
+
+        $sqlCliente = "INSERT INTO cliente (
+                            cod_cliente,
+							ci_cliente,
+                            estado,
+                            cod_user_insert,
+                            fecha_insert,
+							idzonaFk
+                        ) VALUES (
+                            '".$idPersona."',
+							'".$documento."',
+                            'Activo',
+                            '".$useru."',
+                            NOW(),
+							0
+                        )";
+
+        if(!$mysqli->query($sqlCliente)){
+            throw new Exception("Error al guardar en cliente: ".$mysqli->error);
+        }
+
+        mysqli_commit($mysqli);
+
+        echo json_encode(array(
+            "1" => "exito",
+            "mensaje" => "Paciente guardado correctamente",
+            "id_paciente" => $idPersona,
+            "nombre_paciente" => $nombre
+        ));
+        exit;
+
+    } catch (Exception $e) {
+        mysqli_rollback($mysqli);
+
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => $e->getMessage()
+        ));
+        exit;
+    }
+}
+
+
+
+
+
+function guardarCita($mysqli, $useru){
+    $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
+    $consultorio = isset($_POST['consultorio']) ? limpiar($mysqli, $_POST['consultorio']) : '';
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $inicio = isset($_POST['inicio']) ? limpiar($mysqli, $_POST['inicio']) : '';
+    $fin = isset($_POST['fin']) ? limpiar($mysqli, $_POST['fin']) : '';
+    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : 'AGENDADO';
+    $motivo = isset($_POST['motivo']) ? limpiar($mysqli, $_POST['motivo']) : '';
+
+    if($paciente == '' || $consultorio == '' || $fecha == '' || $inicio == '' || $fin == ''){
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "Faltan datos obligatorios"
+        ));
+        exit;
+    }
+
+    $sql = "INSERT INTO agenda (
+                id_paciente,
+                id_consultorio,
+                fecha,
+                hora_inicio,
+                hora_fin,
+                estado,
+                motivo,
+                creado_por,
+                creado_en
+            ) VALUES (
+                '".$paciente."',
+                '".$consultorio."',
+                '".$fecha."',
+                '".$inicio."',
+                '".$fin."',
+                '".$estado."',
+                '".$motivo."',
+                '".$useru."',
+                NOW()
+            )";
+
+    if(!$mysqli->query($sql)){
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudo guardar la cita",
+            "sql" => $sql,
+            "mysql" => $mysqli->error
+        ));
+        exit;
+    }
+
+    echo json_encode(array(
+        "1" => "exito",
+        "mensaje" => "Cita guardada correctamente"
+    ));
+    exit;
+}
+
 
 
 function actualizarEstadoCita($mysqli, $useru){
@@ -98,12 +338,7 @@ function actualizarEstadoCita($mysqli, $useru){
     exit;
 }
 
-
-
-
-
-
-
+ 
 
 function limpiar($mysqli, $valor){
     return mysqli_real_escape_string($mysqli, trim($valor));
@@ -129,7 +364,7 @@ function cargarAgenda($mysqli){
             c.color
         FROM consultorios c
         WHERE  c.estado = 'Activo'
-        ORDER BY c.nombre ASC ";
+        ORDER BY cod_localFk asc ,c.nombre ASC ";
 
     $resultConsultorios = $mysqli->query($sqlConsultorios);
 
@@ -200,60 +435,7 @@ function cargarAgenda($mysqli){
     exit;
 }
 
-function guardarCita($mysqli, $useru){
-    $consultorio = isset($_POST['consultorio']) ? limpiar($mysqli, $_POST['consultorio']) : '';
-    $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
-    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
-    $inicio = isset($_POST['inicio']) ? limpiar($mysqli, $_POST['inicio']) : '';
-    $fin = isset($_POST['fin']) ? limpiar($mysqli, $_POST['fin']) : '';
-    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : 'AGENDADO';
-    $motivo = isset($_POST['motivo']) ? limpiar($mysqli, $_POST['motivo']) : '';
-
-    if ($consultorio == '' || $paciente == '' || $fecha == '' || $inicio == '' || $fin == '') {
-        echo json_encode(array("1" => "Faltan datos obligatorios"));
-        exit;
-    }
-
-    $sql = "
-        INSERT INTO agenda_consultorios (
-            cod_consultorioFK,
-            cod_pacienteFK,
-            fecha,
-            hora_inicio,
-            hora_fin,
-            estado,
-            motivo,
-            usuario,
-            fechainsert
-        ) VALUES (
-            '".$consultorio."',
-            '".$paciente."',
-            '".$fecha."',
-            '".$inicio."',
-            '".$fin."',
-            '".$estado."',
-            '".$motivo."',
-            '".$useru."',
-            NOW()
-        )
-    ";
-
-    if (!$mysqli->query($sql)) {
-        echo json_encode(array(
-            "1" => "Error al guardar cita",
-            "sql" => $sql,
-            "mysql" => $mysqli->error
-        ));
-        exit;
-    }
-
-    echo json_encode(array(
-        "1" => "exito",
-        "mensaje" => "Cita guardada correctamente"
-    ));
-    exit;
-}
-
+ 
 function moverCita($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
     $id_consultorio = isset($_POST['id_consultorio']) ? limpiar($mysqli, $_POST['id_consultorio']) : '';
@@ -330,4 +512,198 @@ function redimensionarCita($mysqli, $useru){
 }
 
 
+
+
+
+
+
+
+
+ 
+ 
+
+function cargarpacientes($mysqli){
+    $html = "";
+
+    $sql = "SELECT cod_persona, nombre_persona
+            FROM persona
+            WHERE IFNULL(nombre_persona,'') != ''
+            ORDER BY nombre_persona ASC";
+
+    $result = $mysqli->query($sql);
+
+    if(!$result){
+        echo json_encode(array("1" => "Error", "2" => $mysqli->error));
+        exit;
+    }
+
+    while($row = $result->fetch_assoc()){
+        $html .= "<option data-id='".$row["cod_persona"]."' value='".utf8_encode($row["nombre_persona"])."'></option>";
+    }
+
+    echo json_encode(array("exito" => "1", "2" => $html));
+    exit;
+}
+
+function cargarespecialistas($mysqli){
+    $html = "";
+
+    $sql = "SELECT cod_consultorio, nombre
+            FROM consultorio
+            WHERE estado = 'Activo'
+            ORDER BY nombre ASC";
+
+    $result = $mysqli->query($sql);
+
+    if(!$result){
+        echo json_encode(array("1" => "Error", "2" => $mysqli->error));
+        exit;
+    }
+
+    while($row = $result->fetch_assoc()){
+        $html .= "<option data-id='".$row["cod_consultorio"]."' value='".utf8_encode($row["nombre"])."'></option>";
+    }
+
+    echo json_encode(array("1" => "exito", "2" => $html));
+    exit;
+}
+
+function guardarAgendamiento($mysqli, $useru){
+    $id = isset($_POST['id_agendamiento']) ? limpiar($mysqli, $_POST['id_agendamiento']) : '';
+    $id_paciente = isset($_POST['id_paciente']) ? limpiar($mysqli, $_POST['id_paciente']) : '';
+    $id_especialista = isset($_POST['id_especialista']) ? limpiar($mysqli, $_POST['id_especialista']) : '';
+    $fecha_recepcion = isset($_POST['fecha_recepcion']) ? limpiar($mysqli, $_POST['fecha_recepcion']) : '';
+    $fecha_consulta = isset($_POST['fecha_consulta']) ? limpiar($mysqli, $_POST['fecha_consulta']) : '';
+    $observacion = isset($_POST['observacion']) ? limpiar($mysqli, $_POST['observacion']) : '';
+
+    if($id_paciente == '' || $id_especialista == '' || $fecha_recepcion == '' || $fecha_consulta == ''){
+        echo json_encode(array("1" => "Error", "2" => "Faltan datos obligatorios"));
+        exit;
+    }
+
+    if($id == ''){
+        $sql = "INSERT INTO agendamiento (
+                    cod_pacienteFK,
+                    cod_consultorioFK,
+                    fecha_recepcion,
+                    fecha_consulta,
+                    observacion,
+                    estado,
+                    usuario,
+                    fechainsert
+                ) VALUES (
+                    '".$id_paciente."',
+                    '".$id_especialista."',
+                    '".$fecha_recepcion."',
+                    '".$fecha_consulta."',
+                    '".$observacion."',
+                    'Pendiente',
+                    '".$useru."',
+                    NOW()
+                )";
+    }else{
+        $sql = "UPDATE agendamiento SET
+                    cod_pacienteFK = '".$id_paciente."',
+                    cod_consultorioFK = '".$id_especialista."',
+                    fecha_recepcion = '".$fecha_recepcion."',
+                    fecha_consulta = '".$fecha_consulta."',
+                    observacion = '".$observacion."'
+                WHERE cod_agendamiento = '".$id."'
+                LIMIT 1";
+    }
+
+    if(!$mysqli->query($sql)){
+        echo json_encode(array("1" => "Error", "2" => $mysqli->error, "sql" => $sql));
+        exit;
+    }
+
+    echo json_encode(array("1" => "exito", "2" => "Guardado correctamente"));
+    exit;
+}
+
+function buscarAgendamiento($mysqli){
+    $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
+    $especialista = isset($_POST['especialista']) ? limpiar($mysqli, $_POST['especialista']) : '';
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+
+    $condPaciente = "";
+    $condEspecialista = "";
+    $condFecha = "";
+
+    if($paciente != ''){
+        $condPaciente = " AND p.nombre_persona LIKE '%".$paciente."%'";
+    }
+
+    if($especialista != ''){
+        $condEspecialista = " AND c.nombre LIKE '%".$especialista."%'";
+    }
+
+    if($fecha != ''){
+        $condFecha = " AND a.fecha_consulta = '".$fecha."'";
+    }
+
+    $sql = "SELECT
+                a.cod_agendamiento,
+                a.cod_pacienteFK,
+                a.cod_consultorioFK,
+                a.fecha_recepcion,
+                a.fecha_consulta,
+                a.observacion,
+                a.estado,
+                p.nombre_persona AS paciente,
+                c.nombre AS especialista
+            FROM agendamiento a
+            INNER JOIN persona p ON p.cod_persona = a.cod_pacienteFK
+            INNER JOIN consultorio c ON c.cod_consultorio = a.cod_consultorioFK
+            WHERE 1=1
+            ".$condPaciente."
+            ".$condEspecialista."
+            ".$condFecha."
+            ORDER BY a.cod_agendamiento DESC";
+
+    $result = $mysqli->query($sql);
+
+    if(!$result){
+        echo json_encode(array("1" => "Error", "2" => $mysqli->error, "sql" => $sql));
+        exit;
+    }
+
+    $html = "<table class='tableRegistroSearch'>";
+
+    while($row = $result->fetch_assoc()){
+        $estadoColor = "#ffc107";
+
+        if($row["estado"] == "Confirmado"){
+            $estadoColor = "#32c782";
+        }else if($row["estado"] == "Cancelado"){
+            $estadoColor = "#858585";
+        }
+
+        $html .= "<tr class='tr_registro' "
+            . "data-id='".$row["cod_agendamiento"]."' "
+            . "data-id-paciente='".$row["cod_pacienteFK"]."' "
+            . "data-id-especialista='".$row["cod_consultorioFK"]."' "
+            . "data-paciente=\"".utf8_encode($row["paciente"])."\" "
+            . "data-especialista=\"".utf8_encode($row["especialista"])."\" "
+            . "data-fecha-recepcion='".$row["fecha_recepcion"]."' "
+            . "data-fecha-consulta='".$row["fecha_consulta"]."' "
+            . "data-observacion=\"".utf8_encode($row["observacion"])."\" "
+            . "onclick='seleccionarAgendamiento(this)'>";
+
+        $html .= "<td style='width:5%;'>".$row["cod_agendamiento"]."</td>";
+        $html .= "<td style='width:25%;'>".utf8_encode($row["paciente"])."</td>";
+        $html .= "<td style='width:30%;'>".utf8_encode($row["especialista"])."</td>";
+        $html .= "<td style='width:25%;'>".$row["fecha_consulta"]."</td>";
+        $html .= "<td style='width:15%; color:#fff; background:".$estadoColor.";'>".$row["estado"]."</td>";
+        $html .= "</tr>";
+    }
+
+    $html .= "</table>";
+
+    echo json_encode(array("1" => "exito", "2" => $html));
+    exit;
+}
 ?>
+
+
+ 

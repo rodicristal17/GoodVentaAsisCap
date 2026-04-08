@@ -615,3 +615,35 @@
 .redimensionando-evento{
     opacity:0.95;
 }
+
+.campo-con-botones-agenda{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+.campo-con-botones-agenda input{
+    flex:1;
+}
+
+.agenda-hora-almuerzo{
+    background:#fff3cd !important;
+    color:#856404 !important;
+    font-weight:bold;
+}
+
+.agenda-slot-almuerzo{
+    background:#fff8db !important;
+    position:relative;
+}
+
+.agenda-slot-almuerzo:before{
+    content:'Hora de almuerzo';
+    position:absolute;
+    top:4px;
+    right:6px;
+    font-size:10px;
+    color:#856404;
+    opacity:0.7;
+    pointer-events:none;
+}

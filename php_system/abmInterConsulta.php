@@ -392,18 +392,18 @@
         abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], NULL, 'inactivo', NULL, NULL, NULL, $cod_usuarioFK, $registroInterc['cod_localFK'], NULL);
     }
 
-    function escaparHtmlInterconsulta($texto) {
-        return htmlspecialchars((string)($texto ?? ''), ENT_QUOTES, 'UTF-8');
+  function escaparHtmlInterconsulta($texto) {
+    return htmlspecialchars((string)(isset($texto) ? $texto : ''), ENT_QUOTES, 'UTF-8');
+}
+
+function convertirTextoDocumentoInterconsulta($texto) {
+    $texto = trim((string)(isset($texto) ? $texto : ''));
+    if ($texto === '') {
+        return '<span style="color: #8b7b5c;">Sin contenido cargado.</span>';
     }
 
-    function convertirTextoDocumentoInterconsulta($texto) {
-        $texto = trim((string)($texto ?? ''));
-        if ($texto === '') {
-            return '<span style="color: #8b7b5c;">Sin contenido cargado.</span>';
-        }
-
-        return nl2br(escaparHtmlInterconsulta($texto), false);
-    }
+    return nl2br(escaparHtmlInterconsulta($texto), false);
+}
 
     function obtenerBotonMasMensajesInterconsulta($offset, $cod_dictamen = '') {
         $cod_dictamen = $cod_dictamen === null ? '' : (string)$cod_dictamen;
@@ -416,13 +416,17 @@
 
     function obtenerVistaDocumentoDictamenInterconsulta($dictamen, $interconsulta, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor) {
         $estadoFondo = 'rgba(184, 134, 11, 0.14)';
-        if (($dictamen['estado'] ?? '') == 'aprobado') {
-            $estadoFondo = 'rgba(47, 111, 62, 0.14)';
-        } else if (($dictamen['estado'] ?? '') == 'ejecutado') {
-            $estadoFondo = 'rgba(31, 78, 121, 0.14)';
-        } else if (($dictamen['estado'] ?? '') == 'inactivo') {
-            $estadoFondo = 'rgba(122, 122, 122, 0.16)';
-        }
+        $estado = isset($dictamen['estado']) ? $dictamen['estado'] : '';
+
+		if ($estado == 'aprobado') {
+			$estadoFondo = 'rgba(47, 111, 62, 0.14)';
+		} else if ($estado == 'ejecutado') {
+			$estadoFondo = 'rgba(31, 78, 121, 0.14)';
+		} else if ($estado == 'inactivo') {
+			$estadoFondo = 'rgba(122, 122, 122, 0.16)';
+		} else {
+			$estadoFondo = '';
+		}
 
         $asunto = escaparHtmlInterconsulta($dictamen['asunto']);
         $contenido = convertirTextoDocumentoInterconsulta($dictamen['dictamen']);

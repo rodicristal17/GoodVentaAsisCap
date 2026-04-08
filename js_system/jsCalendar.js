@@ -159,6 +159,9 @@ function cargarAgendaConsultorios(){
     var consultorios = [];
     var i, j, hora;
     var html = '';
+    var esHoraAlmuerzo = false;
+    var claseHora = '';
+    var claseSlot = '';
 
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
         if(consultorioFiltro === '' || String(agendaConsultoriosData.consultorios[i].id) === String(consultorioFiltro)){
@@ -170,7 +173,6 @@ function cargarAgendaConsultorios(){
     html += "<div class='agenda-celda-hora-header'>Hora</div>";
 
     for(i = 0; i < consultorios.length; i++){
-
         html += "<div class='agenda-celda-consultorio'>"
             + consultorios[i].nombre
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
@@ -180,11 +182,16 @@ function cargarAgendaConsultorios(){
     html += "</div>";
 
     for(hora = 7; hora <= 22; hora++){
+        esHoraAlmuerzo = (hora >= 12 && hora < 14);
+
+        claseHora = esHoraAlmuerzo ? " agenda-hora-almuerzo" : "";
+        claseSlot = esHoraAlmuerzo ? " agenda-slot-almuerzo" : "";
+
         html += "<div class='agenda-row' style='--total-consultorios:" + consultorios.length + "'>";
-        html += "<div class='agenda-hora'>" + completarHora(hora) + ":00</div>";
+        html += "<div class='agenda-hora" + claseHora + "'>" + completarHora(hora) + ":00</div>";
 
         for(j = 0; j < consultorios.length; j++){
-            html += "<div class='agenda-slot' "
+            html += "<div class='agenda-slot" + claseSlot + "' "
                 + "data-consultorio='" + consultorios[j].id + "' "
                 + "data-fecha='" + fecha + "' "
                 + "data-hora='" + completarHora(hora) + ":00'"
@@ -201,7 +208,6 @@ function cargarAgendaConsultorios(){
     actualizarResumenFiltrosAgenda();
     inicializarDragAndDropAgenda();
 }
-
 function pintarEventosAgenda(fecha, estado, consultorioFiltro){
     var slots = document.querySelectorAll('.agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
@@ -1086,6 +1092,250 @@ function actualizarEstadoAgendaServidor(idAgenda, nuevoEstado){
                 var titulo = "Error actualizar estado agenda: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
                 console.log(responseText);
+            }
+        }
+    });
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+function guardarCitaAgenda(){
+    obtener_datos_user();
+
+    var paciente = document.getElementById('inptIdPacienteAgenda').value;
+    var consultorio = document.getElementById('inptConsultorioAgenda').value;
+    var fecha = document.getElementById('inptFechaNuevaCita').value;
+    var inicio = document.getElementById('inptHoraInicioAgenda').value;
+    var fin = document.getElementById('inptHoraFinAgenda').value;
+    var estado = document.getElementById('inptEstadoNuevaCita').value;
+    var motivo = document.getElementById('inptMotivoAgenda').value;
+
+    if(paciente == ''){
+    alert('Debe seleccionar un paciente');
+    return;
+}
+
+    if(consultorio == ''){
+        alert('Debe seleccionar el consultorio');
+        return;
+    }
+
+    if(fecha == ''){
+        alert('Debe cargar la fecha');
+        return;
+    }
+
+    if(inicio == ''){
+        alert('Debe cargar la hora de inicio');
+        return;
+    }
+
+    if(fin == ''){
+        alert('Debe cargar la hora de fin');
+        return;
+    }
+
+    if(horaAMinutos(fin) <= horaAMinutos(inicio)){
+        alert('La hora fin debe ser mayor a la hora inicio');
+        return;
+    }
+
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "paciente": paciente,
+        "consultorio": consultorio,
+        "fecha": fecha,
+        "inicio": inicio,
+        "fin": fin,
+        "estado": estado,
+        "motivo": motivo,
+        "funt": "guardarCita"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        beforeSend: function () {
+        },
+        error: function (jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function (responseText) {
+            try {
+                var resp = responseText;
+
+                if(typeof responseText === "string"){
+                    resp = $.parseJSON(responseText);
+                }
+
+                var Respuesta = resp["1"];
+                Respuesta = respuestaJqueryAjax(Respuesta);
+
+                if(Respuesta == true){
+                    cerrarModalNuevaCita();
+                    limpiarFormularioNuevaCita();
+                    cargarAgendaConsultoriosDesdePHP();
+                }else{
+                    alert(resp["mensaje"] || "No se pudo guardar la cita");
+                }
+            } catch (error) {
+                var titulo = "Error guardarCitaAgenda: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+                console.log(responseText);
+            }
+        }
+    });
+}
+
+function limpiarFormularioNuevaCita(){
+    document.getElementById('inptPacienteAgenda').value = '';
+    document.getElementById('inptConsultorioAgenda').value = '';
+    document.getElementById('inptFechaNuevaCita').value = '';
+    document.getElementById('inptHoraInicioAgenda').value = '';
+    document.getElementById('inptHoraFinAgenda').value = '';
+    document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
+    document.getElementById('inptMotivoAgenda').value = '';
+}
+
+
+
+
+
+function abrirModalBuscarPacienteAgenda(){
+    document.getElementById('overlayBuscarPacienteAgenda').style.display = 'block';
+    document.getElementById('modalBuscarPacienteAgenda').style.display = 'block';
+    document.getElementById('inptBuscarPacienteAgendaModal').focus();
+    buscarPacientesAgenda();
+}
+
+function cerrarModalBuscarPacienteAgenda(){
+    document.getElementById('overlayBuscarPacienteAgenda').style.display = 'none';
+    document.getElementById('modalBuscarPacienteAgenda').style.display = 'none';
+}
+
+function abrirModalNuevoPacienteAgenda(){
+    document.getElementById('overlayNuevoPacienteAgenda').style.display = 'block';
+    document.getElementById('modalNuevoPacienteAgenda').style.display = 'block';
+}
+
+function cerrarModalNuevoPacienteAgenda(){
+    document.getElementById('overlayNuevoPacienteAgenda').style.display = 'none';
+    document.getElementById('modalNuevoPacienteAgenda').style.display = 'none';
+}
+
+function buscarPacientesAgenda(){
+    obtener_datos_user();
+
+    var buscar = document.getElementById('inptBuscarPacienteAgendaModal').value;
+
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "buscar": buscar,
+        "funt": "buscarPacientesAgenda"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        beforeSend: function () {
+            document.getElementById("divTablaPacientesAgenda").innerHTML = paginacargando;
+        },
+        error: function (jqXHR, textstatus, errorThrowm) {
+            document.getElementById("divTablaPacientesAgenda").innerHTML = '';
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function (responseText) {
+            try {
+                var resp = responseText;
+
+                if (typeof responseText === "string") {
+                    resp = $.parseJSON(responseText);
+                }
+
+                if (resp["1"] == "exito") {
+                    document.getElementById("divTablaPacientesAgenda").innerHTML = resp["2"];
+                } else {
+                    document.getElementById("divTablaPacientesAgenda").innerHTML = "";
+                }
+            } catch (error) {
+                var titulo = "Error buscarPacientesAgenda: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+                document.getElementById("divTablaPacientesAgenda").innerHTML = "";
+            }
+        }
+    });
+}
+
+function seleccionarPacienteAgenda(idPaciente, nombrePaciente){
+    document.getElementById('inptIdPacienteAgenda').value = idPaciente;
+    document.getElementById('inptPacienteAgenda').value = nombrePaciente;
+    cerrarModalBuscarPacienteAgenda();
+}
+
+function guardarNuevoPacienteAgenda(){
+    obtener_datos_user();
+
+    var nombre = document.getElementById('inptNombreNuevoPacienteAgenda').value;
+    var documento = document.getElementById('inptDocumentoNuevoPacienteAgenda').value;
+    var telefono = document.getElementById('inptTelefonoNuevoPacienteAgenda').value;
+    var direccion = document.getElementById('inptDireccionNuevoPacienteAgenda').value;
+
+    if(nombre == ''){
+        alert('Debe cargar el nombre del paciente');
+        return;
+    }
+
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "nombre": nombre,
+        "documento": documento,
+        "telefono": telefono,
+        "direccion": direccion,
+        "funt": "guardarPacienteAgenda"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        error: function (jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function (responseText) {
+            try {
+                var resp = responseText;
+
+                if (typeof responseText === "string") {
+                    resp = $.parseJSON(responseText);
+                }
+
+                if (resp["1"] == "exito") {
+                    document.getElementById('inptIdPacienteAgenda').value = resp["id_paciente"];
+                    document.getElementById('inptPacienteAgenda').value = resp["nombre_paciente"];
+
+                    document.getElementById('inptNombreNuevoPacienteAgenda').value = '';
+                    document.getElementById('inptDocumentoNuevoPacienteAgenda').value = '';
+                    document.getElementById('inptTelefonoNuevoPacienteAgenda').value = '';
+                    document.getElementById('inptDireccionNuevoPacienteAgenda').value = '';
+
+                    cerrarModalNuevoPacienteAgenda();
+                } else {
+                    alert(resp["mensaje"] || "No se pudo guardar el paciente");
+                }
+            } catch (error) {
+                var titulo = "Error guardarNuevoPacienteAgenda: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
             }
         }
     });

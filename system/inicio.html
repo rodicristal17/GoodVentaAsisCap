@@ -618,15 +618,6 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-
-
-
-
-
-
-
-
- 
  
 </div>
 
@@ -4597,6 +4588,7 @@ style='background-color:#5bc572'>
       </div>
   </center>
 </div>
+
 <div id="divAbmInterConsulta" class="principal2" style="display: none;">
 <center>
       <div id="divAbmInterConsulta3" class="divAbms" style="width: 650px;min-height: 100px;height: fit-content;">
@@ -4655,8 +4647,7 @@ style='background-color:#5bc572'>
                   <select class="inputSelect" id="inptLocalAbmInterConsulta" style="width:100%;">
                   </select>
                   </td></tr>
-                </table>
-              </td></tr></table>
+                </table> 
                 <table style="width: 100%;"><tr>
                   <td style="width: 25%;">
                   <p class="pTituloC">Tipo :</p>
@@ -12260,6 +12251,10 @@ Reg. Encontrados :</p>
 </div>
 
 <div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='cerrarModalNuevaCita()' style='display:none;'></div>
+
+
+
+
 <div class='modal-filtros-catalogo' id='modalNuevaCita' style='display:none;'>
     <div class='modal-filtros-box modal-cita-box'>
         <div class='modal-filtros-header'>
@@ -12268,10 +12263,18 @@ Reg. Encontrados :</p>
         </div>
 
         <div class='modal-filtros-body modal-cita-grid'>
-            <div class='filtro-grupo'>
-                <label>Paciente</label>
-                <input type='text' id='inptPacienteAgenda' class='catalogo-selectBuscador' placeholder='Nombre del paciente' />
-            </div>
+           
+		   <div class='filtro-grupo'>
+				<label>Paciente</label>
+
+				<div class='campo-con-botones-agenda'>
+					<input type='text' id='inptPacienteAgenda' class='catalogo-selectBuscador' placeholder='Seleccionar paciente' readonly />
+					<input type='hidden' id='inptIdPacienteAgenda' />
+
+					<button type='button' class='btn-filtro' onclick='abrirModalBuscarPacienteAgenda()'>Buscar</button>
+					<button type='button' class='btn-accion-principal' onclick='abrirModalNuevoPacienteAgenda()'>Nuevo</button>
+				</div>
+			</div>
 
             <div class='filtro-grupo'>
                 <label>Consultorio</label>
@@ -12317,6 +12320,70 @@ Reg. Encontrados :</p>
 </div>
 
 
+<div class='modal-filtros-overlay' id='overlayBuscarPacienteAgenda' onclick='cerrarModalBuscarPacienteAgenda()' style='display:none;'></div>
+
+<div class='modal-filtros-catalogo' id='modalBuscarPacienteAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Buscar paciente</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalBuscarPacienteAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body'>
+            <div class='filtro-grupo'>
+                <label>Buscar por nombre, CI o teléfono</label>
+                <input type='text' id='inptBuscarPacienteAgendaModal' class='catalogo-selectBuscador'
+                       onkeyup='if(event.keyCode==13){buscarPacientesAgenda()}' placeholder='Ej: Juan Pérez' />
+            </div>
+
+            <div id='divTablaPacientesAgenda' style='max-height:350px; overflow:auto;'></div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='cerrarModalBuscarPacienteAgenda()'>Cerrar</button>
+            <button class='btn-accion-principal' onclick='buscarPacientesAgenda()'>Buscar</button>
+        </div>
+    </div>
+</div>
+
+
+<div class='modal-filtros-overlay' id='overlayNuevoPacienteAgenda' onclick='cerrarModalNuevoPacienteAgenda()' style='display:none;'></div>
+
+<div class='modal-filtros-catalogo' id='modalNuevoPacienteAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Nuevo paciente</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevoPacienteAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body modal-cita-grid'>
+            <div class='filtro-grupo'>
+                <label>Nombre completo</label>
+                <input type='text' id='inptNombreNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>CI / Documento</label>
+                <input type='text' id='inptDocumentoNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Teléfono</label>
+                <input type='text' id='inptTelefonoNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Dirección</label>
+                <input type='text' id='inptDireccionNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='cerrarModalNuevoPacienteAgenda()'>Cancelar</button>
+            <button class='btn-accion-principal' onclick='guardarNuevoPacienteAgenda()'>Guardar paciente</button>
+        </div>
+    </div>
+</div>
 
 
 <div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda()' style='display:none;'></div>
