@@ -494,6 +494,9 @@ function limpiarFiltrosAgenda(){
 }
 
 function abrirModalNuevaCita(){
+	
+	if(controlacceso("INSERTARFORMULARIOCALENDARIO","accion")==false){return;}
+	 		
     document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
     document.getElementById('overlayNuevaCita').style.display = 'block';
     document.getElementById('modalNuevaCita').style.display = 'block';

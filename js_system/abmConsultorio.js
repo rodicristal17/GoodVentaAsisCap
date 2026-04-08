@@ -11,7 +11,7 @@ function verCerrarAbmConsultorio(){
 	$("div[id=divAbmConsultorio]").fadeOut(500);	
 	
 	}else{			
-		// if(controlacceso("VERLISTADODELOCALES","accion")==false){return;}
+		if(controlacceso("VERFORMULARIOCONSULTORIO","accion")==false){return;}
 		
 		document.getElementById("inptColorConsultorioHex").value =document.getElementById("inptColorConsultorio").value;
 		document.getElementById("divAbmConsultorio").style.display="" 
@@ -32,7 +32,7 @@ function minimizarConsultorio(){
 function verCerrarVentanaAbmConsultorio(d, l) {
 	if (d == "1") {
 		if (l == "1") {
-			if(controlacceso("INSERTARLISTADODELOCALES","accion")==false){return;}
+			if(controlacceso("INSERTARFORMULARIOCONSULTORIO","accion")==false){return;}
 			limpiarcamposConsultorio()
 		}
 		$("div[id=divAbmConsultorio2]").fadeIn(250)
@@ -43,7 +43,7 @@ function verCerrarVentanaAbmConsultorio(d, l) {
 	}
 }
 function verVentanaEditarConsultorio() {
-	if(controlacceso("EDITARLISTADODELOCALES","accion")==false){return;}
+	if(controlacceso("EDITARFORMULARIOCONSULTORIO","accion")==false){return;}
 	if (idAbmConsultorio == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
@@ -84,10 +84,10 @@ function verificarcamposConsultorio() {
 	var accion = "";
 	if (idAbmConsultorio != "") {
 		accion = "editar";
-		if(controlacceso("EDITARLISTADODELOCALES","accion")==false){return;}
+		if(controlacceso("EDITARFORMULARIOCONSULTORIO","accion")==false){return;}
 	} else {
 		accion = "nuevo";
-		if(controlacceso("INSERTARLISTADODELOCALES","accion")==false){return;}
+		if(controlacceso("INSERTARFORMULARIOCONSULTORIO","accion")==false){return;}
 	}
 	abmConsultorio(inptLocalConsultorio,inptNombreConsultorio, inptDescripcionConsultorio, inptColorConsultorioHex, inptEstadoConsultorio, idAbmConsultorio, accion);
 }
@@ -183,7 +183,7 @@ function checkestadoConsultorios(d){
 
 
 function buscarabmConsultorio() {
-if(controlacceso("BUSCARLISTADODELOCALES","accion")==false){return;}
+if(controlacceso("BUSCARFORMULARIOCONSULTORIO","accion")==false){return;}
 	var codigo = document.getElementById('inptBuscarAbmConsultorio1').value
 	var nombre = document.getElementById('inptBuscarAbmConsultorio2').value
 	var descripcion = document.getElementById('inptBuscarAbmConsultorio3').value

@@ -602,7 +602,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.71";
+var codigodeactualizacion="X-GT-1-JMTG-V1.72";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -26892,13 +26892,33 @@ function removeToMenu(){
 	// controlAgendamientos=controlAgendamientos+1;		
 	}
 	
+	
+	
+	if( accesosuser["VERFORMULARIOCALENDARIO"]["accion"]!="SI")
+	{
+	$("table[id=divMenuCalendario]").remove()
+	// controlAgendamientos=controlAgendamientos+1;		
+	}
+	
+	
+	
 		/*MENU LISTADOS*/
 	var controllistado=0;	
+	
+	
 	if( accesosuser["VERLISTADODELOCALES"]["accion"]!="SI")
 	{
 	$("table[id=divMenuAbmLocales]").remove()
 	controllistado=controllistado+1;		
 	}
+	
+	
+	if( accesosuser["VERFORMULARIOCONSULTORIO"]["accion"]!="SI")
+	{
+	$("table[id=divMenuAbmConsultorio]").remove()
+	controllistado=controllistado+1;		
+	}
+	
 	if( accesosuser["VERLISTADODEZONAS"]["accion"]!="SI")
 	{
 	$("table[id=divMenuAbmZona]").remove()
@@ -26940,7 +26960,7 @@ function removeToMenu(){
 	$("table[id=divMenuAbmFacturas]").remove()
 	controllistado=controllistado+1;		
 	}
-	if(controllistado==9){
+	if(controllistado==10){
 		document.getElementById("divMenuListados").style.display="none"
 	}
 	
