@@ -257,7 +257,7 @@
             }
 
             if (empty($estado)) {
-                $estado = 'solicitado';
+                $estado = 'aprobado';
             }
 
             if ($estado == 'aprobado') {

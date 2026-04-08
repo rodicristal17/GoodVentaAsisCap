@@ -250,8 +250,6 @@ CREATE TABLE dictamenes (
 
 ALTER TABLE mensaje ADD COLUMN cod_dictamenFK INT(11);
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.71', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
-
 DELIMITER $$
 DROP PROCEDURE IF EXISTS generar_mensajes_interconsulta_vencimiento$$
 CREATE PROCEDURE generar_mensajes_interconsulta_vencimiento()
@@ -308,6 +306,11 @@ DO
     CALL actualizar_gastos_pendientes();
 
 DELIMITER $$
+
+ALTER TABLE dictamenes 
+MODIFY estado VARCHAR(15) DEFAULT 'autorizado';
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.71', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

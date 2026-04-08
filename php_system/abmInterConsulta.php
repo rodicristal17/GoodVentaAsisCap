@@ -550,7 +550,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 $fechaDictamen = !empty($dictamen['fecha_create']) ? date('d/m/Y H:i', strtotime($dictamen['fecha_create'])) : '';
                 $fechaId = !empty($dictamen['fecha_create']) ? date('Y', strtotime($dictamen['fecha_create'])) : date('Y');
                 $idDocumento = 'RES-'.$fechaId.'-'.$valueInter['cod_interConsulta'].'-'.str_pad($dictamen['id'], 2, '0', STR_PAD_LEFT);
-                $estadoDictamen = !empty($dictamen['estado']) ? strtoupper($dictamen['estado']) : 'SOLICITADO';
+                $estadoDictamen = !empty($dictamen['estado']) ? strtoupper($dictamen['estado']) : 'AUTORIZADO';
                 $estadoColor = '#b8860b';
                 if ($dictamen['estado'] == 'aprobado') {
                     $estadoColor = '#2f6f3e';
@@ -666,7 +666,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                         </div>
                         <div style="border-top: 1px solid #d9ceb6;text-align: start;padding: 5px;">
                             <select class="form-select form-select-sm" style="width: 25%;" aria-label="Seleccionar dictamen" onchange="cod_dictamenSeleccionado='.$dictamen['id'].';abmDictamen(\'\',\'\',this.selectedOptions[0].value);">
-                                <option value="solicitado" '.($dictamen["estado"] == "solicitado" ? "selected" : "").'>SOLICITADO</option>
+                                <!--option value="solicitado" '.($dictamen["estado"] == "solicitado" ? "selected" : "").'>SOLICITADO</option-->
                                 <option value="autorizado" '.($dictamen["estado"] == "autorizado" ? "selected" : "").'>AUTORIZADO</option>
                                 <option value="ejecutado" '.($dictamen["estado"] == "ejecutado" ? "selected" : "").'>EJECUTADO</option>
                             </select>
