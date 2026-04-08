@@ -28,7 +28,7 @@ if ($verificar != 'ok') {
 }
 
 switch ($funt) {
-    case 'cargarAgenda':
+    case 'cargarAgenda':echo
         cargarAgenda($mysqli);
         break;
 
@@ -111,7 +111,7 @@ function buscarPacientesAgenda($mysqli){
               </tr>";
 
     while($row = $result->fetch_assoc()){
-        $nombre = utf8_encode($row["nombre_persona"]);
+        $nombre = normalizarTextoUtf8($row["nombre_persona"]);
 
         $html .= "<tr class='tr_registro' style='cursor:pointer;' onclick=\"seleccionarPacienteAgenda('".$row["cod_persona"]."', '".addslashes($nombre)."')\">";
         $html .= "<td>".$row["cod_persona"]."</td>";
@@ -344,6 +344,18 @@ function limpiar($mysqli, $valor){
     return mysqli_real_escape_string($mysqli, trim($valor));
 }
 
+function normalizarTextoUtf8($valor){
+    if ($valor === null) {
+        return '';
+    }
+
+    if (mb_check_encoding($valor, 'UTF-8')) {
+        return $valor;
+    }
+
+    return mb_convert_encoding($valor, 'UTF-8', 'ISO-8859-1');
+}
+
 function cargarAgenda($mysqli){
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
 
@@ -380,9 +392,9 @@ function cargarAgenda($mysqli){
     while ($row = $resultConsultorios->fetch_assoc()) {
         $consultorios[] = array(
             "id" => (int)$row["id_consultorio"],
-            "nombre" => utf8_encode($row["nombre"]),
+            "nombre" => normalizarTextoUtf8($row["nombre"]),
             "color" => $row["color"] != '' ? $row["color"] : "#7c3aed",
-            "descripcion" => utf8_encode($row["descripcion"])
+            "descripcion" => normalizarTextoUtf8($row["descripcion"])
         );
     }
 
@@ -418,12 +430,12 @@ function cargarAgenda($mysqli){
         $eventos[] = array(
             "id" => (int)$row["id_agenda"],
             "consultorio" => (int)$row["id_consultorio"],
-            "paciente" => utf8_encode($row["nombre_persona"]),
+            "paciente" => normalizarTextoUtf8($row["nombre_persona"]),
             "fecha" => $row["fecha"],
             "inicio" => $row["hora_inicio"],
             "fin" => $row["hora_fin"],
             "estado" => $row["estado"],
-            "motivo" => utf8_encode($row["motivo"])
+            "motivo" => normalizarTextoUtf8($row["motivo"])
         );
     }
 
@@ -538,7 +550,7 @@ function cargarpacientes($mysqli){
     }
 
     while($row = $result->fetch_assoc()){
-        $html .= "<option data-id='".$row["cod_persona"]."' value='".utf8_encode($row["nombre_persona"])."'></option>";
+        $html .= "<option data-id='".$row["cod_persona"]."' value='".normalizarTextoUtf8($row["nombre_persona"])."'></option>";
     }
 
     echo json_encode(array("exito" => "1", "2" => $html));
@@ -561,7 +573,7 @@ function cargarespecialistas($mysqli){
     }
 
     while($row = $result->fetch_assoc()){
-        $html .= "<option data-id='".$row["cod_consultorio"]."' value='".utf8_encode($row["nombre"])."'></option>";
+        $html .= "<option data-id='".$row["cod_consultorio"]."' value='".normalizarTextoUtf8($row["nombre"])."'></option>";
     }
 
     echo json_encode(array("1" => "exito", "2" => $html));
@@ -683,16 +695,16 @@ function buscarAgendamiento($mysqli){
             . "data-id='".$row["cod_agendamiento"]."' "
             . "data-id-paciente='".$row["cod_pacienteFK"]."' "
             . "data-id-especialista='".$row["cod_consultorioFK"]."' "
-            . "data-paciente=\"".utf8_encode($row["paciente"])."\" "
-            . "data-especialista=\"".utf8_encode($row["especialista"])."\" "
+            . "data-paciente=\"".normalizarTextoUtf8($row["paciente"])."\" "
+            . "data-especialista=\"".normalizarTextoUtf8($row["especialista"])."\" "
             . "data-fecha-recepcion='".$row["fecha_recepcion"]."' "
             . "data-fecha-consulta='".$row["fecha_consulta"]."' "
-            . "data-observacion=\"".utf8_encode($row["observacion"])."\" "
+            . "data-observacion=\"".normalizarTextoUtf8($row["observacion"])."\" "
             . "onclick='seleccionarAgendamiento(this)'>";
 
         $html .= "<td style='width:5%;'>".$row["cod_agendamiento"]."</td>";
-        $html .= "<td style='width:25%;'>".utf8_encode($row["paciente"])."</td>";
-        $html .= "<td style='width:30%;'>".utf8_encode($row["especialista"])."</td>";
+        $html .= "<td style='width:25%;'>".normalizarTextoUtf8($row["paciente"])."</td>";
+        $html .= "<td style='width:30%;'>".normalizarTextoUtf8($row["especialista"])."</td>";
         $html .= "<td style='width:25%;'>".$row["fecha_consulta"]."</td>";
         $html .= "<td style='width:15%; color:#fff; background:".$estadoColor.";'>".$row["estado"]."</td>";
         $html .= "</tr>";
