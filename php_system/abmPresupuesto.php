@@ -37,15 +37,15 @@ function verificarOperacionPresupuesto($operacion)
             $pagina= "";
             foreach ($result as $value) {
                 $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="5">
-                    <tr id="tbSelecRegistro" onclick="obtenerDatosPresupuesto(this)">
-                        <td id="td_id" style="width: 10%;">'.$value['id'].'</td>
+                    <tr id="tbSelecRegistro" onclick="obtenerDatosPresupuesto(this)" style="text-align: center;">
+                        <td id="td_id" style="width: 5%;">'.$value['id'].'</td>
                         <td id="td_datos_1" style="width: 15%;">'.$value['fecha_create'].'</td>
                         <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
                         <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
-                        <td id="td_datos_4" style="width: 35%;">'.$value['nombre_cliente'].'</td>
-                        <td id="td_datos_5" style="width: 20%;">'.$value['rut_cliente'].'</td>
-                        <td id="td_datos_6" style="display: none;">'.$value['nombre_usuarioFK_create'].'</td>
-                        <td id="td_datos_7" style="width: 20%;">'.number_format($value['monto_total'], 0, ',','.').'</td>
+                        <td id="td_datos_4" style="width: 30%;text-align: left;">'.$value['nombre_cliente'].'</td>
+                        <td id="td_datos_5" style="width: 10%;">'.$value['rut_cliente'].'</td>
+                        <td id="td_datos_7" style="width: 20%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
+                        <td id="td_datos_6" style="width: 20%;">'.$value['nombre_usuarioFK_create'].'</td>
                     </tr>
                 </table>';
             }
@@ -151,7 +151,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
             p.*,
             (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
             (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
-            (SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id) AS monto_total,
+            IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id), 0) AS monto_total,
             (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create
             FROM presupuesto p
             $sqlFiltro ORDER BY p.id DESC $limite";
