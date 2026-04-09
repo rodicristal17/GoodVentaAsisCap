@@ -189,7 +189,6 @@
         }
 
         echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $monto_total));
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $monto_total));
     }
 
     function obtenerInventarioLocal($filtros= array(), $limite= 0) {

@@ -75,7 +75,7 @@
                 $stmt->close();
 
                 // Compara si la hora_entrada_usuario es mayor que la hora_entrada por 10 min.
-                $llegada_tardia = ($hora_entrada_usuario && (strtotime($hora_entrada) - strtotime($hora_entrada_usuario)) > 600) ? 1 : 0;
+                $llegada_tardia = ($hora_entrada_usuario && (strtotime($hora_entrada) - strtotime($hora_entrada_usuario)) > 660) ? 1 : 0;
 
                 echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia, "llegada_tardia" => $llegada_tardia, 'hora_entrada' => $hora_entrada, 'hora_entrada_usuario' => $hora_entrada_usuario));
                 break;

@@ -56,6 +56,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js"></script>
+<script src="../js_system/abmPresupuesto.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -1099,7 +1100,7 @@ class='divMinimizado'></div>
 </table>
 
 
-<table class='divMenub' id='divMenuPresupuestoProducto' onclick='verCerrarAbmDetallesPresupuesto("1")' style='text-align:center'>
+<table class='divMenub' id='divMenuPresupuestoProducto' onclick='verCerrarAbmDetallesPresupuesto(true, false)' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/presupuesto.png' />
@@ -7983,159 +7984,268 @@ ACCION
 
 
 <div class="principal2" id="divAbmDetallesPresupuesto" style="display:none;width: 100%;">
-  <center class="presupuesto-container">
-  <header class="presupuesto-header">
-    <h2>Presupuesto Producto</h2>
-    <div class="header-actions">
-      <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar" onclick="limpirarPresupuesto()">
-      <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir" onclick='ordenimpresion("Presupuesto")'>
-      <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás" onclick='verCerrarAbmDetallesPresupuesto("2")'>
-    </div>
-  </header>
+  <center class="presupuesto-container" id="divAbmDetallesPresupuesto2">
+    <header class="presupuesto-header">
+      <h2>Presupuesto Producto</h2>
+      <div class="header-actions">
+        <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
+          onclick="limpirarPresupuesto()">
+        <img src="/GoodVentaAsisCap/iconos/buscar.png" class="iconoBtn" title="Ver historial"
+          onclick="idFkCliente= '';verCerrarAbmDetallesPresupuesto(true, true)">
+        <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
+          onclick='ordenimpresion("Presupuesto")'>
+        <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
+          onclick='verCerrarAbmDetallesPresupuesto(false, false)'>
+      </div>
+    </header>
 
-  <!-- Productos -->
-  <section class="productos-section">
-    <div class="productos-lista presupuesto-panel">
-      <div class="panel-title">Tratamientos Disponibles</div>
- 
-	  <table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-CODIGO
-</td>
-<td class="td_registro" style="width:50%;">
-TRATAMIENTO
-</td> 
-<td class="td_registro" style="width:15%;">
-PRECIO
-</td> 
-</tr>
-</tbody>
-</table>	  
-	  
-      <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto"></div>
-    </div>
+    <section class="form-section presupuesto-panel">
+      <div class="panel-title" style="width:100%;">Carga del Presupuesto</div>
+      <div class="form-row">
+        <label>Documento:</label>
+        <input type="text" class="inputText" id="inptDocumentoClientePresupuesto"
+          onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}">
+      </div>
 
-    <div class="presupuesto-contado presupuesto-panel">
-      <div class="panel-title">Presupuesto Contado</div>
-      <div id="inptTotalPresupuesto2" class="DivTotalVenta">0</div>
-    </div>
-  </section>
+      <div class="form-row flex-grow" style="flex: 1 0;">
+        <label>Nombre:</label>
+        <input type="text" class="inputText" id="inptNombreClientePresupuesto"
+          onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}">
+      </div>
 
-  <!-- Formulario de carga -->
-  <section class="form-section presupuesto-panel">
-    <div class="panel-title" style="width:100%;">Carga del Presupuesto</div>
-    <div class="form-row" style='display:none;'>
-      <label>Entrega:</label>
-      <input type="text" class="inputText" id="inptEntregaPresupuesto" onkeyup="separadordemiles(this)">
-    </div>
+      <div class="form-row">
+        <input type="button" value="Seleccionar cliente" class="btn4" onclick='vercerrarvistacliente("1","presupuesto")'
+          style='width:150px;margin-top: 20px;'>
+      </div>
+    </section>
 
-    <div class="form-row">
-      <label>Código:</label>
-      <input type="text" class="inputText" id="inptCodigoPresupuesto" 
-             onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}">
-    </div>
+    <section class="productos-section">
+      <div class="productos-lista presupuesto-panel">
+        <div class="panel-title">Tratamientos Disponibles</div>
 
-    <div class="form-row flex-grow" style="flex: 0 0 80%;">
-      <label>Producto:</label>
-      <input type="text" class="inputText" id="inptProductoPresupuesto" 
-             onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}">
-    </div>
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                CODIGO
+              </td>
+              <td class="td_registro" style="width:50%;">
+                TRATAMIENTO
+              </td>
+              <td class="td_registro" style="width:15%;">
+                PRECIO
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-    <div class="form-row">
-      <label>Precio:</label>
-      <input type="text" class="inputText" id="inptPrecioPresupuesto" onkeyup="calcular_total_Presupuesto()">
-      <select id="inpTSeleccCostoPresupuesto" style='display:none;' class="inputSelect" onchange="seleccionarpreciospresupuesto(this)"></select>
-    </div>
+        <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto"></div>
+      </div>
 
-    <div class="form-row">
-      <label>Cantidad:</label>
-      <input type="text" class="inputText" id="inptCantidadPresupuesto" 
-             onkeyup="if(event.keyCode == 13){focusSiguiente()}else{calcular_total_Presupuesto()}">
-    </div>
+      <div class="presupuesto-contado presupuesto-panel">
+        <div class="panel-title">Presupuesto Contado</div>
+        <div id="inptTotalPresupuesto2" class="DivTotalVenta">0</div>
+      </div>
+    </section>
 
-    <div class="form-row">
-      <label>Total:</label>
-      <input type="text" class="inputTextDisable" disabled id="inptTotalPresupuesto">
-    </div>
-	
-	 <div class="form-row">
-      <label>Cuota Max:</label>
-		<select class="inputSelect" style='width:150px' id='inptTotalcuotasPresupuesto'>
-			<option value="18">18</option>
-			<option value="12">12</option> 
-		</select>
-    </div>
+    <!-- Formulario de carga -->
+    <section class="form-section presupuesto-panel">
+      <div class="panel-title" style="width:100%;">Carga del Presupuesto</div>
+      <div class="form-row" style='display:none;'>
+        <label>Entrega:</label>
+        <input type="text" class="inputText" id="inptEntregaPresupuesto" onkeyup="separadordemiles(this)">
+      </div>
 
-    <div class="form-row">
-	<input id='btnAddPreciosProductos3' type="button" value="Add Presupuesto" class="btn4" onclick='anhadirPrPresupuesto()'   style='width:150px;margin-top: 20px;'> 
+      <div class="form-row">
+        <label>Código:</label>
+        <input type="text" class="inputText" id="inptCodigoPresupuesto"
+          onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}">
+      </div>
+
+      <div class="form-row flex-grow" style="flex: 0 0 80%;">
+        <label>Producto:</label>
+        <input type="text" class="inputText" id="inptProductoPresupuesto"
+          onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}">
+      </div>
+
+      <div class="form-row">
+        <label>Precio:</label>
+        <input type="text" class="inputText" id="inptPrecioPresupuesto" onkeyup="calcular_total_Presupuesto()">
+        <select id="inpTSeleccCostoPresupuesto" style='display:none;' class="inputSelect"
+          onchange="seleccionarpreciospresupuesto(this)"></select>
+      </div>
+
+      <div class="form-row">
+        <label>Cantidad:</label>
+        <input type="text" class="inputText" id="inptCantidadPresupuesto"
+          onkeyup="if(event.keyCode == 13){focusSiguiente()}else{calcular_total_Presupuesto()}">
+      </div>
+
+      <div class="form-row">
+        <label>Total:</label>
+        <input type="text" class="inputTextDisable" disabled id="inptTotalPresupuesto">
+      </div>
+
+      <div class="form-row">
+        <label>Cuota Max:</label>
+        <select class="inputSelect" style='width:150px' id='inptTotalcuotasPresupuesto'>
+          <option value="18">18</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <input id='btnAddPreciosProductos3' type="button" value="Add Presupuesto" class="btn4"
+          onclick='anhadirPrPresupuesto()' style='width:150px;margin-top: 20px;'>
+      </div>
+    </section>
+
+    <!-- Detalles -->
+    <section class="detalles-section" id="tdTablaPresupuesto">
+      <div class="tabla-detalles presupuesto-panel">
+        <div class="panel-title">Detalle del Tratamiento</div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                CODIGO
+              </td>
+              <td class="td_registro" style="width:50%;">
+                TRATAMIENTO
+              </td>
+              <td class="td_registro" style="width:10%;">
+                CANTIDAD
+              </td>
+              <td class="td_registro" style="width:15%;">
+                PRECIO
+              </td>
+              <td class="td_registro" style="width:15%;">
+                TOTAL
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle"></div>
+      </div>
+
+      <div class="tabla-cuotas presupuesto-panel">
+        <div class="panel-title">Plan de Cuotas</div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:25%;">
+                CUOTAS
+              </td>
+              <td class="td_registro" style="width:25%;">
+                PLAN DE PAGO
+              </td>
+              <td class="td_registro" style="width:25%;">
+                DESCRIPCION
+              </td>
+              <td class="td_registro" style="width:25%;">
+                TOTAL
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto"></div>
+      </div>
+    </section>
+
+    <!-- Total -->
+    <footer class="presupuesto-footer">
+      <label>TOTAL PRESUPUESTO:</label>
+      <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
+    </footer>
+  </center>
+  <center style="display: none;" id="divListPresupuesto">
+    <div class="presupuesto-container presupuesto-search-modal">
+      <header class="presupuesto-header presupuesto-search-header">
+        <div class="presupuesto-search-title">
+          <span class="presupuesto-search-kicker">Historial</span>
+          <h2>Buscar Presupuesto</h2>
+          <p>Consultá presupuestos guardados por cliente, documento o venta y retomá el detalle cuando lo necesites.</p>
+        </div>
+        <div class="header-actions">
+          <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+            onclick="verCerrarAbmDetallesPresupuesto(false, true)">
+        </div>
+      </header>
+
+      <section class="presupuesto-panel presupuesto-search-filters">
+        <div class="panel-title">Filtros de Búsqueda</div>
+        <div class="presupuesto-search-grid">
+          <div class="form-row presupuesto-search-field presupuesto-search-field-wide">
+            <label>Buscador</label>
+            <input class="inputText" type="text" placeholder="Escribí el dato a buscar" id="inptBuscarVistaPresupuestos"
+              onkeyup="if(event.keyCode == 13){buscarvistaventa()}">
+          </div>
+
+          <div class="form-row presupuesto-search-field">
+            <label>Buscar Por</label>
+            <select class="inputSelect" id="inptOpcionesdeBusquedaPresupuesto">
+              <option value="1">NOMBRE Y APELLIDO DEL CLIENTE</option>
+              <option value="2">NRO DOCUMENTO DEL CLIENTE</option>
+              <option value="3">RUC DEL CLIENTE</option>
+              <option value="4">NRO TELEF. DEL CLIENTE</option>
+              <option value="5">NRO VENTA</option>
+            </select>
+          </div>
+
+          <div class="form-row presupuesto-search-action">
+            <label>&nbsp;</label>
+            <input type="button" value="Buscar Presupuesto" class="btn4" onclick="buscarvistaPresupuesto()">
+          </div>
+        </div>
+      </section>
+
+      <section class="presupuesto-panel presupuesto-search-results">
+        <div class="presupuesto-search-results-head">
+          <div class="panel-title">Resultados</div>
+          <span class="presupuesto-search-chip">Listado de presupuestos</span>
+        </div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                #
+              </td>
+              <td class="td_registro" style="width:15%;">
+                FECHA
+              </td>
+              <td class="td_registro" style="width:35%;">
+                CLIENTE
+              </td>
+              <td class="td_registro" style="width:20%;">
+                DOCUMENTO
+              </td>
+              <td class="td_registro" style="width:20%;">
+                SUB-TOTAL
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="divTablesScrool" style="height: 350px;display: grid;">
+          <div class="div_cuerpo_table presupuesto-search-table" id="table_vista_presupuesto"></div>
+          <table style="width:100%;height:50px;display:none" id="tbProcessPresupuesto">
+            <tr>
+              <td style="width:90%">
+                <div class="divprogreso1"><div class="divprogreso2" id="divProgressPresupuesto"></div></div>
+              </td>
+              <td style="width:10%;text-align:center">
+                <input type="button" value="Cancelar" class="btn4" onclick="cancelarListadoPresupuesto()" style="width:100px;background-color:rgb(58 58 58)">
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
     </div>
-  </section>
-
-  <!-- Detalles -->
-  <section class="detalles-section" id="tdTablaPresupuesto">
-    <div class="tabla-detalles presupuesto-panel">
-      <div class="panel-title">Detalle del Tratamiento</div>
- 
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-CODIGO
-</td>
-<td class="td_registro" style="width:50%;">
-TRATAMIENTO
-</td>
-<td class="td_registro" style="width:10%;">
-CANTIDAD
-</td>
-<td class="td_registro" style="width:15%;">
-PRECIO
-</td>
-<td class="td_registro" style="width:15%;">
-TOTAL
-</td>
-</tr>
-</tbody>
-</table>
-
-      <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle"></div>
-    </div>
-
-    <div class="tabla-cuotas presupuesto-panel">
-      <div class="panel-title">Plan de Cuotas</div>
- 
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:25%;">
-CUOTAS
-</td>
-<td class="td_registro" style="width:25%;">
-PLAN DE PAGO
-</td>
-<td class="td_registro" style="width:25%;">
-DESCRIPCION
-</td>
-<td class="td_registro" style="width:25%;">
-TOTAL
-</td> 
-</tr>
-</tbody>
-</table>
-      <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto"></div>
-    </div>
-  </section>
-
-  <!-- Total -->
-  <footer class="presupuesto-footer">
-    <label>TOTAL PRESUPUESTO:</label>
-    <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
-  </footer>
+  </center>
 </div>
-</center>
-
 
 <!-- <div class='principal2' style='display:none' id='divAbmDetallesPresupuesto'> -->
 <!-- <table style='width:100%;height:100%' id='tdEfectoAbmDetallePresupuesto'> -->
@@ -8155,7 +8265,7 @@ TOTAL
 <!-- onclick='ordenimpresion("Presupuesto")' /> -->
 <!-- </td> -->
 <!-- <td style='width:5%;text-align:center'> -->
-<!-- <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmDetallesPresupuesto("2")' /></td> -->
+<!-- <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmDetallesPresupuesto(true, false)' /></td> -->
 <!-- </tr> -->
 <!-- </table> -->
 

@@ -24,21 +24,40 @@ function verificarOperacionPresupuesto($operacion)
         case 'obtenerPresupuesto':
             $filtro = array(
                 'id' => isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null,
-                'cant_cuotas' => isset($_POST['cant_cuotas']) ? mb_convert_encoding((string)($_POST['cant_cuotas']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_clienteFK' => isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_usuarioFK_create' => isset($_POST['cod_usuarioFK_create']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_create']), 'ISO-8859-1', 'UTF-8') : null
             );
             $limite = (isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : NULL);
-            echo json_encode(array("1" => "exito", "2" => obtenerPresupuesto($filtro, $limite)));
+
+            $result= obtenerPresupuesto($filtro);
+            $totalRegistros= count($result);
+
+            $result= obtenerPresupuesto($filtro, $limite);
+            
+            $pagina= "";
+            foreach ($result as $value) {
+                $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="5">
+                    <tr id="tbSelecRegistro" onclick="obtenerDatosPresupuesto(this)">
+                        <td id="td_id" style="width: 10%;">'.$value['id'].'</td>
+                        <td id="td_datos_1" style="width: 15%;">'.$value['fecha_create'].'</td>
+                        <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
+                        <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
+                        <td id="td_datos_4" style="width: 35%;">'.$value['nombre_cliente'].'</td>
+                        <td id="td_datos_5" style="width: 20%;">'.$value['rut_cliente'].'</td>
+                        <td id="td_datos_6" style="display: none;">'.$value['nombre_usuarioFK_create'].'</td>
+                        <td id="td_datos_7" style="width: 20%;">'.number_format($value['monto_total'], 0, ',','.').'</td>
+                    </tr>
+                </table>';
+            }
+            echo json_encode(array("1" => "exito", "2" => $result, "3" => $pagina, "4" => count($result), "5" => $totalRegistros));
             break;
 
         case 'abmPresupuesto':
             $id = isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;
             $cant_cuotas = isset($_POST['cant_cuotas']) ? mb_convert_encoding((string)($_POST['cant_cuotas']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_clienteFK = isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null;
-            $cod_usuarioFK_create = isset($_POST['cod_usuarioFK_create']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_create']), 'ISO-8859-1', 'UTF-8') : $user;
 
-            $idPresupuesto = abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create);
+            $idPresupuesto = abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $user);
             echo json_encode(array("1" => "exito", "2" => $idPresupuesto));
             break;
 
@@ -49,22 +68,50 @@ function verificarOperacionPresupuesto($operacion)
                 'cod_presupuestoFK' => isset($_POST['cod_presupuestoFK']) ? mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8') : null
             );
             $limite = (isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : NULL);
-            echo json_encode(array("1" => "exito", "2" => obtenerDetallesPresupuesto($filtro, $limite)));
-            break;
 
+            obtenerVistaDetallesPresupuesto($filtro, $limite);
+            break;
         case 'abmDetallesPresupuesto':
             $id = isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_productoFK = isset($_POST['cod_productoFK']) ? mb_convert_encoding((string)($_POST['cod_productoFK']), 'ISO-8859-1', 'UTF-8') : null;
+            $cantidad = isset($_POST['cantidad']) ? mb_convert_encoding((string)($_POST['cantidad']), 'ISO-8859-1', 'UTF-8') : null;
             $precio = isset($_POST['precio']) ? mb_convert_encoding((string)($_POST['precio']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8') : null;
 
-            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $precio, $cod_presupuestoFK);
+            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $cod_presupuestoFK);
             echo json_encode(array("1" => "exito", "2" => $idDetalle));
             break;
         default:
             echo json_encode(array("1" => "error", "2" => "Operacion $operacion no definida"));
             break;
     }
+}
+
+function obtenerVistaDetallesPresupuesto($filtro, $limite) {
+    $registros= obtenerDetallesPresupuesto($filtro, $limite);
+
+    $pagina= "";
+    foreach ($registros as $value) {
+        $nroId = rand(1, 1000);
+        $pagina .= "<table id='tdDetalleVenta_".$nroId."' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+			. "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
+			. "<td  id='td_datos_1' style='width:10%;'>".$value['cod_producto']."</td>"
+			. "<td  id='td_datos_2' style='width:50%;'>".$value['nombre_producto']."</td>"
+			. "<td  id='td_datos_3' style='width:10%'>".$value['cantidad']."</td>"
+			. "<td  id='td_datos_4' style='width:15%'>".$value['precio']."</td>"
+			. "<td  id='td_datos_5' style='width:15%'>".$value['subTotal']."</td>"
+			. "<td  id='td_datos_6' style='display:none'></td>"
+			. "<td  id='td_datos_7' style='display:none'>". 0 ."</td>"
+			. "<td  id='td_datos_8' style='display:none'>".$value['cantidad']."</td>"
+			. "<td  id='td_datos_9' style='display:none'>". 0 ."</td>"
+			. "<td  id='td_datos_10' style='display:none'>".$value['precio']."</td>"
+			. "<td  id='td_datos_11' style='display:none'>".$value['subTotal']."</td>"
+			. "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
+			. "</tr>"
+			. "</table>";
+    }
+
+    echo json_encode(array("1" => "exito", "2" => $registros, "3" => $pagina));
 }
 
 function obtenerPresupuesto($filtros = array(), $limite = 0)
@@ -102,7 +149,9 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
 
     $sql = "SELECT 
             p.*,
-            (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_personaFK = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
+            (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
+            (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
+            (SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id) AS monto_total,
             (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create
             FROM presupuesto p
             $sqlFiltro ORDER BY p.id DESC $limite";
@@ -207,7 +256,7 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
 
         switch ($key) {
             case 'nombre_producto':
-                $sqlFiltro .= "(SELECT nombre FROM producto WHERE cod_producto = dp.cod_productoFK) like '%$value%'";
+                $sqlFiltro .= "(SELECT nombre_producto FROM producto WHERE cod_producto = dp.cod_productoFK) like '%$value%'";
                 break;
             case 'cod_barra':
                 $sqlFiltro .= "(SELECT cod_barra FROM producto WHERE cod_producto = dp.cod_productoFK) like '%$value%'";
@@ -230,8 +279,9 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
 
     $sql = "SELECT
             dp.*,
-            (SELECT nombre FROM producto WHERE cod_producto = dp.cod_productoFK) as nombre_producto,
-            (SELECT cod_barra FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_barra
+            (precio * cantidad) AS subTotal,
+            (SELECT nombre_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as nombre_producto,
+            (SELECT cod_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_producto
             FROM detalles_presupuesto dp
             $sqlFiltro ORDER BY dp.id DESC $limite";
 
@@ -257,7 +307,7 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
     return $registros;
 }
 
-function abmDetallesPresupuesto($id, $cod_productoFK, $precio, $cod_presupuestoFK)
+function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $cod_presupuestoFK)
 {
     $mysqli = conectar_al_servidor();
 
@@ -266,9 +316,9 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $precio, $cod_presupuestoF
     }
 
     if (empty($id)) {
-        $sql = "INSERT INTO detalles_presupuesto (cod_productoFK, precio, cod_presupuestoFK) VALUES (?,?,?)";
+        $sql = "INSERT INTO detalles_presupuesto (cod_productoFK, precio, cantidad, cod_presupuestoFK) VALUES (?,?,?,?)";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('iii', $cod_productoFK, $precio, $cod_presupuestoFK);
+        $stmt->bind_param('iiii', $cod_productoFK, $precio, $cantidad, $cod_presupuestoFK);
     } else {
         $parametros = array();
         $atributos = "";
@@ -286,6 +336,14 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $precio, $cod_presupuestoF
             $atributos .= "precio= ?";
             $ss .= "i";
             $parametros[] = $precio;
+        }
+        if ($cantidad != null) {
+            if ($atributos != "") {
+                $atributos .= ", ";
+            }
+            $atributos .= "cantidad= ?";
+            $ss .= "i";
+            $parametros[] = $cantidad;
         }
         if ($cod_presupuestoFK != null) {
             if ($atributos != "") {
@@ -329,7 +387,7 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $precio, $cod_presupuestoF
 }
 
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
-    $operacion = mb_convert_encoding((string)($_POST['funt']), 'ISO-8859-1', 'UTF-8');
+    $operacion = mb_convert_encoding((string)($_POST['accion']), 'ISO-8859-1', 'UTF-8');
     verificarOperacionPresupuesto($operacion);
 }
 ?>

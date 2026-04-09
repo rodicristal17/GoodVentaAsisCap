@@ -3,8 +3,9 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 	if(mostrar){
         if (historial) {
             document.getElementById('divListPresupuesto').style.display= "";
-            document.getElementById("divAbmDetallesPresupuesto").style.display="none";
+            document.getElementById("divAbmDetallesPresupuesto2").style.display="none";
         } else {
+            document.getElementById('divListPresupuesto').style.display= "none";
             document.getElementById("divAbmDetallesPresupuesto").style.display=""
             // document.getElementById("tdEfectoAbmDetallePresupuesto").className="magictime slideLeftReturn"
             
@@ -14,12 +15,76 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 	}else{
         if (historial) {
             $("div[id=divListPresupuesto]").fadeOut(500);
-            document.getElementById("divAbmDetallesPresupuesto").style.display="";
+            document.getElementById("divAbmDetallesPresupuesto2").style.display="";
+            document.getElementById('divListPresupuesto').style.display= "none";
         } else {
             // document.getElementById("tdEfectoAbmDetallePresupuesto").className="magictime slideRight"
             $("div[id=divAbmDetallesPresupuesto]").fadeOut(500);
         }
 	}
+}
+
+var idabmPresupuesto= "";
+function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK) {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"accion": "abmPresupuesto",
+		"id": cod_presupuesto,
+		"cant_cuotas": cant_cuotas,
+		"cod_clienteFK": cod_clienteFK,
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+			console.error(jqXHR.status,textstatus,errorThrowm);
+			ver_vetana_informativa("LO SENTIMOS, HA OCURRIDO UN ERROR", "", "error");
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				 Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+				idabmPresupuesto = datos[2];
+				ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
 }
 
 function buscarvistaproductoPresupuesto() {
@@ -165,7 +230,7 @@ function buscarproductoporcodigoPresupuesto() {
 		"passu": passuser,
 		"navegador": navegador,
 		"buscar": buscador,
-		"funt": "buscarporcodigoPresupuesto"
+		"accion": "buscarporcodigoPresupuesto"
 	};
 	$.ajax({
 		data: datos,
@@ -304,8 +369,6 @@ function generarTabla() {
     // let valorCuota = Math.round(total / cuotas); // redondeo al entero más cercano
 	let valorCuota = Math.round((total / cuotas) / 1000) * 1000;
 	
-	
-	
     html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' >"
      +" <tr>"
       +"  <td style='width:25%'>"+cuotas+"</td>"
@@ -319,16 +382,75 @@ function generarTabla() {
   divCuerpo.innerHTML = html;
 }
  
+function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad) {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"accion": "abmDetallesPresupuesto",
+		"cod_presupuestoFK": cod_presupuestoFK,
+		"cod_productoFK": cod_productoFK,
+		"cantidad": cantidad,
+		"precio": precio,
+	};
+	$.ajax({
 
- 
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			console.error(jqXHR.status,textstatus,errorThrowm);
+			ver_vetana_informativa("Lo sentimos, ha ocurrido un error", "", "error");
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				 Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+					ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
  
 var totalPresupuesto=0;
+function anhadirPrPresupuesto() {
+	var entrega = document.getElementById('inptEntregaPresupuesto').value
 
-function anhadirPrPresupuesto(){
-	
- 
-	var entrega= document.getElementById('inptEntregaPresupuesto').value
-	
 	var inptCodigoPresupuesto = document.getElementById('inptCodigoPresupuesto').value
 	var inptProductoPresupuesto = document.getElementById('inptProductoPresupuesto').value
 	var inptPrecioPresupuesto = document.getElementById('inptPrecioPresupuesto').value
@@ -338,74 +460,72 @@ function anhadirPrPresupuesto(){
 	var inpCuotero = $("select[id=inpTSeleccCostoPresupuesto]").children(":selected").attr("id")
 	var inpPrecioContado = $("select[id=inpTSeleccCostoPresupuesto]").children(":selected").attr("url")
 
-
-	
 	if (inptCodigoPresupuesto != "") {
-		
-		if(inptCantidadPresupuesto<=0|| inptCantidadPresupuesto==""){
-					ver_vetana_informativa("FAVOR AGREGAR CANTIDAD")
-					return false;
+		if (!idabmPresupuesto) {
+			ver_vetana_informativa("Faltan datos", "Favor seleccionar el cliente", "error");
+			return false;
 		}
-	
-		if(inptPrecioPresupuesto<=0|| inptPrecioPresupuesto==""){
-					ver_vetana_informativa("FAVOR AGREGAR EL PRECIO")
-					return false;
+
+		if (inptCantidadPresupuesto <= 0 || inptCantidadPresupuesto == "") {
+			ver_vetana_informativa("Faltan datos", "FAVOR AGREGAR CANTIDAD");
+			return false;
 		}
-		
-		if (inptTotalPresupuesto == "0" || inptTotalPresupuesto=="") {
-		ver_vetana_informativa("TOTAL NO VALIDO")
-		return false;
+
+		if (inptPrecioPresupuesto <= 0 || inptPrecioPresupuesto == "") {
+			ver_vetana_informativa("Faltan datos", "FAVOR AGREGAR EL PRECIO");
+			return false;
+		}
+
+		if (inptTotalPresupuesto == "0" || inptTotalPresupuesto == "") {
+			ver_vetana_informativa("Faltan datos", "TOTAL NO VALIDO");
+			return false;
+		}
+
+		// Agrega al presupuesto existente
+		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto);
+
+		var nroid = Math.floor((Math.random() * 1000) + 1);
+		var pagina = "<table id='tdDetalleVenta_" + nroid + "' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+			+ "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
+			+ "<td  id='td_datos_1' style='width:10%;'>" + inptCodigoPresupuesto + "</td>"
+			+ "<td  id='td_datos_2' style='width:50%;'>" + inptProductoPresupuesto + "</td>"
+			+ "<td  id='td_datos_3' style='width:10%'>" + inptCantidadPresupuesto + "</td>"
+			+ "<td  id='td_datos_4' style='width:15%'>" + inptPrecioPresupuesto + "</td>"
+			+ "<td  id='td_datos_5' style='width:15%'>" + inptTotalPresupuesto + "</td>"
+			+ "<td  id='td_datos_6' style='display:none'></td>"
+			+ "<td  id='td_datos_7' style='display:none'>" + inpTSeleccCostoPresupuesto + "</td>"
+			+ "<td  id='td_datos_8' style='display:none'>" + inpCuotero + "</td>"
+			+ "<td  id='td_datos_9' style='display:none'>" + inpPrecioContado + "</td>"
+			+ "<td  id='td_datos_10' style='display:none'>" + inptPrecioPresupuesto + "</td>"
+			+ "<td  id='td_datos_11' style='display:none'>" + inptTotalPresupuesto + "</td>"
+			+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
+			+ "</tr>"
+			+ "</table>"
+
+		document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML += pagina;
+
+		totalPresupuesto = 0;
+		var totalEntrega = document.getElementById('inptTotalPresupuesto').value;
+
+		$("tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
+			var total = $(elementohtml).children('td[id="td_datos_11"]').html();
+			total = QuitarSeparadorMilValor(total)
+			totalPresupuesto = Number(totalPresupuesto) + Number(total)
+		});
+
+		document.getElementById("inptTotalPresupuesto2").innerHTML = separadordemilesnumero(totalPresupuesto);
+		document.getElementById("inptTOTALPresupuestoFORM").value = separadordemilesnumero(totalPresupuesto);
+
+		generarTabla()
 	}
-	
-	// alert(inptPrecioPresupuesto)
-	
-	var nroid=Math.floor((Math.random() * 1000) + 1);
-	var pagina="<table id='tdDetalleVenta_"+nroid+"' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
-+"<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
-+"<td  id='td_datos_1' style='width:10%;'>"+inptCodigoPresupuesto+"</td>"
-+"<td  id='td_datos_2' style='width:50%;'>"+inptProductoPresupuesto+"</td>"
-+"<td  id='td_datos_3' style='width:10%'>"+inptCantidadPresupuesto+"</td>"
-+"<td  id='td_datos_4' style='width:15%'>"+inptPrecioPresupuesto+"</td>"
-+"<td  id='td_datos_5' style='width:15%'>"+inptTotalPresupuesto+"</td>"
-+"<td  id='td_datos_6' style='display:none'></td>"
-+"<td  id='td_datos_7' style='display:none'>"+inpTSeleccCostoPresupuesto+"</td>"
-+"<td  id='td_datos_8' style='display:none'>"+inpCuotero+"</td>"
-+"<td  id='td_datos_9' style='display:none'>"+inpPrecioContado+"</td>"
-+"<td  id='td_datos_10' style='display:none'>"+inptPrecioPresupuesto+"</td>"
-+"<td  id='td_datos_11' style='display:none'>"+inptTotalPresupuesto+"</td>"
-+"<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
-+"</tr>"
-+"</table>"
 
-document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML+=pagina;
-
-
-
-totalPresupuesto=0;
-var totalEntrega=document.getElementById('inptTotalPresupuesto').value;
-
-$("tr[name=tdDetallePresupuesto]").each(function(i, elementohtml){
-var total=$(elementohtml).children('td[id="td_datos_11"]').html();
-total=QuitarSeparadorMilValor(total)
-totalPresupuesto=Number(totalPresupuesto)+Number(total)
-});
-	   
-document.getElementById("inptTotalPresupuesto2").innerHTML=separadordemilesnumero(totalPresupuesto);
-document.getElementById("inptTOTALPresupuestoFORM").value=separadordemilesnumero(totalPresupuesto);
- 
-generarTabla()
- 
-
-	}
- 
-document.getElementById('inptCodigoPresupuesto').value = ""
-document.getElementById('inptProductoPresupuesto').value = ""
-document.getElementById('inptPrecioPresupuesto').value = ""
-document.getElementById('inpTSeleccCostoPresupuesto').value = ""
-limpirarAddPresupuesto()
-document.getElementById('inptCantidadPresupuesto').value = ""
-document.getElementById('inptTotalPresupuesto').value = ""
-
+	document.getElementById('inptCodigoPresupuesto').value = ""
+	document.getElementById('inptProductoPresupuesto').value = ""
+	document.getElementById('inptPrecioPresupuesto').value = ""
+	document.getElementById('inpTSeleccCostoPresupuesto').value = ""
+	limpirarAddPresupuesto()
+	document.getElementById('inptCantidadPresupuesto').value = ""
+	document.getElementById('inptTotalPresupuesto').value = ""
 }
 
 function limpirarPresupuesto(){
@@ -434,28 +554,179 @@ document.getElementById("tbDatosImpresiones").innerHTML=""
 document.getElementById("divPieImpresiones").innerHTML=""	
 }
 
+totalregistroPresupuesto= 0;
+registrocargadoPresupuesto= 0;
+controldebusquedadPresupuesto= true;
+function buscarvistaPresupuesto() {
+	document.getElementById("table_vista_presupuesto").innerHTML= paginacargando;
+
+	obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("accion", "obtenerPresupuesto");
+	datos.append("cod_clienteFK", idFkCliente);
+
+	verCerrarEfectoCargando("1")
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR", "", "error");
+			console.error(jqXHR, textstatus, errorThrowm);
+		},
+		success: function (responseText) {
+			document.getElementById("table_vista_presupuesto").innerHTML= '';
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					document.getElementById("table_vista_presupuesto").innerHTML= datos["3"];
+					totalregistroPresupuesto= parseInt(datos["5"]);
+					registrocargadoPresupuesto= parseInt(datos["4"]);
+
+					// Controla el progreso de la busqueda
+					if(totalregistroPresupuesto>registrocargadoPresupuesto){
+						document.getElementById("divProgressPresupuesto").style.backgroundColor='';
+						
+						controldebusquedadPresupuesto=true;
+						var porce=((registrocargadoPresupuesto*100)/totalregistroPresupuesto).toFixed(0)
+						document.getElementById('tbProcessPresupuesto').style.display= ""
+						document.getElementById("divProgressPresupuesto").style.width=porce+"%"
+						buscarmasVistaPresupuesto(cod_clienteFK);
+					 }else{
+						document.getElementById('tbProcessPresupuesto').style.display= "none";
+						controldebusquedadPresupuesto=false
+					 }
+				}
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
+function cancelarListadoPresupuesto() {
+	controldebusquedadPresupuesto= false;
+	document.getElementById("divProgressPresupuesto").style.backgroundColor='#ff5722'
+}
+
 function obtenerDatosPresupuesto(elemento) {
-    document.getElementById('inptCodigoPresupuesto').value = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptProductoPresupuesto').value = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptPrecioPresupuesto').value = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inpTSeleccCostoPresupuesto').value = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptEntregaPresupuesto').value = "0";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptCantidadPresupuesto').value = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptTotalPresupuesto').value = "";$(elemento).children('td["td_datos_"]').html();
-    totalPresupuesto=0;$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptTotalPresupuesto2').innerHTML = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptTOTALPresupuestoFORM').value = "0";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('table_vista_producto_Presupuesto').innerHTML = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('table_vista_producto_presupuestoDetalle').innerHTML = "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('table_vista_detalles_presupuesto').innerHTML = "";$(elemento).children('td["td_datos_"]').html();
+    idabmPresupuesto = $(elemento).children('td[id="td_id"]').html();
+    document.getElementById('inptCodigoPresupuesto').value = $(elemento).children('td[id="td_id"]').html();
+    totalPresupuesto= $(elemento).children('td[id="td_datos_7"]').html();
+    document.getElementById('inptTotalPresupuesto2').innerHTML = $(elemento).children('td[id="td_datos_7"]').html();
+    document.getElementById('inptTOTALPresupuestoFORM').value = $(elemento).children('td[id="td_datos_7"]').html();
 
-    document.getElementById('inptDocumentoClientePresupuesto').value= "";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById('inptNombreClientePresupuesto').value= "";$(elemento).children('td["td_datos_"]').html();
-    idFkCliente= "";$(elemento).children('td["td_datos_"]').html();
+	buscarDetallesPresupuesto($(elemento).children('td[id="td_id"]').html());
+    document.getElementById('table_vista_producto_presupuestoDetalle').innerHTML = "";$(elemento).children('td[id="td_datos_"]').html();
+    document.getElementById('table_vista_detalles_presupuesto').innerHTML = "";$(elemento).children('td[id="td_datos_"]').html();
 
-    document.getElementById("divCabeceraImpresiones").innerHTML="";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById("tbTitulosImpresiones").innerHTML="";$(elemento).children('td["td_datos_"]').html();
-    document.getElementById("tbDatosImpresiones").innerHTML="";$(elemento).children('td["td_datos_"]').html();
+    document.getElementById('inptDocumentoClientePresupuesto').value= $(elemento).children('td[id="td_datos_5"]').html();
+    document.getElementById('inptNombreClientePresupuesto').value= $(elemento).children('td[id="td_datos_4"]').html();
+    idFkCliente= $(elemento).children('td[id="td_datos_3"]').html();
+	verCerrarAbmDetallesPresupuesto(false, true);
+}
 
-    document.getElementById("divPieImpresiones").innerHTML="";$(elemento).children('td["td_datos_"]').html();
+function buscarDetallesPresupuesto(cod_presupuestoFK) {
+	document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML= paginacargando;
+	document.getElementById("table_vista_detalles_presupuesto").innerHTML= paginacargando;
+
+	obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("accion", "obtenerDetallesPresupuesto");
+	datos.append("cod_presupuestoFK", cod_presupuestoFK);
+
+	verCerrarEfectoCargando("1")
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR", "", "error");
+			console.error(jqXHR, textstatus, errorThrowm);
+		},
+		success: function (responseText) {
+			document.getElementById("table_vista_presupuesto").innerHTML= '';
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML= datos["3"];
+					generarTabla();
+				}
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", error, "error")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
 }

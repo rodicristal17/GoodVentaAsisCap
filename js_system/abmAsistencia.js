@@ -77,6 +77,7 @@ function registrarAsistencia() {
 					} else {
 						//obtenerAsistenciaUsuario();
 						location.reload();
+						document.getElementById("btnRegistrarAsistencia").disabled = false;
 					}
 				} else {
 					let mensaje= datos["2"];
@@ -89,10 +90,10 @@ function registrarAsistencia() {
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+				GuardarArchivosLog(titulo);
+				document.getElementById("btnRegistrarAsistencia").disabled = false;
 			} finally {
                 verCerrarEfectoCargando("");
-				document.getElementById("btnRegistrarAsistencia").disabled = false;
             }
 		}
 	});
