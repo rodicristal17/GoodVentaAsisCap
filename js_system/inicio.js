@@ -602,7 +602,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.72";
+var codigodeactualizacion="X-GT-1-JMTG-V1.73";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -10531,6 +10531,7 @@ function limpiarcamposCasa() {
 	idAbmCasa = "";
 }
 function buscarabmCasaOption() {
+	document.getElementById("inptLocalAgendaFiltro").innerHTML = "";
 	document.getElementById("inptlocaluser").innerHTML = "";
 	document.getElementById("inptlocalProducto").innerHTML = "";
 	document.getElementById("inptCodLocalMecanicoDental").innerHTML = "";
@@ -10645,6 +10646,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
+					document.getElementById("inptLocalAgendaFiltro").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptLocalConsultorio").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptBuscarAbmConsultorio4").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptBuscarLocalPaciente").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
@@ -10797,6 +10799,7 @@ function seleccionarLocalUSer(){
 			//document.getElementById("inptlocalsolicitudCredito").value = cod_localFKUSer
 			
 		
+		document.getElementById("inptLocalAgendaFiltro").value = cod_localFKUSer
 		document.getElementById("inptBuscarUsuario4").value = cod_localFKUSer
 		document.getElementById("inptlocalVenta").value = cod_localFKUSer
 		document.getElementById("inptLocalMisDatos").value = cod_localFKUSer
@@ -10834,7 +10837,14 @@ function seleccionarLocalUSer(){
 		document.getElementById("inptlocalContabilidad").value = cod_localFKUSer
 		document.getElementById("inptlocalContabilidadCompra").value = cod_localFKUSer
 		
+		var contrlLocal="SI";		
 		
+		if(controlacceso2("CAMBIARLOCAL","accion")==false){contrlLocal="NO";}
+ 
+		if(contrlLocal=="NO"){
+					
+			document.getElementById("inptLocalAgendaFiltro").disabled=true
+		}
 	
 					
 }

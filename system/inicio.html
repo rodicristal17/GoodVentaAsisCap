@@ -12156,17 +12156,7 @@ Reg. Encontrados :</p>
             <button class='btn-filtro' onclick='cambiarFechaAgenda(1)'>&gt;</button>
             <button class='btn-filtro btn-hoy' onclick='irHoyAgenda()'>Hoy</button>
         </div>
-
-        <div class='agenda-buscadores'>
-            <input type='text' id='inptBuscarPacienteAgenda' class='catalogo-selectBuscador' placeholder='Buscar paciente...' onkeyup='filtrarAgendaLocal()' />
-            <select id='inptEstadoAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultorios()'>
-                <option value=''>Todos los estados</option>
-                <option value='AGENDADO'>Agendado</option>
-                <option value='CONFIRMADO'>Confirmado</option>
-                <option value='ATENDIDO'>Atendido</option>
-                <option value='CANCELADO'>Cancelado</option>
-            </select>
-        </div>
+ 
 
         <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
             <span class='chip-filtro'>Fecha: hoy</span>
@@ -12213,43 +12203,67 @@ Reg. Encontrados :</p>
 </div>
 
 <div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='cerrarModalFiltrosAgenda()' style='display:none;'></div>
-<div class='modal-filtros-catalogo' id='modalFiltrosAgenda' style='display:none;'>
-    <div class='modal-filtros-box'>
-        <div class='modal-filtros-header'>
-            <h3>Filtros de agenda</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalFiltrosAgenda()'>×</button>
+<div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="cerrarModalFiltrosAgenda()"></div>
+
+<div class="modal-filtros-catalogo" id="modalFiltrosAgenda" style="display:none;">
+    <div class="modal-filtros-box modal-agenda-pro">
+        
+        <div class="modal-filtros-header">
+            <div class="modal-header-info">
+                <p class="modal-etiqueta">Panel de filtros</p>
+                <h3>Filtros de agenda</h3>
+                <span>Refiná la búsqueda por consultorio, local, paciente y estado</span>
+            </div>
+
+            <button type="button" class="btn-cerrar-modal" onclick="cerrarModalFiltrosAgenda()">×</button>
         </div>
 
-        <div class='modal-filtros-body'>
-            <div class='filtro-grupo'>
-                <label>Consultorio</label>
-                <select id='inptConsultorioAgendaFiltro' class='catalogo-selectBuscador'>
-                    <option value=''>Todos</option>
+        <div class="modal-filtros-body agenda-filtros-grid">
+            
+            <div class="filtro-grupo filtro-destacado">
+                <label for="inptBuscarPacienteAgenda">Buscar paciente</label>
+                <input 
+                    type="text" 
+                    id="inptBuscarPacienteAgenda" 
+                    class="catalogo-selectBuscador input-filtro-pro" 
+                    placeholder="Escriba el nombre del paciente..." 
+                    onkeyup="filtrarAgendaLocal()" 
+                />
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="inptConsultorioAgendaFiltro">Consultorio</label>
+                <select id="inptConsultorioAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
+                    <option value="">Todos</option>
                 </select>
             </div>
 
-            <div class='filtro-grupo'>
-                <label>Profesional</label>
-                <select id='inptProfesionalAgendaFiltro' class='catalogo-selectBuscador'>
-                    <option value=''>Todos</option>
+            <div class="filtro-grupo">
+                <label for="inptLocalAgendaFiltro">Local</label>
+                <select id="inptLocalAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
+                    <option value="">Todos</option>
                 </select>
             </div>
 
-            <div class='filtro-checks'>
-                <label><input type='checkbox' id='chkAgendaAgendado' checked /> Agendado</label>
-                <label><input type='checkbox' id='chkAgendaConfirmado' checked /> Confirmado</label>
-                <label><input type='checkbox' id='chkAgendaAtendido' checked /> Atendido</label>
-                <label><input type='checkbox' id='chkAgendaCancelado' /> Cancelado</label>
+            <div class="filtro-grupo">
+                <label for="inptEstadoAgenda">Estado</label>
+                <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultorios()">
+                    <option value="">Todos los estados</option>
+                    <option value="AGENDADO">Agendado</option>
+                    <option value="CONFIRMADO">Confirmado</option>
+                    <option value="ATENDIDO">Atendido</option>
+                    <option value="CANCELADO">Cancelado</option>
+                </select>
             </div>
+
         </div>
 
-        <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='limpiarFiltrosAgenda()'>Limpiar</button>
-            <button class='btn-accion-principal' onclick='aplicarFiltrosAgenda()'>Aplicar filtros</button>
+        <div class="modal-filtros-footer">
+            <button class="btn-filtro btn-secundario" onclick="limpiarFiltrosAgenda()">Limpiar</button>
+            <button class="btn-accion-principal btn-principal-pro" onclick="aplicarFiltrosAgenda()">Aplicar filtros</button>
         </div>
     </div>
 </div>
-
 <div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='cerrarModalNuevaCita()' style='display:none;'></div>
 
 

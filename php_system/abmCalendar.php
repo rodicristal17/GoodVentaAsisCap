@@ -358,6 +358,10 @@ function normalizarTextoUtf8($valor){
 
 function cargarAgenda($mysqli){
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
+    $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
 
     if ($fecha == '') {
         $fecha = date('Y-m-d');
@@ -369,13 +373,18 @@ function cargarAgenda($mysqli){
     /* ===========================
        CONSULTORIOS
     =========================== */
+	$condicionConsultorio="";
+	if($cod_local!=""){
+		$condicionConsultorio.=" and c.cod_localFk = '".$cod_local."'";
+	}
+	
     $sqlConsultorios = "
         SELECT  c.id_consultorio,
             c.nombre,
             c.descripcion,
             c.color
         FROM consultorios c
-        WHERE  c.estado = 'Activo'
+        WHERE  c.estado = 'Activo' ".$condicionConsultorio."
         ORDER BY cod_localFk asc ,c.nombre ASC ";
 
     $resultConsultorios = $mysqli->query($sqlConsultorios);
@@ -401,6 +410,28 @@ function cargarAgenda($mysqli){
     /* ===========================
        EVENTOS / AGENDAMIENTOS
     =========================== */
+	
+	$condicion="";
+	if($fecha!=""){
+		$condicion.=" and a.fecha = '".$fecha."'";
+	}
+	
+	if($paciente!=""){
+		$condicion.=" and p.nombre_persona like '%".$paciente."%'";
+	}
+	
+	if($cod_consultorio!=""){
+		$condicion.=" and a.id_consultorio = '".$cod_consultorio."'";
+	}
+	
+	if($cod_local!=""){
+		$condicion.=" and c.cod_localFk = '".$cod_local."'";
+	}
+	
+	if($estado!=""){
+		$condicion.=" and a.estado = '".$estado."'";
+	}	
+	
     $sqlEventos = "SELECT  a.id_agenda,
             a.id_consultorio,
             a.fecha,
@@ -411,7 +442,8 @@ function cargarAgenda($mysqli){
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
-        WHERE a.fecha = '".$fecha."'
+		INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
+        WHERE 1=1 ".$condicion."
         ORDER BY a.hora_inicio ASC, a.id_agenda ASC
     ";
 

@@ -6,13 +6,21 @@ var agendaConsultoriosData = {
 function cargarAgendaConsultoriosDesdePHP() {
     obtener_datos_user();
 
+    var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
+    var consultorio = document.getElementById('inptConsultorioAgendaFiltro').value || '';
+    var local = document.getElementById('inptLocalAgendaFiltro').value || '';
+    var estado = document.getElementById('inptEstadoAgenda').value || '';
     var fecha = document.getElementById('inptFechaAgenda').value || '';
 
     var datos = {
         "useru": userid,
         "passu": passuser,
         "navegador": navegador,
+        "paciente": paciente,
+        "cod_consultorio": consultorio,
+        "cod_local": local,
         "fecha": fecha,
+        "estado": estado,
         "funt": "cargarAgenda"
     };
 
@@ -208,6 +216,8 @@ function cargarAgendaConsultorios(){
     actualizarResumenFiltrosAgenda();
     inicializarDragAndDropAgenda();
 }
+
+
 function pintarEventosAgenda(fecha, estado, consultorioFiltro){
     var slots = document.querySelectorAll('.agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
@@ -464,8 +474,8 @@ function formatearFechaInput(fecha){
 }
 
 function abrirModalFiltrosAgenda(){
-    document.getElementById('overlayFiltrosAgenda').style.display = 'block';
-    document.getElementById('modalFiltrosAgenda').style.display = 'block';
+    document.getElementById('overlayFiltrosAgenda').style.display = '';
+    document.getElementById('modalFiltrosAgenda').style.display = '';
 }
 
 function cerrarModalFiltrosAgenda(){
@@ -475,22 +485,16 @@ function cerrarModalFiltrosAgenda(){
 
 function aplicarFiltrosAgenda(){
     cerrarModalFiltrosAgenda();
-    cargarAgendaConsultorios();
+    cargarAgendaConsultoriosDesdePHP();
 }
 
 function limpiarFiltrosAgenda(){
+    document.getElementById('inptBuscarPacienteAgenda').value = '';
     document.getElementById('inptConsultorioAgendaFiltro').value = '';
+    document.getElementById('inptLocalAgendaFiltro').value = '';
+    document.getElementById('inptEstadoAgenda').value = '';  
 
-    if(document.getElementById('inptProfesionalAgendaFiltro')){
-        document.getElementById('inptProfesionalAgendaFiltro').value = '';
-    }
-
-    document.getElementById('chkAgendaAgendado').checked = true;
-    document.getElementById('chkAgendaConfirmado').checked = true;
-    document.getElementById('chkAgendaAtendido').checked = true;
-    document.getElementById('chkAgendaCancelado').checked = false;
-
-    cargarAgendaConsultorios();
+    cargarAgendaConsultoriosDesdePHP();
 }
 
 function abrirModalNuevaCita(){
@@ -498,8 +502,8 @@ function abrirModalNuevaCita(){
 	if(controlacceso("INSERTARFORMULARIOCALENDARIO","accion")==false){return;}
 	 		
     document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
-    document.getElementById('overlayNuevaCita').style.display = 'block';
-    document.getElementById('modalNuevaCita').style.display = 'block';
+    document.getElementById('overlayNuevaCita').style.display = '';
+    document.getElementById('modalNuevaCita').style.display = '';
 }
 
 function cerrarModalNuevaCita(){
