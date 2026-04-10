@@ -307,8 +307,6 @@ DO
 
 DELIMITER $$
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.73', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
-
 ALTER TABLE dictamenes 
 MODIFY estado VARCHAR(15) DEFAULT 'autorizado';
 
@@ -323,13 +321,14 @@ CREATE TABLE presupuesto(
 
 CREATE TABLE detalles_presupuesto(
     id INT PRIMARY KEY AUTO_INCREMENT,
-    cod_productoFK INT(11),
+    cod_productoFK VARCHAR(45),
     precio bigint NOT NULL,
     cantidad INT DEFAULT 1,
-    cod_presupuestoFK INT(11),
-    FOREIGN KEY (cod_productoFK) REFERENCES producto(cod_producto),
+    cod_presupuestoFK INT,
     FOREIGN KEY (cod_presupuestoFK) REFERENCES presupuesto(id)
 );
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.74', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
