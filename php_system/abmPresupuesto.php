@@ -25,7 +25,10 @@ function verificarOperacionPresupuesto($operacion)
             $filtro = array(
                 'id' => isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_clienteFK' => isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null,
-                'cod_usuarioFK_create' => isset($_POST['cod_usuarioFK_create']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_create']), 'ISO-8859-1', 'UTF-8') : null
+                'cod_usuarioFK_create' => isset($_POST['cod_usuarioFK_create']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_create']), 'ISO-8859-1', 'UTF-8') : null,
+                'nombre_cedula_cliente' => isset($_POST['nombre_cedula_cliente']) ? mb_convert_encoding((string)($_POST['nombre_cedula_cliente']), 'ISO-8859-1', 'UTF-8') : null,
+                'fecha_inicio' => isset($_POST['fecha_inicio']) ? mb_convert_encoding((string)($_POST['fecha_inicio']), 'ISO-8859-1', 'UTF-8') : null,
+                'fecha_fin' => isset($_POST['fecha_fin']) ? mb_convert_encoding((string)($_POST['fecha_fin']), 'ISO-8859-1', 'UTF-8') : null,
             );
             $limite = (isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : NULL);
 
@@ -130,6 +133,15 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
         switch ($key) {
             case 'nombre_cliente':
                 $sqlFiltro .= "(SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_personaFK = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) like '%$value%'";
+                break;
+            case 'fecha_inicio':
+                $sqlFiltro .= "fecha_create >= $value";
+                break;
+            case 'fecha_fin':
+                $sqlFiltro .= "fecha_create <= $value";
+                break;
+            case 'nombre_cedula_cliente':
+                $sqlFiltro .= "((SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) like '%$value%' OR (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK) LIKE '%$value%')";
                 break;
             default:
                 if (is_numeric($value)) {

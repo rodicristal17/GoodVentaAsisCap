@@ -307,7 +307,7 @@ DO
 
 DELIMITER $$
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.72', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.73', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE dictamenes 
 MODIFY estado VARCHAR(15) DEFAULT 'autorizado';

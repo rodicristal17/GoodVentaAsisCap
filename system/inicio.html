@@ -8165,49 +8165,19 @@ ACCION
     <div class="presupuesto-container presupuesto-search-modal">
       <header class="presupuesto-header presupuesto-search-header">
         <div class="presupuesto-search-title">
-          <span class="presupuesto-search-kicker">Historial</span>
           <h2>Buscar Presupuesto</h2>
           <p>Consultá presupuestos guardados por cliente, documento o venta y retomá el detalle cuando lo necesites.</p>
         </div>
         <div class="header-actions">
           <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
             onclick="verCerrarAbmDetallesPresupuesto(false, true)">
+          <button class="btn-icon" onclick="verCerrarFiltrosPresupuesto(true)" title="Filtros">
+              <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
+          </button>
         </div>
       </header>
 
-      <section class="presupuesto-panel presupuesto-search-filters">
-        <div class="panel-title">Filtros de Búsqueda</div>
-        <div class="presupuesto-search-grid">
-          <div class="form-row presupuesto-search-field presupuesto-search-field-wide">
-            <label>Buscador</label>
-            <input class="inputText" type="text" placeholder="Escribí el dato a buscar" id="inptBuscarVistaPresupuestos"
-              onkeyup="if(event.keyCode == 13){buscarvistaventa()}">
-          </div>
-
-          <div class="form-row presupuesto-search-field">
-            <label>Buscar Por</label>
-            <select class="inputSelect" id="inptOpcionesdeBusquedaPresupuesto">
-              <option value="1">NOMBRE Y APELLIDO DEL CLIENTE</option>
-              <option value="2">NRO DOCUMENTO DEL CLIENTE</option>
-              <option value="3">RUC DEL CLIENTE</option>
-              <option value="4">NRO TELEF. DEL CLIENTE</option>
-              <option value="5">NRO VENTA</option>
-            </select>
-          </div>
-
-          <div class="form-row presupuesto-search-action">
-            <label>&nbsp;</label>
-            <input type="button" value="Buscar Presupuesto" class="btn4" onclick="buscarvistaPresupuesto()">
-          </div>
-        </div>
-      </section>
-
       <section class="presupuesto-panel presupuesto-search-results">
-        <div class="presupuesto-search-results-head">
-          <div class="panel-title">Resultados</div>
-          <span class="presupuesto-search-chip">Listado de presupuestos</span>
-        </div>
-
         <table class="tableCabeceraRegistro">
           <tbody>
             <tr>
@@ -8248,6 +8218,69 @@ ACCION
       </section>
     </div>
   </center>
+  <div class="modal-filtros-overlay" id="overlayFiltrosPresupuesto" style="display:none;">
+    <div class="modal-filtros-catalogo" id="modalFiltrosPresupuesto">
+      <div class="modal-filtros-box modal-agenda-pro">
+          
+          <div class="modal-filtros-header">
+              <div class="modal-header-info">
+                  <p class="modal-etiqueta">Panel de filtros</p>
+                  <h3>Filtros de presupuesto</h3>
+                  <span>Refiná la búsqueda por consultorio, local, paciente y estado</span>
+              </div>
+
+              <button type="button" class="btn-cerrar-modal" onclick="verCerrarFiltrosPresupuesto(false)">×</button>
+          </div>
+
+          <div class="modal-filtros-body agenda-filtros-grid">
+              
+              <div class="filtro-grupo filtro-destacado">
+                  <label for="inptClienteCedulaFiltroPresupuesto">Cliente o cédula</label>
+                  <input 
+                      type="text"
+                      id="inptClienteCedulaFiltroPresupuesto"
+                      class="catalogo-selectBuscador input-filtro-pro"
+                      placeholder="Escriba el nombre del cliente o su cÃ©dula..."
+                  />
+              </div>
+
+              <div class="filtro-grupo">
+                  <label for="inptFechaInicioFiltroPresupuesto">Fecha inicio</label>
+                  <input 
+                      type="date"
+                      id="inptFechaInicioFiltroPresupuesto"
+                      class="catalogo-selectBuscador input-filtro-pro"
+                  />
+              </div>
+
+              <div class="filtro-grupo">
+                  <label for="inptFechaFinFiltroPresupuesto">Fecha fin</label>
+                  <input 
+                      type="date"
+                      id="inptFechaFinFiltroPresupuesto"
+                      class="catalogo-selectBuscador input-filtro-pro"
+                  />
+              </div>
+
+              <div class="filtro-grupo">
+                  <label for="inptIdFiltroPresupuesto">Cod. del presupuesto</label>
+                  <input 
+                      type="text"
+                      id="inptIdFiltroPresupuesto"
+                      class="catalogo-selectBuscador input-filtro-pro"
+                      placeholder="Ingrese el id del presupuesto..."
+                  />
+              </div>
+
+          </div>
+
+          <div class="modal-filtros-footer">
+              <button type="button" class="btn-filtro btn-secundario" onclick="limpiarFiltroPresupuesto()">Limpiar</button>
+              <button type="button" class="btn-accion-principal btn-principal-pro" onclick="verCerrarFiltrosPresupuesto(false);buscarvistaPresupuesto();">Aplicar filtros</button>
+          </div>
+      </div>
+  </div>
+  </div>
 </div>
 
 <!-- <div class='principal2' style='display:none' id='divAbmDetallesPresupuesto'> -->

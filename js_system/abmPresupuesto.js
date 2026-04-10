@@ -5,6 +5,7 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
             document.getElementById('divListPresupuesto').style.display= "";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="none";
         } else {
+			buscarvistaPresupuesto();
             document.getElementById('divListPresupuesto').style.display= "none";
             document.getElementById("divAbmDetallesPresupuesto").style.display=""
             // document.getElementById("tdEfectoAbmDetallePresupuesto").className="magictime slideLeftReturn"
@@ -567,6 +568,10 @@ function buscarvistaPresupuesto() {
 	datos.append("navegador", navegador)
 	datos.append("accion", "obtenerPresupuesto");
 	datos.append("cod_clienteFK", idFkCliente);
+	datos.append("nombre_cedula_cliente", document.getElementById('inptClienteCedulaFiltroPresupuesto').value);
+	datos.append("id", document.getElementById('inptIdFiltroPresupuesto').value);
+	datos.append("fecha_inicio", document.getElementById('inptFechaInicioFiltroPresupuesto').value);
+	datos.append("fecha_fin", document.getElementById('inptFechaFinFiltroPresupuesto').value);
 
 	verCerrarEfectoCargando("1")
     var OpAjax = $.ajax({
@@ -638,6 +643,16 @@ function buscarvistaPresupuesto() {
             }
 		}
 	});
+}
+
+function limpiarFiltroPresupuesto() {
+	idFkCliente = "";
+	document.getElementById('inptClienteCedulaFiltroPresupuesto').value = "";
+	document.getElementById('inptIdFiltroPresupuesto').value = "";
+	document.getElementById('inptFechaInicioFiltroPresupuesto').value = "";
+	document.getElementById('inptFechaFinFiltroPresupuesto').value = "";
+
+	buscarvistaPresupuesto();
 }
 
 function cancelarListadoPresupuesto() {
@@ -729,4 +744,14 @@ function buscarDetallesPresupuesto(cod_presupuestoFK) {
             }
 		}
 	});
+}
+
+function verCerrarFiltrosPresupuesto(mostrar) {
+	if (mostrar) {
+		//document.getElementById('divListPresupuesto').style.display= "none";
+		document.getElementById('overlayFiltrosPresupuesto').style.display= "";
+	} else {
+		//document.getElementById('divListPresupuesto').style.display= "";
+		document.getElementById('overlayFiltrosPresupuesto').style.display= "none";
+	}
 }

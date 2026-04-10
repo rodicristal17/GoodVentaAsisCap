@@ -1867,7 +1867,6 @@ textarea:focus, select:focus {
   border-top: none;
   border-radius: 0 0 14px 14px;
   min-height: 170px;
-  height: 170px;
   overflow-y: auto;
   background: #ffffff;
 }
@@ -2023,6 +2022,7 @@ textarea:focus, select:focus {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
 }
 
 .presupuesto-search-kicker {
@@ -2041,7 +2041,6 @@ textarea:focus, select:focus {
 
 .presupuesto-search-title p {
   margin: 0;
-  max-width: 620px;
   color: #61809d;
   font-size: 14px;
   line-height: 1.5;
