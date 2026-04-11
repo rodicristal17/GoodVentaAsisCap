@@ -494,7 +494,48 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
           Respuesta=datos["1"];  
 		   Respuesta=respuestaJqueryAjax(Respuesta)
 			if (Respuesta == true) {
-				
+				var zonaCliente = "";
+                if (document.getElementById("inptZonaCliente")) {
+                    zonaCliente = document.getElementById("inptZonaCliente").value;
+                }
+
+                var styleFondo = "";
+                if (accesocredito == "Denegado") {
+                    styleFondo = "background-color:#ff5722;color:#fff";
+                }
+
+                var tablaClienteFicticia = $(
+                    "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>" +
+                        "<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='" + styleFondo + "'>" +
+                            "<td id='td_id' style='display:none'>" + idFkCliente + "</td>" +
+                            "<td id='td_datos_2' style='width:10%'>" + ci_cliente + "</td>" +
+                            "<td id='td_datos_13' style='width:10%'>" + rut_cliente + "</td>" +
+                            "<td id='td_datos_1' style='width:10%'>" + nombre_persona + "</td>" +
+                            "<td id='td_datos_10' style='display:none'>" + zonaCliente + "</td>" +
+                            "<td id='td_datos_3' style='width:10%'>" + direccion + "</td>" +
+                            "<td id='td_datos_4' style='width:10%'>" + telefono + "</td>" +
+                            "<td id='td_datos_5' style='display:none'>" + email + "</td>" +
+                            "<td id='td_datos_6' style='display:none'>" + Calificacion + "</td>" +
+                            "<td id='td_datos_7' style='display:none'>" + whapp + "</td>" +
+                            "<td id='td_datos_8' style='display:none'>" + estado + "</td>" +
+                            "<td id='td_datos_9' style='display:none'>" + idzonaFk + "</td>" +
+                            "<td id='td_datos_11' style='display:none'>" + fotocliente1 + "</td>" +
+                            "<td id='td_datos_12' style='display:none'>" + fotocliente2 + "</td>" +
+                            "<td id='td_datos_14' style='display:none'>" + accesocredito + "</td>" +
+                            "<td id='td_datos_15' style='display:none'></td>" +
+                            "<td id='td_datos_16' style='display:none'>" + lugardetrabajo + "</td>" +
+                            "<td id='td_datos_17' style='display:none'>" + salario + "</td>" +
+                            "<td id='td_datos_18' style='display:none'>" + antiguedad + "</td>" +
+                            "<td id='td_datos_19' style='display:none'>" + teleftrab1 + "</td>" +
+                            "<td id='td_datos_20' style='display:none'>" + teleftrab2 + "</td>" +
+                            "<td id='td_datos_21' style='display:none'>" + direcciontrab + "</td>" +
+                            "<td id='td_datos_22' style='display:none'>" + FechaNac + "</td>" +
+                        "</tr>" +
+                    "</table>"
+                );
+
+                elementoCliente = tablaClienteFicticia.find("tr")[0];
+
 				idFkCliente = datos["2"];
                 if (controlseleccvistacliente) {
                     
@@ -2068,7 +2109,7 @@ function vercerrarvistacuentacliente(d) {
 	}
 }
 
-function buscarClientePorCi(elementoLlamando, nombreElementoCedula, nombreElementoNombre, ventanaOrigen) {
+function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreElementoNombre, ventanaOrigen) {
     let cedula= "";
     let nombre= "";
 
@@ -2121,15 +2162,57 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
-			   if (Respuesta == true) {
+                if (Respuesta == true) {
+                   controlseleccvistacliente= ventanaOrigen;
                     if (datos[2].length) {
                         let registro= datos[2][0];
                         idFkCliente = registro['cod_cliente'];
                         document.getElementById(nombreElementoCedula).value= registro['rut_cliente'] || registro['ci_cliente'];
                         document.getElementById(nombreElementoNombre).value= registro['nombre_persona'];
+                        
+                        var zonaCliente = "";
+                        if (document.getElementById("inptZonaCliente")) {
+                            zonaCliente = document.getElementById("inptZonaCliente").value;
+                        }
+
+                        var styleFondo = "";
+                        if (registro['accesocredito'] == "Denegado") {
+                            styleFondo = "background-color:#ff5722;color:#fff";
+                        }
+
+                        var tablaClienteFicticia = $(
+                            "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>" +
+                                "<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='" + styleFondo + "'>" +
+                                    "<td id='td_id' style='display:none'>" + registro['cod_persona'] + "</td>" +
+                                    "<td id='td_datos_2' style='width:10%'>" + registro['ci_cliente'] + "</td>" +
+                                    "<td id='td_datos_13' style='width:10%'>" + registro['rut_cliente'] + "</td>" +
+                                    "<td id='td_datos_1' style='width:10%'>" + registro['nombre_persona'] + "</td>" +
+                                    "<td id='td_datos_10' style='display:none'>" + registro['zona'] + "</td>" +
+                                    "<td id='td_datos_3' style='width:10%'>" + registro['direccion'] + "</td>" +
+                                    "<td id='td_datos_4' style='width:10%'>" + registro['telefono'] + "</td>" +
+                                    "<td id='td_datos_5' style='display:none'>" + registro['email'] + "</td>" +
+                                    "<td id='td_datos_6' style='display:none'>" + registro['Calificacion'] + "</td>" +
+                                    "<td id='td_datos_7' style='display:none'>" + registro['whapp'] + "</td>" +
+                                    "<td id='td_datos_8' style='display:none'>" + registro['estado'] + "</td>" +
+                                    "<td id='td_datos_9' style='display:none'>" + registro['idzonaFk'] + "</td>" +
+                                    "<td id='td_datos_11' style='display:none'>" + registro['foto1'] + "</td>" +
+                                    "<td id='td_datos_12' style='display:none'>" + registro['foto2'] + "</td>" +
+                                    "<td id='td_datos_14' style='display:none'>" + registro['accesocredito'] + "</td>" +
+                                    "<td id='td_datos_15' style='display:none'></td>" +
+                                    "<td id='td_datos_16' style='display:none'>" + registro['lugardetrabajo'] + "</td>" +
+                                    "<td id='td_datos_17' style='display:none'>" + registro['salario'] + "</td>" +
+                                    "<td id='td_datos_18' style='display:none'>" + registro['antiguedad'] + "</td>" +
+                                    "<td id='td_datos_19' style='display:none'>" + registro['teleftrab1'] + "</td>" +
+                                    "<td id='td_datos_20' style='display:none'>" + registro['teleftrab2'] + "</td>" +
+                                    "<td id='td_datos_21' style='display:none'>" + registro['direcciontrab'] + "</td>" +
+                                    "<td id='td_datos_22' style='display:none'>" + registro['fechanac'] + "</td>" +
+                                "</tr>" +
+                            "</table>"
+                        );
+                        elementoCliente = tablaClienteFicticia.find("tr")[0];
+                        EnviarClienteDesde();
                     } else {
                         // Abre la ventana para agregar un nuevo cliente
-                        controlseleccvistacliente= ventanaOrigen;
                         vernuevoclientevista("1");
                     }
 				} else {
