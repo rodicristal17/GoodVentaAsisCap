@@ -74,6 +74,12 @@ function verificarOperacionPresupuesto($operacion)
 
             obtenerVistaDetallesPresupuesto($filtro, $limite);
             break;
+        case 'eliminarDetallePresupuesto':
+            $idDetalle = mb_convert_encoding((string)($_POST['idDetalle']), 'ISO-8859-1', 'UTF-8');
+            
+            eliminarDetallePresupuesto($idDetalle);
+            echo json_encode(array("1" => "exito", "2" => $idDetalle));
+            break;
         case 'abmDetallesPresupuesto':
             $id = isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_productoFK = isset($_POST['cod_productoFK']) ? mb_convert_encoding((string)($_POST['cod_productoFK']), 'ISO-8859-1', 'UTF-8') : null;
@@ -87,6 +93,20 @@ function verificarOperacionPresupuesto($operacion)
         default:
             echo json_encode(array("1" => "error", "2" => "Operacion $operacion no definida"));
             break;
+    }
+}
+
+function eliminarDetallePresupuesto($idDetalle) {
+    $sql= "DELETE FROM detalles_presupuesto WHERE id= ?";
+
+    $mysqli = conectar_al_servidor();
+    $stmt = $mysqli->prepare($sql);
+    $stmt->bind_param('i',$idDetalle);
+
+    if (!$stmt->execute()) {
+        $informacion = array("1" => "error", "mensaje" => "Error al obtener presupuesto: " . $stmt->error, "sql" => $sql);
+        echo json_encode($informacion);
+        exit;
     }
 }
 

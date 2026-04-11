@@ -361,7 +361,7 @@ $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion
 $consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion,hora_entrada_lunes,hora_entrada_martes,hora_entrada_miercoles,hora_entrada_jueves,hora_entrada_viernes,hora_entrada_sabado)
 values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW(),?,?,?,?,?,?)";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssssSSSSSS';
+$ss='sssssssssssss';
 $stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves,$hora_entrada_viernes,$hora_entrada_sabado);
 
 $con=rand(5, 1500);

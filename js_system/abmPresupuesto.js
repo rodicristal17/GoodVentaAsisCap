@@ -314,11 +314,69 @@ function calcular_total_Presupuesto() {
 
 function eliminarFila(btn) {
   if (confirm("¿Seguro que deseas eliminar este producto del presupuesto?")) {
-    let fila = btn.closest("tr"); // obtiene la fila del botón
-    fila.remove(); // elimina la fila
-
-    // Opcional: recalcular el total
-    recalcularTotalPresupuesto();
+    let fila = btn.closest("tr");
+	let tabla= fila.parentElement.parentElement;
+	const idDetalle= tabla.id.substring(15);
+	
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idDetalle": idDetalle,
+		"accion": "eliminarDetallePresupuesto"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			verCerrarEfectoCargando("2")
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			verCerrarEfectoCargando("2")
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					fila.remove();
+    				recalcularTotalPresupuesto();
+				}
+				
+			} catch (error) {
+ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
   }
 }
 
@@ -384,7 +442,7 @@ function generarTabla() {
   divCuerpo.innerHTML = html;
 }
  
-function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad) {
+function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad, codigo_ficticio_presupuesto, nombre_producto, total_presupuesto,es_precio_contado) {
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -437,8 +495,38 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 				Respuesta = datos["1"];
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					var datos_buscados = datos[2];
-					ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+					var pagina = "<table id='tdDetalleVenta_" + datos[2] + "' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+						+ "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
+						+ "<td  id='td_datos_1' style='width:10%;'>" + codigo_ficticio_presupuesto + "</td>"
+						+ "<td  id='td_datos_2' style='width:50%;'>" + nombre_producto + "</td>"
+						+ "<td  id='td_datos_3' style='width:10%'>" + cantidad + "</td>"
+						+ "<td  id='td_datos_4' style='width:15%'>" + precio + "</td>"
+						+ "<td  id='td_datos_5' style='width:15%'>" + total_presupuesto + "</td>"
+						+ "<td  id='td_datos_6' style='display:none'></td>"
+						+ "<td  id='td_datos_7' style='display:none'>" + 0 + "</td>"
+						+ "<td  id='td_datos_8' style='display:none'>" + 0 + "</td>"
+						+ "<td  id='td_datos_9' style='display:none'>" + es_precio_contado + "</td>"
+						+ "<td  id='td_datos_10' style='display:none'>" + separadordemilesnumero(precio) + "</td>"
+						+ "<td  id='td_datos_11' style='display:none'>" + separadordemilesnumero(total_presupuesto) + "</td>"
+						+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
+						+ "</tr>"
+						+ "</table>"
+
+					document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML += pagina;
+
+					totalPresupuesto = 0;
+					var totalEntrega = document.getElementById('inptTotalPresupuesto').value;
+
+					$("tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
+						var total = $(elementohtml).children('td[id="td_datos_11"]').html();
+						total = QuitarSeparadorMilValor(total)
+						totalPresupuesto = Number(totalPresupuesto) + Number(total)
+					});
+
+					document.getElementById("inptTotalPresupuesto2").innerHTML = separadordemilesnumero(totalPresupuesto);
+					document.getElementById("inptTOTALPresupuestoFORM").value = separadordemilesnumero(totalPresupuesto);
+
+					generarTabla();
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
@@ -484,41 +572,7 @@ function anhadirPrPresupuesto() {
 		}
 
 		// Agrega al presupuesto existente
-		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto);
-
-		var nroid = Math.floor((Math.random() * 1000) + 1);
-		var pagina = "<table id='tdDetalleVenta_" + nroid + "' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
-			+ "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
-			+ "<td  id='td_datos_1' style='width:10%;'>" + inptCodigoPresupuesto + "</td>"
-			+ "<td  id='td_datos_2' style='width:50%;'>" + inptProductoPresupuesto + "</td>"
-			+ "<td  id='td_datos_3' style='width:10%'>" + inptCantidadPresupuesto + "</td>"
-			+ "<td  id='td_datos_4' style='width:15%'>" + inptPrecioPresupuesto + "</td>"
-			+ "<td  id='td_datos_5' style='width:15%'>" + inptTotalPresupuesto + "</td>"
-			+ "<td  id='td_datos_6' style='display:none'></td>"
-			+ "<td  id='td_datos_7' style='display:none'>" + inpTSeleccCostoPresupuesto + "</td>"
-			+ "<td  id='td_datos_8' style='display:none'>" + inpCuotero + "</td>"
-			+ "<td  id='td_datos_9' style='display:none'>" + inpPrecioContado + "</td>"
-			+ "<td  id='td_datos_10' style='display:none'>" + inptPrecioPresupuesto + "</td>"
-			+ "<td  id='td_datos_11' style='display:none'>" + inptTotalPresupuesto + "</td>"
-			+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
-			+ "</tr>"
-			+ "</table>"
-
-		document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML += pagina;
-
-		totalPresupuesto = 0;
-		var totalEntrega = document.getElementById('inptTotalPresupuesto').value;
-
-		$("tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
-			var total = $(elementohtml).children('td[id="td_datos_11"]').html();
-			total = QuitarSeparadorMilValor(total)
-			totalPresupuesto = Number(totalPresupuesto) + Number(total)
-		});
-
-		document.getElementById("inptTotalPresupuesto2").innerHTML = separadordemilesnumero(totalPresupuesto);
-		document.getElementById("inptTOTALPresupuestoFORM").value = separadordemilesnumero(totalPresupuesto);
-
-		generarTabla()
+		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado);
 	}
 
 	document.getElementById('inptCodigoPresupuesto').value = ""
