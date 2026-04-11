@@ -276,7 +276,31 @@ EliminarGeo($CodGeoLocalizacion);
 
 }
 
+if ($operacion == "obtenerCliente") {
+	$filtro = array(
+		'c.cod_cliente' => isset($_POST['cod_cliente']) ? mb_convert_encoding((string)($_POST['cod_cliente']), 'ISO-8859-1', 'UTF-8') : null,
+		'p.cod_persona' => isset($_POST['cod_persona']) ? mb_convert_encoding((string)($_POST['cod_persona']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.ci_cliente' => isset($_POST['ci_cliente']) ? mb_convert_encoding((string)($_POST['ci_cliente']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.rut_cliente' => isset($_POST['rut_cliente']) ? mb_convert_encoding((string)($_POST['rut_cliente']), 'ISO-8859-1', 'UTF-8') : null,
+		'p.nombre_persona' => isset($_POST['nombre_persona']) ? mb_convert_encoding((string)($_POST['nombre_persona']), 'ISO-8859-1', 'UTF-8') : null,
+		'nombre_cedula_cliente' => isset($_POST['nombre_cedula_cliente']) ? mb_convert_encoding((string)($_POST['nombre_cedula_cliente']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.telefono' => isset($_POST['telefono']) ? mb_convert_encoding((string)($_POST['telefono']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.direccion' => isset($_POST['direccion']) ? mb_convert_encoding((string)($_POST['direccion']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.estado' => isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.accesocredito' => isset($_POST['accesocredito']) ? mb_convert_encoding((string)($_POST['accesocredito']), 'ISO-8859-1', 'UTF-8') : null,
+		'c.idzonaFk' => isset($_POST['idzonaFk']) ? mb_convert_encoding((string)($_POST['idzonaFk']), 'ISO-8859-1', 'UTF-8') : null,
+		'cedula' => isset($_POST['cedula']) ? mb_convert_encoding((string)($_POST['cedula']), 'ISO-8859-1', 'UTF-8') : null,
+	);
+	$limite = isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
+	$resultado = obtenerCliente($filtro);
+	$totalRegistros = count($resultado);
+	$resultado = obtenerCliente($filtro, $limite);
+
+	$informacion = array("1" => "exito", "2" => $resultado, "3" => count($resultado), "4" => $totalRegistros);
+	echo json_encode($informacion);
+	exit;
+}
 
 if($operacion=="buscarDatalis")
 {
@@ -998,6 +1022,130 @@ if ( ! $stmt->execute()) {
    exit;
 }
 	 mysqli_close($mysqli);
+}
+
+function obtenerCliente($filtros = array(), $limite = 0)
+{
+	$mysqli = conectar_al_servidor();
+	$sqlFiltro = "";
+
+	foreach ($filtros as $key => $value) {
+		if ($value === null || $value === "") {
+			continue;
+		}
+
+		if ($sqlFiltro == "") {
+			$sqlFiltro .= "WHERE ";
+		} else {
+			$sqlFiltro .= " AND ";
+		}
+
+		switch ($key) {
+			case 'cedula':
+				$sqlFiltro .= "c.ci_cliente LIKE '%$value%' OR c.rut_cliente LIKE '%$value%'";
+				break;
+			case 'nombre_cedula_cliente':
+				$sqlFiltro .= "(p.nombre_persona LIKE '%$value%' OR c.ci_cliente LIKE '%$value%' OR c.rut_cliente LIKE '%$value%')";
+				break;
+			case 'fecha_inicio':
+				$sqlFiltro .= "c.fecha_insert >= '$value'";
+				break;
+			case 'fecha_fin':
+				$sqlFiltro .= "c.fecha_insert <= '$value'";
+				break;
+			default:
+				if (is_numeric($value)) {
+					$sqlFiltro .= "$key = $value";
+				} else {
+					$sqlFiltro .= "$key LIKE '%$value%'";
+				}
+				break;
+		}
+	}
+
+	if ($limite == 0) {
+		$limite = '';
+	} else {
+		$limite = "LIMIT " . intval($limite);
+	}
+
+	$sql = "SELECT
+			c.*,
+			p.cod_persona,
+			p.nombre_persona,
+			p.direccion,
+			p.telefono,
+			p.email,
+			(SELECT nombre FROM zona WHERE idzona = c.idzonaFk LIMIT 1) as zona,
+			(SELECT nombre_persona FROM persona pra WHERE pra.cod_persona = c.cod_user_insert LIMIT 1) as insertadopor,
+			(SELECT nombre_persona FROM persona pra WHERE pra.cod_persona = c.cod_user_edit LIMIT 1) as editadopor
+			FROM cliente c
+			INNER JOIN persona p ON c.cod_cliente = p.cod_persona
+			$sqlFiltro ORDER BY c.cod_cliente DESC $limite";
+
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt->execute()) {
+		$informacion = array("1" => "error", "mensaje" => "Error al obtener cliente: " . $stmt->error, "sql" => $sql);
+		echo json_encode($informacion);
+		exit;
+	}
+
+	$result = $stmt->get_result();
+	$registros = array();
+	while ($row = $result->fetch_assoc()) {
+		$reg = array();
+		foreach ($row as $key => $value) {
+			$reg[$key] = mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+		}
+		$registros[] = $reg;
+	}
+
+	$stmt->close();
+	mysqli_close($mysqli);
+	return $registros;
+};
+
+function obtenerPaginaClienteVista($registros)
+{
+	$pagina = "";
+
+	foreach ($registros as $value) {
+		$stylefondo = "";
+		if (isset($value['accesocredito']) && $value['accesocredito'] == "Denegado") {
+			$stylefondo = "background-color:#ff5722;color:#fff";
+		}
+
+		$pagina .= "
+<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>
+<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='$stylefondo'>
+<td id='td_id' style='display:none'>".$value['cod_persona']."</td>
+<td id='td_datos_2' style='width:10%'>".$value['ci_cliente']."</td>
+<td id='td_datos_13' style='width:10%'>".$value['rut_cliente']."</td>
+<td id='td_datos_1' style='width:10%'>".$value['nombre_persona']."</td>
+<td id='td_datos_10' style='display:none'>".$value['zona']."</td>
+<td id='td_datos_3' style='width:10%'>".$value['direccion']."</td>
+<td id='td_datos_4' style='width:10%'>".$value['telefono']."</td>
+<td id='td_datos_5' style='display:none'>".$value['email']."</td>
+<td id='td_datos_6' style='display:none'>".$value['Calificacion']."</td>
+<td id='td_datos_7' style='display:none'>".$value['whapp']."</td>
+<td id='td_datos_8' style='display:none'>".$value['estado']."</td>
+<td id='td_datos_9' style='display:none'>".$value['idzonaFk']."</td>
+<td id='td_datos_11' style='display:none'>".$value['foto1']."</td>
+<td id='td_datos_12' style='display:none'>".$value['foto2']."</td>
+<td id='td_datos_14' style='display:none'>".$value['accesocredito']."</td>
+<td id='td_datos_15' style='display:none'>".$value['totaldias']."</td>
+<td id='td_datos_16' style='display:none'>".$value['lugardetrabajo']."</td>
+<td id='td_datos_17' style='display:none'>".$value['salario']."</td>
+<td id='td_datos_18' style='display:none'>".$value['antiguedad']."</td>
+<td id='td_datos_19' style='display:none'>".$value['teleftrab1']."</td>
+<td id='td_datos_20' style='display:none'>".$value['teleftrab2']."</td>
+<td id='td_datos_21' style='display:none'>".$value['direcciontrab']."</td>
+<td id='td_datos_22' style='display:none'>".$value['fechanac']."</td>
+</tr>
+</table>";
+	}
+
+	return $pagina;
 }
 
 

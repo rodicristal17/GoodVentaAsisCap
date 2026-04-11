@@ -98,6 +98,7 @@ function buscarvistaproductoPresupuesto() {
 		"navegador": navegador,
 		"buscar": buscador,
 		"local": cod_localFKUSer,
+		"cod_producto": document.getElementById('inptCodigoPresupuesto').value,
 		"funt": "buscarpresupuesto"
 	};
 	$.ajax({
@@ -231,7 +232,7 @@ function buscarproductoporcodigoPresupuesto() {
 		"passu": passuser,
 		"navegador": navegador,
 		"buscar": buscador,
-		"accion": "buscarporcodigoPresupuesto"
+		"funt": "buscarporcodigoPresupuesto"
 	};
 	$.ajax({
 		data: datos,

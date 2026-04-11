@@ -57,6 +57,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js"></script>
 <script src="../js_system/abmPresupuesto.js"></script>
+<script src="../js_system/abmCliente.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -7991,7 +7992,7 @@ ACCION
         <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
           onclick="limpirarPresupuesto()">
         <img src="/GoodVentaAsisCap/iconos/buscar.png" class="iconoBtn" title="Ver historial"
-          onclick="idFkCliente= '';verCerrarAbmDetallesPresupuesto(true, true)">
+          onclick="idFkCliente= '';verCerrarAbmDetallesPresupuesto(true, true);buscarvistaPresupuesto();">
         <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
           onclick='ordenimpresion("Presupuesto")'>
         <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
@@ -8004,17 +8005,21 @@ ACCION
       <div class="form-row">
         <label>Documento:</label>
         <input type="text" class="inputText" id="inptDocumentoClientePresupuesto"
-          onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto()}">
+          onkeyup="if(event.keyCode == 13){buscarClientePorCi(this,'inptDocumentoClientePresupuesto', 'inptNombreClientePresupuesto','presupuesto')}">
       </div>
 
       <div class="form-row flex-grow" style="flex: 1 0;">
         <label>Nombre:</label>
         <input type="text" class="inputText" id="inptNombreClientePresupuesto"
-          onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto()}">
+          onkeyup="if(event.keyCode == 13){buscarClientePorCi(this,'inptDocumentoClientePresupuesto', 'inptNombreClientePresupuesto','presupuesto')}">
       </div>
 
       <div class="form-row">
         <input type="button" value="Seleccionar cliente" class="btn4" onclick='vercerrarvistacliente("1","presupuesto")'
+          style='width:150px;margin-top: 20px;'>
+      </div>
+      <div class="form-row">
+        <input type="button" value="Nuevo cliente" class="btn4" onclick="controlseleccvistacliente= 'presupuesto';vernuevoclientevista('1');"
           style='width:150px;margin-top: 20px;'>
       </div>
     </section>
@@ -8039,7 +8044,7 @@ ACCION
           </tbody>
         </table>
 
-        <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto"></div>
+        <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto" style="max-height: 200px;"></div>
       </div>
 
       <div class="presupuesto-contado presupuesto-panel">
