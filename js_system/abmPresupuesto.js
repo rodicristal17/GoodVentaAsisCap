@@ -8,7 +8,7 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
             document.getElementById('divListPresupuesto').style.display= "";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="none";
         } else {
-			if(controlacceso("VERPRESUPUESTOCAJERA","accion")==false){return;}
+			if(controlacceso("VERHISTORIALPRESUPUESTO","accion")==false){return;}
 			buscarvistaPresupuesto();
             document.getElementById('divListPresupuesto').style.display= "none";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="";

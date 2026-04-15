@@ -328,7 +328,6 @@ CREATE TABLE detalles_presupuesto(
     FOREIGN KEY (cod_presupuestoFK) REFERENCES presupuesto(id)
 );
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.74', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE detalles_presupuesto ADD COLUMN es_prioritario BOOLEAN DEFAULT 0;
 ALTER TABLE presupuesto ADD COLUMN cod_usuarioFK_edit INT(11);
@@ -356,8 +355,9 @@ WHERE TRIM(motivo) REGEXP '^Cuota [0-9]+ de .+ \\([0-9]+\\)$'
       )
   );
 
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.75', detalles='Modulo para generacion de presupuesto para cajero y doctor separados.', fecha='2026-04-15' WHERE idhistorialactualizacion= 2;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
--- VERPRESUPUESTOCAJERA, 
+-- VERHISTORIALPRESUPUESTO, 
