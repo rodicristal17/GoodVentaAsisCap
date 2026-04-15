@@ -334,6 +334,29 @@ ALTER TABLE detalles_presupuesto ADD COLUMN es_prioritario BOOLEAN DEFAULT 0;
 ALTER TABLE presupuesto ADD COLUMN cod_usuarioFK_edit INT(11);
 ALTER TABLE presupuesto ADD COLUMN fecha_edit DATETIME;
 
+ALTER TABLE gastos ADD COLUMN cod_gasto_padre INT(11);
+
+UPDATE gastos
+SET cod_gasto_padre = CAST(
+    SUBSTRING_INDEX(
+        SUBSTRING_INDEX(TRIM(motivo), '(', -1),
+        ')',
+        1
+    ) AS UNSIGNED
+)
+WHERE TRIM(motivo) REGEXP '^Cuota [0-9]+ de .+ \\([0-9]+\\)$'
+  AND (
+      cod_gasto_padre IS NULL
+      OR cod_gasto_padre <> CAST(
+          SUBSTRING_INDEX(
+              SUBSTRING_INDEX(TRIM(motivo), '(', -1),
+              ')',
+              1
+          ) AS UNSIGNED
+      )
+  );
+
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN

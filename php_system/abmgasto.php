@@ -83,7 +83,7 @@ $editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF
 	if (count($monto_limite) > 0) {
 		$monto_limite= $monto_limite[0]["monto_limite"];
 		$estado= ($estado == "Inactivo" ? "Inactivo" : "Activo");
-		$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '');
+		$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '', '');
 	
 		if ($monto_limite && $monto_limite != '0')
 		$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -141,7 +141,7 @@ if($operacion=="buscar")
 	}
 	$idgastos= "";
 
-	$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, '', $idgastos);
+	$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, '', '', $idgastos);
 	echo json_encode($informacion);
 	exit;
 }	
@@ -409,45 +409,19 @@ if ($operacion == "obtenerGastosAsociados") {
 
 function obtenerGastosAsociados($idgastos) {
 	$result= array();
-	$gastos = buscarGasto('','','','','','','','','','','','','',$idgastos)[9];
-	if (empty($gastos)) {
-		return $result;
+	// Obtenemos el registro
+	$result = buscarGasto('','','','','','','','','true','','','','','', $idgastos)[9];
+	$regGasto= $result[0];
+	
+	// Se verifica si es cuota y se obtiene el gasto padre
+	if ($regGasto['cod_gasto_padre']) {
+		$result= buscarGasto('','','','','','','','','true','','','','','', $regGasto['cod_gasto_padre'])[9];
 	}
 
-	$idBaseSerie = intval($idgastos);
-	$descripcion = isset($gastos[0]['descripcion']) ? trim((string)$gastos[0]['descripcion']) : "";
+	// Se evalua si existen gastos asociados
+	$gastos_asociados= buscarGasto('','','','','','','','','true','','','','',$regGasto['idgastos'], '','ASC')[9];
 
-	// Si el registro recibido ya es una cuota, primero identificamos su ID base.
-	if (preg_match('/^Cuota\s+\d+\s+de\s+.+\((\d+)\)\s*$/iu', $descripcion, $matchBase)) {
-		$idBaseSerie = intval($matchBase[1]);
-		$baseSerie = buscarGasto('','','','','','','','','','','','','',$idBaseSerie)[9];
-		if (!empty($baseSerie)) {
-			$result[] = $baseSerie[0];
-		}
-	} else {
-		$result[] = $gastos[0];
-	}
-
-	// Siempre buscamos las cuotas con el ID base de la serie.
-	$motivo= "Cuota % de %(".$idBaseSerie.")";
-	$cuotas = buscarGasto('','','','','','','','',TRUE,'','','',$motivo,'','ASC')[9];
-	foreach ($cuotas as $gasto) {
-		$result[] = $gasto;
-	}
-
-	// Evita retornos duplicados cuando la consulta trae registros repetidos.
-	$resultUnico = array();
-	$idsVistos = array();
-	foreach ($result as $gasto) {
-		$idActual = isset($gasto['idgastos']) ? (string)$gasto['idgastos'] : '';
-		if ($idActual === '' || isset($idsVistos[$idActual])) {
-			continue;
-		}
-		$idsVistos[$idActual] = true;
-		$resultUnico[] = $gasto;
-	}
-
-	return $resultUnico;
+	return array_merge($result, $gastos_asociados);
 }
 
 function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estadoFiltroPagoprogrtamado)
@@ -853,7 +827,7 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 
 function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	// Obtiene los datos del gasto
-	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9][0];
+	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[9][0];
 	$cod_aperturaFK= $registroGasto['codApertura'];
 	$cod_cajaFK= $registroGasto['codCaja'];
 
@@ -1010,10 +984,10 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		return;
 	}
 		
-	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad)
-	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad, cod_gasto_padre)
+	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	$stmtRecurrente = $mysqli->prepare($consultaRecurrente);
-	$ssRecurrente = str_repeat('s', 17);
+	$ssRecurrente = str_repeat('s', 18);
 	$modalidadCredito = 'credito';
 		
 	for ($i = 1; $i < $cantCuotas; $i++) {
@@ -1024,7 +998,7 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		}
 
 		$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
-		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,$modalidadCredito);
+		$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,$modalidadCredito,$idBaseSerie);
 		$stmtRecurrente->execute();
 		$idgastos = mysqli_insert_id($mysqli);
 
@@ -1107,7 +1081,7 @@ if($operacion=="editar")
 {
 
 // Obtiene los datos actuales del gasto
-$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9];
+$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[9];
 $estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
 $cod_usuario_autoriz= NULL;
 
@@ -1150,6 +1124,16 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 			$stmt = $mysqli->prepare($sql);
 			$stmt->bind_param('i', $value['idgastos']);
 			$stmt->execute();
+
+			// Borra tambien el mensaje programado asociado
+			$sql = "DELETE FROM menciones WHERE cod_mensajeFK= ?";
+			$stmt = $mysqli->prepare($sql);
+			$stmt->bind_param('i', $value['cod_mensajeFK']);
+			$stmt->execute();
+			$sql = "DELETE FROM mensaje WHERE cod_mensaje= ?";
+			$stmt = $mysqli->prepare($sql);
+			$stmt->bind_param('i', $value['cod_mensajeFK']);
+			$stmt->execute();
 		}
 	}
 	
@@ -1166,7 +1150,7 @@ subirImagenGasto($idgastos, $foto, $ext);
 if($operacion=="editar")
 {
 	// Obtiene los datos actuales del gasto
-	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '', $idgastos)[9][0];
+	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[9][0];
 
 	// Compara los datos anteriores con los nuevos y prepara el mensaje
 	$mensaje= "";
@@ -1193,7 +1177,7 @@ if($operacion=="editar")
 return array("1" => "exito", "2" => $idgastos);	
 }
 
-function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $idgastos, $fechaOrder= 'DESC')
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder= 'DESC')
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -1246,7 +1230,8 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			'usuario_autoriz_nombre' => "",
 			'cod_motivoIngresoEgresoFK' => -1,
 			'nombre_usuario_edit' => "",
-			'modalidad' => "contado"
+			'modalidad' => "contado",
+			'cod_gasto_padre' => "",
 		);
 		$registrosZona['ingreso'][-1][]= $valor;
 		if ($valor['estado'] == 'Activo') {
@@ -1318,6 +1303,9 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		if ($motivo != "") {
 			$sqlFiltro .= " and g.motivo like '%$motivo%' ";
 		}
+		if ($cod_gasto_padre != "") {
+			$sqlFiltro .= " and g.cod_gasto_padre " .($cod_gasto_padre == "NULL" ? 'IS NULL' : "= $cod_gasto_padre");
+		}
 		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = ".$mot['cod_motivo_ingreso_egreso'];
 
 		// Se limpia el primer ' and'
@@ -1327,7 +1315,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			
 		$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
 		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
-		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,
+		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,
 		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
 		(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
@@ -1395,6 +1383,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					'nombre_usuario_edit' => mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1'),
 					'cod_usuarioFK_edit' => mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1'),
 					'modalidad' => mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'),
+					'cod_gasto_padre' => mb_convert_encoding((string)($valor['cod_gasto_padre']), 'UTF-8', 'ISO-8859-1'),
 				);
 
 				if ($valor['estado'] == 'Activo') {
@@ -1496,6 +1485,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
 			$nombre_usuario_edit= mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1');
 			$modalidad= ucfirst(mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'));
+			$cod_gasto_padre= ucfirst(mb_convert_encoding((string)($valor['cod_gasto_padre']), 'UTF-8', 'ISO-8859-1'));
 
 			$funcion= "obtenerdatosabmGasto(this)";
 			if ($idgastos == "") {
@@ -1565,6 +1555,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 					<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 					<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
 					<td  id='td_datos_22' style='display:none'>".$nombre_usuario_edit."</td>
+					<td  id='td_datos_23' style='display:none'>".$cod_gasto_padre."</td>
 					</tr>
 					</table>";
 			}
@@ -1598,6 +1589,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 				<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
+				<td  id='td_datos_21' style='display:none'>".$cod_gasto_padre."</td>
 				</tr>
 				</table>
 			</li>";

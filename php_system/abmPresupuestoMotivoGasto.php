@@ -34,7 +34,7 @@
                 $primerDiaMes= $fechaActual->format('Y-m-01');
                 $ultimoDiaMes= $fechaActual->format('Y-m-t');
 
-                $informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '', '', '', '');
+                $informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, 'Activo', $cod_local, '', '', '','true', $cod_motivo, '','', '', '','');
                 $informacion = obtenerPresupuestoMotivoGasto(array(
                     'cod_motivo_ingreso_egresoFK' => $cod_motivo,
                     'cod_localFK' => $cod_local

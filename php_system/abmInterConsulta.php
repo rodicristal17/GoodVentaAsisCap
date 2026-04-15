@@ -752,7 +752,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
         }
 
         $gastosElemento= "";
-        $registrosGastos = buscarGasto("","","",'','','','','','true','', $cod_interConsulta, '', '','');
+        $registrosGastos = buscarGasto("","","",'','','','','','true','', $cod_interConsulta, '', '','NULL','');
         $registrosGastos= $registrosGastos[9];
         $colorFondo= "";
         foreach ($registrosGastos as $key => $gast) {

@@ -1456,7 +1456,6 @@ function obtenerDatosInterConsulta(elemento) {
     }
 
     // Datos para editar
-    console.warn("datos: ", $(elemento), $(elemento).children('#td_datos_10'))
     document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_5').html();
     cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
     document.getElementById('inptAsuntoAbmInterConsulta').value= $(elemento).children('#td_datos_10').html();
