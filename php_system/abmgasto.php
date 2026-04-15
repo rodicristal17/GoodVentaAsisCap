@@ -863,6 +863,11 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		$cod_aperturaFK = $result_caja["3"];
 		$cod_cajaFK= $result_caja["4"];
 	}
+	if ($cod_aperturaFK == 0 || $cod_aperturaFK == "0" || $cod_cajaFK == "0" || $cod_cajaFK == 0) {
+		echo "cod_apertura: $cod_aperturaFK, cod_caja: $cod_cajaFK\n";
+		print_r($result_caja);
+		exit;
+	}
 
 	$fechaActual= new DateTime();
 	$fechaActual= $fechaActual->format('Y-m-d H:i:s');
@@ -989,7 +994,7 @@ function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
 		case 'anual':
 			return sumarMesesRespetandoDia($fechaBase, 12 * $indice, $diaObjetivo);
 		default:
-			echo "No ese encontro la $periodicidad";exit;
+			echo "No ese encontro la periodicidad: $periodicidad";exit;
 			return null;
 	}
 }
@@ -1042,6 +1047,11 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas= "true")
 {
 		
+if ($codcaja == "0" || $codcaja == 0 || $idaperturacierrecaja == 0 || $idaperturacierrecaja == "0") {
+	echo "Cod caja o de apertura en 0";
+	print_r($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas);
+	exit;
+}
 if($monto==""   ){
 $informacion =array("1" => "camposvacio");
 echo json_encode($informacion);	

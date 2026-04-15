@@ -450,7 +450,9 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
  	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 	$local=$_POST["local"];
  	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
-	buscarpresupuesto($buscar,$local);
+	$vistaOrigen=$_POST["vista_origen"];
+ 	$vistaOrigen=mb_convert_encoding((string)($vistaOrigen), 'ISO-8859-1', 'UTF-8');
+	buscarpresupuesto($buscar,$local,$vistaOrigen);
  }
 
 
@@ -3331,7 +3333,7 @@ exit;
 }
 
 
-function  buscarpresupuesto($buscar,$local)
+function  buscarpresupuesto($buscar,$local,$vistaOrigen)
 {
 $mysqli=conectar_al_servidor();
 $condicionLocal="";
@@ -3440,7 +3442,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_2' style='display:none'>".$descripcion_producto."</td>
 <td  id='td_datos_12' style='display:none'>".$NombreCategoria."</td>
 <td  id='td_datos_3' style='display:none'>".$unidad_producto."</td>
-<td  id='td_datos_precio_contado' style='width:10%'>". number_format($precio_producto,'0',',','.')."</td>
+<td  id='td_datos_precio_contado' style='width:10%;".($vistaOrigen == 'doctor' ? 'display: none;' : '')."'>". number_format($precio_producto,'0',',','.')."</td>
 <td  id='td_datos_precios_creditos' style='width:10%;display:none;    line-height: 18px;    font-size: 9px;'>".$paginapreciosb."</td>
 <td  id='td_datos_4' style='display:none'>". number_format($precio_producto,'0',',','.')."</td>
 <td  id='td_datos_5' style='display:none'>".number_format($precio_compra,'0',',','.')."</td>

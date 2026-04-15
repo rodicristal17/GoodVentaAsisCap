@@ -404,7 +404,6 @@ function verificarCamposInterConsulta() {
         return false;
     }
 
-
     // Verificar si el asunto es uno seleccionado del datalist o no
     const datalist = document.getElementById('listAsuntoAbmInterConsulta');
     if (datalist && !cod_interConsulta) {
@@ -431,7 +430,10 @@ function abmInterConsulta(asunto, estado, tipo, local, monto_limite, observacion
     }
 
     // Limpia el formato del monto_limite
-    monto_limite= monto_limite.replace(".", "");
+    monto_limite= monto_limite.replace(".", "").replace(" ", "");
+    if (monto_limite == "") {
+        monto_limite= "0";
+    }
 
     let datos= new FormData();
     datos.append("useru", userid);
@@ -1608,7 +1610,7 @@ function verCerrarVentanaDetalleInterConsulta(mostrar, anterior= '') {
         }
     } else {
         document.getElementById("divAbmDetallesInterConsulta").style.display= "none";
-
+        document.getElementById("collapseExtracto").className= "extracto-floating-panel collapse";
         if (ventanaAnterior.length > 0) {
             switch (ventanaAnterior[ventanaAnterior.length - 1]) {
                 case 'divListadoInterConsulta':

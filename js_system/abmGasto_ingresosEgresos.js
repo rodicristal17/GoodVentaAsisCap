@@ -308,7 +308,7 @@ function verificarcamposGasto() {
 		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO")
 		return false;
 	}
-	if (inptCantCuotaGasto > 1 && inptPeriodicidadGasto == "") {
+	if (inptCantCuotaGasto > 1 || inptPeriodicidadGasto == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
 		return false;
 	}
@@ -915,8 +915,8 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 	var tipo = document.getElementById('inptSeleccTipoBuscarGasto').value
 	var arreglo = ""; //document.getElementById('inptSeleccArregloBuscarGasto').value
 	var cod_local = document.getElementById('inptlocalMisGastosBusca').value
-	var fecha = document.getElementById('inptBuscarIngresoEgreso1').value
-	var usuario = document.getElementById('inptBuscarIngresoEgreso2').value
+	var usuario = document.getElementById('inptBuscarIngresoEgreso1').value
+	var fecha = document.getElementById('inptBuscarIngresoEgreso2').value
     let cod_motivoFK= '';
 	const interConsulta= document.getElementById('inptBuscarIngresoEgreso4').value;
     $("input[id=inptBuscarIngresoEgreso3]").each(function (i, Elemento) {

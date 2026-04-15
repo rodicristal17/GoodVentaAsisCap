@@ -12,7 +12,7 @@
         if ($procedimiento === "") {
             return array("1" => "error", "2" => "Debe indicar el procedimiento a ejecutar.");
         }
-
+/*
         $sql = "CALL `$procedimiento`();";
         if (!$mysqli->query($sql)) {
             return array("1" => "error", "2" => "Error al ejecutar el procedimiento '$procedimiento': " . $mysqli->error);
@@ -24,7 +24,7 @@
                 $resultadoExtra->free();
             }
         }
-
+*/
         return array("1" => "exito", "2" => "Procedimiento '$procedimiento' ejecutado correctamente.");
     }
 

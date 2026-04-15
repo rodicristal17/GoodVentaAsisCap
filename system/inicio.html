@@ -1101,11 +1101,23 @@ class='divMinimizado'></div>
 </table>
 
 
-<table class='divMenub' id='divMenuPresupuestoProducto' onclick='verCerrarAbmDetallesPresupuesto(true, false)' style='text-align:center'>
+<table class='divMenub' id='divMenuPresupuestoProductoDoc' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/presupuesto.png' />
 <p class='pTitulo4'>Generar Presupuesto</p>
+<center>
+<div id='divMinimizadoSalidadDepositoDoc' style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuPresupuestoProducto' onclick='idFkCliente= "";verCerrarAbmDetallesPresupuesto(true, true);buscarvistaPresupuesto();' style='text-align:center'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/presupuesto.png' />
+<p class='pTitulo4'>Historial de presupuestos</p>
 <center>
 <div id='divMinimizadoSalidadDeposito' style='display:none' class='divMinimizado'></div>
 </center>
@@ -4449,6 +4461,30 @@ style='background-color:#5bc572'>
             </tbody>
           </table> 
             <div class="divMenuf">
+              <div class="collapse extracto-floating-panel" id="collapseExtracto">
+                <div class="card extracto-floating-card">
+                  <div class="card-header" id="tituloExtractoGastosInterconsulta"></div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table align-middle mb-0"><thead>
+                        <tr>
+                          <th style="width: 10%;">Cuota</th>
+                          <th style="width: 15%;">Vencimiento</th>
+                          <th>Concepto</th>
+                          <th style="width: 20%;">Estado</th>
+                          <th style="width: 15%;">Monto</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tableExtractoGastosInterConsulta"></tbody>
+                      <tfoot><tr>
+                        <th colspan="4">Monto pendiente:</th>
+                        <th id="tableExtractoGastosInterConsultaTotal">0</th>
+                      </tr></tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="sugerencias-container">
                 <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';">
                   <div class="card-body">
@@ -4503,30 +4539,6 @@ style='background-color:#5bc572'>
                     </span>
                     <div id="contenedorFlujoGastosInterConsulta">
                       <div class="text-secondary">Cargando gastos...</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="collapse extracto-floating-panel" id="collapseExtracto">
-                <div class="card extracto-floating-card">
-                  <div class="card-header" id="tituloExtractoGastosInterconsulta"></div>
-                  <div class="card-body">
-                    <div class="table-responsive">
-                      <table class="table align-middle mb-0"><thead>
-                        <tr>
-                          <th style="width: 10%;">Cuota</th>
-                          <th style="width: 15%;">Vencimiento</th>
-                          <th>Concepto</th>
-                          <th style="width: 20%;">Estado</th>
-                          <th style="width: 15%;">Monto</th>
-                        </tr>
-                      </thead>
-                      <tbody id="tableExtractoGastosInterConsulta"></tbody>
-                      <tfoot><tr>
-                        <th colspan="4">Monto pendiente:</th>
-                        <th id="tableExtractoGastosInterConsultaTotal">0</th>
-                      </tr></tfoot>
-                      </table>
                     </div>
                   </div>
                 </div>
@@ -7983,6 +7995,160 @@ ACCION
 </table>
 </div>
 
+<div class="principal2" id="divAbmDetallesPresupuestoDoc" style="display:none;width: 100%;">
+  <center class="presupuesto-container">
+    <header class="presupuesto-header">
+      <h2>Plan de tratamientos</h2>
+      <div class="header-actions">
+        <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
+          onclick="limpirarPresupuesto()">
+        <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
+          onclick='verCerrarAbmDetallesPresupuestoDoc(false)'>
+      </div>
+    </header>
+
+    <section class="form-section presupuesto-panel">
+      <div class="panel-title" style="width:100%;">Datos del paciente</div>
+      <div class="form-row">
+        <label>Documento:</label>
+        <input type="text" class="inputText" id="inptDocumentoClientePresupuestoDoc"
+          onkeyup="if(event.keyCode == 13){buscarClientePorCiVista(this,'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto')}">
+      </div>
+
+      <div class="form-row flex-grow" style="flex: 1 0;">
+        <label>Nombre:</label>
+        <input type="text" class="inputText" id="inptNombreClientePresupuestoDoc"
+          onkeyup="if(event.keyCode == 13){buscarClientePorCiVista(this,'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto')}">
+      </div>
+
+      <div class="form-row">
+        <input type="button" value="Seleccionar cliente" class="btn4" onclick='vercerrarvistacliente("1","presupuestoDoctor")'
+          style='width:150px;margin-top: 20px;'>
+      </div>
+      <div class="form-row">
+        <input type="button" value="Nuevo cliente" class="btn4" onclick="controlseleccvistacliente= 'presupuestoDoctor';vernuevoclientevista('1');"
+          style='width:150px;margin-top: 20px;'>
+      </div>
+    </section>
+
+    <section style="margin-bottom: 20px;">
+      <div class="productos-lista presupuesto-panel">
+        <div class="panel-title">Tratamientos Disponibles</div>
+
+        <div class="form-section" style="justify-content: space-between;">
+          <div class="form-row">
+            <label>Código:</label>
+            <input type="text" class="inputText" id="inptCodigoPresupuestoDoc"
+              onkeyup="if(event.keyCode == 13){buscarproductoporcodigoPresupuesto('doctor')}">
+          </div>
+  
+          <div class="form-row flex-grow" style="flex: 0 0 60%;">
+            <label>Producto:</label>
+            <input type="text" class="inputText" id="inptProductoPresupuestoDoc"
+              onkeyup="if(event.keyCode == 13){buscarvistaproductoPresupuesto('doctor')}">
+          </div>
+          
+          <div class="form-row">
+            <input type="button" value="Buscar producto" class="btn4" onclick="buscarvistaproductoPresupuesto('doctor')" style="width:150px;margin-top: 20px;">
+          </div>
+        </div>
+        
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                CODIGO
+              </td>
+              <td class="td_registro">
+                TRATAMIENTO
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="div_cuerpo_table" id="table_vista_producto_Presupuesto_doctor" style="max-height: 200px;"></div>
+
+        <div class="form-section" style="margin-top: 10px;justify-content: space-around;">
+          <div class="form-row" style="display: none;">
+            <label>Precio:</label>
+            <input type="text" class="inputText" id="inptPrecioPresupuestoDoc" onkeyup="calcular_total_Presupuesto()">
+            <select id="inpTSeleccCostoPresupuesto" style='display:none;' class="inputSelect"
+              onchange="seleccionarpreciospresupuesto(this)"></select>
+          </div>
+
+          <div class="form-row">
+            <label>Cantidad:</label>
+            <input type="text" class="inputText" id="inptCantidadPresupuestoDoc"
+              onkeyup="if(event.keyCode == 13){focusSiguiente()}else{calcular_total_Presupuesto()}">
+          </div>
+
+          <div class="form-row" style="display: none;">
+            <label>Total:</label>
+            <input type="text" class="inputTextDisable" disabled id="inptTotalPresupuestoDoc">
+          </div>
+
+          <div class="form-row">
+            <label>Es prioritario:</label>
+            <input type="checkbox" class="inputText" id="inptPrioritarioPresupuestoDoc"  style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
+          </div>
+
+          <div class="form-row">
+            <input type="button" value="Add Presupuesto" class="btn4"
+              onclick='anhadirPrPresupuesto()' style='width:150px;margin-top: 20px;'>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detalles -->
+    <section class="detalles-section" id="tdTablaPresupuesto">
+      <div class="tabla-detalles presupuesto-panel">
+        <div class="panel-title">Detalle de tratamientos</div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                CODIGO
+              </td>
+              <td class="td_registro" style="width:80%;">
+                TRATAMIENTO
+              </td>
+              <td class="td_registro" style="width:10%;">
+                CANTIDAD
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_doctor"></div>
+      </div>
+
+      <div class="tabla-detalles presupuesto-panel">
+        <div class="panel-title">Detalle de tratamiento prioritario</div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                CODIGO
+              </td>
+              <td class="td_registro" style="width:80%;">
+                TRATAMIENTO
+              </td>
+              <td class="td_registro" style="width:10%;">
+                CANTIDAD
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_prioritario_doctor"></div>
+      </div>
+    </section>
+  </center>
+  </div>
+</div>
 
 <div class="principal2" id="divAbmDetallesPresupuesto" style="display:none;width: 100%;">
   <center class="presupuesto-container" id="divAbmDetallesPresupuesto2">
@@ -7996,7 +8162,7 @@ ACCION
         <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
           onclick='ordenimpresion("Presupuesto")'>
         <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
-          onclick='verCerrarAbmDetallesPresupuesto(false, false)'>
+          onclick='verCerrarAbmDetallesPresupuesto(true, true)'>
       </div>
     </header>
 
@@ -8090,13 +8256,10 @@ ACCION
         <label>Total:</label>
         <input type="text" class="inputTextDisable" disabled id="inptTotalPresupuesto">
       </div>
-
+      
       <div class="form-row">
-        <label>Cuota Max:</label>
-        <select class="inputSelect" style='width:150px' id='inptTotalcuotasPresupuesto'>
-          <option value="18">18</option>
-          <option value="12">12</option>
-        </select>
+        <label>Es prioritario:</label>
+        <input type="checkbox" class="inputText" id="inptPrioritarioPresupuesto" style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
       </div>
 
       <div class="form-row">
@@ -8108,7 +8271,7 @@ ACCION
     <!-- Detalles -->
     <section class="detalles-section" id="tdTablaPresupuesto">
       <div class="tabla-detalles presupuesto-panel">
-        <div class="panel-title">Detalle del Tratamiento</div>
+        <div class="panel-title">Detalle del Plan A</div>
 
         <table class="tableCabeceraRegistro">
           <tbody>
@@ -8132,11 +8295,11 @@ ACCION
           </tbody>
         </table>
 
-        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle"></div>
+        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle" style="height: 450px;"></div>
       </div>
 
       <div class="tabla-cuotas presupuesto-panel">
-        <div class="panel-title">Plan de Cuotas</div>
+        <div class="panel-title">Plan de Cuotas del Plan A</div>
 
         <table class="tableCabeceraRegistro">
           <tbody>
@@ -8157,28 +8320,83 @@ ACCION
           </tbody>
         </table>
         <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto"></div>
+        <footer class="presupuesto-footer">
+          <label>TOTAL PRESUPUESTO:</label>
+          <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
+        </footer>
+      </div>
+
+      <div class="tabla-detalles presupuesto-panel">
+        <div class="panel-title">Detalle del Plan B</div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:10%;">
+                CODIGO
+              </td>
+              <td class="td_registro" style="width:50%;">
+                TRATAMIENTO
+              </td>
+              <td class="td_registro" style="width:10%;">
+                CANTIDAD
+              </td>
+              <td class="td_registro" style="width:15%;">
+                PRECIO
+              </td>
+              <td class="td_registro" style="width:15%;">
+                TOTAL
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_prioritario" style="height: 450px;"></div>
+      </div>
+
+      <div class="tabla-cuotas presupuesto-panel">
+        <div class="panel-title">Plan de Cuotas del Plan B</div>
+
+        <table class="tableCabeceraRegistro">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:25%;">
+                CUOTAS
+              </td>
+              <td class="td_registro" style="width:25%;">
+                PLAN DE PAGO
+              </td>
+              <td class="td_registro" style="width:25%;">
+                DESCRIPCION
+              </td>
+              <td class="td_registro" style="width:25%;">
+                TOTAL
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto_prioritario"></div>
+        <footer class="presupuesto-footer">
+          <label>TOTAL PRESUPUESTO:</label>
+          <input type="text" class="inputText" id="inptTOTALPresupuestoFORMPrioritario" onkeyup="separadordemiles(this)">
+        </footer>
       </div>
     </section>
-
-    <!-- Total -->
-    <footer class="presupuesto-footer">
-      <label>TOTAL PRESUPUESTO:</label>
-      <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
-    </footer>
   </center>
   <center style="display: none;" id="divListPresupuesto">
     <div class="presupuesto-container presupuesto-search-modal">
       <header class="presupuesto-header presupuesto-search-header">
         <div class="presupuesto-search-title">
           <h2>Buscar Presupuesto</h2>
-          <p>Consultá presupuestos guardados por cliente, documento o venta y retomá el detalle cuando lo necesites.</p>
         </div>
         <div class="header-actions">
+          <button class="btn-icon" onclick="verCerrarFiltrosPresupuesto(true)" title="Filtros">
+            <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
+          </button>
+          <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro"
+           onclick="verCerrarAbmDetallesPresupuesto(true, false)">
           <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
             onclick="verCerrarAbmDetallesPresupuesto(false, true)">
-          <button class="btn-icon" onclick="verCerrarFiltrosPresupuesto(true)" title="Filtros">
-              <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
-          </button>
         </div>
       </header>
 
@@ -8231,7 +8449,6 @@ ACCION
               <div class="modal-header-info">
                   <p class="modal-etiqueta">Panel de filtros</p>
                   <h3>Filtros de presupuesto</h3>
-                  <span>Refiná la búsqueda por consultorio, local, paciente y estado</span>
               </div>
 
               <button type="button" class="btn-cerrar-modal" onclick="verCerrarFiltrosPresupuesto(false)">×</button>

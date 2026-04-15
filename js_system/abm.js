@@ -5489,7 +5489,6 @@ function separadordemiles(input) {
 }
 
 function separadordemilesnumero(input) {
-
 	var num = input.toString().replace(/\./g, '');
 	if (!isNaN(num)) {
 		var num2 = num.toString().split('.');

@@ -1976,8 +1976,9 @@ textarea:focus, select:focus {
 
 .tabla-detalles .div_cuerpo_table,
 .tabla-cuotas .div_cuerpo_table {
-  min-height: 400px;
-  height: 400px;
+  min-height: 370px;
+  height: 370px;
+  margin-bottom: 5px;
 }
 
 .presupuesto-footer {
@@ -3061,8 +3062,9 @@ text-align: justify;
 }
 
 .extracto-floating-panel{
-  position:relative;
-  left: 8%;
+  position:absolute;
+  left: 10%;
+  top: 60%;
   transform:translateY(-38%);
   width:min(760px,70vw);
   z-index:2000;
