@@ -4711,6 +4711,7 @@ function verCerrarAbmSalidadDeposito(d){
 document.getElementById("tdEfectoAbmSalidadDeposito").className="magictime vanishOut"
 	$("div[id=divAbmSalidadDeposito]").fadeOut(500);	
 		document.getElementById("divMinimizadoSalidadDeposito").style.display="none"
+		document.getElementById("divMinimizadoSalidadDeposito2").style.display="none"
 		limpiarTodoListadoDespacharProductos()
 	}else{	
 if(controlacceso("VERCONTROLDEPOSITO","accion")==false){return;}
@@ -4723,6 +4724,7 @@ function minimizarabmsalidaddeposito(){
 document.getElementById("tdEfectoAbmSalidadDeposito").className="magictime slideDown"
 $("div[id=divAbmSalidadDeposito]").fadeOut(500);
 document.getElementById("divMinimizadoSalidadDeposito").style.display=""		
+document.getElementById("divMinimizadoSalidadDeposito2").style.display=""		
 }
 function VerificarDatosSalidaDeposito(){
 	var inptFechaSalidadDeposito = document.getElementById("inptFechaSalidadDeposito").value
