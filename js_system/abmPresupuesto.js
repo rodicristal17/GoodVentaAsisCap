@@ -1,13 +1,14 @@
 var vistaPresupuestoOrigen= ""
 var totalPrecioPresupuesto =0
 function verCerrarAbmDetallesPresupuesto(mostrar, historial){
-	vistaPresupuestoOrigen= "historial"
+	vistaPresupuestoOrigen= "historial";
 	if(mostrar){
-        if (historial) {
-            document.getElementById("divAbmDetallesPresupuesto").style.display=""
+		if (historial) {
+			document.getElementById("divAbmDetallesPresupuesto").style.display=""
             document.getElementById('divListPresupuesto').style.display= "";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="none";
         } else {
+			if(controlacceso("VERPRESUPUESTOCAJERA","accion")==false){return;}
 			buscarvistaPresupuesto();
             document.getElementById('divListPresupuesto').style.display= "none";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="";

@@ -80,7 +80,7 @@ function verificarOperacionPresupuesto($operacion)
             $solo_eliminar_prioritario = mb_convert_encoding((string)($_POST['solo_eliminar_prioritario']), 'ISO-8859-1', 'UTF-8');
 
             if ($solo_eliminar_prioritario == 'true') {
-                abmDetallesPresupuesto($idDetalle, NULL, NULL, NULL, 0, NULL);
+                abmDetallesPresupuesto($idDetalle, NULL, NULL, NULL, 0, $user, NULL);
             } else {
                 eliminarDetallePresupuesto($idDetalle);
             }
@@ -94,7 +94,7 @@ function verificarOperacionPresupuesto($operacion)
             $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8') : null;
             $es_prioritario = isset($_POST['es_prioritario']) ? mb_convert_encoding((string)($_POST['es_prioritario']), 'ISO-8859-1', 'UTF-8') : null;
 
-            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_presupuestoFK);
+            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_usuarioFK_edit, $cod_presupuestoFK);
             echo json_encode(array("1" => "exito", "2" => $idDetalle));
             break;
         default:
@@ -354,7 +354,7 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
     return $registros;
 }
 
-function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_presupuestoFK)
+function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_usuarioFK_edit, $cod_presupuestoFK)
 {
     $mysqli = conectar_al_servidor();
 
@@ -413,6 +413,10 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
             return $id;
         }
 
+        $atributos .= ",cod_usuarioFK_edit= ?,fecha_edit= NOW()";
+        $ss .= "i";
+        $parametros[] = $cod_usuarioFK_edit;
+        // Id del registro a editar
         $parametros[] = $id;
         $ss .= "i";
 

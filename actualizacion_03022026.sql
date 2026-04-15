@@ -331,7 +331,10 @@ CREATE TABLE detalles_presupuesto(
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.74', detalles='Implementacion de dictamenes.', fecha='2026-03-25' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE detalles_presupuesto ADD COLUMN es_prioritario BOOLEAN DEFAULT 0;
+ALTER TABLE presupuesto ADD COLUMN cod_usuarioFK_edit INT(11);
+ALTER TABLE presupuesto ADD COLUMN fecha_edit DATETIME;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
+-- VERPRESUPUESTOCAJERA, 
