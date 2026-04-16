@@ -15173,11 +15173,12 @@ function ReImprimirTicketPagos(){
 	var InteresActual=$(datostr).children('td[id="td_datos_20"]').html();
 	var deudaActualsininteres=$(datostr).children('td[id="td_datos_18"]').html();
 	var CuotasNro=$(datostr).children('td[id="td_datos_24"]').html();	
+	const totalPagadoHastaHoy=$(datostr).children('td[id="td_datos_26"]').html();	
 	
 	paginaticket=$(datostr).children('td[id="td_datos_25"]').html();	
 	
 	ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazado,NombreCliente,CiCliente,NroRecibo,tipoventa,
-	totalInteres,deudaActual,totalpagado,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres)
+	totalInteres,deudaActual,totalPagadoHastaHoy,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres)
 }
 
 

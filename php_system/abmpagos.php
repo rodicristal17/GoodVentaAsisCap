@@ -1740,7 +1740,7 @@ $totalApagar=$datos[4];
 $diasatrasado=$datos[5];
 $acobrar=$datos[8];
 $totalCredito=$datos[11];
-$totalpagado=$datos[3];
+$totalPagadoConInteres=$datos[3];
 $TotalPagadoSinInteres=$datos[13];
 $TotalApagarSinInteres=$datos[7];
 
@@ -1822,6 +1822,7 @@ $pagina.="
 <td id='td_datos_23' style='display:none'>". $puntoexpedicion."-".$num_factura."</td>
 <td id='td_datos_24' style='display:none'>". $titulopago[2] ."</td>
 <td id='td_datos_25' style='display:none'>Factura nro: ". $DetalleDescripcionVenta[2] ."</td>
+<td id='td_datos_26' style='display:none'>". number_format($totalPagadoConInteres,'0',',','.') ."</td>
 </tr>
 </table>
 ";
