@@ -8105,7 +8105,7 @@ ACCION
     </section>
 
     <!-- Detalles -->
-    <section class="detalles-section" id="tdTablaPresupuesto">
+    <section class="detalles-section">
       <div class="tabla-detalles presupuesto-panel">
         <div class="panel-title">Detalle de tratamientos</div>
 
@@ -8161,12 +8161,10 @@ ACCION
       <div class="header-actions">
         <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
           onclick="limpirarPresupuesto()">
-        <img src="/GoodVentaAsisCap/iconos/buscar.png" class="iconoBtn" title="Ver historial"
-          onclick="idFkCliente= '';verCerrarAbmDetallesPresupuesto(true, true);buscarvistaPresupuesto();">
         <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
           onclick='ordenimpresion("Presupuesto")'>
         <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
-          onclick='verCerrarAbmDetallesPresupuesto(true, true)'>
+          onclick='idAbmPresupuesto="";idFkCliente= "";verCerrarAbmDetallesPresupuesto(true, true)'>
       </div>
     </header>
 
@@ -8429,7 +8427,7 @@ ACCION
             </tr>
           </tbody>
         </table>
-        <div class="divTablesScrool" style="height: 350px;display: grid;">
+        <div class="divTablesScrool" style="height: 350px;display: grid;grid-template-rows: auto;">
           <div class="div_cuerpo_table presupuesto-search-table" id="table_vista_presupuesto"></div>
           <table style="width:100%;height:50px;display:none" id="tbProcessPresupuesto">
             <tr>

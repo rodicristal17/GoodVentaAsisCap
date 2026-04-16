@@ -361,7 +361,7 @@ function eliminarFila(btn) {
 	let tabla= fila.parentElement.parentElement;
 	const idDetalle= tabla.id.substring(15);
 	tabla= tabla.parentElement;
-	console.info(tabla.id, tabla.id.includes("prioritario"));//throw new Error("Prueba");
+	const esTablaPrioritaria = tabla.id.includes("prioritario");
 	
 	obtener_datos_user();
 	var datos = {
@@ -369,7 +369,8 @@ function eliminarFila(btn) {
 		"passu": passuser,
 		"navegador": navegador,
 		"idDetalle": idDetalle,
-		"solo_eliminar_prioritario": (!tabla.id.includes("prioritario") ? true : false), 
+		"solo_eliminar_prioritario": esTablaPrioritaria,
+		"cod_presupuestoFK": idabmPresupuesto, 
 		"accion": "eliminarDetallePresupuesto"
 	};
 	$.ajax({
@@ -412,28 +413,41 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					if (!tabla.id.includes("prioritario")) {
-						const tablaTemp = document.querySelector(
-							`#table_vista_producto_presupuestoDetalle_doctor #tdDetalleVenta_${idDetalle}`
-						);
-						tablaTemp.remove();
-					}
-					if (vistaPresupuestoOrigen == "doctor") {
-						console.info(es_prioritario);
-						if (es_prioritario == 1) {
-							const tablaPrioritaria = document.querySelector(
-								`#table_vista_producto_presupuestoDetalle_prioritario_doctor #tdDetalleVenta_${idDetalle}`
-							);
+					const contenedorPrincipal = vistaPresupuestoOrigen == "doctor"
+						? "#table_vista_producto_presupuestoDetalle_doctor"
+						: "#table_vista_producto_presupuestoDetalle";
+					const contenedorPrioritario = vistaPresupuestoOrigen == "doctor"
+						? "#table_vista_producto_presupuestoDetalle_prioritario_doctor"
+						: "#table_vista_producto_presupuestoDetalle_prioritario";
+
+					const tablaPrincipal = document.querySelector(
+						`${contenedorPrincipal} #tdDetalleVenta_${idDetalle}`
+					);
+					const tablaPrioritaria = document.querySelector(
+						`${contenedorPrioritario} #tdDetalleVenta_${idDetalle}`
+					);
+
+					if (esTablaPrioritaria) {
+						if (tablaPrioritaria) {
 							tablaPrioritaria.remove();
+						}
+						if (tablaPrincipal) {
+							const campoPrioritario = tablaPrincipal.querySelector('#td_datos_12');
+							if (campoPrioritario) {
+								campoPrioritario.textContent = "0";
+							}
 						}
 					} else {
-						recalcularTotalPresupuesto();
-						if (es_prioritario) {
-							const tablaPrioritaria = document.querySelector(
-								`#table_vista_producto_presupuestoDetalle_prioritario #tdDetalleVenta_${idDetalle}`
-							);
+						if (tablaPrincipal) {
+							tablaPrincipal.remove();
+						}
+						if ((es_prioritario === "1") && tablaPrioritaria) {
 							tablaPrioritaria.remove();
 						}
+					}
+
+					if (vistaPresupuestoOrigen != "doctor") {
+						recalcularTotalPresupuesto();
 					}
 				}
 			} catch (error) {
@@ -475,8 +489,8 @@ function generarTabla() {
 	let total = document.getElementById("inptTOTALPresupuestoFORM").value || 0;
 	let total_prioritario = document.getElementById("inptTOTALPresupuestoFORMPrioritario").value || 0;
 
-	total = total != 0 ? total.substr(0, total.length - 4).replace(/\./g, '') : 0;
-	total_prioritario = total_prioritario != 0 ? total_prioritario.substr(0, total_prioritario.length - 4).replace(/\./g, '') : 0;
+	total = total != 0 ? total.replace(/\./g, '') : 0;
+	total_prioritario = total_prioritario != 0 ? total_prioritario.replace(/\./g, '') : 0;
 
  if(total==0){
 	 return false;
@@ -541,6 +555,7 @@ function generarTabla() {
  
 function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad, codigo_ficticio_presupuesto, nombre_producto, total_presupuesto,es_precio_contado, es_prioritario) {
 	obtener_datos_user();
+	const esPrioritario = es_prioritario === true || es_prioritario === 1 || es_prioritario === "1";
 	var datos = {
 		"useru": userid,
 		"passu": passuser,
@@ -550,7 +565,7 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 		"cod_productoFK": cod_productoFK,
 		"cantidad": cantidad,
 		"precio": precio,
-		"es_prioritario": es_prioritario,
+		"es_prioritario": (esPrioritario ? 1 : 0),
 	};
 	$.ajax({
 		data: datos,
@@ -605,25 +620,25 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						+ "<td  id='td_datos_9' style='display:none'>" + es_precio_contado + "</td>"
 						+ "<td id='td_datos_10' style='display:none'>" + precio + "</td>"
 						+ "<td  id='td_datos_11' style='display:none'>" + total_presupuesto + "</td>"
-						+ "<td  id='td_datos_12' style='display:none'>" + (es_prioritario ? 1 : 0) + "</td>"
+						+ "<td  id='td_datos_12' style='display:none'>" + (esPrioritario ? 1 : 0) + "</td>"
 						+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 						+ "</tr>"
 						+ "</table>"
 
 					if (vistaPresupuestoOrigen == "doctor") {
 						document.getElementById("table_vista_producto_presupuestoDetalle_doctor").innerHTML += pagina;
-						if (es_prioritario == 1) {
+						if (esPrioritario) {
 							document.getElementById("table_vista_producto_presupuestoDetalle_prioritario_doctor").innerHTML += pagina;
 						}
 
-						$("tr[name=tdDetallePresupuesto_doctor]").each(function (i, elementohtml) {
+						$("#table_vista_producto_presupuestoDetalle_doctor tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
 							var total = $(elementohtml).children('td[id="td_datos_11"]').html();
 							total = QuitarSeparadorMilValor(total)
 							totalPresupuesto = Number(totalPresupuesto) + Number(total)
 						});
 					} else {
 						document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML += pagina;
-						if (es_prioritario) {
+						if (esPrioritario) {
 							document.getElementById("table_vista_producto_presupuestoDetalle_prioritario").innerHTML += pagina;
 						}
 
@@ -631,11 +646,11 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						totalPresupuestoPrioritario = 0;
 						var totalEntrega = document.getElementById('inptTotalPresupuesto').value;
 	
-						$("tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
+						$("#table_vista_producto_presupuestoDetalle tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
 							var total = $(elementohtml).children('td[id="td_datos_11"]').html();
 							total = QuitarSeparadorMilValor(total)
 							totalPresupuesto = Number(totalPresupuesto) + Number(total)
-							if ($(elementohtml).children('td[id="td_datos_12"]').html()) {
+							if ($(elementohtml).children('td[id="td_datos_12"]').html() === "1") {
 								totalPresupuestoPrioritario = Number(totalPresupuestoPrioritario) + Number(total)
 							}
 						});
@@ -965,6 +980,7 @@ function buscarDetallesPresupuesto(cod_presupuestoFK) {
 				if (Respuesta == "exito") {
 					document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML= datos["3"];
 					document.getElementById("table_vista_producto_presupuestoDetalle_prioritario").innerHTML= datos["4"];
+					recalcularTotalPresupuesto();
 					generarTabla();
 				}
 			} catch (error) {

@@ -5157,8 +5157,18 @@ var piedepagina="<div style='text-align: -webkit-right;'> <table style='width:40
 +"</tbody>"
 +"</table> </div>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
-document.getElementById("tbTitulosImpresiones").innerHTML=""
-document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("tdTablaPresupuesto").innerHTML
+document.getElementById("tbTitulosImpresiones").innerHTML="";
+const tb = document.getElementById("tbDatosImpresiones");
+tb.innerHTML = document.getElementById("tdTablaPresupuesto").innerHTML;
+
+// Modifica el diseño
+tb.querySelectorAll(".div_cuerpo_table").forEach(function (div) {
+	div.style.height = "auto";
+	div.style.overflow = "visible"; // opcional, útil si es para impresión
+});
+tb.querySelectorAll(".presupuesto-panel").forEach(function (div) {
+	div.style.marginBottom = "25px";
+});
 
 document.getElementById("divPieImpresiones").innerHTML=piedepagina
 

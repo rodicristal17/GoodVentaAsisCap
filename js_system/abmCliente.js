@@ -2125,6 +2125,7 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
         nombre= document.getElementById(nombreElementoNombre).value;
     }
 
+	verCerrarEfectoCargando("1");
     obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -2159,7 +2160,8 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
         return xhr;
     },
 		error: function (jqXHR, textstatus, errorThrowm) {
-manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+			verCerrarEfectoCargando("");
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -2170,7 +2172,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
                 if (Respuesta == true) {
                    controlseleccvistacliente= ventanaOrigen;
-                    if (datos[2].length) {
+                    if (datos[2].length == 1) {
                         let registro= datos[2][0];
                         idFkCliente = registro['cod_cliente'];
                         document.getElementById(nombreElementoCedula).value= registro['rut_cliente'] || registro['ci_cliente'];
@@ -2217,14 +2219,18 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
                         );
                         elementoCliente = tablaClienteFicticia.find("tr")[0];
                         EnviarClienteDesde();
-                    } else {
+                    } else if (datos[2].length == 0) {
                         // Abre la ventana para agregar un nuevo cliente
                         vernuevoclientevista("1");
-                    }
+                    } else {
+						vercerrarvistacliente("1",(vistaPresupuestoOrigen == "doctor" ? "presupuestoDoctor" : "presupuesto"));
+					}
 				} else {
                     ver_vetana_informativa(datos[2], datos[3], "advertencia");
                 }
+				verCerrarEfectoCargando("");
 			} catch (error) {
+				verCerrarEfectoCargando("");
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)

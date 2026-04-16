@@ -78,9 +78,10 @@ function verificarOperacionPresupuesto($operacion)
         case 'eliminarDetallePresupuesto':
             $idDetalle = mb_convert_encoding((string)($_POST['idDetalle']), 'ISO-8859-1', 'UTF-8');
             $solo_eliminar_prioritario = mb_convert_encoding((string)($_POST['solo_eliminar_prioritario']), 'ISO-8859-1', 'UTF-8');
+            $cod_presupuestoFK = mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8');
 
             if ($solo_eliminar_prioritario == 'true') {
-                abmDetallesPresupuesto($idDetalle, NULL, NULL, NULL, 0, $user, NULL);
+                abmDetallesPresupuesto($idDetalle, NULL, NULL, NULL, 0, $user, $cod_presupuestoFK);
             } else {
                 eliminarDetallePresupuesto($idDetalle);
             }
@@ -94,7 +95,7 @@ function verificarOperacionPresupuesto($operacion)
             $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8') : null;
             $es_prioritario = isset($_POST['es_prioritario']) ? mb_convert_encoding((string)($_POST['es_prioritario']), 'ISO-8859-1', 'UTF-8') : null;
 
-            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_usuarioFK_edit, $cod_presupuestoFK);
+            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $user, $cod_presupuestoFK);
             echo json_encode(array("1" => "exito", "2" => $idDetalle));
             break;
         default:
@@ -109,7 +110,6 @@ function eliminarDetallePresupuesto($idDetalle) {
     $mysqli = conectar_al_servidor();
     $stmt = $mysqli->prepare($sql);
     $stmt->bind_param('i',$idDetalle);
-
     if (!$stmt->execute()) {
         $informacion = array("1" => "error", "mensaje" => "Error al obtener presupuesto: " . $stmt->error, "sql" => $sql);
         echo json_encode($informacion);
@@ -356,6 +356,11 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
 
 function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_usuarioFK_edit, $cod_presupuestoFK)
 {
+    if (empty($cod_presupuestoFK)) {
+        $informacion = array("1" => "error", "mensaje" => "El código de presupuesto es requerido para guardar el detalle del presupuesto.");
+        echo json_encode($informacion);
+        exit;
+    }
     $mysqli = conectar_al_servidor();
 
     if ($precio !== null && $precio !== '') {
@@ -413,16 +418,12 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
             return $id;
         }
 
-        $atributos .= ",cod_usuarioFK_edit= ?,fecha_edit= NOW()";
-        $ss .= "i";
-        $parametros[] = $cod_usuarioFK_edit;
         // Id del registro a editar
         $parametros[] = $id;
         $ss .= "i";
 
         $sql = "UPDATE detalles_presupuesto SET $atributos WHERE id = ?";
         $stmt = $mysqli->prepare($sql);
-
         $refs = array();
         foreach ($parametros as $k => $v) {
             $refs[$k] = &$parametros[$k];
@@ -439,6 +440,16 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
 
     if (empty($id)) {
         $id = $stmt->insert_id;
+    } else {
+        // Actualiza la auditoria del presupuesto
+        $sql = "UPDATE presupuesto SET cod_usuarioFK_edit= ?,fecha_edit= NOW() WHERE id = ?";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('ii', $cod_usuarioFK_edit, $cod_presupuestoFK);
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al guardar detalle del presupuesto: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
     }
 
     $stmt->close();
