@@ -308,7 +308,7 @@ function verificarcamposGasto() {
 		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO")
 		return false;
 	}
-	if (inptCantCuotaGasto > 1 || inptPeriodicidadGasto == "") {
+	if (inptCantCuotaGasto > 1 && inptPeriodicidadGasto == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
 		return false;
 	}
