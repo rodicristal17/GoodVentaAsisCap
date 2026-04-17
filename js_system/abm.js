@@ -5161,6 +5161,18 @@ document.getElementById("tbTitulosImpresiones").innerHTML="";
 const tb = document.getElementById("tbDatosImpresiones");
 tb.innerHTML = document.getElementById("tdTablaPresupuesto").innerHTML;
 
+// Completa con los valores
+const totalPresupuestoImp = tb.querySelector("#inptTOTALPresupuestoFORM");
+const totalPresupuestoPrioritarioImp = tb.querySelector("#inptTOTALPresupuestoFORMPrioritario");
+const totalPresupuestoOrigen = document.getElementById("inptTOTALPresupuestoFORM");
+const totalPresupuestoPrioritarioOrigen = document.getElementById("inptTOTALPresupuestoFORMPrioritario");
+
+	totalPresupuestoImp.value = document.getElementById("inptTOTALPresupuestoFORM").value;
+	totalPresupuestoImp.setAttribute("value", document.getElementById("inptTOTALPresupuestoFORM").value);
+
+	totalPresupuestoPrioritarioImp.value = document.getElementById("inptTOTALPresupuestoFORMPrioritario").value;
+	totalPresupuestoPrioritarioImp.setAttribute("value", document.getElementById("inptTOTALPresupuestoFORMPrioritario").value);
+
 // Modifica el diseño
 tb.querySelectorAll(".div_cuerpo_table").forEach(function (div) {
 	div.style.height = "auto";
@@ -5170,7 +5182,7 @@ tb.querySelectorAll(".presupuesto-panel").forEach(function (div) {
 	div.style.marginBottom = "25px";
 });
 
-document.getElementById("divPieImpresiones").innerHTML=piedepagina
+//document.getElementById("divPieImpresiones").innerHTML=piedepagina
 
 	var documento=document.getElementById("DivImpresiones").innerHTML;
 	
