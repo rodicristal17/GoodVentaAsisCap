@@ -269,7 +269,6 @@
                         <td id="td_datos_10" class="tdRegistroSearch" style="width: 40%;">'.$value['asunto'].'</td>
                         <td id="td_datos_9" class="tdRegistroSearch" style="width: 35%;">'.$value['nombre_persona_creador'].'</td>
                         <td id="td_datos_2" class="tdRegistroSearch" style="width: 15%;">'.$value['estado'].'</td>
-                        <td id="td_datos_13" class="tdRegistroSearch" style="width: 15%;">'.$value['estado_fisico'].'</td>
                         <td id="td_datos_14" style="display: none;">'.$cant_ultima_edicion.'</td>
                     </tr></table>';
                 }

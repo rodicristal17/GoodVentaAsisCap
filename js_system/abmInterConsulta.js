@@ -926,6 +926,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     document.getElementById('contenedorEncabezadoInterConsulta').style.border= "10px solid "+colorTarjeta;
 
                     // Se evalua si se recibio los elementos para el titulo y otros detalles
+                    console.error(elemento);
                     if (elemento) {
                         document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
                         document.getElementById('tituloInterConsultas').innerHTML= $(elemento).children('#td_datos_10').html() + " - " + cod_interConsulta;

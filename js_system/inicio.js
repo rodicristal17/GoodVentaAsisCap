@@ -10636,7 +10636,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptBuscarLocalPaciente").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocaluser").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					//document.getElementById("inptlocalsolicitudCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
-					document.getElementById("inptBuscarAbmInventarioLocal3").innerHTML = datos_buscados
+					document.getElementById("inptBuscarAbmInventarioLocal3").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptLocalInventarioInsumo").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalProducto").innerHTML = datos_buscados
 					document.getElementById("inptBuscarUsuario4").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
