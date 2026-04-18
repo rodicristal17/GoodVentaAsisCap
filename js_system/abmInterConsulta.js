@@ -842,6 +842,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "none";
     
     document.getElementById('tituloInterConsultas').innerHTML= 'Cargando...';
+    document.getElementById('tituloInterConsultas2').innerHTML= 'Cargando...';
     document.getElementById('listadoMencionados').innerHTML= '';
     document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= '';
     document.getElementById('txtFechaCreadorInterConsulta').innerHTML= '';
@@ -897,8 +898,10 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 
                     // Se asignan los datos del encabezado
                     document.getElementById('tituloInterConsultas2').innerHTML= datos['4']['asunto'];
+                    document.getElementById('tituloInterConsultas').innerHTML= datos['4']['asunto'];
                     if (datos['4']['cod_ventaFK'] && datos['4']['cod_ventaFK'] != 0) {
                         document.getElementById('tituloInterConsultas2').innerHTML += ' - ' + datos['4']['nombre_persona'];
+                            document.getElementById('tituloInterConsultas').innerHTML += ' - ' + datos['4']['nombre_persona'];
                     }
                     document.getElementById('listadoMencionados').innerHTML= datos['6'];
                     document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= datos["4"]['nombre_persona_creador'];
@@ -928,7 +931,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     // Se evalua si se recibio los elementos para el titulo y otros detalles
                     console.error(elemento);
                     if (elemento) {
-                        document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
+                        document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_5').html();
                         document.getElementById('tituloInterConsultas').innerHTML= $(elemento).children('#td_datos_10').html() + " - " + cod_interConsulta;
                     }
 

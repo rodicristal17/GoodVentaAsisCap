@@ -5167,11 +5167,11 @@ const totalPresupuestoPrioritarioImp = tb.querySelector("#inptTOTALPresupuestoFO
 const totalPresupuestoOrigen = document.getElementById("inptTOTALPresupuestoFORM");
 const totalPresupuestoPrioritarioOrigen = document.getElementById("inptTOTALPresupuestoFORMPrioritario");
 
-	totalPresupuestoImp.value = document.getElementById("inptTOTALPresupuestoFORM").value;
-	totalPresupuestoImp.setAttribute("value", document.getElementById("inptTOTALPresupuestoFORM").value);
+	totalPresupuestoImp.value = totalPresupuestoOrigen.value;
+	totalPresupuestoImp.setAttribute("value", totalPresupuestoOrigen.value);
 
-	totalPresupuestoPrioritarioImp.value = document.getElementById("inptTOTALPresupuestoFORMPrioritario").value;
-	totalPresupuestoPrioritarioImp.setAttribute("value", document.getElementById("inptTOTALPresupuestoFORMPrioritario").value);
+	totalPresupuestoPrioritarioImp.value = totalPresupuestoPrioritarioOrigen.value;
+	totalPresupuestoPrioritarioImp.setAttribute("value", totalPresupuestoPrioritarioOrigen.value);
 
 // Modifica el diseño
 tb.querySelectorAll(".div_cuerpo_table").forEach(function (div) {
