@@ -999,8 +999,7 @@
     border:1px solid #dbe3ea;
     border-radius:10px;
     margin-bottom:8px;
-    cursor:pointer;
-    background:#fff;
+    cursor:pointer; 
 }
 
 .item-consultorio-check input[type="checkbox"]{
