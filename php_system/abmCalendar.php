@@ -442,9 +442,9 @@ function cargarAgenda($mysqli){
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
-		INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
+        INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
         WHERE 1=1 ".$condicion."
-        ORDER BY a.hora_inicio ASC, a.id_agenda ASC
+        ORDER BY a.fecha ASC, a.id_consultorio ASC, a.hora_inicio ASC, a.id_agenda ASC
     ";
 
     $resultEventos = $mysqli->query($sqlEventos);

@@ -315,7 +315,7 @@
 .agenda-consultorios-lista{
     display:flex;
     flex-direction:column;
-    gap:5px;
+    gap:0px;
 }
 
 .item-consultorio{
@@ -989,4 +989,26 @@
     background-image:
         linear-gradient(to bottom, var(--slot-bg-line) 1px, transparent 1px);
     background-size:100% 45px;
+}
+
+.item-consultorio-check{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:5px;
+    border:1px solid #dbe3ea;
+    border-radius:10px;
+    margin-bottom:8px;
+    cursor:pointer;
+    background:#fff;
+}
+
+.item-consultorio-check input[type="checkbox"]{
+    width:16px;
+    height:16px;
+    cursor:pointer;
+}
+
+.item-consultorio-check:hover{
+    background:#f8fafc;
 }
