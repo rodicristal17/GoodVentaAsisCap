@@ -156,7 +156,8 @@ function cargarSelectConsultoriosAgenda(){
     document.getElementById('inptConsultorioAgenda').innerHTML = html;
     document.getElementById('inptConsultorioAgendaFiltro').innerHTML = htmlFiltro;
 }
-
+var intervaloLineaHoraActualAgenda = null;
+ 
 function cargarAgendaConsultorios(){
     var fecha = document.getElementById('inptFechaAgenda').value;
     var estado = document.getElementById('inptEstadoAgenda').value;
@@ -165,17 +166,19 @@ function cargarAgendaConsultorios(){
         : '';
 
     var consultorios = [];
-    var i, j, hora;
+    var i, j, hora, minuto;
     var html = '';
-    var esHoraAlmuerzo = false;
-    var claseHora = '';
-    var claseSlot = '';
+    var textoHora = '';
+    var datosAlmuerzo = null;
+    var dataHoraRow = '';
 
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
         if(consultorioFiltro === '' || String(agendaConsultoriosData.consultorios[i].id) === String(consultorioFiltro)){
             consultorios.push(agendaConsultoriosData.consultorios[i]);
         }
     }
+
+    html += "<div class='agenda-grid' id='agendaGridInterno' style='--total-consultorios:" + consultorios.length + "'>";
 
     html += "<div class='agenda-header-row' style='--total-consultorios:" + consultorios.length + "'>";
     html += "<div class='agenda-celda-hora-header'>Hora</div>";
@@ -184,30 +187,40 @@ function cargarAgendaConsultorios(){
         html += "<div class='agenda-celda-consultorio'>"
             + consultorios[i].nombre
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
-        + "</div>";
+            + "</div>";
     }
 
     html += "</div>";
 
     for(hora = 7; hora <= 22; hora++){
-        esHoraAlmuerzo = (hora >= 12 && hora < 14);
+        for(minuto = 0; minuto <= 30; minuto += 30){
+            if(hora === 22 && minuto === 30){
+                continue;
+            }
 
-        claseHora = esHoraAlmuerzo ? " agenda-hora-almuerzo" : "";
-        claseSlot = esHoraAlmuerzo ? " agenda-slot-almuerzo" : "";
+            textoHora = completarHora(hora) + ":" + completarHora(minuto);
+            dataHoraRow = hora + "-" + minuto;
+            datosAlmuerzo = obtenerDatosAlmuerzoAgendaMediaHora(fecha, hora, minuto);
 
-        html += "<div class='agenda-row' style='--total-consultorios:" + consultorios.length + "'>";
-        html += "<div class='agenda-hora" + claseHora + "'>" + completarHora(hora) + ":00</div>";
+            html += "<div class='agenda-row agenda-row-mediahora' style='--total-consultorios:" + consultorios.length + "' data-hora-row='" + dataHoraRow + "'>";
+            html += "<div class='agenda-hora" + datosAlmuerzo.claseHora + "'>" + textoHora + "</div>";
 
-        for(j = 0; j < consultorios.length; j++){
-            html += "<div class='agenda-slot" + claseSlot + "' "
-                + "data-consultorio='" + consultorios[j].id + "' "
-                + "data-fecha='" + fecha + "' "
-                + "data-hora='" + completarHora(hora) + ":00'"
-                + "></div>";
+            for(j = 0; j < consultorios.length; j++){
+                html += "<div class='agenda-slot agenda-slot-mediahora" + datosAlmuerzo.claseSlot + "' "
+				+ "data-consultorio='" + consultorios[j].id + "' "
+				+ "data-fecha='" + fecha + "' "
+				+ "data-hora='" + textoHora + "' "
+				+ "onclick='clickSlotAgenda(this, event)'>"
+				+ datosAlmuerzo.htmlOverlay
+				+ "</div>";
+            }
+
+            html += "</div>";
         }
-
-        html += "</div>";
     }
+
+    html += "<div class='linea-hora-actual' id='lineaHoraActualAgenda' style='display:none;'><span class='etiqueta-hora-actual' id='etiquetaHoraActualAgenda'></span></div>";
+    html += "</div>";
 
     document.getElementById('agendaGridConsultorios').innerHTML = html;
 
@@ -215,30 +228,244 @@ function cargarAgendaConsultorios(){
     actualizarResumenAgenda(fecha, estado, consultorioFiltro);
     actualizarResumenFiltrosAgenda();
     inicializarDragAndDropAgenda();
+    iniciarLineaHoraActualAgenda();
 }
 
+
+function clickSlotAgenda(slot, ev){
+    if(!slot){
+        return;
+    }
+
+    if(ev && ev.target && closestByClass(ev.target, 'agenda-evento')){
+        return;
+    }
+
+    if(agendaResizeState.activo){
+        return;
+    }
+
+    var consultorio = slot.getAttribute('data-consultorio') || '';
+    var fecha = slot.getAttribute('data-fecha') || '';
+    var hora = slot.getAttribute('data-hora') || '';
+    var horaFin = '';
+
+    horaFin = minutosAHora(horaAMinutos(hora) + 30);
+
+    abrirModalNuevaCita();
+
+    document.getElementById('inptConsultorioAgenda').value = consultorio;
+    document.getElementById('inptFechaNuevaCita').value = fecha;
+    document.getElementById('inptHoraInicioAgenda').value = hora;
+    document.getElementById('inptHoraFinAgenda').value = horaFin;
+
+    if(document.getElementById('inptEstadoNuevaCita')){
+        document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
+    }
+}
+
+function closestByClass(elemento, clase){
+    while(elemento){
+        if(elemento.classList && elemento.classList.contains(clase)){
+            return elemento;
+        }
+        elemento = elemento.parentNode;
+    }
+    return null;
+}
 
 function pintarEventosAgenda(fecha, estado, consultorioFiltro){
     var slots = document.querySelectorAll('.agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
+    var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal;
 
     for(i = 0; i < slots.length; i++){
         slot = slots[i];
         consultorioId = slot.getAttribute('data-consultorio');
         horaSlot = slot.getAttribute('data-hora');
 
+        partesHora = horaSlot.split(':');
+        horaNumero = parseInt(partesHora[0], 10);
+        minutoNumero = parseInt(partesHora[1], 10);
+
         eventosConsultorio = obtenerEventosFiltradosConsultorio(fecha, estado, consultorioFiltro, consultorioId);
         htmlEventos = '';
 
         for(j = 0; j < eventosConsultorio.length; j++){
-            if(obtenerHoraTexto(eventosConsultorio[j].inicio) === horaSlot){
+            if(obtenerHoraVisualAgenda(eventosConsultorio[j].inicio) === horaSlot){
                 htmlEventos += renderEventoAgenda(eventosConsultorio[j], eventosConsultorio);
             }
         }
 
-        slot.innerHTML = htmlEventos;
+        datosAlmuerzo = obtenerDatosAlmuerzoAgendaMediaHora(fecha, horaNumero, minutoNumero);
+        htmlFinal = datosAlmuerzo.htmlOverlay + htmlEventos;
+        slot.innerHTML = htmlFinal;
     }
 }
+function obtenerHoraVisualAgenda(h){
+    if(!h){
+        return '';
+    }
+
+    var partes = h.split(':');
+    var hora = parseInt(partes[0], 10);
+    var minuto = parseInt(partes[1], 10);
+
+    if(isNaN(hora)){ hora = 0; }
+    if(isNaN(minuto)){ minuto = 0; }
+
+    if(minuto >= 30){
+        minuto = 30;
+    }else{
+        minuto = 0;
+    }
+
+    return completarHora(hora) + ":" + completarHora(minuto);
+}
+
+function iniciarLineaHoraActualAgenda(){
+    if(intervaloLineaHoraActualAgenda){
+        clearInterval(intervaloLineaHoraActualAgenda);
+        intervaloLineaHoraActualAgenda = null;
+    }
+
+    actualizarLineaHoraActualAgenda();
+    scrollAHoraActualAgenda();
+
+    intervaloLineaHoraActualAgenda = setInterval(function(){
+        actualizarLineaHoraActualAgenda();
+    }, 60000);
+}
+
+function scrollAHoraActualAgenda(){
+    var inputFecha = document.getElementById('inptFechaAgenda');
+    var wrapper = document.getElementById('agendaGridConsultorios');
+    var ahora = new Date();
+    var yyyy = ahora.getFullYear();
+    var mm = ('0' + (ahora.getMonth() + 1)).slice(-2);
+    var dd = ('0' + ahora.getDate()).slice(-2);
+    var fechaHoy = yyyy + "-" + mm + "-" + dd;
+    var minutoBase;
+    var selector;
+    var filaHora;
+
+    if(!inputFecha || !wrapper || inputFecha.value !== fechaHoy){
+        return;
+    }
+
+    minutoBase = ahora.getMinutes() >= 30 ? 30 : 0;
+    selector = ".agenda-row[data-hora-row='" + ahora.getHours() + "-" + minutoBase + "']";
+    filaHora = document.querySelector(selector);
+
+    if(filaHora){
+        wrapper.scrollTop = filaHora.offsetTop - 120;
+    }
+}
+function actualizarLineaHoraActualAgenda(){
+    var inputFecha = document.getElementById('inptFechaAgenda');
+    var linea = document.getElementById('lineaHoraActualAgenda');
+    var etiqueta = document.getElementById('etiquetaHoraActualAgenda');
+    var gridInterno = document.getElementById('agendaGridInterno');
+    var ahora = new Date();
+    var yyyy, mm, dd, fechaHoy, fechaSeleccionada;
+    var horaActual, minutoActual, minutoBase, selector, filaHora;
+    var topFila, altoFila, offsetMinutos, topFinal;
+
+    if(!inputFecha || !linea || !etiqueta || !gridInterno){
+        return;
+    }
+
+    fechaSeleccionada = inputFecha.value;
+    yyyy = ahora.getFullYear();
+    mm = ('0' + (ahora.getMonth() + 1)).slice(-2);
+    dd = ('0' + ahora.getDate()).slice(-2);
+    fechaHoy = yyyy + "-" + mm + "-" + dd;
+
+    if(fechaSeleccionada !== fechaHoy){
+        linea.style.display = 'none';
+        return;
+    }
+
+    horaActual = ahora.getHours();
+    minutoActual = ahora.getMinutes();
+
+    if(horaActual < 7 || horaActual > 22 || (horaActual === 22 && minutoActual > 0)){
+        linea.style.display = 'none';
+        return;
+    }
+
+    minutoBase = minutoActual >= 30 ? 30 : 0;
+    selector = ".agenda-row[data-hora-row='" + horaActual + "-" + minutoBase + "']";
+    filaHora = document.querySelector(selector);
+
+    if(!filaHora){
+        linea.style.display = 'none';
+        return;
+    }
+
+    topFila = filaHora.offsetTop;
+    altoFila = filaHora.offsetHeight;
+
+    if(minutoBase === 0){
+        offsetMinutos = (minutoActual / 30) * altoFila;
+    }else{
+        offsetMinutos = ((minutoActual - 30) / 30) * altoFila;
+    }
+
+    topFinal = topFila + offsetMinutos;
+
+    linea.style.top = topFinal + "px";
+    linea.style.display = 'block';
+    etiqueta.innerHTML = completarHora(horaActual) + ":" + completarHora(minutoActual);
+}
+
+function obtenerDatosAlmuerzoAgendaMediaHora(fecha, hora, minuto){
+    var fechaObj = null;
+    var esSabado = false;
+    var inicioBloque = (hora * 60) + minuto;
+    var finBloque = inicioBloque + 30;
+
+    var inicioAlmuerzo = 12 * 60;
+    var finAlmuerzo = 14 * 60;
+
+    var datos = {
+        esAlmuerzo: false,
+        claseHora: '',
+        claseSlot: '',
+        htmlOverlay: ''
+    };
+
+    if(fecha){
+        fechaObj = new Date(fecha + 'T00:00:00');
+        esSabado = (fechaObj.getDay() === 6);
+    }
+
+    if(esSabado){
+        inicioAlmuerzo = (11 * 60) + 30; /* 11:30 */
+        finAlmuerzo = 13 * 60;           /* 13:00 */
+    }
+
+    if(inicioBloque < finAlmuerzo && finBloque > inicioAlmuerzo){
+        datos.esAlmuerzo = true;
+        datos.claseSlot = ' agenda-slot-almuerzo';
+
+        if((hora === 12 && minuto === 0) || (!esSabado && hora === 13 && minuto === 0)){
+            datos.claseHora = ' agenda-hora-almuerzo';
+        }
+
+        if(esSabado){
+            datos.htmlOverlay = "<div class='bloque-almuerzo-slot' style='top:0;height:100%;'></div>"
+                + "<div class='texto-almuerzo-slot'>Almuerzo 11:30 - 13:00</div>";
+        }else{
+            datos.htmlOverlay = "<div class='bloque-almuerzo-slot' style='top:0;height:100%;'></div>"
+                + "<div class='texto-almuerzo-slot'>Hora de almuerzo</div>";
+        }
+    }
+
+    return datos;
+}
+
+ 
 
 function obtenerEventosFiltradosConsultorio(fecha, estado, consultorioFiltro, consultorioId){
     var lista = [];
@@ -280,15 +507,29 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
 
     var MiColor = "#0d6efd";
 
+
     if(e.estado == "AGENDADO"){
-        MiColor = "#ffc107";
-    }else if(e.estado == "CONFIRMADO"){
-        MiColor = "#198754";
-    }else if(e.estado == "CANCELADO"){
+        MiColor = "#80c583";
+    }	
+	else if(e.estado == "CONFIRMADO"){
+        MiColor = "#3b833e";
+    } 	
+	else if(e.estado == "ATENDIDO"){
+        MiColor = "#833b3b";
+    }	
+	else if(e.estado == "CANCELADO"){
         MiColor = "#6c757d";
-    }else if(e.estado == "ATENDIDO"){
-        MiColor = "#007bff";
+	}	
+	else if(e.estado == "ENESPERA"){
+        MiColor = "#dcb645";
     }
+	else if(e.estado == "CONFIRMADOCONDEUDA"){
+        MiColor = "#07488f";
+    }	
+	else if(e.estado == "PRIMERACONSULTA"){
+        MiColor = "#9d457c";
+    }
+	 
 
     var estilos = ""
         + "background:" + MiColor + ";"
@@ -297,7 +538,8 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         + "width:" + width + ";"
         + "height:" + altura + "px;"
         + "right:auto;"
-        + "overflow:visible;";
+        + "overflow:visible;"
+		+ "border:1px solid #ccc;";
 
     return ''
     + "<div class='agenda-evento estado-" + e.estado + "' "
@@ -311,7 +553,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "onclick='clickEventoAgenda(" + e.id + ", event)'>"
         + "<span class='paciente'>" + e.paciente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
-        + "<span class='detalle'>" + (e.motivo || '') + "</span>"
+        + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
         + "<div class='agenda-evento-resize' "
             + "data-id='" + e.id + "' "
             + "title='Arrastrar para alargar o acortar horario'></div>"
@@ -371,9 +613,7 @@ function calcularPosicionLateral(evento, listaEventosMismoConsultorio){
 }
 
 function calcularTopEvento(inicio){
-    var partes = inicio.split(':');
-    var minutos = parseInt(partes[1], 10);
-    return 6 + Math.round((minutos / 60) * 74);
+    return 0;
 }
 
 function calcularAlturaEvento(inicio, fin){
@@ -381,7 +621,7 @@ function calcularAlturaEvento(inicio, fin){
     var min2 = horaAMinutos(fin);
     var diferencia = min2 - min1;
 
-    return Math.max(18, Math.round((diferencia / 60) * 74) - 4);
+    return Math.max(18, Math.round((diferencia / 30) * 45) - 4);
 }
 
 function horaAMinutos(h){
@@ -400,7 +640,8 @@ function obtenerHoraNumero(h){
 }
 
 function obtenerHoraTexto(h){
-    return completarHora(parseInt(h.split(':')[0], 10)) + ":00";
+    var partes = h.split(':');
+    return completarHora(parseInt(partes[0], 10)) + ":" + completarHora(parseInt(partes[1], 10));
 }
 
 function completarHora(n){
@@ -412,6 +653,10 @@ function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
     var confirmadas = 0;
     var pendientes = 0;
     var canceladas = 0;
+    var PrimeraConsulta = 0;
+    var Atendido = 0;
+    var EnEspera = 0;
+    var ConDeuda = 0;
     var i, e;
 
     for(i = 0; i < agendaConsultoriosData.eventos.length; i++){
@@ -425,13 +670,22 @@ function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
             if(e.estado === 'CONFIRMADO'){ confirmadas++; }
             if(e.estado === 'AGENDADO'){ pendientes++; }
             if(e.estado === 'CANCELADO'){ canceladas++; }
+            if(e.estado === 'PRIMERACONSULTA'){ PrimeraConsulta++; }
+            if(e.estado === 'ATENDIDO'){ Atendido++; }
+            if(e.estado === 'ENESPERA'){ EnEspera++; }
+            if(e.estado === 'CONFIRMADOCONDEUDA'){ ConDeuda++; }
         }
     }
+	
 
     document.getElementById('lblTotalCitasAgenda').innerHTML = total;
     document.getElementById('lblConfirmadasAgenda').innerHTML = confirmadas;
     document.getElementById('lblPendientesAgenda').innerHTML = pendientes;
     document.getElementById('lblCanceladasAgenda').innerHTML = canceladas;
+    document.getElementById('lblPrimeraConsultaAgenda').innerHTML = PrimeraConsulta;
+    document.getElementById('lblAtendidoAgenda').innerHTML = Atendido;
+    document.getElementById('lblEsperaAgenda').innerHTML = EnEspera;
+    document.getElementById('lblConDeudaAgenda').innerHTML = ConDeuda;
 }
 
 function actualizarResumenFiltrosAgenda(){
@@ -588,8 +842,8 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaEstado').innerHTML =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
 
-    document.getElementById('overlayDetalleAgenda').style.display = 'block';
-    document.getElementById('modalDetalleAgenda').style.display = 'block';
+    document.getElementById('overlayDetalleAgenda').style.display = '';
+    document.getElementById('modalDetalleAgenda').style.display = '';
 }
 
 function cerrarDetalleAgenda(){
@@ -632,8 +886,15 @@ function inicializarDragAndDropAgenda(){
     var i;
 
     for(i = 0; i < eventos.length; i++){
+        eventos[i].setAttribute('draggable', 'true');
         eventos[i].addEventListener('dragstart', onAgendaDragStart, false);
         eventos[i].addEventListener('dragend', onAgendaDragEnd, false);
+        eventos[i].addEventListener('mousedown', function(ev){
+            if(ev.target && ev.target.classList.contains('agenda-evento-resize')){
+                return;
+            }
+            this.setAttribute('draggable', 'true');
+        }, false);
     }
 
     for(i = 0; i < slots.length; i++){
@@ -653,8 +914,12 @@ function onAgendaDragStart(ev){
     }
 
     var id = this.getAttribute('data-id');
-    agendaDragState.eventoId = id;
+    if(!id){
+        ev.preventDefault();
+        return;
+    }
 
+    agendaDragState.eventoId = id;
     this.classList.add('dragging-evento');
 
     if(ev.dataTransfer){
@@ -717,24 +982,7 @@ function calcularHoraDrop(slot, ev){
     var horaBase = slot.getAttribute('data-hora');
     var minBase = horaAMinutos(horaBase);
 
-    var rect = slot.getBoundingClientRect();
-    var y = ev.clientY - rect.top;
-
-    if(y < 0){
-        y = 0;
-    }
-    if(y > rect.height){
-        y = rect.height;
-    }
-
-    var proporcion = rect.height > 0 ? (y / rect.height) : 0;
-    var minutosDentroHora = Math.round((proporcion * 60) / 15) * 15;
-
-    if(minutosDentroHora >= 60){
-        minutosDentroHora = 45;
-    }
-
-    return minutosAHora(minBase + minutosDentroHora);
+    return minutosAHora(minBase);
 }
 
 function obtenerEventoPorId(id){
@@ -820,7 +1068,7 @@ function onAgendaResizing(ev){
     }
 
     diferenciaPx = ev.clientY - agendaResizeState.startY;
-    diferenciaMinutos = Math.round((diferenciaPx / 74) * 60);
+    diferenciaMinutos = Math.round((diferenciaPx / 90) * 60);
     diferenciaMinutos = Math.round(diferenciaMinutos / 15) * 15;
 
     minInicio = horaAMinutos(agendaResizeState.inicioOriginal);
@@ -835,7 +1083,7 @@ function onAgendaResizing(ev){
     }
 
     nuevaDuracion = minNuevoFin - minInicio;
-    alturaPreview = Math.max(18, Math.round((nuevaDuracion / 60) * 74) - 4);
+    alturaPreview = Math.max(18, Math.round((nuevaDuracion / 60) * 90) - 4);
 
     agendaResizeState.elemento.style.height = alturaPreview + 'px';
     agendaResizeState.elemento.setAttribute('data-fin', minutosAHora(minNuevoFin));
@@ -969,7 +1217,7 @@ function moverEventoDesdeDrop(idEvento, slot, ev){
     var nuevoConsultorio = slot.getAttribute('data-consultorio');
     var nuevaFecha = slot.getAttribute('data-fecha');
     var duracion = horaAMinutos(evento.fin) - horaAMinutos(evento.inicio);
-    var nuevoInicio = calcularHoraDrop(slot, ev);
+    var nuevoInicio = obtenerHoraVisualAgenda(calcularHoraDrop(slot, ev));
     var nuevoFin = minutosAHora(horaAMinutos(nuevoInicio) + duracion);
 
     if(horaAMinutos(nuevoFin) > (22 * 60 + 59)){
@@ -1008,7 +1256,7 @@ function onAgendaResizeEnd(ev){
     }
 
     diferenciaPx = ev.clientY - agendaResizeState.startY;
-    diferenciaMinutos = Math.round((diferenciaPx / 74) * 60);
+    diferenciaMinutos = Math.round((diferenciaPx / 90) * 60);
     diferenciaMinutos = Math.round(diferenciaMinutos / 15) * 15;
 
     minInicio = horaAMinutos(agendaResizeState.inicioOriginal);
@@ -1023,7 +1271,7 @@ function onAgendaResizeEnd(ev){
     }
 
     nuevoFin = minutosAHora(minNuevoFin);
-    nuevaAltura = Math.max(18, Math.round(((minNuevoFin - minInicio) / 60) * 74) - 4);
+    nuevaAltura = Math.max(18, Math.round(((minNuevoFin - minInicio) / 60) * 90) - 4);
 
     evento.fin = nuevoFin;
 
@@ -1346,4 +1594,32 @@ function guardarNuevoPacienteAgenda(){
             }
         }
     });
+}
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    var temaGuardado = localStorage.getItem("tema");
+    var btn = document.getElementById("btnTema");
+
+    if (temaGuardado === "dark") {
+        document.body.classList.add("theme-dark");
+        if(btn) btn.innerHTML = "☀️";
+    } else {
+        if(btn) btn.innerHTML = "🌙";
+    }
+});
+
+function toggleTema() {
+    var body = document.body;
+    var btn = document.getElementById("btnTema");
+
+    if (body.classList.contains("theme-dark")) {
+        body.classList.remove("theme-dark");
+        localStorage.setItem("tema", "light");
+        if(btn) btn.innerHTML = "🌙";
+    } else {
+        body.classList.add("theme-dark");
+        localStorage.setItem("tema", "dark");
+        if(btn) btn.innerHTML = "☀️";
+    }
 }
