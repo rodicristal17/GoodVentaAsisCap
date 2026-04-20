@@ -193,13 +193,7 @@
         }
         $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, ($ip_valida ? $value['direccion_ip'] : NULL), NULL, $cod_asistencia);
         
-        // Valida la ip y registra la salida o devuelve error
-        if (! $ip_valida) {
-            $informacion =array("1" => "red", "2" => "Se registro la asistencia pero la direccion IP de la salida no coincide con ningun administrador del local.", "3" => "Comunique si es un caso especial.", "4" => $_SERVER['REMOTE_ADDR'], "5" => $cod_asistencia);
-            echo json_encode($informacion);	
-            exit;
-        }
-        echo json_encode(array("1" => "exito", "2" => $cod_asistencia, "3" => $hora_salida));
+        echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia, "llegada_tardia" => 0, 'ip_valida' => ($ip_valida ? 1 : 0)));
     }
 
     function obtenerVistaAsistencia($filtros, $limite= "0") {

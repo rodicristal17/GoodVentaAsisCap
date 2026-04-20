@@ -70,14 +70,24 @@ function registrarAsistencia() {
 					if (!cod_asistencia && datos['llegada_tardia'] == 1) {
 						cod_asistencia= datos['cod_asistencia'];
 						document.getElementById('divJustificacionAsistencia').style.display= "";
+						document.getElementById('tituloJustificacionAsistencia').innerHTML= "Justificar Entrada Tardia";
 						document.getElementById('inptNombreUsuarioJustificacionAsistencia').value= document.getElementById('nombrePerfilUsuario').innerHTML;
 						document.getElementById('inptHoraEntradaJustificacionAsistencia').value= datos['hora_entrada_usuario'];
 						document.getElementById('inptHoraRegistradaJustificacionAsistencia').value= datos['hora_entrada'];
 						document.getElementById('inptJustificacionJustificacionAsistencia').value= "";
 					} else {
-						//obtenerAsistenciaUsuario();
-						location.reload();
-						document.getElementById("btnRegistrarAsistencia").disabled = false;
+						if (datos['ip_valida'] == 0) {
+							//obtenerAsistenciaUsuario();
+							location.reload();
+							document.getElementById("btnRegistrarAsistencia").disabled = false;
+						} else {
+							document.getElementById('divJustificacionAsistencia').style.display= "";
+							document.getElementById('tituloJustificacionAsistencia').innerHTML= "Justificar Salida en Otra Ubicacion";
+							document.getElementById('inptNombreUsuarioJustificacionAsistencia').value= document.getElementById('nombrePerfilUsuario').innerHTML;
+							document.getElementById('inptHoraEntradaJustificacionAsistencia').parentElement.parentElement.parentElement.parentElement.style.display= 'none';
+							document.getElementById('inptHoraRegistradaJustificacionAsistencia').parentElement.parentElement.parentElement.parentElement.style.display= 'none';
+							document.getElementById('inptJustificacionJustificacionAsistencia').value= "";
+						}
 					}
 				} else {
 					let mensaje= datos["2"];
