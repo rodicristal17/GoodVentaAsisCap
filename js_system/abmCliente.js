@@ -1245,6 +1245,12 @@ function EnviarClienteDesde() {
 			idFkCliente = $(datostr).children('td[id="td_id"]').html();
 			document.getElementById('inptDocumentoClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_2"]').html();	
 			document.getElementById('inptNombreClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_1"]').html();
+			if (typeof actualizarResumenPacientePresupuestoDoc === "function") {
+				actualizarResumenPacientePresupuestoDoc();
+			}
+			if (typeof verPasoPresupuestoDoc === "function") {
+				verPasoPresupuestoDoc(1);
+			}
 			abmPresupuesto(idabmPresupuesto, "", idFkCliente);
 			break;
 	}
