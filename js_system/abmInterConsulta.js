@@ -964,10 +964,20 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                             verCerrarVentanaInterConsulta(false);
                             //verCerrarVentanaDetalleInterConsulta(false);
                             break;
+                        case 'divAbmGasto1':
+                            document.getElementById('divAbmGastos').style.display= "none";
+                            verCerrarVentanaDetalleInterConsulta(true, 'divAbmGastos');
+                            break;
                         default:
                             break;
                     }
-				}
+				} else if(datos["1"] == "NI"){
+                    setTimeout(function () {
+                        if (confirm(`¿Desea solicitar ingresar a la conversación?`)) {
+                            solicitarMencionInterConsulta(codInterConsulta);
+                        }
+                    }, 500);
+                }
 
                 // Limpia campos
                 fotoMensajeInterconsulta= "";
@@ -1416,9 +1426,6 @@ function obtenerDatosInterConsulta(elemento) {
             cod_ventaFKConsulta= "";
             cod_clienteConsulta= "";
             document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
-            ventanaAnterior.pop();
-            document.getElementById('divAbmGastos').style.display= "none";
-            verCerrarVentanaDetalleInterConsulta(true, 'divAbmGastos');
             buscarInterConsultasYContenido(cod_interConsulta);
             break;
         case 'divInformeDictamen':

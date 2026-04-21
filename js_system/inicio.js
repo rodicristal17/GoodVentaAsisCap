@@ -2084,7 +2084,6 @@ INFO
 function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 	document.getElementById('lbltitulomensajedetalle').style.display = "";
 	titulo= titulo.toLowerCase();
-
 	// Comprueba si es informacion ya predefinida o con error
 	if (titulo.includes('error') && !tipo) {
 		tipo= "error";
