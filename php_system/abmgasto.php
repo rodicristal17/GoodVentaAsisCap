@@ -83,7 +83,7 @@ $editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF
 	if (count($monto_limite) > 0) {
 		$monto_limite= $monto_limite[0]["monto_limite"];
 		$estado= ($estado == "Inactivo" ? "Inactivo" : "Activo");
-		$informacion2 = buscarGasto('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '', '');
+		$informacion2 = buscarGastoConMotivos('', $primerDiaMes, $ultimoDiaMes, ($operacion == 'editar' ? "Activo and g.idgastos != $idgastos" : $estado), $cod_local, '', '', '','true', $cod_motivo, '', '','', '', '');
 	
 		if ($monto_limite && $monto_limite != '0')
 		$totalGasto= intval(str_replace('.', '', $informacion2["4"])) + $monto;
@@ -141,7 +141,7 @@ if($operacion=="buscar")
 	}
 	$idgastos= "";
 
-	$informacion = buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, '', '', $idgastos);
+	$informacion = buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, '', '', $idgastos);
 	echo json_encode($informacion);
 	exit;
 }	
@@ -410,16 +410,16 @@ if ($operacion == "obtenerGastosAsociados") {
 function obtenerGastosAsociados($idgastos) {
 	$result= array();
 	// Obtenemos el registro
-	$result = buscarGasto('','','','','','','','','true','','','','','', $idgastos)[9];
+	$result = buscarGasto('','','','','','','','','true','','','','','', $idgastos);
 	$regGasto= $result[0];
 	
 	// Se verifica si es cuota y se obtiene el gasto padre
 	if ($regGasto['cod_gasto_padre']) {
-		$result= buscarGasto('','','','','','','','','true','','','','','', $regGasto['cod_gasto_padre'])[9];
+		$result= buscarGasto('','','','','','','','','true','','','','','', $regGasto['cod_gasto_padre']);
 	}
 
 	// Se evalua si existen gastos asociados
-	$gastos_asociados= buscarGasto('','','','','','','','','true','','','','',$regGasto['idgastos'], '','ASC')[9];
+	$gastos_asociados= buscarGasto('','','','','','','','','true','','','','',$regGasto['idgastos'], '','ASC');
 
 	return array_merge($result, $gastos_asociados);
 }
@@ -827,7 +827,7 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 
 function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	// Obtiene los datos del gasto
-	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[9][0];
+	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[0];
 	$cod_aperturaFK= $registroGasto['codApertura'];
 	$cod_cajaFK= $registroGasto['codCaja'];
 
@@ -1081,7 +1081,7 @@ if($operacion=="editar")
 {
 
 // Obtiene los datos actuales del gasto
-$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[9];
+$datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos);
 $estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
 $cod_usuario_autoriz= NULL;
 
@@ -1150,7 +1150,7 @@ subirImagenGasto($idgastos, $foto, $ext);
 if($operacion=="editar")
 {
 	// Obtiene los datos actuales del gasto
-	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[9][0];
+	$datos_gasto_nuevo= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[0];
 
 	// Compara los datos anteriores con los nuevos y prepara el mensaje
 	$mensaje= "";
@@ -1177,7 +1177,119 @@ if($operacion=="editar")
 return array("1" => "exito", "2" => $idgastos);	
 }
 
-function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder= 'DESC')
+function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder= 'DESC') {
+	$registros= array();
+	$mysqli=conectar_al_servidor();
+
+	$sqlFiltro= '';
+	if($cod_local != ""){
+		$sqlFiltro .= " and g.cod_local='$cod_local'";
+	}
+	if($tipo!=""){
+		$sqlFiltro .= " and g.tipo='$tipo'";
+	}
+	if($arreglo!=""){
+		$sqlFiltro .=" and g.arreglo='$arreglo'";
+	}
+	if($fecha!=""){
+		$sqlFiltro .=" and g.fecha='$fecha'";
+	}
+	if($usuario!=""){
+		$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=g.cod_usuario) like '%".$usuario."%'";
+	}
+	if($fecha1!="" && $fecha2!="" ){
+		$sqlFiltro .=" and g.fecha>='$fecha1' and g.fecha<='$fecha2'"; 
+	}
+	if ($cod_motivoFK != "") {
+		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = $cod_motivoFK";
+	}
+	if ($ocultar_inactivos == "true") {
+		$sqlFiltro .= " and g.estado != 'Inactivo'";
+	}
+	if ($estado != "") {
+		$sqlFiltro .= " and g.estado='$estado'";
+	}
+	if ($cod_interConsultaFK != "") {
+		$sqlFiltro .= " and g.cod_interConsultaFK= $cod_interConsultaFK ";
+	}
+	if ($nombre_interConsulta != "") {
+		$sqlFiltro .= " and (Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) like '%".$nombre_interConsulta."%'";
+	}
+	if ($idgastos != "") {
+		$sqlFiltro .= " and g.idgastos= $idgastos ";
+	}
+	if ($motivo != "") {
+		$sqlFiltro .= " and g.motivo like '%$motivo%' ";
+	}
+	if ($cod_gasto_padre != "") {
+		$sqlFiltro .= " and g.cod_gasto_padre " .($cod_gasto_padre == "NULL" ? 'IS NULL' : "= $cod_gasto_padre");
+	}
+
+	// Se limpia el primer ' and'
+	if (strlen($sqlFiltro) > 0) {
+		$sqlFiltro = "where" . substr($sqlFiltro, 4, strlen($sqlFiltro));
+	}
+		
+	$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
+	g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
+	g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,
+	(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
+	(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
+	(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
+	(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
+	m.descripcion AS motivo, m.categoria,
+	(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
+	from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY 
+	FIELD(m.categoria,'','ingreso','directo','operativo'), necesita_autorizacion DESC, g.fecha $fechaOrder, g.idgastos DESC";
+
+	$stmt = $mysqli->prepare($sql);
+	if ( ! $stmt->execute()) {
+		echo "Error";
+		exit;
+	}
+
+	$result = $stmt->get_result();
+	$valor= mysqli_num_rows($result);	
+	if ($valor>0) {
+		while ($valor= mysqli_fetch_assoc($result)) {
+			$registros[] = array(
+				'idgastos' =>mb_convert_encoding((string)($valor['idgastos']), 'UTF-8', 'ISO-8859-1'),
+				'interconsulta_nombre' => mb_convert_encoding((string)($valor['interconsulta_nombre']), 'UTF-8', 'ISO-8859-1'),
+				'cod_interConsultaFK' => mb_convert_encoding((string)($valor['cod_interConsultaFK']), 'UTF-8', 'ISO-8859-1'),
+				'usuarionombre' => mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1'),
+				'monto' => mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1'),
+				'motivo' => mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1'),
+				'descripcion' => mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1'),
+				'fecha' => mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'),
+				'tipo' => mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'),
+				'estado' => mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'),
+				'cod_local' => mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1'),
+				'cod_usuario' => mb_convert_encoding((string)($valor['cod_usuario']), 'UTF-8', 'ISO-8859-1'),
+				'codCaja' => mb_convert_encoding((string)($valor['codCaja']), 'UTF-8', 'ISO-8859-1'),
+				'codApertura' => mb_convert_encoding((string)($valor['codApertura']), 'UTF-8', 'ISO-8859-1'),
+				'nombrelocal' => mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1'),
+				'nroboleta' => mb_convert_encoding((string)($valor['nroboleta']), 'UTF-8', 'ISO-8859-1'),
+				'banco' => mb_convert_encoding((string)($valor['banco']), 'UTF-8', 'ISO-8859-1'),
+				'nrocuenta' => mb_convert_encoding((string)($valor['nrocuenta']), 'UTF-8', 'ISO-8859-1'),
+				'arreglo' => mb_convert_encoding((string)($valor['arreglo']), 'UTF-8', 'ISO-8859-1'),
+				'url1' => mb_convert_encoding((string)($valor['url1']), 'UTF-8', 'ISO-8859-1'),
+				'categoria' => mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1'),
+				'cod_usuario_autoriz' => mb_convert_encoding((string)($valor['cod_usuario_autoriz']), 'UTF-8', 'ISO-8859-1'),
+				'fecha_autoriz' => mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1'),
+				'usuario_autoriz_nombre' => mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1'),
+				'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
+				'nombre_usuario_edit' => mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1'),
+				'cod_usuarioFK_edit' => mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1'),
+				'modalidad' => mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'),
+				'cod_gasto_padre' => mb_convert_encoding((string)($valor['cod_gasto_padre']), 'UTF-8', 'ISO-8859-1'),
+			);
+		}
+	}
+	
+	return $registros;
+}
+
+function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder= 'DESC')
 {
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
@@ -1260,147 +1372,40 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			$registrosZona[$categoria][$mot['cod_motivo_ingreso_egreso']]= array();
 		}
 
-		// Busca por motivo
-		$mysqli=conectar_al_servidor();
-
-		$sqlFiltro= '';
-		if($cod_local != ""){
-			$sqlFiltro .= " and g.cod_local='$cod_local'";
-		}
-		if($tipo!=""){
-			$sqlFiltro .= " and g.tipo='$tipo'";
-		}
-		if($arreglo!=""){
-			$sqlFiltro .=" and g.arreglo='$arreglo'";
-		}
-		if($fecha!=""){
-			$sqlFiltro .=" and g.fecha='$fecha'";
-		}
-		if($usuario!=""){
-			$sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=g.cod_usuario) like '%".$usuario."%'";
-		}
-		if($fecha1!="" && $fecha2!="" ){
-			$sqlFiltro .=" and g.fecha>='$fecha1' and g.fecha<='$fecha2'"; 
-		}
-		if ($cod_motivoFK != "") {
-			$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = $cod_motivoFK";
-		}
-		if ($ocultar_inactivos == "true") {
-			$sqlFiltro .= " and g.estado != 'Inactivo'";
-		}
-		if ($estado != "") {
-			$sqlFiltro .= " and g.estado='$estado'";
-		}
-		if ($cod_interConsultaFK != "") {
-			$sqlFiltro .= " and g.cod_interConsultaFK= $cod_interConsultaFK ";
-		}
-		if ($nombre_interConsulta != "") {
-			$sqlFiltro .= " and (Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) like '%".$nombre_interConsulta."%'";
-		}
-		if ($idgastos != "") {
-			$sqlFiltro .= " and g.idgastos= $idgastos ";
-		}
-		if ($motivo != "") {
-			$sqlFiltro .= " and g.motivo like '%$motivo%' ";
-		}
-		if ($cod_gasto_padre != "") {
-			$sqlFiltro .= " and g.cod_gasto_padre " .($cod_gasto_padre == "NULL" ? 'IS NULL' : "= $cod_gasto_padre");
-		}
-		$sqlFiltro .= " and g.cod_motivoIngresoEgresoFK = ".$mot['cod_motivo_ingreso_egreso'];
-
-		// Se limpia el primer ' and'
-		if (strlen($sqlFiltro) > 0) {
-			$sqlFiltro = "where" . substr($sqlFiltro, 4, strlen($sqlFiltro));
-		}
-			
-		$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,
-		g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
-		g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,
-		(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
-		(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
-		(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
-		(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
-		m.descripcion AS motivo, m.categoria,
-		(Select Nombre from local l where l.cod_local=g.cod_local) as nombrelocal
-		from gastos g left join motivos_ingreso_egreso m on m.cod_motivo_ingreso_egreso = g.cod_motivoIngresoEgresoFK $sqlFiltro ORDER BY 
-		FIELD(m.categoria,'','ingreso','directo','operativo'), necesita_autorizacion DESC, g.fecha $fechaOrder, g.idgastos DESC";
-
-		$stmt = $mysqli->prepare($sql);
-		if ( ! $stmt->execute()) {
-			echo "Error";
-			exit;
-		}
-
-		$result = $stmt->get_result();
-		$valor= mysqli_num_rows($result);
+		$registros= buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$mot['cod_motivo_ingreso_egreso'], $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder);
 		$nroRegistro= $valor;
 		$registroZona = array();
 
 		$styleName="tableRegistroSearch";
-		
-		if ($valor>0) {
-			while ($valor= mysqli_fetch_assoc($result)) {
-				$monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
-				$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
-				$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
-				$cod_usuarioFK_edit= mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1');
-				
-				if (empty($categoria)) {
-					$categoria= "sinCategoria";
-				}
-				
-				$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
-				if ($valor['estado'] == 'Activo') {
-					$totalGasto += $monto;
-				}
-				
-				$registros[] = array(
-					'idgastos' =>mb_convert_encoding((string)($valor['idgastos']), 'UTF-8', 'ISO-8859-1'),
-					'interconsulta_nombre' => mb_convert_encoding((string)($valor['interconsulta_nombre']), 'UTF-8', 'ISO-8859-1'),
-					'cod_interConsultaFK' => mb_convert_encoding((string)($valor['cod_interConsultaFK']), 'UTF-8', 'ISO-8859-1'),
-					'usuarionombre' => mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1'),
-					'monto' => mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1'),
-					'motivo' => mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1'),
-					'descripcion' => mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1'),
-					'fecha' => mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1'),
-					'tipo' => mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'),
-					'estado' => mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'),
-					'cod_local' => mb_convert_encoding((string)($valor['cod_local']), 'UTF-8', 'ISO-8859-1'),
-					'cod_usuario' => mb_convert_encoding((string)($valor['cod_usuario']), 'UTF-8', 'ISO-8859-1'),
-					'codCaja' => mb_convert_encoding((string)($valor['codCaja']), 'UTF-8', 'ISO-8859-1'),
-					'codApertura' => mb_convert_encoding((string)($valor['codApertura']), 'UTF-8', 'ISO-8859-1'),
-					'nombrelocal' => mb_convert_encoding((string)($valor['nombrelocal']), 'UTF-8', 'ISO-8859-1'),
-					'nroboleta' => mb_convert_encoding((string)($valor['nroboleta']), 'UTF-8', 'ISO-8859-1'),
-					'banco' => mb_convert_encoding((string)($valor['banco']), 'UTF-8', 'ISO-8859-1'),
-					'nrocuenta' => mb_convert_encoding((string)($valor['nrocuenta']), 'UTF-8', 'ISO-8859-1'),
-					'arreglo' => mb_convert_encoding((string)($valor['arreglo']), 'UTF-8', 'ISO-8859-1'),
-					'url1' => mb_convert_encoding((string)($valor['url1']), 'UTF-8', 'ISO-8859-1'),
-					'categoria' => mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1'),
-					'cod_usuario_autoriz' => mb_convert_encoding((string)($valor['cod_usuario_autoriz']), 'UTF-8', 'ISO-8859-1'),
-					'fecha_autoriz' => mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1'),
-					'usuario_autoriz_nombre' => mb_convert_encoding((string)($valor['usuario_autoriz_nombre']), 'UTF-8', 'ISO-8859-1'),
-					'cod_motivoIngresoEgresoFK' => mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1'),
-					'nombre_usuario_edit' => mb_convert_encoding((string)($valor['nombre_usuario_edit']), 'UTF-8', 'ISO-8859-1'),
-					'cod_usuarioFK_edit' => mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1'),
-					'modalidad' => mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'),
-					'cod_gasto_padre' => mb_convert_encoding((string)($valor['cod_gasto_padre']), 'UTF-8', 'ISO-8859-1'),
-				);
+		foreach ($registros as $valor) {
+			$monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
+			$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
+			$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
+			$cod_usuarioFK_edit= mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1');
+			
+			if (empty($categoria)) {
+				$categoria= "sinCategoria";
+			}
+			
+			$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
+			if ($valor['estado'] == 'Activo') {
+				$totalGasto += $monto;
+			}
 
-				if ($valor['estado'] == 'Activo') {
-					switch ($categoria) {
-						case 'ingreso':
-							$totalZonaIngresos += $monto;
-							break;
-						case 'directo':
-							$totalZonaCostosDirectos += $monto;
-							break;
-						case 'operativo':
-							$totalZonaGastosOperativos += $monto;
-							break;
-						default:
-							$totalZonaSinCategorizar += $monto;
-							break;
-					}
+			if ($valor['estado'] == 'Activo') {
+				switch ($categoria) {
+					case 'ingreso':
+						$totalZonaIngresos += $monto;
+						break;
+					case 'directo':
+						$totalZonaCostosDirectos += $monto;
+						break;
+					case 'operativo':
+						$totalZonaGastosOperativos += $monto;
+						break;
+					default:
+						$totalZonaSinCategorizar += $monto;
+						break;
 				}
 			}
 		}
