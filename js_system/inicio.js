@@ -11169,6 +11169,7 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptTotalDescuento').value = ""
 	document.getElementById('inptTotalVenta2').innerHTML = "0"
 	document.getElementById('inptTotalPagado').value = ""
+ 	document.getElementById("inptDescuentoVentaTerminar").value= "0";
 	document.getElementById('inptDeudaActual').value = ""
 	document.getElementById('inpCodVentaPagos').value = ""
 	document.getElementById('inptTotalVentaPagos').value = ""
@@ -12011,7 +12012,8 @@ controldetalle=controldetalle+1;
 	var inptlocalVenta = document.getElementById('inptlocalVenta').value
 	var inptGaranteVenta = document.getElementById('inptGaranteVenta').value
 	var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComprobanteVenta').value
-	var inptSeleccPuntoExpedicionVenta = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text() 
+	var inptSeleccPuntoExpedicionVenta = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text();
+	const inptDescuentoVentaTerminar = document.getElementById('inptDescuentoVentaTerminar').value.replace(/\./g, '');;
 	var nrocaja = document.getElementById('pCaja').innerHTML
 	if (inpCodVenta == "") {
 		document.getElementById('inpCodVenta').value = "";
@@ -12061,17 +12063,12 @@ controldetalle=controldetalle+1;
 	return
 	}
 	
-	
-	
     var accion = "nuevo";
 	var tipo="1"
 	
-	
 	const inptNroComprobanteVentaTerminarEfectivo= document.getElementById('inptNroComprobanteVentaTerminarEfectivo').value;
 	
-	
-    abmdetalleventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, inptNroComprobanteVentaTerminarEfectivo, accion,tipo);
-	
+    abmdetalleventa(inptDescuentoVentaTerminar,nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, inptNroComprobanteVentaTerminarEfectivo, accion,tipo);
 }
 
 
@@ -12100,6 +12097,7 @@ controldetalle=controldetalle+1;
 	var inptGaranteVenta = document.getElementById('inptGaranteVenta').value
 	var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComprobanteVenta').value
 	var inptSeleccPuntoExpedicionVenta = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text() 
+	const inptDescuentoVentaTerminar = document.getElementById('inptDescuentoVentaTerminar').value.replace(/\./g, '');;
 	var nrocaja = document.getElementById('pCaja').innerHTML
 	if (inpCodVenta == "") {
 		document.getElementById('inpCodVenta').value = "";
@@ -12146,9 +12144,9 @@ controldetalle=controldetalle+1;
 
     var accion = "nuevo";
 	var tipo="2"
-    abmdetalleventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, '', accion,tipo);
+    abmdetalleventa(inptDescuentoVentaTerminar,nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, '', accion,tipo);
 }
-function abmdetalleventa(caja,puntoexpedicion,tipo_comprobante,fecha_venta,comisioncobrador,cod_clienteFK,idGaranteFk,TipoVenta,cod_cobradorFK,idFkVendedor1, idFkVendedor2,cod_ventaFK, num_factura, cod_local, nro_comprobante, accion,tipo) {
+function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_venta,comisioncobrador,cod_clienteFK,idGaranteFk,TipoVenta,cod_cobradorFK,idFkVendedor1, idFkVendedor2,cod_ventaFK, num_factura, cod_local, nro_comprobante, accion,tipo) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -12187,6 +12185,7 @@ function abmdetalleventa(caja,puntoexpedicion,tipo_comprobante,fecha_venta,comis
 	datos.append("vendedor1", idFkVendedor1)
 	datos.append("vendedor2", idFkVendedor2)
 	datos.append("TipoVenta", TipoVenta)
+	datos.append("descuento", descuento)
 	datos.append("tipo_comprobante", tipo_comprobante)
 	datos.append("puntoexpedicion", puntoexpedicion)
 	datos.append("codSolicitudCreditoFK", codSolcirudFK)
@@ -12914,7 +12913,9 @@ function vercerrarOpcionesImpresion(mostrar) {
 		}
 		$("div[id=divOpcionesImpresion]").fadeIn(250)
 	} else {
-		$("div[id=divOpcionesImpresion]").fadeOut(250)		
+		$("div[id=divOpcionesImpresion]").fadeOut(250);
+		limpiarCamposAnhadirPagos()
+		limpiarcamposventa()
 	}
 }
 function vercerrarConfirmarNroFactura(d) {
@@ -13635,12 +13636,7 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 					// document.getElementById("divOpcionesImpresion").style.display="none"
 					document.getElementById("divConfirmarNroDeFactura").style.display=""
 					ImprimirFacrtura1()
-					limpiarcamposventa()
-					 }else{
-					 limpiarcamposventa()
 					 }
-					
-					 
 					 document.getElementById("divVueltoVentaAContado").style.display="";
                      document.getElementById("tdEfectoVueltoVentaContado").className="magictime vanishIn"
 				}
@@ -26900,8 +26896,6 @@ function abmTipoPagosVentaContado(idVentaFK) {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   
-				   limpiarCamposAnhadirPagos()
 				   verCerrarVentanaAnhadirPagoVenta("")
 				   
 					ver_vetana_informativa('Pagos cargados correctamente')
@@ -26942,9 +26936,6 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 					// document.getElementById("divOpcionesImpresion").style.display="none"
 					document.getElementById("divConfirmarNroDeFactura").style.display=""
 					ImprimirFacrtura1()
-					limpiarcamposventa()
-					 }else{
-					 limpiarcamposventa()
 					 }
 					 document.getElementById("divVueltoVentaAContado").style.display="";
                      document.getElementById("tdEfectoVueltoVentaContado").className="magictime vanishIn"

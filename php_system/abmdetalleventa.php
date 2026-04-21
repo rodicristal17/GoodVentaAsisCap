@@ -80,7 +80,10 @@ $codSolicitudCreditoFK = mb_convert_encoding((string)($codSolicitudCreditoFK), '
 $tipo=$_POST['tipo'];
 $tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 
-$datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$cod_local,$idGaranteFk);
+$descuento=$_POST['descuento'];
+$descuento = mb_convert_encoding((string)($descuento), 'ISO-8859-1', 'UTF-8');
+
+$datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$descuento,$cod_local,$idGaranteFk);
 $cod_ventaFK=$datosventa[0];
 $num_factura=$datosventa[1];
 }
@@ -1180,7 +1183,7 @@ exit;
 
 
 
-function iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$cod_local,$idGaranteFk){
+function iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$descuento,$cod_local,$idGaranteFk){
 	
 	$mysqli=conectar_al_servidor(); 
 	
@@ -1202,8 +1205,8 @@ $fecha_inser_edit = date('Y-m-d | h:i:sa', time());
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 
-	$consulta1="Insert into venta (idGaranteFk,fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2,comision,cod_local,tipo_comprobante,puntoexpedicion,codnrofactura,cod_user_insert,fecha_insert,codSolicitudCreditoFK)
-values($idGaranteFk,'$fecha_venta','0',$cod_usuarioFK,$cod_clienteFK,'$num_factura',$cod_cobradorFK,'$TipoVenta','$TipoPago','$vendedor1','$vendedor2','$comisioncobrador',$cod_local,'$tipo_comprobante','$puntoexpedicion','$codnrofactura','$user','$fecha_inser_edit','$codSolicitudCreditoFK')";
+	$consulta1="Insert into venta (idGaranteFk,fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2,comision,descuento,cod_local,tipo_comprobante,puntoexpedicion,codnrofactura,cod_user_insert,fecha_insert,codSolicitudCreditoFK)
+values($idGaranteFk,'$fecha_venta','0',$cod_usuarioFK,$cod_clienteFK,'$num_factura',$cod_cobradorFK,'$TipoVenta','$TipoPago','$vendedor1','$vendedor2','$comisioncobrador','$descuento',$cod_local,'$tipo_comprobante','$puntoexpedicion','$codnrofactura','$user','$fecha_inser_edit','$codSolicitudCreditoFK')";
 
 // echo($consulta1);
 // exit;

@@ -5511,6 +5511,8 @@ function separadordemiles(input) {
 }
 
 function separadordemilesnumero(input) {
+
+
 	var num = input.toString().replace(/\./g, '');
 
 	if (!isNaN(num) && num !== "") {
@@ -5912,6 +5914,8 @@ pagina="<br><div style='background-color:#fff;'>"
 +"<table class='tableTicket' style='font-size: 15px;font-size: 12px;'> <tr> "
 +"<td style='width:40%'><b>TOTAL PAGADO:</b></td> <td style='width:60%'><b> "+totalpagado+" Gs. </b></td> </tr> </table>"
 +"<table class='tableTicket' style='font-size: 15px;font-size: 12px;'> <tr>"
++"<td style='width:40%'><b>TOTAL DESCUENTO:</b></td> <td style='width:60%'><b> "+totaldescuento+" Gs. </b></td> </tr> </table>"
++"<table class='tableTicket' style='font-size: 15px;font-size: 12px;'> <tr>"
 +"<td style='width:40%'><b>SALDO ACTUAL:</b></td> <td style='width:60%'><b> "+deudaActual+" Gs. </b></td> </tr> </table> "
 +"</td>"
 +"</tr></table>"
@@ -5968,11 +5972,10 @@ var totalVe=totalesRecibo;
 totalVe=QuitarSeparadorMilValor(totalVe)
 var Pendiente=Number(totalVe)-Number(totalP)
 let TotalDescuentoRecibo= document.getElementById('inptDescuentoVentaTerminar').value;
-
 if(document.getElementById("inptSeleccTipoVenta").value=="CONTADO"){
 	
  var cajera = document.getElementById("lblUser").innerHTML;	
- TotalPagado= document.getElementById("inptTotalVentaTerminar").value;
+ TotalPagado= document.getElementById("inptMontoVentaTerminarEfectivo").value;
 
 ReImprimirDivTickeFacturaPago(fechaVenta,cajera,CuotasNro,TotalPagado,"0",NombreRecibo,DocumentoRecibo,NroVentas,"","0","0",TotalPagado,TotalDescuentoRecibo,totalesRecibo,"0","0");	
 

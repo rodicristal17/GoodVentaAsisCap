@@ -2800,7 +2800,7 @@ if ( ! $stmt->execute()) {
 function buscardatosventa($codVenta){
 	$mysqli=conectar_al_servidor();
 	 
-		$sql= "Select fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,puntoexpedicion,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,
+		$sql= "Select fecha_venta,(total_venta - descuento) as total_venta,cod_usuarioFK,cod_clienteFK,num_factura,puntoexpedicion,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,
 		(Select nombre from vendedor where idvendedor=Vendedor1) as nombrevendedor1,
 		(Select nombre from vendedor where idvendedor=Vendedor2) as nombrevendedor2,
 		(Select nombre_persona from persona where cod_persona=cod_usuarioFK) as usuarionombre,
