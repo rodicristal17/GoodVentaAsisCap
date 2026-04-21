@@ -373,34 +373,34 @@ function verificarcamposCliente(){
 
 
 	  if(inptNombreApellidoCliente==""){
-	ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL CLIENTE","#")
+	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NOMBRE DEL CLIENTE","advertencia")
 	  return false;
   }
   if(inptNroDocCliente==""){
-	ver_vetana_informativa("FALTO INGRESAR EL NRO DE DOCUMENTO","#")
+	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE DOCUMENTO","advertencia")
 	  return false;
   }
   if(idFKZona==""){
-	ver_vetana_informativa("FALTO SELECCIONAR UNA ZONA","#")
+	ver_vetana_informativa("FALTAN DATOS", "FALTO SELECCIONAR UNA ZONA","advertencia")
 	  return false;
   }
  
  
  
 if(inptDireccionCliente==""){
-	ver_vetana_informativa("FALTO INGRESAR LA DIRECCION DEL CLIENTE","#")
+	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR LA DIRECCION DEL CLIENTE","advertencia")
 	  return false;
   }
   
   
   if(inptNroTelefCliente==""){
-	ver_vetana_informativa("FALTO INGRESAR EL NRO DE TELEFONO","#")
+	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE TELEFONO","advertencia")
 	  return false;
   }
   
   
   if(inptReferenciaCliente==""){
-	ver_vetana_informativa("FALTO INGRESAR UNA REFERENCIA DEL CLIENTE","#")
+	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR UNA REFERENCIA DEL CLIENTE","advertencia")
 	  return false;
   }
  
@@ -507,7 +507,7 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
                 var tablaClienteFicticia = $(
                     "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>" +
                         "<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='" + styleFondo + "'>" +
-                            "<td id='td_id' style='display:none'>" + idFkCliente + "</td>" +
+                            "<td id='td_id' style='display:none'>" + datos["2"] + "</td>" +
                             "<td id='td_datos_2' style='width:10%'>" + ci_cliente + "</td>" +
                             "<td id='td_datos_13' style='width:10%'>" + rut_cliente + "</td>" +
                             "<td id='td_datos_1' style='width:10%'>" + nombre_persona + "</td>" +
