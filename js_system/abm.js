@@ -5511,20 +5511,22 @@ function separadordemiles(input) {
 }
 
 function separadordemilesnumero(input) {
-	var num = input.toString().replace(/\./g, '');console.info(num);
-	if (!isNaN(num)) {
+	var num = input.toString().replace(/\./g, '');
+
+	if (!isNaN(num) && num !== "") {
 		var num2 = num.toString().split('.');
-		var thousands = num2[0].split('').reverse().join('').match(/.{1,3}/g).join('.');
+		var grupos = num2[0].split('').reverse().join('').match(/.{1,3}/g);
+
+		if (!grupos) {
+			return input;
+		}
+
+		var thousands = grupos.join('.');
 		var decimals = (num2[1]) ? ',' + num2[1] : '';
 
-		var answer = thousands.split('').reverse().join('') + decimals;
-		input = answer
-	} else {
-		/*alert('Esto no es un número')
-		//input.value=input.value.replace(/[˄\d\.]*g,'');
-		 asi va antes de la /g */
-
+		return thousands.split('').reverse().join('') + decimals;
 	}
+
 	return input;
 }
 
@@ -5965,33 +5967,16 @@ totalP=QuitarSeparadorMilValor(totalP)
 var totalVe=totalesRecibo;
 totalVe=QuitarSeparadorMilValor(totalVe)
 var Pendiente=Number(totalVe)-Number(totalP)
-
-
-
-
+let TotalDescuentoRecibo= document.getElementById('inptDescuentoVentaTerminar').value;
 
 if(document.getElementById("inptSeleccTipoVenta").value=="CONTADO"){
 	
-		
-	
  var cajera = document.getElementById("lblUser").innerHTML;	
- var TotalDescuentoRecibo =0
+ TotalPagado= document.getElementById("inptTotalVentaTerminar").value;
 
 ReImprimirDivTickeFacturaPago(fechaVenta,cajera,CuotasNro,TotalPagado,"0",NombreRecibo,DocumentoRecibo,NroVentas,"","0","0",TotalPagado,TotalDescuentoRecibo,totalesRecibo,"0","0");	
 
 }else{
-	
-	
-	NroVentas
-	fechaVenta
-	NombreRecibo
-	DeudaActualRecibo
-	DocumentoRecibo
-	CuotasRestante
-	paginaDetalleTicket
-	totalesRecibo
-	InteresRecibo
-	TotalDescuentoRecibo
 	 TotalPagado =  document.getElementById("inptTotalPagado").value
 	DiasAtrasado
 	
