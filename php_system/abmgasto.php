@@ -833,6 +833,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 
 	// Se verifica si la caja sigue abierta, en caso contrario se actualiza
 	$result_caja = controldecaja($registroGasto['codCaja'],$registroGasto['cod_local'],$registroGasto['cod_usuario']);
+	/*
 	if ($result_caja["2"] == "0" || $result_caja["3"] != $registroGasto['codApertura']) {
 		$cod_aperturaFK = $result_caja["3"];
 		$cod_cajaFK= $result_caja["4"];
@@ -842,7 +843,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		print_r($result_caja);
 		exit;
 	}
-
+*/
 	$fechaActual= new DateTime();
 	$fechaActual= $fechaActual->format('Y-m-d H:i:s');
 	$decision= ($decision == 'true' ? 'Activo' : 'Rechazado');
@@ -1020,12 +1021,12 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 
 function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas= "true")
 {
-		
+/*		
 if ($codcaja == "0" || $codcaja == 0 || $idaperturacierrecaja == 0 || $idaperturacierrecaja == "0") {
 	echo "Cod caja o de apertura en 0";
 	print_r($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas);
 	exit;
-}
+}*/
 if($monto==""   ){
 $informacion =array("1" => "camposvacio");
 echo json_encode($informacion);	
