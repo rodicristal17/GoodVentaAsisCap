@@ -147,8 +147,8 @@ if($nroCancelado==0){
 	//CONDICION PARA SABER SI HAY DIAS ATRAZADOS
 	if($diff<0 && $diff!=""){
 	$diff=$diff*-1;
-	editarDiasAtrazadosdesdecalcularcredito($cod_clienteFK,$diff);
-	actualizardiasatrazadocredito($idcredito,$diff);
+	editarDiasAtrazadosdesdecalcularcredito($cod_clienteFK,$diff,$mysqli);
+	actualizardiasatrazadocredito($idcredito,$diff,$mysqli);
 	}else{
 	$diff=0;
     }
@@ -196,7 +196,7 @@ if($nroCancelado==0){
 	$deudaActua=$montoIn+$total_interes + $deudaInteres;
 	
 	if($actualizar=="si"){
-	actualizarTotalCuota($idcredito,$total,$total_interes,$total);
+	actualizarTotalCuota($idcredito,$total,$total_interes,$total,$mysqli);
 	}
 	
 	}else{
@@ -204,7 +204,7 @@ if($nroCancelado==0){
 	$deudaActua=$MontoConDescuento-$totalPagoCredito + $deudaInteres;
 	$total=$deudaActua;
 	if($actualizar=="si"){
-    actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento);
+    actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento,$mysqli);
 	}
 	}	
 	}else{
@@ -212,7 +212,7 @@ if($nroCancelado==0){
 	$deudaActua=$MontoConDescuento-$totalPagoCredito;
 	$total=$deudaActua;
 	 if($actualizar=="si"){
-	 actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento);
+	 actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento,$mysqli);
 	}		
 	}
 			$DeudaPendiente=$DeudaPendiente+$deudaActua;
@@ -221,7 +221,7 @@ if($nroCancelado==0){
 	$deudaActua=$MontoConDescuento-$totalPagoCredito + $deudaInteres;
 	$total=$deudaActua;
 	if($actualizar=="si"){
-	 actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento);
+	 actualizarTotalCuota($idcredito,$total,0,$MontoConDescuento,$mysqli);
 	}
 	}
 	
@@ -324,9 +324,13 @@ $datos[16]=$SumadeudaInteres;
 return $datos;
 }
 
-function actualizarTotalCuota($idcredito,$total,$totalinteres,$totaldeuda){
+function actualizarTotalCuota($idcredito,$total,$totalinteres,$totaldeuda,$mysqli=null){
 	
-	$mysqli=conectar_al_servidor(); 
+	$cerrarConexion=false;
+	if($mysqli==null){
+	$mysqli=conectar_al_servidor();
+	$cerrarConexion=true;
+	}
 	$consulta1="Update credito set total=?,totalinteres=?,totaldeuda=? 
 	where idcredito='$idcredito' and (totalinteres!='$totalinteres' or total!='$total' or totaldeuda!='$totaldeuda') ";	
 $stmt1 = $mysqli->prepare($consulta1);
@@ -335,17 +339,24 @@ $stmt1->bind_param($ss,$total,$totalinteres,$totaldeuda);
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
 
+ $stmt1->close();
+ if($cerrarConexion==true){
  mysqli_close($mysqli);
+ }
 }
-function editarDiasAtrazadosdesdecalcularcredito($codCliente,$nroDias)
+function editarDiasAtrazadosdesdecalcularcredito($codCliente,$nroDias,$mysqli=null)
 {
 	
-$mysqli=conectar_al_servidor(); 
+$cerrarConexion=false;
+if($mysqli==null){
+$mysqli=conectar_al_servidor();
+$cerrarConexion=true;
+}
 $consulta1="Update cliente set totaldias='$nroDias' where cod_cliente='$codCliente' and totaldias<'$nroDias' ";	
 $stmt1 = $mysqli->prepare($consulta1);
 
@@ -353,18 +364,30 @@ if (!$stmt1->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
+$stmt1->close();
+if($cerrarConexion==true){
+mysqli_close($mysqli);
+}
 	
 }
-function actualizardiasatrazadocredito($idcredito,$nroDias)
+function actualizardiasatrazadocredito($idcredito,$nroDias,$mysqli=null)
 {
 	
-$mysqli=conectar_al_servidor(); 
+$cerrarConexion=false;
+if($mysqli==null){
+$mysqli=conectar_al_servidor();
+$cerrarConexion=true;
+}
 $consulta1="Update credito set diasatrasados='$nroDias' where idcredito='$idcredito' ";	
 $stmt1 = $mysqli->prepare($consulta1);
 
 if (!$stmt1->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
+}
+$stmt1->close();
+if($cerrarConexion==true){
+mysqli_close($mysqli);
 }
 	
 }

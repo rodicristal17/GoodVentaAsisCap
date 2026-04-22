@@ -17160,7 +17160,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 						 if(totalregistroinformecuentacobrar>registrocargadoinformecuentasacobrar){
 						 	var porce=((registrocargadoinformecuentasacobrar*100)/totalregistroinformecuentacobrar).toFixed(0)
 	                      document.getElementById("divProgressInformeCuentaACobrar").style.width=porce+"%"
-						 document.getElementById("table_cuentas_a_cobrar").innerHTML += "<div id='table_mas_cuentas_a_cobrar'></div>"
+						 //document.getElementById("table_cuentas_a_cobrar").innerHTML += "<div id='table_mas_cuentas_a_cobrar'></div>"
 						  buscarmascuentaacobrar();
 					 }else{
 						 controldebusquedadInformeCuentaCobrar=false
@@ -17232,7 +17232,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	document.getElementById("divProgressInformeCuentaACobrar").style.backgroundColor=''
 	var totaldeuda=document.getElementById("inptRegistroNroHistorialTotalADeudad").value
 	var totalcobrar=document.getElementById("inptRegistroHistorialTotalACobrar").value
-	document.getElementById("table_cuentas_a_cobrar").innerHTML = paginacargando
+
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -17290,7 +17290,6 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 		success: function (responseText) {
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -17298,7 +17297,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 			   if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					
-					document.getElementById("table_cuentas_a_cobrar").innerHTML = datos_buscados
+					document.getElementById("table_cuentas_a_cobrar").innerHTML += datos_buscados
 					 document.getElementById("inptRegistroRegistrocargadoCuentaAcobrar").value =datos[3]
 	                document.getElementById("inptRegistroNroHistorialTotalADeudad").value =  datos[4]
 	                document.getElementById("inptRegistroHistorialTotalACobrar").value =  datos[5]
@@ -17307,8 +17306,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 						 if(totalregistroinformecuentacobrar>registrocargadoinformecuentasacobrar){
 						 	var porce=((registrocargadoinformecuentasacobrar*100)/totalregistroinformecuentacobrar).toFixed(0)
 	                      document.getElementById("divProgressInformeCuentaACobrar").style.width=porce+"%"
-						 document.getElementById("table_cuentas_a_cobrar").innerHTML += "<div id='table_mas_cuentas_a_cobrar'></div>"
-						 document.getElementById("table_cuentas_a_cobrar").id=""
+						 //document.getElementById("table_cuentas_a_cobrar").innerHTML += "<div id='table_mas_cuentas_a_cobrar'></div>";
 						  buscarmascuentaacobrar();
 					 }else{
 						 document.getElementById("tbProcessInformeCuentaACobrar").style.display='none'
