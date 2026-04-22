@@ -81,7 +81,7 @@ function verificarOperacionPresupuesto($operacion)
             $cod_presupuestoFK = mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8');
 
             if ($solo_eliminar_prioritario == 'true') {
-                abmDetallesPresupuesto($idDetalle, NULL, NULL, NULL, 0, $user, $cod_presupuestoFK);
+                abmDetallesPresupuesto($idDetalle, NULL, NULL, NULL, 0, 0, $user, $cod_presupuestoFK);
             } else {
                 eliminarDetallePresupuesto($idDetalle);
             }
@@ -94,8 +94,9 @@ function verificarOperacionPresupuesto($operacion)
             $precio = isset($_POST['precio']) ? mb_convert_encoding((string)($_POST['precio']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8') : null;
             $es_prioritario = isset($_POST['es_prioritario']) ? mb_convert_encoding((string)($_POST['es_prioritario']), 'ISO-8859-1', 'UTF-8') : null;
+            $es_alternativo = isset($_POST['es_alternativo']) ? mb_convert_encoding((string)($_POST['es_alternativo']), 'ISO-8859-1', 'UTF-8') : null;
 
-            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $user, $cod_presupuestoFK);
+            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $user, $cod_presupuestoFK);
             echo json_encode(array("1" => "exito", "2" => $idDetalle));
             break;
         default:
@@ -139,10 +140,13 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<td  id='td_datos_10' style='display:none'>".$value['precio']."</td>"
 			. "<td  id='td_datos_11' style='display:none'>".$value['subTotal']."</td>"
 			. "<td  id='td_datos_12' style='display:none'>".$value['es_prioritario']."</td>"
+			. "<td  id='td_datos_13' style='display:none'>".$value['es_alternativo']."</td>"
 			. "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 			. "</tr>"
 			. "</table>";
-        $pagina .= $elemento;
+        if ($value['es_alternativo'] != 1 && $value['es_alternativo'] != "1") {
+            $pagina .= $elemento;
+        }
         if ($value['es_prioritario'] == 1 || $value['es_prioritario'] == "1") {
             $paginaPrioritario .= $elemento;
         }
@@ -197,7 +201,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
             p.*,
             (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
             (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
-            IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id), 0) AS monto_total,
+            IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_alternativo = 0), 0) AS monto_total,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_prioritario = 1), 0) AS monto_total_prioritario,
             (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create
             FROM presupuesto p
@@ -354,7 +358,7 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
     return $registros;
 }
 
-function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $cod_usuarioFK_edit, $cod_presupuestoFK)
+function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $cod_usuarioFK_edit, $cod_presupuestoFK)
 {
     if (empty($cod_presupuestoFK)) {
         $informacion = array("1" => "error", "mensaje" => "El código de presupuesto es requerido para guardar el detalle del presupuesto.");
@@ -368,9 +372,15 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
     }
 
     if (empty($id)) {
-        $sql = "INSERT INTO detalles_presupuesto (cod_productoFK, precio, cantidad, es_prioritario, cod_presupuestoFK) VALUES (?,?,?,?,?)";
+        if ($es_prioritario === null || $es_prioritario === '') {
+            $es_prioritario = 0;
+        }
+        if ($es_alternativo === null || $es_alternativo === '') {
+            $es_alternativo = 0;
+        }
+        $sql = "INSERT INTO detalles_presupuesto (cod_productoFK, precio, cantidad, es_prioritario, es_alternativo, cod_presupuestoFK) VALUES (?,?,?,?,?,?)";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('iiisi', $cod_productoFK, $precio, $cantidad, $es_prioritario, $cod_presupuestoFK);
+        $stmt->bind_param('iiiiii', $cod_productoFK, $precio, $cantidad, $es_prioritario, $es_alternativo, $cod_presupuestoFK);
     } else {
         $parametros = array();
         $atributos = "";
@@ -412,6 +422,14 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
             $atributos .= "es_prioritario= ?";
             $ss .= "i";
             $parametros[] = $es_prioritario;
+        }
+        if ($es_alternativo !== NULL) {
+            if ($atributos != "") {
+                $atributos .= ", ";
+            }
+            $atributos .= "es_alternativo= ?";
+            $ss .= "i";
+            $parametros[] = $es_alternativo;
         }
 
         if ($atributos == "") {

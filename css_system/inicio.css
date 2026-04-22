@@ -3649,11 +3649,61 @@ text-align: justify;
   align-items: start;
 }
 
+#presupuestoDocDetallePanel.presupuesto-doc-planificador {
+  grid-template-columns: minmax(300px, 0.95fr) minmax(420px, 1.55fr);
+  align-items: stretch;
+}
+
 #presupuestoDocProductosPanel,
 #presupuestoDocResumenPanel,
 #presupuestoDocPrioritarioHeader,
 #presupuestoDocDetallePanel > div {
   margin-bottom: 0;
+}
+
+.presupuesto-doc-tratamientos-panel,
+.presupuesto-doc-plan-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.presupuesto-doc-planes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(230px, 1fr));
+  gap: 18px;
+  min-width: 0;
+}
+
+.presupuesto-doc-tratamientos-lista,
+.presupuesto-doc-dropzone {
+  min-height: 420px;
+  height: calc(100vh - 330px);
+  max-height: 620px;
+}
+
+.presupuesto-doc-dropzone {
+  background: #f8fbfe;
+  transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+
+.presupuesto-doc-dropzone.presupuesto-doc-dropzone-activa {
+  border-color: #1c9f58;
+  background: #f4fbf7;
+  box-shadow: inset 0 0 0 2px rgba(28, 159, 88, 0.18);
+}
+
+#table_vista_producto_presupuestoDetalle_doctor > table {
+  cursor: grab;
+  touch-action: none;
+}
+
+#table_vista_producto_presupuestoDetalle_doctor > table:active {
+  cursor: grabbing;
+}
+
+.presupuesto-doc-plan-panel .tableRegistroSearch {
+  cursor: pointer;
 }
 
 #presupuestoDocProductosPanel .div_cuerpo_table {
@@ -3721,8 +3771,17 @@ text-align: justify;
 }
 
 .presupuesto-doc-prioritario {
-  border: 2px solid #1c9f58 !important;
   font-weight: bold;
+  box-shadow: 0 10px 22px rgba(28, 159, 88, 0.16);
+}
+
+.presupuesto-doc-plan-a {
+  border: 2px solid #0b6fb6 !important;
+  box-shadow: 0 10px 22px rgba(11, 111, 182, 0.12);
+}
+
+.presupuesto-doc-plan-b {
+  border: 2px solid #1c9f58 !important;
   box-shadow: 0 10px 22px rgba(28, 159, 88, 0.16);
 }
 
@@ -3732,10 +3791,30 @@ text-align: justify;
     grid-template-columns: 1fr;
   }
 
+  #presupuestoDocDetallePanel.presupuesto-doc-planificador {
+    grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.2fr);
+  }
+
   #presupuestoDocResumenPanel .div_cuerpo_table,
   #presupuestoDocDetallePanel .div_cuerpo_table {
     min-height: 280px;
     height: 280px;
+  }
+
+  .presupuesto-doc-tratamientos-lista,
+  .presupuesto-doc-dropzone {
+    min-height: 300px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 980px) {
+  #presupuestoDocDetallePanel.presupuesto-doc-planificador {
+    grid-template-columns: 1fr;
+  }
+
+  .presupuesto-doc-planes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -3759,5 +3838,11 @@ text-align: justify;
   .presupuesto-doc-nav {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@media (max-width: 680px) {
+  .presupuesto-doc-planes {
+    grid-template-columns: 1fr;
   }
 }

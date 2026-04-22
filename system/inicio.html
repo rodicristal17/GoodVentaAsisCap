@@ -8135,7 +8135,7 @@ ACCION
 
           <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_doctor_resumen" style="min-height: 410px; height: inherit;background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);"></div>
           <div class="presupuesto-doc-nav" style="margin-top:18px;">
-            <input type="button" value="Siguiente: Prioritarios" class="btn4" onclick="verPasoPresupuestoDoc(2)"
+            <input type="button" value="Siguiente" class="btn4" onclick="verPasoPresupuestoDoc(2)"
               style="width:210px;">
           </div>
           </section>
@@ -8158,11 +8158,9 @@ ACCION
   </div>
 </section>
 
-<section id="presupuestoDocDetallePanel" style="display:none;grid-template-columns: minmax(320px, 2.3fr) minmax(0, 1.3fr);">
-  <div class="tabla-detalles presupuesto-panel">
-    <div class="panel-title">Tratamientos del plan total</div>
-    <p class="presupuesto-doc-helper" style="margin-bottom:12px;">Toca un tratamiento para marcarlo o quitarlo del plan
-      prioritario.</p>
+<section id="presupuestoDocDetallePanel" class="presupuesto-doc-planificador" style="display:none;">
+  <div class="tabla-detalles presupuesto-panel presupuesto-doc-tratamientos-panel">
+    <div class="panel-title">Tratamientos</div>
 
     <table class="tableCabeceraRegistro">
       <tbody>
@@ -8180,29 +8178,53 @@ ACCION
       </tbody>
     </table>
 
-    <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_doctor"></div>
+    <div class="div_cuerpo_table presupuesto-doc-tratamientos-lista" id="table_vista_producto_presupuestoDetalle_doctor"></div>
   </div>
 
-  <div class="tabla-detalles presupuesto-panel" stle="height: -webkit-fill-available;">
-    <div class="panel-title">Detalle de tratamiento prioritario</div>
+  <div class="presupuesto-doc-planes">
+    <div class="tabla-detalles presupuesto-panel presupuesto-doc-plan-panel">
+      <div class="panel-title">Plan TOTAL</div>
 
-    <table class="tableCabeceraRegistro">
-      <tbody>
-        <tr>
-          <td class="td_registro" style="width:10%;">
-            CODIGO
-          </td>
-          <td class="td_registro" style="width:80%;">
-            TRATAMIENTO
-          </td>
-          <td class="td_registro" style="width:10%;">
-            CANTIDAD
-          </td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="tableCabeceraRegistro">
+        <tbody>
+          <tr>
+            <td class="td_registro" style="width:10%;">
+              CODIGO
+            </td>
+            <td class="td_registro" style="width:80%;">
+              TRATAMIENTO
+            </td>
+            <td class="td_registro" style="width:10%;">
+              CANTIDAD
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-    <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_prioritario_doctor" style="height: 100%;"></div>
+      <div class="div_cuerpo_table presupuesto-doc-dropzone" id="table_vista_producto_presupuestoDetalle_plan_a_doctor" data-plan="a"></div>
+    </div>
+
+    <div class="tabla-detalles presupuesto-panel presupuesto-doc-plan-panel">
+      <div class="panel-title">Plan URGENTE</div>
+
+      <table class="tableCabeceraRegistro">
+        <tbody>
+          <tr>
+            <td class="td_registro" style="width:10%;">
+              CODIGO
+            </td>
+            <td class="td_registro" style="width:80%;">
+              TRATAMIENTO
+            </td>
+            <td class="td_registro" style="width:10%;">
+              CANTIDAD
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="div_cuerpo_table presupuesto-doc-dropzone" id="table_vista_producto_presupuestoDetalle_prioritario_doctor" data-plan="b"></div>
+    </div>
   </div>
 </section>
   </center>
@@ -8314,8 +8336,13 @@ ACCION
       </div>
       
       <div class="form-row">
-        <label>Es prioritario:</label>
+        <label>Ambos planes:</label>
         <input type="checkbox" class="inputText" id="inptPrioritarioPresupuesto" style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
+      </div>
+
+      <div class="form-row">
+        <label>Solo plan urgente:</label>
+        <input type="checkbox" class="inputText" id="inptAlternativoPresupuesto" style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
       </div>
 
       <div class="form-row">
@@ -8327,7 +8354,7 @@ ACCION
     <!-- Detalles -->
     <section class="detalles-section" id="tdTablaPresupuesto">
       <div class="tabla-detalles presupuesto-panel">
-        <div class="panel-title">Detalle del Plan A</div>
+        <div class="panel-title">Detalle del Plan Total</div>
 
         <table class="tableCabeceraRegistro">
           <tbody>
@@ -8355,7 +8382,7 @@ ACCION
       </div>
 
       <div class="tabla-cuotas presupuesto-panel">
-        <div class="panel-title">Plan de Cuotas del Plan A</div>
+        <div class="panel-title">Plan de Cuotas del Plan Total</div>
 
         <table class="tableCabeceraRegistro">
           <tbody>
@@ -8383,7 +8410,7 @@ ACCION
       </div>
 
       <div class="tabla-detalles presupuesto-panel">
-        <div class="panel-title">Detalle del Plan B</div>
+        <div class="panel-title">Detalle del Plan Urgente</div>
 
         <table class="tableCabeceraRegistro">
           <tbody>
@@ -8411,7 +8438,7 @@ ACCION
       </div>
 
       <div class="tabla-cuotas presupuesto-panel">
-        <div class="panel-title">Plan de Cuotas del Plan B</div>
+        <div class="panel-title">Plan de Cuotas del Plan Urgente</div>
 
         <table class="tableCabeceraRegistro">
           <tbody>

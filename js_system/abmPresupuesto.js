@@ -364,8 +364,197 @@ function actualizarResumenPacientePresupuestoDoc() {
 
 function aplicarEstadoPrioritarioDetalleDoc() {
 	document.querySelectorAll("#table_vista_producto_presupuestoDetalle_doctor > table").forEach(function (tabla) {
+		asegurarCampoAlternativoPresupuestoDoc(tabla);
 		const esPrioritario = tabla.querySelector('#td_datos_12')?.textContent.trim() === "1";
-		tabla.classList.toggle("presupuesto-doc-prioritario", esPrioritario);
+		const esAlternativo = tabla.querySelector('#td_datos_13')?.textContent.trim() === "1";
+		tabla.classList.toggle("presupuesto-doc-plan-a", !esAlternativo);
+		//tabla.classList.toggle("presupuesto-doc-prioritario", esPrioritario);
+	});
+	document.querySelectorAll("#table_vista_producto_presupuestoDetalle_plan_a_doctor > table").forEach(function (tabla) {
+		tabla.classList.add("presupuesto-doc-plan-a");
+	});
+	document.querySelectorAll("#table_vista_producto_presupuestoDetalle_prioritario_doctor > table").forEach(function (tabla) {
+		tabla.classList.add("presupuesto-doc-plan-b");
+	});
+	prepararDragDropPresupuestoDoc();
+}
+
+function asegurarCampoAlternativoPresupuestoDoc(tabla) {
+	if (!tabla || tabla.querySelector("#td_datos_13")) {
+		return;
+	}
+	const fila = tabla.querySelector("tr[name=tdDetallePresupuesto]");
+	if (!fila) {
+		return;
+	}
+	const campo = document.createElement("td");
+	campo.id = "td_datos_13";
+	campo.style.display = "none";
+	campo.textContent = "0";
+	fila.appendChild(campo);
+}
+
+function obtenerIdDetallePresupuestoDoc(tabla) {
+	if (!tabla || !tabla.id) {
+		return "";
+	}
+	return tabla.id.replace("tdDetalleVenta_", "");
+}
+
+function obtenerTablaDetallePresupuestoDoc(idDetalle, contenedorId) {
+	return document.querySelector("#" + contenedorId + " #tdDetalleVenta_" + idDetalle);
+}
+
+function clonarDetallePlanPresupuestoDoc(tablaOrigen) {
+	const clon = tablaOrigen.cloneNode(true);
+	asegurarCampoAlternativoPresupuestoDoc(clon);
+	clon.removeAttribute("draggable");
+	clon.querySelectorAll("[ondragstart]").forEach(function (elemento) {
+		elemento.removeAttribute("ondragstart");
+	});
+	return clon;
+}
+
+function renderizarPlanesDetallePresupuestoDoc() {
+	const origen = document.getElementById("table_vista_producto_presupuestoDetalle_doctor");
+	const planA = document.getElementById("table_vista_producto_presupuestoDetalle_plan_a_doctor");
+	const planB = document.getElementById("table_vista_producto_presupuestoDetalle_prioritario_doctor");
+
+	if (!origen || !planA || !planB) {
+		return;
+	}
+
+	planA.innerHTML = "";
+	planB.innerHTML = "";
+	Array.from(origen.children).forEach(function (tablaOriginal) {
+		if (!tablaOriginal.matches("table")) {
+			return;
+		}
+		asegurarCampoAlternativoPresupuestoDoc(tablaOriginal);
+		const esPrioritario = tablaOriginal.querySelector('#td_datos_12')?.textContent.trim() === "1";
+		const esAlternativo = tablaOriginal.querySelector('#td_datos_13')?.textContent.trim() === "1";
+
+		if (!esAlternativo) {
+			planA.appendChild(clonarDetallePlanPresupuestoDoc(tablaOriginal));
+		}
+		if (esPrioritario) {
+			planB.appendChild(clonarDetallePlanPresupuestoDoc(tablaOriginal));
+		}
+	});
+	aplicarEstadoPrioritarioDetalleDoc();
+}
+
+function prepararDragDropPresupuestoDoc() {
+	const origen = document.getElementById("table_vista_producto_presupuestoDetalle_doctor");
+	if (origen) {
+		Array.from(origen.children).forEach(function (tabla) {
+			if (!tabla.matches("table")) {
+				return;
+			}
+			asegurarCampoAlternativoPresupuestoDoc(tabla);
+			tabla.setAttribute("draggable", "true");
+			tabla.ondragstart = function (evento) {
+				evento.dataTransfer.setData("text/plain", obtenerIdDetallePresupuestoDoc(tabla));
+				evento.dataTransfer.effectAllowed = "copy";
+			};
+			tabla.onpointerdown = function (evento) {
+				iniciarArrastreTactilPresupuestoDoc(evento, tabla);
+			};
+		});
+	}
+
+	document.querySelectorAll(".presupuesto-doc-dropzone").forEach(function (zona) {
+		zona.ondragover = function (evento) {
+			evento.preventDefault();
+			evento.dataTransfer.dropEffect = "copy";
+			zona.classList.add("presupuesto-doc-dropzone-activa");
+		};
+		zona.ondragleave = function () {
+			zona.classList.remove("presupuesto-doc-dropzone-activa");
+		};
+		zona.ondrop = function (evento) {
+			evento.preventDefault();
+			zona.classList.remove("presupuesto-doc-dropzone-activa");
+			const idDetalle = evento.dataTransfer.getData("text/plain");
+			if (idDetalle) {
+				agregarDetalleAPlanPresupuestoDoc(idDetalle, zona.dataset.plan);
+			}
+		};
+	});
+}
+
+function iniciarArrastreTactilPresupuestoDoc(evento, tabla) {
+	if (evento.pointerType === "mouse") {
+		return;
+	}
+	const idDetalle = obtenerIdDetallePresupuestoDoc(tabla);
+	if (!idDetalle) {
+		return;
+	}
+
+	evento.preventDefault();
+	const fantasma = tabla.cloneNode(true);
+	fantasma.style.position = "fixed";
+	fantasma.style.left = "0";
+	fantasma.style.top = "0";
+	fantasma.style.width = tabla.getBoundingClientRect().width + "px";
+	fantasma.style.pointerEvents = "none";
+	fantasma.style.opacity = "0.86";
+	fantasma.style.zIndex = "99999";
+	fantasma.style.transform = "translate(" + evento.clientX + "px, " + evento.clientY + "px)";
+	document.body.appendChild(fantasma);
+
+	function mover(eventoMover) {
+		fantasma.style.transform = "translate(" + eventoMover.clientX + "px, " + eventoMover.clientY + "px)";
+		document.querySelectorAll(".presupuesto-doc-dropzone").forEach(function (zona) {
+			zona.classList.remove("presupuesto-doc-dropzone-activa");
+		});
+		const elemento = document.elementFromPoint(eventoMover.clientX, eventoMover.clientY);
+		const zona = elemento ? elemento.closest(".presupuesto-doc-dropzone") : null;
+		if (zona) {
+			zona.classList.add("presupuesto-doc-dropzone-activa");
+		}
+	}
+
+	function terminar(eventoTerminar) {
+		const elemento = document.elementFromPoint(eventoTerminar.clientX, eventoTerminar.clientY);
+		const zona = elemento ? elemento.closest(".presupuesto-doc-dropzone") : null;
+		if (zona) {
+			agregarDetalleAPlanPresupuestoDoc(idDetalle, zona.dataset.plan);
+		}
+		document.querySelectorAll(".presupuesto-doc-dropzone").forEach(function (zonaDrop) {
+			zonaDrop.classList.remove("presupuesto-doc-dropzone-activa");
+		});
+		fantasma.remove();
+		window.removeEventListener("pointermove", mover);
+		window.removeEventListener("pointerup", terminar);
+		window.removeEventListener("pointercancel", terminar);
+	}
+
+	window.addEventListener("pointermove", mover);
+	window.addEventListener("pointerup", terminar);
+	window.addEventListener("pointercancel", terminar);
+}
+
+function actualizarCamposPlanDetallePresupuestoDoc(idDetalle, esPrioritario, esAlternativo) {
+	[
+		"table_vista_producto_presupuestoDetalle_doctor",
+		"table_vista_producto_presupuestoDetalle_plan_a_doctor",
+		"table_vista_producto_presupuestoDetalle_prioritario_doctor"
+	].forEach(function (contenedorId) {
+		const tabla = obtenerTablaDetallePresupuestoDoc(idDetalle, contenedorId);
+		if (!tabla) {
+			return;
+		}
+		asegurarCampoAlternativoPresupuestoDoc(tabla);
+		const campoPrioritario = tabla.querySelector('#td_datos_12');
+		const campoAlternativo = tabla.querySelector('#td_datos_13');
+		if (campoPrioritario) {
+			campoPrioritario.textContent = esPrioritario ? "1" : "0";
+		}
+		if (campoAlternativo) {
+			campoAlternativo.textContent = esAlternativo ? "1" : "0";
+		}
 	});
 }
 
@@ -395,7 +584,11 @@ function verPasoPresupuestoDoc(paso) {
 	etiqueta.textContent = mostrarPaso1
 		? "Ventana 1 de 2: Paciente y plan total"
 		: "Ventana 2 de 2: Seleccion de prioritarios";
-	aplicarEstadoPrioritarioDetalleDoc();
+	if (paso === 2) {
+		renderizarPlanesDetallePresupuestoDoc();
+	} else {
+		aplicarEstadoPrioritarioDetalleDoc();
+	}
 	actualizarResumenPacientePresupuestoDoc();
 	return true;
 }
@@ -426,8 +619,11 @@ function sincronizarResumenDetallePresupuestoDoc() {
 	actualizarResumenPacientePresupuestoDoc();
 }
 
-function actualizarPrioritarioDetallePresupuestoDoc(idDetalle, esPrioritario) {
+function actualizarPlanesDetallePresupuestoDoc(idDetalle, enPlanA, enPlanB) {
+	const esPrioritario = enPlanB ? 1 : 0;
+	const esAlternativo = enPlanB && !enPlanA ? 1 : 0;
 	obtener_datos_user();
+	verCerrarEfectoCargando("1");
 	var datos = {
 		"useru": userid,
 		"passu": passuser,
@@ -435,7 +631,8 @@ function actualizarPrioritarioDetallePresupuestoDoc(idDetalle, esPrioritario) {
 		"accion": "abmDetallesPresupuesto",
 		"id": idDetalle,
 		"cod_presupuestoFK": idabmPresupuesto,
-		"es_prioritario": esPrioritario ? 1 : 0
+		"es_prioritario": esPrioritario,
+		"es_alternativo": esAlternativo
 	};
 
 	$.ajax({
@@ -446,39 +643,49 @@ function actualizarPrioritarioDetallePresupuestoDoc(idDetalle, esPrioritario) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
 			console.error(jqXHR.status, textstatus, errorThrowm);
 			ver_vetana_informativa("Lo sentimos, ha ocurrido un error", "", "error");
+			verCerrarEfectoCargando("");
 		},
 		success: function (responseText) {
 			try {
 				var respuesta = $.parseJSON(responseText);
 				var operacionOk = respuestaJqueryAjax(respuesta["1"]);
 				if (operacionOk == true) {
-					const tablaPrincipal = document.querySelector("#table_vista_producto_presupuestoDetalle_doctor #tdDetalleVenta_" + idDetalle);
-					const tablaPrioritaria = document.querySelector("#table_vista_producto_presupuestoDetalle_prioritario_doctor #tdDetalleVenta_" + idDetalle);
-
-					if (tablaPrincipal) {
-						const campoPrioritario = tablaPrincipal.querySelector('#td_datos_12');
-						if (campoPrioritario) {
-							campoPrioritario.textContent = esPrioritario ? "1" : "0";
-						}
-					}
-
-					if (esPrioritario) {
-						if (!tablaPrioritaria && tablaPrincipal) {
-							document.getElementById("table_vista_producto_presupuestoDetalle_prioritario_doctor").innerHTML += tablaPrincipal.outerHTML;
-						}
-					} else if (tablaPrioritaria) {
-						tablaPrioritaria.remove();
-					}
-
+					actualizarCamposPlanDetallePresupuestoDoc(idDetalle, esPrioritario, esAlternativo);
+					renderizarPlanesDetallePresupuestoDoc();
 					sincronizarResumenDetallePresupuestoDoc();
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error");
 				var titulo="Error: "+error+" \r\n Consola: "+responseText;
 				GuardarArchivosLog(titulo);
+			} finally {
+				verCerrarEfectoCargando("");
 			}
 		}
 	});
+}
+
+function agregarDetalleAPlanPresupuestoDoc(idDetalle, plan) {
+	const enPlanA = !!obtenerTablaDetallePresupuestoDoc(idDetalle, "table_vista_producto_presupuestoDetalle_plan_a_doctor") || plan === "a";
+	const enPlanB = !!obtenerTablaDetallePresupuestoDoc(idDetalle, "table_vista_producto_presupuestoDetalle_prioritario_doctor") || plan === "b";
+	actualizarPlanesDetallePresupuestoDoc(idDetalle, enPlanA, enPlanB);
+}
+
+function quitarDetalleDePlanPresupuestoDoc(idDetalle, plan) {
+	let enPlanA = !!obtenerTablaDetallePresupuestoDoc(idDetalle, "table_vista_producto_presupuestoDetalle_plan_a_doctor");
+	let enPlanB = !!obtenerTablaDetallePresupuestoDoc(idDetalle, "table_vista_producto_presupuestoDetalle_prioritario_doctor");
+
+	if (plan === "a") {
+		enPlanA = false;
+	}
+	if (plan === "b") {
+		enPlanB = false;
+	}
+	if (!enPlanA && !enPlanB) {
+		enPlanA = true;
+	}
+
+	actualizarPlanesDetallePresupuestoDoc(idDetalle, enPlanA, enPlanB);
 }
 
 
@@ -486,14 +693,18 @@ function actualizarPrioritarioDetallePresupuestoDoc(idDetalle, esPrioritario) {
 function eliminarFila(btn) {
 	if (vistaPresupuestoOrigen == "doctor" && pasoVistaPresupuestoDoc === 2) {
 		let filaDoctor = btn.closest("tr");
-		let tablaDoctor = filaDoctor.parentElement.parentElement.parentElement;
-		const esTablaPrioritariaDoctor = tablaDoctor.id.includes("prioritario");
-		if (!esTablaPrioritariaDoctor) {
-			const idDetalleDoctor = filaDoctor.parentElement.parentElement.id.substring(15);
-			const esPrioritarioDoctor = filaDoctor.querySelector('#td_datos_12')?.textContent.trim();
-			actualizarPrioritarioDetallePresupuestoDoc(idDetalleDoctor, esPrioritarioDoctor !== "1");
+		let tablaDetalleDoctor = filaDoctor.parentElement.parentElement;
+		let contenedorDoctor = tablaDetalleDoctor.parentElement;
+		const idDetalleDoctor = obtenerIdDetallePresupuestoDoc(tablaDetalleDoctor);
+		if (contenedorDoctor.id === "table_vista_producto_presupuestoDetalle_plan_a_doctor") {
+			quitarDetalleDePlanPresupuestoDoc(idDetalleDoctor, "a");
 			return;
 		}
+		if (contenedorDoctor.id === "table_vista_producto_presupuestoDetalle_prioritario_doctor") {
+			quitarDetalleDePlanPresupuestoDoc(idDetalleDoctor, "b");
+			return;
+		}
+		return;
 	}
   if (confirm("¿Seguro que deseas eliminar este producto del presupuesto?")) {
     let fila = btn.closest("tr");
@@ -568,14 +779,29 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					);
 
 					if (esTablaPrioritaria) {
+						const tablaPlanADesdePrioritaria = tablaPrioritaria ? tablaPrioritaria.cloneNode(true) : null;
 						if (tablaPrioritaria) {
 							tablaPrioritaria.remove();
 						}
 						if (tablaPrincipal) {
 							const campoPrioritario = tablaPrincipal.querySelector('#td_datos_12');
+							const campoAlternativo = tablaPrincipal.querySelector('#td_datos_13');
 							if (campoPrioritario) {
 								campoPrioritario.textContent = "0";
 							}
+							if (campoAlternativo) {
+								campoAlternativo.textContent = "0";
+							}
+						} else if (tablaPlanADesdePrioritaria) {
+							const campoPrioritario = tablaPlanADesdePrioritaria.querySelector('#td_datos_12');
+							const campoAlternativo = tablaPlanADesdePrioritaria.querySelector('#td_datos_13');
+							if (campoPrioritario) {
+								campoPrioritario.textContent = "0";
+							}
+							if (campoAlternativo) {
+								campoAlternativo.textContent = "0";
+							}
+							document.querySelector(contenedorPrincipal).appendChild(tablaPlanADesdePrioritaria);
 						}
 					} else {
 						if (tablaPrincipal) {
@@ -604,15 +830,18 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 
 function recalcularTotalPresupuesto() {
   let filas = document.querySelectorAll("#table_vista_producto_presupuestoDetalle tr");
+  let filasPrioritarias = document.querySelectorAll("#table_vista_producto_presupuestoDetalle_prioritario tr");
   let total = 0;
   let total_prioritario = 0;
 
   filas.forEach(fila => {
     let valor = fila.cells[4]?.innerText.replace(/\./g,"").replace(",",".") || "0";
     total += parseFloat(valor) || 0;
-	if (fila.cells[11]?.innerText == "1") {
-		total_prioritario += parseFloat(valor) || 0;
-	}
+  });
+
+  filasPrioritarias.forEach(fila => {
+    let valor = fila.cells[4]?.innerText.replace(/\./g,"").replace(",",".") || "0";
+    total_prioritario += parseFloat(valor) || 0;
   });
  
 document.getElementById("inptTotalPresupuesto2").innerHTML=separadordemilesnumero(total);
@@ -695,9 +924,10 @@ function generarTabla() {
 	divCuerpoPrioritario.innerHTML = html;
 }
  
-function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad, codigo_ficticio_presupuesto, nombre_producto, total_presupuesto,es_precio_contado, es_prioritario) {
+function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad, codigo_ficticio_presupuesto, nombre_producto, total_presupuesto,es_precio_contado, es_prioritario, es_alternativo) {
 	obtener_datos_user();
 	const esPrioritario = es_prioritario === true || es_prioritario === 1 || es_prioritario === "1";
+	const esAlternativo = es_alternativo === true || es_alternativo === 1 || es_alternativo === "1";
 	var datos = {
 		"useru": userid,
 		"passu": passuser,
@@ -708,6 +938,7 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 		"cantidad": cantidad,
 		"precio": precio,
 		"es_prioritario": (esPrioritario ? 1 : 0),
+		"es_alternativo": (esAlternativo ? 1 : 0),
 	};
 	$.ajax({
 		data: datos,
@@ -763,15 +994,14 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						+ "<td id='td_datos_10' style='display:none'>" + precio + "</td>"
 						+ "<td  id='td_datos_11' style='display:none'>" + total_presupuesto + "</td>"
 						+ "<td  id='td_datos_12' style='display:none'>" + (esPrioritario ? 1 : 0) + "</td>"
+						+ "<td  id='td_datos_13' style='display:none'>" + (esAlternativo ? 1 : 0) + "</td>"
 						+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 						+ "</tr>"
 						+ "</table>"
 
 					if (vistaPresupuestoOrigen == "doctor") {
 						document.getElementById("table_vista_producto_presupuestoDetalle_doctor").innerHTML += pagina;
-						if (esPrioritario) {
-							document.getElementById("table_vista_producto_presupuestoDetalle_prioritario_doctor").innerHTML += pagina;
-						}
+						renderizarPlanesDetallePresupuestoDoc();
 
 						$("#table_vista_producto_presupuestoDetalle_doctor tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
 							var total = $(elementohtml).children('td[id="td_datos_11"]').html();
@@ -780,7 +1010,9 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						});
 						sincronizarResumenDetallePresupuestoDoc();
 					} else {
-						document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML += pagina;
+						if (!esAlternativo) {
+							document.getElementById("table_vista_producto_presupuestoDetalle").innerHTML += pagina;
+						}
 						if (esPrioritario) {
 							document.getElementById("table_vista_producto_presupuestoDetalle_prioritario").innerHTML += pagina;
 						}
@@ -793,9 +1025,12 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 							var total = $(elementohtml).children('td[id="td_datos_11"]').html();
 							total = QuitarSeparadorMilValor(total)
 							totalPresupuesto = Number(totalPresupuesto) + Number(total)
-							if ($(elementohtml).children('td[id="td_datos_12"]').html() === "1") {
-								totalPresupuestoPrioritario = Number(totalPresupuestoPrioritario) + Number(total)
-							}
+						});
+
+						$("#table_vista_producto_presupuestoDetalle_prioritario tr[name=tdDetallePresupuesto]").each(function (i, elementohtml) {
+							var total = $(elementohtml).children('td[id="td_datos_11"]').html();
+							total = QuitarSeparadorMilValor(total)
+							totalPresupuestoPrioritario = Number(totalPresupuestoPrioritario) + Number(total)
 						});
 	
 						document.getElementById("inptTotalPresupuesto2").innerHTML = separadordemilesnumero(totalPresupuesto);
@@ -828,6 +1063,7 @@ function anhadirPrPresupuesto() {
 	let inpCuotero = "";
 	let inpPrecioContado = "";
 	let inptPrioritarioPresupuesto= "";
+	let inptAlternativoPresupuesto = false;
 
 	if (vistaPresupuestoOrigen == "doctor") {
 		inptCodigoPresupuesto = document.getElementById('inptCodigoPresupuestoDoc').value
@@ -839,6 +1075,7 @@ function anhadirPrPresupuesto() {
 		inpCuotero = $("select[id=inpTSeleccCostoPresupuestoDoc]").children(":selected").attr("id")
 		inpPrecioContado = $("select[id=inpTSeleccCostoPresupuestoDoc]").children(":selected").attr("url")
 		inptPrioritarioPresupuesto= false;
+		inptAlternativoPresupuesto = false;
 	} else {
 		entrega = document.getElementById('inptEntregaPresupuesto').value
 		inptCodigoPresupuesto = document.getElementById('inptCodigoPresupuesto').value
@@ -850,6 +1087,10 @@ function anhadirPrPresupuesto() {
 		inpCuotero = $("select[id=inpTSeleccCostoPresupuesto]").children(":selected").attr("id")
 		inpPrecioContado = $("select[id=inpTSeleccCostoPresupuesto]").children(":selected").attr("url")
 		inptPrioritarioPresupuesto= document.getElementById('inptPrioritarioPresupuesto').checked;
+		inptAlternativoPresupuesto = document.getElementById('inptAlternativoPresupuesto').checked;
+		if (inptAlternativoPresupuesto) {
+			inptPrioritarioPresupuesto = true;
+		}
 	}
 	
 	if (inptCodigoPresupuesto != "") {
@@ -876,7 +1117,7 @@ function anhadirPrPresupuesto() {
 		}
 
 		// Agrega al presupuesto existente
-		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado, inptPrioritarioPresupuesto);
+		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado, inptPrioritarioPresupuesto, inptAlternativoPresupuesto);
 	}
 	document.getElementById('inptCodigoPresupuestoDoc').value = ""
 	document.getElementById('inptProductoPresupuestoDoc').value = ""
@@ -892,6 +1133,7 @@ function anhadirPrPresupuesto() {
 	document.getElementById('inptPrecioPresupuesto').value = ""
 	document.getElementById('inpTSeleccCostoPresupuesto').value = ""
 	document.getElementById('inptPrioritarioPresupuesto').checked = false;
+	document.getElementById('inptAlternativoPresupuesto').checked = false;
 	limpirarAddPresupuesto()
 	document.getElementById('inptCantidadPresupuesto').value = ""
 	document.getElementById('inptTotalPresupuesto').value = ""
@@ -913,7 +1155,9 @@ function limpirarPresupuesto(){
 	document.getElementById('inptCantidadPresupuesto').value = ""
 	document.getElementById('inptTotalPresupuesto').value = ""
 	document.getElementById('inptPrioritarioPresupuesto').checked = false;
+	document.getElementById('inptAlternativoPresupuesto').checked = false;
 	document.getElementById('table_vista_producto_presupuestoDetalle_doctor').innerHTML = ""
+	document.getElementById('table_vista_producto_presupuestoDetalle_plan_a_doctor').innerHTML = ""
 	document.getElementById('table_vista_producto_presupuestoDetalle_prioritario_doctor').innerHTML = ""
 	document.getElementById('table_vista_producto_presupuestoDetalle_doctor_resumen').innerHTML = ""
 	document.getElementById('table_vista_producto_Presupuesto_doctor').innerHTML = ""
