@@ -4,6 +4,7 @@ include_once("buscar_nivel.php");
 require_once("conexion.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
+include_once("abmpagos.php");
 
 function verificar($operacion)
 {
@@ -282,14 +283,25 @@ if ( ! $stmt->execute()) {
 
 function controldecaja($buscar,$cod_local,$user)
 {
+	// Se prepara el filtro
+	$sqlFiltro= " WHERE estado='Activo'";
+	if ($buscar) {
+		$sqlFiltro .= " and caja_idcaja='$buscar'";
+	}
+	if ($cod_local) {
+		$sqlFiltro .= " and cod_local='$cod_local'";
+	}
+	if ($user) {
+		$sqlFiltro .= " and codusuarioap='$user'";
+	}
+	
 	$mysqli=conectar_al_servidor();
 	
 		$sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertura, fechacierre, estado, codusuarioap, codusuarioce,
 		(Select nombre_persona from persona where cod_persona=codusuarioap) as usuarioap
-		from arqueocaja where caja_idcaja='$buscar' and estado='Activo' and cod_local='$cod_local' and codusuarioap='$user' ";
+		from arqueocaja $sqlFiltro ";
 		 $pagina="";  
 
-   
    
    $stmt = $mysqli->prepare($sql);
 

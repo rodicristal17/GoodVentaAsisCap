@@ -831,19 +831,14 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	$cod_aperturaFK= $registroGasto['codApertura'];
 	$cod_cajaFK= $registroGasto['codCaja'];
 
-	// Se verifica si la caja sigue abierta, en caso contrario se actualiza
+	// Se verifica si la caja sigue abierta, en caso contrario se actualiza basandose en el usuario creador
 	$result_caja = controldecaja($registroGasto['codCaja'],$registroGasto['cod_local'],$registroGasto['cod_usuario']);
-	/*
 	if ($result_caja["2"] == "0" || $result_caja["3"] != $registroGasto['codApertura']) {
+		$result_caja = controldecaja('',$registroGasto['cod_local'],$registroGasto['cod_usuario']);
 		$cod_aperturaFK = $result_caja["3"];
 		$cod_cajaFK= $result_caja["4"];
 	}
-	if ($cod_aperturaFK == 0 || $cod_aperturaFK == "0" || $cod_cajaFK == "0" || $cod_cajaFK == 0) {
-		echo "cod_apertura: $cod_aperturaFK, cod_caja: $cod_cajaFK\n";
-		print_r($result_caja);
-		exit;
-	}
-*/
+
 	$fechaActual= new DateTime();
 	$fechaActual= $fechaActual->format('Y-m-d H:i:s');
 	$decision= ($decision == 'true' ? 'Activo' : 'Rechazado');
@@ -1021,12 +1016,12 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 
 function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas= "true")
 {
-/*		
+		
 if ($codcaja == "0" || $codcaja == 0 || $idaperturacierrecaja == 0 || $idaperturacierrecaja == "0") {
 	echo "Cod caja o de apertura en 0";
 	print_r($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas);
 	exit;
-}*/
+}
 if($monto==""   ){
 $informacion =array("1" => "camposvacio");
 echo json_encode($informacion);	
@@ -1090,9 +1085,9 @@ $atributos= "arreglo=?, monto=?,motivo=?,fecha=?,estado=?,cod_usuarioFK_edit=?,
 personales=?,cod_local=?,tipo=?,nroboleta=?,banco=?,nrocuenta=?, cod_motivoIngresoEgresoFK=?, cod_interConsultaFK=?, cod_usuario_autoriz=?";
 
 // Se verifica si se cambio el monto y se requiere cambio de caja
-if ($datos_gasto[0]['monto'] != $monto) {
+/*if ($datos_gasto[0]['monto'] != $monto) {
 	$atributos .= ", codCaja =$codcaja ,codApertura = $idaperturacierrecaja";
-}
+}*/
 
 $consulta1="Update gastos set $atributos where idgastos=?";
 $stmt = $mysqli->prepare($consulta1);
@@ -1374,7 +1369,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		}
 
 		$registros= buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$mot['cod_motivo_ingreso_egreso'], $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder);
-		$nroRegistro= $valor;
+		$nroRegistro= count($registros);
 		$registroZona = array();
 
 		$styleName="tableRegistroSearch";

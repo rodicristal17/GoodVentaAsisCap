@@ -76,7 +76,7 @@ function registrarAsistencia() {
 						document.getElementById('inptHoraRegistradaJustificacionAsistencia').value= datos['hora_entrada'];
 						document.getElementById('inptJustificacionJustificacionAsistencia').value= "";
 					} else {
-						if (datos['ip_valida'] == 0) {
+						if (datos['ip_valida'] == 1) {
 							//obtenerAsistenciaUsuario();
 							location.reload();
 							document.getElementById("btnRegistrarAsistencia").disabled = false;
