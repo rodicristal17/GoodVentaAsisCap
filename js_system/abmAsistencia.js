@@ -67,14 +67,20 @@ function registrarAsistencia() {
 				console.log(datos);
 				if (Respuesta == "exito") {
 					// Se evalua si es entrada y si esta en hora para pedir justificacion
-					if (!cod_asistencia && datos['llegada_tardia'] == 1) {
-						cod_asistencia= datos['cod_asistencia'];
-						document.getElementById('divJustificacionAsistencia').style.display= "";
-						document.getElementById('tituloJustificacionAsistencia').innerHTML= "Justificar Entrada Tardia";
-						document.getElementById('inptNombreUsuarioJustificacionAsistencia').value= document.getElementById('nombrePerfilUsuario').innerHTML;
-						document.getElementById('inptHoraEntradaJustificacionAsistencia').value= datos['hora_entrada_usuario'];
-						document.getElementById('inptHoraRegistradaJustificacionAsistencia').value= datos['hora_entrada'];
-						document.getElementById('inptJustificacionJustificacionAsistencia').value= "";
+					if (!cod_asistencia) {
+						if (datos['llegada_tardia'] == 1) {
+							cod_asistencia= datos['cod_asistencia'];
+							document.getElementById('divJustificacionAsistencia').style.display= "";
+							document.getElementById('tituloJustificacionAsistencia').innerHTML= "Justificar Entrada Tardia";
+							document.getElementById('inptNombreUsuarioJustificacionAsistencia').value= document.getElementById('nombrePerfilUsuario').innerHTML;
+							document.getElementById('inptHoraEntradaJustificacionAsistencia').value= datos['hora_entrada_usuario'];
+							document.getElementById('inptHoraRegistradaJustificacionAsistencia').value= datos['hora_entrada'];
+							document.getElementById('inptJustificacionJustificacionAsistencia').value= "";
+						} else {
+							//obtenerAsistenciaUsuario();
+							location.reload();
+							document.getElementById("btnRegistrarAsistencia").disabled = false;
+						}
 					} else {
 						if (datos['ip_valida'] == 1) {
 							//obtenerAsistenciaUsuario();
