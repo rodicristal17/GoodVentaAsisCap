@@ -112,7 +112,7 @@ border-radius: 50%;
 .divAbms_b { width: 400px; min-height: 500px; background-color: rgb(255, 255, 255); border-radius: 20px; border: 7px solid rgb(255, 255, 255); }
 .divMenuf { width: 97%; padding: 9px; background-color: rgb(255, 255, 255); border-radius: 5px; border: 1px solid rgb(209, 209, 209); margin-bottom: 1%; }
 .btn4 { height: 28px; border: none; color: rgb(255, 255, 255); background-color: rgb(76, 175, 80); font-family: "Merriweather Sans", Arial; font-size: 12px; width: 85px; cursor: pointer; border-radius: 2px; }
-.btn5 { height: 28px; border: none; color: rgb(255, 255, 255); background-color: rgb(33, 150, 243); font-family: "Merriweather Sans", Arial; font-size: 10px; width: 90px; cursor: pointer; border-radius: 2px; }
+.btn5 { height: 28px; border: none; color: rgb(255, 255, 255); background: none !important;background-color: rgb(33, 150, 243) !important; font-family: "Merriweather Sans", Arial; font-size: 10px; width: 90px; cursor: pointer; border-radius: 2px; }
 .tableMenuZ { height: 46px; margin-bottom: 10px; padding: 3px; box-shadow: rgb(225, 225, 225) 0px 1px 0px 0px; background-color: rgb(253, 253, 253); }
 .pTituloB { font-size: 20px; font-family: "Merriweather Sans", Arial; color: rgb(47, 47, 47); padding: 3px; margin: 0px; }
 .pTituloE { font-size: 13px; font-family: Arial; font-stretch: condensed; color: rgb(0, 4, 36); width: 95%; text-align: left; margin: 5px 0px 0px; padding: 9px; background-color: rgb(246, 245, 245); }
@@ -1757,7 +1757,6 @@ textarea:focus, select:focus {
   .presupuesto-container {
   width: calc(100% - 48px);
   max-width: 1380px;
-  min-height: calc(100% - 48px);
   margin: 24px auto;
   box-sizing: border-box;
   font-family: "Merriweather Sans", Arial, sans-serif;
