@@ -1226,6 +1226,8 @@ function buscarvistaPresupuesto() {
 	datos.append("cod_clienteFK", idFkCliente);
 	datos.append("nombre_cedula_cliente", document.getElementById('inptClienteCedulaFiltroPresupuesto').value);
 	datos.append("id", document.getElementById('inptIdFiltroPresupuesto').value);
+	datos.append("cod_localFK", document.getElementById('inptCodLocalFiltroPresupuesto').value);
+	datos.append("nombre_usuario_create", document.getElementById('inptNombreCreadorFiltroPresupuesto').value);
 	datos.append("fecha_inicio", document.getElementById('inptFechaInicioFiltroPresupuesto').value);
 	datos.append("fecha_fin", document.getElementById('inptFechaFinFiltroPresupuesto').value);
 
@@ -1305,7 +1307,9 @@ function limpiarFiltroPresupuesto() {
 	idFkCliente = "";
 	document.getElementById('inptClienteCedulaFiltroPresupuesto').value = "";
 	document.getElementById('inptIdFiltroPresupuesto').value = "";
+	document.getElementById('inptCodLocalFiltroPresupuesto').value = "";
 	document.getElementById('inptFechaInicioFiltroPresupuesto').value = "";
+	document.getElementById('inptNombreCreadorFiltroPresupuesto').value= "";
 	document.getElementById('inptFechaFinFiltroPresupuesto').value = "";
 
 	buscarvistaPresupuesto();

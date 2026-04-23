@@ -10579,6 +10579,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptlocalProximoPago").innerHTML =""	
 	document.getElementById("inptBuscarAbmConsultorio4").innerHTML =""	
 	document.getElementById("inptLocalConsultorio").innerHTML =""	
+	document.getElementById("inptCodLocalFiltroPresupuesto").innerHTML =""
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10695,6 +10696,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 	               document.getElementById("inptBuscarHistorialConsulta5").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptlocalAsignarLocal").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptlocalProximoPago").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+	               document.getElementById("inptCodLocalFiltroPresupuesto").innerHTML ="<option value=''>TODOS</option>" + datos_buscados
 				  seleccionarLocalUSer()
                  buscarOptionCaja();
 				}

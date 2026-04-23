@@ -24,6 +24,8 @@ function verificarOperacionPresupuesto($operacion)
         case 'obtenerPresupuesto':
             $filtro = array(
                 'id' => isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null,
+                'cod_localFK' => isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null,
+                'nombre_usuario_create' => isset($_POST['nombre_usuario_create']) ? mb_convert_encoding((string)($_POST['nombre_usuario_create']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_clienteFK' => isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_usuarioFK_create' => isset($_POST['cod_usuarioFK_create']) ? mb_convert_encoding((string)($_POST['cod_usuarioFK_create']), 'ISO-8859-1', 'UTF-8') : null,
                 'nombre_cedula_cliente' => isset($_POST['nombre_cedula_cliente']) ? mb_convert_encoding((string)($_POST['nombre_cedula_cliente']), 'ISO-8859-1', 'UTF-8') : null,
@@ -45,9 +47,10 @@ function verificarOperacionPresupuesto($operacion)
                         <td id="td_datos_1" style="width: 15%;">'.$value['fecha_create'].'</td>
                         <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
                         <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
-                        <td id="td_datos_4" style="width: 30%;text-align: left;">'.$value['nombre_cliente'].'</td>
+                        <td id="td_datos_4" style="width: 20%;text-align: left;">'.$value['nombre_cliente'].'</td>
                         <td id="td_datos_5" style="width: 10%;">'.$value['rut_cliente'].'</td>
-                        <td id="td_datos_7" style="width: 20%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
+                        <td id="td_datos_7" style="width: 15%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
+                        <td id="td_datos_7" style="width: 15%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
                         <td id="td_datos_6" style="width: 20%;">'.$value['nombre_usuarioFK_create'].'</td>
                         <td id="td_datos_8" style="display: none;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
                     </tr>
@@ -173,13 +176,19 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
                 $sqlFiltro .= "(SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_personaFK = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) like '%$value%'";
                 break;
             case 'fecha_inicio':
-                $sqlFiltro .= "fecha_create >= $value";
+                $sqlFiltro .= "fecha_create >= '$value'";
                 break;
             case 'fecha_fin':
-                $sqlFiltro .= "fecha_create <= $value";
+                $sqlFiltro .= "fecha_create <= '$value'";
                 break;
             case 'nombre_cedula_cliente':
                 $sqlFiltro .= "((SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) like '%$value%' OR (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK) LIKE '%$value%')";
+                break;
+            case 'nombre_usuario_create':
+                $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) like '%$value%'";
+                break;
+            case 'cod_localFK':
+                $sqlFiltro .= "(SELECT cod_localFK FROM usuario WHERE cod_usuario = cod_usuarioFK_create) like '%$value%'";
                 break;
             default:
                 if (is_numeric($value)) {
@@ -203,7 +212,8 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
             (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_alternativo = 0), 0) AS monto_total,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_prioritario = 1), 0) AS monto_total_prioritario,
-            (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create
+            (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create,
+            (SELECT cod_localFK FROM usuario WHERE cod_usuario = p.cod_usuarioFK_create) as nombre_usuarioFK_local
             FROM presupuesto p
             $sqlFiltro ORDER BY p.id DESC $limite";
 
