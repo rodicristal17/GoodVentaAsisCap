@@ -97,14 +97,14 @@
             case 'nuevo_tipo_trabajo':
                 $descripcion = mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8');
                 $estado = isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : 'activo';
-                $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo(null, $descripcion, $estado);
+                $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo($descripcion, $estado, null);
                 echo json_encode(array("1" => "exito", "cod_tipo_trabajo_mecanico_dental" => $cod_tipo_trabajo_mecanico_dental));
                 break;
             case 'editar_tipo_trabajo':
                 $cod_tipo_trabajo = isset($_POST['cod_tipo_trabajo']) ? mb_convert_encoding((string)($_POST['cod_tipo_trabajo']), 'ISO-8859-1', 'UTF-8') : null;
                 $descripcion = isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado = mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8');
-                $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo($cod_tipo_trabajo, $descripcion, $estado);
+                $cod_tipo_trabajo_mecanico_dental= abmTipoTrabajo($descripcion, $estado, $cod_tipo_trabajo);
                 echo json_encode(array("1" => "exito", "cod_tipo_trabajo_mecanico_dental" => $cod_tipo_trabajo_mecanico_dental));
                 break;
             case 'buscar_tipo_trabajo':
@@ -236,7 +236,7 @@
         return $registros;
     }
 
-    function abmTipoTrabajo($cod_tipo_trabajo= null, $descripcion, $estado) {
+    function abmTipoTrabajo($descripcion, $estado, $cod_tipo_trabajo= null) {
         $mysqli = conectar_al_servidor();
 
         if (empty($cod_tipo_trabajo)) {

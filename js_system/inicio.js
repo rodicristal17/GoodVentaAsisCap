@@ -500,7 +500,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 							document.getElementById('DivVistaOdontologia').style.display = ""
 							document.getElementById('divtdProducto').style.display = ""
 							document.getElementById('divtdCantidadProducto').style.display = ""
-							document.getElementById('divtdPrecioProducto').style.display = ""
+							//document.getElementById('divtdPrecioProducto').style.display = ""
 						// }else{
 							// document.getElementById('divVistaFinanciera').style.display = ""
 						// }
@@ -18636,7 +18636,7 @@ function anhadirProductoEnDetalleCambio(){
 +"<td  id='td_datos_1' style='width:20%;'>"+inptProductoVenta+"</td>"
 +"<td  id='td_datos_6' style='display:none'>"+inptObservacionDetalleVenta+"</td>"
 +"<td  id='td_datos_3' style='width:10%'>"+inptCostoProductoVenta+"</td>"
-+"<td  id='td_datos_9' style='display:none'>"+inptDescuentoProductoVenta+"</td>"
++"<td  id='td_datos_8' style='display:none'>"+inptDescuentoProductoVenta+"</td>"
 +"<td  id='td_datos_4' style='width:5%'>"+inptCantProductoVenta+"</td>"
 +"<td  id='td_datos_5' style='width:10%'>"+inpTotalCostoVenta+"</td>"
 +"</tr>"
@@ -31757,55 +31757,47 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 
 }
 
-
-
-
 function EditarcantidadProductoDetalleVenta(){
-	var  MontoProductoDetalleOpcionOff = document.getElementById('inptMontoProductoDetalleOpcionOff').value
-
+	var MontoProductoDetalleOpcionOff = QuitarSeparadorMilValor(document.getElementById('inptMontoProductoDetalleOpcionOff').value)
+	var cantidadDetalle = QuitarSeparadorMilValor($(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_4"]').html());
+	var Descuentoproducto = QuitarSeparadorMilValor($(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_9"]').html());
 	
-	var Descuentoproducto =$(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_9"]').html();
-
+	if (isNaN(MontoProductoDetalleOpcionOff) || MontoProductoDetalleOpcionOff === "") {
+		ver_vetana_informativa("FALTO AGREGAR EL MONTO")
+		return false;
+	}
+	if (isNaN(cantidadDetalle) || cantidadDetalle === "" || Number(cantidadDetalle) <= 0) {
+		cantidadDetalle = 1;
+	}
+	if (isNaN(Descuentoproducto) || Descuentoproducto === "") {
+		Descuentoproducto = 0;
+	}
 	
-// var totalVentaEditado= (cantidadDetalleEditar * QuitarSeparadorMilValor(precioDetalleEditar)) - QuitarSeparadorMilValor(Descuentoproducto);
+	var totalVentaEditado = (Number(MontoProductoDetalleOpcionOff) * Number(cantidadDetalle)) - Number(Descuentoproducto);
 	
 	$(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_3"]').text(separadordemilesnumero(MontoProductoDetalleOpcionOff));
-	
-	$(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_5"]').text(separadordemilesnumero(MontoProductoDetalleOpcionOff));
-	
-	$(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_15"]').text((MontoProductoDetalleOpcionOff));
+	$(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_5"]').text(separadordemilesnumero(totalVentaEditado));
+	$(elemSeleccDetalleProdVentaOff).children('td[id="td_datos_15"]').text(separadordemilesnumero(totalVentaEditado));
 
+	var totalVenta=0;
+	var totalDescuento=0;
+	$("tr[name=tdDetalleVentaOffline]").each(function(i, elementohtml){
+		var total=$(elementohtml).children('td[id="td_datos_5"]').html();
+		var descuento=$(elementohtml).children('td[id="td_datos_9"]').html();
+		total=QuitarSeparadorMilValor(total)
+		descuento=QuitarSeparadorMilValor(descuento)
+		totalVenta=Number(totalVenta)+Number(total)
+		totalDescuento=Number(totalDescuento)+Number(descuento)
+	});
 	
-var totalVenta=0;
-var control=0;
-$("tr[name=tdDetalleVentaOffline]").each(function(i, elementohtml){
-var total=$(elementohtml).children('td[id="td_datos_5"]').html();
-total=QuitarSeparadorMilValor(total)
-totalVenta=Number(totalVenta)+Number(total)
-control=control+1;
-	   });
-	
-	document.getElementById("inptSubTotalVenta").value=separadordemilesnumero(totalVenta);
-
-	
-var subtotalVenta=0;
-var subcontrol=0;
-$("tr[name=tdDetalleVentaOffline]").each(function(i, elementohtml){
-var subDescuento=0
-totalVenta = QuitarSeparadorMilValor(totalVenta)
-subDescuento=QuitarSeparadorMilValor(subDescuento)
-subtotalVenta=Number(totalVenta) - Number(subDescuento)
-subcontrol=subcontrol+1;
-	   });
-	
+	var subtotalVenta=Number(totalVenta)+Number(totalDescuento);
 	document.getElementById("inptSubTotalVenta").value=separadordemilesnumero(subtotalVenta);
-	document.getElementById("inptTotalVenta").value=separadordemilesnumero(subtotalVenta);
-	document.getElementById("inptTotalVenta2").innerHTML=separadordemilesnumero(subtotalVenta);
+	document.getElementById("inptTotalVenta").value=separadordemilesnumero(totalVenta);
+	document.getElementById("inptTotalVenta2").innerHTML=separadordemilesnumero(totalVenta);
+	document.getElementById("inptTotalDescuento").value=separadordemilesnumero(totalDescuento);
 
 	verCerraOpcionDetalleProducto()
 }
-
-
 
 function obtenerdatoscomboproductoVenta() {
 	

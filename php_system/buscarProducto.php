@@ -114,7 +114,7 @@ $sql= "select pr.cod_producto,pr.nombre_producto,dtv.cod_detalle,vt.cod_venta,dt
  from  producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
 inner join venta vt on vt.cod_venta=dtv.cod_ventaFK 
  where concat(pr.nombre_producto,' ',pr.descripcion_producto) like ?  and  
- (select sum(pg.Monto) from pago pg inner join credito cr on pg.cod_creditoFK=cr.idcredito where vt.cod_venta=cr.cod_venta)<vt.total_venta 
+ (select sum(pg.Monto) from pago pg inner join credito cr on pg.cod_creditoFK=cr.idcredito where vt.cod_venta=cr.cod_venta)<(vt.total_venta-IFNULL(vt.descuento,0))
 and cod_clienteFK=? ";
  /*Sentencia para buscar registros*/
 $pagina = "";   

@@ -540,6 +540,7 @@ $detalleproducto=$_POST['detalleproducto'.$control];
 $detalleproducto = mb_convert_encoding((string)($detalleproducto), 'ISO-8859-1', 'UTF-8');
 	
 $subPrecioCompra=obtenerCostoProducto($cod_productoFK);	
+$subtotal=($cantidad_detalle*$precio_producto)-$descuento;
 	
 $cod_local=$_POST['cod_local'];
 $cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
@@ -690,6 +691,7 @@ $detalleproducto=$_POST['detalleproducto'.$control];
 $detalleproducto = mb_convert_encoding((string)($detalleproducto), 'ISO-8859-1', 'UTF-8');
 	
 $subPrecioCompra=obtenerCostoProducto($cod_productoFK);	
+$subtotal=($cantidad_detalle*$precio_producto)-$descuento;
 	
 
 	

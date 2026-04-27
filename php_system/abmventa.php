@@ -1106,10 +1106,10 @@ function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$d
 	 $condicionCuenta=" "; 
 		 $condiciontipoventa=" "; 
 		 if($estadocuenta=="1"){
-			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))<total_venta"; 
+			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))<(total_venta-IFNULL(vt.descuento,0))";
 		 }
 		 if($estadocuenta=="2"){
-			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=total_venta"; 
+			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=(total_venta-IFNULL(vt.descuento,0))";
 		 }
 		  if($estadocuenta=="3"){
 			$condicionCuenta=" and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)>0"; 
@@ -1124,7 +1124,7 @@ function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$d
 			 $condicionCodLocal=" and vt.cod_local='$cod_local' ";
 		 }
 		 
-		 $sql= "Select tipo_comprobante,puntoexpedicion,idGaranteFk,fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,cod_local,pago,
+		 $sql= "Select tipo_comprobante,puntoexpedicion,idGaranteFk,fecha_venta,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,cod_local,pago,
 		 (Select nombre from vendedor where idvendedor=Vendedor1) as nombrevendedor1,
 		(Select nombre from vendedor where idvendedor=Vendedor2) as nombrevendedor2,
 		(Select ci_cliente from cliente where cod_cliente=cod_clienteFK) as nrodocliente,
@@ -1409,10 +1409,10 @@ function mashistorialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa
 	 $condicionCuenta=" "; 
 		 $condiciontipoventa=" "; 
 		 if($estadocuenta=="1"){
-			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))<total_venta"; 
+			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))<(total_venta-IFNULL(vt.descuento,0))";
 		 }
 		 if($estadocuenta=="2"){
-			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=total_venta"; 
+			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=(total_venta-IFNULL(vt.descuento,0))";
 		 }
 		  if($estadocuenta=="3"){
 			$condicionCuenta=" and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)>0"; 
@@ -1427,7 +1427,7 @@ function mashistorialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa
 			 $condicionCodLocal=" and vt.cod_local='$cod_local' ";
 		 }
 		 
-		 $sql= "Select tipo_comprobante,puntoexpedicion,idGaranteFk,fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,cod_local,pago,
+		 $sql= "Select tipo_comprobante,puntoexpedicion,idGaranteFk,fecha_venta,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,cod_local,pago,
 		 (Select nombre from vendedor where idvendedor=Vendedor1) as nombrevendedor1,
 		(Select nombre from vendedor where idvendedor=Vendedor2) as nombrevendedor2,
 		(Select ci_cliente from cliente where cod_cliente=cod_clienteFK) as nrodocliente,
@@ -3770,7 +3770,7 @@ function buscarCuentasCanceladas($buscar){
 	
     	$sql= "Select vt.cod_clienteFK,vt.cod_venta,vt.puntoexpedicion,vt.num_factura,vt.fecha_venta,datediff(cr.fechapago,(select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1)) as diff
 		from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta where vt.cod_clienteFK ='".$buscar."'  and
-		(IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=total_venta
+		(IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=(total_venta-IFNULL(vt.descuento,0))
         and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0		
 		order by (diff*-1) desc limit 5";
 		  

@@ -2510,7 +2510,7 @@ function buscarcreditoshistorialventa($buscar)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
-$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,cr.Nro_recibo,vt.total_venta,interes,dias,vt.pago as entrega,
+$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,cr.Nro_recibo,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,interes,dias,vt.pago as entrega,
 IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as nroCancelado,
 (select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1) as fechapagado
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
@@ -4235,7 +4235,7 @@ if($filtro=="1"){
 	if($zona==""){
 	$condicionZona="";
 	}
-	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,vt.cod_clienteFK,
+	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,vt.num_factura,vt.cod_clienteFK,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.descuento,cr.totalinteres,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) as creditopagado,
 (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as clientenombre,
@@ -4256,7 +4256,7 @@ if($filtro=="2"){
 	if($zona==""){
 	$condicionZona="";
 	}
-	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,vt.cod_clienteFK,
+	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,vt.num_factura,vt.cod_clienteFK,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.descuento,cr.totalinteres,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) as creditopagado,
 (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as clientenombre,
@@ -4277,7 +4277,7 @@ if($filtro=="3"){
 	if($zona==""){
 	$condicionZona="";
 	}
-	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,vt.cod_clienteFK,
+	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,vt.num_factura,vt.cod_clienteFK,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.descuento,cr.totalinteres,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) as creditopagado,
 (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as clientenombre,
@@ -4298,7 +4298,7 @@ if($filtro=="4"){
 	if($zona==""){
 	$condicionZona="";
 	}
-	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,vt.cod_clienteFK,
+	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.cod_cobradorFK,vt.num_factura,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,vt.num_factura,vt.cod_clienteFK,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.descuento,cr.totalinteres,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0) as creditopagado,
 (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as clientenombre,

@@ -691,7 +691,7 @@ function buscarTotalVentaVendedorCredito($Vendedor,$fecha1,$fecha2,$local)
 		$condicionfecha=" and fecha_venta between '".$fecha1."' and '".$fecha2."' ";
 	}
 	
-		$sql= "Select sum(total_venta) as total_venta  
+		$sql= "Select sum(total_venta-IFNULL(descuento,0)) as total_venta
         from venta vt where  vt.TipoVenta='CREDITO'  and Vendedor1='".$Vendedor."' ".$condicionfecha.$condicionLocal."   and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0   limit 1 ";
 	
    $stmt = $mysqli->prepare($sql);
@@ -733,7 +733,7 @@ function buscarTotalVentaVendedorContado($Vendedor,$fecha1,$fecha2,$local)
 		$condicionfecha=" and fecha_venta between '".$fecha1."' and '".$fecha2."' ";
 	}
 	
-		$sql= "Select sum(total_venta) as total_venta  
+		$sql= "Select sum(total_venta-IFNULL(descuento,0)) as total_venta
         from venta vt where  vt.TipoVenta='CONTADO'  and Vendedor1='".$Vendedor."' ".$condicionfecha.$condicionLocal."   and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0   limit 1 ";
 	
    $stmt = $mysqli->prepare($sql);
@@ -776,7 +776,7 @@ function buscarTotalVenta($fecha1,$fecha2,$local)
 		$condicionLocal=" and  vt.cod_local='$local' ";
 	}
 	
-		$sql= "Select sum(total_venta) as total_venta  
+		$sql= "Select sum(total_venta-IFNULL(descuento,0)) as total_venta
         from venta vt where  IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0    ".$condicionLocal.$condicionfecha."   limit 1 ";
 	
    $stmt = $mysqli->prepare($sql);
