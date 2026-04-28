@@ -25,6 +25,7 @@ function verificarOperacionPresupuesto($operacion)
         case 'obtenerPresupuesto':
             $filtro = array(
                 'id' => isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null,
+                'plan_vendido' => isset($_POST['plan_vendido']) ? mb_convert_encoding((string)($_POST['plan_vendido']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_localFK' => isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null,
                 'nombre_usuario_create' => isset($_POST['nombre_usuario_create']) ? mb_convert_encoding((string)($_POST['nombre_usuario_create']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_clienteFK' => isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null,
