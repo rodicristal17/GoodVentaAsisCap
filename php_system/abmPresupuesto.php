@@ -26,6 +26,7 @@ function verificarOperacionPresupuesto($operacion)
             $filtro = array(
                 'id' => isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null,
                 'plan_vendido' => isset($_POST['plan_vendido']) ? mb_convert_encoding((string)($_POST['plan_vendido']), 'ISO-8859-1', 'UTF-8') : null,
+                'num_factura' => isset($_POST['num_factura']) ? mb_convert_encoding((string)($_POST['num_factura']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_localFK' => isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null,
                 'nombre_usuario_create' => isset($_POST['nombre_usuario_create']) ? mb_convert_encoding((string)($_POST['nombre_usuario_create']), 'ISO-8859-1', 'UTF-8') : null,
                 'cod_clienteFK' => isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null,
@@ -49,12 +50,13 @@ function verificarOperacionPresupuesto($operacion)
                         <td id="td_datos_1" style="width: 15%;">'.$value['fecha_create'].'</td>
                         <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
                         <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
-                        <td id="td_datos_4" style="width: 20%;text-align: left;">'.$value['nombre_cliente'].'</td>
+                        <td id="td_datos_4" style="width: 15%;text-align: left;">'.$value['nombre_cliente'].'</td>
                         <td id="td_datos_5" style="width: 10%;">'.$value['ci_cliente'].'</td>
                         <td id="td_datos_7" style="width: 10%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
                         <td id="td_datos_8" style="width: 10%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
-                        <td id="td_datos_8" style="width: 10%;text-align: end;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
-                        <td id="td_datos_6" style="width: 20%;">'.$value['nombre_usuarioFK_create'].'</td>
+                        <td id="td_datos_9" style="width: 10%;text-align: end;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
+                        <td id="td_datos_10" style="width: 5%;">'.$value['num_factura'].'</td>
+                        <td id="td_datos_6" style="width: 15%;">'.$value['nombre_usuarioFK_create'].'</td>
                     </tr>
                 </table>';
             }
@@ -197,6 +199,9 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
             case 'nombre_usuario_create':
                 $sqlFiltro .= "(SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) like '%$value%'";
                 break;
+            case 'num_factura': 
+                $sqlFiltro .= "(SELECT num_factura FROM venta WHERE cod_venta = p.cod_ventaFK) like '%$value%'";
+                break;
             case 'cod_localFK':
                 $sqlFiltro .= "(SELECT cod_localFK FROM usuario WHERE cod_usuario = cod_usuarioFK_create) like '%$value%'";
                 break;
@@ -223,6 +228,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
             (SELECT c.ci_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as ci_cliente,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_alternativo = 0), 0) AS monto_total,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_prioritario = 1), 0) AS monto_total_prioritario,
+            (SELECT num_factura FROM venta WHERE cod_venta = p.cod_ventaFK) AS num_factura,
             (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create,
             (SELECT cod_localFK FROM usuario WHERE cod_usuario = p.cod_usuarioFK_create) as nombre_usuarioFK_local
             FROM presupuesto p
