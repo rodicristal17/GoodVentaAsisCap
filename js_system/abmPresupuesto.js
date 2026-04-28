@@ -1237,6 +1237,7 @@ function buscarvistaPresupuesto() {
 	datos.append("nombre_usuario_create", document.getElementById('inptNombreCreadorFiltroPresupuesto').value);
 	datos.append("fecha_inicio", document.getElementById('inptFechaInicioFiltroPresupuesto').value);
 	datos.append("fecha_fin", document.getElementById('inptFechaFinFiltroPresupuesto').value);
+	datos.append("limite", 10);
 
 	verCerrarEfectoCargando("1")
     var OpAjax = $.ajax({
@@ -1283,7 +1284,7 @@ function buscarvistaPresupuesto() {
 				if (Respuesta == "exito") {
 					document.getElementById("table_vista_presupuesto").innerHTML= datos["3"];
 					totalregistroPresupuesto= parseInt(datos["5"]);
-					registrocargadoPresupuesto= parseInt(datos["4"]);
+					registrocargadoPresupuesto = parseInt(datos["4"]);
 
 					// Controla el progreso de la busqueda
 					if(totalregistroPresupuesto>registrocargadoPresupuesto){
@@ -1293,7 +1294,94 @@ function buscarvistaPresupuesto() {
 						var porce=((registrocargadoPresupuesto*100)/totalregistroPresupuesto).toFixed(0)
 						document.getElementById('tbProcessPresupuesto').style.display= ""
 						document.getElementById("divProgressPresupuesto").style.width=porce+"%"
-						buscarmasVistaPresupuesto(cod_clienteFK);
+						buscarmasVistaPresupuesto();
+					 }else{
+						document.getElementById('tbProcessPresupuesto').style.display= "none";
+						controldebusquedadPresupuesto=false
+					 }
+				}
+			} catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+                var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			} finally {
+                verCerrarEfectoCargando("");
+            }
+		}
+	});
+}
+
+function buscarmasVistaPresupuesto() {
+	obtener_datos_user()
+	var datos = new FormData();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("accion", "obtenerPresupuesto");
+	datos.append("cod_clienteFK", idFkCliente);
+	datos.append("nombre_cedula_cliente", document.getElementById('inptClienteCedulaFiltroPresupuesto').value);
+	datos.append("id", document.getElementById('inptIdFiltroPresupuesto').value);
+	datos.append("plan_vendido", document.getElementById('inptPlanFiltroPresupuesto').value);
+	datos.append("cod_localFK", document.getElementById('inptCodLocalFiltroPresupuesto').value);
+	datos.append("nombre_usuario_create", document.getElementById('inptNombreCreadorFiltroPresupuesto').value);
+	datos.append("fecha_inicio", document.getElementById('inptFechaInicioFiltroPresupuesto').value);
+	datos.append("fecha_fin", document.getElementById('inptFechaFinFiltroPresupuesto').value);
+	datos.append("limite", "10 OFFSET " + registrocargadoPresupuesto);
+
+	verCerrarEfectoCargando("1")
+    var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		 xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+         var kb=((evt.loaded*1)/1000).toFixed(1)
+		
+		 if(kb=="0.0"){
+			kb=0.1;
+		}
+                     
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+			kb=0.1;
+		}
+                    
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+	        verCerrarEfectoCargando("");
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR", "", "error");
+			console.error(jqXHR, textstatus, errorThrowm);
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					document.getElementById("table_vista_presupuesto").innerHTML += datos["3"];
+					registrocargadoPresupuesto += parseInt(datos["4"]);
+
+					// Controla el progreso de la busqueda
+					if(totalregistroPresupuesto>registrocargadoPresupuesto){
+						document.getElementById("divProgressPresupuesto").style.backgroundColor='';
+						
+						controldebusquedadPresupuesto=true;
+						var porce=((registrocargadoPresupuesto*100)/totalregistroPresupuesto).toFixed(0)
+						document.getElementById('tbProcessPresupuesto').style.display= ""
+						document.getElementById("divProgressPresupuesto").style.width=porce+"%"
+						buscarmasVistaPresupuesto();
 					 }else{
 						document.getElementById('tbProcessPresupuesto').style.display= "none";
 						controldebusquedadPresupuesto=false

@@ -47,15 +47,16 @@ function verificarOperacionPresupuesto($operacion)
                 $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="5">
                     <tr id="tbSelecRegistro" onclick="obtenerDatosPresupuesto(this)" style="text-align: center;">
                         <td id="td_id" style="width: 5%;">'.$value['id'].'</td>
-                        <td id="td_datos_1" style="width: 15%;">'.$value['fecha_create'].'</td>
+                        <td id="td_datos_1" style="display: none;">'.$value['fecha_create'].'</td>
+                        <td style="width: 15%;">'.date("d-m-Y H:i:s", strtotime($value['fecha_create'])).'</td>
                         <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
                         <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
                         <td id="td_datos_4" style="width: 15%;text-align: left;">'.$value['nombre_cliente'].'</td>
                         <td id="td_datos_5" style="width: 10%;">'.$value['ci_cliente'].'</td>
                         <td id="td_datos_7" style="width: 10%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
                         <td id="td_datos_8" style="width: 10%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
-                        <td id="td_datos_9" style="width: 10%;text-align: end;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
-                        <td id="td_datos_10" style="width: 5%;"><div onclick="obtenerDatosVenta('.$value['cod_ventaFK'].', \'divListPresupuesto\')">'.$value['num_factura'].'</div></td>
+                        <td id="td_datos_9" style="width: 10%;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
+                        <td id="td_datos_10" style="width: 5%;"><div style= "text-decoration: underline;color: blue;font-weight: bold;" onclick="obtenerDatosVenta('.$value['cod_ventaFK'].', \'divListPresupuesto\')">'.$value['num_factura'].'</div></td>
                         <td id="td_datos_6" style="width: 15%;">'.$value['nombre_usuarioFK_create'].'</td>
                     </tr>
                 </table>';
