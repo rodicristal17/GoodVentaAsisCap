@@ -15532,6 +15532,101 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 
+function obtenerDatosVenta(cod_venta, ventanaOrigen) {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,	
+		"fecha1": '',
+		"fecha2": '',
+		"fechafiltro": '',
+		"nroventa": '',
+		"cod_venta": cod_venta,
+		"documento": '',
+		"cliente": '',
+		"telefono": '',
+		"tipoventa": '',
+		"estadocuenta": '',
+		"local": '',
+		"tipoComprobante": '',
+		"vendedor": '', 
+		"AgenteCredito": '', 		
+		"funt": "historialventa"
+	};
+	$.ajax({
+
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		beforeSend: function () {
+
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			controldebusquedadHistorialVenta=false
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];              
+			  	Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {				   
+					var datos_buscados = datos[2];
+
+					// Envia el dato de acuerdo a la ventanaOrigen
+					switch (ventanaOrigen) {
+						case 'divListPresupuesto':
+							var contenedorTemporal = document.createElement("div");
+							contenedorTemporal.innerHTML = datos_buscados;
+
+							var trVenta = contenedorTemporal.querySelector("tr[id='tbSelecRegistro']");
+
+							if (trVenta) {
+								obtenerelementohistroialventa(trVenta);
+								editarventaselecc();
+								buscardetallesventa();
+								verCerrarAbmVenta();
+							}
+							break;
+
+						default:
+							break;
+					}
+				}
+			} catch (error) {
+				controldebusquedadHistorialVenta=false
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 /*
 OPCIONES DE HISTORIAL VENTA
 */

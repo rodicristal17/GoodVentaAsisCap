@@ -55,7 +55,7 @@ function verificarOperacionPresupuesto($operacion)
                         <td id="td_datos_7" style="width: 10%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
                         <td id="td_datos_8" style="width: 10%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
                         <td id="td_datos_9" style="width: 10%;text-align: end;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
-                        <td id="td_datos_10" style="width: 5%;">'.$value['num_factura'].'</td>
+                        <td id="td_datos_10" style="width: 5%;"><div onclick="obtenerDatosVenta('.$value['cod_ventaFK'].', \'divListPresupuesto\')">'.$value['num_factura'].'</div></td>
                         <td id="td_datos_6" style="width: 15%;">'.$value['nombre_usuarioFK_create'].'</td>
                     </tr>
                 </table>';
@@ -106,7 +106,7 @@ function verificarOperacionPresupuesto($operacion)
             $es_alternativo = isset($_POST['es_alternativo']) ? mb_convert_encoding((string)($_POST['es_alternativo']), 'ISO-8859-1', 'UTF-8') : null;
 
             $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $user, $cod_presupuestoFK);
-            $paginaprecios=buscardetallesprecios($cod_producto, $precio,0);
+            $paginaprecios=buscardetallesprecios($cod_productoFK, $precio,0);
             
             echo json_encode(array("1" => "exito", "2" => $idDetalle, "3" => $paginaprecios));
             break;
@@ -141,7 +141,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
         $nroId = $value['id'];
         $elemento= "<table id='tdDetalleVenta_".$nroId."' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
 			. "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
-			. "<td  id='td_datos_1' style='width:10%;'>".$value['cod_producto']."</td>"
+			. "<td  id='td_datos_1' style='width:10%;'>".$value['cod_barra']."</td>"
 			. "<td  id='td_datos_2' style='width:50%;'>".$value['nombre_producto']."</td>"
 			. "<td  id='td_datos_3' style='width:10%'>".$value['cantidad']."</td>"
 			. "<td  id='td_datos_4' style='width:15%'>".number_format($value['precio'], 0, ",", ".")."</td>"
@@ -154,7 +154,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<td  id='td_datos_11' style='display:none'>".$value['subTotal']."</td>"
 			. "<td  id='td_datos_12' style='display:none'>".$value['es_prioritario']."</td>"
 			. "<td  id='td_datos_13' style='display:none'>".$value['es_alternativo']."</td>"
-			. "<td  id='td_datos_14' style='display:none'></td>"
+			. "<td  id='td_datos_14' style='display:none'>".$value['cod_producto']."</td>"
 			. "<td  id='td_datos_15' style='display:none'>".$paginaprecios."</td>"
 			. "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 			. "</tr>"
@@ -375,6 +375,7 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
             dp.*,
             (precio * cantidad) AS subTotal,
             (SELECT nombre_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as nombre_producto,
+            (SELECT cod_barra FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_barra,
             (SELECT cod_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_producto
             FROM detalles_presupuesto dp
             $sqlFiltro ORDER BY dp.id DESC $limite";

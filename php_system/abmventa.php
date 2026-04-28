@@ -104,10 +104,10 @@ $tipoComprobante = mb_convert_encoding((string)($tipoComprobante), 'ISO-8859-1',
 $vendedor=$_POST['vendedor'];
 $vendedor = mb_convert_encoding((string)($vendedor), 'ISO-8859-1', 'UTF-8');
 
-
 $AgenteCredito=$_POST['AgenteCredito'];
 $AgenteCredito = mb_convert_encoding((string)($AgenteCredito), 'ISO-8859-1', 'UTF-8');
 
+$cod_venta=isset($_POST['cod_venta']) ? mb_convert_encoding((string)($_POST['cod_venta']), 'ISO-8859-1', 'UTF-8') : null;
 
 if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
@@ -115,7 +115,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$local=buscarlocaluser($user);
 	}
 }
-	historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$documento,$cliente,$telefono,$tipoventa,$estadocuenta,$local,$tipoComprobante,$vendedor);
+	historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$documento,$cliente,$telefono,$tipoventa,$estadocuenta,$local,$tipoComprobante,$vendedor,$cod_venta);
 
 }
 
@@ -1054,74 +1054,71 @@ return $cod_venta;
 }
 
 
-function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$documento,$cliente,$telefono,$tipoventa,$estadocuenta,$cod_local,$tipoComprobante,$vendedor){
+function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$documento,$cliente,$telefono,$tipoventa,$estadocuenta,$cod_local,$tipoComprobante,$vendedor,$cod_venta){
 	$mysqli=conectar_al_servidor();
 
 	 $totalRegistro=0;
 	 $pagina="";
 	 
-	  $condicionVendedor="";
+	$sqlFiltro= "";
 	 if($vendedor!=""){
-	   $condicionVendedor="and  Vendedor1 ='".$vendedor."'";		
+	   $sqlFiltro .= "and  Vendedor1 ='".$vendedor."'";		
 	 }
 	 
-	 
-	 $condicionAgenteCredito="";
 	 if($AgenteCredito!=""){
-	   $condicionAgenteCredito="and  cod_cobradorFK ='".$AgenteCredito."'";		
+	   $sqlFiltro .= "and  cod_cobradorFK ='".$AgenteCredito."'";		
 	 }
-	 
-	 
-	 
-	 $condiciontipoComprobante="";
+
 	 if($tipoComprobante!=""){
-		 $condiciontipoComprobante="and tipo_comprobante='".$tipoComprobante."'";
+		 $sqlFiltro .= "and tipo_comprobante='".$tipoComprobante."'";
 	 }
 	 
-	 
-	  $condicionfecha="";
 	 if($fecha1!="" && $fecha2!=""){
-		 $condicionfecha="and fecha_venta>='".$fecha1."' and fecha_venta<='".$fecha2."'";
+		 $sqlFiltro .= "and fecha_venta>='".$fecha1."' and fecha_venta<='".$fecha2."'";
 	 }
-	 $condicionfechafiltro="";
+
 	 if($fechafiltro!=""){
-	   $condicionfechafiltro="and fecha_venta='".$fechafiltro."'";		
+	   $sqlFiltro .= "and fecha_venta='".$fechafiltro."'";		
 	 }
-	 $condicionnroventa="";
+
 	 if($nroventa!=""){
-	   $condicionnroventa="and num_factura like '%".$nroventa."%'";		
+	   $sqlFiltro .= "and num_factura like '%".$nroventa."%'";		
 	 }
-	 $condiciondocumento="";
+
 	 if($documento!=""){
-	   $condiciondocumento="and (Select ci_cliente from cliente where cod_cliente=cod_clienteFK limit 1)='".$documento."'";		
+	   $sqlFiltro .= "and (Select ci_cliente from cliente where cod_cliente=cod_clienteFK limit 1)='".$documento."'";		
 	 }
-	 $condicioncliente="";
+
 	 if($cliente!=""){
-	   $condicioncliente="and (Select nombre_persona from persona where cod_persona=cod_clienteFK limit 1) like '%".$cliente."%'";		
+	   $sqlFiltro .= "and (Select nombre_persona from persona where cod_persona=cod_clienteFK limit 1) like '%".$cliente."%'";		
 	 }
-	 $condiciontelef="";
+
 	 if($telefono!=""){
-	   $condiciontelef="and (Select telefono from persona where cod_persona=vt.cod_clienteFK limit 1) like '%".$telefono."%'";		
+	   $sqlFiltro .= "and (Select telefono from persona where cod_persona=vt.cod_clienteFK limit 1) like '%".$telefono."%'";		
 	 }
-	 $condicionCuenta=" "; 
-		 $condiciontipoventa=" "; 
+
 		 if($estadocuenta=="1"){
-			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))<(total_venta-IFNULL(vt.descuento,0))";
+			$sqlFiltro .= " and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))<(total_venta-IFNULL(vt.descuento,0))";
 		 }
+
 		 if($estadocuenta=="2"){
-			$condicionCuenta=" and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=(total_venta-IFNULL(vt.descuento,0))";
+			$sqlFiltro .= " and (IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) + IFNULL((select sum(cr.descuento) from credito cr where cr.cod_venta=vt.cod_venta),0))>=(total_venta-IFNULL(vt.descuento,0))";
 		 }
-		  if($estadocuenta=="3"){
-			$condicionCuenta=" and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)>0"; 
+
+		 if($estadocuenta=="3"){
+			$sqlFiltro .= " and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)>0"; 
 		 }
+
 		 if($tipoventa!=""){
-			$condiciontipoventa=" and TipoVenta='$tipoventa'"; 
+			$sqlFiltro .= " and TipoVenta='$tipoventa'"; 
 		 }
-	 
-	 $condicionCodLocal=" "; 
+ 
 		 if($cod_local!=""){
-			
-			 $condicionCodLocal=" and vt.cod_local='$cod_local' ";
+			$sqlFiltro .= " and vt.cod_local='$cod_local' ";
+		 }
+
+		 if($cod_venta !=""){
+			$sqlFiltro .= " and vt.cod_venta='$cod_venta' ";
 		 }
 		 
 		 $sql= "Select tipo_comprobante,puntoexpedicion,idGaranteFk,fecha_venta,(vt.total_venta-IFNULL(vt.descuento,0)) as total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2 ,cod_venta,comision,cod_local,pago,
@@ -1150,7 +1147,7 @@ function historialventa($AgenteCredito,$fecha1,$fecha2,$fechafiltro,$nroventa,$d
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_insert )as insertadopor,
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_edit )as editadopor,
 		(Select accesocredito from cliente where cod_cliente=cod_clienteFK) as accesocredito , cob_ex
-		from  venta vt where cod_venta!='0' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  ".$condicionfecha.$condicionAgenteCredito.$condiciontipoComprobante.$condicionfechafiltro.$condicionnroventa.$condiciondocumento.$condicioncliente.$condiciontelef.$condicionCuenta.$condiciontipoventa.$condicionCodLocal.$condicionVendedor."  order by vt.cod_venta asc limit 50" ;
+		from  venta vt where cod_venta!='0' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  ".$sqlFiltro."  order by vt.cod_venta asc limit 50" ;
 	
    $stmt = $mysqli->prepare($sql);
   
@@ -1341,7 +1338,7 @@ if($cob_ex!="Local"){
  }
 
  $sql= "Select tipo_comprobante
-		from venta vt where cod_venta!='0' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0   ".$condicionfecha.$condicionAgenteCredito.$condiciontipoComprobante.$condicionfechafiltro.$condicionnroventa.$condiciondocumento.$condicioncliente.$condiciontelef.$condicionCuenta.$condiciontipoventa.$condicionCodLocal.$condicionVendedor."  order by vt.cod_venta asc " ;
+		from venta vt where cod_venta!='0' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0   ".$sqlFiltro."  order by vt.cod_venta asc " ;
    $stmt = $mysqli->prepare($sql);  
 if ( ! $stmt->execute()) {
    echo "Error";

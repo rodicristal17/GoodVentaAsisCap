@@ -1467,6 +1467,7 @@ function presupuestoAVenta(){
 	// Agrega los productos
 	Array.from(plan.children).forEach(tabla => {
 		const cod_producto= $(tabla).find("#td_datos_14").html();
+		const cod_barra= $(tabla).find("#td_datos_1").html();
 		const nombre_producto= $(tabla).find("#td_datos_2").html();
 		const detalle_venta= "";//$(tabla).find("#td_datos_").html();
 		const costo= separadordemilesnumero($(tabla).find("#td_datos_10").html());
@@ -1481,7 +1482,7 @@ function presupuestoAVenta(){
 		const costo_total_venta= separadordemilesnumero($(tabla).find("#td_datos_11").html());
 		
 		const nroid = Math.floor((Math.random() * 1000) + 1);
-		mostrarProductoEnDetalleVenta(undefined,cod_producto,nombre_producto,detalle_venta,costo,cantidad,0,total_costo,0,cuota_nro,0,porcentaje_contado,porcentaje_credito,precio_contado_producto,costo_total_venta,nroid);
+		mostrarProductoEnDetalleVenta(cod_producto,cod_barra,nombre_producto,detalle_venta,costo,cantidad,0,total_costo,0,cuota_nro,0,porcentaje_contado,porcentaje_credito,precio_contado_producto,costo_total_venta,nroid);
 		
 		// Calcula los totales
 		let totalVenta = 0;
