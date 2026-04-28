@@ -357,7 +357,7 @@ WHERE TRIM(motivo) REGEXP '^Cuota [0-9]+ de .+ \\([0-9]+\\)$'
 
 ALTER TABLE detalles_presupuesto ADD COLUMN es_alternativo BOOLEAN DEFAULT 0;
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.76', detalles='Re-estructuracion de presupuesto.', fecha='2026-04-22' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.77', detalles='Vinculacion de presupuesto y venta, redireccionamiento de presupuesto a venta.', fecha='2026-04-28' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE presupuesto ADD COLUMN plan_vendido ENUM('total', 'prioritario');
 ALTER TABLE presupuesto ADD COLUMN cod_ventaFK INT(11);
