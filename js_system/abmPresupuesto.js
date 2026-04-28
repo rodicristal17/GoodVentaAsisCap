@@ -1374,10 +1374,9 @@ function buscarmasVistaPresupuesto() {
 					registrocargadoPresupuesto += parseInt(datos["4"]);
 
 					// Controla el progreso de la busqueda
-					if(totalregistroPresupuesto>registrocargadoPresupuesto){
+					if(controldebusquedadPresupuesto && totalregistroPresupuesto>registrocargadoPresupuesto){
 						document.getElementById("divProgressPresupuesto").style.backgroundColor='';
 						
-						controldebusquedadPresupuesto=true;
 						var porce=((registrocargadoPresupuesto*100)/totalregistroPresupuesto).toFixed(0)
 						document.getElementById('tbProcessPresupuesto').style.display= ""
 						document.getElementById("divProgressPresupuesto").style.width=porce+"%"
