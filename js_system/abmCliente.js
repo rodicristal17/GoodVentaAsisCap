@@ -1239,7 +1239,7 @@ function EnviarClienteDesde() {
 			idFkCliente = $(datostr).children('td[id="td_id"]').html();
 			document.getElementById('inptDocumentoClientePresupuesto').value = $(datostr).children('td[id="td_datos_2"]').html();	
 			document.getElementById('inptNombreClientePresupuesto').value = $(datostr).children('td[id="td_datos_1"]').html();
-			abmPresupuesto(idabmPresupuesto, "", idFkCliente);
+			abmPresupuesto(idabmPresupuesto, "", idFkCliente, null, null);
 			break;
 		case 'presupuestoDoctor':
 			idFkCliente = $(datostr).children('td[id="td_id"]').html();
@@ -1251,7 +1251,7 @@ function EnviarClienteDesde() {
 			if (typeof verPasoPresupuestoDoc === "function") {
 				verPasoPresupuestoDoc(1);
 			}
-			abmPresupuesto(idabmPresupuesto, "", idFkCliente);
+			abmPresupuesto(idabmPresupuesto, "", idFkCliente, null, null);
 			break;
 	}
 	

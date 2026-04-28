@@ -1,11 +1,10 @@
 <?php
-require("conexion.php");
-include("verificar_navegador.php");
-include('quitarseparadormiles.php');
-include("buscar_nivel.php");
-include("classTable.php");
-$operacion = $_POST['funt'];
-$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+require_once("conexion.php");
+include_once("verificar_navegador.php");
+include_once('quitarseparadormiles.php');
+include_once("buscar_nivel.php");
+include_once("classTable.php");
+
 function ObtenerDatos($operacion)
 {
 
@@ -2656,7 +2655,7 @@ $sql= "select (select porcentaje from producto p where p.cod_producto=dt.cod_pro
 	(select precio_producto from producto where cod_producto= ?) as precio_contado,
 	precio,Porcentaje as porcen,descripcion,cod_producto,iddetallesprecio,comision,Cuota
  from  detallesprecio dt
-where cod_producto=? ";
+where cod_producto=? limit 1";
  $pagina="";  
 $stmt = $mysqli->prepare($sql);
 $s='ss';
@@ -4085,10 +4084,10 @@ exit;
 }
 
 
-
-
-
-
-ObtenerDatos($operacion);
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+    $operacion = $_POST['funt'];
+	$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+	ObtenerDatos($operacion);
+}
 
 ?>

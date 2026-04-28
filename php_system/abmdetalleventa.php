@@ -1538,7 +1538,7 @@ if($totalCredito>0){
 	$totalventa=$totalventa-$totalEnDescuento;
 }
 
-$plazoPago = buscarpagosTitulo($cod_ventaFK);
+$plazoPago = buscarpagosTitulo($cod_venta);
 
 $cuotas=buscarcantidadcuotapagados($cod_venta)."/".$nroCouta;
 $informacion =array(

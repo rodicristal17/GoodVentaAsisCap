@@ -11588,68 +11588,64 @@ function confirmarCambios(){
 	document.getElementById("divAddMasDetallesVenta").style.display="none"
 	masdetallesVenta=document.getElementById("inptDetallesVentaProductos").value
 }
+
 var DatosAutoCompleteCredito =new Array()
-function anhadirProductoEnDetalleVenta(){
-	
-	var entrega= document.getElementById('inptEntregaVenta').value
-	if(entrega==""){
+function anhadirProductoEnDetalleVenta() {
+	var entrega = document.getElementById('inptEntregaVenta').value
+	if (entrega == "") {
 		ver_vetana_informativa("FALTO AGREGAR ENTREGA")
 		return false;
 	}
-	
-	var ContadoranhadirVenta=0;
-	$("tr[name=tdDetalleVenta]").each(function(i, elementohtml){
-ContadoranhadirVenta= ContadoranhadirVenta +1 ;
-	   });
-	   
-	   if(ContadoranhadirVenta!=0){
-		   ver_vetana_informativa("NO ES POSIBLE AGREGAR UN PRODUCTO A UNA VENTA FINALIZADO")
-		 
-		   return false;
-	   }
-	
-	if(idabmAperturacierrecaja==""){
-		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
-		   verCerrarVentanaAbmAperturaCierreCaja1()
-		   return
-	   }
-	DatosAutoCompleteCredito=new Array ();
+
+	var ContadoranhadirVenta = 0;
+	$("tr[name=tdDetalleVenta]").each(function (i, elementohtml) {
+		ContadoranhadirVenta = ContadoranhadirVenta + 1;
+	});
+
+	if (ContadoranhadirVenta != 0) {
+		ver_vetana_informativa("NO ES POSIBLE AGREGAR UN PRODUCTO A UNA VENTA FINALIZADO")
+		return false;
+	}
+
+	if (idabmAperturacierrecaja == "") {
+		ver_vetana_informativa("FALTO INICIAR UNA CAJA")
+		verCerrarVentanaAbmAperturaCierreCaja1()
+		return
+	}
+	DatosAutoCompleteCredito = new Array();
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
 		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
 		return false;
 	}
-	
+
 	var acceso = document.getElementById('inptAccesoCreditoVentaCliente').value
-	if(acceso=="Denegado"){
-		var estado=document.getElementById("inptSeleccTipoVenta").value;
-		if(estado=="CREDITO"){
+	if (acceso == "Denegado") {
+		var estado = document.getElementById("inptSeleccTipoVenta").value;
+		if (estado == "CREDITO") {
 			ver_vetana_informativa("EL CLIENTE NO ESTA AUTORIZADO PARA VENTAS A CREDITOS")
-		return false;
+			return false;
 		}
 	}
-	
-	
-	
-	var monto= document.getElementById('inptCostoProductoVenta').value
-	if(monto=="" || monto=="0" ){
+
+	var monto = document.getElementById('inptCostoProductoVenta').value
+	if (monto == "" || monto == "0") {
 		ver_vetana_informativa("FALTO AGREGAR EL MONTO")
 		return false;
 	}
-	
-	document.getElementById('inptSeleccTipoVenta').disabled=true
-	
+
+	document.getElementById('inptSeleccTipoVenta').disabled = true
+
 	var inptCodProductoVenta = document.getElementById('inptCodProductoVenta').value
 	var inptProductoVenta = document.getElementById('inptProductoVenta').value
 	var inptCantProductoVenta = document.getElementById('inptCantProductoVenta').value
-	
-		if( inptCantProductoVenta =="1" || inptCantProductoVenta=="" || inptCantProductoVenta=="0"){
-			inptCantProductoVenta = "1"
-		}else{
-			inptCantProductoVenta = document.getElementById('inptCantProductoVenta').value
-		}
-	
-	
+
+	if (inptCantProductoVenta == "1" || inptCantProductoVenta == "" || inptCantProductoVenta == "0") {
+		inptCantProductoVenta = "1"
+	} else {
+		inptCantProductoVenta = document.getElementById('inptCantProductoVenta').value
+	}
+
 	var inpTotalCostoVenta = document.getElementById('inpTotalCostoVenta').value
 	var inptCostoProductoVenta = document.getElementById('inptCostoProductoVenta').value
 	var inptComisionVenta = document.getElementById('inptComisionVenta').value
@@ -11657,108 +11653,108 @@ ContadoranhadirVenta= ContadoranhadirVenta +1 ;
 	var inptObservacionDetalleVenta = document.getElementById('inptObservacionDetalleVenta').value
 	var inptDescuentoProductoVenta = document.getElementById('inptDescuentoProductoVenta').value
 	var inptDetallesVentaProductos = document.getElementById('inptDetallesVentaProductos').value
-	
-	var porcentajealcontado =$("select[id=inpTSeleccCosto]").children(":selected").attr("style")
-	var porcentajeCredito =$("select[id=inpTSeleccCosto]").children(":selected").attr("class")
-	var PrecioContadoProducto =$("select[id=inpTSeleccCosto]").children(":selected").attr("url")
-	
-	
-	if(inptCantProductoVenta<=0|| inptCantProductoVenta==""){
-				ver_vetana_informativa("FAVOR AGREGAR CANTIDAD")
-				return false;
-			}
-	
-	var resultado= Number(StockVenta) -  Number(inptCantProductoVenta)
-	 
-	
-		if( accesosuser["STOCK0"]["accion"]!="SI")
-	{
-			// if(resultado<0){
-				// ver_vetana_informativa("NO PUEDES VENDER PRODUCTOS CON STOCK MENOR A 0")
-				// return false;
-			// }
+
+	var porcentajealcontado = $("select[id=inpTSeleccCosto]").children(":selected").attr("style")
+	var porcentajeCredito = $("select[id=inpTSeleccCosto]").children(":selected").attr("class")
+	var PrecioContadoProducto = $("select[id=inpTSeleccCosto]").children(":selected").attr("url")
+
+	if (inptCantProductoVenta <= 0 || inptCantProductoVenta == "") {
+		ver_vetana_informativa("FAVOR AGREGAR CANTIDAD")
+		return false;
 	}
-	
-	
-	
-	 inptDetallesVentaProductos =inptDetallesVentaProductos.replace(new RegExp("\n","g"), "<br>")
-	var CuotaNro =$("select[id=inpTSeleccCosto]").children(":selected").attr("id")
+
+	var resultado = Number(StockVenta) - Number(inptCantProductoVenta)
+
+	if (accesosuser["STOCK0"]["accion"] != "SI") {
+		// if(resultado<0){
+		// ver_vetana_informativa("NO PUEDES VENDER PRODUCTOS CON STOCK MENOR A 0")
+		// return false;
+		// }
+	}
+
+	inptDetallesVentaProductos = inptDetallesVentaProductos.replace(new RegExp("\n", "g"), "<br>")
+	var CuotaNro = $("select[id=inpTSeleccCosto]").children(":selected").attr("id")
 	if (idFkProducto == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UN PRODUCTO")
 		return false;
 	}
-	var nroid=Math.floor((Math.random() * 1000) + 1);
-	var pagina="<table id='tdDetalleVenta_"+nroid+"' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
-+"<tr id='tbSelecRegistro' onclick='SeleccionarProductoVentaOffline(this)'  name='tdDetalleVentaOffline'>"
-+"<td id='td_id_1' style='display:none'>"+idFkProducto+"</td>"
-+"<td id='td_id_2' style='display:none'>"+nroid+"</td>"
-+"<td  id='td_datos_8' style='width:5%'>"+inptCodProductoVenta+"</td>"
-+"<td  id='td_datos_1' style='width:20%;'>"+inptProductoVenta+"</td>"
-+"<td  id='td_datos_6' style='display:none'>"+inptDetallesVentaProductos+"</td>"
-+"<td  id='td_datos_3' style='width:10%'>"+inptCostoProductoVenta+"</td>"
-+"<td  id='td_datos_4' style='width:5%'>"+inptCantProductoVenta+"</td>"
-+"<td  id='td_datos_9' style='display:none'>"+inptDescuentoProductoVenta+"</td>"
-+"<td  id='td_datos_5' style='width:10%'>"+inpTotalCostoVenta+"</td>"
-+"<td  id='td_datos_7'  style='display:none'>"+inptComisionVenta+"</td>"
-+"<td  id='td_datos_10' style='display:none'>"+CuotaNro+"</td>"
-+"<td  id='td_datos_11' style='display:none'>"+entrega+"</td>" 
-+"<td  id='td_datos_12' style='display:none'>"+porcentajealcontado+"</td>"
-+"<td  id='td_datos_13' style='display:none'>"+porcentajeCredito+"</td>"
-+"<td  id='td_datos_14' style='display:none'>"+PrecioContadoProducto+"</td>"   
-+"<td  id='td_datos_15' style='display:none'>"+inpTotalCostoVenta+"</td>"
-+"</tr>"
-+"</table>"
-document.getElementById("table_abm_detalle_venta").innerHTML+=pagina;
-var totalVenta=0;
-var SubtotalVenta=0;
-var totaldescuento=0;
-var control=0;
-$("tr[name=tdDetalleVentaOffline]").each(function(i, elementohtml){
-var total=$(elementohtml).children('td[id="td_datos_15"]').html();
-var totaldescuentos=$(elementohtml).children('td[id="td_datos_9"]').html();
-totaldescuentos=QuitarSeparadorMilValor(totaldescuentos)
-total=QuitarSeparadorMilValor(total)
-totalVenta=Number(totalVenta)+Number(total)
-totaldescuento=Number(totaldescuento)+Number(totaldescuentos)
-SubtotalVenta=Number(totalVenta)+Number(totaldescuento)
-control=control+1;
-	   });
-	   
-	   if(control=="1"){
-		   DatosAutoCompleteCredito.push(CuotaNro)
-	   }
-	   
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	mostrarProductoEnDetalleVenta(idFkProducto,inptCodProductoVenta,inptProductoVenta,inptDetallesVentaProductos,inptCostoProductoVenta,inptCantProductoVenta,inptDescuentoProductoVenta,inpTotalCostoVenta,inptComisionVenta,CuotaNro,entrega,porcentajealcontado,porcentajeCredito,PrecioContadoProducto,inpTotalCostoVenta);
 
-buscarDescripcionProducto(idFkProducto,totalVenta,nroid);
+	let totalVenta = 0;
+	let SubtotalVenta = 0;
+	let totaldescuento = 0;
+	let control = 0;
+	$("tr[name=tdDetalleVentaOffline]").each(function (i, elementohtml) {
+		let total = $(elementohtml).children('td[id="td_datos_15"]').html();
+		let totaldescuentos = $(elementohtml).children('td[id="td_datos_9"]').html();
+		totaldescuentos = QuitarSeparadorMilValor(totaldescuentos)
+		total = QuitarSeparadorMilValor(total)
+		totalVenta = Number(totalVenta) + Number(total)
+		totaldescuento = Number(totaldescuento) + Number(totaldescuentos)
+		SubtotalVenta = Number(totalVenta) + Number(totaldescuento)
+		control = control + 1;
+	});
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	   
-document.getElementById("inptSubTotalVenta").value=separadordemilesnumero(SubtotalVenta);
-document.getElementById("inptTotalVenta").value=separadordemilesnumero(totalVenta);
-document.getElementById("inptTotalVenta2").innerHTML=separadordemilesnumero(totalVenta);
-document.getElementById("inptTotalDescuento").value=separadordemilesnumero(totaldescuento);
-OpcionesTipoVenta();
-document.getElementById("btnFinalizarVenta").style.display=""
-document.getElementById("btnCancelarVenta").style.display=""
+	if (control == "1") {
+		DatosAutoCompleteCredito.push(CuotaNro)
+	}
+	const nroid = Math.floor((Math.random() * 1000) + 1);
 
-document.getElementById('inptCantProductoVenta').value = ""
-document.getElementById('inpTotalCostoVenta').value = ""
-document.getElementById('inptCostoProductoVenta').value = ""
-document.getElementById('inptDescuentoProductoVenta').value = "0"
-document.getElementById('inptObservacionDetalleVenta').value = ""
-document.getElementById('inptComisionVenta').value = ""
-document.getElementById('inpTSeleccCosto').innerHTML = ""
-document.getElementById('inptObservacionDetalleVenta').value = ""
-document.getElementById('inptProductoVenta').value = ""
-document.getElementById('inptDetallesVentaProductos').value = ""
-document.getElementById('btnAbmVenta').style.display = "none"
-// document.getElementById('btnAddDetallesaVenta').style.backgroundColor = "#b7b7b7";
-document.getElementById('btnSolicitarDescuento').style.backgroundColor = "#b7b7b7";
-idFkProducto = ""
+	buscarDescripcionProducto(idFkProducto, totalVenta, nroid);
+	
+	document.getElementById("inptSubTotalVenta").value=separadordemilesnumero(SubtotalVenta);
+	document.getElementById("inptTotalVenta").value=separadordemilesnumero(totalVenta);
+	document.getElementById("inptTotalVenta2").innerHTML=separadordemilesnumero(totalVenta);
+	document.getElementById("inptTotalDescuento").value=separadordemilesnumero(totaldescuento);
+	OpcionesTipoVenta();
 
+	limpiarCamposAnhadirProductosVenta();
 }
 
+function mostrarProductoEnDetalleVenta(idFkProducto,cod_producto,nombre_producto,detalle_venta,costo,cantidad,descuento,total_costo,comision,cuota_nro,entrega,porcentaje_contado,porcentaje_credito,precio_contado_producto,costo_total_venta,nroid) {
+	const pagina = "<table id='tdDetalleVenta_" + nroid + "' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+		+ "<tr id='tbSelecRegistro' onclick='SeleccionarProductoVentaOffline(this)'  name='tdDetalleVentaOffline'>"
+		+ "<td id='td_id_1' style='display:none'>" + idFkProducto + "</td>"
+		+ "<td id='td_id_2' style='display:none'>" + nroid + "</td>"
+		+ "<td  id='td_datos_8' style='width:5%'>" + cod_producto + "</td>"
+		+ "<td  id='td_datos_1' style='width:20%;'>" + nombre_producto + "</td>"
+		+ "<td  id='td_datos_6' style='display:none'>" + detalle_venta + "</td>"
+		+ "<td  id='td_datos_3' style='width:10%'>" + costo + "</td>"
+		+ "<td  id='td_datos_4' style='width:5%'>" + cantidad + "</td>"
+		+ "<td  id='td_datos_9' style='display:none'>" + descuento + "</td>"
+		+ "<td  id='td_datos_5' style='width:10%'>" + total_costo + "</td>"
+		+ "<td  id='td_datos_7'  style='display:none'>" + comision + "</td>"
+		+ "<td  id='td_datos_10' style='display:none'>" + cuota_nro + "</td>"
+		+ "<td  id='td_datos_11' style='display:none'>" + entrega + "</td>"
+		+ "<td  id='td_datos_12' style='display:none'>" + porcentaje_contado + "</td>"
+		+ "<td  id='td_datos_13' style='display:none'>" + porcentaje_credito + "</td>"
+		+ "<td  id='td_datos_14' style='display:none'>" + precio_contado_producto + "</td>"
+		+ "<td  id='td_datos_15' style='display:none'>" + costo_total_venta + "</td>"
+		+ "</tr>"
+		+ "</table>"
+	document.getElementById("table_abm_detalle_venta").innerHTML += pagina;
+}
+
+function limpiarCamposAnhadirProductosVenta() {
+	document.getElementById("btnFinalizarVenta").style.display=""
+	document.getElementById("btnCancelarVenta").style.display=""
+
+	document.getElementById('inptCantProductoVenta').value = ""
+	document.getElementById('inpTotalCostoVenta').value = ""
+	document.getElementById('inptCostoProductoVenta').value = ""
+	document.getElementById('inptDescuentoProductoVenta').value = "0"
+	document.getElementById('inptObservacionDetalleVenta').value = ""
+	document.getElementById('inptComisionVenta').value = ""
+	document.getElementById('inpTSeleccCosto').innerHTML = ""
+	document.getElementById('inptObservacionDetalleVenta').value = ""
+	document.getElementById('inptProductoVenta').value = ""
+	document.getElementById('inptDetallesVentaProductos').value = ""
+	document.getElementById('btnAbmVenta').style.display = "none"
+	// document.getElementById('btnAddDetallesaVenta').style.backgroundColor = "#b7b7b7";
+	document.getElementById('btnSolicitarDescuento').style.backgroundColor = "#b7b7b7";
+	idFkProducto = ""
+}
 
 var elemSeleccDetalleProdVentaOff="";
 var idfkTableDetalle="";
@@ -12260,10 +12256,11 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 					if(tipo=="2"){
 						crearcreditodesdeventa()
 					}
-				   
-		          
-				  
-		          
+					
+					// Se verifica si idAbmPresupuesto tiene valor
+					if (idabmPresupuesto != "") {
+						abmPresupuesto(idabmPresupuesto, null, null,datos["3"], tipo_plan);
+					}
 				}
 
 			} catch (error) {

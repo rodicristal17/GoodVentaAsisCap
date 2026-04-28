@@ -4,6 +4,7 @@ include_once("buscar_nivel.php");
 require_once("conexion.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
+include_once("abmproductos.php");
 
 date_default_timezone_set('America/Asuncion');
 
@@ -48,11 +49,11 @@ function verificarOperacionPresupuesto($operacion)
                         <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
                         <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
                         <td id="td_datos_4" style="width: 20%;text-align: left;">'.$value['nombre_cliente'].'</td>
-                        <td id="td_datos_5" style="width: 10%;">'.$value['rut_cliente'].'</td>
-                        <td id="td_datos_7" style="width: 15%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
-                        <td id="td_datos_7" style="width: 15%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
+                        <td id="td_datos_5" style="width: 10%;">'.$value['ci_cliente'].'</td>
+                        <td id="td_datos_7" style="width: 10%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
+                        <td id="td_datos_8" style="width: 10%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
+                        <td id="td_datos_8" style="width: 10%;text-align: end;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
                         <td id="td_datos_6" style="width: 20%;">'.$value['nombre_usuarioFK_create'].'</td>
-                        <td id="td_datos_8" style="display: none;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
                     </tr>
                 </table>';
             }
@@ -63,8 +64,10 @@ function verificarOperacionPresupuesto($operacion)
             $id = isset($_POST['id']) ? mb_convert_encoding((string)($_POST['id']), 'ISO-8859-1', 'UTF-8') : null;
             $cant_cuotas = isset($_POST['cant_cuotas']) ? mb_convert_encoding((string)($_POST['cant_cuotas']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_clienteFK = isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null;
+            $cod_ventaFK = isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
+            $plan_vendido = isset($_POST['plan_vendido']) ? mb_convert_encoding((string)($_POST['plan_vendido']), 'ISO-8859-1', 'UTF-8') : null;
 
-            $idPresupuesto = abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $user);
+            $idPresupuesto = abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $user, $cod_ventaFK, $plan_vendido);
             echo json_encode(array("1" => "exito", "2" => $idPresupuesto));
             break;
 
@@ -100,7 +103,9 @@ function verificarOperacionPresupuesto($operacion)
             $es_alternativo = isset($_POST['es_alternativo']) ? mb_convert_encoding((string)($_POST['es_alternativo']), 'ISO-8859-1', 'UTF-8') : null;
 
             $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $user, $cod_presupuestoFK);
-            echo json_encode(array("1" => "exito", "2" => $idDetalle));
+            $paginaprecios=buscardetallesprecios($cod_producto, $precio,0);
+            
+            echo json_encode(array("1" => "exito", "2" => $idDetalle, "3" => $paginaprecios));
             break;
         default:
             echo json_encode(array("1" => "error", "2" => "Operacion $operacion no definida"));
@@ -128,6 +133,8 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
     $paginaPrioritario= "";
     foreach ($registros as $value) {
         //$nroId = rand(1, 1000);
+        $paginaprecios=buscardetallesprecios($value['cod_producto'], $value['precio'],0);
+
         $nroId = $value['id'];
         $elemento= "<table id='tdDetalleVenta_".$nroId."' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
 			. "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
@@ -144,6 +151,8 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<td  id='td_datos_11' style='display:none'>".$value['subTotal']."</td>"
 			. "<td  id='td_datos_12' style='display:none'>".$value['es_prioritario']."</td>"
 			. "<td  id='td_datos_13' style='display:none'>".$value['es_alternativo']."</td>"
+			. "<td  id='td_datos_14' style='display:none'></td>"
+			. "<td  id='td_datos_15' style='display:none'>".$paginaprecios."</td>"
 			. "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 			. "</tr>"
 			. "</table>";
@@ -210,6 +219,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
             p.*,
             (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
             (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
+            (SELECT c.ci_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as ci_cliente,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_alternativo = 0), 0) AS monto_total,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_prioritario = 1), 0) AS monto_total_prioritario,
             (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create,
@@ -239,7 +249,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
     return $registros;
 }
 
-function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create)
+function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create, $cod_ventaFK, $plan_vendido)
 {
     $mysqli = conectar_al_servidor();
 
@@ -248,9 +258,9 @@ function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create
     }
 
     if (empty($id)) {
-        $sql = "INSERT INTO presupuesto (cant_cuotas, cod_clienteFK, cod_usuarioFK_create) VALUES (?,?,?)";
+        $sql = "INSERT INTO presupuesto (cant_cuotas, cod_clienteFK, cod_usuarioFK_create, cod_ventaFK, plan_vendido) VALUES (?,?,?,?,?)";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('iii', $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create);
+        $stmt->bind_param('iiiis', $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create, $cod_ventaFK, $plan_vendido);
     } else {
         $parametros = array();
         $atributos = "";
@@ -268,6 +278,22 @@ function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create
             $atributos .= "cod_clienteFK= ?";
             $ss .= "i";
             $parametros[] = $cod_clienteFK;
+        }
+        if ($cod_ventaFK != null) {
+            if ($atributos != "") {
+                $atributos .= ", ";
+            }
+            $atributos .= "cod_ventaFK= ?";
+            $ss .= "i";
+            $parametros[] = $cod_ventaFK;
+        }
+        if ($plan_vendido != null) {
+            if ($atributos != "") {
+                $atributos .= ", ";
+            }
+            $atributos .= "plan_vendido= ?";
+            $ss .= "s";
+            $parametros[] = $plan_vendido;
         }
 
         if ($atributos == "") {

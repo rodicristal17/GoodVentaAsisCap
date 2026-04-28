@@ -8469,6 +8469,26 @@ ACCION
         </footer>
       </div>
     </section>
+    <section class="form-section presupuesto-panel">
+      <div class="form-row">
+        <label for="inptSelecctPlanPresupuesto">Seleccionar plan</label>
+        <select class="inputSelect" id="inptSelecctPlanPresupuesto">
+          <option value="total">Plan Total</option>
+          <option value="urgente">Plan Urgente</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="inptSelecctModalidadPresupuesto">Seleccionar modalidad</label>
+        <select class="inputSelect" id="inptSelecctModalidadPresupuesto">
+          <option value="CREDITO" selected>Credito</option>
+          <option value="CONTADO">Contado</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <input type="button" value="Concretar venta" class="btn4"
+          onclick='presupuestoAVenta()' style='width:150px;margin-top: 20px;'>
+      </div>
+    </section>
   </center>
   <center style="display: none;" id="divListPresupuesto">
     <div class="presupuesto-container presupuesto-search-modal">
@@ -8503,11 +8523,14 @@ ACCION
               <td class="td_registro" style="width:10%;">
                 DOCUMENTO
               </td>
-              <td class="td_registro" style="width:15%;">
+              <td class="td_registro" style="width:10%;">
                 SUB-TOTAL PLAN A
               </td>
-              <td class="td_registro" style="width:15%;">
+              <td class="td_registro" style="width:10%;">
                 SUB-TOTAL PLAN B
+              </td>
+              <td class="td_registro" style="width:10%;">
+                PLAN VENDIDO
               </td>
               <td class="td_registro" style="width:15%;">
                 CREADOR
@@ -13723,7 +13746,7 @@ style='width:270px' />
 <br>
 <center>
 <input type='Button' value='Editar el producto seleccionado' class='inputBtn'
-onclick='EditarcantidadProductoDetalleVenta()'  style='width:80%;height: 40px;background-color: #43a346; border-radius: 12px;' />
+onclick='EditarcantidadProductoDetalleVenta()'  style='display:none;width:80%;height: 40px;background-color: #43a346; border-radius: 12px;' />
 </center>
 
 <br>

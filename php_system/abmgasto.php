@@ -400,7 +400,7 @@ if ($operacion == "obtenerGastosAsociados") {
 		</tr>";
 	}
 
-	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $gastos[0], "4" => $gastos[0]['descripcion'], "5" => number_format($total_pendiente, 0, ',', '.')));
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $gastos[0], "4" => (isset($gastos[0]) ? $gastos[0]['descripcion'] : null), "5" => number_format($total_pendiente, 0, ',', '.')));
 	exit;
 }
 
@@ -412,12 +412,13 @@ function obtenerGastosAsociados($idgastos) {
 	// Obtenemos el registro
 	$result = buscarGasto('','','','','','','','','true','','','','','', $idgastos);
 	$regGasto= $result[0];
-	
+
 	// Se verifica si es cuota y se obtiene el gasto padre
 	if ($regGasto['cod_gasto_padre']) {
 		$result= buscarGasto('','','','','','','','','true','','','','','', $regGasto['cod_gasto_padre']);
+		$regGasto= $result[0];
 	}
-
+	
 	// Se evalua si existen gastos asociados
 	$gastos_asociados= buscarGasto('','','','','','','','','true','','','','',$regGasto['idgastos'], '','ASC');
 
@@ -455,6 +456,7 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
     // ✅ NO TOCO TU SQL
     $sql = "
     SELECT 
+		g.idgastos,
         g.monto,
         g.fecha,
         g.motivo AS detalle,
@@ -523,6 +525,7 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
         $modalidad = mb_convert_encoding((string)$row['modalidad'], 'UTF-8', 'ISO-8859-1');
         $titulo = mb_convert_encoding((string)$row['titulo'], 'UTF-8', 'ISO-8859-1');
         $Nombrelocal = mb_convert_encoding((string)$row['Nombrelocal'], 'UTF-8', 'ISO-8859-1');
+        $idgastos = mb_convert_encoding((string)$row['idgastos'], 'UTF-8', 'ISO-8859-1');
 		
 
         // normalizar fecha día
@@ -539,7 +542,8 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
             'estado' => $estado,
             'modalidad' => $modalidad,
             'titulo' => $titulo,
-            'Nombrelocal' => $Nombrelocal
+            'Nombrelocal' => $Nombrelocal,
+            'idgastos' => $idgastos
         );
 
         if ($fDia < $hoy) {
@@ -590,6 +594,7 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
         $local = htmlspecialchars($r['Nombrelocal'], ENT_QUOTES, 'UTF-8');
         $fecha = htmlspecialchars($fmtFecha($r['fecha']), ENT_QUOTES, 'UTF-8');
         $monto = htmlspecialchars($gs($r['monto']), ENT_QUOTES, 'UTF-8');
+        $idgastos = htmlspecialchars($r['idgastos'], ENT_QUOTES, 'UTF-8');
 
         // $badge = $ponerBadgeVencido ? "<span class='badge'>Vencido</span>" : "";
         $badge = "";
@@ -623,6 +628,7 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
               </div>
 
               <div class='lines'>
+                <div class='line' style='display: none;'><b>IdGastos:</b> {$idgastos}</div>
                 <div class='line'><b>Fecha:</b> {$fecha}</div>
                 <div class='line'><b>Monto:</b> {$monto}</div>
                 <div class='line'><b>Detalle:</b> {$detalle}</div>

@@ -7,7 +7,8 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 			document.getElementById("divAbmDetallesPresupuesto").style.display=""
             document.getElementById('divListPresupuesto').style.display= "";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="none";
-        } else {
+			buscarvistaPresupuesto();
+		} else {
 			if(controlacceso("VERHISTORIALPRESUPUESTO","accion")==false){return;}
 			buscarvistaPresupuesto();
             document.getElementById('divListPresupuesto').style.display= "none";
@@ -32,7 +33,7 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 
 var idabmPresupuesto= "";
 var pasoVistaPresupuestoDoc = 1;
-function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK) {
+function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK, plan_vendido) {
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -42,6 +43,8 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK) {
 		"id": cod_presupuesto,
 		"cant_cuotas": cant_cuotas,
 		"cod_clienteFK": cod_clienteFK,
+		"cod_ventaFK": cod_ventaFK,
+		"plan_vendido": plan_vendido,
 	};
 	$.ajax({
 		data: datos,
@@ -995,6 +998,8 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						+ "<td  id='td_datos_11' style='display:none'>" + total_presupuesto + "</td>"
 						+ "<td  id='td_datos_12' style='display:none'>" + (esPrioritario ? 1 : 0) + "</td>"
 						+ "<td  id='td_datos_13' style='display:none'>" + (esAlternativo ? 1 : 0) + "</td>"
+						+ "<td  id='td_datos_14' style='display:none'>" + cod_productoFK + "</td>"
+						+ "<td  id='td_datos_15' style='display:none'>" + datos[3] + "</td>"
 						+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 						+ "</tr>"
 						+ "</table>"
@@ -1165,6 +1170,7 @@ function limpirarPresupuesto(){
 	
 	totalPresupuesto=0;
 	totalPresupuestoPrioritario=0;
+	tipo_plan="";
 	document.getElementById('inptTotalPresupuesto2').innerHTML = ""
 	document.getElementById('inptTOTALPresupuestoFORM').value = "0"
 	document.getElementById('inptTOTALPresupuestoFORMPrioritario').value = "0"
@@ -1433,4 +1439,77 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 		$("div[id=divAbmDetallesPresupuestoDoc]").fadeOut(500);
 		vistaPresupuestoOrigen= ""
 	}
+}
+
+var tipo_plan= "";
+function presupuestoAVenta(){
+	limpiarcamposventa("2");
+
+	// Se evalua cual fue el plan seleccionado y si la venta es a credito
+	let plan= "";
+	if (document.getElementById('inptSelecctPlanPresupuesto').value == "total") {
+		plan= document.getElementById('table_vista_producto_presupuestoDetalle');
+		tipo_plan= "total";
+	} else {
+		plan= document.getElementById('table_vista_producto_presupuestoDetalle_prioritario');
+		tipo_plan= "prioritario";
+	}
+
+	document.getElementById('inptSeleccTipoVenta').value= document.getElementById('inptSelecctModalidadPresupuesto').value;
+
+	// Agrega los datos del cliente
+	const inptDocClienteVenta= document.getElementById('inptDocClienteVenta');
+	inptDocClienteVenta.value= document.getElementById('inptDocumentoClientePresupuesto').value.split('-')[0];
+	buscarClientePorCiVista(inptDocClienteVenta,'inptDocClienteVenta', 'inptClienteVenta', 'venta');
+
+	// Agrega los productos
+	Array.from(plan.children).forEach(tabla => {
+		const cod_producto= $(tabla).find("#td_datos_14").html();
+		const nombre_producto= $(tabla).find("#td_datos_2").html();
+		const detalle_venta= "";//$(tabla).find("#td_datos_").html();
+		const costo= separadordemilesnumero($(tabla).find("#td_datos_10").html());
+		const cantidad= $(tabla).find("#td_datos_3").html();
+		const total_costo= separadordemilesnumero($(tabla).find("#td_datos_11").html());
+		const cuota_nro= 1;//$(tabla).find("#td_datos_").html()
+
+		const porcentaje_contado= $(tabla).find("#td_datos_15")['context'].children[0].style;
+		const porcentaje_credito= $(tabla).find("#td_datos_15")['context'].children[0].class;
+		const precio_contado_producto= $(tabla).find("#td_datos_15")['context'].children[0].url;
+
+		const costo_total_venta= separadordemilesnumero($(tabla).find("#td_datos_11").html());
+		
+		const nroid = Math.floor((Math.random() * 1000) + 1);
+		mostrarProductoEnDetalleVenta(undefined,cod_producto,nombre_producto,detalle_venta,costo,cantidad,0,total_costo,0,cuota_nro,0,porcentaje_contado,porcentaje_credito,precio_contado_producto,costo_total_venta,nroid);
+		
+		// Calcula los totales
+		let totalVenta = 0;
+		let SubtotalVenta = 0;
+		let totaldescuento = 0;
+		let control = 0;
+		$("tr[name=tdDetalleVentaOffline]").each(function (i, elementohtml) {
+			let total = $(elementohtml).children('td[id="td_datos_15"]').html();
+			let totaldescuentos = $(elementohtml).children('td[id="td_datos_9"]').html();
+			totaldescuentos = QuitarSeparadorMilValor(totaldescuentos)
+			total = QuitarSeparadorMilValor(total)
+			totalVenta = Number(totalVenta) + Number(total)
+			totaldescuento = Number(totaldescuento) + Number(totaldescuentos)
+			SubtotalVenta = Number(totalVenta) + Number(totaldescuento)
+			control = control + 1;
+		});
+	
+		if (control == "1") {
+			DatosAutoCompleteCredito.push(1)
+		}
+		buscarDescripcionProducto(idFkProducto, totalVenta, nroid);
+
+		document.getElementById("inptSubTotalVenta").value=separadordemilesnumero(SubtotalVenta);
+		document.getElementById("inptTotalVenta").value=separadordemilesnumero(totalVenta);
+		document.getElementById("inptTotalVenta2").innerHTML=separadordemilesnumero(totalVenta);
+		document.getElementById("inptTotalDescuento").value=separadordemilesnumero(totaldescuento);
+		
+		OpcionesTipoVenta();
+	});
+
+	limpiarCamposAnhadirProductosVenta();
+	verCerrarAbmVenta();
 }

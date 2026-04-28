@@ -359,6 +359,9 @@ ALTER TABLE detalles_presupuesto ADD COLUMN es_alternativo BOOLEAN DEFAULT 0;
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.76', detalles='Re-estructuracion de presupuesto.', fecha='2026-04-22' WHERE idhistorialactualizacion= 2;
 
+ALTER TABLE presupuesto ADD COLUMN plan_vendido ENUM('total', 'prioritario');
+ALTER TABLE presupuesto ADD COLUMN cod_ventaFK INT(11);
+
 CREATE TABLE tareas_programadas (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
@@ -369,6 +372,30 @@ CREATE TABLE tareas_programadas (
     cod_usuarioFK_create INT(11),
     fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE historial_tareas_programadas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    estado ENUM('completado', 'inconcluso') DEFAULT 'inconcluso',
+    fecha_realizado DATETIME,
+    cod_usuarioFK INT(11),
+    cod_usuarioFK_create INT(11),
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS reiniciar_tareas_programadas$$
+CREATE PROCEDURE reiniciar_tareas_programadas()
+BEGIN
+    UPDATE tareas_programadas
+    SET estado = 'pendiente'
+    WHERE estado <> 'inactivo'
+      AND hora IS NOT NULL
+      AND hora <> '00:00:00';
+END$$
+
+DELIMITER ;
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
