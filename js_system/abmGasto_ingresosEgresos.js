@@ -30,6 +30,7 @@ function verCerrarAbmGasto(){
 		checkfiltroshistorialegresoingreso(1);
         buscaroptionMotivoEgresoIngreso();
 		buscarabmGasto();
+		buscarProyectosVistaSelecc();
 		document.getElementById("divAbmGastos").style.display=""
         document.getElementById("tdEfectoAbmGasto").className="magictime slideDownReturn"
 	}
@@ -60,6 +61,7 @@ function verCerrarVentanaAbmGasto(mostrar, limpiar= false) {
 	   }
 		
 		if (limpiar) {
+			buscarProyectosVistaSelecc();
 			limpiarcamposGasto();
             BuscarAbmMotivoEgresoIngreso();
 			if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
@@ -95,7 +97,7 @@ function verVentanaEditarGasto(vent_anterior= "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
-	
+
 	ventanaAnterior.push(vent_anterior);
 	verCerrarVentanaAbmGasto(true, false)
 }
@@ -111,6 +113,8 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_14"]').html();
 	
 	document.getElementById('inptFechaGasto').value = $(datostr).children('td[id="td_datos_3"]').html();
+	document.getElementById('inptProyectoGasto').value = $(datostr).children('td[id="td_datos_22"]').html();
+	document.getElementById('inptIdGasto').value = $(datostr).children('td[id="td_id"]').html();
 	
 	document.getElementById('inptEstadoGasto').value = ($(datostr).children('td[id="td_datos_5"]').html() == 'Inactivo' ? 'Inactivo' : 'Activo');
 	document.getElementById('inptlocalMisGastos').value = $(datostr).children('td[id="td_datos_7"]').html();
@@ -259,6 +263,72 @@ function seleccionarGastosAsociados(element) {
 	}
 }
 
+function buscarProyectosVistaSelecc() {
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid)
+	datos.append("passu", passuser)
+	datos.append("navegador", navegador)
+	datos.append("accion", 'buscarVistaSelect')
+	
+	var OpAjax = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmProyectoGasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+			xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+        var porce= ~~((evt.loaded / evt.total) * 100); 
+		if(porce>90){
+		porce=Number(porce)-7				
+		}
+		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			return false;
+		},
+		success: function (responseText) {
+			Respuesta = responseText;
+			verCerrarEfectoCargando("")
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+				   document.getElementById('inptProyectoGasto').innerHTML= '<option value= "">SELECCIONAR</option><option value= "">NUEVO PROYECTO</option>' + datos[2];
+				}				
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 function verificarcamposGasto() {
 	var inptMontoGasto = document.getElementById('inptMontoGasto').value
 	var inptDescripcionGasto = document.getElementById('inptDescripcionGasto').value
@@ -272,25 +342,10 @@ function verificarcamposGasto() {
 	var inptCuentaGasto = document.getElementById('inptCuentaGasto').value
 	var inptCantCuotaGasto = Number(document.getElementById('inptCantCuotaGasto').value || 0)
 	var inptPeriodicidadGasto = document.getElementById('inptPeriodicidadGasto').value;
+	var inptProyectoGasto = document.getElementById('inptProyectoGasto').value;
 	let actualizar_caja= false;
 
-    let inptMotivoMisGastos= '';
-    $("input[id=inptMotivoMisGastos]").each(function (i, Elemento) {
-      var $input = $(this),
-          val = $input.val();
-		 
-          list = $input.attr('list'),
-          match = $('#'+list + ' option').filter(function() {
-              return ($(this).val() === val);			 
-          });
-
-       if(match.length > 0) {
-         inptMotivoMisGastos=$(match).attr("id")
-       } else {
-           // value is not in list
-		   inptMotivoMisGastos= '';
-       }
-    });
+    const inptMotivoMisGastos= document.getElementById('inptMotivoMisGastos').value;
 
     if (inptMotivoMisGastos == '') {
         ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO DE LA LISTA.");
@@ -320,12 +375,12 @@ function verificarcamposGasto() {
 		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
 		accion = "nuevo";
 	}
-	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto);
+	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto, inptProyectoGasto);
 }
-function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "") {
+function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "", proyecto_gasto="") {
 	verCerrarEfectoCargando("1")
 	let editar_cuotas= true;
-
+	
 	if (accion == "editar") {
 		editar_cuotas= confirm("¿Modificar tambien las cuotas asociadas?");
 	}
@@ -343,6 +398,7 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("estado", estado)
 	datos.append("tipo", tipo)
 	datos.append("cod_local", cod_local)
+	datos.append("cod_proyecto_gastoFK", proyecto_gasto)
 	datos.append("codcaja", cajapredeterminada)
 	datos.append("idaperturacierrecaja", idabmAperturacierrecaja)
 	datos.append("nroboleta", nroboleta)
@@ -1264,7 +1320,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 function buscaroptionMotivoEgresoIngreso() {
 
-	document.getElementById("ListMotivoMisGastos").innerHTML = ""
+	document.getElementById("inptMotivoMisGastos").innerHTML = ""
 	document.getElementById("listBuscarIngresoEgreso3").innerHTML = ""
 
 	obtener_datos_user();
@@ -1286,14 +1342,14 @@ function buscaroptionMotivoEgresoIngreso() {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("ListMotivoMisGastos").innerHTML = ''
+			document.getElementById("inptMotivoMisGastos").innerHTML = ''
 			document.getElementById("listBuscarIngresoEgreso3").innerHTML = ""
 		},
 		success: function (responseText) {
 
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("ListMotivoMisGastos").innerHTML = ''
+			document.getElementById("inptMotivoMisGastos").innerHTML = ''
 			document.getElementById("listBuscarIngresoEgreso3").innerHTML = ""
 			try {
 				var datos = $.parseJSON(Respuesta);
@@ -1301,7 +1357,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 				   var datos_buscados = datos[2];
-					document.getElementById("ListMotivoMisGastos").innerHTML = datos[4]
+					document.getElementById("inptMotivoMisGastos").innerHTML = datos[2]
 					document.getElementById("listBuscarIngresoEgreso3").innerHTML = datos[4]
 				}
 			} catch (error) {

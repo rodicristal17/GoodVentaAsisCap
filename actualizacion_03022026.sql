@@ -397,6 +397,14 @@ END$$
 
 DELIMITER ;
 
+CREATE TABLE proyectos_gasto(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo'
+);
+
+ALTER TABLE gastos ADD COLUMN cod_proyecto_gastoFK INT(11);
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
