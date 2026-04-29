@@ -5135,8 +5135,12 @@ if (ventana == "Presupuesto") {
 "<table class='TableRepor0' style='width:100%'>"
 +"<tr>"
 +"<td style='width:20%;text-align:left'>" 
++"<p class='pTituloC'><b>CEDULTA:</b></p>"
++"<p class='pTituloC' >"+document.getElementById('inptDocumentoClientePresupuesto').value+"</p>"
 +"</td>"
 +"<td style='width:40%;text-align:left'>"
++"<p class='pTituloC'><b>PACIENTE:</b></p>"
++"<p class='pTituloC' >"+document.getElementById('inptNombreClientePresupuesto').value+"</p>"
 +"</td>"
 +"<td style='width:20%;text-align:left'>"
 +"<p class='pTituloC'><b>FECHA IMPRESION:</b></p>"
@@ -5173,13 +5177,30 @@ const totalPresupuestoPrioritarioOrigen = document.getElementById("inptTOTALPres
 	totalPresupuestoPrioritarioImp.value = totalPresupuestoPrioritarioOrigen.value;
 	totalPresupuestoPrioritarioImp.setAttribute("value", totalPresupuestoPrioritarioOrigen.value);
 
+	//Agrega bordes a los div hijo
+	Array.from(tb.children).forEach(function (div) {
+		div.style.border= "3px solid #0077cc";
+		div.style.borderRadius= "16px";
+		div.style.marginBottom= "5px";
+		div.style.display= "flex";
+		div.style.padding= "10px";
+		div.style.marginBottom = "10px";
+	})
+
 // Modifica el diseño
 tb.querySelectorAll(".div_cuerpo_table").forEach(function (div) {
 	div.style.height = "auto";
 	div.style.overflow = "visible"; // opcional, útil si es para impresión
 });
 tb.querySelectorAll(".presupuesto-panel").forEach(function (div) {
-	div.style.marginBottom = "25px";
+	div.style.width= "50%";
+	div.style.marginInline= "2px";
+	div.style.flex= "none";
+});
+
+// Remueve el subtitulo
+tb.querySelectorAll(".panel-subtitle").forEach(function (span) {
+	span.remove();
 });
 
 //document.getElementById("divPieImpresiones").innerHTML=piedepagina
