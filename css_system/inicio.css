@@ -1825,6 +1825,26 @@ textarea:focus, select:focus {
   text-transform: uppercase;
 }
 
+.panel-subtitle {
+  display: block;
+  width: 100%;
+  margin: -8px 0 14px;
+  color: #6f879f;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.form-section > .panel-subtitle {
+  flex: 1 1 100%;
+}
+
+.presupuesto-search-results-head .panel-subtitle {
+  flex: 1 1 auto;
+  width: auto;
+  margin: 0;
+}
+
 .productos-section {
   display: grid;
   grid-template-columns: minmax(0, 2.2fr) minmax(260px, 0.9fr);

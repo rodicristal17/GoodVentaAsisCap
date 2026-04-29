@@ -4786,206 +4786,151 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <tr>
 <td>
 <center>
-<div id='divAbmGasto2' style='display:none;width: fit-content;' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Abm <b style='font-size: 30px;' >Egreso / Ingreso</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
-title='Limpiar campos' onclick='limpiarcamposGasto()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
-title='Minimizar Ventana' onclick='minimizarventanaingresoegreso()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
-title='Volver Atras' onclick='verCerrarVentanaAbmGasto(false, false)' />
-</td>
-</tr>
-</table>
-<center>
-<div style="display: flex;">
-<div class='divMenuf' style='margin:1%;width: 350px;'>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Monto* :</p>
-<input class='inputText' type='text' placeholder='Obligatorio (*)'
-id='inptMontoGasto' onkeyup='separadordemiles(this)'
-style='width:200px' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Concepto contable* :</p>
-<!-- <select class="inputSelect" id="inptMotivoMisGastos" -->
-<!-- style='width:150px'></select> -->
-<input id='inptMotivoMisGastos' list='ListMotivoMisGastos' style='width:70%' type='text' class='inputText' />
-<datalist id="ListMotivoMisGastos"></datalist>
-<input  type="button" value="Add" class="btn5" onclick="verCerrarAbmNuevoMotivo()" >
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%;'>
-<tr>
-<td>
-<p class='pTituloC' >Descripcion* :</p>
-<textarea class='textarea1' placeholder='Obligatorio (*)'
-id='inptDescripcionGasto' style='height:120px'></textarea>
-</td>
-</tr>
-</table>
-<table style='width:100%;display:none'>
-<tr>
-<td>
-<p class='pTituloC' >Gasto de :</p>
-<input class='inputText' type='text' placeholder='Obligatorio (*)'
-id='inptPersonalGasto' style='width:200px' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style="width: 40%;">
-<p class='pTituloC' >Fecha* :</p>
-<input class='inputText' type='Date' id='inptFechaGasto'
-style='width:150px' />
-</td>
-<td style="width: 60%;">
-<p class='pTituloC' >Local* :</p>
-<select class="inputSelect" id="inptlocalMisGastos"
-style='width:150px'></select>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-  <td style="width:100%">
-    <p class="pTituloC">Interconsulta* :</p>
-    <input type="text" class="inputTextDisable" id="inptAbmInterConsultaGasto" disabled="" style="width: 250px;">
-    <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmGastos')" style="background-color: #FF5722;">
-  </td>
-</tr>
-</table>
+<div id='divAbmGasto2' style='display:none;max-width:1240px;' class='presupuesto-container presupuesto-search-modal'>
+<header class='presupuesto-header'>
+<h2>Egreso / Ingreso</h2>
+<div class='header-actions'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar campos' onclick='limpiarcamposGasto()' />
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarventanaingresoegreso()' />
+<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaAbmGasto(false, false)' />
 </div>
-<div class='divMenuf' style='margin:1%;width: 350px;'>
-<br>
-<table>
-<tr>
-<td style='width:60%'>
-<p class='pTituloC' >Nro de Boleta :</p>
-<input class='inputText' type='text' id='inptNroBoletaGasto' style='width:200px' />
-</td>
-<td style='width:40%'>
-<p class='pTituloC'>Tipo* :</p>
-<select class="inputSelect" id="inptTipoGasto" style='width:150px'>
-<option value="Ingreso">INGRESO</option>
-<option value="Egreso">EGRESOS</option>
+</header>
+
+<section class='detalles-section' style='grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:18px;align-items:stretch;'>
+<div class='presupuesto-panel tabla-detalles' style='height:100%;'>
+<div class='panel-title'>Datos principales</div>
+<div class='form-section' style='margin-bottom:0;'>
+<div class='form-row'>
+<label for='inptIdGasto'>Cod. gasto :</label>
+<input class='inputTextDisable' type='text' disabled placeholder='Obligatorio (*)' id='inptIdGasto' />
+</div><div class='form-row'>
+<label for='inptMontoGasto'>Monto* :</label>
+<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoGasto' onkeyup='separadordemiles(this)' />
+</div>
+<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<label for='inptMotivoMisGastos'>Concepto contable* :</label>
+<div style='display:flex;gap:10px;align-items:flex-end;width:100%;'>
+<select class="inputSelect" id="inptMotivoMisGastos"></select>
+<input type='button' value='Add' class='btn5' onclick='verCerrarAbmNuevoMotivo()' style='width:70px;' />
+</div>
+</div>
+<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<label for='inptDescripcionGasto'>Descripcion* :</label>
+<textarea class='textarea1' placeholder='Obligatorio (*)' id='inptDescripcionGasto' style='width:100%;min-height:120px;box-sizing:border-box;resize:vertical;border-radius:12px;padding:12px;border:1px solid #ccd8e6;background:#f9fbfe;box-shadow:inset 0 1px 2px rgba(37,71,106,0.06);'></textarea>
+</div>
+<div class='form-row' style='display:none;'>
+<label for='inptPersonalGasto'>Gasto de :</label>
+<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptPersonalGasto' />
+</div>
+<div class='form-row'>
+<label for='inptFechaGasto'>Fecha* :</label>
+<input class='inputText' type='Date' id='inptFechaGasto' />
+</div>
+<div class='form-row'>
+<label for='inptlocalMisGastos'>Local* :</label>
+<select class='inputSelect' id='inptlocalMisGastos'></select>
+</div>
+<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<label for='inptAbmInterConsultaGasto'>Interconsulta* :</label>
+<div style='display:flex;gap:10px;align-items:flex-end;width:100%;'>
+<input type='text' class='inputTextDisable' id='inptAbmInterConsultaGasto' disabled style='flex:1 1 auto;min-width:0;'>
+<input type='button' value='Seleccionar' class='btn4' onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmGastos')" style='width:130px;background-color:#FF5722;'>
+</div>
+</div>
+</div>
+</div>
+
+<div class='presupuesto-panel tabla-cuotas' style='height:100%;'>
+<div class='panel-title'>Pago y estado</div>
+<div class='form-section' style='margin-bottom:0;'>
+<div class='form-row'>
+<label for='inptNroBoletaGasto'>Nro de Boleta :</label>
+<input class='inputText' type='text' id='inptNroBoletaGasto' />
+</div>
+<div class='form-row'>
+<label for='inptTipoGasto'>Tipo* :</label>
+<select class='inputSelect' id='inptTipoGasto'>
+<option value='Ingreso'>INGRESO</option>
+<option value='Egreso'>EGRESOS</option>
 </select>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style="width: 50%;">
-<p class='pTituloC' >Banco :</p>
+</div>
+<div class='form-row'>
+<label for='inptBancoGasto'>Banco :</label>
 <input class='inputText' type='text' id='inptBancoGasto' />
-</td>
-<td style="width: 50%;">
-<p class='pTituloC' >Cuenta :</p>
-<input class='inputText' type='text' id='inptCuentaGasto' style='width:200px' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%; display: none;'>
-<tr>
-<td>
-<p class='pTituloC' >Arreglo :</p>
-<select class="inputSelect" id="inptArregloGasto" style='width:200px'>
-<option value="">SELECCIONAR</option>
-<option value="INTERNO">INTERNO</option>
-<option value="EXTERNO">EXTERNO</option>
+</div>
+<div class='form-row'>
+<label for='inptCuentaGasto'>Cuenta :</label>
+<input class='inputText' type='text' id='inptCuentaGasto' />
+</div>
+<div class='form-row' style='display:none;'>
+<label for='inptArregloGasto'>Arreglo :</label>
+<select class='inputSelect' id='inptArregloGasto'>
+<option value=''>SELECCIONAR</option>
+<option value='INTERNO'>INTERNO</option>
+<option value='EXTERNO'>EXTERNO</option>
 </select>
-</td>
-</tr>
-</table>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Estado :</p>
-<select class="inputSelect" id="inptEstadoGasto" style='width:200px'>
-<option value="Activo">ACTIVO</option>
-<option value="Inactivo">INACTIVO</option>
+</div>
+<div class='form-row'>
+<label for='inptEstadoGasto'>Estado :</label>
+<select class='inputSelect' id='inptEstadoGasto'>
+<option value='Activo'>ACTIVO</option>
+<option value='Inactivo'>INACTIVO</option>
 </select>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style="width: 50%;" id='tablePeriodicidad'>
-<p class='pTituloC' >Cantidad de cuotas :</p>
+</div>
+<div class='form-row' id='tablePeriodicidad'>
+<label for='inptCantCuotaGasto'>Cantidad de cuotas :</label>
 <input class='inputText' type='number' id='inptCantCuotaGasto'/>
-</td>
-<td style="width: 50%;">
-<p class='pTituloC' >Periodicidad :</p>
-<select class="inputSelect" id="inptPeriodicidadGasto">
-<option value="">NINGUNA</option>
-<option value="semanal">SEMANAL</option>
-<option value="quincenal">QUINCENAL</option>
-<option value="mensual">MENSUAL</option>
-<option value="semestral">SEMESTRAL</option>
-<option value="anual">ANUAL</option>
+</div>
+<div class='form-row'>
+<label for='inptPeriodicidadGasto'>Periodicidad :</label>
+<select class='inputSelect' id='inptPeriodicidadGasto'>
+<option value=''>NINGUNA</option>
+<option value='semanal'>SEMANAL</option>
+<option value='quincenal'>QUINCENAL</option>
+<option value='mensual'>MENSUAL</option>
+<option value='semestral'>SEMESTRAL</option>
+<option value='anual'>ANUAL</option>
 </select>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
+</div>
+<div class='form-row'>
+<label for='inptProyectoGasto'>Proyecto :</label>
+<select class='inputSelect' id='inptProyectoGasto'>
+  <option value="">SELECCIONAR</option>
+</select>
+</div>
+</div>
+</div>
+
+<div class='presupuesto-panel tabla-detalles' style='height:100%;'>
+<div class='panel-title'>Comprobante</div>
+<center>
+<div id='imgfotoGasto' class='imgFotoProducto' onclick="vercerrarcargadefotos('fotoGasto')" style="background-image:url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></div>
+</center>
+<div class='form-section' style='margin-top:18px;margin-bottom:0;'>
+<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<input type='button' value='Guardar datos' class='btn1' onclick='verificarcamposGasto()' id='btnAbmGastos' style='width:100%;' />
+</div>
+</div>
+</div>
+</section>
+
+<section class='presupuesto-panel presupuesto-search-results' id='divGastoAsociadosGastos' style='display:none;padding:20px;margin-bottom:18px;'>
+<div class='presupuesto-search-results-head'>
+<div class='panel-title'>Gastos asociados</div>
+<strong id='divNombreProyectoGasto'>Nombre proyecto</strong>
+</div>
+<table class='tableCabeceraRegistro'>
 <tr>
-<td>
-<center>
-  <div id="imgfotoGasto" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoGasto')" 
-    style="background-image: url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></div>
-</center>
-</td>
+<td class='td_registro' style='width:10%;'>#</td>
+<td class='td_registro' style='width:15%;'>Fecha</td>
+<td class='td_registro'>Descripcion</td>
+<td class='td_registro' style='width:10%;'>Estado</td>
+<td class='td_registro' style='width:15%;'>Monto</td>
 </tr>
 </table>
-<br>
-<center>
-<input type='button' value='Guardar datos' class='btn1' onclick='verificarcamposGasto()' id='btnAbmGastos' />
-</center>
-</div>
-<div class='divMenuf' style='float:left;margin:1%;width: 470px;display: none;' id="divGastoAsociadosGastos">
-  <table style='width:100%'><tr>
-    <td style="width: 50%;text-align: center;">
-    <strong id="divNombreProyectoGasto">Nombre proyecto</strong>
-  </tr></table>
-  <table class="tableCabeceraRegistro">
-    <tr>
-      <td class="td_registro" style="width: 10%;">#</td>
-      <td class="td_registro" style="width: 15%;">Fecha</td>
-      <td class="td_registro" style="">Descripcion</td>
-      <td class="td_registro" style="width: 10%;">Estado</td>
-      <td class="td_registro" style="width: 15%;">Monto</td>
-    </tr>
-  </table>
-  <table border="1" cellspacing="1" cellpadding="5" id="divTableProyecto" style="max-height: 450px;display: flex;overflow-y: auto;"></table>
-</div>
-</div>
-</center>
+<div id='divTableProyecto' style='max-height:450px;display:grid;overflow-y:auto;'></div>
+<table border='1' cellspacing='1' cellpadding='5' ></table>
+</section>
 </div>
 <div id='divAbmGasto1' style='width:90%;display:' class='divAbms'>
 <table class='tableMenuZ'>
@@ -8008,7 +7953,7 @@ ACCION
     <header class="presupuesto-header">
       <div>
         <h2>Plan de tratamientos</h2>
-        <p id="presupuestoDocStepLabel" style="margin: 6px 0 0; color: #6b859d; font-size: 13px; font-weight: 700; letter-spacing: 0.04em;">Ventana 1 de 2: Paciente y plan total</p>
+        <p id="presupuestoDocStepLabel" style="margin: 6px 0 0; color: #6b859d; font-size: 13px; font-weight: 700; letter-spacing: 0.04em;">Ventana 1 de 2: Paciente y todos los tratamientos</p>
       </div>
       <div class="header-actions">
         <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
@@ -8047,6 +7992,7 @@ ACCION
         <section style="margin-bottom: 0;">
           <div class="productos-lista presupuesto-panel" id="presupuestoDocProductosPanel">
             <div class="panel-title">Tratamientos Disponibles</div>
+            <span class="panel-subtitle">Busca tratamientos por codigo o nombre para agregarlos a ambos planes.</span>
 
             <div class="form-section" style="justify-content: space-between;">
               <div class="form-row">
@@ -8119,7 +8065,8 @@ ACCION
 
       <div id="presupuestoDocTrabajoPanel" style="height: -webkit-fill-available;">
         <section class="tabla-detalles presupuesto-panel" id="presupuestoDocResumenPanel" style="height: 100%;">
-          <div class="panel-title">Detalle del plan total</div>
+          <div class="panel-title">Detalle del plan rehabilitacion total</div>
+          <span class="panel-subtitle">Muestra todos los tratamientos cargados que seran para ambos planes.</span>
 
           <table class="tableCabeceraRegistro">
             <tbody>
@@ -8149,22 +8096,26 @@ ACCION
 <section class="presupuesto-panel" id="presupuestoDocPrioritarioHeader"
   style="display:none;margin-bottom:18px;padding:14px 18px;margin-top: 18px;">
   <div class="panel-title" style="margin-bottom:10px;">Seleccion de prioritarios</div>
+  <span class="panel-subtitle">Resume el paciente y permite volver, guardar o continuar con la division de planes.</span>
   <div class="presupuesto-doc-nav">
     <div style="display:flex;flex-wrap:wrap;gap:10px;">
       <span class="presupuesto-doc-pill">Paciente: <span id="presupuestoDocPacienteResumen">Sin
           seleccionar</span></span>
       <span class="presupuesto-doc-pill">Ventana 2 de 2</span>
     </div>
-    <input type="button" value="Volver al plan total" class="btn4" onclick="verPasoPresupuestoDoc(1)"
-      style="width:190px;">
-    <input type="button" value="Guardar todo" class="btn4" onclick="limpiarCamposGenerarTratamiento();verCerrarAbmDetallesPresupuestoDoc(false);"
-      style="width:190px;">
+    <div>
+      <input type="button" value="Volver atras" class="btn4" onclick="verPasoPresupuestoDoc(1)"
+        style="width:190px;">
+      <input type="button" value="Guardar todo" class="btn4" onclick="limpiarCamposGenerarTratamiento();verCerrarAbmDetallesPresupuestoDoc(false);"
+        style="width:190px;">
+    </div>
   </div>
 </section>
 
 <section id="presupuestoDocDetallePanel" class="presupuesto-doc-planificador" style="display:none;">
   <div class="tabla-detalles presupuesto-panel presupuesto-doc-tratamientos-panel">
     <div class="panel-title">Tratamientos</div>
+    <span class="panel-subtitle">Lista base de tratamientos disponibles para distribuir entre los planes.</span>
 
     <table class="tableCabeceraRegistro">
       <tbody>
@@ -8187,7 +8138,8 @@ ACCION
 
   <div class="presupuesto-doc-planes">
     <div class="tabla-detalles presupuesto-panel presupuesto-doc-plan-panel">
-      <div class="panel-title">Plan TOTAL</div>
+      <div class="panel-title">Plan REHABILITACION TOTAL</div>
+      <span class="panel-subtitle">Contiene todos los tratamientos incluidos en la propuesta completa.</span>
 
       <table class="tableCabeceraRegistro">
         <tbody>
@@ -8209,7 +8161,8 @@ ACCION
     </div>
 
     <div class="tabla-detalles presupuesto-panel presupuesto-doc-plan-panel">
-      <div class="panel-title">Plan URGENTE</div>
+      <div class="panel-title">Plan PROVISORIO</div>
+      <span class="panel-subtitle">Agrupa los tratamientos prioritarios o iniciales del plan.</span>
 
       <table class="tableCabeceraRegistro">
         <tbody>
@@ -8275,7 +8228,6 @@ ACCION
     <section class="productos-section">
       <div class="productos-lista presupuesto-panel">
         <div class="panel-title">Tratamientos Disponibles</div>
-
         <table class="tableCabeceraRegistro">
           <tbody>
             <tr>
@@ -8345,7 +8297,7 @@ ACCION
       </div>
 
       <div class="form-row">
-        <label>Solo plan urgente:</label>
+        <label>Solo plan provisorio:</label>
         <input type="checkbox" class="inputText" id="inptAlternativoPresupuesto" style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
       </div>
 
@@ -8357,124 +8309,131 @@ ACCION
 
     <!-- Detalles -->
     <section class="detalles-section" id="tdTablaPresupuesto">
-      <div class="tabla-detalles presupuesto-panel">
-        <div class="panel-title">Detalle del Plan Total</div>
+      <div>
+        <div class="tabla-detalles presupuesto-panel">
+          <div class="panel-title">Detalle del Plan Rehabilitacion Total</div>
+          <span class="panel-subtitle">Detalle valorizado de todos los tratamientos del plan completo.</span>
 
-        <table class="tableCabeceraRegistro">
-          <tbody>
-            <tr>
-              <td class="td_registro" style="width:10%;">
-                CODIGO
-              </td>
-              <td class="td_registro" style="width:50%;">
-                TRATAMIENTO
-              </td>
-              <td class="td_registro" style="width:10%;">
-                CANTIDAD
-              </td>
-              <td class="td_registro" style="width:15%;">
-                PRECIO
-              </td>
-              <td class="td_registro" style="width:15%;">
-                TOTAL
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <table class="tableCabeceraRegistro">
+            <tbody>
+              <tr>
+                <td class="td_registro" style="width:10%;">
+                  CODIGO
+                </td>
+                <td class="td_registro" style="width:50%;">
+                  TRATAMIENTO
+                </td>
+                <td class="td_registro" style="width:10%;">
+                  CANTIDAD
+                </td>
+                <td class="td_registro" style="width:15%;">
+                  PRECIO
+                </td>
+                <td class="td_registro" style="width:15%;">
+                  TOTAL
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle" style="height: 450px;"></div>
+          <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle" style="height: 450px;"></div>
+        </div>
+
+        <div class="tabla-cuotas presupuesto-panel">
+          <div class="panel-title">Plan de Cuotas del Plan Rehabilitacion Total</div>
+          <span class="panel-subtitle">Configura las cuotas y el total financiado del plan completo.</span>
+
+          <table class="tableCabeceraRegistro">
+            <tbody>
+              <tr>
+                <td class="td_registro" style="width:25%;">
+                  CUOTAS
+                </td>
+                <td class="td_registro" style="width:25%;">
+                  PLAN DE PAGO
+                </td>
+                <td class="td_registro" style="width:25%;">
+                  DESCRIPCION
+                </td>
+                <td class="td_registro" style="width:25%;">
+                  TOTAL
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto"></div>
+          <footer class="presupuesto-footer">
+            <label>TOTAL PRESUPUESTO:</label>
+            <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
+          </footer>
+        </div>
       </div>
+      <div>
+        <div class="tabla-detalles presupuesto-panel">
+          <div class="panel-title">Detalle del Plan Provisorio</div>
+          <span class="panel-subtitle">Detalle valorizado de los tratamientos definidos como provisorios.</span>
 
-      <div class="tabla-cuotas presupuesto-panel">
-        <div class="panel-title">Plan de Cuotas del Plan Total</div>
+          <table class="tableCabeceraRegistro">
+            <tbody>
+              <tr>
+                <td class="td_registro" style="width:10%;">
+                  CODIGO
+                </td>
+                <td class="td_registro" style="width:50%;">
+                  TRATAMIENTO
+                </td>
+                <td class="td_registro" style="width:10%;">
+                  CANTIDAD
+                </td>
+                <td class="td_registro" style="width:15%;">
+                  PRECIO
+                </td>
+                <td class="td_registro" style="width:15%;">
+                  TOTAL
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-        <table class="tableCabeceraRegistro">
-          <tbody>
-            <tr>
-              <td class="td_registro" style="width:25%;">
-                CUOTAS
-              </td>
-              <td class="td_registro" style="width:25%;">
-                PLAN DE PAGO
-              </td>
-              <td class="td_registro" style="width:25%;">
-                DESCRIPCION
-              </td>
-              <td class="td_registro" style="width:25%;">
-                TOTAL
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto"></div>
-        <footer class="presupuesto-footer">
-          <label>TOTAL PRESUPUESTO:</label>
-          <input type="text" class="inputText" id="inptTOTALPresupuestoFORM" onkeyup="separadordemiles(this)">
-        </footer>
-      </div>
+          <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_prioritario" style="height: 450px;"></div>
+        </div>
 
-      <div class="tabla-detalles presupuesto-panel">
-        <div class="panel-title">Detalle del Plan Urgente</div>
+        <div class="tabla-cuotas presupuesto-panel">
+          <div class="panel-title">Plan de Cuotas del Plan Provisorio</div>
+          <span class="panel-subtitle">Configura las cuotas y el total financiado del plan provisorio.</span>
 
-        <table class="tableCabeceraRegistro">
-          <tbody>
-            <tr>
-              <td class="td_registro" style="width:10%;">
-                CODIGO
-              </td>
-              <td class="td_registro" style="width:50%;">
-                TRATAMIENTO
-              </td>
-              <td class="td_registro" style="width:10%;">
-                CANTIDAD
-              </td>
-              <td class="td_registro" style="width:15%;">
-                PRECIO
-              </td>
-              <td class="td_registro" style="width:15%;">
-                TOTAL
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_prioritario" style="height: 450px;"></div>
-      </div>
-
-      <div class="tabla-cuotas presupuesto-panel">
-        <div class="panel-title">Plan de Cuotas del Plan Urgente</div>
-
-        <table class="tableCabeceraRegistro">
-          <tbody>
-            <tr>
-              <td class="td_registro" style="width:25%;">
-                CUOTAS
-              </td>
-              <td class="td_registro" style="width:25%;">
-                PLAN DE PAGO
-              </td>
-              <td class="td_registro" style="width:25%;">
-                DESCRIPCION
-              </td>
-              <td class="td_registro" style="width:25%;">
-                TOTAL
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto_prioritario"></div>
-        <footer class="presupuesto-footer">
-          <label>TOTAL PRESUPUESTO:</label>
-          <input type="text" class="inputText" id="inptTOTALPresupuestoFORMPrioritario" onkeyup="separadordemiles(this)">
-        </footer>
+          <table class="tableCabeceraRegistro">
+            <tbody>
+              <tr>
+                <td class="td_registro" style="width:25%;">
+                  CUOTAS
+                </td>
+                <td class="td_registro" style="width:25%;">
+                  PLAN DE PAGO
+                </td>
+                <td class="td_registro" style="width:25%;">
+                  DESCRIPCION
+                </td>
+                <td class="td_registro" style="width:25%;">
+                  TOTAL
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto_prioritario"></div>
+          <footer class="presupuesto-footer">
+            <label>TOTAL PRESUPUESTO:</label>
+            <input type="text" class="inputText" id="inptTOTALPresupuestoFORMPrioritario" onkeyup="separadordemiles(this)">
+          </footer>
+        </div>
       </div>
     </section>
-    <section class="form-section presupuesto-panel">
+    <section class="form-section presupuesto-panel" style="justify-content: space-around;">
       <div class="form-row">
         <label for="inptSelecctPlanPresupuesto">Seleccionar plan</label>
         <select class="inputSelect" id="inptSelecctPlanPresupuesto">
-          <option value="total">Plan Total</option>
-          <option value="urgente">Plan Urgente</option>
+          <option value="total">Plan Rehabilitacion Total</option>
+          <option value="urgente">Plan Provisorio</option>
         </select>
       </div>
       <div class="form-row">
@@ -22348,6 +22307,7 @@ D/A
 <section class='detalles-section' style='grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:18px;align-items:stretch;'>
 <div class='presupuesto-panel tabla-detalles' style='height:100%;'>
 <div class='panel-title'>Datos del cliente</div>
+<span class='panel-subtitle'>Carga la identificacion, contactos y datos personales principales.</span>
 <div class='form-section' style='margin-bottom:0;'>
 <div class='form-row flex-grow'>
 <label for='inptNombreApellidoCliente'>Nombre y apellido</label>
@@ -22378,6 +22338,7 @@ D/A
 
 <div class='presupuesto-panel tabla-cuotas' style='height:100%;'>
 <div class='panel-title'>Ubicacion y calif.</div>
+<span class='panel-subtitle'>Registra direccion, zona, referencias y condicion de credito.</span>
 <div class='form-section' style='margin-bottom:0;'>
 <div class='form-row flex-grow'>
 <label for='inptDireccionCliente'>Direccion particular</label>
@@ -22419,6 +22380,7 @@ D/A
 
 <div class='presupuesto-panel tabla-detalles' style='height:100%;'>
 <div class='panel-title'>Datos laborales</div>
+<span class='panel-subtitle'>Completa empleo, direccion laboral, salario y contactos de la empresa.</span>
 <div class='form-section' style='margin-bottom:0;'>
 <div class='form-row flex-grow'>
 <label for='inptLugrarTrabajoCliente'>Lugar de trabajo</label>
@@ -22452,7 +22414,9 @@ D/A
 <div class='panel-title' style='margin:0;'>Fotos y estado</div>
 <img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn' title='Imprimir Documento' onclick='imprimirFotoCI()' />
 </div>
+<span class='panel-subtitle'>Adjunta documentos del cliente y define si permanece activo.</span>
 <div class='panel-title' style='margin-bottom:10px;'>Foto C.I.</div>
+<span class='panel-subtitle'>Guarda las imagenes frontal y posterior del documento de identidad.</span>
 <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;'>
 <div style='text-align:center;'>
 <div id='imgFotoCliente1' onclick='verCerrarVisorImagen("1","cliente1")' class='imgFotoCi' style='width:100%;height:180px;border-radius:14px;'></div>
@@ -22482,6 +22446,7 @@ D/A
 <section class='presupuesto-panel presupuesto-search-results' style='padding:20px;'>
 <div class='presupuesto-search-results-head'>
 <div class='panel-title'>Mas referencias</div>
+<span class='panel-subtitle'>Complementa contactos personales o comerciales para el analisis del cliente.</span>
 <span class='presupuesto-search-chip'>Complementa contactos personales y comerciales</span>
 </div>
 
@@ -27865,6 +27830,7 @@ id="table_vista_Descuento"></div>
 
     <section class='form-section presupuesto-panel'>
       <div class='panel-title' style='width:100%;'>Datos de la tarea</div>
+      <span class='panel-subtitle'>Programa una tarea diaria con hora, estado y fecha de realizacion.</span>
       <div class='form-row flex-grow' style='flex:1 1 320px;'>
         <label>Tarea* :</label>
         <input type='text' class='inputText' id='inptNombreTareasProgramadas'
