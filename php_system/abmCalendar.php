@@ -203,6 +203,7 @@ function guardarPacienteAgenda($mysqli, $useru){
                             estado,
                             cod_user_insert,
                             fecha_insert,
+                            accesocredito,
 							idzonaFk
                         ) VALUES (
                             '".$idPersona."',
@@ -210,6 +211,7 @@ function guardarPacienteAgenda($mysqli, $useru){
                             'Activo',
                             '".$useru."',
                             NOW(),
+                            'Confirmado',
 							0
                         )";
 
