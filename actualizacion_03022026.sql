@@ -405,6 +405,167 @@ CREATE TABLE proyectos_gasto(
 
 ALTER TABLE gastos ADD COLUMN cod_proyecto_gastoFK INT(11);
 
+-- Convertir los gastos asociados actuales en proyectos
+/* ============================================================
+   COMPLETAR MIGRACION DE GASTOS PERIODICOS SIN PROYECTO
+   ============================================================ */
+
+START TRANSACTION;
+
+
+/* 1) Crear tabla temporal con UN SOLO registro por cod_gasto_padre */
+DROP TEMPORARY TABLE IF EXISTS tmp_gastos_periodicos_sin_proyecto;
+
+CREATE TEMPORARY TABLE tmp_gastos_periodicos_sin_proyecto (
+    cod_gasto_padre INT NOT NULL PRIMARY KEY,
+    nombre_proyecto VARCHAR(100) NOT NULL,
+    cod_proyecto_gastoFK INT NULL
+);
+
+
+/* 2) Cargar padres pendientes usando como nombre el motivo de la primera cuota */
+INSERT INTO tmp_gastos_periodicos_sin_proyecto (
+    cod_gasto_padre,
+    nombre_proyecto
+)
+SELECT 
+    x.cod_gasto_padre,
+
+    LEFT(
+        COALESCE(
+            NULLIF(TRIM(p.motivo), ''),
+            CONCAT('Gasto sin motivo #', x.cod_gasto_padre)
+        ),
+        100
+    ) AS nombre_proyecto
+
+FROM (
+    SELECT DISTINCT g.cod_gasto_padre
+    FROM gastos g
+    WHERE g.cod_gasto_padre IS NOT NULL
+      AND g.cod_gasto_padre > 0
+      AND (
+            g.cod_proyecto_gastoFK IS NULL
+            OR g.cod_proyecto_gastoFK = 0
+          )
+) x
+LEFT JOIN gastos p 
+    ON p.idgastos = x.cod_gasto_padre;
+
+
+/* 3) Verificar lo que se va a migrar */
+SELECT 
+    t.cod_gasto_padre,
+    t.nombre_proyecto,
+    COUNT(g.idgastos) AS cantidad_gastos_a_asociar,
+    SUM(IFNULL(g.monto, 0)) AS total
+FROM tmp_gastos_periodicos_sin_proyecto t
+LEFT JOIN gastos g 
+    ON g.idgastos = t.cod_gasto_padre
+    OR g.cod_gasto_padre = t.cod_gasto_padre
+GROUP BY 
+    t.cod_gasto_padre,
+    t.nombre_proyecto
+ORDER BY t.cod_gasto_padre ASC;
+
+
+/* 4) Reutilizar proyectos existentes con el mismo nombre */
+UPDATE tmp_gastos_periodicos_sin_proyecto t
+INNER JOIN (
+    SELECT 
+        TRIM(nombre) AS nombre,
+        MIN(id) AS id
+    FROM proyectos_gasto
+    GROUP BY TRIM(nombre)
+) pg 
+    ON TRIM(pg.nombre) = TRIM(t.nombre_proyecto)
+SET t.cod_proyecto_gastoFK = pg.id;
+
+
+/* 5) Crear los proyectos que todavía no existen */
+INSERT INTO proyectos_gasto (
+    nombre,
+    estado
+)
+SELECT 
+    t.nombre_proyecto,
+    'activo'
+FROM tmp_gastos_periodicos_sin_proyecto t
+WHERE t.cod_proyecto_gastoFK IS NULL;
+
+
+/* 6) Volver a asociar cada temporal con el proyecto existente o creado */
+UPDATE tmp_gastos_periodicos_sin_proyecto t
+INNER JOIN (
+    SELECT 
+        TRIM(nombre) AS nombre,
+        MIN(id) AS id
+    FROM proyectos_gasto
+    GROUP BY TRIM(nombre)
+) pg 
+    ON TRIM(pg.nombre) = TRIM(t.nombre_proyecto)
+SET t.cod_proyecto_gastoFK = pg.id
+WHERE t.cod_proyecto_gastoFK IS NULL;
+
+
+/* 7) Asignar proyecto al gasto padre */
+UPDATE gastos g
+INNER JOIN tmp_gastos_periodicos_sin_proyecto t
+    ON t.cod_gasto_padre = g.idgastos
+SET g.cod_proyecto_gastoFK = t.cod_proyecto_gastoFK
+WHERE t.cod_proyecto_gastoFK IS NOT NULL
+  AND t.cod_proyecto_gastoFK > 0
+  AND (
+        g.cod_proyecto_gastoFK IS NULL
+        OR g.cod_proyecto_gastoFK = 0
+      );
+
+
+/* 8) Asignar proyecto a todas las cuotas hijas */
+UPDATE gastos g
+INNER JOIN tmp_gastos_periodicos_sin_proyecto t
+    ON t.cod_gasto_padre = g.cod_gasto_padre
+SET g.cod_proyecto_gastoFK = t.cod_proyecto_gastoFK
+WHERE t.cod_proyecto_gastoFK IS NOT NULL
+  AND t.cod_proyecto_gastoFK > 0
+  AND (
+        g.cod_proyecto_gastoFK IS NULL
+        OR g.cod_proyecto_gastoFK = 0
+      );
+
+
+/* 9) Verificar resultado antes de confirmar */
+SELECT 
+    t.cod_gasto_padre,
+    t.nombre_proyecto,
+    t.cod_proyecto_gastoFK,
+    pg.nombre AS proyecto,
+    COUNT(g.idgastos) AS cantidad_asociada,
+    SUM(IFNULL(g.monto, 0)) AS total_asociado
+FROM tmp_gastos_periodicos_sin_proyecto t
+INNER JOIN proyectos_gasto pg 
+    ON pg.id = t.cod_proyecto_gastoFK
+LEFT JOIN gastos g 
+    ON g.idgastos = t.cod_gasto_padre
+    OR g.cod_gasto_padre = t.cod_gasto_padre
+GROUP BY 
+    t.cod_gasto_padre,
+    t.nombre_proyecto,
+    t.cod_proyecto_gastoFK,
+    pg.nombre
+ORDER BY t.cod_gasto_padre ASC;
+
+
+/* 10) Confirmar */
+COMMIT;
+
+
+/* Si algo sale mal antes del COMMIT:
+ROLLBACK;
+*/
+
+
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
