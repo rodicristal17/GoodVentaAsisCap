@@ -157,13 +157,16 @@ $vendedor = mb_convert_encoding((string)($vendedor), 'ISO-8859-1', 'UTF-8');
 $nro_venta=$_POST['nro_venta'];
 $nro_venta = mb_convert_encoding((string)($nro_venta), 'ISO-8859-1', 'UTF-8');
 
+$cant_cuota=$_POST['cant_cuota'];
+$cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
+
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta);
+cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota);
 
 }
 	if($operacion=="mascuentasacobrar")
@@ -198,13 +201,17 @@ $vendedor = mb_convert_encoding((string)($vendedor), 'ISO-8859-1', 'UTF-8');
 
 $nro_venta=$_POST['nro_venta'];
 $nro_venta = mb_convert_encoding((string)($nro_venta), 'ISO-8859-1', 'UTF-8');
+
+$cant_cuota=$_POST['cant_cuota'];
+$cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
+
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_venta);
+mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_venta,$cant_cuota);
 
 }
 
@@ -3142,59 +3149,66 @@ if($nroCancelado==0){
 }
 
 
-function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$num_factura)
+function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$num_factura,$cant_cuota)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
 
+$sqlFiltro= "";
 
-	$condicionVendedor="";
 	 if($vendedor!=""){
-	   $condicionVendedor="and  Vendedor1 ='".$vendedor."'";		
+	   $sqlFiltro .="and  Vendedor1 ='".$vendedor."'";		
 	 }
 
+	if($codlocal!=""){
+		$sqlFiltro .=" and vt.cod_local='$codlocal' ";
+	}
 
-$condicionCodLocal=" "; 
-if($codlocal!=""){
-$condicionCodLocal=" and vt.cod_local='$codlocal' ";
- }
-	$condicioncliente=" ";
 	if($cliente!=""){
-	 $condicioncliente=" and  (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%' ";
+	 $sqlFiltro .=" and  (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%' ";
 	}	
-	$condiciondocumento=" ";
+
 	if($documento!=""){
-	 $condiciondocumento=" and  (Select ci_cliente from cliente where cod_cliente=cod_clienteFK) = '".$documento."' ";
+	 $sqlFiltro .=" and  (Select ci_cliente from cliente where cod_cliente=cod_clienteFK) = '".$documento."' ";
 	}	
-	$condiciontelefono=" ";
+
 	if($telefono!=""){
-	  $condiciontelefono=" and  (Select telefono from persona where cod_persona=cod_clienteFK) like '%".$telefono."%' ";
+	  $sqlFiltro .=" and  (Select telefono from persona where cod_persona=cod_clienteFK) like '%".$telefono."%' ";
 	}	
-	$condicionFactura="";
+
 	if (!empty($num_factura)) {
-		$condicionFactura= " and vt.num_factura='$num_factura'";
-	}
-	$condicionfechafiltro=" ";
-	if($filtrofecha!=""){
-	 $condicionfechafiltro=" and  cr.fechapago='$filtrofecha' ";
+		$sqlFiltro .= " and vt.num_factura='$num_factura'";
 	}
 
-$condicionFecha="";
+	if($filtrofecha!=""){
+	 $sqlFiltro .=" and  cr.fechapago='$filtrofecha' ";
+	}
+
 if($filtro=="1")
 {
-$condicionFecha=" and cr.fechapago>='$fecha1' and cr.fechapago<='$fecha2'";
+$sqlFiltro .=" and cr.fechapago>='$fecha1' and cr.fechapago<='$fecha2'";
 
 }	
 if($filtro=="3")
 {
-$condicionFecha=" and cr.fechapago<='$fecha1' ";
+$sqlFiltro .=" and cr.fechapago<='$fecha1' ";
 	
 }
 if($filtro=="4")
 {
-$condicionFecha=" and cr.fechapago>='$fecha1' ";
-	
-}	
+$sqlFiltro .=" and cr.fechapago>='$fecha1' ";
+}
+
+if ($cant_cuota != "") {
+	$sqlFiltro .= " and (
+		Select count(*)
+		from credito cr_atrasada
+		where cr_atrasada.cod_venta=vt.cod_venta
+		and cr_atrasada.plazo!='ENTREGA'
+		and cr_atrasada.fechapago <= '$fechahoy'
+		and ((cr_atrasada.Monto-cr_atrasada.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr_atrasada.idcredito and pg.tipo='Pago Cuota'),0)) > 0
+	) = $cant_cuota ";
+}
 
 	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.tipo_comprobante,vt.puntoexpedicion,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.totalinteres,cr.descuento,vt.TipoVenta,
@@ -3210,12 +3224,9 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor.$condicionFactura."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 300 ";
+".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 300 ";
  
-
-// echo($sql);
-// exit;
-
+//echo($sql);exit;
  
 $pagina = "";  
 $totalPagado = "0";  
@@ -3314,8 +3325,8 @@ $pagina.="
 <td id='' style='display:none'>". number_format($TotalPagadoSinInteres,'0',',','.')."</td>
 <td id='td_datos_13' style='display:none'>". number_format($TotalEnPagado,'0',',','.')."</td>
 <td id='td_datos_17' style='display:none'>". number_format($TotalEnInteres,'0',',','.')."</td>
-<td id='td_datos_20' style='width:3%'>".$cuotasatrazadas."</td>
-<td id='td_datos_10' style='width:3%'>".$TotalDiasAtrasado."</td>
+<td id='td_datos_20' style='width:5%'>".$cuotasatrazadas."</td>
+<td id='td_datos_10' style='width:5%'>".$TotalDiasAtrasado."</td>
 <td id='td_datos_22' style='width:5%'>". number_format($DeudaPendiente,'0',',','.')."</td>
 <td id='td_datos_11' style='display:none'>". number_format($TotalEnDeuda,'0',',','.')."</td>
 <td id='td_datos_14' style='width:5%'>". number_format($TotalAPagar,'0',',','.')."</td>
@@ -3342,7 +3353,7 @@ $sql= "select cr.plazo
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor.$condicionFactura."  group by cr.cod_venta order by cr.fechapago asc ";
+".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc ";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
@@ -3358,60 +3369,66 @@ echo json_encode($informacion);
 exit;
 }
 
-function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_factura)
+function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_factura,$cant_cuota)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
 
-$condicionVendedor="";
+$sqlFiltro= "";
 	 if($vendedor!=""){
-	   $condicionVendedor="and  Vendedor1 ='".$vendedor."'";		
+	   $sqlFiltro .="and  Vendedor1 ='".$vendedor."'";		
 	 }
 
-
-$condicionCodLocal=" "; 
 if($codlocal!=""){
-$condicionCodLocal=" and vt.cod_local='$codlocal' ";
+$sqlFiltro .=" and vt.cod_local='$codlocal' ";
  }
-	$condicioncliente=" ";
+	
 	if($cliente!=""){
-	 $condicioncliente=" and  (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%' ";
-	}	
-	$condiciondocumento=" ";
-	if($documento!=""){
-	 $condiciondocumento=" and  (Select ci_cliente from cliente where cod_cliente=cod_clienteFK) = '".$documento."' ";
-	}	
-	$condiciontelefono=" ";
-	if($telefono!=""){
-	 $condiciontelefono=" and  (Select telefono from persona where cod_persona=cod_clienteFK) like '%".$telefono."%' ";
+	 $sqlFiltro .=" and  (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%' ";
 	}	
 	
-	$condicionfechafiltro=" ";
+	if($documento!=""){
+	 $sqlFiltro .=" and  (Select ci_cliente from cliente where cod_cliente=cod_clienteFK) = '".$documento."' ";
+	}	
+	
+	if($telefono!=""){
+	 $sqlFiltro .=" and  (Select telefono from persona where cod_persona=cod_clienteFK) like '%".$telefono."%' ";
+	}	
+	
 	if($filtrofecha!=""){
-	 $condicionfechafiltro=" and  cr.fechapago='$filtrofecha' ";
+	 $sqlFiltro .=" and  cr.fechapago='$filtrofecha' ";
 	}
-	$condicionFactura="";
+	
 	if (!empty($nro_factura)) {
-		$condicionFactura= " and vt.num_factura='$nro_factura'";
+		$sqlFiltro .= " and vt.num_factura='$nro_factura'";
 	}
-$condicionFecha="";
-if($filtro=="1")
+
+	if($filtro=="1")
 {
-$condicionFecha=" and cr.fechapago>='$fecha1' and cr.fechapago<='$fecha2'";
+$sqlFiltro .=" and cr.fechapago>='$fecha1' and cr.fechapago<='$fecha2'";
 
 }	
 if($filtro=="3")
 {
-$condicionFecha=" and cr.fechapago<='$fecha1' ";
+$sqlFiltro .=" and cr.fechapago<='$fecha1' ";
 	
 }
 if($filtro=="4")
 {
-$condicionFecha=" and cr.fechapago>='$fecha1' ";
+$sqlFiltro .=" and cr.fechapago>='$fecha1' ";
 	
 }	
 
-	
+if ($cant_cuota != "") {
+	$sqlFiltro .= " and (
+		Select count(*)
+		from credito cr_atrasada
+		where cr_atrasada.cod_venta=vt.cod_venta
+		and cr_atrasada.plazo!='ENTREGA'
+		and cr_atrasada.fechapago <= '$fechahoy'
+		and ((cr_atrasada.Monto-cr_atrasada.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr_atrasada.idcredito and pg.tipo='Pago Cuota'),0)) > 0
+	) = $cant_cuota ";
+}
 
 	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.tipo_comprobante,vt.puntoexpedicion,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.totalinteres,cr.descuento,vt.TipoVenta,
@@ -3427,7 +3444,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$condicionCodLocal.$condicioncliente.$condiciondocumento.$condiciontelefono.$condicionfechafiltro.$condicionFecha.$condicionVendedor.$condicionFactura."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 100 ";
+".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 100 ";
  
 
 
@@ -3530,8 +3547,8 @@ $pagina.="
 <td id='' style='display:none'>". number_format($TotalPagadoSinInteres,'0',',','.')."</td>
 <td id='td_datos_13' style='display:none'>". number_format($TotalEnPagado,'0',',','.')."</td>
 <td id='td_datos_17' style='display:none'>". number_format($TotalEnInteres,'0',',','.')."</td>
-<td id='td_datos_20' style='width:3%'>".$cuotasatrazadas."</td>
-<td id='td_datos_10' style='width:3%'>".$TotalDiasAtrasado."</td>
+<td id='td_datos_20' style='width:5%'>".$cuotasatrazadas."</td>
+<td id='td_datos_10' style='width:5%'>".$TotalDiasAtrasado."</td>
 <td id='td_datos_22' style='width:5%'>". number_format($DeudaPendiente,'0',',','.')."</td>
 <td id='td_datos_11' style='display:none'>". number_format($TotalEnDeuda,'0',',','.')."</td>
 <td id='td_datos_14' style='width:5%'>". number_format($TotalAPagar,'0',',','.')."</td>

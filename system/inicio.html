@@ -41,7 +41,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=x-ios10v1"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=presupuesto-plan-vendido-20260430"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
@@ -56,7 +56,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js"></script>
-<script src="../js_system/abmPresupuesto.js"></script>
+<script src="../js_system/abmPresupuesto.js?x=presupuesto-plan-vendido-20260430"></script>
 <script src="../js_system/abmTareasProgramadas.js"></script>
 <script src="../js_system/abmCliente.js"></script>
 
@@ -10128,13 +10128,11 @@ id='tdTituloImpreCuenta'>
 <td class="td_registro" style="width:5%;">TELEF.</td>
 <td class="td_registro" style="width:5%;">NRO VENTA</td>
 <td class="td_registro" style="width:10%;">PRODUCTO</td>
-<td class="td_registro" style="width:5%;">FECHA VENC.
-</td>
-<td class="td_registro" style="width:3%;">C/A</td>
-<td class="td_registro" style="width:3%;">D/A</td>
+<td class="td_registro" style="width:15%;">FECHA VENC.</td>
+<td class="td_registro" style="width:5%;">C/A</td>
+<td class="td_registro" style="width:5%;">D/A</td>
 <td class="td_registro" style="width:5%;">A COBRAR</td>
-<td class="td_registro" style="width:5%;">TOTAL DEUDA
-</td>
+<td class="td_registro" style="width:5%;">TOTAL DEUDA</td>
 <td class="td_registro" style="width:5%;">LOCAL</td>
 <td class="td_registro" style="width:5%;">VENDEDOR</td>
 </tr>
@@ -10195,8 +10193,12 @@ onkeyup="if(event.keyCode == 13){buscarcuentaacobrar()}" />
 src='/GoodVentaAsisCap/iconos/limpiar.png'
 onclick="vaciar('inptBuscarCuentasCobrar5')" />
 </td>
-<td class="td_registro" style="width:3%;"></td>
-<td class="td_registro" style="width:3%;"></td>
+<td class="td_registro" style="width:5%;">
+<input class='inputfiltro' type='number'
+id='inptBuscarCuentasCobrar8'
+onkeyup="if(event.keyCode == 13){buscarcuentaacobrar()}" />
+</td>
+<td class="td_registro" style="width:5%;"></td>
 <td class="td_registro" style="width:5%;"></td>
 <td class="td_registro" style="width:5%;"></td>
 <td class="td_registro" style="width:5%;">

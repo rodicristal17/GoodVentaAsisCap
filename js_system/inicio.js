@@ -12267,7 +12267,10 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 					
 					// Se verifica si idAbmPresupuesto tiene valor
 					if (idabmPresupuesto != "") {
-						abmPresupuesto(idabmPresupuesto, null, null,datos["3"], tipo_plan);
+						if (!tipo_plan || tipo_plan == "") {
+							tipo_plan= document.getElementById('inptSelecctPlanPresupuesto').value;
+						}
+						abmPresupuesto(idabmPresupuesto, null, null,datos["3"], obtenerTipoPlanPresupuestoVenta());
 					}
 				}
 
@@ -12283,6 +12286,7 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 
 
 }
+
 function buscardetallesventa() {
 	document.getElementById("table_abm_detalle_venta").innerHTML = paginacargando
 	obtener_datos_user();
@@ -17178,6 +17182,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	var codlocal = document.getElementById("inptBuscarCuentasCobrar6").value
 	var vendedor = document.getElementById("inptBuscarCuentasCobrar7").value
 	const nro_venta = document.getElementById("inptBuscarCuentasCobrar4").value
+	const cant_cuota = document.getElementById("inptBuscarCuentasCobrar8").value
 	
 	if(controldebusquedadInformeCuentaCobrar==true){
 		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
@@ -17207,6 +17212,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 		"vendedor": vendedor,
 		"funt": "cuentasacobrar",
 		"nro_venta": nro_venta,
+		"cant_cuota": cant_cuota,
 	};
 	$.ajax({
 		data: datos,
@@ -17323,6 +17329,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	var codlocal = document.getElementById("inptBuscarCuentasCobrar6").value
 	var vendedor = document.getElementById("inptBuscarCuentasCobrar7").value
 	const nro_venta = document.getElementById("inptBuscarCuentasCobrar4").value
+	const cant_cuota = document.getElementById("inptBuscarCuentasCobrar8").value
 	if(c=="1"){
 		controldebusquedadInformeCuentaCobrar=true
 	}
@@ -17355,6 +17362,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 		"registrocargado": registrocargadoinformecuentasacobrar,
 		"funt": "mascuentasacobrar",
 		"nro_venta": nro_venta,
+		"cant_cuota": cant_cuota,
 	};
 	$.ajax({
 		data: datos,
