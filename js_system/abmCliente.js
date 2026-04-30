@@ -53,7 +53,7 @@ document.getElementById("btnVolverAtrasCliente").style.display=""
 		document.getElementById("divAbmCliente2").style.display="none"
 }
 var controlventananuevocliente="";
-function vernuevoclientevista(d) {
+function vernuevoclientevista(d, ocultar_datos_extras= false) {
 	if (d == "1") {
 		if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
 		document.getElementById("divAbmCliente").style.display=""
@@ -64,6 +64,18 @@ function vernuevoclientevista(d) {
 		document.getElementById("btnCerrarAtrasCliente").style.display=""
 		controlventananuevocliente="venta"
 		limpiarcamposCliente()
+
+		// Ocultar secciones de datos extras
+		if (
+			controlseleccvistacliente == 'presupuestoDoctor' ||
+			controlseleccvistacliente == 'presupuesto'
+		) {
+			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+			document.getElementById('divAbmCliente2').style.width= "850px";
+		} else {
+			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
+			document.getElementById('divAbmCliente2').style.width= "auto";
+		}
 	} else {
 		document.getElementById("btnVolverAtrasCliente").style.display=""
 		document.getElementById("btnCerrarAtrasCliente").style.display="none"
@@ -100,7 +112,8 @@ function verificarcamposClienteVista() {
 if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
 	abmcliente(inptAccesoCreditoCliente,idFKZona, inptNombreApellidoCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
 }
-function verCerrarVentanaAbmCliente(d, l) {	
+
+function verCerrarVentanaAbmCliente(d, l, ocultar_datos_extras= false) {	
 	if (d == "1") {
 		if (l == "1") {
 			if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
@@ -108,11 +121,21 @@ function verCerrarVentanaAbmCliente(d, l) {
 		}
 		$("div[id=divAbmCliente2]").fadeIn(250)
 		document.getElementById('divAbmCliente1').style.display = "none"
+
+		// Ocultar secciones de datos extras
+		if (ocultar_datos_extras) {
+			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+			document.getElementById('divAbmCliente2').style.width= "850px";
+		} else {
+			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
+			document.getElementById('divAbmCliente2').style.width= "auto";
+		}
 	} else {
 		$("div[id=divAbmCliente1]").fadeIn(250)
 		document.getElementById('divAbmCliente2').style.display = "none"
 	}
 }
+
 function verVentanaEditarCliente() {
 	if(controlacceso("EDITARLISTADODECLIENTES","accion")==false){return;}
 	if (idAbmCliente == "") {
@@ -339,107 +362,100 @@ function LimpiarMasReferencia(){
 	document.getElementById("inptMasRefTipoCliente").value="";
 	elementoAddMasReferencias="";
 }
-function verificarcamposCliente(){
-	var inptFechaNacCliente=document.getElementById('inptFechaNacCliente').value
-	var inptNombreApellidoCliente=document.getElementById('inptNombreApellidoCliente').value
-	var inptNroDocCliente=document.getElementById('inptNroDocCliente').value
-	var inptNroRucCliente=document.getElementById('inptNroRucCliente').value
-	var inptNroTelefCliente=document.getElementById('inptNroTelefCliente').value
-	var inptNrowhatsappCliente=document.getElementById('inptNrowhatsappCliente').value
-	var inptDireccionCliente=document.getElementById('inptDireccionCliente').value
-	var inptReferenciaCliente=document.getElementById('inptReferenciaCliente').value
-	var inptCalificaCliente=document.getElementById('inptCalificaCliente').value
-	var inptEstadoCliente=document.getElementById('inptEstadoCliente').value
-	var inptLugrarTrabajoCliente=document.getElementById('inptLugrarTrabajoCliente').value
-	var inptDireccionTrabajoCliente=document.getElementById('inptDireccionTrabajoCliente').value
-	var inptSalarioCliente=document.getElementById('inptSalarioCliente').value
-	var inptAntiguedadCliente=document.getElementById('inptAntiguedadCliente').value
-	var inptNroTelefTrabajoCliente1=document.getElementById('inptNroTelefTrabajoCliente1').value
-	var inptNroTelefTrabajoCliente2=document.getElementById('inptNroTelefTrabajoCliente2').value
+
+function verificarcamposCliente() {
+	var inptFechaNacCliente = document.getElementById('inptFechaNacCliente').value
+	var inptNombreApellidoCliente = document.getElementById('inptNombreApellidoCliente').value
+	var inptNroDocCliente = document.getElementById('inptNroDocCliente').value
+	var inptNroRucCliente = document.getElementById('inptNroRucCliente').value
+	var inptNroTelefCliente = document.getElementById('inptNroTelefCliente').value
+	var inptNrowhatsappCliente = document.getElementById('inptNrowhatsappCliente').value
+	var inptDireccionCliente = document.getElementById('inptDireccionCliente').value
+	var inptReferenciaCliente = document.getElementById('inptReferenciaCliente').value
+	var inptCalificaCliente = document.getElementById('inptCalificaCliente').value
+	var inptEstadoCliente = document.getElementById('inptEstadoCliente').value
+	var inptLugrarTrabajoCliente = document.getElementById('inptLugrarTrabajoCliente').value
+	var inptDireccionTrabajoCliente = document.getElementById('inptDireccionTrabajoCliente').value
+	var inptSalarioCliente = document.getElementById('inptSalarioCliente').value
+	var inptAntiguedadCliente = document.getElementById('inptAntiguedadCliente').value
+	var inptNroTelefTrabajoCliente1 = document.getElementById('inptNroTelefTrabajoCliente1').value
+	var inptNroTelefTrabajoCliente2 = document.getElementById('inptNroTelefTrabajoCliente2').value
 	var inptAccesoCreditoCliente = document.getElementById('inptAccesoCreditoCliente').value
-	var sms="";
-		if(document.getElementById('inptSeleccSMS1').checked==true){
-			sms="SI";
-		}else{
-			sms="NO";	
+	var sms = "";
+
+	if (inptNombreApellidoCliente == "") {
+		ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NOMBRE DEL CLIENTE", "advertencia")
+		return false;
+	}
+	if (inptNroDocCliente == "") {
+		ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE DOCUMENTO", "advertencia")
+		return false;
+	}
+	
+	// Evalua si se estan mostrando los datos de campo extra
+	if (document.querySelectorAll("#divAbmCliente2 .abm-cliente-datos-extra")[0].style.display != 'none') {
+		if (document.getElementById('inptSeleccSMS1').checked == true) {
+			sms = "SI";
+		} else {
+			sms = "NO";
 		}
-		
 
+		if (idFKZona == "") {
+			ver_vetana_informativa("FALTAN DATOS", "FALTO SELECCIONAR UNA ZONA", "advertencia")
+			return false;
+		}
+	
+		if (inptDireccionCliente == "") {
+			ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR LA DIRECCION DEL CLIENTE", "advertencia")
+			return false;
+		}
+	
+		if (inptNroTelefCliente == "") {
+			ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE TELEFONO", "advertencia")
+			return false;
+		}
+	
+		if (inptReferenciaCliente == "") {
+			ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR UNA REFERENCIA DEL CLIENTE", "advertencia")
+			return false;
+		}
+	}
 
+	var accion = "";
+	if (idAbmCliente != "") {
+		accion = "editar";
+		if (controlacceso("EDITARLISTADODECLIENTES", "accion") == false) { return; }
+	} else {
+		if (controlacceso("INSERTARLISTADODECLIENTES", "accion") == false) { return; }
+		accion = "nuevo";
+	}
 
-
-
-
-
-
-	  if(inptNombreApellidoCliente==""){
-	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NOMBRE DEL CLIENTE","advertencia")
-	  return false;
-  }
-  if(inptNroDocCliente==""){
-	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE DOCUMENTO","advertencia")
-	  return false;
-  }
-  if(idFKZona==""){
-	ver_vetana_informativa("FALTAN DATOS", "FALTO SELECCIONAR UNA ZONA","advertencia")
-	  return false;
-  }
- 
- 
- 
-if(inptDireccionCliente==""){
-	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR LA DIRECCION DEL CLIENTE","advertencia")
-	  return false;
-  }
-  
-  
-  if(inptNroTelefCliente==""){
-	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE TELEFONO","advertencia")
-	  return false;
-  }
-  
-  
-  if(inptReferenciaCliente==""){
-	ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR UNA REFERENCIA DEL CLIENTE","advertencia")
-	  return false;
-  }
- 
- 
-  var accion="";
-  if(idAbmCliente!=""){
-	  accion="editar";
-	 	if(controlacceso("EDITARLISTADODECLIENTES","accion")==false){return;}
-  }else{
-	 if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
-	  accion="nuevo";
-  }
-  
-  abmcliente(inptFechaNacCliente,sms,inptAccesoCreditoCliente,inptLugrarTrabajoCliente,inptDireccionTrabajoCliente,inptSalarioCliente,inptAntiguedadCliente,inptNroTelefTrabajoCliente1,inptNroTelefTrabajoCliente2,idFKZona,inptNombreApellidoCliente,inptNroRucCliente,inptNroDocCliente,inptNroTelefCliente,inptNrowhatsappCliente,inptDireccionCliente,inptReferenciaCliente,inptCalificaCliente,inptEstadoCliente,idAbmCliente,accion);
+	abmcliente(inptFechaNacCliente, sms, inptAccesoCreditoCliente, inptLugrarTrabajoCliente, inptDireccionTrabajoCliente, inptSalarioCliente, inptAntiguedadCliente, inptNroTelefTrabajoCliente1, inptNroTelefTrabajoCliente2, idFKZona, inptNombreApellidoCliente, inptNroRucCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
 }
+
 function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,nombre_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion){
 	verCerrarEfectoCargando("1")
-	
 
-	  var datos = new FormData();
-			obtener_datos_user();
-			 datos.append("useru" , userid)
-			 datos.append("passu" , passuser)
-			 datos.append("navegador" , navegador)
-			 datos.append("funt", accion)
-			 datos.append("cod_persona" , cod_persona)
-			  datos.append("nombre_persona" , nombre_persona)
-			 datos.append("direccion" , direccion)
-			 datos.append("FechaNac" , FechaNac)
-			 datos.append("telefono" , telefono)
-			 datos.append("email" , email)//Sirve para la referencia
-			 datos.append("rut_cliente" , rut_cliente)
-			 datos.append("ci_cliente" , ci_cliente)
-			 datos.append("Calificacion" , Calificacion)
-			 datos.append("whapp" , whapp)
-			 datos.append("estado" , estado)
-			 datos.append("idzonaFk" , idzonaFk)
-			datos.append("foto1", fotocliente1)
-			datos.append("sms", sms)
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru" , userid)
+	datos.append("passu" , passuser)
+	datos.append("navegador" , navegador)
+	datos.append("funt", accion)
+	datos.append("cod_persona" , cod_persona)
+	datos.append("nombre_persona" , nombre_persona)
+	datos.append("direccion" , direccion)
+	datos.append("FechaNac" , FechaNac)
+	datos.append("telefono" , telefono)
+	datos.append("email" , email)//Sirve para la referencia
+	datos.append("rut_cliente" , rut_cliente)
+	datos.append("ci_cliente" , ci_cliente)
+	datos.append("Calificacion" , Calificacion)
+	datos.append("whapp" , whapp)
+	datos.append("estado" , estado)
+	datos.append("idzonaFk" , idzonaFk)
+	datos.append("foto1", fotocliente1)
+	datos.append("sms", sms)
 	datos.append("ext1", extcliente1)
 	datos.append("foto2", fotocliente2)
 	datos.append("ext2", extcliente2)		

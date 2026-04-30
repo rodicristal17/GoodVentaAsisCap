@@ -22279,365 +22279,404 @@ D/A
 </table>
 </div>
 
-
-
 <div class='principal2' style='display:none' id='divAbmCliente'>
-<table style='width:100%;height:100%;' id='tdEfectoAbmCliente'>
-<tr>
-<td>
-<center>
-<div id='divAbmCliente2' style='display:none;max-width:1380px;' class='presupuesto-container presupuesto-search-modal'>
-<header class='presupuesto-header presupuesto-search-header'>
-<div class='presupuesto-search-title'>
-<h2>Clientes</h2>
-</div>
-<div class='header-actions'>
-<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar campos' onclick='limpiarcamposCliente()' />
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarabmcliente()' />
-<img id='btnVolverAtrasCliente' src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaAbmCliente("2","")' />
-<img id='btnCerrarAtrasCliente' src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarAbmClientes2()' style='display:none' />
-</div>
-</header>
+  <table style='width:100%;height:100%;' id='tdEfectoAbmCliente'>
+    <tr>
+      <td>
+        <center>
+          <div id='divAbmCliente2' style='display:none;max-width:1380px;'
+            class='presupuesto-container presupuesto-search-modal'>
+            <header class='presupuesto-header presupuesto-search-header'>
+              <div class='presupuesto-search-title'>
+                <h2>Clientes</h2>
+              </div>
+              <div class='header-actions'>
+                <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar campos'
+                  onclick='limpiarcamposCliente()' />
+                <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana'
+                  onclick='minimizarabmcliente()' />
+                <img id='btnVolverAtrasCliente' src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
+                  title='Volver Atras' onclick='verCerrarVentanaAbmCliente("2","")' />
+                <img id='btnCerrarAtrasCliente' src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+                  title='Cerrar Ventana' onclick='verCerrarAbmClientes2()' style='display:none' />
+              </div>
+            </header>
 
-<section class='detalles-section' style='grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:18px;align-items:stretch;'>
-<div class='presupuesto-panel tabla-detalles' style='height:100%;'>
-<div class='panel-title'>Datos del cliente</div>
-<div class='form-section' style='margin-bottom:0;'>
-<div class='form-row flex-grow'>
-<label for='inptNombreApellidoCliente'>Nombre y apellido</label>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNombreApellidoCliente' />
-</div>
-<div class='form-row'>
-<label for='inptNroDocCliente'>Nro documento</label>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNroDocCliente' />
-</div>
-<div class='form-row'>
-<label for='inptNroRucCliente'>R.U.C</label>
-<input class='inputText' type='text' placeholder='' id='inptNroRucCliente' />
-</div>
-<div class='form-row'>
-<label for='inptNroTelefCliente'>Nro telef.</label>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNroTelefCliente' />
-</div>
-<div class='form-row'>
-<label for='inptNrowhatsappCliente'>Whatsapp</label>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNrowhatsappCliente' />
-</div>
-<div class='form-row'>
-<label for='inptFechaNacCliente'>Fecha nac.</label>
-<input class='inputText' type='Date' id='inptFechaNacCliente' />
-</div>
-</div>
-</div>
+            <section class='detalles-section'
+              style='grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:18px;align-items:stretch;'>
+              <div class='presupuesto-panel tabla-detalles' style='height:100%;'>
+                <div class='panel-title'>Datos del cliente</div>
+                <div class='form-section' style='margin-bottom:0;'>
+                  <div class='form-row flex-grow'>
+                    <label for='inptNombreApellidoCliente'>Nombre y apellido</label>
+                    <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNombreApellidoCliente' />
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptNroDocCliente'>Nro documento</label>
+                    <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNroDocCliente' />
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptNroRucCliente'>R.U.C</label>
+                    <input class='inputText' type='text' placeholder='' id='inptNroRucCliente' />
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptNrowhatsappCliente'>Whatsapp</label>
+                    <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNrowhatsappCliente' />
+                  </div>
+                  <div class='form-row flex-grow'>
+                    <label for='inptZonaCliente'>Zona</label>
+                    <div style='display:flex;gap:10px;align-items:flex-end;'>
+                      <input class='inputTextDisable' type='text' placeholder='Seleccionar una zona'
+                        id='inptZonaCliente' style='flex:1 1 auto;min-width:0;' disabled />
+                      <input type='button' value='Buscar' class='btn4' onclick='verCerrarVistaZona("1","clienteabm")'
+                        style='width:100px;' />
+                    </div>
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptFechaNacCliente'>Fecha nac.</label>
+                    <input class='inputText' type='Date' id='inptFechaNacCliente' />
+                  </div>
+                </div>
+              </div>
+              <div class='presupuesto-panel tabla-cuotas abm-cliente-datos-extra' style='height:100%;'>
+                <div class='panel-title'>Ubicacion y calif.</div>
+                <div class='form-section' style='margin-bottom:0;'>
+                  <div class='form-row flex-grow'>
+                    <label for='inptDireccionCliente'>Direccion particular</label>
+                    <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptDireccionCliente' />
+                  </div>
+                  <div class='form-row flex-grow'>
+                    <label for='inptReferenciaCliente'>Referencia</label>
+                    <textarea class='textarea1' id='inptReferenciaCliente'
+                      style='width:100%;min-height:120px;box-sizing:border-box;resize:vertical;border-radius:12px;padding:12px;border:1px solid #ccd8e6;background:#f9fbfe;box-shadow:inset 0 1px 2px rgba(37,71,106,0.06);'></textarea>
+                  </div>
+                  <div class='form-row' style="display:none;">
+                    <label for='inptAccesoCreditoCliente'>Estado de credito</label>
+                    <select class='inputSelect' id='inptAccesoCreditoCliente'>
+                      <option value="Confirmado">CONFIRMADO</option>
+                      <option value="Denegado">DENEGADO</option>
+                    </select>
+                  </div>
+                  <div class='form-row' style="display: none;">
+                    <label for='inptCalificaCliente'>Calificacion</label>
+                    <select class='inputSelect' id='inptCalificaCliente'>
+                      <option value="EXCELENTE">EXCELENTE</option>
+                      <option value="BUENO">BUENO</option>
+                      <option value="MUY BUENO">MUY BUENO</option>
+                      <option value="MALO">MALO</option>
+                    </select>
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptNroTelefCliente'>Nro telef.</label>
+                    <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNroTelefCliente' />
+                  </div>
+                  <div class='form-row flex-grow'
+                    style='flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;'>
+                    <p class='pTitulo8' style='margin:0;' onclick='checkestadoClientesSms(1)'><input type='checkbox'
+                        id='inptSeleccSMS1' checked> Habilitar SMS</p>
+                    <p class='pTitulo8' style='margin:0;' onclick='checkestadoClientesSms(2)'><input type='checkbox'
+                        id='inptSeleccSMS2'> Deshabilitar SMS</p>
+                  </div>
+                </div>
+              </div>
 
-<div class='presupuesto-panel tabla-cuotas' style='height:100%;'>
-<div class='panel-title'>Ubicacion y calif.</div>
-<div class='form-section' style='margin-bottom:0;'>
-<div class='form-row flex-grow'>
-<label for='inptDireccionCliente'>Direccion particular</label>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptDireccionCliente' />
-</div>
-<div class='form-row flex-grow'>
-<label for='inptReferenciaCliente'>Referencia</label>
-<textarea class='textarea1' id='inptReferenciaCliente' style='width:100%;min-height:120px;box-sizing:border-box;resize:vertical;border-radius:12px;padding:12px;border:1px solid #ccd8e6;background:#f9fbfe;box-shadow:inset 0 1px 2px rgba(37,71,106,0.06);'></textarea>
-</div>
-<div class='form-row flex-grow'>
-<label for='inptZonaCliente'>Zona</label>
-<div style='display:flex;gap:10px;align-items:flex-end;'>
-<input class='inputTextDisable' type='text' placeholder='Seleccionar una zona' id='inptZonaCliente' style='flex:1 1 auto;min-width:0;' disabled />
-<input type='button' value='Buscar' class='btn4' onclick='verCerrarVistaZona("1","clienteabm")' style='width:100px;' />
-</div>
-</div>
-<div class='form-row'>
-<label for='inptAccesoCreditoCliente'>Estado de credito</label>
-<select class='inputSelect' id='inptAccesoCreditoCliente'>
-<option value="Confirmado">CONFIRMADO</option>
-<option value="Denegado">DENEGADO</option>
-</select>
-</div>
-<div class='form-row'>
-<label for='inptCalificaCliente'>Calificacion</label>
-<select class='inputSelect' id='inptCalificaCliente'>
-<option value="EXCELENTE">EXCELENTE</option>
-<option value="BUENO">BUENO</option>
-<option value="MUY BUENO">MUY BUENO</option>
-<option value="MALO">MALO</option>
-</select>
-</div>
-<div class='form-row flex-grow' style='flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;'>
-<p class='pTitulo8' style='margin:0;' onclick='checkestadoClientesSms(1)'><input type='checkbox' id='inptSeleccSMS1' checked> Habilitar SMS</p>
-<p class='pTitulo8' style='margin:0;' onclick='checkestadoClientesSms(2)'><input type='checkbox' id='inptSeleccSMS2'> Deshabilitar SMS</p>
-</div>
-</div>
-</div>
+              <div class='presupuesto-panel tabla-detalles abm-cliente-datos-extra' style='height:100%;'>
+                <div class='panel-title'>Datos laborales</div>
+                <div class='form-section' style='margin-bottom:0;'>
+                  <div class='form-row flex-grow'>
+                    <label for='inptLugrarTrabajoCliente'>Lugar de trabajo</label>
+                    <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptLugrarTrabajoCliente' />
+                  </div>
+                  <div class='form-row flex-grow'>
+                    <label for='inptDireccionTrabajoCliente'>Direccion laboral</label>
+                    <input class='inputText' type='text' id='inptDireccionTrabajoCliente' />
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptSalarioCliente'>Salario</label>
+                    <input class='inputText' type='text' id='inptSalarioCliente' onkeyup='separadordemiles(this)' />
+                  </div>
+                  <div class='form-row' style="display: none;">
+                    <label for='inptAntiguedadCliente'>Antiguedad</label>
+                    <input class='inputText' type='text' id='inptAntiguedadCliente' />
+                  </div>
+                  <div class='form-row' style="display: none;">
+                    <label for='inptNroTelefTrabajoCliente1'>Telef. empresa</label>
+                    <input class='inputText' type='text' id='inptNroTelefTrabajoCliente1' />
+                  </div>
+                  <div class='form-row' style="display: none;">
+                    <label for='inptNroTelefTrabajoCliente2'>Nombre encargado</label>
+                    <input class='inputText' type='text' id='inptNroTelefTrabajoCliente2' />
+                  </div>
+                </div>
+              </div>
 
-<div class='presupuesto-panel tabla-detalles' style='height:100%;'>
-<div class='panel-title'>Datos laborales</div>
-<div class='form-section' style='margin-bottom:0;'>
-<div class='form-row flex-grow'>
-<label for='inptLugrarTrabajoCliente'>Lugar de trabajo</label>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptLugrarTrabajoCliente' />
-</div>
-<div class='form-row flex-grow'>
-<label for='inptDireccionTrabajoCliente'>Direccion laboral</label>
-<input class='inputText' type='text' id='inptDireccionTrabajoCliente' />
-</div>
-<div class='form-row'>
-<label for='inptSalarioCliente'>Salario</label>
-<input class='inputText' type='text' id='inptSalarioCliente' onkeyup='separadordemiles(this)' />
-</div>
-<div class='form-row'>
-<label for='inptAntiguedadCliente'>Antiguedad</label>
-<input class='inputText' type='text' id='inptAntiguedadCliente' />
-</div>
-<div class='form-row'>
-<label for='inptNroTelefTrabajoCliente1'>Telef. empresa</label>
-<input class='inputText' type='text' id='inptNroTelefTrabajoCliente1' />
-</div>
-<div class='form-row'>
-<label for='inptNroTelefTrabajoCliente2'>Nombre encargado</label>
-<input class='inputText' type='text' id='inptNroTelefTrabajoCliente2' />
-</div>
-</div>
-</div>
+              <div class='presupuesto-panel tabla-cuotas abm-cliente-datos-extra' style='height:100%;'>
+                <div style='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;'>
+                  <div class='panel-title' style='margin:0;'>Fotos y estado</div>
+                  <img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn' title='Imprimir Documento'
+                    onclick='imprimirFotoCI()' />
+                </div>
+                <div class='panel-title' style='margin-bottom:10px;'>Foto C.I.</div>
+                <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;'>
+                  <div style='text-align:center;'>
+                    <div id='imgFotoCliente1' onclick='verCerrarVisorImagen("1","cliente1")' class='imgFotoCi'
+                      style='width:100%;height:180px;border-radius:14px;'></div>
+                    <input type='button' value='Explorar' class='btn4' onclick='ExploradorImagenCliente("foto1")'
+                      style='width:130px;margin-top:10px;' />
+                  </div>
+                  <div style='text-align:center;'>
+                    <div id='imgFotoCliente2' onclick='verCerrarVisorImagen("1","cliente2")' class='imgFotoCi'
+                      style='width:100%;height:180px;border-radius:14px;'></div>
+                    <input type='button' value='Explorar' class='btn4' onclick='ExploradorImagenCliente("foto2")'
+                      style='width:130px;margin-top:10px;' />
+                  </div>
+                </div>
+                <input type='file' id='file_1' name='file_1' style='display:none;' onchange='readFileCliente2(this)' />
+                <div class='form-section' style='margin-top:16px;margin-bottom:0;'>
+                  <div class='form-row flex-grow'>
+                    <input type='button' value='Cargar Mas Fotos' class='btn4'
+                      onclick='verCerrarAbmCargarFotosCliente("1")' style='width:100%;' />
+                  </div>
+                  <div class='form-row'>
+                    <label for='inptEstadoCliente'>Estado</label>
+                    <select class='inputSelect' id='inptEstadoCliente'>
+                      <option value="Activo">ACTIVO</option>
+                      <option value="Inactivo">INACTIVO</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-<div class='presupuesto-panel tabla-cuotas' style='height:100%;'>
-<div style='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;'>
-<div class='panel-title' style='margin:0;'>Fotos y estado</div>
-<img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn' title='Imprimir Documento' onclick='imprimirFotoCI()' />
-</div>
-<div class='panel-title' style='margin-bottom:10px;'>Foto C.I.</div>
-<div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;'>
-<div style='text-align:center;'>
-<div id='imgFotoCliente1' onclick='verCerrarVisorImagen("1","cliente1")' class='imgFotoCi' style='width:100%;height:180px;border-radius:14px;'></div>
-<input type='button' value='Explorar' class='btn4' onclick='ExploradorImagenCliente("foto1")' style='width:130px;margin-top:10px;' />
-</div>
-<div style='text-align:center;'>
-<div id='imgFotoCliente2' onclick='verCerrarVisorImagen("1","cliente2")' class='imgFotoCi' style='width:100%;height:180px;border-radius:14px;'></div>
-<input type='button' value='Explorar' class='btn4' onclick='ExploradorImagenCliente("foto2")' style='width:130px;margin-top:10px;' />
-</div>
-</div>
-<input type='file' id='file_1' name='file_1' style='display:none;' onchange='readFileCliente2(this)' />
-<div class='form-section' style='margin-top:16px;margin-bottom:0;'>
-<div class='form-row flex-grow'>
-<input type='button' value='Cargar Mas Fotos' class='btn4' onclick='verCerrarAbmCargarFotosCliente("1")' style='width:100%;' />
-</div>
-<div class='form-row'>
-<label for='inptEstadoCliente'>Estado</label>
-<select class='inputSelect' id='inptEstadoCliente'>
-<option value="Activo">ACTIVO</option>
-<option value="Inactivo">INACTIVO</option>
-</select>
-</div>
-</div>
-</div>
-</section>
+            <section class='presupuesto-panel presupuesto-search-results abm-cliente-datos-extra' style='padding:20px;'>
+              <div class='presupuesto-search-results-head'>
+                <div class='panel-title'>Mas referencias</div>
+                <span class='presupuesto-search-chip'>Complementa contactos personales y comerciales</span>
+              </div>
 
-<section class='presupuesto-panel presupuesto-search-results' style='padding:20px;'>
-<div class='presupuesto-search-results-head'>
-<div class='panel-title'>Mas referencias</div>
-<span class='presupuesto-search-chip'>Complementa contactos personales y comerciales</span>
-</div>
+              <div class='form-section'>
+                <div class='form-row'>
+                  <label for='inptMasRefTipoCliente'>Tipo</label>
+                  <select class='inputSelect' id='inptMasRefTipoCliente'>
+                    <option value="">SELECCIONAR</option>
+                    <option value="COMERCIAL">COMERCIAL</option>
+                    <option value="PERSONAL">PERSONAL</option>
+                  </select>
+                </div>
+                <div class='form-row flex-grow'>
+                  <label for='inptMasRefDireccionCliente'>Direccion</label>
+                  <input class='inputText' type='text' placeholder='' id='inptMasRefDireccionCliente' />
+                </div>
+                <div class='form-row flex-grow'>
+                  <label for='inptMasRefReferenciaCliente'>Referencia</label>
+                  <input class='inputText' type='text' placeholder='' id='inptMasRefReferenciaCliente' />
+                </div>
+                <div class='form-row'>
+                  <label for='inptMasRefTelefCliente'>Telef.</label>
+                  <input class='inputText' type='text' placeholder='' id='inptMasRefTelefCliente' />
+                </div>
+                <div class='form-row flex-grow' style='flex:1 1 100%;'>
+                  <label for='inptMasRefObservacionCliente'>Obs.</label>
+                  <textarea class='textarea1' id='inptMasRefObservacionCliente'
+                    style='width:100%;min-height:96px;box-sizing:border-box;resize:vertical;border-radius:12px;padding:12px;border:1px solid #ccd8e6;background:#f9fbfe;box-shadow:inset 0 1px 2px rgba(37,71,106,0.06);'></textarea>
+                </div>
+              </div>
 
-<div class='form-section'>
-<div class='form-row'>
-<label for='inptMasRefTipoCliente'>Tipo</label>
-<select class='inputSelect' id='inptMasRefTipoCliente'>
-<option value="">SELECCIONAR</option>
-<option value="COMERCIAL">COMERCIAL</option>
-<option value="PERSONAL">PERSONAL</option>
-</select>
-</div>
-<div class='form-row flex-grow'>
-<label for='inptMasRefDireccionCliente'>Direccion</label>
-<input class='inputText' type='text' placeholder='' id='inptMasRefDireccionCliente' />
-</div>
-<div class='form-row flex-grow'>
-<label for='inptMasRefReferenciaCliente'>Referencia</label>
-<input class='inputText' type='text' placeholder='' id='inptMasRefReferenciaCliente' />
-</div>
-<div class='form-row'>
-<label for='inptMasRefTelefCliente'>Telef.</label>
-<input class='inputText' type='text' placeholder='' id='inptMasRefTelefCliente' />
-</div>
-<div class='form-row flex-grow' style='flex:1 1 100%;'>
-<label for='inptMasRefObservacionCliente'>Obs.</label>
-<textarea class='textarea1' id='inptMasRefObservacionCliente' style='width:100%;min-height:96px;box-sizing:border-box;resize:vertical;border-radius:12px;padding:12px;border:1px solid #ccd8e6;background:#f9fbfe;box-shadow:inset 0 1px 2px rgba(37,71,106,0.06);'></textarea>
-</div>
-</div>
+              <div style='display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px;'>
+                <input id='btnAddMasReferencias1' type='button' value='A&ntilde;adir' class='btn4'
+                  onclick='AnhadirMasReferencias()' style='width:110px;'>
+                <input id='btnAddMasReferencias2' type='button' value='Editar' class='btn4'
+                  onclick='editarMasRefencia()' style='display:none;width:110px;'>
+                <input id='btnAddMasReferencias3' type='button' value='Eliminar' class='btn4'
+                  onclick='EliminarMasReferencia()' style='display:none;background-color:#2196F3;width:110px;'>
+                <input id='btnAddMasReferencias4' type='button' value='Cancelar' class='btn4'
+                  onclick='CancelarMasReferencia()' style='display:none;background-color:#2196F3;width:110px;'>
+              </div>
 
-<div style='display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px;'>
-<input id='btnAddMasReferencias1' type='button' value='A&ntilde;adir' class='btn4' onclick='AnhadirMasReferencias()' style='width:110px;'>
-<input id='btnAddMasReferencias2' type='button' value='Editar' class='btn4' onclick='editarMasRefencia()' style='display:none;width:110px;'>
-<input id='btnAddMasReferencias3' type='button' value='Eliminar' class='btn4' onclick='EliminarMasReferencia()' style='display:none;background-color:#2196F3;width:110px;'>
-<input id='btnAddMasReferencias4' type='button' value='Cancelar' class='btn4' onclick='CancelarMasReferencia()' style='display:none;background-color:#2196F3;width:110px;'>
-</div>
+              <table class='tableCabeceraRegistro' style='width:100%;'>
+                <tbody>
+                  <tr>
+                    <td class='td_registro' style='width:28%;'>OBS.</td>
+                    <td class='td_registro' style='width:16%;'>TELEF.</td>
+                    <td class='td_registro' style='width:22%;'>DIRECCION</td>
+                    <td class='td_registro' style='width:22%;'>REFERENCIAS</td>
+                    <td class='td_registro' style='width:12%;'>TIPO</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class='divTablesScrool' id='TableScroollMasReferencias2' style='height:180px;display:flex;'>
+                <div class='div_cuerpo_table presupuesto-search-table' id='table_mas_referenciasClientes'
+                  style='height:100%;border:none;width:100%;margin-top:0;min-height:0;overflow-y: auto;'></div>
+              </div>
+            </section>
 
-<table class='tableCabeceraRegistro' style='width:100%;'>
-<tbody>
-<tr>
-<td class='td_registro' style='width:28%;'>OBS.</td>
-<td class='td_registro' style='width:16%;'>TELEF.</td>
-<td class='td_registro' style='width:22%;'>DIRECCION</td>
-<td class='td_registro' style='width:22%;'>REFERENCIAS</td>
-<td class='td_registro' style='width:12%;'>TIPO</td>
-</tr>
-</tbody>
-</table>
-<div class='divTablesScrool' id='TableScroollMasReferencias2' style='height:180px;display:flex;'>
-<div class='div_cuerpo_table presupuesto-search-table' id='table_mas_referenciasClientes' style='height:100%;border:none;width:100%;margin-top:0;min-height:0;overflow-y: auto;'></div>
-</div>
-</section>
+            <section class='presupuesto-panel' style='padding:14px 18px;'>
+              <div style='display:flex;justify-content:center;align-items:center;'>
+                <input id='btnAbmCliente' type='button' value='Guardar datos' class='btn1'
+                  onclick='verificarcamposCliente()' style='width:220px;'>
+              </div>
+            </section>
+          </div>
 
-<section class='presupuesto-panel' style='padding:14px 18px;'>
-<div style='display:flex;justify-content:center;align-items:center;'>
-<input id='btnAbmCliente' type='button' value='Guardar datos' class='btn1' onclick='verificarcamposCliente()' style='width:220px;'>
-</div>
-</section>
-</div>
+          <div id='divAbmCliente1' style='width:96vw;max-width:1180px;' class='divAbms'>
+            <table class='tableMenuZ'>
+              <tr>
+                <td style='width:100%;text-align:left'>
+                  <p class='pTituloB'>Buscar <b style='font-size: 30px;'>Cliente</b></p>
+                </td>
+                <td style='width:5%;text-align:center'>
+                  <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
+                    onclick='verCerrarVentanaAbmCliente("1","1")' />
+                </td>
+                <td style='width:5%;text-align:center'>
+                  <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana'
+                    onclick='minimizarabmcliente()' />
+                </td>
+                <td style='width:5%;text-align:center'>
+                  <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
+                    onclick='verCerrarAbmClientes()' />
+                </td>
+              </tr>
+            </table>
+            <br>
+            <center>
+              <div class='divMenuf'>
+                <table style='width:100%'>
+                  <tr>
+                    <td style='width:80%'>
+                    </td>
+                    <td style='width:10%;text-align:left'>
+                      <p class='pTitulo8' onclick='checkestadoClientes(1)'>
+                        <input type='checkbox' id="inptSeleccEstadoBuscarCliente1" checked> Activo
+                      </p>
+                    </td>
+                    <td style='width:10%;text-align:left'>
+                      <p class='pTitulo8' onclick='checkestadoClientes(2)'>
+                        <input type='checkbox' id="inptSeleccEstadoBuscarCliente2"> Inactivo
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+                <table class="tableCabeceraRegistro">
+                  <tbody>
+                    <tr>
+                      <td class="td_registro" style="width:5%;">
+                        #
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        NRO DOC.
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        CLIENTE
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        ZONA
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        TELEF.
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        CREDITO
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="tableCabeceraRegistro">
+                  <tbody>
+                    <tr>
+                      <td class="td_registro" style="width:4%;">
+                        <input class='inputfiltro' type='text' id='inptBuscarAbmCliente1'
+                          onkeyup="if(event.keyCode == 13){buscarabmCliente()}" placeholder='Igual a' />
+                      </td>
+                      <td class="td_registro" style="width:1%;">
+                        <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+                          onclick="vaciar('inptBuscarAbmCliente1')" />
+                      </td>
+                      <td class="td_registro" style="width:9%;">
+                        <input class='inputfiltro' type='text' id='inptBuscarAbmCliente2'
+                          onkeyup="if(event.keyCode == 13){buscarabmCliente()}" placeholder='Igual a' />
+                      </td>
+                      <td class="td_registro" style="width:1%;">
+                        <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+                          onclick="vaciar('inptBuscarAbmCliente2')" />
+                      </td>
+                      <td class="td_registro" style="width:9%;">
+                        <input class='inputfiltro' type='text' id='inptBuscarAbmCliente3'
+                          onkeyup="if(event.keyCode == 13){buscarabmCliente()}" placeholder='Parecido' />
+                      </td>
+                      <td class="td_registro" style="width:1%;">
+                        <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+                          onclick="vaciar('inptBuscarAbmCliente3')" />
+                      </td>
+                      <td class="td_registro" style="width:9%;">
+                        <select class="inputfiltro" id="inptBuscarAbmCliente4"></select>
+                      </td>
+                      <td class="td_registro" style="width:1%;">
+                        <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+                          onclick="vaciar('inptBuscarAbmCliente4')" />
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                      </td>
+                      <td class="td_registro" style="width:10%;">
+                        <select class="inputfiltro" id="inptBuscarAbmCliente5">
+                          <option value="Confirmado">Confirmado</option>
+                          <option value="Denegado">Denegado</option>
+                        </select>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="div_cuerpo_table" id="table_abm_clientes"></div>
+                <table style='width:100%;height:50px;display:none' id='tbProcessClientes'>
+                  <tr>
+                    <td style='width:90%'>
+                      <div class='divprogreso1'>
+                        <div class='divprogreso2' id='divProgressClientes'></div>
+                      </div>
+                    </td>
+                    <td style='width:10%;text-align:center'>
+                      <input type="button" value="Cancelar" class="btn4" onclick="cancelarCargaClientes()"
+                        style="width:100px;background-color:rgb(58 58 58)">
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div class='divMenuf'>
+                <table style='width:100%'>
+                  <tr>
+                    <td style='width:20%;text-align:left'>
+                      <p class='pTituloC'>Registros Encontrados
+                      </p>
+                      <input class='inputTextDisable' type='text' disabled id='inptRegistroNroClientes'
+                        style='width:120px' />
+                    </td>
 
-<div id='divAbmCliente1' style='width:96vw;max-width:1180px;' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Buscar <b style='font-size: 30px;' >Cliente</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro' onclick='verCerrarVentanaAbmCliente("1","1")' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarabmcliente()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarAbmClientes()' />
-</td>
-</tr>
-</table>
-<br>
-<center>
-<div class='divMenuf'>
-<table style='width:100%'>
-<tr>
-<td style='width:80%'>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8' onclick='checkestadoClientes(1)'> 
-<input type='checkbox' id="inptSeleccEstadoBuscarCliente1" checked> Activo</p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8' onclick='checkestadoClientes(2)'>
- <input type='checkbox' id="inptSeleccEstadoBuscarCliente2"> Inactivo </p>
-</td>
-</tr>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:5%;">
-#
-</td>
-<td class="td_registro" style="width:10%;">
-NRO DOC.
-</td>
-<td class="td_registro" style="width:10%;">
-CLIENTE
-</td>
-<td class="td_registro" style="width:10%;">
-ZONA
-</td>
-<td class="td_registro" style="width:10%;">
-TELEF.
-</td>
-<td class="td_registro" style="width:10%;">
-CREDITO
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:4%;">
-<input class='inputfiltro' type='text' id='inptBuscarAbmCliente1' onkeyup="if(event.keyCode == 13){buscarabmCliente()}" placeholder='Igual a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmCliente1')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarAbmCliente2' onkeyup="if(event.keyCode == 13){buscarabmCliente()}" placeholder='Igual a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmCliente2')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarAbmCliente3' onkeyup="if(event.keyCode == 13){buscarabmCliente()}" placeholder='Parecido' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmCliente3')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<select class="inputfiltro" id="inptBuscarAbmCliente4"></select>
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarAbmCliente4')" />
-</td>
-<td class="td_registro" style="width:10%;">
-</td>
-<td class="td_registro" style="width:10%;">
-<select class="inputfiltro" id="inptBuscarAbmCliente5">
-<option value="Confirmado">Confirmado</option>
-<option value="Denegado">Denegado</option>
-</select>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_abm_clientes"></div>
-<table style='width:100%;height:50px;display:none' id='tbProcessClientes'>
-<tr>
-<td  style='width:90%'>
-<div class='divprogreso1'><div class='divprogreso2' id='divProgressClientes'></div></div>
-</td>
-<td style='width:10%;text-align:center'>
-<input  type="button" value="Cancelar" class="btn4" onclick="cancelarCargaClientes()" style="width:100px;background-color:rgb(58 58 58)">
-</td>
-</tr>
-</table>
-</div>
-<div class='divMenuf'>
-<table style='width:100%'>
-<tr>
-<td style='width:20%;text-align:left'>
-<p class='pTituloC' >Registros Encontrados
-</p>
-<input class='inputTextDisable' type='text' disabled id='inptRegistroNroClientes' style='width:120px' />
-</td>
-
-<td style='width:80%;text-align:left'>
-<p class='pTituloC' >Registro Selecc..</p>
-<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCliente' style='width:200px' />
-<input id='btnEditarClientes' type='button' value='Editar' class='btn5' onclick='verVentanaEditarCliente()' style='background-color:#b7b7b7'>
-<input id='btnAuditoriaClientes' type='button' value='Auditoria' class='btn5' onclick='verCerrarAuditoria(true)' style='background-color:#b7b7b7'>
+                    <td style='width:80%;text-align:left'>
+                      <p class='pTituloC'>Registro Selecc..</p>
+                      <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCliente'
+                        style='width:200px' />
+                      <input id='btnEditarClientes' type='button' value='Editar' class='btn5'
+                        onclick='verVentanaEditarCliente()' style='background-color:#b7b7b7'>
+                      <input id='btnAuditoriaClientes' type='button' value='Auditoria' class='btn5'
+                        onclick='verCerrarAuditoria(true)' style='background-color:#b7b7b7'>
 
 
-<input id='btnUbiClientes' type='button' value='Ubicacion' class='btn5' onclick='ver_cerrar_Geolocalizacion(1)' style='background-color:#b7b7b7'>
+                      <input id='btnUbiClientes' type='button' value='Ubicacion' class='btn5'
+                        onclick='ver_cerrar_Geolocalizacion(1)' style='background-color:#b7b7b7'>
 
-</td>
-<td style='width:20%;text-align:left'></td>
-</tr>
-</table>
+                    </td>
+                    <td style='width:20%;text-align:left'></td>
+                  </tr>
+                </table>
+              </div>
+            </center>
+            <br>
+          </div>
+        </center>
+      </td>
+    </tr>
+  </table>
 </div>
-</center>
-<br>
-</div>
-</center>
-</td>
-</tr>
-</table>
-</div>
-
-
-
 
 <div class='principal2' style='display:none' id='divGeoLocalizacion'>
 
