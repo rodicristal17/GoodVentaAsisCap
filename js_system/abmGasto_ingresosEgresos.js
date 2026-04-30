@@ -1098,6 +1098,8 @@ function limpiarcamposGasto() {
 	document.getElementById('inptAbmInterConsultaGasto').value= "";
 	document.getElementById('divGastoAsociadosGastos').style.display= "none";
 	document.getElementById('tablePeriodicidad').style.display= "";
+	document.getElementById('inptIdGasto').value = "";
+	document.getElementById('inptProyectoGasto').value = "";
 	cod_interConsulta= "";
 	idAbmGasto = "";
 	seleccionarLocalUSer()

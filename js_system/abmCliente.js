@@ -1271,6 +1271,28 @@ function EnviarClienteDesde() {
 			break;
 	}
 	
+	// Verifica los datos del cliente
+	if (
+		!(controlseleccvistacliente == "presupuesto" || controlseleccvistacliente == "agenda") && (
+			($(datostr).children('td[id="td_datos_2"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_7"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_10"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_3"]').html() == "")
+		)
+	) {
+		//ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
+		//EditarDatosClienteDesdeVenta();
+	} else if (
+		(controlseleccvistacliente == "presupuesto" || controlseleccvistacliente == "agenda") && (
+			($(datostr).children('td[id="td_datos_2"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_7"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_10"]').html() == "")
+		)
+	) {
+		ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
+		EditarDatosClienteDesdeVenta(true);
+	}
+
 	document.getElementById("divVistaCliente").style.display = "none"
 	document.getElementById("table_vista_cliente").innerHTML = ""
 	document.getElementById("table_clientes_cuentas1").innerHTML = ""

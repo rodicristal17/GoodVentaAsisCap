@@ -11442,7 +11442,7 @@ elementohtml.style.display="none"
 	calcular_total_venta()
 	
 }
-function EditarDatosClienteDesdeVenta(){
+function EditarDatosClienteDesdeVenta(ocultar_datos_extras= false){
 	if(elementoCliente==""){
 		ver_vetana_informativa("FALTO SELCCIONAR UN REGISTRO")
 		return;
@@ -11486,7 +11486,15 @@ function EditarDatosClienteDesdeVenta(){
 		controlventananuevocliente="ventavista"
 		buscarmasreferenciasclientes()
    verCerrarVentanaAbmCliente("1", "2")
-  
+
+  // Ocultar secciones de datos extras
+		if (ocultar_datos_extras) {
+			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+			document.getElementById('divAbmCliente2').style.width= "850px";
+		} else {
+			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
+			document.getElementById('divAbmCliente2').style.width= "auto";
+		}
 }
 function calcular_total_venta() {
 	var c = QuitarSeparadorMilValor(document.getElementById('inptCantProductoVenta').value);
