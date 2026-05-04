@@ -12596,373 +12596,6 @@ Reg. Encontrados :</p>
 </table>
 </div>
 
-
-
-<div id='divAgendaConsultorios' class='divAbms agenda-ventana' style='width:100%;height:100vh;position: absolute;display:none;'>
-    <div class='catalogo-header'>
-        <div class='catalogo-header-left'>
-            <div>
-                <p class='pTituloB titulo-agenda'>Agenda de <b>Consultorios</b></p>
-                <span class='subtitulo-agenda'>Gestión visual de turnos, pacientes y consultorios</span>
-            </div>
-        </div>
-
-        <div class='catalogo-header-right'>
-		<button class="btn-filtro" id="btnTema" onclick="toggleTema()">
-			🌙
-		</button>
-            <button class='btn-icon' onclick='abrirModalFiltrosAgenda()' title='Filtros'>
-                <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn' />
-            </button>
-            <button class='btn-icon' onclick='abrirModalNuevaCita()' title='Nueva cita'>
-                <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' />
-            </button>
-            <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
-                <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' />
-            </button>
-            <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios()' title='Cerrar'>
-                <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' />
-            </button>
-        </div>
-    </div>
-
-    <div class='catalogo-toolbar'>
-        <div class='agenda-nav-fecha'>
-            <button class='btn-filtro' onclick='cambiarFechaAgenda(-1)'>&lt;</button>
-            <input type='date' id='inptFechaAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultorios()' />
-            <button class='btn-filtro' onclick='cambiarFechaAgenda(1)'>&gt;</button>
-            <button class='btn-filtro btn-hoy' onclick='irHoyAgenda()'>Hoy</button>
-        </div>
- 
-
-        <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
-            <span class='chip-filtro'>Fecha: hoy</span>
-            <span class='chip-filtro'>Consultorios: todos</span>
-        </div>
-    </div>
-
-    <div class='agenda-layout'>
-        <div class='agenda-sidebar'>
-            <div class='agenda-card'>
-                <p class='agenda-card-title'>Resumen del día</p>
-                <div class='agenda-resumen-item'>
-                    <span>Total citas</span>
-                    <b id='lblTotalCitasAgenda'>0</b>
-                </div>
-                <div class='agenda-resumen-item'>
-                    <span>Confirmadas</span>
-                    <b id='lblConfirmadasAgenda'>0</b>
-                </div>
-                <div class='agenda-resumen-item'>
-                    <span>Pendientes</span>
-                    <b id='lblPendientesAgenda'>0</b>
-                </div>
-                <div class='agenda-resumen-item'>
-                    <span>Canceladas</span>
-                    <b id='lblCanceladasAgenda'>0</b>
-                </div>
-				
-				<div class='agenda-resumen-item'>
-                    <span>Primera consulta</span>
-                    <b id='lblPrimeraConsultaAgenda'>0</b>
-                </div>
-				
-				<div class='agenda-resumen-item'>
-                    <span>Atendido</span>
-                    <b id='lblAtendidoAgenda'>0</b>
-                </div>
-				
-				<div class='agenda-resumen-item'>
-                    <span>En espera</span>
-                    <b id='lblEsperaAgenda'>0</b>
-                </div>
-		
-				<div class='agenda-resumen-item'>
-                    <span>Confirmado con deuda</span>
-                    <b id='lblConDeudaAgenda'>0</b>
-                </div>
-				
-				
-            </div>
-
-            <div class='agenda-card'>
-                <p class='agenda-card-title'>Consultorios</p>
-                <div id='listaConsultoriosAgenda' class='agenda-consultorios-lista'></div>
-            </div>
-        </div>
-
-        <div class='agenda-main'>
-            <div class='agenda-grid-wrapper'>
-                <div class="agenda-grid-wrapper" id="agendaGridConsultorios"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='cerrarModalFiltrosAgenda()' style='display:none;'></div>
-<div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="cerrarModalFiltrosAgenda()"></div>
-
-<div class="modal-filtros-catalogo" id="modalFiltrosAgenda" style="display:none;">
-    <div class="modal-filtros-box modal-agenda-pro">
-        
-        <div class="modal-filtros-header">
-            <div class="modal-header-info">
-                <p class="modal-etiqueta">Panel de filtros</p>
-                <h3>Filtros de agenda</h3>
-                <span>Refiná la búsqueda por consultorio, local, paciente y estado</span>
-            </div>
-
-            <button type="button" class="btn-cerrar-modal" onclick="cerrarModalFiltrosAgenda()">×</button>
-        </div>
-
-        <div class="modal-filtros-body agenda-filtros-grid">
-            
-            <div class="filtro-grupo filtro-destacado">
-                <label for="inptBuscarPacienteAgenda">Buscar paciente</label>
-                <input 
-                    type="text" 
-                    id="inptBuscarPacienteAgenda" 
-                    class="catalogo-selectBuscador input-filtro-pro" 
-                    placeholder="Escriba el nombre del paciente..." 
-                    onkeyup="filtrarAgendaLocal()" 
-                />
-            </div>
-
-            <div class="filtro-grupo">
-                <label for="inptConsultorioAgendaFiltro">Consultorio</label>
-                <select id="inptConsultorioAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
-                    <option value="">Todos</option>
-                </select>
-            </div>
-
-            <div class="filtro-grupo">
-                <label for="inptLocalAgendaFiltro">Local</label>
-                <select id="inptLocalAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
-                    <option value="">Todos</option>
-                </select>
-            </div>
-
-            <div class="filtro-grupo">
-                <label for="inptEstadoAgenda">Estado</label>
-                <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultorios()">
-                    <option value="">Todos los estados</option>
-                    <option value="AGENDADO">Agendado</option>
-                    <option value="CONFIRMADO">Confirmado</option>
-                    <option value="ATENDIDO">Atendido</option>
-                    <option value="CANCELADO">Cancelado</option>
-                </select>
-            </div>
-
-        </div>
-
-        <div class="modal-filtros-footer">
-            <button class="btn-filtro btn-secundario" onclick="limpiarFiltrosAgenda()">Limpiar</button>
-            <button class="btn-accion-principal btn-principal-pro" onclick="aplicarFiltrosAgenda()">Aplicar filtros</button>
-        </div>
-    </div>
-</div>
-<div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='cerrarModalNuevaCita()' style='display:none;'></div>
-
-
-
-
-<div class='modal-filtros-catalogo' id='modalNuevaCita' style='display:none;'>
-    <div class='modal-filtros-box modal-cita-box'>
-        <div class='modal-filtros-header'>
-            <h3>Nueva cita</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevaCita()'>×</button>
-        </div>
-
-        <div class='modal-filtros-body modal-cita-grid'>
-           
-		   <div class='filtro-grupo'>
-				<label>Paciente</label>
-
-				<div class='campo-con-botones-agenda'>
-					<input type='text' id='inptPacienteAgenda' class='catalogo-selectBuscador' placeholder='Seleccionar paciente' readonly />
-					<input type='hidden' id='inptIdPacienteAgenda' />
-
-					<button type='button' class='btn-filtro' onclick='abrirModalBuscarPacienteAgenda()'>Buscar</button>
-					<button type='button' class='btn-accion-principal' onclick='abrirModalNuevoPacienteAgenda()'>Nuevo</button>
-				</div>
-			</div>
-
-            <div class='filtro-grupo'>
-                <label>Consultorio</label>
-                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador'></select>
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>Fecha</label>
-                <input type='date' id='inptFechaNuevaCita' class='catalogo-selectBuscador' />
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>Hora inicio</label>
-                <input type='time' id='inptHoraInicioAgenda' class='catalogo-selectBuscador' />
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>Hora fin</label>
-                <input type='time' id='inptHoraFinAgenda' class='catalogo-selectBuscador' />
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>Estado</label>
-                <select id='inptEstadoNuevaCita' class='catalogo-selectBuscador'>
-                    <option style='background:#80c583;color:#ffff' value='AGENDADO'>Agendado</option>
-                    <option style='background:#3b833e;color:#ffff'  value='CONFIRMADO'>Confirmado</option>
-                    <option style='background:#833b3b;color:#ffff'  value='ATENDIDO'>Atendido</option>
-                    <option style='background:#6c757d;color:#ffff' value='CANCELADO'>Cancelado</option>
-                    <option style='background:#dcb645;color:#ffff'  value='ENESPERA'>En espera</option>
-                    <option style='background:#07488f;color:#ffff' value='CONFIRMADOCONDEUDA'>Confirmado con deuda</option>
-                    <option style='background:#9d457c;color:#ffff' value='PRIMERACONSULTA'>Primera consulta</option>
-                </select>
-            </div>
-
-            <div class='filtro-grupo filtro-grupo-full'>
-                <label>Motivo</label>
-                <textarea id='inptMotivoAgenda' class='textarea-agenda' placeholder='Motivo de la consulta'></textarea>
-            </div>
-        </div>
-
-        <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='cerrarModalNuevaCita()'>Cancelar</button>
-            <button class='btn-accion-principal' onclick='guardarCitaAgenda()'>Guardar cita</button>
-        </div>
-    </div>
-</div>
-
-
-<div class='modal-filtros-overlay' id='overlayBuscarPacienteAgenda' onclick='cerrarModalBuscarPacienteAgenda()' style='display:none;'></div>
-
-<div class='modal-filtros-catalogo' id='modalBuscarPacienteAgenda' style='display:none;'>
-    <div class='modal-filtros-box modal-cita-box'>
-        <div class='modal-filtros-header'>
-            <h3>Buscar paciente</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalBuscarPacienteAgenda()'>×</button>
-        </div>
-
-        <div class='modal-filtros-body'>
-            <div class='filtro-grupo'>
-                <label>Buscar por nombre, CI o teléfono</label>
-                <input type='text' id='inptBuscarPacienteAgendaModal' class='catalogo-selectBuscador'
-                       onkeyup='if(event.keyCode==13){buscarPacientesAgenda()}' placeholder='Ej: Juan Pérez' />
-            </div>
-
-            <div id='divTablaPacientesAgenda' style='max-height:350px; overflow:auto;'></div>
-        </div>
-
-        <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='cerrarModalBuscarPacienteAgenda()'>Cerrar</button>
-            <button class='btn-accion-principal' onclick='buscarPacientesAgenda()'>Buscar</button>
-        </div>
-    </div>
-</div>
-
-
-<div class='modal-filtros-overlay' id='overlayNuevoPacienteAgenda' onclick='cerrarModalNuevoPacienteAgenda()' style='display:none;'></div>
-
-<div class='modal-filtros-catalogo' id='modalNuevoPacienteAgenda' style='display:none;'>
-    <div class='modal-filtros-box modal-cita-box'>
-        <div class='modal-filtros-header'>
-            <h3>Nuevo paciente</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevoPacienteAgenda()'>×</button>
-        </div>
-
-        <div class='modal-filtros-body modal-cita-grid'>
-            <div class='filtro-grupo'>
-                <label>Nombre completo</label>
-                <input type='text' id='inptNombreNuevoPacienteAgenda' class='catalogo-selectBuscador' />
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>CI / Documento</label>
-                <input type='text' id='inptDocumentoNuevoPacienteAgenda' class='catalogo-selectBuscador' />
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>Teléfono</label>
-                <input type='text' id='inptTelefonoNuevoPacienteAgenda' class='catalogo-selectBuscador' />
-            </div>
-
-            <div class='filtro-grupo'>
-                <label>Dirección</label>
-                <input type='text' id='inptDireccionNuevoPacienteAgenda' class='catalogo-selectBuscador' />
-            </div>
-        </div>
-
-        <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='cerrarModalNuevoPacienteAgenda()'>Cancelar</button>
-            <button class='btn-accion-principal' onclick='guardarNuevoPacienteAgenda()'>Guardar paciente</button>
-        </div>
-    </div>
-</div>
-
-
-<div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda()' style='display:none;'></div>
-<div class='modal-filtros-catalogo' id='modalDetalleAgenda' style='display:none;'>
-    <div class='modal-filtros-box modal-detalle-agenda-box'>
-        <div class='modal-filtros-header'>
-            <h3>Detalle del agendamiento</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda()'>×</button>
-        </div>
-
-        <div class='modal-filtros-body'>
-            <div class='detalle-agenda-grid'>
-                <div class='detalle-item'>
-                    <span class='detalle-label'>ID</span>
-                    <div class='detalle-valor' id='detAgendaId'></div>
-                </div>
-
-                <div class='detalle-item'>
-                    <span class='detalle-label'>Estado</span>
-                    <div class='detalle-valor' id='detAgendaEstado'></div>
-                </div>
-
-                <div class='detalle-item'>
-                    <span class='detalle-label'>Paciente</span>
-                    <div class='detalle-valor' id='detAgendaPaciente'></div>
-                </div>
-
-                <div class='detalle-item'>
-                    <span class='detalle-label'>Consultorio</span>
-                    <div class='detalle-valor' id='detAgendaConsultorio'></div>
-                </div>
-
-                <div class='detalle-item'>
-                    <span class='detalle-label'>Fecha</span>
-                    <div class='detalle-valor' id='detAgendaFecha'></div>
-                </div>
-
-                <div class='detalle-item'>
-                    <span class='detalle-label'>Horario</span>
-                    <div class='detalle-valor' id='detAgendaHorario'></div>
-                </div>
-
-                <div class='detalle-item detalle-item-full'>
-                    <span class='detalle-label'>Motivo</span>
-                    <div class='detalle-valor' id='detAgendaMotivo'></div>
-                </div>
-            </div>
-        </div>
-
-        <div class='modal-filtros-footer'>
-            <button class='btn-filtro' style='background:#9d457c; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("PRIMERACONSULTA")'>Primera Consulta </button>
-			
-			<button class='btn-filtro' style='background:#07488f; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADOCONDEUDA")'>Confirmado con Deuda</button>
-						
-			<button class='btn-filtro' style='background:#dcb645; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ENESPERA")'>En Espera</button>
-			
-			<button class='btn-filtro' style='background:#3b833e; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADO")'>Confirmado</button>			
-			
-            <button class='btn-filtro' style='background:#833b3b; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ATENDIDO")'>Atendido</button>
-			
-            <button class='btn-filtro' style='background:#858585; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CANCELADO")'>Cancelado</button>
-        </div>
-    </div>
-</div>
-
 <div class='principal2' style='display:none' id='divAbmVistaConsulta'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmVistaConsulta'>
 <tr>
@@ -22120,6 +21753,370 @@ onclick='buscarvistaaperturacierrecaja()' />
 </table>
 </div>
 
+<div id='divAgendaConsultorios' class='divAbms agenda-ventana' style='width:100%;height:100vh;position: absolute;display:none;'>
+    <div class='catalogo-header'>
+        <div class='catalogo-header-left'>
+            <div>
+                <p class='pTituloB titulo-agenda'>Agenda de <b>Consultorios</b></p>
+                <span class='subtitulo-agenda'>Gestión visual de turnos, pacientes y consultorios</span>
+            </div>
+        </div>
+
+        <div class='catalogo-header-right'>
+		<button class="btn-filtro" id="btnTema" onclick="toggleTema()">
+			🌙
+		</button>
+            <button class='btn-icon' onclick='abrirModalFiltrosAgenda()' title='Filtros'>
+                <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn' />
+            </button>
+            <button class='btn-icon' onclick='abrirModalNuevaCita()' title='Nueva cita'>
+                <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' />
+            </button>
+            <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
+                <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' />
+            </button>
+            <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios()' title='Cerrar'>
+                <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' />
+            </button>
+        </div>
+    </div>
+
+    <div class='catalogo-toolbar'>
+        <div class='agenda-nav-fecha'>
+            <button class='btn-filtro' onclick='cambiarFechaAgenda(-1)'>&lt;</button>
+            <input type='date' id='inptFechaAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultorios()' />
+            <button class='btn-filtro' onclick='cambiarFechaAgenda(1)'>&gt;</button>
+            <button class='btn-filtro btn-hoy' onclick='irHoyAgenda()'>Hoy</button>
+        </div>
+ 
+
+        <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
+            <span class='chip-filtro'>Fecha: hoy</span>
+            <span class='chip-filtro'>Consultorios: todos</span>
+        </div>
+    </div>
+
+    <div class='agenda-layout'>
+        <div class='agenda-sidebar'>
+            <div class='agenda-card'>
+                <p class='agenda-card-title'>Resumen del día</p>
+                <div class='agenda-resumen-item'>
+                    <span>Total citas</span>
+                    <b id='lblTotalCitasAgenda'>0</b>
+                </div>
+                <div class='agenda-resumen-item'>
+                    <span>Confirmadas</span>
+                    <b id='lblConfirmadasAgenda'>0</b>
+                </div>
+                <div class='agenda-resumen-item'>
+                    <span>Pendientes</span>
+                    <b id='lblPendientesAgenda'>0</b>
+                </div>
+                <div class='agenda-resumen-item'>
+                    <span>Canceladas</span>
+                    <b id='lblCanceladasAgenda'>0</b>
+                </div>
+				
+				<div class='agenda-resumen-item'>
+                    <span>Primera consulta</span>
+                    <b id='lblPrimeraConsultaAgenda'>0</b>
+                </div>
+				
+				<div class='agenda-resumen-item'>
+                    <span>Atendido</span>
+                    <b id='lblAtendidoAgenda'>0</b>
+                </div>
+				
+				<div class='agenda-resumen-item'>
+                    <span>En espera</span>
+                    <b id='lblEsperaAgenda'>0</b>
+                </div>
+		
+				<div class='agenda-resumen-item'>
+                    <span>Confirmado con deuda</span>
+                    <b id='lblConDeudaAgenda'>0</b>
+                </div>
+				
+				
+            </div>
+
+            <div class='agenda-card'>
+                <p class='agenda-card-title'>Consultorios</p>
+                <div id='listaConsultoriosAgenda' class='agenda-consultorios-lista'></div>
+            </div>
+        </div>
+
+        <div class='agenda-main'>
+            <div class='agenda-grid-wrapper'>
+                <div class="agenda-grid-wrapper" id="agendaGridConsultorios"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='cerrarModalFiltrosAgenda()' style='display:none;'></div>
+<div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="cerrarModalFiltrosAgenda()"></div>
+
+<div class="modal-filtros-catalogo" id="modalFiltrosAgenda" style="display:none;">
+    <div class="modal-filtros-box modal-agenda-pro">
+        
+        <div class="modal-filtros-header">
+            <div class="modal-header-info">
+                <p class="modal-etiqueta">Panel de filtros</p>
+                <h3>Filtros de agenda</h3>
+                <span>Refiná la búsqueda por consultorio, local, paciente y estado</span>
+            </div>
+
+            <button type="button" class="btn-cerrar-modal" onclick="cerrarModalFiltrosAgenda()">×</button>
+        </div>
+
+        <div class="modal-filtros-body agenda-filtros-grid">
+            
+            <div class="filtro-grupo filtro-destacado">
+                <label for="inptBuscarPacienteAgenda">Buscar paciente</label>
+                <input 
+                    type="text" 
+                    id="inptBuscarPacienteAgenda" 
+                    class="catalogo-selectBuscador input-filtro-pro" 
+                    placeholder="Escriba el nombre del paciente..." 
+                    onkeyup="filtrarAgendaLocal()" 
+                />
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="inptConsultorioAgendaFiltro">Consultorio</label>
+                <select id="inptConsultorioAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="inptLocalAgendaFiltro">Local</label>
+                <select id="inptLocalAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="inptEstadoAgenda">Estado</label>
+                <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultorios()">
+                    <option value="">Todos los estados</option>
+                    <option value="AGENDADO">Agendado</option>
+                    <option value="CONFIRMADO">Confirmado</option>
+                    <option value="ATENDIDO">Atendido</option>
+                    <option value="CANCELADO">Cancelado</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="modal-filtros-footer">
+            <button class="btn-filtro btn-secundario" onclick="limpiarFiltrosAgenda()">Limpiar</button>
+            <button class="btn-accion-principal btn-principal-pro" onclick="aplicarFiltrosAgenda()">Aplicar filtros</button>
+        </div>
+    </div>
+</div>
+<div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='cerrarModalNuevaCita()' style='display:none;'></div>
+
+
+
+
+<div class='modal-filtros-catalogo' id='modalNuevaCita' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Nueva cita</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevaCita()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body modal-cita-grid'>
+           
+		   <div class='filtro-grupo'>
+				<label>Paciente</label>
+
+				<div class='campo-con-botones-agenda'>
+					<input type='text' id='inptPacienteAgenda' class='catalogo-selectBuscador' placeholder='Seleccionar paciente' readonly />
+					<input type='hidden' id='inptIdPacienteAgenda' />
+
+					<button type='button' class='btn-filtro' onclick='abrirModalBuscarPacienteAgenda()'>Buscar</button>
+					<button type='button' class='btn-accion-principal' onclick='abrirModalNuevoPacienteAgenda()'>Nuevo</button>
+				</div>
+			</div>
+
+            <div class='filtro-grupo'>
+                <label>Consultorio</label>
+                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador'></select>
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Fecha</label>
+                <input type='date' id='inptFechaNuevaCita' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Hora inicio</label>
+                <input type='time' id='inptHoraInicioAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Hora fin</label>
+                <input type='time' id='inptHoraFinAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Estado</label>
+                <select id='inptEstadoNuevaCita' class='catalogo-selectBuscador'>
+                    <option style='background:#80c583;color:#ffff' value='AGENDADO'>Agendado</option>
+                    <option style='background:#3b833e;color:#ffff'  value='CONFIRMADO'>Confirmado</option>
+                    <option style='background:#833b3b;color:#ffff'  value='ATENDIDO'>Atendido</option>
+                    <option style='background:#6c757d;color:#ffff' value='CANCELADO'>Cancelado</option>
+                    <option style='background:#dcb645;color:#ffff'  value='ENESPERA'>En espera</option>
+                    <option style='background:#07488f;color:#ffff' value='CONFIRMADOCONDEUDA'>Confirmado con deuda</option>
+                    <option style='background:#9d457c;color:#ffff' value='PRIMERACONSULTA'>Primera consulta</option>
+                </select>
+            </div>
+
+            <div class='filtro-grupo filtro-grupo-full'>
+                <label>Motivo</label>
+                <textarea id='inptMotivoAgenda' class='textarea-agenda' placeholder='Motivo de la consulta'></textarea>
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='cerrarModalNuevaCita()'>Cancelar</button>
+            <button class='btn-accion-principal' onclick='guardarCitaAgenda()'>Guardar cita</button>
+        </div>
+    </div>
+</div>
+
+
+<div class='modal-filtros-overlay' id='overlayBuscarPacienteAgenda' onclick='cerrarModalBuscarPacienteAgenda()' style='display:none;'></div>
+
+<div class='modal-filtros-catalogo' id='modalBuscarPacienteAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Buscar paciente</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalBuscarPacienteAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body'>
+            <div class='filtro-grupo'>
+                <label>Buscar por nombre, CI o teléfono</label>
+                <input type='text' id='inptBuscarPacienteAgendaModal' class='catalogo-selectBuscador'
+                       onkeyup='if(event.keyCode==13){buscarPacientesAgenda()}' placeholder='Ej: Juan Pérez' />
+            </div>
+
+            <div id='divTablaPacientesAgenda' style='max-height:350px; overflow:auto;'></div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='cerrarModalBuscarPacienteAgenda()'>Cerrar</button>
+            <button class='btn-accion-principal' onclick='buscarPacientesAgenda()'>Buscar</button>
+        </div>
+    </div>
+</div>
+
+
+<div class='modal-filtros-overlay' id='overlayNuevoPacienteAgenda' onclick='cerrarModalNuevoPacienteAgenda()' style='display:none;'></div>
+
+<div class='modal-filtros-catalogo' id='modalNuevoPacienteAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Nuevo paciente</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevoPacienteAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body modal-cita-grid'>
+            <div class='filtro-grupo'>
+                <label>Nombre completo</label>
+                <input type='text' id='inptNombreNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>CI / Documento</label>
+                <input type='text' id='inptDocumentoNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Teléfono</label>
+                <input type='text' id='inptTelefonoNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Dirección</label>
+                <input type='text' id='inptDireccionNuevoPacienteAgenda' class='catalogo-selectBuscador' />
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='cerrarModalNuevoPacienteAgenda()'>Cancelar</button>
+            <button class='btn-accion-principal' onclick='guardarNuevoPacienteAgenda()'>Guardar paciente</button>
+        </div>
+    </div>
+</div>
+
+
+<div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda()' style='display:none;'></div>
+<div class='modal-filtros-catalogo' id='modalDetalleAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-detalle-agenda-box'>
+        <div class='modal-filtros-header'>
+            <h3>Detalle del agendamiento</h3>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda()'>×</button>
+        </div>
+
+        <div class='modal-filtros-body'>
+            <div class='detalle-agenda-grid'>
+                <div class='detalle-item'>
+                    <span class='detalle-label'>ID</span>
+                    <div class='detalle-valor' id='detAgendaId'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Estado</span>
+                    <div class='detalle-valor' id='detAgendaEstado'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Paciente</span>
+                    <div class='detalle-valor' id='detAgendaPaciente'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Consultorio</span>
+                    <div class='detalle-valor' id='detAgendaConsultorio'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Fecha</span>
+                    <div class='detalle-valor' id='detAgendaFecha'></div>
+                </div>
+
+                <div class='detalle-item'>
+                    <span class='detalle-label'>Horario</span>
+                    <div class='detalle-valor' id='detAgendaHorario'></div>
+                </div>
+
+                <div class='detalle-item detalle-item-full'>
+                    <span class='detalle-label'>Motivo</span>
+                    <div class='detalle-valor' id='detAgendaMotivo'></div>
+                </div>
+            </div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' style='background:#9d457c; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("PRIMERACONSULTA")'>Primera Consulta </button>
+			
+			<button class='btn-filtro' style='background:#07488f; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADOCONDEUDA")'>Confirmado con Deuda</button>
+						
+			<button class='btn-filtro' style='background:#dcb645; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ENESPERA")'>En Espera</button>
+			
+			<button class='btn-filtro' style='background:#3b833e; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADO")'>Confirmado</button>			
+			
+            <button class='btn-filtro' style='background:#833b3b; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ATENDIDO")'>Atendido</button>
+			
+            <button class='btn-filtro' style='background:#858585; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CANCELADO")'>Cancelado</button>
+        </div>
+    </div>
+</div>
 
 <div class='principal2' style='display:none' id='divVistaCliente'>
 <table style='width:100%;height:100%;' id='tdEfectoVistaCliente'>

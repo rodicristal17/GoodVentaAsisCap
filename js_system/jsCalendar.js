@@ -24,6 +24,7 @@ function cargarAgendaConsultoriosDesdePHP() {
         "funt": "cargarAgenda"
     };
 
+	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
@@ -55,8 +56,10 @@ function cargarAgendaConsultoriosDesdePHP() {
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
             document.getElementById("agendaGridConsultorios").innerHTML = '';
+	        verCerrarEfectoCargando();
         },
         success: function (responseText) {
+	        verCerrarEfectoCargando();
             try {
                 var datosRespuesta = responseText;
 					console.log(datosRespuesta)
@@ -601,6 +604,11 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         MiColor = "#9d457c";
     }
 	 
+    // Evalua si tiene los datos basicos
+    let advertencia_datos_incompletos= '';
+    if (!e.idzonaFk || e.idzonaFk == 0 || !e.whapp || !e.ci_cliente) {
+        advertencia_datos_incompletos= '<i class="fa-solid fa-triangle-exclamation" style="color: gold;padding-right: 5px;"></i>';
+    }
 
     var estilos = ""
         + "background:" + MiColor + ";"
@@ -622,7 +630,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "data-fin='" + e.fin + "' "
     + "style='" + estilos + "' "
     + "onclick='clickEventoAgenda(" + e.id + ", event)'>"
-        + "<span class='paciente'>" + e.paciente + "</span>"
+        + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
         + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
         + "<div class='agenda-evento-resize' "
@@ -774,12 +782,6 @@ function cambiarFechaAgenda(dias){
     cargarAgendaConsultoriosDesdePHP();
 }
 
-function irHoyAgenda(){
-    var hoy = new Date();
-    document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
-    cargarAgendaConsultoriosDesdePHP();
-}
-
 function formatearFechaInput(fecha){
     var y = fecha.getFullYear();
     var m = ('0' + (fecha.getMonth() + 1)).slice(-2);
@@ -893,8 +895,14 @@ function verDetalleAgenda(id){
         }
     }
 
+    // Se evalua si los datos del cliente estan completos
+    let advertencia_datos_cliente_incompleto= '';
+    if (!evento.ci_cliente || !evento.whapp || !evento.idzonaFk || evento.idzonaFk == 0) {
+        advertencia_datos_cliente_incompleto= '<br><input type="button" value="Cargar datos faltantes" class="btn4" onclick="controlseleccvistacliente= \'calendario\';verCerrarVentanaAbmCliente(true, true, true);cerrarDetalleAgenda();cerrarAgendaConsultorios()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;background: #b40303;"/>';
+    }
+
     document.getElementById('detAgendaId').innerHTML = evento.id;
-    document.getElementById('detAgendaPaciente').innerHTML = evento.paciente || '';
+    document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
     document.getElementById('detAgendaConsultorio').innerHTML = nombreConsultorio;
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorario').innerHTML = (evento.inicio || '') + ' - ' + (evento.fin || '');
@@ -904,6 +912,16 @@ function verDetalleAgenda(id){
 
     document.getElementById('overlayDetalleAgenda').style.display = '';
     document.getElementById('modalDetalleAgenda').style.display = '';
+
+    // Completa los datos del form de paciente
+    idAbmCliente= evento.cod_cliente;
+    document.getElementById('inptNombreApellidoCliente').value= evento.paciente || '';
+    document.getElementById('inptNroDocCliente').value= evento.ci_cliente || '';
+    document.getElementById('inptNroRucCliente').value= evento.rut_cliente || '';
+    document.getElementById('inptNrowhatsappCliente').value= evento.whapp || '';
+    document.getElementById('inptZonaCliente').value= evento.nombre_zona || '';
+    document.getElementById('inptFechaNacCliente').value= evento.fechanac || '';
+    idFKZona = evento.idzonaFk || '';
 }
 
 function cerrarDetalleAgenda(){
@@ -931,9 +949,13 @@ function cerrarAgendaConsultorios(){
     document.getElementById('divAgendaConsultorios').style.display = 'none';
 }
 
-function AbrirAgendaConsultorios(){
-    irHoyAgenda();
+function AbrirAgendaConsultorios(ir_hoy= true){
     document.getElementById('divAgendaConsultorios').style.display = '';
+    if (ir_hoy) {
+        var hoy = new Date();
+        document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
+    }
+    cargarAgendaConsultoriosDesdePHP();
 }
 
 /* ===========================
@@ -1188,15 +1210,18 @@ function guardarMovimientoAgendaServidor(data){
         "hora_fin": data.hora_fin
     };
 
+	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
         type: "post",
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+	        verCerrarEfectoCargando();
             cargarAgendaConsultoriosDesdePHP();
         },
         success: function (responseText) {
+	        verCerrarEfectoCargando();
             try {
                 var resp = responseText;
 
@@ -1234,15 +1259,18 @@ function guardarResizeAgendaServidor(data){
         "hora_fin": data.hora_fin
     };
 
+	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
         type: "post",
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+	        verCerrarEfectoCargando();
             cargarAgendaConsultoriosDesdePHP();
         },
         success: function (responseText) {
+	        verCerrarEfectoCargando();
             try {
                 var resp = responseText;
 
@@ -1379,14 +1407,17 @@ function actualizarEstadoAgendaServidor(idAgenda, nuevoEstado){
         "estado": nuevoEstado
     };
 
+	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
         type: "post",
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        	verCerrarEfectoCargando();
         },
         success: function (responseText) {
+	        verCerrarEfectoCargando();
             try {
                 var resp = responseText;
 
@@ -1472,6 +1503,7 @@ function guardarCitaAgenda(){
         "funt": "guardarCita"
     };
 
+	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
@@ -1480,8 +1512,10 @@ function guardarCitaAgenda(){
         },
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+	        verCerrarEfectoCargando();
         },
         success: function (responseText) {
+	        verCerrarEfectoCargando();
             try {
                 var resp = responseText;
 
@@ -1620,14 +1654,17 @@ function guardarNuevoPacienteAgenda(){
         "funt": "guardarPacienteAgenda"
     };
 
+	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
         type: "post",
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+	        verCerrarEfectoCargando();
         },
         success: function (responseText) {
+	        verCerrarEfectoCargando();
             try {
                 var resp = responseText;
 

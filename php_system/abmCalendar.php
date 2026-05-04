@@ -441,9 +441,12 @@ function cargarAgenda($mysqli){
             TIME_FORMAT(a.hora_fin, '%H:%i') AS hora_fin,
             a.estado,
             a.motivo,
+            cl.ci_cliente, cl.idzonaFk,cl.whapp, p.telefono,cl.fechanac,cl.rut_cliente,cl.cod_cliente,
+            (SELECT nombre FROM zona WHERE idzona = cl.idzonaFk) AS nombre_zona,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
+        INNER JOIN cliente cl ON cl.cod_cliente = a.id_paciente
         INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
         WHERE 1=1 ".$condicion."
         ORDER BY a.fecha ASC, a.id_consultorio ASC, a.hora_inicio ASC, a.id_agenda ASC
@@ -469,6 +472,14 @@ function cargarAgenda($mysqli){
             "inicio" => $row["hora_inicio"],
             "fin" => $row["hora_fin"],
             "estado" => $row["estado"],
+            "ci_cliente" => $row["ci_cliente"],
+            "idzonaFk" => $row["idzonaFk"],
+            "whapp" => $row["whapp"],
+            "telefono" => $row["telefono"],
+            "fechanac" => $row["fechanac"],
+            "nombre_zona" => $row["nombre_zona"],
+            "rut_cliente" => $row["rut_cliente"],
+            "cod_cliente" => $row["cod_cliente"],
             "motivo" => normalizarTextoUtf8($row["motivo"])
         );
     }

@@ -106,7 +106,14 @@ function verCerrarVentanaAbmCliente(mostrar, abm, ocultar_datos_extras= false) {
 			}
 		} else {
 			$("div[id=divAbmCliente1]").fadeOut(250)
-			document.getElementById('divAbmCliente').style.display = "none"	
+			document.getElementById('divAbmCliente').style.display = "none"
+			
+			// Evalua si existe una ventana de origen y se actua
+			switch (controlseleccvistacliente) {
+				case 'calendario':
+					AbrirAgendaConsultorios(false);
+					break;
+			}
 		}
 	}
 }
@@ -367,7 +374,7 @@ function verificarcamposCliente() {
 		return false;
 	}
 	
-	if (idFKZona == "") {
+	if (idFKZona == "" || idFKZona == 0) {
 		ver_vetana_informativa("FALTAN DATOS", "FALTO SELECCIONAR UNA ZONA", "advertencia")
 		return false;
 	}
@@ -1243,6 +1250,9 @@ function EnviarClienteDesde() {
 				verPasoPresupuestoDoc(1);
 			}
 			abmPresupuesto(idabmPresupuesto, "", idFkCliente, null, null);
+			break;
+		case 'calendario':
+			AbrirAgendaConsultorios(false);
 			break;
 	}
 	
