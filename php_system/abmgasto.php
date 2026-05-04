@@ -72,8 +72,11 @@ $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8
 $editar_cuotas= $_POST['editar_cuotas'];
 $editar_cuotas= mb_convert_encoding((string)($editar_cuotas), 'ISO-8859-1', 'UTF-8');
 
-$cod_proyecto_gastoFK= $_POST['cod_proyecto_gastoFK'];
+$cod_proyecto_gastoFK= isset($_POST['cod_proyecto_gastoFK']) ? $_POST['cod_proyecto_gastoFK'] : '';
 $cod_proyecto_gastoFK= mb_convert_encoding((string)($cod_proyecto_gastoFK), 'ISO-8859-1', 'UTF-8');
+if (!is_numeric($cod_proyecto_gastoFK)) {
+	$cod_proyecto_gastoFK= NULL;
+}
 
 	// Comprueba si esta dentro del presupuesto
 	$fechaRango= DateTime::createFromFormat('Y-m-d', $fecha);
@@ -401,31 +404,106 @@ if ($operacion == "obtenerGastosAsociados") {
 			<td  id='td_datos_18' style='display:none;'>".$gast['usuario_autoriz_nombre']."</td>
 			<td  id='td_datos_19' style='display:none;'>".$gast['fecha_autoriz']."</td>
 			<td  id='td_datos_20' style='display:none;'>".$gast['cod_motivoIngresoEgresoFK']."</td>
+			<td  id='td_datos_22' style='display:none;'>".$gast['cod_proyecto_gastoFK']."</td>
 		</tr>";
 	}
 
-	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $gastos[0], "4" => (isset($gastos[0]) ? $gastos[0]['descripcion'] : null), "5" => number_format($total_pendiente, 0, ',', '.')));
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => (isset($gastos[0]) ? $gastos[0] : null), "4" => (isset($gastos[0]) ? $gastos[0]['descripcion'] : null), "5" => number_format($total_pendiente, 0, ',', '.')));
 	exit;
 }
 
 }
 
 
+function mostrarDiagnosticoObtenerGastosAsociados($idgastos, $motivo, $extra= array()) {
+	$mysqli= conectar_al_servidor();
+	$diagnostico= array(
+		'motivo' => $motivo,
+		'idgastos_recibido' => $idgastos,
+		'idgastos_var_export' => var_export($idgastos, true),
+		'idgastos_strlen' => strlen((string)$idgastos),
+		'idgastos_hex' => bin2hex((string)$idgastos),
+		'post' => $_POST,
+		'extra' => $extra,
+	);
+
+	$consultas= array(
+		'conexion' => "SELECT DATABASE() AS base_actual, @@hostname AS host, @@version AS version_mysql, CONNECTION_ID() AS connection_id",
+		'gasto_por_id_string' => "SELECT idgastos, monto, motivo, fecha, estado, cod_gasto_padre, cod_proyecto_gastoFK, cod_interConsultaFK FROM gastos WHERE idgastos = ?",
+		'gasto_por_id_int' => "SELECT idgastos, monto, motivo, fecha, estado, cod_gasto_padre, cod_proyecto_gastoFK, cod_interConsultaFK FROM gastos WHERE idgastos = ?",
+		'gasto_con_filtro_buscarGasto' => "SELECT idgastos, monto, motivo, fecha, estado, cod_gasto_padre, cod_proyecto_gastoFK, cod_interConsultaFK FROM gastos WHERE estado != 'Inactivo' AND idgastos = ?",
+	);
+
+	foreach ($consultas as $nombre => $sql) {
+		$stmt= $mysqli->prepare($sql);
+		if (!$stmt) {
+			$diagnostico[$nombre]= "Error prepare: ".$mysqli->error;
+			continue;
+		}
+		if ($nombre == 'gasto_por_id_string' || $nombre == 'gasto_con_filtro_buscarGasto') {
+			$stmt->bind_param('s', $idgastos);
+		}
+		if ($nombre == 'gasto_por_id_int') {
+			$idgastosInt= intval($idgastos);
+			$stmt->bind_param('i', $idgastosInt);
+		}
+		if (!$stmt->execute()) {
+			$diagnostico[$nombre]= "Error execute: ".$stmt->error;
+			$stmt->close();
+			continue;
+		}
+		$diagnostico[$nombre]= $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+		$stmt->close();
+	}
+
+	$filaGasto= isset($diagnostico['gasto_por_id_int'][0]) ? $diagnostico['gasto_por_id_int'][0] : null;
+	if ($filaGasto && !empty($filaGasto['cod_proyecto_gastoFK'])) {
+		$sql= "SELECT idgastos, fecha, estado, cod_gasto_padre, cod_proyecto_gastoFK, motivo FROM gastos WHERE cod_proyecto_gastoFK = ? ORDER BY fecha ASC, idgastos DESC";
+		$stmt= $mysqli->prepare($sql);
+		$stmt->bind_param('i', $filaGasto['cod_proyecto_gastoFK']);
+		$stmt->execute();
+		$diagnostico['gastos_del_proyecto']= $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+		$stmt->close();
+	}
+	if ($filaGasto && !empty($filaGasto['cod_gasto_padre'])) {
+		$sql= "SELECT idgastos, fecha, estado, cod_gasto_padre, cod_proyecto_gastoFK, motivo FROM gastos WHERE idgastos = ?";
+		$stmt= $mysqli->prepare($sql);
+		$stmt->bind_param('i', $filaGasto['cod_gasto_padre']);
+		$stmt->execute();
+		$diagnostico['gasto_padre']= $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+		$stmt->close();
+	}
+
+	echo "<pre style='white-space: pre-wrap; font-size: 13px;'>";
+	echo htmlspecialchars(print_r($diagnostico, true), ENT_QUOTES, 'UTF-8');
+	echo "</pre>";
+	exit;
+}
+
 function obtenerGastosAsociados($idgastos) {
 	$result= array();
-	// Obtenemos el registro
-	$result = buscarGasto('','','','','','','','','true','','','','','', $idgastos);
-	$regGasto= $result[0];
-
-	// Se verifica si tiene un proyecto asociado
-	if ($regGasto['cod_proyecto_gastoFK']) {
-		return buscarGasto('','','','','','','','','true','','','','','', '', 'ASC', $regGasto['cod_proyecto_gastoFK']);
+	// Obtenemos el registro base aunque este inactivo, porque desde el se resuelve el proyecto/padre.
+	$result = buscarGasto('','','','','','','','','false','','','','','', $idgastos);
+	if (count($result) < 1) {
+		error_log("obtenerGastosAsociados sin resultado. idgastos=[".$idgastos."] POST=".json_encode($_POST));
+		mostrarDiagnosticoObtenerGastosAsociados($idgastos, 'buscarGasto inicial no devolvio registros');
 	}
+	$regGasto= $result[0];
 
 	// Se verifica si es cuota y se obtiene el gasto padre
 	if ($regGasto['cod_gasto_padre']) {
-		$result= buscarGasto('','','','','','','','','true','','','','','', $regGasto['cod_gasto_padre']);
+		$result= buscarGasto('','','','','','','','','false','','','','','', $regGasto['cod_gasto_padre']);
+		if (count($result) < 1) {
+			error_log("obtenerGastosAsociados sin gasto padre. idgastos=[".$idgastos."] cod_gasto_padre=[".$regGasto['cod_gasto_padre']."] POST=".json_encode($_POST));
+			mostrarDiagnosticoObtenerGastosAsociados($idgastos, 'buscarGasto no encontro el gasto padre', array('regGasto' => $regGasto));
+		}
 		$regGasto= $result[0];
+	}
+
+	// Se verifica si tiene un proyecto asociado
+	if ($regGasto['cod_proyecto_gastoFK']) {
+		$gastosProyecto= buscarGasto('','','','','','','','','true','','','','','', '', 'ASC', $regGasto['cod_proyecto_gastoFK']);
+		return (count($gastosProyecto) > 0 ? $gastosProyecto : $result);
 	}
 
 	// Se evalua si existen gastos asociados
@@ -979,7 +1057,7 @@ function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
 		case 'anual':
 			return sumarMesesRespetandoDia($fechaBase, 12 * $indice, $diaObjetivo);
 		default:
-			echo "No ese encontro la periodicidad: $periodicidad";exit;
+			echo "No se encontro la periodicidad: $periodicidad";exit;
 			return null;
 	}
 }
@@ -1027,7 +1105,32 @@ function obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivoPrim
 	return $codProyectoGasto;
 }
 
-function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas, $periodicidad, $fechaBaseStr, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK) {
+function obtenerProyectoGastoSerie($mysqli, $idgastos, $codProyectoGastoSolicitado= '') {
+	$sql= "SELECT g.cod_proyecto_gastoFK, g.cod_gasto_padre, gp.cod_proyecto_gastoFK AS cod_proyecto_padre
+		FROM gastos g
+		LEFT JOIN gastos gp ON gp.idgastos = g.cod_gasto_padre
+		WHERE g.idgastos = ?
+		LIMIT 1";
+	$stmt= $mysqli->prepare($sql);
+	$stmt->bind_param('i', $idgastos);
+	$stmt->execute();
+	$result= $stmt->get_result();
+	$row= $result->fetch_assoc();
+	$stmt->close();
+
+	if ($row) {
+		if (!empty($row['cod_gasto_padre']) && !empty($row['cod_proyecto_padre'])) {
+			return $row['cod_proyecto_padre'];
+		}
+		if (!empty($row['cod_proyecto_gastoFK'])) {
+			return $row['cod_proyecto_gastoFK'];
+		}
+	}
+
+	return (is_numeric($codProyectoGastoSolicitado) ? $codProyectoGastoSolicitado : '');
+}
+
+function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas, $periodicidad, $fechaBaseStr, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK, $codProyectoGastoFijo= '') {
 	$estado= 'pendiente';
 	if ($cantCuotas <= 1) {
 		return;
@@ -1038,7 +1141,7 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 		return;
 	}
 
-	$codProyectoGasto= obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivo);
+	$codProyectoGasto= ($codProyectoGastoFijo != '' && is_numeric($codProyectoGastoFijo)) ? $codProyectoGastoFijo : obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivo);
 		
 	$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad, cod_proyecto_gastoFK)
 	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -1215,7 +1318,7 @@ if ($cod_interConsultaFK != NULL) {
 	$ss .= "s";
 	$parametros[] = $cod_interConsultaFK;
 }
-if ($cod_proyecto_gastoFK != NULL) {
+if ($cod_proyecto_gastoFK != NULL && $cod_proyecto_gastoFK != "" && is_numeric($cod_proyecto_gastoFK)) {
 	$atributos .= ($atributos == "" ? "" : ", ") . "cod_proyecto_gastoFK= ?";
 	$ss .= "s";
 	$parametros[] = $cod_proyecto_gastoFK;
@@ -1253,35 +1356,55 @@ exit;
 
 if($operacion=='nuevo'){
 	$idgastos = mysqli_insert_id($mysqli);
-	registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+	if (intval($cantCuotas) > 1 && $periodicidad != "") {
+		registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+	}
 }
 
 if($operacion=='editar' && $editar_cuotas == "true"){
-	$gastos_asociados= obtenerGastosAsociados($idgastos);
-	$idBaseSerie= $gastos_asociados[0]['idgastos'];
-	foreach ($gastos_asociados as $key => $value) {
-		if ($key != 0 && ($value['estado'] != 'Activo')) {
+	$codProyectoSerie= obtenerProyectoGastoSerie($mysqli, $idgastos, $cod_proyecto_gastoFK);
+	if ($codProyectoSerie != '') {
+		$sql = "UPDATE gastos SET cod_proyecto_gastoFK = ? WHERE idgastos = ?";
+		$stmt = $mysqli->prepare($sql);
+		$stmt->bind_param('ii', $codProyectoSerie, $idgastos);
+		$stmt->execute();
+
+		$gastos_asociados= buscarGasto('','','','','','','','','false','','','','','', '', 'ASC', $cod_proyecto_gastoFK);
+	} else {
+		$gastos_asociados= obtenerGastosAsociados($idgastos);
+	}
+
+	$cantidadCuotasSerie= 0;
+	foreach ($gastos_asociados as $value) {
+		if ($value['idgastos'] == $idgastos || $value['estado'] != 'Activo') {
+			$cantidadCuotasSerie++;
+		}
+		if ($value['idgastos'] != $idgastos && ($value['estado'] != 'Activo')) {
 			$sql = "UPDATE gastos SET estado='Inactivo' WHERE idgastos= ?";
 			$stmt = $mysqli->prepare($sql);
 			$stmt->bind_param('i', $value['idgastos']);
 			$stmt->execute();
 
 			// Borra tambien el mensaje programado asociado
-			$sql = "DELETE FROM menciones WHERE cod_mensajeFK= ?";
-			$stmt = $mysqli->prepare($sql);
-			$stmt->bind_param('i', $value['cod_mensajeFK']);
-			$stmt->execute();
-			$sql = "DELETE FROM mensaje WHERE cod_mensaje= ?";
-			$stmt = $mysqli->prepare($sql);
-			$stmt->bind_param('i', $value['cod_mensajeFK']);
-			$stmt->execute();
+			if (!empty($value['cod_mensajeFK'])) {
+				$sql = "DELETE FROM menciones WHERE cod_mensajeFK= ?";
+				$stmt = $mysqli->prepare($sql);
+				$stmt->bind_param('i', $value['cod_mensajeFK']);
+				$stmt->execute();
+				$sql = "DELETE FROM mensaje WHERE cod_mensaje= ?";
+				$stmt = $mysqli->prepare($sql);
+				$stmt->bind_param('i', $value['cod_mensajeFK']);
+				$stmt->execute();
+			}
 		}
 	}
 	
-	if (count($gastos_asociados) > 1 && $estado != 'Inactivo') {
-		registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, count($gastos_asociados), $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+	if ($cantidadCuotasSerie > 1 && $estado != 'Inactivo') {
+		registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantidadCuotasSerie, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK, $codProyectoSerie);
 	}
-	$stmt->close();
+	if (isset($stmt) && $stmt) {
+		$stmt->close();
+	}
 	}
 
 $foto=$_POST['foto'];
@@ -1387,7 +1510,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 		
 	$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,g.cod_proyecto_gastoFK,
 	g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
-	g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,
+	g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,g.cod_mensajeFK,
 	(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 	(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
 	(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
@@ -1438,6 +1561,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				'modalidad' => mb_convert_encoding((string)($valor['modalidad']), 'UTF-8', 'ISO-8859-1'),
 				'cod_gasto_padre' => mb_convert_encoding((string)($valor['cod_gasto_padre']), 'UTF-8', 'ISO-8859-1'),
 				'cod_proyecto_gastoFK' => mb_convert_encoding((string)($valor['cod_proyecto_gastoFK']), 'UTF-8', 'ISO-8859-1'),
+				'cod_mensajeFK' => mb_convert_encoding((string)($valor['cod_mensajeFK']), 'UTF-8', 'ISO-8859-1'),
 			);
 		}
 	}

@@ -110,8 +110,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('inptMontoGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptRegistroSeleccGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_13"]').html();
-	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_14"]').html();
-	
+	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_20"]').html();
 	document.getElementById('inptFechaGasto').value = $(datostr).children('td[id="td_datos_3"]').html();
 	document.getElementById('inptProyectoGasto').value = $(datostr).children('td[id="td_datos_22"]').html();
 	document.getElementById('inptIdGasto').value = $(datostr).children('td[id="td_id"]').html();
@@ -264,6 +263,7 @@ function seleccionarGastosAsociados(element) {
 }
 
 function buscarProyectosVistaSelecc() {
+	const valor= document.getElementById('inptProyectoGasto').value;
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("useru", userid)
@@ -319,6 +319,7 @@ function buscarProyectosVistaSelecc() {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
 				   document.getElementById('inptProyectoGasto').innerHTML= '<option value= "">SELECCIONAR</option><option value= "">NUEVO PROYECTO</option>' + datos[2];
+				   document.getElementById('inptProyectoGasto').value= valor;
 				}				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -366,6 +367,18 @@ function verificarcamposGasto() {
 	if (inptCantCuotaGasto > 1 && inptPeriodicidadGasto == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
 		return false;
+	}
+
+	// Se evalua si ya existen gastos asociados
+	if (document.getElementById('divGastoAsociadosGastos').style.display != 'none') {
+		if (inptPeriodicidadGasto == "") {
+			ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
+			return false;
+		}
+		if (inptProyectoGasto == "") {
+			ver_vetana_informativa("FALTO SELECCIONAR EL PROYECTO DEL GASTO")
+			return false;
+		}
 	}
 	var accion = "";
 	if (idAbmGasto != "") {
@@ -1321,7 +1334,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 }
 
 function buscaroptionMotivoEgresoIngreso() {
-
+	if (document.getElementById("inptMotivoMisGastos").innerHTML != '') {
+		return;
+	}
+	const valor= document.getElementById("inptMotivoMisGastos").value; 
 	document.getElementById("inptMotivoMisGastos").innerHTML = ""
 	document.getElementById("listBuscarIngresoEgreso3").innerHTML = ""
 
@@ -1360,6 +1376,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 				   var datos_buscados = datos[2];
 					document.getElementById("inptMotivoMisGastos").innerHTML = datos[2]
+					document.getElementById("inptMotivoMisGastos").value = valor;
 					document.getElementById("listBuscarIngresoEgreso3").innerHTML = datos[4]
 				}
 			} catch (error) {
