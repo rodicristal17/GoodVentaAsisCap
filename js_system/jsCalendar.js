@@ -751,6 +751,30 @@ function completarHora(n){
     return (n < 10 ? '0' : '') + n;
 }
 
+function esDomingoFechaAgenda(fecha){
+    var partes, anio, mes, dia, fechaUtc;
+
+    if(!fecha){
+        return false;
+    }
+
+    partes = fecha.split('-');
+    if(partes.length !== 3){
+        return false;
+    }
+
+    anio = parseInt(partes[0], 10);
+    mes = parseInt(partes[1], 10);
+    dia = parseInt(partes[2], 10);
+
+    if(isNaN(anio) || isNaN(mes) || isNaN(dia)){
+        return false;
+    }
+
+    fechaUtc = new Date(Date.UTC(anio, mes - 1, dia));
+    return fechaUtc.getUTCDay() === 0;
+}
+
 function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
     var total = 0;
     var confirmadas = 0;
@@ -1493,6 +1517,11 @@ function guardarCitaAgenda(){
 
     if(fecha == ''){
         alert('Debe cargar la fecha');
+        return;
+    }
+
+    if(esDomingoFechaAgenda(fecha)){
+        alert('La fecha seleccionada es domingo');
         return;
     }
 
