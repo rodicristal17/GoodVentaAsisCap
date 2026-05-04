@@ -154,7 +154,7 @@ function verventanasminizados(){
 	control=control+1;
 	}
 	if($("div[id=divMinimizadoListadoCliente]").is(':visible')){
-	pagina+="<button  id='btnMini_"+control+"'onclick='verCerrarAbmClientes()' class='buttonMinimizado'><img class='imgIconoMenuMinimizado' src='/GoodVentaAsisCap/iconos/cliente.png' /><br/><label class='pTitulo17'  >Listado de Clientes</label></button>"
+	pagina+="<button  id='btnMini_"+control+"'onclick='verCerrarAbmClientes(false)' class='buttonMinimizado'><img class='imgIconoMenuMinimizado' src='/GoodVentaAsisCap/iconos/cliente.png' /><br/><label class='pTitulo17'  >Listado de Clientes</label></button>"
 	control=control+1;
 	}
 	if($("div[id=divMinimizadoListadoCaja]").is(':visible')){

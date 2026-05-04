@@ -451,7 +451,9 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
  	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$vistaOrigen=$_POST["vista_origen"];
  	$vistaOrigen=mb_convert_encoding((string)($vistaOrigen), 'ISO-8859-1', 'UTF-8');
-	buscarpresupuesto($buscar,$local,$vistaOrigen);
+	$cod_producto=$_POST["cod_producto"];
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
+	buscarpresupuesto($buscar,$cod_producto,$local,$vistaOrigen);
  }
 
 
@@ -3332,22 +3334,21 @@ exit;
 }
 
 
-function  buscarpresupuesto($buscar,$local,$vistaOrigen)
+function  buscarpresupuesto($buscar,$cod_producto,$local,$vistaOrigen)
 {
 $mysqli=conectar_al_servidor();
-$condicionLocal="";
-$condicionCategria="";
-$condicionMarca="";
+$sqlFiltro= "";
 if($local!=""){
-	$condicionLocal=" and stk.cod_localFK='$local' ";
+	$sqlFiltro .=" and stk.cod_localFK='$local' ";
 }
-
+if ($cod_producto) {
+	$sqlFiltro .=" and (pr.cod_producto='$cod_producto' or pr.cod_barra = '$cod_producto') ";
+}
 
 $CondicionBuscador1="";
 $CondicionBuscador2="";
 $CondicionBuscadorTotal1="";
 $CondicionBuscadorTotal2="";
-$CondicionBuscadorTotalResyltado="";
 
 
 if($buscar!=""){
@@ -3365,10 +3366,10 @@ while(($contador < $total)){
 }
 	$contador++;
 }
-$CondicionBuscadorTotalResyltado=$CondicionBuscadorTotal1.$CondicionBuscadorTotal2;
+$sqlFiltro .=$CondicionBuscadorTotal1.$CondicionBuscadorTotal2;
 
 }else{
-	$CondicionBuscadorTotalResyltado=" and concat(pr.nombre_producto,' ',descripcion_producto) like '%%'";	
+	$sqlFiltro .=" and concat(pr.nombre_producto,' ',descripcion_producto) like '%%'";	
 }
 
 
@@ -3379,7 +3380,7 @@ pr.precio_producto,pr.precio_compra,stk.cantidad as stock_producto,stk.cod_local
 (select descripcion from impuesto where cod_Impuesto= pr.cod_ImpuestoFK limit 1 ) as NombreImpuesto,
 (select descripcion from marcas where cod_marcas= pr.cod_marcasFK limit 1 ) as NombreMarca
  from  producto pr inner join stocklocales stk on stk.cod_productofk=pr.cod_producto
-where  pr.estado='Activo' ".$condicionLocal.$CondicionBuscadorTotalResyltado." limit 50";
+where  pr.estado='Activo' ".$sqlFiltro." limit 50";
 	
 
 

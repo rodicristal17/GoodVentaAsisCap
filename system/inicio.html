@@ -56,7 +56,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js"></script>
-<script src="../js_system/abmPresupuesto.js?x=presupuesto-plan-vendido-20260430"></script>
+<script src="../js_system/abmPresupuesto.js"></script>
 <script src="../js_system/abmTareasProgramadas.js"></script>
 <script src="../js_system/abmCliente.js"></script>
 
@@ -717,7 +717,7 @@ style='display:none' class='divMinimizado'></div>
 
 
 <table class='divMenub' id='divMenuAbmClientes'
-onclick='verCerrarAbmClientes()' style='text-align:center'>
+onclick='verCerrarAbmClientes(true)' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu'
@@ -7985,7 +7985,7 @@ ACCION
           </div>
           <div class="form-row" style="flex: 1 1 180px;">
             <input type="button" value="Nuevo cliente" class="btn4"
-              onclick="controlseleccvistacliente= 'presupuestoDoctor';vernuevoclientevista('1');"
+              onclick="controlseleccvistacliente= 'presupuestoDoctor';limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true, true);"
               style='width:150px;margin-top: 20px;'>
           </div>
         </section>
@@ -8105,7 +8105,7 @@ ACCION
     <div>
       <input type="button" value="Volver atras" class="btn4" onclick="verPasoPresupuestoDoc(1)"
         style="width:190px;">
-      <input type="button" value="Guardar todo" class="btn4" onclick="limpiarCamposGenerarTratamiento();verCerrarAbmDetallesPresupuestoDoc(false);"
+      <input type="button" value="Guardar todo" class="btn4" onclick="if(confirm('¿Todos los datos son correctos?')){limpiarCamposGenerarTratamiento();verCerrarAbmDetallesPresupuestoDoc(false);}"
         style="width:190px;">
     </div>
   </div>
@@ -8219,7 +8219,7 @@ ACCION
           style='width:150px;margin-top: 20px;'>
       </div>
       <div class="form-row">
-        <input type="button" value="Nuevo cliente" class="btn4" onclick="controlseleccvistacliente= 'presupuesto';vernuevoclientevista('1');"
+        <input type="button" value="Nuevo cliente" class="btn4" onclick="controlseleccvistacliente= 'presupuesto';limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);"
           style='width:150px;margin-top: 20px;'>
       </div>
     </section>
@@ -10622,7 +10622,7 @@ onkeyup='separadordemiles(this)' />
 <input class='inputText' type='text' id='inptDocClienteVenta' onkeyup='if(event.keyCode == 13){buscarclienteporci()}' placeholder='Documento'style='width:70%' />
 <input id='btnMasInfoClienteVenta' type="button" value="Más Info.." class="btn4" onclick='EditarDatosClienteDesdeVenta()'
 style='background-color: #ff5900;'>
-<input id='btnNuevoClienteVenta' type="button" value="Nuevo" class="btn4" onclick='vernuevoclientevista("1")'
+<input id='btnNuevoClienteVenta' type="button" value="Nuevo" class="btn4" onclick='ventanaAnterior.push("listVista");limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);'
 >
 </td>
 
@@ -11709,7 +11709,7 @@ style='background-color: #b7b7b7;'>
   <div class="vista-consulta-header">
     <!-- <img src="/GoodVentaAsisCap/iconos/depCuenta.png" alt="Icono" class="icono-btn2" /> -->
     <h2 class="titulo-turnos pTitulo4"   >Listado de <strong>Pacientes</strong></h2>
-	<button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmClientes()">
+	<button class="cerrar-btn btncssnuevo" onclick="limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);">
       <img src="/GoodVentaAsisCap/iconos/add.png" class='iconoBtn' alt="Crear Cliente" />
     </button>
     <button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmVistaConsulta()">
@@ -22134,7 +22134,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Nuevo Cliente'
-onclick='vernuevoclientevista("1")' />
+onclick='ventanaAnterior.push("listVista");limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);' />
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/editar.png' class='iconoBtn'
@@ -22298,9 +22298,9 @@ D/A
                 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana'
                   onclick='minimizarabmcliente()' />
                 <img id='btnVolverAtrasCliente' src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
-                  title='Volver Atras' onclick='verCerrarVentanaAbmCliente("2","")' />
+                  title='Volver Atras' onclick='verCerrarVentanaAbmCliente(false, false)' />
                 <img id='btnCerrarAtrasCliente' src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-                  title='Cerrar Ventana' onclick='verCerrarAbmClientes2()' style='display:none' />
+                  title='Cerrar Ventana' onclick='verCerrarVentanaAbmCliente(false, false)' style='display:none' />
               </div>
             </header>
 
@@ -22528,7 +22528,7 @@ D/A
                 </td>
                 <td style='width:5%;text-align:center'>
                   <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
-                    onclick='verCerrarVentanaAbmCliente("1","1")' />
+                    onclick='verCerrarVentanaAbmCliente(true, true);limpiarcamposCliente();' />
                 </td>
                 <td style='width:5%;text-align:center'>
                   <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana'
@@ -22536,7 +22536,7 @@ D/A
                 </td>
                 <td style='width:5%;text-align:center'>
                   <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
-                    onclick='verCerrarAbmClientes()' />
+                    onclick='verCerrarAbmClientes(false)' />
                 </td>
               </tr>
             </table>

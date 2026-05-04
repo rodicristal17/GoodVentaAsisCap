@@ -2082,6 +2082,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 INFO
 */
 function ver_vetana_informativa(titulo, detalle= "", tipo="") {
+	console.error(titulo);
 	document.getElementById('lbltitulomensajedetalle').style.display = "";
 	titulo= titulo.toLowerCase();
 	// Comprueba si es informacion ya predefinida o con error
@@ -11457,8 +11458,6 @@ function EditarDatosClienteDesdeVenta(ocultar_datos_extras= false){
 	document.getElementById('inptNroTelefTrabajoCliente2').value=$(datostr).children('td[id="td_datos_19"]').html()
 	document.getElementById('inptDireccionTrabajoCliente').value=$(datostr).children('td[id="td_datos_20"]').html()
 	
-	
-	
 	document.getElementById('inptNombreApellidoCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptRegistroSeleccCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptNroDocCliente').value=$(datostr).children('td[id="td_datos_2"]').html();
@@ -11484,17 +11483,17 @@ function EditarDatosClienteDesdeVenta(ocultar_datos_extras= false){
   document.getElementById("btnVolverAtrasCliente").style.display="none"
 		document.getElementById("btnCerrarAtrasCliente").style.display=""
 		controlventananuevocliente="ventavista"
-		buscarmasreferenciasclientes()
-   verCerrarVentanaAbmCliente("1", "2")
+		buscarmasreferenciasclientes();
+   verCerrarVentanaAbmCliente(true, true)
 
-  // Ocultar secciones de datos extras
-		if (ocultar_datos_extras) {
-			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
-			document.getElementById('divAbmCliente2').style.width= "850px";
-		} else {
-			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
-			document.getElementById('divAbmCliente2').style.width= "auto";
-		}
+  	// Ocultar secciones de datos extras
+	if (ocultar_datos_extras) {
+		$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+		document.getElementById('divAbmCliente2').style.width= "850px";
+	} else {
+		$("#divAbmCliente2 .abm-cliente-datos-extra").show();
+		document.getElementById('divAbmCliente2').style.width= "auto";
+	}
 }
 function calcular_total_venta() {
 	var c = QuitarSeparadorMilValor(document.getElementById('inptCantProductoVenta').value);

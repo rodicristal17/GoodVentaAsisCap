@@ -58,6 +58,11 @@ function verificarOperacionPresupuesto($operacion)
                         <td id="td_datos_9" style="width: 10%;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
                         <td id="td_datos_10" style="width: 5%;"><div style= "text-decoration: underline;color: blue;font-weight: bold;" onclick="obtenerDatosVenta('.$value['cod_ventaFK'].', \'divListPresupuesto\')">'.$value['num_factura'].'</div></td>
                         <td id="td_datos_6" style="width: 15%;">'.$value['nombre_usuarioFK_create'].'</td>
+                        <td id="td_datos_11" style="display: none;">'.$value['nombre_zona'].'</td>
+                        <td id="td_datos_12" style="display: none;">'.$value['idzonaFk'].'</td>
+                        <td id="td_datos_13" style="display: none;">'.$value['rut_cliente'].'</td>
+                        <td id="td_datos_14" style="display: none;">'.$value['whapp'].'</td>
+                        <td id="td_datos_15" style="display: none;">'.$value['fechanac'].'</td>
                     </tr>
                 </table>';
             }
@@ -224,7 +229,11 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
 
     $sql = "SELECT 
             p.*,
+            (SELECT z.nombre FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona JOIN zona z ON c.idzonaFk = z.idzona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_zona,
             (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
+            (SELECT c.idzonaFk FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as idzonaFk,
+            (SELECT c.whapp FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as whapp,
+            (SELECT c.fechanac FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as fechanac,
             (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
             (SELECT c.ci_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as ci_cliente,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_alternativo = 0), 0) AS monto_total,

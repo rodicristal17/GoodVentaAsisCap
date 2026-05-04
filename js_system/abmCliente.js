@@ -2,9 +2,9 @@
 ABM CLIENTES
 */
 var cod_clienteFK= "";
-function verCerrarAbmClientes(){
+function verCerrarAbmClientes(mostrar){
 	document.getElementById("divSegundoPlano").style.display="none";
-	if(document.getElementById("divAbmCliente").style.display==""){
+	if(!mostrar){
 		if(controldebusquedadClientes==true){
 		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
 	return
@@ -45,47 +45,8 @@ document.getElementById("tdEfectoAbmCliente").className="magictime slideDown"
 	$("div[id=divAbmCliente]").fadeOut(500);	
 	document.getElementById("divMinimizadoListadoCliente").style.display=""
 }
-function verCerrarAbmClientes2(){
-document.getElementById("divAbmCliente").style.display="none"
-document.getElementById("btnVolverAtrasCliente").style.display=""
-		document.getElementById("btnCerrarAtrasCliente").style.display="none"
-		document.getElementById("divAbmCliente1").style.display=""
-		document.getElementById("divAbmCliente2").style.display="none"
-}
-var controlventananuevocliente="";
-function vernuevoclientevista(d, ocultar_datos_extras= false) {
-	if (d == "1") {
-		if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
-		document.getElementById("divAbmCliente").style.display=""
-		 document.getElementById("tdEfectoAbmCliente").className="magictime vanishIn"
-		document.getElementById("divAbmCliente1").style.display="none"
-		document.getElementById("divAbmCliente2").style.display=""
-		document.getElementById("btnVolverAtrasCliente").style.display="none"
-		document.getElementById("btnCerrarAtrasCliente").style.display=""
-		controlventananuevocliente="venta"
-		limpiarcamposCliente()
 
-		// Ocultar secciones de datos extras
-		if (
-			controlseleccvistacliente == 'presupuestoDoctor' ||
-			controlseleccvistacliente == 'presupuesto'
-		) {
-			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
-			document.getElementById('divAbmCliente2').style.width= "850px";
-		} else {
-			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
-			document.getElementById('divAbmCliente2').style.width= "auto";
-		}
-	} else {
-		document.getElementById("btnVolverAtrasCliente").style.display=""
-		document.getElementById("btnCerrarAtrasCliente").style.display="none"
-		document.getElementById("divAbmCliente1").style.display=""
-		document.getElementById("divAbmCliente2").style.display="none"
-		 document.getElementById("tdEfectoAbmCliente").className="magictime vanishOut"
-		$("div[id=divAbmCliente]").fadeOut(500)
-		
-	}
-}
+var controlventananuevocliente="";
 function verificarcamposClienteVista() {
 	var inptNombreApellidoCliente = document.getElementById('inptNombreApellidoClienteVista').value
 	var inptNroDocCliente = document.getElementById('inptNroDocClienteVista').value
@@ -113,26 +74,40 @@ if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
 	abmcliente(inptAccesoCreditoCliente,idFKZona, inptNombreApellidoCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
 }
 
-function verCerrarVentanaAbmCliente(d, l, ocultar_datos_extras= false) {	
-	if (d == "1") {
-		if (l == "1") {
-			if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
-			limpiarcamposCliente()
-		}
-		$("div[id=divAbmCliente2]").fadeIn(250)
-		document.getElementById('divAbmCliente1').style.display = "none"
+function verCerrarVentanaAbmCliente(mostrar, abm, ocultar_datos_extras= false) {	
+	if (mostrar) {
+		document.getElementById('divAbmCliente').style.display = ""
+		controlventananuevocliente="venta"
 
-		// Ocultar secciones de datos extras
-		if (ocultar_datos_extras) {
-			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
-			document.getElementById('divAbmCliente2').style.width= "850px";
+		if (abm) {
+			$("div[id=divAbmCliente2]").fadeIn(250)
+			document.getElementById('divAbmCliente1').style.display = "none"
+
+			// Ocultar secciones de datos extras
+			if (ocultar_datos_extras || controlseleccvistacliente == "presupuesto" || controlseleccvistacliente == "presupuestoDoctor") {
+				$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+				document.getElementById('divAbmCliente2').style.width= "850px";
+			} else {
+				$("#divAbmCliente2 .abm-cliente-datos-extra").show();
+				document.getElementById('divAbmCliente2').style.width= "auto";
+			}
 		} else {
-			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
-			document.getElementById('divAbmCliente2').style.width= "auto";
+			$("div[id=divAbmCliente1]").fadeIn(250)
+			document.getElementById('divAbmCliente2').style.display = "none"	
 		}
 	} else {
-		$("div[id=divAbmCliente1]").fadeIn(250)
-		document.getElementById('divAbmCliente2').style.display = "none"
+		if (abm) {
+			$("div[id=divAbmCliente2]").fadeOut(250)
+			document.getElementById('divAbmCliente1').style.display = ""
+
+			if (ventanaAnterior[ventanaAnterior.length - 1] == "listCliente") {
+				$("div[id=divAbmCliente1]").fadeOut(250)
+				document.getElementById('divAbmCliente').style.display = "none"
+			}
+		} else {
+			$("div[id=divAbmCliente1]").fadeOut(250)
+			document.getElementById('divAbmCliente').style.display = "none"	
+		}
 	}
 }
 
@@ -142,7 +117,7 @@ function verVentanaEditarCliente() {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return;
 	}
-	verCerrarVentanaAbmCliente("1", "2")
+	verCerrarVentanaAbmCliente(true)
 }
 var controlfotocliente="";
 function ExploradorImagenCliente(File){	
@@ -392,17 +367,17 @@ function verificarcamposCliente() {
 		return false;
 	}
 	
+	if (idFKZona == "") {
+		ver_vetana_informativa("FALTAN DATOS", "FALTO SELECCIONAR UNA ZONA", "advertencia")
+		return false;
+	}
+	
 	// Evalua si se estan mostrando los datos de campo extra
 	if (document.querySelectorAll("#divAbmCliente2 .abm-cliente-datos-extra")[0].style.display != 'none') {
 		if (document.getElementById('inptSeleccSMS1').checked == true) {
 			sms = "SI";
 		} else {
 			sms = "NO";
-		}
-
-		if (idFKZona == "") {
-			ver_vetana_informativa("FALTAN DATOS", "FALTO SELECCIONAR UNA ZONA", "advertencia")
-			return false;
 		}
 	
 		if (inptDireccionCliente == "") {
@@ -1084,7 +1059,7 @@ var idFkCliente = ""
 var controlseleccvistacliente = ""
 function vercerrarvistacliente(d, ventana) {
 	if (d == "1") {
-		
+		buscarvistacliente();
 		document.getElementById("divVistaCliente").style.display=""
 		document.getElementById("tdEfectoVistaCliente").className="magictime slideLeftReturn"
 		controlseleccvistacliente = ventana
@@ -1273,16 +1248,6 @@ function EnviarClienteDesde() {
 	
 	// Verifica los datos del cliente
 	if (
-		!(controlseleccvistacliente == "presupuesto" || controlseleccvistacliente == "agenda") && (
-			($(datostr).children('td[id="td_datos_2"]').html() == "") ||
-			($(datostr).children('td[id="td_datos_7"]').html() == "") ||
-			($(datostr).children('td[id="td_datos_10"]').html() == "") ||
-			($(datostr).children('td[id="td_datos_3"]').html() == "")
-		)
-	) {
-		//ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
-		//EditarDatosClienteDesdeVenta();
-	} else if (
 		(controlseleccvistacliente == "presupuesto" || controlseleccvistacliente == "agenda") && (
 			($(datostr).children('td[id="td_datos_2"]').html() == "") ||
 			($(datostr).children('td[id="td_datos_7"]').html() == "") ||
@@ -1291,9 +1256,20 @@ function EnviarClienteDesde() {
 	) {
 		ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
 		EditarDatosClienteDesdeVenta(true);
+	} else if (
+		controlseleccvistacliente != "presupuestoDoctor" && !(controlseleccvistacliente == "presupuesto" || controlseleccvistacliente == "agenda") && (
+			($(datostr).children('td[id="td_datos_2"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_7"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_10"]').html() == "") ||
+			($(datostr).children('td[id="td_datos_3"]').html() == "")
+		)
+	) {
+		ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
+		EditarDatosClienteDesdeVenta();
+	} else {
+		document.getElementById("divVistaCliente").style.display = "none"
 	}
 
-	document.getElementById("divVistaCliente").style.display = "none"
 	document.getElementById("table_vista_cliente").innerHTML = ""
 	document.getElementById("table_clientes_cuentas1").innerHTML = ""
 	document.getElementById("table_clientes_cuentas2").innerHTML = ""
@@ -2215,7 +2191,8 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
                 if (Respuesta == true) {
-                   controlseleccvistacliente= ventanaOrigen;
+                   const origenVistaCliente = (ventanaOrigen == "presupuesto" && vistaPresupuestoOrigen == "doctor") ? "presupuestoDoctor" : ventanaOrigen;
+                   controlseleccvistacliente= origenVistaCliente;
                     if (datos[2].length == 1) {
                         let registro= datos[2][0];
                         idFkCliente = registro['cod_cliente'];
@@ -2265,9 +2242,12 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
                         EnviarClienteDesde();
                     } else if (datos[2].length == 0) {
                         // Abre la ventana para agregar un nuevo cliente
-                        vernuevoclientevista("1");
-                    } else {
-						vercerrarvistacliente("1",(vistaPresupuestoOrigen == "doctor" ? "presupuestoDoctor" : "presupuesto"));
+                        limpiarcamposCliente();
+						verCerrarVentanaAbmCliente(true, true);
+					} else {
+						document.getElementById('inptBuscarVistaCliente1').value= document.getElementById(nombreElementoCedula).value;
+						document.getElementById('inptBuscarVistaCliente3').value= (document.getElementById(nombreElementoNombre).value != "CLIENTE OCASIONAL") ? document.getElementById(nombreElementoNombre).value : '';
+						vercerrarvistacliente("1", origenVistaCliente);
 					}
 				} else {
                     ver_vetana_informativa(datos[2], datos[3], "advertencia");

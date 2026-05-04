@@ -203,7 +203,7 @@ function obtenerdatosvistaproductodesdePresupuesto(datostr) {
 		//document.getElementById('inpTSeleccCostoPresupuestoDoc').innerHTML = $(datostr).children('td[id="td_datos_11"]').html();
 		document.getElementById('inptCantidadPresupuestoDoc').value = "1";
 		document.getElementById('inptPrecioPresupuestoDoc').value = $(datostr).children('td[id="td_datos_4"]').html();
-		document.getElementById('inptCantidadPresupuestoDoc').focus();
+		//document.getElementById('inptCantidadPresupuestoDoc').focus();
 	} else {
 		document.getElementById('inptCodigoPresupuesto').value = $(datostr).children('td[id="td_datos_13"]').html();
 		document.getElementById('inptProductoPresupuesto').value = $(datostr).children('td[id="td_datos_1"]').html();
@@ -1291,6 +1291,8 @@ function limpiarCamposGenerarTratamiento() {
 
 	idabmPresupuesto = "";
 	idFkCliente = "";
+	document.getElementById('inptDocumentoClientePresupuestoDoc').value = "";	
+	document.getElementById('inptNombreClientePresupuestoDoc').value = "";
 	limpirarPresupuesto();
 
 	if (document.getElementById('inptDocumentoClientePresupuestoDoc')) {
@@ -1515,7 +1517,26 @@ function obtenerDatosPresupuesto(elemento) {
     document.getElementById('inptDocumentoClientePresupuesto').value= $(elemento).children('td[id="td_datos_5"]').html();
     document.getElementById('inptNombreClientePresupuesto').value= $(elemento).children('td[id="td_datos_4"]').html();
     idFkCliente= $(elemento).children('td[id="td_datos_3"]').html();
+    idAbmCliente= $(elemento).children('td[id="td_datos_3"]').html();
 	verCerrarAbmDetallesPresupuesto(true, false);
+	if ($(elemento).children('td[id="td_datos_5"]').html() == "" || $(elemento).children('td[id="td_datos_4"]').html() == "") {
+		document.getElementById('inptNombreApellidoCliente').value= $(elemento).children('td[id="td_datos_4"]').html();
+		document.getElementById('inptNroDocCliente').value= $(elemento).children('td[id="td_datos_5"]').html();
+		document.getElementById('inptNroRucCliente').value= $(elemento).children('td[id="td_datos_13"]').html();
+		document.getElementById('inptNrowhatsappCliente').value= $(elemento).children('td[id="td_datos_14"]').html();
+		document.getElementById('inptZonaCliente').value= $(elemento).children('td[id="td_datos_11"]').html();
+		document.getElementById('inptFechaNacCliente').value= $(elemento).children('td[id="td_datos_"]').html();
+		idFKZona= $(elemento).children('td[id="td_datos_12"]').html();
+
+		document.getElementById('divAbmCliente').style.display= "";
+		document.getElementById('divAbmCliente2').style.display= "";
+		document.getElementById('divAbmCliente1').style.display= "none";
+
+		$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+		document.getElementById('divAbmCliente2').style.width= "850px";
+
+		ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
+	}
 }
 
 function buscarDetallesPresupuesto(cod_presupuestoFK) {
@@ -1615,6 +1636,10 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 
 var tipo_plan= "";
 function presupuestoAVenta(){
+	const codClientePresupuesto = idFkCliente;
+	const documentoClientePresupuesto = document.getElementById('inptDocumentoClientePresupuesto').value.split('-')[0];
+	const nombreClientePresupuesto = document.getElementById('inptNombreClientePresupuesto').value;
+
 	limpiarcamposventa("2");
 
 	// Se evalua cual fue el plan seleccionado y si la venta es a credito
@@ -1631,8 +1656,14 @@ function presupuestoAVenta(){
 
 	// Agrega los datos del cliente
 	const inptDocClienteVenta= document.getElementById('inptDocClienteVenta');
-	inptDocClienteVenta.value= document.getElementById('inptDocumentoClientePresupuesto').value.split('-')[0];
-	buscarClientePorCiVista(inptDocClienteVenta,'inptDocClienteVenta', 'inptClienteVenta', 'venta');
+	inptDocClienteVenta.value= documentoClientePresupuesto;
+	document.getElementById('inptDocClienteVenta2').value= documentoClientePresupuesto;
+	document.getElementById('inptClienteVenta').value= nombreClientePresupuesto;
+	document.getElementById('inptClienteVenta2').value= nombreClientePresupuesto;
+	idFkCliente= codClientePresupuesto;
+	if (documentoClientePresupuesto != "") {
+		buscarClientePorCiVista(inptDocClienteVenta,'inptDocClienteVenta', 'inptClienteVenta', 'venta');
+	}
 
 	// Agrega los productos
 	Array.from(plan.children).forEach(tabla => {
