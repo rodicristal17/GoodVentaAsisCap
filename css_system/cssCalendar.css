@@ -460,6 +460,7 @@
     overflow:visible !important;
     font-size:11px;
     min-height:18px;
+    z-index:5;
 }
 
 .agenda-evento:active{
@@ -908,6 +909,35 @@
 .agenda-slot-mediahora{
     height:45px;
     background-size:100% 100%;
+}
+
+.agenda-cuarto-hora{
+    position:absolute;
+    left:0;
+    right:0;
+    height:50%;
+    box-sizing:border-box;
+    pointer-events:none;
+    z-index:0;
+}
+
+.agenda-cuarto-hora-superior{
+    top:0;
+}
+
+.agenda-cuarto-hora-inferior{
+    bottom:0;
+    border-top:1px dashed var(--border-soft);
+}
+
+.agenda-cuarto-hora span{
+    position:absolute;
+    top:2px;
+    left:5px;
+    font-size:9px;
+    line-height:1;
+    color:var(--text-muted);
+    opacity:.55;
 }
 
 /* ===== ALMUERZO ===== */

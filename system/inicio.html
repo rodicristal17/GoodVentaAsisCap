@@ -21937,8 +21937,8 @@ onclick='buscarvistaaperturacierrecaja()' />
 					<input type='text' id='inptPacienteAgenda' class='catalogo-selectBuscador' placeholder='Seleccionar paciente' readonly />
 					<input type='hidden' id='inptIdPacienteAgenda' />
 
-					<button type='button' class='btn-filtro' onclick='abrirModalBuscarPacienteAgenda()'>Buscar</button>
-					<button type='button' class='btn-accion-principal' onclick='abrirModalNuevoPacienteAgenda()'>Nuevo</button>
+					<button type='button' class='btn-filtro' onclick='verCerrarModalBuscarPacienteAgenda(true)'>Buscar</button>
+					<button type='button' class='btn-accion-principal' onclick='verCerrarModalNuevoPacienteAgenda(true)'>Nuevo</button>
 				</div>
 			</div>
 
@@ -21989,13 +21989,13 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 
 
-<div class='modal-filtros-overlay' id='overlayBuscarPacienteAgenda' onclick='cerrarModalBuscarPacienteAgenda()' style='display:none;'></div>
+<div class='modal-filtros-overlay' id='overlayBuscarPacienteAgenda' onclick='verCerrarModalBuscarPacienteAgenda(false)' style='display:none;'></div>
 
 <div class='modal-filtros-catalogo' id='modalBuscarPacienteAgenda' style='display:none;'>
     <div class='modal-filtros-box modal-cita-box'>
         <div class='modal-filtros-header'>
             <h3>Buscar paciente</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalBuscarPacienteAgenda()'>×</button>
+            <button type='button' class='btn-cerrar-modal' onclick='verCerrarModalBuscarPacienteAgenda(false)'>×</button>
         </div>
 
         <div class='modal-filtros-body'>
@@ -22009,20 +22009,20 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
 
         <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='cerrarModalBuscarPacienteAgenda()'>Cerrar</button>
+            <button class='btn-filtro' onclick='verCerrarModalBuscarPacienteAgenda(false)'>Cerrar</button>
             <button class='btn-accion-principal' onclick='buscarPacientesAgenda()'>Buscar</button>
         </div>
     </div>
 </div>
 
 
-<div class='modal-filtros-overlay' id='overlayNuevoPacienteAgenda' onclick='cerrarModalNuevoPacienteAgenda()' style='display:none;'></div>
+<div class='modal-filtros-overlay' id='overlayNuevoPacienteAgenda' onclick='verCerrarModalNuevoPacienteAgenda(false)' style='display:none;'></div>
 
 <div class='modal-filtros-catalogo' id='modalNuevoPacienteAgenda' style='display:none;'>
     <div class='modal-filtros-box modal-cita-box'>
         <div class='modal-filtros-header'>
             <h3>Nuevo paciente</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevoPacienteAgenda()'>×</button>
+            <button type='button' class='btn-cerrar-modal' onclick='verCerrarModalNuevoPacienteAgenda(false)'>×</button>
         </div>
 
         <div class='modal-filtros-body modal-cita-grid'>
@@ -22048,7 +22048,7 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
 
         <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='cerrarModalNuevoPacienteAgenda()'>Cancelar</button>
+            <button class='btn-filtro' onclick='verCerrarModalNuevoPacienteAgenda(false)'>Cancelar</button>
             <button class='btn-accion-principal' onclick='guardarNuevoPacienteAgenda()'>Guardar paciente</button>
         </div>
     </div>

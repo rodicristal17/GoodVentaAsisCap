@@ -202,6 +202,7 @@ function cargarAgendaConsultorios(){
     var textoHora = '';
     var datosAlmuerzo = null;
     var dataHoraRow = '';
+    var htmlCuartosHora = '';
 
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
     if(
@@ -265,6 +266,39 @@ function cargarAgendaConsultorios(){
     iniciarLineaHoraActualAgenda();
 }
 
+function renderCuartosHoraAgenda(hora, minuto){
+    var horaInicio = completarHora(hora) + ":" + completarHora(minuto);
+    var horaSegundoCuarto = minutosAHora((hora * 60) + minuto + 15);
+
+    return "<div class='agenda-cuarto-hora agenda-cuarto-hora-superior' data-hora-cuarto='" + horaInicio + "'>"
+        + "<span>" + horaInicio + "</span>"
+        + "</div>"
+        + "<div class='agenda-cuarto-hora agenda-cuarto-hora-inferior' data-hora-cuarto='" + horaSegundoCuarto + "'>"
+        + "<span>" + horaSegundoCuarto + "</span>"
+        + "</div>";
+}
+
+function calcularHoraSlotQuinceMinutos(slot, ev){
+    var horaBase = slot.getAttribute('data-hora') || '';
+    var minBase = horaAMinutos(horaBase);
+    var rect, offsetY;
+
+    if(!horaBase || isNaN(minBase)){
+        return horaBase;
+    }
+
+    if(ev && typeof ev.clientY === 'number' && slot.getBoundingClientRect){
+        rect = slot.getBoundingClientRect();
+        offsetY = ev.clientY - rect.top;
+
+        if(offsetY >= (rect.height / 2)){
+            minBase += 15;
+        }
+    }
+
+    return minutosAHora(minBase);
+}
+
 
 function clickSlotAgenda(slot, ev){
     if(!slot){
@@ -284,7 +318,8 @@ function clickSlotAgenda(slot, ev){
     var hora = slot.getAttribute('data-hora') || '';
     var horaFin = '';
 
-    horaFin = minutosAHora(horaAMinutos(hora) + 30);
+    hora = calcularHoraSlotQuinceMinutos(slot, ev);
+    horaFin = minutosAHora(horaAMinutos(hora) + 15);
 
     abrirModalNuevaCita();
 
@@ -311,7 +346,7 @@ function closestByClass(elemento, clase){
 function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
     var slots = document.querySelectorAll('.agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
-    var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal;
+    var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal, htmlCuartosHora;
 
     for(i = 0; i < slots.length; i++){
         slot = slots[i];
@@ -1058,15 +1093,6 @@ function limpiarHoverSlotsAgenda(){
     }
 }
 
- 
-
-function calcularHoraDrop(slot, ev){
-    var horaBase = slot.getAttribute('data-hora');
-    var minBase = horaAMinutos(horaBase);
-
-    return minutosAHora(minBase);
-}
-
 function obtenerEventoPorId(id){
     var i;
     for(i = 0; i < agendaConsultoriosData.eventos.length; i++){
@@ -1075,10 +1101,6 @@ function obtenerEventoPorId(id){
         }
     }
     return null;
-}
-
-function hayConflictoAgenda(idExcluir, consultorio, fecha, inicio, fin){
-    return false;
 }
 
 function horasSeSolapan(inicio1, fin1, inicio2, fin2){
@@ -1305,7 +1327,7 @@ function moverEventoDesdeDrop(idEvento, slot, ev){
     var nuevoConsultorio = slot.getAttribute('data-consultorio');
     var nuevaFecha = slot.getAttribute('data-fecha');
     var duracion = horaAMinutos(evento.fin) - horaAMinutos(evento.inicio);
-    var nuevoInicio = obtenerHoraVisualAgenda(calcularHoraDrop(slot, ev));
+    var nuevoInicio = calcularHoraSlotQuinceMinutos(slot, ev);
     var nuevoFin = minutosAHora(horaAMinutos(nuevoInicio) + duracion);
 
     if(horaAMinutos(nuevoFin) > (22 * 60 + 59)){
@@ -1552,30 +1574,26 @@ function limpiarFormularioNuevaCita(){
     document.getElementById('inptMotivoAgenda').value = '';
 }
 
-
-
-
-
-function abrirModalBuscarPacienteAgenda(){
-    document.getElementById('overlayBuscarPacienteAgenda').style.display = 'block';
-    document.getElementById('modalBuscarPacienteAgenda').style.display = 'block';
-    document.getElementById('inptBuscarPacienteAgendaModal').focus();
-    buscarPacientesAgenda();
+function verCerrarModalBuscarPacienteAgenda(mostrar) {
+    if (mostrar) {
+        document.getElementById('overlayBuscarPacienteAgenda').style.display = 'block';
+        document.getElementById('modalBuscarPacienteAgenda').style.display = 'block';
+        document.getElementById('inptBuscarPacienteAgendaModal').focus();
+        buscarPacientesAgenda();
+    } else {
+        document.getElementById('overlayBuscarPacienteAgenda').style.display = 'none';
+        document.getElementById('modalBuscarPacienteAgenda').style.display = 'none';
+    }
 }
 
-function cerrarModalBuscarPacienteAgenda(){
-    document.getElementById('overlayBuscarPacienteAgenda').style.display = 'none';
-    document.getElementById('modalBuscarPacienteAgenda').style.display = 'none';
-}
-
-function abrirModalNuevoPacienteAgenda(){
-    document.getElementById('overlayNuevoPacienteAgenda').style.display = 'block';
-    document.getElementById('modalNuevoPacienteAgenda').style.display = 'block';
-}
-
-function cerrarModalNuevoPacienteAgenda(){
-    document.getElementById('overlayNuevoPacienteAgenda').style.display = 'none';
-    document.getElementById('modalNuevoPacienteAgenda').style.display = 'none';
+function verCerrarModalNuevoPacienteAgenda(mostrar) {
+    if (mostrar) {
+        document.getElementById('overlayNuevoPacienteAgenda').style.display = 'block';
+        document.getElementById('modalNuevoPacienteAgenda').style.display = 'block';
+    } else {
+        document.getElementById('overlayNuevoPacienteAgenda').style.display = 'none';
+        document.getElementById('modalNuevoPacienteAgenda').style.display = 'none';
+    }
 }
 
 function buscarPacientesAgenda(){
@@ -1627,7 +1645,7 @@ function buscarPacientesAgenda(){
 function seleccionarPacienteAgenda(idPaciente, nombrePaciente){
     document.getElementById('inptIdPacienteAgenda').value = idPaciente;
     document.getElementById('inptPacienteAgenda').value = nombrePaciente;
-    cerrarModalBuscarPacienteAgenda();
+    verCerrarModalBuscarPacienteAgenda(false);
 }
 
 function guardarNuevoPacienteAgenda(){
@@ -1681,7 +1699,7 @@ function guardarNuevoPacienteAgenda(){
                     document.getElementById('inptTelefonoNuevoPacienteAgenda').value = '';
                     document.getElementById('inptDireccionNuevoPacienteAgenda').value = '';
 
-                    cerrarModalNuevoPacienteAgenda();
+                    verCerrarModalNuevoPacienteAgenda(false);
                 } else {
                     alert(resp["mensaje"] || "No se pudo guardar el paciente");
                 }
