@@ -1224,6 +1224,9 @@ if ($estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] =
 
 if($operacion=="nuevo")
 {
+if ($cod_proyecto_gastoFK == "0") {
+	$cod_proyecto_gastoFK = NULL;
+}
 
 $consulta1="Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad,cod_proyecto_gastoFK)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -1318,7 +1321,10 @@ if ($cod_interConsultaFK != NULL) {
 	$ss .= "s";
 	$parametros[] = $cod_interConsultaFK;
 }
-if ($cod_proyecto_gastoFK != NULL && $cod_proyecto_gastoFK != "" && is_numeric($cod_proyecto_gastoFK)) {
+if ($cod_proyecto_gastoFK != "") {
+	if ($cod_proyecto_gastoFK == "0") {
+		$cod_proyecto_gastoFK = NULL;
+	}
 	$atributos .= ($atributos == "" ? "" : ", ") . "cod_proyecto_gastoFK= ?";
 	$ss .= "s";
 	$parametros[] = $cod_proyecto_gastoFK;
@@ -1369,7 +1375,7 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 		$stmt->bind_param('ii', $codProyectoSerie, $idgastos);
 		$stmt->execute();
 
-		$gastos_asociados= buscarGasto('','','','','','','','','false','','','','','', '', 'ASC', $cod_proyecto_gastoFK);
+		$gastos_asociados= buscarGasto('','','','','','','','','false','','','','','', '', 'ASC', $codProyectoSerie);
 	} else {
 		$gastos_asociados= obtenerGastosAsociados($idgastos);
 	}

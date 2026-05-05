@@ -318,7 +318,7 @@ function buscarProyectosVistaSelecc() {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   document.getElementById('inptProyectoGasto').innerHTML= '<option value= "">SELECCIONAR</option><option value= "">NUEVO PROYECTO</option>' + datos[2];
+				   document.getElementById('inptProyectoGasto').innerHTML= '<option value= "">SELECCIONAR</option><option value= "0">NUEVO PROYECTO</option>' + datos[2];
 				   document.getElementById('inptProyectoGasto').value= valor;
 				}				
 			} catch (error) {
