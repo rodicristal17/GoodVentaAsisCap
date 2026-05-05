@@ -1621,7 +1621,13 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 		sincronizarResumenDetallePresupuestoDoc();
 	}else{
 		$("div[id=divAbmDetallesPresupuestoDoc]").fadeOut(500);
-		vistaPresupuestoOrigen= ""
+		vistaPresupuestoOrigen= "";
+
+		switch (ventanaAnterior[ventanaAnterior.length - 1]) {
+			case 'calendario':
+				AbrirAgendaConsultorios(false);
+				break;
+		}
 	}
 }
 
@@ -1707,4 +1713,14 @@ function presupuestoAVenta(){
 
 	limpiarCamposAnhadirProductosVenta();
 	verCerrarAbmVenta();
+}
+
+function cargarTratamientoDesdeAgenda() {
+	verCerrarAbmDetallesPresupuestoDoc(true);
+	const nombrePaciente= document.getElementById('detAgendaPaciente').textContent;
+	document.getElementById('inptNombreClientePresupuestoDoc').value= nombrePaciente;
+	buscarClientePorCiVista(document.getElementById('inptNombreClientePresupuestoDoc'),'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto');
+	ventanaAnterior.push('calendario');
+	cerrarDetalleAgenda();
+	cerrarAgendaConsultorios();
 }
