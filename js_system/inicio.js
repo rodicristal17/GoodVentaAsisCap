@@ -12705,8 +12705,6 @@ function calcular_cuota_desde_venta() {
 	separadordemiles(document.getElementById('inptEntregaConfCredito'))
 }
 function crearcreditodesdeventa() {
-	
-	
 	var inptNroCuotasConfCredito = document.getElementById('inptNroCuotasConfCredito').value
 	var inptMontoPagoConfCredito = document.getElementById('inptMontoPagoConfCredito').value
 	var inptFechaInicioConfCredito = document.getElementById('inptFechaInicioConfCredito').value

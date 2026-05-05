@@ -1519,24 +1519,15 @@ function obtenerDatosPresupuesto(elemento) {
     idFkCliente= $(elemento).children('td[id="td_datos_3"]').html();
     idAbmCliente= $(elemento).children('td[id="td_datos_3"]').html();
 	verCerrarAbmDetallesPresupuesto(true, false);
-	if ($(elemento).children('td[id="td_datos_5"]').html() == "" || $(elemento).children('td[id="td_datos_4"]').html() == "") {
-		document.getElementById('inptNombreApellidoCliente').value= $(elemento).children('td[id="td_datos_4"]').html();
-		document.getElementById('inptNroDocCliente').value= $(elemento).children('td[id="td_datos_5"]').html();
-		document.getElementById('inptNroRucCliente').value= $(elemento).children('td[id="td_datos_13"]').html();
-		document.getElementById('inptNrowhatsappCliente').value= $(elemento).children('td[id="td_datos_14"]').html();
-		document.getElementById('inptZonaCliente').value= $(elemento).children('td[id="td_datos_11"]').html();
-		document.getElementById('inptFechaNacCliente').value= $(elemento).children('td[id="td_datos_"]').html();
-		idFKZona= $(elemento).children('td[id="td_datos_12"]').html();
-
-		document.getElementById('divAbmCliente').style.display= "";
-		document.getElementById('divAbmCliente2').style.display= "";
-		document.getElementById('divAbmCliente1').style.display= "none";
-
-		$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
-		document.getElementById('divAbmCliente2').style.width= "850px";
-
-		ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
-	}
+	document.getElementById('inptNombreApellidoCliente').value= $(elemento).children('td[id="td_datos_4"]').html();
+	document.getElementById('inptNroDocCliente').value= $(elemento).children('td[id="td_datos_5"]').html();
+	document.getElementById('inptNroRucCliente').value= $(elemento).children('td[id="td_datos_13"]').html();
+	document.getElementById('inptNrowhatsappCliente').value= $(elemento).children('td[id="td_datos_14"]').html();
+	document.getElementById('inptZonaCliente').value= $(elemento).children('td[id="td_datos_11"]').html();
+	document.getElementById('inptFechaNacCliente').value= $(elemento).children('td[id="td_datos_"]').html();
+	idFKZona= $(elemento).children('td[id="td_datos_12"]').html();
+	
+	verificarDatosCliente(true);
 }
 
 function buscarDetallesPresupuesto(cod_presupuestoFK) {

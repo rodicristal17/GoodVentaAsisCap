@@ -576,7 +576,8 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 				
 				}
 
-limpiarcamposCliente()
+//limpiarcamposCliente()
+verCerrarVentanaAbmCliente(false, false);
 			}
 			
 			}catch(error)
@@ -2271,4 +2272,50 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
 			}
 		}
 	});
+}
+
+function verificarDatosCliente(solo_basicos) {
+	const nombre= document.getElementById('inptNombreApellidoCliente').value;
+	const nroDoc= document.getElementById('inptNroDocCliente').value;
+	const whapp= document.getElementById('inptNrowhatsappCliente').value;
+	if (solo_basicos) {
+		if (
+			nombre == "" ||
+			nroDoc == "" ||
+			whapp == "" ||
+			idFKZona == "" || idFKZona == 0
+		) {
+			document.getElementById('divAbmCliente').style.display= "";
+			document.getElementById('divAbmCliente2').style.display= "";
+			document.getElementById('divAbmCliente1').style.display= "none";
+
+			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+			document.getElementById('divAbmCliente2').style.width= "850px";
+
+			ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
+			return false;
+		} else {
+			return true
+		}
+	} else {
+		if (
+			nombre == "" ||
+			nroDoc == "" ||
+			whapp == "" ||
+			idFKZona == "" || idFKZona == 0 ||
+			document.getElementById('inptDireccionCliente').value == ""
+		) {
+			document.getElementById('divAbmCliente').style.display= "";
+			document.getElementById('divAbmCliente2').style.display= "";
+			document.getElementById('divAbmCliente1').style.display= "none";
+
+			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
+			document.getElementById('divAbmCliente2').style.width= "850px";
+
+			ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
+			return false;
+		} else {
+			return true
+		}
+	}
 }

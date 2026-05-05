@@ -266,18 +266,6 @@ function cargarAgendaConsultorios(){
     iniciarLineaHoraActualAgenda();
 }
 
-function renderCuartosHoraAgenda(hora, minuto){
-    var horaInicio = completarHora(hora) + ":" + completarHora(minuto);
-    var horaSegundoCuarto = minutosAHora((hora * 60) + minuto + 15);
-
-    return "<div class='agenda-cuarto-hora agenda-cuarto-hora-superior' data-hora-cuarto='" + horaInicio + "'>"
-        + "<span>" + horaInicio + "</span>"
-        + "</div>"
-        + "<div class='agenda-cuarto-hora agenda-cuarto-hora-inferior' data-hora-cuarto='" + horaSegundoCuarto + "'>"
-        + "<span>" + horaSegundoCuarto + "</span>"
-        + "</div>";
-}
-
 function calcularHoraSlotQuinceMinutos(slot, ev){
     var horaBase = slot.getAttribute('data-hora') || '';
     var minBase = horaAMinutos(horaBase);
@@ -321,7 +309,7 @@ function clickSlotAgenda(slot, ev){
     hora = calcularHoraSlotQuinceMinutos(slot, ev);
     horaFin = minutosAHora(horaAMinutos(hora) + 15);
 
-    abrirModalNuevaCita();
+    vercerrarModalNuevaCita(true);
 
     document.getElementById('inptConsultorioAgenda').value = consultorio;
     document.getElementById('inptFechaNuevaCita').value = fecha;
@@ -841,6 +829,13 @@ function cambiarFechaAgenda(dias){
     cargarAgendaConsultoriosDesdePHP();
 }
 
+
+function irHoyAgenda(){
+    var hoy = new Date();
+    document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
+    cargarAgendaConsultoriosDesdePHP();
+}
+
 function formatearFechaInput(fecha){
     var y = fecha.getFullYear();
     var m = ('0' + (fecha.getMonth() + 1)).slice(-2);
@@ -848,18 +843,18 @@ function formatearFechaInput(fecha){
     return y + '-' + m + '-' + d;
 }
 
-function abrirModalFiltrosAgenda(){
-    document.getElementById('overlayFiltrosAgenda').style.display = '';
-    document.getElementById('modalFiltrosAgenda').style.display = '';
-}
-
-function cerrarModalFiltrosAgenda(){
-    document.getElementById('overlayFiltrosAgenda').style.display = 'none';
-    document.getElementById('modalFiltrosAgenda').style.display = 'none';
+function vercerrarModalFiltrosAgenda(mostrar){
+    if (mostrar) {
+        document.getElementById('overlayFiltrosAgenda').style.display = '';
+        document.getElementById('modalFiltrosAgenda').style.display = '';
+    } else {
+        document.getElementById('overlayFiltrosAgenda').style.display = 'none';
+        document.getElementById('modalFiltrosAgenda').style.display = 'none';
+    }
 }
 
 function aplicarFiltrosAgenda(){
-    cerrarModalFiltrosAgenda();
+    vercerrarModalFiltrosAgenda(false);
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -872,18 +867,17 @@ function limpiarFiltrosAgenda(){
     cargarAgendaConsultoriosDesdePHP();
 }
 
-function abrirModalNuevaCita(){
-	
-	if(controlacceso("INSERTARFORMULARIOCALENDARIO","accion")==false){return;}
-	 		
-    document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
-    document.getElementById('overlayNuevaCita').style.display = '';
-    document.getElementById('modalNuevaCita').style.display = '';
-}
-
-function cerrarModalNuevaCita(){
-    document.getElementById('overlayNuevaCita').style.display = 'none';
-    document.getElementById('modalNuevaCita').style.display = 'none';
+function vercerrarModalNuevaCita(mostrar){
+    if (mostrar) {
+        if(controlacceso("INSERTARFORMULARIOCALENDARIO","accion")==false){return;}
+                 
+        document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
+        document.getElementById('overlayNuevaCita').style.display = '';
+        document.getElementById('modalNuevaCita').style.display = '';
+    } else {
+        document.getElementById('overlayNuevaCita').style.display = 'none';
+        document.getElementById('modalNuevaCita').style.display = 'none';
+    }
 }
 
 function guardarCitaAgenda(){
@@ -916,7 +910,7 @@ function guardarCitaAgenda(){
         motivo: motivo
     });
 
-    cerrarModalNuevaCita();
+    vercerrarModalNuevaCita(false);
     limpiarFormularioNuevaCita();
     cargarAgendaConsultorios();
 }
@@ -1578,7 +1572,7 @@ function guardarCitaAgenda(){
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if(Respuesta == true){
-                    cerrarModalNuevaCita();
+                    vercerrarModalNuevaCita(false);
                     limpiarFormularioNuevaCita();
                     cargarAgendaConsultoriosDesdePHP();
                 }else{

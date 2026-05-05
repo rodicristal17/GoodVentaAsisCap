@@ -8194,7 +8194,7 @@ ACCION
         <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
           onclick="limpirarPresupuesto()">
         <img src="/GoodVentaAsisCap/iconos/imprimir.png" class="iconoBtn" title="Imprimir"
-          onclick='ordenimpresion("Presupuesto")'>
+          onclick='if (verificarDatosCliente(true)) {ordenimpresion("Presupuesto")}'>
         <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
           onclick='idAbmPresupuesto="";idFkCliente= "";verCerrarAbmDetallesPresupuesto(true, true)'>
       </div>
@@ -10851,7 +10851,7 @@ onclick='vercerrarpagos("1")'
 style=';width: 100px; background-color: #2196F3;'>
 <input id='btnFinalizarVenta' type='button'
 value='Finalizar Venta' class='btn4'
-onclick='guardaryfinalizarventa()'
+onclick='if (verificarDatosCliente(false)){guardaryfinalizarventa()}'
 style='width: 150px; background-color: #2196F3;display:none'>
 <input id='btnCancelarVenta' type='button'
 value='Cancelar' class='btn4'
@@ -21766,10 +21766,10 @@ onclick='buscarvistaaperturacierrecaja()' />
 		<button class="btn-filtro" id="btnTema" onclick="toggleTema()">
 			🌙
 		</button>
-            <button class='btn-icon' onclick='abrirModalFiltrosAgenda()' title='Filtros'>
+            <button class='btn-icon' onclick='vercerrarModalFiltrosAgenda(true)' title='Filtros'>
                 <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn' />
             </button>
-            <button class='btn-icon' onclick='abrirModalNuevaCita()' title='Nueva cita'>
+            <button class='btn-icon' onclick='vercerrarModalNuevaCita(true)' title='Nueva cita'>
                 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' />
             </button>
             <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
@@ -21854,8 +21854,8 @@ onclick='buscarvistaaperturacierrecaja()' />
     </div>
 </div>
 
-<div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='cerrarModalFiltrosAgenda()' style='display:none;'></div>
-<div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="cerrarModalFiltrosAgenda()"></div>
+<div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='vercerrarModalFiltrosAgenda(false)' style='display:none;'></div>
+<div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="vercerrarModalFiltrosAgenda(false)"></div>
 
 <div class="modal-filtros-catalogo" id="modalFiltrosAgenda" style="display:none;">
     <div class="modal-filtros-box modal-agenda-pro">
@@ -21867,7 +21867,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <span>Refiná la búsqueda por consultorio, local, paciente y estado</span>
             </div>
 
-            <button type="button" class="btn-cerrar-modal" onclick="cerrarModalFiltrosAgenda()">×</button>
+            <button type="button" class="btn-cerrar-modal" onclick="vercerrarModalFiltrosAgenda(false)">×</button>
         </div>
 
         <div class="modal-filtros-body agenda-filtros-grid">
@@ -21916,7 +21916,7 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
     </div>
 </div>
-<div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='cerrarModalNuevaCita()' style='display:none;'></div>
+<div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='vercerrarModalNuevaCita(false)' style='display:none;'></div>
 
 
 
@@ -21925,7 +21925,7 @@ onclick='buscarvistaaperturacierrecaja()' />
     <div class='modal-filtros-box modal-cita-box'>
         <div class='modal-filtros-header'>
             <h3>Nueva cita</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarModalNuevaCita()'>×</button>
+            <button type='button' class='btn-cerrar-modal' onclick='vercerrarModalNuevaCita(false)'>×</button>
         </div>
 
         <div class='modal-filtros-body modal-cita-grid'>
@@ -21982,7 +21982,7 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
 
         <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='cerrarModalNuevaCita()'>Cancelar</button>
+            <button class='btn-filtro' onclick='vercerrarModalNuevaCita(false)'>Cancelar</button>
             <button class='btn-accion-principal' onclick='guardarCitaAgenda()'>Guardar cita</button>
         </div>
     </div>
