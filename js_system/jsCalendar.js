@@ -653,7 +653,8 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "data-fin='" + e.fin + "' "
     + "style='" + estilos + "' "
     + "onclick='clickEventoAgenda(" + e.id + ", event)'>"
-        + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
+    + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
+    + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
         + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
         + "<div class='agenda-evento-resize' "
@@ -990,11 +991,15 @@ function cerrarDetalleAgenda(){
 function filtrarAgendaLocal(){
     var texto = document.getElementById('inptBuscarPacienteAgenda').value.toLowerCase();
     var bloques = document.getElementsByClassName('agenda-evento');
-    var i, paciente;
+    var i, paciente, ciCliente, pacienteElementos, ciClienteElementos;
 
     for(i = 0; i < bloques.length; i++){
-        paciente = bloques[i].getElementsByClassName('paciente')[0].innerHTML.toLowerCase();
-        bloques[i].style.display = paciente.indexOf(texto) >= 0 ? 'block' : 'none';
+        pacienteElementos = bloques[i].getElementsByClassName('paciente');
+        ciClienteElementos = bloques[i].getElementsByClassName('ci_cliente');
+        paciente = pacienteElementos.length > 0 ? pacienteElementos[0].innerHTML.toLowerCase() : '';
+        ciCliente = ciClienteElementos.length > 0 ? ciClienteElementos[0].innerHTML.toLowerCase() : '';
+
+        bloques[i].style.display = (paciente.indexOf(texto) >= 0 || ciCliente.indexOf(texto) >= 0) ? 'block' : 'none';
     }
 }
 
