@@ -42,18 +42,18 @@ exit;
 	
 if($operacion=="nuevo" || $operacion=="editar")
 {
-	$idAgenda=$_POST['idAgenda'];
-$idAgenda = mb_convert_encoding((string)($idAgenda), 'ISO-8859-1', 'UTF-8');
-	$motivo=$_POST['motivo'];
-$motivo = mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
-	$fechaCompromiso=$_POST['fechaCompromiso'];
-$fechaCompromiso = mb_convert_encoding((string)($fechaCompromiso), 'ISO-8859-1', 'UTF-8');
-	$estado=$_POST['estado'];
-$estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
-	$Cod_cobrador=$_POST['Cod_cobrador'];
-$Cod_cobrador = mb_convert_encoding((string)($Cod_cobrador), 'ISO-8859-1', 'UTF-8');
-	$cod_clienteAgenda=$_POST['cod_clienteAgenda'];
-$cod_clienteAgenda = mb_convert_encoding((string)($cod_clienteAgenda), 'ISO-8859-1', 'UTF-8');
+	$idAgenda=isset($_POST['idAgenda']) ? $_POST['idAgenda'] : NULL;
+$idAgenda = $idAgenda !== NULL ? mb_convert_encoding((string)($idAgenda), 'ISO-8859-1', 'UTF-8') : NULL;
+	$motivo=isset($_POST['motivo']) ? $_POST['motivo'] : NULL;
+$motivo = $motivo !== NULL ? mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8') : NULL;
+	$fechaCompromiso=isset($_POST['fechaCompromiso']) ? $_POST['fechaCompromiso'] : NULL;
+$fechaCompromiso = $fechaCompromiso !== NULL ? mb_convert_encoding((string)($fechaCompromiso), 'ISO-8859-1', 'UTF-8') : NULL;
+	$estado=isset($_POST['estado']) ? $_POST['estado'] : NULL;
+$estado = $estado !== NULL ? mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8') : NULL;
+	$Cod_cobrador=isset($_POST['Cod_cobrador']) ? $_POST['Cod_cobrador'] : NULL;
+$Cod_cobrador = $Cod_cobrador !== NULL ? mb_convert_encoding((string)($Cod_cobrador), 'ISO-8859-1', 'UTF-8') : NULL;
+	$cod_clienteAgenda=isset($_POST['cod_clienteAgenda']) ? $_POST['cod_clienteAgenda'] : NULL;
+$cod_clienteAgenda = $cod_clienteAgenda !== NULL ? mb_convert_encoding((string)($cod_clienteAgenda), 'ISO-8859-1', 'UTF-8') : NULL;
 
 abm($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,$operacion);
 
@@ -106,29 +106,72 @@ if($operacion=="nuevo")
 {
 
 
-$consulta1="Insert into visitascliente (fecha,Motivo,cod_clienteFK,cod_cobradorFK,fechaCompro,estado) values (NOW(),'$motivo',$cod_clienteAgenda,$Cod_cobrador,'$fechaCompromiso','$estado')";
-
-// echo($consulta1);
-// exit;
+$consulta1="Insert into visitascliente (fecha,Motivo,cod_clienteFK,cod_cobradorFK,fechaCompro,estado) values (NOW(),?,?,?,?,?)";
 $stmt1 = $mysqli->prepare($consulta1);
+$stmt1->bind_param('siiss',$motivo,$cod_clienteAgenda,$Cod_cobrador,$fechaCompromiso,$estado);
 }
 
 
 if($operacion=="editar")
 {
 
-$consulta1="Update visitascliente set Motivo=?,cod_clienteFK=?,cod_cobradorFK=?,fechaCompro=?,estado=? where cod_VisitasCliente=?";	
+$parametros = array();
+$atributos = "";
+$ss = "";
+
+if ($motivo !== NULL) {
+	$atributos .= "Motivo=?";
+	$ss .= "s";
+	$parametros[] = $motivo;
+}
+if ($cod_clienteAgenda !== NULL) {
+	$atributos .= $atributos != "" ? ",cod_clienteFK=?" : "cod_clienteFK=?";
+	$ss .= "i";
+	$parametros[] = $cod_clienteAgenda;
+}
+if ($Cod_cobrador !== NULL) {
+	$atributos .= $atributos != "" ? ",cod_cobradorFK=?" : "cod_cobradorFK=?";
+	$ss .= "i";
+	$parametros[] = $Cod_cobrador;
+}
+if ($fechaCompromiso !== NULL) {
+	$atributos .= $atributos != "" ? ",fechaCompro=?" : "fechaCompro=?";
+	$ss .= "s";
+	$parametros[] = $fechaCompromiso;
+}
+if ($estado !== NULL) {
+	$atributos .= $atributos != "" ? ",estado=?" : "estado=?";
+	$ss .= "s";
+	$parametros[] = $estado;
+}
+
+if ($atributos == "") {
+	$informacion =array("1" => "camposvacio");
+	echo json_encode($informacion);	
+	exit;
+}
+
+$parametros[] = $idAgenda;
+$ss .= "i";
+
+$consulta1="Update visitascliente set $atributos where cod_VisitasCliente=?";	
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='ssssss';
-$stmt1->bind_param($ss,$motivo,$cod_clienteAgenda,$Cod_cobrador,$fechaCompromiso,$estado,$idAgenda);
+
+$refs = array();
+foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+
+call_user_func_array(array($stmt1, 'bind_param'), array_merge(array($ss), $refs));
 
 }
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+$informacion =array("1" => "error", "mensaje" => "Error al guardar: " . $stmt1->error, "sql" => $consulta1);
+echo json_encode($informacion);
 exit;
 
 }
+
+$stmt1->close();
 
 
 $informacion =array("1" => "exito");

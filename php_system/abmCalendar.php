@@ -47,6 +47,10 @@ switch ($funt) {
 	case 'actualizarEstadoCita':
 		actualizarEstadoCita($mysqli, $useru);
 		break;
+
+	case 'actualizarPresupuestoAgenda':
+		actualizarPresupuestoAgenda($mysqli, $useru);
+		break;
 		
 	case 'buscarPacientesAgenda':
 		buscarPacientesAgenda($mysqli);
@@ -340,6 +344,45 @@ function actualizarEstadoCita($mysqli, $useru){
     exit;
 }
 
+
+function actualizarPresupuestoAgenda($mysqli, $useru){
+    $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
+    $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? limpiar($mysqli, $_POST['cod_presupuestoFK']) : '';
+
+    if($id_agenda == '' || $cod_presupuestoFK == ''){
+        echo json_encode(array(
+            "1" => "Datos incompletos",
+            "mensaje" => "Faltan datos para asociar el presupuesto a la agenda"
+        ));
+        exit;
+    }
+
+    $sql = "
+        UPDATE agenda SET
+            cod_presupuestoFK = '".$cod_presupuestoFK."',
+            creado_por = '".$useru."',
+            creado_en = NOW()
+        WHERE id_agenda = '".$id_agenda."'
+        LIMIT 1
+    ";
+
+    if(!$mysqli->query($sql)){
+        echo json_encode(array(
+            "1" => "Error al actualizar presupuesto",
+            "mensaje" => "No se pudo asociar el presupuesto al agendamiento",
+            "sql" => $sql,
+            "mysql" => $mysqli->error
+        ));
+        exit;
+    }
+
+    echo json_encode(array(
+        "1" => "exito",
+        "mensaje" => "Presupuesto asociado correctamente"
+    ));
+    exit;
+}
+
  
 
 function limpiar($mysqli, $valor){
@@ -443,6 +486,7 @@ function cargarAgenda($mysqli){
             a.motivo,
             cl.ci_cliente, cl.idzonaFk,cl.whapp, p.telefono,cl.fechanac,cl.rut_cliente,cl.cod_cliente,
             (SELECT nombre FROM zona WHERE idzona = cl.idzonaFk) AS nombre_zona,
+            (SELECT nombre_persona FROM persona JOIN presupuesto ON cod_usuarioFK_create = cod_persona WHERE a.cod_presupuestoFK = id) AS nombre_doctor,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
@@ -480,6 +524,7 @@ function cargarAgenda($mysqli){
             "nombre_zona" => $row["nombre_zona"],
             "rut_cliente" => $row["rut_cliente"],
             "cod_cliente" => $row["cod_cliente"],
+            "nombre_doctor" => $row["nombre_doctor"],
             "motivo" => normalizarTextoUtf8($row["motivo"])
         );
     }

@@ -86,8 +86,11 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 				Respuesta = datos["1"];
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-				idabmPresupuesto = datos[2];
-				ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+					idabmPresupuesto = datos[2];
+					ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+
+					// Actualiza tambien los datos de la agenda
+					asignarCodPresupuestoAgenda();
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
@@ -211,15 +214,11 @@ function obtenerdatosvistaproductodesdePresupuesto(datostr) {
 		document.getElementById('inptCantidadPresupuesto').value = "1";
 		document.getElementById('inptPrecioPresupuesto').value = $(datostr).children('td[id="td_datos_4"]').html();
 		document.getElementById('inptCantidadPresupuesto').focus();
-		calcularTotalPresupuesto(document.getElementById('inptPrecioPresupuesto'))
+		separadordemiles(document.getElementById('inptPrecioPresupuesto'))
+		calcular_total_Presupuesto()
 	}
 }
 
-
-function calcularTotalPresupuesto(datos) {
-	separadordemiles(datos)
-	calcular_total_Presupuesto()
-}
 function calcular_total_Presupuesto() {
 	var c = QuitarSeparadorMilValor(document.getElementById('inptCantidadPresupuesto').value);
 	var t = QuitarSeparadorMilValor(document.getElementById('inptPrecioPresupuesto').value);
@@ -330,7 +329,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById('inptCantidadPresupuesto').value = "1";
 						document.getElementById('inptPrecioPresupuesto').value = datos["4"];
 						document.getElementById('inptCantidadPresupuesto').focus();
-						calcularTotalPresupuesto(document.getElementById('inptPrecioPresupuesto'))					
+						separadordemiles(document.getElementById('inptPrecioPresupuesto'));
+						calcular_total_Presupuesto()
 					}
 				}
 			} catch (error) {
