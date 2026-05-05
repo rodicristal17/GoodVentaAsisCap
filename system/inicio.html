@@ -21784,7 +21784,7 @@ onclick='buscarvistaaperturacierrecaja()' />
     <div class='catalogo-toolbar'>
         <div class='agenda-nav-fecha'>
             <button class='btn-filtro' onclick='cambiarFechaAgenda(-1)'>&lt;</button>
-            <input type='date' id='inptFechaAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultorios()' />
+            <input type='date' id='inptFechaAgenda' class='catalogo-selectBuscador' onchange='cargarAgendaConsultoriosDesdePHP()' />
             <button class='btn-filtro' onclick='cambiarFechaAgenda(1)'>&gt;</button>
             <button class='btn-filtro btn-hoy' onclick='irHoyAgenda()'>Hoy</button>
         </div>
@@ -21899,7 +21899,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 
             <div class="filtro-grupo">
                 <label for="inptEstadoAgenda">Estado</label>
-                <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultorios()">
+                <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultoriosDesdePHP()">
                     <option value="">Todos los estados</option>
                     <option value="AGENDADO">Agendado</option>
                     <option value="CONFIRMADO">Confirmado</option>
@@ -28737,7 +28737,7 @@ id='lblReciboTotaliva3'>0.0</p>
 
 
 <div class='div_info_10' id='div_principal_info_carga'
-style='display:none;    background-color: #0000008f;'>
+style='display:none;background-color: #0000008f;z-index: 10;'>
 <center>
 
 <table class='table_info_2'>
