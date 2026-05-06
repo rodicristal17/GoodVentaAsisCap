@@ -47,6 +47,25 @@ document.getElementById("tdEfectoAbmCliente").className="magictime slideDown"
 }
 
 var controlventananuevocliente="";
+var volverAtrasClienteDesdeEditar = false;
+
+function editarClienteDesdeListado() {
+	if(controlacceso("EDITARLISTADODECLIENTES","accion")==false){return;}
+	if (idAbmCliente == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
+		return;
+	}
+	volverAtrasClienteDesdeEditar = true;
+	verCerrarVentanaAbmCliente(true, true);
+	verCerrarAbmClientes(true);
+}
+
+function volverAtrasCliente() {
+	var volverAlFormulario = volverAtrasClienteDesdeEditar;
+	volverAtrasClienteDesdeEditar = false;
+	verCerrarVentanaAbmCliente(false, volverAlFormulario);
+}
+
 function verificarcamposClienteVista() {
 	var inptNombreApellidoCliente = document.getElementById('inptNombreApellidoClienteVista').value
 	var inptNroDocCliente = document.getElementById('inptNroDocClienteVista').value
@@ -118,14 +137,6 @@ function verCerrarVentanaAbmCliente(mostrar, abm, ocultar_datos_extras= false) {
 	}
 }
 
-function verVentanaEditarCliente() {
-	if(controlacceso("EDITARLISTADODECLIENTES","accion")==false){return;}
-	if (idAbmCliente == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
-		return;
-	}
-	verCerrarVentanaAbmCliente(true)
-}
 var controlfotocliente="";
 function ExploradorImagenCliente(File){	
 $("input[name=file_1]").click();
@@ -577,7 +588,31 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 				}
 
 //limpiarcamposCliente()
-verCerrarVentanaAbmCliente(false, false);
+volverAtrasCliente();
+			} else if (datos[1] == 'EX') {
+				if (confirm('Usar datos del cliente existente')) {
+					const regCliente= datos[2];
+					console.info(regCliente);
+					idAbmCliente = regCliente['cod_persona'];
+					idFKZona = regCliente['idzonaFk'];
+					document.getElementById('inptFechaNacCliente').value = regCliente['fechanac'];
+					document.getElementById('inptNombreApellidoCliente').value = regCliente['nombre_persona'];
+					document.getElementById('inptNroDocCliente').value = regCliente['ci_cliente'];
+					document.getElementById('inptNroRucCliente').value = regCliente['rut_cliente'];
+					document.getElementById('inptNroTelefCliente').value = regCliente['telefono'];
+					document.getElementById('inptNrowhatsappCliente').value = regCliente['whapp'];
+					document.getElementById('inptDireccionCliente').value = regCliente['direccion'];
+					document.getElementById('inptReferenciaCliente').value = regCliente['email'];
+					document.getElementById('inptCalificaCliente').value = regCliente['Calificacion'];
+					document.getElementById('inptEstadoCliente').value = regCliente['estado'];
+					document.getElementById('inptLugrarTrabajoCliente').value = regCliente['lugardetrabajo'];
+					document.getElementById('inptDireccionTrabajoCliente').value = regCliente['direcciontrab'];
+					document.getElementById('inptSalarioCliente').value = regCliente['salario'];
+					document.getElementById('inptAntiguedadCliente').value = regCliente['antiguedad'];
+					document.getElementById('inptNroTelefTrabajoCliente1').value = regCliente['tefeftrab1'];
+					document.getElementById('inptNroTelefTrabajoCliente2').value = regCliente['teleftrab2'];
+					document.getElementById('inptAccesoCreditoCliente').value = regCliente['accesocredito'];
+				}
 			}
 			
 			}catch(error)

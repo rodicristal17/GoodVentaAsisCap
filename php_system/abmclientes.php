@@ -202,7 +202,9 @@ EliminarDocumento($idcontrato,$iddocumento,$urldocumento);
  	$cliente=mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
 	$telef=$_POST["telef"];
  	$telef=mb_convert_encoding((string)($telef), 'ISO-8859-1', 'UTF-8');
- 	BuscarRegistroEnVista($ruc,$documento,$cliente,$telef);
+ 	$informacion = BuscarRegistroEnVista($ruc,$documento,$cliente,$telef);
+	echo json_encode($informacion);	
+	exit;
  }
 
  if($operacion=="buscarporci"){
@@ -686,31 +688,29 @@ exit;
 
 $mysqli=conectar_al_servidor(); 
 
-if($operacion=="nuevo")
-	{
-				$consulta= "Select count(*) from cliente where ci_cliente=? and estado ='Activo' ";
-	
-	
-		$stmt = $mysqli->prepare($consulta);
-$ss='s';
-$stmt->bind_param($ss, $ci_cliente); 
+// Verificar si ya existe el cliente
+$result= BuscarRegistroEnVista("", $ci_cliente, "", "");
+if(count($result[4]) > 0) {
+	if($operacion=="nuevo") {
+		$informacion =array("1" => "EX", "2" => $result[4][0]);
+		echo json_encode($informacion);	
+		exit;
+	} else {
+		// Comprueba si el que existe coincide con cod_cliente
+		$es_mismo_registro= false;
+		foreach ($result[4] as $reg) {
+			if ($reg['cod_persona'] == $cod_persona) {
+				$es_mismo_registro= true;
+			}
+		}
 
-
-if ( ! $stmt->execute()) {
-   echo "Error";
-   exit;
+		if (!$es_mismo_registro) {
+			$informacion =array("1" => "EX", "2" => $result[4][0]);
+			echo json_encode($informacion);	
+			exit;
+		}
+	}  
 }
-
-$result = $stmt->get_result();
-$nro_total=$result->fetch_row();
- $valor=$nro_total[0];
-if($valor>=1)
-{
-	$informacion =array("1" => "EX");
-	echo json_encode($informacion);	
-	exit;
-}   
-	}
 	/*AUDITORIA*/
 	date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
@@ -1500,7 +1500,7 @@ if($cliente!=""){
 }
 $condiciondocumento="";
 if($documento!=""){
-	$condiciondocumento=" and cl.ci_cliente like '%$documento%'";
+	$condiciondocumento=" and cl.ci_cliente = '$documento'";
 }
 $condicionruc="";
 if($ruc!=""){
@@ -1529,15 +1529,12 @@ exit;
 $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
+$registros= array();
  $styleName="tableRegistroSearch";
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
 {  
-
-
-
-
 $fechanac = mb_convert_encoding((string)($valor['fechanac']), 'UTF-8', 'ISO-8859-1');  
 $cod_persona = mb_convert_encoding((string)($valor['cod_persona']), 'UTF-8', 'ISO-8859-1');     
 $nombre_persona = mb_convert_encoding((string)($valor['nombre_persona']), 'UTF-8', 'ISO-8859-1');          
@@ -1562,6 +1559,30 @@ $teleftrab1 = mb_convert_encoding((string)($valor['teleftrab1']), 'UTF-8', 'ISO-
 $teleftrab2 = mb_convert_encoding((string)($valor['teleftrab2']), 'UTF-8', 'ISO-8859-1'); 
 $direcciontrab = mb_convert_encoding((string)($valor['direcciontrab']), 'UTF-8', 'ISO-8859-1'); 
 
+$registros[] = array(
+	'fechanac' => $fechanac,
+	'cod_persona' => $cod_persona,
+	'nombre_persona' => $nombre_persona,
+	'direccion' => $direccion,
+	'telefono' => $telefono,
+	'email' => $email,
+	'rut_cliente' => $rut_cliente,
+	'Calificacion' => $Calificacion,
+	'whapp' => $whapp,
+	'estado' => $estado,
+	'idzonaFk' => $idzonaFk,
+	'zona' => $zona,
+	'foto1' => $foto1,
+	'foto2' => $foto2,
+	'ci_cliente' => $ci_cliente,
+	'accesocredito' => $accesocredito,
+	'lugardetrabajo' => $lugardetrabajo,
+	'salario' => $salario,
+	'antiguedad' => $antiguedad,
+	'teleftrab1' => $teleftrab1,
+	'teleftrab2' => $teleftrab2,
+	'direcciontrab' => $direcciontrab,
+);
 $stylefondo="";
 if($accesocredito=="Denegado"){
 $stylefondo="background-color:#ff5722;color:#fff";	
@@ -1601,9 +1622,7 @@ $stylefondo="background-color:#ff5722;color:#fff";
 }
 }
      mysqli_close($mysqli);
-$informacion =array("1" => "exito","2" =>($pagina),"3" => $nroRegistro);
-echo json_encode($informacion);	
-exit;
+return array("1" => "exito","2" =>($pagina),"3" => $nroRegistro, "4" => $registros);
 }
 
 function  buscarporci($buscar)
