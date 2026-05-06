@@ -21,9 +21,28 @@ function verCerrarAbmConsultorio(){
 function limpiarCamposBuscarConsultorio(){
 	document.getElementById("inptBuscarAbmConsultorio1").value=""
 	document.getElementById("inptBuscarAbmConsultorio2").value=""
+	document.getElementById("inptBuscarAbmConsultorio3").value=""
+	document.getElementById("inptBuscarAbmConsultorio4").value=""
+	document.getElementById("inptBuscarAbmConsultorio5").value="Activo"
 	document.getElementById("inptTotalRegistoConsultorio").value=""
 	document.getElementById("inptRegistroSeleccConsultorio").value=""
 	document.getElementById("table_abm_Consultorio").innerHTML=""
+	document.getElementById("overlayFiltrosConsultorio").style.display="none"
+}
+function verCerrarFiltrosConsultorio(mostrar){
+	if (mostrar) {
+		document.getElementById("overlayFiltrosConsultorio").style.display = "";
+	} else {
+		document.getElementById("overlayFiltrosConsultorio").style.display = "none";
+	}
+}
+function limpiarFiltroConsultorio(){
+	document.getElementById("inptBuscarAbmConsultorio1").value="";
+	document.getElementById("inptBuscarAbmConsultorio2").value="";
+	document.getElementById("inptBuscarAbmConsultorio3").value="";
+	document.getElementById("inptBuscarAbmConsultorio4").value="";
+	document.getElementById("inptBuscarAbmConsultorio5").value="Activo";
+	buscarabmConsultorio();
 }
 function minimizarConsultorio(){
 		document.getElementById("divMinimizadoListadoDeConsultorios").style.display="" 
@@ -62,7 +81,6 @@ function obtenerdatosabmConsultorio(datostr) {
 	document.getElementById('inptRegistroSeleccConsultorio').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptEstadoConsultorio').value = $(datostr).children('td[id="td_datos_4"]').html();
 	document.getElementById('inptLocalConsultorio').value = $(datostr).children('td[id="td_datos_5"]').html();
-	document.getElementById('btnEditarConsultorios').style.backgroundColor="";
 	document.getElementById('btnAbmConsultorio').value = "Editar datos";
 	iniciarSelectorColorConsultorio()
 	idAbmConsultorio = $(datostr).children('td[id="td_id"]').html();
@@ -170,17 +188,6 @@ function abmConsultorio(cod_local,nombre, descripcion, color, estado, cod_Consul
 
 
 }
-function checkestadoConsultorios(d){
-	if(d=="1"){
-	document.getElementById('inptSeleccEstadoBuscarConsultorio1').checked=true
-		document.getElementById('inptSeleccEstadoBuscarConsultorio2').checked=false	
-	}else{
-		
-		document.getElementById('inptSeleccEstadoBuscarConsultorio1').checked=false
-		document.getElementById('inptSeleccEstadoBuscarConsultorio2').checked=true
-	}
-}
-
 
 function buscarabmConsultorio() {
 if(controlacceso("BUSCARFORMULARIOCONSULTORIO","accion")==false){return;}
@@ -188,12 +195,7 @@ if(controlacceso("BUSCARFORMULARIOCONSULTORIO","accion")==false){return;}
 	var nombre = document.getElementById('inptBuscarAbmConsultorio2').value
 	var descripcion = document.getElementById('inptBuscarAbmConsultorio3').value
 	var NombreLocal = document.getElementById('inptBuscarAbmConsultorio4').value
-	var estado = ""
-	if(document.getElementById('inptSeleccEstadoBuscarConsultorio1').checked==true){
-		estado = "Activo"
-	}else{
-		estado = "Inactivo"
-	}
+	var estado = document.getElementById('inptBuscarAbmConsultorio5').value
 	document.getElementById("table_abm_Consultorio").innerHTML = paginacargando
 	obtener_datos_user();
 	var datos = {
@@ -269,7 +271,6 @@ function limpiarcamposConsultorio() {
 	document.getElementById('inptNombreConsultorio').value = "";
 	document.getElementById('inptDescripcionConsultorio').value = "";
 	document.getElementById('inptRegistroSeleccConsultorio').value = "";
-	document.getElementById('btnEditarConsultorios').style.backgroundColor="#b7b7b7";
 	document.getElementById('inptEstadoConsultorio').value = "ACTIVO";
 	document.getElementById('btnAbmConsultorio').value = "Guardar datos";
 	idAbmConsultorio = "";
@@ -317,4 +318,4 @@ function iniciarSelectorColorConsultorio(){
 
 document.addEventListener("DOMContentLoaded", function(){
     iniciarSelectorColorConsultorio();
-}); 
+});

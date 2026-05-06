@@ -193,7 +193,7 @@ if ( ! $stmt->execute()) {
 			  $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
 <table class='$styleName' border='1' style='background-color:$color' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='obtenerdatosabmConsultorio(this)'>
+<tr id='tbSelecRegistro' onclick='obtenerdatosabmConsultorio(this);verVentanaEditarConsultorio();'>
 <td id='td_id' style='width:10%; background-color: #efeded;color:red'>".$id_consultorio."</td>
 <td  id='td_datos_1' style='width:30%'>".$nombre."</td>
 <td  id='td_datos_2' style='width:30%'>".$descripcion."</td>

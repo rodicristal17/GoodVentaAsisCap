@@ -656,7 +656,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuAbmConsultorio' onclick='verCerrarAbmConsultorio()' style='text-align:center'>
+<table class='divMenub' id='divMenuAbmConsultorio' onclick='verCerrarAbmConsultorio();buscarabmConsultorio();' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/odontologia.png' />
@@ -5906,234 +5906,150 @@ onclick='verVentanaEditarCasa()' style='background-color:#b7b7b7'>
 <div class='principal2' style='display:none' id='divAbmConsultorio'>
  
 <center>
-<div id='divAbmConsultorio2' style='display:none;  height: 100vh;' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:80%;text-align:left'>
-<p class='pTituloB'>Datos de <b style='font-size: 30px;' >Consultorios</b></p>
-</td> 
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
-title='Limpiar campos' onclick='limpiarcamposConsultorio()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
-title='Minimizar Ventana' onclick='minimizarConsultorio()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
-title='Volver Atras' onclick='verCerrarVentanaAbmConsultorio("2","")' />
-</td>
-</tr>
-</table>
-<br>
-<center>
-<div class='divMenuf'>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Nombre :</p>
+<div id='divAbmConsultorio2' style='display:none;max-width:900px;' class='presupuesto-container presupuesto-search-modal'>
+<header class='presupuesto-header'>
+<h2>Datos de Consultorios</h2>
+<div class='header-actions'>
+<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar campos' onclick='limpiarcamposConsultorio()' />
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarConsultorio()' />
+<img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaAbmConsultorio("2","")' />
+</div>
+</header>
+
+<section class='form-section presupuesto-panel'>
+<div class='panel-title' style='width:100%;'>Informacion del consultorio</div>
+<div class='form-row flex-grow' style='flex:1 1 320px;'>
+<label for='inptNombreConsultorio'>Nombre :</label>
 <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNombreConsultorio' />
-</td>
-</tr>
-</table>
+</div>
 
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Descripcion :</p>
+<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<label for='inptDescripcionConsultorio'>Descripcion :</label>
 <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptDescripcionConsultorio' />
-</td>
-</tr>
-</table>
+</div>
 
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Local :</p>
-<select class="inputSelect" id="inptLocalConsultorio"  > 
+<div class='form-row' style='flex:1 1 240px;'>
+<label for='inptLocalConsultorio'>Local :</label>
+<select class='inputSelect' id='inptLocalConsultorio'></select>
+</div>
+
+<div class='form-row' style='flex:0 1 220px;'>
+<label for='inptEstadoConsultorio'>Estado :</label>
+<select class='inputSelect' id='inptEstadoConsultorio'>
+<option value='ACTIVO'>ACTIVO</option>
+<option value='INACTIVO'>INACTIVO</option>
 </select>
-</td>
-</tr>
-</table>
-
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'>Color:</p>
-
-<div style="display:flex; gap:10px; align-items:center;">
-    
-    <!-- Selector de color -->
-    <input type="color" id="inptColorConsultorio" value="#3b82f6"
-        style="
-            width:50px;
-            height:40px;
-            border:none;
-            cursor:pointer;
-            background:none;
-        ">
-
-    <!-- Input texto para ver HEX -->
-    <input class="inputText" type="text"
-        id="inptColorConsultorioHex"
-        placeholder="#000000"
-        style="width:120px"
-    >
-
 </div>
 
-</td>
-</tr>
-</table>
-
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Estado :</p>
-<select class="inputSelect" id="inptEstadoConsultorio" style='width:200px'>
-<option value="ACTIVO">ACTIVO</option>
-<option value="INACTIVO">INACTIVO</option>
-</select>
-</td>
-</tr>
-</table>
-<br>
+<div class='form-row' style='flex:0 1 260px;'>
+<label for='inptColorConsultorio'>Color :</label>
+<div style='display:flex;gap:10px;align-items:center;width:100%;'>
+<input type='color' id='inptColorConsultorio' value='#3b82f6' style='width:50px;height:40px;border:none;cursor:pointer;background:none;' />
+<input class='inputText' type='text' id='inptColorConsultorioHex' placeholder='#000000' style='flex:1 1 auto;min-width:0;' />
 </div>
-<div class='divMenuf'>
-<br>
-<center>
-<input type='button' value='Guardar' class='btn1'
-onclick='verificarcamposConsultorio()' id='btnAbmConsultorio' />
-</center>
-<br>
-</div>
-<br>
-<br>
-</center>
 </div>
 
-<div id='divAbmConsultorio1'  class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Buscar <b style='font-size: 30px;' >Consultorio</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
-onclick='verCerrarVentanaAbmConsultorio("1","1")' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
-title='Minimizar Ventana' onclick='minimizarConsultorio()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='verCerrarAbmConsultorio()' />
-</td>
-</tr>
-</table> 
-<center>
-<div class='divMenuf'>
-<table style='width:100%'>
-<tr>
-<td style='width:80%'>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8' onclick='checkestadoConsultorios(1)'> <input
-type='checkbox' id="inptSeleccEstadoBuscarConsultorio1" checked> Activo
-</p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8' onclick='checkestadoConsultorios(2)'> <input
-type='checkbox' id="inptSeleccEstadoBuscarConsultorio2"> Inactivo</p>
-</td>
-</tr>
-</table>
-<table class="tableCabeceraRegistro">
+<div class='form-row' style='flex:0 0 170px;'>
+<input type='button' value='Guardar' class='btn1' onclick='verificarcamposConsultorio()' id='btnAbmConsultorio' style='width:150px;margin-top:20px;' />
+</div>
+</section>
+</div>
+
+<div id='divAbmConsultorio1' class='presupuesto-container presupuesto-search-modal'>
+<header class='presupuesto-header presupuesto-search-header'>
+<div class='presupuesto-search-title'>
+<h2>Buscar Consultorio</h2>
+</div>
+<div class='header-actions'>
+<button class='btn-icon' onclick='verCerrarFiltrosConsultorio(true)' title='Filtros'>
+<img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn'>
+</button>
+<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='A�adir registro' onclick='verCerrarVentanaAbmConsultorio("1","1")' />
+<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarConsultorio()' />
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarAbmConsultorio()' />
+</div>
+</header>
+
+<section class='presupuesto-panel presupuesto-search-results'>
+<div class='presupuesto-search-results-head'>
+<div class='panel-title'>Consultorios</div>
+<span class='presupuesto-search-chip'>Seleccione un registro para editar</span>
+</div>
+<table class='tableCabeceraRegistro'>
 <tbody>
 <tr>
-<td class="td_registro" style="width:10%;">
-#
-</td>
-<td class="td_registro" style="width:30%;">
-CONSULTORIO
-</td>
-<td class="td_registro" style="width:30%;">
-DESCRIPCION
-</td>
-<td class="td_registro" style="width:30%;">
-LOCAL
-</td>
+<td class='td_registro' style='width:10%;'>#</td>
+<td class='td_registro' style='width:30%;'>CONSULTORIO</td>
+<td class='td_registro' style='width:30%;'>DESCRIPCION</td>
+<td class='td_registro' style='width:30%;'>LOCAL</td>
 </tr>
 </tbody>
 </table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarAbmConsultorio1'
-onkeyup="if(event.keyCode == 13){buscarabmConsultorio()}"
-placeholder='Igual a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-onclick="vaciar('inptBuscarAbmConsultorio1')" />
-</td>
-<td class="td_registro" style="width:29%;">
-<input class='inputfiltro' type='text' id='inptBuscarAbmConsultorio2'
-onkeyup="if(event.keyCode == 13){buscarabmConsultorio()}"
-placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-onclick="vaciar('inptBuscarAbmConsultorio2')" />
-</td>
-<td class="td_registro" style="width:29%;">
-<input class='inputfiltro' type='text' id='inptBuscarAbmConsultorio3'
-onkeyup="if(event.keyCode == 13){buscarabmConsultorio()}"
-placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-onclick="vaciar('inptBuscarAbmConsultorio3')" />
-</td>
-<td class="td_registro" style="width:29%;">
-<select class="inputSelect" id="inptBuscarAbmConsultorio4"  > 
+<div class='div_cuerpo_table presupuesto-search-table' style='height:55vh;' id='table_abm_Consultorio'></div>
+</section>
+
+<section class='presupuesto-panel presupuesto-search-results' style='padding:16px 20px;'>
+<div class='form-section' style='margin-bottom:0;'>
+<div class='form-row' style='flex:0 0 170px;'>
+<label for='inptTotalRegistoConsultorio'>Registros :</label>
+<input class='inputTextDisable' type='text' disabled id='inptTotalRegistoConsultorio' style='text-align:center' />
+</div>
+<div class='form-row flex-grow' style='flex:1 1 260px;'>
+<label for='inptRegistroSeleccConsultorio'>Registro selecc. :</label>
+<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccConsultorio' />
+</div>
+</div>
+</section>
+</div>
+
+<div class='modal-filtros-overlay' id='overlayFiltrosConsultorio' style='display:none;height:80vw;'>
+<div class='modal-filtros-catalogo' id='modalFiltrosConsultorio' style='position:initial;'>
+<div class='modal-filtros-box modal-agenda-pro'>
+<div class='modal-filtros-header'>
+<div class='modal-header-info'>
+<p class='modal-etiqueta'>Panel de filtros</p>
+<h3>Filtros de consultorio</h3>
+</div>
+<button type='button' class='btn-cerrar-modal' onclick='verCerrarFiltrosConsultorio(false)'>x</button>
+</div>
+
+<div class='modal-filtros-body agenda-filtros-grid'>
+<div class='filtro-grupo'>
+<label for='inptBuscarAbmConsultorio1'>Codigo</label>
+<input class='catalogo-selectBuscador input-filtro-pro' type='text' id='inptBuscarAbmConsultorio1' onkeyup='if(event.keyCode == 13){buscarabmConsultorio()}' placeholder='Ingrese el codigo...' />
+</div>
+
+<div class='filtro-grupo filtro-destacado'>
+<label for='inptBuscarAbmConsultorio2'>Consultorio</label>
+<input class='catalogo-selectBuscador input-filtro-pro' type='text' id='inptBuscarAbmConsultorio2' onkeyup='if(event.keyCode == 13){buscarabmConsultorio()}' placeholder='Ingrese el nombre del consultorio...' />
+</div>
+
+<div class='filtro-grupo'>
+<label for='inptBuscarAbmConsultorio3'>Descripcion</label>
+<input class='catalogo-selectBuscador input-filtro-pro' type='text' id='inptBuscarAbmConsultorio3' onkeyup='if(event.keyCode == 13){buscarabmConsultorio()}' placeholder='Ingrese una descripcion...' />
+</div>
+
+<div class='filtro-grupo'>
+<label for='inptBuscarAbmConsultorio4'>Local</label>
+<select class='catalogo-selectBuscador select-filtro-pro' id='inptBuscarAbmConsultorio4' style='width:100%;max-width:100%;box-sizing:border-box;'></select>
+</div>
+
+<div class='filtro-grupo'>
+<label for='inptBuscarAbmConsultorio5'>Estado</label>
+<select class='catalogo-selectBuscador select-filtro-pro' id='inptBuscarAbmConsultorio5' style='width:100%;max-width:100%;box-sizing:border-box;'>
+  <option value="Activo">Activo</option>
+  <option value="Inactivo">Inactivo</option>
 </select>
-</td> 
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" style='height: 55vh;' id="table_abm_Consultorio"></div>
+
 </div>
-<div class='divMenuf'>
-<table style='width:95%'>
-<tr>
-<td style='width:25%;text-align:left'>
-<p class='pTituloC' >Registros :</p>
-<input class='inputTextDisable' type='text' disabled
-id='inptTotalRegistoConsultorio' style='width:150px;text-align:center' />
-</td>
-<td style='width:5%'>
-</td>
-<td style='width:70%;text-align:left'>
-<p class='pTituloC' >Registro Selecc..</p>
-<input class='inputTextDisable' type='text' disabled
-id='inptRegistroSeleccConsultorio' style='width:200px' />
-<input id='btnEditarConsultorios' type='button' value='Editar' class='btn5'
-onclick='verVentanaEditarConsultorio()' style='background-color:#b7b7b7'>
-</td>
-</tr>
-</table>
 </div>
-</center>
- 
+
+<div class='modal-filtros-footer'>
+<button type='button' class='btn-filtro btn-secundario' onclick='limpiarFiltroConsultorio()'>Limpiar</button>
+<button type='button' class='btn-accion-principal btn-principal-pro' onclick='verCerrarFiltrosConsultorio(false);buscarabmConsultorio();'>Aplicar filtros</button>
+</div>
+</div>
+</div>
 </div>
 </center>
  
