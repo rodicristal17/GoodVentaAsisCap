@@ -562,7 +562,7 @@ COMMIT;
 ROLLBACK;
 */
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.78', detalles='Interfaz de abmCliente y campos modificada', fecha='2026-04-30' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.79', detalles='Calendario conectado con presupuesto', fecha='2026-05-06' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE agenda ADD COLUMN cod_presupuestoFK INT(11);
 

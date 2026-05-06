@@ -90,7 +90,9 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 					ver_vetana_informativa("Datos guardados exitosamente", "", "info");
 
 					// Actualiza tambien los datos de la agenda
-					asignarCodPresupuestoAgenda();
+					if (idAbmAgenda) {
+						asignarCodPresupuestoAgenda();
+					}
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
@@ -1266,6 +1268,8 @@ function limpirarPresupuesto(){
 	document.getElementById('inptDocumentoClientePresupuesto').value= "";
 	document.getElementById('inptNombreClientePresupuesto').value= "";
 	idFkCliente= "";
+	document.getElementById('inptDocumentoClientePresupuestoDoc').value= "";
+	document.getElementById('inptNombreClientePresupuestoDoc').value= "";
 
 	document.getElementById("divCabeceraImpresiones").innerHTML=""
 	document.getElementById("tbTitulosImpresiones").innerHTML=""
