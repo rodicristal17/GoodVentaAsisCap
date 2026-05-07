@@ -12269,7 +12269,7 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 						if (!tipo_plan || tipo_plan == "") {
 							tipo_plan= document.getElementById('inptSelecctPlanPresupuesto').value;
 						}
-						abmPresupuesto(idabmPresupuesto, null, null,datos["3"], obtenerTipoPlanPresupuestoVenta());
+						abmPresupuesto(idabmPresupuesto, null, null,datos["3"], tipo_plan);
 					}
 				}
 
@@ -15013,7 +15013,7 @@ if(controlacceso("INSERTARPAGOSCREDITO","accion")==false){return;}
 	
 	document.getElementById('inptMontoCargoAdministrativoCuotaPago').value = "" ;
 	//imprimirDivTickeFacturaPago(nombrecliente,cicliente,nrofactura,tipoventa,totalinteres,deuda,totalpagado,TotalDescuento,totalventa,TotalInteresActual,deudaActualsininteres)
-	var Cajero=document.getElementById("inptCobradorCargarPago").innerHTML
+	var Cajero=document.getElementById("inptCobradorCargarPago").value
 	var subtotal=document.getElementById("inptTotalVenta").value;
 	var descuento=document.getElementById("inptDescuentoCargaPago").value;
 							 var totalinteres =(Number(QuitarSeparadorMilValor(TotalInteresActual))+Number(QuitarSeparadorMilValor(interespagado)))

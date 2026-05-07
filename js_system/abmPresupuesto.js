@@ -77,6 +77,7 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
 			console.error(jqXHR.status,textstatus,errorThrowm);
 			ver_vetana_informativa("LO SENTIMOS, HA OCURRIDO UN ERROR", "", "error");
+			limpirarPresupuesto();
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -93,11 +94,14 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 					if (idAbmAgenda) {
 						asignarCodPresupuestoAgenda();
 					}
+				} else {
+					throw new Error(datos);
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+				GuardarArchivosLog(titulo);
+				limpirarPresupuesto();
 			}
 		}
 	});
@@ -1184,7 +1188,7 @@ function anhadirPrPresupuesto() {
 	}
 	
 	if (inptCodigoPresupuesto != "") {
-		if (!idabmPresupuesto) {
+		if (!idabmPresupuesto || !idFkCliente) {
 			ver_vetana_informativa("Faltan datos", "Favor seleccionar el cliente", "error");
 			return false;
 		}
@@ -1204,32 +1208,25 @@ function anhadirPrPresupuesto() {
 				ver_vetana_informativa("Faltan datos", "TOTAL NO VALIDO");
 				return false;
 			}
+		} else {
+			if (inptPrecioPresupuesto <= 0 || inptPrecioPresupuesto == "") {
+				ver_vetana_informativa("Faltan datos", "Error al seleccionar el producto.");
+				return false;
+			}
 		}
 
 		// Agrega al presupuesto existente
 		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado, inptPrioritarioPresupuesto, inptAlternativoPresupuesto);
-	}
-	document.getElementById('inptCodigoPresupuestoDoc').value = ""
-	document.getElementById('inptProductoPresupuestoDoc').value = ""
-	document.getElementById('inptPrecioPresupuestoDoc').value = ""
-	//document.getElementById('inpTSeleccCostoPresupuestoDoc').value = ""
-	limpirarAddPresupuesto()
-	document.getElementById('inptCantidadPresupuestoDoc').value = ""
-	document.getElementById('inptTotalPresupuestoDoc').value = ""
-	document.getElementById('inptPrioritarioPresupuestoDoc').checked = false;
 
-	document.getElementById('inptCodigoPresupuesto').value = ""
-	document.getElementById('inptProductoPresupuesto').value = ""
-	document.getElementById('inptPrecioPresupuesto').value = ""
-	document.getElementById('inpTSeleccCostoPresupuesto').value = ""
-	document.getElementById('inptPrioritarioPresupuesto').checked = false;
-	document.getElementById('inptAlternativoPresupuesto').checked = false;
-	limpirarAddPresupuesto()
-	document.getElementById('inptCantidadPresupuesto').value = ""
-	document.getElementById('inptTotalPresupuesto').value = ""
+		limpirarAddPresupuesto()
+	} else {
+		ver_vetana_informativa("Faltan datos", "Favor seleccionar un producto", "error");
+		return false;
+	}
 }
 
 function limpirarPresupuesto(){
+	idabmPresupuesto= "";
 	document.getElementById('inptCodigoPresupuestoDoc').value = ""
 	document.getElementById('inptProductoPresupuestoDoc').value = ""
 	document.getElementById('inptPrecioPresupuestoDoc').value = ""
@@ -1637,6 +1634,11 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 
 var tipo_plan= "";
 function presupuestoAVenta(){
+	if ((document.getElementById('inptTOTALPresupuestoFORM').value == "0" && document.getElementById('inptTOTALPresupuestoFORMPrioritario').value == "0") ||
+		(document.getElementById('inptTOTALPresupuestoFORM').value == "" && document.getElementById('inptTOTALPresupuestoFORMPrioritario').value == "")) {
+		ver_vetana_informativa("Faltan datos", "Favor armar el presupuesto primeramente", "error");
+		return false;
+	}
 	const codClientePresupuesto = idFkCliente;
 	const documentoClientePresupuesto = document.getElementById('inptDocumentoClientePresupuesto').value.split('-')[0];
 	const nombreClientePresupuesto = document.getElementById('inptNombreClientePresupuesto').value;

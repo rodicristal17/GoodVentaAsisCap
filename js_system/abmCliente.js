@@ -2344,8 +2344,8 @@ function verificarDatosCliente(solo_basicos) {
 			document.getElementById('divAbmCliente2').style.display= "";
 			document.getElementById('divAbmCliente1').style.display= "none";
 
-			$("#divAbmCliente2 .abm-cliente-datos-extra").hide();
-			document.getElementById('divAbmCliente2').style.width= "850px";
+			$("#divAbmCliente2 .abm-cliente-datos-extra").show();
+			document.getElementById('divAbmCliente2').style.width= "auto";
 
 			ver_vetana_informativa("Faltan datos del cliente", "Se debe completar los datos del cliente.", "advertencia");
 			return false;
