@@ -261,7 +261,7 @@ function buscarHistorialPacienteCalendario($mysqli){
     }
 
     $sql = "SELECT
-                a.id_agenda,
+                a.id_agenda,a.fecha,
                 DATE_FORMAT(a.fecha, '%d/%m/%Y') AS fecha_formateada,
                 TIME_FORMAT(a.hora_inicio, '%H:%i') AS hora_inicio,
                 TIME_FORMAT(a.hora_fin, '%H:%i') AS hora_fin,
@@ -301,10 +301,10 @@ function buscarHistorialPacienteCalendario($mysqli){
 
             $estado = htmlspecialchars(normalizarTextoUtf8($row["estado"]), ENT_QUOTES, 'UTF-8');
 
-            $html .= "<tr id='tbSeleccRegistro' style='text-align: center;'>";
-            $html .= "<td style='width:50%;'>".$row["fecha_formateada"]."</td>";
-            $html .= "<td style='width:50%;'>".$fechaHora."</td>";
-            $html .= "<td style='width:50%;'>".$estado."</td>";
+            $html .= "<tr id='tbSeleccRegistro' onclick='console.info(\"".$row["fecha"]."\");document.getElementById(\"inptFechaAgenda\").value=\"".$row["fecha"]."\" ;aplicarFiltrosAgenda();vercerrarModalFiltrosAgenda(false);' style='text-align: center;'>";
+            $html .= "<td style='width:30%;'>".$row["fecha_formateada"]."</td>";
+            $html .= "<td style='width:40%;'>".$fechaHora."</td>";
+            $html .= "<td style='width:30%;'>".$estado."</td>";
             $html .= "</tr>";
             $html .= "</table>";
         }
@@ -536,7 +536,11 @@ function cargarAgenda($mysqli){
 	}
 	
 	if($paciente!=""){
-		$condicion.=" and p.nombre_persona like '%".$paciente."%'";
+		$condicion.=" and (
+            p.nombre_persona like '%".$paciente."%' OR
+            cl.ci_cliente like '%".$paciente."%' OR
+            a.id_paciente like '%".$paciente."%'
+        )";
 	}
 	
 	if($cod_consultorio!=""){

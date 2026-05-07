@@ -774,14 +774,25 @@ function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
     var Atendido = 0;
     var EnEspera = 0;
     var ConDeuda = 0;
-    var i, e;
+    var i, e, filtrarPorConsultorios;
+
+    filtrarPorConsultorios = Array.isArray(consultorioFiltro)
+        ? consultorioFiltro.length > 0
+        : consultorioFiltro !== '';
 
     for(i = 0; i < agendaConsultoriosData.eventos.length; i++){
         e = agendaConsultoriosData.eventos[i];
         if(
             e.fecha === fecha &&
             (estado === '' || e.estado === estado) &&
-            (consultorioFiltro === '' || String(e.consultorio) === String(consultorioFiltro))
+            (
+                !filtrarPorConsultorios ||
+                (
+                    Array.isArray(consultorioFiltro)
+                        ? consultorioFiltro.indexOf(String(e.consultorio)) >= 0
+                        : String(e.consultorio) === String(consultorioFiltro)
+                )
+            )
         ){
             total++;
             if(e.estado === 'CONFIRMADO'){ confirmadas++; }
@@ -1006,11 +1017,6 @@ function filtrarAgendaLocal(){
 
         bloques[i].style.display = (paciente.indexOf(texto) >= 0 || ciCliente.indexOf(texto) >= 0) ? 'block' : 'none';
     }
-
-    clearTimeout(timeoutBuscarHistorialPacienteCalendario);
-    timeoutBuscarHistorialPacienteCalendario = setTimeout(function(){
-        buscarHistorialPacienteCalendario();
-    }, 300);
 }
 
 function minimizarAgendaConsultorios(){
