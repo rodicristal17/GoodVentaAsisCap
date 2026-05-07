@@ -1876,7 +1876,12 @@ function buscarHistorialPacienteCalendario() {
                 }
 
                 if (resp["1"] == "exito") {
-                    tabla.innerHTML = resp["2"];
+                    if (resp["3"] == 1) {
+                        tabla.innerHTML = resp["2"];
+                    } else {
+                        alert("Se encontro "+resp["3"]+" pacientes con el mismo CI o nombre");
+                        tabla.innerHTML = "";
+                    }
                 } else {
                     tabla.innerHTML = "";
                 }

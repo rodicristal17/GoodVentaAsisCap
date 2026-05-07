@@ -255,13 +255,14 @@ function buscarHistorialPacienteCalendario($mysqli){
     if($paciente == ''){
         echo json_encode(array(
             "1" => "exito",
-            "2" => ""
+            "2" => "",
+            "3" => 0
         ));
         exit;
     }
 
     $sql = "SELECT
-                a.id_agenda,a.fecha,
+                a.id_agenda,a.fecha,a.id_paciente,cl.ci_cliente,
                 DATE_FORMAT(a.fecha, '%d/%m/%Y') AS fecha_formateada,
                 TIME_FORMAT(a.hora_inicio, '%H:%i') AS hora_inicio,
                 TIME_FORMAT(a.hora_fin, '%H:%i') AS hora_fin,
@@ -289,9 +290,11 @@ function buscarHistorialPacienteCalendario($mysqli){
     }
 
     $html = "";
+    $clientesDiferentes = array();
 
     if($result->num_rows > 0){
         while($row = $result->fetch_assoc()){
+            $clientesDiferentes[$row["id_paciente"]] = true;
             $html .= "<table class='tableRegistroSearch2' style='width:100%;'>";
             $fechaHora = "";
 
@@ -300,6 +303,7 @@ function buscarHistorialPacienteCalendario($mysqli){
             }
 
             $estado = htmlspecialchars(normalizarTextoUtf8($row["estado"]), ENT_QUOTES, 'UTF-8');
+            $estado = '<span class="badge-estado-detalle badge-'.$estado.'">'.$estado.'</span>';
 
             $html .= "<tr id='tbSeleccRegistro' onclick='console.info(\"".$row["fecha"]."\");document.getElementById(\"inptFechaAgenda\").value=\"".$row["fecha"]."\" ;aplicarFiltrosAgenda();vercerrarModalFiltrosAgenda(false);' style='text-align: center;'>";
             $html .= "<td style='width:30%;'>".$row["fecha_formateada"]."</td>";
@@ -313,7 +317,8 @@ function buscarHistorialPacienteCalendario($mysqli){
 
     echo json_encode(array(
         "1" => "exito",
-        "2" => $html
+        "2" => $html,
+        "3" => count($clientesDiferentes)
     ));
     exit;
 }
