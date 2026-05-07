@@ -2,6 +2,7 @@ var agendaConsultoriosData = {
     consultorios: [],
     eventos: []
 };
+var timeoutBuscarHistorialPacienteCalendario = null;
 
 function cargarAgendaConsultoriosDesdePHP() {
     obtener_datos_user();
@@ -865,6 +866,10 @@ function limpiarFiltrosAgenda(){
     document.getElementById('inptLocalAgendaFiltro').value = '';
     document.getElementById('inptEstadoAgenda').value = '';  
 
+    document.getElementById("seccion_historial_agenda").style.display = "none";
+    document.getElementById("seccion_historial_agenda").parentElement.style.gridTemplateColumns= '1fr';
+    document.getElementById("table_historial_paciente_agenda").innerHTML = "";
+    
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -1001,6 +1006,11 @@ function filtrarAgendaLocal(){
 
         bloques[i].style.display = (paciente.indexOf(texto) >= 0 || ciCliente.indexOf(texto) >= 0) ? 'block' : 'none';
     }
+
+    clearTimeout(timeoutBuscarHistorialPacienteCalendario);
+    timeoutBuscarHistorialPacienteCalendario = setTimeout(function(){
+        buscarHistorialPacienteCalendario();
+    }, 300);
 }
 
 function minimizarAgendaConsultorios(){
@@ -1808,4 +1818,67 @@ function toggleTema() {
         localStorage.setItem("tema", "dark");
         if(btn) btn.innerHTML = "☀️";
     }
+}
+
+function buscarHistorialPacienteCalendario() {
+    obtener_datos_user();
+
+    var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
+    var seccion = document.getElementById("seccion_historial_agenda");
+    var tabla = document.getElementById("table_historial_paciente_agenda");
+
+    if(paciente.trim() == ''){
+        seccion.style.display = "none";
+        seccion.parentElement.style.gridTemplateColumns = '1fr';
+        tabla.innerHTML = "";
+        return;
+    }
+
+    seccion.style.display = "flex";
+    seccion.parentElement.style.gridTemplateColumns= 'repeat(2, 1fr)';
+    var pacienteBuscado = paciente;
+
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "paciente": paciente,
+        "funt": "buscarHistorialPacienteCalendario"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        beforeSend: function () {
+            tabla.innerHTML = paginacargando;
+        },
+        error: function (jqXHR, textstatus, errorThrowm) {
+            tabla.innerHTML = "";
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function (responseText) {
+            try {
+                if((document.getElementById('inptBuscarPacienteAgenda').value || '') != pacienteBuscado){
+                    return;
+                }
+
+                var resp = responseText;
+
+                if (typeof responseText === "string") {
+                    resp = $.parseJSON(responseText);
+                }
+
+                if (resp["1"] == "exito") {
+                    tabla.innerHTML = resp["2"];
+                } else {
+                    tabla.innerHTML = "";
+                }
+            } catch (error) {
+                var titulo = "Error buscarHistorialPacienteCalendario: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+                tabla.innerHTML = "";
+            }
+        }
+    });
 }

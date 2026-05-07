@@ -21787,43 +21787,53 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
 
         <div class="modal-filtros-body agenda-filtros-grid">
-            
-            <div class="filtro-grupo filtro-destacado">
-                <label for="inptBuscarPacienteAgenda">Buscar paciente</label>
-                <input 
-                    type="text" 
-                    id="inptBuscarPacienteAgenda" 
-                    class="catalogo-selectBuscador input-filtro-pro" 
-                    placeholder="Escriba el nombre o CI del paciente..." 
-                    onkeyup="filtrarAgendaLocal()" 
-                />
-            </div>
+            <section class="form-section" style="display: grid;">
+              <div class="filtro-grupo filtro-destacado">
+                  <label for="inptBuscarPacienteAgenda">Buscar paciente</label>
+                  <input 
+                      type="text" 
+                      id="inptBuscarPacienteAgenda" 
+                      class="catalogo-selectBuscador input-filtro-pro" 
+                      placeholder="Escriba el nombre o CI del paciente..." 
+                      onkeyup="filtrarAgendaLocal()" 
+                  />
+              </div>
 
-            <div class="filtro-grupo">
-                <label for="inptConsultorioAgendaFiltro">Consultorio</label>
-                <select id="inptConsultorioAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
-                    <option value="">Todos</option>
-                </select>
-            </div>
+              <div class="filtro-grupo">
+                  <label for="inptConsultorioAgendaFiltro">Consultorio</label>
+                  <select id="inptConsultorioAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
+                      <option value="">Todos</option>
+                  </select>
+              </div>
 
-            <div class="filtro-grupo">
-                <label for="inptLocalAgendaFiltro">Local</label>
-                <select id="inptLocalAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
-                    <option value="">Todos</option>
-                </select>
-            </div>
+              <div class="filtro-grupo">
+                  <label for="inptLocalAgendaFiltro">Local</label>
+                  <select id="inptLocalAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
+                      <option value="">Todos</option>
+                  </select>
+              </div>
 
-            <div class="filtro-grupo">
-                <label for="inptEstadoAgenda">Estado</label>
-                <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultoriosDesdePHP()">
-                    <option value="">Todos los estados</option>
-                    <option value="AGENDADO">Agendado</option>
-                    <option value="CONFIRMADO">Confirmado</option>
-                    <option value="ATENDIDO">Atendido</option>
-                    <option value="CANCELADO">Cancelado</option>
-                </select>
-            </div>
-
+              <div class="filtro-grupo">
+                  <label for="inptEstadoAgenda">Estado</label>
+                  <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultoriosDesdePHP()">
+                      <option value="">Todos los estados</option>
+                      <option value="AGENDADO">Agendado</option>
+                      <option value="CONFIRMADO">Confirmado</option>
+                      <option value="ATENDIDO">Atendido</option>
+                      <option value="CANCELADO">Cancelado</option>
+                  </select>
+              </div>
+          </section>
+          <section class="form-section" style="gap: unset; height: fit-content;" id="seccion_historial_agenda">
+            <table class="tableCabeceraRegistro">
+              <tr>
+                <td class="td_registro" style="width: 30%">FECHA</td>
+                <td class="td_registro" style="width: 40%">HORARIO</td>
+                <td class="td_registro" style="width: 30%">ESTADO</td>
+              </tr>
+            </table>
+            <div id="table_historial_paciente_agenda" class="div_cuerpo_table presupuesto-search-table"></div>
+          </section>
         </div>
 
         <div class="modal-filtros-footer">

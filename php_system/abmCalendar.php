@@ -59,6 +59,10 @@ switch ($funt) {
 	case 'guardarPacienteAgenda':
 		guardarPacienteAgenda($mysqli, $useru);
 		break;
+
+	case 'buscarHistorialPacienteCalendario':
+		buscarHistorialPacienteCalendario($mysqli);
+		break;
 		
 
     default:
@@ -242,6 +246,76 @@ function guardarPacienteAgenda($mysqli, $useru){
         ));
         exit;
     }
+}
+
+
+function buscarHistorialPacienteCalendario($mysqli){
+    $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
+
+    if($paciente == ''){
+        echo json_encode(array(
+            "1" => "exito",
+            "2" => ""
+        ));
+        exit;
+    }
+
+    $sql = "SELECT
+                a.id_agenda,
+                DATE_FORMAT(a.fecha, '%d/%m/%Y') AS fecha_formateada,
+                TIME_FORMAT(a.hora_inicio, '%H:%i') AS hora_inicio,
+                TIME_FORMAT(a.hora_fin, '%H:%i') AS hora_fin,
+                a.estado
+            FROM agenda a
+            INNER JOIN persona p ON p.cod_persona = a.id_paciente
+            INNER JOIN cliente cl ON cl.cod_cliente = a.id_paciente
+            WHERE (
+                p.nombre_persona LIKE '%".$paciente."%' OR
+                cl.ci_cliente LIKE '%".$paciente."%' OR
+                a.id_paciente LIKE '%".$paciente."%'
+            )
+            ORDER BY a.fecha DESC, a.hora_inicio DESC, a.id_agenda DESC
+            LIMIT 100";
+
+    $result = $mysqli->query($sql);
+
+    if(!$result){
+        echo json_encode(array(
+            "1" => "Error",
+            "2" => $mysqli->error,
+            "sql" => $sql
+        ));
+        exit;
+    }
+
+    $html = "";
+
+    if($result->num_rows > 0){
+        while($row = $result->fetch_assoc()){
+            $html .= "<table class='tableRegistroSearch2' style='width:100%;'>";
+            $fechaHora = "";
+
+            if($row["hora_inicio"] != '' || $row["hora_fin"] != ''){
+                $fechaHora = $row["hora_inicio"]." - ".$row["hora_fin"];
+            }
+
+            $estado = htmlspecialchars(normalizarTextoUtf8($row["estado"]), ENT_QUOTES, 'UTF-8');
+
+            $html .= "<tr id='tbSeleccRegistro' style='text-align: center;'>";
+            $html .= "<td style='width:50%;'>".$row["fecha_formateada"]."</td>";
+            $html .= "<td style='width:50%;'>".$fechaHora."</td>";
+            $html .= "<td style='width:50%;'>".$estado."</td>";
+            $html .= "</tr>";
+            $html .= "</table>";
+        }
+
+    }
+
+    echo json_encode(array(
+        "1" => "exito",
+        "2" => $html
+    ));
+    exit;
 }
 
 
