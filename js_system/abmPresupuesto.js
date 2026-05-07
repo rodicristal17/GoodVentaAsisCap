@@ -1306,7 +1306,12 @@ function limpiarCamposGenerarTratamiento() {
 totalregistroPresupuesto= 0;
 registrocargadoPresupuesto= 0;
 controldebusquedadPresupuesto= true;
+busquedaActivaPresupuesto= 0;
 function buscarvistaPresupuesto() {
+	const busquedaPresupuesto = ++busquedaActivaPresupuesto;
+	totalregistroPresupuesto= 0;
+	registrocargadoPresupuesto= 0;
+	controldebusquedadPresupuesto= true;
 	document.getElementById("table_vista_presupuesto").innerHTML= paginacargando;
 
 	obtener_datos_user()
@@ -1361,6 +1366,9 @@ function buscarvistaPresupuesto() {
 			console.error(jqXHR, textstatus, errorThrowm);
 		},
 		success: function (responseText) {
+			if (busquedaPresupuesto !== busquedaActivaPresupuesto) {
+				return;
+			}
 			document.getElementById("table_vista_presupuesto").innerHTML= '';
 			Respuesta = responseText;
 			console.log(Respuesta)
@@ -1378,9 +1386,10 @@ function buscarvistaPresupuesto() {
 						
 						controldebusquedadPresupuesto=true;
 						var porce=((registrocargadoPresupuesto*100)/totalregistroPresupuesto).toFixed(0)
+						//registrocargadoPresupuesto += 10;
 						document.getElementById('tbProcessPresupuesto').style.display= ""
 						document.getElementById("divProgressPresupuesto").style.width=porce+"%"
-						buscarmasVistaPresupuesto();
+						buscarmasVistaPresupuesto(busquedaPresupuesto);
 					 }else{
 						document.getElementById('tbProcessPresupuesto').style.display= "none";
 						controldebusquedadPresupuesto=false
@@ -1397,7 +1406,10 @@ function buscarvistaPresupuesto() {
 	});
 }
 
-function buscarmasVistaPresupuesto() {
+function buscarmasVistaPresupuesto(busquedaPresupuesto) {
+	if (busquedaPresupuesto !== busquedaActivaPresupuesto) {
+		return;
+	}
 	obtener_datos_user()
 	var datos = new FormData();
 	datos.append("useru", userid)
@@ -1413,7 +1425,6 @@ function buscarmasVistaPresupuesto() {
 	datos.append("fecha_inicio", document.getElementById('inptFechaInicioFiltroPresupuesto').value);
 	datos.append("fecha_fin", document.getElementById('inptFechaFinFiltroPresupuesto').value);
 	datos.append("limite", "10 OFFSET " + registrocargadoPresupuesto);
-
 	verCerrarEfectoCargando("1")
     var OpAjax = $.ajax({
 		data: datos,
@@ -1450,6 +1461,9 @@ function buscarmasVistaPresupuesto() {
 			console.error(jqXHR, textstatus, errorThrowm);
 		},
 		success: function (responseText) {
+			if (busquedaPresupuesto !== busquedaActivaPresupuesto) {
+				return;
+			}
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
@@ -1458,7 +1472,6 @@ function buscarmasVistaPresupuesto() {
 				if (Respuesta == "exito") {
 					document.getElementById("table_vista_presupuesto").innerHTML += datos["3"];
 					registrocargadoPresupuesto += parseInt(datos["4"]);
-
 					// Controla el progreso de la busqueda
 					if(controldebusquedadPresupuesto && totalregistroPresupuesto>registrocargadoPresupuesto){
 						document.getElementById("divProgressPresupuesto").style.backgroundColor='';
@@ -1466,7 +1479,7 @@ function buscarmasVistaPresupuesto() {
 						var porce=((registrocargadoPresupuesto*100)/totalregistroPresupuesto).toFixed(0)
 						document.getElementById('tbProcessPresupuesto').style.display= ""
 						document.getElementById("divProgressPresupuesto").style.width=porce+"%"
-						buscarmasVistaPresupuesto();
+						buscarmasVistaPresupuesto(busquedaPresupuesto);
 					 }else{
 						document.getElementById('tbProcessPresupuesto').style.display= "none";
 						controldebusquedadPresupuesto=false
