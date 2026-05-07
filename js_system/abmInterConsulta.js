@@ -309,7 +309,7 @@ function solicitarMencionInterConsulta(cod_interC) {
 
 function fusionarInterConsultas(id_interconsulta_destino) {
     if(controlacceso("FUSIONARINTERCONSULTA","accion")==false){ return;}
-    if(!confirm("¿Esta seguro que desea fusionar los hilos?")) { return;}
+    if(!confirm("¿Esta seguro que desea fusionar el hilo "+cod_interConsulta+" con "+id_interconsulta_destino+"?")) { return;}
     
     let datos= new FormData();
     datos.append("useru", userid);
