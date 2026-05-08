@@ -507,6 +507,7 @@ function cargarAgenda($mysqli){
             c.nombre,
             (SELECT nombre_persona FROM persona WHERE cod_persona= c.cod_doctorFK) AS nombre_doctor,
             c.descripcion,
+            c.cod_doctorFK,
             c.color
         FROM consultorios c
         WHERE  c.estado = 'Activo' ".$condicionConsultorio."
@@ -526,6 +527,7 @@ function cargarAgenda($mysqli){
     while ($row = $resultConsultorios->fetch_assoc()) {
         $consultorios[] = array(
             "id" => (int)$row["id_consultorio"],
+            "cod_doctorFK" => (int)$row["cod_doctorFK"],
             "nombre" => normalizarTextoUtf8($row["nombre"]),
             "nombre_doctor" => normalizarTextoUtf8($row["nombre_doctor"]),
             "color" => $row["color"] != '' ? $row["color"] : "#7c3aed",

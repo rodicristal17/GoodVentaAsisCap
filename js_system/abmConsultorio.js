@@ -86,6 +86,16 @@ function obtenerdatosabmConsultorio(datostr) {
 	iniciarSelectorColorConsultorio()
 	idAbmConsultorio = $(datostr).children('td[id="td_id"]').html();
 }
+
+function obtenerDatosAbmConsultorioAgenda(datostr) {
+	const idConsultorio = $(datostr).find('[id="td_id"]').first();
+	const nombreConsultorio = $(datostr).find('[id="td_datos_2"]').first();
+	const doctorConsultorio = $(datostr).find('[id="td_datos_4"]').first();
+	document.getElementById('inptIDAbmConsultorioAgenda').value = idConsultorio.text().trim();
+	document.getElementById('tituloAbmConsultorioAgenda').innerHTML = nombreConsultorio.html();
+	document.getElementById('inptDoctorAbmConsultorioAgenda').value = doctorConsultorio.text().trim();
+}
+
 function verificarcamposConsultorio() {
 	var inptNombreConsultorio = document.getElementById('inptNombreConsultorio').value
 	var inptDescripcionConsultorio = document.getElementById('inptDescripcionConsultorio').value

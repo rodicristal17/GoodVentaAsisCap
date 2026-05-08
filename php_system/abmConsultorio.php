@@ -74,7 +74,15 @@ $NombreLocal = mb_convert_encoding((string)($NombreLocal), 'ISO-8859-1', 'UTF-8'
 
 }	
 
- 
+if($operacion=="actualizarDoctor")
+{
+	$cod_Consultorio=isset($_POST['cod_Consultorio']) ? $_POST['cod_Consultorio'] : (isset($_POST['cod_consultorio']) ? $_POST['cod_consultorio'] : NULL);
+	$cod_Consultorio = $cod_Consultorio !== NULL ? mb_convert_encoding((string)($cod_Consultorio), 'ISO-8859-1', 'UTF-8') : NULL;
+	$cod_doctor=isset($_POST['cod_doctor']) ? $_POST['cod_doctor'] : (isset($_POST['doctor']) ? $_POST['doctor'] : NULL);
+	$cod_doctor = $cod_doctor !== NULL ? mb_convert_encoding((string)($cod_doctor), 'ISO-8859-1', 'UTF-8') : NULL;
+
+	abm($cod_Consultorio,NULL,NULL,NULL,NULL,NULL,$cod_doctor,"editar");
+} 
 
 if($operacion=="buscaroption")
 {
@@ -88,7 +96,7 @@ function abm($cod_Consultorio,$nombre,$descripcion,$color,$estado,$cod_local,$co
 {
 	
 	
-if($nombre==""  ){
+if($operacion=="nuevo" && $nombre==""  ){
 $informacion =array("1" => "camposvacio");
 echo json_encode($informacion);	
 exit;
@@ -113,10 +121,57 @@ $stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_docto
 if($operacion=="editar")
 {
 
-$consulta1="Update consultorios set nombre=?,descripcion=?,color=?,estado=?,cod_localFk=?,cod_doctorFK=? where id_consultorio=?";	
+$parametros = array();
+$atributos = "";
+$ss = "";
+
+if ($nombre !== NULL) {
+	$atributos .= "nombre=?";
+	$ss .= "s";
+	$parametros[] = $nombre;
+}
+if ($descripcion !== NULL) {
+	$atributos .= $atributos != "" ? ",descripcion=?" : "descripcion=?";
+	$ss .= "s";
+	$parametros[] = $descripcion;
+}
+if ($color !== NULL) {
+	$atributos .= $atributos != "" ? ",color=?" : "color=?";
+	$ss .= "s";
+	$parametros[] = $color;
+}
+if ($estado !== NULL) {
+	$atributos .= $atributos != "" ? ",estado=?" : "estado=?";
+	$ss .= "s";
+	$parametros[] = $estado;
+}
+if ($cod_local !== NULL) {
+	$atributos .= $atributos != "" ? ",cod_localFk=?" : "cod_localFk=?";
+	$ss .= "s";
+	$parametros[] = $cod_local;
+}
+if ($cod_doctor !== NULL) {
+	$atributos .= $atributos != "" ? ",cod_doctorFK=?" : "cod_doctorFK=?";
+	$ss .= "s";
+	$parametros[] = $cod_doctor;
+}
+
+if ($atributos == "" || $cod_Consultorio == "") {
+	$informacion =array("1" => "camposvacio");
+	echo json_encode($informacion);	
+	exit;
+}
+
+$parametros[] = $cod_Consultorio;
+$ss .= "s";
+
+$consulta1="Update consultorios set $atributos where id_consultorio=?";	
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='sssssis';
-$stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_doctor,$cod_Consultorio); 
+
+$refs = array();
+foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+
+call_user_func_array(array($stmt1, 'bind_param'), array_merge(array($ss), $refs));
 
 }
 
@@ -124,11 +179,13 @@ $stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_docto
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+$informacion =array("1" => "error", "mensaje" => "Error al guardar: " . $stmt1->error, "sql" => $consulta1);
+echo json_encode($informacion);
 exit;
 
 }
 
+ $stmt1->close();
  mysqli_close($mysqli);
 $informacion =array("1" => "exito");
 echo json_encode($informacion);	

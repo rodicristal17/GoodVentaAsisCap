@@ -2190,7 +2190,6 @@ function buscarobtenermedicos(){
 			document.getElementById("ListConsultaAgendamiento").innerHTML=datos_buscados	 
 			document.getElementById("inptDoctorTrabajoMecanicoDental").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			document.getElementById("inptEspecialistaConsulta").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
-			document.getElementById("inptDoctorConsultorio").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			document.getElementById("inptBuscarInfHistorialEspecialista").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			
  
@@ -2207,6 +2206,7 @@ function buscarobtenermedicos(){
 
 function buscarobtenertodosmedicos() {
 	document.getElementById("inptDoctorConsultorio").innerHTML = "";
+	document.getElementById("inptDoctorAbmConsultorioAgenda").innerHTML = "";
 
 	obtener_datos_user();
 	var datos = {
@@ -2252,6 +2252,7 @@ function buscarobtenertodosmedicos() {
 				if (Respuesta == "exito") {
 					var datos_buscados = datos[2];
 					document.getElementById("inptDoctorConsultorio").innerHTML = "<option value='' >SELECCIONAR</option>" + datos_buscados
+					document.getElementById("inptDoctorAbmConsultorioAgenda").innerHTML = "<option value='' >SELECCIONAR</option>" + datos_buscados;
 				}
 			} catch (error) {
 

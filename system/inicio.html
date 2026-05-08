@@ -21808,7 +21808,7 @@ onclick='buscarvistaaperturacierrecaja()' />
             <button type="button" class="btn-cerrar-modal" onclick="vercerrarModalFiltrosAgenda(false)">×</button>
         </div>
 
-        <div class="modal-filtros-body agenda-filtros-grid">
+        <div class="modal-filtros-body agenda-filtros-grid" style="grid-template-columns: 1fr;">
             <section class="form-section" style="display: grid;">
               <div class="filtro-grupo filtro-destacado">
                   <label for="inptBuscarPacienteAgenda">Buscar paciente</label>
@@ -21847,7 +21847,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                   </select>
               </div>
           </section>
-          <section class="form-section" style="gap: unset; height: fit-content;" id="seccion_historial_agenda">
+          <section class="form-section" style="gap: unset; height: fit-content;display: none;" id="seccion_historial_agenda">
             <table class="tableCabeceraRegistro">
               <tr>
                 <td class="td_registro" style="width: 30%">FECHA</td>
@@ -21867,8 +21867,30 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 <div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='vercerrarModalNuevaCita(false)' style='display:none;'></div>
 
+<div class='modal-filtros-catalogo' id='modalAbmConsultorioAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box'>
+        <div class='modal-filtros-header'>
+            <h3>Datos del <b id="tituloAbmConsultorioAgenda"></b></h3>
+            <button type='button' class='btn-cerrar-modal' onclick='vercerrarModalAbmConsultorioAgenda(false)'>×</button>
+        </div>
 
+        <div class='modal-filtros-body modal-cita-grid'>
+            <div class='filtro-grupo' style="display: none;">
+                <label>ID consultorio</label>
+                <input type='text' id='inptIDAbmConsultorioAgenda' class='catalogo-selectBuscador' />
+            </div>
+            <div class='filtro-grupo'>
+                <label>Doctor/a</label>
+                <select id='inptDoctorAbmConsultorioAgenda' class='inputTextDisable'></select>
+            </div>
+        </div>
 
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='vercerrarModalAbmConsultorioAgenda(false)'>Cancelar</button>
+            <button class='btn-accion-principal' onclick='verificarAbmConsultorioAgenda()'>Guardar cita</button>
+        </div>
+    </div>
+</div>
 
 <div class='modal-filtros-catalogo' id='modalNuevaCita' style='display:none;'>
     <div class='modal-filtros-box modal-cita-box'>
@@ -21936,7 +21958,6 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
     </div>
 </div>
-
 
 <div class='modal-filtros-overlay' id='overlayBuscarPacienteAgenda' onclick='verCerrarModalBuscarPacienteAgenda(false)' style='display:none;'></div>
 
