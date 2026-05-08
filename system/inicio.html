@@ -8048,7 +8048,13 @@ ACCION
       </tbody>
     </table>
 
-    <div class="div_cuerpo_table presupuesto-doc-tratamientos-lista" id="table_vista_producto_presupuestoDetalle_doctor"></div>
+    <div class="presupuesto-doc-tratamientos-scroll">
+      <div class="div_cuerpo_table presupuesto-doc-tratamientos-lista" id="table_vista_producto_presupuestoDetalle_doctor"></div>
+      <div class="presupuesto-doc-scroll-controles">
+        <button type="button" class="presupuesto-doc-scroll-btn" title="Subir tratamientos" onclick="desplazarTratamientosPresupuestoDoc('table_vista_producto_presupuestoDetalle_doctor',-1)">&uarr;</button>
+        <button type="button" class="presupuesto-doc-scroll-btn" title="Bajar tratamientos" onclick="desplazarTratamientosPresupuestoDoc('table_vista_producto_presupuestoDetalle_doctor',1)">&darr;</button>
+      </div>
+    </div>
   </div>
 
   <div class="presupuesto-doc-planes">
@@ -8071,8 +8077,13 @@ ACCION
           </tr>
         </tbody>
       </table>
-
+    <div class="presupuesto-doc-tratamientos-scroll">
       <div class="div_cuerpo_table presupuesto-doc-dropzone" id="table_vista_producto_presupuestoDetalle_plan_a_doctor" data-plan="a"></div>
+      <div class="presupuesto-doc-scroll-controles">
+        <button type="button" class="presupuesto-doc-scroll-btn" title="Subir tratamientos" onclick="desplazarTratamientosPresupuestoDoc('table_vista_producto_presupuestoDetalle_plan_a_doctor',-1)">&uarr;</button>
+        <button type="button" class="presupuesto-doc-scroll-btn" title="Bajar tratamientos" onclick="desplazarTratamientosPresupuestoDoc('table_vista_producto_presupuestoDetalle_plan_a_doctor',1)">&darr;</button>
+      </div>
+    </div>
     </div>
 
     <div class="tabla-detalles presupuesto-panel presupuesto-doc-plan-panel">
@@ -8095,7 +8106,13 @@ ACCION
         </tbody>
       </table>
 
+    <div class="presupuesto-doc-tratamientos-scroll">
       <div class="div_cuerpo_table presupuesto-doc-dropzone" id="table_vista_producto_presupuestoDetalle_prioritario_doctor" data-plan="b"></div>
+      <div class="presupuesto-doc-scroll-controles">
+        <button type="button" class="presupuesto-doc-scroll-btn" title="Subir tratamientos" onclick="desplazarTratamientosPresupuestoDoc('table_vista_producto_presupuestoDetalle_prioritario_doctor',-1)">&uarr;</button>
+        <button type="button" class="presupuesto-doc-scroll-btn" title="Bajar tratamientos" onclick="desplazarTratamientosPresupuestoDoc('table_vista_producto_presupuestoDetalle_prioritario_doctor',1)">&darr;</button>
+      </div>
+    </div>
     </div>
   </div>
 </section>

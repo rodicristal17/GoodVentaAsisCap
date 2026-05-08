@@ -494,6 +494,18 @@ function prepararDragDropPresupuestoDoc() {
 	});
 }
 
+function desplazarTratamientosPresupuestoDoc(nombreElemento, direccion) {
+	const contenedor = document.getElementById(nombreElemento);
+	if (!contenedor) {
+		return;
+	}
+	const distancia = Math.max(160, Math.round(contenedor.clientHeight * 0.65));
+	contenedor.scrollBy({
+		top: distancia * direccion,
+		behavior: "smooth"
+	});
+}
+
 function iniciarArrastreTactilPresupuestoDoc(evento, tabla) {
 	if (evento.pointerType === "mouse") {
 		return;
