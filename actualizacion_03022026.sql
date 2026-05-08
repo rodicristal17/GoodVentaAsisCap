@@ -565,7 +565,7 @@ ALTER TABLE agenda ADD COLUMN cod_presupuestoFK INT(11);
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.79', detalles='Calendario conectado con presupuesto', fecha='2026-05-06' WHERE idhistorialactualizacion= 2;
 
-
+ALTER TABLE consultorios ADD COLUMN cod_doctorFK INT(11);
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN

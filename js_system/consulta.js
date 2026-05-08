@@ -2190,6 +2190,7 @@ function buscarobtenermedicos(){
 			document.getElementById("ListConsultaAgendamiento").innerHTML=datos_buscados	 
 			document.getElementById("inptDoctorTrabajoMecanicoDental").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			document.getElementById("inptEspecialistaConsulta").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
+			document.getElementById("inptDoctorConsultorio").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			document.getElementById("inptBuscarInfHistorialEspecialista").innerHTML="<option value='' >SELECCIONAR</option>"+datos_buscados	
 			
  
@@ -2202,6 +2203,61 @@ function buscarobtenermedicos(){
 			});
 	
 	
+}
+
+function buscarobtenertodosmedicos() {
+	document.getElementById("inptDoctorConsultorio").innerHTML = "";
+
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_venta": "",
+		"funt": "obtenermedicos"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			//Uload progress
+			xhr.upload.addEventListener("progress", function (evt) {
+				var kb = ((evt.loaded * 1) / 1000).toFixed(1)
+				if (kb == "0.0") {
+					kb = 0.1;
+				}
+
+			}, false);
+			//Download progress
+			xhr.addEventListener("progress", function (evt) {
+				var kb = ((evt.loaded * 1) / 1000).toFixed(1)
+				if (kb == "0.0") {
+					kb = 0.1;
+				}
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana")
+		},
+		success: function (responseText) {
+
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				if (Respuesta == "exito") {
+					var datos_buscados = datos[2];
+					document.getElementById("inptDoctorConsultorio").innerHTML = "<option value='' >SELECCIONAR</option>" + datos_buscados
+				}
+			} catch (error) {
+
+			}
+		}
+	});
 }
 
 

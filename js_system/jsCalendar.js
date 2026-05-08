@@ -222,6 +222,7 @@ function cargarAgendaConsultorios(){
     for(i = 0; i < consultorios.length; i++){
         html += "<div class='agenda-celda-consultorio'>"
             + consultorios[i].nombre
+            + (consultorios[i].nombre_doctor ? "<br>" + consultorios[i].nombre_doctor : "")
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
             + "</div>";
     }

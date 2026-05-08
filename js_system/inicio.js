@@ -522,6 +522,7 @@ buscaroptionBanco()
 BuscarSelecProductos()
 buscarDataListCliente()
 buscarobtenermedicos()
+buscarobtenertodosmedicos()
 BuscarOptionUsuario()
 buscarobtenerPacientes()
 obtenerAsistenciaUsuario();

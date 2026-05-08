@@ -81,6 +81,7 @@ function obtenerdatosabmConsultorio(datostr) {
 	document.getElementById('inptRegistroSeleccConsultorio').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptEstadoConsultorio').value = $(datostr).children('td[id="td_datos_4"]').html();
 	document.getElementById('inptLocalConsultorio').value = $(datostr).children('td[id="td_datos_5"]').html();
+	document.getElementById('inptDoctorConsultorio').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('btnAbmConsultorio').value = "Editar datos";
 	iniciarSelectorColorConsultorio()
 	idAbmConsultorio = $(datostr).children('td[id="td_id"]').html();
@@ -91,6 +92,7 @@ function verificarcamposConsultorio() {
 	var inptColorConsultorioHex = document.getElementById('inptColorConsultorioHex').value
 	var inptLocalConsultorio = document.getElementById('inptLocalConsultorio').value
 	var inptEstadoConsultorio = document.getElementById('inptEstadoConsultorio').value
+	var inptDoctorConsultorio = document.getElementById('inptDoctorConsultorio').value
 	if (inptLocalConsultorio == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR EL LOCAL")
 		return false;
@@ -107,9 +109,9 @@ function verificarcamposConsultorio() {
 		accion = "nuevo";
 		if(controlacceso("INSERTARFORMULARIOCONSULTORIO","accion")==false){return;}
 	}
-	abmConsultorio(inptLocalConsultorio,inptNombreConsultorio, inptDescripcionConsultorio, inptColorConsultorioHex, inptEstadoConsultorio, idAbmConsultorio, accion);
+	abmConsultorio(inptLocalConsultorio,inptNombreConsultorio, inptDescripcionConsultorio, inptColorConsultorioHex, inptEstadoConsultorio, inptDoctorConsultorio, idAbmConsultorio, accion);
 }
-function abmConsultorio(cod_local,nombre, descripcion, color, estado, cod_Consultorio, accion) {
+function abmConsultorio(cod_local,nombre, descripcion, color, estado, cod_doctor, cod_Consultorio, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -123,6 +125,7 @@ function abmConsultorio(cod_local,nombre, descripcion, color, estado, cod_Consul
 	datos.append("color", color)
 	datos.append("cod_local", cod_local)
 	datos.append("estado", estado)
+	datos.append("cod_doctor", cod_doctor)
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmConsultorio.php",
@@ -272,6 +275,7 @@ function limpiarcamposConsultorio() {
 	document.getElementById('inptDescripcionConsultorio').value = "";
 	document.getElementById('inptRegistroSeleccConsultorio').value = "";
 	document.getElementById('inptEstadoConsultorio').value = "ACTIVO";
+	document.getElementById('inptDoctorConsultorio').value = "";
 	document.getElementById('btnAbmConsultorio').value = "Guardar datos";
 	idAbmConsultorio = "";
 }

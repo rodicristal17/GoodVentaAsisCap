@@ -51,8 +51,10 @@ $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $cod_local=$_POST['cod_local'];
 $cod_local = mb_convert_encoding((string)($cod_local), 'ISO-8859-1', 'UTF-8');
 
+$cod_doctor=$_POST['cod_doctor'];
+$cod_doctor = mb_convert_encoding((string)($cod_doctor), 'ISO-8859-1', 'UTF-8');
 	
-	abm($cod_Consultorio,$nombre,$descripcion,$color,$estado,$cod_local,$operacion);
+	abm($cod_Consultorio,$nombre,$descripcion,$color,$estado,$cod_local,$cod_doctor,$operacion);
 
 }
 
@@ -82,7 +84,7 @@ if($operacion=="buscaroption")
 
 }
 
-function abm($cod_Consultorio,$nombre,$descripcion,$color,$estado,$cod_local,$operacion)
+function abm($cod_Consultorio,$nombre,$descripcion,$color,$estado,$cod_local,$cod_doctor,$operacion)
 {
 	
 	
@@ -98,11 +100,11 @@ if($operacion=="nuevo")
 {
 
 
-$consulta1="Insert into consultorios (nombre,descripcion,color,estado,cod_localFk)
-values(?,?,?,?,?)";
+$consulta1="Insert into consultorios (nombre,descripcion,color,estado,cod_localFk,cod_doctorFK)
+values(?,?,?,?,?,?)";
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='sssss';
-$stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local);
+$ss='ssssss';
+$stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_doctor);
 
 
 }
@@ -111,10 +113,10 @@ $stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local);
 if($operacion=="editar")
 {
 
-$consulta1="Update consultorios set nombre=?,descripcion=?,color=?,estado=?,cod_localFk=? where id_consultorio=?";	
+$consulta1="Update consultorios set nombre=?,descripcion=?,color=?,estado=?,cod_localFk=?,cod_doctorFK=? where id_consultorio=?";	
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='ssssss';
-$stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_Consultorio); 
+$ss='sssssis';
+$stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_doctor,$cod_Consultorio); 
 
 }
 
@@ -157,7 +159,7 @@ if($NombreLocal!=""){
 	$condicionNombreLocal=" and cod_localFk ='".$NombreLocal."'";
 }
 
-		$sql= "Select id_consultorio,nombre,descripcion,color,estado,cod_localFk ,
+		$sql= "Select *,
 (select  Nombre from local where cod_local=cod_localFk) as NombreLocal from consultorios where estado=? ".$condicioncodigo.$condicionnombre.$condiciondescripcion.$condicionNombreLocal;
 		
    
@@ -188,7 +190,7 @@ if ( ! $stmt->execute()) {
 		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
 		  	  $cod_localFk=mb_convert_encoding((string)($valor['cod_localFk']), 'UTF-8', 'ISO-8859-1');
 		  	  $NombreLocal=mb_convert_encoding((string)($valor['NombreLocal']), 'UTF-8', 'ISO-8859-1');
-		  	 
+		  	  $cod_doctorFK=mb_convert_encoding((string)($valor['cod_doctorFK']), 'UTF-8', 'ISO-8859-1');
 		  	 
 			  $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
@@ -201,6 +203,7 @@ if ( ! $stmt->execute()) {
 <td  id='td_datos_3' style='display:none'>".$color."</td>
 <td  id='td_datos_4' style='display:none'>".$estado."</td>
 <td  id='td_datos_5' style='display:none'>".$cod_localFk."</td>
+<td  id='td_datos_7' style='display:none'>".$cod_doctorFK."</td>
 </tr>
 </table>";
 			  
