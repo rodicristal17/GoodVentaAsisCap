@@ -5993,7 +5993,7 @@ onclick='verVentanaEditarCasa()' style='background-color:#b7b7b7'>
 <div class='div_cuerpo_table presupuesto-search-table' style='height:55vh;' id='table_abm_Consultorio'></div>
 </section>
 
-<section class='presupuesto-panel presupuesto-search-results' style='padding:16px 20px;'>
+<section class='presupuesto-panel presupuesto-search-results' style='padding:16px 20px;margin-top: 10px;'>
 <div class='form-section' style='margin-bottom:0;'>
 <div class='form-row' style='flex:0 0 170px;'>
 <label for='inptTotalRegistoConsultorio'>Registros :</label>
@@ -8400,6 +8400,10 @@ ACCION
       </header>
 
       <section class="presupuesto-panel presupuesto-search-results">
+        <div class="presupuesto-search-results-head">
+          <div class="panel-title">Presupuestos</div>
+          <span class="presupuesto-search-chip">Seleccione un registro para editar</span>
+        </div>
         <table class="tableCabeceraRegistro">
           <tbody>
             <tr>
@@ -8445,6 +8449,14 @@ ACCION
               </td>
             </tr>
           </table>
+        </div>
+      </section>
+      <section class="presupuesto-panel presupuesto-search-results" style="padding:16px 20px;margin-top: 10px;">
+        <div class="form-section" style="margin-bottom:0;">
+          <div class="form-row" style="flex:0 0 170px;">
+            <label for="inptTotalRegistoPresupuesto">Registros :</label>
+            <input class="inputTextDisable" type="text" disabled id="inptTotalRegistoPresupuesto" style="text-align:center">
+          </div>
         </div>
       </section>
     </div>

@@ -1324,6 +1324,8 @@ function buscarvistaPresupuesto() {
 	totalregistroPresupuesto= 0;
 	registrocargadoPresupuesto= 0;
 	controldebusquedadPresupuesto= true;
+	idabmPresupuesto = "";
+	document.getElementById("inptTotalRegistoPresupuesto").value= 0;
 	document.getElementById("table_vista_presupuesto").innerHTML= paginacargando;
 
 	obtener_datos_user()
@@ -1391,6 +1393,8 @@ function buscarvistaPresupuesto() {
 					document.getElementById("table_vista_presupuesto").innerHTML= datos["3"];
 					totalregistroPresupuesto= parseInt(datos["5"]);
 					registrocargadoPresupuesto = parseInt(datos["4"]);
+					
+					document.getElementById("inptTotalRegistoPresupuesto").value= registrocargadoPresupuesto;
 
 					// Controla el progreso de la busqueda
 					if(totalregistroPresupuesto>registrocargadoPresupuesto){
@@ -1484,6 +1488,8 @@ function buscarmasVistaPresupuesto(busquedaPresupuesto) {
 				if (Respuesta == "exito") {
 					document.getElementById("table_vista_presupuesto").innerHTML += datos["3"];
 					registrocargadoPresupuesto += parseInt(datos["4"]);
+					
+					document.getElementById("inptTotalRegistoPresupuesto").value= registrocargadoPresupuesto;
 					// Controla el progreso de la busqueda
 					if(controldebusquedadPresupuesto && totalregistroPresupuesto>registrocargadoPresupuesto){
 						document.getElementById("divProgressPresupuesto").style.backgroundColor='';
@@ -1528,6 +1534,10 @@ function cancelarListadoPresupuesto() {
 
 function obtenerDatosPresupuesto(elemento) {
     idabmPresupuesto = $(elemento).children('td[id="td_id"]').html();
+	const registroSeleccionadoPresupuesto = document.getElementById('inptRegistroSeleccPresupuesto');
+	if (registroSeleccionadoPresupuesto) {
+		registroSeleccionadoPresupuesto.value = idabmPresupuesto + " - " + $(elemento).children('td[id="td_datos_4"]').html();
+	}
     document.getElementById('inptCodigoPresupuesto').value = $(elemento).children('td[id="td_id"]').html();
     totalPresupuesto= $(elemento).children('td[id="td_datos_7"]').html();
     totalPresupuestoPrioritario= $(elemento).children('td[id="td_datos_8"]').html();
