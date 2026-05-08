@@ -4314,8 +4314,21 @@ style='background-color:#5bc572'>
 <!-- InterConsulta -->
 <div id="divListadoInterConsulta" class="principal2" style="display: none;">
   <center>
-    <div id="divAbmInterConsulta1" class="divAbms" style="width: 90%;">
-      <table class="tableMenuZ">
+    <div id="divAbmInterConsulta1" class="presupuesto-container presupuesto-search-modal">
+      <header class="presupuesto-header presupuesto-search-header">
+        <div class="presupuesto-search-title">
+          <h2>Hilos - InterConsultas</h2>
+        </div>
+        <div class="header-actions">
+          <button class="btn-icon" onclick="document.getElementById('overlayFiltrosInterConsulta').style.display=''" title="Filtros">
+            <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
+          </button>
+          <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Anadir registro" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
+          <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana" onclick="minimizarabmInterConsulta()">
+          <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaListadoInterConsulta(false)">
+        </div>
+      </header>
+      <table class="tableMenuZ" style="display:none;">
         <tbody>
           <tr>
             <td style="width:100%;text-align:left">
@@ -4333,11 +4346,11 @@ style='background-color:#5bc572'>
           </tr>
         </tbody>
       </table>
-        <div class="divMenuf" style="display: flex; justify-content: space-between;">
+        <div class="divMenuf" style="display: none;">
           <table style="width:100%"><tr>
             <td style="width:20%;text-align: rigth;">
               <p class="pTitulo8" style="width: fit-content; text-align: start;"> 
-              <input type="checkbox" id="inptSeleccFiltroEstadoInterConsulta" style="width: fit-content;" checked="">Ocultar inactivos</p>
+              <input type="checkbox" id="inptSeleccFiltroEstadoInterConsultaOld" style="width: fit-content;" checked="">Ocultar inactivos</p>
             </td>
             <td style="width:60%"></td>
             <td style="width: 20%; text-align: end;">
@@ -4346,24 +4359,11 @@ style='background-color:#5bc572'>
             </td>
           </tr></table>
         </div>
-        <div class="divMenuf" style="display: flex; justify-content: space-between;">
-          <table style="width:100%"><tr>
-            <td style="width:10%;">
-              <p class="pTituloC">Registro :</p>
-              <input class="inputTextDisable" type="text" disabled="" id="inptRegistoCargadoInterConsulta" style="width:100px;text-align:center">
-            </td>
-            <td style="width:10%;">
-              <p class="pTituloC">Consultas abiertas :</p>
-              <input class="inputTextDisable" type="text" disabled="" id="inptRegistoInterConsultaAbierta" style="width:100px;text-align:center">
-            </td>
-            <td style="width:45%"></td>
-            <td style="width:15%;">
-              <p class="pTituloC">Interconsultas con:</p>
-              <select class="inputSelect" id="inptUsuariosInterConsulta" style="width:125px"></select>
-            </td>
-          </tr></table>
-        </div>
-        <div class="divMenuf">
+        <section class="presupuesto-panel presupuesto-search-results">
+          <div class="presupuesto-search-results-head">
+            <div class="panel-title">InterConsultas</div>
+            <span class="presupuesto-search-chip">Seleccione un registro para ver el hilo</span>
+          </div>
           <div style="width: 98%;height:auto">
             <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
               <tr>
@@ -4377,29 +4377,29 @@ style='background-color:#5bc572'>
                 <td class="td_registro" style="width:15%;">RESPONSABLE</td>
               </tr>
             </table>
-            <table class="tableCabeceraRegistro">
+            <table class="tableCabeceraRegistro" style="display:none;">
               <tr>
                 <td class="td_registro" style="width:5%;">
-                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta1" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta1Old" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
                 </td>
                 <td class="td_registro" style="width:24%;">
-                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta2" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta2Old" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
                 </td>
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta2')">
                 </td>
                 <td class="td_registro" style="width:14%;">
-                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta3" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                <input class="inputfiltro" type="text" id="inptBuscarInterConsulta3Old" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
                 </td>
                 <td class="td_registro" style="width:1%;">
                   <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta3')">
                 </td>
                 <td class="td_registro" style="width:10%;">
-                <select class="inputfiltro" id="inptBuscarInterConsulta7">
+                <select class="inputfiltro" id="inptBuscarInterConsulta7Old">
                 </select>
                 </td>
                 <td class="td_registro" style="width:10%;">
-                <select class="inputfiltro" id="inptBuscarInterConsulta5">
+                <select class="inputfiltro" id="inptBuscarInterConsulta5Old">
                 <option value="">Todos</option>
                 <option value="pendiente">Pendiente</option>
                 <option value="proceso">Proceso</option>
@@ -4408,7 +4408,7 @@ style='background-color:#5bc572'>
                 </select>
                 </td>
                 <td class="td_registro" style="width:10%;">
-                <select class="inputfiltro" id="inptBuscarInterConsulta4">
+                <select class="inputfiltro" id="inptBuscarInterConsulta4Old">
                 <option value="">Todos</option>
                 <option value="administrativo">Administrativo</option>
                 <option value="clinico">Clinico</option>
@@ -4420,14 +4420,14 @@ style='background-color:#5bc572'>
                 </td>
                 <td class="td_registro" style="width:10%;"></td>
                 <td class="td_registro" style="width:14%;">
-                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+                <input placeholder="Parecido a" class="inputfiltro" type="text" id="inptBuscarInterConsulta6Old" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
                 </td>
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarInterConsulta6')">
                 </td>
               </tr>
             </table>
-            <div id="table_frm_VistaInterConsulta" style= "max-height: 400px;overflow-y: auto;">
+            <div class="div_cuerpo_table presupuesto-search-table" id="table_frm_VistaInterConsulta" style= "max-height: 400px;overflow-y: auto;">
 
             </div>
             <table style="width:100%;height:50px;display:none" id="tbProcessInformeInterConsulta">
@@ -4441,17 +4441,108 @@ style='background-color:#5bc572'>
             </tr>
             </table>
           </div>
-      </div>
-      <div class="divMenuF" style="display: inline-flex;">
+        </section>
+      <section class="presupuesto-panel presupuesto-search-results" style="padding:12px 20px;margin-top: 10px;">
+        <div class="form-section" style="margin-bottom:0;align-items:center;">
         <div style="background-color: #2ea3c0;height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
         <p class="pTitulo8" style="width: fit-content; text-align: start;color: #2ea3c0;">Asociado a Egreso / Ingreso</p>
         <div style="background-color: #762424;height: 10px; margin-inline: 5px;width: 10px;margin-top: 5px;"></div>
         <p class="pTitulo8" style="width: fit-content; text-align: start;color: #762424;">Gastos pendientes de aprobacion</p>
         <div style="background-color: #585f08;height: 10px; margin-inline: 5px;width: 10px;margin-top: 5px;"></div>
         <p class="pTitulo8" style="width: fit-content; text-align: start;color: #585f08;">Tipo interno</p>
-      </div>
+        </div>
+      </section>
+      <section class="presupuesto-panel presupuesto-search-results" style="padding:16px 20px;margin-bottom: 10px;">
+        <div class="form-section" style="margin-bottom:0;">
+          <div class="form-row" style="flex:0 0 170px;">
+            <label for="inptRegistoCargadoInterConsulta">Registros :</label>
+            <input class="inputTextDisable" type="text" disabled id="inptRegistoCargadoInterConsulta" style="text-align:center">
+          </div>
+          <div class="form-row" style="flex:0 0 190px;">
+            <label for="inptRegistoInterConsultaAbierta">Consultas abiertas :</label>
+            <input class="inputTextDisable" type="text" disabled id="inptRegistoInterConsultaAbierta" style="text-align:center">
+          </div>
+        </div>
+      </section>
     </div>
   </center>
+  <div class="modal-filtros-overlay" id="overlayFiltrosInterConsulta" style="display:none;height: 80vw;">
+    <div class="modal-filtros-catalogo" id="modalFiltrosInterConsulta" style="position: initial;">
+      <div class="modal-filtros-box modal-agenda-pro">
+        <div class="modal-filtros-header">
+          <div class="modal-header-info">
+            <p class="modal-etiqueta">Panel de filtros</p>
+            <h3>Filtros de InterConsulta</h3>
+          </div>
+          <button type="button" class="btn-cerrar-modal" onclick="document.getElementById('overlayFiltrosInterConsulta').style.display='none'">x</button>
+        </div>
+
+        <div class="modal-filtros-body agenda-filtros-grid">
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsulta1">Cod. InterConsulta</label>
+            <input class="catalogo-selectBuscador input-filtro-pro" type="text" id="inptBuscarInterConsulta1" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+          </div>
+
+          <div class="filtro-grupo filtro-destacado">
+            <label for="inptBuscarInterConsulta2">Asunto</label>
+            <input placeholder="Parecido a" class="catalogo-selectBuscador input-filtro-pro" type="text" id="inptBuscarInterConsulta2" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsulta3">Cliente / CI</label>
+            <input class="catalogo-selectBuscador input-filtro-pro" type="text" id="inptBuscarInterConsulta3" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsulta7">Local</label>
+            <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta7" style="width:100%;max-width:100%;box-sizing:border-box;"></select>
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsulta5">Estado</label>
+            <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta5" style="width:100%;max-width:100%;box-sizing:border-box;">
+              <option value="">Todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="proceso">Proceso</option>
+              <option value="finalizado">Finalizado</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+            <p class="pTitulo8" style="width: fit-content; text-align: start;">
+              <input type="checkbox" id="inptSeleccFiltroEstadoInterConsulta" style="width: fit-content;" checked>Ocultar inactivos
+            </p>
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsulta4">Tipo</label>
+            <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta4" style="width:100%;max-width:100%;box-sizing:border-box;">
+              <option value="">Todos</option>
+              <option value="administrativo">Administrativo</option>
+              <option value="clinico">Clinico</option>
+              <option value="interno">Interno</option>
+              <option value="compras">Compras</option>
+              <option value="pagos">Pagos</option>
+              <option value="judicial">Judicial</option>
+            </select>
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsulta6">Responsable</label>
+            <input placeholder="Parecido a" class="catalogo-selectBuscador input-filtro-pro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptUsuariosInterConsulta">Interconsultas con</label>
+            <select class="catalogo-selectBuscador select-filtro-pro" id="inptUsuariosInterConsulta" style="width:100%;max-width:100%;box-sizing:border-box;"></select>
+          </div>
+        </div>
+
+        <div class="modal-filtros-footer">
+          <button type="button" class="btn-filtro btn-secundario" onclick="document.getElementById('inptBuscarInterConsulta1').value='';document.getElementById('inptBuscarInterConsulta2').value='';document.getElementById('inptBuscarInterConsulta3').value='';document.getElementById('inptBuscarInterConsulta4').value='';document.getElementById('inptBuscarInterConsulta5').value='';document.getElementById('inptBuscarInterConsulta6').value='';document.getElementById('inptBuscarInterConsulta7').value='';document.getElementById('inptUsuariosInterConsulta').value='';document.getElementById('inptSeleccFiltroEstadoInterConsulta').checked=true;buscarPacientesConInterConsultas();">Limpiar</button>
+          <button type="button" class="btn-accion-principal btn-principal-pro" onclick="document.getElementById('overlayFiltrosInterConsulta').style.display='none';buscarPacientesConInterConsultas();">Aplicar filtros</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div id="divAbmDetallesInterConsulta" class="principal2" style="display: none;">
   <center>
