@@ -241,7 +241,7 @@ function cargarAgendaConsultorios(){
             dataHoraRow = hora + "-" + minuto;
             datosAlmuerzo = obtenerDatosAlmuerzoAgendaMediaHora(fecha, hora, minuto);
 
-            html += "<div class='agenda-row agenda-row-mediahora' style='--total-consultorios:" + consultorios.length + "' data-hora-row='" + dataHoraRow + "'>";
+            html += "<div class='agenda-row agenda-row-mediahora" + (hora >= 18 ? " agenda-row-horario-tarde" : "") + "' style='--total-consultorios:" + consultorios.length + "' data-hora-row='" + dataHoraRow + "'>";
             html += "<div class='agenda-hora" + datosAlmuerzo.claseHora + "'>" + textoHora + "</div>";
 
             for(j = 0; j < consultorios.length; j++){

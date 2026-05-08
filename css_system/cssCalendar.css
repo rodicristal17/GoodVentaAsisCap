@@ -41,6 +41,7 @@
     --input-focus: #6c97ee;
 
     --slot-bg-line: rgba(220,228,238,0.65);
+    --slot-after-hours-bg: rgba(36,54,75,0.075);
     --slot-hover: rgba(108,151,238,0.10);
     --slot-hover-border: rgba(108,151,238,0.30);
 
@@ -100,6 +101,7 @@
     --input-focus: #84aaf5;
 
     --slot-bg-line: rgba(75,89,109,0.55);
+    --slot-after-hours-bg: rgba(255,255,255,0.045);
     --slot-hover: rgba(132,170,245,0.12);
     --slot-hover-border: rgba(132,170,245,0.34);
 
@@ -904,6 +906,15 @@
 
 .agenda-row-mediahora{
     min-height:45px;
+}
+
+.agenda-row-horario-tarde .agenda-slot{
+    background-color: var(--slot-after-hours-bg);
+    border-bottom:1px solid #ffffff;
+}
+
+.theme-dark .agenda-row-horario-tarde .agenda-slot{
+    border-bottom:1px solid var(--border-soft);
 }
 
 .agenda-slot-mediahora{
