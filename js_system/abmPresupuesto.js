@@ -405,6 +405,9 @@ function asegurarCampoAlternativoPresupuestoDoc(tabla) {
 }
 
 function obtenerIdDetallePresupuestoDoc(tabla) {
+	if (tabla?.dataset?.idDetallePresupuesto) {
+		return tabla.dataset.idDetallePresupuesto;
+	}
 	if (!tabla || !tabla.id) {
 		return "";
 	}
@@ -633,13 +636,12 @@ function sincronizarResumenDetallePresupuestoDoc() {
 	destino.innerHTML = "";
 
 	Array.from(origen.children).forEach(function (tablaOriginal) {
+		const idDetalle = obtenerIdDetallePresupuestoDoc(tablaOriginal);
 		const tablaClonada = tablaOriginal.cloneNode(true);
+		tablaClonada.dataset.idDetallePresupuesto = idDetalle;
 		tablaClonada.removeAttribute("id");
 		tablaClonada.querySelectorAll("[id]").forEach(function (elemento) {
 			elemento.removeAttribute("id");
-		});
-		tablaClonada.querySelectorAll("[onclick]").forEach(function (elemento) {
-			elemento.removeAttribute("onclick");
 		});
 		destino.appendChild(tablaClonada);
 	});
@@ -777,26 +779,41 @@ function eliminarDetallePlanPresupuestoDoc(idDetalle, tablaDetalle) {
 
 
 function eliminarFila(btn) {
-	if (vistaPresupuestoOrigen == "doctor" && pasoVistaPresupuestoDoc === 2) {
-		let filaDoctor = btn.closest("tr");
-		let tablaDetalleDoctor = filaDoctor.parentElement.parentElement;
-		let contenedorDoctor = tablaDetalleDoctor.parentElement;
+	const filaDoctor = btn.closest("tr");
+	const tablaDetalleDoctor = filaDoctor?.parentElement?.parentElement;
+	const contenedorDoctor = tablaDetalleDoctor?.parentElement;
+
+	if (
+		vistaPresupuestoOrigen == "doctor" &&
+		contenedorDoctor?.id === "table_vista_producto_presupuestoDetalle_doctor_resumen"
+	) {
 		const idDetalleDoctor = obtenerIdDetallePresupuestoDoc(tablaDetalleDoctor);
-		if (contenedorDoctor.id === "table_vista_producto_presupuestoDetalle_plan_a_doctor") {
-			eliminarDetallePlanPresupuestoDoc(idDetalleDoctor, tablaDetalleDoctor);
-			return;
-		}
-		if (contenedorDoctor.id === "table_vista_producto_presupuestoDetalle_prioritario_doctor") {
-			eliminarDetallePlanPresupuestoDoc(idDetalleDoctor, tablaDetalleDoctor);
-			return;
+		const tablaOriginal = obtenerTablaDetallePresupuestoDoc(idDetalleDoctor, "table_vista_producto_presupuestoDetalle_doctor");
+		const filaOriginal = tablaOriginal?.querySelector("tr[name=tdDetallePresupuesto]");
+		if (filaOriginal) {
+			eliminarFila(filaOriginal);
 		}
 		return;
+	}
+
+	if (vistaPresupuestoOrigen == "doctor" && pasoVistaPresupuestoDoc === 2) {
+		const idDetalleDoctor = obtenerIdDetallePresupuestoDoc(tablaDetalleDoctor);
+		if (
+			(contenedorDoctor?.id === "table_vista_producto_presupuestoDetalle_plan_a_doctor") ||
+			(contenedorDoctor?.id === "table_vista_producto_presupuestoDetalle_prioritario_doctor")
+		) {
+			eliminarDetallePlanPresupuestoDoc(idDetalleDoctor, tablaDetalleDoctor);
+			return;
+		}
+		if (contenedorDoctor?.id !== "table_vista_producto_presupuestoDetalle_doctor") {
+			return;
+		}
 	}
   if (confirm("¿Seguro que deseas eliminar este producto del presupuesto?")) {
     let fila = btn.closest("tr");
 	const es_prioritario= fila.querySelector('#td_datos_12')?.textContent.trim();
 	let tabla= fila.parentElement.parentElement;
-	const idDetalle= tabla.id.substring(15);
+	const idDetalle= obtenerIdDetallePresupuestoDoc(tabla);
 	tabla= tabla.parentElement;
 	const esTablaPrioritaria = tabla.id.includes("prioritario");
 	
