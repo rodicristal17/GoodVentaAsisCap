@@ -198,7 +198,7 @@ function cargarAgendaConsultorios(){
     var consultoriosSeleccionados = obtenerConsultoriosSeleccionadosAgenda();
 
     var consultorios = [];
-    var i, j, hora, minuto;
+    var i, j, hora, minuto, contador_cita;
     var html = '';
     var textoHora = '';
     var datosAlmuerzo = null;
@@ -220,12 +220,23 @@ function cargarAgendaConsultorios(){
     html += "<div class='agenda-celda-hora-header'>Hora</div>";
 
     for(i = 0; i < consultorios.length; i++){
+        contador_cita = calcularTotalesResumenAgenda(fecha, '', String(consultorios[i].id));
+            
         html += "<div class='agenda-celda-consultorio' onclick='vercerrarModalAbmConsultorioAgenda(true);obtenerDatosAbmConsultorioAgenda(this)'>"
             + "<span id='td_id' style='display:none;'>"+consultorios[i].id+"</span>"
             + "<span id='td_datos_2'>"+consultorios[i].nombre+"</span>"
             + "<span id='td_datos_4' style='display:none;'>"+consultorios[i].cod_doctorFK+"</span>"
             + "<span id='td_datos_3'>"+consultorios[i].nombre_doctor+"</span>"
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
+
+            + "<span id='td_datos_5' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.total + "</span>"
+            + "<span id='td_datos_6' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.confirmadas + "</span>"
+            + "<span id='td_datos_7' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.pendientes + "</span>"
+            + "<span id='td_datos_8' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.canceladas + "</span>"
+            + "<span id='td_datos_9' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.PrimeraConsulta + "</span>"
+            + "<span id='td_datos_10' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.Atendido + "</span>"
+            + "<span id='td_datos_11' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.EnEspera + "</span>"
+            + "<span id='td_datos_12' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.ConDeuda + "</span>"
             + "</div>";
     }
 
@@ -768,15 +779,17 @@ function esDomingoFechaAgenda(fecha){
     return fechaUtc.getUTCDay() === 0;
 }
 
-function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
-    var total = 0;
-    var confirmadas = 0;
-    var pendientes = 0;
-    var canceladas = 0;
-    var PrimeraConsulta = 0;
-    var Atendido = 0;
-    var EnEspera = 0;
-    var ConDeuda = 0;
+function calcularTotalesResumenAgenda(fecha, estado, consultorioFiltro){
+    var totales = {
+        total: 0,
+        confirmadas: 0,
+        pendientes: 0,
+        canceladas: 0,
+        PrimeraConsulta: 0,
+        Atendido: 0,
+        EnEspera: 0,
+        ConDeuda: 0
+    };
     var i, e, filtrarPorConsultorios;
 
     filtrarPorConsultorios = Array.isArray(consultorioFiltro)
@@ -797,26 +810,31 @@ function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
                 )
             )
         ){
-            total++;
-            if(e.estado === 'CONFIRMADO'){ confirmadas++; }
-            if(e.estado === 'AGENDADO'){ pendientes++; }
-            if(e.estado === 'CANCELADO'){ canceladas++; }
-            if(e.estado === 'PRIMERACONSULTA'){ PrimeraConsulta++; }
-            if(e.estado === 'ATENDIDO'){ Atendido++; }
-            if(e.estado === 'ENESPERA'){ EnEspera++; }
-            if(e.estado === 'CONFIRMADOCONDEUDA'){ ConDeuda++; }
+            totales.total++;
+            if(e.estado === 'CONFIRMADO'){ totales.confirmadas++; }
+            if(e.estado === 'AGENDADO'){ totales.pendientes++; }
+            if(e.estado === 'CANCELADO'){ totales.canceladas++; }
+            if(e.estado === 'PRIMERACONSULTA'){ totales.PrimeraConsulta++; }
+            if(e.estado === 'ATENDIDO'){ totales.Atendido++; }
+            if(e.estado === 'ENESPERA'){ totales.EnEspera++; }
+            if(e.estado === 'CONFIRMADOCONDEUDA'){ totales.ConDeuda++; }
         }
     }
-	
 
-    document.getElementById('lblTotalCitasAgenda').innerHTML = total;
-    document.getElementById('lblConfirmadasAgenda').innerHTML = confirmadas;
-    document.getElementById('lblPendientesAgenda').innerHTML = pendientes;
-    document.getElementById('lblCanceladasAgenda').innerHTML = canceladas;
-    document.getElementById('lblPrimeraConsultaAgenda').innerHTML = PrimeraConsulta;
-    document.getElementById('lblAtendidoAgenda').innerHTML = Atendido;
-    document.getElementById('lblEsperaAgenda').innerHTML = EnEspera;
-    document.getElementById('lblConDeudaAgenda').innerHTML = ConDeuda;
+    return totales;
+}
+
+function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
+    var totales = calcularTotalesResumenAgenda(fecha, estado, consultorioFiltro);
+
+    document.getElementById('lblTotalCitasAgenda').innerHTML = totales.total;
+    document.getElementById('lblConfirmadasAgenda').innerHTML = totales.confirmadas;
+    document.getElementById('lblPendientesAgenda').innerHTML = totales.pendientes;
+    document.getElementById('lblCanceladasAgenda').innerHTML = totales.canceladas;
+    document.getElementById('lblPrimeraConsultaAgenda').innerHTML = totales.PrimeraConsulta;
+    document.getElementById('lblAtendidoAgenda').innerHTML = totales.Atendido;
+    document.getElementById('lblEsperaAgenda').innerHTML = totales.EnEspera;
+    document.getElementById('lblConDeudaAgenda').innerHTML = totales.ConDeuda;
 }
 
 function actualizarResumenFiltrosAgenda(){

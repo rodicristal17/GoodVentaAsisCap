@@ -91,9 +91,20 @@ function obtenerDatosAbmConsultorioAgenda(datostr) {
 	const idConsultorio = $(datostr).find('[id="td_id"]').first();
 	const nombreConsultorio = $(datostr).find('[id="td_datos_2"]').first();
 	const doctorConsultorio = $(datostr).find('[id="td_datos_4"]').first();
+
+	document.getElementById('lblTotalCitasbmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_5"]').first().html();
+	document.getElementById('lblConfirmadasbmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_6"]').first().html();
+	document.getElementById('lblPendientesbmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_7"]').first().html();
+	document.getElementById('lblCanceladasbmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_8"]').first().html();
+	document.getElementById('lblPrimeraConsultabmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_9"]').first().html();
+	document.getElementById('lblAtendidobmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_10"]').first().html();
+	document.getElementById('lblEsperabmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_11"]').first().html();
+	document.getElementById('lblConDeudabmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_12"]').first().html();
+
 	document.getElementById('inptIDAbmConsultorioAgenda').value = idConsultorio.text().trim();
 	document.getElementById('tituloAbmConsultorioAgenda').innerHTML = nombreConsultorio.html();
 	document.getElementById('inptDoctorAbmConsultorioAgenda').value = doctorConsultorio.text().trim();
+	document.getElementById('inptFechaAbmConsultorioAgenda').value = document.getElementById('inptFechaAgenda').value
 }
 
 function verificarcamposConsultorio() {

@@ -21984,14 +21984,59 @@ onclick='buscarvistaaperturacierrecaja()' />
             <button type='button' class='btn-cerrar-modal' onclick='vercerrarModalAbmConsultorioAgenda(false)'>×</button>
         </div>
 
-        <div class='modal-filtros-body modal-cita-grid'>
+        <div class='modal-filtros-body modal-cita-grid' style='display: flex;flex-direction: column;'>
             <div class='filtro-grupo' style="display: none;">
                 <label>ID consultorio</label>
                 <input type='text' id='inptIDAbmConsultorioAgenda' class='catalogo-selectBuscador' />
             </div>
+            
+            <div class='filtro-grupo'>
+                <label>Fecha</label>
+                <input type='date' id='inptFechaAbmConsultorioAgenda' class='catalogo-selectBuscador' />
+            </div>
+            
             <div class='filtro-grupo'>
                 <label>Doctor/a</label>
                 <select id='inptDoctorAbmConsultorioAgenda' class='inputTextDisable'></select>
+            </div>
+            <div class="agenda-card">
+              <p class="agenda-card-title">Resumen del día</p>
+              <div class="agenda-resumen-item">
+                <span>Total citas</span>
+                <b id="lblTotalCitasbmConsultorioAgenda">20</b>
+              </div>
+              <div class="agenda-resumen-item">
+                <span>Confirmadas</span>
+                <b id="lblConfirmadasbmConsultorioAgenda">0</b>
+              </div>
+              <div class="agenda-resumen-item">
+                <span>Pendientes</span>
+                <b id="lblPendientesbmConsultorioAgenda">19</b>
+              </div>
+              <div class="agenda-resumen-item">
+                <span>Canceladas</span>
+                <b id="lblCanceladasbmConsultorioAgenda">0</b>
+              </div>
+            
+              <div class="agenda-resumen-item">
+                <span>Primera consulta</span>
+                <b id="lblPrimeraConsultabmConsultorioAgenda">1</b>
+              </div>
+            
+              <div class="agenda-resumen-item">
+                <span>Atendido</span>
+                <b id="lblAtendidobmConsultorioAgenda">0</b>
+              </div>
+            
+              <div class="agenda-resumen-item">
+                <span>En espera</span>
+                <b id="lblEsperabmConsultorioAgenda">0</b>
+              </div>
+            
+              <div class="agenda-resumen-item">
+                <span>Confirmado con deuda</span>
+                <b id="lblConDeudabmConsultorioAgenda">0</b>
+              </div>
             </div>
         </div>
 
