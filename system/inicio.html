@@ -11766,12 +11766,19 @@ style='background-color: #b7b7b7;'>
 		<select class="inputTextDisable" id="inptBuscarLocalPaciente" >  </select> 
       </div>
 
-      <div class="filtro filtro-grande">
-        <label for="inptBuscarFrmPacienteVistaConsulta" class='pTitulo5' >Paciente</label>
-        <div class="busqueda-paciente">
-          <input type="text" id="inptBuscarFrmPacienteVistaConsulta" class="input inputText" placeholder="Nro CI - Nombre"
+      <div class="filtro filtro-grande filtro-consulta-linea">
+        <div class="filtro-nro-venta">
+          <label for="inptBuscarFrmNumFacturaVistaConsulta" class='pTitulo5' >Nro venta</label>
+          <input type="text" id="inptBuscarFrmNumFacturaVistaConsulta" class="input inputText" placeholder="Nro venta"
             onkeyup="if(event.keyCode == 13){buscarVistaConsulta()}" />
-          <button class="btn" onclick="buscarVistaConsulta()">Buscar</button>
+        </div>
+        <div class="filtro-paciente-consulta">
+          <label for="inptBuscarFrmPacienteVistaConsulta" class='pTitulo5' >Paciente</label>
+          <div class="busqueda-paciente">
+            <input type="text" id="inptBuscarFrmPacienteVistaConsulta" class="input inputText" placeholder="Nro CI - Nombre"
+              onkeyup="if(event.keyCode == 13){buscarVistaConsulta()}" />
+            <button class="btn" onclick="buscarVistaConsulta()">Buscar</button>
+          </div>
         </div>
       </div>
     </div>

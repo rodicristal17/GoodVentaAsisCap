@@ -30,7 +30,8 @@ if($operacion=="buscarVistaConsulta")
 	$Paciente=$_POST['Paciente'];
     $Paciente = mb_convert_encoding((string)($Paciente), 'ISO-8859-1', 'UTF-8');
 	$local= (isset($_POST['local']) ? mb_convert_encoding((string)($_POST['local']), 'ISO-8859-1', 'UTF-8') : "");
-	buscarVistaConsulta($Paciente,$local);
+	$num_factura= (isset($_POST['num_factura']) ? mb_convert_encoding((string)($_POST['num_factura']), 'ISO-8859-1', 'UTF-8') : "");
+	buscarVistaConsulta($Paciente,$local,$num_factura);
 }	
  
 if($operacion=="buscarDetalleCompradoConsulta")
@@ -743,23 +744,23 @@ exit;
 
  
 
- function buscarVistaConsulta($Paciente,$local)
+ function buscarVistaConsulta($Paciente,$local,$num_factura)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
 	 
- 
-	
-		$condicionlocal="";
+    $sqlFiltro= "";
 	if($local!=""){
-		$condicionlocal=" and  cod_local='".$local."' ";
+		$sqlFiltro=" and  cod_local='".$local."' ";
 	}
 	
-	$condicionPaciente="";
 	if($Paciente!=""){
-		$condicionPaciente=" and  concat(cl.ci_cliente,' ',cl.rut_cliente ,' ',p.nombre_persona )   like '%".$Paciente."%' ";
+		$sqlFiltro=" and  concat(cl.ci_cliente,' ',cl.rut_cliente ,' ',p.nombre_persona )   like '%".$Paciente."%' ";
 	}
-	
+
+    if($num_factura!=""){
+		$sqlFiltro=" and num_factura like '%".$num_factura."%' ";
+	}
 	
 		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo , 
 		(select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
@@ -767,7 +768,7 @@ exit;
 		(select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
 		from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
 		inner join persona p on cod_cliente=cod_persona
-		  where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$condicionPaciente.$condicionlocal." limit 100;";
+		  where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$sqlFiltro." limit 100;";
 
 
    

@@ -1422,7 +1422,8 @@ document.getElementById("divPieImpresiones").innerHTML=paginaPie
 
 
 function buscarVistaConsulta() {	 
-	let paciente =  document.getElementById("inptBuscarFrmPacienteVistaConsulta").value 
+	const paciente =  document.getElementById("inptBuscarFrmPacienteVistaConsulta").value
+	const num_factura= document.getElementById("inptBuscarFrmNumFacturaVistaConsulta").value;
  // alert(paciente)
 	obtener_datos_user();
 	var datos = {
@@ -1430,6 +1431,7 @@ function buscarVistaConsulta() {
 		"passu": passuser,
 		"navegador": navegador,   
 		"Paciente": paciente, 
+		"num_factura": num_factura, 
 		"funt": "buscarVistaConsulta"
 	};
 
