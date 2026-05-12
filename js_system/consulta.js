@@ -583,6 +583,11 @@ var controlVentanaConsulta="";
 function verCerrarAbmVistaConsulta(controlVentana) { 
 	if(document.getElementById("divFrmVistaConsulta").style.display==""){ 
 		$("div[id=divFrmVistaConsulta]").fadeOut(500);	
+		
+		if (ventanaAnterior.length > 0) {
+			document.getElementById(ventanaAnterior[ventanaAnterior.length - 1]).style.display= "none";
+			ventanaAnterior.POP();
+		}
 	}else{	
 		var f = new Date();
 		var dia = f.getDate()

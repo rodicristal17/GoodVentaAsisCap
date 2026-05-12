@@ -668,6 +668,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "style='" + estilos + "' "
     + "onclick='clickEventoAgenda(" + e.id + ", event)'>"
     + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
+    + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
         + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
@@ -1069,7 +1070,8 @@ function verDetalleAgenda(id){
     idAbmAgenda = evento.id;
     document.getElementById('detAgendaId').innerHTML = evento.id;
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
-    document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '') + '<input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">';
+    document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
+    document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorario').innerHTML = (evento.inicio || '') + ' - ' + (evento.fin || '');
     document.getElementById('detAgendaMotivo').innerHTML = evento.motivo || '-';
@@ -1099,6 +1101,7 @@ function verDetalleAgenda(id){
 function cerrarDetalleAgenda(){
     document.getElementById('overlayDetalleAgenda').style.display = 'none';
     document.getElementById('modalDetalleAgenda').style.display = 'none';
+    ventanaAnterior.pop();
 }
 
 function filtrarAgendaLocal(){
@@ -1989,4 +1992,18 @@ function buscarHistorialPacienteCalendario() {
             }
         }
     });
+}
+
+function verHistorialDesdeConsultorio() {
+    const cedula= document.getElementById('detAgendaCedula').textContent;
+
+    if (cedula) {
+        cerrarDetalleAgenda();
+        cerrarAgendaConsultorios();
+        verCerrarAbmVistaConsulta('consulta');
+        document.getElementById('inptBuscarFrmPacienteVistaConsulta').value= cedula;
+        buscarVistaConsulta();
+    } else {
+        ver_vetana_informativa("El paciente no tiene cedula", "", "info");
+    }
 }

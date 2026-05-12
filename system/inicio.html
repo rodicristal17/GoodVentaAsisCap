@@ -11739,13 +11739,6 @@ style='background-color: #b7b7b7;'>
 </table>
 </div>
 
-
-
-
-
-
-
-
 <div class=" vista-consulta principal2" style='display:none'  id="divFrmVistaConsulta">
   <div class="vista-consulta-header">
     <!-- <img src="/GoodVentaAsisCap/iconos/depCuenta.png" alt="Icono" class="icono-btn2" /> -->
@@ -11787,11 +11780,6 @@ style='background-color: #b7b7b7;'>
 
   </div>
 </div>
-
-
-
-
-
 
 <div class='principal2 divMenuG' style='display:none;' id='divAbmConsulta'>
 <table style='width:100%;height:100%;' id='tdEfectoAbmConsulta'>
@@ -22190,6 +22178,11 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <div class='detalle-valor' id='detAgendaPaciente'></div>
                 </div>
 
+                <div class='detalle-item' style='display: none;''>
+                    <span class='detalle-label'>Cedula</span>
+                    <div class='detalle-valor' id='detAgendaCedula'></div>
+                </div>
+
                 <div class='detalle-item'>
                     <span class='detalle-label'>Estado</span>
                     <div class='detalle-valor' id='detAgendaEstado'></div>
@@ -22212,8 +22205,10 @@ onclick='buscarvistaaperturacierrecaja()' />
 
                 <div class='detalle-item'>
                     <span class='detalle-label'>Doctor/a</span>
-                    <div class='detalle-valor' id='detAgendaPresupuesto'>
+                    <div class='detalle-valor'>
+                      <span id='detAgendaPresupuesto'></span>
                       <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
+                      <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
                     </div>
                 </div>
                 

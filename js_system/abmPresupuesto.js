@@ -1680,6 +1680,9 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 			case 'calendario':
 				AbrirAgendaConsultorios(false);
 				break;
+			case 'divAgendaConsultorios':
+				document.getElementById('divAgendaConsultorios').style.display= "";
+				break;
 		}
 	}
 }
