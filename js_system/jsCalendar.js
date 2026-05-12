@@ -671,11 +671,11 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
-        + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
-        + "<div class='agenda-evento-resize' "
+        + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>";
+/*        + "<div class='agenda-evento-resize' "
             + "data-id='" + e.id + "' "
             + "title='Arrastrar para alargar o acortar horario'></div>"
-    + "</div>";
+    + "</div>";*/
 }
 function clickEventoAgenda(id, ev){
     if(ev && ev.defaultPrevented){
@@ -1073,9 +1073,10 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
-    document.getElementById('detAgendaHorario').innerHTML = (evento.inicio || '') + ' - ' + (evento.fin || '');
+    document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
+    document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
     document.getElementById('detAgendaMotivo').innerHTML = evento.motivo || '-';
-    document.getElementById('detAgendaEstado').innerHTML =
+    document.getElementById('detAgendaEstado').value =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
 
     document.getElementById('btnConfirmAgendamiento').style.display= "";
@@ -1101,7 +1102,6 @@ function verDetalleAgenda(id){
 function cerrarDetalleAgenda(){
     document.getElementById('overlayDetalleAgenda').style.display = 'none';
     document.getElementById('modalDetalleAgenda').style.display = 'none';
-    ventanaAnterior.pop();
 }
 
 function filtrarAgendaLocal(){
@@ -1558,19 +1558,44 @@ function cambiarEstadoAgendaDesdeModal(nuevoEstado){
         return;
     }
 
-    actualizarEstadoAgendaServidor(idAgenda, nuevoEstado);
+    actualizarAgenda(idAgenda, '', '', nuevoEstado);
 }
 
-function actualizarEstadoAgendaServidor(idAgenda, nuevoEstado){
+function actualizarHorarioAgendaDesdeModal(){
+    var idAgenda = document.getElementById('detAgendaId').innerHTML;
+    var horaInicio = document.getElementById('detAgendaHorarioInicio').value;
+    var horaFin = document.getElementById('detAgendaHorarioFin').value;
+
+    if(idAgenda == ''){
+        alert('No se encontró el ID del agendamiento.');
+        return;
+    }
+
+    if(horaInicio == '' || horaFin == ''){
+        alert('Debe cargar la hora de inicio y fin.');
+        return;
+    }
+
+    if(horaAMinutos(horaFin) <= horaAMinutos(horaInicio)){
+        alert('La hora fin debe ser mayor a la hora inicio.');
+        return;
+    }
+
+    actualizarAgenda(idAgenda, horaInicio, horaFin, '');
+}
+
+function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
     obtener_datos_user();
 
     var datos = {
         "useru": userid,
         "passu": passuser,
         "navegador": navegador,
-        "funt": "actualizarEstadoCita",
+        "funt": "actualizarCita",
+        "estado": estado,
         "id_agenda": idAgenda,
-        "estado": nuevoEstado
+        "hora_inicio": horaInicio,
+        "hora_fin": horaFin
     };
 
 	verCerrarEfectoCargando("1");
@@ -1598,10 +1623,10 @@ function actualizarEstadoAgendaServidor(idAgenda, nuevoEstado){
                     cerrarDetalleAgenda();
                     cargarAgendaConsultoriosDesdePHP();
                 } else {
-                    alert(resp["mensaje"] || "No se pudo actualizar el estado.");
+                    alert(resp["mensaje"] || "No se pudo actualizar el horario.");
                 }
             } catch (error) {
-                var titulo = "Error actualizar estado agenda: " + error + " \r\n Consola: " + responseText;
+                var titulo = "Error actualizar horario agenda: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
                 console.log(responseText);
             }

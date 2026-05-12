@@ -43,9 +43,9 @@ switch ($funt) {
     case 'redimensionarCita':
         redimensionarCita($mysqli, $useru);
         break;
-		
-	case 'actualizarEstadoCita':
-		actualizarEstadoCita($mysqli, $useru);
+
+    case 'actualizarCita':
+		actualizarCita($mysqli, $useru);
 		break;
 
 	case 'actualizarPresupuestoAgenda':
@@ -385,31 +385,63 @@ function guardarCita($mysqli, $useru){
 
 
 
-function actualizarEstadoCita($mysqli, $useru){
+function actualizarCita($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
-    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
+    $hora_inicio = isset($_POST['hora_inicio']) ? limpiar($mysqli, $_POST['hora_inicio']) : '';
+    $hora_fin = isset($_POST['hora_fin']) ? limpiar($mysqli, $_POST['hora_fin']) : '';
+    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';    
+    $campos = array();
 
-    if($id_agenda == '' || $estado == ''){
+    if($id_agenda == ''){
         echo json_encode(array(
             "1" => "Datos incompletos",
-            "mensaje" => "Faltan datos para actualizar el estado"
+            "mensaje" => "Falta el ID del agendamiento"
         ));
         exit;
     }
 
+    if($hora_inicio != ''){
+        $campos[] = "hora_inicio = '".$hora_inicio."'";
+    }
+
+    if($hora_fin != ''){
+        $campos[] = "hora_fin = '".$hora_fin."'";
+    }
+
+    if($estado != ''){
+        $campos[] = "estado = '".$estado."'";
+    }
+
+    if($hora_inicio != '' && $hora_fin != '' && strtotime($hora_fin) <= strtotime($hora_inicio)){
+        echo json_encode(array(
+            "1" => "Horario inválido",
+            "mensaje" => "La hora fin debe ser mayor a la hora inicio"
+        ));
+        exit;
+    }
+
+    if(count($campos) == 0){
+        echo json_encode(array(
+            "1" => "Datos incompletos",
+            "mensaje" => "No hay datos para actualizar"
+        ));
+        exit;
+    }
+
+    $campos[] = "creado_por = '".$useru."'";
+    $campos[] = "creado_en = NOW()";
+
     $sql = "
         UPDATE agenda SET
-            estado = '".$estado."',
-            creado_por = '".$useru."',
-            creado_en = NOW()
+            ".implode(",\n            ", $campos)."
         WHERE id_agenda = '".$id_agenda."'
         LIMIT 1
     ";
 
     if(!$mysqli->query($sql)){
         echo json_encode(array(
-            "1" => "Error al actualizar estado",
-            "mensaje" => "No se pudo actualizar el estado del agendamiento",
+            "1" => "Error al actualizar cita",
+            "mensaje" => "No se pudo actualizar el agendamiento",
             "sql" => $sql,
             "mysql" => $mysqli->error
         ));
@@ -418,7 +450,7 @@ function actualizarEstadoCita($mysqli, $useru){
 
     echo json_encode(array(
         "1" => "exito",
-        "mensaje" => "Estado actualizado correctamente"
+        "mensaje" => "Agendamiento actualizado correctamente"
     ));
     exit;
 }
@@ -699,17 +731,6 @@ function redimensionarCita($mysqli, $useru){
     ));
     exit;
 }
-
-
-
-
-
-
-
-
-
- 
- 
 
 function cargarpacientes($mysqli){
     $html = "";

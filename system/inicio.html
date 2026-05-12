@@ -22195,7 +22195,10 @@ onclick='buscarvistaaperturacierrecaja()' />
 
                 <div class='detalle-item'>
                     <span class='detalle-label'>Horario</span>
-                    <div class='detalle-valor' id='detAgendaHorario'></div>
+                    <div class='detalle-valor'>
+                      <input id="detAgendaHorarioInicio" style="width: fit-content;" type="time" onchange="actualizarHorarioAgendaDesdeModal()"/> -
+                      <input id="detAgendaHorarioFin" style="width: fit-content;" type="time" onchange="actualizarHorarioAgendaDesdeModal()"/>
+                    </div>
                 </div>
 
                 <div class='detalle-item'>
@@ -22207,7 +22210,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <span class='detalle-label'>Doctor/a</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaPresupuesto'></span>
-                      <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
+                      <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
                       <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
                     </div>
                 </div>

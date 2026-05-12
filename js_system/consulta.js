@@ -585,8 +585,8 @@ function verCerrarAbmVistaConsulta(controlVentana) {
 		$("div[id=divFrmVistaConsulta]").fadeOut(500);	
 		
 		if (ventanaAnterior.length > 0) {
-			document.getElementById(ventanaAnterior[ventanaAnterior.length - 1]).style.display= "none";
-			ventanaAnterior.POP();
+			document.getElementById(ventanaAnterior[ventanaAnterior.length - 1]).style.display= "";
+			ventanaAnterior.pop();
 		}
 	}else{	
 		var f = new Date();

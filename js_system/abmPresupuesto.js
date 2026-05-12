@@ -1682,6 +1682,7 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 				break;
 			case 'divAgendaConsultorios':
 				document.getElementById('divAgendaConsultorios').style.display= "";
+				ventanaAnterior.pop();
 				break;
 		}
 	}
@@ -1781,7 +1782,6 @@ function cargarTratamientoDesdeAgenda() {
 	const nombrePaciente= document.getElementById('detAgendaPaciente').textContent;
 	document.getElementById('inptNombreClientePresupuestoDoc').value= nombrePaciente;
 	buscarClientePorCiVista(document.getElementById('inptNombreClientePresupuestoDoc'),'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto');
-	ventanaAnterior.push('calendario');
 	cerrarDetalleAgenda();
 	cerrarAgendaConsultorios();
 }
