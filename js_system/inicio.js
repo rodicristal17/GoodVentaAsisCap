@@ -17136,6 +17136,150 @@ function cancelarInformeCuentaACobrar(){
 	controldebusquedadInformeCuentaCobrar=false
 	document.getElementById("divProgressInformeCuentaACobrar").style.backgroundColor='#ff5722'
 }
+function escaparHtmlAgendaDeuda(valor) {
+	if (valor === null || valor === undefined) {
+		return "";
+	}
+	return String(valor)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+function generarVistaResumenAgendaDeudas(registros) {
+	var filas = "";
+	if (!Array.isArray(registros)) {
+		return '<div class="text-secondary" style="padding: 8px;">No tiene cuotas atrasadas.</div>';
+	}
+
+	registros.forEach(function (element) {
+		var cuotasAtrasadas = parseInt(element["cuotasatrazadas"], 10);
+		if (isNaN(cuotasAtrasadas) || cuotasAtrasadas <= 0) {
+			return;
+		}
+
+		var nroVenta = element["nrof"] || element["num_factura"] || element["cod_venta"] || "";
+		filas += "<tr>"
+			+ "<td style='padding:5px;text-align:left;border-bottom:1px solid #d7d7d7;'>" + escaparHtmlAgendaDeuda(nroVenta) + "</td>"
+			+ "<td style='padding:5px;text-align:center;border-bottom:1px solid #d7d7d7;'>" + escaparHtmlAgendaDeuda(cuotasAtrasadas) + "</td>"
+			+ "</tr>";
+	});
+
+	if (filas == "") {
+		return '<div class="text-secondary" style="padding: 8px;">No tiene cuotas atrasadas.</div>';
+	}
+
+	// Caso en el cual si existan cuotas pendientes
+	document.getElementById('btnConfirmAgendamiento').style.display= "none";
+    document.getElementById('btnConfirmDeudaAgendamiento').style.display= "";
+
+	return "<table style='width:100%;border-collapse:collapse;font-size:11px;background:#fff;'>"
+		+ "<thead>"
+		+ "<tr>"
+		+ "<th style='padding:5px;text-align:left;background:#f3f5f7;border-bottom:1px solid #cfd6dd;'>Nro. Venta</th>"
+		+ "<th style='padding:5px;text-align:center;background:#f3f5f7;border-bottom:1px solid #cfd6dd;'>Cuotas atrasadas</th>"
+		+ "</tr>"
+		+ "</thead>"
+		+ "<tbody>" + filas + "</tbody>"
+		+ "</table>";
+}
+function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota) {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"fecha1": fecha1,
+		"fecha2": fecha2,
+		"cliente": cliente,
+		"documento": documento,
+		"telefono": telefono,
+		"producto": "",
+		"filtrofecha": filtrofecha,
+		"codlocal": codlocal,
+		"filtro": filtro,
+		"vendedor": vendedor,
+		"funt": "cuentasacobrar",
+		"nro_venta": nro_venta,
+		"cant_cuota": cant_cuota,
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
+		type: "post",
+		xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        //Uload progress
+        xhr.upload.addEventListener("progress" ,function (evt) {
+		var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+         cargarConectividad("enviado",kb,"0")           
+        }, false);
+ //Download progress
+		xhr.addEventListener("progress", function (evt) {
+        var kb=((evt.loaded*1)/1000).toFixed(1)
+		if(kb=="0.0"){
+		kb=0.1;
+		}
+        cargarConectividad("recibido","0",kb)  
+        }, false);
+        return xhr;
+    },
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
+			controldebusquedadInformeCuentaCobrar=false
+			document.getElementById('detAgendaDeudasPendientes').innerHTML= "";
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
+			document.getElementById('detAgendaDeudasPendientes').innerHTML= "";
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+			   if (Respuesta == true) {
+					var datos_buscados = datos[2];
+	
+					switch (ventanaAnterior[ventanaAnterior.length - 1]) {
+						case 'divAgendaConsultorios':
+							document.getElementById('detAgendaDeudasPendientes').innerHTML = generarVistaResumenAgendaDeudas(datos["6"]);
+							break;
+						default:
+							document.getElementById("table_cuentas_a_cobrar").innerHTML = datos_buscados
+							document.getElementById("inptRegistroRegistrocargadoCuentaAcobrar").value =datos[3]
+							document.getElementById("inptRegistroNroHistorialTotalADeudad").value =  datos[4]
+							document.getElementById("inptRegistroHistorialTotalACobrar").value =  datos[5]
+							
+								registrocargadoinformecuentasacobrar=datos[99];
+							totalregistroinformecuentacobrar=datos[100];			
+							
+								 if(totalregistroinformecuentacobrar>registrocargadoinformecuentasacobrar){
+									 var porce=((registrocargadoinformecuentasacobrar*100)/totalregistroinformecuentacobrar).toFixed(0)
+								  document.getElementById("divProgressInformeCuentaACobrar").style.width=porce+"%"
+								 //document.getElementById("table_cuentas_a_cobrar").innerHTML += "<div id='table_mas_cuentas_a_cobrar'></div>"
+								  buscarmascuentaacobrar();
+							 }else{
+								 controldebusquedadInformeCuentaCobrar=false
+							 }
+							break;
+						}
+					}
+					
+			} catch (error) {
+				controldebusquedadInformeCuentaCobrar=false
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
 function buscarcuentaacobrar() {
 if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}		
 	
@@ -17193,94 +17337,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	document.getElementById("inptRegistroHistorialTotalACobrar").value =  ""
 	document.getElementById("table_cuentas_a_cobrar").innerHTML = paginacargando
 
-	obtener_datos_user();
-	var datos = {
-		"useru": userid,
-		"passu": passuser,
-		"navegador": navegador,
-		"fecha1": fecha1,
-		"fecha2": fecha2,
-		"cliente": cliente,
-		"documento": documento,
-		"telefono": telefono,
-		"producto": "",
-		"filtrofecha": filtrofecha,
-		"codlocal": codlocal,
-		"filtro": filtro,
-		"vendedor": vendedor,
-		"funt": "cuentasacobrar",
-		"nro_venta": nro_venta,
-		"cant_cuota": cant_cuota,
-	};
-	$.ajax({
-		data: datos,
-		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
-		type: "post",
-		xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-		var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-         cargarConectividad("enviado",kb,"0")           
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-        cargarConectividad("recibido","0",kb)  
-        }, false);
-        return xhr;
-    },
-		
-		beforeSend: function () {
-		},
-		error: function (jqXHR, textstatus, errorThrowm) {
-			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
-			controldebusquedadInformeCuentaCobrar=false
-		},
-		success: function (responseText) {
-			var Respuesta = responseText;
-			console.log(Respuesta)
-			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
-			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-				Respuesta=respuestaJqueryAjax(Respuesta)
-			   if (Respuesta == true) {
-					var datos_buscados = datos[2];
-					
-					document.getElementById("table_cuentas_a_cobrar").innerHTML = datos_buscados
-					 document.getElementById("inptRegistroRegistrocargadoCuentaAcobrar").value =datos[3]
-	                document.getElementById("inptRegistroNroHistorialTotalADeudad").value =  datos[4]
-	                document.getElementById("inptRegistroHistorialTotalACobrar").value =  datos[5]
-					
-						registrocargadoinformecuentasacobrar=datos[99];
-					totalregistroinformecuentacobrar=datos[100];			
-					
-						 if(totalregistroinformecuentacobrar>registrocargadoinformecuentasacobrar){
-						 	var porce=((registrocargadoinformecuentasacobrar*100)/totalregistroinformecuentacobrar).toFixed(0)
-	                      document.getElementById("divProgressInformeCuentaACobrar").style.width=porce+"%"
-						 //document.getElementById("table_cuentas_a_cobrar").innerHTML += "<div id='table_mas_cuentas_a_cobrar'></div>"
-						  buscarmascuentaacobrar();
-					 }else{
-						 controldebusquedadInformeCuentaCobrar=false
-					 }
-					}
-					
-			} catch (error) {
-				controldebusquedadInformeCuentaCobrar=false
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
-			}
-		}
-	});
+	buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota);
 }
 
 function buscarmascuentaacobrar(c) {

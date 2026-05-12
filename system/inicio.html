@@ -21874,11 +21874,6 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <span>Atendido</span>
                     <b id='lblAtendidoAgenda'>0</b>
                 </div>
-				
-				<div class='agenda-resumen-item'>
-                    <span>En espera</span>
-                    <b id='lblEsperaAgenda'>0</b>
-                </div>
 		
 				<div class='agenda-resumen-item'>
                     <span>Confirmado con deuda</span>
@@ -22026,11 +22021,6 @@ onclick='buscarvistaaperturacierrecaja()' />
               <div class="agenda-resumen-item">
                 <span>Atendido</span>
                 <b id="lblAtendidobmConsultorioAgenda">0</b>
-              </div>
-            
-              <div class="agenda-resumen-item">
-                <span>En espera</span>
-                <b id="lblEsperabmConsultorioAgenda">0</b>
               </div>
             
               <div class="agenda-resumen-item">
@@ -22216,8 +22206,8 @@ onclick='buscarvistaaperturacierrecaja()' />
                 </div>
 
                 <div class='detalle-item'>
-                    <span class='detalle-label'>Consultorio</span>
-                    <div class='detalle-valor' id='detAgendaConsultorio'></div>
+                    <span class='detalle-label'>Deudas pendientes</span>
+                    <div class='detalle-valor' id='detAgendaDeudasPendientes'></div>
                 </div>
 
                 <div class='detalle-item'>
@@ -22237,11 +22227,9 @@ onclick='buscarvistaaperturacierrecaja()' />
         <div class='modal-filtros-footer'>
             <button class='btn-filtro' style='background:#9d457c; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("PRIMERACONSULTA")'>Primera Consulta </button>
 			
-			<button class='btn-filtro' style='background:#07488f; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADOCONDEUDA")'>Confirmado con Deuda</button>
-						
-			<button class='btn-filtro' style='background:#dcb645; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ENESPERA")'>En Espera</button>
-			
-			<button class='btn-filtro' style='background:#3b833e; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADO")'>Confirmado</button>			
+            <button id="btnConfirmDeudaAgendamiento" class='btn-filtro' style='background:#07488f; color:#ffffff;display: none;' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADOCONDEUDA")'>Confirmado con Deuda</button>
+            
+            <button id="btnConfirmAgendamiento" class='btn-filtro' style='background:#3b833e; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADO")'>Confirmado</button>			
 			
             <button class='btn-filtro' style='background:#833b3b; color:#ffffff' onclick='cambiarEstadoAgendaDesdeModal("ATENDIDO")'>Atendido</button>
 			

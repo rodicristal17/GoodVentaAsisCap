@@ -98,7 +98,6 @@ function obtenerDatosAbmConsultorioAgenda(datostr) {
 	document.getElementById('lblCanceladasbmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_8"]').first().html();
 	document.getElementById('lblPrimeraConsultabmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_9"]').first().html();
 	document.getElementById('lblAtendidobmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_10"]').first().html();
-	document.getElementById('lblEsperabmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_11"]').first().html();
 	document.getElementById('lblConDeudabmConsultorioAgenda').innerHTML = $(datostr).find('[id="td_datos_12"]').first().html();
 
 	document.getElementById('inptIDAbmConsultorioAgenda').value = idConsultorio.text().trim();

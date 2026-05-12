@@ -224,7 +224,7 @@ function cargarAgendaConsultorios(){
             
         html += "<div class='agenda-celda-consultorio' onclick='vercerrarModalAbmConsultorioAgenda(true);obtenerDatosAbmConsultorioAgenda(this)'>"
             + "<span id='td_id' style='display:none;'>"+consultorios[i].id+"</span>"
-            + "<span id='td_datos_2'>"+consultorios[i].nombre+"</span>"
+            + "<span id='td_datos_2' style='text-decoration: underline; color: blue;'>"+consultorios[i].nombre+"</span>"
             + "<span id='td_datos_4' style='display:none;'>"+consultorios[i].cod_doctorFK+"</span>"
             + "<span id='td_datos_3'>"+consultorios[i].nombre_doctor+"</span>"
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
@@ -235,7 +235,6 @@ function cargarAgendaConsultorios(){
             + "<span id='td_datos_8' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.canceladas + "</span>"
             + "<span id='td_datos_9' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.PrimeraConsulta + "</span>"
             + "<span id='td_datos_10' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.Atendido + "</span>"
-            + "<span id='td_datos_11' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.EnEspera + "</span>"
             + "<span id='td_datos_12' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.ConDeuda + "</span>"
             + "</div>";
     }
@@ -787,7 +786,6 @@ function calcularTotalesResumenAgenda(fecha, estado, consultorioFiltro){
         canceladas: 0,
         PrimeraConsulta: 0,
         Atendido: 0,
-        EnEspera: 0,
         ConDeuda: 0
     };
     var i, e, filtrarPorConsultorios;
@@ -816,7 +814,6 @@ function calcularTotalesResumenAgenda(fecha, estado, consultorioFiltro){
             if(e.estado === 'CANCELADO'){ totales.canceladas++; }
             if(e.estado === 'PRIMERACONSULTA'){ totales.PrimeraConsulta++; }
             if(e.estado === 'ATENDIDO'){ totales.Atendido++; }
-            if(e.estado === 'ENESPERA'){ totales.EnEspera++; }
             if(e.estado === 'CONFIRMADOCONDEUDA'){ totales.ConDeuda++; }
         }
     }
@@ -833,7 +830,6 @@ function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
     document.getElementById('lblCanceladasAgenda').innerHTML = totales.canceladas;
     document.getElementById('lblPrimeraConsultaAgenda').innerHTML = totales.PrimeraConsulta;
     document.getElementById('lblAtendidoAgenda').innerHTML = totales.Atendido;
-    document.getElementById('lblEsperaAgenda').innerHTML = totales.EnEspera;
     document.getElementById('lblConDeudaAgenda').innerHTML = totales.ConDeuda;
 }
 
@@ -1073,7 +1069,6 @@ function verDetalleAgenda(id){
     idAbmAgenda = evento.id;
     document.getElementById('detAgendaId').innerHTML = evento.id;
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
-    document.getElementById('detAgendaConsultorio').innerHTML = nombreConsultorio;
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '') + '<input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">';
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorario').innerHTML = (evento.inicio || '') + ' - ' + (evento.fin || '');
@@ -1081,6 +1076,8 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaEstado').innerHTML =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
 
+    document.getElementById('btnConfirmAgendamiento').style.display= "";
+    document.getElementById('btnConfirmDeudaAgendamiento').style.display= "none";
     document.getElementById('overlayDetalleAgenda').style.display = '';
     document.getElementById('modalDetalleAgenda').style.display = '';
 
@@ -1093,6 +1090,10 @@ function verDetalleAgenda(id){
     document.getElementById('inptZonaCliente').value= evento.nombre_zona || '';
     document.getElementById('inptFechaNacCliente').value= evento.fechanac || '';
     idFKZona = evento.idzonaFk || '';
+
+    // Evalua si el cliente tiene cuotas pendientes
+    ventanaAnterior.push('divAgendaConsultorios');
+    buscarCuentasPendientes('', '', evento.paciente, evento.ci_cliente, '', '', '', '','' ,'', '');
 }
 
 function cerrarDetalleAgenda(){

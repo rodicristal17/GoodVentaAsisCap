@@ -2,13 +2,13 @@
 
 $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
-include('quitarseparadormiles.php');
-require("conexion.php");
-include("verificar_navegador.php");
-include("buscar_nivel.php");
-include("calcularintereses.php");
+include_once('quitarseparadormiles.php');
+require_once("conexion.php");
+include_once("verificar_navegador.php");
+include_once("buscar_nivel.php");
+include_once("calcularintereses.php");
 // include("calcularInteresDirecto.php");
-include("classTable.php");
+include_once("classTable.php");
 
 
 function verificar($operacion)
@@ -166,8 +166,49 @@ $cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota);
+$informacion = cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota);
+echo json_encode($informacion);	
+exit;
+}
+	if($operacion=="cuentasacobrar")
+{
+$fecha1=$_POST['fecha1'];
+$fecha1 = mb_convert_encoding((string)($fecha1), 'ISO-8859-1', 'UTF-8');
+$fecha2=$_POST['fecha2'];
+$fecha2 = mb_convert_encoding((string)($fecha2), 'ISO-8859-1', 'UTF-8');
+$cliente=$_POST['cliente'];
+$cliente = mb_convert_encoding((string)($cliente), 'ISO-8859-1', 'UTF-8');
+$documento=$_POST['documento'];
+$documento = mb_convert_encoding((string)($documento), 'ISO-8859-1', 'UTF-8');
+$telefono=$_POST['telefono'];
+$telefono = mb_convert_encoding((string)($telefono), 'ISO-8859-1', 'UTF-8');
+$producto=$_POST['producto'];
+$producto = mb_convert_encoding((string)($producto), 'ISO-8859-1', 'UTF-8');
+$filtrofecha=$_POST['filtrofecha'];
+$filtrofecha = mb_convert_encoding((string)($filtrofecha), 'ISO-8859-1', 'UTF-8');
+$codlocal=$_POST['codlocal'];
+$codlocal = mb_convert_encoding((string)($codlocal), 'ISO-8859-1', 'UTF-8');
+$filtro=$_POST['filtro'];
+$filtro = mb_convert_encoding((string)($filtro), 'ISO-8859-1', 'UTF-8');
 
+$vendedor=$_POST['vendedor'];
+$vendedor = mb_convert_encoding((string)($vendedor), 'ISO-8859-1', 'UTF-8');
+
+$nro_venta=$_POST['nro_venta'];
+$nro_venta = mb_convert_encoding((string)($nro_venta), 'ISO-8859-1', 'UTF-8');
+
+$cant_cuota=$_POST['cant_cuota'];
+$cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
+
+// if($codlocal==""){
+// $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
+	// if($controllocal==0){
+		// $codlocal=buscarlocaluser($user);
+	// }
+// }
+$informacion = cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota);
+echo json_encode($informacion);	
+exit;
 }
 	if($operacion=="mascuentasacobrar")
 {
@@ -2277,6 +2318,7 @@ if($totalPago>0){
 	$enabled=" disabled";
 }
 $styleName=CargarStyleTable($styleName);
+$detalleventa = buscar_detalles_venta_en_cuentas_a_cobrar($cod_venta);
 $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr  >
@@ -3229,6 +3271,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
 //echo($sql);exit;
  
 $pagina = "";  
+$registros= array();
 $totalPagado = "0";  
 $totalacobrar = "0";  
 $deuda = "0";  
@@ -3302,6 +3345,7 @@ if($puntoexpedicion!=""){
 	$nrof=$num_factura;
 }
   $totalacobrar=$totalacobrar+$DeudaPendiente;
+$detalleventa= buscar_detalles_venta_en_cuentas_a_cobrar($cod_venta);
 
 $styleName=CargarStyleTable($styleName);
 $pagina.="
@@ -3314,7 +3358,7 @@ $pagina.="
 <td id='td_datos_25' style='width:5%;' >".$documento."</td>
 <td id='' style='width:5%;' >".$telefono."</td>
 <td id='' style='width:5%;' >".$nrof."</td>
-<td id='' style='width:10%;text-align:center' >".buscar_detalles_venta_en_cuentas_a_cobrar($cod_venta)."</td>
+<td id='' style='width:10%;text-align:center' >".$detalleventa."</td>
 <td id='td_datos_5' style='display:none' >".$cobradornombre."</td>
 <td id='td_datos_12' style='display:none'>". number_format($total_venta,'0',',','.')."</td>
 <td id='td_datos_3' style='width:5%' >".$fechapago."</td>
@@ -3341,9 +3385,39 @@ $pagina.="
 </tr>
 </table>";
 
-
-
-
+$registros[] = array(
+	"cod_venta" => $cod_venta,
+	"num_factura" => $num_factura,
+	"plazo" => $plazo,
+	"clientenombre" => $clientenombre,
+	"documento" => $documento,
+	"telefono" => $telefono,
+	"nrof" => $nrof,
+	"detalleventa" => $detalleventa,
+	"cobradornombre" => $cobradornombre,
+	"total_venta" => number_format($total_venta,'0',',','.'),
+	"fechapago" => $fechapago,
+	"cuotas" => $cuotas,
+	"Monto" => number_format($Monto,'0',',','.'),
+	"totalEnDescuento" => number_format($totalEnDescuento,'0',',','.'),
+	"TotalInteresPagado" => number_format($TotalInteresPagado,'0',',','.'),
+	"TotalPagadoSinInteres" => number_format($TotalPagadoSinInteres,'0',',','.'),
+	"TotalEnPagado" => number_format($TotalEnPagado,'0',',','.'),
+	"TotalEnInteres" => number_format($TotalEnInteres,'0',',','.'),
+	"cuotasatrazadas" => $cuotasatrazadas,
+	"TotalDiasAtrasado" => $TotalDiasAtrasado,
+	"DeudaPendiente" => number_format($DeudaPendiente,'0',',','.'),
+	"TotalEnDeuda" => number_format($TotalEnDeuda,'0',',','.'),
+	"TotalAPagar" => number_format($TotalAPagar,'0',',','.'),
+	"totalPagado" => number_format($totalPagado,'0',',','.'),
+	"total_venta_sin_formato" => number_format($total_venta,'0',',','.'),
+	"cod_cobradorFK" => $cod_cobradorFK,
+	"nombrelocal" => $nombrelocal,
+	"tipo_comprobante" => $tipo_comprobante,
+	"puntoexpedicion" => $puntoexpedicion,
+	"TotalApagarSinInteres" => number_format($TotalApagarSinInteres,'0',',','.'),
+	"nombrevendedor1" => $nombrevendedor1
+);
 }
 }
 
@@ -3364,7 +3438,7 @@ $valor= mysqli_num_rows($result);
 $totalregistro=$valor;
 
  mysqli_close($mysqli);   
-$informacion =array("1" => "exito","2" => $pagina,"3" =>number_format($nroRegistro,'0',',','.') ,"4" =>number_format($deuda,'0',',','.'),"5" =>number_format($totalacobrar,'0',',','.'),"99"=> $nroRegistro,"100"=>$totalregistro);
+return array("1" => "exito","2" => $pagina,"3" =>number_format($nroRegistro,'0',',','.') ,"4" =>number_format($deuda,'0',',','.'),"5" =>number_format($totalacobrar,'0',',','.'),"6"=> $registros,"25" => $registros,"registros" => $registros, "99"=> $nroRegistro,"100"=>$totalregistro);
 echo json_encode($informacion);	
 exit;
 }
