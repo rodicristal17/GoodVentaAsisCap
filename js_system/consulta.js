@@ -580,11 +580,11 @@ function GuardarRegistroDetallePreCOnsulta(datos) {
 
 
 var controlVentanaConsulta="";
-function verCerrarAbmVistaConsulta(controlVentana) { 
+function verCerrarAbmVistaConsulta(controlVentana, volverAtras= false) { 
 	if(document.getElementById("divFrmVistaConsulta").style.display==""){ 
 		$("div[id=divFrmVistaConsulta]").fadeOut(500);	
 		
-		if (ventanaAnterior.length > 0) {
+		if (volverAtras && ventanaAnterior.length > 0) {
 			document.getElementById(ventanaAnterior[ventanaAnterior.length - 1]).style.display= "";
 			ventanaAnterior.pop();
 		}
@@ -1794,6 +1794,7 @@ document.getElementById("tdEfectoAbmConsulta").className="magictime vanishOut"
  
 	limpiarcamposConsulta()
 document.getElementById('btn_flotante_consulta').style.display= 'none'
+verCerrarAbmVistaConsulta();
 }else{		
 	document.getElementById('btn_flotante_consulta').style.display= ''
 	document.getElementById("divAbmConsulta").style.display=""
