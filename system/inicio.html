@@ -21915,7 +21915,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                   <span style="font-size:11px;color:#6b7280;margin-top:4px;display:block;">Presione enter para buscar su historial</span>
               </div>
 
-              <div class="filtro-grupo">
+              <div clasinptMotivoAgendas="filtro-grupo">
                   <label for="inptConsultorioAgendaFiltro">Consultorio</label>
                   <select id="inptConsultorioAgendaFiltro" class="catalogo-selectBuscador select-filtro-pro">
                       <option value="">Todos</option>
@@ -22207,18 +22207,13 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <div class='detalle-valor' id='detAgendaEstado'></div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-full'>
                     <span class='detalle-label'>Doctor/a</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaPresupuesto'></span>
-                      <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
-                      <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;">
+                      <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;padding: 6px 12px;">
+                      <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;padding: 6px 12px;">
                     </div>
-                </div>
-                
-                <div class='detalle-item detalle-item-full'>
-                    <span class='detalle-label'>Motivo</span>
-                    <div class='detalle-valor' id='detAgendaMotivo'></div>
                 </div>
             </div>
           </section>
@@ -22231,6 +22226,14 @@ onclick='buscarvistaaperturacierrecaja()' />
               </tr>
             </table>
             <div id="table_historial_paciente_agenda_detalle" class="div_cuerpo_table presupuesto-search-table" style="border: none;"></div>
+          </section>
+          <section class="presupuesto-panel" style="width: 25%;margin-inline: 10px;padding: 5px;">
+            <div class='detalle-item' style="margin-bottom: 10px;height: 85%;">
+                <span class='detalle-label'>Motivo</span>
+                <div class='detalle-valor' id='detAgendaMotivo' style="overflow-y: auto;"></div>
+                <div style="display: none;" id='detAgendaMotivo2'></div>
+            </div>
+            <input id="detAgendaMotivoInput" onkeyup="if (event.keyCode==13) {actualizarMotivoAgendaDesdeModal()}" placeholder="Presione enter para enviar..."/>
           </section>
         </div>
 

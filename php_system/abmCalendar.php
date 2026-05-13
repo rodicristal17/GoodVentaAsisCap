@@ -1,10 +1,10 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-include 'verificar_navegador.php';
-include 'buscar_nivel.php';
-include 'classTable.php';
-include 'conexion.php';
+include_once 'verificar_navegador.php';
+include_once 'buscar_nivel.php';
+include_once 'classTable.php';
+include_once 'conexion.php';
 
 date_default_timezone_set('America/Asuncion');
 
@@ -28,7 +28,7 @@ if ($verificar != 'ok') {
 }
 
 switch ($funt) {
-    case 'cargarAgenda':echo
+    case 'cargarAgenda':
         cargarAgenda($mysqli);
         break;
 
@@ -46,6 +46,10 @@ switch ($funt) {
 
     case 'actualizarCita':
 		actualizarCita($mysqli, $useru);
+		break;
+
+    case 'actualizarMotivoCita':
+		actualizarMotivoCita($mysqli, $useru);
 		break;
 
 	case 'actualizarPresupuestoAgenda':
@@ -390,6 +394,7 @@ function actualizarCita($mysqli, $useru){
     $hora_inicio = isset($_POST['hora_inicio']) ? limpiar($mysqli, $_POST['hora_inicio']) : '';
     $hora_fin = isset($_POST['hora_fin']) ? limpiar($mysqli, $_POST['hora_fin']) : '';
     $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';    
+    $motivo = isset($_POST['motivo']) ? limpiar($mysqli, $_POST['motivo']) : '';
     $campos = array();
 
     if($id_agenda == ''){
@@ -410,6 +415,10 @@ function actualizarCita($mysqli, $useru){
 
     if($estado != ''){
         $campos[] = "estado = '".$estado."'";
+    }
+
+    if($motivo != ''){
+        $campos[] = "motivo = '".$motivo."'";
     }
 
     if($hora_inicio != '' && $hora_fin != '' && strtotime($hora_fin) <= strtotime($hora_inicio)){
@@ -453,6 +462,10 @@ function actualizarCita($mysqli, $useru){
         "mensaje" => "Agendamiento actualizado correctamente"
     ));
     exit;
+}
+
+function actualizarMotivoCita($mysqli, $useru){
+    actualizarCita($mysqli, $useru);
 }
 
 
@@ -626,7 +639,31 @@ function cargarAgenda($mysqli){
         exit;
     }
 
+    $usuariosAgenda = obtenerUsuariosAgenda($mysqli);
+
     while ($row = $resultEventos->fetch_assoc()) {
+        $motivo = normalizarTextoUtf8($row["motivo"]);
+        $motivoLimpio = "";
+
+        if(preg_match_all('/@\{(\d+)\}\s*:\s*(.*?)(?=@\{\d+\}\s*:|$)/s', $motivo, $coincidencias, PREG_SET_ORDER)){
+            foreach($coincidencias as $coincidencia){
+                $codUsuario = $coincidencia[1];
+                $nombreUsuario = isset($usuariosAgenda[$codUsuario]) ? $usuariosAgenda[$codUsuario] : "@{".$codUsuario."}";
+                $contenidoMotivo = nl2br(trim($coincidencia[2]), false);
+
+                $motivoLimpio .= '<div class="sugerencias-container" style="justify-content:flex-start;margin:0;">
+                    <div class="card my-3" style="border-left:5px solid #416c8f;margin: 0px !important;margin-bottom: 7px !important;display:flex;flex-direction:column;gap:0;min-height:auto;">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="padding:6px 10px 4px 10px;gap:10px;min-height:auto;">
+                            <span style="font-size:10pt;line-height:1.15;">'.$nombreUsuario.'</span>
+                        </div>
+                        <div class="card-body" style="padding:4px 10px 8px 10px;">
+                            <p class="card-text" style="font-size: 10pt; text-align:justify;margin:0;line-height:1.35;">'.$contenidoMotivo.'</p>
+                        </div>
+                    </div>
+                </div>';
+            }
+        }
+
         $eventos[] = array(
             "id" => (int)$row["id_agenda"],
             "consultorio" => (int)$row["id_consultorio"],
@@ -644,7 +681,8 @@ function cargarAgenda($mysqli){
             "rut_cliente" => $row["rut_cliente"],
             "cod_cliente" => $row["cod_cliente"],
             "nombre_doctor" => $row["nombre_doctor"],
-            "motivo" => normalizarTextoUtf8($row["motivo"])
+            "motivo" => normalizarTextoUtf8($row["motivo"]),
+            "motivo_limpio" => $motivoLimpio
         );
     }
 
@@ -656,6 +694,48 @@ function cargarAgenda($mysqli){
     exit;
 }
 
+function obtenerUsuariosAgenda($mysqli){
+    $usuarios = array();
+    $sql = "SELECT u.cod_usuario, p.nombre_persona
+            FROM usuario u
+            INNER JOIN persona p ON p.cod_persona = u.cod_usuario";
+
+    $result = $mysqli->query($sql);
+
+    if(!$result){
+        return $usuarios;
+    }
+
+    while($row = $result->fetch_assoc()){
+        $usuarios[$row["cod_usuario"]] = normalizarTextoUtf8($row["nombre_persona"]);
+    }
+
+    return $usuarios;
+}
+
+function buscarUsuarios() {
+    $mysqli=conectar_al_servidor();
+
+    $sql= "SELECT u.*, p.nombre_persona FROM usuario u JOIN persona p ON p.cod_persona = u.cod_usuario WHERE u.estado = 'Activo'";
+    $stmt = $mysqli->prepare($sql);
+    if ( !$stmt->execute()) {
+        $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);
+        echo json_encode($informacion);	
+        exit;
+    }        
+
+    $result = $stmt->get_result();
+    $registros= array();
+    while ($row = $result->fetch_assoc()) {
+        foreach ($row as $key => $value) {
+            $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+        }
+        $registros[] = $reg;
+    }
+
+    $stmt->close();
+    return $registros;
+}
  
 function moverCita($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
@@ -914,6 +994,3 @@ function buscarAgendamiento($mysqli){
     exit;
 }
 ?>
-
-
- 

@@ -5,9 +5,6 @@ include("subir_foto_base64.php");
 include("buscar_nivel.php");
 include("classTable.php");
 
-$operacion = $_POST['funt'];
-$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
-
 function ObtenerDatos($operacion)
 {
 
@@ -841,6 +838,11 @@ if ( ! $stmt->execute()) {
 	 mysqli_close($mysqli); 
 }
 
-ObtenerDatos($operacion);
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	$operacion = $_POST['funt'];
+	$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+
+	ObtenerDatos($operacion);
+}
 
 ?>

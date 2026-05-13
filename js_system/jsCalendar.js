@@ -51,10 +51,8 @@ function cargarAgendaConsultoriosDesdePHP() {
 
             return xhr;
         },
-        beforeSend: function () {
-            // document.getElementById("agendaGridConsultorios").innerHTML = paginacargando;
-        },
         error: function (jqXHR, textstatus, errorThrowm) {
+            console.error(jqXHR, textstatus, errorThrowm);
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
             document.getElementById("agendaGridConsultorios").innerHTML = '';
 	        verCerrarEfectoCargando();
@@ -990,6 +988,12 @@ function verificarAbmConsultorioAgenda() {
 	});
 }
 
+function obtenerMotivoCitaAgendaConCreador(nombreInputElement){
+    var motivo = document.getElementById(nombreInputElement).value;
+
+    return "@{" + userid + "}" + ": " + motivo;
+}
+
 function guardarCitaAgenda(){
     var paciente = document.getElementById('inptPacienteAgenda').value;
     var consultorio = document.getElementById('inptConsultorioAgenda').value;
@@ -997,7 +1001,7 @@ function guardarCitaAgenda(){
     var inicio = document.getElementById('inptHoraInicioAgenda').value;
     var fin = document.getElementById('inptHoraFinAgenda').value;
     var estado = document.getElementById('inptEstadoNuevaCita').value;
-    var motivo = document.getElementById('inptMotivoAgenda').value;
+    var motivo = obtenerMotivoCitaAgendaConCreador('inptMotivoAgenda');
 
     if(paciente === '' || consultorio === '' || fecha === '' || inicio === '' || fin === ''){
         alert('Complete los datos obligatorios de la cita.');
@@ -1075,7 +1079,9 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
-    document.getElementById('detAgendaMotivo').innerHTML = evento.motivo || '-';
+    document.getElementById('detAgendaMotivo').innerHTML = evento.motivo_limpio || '';
+    document.getElementById('detAgendaMotivo2').innerHTML = evento.motivo || '';
+    document.getElementById('detAgendaMotivoInput').value = '';
     document.getElementById('detAgendaEstado').innerHTML =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
 
@@ -1587,6 +1593,69 @@ function actualizarHorarioAgendaDesdeModal(){
     actualizarAgenda(idAgenda, horaInicio, horaFin, '');
 }
 
+function actualizarMotivoAgendaDesdeModal(){
+    obtener_datos_user();
+
+    var idAgenda = document.getElementById('detAgendaId').innerHTML;
+
+    if(idAgenda == ''){
+        alert('No se encontrÃ³ el ID del agendamiento.');
+        return;
+    }
+
+    if(document.getElementById('detAgendaMotivoInput').value == ''){
+        alert('Debe cargar el motivo.');
+        return;
+    }
+
+    var motivo = document.getElementById('detAgendaMotivo2').textContent;
+    motivo += obtenerMotivoCitaAgendaConCreador('detAgendaMotivoInput');
+
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "funt": "actualizarMotivoCita",
+        "id_agenda": idAgenda,
+        "motivo": motivo
+    };
+
+	verCerrarEfectoCargando("1");
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        error: function (jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        	verCerrarEfectoCargando();
+        },
+        success: function (responseText) {
+	        verCerrarEfectoCargando();
+            try {
+                var resp = responseText;
+
+                if (typeof responseText === "string") {
+                    resp = $.parseJSON(responseText);
+                }
+
+                var Respuesta = resp["1"];
+                Respuesta = respuestaJqueryAjax(Respuesta);
+
+                if (Respuesta == true) {
+                    cerrarDetalleAgenda();
+                    cargarAgendaConsultoriosDesdePHP();
+                } else {
+                    alert(resp["mensaje"] || "No se pudo actualizar el motivo.");
+                }
+            } catch (error) {
+                var titulo = "Error actualizar motivo agenda: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+                console.log(responseText);
+            }
+        }
+    });
+}
+
 function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
     obtener_datos_user();
 
@@ -1689,7 +1758,7 @@ function guardarCitaAgenda(){
     var inicio = document.getElementById('inptHoraInicioAgenda').value;
     var fin = document.getElementById('inptHoraFinAgenda').value;
     var estado = document.getElementById('inptEstadoNuevaCita').value;
-    var motivo = document.getElementById('inptMotivoAgenda').value;
+    var motivo = obtenerMotivoCitaAgendaConCreador('inptMotivoAgenda');
 
     if(paciente == ''){
     alert('Debe seleccionar un paciente');
