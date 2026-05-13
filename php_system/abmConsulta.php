@@ -717,9 +717,9 @@ if ($estado == "eliminado") {
 $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' $Style> 
-<td  style='width:20%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
+<td  style='width:5%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
 <td  style='width:60%'>$nombre_producto   $descripcion </td> 
-<td   style='width:20%;text-align: center;'> <span style='
+<td   style='width:25%;text-align: center;'> <span style='
             background: linear-gradient(135deg, #4CAF50, #81C784);
     color: #fff;
     padding: 8px 3px;

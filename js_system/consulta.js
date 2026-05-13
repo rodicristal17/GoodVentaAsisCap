@@ -600,7 +600,9 @@ function verCerrarAbmVistaConsulta(controlVentana, volverAtras= false) {
 		} 
 		// document.getElementById('inptBuscarFrmFechaPaciente').value = f.getFullYear() + "-" + mes + "-" + dia;
 
-		controlVentanaConsulta= controlVentana;
+		if (controlVentana !== undefined && controlVentana !== "") {
+			controlVentanaConsulta= controlVentana;
+		}
 		document.getElementById("divFrmVistaConsulta").style.display="" 
 	}
 }
@@ -1794,12 +1796,33 @@ document.getElementById("tdEfectoAbmConsulta").className="magictime vanishOut"
  
 	limpiarcamposConsulta()
 document.getElementById('btn_flotante_consulta').style.display= 'none'
-verCerrarAbmVistaConsulta();
+verCerrarAbmDetalleConsulta(false);
+verCerrarAbmVistaConsulta("consulta");
 }else{		
 	document.getElementById('btn_flotante_consulta').style.display= ''
 	document.getElementById("divAbmConsulta").style.display=""
     document.getElementById("tdEfectoAbmConsulta").className="magictime slideDownReturn"
 }
+}
+
+function verCerrarAbmDetalleConsulta(mostrar){
+	const detalle = document.getElementById("divAbmDetalleConsulta");
+	if (!detalle) { return; }
+
+	if (mostrar === true) {
+		detalle.style.display = "";
+		document.getElementById("overlayAbmDetalleConsulta").style.display= "";
+		return;
+	}
+
+	if (mostrar === false) {
+		detalle.style.display = "none";
+		document.getElementById("overlayAbmDetalleConsulta").style.display= "none";
+		return;
+	}
+
+	detalle.style.display = detalle.style.display == "" ? "none" : "";
+	document.getElementById("overlayAbmDetalleConsulta").style.display = detalle.style.display == "" ? "none" : "";
 }
 
 
@@ -2039,6 +2062,7 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 					cod_consulta = datos[2];
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
+					verCerrarAbmDetalleConsulta(false)
  
 				}
 			} catch (error) {

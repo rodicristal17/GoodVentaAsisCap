@@ -674,13 +674,20 @@
 }
 
 .modal-detalle-agenda-box{
-    max-width:1000px;
+    max-width:1100px;
 }
 
 .detalle-agenda-grid{
     display:grid;
     grid-template-columns:repeat(2, 1fr);
     gap:14px;
+}
+
+.detalle-layout-responsive{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:10px;
+    align-items:start;
 }
 
 .detalle-item{

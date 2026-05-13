@@ -1073,7 +1073,7 @@ function verDetalleAgenda(id){
     idAbmAgenda = evento.id;
     document.getElementById('detAgendaId').innerHTML = evento.id;
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
-    document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
+    document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente.replace(/\B(?=(\d{3})+(?!\d))/g, ".") || '';
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
@@ -1092,7 +1092,7 @@ function verDetalleAgenda(id){
     // Completa los datos del form de paciente
     idAbmCliente= evento.cod_cliente;
     document.getElementById('inptNombreApellidoCliente').value= evento.paciente || '';
-    document.getElementById('inptNroDocCliente').value= evento.ci_cliente || '';
+    document.getElementById('inptNroDocCliente').value= evento.ci_cliente.replace(/\B(?=(\d{3})+(?!\d))/g, ".") || '';
     document.getElementById('inptNroRucCliente').value= evento.rut_cliente || '';
     document.getElementById('inptNrowhatsappCliente').value= evento.whapp || '';
     document.getElementById('inptZonaCliente').value= evento.nombre_zona || '';
@@ -2044,7 +2044,7 @@ function buscarHistorialPacienteCalendario(controlVentana) {
             seccion.parentElement.style.gridTemplateColumns= 'repeat(2, 1fr)';
             break;
         case 'detalle_agendamiento':
-            paciente = document.getElementById('detAgendaCedula').textContent || '';
+            paciente = document.getElementById('detAgendaCedula').textContent.replaceAll('.', '') || '';
             tabla = document.getElementById("table_historial_paciente_agenda_detalle");
             
             if(paciente.trim() == ''){
@@ -2088,7 +2088,7 @@ function buscarHistorialPacienteCalendario(controlVentana) {
                     if (resp["3"] == 1) {
                         tabla.innerHTML = resp["2"];
                     } else {
-                        alert("Se encontro "+resp["3"]+" pacientes con el mismo CI o nombre");
+                        ver_vetana_informativa("Se encontro "+resp["3"]+" pacientes con el mismo CI o nombre en agendamientos anteriores.");
                         tabla.innerHTML = "";
                     }
                 } else {
