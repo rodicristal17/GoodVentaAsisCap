@@ -61,7 +61,6 @@ function cargarAgendaConsultoriosDesdePHP() {
 	        verCerrarEfectoCargando();
             try {
                 var datosRespuesta = responseText;
-					console.log(datosRespuesta)
                 if (typeof responseText === "string") {
                     datosRespuesta = $.parseJSON(responseText);
                 }
@@ -1644,6 +1643,7 @@ function actualizarMotivoAgendaDesdeModal(){
                 if (Respuesta == true) {
                     cerrarDetalleAgenda();
                     cargarAgendaConsultoriosDesdePHP();
+                    ventanaAnterior.pop();
                 } else {
                     alert(resp["mensaje"] || "No se pudo actualizar el motivo.");
                 }
@@ -1694,6 +1694,7 @@ function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
                 if (Respuesta == true) {
                     cerrarDetalleAgenda();
                     cargarAgendaConsultoriosDesdePHP();
+                    ventanaAnterior.pop();
                 } else {
                     alert(resp["mensaje"] || "No se pudo actualizar el horario.");
                 }
@@ -2047,7 +2048,8 @@ function buscarHistorialPacienteCalendario(controlVentana) {
             tabla = document.getElementById("table_historial_paciente_agenda_detalle");
             
             if(paciente.trim() == ''){
-                ver_vetana_informativa("Faltan datos", "Cedula no es valido", "advertencia");
+                tabla.innerHTML= "No se encontro ningun agendamiento anteriormente.";
+                //ver_vetana_informativa("Faltan datos", "Cedula no es valido", "advertencia");
                 return;
             }
 
