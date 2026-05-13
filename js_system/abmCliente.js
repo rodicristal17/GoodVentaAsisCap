@@ -1276,6 +1276,11 @@ function EnviarClienteDesde() {
 			abmPresupuesto(idabmPresupuesto, "", idFkCliente, null, null);
 			break;
 		case 'presupuestoDoctor':
+			var presupuestoDoctorTieneDatos = (typeof idabmPresupuesto !== "undefined" && idabmPresupuesto) ||
+				(typeof tieneTratamientosPresupuestoDoctor === "function" && tieneTratamientosPresupuestoDoctor());
+			if (presupuestoDoctorTieneDatos && typeof limpirarPresupuesto === "function") {
+				limpirarPresupuesto();
+			}
 			idFkCliente = $(datostr).children('td[id="td_id"]').html();
 			document.getElementById('inptDocumentoClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_2"]').html();	
 			document.getElementById('inptNombreClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_1"]').html();
@@ -1285,7 +1290,6 @@ function EnviarClienteDesde() {
 			if (typeof verPasoPresupuestoDoc === "function") {
 				verPasoPresupuestoDoc(1);
 			}
-			abmPresupuesto(idabmPresupuesto, "", idFkCliente, null, null);
 			break;
 		case 'calendario':
 			AbrirAgendaConsultorios(false);

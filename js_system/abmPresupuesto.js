@@ -34,7 +34,9 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 var idabmPresupuesto= "";
 var pasoVistaPresupuestoDoc = 1;
 var presupuestoDocDropDestinoPlan = "";
-function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK, plan_vendido) {
+var presupuestoGuardando = false;
+function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK, plan_vendido, opciones) {
+	opciones = opciones || {};
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -76,32 +78,55 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
 			console.error(jqXHR.status,textstatus,errorThrowm);
-			ver_vetana_informativa("LO SENTIMOS, HA OCURRIDO UN ERROR", "", "error");
-			limpirarPresupuesto();
+			if (opciones.mostrarError !== false) {
+				ver_vetana_informativa("LO SENTIMOS, HA OCURRIDO UN ERROR", "", "error");
+			}
+			if (opciones.conservarDatosEnError !== true) {
+				limpirarPresupuesto();
+			}
+			if (typeof opciones.onError === "function") {
+				opciones.onError(jqXHR, textstatus, errorThrowm);
+			}
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
+			var ejecutarOnSuccess = false;
+			var datosPresupuesto = null;
 			console.log(Respuesta)
 			try {
 				var datos = $.parseJSON(Respuesta);
+				datosPresupuesto = datos;
 				Respuesta = datos["1"];
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					idabmPresupuesto = datos[2];
-					ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+					if (opciones.silencioso !== true) {
+						ver_vetana_informativa("Datos guardados exitosamente", "", "info");
+					}
 
 					// Actualiza tambien los datos de la agenda
 					if (idAbmAgenda) {
 						asignarCodPresupuestoAgenda();
 					}
+					ejecutarOnSuccess = true;
 				} else {
 					throw new Error(datos);
 				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
+				if (opciones.mostrarError !== false) {
+					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
+				}
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo);
-				limpirarPresupuesto();
+				if (opciones.conservarDatosEnError !== true) {
+					limpirarPresupuesto();
+				}
+				if (typeof opciones.onError === "function") {
+					opciones.onError(error, responseText);
+				}
+			}
+			if (ejecutarOnSuccess && typeof opciones.onSuccess === "function") {
+				opciones.onSuccess(idabmPresupuesto, datosPresupuesto);
 			}
 		}
 	});
@@ -1174,6 +1199,64 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
  
 var totalPresupuesto=0;
 var totalPresupuestoPrioritario=0;
+function tieneTratamientosPresupuestoDoctor() {
+	return !!document.querySelector("#table_vista_producto_presupuestoDetalle_doctor tr[name=tdDetallePresupuesto]");
+}
+
+function validarPresupuestoDoctorListo() {
+	if (!tieneTratamientosPresupuestoDoctor()) {
+		ver_vetana_informativa("Faltan datos", "Primero agrega tratamientos al plan total.", "error");
+		return false;
+	}
+
+	if (!idabmPresupuesto) {
+		ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Revise la conexion e intente agregar el tratamiento nuevamente.", "error");
+		return false;
+	}
+
+	return true;
+}
+
+function crearPresupuestoDoctorSiHaceFalta(callback) {
+	if (idabmPresupuesto) {
+		callback();
+		return true;
+	}
+
+	if (!idFkCliente) {
+		ver_vetana_informativa("Faltan datos", "Favor seleccionar el cliente", "error");
+		return false;
+	}
+
+	if (presupuestoGuardando) {
+		ver_vetana_informativa("Guardando", "Se esta creando el presupuesto, espere un momento.", "info");
+		return false;
+	}
+
+	presupuestoGuardando = true;
+	verCerrarEfectoCargando("1");
+	abmPresupuesto("", "", idFkCliente, null, null, {
+		silencioso: true,
+		mostrarError: false,
+		conservarDatosEnError: true,
+		onSuccess: function () {
+			presupuestoGuardando = false;
+			verCerrarEfectoCargando("");
+			if (!idabmPresupuesto) {
+				ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Intente agregar el tratamiento nuevamente.", "error");
+				return;
+			}
+			callback();
+		},
+		onError: function () {
+			presupuestoGuardando = false;
+			verCerrarEfectoCargando("");
+			ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Revise la conexion e intente agregar el tratamiento nuevamente.", "error");
+		}
+	});
+	return false;
+}
+
 function anhadirPrPresupuesto() {
 	let entrega = "";
 
@@ -1217,7 +1300,7 @@ function anhadirPrPresupuesto() {
 	}
 	
 	if (inptCodigoPresupuesto != "") {
-		if (!idabmPresupuesto || !idFkCliente) {
+		if (!idFkCliente) {
 			ver_vetana_informativa("Faltan datos", "Favor seleccionar el cliente", "error");
 			return false;
 		}
@@ -1242,6 +1325,17 @@ function anhadirPrPresupuesto() {
 				ver_vetana_informativa("Faltan datos", "Error al seleccionar el producto.");
 				return false;
 			}
+		}
+
+		if (!idabmPresupuesto) {
+			if (vistaPresupuestoOrigen == "doctor") {
+				return crearPresupuestoDoctorSiHaceFalta(function () {
+					anhadirPrPresupuesto();
+				});
+			}
+
+			ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Vuelva a seleccionar el cliente e intente nuevamente.", "error");
+			return false;
 		}
 
 		// Agrega al presupuesto existente
@@ -1306,14 +1400,7 @@ function limpirarPresupuesto(){
 }
 
 function limpiarCamposGenerarTratamiento(forzar= false) {
-	if (!forzar && !idabmPresupuesto) {
-		ver_vetana_informativa("Faltan datos", "Primero selecciona un paciente y carga el plan de tratamientos.", "error");
-		return false;
-	}
-
-	const tieneTratamientos = document.querySelector("#table_vista_producto_presupuestoDetalle_doctor tr[name=tdDetallePresupuesto]");
-	if (!forzar && !tieneTratamientos) {
-		ver_vetana_informativa("Faltan datos", "Primero agrega tratamientos al plan total.", "error");
+	if (!forzar && !validarPresupuestoDoctorListo()) {
 		return false;
 	}
 
@@ -1779,6 +1866,7 @@ function presupuestoAVenta(){
 
 function cargarTratamientoDesdeAgenda() {
 	verCerrarAbmDetallesPresupuestoDoc(true);
+	limpirarPresupuesto();
 	const nombrePaciente= document.getElementById('detAgendaPaciente').textContent;
 	document.getElementById('inptNombreClientePresupuestoDoc').value= nombrePaciente;
 	buscarClientePorCiVista(document.getElementById('inptNombreClientePresupuestoDoc'),'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto');
@@ -1787,11 +1875,10 @@ function cargarTratamientoDesdeAgenda() {
 }
 
 function confirmarDatosGuardados() {
-	if (!idabmPresupuesto) {
-		ver_vetana_informativa("Error al guardar", "No se creo el registro del presupuesto, por favor vuelva a seleccionar el cliente", "error");
+	if (!validarPresupuestoDoctorListo()) {
 		return false;
 	}
-	if(confirm('¿Todos los datos son correctos?')){
+	if(confirm('Todos los datos son correctos?')){
 		limpiarCamposGenerarTratamiento(true);
 		verCerrarAbmDetallesPresupuestoDoc(false);
 	}
