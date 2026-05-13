@@ -21910,7 +21910,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                       id="inptBuscarPacienteAgenda" 
                       class="catalogo-selectBuscador input-filtro-pro" 
                       placeholder="Escriba el nombre o CI del paciente..." 
-                      onkeyup="if(event.keyCode == 13){buscarHistorialPacienteCalendario()}else{filtrarAgendaLocal()}" 
+                      onkeyup="if(event.keyCode == 13){buscarHistorialPacienteCalendario('filtro')}else{filtrarAgendaLocal()}" 
                   />
                   <span style="font-size:11px;color:#6b7280;margin-top:4px;display:block;">Presione enter para buscar su historial</span>
               </div>
@@ -21940,7 +21940,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                   </select>
               </div>
           </section>
-          <section class="form-section" style="gap: unset; height: fit-content;display: none;" id="seccion_historial_agenda">
+          <section class="form-section presupuesto-panel" style="gap: unset; height: fit-content;display: none;" id="seccion_historial_agenda">
             <table class="tableCabeceraRegistro">
               <tr>
                 <td class="td_registro" style="width: 30%">FECHA</td>
@@ -21948,7 +21948,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <td class="td_registro" style="width: 30%">ESTADO</td>
               </tr>
             </table>
-            <div id="table_historial_paciente_agenda" class="div_cuerpo_table presupuesto-search-table"></div>
+            <div id="table_historial_paciente_agenda" class="div_cuerpo_table presupuesto-search-table" style="border: none;"></div>
           </section>
         </div>
 
@@ -22166,16 +22166,12 @@ onclick='buscarvistaaperturacierrecaja()' />
             <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda()'>×</button>
         </div>
 
-        <div class='modal-filtros-body'>
+        <div class='modal-filtros-body' style="display: flex;">
+          <section class="form-section" style="display: grid;margin-inline: 10px;">
             <div class='detalle-agenda-grid'>
                 <div class='detalle-item' style="display:none;">
                     <span class='detalle-label'>ID</span>
                     <div class='detalle-valor' id='detAgendaId'></div>
-                </div>
-
-                <div class='detalle-item'>
-                    <span class='detalle-label'>Paciente</span>
-                    <div class='detalle-valor' id='detAgendaPaciente'></div>
                 </div>
 
                 <div class='detalle-item'>
@@ -22184,8 +22180,8 @@ onclick='buscarvistaaperturacierrecaja()' />
                 </div>
 
                 <div class='detalle-item'>
-                    <span class='detalle-label'>Estado</span>
-                    <div class='detalle-valor' id='detAgendaEstado'></div>
+                    <span class='detalle-label'>Paciente</span>
+                    <div class='detalle-valor' id='detAgendaPaciente'></div>
                 </div>
 
                 <div class='detalle-item'>
@@ -22207,6 +22203,11 @@ onclick='buscarvistaaperturacierrecaja()' />
                 </div>
 
                 <div class='detalle-item'>
+                    <span class='detalle-label'>Estado</span>
+                    <div class='detalle-valor' id='detAgendaEstado'></div>
+                </div>
+
+                <div class='detalle-item'>
                     <span class='detalle-label'>Doctor/a</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaPresupuesto'></span>
@@ -22220,6 +22221,17 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <div class='detalle-valor' id='detAgendaMotivo'></div>
                 </div>
             </div>
+          </section>
+          <section class="presupuesto-panel" style="width: 25%;margin-inline: 10px;padding: 5px;">
+            <table class="tableCabeceraRegistro">
+              <tr>
+                <td class="td_registro" style="width: 30%">FECHA</td>
+                <td class="td_registro" style="width: 40%">HORARIO</td>
+                <td class="td_registro" style="width: 30%">ESTADO</td>
+              </tr>
+            </table>
+            <div id="table_historial_paciente_agenda_detalle" class="div_cuerpo_table presupuesto-search-table" style="border: none;"></div>
+          </section>
         </div>
 
         <div class='modal-filtros-footer'>

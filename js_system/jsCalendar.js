@@ -1098,6 +1098,8 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaDeudasPendientes').innerHTML = 'Cargando...'
     ventanaAnterior.push('divAgendaConsultorios');
     buscarCuentasPendientes('', '', evento.paciente, evento.ci_cliente, '', '', '', '','' ,'', '');
+    document.getElementById('table_historial_paciente_agenda_detalle').innerHTML = 'Cargando...'
+    buscarHistorialPacienteCalendario('detalle_agendamiento');
 }
 
 function cerrarDetalleAgenda(){
@@ -1952,24 +1954,38 @@ function toggleTema() {
     }
 }
 
-function buscarHistorialPacienteCalendario() {
-    obtener_datos_user();
+function buscarHistorialPacienteCalendario(controlVentana) {
+    let paciente= '';
+    let tabla;
+    switch (controlVentana) {
+        case 'filtro':
+            paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
+            tabla = document.getElementById("table_historial_paciente_agenda");
+            var seccion = document.getElementById("seccion_historial_agenda");
 
-    var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
-    var seccion = document.getElementById("seccion_historial_agenda");
-    var tabla = document.getElementById("table_historial_paciente_agenda");
+            if(paciente.trim() == ''){
+                seccion.style.display = "none";
+                seccion.parentElement.style.gridTemplateColumns = '1fr';
+                tabla.innerHTML = "";
+                return;
+            }
 
-    if(paciente.trim() == ''){
-        seccion.style.display = "none";
-        seccion.parentElement.style.gridTemplateColumns = '1fr';
-        tabla.innerHTML = "";
-        return;
+            seccion.style.display = "flex";
+            seccion.parentElement.style.gridTemplateColumns= 'repeat(2, 1fr)';
+            break;
+        case 'detalle_agendamiento':
+            paciente = document.getElementById('detAgendaCedula').textContent || '';
+            tabla = document.getElementById("table_historial_paciente_agenda_detalle");
+            
+            if(paciente.trim() == ''){
+                ver_vetana_informativa("Faltan datos", "Cedula no es valido", "advertencia");
+                return;
+            }
+
+            break;
     }
-
-    seccion.style.display = "flex";
-    seccion.parentElement.style.gridTemplateColumns= 'repeat(2, 1fr)';
-    var pacienteBuscado = paciente;
-
+    
+    obtener_datos_user();
     var datos = {
         "useru": userid,
         "passu": passuser,
@@ -1991,10 +2007,6 @@ function buscarHistorialPacienteCalendario() {
         },
         success: function (responseText) {
             try {
-                if((document.getElementById('inptBuscarPacienteAgenda').value || '') != pacienteBuscado){
-                    return;
-                }
-
                 var resp = responseText;
 
                 if (typeof responseText === "string") {
