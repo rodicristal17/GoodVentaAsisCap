@@ -1305,14 +1305,14 @@ function limpirarPresupuesto(){
 	actualizarResumenPacientePresupuestoDoc()
 }
 
-function limpiarCamposGenerarTratamiento() {
-	if (!idabmPresupuesto) {
+function limpiarCamposGenerarTratamiento(forzar= false) {
+	if (!forzar && !idabmPresupuesto) {
 		ver_vetana_informativa("Faltan datos", "Primero selecciona un paciente y carga el plan de tratamientos.", "error");
 		return false;
 	}
 
 	const tieneTratamientos = document.querySelector("#table_vista_producto_presupuestoDetalle_doctor tr[name=tdDetallePresupuesto]");
-	if (!tieneTratamientos) {
+	if (!forzar && !tieneTratamientos) {
 		ver_vetana_informativa("Faltan datos", "Primero agrega tratamientos al plan total.", "error");
 		return false;
 	}
@@ -1784,4 +1784,15 @@ function cargarTratamientoDesdeAgenda() {
 	buscarClientePorCiVista(document.getElementById('inptNombreClientePresupuestoDoc'),'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto');
 	cerrarDetalleAgenda();
 	cerrarAgendaConsultorios();
+}
+
+function confirmarDatosGuardados() {
+	if (!idabmPresupuesto) {
+		ver_vetana_informativa("Error al guardar", "No se creo el registro del presupuesto, por favor vuelva a seleccionar el cliente", "error");
+		return false;
+	}
+	if(confirm('¿Todos los datos son correctos?')){
+		limpiarCamposGenerarTratamiento(true);
+		verCerrarAbmDetallesPresupuestoDoc(false);
+	}
 }

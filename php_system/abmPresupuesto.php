@@ -197,7 +197,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
                 $sqlFiltro .= "fecha_create >= '$value'";
                 break;
             case 'fecha_fin':
-                $sqlFiltro .= "fecha_create <= '$value'";
+                $sqlFiltro .= "fecha_create <= '$value 23:59:59'";
                 break;
             case 'nombre_cedula_cliente':
                 $sqlFiltro .= "((SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) like '%$value%' OR (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK) LIKE '%$value%')";

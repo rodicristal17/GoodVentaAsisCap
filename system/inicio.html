@@ -8045,7 +8045,7 @@ ACCION
                 <label>Precio:</label>
                 <input type="text" class="inputText" id="inptPrecioPresupuestoDoc"
                   onkeyup="calcular_total_Presupuesto()">
-                <select id="inpTSeleccCostoPresupuesto" style='display:none;' class="inputSelect"
+                <select id="inpTSeleccCostoPresupuestoDoc" style='display:none;' class="inputSelect"
                   onchange="seleccionarpreciospresupuesto(this)"></select>
               </div>
 
@@ -8117,7 +8117,7 @@ ACCION
     <div>
       <input type="button" value="Volver atras" class="btn4" onclick="verPasoPresupuestoDoc(1)"
         style="width:190px;">
-      <input type="button" value="Guardar todo" class="btn4" onclick="if(confirm('¿Todos los datos son correctos?')){limpiarCamposGenerarTratamiento();verCerrarAbmDetallesPresupuestoDoc(false);}"
+      <input type="button" value="Guardar todo" class="btn4" onclick="confirmarDatosGuardados()"
         style="width:190px;">
     </div>
   </div>
@@ -22178,7 +22178,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <div class='detalle-valor' id='detAgendaPaciente'></div>
                 </div>
 
-                <div class='detalle-item' style='display: none;''>
+                <div class='detalle-item'>
                     <span class='detalle-label'>Cedula</span>
                     <div class='detalle-valor' id='detAgendaCedula'></div>
                 </div>

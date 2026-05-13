@@ -671,11 +671,11 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
-        + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>";
+        + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
 /*        + "<div class='agenda-evento-resize' "
             + "data-id='" + e.id + "' "
-            + "title='Arrastrar para alargar o acortar horario'></div>"
-    + "</div>";*/
+            + "title='Arrastrar para alargar o acortar horario'></div>"*/
+    + "</div>";
 }
 function clickEventoAgenda(id, ev){
     if(ev && ev.defaultPrevented){
@@ -1076,7 +1076,7 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
     document.getElementById('detAgendaMotivo').innerHTML = evento.motivo || '-';
-    document.getElementById('detAgendaEstado').value =
+    document.getElementById('detAgendaEstado').innerHTML =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
 
     document.getElementById('btnConfirmAgendamiento').style.display= "";
@@ -1095,6 +1095,7 @@ function verDetalleAgenda(id){
     idFKZona = evento.idzonaFk || '';
 
     // Evalua si el cliente tiene cuotas pendientes
+    document.getElementById('detAgendaDeudasPendientes').innerHTML = 'Cargando...'
     ventanaAnterior.push('divAgendaConsultorios');
     buscarCuentasPendientes('', '', evento.paciente, evento.ci_cliente, '', '', '', '','' ,'', '');
 }
