@@ -4,6 +4,5 @@ php_system/conexion.php
 *.pdf
 *.gz
 /archivoscheque
-syscvxco_ac.sql
 
 .vscode/
