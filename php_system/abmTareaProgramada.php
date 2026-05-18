@@ -579,6 +579,10 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
         echo json_encode($informacion);
         exit;
     }
+	
+	 date_default_timezone_set('America/Asuncion');
+	 
+	 $fecha_insert = date("Y-m-d H:i:s");
 
     $mysqli = conectar_al_servidor();
 
@@ -586,7 +590,7 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 
         $consulta1 = "UPDATE tareas_programadas_asignadas 
                       SET estado_tarea = ?,
-                          fecha_completada = NOW(),
+                          fecha_completada = '".$fecha_insert."',
                           fecha_update = NOW()
                       WHERE cod_tarea_asignada = ?
                       AND cod_usuarioFK = ?";
@@ -595,7 +599,7 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 
         $consulta1 = "UPDATE tareas_programadas_asignadas 
                       SET estado_tarea = ?,
-                          fecha_completada = NULL,
+                          fecha_completada = '".$fecha_insert."',
                           fecha_update = NOW()
                       WHERE cod_tarea_asignada = ?
                       AND cod_usuarioFK = ?";
