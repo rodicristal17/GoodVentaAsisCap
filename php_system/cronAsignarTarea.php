@@ -1,3 +1,9 @@
+<?php
+
+require("conexion.php");
+
+generarTareasDiariasAutomaticas();
+
 function generarTareasDiariasAutomaticas()
 {
     date_default_timezone_set('America/Asuncion');
@@ -24,12 +30,28 @@ function generarTareasDiariasAutomaticas()
     }
 
     if ($campo_dia == "") {
-        $informacion = array("1" => "error", "mensaje" => "No se pudo determinar el día.");
+        $informacion = array(
+            "1" => "error",
+            "mensaje" => "No se pudo determinar el día."
+        );
         echo json_encode($informacion);
         exit;
     }
 
     $mysqli = conectar_al_servidor();
+
+    if (!$mysqli) {
+        $informacion = array(
+            "1" => "error",
+            "mensaje" => "No se pudo conectar a la base de datos."
+        );
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if (method_exists($mysqli, "set_charset")) {
+        $mysqli->set_charset("utf8mb4");
+    }
 
     $sql = "SELECT 
                 cod_tarea_diaria,
@@ -39,31 +61,43 @@ function generarTareasDiariasAutomaticas()
             FROM tareas_programadas_diarias
             WHERE estado = 'Activo'
             AND ".$campo_dia." = 'Si'
-            AND (fecha_inicio IS NULL OR fecha_inicio <= ?)
-            AND (fecha_fin IS NULL OR fecha_fin >= ?)
-            AND (ultima_fecha_generada IS NULL OR ultima_fecha_generada <> ?)";
+            AND (fecha_inicio IS NULL OR fecha_inicio <= '".$fecha_hoy."')
+            AND (fecha_fin IS NULL OR fecha_fin >= '".$fecha_hoy."') ";
+ 
 
     $stmt = $mysqli->prepare($sql);
 
     if (!$stmt) {
-        $informacion = array("1" => "error", "mensaje" => "Error al preparar generación: " . $mysqli->error, "sql" => $sql);
+        $informacion = array(
+            "1" => "error",
+            "mensaje" => "Error al preparar generación: " . $mysqli->error,
+            "sql" => $sql
+        );
         echo json_encode($informacion);
         exit;
     }
 
-    $ss = "sss";
-    $stmt->bind_param($ss, $fecha_hoy, $fecha_hoy, $fecha_hoy);
+    // $ss = "sss";
+    // $stmt->bind_param($ss, $fecha_hoy, $fecha_hoy, $fecha_hoy);
 
     if (!$stmt->execute()) {
-        $informacion = array("1" => "error", "mensaje" => "Error al buscar reglas diarias: " . $stmt->error, "sql" => $sql);
+        $informacion = array(
+            "1" => "error",
+            "mensaje" => "Error al buscar reglas diarias: " . $stmt->error,
+            "sql" => $sql
+        );
         echo json_encode($informacion);
         exit;
     }
 
     $result = $stmt->get_result();
+
     $generadas = 0;
+    $procesadas = 0;
 
     while ($row = mysqli_fetch_assoc($result)) {
+
+        $procesadas++;
 
         $cod_tarea_diaria = $row["cod_tarea_diaria"];
         $cod_tareaFK = $row["cod_tareaFK"];
@@ -78,8 +112,29 @@ function generarTareasDiariasAutomaticas()
                          LIMIT 1";
 
         $stmtVerificar = $mysqli->prepare($sqlVerificar);
+
+        if (!$stmtVerificar) {
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al preparar verificación: " . $mysqli->error,
+                "sql" => $sqlVerificar
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+		$ss="sss";
         $stmtVerificar->bind_param($ss, $cod_tareaFK, $cod_usuarioFK, $fecha_hoy);
-        $stmtVerificar->execute();
+
+        if (!$stmtVerificar->execute()) {
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al verificar tarea: " . $stmtVerificar->error,
+                "sql" => $sqlVerificar
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+
         $resultVerificar = $stmtVerificar->get_result();
 
         if (mysqli_num_rows($resultVerificar) == 0) {
@@ -102,6 +157,17 @@ function generarTareasDiariasAutomaticas()
                           (?, ?, ?, ?, ?, ?, ?)";
 
             $stmtInsert = $mysqli->prepare($sqlInsert);
+
+            if (!$stmtInsert) {
+                $informacion = array(
+                    "1" => "error",
+                    "mensaje" => "Error al preparar inserción: " . $mysqli->error,
+                    "sql" => $sqlInsert
+                );
+                echo json_encode($informacion);
+                exit;
+            }
+
             $sssInsert = "sssssss";
 
             $stmtInsert->bind_param(
@@ -117,14 +183,14 @@ function generarTareasDiariasAutomaticas()
 
             if ($stmtInsert->execute()) {
                 $generadas++;
-            }
-
-            $stmt,
-                $fecha_insert
-            );
-
-            if ($stmtInsert->execute()) {
-                $generadas++;
+            } else {
+                $informacion = array(
+                    "1" => "error",
+                    "mensaje" => "Error al insertar tarea asignada: " . $stmtInsert->error,
+                    "sql" => $sqlInsert
+                );
+                echo json_encode($informacion);
+                exit;
             }
 
             $stmtInsert->close();
@@ -138,16 +204,46 @@ function generarTareasDiariasAutomaticas()
                       WHERE cod_tarea_diaria = ?";
 
         $stmtUpdate = $mysqli->prepare($sqlUpdate);
+
+        if (!$stmtUpdate) {
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al preparar actualización: " . $mysqli->error,
+                "sql" => $sqlUpdate
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+
         $ssUpdate = "ss";
         $stmtUpdate->bind_param($ssUpdate, $fecha_hoy, $cod_tarea_diaria);
-        $stmtUpdate->execute();
+
+        if (!$stmtUpdate->execute()) {
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al actualizar regla diaria: " . $stmtUpdate->error,
+                "sql" => $sqlUpdate
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+
         $stmtUpdate->close();
     }
 
     $stmt->close();
     mysqli_close($mysqli);
 
-    $informacion = array("1" => "exito", "2" => $generadas);
+    $informacion = array(
+        "1" => "exito",
+        "2" => $generadas,
+        "procesadas" => $procesadas,
+        "fecha" => $fecha_hoy,
+        "dia" => $campo_dia
+    );
+
     echo json_encode($informacion);
     exit;
 }
+
+?>

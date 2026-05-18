@@ -93,9 +93,9 @@ function verCerrarAbmTareaProgramada() {
 
     } else {
 
-        if (controlacceso("VERFORMULARIOTAREAPROGRAMADA", "accion") == false) {
-            return;
-        }
+        // if (controlacceso("VERFORMULARIOTAREAPROGRAMADA", "accion") == false) {
+            // return;
+        // }
 
         document.getElementById("divAbmTareaProgramada").style.display = "";
     }
@@ -148,9 +148,9 @@ function verCerrarVentanaAbmTareaProgramada(d, l) {
 
         if (l == "1") {
 
-            if (controlacceso("INSERTARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
-                return;
-            }
+            // if (controlacceso("INSERTARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
+                // return;
+            // }
 
             limpiarcamposTareaProgramada();
         }
@@ -169,9 +169,9 @@ function verCerrarVentanaAbmTareaProgramada(d, l) {
 
 function verVentanaEditarTareaProgramada() {
 
-    if (controlacceso("EDITARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
-        return;
-    }
+    // if (controlacceso("EDITARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
+        // return;
+    // }
 
     if (idAbmTareaProgramada == "") {
         ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
@@ -234,17 +234,17 @@ function verificarcamposTareaProgramada() {
 
         accion = "editar";
 
-        if (controlacceso("EDITARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
-            return;
-        }
+        // if (controlacceso("EDITARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
+            // return;
+        // }
 
     } else {
 
         accion = "nuevo";
 
-        if (controlacceso("INSERTARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
-            return;
-        }
+        // if (controlacceso("INSERTARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
+            // return;
+        // }
     }
 
     abmTareaProgramada(
@@ -385,9 +385,9 @@ function abmTareaProgramada(id, nombre, hora, tipo, accion) {
 
 function buscarabmTareaProgramada() {
 
-    if (controlacceso("BUSCARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
-        return;
-    }
+    // if (controlacceso("BUSCARFORMULARIOTAREAPROGRAMADA", "accion") == false) {
+        // return;
+    // }
 
     var codigo = obtenerValorTareaProgramada("inptBuscarAbmTareaProgramada1");
     var nombre = obtenerValorTareaProgramada("inptBuscarAbmTareaProgramada2");
