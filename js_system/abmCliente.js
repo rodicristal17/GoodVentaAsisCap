@@ -1198,6 +1198,26 @@ function obtenerdatosvistacliente(datostr) {
 	datostr.className = 'tableRegistroSelec'
 	IdClienteFKCuentas = $(datostr).children('td[id="td_id"]').html();
     elementoCliente=datostr;
+
+	// Completa los datos del abmCliente
+	document.getElementById('inptNombreApellidoCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
+	document.getElementById('inptRegistroSeleccCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
+	document.getElementById('inptNroDocCliente').value=$(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById('inptNroTelefCliente').value=$(datostr).children('td[id="td_datos_4"]').html();
+	document.getElementById('inptNrowhatsappCliente').value=$(datostr).children('td[id="td_datos_7"]').html();
+	document.getElementById('inptDireccionCliente').value=$(datostr).children('td[id="td_datos_3"]').html();
+	document.getElementById('inptReferenciaCliente').value=$(datostr).children('td[id="td_datos_5"]').html();
+	document.getElementById('inptCalificaCliente').value=$(datostr).children('td[id="td_datos_6"]').html();
+	document.getElementById('inptEstadoCliente').value=$(datostr).children('td[id="td_datos_8"]').html();
+	document.getElementById('inptZonaCliente').value=$(datostr).children('td[id="td_datos_10"]').html();
+	document.getElementById('inptNroRucCliente').value=$(datostr).children('td[id="td_datos_13"]').html();
+	fotocliente1= $(datostr).children('td[id="td_datos_11"]').html();
+	fotocliente2= $(datostr).children('td[id="td_datos_12"]').html();
+	$("div[id=imgFotoCliente1]").css({"background-image":"url("+fotocliente1+")"})
+	$("div[id=imgFotoCliente2]").css({"background-image":"url("+fotocliente2+")"})
+	idAbmCliente= $(datostr).children('td[id="td_id"]').html();
+	idFKZona= $(datostr).children('td[id="td_datos_9"]').html();
+
 	buscarcuentasClienteCancelados()
 	buscarcuentasClientePendientes()	
 }
