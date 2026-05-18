@@ -10839,12 +10839,10 @@ function seleccionarLocalUSer(){
 		
 		if(controlacceso2("CAMBIARLOCAL","accion")==false){contrlLocal="NO";}
  
-		if(contrlLocal=="NO"){
+		/* if(contrlLocal=="NO"){
 					
 			document.getElementById("inptLocalAgendaFiltro").disabled=true
-		}
-	
-					
+		} */				
 }
 
 /*

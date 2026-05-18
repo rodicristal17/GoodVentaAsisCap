@@ -1143,6 +1143,7 @@ function AbrirAgendaConsultorios(ir_hoy= true){
         document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
     }
     cargarAgendaConsultoriosDesdePHP();
+    buscarOptionLocalesCalendario();
 }
 
 /* ===========================
@@ -2115,4 +2116,62 @@ function verHistorialDesdeConsultorio() {
     } else {
         ver_vetana_informativa("El paciente no tiene cedula", "", "info");
     }
+}
+
+function buscarOptionLocalesCalendario(){
+    if(controlacceso("OBTENERTODOSLOCALESCALENDARIO","accion")==false){ return;}
+
+    var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "buscaroptionlogin"
+	};
+	$.ajax({
+
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
+		type: "post",
+		xhr: function () {
+            var xhr = new window.XMLHttpRequest();
+            //Uload progress
+            xhr.upload.addEventListener("progress" ,function (evt) {
+            var kb=((evt.loaded*1)/1000).toFixed(1)
+            if(kb=="0.0"){
+            kb=0.1;
+            }
+            cargarConectividad("enviado",kb,"0")           
+            }, false);
+    //Download progress
+            xhr.addEventListener("progress", function (evt) {
+            var kb=((evt.loaded*1)/1000).toFixed(1)
+            if(kb=="0.0"){
+            kb=0.1;
+            }
+            cargarConectividad("recibido","0",kb)  
+            }, false);
+            return xhr;
+        },
+		error: function (jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+
+			var Respuesta = responseText;
+			console.log(Respuesta)
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				 Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+                    document.getElementById('inptLocalAgendaFiltro').innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados;
+                }
+            } catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
 }
