@@ -1527,8 +1527,8 @@ function ObtenerdatosAbmConsulta(elemento) {
 			buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 			vercuotasatrazadas(cod_ventaFKConsulta)
 			buscarPacienteConsulta()	
-			buscarVistaGaleriaFoto();
 			buscarResumenAntecedenteConsulta()
+			buscarVistaGaleriaFoto();
 			verCerrarAbmConsulta()
 			break;
 		case "interConsulta":
@@ -2306,7 +2306,8 @@ function obtenerdatostrConsultaTratamiento(datostr) {
 	let porcentaje = $(datostr).children('td[id="td_datos_1"]').html()
 	mostrarValorSlider(parseInt(porcentaje))
 	verCerrarCargarPorcentajeProgreso()
-	verEvolucion()()
+	verEvolucion()
+	verCerrarAbmConsulta();
 }
 
 function verCerrarCargarPorcentajeProgreso(){
@@ -2314,6 +2315,7 @@ function verCerrarCargarPorcentajeProgreso(){
 	if(document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display==""){
 	document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display="none"
 	mostrarValorSlider(0)
+	verCerrarAbmConsulta();
 	}else{		
 		
 		$("div[id=divCargarTratamientoPorcentajeProgreso]").fadeIn(500);
