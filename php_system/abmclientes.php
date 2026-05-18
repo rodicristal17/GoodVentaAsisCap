@@ -384,7 +384,7 @@ if ( ! $stmt->execute()) {
 			   $pagina.="<div class='divFloat2' style='width: 24%;margin: 4px;'>
 			  <center>
 			  <table class='divMenub2'  id='$codigo'  style='  width: 100%;  height: 230px;  border: 1px solid #aba6a6;'>
-				<tr id='tbSelecRegistroImagen' onclick='SeleccionarItemImagenGaleriaFoto(this)' >
+				<tr id='tbSelecRegistroImagen' onclick='SeleccionarItemImagenGaleriaFoto(this,\"divAbmConsulta\");' >
 				<td>
 				<div  class='imgFotoCi' style='background-image: url(".$archivourl.")'></div>
 				<center>

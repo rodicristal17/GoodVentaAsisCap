@@ -1769,10 +1769,19 @@ function VerCargarFotosCliente(d){
 	if(d == "2"){
 		document.getElementById('divVistaDocumento').style.display = "none"
 		document.getElementById("docVisor").setAttribute('src',"");
+
+		switch (ventanaAnterior[ventanaAnterior.length-1]) {
+			case "divAbmConsulta":
+				verCerrarAbmConsulta();
+				ventanaAnterior.pop();
+				break;
+		}
+
 		let aumentados= document.getElementsByClassName("magnifier-class");
 		aumentados.forEach(element => {
 			element.remove();
 		});
+
 		return;
 	}
 	

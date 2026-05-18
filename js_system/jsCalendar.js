@@ -2104,7 +2104,7 @@ function buscarHistorialPacienteCalendario(controlVentana) {
 }
 
 function verHistorialDesdeConsultorio() {
-    const cedula= document.getElementById('detAgendaCedula').textContent;
+    const cedula= document.getElementById('detAgendaCedula').textContent.replaceAll('.', '');
 
     if (cedula) {
         cerrarDetalleAgenda();

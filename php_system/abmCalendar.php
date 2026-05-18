@@ -195,11 +195,9 @@ function guardarPacienteAgenda($mysqli, $useru){
     try {
         $sqlPersona = "INSERT INTO persona (
                             nombre_persona, 
-                            telefono,
                             direccion 
                         ) VALUES (
                             '".$nombre."', 
-                            '".$telefono."',
                             '".$direccion."' 
                         )";
 
@@ -212,6 +210,7 @@ function guardarPacienteAgenda($mysqli, $useru){
         $sqlCliente = "INSERT INTO cliente (
                             cod_cliente,
 							ci_cliente,
+                            whapp,
                             estado,
                             cod_user_insert,
                             fecha_insert,
@@ -220,6 +219,7 @@ function guardarPacienteAgenda($mysqli, $useru){
                         ) VALUES (
                             '".$idPersona."',
 							'".$documento."',
+                            '".$telefono."',
                             'Activo',
                             '".$useru."',
                             NOW(),

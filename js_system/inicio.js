@@ -32209,9 +32209,9 @@ function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 		/* buscarAbmContratoDocumentos() */
 		switch (ventanaControlCargarFotos) {
 			case 'AbmConsulta':
- 
 				document.getElementById('inptNombreClientesFotoPrincipal').value= document.getElementById('inptPacienteConsulta').value
 					buscarFotosClientePrincipal(cod_clienteConsulta)
+					verCerrarAbmConsulta();
 				break;
 		}
 	}else{
@@ -32219,6 +32219,7 @@ function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 		switch (ventanaControlCargarFotos) {
 			case 'AbmConsulta':
 				buscarVistaGaleriaFoto();
+				verCerrarAbmConsulta();
 				break;
 		}
 	}
@@ -32777,7 +32778,7 @@ function buscarVistaGaleriaFoto(){
 		"descripcion": descripcion,
 		"codVenta": cod_ventaFKConsulta,
 		"funt": "buscarDocumentosGaleriaFoto"
-	};
+	};console.info(datos);
 	$.ajax({
 		data: datos,
         url: "/GoodVentaAsisCap/php_system/abmclientes.php",
@@ -32823,7 +32824,7 @@ document.getElementById("tdEfectoFrmVistaGaleria").className="magictime vanishOu
 }
 
 
-function SeleccionarItemImagenGaleriaFoto(datostr) {
+function SeleccionarItemImagenGaleriaFoto(datostr, controlVentanaAnterior="") {
 	var elementoimagenseleccionadoGaleriaFoto = datostr
 	$("tr[id=tbSelecRegistroImagen]").each(function(i, td){		
 		 td.className=''
@@ -32845,13 +32846,11 @@ function SeleccionarItemImagenGaleriaFoto(datostr) {
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_datos_1"]').html());
 		enableMagnifier(".magnifier-container");
 	}
-	
-	 
-	
-	
-	
-	
-	 
+
+	if (controlVentanaAnterior == "divAbmConsulta") {
+		ventanaAnterior.push(controlVentanaAnterior);
+		verCerrarAbmConsulta();
+	}
 }
 
 
