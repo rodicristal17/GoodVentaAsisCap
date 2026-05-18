@@ -317,6 +317,9 @@ window.onload = function () {
 			} else {
 				controldeactualizacion(codigopc)
 			}
+			
+			cargarTareasPendientesAdministrador();
+			
 		}
 		controlactualizacion = controlactualizacion + 1;
 
@@ -527,7 +530,13 @@ BuscarOptionUsuario()
 buscarobtenerPacientes()
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
-buscarSugerencias()
+buscarSugerencias();
+
+
+        cargarTareasPendientesAdministrador();
+
+
+
 buscarPacientesConInterConsultas2("", "", "", "", "", "", "", userid,0, true, "");
 // Busca todas las interconsultas existentes con estado pendiente o proceso
 buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
@@ -10582,6 +10591,7 @@ function buscarabmCasaOption() {
 	document.getElementById("inptBuscarAbmConsultorio4").innerHTML =""	
 	document.getElementById("inptLocalConsultorio").innerHTML =""	
 	document.getElementById("inptCodLocalFiltroPresupuesto").innerHTML =""
+	document.getElementById("inptBuscarTipoUsuarioAsignarTarea").innerHTML =""
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -10699,6 +10709,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 	               document.getElementById("inptlocalAsignarLocal").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptlocalProximoPago").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptCodLocalFiltroPresupuesto").innerHTML ="<option value=''>TODOS</option>" + datos_buscados
+	               document.getElementById("inptBuscarTipoUsuarioAsignarTarea").innerHTML ="<option value=''>TODOS</option>" + datos_buscados
 				  seleccionarLocalUSer()
                  buscarOptionCaja();
 				}
@@ -24945,7 +24956,18 @@ ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error",
 function removeToMenu(){
 	
 	
-
+	if( accesosuser["VERLISTADOTAREASUSUARIO"]["accion"]!="SI")
+	{
+	$("table[id=divMenuAbmTareasUsuario]").remove() 	
+	}
+	
+	if( accesosuser["VERASIGNARTAREASUSUARIO"]["accion"]!="SI")
+	{
+	$("table[id=divMenuAsignarTareas]").remove() 		
+	}
+	
+	
+	
 	
 	var controlAgendamientos=0;
 	if( accesosuser["VERHISTORIALCONSULTA"]["accion"]!="SI")

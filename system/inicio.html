@@ -48,6 +48,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
@@ -417,85 +418,146 @@ style='display:none' class='divMinimizado'>
 </table>
 
 </td>
-<td style='width:35%;border-left: solid 1px #cacaca;'>
-  <div style="width:100%;display: grid;justify-items: center;">
-    <div style="position:relative; display: inline-block;text-align: center;">
-      <div onclick="verCerrarVentanaListadoInterConsulta(true)">
-        <span id="avisoMensajesPendientes" class="badge badge-danger text-uppercase" style="margin-bottom: 10px;display: none;">Tiene mensajes sin leer.</span>
-      </div>
-      <div onclick="verCerrarVentanaListadoInterConsulta(true)">
-        <span id="avisoInterconsultasAbiertos" class="badge badge-warning text-uppercase" style="margin-bottom: 10px;display: none;">Tiene 0 interconsultas sin cerrar.</span>
-      </div>
-      <img id='fotoPerfilUsuario' style='height:200px;aspect-ratio: 1/1;object-fit: contain;border-radius:100px;border-style: solid;border-color: #6a6a6a;border-width: 3px;'/>
-      <img src="../iconos/editar.png" alt="Icono" style="position: absolute; bottom: 5px; right: 8px; width: 40px; height: 40px;border-radius: 15px;padding: 5;background-color: #b7b7b7;" onclick="verCerrarMisDatos(1);"/>
-    </div>
-    <p class='pTitulo14' id='nombrePerfilUsuario' style="margin:0;margin-top: 5px"></p>    
-  </div>
-<input type='text' id='inptreloj2' class='inputReloj2' />
-<p class='pTitulo16' id='pfechaactual'></p>
-<br>
-<center>
-  <input id="btnRegistrarAsistencia" type="button" value="Marcar entrada" class="btn4" style="width: 150px;" onclick="registrarAsistencia()">
-  <br>
-  <table style="width: 80%; font-size: 1.5rem;" id="tableRegistroEntrada" >
-    <thead>
-      <tr class="tableCabeceraRegistro">
-        <td class="td_registro" style="font-size: 1rem;">Fecha de entrada</td>
-        <td class="td_registro" style="font-size: 1rem;">Hora de entrada</td>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="tableRegistroSelec" style="text-align: center;"></tr>
-    </tbody>
-  </table>
-<table style='width:290px;display: none;'>
-<tr>
-<td style='width:33%;display:none'
-onclick='verCerrarAdministradorTareas("1")'>
-<center>
-<img src='/GoodVentaAsisCap/iconos/administradordetareas.png'
-class='imgsMenuLateral2' />
-<p class='pTituloConexion1' id='pAdminTareas'>0 Mb
-</p>
-</center>
-</td>
-<td style='width:33%;display:none'>
-<center>
-<img src='/GoodVentaAsisCap/iconos/conexion.png'
-class='imgsMenuLateral2'
-id='imgConectividad1' />
-<img src='/GoodVentaAsisCap/iconos/sinconexion.png'
-class='imgsMenuLateral2' id='imgConectividad2'
-style='display:none' />
-<p class='pTituloConexion1' id='pConectivida1'>0/0
-</p>
 
-</center>
+
+<td style='width:35%' class="perfil-app">
+
+    <div class="perfil-app__contenedor">
+
+        <div class="perfil-app__foto-contenedor">
+
+            <div onclick="verCerrarVentanaListadoInterConsulta(true)">
+                <span id="avisoMensajesPendientes" class="badge badge-danger text-uppercase" style="margin-bottom: 10px; display: none;">
+                    Tiene mensajes sin leer.
+                </span>
+            </div>
+
+            <div onclick="verCerrarVentanaListadoInterConsulta(true)">
+                <span id="avisoInterconsultasAbiertos" class="badge badge-warning text-uppercase" style="margin-bottom: 10px; display: none;">
+                    Tiene 0 interconsultas sin cerrar.
+                </span>
+            </div>
+
+            <img id="fotoPerfilUsuario" class="perfil-app__foto" />
+
+            <img src="../iconos/editar.png" 
+                 alt="Icono" 
+                 class="perfil-app__editar"
+                 onclick="verCerrarMisDatos(1);" />
+
+        </div>
+
+        <p class="pTitulo14" id="nombrePerfilUsuario" style="margin:0; margin-top:5px;"></p>
+
+    </div>
+
+
+    <!-- INICIO TAREAS ASIGNADAS POR EL ADMINISTRADOR -->
+    <div class="perfil-tareas" id="divTareasAdministrador">
+
+        <div class="perfil-tareas__cabecera">
+
+            <div>
+                <p class="perfil-tareas__titulo">Tareas programadas</p>
+                <p class="perfil-tareas__subtitulo">Asignado por el Administrador</p>
+            </div>
+
+            <div class="perfil-tareas__contador">
+                <span id="spanTareasPendientes">0</span> pendientes
+            </div>
+
+        </div>
+
+        <div class="perfil-tareas__lista" id="listaTareasAdministrador">
+            <!-- Las tareas se cargan desde JavaScript -->
+        </div>
+
+        <div class="perfil-tareas__vacio" id="tareasAdministradorVacio">
+            No tenés tareas asignadas.
+        </div>
+
+    </div>
+    <!-- FIN TAREAS ASIGNADAS POR EL ADMINISTRADOR -->
+
+
+    <input type="text" id="inptreloj2" class="inputReloj2" />
+
+    <p class="pTitulo16" id="pfechaactual"></p>
+
+    <br>
+
+    <div style="text-align:center;">
+
+        <input id="btnRegistrarAsistencia" 
+               type="button" 
+               value="Marcar entrada" 
+               class="btn4" 
+               style="width:150px;" 
+               onclick="registrarAsistencia();" />
+
+        <br>
+
+        <table style="width:80%; font-size:1.5rem;" id="tableRegistroEntrada">
+            <thead>
+                <tr class="tableCabeceraRegistro">
+                    <td class="td_registro" style="font-size:1rem;">Fecha de entrada</td>
+                    <td class="td_registro" style="font-size:1rem;">Hora de entrada</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="tableRegistroSelec" style="text-align:center;"></tr>
+            </tbody>
+        </table>
+
+        <table style="width:290px; display:none;">
+            <tr>
+
+                <td style="width:33%; display:none;" onclick="verCerrarAdministradorTareas('1')">
+                    <div style="text-align:center;">
+                        <img src="/GoodVentaAsisCap/iconos/administradordetareas.png" class="imgsMenuLateral2" />
+                        <p class="pTituloConexion1" id="pAdminTareas">0 Mb</p>
+                    </div>
+                </td>
+
+                <td style="width:33%; display:none;">
+                    <div style="text-align:center;">
+                        <img src="/GoodVentaAsisCap/iconos/conexion.png" class="imgsMenuLateral2" id="imgConectividad1" />
+                        <img src="/GoodVentaAsisCap/iconos/sinconexion.png" class="imgsMenuLateral2" id="imgConectividad2" style="display:none;" />
+                        <p class="pTituloConexion1" id="pConectivida1">0/0</p>
+                    </div>
+                </td>
+
+                <td style="width:33%;" onclick="CambiarTema('black')">
+                    <div style="text-align:center;">
+                        <img src="/GoodVentaAsisCap/iconos/modooscuro.png" class="imgsMenuLateral2" title="Tema Oscuro" />
+                        <p class="pTituloConexion1">Black</p>
+                    </div>
+                </td>
+
+                <td style="width:33%;" onclick="verCerrarTemas('1')">
+                    <div style="text-align:center;">
+                        <img src="/GoodVentaAsisCap/iconos/rgb.png" class="imgsMenuLateral2" title="Mas Temas" />
+                        <p class="pTituloConexion1">Temas</p>
+                    </div>
+                </td>
+
+                <td style="width:33%;" onclick="CambiarTema('white')">
+                    <div style="text-align:center;">
+                        <img src="/GoodVentaAsisCap/iconos/modowhite.png" class="imgsMenuLateral2" title="Tema White" />
+                        <p class="pTituloConexion1">White</p>
+                    </div>
+                </td>
+
+            </tr>
+        </table>
+
+    </div>
+
 </td>
-<td style='width:33%' onclick='CambiarTema("black")'>
-<center>
-<img src='/GoodVentaAsisCap/iconos/modooscuro.png'
-class='imgsMenuLateral2' title='Tema Oscuro' />
-<p class='pTituloConexion1'>Black</p>
-</center>
-</td>
-<td  style='width:33%' onclick='verCerrarTemas("1")'>
-<center>
-<img src='/GoodVentaAsisCap/iconos/rgb.png'  class='imgsMenuLateral2' title='Mas Temas'  />
-<p class='pTituloConexion1' >Temas</p>
-</center>
-</td>
-<td style='width:33%' onclick='CambiarTema("white")'>
-<center>
-<img src='/GoodVentaAsisCap/iconos/modowhite.png'
-class='imgsMenuLateral2' title='Tema White' />
-<p class='pTituloConexion1'>White</p>
-</center>
-</td>
-</tr>
-</table>
-</center>
-</td>
+
+
+
+
 </tr>
 </table>
 </div>
@@ -639,6 +701,23 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
+
+
+<table class='divMenub' id='divMenuAsignarTareas' onclick="verCerrarVentanaAsignarTareaUsuario(true)" style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/lista-de-tareas.png' />
+<p class='pTitulo4'  >Asignar Tareas</p>
+<center>
+<div id='divMinimizadoAsignarTareas' style='display:none' class='divMinimizado'>
+</div>
+</center>
+</td>
+</tr>
+</table>
+
+
+
  
 </div>
 
@@ -655,6 +734,20 @@ style='display:none' class='divMinimizado'>
 </td>
 </tr>
 </table>
+
+
+<table class='divMenub' id='divMenuAbmTareasUsuario' onclick='verCerrarAbmTareaProgramada();buscarabmTareaProgramada();' style='text-align:center'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/TareaUsuario.png' />
+<p class='pTitulo4'>Listado de Tareas Usuario</p>
+<center>
+<div id='divMinimizadoListadoDeTareasProgramadas' style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
 
 <table class='divMenub' id='divMenuAbmConsultorio' onclick='verCerrarAbmConsultorio();buscarabmConsultorio();' style='text-align:center'>
 <tr>
@@ -4442,7 +4535,7 @@ style='background-color:#5bc572'>
             </table>
           </div>
         </section>
-      <section class="presupuesto-panel presupuesto-search-results" style="padding:12px 20px;margin-top: 10px;">
+      <section class="presupuesto-panel presupuesto-search-results" style="padding:5px 20px;margin-top: 10px;">
         <div class="form-section" style="margin-bottom:0;align-items:center;">
         <div style="background-color: #2ea3c0;height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
         <p class="pTitulo8" style="width: fit-content; text-align: start;color: #2ea3c0;">Asociado a Egreso / Ingreso</p>
@@ -6084,7 +6177,7 @@ onclick='verVentanaEditarCasa()' style='background-color:#b7b7b7'>
 <div class='div_cuerpo_table presupuesto-search-table' style='height:55vh;' id='table_abm_Consultorio'></div>
 </section>
 
-<section class='presupuesto-panel presupuesto-search-results' style='padding:16px 20px;margin-top: 10px;'>
+<section class='presupuesto-panel presupuesto-search-results' style='padding:5px 20px;margin-top: 5px;'>
 <div class='form-section' style='margin-bottom:0;'>
 <div class='form-row' style='flex:0 0 170px;'>
 <label for='inptTotalRegistoConsultorio'>Registros :</label>
@@ -6150,6 +6243,184 @@ onclick='verVentanaEditarCasa()' style='background-color:#b7b7b7'>
 </center>
  
 </div>
+
+
+
+
+
+
+<div class='principal2' style='display:none' id='divAbmTareaProgramada'>
+
+<center>
+
+<div id='divAbmTareaProgramada2' style='display:none;max-width:900px;' class='presupuesto-container presupuesto-search-modal'>
+
+<div class='presupuesto-header'>
+    <h2>Datos de Tarea Programada</h2>
+
+    <div class='header-actions'>
+        <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar campos' onclick='limpiarcamposTareaProgramada()' />
+        <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarTareaProgramada()' />
+        <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaAbmTareaProgramada("2","")' />
+    </div>
+</div>
+
+<div class='form-section presupuesto-panel'>
+
+    <div class='panel-title' style='width:100%;'>Información de la tarea programada</div>
+
+    <input type='hidden' id='inptIdTareaProgramada' value='0' />
+
+    <div class='form-row flex-grow' style='flex:1 1 320px;'>
+        <label for='inptNombreTareaProgramada'>Nombre :</label>
+        <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptNombreTareaProgramada' />
+    </div>
+
+    <div class='form-row' style='flex:0 1 180px;'>
+        <label for='inptHoraTareaProgramada'>Hora :</label>
+        <input class='inputText' type='time' id='inptHoraTareaProgramada' />
+    </div>
+ 
+
+    <div class='form-row flex-grow' style='flex:1 1 260px;'>
+        <label for='inptTipoTareaProgramada'>Tipo :</label>
+         <select class='inputSelect' id='inptTipoTareaProgramada'>
+            <option value='DIARIO'>DIARIO</option>
+            <option value='CASUAL'>CASUAL</option> 
+        </select>
+    </div>
+ 
+ 
+
+    <div class='form-row' style='flex:0 0 170px;'>
+        <input type='button' value='Guardar' class='btn1' onclick='verificarcamposTareaProgramada()' id='btnAbmTareaProgramada' style='width:150px;margin-top:20px;' />
+    </div>
+
+</div>
+
+</div>
+
+<div id='divAbmTareaProgramada1' class='presupuesto-container presupuesto-search-modal'>
+
+<div class='presupuesto-header presupuesto-search-header'>
+
+    <div class='presupuesto-search-title'>
+        <h2>Buscar Tareas Programadas</h2>
+    </div>
+
+    <div class='header-actions'>
+        <button class='btn-icon' onclick='verCerrarFiltrosTareaProgramada(true)' title='Filtros'>
+            <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn'>
+        </button>
+
+        <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro' onclick='verCerrarVentanaAbmTareaProgramada("1","1")' />
+        <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarTareaProgramada()' />
+        <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarAbmTareaProgramada()' />
+    </div>
+
+</div>
+
+<div class='presupuesto-panel presupuesto-search-results'>
+
+    <div class='presupuesto-search-results-head'>
+        <div class='panel-title'>Tareas programadas</div>
+        <span class='presupuesto-search-chip'>Seleccione un registro para editar</span>
+    </div>
+
+    <table class='tableCabeceraRegistro'>
+        <tbody>
+            <tr>
+                <td class='td_registro' style='width:10%;'>#</td>
+                <td class='td_registro' style='width:50%;'>TAREA</td>
+                <td class='td_registro' style='width:20%;'>HORA</td> 
+                <td class='td_registro' style='width:20%;'>TIPO</td> 
+            </tr>
+        </tbody>
+    </table>
+
+    <div class='div_cuerpo_table presupuesto-search-table' style='height:55vh;' id='table_abm_TareaProgramada'></div>
+
+</div>
+
+<div class='presupuesto-panel presupuesto-search-results' style='padding:5px 20px;margin-top:5px;'>
+
+    <div class='form-section' style='margin-bottom:0;'>
+
+        <div class='form-row' style='flex:0 0 170px;'>
+            <label for='inptTotalRegistoTareaProgramada'>Registros :</label>
+            <input class='inputTextDisable' type='text' disabled id='inptTotalRegistoTareaProgramada' style='text-align:center' />
+        </div>
+
+        <div class='form-row flex-grow' style='flex:1 1 260px;'>
+            <label for='inptRegistroSeleccTareaProgramada'>Registro selecc. :</label>
+            <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccTareaProgramada' />
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<div class='modal-filtros-overlay' id='overlayFiltrosTareaProgramada' style='display:none;height:80vw;'>
+
+    <div class='modal-filtros-catalogo' id='modalFiltrosTareaProgramada' style='position:initial;'>
+
+        <div class='modal-filtros-box modal-agenda-pro'>
+
+            <div class='modal-filtros-header'>
+
+                <div class='modal-header-info'>
+                    <p class='modal-etiqueta'>Panel de filtros</p>
+                    <h3>Filtros de tareas programadas</h3>
+                </div>
+
+                <button type='button' class='btn-cerrar-modal' onclick='verCerrarFiltrosTareaProgramada(false)'>x</button>
+
+            </div>
+
+            <div class='modal-filtros-body agenda-filtros-grid'>
+
+                <div class='filtro-grupo'>
+                    <label for='inptBuscarAbmTareaProgramada1'>Código</label>
+                    <input class='catalogo-selectBuscador input-filtro-pro' type='text' id='inptBuscarAbmTareaProgramada1' onkeyup='if(event.keyCode == 13){buscarabmTareaProgramada()}' placeholder='Ingrese el código...' />
+                </div>
+
+                <div class='filtro-grupo filtro-destacado'>
+                    <label for='inptBuscarAbmTareaProgramada2'>Nombre</label>
+                    <input class='catalogo-selectBuscador input-filtro-pro' type='text' id='inptBuscarAbmTareaProgramada2' onkeyup='if(event.keyCode == 13){buscarabmTareaProgramada()}' placeholder='Ingrese el nombre de la tarea...' />
+                </div>
+
+                <div class='filtro-grupo'>
+                    <label for='inptBuscarAbmTareaProgramada3'>Hora</label>
+                    <input class='catalogo-selectBuscador input-filtro-pro' type='time' id='inptBuscarAbmTareaProgramada3' onchange='buscarabmTareaProgramada()' />
+                </div>
+ 
+
+                <div class='filtro-grupo'>
+                    <label for='inptBuscarAbmTareaProgramada6'>Tipo</label>
+                    <input class='catalogo-selectBuscador input-filtro-pro' type='text' id='inptBuscarAbmTareaProgramada6' onkeyup='if(event.keyCode == 13){buscarabmTareaProgramada()}' placeholder='Ingrese el tipo...' />
+                </div>
+  
+
+            </div>
+
+            <div class='modal-filtros-footer'>
+                <button type='button' class='btn-filtro btn-secundario' onclick='limpiarFiltroTareaProgramada()'>Limpiar</button>
+                <button type='button' class='btn-accion-principal btn-principal-pro' onclick='verCerrarFiltrosTareaProgramada(false);buscarabmTareaProgramada();'>Aplicar filtros</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</center>
+
+</div>
+
+
 
 
 
@@ -8542,7 +8813,7 @@ ACCION
           </table>
         </div>
       </section>
-      <section class="presupuesto-panel presupuesto-search-results" style="padding:16px 20px;margin-top: 10px;">
+      <section class="presupuesto-panel presupuesto-search-results" style="padding:5px 20px;margin-top: 10px;">
         <div class="form-section" style="margin-bottom:0;">
           <div class="form-row" style="flex:0 0 170px;">
             <label for="inptTotalRegistoPresupuesto">Registros :</label>
@@ -11779,6 +12050,344 @@ style='background-color: #b7b7b7;'>
   <div id="table_frm_VistaConsulta" class="tabla-resultados tablaContanedorConsulta"></div>
 
   </div>
+</div>
+
+
+
+<div class="asignar-tarea principal2" style="display:none" id="divFrmAsignarTareaUsuario">
+
+    <div class="asignar-tarea__ventana">
+
+        <div class="asignar-tarea__header">
+
+            <div class="asignar-tarea__titulo-box">
+                <p class="asignar-tarea__etiqueta">Asignación de tareas</p>
+                <h2 class="asignar-tarea__titulo">
+                    Seleccionar <strong>Usuario</strong>
+                </h2>
+            </div>
+
+            <div class="asignar-tarea__acciones">
+                <button type="button" class="asignar-tarea__btn-icono" onclick="limpiarFiltrosAsignarTareaUsuario()">
+                    <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" alt="Limpiar" />
+                </button>
+
+                <button type="button" class="asignar-tarea__btn-icono" onclick="verCerrarVentanaAsignarTareaUsuario(false)">
+                    <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" alt="Cerrar" />
+                </button>
+            </div>
+
+        </div>
+
+        <div class="asignar-tarea__body">
+
+            <input type="hidden" id="inptCodUsuarioAsignadoTarea" value="" />
+            <input type="hidden" id="inptFotoUsuarioAsignadoTarea" value="" />
+
+            <div class="asignar-tarea__filtros">
+
+                <div class="asignar-tarea__filtro">
+                    <label class="asignar-tarea__label" for="inptBuscarUsuarioAsignarTarea">Buscar usuario</label>
+                    <input 
+                        type="text" 
+                        id="inptBuscarUsuarioAsignarTarea" 
+                        class="asignar-tarea__input inputText" 
+                        placeholder="Nombre, Tipo o CI..."
+                        onkeyup="if(event.keyCode == 13){buscarUsuariosAsignarTarea()}" 
+                    />
+                </div>
+
+                <div class="asignar-tarea__filtro">
+                    <label class="asignar-tarea__label" for="inptBuscarTipoUsuarioAsignarTarea">Local</label>
+                    <select id="inptBuscarTipoUsuarioAsignarTarea" class="asignar-tarea__input inputText">
+                         
+                    </select>
+                </div>
+
+                <div class="asignar-tarea__filtro" style='display:none;'>
+                    <label class="asignar-tarea__label" for="inptBuscarEstadoUsuarioAsignarTarea">Estado</label>
+                    <select id="inptBuscarEstadoUsuarioAsignarTarea" class="asignar-tarea__input inputText">
+                        <option value="Activo">ACTIVO</option>
+                        <option value="">TODOS</option>
+                        <option value="Inactivo">INACTIVO</option>
+                    </select>
+                </div>
+
+                <div class="asignar-tarea__filtro asignar-tarea__filtro--boton">
+                    <button type="button" class="asignar-tarea__btn-buscar" onclick="buscarUsuariosAsignarTarea()">
+                        Buscar
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="asignar-tarea__seleccion" id="boxUsuarioSeleccionadoTarea" style="display:none;">
+                <div class="asignar-tarea__seleccion-info">
+                    <img src="" id="imgUsuarioSeleccionadoTarea" class="asignar-tarea__seleccion-img" />
+                    <div>
+                        <p class="asignar-tarea__seleccion-label">Usuario seleccionado</p>
+                        <h3 class="asignar-tarea__seleccion-nombre" id="lblUsuarioSeleccionadoTarea"></h3>
+                    </div>
+                </div>
+
+               <button type="button" class="asignar-tarea__btn-confirmar" onclick="confirmarUsuarioAsignadoTareaDiaria()">
+					Asignar tarea diaria
+				</button>
+				
+				<button type="button" class="asignar-tarea__btn-confirmar" onclick="confirmarUsuarioAsignadoTarea()">
+                    Asignar tarea casual
+                </button>
+				
+            </div>
+
+            <div class="asignar-tarea__contenedor" id="contenedorUsuariosAsignarTarea">
+                <div class="asignar-tarea__vacio">
+                    <p>Buscá un usuario para asignarle la tarea.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="tarea-diaria-modal" id="modalAsignarTareaDiaria" style="display:none;">
+
+    <div class="tarea-diaria-modal__ventana">
+
+        <div class="tarea-diaria-modal__header">
+
+            <div>
+                <p class="tarea-diaria-modal__etiqueta">Asignación automática</p>
+                <h2 class="tarea-diaria-modal__titulo">
+                    Tarea diaria para <strong id="lblUsuarioTareaDiariaModal">usuario</strong>
+                </h2>
+            </div>
+
+            <button type="button" class="tarea-diaria-modal__cerrar" onclick="verCerrarModalTareaDiaria(false)">
+                x
+            </button>
+
+        </div>
+
+        <div class="tarea-diaria-modal__body">
+
+            <input type="hidden" id="inptCodTareaDiariaSeleccionada" value="" />
+
+            <div class="tarea-diaria-modal__filtros">
+
+                <div class="tarea-diaria-modal__campo">
+                    <label>Buscar tarea</label>
+                    <input 
+                        type="text" 
+                        class="inputText tarea-diaria-modal__input" 
+                        id="inptBuscarTareaDiaria"
+                        placeholder="Nombre de la tarea..."
+                        onkeyup="if(event.keyCode == 13){buscarTareasParaAsignarDiariaUsuario()}" />
+                </div>
+
+                <div class="tarea-diaria-modal__campo">
+                    <label>Tipo</label>
+                    <select class="inputText tarea-diaria-modal__input" id="inptBuscarTipoTareaDiaria">
+                        <option value="">TODOS</option>
+                        <option value="DIARIO">DIARIO</option>
+                        <option value="CASUAL">CASUAL</option>
+                    </select>
+                </div>
+
+                <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--boton">
+                    <button type="button" class="tarea-diaria-modal__btn-buscar" onclick="buscarTareasParaAsignarDiariaUsuario()">
+                        Buscar
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="tarea-diaria-modal__seleccion" id="boxTareaDiariaSeleccionada" style="display:none;">
+
+                <div class="tarea-diaria-modal__seleccion-info">
+                    <p class="tarea-diaria-modal__seleccion-label">Tarea seleccionada</p>
+                    <h3 class="tarea-diaria-modal__seleccion-titulo" id="lblTareaDiariaSeleccionada"></h3>
+                </div>
+
+                <div class="tarea-diaria-modal__fechas">
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Fecha inicio</label>
+                        <input type="date" class="inputText tarea-diaria-modal__input" id="inptFechaInicioTareaDiaria" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Fecha fin</label>
+                        <input type="date" class="inputText tarea-diaria-modal__input" id="inptFechaFinTareaDiaria" />
+                    </div>
+
+                </div>
+
+                <div class="tarea-diaria-modal__dias">
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaLunes" checked />
+                        <span>Lun</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaMartes" checked />
+                        <span>Mar</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaMiercoles" checked />
+                        <span>Mié</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaJueves" checked />
+                        <span>Jue</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaViernes" checked />
+                        <span>Vie</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaSabado" checked />
+                        <span>Sáb</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__dia">
+                        <input type="checkbox" id="checkTareaDiariaDomingo" checked />
+                        <span>Dom</span>
+                    </label>
+
+                </div>
+
+                <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--observacion">
+                    <label>Observación del administrador</label>
+                    <textarea 
+                        id="inptObservacionTareaDiaria" 
+                        class="inputText tarea-diaria-modal__textarea"
+                        placeholder="Observación opcional..."></textarea>
+                </div>
+
+                <button type="button" class="tarea-diaria-modal__btn-confirmar" onclick="guardarTareaDiariaUsuario()">
+                    Guardar tarea diaria
+                </button>
+
+            </div>
+
+            <div class="tarea-diaria-modal__lista" id="contenedorTareasDiariasParaAsignar">
+                <div class="tarea-diaria-modal__vacio">
+                    <p>Seleccione un usuario para buscar tareas diarias.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="asignar-tarea-modal" id="modalTareasParaAsignarUsuario" style="display:none;">
+
+    <div class="asignar-tarea-modal__ventana">
+
+        <div class="asignar-tarea-modal__header">
+            <div>
+                <p class="asignar-tarea-modal__etiqueta">Tareas disponibles</p>
+                <h2 class="asignar-tarea-modal__titulo">
+                    Asignar tarea a <strong id="lblUsuarioTareaModal">usuario</strong>
+                </h2>
+            </div>
+
+            <button type="button" class="asignar-tarea-modal__cerrar" onclick="verCerrarModalTareasParaAsignar(false)">
+                x
+            </button>
+        </div>
+
+        <div class="asignar-tarea-modal__body">
+
+            <input type="hidden" id="inptCodTareaSeleccionadaAsignar" value="" />
+
+            <div class="asignar-tarea-modal__filtros">
+
+                <div class="asignar-tarea-modal__campo">
+                    <label>Buscar tarea</label>
+                    <input 
+                        type="text" 
+                        class="inputText asignar-tarea-modal__input" 
+                        id="inptBuscarTareaParaAsignarUsuario"
+                        placeholder="Nombre de la tarea..."
+                        onkeyup="if(event.keyCode == 13){buscarTareasParaAsignarUsuario()}" />
+                </div>
+
+                <div class="asignar-tarea-modal__campo">
+                    <label>Tipo</label>
+                    <select class="inputText asignar-tarea-modal__input" id="inptBuscarTipoTareaParaAsignarUsuario">
+                        <option value="">TODOS</option>
+                        <option value="DIARIO">DIARIO</option>
+                        <option value="CASUAL">CASUAL</option>
+                    </select>
+                </div>
+
+                <div class="asignar-tarea-modal__campo" style='display:none;'>
+                    <label>Estado</label>
+                    <select class="inputText asignar-tarea-modal__input" id="inptBuscarEstadoTareaParaAsignarUsuario">
+                        <option value="pendiente">PENDIENTE</option>
+                        <option value="">TODOS</option>
+                        <option value="completada">COMPLETADA</option>
+                        <option value="inactivo">INACTIVO</option>
+                    </select>
+                </div>
+
+                <div class="asignar-tarea-modal__campo asignar-tarea-modal__campo--boton">
+                    <button type="button" class="asignar-tarea-modal__btn-buscar" onclick="buscarTareasParaAsignarUsuario()">
+                        Buscar
+                    </button>
+                </div>
+
+            </div>
+
+           <div class="asignar-tarea-modal__seleccion" id="boxTareaSeleccionadaAsignar" style="display:none;">
+
+    <div class="asignar-tarea-modal__seleccion-info">
+        <p class="asignar-tarea-modal__seleccion-label">Tarea seleccionada</p>
+        <h3 class="asignar-tarea-modal__seleccion-titulo" id="lblTareaSeleccionadaAsignar"></h3>
+    </div>
+
+    <div class="asignar-tarea-modal__fecha-box">
+        <label for="inptFechaTareaAsignada" class="asignar-tarea-modal__fecha-label">
+            Fecha de tarea
+        </label>
+        <input 
+            type="date" 
+            id="inptFechaTareaAsignada" 
+            class="asignar-tarea-modal__fecha-input inputText" 
+        />
+    </div>
+
+    <button type="button" class="asignar-tarea-modal__btn-confirmar" onclick="asignarTareaSeleccionadaAUsuario()">
+        Confirmar asignación
+    </button>
+
+</div>
+
+            <div class="asignar-tarea-modal__lista" id="contenedorTareasParaAsignarUsuario">
+                <div class="asignar-tarea-modal__vacio">
+                    <p>Seleccione un usuario para ver las tareas disponibles.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 <div class='principal2 divMenuG modal-filtros-catalogo' style='display:none;padding:10px;' id='divAbmConsulta'>
@@ -28844,7 +29453,7 @@ id='lblReciboTotaliva3'>0.0</p>
 
 
 <div class='div_info_10' id='div_principal_info_carga'
-style='display:none;background-color: #0000008f;z-index: 10;'>
+style='display:none;background-color: #0000008f;z-index: 999999;'>
 <center>
 
 <table class='table_info_2'>
@@ -28865,7 +29474,7 @@ style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
 </center>
 </div>
 
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style='z-index: 999999;'>
   <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header" style="color: white;">
       <strong class="me-auto" id="lbltitulomensaje" style="text-transform: capitalize;">Informacion</strong>
