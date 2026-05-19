@@ -66,6 +66,7 @@ function buscarVistaInformacionProtocolos() {
     buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 10, ocultarInactivo);
 }
 
+var mensajes_protocolos_empresariales = [];
 function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, limite, ocultarInactivo) {
     let datos = new FormData();
     datos.append("useru", userid);
@@ -89,7 +90,8 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
         }
         datos.append("limite", limite);
     }
-
+    
+	verCerrarEfectoCargando("1")
     $.ajax({
         data: datos,
         url: "../php_system/abmInformacionProtocolo.php",
@@ -101,10 +103,12 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
             controldebusquedadInformeInformacionProtocolo = false;
+	        verCerrarEfectoCargando("")
         },
         success: function (responseText) {
             Respuesta = responseText;
             console.log(Respuesta);
+	        verCerrarEfectoCargando("")
             try {
                 var datos = $.parseJSON(Respuesta);
                 Respuesta = datos["1"];
@@ -115,10 +119,17 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
                         tabla.innerHTML = datos["2"];
                     }
 
-                    registrocargadoInformacionProtocolo = Number(datos["4"]);
-                    totalregistroinformeInformacionProtocolo = Number(datos["4"]);
-                    document.getElementById("inptRegistoCargadoInformacionProtocolo").value = registrocargadoInformacionProtocolo;
-                    document.getElementById("tbProcessInformeInformacionProtocolo").style.display = "none";
+                    if (limite != 0) {
+                        registrocargadoInformacionProtocolo = Number(datos["4"]);
+                        totalregistroinformeInformacionProtocolo = Number(datos["4"]);
+                        document.getElementById("inptRegistoCargadoInformacionProtocolo").value = registrocargadoInformacionProtocolo;
+                        document.getElementById("tbProcessInformeInformacionProtocolo").style.display = "none";
+                    } else {
+                        mensajes_protocolos_empresariales= [];
+                        Array.from(datos["3"]).forEach(function (elemento) {
+                            mensajes_protocolos_empresariales.push(elemento.descripcion);
+                        });
+                    }
                 }
             } catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");

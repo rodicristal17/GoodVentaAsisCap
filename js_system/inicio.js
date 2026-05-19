@@ -289,6 +289,7 @@ window.onload = function () {
 
 	buscar_datos_del_usuario();
 	obtenerUltimoLimiteCaja();
+	buscarVistaInformacionProtocolos2('','','', '', 0, true);
 	eventoScrollTable(document.getElementById('TableScroollProductos2'));
 	eventoScrollTable(document.getElementById('TableScroollHistorialVenta2'));
 	eventoScrollTable(document.getElementById('TableScroollHistorialVentaExpediente2'));
@@ -305,6 +306,13 @@ window.onload = function () {
 	scrollevents(document.getElementById('divMenuMantenimiento'));
 	var controlactualizacion = 0;
 	var controlMensaje = 0;
+	var mostrandoMensajeProtocolo = false;
+	var ultimaActividadMensajeProtocolo = Date.now();
+	["mousemove", "mousedown", "keydown", "scroll", "touchstart"].forEach(function(evento) {
+		document.addEventListener(evento, function() {
+			ultimaActividadMensajeProtocolo = Date.now();
+		}, true);
+	});
 	var counter = setInterval(timer, 1000);
 	function timer() {
 		if (controlactualizacion == 60) {
@@ -335,6 +343,22 @@ window.onload = function () {
 
 		}
 		controlMensaje = controlMensaje + 1;
+
+		if (Date.now() - ultimaActividadMensajeProtocolo >= 15000) {
+			mostrarMensajeProtocoloEmpresarialAleatorio();
+		}
+	}
+
+	async function mostrarMensajeProtocoloEmpresarialAleatorio() {
+		if (mostrandoMensajeProtocolo || mensajes_protocolos_empresariales.length == 0) {
+			return;
+		}
+		
+		mostrandoMensajeProtocolo = true;
+		var posicionAleatoria = Math.floor(Math.random() * mensajes_protocolos_empresariales.length);
+		await ver_ventana_confirmacion(mensajes_protocolos_empresariales[posicionAleatoria], "Mensaje de protocolo");
+		mostrandoMensajeProtocolo = false;
+		ultimaActividadMensajeProtocolo = Date.now();
 	}
 }
 
@@ -2134,12 +2158,48 @@ function ver_vetana_informativa(titulo, detalle= "", tipo="") {
 	toastBootstrap.show();
 }
 
-function ver_ventana_confirmacion(detalle, titulo="Atencion") {
-	document.getElementById('titleAlertConfirmMensaje').innerHTML= titulo;
-	document.getElementById('bodyAlertConfirmMensaje').innerHTML= detalle;
-	const modalEl = document.getElementById('alertConfirmDialog');
-	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-	modal.show();
+async function ver_ventana_confirmacion(mensaje, titulo="Atencion") {
+	return new Promise(function(resolve) {
+		const modalEl = document.getElementById('confirmDialogGenerico');
+		const tituloEl = document.getElementById('confirmDialogGenericoTitulo');
+		const mensajeEl = document.getElementById('confirmDialogGenericoMensaje');
+		const btnAceptar = document.getElementById('btnConfirmDialogGenericoAceptar');
+		const btnCancelar = document.getElementById('btnConfirmDialogGenericoCancelar');
+		const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+		let resuelto = false;
+
+		tituloEl.innerHTML = titulo;
+		mensajeEl.innerHTML = mensaje;
+
+		function finalizar(valor) {
+			if (resuelto) {
+				return;
+			}
+			resuelto = true;
+			btnAceptar.removeEventListener('click', aceptar);
+			btnCancelar.removeEventListener('click', cancelar);
+			modalEl.removeEventListener('hidden.bs.modal', cerrar);
+			modal.hide();
+			resolve(valor);
+		}
+
+		function aceptar() {
+			finalizar(true);
+		}
+
+		function cancelar() {
+			finalizar(false);
+		}
+
+		function cerrar() {
+			finalizar(false);
+		}
+
+		btnAceptar.addEventListener('click', aceptar);
+		btnCancelar.addEventListener('click', cancelar);
+		modalEl.addEventListener('hidden.bs.modal', cerrar);
+		modal.show();
+	});
 }
 
 var idFkCobrador = ""
