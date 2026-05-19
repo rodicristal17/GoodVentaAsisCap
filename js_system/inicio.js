@@ -13258,70 +13258,70 @@ function obtenerdatosvistaventa(datostr) {
 		document.getElementById('inptPacienteCITrabajoMecanicoDental').value = $(datostr).children('td[id="td_datos_5"]').html();
 	} else {
 		limpiarcamposventa("1")
-	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
-	});
-	datostr.className = 'tableRegistroSelec'
-	idabmVenta = $(datostr).children('td[id="td_datos_8"]').html();
-	document.getElementById('inptFechaVenta').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptClienteVenta').value = $(datostr).children('td[id="td_datos_2"]').html();
-	controltipoventa = $(datostr).children('td[id="td_datos_12"]').html();
-	document.getElementById('inptSeleccTipoVenta').value = $(datostr).children('td[id="td_datos_12"]').html();
-	document.getElementById('inptVendedorVenta1').value = $(datostr).children('td[id="td_datos_15"]').html();
-	document.getElementById('inptVendedorVenta2').value = $(datostr).children('td[id="td_datos_16"]').html();
-	document.getElementById('inptCobradorVenta').value = $(datostr).children('td[id="td_datos_4"]').html();
-	document.getElementById('inptCobradorCargarPago').value = $(datostr).children('td[id="td_datos_4"]').html();
-	document.getElementById('inpCodVenta').value = $(datostr).children('td[id="td_datos_13"]').html();
-	document.getElementById('inptNroVenta').value = $(datostr).children('td[id="td_datos_13"]').html();
-	document.getElementById('inptSeleccPuntoExpedicionVenta').value = $(datostr).children('td[id="td_datos_33"]').html();
-	document.getElementById('inptAccesoCreditoVentaCliente').value =  $(datostr).children('td[id="td_datos_34"]').html();
-	document.getElementById('inptEntregaVenta').value =  $(datostr).children('td[id="td_datos_35"]').html();
-	
-	EntregaPagare =  $(datostr).children('td[id="td_datos_35"]').html();
-	var puntoExpedicion=$("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text() 
-	if(puntoExpedicion==""){						
-	document.getElementById("pNroFactuaCaja").innerHTML = "*"+$(datostr).children('td[id="td_datos_13"]').html()+"*";
-	}else{
-	document.getElementById("pNroFactuaCaja").innerHTML = "*"+puntoExpedicion+"-"+$(datostr).children('td[id="td_datos_13"]').html()+"*";
-	}
+		$("tr[id=tbSelecRegistro]").each(function (i, td) {
+			td.className = ''
+		});
+		datostr.className = 'tableRegistroSelec'
+		idabmVenta = $(datostr).children('td[id="td_datos_8"]').html();
+		document.getElementById('inptFechaVenta').value = $(datostr).children('td[id="td_datos_1"]').html();
+		document.getElementById('inptClienteVenta').value = $(datostr).children('td[id="td_datos_2"]').html();
+		controltipoventa = $(datostr).children('td[id="td_datos_12"]').html();
+		document.getElementById('inptSeleccTipoVenta').value = $(datostr).children('td[id="td_datos_12"]').html();
+		document.getElementById('inptVendedorVenta1').value = $(datostr).children('td[id="td_datos_15"]').html();
+		document.getElementById('inptVendedorVenta2').value = $(datostr).children('td[id="td_datos_16"]').html();
+		document.getElementById('inptCobradorVenta').value = $(datostr).children('td[id="td_datos_4"]').html();
+		document.getElementById('inptCobradorCargarPago').value = $(datostr).children('td[id="td_datos_4"]').html();
+		document.getElementById('inpCodVenta').value = $(datostr).children('td[id="td_datos_13"]').html();
+		document.getElementById('inptNroVenta').value = $(datostr).children('td[id="td_datos_13"]').html();
+		document.getElementById('inptSeleccPuntoExpedicionVenta').value = $(datostr).children('td[id="td_datos_33"]').html();
+		document.getElementById('inptAccesoCreditoVentaCliente').value = $(datostr).children('td[id="td_datos_34"]').html();
+		document.getElementById('inptEntregaVenta').value = $(datostr).children('td[id="td_datos_35"]').html();
 
-	document.getElementById('inptComisionVentaCobrador').value = $(datostr).children('td[id="td_datos_22"]').html();
-	document.getElementById('inptlocalVenta').value = $(datostr).children('td[id="td_datos_23"]').html();
-	document.getElementById('inptGaranteVenta').value = $(datostr).children('td[id="td_datos_31"]').html();
-	document.getElementById('inptSeleccTipoComprobanteVenta').value = $(datostr).children('td[id="td_datos_32"]').html();
-	
-	if(document.getElementById('inptSeleccTipoComprobanteVenta').value=="FACTURA"){
-					document.getElementById("btnImprimirticket").style.display=""
-					 document.getElementById("btnImprimirFactura").style.display=""
-					 document.getElementById("btnImprimirPagare").style.display=""
-	}else{
-		document.getElementById("btnImprimirticket").style.display=""
-					 document.getElementById("btnImprimirFactura").style.display="none"
-					 document.getElementById("btnImprimirPagare").style.display=""
+		EntregaPagare = $(datostr).children('td[id="td_datos_35"]').html();
+		var puntoExpedicion = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text()
+		if (puntoExpedicion == "") {
+			document.getElementById("pNroFactuaCaja").innerHTML = "*" + $(datostr).children('td[id="td_datos_13"]').html() + "*";
+		} else {
+			document.getElementById("pNroFactuaCaja").innerHTML = "*" + puntoExpedicion + "-" + $(datostr).children('td[id="td_datos_13"]').html() + "*";
+		}
+
+		document.getElementById('inptComisionVentaCobrador').value = $(datostr).children('td[id="td_datos_22"]').html();
+		document.getElementById('inptlocalVenta').value = $(datostr).children('td[id="td_datos_23"]').html();
+		document.getElementById('inptGaranteVenta').value = $(datostr).children('td[id="td_datos_31"]').html();
+		document.getElementById('inptSeleccTipoComprobanteVenta').value = $(datostr).children('td[id="td_datos_32"]').html();
+
+		if (document.getElementById('inptSeleccTipoComprobanteVenta').value == "FACTURA") {
+			document.getElementById("btnImprimirticket").style.display = ""
+			document.getElementById("btnImprimirFactura").style.display = ""
+			document.getElementById("btnImprimirPagare").style.display = ""
+		} else {
+			document.getElementById("btnImprimirticket").style.display = ""
+			document.getElementById("btnImprimirFactura").style.display = "none"
+			document.getElementById("btnImprimirPagare").style.display = ""
+		}
+
+		if (document.getElementById("inptSeleccTipoVenta").value == "CONTADO") {
+			buscarImprimirTicketVentaContado();
+		}
+		idGaranteFk = $(datostr).children('td[id="td_datos_30"]').html();
+		idFkVendedor1 = $(datostr).children('td[id="td_datos_3"]').html();
+		idFkVendedor2 = $(datostr).children('td[id="td_datos_14"]').html();
+		idFkCliente = $(datostr).children('td[id="td_datos_10"]').html();
+		idFkCobrador = $(datostr).children('td[id="td_datos_11"]').html();
+		cobradorcargarpagos = $(datostr).children('td[id="td_datos_11"]').html();
+
+		idFkVenta = $(datostr).children('td[id="td_datos_8"]').html();
+		document.getElementById('inpCodVenta').disabled = true
+		document.getElementById('inpCodVenta').className = "inputTextDisable"
+		document.getElementById('btnAbmVenta').style.display = ""
+		document.getElementById('btnAbmVenta').value = "Editar datos"
+		buscardetallesventa()
+		document.getElementById("btnNuevoClienteVenta").style.display = ''
+		document.getElementById("tdImprimirVenta").style.display = ''
+		SeleccTipoComprobanteVenta()
 	}
-	
-	if(document.getElementById("inptSeleccTipoVenta").value=="CONTADO"){
-	buscarImprimirTicketVentaContado();
-	}
-	idGaranteFk = $(datostr).children('td[id="td_datos_30"]').html();
-	idFkVendedor1 = $(datostr).children('td[id="td_datos_3"]').html();
-	idFkVendedor2 = $(datostr).children('td[id="td_datos_14"]').html();
-	idFkCliente = $(datostr).children('td[id="td_datos_10"]').html();
-	idFkCobrador = $(datostr).children('td[id="td_datos_11"]').html();
-	cobradorcargarpagos = $(datostr).children('td[id="td_datos_11"]').html();
-	
-	idFkVenta = $(datostr).children('td[id="td_datos_8"]').html();
-	document.getElementById('inpCodVenta').disabled = true
-	document.getElementById('inpCodVenta').className = "inputTextDisable"
-	document.getElementById('btnAbmVenta').style.display = ""
-	document.getElementById('btnAbmVenta').value = "Editar datos"
-	buscardetallesventa()
-document.getElementById("btnNuevoClienteVenta").style.display=''
-document.getElementById("tdImprimirVenta").style.display=''
-SeleccTipoComprobanteVenta()
-	}
-	document.getElementById("divVistaVentas").style.display='none'
-   	document.getElementById("btnMasInfoClienteVenta").style.display='none'
+	document.getElementById("divVistaVentas").style.display = 'none'
+	document.getElementById("btnMasInfoClienteVenta").style.display = 'none'
 }
 
 var cantidaDetalleSelec = "";
@@ -15826,7 +15826,7 @@ function editarventaselecc() {
 	obtenerdatoshistorialventa(elementoventa)
 	//limpiarcamposhistorialventa()
 	vercerrarOpcionesHistorialVenta("2");
-	}
+}
 var elementoventa = ""
 var controltipoventa="";
 function obtenerdatoshistorialventa(datostr) {
@@ -15886,7 +15886,7 @@ function obtenerdatoshistorialventa(datostr) {
 	document.getElementById('inpCodVenta').className = "inputTextDisable"
 	document.getElementById('btnAbmVenta').style.display = ""
 	document.getElementById('btnAbmVenta').value = "Editar datos"
-	
+	document.getElementById('tdImprimirVenta').style.display = "";
 	
 	buscardetallesventa()
 /*

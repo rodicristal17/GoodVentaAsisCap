@@ -1012,6 +1012,8 @@ function guardarCitaAgenda(){
         return;
     }
 
+    vercerrarModalNuevaCita(false);
+    
     agendaConsultoriosData.eventos.push({
         id: new Date().getTime(),
         consultorio: parseInt(consultorio, 10),
@@ -1023,7 +1025,6 @@ function guardarCitaAgenda(){
         motivo: motivo
     });
 
-    vercerrarModalNuevaCita(false);
     limpiarFormularioNuevaCita();
     cargarAgendaConsultorios();
 }
