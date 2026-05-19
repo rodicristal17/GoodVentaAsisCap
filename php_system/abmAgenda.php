@@ -520,6 +520,59 @@ function crearComentario($idAgenda, $comentario)
 	return array("1" => "exito", "id" => $idComentario);
 }
 
+function registrarComentariosCambiosAgenda($idAgenda, $codUsuario, $registroAnterior, $valoresNuevos)
+{
+	if (empty($idAgenda) || !is_array($registroAnterior) || !is_array($valoresNuevos)) {
+		return;
+	}
+
+	foreach ($valoresNuevos as $campo => $valorNuevo) {
+		if ($valorNuevo === NULL || $valorNuevo === "") {
+			continue;
+		}
+
+		$valorAnterior = array_key_exists($campo, $registroAnterior) ? $registroAnterior[$campo] : NULL;
+
+		if (valorComparableComentarioAgenda($valorAnterior) === valorComparableComentarioAgenda($valorNuevo)) {
+			continue;
+		}
+
+		$comentario = "@{0}: El usuario @{".$codUsuario."} ha modificado ".$campo." de ".formatearValorComentarioAgenda($valorAnterior)." a ".formatearValorComentarioAgenda($valorNuevo);
+		if (mb_strlen($comentario, 'UTF-8') > 255) {
+			$comentario = mb_substr($comentario, 0, 252, 'UTF-8')."...";
+		}
+		crearComentario($idAgenda, $comentario);
+	}
+}
+
+function valorComparableComentarioAgenda($valor)
+{
+	if ($valor === NULL) {
+		return "";
+	}
+
+	$valor = trim((string)$valor);
+	if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $valor)) {
+		return substr($valor, 0, 5);
+	}
+
+	return $valor;
+}
+
+function formatearValorComentarioAgenda($valor)
+{
+	if ($valor === NULL || $valor === "") {
+		return "NULL";
+	}
+
+	$valor = trim((string)$valor);
+	if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $valor)) {
+		return substr($valor, 0, 5);
+	}
+
+	return $valor;
+}
+
 function obtenerNombreUsuarioAgenda($codUsuario, $usuariosAgenda)
 {
 	if ((string)$codUsuario == "0") {

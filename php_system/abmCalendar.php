@@ -4,6 +4,7 @@ include_once 'verificar_navegador.php';
 include_once 'buscar_nivel.php';
 include_once 'classTable.php';
 include_once 'conexion.php';
+include_once 'abmAgenda.php';
 
 date_default_timezone_set('America/Asuncion');
 
@@ -440,6 +441,8 @@ function actualizarCita($mysqli, $useru){
         exit;
     }
 
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+
     $campos[] = "creado_por = '".$useru."'";
     $campos[] = "creado_en = NOW()";
 
@@ -459,6 +462,13 @@ function actualizarCita($mysqli, $useru){
         ));
         exit;
     }
+
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "hora_inicio" => $hora_inicio,
+        "hora_fin" => $hora_fin,
+        "estado" => $estado,
+        "motivo" => $motivo
+    ));
 
     echo json_encode(array(
         "1" => "exito",
@@ -484,6 +494,8 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
         exit;
     }
 
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+
     $sql = "
         UPDATE agenda SET
             cod_presupuestoFK = '".$cod_presupuestoFK."',
@@ -503,6 +515,10 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
         exit;
     }
 
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "cod_presupuestoFK" => $cod_presupuestoFK
+    ));
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Presupuesto asociado correctamente"
@@ -514,6 +530,18 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
 
 function limpiar($mysqli, $valor){
     return mysqli_real_escape_string($mysqli, trim($valor));
+}
+
+function obtenerAgendaAuditoria($mysqli, $id_agenda){
+    $id_agenda = limpiar($mysqli, $id_agenda);
+    $sql = "SELECT * FROM agenda WHERE id_agenda = '".$id_agenda."' LIMIT 1";
+    $result = $mysqli->query($sql);
+
+    if(!$result || $result->num_rows == 0){
+        return array();
+    }
+
+    return $result->fetch_assoc();
 }
 
 function normalizarTextoUtf8($valor){
@@ -756,6 +784,8 @@ function moverCita($mysqli, $useru){
         exit;
     }
 
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+
     $sql = "
         UPDATE agenda SET
             id_consultorio = '".$id_consultorio."',
@@ -778,6 +808,13 @@ function moverCita($mysqli, $useru){
         exit;
     }
 
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "id_consultorio" => $id_consultorio,
+        "fecha" => $fecha,
+        "hora_inicio" => $hora_inicio,
+        "hora_fin" => $hora_fin
+    ));
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Cita movida correctamente"
@@ -792,6 +829,8 @@ function redimensionarCita($mysqli, $useru){
         echo json_encode(array("1" => "Datos incompletos para redimensionar cita", "mensaje" => "Faltan datos"));
         exit;
     }
+
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
 
     $sql = "
         UPDATE agenda SET
@@ -811,6 +850,10 @@ function redimensionarCita($mysqli, $useru){
         ));
         exit;
     }
+
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "hora_fin" => $hora_fin
+    ));
 
     echo json_encode(array(
         "1" => "exito",
