@@ -56,8 +56,9 @@ if ($operacion == 'obtenerComentarios') {
         if(preg_match_all('/@\{(\d+)\}\s*:\s*(.*?)(?=@\{\d+\}\s*:|$)/s', $textoComentario, $coincidencias, PREG_SET_ORDER)){
             foreach($coincidencias as $coincidencia){
                 $codUsuario = $coincidencia[1];
-                $nombreUsuario = isset($usuariosAgenda[$codUsuario]) ? $usuariosAgenda[$codUsuario] : "@{".$codUsuario."}";
-                $contenidoMotivo = nl2br(htmlspecialchars(trim($coincidencia[2]), ENT_QUOTES, 'UTF-8'), false);
+                $nombreUsuario = obtenerNombreUsuarioAgenda($codUsuario, $usuariosAgenda);
+				$contenidoTexto = reemplazarUsuariosComentarioAgenda(trim($coincidencia[2]), $usuariosAgenda);
+                $contenidoMotivo = nl2br(htmlspecialchars($contenidoTexto, ENT_QUOTES, 'UTF-8'), false);
 
                 $pagina .= '<div class="sugerencias-container" style="justify-content:flex-start;margin:0;">
                     <div class="card my-3" style="border-left:5px solid #416c8f;margin: 0px !important;margin-bottom: 7px !important;display:flex;flex-direction:column;gap:0;min-height:auto;">
@@ -517,6 +518,22 @@ function crearComentario($idAgenda, $comentario)
 	mysqli_close($mysqli);
 
 	return array("1" => "exito", "id" => $idComentario);
+}
+
+function obtenerNombreUsuarioAgenda($codUsuario, $usuariosAgenda)
+{
+	if ((string)$codUsuario == "0") {
+		return "Sistema";
+	}
+
+	return isset($usuariosAgenda[$codUsuario]) ? $usuariosAgenda[$codUsuario] : "@{".$codUsuario."}";
+}
+
+function reemplazarUsuariosComentarioAgenda($texto, $usuariosAgenda)
+{
+	return preg_replace_callback('/@\{(\d+)\}/', function($coincidencia) use ($usuariosAgenda) {
+		return obtenerNombreUsuarioAgenda($coincidencia[1], $usuariosAgenda);
+	}, $texto);
 }
 
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
