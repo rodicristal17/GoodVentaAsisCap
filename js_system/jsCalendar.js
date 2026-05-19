@@ -1039,6 +1039,133 @@ function limpiarFormularioNuevaCita(){
     idAbmAgenda= "";
 }
 
+function obtenerComentariosAgendamiento() {
+ 	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idAgenda": idAbmAgenda,
+		"funt": "obtenerComentarios"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAgenda.php",
+		type: "post",
+        dataType: "text",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			//Uload progress
+			xhr.upload.addEventListener("progress" ,function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("enviado",kb,"0")           
+			}, false);
+			//Download progress
+			xhr.addEventListener("progress", function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("recibido","0",kb)  
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+            console.error(jqXHR, textstatus, errorThrowm);
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		},
+		success: function (responseText) {
+            console.log(responseText);
+			try {
+				var datos = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+				var Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+                    var contenedorComentarios = document.getElementById('detAgendaMotivo');
+                    var motivoBase = contenedorComentarios.getAttribute('data-motivo-base') || '';
+                    contenedorComentarios.innerHTML = motivoBase + (datos["3"] || '');
+				}else{
+    				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				}
+			} catch (error) {
+                console.error(error, responseText);
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+function verificarComentarioAgendamiento() {
+    const detAgendaMotivoInput= document.getElementById('detAgendaMotivoInput').value;
+    if (!detAgendaMotivoInput) {
+        ver_vetana_informativa("Ingrese un comentario para guardar");
+        return false;
+    }
+
+ 	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idAgenda": idAbmAgenda,
+        "comentario": detAgendaMotivoInput,
+		"funt": "crearComentario"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAgenda.php",
+		type: "post",
+        dataType: "text",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			//Uload progress
+			xhr.upload.addEventListener("progress" ,function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("enviado",kb,"0")           
+			}, false);
+			//Download progress
+			xhr.addEventListener("progress", function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("recibido","0",kb)  
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+			try {
+				var datos = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+				var Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					ver_vetana_informativa("Datos Guardados con exito");
+                    document.getElementById('detAgendaMotivoInput').value = '';
+                    obtenerComentariosAgendamiento();
+				}else{
+    				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				}
+			} catch (error) {
+                console.error(error);
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
 var idAbmAgenda= "";
 function verDetalleAgenda(id){
     var evento = null;
@@ -1080,7 +1207,7 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
     document.getElementById('detAgendaMotivo').innerHTML = evento.motivo_limpio || '';
-    document.getElementById('detAgendaMotivo2').innerHTML = evento.motivo || '';
+    document.getElementById('detAgendaMotivo').setAttribute('data-motivo-base', evento.motivo_limpio || '');
     document.getElementById('detAgendaMotivoInput').value = '';
     document.getElementById('detAgendaEstado').innerHTML =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
@@ -1106,6 +1233,7 @@ function verDetalleAgenda(id){
     buscarCuentasPendientes('', '', evento.paciente, evento.ci_cliente, '', '', '', '','' ,'', '');
     document.getElementById('table_historial_paciente_agenda_detalle').innerHTML = 'Cargando...'
     buscarHistorialPacienteCalendario('detalle_agendamiento');
+    obtenerComentariosAgendamiento();
 }
 
 function cerrarDetalleAgenda(){
@@ -1594,70 +1722,6 @@ function actualizarHorarioAgendaDesdeModal(){
     actualizarAgenda(idAgenda, horaInicio, horaFin, '');
 }
 
-function actualizarMotivoAgendaDesdeModal(){
-    obtener_datos_user();
-
-    var idAgenda = document.getElementById('detAgendaId').innerHTML;
-
-    if(idAgenda == ''){
-        alert('No se encontrÃ³ el ID del agendamiento.');
-        return;
-    }
-
-    if(document.getElementById('detAgendaMotivoInput').value == ''){
-        alert('Debe cargar el motivo.');
-        return;
-    }
-
-    var motivo = document.getElementById('detAgendaMotivo2').textContent;
-    motivo += obtenerMotivoCitaAgendaConCreador('detAgendaMotivoInput');
-
-    var datos = {
-        "useru": userid,
-        "passu": passuser,
-        "navegador": navegador,
-        "funt": "actualizarMotivoCita",
-        "id_agenda": idAgenda,
-        "motivo": motivo
-    };
-
-	verCerrarEfectoCargando("1");
-    $.ajax({
-        data: datos,
-        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
-        type: "post",
-        error: function (jqXHR, textstatus, errorThrowm) {
-            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
-        	verCerrarEfectoCargando();
-        },
-        success: function (responseText) {
-	        verCerrarEfectoCargando();
-            try {
-                var resp = responseText;
-
-                if (typeof responseText === "string") {
-                    resp = $.parseJSON(responseText);
-                }
-
-                var Respuesta = resp["1"];
-                Respuesta = respuestaJqueryAjax(Respuesta);
-
-                if (Respuesta == true) {
-                    cerrarDetalleAgenda();
-                    cargarAgendaConsultoriosDesdePHP();
-                    ventanaAnterior.pop();
-                } else {
-                    alert(resp["mensaje"] || "No se pudo actualizar el motivo.");
-                }
-            } catch (error) {
-                var titulo = "Error actualizar motivo agenda: " + error + " \r\n Consola: " + responseText;
-                GuardarArchivosLog(titulo);
-                console.log(responseText);
-            }
-        }
-    });
-}
-
 function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
     obtener_datos_user();
 
@@ -1764,9 +1828,9 @@ function guardarCitaAgenda(){
     var motivo = obtenerMotivoCitaAgendaConCreador('inptMotivoAgenda');
 
     if(paciente == ''){
-    alert('Debe seleccionar un paciente');
-    return;
-}
+        alert('Debe seleccionar un paciente');
+        return;
+    }
 
     if(consultorio == ''){
         alert('Debe seleccionar el consultorio');
@@ -1798,6 +1862,7 @@ function guardarCitaAgenda(){
         return;
     }
 
+    document.getElementById('btn-accion-principal').disabled= true;
     var datos = {
         "useru": userid,
         "passu": passuser,
@@ -1822,6 +1887,7 @@ function guardarCitaAgenda(){
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 	        verCerrarEfectoCargando();
+            document.getElementById('btn-accion-principal').disabled= true;
         },
         success: function (responseText) {
 	        verCerrarEfectoCargando();
@@ -1842,10 +1908,12 @@ function guardarCitaAgenda(){
                 }else{
                     alert(resp["mensaje"] || "No se pudo guardar la cita");
                 }
+                document.getElementById('btn-accion-principal').disabled= false;
             } catch (error) {
                 var titulo = "Error guardarCitaAgenda: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
                 console.log(responseText);
+                document.getElementById('btn-accion-principal').disabled= false;
             }
         }
     });

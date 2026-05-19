@@ -22777,8 +22777,8 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <div class='detalle-item'>
                     <span class='detalle-label'>Horario</span>
                     <div class='detalle-valor'>
-                      <input id="detAgendaHorarioInicio" style="width: fit-content;" type="time" onchange="actualizarHorarioAgendaDesdeModal()"/> -
-                      <input id="detAgendaHorarioFin" style="width: fit-content;" type="time" onchange="actualizarHorarioAgendaDesdeModal()"/>
+                      <input id="detAgendaHorarioInicio" style="width: fit-content;" type="time" oncblur="actualizarHorarioAgendaDesdeModal()"/> -
+                      <input id="detAgendaHorarioFin" style="width: fit-content;" type="time" oncblur="actualizarHorarioAgendaDesdeModal()"/>
                     </div>
                 </div>
 
@@ -22815,11 +22815,13 @@ onclick='buscarvistaaperturacierrecaja()' />
           </section>
           <section class="presupuesto-panel" style="width: 25%;margin-inline: 10px;padding: 5px;">
             <div class='detalle-item' style="margin-bottom: 10px;height: 85%;">
-                <span class='detalle-label'>Motivo</span>
+                <span class='detalle-label'>Comentarios</span>
                 <div class='detalle-valor' id='detAgendaMotivo' style="overflow-y: auto;"></div>
-                <div style="display: none;" id='detAgendaMotivo2'></div>
             </div>
-            <input id="detAgendaMotivoInput" onkeyup="if (event.keyCode==13) {actualizarMotivoAgendaDesdeModal()}" placeholder="Presione enter para enviar..."/>
+            <div>
+              <input id="detAgendaMotivoInput" onkeyup="if (event.keyCode==13) {verificarComentarioAgendamiento()}" placeholder="Presione enter para enviar..." style="width: 85%;"/>
+              <i class="fa-regular fa-paper-plane" onclick="verificarComentarioAgendamiento()"></i>
+            </div>
           </section>
         </div>
 

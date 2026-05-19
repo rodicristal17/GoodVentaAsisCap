@@ -1,5 +1,4 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 
 include_once 'verificar_navegador.php';
 include_once 'buscar_nivel.php';
@@ -8,73 +7,77 @@ include_once 'conexion.php';
 
 date_default_timezone_set('America/Asuncion');
 
-$mysqli = conectar_al_servidor();
-$mysqli->set_charset("utf8");
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+    header('Content-Type: application/json; charset=utf-8');
 
-$useru = isset($_POST['useru']) ? $_POST['useru'] : '';
-$passu = isset($_POST['passu']) ? $_POST['passu'] : '';
-$navegador = isset($_POST['navegador']) ? $_POST['navegador'] : '';
-$funt = isset($_POST['funt']) ? $_POST['funt'] : '';
-
-if ($useru == '' || $passu == '' || $navegador == '') {
-    echo json_encode(array("1" => "UI"));
+    $mysqli = conectar_al_servidor();
+    $mysqli->set_charset("utf8");
+    
+    $useru = isset($_POST['useru']) ? $_POST['useru'] : '';
+    $passu = isset($_POST['passu']) ? $_POST['passu'] : '';
+    $navegador = isset($_POST['navegador']) ? $_POST['navegador'] : '';
+    $funt = isset($_POST['funt']) ? $_POST['funt'] : '';
+    
+    if ($useru == '' || $passu == '' || $navegador == '') {
+        echo json_encode(array("1" => "UI"));
+        exit;
+    }
+    
+    $verificar = verificar_navegador($useru, $navegador, $passu);
+    if ($verificar != 'ok') {
+        echo json_encode(array("1" => "UI"));
+        exit;
+    }
+    
+    switch ($funt) {
+        case 'cargarAgenda':
+            cargarAgenda($mysqli);
+            break;
+    
+        case 'guardarCita':
+            guardarCita($mysqli, $useru);
+            break;
+    
+        case 'moverCita':
+            moverCita($mysqli, $useru);
+            break;
+    
+        case 'redimensionarCita':
+            redimensionarCita($mysqli, $useru);
+            break;
+    
+        case 'actualizarCita':
+            actualizarCita($mysqli, $useru);
+            break;
+    
+        case 'actualizarMotivoCita':
+            actualizarMotivoCita($mysqli, $useru);
+            break;
+    
+        case 'actualizarPresupuestoAgenda':
+            actualizarPresupuestoAgenda($mysqli, $useru);
+            break;
+            
+        case 'buscarPacientesAgenda':
+            buscarPacientesAgenda($mysqli);
+            break;
+    
+        case 'guardarPacienteAgenda':
+            guardarPacienteAgenda($mysqli, $useru);
+            break;
+    
+        case 'buscarHistorialPacienteCalendario':
+            buscarHistorialPacienteCalendario($mysqli);
+            break;
+            
+    
+        default:
+            echo json_encode(array("1" => "Función inválida"));
+            break;
+    }
+    
     exit;
 }
-
-$verificar = verificar_navegador($useru, $navegador, $passu);
-if ($verificar != 'ok') {
-    echo json_encode(array("1" => "UI"));
-    exit;
-}
-
-switch ($funt) {
-    case 'cargarAgenda':
-        cargarAgenda($mysqli);
-        break;
-
-    case 'guardarCita':
-        guardarCita($mysqli, $useru);
-        break;
-
-    case 'moverCita':
-        moverCita($mysqli, $useru);
-        break;
-
-    case 'redimensionarCita':
-        redimensionarCita($mysqli, $useru);
-        break;
-
-    case 'actualizarCita':
-		actualizarCita($mysqli, $useru);
-		break;
-
-    case 'actualizarMotivoCita':
-		actualizarMotivoCita($mysqli, $useru);
-		break;
-
-	case 'actualizarPresupuestoAgenda':
-		actualizarPresupuestoAgenda($mysqli, $useru);
-		break;
-		
-	case 'buscarPacientesAgenda':
-		buscarPacientesAgenda($mysqli);
-		break;
-
-	case 'guardarPacienteAgenda':
-		guardarPacienteAgenda($mysqli, $useru);
-		break;
-
-	case 'buscarHistorialPacienteCalendario':
-		buscarHistorialPacienteCalendario($mysqli);
-		break;
-		
-
-    default:
-        echo json_encode(array("1" => "Función inválida"));
-        break;
-}
-
-exit;
 
 /* =========================================================
    FUNCIONES
@@ -694,7 +697,11 @@ function cargarAgenda($mysqli){
     exit;
 }
 
-function obtenerUsuariosAgenda($mysqli){
+function obtenerUsuariosAgenda($mysqli= null){
+    if ($mysqli === null) {
+        $mysqli = conectar_al_servidor();
+    }
+
     $usuarios = array();
     $sql = "SELECT u.cod_usuario, p.nombre_persona
             FROM usuario u

@@ -567,6 +567,14 @@ ALTER TABLE consultorios ADD COLUMN cod_doctorFK INT(11);
 
 UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.81', detalles='Abm para asignar doctores a consultorios establecidos', fecha='2026-05-11' WHERE idhistorialactualizacion= 2;
 
+CREATE TABLE comentarios_agenda (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    comentario VARCHAR(255) NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_agendaFK INT(11),
+    FOREIGN KEY (cod_agendaFK) REFERENCES agenda(id_agenda)
+);
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
