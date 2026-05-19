@@ -1444,6 +1444,7 @@ function obtenerDatosInterConsulta(elemento) {
             buscarInterConsultasYContenido($(elemento).children('#td_id').html(), elemento);
             break;
         case 'divListadoInterConsulta':
+            cancelarInformeInterConsulta();
             limpiarCamposDetallesInterConsulta();
             buscarInterConsultasYContenido($(elemento).children('#td_id').html(), elemento);
             limpiarcamposMensaje();

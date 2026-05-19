@@ -575,6 +575,15 @@ CREATE TABLE comentarios_agenda (
     FOREIGN KEY (cod_agendaFK) REFERENCES agenda(id_agenda)
 );
 
+CREATE TABLE informacion_protocolo (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    cod_usuarioFK_create INT(11),
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
