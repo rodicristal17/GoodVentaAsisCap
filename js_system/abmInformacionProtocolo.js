@@ -34,6 +34,8 @@ function verCerrarVentanaAbmInformacionProtocolo(mostrar, abm) {
             document.getElementById('divAbmInformacionprotocolo2').style.display = "";
             document.getElementById('divAbmInformacionprotocolo1').style.display = "none";
         } else {
+            if(controlacceso("LISTARINFORMACIONPROTOCOLO","accion")==false){ return;}
+
             document.getElementById("divAbmInformacionprotocolo").style.display = "";
             document.getElementById('divAbmInformacionprotocolo1').style.display = "";
             document.getElementById('divAbmInformacionprotocolo2').style.display = "none";
@@ -230,6 +232,7 @@ function cancelarInformeInformacionProtocolo() {
 }
 
 function obtenerDatosInformacionProtocolo(elemento) {
+    if(controlacceso("EDITARINFORMACIONPROTOCOLO","accion")==false){ return;}
     cancelarInformeInformacionProtocolo();
 
     codInformacionProtocolo = $(elemento).children("#td_id").html();
@@ -242,6 +245,8 @@ function obtenerDatosInformacionProtocolo(elemento) {
 }
 
 function verificarCamposInformacionProtocolo() {
+    if(controlacceso("CREARINFORMACIONPROTOCOLO","accion")==false){ return;}
+
     const nombre = document.getElementById("inptNombreAbmInformacionProtocolo").value;
     const descripcion = document.getElementById("inptDescripcionAbmInformacionProtocolo").value;
     const estado = document.getElementById("inptEstadoAbmInformacionProtocolo").value;
