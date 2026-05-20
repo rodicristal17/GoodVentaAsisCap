@@ -58,6 +58,9 @@ if ($operacion == 'obtenerComentarios') {
                 $codUsuario = $coincidencia[1];
                 $nombreUsuario = obtenerNombreUsuarioAgenda($codUsuario, $usuariosAgenda);
 				$contenidoTexto = reemplazarUsuariosComentarioAgenda(trim($coincidencia[2]), $usuariosAgenda);
+				if ($contenidoTexto == "") {
+					continue;
+				}
                 $contenidoMotivo = nl2br(htmlspecialchars($contenidoTexto, ENT_QUOTES, 'UTF-8'), false);
 
                 $pagina .= '<div class="sugerencias-container" style="justify-content:flex-start;margin:0;">

@@ -8,6 +8,7 @@ include_once 'abmAgenda.php';
 
 date_default_timezone_set('America/Asuncion');
 
+$useru= "";
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
     header('Content-Type: application/json; charset=utf-8');
 
@@ -384,6 +385,9 @@ function guardarCita($mysqli, $useru){
         exit;
     }
 
+    $id_agenda = $mysqli->insert_id;
+    crearComentario($id_agenda, "@{0}: @{".$useru."} a creado la cita.");
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Cita guardada correctamente"
@@ -562,6 +566,7 @@ function cargarAgenda($mysqli){
     $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
     $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
     $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
+    $ver_todos_consoltorios = isset($_POST['ver_todos_consoltorios']) ? limpiar($mysqli, $_POST['ver_todos_consoltorios']) : 'true';
 
     if ($fecha == '') {
         $fecha = date('Y-m-d');
@@ -573,10 +578,13 @@ function cargarAgenda($mysqli){
     /* ===========================
        CONSULTORIOS
     =========================== */
-	$condicionConsultorio="";
+	$sqlFiltro="";
 	if($cod_local!=""){
-		$condicionConsultorio.=" and c.cod_localFk = '".$cod_local."'";
+		$sqlFiltro.=" and c.cod_localFk = '".$cod_local."'";
 	}
+    if ($ver_todos_consoltorios == 'false') {
+        $sqlFiltro .= " AND (c.cod_doctorFK IN (SELECT cod_usuarioFK FROM usuario WHERE cod_usuario = '".$useru."'))";
+    }
 	
     $sqlConsultorios = "
         SELECT  c.id_consultorio,
@@ -586,7 +594,7 @@ function cargarAgenda($mysqli){
             c.cod_doctorFK,
             c.color
         FROM consultorios c
-        WHERE  c.estado = 'Activo' ".$condicionConsultorio."
+        WHERE  c.estado = 'Activo' ".$sqlFiltro."
         ORDER BY cod_localFk asc ,c.nombre ASC ";
 
     $resultConsultorios = $mysqli->query($sqlConsultorios);
@@ -680,7 +688,11 @@ function cargarAgenda($mysqli){
             foreach($coincidencias as $coincidencia){
                 $codUsuario = $coincidencia[1];
                 $nombreUsuario = isset($usuariosAgenda[$codUsuario]) ? $usuariosAgenda[$codUsuario] : "@{".$codUsuario."}";
-                $contenidoMotivo = nl2br(trim($coincidencia[2]), false);
+                $contenidoTexto = trim($coincidencia[2]);
+                if($contenidoTexto == ""){
+                    continue;
+                }
+                $contenidoMotivo = nl2br($contenidoTexto, false);
 
                 $motivoLimpio .= '<div class="sugerencias-container" style="justify-content:flex-start;margin:0;">
                     <div class="card my-3" style="border-left:5px solid #416c8f;margin: 0px !important;margin-bottom: 7px !important;display:flex;flex-direction:column;gap:0;min-height:auto;">
@@ -688,7 +700,7 @@ function cargarAgenda($mysqli){
                             <span style="font-size:10pt;line-height:1.15;">'.$nombreUsuario.'</span>
                         </div>
                         <div class="card-body" style="padding:4px 10px 8px 10px;">
-                            <p class="card-text" style="font-size: 10pt; text-align:justify;margin:0;line-height:1.35;">'.$contenidoMotivo.'</p>
+                            <p class="card-text" style="font-size: 10pt; text-align:justify;margin:0;line-height:1.35;"><b>Motivo consulta:</b> '.$contenidoMotivo.'</p>
                         </div>
                     </div>
                 </div>';
