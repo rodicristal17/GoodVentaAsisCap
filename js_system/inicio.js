@@ -216,7 +216,6 @@ window.onload = function () {
 
 		// Actualizar el contador de pantalla
 		document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
-		console.log(contadorLongitudMensaje)
 		
 		if (e.target.matches('p.mensaje-interconsulta')) {
 			const valor = e.target.textContent;
@@ -344,7 +343,7 @@ window.onload = function () {
 		}
 		controlMensaje = controlMensaje + 1;
 
-		if (Date.now() - ultimaActividadMensajeProtocolo >= 15000) {
+		if (Date.now() - ultimaActividadMensajeProtocolo >= 60000) {
 			mostrarMensajeProtocoloEmpresarialAleatorio();
 		}
 	}

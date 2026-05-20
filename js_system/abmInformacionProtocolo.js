@@ -63,7 +63,7 @@ function buscarVistaInformacionProtocolos() {
     const ocultarInactivo = document.getElementById("inptSeleccFiltroEstadoInformacionProtocolo").checked;
     const usuario_creador= document.getElementById('inptBuscarInformacionProtocolo7').value;
 
-    buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 10, ocultarInactivo);
+    buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 1, ocultarInactivo);
 }
 
 var mensajes_protocolos_empresariales = [];
@@ -82,7 +82,7 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
     }
 
     if (limite != 0) {
-        controldebusquedadInformeInformacionProtocolo = false;
+        controldebusquedadInformeInformacionProtocolo = true;
         registrocargadoInformacionProtocolo = 0;
         const tabla = document.getElementById("table_frm_VistaInformacionProtocolo");
         if (tabla) {
@@ -121,9 +121,16 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
 
                     if (limite != 0) {
                         registrocargadoInformacionProtocolo = Number(datos["4"]);
-                        totalregistroinformeInformacionProtocolo = Number(datos["4"]);
+                        totalregistroinformeInformacionProtocolo = Number(datos["5"]);
                         document.getElementById("inptRegistoCargadoInformacionProtocolo").value = registrocargadoInformacionProtocolo;
                         document.getElementById("tbProcessInformeInformacionProtocolo").style.display = "none";
+                        if (controldebusquedadInformeInformacionProtocolo && registrocargadoInformacionProtocolo < totalregistroinformeInformacionProtocolo) {
+                            document.getElementById("tbProcessInformeInformacionProtocolo").style.display = "";
+                            var porce=((registrocargadoInformacionProtocolo*100)/totalregistroinformeInformacionProtocolo).toFixed(0)
+                            document.getElementById("divProgressInformeInformacionProtocolo").style.width=porce+"%";
+
+                            buscarMasVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, '1 OFFSET '+registrocargadoInformacionProtocolo, ocultarInactivo)
+                        }
                     } else {
                         mensajes_protocolos_empresariales= [];
                         Array.from(datos["3"]).forEach(function (elemento) {
@@ -140,20 +147,90 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
     });
 }
 
+function buscarMasVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, limite, ocultarInactivo) {
+    let datos = new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "buscarVista");
+    datos.append("id", id);
+    datos.append("nombre", nombre);
+    datos.append("estado", estado);
+    datos.append("usuario_creador", usuario_creador);
+    datos.append("limite", limite);
+    if (ocultarInactivo) {
+        datos.append("ocultar_inactivo", ocultarInactivo);
+    }
+    
+    if (!controldebusquedadInformeInformacionProtocolo) {
+        return;
+    }
+
+    $.ajax({
+        data: datos,
+        url: "../php_system/abmInformacionProtocolo.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function (jqXHR, textstatus) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+            controldebusquedadInformeInformacionProtocolo = false;
+        },
+        success: function (responseText) {
+            if (!controldebusquedadInformeInformacionProtocolo) {
+                return;
+            }
+
+            Respuesta = responseText;
+            console.log(Respuesta);
+            try {
+                var datos = $.parseJSON(Respuesta);
+                Respuesta = datos["1"];
+                Respuesta = respuestaJqueryAjax(Respuesta);
+
+                if (!controldebusquedadInformeInformacionProtocolo) {
+                    return;
+                }
+
+                if (Respuesta) {
+                    const tabla = document.getElementById("table_frm_VistaInformacionProtocolo");
+                    if (tabla) {
+                        tabla.innerHTML += datos["2"];
+                    }
+
+                    registrocargadoInformacionProtocolo += Number(datos["4"]);
+                    document.getElementById("inptRegistoCargadoInformacionProtocolo").value = registrocargadoInformacionProtocolo;
+
+                    if (controldebusquedadInformeInformacionProtocolo && registrocargadoInformacionProtocolo < totalregistroinformeInformacionProtocolo) {
+                        buscarMasVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, '10 OFFSET '+registrocargadoInformacionProtocolo, ocultarInactivo)
+                    
+                        document.getElementById("tbProcessInformeInformacionProtocolo").style.display = "";
+                        var porce=((registrocargadoInformacionProtocolo*100)/totalregistroinformeInformacionProtocolo).toFixed(0)
+                        document.getElementById("divProgressInformeInformacionProtocolo").style.width=porce+"%";
+                    }
+                }
+            } catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+                var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+            }
+        }
+    });
+}
+
 function cancelarInformeInformacionProtocolo() {
     controldebusquedadInformeInformacionProtocolo = false;
+
     const progreso = document.getElementById("divProgressInformeInformacionProtocolo");
-    if (progreso) {
+    if (progreso && registrocargadoInformacionProtocolo < totalregistroinformeInformacionProtocolo) {
         progreso.style.backgroundColor = "#ff5722";
     }
 }
 
 function obtenerDatosInformacionProtocolo(elemento) {
-    controldebusquedadInformeInformacionProtocolo = false;
-    const progreso = document.getElementById("divProgressInformeInformacionProtocolo");
-    if (progreso) {
-        progreso.style.width = "0%";
-    }
+    cancelarInformeInformacionProtocolo();
 
     codInformacionProtocolo = $(elemento).children("#td_id").html();
     document.getElementById("inptCodAbmInformacionProtocolo").value = codInformacionProtocolo;

@@ -56,6 +56,8 @@
     }
 
     function obtenerVistaInformacionProtocolo($filtros = array(), $limite = 0) {
+        $registros = obtenerInformacionProtocolo($filtros);
+        $cant_total_registros = count($registros);
         $registros = obtenerInformacionProtocolo($filtros, $limite);
         $pagina = "";
         $styleName = "tableRegistroSearch";
@@ -65,7 +67,7 @@
             $pagina .= "
             <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosInformacionProtocolo(this)'>
-                <td id='td_id' style='width: 10%;'>".str_pad($value['id'], 3, "0", STR_PAD_LEFT)."</td>
+                <td id='td_id' style='width: 10%;'>".$value['id']."</td>
                 <td id='td_datos_1' style='width: 25%;'>".$value['nombre']."</td>
                 <td id='td_datos_2' style='display: none;'>".$value['descripcion']."</td>
                 <td id='td_datos_3' style='width: 10%;'>".ucfirst($value['estado'])."</td>
@@ -76,7 +78,7 @@
             </table>";
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros)));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cant_total_registros));
     }
 
     function obtenerOptionInformacionProtocolo() {
@@ -120,10 +122,10 @@
             }
         }
 
-        if ($limite == 0) {
+        if (!$limite || $limite == 0) {
             $limite = "";
         } else {
-            $limite = "LIMIT ".intval($limite);
+            $limite = "LIMIT ".$limite;
         }
 
         $sql = "SELECT
