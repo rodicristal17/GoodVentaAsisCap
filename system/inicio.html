@@ -22595,7 +22595,7 @@ onclick='buscarvistaaperturacierrecaja()' />
             <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
                 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' />
             </button>
-            <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios()' title='Cerrar'>
+            <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios();limpiarFichaPacienteCalendario();' title='Cerrar'>
                 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' />
             </button>
         </div>
@@ -22942,12 +22942,12 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 
 
-<div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda()' style='display:none;'></div>
+<div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda();limpiarFichaPacienteCalendario();ventanaAnterior.pop();' style='display:none;'></div>
 <div class='modal-filtros-catalogo' id='modalDetalleAgenda' style='display:none;'>
     <div class='modal-filtros-box modal-detalle-agenda-box'>
         <div class='modal-filtros-header'>
             <h3>Detalle del agendamiento</h3>
-            <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda()'>×</button>
+            <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda();limpiarFichaPacienteCalendario();ventanaAnterior.pop();'>×</button>
         </div>
 
         <div class='modal-filtros-body' style="display: flex;">

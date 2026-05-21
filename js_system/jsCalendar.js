@@ -1345,6 +1345,14 @@ function AbrirAgendaConsultorios(ir_hoy= true){
     cargarAgendaConsultoriosDesdePHP();
 }
 
+function limpiarFichaPacienteCalendario() {
+    idAbmAgenda= "";
+    document.getElementById('detAgendaDeudasPendientes').innerHTML = '';
+    document.getElementById('table_historial_paciente_agenda_detalle').innerHTML = '';
+    document.getElementById('detAgendaMotivo').innerHTML = '';
+    document.getElementById('detAgendaMotivoInput').value = '';
+}
+
 /* ===========================
    DRAG AND DROP
 =========================== */
@@ -1831,6 +1839,7 @@ function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
                     cerrarDetalleAgenda();
                     cargarAgendaConsultoriosDesdePHP();
                     ventanaAnterior.pop();
+                    limpiarFichaPacienteCalendario();
                 } else {
                     alert(resp["mensaje"] || "No se pudo actualizar el horario.");
                 }
