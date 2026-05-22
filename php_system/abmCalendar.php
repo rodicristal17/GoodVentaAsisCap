@@ -489,22 +489,35 @@ function actualizarMotivoCita($mysqli, $useru){
 function actualizarPresupuestoAgenda($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
     $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? limpiar($mysqli, $_POST['cod_presupuestoFK']) : '';
+    $campos = array();
 
-    if($id_agenda == '' || $cod_presupuestoFK == ''){
+    if($id_agenda == ''){
         echo json_encode(array(
-            "1" => "Datos incompletos",
-            "mensaje" => "Faltan datos para asociar el presupuesto a la agenda"
+            "1" => "error",
+            "mensaje" => "Falta el ID del agendamiento"
+        ));
+        exit;
+    }
+
+    if($cod_presupuestoFK != ''){
+        $campos[] = "cod_presupuestoFK = '".$cod_presupuestoFK."'";
+    }
+
+    if(count($campos) == 0){
+        echo json_encode(array(
+            "1" => "error",
+            "mensaje" => "No hay datos para actualizar"
         ));
         exit;
     }
 
     $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
 
+    $campos[] = "estado = 'ATENDIDO'";
+
     $sql = "
         UPDATE agenda SET
-            cod_presupuestoFK = '".$cod_presupuestoFK."',
-            creado_por = '".$useru."',
-            creado_en = NOW()
+            ".implode(",\n            ", $campos)."
         WHERE id_agenda = '".$id_agenda."'
         LIMIT 1
     ";
@@ -520,7 +533,7 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
     }
 
     registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
-        "cod_presupuestoFK" => $cod_presupuestoFK
+        "cod_presupuestoFK" => $cod_presupuestoFK,
     ));
 
     echo json_encode(array(
@@ -657,7 +670,12 @@ function cargarAgenda($mysqli){
             a.motivo,
             cl.ci_cliente, cl.idzonaFk,cl.whapp, p.telefono,cl.fechanac,cl.rut_cliente,cl.cod_cliente,
             (SELECT nombre FROM zona WHERE idzona = cl.idzonaFk) AS nombre_zona,
-            (SELECT nombre_persona FROM persona JOIN presupuesto ON cod_usuarioFK_create = cod_persona WHERE a.cod_presupuestoFK = id) AS nombre_doctor,
+            (SELECT nombre_persona FROM persona JOIN presupuesto ON cod_usuarioFK_create = cod_persona WHERE a.cod_presupuestoFK = id) AS nombre_doctor_presupesto,
+            (SELECT fecha_create FROM presupuesto WHERE id = a.cod_presupuestoFK) AS fecha_presupuesto,
+            (SELECT nombre_persona FROM persona JOIN consulta ON consulta.cod_usuarioFK = cod_persona WHERE consulta.cod_agendamientoFK is not null and a.id_agenda = consulta.cod_agendamientoFK limit 1) AS nombre_doctor_consulta,
+            (SELECT fecha FROM consulta WHERE consulta.cod_agendamientoFK is not null and cod_agendamientoFK = a.id_agenda limit 1) AS fecha_consulta,
+            (SELECT nombre_persona FROM persona JOIN evoluciontratamiento ON evoluciontratamiento.cod_usuraioFK = cod_persona WHERE a.id_agenda = evoluciontratamiento.cod_agendaFK) AS nombre_doctor_tratamiento,
+            (SELECT fecha FROM evoluciontratamiento WHERE cod_agendaFK = a.id_agenda) AS fecha_tratamiento,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
@@ -707,6 +725,16 @@ function cargarAgenda($mysqli){
             }
         }
 
+        // Asigna el nombre del doctor segun la fecha
+        $nombre_doctor = "";
+        if ($row["fecha_consulta"] == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_consulta"];
+        } elseif (substr($row["fecha_presupuesto"], 0, 10) == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_presupesto"];
+        } elseif (substr($row["fecha_tratamiento"], 0, 10) == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_tratamiento"];
+        }
+
         $eventos[] = array(
             "id" => (int)$row["id_agenda"],
             "consultorio" => (int)$row["id_consultorio"],
@@ -723,7 +751,7 @@ function cargarAgenda($mysqli){
             "nombre_zona" => $row["nombre_zona"],
             "rut_cliente" => $row["rut_cliente"],
             "cod_cliente" => $row["cod_cliente"],
-            "nombre_doctor" => $row["nombre_doctor"],
+            "nombre_doctor" => $nombre_doctor,
             "motivo" => normalizarTextoUtf8($row["motivo"]),
             "motivo_limpio" => $motivoLimpio
         );

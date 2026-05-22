@@ -2008,7 +2008,7 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 	datos.append("trabajoreali", trabajoreali)
 	datos.append("fecha", fecha)
 	datos.append("cod_estecialista", cod_especialista) 
-	datos.append("cod_agendamiento", cod_Agendamiento) 
+	datos.append("cod_agendamiento", idAbmAgenda) 
 	datos.append("cod_venta", cod_ventaFKConsulta) 
 	datos.append("cod_clienteConsulta", cod_clienteConsulta) 
 	datos.append("apodo", apodo) 
@@ -2064,6 +2064,7 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 					verCerrarAbmDetalleConsulta(false)
  
+					asignarCodPresupuestoAgenda();
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -2339,6 +2340,7 @@ function guardarPorcentajeProgreso(){
 			 "navegador": navegador, 
 			 "id_detalle_tratamientoConsulta": id_detalle_tratamientoConsulta, 
 			 "porcentaje": porcentaje, 
+			 "cod_agendaFK": idAbmAgenda,
 			"funt": "guardarPorcentajeProgreso"
 			};
 	 $.ajax({
@@ -2367,6 +2369,7 @@ function guardarPorcentajeProgreso(){
 				verCerrarCargarPorcentajeProgreso()
 		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
  buscarDetalleVentaConsulta(cod_ventaFKConsulta);
+ asignarCodPresupuestoAgenda();
 			}
 			}catch(error)
 				{

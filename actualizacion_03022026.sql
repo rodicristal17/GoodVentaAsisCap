@@ -565,8 +565,6 @@ ALTER TABLE agenda ADD COLUMN cod_presupuestoFK INT(11);
 
 ALTER TABLE consultorios ADD COLUMN cod_doctorFK INT(11);
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.83', detalles='Abm para mostrar y administrar mensajes de procedimientos institucionales', fecha='2026-05-20' WHERE idhistorialactualizacion= 2;
-
 CREATE TABLE comentarios_agenda (
     id INT PRIMARY KEY AUTO_INCREMENT,
     comentario VARCHAR(255) NOT NULL,
@@ -583,6 +581,11 @@ CREATE TABLE informacion_protocolo (
     cod_usuarioFK_create INT(11),
     fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.83', detalles='Abm para mostrar y administrar mensajes de procedimientos institucionales', fecha='2026-05-20' WHERE idhistorialactualizacion= 2;
+
+ALTER TABLE agenda ADD COLUMN cod_detalle_ventaFK INT(11);
+ALTER TABLE evoluciontratamiento ADD COLUMN cod_agendaFK INT(11);
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

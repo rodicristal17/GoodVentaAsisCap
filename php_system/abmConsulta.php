@@ -54,7 +54,9 @@ if($operacion=="guardarPorcentajeProgreso")
     $id_detalle_tratamientoConsulta = mb_convert_encoding((string)($id_detalle_tratamientoConsulta), 'ISO-8859-1', 'UTF-8');
 	$porcentaje=$_POST['porcentaje'];
     $porcentaje = mb_convert_encoding((string)($porcentaje), 'ISO-8859-1', 'UTF-8'); 
-	guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje);
+	$cod_agendaFK=$_POST['cod_agendaFK'];
+    $cod_agendaFK = mb_convert_encoding((string)($cod_agendaFK), 'ISO-8859-1', 'UTF-8'); 
+	guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$cod_agendaFK);
 }
 
 	
@@ -304,7 +306,7 @@ function actualizarApodo($cod_venta,$apodo)
 }
 
 
-function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje)
+function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$cod_agendaFK)
 {
      $mysqli = conectar_al_servidor();
  
@@ -321,7 +323,7 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje)
 	$user=$_POST['useru'];
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 	
-	$consulta1 = "insert into evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha)VALUES('$id_detalle_tratamientoConsulta',$user,'$porcentaje',now()) ";
+	$consulta1 = "insert into evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK)VALUES('$id_detalle_tratamientoConsulta',$user,'$porcentaje',now(),'$cod_agendaFK') ";
 
     $stmt1 = $mysqli->prepare($consulta1);
     

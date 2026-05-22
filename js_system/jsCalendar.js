@@ -1873,22 +1873,22 @@ function asignarCodPresupuestoAgenda(){
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 	        verCerrarEfectoCargando();
+            console.error(jqXHR, textstatus, errorThrowm);
         },
         success: function (responseText) {
 	        verCerrarEfectoCargando();
+            console.log(responseText);
             try {
                 var resp = responseText;
                 var Respuesta = resp["1"];
                 Respuesta = respuestaJqueryAjax(Respuesta);
-                if(Respuesta = true){
-                    cambiarEstadoAgendaDesdeModal("ATENDIDO");
-                } else {
+                if(!Respuesta){
                     ver_vetana_informativa("No se pudo vincular el presupuesto con la agenda");
                 }
             } catch (error) {
                 var titulo = "Error guardarCitaAgenda: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
-                console.log(responseText);
+                console.error(responseText);
             }
         }
     });
