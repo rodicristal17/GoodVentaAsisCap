@@ -813,6 +813,12 @@
 .badge-CONFIRMADOCONDEUDA{ background:#07488f; }
 .badge-PRIMERACONSULTA{ background:#9d457c; } 
 
+.tratamiento-agenda-card--activo{
+    background:#f2f2f2;
+    border-color:var(--primary-strong);
+    box-shadow:0 0 0 3px var(--primary-soft);
+}
+
  
 
 .campo-con-botones-agenda{

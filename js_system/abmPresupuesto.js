@@ -10,7 +10,7 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 			buscarvistaPresupuesto();
 		} else {
 			if(controlacceso("VERHISTORIALPRESUPUESTO","accion")==false){return;}
-			buscarvistaPresupuesto();
+			
             document.getElementById('divListPresupuesto').style.display= "none";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="";
             // document.getElementById("tdEfectoAbmDetallePresupuesto").className="magictime slideLeftReturn"

@@ -720,7 +720,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         + "right:auto;"
         + "overflow:visible;"
 		+ "border:1px solid #ccc;";
-
+console.error(e);
     return ''
     + "<div class='agenda-evento estado-" + e.estado + "' "
     + "draggable='true' "
@@ -735,6 +735,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
+        + "<span class='hora'>" + e.nombre_tratamiento_pendiente + "</span>"
         + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
 /*        + "<div class='agenda-evento-resize' "
             + "data-id='" + e.id + "' "

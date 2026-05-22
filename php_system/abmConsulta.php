@@ -184,9 +184,155 @@ if($operacion=="verEvolucion")
 	verEvolucion($cod_venta);
 }
 
+if($operacion=="buscarTratamientosAgenda")
+{	
+	$id_agenda=$_POST['id_agenda'];
+    $id_agenda = mb_convert_encoding((string)($id_agenda), 'ISO-8859-1', 'UTF-8');
+	$buscar= (isset($_POST['buscar']) ? mb_convert_encoding((string)($_POST['buscar']), 'ISO-8859-1', 'UTF-8') : "");
+	buscarTratamientosAgenda($id_agenda,$buscar);
+}
+
+if($operacion=="vincularTratamientoAgenda")
+{	
+	$id_agenda=$_POST['id_agenda'];
+    $id_agenda = mb_convert_encoding((string)($id_agenda), 'ISO-8859-1', 'UTF-8');
+	$cod_detalle=$_POST['cod_detalle'];
+    $cod_detalle = mb_convert_encoding((string)($cod_detalle), 'ISO-8859-1', 'UTF-8');
+	vincularTratamientoAgenda($id_agenda,$cod_detalle);
+}
+
 
 }
 
+
+function buscarTratamientosAgenda($id_agenda,$buscar)
+{
+$mysqli=conectar_al_servidor();
+
+if($id_agenda==""){
+	$informacion =array("1" => "camposvacio","2" => "");
+	echo json_encode($informacion);	
+	exit;
+}
+
+$id_agenda = mysqli_real_escape_string($mysqli,$id_agenda);
+$buscar = mysqli_real_escape_string($mysqli,$buscar);
+$filtroBuscar = "";
+if($buscar!=""){
+	$filtroBuscar = " and concat(pr.nombre_producto,' ',IFNULL(dtv.descripcion,''),' ',IFNULL(vt.num_factura,'')) like '%".$buscar."%' ";
+}
+
+$sql= "SELECT 
+		dtv.cod_detalle,
+		dtv.descripcion,
+		dtv.cantidad_detalle,
+		dtv.progreso_porcentaje,
+		dtv.estado,
+		pr.nombre_producto,
+		vt.cod_venta,
+		vt.num_factura,
+		a.cod_detalle_ventaFK
+	from agenda a
+	inner join venta vt on vt.cod_clienteFK = a.id_paciente
+	inner join detalle_venta dtv on dtv.cod_ventaFK = vt.cod_venta
+	inner join producto pr on pr.cod_producto = dtv.cod_productoFK
+	where a.id_agenda = '$id_agenda'
+	and IFNULL(dtv.estado,'') <> 'eliminado'
+	".$filtroBuscar."
+	order by vt.cod_venta desc, dtv.cod_detalle desc
+	limit 150";
+
+$stmt = $mysqli->prepare($sql);
+if ( ! $stmt->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+exit;
+}
+ 
+$result = $stmt->get_result();
+$valor= mysqli_num_rows($result);
+$pagina="";
+
+if ($valor>0)
+{
+while ($row= mysqli_fetch_assoc($result))
+{  
+	$cod_detalle = mb_convert_encoding((string)($row['cod_detalle']), 'UTF-8', 'ISO-8859-1');
+	$descripcion = mb_convert_encoding((string)($row['descripcion']), 'UTF-8', 'ISO-8859-1');
+	$progreso_porcentaje = mb_convert_encoding((string)($row['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1');
+	$nombre_producto = mb_convert_encoding((string)($row['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+	$num_factura = mb_convert_encoding((string)($row['num_factura']), 'UTF-8', 'ISO-8859-1');
+	$cod_detalle_ventaFK = mb_convert_encoding((string)($row['cod_detalle_ventaFK']), 'UTF-8', 'ISO-8859-1');
+	$seleccionado = ($cod_detalle_ventaFK == $cod_detalle) ? " tratamiento-agenda-card--activo" : "";
+	$detalle = trim($nombre_producto." ".$descripcion);
+	$detalleAttr = htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8');
+
+	$pagina .= "
+	<div class='tratamiento-agenda-card".$seleccionado."' onclick='seleccionarTratamientoAgenda(this)'
+		data-id='".$cod_detalle."'
+		data-nombre='".$detalleAttr."'>
+		<div class='tratamiento-agenda-card__top'>
+			<strong>".$detalleAttr."</strong>
+		</div>
+		<div class='tratamiento-agenda-card__meta'>
+			<span>Num. venta: ".htmlspecialchars($num_factura, ENT_QUOTES, 'UTF-8')."</span>
+			<span>Progreso: ".htmlspecialchars($progreso_porcentaje, ENT_QUOTES, 'UTF-8')."%</span>
+		</div>
+	</div>";
+}
+}else{
+	$pagina = "<div class='tratamiento-agenda-vacio'>No se encontraron tratamientos para este paciente.</div>";
+}
+
+$informacion =array("1" => "exito","2" => $pagina,"3" => $valor);
+echo json_encode($informacion);	
+exit;
+}
+
+function vincularTratamientoAgenda($id_agenda,$cod_detalle)
+{
+$mysqli=conectar_al_servidor();
+
+if($id_agenda=="" || $cod_detalle==""){
+	$informacion =array("1" => "camposvacio");
+	echo json_encode($informacion);	
+	exit;
+}
+
+$consultaVerificar = "SELECT dtv.cod_detalle
+	FROM agenda a
+	inner join venta vt on vt.cod_clienteFK = a.id_paciente
+	inner join detalle_venta dtv on dtv.cod_ventaFK = vt.cod_venta
+	WHERE a.id_agenda = ? and dtv.cod_detalle = ?
+	LIMIT 1";
+$stmtVerificar = $mysqli->prepare($consultaVerificar);
+$stmtVerificar->bind_param('ss', $id_agenda, $cod_detalle);
+
+if (!$stmtVerificar->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmtVerificar->errno.') '.$stmtVerificar->error, E_USER_ERROR);
+	exit;
+}
+
+$resultVerificar = $stmtVerificar->get_result();
+if(mysqli_num_rows($resultVerificar)==0){
+	$informacion =array("1" => "error","mensaje" => "El tratamiento no pertenece al paciente del agendamiento");
+	echo json_encode($informacion);	
+	exit;
+}
+
+$consulta1 = "UPDATE agenda SET cod_detalle_ventaFK = ? WHERE id_agenda = ? LIMIT 1";
+$stmt1 = $mysqli->prepare($consulta1);
+$stmt1->bind_param('ss', $cod_detalle, $id_agenda);
+
+if (!$stmt1->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	exit;
+}
+
+$informacion = array("1" => "exito");
+mysqli_close($mysqli);
+echo json_encode($informacion);
+exit;
+}
 
 function  verEvolucion($cod_venta)
 {
@@ -744,12 +890,9 @@ echo json_encode($informacion);
 exit;
 }
 
- 
-
- function buscarVistaConsulta($Paciente,$local,$num_factura)
-{
-	$mysqli=conectar_al_servidor();
-	 $pagina='';
+function buscarConsulta($Paciente,$local,$num_factura) {
+    $mysqli=conectar_al_servidor();
+	$pagina='';
 	 
     $sqlFiltro= "";
 	if($local!=""){
@@ -764,138 +907,166 @@ exit;
 		$sqlFiltro=" and num_factura like '%".$num_factura."%' ";
 	}
 	
-		$sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo , 
-		(select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
-		(select Nombre from local where cod_local=vt.cod_local) as nombre_local , 
-		(select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
-		from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
-		inner join persona p on cod_cliente=cod_persona
-		  where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$sqlFiltro." limit 100;";
-
-
-   
-   $stmt = $mysqli->prepare($sql);
-if ( ! $stmt->execute()) {
-   echo "Error";
-   exit;
-}
+    $sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo , 
+    (select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
+    (select Nombre from local where cod_local=vt.cod_local) as nombre_local , 
+    (select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
+    from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
+    inner join persona p on cod_cliente=cod_persona
+    where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$sqlFiltro." limit 100;";
+  
+    $stmt = $mysqli->prepare($sql);
+    if ( ! $stmt->execute()) {
+        echo "Error";
+        exit;
+    }
  
 	$result = $stmt->get_result();
- $valor= mysqli_num_rows($result);
- $nroRegistro= $valor;
- $contador=0;
+    $valor= mysqli_num_rows($result);
+    $nroRegistro= $valor;
+    $registros=array();
  
- if ($valor>0)
- {
-	  while ($valor= mysqli_fetch_assoc($result))
-	  {
-		   
-		  
-		  	  $num_factura=mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');
-		  	  $ci_cliente=mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
-			  $paciente=mb_convert_encoding((string)($valor['paciente']), 'UTF-8', 'ISO-8859-1');
-			  $cod_cliente=mb_convert_encoding((string)($valor['cod_cliente']), 'UTF-8', 'ISO-8859-1');
-			   $decripcion=''; 
-			   $cod_venta=mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1');
-			   $apodo=mb_convert_encoding((string)($valor['apodo']), 'UTF-8', 'ISO-8859-1');
-			   $nombre_local=mb_convert_encoding((string)($valor['nombre_local']), 'UTF-8', 'ISO-8859-1');
-			   
-$porcentaje = $valor['porcentaje'];
-$totalporcentaje = $valor['totalporcentaje'];
-$totalporcentaje = $totalporcentaje * 100;
+    if ($valor>0) {
+        while ($valor= mysqli_fetch_assoc($result)) {
+            $num_factura=mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');
+            $ci_cliente=mb_convert_encoding((string)($valor['ci_cliente']), 'UTF-8', 'ISO-8859-1'); 
+            $paciente=mb_convert_encoding((string)($valor['paciente']), 'UTF-8', 'ISO-8859-1');
+            $cod_cliente=mb_convert_encoding((string)($valor['cod_cliente']), 'UTF-8', 'ISO-8859-1');
+            $decripcion=''; 
+            $cod_venta=mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1');
+            $apodo=mb_convert_encoding((string)($valor['apodo']), 'UTF-8', 'ISO-8859-1');
+            $nombre_local=mb_convert_encoding((string)($valor['nombre_local']), 'UTF-8', 'ISO-8859-1');
+            $porcentaje = $valor['porcentaje'];
+            $totalporcentaje = $valor['totalporcentaje'];
 
- if ($totalporcentaje > 0) {
-    $resultadoPorcentaje = round(($porcentaje / $totalporcentaje) * 100);
-} else {
-    $resultadoPorcentaje = 0; // Evitar división por cero
+            $registros[] = array(
+                "num_factura" => $num_factura,
+                "ci_cliente" => $ci_cliente,
+                "paciente" => $paciente,
+                "cod_cliente" => $cod_cliente,
+                "decripcion" => $decripcion,
+                "cod_venta" => $cod_venta,
+                "apodo" => $apodo,
+                "nombre_local" => $nombre_local,
+                "porcentaje" => $porcentaje,
+                "totalporcentaje" => $totalporcentaje,
+            );
+        }
+    }
+    mysqli_close($mysqli);
+
+    return $registros;
 }
-			   
-			   $descripcion= detalleTratamiento($cod_venta);
-			    	 if($apodo != ''){
-						 $paciente = $paciente." <b style='color:#8BC34A' >($apodo)</b>";
-					 }
-$color=" #e53935; ";	
-if($resultadoPorcentaje=="100"){
-	$color=" #8bc34a; ";
-}			 
-		$pagina .= "
-<div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='
-  position: relative; /* Necesario para posicionar el círculo */
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin: 10px 0;
-  height: auto;
-  padding: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  font-family: Arial, sans-serif;
-'>
-  <!-- Círculo del porcentaje -->
-  <div style='
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: $color /* Rojo */
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  '>
-    $resultadoPorcentaje %
-  </div>
 
-  <h3 style='
-    margin-top:0;
-    margin-bottom:10px;
-    font-size: 16px;
-    color: #333;
-  '>DATOS PACIENTE</h3>
-  
-  <p><strong>Nombre:</strong> $paciente</p>
-  <p><strong>CI:</strong> $ci_cliente</p>
-  <p><strong>Código venta:</strong> $num_factura</p>
-  <p><strong>Local:</strong> $nombre_local</p>
+function buscarSelectorTratamiento($Paciente,$local,$num_factura) {
+    $registros = buscarConsulta($Paciente,$local,$num_factura);
+    
+	$pagina='';
+    foreach ($registros as $valor) {
+        
+    }
+}
 
-  <div style='
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #ddd;
-  '>
-    <strong>Tratamientos:</strong>
-    $descripcion
-  </div>
-  
-  <!-- Datos ocultos -->
-  <div style='display:none;'>
-    <span id='td_datos_1'>$paciente</span>
-    <span id='td_datos_2'>$ci_cliente</span>
-    <span id='td_datos_3'>$num_factura</span>
-    <span id='td_datos_4'></span> 
-    <span id='td_datos_5'>$cod_venta</span> 
-    <span id='td_datos_6'>$cod_cliente</span> 
-    <span id='td_datos_7'>$apodo</span> 
-  </div>
-</div>";
+function buscarVistaConsulta($Paciente,$local,$num_factura) {
+    $registros = buscarConsulta($Paciente,$local,$num_factura);
+    
+	$pagina='';
+    foreach ($registros as $valor) {
+        $num_factura= $valor['num_factura'];
+        $ci_cliente= $valor['ci_cliente'];
+        $paciente= $valor['paciente'];
+        $cod_cliente= $valor['cod_cliente'];
+        $cod_venta= $valor['cod_venta'];
+        $apodo= $valor['apodo'];
+        $nombre_local= $valor['nombre_local'];
+        
+        $porcentaje = $valor['porcentaje'];
+        $totalporcentaje = $valor['totalporcentaje'];
+        $totalporcentaje = $totalporcentaje * 100;
 
+        if ($totalporcentaje > 0) {
+            $resultadoPorcentaje = round(($porcentaje / $totalporcentaje) * 100);
+        } else {
+            $resultadoPorcentaje = 0; // Evitar división por cero
+        }
+        
+        $descripcion= detalleTratamiento($cod_venta);
 
-   
-	  }
- }
- 
- 		
- 
- 
- mysqli_close($mysqli);
- $informacion =array("1" => "exito","2" => $pagina);
-echo json_encode($informacion);	
-exit;
+        if($apodo != ''){
+            $paciente = $paciente." <b style='color:#8BC34A' >($apodo)</b>";
+        }
+        $color=" #e53935; ";	
+        if($resultadoPorcentaje=="100"){
+            $color=" #8bc34a; ";
+        }			 
+                $pagina .= "
+        <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='
+          position: relative; /* Necesario para posicionar el círculo */
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          margin: 10px 0;
+          height: auto;
+          padding: 15px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          font-family: Arial, sans-serif;
+        '>
+          <!-- Círculo del porcentaje -->
+          <div style='
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: $color /* Rojo */
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          '>
+            $resultadoPorcentaje %
+          </div>
+        
+          <h3 style='
+            margin-top:0;
+            margin-bottom:10px;
+            font-size: 16px;
+            color: #333;
+          '>DATOS PACIENTE</h3>
+          
+          <p><strong>Nombre:</strong> $paciente</p>
+          <p><strong>CI:</strong> $ci_cliente</p>
+          <p><strong>Código venta:</strong> $num_factura</p>
+          <p><strong>Local:</strong> $nombre_local</p>
+        
+          <div style='
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+          '>
+            <strong>Tratamientos:</strong>
+            $descripcion
+          </div>
+          
+          <!-- Datos ocultos -->
+          <div style='display:none;'>
+            <span id='td_datos_1'>$paciente</span>
+            <span id='td_datos_2'>$ci_cliente</span>
+            <span id='td_datos_3'>$num_factura</span>
+            <span id='td_datos_4'></span> 
+            <span id='td_datos_5'>$cod_venta</span> 
+            <span id='td_datos_6'>$cod_cliente</span> 
+            <span id='td_datos_7'>$apodo</span> 
+          </div>
+        </div>";
+    }
 
-
+    $informacion =array("1" => "exito","2" => $pagina);
+    echo json_encode($informacion);	
+    exit;
 }
  
 function detalleTratamiento($buscar) {

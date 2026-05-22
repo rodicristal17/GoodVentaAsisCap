@@ -676,7 +676,8 @@ function cargarAgenda($mysqli){
             (SELECT fecha FROM consulta WHERE consulta.cod_agendamientoFK is not null and cod_agendamientoFK = a.id_agenda limit 1) AS fecha_consulta,
             (SELECT nombre_persona FROM persona JOIN evoluciontratamiento et ON et.cod_usuraioFK = cod_persona WHERE a.id_agenda = et.cod_agendaFK order by et.cod_evoluciontratamiento desc limit 1) AS nombre_doctor_tratamiento,
             (SELECT fecha FROM evoluciontratamiento et WHERE et.cod_agendaFK = a.id_agenda order by et.cod_evoluciontratamiento desc limit 1) AS fecha_tratamiento,
-            (SELECT GROUP_CONCAT(CONCAT(p.nombre_producto, '(', et.nro,'%)') SEPARATOR '<br> ') FROM evoluciontratamiento et JOIN detalle_venta dv ON et.cod_detalle_venta = dv.cod_detalle JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE cod_agendaFK = a.id_agenda) AS nombre_tratamiento,
+            (SELECT GROUP_CONCAT(CONCAT(p.nombre_producto, '(', et.nro,'%)') SEPARATOR '<br>') FROM evoluciontratamiento et JOIN detalle_venta dv ON et.cod_detalle_venta = dv.cod_detalle JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE cod_agendaFK = a.id_agenda) AS nombre_tratamiento,
+            (IFNULL((SELECT p.nombre_producto FROM detalle_venta dv JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE dv.cod_detalle = a.cod_detalle_ventaFK), '')) AS nombre_tratamiento_pendiente,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
@@ -754,6 +755,7 @@ function cargarAgenda($mysqli){
             "cod_cliente" => $row["cod_cliente"],
             "nombre_doctor" => $nombre_doctor,
             "nombres_tratamiento" => $row["nombre_tratamiento"],
+            "nombre_tratamiento_pendiente" => $row["nombre_tratamiento_pendiente"],
             "motivo" => normalizarTextoUtf8($row["motivo"]),
             "motivo_limpio" => $motivoLimpio
         );

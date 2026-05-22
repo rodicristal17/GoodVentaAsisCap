@@ -8923,7 +8923,7 @@ ACCION
         <label for="inptSelecctPlanPresupuesto">Seleccionar plan</label>
         <select class="inputSelect" id="inptSelecctPlanPresupuesto">
           <option value="total">Plan Rehabilitacion Total</option>
-          <option value="urgente">Plan Provisorio</option>
+          <option value="prioritario">Plan Provisorio</option>
         </select>
       </div>
       <div class="form-row">
@@ -22941,6 +22941,37 @@ onclick='buscarvistaaperturacierrecaja()' />
     </div>
 </div>
 
+<div class='modal-filtros-overlay' id='overlayAsignarTratamientoAgenda' onclick='verCerrarAsignarTratamiento(false)' style='display:none;z-index:12;'></div>
+<div class='modal-filtros-catalogo' id='modalAsignarTratamientoAgenda' style='display:none;z-index:13;'>
+    <div class='modal-filtros-box modal-cita-box' style='max-width:820px;'>
+        <div class='modal-filtros-header'>
+            <div class='modal-header-info'>
+                <p class='modal-etiqueta'>Calendario</p>
+                <h3>Asignar tratamiento</h3>
+                <span>Seleccione un tratamiento comprado para vincularlo con este agendamiento</span>
+            </div>
+            <button type='button' class='btn-cerrar-modal' onclick='verCerrarAsignarTratamiento(false)'>×</button>
+        </div>
+
+        <div class='modal-filtros-body'>
+            <div class='filtro-grupo'>
+                <label>Buscar tratamiento</label>
+                <input type='text' id='inptBuscarTratamientoAgenda' class='catalogo-selectBuscador'
+                       placeholder='Nombre, descripcion o venta'
+                       onkeyup='if(event.keyCode==13){buscarTratamientosParaAgenda()}' />
+            </div>
+
+            <div id='divTratamientosAgenda' class='div_cuerpo_table presupuesto-search-table' style='border:none;display:grid;gap:8px;max-height:420px;overflow:auto;padding:2px;'></div>
+        </div>
+
+        <div class='modal-filtros-footer'>
+            <button class='btn-filtro' onclick='verCerrarAsignarTratamiento(false)'>Cancelar</button>
+            <button class='btn-filtro' onclick='buscarTratamientosParaAgenda()'>Buscar</button>
+            <button class='btn-accion-principal' onclick='vincularTratamientoCalendario(idAbmAgenda, idTratamientoAgendaSeleccionado)'>Vincular</button>
+        </div>
+    </div>
+</div>
+
 
 <div class='modal-filtros-overlay' id='overlayDetalleAgenda' onclick='cerrarDetalleAgenda();limpiarFichaPacienteCalendario();ventanaAnterior.pop();' style='display:none;'></div>
 <div class='modal-filtros-catalogo' id='modalDetalleAgenda' style='display:none;'>
@@ -22997,6 +23028,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                       <span id='detAgendaPresupuesto'></span>
                       <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;padding: 6px 12px;">
                       <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;padding: 6px 12px;">
+                      <input type="button" value="Asignar tratamiento" class="btn4" onclick="verCerrarAsignarTratamiento()" style="width:fit-content;padding: 6px 12px;">
                     </div>
                 </div>
             </div>
