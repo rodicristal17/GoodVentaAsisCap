@@ -2058,13 +2058,12 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					
 					cod_consulta = datos[2];
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					cambiarEstadoAgendaDesdeModal("ATENDIDO");
+
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 					verCerrarAbmDetalleConsulta(false)
- 
-					asignarCodPresupuestoAgenda();
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -2369,7 +2368,7 @@ function guardarPorcentajeProgreso(){
 				verCerrarCargarPorcentajeProgreso()
 		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
  buscarDetalleVentaConsulta(cod_ventaFKConsulta);
- asignarCodPresupuestoAgenda();
+ 					cambiarEstadoAgendaDesdeModal("ATENDIDO");
 			}
 			}catch(error)
 				{

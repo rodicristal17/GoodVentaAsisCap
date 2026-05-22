@@ -1637,6 +1637,7 @@ function cancelarListadoPresupuesto() {
 }
 
 function obtenerDatosPresupuesto(elemento) {
+	cancelarListadoPresupuesto();
     idabmPresupuesto = $(elemento).children('td[id="td_id"]').html();
 	const registroSeleccionadoPresupuesto = document.getElementById('inptRegistroSeleccPresupuesto');
 	if (registroSeleccionadoPresupuesto) {
