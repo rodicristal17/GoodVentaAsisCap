@@ -676,6 +676,7 @@ function cargarAgenda($mysqli){
             (SELECT fecha FROM consulta WHERE consulta.cod_agendamientoFK is not null and cod_agendamientoFK = a.id_agenda limit 1) AS fecha_consulta,
             (SELECT nombre_persona FROM persona JOIN evoluciontratamiento ON evoluciontratamiento.cod_usuraioFK = cod_persona WHERE a.id_agenda = evoluciontratamiento.cod_agendaFK) AS nombre_doctor_tratamiento,
             (SELECT fecha FROM evoluciontratamiento WHERE cod_agendaFK = a.id_agenda) AS fecha_tratamiento,
+            (SELECT GROUP_CONCAT(CONCAT(p.nombre_producto, '(', et.nro,'%)') SEPARATOR '<br> ') FROM evoluciontratamiento et JOIN detalle_venta dv ON et.cod_detalle_venta = dv.cod_detalle JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE cod_agendaFK = a.id_agenda) AS nombre_tratamiento,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
@@ -729,10 +730,10 @@ function cargarAgenda($mysqli){
         $nombre_doctor = "";
         if ($row["fecha_consulta"] == $row["fecha"]) {
             $nombre_doctor = $row["nombre_doctor_consulta"];
-        } elseif (substr($row["fecha_presupuesto"], 0, 10) == $row["fecha"]) {
-            $nombre_doctor = $row["nombre_doctor_presupesto"];
         } elseif (substr($row["fecha_tratamiento"], 0, 10) == $row["fecha"]) {
             $nombre_doctor = $row["nombre_doctor_tratamiento"];
+        } elseif (substr($row["fecha_presupuesto"], 0, 10) == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_presupesto"];
         }
 
         $eventos[] = array(
@@ -752,6 +753,7 @@ function cargarAgenda($mysqli){
             "rut_cliente" => $row["rut_cliente"],
             "cod_cliente" => $row["cod_cliente"],
             "nombre_doctor" => $nombre_doctor,
+            "nombres_tratamiento" => $row["nombre_tratamiento"],
             "motivo" => normalizarTextoUtf8($row["motivo"]),
             "motivo_limpio" => $motivoLimpio
         );

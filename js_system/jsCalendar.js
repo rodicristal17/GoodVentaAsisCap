@@ -1274,6 +1274,7 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
     document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
+    document.getElementById('detAgendaPresupuesto').innerHTML += (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
