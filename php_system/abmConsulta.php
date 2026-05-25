@@ -1072,7 +1072,7 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
 function detalleTratamiento($buscar) {
     $mysqli = conectar_al_servidor();
 
-    $sql = "SELECT pr.cod_producto, pr.nombre_producto, dtv.estado 
+    $sql = "SELECT pr.cod_producto, pr.nombre_producto, dtv.estado, dtv.progreso_porcentaje 
             FROM producto pr 
             INNER JOIN detalle_venta dtv ON dtv.cod_productoFK = pr.cod_producto
             WHERE dtv.cod_ventaFK = '$buscar'";
@@ -1092,17 +1092,21 @@ function detalleTratamiento($buscar) {
         while ($row = mysqli_fetch_assoc($result)) {
             $nombre_producto = mb_convert_encoding((string)($row['nombre_producto']), 'UTF-8', 'ISO-8859-1');
             $estado = mb_convert_encoding((string)($row['estado']), 'UTF-8', 'ISO-8859-1');
+            $progreso_porcentaje = mb_convert_encoding((string)($row['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1');
+            $progreso_porcentaje = max(0, min(100, (int)$progreso_porcentaje));
+            $nombre_producto_html = htmlspecialchars($nombre_producto, ENT_QUOTES, 'UTF-8');
             
             $html .= "
             <li style='
-                background-color:#f2f2f2;
+                background:linear-gradient(90deg, rgba(76,175,80,.28) 0%, rgba(76,175,80,.28) ".$progreso_porcentaje."%, #f2f2f2 ".$progreso_porcentaje."%, #f2f2f2 100%);
                 margin-bottom:4px;
                 padding:5px 10px;
                 border-radius:4px;
-                font-size:13px;"
+                font-size:13px;
+                border:1px solid #e0e0e0;"
                 .($estado == 'eliminado' ? 'text-decoration: line-through;' : '').
             "'>
-            $nombre_producto
+            ".$nombre_producto_html." <span style='float:right;font-weight:bold;'>".$progreso_porcentaje."%</span>
             </li>";
         }
     } else {
