@@ -22745,13 +22745,14 @@ onclick='buscarvistaaperturacierrecaja()' />
 <div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='vercerrarModalNuevaCita(false)' style='display:none;'></div>
 
 <div class='modal-filtros-catalogo' id='modalAbmConsultorioAgenda' style='display:none;'>
-    <div class='modal-filtros-box modal-cita-box'>
+    <div class='modal-filtros-box modal-cita-box' style='max-width:1200px;width: 800px;'>
         <div class='modal-filtros-header'>
             <h3>Datos del <b id="tituloAbmConsultorioAgenda"></b></h3>
             <button type='button' class='btn-cerrar-modal' onclick='vercerrarModalAbmConsultorioAgenda(false)'>×</button>
         </div>
 
-        <div class='modal-filtros-body modal-cita-grid' style='display: flex;flex-direction: column;'>
+        <div class='modal-filtros-body modal-cita-grid' style='display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:14px;'>
+          <section class="form-section" style="display: grid;margin-inline: 10px;">
             <div class='filtro-grupo' style="display: none;">
                 <label>ID consultorio</label>
                 <input type='text' id='inptIDAbmConsultorioAgenda' class='catalogo-selectBuscador' />
@@ -22759,7 +22760,7 @@ onclick='buscarvistaaperturacierrecaja()' />
             
             <div class='filtro-grupo'>
                 <label>Fecha</label>
-                <input type='date' id='inptFechaAbmConsultorioAgenda' class='catalogo-selectBuscador' />
+                <input type='date' id='inptFechaAbmConsultorioAgenda' class='catalogo-selectBuscador' onchange='cargarResumenAbmConsultorioAgenda()' />
             </div>
             
             <div class='filtro-grupo'>
@@ -22800,11 +22801,18 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <b id="lblConDeudabmConsultorioAgenda">0</b>
               </div>
             </div>
+          </section>
+          <section class="presupuesto-panel" style="min-width:0;margin-inline:10px;padding:5px;">
+            <span class="detalle-label">Consultas del dia</span>
+            <div class="agenda-grid-wrapper" style="height:400px;margin-top:8px;">
+                <div id="agendaGridResumenConsultorio" class="agenda-grid-wrapper"></div>
+            </div>
+          </section>
         </div>
 
         <div class='modal-filtros-footer'>
             <button class='btn-filtro' onclick='vercerrarModalAbmConsultorioAgenda(false)'>Cancelar</button>
-            <button class='btn-accion-principal' onclick='verificarAbmConsultorioAgenda()'>Guardar cita</button>
+            <button class='btn-accion-principal' onclick='verificarAbmConsultorioAgenda()'>Guardar</button>
         </div>
     </div>
 </div>
@@ -22957,7 +22965,7 @@ onclick='buscarvistaaperturacierrecaja()' />
             <div class='filtro-grupo'>
                 <label>Buscar tratamiento</label>
                 <input type='text' id='inptBuscarTratamientoAgenda' class='catalogo-selectBuscador'
-                       placeholder='Nombre, descripcion o venta'
+                       placeholder='Nombre, descripcion o venta' style="width: 98%;"
                        onkeyup='if(event.keyCode==13){buscarTratamientosParaAgenda()}' />
             </div>
 
@@ -23028,7 +23036,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                       <span id='detAgendaPresupuesto'></span>
                       <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;padding: 6px 12px;">
                       <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;padding: 6px 12px;">
-                      <input type="button" value="Asignar tratamiento" class="btn4" onclick="verCerrarAsignarTratamiento()" style="width:fit-content;padding: 6px 12px;">
+                      <input type="button" value="Asignar tratamiento" class="btn4" onclick="verCerrarAsignarTratamiento(true)" style="width:fit-content;padding: 6px 12px;">
                     </div>
                 </div>
             </div>

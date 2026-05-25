@@ -104,6 +104,9 @@ function obtenerDatosAbmConsultorioAgenda(datostr) {
 	document.getElementById('tituloAbmConsultorioAgenda').innerHTML = nombreConsultorio.html();
 	document.getElementById('inptDoctorAbmConsultorioAgenda').value = doctorConsultorio.text().trim();
 	document.getElementById('inptFechaAbmConsultorioAgenda').value = document.getElementById('inptFechaAgenda').value
+	if (typeof cargarResumenAbmConsultorioAgenda === "function") {
+		cargarResumenAbmConsultorioAgenda();
+	}
 }
 
 function verificarcamposConsultorio() {

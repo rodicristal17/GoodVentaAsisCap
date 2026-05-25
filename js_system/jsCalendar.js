@@ -4,7 +4,7 @@ var agendaConsultoriosData = {
 };
 var timeoutBuscarHistorialPacienteCalendario = null;
 
-function cargarAgendaConsultoriosDesdePHP() {
+function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
 
     var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
@@ -76,6 +76,9 @@ function cargarAgendaConsultoriosDesdePHP() {
                     renderListaConsultoriosAgenda();
                     cargarSelectConsultoriosAgenda();
                     cargarAgendaConsultorios();
+                    if (typeof callback === "function") {
+                        callback();
+                    }
                 } else {
                     document.getElementById("agendaGridConsultorios").innerHTML = "";
                 }
@@ -410,7 +413,7 @@ function closestByClass(elemento, clase){
 }
 
 function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
-    var slots = document.querySelectorAll('.agenda-slot');
+    var slots = document.querySelectorAll('#agendaGridInterno .agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
     var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal, htmlCuartosHora;
 
@@ -436,6 +439,82 @@ function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
         htmlFinal = datosAlmuerzo.htmlOverlay + htmlEventos;
         slot.innerHTML = htmlFinal;
     }
+}
+
+function cargarResumenAbmConsultorioAgenda(){
+    var consultorio = document.getElementById('inptIDAbmConsultorioAgenda').value || '';
+    var fecha = document.getElementById('inptFechaAbmConsultorioAgenda').value || document.getElementById('inptFechaAgenda').value;
+    var totales = calcularTotalesResumenAgenda(fecha, '', consultorio);
+
+    document.getElementById('lblTotalCitasbmConsultorioAgenda').innerHTML = totales.total;
+    document.getElementById('lblConfirmadasbmConsultorioAgenda').innerHTML = totales.confirmadas;
+    document.getElementById('lblPendientesbmConsultorioAgenda').innerHTML = totales.pendientes;
+    document.getElementById('lblCanceladasbmConsultorioAgenda').innerHTML = totales.canceladas;
+    document.getElementById('lblPrimeraConsultabmConsultorioAgenda').innerHTML = totales.PrimeraConsulta;
+    document.getElementById('lblAtendidobmConsultorioAgenda').innerHTML = totales.Atendido;
+    document.getElementById('lblConDeudabmConsultorioAgenda').innerHTML = totales.ConDeuda;
+
+    renderAgendaResumenConsultorio(consultorio, fecha);
+}
+
+function obtenerConsultorioAgendaPorId(idConsultorio){
+    var i;
+
+    for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
+        if(String(agendaConsultoriosData.consultorios[i].id) === String(idConsultorio)){
+            return agendaConsultoriosData.consultorios[i];
+        }
+    }
+
+    return null;
+}
+
+function renderAgendaResumenConsultorio(idConsultorio, fecha){
+    var contenedor = document.getElementById('agendaGridResumenConsultorio');
+    var consultorio = obtenerConsultorioAgendaPorId(idConsultorio);
+    var estado = document.getElementById('inptEstadoAgenda').value;
+    var eventosConsultorio = [];
+    var html = '';
+    var hora, minuto, textoHora, dataHoraRow, datosAlmuerzo, eventosHora, i;
+
+    eventosConsultorio = obtenerEventosFiltradosConsultorio(fecha, estado, [String(idConsultorio)], idConsultorio);
+
+    html += "<div class='agenda-grid' style='--total-consultorios:1;min-width:100%;'>";
+
+    for(hora = 7; hora <= 22; hora++){
+        for(minuto = 0; minuto <= 30; minuto += 30){
+            if(hora === 22 && minuto === 30){
+                continue;
+            }
+
+            textoHora = completarHora(hora) + ":" + completarHora(minuto);
+            dataHoraRow = hora + "-" + minuto;
+            datosAlmuerzo = obtenerDatosAlmuerzoAgendaMediaHora(fecha, hora, minuto);
+            eventosHora = "";
+
+            for(i = 0; i < eventosConsultorio.length; i++){
+                if(obtenerHoraVisualAgenda(eventosConsultorio[i].inicio) === textoHora){
+                    eventosHora += renderEventoAgenda(eventosConsultorio[i], eventosConsultorio);
+                }
+            }
+
+            html += "<div class='agenda-row agenda-row-mediahora" + (hora >= 18 ? " agenda-row-horario-tarde" : "") + "' style='--total-consultorios:1;' data-hora-row='" + dataHoraRow + "'>";
+            html += "<div class='agenda-hora" + datosAlmuerzo.claseHora + "'>" + textoHora + "</div>";
+            html += "<div class='agenda-slot agenda-slot-mediahora" + datosAlmuerzo.claseSlot + "' "
+                + "data-consultorio='" + consultorio.id + "' "
+                + "data-fecha='" + fecha + "' "
+                + "data-hora='" + textoHora + "' "
+                + "onclick='clickSlotAgenda(this, event)'>"
+                + datosAlmuerzo.htmlOverlay
+                + eventosHora
+                + "</div>";
+            html += "</div>";
+        }
+    }
+
+    html += "</div>";
+    contenedor.innerHTML = html;
+    inicializarDragAndDropAgenda(contenedor);
 }
 function obtenerHoraVisualAgenda(h){
     if(!h){
@@ -721,6 +800,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         + "overflow:visible;"
 		+ "border:1px solid #ccc;";
 console.error(e);
+
     return ''
     + "<div class='agenda-evento estado-" + e.estado + "' "
     + "draggable='true' "
@@ -734,8 +814,8 @@ console.error(e);
     + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
+    + "<span class='hora'>" + e.nombre_tratamiento_pendiente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
-        + "<span class='hora'>" + e.nombre_tratamiento_pendiente + "</span>"
         + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
 /*        + "<div class='agenda-evento-resize' "
             + "data-id='" + e.id + "' "
@@ -1359,9 +1439,10 @@ function limpiarFichaPacienteCalendario() {
    DRAG AND DROP
 =========================== */
 
-function inicializarDragAndDropAgenda(){
-    var eventos = document.querySelectorAll('.agenda-evento');
-    var slots = document.querySelectorAll('.agenda-slot');
+function inicializarDragAndDropAgenda(contenedor){
+    var raiz = contenedor || document;
+    var eventos = raiz.querySelectorAll('.agenda-evento');
+    var slots = raiz.querySelectorAll('.agenda-slot');
     var i;
 
     for(i = 0; i < eventos.length; i++){

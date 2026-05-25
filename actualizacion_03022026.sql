@@ -586,7 +586,6 @@ UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.83', detalles='Abm para
 
 ALTER TABLE agenda ADD COLUMN cod_detalle_ventaFK INT(11);
 ALTER TABLE evoluciontratamiento ADD COLUMN cod_agendaFK INT(11);
-ALTER TABLE agenda ADD COLUMN cod_detalle_ventaFK INT(11);
 
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA

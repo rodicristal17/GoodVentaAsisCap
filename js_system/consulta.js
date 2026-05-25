@@ -2312,6 +2312,11 @@ function verCerrarAsignarTratamiento(mostrar) {
 		return;
 	}
 
+	if (document.getElementById("detAgendaCedula").textContent == "") {
+		ver_vetana_informativa("FALTA COMPLETAR LOS DATOS DEL PACIENTE");
+		return;
+	}
+
 	if (typeof idAbmAgenda === "undefined" || idAbmAgenda == "") {
 		idAbmAgenda = document.getElementById("detAgendaId") ? document.getElementById("detAgendaId").innerHTML : "";
 	}
@@ -2370,14 +2375,14 @@ function buscarTratamientosParaAgenda() {
 				Respuesta = respuestaJqueryAjax(Respuesta);
 				if (Respuesta == true) {
 					document.getElementById("divTratamientosAgenda").innerHTML = datos[2];
-					const cards = document.querySelectorAll("#divTratamientosAgenda .tratamiento-agenda-card");
-					for (let i = 0; i < cards.length; i++) {
-						cards[i].classList.remove("tratamiento-agenda-card--activo");
-					}
+					const cardActiva = document.querySelector("#divTratamientosAgenda .tratamiento-agenda-card--activo");
 
-					document.querySelector("#divTratamientosAgenda .tratamiento-agenda-card--activo").classList.add("tratamiento-agenda-card--activo");
-					idTratamientoAgendaSeleccionado = elemento.getAttribute("data-id");
-					nombreTratamientoAgendaSeleccionado = elemento.getAttribute("data-nombre") || "";
+					idTratamientoAgendaSeleccionado = "";
+					nombreTratamientoAgendaSeleccionado = "";
+					if (cardActiva) {
+						idTratamientoAgendaSeleccionado = cardActiva.getAttribute("data-id");
+						nombreTratamientoAgendaSeleccionado = cardActiva.getAttribute("data-nombre") || "";
+					}
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
@@ -2386,6 +2391,17 @@ function buscarTratamientosParaAgenda() {
 			}
 		}
 	});
+}
+
+function seleccionarTratamientoAgenda(elemento) {
+	const cards = document.querySelectorAll("#divTratamientosAgenda .tratamiento-agenda-card");
+	for (let i = 0; i < cards.length; i++) {
+		cards[i].classList.remove("tratamiento-agenda-card--activo");
+	}
+
+	elemento.classList.add("tratamiento-agenda-card--activo");
+	idTratamientoAgendaSeleccionado = elemento.getAttribute("data-id");
+	nombreTratamientoAgendaSeleccionado = elemento.getAttribute("data-nombre") || "";
 }
 
 function vincularTratamientoCalendario(id_agenda, cod_tratamiento) {
@@ -2429,7 +2445,14 @@ function vincularTratamientoCalendario(id_agenda, cod_tratamiento) {
 						document.getElementById("detAgendaPresupuesto").innerHTML = nombreTratamientoAgendaSeleccionado + "<br>";
 					}
 					if (typeof cargarAgendaConsultoriosDesdePHP === "function") {
-						cargarAgendaConsultoriosDesdePHP();
+						cargarAgendaConsultoriosDesdePHP(function () {
+							if (
+								typeof cargarResumenAbmConsultorioAgenda === "function" &&
+								document.getElementById("modalAbmConsultorioAgenda").style.display == ""
+							) {
+								cargarResumenAbmConsultorioAgenda();
+							}
+						});
 					}
 				}
 			} catch (error) {
