@@ -1,8 +1,9 @@
 <?php
-    require("conexion.php");
-    include("verificar_navegador.php");
-    include("buscar_nivel.php");
-    include("classTable.php");
+    require_once("conexion.php");
+    include_once("verificar_navegador.php");
+    include_once("buscar_nivel.php");
+    include_once("classTable.php");
+    include_once("abmusuarios.php");
 
     date_default_timezone_set('America/Asuncion');
 
@@ -34,6 +35,9 @@
                 // Obtiene la hora de entrada del usuario
                 $diaActual= getdate()['wday'];
                 switch ($diaActual) {
+                    case 0:
+                        $diaActual= "domingo";
+                        break;
                     case 1:
                         $diaActual= "lunes";
                         break;
@@ -53,26 +57,9 @@
                         $diaActual= "sabado";
                         break;
                 }
-                $sql= "SELECT hora_entrada_$diaActual FROM usuario WHERE cod_usuario= $cod_usuario";
-
-                $mysqli=conectar_al_servidor();
-                $stmt = $mysqli->prepare($sql);
-                if ( !$stmt->execute()) {
-                    $informacion =array("1" => "error", "mensaje" => "Error al obtener la hora_entrada: " . $stmt->error, "sql" => $sql);
-                    echo json_encode($informacion);	
-                    exit;
-                }        
-
-                $result = $stmt->get_result();
-                $registros= array();
-                $hora_entrada_usuario= "";
-                while ($row = $result->fetch_assoc()) {
-                    foreach ($row as $key => $value) {
-                        $hora_entrada_usuario= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
-                    }
-                }
-
-                $stmt->close();
+                
+                $horarios_usuario = buscarHorariosUsuario(null, $cod_usuario);
+                $hora_entrada_usuario = obtenerHoraEntradaUsuarioMasCercana($horarios_usuario, $diaActual, $hora_entrada);
 
                 // Compara si la hora_entrada_usuario es mayor que la hora_entrada por 10 min.
                 $llegada_tardia = ($hora_entrada_usuario && (strtotime($hora_entrada) - strtotime($hora_entrada_usuario)) > 660) ? 1 : 0;
@@ -173,6 +160,28 @@
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
         }
+    }
+
+    function obtenerHoraEntradaUsuarioMasCercana($horarios_usuario, $diaActual, $hora_entrada) {
+        $hora_entrada_usuario = null;
+        $menor_diferencia = null;
+        $hora_marcada = strtotime("2025-01-01 ".$hora_entrada);
+
+        foreach ($horarios_usuario as $horario) {
+            if (!isset($horario['dia']) || !isset($horario['hora_entrada']) || $horario['dia'] != $diaActual) {
+                continue;
+            }
+
+            $hora_horario = strtotime("2025-01-01 ".$horario['hora_entrada']);
+            
+            $diferencia = abs($hora_marcada - $hora_horario);
+            if ($menor_diferencia === null || $diferencia < $menor_diferencia) {
+                $menor_diferencia = $diferencia;
+                $hora_entrada_usuario = $horario['hora_entrada'];
+            }
+        }
+
+        return $hora_entrada_usuario;
     }
 
     function registrarSalida($cod_usuarioFK, $hora_salida, $cod_asistencia, $cod_local, $fecha) {
@@ -357,7 +366,9 @@
     }
 
     // Validacion e identificacion de funcion
-    $operacion= $_POST['accion'];
-    $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
-    verificar($operacion);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $operacion= $_POST['accion'];
+        $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+        verificar($operacion);
+    }
 ?>

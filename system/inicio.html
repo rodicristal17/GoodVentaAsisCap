@@ -2082,41 +2082,25 @@ id='inptContrasenhaUser' style='width:100%;box-sizing:border-box;' />
 <textarea class='inputText' id='inptTipoRelacionamientoUser' style='width:100%;min-height:86px;box-sizing:border-box;resize:vertical;'></textarea>
 </div>
 
-<div style='margin-top:14px;'>
-<p class='pTituloC' style='margin-bottom:8px;'>Dias laborales:</p>
-<table class='tableCabeceraRegistro' style='width:100%;'>
-<tr>
-<td class='td_registro' style='width:42%;'>DIA</td>
-<td class='td_registro' style='width:58%;'>HORA ENTRADA</td>
-</tr>
-</table>
-<table style='width:100%;border-collapse:collapse;border:1px solid rgb(226,226,226);border-top:none;background-color:rgb(255,255,255);'>
-<tr>
-<td style='width:42%;padding:8px 10px;border-bottom:1px solid rgb(238,238,238);'>Lunes</td>
-<td style='padding:6px 10px;border-bottom:1px solid rgb(238,238,238);'><input type='time' class='inputText' id='inptLunesUser' style='width:100%;box-sizing:border-box;'/></td>
-</tr>
-<tr>
-<td style='padding:8px 10px;border-bottom:1px solid rgb(238,238,238);'>Martes</td>
-<td style='padding:6px 10px;border-bottom:1px solid rgb(238,238,238);'><input type='time' class='inputText' id='inptMartesUser' style='width:100%;box-sizing:border-box;'/></td>
-</tr>
-<tr>
-<td style='padding:8px 10px;border-bottom:1px solid rgb(238,238,238);'>Mi&eacute;rcoles</td>
-<td style='padding:6px 10px;border-bottom:1px solid rgb(238,238,238);'><input type='time' class='inputText' id='inptMiercolesUser' style='width:100%;box-sizing:border-box;'/></td>
-</tr>
-<tr>
-<td style='padding:8px 10px;border-bottom:1px solid rgb(238,238,238);'>Jueves</td>
-<td style='padding:6px 10px;border-bottom:1px solid rgb(238,238,238);'><input type='time' class='inputText' id='inptJuevesUser' style='width:100%;box-sizing:border-box;'/></td>
-</tr>
-<tr>
-<td style='padding:8px 10px;border-bottom:1px solid rgb(238,238,238);'>Viernes</td>
-<td style='padding:6px 10px;border-bottom:1px solid rgb(238,238,238);'><input type='time' class='inputText' id='inptViernesUser' style='width:100%;box-sizing:border-box;'/></td>
-</tr>
-<tr>
-<td style='padding:8px 10px;'>S&aacute;bado</td>
-<td style='padding:6px 10px;'><input type='time' class='inputText' id='inptSabadoUser' style='width:100%;box-sizing:border-box;'/></td>
-</tr>
-</table>
-</div>
+  <div style='margin-top:14px;'>
+    <div style='display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;'>
+      <p class='pTituloC'>Dias laborales:</p>
+      <input type='button' value='Agregar horario' class='btn5' onclick='agregarFilaHorarioUsuario();' />
+    </div>
+    <table class='tableCabeceraRegistro' style='width:100%;'>
+      <tr>
+        <td class='td_registro' style='width:28%;'>DIA</td>
+        <td class='td_registro' style='width:27%;'>HORA ENTRADA</td>
+        <td class='td_registro' style='width:27%;'>HORA SALIDA</td>
+        <td class='td_registro' style='width:18%;'>ACCION</td>
+      </tr>
+    </table>
+    <div style='max-height:220px;overflow-y:auto;border:1px solid rgb(226,226,226);border-top:none;border-radius:0 0 10px 10px;background-color:rgb(255,255,255);'>
+      <table id='tableHorariosUsuario' border='0' cellspacing='0' cellpadding='5' style='width:100%;border-collapse:collapse;box-sizing:border-box;'>
+        <tbody id='tbodyHorariosUsuario'></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 </div>
 

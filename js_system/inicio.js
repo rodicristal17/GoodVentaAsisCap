@@ -1091,12 +1091,8 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptDireccionUser').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptFechaCreacionMUser').value = $(datostr).children('td[id="td_datos_15"]').html();
 
-	document.getElementById('inptLunesUser').value = $(datostr).children('td[id="td_datos_16"]').html();
-	document.getElementById('inptMartesUser').value = $(datostr).children('td[id="td_datos_17"]').html();
-	document.getElementById('inptMiercolesUser').value = $(datostr).children('td[id="td_datos_18"]').html();
-	document.getElementById('inptJuevesUser').value = $(datostr).children('td[id="td_datos_19"]').html();
-	document.getElementById('inptViernesUser').value = $(datostr).children('td[id="td_datos_20"]').html();
-	document.getElementById('inptSabadoUser').value = $(datostr).children('td[id="td_datos_21"]').html();
+	limpiarHorariosUsuario();
+	cargarHorariosUsuarioDesdeJson($(datostr).children('td[id="td_datos_22"]').text());
 		
 	fotocliente3= $(datostr).children('td[id="td_datos_11"]').html(); 
 	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
@@ -1108,6 +1104,138 @@ function obtenerdatosabmusuario(datostr) {
 
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
 }
+
+function obtenerOpcionesDiaHorarioUsuario(diaSeleccionado) {
+	var dias = [
+		["lunes", "Lunes"],
+		["martes", "Martes"],
+		["miercoles", "Miércoles"],
+		["jueves", "Jueves"],
+		["viernes", "Viernes"],
+		["sabado", "Sábado"],
+		["domingo", "Domingo"]
+	];
+	var opciones = "";
+
+	for (var i = 0; i < dias.length; i++) {
+		var seleccionado = dias[i][0] == diaSeleccionado ? " selected" : "";
+		opciones += "<option value='" + dias[i][0] + "'" + seleccionado + ">" + dias[i][1] + "</option>";
+	}
+
+	return opciones;
+}
+
+function agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida) {
+	var tbody = document.getElementById("tbodyHorariosUsuario");
+	if (!tbody) {
+		return;
+	}
+
+	dia = dia || "lunes";
+	horaEntrada = horaEntrada || "";
+	horaSalida = horaSalida || "";
+
+	var fila = document.createElement("tr");
+	fila.className = "filaHorarioUsuario";
+	fila.innerHTML =
+		"<td style='width:28%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+			"<select class='inputSelect horarioUsuarioDia' style='width:100%;box-sizing:border-box;'>" +
+				obtenerOpcionesDiaHorarioUsuario(dia) +
+			"</select>" +
+		"</td>" +
+		"<td style='width:27%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+			"<input type='time' class='inputText horarioUsuarioEntrada' value='" + horaEntrada + "' style='width:100%;box-sizing:border-box;' />" +
+		"</td>" +
+		"<td style='width:27%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+			"<input type='time' class='inputText horarioUsuarioSalida' value='" + horaSalida + "' style='width:100%;box-sizing:border-box;' />" +
+		"</td>" +
+		"<td style='width:18%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);text-align:center;'>" +
+			"<input type='button' value='Eliminar' class='btn4' onclick='eliminarFilaHorarioUsuario(this);' />" +
+		"</td>";
+
+	tbody.appendChild(fila);
+}
+
+function eliminarFilaHorarioUsuario(boton) {
+	var fila = boton ? boton.closest("tr") : null;
+	if (fila) {
+		fila.parentNode.removeChild(fila);
+	}
+}
+
+function limpiarHorariosUsuario() {
+	var tbody = document.getElementById("tbodyHorariosUsuario");
+	if (tbody) {
+		tbody.innerHTML = "";
+	}
+}
+
+function cargarHorarioUsuarioDesdeRegistro(dia, horaEntrada, horaSalida) {
+	horaEntrada = $.trim(horaEntrada || "");
+	horaSalida = $.trim(horaSalida || "");
+
+	if (horaEntrada == "" && horaSalida == "") {
+		return;
+	}
+
+	agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida);
+}
+
+function cargarHorariosUsuarioDesdeJson(horariosJson) {
+	horariosJson = $.trim(horariosJson || "");
+
+	if (horariosJson == "") {
+		return false;
+	}
+
+	try {
+		var horarios = JSON.parse(horariosJson);
+
+		if (!Array.isArray(horarios) || horarios.length == 0) {
+			return false;
+		}
+
+		for (var i = 0; i < horarios.length; i++) {
+			agregarFilaHorarioUsuario(
+				horarios[i].dia || "lunes",
+				horarios[i].hora_entrada || "",
+				horarios[i].hora_salida || ""
+			);
+		}
+
+		return true;
+	} catch (error) {
+		return false;
+	}
+}
+
+function obtenerHorariosUsuarioFormulario() {
+	var horarios = [];
+	var filas = document.querySelectorAll("#tbodyHorariosUsuario tr");
+
+	for (var i = 0; i < filas.length; i++) {
+		var dia = filas[i].querySelector(".horarioUsuarioDia");
+		var entrada = filas[i].querySelector(".horarioUsuarioEntrada");
+		var salida = filas[i].querySelector(".horarioUsuarioSalida");
+
+		if (!dia || !entrada || !salida) {
+			continue;
+		}
+
+		if (entrada.value == "" && salida.value == "") {
+			continue;
+		}
+
+		horarios.push({
+			dia: dia.value,
+			hora_entrada: entrada.value,
+			hora_salida: salida.value
+		});
+	}
+
+	return horarios;
+}
+
 function verificarcamposusuario() {
 	var inptNombreApellidoUsuario = document.getElementById('inptNombreApellidoUsuario').value
 	var inptNroDocUsuario = document.getElementById('inptNroDocUsuario').value
@@ -1123,13 +1251,7 @@ function verificarcamposusuario() {
 	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
 	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
 
-	const inptLunesUser= document.getElementById('inptLunesUser').value;
-	const inptMartesUser= document.getElementById('inptMartesUser').value;
-	const inptMiercolesUser= document.getElementById('inptMiercolesUser').value;
-	const inptJuevesUser= document.getElementById('inptJuevesUser').value;
-	const inptViernesUse= document.getElementById('inptViernesUser').value;
-	const inptSabadoUser= document.getElementById('inptSabadoUser').value;
-
+	const horariosUsuario = obtenerHorariosUsuarioFormulario();
 	if (inptNombreApellidoUsuario == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO")
 		return false;
@@ -1158,10 +1280,9 @@ function verificarcamposusuario() {
 		accion = "nuevo";
 		if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
 	}
-	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,inptLunesUser, inptMartesUser, inptMiercolesUser, inptJuevesUser, inptViernesUse, inptSabadoUser,idAbmUsuario, accion);
+	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,horariosUsuario,idAbmUsuario, accion);
 }
-function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,hora_entrada_lunes, hora_entrada_martes, hora_entrada_miercoles, hora_entrada_jueves, hora_entrada_viernes,
-hora_entrada_sabado,cod_persona, accion) {
+function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,horarios_usuario,cod_persona, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1184,12 +1305,7 @@ hora_entrada_sabado,cod_persona, accion) {
 	datos.append("tipo", tipo)
 	datos.append("foto", fotocliente3)
 	datos.append("ext", extcliente3)
-	datos.append("hora_entrada_lunes", hora_entrada_lunes);
-	datos.append("hora_entrada_martes", hora_entrada_martes);
-	datos.append("hora_entrada_miercoles", hora_entrada_miercoles);
-	datos.append("hora_entrada_jueves", hora_entrada_jueves);
-	datos.append("hora_entrada_viernes", hora_entrada_viernes);
-	datos.append("hora_entrada_sabado", hora_entrada_sabado);
+	datos.append("horarios_usuario_json", JSON.stringify(horarios_usuario));
 	datos.append("fecha_creacion", fecha_creacion);
 	var OpAjax = $.ajax({
 		data: datos,
@@ -1458,12 +1574,7 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptContrasenhaUser').value = ""
 	document.getElementById('inptRegistroSeleccUser').value = ""
 	
-	document.getElementById('inptLunesUser').value = "";
-	document.getElementById('inptMartesUser').value = "";
-	document.getElementById('inptMiercolesUser').value = "";
-	document.getElementById('inptJuevesUser').value = "";
-	document.getElementById('inptViernesUser').value = "";
-	document.getElementById('inptSabadoUser').value = "";
+	limpiarHorariosUsuario();
 
 	const fecahActual= new Date();
 	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth()).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');

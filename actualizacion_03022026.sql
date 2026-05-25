@@ -608,7 +608,107 @@ STARTS TIMESTAMP(CURDATE() + INTERVAL 1 DAY)
 DO
     CALL limpiar_doctores_consultorios();
 
+CREATE TABLE horario_usuario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cod_usuarioFK INT(11),
+    dia_semana ENUM('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo') NOT NULL,
+    hora_entrada TIME NOT NULL,
+    hora_salida TIME,
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_usuarioFK_create INT(11),
+    fecha_edit DATETIME,
+    cod_usuarioFK_edit INT(11),
+    FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
+);
 
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, estado, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'lunes', u.hora_entrada_lunes, NULL, 'activo', NULL
+FROM usuario u
+WHERE u.hora_entrada_lunes IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'lunes'
+    AND hu.hora_entrada = u.hora_entrada_lunes
+    AND hu.estado = 'activo'
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, estado, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'martes', u.hora_entrada_martes, NULL, 'activo', NULL
+FROM usuario u
+WHERE u.hora_entrada_martes IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'martes'
+    AND hu.hora_entrada = u.hora_entrada_martes
+    AND hu.estado = 'activo'
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, estado, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'miercoles', u.hora_entrada_miercoles, NULL, 'activo', NULL
+FROM usuario u
+WHERE u.hora_entrada_miercoles IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'miercoles'
+    AND hu.hora_entrada = u.hora_entrada_miercoles
+    AND hu.estado = 'activo'
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, estado, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'jueves', u.hora_entrada_jueves, NULL, 'activo', NULL
+FROM usuario u
+WHERE u.hora_entrada_jueves IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'jueves'
+    AND hu.hora_entrada = u.hora_entrada_jueves
+    AND hu.estado = 'activo'
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, estado, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'viernes', u.hora_entrada_viernes, NULL, 'activo', NULL
+FROM usuario u
+WHERE u.hora_entrada_viernes IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'viernes'
+    AND hu.hora_entrada = u.hora_entrada_viernes
+    AND hu.estado = 'activo'
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, estado, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'sabado', u.hora_entrada_sabado, NULL, 'activo', NULL
+FROM usuario u
+WHERE u.hora_entrada_sabado IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'sabado'
+    AND hu.hora_entrada = u.hora_entrada_sabado
+    AND hu.estado = 'activo'
+);
+
+
+/*
+ALTER TABLE usuario DROP COLUMN hora_entrada_lunes;
+ALTER TABLE usuario DROP COLUMN hora_entrada_martes;
+ALTER TABLE usuario DROP COLUMN hora_entrada_miercoles;
+ALTER TABLE usuario DROP COLUMN hora_entrada_jueves;
+ALTER TABLE usuario DROP COLUMN hora_entrada_viernes;
+ALTER TABLE usuario DROP COLUMN hora_entrada_sabado;
+*/
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
