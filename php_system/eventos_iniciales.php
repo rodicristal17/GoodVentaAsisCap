@@ -1,7 +1,7 @@
 <?php
 require_once("conexion.php");
 
-$listado_procedimientos = ['actualizar_gastos_pendientes', 'reiniciar_tareas_programadas'];
+$listado_procedimientos = ['actualizar_gastos_pendientes', 'reiniciar_tareas_programadas', 'limpiar_doctores_consultorios'];
 
 function ejecutarManualmenteEvento($procedimiento) {
     $mysqli = conectar_al_servidor();

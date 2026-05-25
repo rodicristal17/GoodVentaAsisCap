@@ -587,6 +587,27 @@ UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.83', detalles='Abm para
 ALTER TABLE agenda ADD COLUMN cod_detalle_ventaFK INT(11);
 ALTER TABLE evoluciontratamiento ADD COLUMN cod_agendaFK INT(11);
 
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS limpiar_doctores_consultorios$$
+CREATE PROCEDURE limpiar_doctores_consultorios()
+BEGIN
+    UPDATE consultorios
+    SET cod_doctorFK = NULL
+    WHERE cod_doctorFK IS NOT NULL;
+END$$
+
+DELIMITER ;
+
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS limpiar_doctores_consultorios_medianoche;
+CREATE EVENT limpiar_doctores_consultorios_medianoche
+ON SCHEDULE EVERY 1 DAY
+STARTS TIMESTAMP(CURDATE() + INTERVAL 1 DAY)
+DO
+    CALL limpiar_doctores_consultorios();
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
