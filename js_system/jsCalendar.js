@@ -799,7 +799,6 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         + "right:auto;"
         + "overflow:visible;"
 		+ "border:1px solid #ccc;";
-console.error(e);
 
     return ''
     + "<div class='agenda-evento estado-" + e.estado + "' "

@@ -17062,10 +17062,8 @@ var idFkVenta = "";
 function verCerrarCuentasACobrar(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divCuentasAcobrar").style.display==""){
-		if(controldebusquedadInformeCuentaCobrar==true){
-		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
-	return
-}
+		cancelarInformeCuentaACobrar();
+		
 		document.getElementById("tdEfectoCuentasACobrar").className="magictime vanishOut"
 	$("div[id=divCuentasAcobrar]").fadeOut(500);	
 		document.getElementById("divMinimizadoCuentasCobrar1").style.display="none"	
@@ -17562,6 +17560,7 @@ var NombreClienteCreditoPagar ="";
 
 var cod_ventaAsignarCod_local="";
 function obtenerdatoscuentaacobrar(datostr) {
+	cancelarInformeCuentaACobrar();
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
 	});
