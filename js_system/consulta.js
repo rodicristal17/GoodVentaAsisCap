@@ -2060,7 +2060,9 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 				if (Respuesta == true) {
 					cod_consulta = datos[2];
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
-					cambiarEstadoAgendaDesdeModal("ATENDIDO");
+					if (idAbmAgenda) {
+					    actualizarAgenda(idAbmAgenda, '', '', "ATENDIDO");
+					}
 
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 					verCerrarAbmDetalleConsulta(false)
