@@ -1,15 +1,13 @@
 <?php
 
-$operacion = $_POST['funt'];
-$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
-
 //cargar achivos importantes
-require("conexion.php");
-include("verificar_navegador.php");
-include("buscar_nivel.php");
-include("classTable.php");
+require_once("conexion.php");
+include_once("verificar_navegador.php");
+include_once("buscar_nivel.php");
+include_once("classTable.php");
+include_once("abmCalendar.php");
 
-function verificar($operacion)
+function verificarAgenda($operacion)
 {
 	
 	
@@ -36,10 +34,66 @@ exit;
 
 
 //CONTROL DE ACCESO
+if ($operacion == 'obtenerComentarios') {
+	$idAgenda = $_POST['idAgenda'];
+	$idAgenda = mb_convert_encoding((string)($idAgenda), 'ISO-8859-1', 'UTF-8');
+	$result= obtenerComentarios(array(
+		'cod_agendaFK' => $idAgenda,
+	));
 
+	if (isset($result["1"]) && $result["1"] == "error") {
+		echo json_encode($result);
+		exit;
+	}
 
+	$mysqliUsuarios = conectar_al_servidor();
+	$mysqliUsuarios->set_charset("utf8");
+    $usuariosAgenda = obtenerUsuariosAgenda($mysqliUsuarios);
+	mysqli_close($mysqliUsuarios);
+	$pagina="";
+	foreach ($result as $comentario) {
+		$textoComentario = isset($comentario["comentario"]) ? $comentario["comentario"] : "";
+        if(preg_match_all('/@\{(\d+)\}\s*:\s*(.*?)(?=@\{\d+\}\s*:|$)/s', $textoComentario, $coincidencias, PREG_SET_ORDER)){
+            foreach($coincidencias as $coincidencia){
+                $codUsuario = $coincidencia[1];
+                $nombreUsuario = obtenerNombreUsuarioAgenda($codUsuario, $usuariosAgenda);
+				$contenidoTexto = reemplazarUsuariosComentarioAgenda(trim($coincidencia[2]), $usuariosAgenda);
+				if ($contenidoTexto == "") {
+					continue;
+				}
+                $contenidoMotivo = nl2br(htmlspecialchars($contenidoTexto, ENT_QUOTES, 'UTF-8'), false);
 
-	
+                $pagina .= '<div class="sugerencias-container" style="justify-content:flex-start;margin:0;">
+                    <div class="card my-3" style="border-left:5px solid #416c8f;margin: 0px !important;margin-bottom: 7px !important;display:flex;flex-direction:column;gap:0;min-height:auto;">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="padding:6px 10px 4px 10px;gap:10px;min-height:auto;">
+                            <span style="font-size:10pt;line-height:1.15;">'.htmlspecialchars($nombreUsuario, ENT_QUOTES, 'UTF-8').'</span>
+                        </div>
+                        <div class="card-body" style="padding:4px 10px 8px 10px;">
+                            <p class="card-text" style="font-size: 10pt; text-align:justify;margin:0;line-height:1.35;">'.$contenidoMotivo.'</p>
+                        </div>
+                    </div>
+                </div>';
+            }
+        }
+	}
+
+	echo json_encode(array('1' => 'exito', '2' =>$result, '3' => $pagina));
+	exit;
+}
+
+if ($operacion == 'crearComentario') {
+	$idAgenda = $_POST['idAgenda'];
+	$idAgenda = mb_convert_encoding((string)($idAgenda), 'ISO-8859-1', 'UTF-8');
+	$comentario = $_POST['comentario'];
+	$comentario = mb_convert_encoding((string)($comentario), 'ISO-8859-1', 'UTF-8');
+
+	// Limpiar comentario
+	$comentario= "@{".$user."}: $comentario";
+	$result= crearComentario($idAgenda, $comentario);
+	echo json_encode($result);
+	exit;
+}
+
 if($operacion=="nuevo" || $operacion=="editar")
 {
 	$idAgenda=isset($_POST['idAgenda']) ? $_POST['idAgenda'] : NULL;
@@ -55,7 +109,7 @@ $Cod_cobrador = $Cod_cobrador !== NULL ? mb_convert_encoding((string)($Cod_cobra
 	$cod_clienteAgenda=isset($_POST['cod_clienteAgenda']) ? $_POST['cod_clienteAgenda'] : NULL;
 $cod_clienteAgenda = $cod_clienteAgenda !== NULL ? mb_convert_encoding((string)($cod_clienteAgenda), 'ISO-8859-1', 'UTF-8') : NULL;
 
-abm($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,$operacion);
+abmAgenda($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,$operacion);
 
 }
 
@@ -90,7 +144,7 @@ $buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
 
 }
 
-function abm($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,$operacion)
+function abmAgenda($idAgenda,$motivo,$fechaCompromiso,$estado,$Cod_cobrador,$cod_clienteAgenda,$operacion)
 {
 	
 	
@@ -374,7 +428,174 @@ exit;
 }
 
 
+function obtenerComentarios($filtros= array())
+{
+	$sqlFiltro = "";
+	$parametros = array();
+	$ss = "";
 
+	foreach ($filtros as $key => $value) {
+		if ($value === NULL || $value === "") {continue;}
 
-verificar($operacion);
+		if ($sqlFiltro == "") {
+			$sqlFiltro .= "WHERE ";
+		} else {
+			$sqlFiltro .= " AND ";
+		}
+
+		switch ($key) {
+			default:
+				$sqlFiltro .= is_numeric($value) ? "ca.$key = ?" : "ca.$key LIKE ?";
+				$ss .= is_numeric($value) ? "i" : "s";
+				$parametros[] = is_numeric($value) ? $value : "%".$value."%";
+				break;
+		}
+	}
+
+	$sql = "SELECT ca.id, ca.comentario, ca.fecha, ca.cod_agendaFK
+		FROM comentarios_agenda ca
+		$sqlFiltro
+		ORDER BY ca.fecha ASC, ca.id ASC";
+
+	$mysqli=conectar_al_servidor();
+	$stmt = $mysqli->prepare($sql);
+
+	if (!$stmt) {
+		return array("1" => "error", "mensaje" => "Error al preparar consulta: " . $mysqli->error, "sql" => $sql);
+	}
+
+	if (count($parametros) > 0) {
+		$refs = array();
+		foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
+		call_user_func_array(array($stmt, 'bind_param'), array_merge(array($ss), $refs));
+	}
+
+	if (!$stmt->execute()) {
+		$informacion =array("1" => "error", "mensaje" => "Error al obtener comentarios: " . $stmt->error, "sql" => $sql);
+		$stmt->close();
+		mysqli_close($mysqli);
+		return $informacion;
+	}
+
+	$result = $stmt->get_result();
+	$registros = array();
+	while ($row = $result->fetch_assoc()) {
+		$reg = array();
+		foreach ($row as $key => $value) {
+			$reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
+		}
+		$registros[] = $reg;
+	}
+
+	$stmt->close();
+	mysqli_close($mysqli);
+
+	return $registros;
+}
+
+function crearComentario($idAgenda, $comentario)
+{
+	if ($idAgenda == "" || $comentario == "") {
+		return array("1" => "camposvacio");
+	}
+
+	$mysqli=conectar_al_servidor();
+	$sql = "INSERT INTO comentarios_agenda (comentario, cod_agendaFK) VALUES (?, ?)";
+	$stmt = $mysqli->prepare($sql);
+
+	if (!$stmt) {
+		return array("1" => "error", "mensaje" => "Error al preparar consulta: " . $mysqli->error, "sql" => $sql);
+	}
+
+	$stmt->bind_param('si', $comentario, $idAgenda);
+
+	if (!$stmt->execute()) {
+		$informacion = array("1" => "error", "mensaje" => "Error al guardar comentario: " . $stmt->error, "sql" => $sql);
+		$stmt->close();
+		mysqli_close($mysqli);
+		return $informacion;
+	}
+
+	$idComentario = $stmt->insert_id;
+	$stmt->close();
+	mysqli_close($mysqli);
+
+	return array("1" => "exito", "id" => $idComentario);
+}
+
+function registrarComentariosCambiosAgenda($idAgenda, $codUsuario, $registroAnterior, $valoresNuevos)
+{
+	if (empty($idAgenda) || !is_array($registroAnterior) || !is_array($valoresNuevos)) {
+		return;
+	}
+
+	foreach ($valoresNuevos as $campo => $valorNuevo) {
+		if ($valorNuevo === NULL || $valorNuevo === "") {
+			continue;
+		}
+
+		$valorAnterior = array_key_exists($campo, $registroAnterior) ? $registroAnterior[$campo] : NULL;
+
+		if (valorComparableComentarioAgenda($valorAnterior) === valorComparableComentarioAgenda($valorNuevo)) {
+			continue;
+		}
+
+		$comentario = "@{0}: El usuario @{".$codUsuario."} ha modificado ".$campo." de ".formatearValorComentarioAgenda($valorAnterior)." a ".formatearValorComentarioAgenda($valorNuevo);
+		if (mb_strlen($comentario, 'UTF-8') > 255) {
+			$comentario = mb_substr($comentario, 0, 252, 'UTF-8')."...";
+		}
+		crearComentario($idAgenda, $comentario);
+	}
+}
+
+function valorComparableComentarioAgenda($valor)
+{
+	if ($valor === NULL) {
+		return "";
+	}
+
+	$valor = trim((string)$valor);
+	if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $valor)) {
+		return substr($valor, 0, 5);
+	}
+
+	return $valor;
+}
+
+function formatearValorComentarioAgenda($valor)
+{
+	if ($valor === NULL || $valor === "") {
+		return "NULL";
+	}
+
+	$valor = trim((string)$valor);
+	if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $valor)) {
+		return substr($valor, 0, 5);
+	}
+
+	return $valor;
+}
+
+function obtenerNombreUsuarioAgenda($codUsuario, $usuariosAgenda)
+{
+	if ((string)$codUsuario == "0") {
+		return "Sistema";
+	}
+
+	return isset($usuariosAgenda[$codUsuario]) ? $usuariosAgenda[$codUsuario] : "@{".$codUsuario."}";
+}
+
+function reemplazarUsuariosComentarioAgenda($texto, $usuariosAgenda)
+{
+	return preg_replace_callback('/@\{(\d+)\}/', function($coincidencia) use ($usuariosAgenda) {
+		return obtenerNombreUsuarioAgenda($coincidencia[1], $usuariosAgenda);
+	}, $texto);
+}
+
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+	$operacion = $_POST['funt'];
+	$operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+
+	verificarAgenda($operacion);
+}
 ?>

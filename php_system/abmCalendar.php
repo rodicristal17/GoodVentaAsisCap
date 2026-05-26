@@ -1,80 +1,101 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 
 include_once 'verificar_navegador.php';
 include_once 'buscar_nivel.php';
 include_once 'classTable.php';
 include_once 'conexion.php';
+include_once 'abmAgenda.php';
 
 date_default_timezone_set('America/Asuncion');
 
-$mysqli = conectar_al_servidor();
-$mysqli->set_charset("utf8");
+$useru= "";
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+    header('Content-Type: application/json; charset=utf-8');
 
-$useru = isset($_POST['useru']) ? $_POST['useru'] : '';
-$passu = isset($_POST['passu']) ? $_POST['passu'] : '';
-$navegador = isset($_POST['navegador']) ? $_POST['navegador'] : '';
-$funt = isset($_POST['funt']) ? $_POST['funt'] : '';
+    $mysqli = conectar_al_servidor();
+    $mysqli->set_charset("utf8");
+    
+    $useru = isset($_POST['useru']) ? $_POST['useru'] : '';
+    $passu = isset($_POST['passu']) ? $_POST['passu'] : '';
+    $navegador = isset($_POST['navegador']) ? $_POST['navegador'] : '';
+    $funt = isset($_POST['funt']) ? $_POST['funt'] : '';
+    
+    if ($useru == '' || $passu == '' || $navegador == '') {
+        echo json_encode(array("1" => "UI"));
+        exit;
+    }
+    
+    $verificar = verificar_navegador($useru, $navegador, $passu);
+    if ($verificar != 'ok') {
+        echo json_encode(array("1" => "UI"));
+        exit;
+    }
+    
+    switch ($funt) {
+        case 'cargarAgenda':
+            cargarAgenda($mysqli);
+            break;
+    
+        case 'guardarCita':
+            guardarCita($mysqli, $useru);
+            break;
+    
+        case 'moverCita':
+            moverCita($mysqli, $useru);
+            break;
+    
+        case 'redimensionarCita':
+            redimensionarCita($mysqli, $useru);
+            break;
+    
+        case 'actualizarCita':
+            actualizarCita($mysqli, $useru);
+            break;
+    
+        case 'actualizarMotivoCita':
+            actualizarMotivoCita($mysqli, $useru);
+            break;
+    
+        case 'actualizarPresupuestoAgenda':
+            actualizarPresupuestoAgenda($mysqli, $useru);
+            break;
+            
+        case 'buscarPacientesAgenda':
+            buscarPacientesAgenda($mysqli);
+            break;
+    
+        case 'guardarPacienteAgenda':
+            guardarPacienteAgenda($mysqli, $useru);
+            break;
+    
+        case 'buscarHistorialPacienteCalendario':
+            buscarHistorialPacienteCalendario($mysqli);
+            break;
 
-if ($useru == '' || $passu == '' || $navegador == '') {
-    echo json_encode(array("1" => "UI"));
+        case 'buscarDoctoresDisponiblesCita':
+            buscarDoctoresDisponiblesCita($mysqli);
+            break;
+
+        case 'listarDiasFeriados':
+            listarDiasFeriados($mysqli);
+            break;
+
+        case 'guardarDiaFeriado':
+            guardarDiaFeriado($mysqli, $useru);
+            break;
+
+        case 'eliminarDiaFeriado':
+            eliminarDiaFeriado($mysqli, $useru);
+            break;
+            
+    
+        default:
+            echo json_encode(array("1" => "Función inválida"));
+            break;
+    }
+    
     exit;
 }
-
-$verificar = verificar_navegador($useru, $navegador, $passu);
-if ($verificar != 'ok') {
-    echo json_encode(array("1" => "UI"));
-    exit;
-}
-
-switch ($funt) {
-    case 'cargarAgenda':
-        cargarAgenda($mysqli);
-        break;
-
-    case 'guardarCita':
-        guardarCita($mysqli, $useru);
-        break;
-
-    case 'moverCita':
-        moverCita($mysqli, $useru);
-        break;
-
-    case 'redimensionarCita':
-        redimensionarCita($mysqli, $useru);
-        break;
-
-    case 'actualizarCita':
-		actualizarCita($mysqli, $useru);
-		break;
-
-    case 'actualizarMotivoCita':
-		actualizarMotivoCita($mysqli, $useru);
-		break;
-
-	case 'actualizarPresupuestoAgenda':
-		actualizarPresupuestoAgenda($mysqli, $useru);
-		break;
-		
-	case 'buscarPacientesAgenda':
-		buscarPacientesAgenda($mysqli);
-		break;
-
-	case 'guardarPacienteAgenda':
-		guardarPacienteAgenda($mysqli, $useru);
-		break;
-
-	case 'buscarHistorialPacienteCalendario':
-		buscarHistorialPacienteCalendario($mysqli);
-		break;
-		
-
-    default:
-        echo json_encode(array("1" => "Función inválida"));
-        break;
-}
-
-exit;
 
 /* =========================================================
    FUNCIONES
@@ -139,6 +160,208 @@ function buscarPacientesAgenda($mysqli){
         "1" => "exito",
         "2" => $html
     ));
+    exit;
+}
+
+function obtenerDiaSemanaAgenda($fecha){
+    $dias = array(
+        0 => 'domingo',
+        1 => 'lunes',
+        2 => 'martes',
+        3 => 'miercoles',
+        4 => 'jueves',
+        5 => 'viernes',
+        6 => 'sabado'
+    );
+
+    $timestamp = strtotime($fecha);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    return $dias[(int)date('w', $timestamp)];
+}
+
+function escaparHtmlAgenda($valor){
+    return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
+function generarHtmlDoctoresDisponiblesCita($doctores){
+    if (count($doctores) == 0) {
+        return "<div class='doctor-disponible-mensaje'>Sin doctores disponibles</div>";
+    }
+
+    $html = "";
+    foreach ($doctores as $doctor) {
+        $html .= "<button type='button' class='doctor-disponible-item' ";
+        $html .= "data-doctor='".escaparHtmlAgenda($doctor["cod_usuario"])."' ";
+        $html .= "onclick='seleccionarDoctorDisponibleNuevaCita(this)'>";
+        $html .= "<span class='doctor-disponible-nombre'>".escaparHtmlAgenda($doctor["nombre"])."</span>";
+        $html .= "<span class='doctor-disponible-horario'>".escaparHtmlAgenda($doctor["horarios"])."</span>";
+        $html .= "</button>";
+    }
+
+    return $html;
+}
+
+function buscarDoctoresDisponiblesCita($mysqli){
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+    $dia_semana = obtenerDiaSemanaAgenda($fecha);
+
+    if ($dia_semana == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "Fecha invalida"));
+        exit;
+    }
+
+    $condicionLocal = "";
+    $condicionConsultorioLocal = "";
+    $condicionHorarioLocal = " AND hu.cod_localFK IS NOT NULL";
+    if ($cod_local != "") {
+        $condicionLocal = " AND c.cod_localFk = '".$cod_local."'";
+        $condicionHorarioLocal = " AND hu.cod_localFK = '".$cod_local."'";
+    }
+
+    $sql = "SELECT
+            u.cod_usuario,
+            p.nombre_persona,
+            GROUP_CONCAT(
+                DISTINCT CONCAT(
+                    TIME_FORMAT(hu.hora_entrada, '%H:%i'),
+                    IF(hu.hora_salida IS NULL, '', CONCAT(' - ', TIME_FORMAT(hu.hora_salida, '%H:%i')))
+                )
+                ORDER BY hu.hora_entrada ASC
+                SEPARATOR ' | '
+            ) AS horarios
+        FROM usuario u
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        INNER JOIN horario_usuario hu ON hu.cod_usuarioFK = u.cod_usuario
+        LEFT JOIN consultorios c ON c.cod_doctorFK = u.cod_usuario AND c.estado = 'Activo' ".$condicionLocal."
+        WHERE u.tipo = 'DOCTOR'
+        AND u.estado = 'Activo'
+        ".$condicionHorarioLocal."
+        AND hu.dia_semana = '".$dia_semana."'
+        ".$condicionConsultorioLocal."
+        GROUP BY u.cod_usuario, p.nombre_persona
+        ORDER BY p.nombre_persona ASC";
+
+    $result = $mysqli->query($sql);
+
+    if (!$result) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudieron obtener los doctores disponibles",
+            "sql" => $sql,
+            "mysql" => $mysqli->error
+        ));
+        exit;
+    }
+
+    $doctores = array();
+    while ($row = $result->fetch_assoc()) {
+        $doctores[] = array(
+            "cod_usuario" => (int)$row["cod_usuario"],
+            "nombre" => normalizarTextoUtf8($row["nombre_persona"]),
+            "horarios" => normalizarTextoUtf8($row["horarios"]),
+        );
+    }
+
+    echo json_encode(array(
+        "1" => "exito",
+        "dia" => $dia_semana,
+        "html" => generarHtmlDoctoresDisponiblesCita($doctores)
+    ), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function listarDiasFeriados($mysqli){
+    $fecha_desde = isset($_POST['fecha_desde']) ? limpiar($mysqli, $_POST['fecha_desde']) : '';
+    $fecha_hasta = isset($_POST['fecha_hasta']) ? limpiar($mysqli, $_POST['fecha_hasta']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+    $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
+
+    $registros= obtenerDiasFeriados($mysqli, array(
+        "fecha_desde" => $fecha_desde,
+        "fecha_hasta" => $fecha_hasta,
+        "cod_local" => $cod_local,
+        "cod_consultorio" => $cod_consultorio
+    ));
+    
+    $html = "";
+    foreach ($registros as $row) {
+        $html .= "<div class='feriado-item'>";
+        $html .= "<div class='feriado-item-info'>";
+        $html .= "<b>".escaparHtmlAgenda($row["fecha_formateada"])."</b>";
+        $html .= "<span>".escaparHtmlAgenda(normalizarTextoUtf8($row["descripcion"]))."</span>";
+        $html .= "<small>".escaparHtmlAgenda(normalizarTextoUtf8($row["local"]))."</small>";
+        $html .= "</div>";
+        $html .= "<button type='button' class='btn-filtro' style='background:#c94d4d;color:#fff;' onclick='eliminarDiaFeriadoAgenda(".(int)$row["id"].")'>Quitar</button>";
+        $html .= "</div>";
+    }
+
+    if ($html == "") {
+        $html = "<div class='feriado-item'><div class='feriado-item-info'><span>Sin feriados registrados</span></div></div>";
+    }
+
+    echo json_encode(array("1" => "exito", "html" => $html), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function guardarDiaFeriado($mysqli, $useru){
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $descripcion = isset($_POST['descripcion']) ? limpiar($mysqli, $_POST['descripcion']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+
+    if ($fecha == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "Debe cargar la fecha"));
+        exit;
+    }
+
+    $cod_local_sql = $cod_local != '' ? "'".$cod_local."'" : "NULL";
+
+    $sql = "INSERT INTO dias_feriados
+            (fecha, descripcion, cod_localFK, estado, cod_usuarioFK_create, fecha_create)
+            VALUES ('".$fecha."', '".$descripcion."', ".$cod_local_sql.", 'activo', '".$useru."', NOW())";
+
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudo guardar el feriado",
+            "mysql" => $mysqli->error,
+            "sql" => $sql
+        ));
+        exit;
+    }
+
+    echo json_encode(array("1" => "exito"));
+    exit;
+}
+
+function eliminarDiaFeriado($mysqli, $useru){
+    $id = isset($_POST['id']) ? limpiar($mysqli, $_POST['id']) : '';
+
+    if ($id == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se encontro el feriado"));
+        exit;
+    }
+
+    $sql = "UPDATE dias_feriados
+            SET estado = 'inactivo',
+                cod_usuarioFK_edit = '".$useru."',
+                fecha_edit = NOW()
+            WHERE id = '".$id."'";
+
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudo quitar el feriado",
+            "mysql" => $mysqli->error,
+            "sql" => $sql
+        ));
+        exit;
+    }
+
+    echo json_encode(array("1" => "exito"));
     exit;
 }
 
@@ -348,6 +571,15 @@ function guardarCita($mysqli, $useru){
         exit;
     }
 
+    $feriado = obtenerFeriadoAgenda($mysqli, $fecha, $consultorio);
+    if ($feriado !== null) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se puede agendar en un día feriado: ".$feriado["descripcion"]." (".$feriado["fecha_formateada"].")"
+        ), JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     $sql = "INSERT INTO agenda (
                 id_paciente,
                 id_consultorio,
@@ -380,6 +612,9 @@ function guardarCita($mysqli, $useru){
         exit;
     }
 
+    $id_agenda = $mysqli->insert_id;
+    crearComentario($id_agenda, "@{0}: @{".$useru."} a creado la cita.");
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Cita guardada correctamente"
@@ -387,7 +622,78 @@ function guardarCita($mysqli, $useru){
     exit;
 }
 
+function obtenerFeriadoAgenda($mysqli, $fecha, $consultorio){
+    $registros = obtenerDiasFeriados($mysqli, array(
+        "fecha" => $fecha,
+        "cod_consultorio" => $consultorio,
+        "limite" => 1
+    ));
 
+    return count($registros) > 0 ? $registros[0] : null;
+}
+
+function obtenerDiasFeriados($mysqli, $filtros){
+    $condicion = " WHERE df.estado = 'activo' ";
+    $joinConsultorio = "";
+    $limite = "";
+
+    foreach ($filtros as $key => $value) {
+        if ($value != '') {
+            switch ($key) {
+                case 'fecha':
+                    $condicion .= " AND df.fecha = '".$value."' ";
+                    break;
+                case 'fecha_desde':
+                    $condicion .= " AND df.fecha >= '".$value."' ";
+                    break;
+                case 'fecha_hasta':
+                    $condicion .= " AND df.fecha <= '".$value."' ";
+                    break;
+                case 'cod_local':
+                    $condicion .= " AND (df.cod_localFK = '".$value."' OR df.cod_localFK IS NULL) ";
+                    break;
+                case 'cod_consultorio':
+                    $joinConsultorio = " LEFT JOIN consultorios c_filtro ON c_filtro.id_consultorio = '".$value."' ";
+                    $condicion .= " AND (df.cod_localFK IS NULL OR df.cod_localFK = c_filtro.cod_localFk) ";
+                    break;
+                case 'limite':
+                    $limite = " LIMIT ".(int)$value;
+                    break;
+                default:
+                    $condicion .= " AND ".$key." = '".$value."' ";
+            }
+        }
+    }
+    
+    $sql = "SELECT
+                df.id,
+                df.fecha,
+                DATE_FORMAT(df.fecha, '%d/%m/%Y') AS fecha_formateada,
+                IFNULL(df.descripcion, '') AS descripcion,
+                IFNULL(df.cod_localFK, '') AS cod_localFK,
+                IFNULL(l.Nombre, 'Todos') AS local
+            FROM dias_feriados df
+            LEFT JOIN local l ON l.cod_local = df.cod_localFK
+            ".$joinConsultorio."
+            ".$condicion."
+            ORDER BY df.fecha ASC, df.id ASC
+            ".$limite;
+
+    $result = $mysqli->query($sql);
+    
+    $registros= array();
+    if (!$result) {
+        return $registros;
+    }
+
+    while ($row = $result->fetch_assoc()) {
+        $row["descripcion"] = normalizarTextoUtf8($row["descripcion"]);
+        $row["local"] = normalizarTextoUtf8($row["local"]);
+        $registros[] = $row;
+    }
+
+    return $registros;
+}
 
 function actualizarCita($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
@@ -437,6 +743,8 @@ function actualizarCita($mysqli, $useru){
         exit;
     }
 
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+
     $campos[] = "creado_por = '".$useru."'";
     $campos[] = "creado_en = NOW()";
 
@@ -457,6 +765,13 @@ function actualizarCita($mysqli, $useru){
         exit;
     }
 
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "hora_inicio" => $hora_inicio,
+        "hora_fin" => $hora_fin,
+        "estado" => $estado,
+        "motivo" => $motivo
+    ));
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Agendamiento actualizado correctamente"
@@ -472,20 +787,35 @@ function actualizarMotivoCita($mysqli, $useru){
 function actualizarPresupuestoAgenda($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
     $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? limpiar($mysqli, $_POST['cod_presupuestoFK']) : '';
+    $campos = array();
 
-    if($id_agenda == '' || $cod_presupuestoFK == ''){
+    if($id_agenda == ''){
         echo json_encode(array(
-            "1" => "Datos incompletos",
-            "mensaje" => "Faltan datos para asociar el presupuesto a la agenda"
+            "1" => "error",
+            "mensaje" => "Falta el ID del agendamiento"
         ));
         exit;
     }
 
+    if($cod_presupuestoFK != ''){
+        $campos[] = "cod_presupuestoFK = '".$cod_presupuestoFK."'";
+    }
+
+    if(count($campos) == 0){
+        echo json_encode(array(
+            "1" => "error",
+            "mensaje" => "No hay datos para actualizar"
+        ));
+        exit;
+    }
+
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+
+    $campos[] = "estado = 'ATENDIDO'";
+
     $sql = "
         UPDATE agenda SET
-            cod_presupuestoFK = '".$cod_presupuestoFK."',
-            creado_por = '".$useru."',
-            creado_en = NOW()
+            ".implode(",\n            ", $campos)."
         WHERE id_agenda = '".$id_agenda."'
         LIMIT 1
     ";
@@ -500,6 +830,10 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
         exit;
     }
 
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "cod_presupuestoFK" => $cod_presupuestoFK,
+    ));
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Presupuesto asociado correctamente"
@@ -511,6 +845,18 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
 
 function limpiar($mysqli, $valor){
     return mysqli_real_escape_string($mysqli, trim($valor));
+}
+
+function obtenerAgendaAuditoria($mysqli, $id_agenda){
+    $id_agenda = limpiar($mysqli, $id_agenda);
+    $sql = "SELECT * FROM agenda WHERE id_agenda = '".$id_agenda."' LIMIT 1";
+    $result = $mysqli->query($sql);
+
+    if(!$result || $result->num_rows == 0){
+        return array();
+    }
+
+    return $result->fetch_assoc();
 }
 
 function normalizarTextoUtf8($valor){
@@ -531,6 +877,7 @@ function cargarAgenda($mysqli){
     $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
     $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
     $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
+    $ver_todos_consoltorios = isset($_POST['ver_todos_consoltorios']) ? limpiar($mysqli, $_POST['ver_todos_consoltorios']) : 'true';
 
     if ($fecha == '') {
         $fecha = date('Y-m-d');
@@ -542,10 +889,13 @@ function cargarAgenda($mysqli){
     /* ===========================
        CONSULTORIOS
     =========================== */
-	$condicionConsultorio="";
+	$sqlFiltro="";
 	if($cod_local!=""){
-		$condicionConsultorio.=" and c.cod_localFk = '".$cod_local."'";
+		$sqlFiltro.=" and c.cod_localFk = '".$cod_local."'";
 	}
+    if ($ver_todos_consoltorios == 'false') {
+        $sqlFiltro .= " AND (c.cod_doctorFK IN (SELECT cod_usuarioFK FROM usuario WHERE cod_usuario = '".$useru."'))";
+    }
 	
     $sqlConsultorios = "
         SELECT  c.id_consultorio,
@@ -555,7 +905,7 @@ function cargarAgenda($mysqli){
             c.cod_doctorFK,
             c.color
         FROM consultorios c
-        WHERE  c.estado = 'Activo' ".$condicionConsultorio."
+        WHERE  c.estado = 'Activo' ".$sqlFiltro."
         ORDER BY cod_localFk asc ,c.nombre ASC ";
 
     $resultConsultorios = $mysqli->query($sqlConsultorios);
@@ -618,7 +968,14 @@ function cargarAgenda($mysqli){
             a.motivo,
             cl.ci_cliente, cl.idzonaFk,cl.whapp, p.telefono,cl.fechanac,cl.rut_cliente,cl.cod_cliente,
             (SELECT nombre FROM zona WHERE idzona = cl.idzonaFk) AS nombre_zona,
-            (SELECT nombre_persona FROM persona JOIN presupuesto ON cod_usuarioFK_create = cod_persona WHERE a.cod_presupuestoFK = id) AS nombre_doctor,
+            (SELECT nombre_persona FROM persona JOIN presupuesto ON cod_usuarioFK_create = cod_persona WHERE a.cod_presupuestoFK = id) AS nombre_doctor_presupesto,
+            (SELECT fecha_create FROM presupuesto WHERE id = a.cod_presupuestoFK) AS fecha_presupuesto,
+            (SELECT nombre_persona FROM persona JOIN consulta ON consulta.cod_usuarioFK = cod_persona WHERE consulta.cod_agendamientoFK is not null and a.id_agenda = consulta.cod_agendamientoFK limit 1) AS nombre_doctor_consulta,
+            (SELECT fecha FROM consulta WHERE consulta.cod_agendamientoFK is not null and cod_agendamientoFK = a.id_agenda limit 1) AS fecha_consulta,
+            (SELECT nombre_persona FROM persona JOIN evoluciontratamiento et ON et.cod_usuraioFK = cod_persona WHERE a.id_agenda = et.cod_agendaFK order by et.cod_evoluciontratamiento desc limit 1) AS nombre_doctor_tratamiento,
+            (SELECT fecha FROM evoluciontratamiento et WHERE et.cod_agendaFK = a.id_agenda order by et.cod_evoluciontratamiento desc limit 1) AS fecha_tratamiento,
+            (SELECT GROUP_CONCAT(CONCAT(p.nombre_producto, '(', et.nro,'%)') SEPARATOR '<br>') FROM evoluciontratamiento et JOIN detalle_venta dv ON et.cod_detalle_venta = dv.cod_detalle JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE cod_agendaFK = a.id_agenda) AS nombre_tratamiento,
+            (IFNULL((SELECT p.nombre_producto FROM detalle_venta dv JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE dv.cod_detalle = a.cod_detalle_ventaFK), '')) AS nombre_tratamiento_pendiente,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
@@ -649,7 +1006,11 @@ function cargarAgenda($mysqli){
             foreach($coincidencias as $coincidencia){
                 $codUsuario = $coincidencia[1];
                 $nombreUsuario = isset($usuariosAgenda[$codUsuario]) ? $usuariosAgenda[$codUsuario] : "@{".$codUsuario."}";
-                $contenidoMotivo = nl2br(trim($coincidencia[2]), false);
+                $contenidoTexto = trim($coincidencia[2]);
+                if($contenidoTexto == ""){
+                    continue;
+                }
+                $contenidoMotivo = nl2br($contenidoTexto, false);
 
                 $motivoLimpio .= '<div class="sugerencias-container" style="justify-content:flex-start;margin:0;">
                     <div class="card my-3" style="border-left:5px solid #416c8f;margin: 0px !important;margin-bottom: 7px !important;display:flex;flex-direction:column;gap:0;min-height:auto;">
@@ -657,11 +1018,21 @@ function cargarAgenda($mysqli){
                             <span style="font-size:10pt;line-height:1.15;">'.$nombreUsuario.'</span>
                         </div>
                         <div class="card-body" style="padding:4px 10px 8px 10px;">
-                            <p class="card-text" style="font-size: 10pt; text-align:justify;margin:0;line-height:1.35;">'.$contenidoMotivo.'</p>
+                            <p class="card-text" style="font-size: 10pt; text-align:justify;margin:0;line-height:1.35;"><b>Motivo consulta:</b> '.$contenidoMotivo.'</p>
                         </div>
                     </div>
                 </div>';
             }
+        }
+
+        // Asigna el nombre del doctor segun la fecha
+        $nombre_doctor = "";
+        if ($row["fecha_consulta"] == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_consulta"];
+        } elseif (substr($row["fecha_tratamiento"], 0, 10) == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_tratamiento"];
+        } elseif (substr($row["fecha_presupuesto"], 0, 10) == $row["fecha"]) {
+            $nombre_doctor = $row["nombre_doctor_presupesto"];
         }
 
         $eventos[] = array(
@@ -680,7 +1051,9 @@ function cargarAgenda($mysqli){
             "nombre_zona" => $row["nombre_zona"],
             "rut_cliente" => $row["rut_cliente"],
             "cod_cliente" => $row["cod_cliente"],
-            "nombre_doctor" => $row["nombre_doctor"],
+            "nombre_doctor" => $nombre_doctor,
+            "nombres_tratamiento" => $row["nombre_tratamiento"],
+            "nombre_tratamiento_pendiente" => $row["nombre_tratamiento_pendiente"],
             "motivo" => normalizarTextoUtf8($row["motivo"]),
             "motivo_limpio" => $motivoLimpio
         );
@@ -694,7 +1067,11 @@ function cargarAgenda($mysqli){
     exit;
 }
 
-function obtenerUsuariosAgenda($mysqli){
+function obtenerUsuariosAgenda($mysqli= null){
+    if ($mysqli === null) {
+        $mysqli = conectar_al_servidor();
+    }
+
     $usuarios = array();
     $sql = "SELECT u.cod_usuario, p.nombre_persona
             FROM usuario u
@@ -749,6 +1126,8 @@ function moverCita($mysqli, $useru){
         exit;
     }
 
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+
     $sql = "
         UPDATE agenda SET
             id_consultorio = '".$id_consultorio."',
@@ -771,6 +1150,13 @@ function moverCita($mysqli, $useru){
         exit;
     }
 
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "id_consultorio" => $id_consultorio,
+        "fecha" => $fecha,
+        "hora_inicio" => $hora_inicio,
+        "hora_fin" => $hora_fin
+    ));
+
     echo json_encode(array(
         "1" => "exito",
         "mensaje" => "Cita movida correctamente"
@@ -785,6 +1171,8 @@ function redimensionarCita($mysqli, $useru){
         echo json_encode(array("1" => "Datos incompletos para redimensionar cita", "mensaje" => "Faltan datos"));
         exit;
     }
+
+    $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
 
     $sql = "
         UPDATE agenda SET
@@ -804,6 +1192,10 @@ function redimensionarCita($mysqli, $useru){
         ));
         exit;
     }
+
+    registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
+        "hora_fin" => $hora_fin
+    ));
 
     echo json_encode(array(
         "1" => "exito",

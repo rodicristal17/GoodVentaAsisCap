@@ -10,7 +10,7 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 			buscarvistaPresupuesto();
 		} else {
 			if(controlacceso("VERHISTORIALPRESUPUESTO","accion")==false){return;}
-			buscarvistaPresupuesto();
+			
             document.getElementById('divListPresupuesto').style.display= "none";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="";
             // document.getElementById("tdEfectoAbmDetallePresupuesto").className="magictime slideLeftReturn"
@@ -1637,6 +1637,7 @@ function cancelarListadoPresupuesto() {
 }
 
 function obtenerDatosPresupuesto(elemento) {
+	cancelarListadoPresupuesto();
     idabmPresupuesto = $(elemento).children('td[id="td_id"]').html();
 	const registroSeleccionadoPresupuesto = document.getElementById('inptRegistroSeleccPresupuesto');
 	if (registroSeleccionadoPresupuesto) {

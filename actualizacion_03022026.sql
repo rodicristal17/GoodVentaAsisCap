@@ -565,8 +565,168 @@ ALTER TABLE agenda ADD COLUMN cod_presupuestoFK INT(11);
 
 ALTER TABLE consultorios ADD COLUMN cod_doctorFK INT(11);
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.81', detalles='Abm para asignar doctores a consultorios establecidos', fecha='2026-05-11' WHERE idhistorialactualizacion= 2;
+CREATE TABLE comentarios_agenda (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    comentario VARCHAR(255) NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_agendaFK INT(11),
+    FOREIGN KEY (cod_agendaFK) REFERENCES agenda(id_agenda)
+);
+
+CREATE TABLE informacion_protocolo (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    cod_usuarioFK_create INT(11),
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.84', detalles='Calendario vinculado a consultas y tratamientos', fecha='2026-05-25' WHERE idhistorialactualizacion= 2;
+
+ALTER TABLE agenda ADD COLUMN cod_detalle_ventaFK INT(11);
+ALTER TABLE evoluciontratamiento ADD COLUMN cod_agendaFK INT(11);
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS limpiar_doctores_consultorios$$
+CREATE PROCEDURE limpiar_doctores_consultorios()
+BEGIN
+    UPDATE consultorios
+    SET cod_doctorFK = NULL
+    WHERE cod_doctorFK IS NOT NULL;
+END$$
+
+DELIMITER ;
+
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS limpiar_doctores_consultorios_medianoche;
+CREATE EVENT limpiar_doctores_consultorios_medianoche
+ON SCHEDULE EVERY 1 DAY
+STARTS TIMESTAMP(CURDATE() + INTERVAL 1 DAY)
+DO
+    CALL limpiar_doctores_consultorios();
+
+CREATE TABLE horario_usuario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cod_usuarioFK INT(11),
+    dia_semana ENUM('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo') NOT NULL,
+    hora_entrada TIME NOT NULL,
+    hora_salida TIME,
+    cod_localFK INT(11),
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_usuarioFK_create INT(11),
+    fecha_edit DATETIME,
+    cod_usuarioFK_edit INT(11),
+    FOREIGN KEY (cod_usuarioFK) REFERENCES usuario(cod_usuario)
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, cod_localFK, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'lunes', u.hora_entrada_lunes, NULL, u.cod_localFK, NULL
+FROM usuario u
+WHERE u.hora_entrada_lunes IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'lunes'
+    AND hu.hora_entrada = u.hora_entrada_lunes
+    AND hu.cod_localFK = u.cod_localFK
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, cod_localFK, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'martes', u.hora_entrada_martes, NULL, u.cod_localFK, NULL
+FROM usuario u
+WHERE u.hora_entrada_martes IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'martes'
+    AND hu.hora_entrada = u.hora_entrada_martes
+    AND hu.cod_localFK = u.cod_localFK
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, cod_localFK, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'miercoles', u.hora_entrada_miercoles, NULL, u.cod_localFK, NULL
+FROM usuario u
+WHERE u.hora_entrada_miercoles IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'miercoles'
+    AND hu.hora_entrada = u.hora_entrada_miercoles
+    AND hu.cod_localFK = u.cod_localFK
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, cod_localFK, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'jueves', u.hora_entrada_jueves, NULL, u.cod_localFK, NULL
+FROM usuario u
+WHERE u.hora_entrada_jueves IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'jueves'
+    AND hu.hora_entrada = u.hora_entrada_jueves
+    AND hu.cod_localFK = u.cod_localFK
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, cod_localFK, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'viernes', u.hora_entrada_viernes, NULL, u.cod_localFK, NULL
+FROM usuario u
+WHERE u.hora_entrada_viernes IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'viernes'
+    AND hu.hora_entrada = u.hora_entrada_viernes
+    AND hu.cod_localFK = u.cod_localFK
+);
+
+INSERT INTO horario_usuario (cod_usuarioFK, dia_semana, hora_entrada, hora_salida, cod_localFK, cod_usuarioFK_create)
+SELECT u.cod_usuario, 'sabado', u.hora_entrada_sabado, NULL, u.cod_localFK, NULL
+FROM usuario u
+WHERE u.hora_entrada_sabado IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1
+    FROM horario_usuario hu
+    WHERE hu.cod_usuarioFK = u.cod_usuario
+    AND hu.dia_semana = 'sabado'
+    AND hu.hora_entrada = u.hora_entrada_sabado
+    AND hu.cod_localFK = u.cod_localFK
+);
+
+
+/*
+ALTER TABLE usuario DROP COLUMN hora_entrada_lunes;
+ALTER TABLE usuario DROP COLUMN hora_entrada_martes;
+ALTER TABLE usuario DROP COLUMN hora_entrada_miercoles;
+ALTER TABLE usuario DROP COLUMN hora_entrada_jueves;
+ALTER TABLE usuario DROP COLUMN hora_entrada_viernes;
+ALTER TABLE usuario DROP COLUMN hora_entrada_sabado;
+*/
+
+CREATE TABLE dias_feriados (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    fecha DATE NOT NULL,
+    descripcion VARCHAR(255),
+    cod_localFK INT(11),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    cod_usuarioFK_create INT(11),
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_usuarioFK_edit INT(11),
+    fecha_edit DATETIME,
+    FOREIGN KEY (cod_localFK) REFERENCES local(cod_local)
+);
+
 -- Cargar permisos
 -- EDITARINTERCONSULTA, CREARINTERCONSULTA, FUSIONARINTERCONSULTA
 -- CREARDICTAMEN, EDITARDICTAMEN
 -- VERHISTORIALPRESUPUESTO, 
+-- OBTENERTODOSLOCALESCALENDARIO, VERTODOSLOSCONSULTORIOS
+-- LISTARINFORMACIONPROTOCOLO, CREARINFORMACIONPROTOCOLO, EDITARINFORMACIONPROTOCOLO
+-- VERFERIADOSAGENDA, GUARDARFERIADOSAGENDA

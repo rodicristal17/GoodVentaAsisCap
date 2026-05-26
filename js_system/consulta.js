@@ -2008,7 +2008,7 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 	datos.append("trabajoreali", trabajoreali)
 	datos.append("fecha", fecha)
 	datos.append("cod_estecialista", cod_especialista) 
-	datos.append("cod_agendamiento", cod_Agendamiento) 
+	datos.append("cod_agendamiento", idAbmAgenda) 
 	datos.append("cod_venta", cod_ventaFKConsulta) 
 	datos.append("cod_clienteConsulta", cod_clienteConsulta) 
 	datos.append("apodo", apodo) 
@@ -2058,12 +2058,14 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					
 					cod_consulta = datos[2];
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					if (idAbmAgenda) {
+					    actualizarAgenda(idAbmAgenda, '', '', "ATENDIDO");
+					}
+
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 					verCerrarAbmDetalleConsulta(false)
- 
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -2294,6 +2296,177 @@ function buscarobtenertodosmedicos() {
 }
 
 
+let idTratamientoAgendaSeleccionado = "";
+let nombreTratamientoAgendaSeleccionado = "";
+
+function verCerrarAsignarTratamiento(mostrar) {
+	const modal = document.getElementById("modalAsignarTratamientoAgenda");
+	const overlay = document.getElementById("overlayAsignarTratamientoAgenda");
+
+	if (!modal || !overlay) {
+		ver_vetana_informativa("No se encontro la vista para asignar tratamiento");
+		return;
+	}
+
+	if (mostrar === false || modal.style.display == "") {
+		modal.style.display = "none";
+		overlay.style.display = "none";
+		return;
+	}
+
+	if (document.getElementById("detAgendaCedula").textContent == "") {
+		ver_vetana_informativa("FALTA COMPLETAR LOS DATOS DEL PACIENTE");
+		return;
+	}
+
+	if (typeof idAbmAgenda === "undefined" || idAbmAgenda == "") {
+		idAbmAgenda = document.getElementById("detAgendaId") ? document.getElementById("detAgendaId").innerHTML : "";
+	}
+
+	if (idAbmAgenda == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN AGENDAMIENTO");
+		return;
+	}
+
+	idTratamientoAgendaSeleccionado = "";
+	nombreTratamientoAgendaSeleccionado = "";
+	document.getElementById("inptBuscarTratamientoAgenda").value = "";
+	document.getElementById("divTratamientosAgenda").innerHTML = paginacargando;
+	overlay.style.display = "";
+	modal.style.display = "";
+	buscarTratamientosParaAgenda();
+}
+
+function buscarTratamientosParaAgenda() {
+	if (typeof idAbmAgenda === "undefined" || idAbmAgenda == "") {
+		idAbmAgenda = document.getElementById("detAgendaId") ? document.getElementById("detAgendaId").innerHTML : "";
+	}
+
+	if (idAbmAgenda == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN AGENDAMIENTO");
+		return;
+	}
+
+	let buscar = document.getElementById("inptBuscarTratamientoAgenda").value;
+	document.getElementById("divTratamientosAgenda").innerHTML = paginacargando;
+	obtener_datos_user();
+
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"id_agenda": idAbmAgenda,
+		"buscar": buscar,
+		"funt": "buscarTratamientosAgenda"
+	};
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+			document.getElementById("divTratamientosAgenda").innerHTML = "";
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta);
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta = respuestaJqueryAjax(Respuesta);
+				if (Respuesta == true) {
+					document.getElementById("divTratamientosAgenda").innerHTML = datos[2];
+					const cardActiva = document.querySelector("#divTratamientosAgenda .tratamiento-agenda-card--activo");
+
+					idTratamientoAgendaSeleccionado = "";
+					nombreTratamientoAgendaSeleccionado = "";
+					if (cardActiva) {
+						idTratamientoAgendaSeleccionado = cardActiva.getAttribute("data-id");
+						nombreTratamientoAgendaSeleccionado = cardActiva.getAttribute("data-nombre") || "";
+					}
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+function seleccionarTratamientoAgenda(elemento) {
+	const cards = document.querySelectorAll("#divTratamientosAgenda .tratamiento-agenda-card");
+	for (let i = 0; i < cards.length; i++) {
+		cards[i].classList.remove("tratamiento-agenda-card--activo");
+	}
+
+	elemento.classList.add("tratamiento-agenda-card--activo");
+	idTratamientoAgendaSeleccionado = elemento.getAttribute("data-id");
+	nombreTratamientoAgendaSeleccionado = elemento.getAttribute("data-nombre") || "";
+}
+
+function vincularTratamientoCalendario(id_agenda, cod_tratamiento) {
+	if (idTratamientoAgendaSeleccionado == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN TRATAMIENTO");
+		return;
+	}
+
+	verCerrarEfectoCargando("1");
+	obtener_datos_user();
+
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"id_agenda": id_agenda,
+		"cod_detalle": cod_tratamiento,
+		"funt": "vincularTratamientoAgenda"
+	};
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			verCerrarEfectoCargando("");
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando("");
+			var Respuesta = responseText;
+			console.log(Respuesta);
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta = respuestaJqueryAjax(Respuesta);
+				if (Respuesta == true) {
+					ver_vetana_informativa("TRATAMIENTO VINCULADO CORRECTAMENTE","", "info");
+					verCerrarAsignarTratamiento(false);
+					if (document.getElementById("detAgendaPresupuesto") && nombreTratamientoAgendaSeleccionado != "") {
+						document.getElementById("detAgendaPresupuesto").innerHTML = nombreTratamientoAgendaSeleccionado + "<br>";
+					}
+					if (typeof cargarAgendaConsultoriosDesdePHP === "function") {
+						cargarAgendaConsultoriosDesdePHP(function () {
+							if (
+								typeof cargarResumenAbmConsultorioAgenda === "function" &&
+								document.getElementById("modalAbmConsultorioAgenda").style.display == ""
+							) {
+								cargarResumenAbmConsultorioAgenda();
+							}
+						});
+					}
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+
 let id_detalle_tratamientoConsulta = '';
 /* PORCENTAJE DE TRATAMIENTOS */
 function obtenerdatostrConsultaTratamiento(datostr) {
@@ -2339,6 +2512,7 @@ function guardarPorcentajeProgreso(){
 			 "navegador": navegador, 
 			 "id_detalle_tratamientoConsulta": id_detalle_tratamientoConsulta, 
 			 "porcentaje": porcentaje, 
+			 "cod_agendaFK": idAbmAgenda,
 			"funt": "guardarPorcentajeProgreso"
 			};
 	 $.ajax({
@@ -2367,6 +2541,7 @@ function guardarPorcentajeProgreso(){
 				verCerrarCargarPorcentajeProgreso()
 		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
  buscarDetalleVentaConsulta(cod_ventaFKConsulta);
+ 					cambiarEstadoAgendaDesdeModal("ATENDIDO");
 			}
 			}catch(error)
 				{

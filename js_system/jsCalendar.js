@@ -4,7 +4,7 @@ var agendaConsultoriosData = {
 };
 var timeoutBuscarHistorialPacienteCalendario = null;
 
-function cargarAgendaConsultoriosDesdePHP() {
+function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
 
     var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
@@ -22,6 +22,7 @@ function cargarAgendaConsultoriosDesdePHP() {
         "cod_local": local,
         "fecha": fecha,
         "estado": estado,
+        "ver_todos_consoltorios": controlacceso("VERTODOSLOSCONSULTORIOS", "accion"),
         "funt": "cargarAgenda"
     };
 
@@ -75,6 +76,9 @@ function cargarAgendaConsultoriosDesdePHP() {
                     renderListaConsultoriosAgenda();
                     cargarSelectConsultoriosAgenda();
                     cargarAgendaConsultorios();
+                    if (typeof callback === "function") {
+                        callback();
+                    }
                 } else {
                     document.getElementById("agendaGridConsultorios").innerHTML = "";
                 }
@@ -187,6 +191,95 @@ function cargarSelectConsultoriosAgenda(){
     document.getElementById('inptConsultorioAgenda').innerHTML = html;
     document.getElementById('inptConsultorioAgendaFiltro').innerHTML = htmlFiltro;
 }
+
+function cargarDoctoresDisponiblesNuevaCita(){
+    var contenedor = document.getElementById('inptDoctorNuevaCita');
+    if(!contenedor){
+        return;
+    }
+
+    var fecha = document.getElementById('inptFechaNuevaCita').value || '';
+    var local = document.getElementById('inptLocalAgendaFiltro') ? document.getElementById('inptLocalAgendaFiltro').value : '';
+
+    contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Cargando...</div>";
+
+    if(fecha == ''){
+        contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Seleccione una fecha</div>";
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "fecha": fecha,
+            "cod_local": local,
+            "funt": "buscarDoctoresDisponiblesCita"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try {
+                var resp = responseText;
+                console.log(responseText);
+                if(typeof responseText === "string"){
+                    resp = $.parseJSON(responseText);
+                }
+
+                if(respuestaJqueryAjax(resp["1"]) != true){
+                    contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Sin datos disponibles</div>";
+                    return;
+                }
+
+                contenedor.innerHTML = resp["html"] || "<div class='doctor-disponible-mensaje'>Sin doctores disponibles</div>";
+                marcarDoctorDisponiblePorConsultorioNuevaCita();
+            } catch(error) {
+                contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>No se pudo cargar el listado</div>";
+                GuardarArchivosLog("Error cargarDoctoresDisponiblesNuevaCita: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            console.error(jqXHR, textstatus);
+            contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>No se pudo cargar el listado</div>";
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function seleccionarDoctorDisponibleNuevaCita(elemento){
+    var items = document.querySelectorAll('#inptDoctorNuevaCita .doctor-disponible-item');
+    var i;
+
+    for(i = 0; i < items.length; i++){
+        items[i].classList.remove('doctor-disponible-item-activo');
+    }
+
+    elemento.classList.add('doctor-disponible-item-activo');
+}
+
+function marcarDoctorDisponiblePorConsultorioNuevaCita(){
+    var consultorioActual = document.getElementById('inptConsultorioAgenda') ? document.getElementById('inptConsultorioAgenda').value : '';
+    var items = document.querySelectorAll('#inptDoctorNuevaCita .doctor-disponible-item');
+    var i;
+
+    for(i = 0; i < items.length; i++){
+        items[i].classList.remove('doctor-disponible-item-activo');
+    }
+
+    if(consultorioActual == ''){
+        return;
+    }
+
+    for(i = 0; i < items.length; i++){
+        if(String(items[i].getAttribute('data-consultorio')) == String(consultorioActual)){
+            items[i].classList.add('doctor-disponible-item-activo');
+            return;
+        }
+    }
+}
 var intervaloLineaHoraActualAgenda = null;
  
 function cargarAgendaConsultorios(){
@@ -272,9 +365,75 @@ function cargarAgendaConsultorios(){
 
     pintarEventosAgenda(fecha, estado, consultoriosSeleccionados);
 	actualizarResumenAgenda(fecha, estado, consultoriosSeleccionados);
-	actualizarResumenFiltrosAgenda();
+    actualizarResumenFiltrosAgenda();
     inicializarDragAndDropAgenda();
+    inicializarBarraHorizontalAgenda();
     iniciarLineaHoraActualAgenda();
+}
+
+function inicializarBarraHorizontalAgenda(){
+    var wrapper = document.getElementById('agendaGridConsultorios');
+    var barra = document.getElementById('agendaScrollHorizontalAgenda');
+    var contenedorBarra;
+    var marcoAgenda;
+
+    if(!wrapper){
+        return;
+    }
+
+    if(!barra){
+        contenedorBarra = document.createElement('div');
+        contenedorBarra.className = 'agenda-scroll-horizontal';
+        contenedorBarra.id = 'agendaScrollHorizontalAgendaCont';
+        contenedorBarra.innerHTML = "<input type='range' id='agendaScrollHorizontalAgenda' min='0' max='0' value='0' step='1' aria-label='Desplazamiento horizontal de agenda'>";
+
+        marcoAgenda = wrapper.parentNode;
+        if(!marcoAgenda || !marcoAgenda.parentNode){
+            return;
+        }
+
+        marcoAgenda.parentNode.insertBefore(contenedorBarra, marcoAgenda.nextSibling);
+        barra = document.getElementById('agendaScrollHorizontalAgenda');
+    }else{
+        contenedorBarra = document.getElementById('agendaScrollHorizontalAgendaCont');
+    }
+
+    function actualizarBarra(){
+        var maxScroll = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
+
+        barra.max = maxScroll;
+        barra.value = Math.min(wrapper.scrollLeft, maxScroll);
+
+        if(contenedorBarra){
+            contenedorBarra.style.display = maxScroll > 0 ? 'block' : 'none';
+        }
+    }
+
+    if(!barra._agendaInputInicializado){
+        barra.addEventListener('input', function(){
+            wrapper.scrollLeft = parseInt(this.value, 10) || 0;
+        }, false);
+        barra._agendaInputInicializado = true;
+    }
+
+    if(!wrapper._agendaScrollBarraInicializada){
+        wrapper.addEventListener('scroll', function(){
+            var barraActual = document.getElementById('agendaScrollHorizontalAgenda');
+            if(barraActual){
+                barraActual.value = wrapper.scrollLeft;
+            }
+        }, false);
+
+        if(window.addEventListener){
+            window.addEventListener('resize', function(){
+                inicializarBarraHorizontalAgenda();
+            }, false);
+        }
+
+        wrapper._agendaScrollBarraInicializada = true;
+    }
+
+    setTimeout(actualizarBarra, 0);
 }
 
 function calcularHoraSlotQuinceMinutos(slot, ev){
@@ -326,6 +485,7 @@ function clickSlotAgenda(slot, ev){
     document.getElementById('inptFechaNuevaCita').value = fecha;
     document.getElementById('inptHoraInicioAgenda').value = hora;
     document.getElementById('inptHoraFinAgenda').value = horaFin;
+    cargarDoctoresDisponiblesNuevaCita();
 
     if(document.getElementById('inptEstadoNuevaCita')){
         document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
@@ -343,7 +503,7 @@ function closestByClass(elemento, clase){
 }
 
 function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
-    var slots = document.querySelectorAll('.agenda-slot');
+    var slots = document.querySelectorAll('#agendaGridInterno .agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
     var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal, htmlCuartosHora;
 
@@ -369,6 +529,82 @@ function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
         htmlFinal = datosAlmuerzo.htmlOverlay + htmlEventos;
         slot.innerHTML = htmlFinal;
     }
+}
+
+function cargarResumenAbmConsultorioAgenda(){
+    var consultorio = document.getElementById('inptIDAbmConsultorioAgenda').value || '';
+    var fecha = document.getElementById('inptFechaAbmConsultorioAgenda').value || document.getElementById('inptFechaAgenda').value;
+    var totales = calcularTotalesResumenAgenda(fecha, '', consultorio);
+
+    document.getElementById('lblTotalCitasbmConsultorioAgenda').innerHTML = totales.total;
+    document.getElementById('lblConfirmadasbmConsultorioAgenda').innerHTML = totales.confirmadas;
+    document.getElementById('lblPendientesbmConsultorioAgenda').innerHTML = totales.pendientes;
+    document.getElementById('lblCanceladasbmConsultorioAgenda').innerHTML = totales.canceladas;
+    document.getElementById('lblPrimeraConsultabmConsultorioAgenda').innerHTML = totales.PrimeraConsulta;
+    document.getElementById('lblAtendidobmConsultorioAgenda').innerHTML = totales.Atendido;
+    document.getElementById('lblConDeudabmConsultorioAgenda').innerHTML = totales.ConDeuda;
+
+    renderAgendaResumenConsultorio(consultorio, fecha);
+}
+
+function obtenerConsultorioAgendaPorId(idConsultorio){
+    var i;
+
+    for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
+        if(String(agendaConsultoriosData.consultorios[i].id) === String(idConsultorio)){
+            return agendaConsultoriosData.consultorios[i];
+        }
+    }
+
+    return null;
+}
+
+function renderAgendaResumenConsultorio(idConsultorio, fecha){
+    var contenedor = document.getElementById('agendaGridResumenConsultorio');
+    var consultorio = obtenerConsultorioAgendaPorId(idConsultorio);
+    var estado = document.getElementById('inptEstadoAgenda').value;
+    var eventosConsultorio = [];
+    var html = '';
+    var hora, minuto, textoHora, dataHoraRow, datosAlmuerzo, eventosHora, i;
+
+    eventosConsultorio = obtenerEventosFiltradosConsultorio(fecha, estado, [String(idConsultorio)], idConsultorio);
+
+    html += "<div class='agenda-grid' style='--total-consultorios:1;min-width:100%;'>";
+
+    for(hora = 7; hora <= 22; hora++){
+        for(minuto = 0; minuto <= 30; minuto += 30){
+            if(hora === 22 && minuto === 30){
+                continue;
+            }
+
+            textoHora = completarHora(hora) + ":" + completarHora(minuto);
+            dataHoraRow = hora + "-" + minuto;
+            datosAlmuerzo = obtenerDatosAlmuerzoAgendaMediaHora(fecha, hora, minuto);
+            eventosHora = "";
+
+            for(i = 0; i < eventosConsultorio.length; i++){
+                if(obtenerHoraVisualAgenda(eventosConsultorio[i].inicio) === textoHora){
+                    eventosHora += renderEventoAgenda(eventosConsultorio[i], eventosConsultorio);
+                }
+            }
+
+            html += "<div class='agenda-row agenda-row-mediahora" + (hora >= 18 ? " agenda-row-horario-tarde" : "") + "' style='--total-consultorios:1;' data-hora-row='" + dataHoraRow + "'>";
+            html += "<div class='agenda-hora" + datosAlmuerzo.claseHora + "'>" + textoHora + "</div>";
+            html += "<div class='agenda-slot agenda-slot-mediahora" + datosAlmuerzo.claseSlot + "' "
+                + "data-consultorio='" + consultorio.id + "' "
+                + "data-fecha='" + fecha + "' "
+                + "data-hora='" + textoHora + "' "
+                + "onclick='clickSlotAgenda(this, event)'>"
+                + datosAlmuerzo.htmlOverlay
+                + eventosHora
+                + "</div>";
+            html += "</div>";
+        }
+    }
+
+    html += "</div>";
+    contenedor.innerHTML = html;
+    inicializarDragAndDropAgenda(contenedor);
 }
 function obtenerHoraVisualAgenda(h){
     if(!h){
@@ -667,6 +903,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
+    + "<span class='hora'>" + e.nombre_tratamiento_pendiente + "</span>"
         + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
         + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
 /*        + "<div class='agenda-evento-resize' "
@@ -840,7 +1077,7 @@ function actualizarResumenFiltrosAgenda(){
         textoConsultorio = consultorio.options[consultorio.selectedIndex].text;
     }
 
-    document.getElementById('agendaFiltrosActivos').innerHTML = ''
+    document.getElementById('agendaFiltrosActivos').innerHTML = '<button class="btn-accion-principal" onclick="verCerrarModalFeriados(true)">Feriados</button>'
         + "<span class='chip-filtro'>Fecha: " + fecha + "</span>"
         + "<span class='chip-filtro'>Consultorios: " + textoConsultorio + "</span>";
 }
@@ -904,12 +1141,179 @@ function vercerrarModalNuevaCita(mostrar){
         if(controlacceso("INSERTARFORMULARIOCALENDARIO","accion")==false){return;}
                  
         document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
+        cargarDoctoresDisponiblesNuevaCita();
         document.getElementById('overlayNuevaCita').style.display = '';
         document.getElementById('modalNuevaCita').style.display = '';
     } else {
         document.getElementById('overlayNuevaCita').style.display = 'none';
         document.getElementById('modalNuevaCita').style.display = 'none';
     }
+}
+
+function cargarLocalesModalFeriadosAgenda(){
+    var origen = document.getElementById('inptLocalAgendaFiltro');
+    var destino = document.getElementById('inptLocalFeriadoAgenda');
+
+    if(!origen || !destino){
+        return;
+    }
+
+    var opciones = "<option value=''>Todos</option>";
+    for(var i = 0; i < origen.options.length; i++){
+        if(origen.options[i].value == ''){
+            continue;
+        }
+        opciones += "<option value='" + origen.options[i].value + "'>" + origen.options[i].text + "</option>";
+    }
+    destino.innerHTML = opciones;
+}
+
+function verCerrarModalFeriados(mostrar){
+    if (mostrar) {
+        if (controlacceso("VERFERIADOSAGENDA","accion")==false){return;}
+        cargarLocalesModalFeriadosAgenda();
+        var fechaAgenda = document.getElementById('inptFechaAgenda') ? document.getElementById('inptFechaAgenda').value : '';
+        var hoy = fechaAgenda || formatearFechaInput(new Date());
+
+        if(document.getElementById('inptFechaFeriadoAgenda').value == ''){
+            document.getElementById('inptFechaFeriadoAgenda').value = hoy;
+        }
+        if(document.getElementById('inptFechaDesdeFeriadoAgenda').value == ''){
+            document.getElementById('inptFechaDesdeFeriadoAgenda').value = hoy.substring(0, 4) + '-01-01';
+        }
+        if(document.getElementById('inptFechaHastaFeriadoAgenda').value == ''){
+            document.getElementById('inptFechaHastaFeriadoAgenda').value = hoy.substring(0, 4) + '-12-31';
+        }
+
+        document.getElementById('overlayFeriadosAgenda').style.display = '';
+        document.getElementById('modalFeriadosAgenda').style.display = '';
+        listarDiasFeriadosAgenda();
+    } else {
+        document.getElementById('overlayFeriadosAgenda').style.display = 'none';
+        document.getElementById('modalFeriadosAgenda').style.display = 'none';
+    }
+}
+
+function listarDiasFeriadosAgenda(){
+    obtener_datos_user();
+
+    var tabla = document.getElementById('tableFeriadosAgenda');
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "fecha_desde": document.getElementById('inptFechaDesdeFeriadoAgenda').value,
+        "fecha_hasta": document.getElementById('inptFechaHastaFeriadoAgenda').value,
+        "cod_local": document.getElementById('inptLocalFeriadoAgenda').value,
+        "funt": "listarDiasFeriados"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        beforeSend: function(){
+            tabla.innerHTML = paginacargando;
+        },
+        error: function(jqXHR, textstatus){
+            tabla.innerHTML = "";
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function(responseText){
+            console.log("Respuesta listarDiasFeriadosAgenda:", responseText);
+            try {
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    tabla.innerHTML = resp["html"] || "";
+                } else {
+                    tabla.innerHTML = "";
+                    alert(resp["mensaje"] || "No se pudieron listar los feriados");
+                }
+            } catch(error) {
+                tabla.innerHTML = "";
+                GuardarArchivosLog("Error listarDiasFeriadosAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        }
+    });
+}
+
+function guardarDiaFeriadoAgenda(){
+    var fecha = document.getElementById('inptFechaFeriadoAgenda').value;
+    var descripcion = document.getElementById('inptDescripcionFeriadoAgenda').value;
+
+    if (controlacceso("GUARDARFERIADOSAGENDA","accion")==false){return;}
+
+    if(fecha == ''){
+        alert('Debe cargar la fecha del feriado');
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "fecha": fecha,
+            "descripcion": descripcion,
+            "cod_local": document.getElementById('inptLocalFeriadoAgenda').value,
+            "funt": "guardarDiaFeriado"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try {
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    document.getElementById('inptDescripcionFeriadoAgenda').value = '';
+                    listarDiasFeriadosAgenda();
+                } else {
+                    alert(resp["mensaje"] || "No se pudo guardar el feriado");
+                }
+            } catch(error) {
+                GuardarArchivosLog("Error guardarDiaFeriadoAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function eliminarDiaFeriadoAgenda(id){
+    if(!confirm('¿Quitar este feriado?')){
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "id": id,
+            "funt": "eliminarDiaFeriado"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try {
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    listarDiasFeriadosAgenda();
+                } else {
+                    alert(resp["mensaje"] || "No se pudo quitar el feriado");
+                }
+            } catch(error) {
+                GuardarArchivosLog("Error eliminarDiaFeriadoAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
 }
 
 function vercerrarModalAbmConsultorioAgenda(mostrar){
@@ -988,7 +1392,11 @@ function verificarAbmConsultorioAgenda() {
 }
 
 function obtenerMotivoCitaAgendaConCreador(nombreInputElement){
-    var motivo = document.getElementById(nombreInputElement).value;
+    var motivo = document.getElementById(nombreInputElement).value.trim();
+
+    if(motivo === ''){
+        return '';
+    }
 
     return "@{" + userid + "}" + ": " + motivo;
 }
@@ -1012,6 +1420,8 @@ function guardarCitaAgenda(){
         return;
     }
 
+    vercerrarModalNuevaCita(false);
+    
     agendaConsultoriosData.eventos.push({
         id: new Date().getTime(),
         consultorio: parseInt(consultorio, 10),
@@ -1023,7 +1433,6 @@ function guardarCitaAgenda(){
         motivo: motivo
     });
 
-    vercerrarModalNuevaCita(false);
     limpiarFormularioNuevaCita();
     cargarAgendaConsultorios();
 }
@@ -1036,6 +1445,133 @@ function limpiarFormularioNuevaCita(){
     document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
     document.getElementById('inptMotivoAgenda').value = '';
     idAbmAgenda= "";
+}
+
+function obtenerComentariosAgendamiento() {
+ 	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idAgenda": idAbmAgenda,
+		"funt": "obtenerComentarios"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAgenda.php",
+		type: "post",
+        dataType: "text",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			//Uload progress
+			xhr.upload.addEventListener("progress" ,function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("enviado",kb,"0")           
+			}, false);
+			//Download progress
+			xhr.addEventListener("progress", function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("recibido","0",kb)  
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+            console.error(jqXHR, textstatus, errorThrowm);
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		},
+		success: function (responseText) {
+            console.log(responseText);
+			try {
+				var datos = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+				var Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+                    var contenedorComentarios = document.getElementById('detAgendaMotivo');
+                    var motivoBase = contenedorComentarios.getAttribute('data-motivo-base') || '';
+                    contenedorComentarios.innerHTML = motivoBase + (datos["3"] || '');
+				}else{
+    				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				}
+			} catch (error) {
+                console.error(error, responseText);
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
+}
+
+function verificarComentarioAgendamiento() {
+    const detAgendaMotivoInput= document.getElementById('detAgendaMotivoInput').value;
+    if (!detAgendaMotivoInput) {
+        ver_vetana_informativa("Ingrese un comentario para guardar");
+        return false;
+    }
+
+ 	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idAgenda": idAbmAgenda,
+        "comentario": detAgendaMotivoInput,
+		"funt": "crearComentario"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAgenda.php",
+		type: "post",
+        dataType: "text",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			//Uload progress
+			xhr.upload.addEventListener("progress" ,function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("enviado",kb,"0")           
+			}, false);
+			//Download progress
+			xhr.addEventListener("progress", function (evt) {
+                var kb=((evt.loaded*1)/1000).toFixed(1)
+                if(kb=="0.0"){
+                    kb=0.1;
+                }
+                cargarConectividad("recibido","0",kb)  
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		},
+		success: function (responseText) {
+			try {
+				var datos = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+				var Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta)
+				if (Respuesta == true) {
+					ver_vetana_informativa("Datos Guardados con exito");
+                    document.getElementById('detAgendaMotivoInput').value = '';
+                    obtenerComentariosAgendamiento();
+				}else{
+    				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				}
+			} catch (error) {
+                console.error(error);
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				GuardarArchivosLog(titulo)
+			}
+		}
+	});
 }
 
 var idAbmAgenda= "";
@@ -1073,13 +1609,14 @@ function verDetalleAgenda(id){
     idAbmAgenda = evento.id;
     document.getElementById('detAgendaId').innerHTML = evento.id;
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
-    document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente.replace(/\B(?=(\d{3})+(?!\d))/g, ".") || '';
+    document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
+    document.getElementById('detAgendaPresupuesto').innerHTML += (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
     document.getElementById('detAgendaMotivo').innerHTML = evento.motivo_limpio || '';
-    document.getElementById('detAgendaMotivo2').innerHTML = evento.motivo || '';
+    document.getElementById('detAgendaMotivo').setAttribute('data-motivo-base', evento.motivo_limpio || '');
     document.getElementById('detAgendaMotivoInput').value = '';
     document.getElementById('detAgendaEstado').innerHTML =
         "<span class='badge-estado-detalle badge-" + evento.estado + "'>" + evento.estado + "</span>";
@@ -1105,6 +1642,7 @@ function verDetalleAgenda(id){
     buscarCuentasPendientes('', '', evento.paciente, evento.ci_cliente, '', '', '', '','' ,'', '');
     document.getElementById('table_historial_paciente_agenda_detalle').innerHTML = 'Cargando...'
     buscarHistorialPacienteCalendario('detalle_agendamiento');
+    obtenerComentariosAgendamiento();
 }
 
 function cerrarDetalleAgenda(){
@@ -1145,13 +1683,22 @@ function AbrirAgendaConsultorios(ir_hoy= true){
     cargarAgendaConsultoriosDesdePHP();
 }
 
+function limpiarFichaPacienteCalendario() {
+    idAbmAgenda= "";
+    document.getElementById('detAgendaDeudasPendientes').innerHTML = '';
+    document.getElementById('table_historial_paciente_agenda_detalle').innerHTML = '';
+    document.getElementById('detAgendaMotivo').innerHTML = '';
+    document.getElementById('detAgendaMotivoInput').value = '';
+}
+
 /* ===========================
    DRAG AND DROP
 =========================== */
 
-function inicializarDragAndDropAgenda(){
-    var eventos = document.querySelectorAll('.agenda-evento');
-    var slots = document.querySelectorAll('.agenda-slot');
+function inicializarDragAndDropAgenda(contenedor){
+    var raiz = contenedor || document;
+    var eventos = raiz.querySelectorAll('.agenda-evento');
+    var slots = raiz.querySelectorAll('.agenda-slot');
     var i;
 
     for(i = 0; i < eventos.length; i++){
@@ -1592,70 +2139,6 @@ function actualizarHorarioAgendaDesdeModal(){
     actualizarAgenda(idAgenda, horaInicio, horaFin, '');
 }
 
-function actualizarMotivoAgendaDesdeModal(){
-    obtener_datos_user();
-
-    var idAgenda = document.getElementById('detAgendaId').innerHTML;
-
-    if(idAgenda == ''){
-        alert('No se encontrÃ³ el ID del agendamiento.');
-        return;
-    }
-
-    if(document.getElementById('detAgendaMotivoInput').value == ''){
-        alert('Debe cargar el motivo.');
-        return;
-    }
-
-    var motivo = document.getElementById('detAgendaMotivo2').textContent;
-    motivo += obtenerMotivoCitaAgendaConCreador('detAgendaMotivoInput');
-
-    var datos = {
-        "useru": userid,
-        "passu": passuser,
-        "navegador": navegador,
-        "funt": "actualizarMotivoCita",
-        "id_agenda": idAgenda,
-        "motivo": motivo
-    };
-
-	verCerrarEfectoCargando("1");
-    $.ajax({
-        data: datos,
-        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
-        type: "post",
-        error: function (jqXHR, textstatus, errorThrowm) {
-            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
-        	verCerrarEfectoCargando();
-        },
-        success: function (responseText) {
-	        verCerrarEfectoCargando();
-            try {
-                var resp = responseText;
-
-                if (typeof responseText === "string") {
-                    resp = $.parseJSON(responseText);
-                }
-
-                var Respuesta = resp["1"];
-                Respuesta = respuestaJqueryAjax(Respuesta);
-
-                if (Respuesta == true) {
-                    cerrarDetalleAgenda();
-                    cargarAgendaConsultoriosDesdePHP();
-                    ventanaAnterior.pop();
-                } else {
-                    alert(resp["mensaje"] || "No se pudo actualizar el motivo.");
-                }
-            } catch (error) {
-                var titulo = "Error actualizar motivo agenda: " + error + " \r\n Consola: " + responseText;
-                GuardarArchivosLog(titulo);
-                console.log(responseText);
-            }
-        }
-    });
-}
-
 function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
     obtener_datos_user();
 
@@ -1695,6 +2178,7 @@ function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
                     cerrarDetalleAgenda();
                     cargarAgendaConsultoriosDesdePHP();
                     ventanaAnterior.pop();
+                    limpiarFichaPacienteCalendario();
                 } else {
                     alert(resp["mensaje"] || "No se pudo actualizar el horario.");
                 }
@@ -1728,22 +2212,22 @@ function asignarCodPresupuestoAgenda(){
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 	        verCerrarEfectoCargando();
+            console.error(jqXHR, textstatus, errorThrowm);
         },
         success: function (responseText) {
 	        verCerrarEfectoCargando();
+            console.log(responseText);
             try {
                 var resp = responseText;
                 var Respuesta = resp["1"];
                 Respuesta = respuestaJqueryAjax(Respuesta);
-                if(Respuesta = true){
-                    cambiarEstadoAgendaDesdeModal("ATENDIDO");
-                } else {
+                if(!Respuesta){
                     ver_vetana_informativa("No se pudo vincular el presupuesto con la agenda");
                 }
             } catch (error) {
                 var titulo = "Error guardarCitaAgenda: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
-                console.log(responseText);
+                console.error(responseText);
             }
         }
     });
@@ -1762,9 +2246,9 @@ function guardarCitaAgenda(){
     var motivo = obtenerMotivoCitaAgendaConCreador('inptMotivoAgenda');
 
     if(paciente == ''){
-    alert('Debe seleccionar un paciente');
-    return;
-}
+        alert('Debe seleccionar un paciente');
+        return;
+    }
 
     if(consultorio == ''){
         alert('Debe seleccionar el consultorio');
@@ -1796,6 +2280,7 @@ function guardarCitaAgenda(){
         return;
     }
 
+    document.getElementById('btnGuardarCitaAgenda').disabled= true;
     var datos = {
         "useru": userid,
         "passu": passuser,
@@ -1820,6 +2305,7 @@ function guardarCitaAgenda(){
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 	        verCerrarEfectoCargando();
+            document.getElementById('btnGuardarCitaAgenda').disabled= true;
         },
         success: function (responseText) {
 	        verCerrarEfectoCargando();
@@ -1840,10 +2326,12 @@ function guardarCitaAgenda(){
                 }else{
                     alert(resp["mensaje"] || "No se pudo guardar la cita");
                 }
+                document.getElementById('btnGuardarCitaAgenda').disabled= false;
             } catch (error) {
                 var titulo = "Error guardarCitaAgenda: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
                 console.log(responseText);
+                document.getElementById('btnGuardarCitaAgenda').disabled= false;
             }
         }
     });
@@ -1857,6 +2345,7 @@ function limpiarFormularioNuevaCita(){
     document.getElementById('inptHoraFinAgenda').value = '';
     document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
     document.getElementById('inptMotivoAgenda').value = '';
+    document.getElementById('inptDoctorNuevaCita').innerHTML = '';
 }
 
 function verCerrarModalBuscarPacienteAgenda(mostrar) {

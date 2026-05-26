@@ -342,6 +342,9 @@
 .agenda-main{
     min-width:0;
     min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
 }
 
 .agenda-grid-wrapper{
@@ -352,9 +355,82 @@
     border-radius:10px;
 }
 
+.agenda-main > .agenda-grid-wrapper{
+    flex:1;
+    min-height:0;
+}
+
+#agendaGridConsultorios{
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+}
+
+#agendaGridConsultorios::-webkit-scrollbar{
+    width:0;
+    height:0;
+}
+
 .agenda-grid{
     min-width:max-content;
     position:relative;
+}
+
+.agenda-scroll-horizontal{
+    display:none;
+    flex:none;
+    padding:0 2px 2px 2px;
+}
+
+.agenda-scroll-horizontal input[type="range"]{
+    width:100%;
+    height:16px;
+    margin:0;
+    cursor:pointer;
+    accent-color:transparent;
+    background:transparent;
+    appearance:none;
+    -webkit-appearance:none;
+}
+
+.agenda-scroll-horizontal input[type="range"]::-webkit-slider-runnable-track{
+    height:14px;
+    background:transparent;
+    border-radius:0;
+}
+
+.agenda-scroll-horizontal input[type="range"]::-webkit-slider-thumb{
+    width:120px;
+    height:12px;
+    margin-top:1px;
+    border:none;
+    border-radius:2px;
+    background:rgba(96, 111, 129, 0.45);
+    box-shadow:none;
+    -webkit-appearance:none;
+}
+
+.agenda-scroll-horizontal input[type="range"]::-webkit-slider-thumb:hover,
+.agenda-scroll-horizontal input[type="range"]::-webkit-slider-thumb:active{
+    background:rgba(96, 111, 129, 0.65);
+}
+
+.agenda-scroll-horizontal input[type="range"]::-moz-range-track{
+    height:14px;
+    background:transparent;
+    border:none;
+}
+
+.agenda-scroll-horizontal input[type="range"]::-moz-range-thumb{
+    width:120px;
+    height:12px;
+    border:none;
+    border-radius:2px;
+    background:rgba(96, 111, 129, 0.45);
+}
+
+.agenda-scroll-horizontal input[type="range"]::-moz-range-thumb:hover,
+.agenda-scroll-horizontal input[type="range"]::-moz-range-thumb:active{
+    background:rgba(96, 111, 129, 0.65);
 }
 
 .agenda-header-row,
@@ -737,7 +813,17 @@
 .badge-CONFIRMADOCONDEUDA{ background:#07488f; }
 .badge-PRIMERACONSULTA{ background:#9d457c; } 
 
- 
+.tratamiento-agenda-card{
+    padding: 5px;
+    border: 1.5px solid #b1b1b1;
+    border-radius: 10px;
+}
+
+.tratamiento-agenda-card--activo{
+    background:#ccc;
+    border-color:var(--primary-strong);
+    box-shadow:0 0 0 3px var(--primary-soft);
+}
 
 .campo-con-botones-agenda{
     display:flex;
@@ -747,6 +833,87 @@
 
 .campo-con-botones-agenda input{
     flex:1;
+}
+
+.doctor-disponible-lista{
+    width:100%;
+    min-height:86px;
+    max-height:180px;
+    overflow:auto;
+    padding:6px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.doctor-disponible-item{
+    border:1px solid var(--border-soft);
+    background:var(--bg-soft);
+    color:var(--text-main);
+    border-radius:10px;
+    padding:8px;
+    text-align:left;
+    cursor:pointer;
+    display:grid;
+    gap:3px;
+}
+
+.doctor-disponible-item:hover,
+.doctor-disponible-item-activo{
+    border-color:var(--input-focus);
+    box-shadow:0 0 0 2px var(--primary-soft);
+}
+
+.doctor-disponible-nombre{
+    font-weight:700;
+    font-size:13px;
+}
+
+.doctor-disponible-horario,
+.doctor-disponible-mensaje{
+    font-size:12px;
+    color:var(--text-muted);
+}
+
+.agenda-feriados-layout{
+    display:grid;
+    grid-template-columns:minmax(240px, 300px) minmax(0, 1fr);
+    gap:12px;
+}
+
+.feriados-lista{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:420px;
+    overflow:auto;
+}
+
+.feriado-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px;
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    background:var(--bg-soft);
+}
+
+.feriado-item-info{
+    display:grid;
+    gap:3px;
+}
+
+.feriado-item-info b{
+    color:var(--text-main);
+    font-size:13px;
+}
+
+.feriado-item-info span,
+.feriado-item-info small{
+    color:var(--text-muted);
+    font-size:12px;
 }
 
 .agenda-hora-almuerzo{

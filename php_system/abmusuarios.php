@@ -1,9 +1,9 @@
 <?php
-require("conexion.php");
-include("verificar_navegador.php");
-include("subir_foto_base64.php");
-include("buscar_nivel.php");
-include("classTable.php");
+require_once("conexion.php");
+include_once("verificar_navegador.php");
+include_once("subir_foto_base64.php");
+include_once("buscar_nivel.php");
+include_once("classTable.php");
 
 function ObtenerDatos($operacion)
 {
@@ -70,14 +70,9 @@ $tipo_relacion = mb_convert_encoding((string)($tipo_relacion), 'ISO-8859-1', 'UT
 $fecha_creacion = $_POST['fecha_creacion'];
 $fecha_creacion = mb_convert_encoding((string)($fecha_creacion), 'ISO-8859-1', 'UTF-8');
 
-$hora_entrada_lunes= (isset($_POST['hora_entrada_lunes']) && !empty($_POST['hora_entrada_lunes'])) ? mb_convert_encoding((string)($_POST['hora_entrada_lunes']), 'ISO-8859-1', 'UTF-8') : NULL;
-$hora_entrada_martes= (isset($_POST['hora_entrada_martes']) && !empty($_POST['hora_entrada_martes'])) ? mb_convert_encoding((string)($_POST['hora_entrada_martes']), 'ISO-8859-1', 'UTF-8') : NULL;
-$hora_entrada_miercoles= (isset($_POST['hora_entrada_miercoles']) && !empty($_POST['hora_entrada_miercoles'])) ? mb_convert_encoding((string)($_POST['hora_entrada_miercoles']), 'ISO-8859-1', 'UTF-8') : NULL;
-$hora_entrada_jueves= (isset($_POST['hora_entrada_jueves']) && !empty($_POST['hora_entrada_jueves'])) ? mb_convert_encoding((string)($_POST['hora_entrada_jueves']), 'ISO-8859-1', 'UTF-8') : NULL;
-$hora_entrada_viernes= (isset($_POST['hora_entrada_viernes']) && !empty($_POST['hora_entrada_viernes'])) ? mb_convert_encoding((string)($_POST['hora_entrada_viernes']), 'ISO-8859-1', 'UTF-8') : NULL;
-$hora_entrada_sabado= (isset($_POST['hora_entrada_sabado']) && !empty($_POST['hora_entrada_sabado'])) ? mb_convert_encoding((string)($_POST['hora_entrada_sabado']), 'ISO-8859-1', 'UTF-8') : NULL;
+$horarios_usuario = obtenerHorariosUsuarioPost();
 
-abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$hora_entrada_lunes, $hora_entrada_martes, $hora_entrada_miercoles, $hora_entrada_jueves, $hora_entrada_viernes, $hora_entrada_sabado, $operacion);
+abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$horarios_usuario,$user,$operacion);
 }
 
  
@@ -304,7 +299,154 @@ exit;
 }
 
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves, $hora_entrada_viernes,$hora_entrada_sabado,$operacion)
+function normalizarHoraUsuario($hora)
+{
+	$hora = trim((string)$hora);
+
+	if ($hora == "") {
+		return "";
+	}
+
+	if (preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $hora)) {
+		return $hora.":00";
+	}
+
+	if (preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/', $hora)) {
+		return $hora;
+	}
+
+	return "";
+}
+
+function obtenerHorariosUsuarioPost()
+{
+	$horariosJson = isset($_POST["horarios_usuario_json"]) ? json_decode((string)$_POST["horarios_usuario_json"], true) : array();
+	$horarios = array();
+
+	if (!is_array($horariosJson)) {
+		return $horarios;
+	}
+
+	foreach ($horariosJson as $horario) {
+		if (!is_array($horario)) {
+			continue;
+		}
+
+		$dia = isset($horario["dia"]) ? (string)$horario["dia"] : "";
+		$cod_localFK = isset($horario["cod_localFK"]) ? (string)$horario["cod_localFK"] : "";
+		$hora_entrada = isset($horario["hora_entrada"]) ? normalizarHoraUsuario($horario["hora_entrada"]) : "";
+		$hora_salida = isset($horario["hora_salida"]) ? normalizarHoraUsuario($horario["hora_salida"]) : NULL;
+
+		$horarios[] = array(
+			"dia_semana" => $dia,
+			"cod_localFK" => $cod_localFK,
+			"hora_entrada" => $hora_entrada,
+			"hora_salida" => $hora_salida
+		);
+	}
+
+	return $horarios;
+}
+
+function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK)
+{
+	$consultaInactivar = "UPDATE horario_usuario
+		SET cod_localFK=NULL, fecha_edit=NOW(), cod_usuarioFK_edit=?
+		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL";
+
+	$stmtInactivar = $mysqli->prepare($consultaInactivar);
+	if (!$stmtInactivar) {
+		echo trigger_error('The query preparation failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
+		exit;
+	}
+
+	$ss='ss';
+	$stmtInactivar->bind_param($ss,$cod_usuario_accion,$cod_usuario);
+
+	if (!$stmtInactivar->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmtInactivar->errno.') '.$stmtInactivar->error, E_USER_ERROR);
+		exit;
+	}
+
+	$stmtInactivar->close();
+
+	if (count($horarios_usuario) == 0) {
+		return;
+	}
+
+	$consultaInsert = "INSERT INTO horario_usuario
+		(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,cod_localFK,cod_usuarioFK_create)
+		VALUES (?,?,?,?,?,?)";
+
+	$stmtInsert = $mysqli->prepare($consultaInsert);
+	if (!$stmtInsert) {
+		echo trigger_error('The query preparation failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
+		exit;
+	}
+
+	foreach ($horarios_usuario as $horario) {
+		$dia_semana = $horario["dia_semana"];
+		$cod_local_horario = isset($horario["cod_localFK"]) && $horario["cod_localFK"] != "" ? $horario["cod_localFK"] : $cod_localFK;
+		$hora_entrada = $horario["hora_entrada"];
+		$hora_salida = $horario["hora_salida"];
+
+		$ss='ssssss';
+		$stmtInsert->bind_param($ss,$cod_usuario,$dia_semana,$hora_entrada,$hora_salida,$cod_local_horario,$cod_usuario_accion);
+
+		if (!$stmtInsert->execute()) {
+			echo trigger_error('The query execution failed; MySQL said ('.$stmtInsert->errno.') '.$stmtInsert->error, E_USER_ERROR);
+			exit;
+		}
+	}
+
+	$stmtInsert->close();
+}
+
+function buscarHorariosUsuario($mysqli,$cod_usuario)
+{
+	if (!$mysqli) {
+		$mysqli = conectar_al_servidor();
+	}
+
+	$horarios = array();
+
+		$consulta = "SELECT
+			dia_semana,
+			cod_localFK,
+			TIME_FORMAT(hora_entrada,'%H:%i') AS hora_entrada,
+			TIME_FORMAT(hora_salida,'%H:%i') AS hora_salida
+		FROM horario_usuario
+		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL
+		ORDER BY FIELD(dia_semana,'lunes','martes','miercoles','jueves','viernes','sabado','domingo'), hora_entrada ASC, id ASC";
+
+	$stmt = $mysqli->prepare($consulta);
+	if (!$stmt) {
+		return "[]";
+	}
+
+	$ss='s';
+	$stmt->bind_param($ss,$cod_usuario);
+
+	if (!$stmt->execute()) {
+		$stmt->close();
+		return "[]";
+	}
+
+	$result = $stmt->get_result();
+	while ($valor = mysqli_fetch_assoc($result)) {
+		$horarios[] = array(
+			"dia" => mb_convert_encoding((string)($valor["dia_semana"]), 'UTF-8', 'ISO-8859-1'),
+			"cod_localFK" => mb_convert_encoding((string)($valor["cod_localFK"]), 'UTF-8', 'ISO-8859-1'),
+			"hora_entrada" => mb_convert_encoding((string)($valor["hora_entrada"]), 'UTF-8', 'ISO-8859-1'),
+			"hora_salida" => mb_convert_encoding((string)($valor["hora_salida"]), 'UTF-8', 'ISO-8859-1')
+		);
+	}
+
+	$stmt->close();
+	return $horarios;
+}
+
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$horarios_usuario,$cod_usuario_accion,$operacion)
 {
 
 
@@ -322,7 +464,7 @@ $consulta= "Select count(*) from usuario where login=? and password=? and cod_lo
 	
 		$stmt = $mysqli->prepare($consulta);
 $ss='ssss';
-$stmt->bind_param($ss,$login,$password,$cod_localFK,$Cod_Usuario); 
+$stmt->bind_param($ss,$login,$password,$cod_localFK,$cod_usuario);
 
 
 if ( ! $stmt->execute()) {
@@ -355,11 +497,11 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='sssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion);
 
-$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion,hora_entrada_lunes,hora_entrada_martes,hora_entrada_miercoles,hora_entrada_jueves,hora_entrada_viernes,hora_entrada_sabado)
-values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW(),?,?,?,?,?,?)";
+$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion)
+values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW())";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssssssssss';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves,$hora_entrada_viernes,$hora_entrada_sabado);
+$ss='sssssss';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo);
 
 $con=rand(5, 1500);
 
@@ -385,10 +527,10 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion,$cod_persona);
 
-$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=?,hora_entrada_lunes=?, hora_entrada_martes=?, hora_entrada_miercoles=?, hora_entrada_jueves=?, hora_entrada_viernes=? , hora_entrada_sabado=? where cod_usuario=? ";
+$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=? where cod_usuario=? ";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssissssssssi';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$hora_entrada_lunes,$hora_entrada_martes,$hora_entrada_miercoles,$hora_entrada_jueves,$hora_entrada_viernes,$hora_entrada_sabado,$cod_usuario);
+$ss='sssssissi';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$cod_usuario);
 
 }
 
@@ -440,9 +582,11 @@ if (!(empty($ext))) {
 
 if($operacion=="nuevo"){
 $cod_usuario=obtenerUltimaid();
+abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK);
 EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }else{
+abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK);
 EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }
@@ -549,7 +693,7 @@ if($local!=""){
 
 
 $sql= "select us.cod_usuario,us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
-pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,us.hora_entrada_lunes,us.hora_entrada_martes,us.hora_entrada_miercoles,us.hora_entrada_jueves,us.hora_entrada_viernes,us.hora_entrada_sabado,
+pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona ".$sqlFiltro;
  
@@ -588,12 +732,8 @@ $direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-88
 $tipo_relacion = mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
 $fecha_creacion = mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
 
-$hora_entrada_lunes = mb_convert_encoding((string)($valor['hora_entrada_lunes']), 'UTF-8', 'ISO-8859-1');
-$hora_entrada_martes = mb_convert_encoding((string)($valor['hora_entrada_martes']), 'UTF-8', 'ISO-8859-1');
-$hora_entrada_miercoles = mb_convert_encoding((string)($valor['hora_entrada_miercoles']), 'UTF-8', 'ISO-8859-1');
-$hora_entrada_jueves = mb_convert_encoding((string)($valor['hora_entrada_jueves']), 'UTF-8', 'ISO-8859-1');
-$hora_entrada_viernes = mb_convert_encoding((string)($valor['hora_entrada_viernes']), 'UTF-8', 'ISO-8859-1');
-$hora_entrada_sabado = mb_convert_encoding((string)($valor['hora_entrada_sabado']), 'UTF-8', 'ISO-8859-1');
+$horarios_usuario_json = buscarHorariosUsuario($mysqli,$cod_usuario);
+$horarios_usuario_json = json_encode($horarios_usuario_json);
 
 	    	 $styleName=CargarStyleTable($styleName);
 		  	  $pagina.="
@@ -615,12 +755,7 @@ $hora_entrada_sabado = mb_convert_encoding((string)($valor['hora_entrada_sabado'
 <td  id='td_datos_13' style='display:none'>".$direccion."</td>
 <td  id='td_datos_14' style='display:none'>".$tipo_relacion."</td>
 <td  id='td_datos_15' style='display:none'>".$fecha_creacion."</td>
-<td id='td_datos_16' style='display: none'>".$hora_entrada_lunes."</td>
-<td id='td_datos_17' style='display: none'>".$hora_entrada_martes."</td>
-<td id='td_datos_18' style='display: none'>".$hora_entrada_miercoles."</td>
-<td id='td_datos_19' style='display: none'>".$hora_entrada_jueves."</td>
-<td id='td_datos_20' style='display: none'>".$hora_entrada_viernes."</td>
-<td id='td_datos_21' style='display: none'>".$hora_entrada_sabado."</td>
+<td id='td_datos_22' style='display: none'>".$horarios_usuario_json."</td>
 </tr>
 </table>";
 
@@ -643,6 +778,7 @@ $registros[] = array(
 	'direccion' => $direccion,
 	'tipo_relacion' => $tipo_relacion,
 	'fecha_creacion' => $fecha_creacion,
+	'horarios_usuario' => json_decode($horarios_usuario_json, true),
 );
 }
 }
