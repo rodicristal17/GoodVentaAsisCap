@@ -835,6 +835,47 @@
     flex:1;
 }
 
+.doctor-disponible-lista{
+    width:100%;
+    min-height:86px;
+    max-height:180px;
+    overflow:auto;
+    padding:6px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.doctor-disponible-item{
+    border:1px solid var(--border-soft);
+    background:var(--bg-soft);
+    color:var(--text-main);
+    border-radius:10px;
+    padding:8px;
+    text-align:left;
+    cursor:pointer;
+    display:grid;
+    gap:3px;
+}
+
+.doctor-disponible-item:hover,
+.doctor-disponible-item-activo{
+    border-color:var(--input-focus);
+    box-shadow:0 0 0 2px var(--primary-soft);
+}
+
+.doctor-disponible-nombre{
+    font-weight:700;
+    font-size:13px;
+}
+
+.doctor-disponible-horario,
+.doctor-disponible-consultorio,
+.doctor-disponible-mensaje{
+    font-size:12px;
+    color:var(--text-muted);
+}
+
 .agenda-hora-almuerzo{
     background: var(--warning-bg) !important;
     color: var(--warning-text) !important;

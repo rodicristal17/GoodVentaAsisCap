@@ -1125,7 +1125,24 @@ function obtenerOpcionesDiaHorarioUsuario(diaSeleccionado) {
 	return opciones;
 }
 
-function agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida) {
+function obtenerOpcionesLocalHorarioUsuario(localSeleccionado) {
+	var selectorLocal = document.getElementById("inptlocaluser");
+	var opciones = "";
+
+	if (!selectorLocal) {
+		return opciones;
+	}
+
+	for (var i = 0; i < selectorLocal.options.length; i++) {
+		var opcion = selectorLocal.options[i];
+		var seleccionado = String(opcion.value) == String(localSeleccionado) ? " selected" : "";
+		opciones += "<option value='" + opcion.value + "'" + seleccionado + ">" + opcion.text + "</option>";
+	}
+
+	return opciones;
+}
+
+function agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida, codLocalFK) {
 	var tbody = document.getElementById("tbodyHorariosUsuario");
 	if (!tbody) {
 		return;
@@ -1134,22 +1151,28 @@ function agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida) {
 	dia = dia || "lunes";
 	horaEntrada = horaEntrada || "";
 	horaSalida = horaSalida || "";
+	codLocalFK = codLocalFK || (document.getElementById("inptlocaluser") ? document.getElementById("inptlocaluser").value : "");
 
 	var fila = document.createElement("tr");
 	fila.className = "filaHorarioUsuario";
 	fila.innerHTML =
-		"<td style='width:28%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
 			"<select class='inputSelect horarioUsuarioDia' style='width:100%;box-sizing:border-box;'>" +
 				obtenerOpcionesDiaHorarioUsuario(dia) +
 			"</select>" +
 		"</td>" +
-		"<td style='width:27%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+			"<select class='inputSelect horarioUsuarioLocal' style='width:100%;box-sizing:border-box;'>" +
+				obtenerOpcionesLocalHorarioUsuario(codLocalFK) +
+			"</select>" +
+		"</td>" +
+		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
 			"<input type='time' class='inputText horarioUsuarioEntrada' value='" + horaEntrada + "' style='width:100%;box-sizing:border-box;' />" +
 		"</td>" +
-		"<td style='width:27%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
+		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
 			"<input type='time' class='inputText horarioUsuarioSalida' value='" + horaSalida + "' style='width:100%;box-sizing:border-box;' />" +
 		"</td>" +
-		"<td style='width:18%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);text-align:center;'>" +
+		"<td style='width:12%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);text-align:center;'>" +
 			"<input type='button' value='Eliminar' class='btn4' onclick='eliminarFilaHorarioUsuario(this);' />" +
 		"</td>";
 
@@ -1170,7 +1193,7 @@ function limpiarHorariosUsuario() {
 	}
 }
 
-function cargarHorarioUsuarioDesdeRegistro(dia, horaEntrada, horaSalida) {
+function cargarHorarioUsuarioDesdeRegistro(dia, horaEntrada, horaSalida, codLocalFK) {
 	horaEntrada = $.trim(horaEntrada || "");
 	horaSalida = $.trim(horaSalida || "");
 
@@ -1178,7 +1201,7 @@ function cargarHorarioUsuarioDesdeRegistro(dia, horaEntrada, horaSalida) {
 		return;
 	}
 
-	agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida);
+	agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida, codLocalFK);
 }
 
 function cargarHorariosUsuarioDesdeJson(horariosJson) {
@@ -1199,7 +1222,8 @@ function cargarHorariosUsuarioDesdeJson(horariosJson) {
 			agregarFilaHorarioUsuario(
 				horarios[i].dia || "lunes",
 				horarios[i].hora_entrada || "",
-				horarios[i].hora_salida || ""
+				horarios[i].hora_salida || "",
+				horarios[i].cod_localFK || ""
 			);
 		}
 
@@ -1215,10 +1239,11 @@ function obtenerHorariosUsuarioFormulario() {
 
 	for (var i = 0; i < filas.length; i++) {
 		var dia = filas[i].querySelector(".horarioUsuarioDia");
+		var local = filas[i].querySelector(".horarioUsuarioLocal");
 		var entrada = filas[i].querySelector(".horarioUsuarioEntrada");
 		var salida = filas[i].querySelector(".horarioUsuarioSalida");
 
-		if (!dia || !entrada || !salida) {
+		if (!dia || !local || !entrada || !salida) {
 			continue;
 		}
 
@@ -1228,6 +1253,7 @@ function obtenerHorariosUsuarioFormulario() {
 
 		horarios.push({
 			dia: dia.value,
+			cod_localFK: local.value,
 			hora_entrada: entrada.value,
 			hora_salida: salida.value
 		});

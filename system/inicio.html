@@ -2089,10 +2089,11 @@ id='inptContrasenhaUser' style='width:100%;box-sizing:border-box;' />
     </div>
     <table class='tableCabeceraRegistro' style='width:100%;'>
       <tr>
-        <td class='td_registro' style='width:28%;'>DIA</td>
-        <td class='td_registro' style='width:27%;'>HORA ENTRADA</td>
-        <td class='td_registro' style='width:27%;'>HORA SALIDA</td>
-        <td class='td_registro' style='width:18%;'>ACCION</td>
+        <td class='td_registro' style='width:22%;'>DIA</td>
+        <td class='td_registro' style='width:22%;'>LOCAL</td>
+        <td class='td_registro' style='width:22%;'>HORA ENTRADA</td>
+        <td class='td_registro' style='width:22%;'>HORA SALIDA</td>
+        <td class='td_registro' style='width:12%;'>ACCION</td>
       </tr>
     </table>
     <div style='max-height:220px;overflow-y:auto;border:1px solid rgb(226,226,226);border-top:none;border-radius:0 0 10px 10px;background-color:rgb(255,255,255);'>
@@ -22824,12 +22825,17 @@ onclick='buscarvistaaperturacierrecaja()' />
 
             <div class='filtro-grupo'>
                 <label>Consultorio</label>
-                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador'></select>
+                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador' onchange='marcarDoctorDisponiblePorConsultorioNuevaCita()'></select>
             </div>
 
             <div class='filtro-grupo'>
                 <label>Fecha</label>
-                <input type='date' id='inptFechaNuevaCita' class='catalogo-selectBuscador' />
+                <input type='date' id='inptFechaNuevaCita' class='catalogo-selectBuscador' onchange='cargarDoctoresDisponiblesNuevaCita()' />
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Doctores disponibles</label>
+                <div id='inptDoctorNuevaCita' class='catalogo-selectBuscador doctor-disponible-lista' ></div>
             </div>
 
             <div class='filtro-grupo'>

@@ -191,6 +191,95 @@ function cargarSelectConsultoriosAgenda(){
     document.getElementById('inptConsultorioAgenda').innerHTML = html;
     document.getElementById('inptConsultorioAgendaFiltro').innerHTML = htmlFiltro;
 }
+
+function cargarDoctoresDisponiblesNuevaCita(){
+    var contenedor = document.getElementById('inptDoctorNuevaCita');
+    if(!contenedor){
+        return;
+    }
+
+    var fecha = document.getElementById('inptFechaNuevaCita').value || '';
+    var local = document.getElementById('inptLocalAgendaFiltro') ? document.getElementById('inptLocalAgendaFiltro').value : '';
+
+    contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Cargando...</div>";
+
+    if(fecha == ''){
+        contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Seleccione una fecha</div>";
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "fecha": fecha,
+            "cod_local": local,
+            "funt": "buscarDoctoresDisponiblesCita"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try {
+                var resp = responseText;
+                console.log(responseText);
+                if(typeof responseText === "string"){
+                    resp = $.parseJSON(responseText);
+                }
+
+                if(respuestaJqueryAjax(resp["1"]) != true){
+                    contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Sin datos disponibles</div>";
+                    return;
+                }
+
+                contenedor.innerHTML = resp["html"] || "<div class='doctor-disponible-mensaje'>Sin doctores disponibles</div>";
+                marcarDoctorDisponiblePorConsultorioNuevaCita();
+            } catch(error) {
+                contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>No se pudo cargar el listado</div>";
+                GuardarArchivosLog("Error cargarDoctoresDisponiblesNuevaCita: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            console.error(jqXHR, textstatus);
+            contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>No se pudo cargar el listado</div>";
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function seleccionarDoctorDisponibleNuevaCita(elemento){
+    var items = document.querySelectorAll('#inptDoctorNuevaCita .doctor-disponible-item');
+    var i;
+
+    for(i = 0; i < items.length; i++){
+        items[i].classList.remove('doctor-disponible-item-activo');
+    }
+
+    elemento.classList.add('doctor-disponible-item-activo');
+}
+
+function marcarDoctorDisponiblePorConsultorioNuevaCita(){
+    var consultorioActual = document.getElementById('inptConsultorioAgenda') ? document.getElementById('inptConsultorioAgenda').value : '';
+    var items = document.querySelectorAll('#inptDoctorNuevaCita .doctor-disponible-item');
+    var i;
+
+    for(i = 0; i < items.length; i++){
+        items[i].classList.remove('doctor-disponible-item-activo');
+    }
+
+    if(consultorioActual == ''){
+        return;
+    }
+
+    for(i = 0; i < items.length; i++){
+        if(String(items[i].getAttribute('data-consultorio')) == String(consultorioActual)){
+            items[i].classList.add('doctor-disponible-item-activo');
+            return;
+        }
+    }
+}
 var intervaloLineaHoraActualAgenda = null;
  
 function cargarAgendaConsultorios(){
@@ -396,6 +485,7 @@ function clickSlotAgenda(slot, ev){
     document.getElementById('inptFechaNuevaCita').value = fecha;
     document.getElementById('inptHoraInicioAgenda').value = hora;
     document.getElementById('inptHoraFinAgenda').value = horaFin;
+    cargarDoctoresDisponiblesNuevaCita();
 
     if(document.getElementById('inptEstadoNuevaCita')){
         document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
@@ -1051,6 +1141,7 @@ function vercerrarModalNuevaCita(mostrar){
         if(controlacceso("INSERTARFORMULARIOCALENDARIO","accion")==false){return;}
                  
         document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
+        cargarDoctoresDisponiblesNuevaCita();
         document.getElementById('overlayNuevaCita').style.display = '';
         document.getElementById('modalNuevaCita').style.display = '';
     } else {
@@ -2088,6 +2179,7 @@ function limpiarFormularioNuevaCita(){
     document.getElementById('inptHoraFinAgenda').value = '';
     document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
     document.getElementById('inptMotivoAgenda').value = '';
+    document.getElementById('inptDoctorNuevaCita').innerHTML = '';
 }
 
 function verCerrarModalBuscarPacienteAgenda(mostrar) {

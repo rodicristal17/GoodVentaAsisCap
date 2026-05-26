@@ -71,6 +71,10 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
         case 'buscarHistorialPacienteCalendario':
             buscarHistorialPacienteCalendario($mysqli);
             break;
+
+        case 'buscarDoctoresDisponiblesCita':
+            buscarDoctoresDisponiblesCita($mysqli);
+            break;
             
     
         default:
@@ -144,6 +148,117 @@ function buscarPacientesAgenda($mysqli){
         "1" => "exito",
         "2" => $html
     ));
+    exit;
+}
+
+function obtenerDiaSemanaAgenda($fecha){
+    $dias = array(
+        0 => 'domingo',
+        1 => 'lunes',
+        2 => 'martes',
+        3 => 'miercoles',
+        4 => 'jueves',
+        5 => 'viernes',
+        6 => 'sabado'
+    );
+
+    $timestamp = strtotime($fecha);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    return $dias[(int)date('w', $timestamp)];
+}
+
+function escaparHtmlAgenda($valor){
+    return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
+function generarHtmlDoctoresDisponiblesCita($doctores){
+    if (count($doctores) == 0) {
+        return "<div class='doctor-disponible-mensaje'>Sin doctores disponibles</div>";
+    }
+
+    $html = "";
+    foreach ($doctores as $doctor) {
+        $html .= "<button type='button' class='doctor-disponible-item' ";
+        $html .= "data-doctor='".escaparHtmlAgenda($doctor["cod_usuario"])."' ";
+        $html .= "onclick='seleccionarDoctorDisponibleNuevaCita(this)'>";
+        $html .= "<span class='doctor-disponible-nombre'>".escaparHtmlAgenda($doctor["nombre"])."</span>";
+        $html .= "<span class='doctor-disponible-horario'>".escaparHtmlAgenda($doctor["horarios"])."</span>";
+        $html .= "</button>";
+    }
+
+    return $html;
+}
+
+function buscarDoctoresDisponiblesCita($mysqli){
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+    $dia_semana = obtenerDiaSemanaAgenda($fecha);
+
+    if ($dia_semana == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "Fecha invalida"));
+        exit;
+    }
+
+    $condicionLocal = "";
+    $condicionConsultorioLocal = "";
+    $condicionHorarioLocal = " AND hu.cod_localFK IS NOT NULL";
+    if ($cod_local != "") {
+        $condicionLocal = " AND c.cod_localFk = '".$cod_local."'";
+        $condicionHorarioLocal = " AND hu.cod_localFK = '".$cod_local."'";
+    }
+
+    $sql = "SELECT
+            u.cod_usuario,
+            p.nombre_persona,
+            GROUP_CONCAT(
+                DISTINCT CONCAT(
+                    TIME_FORMAT(hu.hora_entrada, '%H:%i'),
+                    IF(hu.hora_salida IS NULL, '', CONCAT(' - ', TIME_FORMAT(hu.hora_salida, '%H:%i')))
+                )
+                ORDER BY hu.hora_entrada ASC
+                SEPARATOR ' | '
+            ) AS horarios
+        FROM usuario u
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        INNER JOIN horario_usuario hu ON hu.cod_usuarioFK = u.cod_usuario
+        LEFT JOIN consultorios c ON c.cod_doctorFK = u.cod_usuario AND c.estado = 'Activo' ".$condicionLocal."
+        WHERE u.tipo = 'DOCTOR'
+        AND u.estado = 'Activo'
+        ".$condicionHorarioLocal."
+        AND hu.dia_semana = '".$dia_semana."'
+        ".$condicionConsultorioLocal."
+        GROUP BY u.cod_usuario, p.nombre_persona
+        ORDER BY p.nombre_persona ASC";
+
+    $result = $mysqli->query($sql);
+
+    if (!$result) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudieron obtener los doctores disponibles",
+            "sql" => $sql,
+            "mysql" => $mysqli->error
+        ));
+        exit;
+    }
+
+    $doctores = array();
+    while ($row = $result->fetch_assoc()) {
+        $doctores[] = array(
+            "cod_usuario" => (int)$row["cod_usuario"],
+            "nombre" => normalizarTextoUtf8($row["nombre_persona"]),
+            "horarios" => normalizarTextoUtf8($row["horarios"]),
+        );
+    }
+
+    echo json_encode(array(
+        "1" => "exito",
+        "dia" => $dia_semana,
+        "html" => generarHtmlDoctoresDisponiblesCita($doctores)
+    ), JSON_UNESCAPED_UNICODE);
     exit;
 }
 

@@ -333,11 +333,13 @@ function obtenerHorariosUsuarioPost()
 		}
 
 		$dia = isset($horario["dia"]) ? (string)$horario["dia"] : "";
+		$cod_localFK = isset($horario["cod_localFK"]) ? (string)$horario["cod_localFK"] : "";
 		$hora_entrada = isset($horario["hora_entrada"]) ? normalizarHoraUsuario($horario["hora_entrada"]) : "";
 		$hora_salida = isset($horario["hora_salida"]) ? normalizarHoraUsuario($horario["hora_salida"]) : NULL;
 
 		$horarios[] = array(
 			"dia_semana" => $dia,
+			"cod_localFK" => $cod_localFK,
 			"hora_entrada" => $hora_entrada,
 			"hora_salida" => $hora_salida
 		);
@@ -346,11 +348,11 @@ function obtenerHorariosUsuarioPost()
 	return $horarios;
 }
 
-function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion)
+function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK)
 {
 	$consultaInactivar = "UPDATE horario_usuario
-		SET estado='inactivo', fecha_edit=NOW(), cod_usuarioFK_edit=?
-		WHERE cod_usuarioFK=? AND estado='activo'";
+		SET cod_localFK=NULL, fecha_edit=NOW(), cod_usuarioFK_edit=?
+		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL";
 
 	$stmtInactivar = $mysqli->prepare($consultaInactivar);
 	if (!$stmtInactivar) {
@@ -373,8 +375,8 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 	}
 
 	$consultaInsert = "INSERT INTO horario_usuario
-		(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,estado,cod_usuarioFK_create)
-		VALUES (?,?,?,?, 'activo', ?)";
+		(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,cod_localFK,cod_usuarioFK_create)
+		VALUES (?,?,?,?,?,?)";
 
 	$stmtInsert = $mysqli->prepare($consultaInsert);
 	if (!$stmtInsert) {
@@ -384,11 +386,12 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 
 	foreach ($horarios_usuario as $horario) {
 		$dia_semana = $horario["dia_semana"];
+		$cod_local_horario = isset($horario["cod_localFK"]) && $horario["cod_localFK"] != "" ? $horario["cod_localFK"] : $cod_localFK;
 		$hora_entrada = $horario["hora_entrada"];
 		$hora_salida = $horario["hora_salida"];
 
-		$ss='sssss';
-		$stmtInsert->bind_param($ss,$cod_usuario,$dia_semana,$hora_entrada,$hora_salida,$cod_usuario_accion);
+		$ss='ssssss';
+		$stmtInsert->bind_param($ss,$cod_usuario,$dia_semana,$hora_entrada,$hora_salida,$cod_local_horario,$cod_usuario_accion);
 
 		if (!$stmtInsert->execute()) {
 			echo trigger_error('The query execution failed; MySQL said ('.$stmtInsert->errno.') '.$stmtInsert->error, E_USER_ERROR);
@@ -407,12 +410,13 @@ function buscarHorariosUsuario($mysqli,$cod_usuario)
 
 	$horarios = array();
 
-	$consulta = "SELECT
+		$consulta = "SELECT
 			dia_semana,
+			cod_localFK,
 			TIME_FORMAT(hora_entrada,'%H:%i') AS hora_entrada,
 			TIME_FORMAT(hora_salida,'%H:%i') AS hora_salida
 		FROM horario_usuario
-		WHERE cod_usuarioFK=? AND estado='activo'
+		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL
 		ORDER BY FIELD(dia_semana,'lunes','martes','miercoles','jueves','viernes','sabado','domingo'), hora_entrada ASC, id ASC";
 
 	$stmt = $mysqli->prepare($consulta);
@@ -432,6 +436,7 @@ function buscarHorariosUsuario($mysqli,$cod_usuario)
 	while ($valor = mysqli_fetch_assoc($result)) {
 		$horarios[] = array(
 			"dia" => mb_convert_encoding((string)($valor["dia_semana"]), 'UTF-8', 'ISO-8859-1'),
+			"cod_localFK" => mb_convert_encoding((string)($valor["cod_localFK"]), 'UTF-8', 'ISO-8859-1'),
 			"hora_entrada" => mb_convert_encoding((string)($valor["hora_entrada"]), 'UTF-8', 'ISO-8859-1'),
 			"hora_salida" => mb_convert_encoding((string)($valor["hora_salida"]), 'UTF-8', 'ISO-8859-1')
 		);
@@ -577,11 +582,11 @@ if (!(empty($ext))) {
 
 if($operacion=="nuevo"){
 $cod_usuario=obtenerUltimaid();
-abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion);
+abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK);
 EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }else{
-abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion);
+abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK);
 EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }
