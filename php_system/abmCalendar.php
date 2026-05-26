@@ -75,6 +75,18 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
         case 'buscarDoctoresDisponiblesCita':
             buscarDoctoresDisponiblesCita($mysqli);
             break;
+
+        case 'listarDiasFeriados':
+            listarDiasFeriados($mysqli);
+            break;
+
+        case 'guardarDiaFeriado':
+            guardarDiaFeriado($mysqli, $useru);
+            break;
+
+        case 'eliminarDiaFeriado':
+            eliminarDiaFeriado($mysqli, $useru);
+            break;
             
     
         default:
@@ -259,6 +271,97 @@ function buscarDoctoresDisponiblesCita($mysqli){
         "dia" => $dia_semana,
         "html" => generarHtmlDoctoresDisponiblesCita($doctores)
     ), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function listarDiasFeriados($mysqli){
+    $fecha_desde = isset($_POST['fecha_desde']) ? limpiar($mysqli, $_POST['fecha_desde']) : '';
+    $fecha_hasta = isset($_POST['fecha_hasta']) ? limpiar($mysqli, $_POST['fecha_hasta']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+    $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
+
+    $registros= obtenerDiasFeriados($mysqli, array(
+        "fecha_desde" => $fecha_desde,
+        "fecha_hasta" => $fecha_hasta,
+        "cod_local" => $cod_local,
+        "cod_consultorio" => $cod_consultorio
+    ));
+    
+    $html = "";
+    foreach ($registros as $row) {
+        $html .= "<div class='feriado-item'>";
+        $html .= "<div class='feriado-item-info'>";
+        $html .= "<b>".escaparHtmlAgenda($row["fecha_formateada"])."</b>";
+        $html .= "<span>".escaparHtmlAgenda(normalizarTextoUtf8($row["descripcion"]))."</span>";
+        $html .= "<small>".escaparHtmlAgenda(normalizarTextoUtf8($row["local"]))."</small>";
+        $html .= "</div>";
+        $html .= "<button type='button' class='btn-filtro' style='background:#c94d4d;color:#fff;' onclick='eliminarDiaFeriadoAgenda(".(int)$row["id"].")'>Quitar</button>";
+        $html .= "</div>";
+    }
+
+    if ($html == "") {
+        $html = "<div class='feriado-item'><div class='feriado-item-info'><span>Sin feriados registrados</span></div></div>";
+    }
+
+    echo json_encode(array("1" => "exito", "html" => $html), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function guardarDiaFeriado($mysqli, $useru){
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $descripcion = isset($_POST['descripcion']) ? limpiar($mysqli, $_POST['descripcion']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+
+    if ($fecha == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "Debe cargar la fecha"));
+        exit;
+    }
+
+    $cod_local_sql = $cod_local != '' ? "'".$cod_local."'" : "NULL";
+
+    $sql = "INSERT INTO dias_feriados
+            (fecha, descripcion, cod_localFK, estado, cod_usuarioFK_create, fecha_create)
+            VALUES ('".$fecha."', '".$descripcion."', ".$cod_local_sql.", 'activo', '".$useru."', NOW())";
+
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudo guardar el feriado",
+            "mysql" => $mysqli->error,
+            "sql" => $sql
+        ));
+        exit;
+    }
+
+    echo json_encode(array("1" => "exito"));
+    exit;
+}
+
+function eliminarDiaFeriado($mysqli, $useru){
+    $id = isset($_POST['id']) ? limpiar($mysqli, $_POST['id']) : '';
+
+    if ($id == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se encontro el feriado"));
+        exit;
+    }
+
+    $sql = "UPDATE dias_feriados
+            SET estado = 'inactivo',
+                cod_usuarioFK_edit = '".$useru."',
+                fecha_edit = NOW()
+            WHERE id = '".$id."'";
+
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se pudo quitar el feriado",
+            "mysql" => $mysqli->error,
+            "sql" => $sql
+        ));
+        exit;
+    }
+
+    echo json_encode(array("1" => "exito"));
     exit;
 }
 
@@ -468,6 +571,15 @@ function guardarCita($mysqli, $useru){
         exit;
     }
 
+    $feriado = obtenerFeriadoAgenda($mysqli, $fecha, $consultorio);
+    if ($feriado !== null) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "No se puede agendar en un día feriado: ".$feriado["descripcion"]." (".$feriado["fecha_formateada"].")"
+        ), JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     $sql = "INSERT INTO agenda (
                 id_paciente,
                 id_consultorio,
@@ -510,7 +622,78 @@ function guardarCita($mysqli, $useru){
     exit;
 }
 
+function obtenerFeriadoAgenda($mysqli, $fecha, $consultorio){
+    $registros = obtenerDiasFeriados($mysqli, array(
+        "fecha" => $fecha,
+        "cod_consultorio" => $consultorio,
+        "limite" => 1
+    ));
 
+    return count($registros) > 0 ? $registros[0] : null;
+}
+
+function obtenerDiasFeriados($mysqli, $filtros){
+    $condicion = " WHERE df.estado = 'activo' ";
+    $joinConsultorio = "";
+    $limite = "";
+
+    foreach ($filtros as $key => $value) {
+        if ($value != '') {
+            switch ($key) {
+                case 'fecha':
+                    $condicion .= " AND df.fecha = '".$value."' ";
+                    break;
+                case 'fecha_desde':
+                    $condicion .= " AND df.fecha >= '".$value."' ";
+                    break;
+                case 'fecha_hasta':
+                    $condicion .= " AND df.fecha <= '".$value."' ";
+                    break;
+                case 'cod_local':
+                    $condicion .= " AND (df.cod_localFK = '".$value."' OR df.cod_localFK IS NULL) ";
+                    break;
+                case 'cod_consultorio':
+                    $joinConsultorio = " LEFT JOIN consultorios c_filtro ON c_filtro.id_consultorio = '".$value."' ";
+                    $condicion .= " AND (df.cod_localFK IS NULL OR df.cod_localFK = c_filtro.cod_localFk) ";
+                    break;
+                case 'limite':
+                    $limite = " LIMIT ".(int)$value;
+                    break;
+                default:
+                    $condicion .= " AND ".$key." = '".$value."' ";
+            }
+        }
+    }
+    
+    $sql = "SELECT
+                df.id,
+                df.fecha,
+                DATE_FORMAT(df.fecha, '%d/%m/%Y') AS fecha_formateada,
+                IFNULL(df.descripcion, '') AS descripcion,
+                IFNULL(df.cod_localFK, '') AS cod_localFK,
+                IFNULL(l.Nombre, 'Todos') AS local
+            FROM dias_feriados df
+            LEFT JOIN local l ON l.cod_local = df.cod_localFK
+            ".$joinConsultorio."
+            ".$condicion."
+            ORDER BY df.fecha ASC, df.id ASC
+            ".$limite;
+
+    $result = $mysqli->query($sql);
+    
+    $registros= array();
+    if (!$result) {
+        return $registros;
+    }
+
+    while ($row = $result->fetch_assoc()) {
+        $row["descripcion"] = normalizarTextoUtf8($row["descripcion"]);
+        $row["local"] = normalizarTextoUtf8($row["local"]);
+        $registros[] = $row;
+    }
+
+    return $registros;
+}
 
 function actualizarCita($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';

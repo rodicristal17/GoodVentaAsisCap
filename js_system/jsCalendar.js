@@ -1077,7 +1077,7 @@ function actualizarResumenFiltrosAgenda(){
         textoConsultorio = consultorio.options[consultorio.selectedIndex].text;
     }
 
-    document.getElementById('agendaFiltrosActivos').innerHTML = ''
+    document.getElementById('agendaFiltrosActivos').innerHTML = '<button class="btn-accion-principal" onclick="verCerrarModalFeriados(true)">Feriados</button>'
         + "<span class='chip-filtro'>Fecha: " + fecha + "</span>"
         + "<span class='chip-filtro'>Consultorios: " + textoConsultorio + "</span>";
 }
@@ -1148,6 +1148,172 @@ function vercerrarModalNuevaCita(mostrar){
         document.getElementById('overlayNuevaCita').style.display = 'none';
         document.getElementById('modalNuevaCita').style.display = 'none';
     }
+}
+
+function cargarLocalesModalFeriadosAgenda(){
+    var origen = document.getElementById('inptLocalAgendaFiltro');
+    var destino = document.getElementById('inptLocalFeriadoAgenda');
+
+    if(!origen || !destino){
+        return;
+    }
+
+    var opciones = "<option value=''>Todos</option>";
+    for(var i = 0; i < origen.options.length; i++){
+        if(origen.options[i].value == ''){
+            continue;
+        }
+        opciones += "<option value='" + origen.options[i].value + "'>" + origen.options[i].text + "</option>";
+    }
+    destino.innerHTML = opciones;
+}
+
+function verCerrarModalFeriados(mostrar){
+    if (mostrar) {
+        if (controlacceso("VERFERIADOSAGENDA","accion")==false){return;}
+        cargarLocalesModalFeriadosAgenda();
+        var fechaAgenda = document.getElementById('inptFechaAgenda') ? document.getElementById('inptFechaAgenda').value : '';
+        var hoy = fechaAgenda || formatearFechaInput(new Date());
+
+        if(document.getElementById('inptFechaFeriadoAgenda').value == ''){
+            document.getElementById('inptFechaFeriadoAgenda').value = hoy;
+        }
+        if(document.getElementById('inptFechaDesdeFeriadoAgenda').value == ''){
+            document.getElementById('inptFechaDesdeFeriadoAgenda').value = hoy.substring(0, 4) + '-01-01';
+        }
+        if(document.getElementById('inptFechaHastaFeriadoAgenda').value == ''){
+            document.getElementById('inptFechaHastaFeriadoAgenda').value = hoy.substring(0, 4) + '-12-31';
+        }
+
+        document.getElementById('overlayFeriadosAgenda').style.display = '';
+        document.getElementById('modalFeriadosAgenda').style.display = '';
+        listarDiasFeriadosAgenda();
+    } else {
+        document.getElementById('overlayFeriadosAgenda').style.display = 'none';
+        document.getElementById('modalFeriadosAgenda').style.display = 'none';
+    }
+}
+
+function listarDiasFeriadosAgenda(){
+    obtener_datos_user();
+
+    var tabla = document.getElementById('tableFeriadosAgenda');
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "fecha_desde": document.getElementById('inptFechaDesdeFeriadoAgenda').value,
+        "fecha_hasta": document.getElementById('inptFechaHastaFeriadoAgenda').value,
+        "cod_local": document.getElementById('inptLocalFeriadoAgenda').value,
+        "funt": "listarDiasFeriados"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        beforeSend: function(){
+            tabla.innerHTML = paginacargando;
+        },
+        error: function(jqXHR, textstatus){
+            tabla.innerHTML = "";
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function(responseText){
+            console.log("Respuesta listarDiasFeriadosAgenda:", responseText);
+            try {
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    tabla.innerHTML = resp["html"] || "";
+                } else {
+                    tabla.innerHTML = "";
+                    alert(resp["mensaje"] || "No se pudieron listar los feriados");
+                }
+            } catch(error) {
+                tabla.innerHTML = "";
+                GuardarArchivosLog("Error listarDiasFeriadosAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        }
+    });
+}
+
+function guardarDiaFeriadoAgenda(){
+    var fecha = document.getElementById('inptFechaFeriadoAgenda').value;
+    var descripcion = document.getElementById('inptDescripcionFeriadoAgenda').value;
+
+    if (controlacceso("GUARDARFERIADOSAGENDA","accion")==false){return;}
+
+    if(fecha == ''){
+        alert('Debe cargar la fecha del feriado');
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "fecha": fecha,
+            "descripcion": descripcion,
+            "cod_local": document.getElementById('inptLocalFeriadoAgenda').value,
+            "funt": "guardarDiaFeriado"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try {
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    document.getElementById('inptDescripcionFeriadoAgenda').value = '';
+                    listarDiasFeriadosAgenda();
+                } else {
+                    alert(resp["mensaje"] || "No se pudo guardar el feriado");
+                }
+            } catch(error) {
+                GuardarArchivosLog("Error guardarDiaFeriadoAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function eliminarDiaFeriadoAgenda(id){
+    if(!confirm('¿Quitar este feriado?')){
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "id": id,
+            "funt": "eliminarDiaFeriado"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try {
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    listarDiasFeriadosAgenda();
+                } else {
+                    alert(resp["mensaje"] || "No se pudo quitar el feriado");
+                }
+            } catch(error) {
+                GuardarArchivosLog("Error eliminarDiaFeriadoAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
 }
 
 function vercerrarModalAbmConsultorioAgenda(mostrar){

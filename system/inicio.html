@@ -22594,8 +22594,8 @@ onclick='buscarvistaaperturacierrecaja()' />
             <button class='btn-filtro btn-hoy' onclick='irHoyAgenda()'>Hoy</button>
         </div>
  
-
         <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
+            <button class="btn-accion-principal" onclick="verCerrarModalFeriados(true)">Feriados</button>
             <span class='chip-filtro'>Fecha: hoy</span>
             <span class='chip-filtro'>Consultorios: todos</span>
         </div>
@@ -22654,7 +22654,6 @@ onclick='buscarvistaaperturacierrecaja()' />
     </div>
 </div>
 
-<div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='vercerrarModalFiltrosAgenda(false)' style='display:none;'></div>
 <div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="vercerrarModalFiltrosAgenda(false)"></div>
 
 <div class="modal-filtros-catalogo" id="modalFiltrosAgenda" style="display:none;">
@@ -22728,6 +22727,53 @@ onclick='buscarvistaaperturacierrecaja()' />
     </div>
 </div>
 <div class='modal-filtros-overlay' id='overlayNuevaCita' onclick='vercerrarModalNuevaCita(false)' style='display:none;'></div>
+
+<div class='modal-filtros-overlay' id='overlayFeriadosAgenda' onclick='verCerrarModalFeriados(false)' style='display:none;'></div>
+<div class='modal-filtros-catalogo' id='modalFeriadosAgenda' style='display:none;'>
+    <div class='modal-filtros-box modal-cita-box' style='max-width:860px;'>
+        <div class='modal-filtros-header'>
+            <div class='modal-header-info'>
+                <p class='modal-etiqueta'>Calendario</p>
+                <h3>Días feriados</h3>
+                <span>Administración de fechas no laborales para la agenda</span>
+            </div>
+            <button type='button' class='btn-cerrar-modal' onclick='verCerrarModalFeriados(false)'>×</button>
+        </div>
+
+        <div class='modal-filtros-body agenda-feriados-layout'>
+            <section class='form-section'>
+                <div class='filtro-grupo'>
+                    <label>Fecha</label>
+                    <input type='date' id='inptFechaFeriadoAgenda' class='catalogo-selectBuscador' />
+                </div>
+                <div class='filtro-grupo'>
+                    <label>Local</label>
+                    <select id='inptLocalFeriadoAgenda' class='catalogo-selectBuscador'></select>
+                </div>
+                <div class='filtro-grupo'>
+                    <label>Descripción</label>
+                    <input type='text' id='inptDescripcionFeriadoAgenda' class='catalogo-selectBuscador' placeholder='Ej: Día de la independencia' />
+                </div>
+                <button type='button' class='btn-accion-principal' onclick='guardarDiaFeriadoAgenda()'>Agregar feriado</button>
+            </section>
+
+            <section class='presupuesto-panel' style='padding:10px;'>
+                <div style='display:flex;align-items:end;gap:8px;margin-bottom:10px;'>
+                    <div class='filtro-grupo' style='flex:1;'>
+                        <label>Desde</label>
+                        <input type='date' id='inptFechaDesdeFeriadoAgenda' class='catalogo-selectBuscador' />
+                    </div>
+                    <div class='filtro-grupo' style='flex:1;'>
+                        <label>Hasta</label>
+                        <input type='date' id='inptFechaHastaFeriadoAgenda' class='catalogo-selectBuscador' />
+                    </div>
+                    <button type='button' class='btn-filtro' onclick='listarDiasFeriadosAgenda()'>Buscar</button>
+                </div>
+                <div id='tableFeriadosAgenda' class='feriados-lista'></div>
+            </section>
+        </div>
+    </div>
+</div>
 
 <div class='modal-filtros-catalogo' id='modalAbmConsultorioAgenda' style='display:none;'>
     <div class='modal-filtros-box modal-cita-box' style='max-width:1200px;width: 800px;'>
