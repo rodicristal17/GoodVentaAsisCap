@@ -3266,7 +3266,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 300 ";
+".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 20 ";
  
 //echo($sql);exit;
  
@@ -3518,7 +3518,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
  where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
-".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 100 ";
+".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 20 ";
  
 
 
