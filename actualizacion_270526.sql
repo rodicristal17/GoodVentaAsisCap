@@ -10,6 +10,7 @@ CREATE TABLE tareas (
     responsable VARCHAR(255)
 );
 
+-- Hasta aca subi 
 CREATE TABLE tarea_usuario (
     id INT PRIMARY KEY AUTO_INCREMENT,
     tarea_id INT,
