@@ -8,8 +8,8 @@ if (!$data || !isset($data['id'])) {
 
 $host     = 'localhost';
 $dbname   = 'syscvxco_ac';
-$username = 'syscvxco_ac';
-$password = 'syscvxco_ac';
+$username = 'root';
+$password = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);

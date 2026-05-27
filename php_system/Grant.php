@@ -4,8 +4,8 @@
 // ===============================
 $host = "localhost";
 $dbname = "syscvxco_ac";
-$username = "syscvxco_ac";
-$password = 'syscvxco_ac';
+$username = "root";
+$password = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -62,6 +62,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ===============================
 $stmt = $pdo->query("SELECT * FROM tareas ORDER BY fecha_inicio ASC");
 $tareas_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmtUsuarios = $pdo->query("
+    SELECT u.cod_usuario, p.nombre_persona
+    FROM usuario u
+    INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+    WHERE u.estado = 'Activo'
+    ORDER BY p.nombre_persona ASC
+");
+$usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
 
 $tareas_ordenadas = [];
 $visitados = [];
@@ -284,7 +293,14 @@ $json = json_encode($tareas_gantt);
             </div>
             <div>
                 <label style="font-size: 12px;">Responsable:</label>
-                <input type="text" name="responsable" id="form_responsable" placeholder="Ej: Jorge, Carlos...">
+                <select name="responsable" id="form_responsable">
+                    <option value="">Sin asignar</option>
+                    <?php foreach ($usuarios as $usuario): ?>
+                        <option value="<?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>">
+                            <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div>
                 <label style="font-size: 12px;">Depende de:</label>
@@ -511,6 +527,27 @@ function formatDate(date) {
         document.getElementById('form_title').innerText = 'Nueva Tarea:';
         document.getElementById('btn_submit').innerText = 'Guardar';
     }
+
+    // Aplicar filtros automaticamente
+    window.addEventListener('load', function () {
+    let intentos = 0;
+
+    const intervalo = setInterval(function () {
+        const lblUser = window.parent.document.getElementById('lblUser');
+        const filtroResponsable = document.getElementById('filtro-responsable');
+
+        if (lblUser && lblUser.textContent.trim() !== '' && filtroResponsable) {
+            filtroResponsable.value = lblUser.textContent.trim();
+            aplicarFiltros();
+            clearInterval(intervalo);
+        }
+
+        intentos++;
+        if (intentos >= 20) {
+            clearInterval(intervalo);
+        }
+    }, 300);
+});
 </script>
 
 </body>
