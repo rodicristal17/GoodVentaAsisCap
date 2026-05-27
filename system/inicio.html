@@ -194,18 +194,19 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 <div class='divScroll' id='divEfectoMantenimiento'>
 
 
-<div style='margin-bottom:100px;margin-top:100px'>
-
-  <div class="Panel">
-    <iframe src='../php_system/Grant.php'
-    width="100%" height="100%" frameborder="0">
-  </iframe>
-</div>
-<table style='width:100%;display: none;'>
-<tr>
-<td style='padding: 15px; padding-left: 33px;width:90%'>
-<p class='pTitulo16' id='ptituloUser2'
-style='text-align:left;font-size:35px'></p>
+                  <div style='margin-bottom:50px;margin-top:50px'>
+                 
+                    <div class="Panel">
+                      <iframe src='../php_system/Grant.php';
+                      width="100%"
+                      height="80%"
+                      frameborder="0">
+                    </iframe>
+                    </div>
+                    <table style='width:100%;display: none;'>
+                      <tr>
+                        <td style='padding: 15px; padding-left: 33px;width:90%'>
+                          <p class='pTitulo16' id='ptituloUser2' style='text-align:left;font-size:35px'></p>
 
 
 </td>
@@ -1262,29 +1263,18 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuInventarioLocal' onclick='verCerrarAbmInventarioLocal(true, false)' style='text-align:center'>
-<tr>
-<td>
-<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/home.png' />
-<p class='pTitulo4'>Activos fijos</p>
-<center>
-<div id='divMinimizadoInventarioLocal' style='display:none' class='divMinimizado'></div>
-</center>
-</td>
-</tr>
-</table>
-
-<table class='divMenub' id='divMenuInformacionProtocolo' onclick='verCerrarVentanaAbmInformacionProtocolo(true, false);buscarVistaInformacionProtocolos();' style='text-align:center'>
-<tr>
-<td>
-<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/home.png' />
-<p class='pTitulo4'>Informacion de protocolos</p>
-<center>
-<div id='divMinimizadoInformacionProtocolo' style='display:none' class='divMinimizado'></div>
-</center>
-</td>
-</tr>
-</table>
+                      <table class='divMenub' id='divMenuInventarioLocal'
+                        onclick='verCerrarAbmInventarioLocal(true, false)' style='text-align:center'>
+                        <tr>
+                          <td>
+                            <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/home.png' />
+                            <p class='pTitulo4'>Activos fijos</p>
+                            <center>
+                              <div id='divMinimizadoInventarioLocal' style='display:none' class='divMinimizado'></div>
+                            </center>
+                          </td>
+                        </tr>
+                      </table>
 
 </div>
 
@@ -2240,27 +2230,29 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <div class="div_cuerpo_table" id="table_abm_usuarios" style='height:50vh;'></div>
 </div>
 
-<div class='divMenuf'>
-<table style='width:95%;'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloC' >Registro Selecc..</p>
-<input class='inputTextDisable' type='text' disabled
-id='inptRegistroSeleccUser' style='width:200px' />
-<input type='button' value='Editar' class='btn5'
-onclick='verVentanaEditarUsuario()' id='btnEditarUsuario'
-style='background-color:#b7b7b7'>
-</td>
-</tr>
-</table>
-</div>
-</center>
-</div>
-</center>
-</td>
-</tr>
-</table>
-</div>
+                <div class='divMenuf'>
+                  <table style='width:95%;'>
+                    <tr>
+                      <td style='width:100%;text-align:left'>
+                        <p class='pTituloC'>Registro Selecc..</p>
+                        <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccUser'
+                          style='width:200px' />
+                        <input type='button' value='Editar' class='btn5' onclick='verVentanaEditarUsuario()'
+                          id='btnEditarUsuario' style='background-color:#b7b7b7'>
+                        <input type='button' value='Tareas' class='btn5'
+                          onclick='verCerrarVentanaTareasProgramadas(true, false, "");'
+                          style='background-color:#b7b7b7'>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </center>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </table>
+  </div>
 
 <div class='principal2' style='display:none' id='divCambiarMisDatosPersonales'>
 <table style='width:100%;height:100%' id='tdEfectoAbmMisDatos'>
@@ -8416,20 +8408,22 @@ ACCION
 </table>
 </div>
 
-<div class="principal2" id="divAbmDetallesPresupuestoDoc" style="display:none;">
-  <center class="presupuesto-container">
-    <header class="presupuesto-header">
-      <div>
-        <h2>Plan de tratamientos</h2>
-        <p id="presupuestoDocStepLabel" style="margin: 6px 0 0; color: #6b859d; font-size: 13px; font-weight: 700; letter-spacing: 0.04em;">Ventana 1 de 2: Paciente y todos los tratamientos</p>
-      </div>
-      <div class="header-actions">
-        <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
-          onclick="limpirarPresupuesto()">
-        <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
-          onclick='verCerrarAbmDetallesPresupuestoDoc(false);limpirarPresupuesto();'>
-      </div>
-    </header>
+  <div class="principal2" id="divAbmDetallesPresupuestoDoc" style="display:none;">
+    <center class="presupuesto-container">
+      <header class="presupuesto-header">
+        <div>
+          <h2>Plan de tratamientos</h2>
+          <p id="presupuestoDocStepLabel"
+            style="margin: 6px 0 0; color: #6b859d; font-size: 13px; font-weight: 700; letter-spacing: 0.04em;">Ventana
+            1 de 2: Paciente y todos los tratamientos</p>
+        </div>
+        <div class="header-actions">
+          <img src="/GoodVentaAsisCap/iconos/limpiarcampos.png" class="iconoBtn" title="Limpiar"
+            onclick="limpirarPresupuesto()">
+          <img src="/GoodVentaAsisCap/iconos/flechaderecha.png" class="iconoBtn" title="Volver Atrás"
+            onclick='verCerrarAbmDetallesPresupuestoDoc(false)'>
+        </div>
+      </header>
 
     <section id="presupuestoDocLayout" style="display:grid;grid-template-columns: minmax(320px, 2.3fr) minmax(0px, 1.3fr);">
       <div id="presupuestoDocClientePanel">
@@ -8882,69 +8876,70 @@ ACCION
         <div class="tabla-cuotas presupuesto-panel">
           <div class="panel-title">Plan de Cuotas del Plan Provisorio</div>
 
-          <table class="tableCabeceraRegistro">
-            <tbody>
-              <tr>
-                <td class="td_registro" style="width:25%;">
-                  CUOTAS
-                </td>
-                <td class="td_registro" style="width:25%;">
-                  PLAN DE PAGO
-                </td>
-                <td class="td_registro" style="width:25%;">
-                  DESCRIPCION
-                </td>
-                <td class="td_registro" style="width:25%;">
-                  TOTAL
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto_prioritario"></div>
-          <footer class="presupuesto-footer">
-            <label>TOTAL PRESUPUESTO:</label>
-            <input type="text" class="inputText" id="inptTOTALPresupuestoFORMPrioritario" onkeyup="separadordemiles(this)">
-          </footer>
+            <table class="tableCabeceraRegistro">
+              <tbody>
+                <tr>
+                  <td class="td_registro" style="width:25%;">
+                    CUOTAS
+                  </td>
+                  <td class="td_registro" style="width:25%;">
+                    PLAN DE PAGO
+                  </td>
+                  <td class="td_registro" style="width:25%;">
+                    DESCRIPCION
+                  </td>
+                  <td class="td_registro" style="width:25%;">
+                    TOTAL
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="div_cuerpo_table" id="table_vista_detalles_presupuesto_prioritario"></div>
+            <footer class="presupuesto-footer">
+              <label>TOTAL PRESUPUESTO:</label>
+              <input type="text" class="inputText" id="inptTOTALPresupuestoFORMPrioritario"
+                onkeyup="separadordemiles(this)">
+            </footer>
+          </div>
         </div>
-      </div>
-    </section>
-    <section class="form-section presupuesto-panel" style="justify-content: space-around;">
-      <div class="form-row">
-        <label for="inptSelecctPlanPresupuesto">Seleccionar plan</label>
-        <select class="inputSelect" id="inptSelecctPlanPresupuesto">
-          <option value="total">Plan Rehabilitacion Total</option>
-          <option value="prioritario">Plan Provisorio</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label for="inptSelecctModalidadPresupuesto">Seleccionar modalidad</label>
-        <select class="inputSelect" id="inptSelecctModalidadPresupuesto">
-          <option value="CREDITO" selected>Credito</option>
-          <option value="CONTADO">Contado</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <input type="button" value="Concretar venta" class="btn4"
-          onclick='presupuestoAVenta()' style='width:150px;margin-top: 20px;'>
-      </div>
-    </section>
-  </center>
-  <center style="display: none;" id="divListPresupuesto">
-    <div class="presupuesto-container presupuesto-search-modal">
-      <header class="presupuesto-header presupuesto-search-header">
-        <div class="presupuesto-search-title">
-          <h2>Buscar Presupuesto</h2>
+      </section>
+      <section class="form-section presupuesto-panel" style="justify-content: space-around;">
+        <div class="form-row">
+          <label for="inptSelecctPlanPresupuesto">Seleccionar plan</label>
+          <select class="inputSelect" id="inptSelecctPlanPresupuesto">
+            <option value="total">Plan Rehabilitacion Total</option>
+            <option value="urgente">Plan Provisorio</option>
+          </select>
         </div>
-        <div class="header-actions">
-          <button class="btn-icon" onclick="verCerrarFiltrosPresupuesto(true)" title="Filtros">
-            <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
-          </button>
-          <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro"
-           onclick="verCerrarAbmDetallesPresupuesto(true, false)">
-          <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
-            onclick="verCerrarAbmDetallesPresupuesto(false, true)">
+        <div class="form-row">
+          <label for="inptSelecctModalidadPresupuesto">Seleccionar modalidad</label>
+          <select class="inputSelect" id="inptSelecctModalidadPresupuesto">
+            <option value="CREDITO" selected>Credito</option>
+            <option value="CONTADO">Contado</option>
+          </select>
         </div>
-      </header>
+        <div class="form-row">
+          <input type="button" value="Concretar venta" class="btn4" onclick='presupuestoAVenta()'
+            style='width:150px;margin-top: 20px;'>
+        </div>
+      </section>
+    </center>
+    <center style="display: none;" id="divListPresupuesto">
+      <div class="presupuesto-container presupuesto-search-modal">
+        <header class="presupuesto-header presupuesto-search-header">
+          <div class="presupuesto-search-title">
+            <h2>Buscar Presupuesto</h2>
+          </div>
+          <div class="header-actions">
+            <button class="btn-icon" onclick="verCerrarFiltrosPresupuesto(true)" title="Filtros">
+              <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
+            </button>
+            <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro"
+              onclick="verCerrarAbmDetallesPresupuesto(true, false)">
+            <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+              onclick="verCerrarAbmDetallesPresupuesto(false, true)">
+          </div>
+        </header>
 
       <section class="presupuesto-panel presupuesto-search-results">
         <div class="presupuesto-search-results-head">
@@ -10988,43 +10983,42 @@ style='width:150px' />
 </table>
 </div>
 
-<div class='principal2' style='display:none' id='divAbmVenta'>
-<table style='width:100%;height:100%;' id='tdEfectoAbmVenta'>
-<tr>
-<td>
-<center>
-<div style='width:1250px;display:;' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<span class='pTituloRepor2' id='pCaja' style='width:100px'>CAJA 01</span>
-<b class='pTituloRepor2' id='pNroFactuaCaja' style='font-size: 30px;cursor:pointer;'
-title='Cambiar Nro de Factura'
-onclick='verOpcionesDeConfigVenta("nro")'  >001-001-000001</b>
-<span class='pTituloRepor2' id='pCajeraVenta'>****</span>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
-title='Limpiar todos los campos' onclick='limpiarcamposventa()' />
-</td>
-<td id='tdImprimirVenta' style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
-title='Imprimir Venta' onclick='vercerrarOpcionesImpresion("1")' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/buscar.png' class='iconoBtn' title='Buscar Venta'
-onclick='vercerrarvistaventas("1")' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
-title='Minimizar Ventana' onclick='minimizarventa("1")' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='verCerrarAbmVenta()' />
-</td>
-</tr>
-</table>
+  <div class='principal2' style='display:none' id='divAbmVenta'>
+    <table style='width:100%;height:100%;' id='tdEfectoAbmVenta'>
+      <tr>
+        <td>
+          <center>
+            <div style='width:1250px;display:;' class='divAbms'>
+              <table class='tableMenuZ'>
+                <tr>
+                  <td style='width:100%;text-align:left'>
+                    <span class='pTituloRepor2' id='pCaja' style='width:100px'>CAJA 01</span>
+                    <b class='pTituloRepor2' id='pNroFactuaCaja' style='font-size: 30px;cursor:pointer;'
+                      title='Cambiar Nro de Factura' onclick='verOpcionesDeConfigVenta("nro")'>001-001-000001</b>
+                    <span class='pTituloRepor2' id='pCajeraVenta'>****</span>
+                  </td>
+                  <td style='width:5%;text-align:center'>
+                    <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
+                      title='Limpiar todos los campos' onclick='limpiarcamposventa()' />
+                  </td>
+                  <td id='tdImprimirVenta' style='width:5%;text-align:center'>
+                    <!--img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
+title='Imprimir Venta' onclick='vercerrarOpcionesImpresion("1")' /-->
+                  </td>
+                  <td style='width:5%;text-align:center'>
+                    <img src='/GoodVentaAsisCap/iconos/buscar.png' class='iconoBtn' title='Buscar Venta'
+                      onclick='vercerrarvistaventas("1")' />
+                  </td>
+                  <td style='width:5%;text-align:center'>
+                    <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana'
+                      onclick='minimizarventa("1")' />
+                  </td>
+                  <td style='width:5%;text-align:center'>
+                    <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
+                      onclick='verCerrarAbmVenta()' />
+                  </td>
+                </tr>
+              </table>
 
 <center>
 <div style='overflow:auto;width:98%'>
@@ -11051,25 +11045,27 @@ placeholder='Telef.' style='width:290px' />
 </div>
 </div>
 
-<div  style='width:98%padding:5px'>
-<div class='divMenuf' style='width:97%'>
-<div class='tbTituloColor' style='height: 130px;width: 98%;'>
-<table  style='width:100%' >
-<tr>
-<td style='width:12%'>
-<p class='pTituloC' style='color:#fff'>Comprobante </p>
-<select class="inputSelect" id="inptSeleccTipoComprobanteVenta" style='width:150px;' onchange='SeleccTipoComprobanteVenta(this)'>
-<option value="NOTA DE VENTA">NOTA DE VENTA</option>
-<option value="FACTURA">FACTURA</option>
-</select>
-</td>
-<td style='width:12%'>
-<p class='pTituloC' style='color:#fff' >Tipo de Venta</p>
-<select class="inputSelect" id="inptSeleccTipoVenta" style='width:150px' onchange='OpcionesTipoVenta(this)'>
-<option value="CREDITO">CREDITO</option>
-<option value="CONTADO">CONTADO</option>
-</select>
-</td>
+                  <div style='width:98%padding:5px'>
+                    <div class='divMenuf' style='width:97%'>
+                      <div class='tbTituloColor' style='height: 130px;width: 98%;'>
+                        <table style='width:100%'>
+                          <tr>
+                            <td style='width:12%'>
+                              <p class='pTituloC' style='color:#fff'>Comprobante </p>
+                              <select class="inputSelect" id="inptSeleccTipoComprobanteVenta" style='width:150px;'
+                                onchange='SeleccTipoComprobanteVenta(this)'>
+                                <option value="NOTA DE VENTA">NOTA DE VENTA</option>
+                                <!-- <option value="FACTURA">FACTURA</option> -->
+                              </select>
+                            </td>
+                            <td style='width:12%'>
+                              <p class='pTituloC' style='color:#fff'>Tipo de Venta</p>
+                              <select class="inputSelect" id="inptSeleccTipoVenta" style='width:150px'
+                                onchange='OpcionesTipoVenta(this)'>
+                                <option value="CREDITO">CREDITO</option>
+                                <option value="CONTADO">CONTADO</option>
+                              </select>
+                            </td>
 
 <td style='width:22%'>
 <p class='pTituloC' style='color:#fff'>Solicitud Credito </p>
@@ -22572,23 +22568,23 @@ onclick='buscarvistaaperturacierrecaja()' />
             </div>
         </div>
 
-        <div class='catalogo-header-right'>
-		<button class="btn-filtro" id="btnTema" onclick="toggleTema()">
-			🌙
-		</button>
-            <button class='btn-icon' onclick='vercerrarModalFiltrosAgenda(true)' title='Filtros'>
-                <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn' />
-            </button>
-            <button class='btn-icon' onclick='vercerrarModalNuevaCita(true)' title='Nueva cita'>
-                <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' />
-            </button>
-            <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
-                <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' />
-            </button>
-            <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios();limpiarFichaPacienteCalendario();' title='Cerrar'>
-                <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' />
-            </button>
-        </div>
+      <div class='catalogo-header-right'>
+        <button class="btn-filtro" id="btnTema" onclick="toggleTema()">
+          🌙
+        </button>
+        <button class='btn-icon' onclick='vercerrarModalFiltrosAgenda(true)' title='Filtros'>
+          <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn' />
+        </button>
+        <button class='btn-icon' onclick='vercerrarModalNuevaCita(true)' title='Nueva cita'>
+          <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' />
+        </button>
+        <button class='btn-icon' onclick='minimizarAgendaConsultorios()' title='Minimizar'>
+          <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' />
+        </button>
+        <button class='btn-icon btn-close' onclick='cerrarAgendaConsultorios()' title='Cerrar'>
+          <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' />
+        </button>
+      </div>
     </div>
 
     <div class='catalogo-toolbar'>
@@ -22659,7 +22655,10 @@ onclick='buscarvistaaperturacierrecaja()' />
     </div>
 </div>
 
-<div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;" onclick="vercerrarModalFiltrosAgenda(false)"></div>
+  <div class='modal-filtros-overlay' id='overlayFiltrosAgenda' onclick='vercerrarModalFiltrosAgenda(false)'
+    style='display:none;'></div>
+  <div class="modal-filtros-overlay" id="overlayFiltrosAgenda" style="display:none;"
+    onclick="vercerrarModalFiltrosAgenda(false)"></div>
 
 <div class="modal-filtros-catalogo" id="modalFiltrosAgenda" style="display:none;">
     <div class="modal-filtros-box modal-agenda-pro">
@@ -22846,10 +22845,10 @@ onclick='buscarvistaaperturacierrecaja()' />
           </section>
         </div>
 
-        <div class='modal-filtros-footer'>
-            <button class='btn-filtro' onclick='vercerrarModalAbmConsultorioAgenda(false)'>Cancelar</button>
-            <button class='btn-accion-principal' onclick='verificarAbmConsultorioAgenda()'>Guardar</button>
-        </div>
+      <div class='modal-filtros-footer'>
+        <button class='btn-filtro' onclick='vercerrarModalAbmConsultorioAgenda(false)'>Cancelar</button>
+        <button class='btn-accion-principal' onclick='verificarAbmConsultorioAgenda()'>Guardar cita</button>
+      </div>
     </div>
 </div>
 
@@ -28659,88 +28658,223 @@ id="table_vista_SoliCredito"></div>
 
 
 
-<div class='principal2' style='display:none' id='divVistaSolicitudDescuento'>
-<table style='width:100%;height:100%;' id='tdEfectoVistaSolicitudDescuento'>
-<tr>
-<td>
-<center>
-<div style='min-height:500px;width:70%;display:'
-class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Buscar <b style='font-size: 30px;' >Solicitud Descuento</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png'
-class='iconoBtn' title='Cerrar Ventana'
-onclick='vercerrarvistaSolicitudDescuento("","")' />
-</td>
-</tr>
-</table>
-<br>
-<center>
-<div class='divMenuf'>
-<table style='width:95%'>
-<tr>
-<td style='width:99%'>
-<p class='pTituloC'
->Buscar :
-</p>
-<input style='width:220px' class='inputText' type='text' placeholder='Buscar producto' id='inptBuscarVistaDescuento' onkeyup="if(event.keyCode == 13){buscarvistaSolicitudDesccuento()}" />
-<input type="button" value="Buscar"  class="btn4" onclick="buscarvistaSolicitudDesccuento()">
-</td>
-</tr>
-</table>
-<br>
-<center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro"
-style="width:5%;">
-#
-</td>
-<td class="td_registro"
-style="width:30%;">
-PRODUCTO
-</td>
-<td class="td_registro"
-style="width:5%;">
-CANTIDAD.
-</td>
-<td class="td_registro"
-style="width:10%;">
-PRECIO.
-</td>
-<td class="td_registro"
-style="width:20%;">
-APROBADO POR.
-</td>
-<td class="td_registro"
-style="width:15%;">
-FECHA.
-</td>
-<td class="td_registro"
-style="width:15%;">
-ESTADO.
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table"
-id="table_vista_Descuento"></div>
-<br>
-</center>
-</div>
-</center>
-<br>
-</div>
-</center>
-</td>
-</tr>
-</table>
-</div>
+  <div class='principal2' style='display:none' id='divVistaSolicitudDescuento'>
+    <table style='width:100%;height:100%;' id='tdEfectoVistaSolicitudDescuento'>
+      <tr>
+        <td>
+          <center>
+            <div style='min-height:500px;width:70%;display:' class='divAbms'>
+              <table class='tableMenuZ'>
+                <tr>
+                  <td style='width:100%;text-align:left'>
+                    <p class='pTituloB'>Buscar <b style='font-size: 30px;'>Solicitud Descuento</b></p>
+                  </td>
+                  <td style='width:5%;text-align:center'>
+                    <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
+                      onclick='vercerrarvistaSolicitudDescuento("","")' />
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <center>
+                <div class='divMenuf'>
+                  <table style='width:95%'>
+                    <tr>
+                      <td style='width:99%'>
+                        <p class='pTituloC'>Buscar :
+                        </p>
+                        <input style='width:220px' class='inputText' type='text' placeholder='Buscar producto'
+                          id='inptBuscarVistaDescuento'
+                          onkeyup="if(event.keyCode == 13){buscarvistaSolicitudDesccuento()}" />
+                        <input type="button" value="Buscar" class="btn4" onclick="buscarvistaSolicitudDesccuento()">
+                      </td>
+                    </tr>
+                  </table>
+                  <br>
+                  <center>
+                    <table class="tableCabeceraRegistro">
+                      <tbody>
+                        <tr>
+                          <td class="td_registro" style="width:5%;">
+                            #
+                          </td>
+                          <td class="td_registro" style="width:30%;">
+                            PRODUCTO
+                          </td>
+                          <td class="td_registro" style="width:5%;">
+                            CANTIDAD.
+                          </td>
+                          <td class="td_registro" style="width:10%;">
+                            PRECIO.
+                          </td>
+                          <td class="td_registro" style="width:20%;">
+                            APROBADO POR.
+                          </td>
+                          <td class="td_registro" style="width:15%;">
+                            FECHA.
+                          </td>
+                          <td class="td_registro" style="width:15%;">
+                            ESTADO.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div class="div_cuerpo_table" id="table_vista_Descuento"></div>
+                    <br>
+                  </center>
+                </div>
+              </center>
+              <br>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+
+
+
+  <div class='principal2' style='display:none;width:100%;' id='divAbmAdministradorTareas'>
+    <center class='presupuesto-container presupuesto-search-modal' id='divListTareasProgramadas'>
+      <header class='presupuesto-header presupuesto-search-header'>
+        <div class='presupuesto-search-title'>
+          <h2>Listado de Tareas Programadas</h2>
+        </div>
+        <div class='header-actions'>
+          <button class='btn-icon' onclick='verCerrarFiltrosTareasProgramadas(true)' title='Filtros'>
+            <img src='/GoodVentaAsisCap/iconos/etiquetafiltrar.png' class='iconoBtn'>
+          </button>
+          <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Anadir registro'
+            onclick='limpiarCamposTareasProgramadas();verCerrarVentanaTareasProgramadas(true, true)'>
+          <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
+            onclick='verCerrarVentanaTareasProgramadas(false, false)'>
+        </div>
+      </header>
+
+      <input type='hidden' id='inptTotalRegistoTareasProgramadas'>
+
+      <section class='presupuesto-panel presupuesto-search-results'>
+        <table class='tableCabeceraRegistro'>
+          <tbody>
+            <tr>
+              <td class='td_registro' style='width:8%;'>#</td>
+              <td class='td_registro' style='width:37%;'>TAREA</td>
+              <td class='td_registro' style='width:15%;'>HORA</td>
+              <td class='td_registro' style='width:15%;'>ESTADO</td>
+              <td class='td_registro' style='width:15%;'>REALIZADO</td>
+              <td class='td_registro' style='width:10%;'>USUARIO</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class='divTablesScrool' style='height:350px;display:grid;grid-template-rows:auto;'>
+          <div class='div_cuerpo_table presupuesto-search-table' id='table_vista_tareas_programadas'></div>
+        </div>
+      </section>
+
+      <div class='modal-filtros-overlay' id='overlayFiltrosTareasProgramadas' style='display:none;height:80vw;'>
+        <div class='modal-filtros-catalogo' id='modalFiltrosTareasProgramadas' style='position:initial;'>
+          <div class='modal-filtros-box modal-agenda-pro'>
+            <div class='modal-filtros-header'>
+              <div class='modal-header-info'>
+                <p class='modal-etiqueta'>Panel de filtros</p>
+                <h3>Filtros de tareas</h3>
+              </div>
+              <button type='button' class='btn-cerrar-modal'
+                onclick='verCerrarFiltrosTareasProgramadas(false)'>&times;</button>
+            </div>
+
+            <div class='modal-filtros-body agenda-filtros-grid'>
+              <div class='filtro-grupo filtro-destacado'>
+                <label for='inptBuscarNombreTareasProgramadas'>Tarea</label>
+                <input type='text' id='inptBuscarNombreTareasProgramadas'
+                  class='catalogo-selectBuscador input-filtro-pro' placeholder='Escriba el nombre de la tarea...'
+                  onkeyup='if(event.keyCode == 13){verCerrarFiltrosTareasProgramadas(false);buscarVistaTareas()}'>
+              </div>
+
+              <div class='filtro-grupo'>
+                <label for='inptBuscarEstadoTareasProgramadas'>Estado</label>
+                <select id='inptBuscarEstadoTareasProgramadas' class='catalogo-selectBuscador input-filtro-pro'>
+                  <option value=''>Todos</option>
+                  <option value='pendiente'>Pendiente</option>
+                  <option value='completada'>Completada</option>
+                  <option value='inactivo'>Inactivo</option>
+                </select>
+              </div>
+
+              <div class='filtro-grupo'>
+                <label for='inptBuscarFechaInicioTareasProgramadas'>Fecha inicio</label>
+                <input type='date' id='inptBuscarFechaInicioTareasProgramadas'
+                  class='catalogo-selectBuscador input-filtro-pro'>
+              </div>
+
+              <div class='filtro-grupo'>
+                <label for='inptBuscarFechaFinTareasProgramadas'>Fecha fin</label>
+                <input type='date' id='inptBuscarFechaFinTareasProgramadas'
+                  class='catalogo-selectBuscador input-filtro-pro'>
+              </div>
+
+              <div class='filtro-grupo'>
+                <label for='inptBuscarIdTareasProgramadas'>Cod. de tarea</label>
+                <input type='text' id='inptBuscarIdTareasProgramadas' class='catalogo-selectBuscador input-filtro-pro'
+                  placeholder='Ingrese el codigo de tarea...'>
+              </div>
+            </div>
+
+            <div class='modal-filtros-footer'>
+              <button type='button' class='btn-filtro btn-secundario'
+                onclick='limpiarFiltrosTareasProgramadas()'>Limpiar</button>
+              <button type='button' class='btn-accion-principal btn-principal-pro'
+                onclick='verCerrarFiltrosTareasProgramadas(false);buscarVistaTareas();'>Aplicar filtros</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </center>
+
+    <center class='presupuesto-container' id='divAbmTareasProgramadas' style='display:none;width: 700px;'>
+      <header class='presupuesto-header'>
+        <h2>Tarea Programada</h2>
+        <div class='header-actions'>
+          <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar'
+            onclick='limpiarCamposTareasProgramadas()'>
+          <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras'
+            onclick='verCerrarVentanaTareasProgramadas(false, true)'>
+          <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana'
+            onclick='verCerrarVentanaTareasProgramadas(false, false)'>
+        </div>
+      </header>
+
+      <section class='form-section presupuesto-panel'>
+        <div class='panel-title' style='width:100%;'>Datos de la tarea</div>
+        <div class='form-row flex-grow' style='flex:1 1 320px;'>
+          <label>Tarea* :</label>
+          <input type='text' class='inputText' id='inptNombreTareasProgramadas'
+            onkeyup='if(event.keyCode == 13){guardarDatosTareaProgramada()}'>
+        </div>
+        <div class='form-row' style='flex:0 0 150px;'>
+          <label>Hora :</label>
+          <input type='time' class='inputText' id='inptHoraTareasProgramadas'>
+        </div>
+        <div class='form-row' style='flex:0 0 170px;'>
+          <label>Estado :</label>
+          <select class='inputSelect' id='inptEstadoTareasProgramadas'>
+            <option value='pendiente'>Pendiente</option>
+            <option value='completada'>Completada</option>
+            <option value='inactivo'>Inactivo</option>
+          </select>
+        </div>
+        <div class='form-row' style='flex:0 0 220px;'>
+          <label>Fecha realizado :</label>
+          <input type='datetime-local' class='inputText' id='inptFechaRealizadoTareasProgramadas' disabled>
+        </div>
+        <div class='form-row' style='flex:0 0 170px;'>
+          <input type='button' value='Guardar datos' class='btn4' id='btnAbmTareasProgramadas'
+            onclick='guardarDatosTareaProgramada()' style='width:150px;margin-top:20px;'>
+        </div>
+      </section>
+    </center>
+  </div>
 
 <div class='principal2' style='display:none' id='divAuditoria'>
 <table style='width:100%;height:100%' id='tdEfectoAuditoria' >
