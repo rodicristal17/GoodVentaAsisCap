@@ -23025,7 +23025,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 <div class='modal-filtros-catalogo' id='modalDetalleAgenda' style='display:none;'>
     <div class='modal-filtros-box modal-detalle-agenda-box'>
         <div class='modal-filtros-header'>
-            <h3>Detalle del agendamiento</h3>
+            <h3 id="detAgendaTitulo">Detalle del agendamiento</h3>
             <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda();limpiarFichaPacienteCalendario();ventanaAnterior.pop();'>×</button>
         </div>
 
@@ -23071,12 +23071,18 @@ onclick='buscarvistaaperturacierrecaja()' />
                 </div>
 
                 <div class='detalle-item detalle-item-full'>
+                    <span class='detalle-label'>Tratamiento asignado</span>
+                    <div class='detalle-valor'>
+                      <span id='detAgendaTratamientoAsignado'></span>
+                      <input type="button" value="Asignar tratamiento" class="btn4" onclick="verCerrarAsignarTratamiento(true)" style="width:fit-content;padding: 6px 12px;">
+                    </div>
+                </div>
+                <div class='detalle-item detalle-item-full'>
                     <span class='detalle-label'>Doctor/a</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaPresupuesto'></span>
                       <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;padding: 6px 12px;">
                       <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;padding: 6px 12px;">
-                      <input type="button" value="Asignar tratamiento" class="btn4" onclick="verCerrarAsignarTratamiento(true)" style="width:fit-content;padding: 6px 12px;">
                     </div>
                 </div>
             </div>

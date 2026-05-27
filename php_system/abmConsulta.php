@@ -231,7 +231,9 @@ $sql= "SELECT
 		pr.nombre_producto,
 		vt.cod_venta,
 		vt.num_factura,
-		a.cod_detalle_ventaFK
+        vt.apodo,
+		a.cod_detalle_ventaFK,
+        (SELECT nombre_persona FROM persona WHERE cod_persona = vt.cod_clienteFK) AS nombre_cliente
 	from agenda a
 	inner join venta vt on vt.cod_clienteFK = a.id_paciente
 	inner join detalle_venta dtv on dtv.cod_ventaFK = vt.cod_venta
@@ -261,6 +263,8 @@ while ($row= mysqli_fetch_assoc($result))
 	$progreso_porcentaje = mb_convert_encoding((string)($row['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1');
 	$nombre_producto = mb_convert_encoding((string)($row['nombre_producto']), 'UTF-8', 'ISO-8859-1');
 	$num_factura = mb_convert_encoding((string)($row['num_factura']), 'UTF-8', 'ISO-8859-1');
+	$apodo = mb_convert_encoding((string)($row['apodo']), 'UTF-8', 'ISO-8859-1');
+	$nombre_cliente = mb_convert_encoding((string)($row['nombre_cliente']), 'UTF-8', 'ISO-8859-1');
 	$cod_detalle_ventaFK = mb_convert_encoding((string)($row['cod_detalle_ventaFK']), 'UTF-8', 'ISO-8859-1');
 	$seleccionado = ($cod_detalle_ventaFK == $cod_detalle) ? " tratamiento-agenda-card--activo" : "";
 	$detalle = trim($nombre_producto." ".$descripcion);
@@ -268,10 +272,13 @@ while ($row= mysqli_fetch_assoc($result))
 
 	$pagina .= "
 	<div class='tratamiento-agenda-card".$seleccionado."' onclick='seleccionarTratamientoAgenda(this)'
+        style= 'background:linear-gradient(90deg, rgba(76,175,80,.28) 0%, rgba(76,175,80,.28) $progreso_porcentaje%, #f2f2f2 $progreso_porcentaje%, #f2f2f2 100%);'
 		data-id='".$cod_detalle."'
 		data-nombre='".$detalleAttr."'>
 		<div class='tratamiento-agenda-card__top'>
-			<strong>".$detalleAttr."</strong>
+			<strong>".$nombre_cliente.($apodo == '' ? "" : " ($apodo)")."</strong>
+            <br>
+			<span>".$detalleAttr."</span>
 		</div>
 		<div class='tratamiento-agenda-card__meta'>
 			<span>Num. venta: ".htmlspecialchars($num_factura, ENT_QUOTES, 'UTF-8')."</span>

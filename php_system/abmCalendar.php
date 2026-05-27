@@ -900,6 +900,7 @@ function cargarAgenda($mysqli){
     $sqlConsultorios = "
         SELECT  c.id_consultorio,
             c.nombre,
+            c.cod_localFk,
             (SELECT nombre_persona FROM persona WHERE cod_persona= c.cod_doctorFK) AS nombre_doctor,
             c.descripcion,
             c.cod_doctorFK,
@@ -923,6 +924,7 @@ function cargarAgenda($mysqli){
         $consultorios[] = array(
             "id" => (int)$row["id_consultorio"],
             "cod_doctorFK" => (int)$row["cod_doctorFK"],
+            "cod_localFk" => (int)$row["cod_localFk"],
             "nombre" => normalizarTextoUtf8($row["nombre"]),
             "nombre_doctor" => normalizarTextoUtf8($row["nombre_doctor"]),
             "color" => $row["color"] != '' ? $row["color"] : "#7c3aed",
@@ -1059,10 +1061,17 @@ function cargarAgenda($mysqli){
         );
     }
 
+    // --- AGREGADO: Obtener los feriados del día ---
+    $feriados = obtenerDiasFeriados($mysqli, array(
+        "fecha" => $fecha,
+        "cod_local" => $cod_local
+    ));
+
     echo json_encode(array(
         "1" => "exito",
         "consultorios" => $consultorios,
-        "eventos" => $eventos
+        "eventos" => $eventos,
+        "feriados" => $feriados /* <-- AGREGADO */
     ));
     exit;
 }

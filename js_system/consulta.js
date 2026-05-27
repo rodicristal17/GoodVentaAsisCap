@@ -2443,8 +2443,8 @@ function vincularTratamientoCalendario(id_agenda, cod_tratamiento) {
 				if (Respuesta == true) {
 					ver_vetana_informativa("TRATAMIENTO VINCULADO CORRECTAMENTE","", "info");
 					verCerrarAsignarTratamiento(false);
-					if (document.getElementById("detAgendaPresupuesto") && nombreTratamientoAgendaSeleccionado != "") {
-						document.getElementById("detAgendaPresupuesto").innerHTML = nombreTratamientoAgendaSeleccionado + "<br>";
+					if (document.getElementById("detAgendaTratamientoAsignado") && nombreTratamientoAgendaSeleccionado != "") {
+						document.getElementById("detAgendaTratamientoAsignado").innerHTML = nombreTratamientoAgendaSeleccionado + "<br>";
 					}
 					if (typeof cargarAgendaConsultoriosDesdePHP === "function") {
 						cargarAgendaConsultoriosDesdePHP(function () {
