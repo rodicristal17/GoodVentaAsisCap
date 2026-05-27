@@ -669,14 +669,36 @@ $json = json_encode($tareas_gantt);
             });
         }
 
-        // =====================================================
-        // NUEVO: Eliminar tarea con confirmación
-        // =====================================================
-        function eliminarTarea(id, nombre) {
-            if (confirm('¿Eliminar la tarea "' + nombre + '"?\n\nEsta acción no se puede deshacer.')) {
-                window.location.href = '.../php_system/Grant.php' + id;
-            }
-        }
+        
+       function eliminarTarea(id, nombre) {
+    if (confirm('¿Eliminar la tarea "' + nombre + '"?\n\nEsta acción no se puede deshacer.')) {
+        
+        fetch('../php_system/Grant.php?delete=' + id)
+            .then(response => {
+                if (response.ok) {
+                    
+                    document.querySelectorAll('.task-row').forEach(function(fila) {
+                        const btnEliminar = fila.querySelector('a[title="Eliminar"]');
+                        if (btnEliminar && btnEliminar.getAttribute('onclick').includes('eliminarTarea(' + id + ',')) {
+                            fila.remove();
+                        }
+                    });
+                    const index = allTasks.findIndex(t => t.id == id || t.id === String(id));
+                    if (index !== -1) allTasks.splice(index, 1);
+                    aplicarFiltros();
+
+                    alert('Tarea eliminada correctamente.');
+                } else {
+                    alert('Error al eliminar la tarea.');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error de conexión al eliminar.');
+            });
+    }
+
+}
 
         // Edición y Formulario
         function editarTarea(tarea) {
