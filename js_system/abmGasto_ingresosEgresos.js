@@ -158,6 +158,9 @@ function obtenerdatosabmGasto(datostr) {
 	let imagen= $(datostr).children('td[id="td_datos_12"]').html();
 	imagen= imagen ? imagen : '/GoodVentaAsisCap/iconos/imagenphoto.png';
     document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ imagen +")";
+	let documentoFirmado= $(datostr).children('td[id="td_datos_25"]').html();
+	documentoFirmado= documentoFirmado ? documentoFirmado : '/GoodVentaAsisCap/iconos/imagenphoto.png';
+    document.getElementById('imgdocumentoFirmadoGasto').style.backgroundImage= "url("+ documentoFirmado +")";
 }
 
 function verCerrarAutorizacionEgreso(mostrar) {
@@ -423,6 +426,8 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("nrocuenta", nrocuenta)
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
+	datos.append("foto_documento_firmado", fotoDocumentoFirmadoGasto);
+    datos.append("ext_documento_firmado", extDocumentoFirmadoGasto);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
 	datos.append("cantCuotas", cantCuotas);
 	datos.append("periodicidad", periodicidad);
@@ -779,6 +784,8 @@ function comprobarLimiteMotivo(cod_motivo, cod_local) {
 
 var fotoGasto= "";
 var extGasto= "";
+var fotoDocumentoFirmadoGasto= "";
+var extDocumentoFirmadoGasto= "";
 function subirImagenGasto(cod_abmGasto) {
     obtener_datos_user()
 	var datos = new FormData();
@@ -789,6 +796,8 @@ function subirImagenGasto(cod_abmGasto) {
     datos.append("idgastos", cod_abmGasto);
     datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
+	datos.append("foto_documento_firmado", fotoDocumentoFirmadoGasto);
+    datos.append("ext_documento_firmado", extDocumentoFirmadoGasto);
     
     var OpAjax = $.ajax({
 		data: datos,
@@ -1003,12 +1012,21 @@ function imprimirRegistroEgresoIngreso() {
 	var estado = document.getElementById("inptEstadoGasto").value;
 	var imagen = document.getElementById("imgfotoGasto").style.backgroundImage || "";
 	imagen = imagen.replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
+	var imagenDocumentoFirmado = document.getElementById("imgdocumentoFirmadoGasto").style.backgroundImage || "";
+	imagenDocumentoFirmado = imagenDocumentoFirmado.replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
 
 	var comprobante = "";
 	if (imagen != "" && imagen.indexOf("imagenphoto.png") == -1) {
 		comprobante = "<div style='margin-top:18px;page-break-inside:avoid;'>"
 			+ "<p class='pTituloC' style='font-weight:bold;margin-bottom:8px;'>COMPROBANTE ADJUNTO</p>"
 			+ "<img src='" + textoSeguroImpresion(imagen) + "' style='max-width:100%;max-height:420px;border:1px solid #d7d7d7;padding:6px;box-sizing:border-box;'>"
+			+ "</div>";
+	}
+	var documentoFirmado = "";
+	if (imagenDocumentoFirmado != "" && imagenDocumentoFirmado.indexOf("imagenphoto.png") == -1) {
+		documentoFirmado = "<div style='margin-top:18px;page-break-inside:avoid;'>"
+			+ "<p class='pTituloC' style='font-weight:bold;margin-bottom:8px;'>DOCUMENTO FIRMADO</p>"
+			+ "<img src='" + textoSeguroImpresion(imagenDocumentoFirmado) + "' style='max-width:100%;max-height:420px;border:1px solid #d7d7d7;padding:6px;box-sizing:border-box;'>"
 			+ "</div>";
 	}
 
@@ -1037,6 +1055,7 @@ function imprimirRegistroEgresoIngreso() {
 		+ filaDatoImpresionEgresoIngreso("Fecha autorizacion", document.getElementById("inptFechaAutorizacionEgreso").value)
 		+ "</table>"
 		+ comprobante
+		+ documentoFirmado
 		+ "<table style='width:100%;margin-top:70px;border-collapse:collapse;font-size:12px;page-break-inside:avoid;'>"
 		+ "<tr>"
 		+ "<td style='width:50%;text-align:center;padding:0 28px;'>"
@@ -1224,7 +1243,10 @@ function limpiarcamposGasto() {
 	seleccionarLocalUSer()
 	fotoGasto= "";
 	extGasto= "";
+	fotoDocumentoFirmadoGasto= "";
+	extDocumentoFirmadoGasto= "";
     document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
+    document.getElementById('imgdocumentoFirmadoGasto').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
 }
 
 /* ABM MOTIVO EN EGRESO/INGRESO */

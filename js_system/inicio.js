@@ -34186,6 +34186,10 @@ function readFileProducto(input) {
 				fotoGasto= e.target.result;
 				extGasto= file_extension;
 				break;
+			case 'documentoFirmadoGasto':
+				fotoDocumentoFirmadoGasto= e.target.result;
+				extDocumentoFirmadoGasto= file_extension;
+				break;
 		}
  		$(elemento).css({"background-image":"url('"+e.target.result+"')"})
 
@@ -34225,6 +34229,10 @@ function eliminarFoto() {
 		case 'fotoGasto':
 			fotoGasto= "";
 			extGasto= "";
+			break;
+		case 'documentoFirmadoGasto':
+			fotoDocumentoFirmadoGasto= "";
+			extDocumentoFirmadoGasto= "";
 			break;
 	}
 	const elemento= "div[id=img"+ controlFoto +"]";

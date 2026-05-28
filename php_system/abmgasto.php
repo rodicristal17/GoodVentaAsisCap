@@ -110,7 +110,13 @@ if ($operacion=='cargar_imagen') {
 	$idgastos=$_POST['idgastos'];
 	$foto=$_POST['foto'];
 	$ext=$_POST['ext'];
+	$foto_documento_firmado= isset($_POST['foto_documento_firmado']) ? $_POST['foto_documento_firmado'] : '';
+	$ext_documento_firmado= isset($_POST['ext_documento_firmado']) ? $_POST['ext_documento_firmado'] : '';
 	subirImagenGasto($idgastos, $foto, $ext);
+	subirDocumentoFirmadoGasto($idgastos, $foto_documento_firmado, $ext_documento_firmado);
+	$informacion =array("1" => "exito", "2" => $idgastos);
+	echo json_encode($informacion);	
+	exit;
 }
 
 if($operacion=="buscar")
@@ -397,6 +403,7 @@ if ($operacion == "obtenerGastosAsociados") {
 			<td  id='' style='display: none;'>".$gast['nombrelocal']."</td>
 			<td  id='td_datos_7' style='display:none;'>".$gast['cod_local']."</td>
 			<td  id='td_datos_12' style='display:none;'>".$gast['url1']."</td>
+			<td  id='td_datos_25' style='display:none;'>".$gast['url_documento_firmado']."</td>
 			<td  id='td_datos_13' style='display:none;'>".$gast['descripcion']."</td>
 			<td  id='td_datos_14' style='display:none;'>".$gast['motivo']."</td>
 			<td  id='td_datos_15' style='display:none;'>".$gast['cod_interConsultaFK']."</td>
@@ -959,27 +966,41 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	exit;
 }
 
-function subirImagenGasto($idgastos, $foto, $ext) {
-	$ruta= NULL;
-	if (!empty($foto) || !empty($ext)) {
-		$foto = substr($foto, strpos($foto, ",") + 1);
-		$foto = base64_decode($foto);
-		$donde = "../fotos/fotosGastos/";
-		$id_foto = $idgastos;
-		$id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
-		$ruta = "/GoodVentaAsisCap/fotos/fotosGastos/" . $idgastos . $id_f . "." . $ext;
+function guardarArchivoGasto($idgastos, $foto, $ext, $columna, $prefijo= '') {
+	if ($columna != 'url1' && $columna != 'url_documento_firmado') {
+		return false;
 	}
+	if (empty($foto) && empty($ext)) {
+		return true;
+	}
+
+	$ruta= NULL;
+	$foto = substr($foto, strpos($foto, ",") + 1);
+	$foto = base64_decode($foto);
+	$donde = "../fotos/fotosGastos/";
+	$id_foto = $prefijo.$idgastos;
+	$id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
+	$ruta = "/GoodVentaAsisCap/fotos/fotosGastos/" . $prefijo . $idgastos . $id_f . "." . $ext;
 	
 	$mysqli=conectar_al_servidor();
-	$consulta="Update gastos set url1='$ruta' where idgastos='$idgastos' ";	
+	$consulta="Update gastos set $columna=? where idgastos=? ";	
 	
 	$stmt = $mysqli->prepare($consulta);
+	$stmt->bind_param('si', $ruta, $idgastos);
 	if ( ! $stmt->execute()) {
 		echo "Error";
 		exit;
 	}
 
 	return true;
+}
+
+function subirImagenGasto($idgastos, $foto, $ext) {
+	return guardarArchivoGasto($idgastos, $foto, $ext, 'url1');
+}
+
+function subirDocumentoFirmadoGasto($idgastos, $foto, $ext) {
+	return guardarArchivoGasto($idgastos, $foto, $ext, 'url_documento_firmado', 'firmado_');
 }
 
 function sumarMesesRespetandoDia($fechaBase, $mesesASumar, $diaObjetivo) {
@@ -1416,6 +1437,9 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 $foto=$_POST['foto'];
 $ext=$_POST['ext'];
 subirImagenGasto($idgastos, $foto, $ext);
+$foto_documento_firmado= isset($_POST['foto_documento_firmado']) ? $_POST['foto_documento_firmado'] : '';
+$ext_documento_firmado= isset($_POST['ext_documento_firmado']) ? $_POST['ext_documento_firmado'] : '';
+subirDocumentoFirmadoGasto($idgastos, $foto_documento_firmado, $ext_documento_firmado);
 
 if($operacion=="editar")
 {
@@ -1515,7 +1539,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 	}
 		
 	$sql= "Select g.arreglo,g.monto,g.motivo as descripcion,g.fecha,g.estado,g.cod_usuario,g.idgastos,g.tipo,g.cod_proyecto_gastoFK,
-	g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
+	g.cod_local,g.nroboleta,g.banco,g.nrocuenta,g.url1,g.url_documento_firmado,g.cod_interConsultaFK,g.modalidad,g.codCaja,g.codApertura,
 	g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,g.cod_mensajeFK,
 	(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 	(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
@@ -1557,6 +1581,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				'nrocuenta' => mb_convert_encoding((string)($valor['nrocuenta']), 'UTF-8', 'ISO-8859-1'),
 				'arreglo' => mb_convert_encoding((string)($valor['arreglo']), 'UTF-8', 'ISO-8859-1'),
 				'url1' => mb_convert_encoding((string)($valor['url1']), 'UTF-8', 'ISO-8859-1'),
+				'url_documento_firmado' => mb_convert_encoding((string)($valor['url_documento_firmado']), 'UTF-8', 'ISO-8859-1'),
 				'categoria' => mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1'),
 				'cod_usuario_autoriz' => mb_convert_encoding((string)($valor['cod_usuario_autoriz']), 'UTF-8', 'ISO-8859-1'),
 				'fecha_autoriz' => mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1'),
@@ -1622,6 +1647,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			'nrocuenta' => "",
 			'arreglo' => "",
 			'url1' => "",
+			'url_documento_firmado' => "",
 			'categoria' => "ingreso",
 			'cod_usuario_autoriz' => "",
 			'fecha_autoriz' => "",
@@ -1770,6 +1796,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$nrocuenta=mb_convert_encoding((string)($valor['nrocuenta']), 'UTF-8', 'ISO-8859-1');
 			$arreglo=mb_convert_encoding((string)($valor['arreglo']), 'UTF-8', 'ISO-8859-1');
 			$url1=mb_convert_encoding((string)($valor['url1']), 'UTF-8', 'ISO-8859-1');
+			$url_documento_firmado=mb_convert_encoding((string)($valor['url_documento_firmado']), 'UTF-8', 'ISO-8859-1');
 			$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
 			$cod_usuario_autoriz = mb_convert_encoding((string)($valor['cod_usuario_autoriz']), 'UTF-8', 'ISO-8859-1');
 			$fecha_autoriz = mb_convert_encoding((string)($valor['fecha_autoriz']), 'UTF-8', 'ISO-8859-1');
@@ -1840,6 +1867,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
 					<td  id='td_datos_12' style='display:none'>".$url1."</td>
+					<td  id='td_datos_25' style='display:none'>".$url_documento_firmado."</td>
 					<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 					<td  id='td_datos_14' style='display:none'>".$motivo."</td>
 					<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
@@ -1876,6 +1904,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  id='td_datos_5' style='display:none'>".$estado."</td>
 				<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
 				<td  id='td_datos_12' style='display:none'>".$url1."</td>
+				<td  id='td_datos_25' style='display:none'>".$url_documento_firmado."</td>
 				<td  id='td_datos_13' style='display:none'>".$descripcion."</td>
 				<td  id='td_datos_14' style='display:none'>".$motivo."</td>
 				<td  id='td_datos_15' style='display:none'>".$cod_interConsultaFK."</td>
