@@ -102,6 +102,7 @@ function verVentanaEditarGasto(vent_anterior= "") {
 	verCerrarVentanaAbmGasto(true, false)
 }
 var idAbmGasto = "";
+var usuarioCreadorEgresoIngreso = "";
 function obtenerdatosabmGasto(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
@@ -124,9 +125,11 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('inptArregloGasto').value = $(datostr).children('td[id="td_datos_11"]').html();
 	document.getElementById('btnAbmGastos').value = "Editar datos";
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
+	document.getElementById('btnImprimirRegistroGastos').style.backgroundColor="";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
+	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').eq(1).html() || "";
 
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
@@ -950,6 +953,107 @@ document.getElementById("DivImprimir").innerHTML=ficha;
      
 }
 
+function textoSeguroImpresion(valor) {
+	return String(valor == null ? "" : valor)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function obtenerFechaHoraImpresionEgresoIngreso() {
+	var f = new Date();
+	var dia = f.getDate();
+	if (dia < 10) {
+		dia = "0" + dia;
+	}
+	var mes = f.getMonth() + 1;
+	if (mes < 10) {
+		mes = "0" + mes;
+	}
+	var hora = f.getHours();
+	if (hora < 10) {
+		hora = "0" + hora;
+	}
+	var min = f.getMinutes();
+	if (min < 10) {
+		min = "0" + min;
+	}
+	return f.getFullYear() + "-" + mes + "-" + dia + " " + hora + ":" + min;
+}
+
+function filaDatoImpresionEgresoIngreso(titulo, valor) {
+	return "<tr>"
+		+ "<td style='width:32%;padding:8px;border:1px solid #d7d7d7;background:#f6f6f6;font-weight:bold;'>" + titulo + "</td>"
+		+ "<td style='padding:8px;border:1px solid #d7d7d7;'>" + textoSeguroImpresion(valor) + "</td>"
+		+ "</tr>";
+}
+
+function imprimirRegistroEgresoIngreso() {
+	if (idAbmGasto == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+
+	var concepto = $("select[id=inptMotivoMisGastos]").children(":selected").text();
+	var local = $("select[id=inptlocalMisGastos]").children(":selected").text();
+	var usuario = usuarioCreadorEgresoIngreso || (document.getElementById("ptituloUser2") ? document.getElementById("ptituloUser2").innerHTML : "");
+	var usuarioAutorizacion = document.getElementById("inptUsuarioAutorizacionEgreso").value;
+	var estado = document.getElementById("inptEstadoGasto").value;
+	var imagen = document.getElementById("imgfotoGasto").style.backgroundImage || "";
+	imagen = imagen.replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
+
+	var comprobante = "";
+	if (imagen != "" && imagen.indexOf("imagenphoto.png") == -1) {
+		comprobante = "<div style='margin-top:18px;page-break-inside:avoid;'>"
+			+ "<p class='pTituloC' style='font-weight:bold;margin-bottom:8px;'>COMPROBANTE ADJUNTO</p>"
+			+ "<img src='" + textoSeguroImpresion(imagen) + "' style='max-width:100%;max-height:420px;border:1px solid #d7d7d7;padding:6px;box-sizing:border-box;'>"
+			+ "</div>";
+	}
+
+	var pagina = "<div style='background-color:#fff;color:#111;font-family:Arial, sans-serif;width:90%;margin:0 auto;'>"
+		+ "<center><h1 class='pTituloD' style='font-size:18px;margin-bottom:6px;'>REGISTRO DE EGRESO / INGRESO</h1></center>"
+		+ "<table class='TableRepor0' style='width:100%;margin-bottom:16px;'>"
+		+ "<tr>"
+		+ "<td style='width:25%;text-align:left'><p class='pTituloC'><b>Codigo</b></p><p class='pTituloC'>" + textoSeguroImpresion(idAbmGasto) + "</p></td>"
+		+ "<td style='width:25%;text-align:left'><p class='pTituloC'><b>Tipo</b></p><p class='pTituloC'>" + textoSeguroImpresion(document.getElementById("inptTipoGasto").value) + "</p></td>"
+		+ "<td style='width:25%;text-align:left'><p class='pTituloC'><b>Estado</b></p><p class='pTituloC'>" + textoSeguroImpresion(estado) + "</p></td>"
+		+ "<td style='width:25%;text-align:left'><p class='pTituloC'><b>Fecha impresion</b></p><p class='pTituloC'>" + textoSeguroImpresion(obtenerFechaHoraImpresionEgresoIngreso()) + "</p></td>"
+		+ "</tr>"
+		+ "</table>"
+		+ "<table style='width:100%;border-collapse:collapse;font-size:12px;'>"
+		+ filaDatoImpresionEgresoIngreso("Monto", document.getElementById("inptMontoGasto").value + " Gs.")
+		+ filaDatoImpresionEgresoIngreso("Fecha del movimiento", document.getElementById("inptFechaGasto").value)
+		+ filaDatoImpresionEgresoIngreso("Concepto contable", concepto)
+		+ filaDatoImpresionEgresoIngreso("Descripcion", document.getElementById("inptDescripcionGasto").value)
+		+ filaDatoImpresionEgresoIngreso("Local", local)
+		+ filaDatoImpresionEgresoIngreso("Usuario", usuario)
+		+ filaDatoImpresionEgresoIngreso("Nro de boleta", document.getElementById("inptNroBoletaGasto").value)
+		+ filaDatoImpresionEgresoIngreso("Banco", document.getElementById("inptBancoGasto").value)
+		+ filaDatoImpresionEgresoIngreso("Cuenta", document.getElementById("inptCuentaGasto").value)
+		+ filaDatoImpresionEgresoIngreso("Interconsulta", document.getElementById("inptAbmInterConsultaGasto").value)
+		+ filaDatoImpresionEgresoIngreso("Usuario autorizacion", usuarioAutorizacion)
+		+ filaDatoImpresionEgresoIngreso("Fecha autorizacion", document.getElementById("inptFechaAutorizacionEgreso").value)
+		+ "</table>"
+		+ comprobante
+		+ "<table style='width:100%;margin-top:70px;border-collapse:collapse;font-size:12px;page-break-inside:avoid;'>"
+		+ "<tr>"
+		+ "<td style='width:50%;text-align:center;padding:0 28px;'>"
+		+ "<div style='border-top:1px solid #111;padding-top:8px;min-height:38px;'>" + textoSeguroImpresion(usuario) + "<br><b>Firma responsable del registro</b></div>"
+		+ "</td>"
+		+ "<td style='width:50%;text-align:center;padding:0 28px;'>"
+		+ "<div style='border-top:1px solid #111;padding-top:8px;min-height:38px;'>" + textoSeguroImpresion(usuarioAutorizacion) + "<br><b>Firma responsable de autorizacion</b></div>"
+		+ "</td>"
+		+ "</tr>"
+		+ "</table>"
+		+ "</div>";
+
+	localStorage.setItem("reporte", pagina);
+	localStorage.setItem("tipo", "ticket");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
+}
+
 function checkfiltroshistorialegresoingreso(d){
 	if(d=="1"){
 	document.getElementById('inptCheckingresoegreso1').checked=true
@@ -1103,6 +1207,7 @@ function limpiarcamposGasto() {
 	document.getElementById('inptCantCuotaGasto').value = "";
 	document.getElementById('inptPeriodicidadGasto').value = "";
 	document.getElementById('btnEditarGastos').style.backgroundColor="#b7b7b7";
+	document.getElementById('btnImprimirRegistroGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor="#b7b7b7";
 	document.getElementById('inptEstadoGasto').value = "Activo";
@@ -1114,6 +1219,7 @@ function limpiarcamposGasto() {
 	document.getElementById('inptIdGasto').value = "";
 	document.getElementById('inptProyectoGasto').value = "";
 	cod_interConsulta= "";
+	usuarioCreadorEgresoIngreso = "";
 	idAbmGasto = "";
 	seleccionarLocalUSer()
 	fotoGasto= "";

@@ -3929,6 +3929,7 @@ function ImprimirExtracto() {
 
 function ordenimpresion(ventana){
 	var pagina=""
+	var tipoReporte="reporte"
 		var f = new Date();
 	var dia =f.getDate()
 	if(dia<10){
@@ -4341,6 +4342,7 @@ document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementByI
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_abm_Sueldo").innerHTML
 }
 if (ventana == "gastos") {
+	tipoReporte="ticket"
 	
 		pagina =
 "<table class='TableRepor0' style='width:100%'>"
@@ -5212,7 +5214,7 @@ document.getElementById("tbDatosImpresiones").innerHTML=""
 document.getElementById("divPieImpresiones").innerHTML=""
 
 	 localStorage.setItem("reporte", documento);
-	   localStorage.setItem("tipo", "reporte");
+	   localStorage.setItem("tipo", tipoReporte);
 	 window.open("/GoodVentaAsisCap/system/reportInformes.html");
 	 
 	 return false
