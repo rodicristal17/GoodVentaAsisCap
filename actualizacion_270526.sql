@@ -16,11 +16,3 @@ CREATE TABLE tareas (
     FOREIGN KEY (cod_usuario_asignadoFK) REFERENCES usuario(cod_usuario)
 );
 
--- Hasta aca subi 
-CREATE TABLE tarea_usuario (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tarea_id INT,
-    cod_usuario INT(11),
-    FOREIGN KEY (cod_usuario) REFERENCES usuario(cod_usuario),
-    FOREIGN KEY (tarea_id) REFERENCES tareas(id)
-);
