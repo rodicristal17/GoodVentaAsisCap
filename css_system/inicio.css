@@ -3965,12 +3965,22 @@ text-align: justify;
 }
 
 .perfil-app__foto {
+    width: 200px;
     height: 200px;
     aspect-ratio: 1/1;
     object-fit: cover;
+    object-position: center;
+    display: block;
     border-radius: 100px;
     border: solid 3px #6a6a6a;
     background-color: #fff;
+}
+
+#imgFotoPerfilMisDatos,
+#imgFotoPerfil1 {
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
 }
 
 .perfil-app__editar {
@@ -5701,5 +5711,385 @@ text-align: justify;
 
     .asignar-tarea-modal__btn-confirmar {
         width: 100%;
+    }
+}
+
+/* Panel lateral de usuario compacto */
+.perfil-app {
+    width: 35%;
+    min-width: 320px;
+    vertical-align: top;
+    padding: 8px 10px !important;
+    border-left: 1px solid #dbe3ea !important;
+    background: #f8fafc !important;
+    box-sizing: border-box;
+}
+
+.perfil-widget {
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    display: grid;
+    gap: 8px;
+    color: #172033;
+}
+
+.perfil-widget__usuario,
+.perfil-widget__jornada,
+.perfil-tareas {
+    background: #ffffff !important;
+    border: 1px solid #e4e7ec !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08) !important;
+}
+
+.perfil-widget__usuario {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.perfil-widget__avatar-wrap {
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.perfil-app__foto {
+    width: 64px !important;
+    height: 64px !important;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    border-radius: 50% !important;
+    border: 2px solid #e4e7ec !important;
+    background-color: #f8fafc !important;
+}
+
+.perfil-app__editar {
+    position: absolute;
+    right: -4px !important;
+    bottom: -4px !important;
+    width: 24px !important;
+    height: 24px !important;
+    padding: 4px !important;
+    border-radius: 8px !important;
+    border: 1px solid #ffffff;
+    background: #eef2f7 !important;
+    box-shadow: 0 5px 12px rgba(15, 23, 42, 0.18);
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.perfil-widget__info {
+    min-width: 0;
+}
+
+.perfil-widget__nombre {
+    margin: 0;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.perfil-widget__rol {
+    margin: 2px 0 0;
+    color: #667085;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.perfil-widget__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+}
+
+.perfil-chip {
+    align-items: center;
+    min-height: 22px;
+    padding: 3px 8px !important;
+    border-radius: 999px !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.1;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.perfil-chip[style*="display: none"] {
+    display: none !important;
+}
+
+.perfil-chip:not([style*="display: none"]) {
+    display: inline-flex !important;
+}
+
+.perfil-chip--danger {
+    background: #fee2e2 !important;
+    color: #b42318 !important;
+}
+
+.perfil-chip--warning {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.perfil-tareas {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    box-sizing: border-box;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.perfil-tareas__cabecera {
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #eef0f4 !important;
+}
+
+.perfil-tareas__titulo {
+    color: #172033 !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0 !important;
+}
+
+.perfil-tareas__subtitulo {
+    color: #667085 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+}
+
+.perfil-tareas__contador,
+.perfil-tareas__contador--alerta {
+    min-width: auto !important;
+    padding: 5px 9px !important;
+    gap: 5px !important;
+    background: #f2f4f7 !important;
+    color: #475467 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    box-shadow: inset 0 0 0 1px #e4e7ec !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+.perfil-tareas__contador--alerta {
+    background: #fff4ed !important;
+    color: #b42318 !important;
+    box-shadow: inset 0 0 0 1px #fed7aa !important;
+}
+
+.perfil-tareas__contador::after,
+.perfil-tareas__contador--alerta::after {
+    display: none !important;
+}
+
+.perfil-tareas__contador span,
+.perfil-tareas__contador--alerta span {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 !important;
+    background: #98a2b3 !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    box-shadow: none !important;
+}
+
+.perfil-tareas__contador--alerta span {
+    background: #f04438 !important;
+}
+
+.perfil-tareas__lista {
+    display: grid;
+    gap: 5px;
+    max-height: 190px;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+.perfil-tareas__item {
+    grid-template-columns: 18px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px !important;
+    border-radius: 8px !important;
+    background: #f8fafc !important;
+    border: 1px solid #eef0f4 !important;
+}
+
+.perfil-tareas__item:hover {
+    background: #f2f4f7 !important;
+}
+
+.perfil-tareas__check {
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+}
+
+.perfil-tareas__descripcion {
+    color: #172033 !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.perfil-tareas__meta {
+    color: #667085 !important;
+    font-size: 10.5px !important;
+    line-height: 1.2 !important;
+}
+
+.perfil-tareas__observacion {
+    margin-top: 5px !important;
+    padding: 6px 8px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+}
+
+.perfil-tareas__estado {
+    padding: 4px 7px !important;
+    font-size: 9.5px !important;
+    border-radius: 999px !important;
+}
+
+.perfil-tareas__vacio {
+    margin-top: 0 !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+}
+
+.perfil-widget__jornada {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.perfil-widget__clock {
+    min-width: 0;
+}
+
+.perfil-widget__hora.inputReloj2,
+.perfil-widget__hora {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #172033 !important;
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-align: left !important;
+    box-shadow: none !important;
+}
+
+.perfil-widget__fecha {
+    margin: 2px 0 0 !important;
+    color: #667085 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+}
+
+.perfil-widget__btn {
+    width: auto !important;
+    min-width: 118px;
+    height: 34px !important;
+    margin: 0 !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    white-space: nowrap;
+}
+
+.perfil-widget__registro {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    margin: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    font-size: 12px !important;
+}
+
+.perfil-widget__registro .tableCabeceraRegistro td {
+    padding: 5px 8px !important;
+    background: #f2f4f7 !important;
+    color: #475467 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+}
+
+.perfil-widget__registro .tableRegistroSelec td {
+    padding: 6px 8px !important;
+    background: #ffffff !important;
+    color: #172033 !important;
+    border-bottom: 1px solid #eef0f4;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+.perfil-widget__oculto {
+    display: block;
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .perfil-app {
+        width: 100% !important;
+        min-width: 0;
+        border-left: 0 !important;
+        border-top: 1px solid #dbe3ea !important;
+    }
+
+    .perfil-widget {
+        max-width: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .perfil-widget__usuario,
+    .perfil-widget__jornada {
+        grid-template-columns: 1fr;
+    }
+
+    .perfil-widget__usuario {
+        justify-items: center;
+        text-align: center;
+    }
+
+    .perfil-widget__chips {
+        justify-content: center;
+    }
+
+    .perfil-widget__btn {
+        width: 100% !important;
     }
 }

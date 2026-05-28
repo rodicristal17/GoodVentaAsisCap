@@ -1,6 +1,7 @@
 var agendaConsultoriosData = {
     consultorios: [],
-    eventos: []
+    eventos: [],
+    feriados: []
 };
 var timeoutBuscarHistorialPacienteCalendario = null;
 
@@ -72,7 +73,33 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
                 if (Respuesta == true) {
                     agendaConsultoriosData.consultorios = datosRespuesta["consultorios"] || [];
                     agendaConsultoriosData.eventos = datosRespuesta["eventos"] || [];
+                    agendaConsultoriosData.feriados = datosRespuesta["feriados"] || [];
 					 
+                    for(var f = 0; f < agendaConsultoriosData.feriados.length; f++) {
+                        var feriado = agendaConsultoriosData.feriados[f];
+                        for(var c = 0; c < agendaConsultoriosData.consultorios.length; c++) {
+                            var consultorio = agendaConsultoriosData.consultorios[c];
+                            
+                            if(feriado.cod_localFK === '' || String(feriado.cod_localFK) === String(consultorio.cod_localFk)) {
+                                agendaConsultoriosData.eventos.push({
+                                    id: 'feriado_' + feriado.id + '_' + consultorio.id,
+                                    consultorio: consultorio.id,
+                                    paciente: "FERIADO: " + feriado.descripcion,
+                                    fecha: feriado.fecha,
+                                    inicio: "07:00",
+                                    fin: "22:30",
+                                    estado: "FERIADO",
+                                    ci_cliente: "",
+                                    nombre_doctor: "",
+                                    nombres_tratamiento: "",
+                                    nombre_tratamiento_pendiente: "",
+                                    motivo: feriado.descripcion,
+                                    motivo_limpio: feriado.descripcion
+                                });
+                            }
+                        }
+                    }
+
                     renderListaConsultoriosAgenda();
                     cargarSelectConsultoriosAgenda();
                     cargarAgendaConsultorios();
@@ -838,6 +865,7 @@ function obtenerEventosFiltradosConsultorio(fecha, estado, consultoriosSeleccion
 
     return lista;
 }
+
 function renderEventoAgenda(e, eventosMismoConsultorio){
     var altura = calcularAlturaEvento(e.inicio, e.fin);
     var top = calcularTopEvento(e.inicio);
@@ -851,34 +879,24 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
 
     var MiColor = "#0d6efd";
 
-
-    if(e.estado == "AGENDADO"){
-        MiColor = "#80c583";
-    }	
-	else if(e.estado == "CONFIRMADO"){
-        MiColor = "#3b833e";
-    } 	
-	else if(e.estado == "ATENDIDO"){
-        MiColor = "#833b3b";
-    }	
-	else if(e.estado == "CANCELADO"){
-        MiColor = "#6c757d";
-	}	
-	else if(e.estado == "ENESPERA"){
-        MiColor = "#dcb645";
-    }
-	else if(e.estado == "CONFIRMADOCONDEUDA"){
-        MiColor = "#07488f";
-    }	
-	else if(e.estado == "PRIMERACONSULTA"){
-        MiColor = "#9d457c";
-    }
+    if(e.estado == "AGENDADO"){ MiColor = "#80c583"; }	
+    else if(e.estado == "CONFIRMADO"){ MiColor = "#3b833e"; } 	
+    else if(e.estado == "ATENDIDO"){ MiColor = "#833b3b"; }	
+    else if(e.estado == "CANCELADO"){ MiColor = "#6c757d"; }	
+    else if(e.estado == "ENESPERA"){ MiColor = "#dcb645"; }
+    else if(e.estado == "CONFIRMADOCONDEUDA"){ MiColor = "#07488f"; }	
+    else if(e.estado == "PRIMERACONSULTA"){ MiColor = "#9d457c"; }
+    // --- AGREGADO PARA FERIADOS ---
+    else if(e.estado == "FERIADO"){ MiColor = "rgba(255, 0, 0, 0.7)"; } // Rojo translúcido
 	 
-    // Evalua si tiene los datos basicos
+    // Evalua si tiene los datos basicos (No lo evaluamos para feriados)
     let advertencia_datos_incompletos= '';
-    if (!e.idzonaFk || e.idzonaFk == 0 || !e.whapp || !e.ci_cliente) {
+    if (e.estado !== "FERIADO" && (!e.idzonaFk || e.idzonaFk == 0 || !e.whapp || !e.ci_cliente)) {
         advertencia_datos_incompletos= '<i class="fa-solid fa-triangle-exclamation" style="color: gold;padding-right: 5px;"></i>';
     }
+
+    var zIndex = (e.estado === "FERIADO") ? "0" : "10"; // Los feriados van al fondo
+    var cursorEstilo = (e.estado === "FERIADO") ? "cursor: default;" : "";
 
     var estilos = ""
         + "background:" + MiColor + ";"
@@ -888,36 +906,40 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         + "height:" + altura + "px;"
         + "right:auto;"
         + "overflow:visible;"
-		+ "border:1px solid #ccc;";
+        + "border:1px solid #ccc;"
+        + "z-index:" + zIndex + ";"
+        + cursorEstilo;
 
+    // IMPORTANTE: Envolvemos e.id en comillas (\"" + e.id + "\") para que acepte los IDs de texto de los feriados.
     return ''
     + "<div class='agenda-evento estado-" + e.estado + "' "
-    + "draggable='true' "
+    + "draggable='" + (e.estado === "FERIADO" ? "false" : "true") + "' "
     + "data-id='" + e.id + "' "
     + "data-consultorio='" + e.consultorio + "' "
     + "data-fecha='" + e.fecha + "' "
     + "data-inicio='" + e.inicio + "' "
     + "data-fin='" + e.fin + "' "
     + "style='" + estilos + "' "
-    + "onclick='clickEventoAgenda(" + e.id + ", event)'>"
+    + "onclick='clickEventoAgenda(\"" + e.id + "\", event)'>"
     + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
-    + "<span class='ci_cliente' style='display: none;'>" + e.ci_cliente + "</span>"
-    + "<span class='hora'>" + e.nombre_tratamiento_pendiente + "</span>"
-        + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
-        + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
-/*        + "<div class='agenda-evento-resize' "
-            + "data-id='" + e.id + "' "
-            + "title='Arrastrar para alargar o acortar horario'></div>"*/
+    + "<span class='ci_cliente' style='display: none;'>" + (e.ci_cliente || '') + "</span>"
+    + "<span class='hora'>" + (e.nombre_tratamiento_pendiente || '') + "</span>"
+    + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
+    + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
     + "</div>";
 }
-function clickEventoAgenda(id, ev){
-    if(ev && ev.defaultPrevented){
-        return;
-    }
 
-    if(agendaResizeState.clickBloqueado){
-        return;
+function clickEventoAgenda(id, ev){
+    if(ev && ev.defaultPrevented){ return; }
+    if(agendaResizeState.clickBloqueado){ return; }
+
+    // --- AGREGADO: Si es un feriado, solo mostramos un mensaje o lo ignoramos ---
+    if (String(id).indexOf('feriado_') === 0) {
+        if(typeof ver_vetana_informativa === "function"){
+            ver_vetana_informativa("Este día está registrado como feriado.");
+        }
+        return; 
     }
 
     verDetalleAgenda(id);
@@ -933,11 +955,16 @@ function eventosSeSolapan(e1, e2){
 }
 
 function calcularPosicionLateral(evento, listaEventosMismoConsultorio){
+    if(evento.estado === "FERIADO"){
+        return { total: 1, indice: 0 }; 
+    }
+
     var conflictos = [];
     var i;
 
     for(i = 0; i < listaEventosMismoConsultorio.length; i++){
-        if(eventosSeSolapan(evento, listaEventosMismoConsultorio[i])){
+        // No verificamos colisiones con los feriados
+        if(listaEventosMismoConsultorio[i].estado !== "FERIADO" && eventosSeSolapan(evento, listaEventosMismoConsultorio[i])){
             conflictos.push(listaEventosMismoConsultorio[i]);
         }
     }
@@ -1031,6 +1058,7 @@ function calcularTotalesResumenAgenda(fecha, estado, consultorioFiltro){
 
     for(i = 0; i < agendaConsultoriosData.eventos.length; i++){
         e = agendaConsultoriosData.eventos[i];
+        if (e.estado === "FERIADO") continue;
         if(
             e.fecha === fecha &&
             (estado === '' || e.estado === estado) &&
@@ -1610,8 +1638,9 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaId').innerHTML = evento.id;
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
     document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
+    document.getElementById('detAgendaTratamientoAsignado').innerHTML = (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
+    document.getElementById('detAgendaTitulo').innerHTML = "Agenda de " + evento.paciente + " "+ (evento.nombres_tratamiento ? (', para ' + evento.nombres_tratamiento) : '');
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
-    document.getElementById('detAgendaPresupuesto').innerHTML += (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
@@ -1730,7 +1759,7 @@ function onAgendaDragStart(ev){
     }
 
     var id = this.getAttribute('data-id');
-    if(!id){
+    if(!id || String(id).indexOf('feriado_') === 0){
         ev.preventDefault();
         return;
     }

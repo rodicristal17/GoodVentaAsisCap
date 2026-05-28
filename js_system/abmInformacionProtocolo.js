@@ -138,6 +138,9 @@ function buscarVistaInformacionProtocolos2(id, nombre, estado, usuario_creador, 
                         Array.from(datos["3"]).forEach(function (elemento) {
                             mensajes_protocolos_empresariales.push(elemento.descripcion);
                         });
+                        if (typeof mostrarMensajeDelDiaProtocolo === "function") {
+                            mostrarMensajeDelDiaProtocolo();
+                        }
                     }
                 }
             } catch (error) {
