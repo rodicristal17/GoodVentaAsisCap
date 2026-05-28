@@ -82,13 +82,21 @@ $stmt = $pdo->query("SELECT * FROM tareas ORDER BY fecha_inicio ASC");
 $tareas_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $stmtUsuarios = $pdo->query("
-    SELECT u.cod_usuario, p.nombre_persona
+    SELECT u.cod_usuario, p.nombre_persona, u.url
     FROM usuario u
     INNER JOIN persona p ON p.cod_persona = u.cod_usuario
     WHERE u.estado = 'Activo'
     ORDER BY p.nombre_persona ASC
 ");
 $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+$fotos_usuarios = [];
+foreach ($usuarios as $usuario) {
+    $nombre_usuario_foto = trim((string) $usuario['nombre_persona']);
+    $url_usuario_foto = trim((string) $usuario['url']);
+    if ($nombre_usuario_foto !== '') {
+        $fotos_usuarios[mb_strtolower($nombre_usuario_foto, 'UTF-8')] = $url_usuario_foto;
+    }
+}
 
 $tareas_ordenadas = [];
 $visitados = [];
@@ -154,19 +162,47 @@ foreach ($tareas_ordenadas as $t) {
 
 
     // Si está completada, forzamos verde
-    if ($t['estado'] == 'Completada')
-        $class = 'bar-completada';
+    $estadoTarea = trim((string) $t['estado']);
+    $estadoVisual = $estadoTarea !== '' ? $estadoTarea : 'Pendiente';
+    $classEstado = 'bar-estado-pendiente';
+    $fechaFinTs = strtotime($t['fecha_fin']);
+    $hoyTs = strtotime(date('Y-m-d'));
+
+    if ($estadoTarea == 'Completada') {
+        $classEstado = 'bar-estado-completada';
+        $estadoVisual = 'Completada';
+    } elseif ($fechaFinTs !== false && $fechaFinTs < $hoyTs) {
+        $classEstado = 'bar-estado-vencida';
+        $estadoVisual = 'Vencida';
+    } elseif ($estadoTarea == 'En Progreso') {
+        $classEstado = 'bar-estado-progreso';
+        $estadoVisual = 'En progreso';
+    } elseif ($fechaFinTs !== false && $fechaFinTs <= strtotime('+2 days', $hoyTs)) {
+        $classEstado = 'bar-estado-proxima';
+        $estadoVisual = 'Proxima a vencer';
+    }
+
+    $responsableTarea = trim((string) $t['responsable']);
+    $fotoResponsable = $responsableTarea !== ''
+        ? ($fotos_usuarios[mb_strtolower($responsableTarea, 'UTF-8')] ?? '')
+        : '';
+    $nombreBarra = trim($t['titulo_gantt'] . ($responsableTarea !== '' ? ', ' . $responsableTarea : ''));
 
     $tareas_gantt[] = [
         'id' => (string) $t['id'],
-        'name' => $t['titulo_gantt'],
+        'name' => $nombreBarra,
         'start' => $t['fecha_inicio'],
         'end' => $t['fecha_fin'],
         'progress' => (int) $t['progreso'],
         'dependencies' => $t['dependencia'] ? (string) $t['dependencia'] : '',
-        'custom_class' => $class,
+        'custom_class' => $class . ' ' . $classEstado,
         'sucursal' => $t['sucursal'],
-        'responsable' => $t['responsable']
+        'responsable' => $responsableTarea,
+        'estado' => $estadoTarea,
+        'estado_visual' => $estadoVisual,
+        'foto_responsable' => $fotoResponsable,
+        'titulo_original' => $t['titulo_gantt'],
+        'nombre_barra' => $nombreBarra
     ];
 }
 
@@ -443,16 +479,7 @@ $json = json_encode($tareas_gantt);
         }
 
         .header {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            min-height: 58px;
-            padding: 14px 24px;
-            background: var(--grant-panel);
-            border-bottom: 1px solid var(--grant-line);
-            color: var(--grant-ink);
-            font-size: 17px;
-            letter-spacing: 0;
+            display: none;
         }
 
         .header span {
@@ -466,16 +493,81 @@ $json = json_encode($tareas_gantt);
         .container {
             width: 100%;
             margin: 0 auto;
-            padding: 18px;
+            padding: 8px 12px 12px;
         }
 
         .form-card {
-            margin-bottom: 14px;
-            padding: 16px;
+            margin-bottom: 8px;
+            padding: 0;
             border: 1px solid var(--grant-line);
-            border-radius: var(--grant-radius);
+            border-radius: 8px;
             background: var(--grant-panel);
-            box-shadow: var(--grant-shadow);
+            box-shadow: none;
+        }
+
+        .task-form-panel summary {
+            min-height: 34px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: var(--grant-blue);
+            font-size: 12px;
+            font-weight: 800;
+            list-style: none;
+        }
+
+        .task-form-panel summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .task-form-panel summary::before {
+            content: "+";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            margin-right: 7px;
+            border-radius: 50%;
+            background: #eef4ff;
+        }
+
+        .task-form-panel[open] summary::before {
+            content: "-";
+        }
+
+        .task-form-panel form {
+            padding: 0 12px 12px;
+        }
+
+        .gantt-welcome {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 42px;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .gantt-welcome h1 {
+            margin: 0;
+            color: var(--grant-ink);
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .gantt-welcome span {
+            color: var(--grant-blue);
+        }
+
+        .gantt-welcome p {
+            margin: 2px 0 0;
+            color: var(--grant-muted);
+            font-size: 12px;
         }
 
         .form-grid {
@@ -557,8 +649,8 @@ $json = json_encode($tareas_gantt);
         }
 
         .gantt-layout {
-            height: calc(100vh - 176px);
-            min-height: 520px;
+            height: 640px;
+            min-height: 0;
             border: 1px solid var(--grant-line);
             border-radius: var(--grant-radius);
             background: var(--grant-panel);
@@ -569,11 +661,16 @@ $json = json_encode($tareas_gantt);
             width: 42%;
             min-width: 390px;
             border-right: 1px solid var(--grant-line);
-            background: var(--grant-panel);
+            background: #fff;
         }
 
         .task-table {
             table-layout: fixed;
+            background: #fff;
+        }
+
+        .task-table tbody {
+            background: #fff;
         }
 
         .task-table th {
@@ -603,6 +700,7 @@ $json = json_encode($tareas_gantt);
             height: var(--gantt-row-height, 40px);
             padding: 0 12px;
             border-bottom: 1px solid #eef0f4;
+            background: #fff;
             color: #344054;
             font-size: 12px;
         }
@@ -619,7 +717,11 @@ $json = json_encode($tareas_gantt);
             font-weight: 700;
         }
 
-        .task-table tbody tr:hover {
+        .task-table .task-row:nth-child(even) td {
+            background: #fcfcfd;
+        }
+
+        .task-table tbody tr:hover td {
             background: #f8fbff;
         }
 
@@ -737,10 +839,26 @@ $json = json_encode($tareas_gantt);
             font-weight: 700;
         }
 
+        .gantt .grant-avatar {
+            pointer-events: none;
+        }
+
+        .gantt .grant-avatar-fallback {
+            pointer-events: none;
+        }
+
+        .gantt .bar-wrapper .bar-label {
+            dominant-baseline: middle;
+        }
+
         .gantt .lower-text,
         .gantt .upper-text {
             fill: var(--grant-muted);
             font-size: 10px;
+        }
+
+        .gantt-container .popup-wrapper {
+            display: none !important;
         }
 
         .bar-general .bar {
@@ -772,13 +890,83 @@ $json = json_encode($tareas_gantt);
             fill: var(--grant-green) !important;
         }
 
+        .bar-estado-pendiente .bar {
+            fill: #64748b !important;
+        }
+
+        .bar-estado-progreso .bar {
+            fill: #2563eb !important;
+        }
+
+        .bar-estado-proxima .bar {
+            fill: #f59e0b !important;
+        }
+
+        .bar-estado-vencida .bar {
+            fill: #dc2626 !important;
+        }
+
+        .bar-estado-completada .bar {
+            fill: #159947 !important;
+        }
+
+        .bar-estado-pendiente .bar-progress,
+        .bar-estado-progreso .bar-progress,
+        .bar-estado-proxima .bar-progress,
+        .bar-estado-vencida .bar-progress,
+        .bar-estado-completada .bar-progress {
+            fill: rgba(255, 255, 255, 0.28) !important;
+        }
+
+        .gantt-tooltip-custom {
+            position: fixed;
+            z-index: 99999;
+            max-width: 300px;
+            padding: 10px 12px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 8px;
+            background: rgba(17, 24, 39, 0.96);
+            color: #fff;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.12s ease, transform 0.12s ease;
+        }
+
+        .gantt-tooltip-custom.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .gantt-tooltip-custom__title {
+            margin-bottom: 7px;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .gantt-tooltip-custom__meta {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 8px;
+            color: #dbeafe;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .gantt-tooltip-custom__meta b {
+            color: #93c5fd;
+            font-weight: 800;
+        }
+
         @media (max-width: 1280px) {
             .form-grid {
                 grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             }
 
             .gantt-layout {
-                height: calc(100vh - 230px);
+                height: 640px;
             }
         }
 
@@ -910,9 +1098,13 @@ $json = json_encode($tareas_gantt);
         }
 
         .gantt-layout {
-            height: auto !important;
+            height: 640px !important;
             min-height: 0 !important;
             overflow: visible !important;
+        }
+
+        .task-form-panel {
+            padding: 0 !important;
         }
 
         .gantt-svg-container {
@@ -933,7 +1125,8 @@ $json = json_encode($tareas_gantt);
 
 <div class="container">
     
-    <div class="form-card">
+    <details class="form-card task-form-panel" id="task-form-panel">
+        <summary>Nueva tarea</summary>
         <form method="POST" id="taskForm" class="form-grid">
             <input type="hidden" name="id" id="form_id" value="">
             
@@ -997,7 +1190,14 @@ $json = json_encode($tareas_gantt);
                 <button class="btn-clear" type="button" onclick="resetForm()">X</button>
             </div>
         </form>
-    </div>
+    </details>
+
+        <section class="gantt-welcome" aria-label="Bienvenida">
+            <div>
+                <h1>Bienvenido <span id="grant-user-name">usuario</span></h1>
+                <p>Planifica tus actividades y revisa el avance operativo.</p>
+            </div>
+        </section>
 
         <div class="gantt-layout task-list-collapsed" id="gantt-layout">
 
@@ -1060,6 +1260,7 @@ $json = json_encode($tareas_gantt);
                     <div class="controls-divider"></div>
 
                     <strong>Vista:</strong>
+                    <button class="view-btn" id="btn-today" onclick="irHoyGantt()" type="button">Hoy</button>
                     <button class="view-btn active" id="btn-Day" onclick="changeGanttView('Day')">Día</button>
                     <button class="view-btn" id="btn-Week" onclick="changeGanttView('Week')">Semana</button>
                     <button class="view-btn" id="btn-Month" onclick="changeGanttView('Month')">Mes</button>
@@ -1081,6 +1282,7 @@ $json = json_encode($tareas_gantt);
         let gantt;
         let vistaActual = 'Day';
         let idsTareasVisiblesGantt = new Set();
+        let ordenTareasVisiblesGantt = [];
 
         function renderGantt(tasksToRender) {
             document.getElementById('gantt').innerHTML = '';
@@ -1088,7 +1290,8 @@ $json = json_encode($tareas_gantt);
             const horizonTask = allTasks.find(t => t.id === '__horizon__');
             const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
             const tareasRender = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
-            idsTareasVisiblesGantt = new Set(sinHorizon.map(t => String(t.id)));
+            ordenTareasVisiblesGantt = sinHorizon.map(t => String(t.id));
+            idsTareasVisiblesGantt = new Set(ordenTareasVisiblesGantt);
             actualizarTablaDescripcionGantt();
 
             if (tareasRender.length > 0) {
@@ -1117,6 +1320,10 @@ $json = json_encode($tareas_gantt);
                 configurarScrollGantt();
                 setTimeout(sincronizarTablaConBarrasGantt, 180);
                 setTimeout(sincronizarTablaConBarrasGantt, 500);
+                setTimeout(decorarBarrasGanttResponsables, 180);
+                setTimeout(decorarBarrasGanttResponsables, 500);
+                setTimeout(configurarTooltipsGantt, 220);
+                setTimeout(configurarTooltipsGantt, 540);
                 programarCentradoFechaActual();
             } else {
                 document.getElementById('gantt').innerHTML =
@@ -1130,6 +1337,10 @@ $json = json_encode($tareas_gantt);
             setTimeout(posicionarGanttEnHoy, 650);
             setTimeout(posicionarGanttEnHoy, 1200);
             setTimeout(posicionarGanttEnHoy, 2000);
+        }
+
+        function irHoyGantt() {
+            programarCentradoFechaActual();
         }
 
         function mostrarMesEnFechasGantt() {
@@ -1168,6 +1379,8 @@ $json = json_encode($tareas_gantt);
             }
 
             alinearFilasDescripcionConGantt();
+            decorarBarrasGanttResponsables();
+            configurarTooltipsGantt();
         }
 
         function actualizarTablaDescripcionGantt() {
@@ -1196,9 +1409,7 @@ $json = json_encode($tareas_gantt);
                 filasPorId[String(fila.dataset.taskId)] = fila;
             });
 
-            const idsDibujados = obtenerIdsTareasDibujadasGantt();
-            const idsOrdenados = idsDibujados.length ? idsDibujados : Array.from(idsTareasVisiblesGantt);
-            const idsActivos = new Set(idsOrdenados);
+            const idsOrdenados = ordenTareasVisiblesGantt.length ? ordenTareasVisiblesGantt : Array.from(idsTareasVisiblesGantt);
 
             if (spacer) tbody.appendChild(spacer);
 
@@ -1212,12 +1423,6 @@ $json = json_encode($tareas_gantt);
 
                 fila.style.display = '';
                 tbody.appendChild(fila);
-            });
-
-            idsTareasVisiblesGantt.forEach(function (id) {
-                if (idsActivos.has(id) || !filasPorId[id] || idsDibujados.length) return;
-                filasPorId[id].style.display = '';
-                tbody.appendChild(filasPorId[id]);
             });
 
             alinearFilasDescripcionConGantt();
@@ -1247,6 +1452,216 @@ $json = json_encode($tareas_gantt);
                         celda.style.height = '';
                     });
                 }
+                });
+        }
+
+        function obtenerTareaGanttPorId(id) {
+            return allTasks.find(function (tarea) {
+                return String(tarea.id) === String(id);
+            });
+        }
+
+        function obtenerInicialesResponsable(nombre) {
+            const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+            if (!partes.length) return 'U';
+            return partes.slice(0, 2).map(function (parte) {
+                return parte.charAt(0).toUpperCase();
+            }).join('');
+        }
+
+        function truncarTextoBarra(texto, anchoDisponible) {
+            const anchoCaracterAprox = 6.1;
+            const maxCaracteres = Math.floor(anchoDisponible / anchoCaracterAprox);
+
+            if (maxCaracteres < 8) return '';
+            if (String(texto).length <= maxCaracteres) return texto;
+            return String(texto).slice(0, Math.max(0, maxCaracteres - 1)).trimEnd() + '…';
+        }
+
+        function decorarBarrasGanttResponsables() {
+            const svg = document.getElementById('gantt');
+            if (!svg) return;
+
+            document.querySelectorAll('#gantt .grant-avatar, #gantt .grant-avatar-fallback, #gantt .grant-avatar-clip').forEach(function (elemento) {
+                elemento.remove();
+            });
+
+            document.querySelectorAll('#gantt .bar-wrapper[data-id]').forEach(function (wrapper) {
+                const id = wrapper.getAttribute('data-id');
+                if (!id || id === '__horizon__') return;
+
+                const tarea = obtenerTareaGanttPorId(id);
+                if (!tarea) return;
+
+                const barra = wrapper.querySelector('.bar');
+                const etiqueta = wrapper.querySelector('.bar-label');
+                if (!barra || !etiqueta) return;
+                const grupoEtiqueta = etiqueta.parentNode || wrapper;
+
+                const x = Number(barra.getAttribute('x')) || 0;
+                const y = Number(barra.getAttribute('y')) || 0;
+                const ancho = Number(barra.getAttribute('width')) || 0;
+                const alto = Number(barra.getAttribute('height')) || 20;
+                const avatarSize = Math.max(14, Math.min(20, alto - 8));
+                const paddingX = ancho < 80 ? 4 : 7;
+                const avatarX = x + paddingX;
+                const avatarY = y + ((alto - avatarSize) / 2);
+                const textoX = avatarX + avatarSize + 7;
+                const textoY = y + (alto / 2);
+                const anchoTexto = Math.max(0, (x + ancho) - textoX - 6);
+                const textoBarra = truncarTextoBarra(tarea.nombre_barra || tarea.name || '', anchoTexto);
+
+                etiqueta.textContent = textoBarra;
+                etiqueta.setAttribute('x', textoX);
+                etiqueta.setAttribute('y', textoY);
+                etiqueta.setAttribute('text-anchor', 'start');
+                etiqueta.setAttribute('dominant-baseline', 'middle');
+                etiqueta.setAttribute('fill', '#fff');
+                etiqueta.setAttribute('font-size', '10');
+                etiqueta.setAttribute('font-weight', '800');
+                etiqueta.setAttribute('dx', '0');
+                etiqueta.style.textAnchor = 'start';
+                etiqueta.style.pointerEvents = 'none';
+
+                const fondo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                fondo.setAttribute('class', 'grant-avatar-fallback');
+                fondo.setAttribute('cx', avatarX + (avatarSize / 2));
+                fondo.setAttribute('cy', avatarY + (avatarSize / 2));
+                fondo.setAttribute('r', avatarSize / 2);
+                fondo.setAttribute('fill', '#eef4ff');
+                fondo.setAttribute('stroke', 'rgba(255,255,255,0.85)');
+                fondo.setAttribute('stroke-width', '1');
+
+                const iniciales = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                iniciales.setAttribute('class', 'grant-avatar-fallback');
+                iniciales.setAttribute('x', avatarX + (avatarSize / 2));
+                iniciales.setAttribute('y', avatarY + (avatarSize / 2));
+                iniciales.setAttribute('text-anchor', 'middle');
+                iniciales.setAttribute('dominant-baseline', 'middle');
+                iniciales.setAttribute('fill', '#1f5eff');
+                iniciales.setAttribute('font-size', '8');
+                iniciales.setAttribute('font-weight', '800');
+                iniciales.textContent = obtenerInicialesResponsable(tarea.responsable);
+
+                grupoEtiqueta.insertBefore(fondo, etiqueta);
+                grupoEtiqueta.insertBefore(iniciales, etiqueta);
+
+                const foto = String(tarea.foto_responsable || '').trim();
+                if (foto && ancho >= 44) {
+                    const clipId = 'grant-avatar-clip-' + String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                    defs.setAttribute('class', 'grant-avatar-clip');
+
+                    const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+                    clipPath.setAttribute('id', clipId);
+
+                    const clipCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    clipCircle.setAttribute('cx', avatarX + (avatarSize / 2));
+                    clipCircle.setAttribute('cy', avatarY + (avatarSize / 2));
+                    clipCircle.setAttribute('r', avatarSize / 2);
+                    clipPath.appendChild(clipCircle);
+                    defs.appendChild(clipPath);
+                    svg.insertBefore(defs, svg.firstChild);
+
+                    const imagen = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                    imagen.setAttribute('class', 'grant-avatar');
+                    imagen.setAttribute('x', avatarX);
+                    imagen.setAttribute('y', avatarY);
+                    imagen.setAttribute('width', avatarSize);
+                    imagen.setAttribute('height', avatarSize);
+                    imagen.setAttribute('clip-path', 'url(#' + clipId + ')');
+                    imagen.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+                    imagen.setAttribute('href', foto);
+                    imagen.setAttributeNS('http://www.w3.org/1999/xlink', 'href', foto);
+                    imagen.addEventListener('error', function () {
+                        imagen.remove();
+                    });
+                    grupoEtiqueta.insertBefore(imagen, etiqueta);
+                }
+            });
+        }
+
+        function escaparHtml(valor) {
+            return String(valor || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatearFechaLegible(fecha) {
+            if (!fecha) return '-';
+            const partes = String(fecha).split('-');
+            if (partes.length !== 3) return fecha;
+            return partes[2] + '/' + partes[1] + '/' + partes[0];
+        }
+
+        function obtenerTooltipGantt() {
+            let tooltip = document.getElementById('gantt-tooltip-custom');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'gantt-tooltip-custom';
+                tooltip.className = 'gantt-tooltip-custom';
+                document.body.appendChild(tooltip);
+            }
+            return tooltip;
+        }
+
+        function moverTooltipGantt(evento) {
+            const tooltip = obtenerTooltipGantt();
+            const margen = 14;
+            const ancho = tooltip.offsetWidth || 280;
+            const alto = tooltip.offsetHeight || 120;
+            let left = evento.clientX + margen;
+            let top = evento.clientY + margen;
+
+            if (left + ancho > window.innerWidth - 8) {
+                left = evento.clientX - ancho - margen;
+            }
+
+            if (top + alto > window.innerHeight - 8) {
+                top = evento.clientY - alto - margen;
+            }
+
+            tooltip.style.left = Math.max(8, left) + 'px';
+            tooltip.style.top = Math.max(8, top) + 'px';
+        }
+
+        function mostrarTooltipGantt(tarea, evento) {
+            const tooltip = obtenerTooltipGantt();
+            tooltip.innerHTML =
+                '<div class="gantt-tooltip-custom__title">' + escaparHtml(tarea.titulo_original || tarea.name) + '</div>' +
+                '<div class="gantt-tooltip-custom__meta">' +
+                    '<b>Responsable</b><span>' + escaparHtml(tarea.responsable || 'Sin asignar') + '</span>' +
+                    '<b>Estado</b><span>' + escaparHtml(tarea.estado_visual || tarea.estado || 'Pendiente') + '</span>' +
+                    '<b>Fechas</b><span>' + escaparHtml(formatearFechaLegible(tarea.start)) + ' - ' + escaparHtml(formatearFechaLegible(tarea.end)) + '</span>' +
+                    '<b>Sucursal</b><span>' + escaparHtml(tarea.sucursal || '-') + '</span>' +
+                    '<b>Progreso</b><span>' + escaparHtml((tarea.progress || 0) + '%') + '</span>' +
+                '</div>';
+            tooltip.classList.add('visible');
+            moverTooltipGantt(evento);
+        }
+
+        function ocultarTooltipGantt() {
+            const tooltip = document.getElementById('gantt-tooltip-custom');
+            if (tooltip) tooltip.classList.remove('visible');
+        }
+
+        function configurarTooltipsGantt() {
+            document.querySelectorAll('#gantt .bar-wrapper[data-id]').forEach(function (wrapper) {
+                if (wrapper.dataset.tooltipReady === '1') return;
+
+                const id = wrapper.getAttribute('data-id');
+                if (!id || id === '__horizon__') return;
+
+                wrapper.dataset.tooltipReady = '1';
+                wrapper.addEventListener('mouseenter', function (evento) {
+                    const tarea = obtenerTareaGanttPorId(id);
+                    if (tarea) mostrarTooltipGantt(tarea, evento);
+                });
+                wrapper.addEventListener('mousemove', moverTooltipGantt);
+                wrapper.addEventListener('mouseleave', ocultarTooltipGantt);
             });
         }
 
@@ -1268,6 +1683,42 @@ $json = json_encode($tareas_gantt);
 
             const contenedorInterno = contenedorExterno.querySelector('.gantt-container');
             return contenedorInterno || contenedorExterno;
+        }
+
+        function obtenerNombreUsuarioGantt() {
+            const idsNombre = ['pUsuarioCabecera', 'lblUser', 'ptituloUser2', 'bNombreUser', 'nombrePerfilUsuario'];
+            const documentos = [document];
+
+            try {
+                if (window.parent && window.parent !== window && window.parent.document) {
+                    documentos.push(window.parent.document);
+                }
+            } catch (e) {
+            }
+
+            for (const doc of documentos) {
+                for (const id of idsNombre) {
+                    const elemento = doc.getElementById(id);
+                    const nombre = elemento ? elemento.textContent.trim() : '';
+                    if (nombre && nombre.toLowerCase() !== 'usuario') return nombre;
+                }
+            }
+
+            try {
+                const parentUserId = window.parent && window.parent.userid ? window.parent.userid : '';
+                const nombreGuardado = parentUserId ? localStorage.getItem('nombreUsuario' + parentUserId) : '';
+                if (nombreGuardado) return nombreGuardado;
+            } catch (e) {
+            }
+
+            return 'usuario';
+        }
+
+        function actualizarSaludoUsuarioGantt() {
+            const etiquetaUsuario = document.getElementById('grant-user-name');
+            if (etiquetaUsuario) {
+                etiquetaUsuario.textContent = obtenerNombreUsuarioGantt();
+            }
         }
 
         function posicionarGanttEnHoy(intentos = 0) {
@@ -1431,6 +1882,8 @@ $json = json_encode($tareas_gantt);
             document.getElementById('btn-' + mode).classList.add('active');
             mostrarMesEnFechasGantt();
             setTimeout(sincronizarTablaConBarrasGantt, 180);
+            setTimeout(decorarBarrasGanttResponsables, 180);
+            setTimeout(configurarTooltipsGantt, 220);
             programarCentradoFechaActual();
         }
 
@@ -1447,6 +1900,8 @@ $json = json_encode($tareas_gantt);
             setTimeout(function () {
                 mostrarMesEnFechasGantt();
                 sincronizarTablaConBarrasGantt();
+                decorarBarrasGanttResponsables();
+                configurarTooltipsGantt();
                 programarCentradoFechaActual();
             }, 320);
         }
@@ -1498,6 +1953,9 @@ $json = json_encode($tareas_gantt);
 
         // Edición y Formulario
         function editarTarea(tarea) {
+            const panelFormulario = document.getElementById('task-form-panel');
+            if (panelFormulario) panelFormulario.open = true;
+
             document.getElementById('form_id').value = tarea.id;
             document.getElementById('form_title').innerText = 'Editar:';
             document.getElementById('form_titulo').value = tarea.titulo;
@@ -1523,6 +1981,9 @@ $json = json_encode($tareas_gantt);
     window.addEventListener('load', function () {
         document.getElementById('filtro-sucursal').value = 'Todas';
         document.getElementById('filtro-responsable').value = '';
+        actualizarSaludoUsuarioGantt();
+        setTimeout(actualizarSaludoUsuarioGantt, 600);
+        setTimeout(actualizarSaludoUsuarioGantt, 1400);
         actualizarEspaciadorFechasGantt();
         sincronizarTablaConBarrasGantt();
         posicionarGanttEnHoy();

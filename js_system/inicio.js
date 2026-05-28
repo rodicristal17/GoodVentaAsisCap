@@ -305,13 +305,6 @@ window.onload = function () {
 	scrollevents(document.getElementById('divMenuMantenimiento'));
 	var controlactualizacion = 0;
 	var controlMensaje = 0;
-	var mostrandoMensajeProtocolo = false;
-	var ultimaActividadMensajeProtocolo = Date.now();
-	["mousemove", "mousedown", "keydown", "scroll", "touchstart"].forEach(function(evento) {
-		document.addEventListener(evento, function() {
-			ultimaActividadMensajeProtocolo = Date.now();
-		}, true);
-	});
 	var counter = setInterval(timer, 1000);
 	function timer() {
 		if (controlactualizacion == 60) {
@@ -343,36 +336,75 @@ window.onload = function () {
 		}
 		controlMensaje = controlMensaje + 1;
 
-		if (Date.now() - ultimaActividadMensajeProtocolo >= 60000) {
-			mostrarMensajeProtocoloEmpresarialAleatorio();
-		}
 	}
 
-	async function mostrarMensajeProtocoloEmpresarialAleatorio() {
-		if (mostrandoMensajeProtocolo || mensajes_protocolos_empresariales.length == 0) {
-			return;
-		}
-		
-		mostrandoMensajeProtocolo = true;
-		var posicionAleatoria = Math.floor(Math.random() * mensajes_protocolos_empresariales.length);
-		await ver_ventana_confirmacion(mensajes_protocolos_empresariales[posicionAleatoria], "Mensaje de protocolo");
-		mostrandoMensajeProtocolo = false;
-		ultimaActividadMensajeProtocolo = Date.now();
+	setTimeout(mostrarMensajeDelDiaProtocolo, 1500);
+}
+
+function obtenerFechaActualClave() {
+	var fecha = new Date();
+	var mes = String(fecha.getMonth() + 1).padStart(2, "0");
+	var dia = String(fecha.getDate()).padStart(2, "0");
+	return fecha.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function obtenerClaveMensajeDiaProtocolo() {
+	obtener_datos_user();
+	return "mensajeProtocoloDia_" + userid + "_" + obtenerFechaActualClave();
+}
+
+function obtenerIndiceMensajeDiaProtocolo(cantidad) {
+	var base = String(userid || "0") + obtenerFechaActualClave();
+	var total = 0;
+	for (var i = 0; i < base.length; i++) {
+		total += base.charCodeAt(i) * (i + 1);
 	}
+	return cantidad > 0 ? total % cantidad : 0;
+}
+
+function cerrarMensajeDiaProtocolo() {
+	var tarjeta = document.getElementById("mensajeDiaProtocolo");
+	if (!tarjeta) return;
+	tarjeta.classList.remove("mensaje-dia-protocolo--visible");
+	setTimeout(function () {
+		tarjeta.style.display = "none";
+	}, 220);
+}
+
+function mostrarMensajeDelDiaProtocolo() {
+	if (typeof mensajes_protocolos_empresariales === "undefined" || mensajes_protocolos_empresariales.length == 0) {
+		return;
+	}
+
+	var clave = obtenerClaveMensajeDiaProtocolo();
+	if (localStorage.getItem(clave) == "mostrado") {
+		return;
+	}
+
+	var tarjeta = document.getElementById("mensajeDiaProtocolo");
+	var texto = document.getElementById("mensajeDiaProtocoloTexto");
+	if (!tarjeta || !texto) return;
+
+	var indice = obtenerIndiceMensajeDiaProtocolo(mensajes_protocolos_empresariales.length);
+	texto.textContent = mensajes_protocolos_empresariales[indice];
+	localStorage.setItem(clave, "mostrado");
+
+	tarjeta.style.display = "";
+	setTimeout(function () {
+		tarjeta.classList.add("mensaje-dia-protocolo--visible");
+	}, 30);
+
+	setTimeout(cerrarMensajeDiaProtocolo, 14000);
 }
 
 function scrollevents(elemento) {
 			
 			
 			$(elemento).on("scroll", function(){		
-		 var scrollelemento=document.getElementById("divMenuMantenimiento").scrollTop;
-  if (scrollelemento > 120 ) {
-	
-	$("table[id=divEncabezadofixed]").fadeIn(100)
-  } else {
-	document.getElementById('divEncabezadofixed').style.display='none';
-
-  }		
+			var encabezadoFixed = document.getElementById('divEncabezadofixed');
+			if (encabezadoFixed) {
+				encabezadoFixed.style.setProperty('display', 'none', 'important');
+			}
 
 			});
 }
@@ -430,6 +462,38 @@ var cajapredeterminada="";
 var accesosuser;
 var ControlCobradorUser="";
 var CodCobradorUser="";
+
+function normalizarFotoUsuario(urlFoto) {
+	var foto = (urlFoto || "").toString().trim();
+	if (foto == "" || foto == "null" || foto == "undefined") {
+		return "/GoodVentaAsisCap/iconos/sinperfil.png";
+	}
+	return foto;
+}
+
+function aplicarFotoUsuario(urlFoto) {
+	var foto = normalizarFotoUsuario(urlFoto);
+	var imgPerfil = document.getElementById("fotoPerfilUsuario");
+	var imgMisDatos = document.getElementById("imgFotoPerfilMisDatos");
+	var imgAbmPerfil = document.getElementById("imgFotoPerfil1");
+
+	if (imgPerfil) {
+		imgPerfil.onerror = function () {
+			this.onerror = null;
+			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
+		};
+		imgPerfil.src = foto;
+	}
+
+	if (imgMisDatos) {
+		imgMisDatos.style.backgroundImage = "url(" + foto + ")";
+	}
+
+	if (imgAbmPerfil) {
+		imgAbmPerfil.style.backgroundImage = "url(" + foto + ")";
+	}
+}
+
 function buscar_datos_del_usuario() {	
 	verCerrarEfectoCargando("1")
 	//document.getElementById("divPresentacion").style.display = "none"
@@ -489,12 +553,13 @@ $("div[id=divPresentacion]").fadeOut(500);
 					verCerrarEfectoCargando("2")
 					 niveluser = datos["3"];
 					var nombre = datos["2"];
+					localStorage.setItem("nombreUsuario" + userid, nombre);
 					 cod_localFKUSer = datos["4"];
 					 ControlCobradorUser = datos["6"];
 					codEncargadoSolicitud = userid;
 					CodCobradorUser = datos["7"];
  accesosuser=datos["5"];
- fotocliente3= datos["8"];
+ fotocliente3= normalizarFotoUsuario(datos["8"]);
       cajapredeterminada=buscar_datos_url_usuario('c');
 
 	 if(accesosuser["CAMBIARCAJA"]["accion"]!="SI"){
@@ -509,10 +574,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 					document.getElementById('pCajeraVenta').innerHTML = "("+nombre+")"
 						document.getElementById("bNombreUser").innerHTML=nombre	
 						document.getElementById("inptNombreMisDatos").value=nombre;
-						document.getElementById("imgFotoPerfilMisDatos").style.backgroundImage= "url("+fotocliente3+")";
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
 						document.getElementById("inptCedulaMisDatos").value= datos["14"];
-						document.getElementById("fotoPerfilUsuario").src= fotocliente3;
+						aplicarFotoUsuario(fotocliente3);
 						document.getElementById('inptTelefonoMisDatos').value= datos["9"];
 						document.getElementById('inptDireccionMisDatos').value = datos["10"];
 						document.getElementById('inptContactoReferenciaMisDatos').value = datos["12"];
@@ -1094,7 +1158,7 @@ function obtenerdatosabmusuario(datostr) {
 	limpiarHorariosUsuario();
 	cargarHorariosUsuarioDesdeJson($(datostr).children('td[id="td_datos_22"]').text());
 		
-	fotocliente3= $(datostr).children('td[id="td_datos_11"]').html(); 
+	fotocliente3= normalizarFotoUsuario($(datostr).children('td[id="td_datos_11"]').html()); 
 	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
     extcliente3=""; 
 	
@@ -1605,8 +1669,8 @@ function limpiarcamposusuarios() {
 	const fecahActual= new Date();
 	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth()).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
 	
-		$("div[id=imgFotoPerfil1]").css({"background-image":"url()"})
-		fotocliente3="";
+		$("div[id=imgFotoPerfil1]").css({"background-image":"url(/GoodVentaAsisCap/iconos/sinperfil.png)"})
+		fotocliente3="/GoodVentaAsisCap/iconos/sinperfil.png";
 		extcliente3="";
 	
 	document.getElementById('inptDireccionUser').value="";

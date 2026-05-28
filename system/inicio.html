@@ -182,7 +182,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
 <div class='divVentanaMenub' id='divMenuMantenimiento' style='display:none'>
 
-<table class='tableMenupanel'>
+<table class='tableMenupanel' style='display:none'>
 <tr>
 <td style=' padding-left: 33px;'>
 <p class='pTituloPanel'  >Centro de <b style='font-size: 45px;' >Aplicaciones</b></p>
@@ -194,7 +194,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 <div class='divScroll' id='divEfectoMantenimiento'>
 
 
-                  <div style='margin-bottom:50px;margin-top:50px'>
+                  <div style='margin-bottom:0;margin-top:0'>
                  
                     <div class="Panel">
                       <iframe
@@ -202,8 +202,8 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         src="../php_system/Grant.php"
                         width="100%"
                         frameborder="0"
-                        scrolling="no"
-                        style="display:block;width:100%;min-height:600px;border:0;"
+                        scrolling="auto"
+                        style="display:block;width:100%;height:760px;max-height:760px;border:0;"
                         onload="ajustarAltoGrantIframe(this)">
                       </iframe>
                       <script>
@@ -222,13 +222,13 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                                 html ? html.offsetHeight : 0
                               );
 
-                              var nuevoAlto = Math.max(600, alto);
+                              var nuevoAlto = Math.min(760, Math.max(600, alto));
                               var altoActual = parseInt(iframe.style.height, 10) || 0;
                               if (Math.abs(altoActual - nuevoAlto) > 10) {
                                 iframe.style.height = nuevoAlto + 'px';
                               }
                             } catch (e) {
-                              iframe.style.height = '900px';
+                              iframe.style.height = '760px';
                             }
                           }
 
@@ -239,8 +239,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                           try {
                             var doc = iframe.contentDocument || iframe.contentWindow.document;
                             if (iframe._grantResizeObserver) iframe._grantResizeObserver.disconnect();
-                            iframe._grantResizeObserver = new ResizeObserver(aplicarAlto);
-                            iframe._grantResizeObserver.observe(doc.body);
                             iframe.contentWindow.addEventListener('resize', aplicarAlto);
                           } catch (e) {
                           }
@@ -476,34 +474,45 @@ style='display:none' class='divMinimizado'>
 
 <td style='width:35%' class="perfil-app">
 
-    <div class="perfil-app__contenedor">
+    <aside class="perfil-widget">
 
-        <div class="perfil-app__foto-contenedor">
+        <div class="perfil-widget__usuario">
 
-            <div onclick="verCerrarVentanaListadoInterConsulta(true)">
-                <span id="avisoMensajesPendientes" class="badge badge-danger text-uppercase" style="margin-bottom: 10px; display: none;">
-                    Tiene mensajes sin leer.
-                </span>
+            <div class="perfil-widget__avatar-wrap">
+
+                <img id="fotoPerfilUsuario" class="perfil-app__foto" src="/GoodVentaAsisCap/iconos/sinperfil.png" alt="Foto de perfil" />
+
+                <img src="../iconos/editar.png"
+                     alt="Editar perfil"
+                     class="perfil-app__editar"
+                     onclick="verCerrarMisDatos(1);" />
+
             </div>
 
-            <div onclick="verCerrarVentanaListadoInterConsulta(true)">
-                <span id="avisoInterconsultasAbiertos" class="badge badge-warning text-uppercase" style="margin-bottom: 10px; display: none;">
-                    Tiene 0 interconsultas sin cerrar.
-                </span>
+            <div class="perfil-widget__info">
+
+                <p class="perfil-widget__nombre" id="nombrePerfilUsuario"></p>
+                <p class="perfil-widget__rol">Panel de usuario</p>
+
+                <div class="perfil-widget__chips">
+                    <span id="avisoMensajesPendientes"
+                          class="perfil-chip perfil-chip--danger text-uppercase"
+                          style="display: none;"
+                          onclick="verCerrarVentanaListadoInterConsulta(true)">
+                        Tiene mensajes sin leer.
+                    </span>
+
+                    <span id="avisoInterconsultasAbiertos"
+                          class="perfil-chip perfil-chip--warning text-uppercase"
+                          style="display: none;"
+                          onclick="verCerrarVentanaListadoInterConsulta(true)">
+                        Tiene 0 interconsultas sin cerrar.
+                    </span>
+                </div>
+
             </div>
-
-            <img id="fotoPerfilUsuario" class="perfil-app__foto" />
-
-            <img src="../iconos/editar.png" 
-                 alt="Icono" 
-                 class="perfil-app__editar"
-                 onclick="verCerrarMisDatos(1);" />
 
         </div>
-
-        <p class="pTitulo14" id="nombrePerfilUsuario" style="margin:0; margin-top:5px;"></p>
-
-    </div>
 
 
     <!-- INICIO TAREAS ASIGNADAS POR EL ADMINISTRADOR -->
@@ -534,34 +543,34 @@ style='display:none' class='divMinimizado'>
     <!-- FIN TAREAS ASIGNADAS POR EL ADMINISTRADOR -->
 
 
-    <input type="text" id="inptreloj2" class="inputReloj2" />
+    <section class="perfil-widget__jornada">
 
-    <p class="pTitulo16" id="pfechaactual"></p>
+        <div class="perfil-widget__clock">
+            <input type="text" id="inptreloj2" class="inputReloj2 perfil-widget__hora" readonly />
+            <p class="perfil-widget__fecha" id="pfechaactual"></p>
+        </div>
 
-    <br>
-
-    <div style="text-align:center;">
-
-        <input id="btnRegistrarAsistencia" 
-               type="button" 
-               value="Marcar entrada" 
-               class="btn4" 
-               style="width:150px;" 
+        <input id="btnRegistrarAsistencia"
+               type="button"
+               value="Marcar entrada"
+               class="btn4 perfil-widget__btn"
                onclick="registrarAsistencia();" />
 
-        <br>
-
-        <table style="width:80%; font-size:1.5rem;" id="tableRegistroEntrada">
+        <table class="perfil-widget__registro" id="tableRegistroEntrada">
             <thead>
                 <tr class="tableCabeceraRegistro">
-                    <td class="td_registro" style="font-size:1rem;">Fecha de entrada</td>
-                    <td class="td_registro" style="font-size:1rem;">Hora de entrada</td>
+                    <td class="td_registro">Fecha de entrada</td>
+                    <td class="td_registro">Hora de entrada</td>
                 </tr>
             </thead>
             <tbody>
                 <tr class="tableRegistroSelec" style="text-align:center;"></tr>
             </tbody>
         </table>
+
+    </section>
+
+    <div class="perfil-widget__oculto">
 
         <table style="width:290px; display:none;">
             <tr>
@@ -606,6 +615,8 @@ style='display:none' class='divMinimizado'>
         </table>
 
     </div>
+
+    </aside>
 
 </td>
 
@@ -1817,7 +1828,7 @@ class='divMinimizado'></div>
 
 </div>
 
-<table class='tableMenupane2' id='divEncabezadofixed' style='display:none'>
+<table class='tableMenupane2' id='divEncabezadofixed' style='display:none !important'>
 <tr>
 <td>
 <p class='pTituloPanel3'   >Good - Technology Py - Ventas -  <b style='font-size: 30px;' >ASISCAP</b></p>
@@ -29821,6 +29832,72 @@ style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
     </div>
   </div>
 </div>
+
+<style>
+  .mensaje-dia-protocolo {
+    position: fixed;
+    right: 18px;
+    bottom: 88px;
+    z-index: 999998;
+    width: min(360px, calc(100vw - 32px));
+    padding: 14px 16px 14px;
+    border: 1px solid rgba(31, 94, 255, 0.16);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.18);
+    color: #172033;
+    transform: translateY(16px);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .mensaje-dia-protocolo--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .mensaje-dia-protocolo__etiqueta {
+    color: #1f5eff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .mensaje-dia-protocolo__titulo {
+    margin-top: 4px;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .mensaje-dia-protocolo__texto {
+    margin-top: 8px;
+    color: #475467;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .mensaje-dia-protocolo__cerrar {
+    margin-top: 12px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 8px;
+    background: #1f5eff;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+</style>
+
+<div id="mensajeDiaProtocolo" class="mensaje-dia-protocolo" aria-live="polite" style="display:none;">
+  <div class="mensaje-dia-protocolo__etiqueta">Cultura Clinident</div>
+  <div class="mensaje-dia-protocolo__titulo">Mensaje del día</div>
+  <div class="mensaje-dia-protocolo__texto" id="mensajeDiaProtocoloTexto"></div>
+  <button type="button" class="mensaje-dia-protocolo__cerrar" onclick="cerrarMensajeDiaProtocolo()">Entendido</button>
+</div>
+
 <div class="modal fade" id="alertConfirmDialog" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
