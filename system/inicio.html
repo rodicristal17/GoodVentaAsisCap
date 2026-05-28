@@ -197,11 +197,59 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                   <div style='margin-bottom:50px;margin-top:50px'>
                  
                     <div class="Panel">
-                      <iframe src='../php_system/Grant.php';
-                      width="100%"
-                      height="80%"
-                      frameborder="0">
-                    </iframe>
+                      <iframe
+                        id="iframeGrant"
+                        src="../php_system/Grant.php"
+                        width="100%"
+                        frameborder="0"
+                        scrolling="no"
+                        style="display:block;width:100%;min-height:600px;border:0;"
+                        onload="ajustarAltoGrantIframe(this)">
+                      </iframe>
+                      <script>
+                        function ajustarAltoGrantIframe(iframe) {
+                          if (!iframe) return;
+
+                          function aplicarAlto() {
+                            try {
+                              var doc = iframe.contentDocument || iframe.contentWindow.document;
+                              var body = doc.body;
+                              var html = doc.documentElement;
+                              var alto = Math.max(
+                                body ? body.scrollHeight : 0,
+                                body ? body.offsetHeight : 0,
+                                html ? html.scrollHeight : 0,
+                                html ? html.offsetHeight : 0
+                              );
+
+                              var nuevoAlto = Math.max(600, alto);
+                              var altoActual = parseInt(iframe.style.height, 10) || 0;
+                              if (Math.abs(altoActual - nuevoAlto) > 10) {
+                                iframe.style.height = nuevoAlto + 'px';
+                              }
+                            } catch (e) {
+                              iframe.style.height = '900px';
+                            }
+                          }
+
+                          aplicarAlto();
+                          setTimeout(aplicarAlto, 300);
+                          setTimeout(aplicarAlto, 900);
+
+                          try {
+                            var doc = iframe.contentDocument || iframe.contentWindow.document;
+                            if (iframe._grantResizeObserver) iframe._grantResizeObserver.disconnect();
+                            iframe._grantResizeObserver = new ResizeObserver(aplicarAlto);
+                            iframe._grantResizeObserver.observe(doc.body);
+                            iframe.contentWindow.addEventListener('resize', aplicarAlto);
+                          } catch (e) {
+                          }
+                        }
+
+                        window.addEventListener('resize', function () {
+                          ajustarAltoGrantIframe(document.getElementById('iframeGrant'));
+                        });
+                      </script>
                     </div>
                     <table style='width:100%;display: none;'>
                       <tr>
