@@ -6,8 +6,14 @@ CREATE TABLE tareas (
     progreso INT,
     estado VARCHAR(50),
     dependencia INT,
-    sucursal VARCHAR(255),
-    responsable VARCHAR(255)
+    cod_localFK INT(11),
+    cod_usuario_asignadoFK INT(11),
+    cod_usuario_createFK INT(11),
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_edit DATETIME,
+    cod_usuario_editFK INT(11),
+    FOREIGN KEY (cod_localFK) REFERENCES local(cod_local),
+    FOREIGN KEY (cod_usuario_asignadoFK) REFERENCES usuario(cod_usuario)
 );
 
 -- Hasta aca subi 
