@@ -244,6 +244,13 @@ function justificarAsistencia() {
 var registrocargadoinformeAsistencia=0;
 var totalregistroinformeAsistencia=0;
 var controldebusquedadInformeAsistencia= true;
+
+function toggleDetalleAsistenciaEmpleado(boton) {
+	var tarjeta = boton ? boton.parentNode : null;
+	if (!tarjeta) { return; }
+	tarjeta.classList.toggle("asistencia-empleado-card--abierta");
+}
+
 function obtenerVistaInformeAsistencia() {
 	if(controlacceso("VERLISTADOASISTENCIA","accion")==false){ return;}
 

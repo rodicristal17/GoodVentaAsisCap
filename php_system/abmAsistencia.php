@@ -207,28 +207,96 @@
     }
 
     function obtenerVistaAsistencia($filtros, $limite= "0") {
-        $cantRegistros= obtenerAsistencias($filtros);
-        $cantRegistros= count($cantRegistros);
-
-        $registros= obtenerAsistencias($filtros, $limite);
+        $registros= obtenerAsistencias($filtros);
 
         $pagina= "";
         $minutosTotales= 0;
+        $empleados= array();
         foreach ($registros as $registro) {
-            $minutosTotales += intval($registro['diferencia_minutos']);
+            $cod_usuario= $registro['cod_usuarioFK'];
+            if (!isset($empleados[$cod_usuario])) {
+                $empleados[$cod_usuario]= array(
+                    'cod_usuario'=> $cod_usuario,
+                    'nombre_persona'=> $registro['nombre_persona'],
+                    'url_usuario'=> !empty($registro['url_usuario']) ? $registro['url_usuario'] : '/GoodVentaAsisCap/iconos/sinperfil.png',
+                    'registros'=> array(),
+                    'total_minutos'=> 0,
+                    'total_registros'=> 0,
+                    'sin_salida'=> 0,
+                    'con_justificacion'=> 0,
+                );
+            }
 
-            $pagina .= "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>
-            <td style='width: 10%;'>".$registro['cod_asistencia']."</td>
-            <td style='width: 20%;'>".$registro['nombre_persona']."</td>
-            <td style='width: 15%;text-align: center;'>".substr($registro['fecha'], 0, 10)."</td>
-            <td style='width: 10%;text-align: center;'>".$registro['hora_entrada']."</td>
-            <td style='width: 10%;text-align: center;'>".$registro['hora_salida']."</td>
-            <td style='width: 10%;text-align: center;'>".$registro['direccion_ip']."</td>
-            <td style='width: 25%;'>".$registro['justificacion']."</td>
-            </tr></table>";
+            $minutos= intval($registro['diferencia_minutos']);
+            $minutosTotales += $minutos;
+            $empleados[$cod_usuario]['total_minutos'] += $minutos;
+            $empleados[$cod_usuario]['total_registros']++;
+            if (empty($registro['hora_salida'])) {
+                $empleados[$cod_usuario]['sin_salida']++;
+            }
+            if (!empty($registro['justificacion'])) {
+                $empleados[$cod_usuario]['con_justificacion']++;
+            }
+            $empleados[$cod_usuario]['registros'][]= $registro;
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $minutosTotales));
+        if (count($empleados) == 0) {
+            $pagina= "<div class='asistencia-resumen-vacio'>No se encontraron registros de asistencia.</div>";
+        }
+
+        foreach ($empleados as $empleado) {
+            $cod_usuario_html= htmlspecialchars($empleado['cod_usuario'], ENT_QUOTES, 'UTF-8');
+            $nombre_html= htmlspecialchars($empleado['nombre_persona'], ENT_QUOTES, 'UTF-8');
+            $foto_html= htmlspecialchars($empleado['url_usuario'], ENT_QUOTES, 'UTF-8');
+            $horas= floor($empleado['total_minutos'] / 60);
+            $minutos= $empleado['total_minutos'] % 60;
+            $detalle= "";
+
+            foreach ($empleado['registros'] as $registro) {
+                $detalle .= "<tr>
+                    <td>".htmlspecialchars($registro['cod_asistencia'], ENT_QUOTES, 'UTF-8')."</td>
+                    <td>".htmlspecialchars(substr($registro['fecha'], 0, 10), ENT_QUOTES, 'UTF-8')."</td>
+                    <td>".htmlspecialchars($registro['hora_entrada'], ENT_QUOTES, 'UTF-8')."</td>
+                    <td>".htmlspecialchars($registro['hora_salida'], ENT_QUOTES, 'UTF-8')."</td>
+                    <td>".htmlspecialchars($registro['direccion_ip'], ENT_QUOTES, 'UTF-8')."</td>
+                    <td>".htmlspecialchars($registro['justificacion'], ENT_QUOTES, 'UTF-8')."</td>
+                </tr>";
+            }
+
+            $pagina .= "
+            <div class='asistencia-empleado-card'>
+                <button type='button' class='asistencia-empleado-card__resumen' onclick='toggleDetalleAsistenciaEmpleado(this)'>
+                    <img class='asistencia-empleado-card__foto' src='".$foto_html."' onerror=\"this.src='/GoodVentaAsisCap/iconos/sinperfil.png'\" alt=''>
+                    <span class='asistencia-empleado-card__info'>
+                        <strong>".$nombre_html."</strong>
+                        <small>Cod. ".$cod_usuario_html."</small>
+                    </span>
+                    <span class='asistencia-empleado-card__metricas'>
+                        <span><b>".$empleado['total_registros']."</b><small>Registros</small></span>
+                        <span><b>".$horas."h ".$minutos."m</b><small>Tiempo</small></span>
+                        <span><b>".$empleado['sin_salida']."</b><small>Sin salida</small></span>
+                        <span><b>".$empleado['con_justificacion']."</b><small>Justif.</small></span>
+                    </span>
+                </button>
+                <div class='asistencia-empleado-card__detalle'>
+                    <table class='asistencia-detalle-table'>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>IP</th>
+                                <th>Justificacion</th>
+                            </tr>
+                        </thead>
+                        <tbody>".$detalle."</tbody>
+                    </table>
+                </div>
+            </div>";
+        }
+
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => count($registros), "6" => $minutosTotales));
     }
 
     function obtenerAsistencias($filtros, $limite= 0) {
@@ -277,7 +345,7 @@
             $limite = "LIMIT $limite";
         }
 
-        $sql= "SELECT *, 
+        $sql= "SELECT a.*, u.*, u.url AS url_usuario,
             IF(hora_salida IS NOT NULL,TIMESTAMPDIFF(MINUTE, hora_entrada, hora_salida),NULL) AS diferencia_minutos,
             IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK),'') AS nombre_persona
             FROM asistencia a JOIN usuario u ON u.cod_usuario = a.cod_usuarioFK $sqlFiltro ORDER BY fecha DESC $limite";
@@ -293,6 +361,7 @@
         $result = $stmt->get_result();
         $registros= array();
         while ($row = $result->fetch_assoc()) {
+            $reg= array();
             foreach ($row as $key => $value) {
                 $reg[$key]= mb_convert_encoding((string)($value), 'UTF-8', 'ISO-8859-1');
             }
