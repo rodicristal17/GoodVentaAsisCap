@@ -1646,7 +1646,6 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                         onkeyup="aplicarFiltros()">
 
                     <select id="filtro-usuario" class="filter-input" onchange="aplicarFiltroUsuarioGantt()">
-                        <option value="">Todos los usuarios</option>
                         <?php foreach ($usuarios as $usuario): ?>
                             <option value="<?= (int) $usuario['cod_usuario'] ?>" data-nombre="<?= htmlspecialchars(mb_strtolower($usuario['nombre_persona'], 'UTF-8'), ENT_QUOTES) ?>">
                                 <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
@@ -1687,7 +1686,8 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
             const horizonTask = allTasks.find(t => t.id === '__horizon__');
             const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
-            const tareasRender = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
+            const tareasRenderBase = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
+            const tareasRender = prepararTareasParaVistaDesdeHoy(tareasRenderBase);
             ordenTareasVisiblesGantt = sinHorizon.map(t => String(t.id));
             idsTareasVisiblesGantt = new Set(ordenTareasVisiblesGantt);
             actualizarTablaDescripcionGantt();
@@ -1700,7 +1700,10 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                     on_date_change: function (task, start, end) {
 
                         if (task.id === '__horizon__') return;
-                        const startStr = formatDate(start);
+                        const startStrCalculado = formatDate(start);
+                        const startStr = task.fecha_inicio_original && startStrCalculado === task.start
+                            ? task.fecha_inicio_original
+                            : startStrCalculado;
                         const endStr = formatDate(end);
 
                         enviarActualizacionBack(task.id, startStr, endStr, task.progress);
@@ -1729,17 +1732,58 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             }
         }
 
+        function prepararTareasParaVistaDesdeHoy(tareas) {
+            const hoy = formatDate(new Date());
+
+            return tareas.map(function (tarea) {
+                if (tarea.id === '__horizon__') {
+                    return Object.assign({}, tarea, {
+                        start: hoy,
+                        end: formatDate(new Date(new Date().getTime() + (60 * 86400000)))
+                    });
+                }
+
+                if (tarea.start && tarea.end && tarea.start < hoy && tarea.end >= hoy) {
+                    return Object.assign({}, tarea, {
+                        fecha_inicio_original: tarea.start,
+                        start: hoy
+                    });
+                }
+
+                return tarea;
+            });
+        }
+
         function programarCentradoFechaActual() {
             posicionarGanttEnHoy();
             setTimeout(posicionarGanttEnHoy, 250);
             setTimeout(posicionarGanttEnHoy, 650);
             setTimeout(posicionarGanttEnHoy, 1200);
             setTimeout(posicionarGanttEnHoy, 2000);
+            setTimeout(posicionarGanttEnHoy, 3200);
+            setTimeout(posicionarGanttEnHoy, 4800);
         }
 
         function irHoyGantt() {
             programarCentradoFechaActual();
         }
+
+        window.posicionarGanttEnHoy = posicionarGanttEnHoy;
+        window.programarCentradoFechaActual = programarCentradoFechaActual;
+
+        function refrescarLayoutGanttVisible() {
+            if (!gantt) return;
+
+            gantt.change_view_mode(vistaActual);
+            configurarScrollGantt();
+            mostrarMesEnFechasGantt();
+            setTimeout(sincronizarTablaConBarrasGantt, 120);
+            setTimeout(decorarBarrasGanttResponsables, 140);
+            setTimeout(configurarTooltipsGantt, 180);
+            programarCentradoFechaActual();
+        }
+
+        window.refrescarLayoutGanttVisible = refrescarLayoutGanttVisible;
 
         function mostrarMesEnFechasGantt() {
             setTimeout(function () {
@@ -2081,7 +2125,15 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             if (!contenedorExterno) return null;
 
             const contenedorInterno = contenedorExterno.querySelector('.gantt-container');
-            return contenedorInterno || contenedorExterno;
+            if (contenedorExterno.scrollWidth > contenedorExterno.clientWidth) {
+                return contenedorExterno;
+            }
+
+            if (contenedorInterno && contenedorInterno.scrollWidth > contenedorInterno.clientWidth) {
+                return contenedorInterno;
+            }
+
+            return contenedorExterno;
         }
 
         function obtenerNombreUsuarioGantt() {
@@ -2122,6 +2174,22 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
         function obtenerUsuarioActualIdGantt() {
             try {
+                if (window.parent && window.parent !== window && typeof window.parent.buscar_datos_url_usuario === 'function') {
+                    const usuarioUrlPadre = window.parent.buscar_datos_url_usuario('q');
+                    if (usuarioUrlPadre) return String(usuarioUrlPadre);
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.buscar_este_cookie === 'function') {
+                    const usuarioCookiePadre = window.parent.buscar_este_cookie('user');
+                    if (usuarioCookiePadre) return String(usuarioCookiePadre);
+                }
+            } catch (e) {
+            }
+
+            try {
                 if (window.parent && window.parent !== window && window.parent.userid) {
                     return String(window.parent.userid);
                 }
@@ -2145,11 +2213,18 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             return '';
         }
 
-        function seleccionarUsuarioActualFiltroGantt() {
+        function obtenerParametroUrlGantt(nombre) {
+            const parametros = new URLSearchParams(window.location.search);
+            return parametros.get(nombre) || '';
+        }
+
+        function seleccionarUsuarioActualFiltroGantt(usuarioForzado) {
             const filtroUsuario = document.getElementById('filtro-usuario');
             if (!filtroUsuario) return false;
 
-            const usuarioActual = obtenerUsuarioActualIdGantt();
+            const usuarioActual = usuarioForzado
+                ? String(usuarioForzado)
+                : (obtenerParametroUrlGantt('usuario') || obtenerParametroUrlGantt('q') || obtenerUsuarioActualIdGantt());
             if (!usuarioActual) return false;
 
             const existeUsuario = Array.from(filtroUsuario.options).some(function (option) {
@@ -2161,6 +2236,30 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             filtroUsuario.value = usuarioActual;
             return true;
         }
+
+        function iniciarFiltroUsuarioActualGantt(intentos = 0) {
+            if (seleccionarUsuarioActualFiltroGantt()) {
+                aplicarFiltros();
+                return;
+            }
+
+            if (intentos < 25) {
+                setTimeout(function () {
+                    iniciarFiltroUsuarioActualGantt(intentos + 1);
+                }, 160);
+                return;
+            }
+
+            const filtroUsuario = document.getElementById('filtro-usuario');
+            if (filtroUsuario) filtroUsuario.value = '';
+            programarCentradoFechaActual();
+        }
+
+        window.aplicarUsuarioActualFiltroGantt = function (usuario) {
+            if (seleccionarUsuarioActualFiltroGantt(usuario)) {
+                aplicarFiltros();
+            }
+        };
 
         function posicionarGanttEnHoy(intentos = 0) {
             setTimeout(function () {
@@ -2174,15 +2273,14 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 }
 
                 const xHoy = calcularPosicionFechaHoy();
-                const anchoHoy = obtenerAnchoColumnaVista();
                 const scrollMaximo = Math.max(0, contenedor.scrollWidth - contenedor.clientWidth);
                 const scrollObjetivo = Math.min(
                     scrollMaximo,
-                    Math.max(0, xHoy + (anchoHoy / 2) - (contenedor.clientWidth / 2))
+                    Math.max(0, xHoy)
                 );
 
                 if (typeof contenedor.scrollTo === 'function') {
-                    contenedor.scrollTo({ left: scrollObjetivo, behavior: intentos === 0 ? 'auto' : 'smooth' });
+                    contenedor.scrollTo({ left: scrollObjetivo, behavior: 'auto' });
                 } else {
                     contenedor.scrollLeft = scrollObjetivo;
                 }
@@ -2190,6 +2288,10 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 const contenedorExterno = document.getElementById('gantt-container');
                 if (contenedorExterno && contenedorExterno !== contenedor) {
                     contenedorExterno.scrollLeft = scrollObjetivo;
+                }
+                const contenedorInterno = contenedorExterno ? contenedorExterno.querySelector('.gantt-container') : null;
+                if (contenedorInterno && contenedorInterno !== contenedor) {
+                    contenedorInterno.scrollLeft = scrollObjetivo;
                 }
                 if (panelDerecho) panelDerecho.scrollLeft = scrollObjetivo;
             }, 120);
@@ -2534,12 +2636,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
     window.addEventListener('load', function () {
         document.getElementById('filtro-sucursal').value = 'Todas';
         document.getElementById('filtro-responsable').value = '';
-        if (seleccionarUsuarioActualFiltroGantt()) {
-            aplicarFiltros();
-        } else {
-            document.getElementById('filtro-usuario').value = '';
-            programarCentradoFechaActual();
-        }
+        iniciarFiltroUsuarioActualGantt();
         const usuariosVinculados = document.getElementById('form_usuarios_vinculados');
         if (usuariosVinculados) {
             usuariosVinculados.addEventListener('change', actualizarVistaUsuariosVinculados);

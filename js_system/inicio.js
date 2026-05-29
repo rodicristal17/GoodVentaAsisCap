@@ -56,6 +56,11 @@ $("div[id=divMenuMantenimiento]").animate({ scrollTop:(0) },500);
 		document.getElementById("divMenuMantenimiento").style.display=""
 		document.getElementById("principalMenub").style.display=""
 		document.getElementById("divEfectoMantenimiento").className="magictime slideDownReturn"	
+		if (typeof refrescarGrantDashboard === "function") {
+			setTimeout(refrescarGrantDashboard, 80);
+			setTimeout(refrescarGrantDashboard, 420);
+			setTimeout(refrescarGrantDashboard, 900);
+		}
 	
 
 	//	$("div[id=divMenuMantenimiento]").fadeIn(500);	
