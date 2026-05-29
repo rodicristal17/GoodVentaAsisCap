@@ -149,6 +149,8 @@ ON DUPLICATE KEY UPDATE
     module_key = VALUES(module_key),
     module_label = VALUES(module_label),
     icon_key = VALUES(icon_key),
+    route_path = VALUES(route_path),
+    permission_key = VALUES(permission_key),
     is_active = VALUES(is_active),
     is_default_quick_access = VALUES(is_default_quick_access),
     default_quick_order = VALUES(default_quick_order),

@@ -4,6 +4,9 @@ var dashboardShortcutCatalogByKey = {};
 var dashboardShortcutSelectedKeys = [];
 var dashboardShortcutTemplatesReady = false;
 var dashboardShortcutCatalogLoaded = false;
+var dashboardShortcutCatalogLoading = false;
+var dashboardShortcutCatalogCallbacks = [];
+var dashboardShortcutCatalogLastError = "";
 
 var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"cargar_compras",
@@ -107,8 +110,38 @@ var DASHBOARD_ACCESS_REGISTRY = {
 };
 
 function dashboardShortcutFormData(funt) {
-	if (typeof obtener_datos_user === "function") {
-		obtener_datos_user();
+	var hasUrlCredentials = false;
+
+	if (typeof buscar_datos_url_usuario === "function") {
+		var urlUser = buscar_datos_url_usuario("q");
+		var urlPass = buscar_datos_url_usuario("p");
+
+		if (urlUser) {
+			userid = urlUser;
+		}
+
+		if (urlPass) {
+			passuser = urlPass;
+		}
+
+		hasUrlCredentials = !!(urlUser && urlPass);
+	}
+
+	if (!hasUrlCredentials && typeof buscar_este_cookie === "function") {
+		var cookieUser = buscar_este_cookie("user");
+		var cookiePass = buscar_este_cookie("pass");
+
+		if (cookieUser) {
+			userid = cookieUser;
+		}
+
+		if (cookiePass) {
+			passuser = cookiePass;
+		}
+	}
+
+	if (typeof obtener_navegor_en_uso === "function") {
+		navegador = obtener_navegor_en_uso();
 	}
 
 	var datos = new FormData();
@@ -132,9 +165,26 @@ function dashboardShortcutEscape(valor) {
 }
 
 function dashboardShortcutParseJson(responseText) {
+	if (responseText && typeof responseText === "object") {
+		return responseText;
+	}
+
+	var cleanResponse = String(responseText || "").replace(/^\uFEFF/, "").trim();
+
 	try {
-		return $.parseJSON(responseText);
+		return $.parseJSON(cleanResponse);
 	} catch (error) {
+		var jsonStart = cleanResponse.indexOf("{");
+		var jsonEnd = cleanResponse.lastIndexOf("}");
+
+		if (jsonStart !== -1 && jsonEnd > jsonStart) {
+			try {
+				return $.parseJSON(cleanResponse.substring(jsonStart, jsonEnd + 1));
+			} catch (innerError) {
+				console.error("No se pudo leer el JSON recuperado de accesos rapidos", innerError, responseText);
+			}
+		}
+
 		console.error("No se pudo leer la respuesta de accesos rapidos", error, responseText);
 		return null;
 	}
@@ -165,6 +215,29 @@ function dashboardShortcutGetSource(accessKey) {
 	return document.querySelector(registry.sourceSelector);
 }
 
+function dashboardShortcutAccessKeyFromElement(elemento, fallbackKey) {
+	if (!elemento) {
+		return "";
+	}
+
+	var accessKey = elemento.dataset && elemento.dataset.accessKey ? elemento.dataset.accessKey : "";
+
+	if (!accessKey) {
+		accessKey = elemento.getAttribute("data-access-key") || "";
+	}
+
+	if (accessKey) {
+		return accessKey;
+	}
+
+	if (elemento.closest && elemento.closest("#quickAccessSection")) {
+		console.warn("El boton de acceso rapido no tiene data-access-key:", elemento);
+		return "";
+	}
+
+	return fallbackKey || "";
+}
+
 function dashboardShortcutIsInlineHidden(elemento) {
 	if (!elemento) {
 		return true;
@@ -185,8 +258,14 @@ function dashboardShortcutPrepareTemplates() {
 		}
 
 		var source = dashboardShortcutGetSource(accessKey);
+		var sourceAccessKey = dashboardShortcutAccessKeyFromElement(source, accessKey);
 
 		if (!source || dashboardShortcutIsInlineHidden(source) || !dashboardShortcutHasPermission(accessKey)) {
+			continue;
+		}
+
+		if (sourceAccessKey != accessKey) {
+			console.warn("Access key no coincide con el registro:", accessKey, sourceAccessKey, source);
 			continue;
 		}
 
@@ -221,6 +300,7 @@ function dashboardShortcutIcon(accessKey) {
 }
 
 function dashboardShortcutCleanClone(tile, accessKey) {
+	tile.setAttribute("data-access-key", accessKey);
 	tile.setAttribute("data-dashboard-access-key", accessKey);
 	tile.setAttribute("data-dashboard-rendered-shortcut", "1");
 	tile.classList.add("dashboard-access-tile");
@@ -286,6 +366,30 @@ function dashboardShortcutKeysFromAccessList(accessList) {
 	return keys;
 }
 
+function dashboardShortcutKeysFromCurrentDom() {
+	var keys = [];
+	var tiles = document.querySelectorAll("#quickAccessSection .dashboard-access-grid > .divMenub");
+
+	for (var i = 0; i < tiles.length; i++) {
+		if (dashboardShortcutIsInlineHidden(tiles[i])) {
+			continue;
+		}
+
+		var key = dashboardShortcutAccessKeyFromElement(tiles[i], "");
+
+		if (!key) {
+			console.warn("El boton de acceso rapido no tiene data-access-key:", tiles[i]);
+			continue;
+		}
+
+		if (DASHBOARD_ACCESS_REGISTRY[key] && DASHBOARD_ACCESS_REGISTRY[key].template) {
+			keys.push(key);
+		}
+	}
+
+	return keys;
+}
+
 function dashboardShortcutDefaultKeys() {
 	var keys = [];
 
@@ -298,6 +402,37 @@ function dashboardShortcutDefaultKeys() {
 	}
 
 	return keys;
+}
+
+function dashboardShortcutSyncSelectionWithCatalog() {
+	if (!dashboardShortcutCatalogLoaded) {
+		return;
+	}
+
+	var validKeys = [];
+
+	for (var i = 0; i < dashboardShortcutSelectedKeys.length; i++) {
+		var key = dashboardShortcutSelectedKeys[i];
+
+		if (dashboardShortcutCatalogByKey[key]) {
+			validKeys.push(key);
+		} else {
+			console.warn("Access key no existe en catalogo o no esta disponible para el usuario:", key);
+		}
+	}
+
+	dashboardShortcutSelectedKeys = validKeys;
+}
+
+function dashboardShortcutFlushCatalogCallbacks(success) {
+	var callbacks = dashboardShortcutCatalogCallbacks.slice(0);
+	dashboardShortcutCatalogCallbacks = [];
+
+	for (var i = 0; i < callbacks.length; i++) {
+		if (typeof callbacks[i] === "function") {
+			callbacks[i](success);
+		}
+	}
 }
 
 function renderDashboardQuickAccess(accessList) {
@@ -313,6 +448,10 @@ function renderDashboardQuickAccess(accessList) {
 
 	if (keys.length == 0) {
 		keys = dashboardShortcutDefaultKeys();
+	}
+
+	if (keys.length == 0) {
+		keys = dashboardShortcutKeysFromCurrentDom();
 	}
 
 	if (keys.length == 0) {
@@ -344,6 +483,21 @@ function renderDashboardQuickAccess(accessList) {
 function cargarDashboardAccessCatalog(callback) {
 	dashboardShortcutPrepareTemplates();
 
+	if (typeof callback === "function") {
+		dashboardShortcutCatalogCallbacks.push(callback);
+	}
+
+	if (dashboardShortcutCatalogLoaded) {
+		dashboardShortcutFlushCatalogCallbacks(true);
+		return;
+	}
+
+	if (dashboardShortcutCatalogLoading) {
+		return;
+	}
+
+	dashboardShortcutCatalogLoading = true;
+
 	var datos = dashboardShortcutFormData("catalog");
 
 	$.ajax({
@@ -354,19 +508,27 @@ function cargarDashboardAccessCatalog(callback) {
 		url: "/GoodVentaAsisCap/php_system/dashboard_shortcuts.php",
 		type: "post",
 		error: function () {
+			dashboardShortcutCatalogLoading = false;
+			dashboardShortcutCatalogLastError = "No se pudo conectar con el servidor del catalogo.";
 			console.error("No se pudo cargar el catalogo de accesos rapidos");
-			if (typeof callback === "function") {
-				callback(false);
-			}
+			renderDashboardShortcutModalContent();
+			dashboardShortcutFlushCatalogCallbacks(false);
 		},
 		success: function (responseText) {
 			var respuesta = dashboardShortcutParseJson(responseText);
 
 			if (!respuesta || respuesta["1"] != "exito") {
-				console.error("Respuesta invalida al cargar catalogo", responseText);
-				if (typeof callback === "function") {
-					callback(false);
+				dashboardShortcutCatalogLoading = false;
+				if (respuesta && respuesta["1"] == "UI") {
+					dashboardShortcutCatalogLastError = "La sesion no fue validada para cargar el catalogo.";
+				} else if (respuesta && respuesta["2"]) {
+					dashboardShortcutCatalogLastError = "El servidor respondio: " + respuesta["2"];
+				} else {
+					dashboardShortcutCatalogLastError = "El servidor devolvio una respuesta invalida del catalogo.";
 				}
+				console.error("Respuesta invalida al cargar catalogo", responseText);
+				renderDashboardShortcutModalContent();
+				dashboardShortcutFlushCatalogCallbacks(false);
 				return;
 			}
 
@@ -392,11 +554,11 @@ function cargarDashboardAccessCatalog(callback) {
 			}
 
 			dashboardShortcutCatalogLoaded = true;
+			dashboardShortcutCatalogLoading = false;
+			dashboardShortcutCatalogLastError = "";
+			dashboardShortcutSyncSelectionWithCatalog();
 			renderDashboardShortcutModalContent();
-
-			if (typeof callback === "function") {
-				callback(true);
-			}
+			dashboardShortcutFlushCatalogCallbacks(true);
 		}
 	});
 }
@@ -474,6 +636,10 @@ function crearModalAccesosRapidos() {
 
 function abrirModalAccesosRapidos() {
 	crearModalAccesosRapidos();
+
+	if (dashboardShortcutCatalogLoaded) {
+		dashboardShortcutSyncSelectionWithCatalog();
+	}
 
 	if (!dashboardShortcutCatalogLoaded) {
 		cargarDashboardAccessCatalog();
@@ -573,7 +739,9 @@ function renderDashboardShortcutModalContent() {
 
 	var catalogHtml = "";
 
-	if (dashboardShortcutCatalog.length == 0) {
+	if (dashboardShortcutCatalogLoading) {
+		catalogHtml = "<div class='dashboard-shortcut-empty'>Cargando catalogo de accesos...</div>";
+	} else if (dashboardShortcutCatalog.length == 0) {
 		catalogHtml = "<div class='dashboard-shortcut-empty'>No se pudo cargar el catalogo de accesos.</div>";
 	} else if (groupOrder.length == 0) {
 		catalogHtml = "<div class='dashboard-shortcut-empty'>No hay accesos que coincidan con la busqueda.</div>";
@@ -636,6 +804,18 @@ function guardarAccesosRapidosUsuario() {
 		return;
 	}
 
+	if (!dashboardShortcutCatalogLoaded) {
+		cargarDashboardAccessCatalog(function (success) {
+			if (success) {
+				guardarAccesosRapidosUsuario();
+				return;
+			}
+
+			ver_vetana_informativa("Catalogo no disponible", dashboardShortcutCatalogLastError || "No se pudo cargar el catalogo de accesos rapidos. Intenta nuevamente.", "error");
+		});
+		return;
+	}
+
 	var shortcuts = [];
 
 	for (var i = 0; i < dashboardShortcutSelectedKeys.length; i++) {
@@ -643,7 +823,15 @@ function guardarAccesosRapidosUsuario() {
 		var access = dashboardShortcutCatalogByKey[key];
 
 		if (!access || !access.access_id) {
-			ver_vetana_informativa("Catalogo incompleto", "No se pudo identificar uno de los accesos.", "error");
+			var source = dashboardShortcutGetSource(key);
+			var detalle = key ? "No se pudo identificar el acceso con data-access-key: " + key : "Hay un boton de acceso rapido sin data-access-key.";
+
+			if (source && !dashboardShortcutAccessKeyFromElement(source, "")) {
+				detalle = "El boton " + (source.id || "(sin id)") + " no tiene data-access-key.";
+			}
+
+			console.warn(detalle, source || key);
+			ver_vetana_informativa("Catalogo incompleto", detalle, "error");
 			return;
 		}
 

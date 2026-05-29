@@ -45,7 +45,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=producto-insumos-list-20260528"></script>
 
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=dashboard-shortcuts-20260528"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260528"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260528f"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
@@ -387,7 +387,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
 
 
-<table class='divMenub'  id='divMenuCompra1'
+<table class='divMenub'  id='divMenuCompra1' data-access-key="cargar_compras"
 onclick='verCerrarAbmCompra()' style='width: 20%;Text-align:center'>
 <tr>
 <td>
@@ -404,7 +404,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub'  id='divMenuCuentasCobar1'
+<table class='divMenub'  id='divMenuCuentasCobar1' data-access-key="cuentas_a_cobrar"
 onclick='verCerrarCuentasACobrar()'  style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -420,7 +420,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table  class='divMenub' id='divMenuCobrosRealizado1'
+<table  class='divMenub' id='divMenuCobrosRealizado1' data-access-key="cobros_realizados"
 onclick='verCerrarInformeArqueo()'  style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -436,7 +436,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuExpedienteCliente1'
+<table class='divMenub' id='divMenuExpedienteCliente1' data-access-key="expediente_cliente"
 onclick='verCerrarInformeExpedientes()' style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -452,7 +452,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuHistorialVenta1'
+<table class='divMenub' id='divMenuHistorialVenta1' data-access-key="historial_venta"
 onclick='verCerrarHistorialVenta()' style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -468,7 +468,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table  class='divMenub' id='divMenuAbmProductos1'
+<table  class='divMenub' id='divMenuAbmProductos1' data-access-key="productos"
 onclick='verCerrarAbmProducto()' style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -484,7 +484,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuVenta'
+<table class='divMenub' id='divMenuVenta' data-access-key="nueva_venta"
 onclick='verCerrarAbmVenta()' style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -499,7 +499,7 @@ style='display:none' class='divMinimizado'>
 </td>
 </tr>
 </table>
-<table class="divMenub" id="divMenuEgreso_Ingreso2" onclick="verCerrarAbmGasto()" style="text-align:center; width: 20%;">
+<table class="divMenub" id="divMenuEgreso_Ingreso2" data-access-key="flujo_egreso_ingreso" onclick="verCerrarAbmGasto()" style="text-align:center; width: 20%;">
 <tbody><tr>
 <td>
 <img class="imgIconoMenu" src="/GoodVentaAsisCap/iconos/gastos.png">
@@ -511,7 +511,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </tbody></table>
 
-<table class='divMenub' id='divMenuImagenesCliente' onclick='verCerrarAbmCargarFotosClientePrincipal("1")' style='width:20%;text-align:center;display:none;'>
+<table class='divMenub' id='divMenuImagenesCliente' data-access-key="cargar_imagenes" onclick='verCerrarAbmCargarFotosClientePrincipal("1")' style='width:20%;text-align:center;display:none;'>
 <tr>
 <td>
 <img class='imgIconoMenu'
@@ -522,7 +522,7 @@ src='/GoodVentaAsisCap/iconos/imagenes.png' />
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuArqueo'
+<table class='divMenub' id='divMenuArqueo' data-access-key="cerrar_caja"
 onclick='verCerrarVentanaAbmAperturaCierreCaja()' style='width:20%;text-align:center'>
 <tr>
 <td>
@@ -534,13 +534,13 @@ Caja</p>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuInterConsulta'
+<table class='divMenub' id='divMenuInterConsulta' data-access-key="hilos_interconsultas"
 onclick='verCerrarVentanaListadoInterConsulta(true)' style='width:20%;text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu'
 src='/GoodVentaAsisCap/iconos/consultamedica.png' />
-<p class='pTitulo4' id='PTituloApCieCaja'>Hilos - InterConsultas</p>
+<p class='pTitulo4' id='PTituloInterConsulta'>Hilos - InterConsultas</p>
 <center>
 <div id='divMinimizadoInterConsulta'
 style='display:none' class='divMinimizado'>
@@ -550,7 +550,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class="divMenub" id="divMenuPresupuestoProducto2" onclick="idFkCliente= '';verCerrarAbmDetallesPresupuesto(true, true);buscarvistaPresupuesto();" style="text-align:center; width: 20%;">
+<table class="divMenub" id="divMenuPresupuestoProducto2" data-access-key="historial_presupuestos" onclick="idFkCliente= '';verCerrarAbmDetallesPresupuesto(true, true);buscarvistaPresupuesto();" style="text-align:center; width: 20%;">
 <tbody><tr>
 <td>
 <img class="imgIconoMenu" src="/GoodVentaAsisCap/iconos/presupuesto.png">
@@ -578,7 +578,7 @@ src='/GoodVentaAsisCap/iconos/INSUMOS.png' />
 </table>
 
 
-<table class='divMenub' id='divMenuMigrarCaja' onclick='verCerrarAbmMigrarCaja()' style='width:20%;text-align:center'>
+<table class='divMenub' id='divMenuMigrarCaja' data-access-key="migrar_caja" onclick='verCerrarAbmMigrarCaja()' style='width:20%;text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu'
@@ -592,7 +592,7 @@ src='/GoodVentaAsisCap/iconos/transferir.png' />
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuRecibirCaja' onclick='verCerrarFrmCajaEscritorio()' style=' width:20%;text-align:center'>
+<table class='divMenub' id='divMenuRecibirCaja' data-access-key="recibir_caja" onclick='verCerrarFrmCajaEscritorio()' style=' width:20%;text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu'

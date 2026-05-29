@@ -1,6 +1,7 @@
 <?php
 
-header('Content-Type: application/json; charset=utf-8');
+ob_start();
+ini_set('display_errors', '0');
 
 require("conexion.php");
 include("verificar_navegador.php");
@@ -9,6 +10,14 @@ date_default_timezone_set('America/Asuncion');
 
 function dashboard_json($datos)
 {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+
     echo json_encode($datos, JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -40,6 +49,15 @@ function dashboard_authenticated_user()
 {
     $user = dashboard_to_iso(dashboard_param('useru'));
     $pass = dashboard_param('passu');
+
+    if ($user == '') {
+        $user = dashboard_to_iso(dashboard_param('user'));
+    }
+
+    if ($pass == '') {
+        $pass = dashboard_param('pass');
+    }
+
     $pass = str_replace('=', '+', $pass);
     $navegador = dashboard_to_iso(dashboard_param('navegador'));
 
