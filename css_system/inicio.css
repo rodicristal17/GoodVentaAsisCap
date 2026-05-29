@@ -10186,23 +10186,76 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmConsulta .consulta-ficha-body {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr) !important;
-    gap: 14px !important;
+    display: block !important;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 14px !important;
     align-items: start;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+#divAbmConsulta .clinical-consultation-layout {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+    align-items: start;
+    box-sizing: border-box;
+}
+
+#divAbmConsulta .clinical-summary-card {
+    order: 1;
+}
+
+#divAbmConsulta .clinical-content-grid {
+    order: 2;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(340px, 0.9fr);
+    gap: 16px;
+    align-items: start;
+    box-sizing: border-box;
+}
+
+#divAbmConsulta .clinical-main-column,
+#divAbmConsulta .clinical-side-column {
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+    align-items: start;
+    box-sizing: border-box;
+}
+
+#divAbmConsulta .clinical-gallery-card {
+    order: 3;
 }
 
 #divAbmConsulta .consulta-card,
 #divAbmConsulta .consulta-gallery-card {
+    width: 100% !important;
     min-width: 0;
+    max-width: 100%;
     height: auto !important;
     min-height: 0;
+    margin: 0 !important;
     padding: 14px !important;
+    float: none !important;
+    position: static !important;
     border: 1px solid #e4e7ec !important;
     border-radius: 10px !important;
     background: #ffffff !important;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+#divAbmConsulta .consulta-card > .card-body,
+#divAbmConsulta .consulta-gallery-card > .card-body {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -10220,11 +10273,11 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmConsulta .consulta-evolution-card {
-    order: 2;
+    order: 3;
 }
 
 #divAbmConsulta .consulta-treatments-card {
-    order: 3;
+    order: 2;
 }
 
 #divAbmConsulta .consulta-profile-card {
@@ -10232,11 +10285,11 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmConsulta .consulta-consultas-card {
-    order: 5;
+    order: 1;
 }
 
 #divAbmConsulta .consulta-gallery-card {
-    order: 6;
+    order: 3;
     grid-column: 1 / -1 !important;
 }
 
@@ -10313,6 +10366,72 @@ button.dashboard-summary-item:hover {
     font-weight: 700;
 }
 
+#divAbmConsulta .consulta-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#divAbmConsulta .consulta-card-heading .consulta-card__hint {
+    margin: 5px 0 0;
+}
+
+#divAbmConsulta .consulta-add-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    padding: 7px;
+    margin: 0;
+    border: 1px solid #d8ebe6;
+    border-radius: 999px;
+    background: #eefaf6;
+    box-shadow: 0 8px 16px rgba(31, 122, 104, 0.12);
+}
+
+#divAbmConsulta .consulta-consultas-card {
+    padding: 16px !important;
+    border-color: #d8ebe6 !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
+}
+
+#divAbmConsulta .consulta-consultas-card .detalle-label {
+    color: #1f7a68;
+    font-size: 13px;
+}
+
+#divAbmConsulta .consulta-internal-comments-card {
+    padding: 12px !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+#divAbmConsulta .consulta-internal-comments-card .detalle-label {
+    color: #344054;
+    font-size: 11px;
+}
+
+#divAbmConsulta .consulta-evolution-card .d-flex {
+    flex-wrap: wrap;
+    gap: 8px !important;
+    margin-bottom: 0 !important;
+}
+
+#divAbmConsulta .consulta-internal-comments-form {
+    align-items: stretch;
+}
+
+#divAbmConsulta .consulta-evolution-card #inputObservacion {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+#divAbmConsulta .consulta-internal-comments-form .btn-accion-principal {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
 #divAbmConsulta .consulta-subsection-title {
     margin: 8px 0 6px;
     color: #172033;
@@ -10331,6 +10450,289 @@ button.dashboard-summary-item:hover {
     border-radius: 8px;
     background: #f8fafc;
     overflow: auto !important;
+}
+
+#divAbmConsulta #divObservacionConsulta {
+    min-height: 96px;
+    max-height: 240px;
+    background: #ffffff;
+}
+
+#divAbmConsulta #divHistorial_Consulta {
+    min-height: 280px;
+    max-height: 560px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding: 10px !important;
+    background: #f8fafc;
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-item {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+    padding: 14px !important;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    color: #172033;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.09);
+}
+
+#divAbmConsulta .consulta-history-item__header {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+#divAbmConsulta .consulta-history-item__avatar {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d8ebe6;
+    border-radius: 999px;
+    background: #eefaf6;
+    color: #1f7a68;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+#divAbmConsulta .consulta-history-item__identity {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+#divAbmConsulta .consulta-history-item__number {
+    color: #1f7a68 !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+#divAbmConsulta .consulta-history-item__identity strong {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+#divAbmConsulta .consulta-history-item__identity span,
+#divAbmConsulta .consulta-history-item__date {
+    color: #667085;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+#divAbmConsulta .consulta-history-item__date {
+    justify-self: end;
+    white-space: nowrap;
+}
+
+#divAbmConsulta .consulta-history-item__body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding-left: 52px;
+}
+
+#divAbmConsulta .consulta-history-item__body p {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+    margin: 0;
+    padding: 9px 10px;
+    border: 1px solid #edf1f5;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#divAbmConsulta .consulta-history-item__body strong {
+    color: #172033;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+#divAbmConsulta .consulta-history-item__body span {
+    color: #344054;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+#divAbmConsulta .consulta-history-item__action {
+    justify-self: start;
+    margin-left: 52px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 11px;
+    border: 1px solid #d8ebe6;
+    border-radius: 999px;
+    background: #eefaf6;
+    color: #1f7a68;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+#divAbmConsulta .consulta-comments-feed {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+}
+
+#divAbmConsulta .consulta-comments-toggle {
+    display: none;
+}
+
+#divAbmConsulta .consulta-comments-feed__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: #667085;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+#divAbmConsulta .consulta-comments-toggle-label {
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid #d9e1ea;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #1f7a68;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#divAbmConsulta .consulta-comments-toggle-label__less {
+    display: none;
+}
+
+#divAbmConsulta .consulta-comments-toggle:not(:checked) ~ .consulta-comment-item--extra {
+    display: none;
+}
+
+#divAbmConsulta .consulta-comments-toggle:checked ~ .consulta-comments-feed__toolbar .consulta-comments-toggle-label__more {
+    display: none;
+}
+
+#divAbmConsulta .consulta-comments-toggle:checked ~ .consulta-comments-feed__toolbar .consulta-comments-toggle-label__less {
+    display: inline;
+}
+
+#divAbmConsulta .consulta-comment-item {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    padding: 2px 0;
+    background: transparent;
+}
+
+#divAbmConsulta .consulta-comment-item__avatar {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d8ebe6;
+    border-radius: 999px;
+    background: #eefaf6;
+    color: #1f7a68;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+}
+
+#divAbmConsulta .consulta-comment-item__content {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+#divAbmConsulta .consulta-comment-item__header {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding: 0 2px;
+}
+
+#divAbmConsulta .consulta-comment-item__header strong {
+    color: #172033;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+#divAbmConsulta .consulta-comment-item__header span {
+    color: #667085;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+#divAbmConsulta .consulta-comment-item__bubble {
+    padding: 10px 12px;
+    border: 1px solid #edf1f5;
+    border-radius: 14px 14px 14px 6px;
+    background: #f6f8fb;
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.04);
+}
+
+#divAbmConsulta .consulta-comment-item__text {
+    color: #344054;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+#divAbmConsulta .consulta-comments-empty {
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    border: 1px dashed #d9e1ea;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
 }
 
 #divAbmConsulta #divPreConsultaDetalle_Consulta {
@@ -10486,6 +10888,9 @@ button.dashboard-summary-item:hover {
     border: 1px solid #edf1f5 !important;
     border-radius: 10px;
     background: #f8fafc;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    box-sizing: border-box;
 }
 
 #divAbmConsulta #table_frm_VistaGaleria .divFloat2 {
@@ -10531,13 +10936,171 @@ button.dashboard-summary-item:hover {
     font-weight: 700;
 }
 
+#divAbmDetalleConsulta .modal-detalle-agenda-box {
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+}
+
+#divAbmDetalleConsulta .modal-filtros-body {
+    display: grid;
+    gap: 14px;
+}
+
+#divAbmDetalleConsulta .clinical-register-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+    gap: 12px;
+    align-items: stretch;
+    padding: 12px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+#divAbmDetalleConsulta .clinical-register-owner {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+#divAbmDetalleConsulta .clinical-register-owner__avatar {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d8ebe6;
+    border-radius: 999px;
+    background: #eefaf6;
+    color: #1f7a68;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    background-position: center;
+    background-size: cover;
+}
+
+#divAbmDetalleConsulta .clinical-register-owner__avatar--image {
+    color: transparent;
+}
+
+#divAbmDetalleConsulta .clinical-register-owner__text {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+#divAbmDetalleConsulta .clinical-register-owner__text strong {
+    color: #172033;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+#divAbmDetalleConsulta .clinical-register-owner__text span,
+#divAbmDetalleConsulta .clinical-register-date label {
+    color: #667085;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+#divAbmDetalleConsulta .clinical-register-date {
+    display: grid;
+    gap: 5px;
+}
+
+#divAbmDetalleConsulta .clinical-register-date input {
+    width: 100%;
+    min-height: 36px;
+}
+
+#divAbmDetalleConsulta .clinical-register-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+#divAbmDetalleConsulta .clinical-register-form-grid .columna-consulta {
+    min-width: 0;
+    display: contents;
+}
+
+#divAbmDetalleConsulta .clinical-register-field {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+    margin-top: 0 !important;
+    padding: 10px;
+    border: 1px solid #edf1f5;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+#divAbmDetalleConsulta .clinical-register-field .pTitulo5 {
+    margin: 0;
+    color: #172033;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+#divAbmDetalleConsulta .clinical-register-field textarea {
+    min-height: 96px !important;
+    box-sizing: border-box;
+}
+
+#divAbmDetalleConsulta .clinical-register-footer {
+    justify-content: flex-end;
+    padding: 0;
+    border-top: none;
+    background: transparent;
+}
+
+#divAbmDetalleConsulta #btnAbmConsulta {
+    min-height: 38px;
+    padding: 9px 16px;
+}
+
 @media (max-width: 980px) {
-    #divAbmConsulta .consulta-ficha-body {
-        grid-template-columns: 1fr !important;
+    #divAbmConsulta .clinical-consultation-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #divAbmConsulta .clinical-content-grid,
+    #divAbmConsulta .clinical-main-column,
+    #divAbmConsulta .clinical-side-column {
+        display: contents;
     }
 
     #divAbmConsulta .consulta-patient-summary__grid {
         grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+    }
+
+    #divAbmConsulta .consulta-patient-summary {
+        order: 1;
+    }
+
+    #divAbmConsulta .consulta-evolution-card {
+        order: 4;
+    }
+
+    #divAbmConsulta .consulta-treatments-card {
+        order: 3;
+    }
+
+    #divAbmConsulta .consulta-profile-card {
+        order: 5;
+    }
+
+    #divAbmConsulta .consulta-consultas-card {
+        order: 2;
+    }
+
+    #divAbmConsulta .consulta-gallery-card {
+        order: 6;
     }
 }
 
@@ -10564,9 +11127,72 @@ button.dashboard-summary-item:hover {
         padding: 10px !important;
     }
 
+    #divAbmDetalleConsulta .clinical-register-meta,
+    #divAbmDetalleConsulta .clinical-register-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #divAbmDetalleConsulta .clinical-register-footer,
+    #divAbmDetalleConsulta #btnAbmConsulta {
+        width: 100%;
+    }
+
     #divAbmConsulta .consulta-apodo-field .campo-con-botones-agenda,
     #divAbmConsulta #divPreConsultaDetalle_Consulta .consulta-treatment-row tr {
         grid-template-columns: 1fr;
+    }
+
+    #divAbmConsulta .consulta-internal-comments-form .btn-accion-principal {
+        width: 100%;
+    }
+
+    #divAbmConsulta .consulta-comments-feed__toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #divAbmConsulta .consulta-card-heading,
+    #divAbmConsulta .consulta-history-item__header {
+        align-items: flex-start;
+    }
+
+    #divAbmConsulta .consulta-history-item__header {
+        grid-template-columns: 36px minmax(0, 1fr);
+    }
+
+    #divAbmConsulta .consulta-history-item__avatar {
+        width: 34px;
+        height: 34px;
+        font-size: 11px;
+    }
+
+    #divAbmConsulta .consulta-history-item__date {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    #divAbmConsulta .consulta-history-item__body {
+        padding-left: 44px;
+        grid-template-columns: 1fr;
+    }
+
+    #divAbmConsulta .consulta-history-item__action {
+        margin-left: 44px;
+    }
+
+    #divAbmConsulta .consulta-comment-item {
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    #divAbmConsulta .consulta-comment-item__avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+
+    #divAbmConsulta .consulta-comment-item__bubble {
+        padding: 9px 10px;
     }
 
     #divAbmConsulta .consulta-treatment-row__progress {

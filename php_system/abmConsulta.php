@@ -104,8 +104,9 @@ if($operacion=="nuevo" || $operacion=="editar" )
 	$fecha=$_POST['fecha'];
     $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8'); 
 	
-	$cod_estecialista=$_POST['cod_estecialista'];
+	$cod_estecialista=isset($_POST['cod_estecialista']) ? $_POST['cod_estecialista'] : "";
     $cod_estecialista = mb_convert_encoding((string)($cod_estecialista), 'ISO-8859-1', 'UTF-8'); 
+    $cod_estecialista = $user;
 	
 	$cod_agendamiento=$_POST['cod_agendamiento'];
     $cod_agendamiento = mb_convert_encoding((string)($cod_agendamiento), 'ISO-8859-1', 'UTF-8'); 
@@ -674,8 +675,8 @@ exit;
 $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
-$styleName="tableRegistroSearch";
 $pagina="";
+$comentarios = array();
 
 if ($valor>0)
 {
@@ -685,67 +686,86 @@ while ($valor= mysqli_fetch_assoc($result))
 $descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');   
 $usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');   
 $fecha_hora = mb_convert_encoding((string)($valor['fecha_hora']), 'UTF-8', 'ISO-8859-1');   
- 
- 
-$styleName=CargarStyleTable($styleName);
-	  $pagina.="
-<style>
-.timeline {
-  position: relative;
-  margin: 2px 0;
-  padding-left: 5px;
-  border-left: 3px solid #4a90e2;
-}
-.timeline-item {
-  position: relative;
-  margin-bottom: 2px;
-}
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 4px;
-  width: 14px;
-  height: 14px;
-  background-color: #4a90e2;
-  border-radius: 50%;
-}
-.timeline-content {
-  background-color: #f9f9f9;
-  padding: 5px 7px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-.timeline-content .description {
-  font-weight: bold;
-  margin-bottom: 2px;
-}
-.timeline-content .meta {
-  font-size: 12px;
-  color: #666;
-  border-top: 1px solid #ddd;
-  margin-top: 2px;
-  padding-top: 2px;
-}
-</style>
 
-<div class='timeline'>
-  <div class='timeline-item'>
-    <div class='timeline-content'>
-      <div class='description'>
-         ".htmlspecialchars($descripcion)."
-      </div>
-      <div class='meta'>
-       ".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha_hora)."
-      </div>
-    </div>
-  </div>
- 
-</div>
-
-"; 
+$comentarios[] = array(
+    "descripcion" => $descripcion,
+    "usuario" => $usuario,
+    "fecha_hora" => $fecha_hora
+);
  
 }
+}
+
+if (count($comentarios) > 0) {
+    $totalComentarios = count($comentarios);
+    $limiteComentarios = 4;
+    $primerVisible = max(0, $totalComentarios - $limiteComentarios);
+    $textoCantidad = $totalComentarios == 1 ? "1 comentario interno" : $totalComentarios." comentarios internos";
+    $toggleId = "consultaComentariosToggle";
+
+    $pagina .= "<div class='consulta-comments-feed'>";
+
+    if ($totalComentarios > $limiteComentarios) {
+        $pagina .= "<input type='checkbox' class='consulta-comments-toggle' id='".$toggleId."'>";
+    }
+
+    $pagina .= "<div class='consulta-comments-feed__toolbar'><span>".$textoCantidad."</span>";
+
+    if ($totalComentarios > $limiteComentarios) {
+        $pagina .= "<label class='consulta-comments-toggle-label' for='".$toggleId."'><span class='consulta-comments-toggle-label__more'>Ver todos</span><span class='consulta-comments-toggle-label__less'>Ver menos</span></label>";
+    }
+
+    $pagina .= "</div>";
+
+    foreach ($comentarios as $indiceComentario => $comentario) {
+        $usuarioComentario = trim($comentario["usuario"]) != "" ? $comentario["usuario"] : "Equipo";
+        $partesNombreComentario = preg_split('/\s+/', trim($usuarioComentario));
+        $inicialesComentario = "";
+
+        foreach ($partesNombreComentario as $parteNombreComentario) {
+            if ($parteNombreComentario != "") {
+                $inicialesComentario .= mb_substr($parteNombreComentario, 0, 1, 'UTF-8');
+            }
+
+            if (mb_strlen($inicialesComentario, 'UTF-8') >= 2) {
+                break;
+            }
+        }
+
+        if ($inicialesComentario == "") {
+            $inicialesComentario = "E";
+        }
+
+        $inicialesComentario = mb_strtoupper($inicialesComentario, 'UTF-8');
+        $fechaComentario = $comentario["fecha_hora"];
+        $horaComentario = "";
+        $timestampComentario = strtotime($comentario["fecha_hora"]);
+
+        if ($timestampComentario !== false) {
+            $fechaComentario = date("d/m/Y", $timestampComentario);
+            $horaComentario = date("H:i", $timestampComentario);
+        }
+
+        $fechaHoraComentario = htmlspecialchars($fechaComentario, ENT_QUOTES, 'UTF-8').($horaComentario != "" ? " &middot; ".htmlspecialchars($horaComentario, ENT_QUOTES, 'UTF-8') : "");
+        $claseExtra = ($totalComentarios > $limiteComentarios && $indiceComentario < $primerVisible) ? " consulta-comment-item--extra" : "";
+
+        $pagina .= "<article class='consulta-comment-item".$claseExtra."'>"
+            ."<div class='consulta-comment-item__avatar' aria-hidden='true'>".htmlspecialchars($inicialesComentario, ENT_QUOTES, 'UTF-8')."</div>"
+            ."<div class='consulta-comment-item__content'>"
+            ."<div class='consulta-comment-item__header'>"
+            ."<strong>".htmlspecialchars($usuarioComentario, ENT_QUOTES, 'UTF-8')."</strong>"
+            ."<span>".$fechaHoraComentario."</span>"
+            ."</div>"
+            ."<div class='consulta-comment-item__bubble'>"
+            ."<div class='consulta-comment-item__text'>".nl2br(htmlspecialchars($comentario["descripcion"], ENT_QUOTES, 'UTF-8'))."</div>"
+            ."</div>"
+            ."</div>"
+            ."</article>";
+    }
+
+    $pagina .= "</div>";
+} else {
+    $pagina = "<div class='consulta-comments-empty'>No hay comentarios internos todav&iacute;a.</div>";
 }
  
 $informacion =array("1" => "exito","2" => $pagina );
@@ -788,30 +808,81 @@ $proximo_trabajo = mb_convert_encoding((string)($valor['proximo_trabajo']), 'UTF
 $motivoconsulta = mb_convert_encoding((string)($valor['motivoconsulta']), 'UTF-8', 'ISO-8859-1');  
 $diagnostico = mb_convert_encoding((string)($valor['diagnostico']), 'UTF-8', 'ISO-8859-1');  
 $especialista = mb_convert_encoding((string)($valor['especialista']), 'UTF-8', 'ISO-8859-1');  
- 
+
+$especialistaMostrar = trim($especialista) != "" ? $especialista : "Profesional";
+$partesEspecialista = preg_split('/\s+/', trim($especialistaMostrar));
+$inicialesEspecialista = "";
+
+foreach ($partesEspecialista as $parteEspecialista) {
+    if ($parteEspecialista != "") {
+        $inicialesEspecialista .= mb_substr($parteEspecialista, 0, 1, 'UTF-8');
+    }
+
+    if (mb_strlen($inicialesEspecialista, 'UTF-8') >= 2) {
+        break;
+    }
+}
+
+if ($inicialesEspecialista == "") {
+    $inicialesEspecialista = "P";
+}
+
+$inicialesEspecialista = mb_strtoupper($inicialesEspecialista, 'UTF-8');
+$fechaConsulta = $fecha;
+$horaConsulta = "";
+$timestampConsulta = strtotime($fecha);
+
+if ($timestampConsulta !== false) {
+    $fechaConsulta = date("d/m/Y", $timestampConsulta);
+    if (date("H:i", $timestampConsulta) != "00:00") {
+        $horaConsulta = date("H:i", $timestampConsulta);
+    }
+}
+
+$codConsultaHtml = htmlspecialchars($cod_consulta, ENT_QUOTES, 'UTF-8');
+$fechaDataHtml = htmlspecialchars($fecha, ENT_QUOTES, 'UTF-8');
+$especialistaDataHtml = htmlspecialchars($especialista, ENT_QUOTES, 'UTF-8');
+$trabajoDataHtml = htmlspecialchars($trabajo_realizado, ENT_QUOTES, 'UTF-8');
+$proximoDataHtml = htmlspecialchars($proximo_trabajo, ENT_QUOTES, 'UTF-8');
+$motivoDataHtml = htmlspecialchars($motivoconsulta, ENT_QUOTES, 'UTF-8');
+$diagnosticoDataHtml = htmlspecialchars($diagnostico, ENT_QUOTES, 'UTF-8');
+$fechaHoraConsultaHtml = htmlspecialchars($fechaConsulta, ENT_QUOTES, 'UTF-8').($horaConsulta != "" ? " &middot; ".htmlspecialchars($horaConsulta, ENT_QUOTES, 'UTF-8') : "");
+$motivoVisible = trim($motivoconsulta) != "" ? $motivoconsulta : "Sin motivo registrado";
+$trabajoVisible = trim($trabajo_realizado) != "" ? $trabajo_realizado : "Sin registro cargado";
+$proximoVisible = trim($proximo_trabajo) != "" ? $proximo_trabajo : "Sin registro cargado";
+$zonaVisible = trim($diagnostico) != "" ? $diagnostico : "Sin zona de trabajo registrada";
+
 $pagina .= "
 <div 
  onclick='abrirModal(this)'  
   role='button' tabindex='0'
   aria-label='Ver consulta número $cod_consulta' 
-  class='tarjeta-consulta consulta-item'
-  data-codconsulta='$cod_consulta'
-  data-fecha='$fecha'
-  data-especialista='$especialista'
-  data-trabajo='$trabajo_realizado'
-  data-proximo='$proximo_trabajo'
-  data-motivo='$motivoconsulta'
-  data-diagnostico='$diagnostico'
+  class='tarjeta-consulta consulta-item consulta-history-item'
+  data-codconsulta='".$codConsultaHtml."'
+  data-fecha='".$fechaDataHtml."'
+  data-especialista='".$especialistaDataHtml."'
+  data-trabajo='".$trabajoDataHtml."'
+  data-proximo='".$proximoDataHtml."'
+  data-motivo='".$motivoDataHtml."'
+  data-diagnostico='".$diagnosticoDataHtml."'
 >
-  <span class='fecha'>$fecha</span>
-  <div class='consulta-header'>
+  <div class='consulta-history-item__header'>
+    <div class='consulta-history-item__avatar' aria-hidden='true'>".htmlspecialchars($inicialesEspecialista, ENT_QUOTES, 'UTF-8')."</div>
+    <div class='consulta-history-item__identity'>
+      <span class='consulta-history-item__number'>Consulta N&deg; ".$codConsultaHtml."</span>
+      <strong>".htmlspecialchars($especialistaMostrar, ENT_QUOTES, 'UTF-8')."</strong>
+      <span>Especialista</span>
+    </div>
+    <time class='consulta-history-item__date'>".$fechaHoraConsultaHtml."</time>
     <h3 style='display:none;'>Consulta Nº $cod_consulta</h3>
   </div>
-  <div class='consulta-body'>
-    <p><strong>Doc.:</strong> $especialista</p>
-    <p><strong>Tr R.:</strong> $trabajo_realizado</p>
-    <p><strong>Prx Tr:</strong> $proximo_trabajo</p>
+  <div class='consulta-history-item__body'>
+    <p><strong>Motivo Consulta:</strong><span>".nl2br(htmlspecialchars($motivoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
+    <p><strong>Trabajos Realizados:</strong><span>".nl2br(htmlspecialchars($trabajoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
+    <p><strong>Zona de Trabajo:</strong><span>".nl2br(htmlspecialchars($zonaVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
+    <p><strong>Pr&oacute;xima Consulta:</strong><span>".nl2br(htmlspecialchars($proximoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
   </div>
+  <span class='consulta-history-item__action'>Ver detalle</span>
 </div>
 ";
  

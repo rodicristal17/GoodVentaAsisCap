@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=tarea-diaria-wizard-20260529" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=registro-clinico-seguro-v2-20260529" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -38,7 +38,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/consulta.js?x=ficha-clinica-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
@@ -13715,11 +13715,11 @@ style='background-color: #b7b7b7;'>
                 <div class='modal-header-info'>
                   <p class='modal-etiqueta'>Ficha clínica</p>
                   <h3 style='margin:0;'>Consulta</h3>
-                  <span>Paciente, tratamientos, observaciones e historial</span>
+                  <span>Paciente, tratamientos, comentarios e historial</span>
                 </div>
               </div>
               <div style='text-align:center'>
-                <button type='button' class='btn-icon consulta-ficha-icon-btn' onclick='limpiarcamposConsulta()' title='Nueva evolución' aria-label='Nueva evolución'><img
+                <button type='button' class='btn-icon consulta-ficha-icon-btn' onclick='limpiarcamposConsulta()' title='Nueva consulta' aria-label='Nueva consulta'><img
                     src='/GoodVentaAsisCap/iconos/archivonuevo.png' class='iconoBtn' alt='' /></button>
               </div>
               <div style='text-align:center;'>
@@ -13734,7 +13734,9 @@ style='background-color: #b7b7b7;'>
           <div class='modal-filtros-body detalle-layout-responsive consulta-ficha-body'
             style='padding:10px;overflow:auto;background:transparent;'>
 
-            <div class="detalle-item consulta-card consulta-patient-summary" style='grid-column:1/-1;padding:10px;'>
+            <div class="clinical-consultation-layout">
+
+            <div class="detalle-item consulta-card clinical-summary-card consulta-patient-summary">
               <span class='detalle-label'>Resumen del paciente</span>
               <div class="card-body">
                 <div class="contenedor-horizontal d-flex flex-wrap gap-3 consulta-patient-summary__grid"
@@ -13785,61 +13787,76 @@ style='background-color: #b7b7b7;'>
             </div>
 
             <!-- CONTENEDOR PRINCIPAL -->
-            <div class="contenedor-principal container-fluid"
-              style='display:contents;'>
+            <div class="clinical-content-grid">
+              <div class="clinical-main-column">
 
-              <!-- BLOQUE 1: Observación Paciente -->
-              <div class="detalle-item consulta-card consulta-evolution-card" style="height:300px;padding:8px;">
-                <span class='detalle-label'>Nueva evolución clínica</span>
+              <!-- BLOQUE 1: Historial de Consultas -->
+              <div class="detalle-item consulta-card consulta-consultas-card">
+                <div class="consulta-card-heading">
+                  <div>
+                    <span class='detalle-label'>Historial de consultas</span>
+                    <p class="consulta-card__hint">Registro cl&iacute;nico de consultas, procedimientos y pr&oacute;ximos pasos.</p>
+                  </div>
+                  <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn consulta-add-icon" title="Agregar consulta" alt="Agregar consulta" onclick="verCerrarAbmDetalleConsulta(true)">
+                </div>
                 <div class="card-body">
-                  <p class="consulta-card__hint">Registrá la observación clínica del día para este paciente.</p>
-                  <div class="d-flex gap-2 mb-3">
+                  <div id="divHistorial_Consulta" class="flex-column gap-2 overflow-auto">
+                    <!-- Consultas din&aacute;micas -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- BLOQUE 2: Comentarios internos -->
+              <div class="detalle-item consulta-card consulta-evolution-card consulta-internal-comments-card">
+                <span class='detalle-label'>Comentarios internos</span>
+                <div class="card-body">
+                  <p class="consulta-card__hint">Agreg&aacute; comentarios internos para que el equipo pueda dar seguimiento al paciente.</p>
+                  <div class="d-flex gap-2 mb-3 consulta-internal-comments-form">
                     <input type="text" id="inputObservacion" style='width:100%;' class="catalogo-selectBuscador"
-                      placeholder="Escriba una observación...">
+                      placeholder="Escribir comentario interno...">
                     <button type="button" onclick="agregarObservacionConsulta()" class="btn-accion-principal">
-                      <i class="bi bi-plus-circle"></i> Guardar evolución
+                      <i class="bi bi-plus-circle"></i> Guardar comentario
                     </button>
                   </div>
-                  <div class="consulta-subsection-title">Historial clínico</div>
-                  <div class="table-responsive" id='divObservacionConsulta'
-                    style="height:200px;overflow:auto;padding:6px;">
+                  <div class="consulta-subsection-title">Comentarios anteriores</div>
+                  <div class="table-responsive" id='divObservacionConsulta'>
 
                   </div>
                 </div>
               </div>
 
               <!-- BLOQUE 2: Perfil Clínico -->
-              <div class="detalle-item consulta-card consulta-profile-card" style="height:300px;padding:8px;">
+              <div class="detalle-item consulta-card consulta-profile-card">
                 <span class='detalle-label'>Perfil clínico</span>
                 <div class="card-body ">
-                  <div class="consulta-body" id="resumen_antencedente_paciente"
-                    style="height:250px;overflow:auto;padding:6px;"></div>
+                  <div class="consulta-body" id="resumen_antencedente_paciente"></div>
                 </div>
               </div>
 
+              </div>
+              <div class="clinical-side-column">
+
+              <div class="divFloat2 panel-izquierdo presupuesto-panel consulta-card consulta-treatments-card">
+                <span class='detalle-label'>Tratamientos activos</span>
+                <div class="div_cuerpo_table presupuesto-search-table" id="divPreConsultaDetalle_Consulta"> </div>
+              </div>
+
               <!-- BLOQUE 3: Historial de Consultas -->
-              <div class="detalle-item consulta-card consulta-consultas-card" style="height:300px;padding:8px;">
+              <div class="detalle-item consulta-card consulta-consultas-card consulta-consultas-card--legacy" style="display:none;">
                 <div style="display: inline-flex; justify-content: space-between">
                   <span class='detalle-label' style="margin-top: auto;margin-bottom: auto;">Historial de consultas</span>
                   <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarAbmDetalleConsulta(true)">
                 </div>
                 <div class="card-body">
-                  <div id="divHistorial_Consulta" class="flex-column gap-2 overflow-auto"
-                    style="height:250px;overflow:auto;padding:6px;">
+                  <div id="divHistorial_Consulta_Legacy" class="flex-column gap-2 overflow-auto">
                     <!-- Consultas dinámicas -->
                   </div>
 
                 </div>
               </div>
-            </div>
 
-            <div class="divMenuh" style='display:contents;'>
-
-              <div class="divFloat2 panel-izquierdo presupuesto-panel consulta-card consulta-treatments-card" style='width:auto;min-width:0;padding:8px;height:300px;'>
-                <span class='detalle-label'>Tratamientos activos</span>
-                <div class="div_cuerpo_table presupuesto-search-table" id="divPreConsultaDetalle_Consulta"
-                  style="height:250px;min-height:250px;overflow:auto;border:none;"> </div>
               </div>
+            </div>
 
               <!-- Panel Derecho -->
               <div class="modal-filtros-overlay" id="overlayAbmDetalleConsulta" onclick="verCerrarAbmDetalleConsulta(false)" style="display: none;"></div>
@@ -13848,70 +13865,64 @@ style='background-color: #b7b7b7;'>
                   <div class='modal-filtros-header' style='padding:14px 18px;'>
                     <div class='modal-header-info'>
                       <p class='modal-etiqueta'>Registro clínico</p>
-                      <h3>Detalle de consulta</h3>
+                      <h3>Nueva consulta</h3>
                       <span>Motivo, diagnóstico, procedimiento realizado y próximo paso</span>
                     </div>
                     <button type='button' class='btn-cerrar-modal' onclick='verCerrarAbmDetalleConsulta(false)'>&times;</button>
                   </div>
                   <div class='modal-filtros-body' style='padding:12px;'>
 
-                  <!-- Especialista y Fecha -->
-                  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-
-                    <div style="flex: 1;">
-                      <p class="pTitulo5">Especialista:</p>
-                      <select class="catalogo-selectBuscador" id="inptEspecialistaConsulta" disabled
-                        style='width:100%;'> </select>
-
+                  <input type="hidden" id="inptEspecialistaConsulta">
+                  <div class="clinical-register-meta">
+                    <div class="clinical-register-owner">
+                      <div class="clinical-register-owner__avatar" id="consultaResponsableAvatar" aria-hidden="true">U</div>
+                      <div class="clinical-register-owner__text">
+                        <strong id="consultaResponsableNombre">Usuario actual</strong>
+                        <span>Especialista responsable del registro</span>
+                      </div>
                     </div>
-
-                    <div style="flex: 1;">
-                      <p class="pTitulo5">Fecha:</p>
-                      <input type="date" class="catalogo-selectBuscador" disabled style="width:100%;"
-                        id="inptFechaConsulta">
+                    <div class="clinical-register-date">
+                      <label for="inptFechaConsulta">Fecha</label>
+                      <input type="date" class="catalogo-selectBuscador" disabled id="inptFechaConsulta">
                     </div>
                   </div>
 
                   <!-- Contenedor Principal en 2 columnas -->
-                  <div class="contenedor-consulta-doble detalle-agenda-grid" style='gap:8px;'>
-                    <!-- Columna izquierda -->
+                  <div class="contenedor-consulta-doble detalle-agenda-grid clinical-register-form-grid">
+                    <!-- Fila principal -->
                     <div class="columna-consulta">
                       <!-- Motivo Consulta -->
-                      <div style="margin-top: 10px;">
+                      <div class="clinical-register-field">
                         <p class="pTitulo5">Motivo de consulta:</p>
-                        <textarea class="textarea-agenda" placeholder="Obligatorio (*)" id="inptMotivoConsulta"
-                          style="min-height:78px;"></textarea>
+                        <textarea class="textarea-agenda" placeholder="Ej.: Dolor, control, revisi&oacute;n, urgencia..." id="inptMotivoConsulta" style="min-height:78px;"></textarea>
                       </div>
 
-                      <!-- Diagnóstico -->
-                      <div style="margin-top: 10px;">
-                        <p class="pTitulo5">Diagnóstico / hallazgo:</p>
-                        <textarea class="textarea-agenda" placeholder="Obligatorio (*)" id="inptDiagnosticoConsulta"
-                          style="min-height:78px;"></textarea>
+                      <!-- Trabajos Realizados -->
+                      <div class="clinical-register-field">
+                        <p class="pTitulo5">Procedimiento realizado:</p>
+                        <textarea class="textarea-agenda" placeholder="Ej.: Limpieza, restauraci&oacute;n, extracci&oacute;n, ajuste..." id="inptTrabajoRealizadoConsulta" style="min-height:78px;"></textarea>
                       </div>
                     </div>
 
-                    <!-- Columna derecha -->
+                    <!-- Fila de seguimiento -->
                     <div class="columna-consulta">
-                      <!-- Trabajos Realizados -->
-                      <div style="margin-top: 10px;">
-                        <p class="pTitulo5">Procedimiento realizado:</p>
-                        <textarea class="textarea-agenda" placeholder="Obligatorio (*)"
-                          id="inptTrabajoRealizadoConsulta" style="min-height:78px;"></textarea>
+                      <!-- Diagnóstico -->
+                      <div class="clinical-register-field">
+                        <p class="pTitulo5">Diagnóstico / hallazgo:</p>
+                        <textarea class="textarea-agenda" placeholder="Describa el hallazgo cl&iacute;nico..." id="inptDiagnosticoConsulta" style="min-height:78px;"></textarea>
                       </div>
 
                       <!-- Próxima Consulta -->
-                      <div style="margin-top: 10px;">
+                      <div class="clinical-register-field">
                         <p class="pTitulo5">Indicación / próximo paso:</p>
-                        <textarea class="textarea-agenda" placeholder="Obligatorio (*)" id="inptProximaConsultaConsulta"
-                          style="min-height:78px;"></textarea>
+                        <textarea class="textarea-agenda" placeholder="Indique seguimiento, pr&oacute;xima consulta o recomendaci&oacute;n..." id="inptProximaConsultaConsulta" style="min-height:78px;"></textarea>
                       </div>
                     </div>
                   </div>
 
                   <!-- Botón Guardar -->
-                  <div class='modal-filtros-footer' style='padding:8px 0 0 0;background:transparent;border-top:none;'>
-                    <input type="button" value="Guardar evolución" class="btn-accion-principal"
+                  <div class='modal-filtros-footer clinical-register-footer'>
+                    <input type="button" value="Guardar registro cl&iacute;nico" class="btn-accion-principal"
                       onclick="VerificarAbmConsulta()" id="btnAbmConsulta">
                   </div>
 
@@ -13923,7 +13934,7 @@ style='background-color: #b7b7b7;'>
             </div>
 
 
-            <div class="presupuesto-panel consulta-card consulta-gallery-card" style='grid-column:1/-1;padding:8px;'>
+            <div class="presupuesto-panel consulta-card clinical-gallery-card consulta-gallery-card">
               <span class='detalle-label'>Galería del paciente</span>
               <div class="card-body d-flex flex-column gap-3">
 
@@ -13934,8 +13945,7 @@ style='background-color: #b7b7b7;'>
                 </button>
 
                 <!-- Contenedor Galería -->
-                <div id="table_frm_VistaGaleria" class="div_cuerpo_table presupuesto-search-table"
-                  style="min-height:120px;max-height:170px;overflow:auto;width:100%;border:none;">
+                <div id="table_frm_VistaGaleria" class="div_cuerpo_table presupuesto-search-table">
                   <div class="consulta-empty-gallery">
                     <strong>No hay imágenes cargadas todavía.</strong>
                     <span>Subí radiografías, fotos clínicas o documentos del paciente.</span>
@@ -13951,6 +13961,7 @@ style='background-color: #b7b7b7;'>
 
             <!-- <input type="button" value="Subir imagen" class="btn1" onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')" id="btnSubirImagen"> -->
             <!-- <div class="div_cuerpo_table2" id="table_frm_VistaGaleria" style='min-height:280px;border:none;overflow:auto'></div> -->
+            </div>
           </div>
 
         </center>

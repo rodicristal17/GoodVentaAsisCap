@@ -1571,6 +1571,68 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 let cod_Agendamiento="";
 let cod_ventaFKConsulta="";
 let cod_clienteConsulta = "";
+
+function obtenerNombreResponsableConsulta() {
+	var nombre = "";
+	try {
+		nombre = localStorage.getItem("nombreUsuario" + userid) || "";
+	} catch (error) {
+		nombre = "";
+	}
+	return nombre.trim() != "" ? nombre : "Usuario actual";
+}
+
+function obtenerInicialesResponsableConsulta(nombre) {
+	var iniciales = "";
+	var partes = (nombre || "").trim().split(/\s+/);
+	for (var i = 0; i < partes.length && iniciales.length < 2; i++) {
+		if (partes[i] != "") {
+			iniciales += partes[i].charAt(0);
+		}
+	}
+	return (iniciales || "U").toUpperCase();
+}
+
+function actualizarResponsableRegistroConsulta() {
+	if (typeof obtener_datos_user == "function") {
+		obtener_datos_user();
+	}
+
+	var especialista = document.getElementById("inptEspecialistaConsulta");
+	if (especialista) {
+		especialista.value = userid;
+	}
+
+	var nombre = obtenerNombreResponsableConsulta();
+	var nombreElemento = document.getElementById("consultaResponsableNombre");
+	if (nombreElemento) {
+		nombreElemento.textContent = nombre;
+	}
+
+	var avatar = document.getElementById("consultaResponsableAvatar");
+	if (!avatar) {
+		return;
+	}
+
+	avatar.textContent = obtenerInicialesResponsableConsulta(nombre);
+	avatar.style.backgroundImage = "";
+	avatar.classList.remove("clinical-register-owner__avatar--image");
+
+	var foto = "";
+	if (typeof fotocliente3 != "undefined") {
+		foto = fotocliente3;
+	}
+	if (typeof normalizarFotoUsuario == "function") {
+		foto = normalizarFotoUsuario(foto);
+	}
+
+	if (foto && foto.indexOf("sinperfil.png") == -1) {
+		avatar.style.backgroundImage = "url(" + foto + ")";
+		avatar.textContent = "";
+		avatar.classList.add("clinical-register-owner__avatar--image");
+	}
+}
+
 function ObtenerdatosAbmConsulta(elemento) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
@@ -1582,7 +1644,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 	
 	switch (controlVentanaConsulta) {
 		case "consulta":
-			document.getElementById("inptEspecialistaConsulta").value = userid
+			actualizarResponsableRegistroConsulta()
 			document.getElementById("inptPacienteConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
 			document.getElementById("inptCIConsulta").value= elemento.querySelector('#td_datos_2')?.textContent.trim();
 			document.getElementById("inptCodigoConsulta").value= elemento.querySelector('#td_datos_3')?.textContent.trim();
@@ -1609,7 +1671,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 function agregarObservacionConsulta(){
 	let descripcion = document.getElementById('inputObservacion').value;
 	if(descripcion ==''){
-		ver_vetana_informativa("FALTO INGRESAR LA OBSERVACIÓN");
+		ver_vetana_informativa("FALTO INGRESAR UN COMENTARIO INTERNO");
 		return;
 	}
 	obtener_datos_user();
@@ -1874,6 +1936,7 @@ function verCerrarAbmDetalleConsulta(mostrar){
 	if (!detalle) { return; }
 
 	if (mostrar === true) {
+		prepararFormularioNuevaConsulta();
 		detalle.style.display = "";
 		document.getElementById("overlayAbmDetalleConsulta").style.display= "";
 		return;
@@ -1891,7 +1954,7 @@ function verCerrarAbmDetalleConsulta(mostrar){
 
 
 
-function limpiarcamposConsulta(){
+function prepararFormularioNuevaConsulta(){
 
 	var f = new Date();
 	var dia =f.getDate()
@@ -1912,15 +1975,21 @@ function limpiarcamposConsulta(){
 	}
 	
 	document.getElementById('inptFechaConsulta').value=f.getFullYear()+"-"+mes+"-"+dia;
+	actualizarResponsableRegistroConsulta();
  
 	document.getElementById("inptMotivoConsulta").value="";	
 	document.getElementById("inptDiagnosticoConsulta").value=""; 
 	document.getElementById("inptTrabajoRealizadoConsulta").value=""; 
 	document.getElementById("inptProximaConsultaConsulta").value=""; 
  
-	document.getElementById("btnAbmConsulta").value="Guardar evolución"
+	document.getElementById("btnAbmConsulta").value="Guardar registro clínico"
  
 	cod_consulta=""
+}
+
+function limpiarcamposConsulta(){
+
+	prepararFormularioNuevaConsulta();
  	cod_ventaFKConsulta="";
 }
 
@@ -1934,11 +2003,11 @@ function VerificarAbmConsulta() {
 	let inptFechaConsulta  = document.getElementById("inptFechaConsulta").value
 	let inptApodoConsulta  = document.getElementById("inptApodoConsulta").value
 	
-	var cod_especialista=  document.getElementById("inptEspecialistaConsulta").value
+	var cod_especialista = userid;
+	actualizarResponsableRegistroConsulta();
  
-	// alert(cod_especialista)
 	if(cod_especialista==""){
-		ver_vetana_informativa("FALTO SELECCIONAR UN ESPECIALISTA")
+		ver_vetana_informativa("NO SE PUDO IDENTIFICAR AL USUARIO ACTUAL")
 		return
 	}
 
@@ -2071,7 +2140,7 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 	datos.append("prxtrabajo", prxtrabajo)
 	datos.append("trabajoreali", trabajoreali)
 	datos.append("fecha", fecha)
-	datos.append("cod_estecialista", cod_especialista) 
+	datos.append("cod_estecialista", userid) 
 	datos.append("cod_agendamiento", idAbmAgenda) 
 	datos.append("cod_venta", cod_ventaFKConsulta) 
 	datos.append("cod_clienteConsulta", cod_clienteConsulta) 
