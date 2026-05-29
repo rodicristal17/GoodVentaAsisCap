@@ -55,7 +55,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-20260528"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
-<script src="../js_system/abmAsistencia.js"></script>
+<script src="../js_system/abmAsistencia.js?x=salida-ubicacion-20260529"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js"></script>
@@ -20048,43 +20048,44 @@ ZONA
 
 <div class="principal2" style="display: none;min-height: 100vh;" id="divJustificacionAsistencia">
   <center>
-<div class="divAbms" style="width: 350px;min-height: auto;">
+<div class="divAbms" style="width:min(440px, calc(100vw - 28px));min-height:auto;margin-top:28px;border-radius:10px;overflow:hidden;">
 <table id="tdEfectoJustificacionAsistencia" class="magictime slideDownReturn" style="width:100%;">
   <tr><td><center>
     <table class="tableMenuZ"><tr>
       <td style="width:100%;text-align:left">
-      <p class="pTituloB"><b style="font-size: 30px;" id="tituloJustificacionAsistencia"></b></p>
+      <p class="pTituloB"><b style="font-size: 24px;" id="tituloJustificacionAsistencia"></b></p>
       </td>
     </tr></table>
-    <br>
     <center>
-      <div class="divMenuf">
+      <div class="divMenuf" style="width:90%;text-align:left;">
+        <p id="descripcionJustificacionAsistencia" style="margin:0 0 12px;color:#475467;font-size:13px;line-height:1.4;"></p>
+        <div id="detalleUbicacionJustificacionAsistencia" style="display:none;margin:0 0 12px;padding:10px;border:1px solid #ffd6a8;border-radius:8px;background:#fff7ed;color:#7c2d12;font-size:12px;line-height:1.5;"></div>
         <table style="width:100%">
           <tbody>
             <tr>
               <td>
                 <p class="pTituloC">Usuario:</p>
-                <input type="text" class="inputTextDisable" style="width:250px" id="inptNombreUsuarioJustificacionAsistencia" disabled="">
+                <input type="text" class="inputTextDisable" style="width:100%" id="inptNombreUsuarioJustificacionAsistencia" disabled="">
               </td>
             </tr>
           </tbody>
         </table>
         <table style="width:100%">
           <tbody>
-            <tr>
+            <tr id="filaHoraEntradaJustificacionAsistencia">
               <td>
                 <p class="pTituloC">Hora de entrada:</p>
-                <input type="text" class="inputTextDisable" style="width:250px" id="inptHoraEntradaJustificacionAsistencia" disabled="">
+                <input type="text" class="inputTextDisable" style="width:100%" id="inptHoraEntradaJustificacionAsistencia" disabled="">
               </td>
             </tr>
           </tbody>
         </table>
         <table style="width:100%">
           <tbody>
-            <tr>
+            <tr id="filaHoraRegistradaJustificacionAsistencia">
               <td>
-                <p class="pTituloC">Hora registrada:</p>
-                <input type="text" class="inputTextDisable" style="width:250px" id="inptHoraRegistradaJustificacionAsistencia" disabled="">
+                <p class="pTituloC" id="lblHoraRegistradaJustificacionAsistencia">Hora registrada:</p>
+                <input type="text" class="inputTextDisable" style="width:100%" id="inptHoraRegistradaJustificacionAsistencia" disabled="">
               </td>
             </tr>
           </tbody>
@@ -20094,14 +20095,14 @@ ZONA
             <tr>
               <td>
                 <p class="pTituloC">Justificacion* :</p>
-                <textarea class="textarea1" placeholder="Obligatorio (*)" id="inptJustificacionJustificacionAsistencia" style="height:120px"></textarea>
+                <textarea class="textarea1" placeholder="Escriba el motivo de la diferencia de ubicacion" id="inptJustificacionJustificacionAsistencia" style="height:120px;width:100%;padding:8px;box-sizing:border-box;"></textarea>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="divMenuf">
-        <input class="btn1" type="button" style="width: fit-content;" value="Guardar" onclick="justificarAsistencia()">
+      <div class="divMenuf" style="width:90%;padding-bottom:16px;">
+        <input class="btn1" type="button" style="width:100%;height:38px;" value="Guardar justificacion" onclick="justificarAsistencia()">
       </div>
     </center>
   </center></td></tr>
