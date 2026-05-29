@@ -278,12 +278,14 @@ function obtenerProductosLista()
     $mysqli = conectar_al_servidor();
     $sql = "SELECT cod_producto, nombre_producto FROM producto ORDER BY nombre_producto ASC";
     $result = mysqli_query($mysqli, $sql);
+    if (!$result) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Error al cargar productos: " . $mysqli->error), JSON_INVALID_UTF8_SUBSTITUTE);
+        exit;
+    }
     $productos_lista = [];
-    if ($result) {
-        while ($p = mysqli_fetch_assoc($result)) {
-            $p['nombre_producto'] = mb_convert_encoding((string)$p['nombre_producto'], 'UTF-8', 'ISO-8859-1');
-            $productos_lista[] = $p;
-        }
+    while ($p = mysqli_fetch_assoc($result)) {
+        $p['nombre_producto'] = mb_convert_encoding((string)$p['nombre_producto'], 'UTF-8', 'ISO-8859-1');
+        $productos_lista[] = $p;
     }
     echo json_encode(array("1" => "exito", "productos_lista" => $productos_lista), JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
@@ -489,10 +491,12 @@ function cargarProductosListaPagina()
     $sql = "SELECT cod_producto, nombre_producto FROM producto ORDER BY nombre_producto ASC";
     $result = $mysqli->query($sql);
 
-    if ($result) {
-        while ($fila = $result->fetch_assoc()) {
-            $productos_lista[] = $fila;
-        }
+    if (!$result) {
+        return $productos_lista;
+    }
+
+    while ($fila = $result->fetch_assoc()) {
+        $productos_lista[] = $fila;
     }
 
     return $productos_lista;

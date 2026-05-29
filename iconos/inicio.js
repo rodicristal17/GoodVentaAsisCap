@@ -2485,8 +2485,8 @@ function verificarcamposProducto() {
 	var inptTipoProducto = document.getElementById('inptTipoProducto').value
     var porcentaje=document.getElementById("inptPorcVentaProducto").value	
 	if (inptCodBarraProducto == "") {
-		inptCodBarraProducto="0000"
-		return false;
+		inptCodBarraProducto = "0000";
+		document.getElementById('inptCodBarraProducto').value = "0000";
 	}	
 	if (inptNombreProducto == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PRODUCTO", "#")
