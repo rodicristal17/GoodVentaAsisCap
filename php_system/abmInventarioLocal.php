@@ -150,22 +150,33 @@
 
             $monto_total += $value["costo"];
             $styleName=CargarStyleTable($styleName);
+            $url_imagen= !empty($value['url1']) ? $value['url1'] : '/GoodVentaAsisCap/iconos/imagenphoto.png';
+            $url_imagen_visible= htmlspecialchars($url_imagen, ENT_QUOTES, 'UTF-8');
+            $nombre_visible= htmlspecialchars($value['nombre'], ENT_QUOTES, 'UTF-8');
+            $local_visible= htmlspecialchars($value['nombreLocal'], ENT_QUOTES, 'UTF-8');
             $pagina.="
-            <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+            <table class='$styleName inventario-local-card-table' cellspacing='0' cellpadding='0'>
             <tr id='tbSelecRegistro' onclick='obtenerDatosInsumoLocal(this)'>
-            <td id='td_id' style='width:5%;'>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)."</td>
-            <td id='td_datos_1' style='width:15%;'>".$value['nombre']."</td>
-            <td id='td_datos_18' style='width:10%;'>".$value['nombre_marca']."</td>
-            <td id='td_datos_20' style='width: 10%;'>".$value['modelo']."</td>
+            <td class='inventario-local-card'>
+                <div class='inventario-local-card__thumb' style='background-image:url(\"".$url_imagen_visible."\");'></div>
+                <div class='inventario-local-card__body'>
+                    <strong>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)." - ".$nombre_visible."</strong>
+                    <span>".$local_visible."</span>
+                </div>
+            </td>
+            <td id='td_id' style='display:none;'>".str_pad($value['cod_insumo'], 3, "0", STR_PAD_LEFT)."</td>
+            <td id='td_datos_1' style='display:none;'>".$value['nombre']."</td>
+            <td id='td_datos_18' style='display:none;'>".$value['nombre_marca']."</td>
+            <td id='td_datos_20' style='display:none;'>".$value['modelo']."</td>
             <td id='td_datos_6' style='display: none;'>".number_format($value['costo'], 0, ",", ".")."</td>
-            <td style='width: 5%;'>".number_format($value['costo'], 0, ",", ".").(intval($value['costo']) == 0 ? ' <i class="fa-solid fa-triangle-exclamation" style="font-size: 14px; color: gold;"></i>' : '')."</td>
+            <td style='display:none;'>".number_format($value['costo'], 0, ",", ".").(intval($value['costo']) == 0 ? ' <i class="fa-solid fa-triangle-exclamation" style="font-size: 14px; color: gold;"></i>' : '')."</td>
             <td id='td_datos_19' style='display:none;'>".$value['nro_serie']."</td>
             <td id='td_datos_2' style='display:none;'>".$value['descripcion']."</td>
-            <td id='td_datos_3' style='width:20%;'>".$value['nombreLocal'].".</td>
-            <td style='width:15%;'>".$value['nombre_usuario_responsable'].($value['url_compromiso'] ? ' <i class="fa-solid fa-square-check" style="font-size: 14px; color: green;"></i>' : '')."</td>
+            <td id='td_datos_3' style='display:none;'>".$value['nombreLocal']."</td>
+            <td style='display:none;'>".$value['nombre_usuario_responsable'].($value['url_compromiso'] ? ' <i class="fa-solid fa-square-check" style="font-size: 14px; color: green;"></i>' : '')."</td>
             <td id='td_datos_14' style='display:none;'>".$value['nombre_usuario_responsable']."</td>
-            <td id='td_datos_4' style='width: 5%;'>".ucfirst($value['estado'])."</td>
-            <td id='td_datos_14' style='dislay:none;'>".$value['nombre_usuarioFK_create']."</td>
+            <td id='td_datos_4' style='display:none;'>".ucfirst($value['estado'])."</td>
+            <td id='td_datos_14' style='display:none;'>".$value['nombre_usuarioFK_create']."</td>
             <td id='td_datos_5' style='display: none;'>".$value['cantidad']."</td>
             <td id='td_datos_7' style='display: none;'>".$value['observacion']."</td>
             <td id='td_datos_8' style='display: none;'>".$value['cod_localFK']."</td>
@@ -182,8 +193,8 @@
             <td id='td_datos_23' style='display: none;'>".$value['ci_usuario_responsable']."</td>
             <td id='td_datos_24' style='display: none;'>".$value['tel_usuario_responsable']."</td>
             <td id='td_datos_25' style='display: none;'>".$value['url_compromiso']."</td>
-            <td id='td_datos_26' style='width: 5%;'>".$value['estado_fisico']."</td>
-            <td id='td_datos_27' style='width: 15%;'>hace ".$cant_ultima_edicion." d.</td>
+            <td id='td_datos_26' style='display:none;'>".$value['estado_fisico']."</td>
+            <td id='td_datos_27' style='display:none;'>hace ".$cant_ultima_edicion." d.</td>
             <td id='td_datos_28' style='display: none;'>".$value['categoria']."</td>
             </tr></table>";
         }

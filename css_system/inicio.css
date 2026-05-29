@@ -3943,6 +3943,102 @@ text-align: justify;
   overflow: hidden;
 }
 
+#divAbmInventarioLocal1 #table_abm_InventarioLocal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-auto-rows: auto;
+  gap: 14px;
+  align-items: start;
+  padding: 12px 4px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+#divAbmInventarioLocal1 #tbTitulosArticulosLocal {
+  display: none;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card-table {
+  display: block;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-collapse: separate;
+  table-layout: fixed;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card-table:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+}
+
+#divAbmInventarioLocal1 .inventario-local-card-table tr.tableRegistroSelec {
+  outline: 3px solid rgba(33, 150, 243, 0.42);
+  outline-offset: -3px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card-table tbody,
+#divAbmInventarioLocal1 .inventario-local-card-table tr {
+  display: block;
+  width: 100%;
+  height: auto !important;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  background: #fff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card__thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: #eef2f7;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 74px;
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card__body strong,
+#divAbmInventarioLocal1 .inventario-local-card__body span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card__body strong {
+  color: #1f2937;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+#divAbmInventarioLocal1 .inventario-local-card__body span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
 .contenedor-imagen {
   padding:12px;
   border-radius:14px;

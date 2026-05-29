@@ -9,8 +9,8 @@ include_once("buscar_nivel.php");
 include_once("classTable.php");
 $host = "localhost";
 $dbname = "syscvxco_ac";
-$username = "root";
-$password = '';
+$username = "syscvxco_ac";
+$password = 'syscvxco_ac';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
