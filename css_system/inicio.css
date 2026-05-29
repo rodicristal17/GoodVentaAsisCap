@@ -4215,20 +4215,7 @@ text-align: justify;
 
 #tdEfectoInformeLogInactivos {
   width: 100%;
-  height: auto !important;
-}
-
-#tdEfectoInformeLogInactivos > tbody,
-#tdEfectoInformeLogInactivos > tbody > tr,
-#tdEfectoInformeLogInactivos > tbody > tr > td {
-  display: block;
-  width: 100%;
-  height: auto !important;
-}
-
-#tdEfectoInformeLogInactivos > tbody > tr > td {
-  padding: 18px 0;
-  box-sizing: border-box;
+  height: 100%;
 }
 
 #tdEfectoInformeLogInactivos .log-inactivos-shell {

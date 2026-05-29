@@ -2483,89 +2483,6 @@ class='divMinimizado'></div>
 </div>
 </div>
 
-<div class="principal2" style="display:none;" id="divInformeLogInactivos">
-  <table style="width:100%;" id="tdEfectoInformeLogInactivos" class="magictime slideDownReturn">
-    <tbody>
-      <tr>
-        <td>
-          <center>
-            <div class="divPrincipalrepor log-inactivos-shell">
-              <table class="tableMenuZ">
-                <tbody>
-                  <tr>
-                    <td style="width:100%;text-align:left">
-                      <p class="pTituloB">Log de <b style="font-size: 30px;">Registros inactivos</b></p>
-                    </td>
-                    <td style="width:5%;text-align:center">
-                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
-                        onclick="minimizarInformeLogInactivos()">
-                    </td>
-                    <td style="width:5%;text-align:center">
-                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
-                        onclick="cerrarInformeLogInactivos()">
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div class="divMenuf log-inactivos-filtros">
-                <table style="width:100%">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <p class="pTituloC">Tabla</p>
-                        <input class="inputText" type="text" id="inptLogInactivosTabla" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
-                      </td>
-                      <td>
-                        <p class="pTituloC">Registro</p>
-                        <input class="inputText" type="text" id="inptLogInactivosRegistro" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
-                      </td>
-                      <td>
-                        <p class="pTituloC">Usuario</p>
-                        <input class="inputText" type="text" id="inptLogInactivosUsuario" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
-                      </td>
-                      <td>
-                        <p class="pTituloC">Desde</p>
-                        <input class="inputText" type="date" id="inptLogInactivosFechaDesde">
-                      </td>
-                      <td>
-                        <p class="pTituloC">Hasta</p>
-                        <input class="inputText" type="date" id="inptLogInactivosFechaHasta">
-                      </td>
-                      <td style="text-align:right;vertical-align:bottom;">
-                        <input type="button" value="Buscar" class="btn4" onclick="buscarInformeLogInactivos()">
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="divMenuf log-inactivos-panel">
-                <div class="log-inactivos-list" id="table_InformeLogInactivos"></div>
-              </div>
-
-              <div class="divMenuf log-inactivos-total">
-                <table style="width:98%">
-                  <tbody>
-                    <tr>
-                      <td style="width:15%;text-align:left">
-                        <p class="pTituloC">Total Registro:</p>
-                        <input class="inputTextDisable" type="text" disabled id="inptTotalRegistroLogInactivos"
-                          style="width:120px;text-align:center">
-                      </td>
-                      <td style="width:85%;"></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </center>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
 <script>
 var isReportsOpen = false;
 
@@ -20313,6 +20230,88 @@ ZONA
 </table>
 </div>
 </center>
+</div>
+<div class="principal2" style="display:none;" id="divInformeLogInactivos">
+  <table style="width:100%;height:100%" id="tdEfectoInformeLogInactivos" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divPrincipalrepor log-inactivos-shell">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Log de <b style="font-size: 30px;">Registros inactivos</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                        onclick="minimizarInformeLogInactivos()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="cerrarInformeLogInactivos()">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="divMenuf log-inactivos-filtros">
+                <table style="width:100%">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <p class="pTituloC">Tabla</p>
+                        <input class="inputText" type="text" id="inptLogInactivosTabla" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Registro</p>
+                        <input class="inputText" type="text" id="inptLogInactivosRegistro" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Usuario</p>
+                        <input class="inputText" type="text" id="inptLogInactivosUsuario" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Desde</p>
+                        <input class="inputText" type="date" id="inptLogInactivosFechaDesde">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Hasta</p>
+                        <input class="inputText" type="date" id="inptLogInactivosFechaHasta">
+                      </td>
+                      <td style="text-align:right;vertical-align:bottom;">
+                        <input type="button" value="Buscar" class="btn4" onclick="buscarInformeLogInactivos()">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="divMenuf log-inactivos-panel">
+                <div class="log-inactivos-list" id="table_InformeLogInactivos"></div>
+              </div>
+
+              <div class="divMenuf log-inactivos-total">
+                <table style="width:98%">
+                  <tbody>
+                    <tr>
+                      <td style="width:15%;text-align:left">
+                        <p class="pTituloC">Total Registro:</p>
+                        <input class="inputTextDisable" type="text" disabled id="inptTotalRegistroLogInactivos"
+                          style="width:120px;text-align:center">
+                      </td>
+                      <td style="width:85%;"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 <div class="principal2" style="display: none;" id="divInformeDictamen">
   <table style="width:100%;height:100%" id="tdEfectoInformeDictamen" class="magictime slideDownReturn">
