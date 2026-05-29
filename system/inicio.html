@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=dashboard-shortcuts-20260528" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=tarea-diaria-wizard-20260529" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -38,14 +38,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/consulta.js?x=x-ios10v1"></script>
+<script src="/GoodVentaAsisCap/js_system/consulta.js?x=ficha-clinica-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=producto-insumos-list-20260528"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-20260529"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=dashboard-shortcuts-20260528"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260528f"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529a"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
@@ -259,11 +259,12 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                     <div class="dashboard-principal">
 
+                      <div class="dashboard-left-column">
                       <section class="dashboard-card dashboard-card--jornada" id="dashboardJornadaCard">
                         <div class="dashboard-card__header">
                           <div>
                             <p class="dashboard-card__eyebrow">Jornada laboral</p>
-                            <h2 class="dashboard-card__title">Agenda del dia</h2>
+                            <h2 class="dashboard-card__title">Agenda del día</h2>
                             <p class="dashboard-card__subtitle">Actividades y control diario del funcionario</p>
                           </div>
                         </div>
@@ -271,12 +272,72 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         <div class="dashboard-card__body" id="dashboardJornadaBody"></div>
                       </section>
 
+                      <section class="dashboard-card dashboard-card--summary" id="dashboardOperationalSummary">
+                        <div class="dashboard-card__header">
+                          <div>
+                            <p class="dashboard-card__eyebrow">Operación diaria</p>
+                            <h2 class="dashboard-card__title">Resumen operativo del día</h2>
+                            <p class="dashboard-card__subtitle">Indicadores rápidos de atención, tareas y caja</p>
+                          </div>
+                        </div>
+
+                        <div class="dashboard-card__body">
+                          <div class="dashboard-summary-grid">
+                            <div class="dashboard-summary-item">
+                              <span class="dashboard-summary-item__value" id="dashboardSummaryMessages">0</span>
+                              <small>Mensajes sin leer</small>
+                            </div>
+                            <div class="dashboard-summary-item">
+                              <span class="dashboard-summary-item__value" id="dashboardSummaryInterconsultas">0</span>
+                              <small>Interconsultas</small>
+                            </div>
+                            <div class="dashboard-summary-item">
+                              <span class="dashboard-summary-item__value" id="dashboardSummaryPendingTasks">0</span>
+                              <small>Tareas pendientes</small>
+                            </div>
+                            <div class="dashboard-summary-item dashboard-summary-item--warning">
+                              <span class="dashboard-summary-item__value" id="dashboardSummaryLateTasks">0</span>
+                              <small>Atrasadas</small>
+                            </div>
+                            <div class="dashboard-summary-item dashboard-summary-item--success">
+                              <span class="dashboard-summary-item__value" id="dashboardSummaryDoneTasks">0</span>
+                              <small>Completadas</small>
+                            </div>
+                            <div class="dashboard-summary-item">
+                              <span class="dashboard-summary-item__value" id="dashboardSummaryPayments">-</span>
+                              <small>Pagos programados</small>
+                            </div>
+                          </div>
+
+                          <div class="dashboard-summary-detail">
+                            <div>
+                              <strong>Próxima actividad</strong>
+                              <span id="dashboardSummaryNextActivity">Sin actividad inmediata</span>
+                            </div>
+                            <div>
+                              <strong>Estado de caja</strong>
+                              <span id="dashboardSummaryCashStatus">Sin datos</span>
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+                      </div>
+
                       <section class="dashboard-card dashboard-card--gantt">
                         <div class="dashboard-card__header">
                           <div>
-                            <p class="dashboard-card__eyebrow">Planificacion</p>
+                            <p class="dashboard-card__eyebrow">Planificación</p>
                             <h2 class="dashboard-card__title">Diagrama de Gantt</h2>
                             <p class="dashboard-card__subtitle">Vista general de tareas y avances</p>
+                          </div>
+                          <div class="dashboard-gantt-actions">
+                            <button type="button" class="dashboard-gantt-secondary-button" onclick="abrirVistaCompletaGantt()">
+                              <strong>Vista completa</strong>
+                            </button>
+                            <button type="button" class="dashboard-gantt-new-task-button" onclick="abrirNuevaTareaGrant()">
+                              <span>+</span>
+                              <strong>Nueva tarea</strong>
+                            </button>
                           </div>
                         </div>
 
@@ -284,14 +345,47 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <div class="Panel dashboard-gantt-panel">
                       <iframe
                         id="iframeGrant"
-                        src="../php_system/Grant.php"
+                        src="../php_system/Grant.php?embed=dashboard&x=20260529compact"
                         width="100%"
                         frameborder="0"
                         scrolling="auto"
-                        style="display:block;width:100%;height:760px;max-height:760px;border:0;"
+                        style="display:block;width:100%;height:620px;max-height:620px;border:0;"
                         onload="ajustarAltoGrantIframe(this)">
                       </iframe>
                       <script>
+                        function abrirVistaCompletaGantt() {
+                          window.open('../php_system/Grant.php?x=20260529full', '_blank');
+                        }
+
+                        function abrirNuevaTareaGrant() {
+                          var iframe = document.getElementById('iframeGrant');
+                          if (!iframe) return;
+
+                          try {
+                            if (iframe.contentWindow && typeof iframe.contentWindow.abrirPanelNuevaTareaGantt === 'function') {
+                              iframe.contentWindow.abrirPanelNuevaTareaGantt();
+                              ajustarAltoGrantIframe(iframe);
+                              return;
+                            }
+
+                            var doc = iframe.contentDocument || iframe.contentWindow.document;
+                            var panel = doc ? doc.getElementById('task-form-panel') : null;
+                            var titulo = doc ? doc.getElementById('form_titulo') : null;
+
+                            if (panel) {
+                              panel.open = true;
+                            }
+
+                            if (titulo) {
+                              setTimeout(function () { titulo.focus(); }, 80);
+                            }
+
+                            ajustarAltoGrantIframe(iframe);
+                          } catch (e) {
+                            console.warn('No se pudo abrir el formulario del Gantt', e);
+                          }
+                        }
+
                         function ajustarAltoGrantIframe(iframe) {
                           if (!iframe) return;
 
@@ -307,13 +401,13 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                                 html ? html.offsetHeight : 0
                               );
 
-                              var nuevoAlto = Math.min(760, Math.max(600, alto));
+                              var nuevoAlto = Math.min(620, Math.max(520, alto));
                               var altoActual = parseInt(iframe.style.height, 10) || 0;
                               if (Math.abs(altoActual - nuevoAlto) > 10) {
                                 iframe.style.height = nuevoAlto + 'px';
                               }
                             } catch (e) {
-                              iframe.style.height = '760px';
+                              iframe.style.height = '620px';
                             }
                           }
 
@@ -339,6 +433,21 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                     </div>
 
+                    <section class="dashboard-access-search dashboard-section-card" id="dashboardAccessSearch">
+                      <div class="dashboard-section-header">
+                        <div>
+                          <p class="dashboard-section-eyebrow">Búsqueda general</p>
+                          <h2 class="dashboard-section-title">Encontrar acceso</h2>
+                        </div>
+                      </div>
+
+                      <div class="dashboard-access-search__box">
+                        <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
+                        <button type="button" onclick="limpiarBuscadorAccesosDashboard()">Limpiar</button>
+                      </div>
+                      <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
+                    </section>
+
                     <script>
                       function organizarDashboardPrincipal() {
                         var jornadaBody = document.getElementById("dashboardJornadaBody");
@@ -354,9 +463,194 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         }
                       }
 
+                      var dashboardAccessSearchItems = [];
+
+                      function textoDashboard(selector, fallback) {
+                        var elemento = document.querySelector(selector);
+                        var texto = elemento ? (elemento.textContent || "").replace(/\s+/g, " ").trim() : "";
+                        return texto || fallback || "";
+                      }
+
+                      function normalizarTextoDashboard(valor) {
+                        var texto = (valor || "").toString().toLowerCase().trim();
+                        return texto.normalize ? texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : texto;
+                      }
+
+                      function escaparHtmlDashboard(valor) {
+                        return (valor || "").toString().replace(/[&<>"']/g, function (caracter) {
+                          return {
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#039;"
+                          }[caracter];
+                        });
+                      }
+
+                      function numeroDashboard(selector) {
+                        var texto = textoDashboard(selector, "0");
+                        var match = texto.match(/\d+/);
+                        return match ? match[0] : "0";
+                      }
+
+                      function moduloAccesoDashboard(tile) {
+                        if (!tile) return "Dashboard";
+                        if (tile.closest("#quickAccessSection")) return "Accesos rápidos";
+                        if (tile.closest("#divMenuConsultas")) return "Agendamientos";
+                        if (tile.closest("#divMenuListados")) return "Listados";
+                        if (tile.closest("#divMenuAdministrativo")) return "Administrativo";
+                        if (tile.closest("#divMenuInformes")) return "Informes";
+                        if (tile.closest("#divMenuSistema")) return "Sistema";
+                        return "Dashboard";
+                      }
+
+                      function accesoOcultoInline(tile) {
+                        var style = (tile && tile.getAttribute("style") || "").replace(/\s/g, "").toLowerCase();
+                        return style.indexOf("display:none") !== -1 || (tile && tile.style && tile.style.display == "none");
+                      }
+
+                      function actualizarBuscadorAccesosDashboard() {
+                        var selectores = [
+                          "#quickAccessSection .divMenub",
+                          "#divMenuConsultas .divMenub",
+                          "#divMenuListados .divMenub",
+                          "#divMenuAdministrativo .divMenub",
+                          "#divMenuInformes .divMenub",
+                          "#divMenuSistema .divMenub"
+                        ];
+                        var vistos = {};
+
+                        dashboardAccessSearchItems = [];
+
+                        document.querySelectorAll(selectores.join(",")).forEach(function (tile) {
+                          if (!tile || accesoOcultoInline(tile)) return;
+
+                          var labelNode = tile.querySelector ? tile.querySelector(".pTitulo4") : null;
+                          var label = labelNode ? (labelNode.textContent || "").replace(/\s+/g, " ").trim() : "";
+
+                          if (!label) return;
+
+                          if (!tile.getAttribute("data-dashboard-access-prepared")) {
+                            tile.setAttribute("role", "button");
+                            tile.setAttribute("tabindex", "0");
+                            tile.setAttribute("data-dashboard-access-prepared", "1");
+                            tile.addEventListener("keydown", function (event) {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                tile.click();
+                              }
+                            });
+                          }
+
+                          var module = moduloAccesoDashboard(tile);
+                          var key = tile.getAttribute("data-access-key") || tile.id || (module + "-" + label);
+                          var uniqueKey = module + "::" + key + "::" + label;
+
+                          if (vistos[uniqueKey]) return;
+                          vistos[uniqueKey] = true;
+
+                          dashboardAccessSearchItems.push({
+                            tile: tile,
+                            label: label,
+                            module: module,
+                            search: normalizarTextoDashboard(label + " " + module + " " + key)
+                          });
+                        });
+
+                        filtrarAccesosDashboard();
+                      }
+
+                      function filtrarAccesosDashboard() {
+                        var input = document.getElementById("dashboardAccessSearchInput");
+                        var results = document.getElementById("dashboardAccessSearchResults");
+                        if (!input || !results) return;
+
+                        var query = normalizarTextoDashboard(input.value);
+                        if (!query) {
+                          results.innerHTML = "<span class='dashboard-access-search__empty'>Escribí para buscar accesos del dashboard.</span>";
+                          return;
+                        }
+
+                        var html = "";
+                        var cantidad = 0;
+
+                        dashboardAccessSearchItems.forEach(function (item, index) {
+                          if (cantidad >= 12 || item.search.indexOf(query) === -1) return;
+                          html += "<button type='button' class='dashboard-access-search__result' onclick='abrirAccesoBuscadoDashboard(" + index + ")'>";
+                          html += "<strong>" + escaparHtmlDashboard(item.label) + "</strong>";
+                          html += "<span>" + escaparHtmlDashboard(item.module) + "</span>";
+                          html += "</button>";
+                          cantidad++;
+                        });
+
+                        results.innerHTML = html || "<span class='dashboard-access-search__empty'>No se encontraron accesos con ese texto.</span>";
+                      }
+
+                      function abrirAccesoBuscadoDashboard(index) {
+                        var item = dashboardAccessSearchItems[index];
+                        if (!item || !item.tile) return;
+
+                        item.tile.click();
+                      }
+
+                      function limpiarBuscadorAccesosDashboard() {
+                        var input = document.getElementById("dashboardAccessSearchInput");
+                        if (input) input.value = "";
+                        filtrarAccesosDashboard();
+                      }
+
+                      function actualizarResumenOperativoDashboard() {
+                        var mensajes = document.getElementById("avisoMensajesPendientes");
+                        var interconsultas = document.getElementById("avisoInterconsultasAbiertos");
+                        var tarea = document.querySelector("#listaTareasAdministrador .perfil-tareas__item:not(.perfil-tareas__item--completada) .perfil-tareas__descripcion");
+                        var cajaAbierta = typeof idabmAperturacierrecaja !== "undefined" && idabmAperturacierrecaja && idabmAperturacierrecaja != "0";
+
+                        var mensajesValue = mensajes && mensajes.style.display != "none" ? "1" : "0";
+                        var interconsultasValue = interconsultas && interconsultas.style.display != "none" ? numeroDashboard("#avisoInterconsultasAbiertos") : "0";
+                        var pendientes = numeroDashboard("#spanTareasPendientesResumen");
+                        var atrasadas = numeroDashboard("#spanTareasAtrasadas");
+                        var completadas = numeroDashboard("#spanTareasCompletadas");
+                        var proxima = tarea ? (tarea.textContent || "").replace(/\s+/g, " ").trim() : "Sin actividad inmediata";
+
+                        var map = {
+                          dashboardSummaryMessages: mensajesValue,
+                          dashboardSummaryInterconsultas: interconsultasValue,
+                          dashboardSummaryPendingTasks: pendientes,
+                          dashboardSummaryLateTasks: atrasadas,
+                          dashboardSummaryDoneTasks: completadas,
+                          appointmentsSummaryTasks: pendientes,
+                          appointmentsSummaryNext: proxima,
+                          dashboardSummaryNextActivity: proxima,
+                          dashboardSummaryCashStatus: cajaAbierta ? "Caja abierta" : "Sin caja abierta"
+                        };
+
+                        Object.keys(map).forEach(function (id) {
+                          var elemento = document.getElementById(id);
+                          if (elemento) elemento.textContent = map[id];
+                        });
+                      }
+
                       document.addEventListener("DOMContentLoaded", organizarDashboardPrincipal);
+                      document.addEventListener("DOMContentLoaded", actualizarBuscadorAccesosDashboard);
+                      document.addEventListener("DOMContentLoaded", actualizarResumenOperativoDashboard);
                       window.addEventListener("load", organizarDashboardPrincipal);
+                      window.addEventListener("load", actualizarBuscadorAccesosDashboard);
+                      window.addEventListener("load", actualizarResumenOperativoDashboard);
                       setTimeout(organizarDashboardPrincipal, 300);
+                      setTimeout(actualizarBuscadorAccesosDashboard, 700);
+                      setTimeout(actualizarBuscadorAccesosDashboard, 1800);
+                      setTimeout(actualizarResumenOperativoDashboard, 700);
+                      setTimeout(actualizarResumenOperativoDashboard, 1800);
+                      setTimeout(actualizarResumenOperativoDashboard, 3500);
+                      setInterval(actualizarResumenOperativoDashboard, 10000);
+
+                      setTimeout(function () {
+                        var tareas = document.getElementById("divTareasAdministrador");
+                        if (tareas && window.MutationObserver) {
+                          new MutationObserver(actualizarResumenOperativoDashboard).observe(tareas, { childList: true, subtree: true, characterData: true });
+                        }
+                      }, 700);
                     </script>
 
                     <table style='width:100%;display: none;'>
@@ -373,11 +667,11 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 <div class="quick-access-section__header dashboard-section-header">
 <div>
 <p class="quick-access-section__eyebrow dashboard-section-eyebrow">Uso frecuente</p>
-<h2 class="quick-access-section__title dashboard-section-title">Accesos rapidos</h2>
+<h2 class="quick-access-section__title dashboard-section-title">Accesos rápidos</h2>
 </div>
 <button type="button" class="quick-access-edit-button" onclick="abrirModalAccesosRapidos()">
 <img src="/GoodVentaAsisCap/iconos/editar.png" alt="" />
-<span>Editar accesos rapidos</span>
+<span>Editar accesos rápidos</span>
 </button>
 </div>
 
@@ -660,7 +954,7 @@ style='display:none' class='divMinimizado'>
 
             <div>
                 <p class="perfil-tareas__eyebrow">Jornada laboral</p>
-                <p class="perfil-tareas__titulo">Agenda del dia</p>
+                <p class="perfil-tareas__titulo">Agenda del día</p>
                 <p class="perfil-tareas__subtitulo">Actividades fijadas por el Administrador</p>
             </div>
 
@@ -794,8 +1088,27 @@ style='display:none' class='divMinimizado'>
 
 <div class="appointments-section__header dashboard-section-header">
 <div>
-<p class="appointments-section__eyebrow dashboard-section-eyebrow">Atencion diaria</p>
+<p class="appointments-section__eyebrow dashboard-section-eyebrow">Atención diaria</p>
 <h2 class="appointments-section__title dashboard-section-title">Agendamientos</h2>
+</div>
+</div>
+
+<div class="appointments-section__summary" id="appointmentsDailySummary">
+<div class="appointments-summary-item">
+<span id="appointmentsSummaryConsultas">-</span>
+<small>Consultas de hoy</small>
+</div>
+<div class="appointments-summary-item">
+<span id="appointmentsSummaryTasks">0</span>
+<small>Tareas asignadas</small>
+</div>
+<div class="appointments-summary-item">
+<span id="appointmentsSummaryTreatments">-</span>
+<small>Tratamientos pendientes</small>
+</div>
+<div class="appointments-summary-item appointments-summary-item--wide">
+<span id="appointmentsSummaryNext">Sin actividad inmediata</span>
+<small>Próxima actividad</small>
 </div>
 </div>
 
@@ -953,7 +1266,7 @@ style='display:none' class='divMinimizado'>
 </span>
 <span class='listados-section-header__text'>
 <strong>Listados</strong>
-<small>Catalogos y registros del sistema</small>
+<small>Catálogos y registros del sistema</small>
 </span>
 <span class='listados-section-header__count' id='listadosSectionCount'>0 listados</span>
 <span class='listados-section-header__action' id='listadosSectionAction'>Mostrar listados</span>
@@ -1257,7 +1570,7 @@ setTimeout(actualizarContadorListados, 1800);
 </span>
 <span class='administrative-section-header__text'>
 <strong>Administrativo</strong>
-<small>Accesos operativos y de gestion</small>
+<small>Accesos operativos y de gestión</small>
 </span>
 <span class='administrative-section-header__count' id='administrativeSectionCount'>0 accesos</span>
 <span class='administrative-section-header__action' id='administrativeSectionAction'>Mostrar accesos</span>
@@ -12764,44 +13077,60 @@ style='background-color: #b7b7b7;'>
 </table>
 </div>
 
-<div class=" vista-consulta principal2" style='display:none'  id="divFrmVistaConsulta">
-  <div class="vista-consulta-header">
-    <!-- <img src="/GoodVentaAsisCap/iconos/depCuenta.png" alt="Icono" class="icono-btn2" /> -->
-    <h2 class="titulo-turnos pTitulo4"   >Listado de <strong>Pacientes</strong></h2>
-	<button class="cerrar-btn btncssnuevo" onclick="limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);">
-      <img src="/GoodVentaAsisCap/iconos/add.png" class='iconoBtn' alt="Crear Cliente" />
-    </button>
-    <button class="cerrar-btn btncssnuevo" onclick="verCerrarAbmVistaConsulta('', true)">
-      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class='iconoBtn' alt="Cerrar" />
-    </button>
+<div class="vista-consulta vista-consulta-clinica principal2" style='display:none'  id="divFrmVistaConsulta">
+  <div class="vista-consulta-header vista-consulta-clinica__header">
+    <div class="vista-consulta-clinica__title-group">
+      <p class="vista-consulta-clinica__eyebrow">Módulo clínico</p>
+      <h2 class="titulo-turnos pTitulo4">Historial Clínico y Evolución</h2>
+      <p class="vista-consulta-clinica__subtitle">Buscá un paciente para consultar su historial, evolución clínica y registros anteriores.</p>
+    </div>
+    <div class="vista-consulta-clinica__actions">
+      <button type="button" class="cerrar-btn btncssnuevo vista-consulta-clinica__icon-btn" onclick="limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);" title="Nuevo paciente" aria-label="Nuevo paciente">
+        <img src="/GoodVentaAsisCap/iconos/add.png" class='iconoBtn' alt="" />
+      </button>
+      <button type="button" class="cerrar-btn btncssnuevo vista-consulta-clinica__icon-btn" onclick="verCerrarAbmVistaConsulta('', true)" title="Cerrar" aria-label="Cerrar">
+        <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class='iconoBtn' alt="" />
+      </button>
+    </div>
   </div>
 
-  <div class="vista-consulta-body">
-    <div class="filtros-consulta">
+  <div class="vista-consulta-body vista-consulta-clinica__body">
+    <section class="filtros-consulta vista-consulta-clinica__search-panel" aria-label="Buscar paciente">
+      <div class="vista-consulta-clinica__search-copy">
+        <strong>Buscar paciente</strong>
+        <span>Filtrá por número de venta, nombre, CI o teléfono para abrir el expediente clínico.</span>
+      </div>
  
       <div class="filtro" style="display: none;">
         <label for="inptBuscarLocalPaciente" class='pTitulo5'>Local:</label>
 		<select class="inputTextDisable" id="inptBuscarLocalPaciente" >  </select> 
       </div>
 
-      <div class="filtro filtro-grande filtro-consulta-linea">
-        <div class="filtro-nro-venta">
-          <label for="inptBuscarFrmNumFacturaVistaConsulta" class='pTitulo5' >Nro venta</label>
-          <input type="text" id="inptBuscarFrmNumFacturaVistaConsulta" class="input inputText" placeholder="Nro venta"
+      <div class="filtro filtro-grande filtro-consulta-linea vista-consulta-clinica__filters">
+        <div class="filtro-nro-venta vista-consulta-clinica__field">
+          <label for="inptBuscarFrmNumFacturaVistaConsulta" class='pTitulo5' >Nro. venta</label>
+          <input type="text" id="inptBuscarFrmNumFacturaVistaConsulta" class="input inputText" placeholder="Nro. venta"
             onkeyup="if(event.keyCode == 13){buscarVistaConsulta()}" />
         </div>
-        <div class="filtro-paciente-consulta">
+        <div class="filtro-paciente-consulta vista-consulta-clinica__field">
           <label for="inptBuscarFrmPacienteVistaConsulta" class='pTitulo5' >Paciente</label>
           <div class="busqueda-paciente">
-            <input type="text" id="inptBuscarFrmPacienteVistaConsulta" class="input inputText" placeholder="Nro CI - Nombre"
+            <input type="text" id="inptBuscarFrmPacienteVistaConsulta" class="input inputText" placeholder="Nombre, CI o teléfono del paciente"
               onkeyup="if(event.keyCode == 13){buscarVistaConsulta()}" />
-            <button class="btn" onclick="buscarVistaConsulta()">Buscar</button>
+            <button type="button" class="btn vista-consulta-clinica__search-btn" onclick="buscarVistaConsulta()">Buscar</button>
+            <button type="button" class="vista-consulta-clinica__clear-btn" onclick="limpiarVistaConsultaClinica()">Limpiar</button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-  <div id="table_frm_VistaConsulta" class="tabla-resultados tablaContanedorConsulta"></div>
+  <div id="table_frm_VistaConsulta" class="tabla-resultados tablaContanedorConsulta">
+    <div class="vista-consulta-empty-state">
+      <img src="/GoodVentaAsisCap/iconos/historialmedico.png" alt="" />
+      <strong>Buscá un paciente</strong>
+      <span>Ingresá el nombre, CI o número de venta para consultar su historial clínico.</span>
+    </div>
+  </div>
 
   </div>
 </div>
@@ -12815,10 +13144,13 @@ style='background-color: #b7b7b7;'>
         <div class="asignar-tarea__header">
 
             <div class="asignar-tarea__titulo-box">
-                <p class="asignar-tarea__etiqueta">Asignación de tareas</p>
+                <p class="asignar-tarea__etiqueta">Asignaci&oacute;n de tareas</p>
                 <h2 class="asignar-tarea__titulo">
-                    Seleccionar <strong>Usuario</strong>
+                    Gesti&oacute;n diaria del <strong>personal</strong>
                 </h2>
+                <p class="asignar-tarea__subtitulo">
+                    Organiz&aacute; funciones por usuario, horario, sucursal y tipo de tarea.
+                </p>
             </div>
 
             <div class="asignar-tarea__acciones">
@@ -12837,6 +13169,13 @@ style='background-color: #b7b7b7;'>
 
             <input type="hidden" id="inptCodUsuarioAsignadoTarea" value="" />
             <input type="hidden" id="inptFotoUsuarioAsignadoTarea" value="" />
+
+            <div class="asignar-tarea__tabs" aria-label="Secciones de asignaci&oacute;n de tareas">
+                <button type="button" class="asignar-tarea__tab asignar-tarea__tab--activo">Usuarios</button>
+                <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Roles y plantillas</button>
+                <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Tareas del d&iacute;a</button>
+                <button type="button" class="asignar-tarea__tab" title="Us&aacute; el bot&oacute;n de tarea casual al seleccionar un usuario">Tareas casuales</button>
+            </div>
 
             <div class="asignar-tarea__filtros">
 
@@ -12858,7 +13197,18 @@ style='background-color: #b7b7b7;'>
                     </select>
                 </div>
 
-                <div class="asignar-tarea__filtro" style='display:none;'>
+                <div class="asignar-tarea__filtro">
+                    <label class="asignar-tarea__label" for="inptBuscarRolOperativoAsignarTarea">Rol operativo</label>
+                    <input 
+                        type="text" 
+                        id="inptBuscarRolOperativoAsignarTarea" 
+                        class="asignar-tarea__input inputText" 
+                        placeholder="Doctor, Caja, Limpieza..."
+                        onkeyup="if(event.keyCode == 13){buscarUsuariosAsignarTarea()}" 
+                    />
+                </div>
+
+                <div class="asignar-tarea__filtro">
                     <label class="asignar-tarea__label" for="inptBuscarEstadoUsuarioAsignarTarea">Estado</label>
                     <select id="inptBuscarEstadoUsuarioAsignarTarea" class="asignar-tarea__input inputText">
                         <option value="Activo">ACTIVO</option>
@@ -12875,29 +13225,76 @@ style='background-color: #b7b7b7;'>
 
             </div>
 
-            <div class="asignar-tarea__seleccion" id="boxUsuarioSeleccionadoTarea" style="display:none;">
-                <div class="asignar-tarea__seleccion-info">
-                    <img src="" id="imgUsuarioSeleccionadoTarea" class="asignar-tarea__seleccion-img" />
-                    <div>
-                        <p class="asignar-tarea__seleccion-label">Usuario seleccionado</p>
-                        <h3 class="asignar-tarea__seleccion-nombre" id="lblUsuarioSeleccionadoTarea"></h3>
+            <div class="asignar-tarea__workspace">
+                <section class="asignar-tarea__usuarios-panel">
+                    <div class="asignar-tarea__panel-header">
+                        <div>
+                            <p class="asignar-tarea__panel-kicker">Usuarios</p>
+                            <h3>Personal disponible</h3>
+                        </div>
+                        <span class="asignar-tarea__panel-note">Seleccion&aacute; un funcionario para ver el detalle.</span>
                     </div>
-                </div>
 
-               <button type="button" class="asignar-tarea__btn-confirmar" onclick="confirmarUsuarioAsignadoTareaDiaria()">
-					Asignar tarea diaria
-				</button>
-				
-				<button type="button" class="asignar-tarea__btn-confirmar" onclick="confirmarUsuarioAsignadoTarea()">
-                    Asignar tarea casual
-                </button>
-				
-            </div>
+                    <div class="asignar-tarea__contenedor" id="contenedorUsuariosAsignarTarea">
+                        <div class="asignar-tarea__vacio">
+                            <p>Busc&aacute; un usuario para asignarle la tarea.</p>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="asignar-tarea__contenedor" id="contenedorUsuariosAsignarTarea">
-                <div class="asignar-tarea__vacio">
-                    <p>Buscá un usuario para asignarle la tarea.</p>
-                </div>
+                <aside class="asignar-tarea__detalle-panel">
+                    <div class="asignar-tarea__detalle-vacio" id="boxUsuarioSinSeleccionTarea">
+                        <strong>Seleccion&aacute; un funcionario</strong>
+                        <span>Ac&aacute; vas a ver su local, rol operativo, horario y resumen de tareas del d&iacute;a.</span>
+                    </div>
+
+                    <div class="asignar-tarea__seleccion" id="boxUsuarioSeleccionadoTarea" style="display:none;">
+                        <div class="asignar-tarea__seleccion-info">
+                            <img src="" id="imgUsuarioSeleccionadoTarea" class="asignar-tarea__seleccion-img" />
+                            <div>
+                                <p class="asignar-tarea__seleccion-label">Usuario seleccionado</p>
+                                <h3 class="asignar-tarea__seleccion-nombre" id="lblUsuarioSeleccionadoTarea"></h3>
+                                <span class="asignar-tarea__seleccion-ci" id="lblUsuarioSeleccionadoCI"></span>
+                            </div>
+                        </div>
+
+                        <div class="asignar-tarea__detalle-grid">
+                            <div>
+                                <small>Rol operativo</small>
+                                <strong id="lblUsuarioSeleccionadoRol">Sin definir</strong>
+                            </div>
+                            <div>
+                                <small>Local</small>
+                                <strong id="lblUsuarioSeleccionadoLocal">Sin definir</strong>
+                            </div>
+                            <div>
+                                <small>Horario</small>
+                                <strong id="lblUsuarioSeleccionadoHorario">No configurado</strong>
+                            </div>
+                        </div>
+
+                        <div class="asignar-tarea__resumen">
+                            <div>
+                                <small>Pendientes / proceso</small>
+                                <strong id="lblUsuarioPendientesTarea">0</strong>
+                            </div>
+                            <div>
+                                <small>Completadas hoy</small>
+                                <strong id="lblUsuarioCompletadasTarea">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="asignar-tarea__detalle-actions">
+                           <button type="button" class="asignar-tarea__btn-confirmar" onclick="confirmarUsuarioAsignadoTareaDiaria()">
+                                Asignar tarea diaria
+                            </button>
+                            
+                            <button type="button" class="asignar-tarea__btn-confirmar" onclick="confirmarUsuarioAsignadoTarea()">
+                                Asignar tarea casual
+                            </button>
+                        </div>
+                    </div>
+                </aside>
             </div>
 
         </div>
@@ -12910,15 +13307,16 @@ style='background-color: #b7b7b7;'>
 
 <div class="tarea-diaria-modal" id="modalAsignarTareaDiaria" style="display:none;">
 
-    <div class="tarea-diaria-modal__ventana">
+    <div class="tarea-diaria-modal__ventana tarea-diaria-modal__ventana--wizard">
 
         <div class="tarea-diaria-modal__header">
 
             <div>
-                <p class="tarea-diaria-modal__etiqueta">Asignación automática</p>
+                <p class="tarea-diaria-modal__etiqueta">Asignaci&oacute;n autom&aacute;tica</p>
                 <h2 class="tarea-diaria-modal__titulo">
-                    Tarea diaria para <strong id="lblUsuarioTareaDiariaModal">usuario</strong>
+                    Configurar tareas diarias
                 </h2>
+                <span class="tarea-diaria-modal__subtitulo">Configur&aacute; actividades por usuario, rol operativo o sucursal.</span>
             </div>
 
             <button type="button" class="tarea-diaria-modal__cerrar" onclick="verCerrarModalTareaDiaria(false)">
@@ -12931,40 +13329,185 @@ style='background-color: #b7b7b7;'>
 
             <input type="hidden" id="inptCodTareaDiariaSeleccionada" value="" />
 
-            <div class="tarea-diaria-modal__filtros">
-
-                <div class="tarea-diaria-modal__campo">
-                    <label>Buscar tarea</label>
-                    <input 
-                        type="text" 
-                        class="inputText tarea-diaria-modal__input" 
-                        id="inptBuscarTareaDiaria"
-                        placeholder="Nombre de la tarea..."
-                        onkeyup="if(event.keyCode == 13){buscarTareasParaAsignarDiariaUsuario()}" />
+            <section class="tarea-diaria-modal__section">
+                <div class="tarea-diaria-modal__section-header">
+                    <span class="tarea-diaria-modal__step">A</span>
+                    <div>
+                        <h3>Destinatario</h3>
+                        <p>Defin&iacute; a qui&eacute;n se aplicar&aacute; la configuraci&oacute;n.</p>
+                    </div>
                 </div>
 
-                <div class="tarea-diaria-modal__campo">
-                    <label>Tipo</label>
-                    <select class="inputText tarea-diaria-modal__input" id="inptBuscarTipoTareaDiaria">
-                        <option value="">TODOS</option>
-                        <option value="DIARIO">DIARIO</option>
-                        <option value="CASUAL">CASUAL</option>
-                    </select>
+                <div class="tarea-diaria-modal__destino">
+                    <label class="tarea-diaria-modal__destino-opcion">
+                        <input type="radio" name="radioDestinoTareaDiaria" value="usuario" checked onchange="cambiarDestinoTareaDiaria()" />
+                        <span>Usuario espec&iacute;fico</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__destino-opcion">
+                        <input type="radio" name="radioDestinoTareaDiaria" value="rol" onchange="cambiarDestinoTareaDiaria()" />
+                        <span>Rol operativo</span>
+                    </label>
+
+                    <label class="tarea-diaria-modal__destino-opcion">
+                        <input type="radio" name="radioDestinoTareaDiaria" value="local" onchange="cambiarDestinoTareaDiaria()" />
+                        <span>Local / Sucursal</span>
+                    </label>
                 </div>
 
-                <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--boton">
-                    <button type="button" class="tarea-diaria-modal__btn-buscar" onclick="buscarTareasParaAsignarDiariaUsuario()">
-                        Buscar
-                    </button>
+                <div class="tarea-diaria-modal__destino-grid">
+                    <div class="tarea-diaria-modal__destino-card">
+                        <small>Usuario seleccionado</small>
+                        <strong id="lblUsuarioTareaDiariaModal">usuario</strong>
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Rol operativo</label>
+                        <select class="inputText tarea-diaria-modal__input" id="inptRolOperativoTareaDiaria" disabled>
+                            <option value="">Seleccionar rol</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Caja">Caja</option>
+                            <option value="Recepci&oacute;n">Recepci&oacute;n</option>
+                            <option value="Limpieza">Limpieza</option>
+                            <option value="Administrativo">Administrativo</option>
+                            <option value="Ortodoncia">Ortodoncia</option>
+                            <option value="Jefa cl&iacute;nica">Jefa cl&iacute;nica</option>
+                            <option value="Contabilidad">Contabilidad</option>
+                            <option value="Tesorer&iacute;a">Tesorer&iacute;a</option>
+                        </select>
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Local / Sucursal</label>
+                        <select class="inputText tarea-diaria-modal__input" id="inptLocalDestinoTareaDiaria" disabled>
+                            <option value="">Seleccionar local</option>
+                        </select>
+                    </div>
                 </div>
 
-            </div>
+                <p class="tarea-diaria-modal__hint" id="txtDestinoTareaDiariaAyuda">
+                    En esta fase el guardado usa el usuario seleccionado. Roles y locales quedan preparados para plantillas operativas.
+                </p>
+            </section>
 
-            <div class="tarea-diaria-modal__seleccion" id="boxTareaDiariaSeleccionada" style="display:none;">
+            <section class="tarea-diaria-modal__section">
+                <div class="tarea-diaria-modal__section-header">
+                    <span class="tarea-diaria-modal__step">B</span>
+                    <div>
+                        <h3>Actividades</h3>
+                        <p>Busc&aacute;, seleccion&aacute; varias tareas y evit&aacute; duplicados.</p>
+                    </div>
+                </div>
 
-                <div class="tarea-diaria-modal__seleccion-info">
-                    <p class="tarea-diaria-modal__seleccion-label">Tarea seleccionada</p>
-                    <h3 class="tarea-diaria-modal__seleccion-titulo" id="lblTareaDiariaSeleccionada"></h3>
+                <div class="tarea-diaria-modal__filtros">
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Buscar tarea</label>
+                        <input 
+                            type="text" 
+                            class="inputText tarea-diaria-modal__input" 
+                            id="inptBuscarTareaDiaria"
+                            placeholder="Nombre de la tarea..."
+                            onkeyup="if(event.keyCode == 13){buscarTareasParaAsignarDiariaUsuario()}" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Tipo</label>
+                        <select class="inputText tarea-diaria-modal__input" id="inptBuscarTipoTareaDiaria">
+                            <option value="">TODOS</option>
+                            <option value="DIARIO">DIARIO</option>
+                            <option value="CASUAL">CASUAL</option>
+                        </select>
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--boton">
+                        <button type="button" class="tarea-diaria-modal__btn-buscar" onclick="buscarTareasParaAsignarDiariaUsuario()">
+                            Buscar
+                        </button>
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--boton">
+                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="toggleCrearActividadTareaDiaria()">
+                            + Crear nueva actividad
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tarea-diaria-modal__crear" id="boxCrearActividadTareaDiaria" style="display:none;">
+                    <div class="tarea-diaria-modal__crear-header">
+                        <strong>Nueva actividad</strong>
+                        <span>Formulario preparado para la siguiente fase.</span>
+                    </div>
+                    <div class="tarea-diaria-modal__crear-grid">
+                        <input type="text" class="inputText tarea-diaria-modal__input" placeholder="Nombre de la tarea" />
+                        <input type="time" class="inputText tarea-diaria-modal__input" />
+                        <select class="inputText tarea-diaria-modal__input">
+                            <option>Prioridad normal</option>
+                            <option>Baja</option>
+                            <option>Alta</option>
+                            <option>Urgente</option>
+                        </select>
+                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="ver_vetana_informativa('La creaci&oacute;n r&aacute;pida queda preparada para la siguiente fase.')">Guardar actividad</button>
+                    </div>
+                </div>
+
+                <div class="tarea-diaria-modal__acciones-masivas">
+                    <div>
+                        <strong id="lblCantidadTareasDiariasSeleccionadas">0 tareas seleccionadas</strong>
+                        <span>Pod&eacute;s asignar varias actividades en una sola acci&oacute;n.</span>
+                    </div>
+                    <div>
+                        <button type="button" onclick="seleccionarTodasTareasDiariasDisponibles()">Seleccionar disponibles</button>
+                        <button type="button" onclick="limpiarSeleccionTareasDiarias()">Limpiar selecci&oacute;n</button>
+                    </div>
+                </div>
+
+                <div class="tarea-diaria-modal__lista" id="contenedorTareasDiariasParaAsignar">
+                    <div class="tarea-diaria-modal__vacio">
+                        <p>Seleccione un usuario para buscar tareas diarias.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tarea-diaria-modal__section">
+                <div class="tarea-diaria-modal__section-header">
+                    <span class="tarea-diaria-modal__step">C</span>
+                    <div>
+                        <h3>Programaci&oacute;n</h3>
+                        <p>Defin&iacute; fechas, frecuencia y observaciones de la asignaci&oacute;n.</p>
+                    </div>
+                </div>
+
+                <div class="tarea-diaria-modal__programacion-grid">
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Frecuencia</label>
+                        <select class="inputText tarea-diaria-modal__input" id="inptFrecuenciaTareaDiaria">
+                            <option value="DIARIO">Diario</option>
+                            <option value="DIAS">D&iacute;as espec&iacute;ficos</option>
+                            <option value="SEMANAL">Semanal</option>
+                            <option value="MENSUAL">Mensual</option>
+                        </select>
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Hora de inicio</label>
+                        <input type="time" class="inputText tarea-diaria-modal__input" id="inptHoraInicioTareaDiaria" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Duraci&oacute;n estimada</label>
+                        <input type="text" class="inputText tarea-diaria-modal__input" id="inptDuracionTareaDiaria" placeholder="Ej: 15 min" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Prioridad</label>
+                        <select class="inputText tarea-diaria-modal__input" id="inptPrioridadTareaDiaria">
+                            <option value="Normal">Normal</option>
+                            <option value="Baja">Baja</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Urgente">Urgente</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="tarea-diaria-modal__fechas">
@@ -13021,23 +13564,37 @@ style='background-color: #b7b7b7;'>
                 </div>
 
                 <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--observacion">
-                    <label>Observación del administrador</label>
+                    <label>Observaci&oacute;n del administrador</label>
                     <textarea 
                         id="inptObservacionTareaDiaria" 
                         class="inputText tarea-diaria-modal__textarea"
-                        placeholder="Observación opcional..."></textarea>
+                        placeholder="Observaci&oacute;n opcional..."></textarea>
+                </div>
+            </section>
+
+            <section class="tarea-diaria-modal__section tarea-diaria-modal__section--confirmacion">
+                <div class="tarea-diaria-modal__section-header">
+                    <span class="tarea-diaria-modal__step">D</span>
+                    <div>
+                        <h3>Confirmaci&oacute;n</h3>
+                        <p>Revis&aacute; el resumen antes de guardar.</p>
+                    </div>
                 </div>
 
+                <div class="tarea-diaria-modal__seleccion" id="boxTareaDiariaSeleccionada" style="display:none;">
+                    <div class="tarea-diaria-modal__seleccion-info">
+                        <p class="tarea-diaria-modal__seleccion-label">Tareas seleccionadas</p>
+                        <h3 class="tarea-diaria-modal__seleccion-titulo" id="lblTareaDiariaSeleccionada"></h3>
+                        <p class="tarea-diaria-modal__resumen" id="lblResumenTareaDiaria"></p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="tarea-diaria-modal__footer">
+                <button type="button" class="tarea-diaria-modal__btn-cancelar" onclick="verCerrarModalTareaDiaria(false)">Cancelar</button>
                 <button type="button" class="tarea-diaria-modal__btn-confirmar" onclick="guardarTareaDiariaUsuario()">
-                    Guardar tarea diaria
+                    Guardar asignaci&oacute;n
                 </button>
-
-            </div>
-
-            <div class="tarea-diaria-modal__lista" id="contenedorTareasDiariasParaAsignar">
-                <div class="tarea-diaria-modal__vacio">
-                    <p>Seleccione un usuario para buscar tareas diarias.</p>
-                </div>
             </div>
 
         </div>
@@ -13144,29 +13701,29 @@ style='background-color: #b7b7b7;'>
 
 </div>
 
-<div class='principal2 divMenuG modal-filtros-catalogo' style='display:none;padding:10px;' id='divAbmConsulta'>
+<div class='principal2 divMenuG modal-filtros-catalogo consulta-ficha-modal' style='display:none;padding:10px;' id='divAbmConsulta'>
   <table style='width:100%;height:100%;' id='tdEfectoAbmConsulta'>
     <tr>
       <td style='width:100%;'>
 
-        <center class='modal-filtros-box modal-detalle-agenda-box'
+        <center class='modal-filtros-box modal-detalle-agenda-box consulta-ficha-shell'
           style='width:100%;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);display:flex;flex-direction:column;overflow:hidden;text-align:left;'>
 
-          <div class='modal-filtros-header' style='width:100%;padding:12px 18px;box-sizing:border-box;'>
+          <div class='modal-filtros-header consulta-ficha-header' style='width:100%;padding:12px 18px;box-sizing:border-box;'>
             <div style='display:flex;width:100%;align-items:center;gap:10px;'>
               <div style='flex:1;'>
                 <div class='modal-header-info'>
-                  <p class='modal-etiqueta'>Ficha clinica</p>
+                  <p class='modal-etiqueta'>Ficha clínica</p>
                   <h3 style='margin:0;'>Consulta</h3>
                   <span>Paciente, tratamientos, observaciones e historial</span>
                 </div>
               </div>
               <div style='text-align:center'>
-                <button type='button' class='btn-icon' onclick='limpiarcamposConsulta()' title='Limpiar Campos'><img
-                    src='/GoodVentaAsisCap/iconos/archivonuevo.png' class='iconoBtn' /></button>
+                <button type='button' class='btn-icon consulta-ficha-icon-btn' onclick='limpiarcamposConsulta()' title='Nueva evolución' aria-label='Nueva evolución'><img
+                    src='/GoodVentaAsisCap/iconos/archivonuevo.png' class='iconoBtn' alt='' /></button>
               </div>
               <div style='text-align:center;'>
-                <button type='button' class='btn-cerrar-modal' title='Cerrar Ventana'
+                <button type='button' class='btn-cerrar-modal consulta-ficha-close-btn' title='Cerrar' aria-label='Cerrar'
                   onclick='verCerrarAbmConsulta()'>&times;</button>
               </div>
             </div>
@@ -13174,37 +13731,37 @@ style='background-color: #b7b7b7;'>
 
 
 
-          <div class='modal-filtros-body detalle-layout-responsive'
+          <div class='modal-filtros-body detalle-layout-responsive consulta-ficha-body'
             style='padding:10px;overflow:auto;background:transparent;'>
 
-            <div class="detalle-item" style='grid-column:1/-1;padding:10px;'>
-              <span class='detalle-label'>Datos del Paciente</span>
+            <div class="detalle-item consulta-card consulta-patient-summary" style='grid-column:1/-1;padding:10px;'>
+              <span class='detalle-label'>Resumen del paciente</span>
               <div class="card-body">
-                <div class="contenedor-horizontal d-flex flex-wrap gap-3"
+                <div class="contenedor-horizontal d-flex flex-wrap gap-3 consulta-patient-summary__grid"
                   style='display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end;'>
 
                   <!-- CI -->
-                  <div class="campo-item">
+                  <div class="campo-item consulta-readonly-field">
                     <label for="inptCIConsulta" class="form-label fw-bold">CI:</label>
                     <input type="text" class="catalogo-selectBuscador" id="inptCIConsulta" disabled style='width:100%;'>
                   </div>
 
                   <!-- Paciente -->
-                  <div class="campo-item">
+                  <div class="campo-item consulta-readonly-field consulta-readonly-field--patient">
                     <label for="inptPacienteConsulta" class="form-label fw-bold">Paciente:</label>
                     <input type="text" class="catalogo-selectBuscador" id="inptPacienteConsulta" disabled
                       style='width:100%;'>
                   </div>
 
                   <!-- Código -->
-                  <div class="campo-item">
+                  <div class="campo-item consulta-readonly-field">
                     <label for="inptCodigoConsulta" class="form-label fw-bold">Código:</label>
                     <input type="text" class="catalogo-selectBuscador" id="inptCodigoConsulta" disabled
                       style='width:100%;'>
                   </div>
 
                   <!-- Apodo -->
-                  <div class="campo-item">
+                  <div class="campo-item consulta-apodo-field">
                     <label for="inptApodoConsulta" class="form-label fw-bold">Apodo:</label>
                     <div class="flex-grow-1 campo-con-botones-agenda">
                       <input type="text" class="catalogo-selectBuscador" id="inptApodoConsulta" style='width:100%;'>
@@ -13219,7 +13776,7 @@ style='background-color: #b7b7b7;'>
                 </div>
 
                 <!-- Estado de cuenta (debajo, ocupa ancho total) -->
-                <div class="mt-3" style='margin-top:8px !important;'>
+                <div class="mt-3 consulta-account-status" style='margin-top:8px !important;'>
                   <label for="inptEstadoCuentaConsulta" class="form-label fw-bold">Estado de cuenta:</label>
                   <textarea class="textarea-agenda" id="inptEstadoCuentaConsulta" placeholder="Obligatorio (*)"
                     style='min-height:54px;'></textarea>
@@ -13232,16 +13789,18 @@ style='background-color: #b7b7b7;'>
               style='display:contents;'>
 
               <!-- BLOQUE 1: Observación Paciente -->
-              <div class="detalle-item" style="height:300px;padding:8px;">
-                <span class='detalle-label'>Observacion Paciente</span>
+              <div class="detalle-item consulta-card consulta-evolution-card" style="height:300px;padding:8px;">
+                <span class='detalle-label'>Nueva evolución clínica</span>
                 <div class="card-body">
+                  <p class="consulta-card__hint">Registrá la observación clínica del día para este paciente.</p>
                   <div class="d-flex gap-2 mb-3">
                     <input type="text" id="inputObservacion" style='width:100%;' class="catalogo-selectBuscador"
                       placeholder="Escriba una observación...">
                     <button type="button" onclick="agregarObservacionConsulta()" class="btn-accion-principal">
-                      <i class="bi bi-plus-circle"></i> Guardar
+                      <i class="bi bi-plus-circle"></i> Guardar evolución
                     </button>
                   </div>
+                  <div class="consulta-subsection-title">Historial clínico</div>
                   <div class="table-responsive" id='divObservacionConsulta'
                     style="height:200px;overflow:auto;padding:6px;">
 
@@ -13250,8 +13809,8 @@ style='background-color: #b7b7b7;'>
               </div>
 
               <!-- BLOQUE 2: Perfil Clínico -->
-              <div class="detalle-item" style="height:300px;padding:8px;">
-                <span class='detalle-label'>Perfil Clinico</span>
+              <div class="detalle-item consulta-card consulta-profile-card" style="height:300px;padding:8px;">
+                <span class='detalle-label'>Perfil clínico</span>
                 <div class="card-body ">
                   <div class="consulta-body" id="resumen_antencedente_paciente"
                     style="height:250px;overflow:auto;padding:6px;"></div>
@@ -13259,9 +13818,9 @@ style='background-color: #b7b7b7;'>
               </div>
 
               <!-- BLOQUE 3: Historial de Consultas -->
-              <div class="detalle-item" style="height:300px;padding:8px;">
+              <div class="detalle-item consulta-card consulta-consultas-card" style="height:300px;padding:8px;">
                 <div style="display: inline-flex; justify-content: space-between">
-                  <span class='detalle-label' style="margin-top: auto;margin-bottom: auto;">Historial de Consultas</span>
+                  <span class='detalle-label' style="margin-top: auto;margin-bottom: auto;">Historial de consultas</span>
                   <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarAbmDetalleConsulta(true)">
                 </div>
                 <div class="card-body">
@@ -13276,8 +13835,8 @@ style='background-color: #b7b7b7;'>
 
             <div class="divMenuh" style='display:contents;'>
 
-              <div class="divFloat2 panel-izquierdo presupuesto-panel" style='width:auto;min-width:0;padding:8px;height:300px;'>
-                <span class='detalle-label'>Mis tratamientos</span>
+              <div class="divFloat2 panel-izquierdo presupuesto-panel consulta-card consulta-treatments-card" style='width:auto;min-width:0;padding:8px;height:300px;'>
+                <span class='detalle-label'>Tratamientos activos</span>
                 <div class="div_cuerpo_table presupuesto-search-table" id="divPreConsultaDetalle_Consulta"
                   style="height:250px;min-height:250px;overflow:auto;border:none;"> </div>
               </div>
@@ -13288,9 +13847,9 @@ style='background-color: #b7b7b7;'>
                 <div class="div_ContenedorDatos modal-filtros-box modal-detalle-agenda-box" style='max-width:900px;'>
                   <div class='modal-filtros-header' style='padding:14px 18px;'>
                     <div class='modal-header-info'>
-                      <p class='modal-etiqueta'>Registro clinico</p>
+                      <p class='modal-etiqueta'>Registro clínico</p>
                       <h3>Detalle de consulta</h3>
-                      <span>Motivo, zona de trabajo, trabajos realizados y proxima consulta</span>
+                      <span>Motivo, diagnóstico, procedimiento realizado y próximo paso</span>
                     </div>
                     <button type='button' class='btn-cerrar-modal' onclick='verCerrarAbmDetalleConsulta(false)'>&times;</button>
                   </div>
@@ -13319,14 +13878,14 @@ style='background-color: #b7b7b7;'>
                     <div class="columna-consulta">
                       <!-- Motivo Consulta -->
                       <div style="margin-top: 10px;">
-                        <p class="pTitulo5">Motivo Consulta:</p>
+                        <p class="pTitulo5">Motivo de consulta:</p>
                         <textarea class="textarea-agenda" placeholder="Obligatorio (*)" id="inptMotivoConsulta"
                           style="min-height:78px;"></textarea>
                       </div>
 
                       <!-- Diagnóstico -->
                       <div style="margin-top: 10px;">
-                        <p class="pTitulo5">Zona de Trabajo:</p>
+                        <p class="pTitulo5">Diagnóstico / hallazgo:</p>
                         <textarea class="textarea-agenda" placeholder="Obligatorio (*)" id="inptDiagnosticoConsulta"
                           style="min-height:78px;"></textarea>
                       </div>
@@ -13336,14 +13895,14 @@ style='background-color: #b7b7b7;'>
                     <div class="columna-consulta">
                       <!-- Trabajos Realizados -->
                       <div style="margin-top: 10px;">
-                        <p class="pTitulo5">Trabajos Realizados:</p>
+                        <p class="pTitulo5">Procedimiento realizado:</p>
                         <textarea class="textarea-agenda" placeholder="Obligatorio (*)"
                           id="inptTrabajoRealizadoConsulta" style="min-height:78px;"></textarea>
                       </div>
 
                       <!-- Próxima Consulta -->
                       <div style="margin-top: 10px;">
-                        <p class="pTitulo5">Próxima Consulta:</p>
+                        <p class="pTitulo5">Indicación / próximo paso:</p>
                         <textarea class="textarea-agenda" placeholder="Obligatorio (*)" id="inptProximaConsultaConsulta"
                           style="min-height:78px;"></textarea>
                       </div>
@@ -13352,7 +13911,7 @@ style='background-color: #b7b7b7;'>
 
                   <!-- Botón Guardar -->
                   <div class='modal-filtros-footer' style='padding:8px 0 0 0;background:transparent;border-top:none;'>
-                    <input type="button" value="Guardar Consulta" class="btn-accion-principal"
+                    <input type="button" value="Guardar evolución" class="btn-accion-principal"
                       onclick="VerificarAbmConsulta()" id="btnAbmConsulta">
                   </div>
 
@@ -13364,19 +13923,23 @@ style='background-color: #b7b7b7;'>
             </div>
 
 
-            <div class="presupuesto-panel" style='grid-column:1/-1;padding:8px;'>
-              <span class='detalle-label'>Galeria del Paciente</span>
+            <div class="presupuesto-panel consulta-card consulta-gallery-card" style='grid-column:1/-1;padding:8px;'>
+              <span class='detalle-label'>Galería del paciente</span>
               <div class="card-body d-flex flex-column gap-3">
 
                 <!-- Botón Subir Imagen -->
                 <button id="btnSubirImagen" class="btn-filtro" style='width:fit-content;'
                   onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')">
-                  <i class="bi bi-cloud-upload"></i> Subir Imagen
+                  <i class="bi bi-cloud-upload"></i> Subir imagen
                 </button>
 
                 <!-- Contenedor Galería -->
                 <div id="table_frm_VistaGaleria" class="div_cuerpo_table presupuesto-search-table"
                   style="min-height:120px;max-height:170px;overflow:auto;width:100%;border:none;">
+                  <div class="consulta-empty-gallery">
+                    <strong>No hay imágenes cargadas todavía.</strong>
+                    <span>Subí radiografías, fotos clínicas o documentos del paciente.</span>
+                  </div>
                   <!-- Aquí se mostrarán las imágenes -->
                 </div>
 

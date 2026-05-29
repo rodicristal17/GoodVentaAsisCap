@@ -478,6 +478,10 @@ function renderDashboardQuickAccess(accessList) {
 
 	grid.appendChild(fragment);
 	dashboardShortcutSelectedKeys = renderedKeys.slice(0);
+
+	if (typeof actualizarBuscadorAccesosDashboard === "function") {
+		setTimeout(actualizarBuscadorAccesosDashboard, 80);
+	}
 }
 
 function cargarDashboardAccessCatalog(callback) {

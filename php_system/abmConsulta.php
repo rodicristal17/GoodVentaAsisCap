@@ -860,30 +860,31 @@ $progreso_porcentaje = mb_convert_encoding((string)($valor['progreso_porcentaje'
 $estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
 
 $Style='';
-if($estado_tratamiento!=""){
-	//$Style=" style=' background-color: #8BC34A; color:#ffffff;' ";
-}
-if ($estado == "eliminado") {
-	$Style=" style=' text-decoration: line-through;' ";
+$estadoClase = 'pendiente';
+$estadoTexto = 'Pendiente';
+$progreso_numero = max(0, min(100, (int)$progreso_porcentaje));
+if ($estado == "eliminado" || $estado == "anulado" || $estado == "cancelado") {
+	$estadoClase = 'cancelado';
+	$estadoTexto = 'Anulado';
+} elseif ($progreso_numero >= 100) {
+	$estadoClase = 'completado';
+	$estadoTexto = 'Completado';
+} elseif ($progreso_numero > 0) {
+	$estadoClase = 'proceso';
+	$estadoTexto = 'En proceso';
 }
 
 // $descripcionDetalleVenta=buscardescripcionDetalleVenta($cod_detalle);
  $styleName=CargarStyleTable($styleName);
 $pagina.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<table class='$styleName consulta-treatment-row consulta-treatment-row--$estadoClase' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' $Style> 
-<td  style='width:5%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
-<td  style='width:60%'>$nombre_producto   $descripcion </td> 
-<td   style='width:25%;text-align: center;'> <span style='
-            background: linear-gradient(135deg, #4CAF50, #81C784);
-    color: #fff;
-    padding: 8px 3px;
-    border-radius: 7px;
-    font-weight: bold;
-    font-size: 12px;
-    display: inline-block;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-    '>  $progreso_porcentaje % </span></td> 
+<td class='consulta-treatment-row__qty' style='width:5%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
+<td class='consulta-treatment-row__name' style='width:60%'><strong>$nombre_producto</strong><span>$descripcion</span></td> 
+<td class='consulta-treatment-row__progress' style='width:25%;text-align: center;'>
+<span class='consulta-treatment-status consulta-treatment-status--$estadoClase'>$estadoTexto</span>
+<span class='consulta-treatment-percent'>$progreso_numero%</span>
+</td> 
 <td id='td_datos_1' style='Display:none'>$progreso_porcentaje </td> 
 <td id='td_id_1' style='display:none'> $cod_detalle </td> 
 </tr>
@@ -974,10 +975,241 @@ function buscarSelectorTratamiento($Paciente,$local,$num_factura) {
     }
 }
 
+function detalleTratamientoDatos($buscar) {
+    $mysqli = conectar_al_servidor();
+
+    $sql = "SELECT pr.cod_producto, pr.nombre_producto, dtv.estado, dtv.progreso_porcentaje 
+            FROM producto pr 
+            INNER JOIN detalle_venta dtv ON dtv.cod_productoFK = pr.cod_producto
+            WHERE dtv.cod_ventaFK = '$buscar'";
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt->execute()) {
+        trigger_error('Query error: '.$stmt->error, E_USER_ERROR);
+        exit;
+    }
+
+    $result = $stmt->get_result();
+    $valor = mysqli_num_rows($result);
+    $pendientes = 0;
+    $proceso = 0;
+    $completados = 0;
+    $cancelados = 0;
+    $html = "<ul class='clinical-treatment-list'>";
+
+    if ($valor > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $nombre_producto = mb_convert_encoding((string)($row['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+            $estado = mb_convert_encoding((string)($row['estado']), 'UTF-8', 'ISO-8859-1');
+            $progreso_porcentaje = mb_convert_encoding((string)($row['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1');
+            $progreso_porcentaje = max(0, min(100, (int)$progreso_porcentaje));
+            $nombre_producto_html = htmlspecialchars($nombre_producto, ENT_QUOTES, 'UTF-8');
+            $estado_normalizado = strtolower(trim($estado));
+            $estado_clase = "pendiente";
+            $estado_texto = "Pendiente";
+
+            if ($estado_normalizado == "eliminado" || $estado_normalizado == "anulado" || $estado_normalizado == "cancelado") {
+                $estado_clase = "cancelado";
+                $estado_texto = "Anulado";
+                $cancelados++;
+            } elseif ($progreso_porcentaje >= 100) {
+                $estado_clase = "completado";
+                $estado_texto = "Completado";
+                $completados++;
+            } elseif ($progreso_porcentaje > 0) {
+                $estado_clase = "proceso";
+                $estado_texto = "En proceso";
+                $proceso++;
+            } else {
+                $pendientes++;
+            }
+
+            $html .= "
+            <li class='clinical-treatment-item clinical-treatment-item--".$estado_clase."'>
+                <span class='clinical-treatment-name'>".$nombre_producto_html."</span>
+                <span class='clinical-treatment-status'>".$estado_texto."</span>
+                <span class='clinical-treatment-progress'>".$progreso_porcentaje."%</span>
+            </li>";
+        }
+    } else {
+        $html .= "<li class='clinical-treatment-empty'>Sin tratamientos registrados</li>";
+    }
+    $html .= "</ul>";
+
+    return array(
+        "html" => $html,
+        "pendientes" => $pendientes,
+        "proceso" => $proceso,
+        "completados" => $completados,
+        "cancelados" => $cancelados
+    );
+}
+
 function buscarVistaConsulta($Paciente,$local,$num_factura) {
     $registros = buscarConsulta($Paciente,$local,$num_factura);
     
 	$pagina='';
+    $gruposPaciente = array();
+    $ordenEstado = array("proceso" => 1, "pendiente" => 2, "completado" => 3, "cancelado" => 4);
+
+    foreach ($registros as $indiceRegistro => $valor) {
+        $num_factura= $valor['num_factura'];
+        $ci_cliente= $valor['ci_cliente'];
+        $paciente= $valor['paciente'];
+        $cod_cliente= $valor['cod_cliente'];
+        $cod_venta= $valor['cod_venta'];
+        $apodo= $valor['apodo'];
+        $nombre_local= $valor['nombre_local'];
+        $porcentaje = $valor['porcentaje'];
+        $totalporcentaje = $valor['totalporcentaje'];
+        $totalporcentaje = $totalporcentaje * 100;
+
+        if ($totalporcentaje > 0) {
+            $resultadoPorcentaje = round(($porcentaje / $totalporcentaje) * 100);
+        } else {
+            $resultadoPorcentaje = 0;
+        }
+
+        $estadoClase = "pendiente";
+        $estadoTexto = "Pendiente";
+        if ($resultadoPorcentaje >= 100) {
+            $estadoClase = "completado";
+            $estadoTexto = "Completado";
+        } elseif ($resultadoPorcentaje > 0) {
+            $estadoClase = "proceso";
+            $estadoTexto = "En proceso";
+        }
+
+        $detalleTratamiento = detalleTratamientoDatos($cod_venta);
+        $claveGrupo = $cod_cliente != "" ? $cod_cliente : $ci_cliente."_".$paciente;
+
+        if (!isset($gruposPaciente[$claveGrupo])) {
+            $pacienteHtml = htmlspecialchars($paciente, ENT_QUOTES, 'UTF-8');
+            $apodoHtml = $apodo != "" ? " <span class='clinical-patient-alias'>(".htmlspecialchars($apodo, ENT_QUOTES, 'UTF-8').")</span>" : "";
+            $gruposPaciente[$claveGrupo] = array(
+                "paciente_html" => $pacienteHtml.$apodoHtml,
+                "paciente_oculto" => htmlspecialchars($paciente.($apodo != "" ? " (".$apodo.")" : ""), ENT_QUOTES, 'UTF-8'),
+                "ci_cliente" => htmlspecialchars($ci_cliente, ENT_QUOTES, 'UTF-8'),
+                "apodo" => htmlspecialchars($apodo, ENT_QUOTES, 'UTF-8'),
+                "pendientes" => 0,
+                "proceso" => 0,
+                "completados" => 0,
+                "registros" => array()
+            );
+        }
+
+        $gruposPaciente[$claveGrupo]["pendientes"] += $detalleTratamiento["pendientes"];
+        $gruposPaciente[$claveGrupo]["proceso"] += $detalleTratamiento["proceso"];
+        $gruposPaciente[$claveGrupo]["completados"] += $detalleTratamiento["completados"];
+
+        $numFacturaHtml = htmlspecialchars($num_factura, ENT_QUOTES, 'UTF-8');
+        $codVentaHtml = htmlspecialchars($cod_venta, ENT_QUOTES, 'UTF-8');
+        $localHtml = htmlspecialchars($nombre_local, ENT_QUOTES, 'UTF-8');
+        $ciHidden = htmlspecialchars($ci_cliente, ENT_QUOTES, 'UTF-8');
+        $tituloRegistro = $num_factura != "" ? "Venta #".$numFacturaHtml : "C&oacute;digo venta #".$codVentaHtml;
+        $codigoVisible = $num_factura != "" ? $numFacturaHtml : $codVentaHtml;
+        $apodoActualHtml = htmlspecialchars($apodo, ENT_QUOTES, 'UTF-8');
+        $apodoBadgeHtml = trim($apodo) != "" ? "<span class='clinical-card__nickname'>Apodo: ".$apodoActualHtml."</span>" : "";
+        $pacienteOcultoRegistro = htmlspecialchars($paciente.($apodo != "" ? " (".$apodo.")" : ""), ENT_QUOTES, 'UTF-8');
+
+        $gruposPaciente[$claveGrupo]["registros"][] = array(
+            "orden" => $ordenEstado[$estadoClase],
+            "indice" => $indiceRegistro,
+            "html" => "
+        <div class='tarjeta-paciente clinical-record-card clinical-record-card--".$estadoClase."' onclick='ObtenerdatosAbmConsulta(this)' onkeyup='if(event.keyCode==13||event.keyCode==32){ObtenerdatosAbmConsulta(this)}' role='button' tabindex='0' title='Abrir historial cl&iacute;nico' aria-label='Abrir historial cl&iacute;nico del paciente'>
+          <div class='clinical-record-card__header'>
+            <div>
+              <span class='clinical-record-card__eyebrow'>Registro cl&iacute;nico</span>
+              <div class='clinical-record-card__title-row'>
+                <h3>".$tituloRegistro."</h3>
+                ".$apodoBadgeHtml."
+              </div>
+            </div>
+            <div class='clinical-progress-badge clinical-progress-badge--".$estadoClase."'>
+              <strong>".$resultadoPorcentaje."%</strong>
+              <span>".$estadoTexto."</span>
+            </div>
+          </div>
+
+          <div class='clinical-record-meta'>
+            <span><strong>C&oacute;digo venta</strong>".$codigoVisible."</span>
+            <span><strong>Local</strong>".$localHtml."</span>
+          </div>
+
+          <div class='clinical-treatment-block'>
+            <strong>Tratamientos</strong>
+            ".$detalleTratamiento["html"]."
+          </div>
+
+          <span class='clinical-record-action'>Ver evoluci&oacute;n</span>
+
+          <div style='display:none;'>
+            <span id='td_datos_1'>".$pacienteOcultoRegistro."</span>
+            <span id='td_datos_2'>".$ciHidden."</span>
+            <span id='td_datos_3'>".$numFacturaHtml."</span>
+            <span id='td_datos_4'></span> 
+            <span id='td_datos_5'>".$codVentaHtml."</span> 
+            <span id='td_datos_6'>".htmlspecialchars($cod_cliente, ENT_QUOTES, 'UTF-8')."</span> 
+            <span id='td_datos_7'>".$apodoActualHtml."</span> 
+          </div>
+        </div>"
+        );
+    }
+
+    foreach ($gruposPaciente as $grupo) {
+        usort($grupo["registros"], function($a, $b) {
+            if ($a["orden"] == $b["orden"]) {
+                if ($a["indice"] == $b["indice"]) {
+                    return 0;
+                }
+                return ($a["indice"] < $b["indice"]) ? -1 : 1;
+            }
+            return ($a["orden"] < $b["orden"]) ? -1 : 1;
+        });
+
+        $cantidadRegistros = count($grupo["registros"]);
+        $textoRegistros = $cantidadRegistros == 1 ? "1 registro encontrado" : $cantidadRegistros." registros encontrados";
+        $registrosHtml = "";
+
+        foreach ($grupo["registros"] as $registro) {
+            $registrosHtml .= $registro["html"];
+        }
+
+        $pagina .= "
+        <section class='clinical-patient-result-group'>
+          <div class='clinical-patient-summary-card'>
+            <div class='clinical-patient-summary-card__main'>
+              <p>Paciente encontrado</p>
+              <h3>".$grupo["paciente_html"]."</h3>
+              <div class='clinical-patient-summary-card__meta'>
+                <span><strong>CI / Documento</strong>".$grupo["ci_cliente"]."</span>
+                <span><strong>Registros</strong>".$cantidadRegistros."</span>
+              </div>
+            </div>
+            <div class='clinical-patient-summary-card__stats'>
+              <span><strong>".$grupo["pendientes"]."</strong><small>Pendientes</small></span>
+              <span><strong>".$grupo["proceso"]."</strong><small>En proceso</small></span>
+              <span><strong>".$grupo["completados"]."</strong><small>Completados</small></span>
+            </div>
+          </div>
+
+          <div class='clinical-records-header'>
+            <div>
+              <p>".$textoRegistros." para ".$grupo["paciente_html"]."</p>
+              <h3>Tratamientos y registros</h3>
+            </div>
+          </div>
+
+          <div class='clinical-records-grid'>
+            ".$registrosHtml."
+          </div>
+        </section>";
+    }
+
+    $informacion =array("1" => "exito","2" => $pagina);
+    echo json_encode($informacion);	
+    exit;
+
     foreach ($registros as $valor) {
         $num_factura= $valor['num_factura'];
         $ci_cliente= $valor['ci_cliente'];
@@ -1007,7 +1239,7 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
             $color=" #8bc34a; ";
         }			 
                 $pagina .= "
-        <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' style='
+        <div class='tarjeta-paciente' onclick='ObtenerdatosAbmConsulta(this)' onkeyup='if(event.keyCode==13||event.keyCode==32){ObtenerdatosAbmConsulta(this)}' role='button' tabindex='0' title='Abrir historial clínico' aria-label='Abrir historial clínico del paciente' style='
           position: relative; /* Necesario para posicionar el círculo */
           border: 1px solid #ddd;
           border-radius: 8px;
@@ -1042,7 +1274,7 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
             margin-bottom:10px;
             font-size: 16px;
             color: #333;
-          '>DATOS PACIENTE</h3>
+          '>Paciente</h3>
           
           <p><strong>Nombre:</strong> $paciente</p>
           <p><strong>CI:</strong> $ci_cliente</p>

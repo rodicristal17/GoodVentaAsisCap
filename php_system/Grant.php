@@ -222,6 +222,7 @@ $tareas_gantt[] = [
 ];
 
 $json = json_encode($tareas_gantt);
+$grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard';
 ?>
 
 <!DOCTYPE html>
@@ -1114,10 +1115,139 @@ $json = json_encode($tareas_gantt);
             overflow-y: visible !important;
         }
 
+        /* Vista compacta cuando el Gantt se muestra dentro del dashboard */
+        body.grant-dashboard-compact {
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        body.grant-dashboard-compact .container {
+            height: 100vh;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        body.grant-dashboard-compact .gantt-welcome {
+            display: none !important;
+        }
+
+        body.grant-dashboard-compact .task-form-panel {
+            flex: 0 0 auto;
+            margin: 0 0 8px !important;
+        }
+
+        body.grant-dashboard-compact .task-form-panel:not([open]) {
+            display: none;
+        }
+
+        body.grant-dashboard-compact .task-form-panel[open] {
+            display: block;
+            max-height: 270px;
+            overflow: auto;
+        }
+
+        body.grant-dashboard-compact .task-form-panel summary {
+            min-height: 30px;
+            padding: 6px 10px;
+        }
+
+        body.grant-dashboard-compact .task-form-panel form {
+            padding: 0 10px 10px;
+        }
+
+        body.grant-dashboard-compact .form-grid {
+            gap: 8px;
+        }
+
+        body.grant-dashboard-compact .form-grid input,
+        body.grant-dashboard-compact .form-grid select {
+            height: 32px;
+            padding: 6px 8px;
+        }
+
+        body.grant-dashboard-compact .gantt-layout {
+            flex: 1 1 auto;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            border-radius: 8px;
+            box-shadow: none;
+        }
+
+        body.grant-dashboard-compact .gantt-right-panel {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        body.grant-dashboard-compact .view-controls {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            min-height: 44px;
+            padding: 6px 8px;
+            gap: 6px;
+            flex: 0 0 auto;
+        }
+
+        body.grant-dashboard-compact .view-controls strong {
+            font-size: 11px;
+        }
+
+        body.grant-dashboard-compact .filter-input {
+            height: 30px;
+            min-width: 150px;
+            max-width: 210px;
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+
+        body.grant-dashboard-compact .view-btn {
+            height: 30px;
+            padding: 0 10px;
+            font-size: 11px;
+        }
+
+        body.grant-dashboard-compact .controls-divider {
+            height: 20px;
+        }
+
+        body.grant-dashboard-compact .gantt-svg-container {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow: auto !important;
+        }
+
+        body.grant-dashboard-compact .task-list-container {
+            overflow: auto;
+        }
+
+        @media (max-width: 680px) {
+            body.grant-dashboard-compact .container {
+                padding: 0;
+            }
+
+            body.grant-dashboard-compact .view-controls {
+                position: static;
+            }
+
+            body.grant-dashboard-compact .filter-input,
+            body.grant-dashboard-compact .view-btn {
+                width: auto;
+                min-width: 0;
+                max-width: none;
+                flex: 1 1 120px;
+            }
+        }
+
     </style>
 </head>
 
-<body>
+<body class="<?= $grant_dashboard_embed ? 'grant-dashboard-compact' : '' ?>">
 
     <div class="header">
         <span>FARAONE CAPITAL SOCIEDAD ANONIMA | Planificación de Expansión Operativa</span>
@@ -1952,6 +2082,22 @@ $json = json_encode($tareas_gantt);
 }
 
         // Edición y Formulario
+        function abrirPanelNuevaTareaGantt() {
+            const panelFormulario = document.getElementById('task-form-panel');
+            resetForm(true);
+
+            if (panelFormulario) {
+                panelFormulario.open = true;
+            }
+
+            setTimeout(function () {
+                const titulo = document.getElementById('form_titulo');
+                if (titulo) titulo.focus();
+                actualizarEspaciadorFechasGantt();
+                sincronizarTablaConBarrasGantt();
+            }, 80);
+        }
+
         function editarTarea(tarea) {
             const panelFormulario = document.getElementById('task-form-panel');
             if (panelFormulario) panelFormulario.open = true;
@@ -1967,14 +2113,21 @@ $json = json_encode($tareas_gantt);
             document.getElementById('form_responsable').value = tarea.responsable || '';
             document.getElementById('form_dependencia').value = tarea.dependencia || '';
             document.getElementById('btn_submit').innerText = 'Actualizar';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(function () {
+                actualizarEspaciadorFechasGantt();
+                sincronizarTablaConBarrasGantt();
+            }, 80);
         }
 
-    function resetForm() {
+    function resetForm(mantenerAbierto) {
         document.getElementById('taskForm').reset();
         document.getElementById('form_id').value        = '';
         document.getElementById('form_title').innerText = 'Nueva Tarea:';
         document.getElementById('btn_submit').innerText = 'Guardar';
+        setTimeout(function () {
+            actualizarEspaciadorFechasGantt();
+            sincronizarTablaConBarrasGantt();
+        }, 80);
     }
 
     // Mantener filtros limpios al cargar.

@@ -135,7 +135,10 @@ function verificar($operacion)
     $estado = isset($_POST['estado']) ? $_POST['estado'] : "";
     $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
-    buscarUsuariosAsignarTarea($buscar, $tipo, $estado);
+    $rol_operativo = isset($_POST['rol_operativo']) ? $_POST['rol_operativo'] : "";
+    $rol_operativo = mb_convert_encoding((string)($rol_operativo), 'ISO-8859-1', 'UTF-8');
+
+    buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo);
 }
 
 
@@ -337,7 +340,10 @@ function buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario)
 
     if ($nroRegistro > 0) {
 
-        $pagina .= "<div class='tarea-diaria-modal__grid'>";
+        $paginaDisponibles = "";
+        $paginaConfiguradas = "";
+        $totalDisponibles = 0;
+        $totalConfiguradas = 0;
 
         while ($valor = mysqli_fetch_assoc($result)) {
 
@@ -355,29 +361,71 @@ function buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario)
             $claseCard = "tarea-diaria-modal__card";
             $onclick = "onclick='seleccionarTareaDiariaParaAsignar(this)'";
             $textoEstado = "Disponible";
+            $checkboxHtml = "
+                <label class='tarea-diaria-modal__check' onclick='event.stopPropagation();'>
+                    <input type='checkbox' onchange='seleccionarTareaDiariaParaAsignar(this)' />
+                    <span></span>
+                </label>";
 
             if ($cod_tarea_diaria != "" && $cod_tarea_diaria != NULL) {
                 $claseCard .= " tarea-diaria-modal__card--asignada";
                 $onclick = "";
                 $textoEstado = "Ya configurada";
+                $checkboxHtml = "<span class='tarea-diaria-modal__check tarea-diaria-modal__check--done'>&#10003;</span>";
             }
 
-            $pagina .= "
+            $cardHtml = "
             <div 
                 class='".$claseCard."'
                 data-id='".$id_html."'
                 data-nombre='".$nombre_html."'
+                data-hora='".$hora_html."'
+                data-tipo='".$tipo_html."'
                 ".$onclick.">
 
-                <p class='tarea-diaria-modal__card-nombre'>".$nombre_html."</p>
-                <p class='tarea-diaria-modal__card-hora'>Hora: ".$hora_html."</p>
+                ".$checkboxHtml."
 
-                <span class='tarea-diaria-modal__badge'>".$tipo_html." - ".$textoEstado."</span>
+                <div class='tarea-diaria-modal__card-copy'>
+                    <p class='tarea-diaria-modal__card-nombre'>".$nombre_html."</p>
+                    <p class='tarea-diaria-modal__card-hora'>Hora: ".$hora_html."</p>
+                </div>
+
+                <span class='tarea-diaria-modal__badge'>".$tipo_html."</span>
+                <span class='tarea-diaria-modal__estado-card'>".$textoEstado."</span>
 
             </div>";
+
+            if ($cod_tarea_diaria != "" && $cod_tarea_diaria != NULL) {
+                $paginaConfiguradas .= $cardHtml;
+                $totalConfiguradas++;
+            } else {
+                $paginaDisponibles .= $cardHtml;
+                $totalDisponibles++;
+            }
         }
 
-        $pagina .= "</div>";
+        $pagina .= "
+        <div class='tarea-diaria-modal__task-columns'>
+            <section class='tarea-diaria-modal__task-column'>
+                <div class='tarea-diaria-modal__task-column-header'>
+                    <h4>Tareas disponibles</h4>
+                    <span>".$totalDisponibles."</span>
+                </div>
+                <div class='tarea-diaria-modal__grid'>".
+                    ($paginaDisponibles != "" ? $paginaDisponibles : "<div class='tarea-diaria-modal__vacio tarea-diaria-modal__vacio--compacto'><p>No hay tareas disponibles.</p></div>").
+                "</div>
+            </section>
+
+            <section class='tarea-diaria-modal__task-column'>
+                <div class='tarea-diaria-modal__task-column-header'>
+                    <h4>Ya configuradas</h4>
+                    <span>".$totalConfiguradas."</span>
+                </div>
+                <div class='tarea-diaria-modal__grid'>".
+                    ($paginaConfiguradas != "" ? $paginaConfiguradas : "<div class='tarea-diaria-modal__vacio tarea-diaria-modal__vacio--compacto'><p>No hay tareas configuradas.</p></div>").
+                "</div>
+            </section>
+        </div>";
 
     } else {
 
@@ -1306,9 +1354,14 @@ function resolverFotoUsuarioAsignarTarea($cod_usuario, $url)
     return $fallback;
 }
 
-function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
+function buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo = "")
 {
     $mysqli = conectar_al_servidor();
+
+    $buscar = mysqli_real_escape_string($mysqli, $buscar);
+    $tipo = mysqli_real_escape_string($mysqli, $tipo);
+    $estado = mysqli_real_escape_string($mysqli, $estado);
+    $rol_operativo = mysqli_real_escape_string($mysqli, $rol_operativo);
 
     $condicionBuscar = "";
     if ($buscar != "") {
@@ -1322,6 +1375,11 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
     $condicionTipo = "";
     if ($tipo != "") {
         $condicionTipo = " and cod_localFK = '".$tipo."'";
+    }
+
+    $condicionRol = "";
+    if ($rol_operativo != "") {
+        $condicionRol = " and u.tipo like '%".$rol_operativo."%'";
     }
 
     $condicionEstado = "";
@@ -1339,13 +1397,36 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
                 tipo,
                 url,
 				nombre_persona,
-				Nombre
+				Nombre,
+                IFNULL((
+                    SELECT COUNT(*) 
+                    FROM tareas_programadas_asignadas tpa 
+                    WHERE tpa.cod_usuarioFK = u.cod_usuario
+                    AND tpa.fecha_tarea = CURDATE()
+                    AND tpa.estado_tarea IN ('Pendiente','En Proceso')
+                ), 0) AS tareas_pendientes_hoy,
+                IFNULL((
+                    SELECT COUNT(*) 
+                    FROM tareas_programadas_asignadas tpa 
+                    WHERE tpa.cod_usuarioFK = u.cod_usuario
+                    AND tpa.fecha_tarea = CURDATE()
+                    AND tpa.estado_tarea = 'Completada'
+                ), 0) AS tareas_completadas_hoy,
+                IFNULL((
+                    SELECT CONCAT(TIME_FORMAT(hu.hora_entrada, '%H:%i'), ' a ', TIME_FORMAT(hu.hora_salida, '%H:%i'))
+                    FROM horario_usuario hu
+                    WHERE hu.cod_usuarioFK = u.cod_usuario
+                    AND (hu.cod_localFK = u.cod_localFK OR hu.cod_localFK IS NULL)
+                    ORDER BY hu.dia_semana ASC
+                    LIMIT 1
+                ), '') AS horario_operativo
             FROM usuario u
 			inner join persona on cod_persona=cod_usuario
 			inner join local on cod_local=cod_localFK
             WHERE 1=1 
             ".$condicionBuscar."
             ".$condicionTipo."
+            ".$condicionRol."
             ".$condicionEstado."
             ORDER BY login ASC";
 
@@ -1380,6 +1461,9 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
             $tipoUsuario = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
             $Nombre = mb_convert_encoding((string)($valor['Nombre']), 'UTF-8', 'ISO-8859-1');
             $url = mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1');
+            $tareas_pendientes_hoy = isset($valor['tareas_pendientes_hoy']) ? (int)$valor['tareas_pendientes_hoy'] : 0;
+            $tareas_completadas_hoy = isset($valor['tareas_completadas_hoy']) ? (int)$valor['tareas_completadas_hoy'] : 0;
+            $horario_operativo = isset($valor['horario_operativo']) ? mb_convert_encoding((string)($valor['horario_operativo']), 'UTF-8', 'ISO-8859-1') : "";
 
             $url = resolverFotoUsuarioAsignarTarea($cod_usuario, $url);
 
@@ -1389,25 +1473,47 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
             $tipo_html = htmlspecialchars($tipoUsuario, ENT_QUOTES, 'UTF-8');
             $NombreLocal_html = htmlspecialchars($Nombre, ENT_QUOTES, 'UTF-8');
             $url_html = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            $horario_html = htmlspecialchars(($horario_operativo != "" ? $horario_operativo : "No configurado"), ENT_QUOTES, 'UTF-8');
+            $tareas_pendientes_html = htmlspecialchars((string)$tareas_pendientes_hoy, ENT_QUOTES, 'UTF-8');
+            $tareas_completadas_html = htmlspecialchars((string)$tareas_completadas_hoy, ENT_QUOTES, 'UTF-8');
 
-            $login_js = htmlspecialchars($login, ENT_QUOTES, 'UTF-8');
-            $url_js = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            $onclick_js = "seleccionarUsuarioAsignarTarea(" .
+                json_encode((string)$cod_usuario) . "," .
+                json_encode($nombre_persona) . "," .
+                json_encode($url) . "," .
+                json_encode($rut_usuario) . "," .
+                json_encode($Nombre) . "," .
+                json_encode($tipoUsuario) . "," .
+                json_encode(($horario_operativo != "" ? $horario_operativo : "No configurado")) . "," .
+                json_encode((string)$tareas_pendientes_hoy) . "," .
+                json_encode((string)$tareas_completadas_hoy) .
+            ")";
+            $onclick_html = htmlspecialchars($onclick_js, ENT_QUOTES, 'UTF-8');
 
             $pagina .= "
             <div 
-                class='asignar-tarea__card' 
+                class='asignar-tarea__card asignar-tarea__user-row' 
                 id='usuarioAsignarTarea_".$cod_usuario."'
-                onclick=\"seleccionarUsuarioAsignarTarea('".$cod_usuario."', '".$login_js."', '".$url_js."')\">
+                onclick=\"".$onclick_html."\">
 
-                <img src='".$url_html."' class='asignar-tarea__foto' onerror=\"this.src='/GoodVentaAsisCap/iconos/user.png'\" />
+                <div class='asignar-tarea__user-main'>
+                    <img src='".$url_html."' class='asignar-tarea__foto' onerror=\"this.src='/GoodVentaAsisCap/iconos/user.png'\" />
 
-                <p class='asignar-tarea__nombre'>".$nombre_persona_html."</p>
-                <p class='asignar-tarea__login'>CI: ".$rut_html."</p>
-				 
-                <p class='asignar-tarea__login'>LOCAL: ".$NombreLocal_html."</p>
+                    <div class='asignar-tarea__user-copy'>
+                        <p class='asignar-tarea__nombre'>".$nombre_persona_html."</p>
+                        <p class='asignar-tarea__login'>CI: ".$rut_html."</p>
+                    </div>
+                </div>
 
-                <div class='asignar-tarea__tipo'>
+                <div class='asignar-tarea__user-meta'>
                     <span class='asignar-tarea__badge'>".$tipo_html."</span>
+                    <span class='asignar-tarea__chip'>".$NombreLocal_html."</span>
+                    <span class='asignar-tarea__chip'>".$horario_html."</span>
+                </div>
+
+                <div class='asignar-tarea__user-stats'>
+                    <span><strong>".$tareas_pendientes_html."</strong> pendientes</span>
+                    <span><strong>".$tareas_completadas_html."</strong> completadas</span>
                 </div>
 
             </div>";

@@ -33416,6 +33416,20 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
  
+function estadoVacioGaleriaConsulta(tipo) {
+	var mensaje = tipo == "error"
+		? "No se pudo cargar la galería del paciente."
+		: "No hay imágenes cargadas todavía.";
+	var detalle = tipo == "error"
+		? "Intentá nuevamente o revisá la conexión."
+		: "Subí radiografías, fotos clínicas o documentos del paciente.";
+
+	return "<div class='consulta-empty-gallery'>" +
+		"<strong>" + mensaje + "</strong>" +
+		"<span>" + detalle + "</span>" +
+		"</div>";
+}
+
 function buscarVistaGaleriaFoto(){
 /*
 	var Cod_clienteFotoFK = ""
@@ -33463,7 +33477,7 @@ function buscarVistaGaleriaFoto(){
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("table_frm_VistaGaleria").innerHTML = ''
+			document.getElementById("table_frm_VistaGaleria").innerHTML = estadoVacioGaleriaConsulta("error")
 		},
 		success: function (responseText) {
 			
@@ -33476,12 +33490,17 @@ function buscarVistaGaleriaFoto(){
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("table_frm_VistaGaleria").innerHTML = datos_buscados
+					if (datos_buscados && datos_buscados.replace(/\s+/g, "") != "") {
+						document.getElementById("table_frm_VistaGaleria").innerHTML = datos_buscados
+					} else {
+						document.getElementById("table_frm_VistaGaleria").innerHTML = estadoVacioGaleriaConsulta()
+					}
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
+				document.getElementById("table_frm_VistaGaleria").innerHTML = estadoVacioGaleriaConsulta("error")
 			}
 		}
 	});

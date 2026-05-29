@@ -512,9 +512,38 @@ var codUsuarioSeleccionadoTarea = "";
 var nombreUsuarioSeleccionadoTarea = "";
 var fotoUsuarioSeleccionadoTarea = "";
 
+function resetSeleccionAsignarTarea() {
+    codUsuarioSeleccionadoTarea = "";
+    nombreUsuarioSeleccionadoTarea = "";
+    fotoUsuarioSeleccionadoTarea = "";
+
+    if (document.getElementById("inptCodUsuarioAsignadoTarea")) {
+        document.getElementById("inptCodUsuarioAsignadoTarea").value = "";
+    }
+
+    if (document.getElementById("inptFotoUsuarioAsignadoTarea")) {
+        document.getElementById("inptFotoUsuarioAsignadoTarea").value = "";
+    }
+
+    if (document.getElementById("boxUsuarioSeleccionadoTarea")) {
+        document.getElementById("boxUsuarioSeleccionadoTarea").style.display = "none";
+    }
+
+    if (document.getElementById("boxUsuarioSinSeleccionTarea")) {
+        document.getElementById("boxUsuarioSinSeleccionTarea").style.display = "";
+    }
+
+    var cards = document.getElementsByClassName("asignar-tarea__card");
+
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.remove("asignar-tarea__card--activo");
+    }
+}
+
 function verCerrarVentanaAsignarTareaUsuario(mostrar) {
     if (mostrar) {
         document.getElementById("divFrmAsignarTareaUsuario").style.display = "";
+        resetSeleccionAsignarTarea();
         buscarUsuariosAsignarTarea();
     } else {
         document.getElementById("divFrmAsignarTareaUsuario").style.display = "none";
@@ -524,12 +553,16 @@ function verCerrarVentanaAsignarTareaUsuario(mostrar) {
 function limpiarFiltrosAsignarTareaUsuario() {
     document.getElementById("inptBuscarUsuarioAsignarTarea").value = "";
     document.getElementById("inptBuscarTipoUsuarioAsignarTarea").value = "";
+    if (document.getElementById("inptBuscarRolOperativoAsignarTarea")) {
+        document.getElementById("inptBuscarRolOperativoAsignarTarea").value = "";
+    }
     document.getElementById("inptBuscarEstadoUsuarioAsignarTarea").value = "Activo";
 
+    resetSeleccionAsignarTarea();
     buscarUsuariosAsignarTarea();
 }
 
-function seleccionarUsuarioAsignarTarea(codUsuario, nombreUsuario, fotoUsuario) {
+function seleccionarUsuarioAsignarTarea(codUsuario, nombreUsuario, fotoUsuario, ciUsuario, localUsuario, rolUsuario, horarioUsuario, tareasPendientes, tareasCompletadas) {
     codUsuarioSeleccionadoTarea = codUsuario;
     nombreUsuarioSeleccionadoTarea = nombreUsuario;
     fotoUsuarioSeleccionadoTarea = fotoUsuario;
@@ -540,7 +573,35 @@ function seleccionarUsuarioAsignarTarea(codUsuario, nombreUsuario, fotoUsuario) 
     document.getElementById("lblUsuarioSeleccionadoTarea").innerHTML = nombreUsuario;
     document.getElementById("imgUsuarioSeleccionadoTarea").src = fotoUsuario;
 
+    if (document.getElementById("lblUsuarioSeleccionadoCI")) {
+        document.getElementById("lblUsuarioSeleccionadoCI").innerHTML = ciUsuario ? "CI: " + ciUsuario : "";
+    }
+
+    if (document.getElementById("lblUsuarioSeleccionadoLocal")) {
+        document.getElementById("lblUsuarioSeleccionadoLocal").innerHTML = localUsuario || "Sin definir";
+    }
+
+    if (document.getElementById("lblUsuarioSeleccionadoRol")) {
+        document.getElementById("lblUsuarioSeleccionadoRol").innerHTML = rolUsuario || "Sin definir";
+    }
+
+    if (document.getElementById("lblUsuarioSeleccionadoHorario")) {
+        document.getElementById("lblUsuarioSeleccionadoHorario").innerHTML = horarioUsuario || "No configurado";
+    }
+
+    if (document.getElementById("lblUsuarioPendientesTarea")) {
+        document.getElementById("lblUsuarioPendientesTarea").innerHTML = tareasPendientes || "0";
+    }
+
+    if (document.getElementById("lblUsuarioCompletadasTarea")) {
+        document.getElementById("lblUsuarioCompletadasTarea").innerHTML = tareasCompletadas || "0";
+    }
+
     document.getElementById("boxUsuarioSeleccionadoTarea").style.display = "";
+
+    if (document.getElementById("boxUsuarioSinSeleccionTarea")) {
+        document.getElementById("boxUsuarioSinSeleccionTarea").style.display = "none";
+    }
 
     var cards = document.getElementsByClassName("asignar-tarea__card");
 
@@ -577,7 +638,13 @@ function buscarUsuariosAsignarTarea() {
     var buscar = document.getElementById("inptBuscarUsuarioAsignarTarea").value;
     var tipo = document.getElementById("inptBuscarTipoUsuarioAsignarTarea").value;
     var estado = document.getElementById("inptBuscarEstadoUsuarioAsignarTarea").value;
+    var rolOperativo = "";
 
+    if (document.getElementById("inptBuscarRolOperativoAsignarTarea")) {
+        rolOperativo = document.getElementById("inptBuscarRolOperativoAsignarTarea").value;
+    }
+
+    resetSeleccionAsignarTarea();
     document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = paginacargando;
 
     obtener_datos_user();
@@ -589,6 +656,7 @@ function buscarUsuariosAsignarTarea() {
         "buscar": buscar,
         "tipo": tipo,
         "estado": estado,
+        "rol_operativo": rolOperativo,
         "funt": "buscarUsuariosAsignarTarea"
     };
 
@@ -1077,6 +1145,7 @@ function cambiarEstadoTareaAsignada(check, codTareaAsignada) {
 
 var codTareaDiariaSeleccionada = "";
 var nombreTareaDiariaSeleccionada = "";
+var tareasDiariasSeleccionadas = [];
 
 function confirmarUsuarioAsignadoTareaDiaria() {
     if (codUsuarioSeleccionadoTarea == "") {
@@ -1097,16 +1166,8 @@ function verCerrarModalTareaDiaria(mostrar) {
             document.getElementById("lblUsuarioTareaDiariaModal").innerHTML = nombreUsuarioSeleccionadoTarea;
         }
 
-        codTareaDiariaSeleccionada = "";
-        nombreTareaDiariaSeleccionada = "";
-
-        if (document.getElementById("inptCodTareaDiariaSeleccionada")) {
-            document.getElementById("inptCodTareaDiariaSeleccionada").value = "";
-        }
-
-        if (document.getElementById("boxTareaDiariaSeleccionada")) {
-            document.getElementById("boxTareaDiariaSeleccionada").style.display = "none";
-        }
+        prepararDestinoTareaDiaria();
+        limpiarSeleccionTareasDiarias();
 
         setFechaActualTareaDiaria();
 
@@ -1131,24 +1192,208 @@ function setFechaActualTareaDiaria() {
     }
 }
 
+function prepararDestinoTareaDiaria() {
+    var radios = document.getElementsByName("radioDestinoTareaDiaria");
+
+    for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = radios[i].value == "usuario";
+    }
+
+    if (document.getElementById("lblUsuarioTareaDiariaModal")) {
+        document.getElementById("lblUsuarioTareaDiariaModal").innerHTML = nombreUsuarioSeleccionadoTarea || "usuario";
+    }
+
+    if (document.getElementById("inptLocalDestinoTareaDiaria") && document.getElementById("inptBuscarTipoUsuarioAsignarTarea")) {
+        document.getElementById("inptLocalDestinoTareaDiaria").innerHTML = document.getElementById("inptBuscarTipoUsuarioAsignarTarea").innerHTML;
+    }
+
+    cambiarDestinoTareaDiaria();
+}
+
+function obtenerDestinoTareaDiaria() {
+    var radios = document.getElementsByName("radioDestinoTareaDiaria");
+
+    for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) {
+            return radios[i].value;
+        }
+    }
+
+    return "usuario";
+}
+
+function cambiarDestinoTareaDiaria() {
+    var destino = obtenerDestinoTareaDiaria();
+    var selectRol = document.getElementById("inptRolOperativoTareaDiaria");
+    var selectLocal = document.getElementById("inptLocalDestinoTareaDiaria");
+    var ayuda = document.getElementById("txtDestinoTareaDiariaAyuda");
+
+    if (selectRol) {
+        selectRol.disabled = destino != "rol";
+    }
+
+    if (selectLocal) {
+        selectLocal.disabled = destino != "local";
+    }
+
+    if (!ayuda) {
+        return;
+    }
+
+    if (destino == "usuario") {
+        ayuda.innerHTML = "La asignacion se guardara para el usuario seleccionado y usara la configuracion diaria actual.";
+    } else if (destino == "rol") {
+        ayuda.innerHTML = "Rol operativo queda preparado para plantillas por cargo. El guardado por rol se habilita en la siguiente fase.";
+    } else {
+        ayuda.innerHTML = "Local / sucursal queda preparado para aplicar tareas por sede. El guardado masivo por local se habilita en la siguiente fase.";
+    }
+}
+
+function toggleCrearActividadTareaDiaria() {
+    var box = document.getElementById("boxCrearActividadTareaDiaria");
+
+    if (!box) {
+        return;
+    }
+
+    box.style.display = box.style.display == "none" ? "" : "none";
+}
+
+function obtenerTareaDiariaDesdeCard(card) {
+    if (!card) {
+        return null;
+    }
+
+    return {
+        id: card.getAttribute("data-id") || "",
+        nombre: card.getAttribute("data-nombre") || "",
+        hora: card.getAttribute("data-hora") || "",
+        tipo: card.getAttribute("data-tipo") || ""
+    };
+}
+
+function existeTareaDiariaSeleccionada(idTarea) {
+    for (var i = 0; i < tareasDiariasSeleccionadas.length; i++) {
+        if (tareasDiariasSeleccionadas[i].id == idTarea) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+function setCardTareaDiariaSeleccionada(card, seleccionar) {
+    if (!card || card.classList.contains("tarea-diaria-modal__card--asignada")) {
+        return;
+    }
+
+    var tarea = obtenerTareaDiariaDesdeCard(card);
+
+    if (!tarea || tarea.id == "") {
+        return;
+    }
+
+    var posicion = existeTareaDiariaSeleccionada(tarea.id);
+
+    if (seleccionar && posicion == -1) {
+        tareasDiariasSeleccionadas.push(tarea);
+    }
+
+    if (!seleccionar && posicion >= 0) {
+        tareasDiariasSeleccionadas.splice(posicion, 1);
+    }
+
+    card.classList.toggle("tarea-diaria-modal__card--activo", seleccionar);
+
+    var check = card.querySelector("input[type='checkbox']");
+
+    if (check) {
+        check.checked = seleccionar;
+    }
+}
+
 function seleccionarTareaDiariaParaAsignar(elemento) {
-    var codTarea = elemento.getAttribute("data-id");
-    var nombreTarea = elemento.getAttribute("data-nombre");
+    var card = elemento;
 
-    codTareaDiariaSeleccionada = codTarea;
-    nombreTareaDiariaSeleccionada = nombreTarea;
+    if (elemento && elemento.closest && !elemento.classList.contains("tarea-diaria-modal__card")) {
+        card = elemento.closest(".tarea-diaria-modal__card");
+    }
 
-    document.getElementById("inptCodTareaDiariaSeleccionada").value = codTarea;
-    document.getElementById("lblTareaDiariaSeleccionada").innerHTML = nombreTarea;
-    document.getElementById("boxTareaDiariaSeleccionada").style.display = "";
+    if (!card || card.classList.contains("tarea-diaria-modal__card--asignada")) {
+        return;
+    }
+
+    var tarea = obtenerTareaDiariaDesdeCard(card);
+    var yaSeleccionada = existeTareaDiariaSeleccionada(tarea.id) >= 0;
+
+    setCardTareaDiariaSeleccionada(card, !yaSeleccionada);
+    actualizarResumenSeleccionTareaDiaria();
+}
+
+function seleccionarTodasTareasDiariasDisponibles() {
+    var cards = document.querySelectorAll("#contenedorTareasDiariasParaAsignar .tarea-diaria-modal__card:not(.tarea-diaria-modal__card--asignada)");
+
+    for (var i = 0; i < cards.length; i++) {
+        setCardTareaDiariaSeleccionada(cards[i], true);
+    }
+
+    actualizarResumenSeleccionTareaDiaria();
+}
+
+function limpiarSeleccionTareasDiarias() {
+    tareasDiariasSeleccionadas = [];
+    codTareaDiariaSeleccionada = "";
+    nombreTareaDiariaSeleccionada = "";
+
+    if (document.getElementById("inptCodTareaDiariaSeleccionada")) {
+        document.getElementById("inptCodTareaDiariaSeleccionada").value = "";
+    }
 
     var cards = document.getElementsByClassName("tarea-diaria-modal__card");
 
     for (var i = 0; i < cards.length; i++) {
         cards[i].classList.remove("tarea-diaria-modal__card--activo");
+
+        var check = cards[i].querySelector("input[type='checkbox']");
+
+        if (check) {
+            check.checked = false;
+        }
     }
 
-    elemento.classList.add("tarea-diaria-modal__card--activo");
+    actualizarResumenSeleccionTareaDiaria();
+}
+
+function actualizarResumenSeleccionTareaDiaria() {
+    var cantidad = tareasDiariasSeleccionadas.length;
+    var nombres = [];
+
+    for (var i = 0; i < tareasDiariasSeleccionadas.length; i++) {
+        nombres.push((tareasDiariasSeleccionadas[i].hora ? tareasDiariasSeleccionadas[i].hora + " " : "") + tareasDiariasSeleccionadas[i].nombre);
+    }
+
+    codTareaDiariaSeleccionada = cantidad > 0 ? tareasDiariasSeleccionadas[0].id : "";
+    nombreTareaDiariaSeleccionada = nombres.join(", ");
+
+    if (document.getElementById("inptCodTareaDiariaSeleccionada")) {
+        document.getElementById("inptCodTareaDiariaSeleccionada").value = codTareaDiariaSeleccionada;
+    }
+
+    if (document.getElementById("lblCantidadTareasDiariasSeleccionadas")) {
+        document.getElementById("lblCantidadTareasDiariasSeleccionadas").innerHTML = cantidad + (cantidad == 1 ? " tarea seleccionada" : " tareas seleccionadas");
+    }
+
+    if (document.getElementById("boxTareaDiariaSeleccionada")) {
+        document.getElementById("boxTareaDiariaSeleccionada").style.display = cantidad > 0 ? "" : "none";
+    }
+
+    if (document.getElementById("lblTareaDiariaSeleccionada")) {
+        document.getElementById("lblTareaDiariaSeleccionada").innerHTML = cantidad > 0 ? nombres.join("<br>") : "";
+    }
+
+    if (document.getElementById("lblResumenTareaDiaria")) {
+        document.getElementById("lblResumenTareaDiaria").innerHTML = cantidad > 0 ? "Destinatario: " + (nombreUsuarioSeleccionadoTarea || "usuario") + " | Frecuencia: diaria" : "";
+    }
 }
 
 function valorCheckTareaDiaria(id) {
@@ -1217,6 +1462,7 @@ function buscarTareasParaAsignarDiariaUsuario() {
 
                 if (Respuesta == true) {
                     document.getElementById("contenedorTareasDiariasParaAsignar").innerHTML = datos[2];
+                    limpiarSeleccionTareasDiarias();
                 }
 
             } catch (error) {
@@ -1235,7 +1481,21 @@ function guardarTareaDiariaUsuario() {
         return;
     }
 
-    if (codTareaDiariaSeleccionada == "") {
+    if (obtenerDestinoTareaDiaria() != "usuario") {
+        ver_vetana_informativa("La asignacion por rol operativo o local queda preparada para la siguiente fase. Por ahora guarde sobre un usuario especifico.");
+        return;
+    }
+
+    if (tareasDiariasSeleccionadas.length == 0 && codTareaDiariaSeleccionada != "") {
+        tareasDiariasSeleccionadas.push({
+            id: codTareaDiariaSeleccionada,
+            nombre: nombreTareaDiariaSeleccionada,
+            hora: "",
+            tipo: ""
+        });
+    }
+
+    if (tareasDiariasSeleccionadas.length == 0) {
         ver_vetana_informativa("FALTO SELECCIONAR UNA TAREA");
         return;
     }
@@ -1286,12 +1546,11 @@ function guardarTareaDiariaUsuario() {
 
     obtener_datos_user();
 
-    var datos = {
+    var datosBase = {
         "useru": userid,
         "passu": passuser,
         "navegador": navegador,
         "funt": "guardarTareaDiariaUsuario",
-        "cod_tareaFK": codTareaDiariaSeleccionada,
         "cod_usuarioFK": codUsuarioSeleccionadoTarea,
         "fecha_inicio": fechaInicio,
         "fecha_fin": fechaFin,
@@ -1305,19 +1564,60 @@ function guardarTareaDiariaUsuario() {
         "observacion_admin": observacion
     };
 
+    guardarTareasDiariasSeleccionadas(0, datosBase, {
+        guardadas: 0,
+        duplicadas: 0,
+        errores: 0
+    });
+}
+
+function guardarTareasDiariasSeleccionadas(indice, datosBase, resultado) {
+    if (indice >= tareasDiariasSeleccionadas.length) {
+        verCerrarEfectoCargando("");
+
+        var mensaje = "Asignacion finalizada. Guardadas: " + resultado.guardadas + ".";
+
+        if (resultado.duplicadas > 0) {
+            mensaje += " Ya configuradas: " + resultado.duplicadas + ".";
+        }
+
+        if (resultado.errores > 0) {
+            mensaje += " Errores: " + resultado.errores + ".";
+        }
+
+        ver_vetana_informativa(mensaje);
+        buscarTareasParaAsignarDiariaUsuario();
+
+        if (typeof cargarTareasPendientesAdministrador === "function") {
+            cargarTareasPendientesAdministrador();
+        }
+
+        return;
+    }
+
+    var tarea = tareasDiariasSeleccionadas[indice];
+    var datos = {};
+
+    for (var key in datosBase) {
+        if (Object.prototype.hasOwnProperty.call(datosBase, key)) {
+            datos[key] = datosBase[key];
+        }
+    }
+
+    datos.cod_tareaFK = tarea.id;
+
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmTareaProgramada.php",
         type: "post",
 
         error: function(jqXHR, textstatus, errorThrowm) {
-            verCerrarEfectoCargando("");
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            resultado.errores++;
+            guardarTareasDiariasSeleccionadas(indice + 1, datosBase, resultado);
         },
 
         success: function(responseText) {
-            verCerrarEfectoCargando("");
-
             var Respuesta = responseText;
 
             console.log("GUARDAR TAREA DIARIA:", Respuesta);
@@ -1326,7 +1626,8 @@ function guardarTareaDiariaUsuario() {
                 var datos = $.parseJSON(Respuesta);
 
                 if (datos["1"] == "duplicado") {
-                    ver_vetana_informativa(datos["mensaje"]);
+                    resultado.duplicadas++;
+                    guardarTareasDiariasSeleccionadas(indice + 1, datosBase, resultado);
                     return;
                 }
 
@@ -1334,20 +1635,18 @@ function guardarTareaDiariaUsuario() {
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if (Respuesta == true) {
-                    ver_vetana_informativa("TAREA DIARIA GUARDADA CORRECTAMENTE");
-
-                    verCerrarModalTareaDiaria(false);
-                    verCerrarVentanaAsignarTareaUsuario(false);
-
-                    codTareaDiariaSeleccionada = "";
-                    nombreTareaDiariaSeleccionada = "";
+                    resultado.guardadas++;
+                } else {
+                    resultado.errores++;
                 }
 
-            } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                guardarTareasDiariasSeleccionadas(indice + 1, datosBase, resultado);
 
+            } catch (error) {
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
+                resultado.errores++;
+                guardarTareasDiariasSeleccionadas(indice + 1, datosBase, resultado);
             }
         }
     });

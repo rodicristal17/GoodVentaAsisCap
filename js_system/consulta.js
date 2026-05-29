@@ -604,6 +604,10 @@ function verCerrarAbmVistaConsulta(controlVentana, volverAtras= false) {
 			controlVentanaConsulta= controlVentana;
 		}
 		document.getElementById("divFrmVistaConsulta").style.display="" 
+		var resultadosVistaConsulta = document.getElementById("table_frm_VistaConsulta");
+		if (resultadosVistaConsulta && resultadosVistaConsulta.innerHTML.trim() == "") {
+			mostrarEstadoVistaConsultaClinica("inicial");
+		}
 	}
 }
 
@@ -1428,6 +1432,56 @@ document.getElementById("divPieImpresiones").innerHTML=paginaPie
 
 
 
+function estadoVistaConsultaClinica(tipo) {
+	var estados = {
+		inicial: {
+			icono: "/GoodVentaAsisCap/iconos/historialmedico.png",
+			titulo: "Buscá un paciente",
+			texto: "Ingresá el nombre, CI o número de venta para consultar su historial clínico."
+		},
+		buscando: {
+			icono: "/GoodVentaAsisCap/iconos/lupa.png",
+			titulo: "Buscando pacientes",
+			texto: "Estamos consultando los registros clínicos disponibles."
+		},
+		sinResultados: {
+			icono: "/GoodVentaAsisCap/iconos/cliente.png",
+			titulo: "Sin pacientes encontrados",
+			texto: "Probá con otro nombre, CI o número de venta."
+		},
+		error: {
+			icono: "/GoodVentaAsisCap/iconos/botonCerrar.png",
+			titulo: "No se pudo cargar el listado",
+			texto: "Intentá nuevamente o revisá la conexión."
+		}
+	};
+	var estado = estados[tipo] || estados.inicial;
+	return "<div class='vista-consulta-empty-state vista-consulta-empty-state--" + tipo + "'>" +
+		"<img src='" + estado.icono + "' alt='' />" +
+		"<strong>" + estado.titulo + "</strong>" +
+		"<span>" + estado.texto + "</span>" +
+		"</div>";
+}
+
+function mostrarEstadoVistaConsultaClinica(tipo) {
+	var contenedor = document.getElementById("table_frm_VistaConsulta");
+	if (contenedor) {
+		contenedor.classList.remove("vista-consulta-results--loaded");
+		contenedor.innerHTML = estadoVistaConsultaClinica(tipo || "inicial");
+	}
+}
+
+function limpiarVistaConsultaClinica() {
+	var nroVenta = document.getElementById("inptBuscarFrmNumFacturaVistaConsulta");
+	var paciente = document.getElementById("inptBuscarFrmPacienteVistaConsulta");
+	if (nroVenta) nroVenta.value = "";
+	if (paciente) {
+		paciente.value = "";
+		paciente.focus();
+	}
+	mostrarEstadoVistaConsultaClinica("inicial");
+}
+
 function buscarVistaConsulta() {	 
 	const paciente =  document.getElementById("inptBuscarFrmPacienteVistaConsulta").value
 	const num_factura= document.getElementById("inptBuscarFrmNumFacturaVistaConsulta").value;
@@ -1443,6 +1497,7 @@ function buscarVistaConsulta() {
 	};
 
 	verCerrarEfectoCargando("1");
+	mostrarEstadoVistaConsultaClinica("buscando");
 	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
@@ -1474,7 +1529,7 @@ function buscarVistaConsulta() {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("table_frm_VistaConsulta").innerHTML = ''
+			mostrarEstadoVistaConsultaClinica("error");
 	verCerrarEfectoCargando("");
 		},
 		success: function (responseText) {
@@ -1489,13 +1544,22 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("table_frm_VistaConsulta").innerHTML = datos_buscados
+					if (datos_buscados && datos_buscados.replace(/\s+/g, "") != "") {
+						var contenedorVistaConsulta = document.getElementById("table_frm_VistaConsulta");
+						contenedorVistaConsulta.classList.add("vista-consulta-results--loaded");
+						contenedorVistaConsulta.innerHTML = datos_buscados
+					} else {
+						mostrarEstadoVistaConsultaClinica("sinResultados");
+					}
 				 					
+				} else {
+					mostrarEstadoVistaConsultaClinica("sinResultados");
 				}
 			} catch (error) {
 				
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
+				mostrarEstadoVistaConsultaClinica("error");
 			}
 		}
 	});
@@ -1854,7 +1918,7 @@ function limpiarcamposConsulta(){
 	document.getElementById("inptTrabajoRealizadoConsulta").value=""; 
 	document.getElementById("inptProximaConsultaConsulta").value=""; 
  
-	document.getElementById("btnAbmConsulta").value="Guardar Datos"
+	document.getElementById("btnAbmConsulta").value="Guardar evolución"
  
 	cod_consulta=""
  	cod_ventaFKConsulta="";
