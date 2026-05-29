@@ -20,6 +20,7 @@ var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"cerrar_caja",
 	"hilos_interconsultas",
 	"historial_presupuestos",
+	"insumos",
 	"migrar_caja",
 	"recibir_caja"
 ];
@@ -36,6 +37,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	cerrar_caja: { sourceSelector: "#divMenuArqueo", permissionKey: "VERCERRARCAJA" },
 	hilos_interconsultas: { sourceSelector: "#divMenuInterConsulta" },
 	historial_presupuestos: { sourceSelector: "#divMenuPresupuestoProducto2" },
+	insumos: { sourceSelector: "#divMenuInsumos" },
 	migrar_caja: { sourceSelector: "#divMenuMigrarCaja", permissionKey: "VERMIGRARCAJA" },
 	recibir_caja: { sourceSelector: "#divMenuRecibirCaja", permissionKey: "VERRECIBIRCAJA" },
 

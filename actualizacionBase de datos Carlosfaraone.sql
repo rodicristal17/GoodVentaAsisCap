@@ -67,8 +67,9 @@ VALUES
 ('cerrar_caja', 'Cerrar caja', 'administrativo', 'Administrativo', 'close-cashbox', NULL, NULL, 1, 1, 9),
 ('hilos_interconsultas', 'Hilos - InterConsultas', 'administrativo', 'Administrativo', 'interconsultas', NULL, NULL, 1, 1, 10),
 ('historial_presupuestos', 'Historial de presupuestos', 'administrativo', 'Administrativo', 'budget-history', NULL, NULL, 1, 1, 11),
-('migrar_caja', 'Migrar Caja', 'administrativo', 'Administrativo', 'cashbox-transfer', NULL, NULL, 1, 1, 12),
-('recibir_caja', 'Recibir Caja', 'administrativo', 'Administrativo', 'receive-cashbox', NULL, NULL, 1, 1, 13),
+('insumos', 'Insumos', 'administrativo', 'Administrativo', 'supplies', NULL, NULL, 1, 1, 12),
+('migrar_caja', 'Migrar Caja', 'administrativo', 'Administrativo', 'cashbox-transfer', NULL, NULL, 1, 1, 13),
+('recibir_caja', 'Recibir Caja', 'administrativo', 'Administrativo', 'receive-cashbox', NULL, NULL, 1, 1, 14),
 
 -- Agendamientos
 ('historial_clinico_evolucion', 'Historial Clínico y Evolución', 'agendamientos', 'Agendamientos', 'clinical-history', NULL, NULL, 1, 0, NULL),
