@@ -24,6 +24,7 @@ try {
 // ===============================
 if (isset($_GET['delete'])) {
     $id = (int) $_GET['delete'];
+    $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$id]);
     $pdo->prepare("DELETE FROM tareas WHERE id=?")->execute([$id]);
     header("Location./php_system/Grant.php");
     exit;
@@ -37,6 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dependencia = !empty($_POST['dependencia']) ? (int) $_POST['dependencia'] : null;
     $sucursal = !empty($_POST['sucursal']) ? $_POST['sucursal'] : 'General';
     $responsable = !empty($_POST['responsable']) ? $_POST['responsable'] : 'Sin asignar';
+    $usuarios_vinculados = isset($_POST['usuarios_vinculados']) && is_array($_POST['usuarios_vinculados'])
+        ? array_values(array_unique(array_filter(array_map('intval', $_POST['usuarios_vinculados']))))
+        : [];
+    $tarea_id_guardada = $id;
 
     if ($id) {
         $stmt = $pdo->prepare("
@@ -70,6 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sucursal,
             $responsable
         ]);
+        $tarea_id_guardada = (int) $pdo->lastInsertId();
+    }
+
+    $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$tarea_id_guardada]);
+    if (!empty($usuarios_vinculados)) {
+        $stmtUsuarioTarea = $pdo->prepare("
+            INSERT INTO tarea_usuarios (tarea_id, cod_usuario)
+            VALUES (?, ?)
+        ");
+        foreach ($usuarios_vinculados as $cod_usuario) {
+            $stmtUsuarioTarea->execute([$tarea_id_guardada, $cod_usuario]);
+        }
     }
     header("Location: ../php_system/Grant.php");
     exit;
@@ -81,6 +98,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt = $pdo->query("SELECT * FROM tareas ORDER BY fecha_inicio ASC");
 $tareas_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$usuarios_por_tarea = [];
+$stmtTareaUsuarios = $pdo->query("
+    SELECT tu.tarea_id,
+           GROUP_CONCAT(tu.cod_usuario ORDER BY p.nombre_persona SEPARATOR ',') AS ids,
+           GROUP_CONCAT(p.nombre_persona ORDER BY p.nombre_persona SEPARATOR ', ') AS nombres
+    FROM tarea_usuarios tu
+    INNER JOIN usuario u ON u.cod_usuario = tu.cod_usuario
+    INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+    GROUP BY tu.tarea_id
+");
+foreach ($stmtTareaUsuarios->fetchAll(PDO::FETCH_ASSOC) as $filaTareaUsuario) {
+    $usuarios_por_tarea[$filaTareaUsuario['tarea_id']] = [
+        'ids' => $filaTareaUsuario['ids'] !== '' ? array_map('intval', explode(',', $filaTareaUsuario['ids'])) : [],
+        'nombres' => $filaTareaUsuario['nombres']
+    ];
+}
+
+foreach ($tareas_db as &$tarea_db) {
+    $vinculados = isset($usuarios_por_tarea[$tarea_db['id']])
+        ? $usuarios_por_tarea[$tarea_db['id']]
+        : ['ids' => [], 'nombres' => ''];
+    $tarea_db['usuarios_vinculados_ids'] = $vinculados['ids'];
+    $tarea_db['usuarios_vinculados'] = $vinculados['nombres'];
+}
+unset($tarea_db);
+
 $stmtUsuarios = $pdo->query("
     SELECT u.cod_usuario, p.nombre_persona, u.url
     FROM usuario u
@@ -90,11 +133,13 @@ $stmtUsuarios = $pdo->query("
 ");
 $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
 $fotos_usuarios = [];
+$ids_usuarios_por_nombre = [];
 foreach ($usuarios as $usuario) {
     $nombre_usuario_foto = trim((string) $usuario['nombre_persona']);
     $url_usuario_foto = trim((string) $usuario['url']);
     if ($nombre_usuario_foto !== '') {
         $fotos_usuarios[mb_strtolower($nombre_usuario_foto, 'UTF-8')] = $url_usuario_foto;
+        $ids_usuarios_por_nombre[mb_strtolower($nombre_usuario_foto, 'UTF-8')] = (int) $usuario['cod_usuario'];
     }
 }
 
@@ -183,8 +228,11 @@ foreach ($tareas_ordenadas as $t) {
     }
 
     $responsableTarea = trim((string) $t['responsable']);
+    $responsableId = isset($ids_usuarios_por_nombre[mb_strtolower($responsableTarea, 'UTF-8')])
+        ? $ids_usuarios_por_nombre[mb_strtolower($responsableTarea, 'UTF-8')]
+        : null;
     $fotoResponsable = $responsableTarea !== ''
-        ? ($fotos_usuarios[mb_strtolower($responsableTarea, 'UTF-8')] ?? '')
+        ? (isset($fotos_usuarios[mb_strtolower($responsableTarea, 'UTF-8')]) ? $fotos_usuarios[mb_strtolower($responsableTarea, 'UTF-8')] : '')
         : '';
     $nombreBarra = trim($t['titulo_gantt'] . ($responsableTarea !== '' ? ', ' . $responsableTarea : ''));
 
@@ -198,6 +246,9 @@ foreach ($tareas_ordenadas as $t) {
         'custom_class' => $class . ' ' . $classEstado,
         'sucursal' => $t['sucursal'],
         'responsable' => $responsableTarea,
+        'responsable_id' => $responsableId,
+        'usuarios_vinculados' => $t['usuarios_vinculados'],
+        'usuarios_vinculados_ids' => $t['usuarios_vinculados_ids'],
         'estado' => $estadoTarea,
         'estado_visual' => $estadoVisual,
         'foto_responsable' => $fotoResponsable,
@@ -605,6 +656,187 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             transition: border-color 0.16s ease, box-shadow 0.16s ease;
         }
 
+        .usuarios-vinculados-field {
+            grid-column: span 2;
+            position: relative;
+        }
+
+        .usuarios-vinculados-picker {
+            position: relative;
+        }
+
+        .usuarios-vinculados-picker[open]::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background: rgba(15, 23, 42, 0.22);
+        }
+
+        .usuarios-vinculados-picker summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            height: 38px;
+            padding: 8px 10px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            outline: none;
+            background: #fff;
+            color: var(--grant-ink);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .usuarios-vinculados-picker summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .usuarios-vinculados-picker summary::after {
+            content: "⌄";
+            color: var(--grant-muted);
+            font-size: 14px;
+            line-height: 1;
+            transition: transform 0.16s ease;
+        }
+
+        .usuarios-vinculados-picker[open] summary {
+            border-color: var(--grant-blue);
+            box-shadow: 0 0 0 3px rgba(31, 94, 255, 0.12);
+        }
+
+        .usuarios-vinculados-picker[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .usuarios-vinculados-summary {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .usuarios-vinculados-count {
+            display: inline-flex;
+            align-items: center;
+            min-height: 20px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #eef4ff;
+            color: var(--grant-blue);
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .usuarios-vinculados-panel {
+            position: fixed;
+            z-index: 90;
+            top: 50%;
+            left: 50%;
+            width: min(620px, calc(100vw - 28px));
+            max-height: min(76vh, 620px);
+            padding: 14px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 24px 58px rgba(16, 24, 40, 0.26);
+            transform: translate(-50%, -50%);
+        }
+
+        .usuarios-vinculados-panel-title {
+            margin: 0 0 10px;
+            color: var(--grant-ink);
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .usuarios-vinculados-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .usuarios-vinculados-actions button {
+            height: 28px;
+            padding: 0 10px;
+            border: 1px solid var(--grant-line);
+            border-radius: 7px;
+            background: #fff;
+            color: var(--grant-muted);
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .usuarios-vinculados-actions button:last-child {
+            border-color: var(--grant-blue);
+            background: var(--grant-blue);
+            color: #fff;
+        }
+
+        .usuarios-checkbox-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 7px;
+            max-height: calc(min(76vh, 620px) - 110px);
+            overflow: auto;
+            padding: 8px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .usuarios-checkbox-list label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 32px;
+            margin: 0;
+            padding: 6px 8px;
+            border: 1px solid #e7ebf1;
+            border-radius: 8px;
+            background: #fff;
+            color: var(--grant-ink);
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            cursor: pointer;
+            transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .usuarios-checkbox-list label:hover {
+            border-color: #b8c7e6;
+            background: #f8fbff;
+        }
+
+        .usuarios-checkbox-list input {
+            width: 15px;
+            height: 15px;
+            min-width: 15px;
+            margin: 0;
+            padding: 0;
+            accent-color: var(--grant-blue);
+        }
+
+        .usuarios-checkbox-list label.is-selected {
+            border-color: rgba(31, 94, 255, 0.45);
+            background: #eef4ff;
+            box-shadow: 0 0 0 2px rgba(31, 94, 255, 0.08);
+            color: #173b91;
+        }
+
+        .usuarios-checkbox-list span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .form-grid input:focus,
         .form-grid select:focus,
         .filter-input:focus {
@@ -689,12 +921,13 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         }
 
         .task-table th:first-child {
-            width: 44%;
+            width: 36%;
         }
 
         .task-table th:nth-child(2),
-        .task-table th:nth-child(3) {
-            width: 23%;
+        .task-table th:nth-child(3),
+        .task-table th:nth-child(4) {
+            width: 18%;
         }
 
         .task-table td {
@@ -1306,6 +1539,30 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                     <?php endforeach; ?>
                 </select>
             </div>
+            <div class="usuarios-vinculados-field">
+                <label style="font-size: 12px;">Usuarios vinculados:</label>
+                <details class="usuarios-vinculados-picker" id="usuarios_vinculados_picker">
+                    <summary>
+                        <span class="usuarios-vinculados-summary" id="usuarios_vinculados_resumen">Seleccionar usuarios</span>
+                        <span class="usuarios-vinculados-count" id="usuarios_vinculados_count">0 seleccionados</span>
+                    </summary>
+                    <div class="usuarios-vinculados-panel">
+                        <h3 class="usuarios-vinculados-panel-title">Seleccionar usuarios vinculados</h3>
+                        <div class="usuarios-checkbox-list" id="form_usuarios_vinculados">
+                            <?php foreach ($usuarios as $usuario): ?>
+                                <label>
+                                    <input type="checkbox" name="usuarios_vinculados[]" value="<?= (int) $usuario['cod_usuario'] ?>">
+                                    <span><?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="usuarios-vinculados-actions">
+                            <button type="button" onclick="limpiarUsuariosVinculados()">Limpiar</button>
+                            <button type="button" onclick="cerrarUsuariosVinculados()">Listo</button>
+                        </div>
+                    </div>
+                </details>
+            </div>
             <div>
                 <label style="font-size: 12px;">Depende de:</label>
                 <select name="dependencia" id="form_dependencia">
@@ -1338,12 +1595,13 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                             <th>Flujo de Tareas</th>
                             <th>Sucursal</th>
                             <th>Responsable</th>
+                            <th>Vinculados</th>
                             <th style="width: 70px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-body">
                         <tr class="gantt-date-spacer" aria-hidden="true">
-                            <td colspan="4"></td>
+                            <td colspan="5"></td>
                         </tr>
                         <?php foreach ($tareas_ordenadas as $t): ?>
                             <tr class="task-row" data-task-id="<?= $t['id'] ?>" data-sucursal="<?= $t['sucursal'] ?>"
@@ -1351,6 +1609,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                                 <td><strong><?= $t['titulo_html'] ?></strong></td>
                                 <td><?= htmlspecialchars($t['sucursal'], ENT_QUOTES) ?></td>
                                 <td><?= htmlspecialchars($t['responsable'], ENT_QUOTES) ?></td>
+                                <td><?= htmlspecialchars($t['usuarios_vinculados'], ENT_QUOTES) ?></td>
                                 <td>
                                     <!-- BOTÓN EDITAR -->
                                     <a style="cursor:pointer;" title="Editar"
@@ -1386,6 +1645,14 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                     <input type="text" id="filtro-responsable" class="filter-input" placeholder="Buscar responsable..."
                         onkeyup="aplicarFiltros()">
 
+                    <select id="filtro-usuario" class="filter-input" onchange="aplicarFiltroUsuarioGantt()">
+                        <?php foreach ($usuarios as $usuario): ?>
+                            <option value="<?= (int) $usuario['cod_usuario'] ?>" data-nombre="<?= htmlspecialchars(mb_strtolower($usuario['nombre_persona'], 'UTF-8'), ENT_QUOTES) ?>">
+                                <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
                     <!-- Separador visual -->
                     <div class="controls-divider"></div>
 
@@ -1419,7 +1686,8 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
             const horizonTask = allTasks.find(t => t.id === '__horizon__');
             const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
-            const tareasRender = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
+            const tareasRenderBase = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
+            const tareasRender = prepararTareasParaVistaDesdeHoy(tareasRenderBase);
             ordenTareasVisiblesGantt = sinHorizon.map(t => String(t.id));
             idsTareasVisiblesGantt = new Set(ordenTareasVisiblesGantt);
             actualizarTablaDescripcionGantt();
@@ -1432,7 +1700,10 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                     on_date_change: function (task, start, end) {
 
                         if (task.id === '__horizon__') return;
-                        const startStr = formatDate(start);
+                        const startStrCalculado = formatDate(start);
+                        const startStr = task.fecha_inicio_original && startStrCalculado === task.start
+                            ? task.fecha_inicio_original
+                            : startStrCalculado;
                         const endStr = formatDate(end);
 
                         enviarActualizacionBack(task.id, startStr, endStr, task.progress);
@@ -1461,17 +1732,58 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             }
         }
 
+        function prepararTareasParaVistaDesdeHoy(tareas) {
+            const hoy = formatDate(new Date());
+
+            return tareas.map(function (tarea) {
+                if (tarea.id === '__horizon__') {
+                    return Object.assign({}, tarea, {
+                        start: hoy,
+                        end: formatDate(new Date(new Date().getTime() + (60 * 86400000)))
+                    });
+                }
+
+                if (tarea.start && tarea.end && tarea.start < hoy && tarea.end >= hoy) {
+                    return Object.assign({}, tarea, {
+                        fecha_inicio_original: tarea.start,
+                        start: hoy
+                    });
+                }
+
+                return tarea;
+            });
+        }
+
         function programarCentradoFechaActual() {
             posicionarGanttEnHoy();
             setTimeout(posicionarGanttEnHoy, 250);
             setTimeout(posicionarGanttEnHoy, 650);
             setTimeout(posicionarGanttEnHoy, 1200);
             setTimeout(posicionarGanttEnHoy, 2000);
+            setTimeout(posicionarGanttEnHoy, 3200);
+            setTimeout(posicionarGanttEnHoy, 4800);
         }
 
         function irHoyGantt() {
             programarCentradoFechaActual();
         }
+
+        window.posicionarGanttEnHoy = posicionarGanttEnHoy;
+        window.programarCentradoFechaActual = programarCentradoFechaActual;
+
+        function refrescarLayoutGanttVisible() {
+            if (!gantt) return;
+
+            gantt.change_view_mode(vistaActual);
+            configurarScrollGantt();
+            mostrarMesEnFechasGantt();
+            setTimeout(sincronizarTablaConBarrasGantt, 120);
+            setTimeout(decorarBarrasGanttResponsables, 140);
+            setTimeout(configurarTooltipsGantt, 180);
+            programarCentradoFechaActual();
+        }
+
+        window.refrescarLayoutGanttVisible = refrescarLayoutGanttVisible;
 
         function mostrarMesEnFechasGantt() {
             setTimeout(function () {
@@ -1764,6 +2076,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 '<div class="gantt-tooltip-custom__title">' + escaparHtml(tarea.titulo_original || tarea.name) + '</div>' +
                 '<div class="gantt-tooltip-custom__meta">' +
                     '<b>Responsable</b><span>' + escaparHtml(tarea.responsable || 'Sin asignar') + '</span>' +
+                    '<b>Vinculados</b><span>' + escaparHtml(tarea.usuarios_vinculados || '-') + '</span>' +
                     '<b>Estado</b><span>' + escaparHtml(tarea.estado_visual || tarea.estado || 'Pendiente') + '</span>' +
                     '<b>Fechas</b><span>' + escaparHtml(formatearFechaLegible(tarea.start)) + ' - ' + escaparHtml(formatearFechaLegible(tarea.end)) + '</span>' +
                     '<b>Sucursal</b><span>' + escaparHtml(tarea.sucursal || '-') + '</span>' +
@@ -1812,7 +2125,15 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             if (!contenedorExterno) return null;
 
             const contenedorInterno = contenedorExterno.querySelector('.gantt-container');
-            return contenedorInterno || contenedorExterno;
+            if (contenedorExterno.scrollWidth > contenedorExterno.clientWidth) {
+                return contenedorExterno;
+            }
+
+            if (contenedorInterno && contenedorInterno.scrollWidth > contenedorInterno.clientWidth) {
+                return contenedorInterno;
+            }
+
+            return contenedorExterno;
         }
 
         function obtenerNombreUsuarioGantt() {
@@ -1851,30 +2172,115 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             }
         }
 
+        function obtenerUsuarioActualIdGantt() {
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.buscar_datos_url_usuario === 'function') {
+                    const usuarioUrlPadre = window.parent.buscar_datos_url_usuario('q');
+                    if (usuarioUrlPadre) return String(usuarioUrlPadre);
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.buscar_este_cookie === 'function') {
+                    const usuarioCookiePadre = window.parent.buscar_este_cookie('user');
+                    if (usuarioCookiePadre) return String(usuarioCookiePadre);
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (window.parent && window.parent !== window && window.parent.userid) {
+                    return String(window.parent.userid);
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (window.opener && window.opener.userid) {
+                    return String(window.opener.userid);
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (typeof userid !== 'undefined' && userid) {
+                    return String(userid);
+                }
+            } catch (e) {
+            }
+
+            return '';
+        }
+
+        function obtenerParametroUrlGantt(nombre) {
+            const parametros = new URLSearchParams(window.location.search);
+            return parametros.get(nombre) || '';
+        }
+
+        function seleccionarUsuarioActualFiltroGantt(usuarioForzado) {
+            const filtroUsuario = document.getElementById('filtro-usuario');
+            if (!filtroUsuario) return false;
+
+            const usuarioActual = usuarioForzado
+                ? String(usuarioForzado)
+                : (obtenerParametroUrlGantt('usuario') || obtenerParametroUrlGantt('q') || obtenerUsuarioActualIdGantt());
+            if (!usuarioActual) return false;
+
+            const existeUsuario = Array.from(filtroUsuario.options).some(function (option) {
+                return String(option.value) === usuarioActual;
+            });
+
+            if (!existeUsuario) return false;
+
+            filtroUsuario.value = usuarioActual;
+            return true;
+        }
+
+        function iniciarFiltroUsuarioActualGantt(intentos = 0) {
+            if (seleccionarUsuarioActualFiltroGantt()) {
+                aplicarFiltros();
+                return;
+            }
+
+            if (intentos < 25) {
+                setTimeout(function () {
+                    iniciarFiltroUsuarioActualGantt(intentos + 1);
+                }, 160);
+                return;
+            }
+
+            const filtroUsuario = document.getElementById('filtro-usuario');
+            if (filtroUsuario) filtroUsuario.value = '';
+            programarCentradoFechaActual();
+        }
+
+        window.aplicarUsuarioActualFiltroGantt = function (usuario) {
+            if (seleccionarUsuarioActualFiltroGantt(usuario)) {
+                aplicarFiltros();
+            }
+        };
+
         function posicionarGanttEnHoy(intentos = 0) {
             setTimeout(function () {
                 const contenedor = obtenerContenedorScrollGantt();
                 const panelDerecho = document.querySelector('.gantt-right-panel');
-                const marcaHoy = document.querySelector('#gantt .today-highlight');
-
                 if (!contenedor) return;
 
-                if (!marcaHoy && intentos < 20) {
+                if ((!gantt || !gantt.gantt_start) && intentos < 20) {
                     posicionarGanttEnHoy(intentos + 1);
                     return;
                 }
 
-                const posicionHoy = obtenerPosicionMarcaHoy(marcaHoy, contenedor);
-                const xHoy = posicionHoy ? posicionHoy.x : calcularPosicionFechaHoy();
-                const anchoHoy = posicionHoy ? posicionHoy.width : obtenerAnchoColumnaVista();
+                const xHoy = calcularPosicionFechaHoy();
                 const scrollMaximo = Math.max(0, contenedor.scrollWidth - contenedor.clientWidth);
                 const scrollObjetivo = Math.min(
                     scrollMaximo,
-                    Math.max(0, xHoy + (anchoHoy / 2) - (contenedor.clientWidth / 2))
+                    Math.max(0, xHoy)
                 );
 
                 if (typeof contenedor.scrollTo === 'function') {
-                    contenedor.scrollTo({ left: scrollObjetivo, behavior: intentos === 0 ? 'auto' : 'smooth' });
+                    contenedor.scrollTo({ left: scrollObjetivo, behavior: 'auto' });
                 } else {
                     contenedor.scrollLeft = scrollObjetivo;
                 }
@@ -1882,6 +2288,10 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 const contenedorExterno = document.getElementById('gantt-container');
                 if (contenedorExterno && contenedorExterno !== contenedor) {
                     contenedorExterno.scrollLeft = scrollObjetivo;
+                }
+                const contenedorInterno = contenedorExterno ? contenedorExterno.querySelector('.gantt-container') : null;
+                if (contenedorInterno && contenedorInterno !== contenedor) {
+                    contenedorInterno.scrollLeft = scrollObjetivo;
                 }
                 if (panelDerecho) panelDerecho.scrollLeft = scrollObjetivo;
             }, 120);
@@ -2038,16 +2448,46 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
         function aplicarFiltros() {
             const sucursalSel = document.getElementById('filtro-sucursal').value;
-            const respText = document.getElementById('filtro-responsable').value.toLowerCase();
+            const respText = normalizarTextoFiltro(document.getElementById('filtro-responsable').value);
+            const filtroUsuario = document.getElementById('filtro-usuario');
+            const usuarioSeleccionado = filtroUsuario ? String(filtroUsuario.value || '') : '';
+            const opcionUsuario = filtroUsuario && filtroUsuario.options ? filtroUsuario.options[filtroUsuario.selectedIndex] : null;
+            const nombreUsuarioSeleccionado = normalizarTextoFiltro(opcionUsuario ? (opcionUsuario.dataset.nombre || opcionUsuario.textContent || '') : '');
 
             // Filtrar tareas reales (excluir la fantasma aquí; renderGantt la re-agrega)
             const tareasFiltradas = allTasks.filter(t => {
                 if (t.id === '__horizon__') return false;
                 const matchSucursal = (sucursalSel === 'Todas') || (t.sucursal === sucursalSel);
-                const matchResp = t.responsable.toLowerCase().includes(respText);
-                return matchSucursal && matchResp;
+                const usuariosBusqueda = normalizarTextoFiltro((t.responsable || '') + ' ' + (t.usuarios_vinculados || ''));
+                const matchResp = usuariosBusqueda.includes(respText);
+                const vinculadosIds = (t.usuarios_vinculados_ids || []).map(function (id) {
+                    return String(id);
+                });
+                const responsableId = t.responsable_id !== null && typeof t.responsable_id !== 'undefined'
+                    ? String(t.responsable_id)
+                    : '';
+                const matchUsuario = !usuarioSeleccionado
+                    || responsableId === usuarioSeleccionado
+                    || (nombreUsuarioSeleccionado && usuariosBusqueda.includes(nombreUsuarioSeleccionado))
+                    || vinculadosIds.includes(usuarioSeleccionado);
+                return matchSucursal && matchResp && matchUsuario;
             });
             renderGantt(tareasFiltradas);
+            programarCentradoFechaActual();
+        }
+
+        function aplicarFiltroUsuarioGantt() {
+            const filtroResponsable = document.getElementById('filtro-responsable');
+            if (filtroResponsable) filtroResponsable.value = '';
+            aplicarFiltros();
+        }
+
+        function normalizarTextoFiltro(valor) {
+            let texto = String(valor || '').trim().toLowerCase();
+            if (typeof texto.normalize === 'function') {
+                texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+            return texto;
         }
 
         
@@ -2111,6 +2551,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             document.getElementById('form_estado').value = tarea.estado;
             document.getElementById('form_sucursal').value = tarea.sucursal || 'General';
             document.getElementById('form_responsable').value = tarea.responsable || '';
+            seleccionarUsuariosVinculados(tarea.usuarios_vinculados_ids || []);
             document.getElementById('form_dependencia').value = tarea.dependencia || '';
             document.getElementById('btn_submit').innerText = 'Actualizar';
             setTimeout(function () {
@@ -2124,16 +2565,94 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         document.getElementById('form_id').value        = '';
         document.getElementById('form_title').innerText = 'Nueva Tarea:';
         document.getElementById('btn_submit').innerText = 'Guardar';
+        seleccionarUsuariosVinculados([]);
         setTimeout(function () {
             actualizarEspaciadorFechasGantt();
             sincronizarTablaConBarrasGantt();
         }, 80);
     }
 
+    function seleccionarUsuariosVinculados(ids) {
+        const contenedor = document.getElementById('form_usuarios_vinculados');
+        if (!contenedor) return;
+
+        const idsNormalizados = (ids || []).map(function (id) {
+            return String(id);
+        });
+
+        Array.from(contenedor.querySelectorAll('input[type="checkbox"]')).forEach(function (checkbox) {
+            checkbox.checked = idsNormalizados.includes(String(checkbox.value));
+        });
+        actualizarVistaUsuariosVinculados();
+    }
+
+    function actualizarVistaUsuariosVinculados() {
+        const contenedor = document.getElementById('form_usuarios_vinculados');
+        const contador = document.getElementById('usuarios_vinculados_count');
+        const resumen = document.getElementById('usuarios_vinculados_resumen');
+        if (!contenedor) return;
+
+        const checks = Array.from(contenedor.querySelectorAll('input[type="checkbox"]'));
+        const seleccionados = checks.filter(function (checkbox) {
+            return checkbox.checked;
+        });
+
+        checks.forEach(function (checkbox) {
+            const label = checkbox.closest('label');
+            if (label) label.classList.toggle('is-selected', checkbox.checked);
+        });
+
+        if (contador) {
+            contador.textContent = seleccionados.length === 1 ? '1 seleccionado' : seleccionados.length + ' seleccionados';
+        }
+
+        if (resumen) {
+            const nombres = seleccionados.map(function (checkbox) {
+                const label = checkbox.closest('label');
+                const texto = label ? label.querySelector('span') : null;
+                return texto ? texto.textContent.trim() : '';
+            }).filter(Boolean);
+
+            resumen.textContent = nombres.length ? nombres.join(', ') : 'Seleccionar usuarios';
+        }
+    }
+
+    function cerrarUsuariosVinculados() {
+        const picker = document.getElementById('usuarios_vinculados_picker');
+        if (picker) picker.open = false;
+    }
+
+    function limpiarUsuariosVinculados() {
+        const contenedor = document.getElementById('form_usuarios_vinculados');
+        if (!contenedor) return;
+
+        Array.from(contenedor.querySelectorAll('input[type="checkbox"]')).forEach(function (checkbox) {
+            checkbox.checked = false;
+        });
+        actualizarVistaUsuariosVinculados();
+    }
+
     // Mantener filtros limpios al cargar.
     window.addEventListener('load', function () {
         document.getElementById('filtro-sucursal').value = 'Todas';
         document.getElementById('filtro-responsable').value = '';
+        iniciarFiltroUsuarioActualGantt();
+        const usuariosVinculados = document.getElementById('form_usuarios_vinculados');
+        if (usuariosVinculados) {
+            usuariosVinculados.addEventListener('change', actualizarVistaUsuariosVinculados);
+            actualizarVistaUsuariosVinculados();
+        }
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') cerrarUsuariosVinculados();
+        });
+        document.addEventListener('click', function (event) {
+            const picker = document.getElementById('usuarios_vinculados_picker');
+            const panel = picker ? picker.querySelector('.usuarios-vinculados-panel') : null;
+            const summary = picker ? picker.querySelector('summary') : null;
+            if (!picker || !picker.open) return;
+            if ((panel && panel.contains(event.target)) || (summary && summary.contains(event.target))) return;
+            picker.open = false;
+        });
         actualizarSaludoUsuarioGantt();
         setTimeout(actualizarSaludoUsuarioGantt, 600);
         setTimeout(actualizarSaludoUsuarioGantt, 1400);

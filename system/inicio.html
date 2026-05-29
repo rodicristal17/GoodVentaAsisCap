@@ -45,6 +45,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=galeria-clinica-paciente-fix-subir-v8-20260529"></script>
 
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=galeria-clinica-paciente-fix-subir-v8-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
+
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -55,7 +58,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-20260528"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
-<script src="../js_system/abmAsistencia.js"></script>
+<script src="../js_system/abmAsistencia.js?x=salida-ubicacion-20260529"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js"></script>
@@ -345,16 +348,16 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <div class="Panel dashboard-gantt-panel">
                       <iframe
                         id="iframeGrant"
-                        src="../php_system/Grant.php?embed=dashboard&x=20260529compact"
+                        src="../php_system/Grant.php?embed=dashboard&x=20260529iniciohoyizq"
                         width="100%"
                         frameborder="0"
                         scrolling="auto"
                         style="display:block;width:100%;height:620px;max-height:620px;border:0;"
-                        onload="ajustarAltoGrantIframe(this)">
+                        onload="ajustarAltoGrantIframe(this); aplicarUsuarioActualGrantIframe(this);">
                       </iframe>
                       <script>
                         function abrirVistaCompletaGantt() {
-                          window.open('../php_system/Grant.php?x=20260529full', '_blank');
+                          window.open('../php_system/Grant.php?x=20260529iniciohoyizqfull', '_blank');
                         }
 
                         function abrirNuevaTareaGrant() {
@@ -423,8 +426,65 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                           }
                         }
 
+                        function aplicarUsuarioActualGrantIframe(iframe) {
+                          if (!iframe) return;
+
+                          function posicionarHoyGrant() {
+                            try {
+                              if (iframe.contentWindow && typeof iframe.contentWindow.programarCentradoFechaActual === "function") {
+                                iframe.contentWindow.programarCentradoFechaActual();
+                              }
+                            } catch (e) {
+                            }
+                          }
+
+                          function aplicarUsuario() {
+                            try {
+                              var usuarioActual = "";
+                              if (typeof buscar_datos_url_usuario === "function") {
+                                usuarioActual = buscar_datos_url_usuario("q") || "";
+                              }
+                              if (!usuarioActual && typeof buscar_este_cookie === "function") {
+                                usuarioActual = buscar_este_cookie("user") || "";
+                              }
+                              if (!usuarioActual && typeof userid !== "undefined") {
+                                usuarioActual = userid || "";
+                              }
+
+                              if (usuarioActual && iframe.contentWindow && typeof iframe.contentWindow.aplicarUsuarioActualFiltroGantt === "function") {
+                                iframe.contentWindow.aplicarUsuarioActualFiltroGantt(usuarioActual);
+                              }
+                              posicionarHoyGrant();
+                            } catch (e) {
+                            }
+                          }
+
+                          aplicarUsuario();
+                          setTimeout(aplicarUsuario, 300);
+                          setTimeout(aplicarUsuario, 900);
+                          setTimeout(aplicarUsuario, 1500);
+                          setTimeout(posicionarHoyGrant, 2400);
+                          setTimeout(posicionarHoyGrant, 4200);
+                        }
+
+                        function refrescarGrantDashboard() {
+                          var iframe = document.getElementById('iframeGrant');
+                          if (!iframe) return;
+
+                          ajustarAltoGrantIframe(iframe);
+
+                          try {
+                            if (iframe.contentWindow && typeof iframe.contentWindow.refrescarLayoutGanttVisible === "function") {
+                              iframe.contentWindow.refrescarLayoutGanttVisible();
+                            } else if (iframe.contentWindow && typeof iframe.contentWindow.programarCentradoFechaActual === "function") {
+                              iframe.contentWindow.programarCentradoFechaActual();
+                            }
+                          } catch (e) {
+                          }
+                        }
+
                         window.addEventListener('resize', function () {
-                          ajustarAltoGrantIframe(document.getElementById('iframeGrant'));
+                          refrescarGrantDashboard();
                         });
                       </script>
                     </div>
@@ -6370,147 +6430,115 @@ id="inptlocalMisGastosBusca"></select>
     </tbody>
   </table>
 </div>
-<div class='principal2' style='display:none' id='divAbmNuevoMotivo'>
-<table style='width:100%;height:100%'>
-<tr>
-<td>
-<center>
-<div class='divAbms_b' style='width: 500px;'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Crear Motivo Egreso / Ingreso</p>
-</td>
-<td style='width:5%;text-align:center'><img
-src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
-title='Limpiar campos' onclick='limpiarcamposmotivoegresoingreso()' /></td>
-<td style='width:5%;text-align:center'><img
-src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn'
-title='Volver Atras' onclick='verCerrarAbmNuevoMotivo("2","")' /></td>
-</tr>
-</table>
-<center>
-<div class='divMenuf'>
+<div class='principal2 motivo-abm-overlay' style='display:none' id='divAbmNuevoMotivo'>
+  <div class='motivo-abm-shell'>
+    <div class='motivo-abm-header'>
+      <div>
+        <p class='motivo-abm-kicker'>Administracion contable</p>
+        <p class='motivo-abm-title'>Motivos de egreso / ingreso</p>
+      </div>
+      <div class='motivo-abm-actions'>
+        <button type='button' class='motivo-icon-btn' title='Limpiar campos' onclick='limpiarcamposmotivoegresoingreso()'>
+          <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' alt='Limpiar'>
+        </button>
+        <button type='button' class='motivo-icon-btn motivo-icon-btn--close' title='Volver Atras' onclick='verCerrarAbmNuevoMotivo("2","")'>
+          <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' alt='Volver'>
+        </button>
+      </div>
+    </div>
 
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloC' >Nombre :</p>
-<input type="text" class="inputText" id="inptNuevoMotivoEgresoIngreso"
-placeholder='Obligatorio(*)'>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td style='width:50%'>
-<p class='pTituloC' >Estado del Registro :</p>
-<select class="inputSelect" style='width:250px' id='inptEstadoMotivoEgresoIngreso'>
-<option value="activo">Activo</option>
-<option value="inactivo">Inactivo</option>
-</select>
-</td>
-<td style='width:50%' rowspan="3">
-<p class='pTituloC' >Presupuesto por local :</p>
-<table class="tableCabeceraRegistro">
-  <tr>
-    <td class="td_registro" style="width:60%;">
-      Local
-    </td>
-    <td class="td_registro" style="width:40%;">
-      Presupuesto
-    </td>
-</table>
-<div id="divPresupuestoLocalMotivoEgresoIngreso"></div>
-</td>
-</tr><tr>
-<td style='width:50%'>
-<p class='pTituloC' >Categoria :</p>
-<select class="inputSelect" style='width:250px' id='inptCategoriaMotivoEgresoIngreso'>
-<option value="">Seleccionar</option>
-<option value="operativo">Gastos Operativos (Fijos)</option>
-<option value="directo">Costos Directos (Variables)</option>
-<option value="ingreso">Ingresos</option>
-</select>
-</td>
-</tr><tr>
-<td style='width:50%'>
-<br>
-<p class="pTitulo8" style="width: 100%;"> 
-<input type="checkbox" id="inptAutorizacionMotivoEgresoIngreso" style="margin-right: 5px;width: fit-content;">
-Necesita autorizacion</p>
-</td>
-</tr>
-</table>
-<br>
-<center>
-<input class='btn1' type='button' value='Guardar Datos'
-onclick='VerificarDatosMotivoEgresoIngreso()' id='btnMotivoIngresoEgreso' />
-</center>
-</div>
-<div class="divMenuf" >
-<center>
-<table style='width:100%'>
-<tr>
-<td style='width:99%;text-align:left'>
-<p class='pTituloC' >Buscar :</p>
-<input class='inputText' type='text' placeholder='Descripción'
-id='inptBuscarAbmMotivoEgresoIngreso'
-onkeyup="if(event.keyCode == 13){BuscarAbmMotivoEgresoIngreso()}"
-style='width: 322px;' />
-<input type='button' value='Buscar' class='btn4'
-onclick='BuscarAbmMotivoEgresoIngreso()'>
-<table style='width:100%'>
-<tr>
-<td style='width:39%'>
-<p class='pTituloC' >Reemplazar :</p>
-<input class="inputTextDisable" disabled type="hidden" 
-    id="inptCodAbmMotivoEgresoIngreso1">
-  <input class="inputTextDisable" disabled type="text" 
-    id="inptNombreAbmMotivoEgresoIngreso1" style="width: 100%;">
-</td>
-<td style="width: 39%;">
-  <p class='pTituloC' >Por :</p>
-  <input class="inputTextDisable" disabled type="hidden" 
-    id="inptCodAbmMotivoEgresoIngreso2">
-  <input class="inputTextDisable" disabled type="text" 
-    id="inptNombreAbmMotivoEgresoIngreso2" style="width: 100%;">
-</td>
-<td style="vertical-align: bottom;">
-<input type='button' value='Reemplazar' class='btn4' style="width: 100%;"
-  onclick='combinarMotivoEgresoIngreso()'>
-</td>
-</tr>
-</table>
-</td>
-<td>
-</td>
-</tr>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:60%;">
-DESCRIPCION
-</td>
-<td class="td_registro" style="width:40%;">
-CATEGORIA
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="divBuscadorMotivoEgresoIngreso" style='height:200px'></div>
-<p class='pTitulo7' id="lblNroRegistroMotivoEgresoIngreso"></p>
-</center>
-</div>
-</center>
-</div>
+    <div class='motivo-abm-grid'>
+      <section class='motivo-panel motivo-panel--form'>
+        <div class='motivo-panel-heading'>
+          <span>Datos del motivo</span>
+        </div>
+        <div class='motivo-form-grid'>
+          <label class='motivo-field motivo-field--wide'>
+            <span>Nombre</span>
+            <input type="text" class="inputText" id="inptNuevoMotivoEgresoIngreso" placeholder='Obligatorio(*)'>
+          </label>
+          <label class='motivo-field'>
+            <span>Estado del registro</span>
+            <select class="inputSelect" id='inptEstadoMotivoEgresoIngreso'>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </label>
+          <label class='motivo-field'>
+            <span>Categoria</span>
+            <select class="inputSelect" id='inptCategoriaMotivoEgresoIngreso'>
+              <option value="">Seleccionar</option>
+              <option value="operativo">Gastos Operativos (Fijos)</option>
+              <option value="directo">Costos Directos (Variables)</option>
+              <option value="ingreso">Ingresos</option>
+            </select>
+          </label>
+          <label class='motivo-check motivo-field--wide'>
+            <input type="checkbox" id="inptAutorizacionMotivoEgresoIngreso">
+            <span>Necesita autorizacion</span>
+          </label>
+        </div>
+        <div class='motivo-footer-action'>
+          <input class='btn1 motivo-save-btn' type='button' value='Guardar Datos'
+            onclick='VerificarDatosMotivoEgresoIngreso()' id='btnMotivoIngresoEgreso' />
+        </div>
+      </section>
 
-</center>
-</td>
-</tr>
-</table>
+      <section class='motivo-panel motivo-panel--budget'>
+        <div class='motivo-panel-heading'>
+          <span>Presupuesto por local</span>
+        </div>
+        <table class="tableCabeceraRegistro motivo-budget-head">
+          <tr>
+            <td class="td_registro" style="width:60%;">Local</td>
+            <td class="td_registro" style="width:40%;">Presupuesto</td>
+          </tr>
+        </table>
+        <div class='motivo-budget-body' id="divPresupuestoLocalMotivoEgresoIngreso"></div>
+      </section>
+    </div>
+
+    <section class='motivo-panel motivo-panel--search'>
+      <div class='motivo-panel-heading motivo-panel-heading--between'>
+        <span>Buscar y combinar motivos</span>
+      </div>
+      <div class='motivo-search-row'>
+        <label class='motivo-field motivo-search-input'>
+          <span>Buscar</span>
+          <input class='inputText' type='text' placeholder='Descripcion'
+            id='inptBuscarAbmMotivoEgresoIngreso'
+            onkeyup="if(event.keyCode == 13){BuscarAbmMotivoEgresoIngreso()}" />
+        </label>
+        <input type='button' value='Buscar' class='btn4 motivo-search-btn' onclick='BuscarAbmMotivoEgresoIngreso()'>
+      </div>
+      <div class='motivo-merge-grid'>
+        <label class='motivo-field'>
+          <span>Reemplazar</span>
+          <input class="inputTextDisable" disabled type="hidden" id="inptCodAbmMotivoEgresoIngreso1">
+          <input class="inputTextDisable" disabled type="text" id="inptNombreAbmMotivoEgresoIngreso1">
+        </label>
+        <label class='motivo-field'>
+          <span>Por</span>
+          <input class="inputTextDisable" disabled type="hidden" id="inptCodAbmMotivoEgresoIngreso2">
+          <input class="inputTextDisable" disabled type="text" id="inptNombreAbmMotivoEgresoIngreso2">
+        </label>
+        <input type='button' value='Reemplazar' class='btn4 motivo-replace-btn' onclick='combinarMotivoEgresoIngreso()'>
+      </div>
+
+      <div class='motivo-table-wrap'>
+        <table class="tableCabeceraRegistro motivo-table-head">
+          <tbody>
+            <tr>
+              <td class="td_registro" style="width:60%;">DESCRIPCION</td>
+              <td class="td_registro" style="width:40%;">CATEGORIA</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="div_cuerpo_table motivo-table-body" id="divBuscadorMotivoEgresoIngreso"></div>
+      </div>
+      <p class='pTitulo7 motivo-result-count' id="lblNroRegistroMotivoEgresoIngreso"></p>
+    </section>
+  </div>
 </div>
 <div class='principal2' style='display:none' id='divAbmResumenGastosMotivos'>
   <table style='width:100%;height:100%'>
@@ -20065,43 +20093,44 @@ ZONA
 
 <div class="principal2" style="display: none;min-height: 100vh;" id="divJustificacionAsistencia">
   <center>
-<div class="divAbms" style="width: 350px;min-height: auto;">
+<div class="divAbms" style="width:min(440px, calc(100vw - 28px));min-height:auto;margin-top:28px;border-radius:10px;overflow:hidden;">
 <table id="tdEfectoJustificacionAsistencia" class="magictime slideDownReturn" style="width:100%;">
   <tr><td><center>
     <table class="tableMenuZ"><tr>
       <td style="width:100%;text-align:left">
-      <p class="pTituloB"><b style="font-size: 30px;" id="tituloJustificacionAsistencia"></b></p>
+      <p class="pTituloB"><b style="font-size: 24px;" id="tituloJustificacionAsistencia"></b></p>
       </td>
     </tr></table>
-    <br>
     <center>
-      <div class="divMenuf">
+      <div class="divMenuf" style="width:90%;text-align:left;">
+        <p id="descripcionJustificacionAsistencia" style="margin:0 0 12px;color:#475467;font-size:13px;line-height:1.4;"></p>
+        <div id="detalleUbicacionJustificacionAsistencia" style="display:none;margin:0 0 12px;padding:10px;border:1px solid #ffd6a8;border-radius:8px;background:#fff7ed;color:#7c2d12;font-size:12px;line-height:1.5;"></div>
         <table style="width:100%">
           <tbody>
             <tr>
               <td>
                 <p class="pTituloC">Usuario:</p>
-                <input type="text" class="inputTextDisable" style="width:250px" id="inptNombreUsuarioJustificacionAsistencia" disabled="">
+                <input type="text" class="inputTextDisable" style="width:100%" id="inptNombreUsuarioJustificacionAsistencia" disabled="">
               </td>
             </tr>
           </tbody>
         </table>
         <table style="width:100%">
           <tbody>
-            <tr>
+            <tr id="filaHoraEntradaJustificacionAsistencia">
               <td>
                 <p class="pTituloC">Hora de entrada:</p>
-                <input type="text" class="inputTextDisable" style="width:250px" id="inptHoraEntradaJustificacionAsistencia" disabled="">
+                <input type="text" class="inputTextDisable" style="width:100%" id="inptHoraEntradaJustificacionAsistencia" disabled="">
               </td>
             </tr>
           </tbody>
         </table>
         <table style="width:100%">
           <tbody>
-            <tr>
+            <tr id="filaHoraRegistradaJustificacionAsistencia">
               <td>
-                <p class="pTituloC">Hora registrada:</p>
-                <input type="text" class="inputTextDisable" style="width:250px" id="inptHoraRegistradaJustificacionAsistencia" disabled="">
+                <p class="pTituloC" id="lblHoraRegistradaJustificacionAsistencia">Hora registrada:</p>
+                <input type="text" class="inputTextDisable" style="width:100%" id="inptHoraRegistradaJustificacionAsistencia" disabled="">
               </td>
             </tr>
           </tbody>
@@ -20111,14 +20140,14 @@ ZONA
             <tr>
               <td>
                 <p class="pTituloC">Justificacion* :</p>
-                <textarea class="textarea1" placeholder="Obligatorio (*)" id="inptJustificacionJustificacionAsistencia" style="height:120px"></textarea>
+                <textarea class="textarea1" placeholder="Escriba el motivo de la diferencia de ubicacion" id="inptJustificacionJustificacionAsistencia" style="height:120px;width:100%;padding:8px;box-sizing:border-box;"></textarea>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="divMenuf">
-        <input class="btn1" type="button" style="width: fit-content;" value="Guardar" onclick="justificarAsistencia()">
+      <div class="divMenuf" style="width:90%;padding-bottom:16px;">
+        <input class="btn1" type="button" style="width:100%;height:38px;" value="Guardar justificacion" onclick="justificarAsistencia()">
       </div>
     </center>
   </center></td></tr>
@@ -30964,6 +30993,278 @@ style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
 </div>
 
 <style>
+  #divAbmNuevoMotivo.motivo-abm-overlay {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 34px 18px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: rgba(8, 13, 24, 0.42);
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-shell {
+    width: min(1040px, 100%);
+    margin: 0 auto;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #f6f8fb;
+    box-shadow: 0 20px 52px rgba(15, 23, 42, 0.25);
+    color: #172033;
+    overflow: hidden;
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    background: #ffffff;
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-kicker,
+  #divAbmNuevoMotivo .motivo-abm-title,
+  #divAbmNuevoMotivo .motivo-result-count {
+    margin: 0;
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-kicker {
+    color: #526070;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-title {
+    margin-top: 4px;
+    color: #111827;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  #divAbmNuevoMotivo .motivo-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  }
+
+  #divAbmNuevoMotivo .motivo-icon-btn:hover {
+    background: #eef4ff;
+    border-color: rgba(37, 99, 235, 0.24);
+    transform: translateY(-1px);
+  }
+
+  #divAbmNuevoMotivo .motivo-icon-btn--close:hover {
+    background: #fff1f2;
+    border-color: rgba(225, 29, 72, 0.22);
+  }
+
+  #divAbmNuevoMotivo .motivo-icon-btn img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+
+  #divAbmNuevoMotivo .motivo-abm-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 14px;
+    padding: 16px;
+  }
+
+  #divAbmNuevoMotivo .motivo-panel {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  }
+
+  #divAbmNuevoMotivo .motivo-panel-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 14px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  #divAbmNuevoMotivo .motivo-panel-heading--between {
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  #divAbmNuevoMotivo .motivo-form-grid,
+  #divAbmNuevoMotivo .motivo-merge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+  }
+
+  #divAbmNuevoMotivo .motivo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    color: #344054;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  #divAbmNuevoMotivo .motivo-field--wide {
+    grid-column: 1 / -1;
+  }
+
+  #divAbmNuevoMotivo .motivo-field .inputText,
+  #divAbmNuevoMotivo .motivo-field .inputTextDisable,
+  #divAbmNuevoMotivo .motivo-field .inputSelect {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    box-sizing: border-box;
+  }
+
+  #divAbmNuevoMotivo .motivo-check {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 12px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #344054;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  #divAbmNuevoMotivo .motivo-check input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+  }
+
+  #divAbmNuevoMotivo .motivo-footer-action {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 14px 14px;
+  }
+
+  #divAbmNuevoMotivo .motivo-save-btn {
+    width: min(210px, 100%);
+  }
+
+  #divAbmNuevoMotivo .motivo-panel--budget {
+    min-height: 100%;
+  }
+
+  #divAbmNuevoMotivo .motivo-budget-head,
+  #divAbmNuevoMotivo .motivo-table-head {
+    width: 100%;
+    margin: 0;
+  }
+
+  #divAbmNuevoMotivo .motivo-budget-body {
+    max-height: 210px;
+    overflow: auto;
+  }
+
+  #divAbmNuevoMotivo .motivo-panel--search {
+    margin: 0 16px 16px;
+  }
+
+  #divAbmNuevoMotivo .motivo-search-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 14px 14px 0;
+  }
+
+  #divAbmNuevoMotivo .motivo-search-input {
+    flex: 1 1 auto;
+  }
+
+  #divAbmNuevoMotivo .motivo-search-btn,
+  #divAbmNuevoMotivo .motivo-replace-btn {
+    height: 36px;
+    width: 130px;
+    flex: 0 0 auto;
+  }
+
+  #divAbmNuevoMotivo .motivo-merge-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 130px;
+    align-items: end;
+    padding-top: 12px;
+  }
+
+  #divAbmNuevoMotivo .motivo-table-wrap {
+    margin: 2px 14px 0;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  #divAbmNuevoMotivo .motivo-table-body {
+    height: 220px;
+    border: 0;
+  }
+
+  #divAbmNuevoMotivo .motivo-result-count {
+    padding: 10px 14px 14px;
+    text-align: right;
+  }
+
+  @media (max-width: 820px) {
+    #divAbmNuevoMotivo.motivo-abm-overlay {
+      padding: 16px 10px;
+    }
+
+    #divAbmNuevoMotivo .motivo-abm-header,
+    #divAbmNuevoMotivo .motivo-panel-heading--between,
+    #divAbmNuevoMotivo .motivo-search-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    #divAbmNuevoMotivo .motivo-abm-actions {
+      justify-content: flex-end;
+    }
+
+    #divAbmNuevoMotivo .motivo-abm-grid,
+    #divAbmNuevoMotivo .motivo-form-grid,
+    #divAbmNuevoMotivo .motivo-merge-grid {
+      grid-template-columns: 1fr;
+    }
+
+    #divAbmNuevoMotivo .motivo-search-btn,
+    #divAbmNuevoMotivo .motivo-replace-btn,
+    #divAbmNuevoMotivo .motivo-save-btn {
+      width: 100%;
+    }
+  }
+
   .mensaje-dia-protocolo {
     position: fixed;
     right: 18px;

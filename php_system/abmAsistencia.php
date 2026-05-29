@@ -185,24 +185,25 @@
     }
 
     function registrarSalida($cod_usuarioFK, $hora_salida, $cod_asistencia, $cod_local, $fecha) {
-        // Otiene la direccion de ip de la encargada
-        $administrador_local= obtenerAsistencias(array('cod_local' => $cod_local, 'acceso' => 1, "fecha_desde" => $fecha, "fecha_hasta" => $fecha));
+        $ip_salida = $_SERVER['REMOTE_ADDR'];
+        $asistencia_actual = obtenerAsistencias(array('cod_asistencia' => $cod_asistencia), 1);
+        $ip_entrada = isset($asistencia_actual[0]['direccion_ip']) ? trim($asistencia_actual[0]['direccion_ip']) : '';
+        $hora_entrada = isset($asistencia_actual[0]['hora_entrada']) ? $asistencia_actual[0]['hora_entrada'] : '';
 
-        // Compara con la direccion ip del usuario que registrara su salida
-        $ip_valida = false;
-        foreach ($administrador_local as $key => $value) {
-            if (strcmp($value['direccion_ip'], $_SERVER['REMOTE_ADDR']) == 0) {
-                $ip_valida = true;
-                break;
-            } else if ($value['cod_usuarioFK'] == $cod_usuarioFK) {
-                // En caso de ser administrador no valida la ip
-                $ip_valida = true;
-                break;
-            }
-        }
-        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, ($ip_valida ? $value['direccion_ip'] : NULL), NULL, $cod_asistencia);
+        // Si no existe IP de entrada, no se puede confirmar una diferencia de ubicacion.
+        $ip_valida = ($ip_entrada == '' || strcmp($ip_entrada, $ip_salida) == 0);
+        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, ($ip_valida ? $ip_salida : NULL), NULL, $cod_asistencia);
         
-        echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia, "llegada_tardia" => 0, 'ip_valida' => ($ip_valida ? 1 : 0)));
+        echo json_encode(array(
+            "1" => "exito",
+            "cod_asistencia" => $cod_asistencia,
+            "llegada_tardia" => 0,
+            'ip_valida' => ($ip_valida ? 1 : 0),
+            'hora_entrada' => $hora_entrada,
+            'hora_salida' => $hora_salida,
+            'ip_entrada' => $ip_entrada,
+            'ip_salida' => $ip_salida
+        ));
     }
 
     function obtenerVistaAsistencia($filtros, $limite= "0") {
