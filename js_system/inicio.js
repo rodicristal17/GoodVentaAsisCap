@@ -1647,6 +1647,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("table_abm_usuarios").innerHTML = datos_buscados
 					document.getElementById("inptUsuariosInterConsulta").innerHTML = "<option value=''>Todos</option>"+datos[5];
 					document.getElementById("inptUsuarioResponsableInventarioInsumo").innerHTML = "<option value=''>Seleccionar</option>"+datos[5];
+					if (typeof sincronizarOpcionesRapidasInterConsulta == "function") {
+						sincronizarOpcionesRapidasInterConsulta();
+					}
 					
 					// Se completa la lista de usuarios para usar en interConsulta
 					registroUsuariosInterconsulta= {}
@@ -11008,6 +11011,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptBuscarInterConsulta7").innerHTML = "<option value=''>TODOS</option>" +datos_buscados
 					document.getElementById("inptInformeDictamen5").innerHTML = "<option value=''>TODOS</option>" +datos_buscados
 					document.getElementById("inptLocalAbmInterConsulta").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados;
+					if (typeof sincronizarOpcionesRapidasInterConsulta == "function") {
+						sincronizarOpcionesRapidasInterConsulta();
+					}
 					document.getElementById("inptBuscarProducto7").innerHTML = datos_buscados
 					document.getElementById("inptlocalProductoBuscarVista").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptLocalInformeAsistencia").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados

@@ -20,7 +20,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
+<<<<<<< Updated upstream
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gantt-dashboard-sin-espacio-v1-20260529" />
+=======
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-detalle-hilo-20260529" />
+>>>>>>> Stashed changes
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -42,9 +46,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=galeria-clinica-paciente-fix-subir-v8-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=interconsulta-filtros-visibles-20260529"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=galeria-clinica-paciente-fix-subir-v8-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=interconsulta-filtros-visibles-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
 
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
@@ -62,10 +66,10 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js"></script>
+<script src="../js_system/abmInterConsulta.js?x=interconsulta-detalle-hilo-20260529"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
-<script src="../js_system/abmDictamen.js"></script>
+<script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
 <script src="../js_system/abmPresupuesto.js"></script>
 <script src="../js_system/abmCliente.js"></script>
 <script src="../js_system/abmInformacionProtocolo.js"></script>
@@ -955,7 +959,7 @@ onclick='verCerrarVentanaListadoInterConsulta(true)' style='width:20%;text-align
 <td>
 <img class='imgIconoMenu'
 src='/GoodVentaAsisCap/iconos/consultamedica.png' />
-<p class='pTitulo4' id='PTituloInterConsulta'>Hilos - InterConsultas</p>
+<p class='pTitulo4' id='PTituloInterConsulta'>Hilos</p>
 <center>
 <div id='divMinimizadoInterConsulta'
 style='display:none' class='divMinimizado'>
@@ -5298,22 +5302,18 @@ style='background-color:#5bc572'>
     <div id="divAbmInterConsulta1" class="presupuesto-container presupuesto-search-modal">
       <header class="presupuesto-header presupuesto-search-header">
         <div class="presupuesto-search-title">
-          <h2>Hilos - InterConsultas</h2>
+          <h2>Hilos</h2>
         </div>
         <div class="header-actions">
-          <button class="btn-icon" onclick="document.getElementById('overlayFiltrosInterConsulta').style.display=''" title="Filtros">
-            <img src="/GoodVentaAsisCap/iconos/etiquetafiltrar.png" class="iconoBtn">
-          </button>
-          <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Anadir registro" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
-          <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana" onclick="minimizarabmInterConsulta()">
-          <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaListadoInterConsulta(false)">
+          <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar ventana" alt="Minimizar ventana" onclick="minimizarabmInterConsulta()">
+          <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar ventana" alt="Cerrar ventana" onclick="verCerrarVentanaListadoInterConsulta(false)">
         </div>
       </header>
       <table class="tableMenuZ" style="display:none;">
         <tbody>
           <tr>
             <td style="width:100%;text-align:left">
-              <p class="pTituloB"><b style="font-size: 30px;">Hilos - InterConsultas</b></p>
+              <p class="pTituloB"><b style="font-size: 30px;">Hilos</b></p>
             </td>
             <td style="width:5%;text-align:center">
               <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
@@ -5340,22 +5340,91 @@ style='background-color:#5bc572'>
             </td>
           </tr></table>
         </div>
+        <section class="interconsulta-controls-panel" aria-label="Busqueda y filtros de hilos">
+          <div class="interconsulta-toolbar">
+            <label class="interconsulta-search-field" for="inptBuscarInterConsultaGlobal">
+              <span>Buscar hilos</span>
+              <input type="text" id="inptBuscarInterConsultaGlobal" class="interconsulta-search-input"
+                placeholder="Buscar por c&oacute;digo, asunto, cliente, local o responsable..."
+                onkeyup="manejarBusquedaGlobalInterConsulta(event)">
+            </label>
+
+            <label class="interconsulta-filter-field" for="inptFiltroRapidoEstadoInterConsulta">
+              <span>Estado</span>
+              <select id="inptFiltroRapidoEstadoInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()">
+                <option value="">Todos</option>
+                <option value="abiertos">Abiertos</option>
+                <option value="pendiente">Pendientes</option>
+                <option value="proceso">En proceso</option>
+                <option value="finalizado">Finalizados</option>
+                <option value="inactivo">Inactivos</option>
+              </select>
+            </label>
+
+            <label class="interconsulta-filter-field" for="inptFiltroRapidoTipoInterConsulta">
+              <span>Tipo</span>
+              <select id="inptFiltroRapidoTipoInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()">
+                <option value="">Todos</option>
+                <option value="administrativo">Administrativo</option>
+                <option value="clinico">Cl&iacute;nico</option>
+                <option value="interno">Interno</option>
+                <option value="compras">Compras</option>
+                <option value="pagos">Pagos</option>
+                <option value="judicial">Judicial</option>
+              </select>
+            </label>
+
+            <label class="interconsulta-filter-field" for="inptFiltroRapidoLocalInterConsulta">
+              <span>Local</span>
+              <select id="inptFiltroRapidoLocalInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()" onfocus="sincronizarOpcionesRapidasInterConsulta()">
+                <option value="">Todos</option>
+              </select>
+            </label>
+
+            <label class="interconsulta-filter-field" for="inptFiltroRapidoResponsableInterConsulta">
+              <span>Responsable</span>
+              <select id="inptFiltroRapidoResponsableInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()" onfocus="sincronizarOpcionesRapidasInterConsulta()">
+                <option value="">Todos</option>
+              </select>
+            </label>
+
+            <button type="button" class="interconsulta-toolbar-btn interconsulta-toolbar-btn--secondary" onclick="abrirFiltrosAvanzadosInterConsulta()">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Filtros avanzados</span>
+            </button>
+            <button type="button" class="interconsulta-toolbar-btn interconsulta-toolbar-btn--primary" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
+              <i class="fa-solid fa-plus"></i>
+              <span>Nuevo hilo</span>
+            </button>
+          </div>
+
+          <div class="interconsulta-chipbar" aria-label="Filtros rapidos">
+            <button type="button" class="interconsulta-filter-chip is-active" data-interconsulta-chip="todos" onclick="aplicarChipInterConsulta('todos')">Todos</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="estado:abiertos" onclick="aplicarChipInterConsulta('estado','abiertos')">Abiertos</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="estado:proceso" onclick="aplicarChipInterConsulta('estado','proceso')">En proceso</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="estado:finalizado" onclick="aplicarChipInterConsulta('estado','finalizado')">Finalizados</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="estado:pendiente" onclick="aplicarChipInterConsulta('estado','pendiente')">Pendientes</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="tipo:interno" onclick="aplicarChipInterConsulta('tipo','interno')">Internos</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="tipo:pagos" onclick="aplicarChipInterConsulta('tipo','pagos')">Pagos</button>
+            <button type="button" class="interconsulta-filter-chip" data-interconsulta-chip="tipo:administrativo" onclick="aplicarChipInterConsulta('tipo','administrativo')">Administrativos</button>
+          </div>
+        </section>
         <section class="presupuesto-panel presupuesto-search-results">
           <div class="presupuesto-search-results-head">
-            <div class="panel-title">InterConsultas</div>
-            <span class="presupuesto-search-chip">Seleccione un registro para ver el hilo</span>
+            <div class="panel-title">Listado de hilos</div>
+            <span class="presupuesto-search-chip">Seleccione un hilo para ver la conversaci&oacute;n</span>
           </div>
           <div style="width: 98%;height:auto">
             <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
               <tr>
-                <td class="td_registro" style="width:5%;">#</td>
-                <td class="td_registro" style="width:25%;">ASUNTO</td>
-                <td class="td_registro" style="width:15%;">CLIENTE/CI</td>
-                <td class="td_registro" style="width:10%;">LOCAL</td>
-                <td class="td_registro" style="width:10%;">ESTADO</td>
-                <td class="td_registro" style="width:10%;">TIPO</td>
-                <td class="td_registro" style="width:10%;">FECHA CREACION</td>
-                <td class="td_registro" style="width:15%;">RESPONSABLE</td>
+                <td class="td_registro" style="width:5%;">C&oacute;digo</td>
+                <td class="td_registro" style="width:25%;">Asunto</td>
+                <td class="td_registro" style="width:15%;">Cliente/CI</td>
+                <td class="td_registro" style="width:10%;">Local</td>
+                <td class="td_registro" style="width:10%;">Estado</td>
+                <td class="td_registro" style="width:10%;">Tipo</td>
+                <td class="td_registro" style="width:10%;">Fecha creaci&oacute;n</td>
+                <td class="td_registro" style="width:15%;">Responsable</td>
               </tr>
             </table>
             <table class="tableCabeceraRegistro" style="display:none;">
@@ -5413,24 +5482,27 @@ style='background-color:#5bc572'>
             </div>
             <table style="width:100%;height:50px;display:none" id="tbProcessInformeInterConsulta">
             <tr>
-            <td style="width:90%">
-            <div class="divprogreso1"><div class="divprogreso2" id="divProgressInformeInterConsulta"></div></div>
+            <td style="width:86%">
+            <div class="interconsulta-load-progress__label">Cargando hilos</div>
+            <div class="divprogreso1 interconsulta-load-progress__bar"><div class="divprogreso2" id="divProgressInformeInterConsulta"></div></div>
             </td>
-            <td style="width:10%;text-align:center">
-            <input type="button" value="Cancelar" class="btn4" onclick="cancelarInformeInterConsulta()" style="width:100px;background-color:rgb(58 58 58)">
+            <td style="width:14%;text-align:center">
+            <input type="button" value="Detener carga" class="btn4" onclick="cancelarInformeInterConsulta()" title="Detener la carga progresiva del listado" style="width:120px;background-color:rgb(58 58 58)">
             </td>
             </tr>
             </table>
           </div>
         </section>
-      <section class="presupuesto-panel presupuesto-search-results" style="padding:5px 20px;margin-top: 10px;">
-        <div class="form-section" style="margin-bottom:0;align-items:center;">
-        <div style="background-color: #2ea3c0;height: 10px; margin-right: 5px;width: 10px;margin-top: 5px;"></div>
-        <p class="pTitulo8" style="width: fit-content; text-align: start;color: #2ea3c0;">Asociado a Egreso / Ingreso</p>
-        <div style="background-color: #762424;height: 10px; margin-inline: 5px;width: 10px;margin-top: 5px;"></div>
-        <p class="pTitulo8" style="width: fit-content; text-align: start;color: #762424;">Gastos pendientes de aprobacion</p>
-        <div style="background-color: #585f08;height: 10px; margin-inline: 5px;width: 10px;margin-top: 5px;"></div>
-        <p class="pTitulo8" style="width: fit-content; text-align: start;color: #585f08;">Tipo interno</p>
+      <section class="presupuesto-panel presupuesto-search-results interconsulta-legend-panel" style="padding:5px 20px;margin-top: 10px;">
+        <div class="form-section interconsulta-legend">
+        <span class="interconsulta-legend__sample interconsulta-legend__sample--linked"></span>
+        <p class="interconsulta-legend__text">Hilo con referencia vinculada</p>
+        <span class="interconsulta-legend__sample interconsulta-legend__sample--pending"></span>
+        <p class="interconsulta-legend__text">Hilo pendiente de respuesta</p>
+        <span class="interconsulta-legend__sample interconsulta-legend__sample--expenses"></span>
+        <p class="interconsulta-legend__text">Gastos pendientes de aprobaci&oacute;n</p>
+        <span class="interconsulta-legend__sample interconsulta-legend__sample--internal"></span>
+        <p class="interconsulta-legend__text">Tipo interno</p>
         </div>
       </section>
       <section class="presupuesto-panel presupuesto-search-results" style="padding:16px 20px;margin-bottom: 10px;">
@@ -5440,7 +5512,7 @@ style='background-color:#5bc572'>
             <input class="inputTextDisable" type="text" disabled id="inptRegistoCargadoInterConsulta" style="text-align:center">
           </div>
           <div class="form-row" style="flex:0 0 190px;">
-            <label for="inptRegistoInterConsultaAbierta">Consultas abiertas :</label>
+            <label for="inptRegistoInterConsultaAbierta">Hilos abiertos :</label>
             <input class="inputTextDisable" type="text" disabled id="inptRegistoInterConsultaAbierta" style="text-align:center">
           </div>
         </div>
@@ -5453,14 +5525,14 @@ style='background-color:#5bc572'>
         <div class="modal-filtros-header">
           <div class="modal-header-info">
             <p class="modal-etiqueta">Panel de filtros</p>
-            <h3>Filtros de InterConsulta</h3>
+            <h3>Filtros de hilos</h3>
           </div>
           <button type="button" class="btn-cerrar-modal" onclick="document.getElementById('overlayFiltrosInterConsulta').style.display='none'">x</button>
         </div>
 
         <div class="modal-filtros-body agenda-filtros-grid">
           <div class="filtro-grupo">
-            <label for="inptBuscarInterConsulta1">Cod. InterConsulta</label>
+            <label for="inptBuscarInterConsulta1">C&oacute;digo de hilo</label>
             <input class="catalogo-selectBuscador input-filtro-pro" type="text" id="inptBuscarInterConsulta1" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
           </div>
 
@@ -5475,6 +5547,16 @@ style='background-color:#5bc572'>
           </div>
 
           <div class="filtro-grupo">
+            <label for="inptBuscarInterConsultaFechaDesde">Fecha desde</label>
+            <input class="catalogo-selectBuscador input-filtro-pro" type="date" id="inptBuscarInterConsultaFechaDesde" onchange="sincronizarFiltrosInterConsultaDesdeAvanzado()">
+          </div>
+
+          <div class="filtro-grupo">
+            <label for="inptBuscarInterConsultaFechaHasta">Fecha hasta</label>
+            <input class="catalogo-selectBuscador input-filtro-pro" type="date" id="inptBuscarInterConsultaFechaHasta" onchange="sincronizarFiltrosInterConsultaDesdeAvanzado()">
+          </div>
+
+          <div class="filtro-grupo">
             <label for="inptBuscarInterConsulta7">Local</label>
             <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta7" style="width:100%;max-width:100%;box-sizing:border-box;"></select>
           </div>
@@ -5483,6 +5565,7 @@ style='background-color:#5bc572'>
             <label for="inptBuscarInterConsulta5">Estado</label>
             <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta5" style="width:100%;max-width:100%;box-sizing:border-box;">
               <option value="">Todos</option>
+              <option value="abiertos">Abiertos</option>
               <option value="pendiente">Pendiente</option>
               <option value="proceso">Proceso</option>
               <option value="finalizado">Finalizado</option>
@@ -5512,14 +5595,14 @@ style='background-color:#5bc572'>
           </div>
 
           <div class="filtro-grupo">
-            <label for="inptUsuariosInterConsulta">Interconsultas con</label>
+            <label for="inptUsuariosInterConsulta">Participante</label>
             <select class="catalogo-selectBuscador select-filtro-pro" id="inptUsuariosInterConsulta" style="width:100%;max-width:100%;box-sizing:border-box;"></select>
           </div>
         </div>
 
         <div class="modal-filtros-footer">
-          <button type="button" class="btn-filtro btn-secundario" onclick="document.getElementById('inptBuscarInterConsulta1').value='';document.getElementById('inptBuscarInterConsulta2').value='';document.getElementById('inptBuscarInterConsulta3').value='';document.getElementById('inptBuscarInterConsulta4').value='';document.getElementById('inptBuscarInterConsulta5').value='';document.getElementById('inptBuscarInterConsulta6').value='';document.getElementById('inptBuscarInterConsulta7').value='';document.getElementById('inptUsuariosInterConsulta').value='';document.getElementById('inptSeleccFiltroEstadoInterConsulta').checked=true;buscarPacientesConInterConsultas();">Limpiar</button>
-          <button type="button" class="btn-accion-principal btn-principal-pro" onclick="document.getElementById('overlayFiltrosInterConsulta').style.display='none';buscarPacientesConInterConsultas();">Aplicar filtros</button>
+          <button type="button" class="btn-filtro btn-secundario" onclick="limpiarFiltrosInterConsulta()">Limpiar filtros</button>
+          <button type="button" class="btn-accion-principal btn-principal-pro" onclick="aplicarFiltrosAvanzadosInterConsulta()">Aplicar filtros</button>
         </div>
       </div>
     </div>
@@ -5711,21 +5794,26 @@ style='background-color:#5bc572'>
     </div>
   </div>
 </div>
-<div id="divAbmDetallesInterConsulta" class="principal2" style="display: none;">
+<div id="divAbmDetallesInterConsulta" class="principal2 interconsulta-detail-overlay" style="display: none;">
   <center>
-    <div id="divAbmDetallesInterConsulta" class="divAbms" style="width: 90%;">
-        <table class="tableMenuZ">
-            <tbody>
-              <tr>
-                <td style="width:100%;text-align:left">
-                  <p class="pTituloB">Detalles de <b style="font-size: 30px;" id="tituloInterConsultas">InterConsulta - </b></p>
-                </td>
-                <td style="width:5%;text-align:center">
-                  <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarVentanaDetalleInterConsulta(false)">
-                </td>
-              </tr>
-            </tbody>
-          </table> 
+    <div id="divAbmDetallesInterConsulta" class="divAbms interconsulta-detail-modal">
+        <div class="interconsulta-detail-header">
+          <div class="interconsulta-detail-title-group">
+            <p class="interconsulta-detail-kicker">Vista oficial de conversaci&oacute;n</p>
+            <h2 id="tituloInterConsultas">Hilo # - </h2>
+            <div class="interconsulta-detail-badges" id="hiloDetalleBadges">
+              <span class="interconsulta-detail-badge" id="badgeEstadoDetalle">Estado</span>
+              <span class="interconsulta-detail-badge" id="badgeTipoDetalle">Tipo</span>
+              <span class="interconsulta-detail-badge" id="badgeLocalDetalle">Local</span>
+              <span class="interconsulta-detail-badge interconsulta-detail-badge--warning" id="badgePendienteDetalle" style="display:none;">Sin responder</span>
+              <span class="interconsulta-detail-badge interconsulta-detail-badge--linked" id="badgeVinculadoDetalle" style="display:none;">Hilo vinculado</span>
+              <span class="interconsulta-detail-badge interconsulta-detail-badge--dictamen" id="badgeDictamenDetalle" style="display:none;">Dictamen registrado</span>
+            </div>
+          </div>
+          <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
+            <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" alt="Cerrar">
+          </button>
+        </div>
             <div class="divMenuf">
               <div class="collapse extracto-floating-panel" id="collapseExtracto">
                 <div class="card extracto-floating-card">
@@ -5751,26 +5839,27 @@ style='background-color:#5bc572'>
                   </div>
                 </div>
               </div>
-              <div class="sugerencias-container">
-                <div id="contenedorEncabezadoInterConsulta" class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';">
+              <div class="sugerencias-container interconsulta-detail-top">
+                <div id="contenedorEncabezadoInterConsulta" class="card my-3 interconsulta-thread-summary" style="border-left: 5px solid '.$colorTarjeta.';">
                   <div class="card-body">
+                    <div class="interconsulta-detail-card-label">Datos del hilo</div>
                     <h5 class="card-title">
                         <span id="tituloInterConsultas2">Cargando...</span>
-                        <img src="../iconos/editar.png" alt="Editar InterConsulta" onclick="verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);">
+                        <img src="../iconos/editar.png" alt="Editar hilo" onclick="verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);">
                     </h5>
                     <div id="detalleResumenInterConsulta">
                       <div>
-                        <strong>Mencionados</strong>
-                        <ul id="listadoMencionados">
+                        <strong class="interconsulta-detail-card-label">Participantes / mencionados</strong>
+                        <ul id="listadoMencionados" class="interconsulta-participant-list">
                         </ul>
                     </div>
-                    <div style="text-align: left;">
+                    <div class="interconsulta-data-list">
                       <div>
                       <span class="fw-bold">Usuario creador:</span>
                       <span class="text-uppercase" id="txtUsuarioCreadorInterConsulta"></span>
                       </div>
                     <div>
-                      <span class="fw-bold">Fecha creacion:</span>
+                      <span class="fw-bold">Fecha creaci&oacute;n:</span>
                       <span class="text-uppercase" id="txtFechaCreadorInterConsulta"></span>
                     </div>
                     <div>
@@ -5782,7 +5871,7 @@ style='background-color:#5bc572'>
                       <span id="txtTipoInterConsulta" class="badge badge-secondary text-uppercase"></span>
                     </div>
                     <div>
-                        <span class="fw-bold">Cod. InterConsulta:</span>
+                        <span class="fw-bold">C&oacute;digo del hilo:</span>
                         <span class="text-uppercase" id="txtCodInterConsulta"></span>
                     </div>
                     <div>
@@ -5790,27 +5879,36 @@ style='background-color:#5bc572'>
                       <span id="localDetalleInterConsulta" class="text-uppercase"></span>
                     </div>
                     <div>
-                      <span class="fw-bold">Cod. Venta:</span>
+                      <span class="fw-bold">C&oacute;digo de venta:</span>
                       <span class="text-uppercase" id="txtCodVenta"></span>
                     </div>
                     <div>
-                      <span class="fw-bold">Monto limite: </span>
+                      <span class="fw-bold">Monto l&iacute;mite: </span>
                       <span id="txtMontoLimite"> Gs.</span>
                     </div>
                   </div>
                   <div class="panel-flujo-gastos">
                     <span onclick="verCerrarAbmGasto()">
-                    <strong onmouseover="this.style.color=\'#0066cc\'; this.style.textDecoration=\'underline\';" onmouseout="this.style.color=\'black\'; this.style.textDecoration=\'none\';">Flujo de gastos: </strong>
-                    <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true); document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\';cod_interConsulta= '.$valueInter['cod_interConsulta'].'">
+                    <strong class="interconsulta-detail-card-label">Flujo de gastos</strong>
+                    <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Agregar gasto al hilo" onclick="verCerrarVentanaAbmGasto(true, true); document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\';cod_interConsulta= '.$valueInter['cod_interConsulta'].'">
                     </span>
-                    <div id="contenedorFlujoGastosInterConsulta">
+                    <div id="contenedorFlujoGastosInterConsulta" class="interconsulta-flow-content">
                       <div class="text-secondary">Cargando gastos...</div>
                     </div>
+                    <button type="button" class="interconsulta-flow-retry" onclick="cargarFlujoGastosInterConsulta(cod_interConsulta)">Reintentar</button>
                   </div>
                 </div>
               </div>
               </div>
-              <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"></div>
+              <section class="interconsulta-conversation-card">
+                <div class="interconsulta-section-head">
+                  <div>
+                    <span>Conversaci&oacute;n</span>
+                    <h3>Timeline del hilo</h3>
+                  </div>
+                </div>
+                <div class="div_cuerpo_table divTablesScrool" id="table_abm_InterConsulta"></div>
+              </section>
               <div class="sugerencias-container" id="contenedorDetalleInterConsultaInferior">
                 <div id="divListDetallesInterconsultasAsoc">
                   <p class="pTituloC"><strong>Hilos relacionados al paciente :</strong></p>
@@ -5835,14 +5933,14 @@ style='background-color:#5bc572'>
                 <div id="divObservacionDetallesInterconsultas">
                 </div>
                 <div class="card my-3" id="panelMensajeInterConsulta">
-                  <div class="card-header d-flex justify-content-between align-items-center" id="cabeceraMensajeInterConsulta">
-                      <span id="nombreUsuarioMensaje">Usuario</span>
+                  <div class="card-header" id="cabeceraMensajeInterConsulta">
                       <div>
-                        <span id="nombreUsuarioMensaje">Dictamen:</span>
-                        <select id="dictamenAbmMensaje"></select>
-                        <small class="text-secondary">
-                          <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26">
-                        </small>
+                        <span class="interconsulta-composer-label">Responder como</span>
+                        <strong id="nombreUsuarioMensaje">Usuario</strong>
+                      </div>
+                      <div class="interconsulta-composer-meta">
+                        <label for="inptFechaAbmMensaje">Fecha/hora</label>
+                        <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26">
                       </div>
                   </div>
                   <div id="avisoMensajesPendientesInterConsulta" class="card-subtitle justify-content-between align-items-center">
@@ -5851,13 +5949,26 @@ style='background-color:#5bc572'>
                   </div>
                   <div class="card-body">
                       <div id="editorMensajeInterConsulta">
-                        <div id="imgfotoAnexoInterchat" class="imgFotoProducto" onclick="vercerrarcargadefotos('fotoAnexoInterchat')"></div>
-                        <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" onfocus="marcarMensajeLeido(this);"></p>
+                        <button type="button" class="interconsulta-attach-action" title="Adjuntar archivo o imagen" onclick="vercerrarcargadefotos('fotoAnexoInterchat')">
+                          <span id="imgfotoAnexoInterchat" class="imgFotoProducto"></span>
+                          <strong>Adjuntar</strong>
+                        </button>
+                        <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" data-placeholder="Escribir respuesta..."></p>
                         <div id="accionesMensajeInterConsulta">
                           <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
                           <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()">
-                          <input id="btnDictamenContenidoAbmMensaje" type="button" value="Dictaminar" class="btn1" onclick="verificarCamposDictamen()">
                           <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()">
+                        </div>
+                      </div>
+                      <div class="interconsulta-admin-action">
+                        <div>
+                          <span class="interconsulta-composer-label">Acci&oacute;n administrativa</span>
+                          <strong>Dictamen / Resoluci&oacute;n</strong>
+                        </div>
+                        <div class="interconsulta-admin-action__controls">
+                          <label for="dictamenAbmMensaje">Dictamen base</label>
+                          <select id="dictamenAbmMensaje"></select>
+                          <input id="btnDictamenContenidoAbmMensaje" type="button" value="Emitir dictamen" class="btn1" onclick="verificarCamposDictamen()">
                         </div>
                       </div>
                   </div>

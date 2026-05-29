@@ -50,6 +50,9 @@
                 $ocultar_inactivos= isset($_POST['ocultar_inactivos']) ? mb_convert_encoding((string)($_POST['ocultar_inactivos']), 'ISO-8859-1', 'UTF-8') : null;
                 $usuario_vinculado= isset($_POST['usuario_vinculado']) ? mb_convert_encoding((string)($_POST['usuario_vinculado']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $busqueda_global= isset($_POST['busqueda_global']) ? mb_convert_encoding((string)($_POST['busqueda_global']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_desde= isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
+                $fecha_hasta= isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -64,6 +67,9 @@
                     'nombre_responsable'=> $nombre_responsable,
                     'ocultar_inactivos'=> $ocultar_inactivos,
                     'usuario_vinculado'=> $usuario_vinculado,
+                    'busqueda_global'=> $busqueda_global,
+                    'fecha_desde'=> $fecha_desde,
+                    'fecha_hasta'=> $fecha_hasta,
                     'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
@@ -166,7 +172,7 @@
                     foreach ($usuarios as $valueUsu) {
                         $contenidoMensaje= str_replace(
                             '@{'.$valueUsu['cod_usuario'].'}', 
-                            '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'">@'.$valueUsu['nombre_persona'].'</b>', 
+                            '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'" title="Mencion a '.$valueUsu['nombre_persona'].'">@'.$valueUsu['nombre_persona'].'</b>', 
                             $contenidoMensaje
                         );
                     }
@@ -513,19 +519,16 @@ function convertirTextoDocumentoInterconsulta($texto) {
     
                 foreach ($registrosMenc as $valueMenc) {
                     if ($valueMenc['estado'] == 'activo' && !in_array($valueMenc['nombre_persona'], $menciones)) {
-                        $mencionesElemento .= '<li style="
-                            background-color: #f2f2f2;
-                            text-align: left;
-                            margin-bottom:4px;
-                            padding:5px 10px;
-                            border-radius:4px;
-                            font-size:13px;
-                            display: '. (($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';
-                            justify-content: space-between;
-                        "><div>'.$valueMenc['nombre_persona'].
-                        (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double" style="color: #0cdd23;"></i>' : '').
-                        '</div>
-                        <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Eliminar" onclick="eliminarMencionMensaje('.$valueMenc["cod_mencion"].')"></li>';
+                        $mencionesElemento .= '<li class="interconsulta-participant-item" style="display: '.(($valueInter['cod_usuarioFK_create'] != $valueMenc['cod_usuarioFK']) ? "flex" : "none").';">
+                            <div class="interconsulta-participant-info">
+                                <span class="interconsulta-participant-avatar"><i class="fa-solid fa-user"></i></span>
+                                <span>'.$valueMenc['nombre_persona'].'</span>'.
+                                (($valueMenc['isLeido'] == 1) ? '<i class="fa-solid fa-check-double interconsulta-participant-check" title="Participante activo"></i>' : '').
+                            '</div>
+                            <button type="button" class="interconsulta-participant-remove" title="Quitar participante" onclick="eliminarMencionMensaje('.$valueMenc["cod_mencion"].')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </li>';
                         $menciones[] = $valueMenc['nombre_persona'];
                     }
                 }
@@ -714,16 +717,13 @@ function convertirTextoDocumentoInterconsulta($texto) {
             ));
 
             foreach ($registrosMens2 as $valueMens) {
-                $paginaMensajes .= '<div class="sugerencias-container" style="justify-content: right;">
-                    <div class="card my-3" style="border-left: 5px solid gray;width: 80%;margin-left: 10px; margin-right: 10px;">
-                      <div class="card-body">
-                          <div style="display: flex;">
-                            <span style="display: none;">'.$valueMens['cod_mensaje'].'</span>
-                            <p class="card-text" style="text-align: justify;">Mensaje programado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'por el sistema').' para el '.$valueMens['fecha_creacion'].'</p>
-                          </div>
-                      </div>
+                $paginaMensajes .= '<div class="interconsulta-message-row interconsulta-message-row--system">
+                    <div class="interconsulta-system-event">
+                        <span style="display: none;">'.$valueMens['cod_mensaje'].'</span>
+                        <i class="fa-solid fa-clock"></i>
+                        <p>Mensaje programado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'por el sistema').' para el '.$valueMens['fecha_creacion'].'</p>
                     </div>
-                  </div>';
+                </div>';
             }
             
             $pagina .= '<div id="contenedorMensajesInterConsulta" class="collapse show" data-total-mensajes="'.count($registrosMens).'">
@@ -977,7 +977,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             foreach ($usuarios as $valueUsu) {
                 $contenidoMensaje= str_replace(
                     '@{'.$valueUsu['cod_usuario'].'}', 
-                    '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'">@'.$valueUsu['nombre_persona'].'</b>', 
+                    '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'" title="Mencion a '.$valueUsu['nombre_persona'].'">@'.$valueUsu['nombre_persona'].'</b>', 
                     $contenidoMensaje
                 );
             }
@@ -985,40 +985,46 @@ function convertirTextoDocumentoInterconsulta($texto) {
 
             $miniatura_imagen= "";
             if ($valueMens['url']) {
-                $miniatura_imagen= '<div id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto" 
-                    onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" style="background-image: url('.$valueMens['url'].');margin-right: 0;flex-shrink: 0;">
-                    </div>';
+                $miniatura_imagen= '<button type="button" class="interconsulta-message-attachment" onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" title="Ver adjunto">
+                    <span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto" style="background-image: url('.$valueMens['url'].');"></span>
+                    <small>Adjunto</small>
+                </button>';
             }
             
-            if (!$valueMens['cod_usuarioFK'] || $valueMens['cod_usuarioFK'] == "NULL") {
-                $colorTarjeta= "#EABA4C";
-                $paginaMensajes .= '<div class="sugerencias-container" style="display: grid;justify-content: center;margin: 0;">
-                    <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 1000px;margin: 4px 10px;display: flex;flex-direction: column;gap: 0;min-height: auto;">
-                        <div class="card-header d-flex justify-content-between align-items-center" style="padding: 6px 10px;border-bottom: none;min-height: auto;">
-                            <p class="card-text" style="text-align: justify;margin: 0;line-height: 1.35;">'.$contenidoMensaje.' el '.$valueMens['fecha_creacion'].'</p>
-                        </div>
+            $contenidoPlano= mb_strtolower(strip_tags($contenidoMensaje));
+            $esEventoSistema= (!$valueMens['cod_usuarioFK'] || $valueMens['cod_usuarioFK'] == "NULL")
+                || strpos($contenidoPlano, ' modifico') !== false
+                || strpos($contenidoPlano, 'fueron unidas') !== false
+                || strpos($contenidoPlano, 'solicito el acceso') !== false;
+
+            if ($esEventoSistema) {
+                $paginaMensajes .= '<div class="interconsulta-message-row interconsulta-message-row--system">
+                    <div class="interconsulta-system-event">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <p>'.$contenidoMensaje.'</p>
+                        <time>'.$valueMens['fecha_creacion'].'</time>
                     </div>
                 </div>';
             } else {
-                $paginaMensajes .= '<div class="sugerencias-container" style="justify-content: '.$posicion.';margin: 0;">
-                        <div class="card my-3" style="border-left: 5px solid '.$colorTarjeta.';width: 80%;margin: 4px 10px;display: flex;flex-direction: column;gap: 0;min-height: auto;">
-                          <div class="card-header d-flex justify-content-between align-items-center" style="padding: 6px 10px 4px 10px;gap: 10px;min-height: auto;">
-                              <div style="display: flex;align-items: center;gap: 8px;">
-                                <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" style="height: 30px;width: 30px;border-radius: 50%;object-fit: cover;"/>
-                                <span style="font-size: 1rem;line-height: 1.15;">'.$valueMens['nombre_persona'].'</span>
-                              </div>
-                              <small class="text-secondary" style="display: block;line-height: 1.2;text-align: right;white-space: nowrap;">
-                                '.$valueMens['fecha_creacion'].'
-                              </small>
-                          </div>
-                          <div class="card-body" style="padding: 4px 10px 8px 10px;">
-                              <div style="display: flex;align-items: flex-start;gap: 8px;">
-                                '.$miniatura_imagen.'
-                                <p class="card-text" style="text-align: justify;margin: 0;line-height: 1.35;">'.$contenidoMensaje.'</p>
-                              </div>
-                          </div>
+                $claseMensajePropio= ($posicion == 'flex-end') ? ' interconsulta-message-row--own' : '';
+                $paginaMensajes .= '<div class="interconsulta-message-row'.$claseMensajePropio.'">
+                    <article class="interconsulta-message-card">
+                        <header class="interconsulta-message-header">
+                            <div class="interconsulta-message-author">
+                                <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" alt="Foto de '.$valueMens['nombre_persona'].'">
+                                <div>
+                                    <strong>'.$valueMens['nombre_persona'].'</strong>
+                                    <span>Participante del hilo</span>
+                                </div>
+                            </div>
+                            <time>'.$valueMens['fecha_creacion'].'</time>
+                        </header>
+                        <div class="interconsulta-message-body">
+                            '.$miniatura_imagen.'
+                            <p>'.$contenidoMensaje.'</p>
                         </div>
-                      </div>';
+                    </article>
+                </div>';
             }
         }
 
@@ -1062,18 +1068,19 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
             }
 
-            $formatAsunto= '<p style="'.$colorText.'font-size: 9pt;width: fit-content;">'
-                .$value['asunto']
-                .(($value['cantAsociadoGastos'] > 0) ? ' <img src="/GoodVentaAsisCap/iconos/checklist.png" style="color:green; height: 20px; margin-inline: 5px;"/>' : '')
+            $esHiloVinculado = intval($value['cantAsociadoGastos']) > 0;
+            $esHiloPendienteRespuesta = intval($value['cantMensajesNoLeidos']) > 0;
+            $clasesTablaHilo = 'tableRegistroSearch2 interconsulta-thread-row'
+                .($esHiloPendienteRespuesta ? ' interconsulta-thread-row--pending' : '')
+                .($esHiloVinculado ? ' interconsulta-thread-row--linked' : '');
+            $claseHiloVinculado = ' class="interconsulta-subject-text'.($esHiloVinculado ? ' interconsulta-linked-subject' : '').'"';
+            $tituloHiloVinculado = $esHiloVinculado ? ' title="Hilo vinculado. Haga clic para ver la referencia asociada."' : '';
+            $iconoHiloVinculado = $esHiloVinculado ? ' <i class="fa-solid fa-link interconsulta-linked-icon" title="Hilo vinculado. Haga clic para ver la referencia asociada." aria-hidden="true"></i>' : '';
+            $contenidoAsunto = $value['asunto']
+                .$iconoHiloVinculado
                 .$cantMensajesNoLeidosOtrosUsuarios;
-            if (intval($value['cantMensajesNoLeidos']) > 0) {
-                $style = 'background-color: rgb(140, 8, 8, 0.7);  color: #ffffff;';
+            if ($esHiloPendienteRespuesta) {
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
-                $formatAsunto= '<b style="'.$colorText.'font-size: 9pt;width: fit-content;">'
-                    .$value['asunto']
-                    .(($value['cantAsociadoGastos'] > 0) ? ' <img src="/GoodVentaAsisCap/iconos/checklist.png" style="color:green; height: 20px; margin-inline: 5px;"/>' : '')
-                    .$cantMensajesNoLeidosOtrosUsuarios
-                    .'</b>';
             }
 
             if ($value["cantMensajesProgramados"]) {
@@ -1087,14 +1094,25 @@ function convertirTextoDocumentoInterconsulta($texto) {
                         $fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));
                         $fechaActual = new DateTime();
                         $diasRestantes = $fechaMensaje->diff($fechaActual->setTime(0, 0, 0));
-                        $formatAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').') ';
+                        $contenidoAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').') ';
                     }
                 }
             }
-            $formatAsunto .= '</p>';
+            $contenidoAsuntoPendienteInicio = $esHiloPendienteRespuesta ? '<b>' : '';
+            $contenidoAsuntoPendienteFin = $esHiloPendienteRespuesta ? '</b>' : '';
+            $badgePendienteRespuesta = $esHiloPendienteRespuesta ? '<span class="interconsulta-pending-badge" title="Hilo pendiente de respuesta">Sin responder</span>' : '';
+            $tooltipFila = $esHiloPendienteRespuesta ? ' title="Hilo pendiente de respuesta"' : '';
+            $formatAsunto= '<div class="interconsulta-subject-wrap">'
+                .'<p'.$claseHiloVinculado.$tituloHiloVinculado.' style="'.$colorText.'font-size: 9pt;">'
+                .$contenidoAsuntoPendienteInicio
+                .$contenidoAsunto
+                .$contenidoAsuntoPendienteFin
+                .'</p>'
+                .$badgePendienteRespuesta
+                .'</div>';
             
-            $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="1">
-                <tr onclick="obtenerDatosInterConsulta(this)">
+            $pagina .= '<table class="'.$clasesTablaHilo.'" border="1" cellspacing="1" cellpadding="1">
+                <tr onclick="obtenerDatosInterConsulta(this)"'.$tooltipFila.'>
                     <td id="td_id" style="width: 5%;'.$styleInterno.'">'.$value['cod_interConsulta'].'</td>
                     <td id="td_datos_1" style="width: 25%;'.$style.'"><div>'.$formatAsunto.'</div></td>
                     <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
@@ -1577,7 +1595,11 @@ function convertirTextoDocumentoInterconsulta($texto) {
                     $sqlFiltro .= "ic.cod_localFK = $value";
                     break;
                 case 'estado':
-                    $sqlFiltro .= "ic.estado = '$value'";
+                    if ($value == 'abiertos') {
+                        $sqlFiltro .= "(ic.estado = 'pendiente' OR ic.estado = 'proceso')";
+                    } else {
+                        $sqlFiltro .= "ic.estado = '$value'";
+                    }
                     break;
                 case 'ocultar_inactivos':
                     $sqlFiltro .= "ic.estado != 'inactivo'";
@@ -1600,6 +1622,29 @@ function convertirTextoDocumentoInterconsulta($texto) {
                     break;
                 case 'usuario_vinculado':
                     $sqlFiltro .= "EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)";
+                    break;
+                case 'busqueda_global':
+                    $valorBusqueda = addslashes($value);
+                    $sqlFiltro .= "(
+                        ic.cod_interConsulta LIKE '%$valorBusqueda%' OR
+                        ic.asunto LIKE '%$valorBusqueda%' OR
+                        ic.estado LIKE '%$valorBusqueda%' OR
+                        ic.tipo LIKE '%$valorBusqueda%' OR
+                        ic.fecha_creacion LIKE '%$valorBusqueda%' OR
+                        (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) LIKE '%$valorBusqueda%' OR
+                        (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) LIKE '%$valorBusqueda%' OR
+                        CONCAT(
+                            (SELECT nombre_persona from persona join venta vt where cod_persona = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
+                            (SELECT ci_cliente from cliente join venta vt where cod_cliente = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
+                            (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK)
+                        ) LIKE '%$valorBusqueda%'
+                    )";
+                    break;
+                case 'fecha_desde':
+                    $sqlFiltro .= "ic.fecha_creacion >= '$value 00:00:00'";
+                    break;
+                case 'fecha_hasta':
+                    $sqlFiltro .= "ic.fecha_creacion <= '$value 23:59:59'";
                     break;
                 case 'fecha_limite':
                     $sqlFiltroMenciones .= " AND mj.fecha_creacion <= '$value' ";
@@ -1778,7 +1823,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             // Se inserto una nueva interconsulta
             $cod_interConsulta = $stmt->insert_id;
         } else {
-            $mensaje = 'El usuario <b class="menciones-mensaje" id="'.$cod_usuarioFK_edit.'">@nombre</b>&nbsp; modifico';
+            $mensaje = 'El usuario <b class="menciones-mensaje" id="'.$cod_usuarioFK_edit.'" title="Mencion a @nombre">@nombre</b>&nbsp; modifico';
             $mensajeDatosCambiados= "";
             // Se actualizo la interconsulta, se compara los datos para registrar los cambios en la tabla mensaje
             foreach ($nuevos_datos as $key => $value) {
