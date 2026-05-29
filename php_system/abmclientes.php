@@ -336,6 +336,42 @@ buscarDocumentosGaleriaFoto($idcliente,$descripcion);
 }
 
 
+function renderImagenPacienteCard($codigo,$iddocumento,$idcontratoFK,$archivourl,$descripcion,$fecha,$onclick,$rowName="",$rowId="tbSelecRegistroImagen")
+{
+	$codigoHtml=htmlspecialchars((string)$codigo, ENT_QUOTES, 'UTF-8');
+	$iddocumentoHtml=htmlspecialchars((string)$iddocumento, ENT_QUOTES, 'UTF-8');
+	$idcontratoFKHtml=htmlspecialchars((string)$idcontratoFK, ENT_QUOTES, 'UTF-8');
+	$archivourlHtml=htmlspecialchars((string)$archivourl, ENT_QUOTES, 'UTF-8');
+	$descripcionTexto=trim((string)$descripcion) != "" ? (string)$descripcion : "Sin descripción";
+	$descripcionHtml=htmlspecialchars($descripcionTexto, ENT_QUOTES, 'UTF-8');
+	$fechaTexto=trim((string)$fecha) != "" ? (string)$fecha : "Sin fecha";
+	$fechaHtml=htmlspecialchars($fechaTexto, ENT_QUOTES, 'UTF-8');
+	$onclickHtml=htmlspecialchars((string)$onclick, ENT_QUOTES, 'UTF-8');
+	$rowNameHtml=$rowName != "" ? " name='".htmlspecialchars((string)$rowName, ENT_QUOTES, 'UTF-8')."'" : "";
+	$rowIdHtml=htmlspecialchars((string)$rowId, ENT_QUOTES, 'UTF-8');
+
+	return "
+<table id='$codigoHtml' class='clinical-image-card' data-description='$descripcionHtml' border='0' cellspacing='0' cellpadding='0'>
+<tr id='$rowIdHtml' onclick='$onclickHtml'$rowNameHtml>
+<td class='clinical-image-card__content'>
+<div class='clinical-image-thumb' style=\"background-image:url('$archivourlHtml')\"></div>
+<div class='clinical-image-card__body'>
+<div class='clinical-image-card__description'>$descripcionHtml</div>
+<div class='clinical-image-card__date'>$fechaHtml</div>
+<div class='clinical-image-card__actions'><span>Ver imagen</span><i class='fa-regular fa-eye'></i></div>
+</div>
+</td>
+<td id='td_id_1' style='display:none'>$codigoHtml</td>
+<td id='td_id_2' style='display:none'>$iddocumentoHtml</td>
+<td id='td_id_3' style='display:none'>$idcontratoFKHtml</td>
+<td id='td_datos_1' style='display:none'>$archivourlHtml</td>
+<td id='td_datos_2' style='display:none'>$descripcionHtml</td>
+<td id='td_datos_3' style='display:none'>$fechaHtml</td>
+</tr>
+</table>";
+}
+
+
 
 
 function buscarDocumentosGaleriaFoto($idcliente,$descripcion)
@@ -381,28 +417,17 @@ if ( ! $stmt->execute()) {
 			  $codigo= substr(str_shuffle($permitted_chars), 0, 5);
 			  
 			  
-			   $pagina.="<div class='divFloat2' style='width: 24%;margin: 4px;'>
-			  <center>
-			  <table class='divMenub2'  id='$codigo'  style='  width: 100%;  height: 230px;  border: 1px solid #aba6a6;'>
-				<tr id='tbSelecRegistroImagen' onclick='SeleccionarItemImagenGaleriaFoto(this,\"divAbmConsulta\");' >
-				<td>
-				<div  class='imgFotoCi' style='background-image: url(".$archivourl.")'></div>
-				<center>
-		<p class='pTituloC' >".$descripcion."</p>
-		<p class='pTituloC'>".$fecha."</p>
-		 </center>
-				</td>
-				
-				<td id='td_id_1' style='display:none'>".$codigo."</td>
-				<td id='td_id_2' style='display:none'>".$iddocumento."</td>
-				<td id='td_id_3' style='display:none'>".$idcontratoFK."</td>
-				<td id='td_datos_1' style='display:none'>".$archivourl."</td>
-				<td id='td_datos_2' style='display:none'>".$descripcion."</td>
-				<td id='td_datos_3' style='display:none'>".$fecha."</td>
-				</tr>
-				</table>
-				</center>
-				</div>";
+			   $pagina.=renderImagenPacienteCard(
+				   $codigo,
+				   $iddocumento,
+				   $idcontratoFK,
+				   $archivourl,
+				   $descripcion,
+				   $fecha,
+				   'SeleccionarItemImagenGaleriaFoto(this,"divAbmConsulta");',
+				   "",
+				   "tbSelecRegistroImagen"
+			   );
 			  
 			  // $pagina.=$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina.$pagina;
 			  
@@ -459,18 +484,17 @@ if ( ! $stmt->execute()) {
 			  $codigo= substr(str_shuffle($permitted_chars), 0, 5);
 			  
 			  
-		  	  $pagina.="
-<table id='$codigo' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistroImagen' onclick='SeleccionarItemImagenPrincipal(this)' name='tdBDClienteFoto' >
-<td id='td_id_1' style='display:none'>".$codigo."</td>
-<td id='td_id_2' style='display:none'>".$iddocumento."</td>
-<td id='td_id_3' style='display:none'>".$idcontratoFK."</td>
-<td id='td_datos_1' style='display:none'>".$archivourl."</td>
-<td id='' style='width:20%'>IMAGEN</td>
-<td id='td_datos_2' style='width:60%'>".$descripcion."</td>
-<td id='td_datos_3' style='width:20%'>".$fecha."</td>
-</tr>
-</table>";
+		  	  $pagina.=renderImagenPacienteCard(
+				  $codigo,
+				  $iddocumento,
+				  $idcontratoFK,
+				  $archivourl,
+				  $descripcion,
+				  $fecha,
+				  "SeleccionarItemImagenPrincipal(this)",
+				  "tdBDClienteFoto",
+				  "tbSelecRegistroImagenPrincipal"
+			  );
 			  
 			  $codigo="";
 	  }

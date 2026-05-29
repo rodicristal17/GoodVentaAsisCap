@@ -32863,8 +32863,154 @@ try {
 
 var ventanaControlCargarFotos= "";
 //ABM Imagenes Cliente Principal
+function obtenerContextoGaleriaPacienteActual() {
+	var codCliente = "";
+	var codVenta = "";
+	var nombrePaciente = "";
+
+	if (typeof cod_clienteConsulta != "undefined") {
+		codCliente = String(cod_clienteConsulta || "").trim();
+	}
+	if (codCliente == "") {
+		var celdaClienteGaleria = document.querySelector("#table_frm_VistaGaleria tr[id='tbSelecRegistroImagen'] td[id='td_id_3'], #table_frm_VistaGaleria td[id='td_id_3']");
+		if (celdaClienteGaleria) {
+			codCliente = String(celdaClienteGaleria.textContent || celdaClienteGaleria.innerText || "").trim();
+		}
+	}
+	if (typeof cod_ventaFKConsulta != "undefined") {
+		codVenta = String(cod_ventaFKConsulta || "").trim();
+	}
+	if (document.getElementById("inptPacienteConsulta")) {
+		nombrePaciente = document.getElementById("inptPacienteConsulta").value || "";
+	}
+
+	return {
+		codCliente: codCliente,
+		codVenta: codVenta,
+		nombrePaciente: nombrePaciente
+	};
+}
+
+function abrirCargaImagenPacienteDesdeFicha(event) {
+	if (event) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
+
+	var pacienteActual = obtenerContextoGaleriaPacienteActual();
+	console.log("Click en Subir imagen");
+	console.log("Paciente actual para carga de imagen:", pacienteActual);
+
+	if (pacienteActual.codCliente == "") {
+		ver_vetana_informativa("No se pudo identificar el paciente para subir la imagen.");
+		return false;
+	}
+
+	abrirModalCargaImagenPacienteBasico(pacienteActual);
+	return false;
+}
+
+function abrirModalCargaImagenPacienteBasico(pacienteActual) {
+	var modal = document.getElementById("divAbmCargarFotosClientePrincipal");
+	if (!modal) {
+		ver_vetana_informativa("No se encontró la ventana de carga de imágenes.");
+		return false;
+	}
+
+	ventanaControlCargarFotos = "AbmConsulta";
+
+	var f = new Date();
+	var dia = f.getDate();
+	if (dia < 10) { dia = "0" + dia; }
+	var mes = f.getMonth() + 1;
+	if (mes < 10) { mes = "0" + mes; }
+
+	if (document.getElementById("inptFechaCargarFotosClientePrincipal")) {
+		document.getElementById("inptFechaCargarFotosClientePrincipal").value = f.getFullYear() + "-" + mes + "-" + dia;
+	}
+	if (document.getElementById("inptNombreClientesFotoPrincipal")) {
+		document.getElementById("inptNombreClientesFotoPrincipal").value = pacienteActual.nombrePaciente;
+	}
+
+	modal.style.setProperty("display", "block", "important");
+	modal.style.setProperty("position", "fixed", "important");
+	modal.style.setProperty("top", "0", "important");
+	modal.style.setProperty("left", "0", "important");
+	modal.style.setProperty("width", "100vw", "important");
+	modal.style.setProperty("height", "100vh", "important");
+	modal.style.setProperty("visibility", "visible", "important");
+	modal.style.setProperty("opacity", "1", "important");
+	modal.style.setProperty("pointer-events", "auto", "important");
+	modal.style.setProperty("z-index", "1000000", "important");
+
+	if (typeof LimpiarCamposCargarFotosClientePrincipal == "function") {
+		try {
+			LimpiarCamposCargarFotosClientePrincipal();
+		} catch (error) {
+			console.error("No se pudieron limpiar los campos de carga de imagenes:", error);
+		}
+	}
+
+	if (document.getElementById("inptFechaCargarFotosClientePrincipal")) {
+		document.getElementById("inptFechaCargarFotosClientePrincipal").value = f.getFullYear() + "-" + mes + "-" + dia;
+	}
+	if (document.getElementById("inptNombreClientesFotoPrincipal")) {
+		document.getElementById("inptNombreClientesFotoPrincipal").value = pacienteActual.nombrePaciente;
+	}
+
+	if (typeof buscarFotosClientePrincipal == "function") {
+		try {
+			buscarFotosClientePrincipal(pacienteActual.codCliente);
+		} catch (error) {
+			console.error("No se pudo cargar la galeria del paciente:", error);
+		}
+	}
+
+	return false;
+}
+
+window.obtenerContextoGaleriaPacienteActual = obtenerContextoGaleriaPacienteActual;
+window.abrirCargaImagenPacienteDesdeFicha = abrirCargaImagenPacienteDesdeFicha;
+window.abrirModalCargaImagenPacienteBasico = abrirModalCargaImagenPacienteBasico;
+
+function esBotonSubirImagenPaciente(elemento) {
+	while (elemento && elemento !== document) {
+		if (elemento.id == "btnSubirImagen" || (elemento.getAttribute && elemento.getAttribute("data-action") == "subir-imagen-paciente")) {
+			return true;
+		}
+		elemento = elemento.parentNode;
+	}
+	return false;
+}
+
+function conectarBotonSubirImagenPaciente() {
+	var boton = document.getElementById("btnSubirImagen");
+	if (!boton) {
+		return;
+	}
+	boton.type = "button";
+	boton.disabled = false;
+	boton.style.pointerEvents = "auto";
+	boton.style.cursor = "pointer";
+}
+
+document.addEventListener("click", function(event) {
+	if (esBotonSubirImagenPaciente(event.target)) {
+		abrirCargaImagenPacienteDesdeFicha(event);
+	}
+}, true);
+
+document.addEventListener("pointerdown", function(event) {
+	if (esBotonSubirImagenPaciente(event.target)) {
+		abrirCargaImagenPacienteDesdeFicha(event);
+	}
+}, true);
+
+document.addEventListener("DOMContentLoaded", conectarBotonSubirImagenPaciente);
+window.addEventListener("load", conectarBotonSubirImagenPaciente);
+
 function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
-	if(d=="1"){
+	if(d=="1" || d === true){
 		
 			var f = new Date();
 	var dia = f.getDate()
@@ -32877,25 +33023,55 @@ function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 	}
 	
  
-	document.getElementById("file_2Principal").value = "";
-	document.getElementById('inptFechaCargarFotosClientePrincipal').value = f.getFullYear() + "-" + mes + "-" + dia; 
+	var modalCargaPrincipal = document.getElementById("divAbmCargarFotosClientePrincipal");
+	if (!modalCargaPrincipal) {
+		ver_vetana_informativa("No se encontró la ventana de carga de imágenes.");
+		return false;
+	}
+	modalCargaPrincipal.style.setProperty("display", "block", "important");
+	modalCargaPrincipal.style.setProperty("position", "fixed", "important");
+	modalCargaPrincipal.style.setProperty("top", "0", "important");
+	modalCargaPrincipal.style.setProperty("left", "0", "important");
+	modalCargaPrincipal.style.setProperty("width", "100vw", "important");
+	modalCargaPrincipal.style.setProperty("height", "100vh", "important");
+	modalCargaPrincipal.style.setProperty("visibility", "visible", "important");
+	modalCargaPrincipal.style.setProperty("opacity", "1", "important");
+	modalCargaPrincipal.style.setProperty("pointer-events", "auto", "important");
+	modalCargaPrincipal.style.setProperty("z-index", "1000000", "important");
+
+	if (document.getElementById("file_2Principal")) {
+		document.getElementById("file_2Principal").value = "";
+	}
+	if (document.getElementById('inptFechaCargarFotosClientePrincipal')) {
+		document.getElementById('inptFechaCargarFotosClientePrincipal').value = f.getFullYear() + "-" + mes + "-" + dia;
+	}
+	if (typeof LimpiarCamposCargarFotosClientePrincipal == "function") {
+		try {
+			LimpiarCamposCargarFotosClientePrincipal();
+		} catch (error) {
+			console.error("No se pudieron limpiar los campos de carga de imagenes:", error);
+		}
+	}
 		
-		document.getElementById("divAbmCargarFotosClientePrincipal").style.display = "";
 		ventanaControlCargarFotos= ventanaLlamadora;
 		/* buscarAbmContratoDocumentos() */
 		switch (ventanaControlCargarFotos) {
 			case 'AbmConsulta':
-				document.getElementById('inptNombreClientesFotoPrincipal').value= document.getElementById('inptPacienteConsulta').value
-					buscarFotosClientePrincipal(cod_clienteConsulta)
-					verCerrarAbmConsulta();
+				var pacienteActual = obtenerContextoGaleriaPacienteActual();
+				document.getElementById('inptNombreClientesFotoPrincipal').value= pacienteActual.nombrePaciente
+				try {
+					buscarFotosClientePrincipal(pacienteActual.codCliente)
+				} catch (error) {
+					console.error("No se pudo cargar la galeria del paciente:", error);
+				}
 				break;
 		}
 	}else{
-		document.getElementById("divAbmCargarFotosClientePrincipal").style.display="none"
+		document.getElementById("divAbmCargarFotosClientePrincipal").style.setProperty("display", "none", "important")
+		document.getElementById("divAbmCargarFotosClientePrincipal").style.setProperty("pointer-events", "none", "important")
 		switch (ventanaControlCargarFotos) {
 			case 'AbmConsulta':
 				buscarVistaGaleriaFoto();
-				verCerrarAbmConsulta();
 				break;
 		}
 	}
@@ -32907,60 +33083,141 @@ var archivoPrincipal="";
 var extensionPrincipal="";	
 var urlarchivopdfPrincipal="";
 
+function prepararArrastreGaleriaPaciente(event) {
+	event.preventDefault();
+	var zona = event.currentTarget;
+	if (zona) {
+		zona.classList.add("is-dragover");
+	}
+}
+
+function cancelarArrastreGaleriaPaciente(event) {
+	event.preventDefault();
+	var zona = event.currentTarget;
+	if (zona) {
+		zona.classList.remove("is-dragover");
+	}
+}
+
+function soltarArchivoGaleriaPaciente(event) {
+	event.preventDefault();
+	var zona = event.currentTarget;
+	if (zona) {
+		zona.classList.remove("is-dragover");
+	}
+
+	if (!event.dataTransfer || !event.dataTransfer.files || event.dataTransfer.files.length == 0) {
+		return;
+	}
+
+	var input = document.getElementById("file_2Principal");
+	var archivo = event.dataTransfer.files[0];
+	if (typeof DataTransfer != "undefined") {
+		var transferencia = new DataTransfer();
+		transferencia.items.add(archivo);
+		input.files = transferencia.files;
+		readFileDocPrincipal(input);
+		return;
+	}
+
+	readFileDocPrincipal({ name: "file_2Principal", files: [archivo] });
+}
+
+function formatearTamanhoArchivoGaleria(bytes) {
+	if (!bytes && bytes !== 0) {
+		return "";
+	}
+	if (bytes < 1024) {
+		return bytes + " B";
+	}
+	if (bytes < 1024 * 1024) {
+		return (bytes / 1024).toFixed(1) + " KB";
+	}
+	return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function mostrarPreviewGaleriaPaciente(file, url) {
+	var preview = document.getElementById("galeriaPreview");
+	var imagen = document.getElementById("galeriaPreviewImg");
+	var nombre = document.getElementById("galeriaPreviewNombre");
+	var tamanho = document.getElementById("galeriaPreviewTamano");
+
+	if (!preview || !imagen || !nombre || !tamanho) {
+		return;
+	}
+
+	preview.style.display = "";
+	imagen.src = url;
+	nombre.textContent = file.name;
+	tamanho.textContent = formatearTamanhoArchivoGaleria(file.size);
+}
+
+function estadoVacioGaleriaPacientePrincipal(tipo) {
+	var mensaje = tipo == "error" ? "No se pudo cargar la galería." : "No hay imágenes cargadas todavía.";
+	var detalle = tipo == "error"
+		? "Intentá nuevamente o revisá la conexión."
+		: "Subí fotos clínicas, radiografías o documentos asociados al paciente.";
+
+	return "<div class='clinical-gallery-empty'>" +
+		"<i class='fa-regular fa-images'></i>" +
+		"<strong>" + mensaje + "</strong>" +
+		"<span>" + detalle + "</span>" +
+		"</div>";
+}
+
+function escaparHtmlGaleriaPaciente(texto) {
+	return String(texto || "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
 
 function readFileDocPrincipal(input){
-var file=$("input[name="+input.name+"]")[0].files[0];
-urlarchivopdfPrincipal = URL.createObjectURL(file);
+var file = input.files && input.files[0] ? input.files[0] : $("input[name="+input.name+"]")[0].files[0];
+if (!file) {
+	return false;
+}
+
 var filename= file.name;
 var tamanho = file.size;
 if (tamanho > 5000000){
-ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 5Mb")
-return false
+	ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 5Mb")
+	limpiarArchivoFotos();
+	return false
 }
+
 file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
+if (file_extension != "jpg" && file_extension != "jpeg") {
+	ver_vetana_informativa("LA IMAGEN SELECCIONADA DEBE TENER FORMATO JPG")
+	limpiarArchivoFotos();
+	return false;
+}
 
+if (file.type && file.type != "image/jpeg") {
+	ver_vetana_informativa("LA IMAGEN SELECCIONADA DEBE TENER FORMATO JPG")
+	limpiarArchivoFotos();
+	return false;
+}
 
+urlarchivopdfPrincipal = URL.createObjectURL(file);
+document.getElementById("text-cargaPrincipal").style.display = "none";
+document.getElementById("text-carga-2Principal").style.display = "block";
+var nombreArchivo = document.getElementById("nombreArchivo");
+if (nombreArchivo) {
+	nombreArchivo.textContent = file.name + " · " + formatearTamanhoArchivoGaleria(file.size);
+}
+document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "";
+document.getElementById("progressBar").style.display = "block";
+document.getElementById("progressBarInner").style.width = "0%";
+mostrarPreviewGaleriaPaciente(file, urlarchivopdfPrincipal);
 
+setTimeout(() => {
+	document.getElementById("progressBarInner").style.width = "100%";
+}, 100);
 
-
-const allowedTypes = ['application/pdf', 
-                          'application/msword', 
-                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                          'image/jpeg', 'image/png'];
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-
-      if (!allowedTypes.includes(file.type)) {
-        alert("Formato de archivo no permitido. Solo IMÁGENES.");
-        input.value = "";
-        return;
-      }
-
-      document.getElementById("text-cargaPrincipal").style.display = "none";
-      document.getElementById("text-carga-2Principal").style.display = "block";
-      document.getElementById("nombreArchivo").textContent = "Archivo seleccionado: " + file.name;
-		
-			document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "";
-			
-      // mostrar barra de progreso simulada
-      document.getElementById("progressBar").style.display = "block";
-      document.getElementById("progressBarInner").style.width = "0%";
-
-      // Simular la carga
-      setTimeout(() => {
-        document.getElementById("progressBarInner").style.width = "100%";
-      }, 100); // arranca casi de inmediato
-    }
-
-
-
-
-
-// if ((file_extension.toLowerCase()=="jpeg") || (file_extension.toLowerCase()=="jpg") || (file_extension.toLowerCase()=="png")){
-// }else{
-// ver_vetana_informativa("LA IMAGEN SELECCIONADO DEBE TENER UNA EXTENSIÓN JPEG, JPG O PNG")
-// return false;
-// }
 var readerPrincipal = new FileReader();
 readerPrincipal.onload = function(e){
 	extensionPrincipal = file_extension;
@@ -32976,25 +33233,42 @@ readerPrincipal.onload = function(e){
 	td.className=''
 });
 	
-	elementoimagenseleccionadoPrincipal="";
+elementoimagenseleccionadoPrincipal="";
 	
 	
 document.getElementById("file_2Principal").value="";
 }
-readerPrincipal.readAsDataURL(input.files[0]);
+readerPrincipal.readAsDataURL(file);
 }
 
 
 function limpiarArchivoFotos() {
     // borrar selección de archivo
-    document.getElementById("file_2Principal").value = "";
+	var fileInput = document.getElementById("file_2Principal");
+	if (fileInput) { fileInput.value = ""; }
 
     // restaurar interfaz
-    document.getElementById("text-cargaPrincipal").style.display = "block";
-    document.getElementById("text-carga-2Principal").style.display = "none";
-    document.getElementById("nombreArchivo").textContent = "";
-    document.getElementById("progressBar").style.display = "none";
-    document.getElementById("progressBarInner").style.width = "0%"; 
+	var textoCarga = document.getElementById("text-cargaPrincipal");
+	var textoCargaOk = document.getElementById("text-carga-2Principal");
+	var nombreArchivo = document.getElementById("nombreArchivo");
+	var progressBar = document.getElementById("progressBar");
+	var progressBarInner = document.getElementById("progressBarInner");
+	if (textoCarga) { textoCarga.style.display = "block"; }
+	if (textoCargaOk) { textoCargaOk.style.display = "none"; }
+	if (nombreArchivo) { nombreArchivo.textContent = ""; }
+	if (progressBar) { progressBar.style.display = "none"; }
+	if (progressBarInner) { progressBarInner.style.width = "0%"; }
+	var preview = document.getElementById("galeriaPreview");
+	var imagen = document.getElementById("galeriaPreviewImg");
+	var nombre = document.getElementById("galeriaPreviewNombre");
+	var tamanho = document.getElementById("galeriaPreviewTamano");
+	if (preview) { preview.style.display = "none"; }
+	if (imagen) { imagen.src = ""; }
+	if (nombre) { nombre.textContent = ""; }
+	if (tamanho) { tamanho.textContent = ""; }
+	archivoPrincipal = "";
+	extensionPrincipal = "";
+	urlarchivopdfPrincipal = "";
   }
 
 
@@ -33020,31 +33294,43 @@ function AddCargarFotosClientePrincipal(){
 		return;
 	}
 	
-	var pagina="<table id='"+codigo+"' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
-+"<tr id='tbSelecRegistro' onclick='SeleccionarItemImagenPrincipal(this)'  name='tdDetalleItemImagenPrincipal'>"
+	var descripcionSegura = escaparHtmlGaleriaPaciente(descripcion);
+	var fechaSegura = escaparHtmlGaleriaPaciente(fecha);
+	var pagina="<table id='"+codigo+"' class='clinical-image-card' data-description='"+descripcionSegura+"' border='0' cellspacing='0' cellpadding='0'>"
++"<tr id='tbSelecRegistroImagenPrincipal' onclick='SeleccionarItemImagenPrincipal(this)'  name='tdDetalleItemImagenPrincipal'>"
++"<td class='clinical-image-card__content'>"
++"<div class='clinical-image-thumb' style=\"background-image:url('"+urlarchivopdfPrincipal+"')\"></div>"
++"<div class='clinical-image-card__body'>"
++"<div class='clinical-image-card__description'>"+descripcionSegura+"</div>"
++"<div class='clinical-image-card__date'>"+fechaSegura+"</div>"
++"<div class='clinical-image-card__actions'><span>Lista para subir</span><i class='fa-regular fa-clock'></i></div>"
++"</div>"
++"</td>"
 +"<td id='td_id_1' style='display:none'>"+codigo+"</td>"
 +"<td id='td_id_2' style='display:none'></td>"
 +"<td id='td_id_3' style='display:none'></td>"
 +"<td  id='td_datos_1' style='display:none'>"+archivoPrincipal+"</td>"
 +"<td  id='td_datos_2' style='display:none'>"+extensionPrincipal+"</td>"
 +"<td  id='td_datos_3' style='display:none'>"+urlarchivopdfPrincipal+"</td>"
-+"<td id='' style='width:20%'>IMAGEN</td>"
-+"<td id='td_datos_4' style='width:60%'>"+descripcion+"</td>"
-+"<td id='td_datos_5' style='width:20%'>"+fecha+"</td>"
-+"<tr>"
++"<td id='td_datos_4' style='display:none'>"+descripcionSegura+"</td>"
++"<td id='td_datos_5' style='display:none'>"+fechaSegura+"</td>"
++"</tr>"
 +"</table>"
 
-
-document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML+=pagina;
+var contenedorGaleria = document.getElementById("table_abm_imagen_clientesPrincipal");
+if (contenedorGaleria.querySelector(".clinical-gallery-empty")) {
+	contenedorGaleria.innerHTML = "";
+}
+contenedorGaleria.innerHTML+=pagina;
 document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "#d5d3d3";
 
 document.getElementById('inptDescripcionCargarFotosClientesPrincipal').value="" 
-document.getElementById('text-cargaPrincipal').style.display="inline-flex";
+document.getElementById('text-cargaPrincipal').style.display="block";
 document.getElementById('text-carga-2Principal').style.display="none"
 
 archivoPrincipal = "";
 extensionPrincipal = "";
-$("tr[id=tbSelecRegistroImagen]").each(function(i, td){
+$("tr[id=tbSelecRegistroImagen], tr[id=tbSelecRegistroImagenPrincipal]").each(function(i, td){
 	td.className=''
 });
 
@@ -33056,11 +33342,13 @@ limpiarArchivoFotos()
 var elementoimagenseleccionadoPrincipal="";
 function SeleccionarItemImagenPrincipal(datostr) {
 	elementoimagenseleccionadoPrincipal = datostr
-	$("tr[id=tbSelecRegistroImagen]").each(function(i, td){		
+	$("tr[id=tbSelecRegistroImagen], tr[id=tbSelecRegistroImagenPrincipal], tr[id=tbSelecRegistro]").each(function(i, td){		
 		 td.className=''
 		
 	   });
+	$("#table_abm_imagen_clientesPrincipal .clinical-image-card").removeClass("is-selected");
 	datostr.className='tableRegistroSelec'	
+	$(datostr).closest(".clinical-image-card").addClass("is-selected");
 	
 	document.getElementById("btnEliminarImagenPrincipal").style.backgroundColor = "#f32121d1";
 	document.getElementById("btnVerImagenClientePrincipal").style.backgroundColor = "#2196F3";
@@ -33069,6 +33357,42 @@ function SeleccionarItemImagenPrincipal(datostr) {
 	document.getElementById("btnAddImagenPrincipal").style.backgroundColor = "#d5d3d3";
 	archivoPrincipal = "";
 	extensionPrincipal = "";
+}
+
+function obtenerDescripcionFechaImagenPaciente(elemento, origen) {
+	if (!elemento) {
+		return { descripcion: "Imagen del paciente", fecha: "" };
+	}
+
+	var descripcion = "";
+	var fecha = "";
+	if (origen == "pendiente") {
+		descripcion = $(elemento).children('td[id="td_datos_4"]').html() || "";
+		fecha = $(elemento).children('td[id="td_datos_5"]').html() || "";
+	} else {
+		descripcion = $(elemento).children('td[id="td_datos_2"]').html() || "";
+		fecha = $(elemento).children('td[id="td_datos_3"]').html() || "";
+	}
+
+	descripcion = $("<textarea/>").html(descripcion).text();
+	fecha = $("<textarea/>").html(fecha).text();
+
+	return {
+		descripcion: descripcion.trim() != "" ? descripcion : "Imagen del paciente",
+		fecha: fecha.trim()
+	};
+}
+
+function actualizarVisorDocumentoClinico(elemento, origen) {
+	var datosImagen = obtenerDescripcionFechaImagenPaciente(elemento, origen);
+	var titulo = document.getElementById("docVisorTitulo");
+	var meta = document.getElementById("docVisorMeta");
+	if (titulo) {
+		titulo.textContent = datosImagen.descripcion;
+	}
+	if (meta) {
+		meta.textContent = datosImagen.fecha != "" ? datosImagen.fecha : "Galería clínica del paciente";
+	}
 }
 
 function VerificarCargarFotosClientePrincipal(idabm){
@@ -33103,10 +33427,10 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 			var extension=$(elementohtml).children('td[id="td_datos_2"]').html();
 			datos.append("ext"+control, extension)
 			
-			var descripcion=$(elementohtml).children('td[id="td_datos_4"]').html();
+			var descripcion=$("<textarea/>").html($(elementohtml).children('td[id="td_datos_4"]').html()).text();
 			datos.append("descripcion"+control, descripcion)
 	   
-			var fecha=$(elementohtml).children('td[id="td_datos_5"]').html();
+			var fecha=$("<textarea/>").html($(elementohtml).children('td[id="td_datos_5"]').html()).text();
 			datos.append("fecha"+control, fecha)
 
 			control=control+1;
@@ -33173,9 +33497,11 @@ function VerCargarFotosClientePrincipal(d){
 	if(d == "1"){
 	document.getElementById('divVistaDocumento').style.display = ""
 	if($(elementoimagenseleccionadoPrincipal).children('td[id="td_id_2"]').html()==""){
+		actualizarVisorDocumentoClinico(elementoimagenseleccionadoPrincipal, "pendiente");
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoPrincipal).children('td[id="td_datos_3"]').html());
 		enableMagnifier(".magnifier-container");
 	}else{
+		actualizarVisorDocumentoClinico(elementoimagenseleccionadoPrincipal, "guardado");
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoPrincipal).children('td[id="td_datos_1"]').html());
 		enableMagnifier(".magnifier-container");
 	}
@@ -33205,6 +33531,10 @@ if(control == 0){
 		ver_vetana_informativa("FALTO SELECCIONAR UN ARCHIVO PARA ELIMINAR")
 		return;
 	}
+
+	if(!confirm("¿Seguro que querés eliminar esta imagen del paciente?")){
+		return;
+	}
 	
 	var urlarchivo = $(elementoimagenseleccionadoPrincipal).children('td[id="td_datos_1"]').html()
 	var iddocumento = $(elementoimagenseleccionadoPrincipal).children('td[id="td_id_2"]').html()
@@ -33222,6 +33552,9 @@ if(control == 0){
 		//Restaurar los botones y vaciar elementodetalleseleccionado
 		document.getElementById("btnEliminarImagenPrincipal").style.backgroundColor = "#d5d3d3";
 		document.getElementById("btnVerImagenClientePrincipal").style.backgroundColor = "#d5d3d3";
+		if (document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML.replace(/\s+/g, "") == "") {
+			document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = estadoVacioGaleriaPacientePrincipal();
+		}
 		elementoimagenseleccionadoPrincipal="";
 
 }
@@ -33278,6 +33611,9 @@ function LimpiarCamposCargarFotosClientePrincipal(){
 	document.getElementById("btnEliminarImagenPrincipal").style.backgroundColor="#d5d3d3";
 	document.getElementById("btnVerImagenClientePrincipal").style.backgroundColor="#d5d3d3";
 	document.getElementById("inptDescripcionCargarFotosClientesPrincipal").value=""
+	if (document.getElementById("inptBuscarImagenPacientePrincipal")) {
+		document.getElementById("inptBuscarImagenPacientePrincipal").value = "";
+	}
  
 	var f = new Date();
 	var dia = f.getDate()
@@ -33292,7 +33628,7 @@ function LimpiarCamposCargarFotosClientePrincipal(){
  
 	document.getElementById("file_2Principal").value = "";
 	document.getElementById('inptFechaCargarFotosClientePrincipal').value = f.getFullYear() + "-" + mes + "-" + dia; 
-	document.getElementById("text-cargaPrincipal").style.display="inline-text";
+	document.getElementById("text-cargaPrincipal").style.display="block";
 	document.getElementById("text-carga-2Principal").style.display="none"
 	limpiarArchivoFotos()
 	elementoimagenseleccionadoPrincipal =""
@@ -33304,7 +33640,7 @@ function LimpiarCamposCargarFotosClientePrincipal(){
 
 function buscarFotosClientePrincipal(cod_CLienteFOtoFK){
 	 
-	document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = ''
+	document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = estadoVacioGaleriaPacientePrincipal()
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -33319,10 +33655,10 @@ function buscarFotosClientePrincipal(cod_CLienteFOtoFK){
         url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		beforeSend: function () {
-		},
-		error: function (jqXHR, textstatus, errorThrowm) {
+	},
+	error: function (jqXHR, textstatus, errorThrowm) {
 		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = ''
+			document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = estadoVacioGaleriaPacientePrincipal("error")
 		},
 		success: function (responseText) {
 			
@@ -33335,15 +33671,50 @@ function buscarFotosClientePrincipal(cod_CLienteFOtoFK){
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = datos_buscados
+					if (datos_buscados && datos_buscados.replace(/\s+/g, "") != "") {
+						document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = datos_buscados
+					} else {
+						document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = estadoVacioGaleriaPacientePrincipal()
+					}
+					filtrarGaleriaPacientePrincipal();
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
+				document.getElementById("table_abm_imagen_clientesPrincipal").innerHTML = estadoVacioGaleriaPacientePrincipal("error")
 			}
 		}
 	});
+}
+
+function filtrarGaleriaPacientePrincipal() {
+	var buscador = document.getElementById("inptBuscarImagenPacientePrincipal");
+	var contenedor = document.getElementById("table_abm_imagen_clientesPrincipal");
+	if (!buscador || !contenedor) {
+		return;
+	}
+
+	var texto = buscador.value.toLowerCase().trim();
+	var tarjetas = contenedor.querySelectorAll(".clinical-image-card");
+	var visibles = 0;
+	tarjetas.forEach(function(tarjeta) {
+		var descripcion = (tarjeta.getAttribute("data-description") || tarjeta.textContent || "").toLowerCase();
+		var visible = texto == "" || descripcion.indexOf(texto) > -1;
+		tarjeta.style.display = visible ? "" : "none";
+		if (visible) {
+			visibles++;
+		}
+	});
+
+	var vacioFiltro = document.getElementById("galeriaFiltroVacioPrincipal");
+	if (texto != "" && tarjetas.length > 0 && visibles == 0) {
+		if (!vacioFiltro) {
+			contenedor.insertAdjacentHTML("beforeend", "<div class='clinical-gallery-empty' id='galeriaFiltroVacioPrincipal'><i class='fa-regular fa-images'></i><strong>No hay coincidencias.</strong><span>Probá con otra descripción.</span></div>");
+		}
+	} else if (vacioFiltro) {
+		vacioFiltro.remove();
+	}
 }
  
  
@@ -33521,7 +33892,7 @@ document.getElementById("tdEfectoFrmVistaGaleria").className="magictime vanishOu
 
 function SeleccionarItemImagenGaleriaFoto(datostr, controlVentanaAnterior="") {
 	var elementoimagenseleccionadoGaleriaFoto = datostr
-	$("tr[id=tbSelecRegistroImagen]").each(function(i, td){		
+	$("tr[id=tbSelecRegistroImagen], tr[id=tbSelecRegistroImagenPrincipal]").each(function(i, td){		
 		 td.className=''
 		
 	   });
@@ -33535,9 +33906,11 @@ function SeleccionarItemImagenGaleriaFoto(datostr, controlVentanaAnterior="") {
 	 
 	document.getElementById('divVistaDocumento').style.display = ""
 	if($(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_id_2"]').html()==""){
+		actualizarVisorDocumentoClinico(elementoimagenseleccionadoGaleriaFoto, "pendiente");
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_datos_3"]').html());
 		enableMagnifier(".magnifier-container");
 	}else{
+		actualizarVisorDocumentoClinico(elementoimagenseleccionadoGaleriaFoto, "guardado");
 		document.getElementById("docVisor").setAttribute('src',$(elementoimagenseleccionadoGaleriaFoto).children('td[id="td_datos_1"]').html());
 		enableMagnifier(".magnifier-container");
 	}

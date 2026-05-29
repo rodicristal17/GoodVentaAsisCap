@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=registro-clinico-seguro-v2-20260529" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=galeria-clinica-paciente-fix-subir-v7-20260529" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -42,9 +42,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=galeria-clinica-paciente-fix-subir-v8-20260529"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=galeria-clinica-paciente-fix-subir-v8-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -13939,10 +13939,84 @@ style='background-color: #b7b7b7;'>
               <div class="card-body d-flex flex-column gap-3">
 
                 <!-- Botón Subir Imagen -->
-                <button id="btnSubirImagen" class="btn-filtro" style='width:fit-content;'
-                  onclick="verCerrarAbmCargarFotosClientePrincipal('1', 'AbmConsulta')">
-                  <i class="bi bi-cloud-upload"></i> Subir imagen
-                </button>
+                <script>
+                  window.subirImagenPacienteFichaClick = function (event) {
+                    if (event) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }
+                    var celdaClienteGaleria = document.querySelector("#table_frm_VistaGaleria tr[id='tbSelecRegistroImagen'] td[id='td_id_3'], #table_frm_VistaGaleria td[id='td_id_3']");
+                    var pacienteActual = {
+                      codCliente: (typeof cod_clienteConsulta !== "undefined" && String(cod_clienteConsulta || "").trim() != "" ? String(cod_clienteConsulta || "").trim() : (celdaClienteGaleria ? String(celdaClienteGaleria.textContent || celdaClienteGaleria.innerText || "").trim() : "")),
+                      codVenta: (typeof cod_ventaFKConsulta !== "undefined" ? String(cod_ventaFKConsulta || "").trim() : ""),
+                      nombrePaciente: document.getElementById("inptPacienteConsulta") ? document.getElementById("inptPacienteConsulta").value : ""
+                    };
+                    console.log("Click en Subir imagen");
+                    console.log("Paciente actual para carga de imagen:", pacienteActual);
+                    if (pacienteActual.codCliente == "") {
+                      ver_vetana_informativa("No se pudo identificar el paciente para subir la imagen.");
+                      return false;
+                    }
+                    try {
+                      ventanaControlCargarFotos = "AbmConsulta";
+                    } catch (e) {
+                      window.ventanaControlCargarFotos = "AbmConsulta";
+                    }
+                    var f = new Date();
+                    var dia = f.getDate();
+                    if (dia < 10) { dia = "0" + dia; }
+                    var mes = f.getMonth() + 1;
+                    if (mes < 10) { mes = "0" + mes; }
+                    if (document.getElementById("inptFechaCargarFotosClientePrincipal")) {
+                      document.getElementById("inptFechaCargarFotosClientePrincipal").value = f.getFullYear() + "-" + mes + "-" + dia;
+                    }
+                    if (document.getElementById("inptNombreClientesFotoPrincipal")) {
+                      document.getElementById("inptNombreClientesFotoPrincipal").value = pacienteActual.nombrePaciente;
+                    }
+                    var modalCargaImagen = document.getElementById("divAbmCargarFotosClientePrincipal");
+                    if (!modalCargaImagen) {
+                      ver_vetana_informativa("No se encontr&oacute; la ventana de carga de im&aacute;genes.");
+                      return false;
+                    }
+                    modalCargaImagen.style.setProperty("display", "block", "important");
+                    modalCargaImagen.style.setProperty("position", "fixed", "important");
+                    modalCargaImagen.style.setProperty("top", "0", "important");
+                    modalCargaImagen.style.setProperty("left", "0", "important");
+                    modalCargaImagen.style.setProperty("width", "100vw", "important");
+                    modalCargaImagen.style.setProperty("height", "100vh", "important");
+                    modalCargaImagen.style.setProperty("visibility", "visible", "important");
+                    modalCargaImagen.style.setProperty("opacity", "1", "important");
+                    modalCargaImagen.style.setProperty("pointer-events", "auto", "important");
+                    modalCargaImagen.style.setProperty("z-index", "1000000", "important");
+                    if (typeof LimpiarCamposCargarFotosClientePrincipal == "function") {
+                      try {
+                        LimpiarCamposCargarFotosClientePrincipal();
+                      } catch (error) {
+                        console.error("No se pudieron limpiar los campos de carga de imagenes:", error);
+                      }
+                    }
+                    if (document.getElementById("inptFechaCargarFotosClientePrincipal")) {
+                      document.getElementById("inptFechaCargarFotosClientePrincipal").value = f.getFullYear() + "-" + mes + "-" + dia;
+                    }
+                    if (document.getElementById("inptNombreClientesFotoPrincipal")) {
+                      document.getElementById("inptNombreClientesFotoPrincipal").value = pacienteActual.nombrePaciente;
+                    }
+                    if (typeof buscarFotosClientePrincipal == "function") {
+                      try {
+                        buscarFotosClientePrincipal(pacienteActual.codCliente);
+                      } catch (error) {
+                        console.error("No se pudo cargar la galería del paciente:", error);
+                      }
+                    }
+                    return false;
+                  };
+                  window.abrirCargaImagenPacienteDesdeFicha = window.subirImagenPacienteFichaClick;
+                </script>
+                <input type="button" id="btnSubirImagen" data-action="subir-imagen-paciente" class="btn-filtro"
+                  value="Subir imagen" style="width:fit-content;position:relative;z-index:1000000;pointer-events:auto;cursor:pointer;"
+                  onpointerdown="return window.subirImagenPacienteFichaClick(event)"
+                  onmousedown="return window.subirImagenPacienteFichaClick(event)"
+                  onclick="return window.subirImagenPacienteFichaClick(event)">
 
                 <!-- Contenedor Galería -->
                 <div id="table_frm_VistaGaleria" class="div_cuerpo_table presupuesto-search-table">
@@ -25252,142 +25326,110 @@ FECHA.
                 </tr>
               </table>
             </div>
-          </div
+          </div>
         </center>
       </td>
     </tr>
   </table>
 </div>
 
-<div class='principal2' style='display:none' id='divAbmCargarFotosClientePrincipal'>
-<table style='width:100%;height:100%'>
-<tr>
-<td>
-<center>
-<div class='divAbms'  style='display:;width: 90%; '>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Seleccionar Imagenes</p>
-</td>
-<td style='width:5%;text-align:center'> <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png'
-class='iconoBtn' title='Limpiar campos' onclick='LimpiarCamposCargarFotosClientePrincipal()' /></td>
-<td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/flechaderecha.png'
-class='iconoBtn' title='Volver Atras' onclick='verCerrarAbmCargarFotosClientePrincipal("2")' /></td>
-</tr>
-</table>
-<div class='divMenuf'>
-<table style='width:100%;'>
-<tr>
-<td style='width:100%;text-align:center'>
-<center>
-<div class='divMenuf' style='  width: 97%; border: none; '>
-<div class='divArhivos' style='margin: 1%;'>
- 
-<table class="tableArchivo" style="width:100%;">
-  <tr>
-    <td style="width:25%; text-align:center;">
-      <div class="upload-area" onclick="document.getElementById('file_2Principal').click()">
-        <!-- Ícono SVG -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-        </svg>
-        <span class="upload-text" id="text-cargaPrincipal">Haz clic para subir archivo (JPG)</span>
-        <span class="upload-success" id="text-carga-2Principal">✅ Archivo cargado con éxito</span>
+<div class='principal2 clinical-gallery-modal' style='display:none' id='divAbmCargarFotosClientePrincipal'>
+  <div class="clinical-gallery-shell">
+    <div class="clinical-gallery-header">
+      <div class="clinical-gallery-title">
+        <span class="clinical-gallery-title__icon"><i class="fa-regular fa-images"></i></span>
+        <div>
+          <p class="modal-etiqueta">Imágenes del paciente</p>
+          <h3>Galería clínica del paciente</h3>
+          <span>Subí, consultá y organizá imágenes asociadas al paciente.</span>
+        </div>
       </div>
-      <div class="file-name" id="nombreArchivo"></div>
-      <div class="progress-bar" id="progressBar">
-        <div class="progress-bar-inner" id="progressBarInner"></div>
+      <div class="clinical-gallery-header__actions">
+        <button type="button" class="clinical-gallery-icon-btn" title="Limpiar campos" onclick="LimpiarCamposCargarFotosClientePrincipal()">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+        <button type="button" class="btn-cerrar-modal" title="Volver atrás" onclick='verCerrarAbmCargarFotosClientePrincipal("2")'>&times;</button>
       </div>
-    </td>
-  </tr>
-</table>
+    </div>
 
-<input
-  type="file"
-  id="file_2Principal"
-  name="file_2Principal"
-  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-  style="display:none;"
-  onchange="readFileDocPrincipal(this)"
-/>
+    <div class="clinical-gallery-body">
+      <section class="clinical-gallery-upload-card">
+        <div class="clinical-gallery-card-title">
+          <strong>Nueva imagen</strong>
+          <span>Formato permitido: JPG</span>
+        </div>
 
+        <div class="upload-area clinical-upload-zone"
+          onclick="document.getElementById('file_2Principal').click()"
+          ondragover="prepararArrastreGaleriaPaciente(event)"
+          ondragleave="cancelarArrastreGaleriaPaciente(event)"
+          ondrop="soltarArchivoGaleriaPaciente(event)">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="upload-text" id="text-cargaPrincipal">Arrastrá una imagen aquí o hacé clic para seleccionar</span>
+          <span class="upload-success" id="text-carga-2Principal">Archivo listo para subir</span>
+          <small>Formato permitido: JPG</small>
+        </div>
 
- <br>
- 
-<table style="width:100%">
-<tbody>
-<tr>
-<td>
-<p class="pTitulo5">Cliente :</p>
-<input id='inptNombreClientesFotoPrincipal' type='text' disabled class='inputTextDisable'>
-</td>
-</tr>
-</tbody>
-</table>
- 
-<br>
+        <div class="clinical-upload-preview" id="galeriaPreview" style="display:none;">
+          <div class="clinical-upload-preview__thumb">
+            <img id="galeriaPreviewImg" alt="Vista previa de imagen seleccionada">
+          </div>
+          <div class="clinical-upload-preview__info">
+            <strong id="galeriaPreviewNombre"></strong>
+            <span id="galeriaPreviewTamano"></span>
+            <button type="button" class="clinical-gallery-link-btn" onclick="limpiarArchivoFotos()">Quitar selección</button>
+          </div>
+        </div>
 
-<div class="divMenuh">
-  <div class="divFloat2 panel-izquierdo" style="min-width: 125px;">
-    <p class="pTitulo5">Fecha :</p>
-    <input id='inptFechaCargarFotosClientePrincipal' type='date' disabled class='inputTextDisable'>
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-bar-inner" id="progressBarInner"></div>
+        </div>
+
+        <input
+          type="file"
+          id="file_2Principal"
+          name="file_2Principal"
+          accept=".jpg,.jpeg,image/jpeg"
+          style="display:none;"
+          onchange="readFileDocPrincipal(this)"
+        />
+
+        <div class="clinical-gallery-form">
+          <label>
+            <span>Paciente</span>
+            <input id='inptNombreClientesFotoPrincipal' type='text' disabled class='inputTextDisable'>
+          </label>
+          <label>
+            <span>Fecha</span>
+            <input id='inptFechaCargarFotosClientePrincipal' type='date' disabled class='inputTextDisable'>
+          </label>
+          <label class="clinical-gallery-form__description">
+            <span>Descripción</span>
+            <input id='inptDescripcionCargarFotosClientesPrincipal' type='text' class='inputText' placeholder="Ej.: Radiografía inicial, control, foto clínica...">
+          </label>
+        </div>
+
+        <input id="btnAddImagenPrincipal" type="button" value="Subir imagen" class="btn5 clinical-gallery-primary-btn" onclick="AddCargarFotosClientePrincipal()" style="background-color:#d5d3d3">
+      </section>
+
+      <section class="clinical-gallery-list-card">
+        <div class="clinical-gallery-list-header">
+          <div>
+            <strong>Imágenes cargadas</strong>
+            <span>Miniaturas asociadas al paciente.</span>
+          </div>
+          <input type="text" class="inputText clinical-gallery-search" id="inptBuscarImagenPacientePrincipal" placeholder="Buscar por descripción" onkeyup="filtrarGaleriaPacientePrincipal()">
+        </div>
+
+        <div class="div_cuerpo_table clinical-gallery-grid" id="table_abm_imagen_clientesPrincipal"></div>
+
+        <div class="clinical-gallery-actions">
+          <input id="btnVerImagenClientePrincipal" type="button" value="Ver imagen" class="btn5" onclick='VerCargarFotosClientePrincipal("1")' style="background-color:#d5d3d3">
+          <input id="btnEliminarImagenPrincipal" type="button" value="Eliminar imagen" class="btn5" onclick="EliminarCargarFotosClientePrincipal()" style="background-color:#d5d3d3">
+        </div>
+      </section>
+    </div>
   </div>
-  <div class="divFloat2 panel-derecho" style="min-width: 0;">
-    <p class="pTitulo5">Descripción :</p>
-    <input id='inptDescripcionCargarFotosClientesPrincipal' style='width:100%;' type='text' class='inputText'>
-  </div>
-</div>
-
-<br>
-
-<input id="btnAddImagenPrincipal" type="button" value="Añadir" class="btn5" onclick="AddCargarFotosClientePrincipal()" style="background-color:#d5d3d3">
-<br>
-</div>
-
-<div class='divArhivos' style='margin: 1%;'>
-
-
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:20%;">
-Archivo
-</td>
-<td class="td_registro" style="width:60%;">
-Descripción
-</td>
-<td class="td_registro" style="width:20%;">
-Fecha
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_abm_imagen_clientesPrincipal" style='height: 450px;'>
-</div>
-
-<br>
-<input id="btnEliminarImagenPrincipal" type="button" value="Eliminar" class="btn5" onclick="EliminarCargarFotosClientePrincipal()" style="background-color:#d5d3d3">
-<input id="btnVerImagenClientePrincipal" type="button" value="Ver" class="btn5" onclick='VerCargarFotosClientePrincipal("1")' style="background-color:#d5d3d3">
-<br>
-</div>
-
-<!--input  type="button" value="Ver Galeria" class="btn2" onclick="verCerrarAbmVistaGaleria()" -->
-
-</div>
-</center>
-</td>
-</tr>
-</table>
-
-</div>
-</div>
-
-
-</center>
-</td>
-</tr>
-</table>
 </div>
 
 
@@ -31081,20 +31123,21 @@ style='color:#673ab7'  > Actualización</span></h1>
 </div>
 
 <div class='principal2' style='display:none;background-color:#fff'  id='divVistaDocumento' >
-		<center style="width: 98vw; height: 89vh;margin: auto;">
-      <table class='tableMenuZ'>
-      <tr>
-      <td style='width:fit-content;text-align:left'><p class='pTituloB'>Visor de <b style='font-size:30px'>Imagen</b></p></td>
-      <td></td>
-      <td style='width:5%;text-align:center'><img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='VerCargarFotosCliente("2")' /></td>
-      </tr>
-      </table>
-      <div class="magnifier-container" style="width: 99vw; height: 92vh;margin: auto;">
-        <img style='max-height:100%;max-width: 100%;object-fit: contain; width: auto; height: auto;' id='docVisor' class="img-fluid"/>
+  <div class="clinical-image-viewer">
+    <div class="clinical-image-viewer__header">
+      <div>
+        <p class='modal-etiqueta'>Vista previa</p>
+        <h3 id="docVisorTitulo">Imagen del paciente</h3>
+        <span id="docVisorMeta">Galería clínica del paciente</span>
       </div>
-      <!--embed style='max-height:100%;max-width: 100%;object-fit: contain; width: auto; height: auto;' id='docVisor' type='application/pdf'/-->
-		</center>
-		</div>
+      <button type='button' class='btn-cerrar-modal' title='Cerrar Ventana' onclick='VerCargarFotosCliente("2")'>&times;</button>
+    </div>
+    <div class="magnifier-container" style="width: 99vw; height: 92vh;margin: auto;">
+      <img style='max-height:100%;max-width: 100%;object-fit: contain; width: auto; height: auto;' id='docVisor' class="img-fluid"/>
+    </div>
+    <!--embed style='max-height:100%;max-width: 100%;object-fit: contain; width: auto; height: auto;' id='docVisor' type='application/pdf'/-->
+  </div>
+</div>
 
 
 </html>
