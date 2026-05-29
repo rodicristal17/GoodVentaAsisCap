@@ -1350,6 +1350,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
         /* Vista compacta cuando el Gantt se muestra dentro del dashboard */
         body.grant-dashboard-compact {
+            display: block;
             height: 100%;
             min-height: 0;
             overflow: hidden;
@@ -1357,10 +1358,12 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         }
 
         body.grant-dashboard-compact .container {
-            height: 100vh;
+            height: 100%;
+            min-height: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
+            justify-content: flex-start;
             overflow: hidden;
             background: #ffffff;
         }
@@ -1405,15 +1408,21 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
         body.grant-dashboard-compact .gantt-layout {
             flex: 1 1 auto;
+            align-items: stretch;
             height: auto !important;
             min-height: 0 !important;
+            margin: 0 !important;
             overflow: hidden !important;
             border-radius: 8px;
             box-shadow: none;
         }
 
         body.grant-dashboard-compact .gantt-right-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
             min-height: 0;
+            align-self: stretch;
             overflow: hidden;
         }
 

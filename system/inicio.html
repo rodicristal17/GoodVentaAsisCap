@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=galeria-clinica-paciente-fix-subir-v7-20260529" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gantt-dashboard-sin-espacio-v1-20260529" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -59,6 +59,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-20260528"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js?x=salida-ubicacion-20260529"></script>
+<script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js"></script>
@@ -348,16 +349,16 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <div class="Panel dashboard-gantt-panel">
                       <iframe
                         id="iframeGrant"
-                        src="../php_system/Grant.php?embed=dashboard&x=20260529iniciohoyizq"
+                        src="../php_system/Grant.php?embed=dashboard&x=20260529sin-espacio-inicio"
                         width="100%"
                         frameborder="0"
                         scrolling="auto"
-                        style="display:block;width:100%;height:620px;max-height:620px;border:0;"
-                        onload="ajustarAltoGrantIframe(this); aplicarUsuarioActualGrantIframe(this);">
+                        style="display:block;width:100%;height:420px;max-height:620px;border:0;"
+                        onload="ajustarAltoGrantIframe(this); corregirEspacioSuperiorGrantIframe(this); aplicarUsuarioActualGrantIframe(this);">
                       </iframe>
                       <script>
                         function abrirVistaCompletaGantt() {
-                          window.open('../php_system/Grant.php?x=20260529iniciohoyizqfull', '_blank');
+                          window.open('../php_system/Grant.php?x=20260529sin-espacio-inicio-full', '_blank');
                         }
 
                         function abrirNuevaTareaGrant() {
@@ -368,6 +369,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                             if (iframe.contentWindow && typeof iframe.contentWindow.abrirPanelNuevaTareaGantt === 'function') {
                               iframe.contentWindow.abrirPanelNuevaTareaGantt();
                               ajustarAltoGrantIframe(iframe);
+                              corregirEspacioSuperiorGrantIframe(iframe);
                               return;
                             }
 
@@ -384,6 +386,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                             }
 
                             ajustarAltoGrantIframe(iframe);
+                            corregirEspacioSuperiorGrantIframe(iframe);
                           } catch (e) {
                             console.warn('No se pudo abrir el formulario del Gantt', e);
                           }
@@ -397,14 +400,34 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                               var doc = iframe.contentDocument || iframe.contentWindow.document;
                               var body = doc.body;
                               var html = doc.documentElement;
-                              var alto = Math.max(
-                                body ? body.scrollHeight : 0,
-                                body ? body.offsetHeight : 0,
-                                html ? html.scrollHeight : 0,
-                                html ? html.offsetHeight : 0
-                              );
+                              var layout = doc.getElementById('gantt-layout');
+                              var svg = doc.getElementById('gantt');
+                              var ganttContainer = doc.getElementById('gantt-container');
+                              var alto = 0;
 
-                              var nuevoAlto = Math.min(620, Math.max(520, alto));
+                              if (layout && svg) {
+                                var cajaLayout = layout.getBoundingClientRect();
+                                var cajaSvg = svg.getBoundingClientRect();
+                                var bordeInferior = cajaSvg.bottom;
+
+                                if (ganttContainer) {
+                                  var cajaGantt = ganttContainer.getBoundingClientRect();
+                                  bordeInferior = Math.max(bordeInferior, Math.min(cajaGantt.bottom, cajaSvg.bottom + 18));
+                                }
+
+                                alto = Math.ceil(bordeInferior - cajaLayout.top + 10);
+                              }
+
+                              if (!alto) {
+                                alto = Math.max(
+                                  body ? body.scrollHeight : 0,
+                                  body ? body.offsetHeight : 0,
+                                  html ? html.scrollHeight : 0,
+                                  html ? html.offsetHeight : 0
+                                );
+                              }
+
+                              var nuevoAlto = Math.min(620, Math.max(360, alto));
                               var altoActual = parseInt(iframe.style.height, 10) || 0;
                               if (Math.abs(altoActual - nuevoAlto) > 10) {
                                 iframe.style.height = nuevoAlto + 'px';
@@ -426,11 +449,48 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                           }
                         }
 
+                        function corregirEspacioSuperiorGrantIframe(iframe) {
+                          if (!iframe) return;
+
+                          function aplicarCorreccion() {
+                            try {
+                              var doc = iframe.contentDocument || iframe.contentWindow.document;
+                              var layout = doc ? doc.getElementById('gantt-layout') : null;
+                              var panel = doc ? doc.querySelector('.gantt-right-panel') : null;
+                              var controles = doc ? doc.querySelector('.view-controls') : null;
+                              if (!layout || !panel || !controles) return;
+
+                              panel.style.marginTop = '';
+                              panel.style.height = '';
+
+                              var cajaLayout = layout.getBoundingClientRect();
+                              var cajaControles = controles.getBoundingClientRect();
+                              var espacioSuperior = Math.round(cajaControles.top - cajaLayout.top);
+
+                              if (espacioSuperior > 70) {
+                                panel.style.marginTop = '-' + espacioSuperior + 'px';
+                                panel.style.height = 'calc(100% + ' + espacioSuperior + 'px)';
+                              }
+
+                              if (doc.scrollingElement) doc.scrollingElement.scrollTop = 0;
+                              if (doc.documentElement) doc.documentElement.scrollTop = 0;
+                              if (doc.body) doc.body.scrollTop = 0;
+                            } catch (e) {
+                            }
+                          }
+
+                          aplicarCorreccion();
+                          setTimeout(aplicarCorreccion, 250);
+                          setTimeout(aplicarCorreccion, 700);
+                          setTimeout(aplicarCorreccion, 1400);
+                        }
+
                         function aplicarUsuarioActualGrantIframe(iframe) {
                           if (!iframe) return;
 
                           function posicionarHoyGrant() {
                             try {
+                              corregirEspacioSuperiorGrantIframe(iframe);
                               if (iframe.contentWindow && typeof iframe.contentWindow.programarCentradoFechaActual === "function") {
                                 iframe.contentWindow.programarCentradoFechaActual();
                               }
@@ -472,6 +532,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                           if (!iframe) return;
 
                           ajustarAltoGrantIframe(iframe);
+                          corregirEspacioSuperiorGrantIframe(iframe);
 
                           try {
                             if (iframe.contentWindow && typeof iframe.contentWindow.refrescarLayoutGanttVisible === "function") {
@@ -2390,6 +2451,21 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table  class='divMenub' id='divMenuLogInactivos'
+onclick='abrirInformeLogInactivos()' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/log_inactivos.svg' />
+<p class='pTitulo4'>Log de inactivos</p>
+<center>
+<div id='divMinimizadoInformeLogInactivos' style='display:none'
+class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
 <table  class='divMenub' id='divMenuDictamenes'
 onclick='verCerrarInformeDictamen(true)' style='text-align:center;'>
 <tr>
@@ -2405,6 +2481,89 @@ class='divMinimizado'></div>
 </tr>
 </table>
 </div>
+</div>
+
+<div class="principal2" style="display:none;" id="divInformeLogInactivos">
+  <table style="width:100%;" id="tdEfectoInformeLogInactivos" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divPrincipalrepor log-inactivos-shell">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Log de <b style="font-size: 30px;">Registros inactivos</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                        onclick="minimizarInformeLogInactivos()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="cerrarInformeLogInactivos()">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="divMenuf log-inactivos-filtros">
+                <table style="width:100%">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <p class="pTituloC">Tabla</p>
+                        <input class="inputText" type="text" id="inptLogInactivosTabla" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Registro</p>
+                        <input class="inputText" type="text" id="inptLogInactivosRegistro" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Usuario</p>
+                        <input class="inputText" type="text" id="inptLogInactivosUsuario" onkeyup="if(event.keyCode == 13){buscarInformeLogInactivos()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Desde</p>
+                        <input class="inputText" type="date" id="inptLogInactivosFechaDesde">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Hasta</p>
+                        <input class="inputText" type="date" id="inptLogInactivosFechaHasta">
+                      </td>
+                      <td style="text-align:right;vertical-align:bottom;">
+                        <input type="button" value="Buscar" class="btn4" onclick="buscarInformeLogInactivos()">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="divMenuf log-inactivos-panel">
+                <div class="log-inactivos-list" id="table_InformeLogInactivos"></div>
+              </div>
+
+              <div class="divMenuf log-inactivos-total">
+                <table style="width:98%">
+                  <tbody>
+                    <tr>
+                      <td style="width:15%;text-align:left">
+                        <p class="pTituloC">Total Registro:</p>
+                        <input class="inputTextDisable" type="text" disabled id="inptTotalRegistroLogInactivos"
+                          style="width:120px;text-align:center">
+                      </td>
+                      <td style="width:85%;"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 <script>
