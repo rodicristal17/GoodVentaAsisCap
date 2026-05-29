@@ -598,6 +598,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 			  document.cookie = "caja=" + cajapredeterminada  +";max-age=86400;path=/";			  
 	           
 				removeToMenu()
+				if (typeof inicializarAccesosRapidosUsuario === "function") {
+					inicializarAccesosRapidosUsuario();
+				}
 					buscarabmCasaOption()
 					buscarabmCasaOptionCuentas()
 					buscarCobradorSelec()

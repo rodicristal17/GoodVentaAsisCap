@@ -654,7 +654,7 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 function buscarTareasPendientesAdministrador($cod_usuario)
 {
     if ($cod_usuario == "") {
-        $informacion = array("1" => "camposvacio", "2" => "", "3" => 0, "4" => 0);
+        $informacion = array("1" => "camposvacio", "2" => "", "3" => 0, "4" => 0, "5" => 0, "6" => 0, "7" => 0, "8" => 0);
         echo json_encode($informacion);
         exit;
     }
@@ -681,6 +681,8 @@ function buscarTareasPendientesAdministrador($cod_usuario)
                 ON tp.id = tpa.cod_tareaFK
             WHERE tpa.cod_usuarioFK = ? AND fecha_tarea = ?
             ORDER BY 
+                CASE WHEN tp.hora IS NULL THEN 1 ELSE 0 END,
+                tp.hora ASC,
                 CASE 
                     WHEN tpa.estado_tarea = 'Pendiente' THEN 1
                     WHEN tpa.estado_tarea = 'En Proceso' THEN 2
@@ -688,7 +690,6 @@ function buscarTareasPendientesAdministrador($cod_usuario)
                     WHEN tpa.estado_tarea = 'Cancelada' THEN 4
                     ELSE 5
                 END,
-                tp.hora ASC,
                 tpa.fecha_insert DESC";
 
     $stmt = $mysqli->prepare($sql);
@@ -705,6 +706,7 @@ function buscarTareasPendientesAdministrador($cod_usuario)
 	
 	date_default_timezone_set('America/Asuncion');
 	$fecha_actual = date("Y-m-d");
+    $momento_actual = time();
  
     $ss = "ss";
     $stmt->bind_param($ss, $cod_usuario,$fecha_actual);
@@ -723,6 +725,10 @@ function buscarTareasPendientesAdministrador($cod_usuario)
 
     $nroRegistro = mysqli_num_rows($result);
     $totalPendientes = 0;
+    $totalProceso = 0;
+    $totalCompletadas = 0;
+    $totalCanceladas = 0;
+    $totalAtrasadas = 0;
     $pagina = "";
 
     if ($nroRegistro > 0) {
@@ -747,6 +753,17 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             $fecha_insert_html = htmlspecialchars($fecha_insert, ENT_QUOTES, 'UTF-8');
             $fecha_completada_html = htmlspecialchars($fecha_completada, ENT_QUOTES, 'UTF-8');
 
+            if ($hora_html == "") {
+                $hora_html = "--:--";
+            }
+
+            $momento_tarea = false;
+            if ($hora != "") {
+                $momento_tarea = strtotime($fecha_actual." ".$hora.":00");
+            }
+
+            $estaAtrasada = ($estado_tarea == "Pendiente" && $momento_tarea !== false && $momento_tarea < $momento_actual);
+
             $claseEstado = "perfil-tareas__estado--pendiente";
             $textoEstado = "Pendiente";
 
@@ -763,20 +780,30 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             }
 
             if ($estado_tarea == "En Proceso") {
+                $totalProceso++;
                 $claseEstado = "perfil-tareas__estado--proceso";
                 $textoEstado = "En proceso";
             }
 
             if ($estado_tarea == "Completada") {
+                $totalCompletadas++;
                 $claseEstado = "perfil-tareas__estado--completada";
                 $textoEstado = "Completada";
                 $claseItem .= " perfil-tareas__item--completada";
             }
 
             if ($estado_tarea == "Cancelada") {
+                $totalCanceladas++;
                 $claseEstado = "perfil-tareas__estado--cancelada";
                 $textoEstado = "Cancelada";
                 $claseItem .= " perfil-tareas__item--cancelada";
+            }
+
+            if ($estaAtrasada == true) {
+                $totalAtrasadas++;
+                $claseEstado = "perfil-tareas__estado--atrasada";
+                $textoEstado = "Atrasada";
+                $claseItem .= " perfil-tareas__item--atrasada";
             }
 
             $checkHtml = "";
@@ -792,6 +819,8 @@ function buscarTareasPendientesAdministrador($cod_usuario)
                 <input 
                     type='checkbox' 
                     class='perfil-tareas__check' 
+                    title='Marcar como completada'
+                    aria-label='Marcar tarea como completada'
                     onclick='cambiarEstadoTareaAsignada(this, ".$cod_tarea_asignada.")' 
                 />";
 
@@ -801,6 +830,8 @@ function buscarTareasPendientesAdministrador($cod_usuario)
                 <input 
                     type='checkbox' 
                     class='perfil-tareas__check' 
+                    title='Tarea completada'
+                    aria-label='Tarea completada'
                     checked 
                     disabled 
                 />";
@@ -811,6 +842,8 @@ function buscarTareasPendientesAdministrador($cod_usuario)
                 <input 
                     type='checkbox' 
                     class='perfil-tareas__check' 
+                    title='Estado no editable'
+                    aria-label='Estado no editable'
                     disabled 
                 />";
             }
@@ -818,14 +851,25 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             $pagina .= "
             <div class='".$claseItem."' data-id='".$cod_tarea_asignada."'>
 
-                ".$checkHtml."
+                <div class='perfil-tareas__hora'>
+                    <span>".$hora_html."</span>
+                    <small>Hora</small>
+                </div>
+
+                <div class='perfil-tareas__linea'></div>
 
                 <div class='perfil-tareas__contenido'>
 
-                    <p class='perfil-tareas__descripcion'>".$nombre_html."</p>
+                    <div class='perfil-tareas__item-header'>
+                        <p class='perfil-tareas__descripcion'>".$nombre_html."</p>
+                        <span class='perfil-tareas__estado ".$claseEstado."'>
+                            ".$textoEstado."
+                        </span>
+                    </div>
 
                     <p class='perfil-tareas__meta'>
-                        Hora: ".$hora_html." | Tipo: ".$tipo_html." | Asignado: ".$fecha_insert_html."
+                        <span>Tipo: ".$tipo_html."</span>
+                        <span>Asignada: ".$fecha_insert_html."</span>
                     </p>";
 
                     if ($fecha_completada_html != "" && $estado_tarea == "Completada") {
@@ -845,9 +889,9 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             $pagina .= "
                 </div>
 
-                <span class='perfil-tareas__estado ".$claseEstado."'>
-                    ".$textoEstado."
-                </span>
+                <div class='perfil-tareas__check-wrap'>
+                    ".$checkHtml."
+                </div>
 
             </div>";
         }
@@ -879,12 +923,20 @@ function buscarTareasPendientesAdministrador($cod_usuario)
     /*
         3 = cantidad pendiente para el contador
         4 = total de tareas listadas
+        5 = total en proceso
+        6 = total completadas
+        7 = total canceladas
+        8 = total atrasadas
     */
     $informacion = array(
         "1" => "exito",
         "2" => $pagina,
         "3" => $totalPendientes,
-        "4" => $nroRegistro
+        "4" => $nroRegistro,
+        "5" => $totalProceso,
+        "6" => $totalCompletadas,
+        "7" => $totalCanceladas,
+        "8" => $totalAtrasadas
     );
 
     echo json_encode($informacion);
@@ -1203,6 +1255,57 @@ function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea)
     echo json_encode($informacion);
     exit;
 }
+
+function resolverFotoUsuarioAsignarTarea($cod_usuario, $url)
+{
+    $fallback = "/GoodVentaAsisCap/iconos/user.png";
+    $foto = trim((string)$url);
+    $baseDir = realpath(__DIR__ . "/../fotos/perfilUsuario");
+
+    if ($baseDir === false) {
+        return ($foto != "") ? $foto : $fallback;
+    }
+
+    if ($foto != "" && $foto != "null" && $foto != "undefined") {
+        $pathUrl = parse_url($foto, PHP_URL_PATH);
+
+        if ($pathUrl !== false && $pathUrl !== null && strpos($pathUrl, "/fotos/perfilUsuario/") !== false) {
+            $archivo = basename($pathUrl);
+            $rutaLocal = $baseDir . DIRECTORY_SEPARATOR . $archivo;
+
+            if (is_file($rutaLocal) && filesize($rutaLocal) > 0) {
+                return "/GoodVentaAsisCap/fotos/perfilUsuario/" . $archivo;
+            }
+        } else {
+            return $foto;
+        }
+    }
+
+    $extensiones = array("jpg", "jpeg", "png", "gif", "webp", "JPG", "JPEG", "PNG", "GIF", "WEBP");
+    $coincidencias = array();
+
+    foreach ($extensiones as $extension) {
+        $archivos = glob($baseDir . DIRECTORY_SEPARATOR . $cod_usuario . "*." . $extension);
+        if (is_array($archivos)) {
+            $coincidencias = array_merge($coincidencias, $archivos);
+        }
+    }
+
+    $coincidencias = array_filter($coincidencias, function ($archivo) {
+        return is_file($archivo) && filesize($archivo) > 0;
+    });
+
+    if (count($coincidencias) > 0) {
+        usort($coincidencias, function ($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+
+        return "/GoodVentaAsisCap/fotos/perfilUsuario/" . basename($coincidencias[0]);
+    }
+
+    return $fallback;
+}
+
 function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
 {
     $mysqli = conectar_al_servidor();
@@ -1278,9 +1381,7 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado)
             $Nombre = mb_convert_encoding((string)($valor['Nombre']), 'UTF-8', 'ISO-8859-1');
             $url = mb_convert_encoding((string)($valor['url']), 'UTF-8', 'ISO-8859-1');
 
-            if ($url == "") {
-                $url = "/GoodVentaAsisCap/iconos/user.png";
-            }
+            $url = resolverFotoUsuarioAsignarTarea($cod_usuario, $url);
 
             $login_html = htmlspecialchars($login, ENT_QUOTES, 'UTF-8');
             $nombre_persona_html = htmlspecialchars($nombre_persona, ENT_QUOTES, 'UTF-8');

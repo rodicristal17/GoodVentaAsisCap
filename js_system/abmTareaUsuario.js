@@ -858,6 +858,10 @@ function cargarTareasPendientesAdministrador() {
     var lista = document.getElementById("listaTareasAdministrador");
     var vacio = document.getElementById("tareasAdministradorVacio");
     var contador = document.getElementById("spanTareasPendientes");
+    var contadorPendientesResumen = document.getElementById("spanTareasPendientesResumen");
+    var contadorProceso = document.getElementById("spanTareasEnProceso");
+    var contadorAtrasadas = document.getElementById("spanTareasAtrasadas");
+    var contadorCompletadas = document.getElementById("spanTareasCompletadas");
 
     if (!lista) {
         return;
@@ -871,6 +875,22 @@ function cargarTareasPendientesAdministrador() {
 
     if (contador) {
         contador.innerHTML = "0";
+    }
+
+    if (contadorPendientesResumen) {
+        contadorPendientesResumen.innerHTML = "0";
+    }
+
+    if (contadorProceso) {
+        contadorProceso.innerHTML = "0";
+    }
+
+    if (contadorAtrasadas) {
+        contadorAtrasadas.innerHTML = "0";
+    }
+
+    if (contadorCompletadas) {
+        contadorCompletadas.innerHTML = "0";
     }
 
     obtener_datos_user();
@@ -916,20 +936,41 @@ function cargarTareasPendientesAdministrador() {
 					var html = datos[2];
 					var totalPendientes = datos[3];
 					var totalTareas = datos[4];
+					var totalProceso = datos[5] || 0;
+					var totalCompletadas = datos[6] || 0;
+					var totalAtrasadas = datos[8] || 0;
 
 					lista.innerHTML = html;
 
 					if (contador) {
-    contador.innerHTML = totalPendientes;
+                        contador.innerHTML = totalPendientes;
 
-    var contenedorContador = contador.parentNode;
+                        var contenedorContador = contador.parentNode;
 
-    if (parseInt(totalPendientes) > 0) {
-        contenedorContador.classList.add("perfil-tareas__contador--alerta");
-    } else {
-        contenedorContador.classList.remove("perfil-tareas__contador--alerta");
-    }
-}
+                        if (contenedorContador) {
+                            if (parseInt(totalPendientes) > 0) {
+                                contenedorContador.classList.add("perfil-tareas__contador--alerta");
+                            } else {
+                                contenedorContador.classList.remove("perfil-tareas__contador--alerta");
+                            }
+                        }
+                    }
+
+                    if (contadorPendientesResumen) {
+                        contadorPendientesResumen.innerHTML = totalPendientes;
+                    }
+
+                    if (contadorProceso) {
+                        contadorProceso.innerHTML = totalProceso;
+                    }
+
+                    if (contadorAtrasadas) {
+                        contadorAtrasadas.innerHTML = totalAtrasadas;
+                    }
+
+                    if (contadorCompletadas) {
+                        contadorCompletadas.innerHTML = totalCompletadas;
+                    }
 
 					if (vacio) {
 						if (parseInt(totalTareas) > 0) {

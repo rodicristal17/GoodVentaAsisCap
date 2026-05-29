@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=x-ios10v1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=dashboard-shortcuts-20260528" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -41,14 +41,19 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
+
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=producto-insumos-list-20260528"></script>
+
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=dashboard-shortcuts-20260528"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260528"></script>
+
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-20260528"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
@@ -243,9 +248,40 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 <div class='divScroll' id='divEfectoMantenimiento'>
 
 
-                  <div style='margin-bottom:0;margin-top:0'>
-                 
-                    <div class="Panel">
+                  <div class="dashboard-contenedor">
+
+                    <div class="dashboard-topbar">
+                      <button type="button" class="dashboard-home-button" onclick="verCerrarMenub(0)">
+                        <img src="/GoodVentaAsisCap/iconos/home.png" alt="" />
+                        <span>Inicio</span>
+                      </button>
+                    </div>
+
+                    <div class="dashboard-principal">
+
+                      <section class="dashboard-card dashboard-card--jornada" id="dashboardJornadaCard">
+                        <div class="dashboard-card__header">
+                          <div>
+                            <p class="dashboard-card__eyebrow">Jornada laboral</p>
+                            <h2 class="dashboard-card__title">Agenda del dia</h2>
+                            <p class="dashboard-card__subtitle">Actividades y control diario del funcionario</p>
+                          </div>
+                        </div>
+
+                        <div class="dashboard-card__body" id="dashboardJornadaBody"></div>
+                      </section>
+
+                      <section class="dashboard-card dashboard-card--gantt">
+                        <div class="dashboard-card__header">
+                          <div>
+                            <p class="dashboard-card__eyebrow">Planificacion</p>
+                            <h2 class="dashboard-card__title">Diagrama de Gantt</h2>
+                            <p class="dashboard-card__subtitle">Vista general de tareas y avances</p>
+                          </div>
+                        </div>
+
+                        <div class="dashboard-card__body dashboard-card__body--gantt">
+                    <div class="Panel dashboard-gantt-panel">
                       <iframe
                         id="iframeGrant"
                         src="../php_system/Grant.php"
@@ -298,6 +334,31 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         });
                       </script>
                     </div>
+                        </div>
+                      </section>
+
+                    </div>
+
+                    <script>
+                      function organizarDashboardPrincipal() {
+                        var jornadaBody = document.getElementById("dashboardJornadaBody");
+                        var perfilWidget = document.querySelector(".perfil-app .perfil-widget");
+                        var perfilApp = document.querySelector(".perfil-app");
+
+                        if (jornadaBody && perfilWidget && !jornadaBody.contains(perfilWidget)) {
+                          jornadaBody.appendChild(perfilWidget);
+                        }
+
+                        if (perfilApp && jornadaBody && jornadaBody.querySelector(".perfil-widget")) {
+                          perfilApp.classList.add("perfil-app--dashboard-moved");
+                        }
+                      }
+
+                      document.addEventListener("DOMContentLoaded", organizarDashboardPrincipal);
+                      window.addEventListener("load", organizarDashboardPrincipal);
+                      setTimeout(organizarDashboardPrincipal, 300);
+                    </script>
+
                     <table style='width:100%;display: none;'>
                       <tr>
                         <td style='padding: 15px; padding-left: 33px;width:90%'>
@@ -308,9 +369,21 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 </tr>
 </table>
 
-<table style='width:100%'>
+<section class="quick-access-section dashboard-section-card" id="quickAccessSection">
+<div class="quick-access-section__header dashboard-section-header">
+<div>
+<p class="quick-access-section__eyebrow dashboard-section-eyebrow">Uso frecuente</p>
+<h2 class="quick-access-section__title dashboard-section-title">Accesos rapidos</h2>
+</div>
+<button type="button" class="quick-access-edit-button" onclick="abrirModalAccesosRapidos()">
+<img src="/GoodVentaAsisCap/iconos/editar.png" alt="" />
+<span>Editar accesos rapidos</span>
+</button>
+</div>
+
+<table class="dashboard-menu-table" style='width:100%'>
 <tr>
-<td style='width:65%'>
+<td class="dashboard-menu-cell dashboard-access-grid dashboard-section-grid" style='width:100%'>
 
 
 
@@ -580,14 +653,15 @@ style='display:none' class='divMinimizado'>
         </div>
 
 
-    <!-- INICIO TAREAS ASIGNADAS POR EL ADMINISTRADOR -->
+    <!-- INICIO AGENDA DIARIA ASIGNADA POR EL ADMINISTRADOR -->
     <div class="perfil-tareas" id="divTareasAdministrador">
 
         <div class="perfil-tareas__cabecera">
 
             <div>
-                <p class="perfil-tareas__titulo">Tareas programadas</p>
-                <p class="perfil-tareas__subtitulo">Asignado por el Administrador</p>
+                <p class="perfil-tareas__eyebrow">Jornada laboral</p>
+                <p class="perfil-tareas__titulo">Agenda del dia</p>
+                <p class="perfil-tareas__subtitulo">Actividades fijadas por el Administrador</p>
             </div>
 
             <div class="perfil-tareas__contador">
@@ -596,16 +670,35 @@ style='display:none' class='divMinimizado'>
 
         </div>
 
+        <div class="perfil-tareas__resumen" aria-label="Resumen de actividades del dia">
+            <div class="perfil-tareas__dato perfil-tareas__dato--pendiente">
+                <span id="spanTareasPendientesResumen">0</span>
+                <small>Pendientes</small>
+            </div>
+            <div class="perfil-tareas__dato perfil-tareas__dato--proceso">
+                <span id="spanTareasEnProceso">0</span>
+                <small>En proceso</small>
+            </div>
+            <div class="perfil-tareas__dato perfil-tareas__dato--atrasada">
+                <span id="spanTareasAtrasadas">0</span>
+                <small>Atrasadas</small>
+            </div>
+            <div class="perfil-tareas__dato perfil-tareas__dato--completada">
+                <span id="spanTareasCompletadas">0</span>
+                <small>Completadas</small>
+            </div>
+        </div>
+
         <div class="perfil-tareas__lista" id="listaTareasAdministrador">
             <!-- Las tareas se cargan desde JavaScript -->
         </div>
 
         <div class="perfil-tareas__vacio" id="tareasAdministradorVacio">
-            No tenés tareas asignadas.
+            No tenes actividades asignadas para hoy.
         </div>
 
     </div>
-    <!-- FIN TAREAS ASIGNADAS POR EL ADMINISTRADOR -->
+    <!-- FIN AGENDA DIARIA ASIGNADA POR EL ADMINISTRADOR -->
 
 
     <section class="perfil-widget__jornada">
@@ -690,24 +783,23 @@ style='display:none' class='divMinimizado'>
 
 </tr>
 </table>
+</section>
 </div>
 
 
 <div style='overflow:auto' >
 
  
-<div style='overflow:auto' id='divMenuConsultas' >
+<div class="appointments-section dashboard-section-card" id='divMenuConsultas' >
 
-<table style='width:100%;' >
-<tr>
-<td style='padding: 15px; padding-left: 33px;width:10%'>
-<p class='pTituloPanel2' style='width:160px'>Agendamientos</p>
-</td>
-<td style='width:90%'>
-<div class='divsperador1'></div>
-</td>
-</tr>
-</table>
+<div class="appointments-section__header dashboard-section-header">
+<div>
+<p class="appointments-section__eyebrow dashboard-section-eyebrow">Atencion diaria</p>
+<h2 class="appointments-section__title dashboard-section-title">Agendamientos</h2>
+</div>
+</div>
+
+<div class="appointments-section__grid dashboard-section-grid">
 
 
 
@@ -850,20 +942,24 @@ style='display:none' class='divMinimizado'>
 
  
 </div>
+</div>
 
 
-<div style='overflow:auto' id='divMenuListados'>
+<div class='listados-section' id='divMenuListados'>
 
-<table style='width:100%;'>
-<tr>
-<td style='padding: 15px; padding-left: 33px;width:10%'>
-<p class='pTituloPanel2' style='width:160px'>Listados</p>
-</td>
-<td style='width:90%'>
-<div class='divsperador1'></div>
-</td>
-</tr>
-</table>
+<button type='button' class='listados-section-header' onclick='toggleListadosSection()' aria-expanded='false' aria-controls='listadosSectionContent' id='listadosSectionHeader'>
+<span class='listados-section-header__icon'>
+<img src='/GoodVentaAsisCap/iconos/listadodecarga.png' alt='' />
+</span>
+<span class='listados-section-header__text'>
+<strong>Listados</strong>
+<small>Catalogos y registros del sistema</small>
+</span>
+<span class='listados-section-header__count' id='listadosSectionCount'>0 listados</span>
+<span class='listados-section-header__action' id='listadosSectionAction'>Mostrar listados</span>
+</button>
+
+<div class='listados-section-content' id='listadosSectionContent'>
 
 
 <table class='divMenub' id='divMenuAbmTareasUsuario' onclick='verCerrarAbmTareaProgramada();buscarabmTareaProgramada();' style='text-align:center'>
@@ -1095,19 +1191,79 @@ src='/GoodVentaAsisCap/iconos/listadodecarga.png' />
 </table>
 
 </div>
+</div>
 
-<div style='overflow:auto' id='divMenuAdministrativo'>
+<script>
+var isListadosOpen = false;
 
-<table style='width:100%;'>
-<tr>
-<td style='padding: 15px; padding-left: 33px;width:10%'>
-<p class='pTituloPanel2' style='width:160px'>Administrativo</p>
-</td>
-<td style='width:90%'>
-<div class='divsperador1'></div>
-</td>
-</tr>
-</table>
+function actualizarContadorListados() {
+    var contenido = document.getElementById("listadosSectionContent");
+    var contador = document.getElementById("listadosSectionCount");
+
+    if (!contenido || !contador) {
+        return;
+    }
+
+    var accesos = contenido.querySelectorAll(".divMenub");
+    var totalAccesos = 0;
+
+    for (var i = 0; i < accesos.length; i++) {
+        var estiloInline = (accesos[i].getAttribute("style") || "").replace(/\s/g, "").toLowerCase();
+        if (estiloInline.indexOf("display:none") === -1) {
+            totalAccesos++;
+        }
+    }
+
+    contador.innerHTML = totalAccesos + " listados";
+}
+
+function toggleListadosSection() {
+    isListadosOpen = !isListadosOpen;
+
+    var seccion = document.getElementById("divMenuListados");
+    var cabecera = document.getElementById("listadosSectionHeader");
+    var accion = document.getElementById("listadosSectionAction");
+
+    if (!seccion) {
+        return;
+    }
+
+    if (isListadosOpen) {
+        seccion.classList.add("listados-section--open");
+    } else {
+        seccion.classList.remove("listados-section--open");
+    }
+
+    if (cabecera) {
+        cabecera.setAttribute("aria-expanded", isListadosOpen ? "true" : "false");
+    }
+
+    if (accion) {
+        accion.innerHTML = isListadosOpen ? "Ocultar listados" : "Mostrar listados";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", actualizarContadorListados);
+window.addEventListener("load", actualizarContadorListados);
+setTimeout(actualizarContadorListados, 600);
+setTimeout(actualizarContadorListados, 1800);
+</script>
+
+<div class='administrative-section' id='divMenuAdministrativo'>
+
+<button type='button' class='administrative-section-header' onclick='toggleAdministrativeSection()' aria-expanded='false' aria-controls='administrativeSectionContent' id='administrativeSectionHeader'>
+<span class='administrative-section-header__icon'>
+<img src='/GoodVentaAsisCap/iconos/administrativo.png' alt='' />
+</span>
+<span class='administrative-section-header__text'>
+<strong>Administrativo</strong>
+<small>Accesos operativos y de gestion</small>
+</span>
+<span class='administrative-section-header__count' id='administrativeSectionCount'>0 accesos</span>
+<span class='administrative-section-header__action' id='administrativeSectionAction'>Mostrar accesos</span>
+</button>
+
+<div class='administrative-section-content' id='administrativeSectionContent'>
 
 
 <table class='divMenub' id='divMenuCompra2'
@@ -1401,19 +1557,79 @@ class='divMinimizado'></div>
                       </table>
 
 </div>
+</div>
 
-<div style='overflow:auto' id='divMenuInformes'>
+<script>
+var isAdministrativeOpen = false;
 
-<table style='width:100%;'>
-<tr>
-<td style='padding: 15px; padding-left: 33px;width:10%'>
-<p class='pTituloPanel2' style='width:160px'>Informes</p>
-</td>
-<td style='width:90%'>
-<div class='divsperador1'></div>
-</td>
-</tr>
-</table>
+function actualizarContadorAdministrativo() {
+    var contenido = document.getElementById("administrativeSectionContent");
+    var contador = document.getElementById("administrativeSectionCount");
+
+    if (!contenido || !contador) {
+        return;
+    }
+
+    var accesos = contenido.querySelectorAll(".divMenub");
+    var totalAccesos = 0;
+
+    for (var i = 0; i < accesos.length; i++) {
+        var estiloInline = (accesos[i].getAttribute("style") || "").replace(/\s/g, "").toLowerCase();
+        if (estiloInline.indexOf("display:none") === -1) {
+            totalAccesos++;
+        }
+    }
+
+    contador.innerHTML = totalAccesos + " accesos";
+}
+
+function toggleAdministrativeSection() {
+    isAdministrativeOpen = !isAdministrativeOpen;
+
+    var seccion = document.getElementById("divMenuAdministrativo");
+    var cabecera = document.getElementById("administrativeSectionHeader");
+    var accion = document.getElementById("administrativeSectionAction");
+
+    if (!seccion) {
+        return;
+    }
+
+    if (isAdministrativeOpen) {
+        seccion.classList.add("administrative-section--open");
+    } else {
+        seccion.classList.remove("administrative-section--open");
+    }
+
+    if (cabecera) {
+        cabecera.setAttribute("aria-expanded", isAdministrativeOpen ? "true" : "false");
+    }
+
+    if (accion) {
+        accion.innerHTML = isAdministrativeOpen ? "Ocultar accesos" : "Mostrar accesos";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", actualizarContadorAdministrativo);
+window.addEventListener("load", actualizarContadorAdministrativo);
+setTimeout(actualizarContadorAdministrativo, 600);
+setTimeout(actualizarContadorAdministrativo, 1800);
+</script>
+
+<div class='reports-section' id='divMenuInformes'>
+
+<button type='button' class='reports-section-header' onclick='toggleReportsSection()' aria-expanded='false' aria-controls='reportsSectionContent' id='reportsSectionHeader'>
+<span class='reports-section-header__icon'>
+<img src='/GoodVentaAsisCap/iconos/report.png' alt='' />
+</span>
+<span class='reports-section-header__text'>
+<strong>Informes</strong>
+<small>Accesos secundarios del sistema</small>
+</span>
+<span class='reports-section-header__count' id='reportsSectionCount'>0 informes</span>
+<span class='reports-section-header__action' id='reportsSectionAction'>Mostrar informes</span>
+</button>
+
+<div class='reports-section-content' id='reportsSectionContent'>
 
 <table  class='divMenub' id='divMenuCodigoBarra'
 onclick='verCerrarInformeCodBarra()' style='text-align:center'>
@@ -1816,19 +2032,70 @@ class='divMinimizado'></div>
 </tr>
 </table>
 </div>
+</div>
 
-<div style='overflow:auto'>
+<script>
+var isReportsOpen = false;
 
-<table style='width:100%;'>
-<tr>
-<td style='padding: 15px; padding-left: 33px;width:10%'>
-<p class='pTituloPanel2' style='width: 160px;'>Sistema</p>
-</td>
-<td style='width:90%'>
-<div class='divsperador1'></div>
-</td>
-</tr>
-</table>
+function actualizarContadorInformes() {
+    var contenido = document.getElementById("reportsSectionContent");
+    var contador = document.getElementById("reportsSectionCount");
+
+    if (!contenido || !contador) {
+        return;
+    }
+
+    var informes = contenido.querySelectorAll(".divMenub");
+    contador.innerHTML = informes.length + " informes";
+}
+
+function toggleReportsSection() {
+    isReportsOpen = !isReportsOpen;
+
+    var seccion = document.getElementById("divMenuInformes");
+    var cabecera = document.getElementById("reportsSectionHeader");
+    var accion = document.getElementById("reportsSectionAction");
+
+    if (!seccion) {
+        return;
+    }
+
+    if (isReportsOpen) {
+        seccion.classList.add("reports-section--open");
+    } else {
+        seccion.classList.remove("reports-section--open");
+    }
+
+    if (cabecera) {
+        cabecera.setAttribute("aria-expanded", isReportsOpen ? "true" : "false");
+    }
+
+    if (accion) {
+        accion.innerHTML = isReportsOpen ? "Ocultar informes" : "Mostrar informes";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", actualizarContadorInformes);
+window.addEventListener("load", actualizarContadorInformes);
+setTimeout(actualizarContadorInformes, 600);
+setTimeout(actualizarContadorInformes, 1800);
+</script>
+
+<div class='sistema-section' id='divMenuSistema'>
+
+<button type='button' class='sistema-section-header' onclick='toggleSistemaSection()' aria-expanded='false' aria-controls='sistemaSectionContent' id='sistemaSectionHeader'>
+<span class='sistema-section-header__icon'>
+<img src='/GoodVentaAsisCap/iconos/desbloquear.png' alt='' />
+</span>
+<span class='sistema-section-header__text'>
+<strong>Sistema</strong>
+<small>Seguridad, usuarios y accesos</small>
+</span>
+<span class='sistema-section-header__count' id='sistemaSectionCount'>0 accesos</span>
+<span class='sistema-section-header__action' id='sistemaSectionAction'>Mostrar accesos</span>
+</button>
+
+<div class='sistema-section-content' id='sistemaSectionContent'>
 
 
 <table  class='divMenub'id='divMenuAbmUsuarios'
@@ -1878,6 +2145,63 @@ class='divMinimizado'></div>
 
 
 </div>
+</div>
+
+<script>
+var isSistemaOpen = false;
+
+function actualizarContadorSistema() {
+    var contenido = document.getElementById("sistemaSectionContent");
+    var contador = document.getElementById("sistemaSectionCount");
+
+    if (!contenido || !contador) {
+        return;
+    }
+
+    var accesos = contenido.querySelectorAll(".divMenub");
+    var totalAccesos = 0;
+
+    for (var i = 0; i < accesos.length; i++) {
+        var estiloInline = (accesos[i].getAttribute("style") || "").replace(/\s/g, "").toLowerCase();
+        if (estiloInline.indexOf("display:none") === -1) {
+            totalAccesos++;
+        }
+    }
+
+    contador.innerHTML = totalAccesos + " accesos";
+}
+
+function toggleSistemaSection() {
+    isSistemaOpen = !isSistemaOpen;
+
+    var seccion = document.getElementById("divMenuSistema");
+    var cabecera = document.getElementById("sistemaSectionHeader");
+    var accion = document.getElementById("sistemaSectionAction");
+
+    if (!seccion) {
+        return;
+    }
+
+    if (isSistemaOpen) {
+        seccion.classList.add("sistema-section--open");
+    } else {
+        seccion.classList.remove("sistema-section--open");
+    }
+
+    if (cabecera) {
+        cabecera.setAttribute("aria-expanded", isSistemaOpen ? "true" : "false");
+    }
+
+    if (accion) {
+        accion.innerHTML = isSistemaOpen ? "Ocultar accesos" : "Mostrar accesos";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", actualizarContadorSistema);
+window.addEventListener("load", actualizarContadorSistema);
+setTimeout(actualizarContadorSistema, 600);
+setTimeout(actualizarContadorSistema, 1800);
+</script>
 
 
 
@@ -1945,7 +2269,7 @@ style='color:#673ab7'>Soft</span></p>
 </center>
 </td>
 </tr>
-<tr style='width:100%;text-align;center'>
+<tr class='dashboard-legacy-nav' style='width:100%;text-align;center'>
 <td class='trBotonmenu'>
 <center>
 
