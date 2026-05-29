@@ -2910,35 +2910,28 @@ $("div[id=divVistaProveedor]").fadeOut(500);
 /*ABM PRODUCTO*/
 function verCerrarAbmProducto(){
 	document.getElementById("divSegundoPlano").style.display="none";
-	if(document.getElementById("divAbmProducto").style.display==""){
-			if(controldebusquedadProductos==true){
-	ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
-	return
-    }
-limpiarcamposproducto()
-		limpiarcamposbuscarproductos()
-		
-document.getElementById("tdEfectoAbmProductos").className="magictime vanishOut"
-	$("div[id=divAbmProducto]").fadeOut(500);	
-		document.getElementById("divMinimizadoListadoProducto1").style.display="none"
-		document.getElementById("divMinimizadoListadoProductos").style.display="none"
-		
-	}else{	
-		if(controlacceso("VERLISTADOPRODUCTOS","accion")==false){return;}
-		
-	document.getElementById("divAbmProducto").style.display=""
-document.getElementById("tdEfectoAbmProductos").className="magictime slideDownReturn"
-		
+	var divAbmProducto = document.getElementById("divAbmProducto");
+	if (!divAbmProducto) { return; }
+	var isVisible = window.getComputedStyle(divAbmProducto).display !== "none";
+	if (isVisible) {
+		if (controldebusquedadProductos == true) {
+			ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR");
+			return;
+		}
+		limpiarcamposproducto();
+		limpiarcamposbuscarproductos();
+		document.getElementById("tdEfectoAbmProductos").className="magictime vanishOut";
+		$("div[id=divAbmProducto]").fadeOut(500);
+		document.getElementById("divMinimizadoListadoProducto1").style.display="none";
+		document.getElementById("divMinimizadoListadoProductos").style.display="none";
+	} else {
+		if (controlacceso("VERLISTADOPRODUCTOS","accion") == false) { return; }
+		divAbmProducto.style.display="";
+		document.getElementById("tdEfectoAbmProductos").className="magictime slideDownReturn";
 	}
 }
 function verCerrarAbmProducto2(){
-		document.getElementById("imgMinimizaeProducto").style.display="none"
-		document.getElementById("imgCerrarProducto").style.display=""
-		document.getElementById("tdEfectoAbmProductos").className="magictime vanishOut"
-	$("div[id=divAbmProducto]").fadeOut(500);
-		document.getElementById('divAbmProducto2').style.display = "none"
-		document.getElementById('divAbmProducto1').style.display = ""
-		
+	verCerrarAbmProducto();
 }
 function minimizarabmproductos(){
 document.getElementById("tdEfectoAbmProductos").className="magictime slideDown"
@@ -3127,9 +3120,9 @@ function verificarcamposProducto() {
 	var inptTipoProducto = document.getElementById('inptTipoProducto').value
     var porcentaje=document.getElementById("inptPorcVentaProducto").value	
 	if (inptCodBarraProducto == "") {
-		inptCodBarraProducto="0000"
-		return false;
-	}	
+		inptCodBarraProducto = "0000";
+		document.getElementById('inptCodBarraProducto').value = "0000";
+	}
 	if (inptNombreProducto == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL PRODUCTO")
 		return false;
@@ -31428,6 +31421,9 @@ ABM INSUMOS
 var idAbmInsumos = "";
 var filaAbmInsumos = "";
 var productosDisponiblesAbmInsumos = [];
+var productosDisponiblesAbmInsumosCargados = false;
+var productosDisponiblesAbmInsumosCargando = false;
+var callbacksProductosDisponiblesAbmInsumos = [];
 
 function verCerrarVentanaAbmInsumos(d, l) {
 	if (d == "1") {
@@ -31663,12 +31659,19 @@ function eliminarAbmInsumos() {
 }
 
 function cargarProductosDisponiblesAbmInsumos(callback) {
-	if (productosDisponiblesAbmInsumos.length > 0) {
+	if (productosDisponiblesAbmInsumosCargados == true) {
 		if (typeof callback == "function") {
 			callback();
 		}
 		return;
 	}
+	if (typeof callback == "function") {
+		callbacksProductosDisponiblesAbmInsumos.push(callback);
+	}
+	if (productosDisponiblesAbmInsumosCargando == true) {
+		return;
+	}
+	productosDisponiblesAbmInsumosCargando = true;
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -31680,14 +31683,31 @@ function cargarProductosDisponiblesAbmInsumos(callback) {
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			productosDisponiblesAbmInsumosCargando = false;
+			callbacksProductosDisponiblesAbmInsumos = [];
+			ver_vetana_informativa("NO SE PUDO CARGAR LA LISTA DE PRODUCTOS");
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+		},
 		success: function (responseText) {
+			productosDisponiblesAbmInsumosCargando = false;
 			try {
 				var datos = $.parseJSON(responseText);
-				productosDisponiblesAbmInsumos = datos.productos_lista || [];
-				if (typeof callback == "function") {
-					callback();
+				if (respuestaJqueryAjax(datos["1"]) != true) {
+					callbacksProductosDisponiblesAbmInsumos = [];
+					ver_vetana_informativa(datos["mensaje"] || "NO SE PUDO CARGAR LA LISTA DE PRODUCTOS");
+					return;
 				}
-			} catch (error) {}
+				productosDisponiblesAbmInsumos = datos.productos_lista || [];
+				productosDisponiblesAbmInsumosCargados = true;
+				while (callbacksProductosDisponiblesAbmInsumos.length > 0) {
+					callbacksProductosDisponiblesAbmInsumos.shift()();
+				}
+			} catch (error) {
+				callbacksProductosDisponiblesAbmInsumos = [];
+				ver_vetana_informativa("NO SE PUDO CARGAR LA LISTA DE PRODUCTOS");
+				GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
+			}
 		}
 	});
 }
@@ -31719,10 +31739,14 @@ function cargarProductosAsociadosAbmInsumos(idInsumo) {
 }
 
 function agregarFilaProductoInsumo(codProducto, cantidad) {
-	if (productosDisponiblesAbmInsumos.length == 0) {
+	if (productosDisponiblesAbmInsumosCargados == false) {
 		cargarProductosDisponiblesAbmInsumos(function () {
 			agregarFilaProductoInsumo(codProducto, cantidad);
 		});
+		return;
+	}
+	if (productosDisponiblesAbmInsumos.length == 0) {
+		ver_vetana_informativa("NO HAY PRODUCTOS DISPONIBLES PARA AGREGAR");
 		return;
 	}
 	var opciones = "<option value=''>Seleccionar producto</option>";

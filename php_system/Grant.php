@@ -24,7 +24,7 @@ try {
 // ===============================
 if (isset($_GET['delete'])) {
     $id = (int) $_GET['delete'];
-    $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$id]);
+    $pdo->prepare("DELETE FROM tarea_usuario WHERE tarea_id=?")->execute([$id]);
     $pdo->prepare("DELETE FROM tareas WHERE id=?")->execute([$id]);
     header("Location./php_system/Grant.php");
     exit;
@@ -78,10 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tarea_id_guardada = (int) $pdo->lastInsertId();
     }
 
-    $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$tarea_id_guardada]);
+    $pdo->prepare("DELETE FROM tarea_usuario WHERE tarea_id=?")->execute([$tarea_id_guardada]);
     if (!empty($usuarios_vinculados)) {
         $stmtUsuarioTarea = $pdo->prepare("
-            INSERT INTO tarea_usuarios (tarea_id, cod_usuario)
+            INSERT INTO tarea_usuario (tarea_id, cod_usuario)
             VALUES (?, ?)
         ");
         foreach ($usuarios_vinculados as $cod_usuario) {
@@ -103,7 +103,7 @@ $stmtTareaUsuarios = $pdo->query("
     SELECT tu.tarea_id,
            GROUP_CONCAT(tu.cod_usuario ORDER BY p.nombre_persona SEPARATOR ',') AS ids,
            GROUP_CONCAT(p.nombre_persona ORDER BY p.nombre_persona SEPARATOR ', ') AS nombres
-    FROM tarea_usuarios tu
+    FROM tarea_usuario tu
     INNER JOIN usuario u ON u.cod_usuario = tu.cod_usuario
     INNER JOIN persona p ON p.cod_persona = u.cod_usuario
     GROUP BY tu.tarea_id
