@@ -299,6 +299,78 @@ function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
     }
 }
 
+var interConsultaMarcandoLectura= false;
+var ultimoCodInterConsultaLectura= "";
+var ultimoMomentoInterConsultaLectura= 0;
+
+function tieneIndicadorLecturaPendienteInterConsulta() {
+    const badgePendiente= document.getElementById("badgePendienteDetalle");
+    const avisoPendiente= document.getElementById("avisoMensajesPendientesInterConsulta");
+    const resumen= document.getElementById("contenedorEncabezadoInterConsulta");
+    const filaSeleccionada= document.querySelector("#table_frm_VistaInterConsulta .interconsulta-thread-row--selected");
+
+    return (badgePendiente && badgePendiente.style.display != "none")
+        || (avisoPendiente && avisoPendiente.style.display != "none")
+        || (resumen && resumen.classList.contains("is-pending"))
+        || (filaSeleccionada && filaSeleccionada.classList.contains("interconsulta-thread-row--pending"));
+}
+
+function actualizarVistaInterConsultaLeida() {
+    mostrarBadgeDetalleHilo("badgePendienteDetalle", false);
+
+    const avisoPendiente= document.getElementById("avisoMensajesPendientesInterConsulta");
+    if (avisoPendiente) {
+        avisoPendiente.style.display= "none";
+    }
+
+    const resumen= document.getElementById("contenedorEncabezadoInterConsulta");
+    if (resumen) {
+        resumen.classList.remove("is-pending");
+    }
+
+    const filaSeleccionada= document.querySelector("#table_frm_VistaInterConsulta .interconsulta-thread-row--selected");
+    if (filaSeleccionada) {
+        filaSeleccionada.classList.remove("interconsulta-thread-row--pending");
+        const badgeFila= filaSeleccionada.querySelector(".interconsulta-pending-badge");
+        if (badgeFila) {
+            badgeFila.remove();
+        }
+        const cantidadNoLeida= filaSeleccionada.querySelector("#td_datos_14");
+        if (cantidadNoLeida) {
+            cantidadNoLeida.textContent= "0";
+        }
+    }
+}
+
+function marcarInterConsultaLeidaDesdeEditor() {
+    if (!cod_interConsulta || interConsultaMarcandoLectura) {
+        return;
+    }
+
+    const ahora= Date.now();
+    const mismoHilo= String(ultimoCodInterConsultaLectura) == String(cod_interConsulta);
+    if (!tieneIndicadorLecturaPendienteInterConsulta() && mismoHilo && (ahora - ultimoMomentoInterConsultaLectura) < 3000) {
+        return;
+    }
+
+    interConsultaMarcandoLectura= true;
+    obtener_datos_user();
+    marcarMensajeLeido(true, function() {
+        interConsultaMarcandoLectura= false;
+        ultimoCodInterConsultaLectura= cod_interConsulta;
+        ultimoMomentoInterConsultaLectura= Date.now();
+    });
+}
+
+function inicializarLecturaEditorInterConsulta() {
+    const editorMensaje= document.getElementById("inptContenidoAbmMensaje");
+    if (editorMensaje && !editorMensaje.dataset.lecturaInterconsultaInicializada) {
+        editorMensaje.dataset.lecturaInterconsultaInicializada= "1";
+        editorMensaje.addEventListener("click", marcarInterConsultaLeidaDesdeEditor);
+        editorMensaje.addEventListener("focus", marcarInterConsultaLeidaDesdeEditor);
+    }
+}
+
 function manejarBusquedaGlobalInterConsulta(event) {
     if (event && event.keyCode == 13) {
         if (temporizadorBusquedaGlobalInterConsulta) {
@@ -319,10 +391,12 @@ function manejarBusquedaGlobalInterConsulta(event) {
 document.addEventListener("DOMContentLoaded", function() {
     sincronizarOpcionesRapidasInterConsulta();
     actualizarChipActivoInterConsulta();
+    inicializarLecturaEditorInterConsulta();
 });
 window.addEventListener("load", function() {
     sincronizarOpcionesRapidasInterConsulta();
     actualizarChipActivoInterConsulta();
+    inicializarLecturaEditorInterConsulta();
 });
 
 function buscarPacientesConInterConsultas() {
@@ -1050,6 +1124,7 @@ function marcarMensajeLeido(actualizarEncabezado= true, callback= null) {
 				if (Respuesta != "exito") {
 					ver_vetana_informativa("Error al marcar mensaje como leído.");
 				} else if (actualizarEncabezado) {
+                    actualizarVistaInterConsultaLeida();
                     // Actualiz la vista
                     let color= document.getElementById("contenedorEncabezadoInterConsulta").style.border;
                     color= color.substring(11);
