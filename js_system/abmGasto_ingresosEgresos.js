@@ -129,7 +129,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
-	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').eq(1).html() || "";
+	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').html() || "";
 
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();

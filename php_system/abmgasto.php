@@ -393,7 +393,7 @@ if ($operacion == "obtenerGastosAsociados") {
 			<td  id='td_datos_1' style='width: 15%;border: none;'>". number_format($gast['monto'],'0',',','.')."</td>
 			<td  id='td_datos_2' style='width:10%; display: none;'>".$gast['motivo']."</td>
 			<td  id='td_datos_16' style='display: none;'>".$gast['interconsulta_nombre']."</td>
-			<td  id='td_datos_21' style='display: none;'>".$gast['modalidad']."</td>
+			<td  id='td_datos_23' style='display: none;'>".$gast['modalidad']."</td>
 			<td  id='td_datos_6' style='display: none;'>".$gast['tipo']."</td>
 			<td  id='td_datos_8' style='display: none;'>".$gast['nroboleta']."</td>
 			<td  id='td_datos_9' style='display: none;'>".$gast['banco']."</td>
@@ -1630,7 +1630,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			'idgastos' => "",
 			'interconsulta_nombre' => "",
 			'cod_interConsultaFK' => "",
-			'usuarionombre' => $value['cod_cobradorFK'],
+			'usuarionombre' => (!empty($value['cobradornombre']) ? $value['cobradornombre'] : $value['cod_cobradorFK']),
 			'monto' => $value['Monto'],
 			'motivo' => "Movimiento de caja",
 			'descripcion' => "Cobro realizado a ".$value['nombrecliente'] . " en formato ".$value['tipopago'],
@@ -1852,17 +1852,17 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  id='td_datos_2' style='width:10%'>".$motivo."</td>
 					<td  id='td_datos_16' style='width:15%'>".$interconsulta_nombre."</td>
-					<td  style='width:2%'>".$descripcion."</td>
+					<td  style='width:20%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 					<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
 					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
-					<td  id='td_datos_21' style='width:20%'>".$usuarionombre."</td>
+					<td  id='td_datos_21' style='width:10%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -1875,9 +1875,10 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 					<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 					<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 					<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
-					<td  id='td_datos_22' style='display:none'>".$nombre_usuario_edit."</td>
-					<td  id='td_datos_23' style='display:none'>".$cod_gasto_padre."</td>
-					<td  id='td_datos_24' style='display:none'>".$cod_proyecto_gastoFK."</td>
+					<td  id='td_datos_22' style='display:none'>".$cod_proyecto_gastoFK."</td>
+					<td  id='td_datos_23' style='display:none'>".$modalidad."</td>
+					<td  id='td_datos_24' style='display:none'>".$cod_gasto_padre."</td>
+					<td  id='td_datos_26' style='display:none'>".$nombre_usuario_edit."</td>
 					</tr>
 					</table>";
 			}
@@ -1892,7 +1893,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
 				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.')."</td>
-				<td  id='td_datos_21' style='width:5%'>".$modalidad."</td>
+				<td  id='td_datos_23' style='width:5%'>".$modalidad."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
@@ -1912,7 +1913,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 				<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
-				<td  id='td_datos_21' style='display:none'>".$cod_gasto_padre."</td>
+				<td  id='td_datos_24' style='display:none'>".$cod_gasto_padre."</td>
 				<td  id='td_datos_22' style='display:none'>".$cod_proyecto_gastoFK."</td>
 				</tr>
 				</table>
