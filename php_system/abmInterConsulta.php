@@ -70,7 +70,7 @@
                     'busqueda_global'=> $busqueda_global,
                     'fecha_desde'=> $fecha_desde,
                     'fecha_hasta'=> $fecha_hasta,
-                    'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
+                    'fecha_limite' => "NOW()"
                 );
 
                 $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
@@ -123,7 +123,7 @@
 
                 $registrosMens= obtenerMensaje(array(
                     'cod_interConsultaFK' => $cod_interConsulta,
-                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    'fecha_creacion' => "<= NOW()",
                 ), 0);
                 foreach ($registrosMens as $valueMens) {
                     $registrosMenc= obtenerMencion(array(
@@ -241,7 +241,7 @@
                 $filtros= array(
                     "cod_interConsultaFK" => $cod_interConsulta,
                     "cod_usuarioFK" => $user,
-                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    'fecha_creacion' => "<= NOW()",
                     "cod_dictamenFK" => $cod_dictamenFK,
                     "sin_dictamen" => ($cod_dictamenFK == null || $cod_dictamenFK == "") ? true : NULL
                 );
@@ -357,7 +357,7 @@
         // Agrega las menciones a los mensajes futuros del sistema
         $registrosMens= obtenerMensaje(array(
             'cod_interConsultaFK' => $cod_interConsulta_destino,
-            'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
+            'fecha_creacion' => "> NOW()",
         ), 0);
 
         foreach ($registrosMens as $mensj) {
@@ -503,7 +503,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             // Se obtienen todas las menciones
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
-                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                'fecha_creacion' => "<= NOW()",
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
             ));
 
@@ -537,7 +537,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             // Se obtienen los mensajes sin dictamenes
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
-                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                'fecha_creacion' => "<= NOW()",
                 'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
                 'sin_dictamen' => TRUE
             ));
@@ -557,7 +557,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 $urlAutor = !empty($dictamen['url_create']) ? $dictamen['url_create'] : '/GoodVentaAsisCap/iconos/user.png';
                 $estadoDictamenClase = preg_replace('/[^a-z0-9_-]/', '', strtolower($estadoDictamenValor));
                 $registrosMens2= obtenerMensaje(array(
-                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    'fecha_creacion' => "<= NOW()",
                     'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
                     'cod_dictamenFK' => $dictamen['id']
                 ));
@@ -683,7 +683,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 ), $limiteMensajes, 0);
 
                 $registrosMens2= obtenerMensaje(array(
-                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    'fecha_creacion' => "<= NOW()",
                     'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
                     'cod_dictamenFK' => $dictamen['id']
                 ));
@@ -713,7 +713,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
 
             // Obtiene los mensajes programados
             $registrosMens2= obtenerMensaje(array(
-                'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
+                'fecha_creacion' => "> NOW()",
                 "cod_interConsultaFK" => $valueInter["cod_interConsulta"],
                 "estado" => 'activo'
             ));
@@ -959,7 +959,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
         // Obtiene todos los mensajes de la interConsulta
         $fechaActual= new DateTime();
         $regMensaje= obtenerMensaje(array(
-                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                'fecha_creacion' => "<= NOW()",
                 "cod_interConsultaFK" => $filtros["cod_interConsultaFK"],
                 "cod_dictamenFK" => isset($filtros['cod_dictamenFK']) ? $filtros['cod_dictamenFK'] : NULL,
                 "sin_dictamen" => isset($filtros['sin_dictamen']) ? $filtros['sin_dictamen'] : NULL,
@@ -1088,7 +1088,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             if ($value["cantMensajesProgramados"]) {
                 // Obtiene los mensajes programados
                 $registrosMens= obtenerMensaje(array(
-                    'fecha_creacion' => "> '".(new DateTime())->format('Y-m-d H:i:s')."'",
+                    'fecha_creacion' => "> NOW()",
                     "cod_interConsultaFK" => $value["cod_interConsulta"],
                 ));
                 foreach ($registrosMens as $valueMens) {
@@ -1525,7 +1525,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             $fechaActual= new DateTime();
             $registrosMens= obtenerMensaje(array(
                 'cod_interConsultaFK' => $cod_interConsulta,
-                'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                'fecha_creacion' => "<= NOW()",
             ), 0);
             $valueMens= end($registrosMens);
             $mencionesTemp= array();
@@ -1649,9 +1649,15 @@ function convertirTextoDocumentoInterconsulta($texto) {
                     $sqlFiltro .= "ic.fecha_creacion <= '$value 23:59:59'";
                     break;
                 case 'fecha_limite':
-                    $sqlFiltroMenciones .= " AND mj.fecha_creacion <= '$value' ";
-                    $sqlFiltroMensaje .= " AND mj.fecha_creacion > '$value' ";
-                    $sqlFiltroFechaLimite .= " AND mj2.fecha_creacion <= '$value'";
+                    if ($value === "NOW()") {
+                        $sqlFiltroMenciones .= " AND mj.fecha_creacion <= NOW() ";
+                        $sqlFiltroMensaje .= " AND mj.fecha_creacion > NOW() ";
+                        $sqlFiltroFechaLimite .= " AND mj2.fecha_creacion <= NOW()";
+                    } else {
+                        $sqlFiltroMenciones .= " AND mj.fecha_creacion <= '$value' ";
+                        $sqlFiltroMensaje .= " AND mj.fecha_creacion > '$value' ";
+                        $sqlFiltroFechaLimite .= " AND mj2.fecha_creacion <= '$value'";
+                    }
                     break;
                 default:
                     if (is_numeric($value)) {
