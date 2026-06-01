@@ -393,7 +393,7 @@ if ($operacion == "obtenerGastosAsociados") {
 			<td  id='td_datos_1' style='width: 15%;border: none;'>". number_format($gast['monto'],'0',',','.')."</td>
 			<td  id='td_datos_2' style='width:10%; display: none;'>".$gast['motivo']."</td>
 			<td  id='td_datos_16' style='display: none;'>".$gast['interconsulta_nombre']."</td>
-			<td  id='td_datos_23' style='display: none;'>".$gast['modalidad']."</td>
+			<td  id='td_datos_21' style='display: none;'>".$gast['modalidad']."</td>
 			<td  id='td_datos_6' style='display: none;'>".$gast['tipo']."</td>
 			<td  id='td_datos_8' style='display: none;'>".$gast['nroboleta']."</td>
 			<td  id='td_datos_9' style='display: none;'>".$gast['banco']."</td>

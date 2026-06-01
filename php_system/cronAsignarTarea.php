@@ -57,6 +57,8 @@ function generarTareasDiariasAutomaticas()
                 cod_tarea_diaria,
                 cod_tareaFK,
                 cod_usuarioFK,
+                tipo_destino,
+                rol_operativoFK,
                 observacion_admin
             FROM tareas_programadas_diarias
             WHERE estado = 'Activo'
@@ -102,7 +104,59 @@ function generarTareasDiariasAutomaticas()
         $cod_tarea_diaria = $row["cod_tarea_diaria"];
         $cod_tareaFK = $row["cod_tareaFK"];
         $cod_usuarioFK = $row["cod_usuarioFK"];
+        $tipo_destino = isset($row["tipo_destino"]) ? $row["tipo_destino"] : "USUARIO";
+        $rol_operativoFK = isset($row["rol_operativoFK"]) ? $row["rol_operativoFK"] : "";
         $observacion_admin = $row["observacion_admin"];
+
+        $usuariosDestino = array();
+
+        if ($tipo_destino == "ROL") {
+            $sqlUsuariosRol = "SELECT cod_usuario
+                               FROM usuario
+                               WHERE estado = 'Activo'
+                               AND tipo = ?
+                               ORDER BY cod_usuario ASC";
+            $stmtUsuariosRol = $mysqli->prepare($sqlUsuariosRol);
+
+            if (!$stmtUsuariosRol) {
+                $informacion = array(
+                    "1" => "error",
+                    "mensaje" => "Error al preparar usuarios por rol: " . $mysqli->error,
+                    "sql" => $sqlUsuariosRol
+                );
+                echo json_encode($informacion);
+                exit;
+            }
+
+            $sRol = "s";
+            $stmtUsuariosRol->bind_param($sRol, $rol_operativoFK);
+
+            if (!$stmtUsuariosRol->execute()) {
+                $informacion = array(
+                    "1" => "error",
+                    "mensaje" => "Error al buscar usuarios por rol: " . $stmtUsuariosRol->error,
+                    "sql" => $sqlUsuariosRol
+                );
+                echo json_encode($informacion);
+                exit;
+            }
+
+            $resultUsuariosRol = $stmtUsuariosRol->get_result();
+
+            while ($usuarioRol = mysqli_fetch_assoc($resultUsuariosRol)) {
+                $usuariosDestino[] = $usuarioRol["cod_usuario"];
+            }
+
+            $stmtUsuariosRol->close();
+        } else {
+            $usuariosDestino[] = $cod_usuarioFK;
+            $rol_operativoFK = "";
+        }
+
+        foreach ($usuariosDestino as $cod_usuarioDestino) {
+            if ($cod_usuarioDestino == "") {
+                continue;
+            }
 
         $sqlVerificar = "SELECT cod_tarea_asignada
                          FROM tareas_programadas_asignadas
@@ -123,7 +177,7 @@ function generarTareasDiariasAutomaticas()
             exit;
         }
 		$ss="sss";
-        $stmtVerificar->bind_param($ss, $cod_tareaFK, $cod_usuarioFK, $fecha_hoy);
+        $stmtVerificar->bind_param($ss, $cod_tareaFK, $cod_usuarioDestino, $fecha_hoy);
 
         if (!$stmtVerificar->execute()) {
             $informacion = array(
@@ -147,6 +201,8 @@ function generarTareasDiariasAutomaticas()
                           (
                             cod_tareaFK,
                             cod_usuarioFK,
+                            tipo_asignacion,
+                            rol_operativoFK,
                             estado_tarea,
                             visto,
                             fecha_tarea,
@@ -154,7 +210,7 @@ function generarTareasDiariasAutomaticas()
                             fecha_insert
                           )
                           VALUES
-                          (?, ?, ?, ?, ?, ?, ?)";
+                          (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmtInsert = $mysqli->prepare($sqlInsert);
 
@@ -168,12 +224,15 @@ function generarTareasDiariasAutomaticas()
                 exit;
             }
 
-            $sssInsert = "sssssss";
+            $tipo_asignacion = $tipo_destino == "ROL" ? "ROL" : "USUARIO";
+            $sssInsert = "sssssssss";
 
             $stmtInsert->bind_param(
                 $sssInsert,
                 $cod_tareaFK,
-                $cod_usuarioFK,
+                $cod_usuarioDestino,
+                $tipo_asignacion,
+                $rol_operativoFK,
                 $estado_tarea,
                 $visto,
                 $fecha_hoy,
@@ -197,6 +256,7 @@ function generarTareasDiariasAutomaticas()
         }
 
         $stmtVerificar->close();
+        }
 
         $sqlUpdate = "UPDATE tareas_programadas_diarias
                       SET ultima_fecha_generada = ?,

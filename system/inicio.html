@@ -20,11 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<<<<<<< Updated upstream
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gantt-dashboard-sin-espacio-v1-20260529" />
-=======
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-detalle-hilo-20260529" />
->>>>>>> Stashed changes
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -13257,8 +13253,8 @@ style='background-color: #b7b7b7;'>
             <input type="hidden" id="inptFotoUsuarioAsignadoTarea" value="" />
 
             <div class="asignar-tarea__tabs" aria-label="Secciones de asignaci&oacute;n de tareas">
-                <button type="button" class="asignar-tarea__tab asignar-tarea__tab--activo">Usuarios</button>
-                <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Roles y plantillas</button>
+                <button type="button" class="asignar-tarea__tab asignar-tarea__tab--activo" id="btnVistaAsignarUsuarios" onclick="cambiarVistaAsignarTarea('USUARIOS')">Usuarios</button>
+                <button type="button" class="asignar-tarea__tab" id="btnVistaAsignarRoles" onclick="cambiarVistaAsignarTarea('ROLES')">Roles</button>
                 <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Tareas del d&iacute;a</button>
                 <button type="button" class="asignar-tarea__tab" title="Us&aacute; el bot&oacute;n de tarea casual al seleccionar un usuario">Tareas casuales</button>
             </div>
@@ -13272,7 +13268,7 @@ style='background-color: #b7b7b7;'>
                         id="inptBuscarUsuarioAsignarTarea" 
                         class="asignar-tarea__input inputText" 
                         placeholder="Nombre, Tipo o CI..."
-                        onkeyup="if(event.keyCode == 13){buscarUsuariosAsignarTarea()}" 
+                        onkeyup="if(event.keyCode == 13){buscarVistaAsignarTarea()}" 
                     />
                 </div>
 
@@ -13290,7 +13286,7 @@ style='background-color: #b7b7b7;'>
                         id="inptBuscarRolOperativoAsignarTarea" 
                         class="asignar-tarea__input inputText" 
                         placeholder="Doctor, Caja, Limpieza..."
-                        onkeyup="if(event.keyCode == 13){buscarUsuariosAsignarTarea()}" 
+                        onkeyup="if(event.keyCode == 13){buscarVistaAsignarTarea()}" 
                     />
                 </div>
 
@@ -13304,7 +13300,7 @@ style='background-color: #b7b7b7;'>
                 </div>
 
                 <div class="asignar-tarea__filtro asignar-tarea__filtro--boton">
-                    <button type="button" class="asignar-tarea__btn-buscar" onclick="buscarUsuariosAsignarTarea()">
+                    <button type="button" class="asignar-tarea__btn-buscar" onclick="buscarVistaAsignarTarea()">
                         Buscar
                     </button>
                 </div>
@@ -13315,10 +13311,10 @@ style='background-color: #b7b7b7;'>
                 <section class="asignar-tarea__usuarios-panel">
                     <div class="asignar-tarea__panel-header">
                         <div>
-                            <p class="asignar-tarea__panel-kicker">Usuarios</p>
-                            <h3>Personal disponible</h3>
+                            <p class="asignar-tarea__panel-kicker" id="kickerPanelAsignarTarea">Usuarios</p>
+                            <h3 id="tituloPanelAsignarTarea">Personal disponible</h3>
                         </div>
-                        <span class="asignar-tarea__panel-note">Seleccion&aacute; un funcionario para ver el detalle.</span>
+                        <span class="asignar-tarea__panel-note" id="notaPanelAsignarTarea">Seleccion&aacute; un funcionario para ver el detalle.</span>
                     </div>
 
                     <div class="asignar-tarea__contenedor" id="contenedorUsuariosAsignarTarea">
@@ -13338,7 +13334,7 @@ style='background-color: #b7b7b7;'>
                         <div class="asignar-tarea__seleccion-info">
                             <img src="" id="imgUsuarioSeleccionadoTarea" class="asignar-tarea__seleccion-img" />
                             <div>
-                                <p class="asignar-tarea__seleccion-label">Usuario seleccionado</p>
+                                <p class="asignar-tarea__seleccion-label" id="lblTipoSeleccionAsignarTarea">Usuario seleccionado</p>
                                 <h3 class="asignar-tarea__seleccion-nombre" id="lblUsuarioSeleccionadoTarea"></h3>
                                 <span class="asignar-tarea__seleccion-ci" id="lblUsuarioSeleccionadoCI"></span>
                             </div>
@@ -13400,9 +13396,9 @@ style='background-color: #b7b7b7;'>
             <div>
                 <p class="tarea-diaria-modal__etiqueta">Asignaci&oacute;n autom&aacute;tica</p>
                 <h2 class="tarea-diaria-modal__titulo">
-                    Configurar tareas diarias
+                    Asignar tareas diarias
                 </h2>
-                <span class="tarea-diaria-modal__subtitulo">Configur&aacute; actividades por usuario, rol operativo o sucursal.</span>
+                <span class="tarea-diaria-modal__subtitulo">Seleccion&aacute; actividades existentes y aplicalas por usuario, rol operativo o sucursal.</span>
             </div>
 
             <button type="button" class="tarea-diaria-modal__cerrar" onclick="verCerrarModalTareaDiaria(false)">
@@ -13449,8 +13445,10 @@ style='background-color: #b7b7b7;'>
 
                     <div class="tarea-diaria-modal__campo">
                         <label>Rol operativo</label>
-                        <select class="inputText tarea-diaria-modal__input" id="inptRolOperativoTareaDiaria" disabled>
+                        <select class="inputText tarea-diaria-modal__input" id="inptRolOperativoTareaDiaria" disabled onchange="actualizarResumenSeleccionTareaDiaria();buscarTareasParaAsignarDiariaUsuario();">
                             <option value="">Seleccionar rol</option>
+                            <option value="DOCTOR">DOCTOR</option>
+                            <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Caja">Caja</option>
                             <option value="Recepci&oacute;n">Recepci&oacute;n</option>
@@ -13513,27 +13511,9 @@ style='background-color: #b7b7b7;'>
                     </div>
 
                     <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--boton">
-                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="toggleCrearActividadTareaDiaria()">
-                            + Crear nueva actividad
+                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="verCerrarModalCrearTareaDiaria(true)">
+                            + Crear tarea diaria
                         </button>
-                    </div>
-                </div>
-
-                <div class="tarea-diaria-modal__crear" id="boxCrearActividadTareaDiaria" style="display:none;">
-                    <div class="tarea-diaria-modal__crear-header">
-                        <strong>Nueva actividad</strong>
-                        <span>Formulario preparado para la siguiente fase.</span>
-                    </div>
-                    <div class="tarea-diaria-modal__crear-grid">
-                        <input type="text" class="inputText tarea-diaria-modal__input" placeholder="Nombre de la tarea" />
-                        <input type="time" class="inputText tarea-diaria-modal__input" />
-                        <select class="inputText tarea-diaria-modal__input">
-                            <option>Prioridad normal</option>
-                            <option>Baja</option>
-                            <option>Alta</option>
-                            <option>Urgente</option>
-                        </select>
-                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="ver_vetana_informativa('La creaci&oacute;n r&aacute;pida queda preparada para la siguiente fase.')">Guardar actividad</button>
                     </div>
                 </div>
 
@@ -13680,6 +13660,69 @@ style='background-color: #b7b7b7;'>
                 <button type="button" class="tarea-diaria-modal__btn-cancelar" onclick="verCerrarModalTareaDiaria(false)">Cancelar</button>
                 <button type="button" class="tarea-diaria-modal__btn-confirmar" onclick="guardarTareaDiariaUsuario()">
                     Guardar asignaci&oacute;n
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="tarea-diaria-modal" id="modalCrearTareaDiaria" style="display:none;">
+
+    <div class="tarea-diaria-modal__ventana tarea-diaria-modal__ventana--crear">
+
+        <div class="tarea-diaria-modal__header">
+
+            <div>
+                <p class="tarea-diaria-modal__etiqueta">Cat&aacute;logo de tareas</p>
+                <h2 class="tarea-diaria-modal__titulo">
+                    Crear tarea diaria
+                </h2>
+                <span class="tarea-diaria-modal__subtitulo">Esta actividad quedar&aacute; disponible para asignarla como tarea diaria.</span>
+            </div>
+
+            <button type="button" class="tarea-diaria-modal__cerrar" onclick="verCerrarModalCrearTareaDiaria(false)">
+                x
+            </button>
+
+        </div>
+
+        <div class="tarea-diaria-modal__body">
+
+            <section class="tarea-diaria-modal__section">
+                <div class="tarea-diaria-modal__section-header">
+                    <span class="tarea-diaria-modal__step">1</span>
+                    <div>
+                        <h3>Datos de la actividad</h3>
+                        <p>Cre&aacute; la tarea base; la asignaci&oacute;n se hace desde el modal anterior.</p>
+                    </div>
+                </div>
+
+                <div class="tarea-diaria-modal__crear-modal-grid">
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Nombre de la tarea</label>
+                        <input type="text" class="inputText tarea-diaria-modal__input" id="inptNombreCrearTareaDiaria" placeholder="Ej: Control de agenda" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Hora sugerida</label>
+                        <input type="time" class="inputText tarea-diaria-modal__input" id="inptHoraCrearTareaDiaria" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Tipo</label>
+                        <input type="text" class="inputText tarea-diaria-modal__input" id="inptTipoCrearTareaDiaria" value="DIARIO" readonly />
+                    </div>
+                </div>
+            </section>
+
+            <div class="tarea-diaria-modal__footer">
+                <button type="button" class="tarea-diaria-modal__btn-cancelar" onclick="verCerrarModalCrearTareaDiaria(false)">Cancelar</button>
+                <button type="button" class="tarea-diaria-modal__btn-confirmar" onclick="guardarNuevaTareaDiaria()">
+                    Guardar tarea diaria
                 </button>
             </div>
 

@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS tareas_programadas_asignadas (
     cod_tarea_asignada INT(11) NOT NULL AUTO_INCREMENT,
     cod_tareaFK INT(11) NOT NULL,
     cod_usuarioFK INT(11) NOT NULL,
+    tipo_asignacion ENUM('USUARIO','ROL') NOT NULL DEFAULT 'USUARIO',
+    rol_operativoFK VARCHAR(45) NULL,
     estado_tarea ENUM('Pendiente','En Proceso','Completada','Cancelada') NOT NULL DEFAULT 'Pendiente',
     visto ENUM('Si','No') NOT NULL DEFAULT 'No',
     fecha_visto DATETIME NULL,
@@ -30,7 +32,10 @@ CREATE TABLE IF NOT EXISTS tareas_programadas_asignadas (
     fecha_insert DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_update DATETIME NULL,
     fecha_tarea date NULL,
-    PRIMARY KEY (cod_tarea_asignada)
+    PRIMARY KEY (cod_tarea_asignada),
+    KEY idx_tarea_asignada_usuario (cod_usuarioFK),
+    KEY idx_tarea_asignada_rol (rol_operativoFK),
+    KEY idx_tarea_asignada_tipo (tipo_asignacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -38,7 +43,9 @@ CREATE TABLE IF NOT EXISTS tareas_programadas_diarias (
     cod_tarea_diaria INT(11) NOT NULL AUTO_INCREMENT,
 
     cod_tareaFK INT(11) NOT NULL,
-    cod_usuarioFK INT(11) NOT NULL,
+    cod_usuarioFK INT(11) NULL,
+    tipo_destino ENUM('USUARIO','ROL') NOT NULL DEFAULT 'USUARIO',
+    rol_operativoFK VARCHAR(45) NULL,
 
     estado ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
 
@@ -65,6 +72,8 @@ CREATE TABLE IF NOT EXISTS tareas_programadas_diarias (
 
     KEY idx_tarea_diaria_tarea (cod_tareaFK),
     KEY idx_tarea_diaria_usuario (cod_usuarioFK),
+    KEY idx_tarea_diaria_rol (rol_operativoFK),
+    KEY idx_tarea_diaria_destino (tipo_destino),
     KEY idx_tarea_diaria_estado (estado),
     KEY idx_tarea_diaria_ultima_fecha (ultima_fecha_generada)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -8112,6 +8112,10 @@ text-align: justify;
     width: min(1180px, 96vw);
 }
 
+.tarea-diaria-modal__ventana--crear {
+    width: min(620px, 94vw);
+}
+
 .tarea-diaria-modal__subtitulo {
     display: block;
     margin-top: 4px;
@@ -8295,6 +8299,13 @@ text-align: justify;
     display: grid;
     grid-template-columns: minmax(220px, 1fr) 130px minmax(140px, 180px) auto;
     gap: 8px;
+    align-items: end;
+}
+
+.tarea-diaria-modal__crear-modal-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 150px 120px;
+    gap: 10px;
     align-items: end;
 }
 
@@ -8505,6 +8516,7 @@ text-align: justify;
 @media (max-width: 900px) {
     .tarea-diaria-modal__filtros,
     .tarea-diaria-modal__crear-grid,
+    .tarea-diaria-modal__crear-modal-grid,
     .tarea-diaria-modal__task-columns {
         grid-template-columns: 1fr;
     }
@@ -8661,7 +8673,7 @@ text-align: justify;
     color: #475569;
     font-size: 12px;
     font-weight: 900;
-    cursor: default;
+    cursor: pointer;
 }
 
 .asignar-tarea__tab--activo {
@@ -8804,6 +8816,7 @@ text-align: justify;
 .asignar-tarea__user-stats span {
     display: inline-flex;
     align-items: center;
+    max-width: 100%;
     min-height: 24px;
     padding: 4px 8px;
     border-radius: 999px;
@@ -8811,6 +8824,28 @@ text-align: justify;
     color: #475569;
     font-size: 11px;
     font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.asignar-tarea__role-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #c7d2fe;
+    border-radius: 14px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.asignar-tarea__role-row .asignar-tarea__user-meta {
+    min-width: 0;
 }
 
 .asignar-tarea__user-stats strong {
