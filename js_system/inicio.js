@@ -33325,24 +33325,13 @@ if (!file) {
 
 var filename= file.name;
 var tamanho = file.size;
-if (tamanho > 5000000){
-	ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 5Mb")
+if (tamanho > 10000000){
+	ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 100Mb")
 	limpiarArchivoFotos();
 	return false
 }
 
 file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
-if (file_extension != "jpg" && file_extension != "jpeg") {
-	ver_vetana_informativa("LA IMAGEN SELECCIONADA DEBE TENER FORMATO JPG")
-	limpiarArchivoFotos();
-	return false;
-}
-
-if (file.type && file.type != "image/jpeg") {
-	ver_vetana_informativa("LA IMAGEN SELECCIONADA DEBE TENER FORMATO JPG")
-	limpiarArchivoFotos();
-	return false;
-}
 
 urlarchivopdfPrincipal = URL.createObjectURL(file);
 document.getElementById("text-cargaPrincipal").style.display = "none";
@@ -35094,6 +35083,64 @@ function relacionarProductosLocal() {
 
 }
 var controlFoto= "";
+var iconoDocumentoAdjunto = "/GoodVentaAsisCap/iconos/informedevolucion.png";
+var iconoImagenProducto = "/GoodVentaAsisCap/iconos/imagenphoto.png";
+var iconoSubirImagen = "/GoodVentaAsisCap/iconos/subir_imagen.png";
+
+function obtenerExtensionAdjunto(ruta) {
+	if (!ruta) {
+		return "";
+	}
+	if (ruta.indexOf("data:image/") === 0) {
+		return "imagen";
+	}
+	if (ruta.indexOf("data:") === 0) {
+		return "documento";
+	}
+	var rutaSinParametros = ruta.split("?")[0].split("#")[0];
+	var posicionPunto = rutaSinParametros.lastIndexOf(".");
+	if (posicionPunto === -1) {
+		return "";
+	}
+	return rutaSinParametros.substring(posicionPunto + 1).toLowerCase();
+}
+
+function esExtensionImagenAdjunto(extension) {
+	return ["imagen", "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].indexOf((extension || "").toLowerCase()) !== -1;
+}
+
+function esAdjuntoImagen(ruta, extension) {
+	if (ruta && ruta.indexOf("data:image/") === 0) {
+		return true;
+	}
+	return esExtensionImagenAdjunto(extension || obtenerExtensionAdjunto(ruta));
+}
+
+function obtenerRutaBackgroundAdjunto(elemento) {
+	if (!elemento) {
+		return "";
+	}
+	var ruta = elemento.style.backgroundImage || "";
+	if (ruta.indexOf("url(") === 0) {
+		ruta = ruta.slice(4, -1).replace(/^["']|["']$/g, "");
+	}
+	return ruta;
+}
+
+function aplicarMiniaturaAdjunto(selectorElemento, rutaArchivo, extension, nombreArchivo) {
+	var elemento = document.querySelector(selectorElemento);
+	if (!elemento) {
+		return;
+	}
+	var esImagen = esAdjuntoImagen(rutaArchivo, extension);
+	var rutaPreview = esImagen ? rutaArchivo : iconoDocumentoAdjunto;
+	elemento.style.backgroundImage = "url('" + rutaPreview + "')";
+	elemento.dataset.adjuntoUrl = rutaArchivo || "";
+	elemento.dataset.adjuntoExt = extension || obtenerExtensionAdjunto(rutaArchivo);
+	elemento.dataset.adjuntoNombre = nombreArchivo || "";
+	elemento.classList.toggle("imgFotoProductoDocumento", !esImagen);
+}
+
 function ExploradorImagenProducto(){
 	$("input[name=file_producto]").click();
 }
@@ -35102,19 +35149,15 @@ function readFileProducto(input) {
 	var file = $("input[name=" + input.name + "]")[0].files[0];
 	var filename = file.name;
 	var tamanho = file.size;
-	if (tamanho > 5000000) {
+	if (tamanho > 10000000) {
 		ver_vetana_informativa("LA FOTO NO PUEDE EXCEDER LOS 5Mb")
 		return false
 	}
 	file_extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-	if ((file_extension == "jpeg") || (file_extension == "jpg") || (file_extension == "png")) {
-	} else {
-		ver_vetana_informativa("LA FOTO SELECCIONADO NO ES JPEG")
-		return false;
-	}
+	
 	var reader = new FileReader();
 	reader.onload = function (e) {
-		let elemento= "div[id=img" + controlFoto + "]";
+		let elemento= "#img" + controlFoto;
 		switch (controlFoto) {
 			case 'fotoInventarioLocal1':
 				fotoInventario1= e.target.result;
@@ -35149,9 +35192,14 @@ function readFileProducto(input) {
 				extDocumentoFirmadoGasto= file_extension;
 				break;
 		}
- 		$(elemento).css({"background-image":"url('"+e.target.result+"')"})
 
-		document.getElementById("ImgFotoProductos").src = e.target.result
+		aplicarMiniaturaAdjunto(elemento, e.target.result, file_extension, filename);
+		const imgPreviewProducto = document.getElementById("ImgFotoProductos");
+		const archivoEsImagen = esAdjuntoImagen(e.target.result, file_extension);
+		imgPreviewProducto.src = archivoEsImagen ? e.target.result : iconoDocumentoAdjunto;
+		imgPreviewProducto.dataset.adjuntoUrl = e.target.result;
+		imgPreviewProducto.dataset.adjuntoExt = file_extension;
+		imgPreviewProducto.onclick = archivoEsImagen ? function () { descargarImagen(this, 'imagenInterconsulta'); } : function () { window.open(this.dataset.adjuntoUrl, '_blank'); };
 		document.getElementById("btnEliminarPhotoProducto").style.backgroundColor = 'red'
 
 	}
@@ -35193,9 +35241,17 @@ function eliminarFoto() {
 			extDocumentoFirmadoGasto= "";
 			break;
 	}
-	const elemento= "div[id=img"+ controlFoto +"]";
- 	$(elemento).css({"background-image":"url('/GoodVentaAsisCap/iconos/imagenphoto.png')"})
-	document.getElementById("ImgFotoProductos").src = "/GoodVentaAsisCap/iconos/imagenphoto.png"
+	const elemento= document.querySelector("#img"+ controlFoto);
+ 	if (elemento) {
+		elemento.style.backgroundImage = "url('" + iconoImagenProducto + "')";
+		elemento.dataset.adjuntoUrl = "";
+		elemento.dataset.adjuntoExt = "";
+		elemento.dataset.adjuntoNombre = "";
+		elemento.classList.remove("imgFotoProductoDocumento");
+	}
+	document.getElementById("ImgFotoProductos").src = iconoImagenProducto;
+	document.getElementById("ImgFotoProductos").dataset.adjuntoUrl = "";
+	document.getElementById("ImgFotoProductos").dataset.adjuntoExt = "";
 }
 
 function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
@@ -35205,23 +35261,35 @@ function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 		controlFoto= opcion;
 		// Obtiene la direccion de la imagen
 		const elemento= 'img' + opcion;
-		let ruta= document.getElementById(elemento).style.backgroundImage;
+		const elementoAdjunto = document.getElementById(elemento);
+		let ruta= elementoAdjunto ? (elementoAdjunto.dataset.adjuntoUrl || obtenerRutaBackgroundAdjunto(elementoAdjunto)) : "";
+		let extensionAdjunto = elementoAdjunto ? (elementoAdjunto.dataset.adjuntoExt || obtenerExtensionAdjunto(ruta)) : "";
 
 		// En caso de que no tenga imagen cargada
 		if (ruta.includes('subir_imagen.png') || ruta.includes('imagenphoto.png')) {
 			ruta= 'url("/GoodVentaAsisCap/iconos/guia_fotos.jpeg")';
+			extensionAdjunto = "jpg";
 		}
 		
-		document.getElementById('ImgFotoProductos').src= ruta.slice(5, -2);
+		if (ruta.indexOf("url(") === 0) {
+			ruta = ruta.slice(4, -1).replace(/^["']|["']$/g, "");
+		}
+		const esImagen = esAdjuntoImagen(ruta, extensionAdjunto);
+		const imgPreview = document.getElementById('ImgFotoProductos');
+		imgPreview.src= esImagen ? ruta : iconoDocumentoAdjunto;
+		imgPreview.dataset.adjuntoUrl = ruta;
+		imgPreview.dataset.adjuntoExt = extensionAdjunto;
+		imgPreview.onclick = esImagen ? function () { descargarImagen(this, 'imagenInterconsulta'); } : function () { window.open(this.dataset.adjuntoUrl, '_blank'); };
 		// Muestra o oculta las opciones de seleccionar y eliminar
 		if (mostrarOpciones) {
 			document.getElementById('opcionesFotos').style.display= "";
-			document.getElementById('ImgFotoProductos').onclick= "";
 		} else {
 			document.getElementById('opcionesFotos').style.display= "none";
 		}
 	} else {
-		document.getElementById('ImgFotoProductos').src= "/GoodVentaAsisCap/iconos/imagenphoto.png";
+		document.getElementById('ImgFotoProductos').src= iconoImagenProducto;
+		document.getElementById('ImgFotoProductos').dataset.adjuntoUrl = "";
+		document.getElementById('ImgFotoProductos').dataset.adjuntoExt = "";
 		document.getElementById('divAddFotos').style.display= "none";
 		document.getElementById('btnEliminarPhotoProducto').style.backgroundColor= "#ccc";
 	}

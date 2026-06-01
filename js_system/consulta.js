@@ -2735,7 +2735,9 @@ function guardarPorcentajeProgreso(){
 				verCerrarCargarPorcentajeProgreso()
 		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
  buscarDetalleVentaConsulta(cod_ventaFKConsulta);
- 					cambiarEstadoAgendaDesdeModal("ATENDIDO");
+ if (idAbmAgenda) {
+	cambiarEstadoAgendaDesdeModal("ATENDIDO");
+ }
 			}
 			}catch(error)
 				{

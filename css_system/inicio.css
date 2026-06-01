@@ -5221,6 +5221,13 @@ text-align: justify;
   box-shadow: none;
 }
 
+.imgFotoProducto.imgFotoProductoDocumento {
+  background-color: #eef4f8;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 #inptContenidoAbmMensaje {
   width: 100%;
   min-height: 108px;

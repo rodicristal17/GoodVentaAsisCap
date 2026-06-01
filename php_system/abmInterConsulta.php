@@ -987,8 +987,13 @@ function convertirTextoDocumentoInterconsulta($texto) {
 
             $miniatura_imagen= "";
             if ($valueMens['url']) {
+                $urlAdjunto= escaparHtmlInterconsulta($valueMens['url']);
+                $extensionAdjunto= escaparHtmlInterconsulta(obtenerExtensionUrlInterconsulta($valueMens['url']));
+                $esImagenAdjunto= esUrlImagenInterconsulta($valueMens['url']);
+                $urlMiniaturaAdjunto= $esImagenAdjunto ? $urlAdjunto : "/GoodVentaAsisCap/iconos/informedevolucion.png";
+                $claseDocumentoAdjunto= $esImagenAdjunto ? "" : " imgFotoProductoDocumento";
                 $miniatura_imagen= '<button type="button" class="interconsulta-message-attachment" onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" title="Ver adjunto">
-                    <span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto" style="background-image: url('.$valueMens['url'].');"></span>
+                    <span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto'.$claseDocumentoAdjunto.'" data-adjunto-url="'.$urlAdjunto.'" data-adjunto-ext="'.$extensionAdjunto.'" style="background-image: url('.$urlMiniaturaAdjunto.');"></span>
                     <small>Adjunto</small>
                 </button>';
             }
@@ -1185,6 +1190,15 @@ function convertirTextoDocumentoInterconsulta($texto) {
 
         $stmt->close();
         return $registros;
+    }
+
+    function esUrlImagenInterconsulta($url) {
+        $extension= strtolower(pathinfo(parse_url((string)$url, PHP_URL_PATH), PATHINFO_EXTENSION));
+        return in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'));
+    }
+
+    function obtenerExtensionUrlInterconsulta($url) {
+        return strtolower(pathinfo(parse_url((string)$url, PHP_URL_PATH), PATHINFO_EXTENSION));
     }
 
     function subirImagenMensaje($cod_mensaje, $foto, $ext, $campo) {
