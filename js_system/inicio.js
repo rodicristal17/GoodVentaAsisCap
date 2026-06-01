@@ -9715,6 +9715,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				
 				  document.getElementById('inptMontoRecaudadoCierreCaja').value=datos[2];
 				  DetalleticketCaja=datos[3];
+				  calcularMontoMovimientoAperturaCierreCaja();
 						
 				}
 			} catch (error) {
@@ -9724,6 +9725,35 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 			}
 		}
 	});
+}
+
+function obtenerMontoNumericoAperturaCierreCaja(id) {
+	const elemento = document.getElementById(id);
+	if (!elemento) {
+		return 0;
+	}
+	const valor = (elemento.value || "0").toString().replace(/\./g, '').replace(',', '.');
+	const numero = Number(valor);
+	return isNaN(numero) ? 0 : numero;
+}
+
+function formatearMontoAperturaCierreCaja(valor) {
+	valor = Number(valor || 0);
+	return valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function actualizarResumenEsperadoAperturaCierreCaja() {
+	const montoApertura = obtenerMontoNumericoAperturaCierreCaja('inptMontoAperturaCierreCaja');
+	const totalRecaudado = obtenerMontoNumericoAperturaCierreCaja('inptMontoRecaudadoCierreCaja');
+	const resumenInicial = document.getElementById('inptResumenInicialAperturaCierre');
+	const resumenTotal = document.getElementById('inptResumenTotalAperturaCierre');
+
+	if (resumenInicial) {
+		resumenInicial.value = formatearMontoAperturaCierreCaja(montoApertura);
+	}
+	if (resumenTotal) {
+		resumenTotal.value = formatearMontoAperturaCierreCaja(montoApertura + totalRecaudado);
+	}
 }
 
 function calcularMontoMovimientoAperturaCierreCaja() {
@@ -9739,29 +9769,17 @@ function calcularMontoMovimientoAperturaCierreCaja() {
 	const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value || 0)*100000;
 
 	total= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
-	document.getElementById('inptResumenCierreAperturaCierre').value= total.toString();
-	separadordemiles(document.getElementById('inptResumenCierreAperturaCierre'));
+	document.getElementById('inptResumenCierreAperturaCierre').value= formatearMontoAperturaCierreCaja(total);
 
 	document.getElementById('inptMontoCierreCierreCaja').value= total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-	var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
-	movimiento= movimiento.replace('.', '');
-	if(movimiento=="...." || movimiento==""){
-		movimiento = 0;
-	}
-	movimiento= parseInt(movimiento)
-
-	let montoApertura = document.getElementById("inptResumenInicialAperturaCierre").value.replace(/\./g, '');
-	montoApertura= parseInt(montoApertura);
-
-	document.getElementById('inptResumenTotalAperturaCierre').value= (total - montoApertura).toString();
-	separadordemiles(document.getElementById('inptResumenTotalAperturaCierre'));
+	actualizarResumenEsperadoAperturaCierreCaja();
 }
 
 var idabmAperturacierrecaja="";
 function verificarcamposaperturacierredecaja() {
 	
 	var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
-	movimiento= movimiento.replace('.', '');
+	movimiento= movimiento.replace(/\./g, '');
 	if(movimiento=="...." || movimiento==""){
 		return;
 	}
@@ -15622,6 +15640,66 @@ function cancelarHistorialVenta(){
 	controldebusquedadHistorialVenta=false
 	document.getElementById("divProgressHistorialVenta").style.backgroundColor='#ff5722'
 }
+function renderEstadoHistorialVenta(tipo) {
+	var tabla = document.getElementById("table_historial_venta");
+	if (!tabla) {
+		return;
+	}
+	var mensajes = {
+		inicial: "Ingrese filtros y presione Buscar para consultar ventas.",
+		vacio: "No hay ventas para los filtros seleccionados.",
+		error: "No se pudieron cargar las ventas. Intente nuevamente."
+	};
+	tabla.innerHTML = "<div class='historial-venta-empty-state'>" + (mensajes[tipo] || mensajes.inicial) + "</div>";
+}
+function mostrarMensajeTabHistorialVenta(mensaje) {
+	var aviso = document.getElementById("historialVentaTabMessage");
+	if (!aviso) {
+		return;
+	}
+	aviso.innerHTML = mensaje;
+	aviso.style.display = "";
+}
+function ocultarMensajeTabHistorialVenta() {
+	var aviso = document.getElementById("historialVentaTabMessage");
+	if (aviso) {
+		aviso.style.display = "none";
+	}
+}
+function historialVentaTieneSeleccion() {
+	var seleccionado = document.getElementById("inptRegistroSeleccHistorialVenta");
+	return codVentaVentanas != "" && seleccionado && seleccionado.value != "";
+}
+function actualizarAccionesHistorialVenta() {
+	var tieneSeleccion = historialVentaTieneSeleccion();
+	var btnOpciones = document.getElementById("btnOpcionesHistorialVenta");
+	var btnAuditoria = document.getElementById("btnAuditoriaVentas");
+	if (btnOpciones) {
+		btnOpciones.disabled = !tieneSeleccion;
+		btnOpciones.title = tieneSeleccion ? "Abrir acciones de la venta seleccionada." : "Seleccione una venta para habilitar acciones.";
+	}
+	if (btnAuditoria) {
+		btnAuditoria.disabled = !tieneSeleccion;
+		btnAuditoria.title = tieneSeleccion ? "Abrir auditoria de la venta seleccionada." : "Seleccione una venta para habilitar auditoria.";
+	}
+}
+function limpiarSeleccionHistorialVenta() {
+	codVentaVentanas = "";
+	codVentaClienteVentanas = "";
+	elementoventa = "";
+	var seleccionado = document.getElementById("inptRegistroSeleccHistorialVenta");
+	if (seleccionado) {
+		seleccionado.value = "";
+	}
+	actualizarAccionesHistorialVenta();
+}
+function limpiarFiltrosHistorialVenta() {
+	if(controldebusquedadHistorialVenta==true){
+		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
+		return
+	}
+	limpiarcamposhistorialventa();
+}
 function buscarhistorialventa() {    
 	
 	var tipoComprobante = document.getElementById("inptBuscarHistorialcomprobante").value
@@ -15655,11 +15733,13 @@ function buscarhistorialventa() {
 	var fecha2 = ""
 	}	
 	
-	if(controldebusquedadHistorialVenta==true){
+if(controldebusquedadHistorialVenta==true){
 		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
 	return
 }
 controldebusquedadHistorialVenta=true
+ocultarMensajeTabHistorialVenta()
+limpiarSeleccionHistorialVenta()
 document.getElementById("tbProcessHistorialVenta").style.display="none"
 	document.getElementById("table_historial_venta").innerHTML = paginacargando
 	document.getElementById("inptRegistroNroHistorialVenta").value = "";
@@ -15717,7 +15797,7 @@ document.getElementById("tbProcessHistorialVenta").style.display="none"
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("table_historial_venta").innerHTML = ''
+			renderEstadoHistorialVenta("error")
 			controldebusquedadHistorialVenta=false
 		},
 		success: function (responseText) {
@@ -15734,10 +15814,15 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptTotalVentaHistorialVenta").value = datos[4];
 					document.getElementById("inptTotalPagosHistorialVenta").value = datos[5];
 					document.getElementById("inptTotalPendienteHistorialVenta").value = datos[6];
-					document.getElementById("table_historial_venta").innerHTML = datos_buscados
+					var totalEncontrado = Number(String(datos[3]).replace(/[^0-9]/g, ""));
+					if (String(datos_buscados).trim() == "" || totalEncontrado == 0) {
+						renderEstadoHistorialVenta("vacio")
+					} else {
+						document.getElementById("table_historial_venta").innerHTML = datos_buscados
+					}
 						registrocargadohistorialventa=datos[99];
 					totalregistrohistorialventa=datos[100];					
-						 if(totalregistrohistorialventa>registrocargadohistorialventa){
+						 if(totalEncontrado > 0 && totalregistrohistorialventa>registrocargadohistorialventa){
 						 	var porce=((registrocargadohistorialventa*100)/totalregistrohistorialventa).toFixed(0)
 	document.getElementById("divProgressHistorialVenta").style.width=porce+"%"
 						 document.getElementById("table_historial_venta").innerHTML += "<div id='table_mas_historial_venta'></div>"
@@ -15749,6 +15834,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					}
 			} catch (error) {
 				controldebusquedadHistorialVenta=false
+renderEstadoHistorialVenta("error")
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
@@ -16010,25 +16096,32 @@ function verCerrarVentanasHistorialVenta(d){
 	document.getElementById("cntHistVentaPago").style.display='none'
 	document.getElementById("cntHistDetalleVenta").style.display='none'
 	if(d=="1"){
+		ocultarMensajeTabHistorialVenta()
 		document.getElementById("btnHistoriaVenta1").style='background-color:#ff9800;color:#fff'
 		document.getElementById("cntHistVenta").style.display=''
 	}
 	if(d=="2"){
 		if (codVentaVentanas == "") {
+			mostrarMensajeTabHistorialVenta("Seleccione una venta para ver los creditos de la venta.")
 			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA")
-			verCerrarVentanasHistorialVenta("1")
+			document.getElementById("btnHistoriaVenta1").style='background-color:#ff9800;color:#fff'
+			document.getElementById("cntHistVenta").style.display=''
 			return
 		}
+		ocultarMensajeTabHistorialVenta()
 		 buscarcreditosHistorialVenta()
 		 	document.getElementById("btnHistoriaVenta2").style='background-color:#ff9800;color:#fff'
 		document.getElementById("cntHistVentaPago").style.display=''
 	}		
 		if(d=="6"){
 		if (codVentaVentanas == "") {
+			mostrarMensajeTabHistorialVenta("Seleccione una venta para ver los detalles.")
 			ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA")
-			verCerrarVentanasHistorialVenta("1")
+			document.getElementById("btnHistoriaVenta1").style='background-color:#ff9800;color:#fff'
+			document.getElementById("cntHistVenta").style.display=''
 			return
 		}
+		ocultarMensajeTabHistorialVenta()
 		 buscarDetallesHistorialVenta()
 		 	document.getElementById("btnHistoriaVenta6").style='background-color:#ff9800;color:#fff'
 		document.getElementById("cntHistDetalleVenta").style.display=''
@@ -16257,13 +16350,18 @@ function obtenerelementohistroialventa(datos) {
 	elementoventa = datos;
 	codVentaVentanas = $(datos).children('td[id="td_datos_8"]').html();
 	codVentaClienteVentanas = $(datos).children('td[id="td_datos_10"]').html();
-	document.getElementById('inptRegistroSeleccHistorialVenta').value = $(datos).children('td[id="td_datos_13"]').html();
+	var nroVentaSeleccionada = $(datos).children('td[id="td_datos_13"]').html();
+	var clienteVentaSeleccionada = $(datos).children('td[id="td_datos_2"]').html();
+	var totalVentaSeleccionada = $(datos).children('td[id="td_datos_5"]').html();
+	document.getElementById('inptRegistroSeleccHistorialVenta').value = "Nro. " + nroVentaSeleccionada + " - " + clienteVentaSeleccionada + " - Gs. " + totalVentaSeleccionada;
 		document.getElementById('inptUsuarioInsertadoPor').value=$(datos).children('td[id="td_datos_100"]').html()
 	document.getElementById('inptFechaInsertadoPor').value=$(datos).children('td[id="td_datos_102"]').html()
 	document.getElementById('inptUsuarioEditadoPor').value=$(datos).children('td[id="td_datos_101"]').html()
 	document.getElementById('inptFechaEditadoPor').value=$(datos).children('td[id="td_datos_103"]').html()
 		document.getElementById("btnOpcionesHistorialVenta").style.backgroundColor="#4CAF50";
 		document.getElementById("btnAuditoriaVentas").style.backgroundColor="#673ab7";
+		ocultarMensajeTabHistorialVenta()
+		actualizarAccionesHistorialVenta()
 		
 		document.getElementById('inptCuotaNroCambioRefinanciamiento2').value= $(datos).children('td[id="td_datos_104"]').html();
 		calcular_cuota_refinanciamiento(document.getElementById('inptCuotaNroCambioRefinanciamiento2'));
@@ -16288,17 +16386,21 @@ function limpiarcamposhistorialventa(){
 	document.getElementById("inptBuscarHistorialVenta6").value="";
 	document.getElementById("inptBuscarHistorialVenta7").value="";
 	document.getElementById("inptBuscarHistorialVenta8").value="";
+	document.getElementById("inptBuscarHistorialVenta9").value="";
+	document.getElementById("inptBuscarHistorialVentaAgenteCredito").value="";
 	document.getElementById("inptBuscarHistorialcomprobante").value="";
+	document.getElementById('inptCheckHistorialVenta1').checked=false
+	document.getElementById('inptCheckHistorialVenta2').checked=true
 	
 
 	document.getElementById("inptRegistroNroHistorialVenta").value="";
 	document.getElementById("inptTotalVentaHistorialVenta").value="";
 	document.getElementById("inptTotalPagosHistorialVenta").value="";
 	document.getElementById("inptTotalPendienteHistorialVenta").value="";
-	document.getElementById("inptRegistroSeleccHistorialVenta").value="";
+	limpiarSeleccionHistorialVenta()
 	document.getElementById("btnOpcionesHistorialVenta").style.backgroundColor="#ccc";
 	document.getElementById("btnAuditoriaVentas").style.backgroundColor="#ccc";
-	document.getElementById("table_historial_venta").innerHTML=""
+	renderEstadoHistorialVenta("inicial")
 	document.getElementById("table_historial_venta_pagos").innerHTML=""
 	document.getElementById("table_historial_venta_detalle").innerHTML=""
 	document.getElementById("table_historial_venta_detalle").innerHTML=""
@@ -16309,9 +16411,11 @@ function vercerrarOpcionesHistorialVenta(d){
 		
 	if(d=="1"){
 		if(document.getElementById("inptRegistroSeleccHistorialVenta").value==""){
+			mostrarMensajeTabHistorialVenta("Seleccione una venta para habilitar acciones.")
 			ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO","#")
 			return false
 		}
+		ocultarMensajeTabHistorialVenta()
 		document.getElementById("divOpcionesHistorialVenta").style.display=""
  document.getElementById("tdEfectoOpcionesHistorialVenta").className="magictime vanishIn"
 	}else{
@@ -16429,6 +16533,7 @@ limpiarcamposhistorialventa()
 				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 					document.getElementById("inptRegistroSeleccHistorialVenta").value="";
 					document.getElementById("btnOpcionesHistorialVenta").style.backgroundColor="#ccc";
+					limpiarSeleccionHistorialVenta()
 					
 			}			
 			}catch(error)
@@ -16817,9 +16922,11 @@ function minimizarexpedientecliente(){
 }
 function irAExtractodesdeVenta() {
 	if (document.getElementById("inptRegistroSeleccHistorialVenta").value == "") {
+		mostrarMensajeTabHistorialVenta("Seleccione una venta para ver el extracto del cliente.")
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO")
 		return
 	}
+	ocultarMensajeTabHistorialVenta()
 	if(controlacceso("VEREXPEDIENTEDELCLIENTE","accion")==false){return;}		
 	console.error("Desde donde se llamo");
 		 document.getElementById("divHistorialVenta").style.display='none'
@@ -34164,7 +34271,12 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					document.getElementById("sugerenciasContainer").innerHTML = datos_buscados
-					document.getElementById("notificacionSugerencias").innerHTML =  datos[4];
+					var notificacionSugerencias = document.getElementById("notificacionSugerencias");
+					var totalSugerenciasPendientes = parseInt(datos[4], 10) || 0;
+					if (notificacionSugerencias) {
+						notificacionSugerencias.innerHTML = totalSugerenciasPendientes;
+						notificacionSugerencias.style.display = totalSugerenciasPendientes > 0 ? "flex" : "none";
+					}
  
 
 				}

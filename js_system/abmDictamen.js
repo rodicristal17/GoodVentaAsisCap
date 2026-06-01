@@ -27,10 +27,29 @@ function verificarCamposDictamen() {
         ver_vetana_informativa("Falto ingresar un contenido");
         return false;
     }
+    if (!confirm("Esta por emitir un dictamen/resolucion administrativa. Esta accion quedara registrada en el historial del hilo.")) {
+        return false;
+    }
 
     const asunto_dictamen= document.getElementById("inptAsuntoAbmInterConsulta").value;
     document.getElementById('btnDictamenContenidoAbmMensaje').disabled= true;
-    abmDictamen(resultado, asunto_dictamen, 'solicitado');
+    abmDictamen(resultado, asunto_dictamen, 'emitido');
+}
+
+function confirmarCambioEstadoDictamen(select, idDictamen) {
+    const estadoAnterior= select.getAttribute("data-estado-actual") || "";
+    const estadoNuevo= select.value;
+
+    if (estadoNuevo == estadoAnterior) {
+        return;
+    }
+
+    select.value= estadoAnterior;
+    ver_vetana_informativa(
+        "Accion no permitida",
+        "Las resoluciones administrativas emitidas no se modifican directamente. Debe registrarse una rectificacion, anulacion con nuevo dictamen o resolucion complementaria.",
+        "advertencia"
+    );
 }
 
 function abmDictamen(resultado, asunto, estado= 'solicitado') {
@@ -95,6 +114,7 @@ function abmDictamen(resultado, asunto, estado= 'solicitado') {
 				if (Respuesta == "exito") {
                     // Se evalua si se edito o se creo
                     if (cod_dictamenSeleccionado) {
+                        cod_dictamenSeleccionado= "";
                         buscarInterConsultasYContenido(cod_interConsulta);
                     } else {
                         cod_dictamenSeleccionado= datos["2"];
@@ -102,6 +122,8 @@ function abmDictamen(resultado, asunto, estado= 'solicitado') {
                         verCerrarVentanaSeleccionDictamen(true);
                     }
                     ver_vetana_informativa("Dictamen guardado.", "", "info");
+				} else {
+                    ver_vetana_informativa("No se pudo guardar el dictamen", datos["2"] || datos["mensaje"] || "", "advertencia");
 				}
 			} catch (error) {
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

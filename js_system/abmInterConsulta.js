@@ -179,6 +179,74 @@ function mostrarBadgeDetalleHilo(id, mostrar, texto= "") {
     elemento.style.display= mostrar ? "" : "none";
 }
 
+function inicialesParticipanteHilo(texto) {
+    const limpio= textoDetalleHilo(texto, "")
+        .replace(/\([^)]*\)/g, " ")
+        .replace(/[^a-zA-Z\u00C0-\u00FF0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    if (limpio == "") {
+        return "?";
+    }
+
+    const partes= limpio.split(" ").filter(Boolean);
+    if (partes.length == 1) {
+        return partes[0].slice(0, 2).toUpperCase();
+    }
+    return (partes[0].charAt(0) + partes[partes.length - 1].charAt(0)).toUpperCase();
+}
+
+function tooltipParticipanteHilo(texto) {
+    return textoDetalleHilo(texto, "Participante")
+        .replace(/\s*\(([^)]+)\)\s*$/, " - $1")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function actualizarAvatarStackDetalleHilo() {
+    const contenedor= document.getElementById("avatarStackDetalle");
+    const listado= document.getElementById("listadoMencionados");
+    if (!contenedor || !listado) {
+        return;
+    }
+
+    contenedor.innerHTML= "";
+    const participantes= Array.from(listado.querySelectorAll(".interconsulta-participant-item"))
+        .filter(function(item) {
+            return item.style.display != "none";
+        })
+        .map(function(item) {
+            const nombre= item.querySelector(".interconsulta-participant-info span:not(.interconsulta-participant-avatar)");
+            return nombre ? nombre.textContent.trim() : item.textContent.trim();
+        })
+        .filter(function(nombre) {
+            return nombre != "";
+        });
+
+    if (participantes.length == 0) {
+        contenedor.style.display= "none";
+        return;
+    }
+
+    contenedor.style.display= "";
+    const maximoVisible= 5;
+    participantes.slice(0, maximoVisible).forEach(function(nombre) {
+        const avatar= document.createElement("span");
+        avatar.className= "interconsulta-avatar-stack__item";
+        avatar.textContent= inicialesParticipanteHilo(nombre);
+        avatar.title= tooltipParticipanteHilo(nombre);
+        contenedor.appendChild(avatar);
+    });
+
+    if (participantes.length > maximoVisible) {
+        const resto= document.createElement("span");
+        resto.className= "interconsulta-avatar-stack__item interconsulta-avatar-stack__more";
+        resto.textContent= "+" + (participantes.length - maximoVisible);
+        resto.title= participantes.slice(maximoVisible).map(tooltipParticipanteHilo).join(", ");
+        contenedor.appendChild(resto);
+    }
+}
+
 function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
     if (!datosHilo) {
         return;
@@ -1114,6 +1182,11 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     document.getElementById('tituloInterConsultas').innerHTML= 'Cargando...';
     document.getElementById('tituloInterConsultas2').innerHTML= 'Cargando...';
     document.getElementById('listadoMencionados').innerHTML= '';
+    actualizarAvatarStackDetalleHilo();
+    const detallesHilo= document.querySelector("#divAbmDetallesInterConsulta .interconsulta-thread-details");
+    if (detallesHilo) {
+        detallesHilo.removeAttribute("open");
+    }
     document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= '';
     document.getElementById('txtFechaCreadorInterConsulta').innerHTML= '';
     document.getElementById('txtEstadoInterConsulta').innerHTML= '';
@@ -1168,6 +1241,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 
                     // Se asignan los datos del encabezado
                     document.getElementById('listadoMencionados').innerHTML= datos['6'];
+                    actualizarAvatarStackDetalleHilo();
 
                     // Asigna loc colores
                     let colorTarjeta= "#8bc34a;";

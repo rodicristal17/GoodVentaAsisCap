@@ -420,13 +420,13 @@ function convertirTextoDocumentoInterconsulta($texto) {
 
     function obtenerVistaDocumentoDictamenInterconsulta($dictamen, $interconsulta, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor) {
         $estadoFondo = 'rgba(184, 134, 11, 0.14)';
-        $estado = isset($dictamen['estado']) ? $dictamen['estado'] : '';
+        $estado = obtenerEstadoVisualDictamen($dictamen);
 
-		if ($estado == 'aprobado') {
+		if (in_array($estado, array('emitido', 'aprobado', 'autorizado'), true)) {
 			$estadoFondo = 'rgba(47, 111, 62, 0.14)';
-		} else if ($estado == 'ejecutado') {
+		} else if (in_array($estado, array('ejecutado', 'finalizado', 'complementaria'), true)) {
 			$estadoFondo = 'rgba(31, 78, 121, 0.14)';
-		} else if ($estado == 'inactivo') {
+		} else if (in_array($estado, array('inactivo', 'rechazado', 'anulado', 'rectificado'), true)) {
 			$estadoFondo = 'rgba(122, 122, 122, 0.16)';
 		} else {
 			$estadoFondo = '';
@@ -551,19 +551,20 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 $fechaDictamen = !empty($dictamen['fecha_create']) ? date('d/m/Y H:i', strtotime($dictamen['fecha_create'])) : '';
                 $fechaId = !empty($dictamen['fecha_create']) ? date('Y', strtotime($dictamen['fecha_create'])) : date('Y');
                 $idDocumento = 'RES-'.$fechaId.'-'.$valueInter['cod_interConsulta'].'-'.str_pad($dictamen['id'], 2, '0', STR_PAD_LEFT);
-                $estadoDictamen = !empty($dictamen['estado']) ? strtoupper($dictamen['estado']) : 'AUTORIZADO';
-                $estadoColor = '#b8860b';
-                if ($dictamen['estado'] == 'aprobado') {
-                    $estadoColor = '#2f6f3e';
-                } else if ($dictamen['estado'] == 'ejecutado') {
-                    $estadoColor = '#1f4e79';
-                } else if ($dictamen['estado'] == 'inactivo') {
-                    $estadoColor = '#7a7a7a';
-                }
+                $estadoDictamenValor = obtenerEstadoVisualDictamen($dictamen);
+                $estadoDictamen = obtenerEtiquetaEstadoDictamen($estadoDictamenValor);
+                $estadoColor = obtenerColorEstadoDictamen($estadoDictamenValor);
                 $urlAutor = !empty($dictamen['url_create']) ? $dictamen['url_create'] : '/GoodVentaAsisCap/iconos/user.png';
+                $estadoDictamenClase = preg_replace('/[^a-z0-9_-]/', '', strtolower($estadoDictamenValor));
+                $registrosMens2= obtenerMensaje(array(
+                    'fecha_creacion' => "<= '".$fechaActual->format('Y-m-d H:i:s')."'",
+                    'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
+                    'cod_dictamenFK' => $dictamen['id']
+                ));
+                $cantidadMensajesDictamen = count($registrosMens2);
 
-                $pagina .= '<div class="card" style="width: 100%; margin: 0; gap: 0; min-height: 0px;">
-                    <div class="card-header" type="button" onClick="mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\')" style="
+                $pagina .= '<section class="interc-dictamen-card interconsulta-resolution-card">
+                    <div class="card-header interc-dictamen-toggle" type="button" onClick="mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\')" style="
                         background: linear-gradient(180deg, #f6f0df 0%, #efe5cf 100%);
                         border: 1px solid #d8ccb2;
                         border-radius: 12px 12px 0 0;
@@ -594,7 +595,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                                     color: #1f5f96;
                                     letter-spacing: 0.4px;
                                     white-space: nowrap;
-                                ">NRO: '.$dictamen['id'].'</div>
+                                ">Resoluci&oacute;n administrativa &middot; NRO: '.$dictamen['id'].'</div>
                                 <div style="
                                     width: 1px;
                                     align-self: stretch;
@@ -605,7 +606,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                                     font-weight: 700;
                                     color: #4d4a43;
                                     letter-spacing: 0.2px;
-                                ">ID: '.$idDocumento.'</div>
+                                ">Documento: '.$idDocumento.'</div>
                             </div>
                             <div style="
                                 display: flex;
@@ -661,16 +662,17 @@ function convertirTextoDocumentoInterconsulta($texto) {
                                 font-size: 15px;
                                 line-height: 1.4;
                             ">
-                                <span style="font-weight: 800; color: #2f2a20;">Dictamen:</span>
+                                <span style="font-weight: 800; color: #2f2a20;">Resoluci&oacute;n emitida:</span>
                                 <span>'.$dictamen['dictamen'].'</span>
                             </div>
+                            <div class="interc-dictamen-origin">
+                                <span>Basado en: '.$cantidadMensajesDictamen.' mensaje'.($cantidadMensajesDictamen == 1 ? '' : 's').' del hilo</span>
+                            </div>
                         </div>
-                        <div style="border-top: 1px solid #d9ceb6;text-align: start;padding: 5px;">
-                            <select class="form-select form-select-sm" style="width: 25%;" aria-label="Seleccionar dictamen" onchange="cod_dictamenSeleccionado='.$dictamen['id'].';abmDictamen(\'\',\'\',this.selectedOptions[0].value);">
-                                <!--option value="solicitado" '.($dictamen["estado"] == "solicitado" ? "selected" : "").'>SOLICITADO</option-->
-                                <option value="autorizado" '.($dictamen["estado"] == "autorizado" ? "selected" : "").'>AUTORIZADO</option>
-                                <option value="ejecutado" '.($dictamen["estado"] == "ejecutado" ? "selected" : "").'>EJECUTADO</option>
-                            </select>
+                        <div class="interc-dictamen-actions">
+                            <span class="interc-dictamen-status-badge interc-dictamen-status-badge--'.$estadoDictamenClase.'" title="Estado administrativo del dictamen">Estado: '.$estadoDictamen.'</span>
+                            <button type="button" class="interc-dictamen-action-btn" onclick="event.stopPropagation();mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\');">Ver resoluci&oacute;n</button>
+                            <button type="button" class="interc-dictamen-action-btn" onclick="event.stopPropagation();mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\');">Ver mensajes relacionados</button>
                         </div>
                     </div>';
                 
@@ -700,7 +702,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                             .obtenerVistaDocumentoDictamenInterconsulta($dictamen, $valueInter, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor).
                         '</div>
                     </div>
-                </div></div>';
+                </div></section>';
             }
 
             $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(

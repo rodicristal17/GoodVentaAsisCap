@@ -1489,6 +1489,9 @@ $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
  $styleName="tableRegistroSearch";
+$escapeHistorialConsulta = function($texto) {
+	return htmlspecialchars((string)$texto, ENT_QUOTES, 'UTF-8');
+};
 if ($valor>0)
 {
 while ($valor= mysqli_fetch_assoc($result))
@@ -1511,25 +1514,56 @@ $especialista = mb_convert_encoding((string)($valor['especialista']), 'UTF-8', '
 $cliente = mb_convert_encoding((string)($valor['cliente']), 'UTF-8', 'ISO-8859-1');
 $ci = mb_convert_encoding((string)($valor['ci']), 'UTF-8', 'ISO-8859-1');
 
+$especialistaNombre = trim($especialista);
+$especialistaCargo = "";
+if (preg_match('/\(([^)]*)\)\s*$/u', $especialista, $coincidenciaCargo)) {
+	$especialistaCargo = trim($coincidenciaCargo[1]);
+	$especialistaNombre = trim(preg_replace('/\s*\([^)]*\)\s*$/u', '', $especialista));
+}
+if ($especialistaNombre == "") {
+	$especialistaNombre = "Sin especialista";
+}
 
-$styleName=CargarStyleTable($styleName);
-	  $pagina.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
-<tr id='tbSelecRegistro' >
-<td  id='' style='width:10%'>".$fecha."</td>
-<td  id='' style='width:5%'>".$ci."</td>
-<td  id='' style='width:10%'>".$cliente."</td>
-<td  id='' style='width:10%'>".$especialista."</td>
-<td  id='' style='width:15%'>".$motivoconsulta."</td>
-<td  id='' style='width:15%'>".$diagnostico."</td>
-<td  id='' style='width:15%'>".$trabajo_realizado."</td>
-<td  id='' style='width:15%'>".$proximo_trabajo."</td>
-<td  id='' style='width:5%'>".$local."</td>
-</tr>
-</table>";
+$nombreParaIniciales = trim(preg_replace('/\s+/', ' ', $especialistaNombre));
+$partesNombre = $nombreParaIniciales != "" ? preg_split('/\s+/', $nombreParaIniciales) : array("Sin", "Especialista");
+$primeraInicial = mb_substr($partesNombre[0], 0, 1, 'UTF-8');
+$ultimaInicial = count($partesNombre) > 1 ? mb_substr($partesNombre[count($partesNombre) - 1], 0, 1, 'UTF-8') : "";
+$iniciales = mb_strtoupper($primeraInicial.$ultimaInicial, 'UTF-8');
+if ($iniciales == "") {
+	$iniciales = "SE";
+}
+
+$fechaMostrar = trim($fecha) != "" ? $fecha : "Sin fecha";
+$ciMostrar = trim($ci) != "" ? $ci : "Sin CI";
+$clienteMostrar = trim($cliente) != "" ? $cliente : "Sin paciente";
+$motivoMostrar = trim($motivoconsulta) != "" ? $motivoconsulta : "Sin motivo";
+$zonaMostrar = trim($diagnostico) != "" ? $diagnostico : "Sin dato";
+$trabajoMostrar = trim($trabajo_realizado) != "" ? $trabajo_realizado : "Sin dato";
+$proximoMostrar = trim($proximo_trabajo) != "" ? $proximo_trabajo : "Sin dato";
+$localMostrar = trim($local) != "" ? $local : "Sin local";
+$cargoMostrar = trim($especialistaCargo) != "" ? $especialistaCargo : "Especialista";
+$incompleta = (trim($motivoconsulta) == "" || trim($diagnostico) == "" || trim($trabajo_realizado) == "" || trim($proximo_trabajo) == "") ? "1" : "0";
+
+$pagina.="
+<article class='consulta-audit-row' data-especialista='".$escapeHistorialConsulta($especialistaNombre)."' data-incompleta='".$incompleta."'>
+<div class='consulta-audit-cell consulta-audit-date' title='".$escapeHistorialConsulta($fechaMostrar)."'>".$escapeHistorialConsulta($fechaMostrar)."</div>
+<div class='consulta-audit-cell consulta-audit-ci' title='".$escapeHistorialConsulta($ciMostrar)."'>".$escapeHistorialConsulta($ciMostrar)."</div>
+<div class='consulta-audit-cell consulta-audit-patient' title='".$escapeHistorialConsulta($clienteMostrar)."'><strong>".$escapeHistorialConsulta($clienteMostrar)."</strong></div>
+<div class='consulta-audit-cell consulta-audit-specialist' title='".$escapeHistorialConsulta($especialistaNombre." - ".$cargoMostrar)."'>
+<span class='consulta-audit-avatar'>".$escapeHistorialConsulta($iniciales)."</span>
+<span class='consulta-audit-specialist-info'><strong>".$escapeHistorialConsulta($especialistaNombre)."</strong><span class='consulta-audit-badge consulta-audit-badge--role'>".$escapeHistorialConsulta($cargoMostrar)."</span></span>
+</div>
+<div class='consulta-audit-cell consulta-audit-reason'><span class='consulta-audit-badge consulta-audit-badge--reason' title='".$escapeHistorialConsulta($motivoMostrar)."'>".$escapeHistorialConsulta($motivoMostrar)."</span></div>
+<div class='consulta-audit-cell consulta-audit-zone consulta-audit-ellipsis' title='".$escapeHistorialConsulta($zonaMostrar)."'>".$escapeHistorialConsulta($zonaMostrar)."</div>
+<div class='consulta-audit-cell consulta-audit-work consulta-audit-ellipsis' title='".$escapeHistorialConsulta($trabajoMostrar)."'>".$escapeHistorialConsulta($trabajoMostrar)."</div>
+<div class='consulta-audit-cell consulta-audit-next consulta-audit-ellipsis' title='".$escapeHistorialConsulta($proximoMostrar)."'>".$escapeHistorialConsulta($proximoMostrar)."</div>
+<div class='consulta-audit-cell consulta-audit-local'><span class='consulta-audit-badge consulta-audit-badge--local' title='".$escapeHistorialConsulta($localMostrar)."'>".$escapeHistorialConsulta($localMostrar)."</span></div>
+</article>";
 
 
 }
+} else {
+	$pagina = "<div class='consulta-audit-empty'>No se encontraron consultas con los filtros seleccionados.</div>";
 }
 
 

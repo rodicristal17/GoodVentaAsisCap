@@ -8,6 +8,95 @@
 
     date_default_timezone_set('America/Asuncion');
 
+    function normalizarEstadoDictamen($estado) {
+        $estado = strtolower(trim((string)$estado));
+        $estado = str_replace(array(" ", "-"), "_", $estado);
+        return $estado;
+    }
+
+    function obtenerEstadosHistoricosDictamen() {
+        return array(
+            'emitido',
+            'aprobado',
+            'autorizado',
+            'rechazado',
+            'finalizado',
+            'ejecutado',
+            'inactivo',
+            'anulado',
+            'rectificado',
+            'complementaria'
+        );
+    }
+
+    function esEstadoHistoricoDictamen($estado) {
+        return in_array(normalizarEstadoDictamen($estado), obtenerEstadosHistoricosDictamen(), true);
+    }
+
+    function obtenerEstadoVisualDictamen($dictamen) {
+        $estado = isset($dictamen['estado']) ? normalizarEstadoDictamen($dictamen['estado']) : '';
+
+        if ($estado === '') {
+            return 'emitido';
+        }
+
+        // Registros anteriores nacieron como "solicitado", aunque ya contienen la resolucion formal.
+        if ($estado === 'solicitado' && !empty($dictamen['dictamen'])) {
+            return 'emitido';
+        }
+
+        return $estado;
+    }
+
+    function obtenerEtiquetaEstadoDictamen($estado) {
+        $estado = normalizarEstadoDictamen($estado);
+        $etiquetas = array(
+            'emitido' => 'EMITIDO',
+            'solicitado' => 'SOLICITADO',
+            'aprobado' => 'APROBADO',
+            'autorizado' => 'AUTORIZADO',
+            'rechazado' => 'RECHAZADO',
+            'finalizado' => 'FINALIZADO',
+            'ejecutado' => 'EJECUTADO',
+            'inactivo' => 'INACTIVO',
+            'anulado' => 'ANULADO',
+            'rectificado' => 'RECTIFICADO',
+            'complementaria' => 'COMPLEMENTARIA'
+        );
+
+        return isset($etiquetas[$estado]) ? $etiquetas[$estado] : strtoupper($estado);
+    }
+
+    function obtenerColorEstadoDictamen($estado) {
+        $estado = normalizarEstadoDictamen($estado);
+
+        if (in_array($estado, array('emitido', 'aprobado', 'autorizado'), true)) {
+            return '#2f6f3e';
+        }
+        if (in_array($estado, array('ejecutado', 'finalizado', 'complementaria'), true)) {
+            return '#1f4e79';
+        }
+        if (in_array($estado, array('inactivo', 'rechazado', 'anulado', 'rectificado'), true)) {
+            return '#7a7a7a';
+        }
+
+        return '#b8860b';
+    }
+
+    function obtenerTipoCorreccionDictamen($tipo_accion) {
+        $tipo_accion = normalizarEstadoDictamen($tipo_accion);
+        $tipos = array(
+            'rectificar' => 'rectificacion',
+            'rectificacion' => 'rectificacion',
+            'anular_emitir_nuevo' => 'anulacion_nuevo',
+            'anulacion_nuevo' => 'anulacion_nuevo',
+            'complementaria' => 'complementaria',
+            'resolucion_complementaria' => 'complementaria'
+        );
+
+        return isset($tipos[$tipo_accion]) ? $tipos[$tipo_accion] : '';
+    }
+
     function verificarOperacionDictamen($funt) {
         $user = $_POST['useru'];
         $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
@@ -31,7 +120,7 @@
                 $asunto= mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8');
 
                 // Actualiza el asunto del dictamen
-                abmDictamen($cod_dictamen, $asunto, NULL, NULL, NULL, NULL );
+                abmDictamen($cod_dictamen, $asunto, NULL, NULL, NULL, NULL, NULL, NULL, TRUE);
 
                 $cod_mensajeFK= explode(';', $cod_mensajeFK);
                 foreach ($cod_mensajeFK as $cod_mensj) {
@@ -125,8 +214,31 @@
                 $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $asunto= mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8');
 
+                if (!empty($id)) {
+                    echo json_encode(array(
+                        "1" => "error",
+                        "2" => "No se permite editar directamente una resolucion administrativa ya emitida. Use una rectificacion, anulacion con nuevo dictamen o resolucion complementaria."
+                    ));
+                    break;
+                }
+
+                if (normalizarEstadoDictamen($estado) === 'solicitado') {
+                    $estado = 'emitido';
+                }
+
                 $id= abmDictamen($id, $asunto, $resultado, $estado, $cod_interConsultaFK, $user, $user, $user);
                 echo json_encode(array("1" => "exito", "2" => $id));
+                break;
+            case 'corregirDictamenFormal':
+                $cod_dictamen_original= isset($_POST['cod_dictamen_original']) ? mb_convert_encoding((string)($_POST['cod_dictamen_original']), 'ISO-8859-1', 'UTF-8') : null;
+                $tipo_accion= isset($_POST['tipo_accion']) ? mb_convert_encoding((string)($_POST['tipo_accion']), 'ISO-8859-1', 'UTF-8') : null;
+                $motivo= isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : null;
+                $asunto= isset($_POST['asunto']) ? mb_convert_encoding((string)($_POST['asunto']), 'ISO-8859-1', 'UTF-8') : null;
+                $resultado= isset($_POST['resultado']) ? mb_convert_encoding((string)($_POST['resultado']), 'ISO-8859-1', 'UTF-8') : null;
+                $estado_nuevo= isset($_POST['estado_nuevo']) ? mb_convert_encoding((string)($_POST['estado_nuevo']), 'ISO-8859-1', 'UTF-8') : 'emitido';
+
+                $cod_dictamen_nuevo= corregirDictamenFormal($cod_dictamen_original, $tipo_accion, $motivo, $asunto, $resultado, $estado_nuevo, $user);
+                echo json_encode(array("1" => "exito", "2" => $cod_dictamen_nuevo));
                 break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
@@ -215,7 +327,7 @@
             LEFT JOIN persona pcreate ON pcreate.cod_persona = d.cod_usuarioFK_create
             LEFT JOIN interconsulta ic ON ic.cod_interConsulta = d.cod_interConsultaFK
             $sqlFiltro
-            ORDER BY FIELD(d.estado, 'solicitado', 'aprobado', 'ejecutado', 'inactivo'), d.id DESC
+            ORDER BY FIELD(d.estado, 'emitido', 'solicitado', 'aprobado', 'autorizado', 'ejecutado', 'rechazado', 'finalizado', 'anulado', 'rectificado', 'complementaria', 'inactivo'), d.id DESC
             $limite";
 
         $mysqli=conectar_al_servidor();
@@ -240,7 +352,7 @@
         return $registros;
     }
 
-    function abmDictamen($id, $asunto, $dictamen, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null) {
+    function abmDictamen($id, $asunto, $dictamen, $estado, $cod_interConsultaFK, $cod_usuarioFK_create, $cod_usuarioFK_autoriz= null, $cod_usuarioFK_ejecut= null, $permitirEdicionDirecta= FALSE) {
         $mysqli = conectar_al_servidor();
         $fechaActual= new DateTime();
         $fechaActual= $fechaActual->format('Y-m-d H:i:s');
@@ -257,7 +369,7 @@
             }
 
             if (empty($estado)) {
-                $estado = 'aprobado';
+                $estado = 'emitido';
             }
 
             if ($estado == 'aprobado') {
@@ -302,6 +414,15 @@
             }
 
             $dictamen_original= $dictamen_original[0];
+
+            if (!$permitirEdicionDirecta) {
+                echo json_encode(array(
+                    "1" => "error",
+                    "2" => "No se permite editar directamente una resolucion administrativa historica."
+                ));
+                exit;
+            }
+
             $parametros = array();
             $atributos = "";
             $ss = "";
@@ -374,6 +495,119 @@
 
         $stmt->close();
         return $id;
+    }
+
+    function actualizarEstadoDictamenFormal($id, $estado) {
+        $mysqli = conectar_al_servidor();
+        $sql = "UPDATE dictamenes SET estado = ? WHERE id = ?";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('si', $estado, $id);
+
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al actualizar estado formal del dictamen: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $stmt->close();
+    }
+
+    function registrarTrazabilidadDictamen($cod_dictamen_original, $cod_dictamen_nuevo, $tipo_accion, $motivo, $estado_anterior, $estado_nuevo, $cod_usuario) {
+        $mysqli = conectar_al_servidor();
+        $sql = "INSERT INTO dictamenes_trazabilidad (
+            cod_dictamen_originalFK, cod_dictamen_nuevoFK, tipo_accion, motivo,
+            estado_anterior, estado_nuevo, cod_usuarioFK_create
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param(
+            'iissssi',
+            $cod_dictamen_original,
+            $cod_dictamen_nuevo,
+            $tipo_accion,
+            $motivo,
+            $estado_anterior,
+            $estado_nuevo,
+            $cod_usuario
+        );
+
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al registrar trazabilidad del dictamen: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $stmt->close();
+    }
+
+    function corregirDictamenFormal($cod_dictamen_original, $tipo_accion, $motivo, $asunto, $dictamen, $estado_nuevo, $cod_usuario) {
+        $tipo_accion = obtenerTipoCorreccionDictamen($tipo_accion);
+        if (empty($cod_dictamen_original) || empty($tipo_accion) || empty($motivo) || empty($dictamen)) {
+            echo json_encode(array("1" => "error", "2" => "Faltan datos para registrar la correccion formal del dictamen."));
+            exit;
+        }
+
+        $registros = obtenerDictamen(array("id" => $cod_dictamen_original), 1);
+        if (count($registros) == 0) {
+            echo json_encode(array("1" => "error", "2" => "Dictamen original no encontrado."));
+            exit;
+        }
+
+        $dictamen_original = $registros[0];
+        $estado_anterior = normalizarEstadoDictamen($dictamen_original['estado']);
+        $estado_nuevo = normalizarEstadoDictamen($estado_nuevo);
+        if (empty($estado_nuevo) || $estado_nuevo === 'solicitado') {
+            $estado_nuevo = 'emitido';
+        }
+
+        if (empty($asunto)) {
+            $prefijos = array(
+                'rectificacion' => 'Rectificacion de ',
+                'anulacion_nuevo' => 'Nuevo dictamen por anulacion de ',
+                'complementaria' => 'Resolucion complementaria de '
+            );
+            $asunto = substr($prefijos[$tipo_accion] . $dictamen_original['asunto'], 0, 150);
+        }
+
+        $cod_dictamen_nuevo = abmDictamen(
+            NULL,
+            $asunto,
+            $dictamen,
+            $estado_nuevo,
+            $dictamen_original['cod_interConsultaFK'],
+            $cod_usuario,
+            $cod_usuario,
+            NULL
+        );
+
+        $estado_original_nuevo = $estado_anterior;
+        if ($tipo_accion === 'rectificacion') {
+            $estado_original_nuevo = 'rectificado';
+            actualizarEstadoDictamenFormal($cod_dictamen_original, $estado_original_nuevo);
+        } else if ($tipo_accion === 'anulacion_nuevo') {
+            $estado_original_nuevo = 'anulado';
+            actualizarEstadoDictamenFormal($cod_dictamen_original, $estado_original_nuevo);
+        }
+
+        registrarTrazabilidadDictamen(
+            $cod_dictamen_original,
+            $cod_dictamen_nuevo,
+            $tipo_accion,
+            $motivo,
+            $estado_anterior,
+            $estado_original_nuevo,
+            $cod_usuario
+        );
+
+        $fechaActual = new DateTime();
+        $acciones = array(
+            'rectificacion' => 'una rectificacion',
+            'anulacion_nuevo' => 'una anulacion con nuevo dictamen',
+            'complementaria' => 'una resolucion complementaria'
+        );
+        $mensaje = "@{".$cod_usuario."} registro ".$acciones[$tipo_accion]." del dictamen #".$cod_dictamen_original." y emitio el dictamen #".$cod_dictamen_nuevo.". Motivo: ".$motivo;
+        abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $dictamen_original['cod_interConsultaFK'], $cod_usuario, $cod_dictamen_original, TRUE);
+
+        return $cod_dictamen_nuevo;
     }
 
     if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {

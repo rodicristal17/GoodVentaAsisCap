@@ -24,3 +24,21 @@ CREATE TABLE IF NOT EXISTS tarea_usuarios (
     FOREIGN KEY (tarea_id) REFERENCES tareas(id) ON DELETE CASCADE,
     FOREIGN KEY (cod_usuario) REFERENCES usuario(cod_usuario)
 );
+
+ALTER TABLE dictamenes
+    MODIFY estado VARCHAR(20) DEFAULT 'emitido';
+
+CREATE TABLE IF NOT EXISTS dictamenes_trazabilidad (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cod_dictamen_originalFK INT(11) NOT NULL,
+    cod_dictamen_nuevoFK INT(11) DEFAULT NULL,
+    tipo_accion VARCHAR(30) NOT NULL,
+    motivo VARCHAR(750) NOT NULL,
+    estado_anterior VARCHAR(20) DEFAULT NULL,
+    estado_nuevo VARCHAR(20) DEFAULT NULL,
+    fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cod_usuarioFK_create INT(11) NOT NULL,
+    FOREIGN KEY (cod_dictamen_originalFK) REFERENCES dictamenes(id),
+    FOREIGN KEY (cod_dictamen_nuevoFK) REFERENCES dictamenes(id),
+    FOREIGN KEY (cod_usuarioFK_create) REFERENCES usuario(cod_usuario)
+);

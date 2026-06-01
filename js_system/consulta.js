@@ -680,6 +680,63 @@ function checkfiltroshistorialConsulta(d){
 	}
 }
 
+function escribirKpiHistorialConsulta(id, valor) {
+	var elemento = document.getElementById(id);
+	if (elemento) {
+		elemento.textContent = valor;
+	}
+}
+
+function prepararDashboardHistorialConsulta() {
+	escribirKpiHistorialConsulta("kpiHistorialConsultaTotal", "...");
+	escribirKpiHistorialConsulta("kpiHistorialConsultaTopEspecialista", "-");
+	escribirKpiHistorialConsulta("kpiHistorialConsultaIncompletas", "...");
+	escribirKpiHistorialConsulta("kpiHistorialConsultaPeriodo", "...");
+}
+
+function actualizarDashboardHistorialConsulta(totalTexto) {
+	var contenedor = document.getElementById("table_historial_Consulta");
+	var filas = contenedor ? contenedor.querySelectorAll(".consulta-audit-row") : [];
+	var conteoEspecialistas = {};
+	var incompletas = 0;
+	var i;
+
+	for (i = 0; i < filas.length; i++) {
+		var especialista = filas[i].getAttribute("data-especialista") || "Sin especialista";
+		conteoEspecialistas[especialista] = (conteoEspecialistas[especialista] || 0) + 1;
+		if (filas[i].getAttribute("data-incompleta") == "1") {
+			incompletas++;
+		}
+	}
+
+	var topEspecialista = "-";
+	var topCantidad = 0;
+	for (var nombreEspecialista in conteoEspecialistas) {
+		if (conteoEspecialistas[nombreEspecialista] > topCantidad) {
+			topEspecialista = nombreEspecialista;
+			topCantidad = conteoEspecialistas[nombreEspecialista];
+		}
+	}
+	if (topCantidad > 1) {
+		topEspecialista += " (" + topCantidad + ")";
+	}
+
+	var fechaExacta = document.getElementById("inptBuscarHistorialConsulta1").value;
+	var fecha1 = document.getElementById("inptBuscarInfHistorialConsultaF1").value;
+	var fecha2 = document.getElementById("inptBuscarInfHistorialConsultaF2").value;
+	var periodo = "Todos";
+	if (document.getElementById("inptCheckHistorialConsulta1").checked == true && fecha1 != "" && fecha2 != "") {
+		periodo = fecha1 + " al " + fecha2;
+	} else if (fechaExacta != "") {
+		periodo = fechaExacta;
+	}
+
+	escribirKpiHistorialConsulta("kpiHistorialConsultaTotal", totalTexto || filas.length);
+	escribirKpiHistorialConsulta("kpiHistorialConsultaTopEspecialista", topEspecialista);
+	escribirKpiHistorialConsulta("kpiHistorialConsultaIncompletas", incompletas);
+	escribirKpiHistorialConsulta("kpiHistorialConsultaPeriodo", periodo);
+}
+
 
 function buscarhistorialConsulta() {    
 	
@@ -715,6 +772,7 @@ function buscarhistorialConsulta() {
 controldebusquedadHistorialConsulta=true */
 
 	// document.getElementById("tbProcessHistorialConsulta").style.display="none"
+	prepararDashboardHistorialConsulta();
 	document.getElementById("table_historial_Consulta").innerHTML = paginacargando
 	document.getElementById("inptRegistroNroHistorialConsulta").value = "";
     // document.getElementById("inptTotalHistorialConsulta").value = "";
@@ -748,6 +806,7 @@ controldebusquedadHistorialConsulta=true */
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("table_historial_Consulta").innerHTML = ''
+			actualizarDashboardHistorialConsulta("0");
 			controldebusquedadHistorialConsulta=false
 		},
 		success: function (responseText) {
@@ -762,6 +821,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					var datos_buscados = datos[2];
 					document.getElementById("table_historial_Consulta").innerHTML = datos_buscados
 					document.getElementById("inptRegistroNroHistorialConsulta").value = datos[3];
+					actualizarDashboardHistorialConsulta(datos[3]);
 					/* document.getElementById("inptTotalHistorialConsulta").value = datos[4];
 					document.getElementById("inptTotalComisionHistorialConsulta").value = datos[5];
 					document.getElementById("inptTotalEvaluacionHistorialConsulta").value = datos[6];
@@ -779,6 +839,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					}
 			} catch (error) {
 				controldebusquedadHistorialConsulta=false
+				actualizarDashboardHistorialConsulta("0")
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)

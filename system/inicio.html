@@ -76,6 +76,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
 <script>
 function verCerrarAbmInsumos(){
     var ventana = document.getElementById("divAbmInsumos");
@@ -280,54 +281,19 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         <div class="dashboard-card__body" id="dashboardJornadaBody"></div>
                       </section>
 
-                      <section class="dashboard-card dashboard-card--summary" id="dashboardOperationalSummary">
-                        <div class="dashboard-card__header">
+                      <section class="dashboard-access-search dashboard-section-card" id="dashboardAccessSearch">
+                        <div class="dashboard-section-header">
                           <div>
-                            <p class="dashboard-card__eyebrow">Operación diaria</p>
-                            <h2 class="dashboard-card__title">Resumen operativo del día</h2>
-                            <p class="dashboard-card__subtitle">Indicadores rápidos de atención, tareas y caja</p>
+                            <p class="dashboard-section-eyebrow">Búsqueda general</p>
+                            <h2 class="dashboard-section-title">Encontrar acceso</h2>
                           </div>
                         </div>
 
-                        <div class="dashboard-card__body">
-                          <div class="dashboard-summary-grid">
-                            <div class="dashboard-summary-item">
-                              <span class="dashboard-summary-item__value" id="dashboardSummaryMessages">0</span>
-                              <small>Mensajes sin leer</small>
-                            </div>
-                            <div class="dashboard-summary-item">
-                              <span class="dashboard-summary-item__value" id="dashboardSummaryInterconsultas">0</span>
-                              <small>Interconsultas</small>
-                            </div>
-                            <div class="dashboard-summary-item">
-                              <span class="dashboard-summary-item__value" id="dashboardSummaryPendingTasks">0</span>
-                              <small>Tareas pendientes</small>
-                            </div>
-                            <div class="dashboard-summary-item dashboard-summary-item--warning">
-                              <span class="dashboard-summary-item__value" id="dashboardSummaryLateTasks">0</span>
-                              <small>Atrasadas</small>
-                            </div>
-                            <div class="dashboard-summary-item dashboard-summary-item--success">
-                              <span class="dashboard-summary-item__value" id="dashboardSummaryDoneTasks">0</span>
-                              <small>Completadas</small>
-                            </div>
-                            <div class="dashboard-summary-item">
-                              <span class="dashboard-summary-item__value" id="dashboardSummaryPayments">-</span>
-                              <small>Pagos programados</small>
-                            </div>
-                          </div>
-
-                          <div class="dashboard-summary-detail">
-                            <div>
-                              <strong>Próxima actividad</strong>
-                              <span id="dashboardSummaryNextActivity">Sin actividad inmediata</span>
-                            </div>
-                            <div>
-                              <strong>Estado de caja</strong>
-                              <span id="dashboardSummaryCashStatus">Sin datos</span>
-                            </div>
-                          </div>
+                        <div class="dashboard-access-search__box">
+                          <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
+                          <button type="button" onclick="limpiarBuscadorAccesosDashboard()">Limpiar</button>
                         </div>
+                        <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
                       </section>
                       </div>
 
@@ -558,21 +524,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                     </div>
 
-                    <section class="dashboard-access-search dashboard-section-card" id="dashboardAccessSearch">
-                      <div class="dashboard-section-header">
-                        <div>
-                          <p class="dashboard-section-eyebrow">Búsqueda general</p>
-                          <h2 class="dashboard-section-title">Encontrar acceso</h2>
-                        </div>
-                      </div>
-
-                      <div class="dashboard-access-search__box">
-                        <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
-                        <button type="button" onclick="limpiarBuscadorAccesosDashboard()">Limpiar</button>
-                      </div>
-                      <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
-                    </section>
-
                     <script>
                       function organizarDashboardPrincipal() {
                         var jornadaBody = document.getElementById("dashboardJornadaBody");
@@ -590,12 +541,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                       var dashboardAccessSearchItems = [];
 
-                      function textoDashboard(selector, fallback) {
-                        var elemento = document.querySelector(selector);
-                        var texto = elemento ? (elemento.textContent || "").replace(/\s+/g, " ").trim() : "";
-                        return texto || fallback || "";
-                      }
-
                       function normalizarTextoDashboard(valor) {
                         var texto = (valor || "").toString().toLowerCase().trim();
                         return texto.normalize ? texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : texto;
@@ -611,12 +556,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                             "'": "&#039;"
                           }[caracter];
                         });
-                      }
-
-                      function numeroDashboard(selector) {
-                        var texto = textoDashboard(selector, "0");
-                        var match = texto.match(/\d+/);
-                        return match ? match[0] : "0";
                       }
 
                       function moduloAccesoDashboard(tile) {
@@ -725,57 +664,13 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         filtrarAccesosDashboard();
                       }
 
-                      function actualizarResumenOperativoDashboard() {
-                        var mensajes = document.getElementById("avisoMensajesPendientes");
-                        var interconsultas = document.getElementById("avisoInterconsultasAbiertos");
-                        var tarea = document.querySelector("#listaTareasAdministrador .perfil-tareas__item:not(.perfil-tareas__item--completada) .perfil-tareas__descripcion");
-                        var cajaAbierta = typeof idabmAperturacierrecaja !== "undefined" && idabmAperturacierrecaja && idabmAperturacierrecaja != "0";
-
-                        var mensajesValue = mensajes && mensajes.style.display != "none" ? "1" : "0";
-                        var interconsultasValue = interconsultas && interconsultas.style.display != "none" ? numeroDashboard("#avisoInterconsultasAbiertos") : "0";
-                        var pendientes = numeroDashboard("#spanTareasPendientesResumen");
-                        var atrasadas = numeroDashboard("#spanTareasAtrasadas");
-                        var completadas = numeroDashboard("#spanTareasCompletadas");
-                        var proxima = tarea ? (tarea.textContent || "").replace(/\s+/g, " ").trim() : "Sin actividad inmediata";
-
-                        var map = {
-                          dashboardSummaryMessages: mensajesValue,
-                          dashboardSummaryInterconsultas: interconsultasValue,
-                          dashboardSummaryPendingTasks: pendientes,
-                          dashboardSummaryLateTasks: atrasadas,
-                          dashboardSummaryDoneTasks: completadas,
-                          appointmentsSummaryTasks: pendientes,
-                          appointmentsSummaryNext: proxima,
-                          dashboardSummaryNextActivity: proxima,
-                          dashboardSummaryCashStatus: cajaAbierta ? "Caja abierta" : "Sin caja abierta"
-                        };
-
-                        Object.keys(map).forEach(function (id) {
-                          var elemento = document.getElementById(id);
-                          if (elemento) elemento.textContent = map[id];
-                        });
-                      }
-
                       document.addEventListener("DOMContentLoaded", organizarDashboardPrincipal);
                       document.addEventListener("DOMContentLoaded", actualizarBuscadorAccesosDashboard);
-                      document.addEventListener("DOMContentLoaded", actualizarResumenOperativoDashboard);
                       window.addEventListener("load", organizarDashboardPrincipal);
                       window.addEventListener("load", actualizarBuscadorAccesosDashboard);
-                      window.addEventListener("load", actualizarResumenOperativoDashboard);
                       setTimeout(organizarDashboardPrincipal, 300);
                       setTimeout(actualizarBuscadorAccesosDashboard, 700);
                       setTimeout(actualizarBuscadorAccesosDashboard, 1800);
-                      setTimeout(actualizarResumenOperativoDashboard, 700);
-                      setTimeout(actualizarResumenOperativoDashboard, 1800);
-                      setTimeout(actualizarResumenOperativoDashboard, 3500);
-                      setInterval(actualizarResumenOperativoDashboard, 10000);
-
-                      setTimeout(function () {
-                        var tareas = document.getElementById("divTareasAdministrador");
-                        if (tareas && window.MutationObserver) {
-                          new MutationObserver(actualizarResumenOperativoDashboard).observe(tareas, { childList: true, subtree: true, characterData: true });
-                        }
-                      }, 700);
                     </script>
 
                     <table style='width:100%;display: none;'>
@@ -1218,25 +1113,6 @@ style='display:none' class='divMinimizado'>
 </div>
 </div>
 
-<div class="appointments-section__summary" id="appointmentsDailySummary">
-<div class="appointments-summary-item">
-<span id="appointmentsSummaryConsultas">-</span>
-<small>Consultas de hoy</small>
-</div>
-<div class="appointments-summary-item">
-<span id="appointmentsSummaryTasks">0</span>
-<small>Tareas asignadas</small>
-</div>
-<div class="appointments-summary-item">
-<span id="appointmentsSummaryTreatments">-</span>
-<small>Tratamientos pendientes</small>
-</div>
-<div class="appointments-summary-item appointments-summary-item--wide">
-<span id="appointmentsSummaryNext">Sin actividad inmediata</span>
-<small>Próxima actividad</small>
-</div>
-</div>
-
 <div class="appointments-section__grid dashboard-section-grid">
 
 
@@ -1257,7 +1133,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
  
-<table class='divMenub'  id='divMenuHistorialClinicoEvolucion'   title='Consutas'  onclick='verCerrarAbmVistaConsulta("consulta")'  style='text-align:center;'>
+<table class='divMenub'  id='divMenuHistorialClinicoEvolucion'   title='Historial Clínico y Evolución'  onclick='verCerrarAbmVistaConsulta("consulta")'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/consultamedica.png' />
@@ -1294,7 +1170,7 @@ style='display:none' class='divMinimizado'>
   <tr>
     <td style="position: relative;">
       <!-- Burbuja de notificación flotante dentro del TD -->
-      <div id="notificacionSugerencias"  class='nronotificacion'>0</div>
+      <div id="notificacionSugerencias"  class='nronotificacion' style='display:none'>0</div>
 
       <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/sugerencias.png' />
       <p class='pTitulo4'>Sugerencias y Calificaciones</p>
@@ -1305,7 +1181,7 @@ style='display:none' class='divMinimizado'>
   </tr>
 </table>
 
-<table class='divMenub'  id='divMenuProximosPagos'   title='Buscar ordenes de trabajo'  onclick='verCerrarInformeProximosPagos()'  style='text-align:center;'>
+<table class='divMenub'  id='divMenuProximosPagos'   title='Pagos Programados'  onclick='verCerrarInformeProximosPagos()'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/proximopago.png' />
@@ -1319,7 +1195,7 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuPresupuestoProductoDoc' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
+<table class='divMenub' id='divMenuPresupuestoProductoDoc' title='Cargar tratamientos' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/presupuesto.png' />
@@ -1332,7 +1208,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub'  id='divMenuHistorialConsulta'   title='Buscar ordenes de trabajo'  onclick='verCerrarHistorialConsulta()'  style='text-align:center;'>
+<table class='divMenub'  id='divMenuHistorialConsulta'   title='Historial Consulta'  onclick='verCerrarHistorialConsulta()'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/historialConsuta.png' />
@@ -1347,7 +1223,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 
-<table class='divMenub' id='divMenuCalendario' title='Agendar Turnos para pacientes' onclick='AbrirAgendaConsultorios()'  style='text-align:center;'>
+<table class='divMenub' id='divMenuCalendario' title='Calendario de agendamientos' onclick='AbrirAgendaConsultorios()'  style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/calendarioAgenda.png' />
@@ -1363,7 +1239,7 @@ style='display:none' class='divMinimizado'>
 
 
 
-<table class='divMenub' id='divMenuAsignarTareas' onclick="verCerrarVentanaAsignarTareaUsuario(true)" style='text-align:center;'>
+<table class='divMenub' id='divMenuAsignarTareas' title='Asignar Tareas' onclick="verCerrarVentanaAsignarTareaUsuario(true)" style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/lista-de-tareas.png' />
@@ -5801,13 +5677,16 @@ style='background-color:#5bc572'>
           <div class="interconsulta-detail-title-group">
             <p class="interconsulta-detail-kicker">Vista oficial de conversaci&oacute;n</p>
             <h2 id="tituloInterConsultas">Hilo # - </h2>
-            <div class="interconsulta-detail-badges" id="hiloDetalleBadges">
-              <span class="interconsulta-detail-badge" id="badgeEstadoDetalle">Estado</span>
-              <span class="interconsulta-detail-badge" id="badgeTipoDetalle">Tipo</span>
-              <span class="interconsulta-detail-badge" id="badgeLocalDetalle">Local</span>
-              <span class="interconsulta-detail-badge interconsulta-detail-badge--warning" id="badgePendienteDetalle" style="display:none;">Sin responder</span>
-              <span class="interconsulta-detail-badge interconsulta-detail-badge--linked" id="badgeVinculadoDetalle" style="display:none;">Hilo vinculado</span>
-              <span class="interconsulta-detail-badge interconsulta-detail-badge--dictamen" id="badgeDictamenDetalle" style="display:none;">Dictamen registrado</span>
+            <div class="interconsulta-detail-meta">
+              <div class="interconsulta-detail-badges" id="hiloDetalleBadges">
+                <span class="interconsulta-detail-badge" id="badgeEstadoDetalle">Estado</span>
+                <span class="interconsulta-detail-badge" id="badgeTipoDetalle">Tipo</span>
+                <span class="interconsulta-detail-badge" id="badgeLocalDetalle">Local</span>
+                <span class="interconsulta-detail-badge interconsulta-detail-badge--warning" id="badgePendienteDetalle" style="display:none;">Sin responder</span>
+                <span class="interconsulta-detail-badge interconsulta-detail-badge--linked" id="badgeVinculadoDetalle" style="display:none;">Hilo vinculado</span>
+                <span class="interconsulta-detail-badge interconsulta-detail-badge--dictamen" id="badgeDictamenDetalle" style="display:none;">Dictamen registrado</span>
+              </div>
+              <div class="interconsulta-avatar-stack" id="avatarStackDetalle" aria-label="Participantes del hilo"></div>
             </div>
           </div>
           <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
@@ -5839,7 +5718,11 @@ style='background-color:#5bc572'>
                   </div>
                 </div>
               </div>
-              <div class="sugerencias-container interconsulta-detail-top">
+              <details class="sugerencias-container interconsulta-detail-top interconsulta-thread-details">
+                <summary class="interconsulta-thread-details__summary">
+                  <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                  <span>Ver detalles y participantes del hilo</span>
+                </summary>
                 <div id="contenedorEncabezadoInterConsulta" class="card my-3 interconsulta-thread-summary" style="border-left: 5px solid '.$colorTarjeta.';">
                   <div class="card-body">
                     <div class="interconsulta-detail-card-label">Datos del hilo</div>
@@ -5862,11 +5745,11 @@ style='background-color:#5bc572'>
                       <span class="fw-bold">Fecha creaci&oacute;n:</span>
                       <span class="text-uppercase" id="txtFechaCreadorInterConsulta"></span>
                     </div>
-                    <div>
+                    <div class="interconsulta-data-redundant">
                       <span class="fw-bold">Estado:</span>
                       <span class="text-uppercase" id="txtEstadoInterConsulta"></span>
                     </div>
-                    <div>
+                    <div class="interconsulta-data-redundant">
                       <span class="fw-bold">Tipo:</span>
                       <span id="txtTipoInterConsulta" class="badge badge-secondary text-uppercase"></span>
                     </div>
@@ -5874,7 +5757,7 @@ style='background-color:#5bc572'>
                         <span class="fw-bold">C&oacute;digo del hilo:</span>
                         <span class="text-uppercase" id="txtCodInterConsulta"></span>
                     </div>
-                    <div>
+                    <div class="interconsulta-data-redundant">
                       <span class="fw-bold">Local:</span>
                       <span id="localDetalleInterConsulta" class="text-uppercase"></span>
                     </div>
@@ -5900,6 +5783,7 @@ style='background-color:#5bc572'>
                 </div>
               </div>
               </div>
+              </details>
               <section class="interconsulta-conversation-card">
                 <div class="interconsulta-section-head">
                   <div>
@@ -11146,78 +11030,64 @@ title='Cerrar Ventana' onclick='verCerrarHistorialVenta()' />
 
 
 <center>
-<table  class='divMenuf'  style='width:97%;margin-bottom:3px'>
-<tr>
-<td style='width:15%;'>
-<p class='pTituloC' >Fecha inicio
-</p>
-<input class='inputText' type='Date' id='inptBuscarInfHistorialVentaF1' style='width:135px' />
-</td>
-<td style='width:15%;'>
-<p class='pTituloC' >Fecha Fin</p>
-<input class='inputText' type='Date' id='inptBuscarInfHistorialVentaF2' style='width:135px' />
-</td>
-<td style='width:15%;'>
-<p class='pTituloC' >Local</p>
-<select class="inputfiltro"id="inptBuscarHistorialVenta8"></select>
-</td>
-<td style='width:15%;'>
-<p class='pTituloC' >Agente de credito</p>
-<select class="inputfiltro"id="inptBuscarHistorialVentaAgenteCredito"></select>
-</td>
-<td style='width:35%;text-align:right'>
+<div class='historial-venta-workspace'>
+<div class='historial-venta-filter-panel'>
+<div class='historial-venta-section-head'>
+<p class='pTituloC historial-venta-section-title'>Filtros de b&uacute;squeda</p>
+</div>
+<div class='historial-venta-filter-grid'>
+<label class='historial-venta-field'>
+<span>Fecha inicio</span>
+<input class='inputText' type='Date' id='inptBuscarInfHistorialVentaF1' />
+</label>
+<label class='historial-venta-field'>
+<span>Fecha fin</span>
+<input class='inputText' type='Date' id='inptBuscarInfHistorialVentaF2' />
+</label>
+<label class='historial-venta-field'>
+<span>Local</span>
+<select class="inputfiltro" id="inptBuscarHistorialVenta8"></select>
+</label>
+<label class='historial-venta-field'>
+<span>Agente de cr&eacute;dito</span>
+<select class="inputfiltro" id="inptBuscarHistorialVentaAgenteCredito"></select>
+</label>
+<div class='historial-venta-period'>
+<span class='historial-venta-field-title'>Periodo</span>
+<div class='historial-venta-period-options'>
+<label class='historial-venta-check' onclick="checkfiltroshistorialventa(1)" title='Filtrar por fecha inicio y fecha fin'>
+<input type="checkbox" id="inptCheckHistorialVenta1"> Usar rango de fechas
+</label>
+<label class='historial-venta-check is-active' onclick="checkfiltroshistorialventa(2)" title='Ignorar el rango de fechas y mostrar todos'>
+<input type="checkbox" id="inptCheckHistorialVenta2" checked> Mostrar todos
+</label>
+</div>
+</div>
+<div class='historial-venta-filter-actions'>
+<input type="button" value="Buscar" class="btn4 historial-venta-primary-action" onclick='buscarhistorialventa()'>
+<input type="button" value="Limpiar filtros" class="btn4 historial-venta-secondary-action" onclick='limpiarFiltrosHistorialVenta()'>
+</div>
+</div>
+</div>
 
-<input type="button" value="Buscar" class="btn4"
-onclick='buscarhistorialventa()'>
-</td>
-</tr>
-</table>
-
-
-<br>
-<div class='divMenuf' style='width:95%'>
-
-<table style="width:98%">
-<tbody>
-<tr>
-<td style="width:80%;text-align:left">
-</td>
-<td style='width:10%;text-align:left'>
-<p class="pTitulo8"
-onclick="checkfiltroshistorialventa(1)"
-style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialVenta1"> Rango de Fecha </p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltroshistorialventa(2)" style='width: 100px;'> <input type="checkbox" id="inptCheckHistorialVenta2" checked> Todos
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-
-<table style='width:100%;margin-bottom:3px'>
-<tr>
-<td>
-<input type='button' value='Historial de Ventas' class='btnSelecct4' id='btnHistoriaVenta1' style='background-color:#ff9800;color:#fff' onclick='verCerrarVentanasHistorialVenta(1)' /></td>
-<td>
-<input type='button' value='Creditos de la venta' class='btnSelecct4' id='btnHistoriaVenta2' onclick='verCerrarVentanasHistorialVenta(2)' />
-</td>
-<td>
-<input type='button' value='Detalles de la Venta' class='btnSelecct4' id='btnHistoriaVenta6' onclick='verCerrarVentanasHistorialVenta(6)' />
-</td>
-<td style='width:15%;display:none'>
+<div class='historial-venta-results-panel'>
+<div class='historial-venta-results-head'>
+<p class='pTituloC historial-venta-section-title'>Resultados</p>
+<input type="button" value="Imprimir" class="btn4 historial-venta-print-action" onclick='ordenimpresion("historialventa")'>
+</div>
+<div class='historial-venta-tabs' role='tablist'>
+<input type='button' value='Historial de Ventas' class='btnSelecct4' id='btnHistoriaVenta1' style='background-color:#ff9800;color:#fff' onclick='verCerrarVentanasHistorialVenta(1)' />
+<input type='button' value='Cr&eacute;ditos de la venta' class='btnSelecct4' id='btnHistoriaVenta2' onclick='verCerrarVentanasHistorialVenta(2)' title='Seleccione una venta para ver creditos' />
+<input type='button' value='Detalles de la Venta' class='btnSelecct4' id='btnHistoriaVenta6' onclick='verCerrarVentanasHistorialVenta(6)' title='Seleccione una venta para ver detalles' />
+<span style='display:none'>
 <input type='button' value='Otras Compras' class='btnSelecct4'id='btnHistoriaVenta4' onclick='verCerrarVentanasHistorialVenta(4)' />
-</td>
-<td style='width:15%;display:none'>
+</span>
+<span style='display:none'>
 <input type='button' value='Otras Deudas' class='btnSelecct4' id='btnHistoriaVenta5'onclick='verCerrarVentanasHistorialVenta(5)' />
-</td>
-<td>
-<input type='button' value='Extracto del cliente' class='btnSelecct4' id='btnHistoriaVenta3'onclick='irAExtractodesdeVenta()' />
-</td>
-<td style='width:100%;text-align:right'>
-<input type="button" value="Imprimir" class="btn4" onclick='ordenimpresion("historialventa")' style="width:100px;background-color: rgb(58 58 58);"></td>
-</tr>
-</table>
+</span>
+<input type='button' value='Extracto del cliente' class='btnSelecct4' id='btnHistoriaVenta3'onclick='irAExtractodesdeVenta()' title='Seleccione una venta para ver el extracto del cliente' />
+</div>
+<div id='historialVentaTabMessage' class='historial-venta-tab-message' style='display:none'>Seleccione una venta para ver los detalles.</div>
 <div style='width:100%' id='cntHistVenta'>
 <div style='overflow:auto;' class='divScrollhideen'id='TableScroollHistorialVenta1'>
 <table class="tableCabeceraRegistro" style='width:2200px;'id='tbTituloImpreHistorialVenta'>
@@ -11256,10 +11126,10 @@ style='width: 120px;'> <input type="checkbox" id="inptCheckHistorialVenta1"> Ran
 <td style="width:4%;"></td>
 
 <td class="td_registro" style="width:4%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta2' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Parecido a' />
+<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta2' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Nro. venta' />
 </td>
 <td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialVenta2')" />
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' title='Limpiar filtro' onclick="vaciar('inptBuscarHistorialVenta2')" />
 </td>
 
 <td class="td_registro" style="width:4%;">
@@ -11275,27 +11145,27 @@ id="inptBuscarHistorialcomprobante">
 <!-- <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialVentacomprobante')" /> -->
 <!-- </td> -->
 <td class="td_registro" style="width:4%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta3' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Igual a' />
+<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta3' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Documento' />
 </td>
 <td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialVenta3')" />
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' title='Limpiar filtro' onclick="vaciar('inptBuscarHistorialVenta3')" />
 </td>
 
 
 <td class="td_registro" style="width:7%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta4' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Parecido a' />
+<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta4' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Cliente' />
 </td>
 <td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialVenta4')" />
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' title='Limpiar filtro' onclick="vaciar('inptBuscarHistorialVenta4')" />
 </td>
 
 
 
 <td class="td_registro" style="width:3%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta5' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Parecido a' />
+<input class='inputfiltro' type='text' id='inptBuscarHistorialVenta5' onkeyup="if(event.keyCode == 13){buscarhistorialventa()}" placeholder='Tel&eacute;fono' />
 </td>
 <td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialVenta5')" />
+<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' title='Limpiar filtro' onclick="vaciar('inptBuscarHistorialVenta5')" />
 </td>
 
 
@@ -11342,6 +11212,7 @@ id="inptBuscarHistorialVenta7">
 </div>
 <div class='divTablesScrool' id='TableScroollHistorialVenta2' style='height:250px'>
 <div class="div_cuerpo_table" id="table_historial_venta" style='min-height:200px;height:auto;width:2200px;border:none;'>
+<div class='historial-venta-empty-state'>Ingrese filtros y presione Buscar para consultar ventas.</div>
 </div>
 </div>
 <table style='width:100%;height:50px;display:none' id='tbProcessHistorialVenta'>
@@ -11354,35 +11225,35 @@ id="inptBuscarHistorialVenta7">
 </td>
 </tr>
 </table>
-<br>
-<table style='width:98%'>
-<tr>
-<td style='width:35%;text-align:left'>
-<p class='pTituloC' >Registro Seleccionado :</p>
-<input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccHistorialVenta' style='width:130px;text-align:center' />
-<input id='btnOpcionesHistorialVenta' type="button" value="Mas Opciones" class="btn4" onclick='vercerrarOpcionesHistorialVenta("1")' style="background-color:#ccc;width:105px">
-<input id="btnAuditoriaVentas" type="button" value="Auditoria" class="btn5" onclick="verCerrarAuditoria(true)" style="background-color: #d5d3d3">
-</td>
-<td style='width:15%;text-align:left'>
-<p class='pTituloC' >
-Reg. Encontrados :</p>
-<input class='inputTextDisable' type='text' disabled  id='inptRegistroNroHistorialVenta' style='width:80px;text-align:center' />
-</td>
-<td style='width:12%;text-align:left'>
-<p class='pTituloC' >Total : </p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalVentaHistorialVenta' style='width:100px' />
-</td>
-<td style='width:12%;text-align:left'>
-<p class='pTituloC' >Pagado : </p>
- <input class='inputTextDisable' type='text' disabled id='inptTotalPagosHistorialVenta' style='width:100px' />
-</td>
-<td style='width:12%;text-align:left'>
-<p class='pTituloC' > Pendiente :</p>
-<input class='inputTextDisable' type='text' style='width:100px' disabled id='inptTotalPendienteHistorialVenta' />
-</td>
-
-</tr>
-</table>
+<div class='historial-venta-bottom-bar'>
+<div class='historial-venta-selected-panel'>
+<p class='pTituloC historial-venta-selected-title'>Venta seleccionada:</p>
+<input class='inputTextDisable historial-venta-selected-input' type='text' disabled id='inptRegistroSeleccHistorialVenta' placeholder='Ninguna venta seleccionada' />
+<input id='btnOpcionesHistorialVenta' type="button" value="Acciones de venta" class="btn4 historial-venta-action-btn" onclick='vercerrarOpcionesHistorialVenta("1")' disabled title='Seleccione una venta para habilitar acciones.'>
+<input id="btnAuditoriaVentas" type="button" value="Auditoria" class="btn5 historial-venta-action-btn historial-venta-action-btn--audit" onclick="verCerrarAuditoria(true)" disabled title='Seleccione una venta para habilitar auditoria.'>
+</div>
+<div class='historial-venta-summary-panel'>
+<p class='pTituloC historial-venta-summary-title'>Resumen</p>
+<div class='historial-venta-summary-cards'>
+<div class='historial-venta-stat-card historial-venta-stat-card--records'>
+<span>Registros encontrados</span>
+<input class='inputTextDisable historial-venta-stat-value' type='text' disabled id='inptRegistroNroHistorialVenta' />
+</div>
+<div class='historial-venta-stat-card historial-venta-stat-card--total'>
+<span>Total</span>
+<input class='inputTextDisable historial-venta-stat-value' type='text' disabled id='inptTotalVentaHistorialVenta' />
+</div>
+<div class='historial-venta-stat-card historial-venta-stat-card--paid'>
+<span>Pagado</span>
+<input class='inputTextDisable historial-venta-stat-value' type='text' disabled id='inptTotalPagosHistorialVenta' />
+</div>
+<div class='historial-venta-stat-card historial-venta-stat-card--pending'>
+<span>Pendiente</span>
+<input class='inputTextDisable historial-venta-stat-value' type='text' disabled id='inptTotalPendienteHistorialVenta' />
+</div>
+</div>
+</div>
+</div>
 </div>
 <div style='width:100%;display:none' id='cntHistVentaPago'>
 
@@ -11467,11 +11338,11 @@ Registros Encontrados :</p>
 </div>
 
 </div>
+</div>
 </center>
 </div>
 
 <br>
-</center>
 </div>
 </center>
 </td>
@@ -14637,7 +14508,6 @@ Reg. Encontrados :</p>
 </div>
 
 <br>
-</center>
 </div>
 </center>
 </td>
@@ -14652,11 +14522,12 @@ Reg. Encontrados :</p>
 <tr>
 <td>
 <center>
-<div class='divPrincipalrepor' style='width:1300px'>
-<table class='tableMenuZ'>
+<div class='divPrincipalrepor historial-consulta-dashboard'>
+<table class='tableMenuZ historial-consulta-titlebar'>
 <tr>
 <td style='width:100%;text-align:left'>
 <p class='pTituloB'>Historial de  <b style='font-size: 30px;' >Consultas</b></p>
+<p class='historial-consulta-subtitle'>Dashboard de auditoria</p>
 </td>
 
 <td style='width:5%;text-align:center'>
@@ -14669,77 +14540,77 @@ title='Cerrar Ventana' onclick='verCerrarHistorialConsulta()' />
 </td>
 </tr>
 </table>
-<br>
 <center>
-<div style='width:100%' >
+<div class='historial-consulta-body'>
 
+<section class='historial-consulta-kpis' aria-label='Resumen del historial de consultas'>
+<article class='historial-consulta-kpi'>
+<span>Total consultas</span>
+<strong id='kpiHistorialConsultaTotal'>0</strong>
+</article>
+<article class='historial-consulta-kpi'>
+<span>Top especialista</span>
+<strong id='kpiHistorialConsultaTopEspecialista'>-</strong>
+</article>
+<article class='historial-consulta-kpi'>
+<span>Consultas incompletas</span>
+<strong id='kpiHistorialConsultaIncompletas'>0</strong>
+</article>
+<article class='historial-consulta-kpi'>
+<span>Periodo</span>
+<strong id='kpiHistorialConsultaPeriodo'>Todos</strong>
+</article>
+</section>
 
-<center>
-<table  class='divMenuf'  style='width:97%;margin-bottom:3px'>
-<tr>
-<td style='width:10%;'>
-<p class='pTituloC' >Fecha inicio
-</p>
-<input class='inputText' type='Date' id='inptBuscarInfHistorialConsultaF1' style='width:135px' />
-</td>
-<td style='width:10%;'>
-<p class='pTituloC' >Fecha Fin</p>
-<input class='inputText' type='Date' id='inptBuscarInfHistorialConsultaF2' style='width:135px' />
-</td>
-<td style='width:5%;'>
-
-</td>
-<td style='width:10%;'>
-<p class='pTituloC' >Especialista</p>
+<section class='divMenuf historial-consulta-toolbar' aria-label='Filtros del historial de consultas'>
+<label class='consulta-filter-field'>
+<span>Fecha inicio</span>
+<input class='inputText' type='Date' id='inptBuscarInfHistorialConsultaF1' />
+</label>
+<label class='consulta-filter-field'>
+<span>Fecha fin</span>
+<input class='inputText' type='Date' id='inptBuscarInfHistorialConsultaF2' />
+</label>
+<label class='consulta-filter-field'>
+<span>Fecha exacta</span>
+<input class='inputfiltro' type='date' id='inptBuscarHistorialConsulta1' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" />
+</label>
+<label class='consulta-filter-field'>
+<span>Nro. CI</span>
+<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta2' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Documento o CI' />
+</label>
+<label class='consulta-filter-field consulta-filter-field--wide'>
+<span>Paciente</span>
+<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta3' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Buscar paciente' />
+</label>
+<label class='consulta-filter-field consulta-filter-field--wide'>
+<span>Especialista</span>
+<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta4' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Nombre del especialista' />
+</label>
+<label class='consulta-filter-field consulta-filter-field--wide'>
+<span>Especialista listado</span>
 <select class='inputfiltro' id='inptBuscarInfHistorialEspecialista' ></select>
-</td>
-<td style='width:100%;text-align:right'>
+</label>
+<label class='consulta-filter-field'>
+<span>Local</span>
+<select class='inputfiltro' id='inptBuscarHistorialConsulta5' ></select>
+</label>
+<div class='consulta-filter-toggles'>
+<span class='consulta-filter-check' onclick="checkfiltroshistorialConsulta(1)">
+<input type="checkbox" id="inptCheckHistorialConsulta1"> Rango de fecha
+</span>
+<span class='consulta-filter-check' onclick="checkfiltroshistorialConsulta(2)">
+<input type="checkbox" id="inptCheckHistorialConsulta2" checked> Todos
+</span>
+</div>
+<div class='consulta-toolbar-actions'>
+<input type="button" value="Buscar" class="btn4" onclick='buscarhistorialConsulta()'>
+<input type="button" value="Imprimir" class="btn4 consulta-print-btn" onclick='ordenimpresion("historialConsulta")'>
+</div>
+</section>
 
-
-</td>
-<td style='width:10%;text-align:right'>
-
-<input type="button" value="Buscar" class="btn4"
-onclick='buscarhistorialConsulta()'>
-</td>
-</tr>
-</table>
-
-
-<br>
-<div class='divMenuf' style='width:97%'>
-
-<table style="width:98%">
-<tbody>
-<tr>
-<td style="width:80%;text-align:left">
-</td>
-<td style='width:15%;text-align:left'>
-<p class="pTitulo8"
-onclick="checkfiltroshistorialConsulta(1)"
-style='width: 100%;'> <input type="checkbox" id="inptCheckHistorialConsulta1">Rango de Fecha</p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltroshistorialConsulta(2)" style='width: 100px;'> <input type="checkbox" id="inptCheckHistorialConsulta2" checked>Todos
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-
-<table style='width:100%;margin-bottom:3px'>
-<tr>
-
-
-<td style='width:20%;'>
-<input type="button" value="Imprimir" class="btn4" onclick='ordenimpresion("historialConsulta")' style="width:100px;background-color: rgb(58 58 58);"></td>
-<td style='width:80%;'>
-</td>
-</tr>
-</table>
-
-<div style='overflow:auto;' class='divScrollhideen'id='TableScroollHistorialConsulta1'>
-<table class="tableCabeceraRegistro" style='width:1800px;'id='tbTituloImpreHistorialConsulta'>
+<div style='overflow:auto;' class='divScrollhideen historial-consulta-head-wrap' id='TableScroollHistorialConsulta1'>
+<table class="tableCabeceraRegistro consulta-audit-table-head" style='width:100%;' id='tbTituloImpreHistorialConsulta'>
 <tbody>
 <tr>
 <td class="td_registro" style="width:10%;">FECHA </td>
@@ -14754,50 +14625,10 @@ style='width: 100%;'> <input type="checkbox" id="inptCheckHistorialConsulta1">Ra
 </tr>
 </tbody>
 </table>
-<table class="tableCabeceraRegistro" style='width:1800px;'>
-<tbody>
-<tr>
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='date' id='inptBuscarHistorialConsulta1' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta1')" />
-</td>
-<td class="td_registro" style="width:4%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta2' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta2')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta3' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta3')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<input class='inputfiltro' type='text' id='inptBuscarHistorialConsulta4' onkeyup="if(event.keyCode == 13){buscarhistorialConsulta()}" placeholder='Parecido a' />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarHistorialConsulta4')" />
-</td>
-
-<td class="td_registro2" style="width:15%;"></td>
-<td class="td_registro2" style="width:15%;"></td>
-<td class="td_registro2" style="width:15%;"></td>
-<td class="td_registro2" style="width:15%;"></td>
-
-<td class="td_registro" style="width:5%;">
-<select class='inputfiltro' id='inptBuscarHistorialConsulta5' ></select>
-</td>
-
-</tr>
-</tbody>
-</table>
 </div>
 
-<div class='divTablesScrool' id='TableScroollHistorialConsulta2' style='height:250px'>
-<div class="div_cuerpo_table" id="table_historial_Consulta" style='min-height:200px;height:auto;width:1800px;border:none;'>
+<div class='divTablesScrool consulta-audit-results' id='TableScroollHistorialConsulta2'>
+<div class="div_cuerpo_table consulta-audit-list" id="table_historial_Consulta">
 </div>
 </div>
 <table style='width:100%;height:50px;display:none' id='tbProcessHistorialConsulta'>
@@ -14827,10 +14658,8 @@ Reg. Encontrados :</p>
 </div>
 
 </center>
-</div>
 
 <br>
-</center>
 </div>
 </center>
 </td>
@@ -29715,8 +29544,8 @@ USUARIO.
 <tr>
 <td>
 <center>
-<div style='width:800px;min-height: 500px;' class='divAbms'>
-<table class='tableMenuZ'>
+<div class='divAbms caja-apertura-modal'>
+<table class='tableMenuZ caja-apertura-titlebar'>
 <tr>
 <td style='width:100%;text-align:left'>
 <p class='pTituloB'><b style='font-size: 30px;' >Apertura / Cierre</b> de Caja
@@ -29734,195 +29563,117 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
 </td>
 </tr>
 </table>
-<br>
-<center>
-<div style='overflow:auto; display: flex; justify-content: center;'>
-<div class='divMenuf' style='float:left;width:20%;margin:1%;'>
-  <div class="timeline-container">
-    <h2 class="titulo" style="font-size: 1.5rem;">Resumen</h2>
-    <div class="timeline">
-      <div class="timeline-item entrada" style="padding-top: 20px;">
-        <div class="timeline-content">
-          <h3 class='taentrada' style="font-size: 0.8rem">Apertura caja</h3>
-          <input class='taentrada' id='inptResumenInicialAperturaCierre' type="text"  readonly style="font-size: 0.8rem;">
-        </div>
-      </div>
-      <div class="timeline-item salida" style="padding-top: 20px;" id="divResumenCierreAperturaCierre">
-        <div class="timeline-content">
-          <h3 class='taentrada' style="font-size: 0.8rem">Monto de cierre</h3>
-          <input class='taentrada' id='inptResumenCierreAperturaCierre' type="text"  readonly style="font-size: 0.8rem;">
-        </div>
-      </div>
-      <div class="timeline-item neutro">
-        <div class="timeline-content">
-          <h3 style="font-size: 0.8rem">Total recaudado</h3>
-          <input style='Text-align:center;' id='inptResumenTotalAperturaCierre'  type="text"  readonly style="font-size: 0.8rem">
-        </div>
+<div class='caja-apertura-body'>
+  <section class='caja-context-header'>
+    <label class='caja-context-item'>
+      <span>Local</span>
+      <select class="inputSelect" id="inptlocalAperturaCierre" onchange='buscarOptionCaja2(1)' disabled></select>
+    </label>
+    <label class='caja-context-item'>
+      <span>Caja</span>
+      <select class="input3" id="inptcajaAperturaCierreCaja" onchange='controldecaja()'></select>
+    </label>
+    <div class='caja-context-item caja-context-cajero'>
+      <span>Cajero</span>
+      <div class='caja-cajero-row'>
+        <input class='inputTextDisable' type='text' placeholder='Obligatorio (*)' id='inptcajeroAperturaCierreCaja' disabled />
+        <input type='button' value='Ir a vista' class='btn4 caja-secondary-action' onclick='vercerrarvistacobrador("1","aperturacierre")'>
       </div>
     </div>
-  </div>
-</div>
-<div class='divMenuf' style='float:left;width:35%;margin:1%;'>
-<br>
-<table style='width:100%'>
-<tr>
-<td style='width:50%'>
-<p class='pTituloC'
->Local</p>
-<select class="inputSelect" id="inptlocalAperturaCierre"  onchange='buscarOptionCaja2(1)' disabled></select>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Caja :</p>
-<select class="input3" id="inptcajaAperturaCierreCaja" style='width:150px'onchange='controldecaja()'></select> 
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'>Cajero :
-</p>
-<input class='inputTextDisable'
-type='text' placeholder='Obligatorio (*)' id='inptcajeroAperturaCierreCaja' style='width:210px' disabled />
-<input type='button' value='Ir A Vista' class='btn4' onclick='vercerrarvistacobrador("1","aperturacierre")'
-style='width:100px'>
+    <label class='caja-context-item'>
+      <span>Fecha apertura</span>
+      <input class='inputText' type='datetime-local' id='inptFechaAperturaCierreCaja' />
+    </label>
+    <label class='caja-context-item caja-context-status'>
+      <span>Estado</span>
+      <select class="inputSelect" id="inptEstadoAperturaCierreCaja" disabled>
+        <option value="Activo">ACTIVO</option>
+        <option value="Cerrado">CERRADO</option>
+      </select>
+    </label>
+  </section>
 
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'
->Monto
-Inicial :</p>
-<input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoAperturaCierreCaja' style='width:150px' onkeyup='separadordemiles(this)' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Fecha Apertura (Hora) :</p>
-<input class='inputText'
-type='datetime-local'
-id='inptFechaAperturaCierreCaja'
- />
-</td>
-</tr>
-</table>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'>Fecha Cierre (Hora) :</p>
-<input class='inputText'
-type='datetime-local'
-id='inptFechaCierreAperturaCierreCaja'
-/>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'>Estado :</p>
-<select class="inputSelect"
-id="inptEstadoAperturaCierreCaja"
- disabled>
-<option value="Activo">ACTIVO
-</option>
-<option value="Cerrado">CERRADO
-</option>
-</select>
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p style="display: none;" class='pTituloC' >Movimiento de caja :</p>
-<input class='inputTextDisable'
-type='text'
-id='inptMontoRecaudadoCierreCaja'
-style='width:150px;display: none;' disabled />
-<input type='button'
-value='Ver Movimientos' class='btn5'
-onclick='ImprimirTicketDeCaja()'
-style='width:120px;display: none;'>
-</td>
-</tr>
-</table>
-<br>
-</div>
-<div class='divMenuf' style='float:left;width:35%;margin:1%;'>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' ><b>Monto Cierre</b></p>
-<input class='inputText' type='text'
-placeholder='Obligatorio (*)'
-id='inptMontoCierreCierreCaja'
-style='width:150px; display: none;'
-onkeyup='separadordemiles(this)' />
-<div>
-  <div>
-    <p class="pTituloC">500 gs.</p>
-    <input id='inptMontoCierreCaja5' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">1.000 gs.</p>
-    <input id='inptMontoCierreCaja10' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">2.000 gs.</p>
-    <input id='inptMontoCierreCaja20' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">5.000 gs.</p>
-    <input id='inptMontoCierreCaja50' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">10.000 gs.</p>
-    <input id='inptMontoCierreCaja100' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">20.000 gs.</p>
-    <input id='inptMontoCierreCaja200' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">50.000 gs.</p>
-    <input id='inptMontoCierreCaja500' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-  <div>
-    <p class="pTituloC">100.000 gs.</p>
-    <input id='inptMontoCierreCaja1000' class="inputText" type="number" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
-  </div>
-</div>
-</td>
-</tr>
-</table>
-<br>
-<center>
-<input type='button' value='Guardar'class='btn1'onclick='verificarcamposaperturacierredecaja()' id='btnAbmAperturaCierreCaja' />
-</center>
-<br>
-<br>
-</div>
+  <div class='caja-main-grid'>
+    <section class='caja-cash-panel'>
+      <div class='caja-panel-heading'>
+        <div>
+          <span>Arqueo de efectivo</span>
+          <h3>Monto cierre</h3>
+        </div>
+      </div>
+      <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoCierreCierreCaja' style='display: none;' onkeyup='separadordemiles(this)' />
+      <div class='caja-denomination-grid'>
+        <label class='caja-denomination-item'>
+          <span>500 gs.</span>
+          <input id='inptMontoCierreCaja5' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>1.000 gs.</span>
+          <input id='inptMontoCierreCaja10' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>2.000 gs.</span>
+          <input id='inptMontoCierreCaja20' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>5.000 gs.</span>
+          <input id='inptMontoCierreCaja50' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>10.000 gs.</span>
+          <input id='inptMontoCierreCaja100' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>20.000 gs.</span>
+          <input id='inptMontoCierreCaja200' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>50.000 gs.</span>
+          <input id='inptMontoCierreCaja500' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+        <label class='caja-denomination-item'>
+          <span>100.000 gs.</span>
+          <input id='inptMontoCierreCaja1000' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
+        </label>
+      </div>
+      <div class='caja-cash-total'>
+        <span>Total arqueado</span>
+        <input id='inptResumenCierreAperturaCierre' type="text" readonly>
+      </div>
+    </section>
 
+    <aside class='caja-summary-panel'>
+      <div class='caja-ticket-panel'>
+        <div class='caja-panel-heading'>
+          <div>
+            <span>Resumen</span>
+            <h3>Ticket de caja</h3>
+          </div>
+        </div>
+        <input id='inptResumenInicialAperturaCierre' type="hidden" readonly>
+        <label class='caja-ticket-row'>
+          <span>Monto inicial</span>
+          <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoAperturaCierreCaja' onkeyup='separadordemiles(this);calcularMontoMovimientoAperturaCierreCaja()' />
+        </label>
+        <label class='caja-ticket-row'>
+          <span>Total recaudado</span>
+          <input class='inputTextDisable' type='text' id='inptMontoRecaudadoCierreCaja' disabled />
+        </label>
+        <label class='caja-ticket-row caja-ticket-row--total'>
+          <span>Total esperado</span>
+          <input id='inptResumenTotalAperturaCierre' type="text" readonly>
+        </label>
+      </div>
+      <div class='caja-summary-actions'>
+        <label class='caja-context-item'>
+          <span>Fecha cierre</span>
+          <input class='inputText' type='datetime-local' id='inptFechaCierreAperturaCierreCaja' />
+        </label>
+        <input type='button' value='Cerrar caja' class='btn1 caja-primary-action' onclick='verificarcamposaperturacierredecaja()' id='btnAbmAperturaCierreCaja' />
+      </div>
+    </aside>
+  </div>
 </div>
-</center>
-<br><br>
 </div>
 </center> 
 </td>
