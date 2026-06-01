@@ -1079,6 +1079,10 @@ function limpiarcamposMensaje() {
 
     document.getElementById('inptContenidoAbmMensaje').innerHTML = "";
     document.getElementById('imgfotoAnexoInterchat').style.backgroundImage = "url('/GoodVentaAsisCap/iconos/subir_imagen.png')";
+    document.getElementById('imgfotoAnexoInterchat').dataset.adjuntoUrl = "";
+    document.getElementById('imgfotoAnexoInterchat').dataset.adjuntoExt = "";
+    document.getElementById('imgfotoAnexoInterchat').dataset.adjuntoNombre = "";
+    document.getElementById('imgfotoAnexoInterchat').classList.remove("imgFotoProductoDocumento");
     fotoMensajeInterconsulta = "";
     extMensajeInterconsulta = "";
 

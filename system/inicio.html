@@ -5850,8 +5850,8 @@ style='background-color:#5bc572'>
                           <strong>Dictamen / Resoluci&oacute;n</strong>
                         </div>
                         <div class="interconsulta-admin-action__controls">
-                          <label for="dictamenAbmMensaje">Dictamen base</label>
-                          <select id="dictamenAbmMensaje"></select>
+                          <label for="dictamenAbmMensaje" style="display: none;">Dictamen base</label>
+                          <select id="dictamenAbmMensaje" style="display: none;"></select>
                           <input id="btnDictamenContenidoAbmMensaje" type="button" value="Emitir dictamen" class="btn1" onclick="verificarCamposDictamen()">
                         </div>
                       </div>
@@ -25516,7 +25516,6 @@ FECHA.
           type="file"
           id="file_2Principal"
           name="file_2Principal"
-          accept=".jpg,.jpeg,image/jpeg"
           style="display:none;"
           onchange="readFileDocPrincipal(this)"
         />
