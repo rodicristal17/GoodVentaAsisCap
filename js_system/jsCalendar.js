@@ -4,6 +4,7 @@ var agendaConsultoriosData = {
     feriados: []
 };
 var timeoutBuscarHistorialPacienteCalendario = null;
+var ultimaPeticionDoctoresNuevaCita = 0;
 
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
@@ -219,6 +220,34 @@ function cargarSelectConsultoriosAgenda(){
     document.getElementById('inptConsultorioAgendaFiltro').innerHTML = htmlFiltro;
 }
 
+function obtenerConsultorioAgendaPorId(idConsultorio){
+    var i;
+
+    if(idConsultorio == ''){
+        return null;
+    }
+
+    for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
+        if(String(agendaConsultoriosData.consultorios[i].id) == String(idConsultorio)){
+            return agendaConsultoriosData.consultorios[i];
+        }
+    }
+
+    return null;
+}
+
+function obtenerLocalConsultorioNuevaCita(){
+    var selectConsultorio = document.getElementById('inptConsultorioAgenda');
+    var consultorio = selectConsultorio ? obtenerConsultorioAgendaPorId(selectConsultorio.value) : null;
+    var filtroLocal = document.getElementById('inptLocalAgendaFiltro');
+
+    if(consultorio && consultorio.cod_localFk !== undefined && consultorio.cod_localFk !== null){
+        return consultorio.cod_localFk;
+    }
+
+    return filtroLocal ? filtroLocal.value : '';
+}
+
 function cargarDoctoresDisponiblesNuevaCita(){
     var contenedor = document.getElementById('inptDoctorNuevaCita');
     if(!contenedor){
@@ -226,7 +255,8 @@ function cargarDoctoresDisponiblesNuevaCita(){
     }
 
     var fecha = document.getElementById('inptFechaNuevaCita').value || '';
-    var local = document.getElementById('inptLocalAgendaFiltro') ? document.getElementById('inptLocalAgendaFiltro').value : '';
+    var local = obtenerLocalConsultorioNuevaCita();
+    var peticionActual = ++ultimaPeticionDoctoresNuevaCita;
 
     contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>Cargando...</div>";
 
@@ -249,6 +279,10 @@ function cargarDoctoresDisponiblesNuevaCita(){
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
         type: "post",
         success: function(responseText){
+            if(peticionActual != ultimaPeticionDoctoresNuevaCita){
+                return;
+            }
+
             try {
                 var resp = responseText;
                 console.log(responseText);
@@ -269,6 +303,10 @@ function cargarDoctoresDisponiblesNuevaCita(){
             }
         },
         error: function(jqXHR, textstatus){
+            if(peticionActual != ultimaPeticionDoctoresNuevaCita){
+                return;
+            }
+
             console.error(jqXHR, textstatus);
             contenedor.innerHTML = "<div class='doctor-disponible-mensaje'>No se pudo cargar el listado</div>";
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -289,6 +327,8 @@ function seleccionarDoctorDisponibleNuevaCita(elemento){
 
 function marcarDoctorDisponiblePorConsultorioNuevaCita(){
     var consultorioActual = document.getElementById('inptConsultorioAgenda') ? document.getElementById('inptConsultorioAgenda').value : '';
+    var consultorio = obtenerConsultorioAgendaPorId(consultorioActual);
+    var doctorConsultorio = consultorio ? consultorio.cod_doctorFK : '';
     var items = document.querySelectorAll('#inptDoctorNuevaCita .doctor-disponible-item');
     var i;
 
@@ -296,12 +336,15 @@ function marcarDoctorDisponiblePorConsultorioNuevaCita(){
         items[i].classList.remove('doctor-disponible-item-activo');
     }
 
-    if(consultorioActual == ''){
+    if(consultorioActual == '' || doctorConsultorio == ''){
         return;
     }
 
     for(i = 0; i < items.length; i++){
-        if(String(items[i].getAttribute('data-consultorio')) == String(consultorioActual)){
+        if(
+            String(items[i].getAttribute('data-consultorio')) == String(consultorioActual) ||
+            String(items[i].getAttribute('data-doctor')) == String(doctorConsultorio)
+        ){
             items[i].classList.add('doctor-disponible-item-activo');
             return;
         }
