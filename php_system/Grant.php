@@ -1304,10 +1304,21 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         }
         .task-list-container,
         .gantt-right-panel {
-            transition: width 0.28s ease, min-width 0.28s ease, opacity 0.2s ease, border-color 0.2s ease;
+            transition: flex-basis 0.28s ease, width 0.28s ease, min-width 0.28s ease, opacity 0.2s ease, border-color 0.2s ease;
+        }
+
+        .task-list-container {
+            flex: 0 0 42%;
+            max-width: 42%;
+        }
+
+        .gantt-right-panel {
+            flex: 1 1 0;
+            width: auto !important;
         }
 
         .gantt-layout.task-list-collapsed .task-list-container {
+            flex-basis: 0 !important;
             width: 0 !important;
             min-width: 0 !important;
             max-width: 0 !important;
@@ -1318,6 +1329,26 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
         .gantt-layout.task-list-collapsed .gantt-right-panel {
             width: 100% !important;
+        }
+
+        @media (max-width: 980px) {
+            .task-list-container {
+                flex: 0 0 auto;
+                width: 100%;
+                max-width: none;
+            }
+
+            .gantt-right-panel {
+                flex: 1 1 auto;
+                width: 100% !important;
+            }
+
+            .gantt-layout.task-list-collapsed .task-list-container {
+                height: 0 !important;
+                max-height: 0 !important;
+                overflow: hidden !important;
+                border-bottom: 0;
+            }
         }
 
         .task-toggle-btn {
@@ -1465,7 +1496,32 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         }
 
         body.grant-dashboard-compact .task-list-container {
+            flex: 0 0 360px;
+            max-width: 360px;
+            min-width: 320px;
             overflow: auto;
+        }
+
+        body.grant-dashboard-compact .gantt-layout.task-list-collapsed .task-list-container {
+            flex-basis: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+        }
+
+        @media (max-width: 980px) {
+            body.grant-dashboard-compact .task-list-container {
+                flex: 0 0 auto;
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                max-height: 260px;
+            }
+
+            body.grant-dashboard-compact .gantt-layout.task-list-collapsed .task-list-container {
+                height: 0 !important;
+                max-height: 0 !important;
+                overflow: hidden !important;
+            }
         }
 
         @media (max-width: 680px) {
@@ -1483,6 +1539,14 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 min-width: 0;
                 max-width: none;
                 flex: 1 1 120px;
+            }
+
+            body.grant-dashboard-compact .task-list-container {
+                flex-basis: 220px;
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                max-height: 220px;
             }
         }
 
@@ -2452,6 +2516,12 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 decorarBarrasGanttResponsables();
                 configurarTooltipsGantt();
                 programarCentradoFechaActual();
+                try {
+                    if (window.parent && typeof window.parent.refrescarGrantDashboard === 'function') {
+                        window.parent.refrescarGrantDashboard();
+                    }
+                } catch (e) {
+                }
             }, 320);
         }
 

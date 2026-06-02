@@ -763,6 +763,10 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                               panel.style.marginTop = '';
                               panel.style.height = '';
 
+                              if (!layout.classList.contains('task-list-collapsed')) {
+                                return;
+                              }
+
                               var cajaLayout = layout.getBoundingClientRect();
                               var cajaControles = controles.getBoundingClientRect();
                               var espacioSuperior = Math.round(cajaControles.top - cajaLayout.top);
