@@ -1182,7 +1182,7 @@ function cargarTareasPendientesAdministrador() {
     }
 
     if (contador) {
-        contador.innerHTML = "0";
+        contador.innerHTML = "0%";
     }
 
     if (contadorPendientesResumen) {
@@ -1247,11 +1247,14 @@ function cargarTareasPendientesAdministrador() {
 					var totalProceso = datos[5] || 0;
 					var totalCompletadas = datos[6] || 0;
 					var totalAtrasadas = datos[8] || 0;
+					var totalTareasNumero = parseInt(totalTareas, 10) || 0;
+					var totalCompletadasNumero = parseInt(totalCompletadas, 10) || 0;
+					var porcentajeCompletadas = totalTareasNumero > 0 ? Math.round((totalCompletadasNumero * 100) / totalTareasNumero) : 0;
 
 					lista.innerHTML = html;
 
 					if (contador) {
-                        contador.innerHTML = totalPendientes;
+                        contador.innerHTML = porcentajeCompletadas + "%";
 
                         var contenedorContador = contador.parentNode;
 

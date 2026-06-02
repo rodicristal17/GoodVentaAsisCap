@@ -9171,7 +9171,7 @@ text-align: justify;
 
 .perfil-tareas__contador span,
 .perfil-tareas__contador--alerta span {
-    width: 20px !important;
+    width: 40px !important;
     min-width: 20px !important;
     height: 20px !important;
     padding: 0 !important;
@@ -9719,8 +9719,24 @@ text-align: justify;
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    gap: 14px;
     width: 100%;
     margin: 0 0 10px;
+    background: rgba(248, 250, 252, 0.92);
+}
+
+.dashboard-topbar__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.dashboard-topbar__jornada {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+    margin-left: auto;
 }
 
 .dashboard-home-button {
@@ -9728,12 +9744,12 @@ text-align: justify;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    min-height: 34px;
-    padding: 7px 12px;
-    border: 1px solid #d9e1ea;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 8px 18px rgba(18, 31, 53, 0.08);
+    min-height: 46px;
+    padding: 0 16px;
+    border: 1px solid #d8e2ee;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
     color: #172033;
     cursor: pointer;
     font-family: "Merriweather Sans", Arial;
@@ -10032,6 +10048,80 @@ button.dashboard-summary-item:hover {
     display: none !important;
 }
 
+.dashboard-topbar__jornada .perfil-widget__jornada {
+    display: grid;
+    grid-template-columns: max-content auto max-content;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    min-height: 46px;
+    padding: 5px 8px 5px 12px;
+    border-color: #d8e2ee !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07) !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__clock {
+    display: grid;
+    align-content: center;
+    width: max-content;
+    min-height: 36px;
+}
+
+.dashboard-topbar__jornada .perfil-widget__hora.inputReloj2 {
+    width: 104px !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__hora.inputReloj2,
+.dashboard-topbar__jornada .perfil-widget__hora {
+    font-size: 19px !important;
+    letter-spacing: 0 !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__fecha {
+    font-size: 11px !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__btn {
+    min-width: 124px;
+    height: 34px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 5px 12px rgba(22, 163, 74, 0.18) !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__registro {
+    grid-column: auto;
+    width: auto !important;
+    min-width: 94px;
+    border: 1px solid #edf1f5;
+    border-radius: 10px;
+    font-size: 11px !important;
+    background: #f8fafc;
+}
+
+.dashboard-topbar__jornada .perfil-widget__registro .tableCabeceraRegistro td:first-child,
+.dashboard-topbar__jornada .perfil-widget__registro .tableRegistroSelec td:first-child {
+    display: none !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__registro .tableCabeceraRegistro td {
+    padding: 4px 8px 2px !important;
+    background: #f8fafc !important;
+    font-size: 10px !important;
+    text-align: center !important;
+}
+
+.dashboard-topbar__jornada .perfil-widget__registro .tableRegistroSelec td {
+    padding: 2px 8px 5px !important;
+    background: #f8fafc !important;
+    font-size: 11px !important;
+    text-align: center !important;
+}
+
 .dashboard-card--jornada .perfil-widget__usuario,
 .dashboard-card--jornada .perfil-widget__jornada,
 .dashboard-card--jornada .perfil-tareas {
@@ -10148,6 +10238,31 @@ button.dashboard-summary-item:hover {
     }
 }
 
+@media (max-width: 980px) {
+    .dashboard-topbar {
+        flex-wrap: wrap;
+    }
+
+    .dashboard-topbar__left,
+    .dashboard-topbar__jornada {
+        width: 100%;
+    }
+
+    .dashboard-topbar__left {
+        justify-content: space-between;
+    }
+
+    .dashboard-topbar__jornada {
+        justify-content: stretch;
+        margin-left: 0;
+    }
+
+    .dashboard-topbar__jornada .perfil-widget__jornada {
+        width: auto;
+        max-width: none;
+    }
+}
+
 @media (max-width: 620px) {
     .dashboard-contenedor {
         padding: 10px 10px 0;
@@ -10156,6 +10271,15 @@ button.dashboard-summary-item:hover {
     .dashboard-topbar {
         justify-content: flex-start;
         margin-bottom: 8px;
+    }
+
+    .dashboard-topbar__jornada .perfil-widget__jornada {
+        grid-template-columns: max-content auto;
+    }
+
+    .dashboard-topbar__jornada .perfil-widget__registro {
+        grid-column: 1 / -1;
+        min-width: 0;
     }
 
     .dashboard-home-button {
