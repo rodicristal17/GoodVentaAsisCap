@@ -9473,7 +9473,7 @@ text-align: justify;
     position: relative;
     display: grid !important;
     gap: 7px !important;
-    max-height: 340px !important;
+    max-height: 215px !important;
     overflow: auto !important;
     padding: 0 2px 0 0 !important;
 }

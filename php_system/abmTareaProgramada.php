@@ -924,6 +924,11 @@ function buscarTareasPendientesAdministrador($cod_usuario)
         $condicionTareasUsuario = "tpa.cod_usuarioFK = ?";
     }
 
+    date_default_timezone_set('America/Asuncion');
+    $fecha_actual = date("Y-m-d");
+    $hora_actual = date("H:i:s");
+    $momento_actual = time();
+
     $sql = "SELECT 
                 tpa.cod_tarea_asignada,
                 tpa.cod_tareaFK,
@@ -946,15 +951,16 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             WHERE ".$condicionTareasUsuario."
             AND tpa.fecha_tarea = ?
             ORDER BY 
+                CASE 
+                    WHEN tpa.estado_tarea = 'Pendiente' AND tp.hora IS NOT NULL AND tp.hora < ? THEN 1
+                    WHEN tpa.estado_tarea = 'Pendiente' THEN 2
+                    WHEN tpa.estado_tarea = 'En Proceso' THEN 3
+                    WHEN tpa.estado_tarea = 'Completada' THEN 4
+                    WHEN tpa.estado_tarea = 'Cancelada' THEN 5
+                    ELSE 6
+                END,
                 CASE WHEN tp.hora IS NULL THEN 1 ELSE 0 END,
                 tp.hora ASC,
-                CASE 
-                    WHEN tpa.estado_tarea = 'Pendiente' THEN 1
-                    WHEN tpa.estado_tarea = 'En Proceso' THEN 2
-                    WHEN tpa.estado_tarea = 'Completada' THEN 3
-                    WHEN tpa.estado_tarea = 'Cancelada' THEN 4
-                    ELSE 5
-                END,
                 tpa.fecha_insert DESC";
 
     $stmt = $mysqli->prepare($sql);
@@ -969,16 +975,12 @@ function buscarTareasPendientesAdministrador($cod_usuario)
         exit;
     }
 	
-	date_default_timezone_set('America/Asuncion');
-	$fecha_actual = date("Y-m-d");
-    $momento_actual = time();
- 
     if ($tieneColumnasAsignadasRol) {
-        $ss = "sss";
-        $stmt->bind_param($ss, $cod_usuario, $cod_usuario, $fecha_actual);
+        $ss = "ssss";
+        $stmt->bind_param($ss, $cod_usuario, $cod_usuario, $fecha_actual, $hora_actual);
     } else {
-        $ss = "ss";
-        $stmt->bind_param($ss, $cod_usuario, $fecha_actual);
+        $ss = "sss";
+        $stmt->bind_param($ss, $cod_usuario, $fecha_actual, $hora_actual);
     }
 
     if (!$stmt->execute()) {
