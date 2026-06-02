@@ -13363,8 +13363,8 @@ style='background-color: #b7b7b7;'>
             <div class="asignar-tarea__tabs" aria-label="Secciones de asignaci&oacute;n de tareas">
                 <button type="button" class="asignar-tarea__tab asignar-tarea__tab--activo" id="btnVistaAsignarUsuarios" onclick="cambiarVistaAsignarTarea('USUARIOS')">Usuarios</button>
                 <button type="button" class="asignar-tarea__tab" id="btnVistaAsignarRoles" onclick="cambiarVistaAsignarTarea('ROLES')">Roles</button>
-                <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Tareas del d&iacute;a</button>
-                <button type="button" class="asignar-tarea__tab" title="Us&aacute; el bot&oacute;n de tarea casual al seleccionar un usuario">Tareas casuales</button>
+                <button type="button" class="asignar-tarea__tab" style="display: none;" title="Preparado para la siguiente fase">Tareas del d&iacute;a</button>
+                <button type="button" class="asignar-tarea__tab" style="display: none;" title="Us&aacute; el bot&oacute;n de tarea casual al seleccionar un usuario">Tareas casuales</button>
             </div>
 
             <div class="asignar-tarea__filtros">
@@ -13539,7 +13539,7 @@ style='background-color: #b7b7b7;'>
                         <span>Rol operativo</span>
                     </label>
 
-                    <label class="tarea-diaria-modal__destino-opcion">
+                    <label class="tarea-diaria-modal__destino-opcion" style="display: none;">
                         <input type="radio" name="radioDestinoTareaDiaria" value="local" onchange="cambiarDestinoTareaDiaria()" />
                         <span>Local / Sucursal</span>
                     </label>
@@ -13569,7 +13569,7 @@ style='background-color: #b7b7b7;'>
                         </select>
                     </div>
 
-                    <div class="tarea-diaria-modal__campo">
+                    <div class="tarea-diaria-modal__campo" style="display:none;">
                         <label>Local / Sucursal</label>
                         <select class="inputText tarea-diaria-modal__input" id="inptLocalDestinoTareaDiaria" disabled>
                             <option value="">Seleccionar local</option>
@@ -18454,8 +18454,8 @@ RESPONSABLE
 <input class='inputText' type='Date' id='inptBuscarCobrosRealizadosFF2' style='width:135px' />
 </td>
 <td style='' >
-<input type="button" style='margin-top: 17px;' value="Buscar" class="btn4" onclick='buscararqueo2()' >
-<input type="button" style='margin-top: 17px;width:125px;background-color:#ff5722' value="Cajas de Cobradores" class="btn4" onclick='verCerrarVistaCajaApp()' >
+<input type="button" style='margin: auto;' value="Buscar" class="btn4" onclick='buscararqueo2()' >
+<input type="button" style='margin: auto;width:125px;background-color:#ff5722' value="Cajas de Cobradores" class="btn4" onclick='verCerrarVistaCajaApp()' >
 </td>
 </tr>
 </table>
