@@ -105,6 +105,80 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     min-width: 0;
   }
 
+  #principalMenub .dashboard-topbar__center {
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    z-index: 2;
+    width: clamp(300px, 34vw, 470px);
+    transform: translateX(-50%);
+  }
+
+  #principalMenub .dashboard-access-search--topbar {
+    position: relative;
+    width: 100%;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box input {
+    height: 46px;
+    border-radius: 14px 0 0 14px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    flex: 0 0 46px;
+    height: 46px;
+    padding: 0;
+    border-left: 0;
+    border-radius: 0 14px 14px 0;
+    background: #eff6ff;
+    color: #2563eb;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box input:focus + button {
+    border-color: #2563eb;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: none;
+    max-height: min(340px, calc(100vh - 92px));
+    min-height: 0;
+    margin-top: 0;
+    padding: 10px;
+    overflow: auto;
+    border: 1px solid #d9e1ea;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.18);
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__results.is-visible {
+    display: flex;
+  }
+
   #principalMenub .dashboard-topbar__jornada {
     display: flex;
     justify-content: flex-end;
@@ -246,11 +320,20 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
   @media (max-width: 980px) {
     #principalMenub .dashboard-contenedor {
-      padding-top: 132px !important;
+      padding-top: 184px !important;
     }
 
     #principalMenub .dashboard-topbar {
       flex-wrap: wrap;
+    }
+
+    #principalMenub .dashboard-topbar__center {
+      position: relative;
+      top: auto;
+      left: auto;
+      order: 2;
+      width: 100%;
+      transform: none;
     }
 
     #principalMenub .dashboard-topbar__left,
@@ -259,10 +342,15 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
 
     #principalMenub .dashboard-topbar__left {
+      order: 1;
+    }
+
+    #principalMenub .dashboard-topbar__left {
       justify-content: space-between;
     }
 
     #principalMenub .dashboard-topbar__jornada {
+      order: 3;
       justify-content: stretch;
       margin-left: 0;
     }
@@ -275,13 +363,22 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
   @media (max-width: 620px) {
     #principalMenub .dashboard-contenedor {
-      padding-top: 174px !important;
+      padding-top: 228px !important;
     }
 
     #principalMenub .dashboard-topbar {
       min-height: 58px;
       padding: 8px 10px;
       gap: 8px;
+    }
+
+    #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box {
+      align-items: center;
+      flex-direction: row;
+    }
+
+    #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button {
+      width: 46px;
     }
 
     #principalMenub .dashboard-home-button span {
@@ -484,6 +581,15 @@ onmouseover='verMenusWindows("ptituloReporte")' style='display:none'>
       <img id="fotoPerfilUsuarioTopbar" class="dashboard-topbar-user__photo" src="/GoodVentaAsisCap/iconos/sinperfil.png" alt="Foto de perfil" />
     </div>
   </div>
+  <div class="dashboard-topbar__center">
+    <div class="dashboard-access-search dashboard-access-search--topbar" id="dashboardAccessSearch">
+      <div class="dashboard-access-search__box">
+        <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
+        <button type="button" onclick="limpiarBuscadorAccesosDashboard()" aria-label="Limpiar búsqueda" title="Limpiar búsqueda">&times;</button>
+      </div>
+      <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
+    </div>
+  </div>
   <div class="dashboard-topbar__jornada" id="dashboardTopbarJornada"></div>
 </div>
 
@@ -519,20 +625,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         <div class="dashboard-card__body" id="dashboardJornadaBody"></div>
                       </section>
 
-                      <section class="dashboard-access-search dashboard-section-card" id="dashboardAccessSearch">
-                        <div class="dashboard-section-header">
-                          <div>
-                            <p class="dashboard-section-eyebrow">Búsqueda general</p>
-                            <h2 class="dashboard-section-title">Encontrar acceso</h2>
-                          </div>
-                        </div>
-
-                        <div class="dashboard-access-search__box">
-                          <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
-                          <button type="button" onclick="limpiarBuscadorAccesosDashboard()">Limpiar</button>
-                        </div>
-                        <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
-                      </section>
                       </div>
 
                       <section class="dashboard-card dashboard-card--gantt">
@@ -876,10 +968,12 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                         var query = normalizarTextoDashboard(input.value);
                         if (!query) {
-                          results.innerHTML = "<span class='dashboard-access-search__empty'>Escribí para buscar accesos del dashboard.</span>";
+                          results.innerHTML = "";
+                          results.classList.remove("is-visible");
                           return;
                         }
 
+                        results.classList.add("is-visible");
                         var html = "";
                         var cantidad = 0;
 
