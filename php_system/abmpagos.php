@@ -2066,7 +2066,7 @@ $mysqli=conectar_al_servidor();
 	 }
 
 	$sql= "select  vt.TipoVenta,vt.puntoexpedicion,vt.tipo_comprobante,pg.idPago,pg.tipo, pg.Fecha, sum(pg.Monto) as Monto,pg.cod_venta_fk,pg.tipopago,
-	vt.cod_local, pg.cod_cobradorFK, pg.fecha_facturado,
+	vt.cod_local, pg.cod_cobradorFK, pg.fecha_facturado, pg.num_comprobante,
 	pg.comision,pg.nrofactura,pg.lot, pg.lat,(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
 	(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as documento,
 	(Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK) as cobradornombre,date_format(hora ,'%H:%i' ) as hora,
@@ -2129,6 +2129,7 @@ $nroCancelado=mb_convert_encoding((string)($valor['nroCancelado']), 'UTF-8', 'IS
 $tipopago=mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1');
 $documento=mb_convert_encoding((string)($valor['documento']), 'UTF-8', 'ISO-8859-1');
 $fecha_facturado=mb_convert_encoding((string)($valor['fecha_facturado']), 'UTF-8', 'ISO-8859-1');
+$num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
 
 $registros[]= array(
 	'TipoVenta' => mb_convert_encoding((string)($valor['TipoVenta']), 'UTF-8', 'ISO-8859-1'),
@@ -2157,6 +2158,7 @@ $registros[]= array(
 	'tipopago'=>mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1'),
 	'documento'=>mb_convert_encoding((string)($valor['documento']), 'UTF-8', 'ISO-8859-1'),
 	'fecha_facturado'=>mb_convert_encoding((string)($valor['fecha_facturado']), 'UTF-8', 'ISO-8859-1'),
+	'num_comprobante'=>mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1'),
 );
 
 if($tipopago=="Efectivo"){
@@ -2166,11 +2168,12 @@ if($tipopago=="Efectivo"){
 }
 
 $style='';
-			   if($puntoexpedicion!=""){
+/*if($puntoexpedicion!=""){
 	$nrof=$puntoexpedicion."-".$num_factura;
 }else{
 	$nrof=$num_factura;
-}   
+}*/
+$nrof= $num_comprobante;
 if($nroCancelado==0){
 $totalPagado=$Monto+$totalPagado;
 }else{
@@ -2180,48 +2183,19 @@ $totalPagado=$Monto+$totalPagado;
 if($plazo!="ENTREGA"){
 	$styleName=CargarStyleTable($styleName);
 $paginacuota.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro'onclick='obtenerdatospagos(this)' style='$style'  >
+<tr class='$styleName' id='tbSelecRegistro' onclick='obtenerdatospagos(this)' style='$style'>
 <td id='td_datos_1' style='display:none' >".$idPago."</td>
 <td id='td_datos_3' style='display:none'>".$num_factura."</td>
 <td id='td_datos_9' style='width:15%'>*".$documento."*<br>".$nombrecliente." </td>
-<td style='width:15%'>".$documento." </td>
+<td style='width:10%'>".$documento." </td>
 <td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
 <td id=''			 style='width:10%'>".$nrof."</td>
+<td id=''			 style='width:5%'>".$cod_venta."</td>
 <td id='td_datos_2' style='display:none' >".$Fecha."</td>
-<td id='' 			style='width:10%' >".$Fecha." ".$hora."</td>
+<td id='' 			style='width:15%' >".$Fecha." ".$hora."</td>
 <td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
 <td id=''			 style='width:10%'>".$tipopago."</td>
-<td id=''		 	style='width:8%'>".$tipo."</td>
-<td id='td_datos_4' style='width:7%'>".$plazo."</td>
-<td id='td_datos_4' style='width:10%'>".$TipoVenta."</td>
-<td id='td_datos_4' style='width:10%'>".$cobradornombre."</td>
-<td id='' style='display:none'>".$nombrezona."</td>
-
-<td id='td_datos_10' style='display:none'>".$cod_venta."</td>
-
-<td id='td_datos_6' style='display:none'>".$comision."</td>
-<td id='td_datos_7' style='display:none'>".$lot."</td>
-<td id='td_datos_8' style='display:none'>".$lat."</td>
-</tr>
-</table>";
-
-}else{
-	$styleName=CargarStyleTable($styleName);
-	$paginaentrega.="
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='obtenerdatospagos(this)' >
-<td id='td_datos_1' style='display:none' >".$idPago."</td>
-<td id='' style='width:10%'>".$nrof."</td>
-<td id='td_datos_3' style='display:none'>".$num_factura."</td>
-<td id='td_datos_9' style='width:15%'>".$nombrecliente."</td>
-<td style='width:15%'>".$documento."</td>
-<td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
-<td id='td_datos_2' style='display:none' >".$Fecha."</td>
-<td id='' style='width:10%' >".$Fecha." ".$hora."</td>
-<td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
-<td id=''			 style='width:10%'>".$tipopago."</td>
-<td id=''		 	style='width:8%'>".$tipo."</td>
+<td id=''		 	style='width:10%'>".$tipo."</td>
 <td id='td_datos_4' style='width:5%'>".$plazo."</td>
 <td id='td_datos_4' style='width:10%'>".$TipoVenta."</td>
 <td id='td_datos_4' style='width:10%'>".$cobradornombre."</td>
@@ -2232,21 +2206,48 @@ $paginacuota.="
 <td id='td_datos_6' style='display:none'>".$comision."</td>
 <td id='td_datos_7' style='display:none'>".$lot."</td>
 <td id='td_datos_8' style='display:none'>".$lat."</td>
-</tr>
-</table>";
+</tr>";
+
+}else{
+	$styleName=CargarStyleTable($styleName);
+	$paginaentrega.="
+<tr class='$styleName' id='tbSelecRegistro' onclick='obtenerdatospagos(this)'>
+<td id='td_datos_1' style='display:none' >".$idPago."</td>
+<td id='td_datos_3' style='display:none'>".$num_factura."</td>
+<td id='td_datos_9' style='width:15%'>".$nombrecliente."</td>
+<td style='width:10%'>".$documento."</td>
+<td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
+<td id='' style='width:10%'>".$nrof."</td>
+<td id='' style='width:5%'>".$cod_venta."</td>
+<td id='td_datos_2' style='display:none' >".$Fecha."</td>
+<td id='' style='width:15%' >".$Fecha." ".$hora."</td>
+<td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
+<td id=''			 style='width:10%'>".$tipopago."</td>
+<td id=''		 	style='width:10%'>".$tipo."</td>
+<td id='td_datos_4' style='width:5%'>".$plazo."</td>
+<td id='td_datos_4' style='width:10%'>".$TipoVenta."</td>
+<td id='td_datos_4' style='width:10%'>".$cobradornombre."</td>
+<td id='' style='display:none'>".$nombrezona."</td>
+
+<td id='td_datos_10' style='display:none'>".$cod_venta."</td>
+
+<td id='td_datos_6' style='display:none'>".$comision."</td>
+<td id='td_datos_7' style='display:none'>".$lot."</td>
+<td id='td_datos_8' style='display:none'>".$lat."</td>
+</tr>";
 }
 
 
 }
 }
 if($paginaentrega!="" && $paginacuota!=""){
-	$pagina="<p class='ptituloZ'>Cobros de Entregas</p>".$paginaentrega."<p class='ptituloZ'>Cobros de Cuotas</p>".$paginacuota;
+	$pagina="<tr class='arqueo-section-row'><td colspan='12'>Cobros de Entregas</td></tr>".$paginaentrega."<tr class='arqueo-section-row'><td colspan='12'>Cobros de Cuotas</td></tr>".$paginacuota;
 }
 if($paginaentrega!="" && $paginacuota==""){
-	$pagina="<p class='ptituloZ'>Cobros de Entregas</p>".$paginaentrega;
+	$pagina="<tr class='arqueo-section-row'><td colspan='12'>Cobros de Entregas</td></tr>".$paginaentrega;
 }
 if($paginaentrega=="" && $paginacuota!=""){
-	$pagina="<p class='ptituloZ'>Cobros de Cuotas</p>".$paginacuota;
+	$pagina="<tr class='arqueo-section-row'><td colspan='12'>Cobros de Cuotas</td></tr>".$paginacuota;
 }
    
 return array("1" => "exito","2" => $pagina,"3" =>number_format($totalPagado,'0',',','.'),"4"=>$nroRegistro

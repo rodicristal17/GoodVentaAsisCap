@@ -4496,7 +4496,8 @@ paginaPie =
 
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("divPieImpresiones").innerHTML=paginaPie
-document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloImpreArqueo").innerHTML
+var encabezadoArqueo = document.querySelector("#divArqueo #tdTituloImpreArqueo .arqueo-header-row")
+document.getElementById("tbTitulosImpresiones").innerHTML=encabezadoArqueo ? encabezadoArqueo.outerHTML : ""
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_arqeo").innerHTML
 }
 if (ventana == "arqueocaja") {

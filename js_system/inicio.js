@@ -20166,12 +20166,22 @@ function checkfiltrosCobrosRealizados(d){
 var cobradorarqueo = "";
 var idHistorialPago = "";
 var cod_ventaFKPago = "";
-function obtenerdatospagos(datostr) {
-	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
+function normalizarFilaPagoArqueo(fila, indice) {
+	var claseBase = fila.dataset.claseBaseArqueo;
+	if (!claseBase) {
+		claseBase = fila.classList.contains('tableRegistroSearch2') ? 'tableRegistroSearch2' : 'tableRegistroSearch';
+		fila.dataset.claseBaseArqueo = claseBase;
+	}
+	fila.classList.remove('tableRegistroSelec', 'tableRegistroSearch', 'tableRegistroSearch2');
+	fila.classList.add(claseBase || (indice % 2 == 0 ? 'tableRegistroSearch' : 'tableRegistroSearch2'));
+}
 
+function obtenerdatospagos(datostr) {
+	$("#divArqueo #table_arqeo tr[id=tbSelecRegistro]").each(function (i, td) {
+		normalizarFilaPagoArqueo(td, i);
 	});
-	datostr.className = 'tableRegistroSelec'
+	normalizarFilaPagoArqueo(datostr, 0);
+	datostr.classList.add('tableRegistroSelec');
 	idHistorialPago = $(datostr).children('td[id="td_datos_1"]').html();
 	cod_ventaFKPago = $(datostr).children('td[id="td_datos_10"]').html();
 		document.getElementById("btnEliminarCobros1").style.backgroundColor=" #e99277 "
@@ -24055,6 +24065,10 @@ function iraenlances(d){
 
 
 
+function mostrarCargandoArqueo() {
+	document.getElementById("table_arqeo").innerHTML = "<tr class='arqueo-loading-row'><td colspan='12'>" + paginacargando + "</td></tr>";
+}
+
 function buscararqueo2() {
 var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 	var cliente = document.getElementById('inptBuscarCobrosRealizados1').value
@@ -24070,7 +24084,7 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 	var cedula = document.getElementById('inptBuscarCobrosRealizados7').value
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
    idHistorialPago = "";
-	document.getElementById("table_arqeo").innerHTML = paginacargando
+	mostrarCargandoArqueo()
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -24164,7 +24178,7 @@ function buscararqueo3() {
 
  idHistorialPago = "";
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
-	document.getElementById("table_arqeo").innerHTML = paginacargando
+	mostrarCargandoArqueo()
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,

@@ -14260,3 +14260,311 @@ button.dashboard-summary-item:hover {
         min-height: 180px;
     }
 }
+
+/* Vista Arqueo */
+#divArqueo {
+    --arqueo-table-width: 1360px;
+    background: rgba(15, 23, 42, 0.38);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#divArqueo #tdEfectoDivArqueo > tbody > tr > td {
+    padding: 22px 14px;
+    vertical-align: middle;
+}
+
+#divArqueo .divPrincipalrepor {
+    width: min(1210px, calc(100vw - 36px)) !important;
+    min-height: 0;
+    max-height: calc(100vh - 44px);
+    overflow: auto;
+    padding: 0 0 14px;
+    border: 1px solid #dce5ed;
+    border-radius: 12px;
+    background: #f8fafc;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
+}
+
+#divArqueo .tableMenuZ {
+    width: 100%;
+    height: auto;
+    margin: 0 0 12px;
+    padding: 12px 16px;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 12px 12px 0 0;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+#divArqueo .pTituloB {
+    color: #172033;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+#divArqueo .iconoBtn:hover {
+    border-color: #cbd5e1;
+    background: #eef2f7;
+    transform: translateY(-1px);
+}
+
+#divArqueo .divMenuF {
+    width: calc(100% - 28px) !important;
+    margin: 0 auto 12px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+#divArqueo table.divMenuF {
+    border-collapse: separate;
+    border-spacing: 10px 0;
+}
+
+#divArqueo .divMenuF td {
+    vertical-align: bottom;
+}
+
+#divArqueo .pTituloC,
+#divArqueo .pTitulo8 {
+    color: #667085;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+#divArqueo .pTitulo8 {
+    width: auto !important;
+    min-height: 26px;
+    margin: 0;
+    gap: 6px;
+    color: #334155;
+}
+
+#divArqueo .inputText,
+#divArqueo #tdTituloImpreArqueo .inputfiltro {
+    height: 34px;
+    border: 1px solid #d7dee7;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172033;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02);
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+    box-sizing: border-box;
+}
+
+#divArqueo .inputText:focus,
+#divArqueo #tdTituloImpreArqueo .inputfiltro:focus {
+    border-color: #2f80ed;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.12);
+}
+
+#divArqueo .btn4 {
+    min-width: 86px;
+    width: auto !important;
+    height: 34px !important;
+    padding: 0 13px;
+    border-radius: 8px !important;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+    transition: filter .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+#divArqueo .btn4:hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.2);
+}
+
+#divArqueo #btnEliminarCobros1 {
+    color: #475467;
+    box-shadow: none;
+}
+
+#divArqueo input[value="Imprimir"].btn4 {
+    background-color: #334155 !important;
+    box-shadow: none;
+}
+
+#divArqueo input[value="Cajas de Cobradores"].btn4 {
+    background-color: #0f766e !important;
+    box-shadow: 0 8px 18px rgba(15, 118, 110, 0.14);
+}
+
+#divArqueo input[value="Cargar Nro factura"].btn4 {
+    background-color: #2563eb !important;
+}
+
+#divArqueo #TableScroollArqeo1 {
+    height: 350px !important;
+    overflow: auto !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    display: block;
+}
+
+#divArqueo #tdTituloImpreArqueo {
+    width: max(100%, var(--arqueo-table-width));
+    min-width: var(--arqueo-table-width);
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    background: #172033;
+}
+
+#divArqueo #tdTituloImpreArqueo thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#divArqueo #tdTituloImpreArqueo .td_registro {
+    height: 30px;
+    padding: 7px 6px;
+    color: #eef4ff;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#divArqueo #tdTituloImpreArqueo .arqueo-filter-row .td_registro {
+    background: #f8fafc;
+    border-right: 1px solid #edf1f5;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#divArqueo .arqueo-filter-cell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 24px;
+    gap: 5px;
+    align-items: center;
+}
+
+#divArqueo #TableScroollArqeo1 .inputfiltro {
+    width: 100%;
+    max-width: none;
+    height: 30px;
+    text-align: left;
+    font-size: 10px;
+}
+
+#divArqueo .inptLimpiarBP {
+    width: 14px;
+    height: 14px;
+    margin-left: 0;
+    padding: 5px;
+    border-radius: 7px;
+    filter: none;
+    background: #eef2f7;
+}
+
+#divArqueo #table_arqeo .arqueo-section-row td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf1f5;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 900;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+#divArqueo #table_arqeo .tableRegistroSearch:not(.tableRegistroSelec),
+#divArqueo #table_arqeo .tableRegistroSearch2:not(.tableRegistroSelec),
+#divArqueo #table_arqeo .arqueo-loading-row {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10px;
+    font-weight: 400 !important;
+}
+
+#divArqueo #table_arqeo .tableRegistroSearch:not(.tableRegistroSelec) td,
+#divArqueo #table_arqeo .tableRegistroSearch2:not(.tableRegistroSelec) td,
+#divArqueo #table_arqeo .arqueo-loading-row td {
+    min-height: 34px;
+    padding: 9px 7px;
+    border: 0;
+    border-bottom: 1px solid #edf1f5;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 400 !important;
+    line-height: 1.35;
+}
+
+#divArqueo #table_arqeo .tableRegistroSearch:not(.tableRegistroSelec):hover td,
+#divArqueo #table_arqeo .tableRegistroSearch2:not(.tableRegistroSelec):hover td {
+    background: #172033 !important;
+    color: #ffffff !important;
+}
+
+#divArqueo #table_arqeo .tableRegistroSelec td {
+    background: #e8f1ff !important;
+    color: #0f3f7a !important;
+    font-weight: 900 !important;
+}
+
+#divArqueo table.divMenuF:last-of-type {
+    background: #f8fafc;
+}
+
+#divArqueo table.divMenuF:last-of-type td:not(:last-child) {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+#divArqueo .inputTextDisable {
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #172033;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+@media (max-width: 900px) {
+    #divArqueo #tdEfectoDivArqueo > tbody > tr > td {
+        padding: 0;
+    }
+
+    #divArqueo .divPrincipalrepor {
+        width: 100vw !important;
+        max-height: 100vh;
+        min-height: 100vh;
+        border-radius: 0;
+        border-width: 0;
+    }
+
+    #divArqueo .divMenuF {
+        width: calc(100% - 16px) !important;
+    }
+
+    #divArqueo table.divMenuF {
+        display: block;
+        overflow-x: auto;
+        border-spacing: 8px 0;
+    }
+
+    #divArqueo #TableScroollArqeo1 {
+        overflow-x: auto;
+    }
+}

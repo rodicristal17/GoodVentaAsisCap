@@ -18406,16 +18406,14 @@ RESPONSABLE
 <div class='divPrincipalrepor' style='width:1210px'>
 <table class='tableMenuZ'>
 <tr>
-<td style='width:100%;text-align:left'>
+<td style='width:90%;text-align:left'>
 <p class='pTituloB'>Cobros Realizados</p>
 </td>
 
 
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png'class='iconoBtn' title='Minimizar Ventana'onclick='minimizarArqueo()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png'class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarInformeArqueo()' />
+<td style='width:10%;text-align:right'>
+<img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar ventana" alt="Minimizar ventana" onclick="minimizarArqueo()">
+<img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarInformeArqueo()">
 </td>
 </tr>
 </table>
@@ -18476,87 +18474,95 @@ RESPONSABLE
 </td></tr>
 </tbody>
 </table>
-<div style='overflow:auto;' class='divScrollhideen' id='TableScroollArqeo1'>
-<table class="tableCabeceraRegistro"  id='tdTituloImpreArqueo' >
-<tbody >
-<tr >
-  <td class="td_registro" style="width:15%;">CLIENTE</td>
-  <td class="td_registro" style="width:15%;">DOCUMENTO</td>
-<td class="td_registro" style="width:15%;">FECHA FACTURADO</td>
-<td class="td_registro" style="width:10%;">NRO FACTURA</td>
-<td class="td_registro" style="width:10%;">FECHA PAGO</td>
-<td class="td_registro" style="width:10%;">MONTO</td>
-<td class="td_registro" style="width:10%;">METODO</td>
-<td class="td_registro" style="width:8%;">TIPO</td>
-<td class="td_registro" style="width:7%;">CUOTA</td>
-<td class="td_registro" style="width:10%;">CONDICION</td>
-<td class="td_registro" style="width:10%;">COBRADOR</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro"   >
-<tbody >
-<tr >
-<td class="td_registro" style="width:14%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados1' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados1')" />
-</td>
-<td class="td_registro" style="width:14%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados7' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados7')" />
-</td>
-<td class="td_registro" style="width: 15%;"></td>
-<td class="td_registro" style="width:9%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados2' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados2')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<input  class='inputfiltro' type='date' id='inptBuscarCobrosRealizados3' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-	<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados3')" />
-</td>
-<td class="td_registro" style="width:10%;"></td>
-<td class="td_registro" style="width:10%;">
-<select class="inputfiltro" id="inptBuscarCobrosRealizados5">
-<option value="">Todos</option>
-<option value="Efectivo">Efectivo</option>
-<option value="Tarjeta">Tarjeta</option>
-</select>
-<td class="td_registro" style="width:1%;">
-	<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados5')" />
-	</td>
-</td>
-<td class="td_registro" style="width:8%;"></td>
-<td class="td_registro" style="width:7%;"></td>
-<td class="td_registro" style="width:10%;">
-<select class="inputfiltro" id="inptBuscarCobrosRealizados6">
-<option value="">TODOS</option>
-<option value="CREDITO">CREDITO</option>
-<option value="CONTADO">CONTADO</option>
-</select>
-<td class="td_registro" style="width:1%;">
-	<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados6')" />
-	</td>
-</td>
-<td class="td_registro" style="width:10%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados4' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados4')" />
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class='divTablesScrool' id='TableScroollArqeo2' style='height:260px;'>
-<div class="div_cuerpo_table" id="table_arqeo" style='min-height:200px;height:auto;border:none;;width:100%'></div>
+<div style='overflow:auto;' class='divScrollhideen divTablesScrool' id='TableScroollArqeo1'>
+  <table class="tableCabeceraRegistro" id='tdTituloImpreArqueo'>
+    <thead>
+      <tr class="arqueo-header-row">
+        <td class="td_registro" style="width:15%;">CLIENTE</td>
+        <td class="td_registro" style="width:10%;">DOCUMENTO</td>
+        <td class="td_registro" style="width:15%;">FECHA FACTURADO</td>
+        <td class="td_registro" style="width:10%;">NRO FACTURA</td>
+        <td class="td_registro" style="width:5%;">NRO VENTA</td>
+        <td class="td_registro" style="width:15%;">FECHA PAGO</td>
+        <td class="td_registro" style="width:10%;">MONTO</td>
+        <td class="td_registro" style="width:10%;">METODO</td>
+        <td class="td_registro" style="width:10%;">TIPO</td>
+        <td class="td_registro" style="width:5%;">CUOTA</td>
+        <td class="td_registro" style="width:10%;">CONDICION</td>
+        <td class="td_registro" style="width:10%;">COBRADOR</td>
+      </tr>
+      <tr class="arqueo-filter-row">
+        <td class="td_registro" style="width:15%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados1'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados1')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados7'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados7')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:15%;"></td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados2'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados2')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:5%;"></td>
+        <td class="td_registro" style="width:15%;">
+          <span class="arqueo-filter-cell">
+            <input class='inputfiltro' type='date' id='inptBuscarCobrosRealizados3'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados3')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;"></td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <select class="inputfiltro" id="inptBuscarCobrosRealizados5">
+              <option value="">Todos</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+            </select>
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados5')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;"></td>
+        <td class="td_registro" style="width:5%;"></td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <select class="inputfiltro" id="inptBuscarCobrosRealizados6">
+              <option value="">TODOS</option>
+              <option value="CREDITO">CREDITO</option>
+              <option value="CONTADO">CONTADO</option>
+            </select>
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados6')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados4'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados4')" />
+          </span>
+        </td>
+      </tr>
+    </thead>
+    <tbody id="table_arqeo"></tbody>
+  </table>
 </div>
 
 </div>
@@ -18941,7 +18947,7 @@ onclick="vaciar('inptBuscarEntregaCobrador4')" />
 </div>
 <div class='divTablesScrool' style='height:260px'>
 
-<div class="div_cuerpo_table" id="table_arqeo"
+<div class="div_cuerpo_table" id="table_entrega_cobrador"
 style='min-height:200px;height:auto;border:none;'></div>
 
 </div>
