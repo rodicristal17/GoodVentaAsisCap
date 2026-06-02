@@ -479,6 +479,7 @@ function normalizarFotoUsuario(urlFoto) {
 function aplicarFotoUsuario(urlFoto) {
 	var foto = normalizarFotoUsuario(urlFoto);
 	var imgPerfil = document.getElementById("fotoPerfilUsuario");
+	var imgPerfilTopbar = document.getElementById("fotoPerfilUsuarioTopbar");
 	var imgMisDatos = document.getElementById("imgFotoPerfilMisDatos");
 	var imgAbmPerfil = document.getElementById("imgFotoPerfil1");
 
@@ -488,6 +489,14 @@ function aplicarFotoUsuario(urlFoto) {
 			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
 		};
 		imgPerfil.src = foto;
+	}
+
+	if (imgPerfilTopbar) {
+		imgPerfilTopbar.onerror = function () {
+			this.onerror = null;
+			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
+		};
+		imgPerfilTopbar.src = foto;
 	}
 
 	if (imgMisDatos) {
@@ -580,6 +589,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("bNombreUser").innerHTML=nombre	
 						document.getElementById("inptNombreMisDatos").value=nombre;
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
+						document.getElementById("nombrePerfilUsuarioTopbar").innerHTML=nombre;
 						document.getElementById("inptCedulaMisDatos").value= datos["14"];
 						aplicarFotoUsuario(fotocliente3);
 						document.getElementById('inptTelefonoMisDatos').value= datos["9"];

@@ -10028,6 +10028,10 @@ button.dashboard-summary-item:hover {
     gap: 10px;
 }
 
+.dashboard-card--jornada .perfil-widget__usuario {
+    display: none !important;
+}
+
 .dashboard-card--jornada .perfil-widget__usuario,
 .dashboard-card--jornada .perfil-widget__jornada,
 .dashboard-card--jornada .perfil-tareas {
