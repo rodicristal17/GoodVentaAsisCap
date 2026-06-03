@@ -60,6 +60,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js?x=salida-ubicacion-20260529"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
+<script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -246,7 +247,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
     display: grid;
-    grid-template-columns: max-content auto max-content;
+    grid-template-columns: max-content auto auto max-content;
     align-items: center;
     gap: 10px;
     width: auto;
@@ -403,7 +404,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
 
     #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
-      grid-template-columns: max-content auto;
+      grid-template-columns: max-content auto auto;
       width: 100%;
       max-width: none;
     }
@@ -474,7 +475,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
 
 <div class='principal'>
-
 <center>
 <div class='divCabecera_b' style='display:none'>
 <table style="width: 90%;height: 100%">
@@ -1369,6 +1369,20 @@ style='display:none' class='divMinimizado'>
                value="Marcar entrada"
                class="btn4 perfil-widget__btn"
                onclick="registrarAsistencia();" />
+
+        <div class="solicitud-eliminacion-pendiente-widget" id="contenedorSolicitudEliminadoPendiente">
+            <button type="button" class="solicitud-eliminacion-pendiente-button" onclick="toggleDropdownSolicitudEliminado()" title="Solicitudes de eliminacion pendientes">
+                <i class="fa-solid fa-list-check"></i>
+                <span class="solicitud-eliminacion-pendiente-badge" id="badgeSolicitudEliminadoPendiente" style="display:none">0</span>
+            </button>
+            <div class="solicitud-eliminacion-pendiente-dropdown" id="dropdownSolicitudEliminadoPendiente" style="display:none">
+                <div class="solicitud-eliminacion-pendiente-header">
+                    <strong id="tituloSolicitudEliminadoPendiente">Solicitudes pendientes</strong>
+                    <button type="button" onclick="abrirInformeSolicitudEliminadoDesdeNotificacion('')">Ver informe</button>
+                </div>
+                <div class="solicitud-eliminacion-pendiente-list" id="listaSolicitudEliminadoPendiente"></div>
+            </div>
+        </div>
 
         <table class="perfil-widget__registro" id="tableRegistroEntrada">
             <thead>
@@ -2682,6 +2696,21 @@ src='/GoodVentaAsisCap/iconos/log_inactivos.svg' />
 <p class='pTitulo4'>Log de inactivos</p>
 <center>
 <div id='divMinimizadoInformeLogInactivos' style='display:none'
+class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
+<table  class='divMenub' id='divMenuSolicitudEliminado'
+onclick='abrirInformeSolicitudEliminado()' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/report.png' />
+<p class='pTitulo4'>Solicitud Eliminados</p>
+<center>
+<div id='divMinimizadoInformeSolicitudEliminado' style='display:none'
 class='divMinimizado'></div>
 </center>
 </td>
@@ -20640,6 +20669,171 @@ ZONA
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="principal2" style="display:none;" id="divInformeSolicitudEliminado">
+  <table style="width:100%;height:100%" id="tdEfectoInformeSolicitudEliminado" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divPrincipalrepor solicitud-eliminado-shell">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Informe de <b style="font-size: 30px;">Solicitud Eliminados</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                        onclick="minimizarInformeSolicitudEliminado()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="cerrarInformeSolicitudEliminado()">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="divMenuf solicitud-eliminado-filtros">
+                <table style="width:100%">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <p class="pTituloC">Solicitud / Motivo</p>
+                        <input class="inputText" type="text" id="inptSolicitudEliminadoBuscar" onkeyup="if(event.keyCode == 13){buscarInformeSolicitudEliminado()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Usuario</p>
+                        <input class="inputText" type="text" id="inptSolicitudEliminadoUsuario" onkeyup="if(event.keyCode == 13){buscarInformeSolicitudEliminado()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Estado</p>
+                        <select class="inputText" id="inptSolicitudEliminadoEstado" onchange="buscarInformeSolicitudEliminado()">
+                          <option value="">Todos</option>
+                          <option value="pendiente">Pendiente</option>
+                          <option value="aprobada">Aprobada</option>
+                          <option value="rechazada">Rechazada</option>
+                        </select>
+                      </td>
+                      <td>
+                        <p class="pTituloC">Desde</p>
+                        <input class="inputText" type="date" id="inptSolicitudEliminadoFechaDesde">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Hasta</p>
+                        <input class="inputText" type="date" id="inptSolicitudEliminadoFechaHasta">
+                      </td>
+                      <td style="text-align:right;vertical-align:bottom;">
+                        <input type="button" value="Buscar" class="btn4" onclick="buscarInformeSolicitudEliminado()">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="divMenuf solicitud-eliminado-panel">
+                <div class="solicitud-eliminado-list" id="table_InformeSolicitudEliminado"></div>
+              </div>
+
+              <div class="divMenuf solicitud-eliminado-total">
+                <table style="width:98%">
+                  <tbody>
+                    <tr>
+                      <td style="width:15%;text-align:left">
+                        <p class="pTituloC">Total Registro:</p>
+                        <input class="inputTextDisable" type="text" disabled id="inptTotalRegistroSolicitudEliminado"
+                          style="width:120px;text-align:center">
+                      </td>
+                      <td style="width:85%;"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="principal2" style="display:none;" id="divEvaluarSolicitudEliminado">
+  <table style="width:100%;height:100%" id="tdEfectoEvaluarSolicitudEliminado" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divAbms_b solicitud-eliminado-evaluar">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Evaluar <b style="font-size: 24px;">Solicitud de eliminacion</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="cerrarVentanaEvaluarSolicitudEliminado()">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <input type="hidden" id="inptEvaluarSolicitudEliminadoId">
+
+              <div class="solicitud-eliminado-evaluar__grid">
+                <label>
+                  <span>Solicitud</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoCodigo" disabled>
+                </label>
+                <label>
+                  <span>Estado</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoEstado" disabled>
+                </label>
+                <label>
+                  <span>Solicitante</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoUsuario" disabled>
+                </label>
+                <label>
+                  <span>Fecha</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoFecha" disabled>
+                </label>
+                <label>
+                  <span>Tabla</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoTabla" disabled>
+                </label>
+                <label>
+                  <span>Registro</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoRegistro" disabled>
+                </label>
+              </div>
+
+              <label class="solicitud-eliminado-evaluar__bloque">
+                <span>Resumen del registro</span>
+                <textarea class="inputTextDisable" id="txtEvaluarSolicitudEliminadoResumen" disabled></textarea>
+              </label>
+
+              <label class="solicitud-eliminado-evaluar__bloque">
+                <span>Motivo solicitado</span>
+                <textarea class="inputTextDisable" id="txtEvaluarSolicitudEliminadoMotivo" disabled></textarea>
+              </label>
+
+              <label class="solicitud-eliminado-evaluar__bloque">
+                <span>Observacion de aprobacion/rechazo</span>
+                <textarea class="inputText" id="txtEvaluarSolicitudEliminadoObservacion"></textarea>
+              </label>
+
+              <p class="solicitud-eliminado-evaluar__alerta" id="lblEvaluarSolicitudEliminadoAlerta" style="display:none"></p>
+
+              <div class="solicitud-eliminado-evaluar__acciones">
+                <input type="button" value="Rechazar" class="btn4 solicitud-eliminado-evaluar__rechazar" onclick="resolverSolicitudEliminado('rechazar')">
+                <input type="button" value="Aprobar e inactivar" class="btn4 solicitud-eliminado-evaluar__aprobar" id="btnAprobarSolicitudEliminado" onclick="resolverSolicitudEliminado('aprobar')">
               </div>
             </div>
           </center>
