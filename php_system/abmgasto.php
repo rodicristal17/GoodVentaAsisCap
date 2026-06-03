@@ -1008,7 +1008,7 @@ function sumarMesesRespetandoDia($fechaBase, $mesesASumar, $diaObjetivo) {
 	$mesBase = (int)$fechaBase->format('n');
 	$mesTotal = $mesBase + $mesesASumar;
 
-	$nuevoAnio = $anioBase + intdiv($mesTotal - 1, 12);
+	$nuevoAnio = $anioBase + floor(($mesTotal - 1) / 12);
 	$nuevoMes = (($mesTotal - 1) % 12) + 1;
 	$ultimoDiaMes = cal_days_in_month(CAL_GREGORIAN, $nuevoMes, $nuevoAnio);
 	$diaFinal = min($diaObjetivo, $ultimoDiaMes);
@@ -1265,8 +1265,16 @@ if($operacion=="editar")
 
 // Obtiene los datos actuales del gasto
 $datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos);
-$estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
-$cod_usuario_autoriz= NULL;
+$foto_documento_firmado_edicion= isset($_POST['foto_documento_firmado']) ? trim((string)$_POST['foto_documento_firmado']) : '';
+$ext_documento_firmado_edicion= isset($_POST['ext_documento_firmado']) ? trim((string)$_POST['ext_documento_firmado']) : '';
+$mantener_estado_por_documento_firmado= ($foto_documento_firmado_edicion != '' && $ext_documento_firmado_edicion != '');
+
+if ($mantener_estado_por_documento_firmado && isset($datos_gasto[0]['estado'])) {
+	$estado= $datos_gasto[0]['estado'];
+} else {
+	$estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
+	$cod_usuario_autoriz= NULL;
+}
 
 $parametros = array();
 $atributos = "";
@@ -1351,9 +1359,11 @@ if ($cod_proyecto_gastoFK != "") {
 	$parametros[] = $cod_proyecto_gastoFK;
 }
 
-$atributos .= ($atributos == "" ? "" : ", ") . "cod_usuario_autoriz= ?";
-$ss .= "s";
-$parametros[] = $cod_usuario_autoriz;
+if (!$mantener_estado_por_documento_firmado) {
+	$atributos .= ($atributos == "" ? "" : ", ") . "cod_usuario_autoriz= ?";
+	$ss .= "s";
+	$parametros[] = $cod_usuario_autoriz;
+}
 
 if ($atributos == "") {
 	return array("1" => "exito", "2" => $idgastos);
