@@ -257,9 +257,9 @@ foreach ($tareas_ordenadas as $t) {
     ];
 }
 
-// ---- TAREA FANTASMA para limitar el Gantt al ultimo mes hasta hoy ----
-$inicio_horizonte = date('Y-m-d', strtotime('-1 month'));
-$fin_horizonte = date('Y-m-d');
+// ---- TAREA FANTASMA para centrar la fecha actual sin cargar todo el año ----
+$inicio_horizonte = date('Y-m-d', strtotime('-30 days'));
+$fin_horizonte = date('Y-m-d', strtotime('+30 days'));
 $tareas_gantt[] = [
     'id' => '__horizon__',
     'name' => '',
@@ -1760,7 +1760,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
     <script>
-        // allTasks incluye la tarea fantasma __horizon__ que limita el diagrama al ultimo mes hasta hoy
+        // allTasks incluye la tarea fantasma __horizon__ que centra la vista cerca de hoy.
         const allTasks = <?= $json ?>;
         let gantt;
         let vistaActual = 'Day';
@@ -1771,14 +1771,10 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         function renderGantt(tasksToRender) {
             document.getElementById('gantt').innerHTML = '';
 
-            const rangoGantt = obtenerRangoUltimoMesGantt();
-            const horizonTaskBase = allTasks.find(t => t.id === '__horizon__');
-            const horizonTask = horizonTaskBase
-                ? Object.assign({}, horizonTaskBase, { start: rangoGantt.inicioStr, end: rangoGantt.finStr })
-                : null;
-            const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t, rangoGantt));
+            const horizonTask = allTasks.find(t => t.id === '__horizon__');
+            const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
             const tareasRenderBase = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
-            const tareasRender = prepararTareasParaRangoGantt(tareasRenderBase, rangoGantt);
+            const tareasRender = prepararTareasParaVistaDesdeHoy(tareasRenderBase);
             ordenTareasVisiblesGantt = sinHorizon.map(t => String(t.id));
             idsTareasVisiblesGantt = new Set(ordenTareasVisiblesGantt);
             actualizarTablaDescripcionGantt();
@@ -1832,28 +1828,25 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             }
         }
 
-        function prepararTareasParaRangoGantt(tareas, rangoGantt) {
+        function prepararTareasParaVistaDesdeHoy(tareas) {
+            const hoy = formatDate(new Date());
+
             return tareas.map(function (tarea) {
                 if (tarea.id === '__horizon__') {
                     return Object.assign({}, tarea, {
-                        start: rangoGantt.inicioStr,
-                        end: rangoGantt.finStr
+                        start: hoy,
+                        end: formatDate(new Date(new Date().getTime() + (60 * 86400000)))
                     });
                 }
 
-                if (!tarea.start || !tarea.end) return tarea;
-
-                const tareaRecortada = Object.assign({}, tarea);
-                if (tarea.start < rangoGantt.inicioStr) {
-                    tareaRecortada.fecha_inicio_original = tarea.start;
-                    tareaRecortada.start = rangoGantt.inicioStr;
-                }
-                if (tarea.end > rangoGantt.finStr) {
-                    tareaRecortada.fecha_fin_original = tarea.end;
-                    tareaRecortada.end = rangoGantt.finStr;
+                if (tarea.start && tarea.end && tarea.start < hoy && tarea.end >= hoy) {
+                    return Object.assign({}, tarea, {
+                        fecha_inicio_original: tarea.start,
+                        start: hoy
+                    });
                 }
 
-                return tareaRecortada;
+                return tarea;
             });
         }
 
@@ -2434,12 +2427,17 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             };
         }
 
-        function tareaPerteneceAlMesActual(tarea, rangoGantt) {
-            const rango = rangoGantt || obtenerRangoUltimoMesGantt();
+        function tareaPerteneceAlMesActual(tarea) {
+            const hoy = new Date();
+            const inicioMes = new Date(hoy);
+            const finMes = new Date(hoy);
+            inicioMes.setDate(hoy.getDate() - 30);
+            finMes.setDate(hoy.getDate() + 30);
+
             const inicioTarea = new Date(tarea.start + 'T00:00:00');
             const finTarea = new Date(tarea.end + 'T00:00:00');
 
-            return inicioTarea <= rango.fin && finTarea >= rango.inicio;
+            return inicioTarea <= finMes && finTarea >= inicioMes;
         }
 
         function obtenerContenedorScrollGantt() {
