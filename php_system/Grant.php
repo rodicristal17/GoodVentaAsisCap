@@ -257,9 +257,9 @@ foreach ($tareas_ordenadas as $t) {
     ];
 }
 
-// ---- TAREA FANTASMA para centrar la fecha actual sin cargar todo el año ----
-$inicio_horizonte = date('Y-m-d', strtotime('-30 days'));
-$fin_horizonte = date('Y-m-d', strtotime('+30 days'));
+// ---- TAREA FANTASMA para limitar el Gantt al ultimo mes hasta hoy ----
+$inicio_horizonte = date('Y-m-d', strtotime('-1 month'));
+$fin_horizonte = date('Y-m-d');
 $tareas_gantt[] = [
     'id' => '__horizon__',
     'name' => '',
@@ -1362,6 +1362,17 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             color: var(--grant-blue);
         }
 
+        .task-print-btn {
+            border-color: #16a34a;
+            color: #15803d;
+        }
+
+        .task-print-btn:hover {
+            border-color: #15803d;
+            color: #166534;
+            background: #f0fdf4;
+        }
+
         .gantt-layout {
             height: 640px !important;
             min-height: 0 !important;
@@ -1606,7 +1617,8 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 <select name="responsable" id="form_responsable">
                     <option value="">Sin asignar</option>
                     <?php foreach ($usuarios as $usuario): ?>
-                        <option value="<?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>">
+                        <option value="<?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>"
+                            data-usuario-id="<?= (int) $usuario['cod_usuario'] ?>">
                             <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
                         </option>
                     <?php endforeach; ?>
@@ -1735,6 +1747,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                     <button class="view-btn" id="btn-Week" onclick="changeGanttView('Week')">Semana</button>
                     <button class="view-btn" id="btn-Month" onclick="changeGanttView('Month')">Mes</button>
                     <button class="view-btn task-toggle-btn active" id="btn-toggle-tasks" onclick="toggleTaskList()" type="button">Mostrar tareas</button>
+                    <button class="view-btn task-print-btn" id="btn-print-gantt" onclick="imprimirListaYGantt()" type="button">Imprimir</button>
                 </div>
 
                 <div class="gantt-svg-container" id="gantt-container">
@@ -1747,20 +1760,25 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
     <script>
-        // allTasks incluye la tarea fantasma __horizon__ que limita el diagrama al mes actual
+        // allTasks incluye la tarea fantasma __horizon__ que limita el diagrama al ultimo mes hasta hoy
         const allTasks = <?= $json ?>;
         let gantt;
         let vistaActual = 'Day';
         let idsTareasVisiblesGantt = new Set();
         let ordenTareasVisiblesGantt = [];
+        let usuarioActualGantt = '';
 
         function renderGantt(tasksToRender) {
             document.getElementById('gantt').innerHTML = '';
 
-            const horizonTask = allTasks.find(t => t.id === '__horizon__');
-            const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
+            const rangoGantt = obtenerRangoUltimoMesGantt();
+            const horizonTaskBase = allTasks.find(t => t.id === '__horizon__');
+            const horizonTask = horizonTaskBase
+                ? Object.assign({}, horizonTaskBase, { start: rangoGantt.inicioStr, end: rangoGantt.finStr })
+                : null;
+            const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t, rangoGantt));
             const tareasRenderBase = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
-            const tareasRender = prepararTareasParaVistaDesdeHoy(tareasRenderBase);
+            const tareasRender = prepararTareasParaRangoGantt(tareasRenderBase, rangoGantt);
             ordenTareasVisiblesGantt = sinHorizon.map(t => String(t.id));
             idsTareasVisiblesGantt = new Set(ordenTareasVisiblesGantt);
             actualizarTablaDescripcionGantt();
@@ -1777,15 +1795,24 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                         const startStr = task.fecha_inicio_original && startStrCalculado === task.start
                             ? task.fecha_inicio_original
                             : startStrCalculado;
-                        const endStr = formatDate(end);
+                        const endStrCalculado = formatDate(end);
+                        const endStr = task.fecha_fin_original && endStrCalculado === task.end
+                            ? task.fecha_fin_original
+                            : endStrCalculado;
 
                         enviarActualizacionBack(task.id, startStr, endStr, task.progress);
                     },
                     on_progress_change: function (task, progress) {
 
                         if (task.id === '__horizon__') return;
-                        const startStr = formatDate(task._start);
-                        const endStr = formatDate(task._end);
+                        const startStrCalculado = formatDate(task._start);
+                        const endStrCalculado = formatDate(task._end);
+                        const startStr = task.fecha_inicio_original && startStrCalculado === task.start
+                            ? task.fecha_inicio_original
+                            : startStrCalculado;
+                        const endStr = task.fecha_fin_original && endStrCalculado === task.end
+                            ? task.fecha_fin_original
+                            : endStrCalculado;
                         enviarActualizacionBack(task.id, startStr, endStr, progress);
                     }
                 });
@@ -1805,25 +1832,28 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             }
         }
 
-        function prepararTareasParaVistaDesdeHoy(tareas) {
-            const hoy = formatDate(new Date());
-
+        function prepararTareasParaRangoGantt(tareas, rangoGantt) {
             return tareas.map(function (tarea) {
                 if (tarea.id === '__horizon__') {
                     return Object.assign({}, tarea, {
-                        start: hoy,
-                        end: formatDate(new Date(new Date().getTime() + (60 * 86400000)))
+                        start: rangoGantt.inicioStr,
+                        end: rangoGantt.finStr
                     });
                 }
 
-                if (tarea.start && tarea.end && tarea.start < hoy && tarea.end >= hoy) {
-                    return Object.assign({}, tarea, {
-                        fecha_inicio_original: tarea.start,
-                        start: hoy
-                    });
+                if (!tarea.start || !tarea.end) return tarea;
+
+                const tareaRecortada = Object.assign({}, tarea);
+                if (tarea.start < rangoGantt.inicioStr) {
+                    tareaRecortada.fecha_inicio_original = tarea.start;
+                    tareaRecortada.start = rangoGantt.inicioStr;
+                }
+                if (tarea.end > rangoGantt.finStr) {
+                    tareaRecortada.fecha_fin_original = tarea.end;
+                    tareaRecortada.end = rangoGantt.finStr;
                 }
 
-                return tarea;
+                return tareaRecortada;
             });
         }
 
@@ -2105,6 +2135,213 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 .replace(/'/g, '&#039;');
         }
 
+        function obtenerTextoSelectGantt(id) {
+            const select = document.getElementById(id);
+            if (!select || !select.options || select.selectedIndex < 0) return '';
+            return select.options[select.selectedIndex].textContent.trim();
+        }
+
+        function crearCampoCabeceraImpresion(titulo, valor) {
+            const valorNormalizado = normalizarValorCabeceraImpresion(valor);
+
+            return ''
+                + '<div class="print-filter-item">'
+                + '<p><b>' + escaparHtml(titulo) + '</b></p>'
+                + '<p>' + escaparHtml(valorNormalizado) + '</p>'
+                + '</div>';
+        }
+
+        function normalizarValorCabeceraImpresion(valor) {
+            const texto = String(valor || '').trim();
+            if (!texto) return 'TODOS';
+            if (/^todas?(\s|$)/i.test(texto) || /^todos?(\s|$)/i.test(texto)) return 'TODOS';
+            return texto;
+        }
+
+        function obtenerHtmlTablaTareasImpresion() {
+            const filas = Array.from(document.querySelectorAll('.task-row')).filter(function (fila) {
+                return fila.style.display !== 'none';
+            });
+
+            if (!filas.length) {
+                return '<p class="print-empty">No hay tareas visibles para imprimir.</p>';
+            }
+
+            const filasHtml = filas.map(function (fila) {
+                const celdas = Array.from(fila.querySelectorAll('td')).slice(0, 4);
+                const claseFila = filas.indexOf(fila) % 2 === 0 ? 'tableRegistroSearch' : 'tableRegistroSearch2';
+
+                return '<tr class="' + claseFila + '">' + celdas.map(function (celda) {
+                    return '<td>' + celda.innerHTML + '</td>';
+                }).join('') + '</tr>';
+            }).join('');
+
+            return ''
+                + '<h1 class="print-table-title">LISTA DE TAREAS</h1>'
+                + '<table class="print-task-table">'
+                + '<thead><tr>'
+                + '<th>Flujo de tareas</th>'
+                + '<th>Sucursal</th>'
+                + '<th>Responsable</th>'
+                + '<th>Vinculados</th>'
+                + '</tr></thead>'
+                + '<tbody>' + filasHtml + '</tbody>'
+                + '</table>';
+        }
+
+        function crearSvgGanttImpresionPorTramo(svg, x, y, ancho, alto) {
+            const svgClone = svg.cloneNode(true);
+            svgClone.removeAttribute('style');
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('width', '100%');
+            svgClone.setAttribute('height', '160mm');
+            svgClone.setAttribute('viewBox', [x, y, ancho, alto].join(' '));
+            svgClone.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+
+            return new XMLSerializer().serializeToString(svgClone);
+        }
+
+        function calcularXFechaGantt(fechaStr) {
+            if (!gantt || !gantt.gantt_start || !fechaStr) return 0;
+
+            const fecha = new Date(fechaStr + 'T00:00:00');
+            const inicioGantt = new Date(gantt.gantt_start);
+            fecha.setHours(0, 0, 0, 0);
+            inicioGantt.setHours(0, 0, 0, 0);
+
+            const diasDesdeInicio = Math.max(0, Math.floor((fecha - inicioGantt) / 86400000));
+            const anchoColumna = obtenerAnchoColumnaVista();
+
+            if (vistaActual === 'Month') return (diasDesdeInicio / 30) * anchoColumna;
+            if (vistaActual === 'Week') return (diasDesdeInicio / 7) * anchoColumna;
+
+            return diasDesdeInicio * anchoColumna;
+        }
+
+        function obtenerAnchoDiaGantt() {
+            const anchoColumna = obtenerAnchoColumnaVista();
+
+            if (vistaActual === 'Month') return anchoColumna / 30;
+            if (vistaActual === 'Week') return anchoColumna / 7;
+
+            return anchoColumna;
+        }
+
+        function obtenerHtmlGanttImpresion() {
+            const svg = document.getElementById('gantt');
+            if (!svg) return '<p class="print-empty">No se encontro el diagrama de Gantt.</p>';
+
+            let caja = null;
+            try {
+                caja = svg.getBBox();
+            } catch (e) {
+            }
+
+            if (!caja || !caja.width || !caja.height) {
+                return crearSvgGanttImpresionPorTramo(svg, 0, 0, 1200, 600);
+            }
+
+            const rangoImpresion = obtenerRangoUltimoMesGantt();
+            const xInicial = Math.max(caja.x, calcularXFechaGantt(rangoImpresion.inicioStr));
+            const xFinal = calcularXFechaGantt(rangoImpresion.finStr) + obtenerAnchoDiaGantt();
+            const yInicial = caja.y;
+            const alto = Math.max(caja.height, 420);
+            const anchoTramo = Math.max(1, xFinal - xInicial);
+            const svgTramo = crearSvgGanttImpresionPorTramo(svg, xInicial, yInicial, anchoTramo, alto);
+
+            return ''
+                + '<section class="print-gantt-section">'
+                + '<h2 class="print-section-title">Diagrama de Gantt</h2>'
+                + '<div class="print-gantt">' + svgTramo + '</div>'
+                + '</section>';
+        }
+
+        function imprimirListaYGantt() {
+            sincronizarTablaConBarrasGantt();
+            mostrarMesEnFechasGantt();
+            decorarBarrasGanttResponsables();
+
+            const fechaImpresion = formatDate(new Date());
+            const rangoImpresion = obtenerRangoUltimoMesGantt();
+            const sucursal = obtenerTextoSelectGantt('filtro-sucursal') || 'TODOS';
+            const usuario = obtenerTextoSelectGantt('filtro-usuario') || 'TODOS';
+            const responsable = document.getElementById('filtro-responsable')
+                ? document.getElementById('filtro-responsable').value.trim()
+                : '';
+            const tablaHtml = obtenerHtmlTablaTareasImpresion();
+            const ganttHtml = obtenerHtmlGanttImpresion();
+            const cabeceraHtml = ''
+                + '<header class="print-report-header">'
+                + '<div class="print-logo-wrap"><img class="print-logo" src="/GoodVentaAsisCap/iconos/Logo.jpg" alt="CLINIDENT &amp; SALUD"></div>'
+                + '<section class="print-filter-grid">'
+                + crearCampoCabeceraImpresion('Local', sucursal)
+                + crearCampoCabeceraImpresion('Fecha Inicio', rangoImpresion.inicioStr)
+                + crearCampoCabeceraImpresion('Fecha Fin', rangoImpresion.finStr)
+                + crearCampoCabeceraImpresion('Responsable', responsable || 'TODOS')
+                + crearCampoCabeceraImpresion('Fecha de Impresion', fechaImpresion)
+                + crearCampoCabeceraImpresion('Usuario', usuario)
+                + crearCampoCabeceraImpresion('Vista', vistaActual)
+                + crearCampoCabeceraImpresion('Documento', 'DIAGRAMA DE GANTT')
+                + '</section>'
+                + '</header>';
+
+            const html = '<!DOCTYPE html>'
+                + '<html lang="es"><head><meta charset="UTF-8">'
+                + '<title>Planificacion de tareas</title>'
+                + '<style>'
+                + '@page{size:landscape;margin:10mm;}'
+                + '*{box-sizing:border-box;}'
+                + 'body{margin:0;font-family:Arial,sans-serif;color:#172033;background:#fff;font-size:11px;}'
+                + '.print-report-header{margin:0 0 14px;}'
+                + '.print-logo-wrap{text-align:center;margin:0 0 16px;}'
+                + '.print-logo{width:160px;max-width:34mm;height:auto;display:inline-block;}'
+                + '.print-filter-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px 32px;padding:14px 18px;border-top:1px dashed #c9ced6;border-bottom:1px dashed #c9ced6;color:#111827;}'
+                + '.print-filter-item{min-width:0;text-align:left;}'
+                + '.print-filter-item p{margin:0 0 6px;font-size:10px;line-height:1.25;color:#111827;text-transform:uppercase;}'
+                + '.print-filter-item p:first-child{text-transform:none;color:#000;}'
+                + '.print-filter-item b{font-weight:700;color:#000;}'
+                + '.print-section-title{margin:0;text-align:center;font-size:13px;color:#172033;break-after:avoid;page-break-after:avoid;}'
+                + '.print-table-title{margin:16px 0 28px;text-align:center;color:#000;font-family:Arial,sans-serif;font-size:14px;font-weight:800;line-height:1;text-transform:uppercase;}'
+                + '.print-task-table{width:100%;border-collapse:collapse;margin:0 0 12px;table-layout:fixed;}'
+                + '.print-task-table th{height:34px;padding:6px;text-align:center;vertical-align:middle;border-right:1px solid #e7f2fb;background:#087ac5;color:#fff;font-size:8px;font-family:Arial,sans-serif;font-weight:800;text-transform:uppercase;}'
+                + '.print-task-table th:last-child{border-right:none;}'
+                + '.print-task-table td{height:33px;padding:6px;text-align:left;vertical-align:middle;border-left:1px solid #cecece;border-right:1px solid #cecece;border-bottom:1px solid #cecece;font-size:9px;font-family:\"Merriweather Sans\",Arial;color:#1b1b1b;word-break:break-word;}'
+                + '.tableRegistroSearch{background:#fff;}'
+                + '.tableRegistroSearch2{background:#f0f0f0;}'
+                + '.print-task-table th:first-child{width:34%;}'
+                + '.print-task-table th:nth-child(2),.print-task-table th:nth-child(3),.print-task-table th:nth-child(4){width:22%;}'
+                + '.print-task-table a{display:none!important;}'
+                + '.print-gantt-section{page-break-before:auto;break-before:auto;break-inside:avoid;page-break-inside:avoid;margin-top:10px;}'
+                + '.print-gantt{width:100%;height:auto;overflow:hidden;border:0;padding:0;background:#fff;line-height:0;}'
+                + '.print-gantt svg{display:block;width:100%;height:160mm;border:0;outline:0;background:#fff;}'
+                + '.print-empty{padding:10px;border:1px solid #d9e1ea;background:#f9fafb;color:#667085;}'
+                + '.grid-background{fill:#fff!important;stroke:none!important;} .grid-header{fill:#f9fafb;} .grid-row{fill:#fff;} .row-line,.tick{stroke:#e5e7eb!important;stroke-width:1!important;}'
+                + '.today-highlight{fill:#fff7d6;opacity:.75;} .bar{fill:#8b95a7;} .bar-progress{fill:rgba(255,255,255,.28);}'
+                + '.bar-label{fill:#fff;font-size:10px;font-weight:700;} .bar-hidden{display:none;}'
+                + '.bar-estado-pendiente .bar{fill:#8b95a7;} .bar-estado-progreso .bar{fill:#2563eb;}'
+                + '.bar-estado-completada .bar{fill:#16a34a;} .bar-estado-vencida .bar{fill:#dc2626;} .bar-estado-proxima .bar{fill:#f59e0b;}'
+                + '.grant-avatar-fallback{display:none;} .grant-avatar{display:none;}'
+                + '</style></head><body>'
+                + cabeceraHtml
+                + tablaHtml
+                + ganttHtml
+                + '</body></html>';
+
+            const ventana = window.open('', '_blank');
+            if (!ventana) {
+                window.print();
+                return;
+            }
+
+            ventana.document.open();
+            ventana.document.write(html);
+            ventana.document.close();
+            ventana.focus();
+            setTimeout(function () {
+                ventana.print();
+            }, 500);
+        }
+
         function formatearFechaLegible(fecha) {
             if (!fecha) return '-';
             const partes = String(fecha).split('-');
@@ -2181,16 +2418,28 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             });
         }
 
-        function tareaPerteneceAlMesActual(tarea) {
-            const hoy = new Date();
-            const inicioMes = new Date(hoy);
-            const finMes = new Date(hoy);
-            inicioMes.setDate(hoy.getDate() - 30);
-            finMes.setDate(hoy.getDate() + 30);
+        function obtenerRangoUltimoMesGantt() {
+            const fin = new Date();
+            fin.setHours(0, 0, 0, 0);
+
+            const inicio = new Date(fin);
+            inicio.setMonth(inicio.getMonth() - 1);
+            inicio.setHours(0, 0, 0, 0);
+
+            return {
+                inicio: inicio,
+                fin: fin,
+                inicioStr: formatDate(inicio),
+                finStr: formatDate(fin)
+            };
+        }
+
+        function tareaPerteneceAlMesActual(tarea, rangoGantt) {
+            const rango = rangoGantt || obtenerRangoUltimoMesGantt();
             const inicioTarea = new Date(tarea.start + 'T00:00:00');
             const finTarea = new Date(tarea.end + 'T00:00:00');
 
-            return inicioTarea <= finMes && finTarea >= inicioMes;
+            return inicioTarea <= rango.fin && finTarea >= rango.inicio;
         }
 
         function obtenerContenedorScrollGantt() {
@@ -2307,11 +2556,42 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             if (!existeUsuario) return false;
 
             filtroUsuario.value = usuarioActual;
+            usuarioActualGantt = usuarioActual;
+            return true;
+        }
+
+        function obtenerUsuarioActualFormularioGantt(usuarioForzado) {
+            const usuarioActual = usuarioForzado
+                ? String(usuarioForzado)
+                : (usuarioActualGantt || obtenerParametroUrlGantt('usuario') || obtenerParametroUrlGantt('q') || obtenerUsuarioActualIdGantt());
+            if (usuarioActual) usuarioActualGantt = usuarioActual;
+            return usuarioActual;
+        }
+
+        function seleccionarResponsableUsuarioActualGantt(usuarioForzado, forzarSeleccion) {
+            const selectResponsable = document.getElementById('form_responsable');
+            if (!selectResponsable) return false;
+
+            const idFormulario = document.getElementById('form_id');
+            if (!forzarSeleccion && idFormulario && idFormulario.value) return false;
+            if (!forzarSeleccion && selectResponsable.value) return false;
+
+            const usuarioActual = obtenerUsuarioActualFormularioGantt(usuarioForzado);
+            if (!usuarioActual) return false;
+
+            const opcionResponsable = Array.from(selectResponsable.options).find(function (option) {
+                return String(option.dataset.usuarioId || '') === String(usuarioActual);
+            });
+
+            if (!opcionResponsable) return false;
+
+            selectResponsable.value = opcionResponsable.value;
             return true;
         }
 
         function iniciarFiltroUsuarioActualGantt(intentos = 0) {
             if (seleccionarUsuarioActualFiltroGantt()) {
+                seleccionarResponsableUsuarioActualGantt('', false);
                 aplicarFiltros();
                 return;
             }
@@ -2329,6 +2609,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         }
 
         window.aplicarUsuarioActualFiltroGantt = function (usuario) {
+            seleccionarResponsableUsuarioActualGantt(usuario, false);
             if (seleccionarUsuarioActualFiltroGantt(usuario)) {
                 aplicarFiltros();
             }
@@ -2645,6 +2926,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         document.getElementById('form_title').innerText = 'Nueva Tarea:';
         document.getElementById('btn_submit').innerText = 'Guardar';
         seleccionarUsuariosVinculados([]);
+        seleccionarResponsableUsuarioActualGantt('', true);
         setTimeout(function () {
             actualizarEspaciadorFechasGantt();
             sincronizarTablaConBarrasGantt();
@@ -2721,6 +3003,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
             usuariosVinculados.addEventListener('change', actualizarVistaUsuariosVinculados);
             actualizarVistaUsuariosVinculados();
         }
+        seleccionarResponsableUsuarioActualGantt('', false);
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') cerrarUsuariosVinculados();
         });
