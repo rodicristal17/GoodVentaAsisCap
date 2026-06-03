@@ -92,6 +92,9 @@
 
                 obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario);
                 break;
+            case 'buscarUsuariosMenciones':
+                echo json_encode(array("1" => "exito", "2" => buscarUsuarios()));
+                break;
             case 'buscarFlujoGastosInterConsulta':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $registrosInterc= obtenerInterConsulta(array(
@@ -1171,7 +1174,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
     function buscarUsuarios() {
         $mysqli=conectar_al_servidor();
 
-        $sql= "SELECT u.*, p.nombre_persona FROM usuario u JOIN persona p ON p.cod_persona = u.cod_usuario WHERE u.estado = 'Activo'";
+        $sql= "SELECT u.cod_usuario, u.url, p.nombre_persona FROM usuario u JOIN persona p ON p.cod_persona = u.cod_usuario WHERE u.estado = 'Activo' ORDER BY p.nombre_persona ASC";
         $stmt = $mysqli->prepare($sql);
         if ( !$stmt->execute()) {
             $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);

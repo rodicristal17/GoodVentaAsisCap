@@ -217,24 +217,32 @@ window.onload = function () {
 	const limiteCaracteresMensaje = 750;
 	document.getElementById('inptContenidoAbmMensaje')
 		.addEventListener('keyup', function(e) {
-		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').textContent.length;
+		const editorMenciones = e.currentTarget;
+		contadorLongitudMensaje = editorMenciones.textContent.length;
 
 		// Actualizar el contador de pantalla
 		document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
 		
-		if (e.target.matches('p.mensaje-interconsulta')) {
-			const valor = e.target.textContent;
+		if (editorMenciones && editorMenciones.classList.contains('mensaje-interconsulta')) {
+			const valor = editorMenciones.textContent;
 			const match = valor.match(/@(\w*)$/); // detecta @ + texto
 			if (match) {
 				const textoBusqueda = match[1].toLowerCase();
+				const mostrarSugerenciasMenciones = function() {
+					const sugerencias = Object.entries(registroUsuariosInterconsulta)
+						.filter(([id, nombre]) => String(nombre || '').toLowerCase().includes(textoBusqueda));
+
+					mostrarOpcionesUsuariosMenciones(editorMenciones, sugerencias);
+					document.getElementById('dropdown-menciones').style.display= "";
+				};
+
+				if (Object.keys(registroUsuariosInterconsulta).length == 0) {
+					cargarUsuariosMencionesInterConsulta(mostrarSugerenciasMenciones);
+					return;
+				}
 				
 				// Filtrar usuarios
-				const sugerencias = Object.entries(registroUsuariosInterconsulta)
-					.filter(([id, nombre]) => nombre.toLowerCase().includes(textoBusqueda));
-					
-				// Aquí podrías renderizar un menú debajo del textarea
-				mostrarOpcionesUsuariosMenciones(e.target, sugerencias);
-				document.getElementById('dropdown-menciones').style.display= "";
+				mostrarSugerenciasMenciones();
 			} else {
 				// Ocultar menú cuando no hay @ al final
 				if (document.getElementById('dropdown-menciones')) {
@@ -1585,6 +1593,64 @@ function checkestadouser(d){
 }
 
 var registroUsuariosInterconsulta= {};
+var cargandoUsuariosMencionesInterConsulta= false;
+function cargarUsuariosMencionesInterConsulta(callback) {
+	if (Object.keys(registroUsuariosInterconsulta).length > 0) {
+		if (typeof callback == "function") {
+			callback();
+		}
+		return;
+	}
+
+	if (cargandoUsuariosMencionesInterConsulta) {
+		setTimeout(function() {
+			cargarUsuariosMencionesInterConsulta(callback);
+		}, 250);
+		return;
+	}
+
+	cargandoUsuariosMencionesInterConsulta= true;
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "buscarUsuariosMenciones");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				var Respuesta = respuestaJqueryAjax(datos["1"]);
+				if (Respuesta == true && Array.isArray(datos["2"])) {
+					registroUsuariosInterconsulta= {};
+					datos["2"].forEach(function(element) {
+						registroUsuariosInterconsulta[element.cod_usuario]= element.nombre_persona;
+					});
+					if (typeof callback == "function") {
+						callback();
+					}
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo= "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		},
+		complete: function() {
+			cargandoUsuariosMencionesInterConsulta= false;
+		}
+	});
+}
 function buscarabmusuario() {
 	if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
 	var codigo = document.getElementById('inptBuscarUsuario1').value
