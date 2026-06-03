@@ -1,4 +1,6 @@
 <?php
+ob_start();
+
 // ===============================
 // CONEXIÓN BD CAMBIAR CREDENCIALES CORRECTAS
 // ===============================
@@ -13,83 +15,217 @@ $username = "root";
 $password = '';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $credenciales = array(
+        array('host' => $host, 'dbname' => $dbname, 'username' => 'syscvxco_ac', 'password' => 'syscvxco_ac'),
+        array('host' => $host, 'dbname' => $dbname, 'username' => $username, 'password' => $password)
+    );
+    $pdo = null;
+    $ultimoErrorConexion = null;
+
+    foreach ($credenciales as $credencial) {
+        try {
+            $pdo = new PDO(
+                "mysql:host={$credencial['host']};dbname={$credencial['dbname']};charset=utf8mb4",
+                $credencial['username'],
+                $credencial['password']
+            );
+            break;
+        } catch (PDOException $e) {
+            $ultimoErrorConexion = $e;
+        }
+    }
+
+    if (!$pdo) {
+        throw $ultimoErrorConexion;
+    }
+
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
+}
+
+function grant_normalizar_utf8($valor)
+{
+    if (is_array($valor)) {
+        foreach ($valor as $clave => $item) {
+            $valor[$clave] = grant_normalizar_utf8($item);
+        }
+        return $valor;
+    }
+
+    if (!is_string($valor) || $valor === '') {
+        return $valor;
+    }
+
+    if (function_exists('mb_check_encoding') && mb_check_encoding($valor, 'UTF-8')) {
+        return $valor;
+    }
+
+    if (function_exists('mb_convert_encoding')) {
+        $convertido = @mb_convert_encoding($valor, 'UTF-8', 'UTF-8, ISO-8859-1, Windows-1252');
+        if (is_string($convertido)) {
+            return $convertido;
+        }
+    }
+
+    if (function_exists('iconv')) {
+        $convertido = @iconv('UTF-8', 'UTF-8//IGNORE', $valor);
+        if (is_string($convertido)) {
+            return $convertido;
+        }
+    }
+
+    return preg_replace('/[^\x09\x0A\x0D\x20-\x7E]/', '', $valor);
+}
+
+function grant_url_redireccion($parametros_extra = array())
+{
+    $parametros = array_merge($_GET, $parametros_extra);
+    unset($parametros['delete']);
+
+    $url = 'Grant.php';
+    if (!empty($parametros)) {
+        $url .= '?' . http_build_query($parametros);
+    }
+
+    return $url;
+}
+
+function grant_redireccionar($url)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        exit;
+    }
+
+    $url_segura = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+    echo '<meta http-equiv="refresh" content="0;url=' . $url_segura . '">';
+    echo '</head><body>';
+    echo '<script>window.location.replace(' . json_encode($url) . ');</script>';
+    echo '<a href="' . $url_segura . '">Continuar</a>';
+    echo '</body></html>';
+    exit;
+}
+
+function grant_mostrar_error($titulo, $detalle)
+{
+    error_log('Grant.php: ' . $titulo . ' ' . $detalle);
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $url = grant_url_redireccion();
+    $url_segura = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+    $titulo_seguro = htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8');
+    $detalle_seguro = htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8');
+
+    echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
+    echo '<style>';
+    echo 'body{margin:0;padding:16px;font-family:Arial,sans-serif;background:#fff;color:#172033;font-size:13px;}';
+    echo '.grant-error{border:1px solid #fecaca;background:#fff7f7;color:#991b1b;border-radius:8px;padding:14px;line-height:1.45;}';
+    echo '.grant-error h1{margin:0 0 6px;font-size:15px;}';
+    echo '.grant-error p{margin:0 0 10px;color:#7f1d1d;}';
+    echo '.grant-error a{display:inline-block;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;padding:8px 10px;text-decoration:none;font-weight:700;}';
+    echo '</style></head><body>';
+    echo '<div class="grant-error">';
+    echo '<h1>' . $titulo_seguro . '</h1>';
+    echo '<p>' . $detalle_seguro . '</p>';
+    echo '<a href="' . $url_segura . '">Volver al diagrama</a>';
+    echo '</div>';
+    echo '</body></html>';
+    exit;
 }
 
 // ===============================
 // CRUD - ELIMINAR
 // ===============================
 if (isset($_GET['delete'])) {
-    $id = (int) $_GET['delete'];
-    $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$id]);
-    $pdo->prepare("DELETE FROM tareas WHERE id=?")->execute([$id]);
-    header("Location./php_system/Grant.php");
-    exit;
+    try {
+        $id = (int) $_GET['delete'];
+        $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$id]);
+        $pdo->prepare("DELETE FROM tareas WHERE id=?")->execute([$id]);
+        grant_redireccionar(grant_url_redireccion());
+    } catch (PDOException $e) {
+        grant_mostrar_error('No se pudo eliminar la tarea.', $e->getMessage());
+    }
 }
 
 // ===============================
 // CRUD - CREAR / ACTUALIZAR
 // ===============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = !empty($_POST['id']) ? (int) $_POST['id'] : null;
-    $dependencia = !empty($_POST['dependencia']) ? (int) $_POST['dependencia'] : null;
-    $sucursal = !empty($_POST['sucursal']) ? $_POST['sucursal'] : 'General';
-    $responsable = !empty($_POST['responsable']) ? $_POST['responsable'] : 'Sin asignar';
-    $usuarios_vinculados = isset($_POST['usuarios_vinculados']) && is_array($_POST['usuarios_vinculados'])
-        ? array_values(array_unique(array_filter(array_map('intval', $_POST['usuarios_vinculados']))))
-        : [];
-    $tarea_id_guardada = $id;
+    try {
+        $id = !empty($_POST['id']) ? (int) $_POST['id'] : null;
+        $dependencia = !empty($_POST['dependencia']) ? (int) $_POST['dependencia'] : null;
+        $sucursal = !empty($_POST['sucursal']) ? $_POST['sucursal'] : 'General';
+        $responsable = !empty($_POST['responsable']) ? $_POST['responsable'] : 'Sin asignar';
+        $usuarios_vinculados = isset($_POST['usuarios_vinculados']) && is_array($_POST['usuarios_vinculados'])
+            ? array_values(array_unique(array_filter(array_map('intval', $_POST['usuarios_vinculados']))))
+            : array();
+        $tarea_id_guardada = $id;
 
-    if ($id) {
-        $stmt = $pdo->prepare("
-            UPDATE tareas 
-            SET titulo=?, fecha_inicio=?, fecha_fin=?, progreso=?, estado=?, dependencia=?, sucursal=?, responsable=?
-            WHERE id=?
-        ");
-        $stmt->execute([
-            $_POST['titulo'],
-            $_POST['fecha_inicio'],
-            $_POST['fecha_fin'],
-            $_POST['progreso'],
-            $_POST['estado'],
-            $dependencia,
-            $sucursal,
-            $responsable,
-            $id
-        ]);
-    } else {
-        $stmt = $pdo->prepare("
-            INSERT INTO tareas (titulo, fecha_inicio, fecha_fin, progreso, estado, dependencia, sucursal, responsable)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $_POST['titulo'],
-            $_POST['fecha_inicio'],
-            $_POST['fecha_fin'],
-            $_POST['progreso'],
-            $_POST['estado'],
-            $dependencia,
-            $sucursal,
-            $responsable
-        ]);
-        $tarea_id_guardada = (int) $pdo->lastInsertId();
-    }
+        $pdo->beginTransaction();
 
-    $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$tarea_id_guardada]);
-    if (!empty($usuarios_vinculados)) {
-        $stmtUsuarioTarea = $pdo->prepare("
-            INSERT INTO tarea_usuarios (tarea_id, cod_usuario)
-            VALUES (?, ?)
-        ");
-        foreach ($usuarios_vinculados as $cod_usuario) {
-            $stmtUsuarioTarea->execute([$tarea_id_guardada, $cod_usuario]);
+        if ($id) {
+            $stmt = $pdo->prepare("
+                UPDATE tareas 
+                SET titulo=?, fecha_inicio=?, fecha_fin=?, progreso=?, estado=?, dependencia=?, sucursal=?, responsable=?
+                WHERE id=?
+            ");
+            $stmt->execute(array(
+                $_POST['titulo'],
+                $_POST['fecha_inicio'],
+                $_POST['fecha_fin'],
+                $_POST['progreso'],
+                $_POST['estado'],
+                $dependencia,
+                $sucursal,
+                $responsable,
+                $id
+            ));
+        } else {
+            $stmt = $pdo->prepare("
+                INSERT INTO tareas (titulo, fecha_inicio, fecha_fin, progreso, estado, dependencia, sucursal, responsable)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute(array(
+                $_POST['titulo'],
+                $_POST['fecha_inicio'],
+                $_POST['fecha_fin'],
+                $_POST['progreso'],
+                $_POST['estado'],
+                $dependencia,
+                $sucursal,
+                $responsable
+            ));
+            $tarea_id_guardada = (int) $pdo->lastInsertId();
         }
+
+        $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute(array($tarea_id_guardada));
+        if (!empty($usuarios_vinculados)) {
+            $stmtUsuarioTarea = $pdo->prepare("
+                INSERT INTO tarea_usuarios (tarea_id, cod_usuario)
+                VALUES (?, ?)
+            ");
+            foreach ($usuarios_vinculados as $cod_usuario) {
+                $stmtUsuarioTarea->execute(array($tarea_id_guardada, $cod_usuario));
+            }
+        }
+
+        $pdo->commit();
+        grant_redireccionar(grant_url_redireccion());
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        grant_mostrar_error('No se pudo guardar la tarea.', $e->getMessage());
     }
-    header("Location: ../php_system/Grant.php");
-    exit;
 }
 
 // ===============================
@@ -272,8 +408,15 @@ $tareas_gantt[] = [
     'responsable' => ''
 ];
 
-$json = json_encode($tareas_gantt);
+$json = json_encode(grant_normalizar_utf8($tareas_gantt));
+if ($json === false) {
+    error_log('Grant.php: json_encode fallo: ' . json_last_error_msg());
+    $json = '[]';
+}
 $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard';
+if (ob_get_length()) {
+    ob_clean();
+}
 ?>
 
 <!DOCTYPE html>
@@ -1574,7 +1717,7 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
     
     <details class="form-card task-form-panel" id="task-form-panel">
         <summary>Nueva tarea</summary>
-        <form method="POST" id="taskForm" class="form-grid">
+        <form method="POST" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>" id="taskForm" class="form-grid">
             <input type="hidden" name="id" id="form_id" value="">
             
             <div>
@@ -1768,18 +1911,52 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
         let ordenTareasVisiblesGantt = [];
         let usuarioActualGantt = '';
 
+        function mostrarMensajeGantt(mensaje) {
+            const svg = document.getElementById('gantt');
+            if (!svg) return;
+
+            svg.innerHTML =
+                '<text x="16" y="34" fill="#667085" font-size="13" font-family="Arial, sans-serif">' +
+                escaparHtml(mensaje) +
+                '</text>';
+        }
+
+        function fechaIsoValidaGantt(valor) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(valor || ''))) return false;
+            return !isNaN(new Date(valor + 'T00:00:00').getTime());
+        }
+
         function renderGantt(tasksToRender) {
             document.getElementById('gantt').innerHTML = '';
 
             const horizonTask = allTasks.find(t => t.id === '__horizon__');
-            const sinHorizon = tasksToRender.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
+            const tareasValidas = tasksToRender.filter(function (tarea) {
+                if (tarea.id === '__horizon__') return true;
+                return fechaIsoValidaGantt(tarea.start) && fechaIsoValidaGantt(tarea.end);
+            });
+            const sinHorizon = tareasValidas.filter(t => t.id !== '__horizon__' && tareaPerteneceAlMesActual(t));
             const tareasRenderBase = horizonTask ? [...sinHorizon, horizonTask] : sinHorizon;
             const tareasRender = prepararTareasParaVistaDesdeHoy(tareasRenderBase);
             ordenTareasVisiblesGantt = sinHorizon.map(t => String(t.id));
             idsTareasVisiblesGantt = new Set(ordenTareasVisiblesGantt);
             actualizarTablaDescripcionGantt();
 
+            if (sinHorizon.length === 0) {
+                gantt = null;
+                mostrarMensajeGantt('No hay tareas que coincidan con el filtro actual.');
+                sincronizarTablaConBarrasGantt();
+                return;
+            }
+
+            if (typeof Gantt !== 'function') {
+                gantt = null;
+                mostrarMensajeGantt('No se pudo cargar la libreria del diagrama de Gantt.');
+                console.error('Frappe Gantt no esta disponible.');
+                return;
+            }
+
             if (tareasRender.length > 0) {
+                try {
                 gantt = new Gantt("#gantt", tareasRender, {
                     view_mode: vistaActual,
                     language: 'es',
@@ -1822,9 +1999,13 @@ $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard'
                 setTimeout(configurarTooltipsGantt, 220);
                 setTimeout(configurarTooltipsGantt, 540);
                 programarCentradoFechaActual();
+                } catch (error) {
+                    gantt = null;
+                    mostrarMensajeGantt('No se pudo dibujar el diagrama. Revise fechas o datos de la tarea.');
+                    console.error('Error al renderizar Gantt:', error, tareasRender);
+                }
             } else {
-                document.getElementById('gantt').innerHTML =
-                    '<text x="10" y="30">No hay tareas que coincidan con el filtro.</text>';
+                mostrarMensajeGantt('No hay tareas que coincidan con el filtro actual.');
             }
         }
 
