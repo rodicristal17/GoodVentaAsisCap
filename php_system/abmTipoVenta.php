@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("classTable.php");
 
@@ -91,6 +92,19 @@ $stmt1 = $mysqli->prepare($consulta1);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'tipopago',
+		'cod_tipoPago',
+		$cod_tipoPago,
+		'Solicitud de eliminacion de tipo de pago.',
+		$user,
+		'Tipo de pago: '.$nombre
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update tipopago set nombre=?,datos=?,estado=? where cod_tipoPago=?";	
 $stmt1 = $mysqli->prepare($consulta1);

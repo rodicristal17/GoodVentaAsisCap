@@ -1,4 +1,59 @@
+var PERMISO_SOLICITUD_ELIMINADO = "VERINFORMESOLICITUDELIMINADO";
+var PERMISO_RESOLVER_SOLICITUD_ELIMINADO = "APROBARSOLICITUDELIMINADO";
+
+function usuarioTieneAccesoSolicitudEliminado() {
+	if (typeof userid !== "undefined" && userid == "2") {
+		return true;
+	}
+	if (typeof permisoAccesoUser == "function") {
+		return permisoAccesoUser(PERMISO_SOLICITUD_ELIMINADO, "accion");
+	}
+	if (typeof accesosuser === "undefined" || !accesosuser || !accesosuser[PERMISO_SOLICITUD_ELIMINADO]) {
+		return false;
+	}
+	return String(accesosuser[PERMISO_SOLICITUD_ELIMINADO]["accion"]).trim().toUpperCase() == "SI";
+}
+
+function usuarioPuedeResolverSolicitudEliminado() {
+	if (typeof userid !== "undefined" && userid == "2") {
+		return true;
+	}
+	if (typeof permisoAccesoUser == "function") {
+		return permisoAccesoUser(PERMISO_RESOLVER_SOLICITUD_ELIMINADO, "accion");
+	}
+	if (typeof accesosuser === "undefined" || !accesosuser || !accesosuser[PERMISO_RESOLVER_SOLICITUD_ELIMINADO]) {
+		return false;
+	}
+	return String(accesosuser[PERMISO_RESOLVER_SOLICITUD_ELIMINADO]["accion"]).trim().toUpperCase() == "SI";
+}
+
+function actualizarVisibilidadSolicitudEliminado() {
+	var tieneAcceso = usuarioTieneAccesoSolicitudEliminado();
+	var contenedor = document.getElementById("contenedorSolicitudEliminadoPendiente");
+	var menuInforme = document.getElementById("divMenuSolicitudEliminado");
+	var informe = document.getElementById("divInformeSolicitudEliminado");
+
+	if (contenedor) {
+		contenedor.style.display = tieneAcceso ? "" : "none";
+	}
+	if (menuInforme) {
+		menuInforme.style.display = tieneAcceso ? "" : "none";
+	}
+	if (!tieneAcceso) {
+		cerrarDropdownSolicitudEliminado();
+		if (informe) {
+			informe.style.display = "none";
+		}
+	}
+}
+
 function abrirInformeSolicitudEliminado() {
+	if (!usuarioTieneAccesoSolicitudEliminado()) {
+		actualizarVisibilidadSolicitudEliminado();
+		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER");
+		return;
+	}
+
 	var ventana = document.getElementById("divInformeSolicitudEliminado");
 	if (!ventana) { return; }
 
@@ -27,6 +82,11 @@ function minimizarInformeSolicitudEliminado() {
 }
 
 function buscarInformeSolicitudEliminado() {
+	if (!usuarioTieneAccesoSolicitudEliminado()) {
+		actualizarVisibilidadSolicitudEliminado();
+		return;
+	}
+
 	obtener_datos_user();
 
 	var datos = new FormData();
@@ -127,6 +187,11 @@ function solicitarEliminacionRegistro(tabla, pkColumna, pkValor, resumen, motivo
 }
 
 function toggleDropdownSolicitudEliminado() {
+	if (!usuarioTieneAccesoSolicitudEliminado()) {
+		actualizarVisibilidadSolicitudEliminado();
+		return;
+	}
+
 	var dropdown = document.getElementById("dropdownSolicitudEliminadoPendiente");
 	if (!dropdown) { return; }
 
@@ -147,6 +212,8 @@ function cerrarDropdownSolicitudEliminado() {
 }
 
 function cargarSolicitudesEliminacionPendientes() {
+	actualizarVisibilidadSolicitudEliminado();
+	if (!usuarioTieneAccesoSolicitudEliminado()) { return; }
 	if (!document.getElementById("listaSolicitudEliminadoPendiente")) { return; }
 
 	obtener_datos_user();
@@ -182,6 +249,12 @@ function cargarSolicitudesEliminacionPendientes() {
 }
 
 function abrirInformeSolicitudEliminadoDesdeNotificacion(idSolicitud) {
+	if (!usuarioTieneAccesoSolicitudEliminado()) {
+		actualizarVisibilidadSolicitudEliminado();
+		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER");
+		return;
+	}
+
 	cerrarDropdownSolicitudEliminado();
 	abrirInformeSolicitudEliminado();
 
@@ -194,6 +267,11 @@ function abrirInformeSolicitudEliminadoDesdeNotificacion(idSolicitud) {
 }
 
 function abrirVentanaEvaluarSolicitudEliminado(idSolicitud) {
+	if (!usuarioTieneAccesoSolicitudEliminado()) {
+		actualizarVisibilidadSolicitudEliminado();
+		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER");
+		return;
+	}
 	if (!idSolicitud) { return; }
 	cerrarDropdownSolicitudEliminado();
 	obtener_datos_user();
@@ -250,13 +328,24 @@ function cargarVentanaEvaluarSolicitudEliminado(solicitud) {
 
 	var alerta = document.getElementById("lblEvaluarSolicitudEliminadoAlerta");
 	var botonAprobar = document.getElementById("btnAprobarSolicitudEliminado");
+	var botonRechazar = document.getElementById("btnRechazarSolicitudEliminado");
+	var observacion = document.getElementById("txtEvaluarSolicitudEliminadoObservacion");
 	var pendiente = solicitud.estado == "pendiente";
 	var puedeAprobar = solicitud.puede_aprobar == "1";
+	var puedeResolver = solicitud.puede_resolver == "1" && usuarioPuedeResolverSolicitudEliminado();
 
-	botonAprobar.disabled = (!pendiente || !puedeAprobar);
+	botonAprobar.disabled = (!pendiente || !puedeAprobar || !puedeResolver);
+	botonRechazar.disabled = (!pendiente || !puedeResolver);
 	botonAprobar.style.opacity = botonAprobar.disabled ? "0.45" : "";
-	alerta.style.display = puedeAprobar ? "none" : "";
-	alerta.innerHTML = puedeAprobar ? "" : "Esta solicitud no tiene tabla, columna o codigo del registro. Se puede rechazar, pero no aprobar.";
+	botonRechazar.style.opacity = botonRechazar.disabled ? "0.45" : "";
+	observacion.disabled = !puedeResolver;
+	if (!puedeResolver) {
+		alerta.style.display = "";
+		alerta.innerHTML = "No tienes permiso para aprobar o rechazar esta solicitud.";
+	} else {
+		alerta.style.display = puedeAprobar ? "none" : "";
+		alerta.innerHTML = puedeAprobar ? "" : "Esta solicitud no tiene tabla, columna o codigo del registro. Se puede rechazar, pero no aprobar.";
+	}
 
 	document.getElementById("divEvaluarSolicitudEliminado").style.display = "";
 	document.getElementById("tdEfectoEvaluarSolicitudEliminado").className = "magictime slideDownReturn";
@@ -268,6 +357,16 @@ function cerrarVentanaEvaluarSolicitudEliminado() {
 }
 
 function resolverSolicitudEliminado(decision) {
+	if (!usuarioTieneAccesoSolicitudEliminado()) {
+		actualizarVisibilidadSolicitudEliminado();
+		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER");
+		return;
+	}
+	if (!usuarioPuedeResolverSolicitudEliminado()) {
+		ver_vetana_informativa("NO TIENES PERMISO PARA APROBAR O RECHAZAR SOLICITUDES");
+		return;
+	}
+
 	var idSolicitud = document.getElementById("inptEvaluarSolicitudEliminadoId").value;
 	var observacion = document.getElementById("txtEvaluarSolicitudEliminadoObservacion").value;
 	if (!idSolicitud) {
@@ -335,6 +434,7 @@ document.addEventListener("click", function (event) {
 });
 
 window.addEventListener("load", function () {
+	actualizarVisibilidadSolicitudEliminado();
 	cargarSolicitudesEliminacionPendientes();
 	setInterval(cargarSolicitudesEliminacionPendientes, 60000);
 });

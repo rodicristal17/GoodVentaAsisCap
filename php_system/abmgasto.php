@@ -3,6 +3,7 @@
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("subir_foto_base64.php");
@@ -911,11 +912,16 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	}
 
 	// SE cambia a inactivo el motivo original
-	$sql= "UPDATE motivos_ingreso_egreso SET estado= 'inactivo', cod_usuarioFK= ?, fecha_edit= ? WHERE cod_motivo_ingreso_egreso = ?";
-	$stmt = $mysqli->prepare($sql);
-	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$cod_motivoIngresoEgreso);
-	if (!$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+		'motivos_ingreso_egreso',
+		'cod_motivo_ingreso_egreso',
+		$cod_motivoIngresoEgreso,
+		'Solicitud de eliminacion por combinacion de motivos de ingreso/egreso.',
+		$cod_usuarioFK,
+		'Motivo combinado hacia: '.$cod_motivoIngresoEgreso_dest
+	);
+	if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+		echo json_encode($respuestaSolicitud);
 		exit;
 	}
 
@@ -1276,6 +1282,19 @@ if ($mantener_estado_por_documento_firmado && isset($datos_gasto[0]['estado'])) 
 	$cod_usuario_autoriz= NULL;
 }
 
+if ($estado == "Inactivo") {
+	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+		'gastos',
+		'idgastos',
+		$idgastos,
+		'Solicitud de eliminacion de gasto.',
+		$cod_usuario,
+		'Gasto: '.$idgastos.' - '.$motivo
+	);
+	echo json_encode($respuestaSolicitud);
+	exit;
+}
+
 $parametros = array();
 $atributos = "";
 $ss = "";
@@ -1417,21 +1436,17 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 			$cantidadCuotasSerie++;
 		}
 		if ($value['idgastos'] != $idgastos && ($value['estado'] != 'Activo')) {
-			$sql = "UPDATE gastos SET estado='Inactivo' WHERE idgastos= ?";
-			$stmt = $mysqli->prepare($sql);
-			$stmt->bind_param('i', $value['idgastos']);
-			$stmt->execute();
-
-			// Borra tambien el mensaje programado asociado
-			if (!empty($value['cod_mensajeFK'])) {
-				$sql = "DELETE FROM menciones WHERE cod_mensajeFK= ?";
-				$stmt = $mysqli->prepare($sql);
-				$stmt->bind_param('i', $value['cod_mensajeFK']);
-				$stmt->execute();
-				$sql = "DELETE FROM mensaje WHERE cod_mensaje= ?";
-				$stmt = $mysqli->prepare($sql);
-				$stmt->bind_param('i', $value['cod_mensajeFK']);
-				$stmt->execute();
+			$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+				'gastos',
+				'idgastos',
+				$value['idgastos'],
+				'Solicitud de eliminacion de cuota asociada de gasto.',
+				$cod_usuario,
+				'Cuota asociada del gasto: '.$idgastos
+			);
+			if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+				echo json_encode($respuestaSolicitud);
+				exit;
 			}
 		}
 	}
@@ -2562,6 +2577,19 @@ exit;
 
 $fechaActual= new DateTime();
 $fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
+
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+		'motivos_ingreso_egreso',
+		'cod_motivo_ingreso_egreso',
+		$idabm,
+		'Solicitud de eliminacion de motivo de ingreso/egreso.',
+		$cod_usuarioFK,
+		'Motivo: '.$motivo
+	);
+	echo json_encode($respuestaSolicitud);
+	exit;
+}
 
 $mysqli=conectar_al_servidor();
 

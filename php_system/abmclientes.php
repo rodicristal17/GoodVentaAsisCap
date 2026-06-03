@@ -1,5 +1,6 @@
 <?php
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("subir_foto_base64.php");
 include("quitarseparadormiles.php");
@@ -764,6 +765,19 @@ $stmt2->bind_param($ss,$FechaNac,$rut_cliente,$Calificacion,$whapp,$estado,$idzo
 if($operacion=="editar")
 {
 
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'cliente',
+		'cod_cliente',
+		$cod_persona,
+		'Solicitud de eliminacion de cliente.',
+		$user,
+		'Cliente: '.$nombre_persona
+	);
+	echo json_encode($respuesta);
+	exit;
+}
+
 $consulta1="Update persona set nombre_persona=Upper(?),direccion=Upper(?),telefono=Upper(?),email=Upper(?) where cod_persona=?";	
 
 $stmt1 = $mysqli->prepare($consulta1);
@@ -894,23 +908,15 @@ exit;
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time());	
 
-$mysqli=conectar_al_servidor(); 
-	
-$consulta= "UPDATE antecedente_paciente SET estado = 'Inactivo', cod_usuario ='$user', fecha='$fecha_inser_edit' WHERE idantecedente_paciente = '$cod_antecedente_paciente'";
-
-
- 
-$stmt1 = $mysqli->prepare($consulta);
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-}
- 
-
-
- mysqli_close($mysqli);
-$informacion =array("1" => "exito");
-echo json_encode($informacion);	
+$respuesta = registrarSolicitudEliminacionGenerica(
+	'antecedente_paciente',
+	'idantecedente_paciente',
+	$cod_antecedente_paciente,
+	'Solicitud de eliminacion de antecedente de paciente.',
+	$user,
+	'Antecedente: '.$cod_antecedente_paciente
+);
+echo json_encode($respuesta);	
 exit;
 
 }

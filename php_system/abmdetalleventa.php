@@ -3,6 +3,7 @@
 $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include('quitarseparadormiles.php');
 include("buscar_nivel.php");
@@ -982,15 +983,32 @@ values(?,?,?,?,?,?)";
 
 function eliminarestecreditos($cod_venta){
 		$mysqli=conectar_al_servidor();
-			$consulta="UPDATE credito SET Esado='inactivo' where  cod_venta='$cod_venta' ";
-
+		$consulta="SELECT idcredito FROM credito WHERE cod_venta=?";
 	$stmt = $mysqli->prepare($consulta);
+	$stmt->bind_param('s', $cod_venta);
 
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
- mysqli_close($mysqli);
+	$result = $stmt->get_result();
+	$user = solicitudEliminadoValorPost('useru', '0');
+	while ($row = $result->fetch_assoc()) {
+		$respuesta = registrarSolicitudEliminacionGenerica(
+			'credito',
+			'idcredito',
+			$row['idcredito'],
+			'Solicitud de eliminacion de credito por venta.',
+			$user,
+			'Credito de venta: '.$cod_venta,
+			'Esado'
+		);
+		if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+			echo json_encode($respuesta);
+			exit;
+		}
+	}
+	mysqli_close($mysqli);
 }
 
 

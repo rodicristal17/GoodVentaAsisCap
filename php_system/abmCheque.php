@@ -6,6 +6,7 @@ $funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
@@ -135,6 +136,19 @@ if($pagado=="PENDIENTE"){
 	}
 	if($funt=="editar")
 	{
+		if (solicitudEliminadoEsEstadoInactivo($estado)) {
+			$user = solicitudEliminadoValorPost('useru', '0');
+			$respuesta = registrarSolicitudEliminacionGenerica(
+				'cheque',
+				'idcheque',
+				$idAbmCheque,
+				'Solicitud de eliminacion de cheque.',
+				$user,
+				'Cheque: '.$nroCheque
+			);
+			echo json_encode($respuesta);
+			exit;
+		}
     
     $consulta="Update cheque set fecemi='$fechaemi', nroche='$nroCheque', fecven='$fechaven', orden=upper('$orden'), concep=upper('$concepto'), importe=$importe, pagado=$pagado, cod_bancoFK=$banco,estado='$estado' where idcheque=$idAbmCheque";	
 

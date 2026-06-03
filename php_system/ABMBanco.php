@@ -6,6 +6,7 @@ $funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
@@ -121,6 +122,19 @@ if($valor==1)
 	}
 	if($funt=="editar")
 	{
+		if (solicitudEliminadoEsEstadoInactivo($estado)) {
+			$user = solicitudEliminadoValorPost('useru', '0');
+			$respuesta = registrarSolicitudEliminacionGenerica(
+				'banco',
+				'idbanco',
+				$cod_Banco,
+				'Solicitud de eliminacion de banco.',
+				$user,
+				'Banco: '.$nombre
+			);
+			echo json_encode($respuesta);
+			exit;
+		}
     
     $consulta="Update banco set nombre=upper('$nombre'),estado='$estado' where idbanco=$cod_Banco";	
 

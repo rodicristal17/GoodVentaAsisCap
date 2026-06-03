@@ -1,5 +1,6 @@
 <?php
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("subir_foto_base64.php");
 include("quitarseparadormiles.php");
@@ -511,6 +512,18 @@ $stmt1 = $mysqli->prepare($consulta1);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'solicitudcredito',
+		'idSolicitudCredito',
+		$idAbm,
+		'Solicitud de eliminacion de solicitud de credito.',
+		$cod_usu,
+		'Solicitud credito: '.$idAbm
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update solicitudcredito set  estado=Upper(?),cod_localFK=Upper(?), cod_clienteFK=Upper(?), cod_codeudorFK=Upper(?), cod_usuarioFK=$cod_usu ,observacion='$observacion' where idSolicitudCredito=?";	
 

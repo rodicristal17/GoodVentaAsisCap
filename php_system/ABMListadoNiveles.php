@@ -4,6 +4,7 @@ $funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include('quitarseparadormiles.php');
@@ -163,6 +164,19 @@ if($valor>0)
 	
 	if($funt=="editar")
 	{
+		if (solicitudEliminadoEsEstadoInactivo($estado)) {
+			$user = solicitudEliminadoValorPost('useru', '0');
+			$respuesta = registrarSolicitudEliminacionGenerica(
+				'listado_niveles',
+				'cod_niveles',
+				$cod_niveles,
+				'Solicitud de eliminacion de nivel.',
+				$user,
+				'Nivel: '.$nombre
+			);
+			echo json_encode($respuesta);
+			exit;
+		}
         
     $consulta="Update listado_niveles set nombre=upper(?),  estado=?  where cod_niveles=?";	
 	$stmt = $mysqli->prepare($consulta);
@@ -210,6 +224,7 @@ if ( ! $stmt->execute() ) {
 	exit;
 }
 
+sincronizarAccesoUsuariosNivel($mysqli, $iddetallesniveles, $acciones);
 
     mysqli_close($mysqli); 
 
@@ -217,6 +232,61 @@ if ( ! $stmt->execute() ) {
     echo json_encode($informacion);	
     exit;
 	
+}
+
+function sincronizarAccesoUsuariosNivel($mysqli, $iddetallesniveles, $acciones)
+{
+	$sqlDatos = "SELECT cod_nivelesfk, idlistadodeacceso FROM detallesniveles WHERE iddetallesniveles = ? LIMIT 1";
+	$stmtDatos = $mysqli->prepare($sqlDatos);
+	if (!$stmtDatos) {
+		return;
+	}
+	$s='s';
+	$stmtDatos->bind_param($s,$iddetallesniveles);
+	if (!$stmtDatos->execute()) {
+		$stmtDatos->close();
+		return;
+	}
+	$result = $stmtDatos->get_result();
+	$row = $result->fetch_assoc();
+	$stmtDatos->close();
+	if (!$row) {
+		return;
+	}
+
+	$codNiveles = $row['cod_nivelesfk'];
+	$idListadoAcceso = $row['idlistadodeacceso'];
+
+	$sqlUpdate = "UPDATE accesosuser acus
+		INNER JOIN usuario us ON us.cod_usuario = acus.usuarios_idusario
+		SET acus.accion = ?
+		WHERE us.Acceso = ?
+			AND acus.idlistadodeaccesoFK = ?
+			AND acus.tipo = 'Administrativo'";
+	$stmtUpdate = $mysqli->prepare($sqlUpdate);
+	if ($stmtUpdate) {
+		$sss='sss';
+		$stmtUpdate->bind_param($sss,$acciones,$codNiveles,$idListadoAcceso);
+		$stmtUpdate->execute();
+		$stmtUpdate->close();
+	}
+
+	$sqlInsert = "INSERT INTO accesosuser (idlistadodeaccesoFK, tipo, usuarios_idusario, accion)
+		SELECT ?, 'Administrativo', us.cod_usuario, ?
+		FROM usuario us
+		LEFT JOIN accesosuser acus ON acus.idlistadodeaccesoFK = ?
+			AND acus.tipo = 'Administrativo'
+			AND acus.usuarios_idusario = us.cod_usuario
+		WHERE us.Acceso = ?
+			AND us.estado = 'Activo'
+			AND acus.idaccesosUser IS NULL";
+	$stmtInsert = $mysqli->prepare($sqlInsert);
+	if ($stmtInsert) {
+		$ssss='ssss';
+		$stmtInsert->bind_param($ssss,$idListadoAcceso,$acciones,$idListadoAcceso,$codNiveles);
+		$stmtInsert->execute();
+		$stmtInsert->close();
+	}
 }
 
 

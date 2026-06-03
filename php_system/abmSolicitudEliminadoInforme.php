@@ -2,9 +2,73 @@
 require_once("conexion.php");
 include_once("verificar_navegador.php");
 
+define('PERMISO_INFORME_SOLICITUD_ELIMINADO', 'VERINFORMESOLICITUDELIMINADO');
+define('PERMISO_RESOLVER_SOLICITUD_ELIMINADO', 'APROBARSOLICITUDELIMINADO');
+
 function responderInformeSolicitudEliminado($datos) {
     echo json_encode($datos, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function usuarioTienePermisoSolicitudEliminado($user, $permiso) {
+    if ((string)$user === '2') {
+        return true;
+    }
+    $permiso = strtoupper(trim((string)$permiso));
+
+    $mysqli = conectar_al_servidor();
+    $sql = "SELECT COUNT(*)
+            FROM accesosuser au
+            INNER JOIN listadodeacceso la ON la.idlistadodeacceso = au.idlistadodeaccesoFK
+            WHERE au.usuarios_idusario = ?
+              AND UPPER(TRIM(la.codigo)) = ?
+              AND UPPER(TRIM(au.accion)) = 'SI'
+            LIMIT 1";
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return false;
+    }
+
+    $stmt->bind_param('ss', $user, $permiso);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return false;
+    }
+
+    $result = $stmt->get_result();
+    $row = $result->fetch_row();
+    $stmt->close();
+
+    return isset($row[0]) && intval($row[0]) > 0;
+}
+
+function usuarioPuedeVerInformeSolicitudEliminado($user) {
+    return usuarioTienePermisoSolicitudEliminado($user, PERMISO_INFORME_SOLICITUD_ELIMINADO);
+}
+
+function usuarioPuedeResolverSolicitudEliminado($user) {
+    return usuarioTienePermisoSolicitudEliminado($user, PERMISO_RESOLVER_SOLICITUD_ELIMINADO);
+}
+
+function exigirPermisoInformeSolicitudEliminado($user, $accion) {
+    $accionesProtegidas = array(
+        'buscar' => true,
+        'pendientes' => true,
+        'detalle' => true,
+        'aprobar' => true,
+        'rechazar' => true
+    );
+
+    if (isset($accionesProtegidas[$accion]) && !usuarioPuedeVerInformeSolicitudEliminado($user)) {
+        responderInformeSolicitudEliminado(array("1" => "NI", "2" => "No tienes permiso para acceder al informe de solicitudes de eliminacion."));
+    }
+}
+
+function exigirPermisoResolverSolicitudEliminado($user, $accion) {
+    if (($accion == 'aprobar' || $accion == 'rechazar') && !usuarioPuedeResolverSolicitudEliminado($user)) {
+        responderInformeSolicitudEliminado(array("1" => "NI", "2" => "No tienes permiso para aprobar o rechazar solicitudes de eliminacion."));
+    }
 }
 
 function verificarInformeSolicitudEliminado($accion) {
@@ -18,6 +82,9 @@ function verificarInformeSolicitudEliminado($accion) {
         responderInformeSolicitudEliminado(array("1" => "UI"));
     }
 
+    exigirPermisoInformeSolicitudEliminado($user, $accion);
+    exigirPermisoResolverSolicitudEliminado($user, $accion);
+
     switch ($accion) {
         case 'buscar':
             buscarInformeSolicitudEliminado();
@@ -29,7 +96,7 @@ function verificarInformeSolicitudEliminado($accion) {
             crearSolicitudEliminado($user);
             break;
         case 'detalle':
-            obtenerDetalleSolicitudEliminado();
+            obtenerDetalleSolicitudEliminado($user);
             break;
         case 'aprobar':
             resolverSolicitudEliminado('aprobada', $user);
@@ -304,7 +371,7 @@ function obtenerSolicitudEliminadoPorId($mysqli, $idSolicitud) {
     return $reg;
 }
 
-function obtenerDetalleSolicitudEliminado() {
+function obtenerDetalleSolicitudEliminado($user) {
     $idSolicitud = isset($_POST['id_solicitud_eliminado']) ? intval($_POST['id_solicitud_eliminado']) : 0;
     if ($idSolicitud <= 0) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "Falto seleccionar la solicitud."));
@@ -313,6 +380,20 @@ function obtenerDetalleSolicitudEliminado() {
     $mysqli = conectar_al_servidor();
     $solicitud = obtenerSolicitudEliminadoPorId($mysqli, $idSolicitud);
     $solicitud['puede_aprobar'] = solicitudEliminadoTieneDestino($solicitud) ? '1' : '0';
+    $solicitud['puede_resolver'] = usuarioPuedeResolverSolicitudEliminado($user) ? '1' : '0';
+    $detalles = obtenerDetallesSolicitudEliminado($mysqli, $idSolicitud);
+    if (count($detalles) > 0) {
+        $lineas = array();
+        foreach ($detalles as $detalle) {
+            $lineas[] = $detalle['tabla_nombre'].".".$detalle['registro_pk_columna']."=".$detalle['registro_pk_valor']
+                ." - ".($detalle['requiere_inactivacion'] == 1 ? "se inactiva" : "informativo")
+                .($detalle['registro_resumen'] != "" ? " - ".$detalle['registro_resumen'] : "");
+        }
+        $resumenRelacionados = "Registros relacionados:\n".implode("\n", $lineas);
+        $solicitud['registro_resumen'] = trim((string)$solicitud['registro_resumen']) != ""
+            ? $solicitud['registro_resumen']."\n\n".$resumenRelacionados
+            : $resumenRelacionados;
+    }
 
     responderInformeSolicitudEliminado(array("1" => "exito", "2" => $solicitud));
 }
@@ -321,13 +402,17 @@ function crearSolicitudEliminado($codUsuarioSolicitud) {
     $tabla = isset($_POST['tabla_nombre']) ? mb_convert_encoding((string)($_POST['tabla_nombre']), 'ISO-8859-1', 'UTF-8') : '';
     $pkColumna = isset($_POST['registro_pk_columna']) ? mb_convert_encoding((string)($_POST['registro_pk_columna']), 'ISO-8859-1', 'UTF-8') : '';
     $pkValor = isset($_POST['registro_pk_valor']) ? mb_convert_encoding((string)($_POST['registro_pk_valor']), 'ISO-8859-1', 'UTF-8') : '';
+    $estadoColumna = isset($_POST['estado_columna']) ? mb_convert_encoding((string)($_POST['estado_columna']), 'ISO-8859-1', 'UTF-8') : 'estado';
     $resumen = isset($_POST['registro_resumen']) ? mb_convert_encoding((string)($_POST['registro_resumen']), 'ISO-8859-1', 'UTF-8') : '';
     $motivo = isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : '';
+    if ($estadoColumna == '') {
+        $estadoColumna = 'estado';
+    }
 
     if ($tabla == "" || $pkColumna == "" || $pkValor == "" || $motivo == "") {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "Faltan datos para solicitar la eliminacion."));
     }
-    if (!validarIdentificadorSqlSolicitudEliminado($tabla) || !validarIdentificadorSqlSolicitudEliminado($pkColumna)) {
+    if (!validarIdentificadorSqlSolicitudEliminado($tabla) || !validarIdentificadorSqlSolicitudEliminado($pkColumna) || !validarIdentificadorSqlSolicitudEliminado($estadoColumna)) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "La tabla o columna del registro no es valida."));
     }
 
@@ -336,20 +421,20 @@ function crearSolicitudEliminado($codUsuarioSolicitud) {
     if (!$columnaPk) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se encontro la tabla o columna del registro."));
     }
-    $columnaEstado = obtenerColumnaTablaSolicitudEliminado($mysqli, $tabla, 'estado');
+    $columnaEstado = obtenerColumnaTablaSolicitudEliminado($mysqli, $tabla, $estadoColumna);
     if (!$columnaEstado) {
-        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La tabla ".$tabla." no tiene columna estado."));
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La tabla ".$tabla." no tiene la columna de estado indicada."));
     }
 
     $sql = "INSERT INTO solicitud_eliminado
-            (id_usuario_solicitud, tabla_nombre, registro_pk_columna, registro_pk_valor, registro_resumen, motivo)
-            VALUES (?, ?, ?, ?, ?, ?)";
+            (id_usuario_solicitud, tabla_nombre, registro_pk_columna, registro_pk_valor, registro_resumen, motivo, estado_columna)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar la solicitud.", "3" => $mysqli->error));
     }
 
-    $stmt->bind_param('isssss', $codUsuarioSolicitud, $tabla, $pkColumna, $pkValor, $resumen, $motivo);
+    $stmt->bind_param('issssss', $codUsuarioSolicitud, $tabla, $pkColumna, $pkValor, $resumen, $motivo, $estadoColumna);
     if (!$stmt->execute()) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo registrar la solicitud.", "3" => $stmt->error));
     }
@@ -413,16 +498,8 @@ function valorInactivoParaColumnaSolicitudEliminado($columnaEstado) {
     return 'Inactivo';
 }
 
-function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
-    if (!solicitudEliminadoTieneDestino($solicitud)) {
-        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La solicitud no tiene tabla, columna o codigo del registro a eliminar. No se puede aprobar."));
-    }
-
-    $tabla = $solicitud['tabla_nombre'];
-    $pkColumna = $solicitud['registro_pk_columna'];
-    $pkValor = $solicitud['registro_pk_valor'];
-
-    if (!validarIdentificadorSqlSolicitudEliminado($tabla) || !validarIdentificadorSqlSolicitudEliminado($pkColumna)) {
+function inactivarDestinoSolicitudEliminado($mysqli, $tabla, $pkColumna, $pkValor, $estadoColumnaSolicitud) {
+    if (!validarIdentificadorSqlSolicitudEliminado($tabla) || !validarIdentificadorSqlSolicitudEliminado($pkColumna) || !validarIdentificadorSqlSolicitudEliminado($estadoColumnaSolicitud)) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "La tabla o columna del registro no es valida."));
     }
 
@@ -431,16 +508,16 @@ function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se encontro la tabla o la columna principal del registro."));
     }
 
-    $columnaEstado = obtenerColumnaTablaSolicitudEliminado($mysqli, $tabla, 'estado');
+    $columnaEstado = obtenerColumnaTablaSolicitudEliminado($mysqli, $tabla, $estadoColumnaSolicitud);
     if (!$columnaEstado) {
-        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La tabla ".$tabla." no tiene columna estado para inactivar el registro."));
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La tabla ".$tabla." no tiene columna ".$estadoColumnaSolicitud." para inactivar el registro."));
     }
 
     $valorInactivo = valorInactivoParaColumnaSolicitudEliminado($columnaEstado);
     if ($valorInactivo === null) {
-        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La columna estado de ".$tabla." no admite el valor Inactivo."));
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La columna ".$estadoColumnaSolicitud." de ".$tabla." no admite el valor Inactivo."));
     }
-    $sql = "UPDATE `".$tabla."` SET `estado` = ? WHERE `".$pkColumna."` = ? LIMIT 1";
+    $sql = "UPDATE `".$tabla."` SET `".$estadoColumnaSolicitud."` = ? WHERE `".$pkColumna."` = ? LIMIT 1";
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar la inactivacion del registro.", "3" => $mysqli->error));
@@ -457,6 +534,103 @@ function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
     if ($filas < 1) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se encontro el registro indicado o ya estaba inactivo."));
     }
+}
+
+function tablaExisteSolicitudEliminado($mysqli, $tabla) {
+    $sql = "SELECT COUNT(*) AS total
+            FROM information_schema.TABLES
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('s', $tabla);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return false;
+    }
+    $result = $stmt->get_result();
+    $row = $result ? $result->fetch_assoc() : null;
+    $stmt->close();
+    return isset($row['total']) && intval($row['total']) > 0;
+}
+
+function obtenerDetallesSolicitudEliminado($mysqli, $idSolicitud) {
+    if (!tablaExisteSolicitudEliminado($mysqli, 'solicitud_eliminado_detalle')) {
+        return array();
+    }
+
+    $sql = "SELECT *
+            FROM solicitud_eliminado_detalle
+            WHERE id_solicitud_eliminado = ?
+            ORDER BY id_solicitud_eliminado_detalle ASC";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar la consulta de relacionados.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('i', $idSolicitud);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo consultar los relacionados.", "3" => $stmt->error));
+    }
+    $result = $stmt->get_result();
+    $detalles = array();
+    while ($row = $result->fetch_assoc()) {
+        $detalles[] = $row;
+    }
+    $stmt->close();
+    return $detalles;
+}
+
+function actualizarProcesoDetalleSolicitudEliminado($mysqli, $idDetalle, $estadoProceso) {
+    $sql = "UPDATE solicitud_eliminado_detalle
+            SET estado_proceso = ?, fecha_proceso = NOW()
+            WHERE id_solicitud_eliminado_detalle = ?";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar el marcado del relacionado.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('si', $estadoProceso, $idDetalle);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo marcar el relacionado.", "3" => $stmt->error));
+    }
+    $stmt->close();
+}
+
+function inactivarDetallesSolicitudEliminado($mysqli, $idSolicitud) {
+    $detalles = obtenerDetallesSolicitudEliminado($mysqli, $idSolicitud);
+    foreach ($detalles as $detalle) {
+        $idDetalle = intval($detalle['id_solicitud_eliminado_detalle']);
+        $requiereInactivacion = intval($detalle['requiere_inactivacion']);
+        if ($requiereInactivacion !== 1) {
+            actualizarProcesoDetalleSolicitudEliminado($mysqli, $idDetalle, 'omitido');
+            continue;
+        }
+
+        $tabla = $detalle['tabla_nombre'];
+        $pkColumna = $detalle['registro_pk_columna'];
+        $pkValor = $detalle['registro_pk_valor'];
+        $estadoColumna = isset($detalle['estado_columna']) && $detalle['estado_columna'] != '' ? $detalle['estado_columna'] : 'estado';
+        inactivarDestinoSolicitudEliminado($mysqli, $tabla, $pkColumna, $pkValor, $estadoColumna);
+        actualizarProcesoDetalleSolicitudEliminado($mysqli, $idDetalle, 'aplicado');
+    }
+}
+
+function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
+    if (!solicitudEliminadoTieneDestino($solicitud)) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "La solicitud no tiene tabla, columna o codigo del registro a eliminar. No se puede aprobar."));
+    }
+
+    $idSolicitud = isset($solicitud['id_solicitud_eliminado']) ? intval($solicitud['id_solicitud_eliminado']) : 0;
+    if ($idSolicitud > 0) {
+        inactivarDetallesSolicitudEliminado($mysqli, $idSolicitud);
+    }
+
+    $tabla = $solicitud['tabla_nombre'];
+    $pkColumna = $solicitud['registro_pk_columna'];
+    $pkValor = $solicitud['registro_pk_valor'];
+    $estadoColumnaSolicitud = isset($solicitud['estado_columna']) && $solicitud['estado_columna'] != '' ? $solicitud['estado_columna'] : 'estado';
+    inactivarDestinoSolicitudEliminado($mysqli, $tabla, $pkColumna, $pkValor, $estadoColumnaSolicitud);
 }
 
 function resolverSolicitudEliminado($decision, $codUsuarioAprobacion) {

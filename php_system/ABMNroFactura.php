@@ -4,6 +4,7 @@ $funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include('quitarseparadormiles.php');
@@ -80,7 +81,7 @@ exit;
 	$mysqli=conectar_al_servidor();
 
 
-	$consulta= "update nrofactura set estado='Inactivo' where cod_localfk=?  and nrocaja=? ";
+	$consulta= "SELECT Cod_Nro FROM nrofactura WHERE cod_localfk=? AND nrocaja=? AND estado!='Inactivo'";
 $stmt = $mysqli->prepare($consulta);
 $ss='ss';
 $stmt->bind_param($ss,$cod_localfk,$nrocaja); 
@@ -90,6 +91,21 @@ if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
+	$result = $stmt->get_result();
+	while ($row = $result->fetch_assoc()) {
+		$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+			'nrofactura',
+			'Cod_Nro',
+			$row['Cod_Nro'],
+			'Solicitud de eliminacion de numeracion anterior de factura.',
+			$cod_usuarioFk,
+			'Numeracion anterior local '.$cod_localfk.' caja '.$nrocaja
+		);
+		if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+			echo json_encode($respuestaSolicitud);
+			exit;
+		}
+	}
 	
     
     $consulta="insert into nrofactura (nro,fecha,cod_localfk,cod_usuarioFk,nrocaja,estado) values (?,?,?,?,?,'Activo')";	

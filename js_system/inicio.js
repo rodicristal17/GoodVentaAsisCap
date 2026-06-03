@@ -581,6 +581,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 					codEncargadoSolicitud = userid;
 					CodCobradorUser = datos["7"];
  accesosuser=datos["5"];
+ if (typeof actualizarVisibilidadSolicitudEliminado == "function") {
+	actualizarVisibilidadSolicitudEliminado();
+ }
  fotocliente3= normalizarFotoUsuario(datos["8"]);
       cajapredeterminada=buscar_datos_url_usuario('c');
 
@@ -16536,10 +16539,6 @@ limpiarcamposhistorialventa()
 			return
 	}
 	
-	if(nro>0){
-		ver_vetana_informativa("NO PUEDES ELEMINAR ESTA VENTA POR QUE CUENTA CON UNO O VARIOS DETALLES","#")
-			return
-	}
 	var motivo=document.getElementById("inptSeleccMotivoEliminarVenta").value
 	if(motivo==""){
 		ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO","#")
@@ -24011,7 +24010,7 @@ Control de acceso
 */
 function controlacceso(frm,accion){
 	if (userid == '2') return true;
-	if(accesosuser[frm][accion]!= "SI"){
+	if(permisoAccesoUser(frm,accion)==false){
 		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER")
 		  return false;
 	}else{
@@ -24023,11 +24022,35 @@ function controlacceso(frm,accion){
 
 function controlacceso2(frm,accion){
 	if (userid == '2') return true;
-	if(accesosuser[frm][accion]!= "SI"){
+	if(permisoAccesoUser(frm,accion)==false){
 		return false;
 	}else{
 		return true;
 	}
+}
+
+function obtenerAccesoUser(frm){
+	if(typeof accesosuser === "undefined" || !accesosuser){
+		return null;
+	}
+	if(accesosuser[frm] != undefined){
+		return accesosuser[frm];
+	}
+	var codigoBuscado = String(frm).trim().toUpperCase();
+	for(var codigo in accesosuser){
+		if(Object.prototype.hasOwnProperty.call(accesosuser, codigo) && String(codigo).trim().toUpperCase() == codigoBuscado){
+			return accesosuser[codigo];
+		}
+	}
+	return null;
+}
+
+function permisoAccesoUser(frm,accion){
+	var acceso = obtenerAccesoUser(frm);
+	if(!acceso || acceso[accion] == undefined){
+		return false;
+	}
+	return String(acceso[accion]).trim().toUpperCase() == "SI";
 }
 
 /*
@@ -25755,6 +25778,11 @@ function removeToMenu(){
 	if( accesosuser["VERINFORMEDEPAGOSELIMINADOS"]["accion"]!="SI")
 	{
 	$("table[id=divMenuPagosEliminados]").remove()
+	controlinforme=controlinforme+1;		
+	}
+	if( userid != '2' && permisoAccesoUser("VERINFORMESOLICITUDELIMINADO","accion")==false)
+	{
+	$("table[id=divMenuSolicitudEliminado]").remove()
 	controlinforme=controlinforme+1;		
 	}
 	if( accesosuser["VERCATALOGO"]["accion"]!="SI")

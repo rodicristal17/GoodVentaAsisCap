@@ -1,5 +1,6 @@
 <?php
     require_once("conexion.php");
+    require_once("solicitud_eliminado_helper.php");
     include_once("verificar_navegador.php");
     include_once("buscar_nivel.php");
     include_once("classTable.php");
@@ -423,6 +424,22 @@
                 exit;
             }
 
+            if ($estado !== null && solicitudEliminadoEsEstadoInactivo($estado)) {
+                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+                    'dictamenes',
+                    'id',
+                    $id,
+                    'Solicitud de eliminacion de dictamen.',
+                    $cod_usuarioFK_create,
+                    'Dictamen: '.$id
+                );
+                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+                    echo json_encode($respuestaSolicitud);
+                    exit;
+                }
+                return $id;
+            }
+
             $parametros = array();
             $atributos = "";
             $ss = "";
@@ -498,6 +515,22 @@
     }
 
     function actualizarEstadoDictamenFormal($id, $estado) {
+        if (solicitudEliminadoEsEstadoInactivo($estado)) {
+            $user = solicitudEliminadoValorPost('useru', '0');
+            $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+                'dictamenes',
+                'id',
+                $id,
+                'Solicitud de eliminacion de dictamen.',
+                $user,
+                'Dictamen: '.$id
+            );
+            if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+                echo json_encode($respuestaSolicitud);
+                exit;
+            }
+            return;
+        }
         $mysqli = conectar_al_servidor();
         $sql = "UPDATE dictamenes SET estado = ? WHERE id = ?";
         $stmt = $mysqli->prepare($sql);

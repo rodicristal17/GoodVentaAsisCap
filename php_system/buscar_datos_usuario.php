@@ -110,14 +110,17 @@ exit;
 function buscaracceso($buscar)
 {
 	$mysqli=conectar_al_servidor();
+	sincronizarAccesosUsuario($mysqli, $buscar);
 	 $datos[0]="";
 			$sql= "Select lta.nro,lta.formulario,lta.codigo,lta.nombre,acus.idaccesosUser,acus.accion,acus.usuarios_idusario,lta.formulario
 		from accesosuser acus inner join listadodeacceso lta on lta.idlistadodeacceso=acus.idlistadodeaccesoFK
-		where usuarios_idusario = '$buscar' and acus.tipo='Administrativo' order by lta.nro asc";
+		where usuarios_idusario = ? and acus.tipo='Administrativo' order by lta.nro asc";
 		
 
    
    $stmt = $mysqli->prepare($sql);
+   $s='s';
+   $stmt->bind_param($s,$buscar);
 if ( ! $stmt->execute()) {
    echo "Error";
    exit;
@@ -132,9 +135,9 @@ if ( ! $stmt->execute()) {
 	  {
 		  
 		     $idaccesosUser=$valor['idaccesosUser'];
-			  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
+			  $accion=strtoupper(trim(mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1')));
 			  $usuarios_idusario=mb_convert_encoding((string)($valor['usuarios_idusario']), 'UTF-8', 'ISO-8859-1');
-			  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
+			  $codigo=strtoupper(trim(mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1')));
 		  	 $datos[$codigo]['accion']=$accion;
 			    	 
 		  	 
@@ -146,6 +149,29 @@ if ( ! $stmt->execute()) {
 return $datos;
 
 
+}
+
+function sincronizarAccesosUsuario($mysqli, $buscar)
+{
+	$sql = "INSERT INTO accesosuser (idlistadodeaccesoFK, tipo, usuarios_idusario, accion)
+		SELECT lta.idlistadodeacceso, 'Administrativo', us.cod_usuario, IFNULL(dts.accion, 'NO')
+		FROM usuario us
+		INNER JOIN listadodeacceso lta ON lta.tipo = 'Administrativo'
+		LEFT JOIN detallesniveles dts ON dts.idlistadodeacceso = lta.idlistadodeacceso
+			AND dts.cod_nivelesfk = us.Acceso
+		LEFT JOIN accesosuser acus ON acus.idlistadodeaccesoFK = lta.idlistadodeacceso
+			AND acus.tipo = 'Administrativo'
+			AND acus.usuarios_idusario = us.cod_usuario
+		WHERE us.cod_usuario = ?
+			AND acus.idaccesosUser IS NULL";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return;
+	}
+	$s='s';
+	$stmt->bind_param($s,$buscar);
+	$stmt->execute();
+	$stmt->close();
 }
 
 
