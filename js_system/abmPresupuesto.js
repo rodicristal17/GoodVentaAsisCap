@@ -35,6 +35,26 @@ var idabmPresupuesto= "";
 var pasoVistaPresupuestoDoc = 1;
 var presupuestoDocDropDestinoPlan = "";
 var presupuestoGuardando = false;
+var idAgendaPresupuestoDoctorActiva = "";
+var idPacientePresupuestoDoctorActivo = "";
+
+function obtenerAgendaPresupuestoDoctorActual() {
+	if (
+		idAgendaPresupuestoDoctorActiva != "" &&
+		idPacientePresupuestoDoctorActivo != "" &&
+		String(idPacientePresupuestoDoctorActivo) == String(idFkCliente || "")
+	) {
+		return idAgendaPresupuestoDoctorActiva;
+	}
+
+	return "";
+}
+
+function limpiarAgendaPresupuestoDoctorActiva() {
+	idAgendaPresupuestoDoctorActiva = "";
+	idPacientePresupuestoDoctorActivo = "";
+}
+
 function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK, plan_vendido, opciones) {
 	opciones = opciones || {};
 	obtener_datos_user();
@@ -105,7 +125,9 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 					}
 
 					// Actualiza tambien los datos de la agenda
-					if (idAbmAgenda) {
+					var idAgendaPresupuestoActual = obtenerAgendaPresupuestoDoctorActual();
+					if (idAgendaPresupuestoActual != "") {
+						idAbmAgenda = idAgendaPresupuestoActual;
 						asignarCodPresupuestoAgenda();
 					}
 					ejecutarOnSuccess = true;
@@ -274,15 +296,23 @@ function seleccionarpreciospresupuesto(datos) {
 	calcular_total_Presupuesto();
 }
 
-function limpirarAddPresupuesto(){
-	
-document.getElementById('inptCodigoPresupuesto').value = ""
-document.getElementById('inptProductoPresupuesto').value = ""
-document.getElementById('inptPrecioPresupuesto').value = ""
-document.getElementById('inpTSeleccCostoPresupuesto').value = ""
-document.getElementById('inptCantidadPresupuesto').value = ""
-document.getElementById('inptTotalPresupuesto').value = ""
-	
+function limpirarAddPresupuesto(vistaOrigen){
+	if (vistaOrigen == "doctor") {
+		document.getElementById('inptCodigoPresupuestoDoc').value = ""
+		document.getElementById('inptProductoPresupuestoDoc').value = ""
+		document.getElementById('inptPrecioPresupuestoDoc').value = ""
+		document.getElementById('inpTSeleccCostoPresupuestoDoc').value = ""
+		document.getElementById('inptCantidadPresupuestoDoc').value = ""
+		document.getElementById('inptTotalPresupuestoDoc').value = ""
+		return;
+	}
+
+	document.getElementById('inptCodigoPresupuesto').value = ""
+	document.getElementById('inptProductoPresupuesto').value = ""
+	document.getElementById('inptPrecioPresupuesto').value = ""
+	document.getElementById('inpTSeleccCostoPresupuesto').value = ""
+	document.getElementById('inptCantidadPresupuesto').value = ""
+	document.getElementById('inptTotalPresupuesto').value = ""
 }
 
 function buscarproductoporcodigoPresupuesto(vistaOrigen= 'presupuesto') {
@@ -353,6 +383,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById('inptCodigoPresupuestoDoc').value = datos["5"];
 						document.getElementById('inptProductoPresupuestoDoc').value = datos["3"];
 						document.getElementById('inptCantidadPresupuestoDoc').value = "1";
+						document.getElementById('inptPrecioPresupuestoDoc').value = datos["4"];
 					} else {
 						document.getElementById('inptCodigoPresupuesto').value = datos["5"];
 						document.getElementById('inptProductoPresupuesto').value = datos["3"];
@@ -1067,6 +1098,7 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 		"navegador": navegador,
 		"accion": "abmDetallesPresupuesto",
 		"cod_presupuestoFK": cod_presupuestoFK,
+		"cod_clienteFK": idFkCliente,
 		"cod_productoFK": cod_productoFK,
 		"cantidad": cantidad,
 		"precio": precio,
@@ -1184,9 +1216,12 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						document.getElementById("inptTotalPresupuesto2").innerHTML = separadordemilesnumero(totalPresupuesto);
 						document.getElementById("inptTOTALPresupuestoFORM").value = separadordemilesnumero(totalPresupuesto);
 						document.getElementById("inptTOTALPresupuestoFORMPrioritario").value = separadordemilesnumero(totalPresupuestoPrioritario);
-	
+
 						generarTabla();
 					}
+					limpirarAddPresupuesto(vistaPresupuestoOrigen);
+				} else {
+					ver_vetana_informativa("No se pudo guardar el tratamiento", datos["mensaje"] || "El presupuesto no corresponde al paciente seleccionado.", "error");
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
@@ -1340,8 +1375,6 @@ function anhadirPrPresupuesto() {
 
 		// Agrega al presupuesto existente
 		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado, inptPrioritarioPresupuesto, inptAlternativoPresupuesto);
-
-		limpirarAddPresupuesto()
 	} else {
 		ver_vetana_informativa("Faltan datos", "Favor seleccionar un producto", "error");
 		return false;
@@ -1757,12 +1790,17 @@ function verCerrarFiltrosPresupuesto(mostrar) {
 function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 	vistaPresupuestoOrigen= "doctor"
 	if(mostrar){
+		if(document.getElementById("divAbmDetallesPresupuestoDoc").style.display!=""){
+			limpirarPresupuesto();
+			limpiarAgendaPresupuestoDoctorActiva();
+		}
 		document.getElementById("divAbmDetallesPresupuestoDoc").style.display=""
 		verPasoPresupuestoDoc(1);
 		sincronizarResumenDetallePresupuestoDoc();
 	}else{
 		$("div[id=divAbmDetallesPresupuestoDoc]").fadeOut(500);
 		vistaPresupuestoOrigen= "";
+		limpiarAgendaPresupuestoDoctorActiva();
 
 		switch (ventanaAnterior[ventanaAnterior.length - 1]) {
 			case 'calendario':
@@ -1868,9 +1906,22 @@ function presupuestoAVenta(){
 function cargarTratamientoDesdeAgenda() {
 	verCerrarAbmDetallesPresupuestoDoc(true);
 	limpirarPresupuesto();
-	const nombrePaciente= document.getElementById('detAgendaPaciente').textContent;
+	const idPacienteAgenda = document.getElementById('detAgendaPacienteId') ? document.getElementById('detAgendaPacienteId').textContent.trim() : "";
+	const nombrePaciente = document.getElementById('detAgendaPaciente') ? (document.getElementById('detAgendaPaciente').getAttribute('data-nombre-paciente') || document.getElementById('detAgendaPaciente').textContent).trim() : "";
+	const documentoPaciente = document.getElementById('detAgendaCedula') ? (document.getElementById('detAgendaCedula').getAttribute('data-documento-paciente') || document.getElementById('detAgendaCedula').textContent).trim() : "";
+
+	if (idPacienteAgenda == "") {
+		ver_vetana_informativa("Faltan datos", "No se pudo identificar el paciente del agendamiento.", "error");
+		return false;
+	}
+
+	idFkCliente = idPacienteAgenda;
+	idAgendaPresupuestoDoctorActiva = document.getElementById('detAgendaId') ? document.getElementById('detAgendaId').textContent.trim() : "";
+	idAbmAgenda = idAgendaPresupuestoDoctorActiva;
+	idPacientePresupuestoDoctorActivo = idPacienteAgenda;
+	document.getElementById('inptDocumentoClientePresupuestoDoc').value= documentoPaciente;
 	document.getElementById('inptNombreClientePresupuestoDoc').value= nombrePaciente;
-	buscarClientePorCiVista(document.getElementById('inptNombreClientePresupuestoDoc'),'inptDocumentoClientePresupuestoDoc', 'inptNombreClientePresupuestoDoc','presupuesto');
+	actualizarResumenPacientePresupuestoDoc();
 	cerrarDetalleAgenda();
 	cerrarAgendaConsultorios();
 }

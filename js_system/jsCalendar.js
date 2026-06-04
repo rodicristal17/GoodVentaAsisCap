@@ -1702,7 +1702,12 @@ function verDetalleAgenda(id){
 
     idAbmAgenda = evento.id;
     document.getElementById('detAgendaId').innerHTML = evento.id;
+    if (document.getElementById('detAgendaPacienteId')) {
+        document.getElementById('detAgendaPacienteId').innerHTML = evento.cod_cliente || evento.id_paciente || '';
+    }
     document.getElementById('detAgendaPaciente').innerHTML = evento.paciente + advertencia_datos_cliente_incompleto;
+    document.getElementById('detAgendaPaciente').setAttribute('data-nombre-paciente', evento.paciente || '');
+    document.getElementById('detAgendaCedula').setAttribute('data-documento-paciente', evento.ci_cliente || '');
     document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
     document.getElementById('detAgendaTratamientoAsignado').innerHTML = (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
     document.getElementById('detAgendaTitulo').innerHTML = "Agenda de " + evento.paciente + " "+ (evento.nombres_tratamiento ? (', para ' + evento.nombres_tratamiento) : '');
