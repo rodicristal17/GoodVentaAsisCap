@@ -5,6 +5,7 @@ var agendaConsultoriosData = {
 };
 var timeoutBuscarHistorialPacienteCalendario = null;
 var ultimaPeticionDoctoresNuevaCita = 0;
+var comentarioAgendamientoEnProceso = false;
 
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
@@ -1580,10 +1581,24 @@ function obtenerComentariosAgendamiento() {
 }
 
 function verificarComentarioAgendamiento() {
-    const detAgendaMotivoInput= document.getElementById('detAgendaMotivoInput').value;
+    if (comentarioAgendamientoEnProceso) {
+        return false;
+    }
+
+    var inputComentario = document.getElementById('detAgendaMotivoInput');
+    var botonEnviarComentario = document.querySelector('#detAgendaMotivoInput + .fa-paper-plane');
+    var detAgendaMotivoInput = inputComentario.value;
+
     if (!detAgendaMotivoInput) {
         ver_vetana_informativa("Ingrese un comentario para guardar");
         return false;
+    }
+
+    comentarioAgendamientoEnProceso = true;
+    inputComentario.disabled = true;
+    if (botonEnviarComentario) {
+        botonEnviarComentario.style.pointerEvents = 'none';
+        botonEnviarComentario.style.opacity = '0.5';
     }
 
  	obtener_datos_user();
@@ -1623,6 +1638,14 @@ function verificarComentarioAgendamiento() {
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 		},
+        complete: function () {
+            comentarioAgendamientoEnProceso = false;
+            inputComentario.disabled = false;
+            if (botonEnviarComentario) {
+                botonEnviarComentario.style.pointerEvents = '';
+                botonEnviarComentario.style.opacity = '';
+            }
+        },
 		success: function (responseText) {
 			try {
 				var datos = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
