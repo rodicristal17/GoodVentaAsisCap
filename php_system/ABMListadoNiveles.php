@@ -393,10 +393,10 @@ $totales=0;
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
  $totalresouesta= $valor;
- $styleName="tableRegistroSearch";
- 
  if ($valor>0)
  {
+	  $pagina.="<table class='lista-niveles-main-table'>
+	  <tbody>";
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		  
@@ -405,21 +405,26 @@ $totales=0;
 		      $cod_niveles=$valor['cod_niveles'];
 		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
 		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+		  	  $estadoSeguro=htmlspecialchars($estado, ENT_QUOTES, 'UTF-8');
+		  	  $estadoClase=$estado=="Activo" ? "is-active" : "is-inactive";
 		  	
-		  	
-			  $styleName=CargarStyleTable($styleName);
-			  $pagina.="<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-			  <tr id='tbSelecRegistro' onclick='ObtenerdatosAbmListaNiveles(this)'>
+			  $pagina.="<tr id='tbSelecRegistro' class='lista-niveles-main-row ".$estadoClase."' onclick='ObtenerdatosAbmListaNiveles(this)'>
 			  <td id='td_id' style='display:none;'>".$cod_niveles."</td>
-			   <td  id='td_datos_1' style='width:60%' >".$nombre."</td>
-			  <td  id='td_datos_2' style='display:none' >".$estado."</td>
-			  </tr>
-			  </table>";
+			  <td id='td_datos_1' style='display:none;'>".$nombreSeguro."</td>
+			  <td id='td_datos_2' style='display:none;'>".$estadoSeguro."</td>
+			  <td class='lista-niveles-main-info'>
+			  <span class='lista-niveles-main-name'>".$nombreSeguro."</span>
+			  <span class='lista-niveles-main-meta'>Nivel administrativo #".$cod_niveles."</span>
+			  </td>
+			  <td class='lista-niveles-main-state'><span class='lista-niveles-state-badge'>".$estadoSeguro."</span></td>
+			  </tr>";
 			    	 
 		  	
 			  
 			  
 	  }
+	  $pagina.="</tbody></table>";
 	  
  }
  
@@ -450,10 +455,11 @@ $controltitulo="";
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
  $totalresouesta= $valor;
- $styleName="tableRegistroSearch";
  
  if ($valor>0)
  {
+	  $pagina.="<table class='lista-niveles-acceso-table'>
+	  <tbody>";
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		  
@@ -466,30 +472,42 @@ $controltitulo="";
 		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
 		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
 		  	 
+			  $formularioSeguro=htmlspecialchars($formulario, ENT_QUOTES, 'UTF-8');
+			  $codigoSeguro=htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8');
+			  $nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+			  $nroSeguro=htmlspecialchars($nro, ENT_QUOTES, 'UTF-8');
+			  $estadoFila=$accion=="SI" ? "is-enabled" : "is-disabled";
+			  $checked=$accion=="SI" ? " checked" : "";
+			  $textoEstado=$accion=="SI" ? "Permitido" : "Bloqueado";
+			  $codigoHtml=$codigoSeguro!="" ? "<span class='lista-niveles-acceso-code'>".$codigoSeguro."</span>" : "";
+
 			   $tituloacceso="";
 			 if($controltitulo!=$formulario){
-				   $tituloacceso="<p class='ptituloZ'>".$formulario."</p>";
+				   $tituloacceso="<tr class='lista-niveles-acceso-group'>
+				   <th colspan='2'>".$formularioSeguro."</th>
+				   </tr>";
 				   $controltitulo=$formulario;
 			 }
-		  	 $inputcheck="<input id='".$iddetallesniveles."' type='checkbox' onclick='abmaccesolistanivel(this)'  />";
-			 if($accion=="SI"){
-			$inputcheck="<input id='".$iddetallesniveles."' type='checkbox'  checked onclick='abmaccesolistanivel(this)' />";
-          		
-			 }
-			    	 
-$styleName=CargarStyleTable($styleName);		  	  
+		  	 $inputcheck="<label class='lista-niveles-switch'>
+		  	 <input id='".$iddetallesniveles."' type='checkbox'".$checked." onclick='abmaccesolistanivel(this)' />
+		  	 <span class='lista-niveles-switch-track'></span>
+		  	 <span class='lista-niveles-switch-text'>".$textoEstado."</span>
+		  	 </label>";
+			    	  	  	  
 $pagina.=$tituloacceso."
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
- <tr id='tbSelecRegistro' >
-<td  id='td_datos_7' style='width:70%;text-align:left;padding-left:10px' >".$nombre."</td>
-<td id='td_datos_2' style='width:20%'>".$inputcheck."</td>
-</tr>
-</table>";
+<tr id='tbSelecRegistro' class='lista-niveles-acceso-row ".$estadoFila."'>
+<td id='td_datos_7' class='lista-niveles-acceso-info'>
+<span class='lista-niveles-acceso-name'>".$nombreSeguro."</span>
+<span class='lista-niveles-acceso-meta'>Nro. ".$nroSeguro.$codigoHtml."</span>
+</td>
+<td id='td_datos_2' class='lista-niveles-acceso-action'>".$inputcheck."</td>
+</tr>";
 			    	 
 		  	
 			  
 			  
 	  }
+	  $pagina.="</tbody></table>";
 	  
  }
  

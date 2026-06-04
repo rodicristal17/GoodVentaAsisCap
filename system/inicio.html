@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-detalle-hilo-20260529" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=form-niveles-modernizado-20260604" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -42,12 +42,12 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=arqueo-print-filtros-20260602"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=interconsulta-filtros-visibles-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=interconsulta-filtros-visibles-20260529"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -2837,7 +2837,7 @@ class='divMinimizado'></div>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/nivelesacceso.png' />
-<p class='pTitulo4'  >Listado de Niveles</p>
+<p class='pTitulo4'  >Listado de Roles</p>
 <center><div id='divMinimizadoListadodeNiveles' style='display:none' class='divMinimizado'></div></center>
 </td>
 </tr>
@@ -3213,7 +3213,7 @@ id='inptContrasenhaUser' style='width:100%;box-sizing:border-box;' />
 </div>
 
 <div style='margin-top:12px;'>
-<p class='pTituloC'>Niveles de acceso :</p>
+<p class='pTituloC'>Rol de acceso :</p>
 <select class='inputSelect' id='inptAccesoUser' style='width:100%;box-sizing:border-box;'>
 <option value="Administrador">ADMINISTRADOR</option>
 <option value="Vendedor">VENDEDOR</option>
@@ -3546,128 +3546,95 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <tr>
 <td>
 <center>
-<div class='divAbms' id='divAbmListaNiveles1' style='display:;'>
-<table class='tableMenuZ'>
+<div class='divAbms lista-niveles-modal' id='divAbmListaNiveles1' style='display:;'>
+<table class='tableMenuZ lista-niveles-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Listado de <b style='font-size: 30px;' >Niveles</b></p>
+<p class='pTituloB lista-niveles-title'>Listado de <b>Roles</b></p>
 </td>
-<td style='width:5%'>
+<td class='lista-niveles-header-action'>
 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir nuevo registro' onclick='NuevoListaNivelesFrm()' />
 </td>
 
-<td style='width:5%'>
+<td class='lista-niveles-header-action'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarFrmListaNiveles("2")' />
 </td>
 </tr>
 </table>
  
 <center>
-<div class='divMenuf'>
-<table style='width:100%' id='trCheckFacultad'>
-<tr>
-<td style='width:70%'>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8'   onclick='checkestadoListadoAcceso(1)' > <input type='checkbox' id="inptSeleccEstadoListadoAcceso1" checked > Activo</p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8'  onclick='checkestadoListadoAcceso(2)' > <input type='checkbox' id="inptSeleccEstadoListadoAcceso2" > Inactivo</p>
-</td>
-</tr>
-</table>
+<div class='divMenuf lista-niveles-body'>
 <center>
-<p class='pTitulo7' style="display:none;"  id="lblNroRegistroListaNiveles"></p>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:100%;">
-NOMBRES
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:99%;" >
-<input placeholder='Parecido a' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarListaNiveles1'  style='width:95%'   onkeyup="if(event.keyCode == 13){BuscarAbmListaNiveles()}"  />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarListaNiveles1')" />
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table tableTamanho2" id="divBuscadorListaNiveles" style='height:60vh;' ></div>
+<div class='lista-niveles-toolbar'>
+<div class='lista-niveles-status-filter' id='trCheckFacultad'>
+<label class='lista-niveles-status-option is-selected' onclick='checkestadoListadoAcceso(1)'>
+<input type='checkbox' id="inptSeleccEstadoListadoAcceso1" checked> Activo
+</label>
+<label class='lista-niveles-status-option' onclick='checkestadoListadoAcceso(2)'>
+<input type='checkbox' id="inptSeleccEstadoListadoAcceso2"> Inactivo
+</label>
+</div>
+<p class='lista-niveles-count' id="lblNroRegistroListaNiveles">0 roles</p>
+</div>
+<div class='lista-niveles-search'>
+<span class='lista-niveles-search-icon'>Buscar</span>
+<input placeholder='Buscar nivel' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarListaNiveles1' onkeyup="if(event.keyCode == 13){BuscarAbmListaNiveles()}"  />
+<button type='button' class='lista-niveles-clear' title='Limpiar busqueda' onclick="vaciar('inptBuscarListaNiveles1');BuscarAbmListaNiveles()">Limpiar</button>
+</div>
+<div class='lista-niveles-table-head'>
+<span>Nivel</span>
+<span>Estado</span>
+</div>
+<div class="div_cuerpo_table tableTamanho2 lista-niveles-table-wrap" id="divBuscadorListaNiveles"></div>
 </center>
 </div>
-<div class='divMenuf'>
-<table style='width:96%'>
-<tr>
-<td style='width:100%;text-align:left'>
+<div class='divMenuf lista-niveles-selection'>
+<div class='lista-niveles-selection-field'>
 <p class='pTituloC'>Registro Seleccionado</p>
-<input type='text'  class='inputTextDisable' id='inptRegistroSeleccionadoListaNiveles'  style='width:150px' disabled />
-<input id='btnEditarDatosListaNiveles' type="button" value="Editar" class="btn4" onclick="EditarListaNivelesFrm()" style='width:100px;background-color:#b5f5b7'>
-<input id='btnEliminarDatosListaNiveles' type="button" value="Eliminar" class="btn4" onclick="EliminarRegitroListaNiveles()" style='width:100px;background-color:#ffcece'>
-<input id='btnDetallesDatosListaNiveles' type="button" value="Accesos" class="btn4" onclick="verCerrarFrmDetallesAccesoListaNiveles(1)" style='width:100px;background-color:#aad9ff'>
-</td>
-
-</tr>
-</table>
+<input type='text'  class='inputTextDisable' id='inptRegistroSeleccionadoListaNiveles' disabled />
+</div>
+<div class='lista-niveles-actions'>
+<input id='btnEditarDatosListaNiveles' type="button" value="Editar datos" class="btn4 lista-niveles-action-btn lista-niveles-action-edit" onclick="EditarListaNivelesFrm()" style='background-color:#b5f5b7'>
+<input id='btnDetallesDatosListaNiveles' type="button" value="Editar accesos" class="btn4 lista-niveles-action-btn lista-niveles-action-access" onclick="verCerrarFrmDetallesAccesoListaNiveles(1)" style='background-color:#aad9ff'>
+<input id='btnEliminarDatosListaNiveles' type="button" value="Eliminar" class="btn4 lista-niveles-action-btn lista-niveles-action-delete" onclick="EliminarRegitroListaNiveles()" style='background-color:#ffcece'>
+</div>
 </div>
 </center>
 </div>
-<div class='divAbms' id='divAbmListaNiveles2' style='display:none;width:350px;min-height:400px'>
-<table class='tableMenuZ'>
+<div class='divAbms lista-niveles-form-modal' id='divAbmListaNiveles2' style='display:none;'>
+<table class='tableMenuZ lista-niveles-form-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Datos de <b style='font-size: 30px;' >Niveles</b></p>
+<p class='pTituloB lista-niveles-form-title'>Datos del <b>Rol</b></p>
 </td>
-<td style='width:5%'>
+<td class='lista-niveles-form-header-action'>
 <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar Campos' onclick='LimpiarCamposListaNiveles()' />
 </td>
-<td style='width:5%'>
+<td class='lista-niveles-form-header-action'>
 <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Atras' onclick='BuscarListaNivelesFrm()' />
 </td>
 </tr>
 </table>
-<br>
-<br>
 <center>
-<div class='divMenuf'>
-
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Nombre :</p>
+<div class='divMenuf lista-niveles-form-body'>
+<div class='lista-niveles-form-grid'>
+<label class='lista-niveles-form-field'>
+<span>Nombre</span>
 <input type='text' placeholder='Obligatorio(*)' class='input3' id='inptNombreListaNiveles' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'  >Estado del Registro  :</p>
-<select class="inputSelect" style='width:250px' id='inptEstadoListaNiveles'>
+</label>
+<label class='lista-niveles-form-field'>
+<span>Estado del registro</span>
+<select class="inputSelect" id='inptEstadoListaNiveles'>
 <option value="">Seleccionar</option>
 <option value="Activo">Activo</option>
 <option value="Inactivo">Inactivo</option>
 </select>
-</td>
-</tr>
-</table>
-<br>
-<br>
-<center>
-<input type='button' value='Guardar' class='btn1' onclick='VerificarDatosListaNiveles()' id='btnAbmListaNiveles'   />
-</center>
-<br>
-<br>
+</label>
 </div>
-<br>
-
+<div class='lista-niveles-form-actions'>
+<input type='button' value='Guardar' class='btn1 lista-niveles-save-btn' onclick='VerificarDatosListaNiveles()' id='btnAbmListaNiveles'   />
+</div>
+</div>
 </center>
 </div>
 </center>
@@ -3681,48 +3648,33 @@ NOMBRES
 <tr>
 <td>
 <center>
-<div class='divAbms' style='display:;' >
-<table class='tableMenuZ'>
+<div class='divAbms detalles-acceso-niveles-modal' style='display:;' >
+<table class='tableMenuZ detalles-acceso-niveles-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Detalles de <b style='font-size: 30px;' >Accesos</b></p>
+<p class='pTituloB detalles-acceso-niveles-title'>Detalles de <b>Accesos</b></p>
 </td>
-<td style='width:5%'>
+<td class='detalles-acceso-niveles-close-cell'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarFrmDetallesAccesoListaNiveles("2")' />
 </td>
 </tr>
 </table>
 <center>
-<div class='divMenuf'>
+<div class='divMenuf detalles-acceso-niveles-body'>
 <center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:70%;">
-NOMBRE
-</td>
-<td class="td_registro" style="width:30%;">
-ACCION
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:69%;" >
-<input placeholder='Parecido a' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarDetallesAccesoListaNiveles1'  style='width:95%'   onkeyup="if(event.keyCode == 13){buscardetalleslistaniveles()}"  />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarDetallesAccesoListaNiveles1')" />
-</td>
-<td class="td_registro" style="width:30%;" >
-
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table tableTamanho3" id="divBuscadorDetallesAccesoListaNiveles" style="height:60vh;"></div>
+<div class='detalles-acceso-toolbar'>
+<div class='detalles-acceso-search'>
+<span class='detalles-acceso-search-icon'>Buscar</span>
+<input placeholder='Buscar por formulario' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarDetallesAccesoListaNiveles1'  onkeyup="if(event.keyCode == 13){buscardetalleslistaniveles()}"  />
+<button type='button' class='detalles-acceso-clear' title='Limpiar busqueda' onclick="vaciar('inptBuscarDetallesAccesoListaNiveles1');buscardetalleslistaniveles()">Limpiar</button>
+</div>
+<p class='detalles-acceso-count' id='lblNroRegistroDetallesAccesoListaNiveles'>0 permisos</p>
+</div>
+<div class='detalles-acceso-table-head'>
+<span>Modulo / permiso</span>
+<span>Acceso</span>
+</div>
+<div class="div_cuerpo_table tableTamanho3 detalles-acceso-table-wrap" id="divBuscadorDetallesAccesoListaNiveles"></div>
 <br>
 </center>
 </div>
