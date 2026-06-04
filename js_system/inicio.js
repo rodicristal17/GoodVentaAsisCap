@@ -24497,7 +24497,7 @@ function verCerrarFrmListaAccesos(d){
 	if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 	
 	if(d=="1"){
-		
+	BuscarAbmListaAccesos();	
 	document.getElementById("divAbmListaAccesos").style.display="";
 document.getElementById("tdEfetoListaAcceso").className="magictime slideDownReturn"
 	
@@ -24515,30 +24515,31 @@ function LimpiarCamposListaAccesos(){
 	idAbmListaAccesos=""
 	nombreformulario=""
 	
-	document.getElementById("btnEditarNombreAcceso").style.backgroundColor="#b5f5b7"
-     document.getElementById("btnEditarNombreFormulario").style.backgroundColor="#b5f5b7"
+	$("#btnEditarNombreAcceso, #btnEditarNombreFormulario").removeClass("is-ready")
 }
 function LimpiarCamposBusquedaListaAccesos(){
 	document.getElementById("inptBuscarListaAccesos1").value=""
 	document.getElementById("divBuscadorListaAccesos").innerHTML=""
+	if(document.getElementById("lblNroRegistroListaAccesos")){
+		document.getElementById("lblNroRegistroListaAccesos").innerHTML="0 accesos"
+	}
 	
 }
 function ObtenerdatosAbmListaAccesos(datostr) {
 
 
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
+		$(td).removeClass("tableRegistroSelec")
 
 	});
 		
-	datostr.className = 'tableRegistroSelec'
+	$(datostr).addClass("tableRegistroSelec")
 	idAbmListaAccesos = $(datostr).children('td[id="td_id"]').html();
-	document.getElementById('inptRegistroSeleccionadoListadoAcceso').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptRegistroSeleccionadoFormListadoAcceso').value = $(datostr).children('td[id="td_datos_2"]').html();
-	nombreformulario = $(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById('inptRegistroSeleccionadoListadoAcceso').value = $(datostr).children('td[id="td_datos_1"]').text();
+	document.getElementById('inptRegistroSeleccionadoFormListadoAcceso').value = $(datostr).children('td[id="td_datos_2"]').text();
+	nombreformulario = $(datostr).children('td[id="td_datos_2"]').text();
 
-     document.getElementById("btnEditarNombreAcceso").style.backgroundColor="#4CAF50"
-     document.getElementById("btnEditarNombreFormulario").style.backgroundColor="#4CAF50"
+     $("#btnEditarNombreAcceso, #btnEditarNombreFormulario").addClass("is-ready")
 
 
 
@@ -24794,6 +24795,9 @@ function BuscarAbmListaAccesos() {
 if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 	var nombre = document.getElementById('inptBuscarListaAccesos1').value
 	document.getElementById("divBuscadorListaAccesos").innerHTML = paginacargando
+	if(document.getElementById("lblNroRegistroListaAccesos")){
+		document.getElementById("lblNroRegistroListaAccesos").innerHTML="Buscando..."
+	}
 
 	obtener_datos_user();
 	var datos = {
@@ -24836,6 +24840,9 @@ if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("divBuscadorListaAccesos").innerHTML = ''
+			if(document.getElementById("lblNroRegistroListaAccesos")){
+				document.getElementById("lblNroRegistroListaAccesos").innerHTML="0 accesos"
+			}
 			
 		},
 		success: function (responseText) {
@@ -24852,6 +24859,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 					var datos_buscados = datos[2];
 					document.getElementById("divBuscadorListaAccesos").innerHTML = datos_buscados					
+					if(document.getElementById("lblNroRegistroListaAccesos")){
+						var totalRegistros = datos[3] || 0
+						document.getElementById("lblNroRegistroListaAccesos").innerHTML = totalRegistros + (totalRegistros == 1 ? " acceso" : " accesos")
+					}
                   
 				  
 					if(datos_buscados==""){
@@ -25009,7 +25020,7 @@ function verCerrarFrmListaNiveles(d){
 	if(controlacceso("VERLISTADODENIVELES","accion")==false){return;}
 	
 	if(d=="1"){
-	
+	BuscarAbmListaNiveles()
 	document.getElementById("divAbmListaNiveles").style.display="";
 document.getElementById("tdEfectoListaNiveles").className="magictime slideDownReturn"
 	

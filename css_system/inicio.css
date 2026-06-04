@@ -15852,6 +15852,412 @@ button.dashboard-summary-item:hover {
     }
 }
 
+/* Listado de accesos */
+#divAbmListaAccesos {
+    z-index: 1100;
+}
+
+#divAbmListaAccesos #tdEfetoListaAcceso > tbody > tr > td {
+    padding: 18px;
+    vertical-align: middle;
+}
+
+#divAbmListaAccesos .lista-accesos-modal {
+    width: min(980px, calc(100vw - 36px));
+    min-height: 0;
+    max-height: calc(100vh - 36px);
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f7f9fc;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.28);
+}
+
+#divAbmListaAccesos .lista-accesos-header {
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #e3e8ef;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+#divAbmListaAccesos .lista-accesos-header td {
+    padding: 18px 22px;
+}
+
+#divAbmListaAccesos .lista-accesos-header-action {
+    width: 48px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#divAbmListaAccesos .lista-accesos-title {
+    color: #172033;
+    font-size: 22px;
+    line-height: 1.2;
+    padding: 0;
+}
+
+#divAbmListaAccesos .lista-accesos-title b {
+    color: #0f65b8;
+    font-size: 28px;
+}
+
+#divAbmListaAccesos .lista-accesos-body {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 16px 18px 12px;
+    border: 0;
+    border-radius: 0;
+    background: #f7f9fc;
+    text-align: left;
+}
+
+#divAbmListaAccesos .lista-accesos-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+#divAbmListaAccesos .lista-accesos-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 260px;
+    padding: 7px;
+    border: 1px solid #d8e0ea;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#divAbmListaAccesos .lista-accesos-search-icon {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #edf5ff;
+    color: #0f65b8;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+#divAbmListaAccesos .lista-accesos-search .inputfiltro {
+    flex: 1;
+    width: auto !important;
+    max-width: none;
+    height: 34px;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #172033;
+    font-size: 13px;
+    text-align: left;
+}
+
+#divAbmListaAccesos .lista-accesos-search .inputfiltro:focus {
+    border: 0;
+    box-shadow: none;
+    background: #f8fbff;
+    font-weight: 600;
+}
+
+#divAbmListaAccesos .lista-accesos-clear {
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #d8e0ea;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #475467;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#divAbmListaAccesos .lista-accesos-clear:hover {
+    background: #f1f5f9;
+    color: #172033;
+}
+
+#divAbmListaAccesos .lista-accesos-count {
+    flex: 0 0 auto;
+    min-width: 100px;
+    margin: 0;
+    padding: 9px 12px;
+    border: 1px solid #e3e8ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172033;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
+
+#divAbmListaAccesos .lista-accesos-table-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border: 1px solid #d8e0ea;
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    background: #172033;
+    color: #ffffff;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+#divAbmListaAccesos .lista-accesos-table-wrap {
+    width: 100%;
+    height: min(48vh, 480px) !important;
+    box-sizing: border-box;
+    margin: 0;
+    border: 1px solid #d8e0ea;
+    border-radius: 0 0 8px 8px;
+    background: #ffffff;
+}
+
+#divAbmListaAccesos .lista-accesos-group {
+    margin: 0;
+    padding: 12px 16px;
+    border-bottom: 1px solid #d8e0ea;
+    background: #eef2f6;
+    color: #172033;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+#divAbmListaAccesos .lista-accesos-main-table {
+    width: 100%;
+    height: auto;
+    border: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #ffffff;
+    font-family: "Merriweather Sans", Arial;
+    color: #172033;
+}
+
+#divAbmListaAccesos .lista-accesos-main-row {
+    cursor: pointer;
+}
+
+#divAbmListaAccesos .lista-accesos-main-row td {
+    padding: 12px 16px;
+    border: 0;
+    border-bottom: 1px solid #edf1f5;
+    background: #ffffff;
+    vertical-align: middle;
+}
+
+#divAbmListaAccesos .lista-accesos-main-row:hover td {
+    background: #f8fbff;
+}
+
+#divAbmListaAccesos .lista-accesos-main-row.tableRegistroSelec td {
+    background: #e8f1ff;
+    color: #0f3f7a;
+}
+
+#divAbmListaAccesos .lista-accesos-main-info {
+    text-align: left;
+}
+
+#divAbmListaAccesos .lista-accesos-main-name {
+    display: block;
+    color: #172033;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+#divAbmListaAccesos .lista-accesos-main-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 6px;
+    color: #667085;
+    font-size: 11px;
+}
+
+#divAbmListaAccesos .lista-accesos-main-code {
+    display: inline-flex;
+    align-items: center;
+    max-width: 320px;
+    min-height: 20px;
+    padding: 2px 7px;
+    border: 1px solid #d8e0ea;
+    border-radius: 999px;
+    background: #f7f9fc;
+    color: #344054;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#divAbmListaAccesos .lista-accesos-main-order {
+    width: 110px;
+    text-align: right;
+}
+
+#divAbmListaAccesos .lista-accesos-order-input {
+    width: 72px !important;
+    height: 32px;
+    box-sizing: border-box;
+    border: 1px solid #d8e0ea;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172033;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center !important;
+}
+
+#divAbmListaAccesos .lista-accesos-order-input:focus {
+    border-color: #0f65b8;
+    box-shadow: 0 0 0 3px rgba(15, 101, 184, 0.14);
+}
+
+#divAbmListaAccesos .lista-accesos-selection {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 14px 18px 18px;
+    border: 0;
+    border-top: 1px solid #e3e8ef;
+    border-radius: 0;
+    background: #ffffff;
+    text-align: left;
+    box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
+}
+
+#divAbmListaAccesos .lista-accesos-selection-field {
+    display: block;
+    min-width: 190px;
+    margin: 0;
+}
+
+#divAbmListaAccesos .lista-accesos-selection-field span {
+    display: block;
+    margin: 0 0 7px;
+    color: #667085;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+#divAbmListaAccesos .lista-accesos-selection .input3 {
+    width: 100% !important;
+    height: 38px;
+    box-sizing: border-box;
+    border: 1px solid #d8e0ea;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172033;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 0 12px;
+}
+
+#divAbmListaAccesos .lista-accesos-selection .input3:focus {
+    border-color: #0f65b8;
+    box-shadow: 0 0 0 3px rgba(15, 101, 184, 0.14);
+}
+
+#divAbmListaAccesos .lista-accesos-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#divAbmListaAccesos .lista-accesos-action-btn {
+    width: auto !important;
+    min-width: 132px;
+    height: 38px;
+    margin: 0;
+    border: 0;
+    border-radius: 7px;
+    color: #172033;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.14);
+}
+
+#divAbmListaAccesos .lista-accesos-action-edit {
+    background: #86efac !important;
+}
+
+#divAbmListaAccesos .lista-accesos-action-edit:hover {
+    background: #4ade80 !important;
+}
+
+#divAbmListaAccesos .lista-accesos-action-edit.is-ready {
+    background: #22c55e !important;
+    color: #ffffff;
+}
+
+@media (max-width: 800px) {
+    #divAbmListaAccesos #tdEfetoListaAcceso > tbody > tr > td {
+        padding: 0;
+    }
+
+    #divAbmListaAccesos .lista-accesos-modal {
+        width: 100vw;
+        min-height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    #divAbmListaAccesos .lista-accesos-toolbar,
+    #divAbmListaAccesos .lista-accesos-selection {
+        align-items: stretch;
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    #divAbmListaAccesos .lista-accesos-search,
+    #divAbmListaAccesos .lista-accesos-actions {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #divAbmListaAccesos .lista-accesos-table-head {
+        grid-template-columns: minmax(0, 1fr) 92px;
+    }
+
+    #divAbmListaAccesos .lista-accesos-table-wrap {
+        height: calc(100vh - 366px) !important;
+    }
+
+    #divAbmListaAccesos .lista-accesos-main-order {
+        width: 92px;
+    }
+
+    #divAbmListaAccesos .lista-accesos-actions .btn4 {
+        width: 100% !important;
+    }
+}
+
 /* Detalles de accesos por nivel */
 #divDetallesAccesoListaNiveles #tdEfectoDetallesListaNiveles > tbody > tr > td {
     padding: 18px;

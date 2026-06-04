@@ -486,24 +486,35 @@ $controltitulo="";
 		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
 		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 		  	  $orden=mb_convert_encoding((string)($valor['orden']), 'UTF-8', 'ISO-8859-1');
+			  $formularioHtml=htmlspecialchars($formulario, ENT_QUOTES, 'UTF-8');
+			  $codigoHtml=htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8');
+			  $nombreHtml=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+			  $ordenHtml=htmlspecialchars($orden, ENT_QUOTES, 'UTF-8');
 			  $tituloPagina="";
 		  	  if($controltitulo==""){
-				   $tituloPagina="<p class='ptituloZ'>".$formulario."</p>"  ;
+				   $tituloPagina="<p class='ptituloZ lista-accesos-group'>".$formularioHtml."</p>"  ;
 				  $controltitulo=$formulario;
 			  }
 			  if($controltitulo!=$formulario){
-				 $tituloPagina="<p class='ptituloZ'>".$formulario."</p>"  ;
+				 $tituloPagina="<p class='ptituloZ lista-accesos-group'>".$formularioHtml."</p>"  ;
 				 $controltitulo=$formulario;
 			  }
-		  	$orden="<input onkeyup='if(event.keyCode === 13){guardarordenlistadoacceso(this)}'  value='$orden' style='width: 80px;text-align: center;' type='text'  class='input3' id='$idlistadodeacceso'  />";
+		  	$orden="<input onkeyup='if(event.keyCode === 13){guardarordenlistadoacceso(this)}'  value='".$ordenHtml."' type='text'  class='input3 lista-accesos-order-input' id='".$idlistadodeacceso."'  />";
 			
 			  $styleName=CargarStyleTable($styleName);
-			  $pagina.=$tituloPagina."<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-			  <tr id='tbSelecRegistro' onclick='ObtenerdatosAbmListaAccesos(this)'>
+			  $pagina.=$tituloPagina."<table class='".$styleName." lista-accesos-main-table' border='0' cellspacing='0' cellpadding='0'>
+			  <tr id='tbSelecRegistro' class='lista-accesos-main-row' onclick='ObtenerdatosAbmListaAccesos(this)'>
 			  <td id='td_id' style='display:none;'>".$idlistadodeacceso."</td>
-			   <td  style='width:10%' >".$orden."</td>
-			   <td  id='td_datos_1' style='width:90%;text-align:left;padding-left:10px' >".$nombre."</td>
-			  <td  id='td_datos_2' style='display:none' >".$formulario."</td>
+			  <td  id='td_datos_1' style='display:none' >".$nombreHtml."</td>
+			  <td  id='td_datos_2' style='display:none' >".$formularioHtml."</td>
+			  <td class='lista-accesos-main-info'>
+			  <span class='lista-accesos-main-name'>".$nombreHtml."</span>
+			  <span class='lista-accesos-main-meta'>
+			  <span>".$formularioHtml."</span>
+			  <span class='lista-accesos-main-code'>".$codigoHtml."</span>
+			  </span>
+			  </td>
+			   <td class='lista-accesos-main-order' >".$orden."</td>
 			  </tr>
 			  </table>";
 			    	 

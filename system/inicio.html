@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=form-niveles-modernizado-20260604" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=listado-accesos-modernizado-20260604" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -42,12 +42,12 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=arqueo-print-filtros-20260602"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=form-niveles-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -3688,73 +3688,54 @@ onclick="vaciar('inptBuscarUsuario3')" />
 
 
 <div class='principal2' style='display:none' id='divAbmListaAccesos'>
-<table style='width:100%;height:100%' id='tdEfetoListaAcceso'>
+<table class='lista-accesos-shell' style='width:100%;height:100%' id='tdEfetoListaAcceso'>
 <tr>
 <td>
 <center>
-<div class='divAbms'  style='display:;'>
-<table class='tableMenuZ'>
+<div class='divAbms lista-accesos-modal'  style='display:;'>
+<table class='tableMenuZ lista-accesos-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Listado de <b style='font-size: 30px;' >Accesos</b></p>
+<p class='pTituloB lista-accesos-title'  >Listado de <b>Accesos</b></p>
 </td>
-<td style='width:5%'>
+<td class='lista-accesos-header-action'>
 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir nuevo registro' onclick='VerCerrarAddAccesos("1")' />
 </td>
-<td style='width:5%'>
+<td class='lista-accesos-header-action'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarFrmListaAccesos("2")' />
 </td>
 </tr>
 </table>
-<br>
-<br>
 
 <center>
-<div class='divMenuf'>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:25%;">
-NOMBRE DEL ACCESO
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:24%;" >
-<input placeholder='Parecido a' autocomplete="off"  type='text'  class='inputfiltro' id='inptBuscarListaAccesos1'  style='width:95%'   onkeyup="if(event.keyCode == 13){BuscarAbmListaAccesos()}"  />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarListaAccesos1')" />
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="divBuscadorListaAccesos" style='height: 230px;'></div>
+<div class='divMenuf lista-accesos-body'>
+<div class='lista-accesos-toolbar'>
+<div class='lista-accesos-search'>
+<span class='lista-accesos-search-icon'>Buscar</span>
+<input placeholder='Nombre o formulario' autocomplete="off"  type='text'  class='inputfiltro' id='inptBuscarListaAccesos1'  onkeyup="if(event.keyCode == 13){BuscarAbmListaAccesos()}"  />
+<button type='button' class='lista-accesos-clear' onclick="vaciar('inptBuscarListaAccesos1');BuscarAbmListaAccesos()">Limpiar</button>
 </div>
-<div class='divMenuf'>
-<table style='width:96%'>
-<tr>
-
-<td style='width:100%;text-align:left'>
-<p class='pTituloC'  >Nombre del Acceso</p>
-<input type='text'  class='input3' id='inptRegistroSeleccionadoListadoAcceso'  style='width:250px'  />
-<input id='btnEditarNombreAcceso'   type="button" value="Editar Nombre" class="btn4" onclick="VerificarDatosListaAccesos1()" style='width:150px;background-color:#b5f5b7'>
-</td>
-</tr>
-</table>
-<table style='width:96%'>
-<tr>
-
-<td style='width:100%;text-align:left'>
-<p class='pTituloC' >Nombre del Formulario</p>
-<input type='text'  class='input3' id='inptRegistroSeleccionadoFormListadoAcceso'  style='width:250px'  />
-<input id='btnEditarNombreFormulario' type="button" value="Editar Formulario" class="btn4" onclick="VerificarDatosListaAccesos2()" style='width:150px;background-color:#b5f5b7'>
-</td>
-</tr>
-</table>
+<p class='lista-accesos-count' id='lblNroRegistroListaAccesos'>0 accesos</p>
+</div>
+<div class='lista-accesos-table-head'>
+<span>Acceso / formulario</span>
+<span>Orden</span>
+</div>
+<div class="div_cuerpo_table lista-accesos-table-wrap" id="divBuscadorListaAccesos" style='height: 230px;'></div>
+</div>
+<div class='divMenuf lista-accesos-selection'>
+<label class='lista-accesos-selection-field'>
+<span>Nombre del acceso</span>
+<input type='text'  class='input3' id='inptRegistroSeleccionadoListadoAcceso'  />
+</label>
+<label class='lista-accesos-selection-field'>
+<span>Nombre del formulario</span>
+<input type='text'  class='input3' id='inptRegistroSeleccionadoFormListadoAcceso'  />
+</label>
+<div class='lista-accesos-actions'>
+<input id='btnEditarNombreAcceso'   type="button" value="Editar nombre" class="btn4 lista-accesos-action-btn lista-accesos-action-edit" onclick="VerificarDatosListaAccesos1()" style='background-color:#b5f5b7'>
+<input id='btnEditarNombreFormulario' type="button" value="Editar formulario" class="btn4 lista-accesos-action-btn lista-accesos-action-edit" onclick="VerificarDatosListaAccesos2()" style='background-color:#b5f5b7'>
+</div>
 </div>
 <br>
 </center>
