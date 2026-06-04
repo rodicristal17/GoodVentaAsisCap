@@ -467,6 +467,9 @@ function obtenerIdDetallePresupuestoDoc(tabla) {
 	if (!tabla || !tabla.id) {
 		return "";
 	}
+	if (tabla.id.indexOf("tdDetalleVenta_") !== 0) {
+		return "";
+	}
 	return tabla.id.replace("tdDetalleVenta_", "");
 }
 
@@ -493,7 +496,7 @@ function obtenerDatosDetallePresupuestoDoc(tabla) {
 		cod_producto: tabla.querySelector("#td_datos_14")?.textContent.trim() || "",
 		codigo: tabla.querySelector("#td_datos_1")?.textContent.trim() || "",
 		nombre: tabla.querySelector("#td_datos_2")?.textContent.trim() || "",
-		cantidad: tabla.querySelector("#td_datos_3")?.textContent.trim() || "1",
+		cantidad: tabla.querySelector("#td_datos_3 span")?.textContent.trim() || tabla.querySelector("#td_datos_3")?.textContent.trim() || "1",
 		precio: tabla.querySelector("#td_datos_10")?.textContent.trim() || "0",
 		total: tabla.querySelector("#td_datos_11")?.textContent.trim() || "0",
 		precio_contado: tabla.querySelector("#td_datos_9")?.textContent.trim() || ""
@@ -651,7 +654,9 @@ function actualizarCamposPlanDetallePresupuestoDoc(idDetalle, esPrioritario, esA
 	[
 		"table_vista_producto_presupuestoDetalle_doctor",
 		"table_vista_producto_presupuestoDetalle_plan_a_doctor",
-		"table_vista_producto_presupuestoDetalle_prioritario_doctor"
+		"table_vista_producto_presupuestoDetalle_prioritario_doctor",
+		"table_vista_producto_presupuestoDetalle",
+		"table_vista_producto_presupuestoDetalle_prioritario"
 	].forEach(function (contenedorId) {
 		const tabla = obtenerTablaDetallePresupuestoDoc(idDetalle, contenedorId);
 		if (!tabla) {
@@ -823,8 +828,8 @@ function quitarDetalleDePlanPresupuestoDoc(idDetalle, plan) {
 	actualizarPlanesDetallePresupuestoDoc(idDetalle, enPlanA, enPlanB);
 }
 
-function eliminarDetallePlanPresupuestoDoc(idDetalle, tablaDetalle) {
-	if (!idDetalle || !confirm("Â¿Seguro que deseas eliminar este tratamiento del plan?")) {
+function eliminarDetallePlanPresupuestoDoc(idDetalle, tablaDetalle, pedirConfirmacion) {
+	if (!idDetalle || (pedirConfirmacion !== false && !confirm("Â¿Seguro que deseas eliminar este tratamiento del plan?"))) {
 		return;
 	}
 	obtener_datos_user();
@@ -851,7 +856,7 @@ function eliminarDetallePlanPresupuestoDoc(idDetalle, tablaDetalle) {
 				var datos = $.parseJSON(responseText);
 				var respuesta = respuestaJqueryAjax(datos["1"]);
 				if (respuesta == true) {
-					tablaDetalle.remove();
+					removerDetallePresupuestoDeVista(idDetalle);
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error");
@@ -862,9 +867,131 @@ function eliminarDetallePlanPresupuestoDoc(idDetalle, tablaDetalle) {
 	});
 }
 
+function quitarDetalleSoloDePlanPresupuesto(idDetalle, plan, esDoctor) {
+	const contenedorPlanA = esDoctor ? "table_vista_producto_presupuestoDetalle_plan_a_doctor" : "table_vista_producto_presupuestoDetalle";
+	const contenedorPlanB = esDoctor ? "table_vista_producto_presupuestoDetalle_prioritario_doctor" : "table_vista_producto_presupuestoDetalle_prioritario";
+	let enPlanA = !!obtenerTablaDetallePresupuestoDoc(idDetalle, contenedorPlanA);
+	let enPlanB = !!obtenerTablaDetallePresupuestoDoc(idDetalle, contenedorPlanB);
+
+	if (plan === "a") {
+		enPlanA = false;
+	}
+	if (plan === "b") {
+		enPlanB = false;
+	}
+	if (!enPlanA && !enPlanB) {
+		eliminarDetallePresupuestoPorId(idDetalle);
+		return;
+	}
+
+	const esPrioritario = enPlanB ? 1 : 0;
+	const esAlternativo = enPlanB && !enPlanA ? 1 : 0;
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"accion": "abmDetallesPresupuesto",
+		"id": idDetalle,
+		"cod_presupuestoFK": idabmPresupuesto,
+		"es_prioritario": esPrioritario,
+		"es_alternativo": esAlternativo
+	};
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+			console.error(jqXHR.status, textstatus, errorThrowm);
+			ver_vetana_informativa("Lo sentimos, ha ocurrido un error", "", "error");
+		},
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				var operacionOk = respuestaJqueryAjax(respuesta["1"]);
+				if (operacionOk == true) {
+					const tablaPlan = obtenerTablaDetallePresupuestoDoc(idDetalle, plan === "b" ? contenedorPlanB : contenedorPlanA);
+					if (tablaPlan) {
+						tablaPlan.remove();
+					}
+					actualizarCamposPlanDetallePresupuestoDoc(idDetalle, esPrioritario, esAlternativo);
+					if (esDoctor) {
+						sincronizarResumenDetallePresupuestoDoc();
+					} else {
+						recalcularTotalPresupuesto();
+					}
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error");
+				var titulo="Error: "+error+" \r\n Consola: "+responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+function removerDetallePresupuestoDeVista(idDetalle) {
+	document.querySelectorAll("table").forEach(function (tabla) {
+		if (String(obtenerIdDetallePresupuestoDoc(tabla)) == String(idDetalle)) {
+			tabla.remove();
+		}
+	});
+
+	if (vistaPresupuestoOrigen == "doctor") {
+		sincronizarResumenDetallePresupuestoDoc();
+	} else {
+		recalcularTotalPresupuesto();
+	}
+}
+
+function eliminarDetallePresupuestoPorId(idDetalle) {
+	if (!idDetalle) {
+		return false;
+	}
+
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idDetalle": idDetalle,
+		"solo_eliminar_prioritario": false,
+		"cod_presupuestoFK": idabmPresupuesto,
+		"accion": "eliminarDetallePresupuesto"
+	};
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmPresupuesto.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+			console.error(jqXHR.status,textstatus,errorThrowm);
+			ver_vetana_informativa("Lo sentimos, ha ocurrido un error", "", "error");
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				var respuesta = respuestaJqueryAjax(datos["1"]);
+				if (respuesta == true) {
+					removerDetallePresupuestoDeVista(idDetalle);
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error");
+				var titulo="Error: "+error+" \r\n Consola: "+responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+	return false;
+}
 
 
-function eliminarFila(btn) {
+
+function eliminarFila(btn, omitirConfirmacion) {
+	omitirConfirmacion = omitirConfirmacion === true || !!btn?.classList?.contains("presupuesto-doc-trash-btn");
 	const filaDoctor = btn.closest("tr");
 	const tablaDetalleDoctor = filaDoctor?.parentElement?.parentElement;
 	const contenedorDoctor = tablaDetalleDoctor?.parentElement;
@@ -877,7 +1004,7 @@ function eliminarFila(btn) {
 		const tablaOriginal = obtenerTablaDetallePresupuestoDoc(idDetalleDoctor, "table_vista_producto_presupuestoDetalle_doctor");
 		const filaOriginal = tablaOriginal?.querySelector("tr[name=tdDetallePresupuesto]");
 		if (filaOriginal) {
-			eliminarFila(filaOriginal);
+			eliminarFila(filaOriginal, omitirConfirmacion);
 		}
 		return;
 	}
@@ -888,20 +1015,38 @@ function eliminarFila(btn) {
 			(contenedorDoctor?.id === "table_vista_producto_presupuestoDetalle_plan_a_doctor") ||
 			(contenedorDoctor?.id === "table_vista_producto_presupuestoDetalle_prioritario_doctor")
 		) {
-			eliminarDetallePlanPresupuestoDoc(idDetalleDoctor, tablaDetalleDoctor);
+			if (omitirConfirmacion) {
+				quitarDetalleSoloDePlanPresupuesto(
+					idDetalleDoctor,
+					contenedorDoctor.id === "table_vista_producto_presupuestoDetalle_prioritario_doctor" ? "b" : "a",
+					true
+				);
+				return;
+			}
+			eliminarDetallePlanPresupuestoDoc(idDetalleDoctor, tablaDetalleDoctor, !omitirConfirmacion);
 			return;
 		}
 		if (contenedorDoctor?.id !== "table_vista_producto_presupuestoDetalle_doctor") {
 			return;
 		}
 	}
-  if (confirm("¿Seguro que deseas eliminar este producto del presupuesto?")) {
+  if (omitirConfirmacion || confirm("¿Seguro que deseas eliminar este producto del presupuesto?")) {
     let fila = btn.closest("tr");
 	const es_prioritario= fila.querySelector('#td_datos_12')?.textContent.trim();
 	let tabla= fila.parentElement.parentElement;
 	const idDetalle= obtenerIdDetallePresupuestoDoc(tabla);
 	tabla= tabla.parentElement;
 	const esTablaPrioritaria = tabla.id.includes("prioritario");
+	if (
+		omitirConfirmacion &&
+		(
+			tabla.id === "table_vista_producto_presupuestoDetalle" ||
+			tabla.id === "table_vista_producto_presupuestoDetalle_prioritario"
+		)
+	) {
+		quitarDetalleSoloDePlanPresupuesto(idDetalle, esTablaPrioritaria ? "b" : "a", false);
+		return;
+	}
 	
 	obtener_datos_user();
 	var datos = {
@@ -909,7 +1054,7 @@ function eliminarFila(btn) {
 		"passu": passuser,
 		"navegador": navegador,
 		"idDetalle": idDetalle,
-		"solo_eliminar_prioritario": esTablaPrioritaria,
+		"solo_eliminar_prioritario": omitirConfirmacion ? false : esTablaPrioritaria,
 		"cod_presupuestoFK": idabmPresupuesto, 
 		"accion": "eliminarDetallePresupuesto"
 	};
@@ -953,6 +1098,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
+					if (omitirConfirmacion) {
+						removerDetallePresupuestoDeVista(idDetalle);
+						return;
+					}
 					const contenedorPrincipal = vistaPresupuestoOrigen == "doctor"
 						? "#table_vista_producto_presupuestoDetalle_doctor"
 						: "#table_vista_producto_presupuestoDetalle";
@@ -1180,7 +1329,7 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						+ "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
 						+ "<td  id='td_datos_1' style='width:10%;'>" + codigo_ficticio_presupuesto + "</td>"
 						+ "<td  id='td_datos_2' >" + nombre_producto + "</td>"
-						+ "<td  id='td_datos_3' style='width:10%;'>" + cantidad + "</td>"
+						+ "<td  id='td_datos_3' class='presupuesto-doc-cantidad-acciones' style='width:10%;'><button type='button' class='btn-eliminar presupuesto-doc-trash-btn' title='Eliminar tratamiento' onclick='event.stopPropagation(); eliminarFila(this); return false;'><i class='fa-solid fa-trash-can'></i></button><span>" + cantidad + "</span></td>"
 						+ "<td  id='td_datos_4' style='width:15%;"+ (vistaPresupuestoOrigen == 'doctor' ? 'display: none;' : '') +"'>" + separadordemilesnumero(precio) + "</td>"
 						+ "<td  id='td_datos_5' style='width:15%;"+ (vistaPresupuestoOrigen == 'doctor' ? 'display: none;' : '') +"'>" + total_presupuesto + "</td>"
 						+ "<td  id='td_datos_6' style='display:none'></td>"
@@ -1193,7 +1342,6 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 						+ "<td  id='td_datos_13' style='display:none'>" + (esAlternativo ? 1 : 0) + "</td>"
 						+ "<td  id='td_datos_14' style='display:none'>" + cod_productoFK + "</td>"
 						+ "<td  id='td_datos_15' style='display:none'>" + datos[3] + "</td>"
-						+ "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 						+ "</tr>"
 						+ "</table>"
 
@@ -1887,7 +2035,7 @@ function presupuestoAVenta(){
 		const nombre_producto= $(tabla).find("#td_datos_2").html();
 		const detalle_venta= "";//$(tabla).find("#td_datos_").html();
 		const costo= separadordemilesnumero($(tabla).find("#td_datos_10").html());
-		const cantidad= $(tabla).find("#td_datos_3").html();
+		const cantidad= $(tabla).find("#td_datos_3 span").first().text() || $(tabla).find("#td_datos_3").text().trim();
 		const total_costo= separadordemilesnumero($(tabla).find("#td_datos_11").html());
 		const cuota_nro= 1;//$(tabla).find("#td_datos_").html()
 

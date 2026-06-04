@@ -6689,6 +6689,40 @@ text-align: justify;
   cursor: pointer;
 }
 
+.presupuesto-doc-cantidad-acciones {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.presupuesto-doc-cantidad-acciones > span {
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+}
+
+.presupuesto-doc-trash-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  margin-left: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent !important;
+  color: #26364d;
+  box-shadow: none;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.presupuesto-doc-trash-btn:hover {
+  background: transparent !important;
+  color: #111827;
+}
+
 #presupuestoDocProductosPanel .div_cuerpo_table {
   min-height: 240px;
   height: 240px;

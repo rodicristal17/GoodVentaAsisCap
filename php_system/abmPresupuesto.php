@@ -150,7 +150,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
 			. "<td  id='td_datos_1' style='width:10%;'>".$value['cod_barra']."</td>"
 			. "<td  id='td_datos_2' style='width:50%;'>".$value['nombre_producto']."</td>"
-			. "<td  id='td_datos_3' style='width:10%'>".$value['cantidad']."</td>"
+			. "<td  id='td_datos_3' class='presupuesto-doc-cantidad-acciones' style='width:10%'><button type='button' class='btn-eliminar presupuesto-doc-trash-btn' title='Eliminar tratamiento' onclick='event.stopPropagation(); eliminarFila(this); return false;'><i class='fa-solid fa-trash-can'></i></button><span>".$value['cantidad']."</span></td>"
 			. "<td  id='td_datos_4' style='width:15%'>".number_format($value['precio'], 0, ",", ".")."</td>"
 			. "<td  id='td_datos_5' style='width:15%'>".number_format($value['subTotal'], 0, ",", ".")."</td>"
 			. "<td  id='td_datos_6' style='display:none'></td>"
@@ -163,7 +163,6 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<td  id='td_datos_13' style='display:none'>".$value['es_alternativo']."</td>"
 			. "<td  id='td_datos_14' style='display:none'>".$value['cod_producto']."</td>"
 			. "<td  id='td_datos_15' style='display:none'>".$paginaprecios."</td>"
-			. "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 			. "</tr>"
 			. "</table>";
         if ($value['es_alternativo'] != 1 && $value['es_alternativo'] != "1") {
