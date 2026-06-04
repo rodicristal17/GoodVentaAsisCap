@@ -1006,6 +1006,13 @@ if (ob_get_length()) {
             background: #0f7a38;
         }
 
+        .btn-save:disabled,
+        .btn-save.is-saving {
+            cursor: not-allowed;
+            opacity: 0.72;
+            background: #6b8f7b;
+        }
+
         .btn-clear {
             min-width: 42px;
             padding: 0 12px;
@@ -1910,6 +1917,7 @@ if (ob_get_length()) {
         let idsTareasVisiblesGantt = new Set();
         let ordenTareasVisiblesGantt = [];
         let usuarioActualGantt = '';
+        let tareaGanttGuardando = false;
 
         function mostrarMensajeGantt(mensaje) {
             const svg = document.getElementById('gantt');
@@ -3080,6 +3088,7 @@ if (ob_get_length()) {
         function editarTarea(tarea) {
             const panelFormulario = document.getElementById('task-form-panel');
             if (panelFormulario) panelFormulario.open = true;
+            setEstadoGuardandoTareaGantt(false);
 
             document.getElementById('form_id').value = tarea.id;
             document.getElementById('form_title').innerText = 'Editar:';
@@ -3093,17 +3102,52 @@ if (ob_get_length()) {
             seleccionarUsuariosVinculados(tarea.usuarios_vinculados_ids || []);
             document.getElementById('form_dependencia').value = tarea.dependencia || '';
             document.getElementById('btn_submit').innerText = 'Actualizar';
+            document.getElementById('btn_submit').dataset.textoBase = 'Actualizar';
             setTimeout(function () {
                 actualizarEspaciadorFechasGantt();
                 sincronizarTablaConBarrasGantt();
             }, 80);
         }
 
+    function setEstadoGuardandoTareaGantt(guardando) {
+        tareaGanttGuardando = guardando === true;
+        const boton = document.getElementById('btn_submit');
+        if (!boton) return;
+
+        if (tareaGanttGuardando && !boton.dataset.textoBase) {
+            boton.dataset.textoBase = boton.innerText || 'Guardar';
+        }
+
+        boton.disabled = tareaGanttGuardando;
+        boton.classList.toggle('is-saving', tareaGanttGuardando);
+        boton.innerText = tareaGanttGuardando ? 'Guardando...' : (boton.dataset.textoBase || 'Guardar');
+    }
+
+    function configurarBloqueoFormularioTareaGantt() {
+        const formulario = document.getElementById('taskForm');
+        if (!formulario || formulario.dataset.bloqueoGuardado === '1') {
+            return;
+        }
+
+        formulario.dataset.bloqueoGuardado = '1';
+        formulario.addEventListener('submit', function (event) {
+            if (tareaGanttGuardando) {
+                event.preventDefault();
+                return false;
+            }
+
+            setEstadoGuardandoTareaGantt(true);
+            return true;
+        });
+    }
+
     function resetForm(mantenerAbierto) {
+        setEstadoGuardandoTareaGantt(false);
         document.getElementById('taskForm').reset();
         document.getElementById('form_id').value        = '';
         document.getElementById('form_title').innerText = 'Nueva Tarea:';
         document.getElementById('btn_submit').innerText = 'Guardar';
+        document.getElementById('btn_submit').dataset.textoBase = 'Guardar';
         seleccionarUsuariosVinculados([]);
         seleccionarResponsableUsuarioActualGantt('', true);
         setTimeout(function () {
@@ -3174,6 +3218,7 @@ if (ob_get_length()) {
 
     // Mantener filtros limpios al cargar.
     window.addEventListener('load', function () {
+        configurarBloqueoFormularioTareaGantt();
         document.getElementById('filtro-sucursal').value = 'Todas';
         document.getElementById('filtro-responsable').value = '';
         iniciarFiltroUsuarioActualGantt();
