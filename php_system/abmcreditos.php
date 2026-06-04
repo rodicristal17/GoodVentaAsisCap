@@ -871,21 +871,22 @@ echo json_encode($informacion);
 exit;
 }
 
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'credito',
+		'idcredito',
+		$idcredito,
+		'Solicitud de eliminacion de credito por refinanciacion.',
+		$user,
+		'Credito: '.$idcredito.' | Venta: '.$cod_venta,
+		'Esado'
+	);
+	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+		echo json_encode($respuesta);
+		exit;
+	}
 
-	$mysqli=conectar_al_servidor();
-$consulta1="delete from credito where idcredito=?";
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='s';
-$stmt1->bind_param($ss,$idcredito);
-if (!$stmt1->execute()) {
-	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-
-}
-cambiarplazos($cod_venta);
- mysqli_close($mysqli);
-$informacion =array("1" => "exito");
+$informacion =array("1" => "exito", "2" => "Solicitud de eliminacion registrada.");
 echo json_encode($informacion);	
 exit;
 

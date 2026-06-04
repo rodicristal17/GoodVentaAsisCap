@@ -492,6 +492,15 @@ function valorInactivoParaColumnaSolicitudEliminado($columnaEstado) {
         if (strpos($columnType, "'INACTIVO'") !== false) {
             return 'INACTIVO';
         }
+        if (strpos($columnType, "'Eliminado'") !== false) {
+            return 'Eliminado';
+        }
+        if (strpos($columnType, "'eliminado'") !== false) {
+            return 'eliminado';
+        }
+        if (strpos($columnType, "'ELIMINADO'") !== false) {
+            return 'ELIMINADO';
+        }
         return null;
     }
 

@@ -934,54 +934,41 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 		exit;
 	}
 
-	$mysqli = conectar_al_servidor();
-
-	/*AUDITORIA*/
-	date_default_timezone_set('America/Anguilla');
-	$fecha_inser_edit = date('Y-m-d H:i:s');
-	$fecha = date('Y-m-d H:i:s');
 	$user = $_POST['useru'];
 	$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
-
-	$consulta = "Insert into detallesventaeliminado (cod_producto,motivo,fecha,cod_user_insert,fecha_insert, cod_ventaFK)
-values(?,?,?,?,?,?)";
-	$stmt = $mysqli->prepare($consulta);
-	$ss = 'sssssi';
-	$stmt->bind_param($ss, $codProducto, $motivo, $fecha, $user, $fecha_inser_edit, $cod_ventaFK);
-	if (! $stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
-		exit;
-	}
 
 	// Limpia el monto
 	$monto= str_replace('.','',$monto);
 	$descuento= str_replace('.','',$descuento);
 	$monto= intval($monto) - intval($descuento);
 
-	$consulta1 = "update detalle_venta set estado='eliminado', descuento= ?, subtotal= ? where cod_detalle=? ";
-	$stmt1 = $mysqli->prepare($consulta1);
-	$ss = 'sis';
-	$stmt1->bind_param($ss, $descuento, $monto, $cod_detalle);
-	if (!$stmt1->execute()) {
-		echo trigger_error('The query execution failed; MySQL said (' . $stmt->errno . ') ' . $stmt->error, E_USER_ERROR);
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'detalle_venta',
+		'cod_detalle',
+		$cod_detalle,
+		'Solicitud de eliminacion de detalle de venta. Motivo: '.$motivo,
+		$user,
+		'Venta: '.$cod_ventaFK.' | Producto: '.$codProducto.' | Descuento: '.$descuento.' | Subtotal nuevo: '.$monto,
+		'estado'
+	);
+	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+		echo json_encode($respuesta);
 		exit;
 	}
-	/*
-	if ($operacion == "1") {
-		editar_cantidad($codProducto, $cantida, "suma", $Local_FK);
+	$idSolicitud = isset($respuesta["3"]) ? $respuesta["3"] : 0;
+	if ($idSolicitud > 0) {
+		registrarCreditosVentaEnSolicitudEliminacion($idSolicitud, $cod_ventaFK);
 	}
-	*/
-	$subtotal = obtenerTotal($cod_ventaFK);
-	actualizarTotal($cod_ventaFK, $subtotal);
-	eliminarestecreditos($cod_ventaFK);
 
-	$informacion = array("1" => "exito", "2" => number_format($subtotal, '0', ',', '.'), "3" => $cod_ventaFK);
+	$subtotal = obtenerTotal($cod_ventaFK);
+
+	$informacion = array("1" => "exito", "2" => number_format($subtotal, '0', ',', '.'), "3" => $cod_ventaFK, "4" => "Solicitud de eliminacion registrada.");
 	echo json_encode($informacion);
 	exit;
 }
 
 
-function eliminarestecreditos($cod_venta){
+function registrarCreditosVentaEnSolicitudEliminacion($idSolicitud, $cod_venta){
 		$mysqli=conectar_al_servidor();
 		$consulta="SELECT idcredito FROM credito WHERE cod_venta=?";
 	$stmt = $mysqli->prepare($consulta);
@@ -992,16 +979,15 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.
 exit;
 }
 	$result = $stmt->get_result();
-	$user = solicitudEliminadoValorPost('useru', '0');
 	while ($row = $result->fetch_assoc()) {
-		$respuesta = registrarSolicitudEliminacionGenerica(
+		$respuesta = registrarDetalleSolicitudEliminacionGenerica(
+			$idSolicitud,
 			'credito',
 			'idcredito',
 			$row['idcredito'],
-			'Solicitud de eliminacion de credito por venta.',
-			$user,
 			'Credito de venta: '.$cod_venta,
-			'Esado'
+			'Esado',
+			1
 		);
 		if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
 			echo json_encode($respuesta);

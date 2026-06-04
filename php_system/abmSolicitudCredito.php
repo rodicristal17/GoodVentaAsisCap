@@ -399,25 +399,21 @@ $pagina .= "
 function eliminar($idSolicitudCredito)
 {
 
-$mysqli=conectar_al_servidor(); 
-
- $consulta2="delete from  solicitudcredito  where idSolicitudCredito=? ";	
-
-$stmt2 = $mysqli->prepare($consulta2);
-$ss='s';
-$stmt2->bind_param($ss,$idSolicitudCredito);
-	
-
-if (!$stmt2->execute()) {
-	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt2->errno.') '.$stmt2->error, E_USER_ERROR);
-exit;
-
+$user = solicitudEliminadoValorPost('useru', '0');
+$respuesta = registrarSolicitudEliminacionGenerica(
+	'solicitudcredito',
+	'idSolicitudCredito',
+	$idSolicitudCredito,
+	'Solicitud de eliminacion de solicitud de credito.',
+	$user,
+	'Solicitud credito: '.$idSolicitudCredito
+);
+if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+	echo json_encode($respuesta);
+	exit;
 }
 
-
- mysqli_close($mysqli);
-$informacion =array("1" => "exito");
+$informacion =array("1" => "exito", "2" => "Solicitud de eliminacion registrada.");
 echo json_encode($informacion);	
 exit;
 
