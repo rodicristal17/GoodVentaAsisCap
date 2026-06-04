@@ -511,6 +511,21 @@ function renderizarPlanesDetallePresupuestoDoc() {
 
 	planA.innerHTML = "";
 	planB.innerHTML = "";
+	Array.from(origen.children).forEach(function (tablaOriginal) {
+		if (!tablaOriginal.matches("table")) {
+			return;
+		}
+		asegurarCampoAlternativoPresupuestoDoc(tablaOriginal);
+		const esPrioritario = tablaOriginal.querySelector('#td_datos_12')?.textContent.trim() === "1";
+		const esAlternativo = tablaOriginal.querySelector('#td_datos_13')?.textContent.trim() === "1";
+
+		if (!esAlternativo) {
+			planA.appendChild(clonarDetallePlanPresupuestoDoc(tablaOriginal));
+		}
+		if (esPrioritario) {
+			planB.appendChild(clonarDetallePlanPresupuestoDoc(tablaOriginal));
+		}
+	});
 	aplicarEstadoPrioritarioDetalleDoc();
 }
 
@@ -563,6 +578,20 @@ function desplazarTratamientosPresupuestoDoc(nombreElemento, direccion) {
 		top: distancia * direccion,
 		behavior: "smooth"
 	});
+}
+
+function alternarTratamientosPresupuestoDoc(forzarMostrar) {
+	const panel = document.getElementById("presupuestoDocDetallePanel");
+	if (!panel) {
+		return;
+	}
+	const debeMostrar = forzarMostrar === true || (forzarMostrar !== false && panel.classList.contains("presupuesto-doc-tratamientos-plegado"));
+	panel.classList.toggle("presupuesto-doc-tratamientos-plegado", !debeMostrar);
+	const boton = panel.querySelector(".presupuesto-doc-toggle-tratamientos");
+	if (boton) {
+		boton.textContent = debeMostrar ? "Plegar" : "Tratamientos";
+		boton.setAttribute("aria-expanded", debeMostrar ? "true" : "false");
+	}
 }
 
 function iniciarArrastreTactilPresupuestoDoc(evento, tabla) {
@@ -667,6 +696,7 @@ function verPasoPresupuestoDoc(paso) {
 		? "Ventana 1 de 2: Paciente y todos los tratamientos"
 		: "Ventana 2 de 2: Division de tratamientos en planes";
 	if (paso === 2) {
+		alternarTratamientosPresupuestoDoc(false);
 		const planA = document.getElementById("table_vista_producto_presupuestoDetalle_plan_a_doctor");
 		const planB = document.getElementById("table_vista_producto_presupuestoDetalle_prioritario_doctor");
 		if (!planA?.children.length && !planB?.children.length) {
@@ -1303,7 +1333,7 @@ function anhadirPrPresupuesto() {
 	let inpTSeleccCostoPresupuesto = "";
 	let inpCuotero = "";
 	let inpPrecioContado = "";
-	let inptPrioritarioPresupuesto= "";
+	let inptPrioritarioPresupuesto= true;
 	let inptAlternativoPresupuesto = false;
 
 	if (vistaPresupuestoOrigen == "doctor") {
@@ -1315,8 +1345,8 @@ function anhadirPrPresupuesto() {
 		inpTSeleccCostoPresupuesto = $("select[id=inpTSeleccCostoPresupuestoDoc]").children(":selected").attr("class")
 		inpCuotero = $("select[id=inpTSeleccCostoPresupuestoDoc]").children(":selected").attr("id")
 		inpPrecioContado = $("select[id=inpTSeleccCostoPresupuestoDoc]").children(":selected").attr("url")
-		inptPrioritarioPresupuesto= false;
-		inptAlternativoPresupuesto = true;
+		inptPrioritarioPresupuesto= true;
+		inptAlternativoPresupuesto = false;
 	} else {
 		entrega = document.getElementById('inptEntregaPresupuesto').value
 		inptCodigoPresupuesto = document.getElementById('inptCodigoPresupuesto').value
@@ -1388,7 +1418,7 @@ function limpirarPresupuesto(){
 	document.getElementById('inptPrecioPresupuestoDoc').value = ""
 	document.getElementById('inptCantidadPresupuestoDoc').value = ""
 	document.getElementById('inptTotalPresupuestoDoc').value = ""
-	document.getElementById('inptPrioritarioPresupuestoDoc').checked = false;
+	document.getElementById('inptPrioritarioPresupuestoDoc').checked = true;
 
 	document.getElementById('inptCodigoPresupuesto').value = ""
 	document.getElementById('inptProductoPresupuesto').value = ""
@@ -1397,7 +1427,7 @@ function limpirarPresupuesto(){
 	document.getElementById('inptEntregaPresupuesto').value = "0"
 	document.getElementById('inptCantidadPresupuesto').value = ""
 	document.getElementById('inptTotalPresupuesto').value = ""
-	document.getElementById('inptPrioritarioPresupuesto').checked = false;
+	document.getElementById('inptPrioritarioPresupuesto').checked = true;
 	document.getElementById('inptAlternativoPresupuesto').checked = false;
 	document.getElementById('table_vista_producto_presupuestoDetalle_doctor').innerHTML = ""
 	document.getElementById('table_vista_producto_presupuestoDetalle_plan_a_doctor').innerHTML = ""

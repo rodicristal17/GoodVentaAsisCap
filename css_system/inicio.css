@@ -6580,6 +6580,10 @@ text-align: justify;
   align-items: stretch;
 }
 
+#presupuestoDocDetallePanel.presupuesto-doc-planificador.presupuesto-doc-tratamientos-plegado {
+  grid-template-columns: 58px minmax(0, 1fr);
+}
+
 #presupuestoDocProductosPanel,
 #presupuestoDocResumenPanel,
 #presupuestoDocPrioritarioHeader,
@@ -6592,6 +6596,59 @@ text-align: justify;
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.presupuesto-doc-tratamientos-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.presupuesto-doc-toggle-tratamientos {
+  flex: 0 0 auto;
+  min-width: 112px;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #0b6fb6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.presupuesto-doc-toggle-tratamientos:hover {
+  background: #095f9e;
+}
+
+.presupuesto-doc-tratamientos-plegado .presupuesto-doc-tratamientos-panel {
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 58px;
+  padding: 12px 6px;
+  overflow: hidden;
+}
+
+.presupuesto-doc-tratamientos-plegado .presupuesto-doc-tratamientos-head {
+  width: 100%;
+  justify-content: center;
+}
+
+.presupuesto-doc-tratamientos-plegado .presupuesto-doc-tratamientos-head > div,
+.presupuesto-doc-tratamientos-plegado .presupuesto-doc-tratamientos-panel > .tableCabeceraRegistro,
+.presupuesto-doc-tratamientos-plegado .presupuesto-doc-tratamientos-panel > .presupuesto-doc-tratamientos-scroll {
+  display: none;
+}
+
+.presupuesto-doc-tratamientos-plegado .presupuesto-doc-toggle-tratamientos {
+  width: 38px;
+  min-width: 38px;
+  min-height: 180px;
+  padding: 12px 6px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
 
 .presupuesto-doc-planes {
@@ -6756,6 +6813,10 @@ text-align: justify;
     grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.2fr);
   }
 
+  #presupuestoDocDetallePanel.presupuesto-doc-planificador.presupuesto-doc-tratamientos-plegado {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
   #presupuestoDocResumenPanel .div_cuerpo_table,
   #presupuestoDocDetallePanel .div_cuerpo_table {
     min-height: 280px;
@@ -6772,6 +6833,19 @@ text-align: justify;
 @media (max-width: 980px) {
   #presupuestoDocDetallePanel.presupuesto-doc-planificador {
     grid-template-columns: 1fr;
+  }
+
+  #presupuestoDocDetallePanel.presupuesto-doc-planificador.presupuesto-doc-tratamientos-plegado {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .presupuesto-doc-tratamientos-plegado .presupuesto-doc-tratamientos-panel {
+    min-width: 48px;
+  }
+
+  .presupuesto-doc-tratamientos-plegado .presupuesto-doc-toggle-tratamientos {
+    width: 34px;
+    min-width: 34px;
   }
 
   .presupuesto-doc-planes {

@@ -9868,7 +9868,7 @@ ACCION
 
               <div class="form-row" style="display:none;">
                 <label>Es prioritario:</label>
-                <input type="checkbox" class="inputText" id="inptPrioritarioPresupuestoDoc"
+                <input type="checkbox" class="inputText" id="inptPrioritarioPresupuestoDoc" checked
                   style="border-radius: 50%;width: 42px;margin: 4px auto;" />
               </div>
 
@@ -9929,10 +9929,15 @@ ACCION
   </div>
 </section>
 
-<section id="presupuestoDocDetallePanel" class="presupuesto-doc-planificador" style="display:none;">
+<section id="presupuestoDocDetallePanel" class="presupuesto-doc-planificador presupuesto-doc-tratamientos-plegado" style="display:none;">
   <div class="tabla-detalles presupuesto-panel presupuesto-doc-tratamientos-panel">
-    <div class="panel-title">Tratamientos</div>
-    <span class="panel-subtitle">Lista base de tratamientos disponibles para distribuir entre los planes.</span>
+    <div class="presupuesto-doc-tratamientos-head">
+      <div>
+        <div class="panel-title">Tratamientos</div>
+        <span class="panel-subtitle">Lista base de tratamientos disponibles para distribuir entre los planes.</span>
+      </div>
+      <button type="button" class="presupuesto-doc-toggle-tratamientos" title="Mostrar u ocultar tratamientos" aria-expanded="false" onclick="alternarTratamientosPresupuestoDoc()">Tratamientos</button>
+    </div>
 
     <table class="tableCabeceraRegistro">
       <tbody>
@@ -10127,7 +10132,7 @@ ACCION
       
       <div class="form-row">
         <label>Ambos planes:</label>
-        <input type="checkbox" class="inputText" id="inptPrioritarioPresupuesto" style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
+        <input type="checkbox" class="inputText" id="inptPrioritarioPresupuesto" checked style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
       </div>
 
       <div class="form-row">
