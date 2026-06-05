@@ -1632,6 +1632,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 let cod_Agendamiento="";
 let cod_ventaFKConsulta="";
 let cod_clienteConsulta = "";
+let cod_localVentaConsulta = "";
+let nombre_localVentaConsulta = "";
 
 function obtenerNombreResponsableConsulta() {
 	var nombre = "";
@@ -1702,6 +1704,8 @@ function ObtenerdatosAbmConsulta(elemento) {
 	cod_Agendamiento= elemento.querySelector('#td_datos_4')?.textContent.trim();
 	cod_ventaFKConsulta= elemento.querySelector('#td_datos_5')?.textContent.trim();
 	cod_clienteConsulta= elemento.querySelector('#td_datos_6')?.textContent.trim();
+	nombre_localVentaConsulta= elemento.querySelector('#td_datos_8')?.textContent.trim() || "";
+	cod_localVentaConsulta= elemento.querySelector('#td_datos_9')?.textContent.trim() || "";
 	
 	switch (controlVentanaConsulta) {
 		case "consulta":
@@ -1712,6 +1716,9 @@ function ObtenerdatosAbmConsulta(elemento) {
 			document.getElementById("inptApodoConsulta").value= elemento.querySelector('#td_datos_7')?.textContent.trim();
 			buscarDetalleVentaConsulta(cod_ventaFKConsulta)
 			buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
+			if (typeof buscarHistorialRecetariosDesdeConsulta == "function") {
+				buscarHistorialRecetariosDesdeConsulta()
+			}
 			vercuotasatrazadas(cod_ventaFKConsulta)
 			buscarPacienteConsulta()	
 			buscarResumenAntecedenteConsulta()
@@ -1963,6 +1970,9 @@ function buscarabmConsultaParaConsulta(cod_ventaFKConsulta) {
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					document.getElementById("divHistorial_Consulta").innerHTML = datos_buscados	 
+					if (typeof buscarHistorialRecetariosDesdeConsulta == "function") {
+						buscarHistorialRecetariosDesdeConsulta()
+					}
 				}
 			} catch (error) {
 					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -2052,6 +2062,8 @@ function limpiarcamposConsulta(){
 
 	prepararFormularioNuevaConsulta();
  	cod_ventaFKConsulta="";
+	cod_localVentaConsulta="";
+	nombre_localVentaConsulta="";
 }
 
 let cod_consulta ="";

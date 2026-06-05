@@ -20,7 +20,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=listado-accesos-modernizado-20260604" />
+<<<<<<< HEAD
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ficha-clinica-prioridad-consultas-20260605" />
+=======
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=vista-cliente-compacto-20260605" />
+>>>>>>> 27aa10b74ac7d04ba312b5d2f601b27e3faa4e24
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -62,13 +66,15 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
+<script src="../js_system/abmRecetarioIndicaciones.js?x=20260605-recetario-historial-grupos"></script>
 <script src="../js_system/abmPresupuesto.js"></script>
-<script src="../js_system/abmCliente.js"></script>
+<script src="../js_system/abmCliente.js?x=vista-cliente-sin-width-20260605"></script>
 <script src="../js_system/abmInformacionProtocolo.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
+<<<<<<< Updated upstream
 <style>
   #principalMenub .dashboard-contenedor {
     padding-top: 76px !important;
@@ -410,6 +416,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
   }
 </style>
+=======
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/recetario_indicaciones.css?x=20260605-recetario-historial-grupos" />
+>>>>>>> Stashed changes
 <script>
 function verCerrarAbmInsumos(){
     var ventana = document.getElementById("divAbmInsumos");
@@ -571,9 +580,18 @@ onmouseover='verMenusWindows("ptituloReporte")' style='display:none'>
     <button type="button" class="dashboard-home-button" onclick="verCerrarMenub(0)">
       <img src="/GoodVentaAsisCap/iconos/home.png" alt="" />
     </button>
-    <div class="dashboard-topbar-user" onclick="verCerrarMisDatos(1);" title="Mis datos">
+    <div class="dashboard-topbar-user dashboard-topbar-user--menu" onclick="toggleMenuPerfilUsuario(event);" title="Mi perfil">
       <span class="dashboard-topbar-user__name" id="nombrePerfilUsuarioTopbar">Usuario Conectado</span>
       <img id="fotoPerfilUsuarioTopbar" class="dashboard-topbar-user__photo" src="/GoodVentaAsisCap/iconos/sinperfil.png" alt="Foto de perfil" />
+      <span id="perfilIncompletoIndicadorTopbar" class="dashboard-topbar-user__status" style="display:none;" title="Tu perfil esta incompleto"></span>
+      <div id="menuPerfilUsuarioTopbar" class="dashboard-topbar-user-menu" style="display:none;" onclick="event.stopPropagation();">
+        <button type="button" onclick="verCerrarMisDatos(1);cerrarMenuPerfilUsuario();">Mi perfil</button>
+        <button type="button" onclick="verCerrarMisDatos(1);cerrarMenuPerfilUsuario();">Actualizar mis datos</button>
+        <button type="button" onclick="verCerrarMisDatos(1);cerrarMenuPerfilUsuario();">Mi horario</button>
+        <button type="button" onclick="verCerrarVentanaTareasProgramadas(true, false, '');cerrarMenuPerfilUsuario();">Mis tareas</button>
+        <button type="button" onclick="mostrarCambioContrasenhaMisDatos();cerrarMenuPerfilUsuario();">Cambiar contrase&ntilde;a</button>
+        <button type="button" onclick="cerrarSesion2();">Cerrar sesi&oacute;n</button>
+      </div>
     </div>
   </div>
   <div class="dashboard-topbar__center">
@@ -2799,7 +2817,7 @@ onclick='verCerrarAbmUsuarios()' style='text-align:center'>
 <td>
 <img class='imgIconoMenu'
 src='/GoodVentaAsisCap/iconos/usuariosacceso.png' />
-<p class='pTitulo4'>Usuarios</p>
+<p class='pTitulo4'>Funcionarios y Accesos</p>
 <center>
 <div id='divMinimizadoUsuarios' style='display:none'
 class='divMinimizado'></div>
@@ -3101,7 +3119,7 @@ style='width: 70px;'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Datos <b style='font-size: 30px;' >Usuarios</b></p>
+<p class='pTituloB'>Ficha del <b style='font-size: 30px;' >Funcionario</b></p>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
@@ -3118,8 +3136,59 @@ title='Volver Atras' onclick='verCerrarVentanaAbmUsuarios("2","")' />
 </tr>
 </table>
 
+<div id='funcionarioFichaResumen' class='funcionario-ficha' style='display:none;'>
+  <div class='funcionario-ficha__header'>
+    <img id='funcionarioFichaFoto' class='funcionario-ficha__avatar' src='/GoodVentaAsisCap/iconos/sinperfil.png' alt='Foto del funcionario' />
+    <div class='funcionario-ficha__identity'>
+      <h2 id='funcionarioFichaNombre'>Funcionario</h2>
+      <p id='funcionarioFichaCargo'>Cargo o funcion</p>
+      <div class='funcionario-ficha__badges'>
+        <span id='funcionarioFichaLocal'>Sucursal principal</span>
+        <span id='funcionarioFichaEstado'>Estado laboral</span>
+        <span id='funcionarioFichaAcceso'>Estado de acceso</span>
+        <span id='funcionarioFichaPerfil'>Perfil completado: 0%</span>
+      </div>
+    </div>
+    <div class='funcionario-ficha__actions'>
+      <button type='button' onclick='mostrarFormularioFuncionario()'>Editar perfil</button>
+      <button type='button' onclick='verCerrarVentanaTareasProgramadas(true, false, "");'>Ver tareas</button>
+      <button type='button' onclick='activarTabFichaFuncionario("horarios")'>Ver horarios</button>
+      <button type='button' onclick='verCerrarAccesoUsuario("1")'>Gestionar acceso</button>
+      <button type='button' onclick='activarTabFichaFuncionario("auditoria")'>Ver auditoria</button>
+    </div>
+  </div>
+
+  <div class='funcionario-ficha__tabs'>
+    <button type='button' class='funcionario-ficha__tab funcionario-ficha__tab--active' data-tab='resumen' onclick='activarTabFichaFuncionario("resumen")'>Resumen</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='personales' onclick='activarTabFichaFuncionario("personales")'>Datos personales</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='laborales' onclick='activarTabFichaFuncionario("laborales")'>Datos laborales</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='acceso' onclick='activarTabFichaFuncionario("acceso")'>Acceso al sistema</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='horarios' onclick='activarTabFichaFuncionario("horarios")'>Horarios</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='tareas' onclick='activarTabFichaFuncionario("tareas")'>Tareas</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='documentos' onclick='activarTabFichaFuncionario("documentos")'>Documentos</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='auditoria' onclick='activarTabFichaFuncionario("auditoria")'>Auditoria</button>
+  </div>
+
+  <div class='funcionario-ficha__sections'>
+    <section class='funcionario-ficha__section funcionario-ficha__section--active' data-section='resumen' id='funcionarioFichaResumenSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='personales' id='funcionarioFichaPersonalesSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='laborales' id='funcionarioFichaLaboralesSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='acceso' id='funcionarioFichaAccesoSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='horarios' id='funcionarioFichaHorariosSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='tareas'>
+      <div class='funcionario-empty-state'>Este funcionario todavia no tiene tareas visibles en esta ficha. Usa el boton Tareas para abrir el modulo actual.</div>
+    </section>
+    <section class='funcionario-ficha__section' data-section='documentos'>
+      <div class='funcionario-empty-state'>Seccion preparada para copia de cedula, contratos, certificados y documentos internos con permiso restringido.</div>
+    </section>
+    <section class='funcionario-ficha__section' data-section='auditoria' id='funcionarioFichaAuditoriaSeccion'>
+      <div class='funcionario-empty-state'>Todavia no hay cambios registrados en la auditoria.</div>
+    </section>
+  </div>
+</div>
+
 <center>
-<div style='overflow:auto;padding:0 12px 12px 12px;box-sizing:border-box;'>
+<div id='funcionarioFormularioEdicion' style='overflow:auto;padding:0 12px 12px 12px;box-sizing:border-box;'>
 <div style='display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:14px;'>
 <div class='divMenuFloat3' style='float:none;width:calc(50% - 7px);min-width:320px;max-width:540px;margin:0;padding:0;'>
 <div class='divMenuf' style='width:100%;height:100%;box-sizing:border-box;padding:14px;text-align:left;'>
@@ -3186,9 +3255,12 @@ id='inptNroTelefReferenciaUser' style='width:100%;box-sizing:border-box;' />
 id='inptClaveAcceso' style='width:100%;box-sizing:border-box;' />
 </div>
 <div style='flex:1 1 220px;'>
-<p class='pTituloC'>Contrase&ntilde;a :</p>
-<input class='inputText' type='Password' placeholder='Obligatorio (*)'
-id='inptContrasenhaUser' style='width:100%;box-sizing:border-box;' />
+<p class='pTituloC'>Acciones de contrase&ntilde;a :</p>
+<input type='hidden' id='inptContrasenhaUser' />
+<input class='inputText' type='Password' placeholder='Clave temporal o nueva clave'
+id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display:none;' />
+<button type='button' class='btn5 funcionario-password-action' onclick='habilitarCambioContrasenhaFuncionario()'>Restablecer contrase&ntilde;a</button>
+<p class='funcionario-field-help'>La contrase&ntilde;a actual no se muestra ni se edita directamente.</p>
 </div>
 </div>
 
@@ -3269,7 +3341,99 @@ onclick='verificarcamposusuario();verCerrarVentanaAbmUsuarios("2","");buscarabmu
 </div>
 </center>
 </div>
-<div id='divAbmUsuario1' style='width:95vw;' class='divAbms'>
+<div id='divAbmUsuario1' style='width:95vw;' class='divAbms funcionarios-shell'>
+<div class='funcionarios-modern'>
+  <div class='funcionarios-header'>
+    <div class='funcionarios-header__copy'>
+      <p class='funcionarios-header__title'>Funcionarios y Accesos</p>
+      <p class='funcionarios-header__help'>Busca, actualiza y administra perfiles, accesos, horarios y responsabilidades del equipo.</p>
+    </div>
+    <div class='funcionarios-header__actions'>
+      <button type='button' class='funcionarios-icon-button' title='Accesos del funcionario' onclick='verCerrarAccesoUsuario("1")'>
+        <img src='/GoodVentaAsisCap/iconos/acceso.png' alt='' />
+      </button>
+      <button type='button' class='funcionarios-primary-button' onclick='verCerrarVentanaAbmUsuarios("1","1")'>Nuevo funcionario</button>
+      <button type='button' class='funcionarios-icon-button' title='Minimizar ventana' onclick='minimizarusuarios()'>
+        <img src='/GoodVentaAsisCap/iconos/minimizar2.png' alt='' />
+      </button>
+      <button type='button' class='funcionarios-icon-button' title='Cerrar ventana' onclick='verCerrarAbmUsuarios()'>
+        <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' alt='' />
+      </button>
+    </div>
+  </div>
+
+  <div class='funcionarios-search'>
+    <input class='funcionarios-search__input' type='search' id='inptBuscarFuncionarioUniversal'
+      placeholder='Buscar por nombre, cedula, telefono, usuario, cargo, sucursal o rol...'
+      onkeyup='if(event.keyCode == 13){buscarabmusuario()}else{filtrarDirectorioFuncionarios();}' />
+    <button type='button' class='funcionarios-secondary-button' onclick='buscarabmusuario()'>Buscar</button>
+  </div>
+
+  <div class='funcionarios-filters'>
+    <button type='button' id='btnFiltroFuncionariosActivos' class='funcionario-filter funcionario-filter--active' onclick='aplicarFiltroEstadoFuncionarios("Activo")'>Activos</button>
+    <button type='button' id='btnFiltroFuncionariosInactivos' class='funcionario-filter' onclick='aplicarFiltroEstadoFuncionarios("Inactivo")'>Inactivos</button>
+    <label class='funcionario-check'><input type='checkbox' id='filtroAccesoHabilitado' onchange='filtrarDirectorioFuncionarios()' /> Acceso habilitado</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroAccesoBloqueado' onchange='filtrarDirectorioFuncionarios()' /> Acceso bloqueado</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroSinAccesoSistema' onchange='filtrarDirectorioFuncionarios()' /> Sin acceso al sistema</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroPerfilIncompleto' onchange='filtrarDirectorioFuncionarios()' /> Perfil incompleto</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroSinHorarioCargado' onchange='filtrarDirectorioFuncionarios()' /> Sin horario cargado</label>
+    <select class='funcionario-select' id='inptFiltroFuncionarioLocal' onchange='sincronizarFiltroLocalFuncionarios();buscarabmusuario();'>
+      <option value=''>Por sucursal/local</option>
+    </select>
+    <select class='funcionario-select' id='inptFiltroFuncionarioCargo' onchange='filtrarDirectorioFuncionarios()'>
+      <option value=''>Por cargo o funcion</option>
+    </select>
+    <select class='funcionario-select' id='inptFiltroFuncionarioRol' onchange='filtrarDirectorioFuncionarios()'>
+      <option value=''>Por rol de acceso</option>
+    </select>
+  </div>
+
+  <div class='funcionarios-layout'>
+    <section class='funcionarios-listado'>
+      <div class='funcionarios-listado__head'>
+        <span>Foto/avatar</span>
+        <span>Funcionario/persona</span>
+        <span>Cedula/documento</span>
+        <span>Cargo o funcion</span>
+        <span>Sucursal principal</span>
+        <span>Telefono/WhatsApp</span>
+        <span>Estado laboral</span>
+        <span>Acceso</span>
+        <span>Perfil</span>
+        <span>Acciones</span>
+      </div>
+      <div id='funcionariosDirectorioLista' class='funcionarios-listado__body'></div>
+      <div id='funcionariosDirectorioVacio' class='funcionarios-empty' style='display:none;'>No se encontraron funcionarios con esos filtros.</div>
+    </section>
+
+    <aside class='funcionario-quick-panel' id='funcionarioPanelRapido'>
+      <div class='funcionario-quick-panel__empty' id='funcionarioPanelVacio'>Selecciona una persona para ver su resumen operativo.</div>
+      <div class='funcionario-quick-panel__content' id='funcionarioPanelContenido' style='display:none;'>
+        <img id='funcionarioPanelFoto' class='funcionario-quick-panel__avatar' src='/GoodVentaAsisCap/iconos/sinperfil.png' alt='Foto del funcionario' />
+        <h3 id='funcionarioPanelNombre'>Funcionario</h3>
+        <p id='funcionarioPanelCargo'>Cargo o funcion</p>
+        <div class='funcionario-quick-panel__facts'>
+          <span id='funcionarioPanelLocal'>Sucursal principal</span>
+          <span id='funcionarioPanelTelefono'>Telefono</span>
+          <span id='funcionarioPanelEstado'>Estado laboral</span>
+          <span id='funcionarioPanelAcceso'>Estado de acceso</span>
+        </div>
+        <div class='funcionario-progress'>
+          <div class='funcionario-progress__bar'><span id='funcionarioPanelProgresoBarra'></span></div>
+          <small id='funcionarioPanelProgresoTexto'>Perfil completado: 0%</small>
+        </div>
+        <div class='funcionario-quick-panel__actions'>
+          <button type='button' onclick='abrirFichaFuncionarioSeleccionado("resumen")'>Ver perfil</button>
+          <button type='button' onclick='verVentanaEditarUsuario()'>Editar</button>
+          <button type='button' onclick='verCerrarVentanaTareasProgramadas(true, false, "");'>Tareas</button>
+          <button type='button' onclick='abrirFichaFuncionarioSeleccionado("horarios")'>Horarios</button>
+          <button type='button' onclick='verCerrarAccesoUsuario("1")'>Acceso</button>
+          <button type='button' onclick='abrirFichaFuncionarioSeleccionado("auditoria")'>Auditoria</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -3419,6 +3583,15 @@ onclick="vaciar('inptBuscarUsuario3')" />
 
 <div class='divMenuf'>
 
+<div class='mi-perfil-status'>
+  <div>
+    <strong id='miPerfilProgresoTexto'>Perfil completado: 0%</strong>
+    <p>Tu perfil esta incompleto. Completa tus datos de contacto y emergencia para mantener actualizada tu ficha laboral.</p>
+  </div>
+  <button type='button' onclick='enfocarPendienteMiPerfil()'>Completar ahora</button>
+</div>
+<div class='mi-perfil-pendientes' id='miPerfilPendientes'></div>
+
 <table style='width:100%'>
 <tr>
   <td style="width:100%;">
@@ -3467,7 +3640,9 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <tr>
 <td>
 <p class='pTituloC'   >Contraseña de acceso :</p>
-<input type='Password' placeholder='Obligatorio(*)' class='inputText' style='width:250px' id='inptPassMisDatos' />
+<input type='Password' placeholder='Nueva clave (opcional)' class='inputText' style='width:250px;display:none;' id='inptPassMisDatos' />
+<input type='button' value='Cambiar contrase&ntilde;a' class='btn5' onclick='mostrarCambioContrasenhaMisDatos()' />
+<p class='funcionario-field-help'>Si no necesitas cambiarla, deja este campo sin completar.</p>
 </td>
 </tr>
 </table>
@@ -3498,6 +3673,15 @@ onclick="vaciar('inptBuscarUsuario3')" />
 </td>
 </tr>
 </table>
+<br>
+<div class='mi-perfil-domicilio' id='miPerfilDomicilioReferencia'>
+  <p class='pTituloC'>Ubicacion del domicilio</p>
+  <p>Esta ubicacion corresponde al domicilio declarado por el funcionario. No se utiliza para seguimiento en tiempo real.</p>
+  <div class='mi-perfil-domicilio__actions'>
+    <button type='button' disabled>Ver en mapa</button>
+    <button type='button' disabled>Actualizar pin</button>
+  </div>
+</div>
 <br>
 <table style='width:100%'>
 <tr>
@@ -5988,9 +6172,12 @@ style='background-color:#5bc572'>
               <div class="interconsulta-avatar-stack" id="avatarStackDetalle" aria-label="Participantes del hilo"></div>
             </div>
           </div>
-          <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
-            <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" alt="Cerrar">
-          </button>
+          <div class="interconsulta-detail-actions">
+            <button type="button" class="interconsulta-recetario-action" title="Emitir receta o indicaciones" onclick="abrirRecetarioIndicacionesDesdeHilo(cod_interConsulta, cod_ventaFKConsulta, cod_clienteConsulta)">Receta / indicaciones</button>
+            <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
+              <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" alt="Cerrar">
+            </button>
+          </div>
         </div>
             <div class="divMenuf">
               <div class="collapse extracto-floating-panel" id="collapseExtracto">
@@ -12842,6 +13029,15 @@ onkeyup='calcular_cuota_desde_venta()' />
 </td>
 </tr>
 </table>
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Nro comprobante :</p>
+<input class='inputText' type='text' id='inptNroComprobanteConfCredito'
+style='width: 220px;' />
+</td>
+</tr>
+</table>
 <p style='display:none' class='pTituloC'>Total</p>
 <input class='inputTextDisable' type='text' id='inptTotalVentaConfCredito'
 style='width:130px;display:none' disabled="true" />
@@ -13033,7 +13229,7 @@ style='width:100px' placeholder='Obligatorio(*)' />
 <br>
 <center>
 <input type='button' value='Guardar' class='btn1'
-onclick='verificarcamposventa()' id='btnAbmVenta' />
+onclick='if(this.disabled){return false;} verificarcamposventa()' id='btnAbmVenta' />
 </center>
 <br>
 <br>
@@ -13173,7 +13369,7 @@ id='inptTotalVentaTerminar'/>
 <table style='width:100%'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloF_1'>Nro comprobante :</p>
+<p class='pTituloF_1'>Nro factura :</p>
 <input class='inputText1_2' type='text'
 id='inptNroComprobanteVentaTerminarEfectivo'/>
 </td>
@@ -14339,6 +14535,21 @@ style='background-color: #b7b7b7;'>
                 <div class="card-body">
                   <div id="divHistorial_Consulta" class="flex-column gap-2 overflow-auto">
                     <!-- Consultas din&aacute;micas -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="detalle-item consulta-card consulta-recetario-card">
+                <div class="consulta-card-heading consulta-recetario-actions">
+                  <div>
+                    <span class='detalle-label'>Recetario e Indicaciones</span>
+                    <p class="consulta-card__hint">Documentos emitidos para esta venta, con impresion y trazabilidad.</p>
+                  </div>
+                  <button type="button" onclick="abrirRecetarioIndicacionesDesdeFicha()">Emitir receta / indicaciones</button>
+                </div>
+                <div class="card-body">
+                  <div id="divHistorial_RecetarioIndicaciones" class="flex-column gap-2 overflow-auto">
+                    <div class="recetario-empty">Seleccione una venta para ver documentos.</div>
                   </div>
                 </div>
               </div>
@@ -16872,7 +17083,7 @@ onclick="ActualizarNroFacturaVenta()">
 </td>
 <td style='width:5%'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='vercerrarOpcionesImpresion(false)' />
+title='Cerrar Ventana' onclick='cerrarPostVentaYLimpiar()' />
 </td>
 </tr>
 </table>
@@ -25100,163 +25311,95 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 
 <div class='principal2' style='display:none' id='divVistaCliente'>
-<table style='width:100%;height:100%;' id='tdEfectoVistaCliente'>
-<tr>
-<td>
-<center>
-<div style='min-height:600px;width:1080px;display:' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Buscar  <b style='font-size: 30px;' >Cliente</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Nuevo Cliente'
-onclick='ventanaAnterior.push("listVista");limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/editar.png' class='iconoBtn'
-title='Editar Registro' onclick='EditarDatosClienteDesdeVenta()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='vercerrarvistacliente("","")' />
-</td>
-</tr>
-</table>
+  <table class='vista-cliente-shell' id='tdEfectoVistaCliente'>
+    <tr>
+      <td>
+        <div class='vista-cliente-modal'>
+          <header class='vista-cliente-header'>
+            <div>
+              <span class='vista-cliente-kicker'>Seleccion de cliente</span>
+              <h2>Buscar Cliente</h2>
+            </div>
+            <div class='vista-cliente-actions'>
+              <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Nuevo Cliente'
+                onclick='ventanaAnterior.push("listVista");limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);' />
+              <img src='/GoodVentaAsisCap/iconos/editar.png' class='iconoBtn'
+                title='Editar Registro' onclick='EditarDatosClienteDesdeVenta()' />
+              <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+                title='Cerrar Ventana' onclick='vercerrarvistacliente("","")' />
+            </div>
+          </header>
 
-<div  class='divMenuf' style='overflow:auto;'>
-<div class='divMenuFloat3' style='width:67%'>
+          <div class='vista-cliente-content'>
+            <section class='vista-cliente-panel vista-cliente-panel-main'>
+              <div class='vista-cliente-panel-head'>
+                <h3>Clientes</h3>
+                <input type='button' value='Buscar' class='btn5 vista-cliente-search-button' onclick='buscarvistacliente()'>
+              </div>
+              <div class='vista-cliente-filter-grid'>
+                <label>
+                  <span>DOC.</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente1'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+                <label>
+                  <span>RUC</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente2'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+                <label>
+                  <span>Cliente</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente3'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+                <label>
+                  <span>Nro. telef.</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente4'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+              </div>
+              <div class='vista-cliente-table-head'>
+                <span>Doc.</span>
+                <span>RUC</span>
+                <span>Cliente</span>
+                <span>Direccion</span>
+                <span>Nro. telef.</span>
+              </div>
+              <div class='div_cuerpo_table vista-cliente-results' id='table_vista_cliente'></div>
+            </section>
 
-<p class='pTituloRepor'>BUSCAR CLIENTES</p>
-<br>
-<div style="text-align: end;margin: 5px;">
-  <input type="button" value="Buscar" class="btn5" onclick="buscarvistacliente()">
-</div>
-<center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-DOC.
-</td>
-<td class="td_registro" style="width:10%;">
-RUC
-</td>
-<td class="td_registro" style="width:10%;">
-CLIENTE
-</td>
-<td class="td_registro" style="width:10%;">
-DIRECCION
-</td>
-<td class="td_registro" style="width:10%;">
-NRO. TELEF.
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente1"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente2"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente3"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-<td class="td_registro" style="width:10%;">
-</td>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente4"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_vista_cliente" style='height:337px'>
-</div>
+            <aside class='vista-cliente-panel vista-cliente-expediente'>
+              <div class='vista-cliente-panel-head'>
+                <h3>Expediente</h3>
+              </div>
+              <div class='vista-cliente-account-block'>
+                <h4>Cuentas pagadas</h4>
+                <div class='vista-cliente-account-head'>
+                  <span>Factura</span>
+                  <span>Fecha</span>
+                  <span>D/A</span>
+                </div>
+                <div class='div_cuerpo_table vista-cliente-account-list' id='table_clientes_cuentas1'></div>
+              </div>
+              <div class='vista-cliente-account-block'>
+                <h4>Cuentas pendientes</h4>
+                <div class='vista-cliente-account-head'>
+                  <span>Factura</span>
+                  <span>Fecha</span>
+                  <span>D/A</span>
+                </div>
+                <div class='div_cuerpo_table vista-cliente-account-list' id='table_clientes_cuentas2'></div>
+              </div>
+            </aside>
+          </div>
 
-<br>
-</center>
-</div>
-<div class='divMenuFloat3' style='width:27%'>
-<p class='pTituloRepor'>EXPEDIENTE DEL CLIENTE</p>
-<BR>
-<p class='pTituloC'>Cuentas Pagados</p>
-<BR>
-<center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:40%;">
-FACTURA
-</td>
-<td class="td_registro" style="width:30%;">
-FECHA
-</td>
-<td class="td_registro" style="width:10%;">
-D/A
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_clientes_cuentas1" style='height:120px'>
-</div>
-<BR>
-<p class='pTituloC'>Cuentas Pendientes</p>
-<BR>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:40%;">
-FACTURA
-</td>
-<td class="td_registro" style="width:30%;">
-FECHA
-</td>
-<td class="td_registro" style="width:10%;">
-D/A
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_clientes_cuentas2" style='height:120px'>
-</div>
-
-<br>
-</center>
-</div>
-
-<input class='btn2' type='button' value=':: Seleccionar Registro ::' onclick='EnviarClienteDesde()' />
-</div>
-
-
-
-
-<br>
-<br>
-
-</div>
-
-
-</center>
-</td>
-</tr>
-</table>
+          <footer class='vista-cliente-footer'>
+            <input class='btn2 vista-cliente-select-button' type='button' value='Seleccionar registro' onclick='EnviarClienteDesde()' />
+          </footer>
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <div class='principal2' style='display:none' id='divAbmCliente'>

@@ -517,7 +517,7 @@ exit;
 
 function guardarNroComprobante($cod_pago, $num_comprobante, $fecha_facturado) {
 	if($cod_pago=="" || $num_comprobante==""){
-		$informacion =array("1" => "camposvacio", "2" => $cod_venta, "3" => $num_comprobante);
+		$informacion =array("1" => "camposvacio", "2" => $cod_pago, "3" => $num_comprobante);
 		echo json_encode($informacion);	
 		exit;
 	}

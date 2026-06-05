@@ -856,7 +856,7 @@ function sincronizarResumenDetallePresupuestoDoc() {
 
 function actualizarPlanesDetallePresupuestoDoc(idDetalle, enPlanA, enPlanB) {
 	const esPrioritario = enPlanB ? 1 : 0;
-	const esAlternativo = enPlanB && !enPlanA ? 1 : 0;
+	const esAlternativo = enPlanA ? 0 : 1;
 	obtener_datos_user();
 	verCerrarEfectoCargando("1");
 	var datos = {
@@ -934,9 +934,6 @@ function quitarDetalleDePlanPresupuestoDoc(idDetalle, plan) {
 	if (plan === "b") {
 		enPlanB = false;
 	}
-	if (!enPlanA && !enPlanB) {
-		enPlanA = true;
-	}
 
 	actualizarPlanesDetallePresupuestoDoc(idDetalle, enPlanA, enPlanB);
 }
@@ -992,13 +989,9 @@ function quitarDetalleSoloDePlanPresupuesto(idDetalle, plan, esDoctor) {
 	if (plan === "b") {
 		enPlanB = false;
 	}
-	if (!enPlanA && !enPlanB) {
-		eliminarDetallePresupuestoPorId(idDetalle);
-		return;
-	}
 
 	const esPrioritario = enPlanB ? 1 : 0;
-	const esAlternativo = enPlanB && !enPlanA ? 1 : 0;
+	const esAlternativo = enPlanA ? 0 : 1;
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,

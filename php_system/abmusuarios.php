@@ -150,6 +150,12 @@ if ($operacion == "obtenerHistorialUsuario" || $operacion == "obtenerHistorialUs
 	exit;
 }
 
+if ($operacion == "obtenerHistorialCambiosUsuario") {
+	$cod_usuarioFK=$_POST['cod_usuarioFK'];
+    $cod_usuarioFK = mb_convert_encoding((string)($cod_usuarioFK), 'ISO-8859-1', 'UTF-8');
+	obtenerHistorialCambiosUsuario($cod_usuarioFK);
+}
+
  if($operacion=="obtenermedicos"){ 
     $cod_venta=$_POST['cod_venta'];
     $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
@@ -216,13 +222,17 @@ exit;
 function editarmisdatos($Cod_Usuario,$user,$pass,$local,$nombre,$foto,$ext,$telefono,$direccion,$telefono_referencia,$cedula)
 {
 	
-	if($Cod_Usuario=="" || $user=="" || $pass==""|| $local==""|| $nombre=="" ){
+	if($Cod_Usuario=="" || $user=="" || $local==""|| $nombre=="" ){
 $informacion =array("1" => "DI");
 echo json_encode($informacion);	
 exit;
 	}
 
 	$mysqli=conectar_al_servidor();
+	$datosAnterioresAuditoria=obtenerDatosUsuarioAuditoria($mysqli,$Cod_Usuario);
+	if($pass==""){
+		$pass=isset($datosAnterioresAuditoria["password"]) ? $datosAnterioresAuditoria["password"] : "";
+	}
 
 	
 	$consulta= "Select count(*) from usuario where login='$user' and password='$pass' and cod_localFK='$local' and Cod_Usuario!='$Cod_Usuario' ";
@@ -275,6 +285,16 @@ if ( ! $stmt1->execute() ) {
 	echo json_encode($informacion);	
 	exit;
 }
+
+registrarHistorialCambiosUsuario($mysqli,$Cod_Usuario,$datosAnterioresAuditoria,array(
+	"nombre_persona" => $nombre,
+	"telefono" => $telefono,
+	"direccion" => $direccion,
+	"telefono_referencia" => $telefono_referencia,
+	"rut_usuario" => $cedula,
+	"login" => $user,
+	"password" => $pass
+),$Cod_Usuario,"Mi perfil");
 
 // Copia la imagen al servidor y genera el enlace
 if (!(empty($ext))) {
@@ -452,13 +472,20 @@ function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usua
 
 
 
-if($nombre_persona==""  || $rut_usuario==""  || $login=="" || $password==""){
+if($nombre_persona==""  || $rut_usuario==""  || $login=="" || ($operacion=="nuevo" && $password=="")){
 $informacion =array("1" => "CAMPOSVACIOS");
 echo json_encode($informacion);	
 exit;
 }
 
 $mysqli=conectar_al_servidor(); 
+$datosAnterioresAuditoria=array();
+if($operacion=="editar"){
+	$datosAnterioresAuditoria=obtenerDatosUsuarioAuditoria($mysqli,$cod_usuario);
+	if($password==""){
+		$password=isset($datosAnterioresAuditoria["password"]) ? $datosAnterioresAuditoria["password"] : "";
+	}
+}
 
 $consulta= "Select count(*) from usuario where login=? and password=? and cod_localFK=?  and Cod_Usuario!=?";
 	
@@ -604,6 +631,24 @@ EliminarAccesos($cod_usuario);
 generarKEYS($acceso,$cod_usuario,'Administrativo');
 }
 
+if($operacion=="editar"){
+	registrarHistorialCambiosUsuario($mysqli,$cod_usuario,$datosAnterioresAuditoria,array(
+		"nombre_persona" => $nombre_persona,
+		"telefono" => $telefono,
+		"telefono_referencia" => $telefono_referencia,
+		"direccion" => $direccion,
+		"tipo_relacion" => $tipo_relacion,
+		"rut_usuario" => $rut_usuario,
+		"login" => $login,
+		"password" => $password,
+		"estado" => $estado,
+		"acceso" => $acceso,
+		"cod_localFK" => $cod_localFK,
+		"tipo" => $tipo,
+		"fecha_creacion" => $fecha_creacion
+	),$cod_usuario_accion,"Administracion");
+}
+
 
 cargarFotos($cod_persona);
 
@@ -705,7 +750,7 @@ if($local!=""){
 
 
 
-$sql= "select us.cod_usuario,us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
+$sql= "select us.cod_usuario,us.rut_usuario,us.login,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
 pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona ".$sqlFiltro;
@@ -731,7 +776,7 @@ while ($valor= mysqli_fetch_assoc($result))
 $cod_usuario = mb_convert_encoding((string)($valor['cod_usuario']), 'UTF-8', 'ISO-8859-1'); 
 $rut_usuario = mb_convert_encoding((string)($valor['rut_usuario']), 'UTF-8', 'ISO-8859-1');          
 $login = mb_convert_encoding((string)($valor['login']), 'UTF-8', 'ISO-8859-1');          
-$password = mb_convert_encoding((string)($valor['password']), 'UTF-8', 'ISO-8859-1'); 
+$password = ""; 
 $estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
 $acceso = mb_convert_encoding((string)($valor['acceso']), 'UTF-8', 'ISO-8859-1'); 
 $cod_localFK = mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'); 
@@ -846,6 +891,145 @@ function obtenerUsuariosAnteriores($filtros = array())
 
 	$stmt->close();
 	return $registros;
+}
+
+function tablaUsuarioExiste($mysqli,$tabla)
+{
+	$sql="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){return false;}
+	$s='s';
+	$stmt->bind_param($s,$tabla);
+	if(!$stmt->execute()){
+		$stmt->close();
+		return false;
+	}
+	$total=0;
+	$stmt->bind_result($total);
+	$stmt->fetch();
+	$stmt->close();
+	return ((int)$total)>0;
+}
+
+function obtenerDatosUsuarioAuditoria($mysqli,$cod_usuario)
+{
+	$datos=array();
+	$sql="SELECT pr.nombre_persona,pr.telefono,pr.telefono_referencia,pr.direccion,pr.tipo_relacion,
+		us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,us.tipo,us.fecha_creacion
+		FROM persona pr INNER JOIN usuario us ON us.cod_usuario=pr.cod_persona
+		WHERE us.cod_usuario=? LIMIT 1";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){return $datos;}
+	$s='s';
+	$stmt->bind_param($s,$cod_usuario);
+	if(!$stmt->execute()){
+		$stmt->close();
+		return $datos;
+	}
+	$result=$stmt->get_result();
+	if($row=$result->fetch_assoc()){
+		foreach($row as $key=>$value){
+			$datos[$key]=(string)$value;
+		}
+	}
+	$stmt->close();
+	return $datos;
+}
+
+function registrarHistorialCambiosUsuario($mysqli,$cod_usuario,$anterior,$nuevo,$cod_usuario_modifico,$origen)
+{
+	if(!tablaUsuarioExiste($mysqli,"usuario_historial_cambios")){
+		return;
+	}
+	$campos=array(
+		"nombre_persona" => "Nombre completo",
+		"telefono" => "Telefono/WhatsApp",
+		"telefono_referencia" => "Contacto de emergencia",
+		"direccion" => "Direccion",
+		"tipo_relacion" => "Tipo de relacion",
+		"rut_usuario" => "Documento/cedula",
+		"login" => "Login",
+		"password" => "Contrasena",
+		"estado" => "Estado laboral",
+		"acceso" => "Rol de acceso",
+		"cod_localFK" => "Sucursal principal",
+		"tipo" => "Tipo de usuario",
+		"fecha_creacion" => "Fecha de ingreso/creacion"
+	);
+	$sql="INSERT INTO usuario_historial_cambios
+		(cod_usuarioFK,campo,valor_anterior,valor_nuevo,fecha_hora,cod_usuario_modifico,origen,estado)
+		VALUES (?,?,?,?,NOW(),?,?,?)";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){return;}
+	foreach($campos as $campo=>$etiqueta){
+		$valorAnterior=isset($anterior[$campo]) ? (string)$anterior[$campo] : "";
+		$valorNuevo=isset($nuevo[$campo]) ? (string)$nuevo[$campo] : "";
+		if($valorAnterior===$valorNuevo){
+			continue;
+		}
+		if($campo=="password"){
+			$valorAnterior=$valorAnterior!="" ? "[protegido]" : "";
+			$valorNuevo=$valorNuevo!="" ? "[actualizada]" : "";
+		}
+		$estado="Registrado";
+		$ss='sssssss';
+		$stmt->bind_param($ss,$cod_usuario,$etiqueta,$valorAnterior,$valorNuevo,$cod_usuario_modifico,$origen,$estado);
+		$stmt->execute();
+	}
+	$stmt->close();
+}
+
+function obtenerHistorialCambiosUsuario($cod_usuario)
+{
+	$mysqli=conectar_al_servidor();
+	if(!tablaUsuarioExiste($mysqli,"usuario_historial_cambios")){
+		mysqli_close($mysqli);
+		echo json_encode(array("1" => "exito", "2" => "<div class='funcionario-empty-state'>La tabla de auditoria aun no fue creada. Ejecuta la migracion aditiva para comenzar a registrar cambios.</div>"));
+		exit;
+	}
+	$sql="SELECT uhc.fecha_hora,uhc.campo,uhc.valor_anterior,uhc.valor_nuevo,uhc.origen,uhc.estado,
+		IFNULL(pr.nombre_persona,uhc.cod_usuario_modifico) AS modificado_por
+		FROM usuario_historial_cambios uhc
+		LEFT JOIN persona pr ON pr.cod_persona=uhc.cod_usuario_modifico
+		WHERE uhc.cod_usuarioFK=?
+		ORDER BY uhc.fecha_hora DESC, uhc.id DESC
+		LIMIT 60";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){
+		mysqli_close($mysqli);
+		echo json_encode(array("1" => "error"));
+		exit;
+	}
+	$s='s';
+	$stmt->bind_param($s,$cod_usuario);
+	if(!$stmt->execute()){
+		$stmt->close();
+		mysqli_close($mysqli);
+		echo json_encode(array("1" => "error"));
+		exit;
+	}
+	$result=$stmt->get_result();
+	$pagina="<table class='funcionario-ficha__table'><thead><tr><th>Fecha</th><th>Campo</th><th>Valor anterior</th><th>Valor nuevo</th><th>Modificado por</th><th>Origen</th><th>Estado</th></tr></thead><tbody>";
+	$total=0;
+	while($valor=$result->fetch_assoc()){
+		$total++;
+		$fecha=htmlspecialchars(mb_convert_encoding((string)$valor["fecha_hora"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$campo=htmlspecialchars(mb_convert_encoding((string)$valor["campo"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$anterior=htmlspecialchars(mb_convert_encoding((string)$valor["valor_anterior"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$nuevo=htmlspecialchars(mb_convert_encoding((string)$valor["valor_nuevo"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$modificado=htmlspecialchars(mb_convert_encoding((string)$valor["modificado_por"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$origen=htmlspecialchars(mb_convert_encoding((string)$valor["origen"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$estado=htmlspecialchars(mb_convert_encoding((string)$valor["estado"], 'UTF-8', 'ISO-8859-1'),ENT_QUOTES,'UTF-8');
+		$pagina.="<tr><td>".$fecha."</td><td>".$campo."</td><td><s>".$anterior."</s></td><td>".$nuevo."</td><td>".$modificado."</td><td>".$origen."</td><td>".$estado."</td></tr>";
+	}
+	$pagina.="</tbody></table>";
+	if($total==0){
+		$pagina="<div class='funcionario-empty-state'>Todavia no hay cambios registrados en la auditoria.</div>";
+	}
+	$stmt->close();
+	mysqli_close($mysqli);
+	echo json_encode(array("1" => "exito", "2" => $pagina));
+	exit;
 }
 
 function buscarfuncionario($buscar,$tipo)

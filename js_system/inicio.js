@@ -475,6 +475,9 @@ var cajapredeterminada="";
 var accesosuser;
 var ControlCobradorUser="";
 var CodCobradorUser="";
+var funcionariosDirectorioCache = [];
+var funcionarioSeleccionadoCache = null;
+var datosPerfilUsuarioActual = {};
 
 function normalizarFotoUsuario(urlFoto) {
 	var foto = (urlFoto || "").toString().trim();
@@ -513,6 +516,680 @@ function aplicarFotoUsuario(urlFoto) {
 
 	if (imgAbmPerfil) {
 		imgAbmPerfil.style.backgroundImage = "url(" + foto + ")";
+	}
+}
+
+function escaparHtmlFuncionario(texto) {
+	return String(texto || "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function textoNormalizadoFuncionario(texto) {
+	return String(texto || "")
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.trim();
+}
+
+function obtenerHorariosFuncionario(registro) {
+	if (!registro || !Array.isArray(registro.horarios_usuario)) {
+		return [];
+	}
+	return registro.horarios_usuario;
+}
+
+function obtenerEstadoAccesoFuncionario(registro) {
+	var login = $.trim((registro && registro.login) || "");
+	var acceso = $.trim((registro && registro.acceso) || "");
+	var estado = textoNormalizadoFuncionario((registro && registro.estado) || "");
+	var tipo = textoNormalizadoFuncionario((registro && registro.tipo) || "");
+	var accesoTexto = textoNormalizadoFuncionario(acceso);
+
+	if (login == "" || tipo == "sin acceso" || accesoTexto == "sin acceso" || acceso == "4") {
+		return "Sin acceso al sistema";
+	}
+	if (estado != "activo") {
+		return "Acceso bloqueado";
+	}
+	return "Acceso habilitado";
+}
+
+function calcularCompletitudFuncionario(registro) {
+	var horarios = obtenerHorariosFuncionario(registro);
+	var requeridos = [
+		{ campo: "nombre_persona", label: "Falta nombre completo." },
+		{ campo: "rut_usuario", label: "Falta cedula/documento." },
+		{ campo: "telefono", label: "Falta telefono/WhatsApp." },
+		{ campo: "local", label: "Falta sucursal principal." },
+		{ campo: "tipo", label: "Falta cargo o funcion." },
+		{ campo: "telefono_referencia", label: "Falta contacto de emergencia." },
+		{ campo: "direccion", label: "Falta direccion." },
+		{ campo: "estado", label: "Falta estado laboral." }
+	];
+	var recomendados = [
+		{ campo: "url", label: "Falta foto de perfil." },
+		{ campo: "tipo_relacion", label: "Falta tipo de relacion." },
+		{ campo: "login", label: "Falta usuario de acceso." },
+		{ campo: "horarios", label: "Falta horario cargado." }
+	];
+	var puntos = 0;
+	var total = requeridos.length + recomendados.length;
+	var pendientes = [];
+
+	for (var i = 0; i < requeridos.length; i++) {
+		var valor = $.trim((registro && registro[requeridos[i].campo]) || "");
+		if (valor != "" && valor != "0" && valor.toLowerCase() != "null") {
+			puntos++;
+		} else {
+			pendientes.push(requeridos[i].label);
+		}
+	}
+
+	for (var j = 0; j < recomendados.length; j++) {
+		var campo = recomendados[j].campo;
+		var valorRecomendado = campo == "horarios" ? horarios.length : $.trim((registro && registro[campo]) || "");
+		if (valorRecomendado && valorRecomendado != "0" && String(valorRecomendado).toLowerCase() != "null") {
+			puntos++;
+		} else {
+			pendientes.push(recomendados[j].label);
+		}
+	}
+
+	return {
+		porcentaje: Math.round((puntos / total) * 100),
+		pendientes: pendientes,
+		completo: puntos == total
+	};
+}
+
+function aplicarFiltroEstadoFuncionarios(estado) {
+	var activo = estado == "Activo";
+	var checkActivo = document.getElementById("inptSeleccEstadoBuscarUser1");
+	var checkInactivo = document.getElementById("inptSeleccEstadoBuscarUser2");
+	var btnActivo = document.getElementById("btnFiltroFuncionariosActivos");
+	var btnInactivo = document.getElementById("btnFiltroFuncionariosInactivos");
+
+	if (checkActivo) checkActivo.checked = activo;
+	if (checkInactivo) checkInactivo.checked = !activo;
+	if (btnActivo) btnActivo.className = activo ? "funcionario-filter funcionario-filter--active" : "funcionario-filter";
+	if (btnInactivo) btnInactivo.className = !activo ? "funcionario-filter funcionario-filter--active" : "funcionario-filter";
+	buscarabmusuario();
+}
+
+function sincronizarFiltroLocalFuncionarios() {
+	var filtroVisible = document.getElementById("inptFiltroFuncionarioLocal");
+	var filtroLegacy = document.getElementById("inptBuscarUsuario4");
+	if (filtroVisible && filtroLegacy) {
+		filtroLegacy.value = filtroVisible.value;
+	}
+}
+
+function sincronizarOpcionesFiltroLocalFuncionarios() {
+	var filtroVisible = document.getElementById("inptFiltroFuncionarioLocal");
+	var filtroLegacy = document.getElementById("inptBuscarUsuario4");
+	if (!filtroVisible || !filtroLegacy) {
+		return;
+	}
+
+	var valorActual = filtroVisible.value;
+	var opciones = "<option value=''>Por sucursal/local</option>";
+	for (var i = 0; i < filtroLegacy.options.length; i++) {
+		var opcion = filtroLegacy.options[i];
+		if (opcion.value == "") {
+			continue;
+		}
+		opciones += "<option value='" + escaparHtmlFuncionario(opcion.value) + "'>" + escaparHtmlFuncionario(opcion.text) + "</option>";
+	}
+	filtroVisible.innerHTML = opciones;
+	filtroVisible.value = valorActual;
+}
+
+function cargarOpcionesDirectorioFuncionarios(registros) {
+	var cargoSelect = document.getElementById("inptFiltroFuncionarioCargo");
+	var rolSelect = document.getElementById("inptFiltroFuncionarioRol");
+	var cargos = {};
+	var roles = {};
+
+	for (var i = 0; i < registros.length; i++) {
+		if ($.trim(registros[i].tipo || "") != "") cargos[registros[i].tipo] = true;
+		if ($.trim(registros[i].acceso || "") != "") roles[registros[i].acceso] = true;
+	}
+
+	if (cargoSelect) {
+		var cargoActual = cargoSelect.value;
+		var htmlCargo = "<option value=''>Por cargo o funcion</option>";
+		Object.keys(cargos).sort().forEach(function(cargo) {
+			htmlCargo += "<option value='" + escaparHtmlFuncionario(cargo) + "'>" + escaparHtmlFuncionario(cargo) + "</option>";
+		});
+		cargoSelect.innerHTML = htmlCargo;
+		cargoSelect.value = cargoActual;
+	}
+
+	if (rolSelect) {
+		var rolActual = rolSelect.value;
+		var htmlRol = "<option value=''>Por rol de acceso</option>";
+		Object.keys(roles).sort().forEach(function(rol) {
+			htmlRol += "<option value='" + escaparHtmlFuncionario(rol) + "'>" + escaparHtmlFuncionario(rol) + "</option>";
+		});
+		rolSelect.innerHTML = htmlRol;
+		rolSelect.value = rolActual;
+	}
+}
+
+function filtrarRegistrosFuncionarios(registros) {
+	var texto = textoNormalizadoFuncionario(document.getElementById("inptBuscarFuncionarioUniversal") ? document.getElementById("inptBuscarFuncionarioUniversal").value : "");
+	var cargo = document.getElementById("inptFiltroFuncionarioCargo") ? document.getElementById("inptFiltroFuncionarioCargo").value : "";
+	var rol = document.getElementById("inptFiltroFuncionarioRol") ? document.getElementById("inptFiltroFuncionarioRol").value : "";
+	var filtroAccesoHabilitado = document.getElementById("filtroAccesoHabilitado") && document.getElementById("filtroAccesoHabilitado").checked;
+	var filtroAccesoBloqueado = document.getElementById("filtroAccesoBloqueado") && document.getElementById("filtroAccesoBloqueado").checked;
+	var filtroSinAcceso = document.getElementById("filtroSinAccesoSistema") && document.getElementById("filtroSinAccesoSistema").checked;
+	var filtroPerfilIncompleto = document.getElementById("filtroPerfilIncompleto") && document.getElementById("filtroPerfilIncompleto").checked;
+	var filtroSinHorario = document.getElementById("filtroSinHorarioCargado") && document.getElementById("filtroSinHorarioCargado").checked;
+
+	return registros.filter(function(registro) {
+		var completitud = calcularCompletitudFuncionario(registro);
+		var estadoAcceso = obtenerEstadoAccesoFuncionario(registro);
+		var horarios = obtenerHorariosFuncionario(registro);
+		var textoRegistro = textoNormalizadoFuncionario([
+			registro.nombre_persona,
+			registro.rut_usuario,
+			registro.telefono,
+			registro.login,
+			registro.tipo,
+			registro.local,
+			registro.acceso
+		].join(" "));
+
+		if (texto != "" && textoRegistro.indexOf(texto) == -1) return false;
+		if (cargo != "" && String(registro.tipo || "") != cargo) return false;
+		if (rol != "" && String(registro.acceso || "") != rol) return false;
+		if (filtroAccesoHabilitado && estadoAcceso != "Acceso habilitado") return false;
+		if (filtroAccesoBloqueado && estadoAcceso != "Acceso bloqueado") return false;
+		if (filtroSinAcceso && estadoAcceso != "Sin acceso al sistema") return false;
+		if (filtroPerfilIncompleto && completitud.porcentaje >= 100) return false;
+		if (filtroSinHorario && horarios.length > 0) return false;
+		return true;
+	});
+}
+
+function renderDirectorioFuncionarios(registros) {
+	var contenedor = document.getElementById("funcionariosDirectorioLista");
+	var vacio = document.getElementById("funcionariosDirectorioVacio");
+	if (!contenedor) {
+		return;
+	}
+
+	var html = "";
+	for (var i = 0; i < registros.length; i++) {
+		var registro = registros[i];
+		var foto = normalizarFotoUsuario(registro.url);
+		var completitud = calcularCompletitudFuncionario(registro);
+		var estadoAcceso = obtenerEstadoAccesoFuncionario(registro);
+		var estadoClase = textoNormalizadoFuncionario(registro.estado) == "activo" ? "funcionario-badge--success" : "funcionario-badge--muted";
+		var accesoClase = estadoAcceso == "Acceso habilitado" ? "funcionario-badge--success" : (estadoAcceso == "Acceso bloqueado" ? "funcionario-badge--danger" : "funcionario-badge--muted");
+
+		html += "<article class='funcionario-row' id='funcionarioRow_" + escaparHtmlFuncionario(registro.cod_usuario) + "' onclick='seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\")'>" +
+			"<img class='funcionario-row__avatar' src='" + escaparHtmlFuncionario(foto) + "' onerror=\"this.src='/GoodVentaAsisCap/iconos/sinperfil.png'\" alt='' />" +
+			"<div class='funcionario-row__person'><strong>" + escaparHtmlFuncionario(registro.nombre_persona || "Sin nombre") + "</strong><small>" + escaparHtmlFuncionario(registro.login || "Sin usuario de acceso") + "</small></div>" +
+			"<span>" + escaparHtmlFuncionario(registro.rut_usuario || "-") + "</span>" +
+			"<span>" + escaparHtmlFuncionario(registro.tipo || "Sin cargo") + "</span>" +
+			"<span>" + escaparHtmlFuncionario(registro.local || "Sin local") + "</span>" +
+			"<span>" + escaparHtmlFuncionario(registro.telefono || "-") + "</span>" +
+			"<span class='funcionario-badge " + estadoClase + "'>" + escaparHtmlFuncionario(registro.estado || "-") + "</span>" +
+			"<span class='funcionario-badge " + accesoClase + "'>" + escaparHtmlFuncionario(estadoAcceso) + "</span>" +
+			"<div class='funcionario-row__progress'><div><span style='width:" + completitud.porcentaje + "%'></span></div><small>" + completitud.porcentaje + "%</small></div>" +
+			"<div class='funcionario-row__actions'>" +
+				"<button type='button' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\");abrirFichaFuncionarioSeleccionado(\"resumen\");'>Ver</button>" +
+				"<button type='button' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\");verVentanaEditarUsuario();'>Editar</button>" +
+				"<button type='button' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\");verCerrarVentanaTareasProgramadas(true, false, \"\");'>Tareas</button>" +
+			"</div>" +
+		"</article>";
+	}
+
+	contenedor.innerHTML = html;
+	if (vacio) {
+		vacio.style.display = registros.length == 0 ? "" : "none";
+	}
+}
+
+function filtrarDirectorioFuncionarios() {
+	renderDirectorioFuncionarios(filtrarRegistrosFuncionarios(funcionariosDirectorioCache));
+}
+
+function encontrarFilaLegacyFuncionario(codUsuario) {
+	var filas = document.querySelectorAll("#table_abm_usuarios tr[id='tbSelecRegistro']");
+	for (var i = 0; i < filas.length; i++) {
+		var td = filas[i].querySelector("td[id='td_id']");
+		if (td && $.trim(td.innerHTML) == String(codUsuario)) {
+			return filas[i];
+		}
+	}
+	return null;
+}
+
+function seleccionarFuncionarioDesdeDirectorio(codUsuario) {
+	var filaLegacy = encontrarFilaLegacyFuncionario(codUsuario);
+	if (filaLegacy) {
+		obtenerdatosabmusuario(filaLegacy);
+		return;
+	}
+
+	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
+		if (String(funcionariosDirectorioCache[i].cod_usuario) == String(codUsuario)) {
+			funcionarioSeleccionadoCache = funcionariosDirectorioCache[i];
+			actualizarPanelRapidoFuncionario(funcionarioSeleccionadoCache);
+			actualizarFichaFuncionario(funcionarioSeleccionadoCache);
+			break;
+		}
+	}
+}
+
+function actualizarPanelRapidoFuncionario(registro) {
+	if (arguments.length > 0) {
+		funcionarioSeleccionadoCache = registro;
+	}
+	registro = funcionarioSeleccionadoCache;
+	var vacio = document.getElementById("funcionarioPanelVacio");
+	var contenido = document.getElementById("funcionarioPanelContenido");
+	if (!registro || !contenido) {
+		if (vacio) vacio.style.display = "";
+		if (contenido) contenido.style.display = "none";
+		return;
+	}
+
+	var completitud = calcularCompletitudFuncionario(registro);
+	if (vacio) vacio.style.display = "none";
+	contenido.style.display = "";
+	document.getElementById("funcionarioPanelFoto").src = normalizarFotoUsuario(registro.url);
+	document.getElementById("funcionarioPanelNombre").innerHTML = escaparHtmlFuncionario(registro.nombre_persona || "Funcionario");
+	document.getElementById("funcionarioPanelCargo").innerHTML = escaparHtmlFuncionario(registro.tipo || "Cargo o funcion");
+	document.getElementById("funcionarioPanelLocal").innerHTML = escaparHtmlFuncionario(registro.local || "Sucursal sin definir");
+	document.getElementById("funcionarioPanelTelefono").innerHTML = escaparHtmlFuncionario(registro.telefono || "Telefono sin cargar");
+	document.getElementById("funcionarioPanelEstado").innerHTML = escaparHtmlFuncionario(registro.estado || "Estado sin definir");
+	document.getElementById("funcionarioPanelAcceso").innerHTML = escaparHtmlFuncionario(obtenerEstadoAccesoFuncionario(registro));
+	document.getElementById("funcionarioPanelProgresoTexto").innerHTML = "Perfil completado: " + completitud.porcentaje + "%";
+	document.getElementById("funcionarioPanelProgresoBarra").style.width = completitud.porcentaje + "%";
+
+	$(".funcionario-row").removeClass("funcionario-row--selected");
+	$("#funcionarioRow_" + registro.cod_usuario).addClass("funcionario-row--selected");
+}
+
+function valorFichaFuncionario(label, valor, valorAnterior) {
+	var anterior = valorAnterior ? "<small class='funcionario-evidencia'>Dato anterior: <s>" + escaparHtmlFuncionario(valorAnterior) + "</s></small>" : "";
+	return "<div class='funcionario-ficha__dato'><span>" + escaparHtmlFuncionario(label) + "</span><strong>" + escaparHtmlFuncionario(valor || "-") + "</strong>" + anterior + "</div>";
+}
+
+function renderHorariosFichaFuncionario(registro) {
+	var horarios = obtenerHorariosFuncionario(registro);
+	if (horarios.length == 0) {
+		return "<div class='funcionario-empty-state'>Este funcionario aun no tiene horario definido.</div>";
+	}
+
+	var html = "<table class='funcionario-ficha__table'><thead><tr><th>Dia</th><th>Local/sucursal</th><th>Hora entrada</th><th>Hora salida</th><th>Turno</th><th>Estado</th></tr></thead><tbody>";
+	for (var i = 0; i < horarios.length; i++) {
+		var horario = horarios[i];
+		var estado = horario.hora_entrada ? "Definido" : "Incompleto";
+		html += "<tr><td>" + escaparHtmlFuncionario(horario.dia || "-") + "</td><td>" + escaparHtmlFuncionario(horario.cod_localFK || registro.cod_localFK || "-") + "</td><td>" + escaparHtmlFuncionario(horario.hora_entrada || "-") + "</td><td>" + escaparHtmlFuncionario(horario.hora_salida || "-") + "</td><td>Operativo</td><td>" + estado + "</td></tr>";
+	}
+	html += "</tbody></table>";
+	return html;
+}
+
+function actualizarFichaFuncionario(registro) {
+	if (!registro) {
+		return;
+	}
+	var completitud = calcularCompletitudFuncionario(registro);
+	var foto = document.getElementById("funcionarioFichaFoto");
+	if (foto) foto.src = normalizarFotoUsuario(registro.url);
+	document.getElementById("funcionarioFichaNombre").innerHTML = escaparHtmlFuncionario(registro.nombre_persona || "Funcionario");
+	document.getElementById("funcionarioFichaCargo").innerHTML = escaparHtmlFuncionario(registro.tipo || "Cargo o funcion");
+	document.getElementById("funcionarioFichaLocal").innerHTML = escaparHtmlFuncionario(registro.local || "Sucursal sin definir");
+	document.getElementById("funcionarioFichaEstado").innerHTML = escaparHtmlFuncionario(registro.estado || "Estado laboral");
+	document.getElementById("funcionarioFichaAcceso").innerHTML = escaparHtmlFuncionario(obtenerEstadoAccesoFuncionario(registro));
+	document.getElementById("funcionarioFichaPerfil").innerHTML = "Perfil completado: " + completitud.porcentaje + "%";
+
+	document.getElementById("funcionarioFichaResumenSeccion").innerHTML =
+		"<div class='funcionario-ficha__grid'>" +
+		valorFichaFuncionario("Telefono/WhatsApp", registro.telefono) +
+		valorFichaFuncionario("Cedula/documento", registro.rut_usuario) +
+		valorFichaFuncionario("Sucursal principal", registro.local) +
+		valorFichaFuncionario("Perfil", completitud.porcentaje + "% completo") +
+		"</div>" +
+		(completitud.pendientes.length > 0 ? "<div class='funcionario-ficha__pendientes'><strong>Datos pendientes</strong><ul><li>" + completitud.pendientes.map(escaparHtmlFuncionario).join("</li><li>") + "</li></ul></div>" : "<div class='funcionario-empty-state'>100% completo.</div>");
+
+	document.getElementById("funcionarioFichaPersonalesSeccion").innerHTML =
+		"<div class='funcionario-ficha__grid'>" +
+		valorFichaFuncionario("Nombre completo", registro.nombre_persona) +
+		valorFichaFuncionario("Documento/cedula", registro.rut_usuario) +
+		valorFichaFuncionario("Telefono/WhatsApp", registro.telefono) +
+		valorFichaFuncionario("Direccion", registro.direccion) +
+		valorFichaFuncionario("Contacto de emergencia", registro.telefono_referencia) +
+		"</div>" +
+		"<div class='funcionario-empty-state'>Ubicacion del domicilio preparada con acceso restringido. No se muestra en el directorio general.</div>";
+
+	document.getElementById("funcionarioFichaLaboralesSeccion").innerHTML =
+		"<div class='funcionario-ficha__grid'>" +
+		valorFichaFuncionario("Cargo o funcion", registro.tipo) +
+		valorFichaFuncionario("Sucursal principal", registro.local) +
+		valorFichaFuncionario("Tipo de relacion", registro.tipo_relacion) +
+		valorFichaFuncionario("Fecha de ingreso/creacion", registro.fecha_creacion) +
+		valorFichaFuncionario("Estado laboral", registro.estado) +
+		"</div>";
+
+	document.getElementById("funcionarioFichaAccesoSeccion").innerHTML =
+		"<div class='funcionario-ficha__grid'>" +
+		valorFichaFuncionario("Login", registro.login) +
+		valorFichaFuncionario("Rol de acceso", registro.acceso) +
+		valorFichaFuncionario("Tipo de usuario", registro.tipo) +
+		valorFichaFuncionario("Estado del acceso", obtenerEstadoAccesoFuncionario(registro)) +
+		"</div>" +
+		"<div class='funcionario-ficha__actions funcionario-ficha__actions--inline'><button type='button' onclick='habilitarCambioContrasenhaFuncionario();mostrarFormularioFuncionario();'>Restablecer contrasena</button><button type='button' onclick='verVentanaEditarUsuario()'>Bloquear o desbloquear acceso</button></div>";
+
+	document.getElementById("funcionarioFichaHorariosSeccion").innerHTML = renderHorariosFichaFuncionario(registro);
+}
+
+function activarTabFichaFuncionario(tab) {
+	$(".funcionario-ficha__tab").removeClass("funcionario-ficha__tab--active");
+	$(".funcionario-ficha__tab[data-tab='" + tab + "']").addClass("funcionario-ficha__tab--active");
+	$(".funcionario-ficha__section").removeClass("funcionario-ficha__section--active");
+	$(".funcionario-ficha__section[data-section='" + tab + "']").addClass("funcionario-ficha__section--active");
+	if (tab == "auditoria") {
+		cargarHistorialCambiosFuncionario();
+	}
+}
+
+function abrirFichaFuncionarioSeleccionado(tab) {
+	if (!funcionarioSeleccionadoCache && idAbmUsuario != "") {
+		seleccionarFuncionarioDesdeDirectorio(idAbmUsuario);
+	}
+	if (!funcionarioSeleccionadoCache) {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	verCerrarVentanaAbmUsuarios("1", "2");
+	document.getElementById("funcionarioFichaResumen").style.display = "";
+	document.getElementById("funcionarioFormularioEdicion").style.display = "none";
+	actualizarFichaFuncionario(funcionarioSeleccionadoCache);
+	activarTabFichaFuncionario(tab || "resumen");
+}
+
+function mostrarFormularioFuncionario() {
+	var ficha = document.getElementById("funcionarioFichaResumen");
+	var formulario = document.getElementById("funcionarioFormularioEdicion");
+	if (ficha) ficha.style.display = "none";
+	if (formulario) formulario.style.display = "";
+}
+
+function habilitarCambioContrasenhaFuncionario() {
+	var input = document.getElementById("inptContrasenhaUserTemporal");
+	if (input) {
+		input.style.display = "";
+		input.focus();
+	}
+}
+
+function cargarHistorialCambiosFuncionario() {
+	if (!idAbmUsuario) {
+		return;
+	}
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "obtenerHistorialCambiosUsuario",
+			"cod_usuarioFK": idAbmUsuario
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		success: function(responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					document.getElementById("funcionarioFichaAuditoriaSeccion").innerHTML = datos["2"];
+				}
+			} catch (error) {
+				document.getElementById("funcionarioFichaAuditoriaSeccion").innerHTML = "<div class='funcionario-empty-state'>No se pudo cargar la auditoria.</div>";
+			}
+		}
+	});
+}
+
+function toggleMenuPerfilUsuario(event) {
+	if (event) event.stopPropagation();
+	var menu = document.getElementById("menuPerfilUsuarioTopbar");
+	if (!menu) return;
+	menu.style.display = menu.style.display == "" ? "none" : "";
+}
+
+function cerrarMenuPerfilUsuario() {
+	var menu = document.getElementById("menuPerfilUsuarioTopbar");
+	if (menu) menu.style.display = "none";
+}
+
+document.addEventListener("click", function() {
+	cerrarMenuPerfilUsuario();
+});
+
+function mostrarCambioContrasenhaMisDatos() {
+	verCerrarMisDatos(1);
+	var input = document.getElementById("inptPassMisDatos");
+	if (input) {
+		input.style.display = "";
+		input.focus();
+	}
+}
+
+function quitarEstiloAnchoMiPerfil(elemento) {
+	if (!elemento) {
+		return;
+	}
+	elemento.style.width = "";
+	elemento.style.maxWidth = "";
+	elemento.style.boxSizing = "";
+}
+
+function crearCampoMiPerfil(slot, label, elemento, anchoCompleto) {
+	var contenedor = document.querySelector("[data-mi-perfil-slot='" + slot + "']");
+	if (!contenedor || !elemento) {
+		return;
+	}
+	quitarEstiloAnchoMiPerfil(elemento);
+	contenedor.innerHTML = "";
+	contenedor.className = anchoCompleto ? "mi-perfil-field mi-perfil-field--wide" : "mi-perfil-field";
+	var etiqueta = document.createElement("span");
+	etiqueta.innerHTML = label;
+	contenedor.appendChild(etiqueta);
+	contenedor.appendChild(elemento);
+}
+
+function inicializarLayoutMiPerfil() {
+	if (document.getElementById("miPerfilModalModernizado")) {
+		return;
+	}
+
+	var modal = document.querySelector("#divCambiarMisDatosPersonales .divAbms");
+	var contenidoViejo = document.querySelector("#divCambiarMisDatosPersonales .divMenuf");
+	if (!modal || !contenidoViejo) {
+		return;
+	}
+
+	var foto = document.getElementById("imgFotoPerfilMisDatos");
+	var botonFoto = foto && foto.parentNode ? foto.parentNode.querySelector("input[type='button']") : null;
+	var progreso = document.getElementById("miPerfilProgresoTexto");
+	var pendientes = document.getElementById("miPerfilPendientes");
+	var domicilio = document.getElementById("miPerfilDomicilioReferencia");
+	var campos = {
+		nombre: document.getElementById("inptNombreMisDatos"),
+		cedula: document.getElementById("inptCedulaMisDatos"),
+		relacion: document.getElementById("inptRelacionamientoMisDatos"),
+		user: document.getElementById("inptUserMisDatos"),
+		pass: document.getElementById("inptPassMisDatos"),
+		local: document.getElementById("inptLocalMisDatos"),
+		telefono: document.getElementById("inptTelefonoMisDatos"),
+		direccion: document.getElementById("inptDireccionMisDatos"),
+		contacto: document.getElementById("inptContactoReferenciaMisDatos"),
+		fecha: document.getElementById("inptFechaCreacionMisDatos")
+	};
+
+	modal.className += " mi-perfil-modal";
+	modal.removeAttribute("style");
+	modal.innerHTML =
+		"<div id='miPerfilModalModernizado'>" +
+			"<div class='mi-perfil-header'>" +
+				"<div class='mi-perfil-header__avatar' data-mi-perfil-slot='foto'></div>" +
+				"<div class='mi-perfil-header__copy'>" +
+					"<p class='mi-perfil-header__title'>Mi perfil</p>" +
+					"<p class='mi-perfil-header__subtitle'>Actualiza tus datos personales y de contacto.</p>" +
+					"<strong id='miPerfilNombreCabecera'>Funcionario</strong>" +
+				"</div>" +
+				"<div class='mi-perfil-header__progress'>" +
+					"<div data-mi-perfil-slot='progreso'></div>" +
+					"<small id='miPerfilResumenEstado'>Faltan datos</small>" +
+					"<button type='button' id='miPerfilCompletarPendientesBtn' onclick='enfocarPendienteMiPerfil()'>Completar pendientes</button>" +
+				"</div>" +
+				"<button type='button' class='mi-perfil-close' title='Cerrar ventana' onclick='verCerrarMisDatos(\"2\")'><img src='/GoodVentaAsisCap/iconos/botonCerrar.png' alt='Cerrar' /></button>" +
+			"</div>" +
+			"<div class='mi-perfil-status'>" +
+				"<div><strong>Tu perfil esta incompleto.</strong><p>Completa los datos pendientes para mantener actualizada tu ficha laboral.</p></div>" +
+				"<button type='button' onclick='enfocarPendienteMiPerfil()'>Completar ahora</button>" +
+			"</div>" +
+			"<div data-mi-perfil-slot='pendientes'></div>" +
+			"<div class='mi-perfil-body'>" +
+				"<section class='mi-perfil-card'>" +
+					"<div class='mi-perfil-card__title'><strong>Foto y datos personales</strong><small>Quien sos y como figura tu ficha.</small></div>" +
+					"<div class='mi-perfil-grid'><label data-mi-perfil-slot='nombre'></label><label data-mi-perfil-slot='cedula'></label><label data-mi-perfil-slot='relacion'></label></div>" +
+				"</section>" +
+				"<section class='mi-perfil-card'>" +
+					"<div class='mi-perfil-card__title'><strong>Contacto</strong><small>Datos para contacto laboral o emergencia.</small></div>" +
+					"<div class='mi-perfil-grid'><label data-mi-perfil-slot='telefono'></label><label data-mi-perfil-slot='contacto'></label><label data-mi-perfil-slot='direccion'></label></div>" +
+				"</section>" +
+				"<section class='mi-perfil-card mi-perfil-card--compact' data-mi-perfil-slot='domicilio'></section>" +
+				"<details class='mi-perfil-card mi-perfil-system' open>" +
+					"<summary><span>Datos del sistema</span><small>Acceso y datos administrativos.</small></summary>" +
+					"<div class='mi-perfil-grid'><label data-mi-perfil-slot='user'></label><label data-mi-perfil-slot='local'></label><label data-mi-perfil-slot='fecha'></label><div data-mi-perfil-slot='password'></div></div>" +
+				"</details>" +
+			"</div>" +
+			"<div class='mi-perfil-footer'><button type='button' class='mi-perfil-footer__cancel' onclick='verCerrarMisDatos(\"2\")'>Cancelar</button><button type='button' class='mi-perfil-footer__save' onclick='AbmEditarMisDatos()'>Guardar cambios</button></div>" +
+		"</div>";
+
+	var slotFoto = document.querySelector("[data-mi-perfil-slot='foto']");
+	if (slotFoto && foto) {
+		slotFoto.appendChild(foto);
+		if (botonFoto) {
+			botonFoto.value = "Cambiar foto";
+			botonFoto.className = "mi-perfil-photo-button";
+			botonFoto.removeAttribute("style");
+			slotFoto.appendChild(botonFoto);
+		}
+	}
+
+	var slotProgreso = document.querySelector("[data-mi-perfil-slot='progreso']");
+	if (slotProgreso && progreso) {
+		slotProgreso.appendChild(progreso);
+	}
+	var slotPendientes = document.querySelector("[data-mi-perfil-slot='pendientes']");
+	if (slotPendientes && pendientes) {
+		slotPendientes.appendChild(pendientes);
+	}
+
+	crearCampoMiPerfil("nombre", "Nombre completo", campos.nombre, true);
+	crearCampoMiPerfil("cedula", "Cedula", campos.cedula, false);
+	crearCampoMiPerfil("relacion", "Relacionamiento", campos.relacion, false);
+	crearCampoMiPerfil("telefono", "Telefono", campos.telefono, false);
+	crearCampoMiPerfil("contacto", "Contacto de referencia", campos.contacto, false);
+	crearCampoMiPerfil("direccion", "Direccion", campos.direccion, true);
+	crearCampoMiPerfil("user", "Usuario de acceso", campos.user, false);
+	crearCampoMiPerfil("local", "Local", campos.local, false);
+	crearCampoMiPerfil("fecha", "Fecha de creacion", campos.fecha, false);
+
+	var slotDomicilio = document.querySelector("[data-mi-perfil-slot='domicilio']");
+	if (slotDomicilio && domicilio) {
+		domicilio.className = "mi-perfil-domicilio";
+		slotDomicilio.appendChild(domicilio);
+	}
+
+	var slotPassword = document.querySelector("[data-mi-perfil-slot='password']");
+	if (slotPassword && campos.pass) {
+		quitarEstiloAnchoMiPerfil(campos.pass);
+		slotPassword.className = "mi-perfil-field mi-perfil-password";
+		slotPassword.innerHTML = "<span>Contrasena de acceso</span>";
+		slotPassword.appendChild(campos.pass);
+		var botonPass = document.createElement("button");
+		botonPass.type = "button";
+		botonPass.innerHTML = "Cambiar contrasena";
+		botonPass.onclick = mostrarCambioContrasenhaMisDatos;
+		slotPassword.appendChild(botonPass);
+		var ayudaPass = document.createElement("p");
+		ayudaPass.className = "funcionario-field-help";
+		ayudaPass.innerHTML = "Si no necesitas cambiarla, deja este campo sin completar.";
+		slotPassword.appendChild(ayudaPass);
+	}
+}
+
+function actualizarEstadoPerfilUsuarioActual() {
+	var completitud = calcularCompletitudFuncionario(datosPerfilUsuarioActual);
+	var indicador = document.getElementById("perfilIncompletoIndicadorTopbar");
+	var progreso = document.getElementById("miPerfilProgresoTexto");
+	var pendientes = document.getElementById("miPerfilPendientes");
+	var status = document.querySelector(".mi-perfil-status");
+	var resumenEstado = document.getElementById("miPerfilResumenEstado");
+	var botonPendientes = document.getElementById("miPerfilCompletarPendientesBtn");
+	var nombreCabecera = document.getElementById("miPerfilNombreCabecera");
+
+	if (progreso) {
+		progreso.innerHTML = "Perfil completado: " + completitud.porcentaje + "%";
+	}
+	if (pendientes) {
+		pendientes.innerHTML = completitud.pendientes.length == 0 ? "<span>Sin datos pendientes.</span>" : "<ul><li>" + completitud.pendientes.map(escaparHtmlFuncionario).join("</li><li>") + "</li></ul>";
+		pendientes.style.display = completitud.pendientes.length == 0 ? "none" : "";
+	}
+	if (status) {
+		status.style.display = completitud.completo ? "none" : "";
+	}
+	if (resumenEstado) {
+		resumenEstado.innerHTML = completitud.completo ? "Perfil completo" : "Faltan " + completitud.pendientes.length + " datos";
+	}
+	if (botonPendientes) {
+		botonPendientes.style.display = completitud.completo ? "none" : "";
+	}
+	if (nombreCabecera) {
+		nombreCabecera.innerHTML = escaparHtmlFuncionario(datosPerfilUsuarioActual.nombre_persona || (document.getElementById("inptNombreMisDatos") ? document.getElementById("inptNombreMisDatos").value : "Funcionario"));
+	}
+	if (indicador) {
+		if (completitud.completo) {
+			indicador.style.display = "none";
+		} else {
+			indicador.style.display = "";
+			indicador.className = completitud.porcentaje < 70 ? "dashboard-topbar-user__status dashboard-topbar-user__status--danger" : "dashboard-topbar-user__status dashboard-topbar-user__status--warning";
+			indicador.title = "Tu perfil esta incompleto";
+		}
+	}
+}
+
+function enfocarPendienteMiPerfil() {
+	var campos = ["inptNombreMisDatos", "inptCedulaMisDatos", "inptTelefonoMisDatos", "inptDireccionMisDatos", "inptContactoReferenciaMisDatos"];
+	for (var i = 0; i < campos.length; i++) {
+		var campo = document.getElementById(campos[i]);
+		if (campo && $.trim(campo.value) == "") {
+			var tarjeta = campo.closest ? campo.closest(".mi-perfil-card") : null;
+			if (tarjeta && tarjeta.scrollIntoView) {
+				tarjeta.scrollIntoView({behavior: "smooth", block: "center"});
+			}
+			campo.focus();
+			return;
+		}
+	}
+	var password = document.getElementById("inptPassMisDatos");
+	if (password && password.style.display != "none" && $.trim(password.value) == "") {
+		password.focus();
 	}
 }
 
@@ -601,6 +1278,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("inptNombreMisDatos").value=nombre;
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
 						document.getElementById("nombrePerfilUsuarioTopbar").innerHTML=nombre;
+						if (document.getElementById("miPerfilNombreCabecera")) {
+							document.getElementById("miPerfilNombreCabecera").innerHTML = escaparHtmlFuncionario(nombre);
+						}
 						document.getElementById("inptCedulaMisDatos").value= datos["14"];
 						aplicarFotoUsuario(fotocliente3);
 						document.getElementById('inptTelefonoMisDatos').value= datos["9"];
@@ -608,6 +1288,28 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById('inptContactoReferenciaMisDatos').value = datos["12"];
 						document.getElementById('inptRelacionamientoMisDatos').value = datos["11"];
 						document.getElementById('inptFechaCreacionMisDatos').value= datos["13"];
+						if (document.getElementById("inptUserMisDatos")) {
+							document.getElementById("inptUserMisDatos").value = datos["15"] || "";
+						}
+						datosPerfilUsuarioActual = {
+							cod_usuario: userid,
+							nombre_persona: nombre,
+							rut_usuario: datos["14"],
+							telefono: datos["9"],
+							direccion: datos["10"],
+							telefono_referencia: datos["12"],
+							tipo_relacion: datos["11"],
+							fecha_creacion: datos["13"],
+							url: fotocliente3,
+							acceso: datos["3"],
+							cod_localFK: datos["4"],
+							local: datos["17"] || datos["4"],
+							login: datos["15"] || "",
+							tipo: datos["16"] || "",
+							estado: "Activo",
+							horarios_usuario: datos["18"] || []
+						};
+						actualizarEstadoPerfilUsuarioActual();
 						
 						// Se indica el local
 						document.getElementById('inptLocalMisDatos').value = cod_localFKUSer;
@@ -1122,6 +1824,8 @@ function verCerrarMisDatos(d){
 	if(d=="1"){
 	document.getElementById("divCambiarMisDatosPersonales").style.display="";	
 	  document.getElementById("tdEfectoAbmMisDatos").className="magictime slideDownReturn"
+	  inicializarLayoutMiPerfil();
+	  actualizarEstadoPerfilUsuarioActual();
 	}else{
 	document.getElementById("tdEfectoAbmMisDatos").className="magictime vanishOut"
 	$("div[id=divCambiarMisDatosPersonales]").fadeOut(500);	
@@ -1129,10 +1833,15 @@ function verCerrarMisDatos(d){
 	}
 }
 function limpiarcamposbuscarusuarios(){
-		document.getElementById('inptBuscarUsuario1').value=""
-	    document.getElementById('inptBuscarUsuario2').value=""
-	   document.getElementById('inptBuscarUsuario3').value=""
-	   document.getElementById('table_abm_usuarios').innerHTML=""
+		if(document.getElementById('inptBuscarUsuario1')) document.getElementById('inptBuscarUsuario1').value=""
+	    if(document.getElementById('inptBuscarUsuario2')) document.getElementById('inptBuscarUsuario2').value=""
+	   if(document.getElementById('inptBuscarUsuario3')) document.getElementById('inptBuscarUsuario3').value=""
+	   if(document.getElementById('inptBuscarFuncionarioUniversal')) document.getElementById('inptBuscarFuncionarioUniversal').value=""
+	   if(document.getElementById('table_abm_usuarios')) document.getElementById('table_abm_usuarios').innerHTML=""
+	   funcionariosDirectorioCache = [];
+	   funcionarioSeleccionadoCache = null;
+	   filtrarDirectorioFuncionarios();
+	   actualizarPanelRapidoFuncionario(null);
 }
 function minimizarusuarios(){
 document.getElementById("tdEfectoAbmUsuario").className="magictime slideDown"
@@ -1149,6 +1858,7 @@ function verCerrarVentanaAbmUsuarios(d, l) {
 		}
 		document.getElementById('divAbmUsuario1').style.display = "none"
 		$("div[id=divAbmUsuario2]").fadeIn(250)
+		mostrarFormularioFuncionario()
 	} else {
 		$("div[id=divAbmUsuario1]").fadeIn(250)
 		document.getElementById('divAbmUsuario2').style.display = "none"
@@ -1175,6 +1885,10 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptNroTelefUsuario').value = $(datostr).children('td[id="td_datos_8"]').html();
 	document.getElementById('inptClaveAcceso').value = $(datostr).children('td[id="td_datos_3"]').html();
 	document.getElementById('inptContrasenhaUser').value = $(datostr).children('td[id="td_datos_4"]').html();
+	if (document.getElementById('inptContrasenhaUserTemporal')) {
+		document.getElementById('inptContrasenhaUserTemporal').value = "";
+		document.getElementById('inptContrasenhaUserTemporal').style.display = "none";
+	}
 	document.getElementById('inptAccesoUser').value = $(datostr).children('td[id="td_datos_6"]').html();
 	document.getElementById('inptEstadoUser').value = $(datostr).children('td[id="td_datos_5"]').html();
 	document.getElementById('inptlocaluser').value = $(datostr).children('td[id="td_datos_7"]').html();
@@ -1196,6 +1910,14 @@ function obtenerdatosabmusuario(datostr) {
     document.getElementById('btnAbmUsuario').value = "Editar datos";
 
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
+	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
+		if (String(funcionariosDirectorioCache[i].cod_usuario) == String(idAbmUsuario)) {
+			funcionarioSeleccionadoCache = funcionariosDirectorioCache[i];
+			actualizarPanelRapidoFuncionario(funcionarioSeleccionadoCache);
+			actualizarFichaFuncionario(funcionarioSeleccionadoCache);
+			break;
+		}
+	}
 }
 
 function obtenerOpcionesDiaHorarioUsuario(diaSeleccionado) {
@@ -1361,6 +2083,11 @@ function verificarcamposusuario() {
 	var inptNroTelefUsuario = document.getElementById('inptNroTelefUsuario').value
 	var inptClaveAcceso = document.getElementById('inptClaveAcceso').value
 	var inptContrasenhaUser = document.getElementById('inptContrasenhaUser').value
+	var inptContrasenhaUserTemporal = document.getElementById('inptContrasenhaUserTemporal') ? document.getElementById('inptContrasenhaUserTemporal').value : "";
+	if (inptContrasenhaUserTemporal != "") {
+		inptContrasenhaUser = inptContrasenhaUserTemporal;
+		document.getElementById('inptContrasenhaUser').value = inptContrasenhaUserTemporal;
+	}
 	var inptAccesoUser = document.getElementById('inptAccesoUser').value
 	var inptEstadoUser = document.getElementById('inptEstadoUser').value
 	var inptlocaluser = document.getElementById('inptlocaluser').value
@@ -1387,17 +2114,17 @@ function verificarcamposusuario() {
 		ver_vetana_informativa("FALTO INGRESAR LA CLAVE DE ACCESO")
 		return false;
 	}
-	if (inptContrasenhaUser == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CONTRASEÑA")
+	if (inptContrasenhaUser == "" && idAbmUsuario == "") {
+		ver_vetana_informativa("FALTO INGRESAR UNA CLAVE TEMPORAL")
 		return false;
 	}
 	var accion = "";
 	if (idAbmUsuario != "") {
 		accion = "editar";
-		if(controlacceso("INSERTARLISTADOUSUARIO","accion")==false){return;}
+		if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
 	} else {
 		accion = "nuevo";
-		if(controlacceso("EDITARLISTADOUSUARIO","accion")==false){return;}
+		if(controlacceso("INSERTARLISTADOUSUARIO","accion")==false){return;}
 	}
 	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,horariosUsuario,idAbmUsuario, accion);
 }
@@ -1498,9 +2225,6 @@ function AbmEditarMisDatos() {
 		ver_vetana_informativa("EL USUARIO NO PUEDE QUEDAR VACÍO")
 	}
 	var pass=document.getElementById("inptPassMisDatos").value;
-	if(pass==""){
-		ver_vetana_informativa("EL CONTRASEÑA NO PUEDE QUEDAR VACÍO")
-	}
 	const telefono_referencia= document.getElementById("inptContactoReferenciaMisDatos").value;
 	const telefono= document.getElementById("inptTelefonoMisDatos").value;
 	const cedula= document.getElementById("inptCedulaMisDatos").value;
@@ -1573,6 +2297,15 @@ function AbmEditarMisDatos() {
 		if (Respuesta == true) {	
 		document.getElementById("inptUserMisDatos").value;
 	document.getElementById("inptPassMisDatos").value;	
+					datosPerfilUsuarioActual.nombre_persona = nombre;
+					datosPerfilUsuarioActual.rut_usuario = cedula;
+					datosPerfilUsuarioActual.telefono = telefono;
+					datosPerfilUsuarioActual.direccion = direccion;
+					datosPerfilUsuarioActual.telefono_referencia = telefono_referencia;
+					datosPerfilUsuarioActual.login = user;
+					actualizarEstadoPerfilUsuarioActual();
+					document.getElementById("inptPassMisDatos").value = "";
+					document.getElementById("inptPassMisDatos").style.display = "none";
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")					
 					}
 
@@ -1656,10 +2389,16 @@ function cargarUsuariosMencionesInterConsulta(callback) {
 }
 function buscarabmusuario() {
 	if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
-	var codigo = document.getElementById('inptBuscarUsuario1').value
-	var documento = document.getElementById('inptBuscarUsuario2').value
-	var usuario = document.getElementById('inptBuscarUsuario3').value
-	var local = document.getElementById('inptBuscarUsuario4').value
+	sincronizarFiltroLocalFuncionarios();
+	var codigo = document.getElementById('inptBuscarUsuario1') ? document.getElementById('inptBuscarUsuario1').value : ""
+	var documento = document.getElementById('inptBuscarUsuario2') ? document.getElementById('inptBuscarUsuario2').value : ""
+	var usuario = document.getElementById('inptBuscarUsuario3') ? document.getElementById('inptBuscarUsuario3').value : ""
+	var local = document.getElementById('inptBuscarUsuario4') ? document.getElementById('inptBuscarUsuario4').value : ""
+	if (document.getElementById("inptBuscarFuncionarioUniversal")) {
+		codigo = "";
+		documento = "";
+		usuario = "";
+	}
 	if(document.getElementById('inptSeleccEstadoBuscarUser1').checked==true){
 		estado='Activo'
 	}else{
@@ -1726,6 +2465,14 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("table_abm_usuarios").innerHTML = datos_buscados
 					document.getElementById("inptUsuariosInterConsulta").innerHTML = "<option value=''>Todos</option>"+datos[5];
 					document.getElementById("inptUsuarioResponsableInventarioInsumo").innerHTML = "<option value=''>Seleccionar</option>"+datos[5];
+					funcionariosDirectorioCache = Array.isArray(datos[4]) ? datos[4] : [];
+					sincronizarOpcionesFiltroLocalFuncionarios();
+					cargarOpcionesDirectorioFuncionarios(funcionariosDirectorioCache);
+					filtrarDirectorioFuncionarios();
+					if (funcionariosDirectorioCache.length == 0) {
+						funcionarioSeleccionadoCache = null;
+						actualizarPanelRapidoFuncionario(null);
+					}
 					if (typeof sincronizarOpcionesRapidasInterConsulta == "function") {
 						sincronizarOpcionesRapidasInterConsulta();
 					}
@@ -1752,6 +2499,10 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptNroTelefUsuario').value = ""
 	document.getElementById('inptClaveAcceso').value = ""
 	document.getElementById('inptContrasenhaUser').value = ""
+	if (document.getElementById('inptContrasenhaUserTemporal')) {
+		document.getElementById('inptContrasenhaUserTemporal').value = "";
+		document.getElementById('inptContrasenhaUserTemporal').style.display = "none";
+	}
 	document.getElementById('inptRegistroSeleccUser').value = ""
 	
 	limpiarHorariosUsuario();
@@ -1772,6 +2523,7 @@ function limpiarcamposusuarios() {
 	document.getElementById('divTableHistorialPersonasUsuarios').innerHTML="";
 	idAbmUsuario = "";
 	seleccionarLocalUSer()
+	mostrarFormularioFuncionario()
 }
 
 function buscarHistorialUsuariosAnteriores(cod_usuario) {
@@ -8728,7 +9480,6 @@ function abmzonas(nombre, estado, idzona, encargado , accion) {
         }, false);
         return xhr;
     },
-		
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
@@ -11098,6 +11849,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptLocalInventarioInsumo").innerHTML = "<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptlocalProducto").innerHTML = datos_buscados
 					document.getElementById("inptBuscarUsuario4").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+					sincronizarOpcionesFiltroLocalFuncionarios();
 					document.getElementById("inptlocalVenta").innerHTML = datos_buscados
 					document.getElementById("inptlocalAperturaCierre").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptlocalCaja").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
@@ -11248,6 +12000,9 @@ function seleccionarLocalUSer(){
 		
 		document.getElementById("inptLocalAgendaFiltro").value = cod_localFKUSer
 		document.getElementById("inptBuscarUsuario4").value = cod_localFKUSer
+		if (document.getElementById("inptFiltroFuncionarioLocal")) {
+			document.getElementById("inptFiltroFuncionarioLocal").value = cod_localFKUSer
+		}
 		document.getElementById("inptlocalVenta").value = cod_localFKUSer
 		document.getElementById("inptLocalMisDatos").value = cod_localFKUSer
 		document.getElementById("inptlocalAperturaCierre").value = cod_localFKUSer
@@ -11631,7 +12386,7 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptTotalVenta2').innerHTML = "0"
 	document.getElementById('inptTotalPagado').value = ""
  	document.getElementById("inptDescuentoVentaTerminar").value= "0";
-	document.getElementById('inptDeudaActual').value = ""
+	//document.getElementById('inptDeudaActual').value = ""
 	document.getElementById('inpCodVentaPagos').value = ""
 	document.getElementById('inptTotalVentaPagos').value = ""
 	document.getElementById('inptNroCuotasPagos').value = ""
@@ -11679,6 +12434,7 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptComisionVentaCobrador').value = "0"
 	document.getElementById('inptGaranteVenta').value = "SIN GARANTE";
 	document.getElementById("inptEntregaConfCredito").value ="0"
+	document.getElementById("inptNroComprobanteConfCredito").value =""
 	document.getElementById("inptConfirmarPagoEntrega").value ="SI"
 	document.getElementById("btnFinalizarVenta").style.display="none"
 	document.getElementById("btnCancelarVenta").style.display="none"
@@ -13172,6 +13928,7 @@ function crearcreditodesdeventa() {
 	var inptInteresConfCredito = document.getElementById('inptInteresConfCredito').value
 	var inptDiasConfCredito = document.getElementById('inptDiasConfCredito').value
 	var inptEntregaConfCredito = document.getElementById('inptEntregaConfCredito').value
+	var inptNroComprobanteConfCredito = document.getElementById('inptNroComprobanteConfCredito').value
 	var inptConfirmarPagoEntrega = document.getElementById('inptConfirmarPagoEntrega').value
 	if (inptTotalPagado > 0) {
 	return false;
@@ -13215,9 +13972,9 @@ function crearcreditodesdeventa() {
 		verificarcamposdetallesventacredito()
 		return
 	}
-    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, idFkVendedor1, idabmVenta);
+    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, inptNroComprobanteConfCredito, idFkVendedor1, idabmVenta);
 }
-function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, cod_vendedorFK, cod_venta) {
+function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, nro_comprobante, cod_vendedorFK, cod_venta) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -13233,6 +13990,7 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 	datos.append("dias", dias)
 	datos.append("interes", interes)
 	datos.append("entrega", entrega)
+	datos.append("nro_comprobante", nro_comprobante)
 	datos.append("pagoentrega", pagoentrega)
 	datos.append("idGaranteFk", idGaranteFk)
 	datos.append("cod_vendedorFK", cod_vendedorFK)
@@ -13299,7 +14057,14 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 					document.getElementById("inptConfirmarNroFactura").value = document.getElementById("inptNroVenta").value	
 					//totalesRecibo = datos[23]
 					InteresRecibo = datos[24]
-					DeudaActualRecibo = datos[25]
+					var deudaGeneradaCredito = (datos[25] != undefined && datos[25] != "") ? datos[25] : "0";
+					DeudaActualRecibo = deudaGeneradaCredito
+					if (document.getElementById("inptDeudaActual") != null) {
+						document.getElementById("inptDeudaActual").value = deudaGeneradaCredito
+					}
+					if (document.getElementById("inptTotalDeudaPago") != null) {
+						document.getElementById("inptTotalDeudaPago").value = deudaGeneradaCredito
+					}
 					DiasAtrasado = datos[26]
 					CuotasRestante = datos[28]
 					if(datos[27]!="0"){
@@ -13380,9 +14145,12 @@ function vercerrarOpcionesImpresion(mostrar) {
 		$("div[id=divOpcionesImpresion]").fadeIn(250)
 	} else {
 		$("div[id=divOpcionesImpresion]").fadeOut(250);
-		limpiarCamposAnhadirPagos()
-		limpiarcamposventa()
 	}
+}
+function cerrarPostVentaYLimpiar() {
+	vercerrarOpcionesImpresion(false);
+	limpiarCamposAnhadirPagos()
+	limpiarcamposventa()
 }
 function vercerrarConfirmarNroFactura(d) {
 	
@@ -13442,7 +14210,6 @@ function ActualizarNroFacturaVenta() {
         }, false);
         return xhr;
     },
-		
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
@@ -13477,7 +14244,32 @@ ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE")
 }
 
 
+var bloqueoTemporalVerificarVenta = false;
+function bloquearTemporalBotonVenta(bloquear) {
+	var boton = document.getElementById('btnAbmVenta');
+	if (boton == null) {
+		return;
+	}
+	boton.disabled = bloquear;
+	if (bloquear) {
+		boton.setAttribute('data-texto-original', boton.value);
+		boton.value = "Guardando...";
+		boton.style.opacity = "0.6";
+		boton.style.cursor = "wait";
+	} else {
+		var textoOriginal = boton.getAttribute('data-texto-original');
+		if (textoOriginal != null && boton.value == "Guardando...") {
+			boton.value = textoOriginal;
+		}
+		boton.style.opacity = "";
+		boton.style.cursor = "";
+	}
+}
+
 function verificarcamposventa() {
+	if (bloqueoTemporalVerificarVenta) {
+		return false;
+	}
 	var inptFechaVenta = document.getElementById('inptFechaVenta').value
 	var inptClienteVenta = document.getElementById('inptClienteVenta').value
 	var inptSeleccTipoVenta = document.getElementById('inptSeleccTipoVenta').value
@@ -13520,6 +14312,8 @@ var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComp
 		accion = "nuevo";
 		if(controlacceso("INSERTARVENTA","accion")==false){return;}
 	}
+	bloqueoTemporalVerificarVenta = true;
+	bloquearTemporalBotonVenta(true);
 	abmventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,idGaranteFk,inptFechaVenta, inptSeleccTipoVenta, inpCodVenta, idFkCliente, idFkCobrador, idabmVenta, "Corrido", idFkVendedor1, idFkVendedor2, inptComisionVentaCobrador, inptlocalVenta, accion);
 }
 function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta, TipoVenta, num_factura, cod_clienteFK, cod_cobradorFK, cod_venta, TipoPago, idFkVendedor1, idFkVendedor2, comision, cod_local, accion) {
@@ -13612,6 +14406,15 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 		}
 	});
 
+	OpAjax.fail(function (jqXHR, textstatus, errorThrowm) {
+		verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventa")
+	});
+
+	OpAjax.always(function () {
+		bloqueoTemporalVerificarVenta = false;
+		bloquearTemporalBotonVenta(false);
+	});
 
 }
 var ventanaAnteriorHistorialVenta= "";
@@ -14151,9 +14954,6 @@ function vercerrarpagos(d,c) {
 		buscarcreditos()
 	} else {
 		console.error(c)
-if(c=="0"){			
-			limpiarcamposventa()
-		}		
 		document.getElementById("tdEfectoOpcionesPagos").className="magictime slideRight"
 		$("div[id=divAbmOpcionesPagos]").fadeOut(500)
 	}
@@ -14295,10 +15095,12 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			   if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					paginaExtractoCuota = datos[12];
+					var deudaTotalCuenta = datos[4];
+					var deudaActualPago = (datos[17] != undefined && datos[17] != "") ? datos[17] : deudaTotalCuenta;
 					document.getElementById("table_abm_opciones_pago").innerHTML = datos_buscados
 					document.getElementById("inptTotalPagado").value = datos[3]
 					document.getElementById("inptTotalPagadoOpcionesPago").value = datos[3]
-					document.getElementById("inptDeudaActual").value = datos[4]
+					document.getElementById("inptDeudaActual").value = deudaTotalCuenta
 					document.getElementById('inptInteresPagoOpciones').value = datos[5]
 					document.getElementById('inptTotalInteres').value = datos[7]
 					document.getElementById('inptDiasAtrazadoCargarPago').value = datos[8]
@@ -14308,7 +15110,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById('inptCuotasAtrazadoCargarPago').value = datos[14]
 					document.getElementById('inptTotalinteresPago').value = datos[18]
 					document.getElementById('inptSubtotalPago').value = datos[13]
-					document.getElementById('inptTotalDeudaPago').value = datos[17]
+					document.getElementById('inptTotalDeudaPago').value = deudaActualPago
 					document.getElementById('inptDescuentoCargaPago').value = 0
 					document.getElementById('inptMontoCargaPago').value = 0
 					
@@ -14325,7 +15127,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					
 					ImportePagare = datos[3]
 					InteresRecibo=datos[19]
-					DeudaActualRecibo=datos[17]
+					DeudaActualRecibo=deudaActualPago
 					TotalDescuentoRecibo=datos[11]	
 					
 					if(datos[3]>0){
@@ -15212,7 +16014,10 @@ function verCerrarCargarPago(d) {
 		document.getElementById('inptFechaPagoCargarPago').value = f.getFullYear() + "-" + mes + "-" + dia;
 	cambiarCobradorCodEnPagos()	
 	
-	var DeudaActualAPagar = document.getElementById('inptDeudaActual').value
+	var DeudaActualAPagar = document.getElementById('inptTotalDeudaPago').value
+	if (DeudaActualAPagar == "" || DeudaActualAPagar == "0") {
+		DeudaActualAPagar = document.getElementById('inptDeudaActual').value
+	}
 	
 	document.getElementById('inptDeudaActualCargaPago').value= DeudaActualAPagar;
 	
