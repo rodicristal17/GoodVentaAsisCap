@@ -20,7 +20,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
+<<<<<<< HEAD
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ficha-clinica-prioridad-consultas-20260605" />
+=======
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=vista-cliente-compacto-20260605" />
+>>>>>>> 27aa10b74ac7d04ba312b5d2f601b27e3faa4e24
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -69,7 +73,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
 <script src="../js_system/abmRecetarioIndicaciones.js?x=20260605-recetario-historial-grupos"></script>
 <script src="../js_system/abmPresupuesto.js"></script>
-<script src="../js_system/abmCliente.js"></script>
+<script src="../js_system/abmCliente.js?x=vista-cliente-sin-width-20260605"></script>
 <script src="../js_system/abmInformacionProtocolo.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
@@ -12755,6 +12759,15 @@ onkeyup='calcular_cuota_desde_venta()' />
 </td>
 </tr>
 </table>
+<table style='width:100%'>
+<tr>
+<td style='width:100%'>
+<p class='pTituloC' >Nro comprobante :</p>
+<input class='inputText' type='text' id='inptNroComprobanteConfCredito'
+style='width: 220px;' />
+</td>
+</tr>
+</table>
 <p style='display:none' class='pTituloC'>Total</p>
 <input class='inputTextDisable' type='text' id='inptTotalVentaConfCredito'
 style='width:130px;display:none' disabled="true" />
@@ -12946,7 +12959,7 @@ style='width:100px' placeholder='Obligatorio(*)' />
 <br>
 <center>
 <input type='button' value='Guardar' class='btn1'
-onclick='verificarcamposventa()' id='btnAbmVenta' />
+onclick='if(this.disabled){return false;} verificarcamposventa()' id='btnAbmVenta' />
 </center>
 <br>
 <br>
@@ -13086,7 +13099,7 @@ id='inptTotalVentaTerminar'/>
 <table style='width:100%'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloF_1'>Nro comprobante :</p>
+<p class='pTituloF_1'>Nro factura :</p>
 <input class='inputText1_2' type='text'
 id='inptNroComprobanteVentaTerminarEfectivo'/>
 </td>
@@ -16800,7 +16813,7 @@ onclick="ActualizarNroFacturaVenta()">
 </td>
 <td style='width:5%'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='vercerrarOpcionesImpresion(false)' />
+title='Cerrar Ventana' onclick='cerrarPostVentaYLimpiar()' />
 </td>
 </tr>
 </table>
@@ -25028,163 +25041,95 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 
 <div class='principal2' style='display:none' id='divVistaCliente'>
-<table style='width:100%;height:100%;' id='tdEfectoVistaCliente'>
-<tr>
-<td>
-<center>
-<div style='min-height:600px;width:1080px;display:' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Buscar  <b style='font-size: 30px;' >Cliente</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Nuevo Cliente'
-onclick='ventanaAnterior.push("listVista");limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/editar.png' class='iconoBtn'
-title='Editar Registro' onclick='EditarDatosClienteDesdeVenta()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='vercerrarvistacliente("","")' />
-</td>
-</tr>
-</table>
+  <table class='vista-cliente-shell' id='tdEfectoVistaCliente'>
+    <tr>
+      <td>
+        <div class='vista-cliente-modal'>
+          <header class='vista-cliente-header'>
+            <div>
+              <span class='vista-cliente-kicker'>Seleccion de cliente</span>
+              <h2>Buscar Cliente</h2>
+            </div>
+            <div class='vista-cliente-actions'>
+              <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Nuevo Cliente'
+                onclick='ventanaAnterior.push("listVista");limpiarcamposCliente();verCerrarVentanaAbmCliente(true, true,true);' />
+              <img src='/GoodVentaAsisCap/iconos/editar.png' class='iconoBtn'
+                title='Editar Registro' onclick='EditarDatosClienteDesdeVenta()' />
+              <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+                title='Cerrar Ventana' onclick='vercerrarvistacliente("","")' />
+            </div>
+          </header>
 
-<div  class='divMenuf' style='overflow:auto;'>
-<div class='divMenuFloat3' style='width:67%'>
+          <div class='vista-cliente-content'>
+            <section class='vista-cliente-panel vista-cliente-panel-main'>
+              <div class='vista-cliente-panel-head'>
+                <h3>Clientes</h3>
+                <input type='button' value='Buscar' class='btn5 vista-cliente-search-button' onclick='buscarvistacliente()'>
+              </div>
+              <div class='vista-cliente-filter-grid'>
+                <label>
+                  <span>DOC.</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente1'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+                <label>
+                  <span>RUC</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente2'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+                <label>
+                  <span>Cliente</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente3'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+                <label>
+                  <span>Nro. telef.</span>
+                  <input class='inputfiltro' type='text' id='inptBuscarVistaCliente4'
+                    onkeyup='if(event.keyCode == 13){buscarvistacliente()}' placeholder='Parecido a'>
+                </label>
+              </div>
+              <div class='vista-cliente-table-head'>
+                <span>Doc.</span>
+                <span>RUC</span>
+                <span>Cliente</span>
+                <span>Direccion</span>
+                <span>Nro. telef.</span>
+              </div>
+              <div class='div_cuerpo_table vista-cliente-results' id='table_vista_cliente'></div>
+            </section>
 
-<p class='pTituloRepor'>BUSCAR CLIENTES</p>
-<br>
-<div style="text-align: end;margin: 5px;">
-  <input type="button" value="Buscar" class="btn5" onclick="buscarvistacliente()">
-</div>
-<center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-DOC.
-</td>
-<td class="td_registro" style="width:10%;">
-RUC
-</td>
-<td class="td_registro" style="width:10%;">
-CLIENTE
-</td>
-<td class="td_registro" style="width:10%;">
-DIRECCION
-</td>
-<td class="td_registro" style="width:10%;">
-NRO. TELEF.
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente1"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente2"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente3"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-<td class="td_registro" style="width:10%;">
-</td>
-<td class="td_registro" style="width:10%;">
-<input class="inputfiltro" type="text"
-id="inptBuscarVistaCliente4"
-onkeyup="if(event.keyCode == 13){buscarvistacliente()}"
-placeholder="Parecido a">
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_vista_cliente" style='height:337px'>
-</div>
+            <aside class='vista-cliente-panel vista-cliente-expediente'>
+              <div class='vista-cliente-panel-head'>
+                <h3>Expediente</h3>
+              </div>
+              <div class='vista-cliente-account-block'>
+                <h4>Cuentas pagadas</h4>
+                <div class='vista-cliente-account-head'>
+                  <span>Factura</span>
+                  <span>Fecha</span>
+                  <span>D/A</span>
+                </div>
+                <div class='div_cuerpo_table vista-cliente-account-list' id='table_clientes_cuentas1'></div>
+              </div>
+              <div class='vista-cliente-account-block'>
+                <h4>Cuentas pendientes</h4>
+                <div class='vista-cliente-account-head'>
+                  <span>Factura</span>
+                  <span>Fecha</span>
+                  <span>D/A</span>
+                </div>
+                <div class='div_cuerpo_table vista-cliente-account-list' id='table_clientes_cuentas2'></div>
+              </div>
+            </aside>
+          </div>
 
-<br>
-</center>
-</div>
-<div class='divMenuFloat3' style='width:27%'>
-<p class='pTituloRepor'>EXPEDIENTE DEL CLIENTE</p>
-<BR>
-<p class='pTituloC'>Cuentas Pagados</p>
-<BR>
-<center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:40%;">
-FACTURA
-</td>
-<td class="td_registro" style="width:30%;">
-FECHA
-</td>
-<td class="td_registro" style="width:10%;">
-D/A
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_clientes_cuentas1" style='height:120px'>
-</div>
-<BR>
-<p class='pTituloC'>Cuentas Pendientes</p>
-<BR>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:40%;">
-FACTURA
-</td>
-<td class="td_registro" style="width:30%;">
-FECHA
-</td>
-<td class="td_registro" style="width:10%;">
-D/A
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_clientes_cuentas2" style='height:120px'>
-</div>
-
-<br>
-</center>
-</div>
-
-<input class='btn2' type='button' value=':: Seleccionar Registro ::' onclick='EnviarClienteDesde()' />
-</div>
-
-
-
-
-<br>
-<br>
-
-</div>
-
-
-</center>
-</td>
-</tr>
-</table>
+          <footer class='vista-cliente-footer'>
+            <input class='btn2 vista-cliente-select-button' type='button' value='Seleccionar registro' onclick='EnviarClienteDesde()' />
+          </footer>
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <div class='principal2' style='display:none' id='divAbmCliente'>
