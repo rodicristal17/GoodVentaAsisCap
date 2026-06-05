@@ -1,5 +1,6 @@
 <?php
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
@@ -118,6 +119,18 @@ $stmt2->bind_param($ss,$rut_proveedor,$estado,$user,$fecha_inser_edit);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'proveedor',
+		'cod_proveedor',
+		$cod_persona,
+		'Solicitud de eliminacion de proveedor.',
+		$user,
+		'Proveedor: '.$nombre_persona
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update persona set nombre_persona=?,direccion=?,telefono=?,email=? where cod_persona=?";	
 $stmt1 = $mysqli->prepare($consulta1);

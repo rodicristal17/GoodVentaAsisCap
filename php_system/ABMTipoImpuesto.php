@@ -6,6 +6,7 @@ $funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
@@ -123,6 +124,20 @@ if($valor==1)
 	}
 	if($funt=="editar")
 	{
+		if (solicitudEliminadoEsEstadoInactivo($Estado)) {
+			$user = solicitudEliminadoValorPost('useru', '0');
+			$respuesta = registrarSolicitudEliminacionGenerica(
+				'impuesto',
+				'cod_Impuesto',
+				$cod_Impuesto,
+				'Solicitud de eliminacion de impuesto.',
+				$user,
+				'Impuesto: '.$descripcion,
+				'Estado'
+			);
+			echo json_encode($respuesta);
+			exit;
+		}
         
         
     

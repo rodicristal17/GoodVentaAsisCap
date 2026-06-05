@@ -4,6 +4,7 @@ $funt = mb_convert_encoding((string)($funt), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include('quitarseparadormiles.php');
@@ -163,6 +164,19 @@ if($valor>0)
 	
 	if($funt=="editar")
 	{
+		if (solicitudEliminadoEsEstadoInactivo($estado)) {
+			$user = solicitudEliminadoValorPost('useru', '0');
+			$respuesta = registrarSolicitudEliminacionGenerica(
+				'listado_niveles',
+				'cod_niveles',
+				$cod_niveles,
+				'Solicitud de eliminacion de nivel.',
+				$user,
+				'Nivel: '.$nombre
+			);
+			echo json_encode($respuesta);
+			exit;
+		}
         
     $consulta="Update listado_niveles set nombre=upper(?),  estado=?  where cod_niveles=?";	
 	$stmt = $mysqli->prepare($consulta);
@@ -210,6 +224,7 @@ if ( ! $stmt->execute() ) {
 	exit;
 }
 
+sincronizarAccesoUsuariosNivel($mysqli, $iddetallesniveles, $acciones);
 
     mysqli_close($mysqli); 
 
@@ -217,6 +232,61 @@ if ( ! $stmt->execute() ) {
     echo json_encode($informacion);	
     exit;
 	
+}
+
+function sincronizarAccesoUsuariosNivel($mysqli, $iddetallesniveles, $acciones)
+{
+	$sqlDatos = "SELECT cod_nivelesfk, idlistadodeacceso FROM detallesniveles WHERE iddetallesniveles = ? LIMIT 1";
+	$stmtDatos = $mysqli->prepare($sqlDatos);
+	if (!$stmtDatos) {
+		return;
+	}
+	$s='s';
+	$stmtDatos->bind_param($s,$iddetallesniveles);
+	if (!$stmtDatos->execute()) {
+		$stmtDatos->close();
+		return;
+	}
+	$result = $stmtDatos->get_result();
+	$row = $result->fetch_assoc();
+	$stmtDatos->close();
+	if (!$row) {
+		return;
+	}
+
+	$codNiveles = $row['cod_nivelesfk'];
+	$idListadoAcceso = $row['idlistadodeacceso'];
+
+	$sqlUpdate = "UPDATE accesosuser acus
+		INNER JOIN usuario us ON us.cod_usuario = acus.usuarios_idusario
+		SET acus.accion = ?
+		WHERE us.Acceso = ?
+			AND acus.idlistadodeaccesoFK = ?
+			AND acus.tipo = 'Administrativo'";
+	$stmtUpdate = $mysqli->prepare($sqlUpdate);
+	if ($stmtUpdate) {
+		$sss='sss';
+		$stmtUpdate->bind_param($sss,$acciones,$codNiveles,$idListadoAcceso);
+		$stmtUpdate->execute();
+		$stmtUpdate->close();
+	}
+
+	$sqlInsert = "INSERT INTO accesosuser (idlistadodeaccesoFK, tipo, usuarios_idusario, accion)
+		SELECT ?, 'Administrativo', us.cod_usuario, ?
+		FROM usuario us
+		LEFT JOIN accesosuser acus ON acus.idlistadodeaccesoFK = ?
+			AND acus.tipo = 'Administrativo'
+			AND acus.usuarios_idusario = us.cod_usuario
+		WHERE us.Acceso = ?
+			AND us.estado = 'Activo'
+			AND acus.idaccesosUser IS NULL";
+	$stmtInsert = $mysqli->prepare($sqlInsert);
+	if ($stmtInsert) {
+		$ssss='ssss';
+		$stmtInsert->bind_param($ssss,$idListadoAcceso,$acciones,$idListadoAcceso,$codNiveles);
+		$stmtInsert->execute();
+		$stmtInsert->close();
+	}
 }
 
 
@@ -323,10 +393,10 @@ $totales=0;
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
  $totalresouesta= $valor;
- $styleName="tableRegistroSearch";
- 
  if ($valor>0)
  {
+	  $pagina.="<table class='lista-niveles-main-table'>
+	  <tbody>";
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		  
@@ -335,21 +405,26 @@ $totales=0;
 		      $cod_niveles=$valor['cod_niveles'];
 		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
 		  	  $estado=mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		  	  $nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+		  	  $estadoSeguro=htmlspecialchars($estado, ENT_QUOTES, 'UTF-8');
+		  	  $estadoClase=$estado=="Activo" ? "is-active" : "is-inactive";
 		  	
-		  	
-			  $styleName=CargarStyleTable($styleName);
-			  $pagina.="<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-			  <tr id='tbSelecRegistro' onclick='ObtenerdatosAbmListaNiveles(this)'>
+			  $pagina.="<tr id='tbSelecRegistro' class='lista-niveles-main-row ".$estadoClase."' onclick='ObtenerdatosAbmListaNiveles(this)'>
 			  <td id='td_id' style='display:none;'>".$cod_niveles."</td>
-			   <td  id='td_datos_1' style='width:60%' >".$nombre."</td>
-			  <td  id='td_datos_2' style='display:none' >".$estado."</td>
-			  </tr>
-			  </table>";
+			  <td id='td_datos_1' style='display:none;'>".$nombreSeguro."</td>
+			  <td id='td_datos_2' style='display:none;'>".$estadoSeguro."</td>
+			  <td class='lista-niveles-main-info'>
+			  <span class='lista-niveles-main-name'>".$nombreSeguro."</span>
+			  <span class='lista-niveles-main-meta'>Nivel administrativo #".$cod_niveles."</span>
+			  </td>
+			  <td class='lista-niveles-main-state'><span class='lista-niveles-state-badge'>".$estadoSeguro."</span></td>
+			  </tr>";
 			    	 
 		  	
 			  
 			  
 	  }
+	  $pagina.="</tbody></table>";
 	  
  }
  
@@ -380,10 +455,11 @@ $controltitulo="";
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
  $totalresouesta= $valor;
- $styleName="tableRegistroSearch";
  
  if ($valor>0)
  {
+	  $pagina.="<table class='lista-niveles-acceso-table'>
+	  <tbody>";
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		  
@@ -396,30 +472,42 @@ $controltitulo="";
 		  	  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
 		  	  $accion=mb_convert_encoding((string)($valor['accion']), 'UTF-8', 'ISO-8859-1');
 		  	 
+			  $formularioSeguro=htmlspecialchars($formulario, ENT_QUOTES, 'UTF-8');
+			  $codigoSeguro=htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8');
+			  $nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+			  $nroSeguro=htmlspecialchars($nro, ENT_QUOTES, 'UTF-8');
+			  $estadoFila=$accion=="SI" ? "is-enabled" : "is-disabled";
+			  $checked=$accion=="SI" ? " checked" : "";
+			  $textoEstado=$accion=="SI" ? "Permitido" : "Bloqueado";
+			  $codigoHtml=$codigoSeguro!="" ? "<span class='lista-niveles-acceso-code'>".$codigoSeguro."</span>" : "";
+
 			   $tituloacceso="";
 			 if($controltitulo!=$formulario){
-				   $tituloacceso="<p class='ptituloZ'>".$formulario."</p>";
+				   $tituloacceso="<tr class='lista-niveles-acceso-group'>
+				   <th colspan='2'>".$formularioSeguro."</th>
+				   </tr>";
 				   $controltitulo=$formulario;
 			 }
-		  	 $inputcheck="<input id='".$iddetallesniveles."' type='checkbox' onclick='abmaccesolistanivel(this)'  />";
-			 if($accion=="SI"){
-			$inputcheck="<input id='".$iddetallesniveles."' type='checkbox'  checked onclick='abmaccesolistanivel(this)' />";
-          		
-			 }
-			    	 
-$styleName=CargarStyleTable($styleName);		  	  
+		  	 $inputcheck="<label class='lista-niveles-switch'>
+		  	 <input id='".$iddetallesniveles."' type='checkbox'".$checked." onclick='abmaccesolistanivel(this)' />
+		  	 <span class='lista-niveles-switch-track'></span>
+		  	 <span class='lista-niveles-switch-text'>".$textoEstado."</span>
+		  	 </label>";
+			    	  	  	  
 $pagina.=$tituloacceso."
-<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
- <tr id='tbSelecRegistro' >
-<td  id='td_datos_7' style='width:70%;text-align:left;padding-left:10px' >".$nombre."</td>
-<td id='td_datos_2' style='width:20%'>".$inputcheck."</td>
-</tr>
-</table>";
+<tr id='tbSelecRegistro' class='lista-niveles-acceso-row ".$estadoFila."'>
+<td id='td_datos_7' class='lista-niveles-acceso-info'>
+<span class='lista-niveles-acceso-name'>".$nombreSeguro."</span>
+<span class='lista-niveles-acceso-meta'>Nro. ".$nroSeguro.$codigoHtml."</span>
+</td>
+<td id='td_datos_2' class='lista-niveles-acceso-action'>".$inputcheck."</td>
+</tr>";
 			    	 
 		  	
 			  
 			  
 	  }
+	  $pagina.="</tbody></table>";
 	  
  }
  

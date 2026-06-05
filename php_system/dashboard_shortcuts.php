@@ -128,6 +128,7 @@ function dashboard_permission_key($accessKey, $catalogPermission)
         'informe_comision_cobrador' => 'VERINFORMEDECOMISIONCOBRADOR',
         'informe_vendedores' => 'VERINFORMEDECOMISIONVENDEDOR',
         'informe_pagos_eliminados' => 'VERINFORMEDEPAGOSELIMINADOS',
+        'informe_solicitud_eliminado' => 'VERINFORMESOLICITUDELIMINADO',
         'catalogo' => 'VERCATALOGO',
         'clientes_inactivos' => 'VERCLIENTESINACTIVOS',
         'productos_despachados' => 'VERDESPACHADOS',

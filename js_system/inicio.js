@@ -217,24 +217,32 @@ window.onload = function () {
 	const limiteCaracteresMensaje = 750;
 	document.getElementById('inptContenidoAbmMensaje')
 		.addEventListener('keyup', function(e) {
-		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').textContent.length;
+		const editorMenciones = e.currentTarget;
+		contadorLongitudMensaje = editorMenciones.textContent.length;
 
 		// Actualizar el contador de pantalla
 		document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
 		
-		if (e.target.matches('p.mensaje-interconsulta')) {
-			const valor = e.target.textContent;
+		if (editorMenciones && editorMenciones.classList.contains('mensaje-interconsulta')) {
+			const valor = editorMenciones.textContent;
 			const match = valor.match(/@(\w*)$/); // detecta @ + texto
 			if (match) {
 				const textoBusqueda = match[1].toLowerCase();
+				const mostrarSugerenciasMenciones = function() {
+					const sugerencias = Object.entries(registroUsuariosInterconsulta)
+						.filter(([id, nombre]) => String(nombre || '').toLowerCase().includes(textoBusqueda));
+
+					mostrarOpcionesUsuariosMenciones(editorMenciones, sugerencias);
+					document.getElementById('dropdown-menciones').style.display= "";
+				};
+
+				if (Object.keys(registroUsuariosInterconsulta).length == 0) {
+					cargarUsuariosMencionesInterConsulta(mostrarSugerenciasMenciones);
+					return;
+				}
 				
 				// Filtrar usuarios
-				const sugerencias = Object.entries(registroUsuariosInterconsulta)
-					.filter(([id, nombre]) => nombre.toLowerCase().includes(textoBusqueda));
-					
-				// Aquí podrías renderizar un menú debajo del textarea
-				mostrarOpcionesUsuariosMenciones(e.target, sugerencias);
-				document.getElementById('dropdown-menciones').style.display= "";
+				mostrarSugerenciasMenciones();
 			} else {
 				// Ocultar menú cuando no hay @ al final
 				if (document.getElementById('dropdown-menciones')) {
@@ -479,6 +487,7 @@ function normalizarFotoUsuario(urlFoto) {
 function aplicarFotoUsuario(urlFoto) {
 	var foto = normalizarFotoUsuario(urlFoto);
 	var imgPerfil = document.getElementById("fotoPerfilUsuario");
+	var imgPerfilTopbar = document.getElementById("fotoPerfilUsuarioTopbar");
 	var imgMisDatos = document.getElementById("imgFotoPerfilMisDatos");
 	var imgAbmPerfil = document.getElementById("imgFotoPerfil1");
 
@@ -488,6 +497,14 @@ function aplicarFotoUsuario(urlFoto) {
 			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
 		};
 		imgPerfil.src = foto;
+	}
+
+	if (imgPerfilTopbar) {
+		imgPerfilTopbar.onerror = function () {
+			this.onerror = null;
+			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
+		};
+		imgPerfilTopbar.src = foto;
 	}
 
 	if (imgMisDatos) {
@@ -564,6 +581,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 					codEncargadoSolicitud = userid;
 					CodCobradorUser = datos["7"];
  accesosuser=datos["5"];
+ if (typeof actualizarVisibilidadSolicitudEliminado == "function") {
+	actualizarVisibilidadSolicitudEliminado();
+ }
  fotocliente3= normalizarFotoUsuario(datos["8"]);
       cajapredeterminada=buscar_datos_url_usuario('c');
 
@@ -580,6 +600,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 						document.getElementById("bNombreUser").innerHTML=nombre	
 						document.getElementById("inptNombreMisDatos").value=nombre;
 						document.getElementById("nombrePerfilUsuario").innerHTML=nombre;
+						document.getElementById("nombrePerfilUsuarioTopbar").innerHTML=nombre;
 						document.getElementById("inptCedulaMisDatos").value= datos["14"];
 						aplicarFotoUsuario(fotocliente3);
 						document.getElementById('inptTelefonoMisDatos').value= datos["9"];
@@ -1575,6 +1596,64 @@ function checkestadouser(d){
 }
 
 var registroUsuariosInterconsulta= {};
+var cargandoUsuariosMencionesInterConsulta= false;
+function cargarUsuariosMencionesInterConsulta(callback) {
+	if (Object.keys(registroUsuariosInterconsulta).length > 0) {
+		if (typeof callback == "function") {
+			callback();
+		}
+		return;
+	}
+
+	if (cargandoUsuariosMencionesInterConsulta) {
+		setTimeout(function() {
+			cargarUsuariosMencionesInterConsulta(callback);
+		}, 250);
+		return;
+	}
+
+	cargandoUsuariosMencionesInterConsulta= true;
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "buscarUsuariosMenciones");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				var Respuesta = respuestaJqueryAjax(datos["1"]);
+				if (Respuesta == true && Array.isArray(datos["2"])) {
+					registroUsuariosInterconsulta= {};
+					datos["2"].forEach(function(element) {
+						registroUsuariosInterconsulta[element.cod_usuario]= element.nombre_persona;
+					});
+					if (typeof callback == "function") {
+						callback();
+					}
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo= "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		},
+		complete: function() {
+			cargandoUsuariosMencionesInterConsulta= false;
+		}
+	});
+}
 function buscarabmusuario() {
 	if(controlacceso("BUSCARLISTADOUSUARIO","accion")==false){return;}
 	var codigo = document.getElementById('inptBuscarUsuario1').value
@@ -16460,10 +16539,6 @@ limpiarcamposhistorialventa()
 			return
 	}
 	
-	if(nro>0){
-		ver_vetana_informativa("NO PUEDES ELEMINAR ESTA VENTA POR QUE CUENTA CON UNO O VARIOS DETALLES","#")
-			return
-	}
 	var motivo=document.getElementById("inptSeleccMotivoEliminarVenta").value
 	if(motivo==""){
 		ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO","#")
@@ -20156,12 +20231,22 @@ function checkfiltrosCobrosRealizados(d){
 var cobradorarqueo = "";
 var idHistorialPago = "";
 var cod_ventaFKPago = "";
-function obtenerdatospagos(datostr) {
-	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
+function normalizarFilaPagoArqueo(fila, indice) {
+	var claseBase = fila.dataset.claseBaseArqueo;
+	if (!claseBase) {
+		claseBase = fila.classList.contains('tableRegistroSearch2') ? 'tableRegistroSearch2' : 'tableRegistroSearch';
+		fila.dataset.claseBaseArqueo = claseBase;
+	}
+	fila.classList.remove('tableRegistroSelec', 'tableRegistroSearch', 'tableRegistroSearch2');
+	fila.classList.add(claseBase || (indice % 2 == 0 ? 'tableRegistroSearch' : 'tableRegistroSearch2'));
+}
 
+function obtenerdatospagos(datostr) {
+	$("#divArqueo #table_arqeo tr[id=tbSelecRegistro]").each(function (i, td) {
+		normalizarFilaPagoArqueo(td, i);
 	});
-	datostr.className = 'tableRegistroSelec'
+	normalizarFilaPagoArqueo(datostr, 0);
+	datostr.classList.add('tableRegistroSelec');
 	idHistorialPago = $(datostr).children('td[id="td_datos_1"]').html();
 	cod_ventaFKPago = $(datostr).children('td[id="td_datos_10"]').html();
 		document.getElementById("btnEliminarCobros1").style.backgroundColor=" #e99277 "
@@ -23925,7 +24010,7 @@ Control de acceso
 */
 function controlacceso(frm,accion){
 	if (userid == '2') return true;
-	if(accesosuser[frm][accion]!= "SI"){
+	if(permisoAccesoUser(frm,accion)==false){
 		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER")
 		  return false;
 	}else{
@@ -23937,11 +24022,35 @@ function controlacceso(frm,accion){
 
 function controlacceso2(frm,accion){
 	if (userid == '2') return true;
-	if(accesosuser[frm][accion]!= "SI"){
+	if(permisoAccesoUser(frm,accion)==false){
 		return false;
 	}else{
 		return true;
 	}
+}
+
+function obtenerAccesoUser(frm){
+	if(typeof accesosuser === "undefined" || !accesosuser){
+		return null;
+	}
+	if(accesosuser[frm] != undefined){
+		return accesosuser[frm];
+	}
+	var codigoBuscado = String(frm).trim().toUpperCase();
+	for(var codigo in accesosuser){
+		if(Object.prototype.hasOwnProperty.call(accesosuser, codigo) && String(codigo).trim().toUpperCase() == codigoBuscado){
+			return accesosuser[codigo];
+		}
+	}
+	return null;
+}
+
+function permisoAccesoUser(frm,accion){
+	var acceso = obtenerAccesoUser(frm);
+	if(!acceso || acceso[accion] == undefined){
+		return false;
+	}
+	return String(acceso[accion]).trim().toUpperCase() == "SI";
 }
 
 /*
@@ -24045,6 +24154,10 @@ function iraenlances(d){
 
 
 
+function mostrarCargandoArqueo() {
+	document.getElementById("table_arqeo").innerHTML = "<tr class='arqueo-loading-row'><td colspan='12'>" + paginacargando + "</td></tr>";
+}
+
 function buscararqueo2() {
 var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 	var cliente = document.getElementById('inptBuscarCobrosRealizados1').value
@@ -24060,7 +24173,7 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 	var cedula = document.getElementById('inptBuscarCobrosRealizados7').value
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
    idHistorialPago = "";
-	document.getElementById("table_arqeo").innerHTML = paginacargando
+	mostrarCargandoArqueo()
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -24154,7 +24267,7 @@ function buscararqueo3() {
 
  idHistorialPago = "";
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
-	document.getElementById("table_arqeo").innerHTML = paginacargando
+	mostrarCargandoArqueo()
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -24384,7 +24497,7 @@ function verCerrarFrmListaAccesos(d){
 	if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 	
 	if(d=="1"){
-		
+	BuscarAbmListaAccesos();	
 	document.getElementById("divAbmListaAccesos").style.display="";
 document.getElementById("tdEfetoListaAcceso").className="magictime slideDownReturn"
 	
@@ -24402,30 +24515,31 @@ function LimpiarCamposListaAccesos(){
 	idAbmListaAccesos=""
 	nombreformulario=""
 	
-	document.getElementById("btnEditarNombreAcceso").style.backgroundColor="#b5f5b7"
-     document.getElementById("btnEditarNombreFormulario").style.backgroundColor="#b5f5b7"
+	$("#btnEditarNombreAcceso, #btnEditarNombreFormulario").removeClass("is-ready")
 }
 function LimpiarCamposBusquedaListaAccesos(){
 	document.getElementById("inptBuscarListaAccesos1").value=""
 	document.getElementById("divBuscadorListaAccesos").innerHTML=""
+	if(document.getElementById("lblNroRegistroListaAccesos")){
+		document.getElementById("lblNroRegistroListaAccesos").innerHTML="0 accesos"
+	}
 	
 }
 function ObtenerdatosAbmListaAccesos(datostr) {
 
 
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
+		$(td).removeClass("tableRegistroSelec")
 
 	});
 		
-	datostr.className = 'tableRegistroSelec'
+	$(datostr).addClass("tableRegistroSelec")
 	idAbmListaAccesos = $(datostr).children('td[id="td_id"]').html();
-	document.getElementById('inptRegistroSeleccionadoListadoAcceso').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptRegistroSeleccionadoFormListadoAcceso').value = $(datostr).children('td[id="td_datos_2"]').html();
-	nombreformulario = $(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById('inptRegistroSeleccionadoListadoAcceso').value = $(datostr).children('td[id="td_datos_1"]').text();
+	document.getElementById('inptRegistroSeleccionadoFormListadoAcceso').value = $(datostr).children('td[id="td_datos_2"]').text();
+	nombreformulario = $(datostr).children('td[id="td_datos_2"]').text();
 
-     document.getElementById("btnEditarNombreAcceso").style.backgroundColor="#4CAF50"
-     document.getElementById("btnEditarNombreFormulario").style.backgroundColor="#4CAF50"
+     $("#btnEditarNombreAcceso, #btnEditarNombreFormulario").addClass("is-ready")
 
 
 
@@ -24681,6 +24795,9 @@ function BuscarAbmListaAccesos() {
 if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 	var nombre = document.getElementById('inptBuscarListaAccesos1').value
 	document.getElementById("divBuscadorListaAccesos").innerHTML = paginacargando
+	if(document.getElementById("lblNroRegistroListaAccesos")){
+		document.getElementById("lblNroRegistroListaAccesos").innerHTML="Buscando..."
+	}
 
 	obtener_datos_user();
 	var datos = {
@@ -24723,6 +24840,9 @@ if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("divBuscadorListaAccesos").innerHTML = ''
+			if(document.getElementById("lblNroRegistroListaAccesos")){
+				document.getElementById("lblNroRegistroListaAccesos").innerHTML="0 accesos"
+			}
 			
 		},
 		success: function (responseText) {
@@ -24739,6 +24859,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 					var datos_buscados = datos[2];
 					document.getElementById("divBuscadorListaAccesos").innerHTML = datos_buscados					
+					if(document.getElementById("lblNroRegistroListaAccesos")){
+						var totalRegistros = datos[3] || 0
+						document.getElementById("lblNroRegistroListaAccesos").innerHTML = totalRegistros + (totalRegistros == 1 ? " acceso" : " accesos")
+					}
                   
 				  
 					if(datos_buscados==""){
@@ -24896,7 +25020,7 @@ function verCerrarFrmListaNiveles(d){
 	if(controlacceso("VERLISTADODENIVELES","accion")==false){return;}
 	
 	if(d=="1"){
-	
+	BuscarAbmListaNiveles()
 	document.getElementById("divAbmListaNiveles").style.display="";
 document.getElementById("tdEfectoListaNiveles").className="magictime slideDownReturn"
 	
@@ -24942,21 +25066,21 @@ function LimpiarCamposListaNiveles(){
 function LimpiarCamposBusquedaListaNiveles(){
 	document.getElementById("inptBuscarListaNiveles1").value=""
 	document.getElementById("divBuscadorListaNiveles").innerHTML=""
-	document.getElementById("lblNroRegistroListaNiveles").innerHTML=""
+	document.getElementById("lblNroRegistroListaNiveles").innerHTML="0 niveles"
 }
 function ObtenerdatosAbmListaNiveles(datostr) {
 
 
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
+		$(td).removeClass("tableRegistroSelec")
 
 	});
 		
-	datostr.className = 'tableRegistroSelec'
-	idAbmListaNiveles = $(datostr).children('td[id="td_id"]').html();
-	document.getElementById('inptRegistroSeleccionadoListaNiveles').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptNombreListaNiveles').value = $(datostr).children('td[id="td_datos_1"]').html();
-	document.getElementById('inptEstadoListaNiveles').value = $(datostr).children('td[id="td_datos_2"]').html();
+	$(datostr).addClass("tableRegistroSelec")
+	idAbmListaNiveles = $(datostr).children('td[id="td_id"]').text();
+	document.getElementById('inptRegistroSeleccionadoListaNiveles').value = $(datostr).children('td[id="td_datos_1"]').text();
+	document.getElementById('inptNombreListaNiveles').value = $(datostr).children('td[id="td_datos_1"]').text();
+	document.getElementById('inptEstadoListaNiveles').value = $(datostr).children('td[id="td_datos_2"]').text();
      document.getElementById("btnEditarDatosListaNiveles").style.backgroundColor='#4CAF50'
      document.getElementById("btnEliminarDatosListaNiveles").style.backgroundColor='red'
      document.getElementById("btnDetallesDatosListaNiveles").style.backgroundColor='#40a7fb'
@@ -25080,6 +25204,12 @@ function checkestadoListadoAcceso(d){
 	document.getElementById('inptSeleccEstadoListadoAcceso1').checked=false
 	document.getElementById('inptSeleccEstadoListadoAcceso2').checked=true
 	}
+	$(".lista-niveles-status-option").removeClass("is-selected")
+	if(d=="1"){
+		$("#inptSeleccEstadoListadoAcceso1").closest(".lista-niveles-status-option").addClass("is-selected")
+	}else{
+		$("#inptSeleccEstadoListadoAcceso2").closest(".lista-niveles-status-option").addClass("is-selected")
+	}
 }
 function BuscarAbmListaNiveles() {
 	if(controlacceso("VERLISTADODENIVELES","accion")==false){return;}
@@ -25091,6 +25221,9 @@ function BuscarAbmListaNiveles() {
 		estado = "Inactivo"
 	}
 	document.getElementById("divBuscadorListaNiveles").innerHTML = paginacargando
+	if (document.getElementById("lblNroRegistroListaNiveles")) {
+		document.getElementById("lblNroRegistroListaNiveles").innerHTML = "Buscando..."
+	}
   
 	obtener_datos_user();
 	var datos = {
@@ -25134,6 +25267,9 @@ function BuscarAbmListaNiveles() {
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("divBuscadorListaNiveles").innerHTML = ''
+			if (document.getElementById("lblNroRegistroListaNiveles")) {
+				document.getElementById("lblNroRegistroListaNiveles").innerHTML = "0 niveles"
+			}
 		
 		},
 		success: function (responseText) {
@@ -25148,7 +25284,11 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 		       if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("divBuscadorListaNiveles").innerHTML = datos_buscados					
+					var totalRegistros = datos[3] || 0;
+					document.getElementById("divBuscadorListaNiveles").innerHTML = datos_buscados
+					if (document.getElementById("lblNroRegistroListaNiveles")) {
+						document.getElementById("lblNroRegistroListaNiveles").innerHTML = totalRegistros == 1 ? "1 nivel" : totalRegistros + " niveles"
+					}
 if(datos_buscados==""){
 					   ver_vetana_informativa("NO ENCONTRARON REGISTROS COINCIDENTES")
 				   }
@@ -25184,6 +25324,9 @@ function buscardetalleslistaniveles() {
 	if(controlacceso("VERLISTADODENIVELES","accion")==false){return;}
 	var buscador = document.getElementById('inptBuscarDetallesAccesoListaNiveles1').value
 	document.getElementById("divBuscadorDetallesAccesoListaNiveles").innerHTML = paginacargando
+	if (document.getElementById("lblNroRegistroDetallesAccesoListaNiveles")) {
+		document.getElementById("lblNroRegistroDetallesAccesoListaNiveles").innerHTML = "Buscando..."
+	}
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -25226,6 +25369,9 @@ function buscardetalleslistaniveles() {
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("divBuscadorDetallesAccesoListaNiveles").innerHTML = ''
+			if (document.getElementById("lblNroRegistroDetallesAccesoListaNiveles")) {
+				document.getElementById("lblNroRegistroDetallesAccesoListaNiveles").innerHTML = "0 permisos"
+			}
 		
 		},
 		success: function (responseText) {
@@ -25240,7 +25386,11 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 		       if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("divBuscadorDetallesAccesoListaNiveles").innerHTML = datos_buscados					
+					var totalRegistros = datos[3] || 0;
+					document.getElementById("divBuscadorDetallesAccesoListaNiveles").innerHTML = datos_buscados
+					if (document.getElementById("lblNroRegistroDetallesAccesoListaNiveles")) {
+						document.getElementById("lblNroRegistroDetallesAccesoListaNiveles").innerHTML = totalRegistros == 1 ? "1 permiso" : totalRegistros + " permisos"
+					}
                   
 				  
 if(datos_buscados==""){
@@ -25310,6 +25460,8 @@ function abmaccesolistanivel(d) {
 		
 		error: function (jqXHR, textstatus, errorThrowm) {
 			verCerrarEfectoCargando("")
+			d.checked = accion != "SI"
+			actualizarVistaAccesoListaNivel(d, d.checked ? "SI" : "NO")
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			return false;
 		},
@@ -25322,6 +25474,7 @@ function abmaccesolistanivel(d) {
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {					
+					actualizarVistaAccesoListaNivel(d, accion)
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")	
 					
 					}			
@@ -25332,6 +25485,17 @@ function abmaccesolistanivel(d) {
 			}
 		}
 	});
+}
+function actualizarVistaAccesoListaNivel(input, accion) {
+	var fila = input ? $(input).closest(".lista-niveles-acceso-row")[0] : null
+	var texto = fila ? fila.querySelector(".lista-niveles-switch-text") : null
+	if (fila) {
+		fila.classList.toggle("is-enabled", accion == "SI")
+		fila.classList.toggle("is-disabled", accion != "SI")
+	}
+	if (texto) {
+		texto.innerHTML = accion == "SI" ? "Permitido" : "Bloqueado"
+	}
 }
 function BuscarNivelesSelect() {
 
@@ -25665,6 +25829,11 @@ function removeToMenu(){
 	if( accesosuser["VERINFORMEDEPAGOSELIMINADOS"]["accion"]!="SI")
 	{
 	$("table[id=divMenuPagosEliminados]").remove()
+	controlinforme=controlinforme+1;		
+	}
+	if( userid != '2' && permisoAccesoUser("VERINFORMESOLICITUDELIMINADO","accion")==false)
+	{
+	$("table[id=divMenuSolicitudEliminado]").remove()
 	controlinforme=controlinforme+1;		
 	}
 	if( accesosuser["VERCATALOGO"]["accion"]!="SI")

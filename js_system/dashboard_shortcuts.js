@@ -89,6 +89,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	informe_comision_cobrador: { sourceSelector: "#divMenuComisionCobrador", permissionKey: "VERINFORMEDECOMISIONCOBRADOR" },
 	informe_vendedores: { sourceSelector: "#divMenuComisionVendedor", permissionKey: "VERINFORMEDECOMISIONVENDEDOR" },
 	informe_pagos_eliminados: { sourceSelector: "#divMenuPagosEliminados", permissionKey: "VERINFORMEDEPAGOSELIMINADOS" },
+	informe_solicitud_eliminado: { sourceSelector: "#divMenuSolicitudEliminado", permissionKey: "VERINFORMESOLICITUDELIMINADO" },
 	catalogo: { sourceSelector: "#divMenuCatalogo", permissionKey: "VERCATALOGO" },
 	clientes_inactivos: { sourceSelector: "#divMenuClientesInactivo", permissionKey: "VERCLIENTESINACTIVOS" },
 	productos_despachados: { sourceSelector: "#divMenuProductoDespachado", permissionKey: "VERDESPACHADOS" },

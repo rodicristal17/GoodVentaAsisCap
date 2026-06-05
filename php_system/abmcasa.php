@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("classTable.php");
 
@@ -108,6 +109,19 @@ $stmt1->bind_param($ss,$nombre,$estado);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'local',
+		'cod_local',
+		$cod_local,
+		'Solicitud de eliminacion de local.',
+		$user,
+		'Local: '.$nombre
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update local set Nombre=?,estado=? where cod_local=?";	
 $stmt1 = $mysqli->prepare($consulta1);

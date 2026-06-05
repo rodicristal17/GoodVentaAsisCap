@@ -3927,6 +3927,167 @@ function ImprimirExtracto() {
 	imprimirDiv() */
 }
 
+function obtenerFilasArqueoOrdenadasParaImpresion(){
+	var tablaArqueo = document.getElementById("table_arqeo");
+	if(!tablaArqueo){
+		return "";
+	}
+
+	function celdasVisibles(fila){
+		return Array.prototype.filter.call(fila.cells, function(celda){
+			return ((celda.getAttribute("style") || "").toLowerCase().indexOf("display:none") === -1);
+		});
+	}
+
+	function textoCelda(fila, indice){
+		var celdas = celdasVisibles(fila);
+		return celdas[indice] ? celdas[indice].textContent.replace(/\s+/g, " ").trim() : "";
+	}
+
+	function normalizarTexto(valor){
+		valor = (valor || "").toString().toLowerCase();
+		if(valor.normalize){
+			valor = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+		}
+		return valor;
+	}
+
+	function normalizarNumero(valor){
+		valor = (valor || "").toString().replace(/\./g, "").replace(/,/g, ".");
+		var numero = parseFloat(valor.replace(/[^\d.-]/g, ""));
+		return isNaN(numero) ? 0 : numero;
+	}
+
+	function normalizarFechaPago(valor){
+		var partes = (valor || "").toString().trim().split(/\s+/);
+		if(!partes[0]){
+			return "";
+		}
+		return partes[0] + " " + (partes[1] || "00:00");
+	}
+
+	function compararValores(valorA, valorB, tipo){
+		if(tipo == "numero"){
+			return normalizarNumero(valorA) - normalizarNumero(valorB);
+		}
+		if(tipo == "fecha"){
+			return normalizarFechaPago(valorA).localeCompare(normalizarFechaPago(valorB));
+		}
+		return normalizarTexto(valorA).localeCompare(normalizarTexto(valorB));
+	}
+
+	function compararFilas(filaA, filaB){
+		var columnasOrden = [
+			{ indice: 11, tipo: "texto" },
+			{ indice: 0, tipo: "texto" },
+			{ indice: 5, tipo: "fecha" },
+			{ indice: 3, tipo: "texto" },
+			{ indice: 4, tipo: "numero" }
+		];
+
+		for(var i = 0; i < columnasOrden.length; i++){
+			var columna = columnasOrden[i];
+			var comparacion = compararValores(textoCelda(filaA, columna.indice), textoCelda(filaB, columna.indice), columna.tipo);
+			if(comparacion !== 0){
+				return comparacion;
+			}
+		}
+		return 0;
+	}
+
+	var grupos = [];
+	var grupoActual = { titulo: null, filas: [] };
+	Array.prototype.forEach.call(tablaArqueo.rows, function(fila){
+		if(fila.classList.contains("arqueo-section-row")){
+			if(grupoActual.titulo || grupoActual.filas.length > 0){
+				grupos.push(grupoActual);
+			}
+			grupoActual = { titulo: fila.cloneNode(true), filas: [] };
+		}else{
+			grupoActual.filas.push(fila.cloneNode(true));
+		}
+	});
+	if(grupoActual.titulo || grupoActual.filas.length > 0){
+		grupos.push(grupoActual);
+	}
+
+	var tbody = document.createElement("tbody");
+	grupos.forEach(function(grupo){
+		if(grupo.titulo){
+			tbody.appendChild(grupo.titulo);
+		}
+		grupo.filas.sort(compararFilas).forEach(function(fila){
+			tbody.appendChild(fila);
+		});
+	});
+	return tbody.innerHTML;
+}
+
+function obtenerTablaArqueoOrdenadaParaImpresion(encabezadoArqueo){
+	var filasArqueo = obtenerFilasArqueoOrdenadasParaImpresion();
+	var encabezado = encabezadoArqueo ? encabezadoArqueo.outerHTML : "";
+	return "<table class='tableCabeceraRegistro' style='width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;'>"
+		+"<thead style='display:table-header-group;'>"+encabezado+"</thead>"
+		+"<tbody>"+filasArqueo+"</tbody>"
+		+"</table>"
+		+"<style>"
+		+"#tbDatosImpresiones .tableCabeceraRegistro{font-family:Arial, sans-serif;font-size:9px;}"
+		+"#tbDatosImpresiones .tableCabeceraRegistro .td_registro{background:#0077cc;color:#fff;border:1px solid #ddd;padding:6px 3px;text-align:center;font-size:9px;line-height:1.15;}"
+		+"#tbDatosImpresiones .tableCabeceraRegistro tr[id='tbSelecRegistro'] td{border:1px solid #ccc;padding:5px 4px;color:#1b1b1b;background:#fff;font-size:9px;line-height:1.2;vertical-align:middle;word-break:break-word;white-space:normal;}"
+		+"#tbDatosImpresiones .tableCabeceraRegistro .arqueo-section-row td{background:#f5f5f5;color:#000;border:1px solid #ccc;font-weight:bold;text-align:center;padding:5px;font-size:10px;}"
+		+"</style>";
+}
+
+function obtenerCabeceraArqueoParaImpresion(fechaimpresion){
+	function obtenerValor(id, defecto){
+		var elemento = document.getElementById(id);
+		if(!elemento || elemento.value === ""){
+			return defecto;
+		}
+		return elemento.value;
+	}
+
+	function obtenerTextoSelect(id, defecto){
+		var elemento = document.getElementById(id);
+		if(!elemento || elemento.value === ""){
+			return defecto;
+		}
+		return elemento.selectedOptions && elemento.selectedOptions[0] ? elemento.selectedOptions[0].textContent : elemento.value;
+	}
+
+	function limpiarTexto(valor){
+		return (valor || "").toString().replace(/\s+/g, " ").trim();
+	}
+
+	function tdFiltro(titulo, valor){
+		return "<td style='text-align:left;vertical-align:top;padding:10px 8px;'>"
+			+"<p class='pTituloC'><b>"+titulo+"</b></p>"
+			+"<p class='pTituloC'>"+limpiarTexto(valor)+"</p>"
+			+"</td>";
+	}
+
+	return "<table class='TableRepor0' style='width:100%;height:auto;'>"
+		+"<tr>"
+		+tdFiltro("Local", obtenerTextoSelect("inptlocalCobrosRealizados3", "TODOS"))
+		+tdFiltro("Fecha Inicio", obtenerValor("inptBuscarCobrosRealizadosF1", "TODOS"))
+		+tdFiltro("Fecha Fin", obtenerValor("inptBuscarCobrosRealizadosF2", "TODOS"))
+		+tdFiltro("Fecha Facturacion Inicio", obtenerValor("inptBuscarCobrosRealizadosFF1", "TODOS"))
+		+tdFiltro("Fecha Facturacion Fin", obtenerValor("inptBuscarCobrosRealizadosFF2", "TODOS"))
+		+tdFiltro("Fecha de Impresion", fechaimpresion)
+		+"</tr>"
+		+"<tr>"
+		+tdFiltro("Cliente", obtenerValor("inptBuscarCobrosRealizados1", "TODOS"))
+		+tdFiltro("Documento", obtenerValor("inptBuscarCobrosRealizados7", "TODOS"))
+		+tdFiltro("Nro Factura", obtenerValor("inptBuscarCobrosRealizados2", "TODOS"))
+		+tdFiltro("Fecha Pago", obtenerValor("inptBuscarCobrosRealizados3", "TODOS"))
+		+tdFiltro("Metodo", obtenerTextoSelect("inptBuscarCobrosRealizados5", "TODOS"))
+		+tdFiltro("Condicion", obtenerTextoSelect("inptBuscarCobrosRealizados6", "TODOS"))
+		+tdFiltro("Cobrador", obtenerValor("inptBuscarCobrosRealizados4", "TODOS"))
+		+"</tr>"
+		+"</table>"
+		+"<br><br><center><h1 class='pTituloD'>COBROS REALIZADOS</h1><br></center>";
+}
+
 function ordenimpresion(ventana){
 	var pagina=""
 	var tipoReporte="reporte"
@@ -4477,7 +4638,7 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
 }
 if (ventana == "arqueo") {
 	
-		pagina =""
+		pagina =obtenerCabeceraArqueoParaImpresion(fechaimpresion)
 paginaPie =
 "<br><br><table class='TableRepor0' style='width:100%'>"
 +"<tr>"
@@ -4496,8 +4657,9 @@ paginaPie =
 
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("divPieImpresiones").innerHTML=paginaPie
-document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloImpreArqueo").innerHTML
-document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_arqeo").innerHTML
+var encabezadoArqueo = document.querySelector("#divArqueo #tdTituloImpreArqueo .arqueo-header-row")
+document.getElementById("tbTitulosImpresiones").innerHTML=""
+document.getElementById("tbDatosImpresiones").innerHTML=obtenerTablaArqueoOrdenadaParaImpresion(encabezadoArqueo)
 }
 if (ventana == "arqueocaja") {
 	

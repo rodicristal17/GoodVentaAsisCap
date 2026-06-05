@@ -72,6 +72,67 @@ function bind_param_tarea_programada($stmt, $tipos, $parametros)
     return call_user_func_array(array($stmt, 'bind_param'), array_merge(array($tipos), $refs));
 }
 
+function normalizar_destino_tarea_programada($tipo_destino)
+{
+    $tipo_destino = strtoupper(trim((string)$tipo_destino));
+
+    if ($tipo_destino != "ROL") {
+        $tipo_destino = "USUARIO";
+    }
+
+    return $tipo_destino;
+}
+
+function buscar_usuarios_por_rol_tarea_programada($mysqli, $rol_operativo)
+{
+    $usuarios = array();
+
+    $sql = "SELECT cod_usuario
+            FROM usuario
+            WHERE estado = 'Activo'
+            AND tipo = ?
+            ORDER BY cod_usuario ASC";
+
+    $stmt = $mysqli->prepare($sql);
+
+    if (!$stmt) {
+        return $usuarios;
+    }
+
+    $s = "s";
+    $stmt->bind_param($s, $rol_operativo);
+
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+
+        while ($fila = mysqli_fetch_assoc($result)) {
+            $usuarios[] = $fila["cod_usuario"];
+        }
+    }
+
+    $stmt->close();
+
+    return $usuarios;
+}
+
+function existe_columna_tarea_programada($mysqli, $tabla, $columna)
+{
+    $tabla = mysqli_real_escape_string($mysqli, $tabla);
+    $columna = mysqli_real_escape_string($mysqli, $columna);
+
+    $sql = "SHOW COLUMNS FROM `".$tabla."` LIKE '".$columna."'";
+    $result = $mysqli->query($sql);
+
+    if (!$result) {
+        return false;
+    }
+
+    $existe = mysqli_num_rows($result) > 0;
+    $result->free();
+
+    return $existe;
+}
+
 function verificar($operacion)
 {
     $user = isset($_POST['useru']) ? $_POST['useru'] : '';
@@ -141,6 +202,17 @@ function verificar($operacion)
     buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo);
 }
 
+if($operacion=="buscarRolesAsignarTarea")
+{
+    $buscar = isset($_POST['buscar']) ? $_POST['buscar'] : "";
+    $buscar = mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
+
+    $estado = isset($_POST['estado']) ? $_POST['estado'] : "";
+    $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
+
+    buscarRolesAsignarTarea($buscar, $estado);
+}
+
 
 
 if($operacion=="buscarTareasParaAsignarUsuario")
@@ -157,7 +229,13 @@ if($operacion=="buscarTareasParaAsignarUsuario")
     $cod_usuario = isset($_POST['cod_usuario']) ? $_POST['cod_usuario'] : "";
     $cod_usuario = mb_convert_encoding((string)($cod_usuario), 'ISO-8859-1', 'UTF-8');
 
-    buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario);
+    $tipo_destino = isset($_POST['tipo_destino']) ? $_POST['tipo_destino'] : "USUARIO";
+    $tipo_destino = mb_convert_encoding((string)($tipo_destino), 'ISO-8859-1', 'UTF-8');
+
+    $rol_operativo = isset($_POST['rol_operativo']) ? $_POST['rol_operativo'] : "";
+    $rol_operativo = mb_convert_encoding((string)($rol_operativo), 'ISO-8859-1', 'UTF-8');
+
+    buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario, $tipo_destino, $rol_operativo);
 }
 
 if($operacion=="asignarTareaAUsuario")
@@ -171,7 +249,13 @@ if($operacion=="asignarTareaAUsuario")
     $fecha_tarea = isset($_POST['fecha_tarea']) ? $_POST['fecha_tarea'] : "";
     $fecha_tarea = mb_convert_encoding((string)($fecha_tarea), 'ISO-8859-1', 'UTF-8');
 
-    asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea);
+    $tipo_destino = isset($_POST['tipo_destino']) ? $_POST['tipo_destino'] : "USUARIO";
+    $tipo_destino = mb_convert_encoding((string)($tipo_destino), 'ISO-8859-1', 'UTF-8');
+
+    $rol_operativo = isset($_POST['rol_operativo']) ? $_POST['rol_operativo'] : "";
+    $rol_operativo = mb_convert_encoding((string)($rol_operativo), 'ISO-8859-1', 'UTF-8');
+
+    asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea, $tipo_destino, $rol_operativo);
 }
 	
 	if($operacion=="buscarTareasPendientesAdministrador")
@@ -209,7 +293,13 @@ if($operacion=="buscarTareasParaAsignarDiariaUsuario")
     $cod_usuario = isset($_POST['cod_usuario']) ? $_POST['cod_usuario'] : "";
     $cod_usuario = mb_convert_encoding((string)($cod_usuario), 'ISO-8859-1', 'UTF-8');
 
-    buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario);
+    $tipo_destino = isset($_POST['tipo_destino']) ? $_POST['tipo_destino'] : "USUARIO";
+    $tipo_destino = mb_convert_encoding((string)($tipo_destino), 'ISO-8859-1', 'UTF-8');
+
+    $rol_operativo = isset($_POST['rol_operativoFK']) ? $_POST['rol_operativoFK'] : "";
+    $rol_operativo = mb_convert_encoding((string)($rol_operativo), 'ISO-8859-1', 'UTF-8');
+
+    buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario, $tipo_destino, $rol_operativo);
 }
 
 if($operacion=="guardarTareaDiariaUsuario")
@@ -253,6 +343,12 @@ if($operacion=="guardarTareaDiariaUsuario")
     $cod_usuarioFK_create = isset($_POST['useru']) ? $_POST['useru'] : "";
     $cod_usuarioFK_create = mb_convert_encoding((string)($cod_usuarioFK_create), 'ISO-8859-1', 'UTF-8');
 
+    $tipo_destino = isset($_POST['tipo_destino']) ? $_POST['tipo_destino'] : "USUARIO";
+    $tipo_destino = mb_convert_encoding((string)($tipo_destino), 'ISO-8859-1', 'UTF-8');
+
+    $rol_operativoFK = isset($_POST['rol_operativoFK']) ? $_POST['rol_operativoFK'] : "";
+    $rol_operativoFK = mb_convert_encoding((string)($rol_operativoFK), 'ISO-8859-1', 'UTF-8');
+
     guardarTareaDiariaUsuario(
         $cod_tareaFK,
         $cod_usuarioFK,
@@ -266,19 +362,37 @@ if($operacion=="guardarTareaDiariaUsuario")
         $sabado,
         $domingo,
         $observacion_admin,
-        $cod_usuarioFK_create
+        $cod_usuarioFK_create,
+        $tipo_destino,
+        $rol_operativoFK
     );
 }
 	
 }
 
-function buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario)
+function buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario, $tipo_destino = "USUARIO", $rol_operativo = "")
 {
     $mysqli = conectar_al_servidor();
 
     $buscar = mysqli_real_escape_string($mysqli, $buscar);
     $tipo = mysqli_real_escape_string($mysqli, $tipo);
     $cod_usuario = mysqli_real_escape_string($mysqli, $cod_usuario);
+    $tipo_destino = normalizar_destino_tarea_programada($tipo_destino);
+    $rol_operativo = mysqli_real_escape_string($mysqli, $rol_operativo);
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+
+    if ($tipo_destino == "USUARIO" && $cod_usuario == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if ($tipo_destino == "ROL" && $rol_operativo == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
 
     $condicionBuscar = "";
     if ($buscar != "") {
@@ -290,6 +404,14 @@ function buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario)
         $condicionTipo = " AND tp.tipo = '".$tipo."'";
     }
 
+    if ($tipo_destino == "ROL") {
+        $joinAsignacion = "AND tpd.tipo_destino = 'ROL'
+                AND tpd.rol_operativoFK = '".$rol_operativo."'";
+    } else {
+        $joinAsignacion = "AND tpd.cod_usuarioFK = '".$cod_usuario."'
+                AND tpd.tipo_destino = 'USUARIO'";
+    }
+
     $sql = "SELECT 
                 tp.id,
                 tp.nombre,
@@ -299,7 +421,7 @@ function buscarTareasParaAsignarDiariaUsuario($buscar, $tipo, $cod_usuario)
             FROM tareas_programadas tp
             LEFT JOIN tareas_programadas_diarias tpd
                 ON tpd.cod_tareaFK = tp.id
-                AND tpd.cod_usuarioFK = '".$cod_usuario."'
+                ".$joinAsignacion."
                 AND tpd.estado = 'Activo'
             WHERE 1=1
             ".$condicionBuscar."
@@ -456,9 +578,25 @@ function guardarTareaDiariaUsuario(
     $sabado,
     $domingo,
     $observacion_admin,
-    $cod_usuarioFK_create
+    $cod_usuarioFK_create,
+    $tipo_destino = "USUARIO",
+    $rol_operativoFK = ""
 ) {
-    if ($cod_tareaFK == "" || $cod_usuarioFK == "" || $fecha_inicio == "") {
+    $tipo_destino = normalizar_destino_tarea_programada($tipo_destino);
+
+    if ($cod_tareaFK == "" || $fecha_inicio == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if ($tipo_destino == "USUARIO" && $cod_usuarioFK == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if ($tipo_destino == "ROL" && $rol_operativoFK == "") {
         $informacion = array("1" => "camposvacio");
         echo json_encode($informacion);
         exit;
@@ -487,12 +625,27 @@ function guardarTareaDiariaUsuario(
 
     $mysqli = conectar_al_servidor();
 
-    $consultaVerificar = "SELECT cod_tarea_diaria 
-                          FROM tareas_programadas_diarias
-                          WHERE cod_tareaFK = ?
-                          AND cod_usuarioFK = ?
-                          AND estado = 'Activo'
-                          LIMIT 1";
+    $rol_operativoFK = mysqli_real_escape_string($mysqli, $rol_operativoFK);
+
+    if ($tipo_destino == "ROL") {
+        $consultaVerificar = "SELECT cod_tarea_diaria 
+                              FROM tareas_programadas_diarias
+                              WHERE cod_tareaFK = ?
+                              AND tipo_destino = 'ROL'
+                              AND rol_operativoFK = ?
+                              AND estado = 'Activo'
+                              LIMIT 1";
+        $parametroDestinoVerificar = $rol_operativoFK;
+    } else {
+        $consultaVerificar = "SELECT cod_tarea_diaria 
+                              FROM tareas_programadas_diarias
+                              WHERE cod_tareaFK = ?
+                              AND cod_usuarioFK = ?
+                              AND tipo_destino = 'USUARIO'
+                              AND estado = 'Activo'
+                              LIMIT 1";
+        $parametroDestinoVerificar = $cod_usuarioFK;
+    }
 
     $stmtVerificar = $mysqli->prepare($consultaVerificar);
 
@@ -507,7 +660,7 @@ function guardarTareaDiariaUsuario(
     }
 
     $ss = "ss";
-    $stmtVerificar->bind_param($ss, $cod_tareaFK, $cod_usuarioFK);
+    $stmtVerificar->bind_param($ss, $cod_tareaFK, $parametroDestinoVerificar);
 
     if (!$stmtVerificar->execute()) {
         $informacion = array(
@@ -527,7 +680,7 @@ function guardarTareaDiariaUsuario(
 
         $informacion = array(
             "1" => "duplicado",
-            "mensaje" => "Esta tarea diaria ya está configurada para este usuario."
+            "mensaje" => $tipo_destino == "ROL" ? "Esta tarea diaria ya está configurada para este rol." : "Esta tarea diaria ya está configurada para este usuario."
         );
         echo json_encode($informacion);
         exit;
@@ -539,6 +692,8 @@ function guardarTareaDiariaUsuario(
                   (
                     cod_tareaFK,
                     cod_usuarioFK,
+                    tipo_destino,
+                    rol_operativoFK,
                     estado,
                     fecha_inicio,
                     fecha_fin,
@@ -556,7 +711,7 @@ function guardarTareaDiariaUsuario(
                     fecha_update
                   )
                   VALUES
-                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)";
+                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)";
 
     $stmt1 = $mysqli->prepare($consulta1);
 
@@ -570,12 +725,21 @@ function guardarTareaDiariaUsuario(
         exit;
     }
 
-    $ss = "sssssssssssssss";
+    if ($tipo_destino == "ROL") {
+        $cod_usuarioFKInsert = NULL;
+    } else {
+        $cod_usuarioFKInsert = $cod_usuarioFK;
+        $rol_operativoFK = "";
+    }
+
+    $ss = "sssssssssssssssss";
 
     $stmt1->bind_param(
         $ss,
         $cod_tareaFK,
-        $cod_usuarioFK,
+        $cod_usuarioFKInsert,
+        $tipo_destino,
+        $rol_operativoFK,
         $estado,
         $fecha_inicio,
         $fecha_fin,
@@ -633,24 +797,44 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 	 $fecha_insert = date("Y-m-d H:i:s");
 
     $mysqli = conectar_al_servidor();
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+
+    if ($tieneColumnasAsignadasRol) {
+        $condicionTareaUsuario = "AND (
+                          tpa.cod_usuarioFK = ?
+                          OR (
+                              tpa.tipo_asignacion = 'ROL'
+                              AND tpa.rol_operativoFK = (
+                                  SELECT TRIM(u.tipo)
+                                  FROM usuario u
+                                  WHERE u.cod_usuario = ?
+                                  LIMIT 1
+                              )
+                              AND (tpa.cod_usuarioFK IS NULL OR tpa.cod_usuarioFK = '' OR tpa.cod_usuarioFK = '0')
+                          )
+                      )";
+    } else {
+        $condicionTareaUsuario = "AND tpa.cod_usuarioFK = ?";
+    }
 
     if ($estado_tarea == "Completada") {
 
-        $consulta1 = "UPDATE tareas_programadas_asignadas 
+        $consulta1 = "UPDATE tareas_programadas_asignadas tpa
                       SET estado_tarea = ?,
                           fecha_completada = '".$fecha_insert."',
                           fecha_update = NOW()
                       WHERE cod_tarea_asignada = ?
-                      AND cod_usuarioFK = ?";
+                      ".$condicionTareaUsuario;
 
     } else {
 
-        $consulta1 = "UPDATE tareas_programadas_asignadas 
+        $consulta1 = "UPDATE tareas_programadas_asignadas tpa
                       SET estado_tarea = ?,
                           fecha_completada = '".$fecha_insert."',
                           fecha_update = NOW()
                       WHERE cod_tarea_asignada = ?
-                      AND cod_usuarioFK = ?";
+                      ".$condicionTareaUsuario;
     }
 
     $stmt1 = $mysqli->prepare($consulta1);
@@ -665,8 +849,13 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
         exit;
     }
 
-    $ss = "sss";
-    $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario);
+    if ($tieneColumnasAsignadasRol) {
+        $ss = "ssss";
+        $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario, $cod_usuario);
+    } else {
+        $ss = "sss";
+        $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario);
+    }
 
     if (!$stmt1->execute()) {
         $informacion = array(
@@ -708,6 +897,37 @@ function buscarTareasPendientesAdministrador($cod_usuario)
     }
 	 
     $mysqli = conectar_al_servidor();
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+
+    if ($tieneColumnasAsignadasRol) {
+        $selectAsignacionRol = ",
+                tpa.tipo_asignacion,
+                tpa.rol_operativoFK";
+        $condicionTareasUsuario = "(
+                tpa.cod_usuarioFK = ?
+                OR (
+                    tpa.tipo_asignacion = 'ROL'
+                    AND tpa.rol_operativoFK = (
+                        SELECT TRIM(u.tipo)
+                        FROM usuario u
+                        WHERE u.cod_usuario = ?
+                        LIMIT 1
+                    )
+                    AND (tpa.cod_usuarioFK IS NULL OR tpa.cod_usuarioFK = '' OR tpa.cod_usuarioFK = '0')
+                )
+            )";
+    } else {
+        $selectAsignacionRol = ",
+                'USUARIO' AS tipo_asignacion,
+                '' AS rol_operativoFK";
+        $condicionTareasUsuario = "tpa.cod_usuarioFK = ?";
+    }
+
+    date_default_timezone_set('America/Asuncion');
+    $fecha_actual = date("Y-m-d");
+    $hora_actual = date("H:i:s");
+    $momento_actual = time();
 
     $sql = "SELECT 
                 tpa.cod_tarea_asignada,
@@ -724,20 +944,23 @@ function buscarTareasPendientesAdministrador($cod_usuario)
                 tp.nombre,
                 TIME_FORMAT(tp.hora, '%H:%i') AS hora_format,
                 tp.tipo
+                ".$selectAsignacionRol."
             FROM tareas_programadas_asignadas tpa
             INNER JOIN tareas_programadas tp 
                 ON tp.id = tpa.cod_tareaFK
-            WHERE tpa.cod_usuarioFK = ? AND fecha_tarea = ?
+            WHERE ".$condicionTareasUsuario."
+            AND tpa.fecha_tarea = ?
             ORDER BY 
+                CASE 
+                    WHEN tpa.estado_tarea = 'Pendiente' AND tp.hora IS NOT NULL AND tp.hora < ? THEN 1
+                    WHEN tpa.estado_tarea = 'Pendiente' THEN 2
+                    WHEN tpa.estado_tarea = 'En Proceso' THEN 3
+                    WHEN tpa.estado_tarea = 'Completada' THEN 4
+                    WHEN tpa.estado_tarea = 'Cancelada' THEN 5
+                    ELSE 6
+                END,
                 CASE WHEN tp.hora IS NULL THEN 1 ELSE 0 END,
                 tp.hora ASC,
-                CASE 
-                    WHEN tpa.estado_tarea = 'Pendiente' THEN 1
-                    WHEN tpa.estado_tarea = 'En Proceso' THEN 2
-                    WHEN tpa.estado_tarea = 'Completada' THEN 3
-                    WHEN tpa.estado_tarea = 'Cancelada' THEN 4
-                    ELSE 5
-                END,
                 tpa.fecha_insert DESC";
 
     $stmt = $mysqli->prepare($sql);
@@ -752,12 +975,13 @@ function buscarTareasPendientesAdministrador($cod_usuario)
         exit;
     }
 	
-	date_default_timezone_set('America/Asuncion');
-	$fecha_actual = date("Y-m-d");
-    $momento_actual = time();
- 
-    $ss = "ss";
-    $stmt->bind_param($ss, $cod_usuario,$fecha_actual);
+    if ($tieneColumnasAsignadasRol) {
+        $ss = "ssss";
+        $stmt->bind_param($ss, $cod_usuario, $cod_usuario, $fecha_actual, $hora_actual);
+    } else {
+        $ss = "sss";
+        $stmt->bind_param($ss, $cod_usuario, $fecha_actual, $hora_actual);
+    }
 
     if (!$stmt->execute()) {
         $informacion = array(
@@ -793,6 +1017,8 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             $observacion_admin = mb_convert_encoding((string)($valor['observacion_admin']), 'UTF-8', 'ISO-8859-1');
             $fecha_insert = mb_convert_encoding((string)($valor['fecha_insert_format']), 'UTF-8', 'ISO-8859-1');
             $fecha_completada = mb_convert_encoding((string)($valor['fecha_completada_format']), 'UTF-8', 'ISO-8859-1');
+            $tipo_asignacion = isset($valor['tipo_asignacion']) ? mb_convert_encoding((string)($valor['tipo_asignacion']), 'UTF-8', 'ISO-8859-1') : "USUARIO";
+            $rol_operativoFK = isset($valor['rol_operativoFK']) ? mb_convert_encoding((string)($valor['rol_operativoFK']), 'UTF-8', 'ISO-8859-1') : "";
 
             $nombre_html = htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
             $hora_html = htmlspecialchars($hora, ENT_QUOTES, 'UTF-8');
@@ -800,6 +1026,7 @@ function buscarTareasPendientesAdministrador($cod_usuario)
             $observacion_admin_html = htmlspecialchars($observacion_admin, ENT_QUOTES, 'UTF-8');
             $fecha_insert_html = htmlspecialchars($fecha_insert, ENT_QUOTES, 'UTF-8');
             $fecha_completada_html = htmlspecialchars($fecha_completada, ENT_QUOTES, 'UTF-8');
+            $rol_operativo_html = htmlspecialchars($rol_operativoFK, ENT_QUOTES, 'UTF-8');
 
             if ($hora_html == "") {
                 $hora_html = "--:--";
@@ -917,7 +1144,14 @@ function buscarTareasPendientesAdministrador($cod_usuario)
 
                     <p class='perfil-tareas__meta'>
                         <span>Tipo: ".$tipo_html."</span>
-                        <span>Asignada: ".$fecha_insert_html."</span>
+                        <span>Asignada: ".$fecha_insert_html."</span>";
+
+                    if ($tipo_asignacion == "ROL" && $rol_operativo_html != "") {
+                        $pagina .= "
+                        <span>Rol: ".$rol_operativo_html."</span>";
+                    }
+
+                    $pagina .= "
                     </p>";
 
                     if ($fecha_completada_html != "" && $estado_tarea == "Completada") {
@@ -953,13 +1187,19 @@ function buscarTareasPendientesAdministrador($cod_usuario)
         $sqlUpdate = "UPDATE tareas_programadas_asignadas
                       SET visto = 'Si',
                           fecha_visto = IF(fecha_visto IS NULL, NOW(), fecha_visto)
-                      WHERE cod_usuarioFK = ?
+                      WHERE ".$condicionTareasUsuario."
+                      AND tpa.fecha_tarea = ?
                       AND visto = 'No'";
 
         $stmtUpdate = $mysqli->prepare($sqlUpdate);
-		$s="s";
         if ($stmtUpdate) {
-            $stmtUpdate->bind_param($s, $cod_usuario);
+            if ($tieneColumnasAsignadasRol) {
+                $s = "sss";
+                $stmtUpdate->bind_param($s, $cod_usuario, $cod_usuario, $fecha_actual);
+            } else {
+                $s = "ss";
+                $stmtUpdate->bind_param($s, $cod_usuario, $fecha_actual);
+            }
             $stmtUpdate->execute();
             $stmtUpdate->close();
         }
@@ -992,7 +1232,7 @@ function buscarTareasPendientesAdministrador($cod_usuario)
 }
 
 
-function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario)
+function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario, $tipo_destino = "USUARIO", $rol_operativo = "")
 {
     $mysqli = conectar_al_servidor();
 
@@ -1000,6 +1240,20 @@ function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario)
     $tipo = mysqli_real_escape_string($mysqli, $tipo);
     $estado = mysqli_real_escape_string($mysqli, $estado);
     $cod_usuario = mysqli_real_escape_string($mysqli, $cod_usuario);
+    $tipo_destino = normalizar_destino_tarea_programada($tipo_destino);
+    $rol_operativo = mysqli_real_escape_string($mysqli, $rol_operativo);
+
+    if ($tipo_destino == "USUARIO" && $cod_usuario == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if ($tipo_destino == "ROL" && $rol_operativo == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
 
     $condicionBuscar = "";
     if ($buscar != "") {
@@ -1033,6 +1287,37 @@ function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario)
 
         Si ya está Completada o Cancelada, se permite volver a asignar.
     */
+    if ($tipo_destino == "ROL" && $tieneColumnasAsignadasRol) {
+        $joinAsignacion = "LEFT JOIN (
+                SELECT 
+                    cod_tareaFK,
+                    MIN(cod_tarea_asignada) AS cod_tarea_asignada,
+                    MIN(estado_tarea) AS estado_tarea,
+                    MIN(visto) AS visto,
+                    MIN(fecha_insert) AS fecha_insert
+                FROM tareas_programadas_asignadas
+                WHERE tipo_asignacion = 'ROL'
+                AND rol_operativoFK = '".$rol_operativo."'
+                AND estado_tarea IN ('Pendiente','En Proceso')
+                GROUP BY cod_tareaFK
+            ) tpa ON tpa.cod_tareaFK = tp.id";
+    } else if ($tipo_destino == "ROL") {
+        $joinAsignacion = "LEFT JOIN (
+                SELECT 
+                    NULL AS cod_tareaFK,
+                    NULL AS cod_tarea_asignada,
+                    NULL AS estado_tarea,
+                    NULL AS visto,
+                    NULL AS fecha_insert
+            ) tpa ON tpa.cod_tareaFK = tp.id";
+    } else {
+        $joinAsignacion = "LEFT JOIN tareas_programadas_asignadas tpa
+                ON tpa.cod_tareaFK = tp.id
+                AND tpa.cod_usuarioFK = '".$cod_usuario."'
+                AND tpa.tipo_asignacion = 'USUARIO'
+                AND tpa.estado_tarea IN ('Pendiente','En Proceso')";
+    }
+
     $sql = "SELECT 
                 tp.id,
                 tp.nombre,
@@ -1047,10 +1332,7 @@ function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario)
 
             FROM tareas_programadas tp
 
-            LEFT JOIN tareas_programadas_asignadas tpa
-                ON tpa.cod_tareaFK = tp.id
-                AND tpa.cod_usuarioFK = '".$cod_usuario."'
-                AND tpa.estado_tarea IN ('Pendiente','En Proceso')
+            ".$joinAsignacion."
 
             WHERE 1=1
             ".$condicionBuscar."
@@ -1181,9 +1463,23 @@ function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario)
     echo json_encode($informacion);
     exit;
 }
-function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea)
+function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea, $tipo_destino = "USUARIO", $rol_operativo = "")
 {
-    if ($id_tarea == "" || $cod_usuario == "" || $fecha_tarea == "") {
+    $tipo_destino = normalizar_destino_tarea_programada($tipo_destino);
+
+    if ($id_tarea == "" || $fecha_tarea == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if ($tipo_destino == "USUARIO" && $cod_usuario == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if ($tipo_destino == "ROL" && $rol_operativo == "") {
         $informacion = array("1" => "camposvacio");
         echo json_encode($informacion);
         exit;
@@ -1192,8 +1488,33 @@ function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea)
     $mysqli = conectar_al_servidor();
 
     $fecha_tarea = mysqli_real_escape_string($mysqli, $fecha_tarea);
+    $rol_operativo = mysqli_real_escape_string($mysqli, $rol_operativo);
 
-    $consultaVerificar = "SELECT cod_tarea_asignada 
+    if ($tipo_destino == "ROL") {
+        $usuariosDestino = buscar_usuarios_por_rol_tarea_programada($mysqli, $rol_operativo);
+
+        if (count($usuariosDestino) == 0) {
+            mysqli_close($mysqli);
+
+            $informacion = array(
+                "1" => "sinusuarios",
+                "mensaje" => "No se encontraron usuarios activos para este rol."
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+    } else {
+        $usuariosDestino = array($cod_usuario);
+        $rol_operativo = "";
+    }
+
+    $estado_tarea = "Pendiente";
+    $visto = "No";
+    $fecha_insert = date("Y-m-d H:i:s");
+    $insertados = 0;
+    $duplicados = 0;
+
+    $consultaVerificar = "SELECT cod_tarea_asignada
                           FROM tareas_programadas_asignadas
                           WHERE cod_tareaFK = ?
                           AND cod_usuarioFK = ?
@@ -1213,43 +1534,12 @@ function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea)
         exit;
     }
 
-    $ss = "sss";
-    $stmtVerificar->bind_param($ss, $id_tarea, $cod_usuario, $fecha_tarea);
-
-    if (!$stmtVerificar->execute()) {
-        $informacion = array(
-            "1" => "error",
-            "mensaje" => "Error al verificar asignación: " . $stmtVerificar->error,
-            "sql" => $consultaVerificar
-        );
-        echo json_encode($informacion);
-        exit;
-    }
-
-    $resultVerificar = $stmtVerificar->get_result();
-
-    if (mysqli_num_rows($resultVerificar) > 0) {
-        $stmtVerificar->close();
-        mysqli_close($mysqli);
-
-        $informacion = array(
-            "1" => "duplicado",
-            "mensaje" => "Esta tarea ya está asignada a este usuario en la fecha seleccionada."
-        );
-        echo json_encode($informacion);
-        exit;
-    }
-
-    $stmtVerificar->close();
-
-    $estado_tarea = "Pendiente";
-    $visto = "No";
-    $fecha_insert = date("Y-m-d H:i:s");
-
     $consulta1 = "INSERT INTO tareas_programadas_asignadas
                   (
                     cod_tareaFK,
                     cod_usuarioFK,
+                    tipo_asignacion,
+                    rol_operativoFK,
                     estado_tarea,
                     visto,
                     fecha_tarea,
@@ -1261,7 +1551,7 @@ function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea)
                     fecha_update
                   )
                   VALUES
-                  (?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, NULL)";
+                  (?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, NULL)";
 
     $stmt1 = $mysqli->prepare($consulta1);
 
@@ -1275,31 +1565,76 @@ function asignarTareaAUsuario($id_tarea, $cod_usuario, $fecha_tarea)
         exit;
     }
 
-    $ss = "ssssss";
-    $stmt1->bind_param(
-        $ss,
-        $id_tarea,
-        $cod_usuario,
-        $estado_tarea,
-        $visto,
-        $fecha_tarea,
-        $fecha_insert
-    );
+    foreach ($usuariosDestino as $cod_usuario_destino) {
+        $ss = "sss";
+        $stmtVerificar->bind_param($ss, $id_tarea, $cod_usuario_destino, $fecha_tarea);
 
-    if (!$stmt1->execute()) {
+        if (!$stmtVerificar->execute()) {
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al verificar asignación: " . $stmtVerificar->error,
+                "sql" => $consultaVerificar
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $resultVerificar = $stmtVerificar->get_result();
+
+        if (mysqli_num_rows($resultVerificar) > 0) {
+            $duplicados++;
+            $resultVerificar->free();
+            continue;
+        }
+
+        $resultVerificar->free();
+
+        $ss = "ssssssss";
+        $stmt1->bind_param(
+            $ss,
+            $id_tarea,
+            $cod_usuario_destino,
+            $tipo_destino,
+            $rol_operativo,
+            $estado_tarea,
+            $visto,
+            $fecha_tarea,
+            $fecha_insert
+        );
+
+        if ($stmt1->execute()) {
+            $insertados++;
+        } else {
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al asignar tarea: " . $stmt1->error,
+                "sql" => $consulta1
+            );
+            echo json_encode($informacion);
+            exit;
+        }
+    }
+
+    if ($insertados == 0) {
+        $stmtVerificar->close();
+        $stmt1->close();
+        mysqli_close($mysqli);
+
         $informacion = array(
-            "1" => "error",
-            "mensaje" => "Error al asignar tarea: " . $stmt1->error,
-            "sql" => $consulta1
+            "1" => "duplicado",
+            "mensaje" => $tipo_destino == "ROL" ? "Esta tarea ya está asignada a todos los usuarios activos del rol en la fecha seleccionada." : "Esta tarea ya está asignada a este usuario en la fecha seleccionada.",
+            "insertados" => $insertados,
+            "duplicados" => $duplicados
         );
         echo json_encode($informacion);
         exit;
     }
 
+    $stmtVerificar->close();
     $stmt1->close();
     mysqli_close($mysqli);
 
-    $informacion = array("1" => "exito");
+    $informacion = array("1" => "exito", "insertados" => $insertados, "duplicados" => $duplicados);
     echo json_encode($informacion);
     exit;
 }
@@ -1529,6 +1864,184 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo = ""
         </div>";
     }
 
+    mysqli_close($mysqli);
+
+    $informacion = array("1" => "exito", "2" => $pagina, "3" => $nroRegistro);
+    echo json_encode($informacion);
+    exit;
+}
+
+function buscarRolesAsignarTarea($buscar, $estado = "")
+{
+    $mysqli = conectar_al_servidor();
+
+    $buscar = mysqli_real_escape_string($mysqli, $buscar);
+    $estado = mysqli_real_escape_string($mysqli, $estado);
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+    $tieneColumnasDiariasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_diarias", "tipo_destino")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_diarias", "rol_operativoFK");
+
+    $condicionBuscar = "";
+    if ($buscar != "") {
+        $condicionBuscar = " AND TRIM(u.tipo) LIKE '%".$buscar."%'";
+    }
+
+    $condicionEstado = "";
+    if ($estado != "") {
+        $condicionEstado = " AND u.estado = '".$estado."'";
+    }
+
+    if ($tieneColumnasAsignadasRol) {
+        $selectPendientesHoy = "IFNULL((
+                    SELECT COUNT(*)
+                    FROM tareas_programadas_asignadas tpa
+                    WHERE tpa.tipo_asignacion = 'ROL'
+                    AND tpa.rol_operativoFK = TRIM(u.tipo)
+                    AND tpa.fecha_tarea = CURDATE()
+                    AND tpa.estado_tarea IN ('Pendiente','En Proceso')
+                ), 0)";
+
+        $selectCompletadasHoy = "IFNULL((
+                    SELECT COUNT(*)
+                    FROM tareas_programadas_asignadas tpa
+                    WHERE tpa.tipo_asignacion = 'ROL'
+                    AND tpa.rol_operativoFK = TRIM(u.tipo)
+                    AND tpa.fecha_tarea = CURDATE()
+                    AND tpa.estado_tarea = 'Completada'
+                ), 0)";
+
+        $selectTareasHoy = "IFNULL((
+                    SELECT GROUP_CONCAT(DISTINCT CONCAT(tp.nombre, ' (', tpa.estado_tarea, ')') ORDER BY tp.hora ASC, tp.nombre ASC SEPARATOR '||')
+                    FROM tareas_programadas_asignadas tpa
+                    INNER JOIN tareas_programadas tp ON tp.id = tpa.cod_tareaFK
+                    WHERE tpa.tipo_asignacion = 'ROL'
+                    AND tpa.rol_operativoFK = TRIM(u.tipo)
+                    AND tpa.fecha_tarea = CURDATE()
+                ), '')";
+    } else {
+        $selectPendientesHoy = "0";
+        $selectCompletadasHoy = "0";
+        $selectTareasHoy = "''";
+    }
+
+    if ($tieneColumnasDiariasRol) {
+        $selectTareasDiarias = "IFNULL((
+                    SELECT GROUP_CONCAT(DISTINCT tp.nombre ORDER BY tp.hora ASC, tp.nombre ASC SEPARATOR '||')
+                    FROM tareas_programadas_diarias tpd
+                    INNER JOIN tareas_programadas tp ON tp.id = tpd.cod_tareaFK
+                    WHERE tpd.tipo_destino = 'ROL'
+                    AND tpd.rol_operativoFK = TRIM(u.tipo)
+                    AND tpd.estado = 'Activo'
+                ), '')";
+    } else {
+        $selectTareasDiarias = "''";
+    }
+
+    $sql = "SELECT
+                TRIM(u.tipo) AS rol_operativo,
+                COUNT(*) AS total_usuarios,
+                SUM(CASE WHEN u.estado = 'Activo' THEN 1 ELSE 0 END) AS usuarios_activos,
+                SUM(CASE WHEN u.estado = 'Inactivo' THEN 1 ELSE 0 END) AS usuarios_inactivos,
+                ".$selectPendientesHoy." AS tareas_pendientes_hoy,
+                ".$selectCompletadasHoy." AS tareas_completadas_hoy,
+                ".$selectTareasHoy." AS tareas_hoy,
+                ".$selectTareasDiarias." AS tareas_diarias
+            FROM usuario u
+            WHERE TRIM(u.tipo) <> ''
+            ".$condicionBuscar."
+            ".$condicionEstado."
+            GROUP BY TRIM(u.tipo)
+            ORDER BY TRIM(u.tipo) ASC";
+
+    $stmt = $mysqli->prepare($sql);
+
+    if (!$stmt) {
+        $informacion = array("1" => "error", "mensaje" => "Error al preparar búsqueda de roles: " . $mysqli->error, "sql" => $sql);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    if (!$stmt->execute()) {
+        $informacion = array("1" => "error", "mensaje" => "Error al buscar roles: " . $stmt->error, "sql" => $sql);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $result = $stmt->get_result();
+    $nroRegistro = mysqli_num_rows($result);
+    $pagina = "";
+
+    if ($nroRegistro > 0) {
+        $pagina .= "<div class='asignar-tarea__grid'>";
+
+        while ($valor = mysqli_fetch_assoc($result)) {
+            $rol_operativo = mb_convert_encoding((string)($valor['rol_operativo']), 'UTF-8', 'ISO-8859-1');
+            $total_usuarios = isset($valor['total_usuarios']) ? (int)$valor['total_usuarios'] : 0;
+            $usuarios_activos = isset($valor['usuarios_activos']) ? (int)$valor['usuarios_activos'] : 0;
+            $usuarios_inactivos = isset($valor['usuarios_inactivos']) ? (int)$valor['usuarios_inactivos'] : 0;
+            $tareas_pendientes_hoy = isset($valor['tareas_pendientes_hoy']) ? (int)$valor['tareas_pendientes_hoy'] : 0;
+            $tareas_completadas_hoy = isset($valor['tareas_completadas_hoy']) ? (int)$valor['tareas_completadas_hoy'] : 0;
+            $tareas_hoy = isset($valor['tareas_hoy']) ? mb_convert_encoding((string)($valor['tareas_hoy']), 'UTF-8', 'ISO-8859-1') : "";
+            $tareas_diarias = isset($valor['tareas_diarias']) ? mb_convert_encoding((string)($valor['tareas_diarias']), 'UTF-8', 'ISO-8859-1') : "";
+
+            $rol_html = htmlspecialchars($rol_operativo, ENT_QUOTES, 'UTF-8');
+            $tareas_hoy_texto = str_replace("||", ", ", $tareas_hoy);
+            $tareas_diarias_texto = str_replace("||", ", ", $tareas_diarias);
+            $tareas_hoy_html = htmlspecialchars($tareas_hoy_texto != "" ? $tareas_hoy_texto : "Sin tareas para hoy", ENT_QUOTES, 'UTF-8');
+            $tareas_diarias_html = htmlspecialchars($tareas_diarias_texto != "" ? $tareas_diarias_texto : "Sin tareas diarias configuradas", ENT_QUOTES, 'UTF-8');
+            $idRol = md5($rol_operativo);
+
+            $onclick_js = "seleccionarRolAsignarTarea(" .
+                json_encode($rol_operativo) . "," .
+                json_encode((string)$total_usuarios) . "," .
+                json_encode((string)$usuarios_activos) . "," .
+                json_encode((string)$usuarios_inactivos) . "," .
+                json_encode((string)$tareas_pendientes_hoy) . "," .
+                json_encode((string)$tareas_completadas_hoy) . "," .
+                json_encode($tareas_hoy_texto) . "," .
+                json_encode($tareas_diarias_texto) .
+            ")";
+            $onclick_html = htmlspecialchars($onclick_js, ENT_QUOTES, 'UTF-8');
+
+            $pagina .= "
+            <div 
+                class='asignar-tarea__card asignar-tarea__user-row asignar-tarea__role-row' 
+                id='rolAsignarTarea_".$idRol."'
+                data-rol='".$rol_html."'
+                onclick=\"".$onclick_html."\">
+
+                <div class='asignar-tarea__user-main'>
+                    <div class='asignar-tarea__role-icon'>R</div>
+                    <div class='asignar-tarea__user-copy'>
+                        <p class='asignar-tarea__nombre'>".$rol_html."</p>
+                        <p class='asignar-tarea__login'>".$usuarios_activos." activos / ".$total_usuarios." usuarios</p>
+                    </div>
+                </div>
+
+                <div class='asignar-tarea__user-meta'>
+                    <span class='asignar-tarea__badge'>ROL</span>
+                    <span class='asignar-tarea__chip' title='".$tareas_hoy_html."'>Hoy: ".$tareas_hoy_html."</span>
+                    <span class='asignar-tarea__chip' title='".$tareas_diarias_html."'>Diarias: ".$tareas_diarias_html."</span>
+                </div>
+
+                <div class='asignar-tarea__user-stats'>
+                    <span><strong>".$tareas_pendientes_hoy."</strong> pendientes</span>
+                    <span><strong>".$tareas_completadas_hoy."</strong> completadas</span>
+                </div>
+
+            </div>";
+        }
+
+        $pagina .= "</div>";
+    } else {
+        $pagina .= "
+        <div class='asignar-tarea__vacio'>
+            <p>No se encontraron roles.</p>
+        </div>";
+    }
+
+    $stmt->close();
     mysqli_close($mysqli);
 
     $informacion = array("1" => "exito", "2" => $pagina, "3" => $nroRegistro);

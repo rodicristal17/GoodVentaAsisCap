@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("classTable.php");
 
@@ -108,6 +109,18 @@ $stmt1->bind_param($ss,$cajanro,$puntoexpedicion,$cod_localFK,$estado,$user,$fec
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'caja',
+		'idcaja',
+		$idcaja,
+		'Solicitud de eliminacion de caja.',
+		$user,
+		'Caja: '.$cajanro.' - Punto: '.$puntoexpedicion
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update caja set cajanro=?,puntoexpedicion=?,cod_localFK=?,estado=?,cod_user_edit=?,fecha_edit=?  where idcaja=?";	
 $stmt1 = $mysqli->prepare($consulta1);

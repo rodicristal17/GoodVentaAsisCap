@@ -1,5 +1,6 @@
 <?php
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
@@ -603,20 +604,18 @@ exit;
 
 function EliminarProducto($cod_producto)
 {
-$mysqli=conectar_al_servidor(); 
-
-$consulta1="update producto set estado='Inactivo' where cod_producto='$cod_producto'";
-$stmt1 = $mysqli->prepare($consulta1);
-
-
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
-
-$informacion =array("1" => "exito","2" => $cod_producto);
-echo json_encode($informacion);	
-exit;
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'producto',
+		'cod_producto',
+		$cod_producto,
+		'Solicitud de eliminacion de producto.',
+		$user,
+		'Producto: '.$cod_producto
+	);
+	$respuesta["4"] = $cod_producto;
+	echo json_encode($respuesta);	
+	exit;
 
 
 }
@@ -959,6 +958,18 @@ nuevoTablaDetallePrecio($cod_producto,$precio_compra,$porcentaje);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'producto',
+		'cod_producto',
+		$cod_producto,
+		'Solicitud de eliminacion de producto.',
+		$user,
+		'Producto: '.$nombre_producto
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 $consulta1="Update producto set CodProveedor=?,tipo=?,cod_barra=?,nombre_producto=upper(?),porcentaje=?,cod_categoriaFK=?,cod_marcasFK=?,cod_ImpuestoFK=?,descripcion_producto=?,unidad_producto=?,precio_producto=?,precio_compra=?,comision=?,estado=?,cod_user_edit=?,fecha_edit=?,link=? where cod_producto=?";	
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssssssssssssssss';
@@ -1884,24 +1895,17 @@ exit;
 
 function anularsalidaProducto($cod_ext)
 {
-$mysqli=conectar_al_servidor();
-
-	date_default_timezone_set('America/Anguilla');    
-$fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
-	 $user=$_POST['useru'];
-    $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
-$mysqli=conectar_al_servidor();
-$consulta1="update historialsalidadeposito set estado='Inactivo',cod_anulado_por='$user',fecha_anulacion='$fecha_inser_edit' where cod_ext='$cod_ext'";
-
-$stmt1 = $mysqli->prepare($consulta1);
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
- 
-$informacion =array("1" => "exito");
-echo json_encode($informacion);	
-exit;
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'historialsalidadeposito',
+		'cod_ext',
+		$cod_ext,
+		'Solicitud de anulacion de salida de producto.',
+		$user,
+		'Salida de producto: '.$cod_ext
+	);
+	echo json_encode($respuesta);	
+	exit;
 }
 
 function EditarHistorialDespacho($idhistorialdespacho)
@@ -1911,15 +1915,18 @@ function EditarHistorialDespacho($idhistorialdespacho)
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 	 $user=$_POST['useru'];
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
-$mysqli=conectar_al_servidor();
-$consulta1="update historialdespacho set estado='Inactivo',cod_anulado_por='$user',fecha_anulacion='$fecha_inser_edit' where idhistorialdespacho='$idhistorialdespacho'";
-
-$stmt1 = $mysqli->prepare($consulta1);
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
- mysqli_close($mysqli);
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'historialdespacho',
+		'idhistorialdespacho',
+		$idhistorialdespacho,
+		'Solicitud de anulacion de despacho.',
+		$user,
+		'Despacho: '.$idhistorialdespacho
+	);
+	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+		echo json_encode($respuesta);
+		exit;
+	}
 
 }
 

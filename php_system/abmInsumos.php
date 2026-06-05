@@ -1,6 +1,7 @@
 <?php
 // ── Conexión ───────────────────────────────────────────────────────────────────
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once('quitarseparadormiles.php');
@@ -94,6 +95,20 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $es
 
     $estado_db = ($estado === 'Activo') ? 1 : 0;
 
+    if ($operacion === "editar" && solicitudEliminadoEsEstadoInactivo($estado_db)) {
+        $user = solicitudEliminadoValorPost('useru', '0');
+        $respuesta = registrarSolicitudEliminacionGenerica(
+            'insumosconsl',
+            'id_insumo',
+            $id_insumo,
+            'Solicitud de eliminacion de insumo.',
+            $user,
+            'Insumo: '.$nombre
+        );
+        echo json_encode($respuesta);
+        exit;
+    }
+
     if ($operacion === "nuevo") {
         $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, unidad_medida, estado)
                 VALUES (?, ?, ?, ?, ?)";
@@ -123,7 +138,7 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $es
     mysqli_query($mysqli, "DELETE FROM insumo_producto WHERE id_insumo=$id_insumo");
     foreach ($productos as $i => $cod) {
         $cod = mysqli_real_escape_string($mysqli, trim($cod));
-        $qty = mysqli_real_escape_string($mysqli, trim($cantidades[$i] ?? 1));
+        $qty = mysqli_real_escape_string($mysqli, trim(isset($cantidades[$i]) ? $cantidades[$i] : 1));
         if (!empty($cod)) {
             mysqli_query($mysqli, "INSERT INTO insumo_producto (id_insumo, cod_producto, cantidad) VALUES ('$id_insumo','$cod','$qty')");
         }
@@ -135,18 +150,19 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $es
 
 function eliminarInsumo($id_insumo)
 {
-    $mysqli = conectar_al_servidor();
-
-    $sql = "UPDATE insumosconsl SET estado = 0 WHERE id_insumo = ?";
-    $stmt = $mysqli->prepare($sql);
-    $stmt->bind_param("i", $id_insumo);
-
-    if (!$stmt->execute()) {
-        echo json_encode(array("1" => "ERROR", "mensaje" => "Error al eliminar insumo: " . $stmt->error));
-        exit;
+    $user = solicitudEliminadoValorPost('useru', '0');
+    $respuesta = registrarSolicitudEliminacionGenerica(
+        'insumosconsl',
+        'id_insumo',
+        $id_insumo,
+        'Solicitud de eliminacion de insumo.',
+        $user,
+        'Insumo: '.$id_insumo
+    );
+    if (isset($respuesta["1"]) && $respuesta["1"] == "exito") {
+        $respuesta["mensaje"] = "Solicitud de eliminacion de insumo registrada.";
     }
-
-    echo json_encode(array("1" => "exito", "mensaje" => "Insumo marcado como Inactivo."));
+    echo json_encode($respuesta);
     exit;
 }
 
@@ -194,7 +210,11 @@ function buscarInsumos($id_insumo, $nombre, $descripcion, $unidad_medida, $estad
 
     $stmt = $mysqli->prepare($sql);
     if (!empty($parametros)) {
-        $stmt->bind_param($tipos, ...$parametros);
+        $refs = array();
+        foreach ($parametros as $k => $v) {
+            $refs[$k] = &$parametros[$k];
+        }
+        call_user_func_array(array($stmt, 'bind_param'), array_merge(array($tipos), $refs));
     }
 
     if (!$stmt->execute()) {
@@ -328,7 +348,11 @@ function BuscarRegistro($codigo, $nombre, $estado)
 
     $stmt = $mysqli->prepare($sql);
     if ($tipos !== "") {
-        $stmt->bind_param($tipos, ...$parametros);
+        $refs = array();
+        foreach ($parametros as $k => $v) {
+            $refs[$k] = &$parametros[$k];
+        }
+        call_user_func_array(array($stmt, 'bind_param'), array_merge(array($tipos), $refs));
     }
 
     if (!$stmt->execute()) {
@@ -407,6 +431,22 @@ function guardarInsumoPagina($operacion)
         return array("tipo" => "err", "mensaje" => "Selecciona un insumo para editar.");
     }
 
+    if ($operacion === 'editar' && solicitudEliminadoEsEstadoInactivo($estado)) {
+        $user = solicitudEliminadoValorPost('useru', '0');
+        $respuesta = registrarSolicitudEliminacionGenerica(
+            'insumosconsl',
+            'id_insumo',
+            $id_insumo,
+            'Solicitud de eliminacion de insumo.',
+            $user,
+            'Insumo: '.$nombre
+        );
+        if (isset($respuesta["1"]) && $respuesta["1"] == "exito") {
+            return array("tipo" => "ok", "mensaje" => "Solicitud de eliminacion registrada.");
+        }
+        return array("tipo" => "err", "mensaje" => isset($respuesta["2"]) ? $respuesta["2"] : "No se pudo registrar la solicitud.");
+    }
+
     if ($operacion === 'nuevo') {
         $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, unidad_medida, estado)
                 VALUES (?, ?, ?, ?, ?)";
@@ -449,21 +489,26 @@ function guardarInsumoPagina($operacion)
 
 function eliminarInsumoPagina()
 {
-    $mysqli = conectar_al_servidor();
     $id_insumo = isset($_POST['id_insumo']) ? (int)$_POST['id_insumo'] : 0;
 
     if ($id_insumo <= 0) {
         return array("tipo" => "err", "mensaje" => "Selecciona un insumo para eliminar.");
     }
 
-    $stmt = $mysqli->prepare("UPDATE insumosconsl SET estado = 0 WHERE id_insumo = ?");
-    $stmt->bind_param("i", $id_insumo);
-
-    if (!$stmt->execute()) {
-        return array("tipo" => "err", "mensaje" => "No se pudo marcar el insumo como inactivo: " . $stmt->error);
+    $user = solicitudEliminadoValorPost('useru', '0');
+    $respuesta = registrarSolicitudEliminacionGenerica(
+        'insumosconsl',
+        'id_insumo',
+        $id_insumo,
+        'Solicitud de eliminacion de insumo.',
+        $user,
+        'Insumo: '.$id_insumo
+    );
+    if (isset($respuesta["1"]) && $respuesta["1"] == "exito") {
+        return array("tipo" => "ok", "mensaje" => "Solicitud de eliminacion registrada.");
     }
 
-    return array("tipo" => "ok", "mensaje" => "Insumo marcado como Inactivo.");
+    return array("tipo" => "err", "mensaje" => isset($respuesta["2"]) ? $respuesta["2"] : "No se pudo registrar la solicitud.");
 }
 
 function cargarInsumosPagina()
@@ -755,7 +800,7 @@ $productos_lista = cargarProductosListaPagina();
         <?php if (count($filas) > 0): ?>
           <?php foreach ($filas as $fila): ?>
             <?php
-              $est_raw = $fila['estado'] ?? '';
+              $est_raw = isset($fila['estado']) ? $fila['estado'] : '';
               $est     = ($est_raw == '1' || strtolower(trim($est_raw)) === 'activo') ? 'activo' : 'inactivo';
               $clsFila = ($est !== 'activo') ? 'fila-inactivo' : '';
             ?>
@@ -937,10 +982,10 @@ $productos_lista = cargarProductosListaPagina();
     document.getElementById('modal-accion').value        = 'editar';
     document.getElementById('modal-id').value            = datos.id_insumo;
     document.getElementById('modal-titulo-texto').textContent = 'Editar Insumo';
-    document.getElementById('campo-nombre').value        = datos.nombre        ?? '';
-    document.getElementById('campo-descripcion').value   = datos.descripcion   ?? '';
-    document.getElementById('campo-stock').value         = datos.cant_stock    ?? '';
-    document.getElementById('campo-unidad').value        = datos.unidad_medida ?? '';
+    document.getElementById('campo-nombre').value        = datos.nombre        || '';
+    document.getElementById('campo-descripcion').value   = datos.descripcion   || '';
+    document.getElementById('campo-stock').value         = datos.cant_stock    || '';
+    document.getElementById('campo-unidad').value        = datos.unidad_medida || '';
 
     // Estado: BD guarda 0/1, el select espera 'Activo'/'Inactivo'
     document.getElementById('campo-estado').value =

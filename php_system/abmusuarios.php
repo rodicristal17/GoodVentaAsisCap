@@ -1,5 +1,6 @@
 <?php
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("subir_foto_base64.php");
 include_once("buscar_nivel.php");
@@ -521,6 +522,18 @@ $stmt4 = $mysqli->prepare($consulta4);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'usuario',
+		'cod_usuario',
+		$cod_usuario,
+		'Solicitud de eliminacion de usuario.',
+		$user,
+		'Usuario: '.$login.' - '.$nombre_persona
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update persona set nombre_persona=?,telefono=?, telefono_referencia=?, direccion=?, tipo_relacion=? where cod_persona=?";	
 $stmt1 = $mysqli->prepare($consulta1);

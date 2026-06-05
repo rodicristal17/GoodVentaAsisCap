@@ -3,6 +3,7 @@
 $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include('quitarseparadormiles.php');
 include("buscar_nivel.php");
@@ -290,33 +291,23 @@ echo json_encode($informacion);
 exit;
 }
 
-$mysqli=conectar_al_servidor(); 
-
 /*AUDITORIA*/
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
 $user=$_POST['useru'];
 $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
-
-$consulta1="Update compra set motivoeliminar=?,cod_user_edit=?,fecha_edit=?,estado='Inactivo' where cod_compra=?";	
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='ssss';
-$stmt1->bind_param($ss,$motivo,$user,$fecha_inser_edit,$cod_compra);
-
-
-
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-
-}
-
-recorredetalles($cod_compra);
-
- mysqli_close($mysqli);
-$informacion =array("1" => "exito","2" => $cod_compra);
-echo json_encode($informacion);	
+$respuesta = registrarSolicitudEliminacionGenerica(
+	'compra',
+	'cod_compra',
+	$cod_compra,
+	$motivo,
+	$user,
+	'Compra: '.$cod_compra
+);
+$respuesta["2"] = isset($respuesta["2"]) ? $respuesta["2"] : $cod_compra;
+$respuesta["4"] = $cod_compra;
+echo json_encode($respuesta);
 exit;
 	
 }

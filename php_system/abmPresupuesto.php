@@ -108,10 +108,11 @@ function verificarOperacionPresupuesto($operacion)
             $cantidad = isset($_POST['cantidad']) ? mb_convert_encoding((string)($_POST['cantidad']), 'ISO-8859-1', 'UTF-8') : null;
             $precio = isset($_POST['precio']) ? mb_convert_encoding((string)($_POST['precio']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? mb_convert_encoding((string)($_POST['cod_presupuestoFK']), 'ISO-8859-1', 'UTF-8') : null;
+            $cod_clienteFK = isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null;
             $es_prioritario = isset($_POST['es_prioritario']) ? mb_convert_encoding((string)($_POST['es_prioritario']), 'ISO-8859-1', 'UTF-8') : null;
             $es_alternativo = isset($_POST['es_alternativo']) ? mb_convert_encoding((string)($_POST['es_alternativo']), 'ISO-8859-1', 'UTF-8') : null;
 
-            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $user, $cod_presupuestoFK);
+            $idDetalle = abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $user, $cod_presupuestoFK, $cod_clienteFK);
             $paginaprecios=buscardetallesprecios($cod_productoFK, $precio,0);
             
             echo json_encode(array("1" => "exito", "2" => $idDetalle, "3" => $paginaprecios));
@@ -149,7 +150,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<tr id='tbSelecRegistro' onclick='eliminarFila(this)'  name='tdDetallePresupuesto'>"
 			. "<td  id='td_datos_1' style='width:10%;'>".$value['cod_barra']."</td>"
 			. "<td  id='td_datos_2' style='width:50%;'>".$value['nombre_producto']."</td>"
-			. "<td  id='td_datos_3' style='width:10%'>".$value['cantidad']."</td>"
+			. "<td  id='td_datos_3' class='presupuesto-doc-cantidad-acciones' style='width:10%'><button type='button' class='btn-eliminar presupuesto-doc-trash-btn' title='Eliminar tratamiento' onclick='event.stopPropagation(); eliminarFila(this); return false;'><i class='fa-solid fa-trash-can'></i></button><span>".$value['cantidad']."</span></td>"
 			. "<td  id='td_datos_4' style='width:15%'>".number_format($value['precio'], 0, ",", ".")."</td>"
 			. "<td  id='td_datos_5' style='width:15%'>".number_format($value['subTotal'], 0, ",", ".")."</td>"
 			. "<td  id='td_datos_6' style='display:none'></td>"
@@ -162,7 +163,6 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<td  id='td_datos_13' style='display:none'>".$value['es_alternativo']."</td>"
 			. "<td  id='td_datos_14' style='display:none'>".$value['cod_producto']."</td>"
 			. "<td  id='td_datos_15' style='display:none'>".$paginaprecios."</td>"
-			. "<td style='display:none' > <button class='btn-eliminar' >❌</button> </td>"
 			. "</tr>"
 			. "</table>";
         if ($value['es_alternativo'] != 1 && $value['es_alternativo'] != "1") {
@@ -412,7 +412,7 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
     return $registros;
 }
 
-function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $cod_usuarioFK_edit, $cod_presupuestoFK)
+function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_prioritario, $es_alternativo, $cod_usuarioFK_edit, $cod_presupuestoFK, $cod_clienteFK = null)
 {
     if (empty($cod_presupuestoFK)) {
         $informacion = array("1" => "error", "mensaje" => "El código de presupuesto es requerido para guardar el detalle del presupuesto.");
@@ -420,6 +420,33 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
         exit;
     }
     $mysqli = conectar_al_servidor();
+
+    if ($cod_clienteFK !== null && $cod_clienteFK !== '') {
+        $sqlValidarPresupuesto = "SELECT cod_clienteFK FROM presupuesto WHERE id = ? LIMIT 1";
+        $stmtValidarPresupuesto = $mysqli->prepare($sqlValidarPresupuesto);
+        $stmtValidarPresupuesto->bind_param('i', $cod_presupuestoFK);
+
+        if (!$stmtValidarPresupuesto->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al validar el presupuesto: " . $stmtValidarPresupuesto->error, "sql" => $sqlValidarPresupuesto);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $resultValidarPresupuesto = $stmtValidarPresupuesto->get_result();
+        if ($resultValidarPresupuesto->num_rows == 0) {
+            $informacion = array("1" => "error", "mensaje" => "El presupuesto seleccionado no existe.");
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $datosPresupuesto = $resultValidarPresupuesto->fetch_assoc();
+        if ((string)$datosPresupuesto['cod_clienteFK'] !== (string)$cod_clienteFK) {
+            $informacion = array("1" => "error", "mensaje" => "El presupuesto no pertenece al paciente seleccionado.");
+            echo json_encode($informacion);
+            exit;
+        }
+        $stmtValidarPresupuesto->close();
+    }
 
     if ($precio !== null && $precio !== '') {
         $precio = str_replace('.', '', $precio);

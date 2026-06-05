@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 include("buscar_nivel.php");
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("classTable.php");
 
@@ -120,6 +121,19 @@ $stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_docto
 
 if($operacion=="editar")
 {
+if ($estado !== NULL && solicitudEliminadoEsEstadoInactivo($estado)) {
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'consultorios',
+		'cod_Consultorio',
+		$cod_Consultorio,
+		'Solicitud de eliminacion de consultorio.',
+		$user,
+		'Consultorio: '.$cod_Consultorio
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $parametros = array();
 $atributos = "";

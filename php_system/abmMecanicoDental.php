@@ -1,5 +1,6 @@
 <?php
     require("conexion.php");
+    require_once("solicitud_eliminado_helper.php");
     include("verificar_navegador.php");
     include("buscar_nivel.php");
     include("classTable.php");
@@ -156,6 +157,23 @@
 
     function abmMecanicoDental($nombre,$telefono_referencia,$direccion,$telefono, $estado,$cod_persona,$cod_mecanico_dental) {
         $mysqli = conectar_al_servidor();
+
+        if (!empty($cod_mecanico_dental) && $estado != null && solicitudEliminadoEsEstadoInactivo($estado)) {
+            $user = solicitudEliminadoValorPost('useru', '0');
+            $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+                'mecanico_dental',
+                'cod_mecanico_dental',
+                $cod_mecanico_dental,
+                'Solicitud de eliminacion de mecanico dental.',
+                $user,
+                'Mecanico dental: '.$nombre
+            );
+            if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+                echo json_encode($respuestaSolicitud);
+                exit;
+            }
+            return $cod_mecanico_dental;
+        }
 
         if (empty($cod_mecanico_dental)) {
             // Primero se inserta los datos de la persona

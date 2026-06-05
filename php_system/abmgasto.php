@@ -3,6 +3,7 @@
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("subir_foto_base64.php");
@@ -415,7 +416,7 @@ if ($operacion == "obtenerGastosAsociados") {
 		</tr>";
 	}
 
-	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => (isset($gastos[0]) ? $gastos[0] : null), "4" => (isset($gastos[0]) ? $gastos[0]['descripcion'] : null), "5" => number_format($total_pendiente, 0, ',', '.')));
+	echo json_encode(array("1" => "exito", "2" => $pagina, "3" => (isset($gastos[0]) ? $gastos[0] : null), "4" => (isset($gastos[0]) ? $gastos[0]['descripcion'] : null), "5" => number_format($total_pendiente, 0, ',', '.'), "6" => count($gastos)));
 	exit;
 }
 
@@ -911,11 +912,16 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	}
 
 	// SE cambia a inactivo el motivo original
-	$sql= "UPDATE motivos_ingreso_egreso SET estado= 'inactivo', cod_usuarioFK= ?, fecha_edit= ? WHERE cod_motivo_ingreso_egreso = ?";
-	$stmt = $mysqli->prepare($sql);
-	$stmt->bind_param('isi',$cod_usuarioFK,$fechaActual,$cod_motivoIngresoEgreso);
-	if (!$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+		'motivos_ingreso_egreso',
+		'cod_motivo_ingreso_egreso',
+		$cod_motivoIngresoEgreso,
+		'Solicitud de eliminacion por combinacion de motivos de ingreso/egreso.',
+		$cod_usuarioFK,
+		'Motivo combinado hacia: '.$cod_motivoIngresoEgreso_dest
+	);
+	if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+		echo json_encode($respuestaSolicitud);
 		exit;
 	}
 
@@ -1008,7 +1014,7 @@ function sumarMesesRespetandoDia($fechaBase, $mesesASumar, $diaObjetivo) {
 	$mesBase = (int)$fechaBase->format('n');
 	$mesTotal = $mesBase + $mesesASumar;
 
-	$nuevoAnio = $anioBase + intdiv($mesTotal - 1, 12);
+	$nuevoAnio = $anioBase + floor(($mesTotal - 1) / 12);
 	$nuevoMes = (($mesTotal - 1) % 12) + 1;
 	$ultimoDiaMes = cal_days_in_month(CAL_GREGORIAN, $nuevoMes, $nuevoAnio);
 	$diaFinal = min($diaObjetivo, $ultimoDiaMes);
@@ -1265,8 +1271,29 @@ if($operacion=="editar")
 
 // Obtiene los datos actuales del gasto
 $datos_gasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos);
-$estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
-$cod_usuario_autoriz= NULL;
+$foto_documento_firmado_edicion= isset($_POST['foto_documento_firmado']) ? trim((string)$_POST['foto_documento_firmado']) : '';
+$ext_documento_firmado_edicion= isset($_POST['ext_documento_firmado']) ? trim((string)$_POST['ext_documento_firmado']) : '';
+$mantener_estado_por_documento_firmado= ($foto_documento_firmado_edicion != '' && $ext_documento_firmado_edicion != '');
+
+if ($mantener_estado_por_documento_firmado && isset($datos_gasto[0]['estado'])) {
+	$estado= $datos_gasto[0]['estado'];
+} else {
+	$estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
+	$cod_usuario_autoriz= NULL;
+}
+
+if ($estado == "Inactivo") {
+	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+		'gastos',
+		'idgastos',
+		$idgastos,
+		'Solicitud de eliminacion de gasto.',
+		$cod_usuario,
+		'Gasto: '.$idgastos.' - '.$motivo
+	);
+	echo json_encode($respuestaSolicitud);
+	exit;
+}
 
 $parametros = array();
 $atributos = "";
@@ -1351,9 +1378,11 @@ if ($cod_proyecto_gastoFK != "") {
 	$parametros[] = $cod_proyecto_gastoFK;
 }
 
-$atributos .= ($atributos == "" ? "" : ", ") . "cod_usuario_autoriz= ?";
-$ss .= "s";
-$parametros[] = $cod_usuario_autoriz;
+if (!$mantener_estado_por_documento_firmado) {
+	$atributos .= ($atributos == "" ? "" : ", ") . "cod_usuario_autoriz= ?";
+	$ss .= "s";
+	$parametros[] = $cod_usuario_autoriz;
+}
 
 if ($atributos == "") {
 	return array("1" => "exito", "2" => $idgastos);
@@ -1407,21 +1436,17 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 			$cantidadCuotasSerie++;
 		}
 		if ($value['idgastos'] != $idgastos && ($value['estado'] != 'Activo')) {
-			$sql = "UPDATE gastos SET estado='Inactivo' WHERE idgastos= ?";
-			$stmt = $mysqli->prepare($sql);
-			$stmt->bind_param('i', $value['idgastos']);
-			$stmt->execute();
-
-			// Borra tambien el mensaje programado asociado
-			if (!empty($value['cod_mensajeFK'])) {
-				$sql = "DELETE FROM menciones WHERE cod_mensajeFK= ?";
-				$stmt = $mysqli->prepare($sql);
-				$stmt->bind_param('i', $value['cod_mensajeFK']);
-				$stmt->execute();
-				$sql = "DELETE FROM mensaje WHERE cod_mensaje= ?";
-				$stmt = $mysqli->prepare($sql);
-				$stmt->bind_param('i', $value['cod_mensajeFK']);
-				$stmt->execute();
+			$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+				'gastos',
+				'idgastos',
+				$value['idgastos'],
+				'Solicitud de eliminacion de cuota asociada de gasto.',
+				$cod_usuario,
+				'Cuota asociada del gasto: '.$idgastos
+			);
+			if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+				echo json_encode($respuestaSolicitud);
+				exit;
 			}
 		}
 	}
@@ -1630,7 +1655,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			'idgastos' => "",
 			'interconsulta_nombre' => "",
 			'cod_interConsultaFK' => "",
-			'usuarionombre' => $value['cod_cobradorFK'],
+			'usuarionombre' => (!empty($value['cobradornombre']) ? $value['cobradornombre'] : $value['cod_cobradorFK']),
 			'monto' => $value['Monto'],
 			'motivo' => "Movimiento de caja",
 			'descripcion' => "Cobro realizado a ".$value['nombrecliente'] . " en formato ".$value['tipopago'],
@@ -1852,17 +1877,17 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
 					<td id='td_id' style='width:5%; background-color: #efeded;color:red'>".$idgastos."</td>
-					<td  id='td_datos_2' style='width:15%'>".$motivo."</td>
+					<td  id='td_datos_2' style='width:10%'>".$motivo."</td>
 					<td  id='td_datos_16' style='width:15%'>".$interconsulta_nombre."</td>
-					<td  style='width:2%'>".$descripcion."</td>
+					<td  style='width:20%'>".$descripcion."</td>
 					<td  id='td_datos_1' style='width:10%'>". number_format($monto,'0',',','.')."</td>
 					<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
-					<td  id='td_datos_3' style='width:10%'>".$fecha."</td>
+					<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 					<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
 					<td  id='td_datos_9' style='display: none;'>".$banco."</td>
 					<td  id='td_datos_10' style='display: none;'>".$nrocuenta."</td>
 					<td  id='td_datos_11' style='display: none;'>".$arreglo."</td>
-					<td  id='td_datos_21' style='width:20%'>".$usuarionombre."</td>
+					<td  id='td_datos_21' style='width:10%'>".$usuarionombre."</td>
 					<td  id='' style='width:10%'>".$nombrelocal."</td>
 					<td  id='td_datos_5' style='display:none'>".$estado."</td>
 					<td  id='td_datos_7' style='display:none'>".$cod_local."</td>
@@ -1875,9 +1900,10 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 					<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 					<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 					<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
-					<td  id='td_datos_22' style='display:none'>".$nombre_usuario_edit."</td>
-					<td  id='td_datos_23' style='display:none'>".$cod_gasto_padre."</td>
-					<td  id='td_datos_24' style='display:none'>".$cod_proyecto_gastoFK."</td>
+					<td  id='td_datos_22' style='display:none'>".$cod_proyecto_gastoFK."</td>
+					<td  id='td_datos_23' style='display:none'>".$modalidad."</td>
+					<td  id='td_datos_24' style='display:none'>".$cod_gasto_padre."</td>
+					<td  id='td_datos_26' style='display:none'>".$nombre_usuario_edit."</td>
 					</tr>
 					</table>";
 			}
@@ -1892,7 +1918,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
 				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.')."</td>
-				<td  id='td_datos_21' style='width:5%'>".$modalidad."</td>
+				<td  id='td_datos_23' style='width:5%'>".$modalidad."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
@@ -1912,7 +1938,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  id='td_datos_18' style='display:none'>".$usuario_autoriz_nombre."</td>
 				<td  id='td_datos_19' style='display:none'>".$fecha_autoriz."</td>
 				<td  id='td_datos_20' style='display:none'>".$cod_motivoIngresoEgresoFK."</td>
-				<td  id='td_datos_21' style='display:none'>".$cod_gasto_padre."</td>
+				<td  id='td_datos_24' style='display:none'>".$cod_gasto_padre."</td>
 				<td  id='td_datos_22' style='display:none'>".$cod_proyecto_gastoFK."</td>
 				</tr>
 				</table>
@@ -2551,6 +2577,19 @@ exit;
 
 $fechaActual= new DateTime();
 $fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
+
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+		'motivos_ingreso_egreso',
+		'cod_motivo_ingreso_egreso',
+		$idabm,
+		'Solicitud de eliminacion de motivo de ingreso/egreso.',
+		$cod_usuarioFK,
+		'Motivo: '.$motivo
+	);
+	echo json_encode($respuestaSolicitud);
+	exit;
+}
 
 $mysqli=conectar_al_servidor();
 

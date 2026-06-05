@@ -4,6 +4,7 @@ include_once 'verificar_navegador.php';
 include_once 'buscar_nivel.php';
 include_once 'classTable.php';
 include_once 'conexion.php';
+include_once 'solicitud_eliminado_helper.php';
 include_once 'abmAgenda.php';
 
 date_default_timezone_set('America/Asuncion');
@@ -345,23 +346,15 @@ function eliminarDiaFeriado($mysqli, $useru){
         exit;
     }
 
-    $sql = "UPDATE dias_feriados
-            SET estado = 'inactivo',
-                cod_usuarioFK_edit = '".$useru."',
-                fecha_edit = NOW()
-            WHERE id = '".$id."'";
-
-    if (!$mysqli->query($sql)) {
-        echo json_encode(array(
-            "1" => "Error",
-            "mensaje" => "No se pudo quitar el feriado",
-            "mysql" => $mysqli->error,
-            "sql" => $sql
-        ));
-        exit;
-    }
-
-    echo json_encode(array("1" => "exito"));
+    $respuesta = registrarSolicitudEliminacionGenerica(
+        'dias_feriados',
+        'id',
+        $id,
+        'Solicitud de eliminacion de dia feriado.',
+        $useru,
+        'Dia feriado: '.$id
+    );
+    echo json_encode($respuesta);
     exit;
 }
 

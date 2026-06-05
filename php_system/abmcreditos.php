@@ -4,6 +4,7 @@ $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include_once('quitarseparadormiles.php');
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("buscar_nivel.php");
 include_once("calcularintereses.php");
@@ -775,7 +776,6 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 
 function eliminarestecreditos($idcredito)
 {
-	$mysqli = conectar_al_servidor();
 	/* No elimina ningun registro, solo actualiza el estado del credito
 	$consulta = "delete from pago where  cod_creditoFK='$idcredito' ";
 
@@ -788,14 +788,20 @@ function eliminarestecreditos($idcredito)
 
 	$consulta = "delete from credito where  idcredito='$idcredito' ";
 */
-	$consulta = "UPDATE credito SET Esado='inactivo' WHERE idcredito='$idcredito'";
-	$stmt = $mysqli->prepare($consulta);
-
-	if (! $stmt->execute()) {
-		echo $mysqli->error;
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'credito',
+		'idcredito',
+		$idcredito,
+		'Solicitud de eliminacion de credito.',
+		$user,
+		'Credito: '.$idcredito,
+		'Esado'
+	);
+	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+		echo json_encode($respuesta);
 		exit;
 	}
-	mysqli_close($mysqli);
 }
 
 
@@ -865,21 +871,22 @@ echo json_encode($informacion);
 exit;
 }
 
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'credito',
+		'idcredito',
+		$idcredito,
+		'Solicitud de eliminacion de credito por refinanciacion.',
+		$user,
+		'Credito: '.$idcredito.' | Venta: '.$cod_venta,
+		'Esado'
+	);
+	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
+		echo json_encode($respuesta);
+		exit;
+	}
 
-	$mysqli=conectar_al_servidor();
-$consulta1="delete from credito where idcredito=?";
-$stmt1 = $mysqli->prepare($consulta1);
-$ss='s';
-$stmt1->bind_param($ss,$idcredito);
-if (!$stmt1->execute()) {
-	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-
-}
-cambiarplazos($cod_venta);
- mysqli_close($mysqli);
-$informacion =array("1" => "exito");
+$informacion =array("1" => "exito", "2" => "Solicitud de eliminacion registrada.");
 echo json_encode($informacion);	
 exit;
 

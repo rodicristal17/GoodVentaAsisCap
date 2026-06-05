@@ -129,7 +129,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
-	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').eq(1).html() || "";
+	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').html() || "";
 
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
@@ -376,7 +376,7 @@ function verificarcamposGasto() {
 	}
 
 	// Se evalua si ya existen gastos asociados
-	if (document.getElementById('divGastoAsociadosGastos').style.display != 'none') {
+	if (gastoSeleccionadoTieneCuotasAsociadas()) {
 		if (inptPeriodicidadGasto == "") {
 			ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
 			return false;
@@ -396,11 +396,16 @@ function verificarcamposGasto() {
 	}
 	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto, inptProyectoGasto);
 }
+
+function gastoSeleccionadoTieneCuotasAsociadas() {
+	return document.getElementById('divGastoAsociadosGastos').getAttribute('data-es-credito') == 'true';
+}
+
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "", proyecto_gasto="") {
 	verCerrarEfectoCargando("1")
 	let editar_cuotas= true;
 	
-	if (accion == "editar") {
+	if (accion == "editar" && gastoSeleccionadoTieneCuotasAsociadas()) {
 		editar_cuotas= confirm("¿Modificar tambien las cuotas asociadas?");
 	}
 	var datos = new FormData();
@@ -523,6 +528,7 @@ function obtenerGastosAsociados(id_gasto) {
 	datos.append("navegador", navegador);
 	datos.append("funt", 'obtenerGastosAsociados');
     datos.append("idgastos", id_gasto);
+	document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'false');
 	document.getElementById('divGastoAsociadosGastos').style.display= "";
 	document.getElementById('divTableProyecto').innerHTML= paginacargando;
 	
@@ -573,12 +579,22 @@ function obtenerGastosAsociados(id_gasto) {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-					if (datos["2"]) {
+					var gastoPrincipal = datos["3"] || {};
+					var modalidad = ((gastoPrincipal["modalidad"] || "") + "").toLowerCase();
+					var codProyecto = ((gastoPrincipal["cod_proyecto_gastoFK"] || "") + "");
+					var cantidadGastos = parseInt(datos["6"] || "0");
+					var esCredito = (modalidad == "credito" || (codProyecto != "" && codProyecto != "0") || cantidadGastos > 1);
+
+					if (datos["2"] && esCredito) {
+						document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'true');
 						document.getElementById('divGastoAsociadosGastos').style.display= "";
 						document.getElementById('divNombreProyectoGasto').innerHTML= datos["4"];
 						document.getElementById('divTableProyecto').innerHTML= datos["2"];
 					} else {
+						document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'false');
 						document.getElementById('divGastoAsociadosGastos').style.display= "none";
+						document.getElementById('divNombreProyectoGasto').innerHTML= "";
+						document.getElementById('divTableProyecto').innerHTML= "";
 					}
 				}				
 			} catch (error) {
@@ -1234,6 +1250,7 @@ function limpiarcamposGasto() {
 	document.getElementById('inptMotivoMisGastos').value ="";
 	document.getElementById('inptAbmInterConsultaGasto').value= "";
 	document.getElementById('divGastoAsociadosGastos').style.display= "none";
+	document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'false');
 	document.getElementById('tablePeriodicidad').style.display= "";
 	document.getElementById('inptIdGasto').value = "";
 	document.getElementById('inptProyectoGasto').value = "";

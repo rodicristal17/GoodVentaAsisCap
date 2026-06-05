@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include('quitarseparadormiles.php');
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 function verificar($operacion)
 {
@@ -105,6 +106,19 @@ $stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantven
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'listado',
+		'idlistado',
+		$idlistado,
+		'Solicitud de eliminacion de listado.',
+		$user,
+		'Listado: '.$idlistado
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update listado set cant=?,fecha=?,estado=?,cod_producto=?,cod_cobrador=?,cantvendido=?,cod_local=? where idlistado=?";	/*Sentencia para editar registros*/
 /*La sentencia update es utilizado para editar datos y esta compuesto por 

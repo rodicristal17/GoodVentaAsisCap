@@ -1716,33 +1716,64 @@ function mostrarOpcionesUsuariosMenciones(textarea, sugerencias) {
   if (!dropdown) {
     dropdown = document.createElement('div');
     dropdown.id = 'dropdown-menciones';
-    dropdown.style.position = 'absolute';
-    dropdown.style.background = '#fff';
-    dropdown.style.border = '1px solid #ccc';
-    dropdown.style.zIndex = 1000;
     document.body.appendChild(dropdown);
   }
+
+  dropdown.style.position = 'fixed';
+  dropdown.style.background = '#fff';
+  dropdown.style.border = '1px solid #cdd9e4';
+  dropdown.style.borderRadius = '8px';
+  dropdown.style.boxShadow = '0 12px 28px rgba(15, 23, 42, 0.22)';
+  dropdown.style.zIndex = 1000001;
+  dropdown.style.maxHeight = '260px';
+  dropdown.style.overflowY = 'auto';
+  dropdown.style.padding = '4px';
+  dropdown.style.display = '';
   
   // Posicionar debajo del textarea
   const rect = textarea.getBoundingClientRect();
   dropdown.style.left = rect.left + 'px';
   dropdown.style.top = rect.bottom + 'px';
-  dropdown.style.width = rect.width + 'px';
+  dropdown.style.width = Math.max(rect.width, 260) + 'px';
   
   // Rellenar con sugerencias
   dropdown.innerHTML = '';
+  if (sugerencias.length == 0) {
+    const itemVacio = document.createElement('div');
+    itemVacio.textContent = 'Sin usuarios disponibles';
+    itemVacio.style.padding = '10px 12px';
+    itemVacio.style.color = '#64748b';
+    itemVacio.style.fontSize = '13px';
+    dropdown.appendChild(itemVacio);
+    return;
+  }
+
   sugerencias.forEach(([id_sug, nombre]) => {
     const item = document.createElement('div');
     item.textContent = nombre;
     item.id= id_sug;
     item.className = 'menciones-mensaje';
-    item.onclick = () => {
+    item.style.padding = '8px 10px';
+    item.style.cursor = 'pointer';
+    item.style.borderRadius = '6px';
+    item.style.color = '#1d4ed8';
+    item.style.borderBottom = '0';
+    item.onmouseenter = () => {
+      item.style.background = '#eef6ff';
+    };
+    item.onmouseleave = () => {
+      item.style.background = '';
+    };
+    item.onmousedown = (event) => {
+      event.preventDefault();
       // Reemplazar el @texto por el nombre completo
       textarea.innerHTML = textarea.innerHTML.replace(
         /@\S*$/, 
         '<b class="menciones-mensaje" id="'+id_sug+'">@' + nombre + '</b>&nbsp;'
       );
       dropdown.innerHTML = '';
+      dropdown.style.display = 'none';
+      textarea.focus();
     };
     dropdown.appendChild(item);
   });
@@ -2077,6 +2108,9 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
         }
 
         // Obtiene tambien el listado de usuario
+        if (typeof cargarUsuariosMencionesInterConsulta == "function") {
+            cargarUsuariosMencionesInterConsulta();
+        }
         buscarabmusuario2('', '', '', 'Activo', '');
         buscarPacientesConInterConsultas();
 

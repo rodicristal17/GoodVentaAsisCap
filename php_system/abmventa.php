@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include('quitarseparadormiles.php');
 include("buscar_nivel.php");
@@ -953,41 +954,153 @@ $informacion =array("1" => "camposvacio");
 echo json_encode($informacion);	
 exit;
 }
-
-eliminarpagos($cod_venta);
-eliminarcreditos($cod_venta);
+if($motivo==""  ){
+$informacion =array("1" => "camposvacio");
+echo json_encode($informacion);	
+exit;
+}
 
 $mysqli=conectar_al_servidor();
 
 /*AUDITORIA*/
 date_default_timezone_set('America/Anguilla');    
-$fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
-$fecha = date('Y-m-d', time()); 
 $user=$_POST['useru'];
 $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
-$consulta="Insert into ventaseliminadas (nrofactura,motivo,fecha,cod_user_insert,fecha_insert)
-values(?,?,?,?,?)";
-$stmt = $mysqli->prepare($consulta);
-$ss='sssss';
-$stmt->bind_param($ss,$nrofactura,$motivo,$fecha,$user,$fecha_inser_edit);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
+$cantDetalle = contarRelacionSolicitudVenta($mysqli, 'detalle_venta', 'cod_ventaFK', $cod_venta);
+$cantCredito = contarRelacionSolicitudVenta($mysqli, 'credito', 'cod_venta', $cod_venta);
+$cantPago = contarRelacionSolicitudVenta($mysqli, 'pago', 'cod_venta_fk', $cod_venta);
+$cantGarantia = contarRelacionSolicitudVenta($mysqli, 'garantias', 'cod_ventaFK', $cod_venta);
+
+$resumen = "Venta: ".$cod_venta;
+if ($nroFactura != "") {
+	$resumen .= " | Factura: ".$nroFactura;
+}
+$resumen .= " | Relacionados: ".$cantDetalle." detalle(s), ".$cantCredito." credito(s), ".$cantPago." pago(s), ".$cantGarantia." garantia(s)";
+
+$respuesta = registrarSolicitudEliminacionGenerica(
+	'venta',
+	'cod_venta',
+	$cod_venta,
+	$motivo,
+	$user,
+	$resumen
+);
+
+if (!isset($respuesta["1"]) || $respuesta["1"] != "exito") {
+	mysqli_close($mysqli);
+	echo json_encode($respuesta);
+	exit;
 }
 
-$consulta="delete from venta where cod_venta='$cod_venta'";	
-$stmt = $mysqli->prepare($consulta);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
+$idSolicitud = isset($respuesta["3"]) ? $respuesta["3"] : 0;
+registrarRelacionadosSolicitudVenta($mysqli, $idSolicitud, $cod_venta);
 
  mysqli_close($mysqli); 
-$informacion =array("1" => "exito" );
-echo json_encode($informacion);	
+$respuesta["2"] = "Solicitud de eliminacion de venta registrada.";
+echo json_encode($respuesta);	
 exit;
 	
+}
+
+function contarRelacionSolicitudVenta($mysqli, $tabla, $columna, $cod_venta) {
+	if (!solicitudEliminadoColumnaExiste($mysqli, $tabla, $columna)) {
+		return 0;
+	}
+	$sql = "SELECT COUNT(*) AS total FROM `".$tabla."` WHERE `".$columna."` = ?";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return 0;
+	}
+	$stmt->bind_param('s', $cod_venta);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		return 0;
+	}
+	$result = $stmt->get_result();
+	$row = $result ? $result->fetch_assoc() : null;
+	$stmt->close();
+	return isset($row['total']) ? intval($row['total']) : 0;
+}
+
+function registrarRelacionadosSolicitudVenta($mysqli, $idSolicitud, $cod_venta) {
+	if (intval($idSolicitud) <= 0) {
+		return;
+	}
+	registrarRelacionadosSolicitudVentaDesdeSql(
+		$mysqli,
+		$idSolicitud,
+		"SELECT cod_detalle AS id, CONCAT('Detalle venta: ', cod_detalle, ' | Producto: ', cod_productoFK, ' | Estado: ', estado) AS resumen FROM detalle_venta WHERE cod_ventaFK = ?",
+		'detalle_venta',
+		'cod_detalle',
+		'estado',
+		1,
+		$cod_venta
+	);
+	registrarRelacionadosSolicitudVentaDesdeSql(
+		$mysqli,
+		$idSolicitud,
+		"SELECT idcredito AS id, CONCAT('Credito: ', idcredito, ' | Plazo: ', plazo, ' | Estado: ', Esado) AS resumen FROM credito WHERE cod_venta = ?",
+		'credito',
+		'idcredito',
+		'Esado',
+		1,
+		$cod_venta
+	);
+	$requiereInactivacionPago = solicitudEliminadoColumnaExiste($mysqli, 'pago', 'estado') ? 1 : 0;
+	registrarRelacionadosSolicitudVentaDesdeSql(
+		$mysqli,
+		$idSolicitud,
+		"SELECT idPago AS id, CONCAT('Pago: ', idPago, ' | Monto: ', Monto, ' | Tipo: ', Tipo) AS resumen FROM pago WHERE cod_venta_fk = ?",
+		'pago',
+		'idPago',
+		$requiereInactivacionPago == 1 ? 'estado' : '',
+		$requiereInactivacionPago,
+		$cod_venta
+	);
+	registrarRelacionadosSolicitudVentaDesdeSql(
+		$mysqli,
+		$idSolicitud,
+		"SELECT idgarantia AS id, CONCAT('Garantia: ', idgarantia, ' | Estado: ', estado) AS resumen FROM garantias WHERE cod_ventaFK = ?",
+		'garantias',
+		'idgarantia',
+		'estado',
+		1,
+		$cod_venta
+	);
+}
+
+function registrarRelacionadosSolicitudVentaDesdeSql($mysqli, $idSolicitud, $sql, $tabla, $pkColumna, $estadoColumna, $requiereInactivacion, $cod_venta) {
+	if (!solicitudEliminadoColumnaExiste($mysqli, $tabla, $pkColumna)) {
+		return;
+	}
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return;
+	}
+	$stmt->bind_param('s', $cod_venta);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		return;
+	}
+	$result = $stmt->get_result();
+	while ($row = $result->fetch_assoc()) {
+		$respuesta = registrarDetalleSolicitudEliminacionGenerica(
+			$idSolicitud,
+			$tabla,
+			$pkColumna,
+			$row['id'],
+			isset($row['resumen']) ? $row['resumen'] : '',
+			$estadoColumna,
+			$requiereInactivacion
+		);
+		if (!isset($respuesta["1"]) || $respuesta["1"] != "exito") {
+			$stmt->close();
+			echo json_encode($respuesta);
+			exit;
+		}
+	}
+	$stmt->close();
 }
 
 function eliminarcreditos($cod_venta){

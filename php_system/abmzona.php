@@ -5,6 +5,7 @@ $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 
 //cargar achivos importantes
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
@@ -106,6 +107,19 @@ $stmt1->bind_param($ss,$nombre,$estado,$encargado);
 
 if($operacion=="editar")
 {
+if (solicitudEliminadoEsEstadoInactivo($estado)) {
+	$user = solicitudEliminadoValorPost('useru', '0');
+	$respuesta = registrarSolicitudEliminacionGenerica(
+		'zona',
+		'idzona',
+		$idzona,
+		'Solicitud de eliminacion de zona.',
+		$user,
+		'Zona: '.$nombre
+	);
+	echo json_encode($respuesta);
+	exit;
+}
 
 $consulta1="Update zona set nombre=?,estado=?,encargado=? where idzona=?";	
 $stmt1 = $mysqli->prepare($consulta1);

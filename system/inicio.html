@@ -20,11 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<<<<<<< Updated upstream
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gantt-dashboard-sin-espacio-v1-20260529" />
-=======
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-detalle-hilo-20260529" />
->>>>>>> Stashed changes
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=listado-accesos-modernizado-20260604" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,15 +39,15 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
-<script src="/GoodVentaAsisCap/js_system/abm.js?x=x-ios10v1"></script>
+<script src="/GoodVentaAsisCap/js_system/abm.js?x=arqueo-print-filtros-20260602"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=interconsulta-filtros-visibles-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=interconsulta-filtros-visibles-20260529"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ficha-clinica-gantt-visible-20260529"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -60,10 +56,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-20260528"></script>   
+<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-porcentaje-20260602"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js?x=salida-ubicacion-20260529"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
+<script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -77,6 +74,347 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
+<style>
+  #principalMenub .dashboard-contenedor {
+    padding-top: 76px !important;
+  }
+
+  #principalMenub .dashboard-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    min-height: 66px;
+    margin: 0;
+    padding: 8px 18px;
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.32);
+    background: rgba(248, 250, 252, 0.92);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  }
+
+  #principalMenub .dashboard-topbar__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  #principalMenub .dashboard-topbar__center {
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    z-index: 2;
+    width: clamp(300px, 34vw, 470px);
+    transform: translateX(-50%);
+  }
+
+  #principalMenub .dashboard-access-search--topbar {
+    position: relative;
+    width: 100%;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box input {
+    height: 46px;
+    border-radius: 14px 0 0 14px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    flex: 0 0 46px;
+    height: 46px;
+    padding: 0;
+    border-left: 0;
+    border-radius: 0 14px 14px 0;
+    background: #eff6ff;
+    color: #2563eb;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box input:focus + button {
+    border-color: #2563eb;
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: none;
+    max-height: min(340px, calc(100vh - 92px));
+    min-height: 0;
+    margin-top: 0;
+    padding: 10px;
+    overflow: auto;
+    border: 1px solid #d9e1ea;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.18);
+  }
+
+  #principalMenub .dashboard-access-search--topbar .dashboard-access-search__results.is-visible {
+    display: flex;
+  }
+
+  #principalMenub .dashboard-topbar__jornada {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  body > .principal2,
+  body > .principalMenub:not(#principalMenub) {
+    z-index: 3000;
+  }
+
+  #principalMenub .dashboard-home-button {
+    min-height: 46px;
+    padding: 0 16px;
+    border-radius: 14px;
+    border-color: #d8e2ee;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  }
+
+  #principalMenub .dashboard-topbar-user {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    min-width: 0;
+    min-height: 46px;
+    max-width: min(360px, 34vw);
+    padding: 4px 6px 4px 14px;
+    border: 1px solid #d8e2ee;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #172033;
+    cursor: pointer;
+    font-family: "Merriweather Sans", Arial;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  }
+
+  #principalMenub .dashboard-topbar-user:hover {
+    background: #ffffff;
+    border-color: #b7c3d0;
+  }
+
+  #principalMenub .dashboard-topbar-user__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  #principalMenub .dashboard-topbar-user__photo {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e5e7eb;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
+    display: grid;
+    grid-template-columns: max-content auto auto max-content;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    min-height: 46px;
+    padding: 5px 8px 5px 12px;
+    border-color: #d8e2ee !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07) !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__clock {
+    display: grid;
+    align-content: center;
+    width: max-content;
+    min-height: 36px;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__hora.inputReloj2 {
+    width: 104px !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__hora.inputReloj2,
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__hora {
+    font-size: 19px !important;
+    letter-spacing: 0 !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__fecha {
+    font-size: 11px !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__btn {
+    min-width: 124px;
+    height: 34px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 5px 12px rgba(22, 163, 74, 0.18) !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__registro {
+    grid-column: auto;
+    width: auto !important;
+    min-width: 94px;
+    border: 1px solid #edf1f5;
+    border-radius: 10px;
+    font-size: 11px !important;
+    background: #f8fafc;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__registro .tableCabeceraRegistro td:first-child,
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__registro .tableRegistroSelec td:first-child {
+    display: none !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__registro .tableCabeceraRegistro td {
+    padding: 4px 8px 2px !important;
+    background: #f8fafc !important;
+    font-size: 10px !important;
+    text-align: center !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__registro .tableRegistroSelec td {
+    padding: 2px 8px 5px !important;
+    background: #f8fafc !important;
+    font-size: 11px !important;
+    text-align: center !important;
+  }
+
+  @media (max-width: 980px) {
+    #principalMenub .dashboard-contenedor {
+      padding-top: 184px !important;
+    }
+
+    #principalMenub .dashboard-topbar {
+      flex-wrap: wrap;
+    }
+
+    #principalMenub .dashboard-topbar__center {
+      position: relative;
+      top: auto;
+      left: auto;
+      order: 2;
+      width: 100%;
+      transform: none;
+    }
+
+    #principalMenub .dashboard-topbar__left,
+    #principalMenub .dashboard-topbar__jornada {
+      width: 100%;
+    }
+
+    #principalMenub .dashboard-topbar__left {
+      order: 1;
+    }
+
+    #principalMenub .dashboard-topbar__left {
+      justify-content: space-between;
+    }
+
+    #principalMenub .dashboard-topbar__jornada {
+      order: 3;
+      justify-content: stretch;
+      margin-left: 0;
+    }
+
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
+      width: auto;
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 620px) {
+    #principalMenub .dashboard-contenedor {
+      padding-top: 228px !important;
+    }
+
+    #principalMenub .dashboard-topbar {
+      min-height: 58px;
+      padding: 8px 10px;
+      gap: 8px;
+    }
+
+    #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box {
+      align-items: center;
+      flex-direction: row;
+    }
+
+    #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button {
+      width: 46px;
+    }
+
+    #principalMenub .dashboard-home-button span {
+      display: none;
+    }
+
+    #principalMenub .dashboard-home-button {
+      width: 42px;
+      min-width: 42px;
+      padding: 8px;
+    }
+
+    #principalMenub .dashboard-topbar-user {
+      max-width: calc(100vw - 68px);
+      padding-left: 10px;
+    }
+
+    #principalMenub .dashboard-topbar-user__photo {
+      width: 38px;
+      height: 38px;
+      flex-basis: 38px;
+    }
+
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
+      grid-template-columns: max-content auto auto;
+      width: 100%;
+      max-width: none;
+    }
+
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__registro {
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+  }
+</style>
 <script>
 function verCerrarAbmInsumos(){
     var ventana = document.getElementById("divAbmInsumos");
@@ -137,7 +475,6 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
 
 <div class='principal'>
-
 <center>
 <div class='divCabecera_b' style='display:none'>
 <table style="width: 90%;height: 100%">
@@ -234,6 +571,28 @@ onmouseover='verMenusWindows("ptituloReporte")' style='display:none'>
 <!--Opciones de Menu!-->
 <div style='display:none;background-color:transparent' id='principalMenub'>
 
+<div class="dashboard-topbar">
+  <div class="dashboard-topbar__left">
+    <button type="button" class="dashboard-home-button" onclick="verCerrarMenub(0)">
+      <img src="/GoodVentaAsisCap/iconos/home.png" alt="" />
+    </button>
+    <div class="dashboard-topbar-user" onclick="verCerrarMisDatos(1);" title="Mis datos">
+      <span class="dashboard-topbar-user__name" id="nombrePerfilUsuarioTopbar">Usuario Conectado</span>
+      <img id="fotoPerfilUsuarioTopbar" class="dashboard-topbar-user__photo" src="/GoodVentaAsisCap/iconos/sinperfil.png" alt="Foto de perfil" />
+    </div>
+  </div>
+  <div class="dashboard-topbar__center">
+    <div class="dashboard-access-search dashboard-access-search--topbar" id="dashboardAccessSearch">
+      <div class="dashboard-access-search__box">
+        <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
+        <button type="button" onclick="limpiarBuscadorAccesosDashboard()" aria-label="Limpiar búsqueda" title="Limpiar búsqueda">&times;</button>
+      </div>
+      <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
+    </div>
+  </div>
+  <div class="dashboard-topbar__jornada" id="dashboardTopbarJornada"></div>
+</div>
+
 <img src='/GoodVentaAsisCap/iconos/fondo.jpg'
 style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoSytem2' />
 <div class='principalMenu2 divScrollolcutar' id='divscrollefecto'>
@@ -259,42 +618,13 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                   <div class="dashboard-contenedor">
 
-                    <div class="dashboard-topbar">
-                      <button type="button" class="dashboard-home-button" onclick="verCerrarMenub(0)">
-                        <img src="/GoodVentaAsisCap/iconos/home.png" alt="" />
-                        <span>Inicio</span>
-                      </button>
-                    </div>
-
                     <div class="dashboard-principal">
 
                       <div class="dashboard-left-column">
                       <section class="dashboard-card dashboard-card--jornada" id="dashboardJornadaCard">
-                        <div class="dashboard-card__header">
-                          <div>
-                            <p class="dashboard-card__eyebrow">Jornada laboral</p>
-                            <h2 class="dashboard-card__title">Agenda del día</h2>
-                            <p class="dashboard-card__subtitle">Actividades y control diario del funcionario</p>
-                          </div>
-                        </div>
-
                         <div class="dashboard-card__body" id="dashboardJornadaBody"></div>
                       </section>
 
-                      <section class="dashboard-access-search dashboard-section-card" id="dashboardAccessSearch">
-                        <div class="dashboard-section-header">
-                          <div>
-                            <p class="dashboard-section-eyebrow">Búsqueda general</p>
-                            <h2 class="dashboard-section-title">Encontrar acceso</h2>
-                          </div>
-                        </div>
-
-                        <div class="dashboard-access-search__box">
-                          <input type="search" id="dashboardAccessSearchInput" placeholder="Buscar por nombre o módulo..." autocomplete="off" oninput="filtrarAccesosDashboard()" />
-                          <button type="button" onclick="limpiarBuscadorAccesosDashboard()">Limpiar</button>
-                        </div>
-                        <div class="dashboard-access-search__results" id="dashboardAccessSearchResults"></div>
-                      </section>
                       </div>
 
                       <section class="dashboard-card dashboard-card--gantt">
@@ -433,6 +763,10 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                               panel.style.marginTop = '';
                               panel.style.height = '';
 
+                              if (!layout.classList.contains('task-list-collapsed')) {
+                                return;
+                              }
+
                               var cajaLayout = layout.getBoundingClientRect();
                               var cajaControles = controles.getBoundingClientRect();
                               var espacioSuperior = Math.round(cajaControles.top - cajaLayout.top);
@@ -527,8 +861,14 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <script>
                       function organizarDashboardPrincipal() {
                         var jornadaBody = document.getElementById("dashboardJornadaBody");
+                        var jornadaTopbar = document.getElementById("dashboardTopbarJornada");
                         var perfilWidget = document.querySelector(".perfil-app .perfil-widget");
                         var perfilApp = document.querySelector(".perfil-app");
+                        var perfilJornada = perfilWidget ? perfilWidget.querySelector(".perfil-widget__jornada") : document.querySelector(".perfil-widget__jornada");
+
+                        if (jornadaTopbar && perfilJornada && !jornadaTopbar.contains(perfilJornada)) {
+                          jornadaTopbar.appendChild(perfilJornada);
+                        }
 
                         if (jornadaBody && perfilWidget && !jornadaBody.contains(perfilWidget)) {
                           jornadaBody.appendChild(perfilWidget);
@@ -632,10 +972,12 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                         var query = normalizarTextoDashboard(input.value);
                         if (!query) {
-                          results.innerHTML = "<span class='dashboard-access-search__empty'>Escribí para buscar accesos del dashboard.</span>";
+                          results.innerHTML = "";
+                          results.classList.remove("is-visible");
                           return;
                         }
 
+                        results.classList.add("is-visible");
                         var html = "";
                         var cantidad = 0;
 
@@ -979,12 +1321,12 @@ style='display:none' class='divMinimizado'>
             </div>
 
             <div class="perfil-tareas__contador">
-                <span id="spanTareasPendientes">0</span> pendientes
+                <span id="spanTareasPendientes">0%</span> completadas
             </div>
 
         </div>
 
-        <div class="perfil-tareas__resumen" aria-label="Resumen de actividades del dia">
+        <div class="perfil-tareas__resumen" style="display: none;" aria-label="Resumen de actividades del dia">
             <div class="perfil-tareas__dato perfil-tareas__dato--pendiente">
                 <span id="spanTareasPendientesResumen">0</span>
                 <small>Pendientes</small>
@@ -1027,6 +1369,20 @@ style='display:none' class='divMinimizado'>
                value="Marcar entrada"
                class="btn4 perfil-widget__btn"
                onclick="registrarAsistencia();" />
+
+        <div class="solicitud-eliminacion-pendiente-widget" id="contenedorSolicitudEliminadoPendiente" style="display:none">
+            <button type="button" class="solicitud-eliminacion-pendiente-button" onclick="toggleDropdownSolicitudEliminado()" title="Solicitudes de eliminacion pendientes">
+                <i class="fa-solid fa-list-check"></i>
+                <span class="solicitud-eliminacion-pendiente-badge" id="badgeSolicitudEliminadoPendiente" style="display:none">0</span>
+            </button>
+            <div class="solicitud-eliminacion-pendiente-dropdown" id="dropdownSolicitudEliminadoPendiente" style="display:none">
+                <div class="solicitud-eliminacion-pendiente-header">
+                    <strong id="tituloSolicitudEliminadoPendiente">Solicitudes pendientes</strong>
+                    <button type="button" onclick="abrirInformeSolicitudEliminadoDesdeNotificacion('')">Ver informe</button>
+                </div>
+                <div class="solicitud-eliminacion-pendiente-list" id="listaSolicitudEliminadoPendiente"></div>
+            </div>
+        </div>
 
         <table class="perfil-widget__registro" id="tableRegistroEntrada">
             <thead>
@@ -2346,6 +2702,21 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table  class='divMenub' id='divMenuSolicitudEliminado'
+onclick='abrirInformeSolicitudEliminado()' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/report.png' />
+<p class='pTitulo4'>Solicitud Eliminados</p>
+<center>
+<div id='divMinimizadoInformeSolicitudEliminado' style='display:none'
+class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
 <table  class='divMenub' id='divMenuDictamenes'
 onclick='verCerrarInformeDictamen(true)' style='text-align:center;'>
 <tr>
@@ -2466,7 +2837,7 @@ class='divMinimizado'></div>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/nivelesacceso.png' />
-<p class='pTitulo4'  >Listado de Niveles</p>
+<p class='pTitulo4'  >Listado de Roles</p>
 <center><div id='divMinimizadoListadodeNiveles' style='display:none' class='divMinimizado'></div></center>
 </td>
 </tr>
@@ -2842,7 +3213,7 @@ id='inptContrasenhaUser' style='width:100%;box-sizing:border-box;' />
 </div>
 
 <div style='margin-top:12px;'>
-<p class='pTituloC'>Niveles de acceso :</p>
+<p class='pTituloC'>Rol de acceso :</p>
 <select class='inputSelect' id='inptAccesoUser' style='width:100%;box-sizing:border-box;'>
 <option value="Administrador">ADMINISTRADOR</option>
 <option value="Vendedor">VENDEDOR</option>
@@ -3175,128 +3546,95 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <tr>
 <td>
 <center>
-<div class='divAbms' id='divAbmListaNiveles1' style='display:;'>
-<table class='tableMenuZ'>
+<div class='divAbms lista-niveles-modal' id='divAbmListaNiveles1' style='display:;'>
+<table class='tableMenuZ lista-niveles-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Listado de <b style='font-size: 30px;' >Niveles</b></p>
+<p class='pTituloB lista-niveles-title'>Listado de <b>Roles</b></p>
 </td>
-<td style='width:5%'>
+<td class='lista-niveles-header-action'>
 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir nuevo registro' onclick='NuevoListaNivelesFrm()' />
 </td>
 
-<td style='width:5%'>
+<td class='lista-niveles-header-action'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarFrmListaNiveles("2")' />
 </td>
 </tr>
 </table>
  
 <center>
-<div class='divMenuf'>
-<table style='width:100%' id='trCheckFacultad'>
-<tr>
-<td style='width:70%'>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8'   onclick='checkestadoListadoAcceso(1)' > <input type='checkbox' id="inptSeleccEstadoListadoAcceso1" checked > Activo</p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class='pTitulo8'  onclick='checkestadoListadoAcceso(2)' > <input type='checkbox' id="inptSeleccEstadoListadoAcceso2" > Inactivo</p>
-</td>
-</tr>
-</table>
+<div class='divMenuf lista-niveles-body'>
 <center>
-<p class='pTitulo7' style="display:none;"  id="lblNroRegistroListaNiveles"></p>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:100%;">
-NOMBRES
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:99%;" >
-<input placeholder='Parecido a' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarListaNiveles1'  style='width:95%'   onkeyup="if(event.keyCode == 13){BuscarAbmListaNiveles()}"  />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarListaNiveles1')" />
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table tableTamanho2" id="divBuscadorListaNiveles" style='height:60vh;' ></div>
+<div class='lista-niveles-toolbar'>
+<div class='lista-niveles-status-filter' id='trCheckFacultad'>
+<label class='lista-niveles-status-option is-selected' onclick='checkestadoListadoAcceso(1)'>
+<input type='checkbox' id="inptSeleccEstadoListadoAcceso1" checked> Activo
+</label>
+<label class='lista-niveles-status-option' onclick='checkestadoListadoAcceso(2)'>
+<input type='checkbox' id="inptSeleccEstadoListadoAcceso2"> Inactivo
+</label>
+</div>
+<p class='lista-niveles-count' id="lblNroRegistroListaNiveles">0 roles</p>
+</div>
+<div class='lista-niveles-search'>
+<span class='lista-niveles-search-icon'>Buscar</span>
+<input placeholder='Buscar nivel' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarListaNiveles1' onkeyup="if(event.keyCode == 13){BuscarAbmListaNiveles()}"  />
+<button type='button' class='lista-niveles-clear' title='Limpiar busqueda' onclick="vaciar('inptBuscarListaNiveles1');BuscarAbmListaNiveles()">Limpiar</button>
+</div>
+<div class='lista-niveles-table-head'>
+<span>Nivel</span>
+<span>Estado</span>
+</div>
+<div class="div_cuerpo_table tableTamanho2 lista-niveles-table-wrap" id="divBuscadorListaNiveles"></div>
 </center>
 </div>
-<div class='divMenuf'>
-<table style='width:96%'>
-<tr>
-<td style='width:100%;text-align:left'>
+<div class='divMenuf lista-niveles-selection'>
+<div class='lista-niveles-selection-field'>
 <p class='pTituloC'>Registro Seleccionado</p>
-<input type='text'  class='inputTextDisable' id='inptRegistroSeleccionadoListaNiveles'  style='width:150px' disabled />
-<input id='btnEditarDatosListaNiveles' type="button" value="Editar" class="btn4" onclick="EditarListaNivelesFrm()" style='width:100px;background-color:#b5f5b7'>
-<input id='btnEliminarDatosListaNiveles' type="button" value="Eliminar" class="btn4" onclick="EliminarRegitroListaNiveles()" style='width:100px;background-color:#ffcece'>
-<input id='btnDetallesDatosListaNiveles' type="button" value="Accesos" class="btn4" onclick="verCerrarFrmDetallesAccesoListaNiveles(1)" style='width:100px;background-color:#aad9ff'>
-</td>
-
-</tr>
-</table>
+<input type='text'  class='inputTextDisable' id='inptRegistroSeleccionadoListaNiveles' disabled />
+</div>
+<div class='lista-niveles-actions'>
+<input id='btnEditarDatosListaNiveles' type="button" value="Editar datos" class="btn4 lista-niveles-action-btn lista-niveles-action-edit" onclick="EditarListaNivelesFrm()" style='background-color:#b5f5b7'>
+<input id='btnDetallesDatosListaNiveles' type="button" value="Editar accesos" class="btn4 lista-niveles-action-btn lista-niveles-action-access" onclick="verCerrarFrmDetallesAccesoListaNiveles(1)" style='background-color:#aad9ff'>
+<input id='btnEliminarDatosListaNiveles' type="button" value="Eliminar" class="btn4 lista-niveles-action-btn lista-niveles-action-delete" onclick="EliminarRegitroListaNiveles()" style='background-color:#ffcece'>
+</div>
 </div>
 </center>
 </div>
-<div class='divAbms' id='divAbmListaNiveles2' style='display:none;width:350px;min-height:400px'>
-<table class='tableMenuZ'>
+<div class='divAbms lista-niveles-form-modal' id='divAbmListaNiveles2' style='display:none;'>
+<table class='tableMenuZ lista-niveles-form-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Datos de <b style='font-size: 30px;' >Niveles</b></p>
+<p class='pTituloB lista-niveles-form-title'>Datos del <b>Rol</b></p>
 </td>
-<td style='width:5%'>
+<td class='lista-niveles-form-header-action'>
 <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar Campos' onclick='LimpiarCamposListaNiveles()' />
 </td>
-<td style='width:5%'>
+<td class='lista-niveles-form-header-action'>
 <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Atras' onclick='BuscarListaNivelesFrm()' />
 </td>
 </tr>
 </table>
-<br>
-<br>
 <center>
-<div class='divMenuf'>
-
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Nombre :</p>
+<div class='divMenuf lista-niveles-form-body'>
+<div class='lista-niveles-form-grid'>
+<label class='lista-niveles-form-field'>
+<span>Nombre</span>
 <input type='text' placeholder='Obligatorio(*)' class='input3' id='inptNombreListaNiveles' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC'  >Estado del Registro  :</p>
-<select class="inputSelect" style='width:250px' id='inptEstadoListaNiveles'>
+</label>
+<label class='lista-niveles-form-field'>
+<span>Estado del registro</span>
+<select class="inputSelect" id='inptEstadoListaNiveles'>
 <option value="">Seleccionar</option>
 <option value="Activo">Activo</option>
 <option value="Inactivo">Inactivo</option>
 </select>
-</td>
-</tr>
-</table>
-<br>
-<br>
-<center>
-<input type='button' value='Guardar' class='btn1' onclick='VerificarDatosListaNiveles()' id='btnAbmListaNiveles'   />
-</center>
-<br>
-<br>
+</label>
 </div>
-<br>
-
+<div class='lista-niveles-form-actions'>
+<input type='button' value='Guardar' class='btn1 lista-niveles-save-btn' onclick='VerificarDatosListaNiveles()' id='btnAbmListaNiveles'   />
+</div>
+</div>
 </center>
 </div>
 </center>
@@ -3310,48 +3648,33 @@ NOMBRES
 <tr>
 <td>
 <center>
-<div class='divAbms' style='display:;' >
-<table class='tableMenuZ'>
+<div class='divAbms detalles-acceso-niveles-modal' style='display:;' >
+<table class='tableMenuZ detalles-acceso-niveles-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Detalles de <b style='font-size: 30px;' >Accesos</b></p>
+<p class='pTituloB detalles-acceso-niveles-title'>Detalles de <b>Accesos</b></p>
 </td>
-<td style='width:5%'>
+<td class='detalles-acceso-niveles-close-cell'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarFrmDetallesAccesoListaNiveles("2")' />
 </td>
 </tr>
 </table>
 <center>
-<div class='divMenuf'>
+<div class='divMenuf detalles-acceso-niveles-body'>
 <center>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:70%;">
-NOMBRE
-</td>
-<td class="td_registro" style="width:30%;">
-ACCION
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:69%;" >
-<input placeholder='Parecido a' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarDetallesAccesoListaNiveles1'  style='width:95%'   onkeyup="if(event.keyCode == 13){buscardetalleslistaniveles()}"  />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarDetallesAccesoListaNiveles1')" />
-</td>
-<td class="td_registro" style="width:30%;" >
-
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table tableTamanho3" id="divBuscadorDetallesAccesoListaNiveles" style="height:60vh;"></div>
+<div class='detalles-acceso-toolbar'>
+<div class='detalles-acceso-search'>
+<span class='detalles-acceso-search-icon'>Buscar</span>
+<input placeholder='Buscar por formulario' autocomplete="off" type='text'  class='inputfiltro' id='inptBuscarDetallesAccesoListaNiveles1'  onkeyup="if(event.keyCode == 13){buscardetalleslistaniveles()}"  />
+<button type='button' class='detalles-acceso-clear' title='Limpiar busqueda' onclick="vaciar('inptBuscarDetallesAccesoListaNiveles1');buscardetalleslistaniveles()">Limpiar</button>
+</div>
+<p class='detalles-acceso-count' id='lblNroRegistroDetallesAccesoListaNiveles'>0 permisos</p>
+</div>
+<div class='detalles-acceso-table-head'>
+<span>Modulo / permiso</span>
+<span>Acceso</span>
+</div>
+<div class="div_cuerpo_table tableTamanho3 detalles-acceso-table-wrap" id="divBuscadorDetallesAccesoListaNiveles"></div>
 <br>
 </center>
 </div>
@@ -3365,73 +3688,54 @@ ACCION
 
 
 <div class='principal2' style='display:none' id='divAbmListaAccesos'>
-<table style='width:100%;height:100%' id='tdEfetoListaAcceso'>
+<table class='lista-accesos-shell' style='width:100%;height:100%' id='tdEfetoListaAcceso'>
 <tr>
 <td>
 <center>
-<div class='divAbms'  style='display:;'>
-<table class='tableMenuZ'>
+<div class='divAbms lista-accesos-modal'  style='display:;'>
+<table class='tableMenuZ lista-accesos-header'>
 <tr>
 <td style='width:100%'>
-<p class='pTituloB'  >Listado de <b style='font-size: 30px;' >Accesos</b></p>
+<p class='pTituloB lista-accesos-title'  >Listado de <b>Accesos</b></p>
 </td>
-<td style='width:5%'>
+<td class='lista-accesos-header-action'>
 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir nuevo registro' onclick='VerCerrarAddAccesos("1")' />
 </td>
-<td style='width:5%'>
+<td class='lista-accesos-header-action'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarFrmListaAccesos("2")' />
 </td>
 </tr>
 </table>
-<br>
-<br>
 
 <center>
-<div class='divMenuf'>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:25%;">
-NOMBRE DEL ACCESO
-</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:24%;" >
-<input placeholder='Parecido a' autocomplete="off"  type='text'  class='inputfiltro' id='inptBuscarListaAccesos1'  style='width:95%'   onkeyup="if(event.keyCode == 13){BuscarAbmListaAccesos()}"  />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarListaAccesos1')" />
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="divBuscadorListaAccesos" style='height: 230px;'></div>
+<div class='divMenuf lista-accesos-body'>
+<div class='lista-accesos-toolbar'>
+<div class='lista-accesos-search'>
+<span class='lista-accesos-search-icon'>Buscar</span>
+<input placeholder='Nombre o formulario' autocomplete="off"  type='text'  class='inputfiltro' id='inptBuscarListaAccesos1'  onkeyup="if(event.keyCode == 13){BuscarAbmListaAccesos()}"  />
+<button type='button' class='lista-accesos-clear' onclick="vaciar('inptBuscarListaAccesos1');BuscarAbmListaAccesos()">Limpiar</button>
 </div>
-<div class='divMenuf'>
-<table style='width:96%'>
-<tr>
-
-<td style='width:100%;text-align:left'>
-<p class='pTituloC'  >Nombre del Acceso</p>
-<input type='text'  class='input3' id='inptRegistroSeleccionadoListadoAcceso'  style='width:250px'  />
-<input id='btnEditarNombreAcceso'   type="button" value="Editar Nombre" class="btn4" onclick="VerificarDatosListaAccesos1()" style='width:150px;background-color:#b5f5b7'>
-</td>
-</tr>
-</table>
-<table style='width:96%'>
-<tr>
-
-<td style='width:100%;text-align:left'>
-<p class='pTituloC' >Nombre del Formulario</p>
-<input type='text'  class='input3' id='inptRegistroSeleccionadoFormListadoAcceso'  style='width:250px'  />
-<input id='btnEditarNombreFormulario' type="button" value="Editar Formulario" class="btn4" onclick="VerificarDatosListaAccesos2()" style='width:150px;background-color:#b5f5b7'>
-</td>
-</tr>
-</table>
+<p class='lista-accesos-count' id='lblNroRegistroListaAccesos'>0 accesos</p>
+</div>
+<div class='lista-accesos-table-head'>
+<span>Acceso / formulario</span>
+<span>Orden</span>
+</div>
+<div class="div_cuerpo_table lista-accesos-table-wrap" id="divBuscadorListaAccesos" style='height: 230px;'></div>
+</div>
+<div class='divMenuf lista-accesos-selection'>
+<label class='lista-accesos-selection-field'>
+<span>Nombre del acceso</span>
+<input type='text'  class='input3' id='inptRegistroSeleccionadoListadoAcceso'  />
+</label>
+<label class='lista-accesos-selection-field'>
+<span>Nombre del formulario</span>
+<input type='text'  class='input3' id='inptRegistroSeleccionadoFormListadoAcceso'  />
+</label>
+<div class='lista-accesos-actions'>
+<input id='btnEditarNombreAcceso'   type="button" value="Editar nombre" class="btn4 lista-accesos-action-btn lista-accesos-action-edit" onclick="VerificarDatosListaAccesos1()" style='background-color:#b5f5b7'>
+<input id='btnEditarNombreFormulario' type="button" value="Editar formulario" class="btn4 lista-accesos-action-btn lista-accesos-action-edit" onclick="VerificarDatosListaAccesos2()" style='background-color:#b5f5b7'>
+</div>
 </div>
 <br>
 </center>
@@ -6268,13 +6572,13 @@ Todos</p>
 <td class="td_registro" style="width:5%;">
 #
 </td>
-<td class="td_registro" style="width:15%;">
+<td class="td_registro" style="width:10%;">
 MOTIVO
 </td>
 <td class="td_registro" style="width:15%;">
 INTERCONSULTA
 </td>
-<td class="td_registro" style="width:15%;">
+<td class="td_registro" style="width:20%;">
 DESCRIPCION
 </td>
 <td class="td_registro" style="width:10%;">
@@ -6289,7 +6593,7 @@ FECHA
 <td class="td_registro" style="width:10%;">
 USUARIO
 </td>
-<td class="td_registro" style="width:15%;">
+<td class="td_registro" style="width:10%;">
 LOCAL
 </td>
 </tr>
@@ -9497,7 +9801,7 @@ ACCION
 
               <div class="form-row" style="display:none;">
                 <label>Es prioritario:</label>
-                <input type="checkbox" class="inputText" id="inptPrioritarioPresupuestoDoc"
+                <input type="checkbox" class="inputText" id="inptPrioritarioPresupuestoDoc" checked
                   style="border-radius: 50%;width: 42px;margin: 4px auto;" />
               </div>
 
@@ -9558,10 +9862,15 @@ ACCION
   </div>
 </section>
 
-<section id="presupuestoDocDetallePanel" class="presupuesto-doc-planificador" style="display:none;">
+<section id="presupuestoDocDetallePanel" class="presupuesto-doc-planificador presupuesto-doc-tratamientos-plegado" style="display:none;">
   <div class="tabla-detalles presupuesto-panel presupuesto-doc-tratamientos-panel">
-    <div class="panel-title">Tratamientos</div>
-    <span class="panel-subtitle">Lista base de tratamientos disponibles para distribuir entre los planes.</span>
+    <div class="presupuesto-doc-tratamientos-head">
+      <div>
+        <div class="panel-title">Tratamientos</div>
+        <span class="panel-subtitle">Lista base de tratamientos disponibles para distribuir entre los planes.</span>
+      </div>
+      <button type="button" class="presupuesto-doc-toggle-tratamientos" title="Mostrar u ocultar tratamientos" aria-expanded="false" onclick="alternarTratamientosPresupuestoDoc()">Tratamientos</button>
+    </div>
 
     <table class="tableCabeceraRegistro">
       <tbody>
@@ -9756,7 +10065,7 @@ ACCION
       
       <div class="form-row">
         <label>Ambos planes:</label>
-        <input type="checkbox" class="inputText" id="inptPrioritarioPresupuesto" style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
+        <input type="checkbox" class="inputText" id="inptPrioritarioPresupuesto" checked style="border-radius: 50%;width: 42px;margin: 4px auto;"/>
       </div>
 
       <div class="form-row">
@@ -13257,10 +13566,10 @@ style='background-color: #b7b7b7;'>
             <input type="hidden" id="inptFotoUsuarioAsignadoTarea" value="" />
 
             <div class="asignar-tarea__tabs" aria-label="Secciones de asignaci&oacute;n de tareas">
-                <button type="button" class="asignar-tarea__tab asignar-tarea__tab--activo">Usuarios</button>
-                <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Roles y plantillas</button>
-                <button type="button" class="asignar-tarea__tab" title="Preparado para la siguiente fase">Tareas del d&iacute;a</button>
-                <button type="button" class="asignar-tarea__tab" title="Us&aacute; el bot&oacute;n de tarea casual al seleccionar un usuario">Tareas casuales</button>
+                <button type="button" class="asignar-tarea__tab asignar-tarea__tab--activo" id="btnVistaAsignarUsuarios" onclick="cambiarVistaAsignarTarea('USUARIOS')">Usuarios</button>
+                <button type="button" class="asignar-tarea__tab" id="btnVistaAsignarRoles" onclick="cambiarVistaAsignarTarea('ROLES')">Roles</button>
+                <button type="button" class="asignar-tarea__tab" style="display: none;" title="Preparado para la siguiente fase">Tareas del d&iacute;a</button>
+                <button type="button" class="asignar-tarea__tab" style="display: none;" title="Us&aacute; el bot&oacute;n de tarea casual al seleccionar un usuario">Tareas casuales</button>
             </div>
 
             <div class="asignar-tarea__filtros">
@@ -13272,7 +13581,7 @@ style='background-color: #b7b7b7;'>
                         id="inptBuscarUsuarioAsignarTarea" 
                         class="asignar-tarea__input inputText" 
                         placeholder="Nombre, Tipo o CI..."
-                        onkeyup="if(event.keyCode == 13){buscarUsuariosAsignarTarea()}" 
+                        onkeyup="if(event.keyCode == 13){buscarVistaAsignarTarea()}" 
                     />
                 </div>
 
@@ -13290,7 +13599,7 @@ style='background-color: #b7b7b7;'>
                         id="inptBuscarRolOperativoAsignarTarea" 
                         class="asignar-tarea__input inputText" 
                         placeholder="Doctor, Caja, Limpieza..."
-                        onkeyup="if(event.keyCode == 13){buscarUsuariosAsignarTarea()}" 
+                        onkeyup="if(event.keyCode == 13){buscarVistaAsignarTarea()}" 
                     />
                 </div>
 
@@ -13304,7 +13613,7 @@ style='background-color: #b7b7b7;'>
                 </div>
 
                 <div class="asignar-tarea__filtro asignar-tarea__filtro--boton">
-                    <button type="button" class="asignar-tarea__btn-buscar" onclick="buscarUsuariosAsignarTarea()">
+                    <button type="button" class="asignar-tarea__btn-buscar" onclick="buscarVistaAsignarTarea()">
                         Buscar
                     </button>
                 </div>
@@ -13315,10 +13624,10 @@ style='background-color: #b7b7b7;'>
                 <section class="asignar-tarea__usuarios-panel">
                     <div class="asignar-tarea__panel-header">
                         <div>
-                            <p class="asignar-tarea__panel-kicker">Usuarios</p>
-                            <h3>Personal disponible</h3>
+                            <p class="asignar-tarea__panel-kicker" id="kickerPanelAsignarTarea">Usuarios</p>
+                            <h3 id="tituloPanelAsignarTarea">Personal disponible</h3>
                         </div>
-                        <span class="asignar-tarea__panel-note">Seleccion&aacute; un funcionario para ver el detalle.</span>
+                        <span class="asignar-tarea__panel-note" id="notaPanelAsignarTarea">Seleccion&aacute; un funcionario para ver el detalle.</span>
                     </div>
 
                     <div class="asignar-tarea__contenedor" id="contenedorUsuariosAsignarTarea">
@@ -13338,7 +13647,7 @@ style='background-color: #b7b7b7;'>
                         <div class="asignar-tarea__seleccion-info">
                             <img src="" id="imgUsuarioSeleccionadoTarea" class="asignar-tarea__seleccion-img" />
                             <div>
-                                <p class="asignar-tarea__seleccion-label">Usuario seleccionado</p>
+                                <p class="asignar-tarea__seleccion-label" id="lblTipoSeleccionAsignarTarea">Usuario seleccionado</p>
                                 <h3 class="asignar-tarea__seleccion-nombre" id="lblUsuarioSeleccionadoTarea"></h3>
                                 <span class="asignar-tarea__seleccion-ci" id="lblUsuarioSeleccionadoCI"></span>
                             </div>
@@ -13400,9 +13709,9 @@ style='background-color: #b7b7b7;'>
             <div>
                 <p class="tarea-diaria-modal__etiqueta">Asignaci&oacute;n autom&aacute;tica</p>
                 <h2 class="tarea-diaria-modal__titulo">
-                    Configurar tareas diarias
+                    Asignar tareas diarias
                 </h2>
-                <span class="tarea-diaria-modal__subtitulo">Configur&aacute; actividades por usuario, rol operativo o sucursal.</span>
+                <span class="tarea-diaria-modal__subtitulo">Seleccion&aacute; actividades existentes y aplicalas por usuario, rol operativo o sucursal.</span>
             </div>
 
             <button type="button" class="tarea-diaria-modal__cerrar" onclick="verCerrarModalTareaDiaria(false)">
@@ -13435,7 +13744,7 @@ style='background-color: #b7b7b7;'>
                         <span>Rol operativo</span>
                     </label>
 
-                    <label class="tarea-diaria-modal__destino-opcion">
+                    <label class="tarea-diaria-modal__destino-opcion" style="display: none;">
                         <input type="radio" name="radioDestinoTareaDiaria" value="local" onchange="cambiarDestinoTareaDiaria()" />
                         <span>Local / Sucursal</span>
                     </label>
@@ -13449,8 +13758,10 @@ style='background-color: #b7b7b7;'>
 
                     <div class="tarea-diaria-modal__campo">
                         <label>Rol operativo</label>
-                        <select class="inputText tarea-diaria-modal__input" id="inptRolOperativoTareaDiaria" disabled>
+                        <select class="inputText tarea-diaria-modal__input" id="inptRolOperativoTareaDiaria" disabled onchange="actualizarResumenSeleccionTareaDiaria();buscarTareasParaAsignarDiariaUsuario();">
                             <option value="">Seleccionar rol</option>
+                            <option value="DOCTOR">DOCTOR</option>
+                            <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
                             <option value="Doctor">Doctor</option>
                             <option value="Caja">Caja</option>
                             <option value="Recepci&oacute;n">Recepci&oacute;n</option>
@@ -13463,7 +13774,7 @@ style='background-color: #b7b7b7;'>
                         </select>
                     </div>
 
-                    <div class="tarea-diaria-modal__campo">
+                    <div class="tarea-diaria-modal__campo" style="display:none;">
                         <label>Local / Sucursal</label>
                         <select class="inputText tarea-diaria-modal__input" id="inptLocalDestinoTareaDiaria" disabled>
                             <option value="">Seleccionar local</option>
@@ -13513,27 +13824,9 @@ style='background-color: #b7b7b7;'>
                     </div>
 
                     <div class="tarea-diaria-modal__campo tarea-diaria-modal__campo--boton">
-                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="toggleCrearActividadTareaDiaria()">
-                            + Crear nueva actividad
+                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="verCerrarModalCrearTareaDiaria(true)">
+                            + Crear tarea diaria
                         </button>
-                    </div>
-                </div>
-
-                <div class="tarea-diaria-modal__crear" id="boxCrearActividadTareaDiaria" style="display:none;">
-                    <div class="tarea-diaria-modal__crear-header">
-                        <strong>Nueva actividad</strong>
-                        <span>Formulario preparado para la siguiente fase.</span>
-                    </div>
-                    <div class="tarea-diaria-modal__crear-grid">
-                        <input type="text" class="inputText tarea-diaria-modal__input" placeholder="Nombre de la tarea" />
-                        <input type="time" class="inputText tarea-diaria-modal__input" />
-                        <select class="inputText tarea-diaria-modal__input">
-                            <option>Prioridad normal</option>
-                            <option>Baja</option>
-                            <option>Alta</option>
-                            <option>Urgente</option>
-                        </select>
-                        <button type="button" class="tarea-diaria-modal__btn-crear" onclick="ver_vetana_informativa('La creaci&oacute;n r&aacute;pida queda preparada para la siguiente fase.')">Guardar actividad</button>
                     </div>
                 </div>
 
@@ -13680,6 +13973,69 @@ style='background-color: #b7b7b7;'>
                 <button type="button" class="tarea-diaria-modal__btn-cancelar" onclick="verCerrarModalTareaDiaria(false)">Cancelar</button>
                 <button type="button" class="tarea-diaria-modal__btn-confirmar" onclick="guardarTareaDiariaUsuario()">
                     Guardar asignaci&oacute;n
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="tarea-diaria-modal" id="modalCrearTareaDiaria" style="display:none;">
+
+    <div class="tarea-diaria-modal__ventana tarea-diaria-modal__ventana--crear">
+
+        <div class="tarea-diaria-modal__header">
+
+            <div>
+                <p class="tarea-diaria-modal__etiqueta">Cat&aacute;logo de tareas</p>
+                <h2 class="tarea-diaria-modal__titulo">
+                    Crear tarea diaria
+                </h2>
+                <span class="tarea-diaria-modal__subtitulo">Esta actividad quedar&aacute; disponible para asignarla como tarea diaria.</span>
+            </div>
+
+            <button type="button" class="tarea-diaria-modal__cerrar" onclick="verCerrarModalCrearTareaDiaria(false)">
+                x
+            </button>
+
+        </div>
+
+        <div class="tarea-diaria-modal__body">
+
+            <section class="tarea-diaria-modal__section">
+                <div class="tarea-diaria-modal__section-header">
+                    <span class="tarea-diaria-modal__step">1</span>
+                    <div>
+                        <h3>Datos de la actividad</h3>
+                        <p>Cre&aacute; la tarea base; la asignaci&oacute;n se hace desde el modal anterior.</p>
+                    </div>
+                </div>
+
+                <div class="tarea-diaria-modal__crear-modal-grid">
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Nombre de la tarea</label>
+                        <input type="text" class="inputText tarea-diaria-modal__input" id="inptNombreCrearTareaDiaria" placeholder="Ej: Control de agenda" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Hora sugerida</label>
+                        <input type="time" class="inputText tarea-diaria-modal__input" id="inptHoraCrearTareaDiaria" />
+                    </div>
+
+                    <div class="tarea-diaria-modal__campo">
+                        <label>Tipo</label>
+                        <input type="text" class="inputText tarea-diaria-modal__input" id="inptTipoCrearTareaDiaria" value="DIARIO" readonly />
+                    </div>
+                </div>
+            </section>
+
+            <div class="tarea-diaria-modal__footer">
+                <button type="button" class="tarea-diaria-modal__btn-cancelar" onclick="verCerrarModalCrearTareaDiaria(false)">Cancelar</button>
+                <button type="button" class="tarea-diaria-modal__btn-confirmar" onclick="guardarNuevaTareaDiaria()">
+                    Guardar tarea diaria
                 </button>
             </div>
 
@@ -18255,16 +18611,14 @@ RESPONSABLE
 <div class='divPrincipalrepor' style='width:1210px'>
 <table class='tableMenuZ'>
 <tr>
-<td style='width:100%;text-align:left'>
+<td style='width:90%;text-align:left'>
 <p class='pTituloB'>Cobros Realizados</p>
 </td>
 
 
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/minimizar2.png'class='iconoBtn' title='Minimizar Ventana'onclick='minimizarArqueo()' />
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png'class='iconoBtn' title='Cerrar Ventana' onclick='verCerrarInformeArqueo()' />
+<td style='width:10%;text-align:right'>
+<img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar ventana" alt="Minimizar ventana" onclick="minimizarArqueo()">
+<img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana" onclick="verCerrarInformeArqueo()">
 </td>
 </tr>
 </table>
@@ -18305,8 +18659,8 @@ RESPONSABLE
 <input class='inputText' type='Date' id='inptBuscarCobrosRealizadosFF2' style='width:135px' />
 </td>
 <td style='' >
-<input type="button" style='margin-top: 17px;' value="Buscar" class="btn4" onclick='buscararqueo2()' >
-<input type="button" style='margin-top: 17px;width:125px;background-color:#ff5722' value="Cajas de Cobradores" class="btn4" onclick='verCerrarVistaCajaApp()' >
+<input type="button" style='margin: auto;' value="Buscar" class="btn4" onclick='buscararqueo2()' >
+<input type="button" style='margin: auto;width:125px;background-color:#ff5722' value="Cajas de Cobradores" class="btn4" onclick='verCerrarVistaCajaApp()' >
 </td>
 </tr>
 </table>
@@ -18325,87 +18679,95 @@ RESPONSABLE
 </td></tr>
 </tbody>
 </table>
-<div style='overflow:auto;' class='divScrollhideen' id='TableScroollArqeo1'>
-<table class="tableCabeceraRegistro"  id='tdTituloImpreArqueo' >
-<tbody >
-<tr >
-  <td class="td_registro" style="width:15%;">CLIENTE</td>
-  <td class="td_registro" style="width:15%;">DOCUMENTO</td>
-<td class="td_registro" style="width:15%;">FECHA FACTURADO</td>
-<td class="td_registro" style="width:10%;">NRO FACTURA</td>
-<td class="td_registro" style="width:10%;">FECHA PAGO</td>
-<td class="td_registro" style="width:10%;">MONTO</td>
-<td class="td_registro" style="width:10%;">METODO</td>
-<td class="td_registro" style="width:8%;">TIPO</td>
-<td class="td_registro" style="width:7%;">CUOTA</td>
-<td class="td_registro" style="width:10%;">CONDICION</td>
-<td class="td_registro" style="width:10%;">COBRADOR</td>
-</tr>
-</tbody>
-</table>
-<table class="tableCabeceraRegistro"   >
-<tbody >
-<tr >
-<td class="td_registro" style="width:14%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados1' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados1')" />
-</td>
-<td class="td_registro" style="width:14%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados7' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados7')" />
-</td>
-<td class="td_registro" style="width: 15%;"></td>
-<td class="td_registro" style="width:9%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados2' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados2')" />
-</td>
-<td class="td_registro" style="width:9%;">
-<input  class='inputfiltro' type='date' id='inptBuscarCobrosRealizados3' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-	<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados3')" />
-</td>
-<td class="td_registro" style="width:10%;"></td>
-<td class="td_registro" style="width:10%;">
-<select class="inputfiltro" id="inptBuscarCobrosRealizados5">
-<option value="">Todos</option>
-<option value="Efectivo">Efectivo</option>
-<option value="Tarjeta">Tarjeta</option>
-</select>
-<td class="td_registro" style="width:1%;">
-	<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados5')" />
-	</td>
-</td>
-<td class="td_registro" style="width:8%;"></td>
-<td class="td_registro" style="width:7%;"></td>
-<td class="td_registro" style="width:10%;">
-<select class="inputfiltro" id="inptBuscarCobrosRealizados6">
-<option value="">TODOS</option>
-<option value="CREDITO">CREDITO</option>
-<option value="CONTADO">CONTADO</option>
-</select>
-<td class="td_registro" style="width:1%;">
-	<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados6')" />
-	</td>
-</td>
-<td class="td_registro" style="width:10%;">
-<input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados4' onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-</td>
-<td class="td_registro" style="width:1%;">
-<img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png' onclick="vaciar('inptBuscarCobrosRealizados4')" />
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class='divTablesScrool' id='TableScroollArqeo2' style='height:260px;'>
-<div class="div_cuerpo_table" id="table_arqeo" style='min-height:200px;height:auto;border:none;;width:100%'></div>
+<div style='overflow:auto;' class='divScrollhideen divTablesScrool' id='TableScroollArqeo1'>
+  <table class="tableCabeceraRegistro" id='tdTituloImpreArqueo'>
+    <thead>
+      <tr class="arqueo-header-row">
+        <td class="td_registro" style="width:15%;">CLIENTE</td>
+        <td class="td_registro" style="width:10%;">DOCUMENTO</td>
+        <td class="td_registro" style="width:15%;">FECHA FACTURADO</td>
+        <td class="td_registro" style="width:10%;">NRO FACTURA</td>
+        <td class="td_registro" style="width:5%;">NRO VENTA</td>
+        <td class="td_registro" style="width:15%;">FECHA PAGO</td>
+        <td class="td_registro" style="width:10%;">MONTO</td>
+        <td class="td_registro" style="width:10%;">METODO</td>
+        <td class="td_registro" style="width:10%;">TIPO</td>
+        <td class="td_registro" style="width:5%;">CUOTA</td>
+        <td class="td_registro" style="width:10%;">CONDICION</td>
+        <td class="td_registro" style="width:10%;">COBRADOR</td>
+      </tr>
+      <tr class="arqueo-filter-row">
+        <td class="td_registro" style="width:15%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados1'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados1')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados7'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados7')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:15%;"></td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados2'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados2')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:5%;"></td>
+        <td class="td_registro" style="width:15%;">
+          <span class="arqueo-filter-cell">
+            <input class='inputfiltro' type='date' id='inptBuscarCobrosRealizados3'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados3')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;"></td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <select class="inputfiltro" id="inptBuscarCobrosRealizados5">
+              <option value="">Todos</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+            </select>
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados5')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;"></td>
+        <td class="td_registro" style="width:5%;"></td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <select class="inputfiltro" id="inptBuscarCobrosRealizados6">
+              <option value="">TODOS</option>
+              <option value="CREDITO">CREDITO</option>
+              <option value="CONTADO">CONTADO</option>
+            </select>
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados6')" />
+          </span>
+        </td>
+        <td class="td_registro" style="width:10%;">
+          <span class="arqueo-filter-cell">
+            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados4'
+              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
+              onclick="vaciar('inptBuscarCobrosRealizados4')" />
+          </span>
+        </td>
+      </tr>
+    </thead>
+    <tbody id="table_arqeo"></tbody>
+  </table>
 </div>
 
 </div>
@@ -18790,7 +19152,7 @@ onclick="vaciar('inptBuscarEntregaCobrador4')" />
 </div>
 <div class='divTablesScrool' style='height:260px'>
 
-<div class="div_cuerpo_table" id="table_arqeo"
+<div class="div_cuerpo_table" id="table_entrega_cobrador"
 style='min-height:200px;height:auto;border:none;'></div>
 
 </div>
@@ -20245,6 +20607,171 @@ ZONA
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="principal2" style="display:none;" id="divInformeSolicitudEliminado">
+  <table style="width:100%;height:100%" id="tdEfectoInformeSolicitudEliminado" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divPrincipalrepor solicitud-eliminado-shell">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Informe de <b style="font-size: 30px;">Solicitud Eliminados</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/minimizar2.png" class="iconoBtn" title="Minimizar Ventana"
+                        onclick="minimizarInformeSolicitudEliminado()">
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="cerrarInformeSolicitudEliminado()">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="divMenuf solicitud-eliminado-filtros">
+                <table style="width:100%">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <p class="pTituloC">Solicitud / Motivo</p>
+                        <input class="inputText" type="text" id="inptSolicitudEliminadoBuscar" onkeyup="if(event.keyCode == 13){buscarInformeSolicitudEliminado()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Usuario</p>
+                        <input class="inputText" type="text" id="inptSolicitudEliminadoUsuario" onkeyup="if(event.keyCode == 13){buscarInformeSolicitudEliminado()}">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Estado</p>
+                        <select class="inputText" id="inptSolicitudEliminadoEstado" onchange="buscarInformeSolicitudEliminado()">
+                          <option value="">Todos</option>
+                          <option value="pendiente">Pendiente</option>
+                          <option value="aprobada">Aprobada</option>
+                          <option value="rechazada">Rechazada</option>
+                        </select>
+                      </td>
+                      <td>
+                        <p class="pTituloC">Desde</p>
+                        <input class="inputText" type="date" id="inptSolicitudEliminadoFechaDesde">
+                      </td>
+                      <td>
+                        <p class="pTituloC">Hasta</p>
+                        <input class="inputText" type="date" id="inptSolicitudEliminadoFechaHasta">
+                      </td>
+                      <td style="text-align:right;vertical-align:bottom;">
+                        <input type="button" value="Buscar" class="btn4" onclick="buscarInformeSolicitudEliminado()">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="divMenuf solicitud-eliminado-panel">
+                <div class="solicitud-eliminado-list" id="table_InformeSolicitudEliminado"></div>
+              </div>
+
+              <div class="divMenuf solicitud-eliminado-total">
+                <table style="width:98%">
+                  <tbody>
+                    <tr>
+                      <td style="width:15%;text-align:left">
+                        <p class="pTituloC">Total Registro:</p>
+                        <input class="inputTextDisable" type="text" disabled id="inptTotalRegistroSolicitudEliminado"
+                          style="width:120px;text-align:center">
+                      </td>
+                      <td style="width:85%;"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </center>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="principal2" style="display:none;" id="divEvaluarSolicitudEliminado">
+  <table style="width:100%;height:100%" id="tdEfectoEvaluarSolicitudEliminado" class="magictime slideDownReturn">
+    <tbody>
+      <tr>
+        <td>
+          <center>
+            <div class="divAbms_b solicitud-eliminado-evaluar">
+              <table class="tableMenuZ">
+                <tbody>
+                  <tr>
+                    <td style="width:100%;text-align:left">
+                      <p class="pTituloB">Evaluar <b style="font-size: 24px;">Solicitud de eliminacion</b></p>
+                    </td>
+                    <td style="width:5%;text-align:center">
+                      <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" class="iconoBtn" title="Cerrar Ventana"
+                        onclick="cerrarVentanaEvaluarSolicitudEliminado()">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <input type="hidden" id="inptEvaluarSolicitudEliminadoId">
+
+              <div class="solicitud-eliminado-evaluar__grid">
+                <label>
+                  <span>Solicitud</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoCodigo" disabled>
+                </label>
+                <label>
+                  <span>Estado</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoEstado" disabled>
+                </label>
+                <label>
+                  <span>Solicitante</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoUsuario" disabled>
+                </label>
+                <label>
+                  <span>Fecha</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoFecha" disabled>
+                </label>
+                <label>
+                  <span>Tabla</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoTabla" disabled>
+                </label>
+                <label>
+                  <span>Registro</span>
+                  <input class="inputTextDisable" id="inptEvaluarSolicitudEliminadoRegistro" disabled>
+                </label>
+              </div>
+
+              <label class="solicitud-eliminado-evaluar__bloque">
+                <span>Resumen del registro</span>
+                <textarea class="inputTextDisable" id="txtEvaluarSolicitudEliminadoResumen" disabled></textarea>
+              </label>
+
+              <label class="solicitud-eliminado-evaluar__bloque">
+                <span>Motivo solicitado</span>
+                <textarea class="inputTextDisable" id="txtEvaluarSolicitudEliminadoMotivo" disabled></textarea>
+              </label>
+
+              <label class="solicitud-eliminado-evaluar__bloque">
+                <span>Observacion de aprobacion/rechazo</span>
+                <textarea class="inputText" id="txtEvaluarSolicitudEliminadoObservacion"></textarea>
+              </label>
+
+              <p class="solicitud-eliminado-evaluar__alerta" id="lblEvaluarSolicitudEliminadoAlerta" style="display:none"></p>
+
+              <div class="solicitud-eliminado-evaluar__acciones">
+                <input type="button" value="Rechazar" class="btn4 solicitud-eliminado-evaluar__rechazar" id="btnRechazarSolicitudEliminado" onclick="resolverSolicitudEliminado('rechazar')">
+                <input type="button" value="Aprobar e inactivar" class="btn4 solicitud-eliminado-evaluar__aprobar" id="btnAprobarSolicitudEliminado" onclick="resolverSolicitudEliminado('aprobar')">
               </div>
             </div>
           </center>
@@ -24223,7 +24750,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 
             <div class='filtro-grupo'>
                 <label>Consultorio</label>
-                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador' onchange='marcarDoctorDisponiblePorConsultorioNuevaCita()'></select>
+                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador' onchange='cargarDoctoresDisponiblesNuevaCita()'></select>
             </div>
 
             <div class='filtro-grupo'>
@@ -24383,6 +24910,11 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <div class='detalle-item' style="display:none;">
                     <span class='detalle-label'>ID</span>
                     <div class='detalle-valor' id='detAgendaId'></div>
+                </div>
+
+                <div class='detalle-item' style="display:none;">
+                    <span class='detalle-label'>ID Paciente</span>
+                    <div class='detalle-valor' id='detAgendaPacienteId'></div>
                 </div>
 
                 <div class='detalle-item'>
@@ -29291,7 +29823,7 @@ onclick='SeleccionarRegistroTipoImpuesto()' />
 </table>
 </div>
 
-<div class="principal2 divScrollPrincipal" style="display: none;z-index: 100;" id="divAddFotos">
+<div class="principal2 divScrollPrincipal" style="display: none;" id="divAddFotos">
   <table style="width:100%;height:100%;" id="tdEfectoSeleccionarFoto">
     <tbody>
       <tr>

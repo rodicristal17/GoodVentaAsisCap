@@ -1,5 +1,6 @@
 <?php
     require_once("conexion.php");
+    require_once("solicitud_eliminado_helper.php");
     include_once("verificar_navegador.php");
     include_once("buscar_nivel.php");
     include_once("classTable.php");
@@ -92,6 +93,9 @@
 
                 obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario);
                 break;
+            case 'buscarUsuariosMenciones':
+                echo json_encode(array("1" => "exito", "2" => buscarUsuarios()));
+                break;
             case 'buscarFlujoGastosInterConsulta':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $registrosInterc= obtenerInterConsulta(array(
@@ -147,7 +151,18 @@
                     'cod_mencion' => $cod_mencion
                 ), 1)[0];
 
-                abmMencion($cod_mencion, null, null, null, 'inactivo');
+                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+                    'menciones',
+                    'cod_mencion',
+                    $cod_mencion,
+                    'Solicitud de eliminacion de mencion.',
+                    $user,
+                    'Mencion de '.$registroMenc['nombre_persona']
+                );
+                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+                    echo json_encode($respuestaSolicitud);
+                    break;
+                }
                 
                 // Se registra el cambio por auditoria
                 $fechaActual= new DateTime();
@@ -392,8 +407,19 @@
             exit;
         }
 
-        // Actualiza el estado de la interconsulta
-        abmInterConsulta($cod_interConsulta, $registroInterc['asunto'], NULL, 'inactivo', NULL, NULL, NULL, $cod_usuarioFK, $registroInterc['cod_localFK'], NULL);
+        // Solicita inactivar la interconsulta original
+        $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+            'interconsulta',
+            'cod_interConsulta',
+            $cod_interConsulta,
+            'Solicitud de eliminacion por union de interconsultas.',
+            $cod_usuarioFK,
+            'Interconsulta unida hacia: '.$cod_interConsulta_destino
+        );
+        if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+            echo json_encode($respuestaSolicitud);
+            exit;
+        }
     }
 
   function escaparHtmlInterconsulta($texto) {
@@ -1171,7 +1197,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
     function buscarUsuarios() {
         $mysqli=conectar_al_servidor();
 
-        $sql= "SELECT u.*, p.nombre_persona FROM usuario u JOIN persona p ON p.cod_persona = u.cod_usuario WHERE u.estado = 'Activo'";
+        $sql= "SELECT u.cod_usuario, u.url, p.nombre_persona FROM usuario u JOIN persona p ON p.cod_persona = u.cod_usuario WHERE u.estado = 'Activo' ORDER BY p.nombre_persona ASC";
         $stmt = $mysqli->prepare($sql);
         if ( !$stmt->execute()) {
             $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);
@@ -1755,6 +1781,21 @@ function convertirTextoDocumentoInterconsulta($texto) {
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('ssssiiii',$asunto, $observacion, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK, $monto_limite);
         } else {
+            if ($estado != NULL && solicitudEliminadoEsEstadoInactivo($estado)) {
+                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
+                    'interconsulta',
+                    'cod_interConsulta',
+                    $cod_interConsulta,
+                    'Solicitud de eliminacion de interconsulta.',
+                    $cod_usuarioFK_edit,
+                    'Interconsulta: '.$cod_interConsulta
+                );
+                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
+                    echo json_encode($respuestaSolicitud);
+                    exit;
+                }
+                return $cod_interConsulta;
+            }
             // Obtiene los datos de la interconsulta antes que sea modificada
             $interconsulta_original= obtenerInterConsulta(array(
                 "cod_interConsulta" => $cod_interConsulta
