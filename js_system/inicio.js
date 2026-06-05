@@ -11678,6 +11678,7 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptComisionVentaCobrador').value = "0"
 	document.getElementById('inptGaranteVenta').value = "SIN GARANTE";
 	document.getElementById("inptEntregaConfCredito").value ="0"
+	document.getElementById("inptNroComprobanteConfCredito").value =""
 	document.getElementById("inptConfirmarPagoEntrega").value ="SI"
 	document.getElementById("btnFinalizarVenta").style.display="none"
 	document.getElementById("btnCancelarVenta").style.display="none"
@@ -13171,6 +13172,7 @@ function crearcreditodesdeventa() {
 	var inptInteresConfCredito = document.getElementById('inptInteresConfCredito').value
 	var inptDiasConfCredito = document.getElementById('inptDiasConfCredito').value
 	var inptEntregaConfCredito = document.getElementById('inptEntregaConfCredito').value
+	var inptNroComprobanteConfCredito = document.getElementById('inptNroComprobanteConfCredito').value
 	var inptConfirmarPagoEntrega = document.getElementById('inptConfirmarPagoEntrega').value
 	if (inptTotalPagado > 0) {
 	return false;
@@ -13214,9 +13216,9 @@ function crearcreditodesdeventa() {
 		verificarcamposdetallesventacredito()
 		return
 	}
-    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, idFkVendedor1, idabmVenta);
+    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, inptNroComprobanteConfCredito, idFkVendedor1, idabmVenta);
 }
-function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, cod_vendedorFK, cod_venta) {
+function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, nro_comprobante, cod_vendedorFK, cod_venta) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -13232,6 +13234,7 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 	datos.append("dias", dias)
 	datos.append("interes", interes)
 	datos.append("entrega", entrega)
+	datos.append("nro_comprobante", nro_comprobante)
 	datos.append("pagoentrega", pagoentrega)
 	datos.append("idGaranteFk", idGaranteFk)
 	datos.append("cod_vendedorFK", cod_vendedorFK)
