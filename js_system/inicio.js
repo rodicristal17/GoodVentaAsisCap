@@ -8728,7 +8728,6 @@ function abmzonas(nombre, estado, idzona, encargado , accion) {
         }, false);
         return xhr;
     },
-		
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
@@ -13442,7 +13441,6 @@ function ActualizarNroFacturaVenta() {
         }, false);
         return xhr;
     },
-		
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
@@ -13477,7 +13475,32 @@ ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE")
 }
 
 
+var bloqueoTemporalVerificarVenta = false;
+function bloquearTemporalBotonVenta(bloquear) {
+	var boton = document.getElementById('btnAbmVenta');
+	if (boton == null) {
+		return;
+	}
+	boton.disabled = bloquear;
+	if (bloquear) {
+		boton.setAttribute('data-texto-original', boton.value);
+		boton.value = "Guardando...";
+		boton.style.opacity = "0.6";
+		boton.style.cursor = "wait";
+	} else {
+		var textoOriginal = boton.getAttribute('data-texto-original');
+		if (textoOriginal != null && boton.value == "Guardando...") {
+			boton.value = textoOriginal;
+		}
+		boton.style.opacity = "";
+		boton.style.cursor = "";
+	}
+}
+
 function verificarcamposventa() {
+	if (bloqueoTemporalVerificarVenta) {
+		return false;
+	}
 	var inptFechaVenta = document.getElementById('inptFechaVenta').value
 	var inptClienteVenta = document.getElementById('inptClienteVenta').value
 	var inptSeleccTipoVenta = document.getElementById('inptSeleccTipoVenta').value
@@ -13520,6 +13543,8 @@ var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComp
 		accion = "nuevo";
 		if(controlacceso("INSERTARVENTA","accion")==false){return;}
 	}
+	bloqueoTemporalVerificarVenta = true;
+	bloquearTemporalBotonVenta(true);
 	abmventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,idGaranteFk,inptFechaVenta, inptSeleccTipoVenta, inpCodVenta, idFkCliente, idFkCobrador, idabmVenta, "Corrido", idFkVendedor1, idFkVendedor2, inptComisionVentaCobrador, inptlocalVenta, accion);
 }
 function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta, TipoVenta, num_factura, cod_clienteFK, cod_cobradorFK, cod_venta, TipoPago, idFkVendedor1, idFkVendedor2, comision, cod_local, accion) {
@@ -13612,6 +13637,15 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 		}
 	});
 
+	OpAjax.fail(function (jqXHR, textstatus, errorThrowm) {
+		verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventa")
+	});
+
+	OpAjax.always(function () {
+		bloqueoTemporalVerificarVenta = false;
+		bloquearTemporalBotonVenta(false);
+	});
 
 }
 var ventanaAnteriorHistorialVenta= "";

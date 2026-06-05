@@ -12938,7 +12938,7 @@ style='width:100px' placeholder='Obligatorio(*)' />
 <br>
 <center>
 <input type='button' value='Guardar' class='btn1'
-onclick='verificarcamposventa()' id='btnAbmVenta' />
+onclick='if(this.disabled){return false;} verificarcamposventa()' id='btnAbmVenta' />
 </center>
 <br>
 <br>
