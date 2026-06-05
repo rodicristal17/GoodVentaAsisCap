@@ -585,9 +585,18 @@ onmouseover='verMenusWindows("ptituloReporte")' style='display:none'>
     <button type="button" class="dashboard-home-button" onclick="verCerrarMenub(0)">
       <img src="/GoodVentaAsisCap/iconos/home.png" alt="" />
     </button>
-    <div class="dashboard-topbar-user" onclick="verCerrarMisDatos(1);" title="Mis datos">
+    <div class="dashboard-topbar-user dashboard-topbar-user--menu" onclick="toggleMenuPerfilUsuario(event);" title="Mi perfil">
       <span class="dashboard-topbar-user__name" id="nombrePerfilUsuarioTopbar">Usuario Conectado</span>
       <img id="fotoPerfilUsuarioTopbar" class="dashboard-topbar-user__photo" src="/GoodVentaAsisCap/iconos/sinperfil.png" alt="Foto de perfil" />
+      <span id="perfilIncompletoIndicadorTopbar" class="dashboard-topbar-user__status" style="display:none;" title="Tu perfil esta incompleto"></span>
+      <div id="menuPerfilUsuarioTopbar" class="dashboard-topbar-user-menu" style="display:none;" onclick="event.stopPropagation();">
+        <button type="button" onclick="verCerrarMisDatos(1);cerrarMenuPerfilUsuario();">Mi perfil</button>
+        <button type="button" onclick="verCerrarMisDatos(1);cerrarMenuPerfilUsuario();">Actualizar mis datos</button>
+        <button type="button" onclick="verCerrarMisDatos(1);cerrarMenuPerfilUsuario();">Mi horario</button>
+        <button type="button" onclick="verCerrarVentanaTareasProgramadas(true, false, '');cerrarMenuPerfilUsuario();">Mis tareas</button>
+        <button type="button" onclick="mostrarCambioContrasenhaMisDatos();cerrarMenuPerfilUsuario();">Cambiar contrase&ntilde;a</button>
+        <button type="button" onclick="cerrarSesion2();">Cerrar sesi&oacute;n</button>
+      </div>
     </div>
   </div>
   <div class="dashboard-topbar__center">
@@ -2813,7 +2822,7 @@ onclick='verCerrarAbmUsuarios()' style='text-align:center'>
 <td>
 <img class='imgIconoMenu'
 src='/GoodVentaAsisCap/iconos/usuariosacceso.png' />
-<p class='pTitulo4'>Usuarios</p>
+<p class='pTitulo4'>Funcionarios y Accesos</p>
 <center>
 <div id='divMinimizadoUsuarios' style='display:none'
 class='divMinimizado'></div>
@@ -3115,7 +3124,7 @@ style='width: 70px;'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Datos <b style='font-size: 30px;' >Usuarios</b></p>
+<p class='pTituloB'>Ficha del <b style='font-size: 30px;' >Funcionario</b></p>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
@@ -3132,8 +3141,59 @@ title='Volver Atras' onclick='verCerrarVentanaAbmUsuarios("2","")' />
 </tr>
 </table>
 
+<div id='funcionarioFichaResumen' class='funcionario-ficha' style='display:none;'>
+  <div class='funcionario-ficha__header'>
+    <img id='funcionarioFichaFoto' class='funcionario-ficha__avatar' src='/GoodVentaAsisCap/iconos/sinperfil.png' alt='Foto del funcionario' />
+    <div class='funcionario-ficha__identity'>
+      <h2 id='funcionarioFichaNombre'>Funcionario</h2>
+      <p id='funcionarioFichaCargo'>Cargo o funcion</p>
+      <div class='funcionario-ficha__badges'>
+        <span id='funcionarioFichaLocal'>Sucursal principal</span>
+        <span id='funcionarioFichaEstado'>Estado laboral</span>
+        <span id='funcionarioFichaAcceso'>Estado de acceso</span>
+        <span id='funcionarioFichaPerfil'>Perfil completado: 0%</span>
+      </div>
+    </div>
+    <div class='funcionario-ficha__actions'>
+      <button type='button' onclick='mostrarFormularioFuncionario()'>Editar perfil</button>
+      <button type='button' onclick='verCerrarVentanaTareasProgramadas(true, false, "");'>Ver tareas</button>
+      <button type='button' onclick='activarTabFichaFuncionario("horarios")'>Ver horarios</button>
+      <button type='button' onclick='verCerrarAccesoUsuario("1")'>Gestionar acceso</button>
+      <button type='button' onclick='activarTabFichaFuncionario("auditoria")'>Ver auditoria</button>
+    </div>
+  </div>
+
+  <div class='funcionario-ficha__tabs'>
+    <button type='button' class='funcionario-ficha__tab funcionario-ficha__tab--active' data-tab='resumen' onclick='activarTabFichaFuncionario("resumen")'>Resumen</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='personales' onclick='activarTabFichaFuncionario("personales")'>Datos personales</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='laborales' onclick='activarTabFichaFuncionario("laborales")'>Datos laborales</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='acceso' onclick='activarTabFichaFuncionario("acceso")'>Acceso al sistema</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='horarios' onclick='activarTabFichaFuncionario("horarios")'>Horarios</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='tareas' onclick='activarTabFichaFuncionario("tareas")'>Tareas</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='documentos' onclick='activarTabFichaFuncionario("documentos")'>Documentos</button>
+    <button type='button' class='funcionario-ficha__tab' data-tab='auditoria' onclick='activarTabFichaFuncionario("auditoria")'>Auditoria</button>
+  </div>
+
+  <div class='funcionario-ficha__sections'>
+    <section class='funcionario-ficha__section funcionario-ficha__section--active' data-section='resumen' id='funcionarioFichaResumenSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='personales' id='funcionarioFichaPersonalesSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='laborales' id='funcionarioFichaLaboralesSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='acceso' id='funcionarioFichaAccesoSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='horarios' id='funcionarioFichaHorariosSeccion'></section>
+    <section class='funcionario-ficha__section' data-section='tareas'>
+      <div class='funcionario-empty-state'>Este funcionario todavia no tiene tareas visibles en esta ficha. Usa el boton Tareas para abrir el modulo actual.</div>
+    </section>
+    <section class='funcionario-ficha__section' data-section='documentos'>
+      <div class='funcionario-empty-state'>Seccion preparada para copia de cedula, contratos, certificados y documentos internos con permiso restringido.</div>
+    </section>
+    <section class='funcionario-ficha__section' data-section='auditoria' id='funcionarioFichaAuditoriaSeccion'>
+      <div class='funcionario-empty-state'>Todavia no hay cambios registrados en la auditoria.</div>
+    </section>
+  </div>
+</div>
+
 <center>
-<div style='overflow:auto;padding:0 12px 12px 12px;box-sizing:border-box;'>
+<div id='funcionarioFormularioEdicion' style='overflow:auto;padding:0 12px 12px 12px;box-sizing:border-box;'>
 <div style='display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:14px;'>
 <div class='divMenuFloat3' style='float:none;width:calc(50% - 7px);min-width:320px;max-width:540px;margin:0;padding:0;'>
 <div class='divMenuf' style='width:100%;height:100%;box-sizing:border-box;padding:14px;text-align:left;'>
@@ -3200,9 +3260,12 @@ id='inptNroTelefReferenciaUser' style='width:100%;box-sizing:border-box;' />
 id='inptClaveAcceso' style='width:100%;box-sizing:border-box;' />
 </div>
 <div style='flex:1 1 220px;'>
-<p class='pTituloC'>Contrase&ntilde;a :</p>
-<input class='inputText' type='Password' placeholder='Obligatorio (*)'
-id='inptContrasenhaUser' style='width:100%;box-sizing:border-box;' />
+<p class='pTituloC'>Acciones de contrase&ntilde;a :</p>
+<input type='hidden' id='inptContrasenhaUser' />
+<input class='inputText' type='Password' placeholder='Clave temporal o nueva clave'
+id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display:none;' />
+<button type='button' class='btn5 funcionario-password-action' onclick='habilitarCambioContrasenhaFuncionario()'>Restablecer contrase&ntilde;a</button>
+<p class='funcionario-field-help'>La contrase&ntilde;a actual no se muestra ni se edita directamente.</p>
 </div>
 </div>
 
@@ -3283,7 +3346,99 @@ onclick='verificarcamposusuario();verCerrarVentanaAbmUsuarios("2","");buscarabmu
 </div>
 </center>
 </div>
-<div id='divAbmUsuario1' style='width:95vw;' class='divAbms'>
+<div id='divAbmUsuario1' style='width:95vw;' class='divAbms funcionarios-shell'>
+<div class='funcionarios-modern'>
+  <div class='funcionarios-header'>
+    <div class='funcionarios-header__copy'>
+      <p class='funcionarios-header__title'>Funcionarios y Accesos</p>
+      <p class='funcionarios-header__help'>Busca, actualiza y administra perfiles, accesos, horarios y responsabilidades del equipo.</p>
+    </div>
+    <div class='funcionarios-header__actions'>
+      <button type='button' class='funcionarios-icon-button' title='Accesos del funcionario' onclick='verCerrarAccesoUsuario("1")'>
+        <img src='/GoodVentaAsisCap/iconos/acceso.png' alt='' />
+      </button>
+      <button type='button' class='funcionarios-primary-button' onclick='verCerrarVentanaAbmUsuarios("1","1")'>Nuevo funcionario</button>
+      <button type='button' class='funcionarios-icon-button' title='Minimizar ventana' onclick='minimizarusuarios()'>
+        <img src='/GoodVentaAsisCap/iconos/minimizar2.png' alt='' />
+      </button>
+      <button type='button' class='funcionarios-icon-button' title='Cerrar ventana' onclick='verCerrarAbmUsuarios()'>
+        <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' alt='' />
+      </button>
+    </div>
+  </div>
+
+  <div class='funcionarios-search'>
+    <input class='funcionarios-search__input' type='search' id='inptBuscarFuncionarioUniversal'
+      placeholder='Buscar por nombre, cedula, telefono, usuario, cargo, sucursal o rol...'
+      onkeyup='if(event.keyCode == 13){buscarabmusuario()}else{filtrarDirectorioFuncionarios();}' />
+    <button type='button' class='funcionarios-secondary-button' onclick='buscarabmusuario()'>Buscar</button>
+  </div>
+
+  <div class='funcionarios-filters'>
+    <button type='button' id='btnFiltroFuncionariosActivos' class='funcionario-filter funcionario-filter--active' onclick='aplicarFiltroEstadoFuncionarios("Activo")'>Activos</button>
+    <button type='button' id='btnFiltroFuncionariosInactivos' class='funcionario-filter' onclick='aplicarFiltroEstadoFuncionarios("Inactivo")'>Inactivos</button>
+    <label class='funcionario-check'><input type='checkbox' id='filtroAccesoHabilitado' onchange='filtrarDirectorioFuncionarios()' /> Acceso habilitado</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroAccesoBloqueado' onchange='filtrarDirectorioFuncionarios()' /> Acceso bloqueado</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroSinAccesoSistema' onchange='filtrarDirectorioFuncionarios()' /> Sin acceso al sistema</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroPerfilIncompleto' onchange='filtrarDirectorioFuncionarios()' /> Perfil incompleto</label>
+    <label class='funcionario-check'><input type='checkbox' id='filtroSinHorarioCargado' onchange='filtrarDirectorioFuncionarios()' /> Sin horario cargado</label>
+    <select class='funcionario-select' id='inptFiltroFuncionarioLocal' onchange='sincronizarFiltroLocalFuncionarios();buscarabmusuario();'>
+      <option value=''>Por sucursal/local</option>
+    </select>
+    <select class='funcionario-select' id='inptFiltroFuncionarioCargo' onchange='filtrarDirectorioFuncionarios()'>
+      <option value=''>Por cargo o funcion</option>
+    </select>
+    <select class='funcionario-select' id='inptFiltroFuncionarioRol' onchange='filtrarDirectorioFuncionarios()'>
+      <option value=''>Por rol de acceso</option>
+    </select>
+  </div>
+
+  <div class='funcionarios-layout'>
+    <section class='funcionarios-listado'>
+      <div class='funcionarios-listado__head'>
+        <span>Foto/avatar</span>
+        <span>Funcionario/persona</span>
+        <span>Cedula/documento</span>
+        <span>Cargo o funcion</span>
+        <span>Sucursal principal</span>
+        <span>Telefono/WhatsApp</span>
+        <span>Estado laboral</span>
+        <span>Acceso</span>
+        <span>Perfil</span>
+        <span>Acciones</span>
+      </div>
+      <div id='funcionariosDirectorioLista' class='funcionarios-listado__body'></div>
+      <div id='funcionariosDirectorioVacio' class='funcionarios-empty' style='display:none;'>No se encontraron funcionarios con esos filtros.</div>
+    </section>
+
+    <aside class='funcionario-quick-panel' id='funcionarioPanelRapido'>
+      <div class='funcionario-quick-panel__empty' id='funcionarioPanelVacio'>Selecciona una persona para ver su resumen operativo.</div>
+      <div class='funcionario-quick-panel__content' id='funcionarioPanelContenido' style='display:none;'>
+        <img id='funcionarioPanelFoto' class='funcionario-quick-panel__avatar' src='/GoodVentaAsisCap/iconos/sinperfil.png' alt='Foto del funcionario' />
+        <h3 id='funcionarioPanelNombre'>Funcionario</h3>
+        <p id='funcionarioPanelCargo'>Cargo o funcion</p>
+        <div class='funcionario-quick-panel__facts'>
+          <span id='funcionarioPanelLocal'>Sucursal principal</span>
+          <span id='funcionarioPanelTelefono'>Telefono</span>
+          <span id='funcionarioPanelEstado'>Estado laboral</span>
+          <span id='funcionarioPanelAcceso'>Estado de acceso</span>
+        </div>
+        <div class='funcionario-progress'>
+          <div class='funcionario-progress__bar'><span id='funcionarioPanelProgresoBarra'></span></div>
+          <small id='funcionarioPanelProgresoTexto'>Perfil completado: 0%</small>
+        </div>
+        <div class='funcionario-quick-panel__actions'>
+          <button type='button' onclick='abrirFichaFuncionarioSeleccionado("resumen")'>Ver perfil</button>
+          <button type='button' onclick='verVentanaEditarUsuario()'>Editar</button>
+          <button type='button' onclick='verCerrarVentanaTareasProgramadas(true, false, "");'>Tareas</button>
+          <button type='button' onclick='abrirFichaFuncionarioSeleccionado("horarios")'>Horarios</button>
+          <button type='button' onclick='verCerrarAccesoUsuario("1")'>Acceso</button>
+          <button type='button' onclick='abrirFichaFuncionarioSeleccionado("auditoria")'>Auditoria</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -3433,6 +3588,15 @@ onclick="vaciar('inptBuscarUsuario3')" />
 
 <div class='divMenuf'>
 
+<div class='mi-perfil-status'>
+  <div>
+    <strong id='miPerfilProgresoTexto'>Perfil completado: 0%</strong>
+    <p>Tu perfil esta incompleto. Completa tus datos de contacto y emergencia para mantener actualizada tu ficha laboral.</p>
+  </div>
+  <button type='button' onclick='enfocarPendienteMiPerfil()'>Completar ahora</button>
+</div>
+<div class='mi-perfil-pendientes' id='miPerfilPendientes'></div>
+
 <table style='width:100%'>
 <tr>
   <td style="width:100%;">
@@ -3481,7 +3645,9 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <tr>
 <td>
 <p class='pTituloC'   >Contraseña de acceso :</p>
-<input type='Password' placeholder='Obligatorio(*)' class='inputText' style='width:250px' id='inptPassMisDatos' />
+<input type='Password' placeholder='Nueva clave (opcional)' class='inputText' style='width:250px;display:none;' id='inptPassMisDatos' />
+<input type='button' value='Cambiar contrase&ntilde;a' class='btn5' onclick='mostrarCambioContrasenhaMisDatos()' />
+<p class='funcionario-field-help'>Si no necesitas cambiarla, deja este campo sin completar.</p>
 </td>
 </tr>
 </table>
@@ -3512,6 +3678,15 @@ onclick="vaciar('inptBuscarUsuario3')" />
 </td>
 </tr>
 </table>
+<br>
+<div class='mi-perfil-domicilio' id='miPerfilDomicilioReferencia'>
+  <p class='pTituloC'>Ubicacion del domicilio</p>
+  <p>Esta ubicacion corresponde al domicilio declarado por el funcionario. No se utiliza para seguimiento en tiempo real.</p>
+  <div class='mi-perfil-domicilio__actions'>
+    <button type='button' disabled>Ver en mapa</button>
+    <button type='button' disabled>Actualizar pin</button>
+  </div>
+</div>
 <br>
 <table style='width:100%'>
 <tr>

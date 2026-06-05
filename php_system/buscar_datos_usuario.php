@@ -37,7 +37,8 @@ function buscardatos($user)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,us.fecha_creacion,us.rut_usuario,
+		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,us.fecha_creacion,us.rut_usuario,us.login,us.tipo,
+		(select Nombre from local where cod_local=us.cod_localFK limit 1) as local_nombre,
 		IFNULL((Select cdu.cod_cobradorFk from cobradorusuario cdu where cdu.cod_usuarioFk=us.cod_usuario),0) as ControlCobra
 		from  persona pr inner join usuario us on us.cod_usuario=pr.cod_persona  where cod_persona=? ";
 
@@ -71,6 +72,10 @@ if ( ! $stmt->execute()) {
 		  $tipo_relacion= mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
 		  $fecha_creacion= mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
 		  $rut_usuario= mb_convert_encoding((string)($valor['rut_usuario']), 'UTF-8', 'ISO-8859-1');
+		  $login= mb_convert_encoding((string)($valor['login']), 'UTF-8', 'ISO-8859-1');
+		  $tipo= mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
+		  $local_nombre= mb_convert_encoding((string)($valor['local_nombre']), 'UTF-8', 'ISO-8859-1');
+		  $horarios_usuario= buscarHorariosUsuarioPerfil($mysqli,$user);
 		  
 		  $informacion =array(
 			"1" =>"exito",
@@ -86,7 +91,11 @@ if ( ! $stmt->execute()) {
 		  	"11" => $tipo_relacion, 
 		  	"12" => $telefono_referencia,
 			"13" => $fecha_creacion,
-			"14" => $rut_usuario
+			"14" => $rut_usuario,
+			"15" => $login,
+			"16" => $tipo,
+			"17" => $local_nombre,
+			"18" => $horarios_usuario
 		);
 echo json_encode($informacion);	
 exit;
@@ -104,6 +113,38 @@ exit;
  
  
 
+}
+
+
+function buscarHorariosUsuarioPerfil($mysqli,$cod_usuario)
+{
+	$horarios=array();
+	$sql= "SELECT dia_semana,cod_localFK,TIME_FORMAT(hora_entrada,'%H:%i') AS hora_entrada,TIME_FORMAT(hora_salida,'%H:%i') AS hora_salida
+		FROM horario_usuario
+		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL
+		ORDER BY FIELD(dia_semana,'lunes','martes','miercoles','jueves','viernes','sabado','domingo'), hora_entrada ASC, id ASC";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return $horarios;
+	}
+	$s='s';
+	$stmt->bind_param($s,$cod_usuario);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		return $horarios;
+	}
+	$result = $stmt->get_result();
+	while ($valor= mysqli_fetch_assoc($result))
+	{
+		$horarios[]=array(
+			"dia" => mb_convert_encoding((string)($valor['dia_semana']), 'UTF-8', 'ISO-8859-1'),
+			"cod_localFK" => mb_convert_encoding((string)($valor['cod_localFK']), 'UTF-8', 'ISO-8859-1'),
+			"hora_entrada" => mb_convert_encoding((string)($valor['hora_entrada']), 'UTF-8', 'ISO-8859-1'),
+			"hora_salida" => mb_convert_encoding((string)($valor['hora_salida']), 'UTF-8', 'ISO-8859-1')
+		);
+	}
+	$stmt->close();
+	return $horarios;
 }
 
 
