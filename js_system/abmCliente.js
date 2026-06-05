@@ -517,12 +517,12 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
                     "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>" +
                         "<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='" + styleFondo + "'>" +
                             "<td id='td_id' style='display:none'>" + datos["2"] + "</td>" +
-                            "<td id='td_datos_2' style='width:10%'>" + ci_cliente + "</td>" +
-                            "<td id='td_datos_13' style='width:10%'>" + rut_cliente + "</td>" +
-                            "<td id='td_datos_1' style='width:10%'>" + nombre_persona + "</td>" +
+                            "<td id='td_datos_2' data-label='Doc.'>" + ci_cliente + "</td>" +
+                            "<td id='td_datos_13' data-label='RUC'>" + rut_cliente + "</td>" +
+                            "<td id='td_datos_1' data-label='Cliente'>" + nombre_persona + "</td>" +
                             "<td id='td_datos_10' style='display:none'>" + zonaCliente + "</td>" +
-                            "<td id='td_datos_3' style='width:10%'>" + direccion + "</td>" +
-                            "<td id='td_datos_4' style='width:10%'>" + telefono + "</td>" +
+                            "<td id='td_datos_3' data-label='Direccion'>" + direccion + "</td>" +
+                            "<td id='td_datos_4' data-label='Nro. telef.'>" + telefono + "</td>" +
                             "<td id='td_datos_5' style='display:none'>" + email + "</td>" +
                             "<td id='td_datos_6' style='display:none'>" + Calificacion + "</td>" +
                             "<td id='td_datos_7' style='display:none'>" + whapp + "</td>" +
@@ -1194,6 +1194,9 @@ var elementoCliente="";
 function obtenerdatosvistacliente(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
+	});
+	$("#table_vista_cliente tr").each(function (i, tr) {
+		tr.className = 'vista-cliente-row'
 	});
 	datostr.className = 'tableRegistroSelec'
 	IdClienteFKCuentas = $(datostr).children('td[id="td_id"]').html();
@@ -2292,12 +2295,12 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
                             "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>" +
                                 "<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='" + styleFondo + "'>" +
                                     "<td id='td_id' style='display:none'>" + registro['cod_persona'] + "</td>" +
-                                    "<td id='td_datos_2' style='width:10%'>" + registro['ci_cliente'] + "</td>" +
-                                    "<td id='td_datos_13' style='width:10%'>" + registro['rut_cliente'] + "</td>" +
-                                    "<td id='td_datos_1' style='width:10%'>" + registro['nombre_persona'] + "</td>" +
+                                    "<td id='td_datos_2' data-label='Doc.'>" + registro['ci_cliente'] + "</td>" +
+                                    "<td id='td_datos_13' data-label='RUC'>" + registro['rut_cliente'] + "</td>" +
+                                    "<td id='td_datos_1' data-label='Cliente'>" + registro['nombre_persona'] + "</td>" +
                                     "<td id='td_datos_10' style='display:none'>" + registro['zona'] + "</td>" +
-                                    "<td id='td_datos_3' style='width:10%'>" + registro['direccion'] + "</td>" +
-                                    "<td id='td_datos_4' style='width:10%'>" + registro['telefono'] + "</td>" +
+                                    "<td id='td_datos_3' data-label='Direccion'>" + registro['direccion'] + "</td>" +
+                                    "<td id='td_datos_4' data-label='Nro. telef.'>" + registro['telefono'] + "</td>" +
                                     "<td id='td_datos_5' style='display:none'>" + registro['email'] + "</td>" +
                                     "<td id='td_datos_6' style='display:none'>" + registro['Calificacion'] + "</td>" +
                                     "<td id='td_datos_7' style='display:none'>" + registro['whapp'] + "</td>" +

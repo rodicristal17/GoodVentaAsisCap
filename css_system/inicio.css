@@ -16607,3 +16607,480 @@ button.dashboard-summary-item:hover {
         font-size: 11px;
     }
 }
+
+#divVistaCliente {
+  background: rgba(15, 23, 42, 0.42);
+  overflow: auto;
+}
+
+#divVistaCliente .vista-cliente-shell {
+  width: 100%;
+  min-height: 100%;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+#divVistaCliente .vista-cliente-shell > tbody > tr > td {
+  padding: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+#divVistaCliente .vista-cliente-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1320px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  margin: 0 auto;
+  text-align: left;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #f7f9fc;
+  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.24);
+  font-family: "Merriweather Sans", Arial, sans-serif;
+}
+
+#divVistaCliente .vista-cliente-header,
+#divVistaCliente .vista-cliente-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid #dbe4ef;
+}
+
+#divVistaCliente .vista-cliente-footer {
+  justify-content: flex-end;
+  border-top: 1px solid #dbe4ef;
+  border-bottom: none;
+}
+
+#divVistaCliente .vista-cliente-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: #0f766e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#divVistaCliente .vista-cliente-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+#divVistaCliente .vista-cliente-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+#divVistaCliente .vista-cliente-actions .iconoBtn {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #d6e0eb;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+}
+
+#divVistaCliente .vista-cliente-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 310px);
+  gap: 10px;
+  min-height: 0;
+  padding: 10px;
+  overflow: auto;
+}
+
+#divVistaCliente .vista-cliente-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #dce5ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+#divVistaCliente .vista-cliente-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#divVistaCliente .vista-cliente-panel-head h3,
+#divVistaCliente .vista-cliente-account-block h4 {
+  margin: 0;
+  color: #26364d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#divVistaCliente .vista-cliente-account-block h4 {
+  margin-bottom: 6px;
+  color: #475569;
+  font-size: 10px;
+}
+
+#divVistaCliente .vista-cliente-search-button,
+#divVistaCliente .vista-cliente-select-button {
+  width: auto;
+  min-width: 96px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#divVistaCliente .vista-cliente-search-button {
+  background: #0f766e !important;
+}
+
+#divVistaCliente .vista-cliente-select-button {
+  max-width: 210px;
+  margin: 0;
+  background: #0f65b8;
+}
+
+#divVistaCliente .vista-cliente-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.65fr) minmax(80px, 0.65fr) minmax(220px, 1.85fr) minmax(110px, 0.85fr);
+  gap: 7px;
+}
+
+#divVistaCliente .vista-cliente-filter-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+}
+
+#divVistaCliente .vista-cliente-filter-grid span {
+  color: #526276;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+#divVistaCliente .vista-cliente-filter-grid .inputfiltro {
+  width: 100%;
+  min-height: 30px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #cad6e4;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #172033;
+  font-size: 10px;
+}
+
+#divVistaCliente .vista-cliente-filter-grid .inputfiltro:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+#divVistaCliente .vista-cliente-table-head,
+#divVistaCliente .vista-cliente-account-head {
+  display: grid;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 8px 8px 0 0;
+  background: #22324a;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+#divVistaCliente .vista-cliente-table-head {
+  grid-template-columns: minmax(72px, 0.55fr) minmax(72px, 0.55fr) minmax(230px, 2fr) minmax(260px, 2.25fr) minmax(92px, 0.7fr);
+  margin-bottom: -8px;
+}
+
+#divVistaCliente .vista-cliente-account-head {
+  grid-template-columns: minmax(0, 1.3fr) minmax(80px, 0.85fr) 44px;
+}
+
+#divVistaCliente .vista-cliente-results,
+#divVistaCliente .vista-cliente-account-list {
+  width: 100%;
+  min-height: 360px;
+  height: auto !important;
+  margin: 0;
+  border: 1px solid #dce5ef;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  background: #ffffff;
+  overflow: auto;
+}
+
+#divVistaCliente .vista-cliente-account-list {
+  min-height: 108px;
+  max-height: 132px;
+}
+
+#divVistaCliente #table_vista_cliente .tableRegistroSearch,
+#divVistaCliente #table_vista_cliente .tableRegistroSearch2,
+#divVistaCliente #table_clientes_cuentas1 .tableRegistroSearch,
+#divVistaCliente #table_clientes_cuentas1 .tableRegistroSearch2,
+#divVistaCliente #table_clientes_cuentas2 .tableRegistroSearch,
+#divVistaCliente #table_clientes_cuentas2 .tableRegistroSearch2 {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: none;
+  border-collapse: collapse;
+  background: transparent;
+  font-size: 10px;
+}
+
+#divVistaCliente #table_vista_cliente .tableRegistroSearch tbody,
+#divVistaCliente #table_vista_cliente .tableRegistroSearch2 tbody,
+#divVistaCliente #table_clientes_cuentas1 .tableRegistroSearch tbody,
+#divVistaCliente #table_clientes_cuentas1 .tableRegistroSearch2 tbody,
+#divVistaCliente #table_clientes_cuentas2 .tableRegistroSearch tbody,
+#divVistaCliente #table_clientes_cuentas2 .tableRegistroSearch2 tbody {
+  display: block;
+  width: 100%;
+}
+
+#divVistaCliente #table_vista_cliente tr,
+#divVistaCliente #table_clientes_cuentas1 tr,
+#divVistaCliente #table_clientes_cuentas2 tr {
+  display: grid;
+  align-items: stretch;
+  width: 100%;
+  min-height: 32px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #edf2f7;
+  border-left: 3px solid transparent;
+  background: #ffffff;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+#divVistaCliente #table_vista_cliente tr {
+  grid-template-columns: minmax(72px, 0.55fr) minmax(72px, 0.55fr) minmax(230px, 2fr) minmax(260px, 2.25fr) minmax(92px, 0.7fr);
+}
+
+#divVistaCliente #table_clientes_cuentas1 tr,
+#divVistaCliente #table_clientes_cuentas2 tr {
+  grid-template-columns: minmax(0, 1.3fr) minmax(80px, 0.85fr) 44px;
+}
+
+#divVistaCliente #table_vista_cliente tr:not(.tableRegistroSelec):hover,
+#divVistaCliente #table_clientes_cuentas1 tr:not(.tableRegistroSelec):hover,
+#divVistaCliente #table_clientes_cuentas2 tr:not(.tableRegistroSelec):hover {
+  border-left-color: #0f766e;
+  background: #eaf4ff;
+  box-shadow: inset 0 0 0 1px #cfe3f7;
+  transform: translateX(1px);
+}
+
+#divVistaCliente #table_vista_cliente tr:not(.tableRegistroSelec):hover td[data-label],
+#divVistaCliente #table_clientes_cuentas1 tr:not(.tableRegistroSelec):hover td[data-label],
+#divVistaCliente #table_clientes_cuentas2 tr:not(.tableRegistroSelec):hover td[data-label] {
+  background: #eaf4ff;
+}
+
+#divVistaCliente #table_vista_cliente tr.tableRegistroSelec,
+#divVistaCliente #table_clientes_cuentas1 tr.tableRegistroSelec,
+#divVistaCliente #table_clientes_cuentas2 tr.tableRegistroSelec {
+  border-left-color: #0b4f90;
+  background: #0f65b8;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+#divVistaCliente #table_vista_cliente tr.tableRegistroSelec td[data-label],
+#divVistaCliente #table_clientes_cuentas1 tr.tableRegistroSelec td[data-label],
+#divVistaCliente #table_clientes_cuentas2 tr.tableRegistroSelec td[data-label] {
+  background: #0f65b8;
+}
+
+#divVistaCliente #table_vista_cliente td[data-label],
+#divVistaCliente #table_clientes_cuentas1 td[data-label],
+#divVistaCliente #table_clientes_cuentas2 td[data-label] {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: auto !important;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  overflow-wrap: anywhere;
+  text-align: left;
+  line-height: 1.2;
+  transition: background-color 0.16s ease;
+}
+
+#divVistaCliente #table_vista_cliente td[id="td_datos_1"] {
+  color: #102033;
+  font-weight: 800;
+}
+
+#divVistaCliente #table_vista_cliente tr.tableRegistroSelec td[id="td_datos_1"] {
+  color: #ffffff;
+}
+
+#divVistaCliente #table_vista_cliente td[id="td_datos_2"],
+#divVistaCliente #table_vista_cliente td[id="td_datos_13"],
+#divVistaCliente #table_vista_cliente td[id="td_datos_4"] {
+  white-space: nowrap;
+}
+
+#divVistaCliente #table_vista_cliente td[id="td_datos_3"] {
+  color: #475569;
+}
+
+#divVistaCliente #table_vista_cliente tr.tableRegistroSelec td[id="td_datos_3"] {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 980px) {
+  #divVistaCliente .vista-cliente-content {
+    grid-template-columns: 1fr;
+  }
+
+  #divVistaCliente .vista-cliente-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  #divVistaCliente .vista-cliente-shell > tbody > tr > td {
+    padding: 0;
+    vertical-align: top;
+  }
+
+  #divVistaCliente .vista-cliente-modal {
+    width: 100vw;
+    max-height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  #divVistaCliente .vista-cliente-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  #divVistaCliente .vista-cliente-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  #divVistaCliente .vista-cliente-content {
+    padding: 10px;
+  }
+
+  #divVistaCliente .vista-cliente-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #divVistaCliente .vista-cliente-table-head,
+  #divVistaCliente .vista-cliente-account-head {
+    display: none;
+  }
+
+  #divVistaCliente .vista-cliente-results,
+  #divVistaCliente .vista-cliente-account-list {
+    min-height: 0;
+    max-height: none;
+    border: none;
+    border-radius: 8px;
+    background: #f7f9fc;
+  }
+
+  #divVistaCliente .vista-cliente-results {
+    height: auto !important;
+    max-height: 48vh;
+  }
+
+  #divVistaCliente #table_vista_cliente .tableRegistroSearch,
+  #divVistaCliente #table_vista_cliente .tableRegistroSearch2,
+  #divVistaCliente #table_clientes_cuentas1 .tableRegistroSearch,
+  #divVistaCliente #table_clientes_cuentas1 .tableRegistroSearch2,
+  #divVistaCliente #table_clientes_cuentas2 .tableRegistroSearch,
+  #divVistaCliente #table_clientes_cuentas2 .tableRegistroSearch2 {
+    margin-bottom: 8px;
+  }
+
+  #divVistaCliente #table_vista_cliente tr,
+  #divVistaCliente #table_clientes_cuentas1 tr,
+  #divVistaCliente #table_clientes_cuentas2 tr {
+    display: block;
+    min-height: 0;
+    border: 1px solid #dce5ef;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  #divVistaCliente #table_vista_cliente td[data-label],
+  #divVistaCliente #table_clientes_cuentas1 td[data-label],
+  #divVistaCliente #table_clientes_cuentas2 td[data-label] {
+    justify-content: space-between;
+    gap: 10px;
+    width: 100% !important;
+    min-height: 34px;
+    padding: 7px 9px;
+    border-bottom: 1px solid #edf2f7;
+    text-align: right;
+    font-size: 10px;
+  }
+
+  #divVistaCliente #table_vista_cliente td[data-label]::before,
+  #divVistaCliente #table_clientes_cuentas1 td[data-label]::before,
+  #divVistaCliente #table_clientes_cuentas2 td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  #divVistaCliente #table_vista_cliente tr.tableRegistroSelec td[data-label]::before,
+  #divVistaCliente #table_clientes_cuentas1 tr.tableRegistroSelec td[data-label]::before,
+  #divVistaCliente #table_clientes_cuentas2 tr.tableRegistroSelec td[data-label]::before {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  #divVistaCliente .vista-cliente-footer {
+    padding: 10px;
+  }
+
+  #divVistaCliente .vista-cliente-select-button {
+    width: 100%;
+    max-width: none;
+  }
+}
