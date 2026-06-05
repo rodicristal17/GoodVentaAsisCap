@@ -1078,6 +1078,17 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 			exit;
 		}
 
+		$idCreditoEntrega = $mysqli->insert_id;
+		$nrofactura = buscarnrofactura();
+		$consulta = "Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK) 
+			values('$entrega',(select fecha_venta from venta where cod_venta='$cod_venta' limit 1),'$idCreditoEntrega','$cod_vendedorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'$nrofactura','Pago Cuota','Efectivo','','','','1')";
+		$stmt = $mysqli->prepare($consulta);
+		if (! $stmt->execute()) {
+			echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+			exit;
+		}
+		actualizarEntrega($cod_venta, $entrega);
+
 		
 		$observacion = " *Entrega :" . $entrega . " Gs.";
 	}
