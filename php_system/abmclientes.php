@@ -1147,14 +1147,14 @@ function obtenerPaginaClienteVista($registros)
 
 		$pagina .= "
 <table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>
-<tr class='tableRegistroSelec' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='$stylefondo'>
+<tr class='vista-cliente-row' id='trdatoClienteCi' onclick='obtenerdatosvistacliente(this)' style='$stylefondo'>
 <td id='td_id' style='display:none'>".$value['cod_persona']."</td>
-<td id='td_datos_2' style='width:10%'>".$value['ci_cliente']."</td>
-<td id='td_datos_13' style='width:10%'>".$value['rut_cliente']."</td>
-<td id='td_datos_1' style='width:10%'>".$value['nombre_persona']."</td>
+<td id='td_datos_2' data-label='Doc.'>".$value['ci_cliente']."</td>
+<td id='td_datos_13' data-label='RUC'>".$value['rut_cliente']."</td>
+<td id='td_datos_1' data-label='Cliente'>".$value['nombre_persona']."</td>
 <td id='td_datos_10' style='display:none'>".$value['zona']."</td>
-<td id='td_datos_3' style='width:10%'>".$value['direccion']."</td>
-<td id='td_datos_4' style='width:10%'>".$value['telefono']."</td>
+<td id='td_datos_3' data-label='Direccion'>".$value['direccion']."</td>
+<td id='td_datos_4' data-label='Nro. telef.'>".$value['telefono']."</td>
 <td id='td_datos_5' style='display:none'>".$value['email']."</td>
 <td id='td_datos_6' style='display:none'>".$value['Calificacion']."</td>
 <td id='td_datos_7' style='display:none'>".$value['whapp']."</td>
@@ -1622,12 +1622,12 @@ $stylefondo="background-color:#ff5722;color:#fff";
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
 <tr id='tbSelecRegistro' onclick='obtenerdatosvistacliente(this)' style='$stylefondo'>
 <td id='td_id' style='display:none'>".$cod_persona."</td>
-<td  id='td_datos_2' style='width:10%'>".$ci_cliente."</td>
-<td  id='td_datos_13' style='width:10%'>".$rut_cliente."</td>
-<td id='td_datos_1' style='width:10%'>".$nombre_persona."</td>
+<td  id='td_datos_2' data-label='Doc.'>".$ci_cliente."</td>
+<td  id='td_datos_13' data-label='RUC'>".$rut_cliente."</td>
+<td id='td_datos_1' data-label='Cliente'>".$nombre_persona."</td>
 <td  id='td_datos_10' style='display:none'>".$zona."</td>
-<td  id='td_datos_3' style='width:10%'>".$direccion."</td>
-<td  id='td_datos_4' style='width:10%'>".$telefono."</td>
+<td  id='td_datos_3' data-label='Direccion'>".$direccion."</td>
+<td  id='td_datos_4' data-label='Nro. telef.'>".$telefono."</td>
 <td  id='td_datos_5' style='display:none'>".$email."</td>
 <td  id='td_datos_6' style='display:none'>".$Calificacion."</td>
 <td  id='td_datos_7' style='display:none'>".$whapp."</td>

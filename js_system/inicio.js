@@ -8728,7 +8728,6 @@ function abmzonas(nombre, estado, idzona, encargado , accion) {
         }, false);
         return xhr;
     },
-		
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
@@ -11631,7 +11630,7 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptTotalVenta2').innerHTML = "0"
 	document.getElementById('inptTotalPagado').value = ""
  	document.getElementById("inptDescuentoVentaTerminar").value= "0";
-	document.getElementById('inptDeudaActual').value = ""
+	//document.getElementById('inptDeudaActual').value = ""
 	document.getElementById('inpCodVentaPagos').value = ""
 	document.getElementById('inptTotalVentaPagos').value = ""
 	document.getElementById('inptNroCuotasPagos').value = ""
@@ -11679,6 +11678,7 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptComisionVentaCobrador').value = "0"
 	document.getElementById('inptGaranteVenta').value = "SIN GARANTE";
 	document.getElementById("inptEntregaConfCredito").value ="0"
+	document.getElementById("inptNroComprobanteConfCredito").value =""
 	document.getElementById("inptConfirmarPagoEntrega").value ="SI"
 	document.getElementById("btnFinalizarVenta").style.display="none"
 	document.getElementById("btnCancelarVenta").style.display="none"
@@ -13172,6 +13172,7 @@ function crearcreditodesdeventa() {
 	var inptInteresConfCredito = document.getElementById('inptInteresConfCredito').value
 	var inptDiasConfCredito = document.getElementById('inptDiasConfCredito').value
 	var inptEntregaConfCredito = document.getElementById('inptEntregaConfCredito').value
+	var inptNroComprobanteConfCredito = document.getElementById('inptNroComprobanteConfCredito').value
 	var inptConfirmarPagoEntrega = document.getElementById('inptConfirmarPagoEntrega').value
 	if (inptTotalPagado > 0) {
 	return false;
@@ -13215,9 +13216,9 @@ function crearcreditodesdeventa() {
 		verificarcamposdetallesventacredito()
 		return
 	}
-    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, idFkVendedor1, idabmVenta);
+    abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, inptNroComprobanteConfCredito, idFkVendedor1, idabmVenta);
 }
-function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, cod_vendedorFK, cod_venta) {
+function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, nro_comprobante, cod_vendedorFK, cod_venta) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -13233,6 +13234,7 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 	datos.append("dias", dias)
 	datos.append("interes", interes)
 	datos.append("entrega", entrega)
+	datos.append("nro_comprobante", nro_comprobante)
 	datos.append("pagoentrega", pagoentrega)
 	datos.append("idGaranteFk", idGaranteFk)
 	datos.append("cod_vendedorFK", cod_vendedorFK)
@@ -13299,7 +13301,14 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 					document.getElementById("inptConfirmarNroFactura").value = document.getElementById("inptNroVenta").value	
 					//totalesRecibo = datos[23]
 					InteresRecibo = datos[24]
-					DeudaActualRecibo = datos[25]
+					var deudaGeneradaCredito = (datos[25] != undefined && datos[25] != "") ? datos[25] : "0";
+					DeudaActualRecibo = deudaGeneradaCredito
+					if (document.getElementById("inptDeudaActual") != null) {
+						document.getElementById("inptDeudaActual").value = deudaGeneradaCredito
+					}
+					if (document.getElementById("inptTotalDeudaPago") != null) {
+						document.getElementById("inptTotalDeudaPago").value = deudaGeneradaCredito
+					}
 					DiasAtrasado = datos[26]
 					CuotasRestante = datos[28]
 					if(datos[27]!="0"){
@@ -13380,9 +13389,12 @@ function vercerrarOpcionesImpresion(mostrar) {
 		$("div[id=divOpcionesImpresion]").fadeIn(250)
 	} else {
 		$("div[id=divOpcionesImpresion]").fadeOut(250);
-		limpiarCamposAnhadirPagos()
-		limpiarcamposventa()
 	}
+}
+function cerrarPostVentaYLimpiar() {
+	vercerrarOpcionesImpresion(false);
+	limpiarCamposAnhadirPagos()
+	limpiarcamposventa()
 }
 function vercerrarConfirmarNroFactura(d) {
 	
@@ -13442,7 +13454,6 @@ function ActualizarNroFacturaVenta() {
         }, false);
         return xhr;
     },
-		
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
@@ -13477,7 +13488,32 @@ ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE")
 }
 
 
+var bloqueoTemporalVerificarVenta = false;
+function bloquearTemporalBotonVenta(bloquear) {
+	var boton = document.getElementById('btnAbmVenta');
+	if (boton == null) {
+		return;
+	}
+	boton.disabled = bloquear;
+	if (bloquear) {
+		boton.setAttribute('data-texto-original', boton.value);
+		boton.value = "Guardando...";
+		boton.style.opacity = "0.6";
+		boton.style.cursor = "wait";
+	} else {
+		var textoOriginal = boton.getAttribute('data-texto-original');
+		if (textoOriginal != null && boton.value == "Guardando...") {
+			boton.value = textoOriginal;
+		}
+		boton.style.opacity = "";
+		boton.style.cursor = "";
+	}
+}
+
 function verificarcamposventa() {
+	if (bloqueoTemporalVerificarVenta) {
+		return false;
+	}
 	var inptFechaVenta = document.getElementById('inptFechaVenta').value
 	var inptClienteVenta = document.getElementById('inptClienteVenta').value
 	var inptSeleccTipoVenta = document.getElementById('inptSeleccTipoVenta').value
@@ -13520,6 +13556,8 @@ var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComp
 		accion = "nuevo";
 		if(controlacceso("INSERTARVENTA","accion")==false){return;}
 	}
+	bloqueoTemporalVerificarVenta = true;
+	bloquearTemporalBotonVenta(true);
 	abmventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,idGaranteFk,inptFechaVenta, inptSeleccTipoVenta, inpCodVenta, idFkCliente, idFkCobrador, idabmVenta, "Corrido", idFkVendedor1, idFkVendedor2, inptComisionVentaCobrador, inptlocalVenta, accion);
 }
 function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta, TipoVenta, num_factura, cod_clienteFK, cod_cobradorFK, cod_venta, TipoPago, idFkVendedor1, idFkVendedor2, comision, cod_local, accion) {
@@ -13612,6 +13650,15 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 		}
 	});
 
+	OpAjax.fail(function (jqXHR, textstatus, errorThrowm) {
+		verCerrarEfectoCargando("")
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventa")
+	});
+
+	OpAjax.always(function () {
+		bloqueoTemporalVerificarVenta = false;
+		bloquearTemporalBotonVenta(false);
+	});
 
 }
 var ventanaAnteriorHistorialVenta= "";
@@ -14151,9 +14198,6 @@ function vercerrarpagos(d,c) {
 		buscarcreditos()
 	} else {
 		console.error(c)
-if(c=="0"){			
-			limpiarcamposventa()
-		}		
 		document.getElementById("tdEfectoOpcionesPagos").className="magictime slideRight"
 		$("div[id=divAbmOpcionesPagos]").fadeOut(500)
 	}
@@ -14295,10 +14339,12 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			   if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					paginaExtractoCuota = datos[12];
+					var deudaTotalCuenta = datos[4];
+					var deudaActualPago = (datos[17] != undefined && datos[17] != "") ? datos[17] : deudaTotalCuenta;
 					document.getElementById("table_abm_opciones_pago").innerHTML = datos_buscados
 					document.getElementById("inptTotalPagado").value = datos[3]
 					document.getElementById("inptTotalPagadoOpcionesPago").value = datos[3]
-					document.getElementById("inptDeudaActual").value = datos[4]
+					document.getElementById("inptDeudaActual").value = deudaTotalCuenta
 					document.getElementById('inptInteresPagoOpciones').value = datos[5]
 					document.getElementById('inptTotalInteres').value = datos[7]
 					document.getElementById('inptDiasAtrazadoCargarPago').value = datos[8]
@@ -14308,7 +14354,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById('inptCuotasAtrazadoCargarPago').value = datos[14]
 					document.getElementById('inptTotalinteresPago').value = datos[18]
 					document.getElementById('inptSubtotalPago').value = datos[13]
-					document.getElementById('inptTotalDeudaPago').value = datos[17]
+					document.getElementById('inptTotalDeudaPago').value = deudaActualPago
 					document.getElementById('inptDescuentoCargaPago').value = 0
 					document.getElementById('inptMontoCargaPago').value = 0
 					
@@ -14325,7 +14371,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					
 					ImportePagare = datos[3]
 					InteresRecibo=datos[19]
-					DeudaActualRecibo=datos[17]
+					DeudaActualRecibo=deudaActualPago
 					TotalDescuentoRecibo=datos[11]	
 					
 					if(datos[3]>0){
@@ -15212,7 +15258,10 @@ function verCerrarCargarPago(d) {
 		document.getElementById('inptFechaPagoCargarPago').value = f.getFullYear() + "-" + mes + "-" + dia;
 	cambiarCobradorCodEnPagos()	
 	
-	var DeudaActualAPagar = document.getElementById('inptDeudaActual').value
+	var DeudaActualAPagar = document.getElementById('inptTotalDeudaPago').value
+	if (DeudaActualAPagar == "" || DeudaActualAPagar == "0") {
+		DeudaActualAPagar = document.getElementById('inptDeudaActual').value
+	}
 	
 	document.getElementById('inptDeudaActualCargaPago').value= DeudaActualAPagar;
 	

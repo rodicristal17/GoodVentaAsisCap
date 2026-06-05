@@ -81,11 +81,13 @@ $interes=$_POST['interes'];
 $interes = quitarseparadormiles($interes);
 $entrega=$_POST['entrega'];
 $entrega = quitarseparadormiles($entrega);
+$nro_comprobante=isset($_POST['nro_comprobante']) ? $_POST['nro_comprobante'] : "";
+$nro_comprobante = mb_convert_encoding((string)($nro_comprobante), 'ISO-8859-1', 'UTF-8');
 $dias=$_POST['dias'];
 $cod_vendedorFK=$_POST['cod_vendedorFK'];
 $cod_vendedorFK = mb_convert_encoding((string)($cod_vendedorFK), 'ISO-8859-1', 'UTF-8');
 
-generarCuotasdesdeventa($idGaranteFk,$pagoentrega,$cod_venta,$Monto,$metodopago,$iniciopago,$nroCuota,$interes,$dias,$entrega,$cod_vendedorFK);
+generarCuotasdesdeventa($idGaranteFk,$pagoentrega,$cod_venta,$Monto,$metodopago,$iniciopago,$nroCuota,$interes,$dias,$entrega,$nro_comprobante,$cod_vendedorFK);
 
 }
 
@@ -1053,9 +1055,11 @@ exit;
 	
 }
 
-function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto, $metodopago, $iniciopago, $nroCuota, $interes, $dias, $entrega, $cod_vendedorFK)
+function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto, $metodopago, $iniciopago, $nroCuota, $interes, $dias, $entrega, $nro_comprobante, $cod_vendedorFK)
 {
 	$mysqli = conectar_al_servidor();
+	$nro_comprobante = $mysqli->real_escape_string($nro_comprobante);
+	$fecha_facturado = date('Y-m-d');
 
 	eliminarcreditos($cod_venta);
 	$totalcuotas = $nroCuota;
@@ -1077,6 +1081,17 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 			echo "Error";
 			exit;
 		}
+
+		$idCreditoEntrega = $mysqli->insert_id;
+		$nrofactura = buscarnrofactura();
+		$consulta = "Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK,num_comprobante,fecha_facturado)
+			values('$entrega',(select fecha_venta from venta where cod_venta='$cod_venta' limit 1),'$idCreditoEntrega','$cod_vendedorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'$nrofactura','Pago Cuota','Efectivo','','','','1','$nro_comprobante','$fecha_facturado')";
+		$stmt = $mysqli->prepare($consulta);
+		if (! $stmt->execute()) {
+			echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+			exit;
+		}
+		actualizarEntrega($cod_venta, $entrega);
 
 		
 		$observacion = " *Entrega :" . $entrega . " Gs.";
@@ -1197,8 +1212,8 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 			$entrega -= $Monto;
 			$nrofactura=buscarnrofactura();
 			
-			$consulta="Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK) 
-			values('$montoCuota',NOW(),'".$creditosPendientes[$i]['idcredito']."','$cod_vendedorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'$nrofactura','Pago Cuota','Efectivo','','','','1')";	
+			$consulta="Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK,num_comprobante,fecha_facturado)
+			values('$montoCuota',NOW(),'".$creditosPendientes[$i]['idcredito']."','$cod_vendedorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'$nrofactura','Pago Cuota','Efectivo','','','','1','$nro_comprobante','$fecha_facturado')";
 
 			$stmt = $mysqli->prepare($consulta);
 			if ( ! $stmt->execute()) {

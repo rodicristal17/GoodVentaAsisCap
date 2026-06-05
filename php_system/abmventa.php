@@ -3928,9 +3928,9 @@ $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5' >
 <tr id='tbSelecRegistro' onclick='ObtenerdatosCuentaCliente(this)' >
 <td  id='td_id' style='display:none'>".$cod_venta."</td>
-<td  id='' style='width:40%'>".$nrof."</td>
-<td  id='' style='width:30%'>".$fecha_venta."</td>
-<td  id='' style='width:10%'>". number_format($diff,'0',',','.') ."</td>
+<td  id='' data-label='Factura' style='width:40%'>".$nrof."</td>
+<td  id='' data-label='Fecha' style='width:30%'>".$fecha_venta."</td>
+<td  id='' data-label='D/A' style='width:10%'>". number_format($diff,'0',',','.') ."</td>
 </tr>
 </table>";
 
@@ -4004,9 +4004,9 @@ $pagina.="
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr id='tbSelecRegistro' onclick='ObtenerdatosCuentaCliente(this)'  >
 <td  id='td_id' style='display:none'>".$cod_venta."</td>
-<td  id='' style='width:40%'>".$nrof."</td>
-<td  id='' style='width:30%'>".$fecha_venta."</td>
-<td  id='' style='width:10%'>". number_format($diff,'0',',','.') ."</td>
+<td  id='' data-label='Factura' style='width:40%'>".$nrof."</td>
+<td  id='' data-label='Fecha' style='width:30%'>".$fecha_venta."</td>
+<td  id='' data-label='D/A' style='width:10%'>". number_format($diff,'0',',','.') ."</td>
 </tr>
 </table>";
 
