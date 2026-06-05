@@ -12,7 +12,11 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
 
     var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
     var consultorio = document.getElementById('inptConsultorioAgendaFiltro').value || '';
-    var local = document.getElementById('inptLocalAgendaFiltro').value || '';
+    var selectLocalAgenda = document.getElementById('inptLocalAgendaFiltro');
+    var local = selectLocalAgenda.value || '';
+    if(local == '' && selectLocalAgenda.options.length <= 1 && typeof cod_localFKUSer !== "undefined"){
+        local = cod_localFKUSer || '';
+    }
     var estado = document.getElementById('inptEstadoAgenda').value || '';
     var fecha = document.getElementById('inptFechaAgenda').value || '';
 
@@ -25,7 +29,7 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
         "cod_local": local,
         "fecha": fecha,
         "estado": estado,
-        "ver_todos_consoltorios": controlacceso("VERTODOSLOSCONSULTORIOS", "accion"),
+        "ver_todos_consoltorios": controlacceso2("VERTODOSLOSCONSULTORIOS", "accion"),
         "funt": "cargarAgenda"
     };
 

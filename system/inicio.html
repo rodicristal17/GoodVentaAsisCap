@@ -43,18 +43,13 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
-
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
-
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=calendario-json-20260605"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-porcentaje-20260602"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
@@ -9407,7 +9402,7 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:90%;text-align:left'>
-<p class='pTituloB'>ABM de <b style='font-size: 30px;'>Insumos</b></p>
+<p class='pTituloB'>Gesti&oacute;n de <b style='font-size: 30px;'>Insumos</b></p>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarAbmInsumos()' />
@@ -9417,6 +9412,13 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 </td>
 </tr>
 </table>
+<div class='insumos-tabs'>
+  <button type='button' class='insumos-tab-btn activo' id='btnTabInsumosAbm' onclick='verTabInsumos("abm")'>ABM de Insumos</button>
+  <button type='button' class='insumos-tab-btn' id='btnTabInsumosStock' onclick='verTabInsumos("stock")'>Stock por sucursal/consultorio</button>
+  <button type='button' class='insumos-tab-btn' id='btnTabInsumosMovimientos' onclick='verTabInsumos("movimientos")'>Movimientos</button>
+  <button type='button' class='insumos-tab-btn' id='btnTabInsumosAlertas' onclick='verTabInsumos("alertas")'>Alertas <span id='contadorAlertasInsumos'>0</span></button>
+</div>
+<div class='insumos-tab-contenido activo' id='tabInsumosAbm'>
 <div id='divAbmInsumos2' style='display:none;width:100%;height:calc(90vh - 58px);overflow:auto;padding:0;box-sizing:border-box;border:0;box-shadow:none;background:#f4f6f8;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
@@ -9429,8 +9431,9 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 <table style='width:100%'>
 <tr>
 <td style='width:50%;padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Nombre :</p><input type='text' class='inputText' id='inptNombreInsumo' placeholder='Obligatorio(*)' style='width:100%;height:34px'></td>
-<td style='width:25%;padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Stock :</p><input type='number' class='inputText' id='inptStockInsumo' placeholder='0' min='0' step='any' style='width:100%;height:34px'></td>
-<td style='width:25%;padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Unidad :</p><select class='inputSelect' id='inptUnidadInsumo' style='width:100%;height:34px'><option value=''>Seleccionar</option><option>Unidad</option><option>Kg</option><option>Gramo</option><option>Litro</option><option>Mililitro</option><option>Metro</option><option>Caja</option><option>Paquete</option></select></td>
+<td style='width:16%;padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Stock :</p><input type='number' class='inputText' id='inptStockInsumo' placeholder='0' min='0' step='any' style='width:100%;height:34px'></td>
+<td style='width:16%;padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Stock m&iacute;nimo :</p><input type='number' class='inputText' id='inptStockMinimoInsumo' placeholder='0' min='0' step='1' value='0' style='width:100%;height:34px'></td>
+<td style='width:18%;padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Unidad :</p><select class='inputSelect' id='inptUnidadInsumo' style='width:100%;height:34px'><option value=''>Seleccionar</option><option>Unidad</option><option>Kg</option><option>Gramo</option><option>Litro</option><option>Mililitro</option><option>Metro</option><option>Caja</option><option>Paquete</option></select></td>
 </tr>
 <tr>
 <td colspan='2' style='padding:6px'><p class='pTituloC' style='font-weight:bold;color:#3d4b5c;'>Descripci&oacute;n :</p><textarea class='inputText' id='inptDescripcionInsumo' placeholder='Opcional' style='width:100%;height:76px;resize:vertical'></textarea></td>
@@ -9478,11 +9481,12 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 <table class='tableCabeceraRegistro' style='width:100%'>
 <tr>
 <td class='td_registro' style='width:8%'>CODIGO</td>
-<td class='td_registro' style='width:24%'>NOMBRE</td>
-<td class='td_registro' style='width:34%'>DESCRIPCION</td>
+<td class='td_registro' style='width:22%'>NOMBRE</td>
+<td class='td_registro' style='width:30%'>DESCRIPCION</td>
 <td class='td_registro' style='width:10%'>STOCK</td>
-<td class='td_registro' style='width:12%'>UNIDAD</td>
-<td class='td_registro' style='width:12%'>ESTADO</td>
+<td class='td_registro' style='width:10%'>MINIMO</td>
+<td class='td_registro' style='width:10%'>UNIDAD</td>
+<td class='td_registro' style='width:10%'>ESTADO</td>
 </tr>
 </table>
 <div class='div_cuerpo_table' id='table_abm_Insumos' style='height:calc(100% - 155px);width:100%;box-sizing:border-box;'></div>
@@ -9494,6 +9498,85 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 <td style='text-align:right'></td>
 </tr>
 </table>
+</div>
+</div>
+<div class='insumos-tab-contenido' id='tabInsumosStock'>
+  <section class='dashboard-insumos-grid'>
+    <div class='presupuesto-panel dashboard-insumos-filtros'>
+      <div class='panel-title'>Filtros</div>
+      <div class='form-row'><label>Sucursal</label><select class='inputSelect' id='inptDashboardInsumosLocal' onchange='filtrarConsultoriosDashboardInsumos();buscarDashboardInsumosStock();'></select></div>
+      <div class='form-row'><label>Consultorio</label><select class='inputSelect' id='inptDashboardInsumosConsultorio' onchange='buscarDashboardInsumosStock()'></select></div>
+      <div class='form-row'><label>Buscar insumo</label><input class='inputText' type='text' id='inptDashboardInsumosBuscar' placeholder='Nombre o codigo' onkeyup='if(event.keyCode == 13){buscarDashboardInsumosStock()}' /></div>
+      <input type='button' value='Buscar' class='btn4' onclick='buscarDashboardInsumosStock()' style='width:120px'>
+      <input type='button' value='Limpiar' class='btn2' onclick='limpiarFiltrosDashboardInsumos()' style='width:120px;border-radius:10px;background:#6b7280'>
+    </div>
+    <div class='presupuesto-panel dashboard-insumos-carga'>
+      <div class='panel-title'>Cargar stock</div>
+      <div class='dashboard-insumos-carga-grid'>
+        <div class='form-row'><label>Insumo</label><select class='inputSelect' id='inptDashboardInsumosInsumo'></select></div>
+        <div class='form-row'><label>Cantidad disponible</label><input class='inputText' type='number' min='0' step='any' id='inptDashboardInsumosCantidad' placeholder='0' /></div>
+        <div class='form-row dashboard-insumos-carga-accion'><input type='button' value='Guardar stock' class='btn4' onclick='guardarDashboardInsumosStock()' style='width:150px'></div>
+      </div>
+    </div>
+  </section>
+  <section class='presupuesto-panel dashboard-insumos-listado'>
+    <div class='dashboard-insumos-listado-head'><div><div class='panel-title'>Stock por sucursal y consultorio</div><span class='panel-subtitle' id='lblDashboardInsumosResumen'>Seleccione una sucursal y consultorio para cargar stock.</span></div></div>
+    <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:20%'>SUCURSAL</td><td class='td_registro' style='width:16%'>CONSULTORIO</td><td class='td_registro' style='width:8%'>CODIGO</td><td class='td_registro' style='width:24%'>INSUMO</td><td class='td_registro' style='width:9%'>STOCK</td><td class='td_registro' style='width:9%'>MINIMO</td><td class='td_registro' style='width:8%'>UNIDAD</td><td class='td_registro' style='width:6%'></td></tr></table>
+    <div class='div_cuerpo_table dashboard-insumos-tabla' id='tableDashboardInsumosStock'></div>
+  </section>
+</div>
+
+<div class='insumos-tab-contenido' id='tabInsumosMovimientos'>
+  <section class='presupuesto-panel dashboard-insumos-carga insumos-movimiento-carga'>
+    <div class='panel-title'>Registrar movimiento</div>
+    <div class='insumos-form-grid insumos-movimiento-datos'>
+      <div class='form-row'><label>Tipo</label><select class='inputSelect' id='inptMovimientoInsumoTipo'><option value='entrada'>Entrada</option><option value='salida'>Salida</option><option value='ajuste'>Ajuste</option></select></div>
+      <div class='form-row'><label>Sucursal</label><select class='inputSelect' id='inptMovimientoInsumoLocal' onchange='filtrarConsultoriosGenericoInsumos("inptMovimientoInsumoLocal","inptMovimientoInsumoConsultorio")'></select></div>
+      <div class='form-row'><label>Consultorio</label><select class='inputSelect' id='inptMovimientoInsumoConsultorio'></select></div>
+      <div class='form-row'><label>Fecha</label><input class='inputText' type='date' id='inptMovimientoInsumoFecha'></div>
+      <div class='form-row insumos-grid-span'><label>Motivo</label><input class='inputText' type='text' id='inptMovimientoInsumoMotivo' placeholder='Obligatorio'></div>
+      <div class='form-row'><label>Insumo</label><select class='inputSelect' id='inptMovimientoDetalleInsumo'></select></div>
+      <div class='form-row'><label>Cantidad</label><input class='inputText' type='number' min='0.001' step='any' id='inptMovimientoDetalleCantidad'></div>
+    </div>
+    <div class='insumos-movimiento-acciones'>
+      <div class='form-row'><input type='button' value='Agregar insumo' class='btn4' onclick='agregarDetalleMovimientoInsumo()' style='width:145px'></div>
+      <div class='form-row'><input type='button' value='Guardar movimiento' class='btn4' onclick='guardarMovimientoInsumo()' style='width:170px'></div>
+    </div>
+    <div class='insumos-movimiento-lista'>
+      <table class='tableCabeceraRegistro' style='width:100%;margin-top:12px'><tr><td class='td_registro' style='width:70%'>INSUMO</td><td class='td_registro' style='width:20%'>CANTIDAD</td><td class='td_registro' style='width:10%'></td></tr></table>
+      <div class='div_cuerpo_table' id='tableMovimientoInsumosDetalle' style='height:120px;width:100%;box-sizing:border-box;'></div>
+    </div>
+  </section>
+  <section class='presupuesto-panel dashboard-insumos-listado'>
+    <div class='insumos-movimientos-layout'>
+      <div class='insumos-movimientos-historial'>
+        <div class='panel-title'>Historial de movimientos</div>
+        <div class='insumos-form-grid insumos-filtros-compactos insumos-movimientos-filtros'>
+          <div class='form-row'><label>Desde</label><input class='inputText' type='date' id='filtroMovimientoDesde'></div>
+          <div class='form-row'><label>Hasta</label><input class='inputText' type='date' id='filtroMovimientoHasta'></div>
+          <div class='form-row'><label>Tipo</label><select class='inputSelect' id='filtroMovimientoTipo'><option value=''>Todos</option><option value='entrada'>Entrada</option><option value='salida'>Salida</option><option value='ajuste'>Ajuste</option></select></div>
+          <div class='form-row'><label>Sucursal</label><select class='inputSelect' id='filtroMovimientoLocal'></select></div>
+          <div class='form-row'><label>Insumo</label><select class='inputSelect' id='filtroMovimientoInsumo'></select></div>
+          <div class='form-row'><input type='button' value='Buscar' class='btn4' onclick='listarMovimientosInsumos()' style='width:110px'></div>
+        </div>
+        <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:18%'>FECHA</td><td class='td_registro' style='width:12%'>TIPO</td><td class='td_registro' style='width:25%'>SUCURSAL</td><td class='td_registro' style='width:20%'>CONSULTORIO</td><td class='td_registro' style='width:10%'>INSUMOS</td><td class='td_registro' style='width:15%'>MOTIVO</td></tr></table>
+        <div class='div_cuerpo_table dashboard-insumos-tabla insumos-movimientos-tabla' id='tableMovimientosInsumos'></div>
+      </div>
+      <div class='insumos-movimientos-detalle'>
+        <div class='panel-title'>Detalle del movimiento</div>
+        <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:55%'>INSUMO</td><td class='td_registro' style='width:20%'>CANTIDAD</td><td class='td_registro' style='width:15%'>UNIDAD</td><td class='td_registro' style='width:10%'>CODIGO</td></tr></table>
+        <div class='div_cuerpo_table insumos-movimientos-detalle-tabla' id='tableDetalleMovimientoInsumos'></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class='insumos-tab-contenido' id='tabInsumosAlertas'>
+  <section class='presupuesto-panel dashboard-insumos-listado'>
+    <div class='dashboard-insumos-listado-head'><div><div class='panel-title'>Alertas de stock m&iacute;nimo</div><span class='panel-subtitle'>Insumos por debajo del m&iacute;nimo configurado.</span></div><input type='button' value='Actualizar' class='btn4' onclick='listarAlertasStockInsumos()' style='width:120px'></div>
+    <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:22%'>SUCURSAL</td><td class='td_registro' style='width:18%'>CONSULTORIO</td><td class='td_registro' style='width:26%'>INSUMO</td><td class='td_registro' style='width:12%'>STOCK ACTUAL</td><td class='td_registro' style='width:12%'>MINIMO</td><td class='td_registro' style='width:10%'>DIF.</td></tr></table>
+    <div class='div_cuerpo_table dashboard-insumos-tabla' id='tableAlertasStockInsumos'></div>
+  </section>
 </div>
 </div>
 </center>
@@ -9740,7 +9823,8 @@ ACCION
               style='width:150px;margin-top: 20px;'>
           </div>
         </section>
-        <section style="margin-bottom: 0;">
+      </div>
+        <section id="presupuestoDocProductosShell" style="margin-bottom: 0;">
           <div class="productos-lista presupuesto-panel" id="presupuestoDocProductosPanel">
             <div class="panel-title">Tratamientos Disponibles</div>
             <span class="panel-subtitle">Busca tratamientos por codigo o nombre para agregarlos a ambos planes.</span>
@@ -9812,10 +9896,13 @@ ACCION
             </div>
           </div>
         </section>
-      </div>
 
-      <div id="presupuestoDocTrabajoPanel" style="height: -webkit-fill-available;">
-        <section class="tabla-detalles presupuesto-panel" id="presupuestoDocResumenPanel" style="height: 100%;">
+      <div id="presupuestoDocTrabajoPanel">
+        <div class="presupuesto-insumos-panel presupuesto-insumos-panel-doc">
+          <div class="panel-title">Insumos del tratamiento</div>
+          <div class="div_cuerpo_table presupuesto-insumos-lista" id="table_presupuesto_doc_insumos_producto"></div>
+        </div>
+        <section class="tabla-detalles presupuesto-panel" id="presupuestoDocResumenPanel">
           <div class="panel-title">Detalle del plan rehabilitacion total</div>
           <span class="panel-subtitle">Muestra todos los tratamientos cargados que seran para ambos planes.</span>
 
@@ -9835,7 +9922,7 @@ ACCION
             </tbody>
           </table>
 
-          <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_doctor_resumen" style="min-height: 410px; height: inherit;background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);"></div>
+          <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_doctor_resumen" style="background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);"></div>
           <div class="presupuesto-doc-nav" style="margin-top:18px;">
             <input type="button" value="Siguiente" class="btn4" onclick="verPasoPresupuestoDoc(2)"
               style="width:210px;">
@@ -10082,6 +10169,10 @@ ACCION
     <!-- Detalles -->
     <section class="detalles-section" id="tdTablaPresupuesto">
       <div>
+        <div class="presupuesto-panel presupuesto-insumos-panel">
+          <div class="panel-title">Insumos del tratamiento seleccionado</div>
+          <div class="div_cuerpo_table presupuesto-insumos-lista" id="table_presupuesto_insumos_producto"></div>
+        </div>
         <div class="tabla-detalles presupuesto-panel">
           <div class="panel-title">Detalle del Plan Rehabilitacion Total</div>
 
@@ -10107,7 +10198,7 @@ ACCION
             </tbody>
           </table>
 
-          <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle" style="height: 450px;"></div>
+          <div class="div_cuerpo_table presupuesto-detalle-compacto" id="table_vista_producto_presupuestoDetalle"></div>
         </div>
 
         <div class="tabla-cuotas presupuesto-panel">
@@ -10139,6 +10230,10 @@ ACCION
         </div>
       </div>
       <div>
+        <div class="presupuesto-panel presupuesto-insumos-panel">
+          <div class="panel-title">Insumos del tratamiento seleccionado</div>
+          <div class="div_cuerpo_table presupuesto-insumos-lista" id="table_presupuesto_insumos_producto_prioritario"></div>
+        </div>
         <div class="tabla-detalles presupuesto-panel">
           <div class="panel-title">Detalle del Plan Provisorio</div>
 
@@ -10164,7 +10259,7 @@ ACCION
             </tbody>
           </table>
 
-          <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_prioritario" style="height: 450px;"></div>
+          <div class="div_cuerpo_table presupuesto-detalle-compacto" id="table_vista_producto_presupuestoDetalle_prioritario"></div>
         </div>
 
         <div class="tabla-cuotas presupuesto-panel">

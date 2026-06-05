@@ -20,6 +20,7 @@ function ObtenerDatos($operacion)
         echo json_encode($informacion);
         exit;
     }
+    asegurarEstructuraInsumos(conectar_al_servidor());
 
     switch ($operacion) {
         case "nuevo":
@@ -28,6 +29,7 @@ function ObtenerDatos($operacion)
             $nombre = $_POST['nombre'];
             $descripcion = $_POST['descripcion'];
             $cant_stock = $_POST['cant_stock'];
+            $stock_minimo = isset($_POST['stock_minimo']) ? $_POST['stock_minimo'] : 0;
             $unidad_medida = $_POST['unidad_medida'];
             $estado = $_POST['estado'];
             $productos = isset($_POST['productos']) ? $_POST['productos'] : [];
@@ -37,10 +39,11 @@ function ObtenerDatos($operacion)
             $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
             $descripcion = mb_convert_encoding((string)($descripcion), 'ISO-8859-1', 'UTF-8');
             $cant_stock = mb_convert_encoding((string)($cant_stock), 'ISO-8859-1', 'UTF-8');
+            $stock_minimo = mb_convert_encoding((string)($stock_minimo), 'ISO-8859-1', 'UTF-8');
             $unidad_medida = mb_convert_encoding((string)($unidad_medida), 'ISO-8859-1', 'UTF-8');
             $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
-            abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $estado, $productos, $cantidades, $operacion);
+            abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion);
             break;
         case "buscar":
             $codigo = isset($_POST["codigo"]) ? mb_convert_encoding((string)($_POST["codigo"]), 'ISO-8859-1', 'UTF-8') : "";
@@ -78,15 +81,87 @@ function ObtenerDatos($operacion)
             $cod_producto = mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
             obtenerInsumosPorProducto($cod_producto);
             break;
+        case "dashboard_catalogos":
+            obtenerCatalogosDashboardInsumos();
+            break;
+        case "dashboard_listar_stock":
+            $cod_local = isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : "";
+            $id_consultorio = isset($_POST['id_consultorio']) ? mb_convert_encoding((string)($_POST['id_consultorio']), 'ISO-8859-1', 'UTF-8') : "";
+            $buscar = isset($_POST['buscar']) ? mb_convert_encoding((string)($_POST['buscar']), 'ISO-8859-1', 'UTF-8') : "";
+            listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar);
+            break;
+        case "dashboard_guardar_stock":
+            $id_insumo = isset($_POST['id_insumo']) ? mb_convert_encoding((string)($_POST['id_insumo']), 'ISO-8859-1', 'UTF-8') : "";
+            $cod_local = isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : "";
+            $id_consultorio = isset($_POST['id_consultorio']) ? mb_convert_encoding((string)($_POST['id_consultorio']), 'ISO-8859-1', 'UTF-8') : "";
+            $cantidad = isset($_POST['cantidad']) ? mb_convert_encoding((string)($_POST['cantidad']), 'ISO-8859-1', 'UTF-8') : "";
+            guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad);
+            break;
+        case "guardar_movimiento":
+            guardarMovimientoInsumo();
+            break;
+        case "listar_movimientos":
+            listarMovimientosInsumos();
+            break;
+        case "detalle_movimiento":
+            detalleMovimientoInsumos();
+            break;
+        case "listar_alertas_stock":
+            listarAlertasStockInsumos();
+            break;
         default:
             echo json_encode(array("1" => "ERROR", "mensaje" => "Operación no válida."));
             break;
     }
 }
 
-function abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $estado, $productos, $cantidades, $operacion)
+function agregarColumnaSiNoExiste($mysqli, $tabla, $columna, $definicion)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+    $columna = preg_replace('/[^a-zA-Z0-9_]/', '', $columna);
+    $result = $mysqli->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
+    if ($result && $result->num_rows == 0) {
+        if (!$mysqli->query("ALTER TABLE `$tabla` ADD COLUMN $definicion")) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo actualizar la estructura de $tabla: " . $mysqli->error));
+            exit;
+        }
+    }
+}
+
+function asegurarEstructuraInsumos($mysqli)
+{
+    agregarColumnaSiNoExiste($mysqli, "insumosconsl", "stock_minimo", "stock_minimo INT NOT NULL DEFAULT 0");
+    asegurarTablaStockDashboardInsumos($mysqli);
+
+    $sqlMovimientos = "CREATE TABLE IF NOT EXISTS movimientos_insumos (
+        id INT NOT NULL AUTO_INCREMENT,
+        grupo_movimiento VARCHAR(40) NULL,
+        tipo ENUM('entrada','salida','ajuste') NOT NULL,
+        insumo_id INT NOT NULL,
+        sucursal_id INT NOT NULL,
+        consultorio_id INT NOT NULL,
+        cantidad DECIMAL(10,3) NOT NULL,
+        motivo VARCHAR(255) NOT NULL,
+        usuario_id INT NULL,
+        fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_mov_insumo (insumo_id),
+        KEY idx_mov_fecha (fecha),
+        KEY idx_mov_sucursal (sucursal_id),
+        KEY idx_mov_consultorio (consultorio_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    if (!$mysqli->query($sqlMovimientos)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar movimientos: " . $mysqli->error));
+        exit;
+    }
+    agregarColumnaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
+
+}
+
+function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion)
 {
     $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
 
     if (empty($nombre)) {
         echo json_encode(array("1" => "ERROR", "mensaje" => "El campo Nombre es obligatorio."));
@@ -94,6 +169,7 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $es
     }
 
     $estado_db = ($estado === 'Activo') ? 1 : 0;
+    $stock_minimo = (int)$stock_minimo;
 
     if ($operacion === "editar" && solicitudEliminadoEsEstadoInactivo($estado_db)) {
         $user = solicitudEliminadoValorPost('useru', '0');
@@ -110,18 +186,18 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $unidad_medida, $es
     }
 
     if ($operacion === "nuevo") {
-        $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, unidad_medida, estado)
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado)
+                VALUES (?, ?, ?, ?, ?, ?)";
     } else { // editar
-        $sql = "UPDATE insumosconsl SET nombre=?, descripcion=?, cant_stock=?, unidad_medida=?, estado=?
+        $sql = "UPDATE insumosconsl SET nombre=?, descripcion=?, cant_stock=?, stock_minimo=?, unidad_medida=?, estado=?
                 WHERE id_insumo=?";
     }
     
     $stmt = $mysqli->prepare($sql);
     if ($operacion === "nuevo") {
-        $stmt->bind_param("ssisi", $nombre, $descripcion, $cant_stock, $unidad_medida, $estado_db);
+        $stmt->bind_param("ssiisi", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado_db);
     } else {
-        $stmt->bind_param("ssisii", $nombre, $descripcion, $cant_stock, $unidad_medida, $estado_db, $id_insumo);
+        $stmt->bind_param("ssiisii", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado_db, $id_insumo);
     }
 
     if (!$stmt->execute()) {
@@ -201,7 +277,7 @@ function buscarInsumos($id_insumo, $nombre, $descripcion, $unidad_medida, $estad
         $condiciones[] = "estado = 1"; // Default to active if no state is specified
     }
 
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
             FROM insumosconsl";
     if (!empty($condiciones)) {
         $sql .= " WHERE " . implode(" AND ", $condiciones);
@@ -293,6 +369,452 @@ function obtenerInsumosPorProducto($cod_producto)
     exit;
 }
 
+function asegurarTablaStockDashboardInsumos($mysqli)
+{
+    $sql = "CREATE TABLE IF NOT EXISTS insumo_stock_consultorio (
+        id_stock INT NOT NULL AUTO_INCREMENT,
+        id_insumo INT NOT NULL,
+        cod_local INT NOT NULL,
+        id_consultorio INT NOT NULL,
+        cantidad DECIMAL(12,3) NOT NULL DEFAULT 0,
+        fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_stock),
+        UNIQUE KEY uq_insumo_local_consultorio (id_insumo, cod_local, id_consultorio),
+        KEY idx_insumo_stock_local (cod_local),
+        KEY idx_insumo_stock_consultorio (id_consultorio)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar la tabla de stock: " . $mysqli->error));
+        exit;
+    }
+}
+
+function obtenerCatalogosDashboardInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarTablaStockDashboardInsumos($mysqli);
+
+    $locales = [];
+    $resultLocales = $mysqli->query("SELECT cod_local, Nombre FROM local WHERE estado='Activo' ORDER BY Nombre ASC");
+    if ($resultLocales) {
+        while ($fila = $resultLocales->fetch_assoc()) {
+            $fila["Nombre"] = mb_convert_encoding((string)$fila["Nombre"], "UTF-8", "ISO-8859-1");
+            $locales[] = $fila;
+        }
+    }
+
+    $consultorios = [];
+    $resultConsultorios = $mysqli->query("SELECT id_consultorio, nombre, cod_localFk FROM consultorios WHERE UPPER(estado)='ACTIVO' ORDER BY cod_localFk ASC, nombre ASC");
+    if ($resultConsultorios) {
+        while ($fila = $resultConsultorios->fetch_assoc()) {
+            $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
+            $consultorios[] = $fila;
+        }
+    }
+
+    $insumos = [];
+    $resultInsumos = $mysqli->query("SELECT id_insumo, nombre, unidad_medida, stock_minimo FROM insumosconsl WHERE estado=1 ORDER BY nombre ASC");
+    if ($resultInsumos) {
+        while ($fila = $resultInsumos->fetch_assoc()) {
+            $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
+            $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+            $insumos[] = $fila;
+        }
+    }
+
+    echo json_encode(array("1" => "exito", "locales" => $locales, "consultorios" => $consultorios, "insumos" => $insumos), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
+{
+    $mysqli = conectar_al_servidor();
+    asegurarTablaStockDashboardInsumos($mysqli);
+
+    $codLocal = (int)$cod_local;
+    $idConsultorio = (int)$id_consultorio;
+    $buscar = trim((string)$buscar);
+    $filas = [];
+
+    if ($codLocal > 0 && $idConsultorio > 0) {
+        $sql = "SELECT i.id_insumo, i.nombre, i.descripcion, i.unidad_medida,
+                       l.cod_local, l.Nombre AS nombre_local,
+                       c.id_consultorio, c.nombre AS nombre_consultorio,
+                       COALESCE(s.cantidad, 0) AS cantidad,
+                       i.stock_minimo
+                FROM insumosconsl i
+                JOIN local l ON l.cod_local = ?
+                JOIN consultorios c ON c.id_consultorio = ? AND c.cod_localFk = l.cod_local
+                LEFT JOIN insumo_stock_consultorio s
+                    ON s.id_insumo = i.id_insumo
+                    AND s.cod_local = l.cod_local
+                    AND s.id_consultorio = c.id_consultorio
+                WHERE i.estado = 1";
+        $tipos = "ii";
+        $parametros = [$codLocal, $idConsultorio];
+        if ($buscar !== "") {
+            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR i.id_insumo = ?)";
+            $tipos .= "ssi";
+            $like = "%" . $buscar . "%";
+            $parametros[] = $like;
+            $parametros[] = $like;
+            $parametros[] = (int)$buscar;
+        }
+        $sql .= " ORDER BY i.nombre ASC";
+    } elseif ($codLocal > 0) {
+        $sql = "SELECT i.id_insumo, i.nombre, i.descripcion, i.unidad_medida,
+                       l.cod_local, l.Nombre AS nombre_local,
+                       c.id_consultorio, c.nombre AS nombre_consultorio,
+                       COALESCE(s.cantidad, 0) AS cantidad,
+                       i.stock_minimo
+                FROM consultorios c
+                JOIN local l ON l.cod_local = c.cod_localFk
+                JOIN insumosconsl i ON i.estado = 1
+                LEFT JOIN insumo_stock_consultorio s
+                    ON s.id_insumo = i.id_insumo
+                    AND s.cod_local = l.cod_local
+                    AND s.id_consultorio = c.id_consultorio
+                WHERE l.cod_local = ? AND UPPER(c.estado)='ACTIVO'";
+        $tipos = "i";
+        $parametros = [$codLocal];
+        if ($buscar !== "") {
+            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR i.id_insumo = ?)";
+            $tipos .= "ssi";
+            $like = "%" . $buscar . "%";
+            $parametros[] = $like;
+            $parametros[] = $like;
+            $parametros[] = (int)$buscar;
+        }
+        $sql .= " ORDER BY c.nombre ASC, i.nombre ASC";
+    } else {
+        $sql = "SELECT i.id_insumo, i.nombre, i.descripcion, i.unidad_medida,
+                       l.cod_local, l.Nombre AS nombre_local,
+                       c.id_consultorio, c.nombre AS nombre_consultorio,
+                       s.cantidad,
+                       i.stock_minimo
+                FROM insumo_stock_consultorio s
+                JOIN insumosconsl i ON i.id_insumo = s.id_insumo
+                JOIN local l ON l.cod_local = s.cod_local
+                JOIN consultorios c ON c.id_consultorio = s.id_consultorio
+                WHERE i.estado = 1";
+        $tipos = "";
+        $parametros = [];
+        if ($buscar !== "") {
+            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR i.id_insumo = ?)";
+            $tipos .= "ssi";
+            $like = "%" . $buscar . "%";
+            $parametros[] = $like;
+            $parametros[] = $like;
+            $parametros[] = (int)$buscar;
+        }
+        $sql .= " ORDER BY l.Nombre ASC, c.nombre ASC, i.nombre ASC";
+    }
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Error al preparar consulta: " . $mysqli->error));
+        exit;
+    }
+    if ($tipos !== "") {
+        $refs = [];
+        foreach ($parametros as $k => $v) {
+            $refs[$k] = &$parametros[$k];
+        }
+        call_user_func_array([$stmt, "bind_param"], array_merge([$tipos], $refs));
+    }
+    if (!$stmt->execute()) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Error al listar stock: " . $stmt->error));
+        exit;
+    }
+
+    $result = $stmt->get_result();
+    while ($fila = $result->fetch_assoc()) {
+        $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
+        $fila["descripcion"] = mb_convert_encoding((string)$fila["descripcion"], "UTF-8", "ISO-8859-1");
+        $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+        $fila["nombre_local"] = mb_convert_encoding((string)$fila["nombre_local"], "UTF-8", "ISO-8859-1");
+        $fila["nombre_consultorio"] = mb_convert_encoding((string)$fila["nombre_consultorio"], "UTF-8", "ISO-8859-1");
+        $filas[] = $fila;
+    }
+
+    echo json_encode(array("1" => "exito", "filas" => $filas, "total" => count($filas)), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad)
+{
+    $mysqli = conectar_al_servidor();
+    asegurarTablaStockDashboardInsumos($mysqli);
+
+    $idInsumo = (int)$id_insumo;
+    $codLocal = (int)$cod_local;
+    $idConsultorio = (int)$id_consultorio;
+    $cantidad = str_replace(",", ".", trim((string)$cantidad));
+    $cantidadNumero = is_numeric($cantidad) ? (float)$cantidad : -1;
+
+    if ($idInsumo <= 0 || $codLocal <= 0 || $idConsultorio <= 0 || $cantidadNumero < 0) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Debe seleccionar sucursal, consultorio, insumo y una cantidad valida."));
+        exit;
+    }
+
+    $stmtValida = $mysqli->prepare("SELECT id_consultorio FROM consultorios WHERE id_consultorio=? AND cod_localFk=? AND UPPER(estado)='ACTIVO'");
+    $stmtValida->bind_param("ii", $idConsultorio, $codLocal);
+    $stmtValida->execute();
+    if ($stmtValida->get_result()->num_rows == 0) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "El consultorio no pertenece a la sucursal seleccionada."));
+        exit;
+    }
+
+    $sql = "INSERT INTO insumo_stock_consultorio (id_insumo, cod_local, id_consultorio, cantidad)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE cantidad=VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Error al preparar guardado: " . $mysqli->error));
+        exit;
+    }
+    $stmt->bind_param("iiid", $idInsumo, $codLocal, $idConsultorio, $cantidadNumero);
+    if (!$stmt->execute()) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo guardar el stock: " . $stmt->error));
+        exit;
+    }
+
+    echo json_encode(array("1" => "exito", "mensaje" => "Stock actualizado correctamente."));
+    exit;
+}
+
+function obtenerUsuarioIdInsumos()
+{
+    return isset($_POST['useru']) ? (int)$_POST['useru'] : null;
+}
+
+function obtenerStockActualInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio)
+{
+    $stmt = $mysqli->prepare("SELECT cantidad FROM insumo_stock_consultorio WHERE id_insumo=? AND cod_local=? AND id_consultorio=?");
+    $stmt->bind_param("iii", $idInsumo, $codLocal, $idConsultorio);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $fila = $result->fetch_assoc();
+    return $fila ? (float)$fila["cantidad"] : 0;
+}
+
+function guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $cantidad)
+{
+    $stmt = $mysqli->prepare("INSERT INTO insumo_stock_consultorio (id_insumo, cod_local, id_consultorio, cantidad)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE cantidad=VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP");
+    $stmt->bind_param("iiid", $idInsumo, $codLocal, $idConsultorio, $cantidad);
+    return $stmt->execute();
+}
+
+function guardarMovimientoInsumo()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+
+    $tipo = isset($_POST["tipo"]) ? strtolower(trim($_POST["tipo"])) : "";
+    $idsInsumos = isset($_POST["id_insumo"]) ? $_POST["id_insumo"] : [];
+    $cantidades = isset($_POST["cantidad"]) ? $_POST["cantidad"] : [];
+    if (!is_array($idsInsumos)) {
+        $idsInsumos = [$idsInsumos];
+        $cantidades = [$cantidades];
+    }
+    $codLocal = isset($_POST["cod_local"]) ? (int)$_POST["cod_local"] : 0;
+    $idConsultorio = isset($_POST["id_consultorio"]) ? (int)$_POST["id_consultorio"] : 0;
+    $motivo = isset($_POST["motivo"]) ? mb_convert_encoding((string)($_POST["motivo"]), 'ISO-8859-1', 'UTF-8') : "";
+    $fecha = isset($_POST["fecha"]) && $_POST["fecha"] !== "" ? $_POST["fecha"] . " " . date("H:i:s") : date("Y-m-d H:i:s");
+    $usuario = obtenerUsuarioIdInsumos();
+    $grupoMovimiento = "mov_" . date("YmdHis") . "_" . substr(uniqid(), -8);
+
+    if (!in_array($tipo, ["entrada", "salida", "ajuste"]) || $codLocal <= 0 || $idConsultorio <= 0 || count($idsInsumos) == 0 || trim($motivo) === "") {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Complete todos los datos del movimiento."));
+        exit;
+    }
+
+    $mysqli->begin_transaction();
+    try {
+        for ($i = 0; $i < count($idsInsumos); $i++) {
+            $idInsumo = (int)$idsInsumos[$i];
+            $cantidad = isset($cantidades[$i]) ? (float)str_replace(",", ".", $cantidades[$i]) : 0;
+            if ($idInsumo <= 0 || $cantidad <= 0) {
+                throw new Exception("Hay insumos incompletos en el movimiento.");
+            }
+
+            $actual = obtenerStockActualInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio);
+            if ($tipo === "entrada") {
+                $nuevoStock = $actual + $cantidad;
+            } elseif ($tipo === "salida") {
+                $nuevoStock = $actual - $cantidad;
+                if ($nuevoStock < 0) {
+                    throw new Exception("Stock insuficiente para registrar la salida.");
+                }
+            } else {
+                $nuevoStock = $cantidad;
+            }
+
+            if (!guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $nuevoStock)) {
+                throw new Exception("No se pudo actualizar el stock.");
+            }
+
+            $stmt = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssiiidsis", $grupoMovimiento, $tipo, $idInsumo, $codLocal, $idConsultorio, $cantidad, $motivo, $usuario, $fecha);
+            if (!$stmt->execute()) {
+                throw new Exception($stmt->error);
+            }
+        }
+
+        $mysqli->commit();
+        echo json_encode(array("1" => "exito", "mensaje" => "Movimiento guardado correctamente."));
+        exit;
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        echo json_encode(array("1" => "ERROR", "mensaje" => $e->getMessage()));
+        exit;
+    }
+}
+
+function listarMovimientosInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+
+    $condiciones = [];
+    $tipos = "";
+    $parametros = [];
+    $filtroInsumo = 0;
+    if (!empty($_POST["fecha_desde"])) {
+        $condiciones[] = "m.fecha >= ?";
+        $tipos .= "s";
+        $parametros[] = $_POST["fecha_desde"] . " 00:00:00";
+    }
+    if (!empty($_POST["fecha_hasta"])) {
+        $condiciones[] = "m.fecha <= ?";
+        $tipos .= "s";
+        $parametros[] = $_POST["fecha_hasta"] . " 23:59:59";
+    }
+    if (!empty($_POST["tipo"])) {
+        $condiciones[] = "m.tipo = ?";
+        $tipos .= "s";
+        $parametros[] = $_POST["tipo"];
+    }
+    if (!empty($_POST["cod_local"])) {
+        $condiciones[] = "m.sucursal_id = ?";
+        $tipos .= "i";
+        $parametros[] = (int)$_POST["cod_local"];
+    }
+    if (!empty($_POST["id_insumo"])) {
+        $filtroInsumo = (int)$_POST["id_insumo"];
+    }
+
+    $grupoSql = "CASE WHEN m.grupo_movimiento IS NULL OR m.grupo_movimiento='' THEN CONCAT('mov_', m.id) ELSE m.grupo_movimiento END";
+    $sql = "SELECT $grupoSql AS grupo_movimiento,
+               MIN(m.id) AS id_movimiento,
+               m.fecha,
+               m.tipo,
+               m.sucursal_id,
+               m.consultorio_id,
+               m.motivo,
+               m.usuario_id,
+               l.Nombre AS nombre_local,
+               c.nombre AS nombre_consultorio,
+               COUNT(*) AS total_insumos,
+               SUM(m.cantidad) AS cantidad_total
+        FROM movimientos_insumos m
+        JOIN local l ON l.cod_local = m.sucursal_id
+        JOIN consultorios c ON c.id_consultorio = m.consultorio_id";
+    if (count($condiciones) > 0) {
+        $sql .= " WHERE " . implode(" AND ", $condiciones);
+    }
+    $sql .= " GROUP BY $grupoSql, m.fecha, m.tipo, m.sucursal_id, m.consultorio_id, m.motivo, m.usuario_id, l.Nombre, c.nombre";
+    if ($filtroInsumo > 0) {
+        $sql .= " HAVING SUM(CASE WHEN m.insumo_id = ? THEN 1 ELSE 0 END) > 0";
+        $tipos .= "i";
+        $parametros[] = $filtroInsumo;
+    }
+    $sql .= " ORDER BY m.fecha DESC LIMIT 300";
+    $stmt = $mysqli->prepare($sql);
+    if ($tipos !== "") {
+        $refs = [];
+        foreach ($parametros as $k => $v) { $refs[$k] = &$parametros[$k]; }
+        call_user_func_array([$stmt, "bind_param"], array_merge([$tipos], $refs));
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $filas = [];
+    while ($fila = $result->fetch_assoc()) {
+        $fila["nombre_local"] = mb_convert_encoding((string)$fila["nombre_local"], "UTF-8", "ISO-8859-1");
+        $fila["nombre_consultorio"] = mb_convert_encoding((string)$fila["nombre_consultorio"], "UTF-8", "ISO-8859-1");
+        $fila["motivo"] = mb_convert_encoding((string)$fila["motivo"], "UTF-8", "ISO-8859-1");
+        $filas[] = $fila;
+    }
+    echo json_encode(array("1" => "exito", "filas" => $filas), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function detalleMovimientoInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+    $grupo = isset($_POST["grupo_movimiento"]) ? trim((string)$_POST["grupo_movimiento"]) : "";
+    if ($grupo === "") {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Movimiento no seleccionado."));
+        exit;
+    }
+
+    if (strpos($grupo, "mov_") === 0 && preg_match('/^mov_([0-9]+)$/', $grupo, $coincidencias)) {
+        $idMovimiento = (int)$coincidencias[1];
+        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida
+            FROM movimientos_insumos m
+            JOIN insumosconsl i ON i.id_insumo = m.insumo_id
+            WHERE m.id=?
+            ORDER BY i.nombre");
+        $stmt->bind_param("i", $idMovimiento);
+    } else {
+        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida
+            FROM movimientos_insumos m
+            JOIN insumosconsl i ON i.id_insumo = m.insumo_id
+            WHERE m.grupo_movimiento=?
+            ORDER BY i.nombre");
+        $stmt->bind_param("s", $grupo);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $filas = [];
+    while ($fila = $result->fetch_assoc()) {
+        $fila["nombre_insumo"] = mb_convert_encoding((string)$fila["nombre_insumo"], "UTF-8", "ISO-8859-1");
+        $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+        $fila["motivo"] = mb_convert_encoding((string)$fila["motivo"], "UTF-8", "ISO-8859-1");
+        $filas[] = $fila;
+    }
+    echo json_encode(array("1" => "exito", "filas" => $filas), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function listarAlertasStockInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+    $sql = "SELECT s.*, i.nombre AS nombre_insumo, i.unidad_medida, i.stock_minimo, l.Nombre AS nombre_local, c.nombre AS nombre_consultorio,
+               (s.cantidad - i.stock_minimo) AS diferencia
+        FROM insumo_stock_consultorio s
+        JOIN insumosconsl i ON i.id_insumo=s.id_insumo
+        JOIN local l ON l.cod_local=s.cod_local
+        JOIN consultorios c ON c.id_consultorio=s.id_consultorio
+        WHERE i.estado=1 AND i.stock_minimo > 0 AND s.cantidad < i.stock_minimo
+        ORDER BY l.Nombre, c.nombre, i.nombre";
+    $result = $mysqli->query($sql);
+    $filas = [];
+    while ($fila = $result->fetch_assoc()) {
+        foreach (["nombre_insumo", "unidad_medida", "nombre_local", "nombre_consultorio"] as $campo) {
+            $fila[$campo] = mb_convert_encoding((string)$fila[$campo], "UTF-8", "ISO-8859-1");
+        }
+        $filas[] = $fila;
+    }
+    echo json_encode(array("1" => "exito", "filas" => $filas, "total" => count($filas)), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
 function obtenerProductosLista()
 {
     $mysqli = conectar_al_servidor();
@@ -339,7 +861,7 @@ function BuscarRegistro($codigo, $nombre, $estado)
         $parametros[] = (strcasecmp($estado, "Activo") === 0 || $estado === "1") ? 1 : 0;
     }
 
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
             FROM insumosconsl";
     if (count($condiciones) > 0) {
         $sql .= " WHERE " . implode(" AND ", $condiciones);
@@ -382,7 +904,7 @@ function BuscarMasRegistro($codigo, $nombre, $estado, $registrocargado)
 function buscarporcodigoeditar($buscar)
 {
     $mysqli = conectar_al_servidor();
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
             FROM insumosconsl
             WHERE id_insumo = ?";
     $stmt = $mysqli->prepare($sql);
@@ -418,6 +940,7 @@ function guardarInsumoPagina($operacion)
     $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
     $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : '';
     $cant_stock = isset($_POST['cant_stock']) && $_POST['cant_stock'] !== '' ? (int)$_POST['cant_stock'] : 0;
+    $stock_minimo = isset($_POST['stock_minimo']) && $_POST['stock_minimo'] !== '' ? (int)$_POST['stock_minimo'] : 0;
     $unidad_medida = isset($_POST['unidad_medida']) ? trim($_POST['unidad_medida']) : '';
     $estado = isset($_POST['estado']) && $_POST['estado'] === 'Inactivo' ? 0 : 1;
     $productos = isset($_POST['productos']) && is_array($_POST['productos']) ? $_POST['productos'] : [];
@@ -448,16 +971,16 @@ function guardarInsumoPagina($operacion)
     }
 
     if ($operacion === 'nuevo') {
-        $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, unidad_medida, estado)
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado)
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param("ssisi", $nombre, $descripcion, $cant_stock, $unidad_medida, $estado);
+        $stmt->bind_param("ssiisi", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado);
     } else {
         $sql = "UPDATE insumosconsl
-                SET nombre = ?, descripcion = ?, cant_stock = ?, unidad_medida = ?, estado = ?
+                SET nombre = ?, descripcion = ?, cant_stock = ?, stock_minimo = ?, unidad_medida = ?, estado = ?
                 WHERE id_insumo = ?";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param("ssisii", $nombre, $descripcion, $cant_stock, $unidad_medida, $estado, $id_insumo);
+        $stmt->bind_param("ssiisii", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $id_insumo);
     }
 
     if (!$stmt || !$stmt->execute()) {
@@ -515,7 +1038,7 @@ function cargarInsumosPagina()
 {
     $mysqli = conectar_al_servidor();
     $filas = [];
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
             FROM insumosconsl
             ORDER BY nombre ASC";
     $result = $mysqli->query($sql);

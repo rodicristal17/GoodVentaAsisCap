@@ -34,7 +34,7 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
     
     switch ($funt) {
         case 'cargarAgenda':
-            cargarAgenda($mysqli);
+            cargarAgenda($mysqli, $useru);
             break;
     
         case 'guardarCita':
@@ -864,7 +864,7 @@ function normalizarTextoUtf8($valor){
     return mb_convert_encoding($valor, 'UTF-8', 'ISO-8859-1');
 }
 
-function cargarAgenda($mysqli){
+function cargarAgenda($mysqli, $useru){
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
     $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
     $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
@@ -887,7 +887,7 @@ function cargarAgenda($mysqli){
 		$sqlFiltro.=" and c.cod_localFk = '".$cod_local."'";
 	}
     if ($ver_todos_consoltorios == 'false') {
-        $sqlFiltro .= " AND (c.cod_doctorFK IN (SELECT cod_usuarioFK FROM usuario WHERE cod_usuario = '".$useru."'))";
+        $sqlFiltro .= " AND c.cod_doctorFK = '".$useru."'";
     }
 	
     $sqlConsultorios = "
@@ -1022,11 +1022,13 @@ function cargarAgenda($mysqli){
 
         // Asigna el nombre del doctor segun la fecha
         $nombre_doctor = "";
+        $fechaTratamiento = isset($row["fecha_tratamiento"]) ? (string)$row["fecha_tratamiento"] : "";
+        $fechaPresupuesto = isset($row["fecha_presupuesto"]) ? (string)$row["fecha_presupuesto"] : "";
         if ($row["fecha_consulta"] == $row["fecha"]) {
             $nombre_doctor = $row["nombre_doctor_consulta"];
-        } elseif (substr($row["fecha_tratamiento"], 0, 10) == $row["fecha"]) {
+        } elseif (substr($fechaTratamiento, 0, 10) == $row["fecha"]) {
             $nombre_doctor = $row["nombre_doctor_tratamiento"];
-        } elseif (substr($row["fecha_presupuesto"], 0, 10) == $row["fecha"]) {
+        } elseif (substr($fechaPresupuesto, 0, 10) == $row["fecha"]) {
             $nombre_doctor = $row["nombre_doctor_presupesto"];
         }
 

@@ -17,6 +17,7 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
             
             document.getElementById("inptEntregaPresupuesto").value=0
             document.getElementById("inptProductoPresupuesto").value=document.getElementById('inptNombreProducto').value
+			limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "presupuesto");
         }
 	}else{
         if (historial) {
@@ -161,10 +162,12 @@ function buscarvistaproductoPresupuesto() {
 		buscador = document.getElementById('inptProductoPresupuestoDoc').value;
 		cod_productoFK= document.getElementById('inptCodigoPresupuestoDoc').value;
 		document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = paginacargando
+		limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
 	} else {
 		buscador = document.getElementById('inptProductoPresupuesto').value
 		cod_productoFK= document.getElementById('inptCodigoPresupuesto').value;
 		document.getElementById("table_vista_producto_Presupuesto").innerHTML = paginacargando
+		limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "presupuesto");
 	}
 	obtener_datos_user();
 	var datos = {
@@ -233,6 +236,7 @@ function buscarvistaproductoPresupuesto() {
 					}
 				}else{
 					ver_vetana_informativa("PRODUCTO NO ECONTRADO")
+					limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", vistaPresupuestoOrigen == "doctor" ? "doctor" : "presupuesto");
 				}
 				}
 			} catch (error) {
@@ -252,6 +256,7 @@ function obtenerdatosvistaproductodesdePresupuesto(datostr) {
 	datostr.className = 'tableRegistroSelec'
 
 	idFkProducto = $(datostr).children('td[id="td_id"]').html();
+	cargarInsumosProductoPresupuesto(idFkProducto, vistaPresupuestoOrigen == "doctor" ? "doctor" : "presupuesto");
 
 	if (vistaPresupuestoOrigen == "doctor") {
 		document.getElementById('inptCodigoPresupuestoDoc').value = $(datostr).children('td[id="td_datos_13"]').html();
@@ -270,6 +275,111 @@ function obtenerdatosvistaproductodesdePresupuesto(datostr) {
 		separadordemiles(document.getElementById('inptPrecioPresupuesto'))
 		calcular_total_Presupuesto()
 	}
+}
+
+function obtenerContenedoresInsumosPresupuesto(vistaOrigen) {
+	if (vistaOrigen == "doctor") {
+		return ["table_presupuesto_doc_insumos_producto"];
+	}
+	return ["table_presupuesto_insumos_producto", "table_presupuesto_insumos_producto_prioritario"];
+}
+
+function escaparHtmlPresupuesto(valor) {
+	return String(valor == null ? "" : valor)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function limpiarPanelInsumosProductoPresupuesto(mensaje, vistaOrigen) {
+	obtenerContenedoresInsumosPresupuesto(vistaOrigen).forEach(function (contenedorId) {
+		var contenedor = document.getElementById(contenedorId);
+		if (!contenedor) {
+			return;
+		}
+		contenedor.innerHTML = "<p class='pTituloC' style='padding:12px;text-align:center;color:#607080'>" + escaparHtmlPresupuesto(mensaje || "") + "</p>";
+	});
+}
+
+function cargarInsumosProductoPresupuesto(codProducto, vistaOrigen) {
+	vistaOrigen = vistaOrigen == "doctor" ? "doctor" : "presupuesto";
+	if (codProducto == "") {
+		limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", vistaOrigen);
+		return;
+	}
+
+	obtenerContenedoresInsumosPresupuesto(vistaOrigen).forEach(function (contenedorId) {
+		var contenedor = document.getElementById(contenedorId);
+		if (contenedor) {
+			contenedor.innerHTML = paginacargando;
+		}
+	});
+
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_producto": codProducto,
+		"funt": "obtener_insumos_producto"
+	};
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+			limpiarPanelInsumosProductoPresupuesto("No se pudieron cargar los insumos.", vistaOrigen);
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					renderInsumosProductoPresupuesto(datos.insumos || [], vistaOrigen);
+				} else {
+					limpiarPanelInsumosProductoPresupuesto("No se pudieron cargar los insumos.", vistaOrigen);
+				}
+			} catch (error) {
+				limpiarPanelInsumosProductoPresupuesto("No se pudieron cargar los insumos.", vistaOrigen);
+				GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
+			}
+		}
+	});
+}
+
+function renderInsumosProductoPresupuesto(insumos, vistaOrigen) {
+	if (insumos.length == 0) {
+		limpiarPanelInsumosProductoPresupuesto("Este tratamiento no tiene insumos asociados.", vistaOrigen);
+		return;
+	}
+
+	var html = "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'>";
+	html += "<tr>";
+	html += "<td class='tdRegistroSearch' style='width:12%;font-weight:bold'>Cod.</td>";
+	html += "<td class='tdRegistroSearch' style='width:42%;font-weight:bold'>Insumo</td>";
+	html += "<td class='tdRegistroSearch' style='width:18%;font-weight:bold'>Cant.</td>";
+	html += "<td class='tdRegistroSearch' style='width:28%;font-weight:bold'>Unidad</td>";
+	html += "</tr>";
+	for (var i = 0; i < insumos.length; i++) {
+		var fila = insumos[i];
+		html += "<tr>";
+		html += "<td class='tdRegistroSearch'>" + escaparHtmlPresupuesto(fila.id_insumo) + "</td>";
+		html += "<td class='tdRegistroSearch'>" + escaparHtmlPresupuesto(fila.nombre) + "</td>";
+		html += "<td class='tdRegistroSearch' style='text-align:center'>" + escaparHtmlPresupuesto(fila.cantidad) + "</td>";
+		html += "<td class='tdRegistroSearch'>" + escaparHtmlPresupuesto(fila.unidad_medida) + "</td>";
+		html += "</tr>";
+	}
+	html += "</table>";
+
+	obtenerContenedoresInsumosPresupuesto(vistaOrigen).forEach(function (contenedorId) {
+		var contenedor = document.getElementById(contenedorId);
+		if (contenedor) {
+			contenedor.innerHTML = html;
+		}
+	});
 }
 
 function calcular_total_Presupuesto() {
@@ -304,6 +414,7 @@ function limpirarAddPresupuesto(vistaOrigen){
 		document.getElementById('inpTSeleccCostoPresupuestoDoc').value = ""
 		document.getElementById('inptCantidadPresupuestoDoc').value = ""
 		document.getElementById('inptTotalPresupuestoDoc').value = ""
+		limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
 		return;
 	}
 
@@ -313,6 +424,7 @@ function limpirarAddPresupuesto(vistaOrigen){
 	document.getElementById('inpTSeleccCostoPresupuesto').value = ""
 	document.getElementById('inptCantidadPresupuesto').value = ""
 	document.getElementById('inptTotalPresupuesto').value = ""
+	limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "presupuesto");
 }
 
 function buscarproductoporcodigoPresupuesto(vistaOrigen= 'presupuesto') {
@@ -378,6 +490,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					datos_buscados = datos["2"];
 					
 					idFkProducto = datos["2"];
+					cargarInsumosProductoPresupuesto(idFkProducto, vistaOrigen == "doctor" ? "doctor" : "presupuesto");
 
 					if (vistaOrigen == "doctor") {
 						document.getElementById('inptCodigoPresupuestoDoc').value = datos["5"];
@@ -1582,6 +1695,7 @@ function limpirarPresupuesto(){
 	document.getElementById('table_vista_producto_presupuestoDetalle_prioritario_doctor').innerHTML = ""
 	document.getElementById('table_vista_producto_presupuestoDetalle_doctor_resumen').innerHTML = ""
 	document.getElementById('table_vista_producto_Presupuesto_doctor').innerHTML = ""
+	limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
 	verPasoPresupuestoDoc(1)
 	
 	totalPresupuesto=0;
@@ -1595,6 +1709,7 @@ function limpirarPresupuesto(){
 	document.getElementById('table_vista_producto_presupuestoDetalle_prioritario').innerHTML = ""
 	document.getElementById('table_vista_detalles_presupuesto').innerHTML = ""
 	document.getElementById('table_vista_detalles_presupuesto_prioritario').innerHTML = ""
+	limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "presupuesto");
 
 	document.getElementById('inptDocumentoClientePresupuesto').value= "";
 	document.getElementById('inptNombreClientePresupuesto').value= "";
@@ -1973,6 +2088,7 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 			limpiarAgendaPresupuestoDoctorActiva();
 		}
 		document.getElementById("divAbmDetallesPresupuestoDoc").style.display=""
+		limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
 		verPasoPresupuestoDoc(1);
 		sincronizarResumenDetallePresupuestoDoc();
 	}else{

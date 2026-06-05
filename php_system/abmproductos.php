@@ -1273,7 +1273,7 @@ exit;
 $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $totalregistro=$valor;
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'),"4" => number_format($valor,'0',',','.'),"99"=>$nroRegistro,"100"=>$totalregistro);
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro ?? 0,'0',',','.'),"4" => number_format($valor ?? 0,'0',',','.'),"99"=>$nroRegistro,"100"=>$totalregistro);
 echo json_encode($informacion);	
 exit;
 }
@@ -1420,7 +1420,7 @@ $styleName=CargarStyleTable($styleName);
 }
 
     
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($num ?? 0,'0',',','.'),"4" => number_format($valor,'0',',','.'),"99"=>$nroRegistro);
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($num ?? 0,'0',',','.'),"4" => number_format($valor ?? 0,'0',',','.'),"99"=>$nroRegistro);
 echo json_encode($informacion);	
 exit;
 }
@@ -1642,7 +1642,7 @@ $nro_total=$result->fetch_row();
 $valor=$nro_total[0];
 
     
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'),"4" => number_format($valor,'0',',','.'));
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro ?? 0,'0',',','.'),"4" => number_format($valor ?? 0,'0',',','.'));
 echo json_encode($informacion);	
 exit;
 }
@@ -1753,7 +1753,7 @@ $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $totalregistro=$valor;    
 
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'),"4" => number_format($costototales,'0',',','.'),"99"=>$nroRegistro,"100"=>$totalregistro);
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro ?? 0,'0',',','.'),"4" => number_format($costototales ?? 0,'0',',','.'),"99"=>$nroRegistro,"100"=>$totalregistro);
 echo json_encode($informacion);	
 exit;
 }
@@ -1851,7 +1851,7 @@ $styleName=CargarStyleTable($styleName);
 }
 
 /*Retornamos los datos obtenidos mediante el JSON */      
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'),"4" => number_format($costototales,'0',',','.'),"99"=>$nroRegistro);
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro ?? 0,'0',',','.'),"4" => number_format($costototales ?? 0,'0',',','.'),"99"=>$nroRegistro);
 echo json_encode($informacion);	
 exit;
 }
@@ -2025,7 +2025,7 @@ $valor= mysqli_num_rows($result);
 $totalregistros=$valor;
 
 /*Retornamos los datos obtenidos mediante el JSON */      
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'),"99"=>$nroRegistro,"100"=>$totalregistros);
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro ?? 0,'0',',','.'),"99"=>$nroRegistro,"100"=>$totalregistros);
 echo json_encode($informacion);	
 exit;
 }
@@ -2109,7 +2109,7 @@ $styleName=CargarStyleTable($styleName);
 }
 
 /*Retornamos los datos obtenidos mediante el JSON */      
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro,'0',',','.'),"99"=>$nroRegistro);
+$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($nroRegistro ?? 0,'0',',','.'),"99"=>$nroRegistro);
 echo json_encode($informacion);	
 exit;
 }

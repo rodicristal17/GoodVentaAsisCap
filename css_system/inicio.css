@@ -2658,6 +2658,299 @@ textarea:focus, select:focus {
   margin-bottom: 5px;
 }
 
+.presupuesto-insumos-panel {
+  border-top: 4px solid #6f9f45;
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.presupuesto-insumos-panel-doc {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.presupuesto-container .presupuesto-insumos-panel-doc .presupuesto-insumos-lista {
+  min-height: 70px;
+  height: 70px;
+}
+
+.presupuesto-container .presupuesto-insumos-lista {
+  min-height: 116px;
+  height: 116px;
+  border-top: 1px solid #dbe6f1;
+  border-radius: 10px;
+}
+
+.tabla-detalles .div_cuerpo_table.presupuesto-detalle-compacto {
+  min-height: 235px;
+  height: 235px;
+}
+
+.presupuesto-insumos-lista .tableRegistroSearch {
+  font-size: 12px;
+}
+
+.presupuesto-insumos-lista .tdRegistroSearch {
+  padding: 6px 7px;
+}
+
+.dashboard-insumos-shell {
+  width: 96vw;
+  max-width: 1450px;
+  height: 90vh;
+  min-height: 560px;
+  overflow: auto;
+  padding: 0;
+  box-sizing: border-box;
+  border: 7px solid #fdfdfd;
+  border-radius: 10px;
+  background: #f4f7fb;
+}
+
+.insumos-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 0;
+  background: #f4f7fb;
+  border-bottom: 1px solid #d9e1e8;
+  flex-wrap: wrap;
+}
+
+.insumos-tab-btn {
+  border: 1px solid #c8d5e2;
+  background: #ffffff;
+  color: #2f526f;
+  border-radius: 8px 8px 0 0;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.insumos-tab-btn.activo {
+  background: #0b6fb6;
+  border-color: #0b6fb6;
+  color: #ffffff;
+}
+
+.insumos-tab-btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 5px;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.14);
+  color: #b91c1c;
+}
+
+.insumos-tab-btn.activo span {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+.insumos-tab-contenido {
+  display: none;
+  width: 100%;
+  height: calc(90vh - 110px);
+  overflow: auto;
+  box-sizing: border-box;
+  background: #f4f7fb;
+}
+
+.insumos-tab-contenido.activo {
+  display: block;
+}
+
+.insumos-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.insumos-grid-span {
+  grid-column: span 2;
+}
+
+.insumos-filtros-compactos {
+  margin-bottom: 12px;
+}
+
+.insumos-movimiento-carga {
+  display: block;
+  margin: 14px;
+}
+
+.insumos-movimiento-datos {
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  gap: 10px 12px;
+}
+
+.insumos-movimiento-acciones {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.insumos-movimiento-acciones .form-row {
+  min-width: 0;
+}
+
+.insumos-movimiento-lista {
+  margin-top: 8px;
+}
+
+.insumos-movimiento-lista #tableMovimientoInsumosDetalle {
+  height: 100px !important;
+  min-height: 100px;
+}
+
+.insumos-movimientos-layout {
+  display: grid;
+  grid-template-columns: minmax(520px, 1.15fr) minmax(380px, 0.85fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.insumos-movimientos-historial,
+.insumos-movimientos-detalle {
+  min-width: 0;
+}
+
+.insumos-movimientos-filtros {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
+.insumos-movimientos-tabla {
+  height: calc(90vh - 545px);
+  min-height: 215px;
+}
+
+.insumos-movimientos-detalle-tabla {
+  height: calc(90vh - 405px);
+  min-height: 335px;
+  width: 100%;
+  box-sizing: border-box;
+  border-top: none;
+}
+
+.insumo-stock-bajo {
+  background: #fff1f2 !important;
+  border-left: 4px solid #dc2626;
+}
+
+@media (max-width: 980px) {
+  .insumos-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insumos-grid-span {
+    grid-column: auto;
+  }
+
+  .insumos-movimiento-datos {
+    grid-template-columns: 1fr;
+  }
+
+  .insumos-movimiento-acciones {
+    flex-wrap: wrap;
+  }
+
+  .insumos-movimientos-layout,
+  .insumos-movimientos-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .insumos-movimientos-tabla,
+  .insumos-movimientos-detalle-tabla {
+    height: auto;
+    min-height: 240px;
+  }
+}
+
+.dashboard-insumos-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.4fr);
+  gap: 14px;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.dashboard-insumos-filtros,
+.dashboard-insumos-carga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 0;
+}
+
+.dashboard-insumos-carga.insumos-movimiento-carga {
+  display: block;
+  flex-wrap: initial;
+  align-items: stretch;
+  gap: 0;
+  margin: 14px;
+}
+
+.dashboard-insumos-carga.insumos-movimiento-carga .insumos-movimiento-lista {
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-insumos-filtros .form-row,
+.dashboard-insumos-carga .form-row {
+  min-width: 180px;
+}
+
+.dashboard-insumos-carga-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.4fr) 160px;
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.dashboard-insumos-carga-accion {
+  min-width: 150px;
+}
+
+.dashboard-insumos-listado {
+  margin: 0 14px 14px;
+}
+
+.dashboard-insumos-listado-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-insumos-tabla {
+  height: calc(90vh - 330px);
+  min-height: 260px;
+  border-top: none;
+}
+
+.dashboard-insumos-stock-input {
+  width: 92px;
+  height: 30px;
+  text-align: center;
+  border: 1px solid #c7d2df;
+  border-radius: 8px;
+}
+
+@media (max-width: 980px) {
+  .dashboard-insumos-grid,
+  .dashboard-insumos-carga-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .presupuesto-footer {
   display: flex;
   justify-content: space-between;
@@ -6575,6 +6868,44 @@ text-align: justify;
   align-items: start;
 }
 
+#presupuestoDocClientePanel {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+#presupuestoDocProductosShell {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+#presupuestoDocTrabajoPanel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: contents;
+}
+
+#presupuestoDocTrabajoPanel .presupuesto-insumos-panel-doc {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 220px;
+}
+
+#presupuestoDocTrabajoPanel .presupuesto-insumos-panel-doc .presupuesto-insumos-lista {
+  min-height: 165px;
+  height: 165px;
+  max-height: 185px;
+}
+
+#presupuestoDocTrabajoPanel #presupuestoDocResumenPanel {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+}
+
 #presupuestoDocDetallePanel.presupuesto-doc-planificador {
   grid-template-columns: minmax(300px, 0.95fr) minmax(420px, 1.55fr);
   align-items: stretch;
@@ -6589,6 +6920,12 @@ text-align: justify;
 #presupuestoDocPrioritarioHeader,
 #presupuestoDocDetallePanel > div {
   margin-bottom: 0;
+}
+
+#presupuestoDocResumenPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .presupuesto-doc-tratamientos-panel,
@@ -6729,6 +7066,12 @@ text-align: justify;
   max-height: 240px;
 }
 
+#table_vista_producto_presupuestoDetalle_doctor_resumen {
+  min-height: 230px;
+  height: 260px;
+  max-height: 300px;
+}
+
 #table_vista_producto_presupuestoDetalle_doctor_resumen:empty::before {
   content: "Aqui se mostrara el plan total cargado para el paciente.";
 }
@@ -6841,6 +7184,19 @@ text-align: justify;
   #presupuestoDocLayout,
   #presupuestoDocDetallePanel {
     grid-template-columns: 1fr;
+  }
+
+  #presupuestoDocClientePanel,
+  #presupuestoDocProductosShell,
+  #presupuestoDocTrabajoPanel {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  #presupuestoDocTrabajoPanel .presupuesto-insumos-panel-doc,
+  #presupuestoDocTrabajoPanel #presupuestoDocResumenPanel {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   #presupuestoDocDetallePanel.presupuesto-doc-planificador {
