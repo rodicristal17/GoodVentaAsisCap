@@ -13586,6 +13586,10 @@ button.dashboard-summary-item:hover {
     order: 3;
 }
 
+#divAbmConsulta .consulta-recetario-card {
+    order: 2;
+}
+
 #divAbmConsulta .consulta-treatments-card {
     order: 2;
 }
@@ -13710,6 +13714,57 @@ button.dashboard-summary-item:hover {
     font-size: 13px;
 }
 
+#divAbmConsulta .consulta-recetario-card {
+    padding: 12px !important;
+    border-color: #edf1f5 !important;
+    background: #fbfcfd !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+#divAbmConsulta .consulta-recetario-card .detalle-label {
+    color: #344054;
+    font-size: 11px;
+}
+
+#divAbmConsulta .consulta-recetario-card .consulta-card__hint {
+    font-size: 11px;
+}
+
+#divAbmConsulta .consulta-recetario-card .card-body {
+    gap: 8px;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones {
+    max-height: 340px;
+    overflow: auto;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones .recetario-card {
+    padding: 10px !important;
+    box-shadow: none;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones .recetario-card__header {
+    margin-bottom: 6px;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones .recetario-card__body p {
+    margin: 2px 0;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones .recetario-card-firma {
+    margin-top: 7px;
+    padding: 7px;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones .recetario-card-firma__preview {
+    height: 50px;
+}
+
+#divAbmConsulta #divHistorial_RecetarioIndicaciones .recetario-card__actions {
+    margin-top: 8px;
+}
+
 #divAbmConsulta .consulta-internal-comments-card {
     padding: 12px !important;
     box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
@@ -13769,8 +13824,8 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmConsulta #divHistorial_Consulta {
-    min-height: 280px;
-    max-height: 560px;
+    min-height: 360px;
+    max-height: 640px;
     display: grid;
     gap: 12px;
     align-content: start;
@@ -14394,15 +14449,19 @@ button.dashboard-summary-item:hover {
     }
 
     #divAbmConsulta .consulta-evolution-card {
-        order: 4;
+        order: 5;
     }
 
     #divAbmConsulta .consulta-treatments-card {
         order: 3;
     }
 
+    #divAbmConsulta .consulta-recetario-card {
+        order: 4;
+    }
+
     #divAbmConsulta .consulta-profile-card {
-        order: 5;
+        order: 6;
     }
 
     #divAbmConsulta .consulta-consultas-card {
@@ -14410,7 +14469,7 @@ button.dashboard-summary-item:hover {
     }
 
     #divAbmConsulta .consulta-gallery-card {
-        order: 6;
+        order: 7;
     }
 }
 

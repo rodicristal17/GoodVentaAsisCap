@@ -882,6 +882,7 @@ $pagina .= "
     <p><strong>Zona de Trabajo:</strong><span>".nl2br(htmlspecialchars($zonaVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
     <p><strong>Pr&oacute;xima Consulta:</strong><span>".nl2br(htmlspecialchars($proximoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
   </div>
+  <button type='button' class='consulta-history-item__recetario' onclick='event.stopPropagation(); abrirRecetarioIndicacionesDesdeConsultaId(\"".$codConsultaHtml."\")'>Emitir receta / indicaciones</button>
   <span class='consulta-history-item__action'>Ver detalle</span>
 </div>
 ";
@@ -986,7 +987,7 @@ function buscarConsulta($Paciente,$local,$num_factura) {
 		$sqlFiltro=" and num_factura like '%".$num_factura."%' ";
 	}
 	
-    $sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo , 
+    $sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo, vt.cod_local as cod_local_venta, 
     (select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
     (select Nombre from local where cod_local=vt.cod_local) as nombre_local , 
     (select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
@@ -1014,6 +1015,7 @@ function buscarConsulta($Paciente,$local,$num_factura) {
             $decripcion=''; 
             $cod_venta=mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1');
             $apodo=mb_convert_encoding((string)($valor['apodo']), 'UTF-8', 'ISO-8859-1');
+            $cod_local_venta=mb_convert_encoding((string)($valor['cod_local_venta']), 'UTF-8', 'ISO-8859-1');
             $nombre_local=mb_convert_encoding((string)($valor['nombre_local']), 'UTF-8', 'ISO-8859-1');
             $porcentaje = $valor['porcentaje'];
             $totalporcentaje = $valor['totalporcentaje'];
@@ -1026,6 +1028,7 @@ function buscarConsulta($Paciente,$local,$num_factura) {
                 "decripcion" => $decripcion,
                 "cod_venta" => $cod_venta,
                 "apodo" => $apodo,
+                "cod_local_venta" => $cod_local_venta,
                 "nombre_local" => $nombre_local,
                 "porcentaje" => $porcentaje,
                 "totalporcentaje" => $totalporcentaje,
@@ -1175,6 +1178,7 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
 
         $numFacturaHtml = htmlspecialchars($num_factura, ENT_QUOTES, 'UTF-8');
         $codVentaHtml = htmlspecialchars($cod_venta, ENT_QUOTES, 'UTF-8');
+        $codLocalVentaHtml = htmlspecialchars($valor['cod_local_venta'], ENT_QUOTES, 'UTF-8');
         $localHtml = htmlspecialchars($nombre_local, ENT_QUOTES, 'UTF-8');
         $ciHidden = htmlspecialchars($ci_cliente, ENT_QUOTES, 'UTF-8');
         $tituloRegistro = $num_factura != "" ? "Venta #".$numFacturaHtml : "C&oacute;digo venta #".$codVentaHtml;
@@ -1222,6 +1226,8 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
             <span id='td_datos_5'>".$codVentaHtml."</span> 
             <span id='td_datos_6'>".htmlspecialchars($cod_cliente, ENT_QUOTES, 'UTF-8')."</span> 
             <span id='td_datos_7'>".$apodoActualHtml."</span> 
+            <span id='td_datos_8'>".$localHtml."</span> 
+            <span id='td_datos_9'>".$codLocalVentaHtml."</span> 
           </div>
         </div>"
         );

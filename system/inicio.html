@@ -20,7 +20,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=listado-accesos-modernizado-20260604" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ficha-clinica-prioridad-consultas-20260605" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -67,6 +67,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
+<script src="../js_system/abmRecetarioIndicaciones.js?x=20260605-recetario-historial-grupos"></script>
 <script src="../js_system/abmPresupuesto.js"></script>
 <script src="../js_system/abmCliente.js"></script>
 <script src="../js_system/abmInformacionProtocolo.js"></script>
@@ -74,6 +75,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
+<<<<<<< Updated upstream
 <style>
   #principalMenub .dashboard-contenedor {
     padding-top: 76px !important;
@@ -415,6 +417,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
   }
 </style>
+=======
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/recetario_indicaciones.css?x=20260605-recetario-historial-grupos" />
+>>>>>>> Stashed changes
 <script>
 function verCerrarAbmInsumos(){
     var ventana = document.getElementById("divAbmInsumos");
@@ -5993,9 +5998,12 @@ style='background-color:#5bc572'>
               <div class="interconsulta-avatar-stack" id="avatarStackDetalle" aria-label="Participantes del hilo"></div>
             </div>
           </div>
-          <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
-            <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" alt="Cerrar">
-          </button>
+          <div class="interconsulta-detail-actions">
+            <button type="button" class="interconsulta-recetario-action" title="Emitir receta o indicaciones" onclick="abrirRecetarioIndicacionesDesdeHilo(cod_interConsulta, cod_ventaFKConsulta, cod_clienteConsulta)">Receta / indicaciones</button>
+            <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
+              <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" alt="Cerrar">
+            </button>
+          </div>
         </div>
             <div class="divMenuf">
               <div class="collapse extracto-floating-panel" id="collapseExtracto">
@@ -14244,6 +14252,21 @@ style='background-color: #b7b7b7;'>
                 <div class="card-body">
                   <div id="divHistorial_Consulta" class="flex-column gap-2 overflow-auto">
                     <!-- Consultas din&aacute;micas -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="detalle-item consulta-card consulta-recetario-card">
+                <div class="consulta-card-heading consulta-recetario-actions">
+                  <div>
+                    <span class='detalle-label'>Recetario e Indicaciones</span>
+                    <p class="consulta-card__hint">Documentos emitidos para esta venta, con impresion y trazabilidad.</p>
+                  </div>
+                  <button type="button" onclick="abrirRecetarioIndicacionesDesdeFicha()">Emitir receta / indicaciones</button>
+                </div>
+                <div class="card-body">
+                  <div id="divHistorial_RecetarioIndicaciones" class="flex-column gap-2 overflow-auto">
+                    <div class="recetario-empty">Seleccione una venta para ver documentos.</div>
                   </div>
                 </div>
               </div>
