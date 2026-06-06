@@ -293,3 +293,235 @@
 .btn-eliminar:hover {
   background: #a71d2a;
 }
+
+/* Impresion de presupuesto en A4 */
+@page presupuesto-print {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
+.presupuesto-print-page {
+  width: min(100%, 281mm);
+  margin: 0 auto;
+  box-sizing: border-box;
+  color: #111827;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+}
+
+.presupuesto-print-page *,
+.presupuesto-print-page *::before,
+.presupuesto-print-page *::after {
+  box-sizing: border-box;
+}
+
+.presupuesto-print-page > center:first-child img {
+  display: block;
+  width: 112px !important;
+  max-height: 50px;
+  object-fit: contain;
+  margin: 0 auto 4mm;
+}
+
+.presupuesto-print-page center,
+.presupuesto-print-page #divCabeceraImpresiones,
+#tbDatosImpresiones.presupuesto-print-body {
+  width: 100% !important;
+}
+
+.presupuesto-print-page .TableRepor0,
+.presupuesto-print-page .presupuesto-print-meta {
+  width: 100% !important;
+  height: auto;
+  min-height: 0;
+  margin: 0 0 4mm;
+  padding: 0;
+  border-top: 1px dashed #c7c7c7;
+  border-bottom: 1px dashed #c7c7c7;
+  border-collapse: collapse;
+}
+
+.presupuesto-print-page .TableRepor0 td {
+  padding: 3mm 2.5mm;
+  vertical-align: top;
+}
+
+.presupuesto-print-page .pTituloC {
+  font-size: 9px;
+  line-height: 1.22;
+  margin: 0 0 1.2mm;
+}
+
+.presupuesto-print-page .pTituloD {
+  padding: 1mm 0 3mm;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+#tbDatosImpresiones.presupuesto-print-body {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: #fff !important;
+}
+
+.presupuesto-print-page .detalles-section {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.presupuesto-print-page .detalles-section > div {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 3mm;
+  align-items: start;
+  width: 100% !important;
+  margin: 0 0 4mm !important;
+  padding: 3mm;
+  border: 2px solid #0077cc;
+  border-radius: 5px;
+}
+
+.presupuesto-print-page .presupuesto-insumos-panel {
+  display: none !important;
+}
+
+.presupuesto-print-page .presupuesto-panel,
+.presupuesto-print-page .tabla-detalles,
+.presupuesto-print-page .tabla-cuotas {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+.presupuesto-print-page .tabla-detalles {
+  grid-column: 1;
+}
+
+.presupuesto-print-page .tabla-cuotas {
+  grid-column: 2;
+}
+
+.presupuesto-print-page .panel-title {
+  margin: 0 0 1.8mm;
+  color: #111827;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.presupuesto-print-page .div_cuerpo_table {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: #fff !important;
+}
+
+.presupuesto-print-page .tableCabeceraRegistro,
+.presupuesto-print-page .tableRegistroSearch {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-family: Arial, sans-serif;
+}
+
+.presupuesto-print-page .tableCabeceraRegistro td,
+.presupuesto-print-page .tableRegistroSearch td {
+  height: auto !important;
+  padding: 1.4mm 1mm !important;
+  border: 1px solid #cbd5e1 !important;
+  font-size: 7.6px !important;
+  line-height: 1.16;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.presupuesto-print-page .tableCabeceraRegistro td {
+  background: #0077cc !important;
+  color: #fff !important;
+  font-weight: 700;
+  text-align: center;
+}
+
+.presupuesto-print-page .tableRegistroSearch td {
+  background: #fff !important;
+  color: #111827 !important;
+  text-align: left;
+}
+
+.presupuesto-print-page .tableRegistroSearch td[id="td_datos_1"],
+.presupuesto-print-page .tableRegistroSearch td[id="td_datos_3"],
+.presupuesto-print-page .tableRegistroSearch td[id="td_datos_4"],
+.presupuesto-print-page .tableRegistroSearch td[id="td_datos_5"] {
+  text-align: center;
+}
+
+.presupuesto-print-page .presupuesto-doc-cantidad-acciones {
+  display: table-cell !important;
+}
+
+.presupuesto-print-page .presupuesto-doc-cantidad-acciones span {
+  display: inline !important;
+}
+
+.presupuesto-print-page .btn-eliminar,
+.presupuesto-print-page .presupuesto-doc-trash-btn,
+.presupuesto-print-page .iconoBtn {
+  display: none !important;
+}
+
+.presupuesto-print-page .presupuesto-footer {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2mm;
+  margin-top: 2mm;
+  padding: 2mm;
+  border-radius: 3px;
+  background: #0077cc !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.presupuesto-print-page .presupuesto-footer label,
+.presupuesto-print-page .presupuesto-total-print {
+  margin: 0;
+  color: #fff !important;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+@media print {
+  .presupuesto-print-page {
+    page: presupuesto-print;
+    width: 100% !important;
+  }
+
+  .presupuesto-print-page,
+  .presupuesto-print-page * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
