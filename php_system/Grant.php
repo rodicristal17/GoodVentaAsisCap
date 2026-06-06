@@ -3051,7 +3051,7 @@ if (ob_get_length()) {
                     <?php foreach ($usuarios as $usuario): ?>
                         <option value="<?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>"
                             data-usuario-id="<?= (int) $usuario['cod_usuario'] ?>"
-                            data-rol="<?= htmlspecialchars($usuario['rol_usuario'] ?? '', ENT_QUOTES) ?>">
+                            data-rol="<?= htmlspecialchars((isset($usuario['rol_usuario']) ? $usuario['rol_usuario'] : ''), ENT_QUOTES) ?>">
                             <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
                         </option>
                     <?php endforeach; ?>
@@ -3166,7 +3166,7 @@ if (ob_get_length()) {
                     <select id="filtro-usuario" class="filter-input" onchange="aplicarFiltroUsuarioGantt()">
                         <option value="">Funcionario</option>
                         <?php foreach ($usuarios as $usuario): ?>
-                            <option value="<?= (int) $usuario['cod_usuario'] ?>" data-nombre="<?= htmlspecialchars(mb_strtolower($usuario['nombre_persona'], 'UTF-8'), ENT_QUOTES) ?>" data-rol="<?= htmlspecialchars($usuario['rol_usuario'] ?? '', ENT_QUOTES) ?>">
+                            <option value="<?= (int) $usuario['cod_usuario'] ?>" data-nombre="<?= htmlspecialchars(mb_strtolower($usuario['nombre_persona'], 'UTF-8'), ENT_QUOTES) ?>" data-rol="<?= htmlspecialchars((isset($usuario['rol_usuario']) ? $usuario['rol_usuario'] : ''), ENT_QUOTES) ?>">
                                 <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
                             </option>
                         <?php endforeach; ?>
