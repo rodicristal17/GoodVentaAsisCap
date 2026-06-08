@@ -3,6 +3,8 @@ var agendaConsultoriosData = {
     eventos: [],
     feriados: []
 };
+var agendaTratamientosSeleccionados = [];
+var agendaVentaSeleccionada = "";
 var timeoutBuscarHistorialPacienteCalendario = null;
 var ultimaPeticionDoctoresNuevaCita = 0;
 var comentarioAgendamientoEnProceso = false;
@@ -942,6 +944,13 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     if (e.estado !== "FERIADO" && (!e.idzonaFk || e.idzonaFk == 0 || !e.whapp || !e.ci_cliente)) {
         advertencia_datos_incompletos= '<i class="fa-solid fa-triangle-exclamation" style="color: gold;padding-right: 5px;"></i>';
     }
+    var badgesAgenda = "";
+    if(e.estado !== "FERIADO" && e.sin_tratamiento){
+        badgesAgenda += "<span class='agenda-alerta-badge'>Sin tratamiento</span>";
+    }
+    if(e.estado !== "FERIADO" && e.riesgo_insumos){
+        badgesAgenda += "<span class='agenda-alerta-badge agenda-alerta-badge--stock'>Faltan insumos</span>";
+    }
 
     var zIndex = (e.estado === "FERIADO") ? "0" : "10"; // Los feriados van al fondo
     var cursorEstilo = (e.estado === "FERIADO") ? "cursor: default;" : "";
@@ -970,6 +979,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "style='" + estilos + "' "
     + "onclick='clickEventoAgenda(\"" + e.id + "\", event)'>"
     + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
+    + badgesAgenda
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + (e.ci_cliente || '') + "</span>"
     + "<span class='hora'>" + (e.nombre_tratamiento_pendiente || '') + "</span>"
@@ -1218,6 +1228,8 @@ function vercerrarModalNuevaCita(mostrar){
                  
         document.getElementById('inptFechaNuevaCita').value = document.getElementById('inptFechaAgenda').value;
         cargarDoctoresDisponiblesNuevaCita();
+        cargarVentasPacienteAgenda(document.getElementById('inptIdPacienteAgenda').value, 'inptVentaAgenda');
+        actualizarPrevisionNuevaCitaAgenda();
         document.getElementById('overlayNuevaCita').style.display = '';
         document.getElementById('modalNuevaCita').style.display = '';
     } else {
@@ -1485,6 +1497,7 @@ function guardarCitaAgenda(){
     var fin = document.getElementById('inptHoraFinAgenda').value;
     var estado = document.getElementById('inptEstadoNuevaCita').value;
     var motivo = obtenerMotivoCitaAgendaConCreador('inptMotivoAgenda');
+    var codVenta = document.getElementById('inptVentaAgenda') ? document.getElementById('inptVentaAgenda').value : "";
 
     if(paciente === '' || consultorio === '' || fecha === '' || inicio === '' || fin === ''){
         alert('Complete los datos obligatorios de la cita.');
@@ -1714,6 +1727,11 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaCedula').setAttribute('data-documento-paciente', evento.ci_cliente || '');
     document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
     document.getElementById('detAgendaTratamientoAsignado').innerHTML = (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
+    if(document.getElementById('detAgendaVentaAsignada')){
+        var ventaTexto = evento.cod_ventaFK ? (evento.venta_apodo || evento.paciente || "Venta seleccionada") : "Sin venta seleccionada";
+        document.getElementById('detAgendaVentaAsignada').innerHTML = ventaTexto;
+    }
+    renderPrevisionInsumosAgenda(evento);
     document.getElementById('detAgendaTitulo').innerHTML = "Agenda de " + evento.paciente + " "+ (evento.nombres_tratamiento ? (', para ' + evento.nombres_tratamiento) : '');
     document.getElementById('detAgendaPresupuesto').innerHTML = (evento.nombre_doctor ? (evento.nombre_doctor + '<br>') : '');
     document.getElementById('detAgendaFecha').innerHTML = evento.fecha || '';
@@ -1749,7 +1767,231 @@ function verDetalleAgenda(id){
     obtenerComentariosAgendamiento();
 }
 
+function escaparHtmlAgenda(valor){
+    return String(valor || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function renderPrevisionInsumosAgenda(evento){
+    var cont = document.getElementById('detAgendaInsumosPrevistos');
+    if(!cont){ return; }
+    if(evento.sin_tratamiento){
+        cont.innerHTML = "<span class='agenda-alerta-inline'>Falta seleccionar tratamiento</span>";
+        return;
+    }
+    var insumos = evento.insumos_previstos || [];
+    var html = "";
+    if(evento.riesgo_insumos){
+        html += "<span class='agenda-alerta-inline agenda-alerta-inline--stock'>Riesgo de falta de insumos</span>";
+    }
+    if(insumos.length === 0){
+        html += "<span class='agenda-ayuda-inline'>Sin insumos configurados para los tratamientos seleccionados.</span>";
+        cont.innerHTML = html;
+        return;
+    }
+    html += "<div class='agenda-insumos-lista'>";
+    for(var i = 0; i < insumos.length; i++){
+        html += "<div class='agenda-insumo-item'>"
+            + "<span>" + escaparHtmlAgenda(insumos[i].nombre) + "</span>"
+            + "<b>" + escaparHtmlAgenda(insumos[i].cantidad) + " " + escaparHtmlAgenda(insumos[i].unidad_medida) + "</b>"
+            + "</div>";
+    }
+    html += "</div>";
+    if((evento.insumos_faltantes || []).length > 0){
+        html += "<div class='agenda-insumos-faltantes'>";
+        for(var j = 0; j < evento.insumos_faltantes.length; j++){
+            html += "<span>" + escaparHtmlAgenda(evento.insumos_faltantes[j].nombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + "</span>";
+        }
+        html += "</div>";
+    }
+    cont.innerHTML = html;
+}
+
+function cargarVentasPacienteAgenda(idPaciente, idSelect, callback){
+    var select = document.getElementById(idSelect);
+    if(!select){ return; }
+    select.innerHTML = "<option value=''>Sin venta seleccionada</option>";
+    if(!idPaciente){
+        if(typeof callback === "function"){ callback(); }
+        return;
+    }
+    obtener_datos_user();
+    $.ajax({
+        data: {"useru": userid, "passu": passuser, "navegador": navegador, "paciente": idPaciente, "funt": "buscarVentasPacienteAgenda"},
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                var html = "<option value=''>Sin venta seleccionada</option>";
+                var ventas = resp.ventas || [];
+                for(var i = 0; i < ventas.length; i++){
+                    var etiqueta = "Venta " + ventas[i].cod_venta + " / " + (ventas[i].num_factura || "");
+                    if(ventas[i].apodo){ etiqueta += " (" + ventas[i].apodo + ")"; }
+                    html += "<option value='" + escaparHtmlAgenda(ventas[i].cod_venta) + "'>" + escaparHtmlAgenda(etiqueta) + "</option>";
+                }
+                select.innerHTML = html;
+                if(typeof callback === "function"){ callback(); }
+            }catch(error){
+                console.error(error, responseText);
+                if(typeof callback === "function"){ callback(); }
+            }
+        }
+    });
+}
+
+function cargarTratamientosVentaAgenda(idSelectVenta, idContenedor, idAgenda){
+    var select = document.getElementById(idSelectVenta);
+    var cont = document.getElementById(idContenedor);
+    if(!select || !cont){ return; }
+    agendaVentaSeleccionada = select.value || "";
+    agendaTratamientosSeleccionados = [];
+    cont.innerHTML = agendaVentaSeleccionada ? paginacargando : "<p class='agenda-ayuda-inline'>Seleccione una venta para ver sus tratamientos.</p>";
+    actualizarPrevisionNuevaCitaAgenda();
+    if(!agendaVentaSeleccionada){ return; }
+    obtener_datos_user();
+    $.ajax({
+        data: {"useru": userid, "passu": passuser, "navegador": navegador, "cod_venta": agendaVentaSeleccionada, "id_agenda": idAgenda || "", "funt": "listarTratamientosVentaAgenda"},
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                var tratamientos = resp.tratamientos || [];
+                var html = "";
+                for(var i = 0; i < tratamientos.length; i++){
+                    if(Number(tratamientos[i].seleccionado) === 1){
+                        agendaTratamientosSeleccionados.push(String(tratamientos[i].cod_detalle));
+                    }
+                    html += "<label class='tratamiento-agenda-card tratamiento-agenda-check'>"
+                        + "<input type='checkbox' value='" + escaparHtmlAgenda(tratamientos[i].cod_detalle) + "' " + (Number(tratamientos[i].seleccionado) === 1 ? "checked" : "") + " onchange='toggleTratamientoAgenda(this)'>"
+                        + "<span>" + escaparHtmlAgenda(tratamientos[i].nombre_producto) + "</span>"
+                        + "</label>";
+                }
+                cont.innerHTML = html || "<p class='agenda-ayuda-inline'>Esta venta no tiene tratamientos pendientes.</p>";
+                actualizarPrevisionNuevaCitaAgenda();
+            }catch(error){
+                console.error(error, responseText);
+                cont.innerHTML = "";
+            }
+        }
+    });
+}
+
+function toggleTratamientoAgenda(check){
+    var valor = String(check.value || "");
+    var idx = agendaTratamientosSeleccionados.indexOf(valor);
+    if(check.checked && idx < 0){
+        agendaTratamientosSeleccionados.push(valor);
+    }else if(!check.checked && idx >= 0){
+        agendaTratamientosSeleccionados.splice(idx, 1);
+    }
+    actualizarPrevisionNuevaCitaAgenda();
+}
+
+function actualizarPrevisionNuevaCitaAgenda(){
+    var modalAsignarVisible = document.getElementById('modalAsignarTratamientoAgenda') && document.getElementById('modalAsignarTratamientoAgenda').style.display !== 'none';
+    var cont = modalAsignarVisible ? document.getElementById('detAgendaInsumosPrevistos') : document.getElementById('divPrevisionInsumosNuevaCita');
+    if(!cont){ return; }
+    if(agendaTratamientosSeleccionados.length === 0){
+        cont.innerHTML = "<span class='agenda-alerta-inline'>Falta seleccionar tratamiento</span>";
+        return;
+    }
+    obtener_datos_user();
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "cod_venta": agendaVentaSeleccionada,
+            "consultorio": document.getElementById('inptConsultorioAgenda') ? document.getElementById('inptConsultorioAgenda').value : "",
+            "detalles": agendaTratamientosSeleccionados,
+            "funt": "obtenerPrevisionInsumosAgenda"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                renderPrevisionInsumosAgenda({
+                    sin_tratamiento: false,
+                    riesgo_insumos: (resp.faltantes || []).length > 0,
+                    insumos_previstos: resp.insumos || [],
+                    insumos_faltantes: resp.faltantes || []
+                });
+                var detalle = document.getElementById('detAgendaInsumosPrevistos');
+                cont.innerHTML = detalle ? detalle.innerHTML : "";
+            }catch(error){
+                console.error(error, responseText);
+            }
+        }
+    });
+}
+
+function guardarTratamientosDetalleAgenda(){
+    var idAgenda = document.getElementById('detAgendaId').innerHTML;
+    if(!idAgenda){
+        ver_vetana_informativa("No se encontro el agendamiento.", "", "error");
+        return;
+    }
+    obtener_datos_user();
+    $.ajax({
+        data: {"useru": userid, "passu": passuser, "navegador": navegador, "id_agenda": idAgenda, "cod_venta": agendaVentaSeleccionada, "detalles": agendaTratamientosSeleccionados, "funt": "guardarTratamientosAgenda"},
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"])){
+                    verCerrarAsignarTratamiento(false);
+                    cargarAgendaConsultoriosDesdePHP(function(){ verDetalleAgenda(idAgenda); });
+                }else{
+                    ver_vetana_informativa(resp.mensaje || "No se pudo guardar.", "", "error");
+                }
+            }catch(error){
+                console.error(error, responseText);
+            }
+        }
+    });
+}
+
+function verCerrarAsignarTratamiento(mostrar){
+    var modal = document.getElementById('modalAsignarTratamientoAgenda');
+    var overlay = document.getElementById('overlayAsignarTratamientoAgenda');
+    var contenedorInline = document.getElementById('contenedorAsignarTratamientoAgenda');
+    if(!modal){ return; }
+
+    if(mostrar){
+        var evento = obtenerEventoPorId(idAbmAgenda);
+        if(contenedorInline && modal.parentNode !== contenedorInline){
+            contenedorInline.appendChild(modal);
+        }
+        if(overlay){
+            overlay.style.display = 'none';
+        }
+        modal.style.display = '';
+        agendaTratamientosSeleccionados = evento && evento.tratamientos_ids ? evento.tratamientos_ids.map(String) : [];
+        agendaVentaSeleccionada = evento && evento.cod_ventaFK ? String(evento.cod_ventaFK) : "";
+        cargarVentasPacienteAgenda(evento ? (evento.cod_cliente || evento.id_paciente || document.getElementById('detAgendaPacienteId').innerHTML) : document.getElementById('detAgendaPacienteId').innerHTML, 'inptVentaAsignarTratamientoAgenda', function(){
+            if(document.getElementById('inptVentaAsignarTratamientoAgenda')){
+                document.getElementById('inptVentaAsignarTratamientoAgenda').value = agendaVentaSeleccionada;
+            }
+            cargarTratamientosVentaAgenda('inptVentaAsignarTratamientoAgenda', 'divTratamientosAgenda', idAbmAgenda);
+        });
+    }else{
+        if(overlay){
+            overlay.style.display = 'none';
+        }
+        modal.style.display = 'none';
+    }
+}
+
 function cerrarDetalleAgenda(){
+    verCerrarAsignarTratamiento(false);
     document.getElementById('overlayDetalleAgenda').style.display = 'none';
     document.getElementById('modalDetalleAgenda').style.display = 'none';
 }
@@ -2348,6 +2590,7 @@ function guardarCitaAgenda(){
     var fin = document.getElementById('inptHoraFinAgenda').value;
     var estado = document.getElementById('inptEstadoNuevaCita').value;
     var motivo = obtenerMotivoCitaAgendaConCreador('inptMotivoAgenda');
+    var codVenta = document.getElementById('inptVentaAgenda') ? document.getElementById('inptVentaAgenda').value : "";
 
     if(paciente == ''){
         alert('Debe seleccionar un paciente');
@@ -2396,6 +2639,8 @@ function guardarCitaAgenda(){
         "fin": fin,
         "estado": estado,
         "motivo": motivo,
+        "cod_venta": codVenta,
+        "detalles": agendaTratamientosSeleccionados,
         "funt": "guardarCita"
     };
 
@@ -2450,6 +2695,17 @@ function limpiarFormularioNuevaCita(){
     document.getElementById('inptEstadoNuevaCita').value = 'AGENDADO';
     document.getElementById('inptMotivoAgenda').value = '';
     document.getElementById('inptDoctorNuevaCita').innerHTML = '';
+    if(document.getElementById('inptVentaAgenda')){
+        document.getElementById('inptVentaAgenda').innerHTML = "<option value=''>Sin venta seleccionada</option>";
+    }
+    if(document.getElementById('divTratamientosNuevaCitaAgenda')){
+        document.getElementById('divTratamientosNuevaCitaAgenda').innerHTML = "<p class='agenda-ayuda-inline'>Seleccione una venta para ver sus tratamientos.</p>";
+    }
+    if(document.getElementById('divPrevisionInsumosNuevaCita')){
+        document.getElementById('divPrevisionInsumosNuevaCita').innerHTML = "<span class='agenda-alerta-inline'>Falta seleccionar tratamiento</span>";
+    }
+    agendaTratamientosSeleccionados = [];
+    agendaVentaSeleccionada = "";
 }
 
 function verCerrarModalBuscarPacienteAgenda(mostrar) {
@@ -2523,6 +2779,7 @@ function buscarPacientesAgenda(){
 function seleccionarPacienteAgenda(idPaciente, nombrePaciente){
     document.getElementById('inptIdPacienteAgenda').value = idPaciente;
     document.getElementById('inptPacienteAgenda').value = nombrePaciente;
+    cargarVentasPacienteAgenda(idPaciente, 'inptVentaAgenda');
     verCerrarModalBuscarPacienteAgenda(false);
 }
 

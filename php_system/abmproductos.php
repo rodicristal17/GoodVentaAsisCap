@@ -1420,11 +1420,7 @@ $styleName=CargarStyleTable($styleName);
 }
 
     
-<<<<<<< HEAD
 $informacion =array("1" => "exito","2" => $pagina,"3" => number_format($num ?? 0,'0',',','.'),"4" => number_format($valor ?? 0,'0',',','.'),"99"=>$nroRegistro);
-=======
-$informacion =array("1" => "exito","2" => $pagina,"3" => number_format($num || 0,'0',',','.'),"4" => number_format($valor,'0',',','.'),"99"=>$nroRegistro);
->>>>>>> e36ca5d10899d3f3805bd53e99f371fe396945b1
 echo json_encode($informacion);	
 exit;
 }

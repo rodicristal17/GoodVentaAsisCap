@@ -128,6 +128,18 @@ function agregarColumnaSiNoExiste($mysqli, $tabla, $columna, $definicion)
     }
 }
 
+function limpiarTextoHtmlInsumos($valor)
+{
+    $texto = (string)$valor;
+    $anterior = null;
+    while ($texto !== $anterior && preg_match('/&lt;|&gt;|<[^>]*>/i', $texto)) {
+        $anterior = $texto;
+        $texto = html_entity_decode($texto, ENT_QUOTES | ENT_HTML5, 'ISO-8859-1');
+        $texto = strip_tags($texto);
+    }
+    return trim($texto);
+}
+
 function asegurarEstructuraInsumos($mysqli)
 {
     agregarColumnaSiNoExiste($mysqli, "insumosconsl", "stock_minimo", "stock_minimo INT NOT NULL DEFAULT 0");
@@ -170,6 +182,9 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $uni
 
     $estado_db = ($estado === 'Activo') ? 1 : 0;
     $stock_minimo = (int)$stock_minimo;
+    $nombre = limpiarTextoHtmlInsumos($nombre);
+    $descripcion = limpiarTextoHtmlInsumos($descripcion);
+    $unidad_medida = limpiarTextoHtmlInsumos($unidad_medida);
 
     if ($operacion === "editar" && solicitudEliminadoEsEstadoInactivo($estado_db)) {
         $user = solicitudEliminadoValorPost('useru', '0');
@@ -301,6 +316,9 @@ function buscarInsumos($id_insumo, $nombre, $descripcion, $unidad_medida, $estad
     $result = $stmt->get_result();
     $filas = [];
     while ($fila = $result->fetch_assoc()) {
+        $fila['nombre'] = limpiarTextoHtmlInsumos($fila['nombre']);
+        $fila['descripcion'] = limpiarTextoHtmlInsumos($fila['descripcion']);
+        $fila['unidad_medida'] = limpiarTextoHtmlInsumos($fila['unidad_medida']);
         $fila['estado'] = ($fila['estado'] == 1) ? 'Activo' : 'Inactivo';
         $filas[] = $fila;
     }

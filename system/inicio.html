@@ -20,13 +20,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<<<<<<< HEAD
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ficha-clinica-prioridad-consultas-20260605" />
-=======
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=vista-cliente-compacto-20260605" />
->>>>>>> 27aa10b74ac7d04ba312b5d2f601b27e3faa4e24
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=insumos-tratamientos-checklist-20260606" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=x-ios10v1" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignar-tratamiento-inline-20260606" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -46,14 +42,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=arqueo-print-filtros-20260602"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=listado-accesos-modernizado-20260604"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=insumos-tratamientos-checklist-20260606"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=calendario-json-20260605"></script>   
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=asignar-tratamiento-inline-v2-20260606"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-porcentaje-20260602"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
@@ -74,7 +70,6 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
-<<<<<<< Updated upstream
 <style>
   #principalMenub .dashboard-contenedor {
     padding-top: 76px !important;
@@ -416,9 +411,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
   }
 </style>
-=======
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/recetario_indicaciones.css?x=20260605-recetario-historial-grupos" />
->>>>>>> Stashed changes
 <script>
 function verCerrarAbmInsumos(){
     var ventana = document.getElementById("divAbmInsumos");
@@ -1564,11 +1557,11 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuPresupuestoProductoDoc' title='Cargar tratamientos' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
+<table class='divMenub' id='divMenuPresupuestoProductoDoc' title='Nuevo Tratamiento' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/presupuesto.png' />
-<p class='pTitulo4'>Cargar tratamientos</p>
+<p class='pTitulo4'>Nuevo Tratamiento</p>
 <center>
 <div id='divMinimizadoSalidadDepositoDoc' style='display:none' class='divMinimizado'></div>
 </center>
@@ -9629,21 +9622,14 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 </table>
 <div style='margin-top:18px;border:1px solid #d9e1e8;border-radius:8px;overflow:hidden;background:#fbfcfd;'>
 <div style='padding:10px 14px;background:#eef4f8;border-bottom:1px solid #d9e1e8;display:flex;align-items:center;justify-content:space-between;'>
-<p class='pTituloC' style='font-weight:bold;color:#2f526f;margin:0'>Productos que usan este insumo</p>
-<input type='button' value='Agregar producto' class='btn4' onclick='agregarFilaProductoInsumo()' style='width:130px;border-radius:8px;background:#2f80ed'>
+<p class='pTituloC' style='font-weight:bold;color:#2f526f;margin:0'>Tratamientos que usan este insumo</p>
+<input type='text' class='inputText' id='inptBuscarProductoInsumo' placeholder='Buscar tratamiento' onkeyup='renderProductosInsumoSeleccionables()' style='width:240px;height:30px;border-radius:8px;'>
 </div>
-<table class='tableCabeceraRegistro' style='width:100%;margin:0'>
-<tr>
-<td class='td_registro' style='width:70%'>PRODUCTO</td>
-<td class='td_registro' style='width:20%'>CANTIDAD</td>
-<td class='td_registro' style='width:10%'></td>
-</tr>
-</table>
-<div id='divProductosInsumo' style='width:100%;padding:8px;box-sizing:border-box;max-height:260px;overflow:auto;'></div>
+<div id='divProductosInsumo' class='insumos-productos-checklist'></div>
 </div>
 <br>
 <center>
-<input class='btn1' type='button' value='Guardar datos' onclick='verificarCamposAbmInsumos()' id='btnAbmInsumosGuardar' style='width:170px;background:#198754;color:#fff;border-radius:8px;height:36px;' />
+<input class='btn1 insumos-action-btn insumos-action-save' type='button' value='Guardar datos' onclick='verificarCamposAbmInsumos()' id='btnAbmInsumosGuardar' style='width:170px;background:#198754;color:#fff;border-radius:8px;height:36px;' />
 </center>
 </div>
 </div>
@@ -9654,10 +9640,10 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 <td style='width:76%;text-align:left;vertical-align:bottom'>
 <p class='pTituloC'>Buscar :</p>
 <input class='inputText' type='text' placeholder='Nombre o c&oacute;digo' id='inptBuscarAbmInsumos' onkeyup='if(event.keyCode == 13){buscarAbmInsumos()}' style='width:280px' />
-<input type='button' value='Buscar' class='btn4' onclick='buscarAbmInsumos()' style='width:95px'>
-<input type='button' value='Nuevo' class='btn1' onclick='verCerrarVentanaAbmInsumos("1","1")' style='width:105px;height:30px;background:#2f80ed;color:#fff;border-radius:10px;margin-left:8px;'>
-<input type='button' value='Editar' class='btn4' onclick='verVentanaEditarAbmInsumos()' id='btnEditarDatosInsumos' style='width:95px;border-radius:10px;margin-left:4px;'>
-<input type='button' value='Eliminar' class='btn2' onclick='eliminarAbmInsumos()' style='width:105px;height:30px;border-radius:10px;margin-left:4px;background:#e53935;'>
+<input type='button' value='Buscar' class='btn4 insumos-action-btn' onclick='buscarAbmInsumos()' style='width:95px'>
+<input type='button' value='Nuevo' class='btn1 insumos-action-btn' onclick='verCerrarVentanaAbmInsumos("1","1")' style='width:105px;height:30px;background:#2f80ed;color:#fff;border-radius:10px;margin-left:8px;'>
+<input type='button' value='Editar' class='btn4 insumos-action-btn' onclick='verVentanaEditarAbmInsumos()' id='btnEditarDatosInsumos' style='width:95px;border-radius:10px;margin-left:4px;'>
+<input type='button' value='Eliminar' class='btn2 insumos-action-btn insumos-action-danger' onclick='eliminarAbmInsumos()' style='width:105px;height:30px;border-radius:10px;margin-left:4px;background:#e53935;'>
 </td>
 <td style='width:24%;text-align:right;vertical-align:bottom;padding-right:10px'>
 <label class='pTituloC' style='margin-right:12px'><input type='radio' id='inptEstadoBuscarInsumos1' name='estadoBuscarInsumos' value='Activo' checked onchange='buscarAbmInsumos()'> Activo</label>
@@ -25056,7 +25042,28 @@ onclick='buscarvistaaperturacierrecaja()' />
 
             <div class='filtro-grupo'>
                 <label>Consultorio</label>
-                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador' onchange='cargarDoctoresDisponiblesNuevaCita()'></select>
+                <select id='inptConsultorioAgenda' class='catalogo-selectBuscador' onchange='cargarDoctoresDisponiblesNuevaCita();actualizarPrevisionNuevaCitaAgenda()'></select>
+            </div>
+
+            <div class='filtro-grupo'>
+                <label>Venta / apodo</label>
+                <select id='inptVentaAgenda' class='catalogo-selectBuscador' onchange="cargarTratamientosVentaAgenda('inptVentaAgenda','divTratamientosNuevaCitaAgenda','')">
+                    <option value=''>Sin venta seleccionada</option>
+                </select>
+            </div>
+
+            <div class='filtro-grupo filtro-grupo-full'>
+                <label>Tratamientos de la venta</label>
+                <div id='divTratamientosNuevaCitaAgenda' class='agenda-tratamientos-lista'>
+                    <p class='agenda-ayuda-inline'>Seleccione una venta para ver sus tratamientos.</p>
+                </div>
+            </div>
+
+            <div class='filtro-grupo filtro-grupo-full'>
+                <label>Insumos previstos</label>
+                <div id='divPrevisionInsumosNuevaCita' class='agenda-prevision-insumos'>
+                    <span class='agenda-alerta-inline'>Falta seleccionar tratamiento</span>
+                </div>
             </div>
 
             <div class='filtro-grupo'>
@@ -25171,7 +25178,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 
 <div class='modal-filtros-overlay' id='overlayAsignarTratamientoAgenda' onclick='verCerrarAsignarTratamiento(false)' style='display:none;z-index:12;'></div>
-<div class='modal-filtros-catalogo' id='modalAsignarTratamientoAgenda' style='display:none;z-index:13;'>
+<div class='modal-filtros-catalogo agenda-asignar-tratamiento-panel' id='modalAsignarTratamientoAgenda' style='display:none;z-index:13;'>
     <div class='modal-filtros-box modal-cita-box' style='max-width:820px;'>
         <div class='modal-filtros-header'>
             <div class='modal-header-info'>
@@ -25184,10 +25191,12 @@ onclick='buscarvistaaperturacierrecaja()' />
 
         <div class='modal-filtros-body'>
             <div class='filtro-grupo'>
-                <label>Buscar tratamiento</label>
-                <input type='text' id='inptBuscarTratamientoAgenda' class='catalogo-selectBuscador'
-                       placeholder='Nombre, descripcion o venta' style="width: 98%;"
-                       onkeyup='if(event.keyCode==13){buscarTratamientosParaAgenda()}' />
+                <label>Venta / apodo</label>
+                <select id='inptVentaAsignarTratamientoAgenda' class='catalogo-selectBuscador'
+                        onchange="cargarTratamientosVentaAgenda('inptVentaAsignarTratamientoAgenda','divTratamientosAgenda',idAbmAgenda)"
+                        style="width: 98%;">
+                    <option value=''>Sin venta seleccionada</option>
+                </select>
             </div>
 
             <div id='divTratamientosAgenda' class='div_cuerpo_table presupuesto-search-table' style='border:none;display:grid;gap:8px;max-height:420px;overflow:auto;padding:2px;'></div>
@@ -25195,8 +25204,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 
         <div class='modal-filtros-footer'>
             <button class='btn-filtro' onclick='verCerrarAsignarTratamiento(false)'>Cancelar</button>
-            <button class='btn-filtro' onclick='buscarTratamientosParaAgenda()'>Buscar</button>
-            <button class='btn-accion-principal' onclick='vincularTratamientoCalendario(idAbmAgenda, idTratamientoAgendaSeleccionado)'>Vincular</button>
+            <button class='btn-accion-principal' onclick='guardarTratamientosDetalleAgenda()'>Guardar tratamientos</button>
         </div>
     </div>
 </div>
@@ -25210,9 +25218,9 @@ onclick='buscarvistaaperturacierrecaja()' />
             <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda();limpiarFichaPacienteCalendario();ventanaAnterior.pop();'>×</button>
         </div>
 
-        <div class='modal-filtros-body' style="display: flex;">
-          <section class="form-section" style="display: grid;margin-inline: 10px;">
-            <div class='detalle-agenda-grid'>
+        <div class='modal-filtros-body detalle-agenda-body'>
+          <section class="detalle-agenda-main">
+            <div class='detalle-agenda-grid detalle-agenda-datos'>
                 <div class='detalle-item' style="display:none;">
                     <span class='detalle-label'>ID</span>
                     <div class='detalle-valor' id='detAgendaId'></div>
@@ -25223,57 +25231,68 @@ onclick='buscarvistaaperturacierrecaja()' />
                     <div class='detalle-valor' id='detAgendaPacienteId'></div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-compact'>
                     <span class='detalle-label'>Cedula</span>
                     <div class='detalle-valor' id='detAgendaCedula'></div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-compact'>
                     <span class='detalle-label'>Paciente</span>
                     <div class='detalle-valor' id='detAgendaPaciente'></div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-compact'>
                     <span class='detalle-label'>Fecha</span>
                     <div class='detalle-valor' id='detAgendaFecha'></div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-compact'>
                     <span class='detalle-label'>Horario</span>
-                    <div class='detalle-valor'>
-                      <input id="detAgendaHorarioInicio" style="width: fit-content;" type="time" onblur="actualizarHorarioAgendaDesdeModal()"/> -
-                      <input id="detAgendaHorarioFin" style="width: fit-content;" type="time" onblur="actualizarHorarioAgendaDesdeModal()"/>
+                    <div class='detalle-valor detalle-horario-control'>
+                      <input id="detAgendaHorarioInicio" type="time" onblur="actualizarHorarioAgendaDesdeModal()"/>
+                      <span>-</span>
+                      <input id="detAgendaHorarioFin" type="time" onblur="actualizarHorarioAgendaDesdeModal()"/>
                     </div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-deudas'>
                     <span class='detalle-label'>Deudas pendientes</span>
                     <div class='detalle-valor' id='detAgendaDeudasPendientes'></div>
                 </div>
 
-                <div class='detalle-item'>
+                <div class='detalle-item detalle-item-estado'>
                     <span class='detalle-label'>Estado</span>
                     <div class='detalle-valor' id='detAgendaEstado'></div>
+                </div>
+
+                <div class='detalle-item detalle-item-full'>
+                    <span class='detalle-label'>Venta / apodo</span>
+                    <div class='detalle-valor' id='detAgendaVentaAsignada'>Sin venta seleccionada</div>
                 </div>
 
                 <div class='detalle-item detalle-item-full'>
                     <span class='detalle-label'>Tratamiento asignado</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaTratamientoAsignado'></span>
-                      <input type="button" value="Asignar tratamiento" class="btn4" onclick="verCerrarAsignarTratamiento(true)" style="width:fit-content;padding: 6px 12px;">
+                      <input type="button" value="Asignar tratamiento" class="btn4 detalle-agenda-action" onclick="verCerrarAsignarTratamiento(true)">
+                      <div id='contenedorAsignarTratamientoAgenda' class='agenda-asignar-tratamiento-anchor'></div>
                     </div>
+                </div>
+                <div class='detalle-item detalle-item-full'>
+                    <span class='detalle-label'>Insumos previstos</span>
+                    <div class='detalle-valor' id='detAgendaInsumosPrevistos'></div>
                 </div>
                 <div class='detalle-item detalle-item-full'>
                     <span class='detalle-label'>Doctor/a</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaPresupuesto'></span>
-                      <input type="button" value="Cargar tratamiento" class="btn4" onclick="cargarTratamientoDesdeAgenda();" style="width:fit-content;padding: 6px 12px;">
-                      <input type="button" value="Ver historial clinico" class="btn4" onclick="verHistorialDesdeConsultorio()" style="width:fit-content;padding: 6px 12px;">
+                      <input type="button" value="Nuevo Tratamiento" class="btn4 detalle-agenda-action" onclick="cargarTratamientoDesdeAgenda();">
+                      <input type="button" value="Ver historial clinico" class="btn4 detalle-agenda-action" onclick="verHistorialDesdeConsultorio()">
                     </div>
                 </div>
             </div>
           </section>
-          <section class="presupuesto-panel" style="width: 25%;margin-inline: 10px;padding: 5px;">
+          <section class="presupuesto-panel detalle-agenda-historial">
             <span class='detalle-label'>Agendamientos anteriores</span>
             <table class="tableCabeceraRegistro">
               <tr>
@@ -25282,15 +25301,15 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <td class="td_registro" style="width: 30%">ESTADO</td>
               </tr>
             </table>
-            <div id="table_historial_paciente_agenda_detalle" class="div_cuerpo_table presupuesto-search-table" style="border: none;"></div>
+            <div id="table_historial_paciente_agenda_detalle" class="div_cuerpo_table presupuesto-search-table detalle-agenda-tabla-historial"></div>
           </section>
-          <section class="presupuesto-panel" style="width: 25%;margin-inline: 10px;padding: 5px;">
-            <div class='detalle-item' style="margin-bottom: 10px;height: 85%;">
+          <section class="presupuesto-panel detalle-agenda-comentarios">
+            <div class='detalle-item detalle-comentarios-box'>
                 <span class='detalle-label'>Comentarios</span>
-                <div class='detalle-valor' id='detAgendaMotivo' style="overflow-y: auto;max-height: 350px;"></div>
+                <div class='detalle-valor' id='detAgendaMotivo'></div>
             </div>
-            <div>
-              <input id="detAgendaMotivoInput" onkeyup="if (event.keyCode==13) {verificarComentarioAgendamiento()}" placeholder="Presione enter para enviar..." style="width: 85%;"/>
+            <div class="detalle-comentario-input">
+              <input id="detAgendaMotivoInput" onkeyup="if (event.keyCode==13) {verificarComentarioAgendamiento()}" placeholder="Presione enter para enviar..."/>
               <i class="fa-regular fa-paper-plane" onclick="verificarComentarioAgendamiento()"></i>
             </div>
           </section>
