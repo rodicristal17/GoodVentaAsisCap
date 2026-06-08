@@ -12168,6 +12168,19 @@ button.dashboard-summary-item:hover {
     display: block;
 }
 
+.dashboard-gantt-scrollbar {
+    display: none;
+    width: 100%;
+    height: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: #ffffff;
+}
+
+.dashboard-gantt-scrollbar__content {
+    height: 1px;
+}
+
 .dashboard-card--jornada .perfil-widget {
     max-width: none;
     margin: 0;

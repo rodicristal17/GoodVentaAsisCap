@@ -655,17 +655,129 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <div class="Panel dashboard-gantt-panel">
                       <iframe
                         id="iframeGrant"
-                        src="../php_system/Grant.php?embed=dashboard&x=20260606-gantt-quick-create-fix"
+                        src="../php_system/Grant.php?embed=dashboard&x=20260605-scrollbar-unica"
                         width="100%"
                         frameborder="0"
                         scrolling="auto"
                         style="display:block;width:100%;height:420px;max-height:620px;border:0;"
                         onload="ajustarAltoGrantIframe(this); corregirEspacioSuperiorGrantIframe(this); aplicarUsuarioActualGrantIframe(this);">
                       </iframe>
+                      <div class="dashboard-gantt-scrollbar" id="grantDashboardScrollbar" aria-hidden="true" style="display:none;width:100%;height:18px;overflow-x:auto;overflow-y:hidden;background:#fff;">
+                        <div class="dashboard-gantt-scrollbar__content" style="height:1px;"></div>
+                      </div>
                       <script>
                         function abrirVistaCompletaGantt() {
-                          window.open('../php_system/Grant.php?x=20260606-gantt-quick-create-fix-full', '_blank');
+                          window.open('../php_system/Grant.php?x=20260529sin-espacio-inicio-full', '_blank');
                         }
+
+                        function obtenerScrollGanttIframe(iframe) {
+                          try {
+                            var doc = iframe.contentDocument || iframe.contentWindow.document;
+                            var contenedorExterno = doc ? doc.getElementById('gantt-container') : null;
+                            var contenedorInterno = contenedorExterno ? contenedorExterno.querySelector('.gantt-container') : null;
+
+                            if (contenedorExterno && contenedorExterno.scrollWidth > contenedorExterno.clientWidth) {
+                              return contenedorExterno;
+                            }
+
+                            if (contenedorInterno && contenedorInterno.scrollWidth > contenedorInterno.clientWidth) {
+                              return contenedorInterno;
+                            }
+
+                            return contenedorExterno || contenedorInterno;
+                          } catch (e) {
+                            return null;
+                          }
+                        }
+
+                        function obtenerAnchoContenidoGanttIframe(iframe, contenedor) {
+                          try {
+                            var doc = iframe.contentDocument || iframe.contentWindow.document;
+                            var svg = doc ? doc.getElementById('gantt') : null;
+                            var contenedorExterno = doc ? doc.getElementById('gantt-container') : null;
+                            var contenedorInterno = contenedorExterno ? contenedorExterno.querySelector('.gantt-container') : null;
+                            var ancho = contenedor ? Math.max(contenedor.scrollWidth || 0, contenedor.clientWidth || 0) : 0;
+
+                            if (contenedorInterno) {
+                              ancho = Math.max(ancho, contenedorInterno.scrollWidth || 0, contenedorInterno.clientWidth || 0);
+                            }
+
+                            if (svg) {
+                              ancho = Math.max(ancho, Number(svg.getAttribute('width')) || 0);
+
+                              try {
+                                if (svg.viewBox && svg.viewBox.baseVal) {
+                                  ancho = Math.max(ancho, Number(svg.viewBox.baseVal.width) || 0);
+                                }
+                              } catch (e) {
+                              }
+
+                              try {
+                                var cajaSvg = svg.getBBox();
+                                ancho = Math.max(ancho, Math.ceil(cajaSvg.x + cajaSvg.width));
+                              } catch (e) {
+                              }
+                            }
+
+                            return Math.ceil(ancho);
+                          } catch (e) {
+                            return contenedor ? Math.max(contenedor.scrollWidth || 0, contenedor.clientWidth || 0) : 0;
+                          }
+                        }
+
+                        function sincronizarBarraHorizontalGrant(iframe) {
+                          if (!iframe) return;
+
+                          var barra = document.getElementById('grantDashboardScrollbar');
+                          var contenido = barra ? barra.querySelector('.dashboard-gantt-scrollbar__content') : null;
+                          var contenedor = obtenerScrollGanttIframe(iframe);
+
+                          if (!barra || !contenido || !contenedor) return;
+
+                          var anchoScroll = obtenerAnchoContenidoGanttIframe(iframe, contenedor);
+                          var tieneScrollHorizontal = anchoScroll > (contenedor.clientWidth + 2);
+
+                          barra.style.display = tieneScrollHorizontal ? 'block' : 'none';
+                          contenido.style.width = anchoScroll + 'px';
+                          barra.scrollLeft = contenedor.scrollLeft || 0;
+
+                          if (barra._grantScrollTarget !== contenedor) {
+                            if (barra._grantScrollTarget && barra._grantTargetHandler) {
+                              barra._grantScrollTarget.removeEventListener('scroll', barra._grantTargetHandler);
+                            }
+
+                            barra._grantScrollTarget = contenedor;
+                            barra._grantTargetHandler = function () {
+                              if (barra._grantSyncing) return;
+                              barra._grantSyncing = true;
+                              barra.scrollLeft = contenedor.scrollLeft;
+                              barra._grantSyncing = false;
+                            };
+                            contenedor.addEventListener('scroll', barra._grantTargetHandler);
+                          }
+
+                          if (!barra._grantBarHandler) {
+                            barra._grantBarHandler = function () {
+                              var target = barra._grantScrollTarget || obtenerScrollGanttIframe(iframe);
+                              if (!target || barra._grantSyncing) return;
+                              barra._grantSyncing = true;
+                              target.scrollLeft = barra.scrollLeft;
+                              barra._grantSyncing = false;
+                            };
+                            barra.addEventListener('scroll', barra._grantBarHandler);
+                          }
+                        }
+
+                        function programarSincronizacionBarraGrant(iframe) {
+                          sincronizarBarraHorizontalGrant(iframe);
+                          setTimeout(function () { sincronizarBarraHorizontalGrant(iframe); }, 250);
+                          setTimeout(function () { sincronizarBarraHorizontalGrant(iframe); }, 800);
+                          setTimeout(function () { sincronizarBarraHorizontalGrant(iframe); }, 1600);
+                        }
+
+                        window.sincronizarGrantDashboardScrollbar = function () {
+                          programarSincronizacionBarraGrant(document.getElementById('iframeGrant'));
+                        };
 
                         function abrirNuevaTareaGrant() {
                           var iframe = document.getElementById('iframeGrant');
@@ -676,6 +788,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                               iframe.contentWindow.abrirPanelNuevaTareaGantt();
                               ajustarAltoGrantIframe(iframe);
                               corregirEspacioSuperiorGrantIframe(iframe);
+                              programarSincronizacionBarraGrant(iframe);
                               return;
                             }
 
@@ -693,6 +806,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                             ajustarAltoGrantIframe(iframe);
                             corregirEspacioSuperiorGrantIframe(iframe);
+                            programarSincronizacionBarraGrant(iframe);
                           } catch (e) {
                             console.warn('No se pudo abrir el formulario del Gantt', e);
                           }
@@ -718,10 +832,10 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                                 if (ganttContainer) {
                                   var cajaGantt = ganttContainer.getBoundingClientRect();
-                                  bordeInferior = Math.max(bordeInferior, Math.min(cajaGantt.bottom, cajaSvg.bottom + 18));
+                                  bordeInferior = Math.max(bordeInferior, Math.min(cajaGantt.bottom, cajaSvg.bottom + 44));
                                 }
 
-                                alto = Math.ceil(bordeInferior - cajaLayout.top + 10);
+                                alto = Math.ceil(bordeInferior - cajaLayout.top + 16);
                               }
 
                               if (!alto) {
@@ -746,6 +860,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                           aplicarAlto();
                           setTimeout(aplicarAlto, 300);
                           setTimeout(aplicarAlto, 900);
+                          programarSincronizacionBarraGrant(iframe);
 
                           try {
                             var doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -825,6 +940,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                                 iframe.contentWindow.aplicarUsuarioActualFiltroGantt(usuarioActual);
                               }
                               posicionarHoyGrant();
+                              programarSincronizacionBarraGrant(iframe);
                             } catch (e) {
                             }
                           }
@@ -843,6 +959,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 
                           ajustarAltoGrantIframe(iframe);
                           corregirEspacioSuperiorGrantIframe(iframe);
+                          programarSincronizacionBarraGrant(iframe);
 
                           try {
                             if (iframe.contentWindow && typeof iframe.contentWindow.refrescarLayoutGanttVisible === "function") {
@@ -852,6 +969,8 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                             }
                           } catch (e) {
                           }
+
+                          programarSincronizacionBarraGrant(iframe);
                         }
 
                         window.addEventListener('resize', function () {
@@ -12551,8 +12670,8 @@ style='width:150px' />
                       title='Limpiar todos los campos' onclick='limpiarcamposventa()' />
                   </td>
                   <td id='tdImprimirVenta' style='width:5%;text-align:center'>
-                    <!--img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
-title='Imprimir Venta' onclick='vercerrarOpcionesImpresion("1")' /-->
+                    <img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
+title='Imprimir Venta' onclick='vercerrarOpcionesImpresion("1")' />
                   </td>
                   <td style='width:5%;text-align:center'>
                     <img src='/GoodVentaAsisCap/iconos/buscar.png' class='iconoBtn' title='Buscar Venta'

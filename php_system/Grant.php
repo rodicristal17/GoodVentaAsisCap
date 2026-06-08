@@ -1423,7 +1423,7 @@ if (ob_get_length()) {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="<?= $grant_dashboard_embed ? 'grant-dashboard-compact-root' : '' ?>">
 
 <head>
     <meta charset="UTF-8">
@@ -2820,6 +2820,11 @@ if (ob_get_length()) {
         }
 
         /* Vista compacta cuando el Gantt se muestra dentro del dashboard */
+        html.grant-dashboard-compact-root,
+        html.grant-dashboard-compact-root body {
+            overflow-x: hidden !important;
+        }
+
         body.grant-dashboard-compact {
             display: block;
             height: 100%;
@@ -2894,7 +2899,8 @@ if (ob_get_length()) {
             justify-content: flex-start;
             min-height: 0;
             align-self: stretch;
-            overflow: hidden;
+            overflow-x: visible;
+            overflow-y: hidden;
         }
 
         body.grant-dashboard-compact .view-controls {
@@ -2932,7 +2938,24 @@ if (ob_get_length()) {
         body.grant-dashboard-compact .gantt-svg-container {
             flex: 1 1 auto !important;
             min-height: 0 !important;
-            overflow: auto !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            scrollbar-gutter: auto;
+            padding-bottom: 0;
+        }
+
+        body.grant-dashboard-compact .gantt-svg-container .gantt-container {
+            overflow-x: hidden !important;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        body.grant-dashboard-compact .gantt-svg-container::-webkit-scrollbar:horizontal,
+        body.grant-dashboard-compact .gantt-svg-container .gantt-container::-webkit-scrollbar,
+        body.grant-dashboard-compact .gantt-svg-container .gantt-container::-webkit-scrollbar:horizontal {
+            width: 0;
+            height: 0;
+            display: none;
         }
 
         body.grant-dashboard-compact .task-list-container {
@@ -3382,6 +3405,8 @@ if (ob_get_length()) {
                 gantt.change_view_mode(vistaActual);
                 mostrarMesEnFechasGantt();
                 configurarScrollGantt();
+                setTimeout(configurarScrollGantt, 160);
+                setTimeout(configurarScrollGantt, 520);
                 setTimeout(sincronizarTablaConBarrasGantt, 180);
                 setTimeout(sincronizarTablaConBarrasGantt, 500);
                 setTimeout(decorarBarrasGanttResponsables, 180);
@@ -3402,20 +3427,14 @@ if (ob_get_length()) {
         }
 
         function prepararTareasParaVistaDesdeHoy(tareas) {
-            const hoy = formatDate(new Date());
+            const inicioHorizon = formatDate(new Date(new Date().getTime() - (30 * 86400000)));
+            const finHorizon = formatDate(new Date(new Date().getTime() + (60 * 86400000)));
 
             return tareas.map(function (tarea) {
                 if (tarea.id === '__horizon__') {
                     return Object.assign({}, tarea, {
-                        start: hoy,
-                        end: formatDate(new Date(new Date().getTime() + (60 * 86400000)))
-                    });
-                }
-
-                if (tarea.start && tarea.end && tarea.start < hoy && tarea.end >= hoy) {
-                    return Object.assign({}, tarea, {
-                        fecha_inicio_original: tarea.start,
-                        start: hoy
+                        start: inicioHorizon,
+                        end: finHorizon
                     });
                 }
 
@@ -3445,6 +3464,8 @@ if (ob_get_length()) {
 
             gantt.change_view_mode(vistaActual);
             configurarScrollGantt();
+            setTimeout(configurarScrollGantt, 180);
+            setTimeout(configurarScrollGantt, 520);
             mostrarMesEnFechasGantt();
             setTimeout(sincronizarTablaConBarrasGantt, 120);
             setTimeout(decorarBarrasGanttResponsables, 140);
@@ -5386,9 +5407,72 @@ if (ob_get_length()) {
             return inicioTarea <= finMes && finTarea >= inicioMes;
         }
 
+        function obtenerAnchoContenidoGantt() {
+            const svg = document.getElementById('gantt');
+            const contenedorExterno = document.getElementById('gantt-container');
+            const contenedorInterno = contenedorExterno ? contenedorExterno.querySelector('.gantt-container') : null;
+            let anchoContenido = 0;
+
+            if (svg) {
+                anchoContenido = Math.max(anchoContenido, Number(svg.getAttribute('width')) || 0);
+
+                try {
+                    if (svg.viewBox && svg.viewBox.baseVal) {
+                        anchoContenido = Math.max(anchoContenido, Number(svg.viewBox.baseVal.width) || 0);
+                    }
+                } catch (e) {
+                }
+
+                try {
+                    const cajaSvg = svg.getBBox();
+                    anchoContenido = Math.max(anchoContenido, Math.ceil(cajaSvg.x + cajaSvg.width));
+                } catch (e) {
+                }
+            }
+
+            if (contenedorInterno) {
+                anchoContenido = Math.max(anchoContenido, contenedorInterno.scrollWidth || 0);
+            }
+
+            if (contenedorExterno) {
+                anchoContenido = Math.max(anchoContenido, contenedorExterno.scrollWidth || 0, contenedorExterno.clientWidth || 0);
+            }
+
+            return Math.ceil(anchoContenido);
+        }
+
+        function normalizarAnchoScrollGantt(recalcular) {
+            const svg = document.getElementById('gantt');
+            const contenedorExterno = document.getElementById('gantt-container');
+            const contenedorInterno = contenedorExterno ? contenedorExterno.querySelector('.gantt-container') : null;
+            if (recalcular && svg) {
+                svg.style.width = '';
+                svg.style.minWidth = '';
+            }
+            if (recalcular && contenedorInterno) {
+                contenedorInterno.style.width = '';
+                contenedorInterno.style.minWidth = '';
+            }
+
+            const anchoContenido = obtenerAnchoContenidoGantt();
+            if (!svg || !contenedorExterno || !anchoContenido) return;
+
+            const anchoMinimo = Math.max(anchoContenido, contenedorExterno.clientWidth || 0);
+            svg.style.width = anchoMinimo + 'px';
+            svg.style.minWidth = anchoMinimo + 'px';
+            svg.setAttribute('width', anchoMinimo);
+
+            if (contenedorInterno) {
+                contenedorInterno.style.width = anchoMinimo + 'px';
+                contenedorInterno.style.minWidth = anchoMinimo + 'px';
+            }
+        }
+
         function obtenerContenedorScrollGantt() {
             const contenedorExterno = document.getElementById('gantt-container');
             if (!contenedorExterno) return null;
+
+            normalizarAnchoScrollGantt(false);
 
             const contenedorInterno = contenedorExterno.querySelector('.gantt-container');
             if (contenedorInterno && (contenedorInterno.scrollLeft > 0 || contenedorInterno.scrollTop > 0)) {
@@ -5578,11 +5662,18 @@ if (ob_get_length()) {
                     return;
                 }
 
-                const xHoy = calcularPosicionFechaHoy();
+                normalizarAnchoScrollGantt(false);
+
+                const marcaHoy = document.querySelector('#gantt .today-highlight');
+                const posicionMarcaHoy = obtenerPosicionMarcaHoy(marcaHoy, contenedor);
+                const anchoVisible = contenedor.clientWidth || (panelDerecho ? panelDerecho.clientWidth : 0) || 0;
+                const xHoy = posicionMarcaHoy
+                    ? posicionMarcaHoy.x + (posicionMarcaHoy.width / 2)
+                    : calcularPosicionFechaHoy() + (obtenerAnchoColumnaVista() / 2);
                 const scrollMaximo = Math.max(0, contenedor.scrollWidth - contenedor.clientWidth);
                 const scrollObjetivo = Math.min(
                     scrollMaximo,
-                    Math.max(0, xHoy)
+                    Math.max(0, xHoy - (anchoVisible / 2))
                 );
 
                 if (typeof contenedor.scrollTo === 'function') {
@@ -5723,7 +5814,17 @@ if (ob_get_length()) {
             }
         }
 
+        function notificarScrollbarDashboardGantt() {
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.sincronizarGrantDashboardScrollbar === 'function') {
+                    window.parent.sincronizarGrantDashboardScrollbar();
+                }
+            } catch (e) {
+            }
+        }
+
         function configurarScrollGantt() {
+            normalizarAnchoScrollGantt(true);
             const contenedor = obtenerContenedorScrollGantt();
             if (contenedor && contenedor !== contenedorScrollGanttActual) {
                 if (contenedorScrollGanttActual) {
@@ -5732,6 +5833,7 @@ if (ob_get_length()) {
                 contenedor.addEventListener('scroll', sincronizarScrollListaTareas);
                 contenedorScrollGanttActual = contenedor;
             }
+            notificarScrollbarDashboardGantt();
         }
 
         configurarScrollGantt();
@@ -5745,6 +5847,8 @@ if (ob_get_length()) {
             if (!gantt) return;
             gantt.change_view_mode(mode);
             configurarScrollGantt();
+            setTimeout(configurarScrollGantt, 180);
+            setTimeout(configurarScrollGantt, 520);
             document.querySelectorAll('.view-btn:not(.task-toggle-btn)').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + mode).classList.add('active');
             mostrarMesEnFechasGantt();
