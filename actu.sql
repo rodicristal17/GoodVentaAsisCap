@@ -77,3 +77,6 @@ CREATE TABLE IF NOT EXISTS tareas_programadas_diarias (
     KEY idx_tarea_diaria_estado (estado),
     KEY idx_tarea_diaria_ultima_fecha (ultima_fecha_generada)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+UPDATE gastos SET cod_gasto_padre = NULL WHERE idgastos= 3515;

@@ -5333,6 +5333,11 @@ contenedorImpresionPresupuesto.classList.add("presupuesto-print-page");
 tb.classList.add("presupuesto-print-body");
 tb.innerHTML = document.getElementById("tdTablaPresupuesto").innerHTML;
 
+// Eliminacion ventana ayuda
+Array.from(tb.querySelectorAll("div")).forEach(function (div) {
+	div.children[0].remove();
+});
+
 // Completa con los valores
 const totalPresupuestoImp = tb.querySelector("#inptTOTALPresupuestoFORM");
 const totalPresupuestoPrioritarioImp = tb.querySelector("#inptTOTALPresupuestoFORMPrioritario");
