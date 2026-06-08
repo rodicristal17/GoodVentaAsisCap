@@ -251,6 +251,13 @@ window.onload = function () {
 			}
 		}
 	});
+	document.getElementById('inptContenidoAbmMensaje').addEventListener('blur', function() {
+		setTimeout(function() {
+			if (document.getElementById('dropdown-menciones')) {
+				document.getElementById('dropdown-menciones').style.display= "none";
+			}
+		}, 150);
+	});
 	document.getElementById('inptContenidoAbmMensaje').addEventListener('keydown', function(e) {
 		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').innerText.length;
 		
@@ -1430,7 +1437,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.84";
+var codigodeactualizacion="X-GT-1-JMTG-V1.87";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
