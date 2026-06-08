@@ -9830,7 +9830,7 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
       <div class='form-row'><label>Consultorio</label><select class='inputSelect' id='inptMovimientoInsumoConsultorio'></select></div>
       <div class='form-row'><label>Fecha</label><input class='inputText' type='date' id='inptMovimientoInsumoFecha'></div>
       <div class='form-row insumos-grid-span'><label>Motivo</label><input class='inputText' type='text' id='inptMovimientoInsumoMotivo' placeholder='Obligatorio'></div>
-      <div class='form-row'><label>Insumo</label><select class='inputSelect' id='inptMovimientoDetalleInsumo'></select></div>
+      <div class='form-row insumos-selector-movimiento'><label>Insumo</label><input class='inputText' type='text' id='inptMovimientoBuscarInsumo' placeholder='Buscar por codigo o nombre' onkeyup='filtrarComboMovimientoDetalleInsumo(event)'><select class='inputSelect' id='inptMovimientoDetalleInsumo'></select></div>
       <div class='form-row'><label>Cantidad</label><input class='inputText' type='number' min='0.001' step='any' id='inptMovimientoDetalleCantidad'></div>
     </div>
     <div class='insumos-movimiento-acciones'>

@@ -33267,12 +33267,42 @@ function opcionesLocalesInsumos(textoInicial) {
 	return html;
 }
 
-function opcionesInsumosInsumos(textoInicial) {
+function opcionesInsumosInsumos(textoInicial, filtro) {
 	var html = "<option value=''>" + (textoInicial || "Seleccionar") + "</option>";
+	var textoFiltro = String(filtro || "").toLowerCase().trim();
 	for (var i = 0; i < dashboardInsumosInsumos.length; i++) {
-		html += "<option value='" + escaparHtmlAbmInsumos(dashboardInsumosInsumos[i].id_insumo) + "'>" + escaparHtmlAbmInsumos(dashboardInsumosInsumos[i].nombre) + "</option>";
+		var insumo = dashboardInsumosInsumos[i];
+		var id = String(insumo.id_insumo || "");
+		var nombre = String(insumo.nombre || "");
+		var unidad = String(insumo.unidad_medida || "");
+		var etiqueta = id + " | " + nombre + (unidad != "" ? " (" + unidad + ")" : "");
+		if (textoFiltro != "" && etiqueta.toLowerCase().indexOf(textoFiltro) < 0) {
+			continue;
+		}
+		html += "<option value='" + escaparHtmlAbmInsumos(id) + "'>" + escaparHtmlAbmInsumos(etiqueta) + "</option>";
 	}
 	return html;
+}
+
+function actualizarComboMovimientoDetalleInsumo() {
+	if (!document.getElementById("inptMovimientoDetalleInsumo")) {
+		return;
+	}
+	var filtro = document.getElementById("inptMovimientoBuscarInsumo") ? document.getElementById("inptMovimientoBuscarInsumo").value : "";
+	document.getElementById("inptMovimientoDetalleInsumo").innerHTML = opcionesInsumosInsumos("Seleccionar", filtro);
+}
+
+function filtrarComboMovimientoDetalleInsumo(evento) {
+	actualizarComboMovimientoDetalleInsumo();
+	if (evento && evento.keyCode == 13) {
+		var select = document.getElementById("inptMovimientoDetalleInsumo");
+		if (select && select.options.length > 1) {
+			select.selectedIndex = 1;
+			if (document.getElementById("inptMovimientoDetalleCantidad")) {
+				document.getElementById("inptMovimientoDetalleCantidad").focus();
+			}
+		}
+	}
 }
 
 function prepararCombosOperativosInsumos() {
@@ -33282,11 +33312,11 @@ function prepararCombosOperativosInsumos() {
 			document.getElementById(locales[i]).innerHTML = opcionesLocalesInsumos(locales[i].indexOf("filtro") === 0 ? "Todos" : "Seleccionar");
 		}
 	}
-	var insumos = ["inptMovimientoDetalleInsumo", "filtroMovimientoInsumo"];
-	for (var j = 0; j < insumos.length; j++) {
-		if (document.getElementById(insumos[j])) {
-			document.getElementById(insumos[j]).innerHTML = opcionesInsumosInsumos(insumos[j].indexOf("filtro") === 0 ? "Todos" : "Seleccionar");
-		}
+	if (document.getElementById("inptMovimientoDetalleInsumo")) {
+		actualizarComboMovimientoDetalleInsumo();
+	}
+	if (document.getElementById("filtroMovimientoInsumo")) {
+		document.getElementById("filtroMovimientoInsumo").innerHTML = opcionesInsumosInsumos("Todos");
 	}
 	var hoy = new Date().toISOString().slice(0, 10);
 	if (document.getElementById("inptMovimientoInsumoFecha") && document.getElementById("inptMovimientoInsumoFecha").value == "") {
@@ -33315,6 +33345,13 @@ function filtrarConsultoriosGenericoInsumos(idLocal, idConsultorio) {
 function agregarDetalleMovimientoInsumo() {
 	var idInsumo = document.getElementById("inptMovimientoDetalleInsumo").value;
 	var cantidad = document.getElementById("inptMovimientoDetalleCantidad").value;
+	if (idInsumo == "" && document.getElementById("inptMovimientoBuscarInsumo") && document.getElementById("inptMovimientoBuscarInsumo").value.trim() != "") {
+		var selectInsumo = document.getElementById("inptMovimientoDetalleInsumo");
+		if (selectInsumo && selectInsumo.options.length > 1) {
+			selectInsumo.selectedIndex = 1;
+			idInsumo = selectInsumo.value;
+		}
+	}
 	if (idInsumo == "" || cantidad == "" || Number(cantidad) <= 0) {
 		ver_vetana_informativa("Seleccione un insumo y una cantidad valida.", "", "error");
 		return;
@@ -33333,12 +33370,14 @@ function agregarDetalleMovimientoInsumo() {
 			movimientoInsumosDetalle[j].cantidad = Number(movimientoInsumosDetalle[j].cantidad) + Number(cantidad);
 			renderDetalleCargaMovimientoInsumo();
 			document.getElementById("inptMovimientoDetalleCantidad").value = "";
+			document.getElementById("inptMovimientoDetalleInsumo").value = "";
 			return;
 		}
 	}
 	movimientoInsumosDetalle.push({ id_insumo: idInsumo, nombre: nombre, unidad_medida: unidad, cantidad: cantidad });
 	renderDetalleCargaMovimientoInsumo();
 	document.getElementById("inptMovimientoDetalleCantidad").value = "";
+	document.getElementById("inptMovimientoDetalleInsumo").value = "";
 }
 
 function quitarDetalleMovimientoInsumo(indice) {

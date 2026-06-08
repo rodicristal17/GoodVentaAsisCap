@@ -4035,6 +4035,16 @@ textarea:focus, select:focus {
   gap: 10px 12px;
 }
 
+.insumos-selector-movimiento {
+  min-width: 260px;
+}
+
+.insumos-selector-movimiento .inputText,
+.insumos-selector-movimiento .inputSelect {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .insumos-movimiento-acciones {
   display: flex;
   gap: 16px;
