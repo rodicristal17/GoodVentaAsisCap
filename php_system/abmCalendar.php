@@ -1,5 +1,31 @@
 <?php
 
+if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
+}
+
+if (!defined('ABM_CALENDAR_JSON_FATAL_HANDLER')) {
+    define('ABM_CALENDAR_JSON_FATAL_HANDLER', true);
+    ob_start();
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        $tiposFatales = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR);
+        if ($error && in_array($error['type'], $tiposFatales)) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=UTF-8');
+                http_response_code(200);
+            }
+            echo json_encode(array(
+                "1" => "Error",
+                "mensaje" => "Error interno al procesar calendario: " . $error['message']
+            ), JSON_INVALID_UTF8_SUBSTITUTE);
+        }
+    });
+}
+
 include_once 'verificar_navegador.php';
 include_once 'buscar_nivel.php';
 include_once 'classTable.php';
@@ -8,6 +34,18 @@ include_once 'solicitud_eliminado_helper.php';
 include_once 'abmAgenda.php';
 
 date_default_timezone_set('America/Asuncion');
+
+function responderJsonCalendar($datos)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=UTF-8');
+    }
+    echo json_encode($datos, JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
 
 $useru= "";
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
@@ -472,8 +510,7 @@ function buscarVentasPacienteAgenda($mysqli)
 {
     $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
     if ($paciente == '') {
-        echo json_encode(array("1" => "exito", "ventas" => array()));
-        exit;
+        responderJsonCalendar(array("1" => "exito", "ventas" => array()));
     }
 
     $sql = "SELECT v.cod_venta, v.num_factura, v.puntoexpedicion, v.fecha_venta, v.estadocuenta,
@@ -490,8 +527,7 @@ function buscarVentasPacienteAgenda($mysqli)
             ORDER BY v.fecha_venta DESC, v.cod_venta DESC";
     $result = $mysqli->query($sql);
     if (!$result) {
-        echo json_encode(array("1" => "Error", "mensaje" => $mysqli->error));
-        exit;
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $mysqli->error));
     }
 
     $ventas = array();
@@ -507,8 +543,7 @@ function buscarVentasPacienteAgenda($mysqli)
         );
     }
 
-    echo json_encode(array("1" => "exito", "ventas" => $ventas), JSON_INVALID_UTF8_SUBSTITUTE);
-    exit;
+    responderJsonCalendar(array("1" => "exito", "ventas" => $ventas));
 }
 
 function listarTratamientosVentaAgenda($mysqli)

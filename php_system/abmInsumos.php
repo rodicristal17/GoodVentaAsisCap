@@ -1,10 +1,7 @@
 <?php
-// ── Conexión ───────────────────────────────────────────────────────────────────
-require_once("conexion.php");
-require_once("solicitud_eliminado_helper.php");
-include_once("verificar_navegador.php");
-include_once("classTable.php");
-include_once('quitarseparadormiles.php');
+if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
+}
 
 if (!defined('ABM_INSUMOS_JSON_FATAL_HANDLER')) {
     define('ABM_INSUMOS_JSON_FATAL_HANDLER', true);
@@ -18,6 +15,7 @@ if (!defined('ABM_INSUMOS_JSON_FATAL_HANDLER')) {
             }
             if (!headers_sent()) {
                 header('Content-Type: application/json; charset=UTF-8');
+                http_response_code(200);
             }
             echo json_encode(array(
                 "1" => "ERROR",
@@ -25,9 +23,13 @@ if (!defined('ABM_INSUMOS_JSON_FATAL_HANDLER')) {
             ), JSON_INVALID_UTF8_SUBSTITUTE);
         }
     });
-if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
-    define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
 }
+// ── Conexión ───────────────────────────────────────────────────────────────────
+require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
+include_once("verificar_navegador.php");
+include_once("classTable.php");
+include_once('quitarseparadormiles.php');
 
 function ObtenerDatos($operacion)
 {

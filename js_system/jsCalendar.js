@@ -2106,6 +2106,9 @@ function cargarVentasPacienteAgenda(idPaciente, idSelect, callback){
         type: "post",
         success: function(responseText){
             try{
+                if(typeof responseText === "string" && responseText.trim() === ""){
+                    throw new Error("Respuesta vacia de abmCalendar.php al buscar ventas del paciente");
+                }
                 var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
                 var html = "<option value=''>Sin venta seleccionada</option>";
                 var ventas = resp.ventas || [];
@@ -2120,8 +2123,16 @@ function cargarVentasPacienteAgenda(idPaciente, idSelect, callback){
                 if(typeof callback === "function"){ callback(); }
             }catch(error){
                 console.error(error, responseText);
+                GuardarArchivosLog("Error cargarVentasPacienteAgenda: " + error + " \r\n Consola: " + responseText);
+                select.innerHTML = "<option value=''>No se pudieron cargar ventas</option>";
                 if(typeof callback === "function"){ callback(); }
             }
+        },
+        error: function(jqXHR, textstatus, errorThrowm){
+            console.error(jqXHR, textstatus, errorThrowm);
+            GuardarArchivosLog("Error HTTP cargarVentasPacienteAgenda: " + jqXHR.status + " \r\n Consola: " + jqXHR.responseText);
+            select.innerHTML = "<option value=''>No se pudieron cargar ventas</option>";
+            if(typeof callback === "function"){ callback(); }
         }
     });
 }
