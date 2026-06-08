@@ -8,6 +8,8 @@ var agendaVentaSeleccionada = "";
 var timeoutBuscarHistorialPacienteCalendario = null;
 var ultimaPeticionDoctoresNuevaCita = 0;
 var comentarioAgendamientoEnProceso = false;
+var resumenInsumosConsultorioPeriodo = "dia";
+var resumenInsumosConsultorioSemanaCache = {};
 
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
@@ -79,6 +81,7 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if (Respuesta == true) {
+                    resumenInsumosConsultorioSemanaCache = {};
                     agendaConsultoriosData.consultorios = datosRespuesta["consultorios"] || [];
                     agendaConsultoriosData.eventos = datosRespuesta["eventos"] || [];
                     agendaConsultoriosData.feriados = datosRespuesta["feriados"] || [];
@@ -621,7 +624,224 @@ function cargarResumenAbmConsultorioAgenda(){
     document.getElementById('lblAtendidobmConsultorioAgenda').innerHTML = totales.Atendido;
     document.getElementById('lblConDeudabmConsultorioAgenda').innerHTML = totales.ConDeuda;
 
+    renderResumenInsumosDiaConsultorioAgenda(consultorio, fecha);
     renderAgendaResumenConsultorio(consultorio, fecha);
+}
+
+function normalizarCantidadInsumoAgenda(valor){
+    var numero = parseFloat(String(valor || 0).replace(',', '.'));
+    return isNaN(numero) ? 0 : numero;
+}
+
+function formatearCantidadInsumoAgenda(valor){
+    var numero = normalizarCantidadInsumoAgenda(valor);
+    if(Math.abs(numero - Math.round(numero)) < 0.0001){
+        return String(Math.round(numero));
+    }
+    return numero.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function obtenerFechaAgendaDesdeInput(valor){
+    var partes = String(valor || '').split('-');
+    if(partes.length !== 3){ return null; }
+    var anio = parseInt(partes[0], 10);
+    var mes = parseInt(partes[1], 10);
+    var dia = parseInt(partes[2], 10);
+    if(isNaN(anio) || isNaN(mes) || isNaN(dia)){ return null; }
+    return new Date(Date.UTC(anio, mes - 1, dia));
+}
+
+function formatearFechaAgendaISO(fecha){
+    return fecha.getUTCFullYear() + '-' + completarHora(fecha.getUTCMonth() + 1) + '-' + completarHora(fecha.getUTCDate());
+}
+
+function obtenerPeriodoResumenInsumosConsultorio(fecha, periodo){
+    var fechaBase = obtenerFechaAgendaDesdeInput(fecha);
+    var inicio, fin, diaSemana;
+
+    if(!fechaBase){
+        return { desde: fecha, hasta: fecha, etiqueta: fecha || '' };
+    }
+
+    if(periodo === "semana"){
+        diaSemana = fechaBase.getUTCDay();
+        inicio = new Date(fechaBase.getTime());
+        inicio.setUTCDate(fechaBase.getUTCDate() - (diaSemana === 0 ? 6 : diaSemana - 1));
+        fin = new Date(inicio.getTime());
+        fin.setUTCDate(inicio.getUTCDate() + 6);
+        return {
+            desde: formatearFechaAgendaISO(inicio),
+            hasta: formatearFechaAgendaISO(fin),
+            etiqueta: formatearFechaAgendaISO(inicio) + " al " + formatearFechaAgendaISO(fin)
+        };
+    }
+
+    return { desde: fecha, hasta: fecha, etiqueta: fecha || '' };
+}
+
+function toggleResumenInsumosConsultorioAgenda(){
+    resumenInsumosConsultorioPeriodo = resumenInsumosConsultorioPeriodo === "semana" ? "dia" : "semana";
+    cargarResumenAbmConsultorioAgenda();
+}
+
+function obtenerClaveResumenInsumosSemanaAgenda(idConsultorio, periodo){
+    return String(idConsultorio) + "|" + periodo.desde + "|" + periodo.hasta;
+}
+
+function cargarEventosResumenInsumosSemanaAgenda(idConsultorio, fecha, periodo){
+    var clave = obtenerClaveResumenInsumosSemanaAgenda(idConsultorio, periodo);
+    var contenedor = document.getElementById('divResumenInsumosDiaConsultorioAgenda');
+    var selectLocalAgenda = document.getElementById('inptLocalAgendaFiltro');
+    var codLocal = selectLocalAgenda ? (selectLocalAgenda.value || '') : '';
+    var paciente = document.getElementById('inptBuscarPacienteAgenda') ? document.getElementById('inptBuscarPacienteAgenda').value || '' : '';
+
+    if(resumenInsumosConsultorioSemanaCache[clave] && resumenInsumosConsultorioSemanaCache[clave].cargando){
+        return;
+    }
+
+    resumenInsumosConsultorioSemanaCache[clave] = { cargando: true, eventos: [] };
+    if(contenedor){
+        contenedor.innerHTML = "<span class='agenda-ayuda-inline'>Cargando insumos de la semana...</span>";
+    }
+
+    if(codLocal == '' && selectLocalAgenda && selectLocalAgenda.options.length <= 1 && typeof cod_localFKUSer !== "undefined"){
+        codLocal = cod_localFKUSer || '';
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "paciente": paciente,
+            "cod_consultorio": idConsultorio,
+            "cod_local": codLocal,
+            "fecha": fecha,
+            "fecha_desde": periodo.desde,
+            "fecha_hasta": periodo.hasta,
+            "estado": "",
+            "ver_todos_consoltorios": controlacceso2("VERTODOSLOSCONSULTORIOS", "accion"),
+            "funt": "cargarAgenda"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                resumenInsumosConsultorioSemanaCache[clave] = {
+                    cargando: false,
+                    eventos: resp.eventos || []
+                };
+                renderResumenInsumosDiaConsultorioAgenda(idConsultorio, fecha);
+            }catch(error){
+                resumenInsumosConsultorioSemanaCache[clave] = { cargando: false, eventos: [] };
+                if(contenedor){
+                    contenedor.innerHTML = "<span class='agenda-ayuda-inline'>No se pudo cargar la semana.</span>";
+                }
+            }
+        },
+        error: function(){
+            resumenInsumosConsultorioSemanaCache[clave] = { cargando: false, eventos: [] };
+            if(contenedor){
+                contenedor.innerHTML = "<span class='agenda-ayuda-inline'>No se pudo cargar la semana.</span>";
+            }
+        }
+    });
+}
+
+function renderResumenInsumosDiaConsultorioAgenda(idConsultorio, fecha){
+    var contenedor = document.getElementById('divResumenInsumosDiaConsultorioAgenda');
+    var titulo = document.getElementById('tituloResumenInsumosConsultorioAgenda');
+    var boton = document.getElementById('btnResumenInsumosSemanaConsultorioAgenda');
+    var labelPeriodo = document.getElementById('lblResumenInsumosPeriodoConsultorioAgenda');
+    var periodo = obtenerPeriodoResumenInsumosConsultorio(fecha, resumenInsumosConsultorioPeriodo);
+    var eventosResumen = agendaConsultoriosData.eventos;
+    var claveSemana;
+    var acumulados = {};
+    var orden = [];
+    var estadosPrevistos = {
+        AGENDADO: true,
+        CONFIRMADO: true,
+        CONFIRMADOCONDEUDA: true,
+        PRIMERACONSULTA: true
+    };
+    var i, j, evento, insumos, insumo, clave, cantidad, html;
+
+    if(!contenedor){ return; }
+
+    if(titulo){
+        titulo.innerHTML = resumenInsumosConsultorioPeriodo === "semana" ? "Insumos de la semana" : "Insumos del d&iacute;a";
+    }
+    if(boton){
+        boton.innerHTML = resumenInsumosConsultorioPeriodo === "semana" ? "D&iacute;a" : "Semana";
+    }
+    if(labelPeriodo){
+        labelPeriodo.innerHTML = escaparHtmlAgenda(periodo.etiqueta);
+    }
+
+    if(resumenInsumosConsultorioPeriodo === "semana"){
+        claveSemana = obtenerClaveResumenInsumosSemanaAgenda(idConsultorio, periodo);
+        if(!resumenInsumosConsultorioSemanaCache[claveSemana]){
+            cargarEventosResumenInsumosSemanaAgenda(idConsultorio, fecha, periodo);
+            return;
+        }
+        if(resumenInsumosConsultorioSemanaCache[claveSemana].cargando){
+            return;
+        }
+        eventosResumen = resumenInsumosConsultorioSemanaCache[claveSemana].eventos || [];
+    }
+
+    for(i = 0; i < eventosResumen.length; i++){
+        evento = eventosResumen[i];
+        if(
+            evento.fecha < periodo.desde ||
+            evento.fecha > periodo.hasta ||
+            String(evento.consultorio) !== String(idConsultorio) ||
+            !estadosPrevistos[String(evento.estado || '').toUpperCase()]
+        ){
+            continue;
+        }
+
+        insumos = evento.insumos_previstos || [];
+        for(j = 0; j < insumos.length; j++){
+            insumo = insumos[j];
+            cantidad = normalizarCantidadInsumoAgenda(insumo.cantidad);
+            if(cantidad <= 0){ continue; }
+
+            clave = String(insumo.id_insumo || insumo.nombre) + "|" + String(insumo.unidad_medida || '');
+            if(!acumulados[clave]){
+                acumulados[clave] = {
+                    nombre: insumo.nombre || 'Insumo',
+                    unidad: insumo.unidad_medida || '',
+                    cantidad: 0
+                };
+                orden.push(clave);
+            }
+            acumulados[clave].cantidad += cantidad;
+        }
+    }
+
+    if(orden.length === 0){
+        contenedor.innerHTML = "<span class='agenda-ayuda-inline'>Sin insumos previstos en este periodo.</span>";
+        return;
+    }
+
+    orden.sort(function(a, b){
+        return acumulados[a].nombre.localeCompare(acumulados[b].nombre);
+    });
+
+    html = "<div class='agenda-insumos-lista'>";
+    for(i = 0; i < orden.length; i++){
+        insumo = acumulados[orden[i]];
+        html += "<div class='agenda-insumo-item agenda-insumo-item-dia'>"
+            + "<span>" + escaparHtmlAgenda(insumo.nombre) + "</span>"
+            + "<b>" + escaparHtmlAgenda(formatearCantidadInsumoAgenda(insumo.cantidad)) + " " + escaparHtmlAgenda(insumo.unidad) + "</b>"
+            + "</div>";
+    }
+    html += "</div>";
+    contenedor.innerHTML = html;
 }
 
 function obtenerConsultorioAgendaPorId(idConsultorio){
@@ -949,11 +1169,12 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         badgesAgenda += "<span class='agenda-alerta-badge'>Sin tratamiento</span>";
     }
     if(e.estado !== "FERIADO" && e.riesgo_insumos){
-        badgesAgenda += "<span class='agenda-alerta-badge agenda-alerta-badge--stock'>Faltan insumos</span>";
+        badgesAgenda += "<span class='agenda-alerta-badge agenda-alerta-badge--stock'>Stock bajo</span>";
     }
 
     var zIndex = (e.estado === "FERIADO") ? "0" : "10"; // Los feriados van al fondo
     var cursorEstilo = (e.estado === "FERIADO") ? "cursor: default;" : "";
+    var tratamientosHtml = renderTratamientosEventoAgenda(e.nombre_tratamiento_pendiente || '');
 
     var estilos = ""
         + "background:" + MiColor + ";"
@@ -982,10 +1203,38 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + badgesAgenda
     + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + (e.ci_cliente || '') + "</span>"
-    + "<span class='hora'>" + (e.nombre_tratamiento_pendiente || '') + "</span>"
+    + tratamientosHtml
     + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
     + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
     + "</div>";
+}
+
+function renderTratamientosEventoAgenda(textoTratamientos){
+    var partes = String(textoTratamientos || '').split(/<br\s*\/?>/i);
+    var html = "";
+    var i, texto, coincidencia, nombre, porcentaje;
+
+    if(!textoTratamientos){
+        return "";
+    }
+
+    html += "<span class='agenda-evento-tratamientos'>";
+    for(i = 0; i < partes.length; i++){
+        texto = partes[i].replace(/<[^>]*>/g, '').trim();
+        if(texto === ''){ continue; }
+
+        coincidencia = texto.match(/^(.*)\((\d{1,3})%\)\s*$/);
+        nombre = coincidencia ? coincidencia[1].trim() : texto;
+        porcentaje = coincidencia ? Math.max(0, Math.min(100, parseInt(coincidencia[2], 10))) : 0;
+
+        html += "<span class='agenda-evento-tratamiento'>"
+            + "<span class='agenda-evento-tratamiento-nombre'>" + escaparHtmlAgenda(nombre) + "</span>"
+            + "<b>" + porcentaje + "%</b>"
+            + "</span>";
+    }
+    html += "</span>";
+
+    return html;
 }
 
 function clickEventoAgenda(id, ev){
@@ -1728,8 +1977,13 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaCedula').innerHTML = evento.ci_cliente || '';
     document.getElementById('detAgendaTratamientoAsignado').innerHTML = (evento.nombres_tratamiento ? (evento.nombres_tratamiento + '<br>') : '');
     if(document.getElementById('detAgendaVentaAsignada')){
-        var ventaTexto = evento.cod_ventaFK ? (evento.venta_apodo || evento.paciente || "Venta seleccionada") : "Sin venta seleccionada";
-        document.getElementById('detAgendaVentaAsignada').innerHTML = ventaTexto;
+        var ventaTexto = evento.cod_ventaFK ? obtenerEtiquetaVentaAgenda({
+            paciente: evento.paciente || "",
+            apodo: evento.venta_apodo || "",
+            num_factura: evento.venta_num_factura || "",
+            cod_venta: evento.cod_ventaFK || ""
+        }) : "Sin venta seleccionada";
+        document.getElementById('detAgendaVentaAsignada').innerHTML = escaparHtmlAgenda(ventaTexto);
     }
     renderPrevisionInsumosAgenda(evento);
     document.getElementById('detAgendaTitulo').innerHTML = "Agenda de " + evento.paciente + " "+ (evento.nombres_tratamiento ? (', para ' + evento.nombres_tratamiento) : '');
@@ -1786,7 +2040,7 @@ function renderPrevisionInsumosAgenda(evento){
     var insumos = evento.insumos_previstos || [];
     var html = "";
     if(evento.riesgo_insumos){
-        html += "<span class='agenda-alerta-inline agenda-alerta-inline--stock'>Riesgo de falta de insumos</span>";
+        html += "<span class='agenda-alerta-inline agenda-alerta-inline--stock'>Stock de insumos debajo del minimo</span>";
     }
     if(insumos.length === 0){
         html += "<span class='agenda-ayuda-inline'>Sin insumos configurados para los tratamientos seleccionados.</span>";
@@ -1804,17 +2058,43 @@ function renderPrevisionInsumosAgenda(evento){
     if((evento.insumos_faltantes || []).length > 0){
         html += "<div class='agenda-insumos-faltantes'>";
         for(var j = 0; j < evento.insumos_faltantes.length; j++){
-            html += "<span>" + escaparHtmlAgenda(evento.insumos_faltantes[j].nombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + "</span>";
+            html += "<span>" + escaparHtmlAgenda(evento.insumos_faltantes[j].nombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + " para el minimo</span>";
         }
         html += "</div>";
     }
     cont.innerHTML = html;
 }
 
+function obtenerEtiquetaVentaAgenda(venta){
+    if(!venta){ return "Sin venta seleccionada"; }
+    var codigo = venta.cod_venta || venta.codVenta || "";
+    var nombre = venta.paciente || venta.nombre || venta.num_factura || "Venta seleccionada";
+    var apodo = venta.apodo || "";
+
+    return ajustarTextoColumnaVentaAgenda(codigo, 10)
+        + " | "
+        + ajustarTextoColumnaVentaAgenda(nombre, 34)
+        + " | "
+        + ajustarTextoColumnaVentaAgenda(apodo, 22);
+}
+
+function ajustarTextoColumnaVentaAgenda(valor, largo){
+    var texto = String(valor || "");
+    if(texto.length > largo){
+        return texto.substring(0, largo - 1) + "...";
+    }
+    while(texto.length < largo){
+        texto += " ";
+    }
+    return texto;
+}
+
 function cargarVentasPacienteAgenda(idPaciente, idSelect, callback){
     var select = document.getElementById(idSelect);
     if(!select){ return; }
     select.innerHTML = "<option value=''>Sin venta seleccionada</option>";
+    agendaVentaSeleccionada = "";
+    agendaTratamientosSeleccionados = [];
     if(!idPaciente){
         if(typeof callback === "function"){ callback(); }
         return;
@@ -1830,9 +2110,11 @@ function cargarVentasPacienteAgenda(idPaciente, idSelect, callback){
                 var html = "<option value=''>Sin venta seleccionada</option>";
                 var ventas = resp.ventas || [];
                 for(var i = 0; i < ventas.length; i++){
-                    var etiqueta = "Venta " + ventas[i].cod_venta + " / " + (ventas[i].num_factura || "");
-                    if(ventas[i].apodo){ etiqueta += " (" + ventas[i].apodo + ")"; }
+                    var etiqueta = obtenerEtiquetaVentaAgenda(ventas[i]);
                     html += "<option value='" + escaparHtmlAgenda(ventas[i].cod_venta) + "'>" + escaparHtmlAgenda(etiqueta) + "</option>";
+                }
+                if(ventas.length === 0){
+                    html += "<option value='' disabled>Sin ventas para este paciente</option>";
                 }
                 select.innerHTML = html;
                 if(typeof callback === "function"){ callback(); }
@@ -1864,12 +2146,14 @@ function cargarTratamientosVentaAgenda(idSelectVenta, idContenedor, idAgenda){
                 var tratamientos = resp.tratamientos || [];
                 var html = "";
                 for(var i = 0; i < tratamientos.length; i++){
+                    var progreso = Math.max(0, Math.min(100, parseInt(tratamientos[i].progreso_porcentaje || 0, 10)));
                     if(Number(tratamientos[i].seleccionado) === 1){
                         agendaTratamientosSeleccionados.push(String(tratamientos[i].cod_detalle));
                     }
                     html += "<label class='tratamiento-agenda-card tratamiento-agenda-check'>"
                         + "<input type='checkbox' value='" + escaparHtmlAgenda(tratamientos[i].cod_detalle) + "' " + (Number(tratamientos[i].seleccionado) === 1 ? "checked" : "") + " onchange='toggleTratamientoAgenda(this)'>"
-                        + "<span>" + escaparHtmlAgenda(tratamientos[i].nombre_producto) + "</span>"
+                        + "<span class='tratamiento-agenda-nombre'>" + escaparHtmlAgenda(tratamientos[i].nombre_producto) + "</span>"
+                        + "<span class='tratamiento-agenda-progreso'>" + progreso + "%</span>"
                         + "</label>";
                 }
                 cont.innerHTML = html || "<p class='agenda-ayuda-inline'>Esta venta no tiene tratamientos pendientes.</p>";

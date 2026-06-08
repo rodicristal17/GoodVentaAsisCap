@@ -1430,7 +1430,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.85";
+var codigodeactualizacion="X-GT-1-JMTG-V1.84";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -32539,6 +32539,20 @@ function verTabInsumos(tab) {
 	}
 }
 
+function toggleHistorialMovimientosInsumos(mostrar) {
+	var contenedor = document.getElementById("contenedorHistorialMovimientosInsumos");
+	var boton = document.getElementById("btnToggleHistorialMovimientosInsumos");
+	if (!contenedor) {
+		return;
+	}
+	var visible = contenedor.style.display !== "none";
+	var nuevoVisible = typeof mostrar === "boolean" ? mostrar : !visible;
+	contenedor.style.display = nuevoVisible ? "" : "none";
+	if (boton) {
+		boton.value = nuevoVisible ? "Ocultar historial" : "Ver historial";
+	}
+}
+
 function verCerrarVentanaAbmInsumos(d, l) {
 	verTabInsumos("abm");
 	if (d == "1") {
@@ -32838,6 +32852,9 @@ function cargarProductosDisponiblesAbmInsumos(callback) {
 		success: function (responseText) {
 			productosDisponiblesAbmInsumosCargando = false;
 			try {
+				if (String(responseText || "").trim() == "") {
+					throw new Error("Respuesta vacia de abmInsumos.php al cargar tratamientos");
+				}
 				var datos = $.parseJSON(responseText);
 				if (respuestaJqueryAjax(datos["1"]) != true) {
 					callbacksProductosDisponiblesAbmInsumos = [];
@@ -32852,7 +32869,7 @@ function cargarProductosDisponiblesAbmInsumos(callback) {
 			} catch (error) {
 				callbacksProductosDisponiblesAbmInsumos = [];
 				ver_vetana_informativa("NO SE PUDO CARGAR LA LISTA DE PRODUCTOS");
-				GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
+				GuardarArchivosLog("Error cargarProductosDisponiblesAbmInsumos: " + error + " \r\n Consola: " + responseText);
 			}
 		}
 	});
@@ -32895,6 +32912,29 @@ function agregarFilaProductoInsumo(codProducto, cantidad) {
 	renderProductosInsumoSeleccionables();
 }
 
+function seleccionarTodosProductosInsumo() {
+	if (productosDisponiblesAbmInsumosCargados == false) {
+		cargarProductosDisponiblesAbmInsumos(function () {
+			seleccionarTodosProductosInsumo();
+		});
+		return;
+	}
+	if (productosDisponiblesAbmInsumos.length == 0) {
+		ver_vetana_informativa("No hay tratamientos disponibles para seleccionar.");
+		return;
+	}
+	for (var i = 0; i < productosDisponiblesAbmInsumos.length; i++) {
+		var cod = String(productosDisponiblesAbmInsumos[i].cod_producto || "");
+		if (cod == "") {
+			continue;
+		}
+		if (!productosSeleccionadosAbmInsumos.hasOwnProperty(cod)) {
+			productosSeleccionadosAbmInsumos[cod] = 1;
+		}
+	}
+	renderProductosInsumoSeleccionables();
+}
+
 function renderProductosInsumoSeleccionables(seleccionados) {
 	if (seleccionados) {
 		productosSeleccionadosAbmInsumos = seleccionados;
@@ -32920,7 +32960,8 @@ function renderProductosInsumoSeleccionables(seleccionados) {
 		var producto = productosDisponiblesAbmInsumos[i];
 		var cod = String(producto.cod_producto || "");
 		var nombreProducto = producto.nombre_producto || "";
-		if (filtro != "" && nombreProducto.toLowerCase().indexOf(filtro) < 0 && cod.toLowerCase().indexOf(filtro) < 0) {
+		var etiquetaProducto = cod + " | " + nombreProducto;
+		if (filtro != "" && etiquetaProducto.toLowerCase().indexOf(filtro) < 0) {
 			continue;
 		}
 		visibles++;
@@ -32928,7 +32969,7 @@ function renderProductosInsumoSeleccionables(seleccionados) {
 		var cantidad = checked ? productosSeleccionadosAbmInsumos[cod] : 1;
 		html += "<label class='insumo-producto-card" + (checked ? " insumo-producto-card--activo" : "") + "'>";
 		html += "<input type='checkbox' class='insumo-producto-check' value='" + escaparHtmlAbmInsumos(cod) + "' " + (checked ? "checked" : "") + " onchange='toggleProductoInsumoSeleccionado(this)'>";
-		html += "<span class='insumo-producto-nombre'>" + escaparHtmlAbmInsumos(nombreProducto) + "</span>";
+		html += "<span class='insumo-producto-nombre'>" + escaparHtmlAbmInsumos(etiquetaProducto) + "</span>";
 		html += "<input type='number' class='inputText insumo-producto-cantidad' value='" + escaparHtmlAbmInsumos(cantidad) + "' min='0.01' step='any' " + (checked ? "" : "disabled") + " onclick='event.stopPropagation()' onchange='actualizarCantidadProductoInsumo(this)'>";
 		html += "</label>";
 	}

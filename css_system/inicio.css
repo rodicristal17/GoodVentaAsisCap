@@ -1536,6 +1536,9 @@ border-radius: 50%;
 #modalFiltrosAgenda {
   z-index: 3201 !important;
 }
+#modalAsignarTratamientoAgenda .modal-filtros-header {
+  display: none;
+}
 .btnTemas { width: 45%; height: 100px; border: 3px solid rgb(219, 219, 219); border-radius: 10px; float: left; margin: 1%; background-repeat: no-repeat; background-position: center center; background-size: cover; }
 .divInfoSaludo { width: 350px; position: fixed; bottom: 0px; padding: 5px; background-color: transparent; margin-bottom: 19px; }
 .tbInfoSaludo { width: 100%; background-color: rgb(30, 30, 30); color: rgb(255, 255, 255); border-radius: 21px; font-family: "Merriweather Sans"; box-shadow: rgb(0, 0, 0) 4px 6px 5px; font-size: 12px; padding: 10px; }
@@ -3893,6 +3896,21 @@ textarea:focus, select:focus {
   background: #e53935;
 }
 
+#divAbmInsumos .insumos-productos-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#divAbmInsumos .insumos-select-all-btn {
+  width: 136px;
+  height: 30px;
+  padding: 0 10px;
+  background: #2f80ed;
+}
+
 #divAbmInsumos .insumos-productos-checklist {
   width: 100%;
   min-height: 110px;
@@ -4044,6 +4062,30 @@ textarea:focus, select:focus {
   align-items: stretch;
 }
 
+.insumos-movimientos-historial-panel {
+  padding: 12px 14px;
+}
+
+.insumos-movimientos-toggle-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.insumos-movimientos-toggle-head .panel-title {
+  margin: 0;
+}
+
+.insumos-movimientos-toggle-head .panel-subtitle {
+  display: block;
+  margin-top: 3px;
+}
+
+#contenedorHistorialMovimientosInsumos {
+  margin-top: 14px;
+}
+
 .insumos-movimientos-historial,
 .insumos-movimientos-detalle {
   min-width: 0;
@@ -4086,6 +4128,11 @@ textarea:focus, select:focus {
 
   .insumos-movimiento-acciones {
     flex-wrap: wrap;
+  }
+
+  .insumos-movimientos-toggle-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .insumos-movimientos-layout,

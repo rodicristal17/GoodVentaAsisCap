@@ -1,5 +1,38 @@
 SET NAMES utf8mb4;
 
+CREATE TABLE IF NOT EXISTS insumo_producto (
+    id INT NOT NULL AUTO_INCREMENT,
+    id_insumo INT NOT NULL,
+    cod_producto VARCHAR(45) NOT NULL,
+    cantidad DECIMAL(12,3) NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_insumo_producto (id_insumo, cod_producto),
+    KEY idx_insumo_producto_insumo (id_insumo),
+    KEY idx_insumo_producto_producto (cod_producto)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+SET @tabla_insumos_existe := (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'insumosconsl'
+);
+SET @col_stock_minimo_existe := (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'insumosconsl'
+      AND COLUMN_NAME = 'stock_minimo'
+);
+SET @sql_stock_minimo := IF(
+    @tabla_insumos_existe > 0 AND @col_stock_minimo_existe = 0,
+    'ALTER TABLE insumosconsl ADD COLUMN stock_minimo INT NOT NULL DEFAULT 0',
+    'SELECT 1'
+);
+PREPARE stmt_stock_minimo FROM @sql_stock_minimo;
+EXECUTE stmt_stock_minimo;
+DEALLOCATE PREPARE stmt_stock_minimo;
+
 CREATE TABLE IF NOT EXISTS dashboard_access_catalog (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     access_key VARCHAR(120) NOT NULL,
