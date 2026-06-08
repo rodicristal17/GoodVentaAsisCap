@@ -626,14 +626,14 @@ function ri_normalizar_medicamentos($lista)
             continue;
         }
         $med = array(
-            "medicamento" => trim((string)($item["medicamento"] ?? "")),
-            "presentacion" => trim((string)($item["presentacion"] ?? "")),
-            "dosis" => trim((string)($item["dosis"] ?? "")),
-            "frecuencia" => trim((string)($item["frecuencia"] ?? "")),
-            "duracion" => trim((string)($item["duracion"] ?? "")),
-            "cantidad" => trim((string)($item["cantidad"] ?? "")),
-            "via" => trim((string)($item["via"] ?? "")),
-            "observaciones" => trim((string)($item["observaciones"] ?? ""))
+            "medicamento" => trim((string)(isset($item["medicamento"]) ? $item["medicamento"] : "")),
+            "presentacion" => trim((string)(isset($item["presentacion"]) ? $item["presentacion"] : "")),
+            "dosis" => trim((string)(isset($item["dosis"]) ? $item["dosis"] : "")),
+            "frecuencia" => trim((string)(isset($item["frecuencia"]) ? $item["frecuencia"] : "")),
+            "duracion" => trim((string)(isset($item["duracion"]) ? $item["duracion"] : "")),
+            "cantidad" => trim((string)(isset($item["cantidad"]) ? $item["cantidad"] : "")),
+            "via" => trim((string)(isset($item["via"]) ? $item["via"] : "")),
+            "observaciones" => trim((string)(isset($item["observaciones"]) ? $item["observaciones"] : ""))
         );
         if (implode("", $med) === "") {
             continue;
@@ -651,8 +651,8 @@ function ri_normalizar_indicaciones($lista)
             continue;
         }
         $indicacion = array(
-            "categoria" => trim((string)($item["categoria"] ?? "")),
-            "texto" => trim((string)($item["texto"] ?? ""))
+            "categoria" => trim((string)(isset($item["categoria"]) ? $item["categoria"] : "")),
+            "texto" => trim((string)(isset($item["texto"]) ? $item["texto"] : ""))
         );
         if ($indicacion["texto"] === "") {
             continue;

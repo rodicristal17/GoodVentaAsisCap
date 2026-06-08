@@ -5296,10 +5296,10 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
 if (ventana == "Presupuesto") {
 	
 		pagina =
-"<table class='TableRepor0' style='width:100%'>"
+"<table class='TableRepor0 presupuesto-print-meta' style='width:100%'>"
 +"<tr>"
 +"<td style='width:20%;text-align:left'>" 
-+"<p class='pTituloC'><b>CEDULTA:</b></p>"
++"<p class='pTituloC'><b>CEDULA:</b></p>"
 +"<p class='pTituloC' >"+document.getElementById('inptDocumentoClientePresupuesto').value+"</p>"
 +"</td>"
 +"<td style='width:40%;text-align:left'>"
@@ -5326,7 +5326,11 @@ var piedepagina="<div style='text-align: -webkit-right;'> <table style='width:40
 +"</table> </div>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("tbTitulosImpresiones").innerHTML="";
+document.getElementById("tbTitulosImpresiones").style.display="none";
 const tb = document.getElementById("tbDatosImpresiones");
+const contenedorImpresionPresupuesto = document.getElementById("DivImpresiones");
+contenedorImpresionPresupuesto.classList.add("presupuesto-print-page");
+tb.classList.add("presupuesto-print-body");
 tb.innerHTML = document.getElementById("tdTablaPresupuesto").innerHTML;
 
 // Completa con los valores
@@ -5335,33 +5339,39 @@ const totalPresupuestoPrioritarioImp = tb.querySelector("#inptTOTALPresupuestoFO
 const totalPresupuestoOrigen = document.getElementById("inptTOTALPresupuestoFORM");
 const totalPresupuestoPrioritarioOrigen = document.getElementById("inptTOTALPresupuestoFORMPrioritario");
 
-	totalPresupuestoImp.value = totalPresupuestoOrigen.value;
-	totalPresupuestoImp.setAttribute("value", totalPresupuestoOrigen.value);
+	if (totalPresupuestoImp) {
+		totalPresupuestoImp.value = totalPresupuestoOrigen.value;
+		totalPresupuestoImp.setAttribute("value", totalPresupuestoOrigen.value);
+	}
 
-	totalPresupuestoPrioritarioImp.value = totalPresupuestoPrioritarioOrigen.value;
-	totalPresupuestoPrioritarioImp.setAttribute("value", totalPresupuestoPrioritarioOrigen.value);
+	if (totalPresupuestoPrioritarioImp) {
+		totalPresupuestoPrioritarioImp.value = totalPresupuestoPrioritarioOrigen.value;
+		totalPresupuestoPrioritarioImp.setAttribute("value", totalPresupuestoPrioritarioOrigen.value);
+	}
 
-	//Agrega bordes a los div hijo
-	Array.from(tb.children).forEach(function (div) {
-		div.style.border= "3px solid #0077cc";
-		div.style.borderRadius= "16px";
-		div.style.marginBottom= "5px";
-		div.style.display= "flex";
-		div.style.padding= "10px";
-		div.style.marginBottom = "10px";
-	})
+	tb.querySelectorAll(".btn-eliminar, .presupuesto-doc-trash-btn").forEach(function (boton) {
+		boton.remove();
+	});
+
+	tb.querySelectorAll(".detalles-section > div").forEach(function (plan) {
+		if (!plan.querySelector("tr[name='tdDetallePresupuesto']")) {
+			plan.remove();
+		}
+	});
+
+	tb.querySelectorAll(".presupuesto-footer input").forEach(function (input) {
+		var total = input.value || input.getAttribute("value") || "0";
+		var totalTexto = document.createElement("span");
+		totalTexto.className = "presupuesto-total-print";
+		totalTexto.textContent = total + " Gs.";
+		input.replaceWith(totalTexto);
+	});
 
 // Modifica el diseño
 tb.querySelectorAll(".div_cuerpo_table").forEach(function (div) {
 	div.style.height = "auto";
 	div.style.overflow = "visible"; // opcional, útil si es para impresión
 });
-tb.querySelectorAll(".presupuesto-panel").forEach(function (div) {
-	div.style.width= "50%";
-	div.style.marginInline= "2px";
-	div.style.flex= "none";
-});
-
 // Remueve el subtitulo
 tb.querySelectorAll(".panel-subtitle").forEach(function (span) {
 	span.remove();
@@ -5374,6 +5384,9 @@ tb.querySelectorAll(".panel-subtitle").forEach(function (span) {
 document.getElementById("divCabeceraImpresiones").innerHTML=""
 document.getElementById("tbDatosImpresiones").innerHTML=""
 document.getElementById("divPieImpresiones").innerHTML=""
+document.getElementById("tbTitulosImpresiones").style.display=""
+tb.classList.remove("presupuesto-print-body");
+contenedorImpresionPresupuesto.classList.remove("presupuesto-print-page");
 
 	 localStorage.setItem("reporte", documento);
 	   localStorage.setItem("tipo", tipoReporte);

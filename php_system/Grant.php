@@ -142,17 +142,895 @@ function grant_mostrar_error($titulo, $detalle)
     exit;
 }
 
+function grant_responder_json($informacion, $codigo_http = 200)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    http_response_code($codigo_http);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(grant_normalizar_utf8($informacion));
+    exit;
+}
+
+function grant_nombre_identificador_valido($nombre)
+{
+    return preg_match('/^[a-zA-Z0-9_]+$/', (string) $nombre) === 1;
+}
+
+function grant_tabla_existe(PDO $pdo, $tabla)
+{
+    static $cache = array();
+
+    if (!grant_nombre_identificador_valido($tabla)) {
+        return false;
+    }
+
+    if (array_key_exists($tabla, $cache)) {
+        return $cache[$tabla];
+    }
+
+    try {
+        $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+        $stmt->execute(array($tabla));
+        $cache[$tabla] = $stmt->fetchColumn() !== false;
+    } catch (PDOException $e) {
+        $cache[$tabla] = false;
+    }
+
+    return $cache[$tabla];
+}
+
+function grant_columna_existe(PDO $pdo, $tabla, $columna)
+{
+    static $cache = array();
+    $clave = $tabla . '.' . $columna;
+
+    if (!grant_nombre_identificador_valido($tabla) || !grant_nombre_identificador_valido($columna)) {
+        return false;
+    }
+
+    if (array_key_exists($clave, $cache)) {
+        return $cache[$clave];
+    }
+
+    try {
+        $stmt = $pdo->prepare("SHOW COLUMNS FROM `" . $tabla . "` LIKE ?");
+        $stmt->execute(array($columna));
+        $cache[$clave] = $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+    } catch (PDOException $e) {
+        $cache[$clave] = false;
+    }
+
+    return $cache[$clave];
+}
+
+function grant_fecha_iso($valor)
+{
+    $valor = trim((string) $valor);
+    if ($valor === '') {
+        return '';
+    }
+
+    $ts = strtotime($valor);
+    if ($ts === false) {
+        return '';
+    }
+
+    return date('Y-m-d', $ts);
+}
+
+function grant_normalizar_estado($estado)
+{
+    $estado = trim((string) $estado);
+    $mapa = array(
+        'pendiente' => 'Pendiente',
+        'en progreso' => 'En Progreso',
+        'en proceso' => 'En Progreso',
+        'completada' => 'Completada',
+        'culminada' => 'Completada',
+        'anulada' => 'Anulada'
+    );
+    $clave = function_exists('mb_strtolower') ? mb_strtolower($estado, 'UTF-8') : strtolower($estado);
+
+    return isset($mapa[$clave]) ? $mapa[$clave] : 'Pendiente';
+}
+
+function grant_valor_historial($valor)
+{
+    if ($valor === null) {
+        return null;
+    }
+
+    if (is_array($valor) || is_object($valor)) {
+        return json_encode(grant_normalizar_utf8($valor));
+    }
+
+    return (string) $valor;
+}
+
+function grant_obtener_nombre_usuario(PDO $pdo, $usuario_id)
+{
+    if ($usuario_id === null || $usuario_id === '') {
+        return '';
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT nombre_persona FROM persona WHERE cod_persona = ? LIMIT 1");
+        $stmt->execute(array($usuario_id));
+        $nombre = $stmt->fetchColumn();
+        return $nombre !== false ? (string) $nombre : '';
+    } catch (PDOException $e) {
+        return '';
+    }
+}
+
+function grant_verificar_usuario_api(PDO $pdo, $payload)
+{
+    $usuario = isset($payload['useru']) ? trim((string) $payload['useru']) : '';
+    $pass = isset($payload['passu']) ? (string) $payload['passu'] : '';
+    $navegador = isset($payload['navegador']) ? trim((string) $payload['navegador']) : '';
+
+    if ($usuario === '' || $pass === '' || $navegador === '') {
+        grant_responder_json(array(
+            'status' => 'error',
+            'message' => 'Sesion no validada. Vuelva a ingresar al sistema.'
+        ), 401);
+    }
+
+    $pass = str_replace('=', '+', $pass);
+    $resp = verificar_navegador($usuario, $navegador, $pass);
+
+    if ($resp !== 'ok') {
+        grant_responder_json(array(
+            'status' => 'error',
+            'message' => 'Sesion expirada o usuario no autorizado.'
+        ), 401);
+    }
+
+    return $usuario;
+}
+
+function grant_obtener_tarea(PDO $pdo, $id)
+{
+    $stmt = $pdo->prepare("SELECT * FROM tareas WHERE id = ? LIMIT 1");
+    $stmt->execute(array($id));
+    $tarea = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $tarea ? $tarea : null;
+}
+
+function grant_registrar_historial(PDO $pdo, $tarea_id, $usuario_id, $accion, $campo, $valor_anterior, $valor_nuevo, $motivo, $origen, $metadata = array())
+{
+    if (!grant_tabla_existe($pdo, 'tarea_historial')) {
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO tarea_historial
+                (tarea_id, usuario_id, accion, campo, valor_anterior, valor_nuevo, motivo, origen, created_at, metadata_json)
+            VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
+        ");
+        $stmt->execute(array(
+            $tarea_id,
+            $usuario_id !== '' ? $usuario_id : null,
+            $accion,
+            $campo,
+            grant_valor_historial($valor_anterior),
+            grant_valor_historial($valor_nuevo),
+            $motivo !== '' ? $motivo : null,
+            $origen,
+            !empty($metadata) ? json_encode(grant_normalizar_utf8($metadata)) : null
+        ));
+    } catch (PDOException $e) {
+        error_log('Grant.php historial: ' . $e->getMessage());
+    }
+}
+
+function grant_registrar_cambios_tarea(PDO $pdo, $tarea_id, $usuario_id, $antes, $despues, $origen, $motivo = '')
+{
+    $campos = array(
+        'titulo' => 'cambio_titulo',
+        'fecha_inicio' => 'cambio_fecha_inicio',
+        'fecha_fin' => 'cambio_fecha_fin',
+        'progreso' => 'cambio_progreso',
+        'estado' => 'cambio_estado',
+        'dependencia' => 'cambio_dependencia',
+        'sucursal' => 'cambio_sucursal',
+        'responsable' => 'cambio_responsable',
+        'observacion' => 'cambio_observacion',
+        'prioridad' => 'cambio_prioridad'
+    );
+
+    $cambio_inicio = array_key_exists('fecha_inicio', $antes) && array_key_exists('fecha_inicio', $despues)
+        && (string) $antes['fecha_inicio'] !== (string) $despues['fecha_inicio'];
+    $cambio_fin = array_key_exists('fecha_fin', $antes) && array_key_exists('fecha_fin', $despues)
+        && (string) $antes['fecha_fin'] !== (string) $despues['fecha_fin'];
+
+    if ($cambio_inicio && $cambio_fin) {
+        grant_registrar_historial(
+            $pdo,
+            $tarea_id,
+            $usuario_id,
+            'movimiento',
+            'fechas',
+            array('fecha_inicio' => $antes['fecha_inicio'], 'fecha_fin' => $antes['fecha_fin']),
+            array('fecha_inicio' => $despues['fecha_inicio'], 'fecha_fin' => $despues['fecha_fin']),
+            $motivo,
+            $origen
+        );
+    } elseif ($cambio_inicio || $cambio_fin) {
+        grant_registrar_historial(
+            $pdo,
+            $tarea_id,
+            $usuario_id,
+            'cambio_duracion',
+            $cambio_inicio ? 'fecha_inicio' : 'fecha_fin',
+            $cambio_inicio ? $antes['fecha_inicio'] : $antes['fecha_fin'],
+            $cambio_inicio ? $despues['fecha_inicio'] : $despues['fecha_fin'],
+            $motivo,
+            $origen
+        );
+    }
+
+    foreach ($campos as $campo => $accion) {
+        if (!array_key_exists($campo, $antes) || !array_key_exists($campo, $despues)) {
+            continue;
+        }
+
+        if ((string) $antes[$campo] === (string) $despues[$campo]) {
+            continue;
+        }
+
+        if ($campo === 'estado') {
+            if ($despues[$campo] === 'Completada') {
+                $accion = 'culminar';
+            } elseif ($antes[$campo] === 'Completada') {
+                $accion = 'reabrir';
+            } elseif ($despues[$campo] === 'Anulada') {
+                $accion = 'anular';
+            }
+        }
+
+        grant_registrar_historial($pdo, $tarea_id, $usuario_id, $accion, $campo, $antes[$campo], $despues[$campo], $motivo, $origen);
+    }
+}
+
+function grant_actualizar_campos_tarea(PDO $pdo, $id, $campos)
+{
+    $columnas_base = array(
+        'titulo' => true,
+        'fecha_inicio' => true,
+        'fecha_fin' => true,
+        'progreso' => true,
+        'estado' => true,
+        'dependencia' => true,
+        'sucursal' => true,
+        'responsable' => true
+    );
+    $sets = array();
+    $valores = array();
+
+    foreach ($campos as $campo => $valor) {
+        if (!isset($columnas_base[$campo]) && !grant_columna_existe($pdo, 'tareas', $campo)) {
+            continue;
+        }
+
+        $sets[] = "`" . $campo . "` = ?";
+        $valores[] = $valor;
+    }
+
+    if (empty($sets)) {
+        return;
+    }
+
+    $valores[] = $id;
+    $stmt = $pdo->prepare("UPDATE tareas SET " . implode(', ', $sets) . " WHERE id = ?");
+    $stmt->execute($valores);
+}
+
+function grant_obtener_vinculados_tarea(PDO $pdo, $tarea_id)
+{
+    if (!grant_tabla_existe($pdo, 'tarea_usuarios')) {
+        return array('ids' => array(), 'nombres' => '');
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT tu.cod_usuario, p.nombre_persona
+            FROM tarea_usuarios tu
+            INNER JOIN usuario u ON u.cod_usuario = tu.cod_usuario
+            INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+            WHERE tu.tarea_id = ?
+            ORDER BY p.nombre_persona ASC
+        ");
+        $stmt->execute(array($tarea_id));
+        $ids = array();
+        $nombres = array();
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $ids[] = (int) $fila['cod_usuario'];
+            $nombres[] = $fila['nombre_persona'];
+        }
+
+        return array('ids' => $ids, 'nombres' => implode(', ', $nombres));
+    } catch (PDOException $e) {
+        return array('ids' => array(), 'nombres' => '');
+    }
+}
+
+function grant_obtener_info_responsable(PDO $pdo, $responsable)
+{
+    $responsable = trim((string) $responsable);
+    if ($responsable === '') {
+        return array('id' => null, 'foto' => '', 'rol' => '');
+    }
+
+    try {
+        $columna_rol = grant_columna_existe($pdo, 'usuario', 'tipo') ? 'u.tipo AS rol' : "'' AS rol";
+        $stmt = $pdo->prepare("
+            SELECT u.cod_usuario, u.url, " . $columna_rol . "
+            FROM usuario u
+            INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+            WHERE p.nombre_persona = ?
+            LIMIT 1
+        ");
+        $stmt->execute(array($responsable));
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$fila) {
+            return array('id' => null, 'foto' => '', 'rol' => '');
+        }
+
+        return array('id' => (int) $fila['cod_usuario'], 'foto' => (string) $fila['url'], 'rol' => (string) $fila['rol']);
+    } catch (PDOException $e) {
+        return array('id' => null, 'foto' => '', 'rol' => '');
+    }
+}
+
+function grant_formatear_ultimo_cambio($fila)
+{
+    if (!$fila || empty($fila['created_at'])) {
+        return 'Sin cambios registrados';
+    }
+
+    $ts = strtotime($fila['created_at']);
+    $fecha = $ts ? date('d/m/Y H:i', $ts) : $fila['created_at'];
+    if ($ts && date('Y-m-d', $ts) === date('Y-m-d')) {
+        $fecha = 'Hoy ' . date('H:i', $ts);
+    }
+
+    $usuario = !empty($fila['nombre_persona']) ? $fila['nombre_persona'] : 'usuario';
+    return 'Ultimo cambio: ' . $fecha . ' por ' . $usuario;
+}
+
+function grant_obtener_ultimo_cambio_tarea(PDO $pdo, $tarea_id)
+{
+    if (!grant_tabla_existe($pdo, 'tarea_historial')) {
+        return null;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT h.*, p.nombre_persona
+            FROM tarea_historial h
+            LEFT JOIN persona p ON p.cod_persona = h.usuario_id
+            WHERE h.tarea_id = ?
+            ORDER BY h.created_at DESC, h.id DESC
+            LIMIT 1
+        ");
+        $stmt->execute(array($tarea_id));
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $fila ? $fila : null;
+    } catch (PDOException $e) {
+        return null;
+    }
+}
+
+function grant_obtener_ultimos_cambios_tareas(PDO $pdo)
+{
+    $ultimos = array();
+
+    if (!grant_tabla_existe($pdo, 'tarea_historial')) {
+        return $ultimos;
+    }
+
+    try {
+        $stmt = $pdo->query("
+            SELECT h.*, p.nombre_persona
+            FROM tarea_historial h
+            LEFT JOIN persona p ON p.cod_persona = h.usuario_id
+            INNER JOIN (
+                SELECT tarea_id, MAX(id) AS ultimo_id
+                FROM tarea_historial
+                GROUP BY tarea_id
+            ) u ON u.ultimo_id = h.id
+        ");
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $ultimos[$fila['tarea_id']] = $fila;
+        }
+    } catch (PDOException $e) {
+        error_log('Grant.php ultimos cambios: ' . $e->getMessage());
+    }
+
+    return $ultimos;
+}
+
+function grant_tarea_payload(PDO $pdo, $tarea)
+{
+    $responsable = isset($tarea['responsable']) ? trim((string) $tarea['responsable']) : '';
+    $responsable_info = grant_obtener_info_responsable($pdo, $responsable);
+    $vinculados = grant_obtener_vinculados_tarea($pdo, $tarea['id']);
+    $estado = isset($tarea['estado']) ? trim((string) $tarea['estado']) : 'Pendiente';
+    $estado_visual = $estado !== '' ? $estado : 'Pendiente';
+    $class_estado = 'bar-estado-pendiente';
+    $fecha_fin_ts = strtotime($tarea['fecha_fin']);
+    $hoy_ts = strtotime(date('Y-m-d'));
+
+    if ($estado === 'Completada') {
+        $class_estado = 'bar-estado-completada';
+        $estado_visual = 'Culminada';
+    } elseif ($estado === 'Anulada') {
+        $class_estado = 'bar-estado-anulada';
+        $estado_visual = 'Anulada';
+    } elseif ($fecha_fin_ts !== false && $fecha_fin_ts < $hoy_ts) {
+        $class_estado = 'bar-estado-vencida';
+        $estado_visual = 'Vencida';
+    } elseif ($estado === 'En Progreso') {
+        $class_estado = 'bar-estado-progreso';
+        $estado_visual = 'En progreso';
+    } elseif ($fecha_fin_ts !== false && $fecha_fin_ts <= strtotime('+2 days', $hoy_ts)) {
+        $class_estado = 'bar-estado-proxima';
+        $estado_visual = 'Proxima a vencer';
+    }
+
+    $class = 'bar-general';
+    if (isset($tarea['sucursal']) && $tarea['sucursal'] === 'Villa Morra') {
+        $class = 'bar-villamorra';
+    }
+    if (isset($tarea['sucursal']) && ($tarea['sucursal'] === 'Cerro Corá' || $tarea['sucursal'] === 'Cerro CorÃ¡' || $tarea['sucursal'] === 'Cerro CorÃƒÂ¡')) {
+        $class = 'bar-CerroCora';
+    }
+    if (isset($tarea['sucursal']) && $tarea['sucursal'] === 'Oviedo') {
+        $class = 'bar-Oviedo';
+    }
+    if (isset($tarea['sucursal']) && $tarea['sucursal'] === 'San Lorenzo') {
+        $class = 'bar-SanLorenzo';
+    }
+    if (isset($tarea['sucursal']) && $tarea['sucursal'] === 'Santa Librada') {
+        $class = 'bar-SantaLibrada';
+    }
+
+    $titulo = isset($tarea['titulo']) ? (string) $tarea['titulo'] : '';
+    $nombre_barra = trim($titulo . ($responsable !== '' ? ', ' . $responsable : ''));
+    $ultimo_cambio = grant_obtener_ultimo_cambio_tarea($pdo, $tarea['id']);
+
+    return array(
+        'id' => (string) $tarea['id'],
+        'name' => $nombre_barra,
+        'start' => $tarea['fecha_inicio'],
+        'end' => $tarea['fecha_fin'],
+        'progress' => isset($tarea['progreso']) ? (int) $tarea['progreso'] : 0,
+        'dependencies' => !empty($tarea['dependencia']) ? (string) $tarea['dependencia'] : '',
+        'custom_class' => $class . ' ' . $class_estado,
+        'sucursal' => isset($tarea['sucursal']) ? $tarea['sucursal'] : '',
+        'responsable' => $responsable,
+        'responsable_id' => $responsable_info['id'],
+        'responsable_rol' => $responsable_info['rol'],
+        'usuarios_vinculados' => $vinculados['nombres'],
+        'usuarios_vinculados_ids' => $vinculados['ids'],
+        'estado' => $estado,
+        'estado_visual' => $estado_visual,
+        'foto_responsable' => $responsable_info['foto'],
+        'titulo' => $titulo,
+        'titulo_original' => $titulo,
+        'nombre_barra' => $nombre_barra,
+        'observacion' => isset($tarea['observacion']) ? (string) $tarea['observacion'] : '',
+        'prioridad' => isset($tarea['prioridad']) && $tarea['prioridad'] !== '' ? (string) $tarea['prioridad'] : 'Normal',
+        'culminada_en' => isset($tarea['culminada_en']) ? (string) $tarea['culminada_en'] : '',
+        'anulada_en' => isset($tarea['anulada_en']) ? (string) $tarea['anulada_en'] : '',
+        'motivo_anulacion' => isset($tarea['motivo_anulacion']) ? (string) $tarea['motivo_anulacion'] : '',
+        'deleted_at' => isset($tarea['deleted_at']) ? (string) $tarea['deleted_at'] : '',
+        'ultimo_cambio_texto' => grant_formatear_ultimo_cambio($ultimo_cambio)
+    );
+}
+
+function grant_sincronizar_usuario_vinculado(PDO $pdo, $tarea_id, $usuario_id)
+{
+    if ($usuario_id === null || $usuario_id === '' || !grant_tabla_existe($pdo, 'tarea_usuarios')) {
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM tarea_usuarios WHERE tarea_id = ? AND cod_usuario = ?");
+        $stmt->execute(array($tarea_id, $usuario_id));
+        if ((int) $stmt->fetchColumn() > 0) {
+            return;
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO tarea_usuarios (tarea_id, cod_usuario) VALUES (?, ?)");
+        $stmt->execute(array($tarea_id, $usuario_id));
+    } catch (PDOException $e) {
+        error_log('Grant.php vincular usuario: ' . $e->getMessage());
+    }
+}
+
+function grant_manejar_api_gantt(PDO $pdo, $payload)
+{
+    $accion = isset($payload['accion_gantt']) ? trim((string) $payload['accion_gantt']) : '';
+    if ($accion === '') {
+        grant_responder_json(array('status' => 'error', 'message' => 'Accion invalida.'), 400);
+    }
+
+    $usuario_id = grant_verificar_usuario_api($pdo, $payload);
+    $origen = isset($payload['origen']) && $payload['origen'] !== '' ? (string) $payload['origen'] : 'grilla Gantt';
+
+    try {
+        if ($accion === 'crear_rapida') {
+            $titulo = trim((string) (isset($payload['titulo']) ? $payload['titulo'] : ''));
+            $fecha = grant_fecha_iso(isset($payload['fecha_inicio']) ? $payload['fecha_inicio'] : '');
+            $sucursal = trim((string) (isset($payload['sucursal']) ? $payload['sucursal'] : 'Todas'));
+            $responsable = trim((string) (isset($payload['responsable']) ? $payload['responsable'] : ''));
+            $responsable_id = isset($payload['responsable_id']) ? trim((string) $payload['responsable_id']) : '';
+
+            if ($titulo === '' || $fecha === '') {
+                grant_responder_json(array('status' => 'error', 'message' => 'Titulo o fecha invalida.'), 400);
+            }
+
+            if ($sucursal === '') {
+                $sucursal = 'Todas';
+            }
+            if ($responsable === '') {
+                $responsable = 'Sin asignar';
+            }
+
+            $campos = array(
+                'titulo' => $titulo,
+                'fecha_inicio' => $fecha,
+                'fecha_fin' => $fecha,
+                'progreso' => 0,
+                'estado' => 'Pendiente',
+                'dependencia' => null,
+                'sucursal' => $sucursal,
+                'responsable' => $responsable
+            );
+            if (grant_columna_existe($pdo, 'tareas', 'prioridad')) {
+                $campos['prioridad'] = 'Normal';
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'created_by')) {
+                $campos['created_by'] = $usuario_id;
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) {
+                $campos['updated_by'] = $usuario_id;
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'created_at')) {
+                $campos['created_at'] = date('Y-m-d H:i:s');
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) {
+                $campos['updated_at'] = date('Y-m-d H:i:s');
+            }
+
+            $columnas = array_keys($campos);
+            $placeholders = implode(', ', array_fill(0, count($columnas), '?'));
+            $sql = "INSERT INTO tareas (`" . implode('`, `', $columnas) . "`) VALUES (" . $placeholders . ")";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array_values($campos));
+            $id = (int) $pdo->lastInsertId();
+
+            grant_sincronizar_usuario_vinculado($pdo, $id, $responsable_id);
+            grant_registrar_historial($pdo, $id, $usuario_id, 'creacion', 'tarea', null, $titulo, '', $origen, array('modo' => 'creacion_rapida'));
+
+            $tarea = grant_obtener_tarea($pdo, $id);
+            grant_responder_json(array(
+                'status' => 'success',
+                'message' => 'Tarea creada.',
+                'task' => grant_tarea_payload($pdo, $tarea),
+                'undo' => array('tipo' => 'anular_creacion', 'tarea_id' => $id)
+            ));
+        }
+
+        if ($accion === 'actualizar_fechas') {
+            $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+            $inicio = grant_fecha_iso(isset($payload['start']) ? $payload['start'] : '');
+            $fin = grant_fecha_iso(isset($payload['end']) ? $payload['end'] : '');
+            $progreso = isset($payload['progress']) ? max(0, min(100, (int) $payload['progress'])) : 0;
+            $antes = grant_obtener_tarea($pdo, $id);
+
+            if (!$antes || $inicio === '' || $fin === '') {
+                grant_responder_json(array('status' => 'error', 'message' => 'Tarea o fecha invalida.'), 400);
+            }
+
+            if (strtotime($fin) < strtotime($inicio)) {
+                $fin = $inicio;
+            }
+
+            $estado = $antes['estado'];
+            if ($progreso === 100) {
+                $estado = 'Completada';
+            } elseif ($estado === 'Pendiente' && $progreso > 0) {
+                $estado = 'En Progreso';
+            }
+
+            $campos = array(
+                'fecha_inicio' => $inicio,
+                'fecha_fin' => $fin,
+                'progreso' => $progreso,
+                'estado' => $estado
+            );
+            if ($estado === 'Completada' && grant_columna_existe($pdo, 'tareas', 'culminada_por')) {
+                $campos['culminada_por'] = $usuario_id;
+            }
+            if ($estado === 'Completada' && grant_columna_existe($pdo, 'tareas', 'culminada_en')) {
+                $campos['culminada_en'] = date('Y-m-d H:i:s');
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) {
+                $campos['updated_by'] = $usuario_id;
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) {
+                $campos['updated_at'] = date('Y-m-d H:i:s');
+            }
+
+            grant_actualizar_campos_tarea($pdo, $id, $campos);
+            $despues = grant_obtener_tarea($pdo, $id);
+            grant_registrar_cambios_tarea($pdo, $id, $usuario_id, $antes, $despues, $origen);
+
+            grant_responder_json(array(
+                'status' => 'success',
+                'message' => ($antes['fecha_inicio'] !== $inicio && $antes['fecha_fin'] !== $fin) ? 'Tarea reprogramada.' : 'Duracion actualizada.',
+                'task' => grant_tarea_payload($pdo, $despues),
+                'undo' => array(
+                    'tipo' => 'restaurar_campos',
+                    'tarea_id' => $id,
+                    'campos' => array(
+                        'fecha_inicio' => $antes['fecha_inicio'],
+                        'fecha_fin' => $antes['fecha_fin'],
+                        'progreso' => $antes['progreso'],
+                        'estado' => $antes['estado']
+                    )
+                )
+            ));
+        }
+
+        if ($accion === 'actualizar_tarea') {
+            $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+            $antes = grant_obtener_tarea($pdo, $id);
+            if (!$antes) {
+                grant_responder_json(array('status' => 'error', 'message' => 'Tarea no encontrada.'), 404);
+            }
+
+            $inicio = grant_fecha_iso(isset($payload['fecha_inicio']) ? $payload['fecha_inicio'] : $antes['fecha_inicio']);
+            $fin = grant_fecha_iso(isset($payload['fecha_fin']) ? $payload['fecha_fin'] : $antes['fecha_fin']);
+            if ($inicio === '') $inicio = $antes['fecha_inicio'];
+            if ($fin === '') $fin = $antes['fecha_fin'];
+            if (strtotime($fin) < strtotime($inicio)) $fin = $inicio;
+
+            $estado = grant_normalizar_estado(isset($payload['estado']) ? $payload['estado'] : $antes['estado']);
+            $progreso = isset($payload['progreso']) ? max(0, min(100, (int) $payload['progreso'])) : (int) $antes['progreso'];
+            if ($estado === 'Completada') $progreso = 100;
+
+            $campos = array(
+                'titulo' => trim((string) (isset($payload['titulo']) ? $payload['titulo'] : $antes['titulo'])),
+                'fecha_inicio' => $inicio,
+                'fecha_fin' => $fin,
+                'progreso' => $progreso,
+                'estado' => $estado,
+                'sucursal' => trim((string) (isset($payload['sucursal']) ? $payload['sucursal'] : $antes['sucursal'])),
+                'responsable' => trim((string) (isset($payload['responsable']) ? $payload['responsable'] : $antes['responsable']))
+            );
+            if (isset($payload['dependencia'])) {
+                $campos['dependencia'] = $payload['dependencia'] !== '' ? (int) $payload['dependencia'] : null;
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'observacion')) {
+                $campos['observacion'] = trim((string) (isset($payload['observacion']) ? $payload['observacion'] : ''));
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'prioridad')) {
+                $campos['prioridad'] = trim((string) (isset($payload['prioridad']) ? $payload['prioridad'] : 'Normal'));
+                if ($campos['prioridad'] === '') $campos['prioridad'] = 'Normal';
+            }
+            if ($estado === 'Completada' && grant_columna_existe($pdo, 'tareas', 'culminada_por')) {
+                $campos['culminada_por'] = $usuario_id;
+            }
+            if ($estado === 'Completada' && grant_columna_existe($pdo, 'tareas', 'culminada_en') && empty($antes['culminada_en'])) {
+                $campos['culminada_en'] = date('Y-m-d H:i:s');
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) {
+                $campos['updated_by'] = $usuario_id;
+            }
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) {
+                $campos['updated_at'] = date('Y-m-d H:i:s');
+            }
+
+            if ($campos['titulo'] === '') {
+                grant_responder_json(array('status' => 'error', 'message' => 'El titulo es obligatorio.'), 400);
+            }
+
+            grant_actualizar_campos_tarea($pdo, $id, $campos);
+            if (isset($payload['responsable_id']) && $payload['responsable_id'] !== '') {
+                grant_sincronizar_usuario_vinculado($pdo, $id, $payload['responsable_id']);
+            }
+            $despues = grant_obtener_tarea($pdo, $id);
+            grant_registrar_cambios_tarea($pdo, $id, $usuario_id, $antes, $despues, $origen);
+
+            $undo_campos = array();
+            foreach (array('titulo', 'fecha_inicio', 'fecha_fin', 'progreso', 'estado', 'sucursal', 'responsable', 'dependencia', 'observacion', 'prioridad') as $campo) {
+                if (array_key_exists($campo, $antes)) {
+                    $undo_campos[$campo] = $antes[$campo];
+                }
+            }
+
+            grant_responder_json(array(
+                'status' => 'success',
+                'message' => 'Tarea actualizada.',
+                'task' => grant_tarea_payload($pdo, $despues),
+                'undo' => array('tipo' => 'restaurar_campos', 'tarea_id' => $id, 'campos' => $undo_campos)
+            ));
+        }
+
+        if ($accion === 'culminar') {
+            $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+            $antes = grant_obtener_tarea($pdo, $id);
+            if (!$antes) {
+                grant_responder_json(array('status' => 'error', 'message' => 'Tarea no encontrada.'), 404);
+            }
+
+            $campos = array('estado' => 'Completada', 'progreso' => 100);
+            if (grant_columna_existe($pdo, 'tareas', 'culminada_por')) $campos['culminada_por'] = $usuario_id;
+            if (grant_columna_existe($pdo, 'tareas', 'culminada_en')) $campos['culminada_en'] = date('Y-m-d H:i:s');
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) $campos['updated_by'] = $usuario_id;
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) $campos['updated_at'] = date('Y-m-d H:i:s');
+            grant_actualizar_campos_tarea($pdo, $id, $campos);
+
+            $despues = grant_obtener_tarea($pdo, $id);
+            grant_registrar_cambios_tarea($pdo, $id, $usuario_id, $antes, $despues, $origen);
+
+            grant_responder_json(array(
+                'status' => 'success',
+                'message' => 'Tarea culminada.',
+                'task' => grant_tarea_payload($pdo, $despues),
+                'undo' => array(
+                    'tipo' => 'restaurar_campos',
+                    'tarea_id' => $id,
+                    'campos' => array('estado' => $antes['estado'], 'progreso' => $antes['progreso'])
+                )
+            ));
+        }
+
+        if ($accion === 'anular') {
+            $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+            $motivo = trim((string) (isset($payload['motivo']) ? $payload['motivo'] : ''));
+            $antes = grant_obtener_tarea($pdo, $id);
+            if (!$antes) {
+                grant_responder_json(array('status' => 'error', 'message' => 'Tarea no encontrada.'), 404);
+            }
+            if ($motivo === '') {
+                $motivo = 'Sin motivo especificado';
+            }
+
+            $campos = array('estado' => 'Anulada');
+            if (grant_columna_existe($pdo, 'tareas', 'anulada_por')) $campos['anulada_por'] = $usuario_id;
+            if (grant_columna_existe($pdo, 'tareas', 'anulada_en')) $campos['anulada_en'] = date('Y-m-d H:i:s');
+            if (grant_columna_existe($pdo, 'tareas', 'motivo_anulacion')) $campos['motivo_anulacion'] = $motivo;
+            if (grant_columna_existe($pdo, 'tareas', 'deleted_at')) $campos['deleted_at'] = date('Y-m-d H:i:s');
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) $campos['updated_by'] = $usuario_id;
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) $campos['updated_at'] = date('Y-m-d H:i:s');
+            grant_actualizar_campos_tarea($pdo, $id, $campos);
+
+            $despues = grant_obtener_tarea($pdo, $id);
+            grant_registrar_cambios_tarea($pdo, $id, $usuario_id, $antes, $despues, $origen, $motivo);
+
+            grant_responder_json(array(
+                'status' => 'success',
+                'message' => 'Tarea anulada.',
+                'task' => grant_tarea_payload($pdo, $despues),
+                'undo' => array(
+                    'tipo' => 'restaurar_anulacion',
+                    'tarea_id' => $id,
+                    'estado_anterior' => $antes['estado']
+                )
+            ));
+        }
+
+        if ($accion === 'deshacer') {
+            $undo = isset($payload['undo']) && is_array($payload['undo']) ? $payload['undo'] : array();
+            $tipo = isset($undo['tipo']) ? (string) $undo['tipo'] : '';
+            $id = isset($undo['tarea_id']) ? (int) $undo['tarea_id'] : 0;
+            $antes = grant_obtener_tarea($pdo, $id);
+            if (!$antes) {
+                grant_responder_json(array('status' => 'error', 'message' => 'Tarea no encontrada.'), 404);
+            }
+
+            if ($tipo === 'anular_creacion') {
+                $campos = array('estado' => 'Anulada');
+                if (grant_columna_existe($pdo, 'tareas', 'deleted_at')) $campos['deleted_at'] = date('Y-m-d H:i:s');
+                if (grant_columna_existe($pdo, 'tareas', 'anulada_por')) $campos['anulada_por'] = $usuario_id;
+                if (grant_columna_existe($pdo, 'tareas', 'anulada_en')) $campos['anulada_en'] = date('Y-m-d H:i:s');
+                if (grant_columna_existe($pdo, 'tareas', 'motivo_anulacion')) $campos['motivo_anulacion'] = 'Deshacer creacion rapida';
+                grant_actualizar_campos_tarea($pdo, $id, $campos);
+                $despues = grant_obtener_tarea($pdo, $id);
+                grant_registrar_historial($pdo, $id, $usuario_id, 'deshacer_creacion', 'estado', $antes['estado'], 'Anulada', 'Deshacer', 'deshacer');
+                grant_responder_json(array('status' => 'success', 'message' => 'Cambio deshecho.', 'removed' => true, 'task_id' => (string) $id));
+            }
+
+            if ($tipo === 'restaurar_anulacion') {
+                $estado_anterior = isset($undo['estado_anterior']) && $undo['estado_anterior'] !== '' ? $undo['estado_anterior'] : 'Pendiente';
+                $campos = array('estado' => grant_normalizar_estado($estado_anterior));
+                if (grant_columna_existe($pdo, 'tareas', 'deleted_at')) $campos['deleted_at'] = null;
+                if (grant_columna_existe($pdo, 'tareas', 'anulada_por')) $campos['anulada_por'] = null;
+                if (grant_columna_existe($pdo, 'tareas', 'anulada_en')) $campos['anulada_en'] = null;
+                if (grant_columna_existe($pdo, 'tareas', 'motivo_anulacion')) $campos['motivo_anulacion'] = null;
+                grant_actualizar_campos_tarea($pdo, $id, $campos);
+                $despues = grant_obtener_tarea($pdo, $id);
+                grant_registrar_historial($pdo, $id, $usuario_id, 'restaurar', 'estado', $antes['estado'], $despues['estado'], 'Deshacer anulacion', 'deshacer');
+                grant_responder_json(array('status' => 'success', 'message' => 'Cambio deshecho.', 'task' => grant_tarea_payload($pdo, $despues)));
+            }
+
+            if ($tipo === 'restaurar_campos') {
+                $campos = isset($undo['campos']) && is_array($undo['campos']) ? $undo['campos'] : array();
+                if (empty($campos)) {
+                    grant_responder_json(array('status' => 'error', 'message' => 'No hay campos para deshacer.'), 400);
+                }
+                grant_actualizar_campos_tarea($pdo, $id, $campos);
+                $despues = grant_obtener_tarea($pdo, $id);
+                grant_registrar_cambios_tarea($pdo, $id, $usuario_id, $antes, $despues, 'deshacer', 'Deshacer');
+                grant_responder_json(array('status' => 'success', 'message' => 'Cambio deshecho.', 'task' => grant_tarea_payload($pdo, $despues)));
+            }
+
+            grant_responder_json(array('status' => 'error', 'message' => 'No se pudo deshacer esta accion.'), 400);
+        }
+
+        if ($accion === 'historial') {
+            $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+            if (!grant_tabla_existe($pdo, 'tarea_historial')) {
+                grant_responder_json(array('status' => 'success', 'historial' => array()));
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT h.*, p.nombre_persona
+                FROM tarea_historial h
+                LEFT JOIN persona p ON p.cod_persona = h.usuario_id
+                WHERE h.tarea_id = ?
+                ORDER BY h.created_at DESC, h.id DESC
+            ");
+            $stmt->execute(array($id));
+            grant_responder_json(array('status' => 'success', 'historial' => $stmt->fetchAll(PDO::FETCH_ASSOC)));
+        }
+
+        grant_responder_json(array('status' => 'error', 'message' => 'Accion no soportada.'), 400);
+    } catch (PDOException $e) {
+        grant_responder_json(array('status' => 'error', 'message' => $e->getMessage()), 500);
+    }
+}
+
+$grant_content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+if (isset($_GET['api_gantt']) || stripos($grant_content_type, 'application/json') !== false) {
+    $grant_payload = json_decode(file_get_contents('php://input'), true);
+    if (is_array($grant_payload) && isset($grant_payload['accion_gantt'])) {
+        grant_manejar_api_gantt($pdo, $grant_payload);
+    }
+}
+
 // ===============================
 // CRUD - ELIMINAR
 // ===============================
 if (isset($_GET['delete'])) {
     try {
         $id = (int) $_GET['delete'];
-        $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute([$id]);
-        $pdo->prepare("DELETE FROM tareas WHERE id=?")->execute([$id]);
+        $antes = grant_obtener_tarea($pdo, $id);
+        if ($antes) {
+            $campos = array('estado' => 'Anulada');
+            if (grant_columna_existe($pdo, 'tareas', 'deleted_at')) $campos['deleted_at'] = date('Y-m-d H:i:s');
+            if (grant_columna_existe($pdo, 'tareas', 'motivo_anulacion')) $campos['motivo_anulacion'] = 'Anulada desde accion anterior';
+            grant_actualizar_campos_tarea($pdo, $id, $campos);
+            $despues = grant_obtener_tarea($pdo, $id);
+            grant_registrar_cambios_tarea($pdo, $id, null, $antes, $despues, 'formulario completo', 'Anulacion compatible');
+        }
         grant_redireccionar(grant_url_redireccion());
     } catch (PDOException $e) {
-        grant_mostrar_error('No se pudo eliminar la tarea.', $e->getMessage());
+        grant_mostrar_error('No se pudo anular la tarea.', $e->getMessage());
     }
 }
 
@@ -169,46 +1047,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ? array_values(array_unique(array_filter(array_map('intval', $_POST['usuarios_vinculados']))))
             : array();
         $tarea_id_guardada = $id;
+        $usuario_form = isset($_POST['useru']) && $_POST['useru'] !== '' ? trim((string) $_POST['useru']) : null;
+        $tarea_antes = $id ? grant_obtener_tarea($pdo, $id) : null;
+        $estado_form = grant_normalizar_estado(isset($_POST['estado']) ? $_POST['estado'] : 'Pendiente');
+        $progreso_form = isset($_POST['progreso']) ? max(0, min(100, (int) $_POST['progreso'])) : 0;
+        if ($estado_form === 'Completada') {
+            $progreso_form = 100;
+        }
 
         $pdo->beginTransaction();
 
         if ($id) {
-            $stmt = $pdo->prepare("
-                UPDATE tareas 
-                SET titulo=?, fecha_inicio=?, fecha_fin=?, progreso=?, estado=?, dependencia=?, sucursal=?, responsable=?
-                WHERE id=?
-            ");
-            $stmt->execute(array(
-                $_POST['titulo'],
-                $_POST['fecha_inicio'],
-                $_POST['fecha_fin'],
-                $_POST['progreso'],
-                $_POST['estado'],
-                $dependencia,
-                $sucursal,
-                $responsable,
-                $id
-            ));
+            $campos_form = array(
+                'titulo' => $_POST['titulo'],
+                'fecha_inicio' => grant_fecha_iso($_POST['fecha_inicio']),
+                'fecha_fin' => grant_fecha_iso($_POST['fecha_fin']),
+                'progreso' => $progreso_form,
+                'estado' => $estado_form,
+                'dependencia' => $dependencia,
+                'sucursal' => $sucursal,
+                'responsable' => $responsable
+            );
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) $campos_form['updated_by'] = $usuario_form;
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) $campos_form['updated_at'] = date('Y-m-d H:i:s');
+            if ($estado_form === 'Completada' && grant_columna_existe($pdo, 'tareas', 'culminada_por')) $campos_form['culminada_por'] = $usuario_form;
+            if ($estado_form === 'Completada' && grant_columna_existe($pdo, 'tareas', 'culminada_en')) $campos_form['culminada_en'] = date('Y-m-d H:i:s');
+            grant_actualizar_campos_tarea($pdo, $id, $campos_form);
         } else {
+            $campos_form = array(
+                'titulo' => $_POST['titulo'],
+                'fecha_inicio' => grant_fecha_iso($_POST['fecha_inicio']),
+                'fecha_fin' => grant_fecha_iso($_POST['fecha_fin']),
+                'progreso' => $progreso_form,
+                'estado' => $estado_form,
+                'dependencia' => $dependencia,
+                'sucursal' => $sucursal,
+                'responsable' => $responsable
+            );
+            if (grant_columna_existe($pdo, 'tareas', 'prioridad')) $campos_form['prioridad'] = 'Normal';
+            if (grant_columna_existe($pdo, 'tareas', 'created_by')) $campos_form['created_by'] = $usuario_form;
+            if (grant_columna_existe($pdo, 'tareas', 'updated_by')) $campos_form['updated_by'] = $usuario_form;
+            if (grant_columna_existe($pdo, 'tareas', 'created_at')) $campos_form['created_at'] = date('Y-m-d H:i:s');
+            if (grant_columna_existe($pdo, 'tareas', 'updated_at')) $campos_form['updated_at'] = date('Y-m-d H:i:s');
+
+            $columnas_form = array_keys($campos_form);
             $stmt = $pdo->prepare("
-                INSERT INTO tareas (titulo, fecha_inicio, fecha_fin, progreso, estado, dependencia, sucursal, responsable)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO tareas (`" . implode('`, `', $columnas_form) . "`)
+                VALUES (" . implode(', ', array_fill(0, count($columnas_form), '?')) . ")
             ");
-            $stmt->execute(array(
-                $_POST['titulo'],
-                $_POST['fecha_inicio'],
-                $_POST['fecha_fin'],
-                $_POST['progreso'],
-                $_POST['estado'],
-                $dependencia,
-                $sucursal,
-                $responsable
-            ));
+            $stmt->execute(array_values($campos_form));
             $tarea_id_guardada = (int) $pdo->lastInsertId();
         }
 
-        $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute(array($tarea_id_guardada));
-        if (!empty($usuarios_vinculados)) {
+        if (grant_tabla_existe($pdo, 'tarea_usuarios')) {
+            $pdo->prepare("DELETE FROM tarea_usuarios WHERE tarea_id=?")->execute(array($tarea_id_guardada));
+        }
+        if (!empty($usuarios_vinculados) && grant_tabla_existe($pdo, 'tarea_usuarios')) {
             $stmtUsuarioTarea = $pdo->prepare("
                 INSERT INTO tarea_usuarios (tarea_id, cod_usuario)
                 VALUES (?, ?)
@@ -216,6 +1110,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($usuarios_vinculados as $cod_usuario) {
                 $stmtUsuarioTarea->execute(array($tarea_id_guardada, $cod_usuario));
             }
+        }
+
+        $tarea_despues = grant_obtener_tarea($pdo, $tarea_id_guardada);
+        if ($tarea_antes) {
+            grant_registrar_cambios_tarea($pdo, $tarea_id_guardada, $usuario_form, $tarea_antes, $tarea_despues, 'formulario completo');
+        } else {
+            grant_registrar_historial($pdo, $tarea_id_guardada, $usuario_form, 'creacion', 'tarea', null, $tarea_despues ? $tarea_despues['titulo'] : '', '', 'formulario completo');
         }
 
         $pdo->commit();
@@ -231,24 +1132,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ===============================
 // OBTENER TAREAS Y ORDENAR
 // ===============================
-$stmt = $pdo->query("SELECT * FROM tareas ORDER BY fecha_inicio ASC");
+$condiciones_tareas = array("(estado IS NULL OR estado <> 'Anulada')");
+if (grant_columna_existe($pdo, 'tareas', 'deleted_at')) {
+    $condiciones_tareas[] = "deleted_at IS NULL";
+}
+$stmt = $pdo->query("SELECT * FROM tareas WHERE " . implode(' AND ', $condiciones_tareas) . " ORDER BY fecha_inicio ASC");
 $tareas_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $usuarios_por_tarea = [];
-$stmtTareaUsuarios = $pdo->query("
-    SELECT tu.tarea_id,
-           GROUP_CONCAT(tu.cod_usuario ORDER BY p.nombre_persona SEPARATOR ',') AS ids,
-           GROUP_CONCAT(p.nombre_persona ORDER BY p.nombre_persona SEPARATOR ', ') AS nombres
-    FROM tarea_usuarios tu
-    INNER JOIN usuario u ON u.cod_usuario = tu.cod_usuario
-    INNER JOIN persona p ON p.cod_persona = u.cod_usuario
-    GROUP BY tu.tarea_id
-");
-foreach ($stmtTareaUsuarios->fetchAll(PDO::FETCH_ASSOC) as $filaTareaUsuario) {
-    $usuarios_por_tarea[$filaTareaUsuario['tarea_id']] = [
-        'ids' => $filaTareaUsuario['ids'] !== '' ? array_map('intval', explode(',', $filaTareaUsuario['ids'])) : [],
-        'nombres' => $filaTareaUsuario['nombres']
-    ];
+if (grant_tabla_existe($pdo, 'tarea_usuarios')) {
+    $stmtTareaUsuarios = $pdo->query("
+        SELECT tu.tarea_id,
+               GROUP_CONCAT(tu.cod_usuario ORDER BY p.nombre_persona SEPARATOR ',') AS ids,
+               GROUP_CONCAT(p.nombre_persona ORDER BY p.nombre_persona SEPARATOR ', ') AS nombres
+        FROM tarea_usuarios tu
+        INNER JOIN usuario u ON u.cod_usuario = tu.cod_usuario
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        GROUP BY tu.tarea_id
+    ");
+    foreach ($stmtTareaUsuarios->fetchAll(PDO::FETCH_ASSOC) as $filaTareaUsuario) {
+        $usuarios_por_tarea[$filaTareaUsuario['tarea_id']] = [
+            'ids' => $filaTareaUsuario['ids'] !== '' ? array_map('intval', explode(',', $filaTareaUsuario['ids'])) : [],
+            'nombres' => $filaTareaUsuario['nombres']
+        ];
+    }
 }
 
 foreach ($tareas_db as &$tarea_db) {
@@ -260,8 +1167,9 @@ foreach ($tareas_db as &$tarea_db) {
 }
 unset($tarea_db);
 
+$columna_rol_usuario = grant_columna_existe($pdo, 'usuario', 'tipo') ? 'u.tipo AS rol_usuario' : "'' AS rol_usuario";
 $stmtUsuarios = $pdo->query("
-    SELECT u.cod_usuario, p.nombre_persona, u.url
+    SELECT u.cod_usuario, p.nombre_persona, u.url, " . $columna_rol_usuario . "
     FROM usuario u
     INNER JOIN persona p ON p.cod_persona = u.cod_usuario
     WHERE u.estado = 'Activo'
@@ -270,12 +1178,15 @@ $stmtUsuarios = $pdo->query("
 $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
 $fotos_usuarios = [];
 $ids_usuarios_por_nombre = [];
+$roles_usuarios_por_nombre = [];
 foreach ($usuarios as $usuario) {
     $nombre_usuario_foto = trim((string) $usuario['nombre_persona']);
     $url_usuario_foto = trim((string) $usuario['url']);
+    $rol_usuario_foto = isset($usuario['rol_usuario']) ? trim((string) $usuario['rol_usuario']) : '';
     if ($nombre_usuario_foto !== '') {
         $fotos_usuarios[mb_strtolower($nombre_usuario_foto, 'UTF-8')] = $url_usuario_foto;
         $ids_usuarios_por_nombre[mb_strtolower($nombre_usuario_foto, 'UTF-8')] = (int) $usuario['cod_usuario'];
+        $roles_usuarios_por_nombre[mb_strtolower($nombre_usuario_foto, 'UTF-8')] = $rol_usuario_foto;
     }
 }
 
@@ -327,6 +1238,7 @@ foreach ($tareas_db as $t) {
 
 // ===============================
 $tareas_gantt = [];
+$ultimos_cambios_tareas = grant_obtener_ultimos_cambios_tareas($pdo);
 foreach ($tareas_ordenadas as $t) {
     // Colores dinámicos por sucursal
     $class = 'bar-general';
@@ -351,7 +1263,10 @@ foreach ($tareas_ordenadas as $t) {
 
     if ($estadoTarea == 'Completada') {
         $classEstado = 'bar-estado-completada';
-        $estadoVisual = 'Completada';
+        $estadoVisual = 'Culminada';
+    } elseif ($estadoTarea == 'Anulada') {
+        $classEstado = 'bar-estado-anulada';
+        $estadoVisual = 'Anulada';
     } elseif ($fechaFinTs !== false && $fechaFinTs < $hoyTs) {
         $classEstado = 'bar-estado-vencida';
         $estadoVisual = 'Vencida';
@@ -370,6 +1285,9 @@ foreach ($tareas_ordenadas as $t) {
     $fotoResponsable = $responsableTarea !== ''
         ? (isset($fotos_usuarios[mb_strtolower($responsableTarea, 'UTF-8')]) ? $fotos_usuarios[mb_strtolower($responsableTarea, 'UTF-8')] : '')
         : '';
+    $rolResponsable = $responsableTarea !== ''
+        ? (isset($roles_usuarios_por_nombre[mb_strtolower($responsableTarea, 'UTF-8')]) ? $roles_usuarios_por_nombre[mb_strtolower($responsableTarea, 'UTF-8')] : '')
+        : '';
     $nombreBarra = trim($t['titulo_gantt'] . ($responsableTarea !== '' ? ', ' . $responsableTarea : ''));
 
     $tareas_gantt[] = [
@@ -383,17 +1301,97 @@ foreach ($tareas_ordenadas as $t) {
         'sucursal' => $t['sucursal'],
         'responsable' => $responsableTarea,
         'responsable_id' => $responsableId,
+        'responsable_rol' => $rolResponsable,
         'usuarios_vinculados' => $t['usuarios_vinculados'],
         'usuarios_vinculados_ids' => $t['usuarios_vinculados_ids'],
         'estado' => $estadoTarea,
         'estado_visual' => $estadoVisual,
         'foto_responsable' => $fotoResponsable,
+        'titulo' => $t['titulo'],
         'titulo_original' => $t['titulo_gantt'],
-        'nombre_barra' => $nombreBarra
+        'nombre_barra' => $nombreBarra,
+        'observacion' => isset($t['observacion']) ? $t['observacion'] : '',
+        'prioridad' => isset($t['prioridad']) && $t['prioridad'] !== '' ? $t['prioridad'] : 'Normal',
+        'culminada_en' => isset($t['culminada_en']) ? $t['culminada_en'] : '',
+        'anulada_en' => isset($t['anulada_en']) ? $t['anulada_en'] : '',
+        'motivo_anulacion' => isset($t['motivo_anulacion']) ? $t['motivo_anulacion'] : '',
+        'deleted_at' => isset($t['deleted_at']) ? $t['deleted_at'] : '',
+        'ultimo_cambio_texto' => isset($ultimos_cambios_tareas[$t['id']])
+            ? grant_formatear_ultimo_cambio($ultimos_cambios_tareas[$t['id']])
+            : 'Sin cambios registrados'
     ];
 }
 
 // ---- TAREA FANTASMA para centrar la fecha actual sin cargar todo el año ----
+// ---- REPORTE DE ACTIVIDADES: incluye tareas activas y anuladas para filtrar la impresion ----
+$tareas_reporte = [];
+try {
+    $stmtReporte = $pdo->query("SELECT * FROM tareas ORDER BY fecha_inicio ASC");
+    $tareas_reporte_db = $stmtReporte->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log('Grant.php reporte actividades: ' . $e->getMessage());
+    $tareas_reporte_db = $tareas_db;
+}
+
+foreach ($tareas_reporte_db as $t) {
+    $responsableTarea = isset($t['responsable']) ? trim((string) $t['responsable']) : '';
+    $claveResponsable = $responsableTarea !== '' ? mb_strtolower($responsableTarea, 'UTF-8') : '';
+    $responsableId = $claveResponsable !== '' && isset($ids_usuarios_por_nombre[$claveResponsable])
+        ? $ids_usuarios_por_nombre[$claveResponsable]
+        : null;
+    $fotoResponsable = $claveResponsable !== '' && isset($fotos_usuarios[$claveResponsable])
+        ? $fotos_usuarios[$claveResponsable]
+        : '';
+    $rolResponsable = $claveResponsable !== '' && isset($roles_usuarios_por_nombre[$claveResponsable])
+        ? $roles_usuarios_por_nombre[$claveResponsable]
+        : '';
+    $vinculados = isset($usuarios_por_tarea[$t['id']])
+        ? $usuarios_por_tarea[$t['id']]
+        : ['ids' => [], 'nombres' => ''];
+    $estadoTarea = isset($t['estado']) ? trim((string) $t['estado']) : 'Pendiente';
+    $fechaFinTs = isset($t['fecha_fin']) ? strtotime($t['fecha_fin']) : false;
+    $hoyTs = strtotime(date('Y-m-d'));
+    $deletedAtReporte = isset($t['deleted_at']) ? trim((string) $t['deleted_at']) : '';
+    $estadoVisual = $estadoTarea !== '' ? $estadoTarea : 'Pendiente';
+
+    if ($estadoTarea === 'Completada') {
+        $estadoVisual = 'Culminada';
+    } elseif ($estadoTarea === 'Anulada' || $deletedAtReporte !== '') {
+        $estadoVisual = 'Anulada';
+    } elseif ($fechaFinTs !== false && $fechaFinTs < $hoyTs) {
+        $estadoVisual = 'Vencida';
+    } elseif ($estadoTarea === 'En Progreso') {
+        $estadoVisual = 'En proceso';
+    }
+
+    $tareas_reporte[] = [
+        'id' => (string) $t['id'],
+        'titulo' => isset($t['titulo']) ? (string) $t['titulo'] : '',
+        'name' => isset($t['titulo']) ? (string) $t['titulo'] : '',
+        'start' => isset($t['fecha_inicio']) ? $t['fecha_inicio'] : '',
+        'end' => isset($t['fecha_fin']) ? $t['fecha_fin'] : '',
+        'fecha_inicio' => isset($t['fecha_inicio']) ? $t['fecha_inicio'] : '',
+        'fecha_fin' => isset($t['fecha_fin']) ? $t['fecha_fin'] : '',
+        'progress' => isset($t['progreso']) ? (int) $t['progreso'] : 0,
+        'sucursal' => isset($t['sucursal']) ? (string) $t['sucursal'] : '',
+        'responsable' => $responsableTarea,
+        'responsable_id' => $responsableId,
+        'responsable_rol' => $rolResponsable,
+        'foto_responsable' => $fotoResponsable,
+        'usuarios_vinculados' => $vinculados['nombres'],
+        'usuarios_vinculados_ids' => $vinculados['ids'],
+        'estado' => $estadoTarea,
+        'estado_visual' => $estadoVisual,
+        'observacion' => isset($t['observacion']) ? (string) $t['observacion'] : '',
+        'prioridad' => isset($t['prioridad']) && $t['prioridad'] !== '' ? (string) $t['prioridad'] : 'Normal',
+        'culminada_en' => isset($t['culminada_en']) ? (string) $t['culminada_en'] : '',
+        'anulada_en' => isset($t['anulada_en']) ? (string) $t['anulada_en'] : '',
+        'motivo_anulacion' => isset($t['motivo_anulacion']) ? (string) $t['motivo_anulacion'] : '',
+        'deleted_at' => $deletedAtReporte
+    ];
+}
+
+// ---- TAREA FANTASMA para centrar la fecha actual sin cargar todo el ano ----
 $inicio_horizonte = date('Y-m-d', strtotime('-30 days'));
 $fin_horizonte = date('Y-m-d', strtotime('+30 days'));
 $tareas_gantt[] = [
@@ -412,6 +1410,11 @@ $json = json_encode(grant_normalizar_utf8($tareas_gantt));
 if ($json === false) {
     error_log('Grant.php: json_encode fallo: ' . json_last_error_msg());
     $json = '[]';
+}
+$json_reporte = json_encode(grant_normalizar_utf8($tareas_reporte));
+if ($json_reporte === false) {
+    error_log('Grant.php: json_encode reporte fallo: ' . json_last_error_msg());
+    $json_reporte = '[]';
 }
 $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard';
 if (ob_get_length()) {
@@ -534,6 +1537,14 @@ if (ob_get_length()) {
             font-size: 12px;
             border: 1px solid #ccc;
             border-radius: 4px;
+        }
+
+        .report-filter-input {
+            min-width: 118px;
+        }
+
+        .task-print-btn {
+            font-weight: 700;
         }
 
         /* Separador visual entre filtros y vistas */
@@ -1110,7 +2121,8 @@ if (ob_get_length()) {
         }
 
         .task-table a[title="Editar"],
-        .task-table a[title="Eliminar"] {
+        .task-table a[title="Eliminar"],
+        .task-table a[title="Anular tarea"] {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -1127,12 +2139,14 @@ if (ob_get_length()) {
             background: #dbeafe;
         }
 
-        .task-table a[title="Eliminar"]:hover {
+        .task-table a[title="Eliminar"]:hover,
+        .task-table a[title="Anular tarea"]:hover {
             background: #fee2e2;
         }
 
         .task-table a[title="Editar"]:active,
-        .task-table a[title="Eliminar"]:active {
+        .task-table a[title="Eliminar"]:active,
+        .task-table a[title="Anular tarea"]:active {
             transform: scale(0.96);
         }
 
@@ -1219,8 +2233,13 @@ if (ob_get_length()) {
         }
 
         .gantt .bar-label {
-            font-size: 11px;
-            font-weight: 700;
+            fill: #fff !important;
+            font-size: 10px;
+            font-weight: 800;
+            paint-order: stroke;
+            stroke: rgba(15, 23, 42, 0.38);
+            stroke-width: 1.8px;
+            stroke-linejoin: round;
         }
 
         .gantt .grant-avatar {
@@ -1233,6 +2252,7 @@ if (ob_get_length()) {
 
         .gantt .bar-wrapper .bar-label {
             dominant-baseline: middle;
+            text-rendering: geometricPrecision;
         }
 
         .gantt .lower-text,
@@ -1247,6 +2267,10 @@ if (ob_get_length()) {
 
         .bar-general .bar {
             fill: #64748b !important;
+        }
+
+        .bar-CerroCora .bar {
+            fill: #0ea5e9 !important;
         }
 
         .bar-villamorra .bar {
@@ -1275,31 +2299,41 @@ if (ob_get_length()) {
         }
 
         .bar-estado-pendiente .bar {
-            fill: #64748b !important;
+            fill: #475569 !important;
         }
 
         .bar-estado-progreso .bar {
-            fill: #2563eb !important;
+            fill: #1d4ed8 !important;
         }
 
         .bar-estado-proxima .bar {
-            fill: #f59e0b !important;
+            fill: #b45309 !important;
         }
 
         .bar-estado-vencida .bar {
-            fill: #dc2626 !important;
+            fill: #b91c1c !important;
         }
 
         .bar-estado-completada .bar {
-            fill: #159947 !important;
+            fill: #047857 !important;
+        }
+
+        .bar-estado-anulada .bar {
+            fill: #6b7280 !important;
+            opacity: 0.78;
         }
 
         .bar-estado-pendiente .bar-progress,
         .bar-estado-progreso .bar-progress,
         .bar-estado-proxima .bar-progress,
         .bar-estado-vencida .bar-progress,
-        .bar-estado-completada .bar-progress {
+        .bar-estado-completada .bar-progress,
+        .bar-estado-anulada .bar-progress {
             fill: rgba(255, 255, 255, 0.28) !important;
+        }
+
+        .gantt .bar-wrapper {
+            cursor: pointer;
         }
 
         .gantt-tooltip-custom {
@@ -1341,6 +2375,251 @@ if (ob_get_length()) {
 
         .gantt-tooltip-custom__meta b {
             color: #93c5fd;
+            font-weight: 800;
+        }
+
+        .gantt-quick-create {
+            position: fixed;
+            z-index: 100020;
+            width: min(260px, calc(100vw - 24px));
+            padding: 6px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 18px 44px rgba(16, 24, 40, 0.22);
+        }
+
+        .gantt-quick-create input,
+        .gantt-quick-panel input,
+        .gantt-quick-panel select,
+        .gantt-quick-panel textarea,
+        .gantt-dialog select,
+        .gantt-dialog textarea {
+            width: 100%;
+            min-width: 0;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--grant-ink);
+            font-size: 12px;
+            outline: none;
+        }
+
+        .gantt-quick-create input {
+            height: 34px;
+            padding: 8px 10px;
+        }
+
+        .gantt-quick-panel {
+            position: fixed;
+            z-index: 100010;
+            top: 14px;
+            right: 14px;
+            width: min(390px, calc(100vw - 28px));
+            max-height: calc(100vh - 28px);
+            overflow: auto;
+            padding: 14px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 24px 60px rgba(16, 24, 40, 0.24);
+        }
+
+        .gantt-quick-panel__header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .gantt-quick-panel__header h2 {
+            margin: 4px 0 0;
+            color: var(--grant-ink);
+            font-size: 16px;
+            line-height: 1.25;
+        }
+
+        .gantt-quick-panel__eyebrow {
+            display: inline-flex;
+            min-height: 22px;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #eef4ff;
+            color: var(--grant-blue);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .gantt-icon-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--grant-muted);
+            cursor: pointer;
+            font-weight: 800;
+        }
+
+        .gantt-quick-panel label,
+        .gantt-dialog label {
+            display: block;
+            margin: 8px 0 5px;
+            color: var(--grant-muted);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .gantt-quick-panel input,
+        .gantt-quick-panel select {
+            height: 36px;
+            padding: 8px 10px;
+        }
+
+        .gantt-quick-panel textarea,
+        .gantt-dialog textarea {
+            min-height: 72px;
+            padding: 8px 10px;
+            resize: vertical;
+        }
+
+        .gantt-quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .gantt-quick-panel__last {
+            margin: 10px 0 0;
+            color: var(--grant-muted);
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .gantt-quick-panel__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .gantt-quick-panel__actions button {
+            flex: 1 1 auto;
+        }
+
+        .gantt-danger-link {
+            color: #b42318;
+            border-color: #fecaca;
+        }
+
+        .gantt-quick-panel__history {
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #f9fafb;
+            color: #344054;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .gantt-history-item {
+            padding: 7px 0;
+            border-bottom: 1px solid #e7ebf1;
+        }
+
+        .gantt-history-item:last-child {
+            border-bottom: 0;
+        }
+
+        .gantt-history-item strong {
+            display: block;
+            color: var(--grant-ink);
+            font-size: 12px;
+        }
+
+        .gantt-dialog-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 100030;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(15, 23, 42, 0.28);
+        }
+
+        .gantt-dialog {
+            width: min(420px, 100%);
+            padding: 16px;
+            border: 1px solid var(--grant-line);
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 24px 60px rgba(16, 24, 40, 0.28);
+        }
+
+        .gantt-dialog h3 {
+            margin: 0 0 6px;
+            color: var(--grant-ink);
+            font-size: 16px;
+        }
+
+        .gantt-dialog p {
+            margin: 0 0 10px;
+            color: var(--grant-muted);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .gantt-dialog select {
+            height: 36px;
+            padding: 8px 10px;
+        }
+
+        .gantt-dialog__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .gantt-btn-danger {
+            background: #b42318 !important;
+        }
+
+        .gantt-toast-zone {
+            position: fixed;
+            z-index: 100040;
+            right: 14px;
+            bottom: 14px;
+            display: grid;
+            gap: 8px;
+            width: min(340px, calc(100vw - 28px));
+        }
+
+        .gantt-toast {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            min-height: 42px;
+            padding: 10px 12px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 8px;
+            background: #111827;
+            color: #fff;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+            font-size: 12px;
+        }
+
+        .gantt-toast button {
+            border: 0;
+            background: transparent;
+            color: #93c5fd;
+            cursor: pointer;
+            font-size: 12px;
             font-weight: 800;
         }
 
@@ -1726,6 +3005,9 @@ if (ob_get_length()) {
         <summary>Nueva tarea</summary>
         <form method="POST" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>" id="taskForm" class="form-grid">
             <input type="hidden" name="id" id="form_id" value="">
+            <input type="hidden" name="useru" id="grant_form_useru" value="">
+            <input type="hidden" name="passu" id="grant_form_passu" value="">
+            <input type="hidden" name="navegador" id="grant_form_navegador" value="">
             
             <div>
                 <label style="font-size: 12px; font-weight:bold;" id="form_title">Nueva Tarea:</label>
@@ -1748,7 +3030,7 @@ if (ob_get_length()) {
                 <select name="estado" id="form_estado">
                     <option value="Pendiente">Pendiente</option>
                     <option value="En Progreso">En Progreso</option>
-                    <option value="Completada">Completada</option>
+                    <option value="Completada">Culminada</option>
                 </select>
             </div>
             <div>
@@ -1768,7 +3050,8 @@ if (ob_get_length()) {
                     <option value="">Sin asignar</option>
                     <?php foreach ($usuarios as $usuario): ?>
                         <option value="<?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>"
-                            data-usuario-id="<?= (int) $usuario['cod_usuario'] ?>">
+                            data-usuario-id="<?= (int) $usuario['cod_usuario'] ?>"
+                            data-rol="<?= htmlspecialchars((isset($usuario['rol_usuario']) ? $usuario['rol_usuario'] : ''), ENT_QUOTES) ?>">
                             <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
                         </option>
                     <?php endforeach; ?>
@@ -1881,11 +3164,24 @@ if (ob_get_length()) {
                         onkeyup="aplicarFiltros()">
 
                     <select id="filtro-usuario" class="filter-input" onchange="aplicarFiltroUsuarioGantt()">
+                        <option value="">Funcionario</option>
                         <?php foreach ($usuarios as $usuario): ?>
-                            <option value="<?= (int) $usuario['cod_usuario'] ?>" data-nombre="<?= htmlspecialchars(mb_strtolower($usuario['nombre_persona'], 'UTF-8'), ENT_QUOTES) ?>">
+                            <option value="<?= (int) $usuario['cod_usuario'] ?>" data-nombre="<?= htmlspecialchars(mb_strtolower($usuario['nombre_persona'], 'UTF-8'), ENT_QUOTES) ?>" data-rol="<?= htmlspecialchars((isset($usuario['rol_usuario']) ? $usuario['rol_usuario'] : ''), ENT_QUOTES) ?>">
                                 <?= htmlspecialchars($usuario['nombre_persona'], ENT_QUOTES) ?>
                             </option>
                         <?php endforeach; ?>
+                    </select>
+
+                    <input type="date" id="reporte-fecha-desde" class="filter-input report-filter-input" title="Fecha desde" onchange="aplicarFiltros()">
+                    <input type="date" id="reporte-fecha-hasta" class="filter-input report-filter-input" title="Fecha hasta" onchange="aplicarFiltros()">
+
+                    <select id="reporte-estado" class="filter-input report-filter-input" title="Estado del reporte" onchange="aplicarFiltros()">
+                        <option value="Todas">Todas</option>
+                        <option value="Pendiente">Pendientes</option>
+                        <option value="En Progreso">En proceso</option>
+                        <option value="Completada">Culminadas</option>
+                        <option value="Vencida">Vencidas</option>
+                        <option value="Anulada">Anuladas</option>
                     </select>
 
                     <!-- Separador visual -->
@@ -1897,7 +3193,10 @@ if (ob_get_length()) {
                     <button class="view-btn" id="btn-Week" onclick="changeGanttView('Week')">Semana</button>
                     <button class="view-btn" id="btn-Month" onclick="changeGanttView('Month')">Mes</button>
                     <button class="view-btn task-toggle-btn active" id="btn-toggle-tasks" onclick="toggleTaskList()" type="button">Mostrar tareas</button>
-                    <button class="view-btn task-print-btn" id="btn-print-gantt" onclick="imprimirListaYGantt()" type="button">Imprimir</button>
+                    <button class="view-btn task-print-btn" id="btn-preview-report" onclick="vistaPreviaReporteActividades()" type="button">Vista previa</button>
+                    <button class="view-btn task-print-btn" id="btn-print-gantt" onclick="imprimirReporteActividades()" type="button">Imprimir</button>
+                    <button class="view-btn task-print-btn" id="btn-generate-pdf-report" onclick="generarPdfReporteActividades()" type="button">Generar PDF</button>
+                    <button class="view-btn task-print-btn" id="btn-download-pdf-report" onclick="descargarPdfReporteActividades()" type="button">Descargar PDF</button>
                 </div>
 
                 <div class="gantt-svg-container" id="gantt-container">
@@ -1906,18 +3205,101 @@ if (ob_get_length()) {
             </div>
 
         </div>
+        <div class="gantt-quick-create" id="gantt-quick-create" style="display:none;">
+            <input type="text" id="gantt-quick-create-input" maxlength="180" placeholder="Titulo de la tarea">
+        </div>
+
+        <aside class="gantt-quick-panel" id="gantt-quick-panel" aria-label="Vista rapida de tarea" style="display:none;">
+            <div class="gantt-quick-panel__header">
+                <div>
+                    <span class="gantt-quick-panel__eyebrow" id="quick_estado_badge">Pendiente</span>
+                    <h2 id="quick_panel_title">Tarea</h2>
+                </div>
+                <button type="button" class="gantt-icon-btn" onclick="cerrarVistaRapidaTarea()" aria-label="Cerrar">x</button>
+            </div>
+            <input type="hidden" id="quick_tarea_id" value="">
+            <label>Titulo</label>
+            <input type="text" id="quick_titulo" maxlength="180">
+            <div class="gantt-quick-grid">
+                <div>
+                    <label>Inicio</label>
+                    <input type="date" id="quick_fecha_inicio">
+                </div>
+                <div>
+                    <label>Fin</label>
+                    <input type="date" id="quick_fecha_fin">
+                </div>
+                <div>
+                    <label>Estado</label>
+                    <select id="quick_estado">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Progreso">En progreso</option>
+                        <option value="Completada">Culminada</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Prioridad</label>
+                    <select id="quick_prioridad">
+                        <option value="Normal">Normal</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Baja">Baja</option>
+                    </select>
+                </div>
+            </div>
+            <label>Responsable</label>
+            <select id="quick_responsable"></select>
+            <label>Sucursal</label>
+            <select id="quick_sucursal"></select>
+            <label>Observacion breve</label>
+            <textarea id="quick_observacion" rows="3"></textarea>
+            <p class="gantt-quick-panel__last" id="quick_ultimo_cambio">Sin cambios registrados</p>
+            <div class="gantt-quick-panel__history" id="quick_historial_panel" style="display:none;"></div>
+            <div class="gantt-quick-panel__actions">
+                <button type="button" class="btn-save" onclick="guardarVistaRapidaTarea()">Guardar</button>
+                <button type="button" class="view-btn" onclick="culminarVistaRapidaTarea()">Culminar</button>
+                <button type="button" class="view-btn" onclick="verHistorialVistaRapidaTarea()">Ver historial</button>
+                <button type="button" class="view-btn" onclick="editarCompletoVistaRapidaTarea()">Editar completo</button>
+                <button type="button" class="view-btn gantt-danger-link" onclick="abrirDialogoAnularTarea()">Anular tarea</button>
+            </div>
+        </aside>
+
+        <div class="gantt-dialog-backdrop" id="gantt-anular-backdrop" style="display:none;">
+            <div class="gantt-dialog" role="dialog" aria-modal="true" aria-labelledby="gantt-anular-title">
+                <h3 id="gantt-anular-title">Anular esta tarea?</h3>
+                <p>La tarea saldra del Gantt principal, pero quedara registrada en auditoria.</p>
+                <input type="hidden" id="gantt_anular_id" value="">
+                <label>Motivo</label>
+                <select id="gantt_anular_motivo" onchange="actualizarMotivoAnulacionGantt()">
+                    <option value="Creada por error">Creada por error</option>
+                    <option value="Duplicada">Duplicada</option>
+                    <option value="Ya no corresponde">Ya no corresponde</option>
+                    <option value="Reprogramada en otra tarea">Reprogramada en otra tarea</option>
+                    <option value="Otro motivo">Otro motivo</option>
+                </select>
+                <textarea id="gantt_anular_otro" rows="3" style="display:none;" placeholder="Motivo"></textarea>
+                <div class="gantt-dialog__actions">
+                    <button type="button" class="view-btn" onclick="cerrarDialogoAnularTarea()">Cancelar</button>
+                    <button type="button" class="btn-save gantt-btn-danger" onclick="confirmarAnularTarea()">Anular tarea</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="gantt-toast-zone" id="gantt-toast-zone" aria-live="polite"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
     <script>
         // allTasks incluye la tarea fantasma __horizon__ que centra la vista cerca de hoy.
         const allTasks = <?= $json ?>;
+        const reportTasks = <?= $json_reporte ?>;
         let gantt;
         let vistaActual = 'Day';
         let idsTareasVisiblesGantt = new Set();
         let ordenTareasVisiblesGantt = [];
         let usuarioActualGantt = '';
         let tareaGanttGuardando = false;
+        let ganttBloqueoClickRapidoHasta = 0;
+        let quickCreateState = null;
 
         function mostrarMensajeGantt(mensaje) {
             const svg = document.getElementById('gantt');
@@ -2006,6 +3388,8 @@ if (ob_get_length()) {
                 setTimeout(decorarBarrasGanttResponsables, 500);
                 setTimeout(configurarTooltipsGantt, 220);
                 setTimeout(configurarTooltipsGantt, 540);
+                setTimeout(configurarInteraccionesBarrasGantt, 240);
+                setTimeout(configurarInteraccionesBarrasGantt, 560);
                 programarCentradoFechaActual();
                 } catch (error) {
                     gantt = null;
@@ -2108,6 +3492,7 @@ if (ob_get_length()) {
             alinearFilasDescripcionConGantt();
             decorarBarrasGanttResponsables();
             configurarTooltipsGantt();
+            configurarInteraccionesBarrasGantt();
         }
 
         function actualizarTablaDescripcionGantt() {
@@ -2197,7 +3582,7 @@ if (ob_get_length()) {
         }
 
         function truncarTextoBarra(texto, anchoDisponible) {
-            const anchoCaracterAprox = 6.1;
+            const anchoCaracterAprox = 5.55;
             const maxCaracteres = Math.floor(anchoDisponible / anchoCaracterAprox);
 
             if (maxCaracteres < 8) return '';
@@ -2229,13 +3614,13 @@ if (ob_get_length()) {
                 const y = Number(barra.getAttribute('y')) || 0;
                 const ancho = Number(barra.getAttribute('width')) || 0;
                 const alto = Number(barra.getAttribute('height')) || 20;
-                const avatarSize = Math.max(14, Math.min(20, alto - 8));
-                const paddingX = ancho < 80 ? 4 : 7;
+                const avatarSize = Math.max(11, Math.min(16, alto - 7));
+                const paddingX = ancho < 80 ? 3 : 5;
                 const avatarX = x + paddingX;
                 const avatarY = y + ((alto - avatarSize) / 2);
-                const textoX = avatarX + avatarSize + 7;
+                const textoX = avatarX + avatarSize + 4;
                 const textoY = y + (alto / 2);
-                const anchoTexto = Math.max(0, (x + ancho) - textoX - 6);
+                const anchoTexto = Math.max(0, (x + ancho) - textoX - 4);
                 const textoBarra = truncarTextoBarra(tarea.nombre_barra || tarea.name || '', anchoTexto);
 
                 etiqueta.textContent = textoBarra;
@@ -2244,9 +3629,13 @@ if (ob_get_length()) {
                 etiqueta.setAttribute('text-anchor', 'start');
                 etiqueta.setAttribute('dominant-baseline', 'middle');
                 etiqueta.setAttribute('fill', '#fff');
-                etiqueta.setAttribute('font-size', '10');
+                etiqueta.setAttribute('font-size', '9.6');
                 etiqueta.setAttribute('font-weight', '800');
                 etiqueta.setAttribute('dx', '0');
+                etiqueta.setAttribute('paint-order', 'stroke');
+                etiqueta.setAttribute('stroke', 'rgba(15,23,42,0.38)');
+                etiqueta.setAttribute('stroke-width', '1.8');
+                etiqueta.setAttribute('stroke-linejoin', 'round');
                 etiqueta.style.textAnchor = 'start';
                 etiqueta.style.pointerEvents = 'none';
 
@@ -2266,8 +3655,9 @@ if (ob_get_length()) {
                 iniciales.setAttribute('text-anchor', 'middle');
                 iniciales.setAttribute('dominant-baseline', 'middle');
                 iniciales.setAttribute('fill', '#1f5eff');
-                iniciales.setAttribute('font-size', '8');
+                iniciales.setAttribute('font-size', '7');
                 iniciales.setAttribute('font-weight', '800');
+                iniciales.setAttribute('stroke', 'none');
                 iniciales.textContent = obtenerInicialesResponsable(tarea.responsable);
 
                 grupoEtiqueta.insertBefore(fondo, etiqueta);
@@ -2309,12 +3699,714 @@ if (ob_get_length()) {
         }
 
         function escaparHtml(valor) {
-            return String(valor || '')
+            return String(valor === null || typeof valor === 'undefined' ? '' : valor)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        function obtenerGlobalGantt(nombre) {
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent[nombre] !== 'undefined') {
+                    return window.parent[nombre] || '';
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (window.opener && typeof window.opener[nombre] !== 'undefined') {
+                    return window.opener[nombre] || '';
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (typeof window[nombre] !== 'undefined') {
+                    return window[nombre] || '';
+                }
+            } catch (e) {
+            }
+
+            return '';
+        }
+
+        function obtenerCredencialesGantt() {
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.obtener_datos_user === 'function') {
+                    window.parent.obtener_datos_user();
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (window.opener && typeof window.opener.obtener_datos_user === 'function') {
+                    window.opener.obtener_datos_user();
+                }
+            } catch (e) {
+            }
+
+            let useru = obtenerGlobalGantt('userid') || obtenerUsuarioActualIdGantt();
+            let passu = obtenerGlobalGantt('passuser');
+            let navegadorActual = obtenerGlobalGantt('navegador');
+
+            try {
+                if (!useru && window.parent && typeof window.parent.buscar_datos_url_usuario === 'function') {
+                    useru = window.parent.buscar_datos_url_usuario('q') || '';
+                }
+                if (!passu && window.parent && typeof window.parent.buscar_datos_url_usuario === 'function') {
+                    passu = window.parent.buscar_datos_url_usuario('p') || '';
+                }
+                if (!useru && window.parent && typeof window.parent.buscar_este_cookie === 'function') {
+                    useru = window.parent.buscar_este_cookie('user') || '';
+                }
+                if (!passu && window.parent && typeof window.parent.buscar_este_cookie === 'function') {
+                    passu = window.parent.buscar_este_cookie('pass') || '';
+                }
+                if (!navegadorActual && window.parent && typeof window.parent.obtener_navegor_en_uso === 'function') {
+                    navegadorActual = window.parent.obtener_navegor_en_uso() || '';
+                }
+            } catch (e) {
+            }
+
+            try {
+                if (!useru && window.opener && typeof window.opener.buscar_datos_url_usuario === 'function') {
+                    useru = window.opener.buscar_datos_url_usuario('q') || '';
+                }
+                if (!passu && window.opener && typeof window.opener.buscar_datos_url_usuario === 'function') {
+                    passu = window.opener.buscar_datos_url_usuario('p') || '';
+                }
+                if (!useru && window.opener && typeof window.opener.buscar_este_cookie === 'function') {
+                    useru = window.opener.buscar_este_cookie('user') || '';
+                }
+                if (!passu && window.opener && typeof window.opener.buscar_este_cookie === 'function') {
+                    passu = window.opener.buscar_este_cookie('pass') || '';
+                }
+                if (!navegadorActual && window.opener && typeof window.opener.obtener_navegor_en_uso === 'function') {
+                    navegadorActual = window.opener.obtener_navegor_en_uso() || '';
+                }
+            } catch (e) {
+            }
+
+            return {
+                useru: useru,
+                passu: passu,
+                navegador: navegadorActual
+            };
+        }
+
+        function sincronizarCredencialesFormularioGantt() {
+            const credenciales = obtenerCredencialesGantt();
+            const campos = {
+                grant_form_useru: credenciales.useru,
+                grant_form_passu: credenciales.passu,
+                grant_form_navegador: credenciales.navegador
+            };
+
+            Object.keys(campos).forEach(function (id) {
+                const campo = document.getElementById(id);
+                if (campo) campo.value = campos[id] || '';
+            });
+        }
+
+        function llamarApiGantt(accion, payload) {
+            const cuerpo = Object.assign({}, payload || {}, obtenerCredencialesGantt(), {
+                accion_gantt: accion
+            });
+
+            return fetch('Grant.php?api_gantt=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cuerpo)
+            })
+                .then(function (respuesta) {
+                    return respuesta.json().catch(function () {
+                        return { status: 'error', message: 'Respuesta invalida del servidor.' };
+                    }).then(function (datos) {
+                        if (!respuesta.ok || datos.status !== 'success') {
+                            throw new Error(datos.message || 'No se pudo completar la accion.');
+                        }
+                        return datos;
+                    });
+                });
+        }
+
+        function mostrarToastGantt(mensaje, undo) {
+            const zona = document.getElementById('gantt-toast-zone');
+            if (!zona) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'gantt-toast';
+            toast.innerHTML = '<span>' + escaparHtml(mensaje) + '</span>';
+
+            if (undo) {
+                const boton = document.createElement('button');
+                boton.type = 'button';
+                boton.textContent = 'Deshacer';
+                boton.addEventListener('click', function () {
+                    boton.disabled = true;
+                    deshacerAccionGantt(undo, toast);
+                });
+                toast.appendChild(boton);
+            }
+
+            zona.appendChild(toast);
+            setTimeout(function () {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 6500);
+        }
+
+        function deshacerAccionGantt(undo, toast) {
+            llamarApiGantt('deshacer', {
+                undo: undo,
+                origen: 'deshacer'
+            })
+                .then(function (datos) {
+                    if (datos.removed) {
+                        quitarTareaGantt(datos.task_id);
+                    }
+                    if (datos.task) {
+                        upsertTareaGantt(datos.task);
+                    }
+                    aplicarFiltros();
+                    cerrarVistaRapidaTarea();
+                    if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+                    mostrarToastGantt(datos.message || 'Cambio deshecho.');
+                })
+                .catch(function (error) {
+                    mostrarToastGantt(error.message || 'No se pudo deshacer.');
+                });
+        }
+
+        function upsertTareaReporteLocal(tarea) {
+            if (!tarea || !tarea.id || tarea.id === '__horizon__' || !Array.isArray(reportTasks)) return;
+
+            const id = String(tarea.id);
+            const tareaReporte = Object.assign({}, tarea, {
+                fecha_inicio: tarea.fecha_inicio || tarea.start || '',
+                fecha_fin: tarea.fecha_fin || tarea.end || '',
+                responsable_rol: tarea.responsable_rol || '',
+                deleted_at: tarea.deleted_at || ''
+            });
+            const indice = reportTasks.findIndex(function (item) {
+                return String(item.id) === id;
+            });
+
+            if (indice >= 0) {
+                reportTasks[indice] = tareaReporte;
+            } else {
+                reportTasks.push(tareaReporte);
+            }
+        }
+
+        function quitarTareaReporteLocal(id) {
+            if (!Array.isArray(reportTasks)) return;
+            const idTexto = String(id);
+            const indice = reportTasks.findIndex(function (item) {
+                return String(item.id) === idTexto;
+            });
+            if (indice >= 0) reportTasks.splice(indice, 1);
+        }
+
+        function upsertTareaGantt(tarea) {
+            if (!tarea || !tarea.id || tarea.id === '__horizon__') return;
+
+            const id = String(tarea.id);
+            const indice = allTasks.findIndex(function (item) {
+                return String(item.id) === id;
+            });
+
+            if (indice >= 0) {
+                allTasks[indice] = tarea;
+            } else {
+                const indiceHorizon = allTasks.findIndex(function (item) {
+                    return item.id === '__horizon__';
+                });
+                if (indiceHorizon >= 0) {
+                    allTasks.splice(indiceHorizon, 0, tarea);
+                } else {
+                    allTasks.push(tarea);
+                }
+            }
+
+            upsertTareaReporteLocal(tarea);
+            actualizarFilaTablaTarea(tarea);
+        }
+
+        function quitarTareaGantt(id) {
+            const idTexto = String(id);
+            const indice = allTasks.findIndex(function (item) {
+                return String(item.id) === idTexto;
+            });
+            if (indice >= 0) allTasks.splice(indice, 1);
+            quitarTareaReporteLocal(idTexto);
+
+            const fila = document.querySelector('.task-row[data-task-id="' + idTexto.replace(/"/g, '\\"') + '"]');
+            if (fila && fila.parentNode) fila.parentNode.removeChild(fila);
+        }
+
+        function actualizarFilaTablaTarea(tarea) {
+            const tbody = document.getElementById('tabla-body');
+            if (!tbody || !tarea || !tarea.id) return;
+
+            let fila = tbody.querySelector('.task-row[data-task-id="' + String(tarea.id).replace(/"/g, '\\"') + '"]');
+            if (!fila) {
+                fila = document.createElement('tr');
+                fila.className = 'task-row';
+                fila.setAttribute('data-task-id', tarea.id);
+                fila.innerHTML =
+                    '<td><strong></strong></td>' +
+                    '<td></td>' +
+                    '<td></td>' +
+                    '<td></td>' +
+                    '<td>' +
+                    '<a style="cursor:pointer;" title="Editar" onclick="abrirVistaRapidaTarea(\'' + String(tarea.id).replace(/'/g, "\\'") + '\', event)">Editar</a> ' +
+                    '<a style="cursor:pointer;" title="Anular tarea" onclick="abrirDialogoAnularTarea(\'' + String(tarea.id).replace(/'/g, "\\'") + '\', event)">Anular</a>' +
+                    '</td>';
+                tbody.appendChild(fila);
+            }
+
+            fila.setAttribute('data-sucursal', tarea.sucursal || '');
+            fila.setAttribute('data-responsable', String(tarea.responsable || '').toLowerCase());
+
+            const celdas = fila.querySelectorAll('td');
+            if (celdas[0]) celdas[0].innerHTML = '<strong>' + escaparHtml(tarea.titulo || tarea.titulo_original || tarea.name || '') + '</strong>';
+            if (celdas[1]) celdas[1].textContent = tarea.sucursal || '';
+            if (celdas[2]) celdas[2].textContent = tarea.responsable || '';
+            if (celdas[3]) celdas[3].textContent = tarea.usuarios_vinculados || '';
+        }
+
+        function convertirTareaGanttAFormulario(tarea) {
+            return {
+                id: tarea.id,
+                titulo: tarea.titulo || tarea.titulo_original || tarea.name || '',
+                fecha_inicio: tarea.fecha_inicio_original || tarea.start,
+                fecha_fin: tarea.fecha_fin_original || tarea.end,
+                progreso: tarea.progress || 0,
+                estado: tarea.estado || 'Pendiente',
+                dependencia: tarea.dependencies || '',
+                sucursal: tarea.sucursal || 'Todas',
+                responsable: tarea.responsable || '',
+                usuarios_vinculados_ids: tarea.usuarios_vinculados_ids || []
+            };
+        }
+
+        function copiarOpcionesSelectGantt(origenId, destinoId) {
+            const origen = document.getElementById(origenId);
+            const destino = document.getElementById(destinoId);
+            if (!origen || !destino || destino.dataset.copiado === '1') return;
+
+            destino.innerHTML = origen.innerHTML;
+            destino.dataset.copiado = '1';
+        }
+
+        function asegurarOpcionSelectGantt(select, valor) {
+            if (!select || !valor) return;
+
+            const existe = Array.from(select.options).some(function (option) {
+                return option.value === valor;
+            });
+            if (existe) return;
+
+            const option = document.createElement('option');
+            option.value = valor;
+            option.textContent = valor;
+            select.appendChild(option);
+        }
+
+        function abrirVistaRapidaTarea(id, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const tarea = obtenerTareaGanttPorId(id);
+            if (!tarea) return;
+
+            copiarOpcionesSelectGantt('form_responsable', 'quick_responsable');
+            copiarOpcionesSelectGantt('form_sucursal', 'quick_sucursal');
+
+            const panel = document.getElementById('gantt-quick-panel');
+            const responsable = document.getElementById('quick_responsable');
+            const sucursal = document.getElementById('quick_sucursal');
+            if (!panel) return;
+
+            asegurarOpcionSelectGantt(responsable, tarea.responsable || '');
+            asegurarOpcionSelectGantt(sucursal, tarea.sucursal || '');
+
+            document.getElementById('quick_tarea_id').value = tarea.id;
+            document.getElementById('quick_panel_title').textContent = tarea.titulo || tarea.titulo_original || tarea.name || 'Tarea';
+            document.getElementById('quick_estado_badge').textContent = tarea.estado_visual || tarea.estado || 'Pendiente';
+            document.getElementById('quick_titulo').value = tarea.titulo || tarea.titulo_original || tarea.name || '';
+            document.getElementById('quick_fecha_inicio').value = tarea.fecha_inicio_original || tarea.start || '';
+            document.getElementById('quick_fecha_fin').value = tarea.fecha_fin_original || tarea.end || '';
+            document.getElementById('quick_estado').value = tarea.estado || 'Pendiente';
+            document.getElementById('quick_prioridad').value = tarea.prioridad || 'Normal';
+            if (responsable) responsable.value = tarea.responsable || '';
+            if (sucursal) sucursal.value = tarea.sucursal || 'Todas';
+            document.getElementById('quick_observacion').value = tarea.observacion || '';
+            document.getElementById('quick_ultimo_cambio').textContent = tarea.ultimo_cambio_texto || 'Sin cambios registrados';
+            document.getElementById('quick_historial_panel').style.display = 'none';
+            document.getElementById('quick_historial_panel').innerHTML = '';
+
+            panel.style.display = '';
+        }
+
+        function cerrarVistaRapidaTarea() {
+            const panel = document.getElementById('gantt-quick-panel');
+            if (panel) panel.style.display = 'none';
+        }
+
+        function obtenerResponsableQuickId() {
+            const select = document.getElementById('quick_responsable');
+            const option = select && select.options ? select.options[select.selectedIndex] : null;
+            return option ? (option.dataset.usuarioId || '') : '';
+        }
+
+        function guardarVistaRapidaTarea() {
+            const id = document.getElementById('quick_tarea_id').value;
+            const tarea = obtenerTareaGanttPorId(id);
+            if (!tarea) return;
+
+            const payload = {
+                id: id,
+                titulo: document.getElementById('quick_titulo').value.trim(),
+                fecha_inicio: document.getElementById('quick_fecha_inicio').value,
+                fecha_fin: document.getElementById('quick_fecha_fin').value,
+                estado: document.getElementById('quick_estado').value,
+                prioridad: document.getElementById('quick_prioridad').value,
+                responsable: document.getElementById('quick_responsable').value,
+                responsable_id: obtenerResponsableQuickId(),
+                sucursal: document.getElementById('quick_sucursal').value,
+                observacion: document.getElementById('quick_observacion').value,
+                progreso: tarea.progress || 0,
+                origen: 'formulario rapido'
+            };
+
+            if (!payload.titulo) {
+                mostrarToastGantt('Ingrese el titulo de la tarea.');
+                return;
+            }
+
+            const cambioSensible = (payload.responsable !== (tarea.responsable || ''))
+                || (payload.sucursal !== (tarea.sucursal || ''))
+                || tarea.estado === 'Completada';
+
+            if (cambioSensible && !confirm('Este cambio quedara registrado. Continuar?')) {
+                return;
+            }
+
+            llamarApiGantt('actualizar_tarea', payload)
+                .then(function (datos) {
+                    upsertTareaGantt(datos.task);
+                    aplicarFiltros();
+                    abrirVistaRapidaTarea(datos.task.id);
+                    mostrarToastGantt(datos.message || 'Tarea actualizada.', datos.undo);
+                })
+                .catch(function (error) {
+                    mostrarToastGantt(error.message || 'No se pudo actualizar la tarea.');
+                });
+        }
+
+        function culminarVistaRapidaTarea() {
+            const id = document.getElementById('quick_tarea_id').value;
+            if (!id) return;
+
+            llamarApiGantt('culminar', {
+                id: id,
+                origen: 'formulario rapido'
+            })
+                .then(function (datos) {
+                    upsertTareaGantt(datos.task);
+                    aplicarFiltros();
+                    abrirVistaRapidaTarea(datos.task.id);
+                    mostrarToastGantt(datos.message || 'Tarea culminada.', datos.undo);
+                })
+                .catch(function (error) {
+                    mostrarToastGantt(error.message || 'No se pudo culminar la tarea.');
+                });
+        }
+
+        function editarCompletoVistaRapidaTarea() {
+            const id = document.getElementById('quick_tarea_id').value;
+            const tarea = obtenerTareaGanttPorId(id);
+            if (!tarea) return;
+
+            cerrarVistaRapidaTarea();
+            editarTarea(convertirTareaGanttAFormulario(tarea));
+        }
+
+        function verHistorialVistaRapidaTarea() {
+            const id = document.getElementById('quick_tarea_id').value;
+            const panel = document.getElementById('quick_historial_panel');
+            if (!id || !panel) return;
+
+            panel.style.display = '';
+            panel.innerHTML = 'Cargando historial...';
+
+            llamarApiGantt('historial', {
+                id: id,
+                origen: 'formulario rapido'
+            })
+                .then(function (datos) {
+                    const historial = datos.historial || [];
+                    if (!historial.length) {
+                        panel.innerHTML = 'Todavia no hay movimientos registrados.';
+                        return;
+                    }
+
+                    panel.innerHTML = historial.map(function (item) {
+                        const usuario = item.nombre_persona || 'usuario';
+                        const campo = item.campo ? ' · ' + item.campo : '';
+                        const motivo = item.motivo ? '<br>Motivo: ' + escaparHtml(item.motivo) : '';
+                        return '<div class="gantt-history-item">'
+                            + '<strong>' + escaparHtml(item.accion || 'cambio') + campo + '</strong>'
+                            + '<span>' + escaparHtml(item.created_at || '') + ' por ' + escaparHtml(usuario) + '</span><br>'
+                            + '<span>' + escaparHtml(item.valor_anterior || '-') + ' -> ' + escaparHtml(item.valor_nuevo || '-') + '</span>'
+                            + motivo
+                            + '</div>';
+                    }).join('');
+                })
+                .catch(function (error) {
+                    panel.innerHTML = escaparHtml(error.message || 'No se pudo cargar el historial.');
+                });
+        }
+
+        function actualizarMotivoAnulacionGantt() {
+            const select = document.getElementById('gantt_anular_motivo');
+            const otro = document.getElementById('gantt_anular_otro');
+            if (!select || !otro) return;
+            otro.style.display = select.value === 'Otro motivo' ? '' : 'none';
+        }
+
+        function abrirDialogoAnularTarea(id, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const idFinal = id || (document.getElementById('quick_tarea_id') ? document.getElementById('quick_tarea_id').value : '');
+            if (!idFinal) return;
+
+            document.getElementById('gantt_anular_id').value = idFinal;
+            document.getElementById('gantt_anular_motivo').value = 'Creada por error';
+            document.getElementById('gantt_anular_otro').value = '';
+            actualizarMotivoAnulacionGantt();
+            document.getElementById('gantt-anular-backdrop').style.display = 'flex';
+        }
+
+        function cerrarDialogoAnularTarea() {
+            const backdrop = document.getElementById('gantt-anular-backdrop');
+            if (backdrop) backdrop.style.display = 'none';
+        }
+
+        function confirmarAnularTarea() {
+            const id = document.getElementById('gantt_anular_id').value;
+            const motivoSelect = document.getElementById('gantt_anular_motivo').value;
+            const motivoOtro = document.getElementById('gantt_anular_otro').value.trim();
+            const motivo = motivoSelect === 'Otro motivo' ? motivoOtro : motivoSelect;
+
+            if (!id) return;
+            if (motivoSelect === 'Otro motivo' && !motivo) {
+                mostrarToastGantt('Ingrese el motivo de anulacion.');
+                return;
+            }
+
+            llamarApiGantt('anular', {
+                id: id,
+                motivo: motivo,
+                origen: 'formulario rapido'
+            })
+                .then(function (datos) {
+                    quitarTareaGantt(id);
+                    aplicarFiltros();
+                    cerrarDialogoAnularTarea();
+                    cerrarVistaRapidaTarea();
+                    mostrarToastGantt(datos.message || 'Tarea anulada.', datos.undo);
+                })
+                .catch(function (error) {
+                    mostrarToastGantt(error.message || 'No se pudo anular la tarea.');
+                });
+        }
+
+        function obtenerFechaDesdeClickGantt(evento) {
+            if (!gantt || !gantt.gantt_start) return '';
+
+            const svg = document.getElementById('gantt');
+            if (!svg) return '';
+            const metricas = obtenerMetricasSvgGanttActual();
+            const contenedor = obtenerContenedorScrollGantt() || document.getElementById('gantt-container');
+            if (!metricas || !contenedor) return '';
+
+            const rectContenedor = contenedor.getBoundingClientRect();
+            const xEnViewport = (evento.clientX - rectContenedor.left) * metricas.escalaX;
+            const yEnViewport = evento.clientY - rectContenedor.top;
+            if (xEnViewport < 0 || yEnViewport < 0 || xEnViewport > rectContenedor.width * metricas.escalaX) return '';
+
+            const primeraFila = document.querySelector('#gantt .grid-row');
+            if (primeraFila) {
+                try {
+                    const rectFila = primeraFila.getBoundingClientRect();
+                    if (evento.clientY < rectFila.top) return '';
+                } catch (e) {
+                }
+            }
+
+            return fechaDesdeXGanttActual(obtenerXVisibleGanttActual(metricas) + xEnViewport);
+        }
+
+        function abrirEditorCreacionRapida(evento, fecha) {
+            const editor = document.getElementById('gantt-quick-create');
+            const input = document.getElementById('gantt-quick-create-input');
+            if (!editor || !input || !fecha) return;
+
+            quickCreateState = { fecha: fecha, creando: false };
+            editor.style.left = Math.min(window.innerWidth - 280, Math.max(8, evento.clientX + 6)) + 'px';
+            editor.style.top = Math.min(window.innerHeight - 54, Math.max(8, evento.clientY + 6)) + 'px';
+            editor.style.display = '';
+            input.value = '';
+            input.focus();
+        }
+
+        function cerrarEditorCreacionRapida() {
+            const editor = document.getElementById('gantt-quick-create');
+            if (editor) editor.style.display = 'none';
+            quickCreateState = null;
+        }
+
+        function obtenerContextoCreacionRapidaGantt() {
+            const filtroSucursal = document.getElementById('filtro-sucursal');
+            const filtroUsuario = document.getElementById('filtro-usuario');
+            const filtroResponsable = document.getElementById('filtro-responsable');
+            const opcionUsuario = filtroUsuario && filtroUsuario.options ? filtroUsuario.options[filtroUsuario.selectedIndex] : null;
+
+            let sucursal = filtroSucursal ? filtroSucursal.value : 'Todas';
+            if (!sucursal) sucursal = 'Todas';
+
+            let responsable = '';
+            let responsableId = '';
+            if (filtroUsuario && filtroUsuario.value && opcionUsuario) {
+                responsable = opcionUsuario.textContent.trim();
+                responsableId = filtroUsuario.value;
+            } else if (filtroResponsable && filtroResponsable.value.trim()) {
+                responsable = filtroResponsable.value.trim();
+            }
+
+            return {
+                sucursal: sucursal,
+                responsable: responsable,
+                responsable_id: responsableId
+            };
+        }
+
+        function asegurarFiltrosIncluyenTareaRapidaGantt(tarea) {
+            if (!tarea) return;
+
+            const fecha = String(tarea.start || tarea.fecha_inicio || '').slice(0, 10);
+            const desde = document.getElementById('reporte-fecha-desde');
+            const hasta = document.getElementById('reporte-fecha-hasta');
+            const estado = document.getElementById('reporte-estado');
+
+            if (fecha) {
+                if (desde && (!desde.value || fecha < desde.value)) desde.value = fecha;
+                if (hasta && (!hasta.value || fecha > hasta.value)) hasta.value = fecha;
+            }
+
+            if (estado && estado.value && estado.value !== 'Todas') {
+                const estadoTarea = normalizarEstadoReporteActividades(tarea);
+                if (estado.value !== estadoTarea) {
+                    estado.value = 'Todas';
+                }
+            }
+        }
+
+        function confirmarCreacionRapidaGantt() {
+            const input = document.getElementById('gantt-quick-create-input');
+            if (!quickCreateState || !input || quickCreateState.creando) return;
+
+            const titulo = input.value.trim();
+            if (!titulo) {
+                cerrarEditorCreacionRapida();
+                return;
+            }
+
+            quickCreateState.creando = true;
+            const contexto = obtenerContextoCreacionRapidaGantt();
+
+            llamarApiGantt('crear_rapida', Object.assign({}, contexto, {
+                titulo: titulo,
+                fecha_inicio: quickCreateState.fecha,
+                origen: 'grilla Gantt'
+            }))
+                .then(function (datos) {
+                    upsertTareaGantt(datos.task);
+                    asegurarFiltrosIncluyenTareaRapidaGantt(datos.task);
+                    cerrarEditorCreacionRapida();
+                    aplicarFiltros();
+                    mostrarToastGantt(datos.message || 'Tarea creada.', datos.undo);
+                })
+                .catch(function (error) {
+                    quickCreateState.creando = false;
+                    mostrarToastGantt(error.message || 'No se pudo crear la tarea.');
+                });
+        }
+
+        function configurarCreacionRapidaGantt() {
+            const contenedor = document.getElementById('gantt-container');
+            const input = document.getElementById('gantt-quick-create-input');
+            if (contenedor && contenedor.dataset.quickCreateReady !== '1') {
+                contenedor.dataset.quickCreateReady = '1';
+                contenedor.addEventListener('click', function (evento) {
+                    if (quickCreateState) return;
+                    if (Date.now() < ganttBloqueoClickRapidoHasta) return;
+                    if (evento.target.closest && evento.target.closest('.bar-wrapper')) return;
+                    if (evento.target.closest && evento.target.closest('input,select,textarea,button,a,.gantt-quick-create,.gantt-quick-panel')) return;
+
+                    const fecha = obtenerFechaDesdeClickGantt(evento);
+                    if (fecha) abrirEditorCreacionRapida(evento, fecha);
+                });
+            }
+
+            if (input && input.dataset.quickCreateInputReady !== '1') {
+                input.dataset.quickCreateInputReady = '1';
+                input.addEventListener('keydown', function (evento) {
+                    if (evento.key === 'Enter') {
+                        evento.preventDefault();
+                        confirmarCreacionRapidaGantt();
+                    }
+                    if (evento.key === 'Escape') {
+                        evento.preventDefault();
+                        cerrarEditorCreacionRapida();
+                    }
+                });
+                input.addEventListener('blur', function () {
+                    setTimeout(function () {
+                        if (quickCreateState) confirmarCreacionRapidaGantt();
+                    }, 100);
+                });
+            }
+        }
+
+        function configurarInteraccionesBarrasGantt() {
+            document.querySelectorAll('#gantt .bar-wrapper[data-id]').forEach(function (wrapper) {
+                if (wrapper.dataset.quickPanelReady === '1') return;
+
+                const id = wrapper.getAttribute('data-id');
+                if (!id || id === '__horizon__') return;
+
+                wrapper.dataset.quickPanelReady = '1';
+                wrapper.addEventListener('click', function (evento) {
+                    if (Date.now() < ganttBloqueoClickRapidoHasta) return;
+                    abrirVistaRapidaTarea(id, evento);
+                });
+                wrapper.addEventListener('dblclick', function (evento) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    const tarea = obtenerTareaGanttPorId(id);
+                    if (tarea) editarTarea(convertirTareaGanttAFormulario(tarea));
+                });
+            });
         }
 
         function obtenerTextoSelectGantt(id) {
@@ -2438,90 +4530,755 @@ if (ob_get_length()) {
                 + '</section>';
         }
 
-        function imprimirListaYGantt() {
-            sincronizarTablaConBarrasGantt();
-            mostrarMesEnFechasGantt();
-            decorarBarrasGanttResponsables();
+        function obtenerFiltrosReporteActividades() {
+            const filtroSucursal = document.getElementById('filtro-sucursal');
+            const filtroUsuario = document.getElementById('filtro-usuario');
+            const filtroResponsable = document.getElementById('filtro-responsable');
+            const filtroEstado = document.getElementById('reporte-estado');
+            const fechaDesde = document.getElementById('reporte-fecha-desde');
+            const fechaHasta = document.getElementById('reporte-fecha-hasta');
+            const opcionUsuario = filtroUsuario && filtroUsuario.options
+                ? filtroUsuario.options[filtroUsuario.selectedIndex]
+                : null;
+            let desde = fechaDesde ? String(fechaDesde.value || '').trim() : '';
+            let hasta = fechaHasta ? String(fechaHasta.value || '').trim() : '';
 
-            const fechaImpresion = formatDate(new Date());
-            const rangoImpresion = obtenerRangoUltimoMesGantt();
-            const sucursal = obtenerTextoSelectGantt('filtro-sucursal') || 'TODOS';
-            const usuario = obtenerTextoSelectGantt('filtro-usuario') || 'TODOS';
-            const responsable = document.getElementById('filtro-responsable')
-                ? document.getElementById('filtro-responsable').value.trim()
+            if (desde && hasta && desde > hasta) {
+                const temporal = desde;
+                desde = hasta;
+                hasta = temporal;
+            }
+
+            return {
+                sucursal: filtroSucursal ? filtroSucursal.value : 'Todas',
+                sucursal_texto: filtroSucursal ? obtenerTextoSelectGantt('filtro-sucursal') : 'Todas',
+                funcionario_id: filtroUsuario ? String(filtroUsuario.value || '') : '',
+                funcionario_nombre: opcionUsuario && filtroUsuario.value ? opcionUsuario.textContent.trim() : '',
+                funcionario_nombre_normalizado: opcionUsuario && filtroUsuario.value
+                    ? normalizarTextoFiltro(opcionUsuario.dataset.nombre || opcionUsuario.textContent || '')
+                    : '',
+                funcionario_rol: opcionUsuario ? String(opcionUsuario.dataset.rol || '').trim() : '',
+                responsable_texto: filtroResponsable ? filtroResponsable.value.trim() : '',
+                responsable_normalizado: filtroResponsable ? normalizarTextoFiltro(filtroResponsable.value) : '',
+                desde: desde,
+                hasta: hasta,
+                estado: filtroEstado ? String(filtroEstado.value || 'Todas') : 'Todas'
+            };
+        }
+
+        function parsearFechaReporte(valor) {
+            const texto = String(valor || '').trim().slice(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return null;
+            const fecha = new Date(texto + 'T00:00:00');
+            if (isNaN(fecha.getTime())) return null;
+            fecha.setHours(0, 0, 0, 0);
+            return fecha;
+        }
+
+        function normalizarEstadoReporteActividades(tarea) {
+            const estado = String(tarea.estado || 'Pendiente').trim();
+            if (estado === 'Anulada' || String(tarea.deleted_at || '').trim() !== '') return 'Anulada';
+            if (estado === 'Completada') return 'Completada';
+
+            const fechaFin = parsearFechaReporte(tarea.end || tarea.fecha_fin);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            if (fechaFin && fechaFin < hoy) return 'Vencida';
+            if (estado === 'En Progreso' || estado === 'En proceso') return 'En Progreso';
+
+            return 'Pendiente';
+        }
+
+        function etiquetaEstadoReporteActividades(estado) {
+            const mapa = {
+                'Pendiente': 'Pendiente',
+                'En Progreso': 'En proceso',
+                'Completada': 'Culminada',
+                'Vencida': 'Vencida',
+                'Anulada': 'Anulada'
+            };
+            return mapa[estado] || 'Pendiente';
+        }
+
+        function tareaCumpleFiltrosReporteActividades(tarea, filtros) {
+            if (!tarea || tarea.id === '__horizon__') return false;
+
+            const matchSucursal = !filtros.sucursal || filtros.sucursal === 'Todas' || tarea.sucursal === filtros.sucursal;
+            const usuariosBusqueda = normalizarTextoFiltro((tarea.responsable || '') + ' ' + (tarea.usuarios_vinculados || ''));
+            const vinculadosIds = (tarea.usuarios_vinculados_ids || []).map(function (id) {
+                return String(id);
+            });
+            const responsableId = tarea.responsable_id !== null && typeof tarea.responsable_id !== 'undefined'
+                ? String(tarea.responsable_id)
                 : '';
-            const tablaHtml = obtenerHtmlTablaTareasImpresion();
-            const ganttHtml = obtenerHtmlGanttImpresion();
-            const cabeceraHtml = ''
-                + '<header class="print-report-header">'
-                + '<div class="print-logo-wrap"><img class="print-logo" src="/GoodVentaAsisCap/iconos/Logo.jpg" alt="CLINIDENT &amp; SALUD"></div>'
-                + '<section class="print-filter-grid">'
-                + crearCampoCabeceraImpresion('Local', sucursal)
-                + crearCampoCabeceraImpresion('Fecha Inicio', rangoImpresion.inicioStr)
-                + crearCampoCabeceraImpresion('Fecha Fin', rangoImpresion.finStr)
-                + crearCampoCabeceraImpresion('Responsable', responsable || 'TODOS')
-                + crearCampoCabeceraImpresion('Fecha de Impresion', fechaImpresion)
-                + crearCampoCabeceraImpresion('Usuario', usuario)
-                + crearCampoCabeceraImpresion('Vista', vistaActual)
-                + crearCampoCabeceraImpresion('Documento', 'DIAGRAMA DE GANTT')
-                + '</section>'
-                + '</header>';
+            const matchFuncionario = !filtros.funcionario_id
+                || responsableId === filtros.funcionario_id
+                || vinculadosIds.includes(filtros.funcionario_id)
+                || (filtros.funcionario_nombre_normalizado && usuariosBusqueda.includes(filtros.funcionario_nombre_normalizado));
+            const matchResponsableTexto = !filtros.responsable_normalizado || usuariosBusqueda.includes(filtros.responsable_normalizado);
+            const inicio = parsearFechaReporte(tarea.start || tarea.fecha_inicio);
+            const fin = parsearFechaReporte(tarea.end || tarea.fecha_fin) || inicio;
+            const desde = parsearFechaReporte(filtros.desde);
+            const hasta = parsearFechaReporte(filtros.hasta);
+            const matchFechas = (!desde || (fin && fin >= desde)) && (!hasta || (inicio && inicio <= hasta));
+            const estadoNormalizado = normalizarEstadoReporteActividades(tarea);
+            const matchEstado = !filtros.estado || filtros.estado === 'Todas' || estadoNormalizado === filtros.estado;
+
+            return matchSucursal && matchFuncionario && matchResponsableTexto && matchFechas && matchEstado;
+        }
+
+        function obtenerTareasReporteActividades(filtros) {
+            const fuente = Array.isArray(reportTasks) && reportTasks.length
+                ? reportTasks
+                : allTasks.filter(function (tarea) { return tarea.id !== '__horizon__'; });
+
+            return fuente
+                .filter(function (tarea) {
+                    return tareaCumpleFiltrosReporteActividades(tarea, filtros);
+                })
+                .sort(function (a, b) {
+                    return String(a.start || a.fecha_inicio || '').localeCompare(String(b.start || b.fecha_inicio || ''))
+                        || String(a.titulo || a.name || '').localeCompare(String(b.titulo || b.name || ''));
+                });
+        }
+
+        function calcularResumenReporteActividades(tareas) {
+            const resumen = {
+                total: tareas.length,
+                pendiente: 0,
+                progreso: 0,
+                culminada: 0,
+                vencida: 0,
+                anulada: 0,
+                cumplimiento: 0
+            };
+
+            tareas.forEach(function (tarea) {
+                const estado = normalizarEstadoReporteActividades(tarea);
+                if (estado === 'Completada') resumen.culminada++;
+                else if (estado === 'En Progreso') resumen.progreso++;
+                else if (estado === 'Vencida') resumen.vencida++;
+                else if (estado === 'Anulada') resumen.anulada++;
+                else resumen.pendiente++;
+            });
+
+            const activas = Math.max(0, resumen.total - resumen.anulada);
+            resumen.cumplimiento = activas > 0 ? Math.round((resumen.culminada / activas) * 100) : 0;
+            return resumen;
+        }
+
+        function obtenerInicialesReporteActividades(nombre) {
+            const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+            if (!partes.length) return 'CS';
+            return partes.slice(0, 2).map(function (parte) {
+                return parte.charAt(0).toUpperCase();
+            }).join('');
+        }
+
+        function obtenerFuncionarioReporteActividades(filtros, tareas) {
+            let nombre = filtros.funcionario_nombre || '';
+            let rol = filtros.funcionario_rol || '';
+            let foto = '';
+
+            const tareaFuncionario = tareas.find(function (tarea) {
+                if (!filtros.funcionario_id) return false;
+                const responsableId = tarea.responsable_id !== null && typeof tarea.responsable_id !== 'undefined'
+                    ? String(tarea.responsable_id)
+                    : '';
+                const vinculadosIds = (tarea.usuarios_vinculados_ids || []).map(function (id) {
+                    return String(id);
+                });
+                return responsableId === filtros.funcionario_id || vinculadosIds.includes(filtros.funcionario_id);
+            }) || tareas[0];
+
+            if (!nombre && filtros.responsable_texto) nombre = filtros.responsable_texto;
+            if (!nombre && filtros.funcionario_id && tareaFuncionario) nombre = tareaFuncionario.responsable || '';
+            if (!nombre) nombre = 'Todos los funcionarios';
+            if (!rol && tareaFuncionario) rol = tareaFuncionario.responsable_rol || '';
+            if (tareaFuncionario) foto = tareaFuncionario.foto_responsable || '';
+
+            return {
+                nombre: nombre,
+                rol: rol || 'Rol no especificado',
+                foto: foto,
+                iniciales: obtenerInicialesReporteActividades(nombre)
+            };
+        }
+
+        function obtenerSucursalReporteActividades(filtros, tareas) {
+            if (filtros.sucursal && filtros.sucursal !== 'Todas') return filtros.sucursal_texto || filtros.sucursal;
+
+            const sucursales = Array.from(new Set(tareas.map(function (tarea) {
+                return tarea.sucursal || '';
+            }).filter(Boolean)));
+
+            return sucursales.length === 1 ? sucursales[0] : 'Todas las sucursales';
+        }
+
+        function formatearFechaHoraReporteActividades(valor) {
+            if (!valor) return '-';
+            if (valor instanceof Date) {
+                const dia = String(valor.getDate()).padStart(2, '0');
+                const mes = String(valor.getMonth() + 1).padStart(2, '0');
+                const anio = valor.getFullYear();
+                const hora = String(valor.getHours()).padStart(2, '0');
+                const minuto = String(valor.getMinutes()).padStart(2, '0');
+                return dia + '/' + mes + '/' + anio + ' ' + hora + ':' + minuto;
+            }
+
+            const texto = String(valor).trim();
+            const fecha = new Date(texto.replace(' ', 'T'));
+            if (isNaN(fecha.getTime())) {
+                return texto.length === 10 ? formatearFechaLegible(texto) : texto;
+            }
+            return formatearFechaHoraReporteActividades(fecha);
+        }
+
+        function limitarTextoReporteActividades(texto, maximo) {
+            const limpio = String(texto || '').replace(/\s+/g, ' ').trim();
+            if (limpio.length <= maximo) return limpio;
+            return limpio.slice(0, Math.max(0, maximo - 3)) + '...';
+        }
+
+        function crearResumenHtmlReporteActividades(resumen) {
+            const partes = [
+                resumen.total + ' tareas',
+                resumen.pendiente + ' pendientes',
+                resumen.progreso + ' en proceso',
+                resumen.culminada + ' culminadas',
+                resumen.vencida + ' vencidas',
+                resumen.anulada + ' anuladas'
+            ];
+
+            return '<p class="report-summary-line">' + partes.map(function (parte) {
+                return escaparHtml(parte);
+            }).join(' &middot; ') + '</p>';
+        }
+
+        function clonarFechaReporte(fecha) {
+            const copia = new Date(fecha.getTime());
+            copia.setHours(0, 0, 0, 0);
+            return copia;
+        }
+
+        function sumarDiasReporte(fecha, dias) {
+            const copia = clonarFechaReporte(fecha);
+            copia.setDate(copia.getDate() + dias);
+            return copia;
+        }
+
+        function diferenciaDiasReporte(inicio, fin) {
+            const inicioLimpio = clonarFechaReporte(inicio);
+            const finLimpio = clonarFechaReporte(fin);
+            return Math.round((finLimpio - inicioLimpio) / 86400000);
+        }
+
+        function obtenerDiasReporteActividades(inicio, fin) {
+            const dias = [];
+            let actual = clonarFechaReporte(inicio);
+            const final = clonarFechaReporte(fin);
+
+            while (actual <= final) {
+                dias.push({
+                    fecha: clonarFechaReporte(actual),
+                    iso: formatDate(actual),
+                    dia: String(actual.getDate()).padStart(2, '0'),
+                    mes: String(actual.getMonth() + 1).padStart(2, '0')
+                });
+                actual = sumarDiasReporte(actual, 1);
+            }
+
+            return dias;
+        }
+
+        function obtenerRangoGanttReporteActividades(filtros, tareas) {
+            let inicio = parsearFechaReporte(filtros.desde);
+            let fin = parsearFechaReporte(filtros.hasta);
+
+            if (!inicio && tareas.length) {
+                tareas.forEach(function (tarea) {
+                    const fecha = parsearFechaReporte(tarea.start || tarea.fecha_inicio);
+                    if (fecha && (!inicio || fecha < inicio)) inicio = fecha;
+                });
+            }
+
+            if (!fin && tareas.length) {
+                tareas.forEach(function (tarea) {
+                    const fecha = parsearFechaReporte(tarea.end || tarea.fecha_fin);
+                    if (fecha && (!fin || fecha > fin)) fin = fecha;
+                });
+            }
+
+            if (!inicio) inicio = sumarDiasReporte(new Date(), -15);
+            if (!fin) fin = sumarDiasReporte(new Date(), 15);
+            if (fin < inicio) {
+                const temporal = inicio;
+                inicio = fin;
+                fin = temporal;
+            }
+
+            return {
+                inicio: inicio,
+                fin: fin,
+                dias: obtenerDiasReporteActividades(inicio, fin)
+            };
+        }
+
+        function obtenerClaseEstadoReporteGantt(estado) {
+            return 'status-' + String(estado || 'Pendiente').toLowerCase().replace(/\s+/g, '-');
+        }
+
+        function obtenerTextoVistaActualGantt() {
+            if (vistaActual === 'Month') return 'Mes';
+            if (vistaActual === 'Week') return 'Semana';
+            return 'Dia';
+        }
+
+        function obtenerTareasVisiblesReporteActual() {
+            let ids = obtenerIdsTareasDibujadasGantt();
+            if (!ids.length) {
+                ids = ordenTareasVisiblesGantt.length ? ordenTareasVisiblesGantt : Array.from(idsTareasVisiblesGantt);
+            }
+
+            return ids.map(function (id) {
+                return allTasks.find(function (tarea) {
+                    return String(tarea.id) === String(id);
+                });
+            }).filter(Boolean);
+        }
+
+        function fechaDesdeXGanttActual(x) {
+            if (!gantt || !gantt.gantt_start) return '';
+
+            const anchoColumna = obtenerAnchoColumnaVista();
+            let dias = 0;
+            if (vistaActual === 'Month') dias = (x / anchoColumna) * 30;
+            else if (vistaActual === 'Week') dias = (x / anchoColumna) * 7;
+            else dias = x / anchoColumna;
+
+            const fecha = new Date(gantt.gantt_start);
+            fecha.setHours(0, 0, 0, 0);
+            fecha.setDate(fecha.getDate() + Math.max(0, Math.floor(dias)));
+            return formatDate(fecha);
+        }
+
+        function obtenerMetricasSvgGanttActual() {
+            const svg = document.getElementById('gantt');
+            if (!svg) return null;
+
+            let caja = null;
+            try {
+                caja = svg.getBBox();
+            } catch (e) {
+            }
+
+            const rectSvg = svg.getBoundingClientRect();
+            const anchoSvg = caja && caja.width ? caja.width : (svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width : svg.clientWidth || 1200);
+            const altoSvg = caja && caja.height ? caja.height : (svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.height : svg.clientHeight || 620);
+            const escalaX = rectSvg && rectSvg.width ? anchoSvg / rectSvg.width : 1;
+
+            return {
+                svg: svg,
+                caja: caja,
+                rectSvg: rectSvg,
+                anchoSvg: anchoSvg,
+                altoSvg: altoSvg,
+                escalaX: escalaX || 1
+            };
+        }
+
+        function obtenerXDesdeEtiquetaVisibleGantt(svg, contenedor, anchoColumna) {
+            if (!svg || !contenedor) return null;
+
+            const rectContenedor = contenedor.getBoundingClientRect();
+            const etiquetas = Array.from(svg.querySelectorAll('.lower-text, .upper-text')).filter(function (etiqueta) {
+                const rect = etiqueta.getBoundingClientRect();
+                return rect.width > 0
+                    && rect.height > 0
+                    && rect.right >= rectContenedor.left
+                    && rect.left <= rectContenedor.right
+                    && rect.bottom >= rectContenedor.top
+                    && rect.top <= rectContenedor.bottom;
+            }).sort(function (a, b) {
+                return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+            });
+
+            if (!etiquetas.length || !svg.createSVGPoint || !svg.getScreenCTM()) return null;
+
+            try {
+                const primera = etiquetas[0];
+                const rectPrimera = primera.getBoundingClientRect();
+                const punto = svg.createSVGPoint();
+                punto.x = rectPrimera.left + (rectPrimera.width / 2);
+                punto.y = rectPrimera.top + (rectPrimera.height / 2);
+                const puntoSvg = punto.matrixTransform(svg.getScreenCTM().inverse());
+                return Math.max(0, puntoSvg.x - (anchoColumna / 2));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function obtenerXVisibleGanttActual(metricas) {
+            if (!metricas || !metricas.svg) return 0;
+
+            const contenedorPrincipal = document.getElementById('gantt-container');
+            const contenedor = obtenerContenedorScrollGantt() || contenedorPrincipal;
+            const candidatos = [];
+
+            if (contenedor) {
+                candidatos.push(Number(contenedor.scrollLeft) || 0);
+
+                const rectContenedor = contenedor.getBoundingClientRect();
+                if (metricas.rectSvg && rectContenedor && metricas.rectSvg.width) {
+                    candidatos.push(Math.max(0, (rectContenedor.left - metricas.rectSvg.left) * metricas.escalaX));
+                }
+            }
+
+            if (contenedorPrincipal) {
+                const scrollables = [contenedorPrincipal].concat(Array.from(contenedorPrincipal.querySelectorAll('*')));
+                scrollables.forEach(function (elemento) {
+                    if (elemento && elemento.scrollWidth > elemento.clientWidth) {
+                        candidatos.push(Number(elemento.scrollLeft) || 0);
+                    }
+                });
+
+                const xEtiqueta = obtenerXDesdeEtiquetaVisibleGantt(metricas.svg, contenedorPrincipal, obtenerAnchoColumnaVista());
+                if (xEtiqueta !== null) candidatos.push(xEtiqueta);
+            }
+
+            const x = Math.max.apply(null, candidatos.filter(function (valor) {
+                return isFinite(valor) && valor >= 0;
+            }).concat([0]));
+
+            return Math.max(0, Math.min(x, Math.max(0, metricas.anchoSvg - 1)));
+        }
+
+        function obtenerRecorteSvgGanttActual() {
+            const metricas = obtenerMetricasSvgGanttActual();
+            if (!metricas || !metricas.svg) return null;
+
+            const contenedor = obtenerContenedorScrollGantt();
+            const anchoVisible = contenedor && contenedor.clientWidth
+                ? Math.max(1, contenedor.clientWidth * metricas.escalaX)
+                : (metricas.svg.clientWidth || metricas.anchoSvg);
+            const x = obtenerXVisibleGanttActual(metricas);
+            const y = 0;
+            const ancho = Math.max(1, Math.min(anchoVisible, metricas.anchoSvg - x));
+            const alto = Math.max(1, metricas.altoSvg);
+
+            return {
+                svg: metricas.svg,
+                x: x,
+                y: y,
+                ancho: ancho,
+                alto: alto,
+                inicioStr: fechaDesdeXGanttActual(x),
+                finStr: fechaDesdeXGanttActual(x + ancho)
+            };
+        }
+
+        function obtenerRangoVisibleGanttActual() {
+            const recorte = obtenerRecorteSvgGanttActual();
+            if (recorte && recorte.inicioStr && recorte.finStr) {
+                return {
+                    inicioStr: recorte.inicioStr,
+                    finStr: recorte.finStr
+                };
+            }
+
+            const rango = obtenerRangoUltimoMesGantt();
+            return {
+                inicioStr: rango.inicioStr,
+                finStr: rango.finStr
+            };
+        }
+
+        function insertarEstilosSvgGanttImpresion(svgClone) {
+            if (!svgClone) return;
+
+            const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+            style.textContent = [
+                '.grid-background{fill:#fff;stroke:none;}',
+                '.grid-header{fill:#f9fafb;}',
+                '.grid-row{fill:#fff;}',
+                '.grid-row:nth-child(even){fill:#fcfcfd;}',
+                '.row-line{stroke:#eef0f4;}',
+                '.tick{stroke:#edf1f7;}',
+                '.today-highlight{fill:#fff8dc;stroke:#f1d98a;opacity:.9;}',
+                '.bar{rx:5;ry:5;fill:#64748b;visibility:visible;}',
+                '.bar-progress{fill:rgba(255,255,255,.28);visibility:visible;}',
+                '.bar-wrapper{visibility:visible;}',
+                '.bar-label{fill:#fff;font-size:9.6px;font-weight:800;dominant-baseline:middle;paint-order:stroke;stroke:rgba(15,23,42,.38);stroke-width:1.8px;stroke-linejoin:round;text-rendering:geometricPrecision;}',
+                '.lower-text,.upper-text{fill:#667085;font-size:10px;}',
+                '.arrow{stroke:#94a3b8;fill:none;}',
+                '.bar-general .bar{fill:#64748b;}',
+                '.bar-CerroCora .bar,.bar-CerroCorÃ¡ .bar,.bar-CerroCorá .bar{fill:#0ea5e9;}',
+                '.bar-villamorra .bar{fill:#7c3aed;}',
+                '.bar-Oviedo .bar{fill:#f97316;}',
+                '.bar-SanLorenzo .bar{fill:#2563eb;}',
+                '.bar-SantaLibrada .bar{fill:#db2777;}',
+                '.bar-estado-pendiente .bar{fill:#475569;}',
+                '.bar-estado-progreso .bar{fill:#1d4ed8;}',
+                '.bar-estado-proxima .bar{fill:#b45309;}',
+                '.bar-estado-vencida .bar{fill:#b91c1c;}',
+                '.bar-estado-completada .bar{fill:#047857;}',
+                '.bar-estado-anulada .bar{fill:#6b7280;opacity:.78;}',
+                '.bar-hidden{display:none;}'
+            ].join('\n');
+
+            svgClone.insertBefore(style, svgClone.firstChild);
+        }
+
+        function obtenerSvgGanttVistaActualImpresion() {
+            const recorte = obtenerRecorteSvgGanttActual();
+            if (!recorte || !recorte.svg) {
+                return '<p class="report-empty">No se encontro el diagrama de Gantt visible.</p>';
+            }
+
+            const svgClone = recorte.svg.cloneNode(true);
+            svgClone.removeAttribute('style');
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('class', ((svgClone.getAttribute('class') || '') + ' gantt gantt-print-svg').trim());
+            svgClone.setAttribute('width', '100%');
+            svgClone.setAttribute('height', String(Math.round(recorte.alto)));
+            svgClone.setAttribute('viewBox', [recorte.x, recorte.y, recorte.ancho, recorte.alto].join(' '));
+            svgClone.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+            insertarEstilosSvgGanttImpresion(svgClone);
+            svgClone.querySelectorAll('.bar').forEach(function (barra) {
+                if (!barra.getAttribute('fill') && !/fill\s*:/.test(barra.getAttribute('style') || '')) {
+                    barra.setAttribute('fill', '#64748b');
+                }
+                barra.setAttribute('visibility', 'visible');
+                barra.style.visibility = 'visible';
+            });
+            svgClone.querySelectorAll('.bar-progress').forEach(function (barra) {
+                barra.setAttribute('visibility', 'visible');
+                barra.style.visibility = 'visible';
+            });
+            svgClone.querySelectorAll('.bar-wrapper').forEach(function (wrapper) {
+                wrapper.setAttribute('visibility', 'visible');
+                wrapper.style.visibility = 'visible';
+            });
+
+            return new XMLSerializer().serializeToString(svgClone);
+        }
+
+        function crearGanttHtmlReporteActividades() {
+            const rango = obtenerRangoVisibleGanttActual();
+            const svgHtml = obtenerSvgGanttVistaActualImpresion();
+
+            return ''
+                + '<section class="report-gantt-section">'
+                + '<div class="section-heading"><h2>Diagrama de Gantt</h2><span>' + escaparHtml(formatearFechaLegible(rango.inicioStr) + ' al ' + formatearFechaLegible(rango.finStr) + ' - Vista: ' + obtenerTextoVistaActualGantt()) + '</span></div>'
+                + '<div class="gantt-legend">'
+                + '<span><i class="status-pendiente"></i>Pendiente</span>'
+                + '<span><i class="status-en-progreso"></i>En proceso</span>'
+                + '<span><i class="status-completada"></i>Culminada</span>'
+                + '<span><i class="status-vencida"></i>Vencida</span>'
+                + '<span><i class="status-anulada"></i>Anulada</span>'
+                + '</div>'
+                + '<div class="print-gantt-current">' + svgHtml + '</div>'
+                + '</section>';
+        }
+
+        function crearNombreArchivoReporteActividades(funcionario, filtros) {
+            const nombre = String(funcionario.nombre || 'funcionario')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '') || 'funcionario';
+            const desde = filtros.desde || 'inicio';
+            const hasta = filtros.hasta || 'fin';
+            return 'reporte_gantt_actividades_' + nombre + '_' + desde + '_' + hasta + '.pdf';
+        }
+
+        function prepararVistaGanttParaImpresion(callback) {
+            sincronizarTablaConBarrasGantt();
+            decorarBarrasGanttResponsables();
+            configurarTooltipsGantt();
+
+            requestAnimationFrame(function () {
+                sincronizarTablaConBarrasGantt();
+                decorarBarrasGanttResponsables();
+                if (typeof callback === 'function') callback();
+            });
+        }
+
+        function crearHtmlReporteActividades(accion) {
+            const filtros = obtenerFiltrosReporteActividades();
+            const tareas = obtenerTareasVisiblesReporteActual();
+            const resumen = calcularResumenReporteActividades(tareas);
+            const funcionario = obtenerFuncionarioReporteActividades(filtros, tareas);
+            const sucursal = obtenerSucursalReporteActividades(filtros, tareas);
+            const rangoGantt = obtenerRangoVisibleGanttActual();
+            const generado = new Date();
+            const usuarioGenerador = obtenerNombreUsuarioGantt();
+            const pageSize = 'A4 landscape';
+            const pageWidth = '297mm';
+            const pageMinHeight = '210mm';
+            const periodo = (rangoGantt.inicioStr ? formatearFechaLegible(rangoGantt.inicioStr) : 'Sin fecha inicial')
+                + ' al '
+                + (rangoGantt.finStr ? formatearFechaLegible(rangoGantt.finStr) : 'Sin fecha final');
+            const estado = filtros.estado && filtros.estado !== 'Todas'
+                ? etiquetaEstadoReporteActividades(filtros.estado)
+                : 'Todas';
+            const archivo = crearNombreArchivoReporteActividades(funcionario, filtros);
+            const avatarHtml = funcionario.foto
+                ? '<img class="employee-avatar" src="' + escaparHtml(funcionario.foto) + '" alt="' + escaparHtml(funcionario.nombre) + '">'
+                : '<div class="employee-avatar employee-avatar-fallback">' + escaparHtml(funcionario.iniciales) + '</div>';
+            const accionesHtml = accion === 'preview'
+                ? '<div class="screen-actions"><button onclick="window.print()">Imprimir</button><button onclick="window.print()">Generar PDF</button><button onclick="window.print()">Descargar PDF</button></div>'
+                : '';
 
             const html = '<!DOCTYPE html>'
                 + '<html lang="es"><head><meta charset="UTF-8">'
-                + '<title>Planificacion de tareas</title>'
+                + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+                + '<base href="' + escaparHtml(window.location.href.split('#')[0]) + '">'
+                + '<title>' + escaparHtml(archivo) + '</title>'
                 + '<style>'
-                + '@page{size:landscape;margin:10mm;}'
+                + '@page{size:' + pageSize + ';margin:8mm 8mm 12mm;}'
                 + '*{box-sizing:border-box;}'
-                + 'body{margin:0;font-family:Arial,sans-serif;color:#172033;background:#fff;font-size:11px;}'
-                + '.print-report-header{margin:0 0 14px;}'
-                + '.print-logo-wrap{text-align:center;margin:0 0 16px;}'
-                + '.print-logo{width:160px;max-width:34mm;height:auto;display:inline-block;}'
-                + '.print-filter-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px 32px;padding:14px 18px;border-top:1px dashed #c9ced6;border-bottom:1px dashed #c9ced6;color:#111827;}'
-                + '.print-filter-item{min-width:0;text-align:left;}'
-                + '.print-filter-item p{margin:0 0 6px;font-size:10px;line-height:1.25;color:#111827;text-transform:uppercase;}'
-                + '.print-filter-item p:first-child{text-transform:none;color:#000;}'
-                + '.print-filter-item b{font-weight:700;color:#000;}'
-                + '.print-section-title{margin:0;text-align:center;font-size:13px;color:#172033;break-after:avoid;page-break-after:avoid;}'
-                + '.print-table-title{margin:16px 0 28px;text-align:center;color:#000;font-family:Arial,sans-serif;font-size:14px;font-weight:800;line-height:1;text-transform:uppercase;}'
-                + '.print-task-table{width:100%;border-collapse:collapse;margin:0 0 12px;table-layout:fixed;}'
-                + '.print-task-table th{height:34px;padding:6px;text-align:center;vertical-align:middle;border-right:1px solid #e7f2fb;background:#087ac5;color:#fff;font-size:8px;font-family:Arial,sans-serif;font-weight:800;text-transform:uppercase;}'
-                + '.print-task-table th:last-child{border-right:none;}'
-                + '.print-task-table td{height:33px;padding:6px;text-align:left;vertical-align:middle;border-left:1px solid #cecece;border-right:1px solid #cecece;border-bottom:1px solid #cecece;font-size:9px;font-family:\"Merriweather Sans\",Arial;color:#1b1b1b;word-break:break-word;}'
-                + '.tableRegistroSearch{background:#fff;}'
-                + '.tableRegistroSearch2{background:#f0f0f0;}'
-                + '.print-task-table th:first-child{width:34%;}'
-                + '.print-task-table th:nth-child(2),.print-task-table th:nth-child(3),.print-task-table th:nth-child(4){width:22%;}'
-                + '.print-task-table a{display:none!important;}'
-                + '.print-gantt-section{page-break-before:auto;break-before:auto;break-inside:avoid;page-break-inside:avoid;margin-top:10px;}'
-                + '.print-gantt{width:100%;height:auto;overflow:hidden;border:0;padding:0;background:#fff;line-height:0;}'
-                + '.print-gantt svg{display:block;width:100%;height:160mm;border:0;outline:0;background:#fff;}'
-                + '.print-empty{padding:10px;border:1px solid #d9e1ea;background:#f9fafb;color:#667085;}'
-                + '.grid-background{fill:#fff!important;stroke:none!important;} .grid-header{fill:#f9fafb;} .grid-row{fill:#fff;} .row-line,.tick{stroke:#e5e7eb!important;stroke-width:1!important;}'
-                + '.today-highlight{fill:#fff7d6;opacity:.75;} .bar{fill:#8b95a7;} .bar-progress{fill:rgba(255,255,255,.28);}'
-                + '.bar-label{fill:#fff;font-size:10px;font-weight:700;} .bar-hidden{display:none;}'
-                + '.bar-estado-pendiente .bar{fill:#8b95a7;} .bar-estado-progreso .bar{fill:#2563eb;}'
-                + '.bar-estado-completada .bar{fill:#16a34a;} .bar-estado-vencida .bar{fill:#dc2626;} .bar-estado-proxima .bar{fill:#f59e0b;}'
-                + '.grant-avatar-fallback{display:none;} .grant-avatar{display:none;}'
+                + 'body{margin:0;background:#edf1f5;color:#172033;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.28;}'
+                + '.screen-actions{position:sticky;top:0;z-index:10;display:flex;gap:8px;justify-content:flex-end;padding:10px 14px;background:#172033;border-bottom:1px solid #0f172a;}'
+                + '.screen-actions button{border:1px solid #cbd5e1;background:#fff;color:#172033;border-radius:4px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}'
+                + '.report-page{width:' + pageWidth + ';min-height:' + pageMinHeight + ';margin:12px auto;padding:0 0 12mm;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.16);position:relative;}'
+                + '.report-inner{padding:8mm 8mm 6mm;}'
+                + '.report-header{display:grid;grid-template-columns:28mm 1fr 20mm;gap:5mm;align-items:center;border-bottom:1px solid #d8e0e8;padding-bottom:4mm;}'
+                + '.brand-logo{width:25mm;max-height:14mm;object-fit:contain;}'
+                + '.report-title h1{margin:0 0 2mm;font-size:18px;line-height:1;color:#172033;font-weight:800;}'
+                + '.report-title p{margin:0;color:#5f6b7a;font-size:9.5px;}'
+                + '.header-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:2mm 4mm;margin-top:3mm;}'
+                + '.header-meta span{display:block;color:#667085;font-size:7.8px;text-transform:uppercase;letter-spacing:.04em;}'
+                + '.header-meta strong{display:block;color:#111827;font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+                + '.employee-box{text-align:center;}'
+                + '.employee-avatar{width:18mm;height:18mm;border-radius:50%;object-fit:cover;border:1px solid #e2e8f0;background:#f8fafc;display:inline-flex;align-items:center;justify-content:center;color:#172033;font-weight:800;font-size:11px;}'
+                + '.employee-avatar-fallback{font-size:11px;}'
+                + '.report-summary-line{margin:3mm 0 3mm;padding:2mm 3mm;border:1px solid #d8e0e8;border-radius:6px;background:#fbfcfe;color:#344054;font-size:9.3px;font-weight:700;}'
+                + '.section-heading{display:flex;justify-content:space-between;gap:4mm;align-items:end;margin:0 0 2mm;}'
+                + '.section-heading h2{margin:0;color:#172033;font-size:12px;}'
+                + '.section-heading span{color:#667085;font-size:8.5px;font-weight:700;}'
+                + '.report-gantt-section{break-inside:auto;page-break-inside:auto;}'
+                + '.gantt-legend{display:flex;gap:4mm;align-items:center;margin:0 0 2mm;color:#475467;font-size:8.2px;}'
+                + '.gantt-legend span{display:inline-flex;align-items:center;gap:1.5mm;}'
+                + '.gantt-legend i{width:12px;height:7px;border-radius:999px;display:inline-block;border:1px solid transparent;}'
+                + '.print-gantt-current{border:1px solid #cbd5e1;border-radius:7px;overflow:hidden;background:#fff;line-height:0;}'
+                + '.gantt-print-svg{display:block;width:100%;height:auto;max-height:154mm;background:#fff;}'
+                + '.gantt-print-svg .grid-background{fill:#fff!important;stroke:none!important;}'
+                + '.gantt-print-svg .grid-header{fill:#f9fafb!important;}'
+                + '.gantt-print-svg .grid-row{fill:#fff!important;}'
+                + '.gantt-print-svg .grid-row:nth-child(even){fill:#fcfcfd!important;}'
+                + '.gantt-print-svg .row-line{stroke:#eef0f4!important;}'
+                + '.gantt-print-svg .tick{stroke:#edf1f7!important;}'
+                + '.gantt-print-svg .today-highlight{fill:#fff8dc!important;stroke:#f1d98a!important;opacity:.9;}'
+                + '.gantt-print-svg .bar{rx:5;ry:5;}'
+                + '.gantt-print-svg .bar-label{fill:#fff!important;font-size:9.6px;font-weight:800;dominant-baseline:middle;paint-order:stroke;stroke:rgba(15,23,42,.38);stroke-width:1.8px;stroke-linejoin:round;text-rendering:geometricPrecision;}'
+                + '.gantt-print-svg .lower-text,.gantt-print-svg .upper-text{fill:#667085!important;font-size:10px;}'
+                + '.gantt-print-svg .arrow{stroke:#94a3b8!important;fill:none!important;}'
+                + '.gantt-print-svg .bar-progress{fill:rgba(255,255,255,.28)!important;}'
+                + '.gantt-print-svg .bar-general .bar{fill:#64748b!important;}'
+                + '.gantt-print-svg .bar-CerroCora .bar,.gantt-print-svg .bar-CerroCorÃ¡ .bar,.gantt-print-svg .bar-CerroCorá .bar{fill:#0ea5e9!important;}'
+                + '.gantt-print-svg .bar-villamorra .bar{fill:#7c3aed!important;}'
+                + '.gantt-print-svg .bar-Oviedo .bar{fill:#f97316!important;}'
+                + '.gantt-print-svg .bar-SanLorenzo .bar{fill:#2563eb!important;}'
+                + '.gantt-print-svg .bar-SantaLibrada .bar{fill:#db2777!important;}'
+                + '.gantt-print-svg .bar-estado-pendiente .bar{fill:#475569!important;}'
+                + '.gantt-print-svg .bar-estado-progreso .bar{fill:#1d4ed8!important;}'
+                + '.gantt-print-svg .bar-estado-proxima .bar{fill:#b45309!important;}'
+                + '.gantt-print-svg .bar-estado-vencida .bar{fill:#b91c1c!important;}'
+                + '.gantt-print-svg .bar-estado-completada .bar{fill:#047857!important;}'
+                + '.gantt-print-svg .bar-estado-anulada .bar{fill:#6b7280!important;opacity:.78;}'
+                + '.gantt-print-svg .bar-hidden{display:none!important;}'
+                + '.status-pendiente{background:#e9eef5;color:#344054;border-color:#cbd5e1;}'
+                + '.status-en-progreso{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd;}'
+                + '.status-completada{background:#dcfce7;color:#047857;border-color:#86efac;}'
+                + '.status-vencida{background:#fee2e2;color:#b42318;border-color:#fca5a5;}'
+                + '.status-anulada{background:#e5e7eb;color:#4b5563;border-color:#cbd5e1;}'
+                + '.report-empty{border:1px dashed #cbd5e1;background:#f8fafc;color:#667085;padding:12px;border-radius:6px;}'
+                + '.report-footer{position:fixed;left:10mm;right:10mm;bottom:5mm;border-top:1px solid #d8e0e8;padding-top:3mm;color:#667085;font-size:9px;text-align:center;background:#fff;}'
+                + '.page-number:after{content:counter(page);}'
+                + '@media print{body{background:#fff;}.screen-actions{display:none!important;}.report-page{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none;}.report-inner{padding:0 0 9mm;}.report-footer{bottom:0;}}'
                 + '</style></head><body>'
-                + cabeceraHtml
-                + tablaHtml
-                + ganttHtml
+                + accionesHtml
+                + '<main class="report-page">'
+                + '<div class="report-inner">'
+                + '<header class="report-header">'
+                + '<div><img class="brand-logo" src="/GoodVentaAsisCap/iconos/Logo.jpg" alt="Clinident Salud"></div>'
+                + '<div class="report-title"><h1>Reporte Gantt de actividades</h1><p>Vista imprimible del cronograma por funcionario/responsable.</p>'
+                + '<div class="header-meta">'
+                + '<div><span>Funcionario</span><strong>' + escaparHtml(funcionario.nombre) + '</strong></div>'
+                + '<div><span>Cargo o rol</span><strong>' + escaparHtml(funcionario.rol) + '</strong></div>'
+                + '<div><span>Sucursal</span><strong>' + escaparHtml(sucursal) + '</strong></div>'
+                + '<div><span>Periodo</span><strong>' + escaparHtml(periodo) + '</strong></div>'
+                + '<div><span>Estado</span><strong>' + escaparHtml(estado) + '</strong></div>'
+                + '<div><span>Generado por</span><strong>' + escaparHtml(usuarioGenerador) + '</strong></div>'
+                + '<div><span>Emision</span><strong>' + escaparHtml(formatearFechaHoraReporteActividades(generado)) + '</strong></div>'
+                + '<div><span>Vista</span><strong>' + escaparHtml(obtenerTextoVistaActualGantt()) + '</strong></div>'
+                + '</div></div>'
+                + '<div class="employee-box">' + avatarHtml + '</div>'
+                + '</header>'
+                + crearResumenHtmlReporteActividades(resumen)
+                + crearGanttHtmlReporteActividades()
+                + '</div>'
+                + '<footer class="report-footer">Clinident Salud &middot; Reporte generado el ' + escaparHtml(formatearFechaHoraReporteActividades(generado)) + ' &middot; Pagina <span class="page-number"></span></footer>'
+                + '</main>'
                 + '</body></html>';
 
+            return { html: html, archivo: archivo };
+        }
+
+        function abrirVentanaReporteActividades(accion) {
             const ventana = window.open('', '_blank');
             if (!ventana) {
-                window.print();
+                alert('No se pudo abrir la vista previa. Habilite ventanas emergentes para generar el reporte.');
                 return;
             }
 
             ventana.document.open();
-            ventana.document.write(html);
+            ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Preparando reporte</title></head><body style="font-family:Arial,sans-serif;padding:18px;color:#172033;">Preparando vista actual del Gantt...</body></html>');
             ventana.document.close();
             ventana.focus();
-            setTimeout(function () {
-                ventana.print();
-            }, 500);
+
+            prepararVistaGanttParaImpresion(function () {
+                try {
+                    const reporte = crearHtmlReporteActividades(accion);
+                    ventana.document.open();
+                    ventana.document.write(reporte.html);
+                    ventana.document.close();
+                    ventana.focus();
+
+                    if (accion !== 'preview') {
+                        setTimeout(function () {
+                            ventana.document.title = reporte.archivo;
+                            ventana.print();
+                        }, 250);
+                    }
+                } catch (error) {
+                    ventana.document.open();
+                    ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Error reporte</title></head><body style="font-family:Arial,sans-serif;padding:18px;color:#991b1b;"><h3>No se pudo preparar el reporte Gantt</h3><p>' + escaparHtml(error && error.message ? error.message : error) + '</p></body></html>');
+                    ventana.document.close();
+                }
+            });
+        }
+
+        function vistaPreviaReporteActividades() {
+            abrirVentanaReporteActividades('preview');
+        }
+
+        function imprimirReporteActividades() {
+            abrirVentanaReporteActividades('print');
+        }
+
+        function generarPdfReporteActividades() {
+            abrirVentanaReporteActividades('pdf');
+        }
+
+        function descargarPdfReporteActividades() {
+            abrirVentanaReporteActividades('download');
+        }
+
+        function imprimirListaYGantt() {
+            imprimirReporteActividades();
         }
 
         function formatearFechaLegible(fecha) {
@@ -2634,12 +5391,20 @@ if (ob_get_length()) {
             if (!contenedorExterno) return null;
 
             const contenedorInterno = contenedorExterno.querySelector('.gantt-container');
-            if (contenedorExterno.scrollWidth > contenedorExterno.clientWidth) {
+            if (contenedorInterno && (contenedorInterno.scrollLeft > 0 || contenedorInterno.scrollTop > 0)) {
+                return contenedorInterno;
+            }
+
+            if (contenedorExterno.scrollLeft > 0 || contenedorExterno.scrollTop > 0) {
                 return contenedorExterno;
             }
 
-            if (contenedorInterno && contenedorInterno.scrollWidth > contenedorInterno.clientWidth) {
+            if (contenedorInterno && (contenedorInterno.scrollWidth > contenedorInterno.clientWidth || contenedorInterno.scrollHeight > contenedorInterno.clientHeight)) {
                 return contenedorInterno;
+            }
+
+            if (contenedorExterno.scrollWidth > contenedorExterno.clientWidth) {
+                return contenedorExterno;
             }
 
             return contenedorExterno;
@@ -2910,6 +5675,27 @@ if (ob_get_length()) {
 
         // Función unificada para enviar actualizaciones (fechas o progreso)
         function enviarActualizacionBack(id, start, end, progress) {
+            ganttBloqueoClickRapidoHasta = Date.now() + 700;
+
+            llamarApiGantt('actualizar_fechas', {
+                id: id,
+                start: start,
+                end: end,
+                progress: progress,
+                origen: 'grilla Gantt'
+            })
+                .then(function (data) {
+                    if (data.task) {
+                        upsertTareaGantt(data.task);
+                        aplicarFiltros();
+                    }
+                    mostrarToastGantt(data.message || 'Tarea reprogramada.', data.undo);
+                })
+                .catch(function (error) {
+                    mostrarToastGantt(error.message || 'No se pudo guardar el cambio.');
+                    aplicarFiltros();
+                });
+            return;
 
 
 
@@ -3000,6 +5786,9 @@ if (ob_get_length()) {
             const usuarioSeleccionado = filtroUsuario ? String(filtroUsuario.value || '') : '';
             const opcionUsuario = filtroUsuario && filtroUsuario.options ? filtroUsuario.options[filtroUsuario.selectedIndex] : null;
             const nombreUsuarioSeleccionado = normalizarTextoFiltro(opcionUsuario ? (opcionUsuario.dataset.nombre || opcionUsuario.textContent || '') : '');
+            const fechaDesde = parsearFechaReporte(document.getElementById('reporte-fecha-desde') ? document.getElementById('reporte-fecha-desde').value : '');
+            const fechaHasta = parsearFechaReporte(document.getElementById('reporte-fecha-hasta') ? document.getElementById('reporte-fecha-hasta').value : '');
+            const estadoReporte = document.getElementById('reporte-estado') ? String(document.getElementById('reporte-estado').value || 'Todas') : 'Todas';
 
             // Filtrar tareas reales (excluir la fantasma aquí; renderGantt la re-agrega)
             const tareasFiltradas = allTasks.filter(t => {
@@ -3017,7 +5806,11 @@ if (ob_get_length()) {
                     || responsableId === usuarioSeleccionado
                     || (nombreUsuarioSeleccionado && usuariosBusqueda.includes(nombreUsuarioSeleccionado))
                     || vinculadosIds.includes(usuarioSeleccionado);
-                return matchSucursal && matchResp && matchUsuario;
+                const inicioTarea = parsearFechaReporte(t.start || t.fecha_inicio);
+                const finTarea = parsearFechaReporte(t.end || t.fecha_fin) || inicioTarea;
+                const matchFechas = (!fechaDesde || (finTarea && finTarea >= fechaDesde)) && (!fechaHasta || (inicioTarea && inicioTarea <= fechaHasta));
+                const matchEstado = !estadoReporte || estadoReporte === 'Todas' || normalizarEstadoReporteActividades(t) === estadoReporte;
+                return matchSucursal && matchResp && matchUsuario && matchFechas && matchEstado;
             });
             renderGantt(tareasFiltradas);
             programarCentradoFechaActual();
@@ -3039,6 +5832,8 @@ if (ob_get_length()) {
 
         
        function eliminarTarea(id, nombre) {
+    abrirDialogoAnularTarea(String(id));
+    return;
     if (confirm('¿Eliminar la tarea "' + nombre + '"?\n\nEsta acción no se puede deshacer.')) {
         
         fetch('../php_system/Grant.php?delete=' + id)
@@ -3131,6 +5926,7 @@ if (ob_get_length()) {
 
         formulario.dataset.bloqueoGuardado = '1';
         formulario.addEventListener('submit', function (event) {
+            sincronizarCredencialesFormularioGantt();
             if (tareaGanttGuardando) {
                 event.preventDefault();
                 return false;
@@ -3216,11 +6012,30 @@ if (ob_get_length()) {
         actualizarVistaUsuariosVinculados();
     }
 
+    function inicializarFiltrosReporteActividades() {
+        const desde = document.getElementById('reporte-fecha-desde');
+        const hasta = document.getElementById('reporte-fecha-hasta');
+        const estado = document.getElementById('reporte-estado');
+        const fin = new Date();
+        fin.setHours(0, 0, 0, 0);
+        fin.setDate(fin.getDate() + 30);
+        const inicio = new Date();
+        inicio.setHours(0, 0, 0, 0);
+        inicio.setDate(inicio.getDate() - 30);
+
+        if (desde && !desde.value) desde.value = formatDate(inicio);
+        if (hasta && !hasta.value) hasta.value = formatDate(fin);
+        if (estado && !estado.value) estado.value = 'Todas';
+    }
+
     // Mantener filtros limpios al cargar.
     window.addEventListener('load', function () {
+        sincronizarCredencialesFormularioGantt();
+        configurarCreacionRapidaGantt();
         configurarBloqueoFormularioTareaGantt();
         document.getElementById('filtro-sucursal').value = 'Todas';
         document.getElementById('filtro-responsable').value = '';
+        inicializarFiltrosReporteActividades();
         iniciarFiltroUsuarioActualGantt();
         const usuariosVinculados = document.getElementById('form_usuarios_vinculados');
         if (usuariosVinculados) {
