@@ -25,6 +25,8 @@ if (!defined('ABM_INSUMOS_JSON_FATAL_HANDLER')) {
             ), JSON_INVALID_UTF8_SUBSTITUTE);
         }
     });
+if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
 }
 
 function ObtenerDatos($operacion)

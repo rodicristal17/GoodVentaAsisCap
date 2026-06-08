@@ -255,7 +255,7 @@ CREATE TABLE insumosconsl (
     id_insumo INT NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(150) NOT NULL,
     descripcion VARCHAR(255) DEFAULT NULL,
-    cant_stock NOT NULL INT,
+    cant_stock INT NOT NULL,
     unidad_medida varchar(50) NOT NULL DEFAULT 0,
     estado  BOOLEAN DEFAULT 1,
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -271,9 +271,9 @@ CREATE TABLE insumo_producto(
     cod_producto VARCHAR(45) NOT NULL,
     cantidad DECIMAL(10,2) NOT NULL DEFAULT 1,
     PRIMARY KEY (id_insumo_producto),
-    FOREIGN KEY (id_insumo) REFERENCES insumosconsl(id_insumo),
-    FOREIGN KEY (cod_producto) REFERENCES producto(cod_producto)
-);
+    CONSTRAINT fk_insumo_producto_insumo FOREIGN KEY (id_insumo) REFERENCES insumosconsl(id_insumo),
+    CONSTRAINT fk_insumo_producto_producto FOREIGN KEY (cod_producto) REFERENCES producto(cod_producto)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 CREATE TABLE insumo_stock_consultorio (
     id_stock INT NOT NULL AUTO_INCREMENT,
@@ -421,6 +421,8 @@ ALTER TABLE usuario
     DROP COLUMN hora_entrada_jueves,
     DROP COLUMN hora_entrada_viernes,
     DROP COLUMN hora_entrada_sabado;
+
+UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.87', detalles='Muchas implementaciones de chatgpt subidas', fecha='2026-06-08' WHERE idhistorialactualizacion= 2;
 
 -- Permisos agregados
 -- VERRECETARIOINDICACIONES, BUSCARRECETARIOINDICACIONES, EMITIRRECETARIOINDICACIONES, IMPRIMIRRECETARIOINDICACIONES, ANULARRECETARIOINDICACIONES
