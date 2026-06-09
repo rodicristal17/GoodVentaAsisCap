@@ -1,6 +1,7 @@
 var agendaConsultoriosData = {
     consultorios: [],
     eventos: [],
+    eventosOcupacion: [],
     feriados: []
 };
 var agendaTratamientosSeleccionados = [];
@@ -8,6 +9,7 @@ var agendaVentaSeleccionada = "";
 var timeoutBuscarHistorialPacienteCalendario = null;
 var ultimaPeticionDoctoresNuevaCita = 0;
 var comentarioAgendamientoEnProceso = false;
+var agendaConsultoriosGruposColapsados = {};
 
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
@@ -21,6 +23,7 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
     }
     var estado = document.getElementById('inptEstadoAgenda').value || '';
     var fecha = document.getElementById('inptFechaAgenda').value || '';
+    actualizarTextoFechaAgenda();
 
     var datos = {
         "useru": userid,
@@ -81,6 +84,7 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
                 if (Respuesta == true) {
                     agendaConsultoriosData.consultorios = datosRespuesta["consultorios"] || [];
                     agendaConsultoriosData.eventos = datosRespuesta["eventos"] || [];
+                    agendaConsultoriosData.eventosOcupacion = datosRespuesta["eventos_ocupacion"] || agendaConsultoriosData.eventos;
                     agendaConsultoriosData.feriados = datosRespuesta["feriados"] || [];
 					 
                     for(var f = 0; f < agendaConsultoriosData.feriados.length; f++) {
@@ -161,6 +165,7 @@ function iniciarAgendaConsultorios(){
 
     document.getElementById('inptFechaAgenda').value = y + '-' + m + '-' + d;
     document.getElementById('inptFechaNuevaCita').value = y + '-' + m + '-' + d;
+    actualizarTextoFechaAgenda();
 
     cargarAgendaConsultoriosDesdePHP();
 }
@@ -168,33 +173,229 @@ function iniciarAgendaConsultorios(){
 function renderListaConsultoriosAgenda(){
     var cont = document.getElementById('listaConsultoriosAgenda');
     var html = '';
-    var i, c;
+    var i, c, grupoClave, grupoNombre, grupos, ordenGrupos, grupo, checked, colapsado, nombreConsultorio;
     var idsSeleccionados = obtenerConsultoriosSeleccionadosAgenda();
+
+    if(!cont){
+        return;
+    }
+
+    grupos = {};
+    ordenGrupos = [];
 
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
         c = agendaConsultoriosData.consultorios[i];
+        grupoNombre = obtenerSucursalConsultorioAgenda(c);
+        grupoClave = grupoNombre.toLowerCase();
 
-        var checked = "checked";
-        if(idsSeleccionados.length > 0){
-            checked = idsSeleccionados.indexOf(String(c.id)) >= 0 ? "checked" : "";
+        if(!grupos[grupoClave]){
+            grupos[grupoClave] = {
+                nombre: grupoNombre,
+                consultorios: []
+            };
+            ordenGrupos.push(grupoClave);
         }
 
+        grupos[grupoClave].consultorios.push(c);
+    }
+
+    for(i = 0; i < ordenGrupos.length; i++){
+        grupo = grupos[ordenGrupos[i]];
+        colapsado = agendaConsultoriosGruposColapsados[ordenGrupos[i]] === true;
+
         html += ''
-        + "<label class='item-consultorio item-consultorio-check'>"
-            + "<input type='checkbox' "
-                + "class='check-consultorio-agenda' "
-                + "value='" + c.id + "' "
-                + checked + " "
-                + "onchange='cargarAgendaConsultorios()'>"
-            + "<span class='consultorio-color' style='background:" + c.color + "'></span>"
-            + "<div>"
-                + "<b>" + c.nombre + "</b><br>"
-                + "<span style='color:#6b7c90;font-size:11px'>" + c.descripcion + "</span>"
+        + "<div class='consultorio-grupo' data-grupo='" + escaparAtributoListaAgenda(ordenGrupos[i]) + "'>"
+            + "<div class='consultorio-grupo-header'>"
+                + "<button type='button' class='consultorio-grupo-toggle' "
+                    + "onclick='toggleGrupoConsultoriosAgenda(this)' "
+                    + "aria-expanded='" + (colapsado ? "false" : "true") + "'>"
+                    + (colapsado ? "+" : "-")
+                + "</button>"
+                + "<label class='consultorio-grupo-label'>"
+                    + "<input type='checkbox' class='check-grupo-consultorio-agenda' "
+                        + "onchange='seleccionarGrupoConsultoriosAgenda(this)'>"
+                    + "<span>" + escaparHtmlListaAgenda(grupo.nombre) + "</span>"
+                + "</label>"
+                + "<span class='consultorio-grupo-contador'></span>"
             + "</div>"
-        + "</label>";
+            + "<div class='consultorio-grupo-body' style='" + (colapsado ? "display:none;" : "") + "'>";
+
+        for(var j = 0; j < grupo.consultorios.length; j++){
+            c = grupo.consultorios[j];
+            checked = "checked";
+            if(idsSeleccionados.length > 0){
+                checked = idsSeleccionados.indexOf(String(c.id)) >= 0 ? "checked" : "";
+            }
+            nombreConsultorio = obtenerNombreConsultorioListaAgenda(c, grupo.nombre);
+
+            html += ''
+            + "<label class='item-consultorio item-consultorio-check'>"
+                + "<input type='checkbox' "
+                    + "class='check-consultorio-agenda' "
+                    + "value='" + escaparAtributoListaAgenda(c.id) + "' "
+                    + checked + " "
+                    + "onchange='actualizarEstadoGruposConsultoriosAgenda();cargarAgendaConsultorios()'>"
+                + "<span class='consultorio-color' style='background:" + escaparAtributoListaAgenda(c.color) + "'></span>"
+                + "<div>"
+                    + "<b>" + escaparHtmlListaAgenda(nombreConsultorio) + "</b><br>"
+                    + "<span style='color:#6b7c90;font-size:11px'>" + escaparHtmlListaAgenda(c.descripcion) + "</span>"
+                + "</div>"
+            + "</label>";
+        }
+
+        html += "</div></div>";
     }
 
     cont.innerHTML = html;
+    actualizarEstadoGruposConsultoriosAgenda();
+}
+
+function obtenerSucursalConsultorioAgenda(consultorio){
+    var nombreLocal = consultorio.nombre_local || consultorio.NombreLocal || consultorio.local || '';
+    var textoBase = normalizarTextoBusquedaAgenda(
+        nombreLocal + ' ' + (consultorio.nombre || '') + ' ' + (consultorio.descripcion || '')
+    );
+
+    if(textoBase.indexOf('CERRO CORA') >= 0){
+        return 'Cerro Cor\u00e1';
+    }
+
+    if(textoBase.indexOf('VILLA INDUSTRIAL') >= 0){
+        return 'Villa Industrial';
+    }
+
+    if(textoBase.indexOf('PADRE MOLAS') >= 0){
+        return 'Padre Molas';
+    }
+
+    if(nombreLocal !== ''){
+        return limpiarNombreSucursalAgenda(nombreLocal);
+    }
+
+    return 'Sin sucursal';
+}
+
+function limpiarNombreSucursalAgenda(nombre){
+    nombre = String(nombre || '').replace(/\s+/g, ' ').trim();
+    nombre = nombre.replace(/^CLINIDENT\s*/i, '').trim();
+    return nombre !== '' ? nombre : 'Sin sucursal';
+}
+
+function obtenerNombreConsultorioListaAgenda(consultorio, sucursal){
+    var nombre = String(consultorio.nombre || '');
+    var textoSucursal = normalizarTextoBusquedaAgenda(sucursal);
+
+    if(textoSucursal == 'CERRO CORA'){
+        nombre = nombre.replace(/^\s*(CLINIDENT\s*)?CERRO\s*COR[A\u00c1\u00e1]\s*[-:]?\s*/i, '');
+    }else if(textoSucursal == 'VILLA INDUSTRIAL'){
+        nombre = nombre.replace(/^\s*(CLINIDENT\s*)?VILLA\s*INDUSTRIAL\s*[-:]?\s*/i, '');
+    }else if(textoSucursal == 'PADRE MOLAS'){
+        nombre = nombre.replace(/^\s*(CLINIDENT\s*)?PADRE\s*MOLAS\s*[-:]?\s*/i, '');
+    }
+
+    nombre = nombre.replace(/\s+/g, ' ').trim();
+    return nombre !== '' ? nombre : consultorio.nombre;
+}
+
+function normalizarTextoBusquedaAgenda(texto){
+    texto = String(texto || '').toUpperCase();
+
+    if(typeof texto.normalize === 'function'){
+        texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    return texto.replace(/\s+/g, ' ').trim();
+}
+
+function escaparHtmlListaAgenda(valor){
+    return String(valor === null || valor === undefined ? '' : valor)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escaparAtributoListaAgenda(valor){
+    return escaparHtmlListaAgenda(valor);
+}
+
+function obtenerContenedorGrupoConsultorioAgenda(elemento){
+    while(elemento && elemento !== document){
+        if(elemento.classList && elemento.classList.contains('consultorio-grupo')){
+            return elemento;
+        }
+        elemento = elemento.parentNode;
+    }
+
+    return null;
+}
+
+function seleccionarGrupoConsultoriosAgenda(checkGrupo){
+    var grupo = obtenerContenedorGrupoConsultorioAgenda(checkGrupo);
+    var checks, i;
+
+    if(!grupo){
+        return;
+    }
+
+    checks = grupo.querySelectorAll('.check-consultorio-agenda');
+    for(i = 0; i < checks.length; i++){
+        checks[i].checked = checkGrupo.checked;
+    }
+
+    checkGrupo.indeterminate = false;
+    actualizarEstadoGruposConsultoriosAgenda();
+    cargarAgendaConsultorios();
+}
+
+function actualizarEstadoGruposConsultoriosAgenda(){
+    var grupos = document.querySelectorAll('#listaConsultoriosAgenda .consultorio-grupo');
+    var i, j, checks, seleccionados, checkGrupo, contador;
+
+    for(i = 0; i < grupos.length; i++){
+        checks = grupos[i].querySelectorAll('.check-consultorio-agenda');
+        checkGrupo = grupos[i].querySelector('.check-grupo-consultorio-agenda');
+        contador = grupos[i].querySelector('.consultorio-grupo-contador');
+        seleccionados = 0;
+
+        for(j = 0; j < checks.length; j++){
+            if(checks[j].checked){
+                seleccionados++;
+            }
+        }
+
+        if(checkGrupo){
+            checkGrupo.checked = checks.length > 0 && seleccionados === checks.length;
+            checkGrupo.indeterminate = seleccionados > 0 && seleccionados < checks.length;
+        }
+
+        if(contador){
+            contador.innerHTML = seleccionados + '/' + checks.length;
+        }
+    }
+}
+
+function toggleGrupoConsultoriosAgenda(boton){
+    var grupo = obtenerContenedorGrupoConsultorioAgenda(boton);
+    var cuerpo, grupoClave, colapsado;
+
+    if(!grupo){
+        return;
+    }
+
+    cuerpo = grupo.querySelector('.consultorio-grupo-body');
+    if(!cuerpo){
+        return;
+    }
+
+    colapsado = cuerpo.style.display !== 'none';
+    cuerpo.style.display = colapsado ? 'none' : '';
+    boton.innerHTML = colapsado ? '+' : '-';
+    boton.setAttribute('aria-expanded', colapsado ? 'false' : 'true');
+
+    grupoClave = grupo.getAttribute('data-grupo') || '';
+    agendaConsultoriosGruposColapsados[grupoClave] = colapsado;
 }
 
 
@@ -358,6 +559,11 @@ function marcarDoctorDisponiblePorConsultorioNuevaCita(){
     }
 }
 var intervaloLineaHoraActualAgenda = null;
+var AGENDA_OCUPACION_INICIO_BASE = '07:30';
+var AGENDA_OCUPACION_FIN_BASE = '18:00';
+var AGENDA_OCUPACION_FIN_VISIBLE = '22:00';
+var AGENDA_OCUPACION_ALMUERZO_INICIO = '12:00';
+var AGENDA_OCUPACION_ALMUERZO_FIN = '14:00';
  
 function cargarAgendaConsultorios(){
     var fecha = document.getElementById('inptFechaAgenda').value;
@@ -365,7 +571,7 @@ function cargarAgendaConsultorios(){
     var consultoriosSeleccionados = obtenerConsultoriosSeleccionadosAgenda();
 
     var consultorios = [];
-    var i, j, hora, minuto, contador_cita;
+    var i, j, hora, minuto, contador_cita, ocupacionConsultorio;
     var html = '';
     var textoHora = '';
     var datosAlmuerzo = null;
@@ -388,6 +594,7 @@ function cargarAgendaConsultorios(){
 
     for(i = 0; i < consultorios.length; i++){
         contador_cita = calcularTotalesResumenAgenda(fecha, '', String(consultorios[i].id));
+        ocupacionConsultorio = calculateOccupancyRate(consultorios[i], fecha);
             
         html += "<div class='agenda-celda-consultorio' onclick='vercerrarModalAbmConsultorioAgenda(true);obtenerDatosAbmConsultorioAgenda(this)'>"
             + "<span id='td_id' style='display:none;'>"+consultorios[i].id+"</span>"
@@ -395,6 +602,7 @@ function cargarAgendaConsultorios(){
             + "<span id='td_datos_4' style='display:none;'>"+consultorios[i].cod_doctorFK+"</span>"
             + "<span id='td_datos_3'>"+consultorios[i].nombre_doctor+"</span>"
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
+            + renderOccupancyIndicatorAgenda(ocupacionConsultorio)
 
             + "<span id='td_datos_5' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.total + "</span>"
             + "<span id='td_datos_6' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.confirmadas + "</span>"
@@ -683,6 +891,320 @@ function renderAgendaResumenConsultorio(idConsultorio, fecha){
     contenedor.innerHTML = html;
     inicializarDragAndDropAgenda(contenedor);
 }
+
+function timeToMinutesAgenda(valor, fallback){
+    var partes, hora, minuto;
+
+    if(valor === null || valor === undefined || valor === ''){
+        return fallback;
+    }
+
+    partes = String(valor).split(':');
+    if(partes.length < 2){
+        return fallback;
+    }
+
+    hora = parseInt(partes[0], 10);
+    minuto = parseInt(partes[1], 10);
+
+    if(isNaN(hora) || isNaN(minuto)){
+        return fallback;
+    }
+
+    return (hora * 60) + minuto;
+}
+
+function getConsultorioDaySchedule(consultorio, fecha){
+    var inicioBase = timeToMinutesAgenda(AGENDA_OCUPACION_INICIO_BASE, 450);
+    var finBase = timeToMinutesAgenda(AGENDA_OCUPACION_FIN_BASE, 1080);
+    var finVisible = timeToMinutesAgenda(AGENDA_OCUPACION_FIN_VISIBLE, 1320);
+    var inicioConfigurado = consultorio.horario_inicio_dia || '';
+    var finConfigurado = consultorio.horario_fin_dia || '';
+    var inicio = timeToMinutesAgenda(inicioConfigurado, inicioBase);
+    var finFallback = inicio >= finBase ? finVisible : finBase;
+    var fin = timeToMinutesAgenda(finConfigurado, finFallback);
+
+    if(fin > finVisible){
+        fin = finVisible;
+    }
+
+    return {
+        fecha: fecha,
+        inicio: inicio,
+        fin: fin,
+        inicioTexto: minutosAHora(inicio),
+        finTexto: minutosAHora(fin),
+        tieneHorarioConfigurado: inicioConfigurado !== '' || finConfigurado !== '',
+        horariosTexto: consultorio.horarios_dia || '',
+        tieneTurnoNoche: fin > finBase
+    };
+}
+
+function getAvailableIntervals(schedule, consultorio, fecha){
+    var intervalos = [];
+    var cierres, i;
+
+    if(!schedule || schedule.fin <= schedule.inicio){
+        return intervalos;
+    }
+
+    intervalos.push({
+        start: schedule.inicio,
+        end: schedule.fin
+    });
+
+    intervalos = subtractLunchInterval(intervalos, {
+        start: timeToMinutesAgenda(AGENDA_OCUPACION_ALMUERZO_INICIO, 720),
+        end: timeToMinutesAgenda(AGENDA_OCUPACION_ALMUERZO_FIN, 840)
+    });
+
+    cierres = getClosureIntervalsForOccupancy(consultorio, fecha);
+    for(i = 0; i < cierres.length; i++){
+        intervalos = subtractIntervalFromListAgenda(intervalos, cierres[i]);
+    }
+
+    return intervalos;
+}
+
+function subtractLunchInterval(intervalos, almuerzo){
+    return subtractIntervalFromListAgenda(intervalos, almuerzo);
+}
+
+function subtractIntervalFromListAgenda(intervalos, bloque){
+    var resultado = [];
+    var i, intervalo;
+
+    for(i = 0; i < intervalos.length; i++){
+        intervalo = intervalos[i];
+
+        if(intervalo.end <= bloque.start || intervalo.start >= bloque.end){
+            resultado.push(intervalo);
+            continue;
+        }
+
+        if(intervalo.start < bloque.start){
+            resultado.push({
+                start: intervalo.start,
+                end: Math.min(bloque.start, intervalo.end)
+            });
+        }
+
+        if(intervalo.end > bloque.end){
+            resultado.push({
+                start: Math.max(bloque.end, intervalo.start),
+                end: intervalo.end
+            });
+        }
+    }
+
+    return resultado;
+}
+
+function getClosureIntervalsForOccupancy(consultorio, fecha){
+    var cierres = [];
+    var feriados = agendaConsultoriosData.feriados || [];
+    var i, feriado, localFeriado;
+
+    for(i = 0; i < feriados.length; i++){
+        feriado = feriados[i];
+        localFeriado = feriado.cod_localFK === null || feriado.cod_localFK === undefined ? '' : String(feriado.cod_localFK);
+
+        if(
+            String(feriado.fecha) === String(fecha) &&
+            (localFeriado === '' || localFeriado === String(consultorio.cod_localFk))
+        ){
+            cierres.push({
+                start: 0,
+                end: 24 * 60,
+                motivo: feriado.descripcion || 'Feriado'
+            });
+        }
+    }
+
+    return cierres;
+}
+
+function getValidAppointmentsForOccupancy(fecha, consultorioId){
+    var eventos = agendaConsultoriosData.eventosOcupacion && agendaConsultoriosData.eventosOcupacion.length > 0
+        ? agendaConsultoriosData.eventosOcupacion
+        : agendaConsultoriosData.eventos;
+    var lista = [];
+    var i, evento;
+
+    for(i = 0; i < eventos.length; i++){
+        evento = eventos[i];
+        if(
+            String(evento.fecha) === String(fecha) &&
+            String(evento.consultorio) === String(consultorioId) &&
+            isValidAppointmentStateForOccupancy(evento.estado)
+        ){
+            lista.push(evento);
+        }
+    }
+
+    return lista;
+}
+
+function isValidAppointmentStateForOccupancy(estado){
+    estado = normalizarTextoBusquedaAgenda(estado);
+
+    if(estado === '' || estado === 'FERIADO'){
+        return false;
+    }
+
+    return ['CANCELADO', 'ANULADO', 'ANULADA', 'ELIMINADO', 'ELIMINADA', 'INACTIVO', 'NO ASISTIO', 'NOASISTIO', 'NO_ASISTIO'].indexOf(estado) < 0;
+}
+
+function calculateOccupiedMinutes(eventos, intervalosDisponibles){
+    var intervalosOcupados = [];
+    var i, j, evento, inicio, fin, disponible, inicioReal, finReal;
+
+    for(i = 0; i < eventos.length; i++){
+        evento = eventos[i];
+        inicio = timeToMinutesAgenda(evento.inicio, null);
+        fin = timeToMinutesAgenda(evento.fin, null);
+
+        if(inicio === null || fin === null || fin <= inicio){
+            continue;
+        }
+
+        for(j = 0; j < intervalosDisponibles.length; j++){
+            disponible = intervalosDisponibles[j];
+            inicioReal = Math.max(inicio, disponible.start);
+            finReal = Math.min(fin, disponible.end);
+
+            if(finReal > inicioReal){
+                intervalosOcupados.push({
+                    start: inicioReal,
+                    end: finReal
+                });
+            }
+        }
+    }
+
+    return sumarMinutosIntervalosAgenda(unirIntervalosAgenda(intervalosOcupados));
+}
+
+function calculateOccupancyRate(consultorio, fecha){
+    var schedule = getConsultorioDaySchedule(consultorio, fecha);
+    var intervalosDisponibles = getAvailableIntervals(schedule, consultorio, fecha);
+    var minutosDisponibles = sumarMinutosIntervalosAgenda(intervalosDisponibles);
+    var eventosValidos = getValidAppointmentsForOccupancy(fecha, consultorio.id);
+    var minutosOcupados = minutosDisponibles > 0 ? calculateOccupiedMinutes(eventosValidos, intervalosDisponibles) : 0;
+    var porcentaje = minutosDisponibles > 0 ? Math.round((minutosOcupados / minutosDisponibles) * 100) : 0;
+
+    return {
+        consultorio: consultorio,
+        fecha: fecha,
+        schedule: schedule,
+        availableIntervals: intervalosDisponibles,
+        availableMinutes: minutosDisponibles,
+        occupiedMinutes: minutosOcupados,
+        freeMinutes: Math.max(0, minutosDisponibles - minutosOcupados),
+        percent: porcentaje,
+        level: getOccupancyLevelAgenda(porcentaje, minutosDisponibles)
+    };
+}
+
+function unirIntervalosAgenda(intervalos){
+    var ordenados = intervalos.slice().sort(function(a, b){
+        return a.start - b.start || a.end - b.end;
+    });
+    var unidos = [];
+    var i, ultimo;
+
+    for(i = 0; i < ordenados.length; i++){
+        if(unidos.length === 0 || ordenados[i].start > unidos[unidos.length - 1].end){
+            unidos.push({
+                start: ordenados[i].start,
+                end: ordenados[i].end
+            });
+            continue;
+        }
+
+        ultimo = unidos[unidos.length - 1];
+        ultimo.end = Math.max(ultimo.end, ordenados[i].end);
+    }
+
+    return unidos;
+}
+
+function sumarMinutosIntervalosAgenda(intervalos){
+    var total = 0;
+    var i;
+
+    for(i = 0; i < intervalos.length; i++){
+        total += Math.max(0, intervalos[i].end - intervalos[i].start);
+    }
+
+    return total;
+}
+
+function getOccupancyLevelAgenda(porcentaje, minutosDisponibles){
+    if(minutosDisponibles <= 0){
+        return 'sin-horario';
+    }
+    if(porcentaje > 100){
+        return 'sobrecarga';
+    }
+    if(porcentaje >= 90){
+        return 'alta';
+    }
+    if(porcentaje >= 75){
+        return 'buena';
+    }
+    if(porcentaje >= 50){
+        return 'media';
+    }
+    return 'baja';
+}
+
+function formatMinutesAsHours(minutos){
+    var horas = Math.floor(minutos / 60);
+    var resto = minutos % 60;
+
+    if(resto === 0){
+        return horas + 'h';
+    }
+
+    return horas + 'h' + completarHora(resto);
+}
+
+function formatOccupancyLabel(ocupacion){
+    if(!ocupacion || ocupacion.availableMinutes <= 0){
+        return 'Sin horario disponible';
+    }
+
+    return 'Ocupaci\u00f3n ' + ocupacion.percent + '% \u00b7 '
+        + formatMinutesAsHours(ocupacion.occupiedMinutes) + '/'
+        + formatMinutesAsHours(ocupacion.availableMinutes);
+}
+
+function renderOccupancyIndicatorAgenda(ocupacion){
+    var label = formatOccupancyLabel(ocupacion);
+    var anchoBarra = ocupacion && ocupacion.availableMinutes > 0 ? Math.min(100, Math.max(0, ocupacion.percent)) : 0;
+    var title = '';
+
+    if(!ocupacion || ocupacion.availableMinutes <= 0){
+        return "<div class='agenda-ocupacion agenda-ocupacion-sin-horario' title='Sin horario disponible'>"
+            + "<span class='agenda-ocupacion-label'>" + label + "</span>"
+            + "</div>";
+    }
+
+    title = "Ocupaci\u00f3n del d\u00eda\n"
+        + "Disponible: " + formatMinutesAsHours(ocupacion.availableMinutes) + "\n"
+        + "Agendado v\u00e1lido: " + formatMinutesAsHours(ocupacion.occupiedMinutes) + "\n"
+        + "Libre: " + formatMinutesAsHours(ocupacion.freeMinutes) + "\n"
+        + "Almuerzo: " + AGENDA_OCUPACION_ALMUERZO_INICIO + "-" + AGENDA_OCUPACION_ALMUERZO_FIN + "\n"
+        + "Horario del d\u00eda: " + ocupacion.schedule.inicioTexto + "-" + ocupacion.schedule.finTexto;
+
+    return "<div class='agenda-ocupacion agenda-ocupacion-" + ocupacion.level + "' title='" + escaparAtributoListaAgenda(title) + "'>"
+        + "<span class='agenda-ocupacion-label'>" + label + "</span>"
+        + "<div class='agenda-ocupacion-barra'><span style='width:" + anchoBarra + "%'></span></div>"
+        + (ocupacion.schedule.tieneTurnoNoche ? "<span class='agenda-ocupacion-turno'>Turno noche hasta " + ocupacion.schedule.finTexto + "</span>" : "")
+        + "</div>";
+}
+
 function obtenerHoraVisualAgenda(h){
     if(!h){
         return '';
@@ -1177,6 +1699,7 @@ function cambiarFechaAgenda(dias){
     var f = new Date(fechaInput.value + 'T00:00:00');
     f.setDate(f.getDate() + dias);
     fechaInput.value = formatearFechaInput(f);
+    actualizarTextoFechaAgenda();
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -1184,6 +1707,7 @@ function cambiarFechaAgenda(dias){
 function irHoyAgenda(){
     var hoy = new Date();
     document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
+    actualizarTextoFechaAgenda();
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -1192,6 +1716,81 @@ function formatearFechaInput(fecha){
     var m = ('0' + (fecha.getMonth() + 1)).slice(-2);
     var d = ('0' + fecha.getDate()).slice(-2);
     return y + '-' + m + '-' + d;
+}
+
+function actualizarTextoFechaAgenda(){
+    var boton = document.querySelector('#divAgendaConsultorios .btn-hoy');
+    var input = document.getElementById('inptFechaAgenda');
+    var fecha, hoy, diferenciaDias, texto, diaSemana;
+
+    if(!boton || !input || input.value === ''){
+        return;
+    }
+
+    fecha = parsearFechaInputAgenda(input.value);
+    if(!fecha){
+        boton.textContent = 'Hoy';
+        return;
+    }
+
+    hoy = new Date();
+    diferenciaDias = Math.round((
+        Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()) -
+        Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+    ) / 86400000);
+
+    diaSemana = obtenerDiaSemanaAgenda(fecha);
+
+    if(diferenciaDias === 0){
+        texto = 'Hoy ' + diaSemana;
+    }else if(diferenciaDias === 1){
+        texto = 'Ma\u00f1ana ' + diaSemana;
+    }else if(diferenciaDias === -1){
+        texto = 'Ayer ' + diaSemana;
+    }else{
+        texto = formatearFechaVisibleAgenda(fecha) + ' \u00b7 ' + diaSemana;
+    }
+
+    boton.textContent = texto;
+}
+
+function parsearFechaInputAgenda(valor){
+    var partes = String(valor || '').split('-');
+    var anho, mes, dia, fecha;
+
+    if(partes.length !== 3){
+        return null;
+    }
+
+    anho = parseInt(partes[0], 10);
+    mes = parseInt(partes[1], 10);
+    dia = parseInt(partes[2], 10);
+
+    if(isNaN(anho) || isNaN(mes) || isNaN(dia)){
+        return null;
+    }
+
+    fecha = new Date(anho, mes - 1, dia);
+    if(
+        fecha.getFullYear() !== anho ||
+        fecha.getMonth() !== mes - 1 ||
+        fecha.getDate() !== dia
+    ){
+        return null;
+    }
+
+    return fecha;
+}
+
+function obtenerDiaSemanaAgenda(fecha){
+    var dias = ['Domingo', 'Lunes', 'Martes', 'Mi\u00e9rcoles', 'Jueves', 'Viernes', 'S\u00e1bado'];
+    return dias[fecha.getDay()];
+}
+
+function formatearFechaVisibleAgenda(fecha){
+    var dia = ('0' + fecha.getDate()).slice(-2);
+    var mes = ('0' + (fecha.getMonth() + 1)).slice(-2);
+    return dia + '/' + mes + '/' + fecha.getFullYear();
 }
 
 function vercerrarModalFiltrosAgenda(mostrar){
@@ -2026,6 +2625,7 @@ function AbrirAgendaConsultorios(ir_hoy= true){
         var hoy = new Date();
         document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
     }
+    actualizarTextoFechaAgenda();
     cargarAgendaConsultoriosDesdePHP();
 }
 
