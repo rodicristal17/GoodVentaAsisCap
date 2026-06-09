@@ -16474,8 +16474,7 @@ function verCerrarHistorialVenta(){
 	if(document.getElementById("divHistorialVenta").style.display==""){
 	
 	if(controldebusquedadHistorialVenta==true){
-		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
-	return
+		cancelarHistorialVenta()
 }
 document.getElementById("tdEfectoHistorialVenta").className="magictime vanishOut"
 	$("div[id=divHistorialVenta]").fadeOut(500);
@@ -17262,6 +17261,15 @@ function obtenerelementohistroialventa(datos) {
 	idFkVenta = $(datos).children('td[id="td_datos_8"]').html();
 	codVentaCambio = $(datos).children('td[id="td_datos_8"]').html();
 }
+
+function imprimirPagareDesdeHistorialVenta() {
+	if (codVentaVentanas == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA");
+		return false;
+	}
+	imprimirPagare(codVentaVentanas);
+}
+
 function limpiarcamposhistorialventa(){
 	
 	if(controldebusquedadHistorialVenta==true){

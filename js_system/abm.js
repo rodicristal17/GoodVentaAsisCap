@@ -1490,12 +1490,12 @@ function buscarDatosPagare(cod_venta) {
     return consulta;
 }
 
-function imprimirPagare() {
+function imprimirPagare(cod_venta) {
     var codVentaPagare = "";
-    if (typeof idabmVenta !== "undefined" && idabmVenta != "") {
+    if (cod_venta != undefined && cod_venta != "") {
+        codVentaPagare = cod_venta;
+    } else if (typeof idabmVenta !== "undefined" && idabmVenta != "") {
         codVentaPagare = idabmVenta;
-    } else if (nroPagare != "" && nroPagare != "0") {
-        codVentaPagare = nroPagare;
     }
 
     var consulta = buscarDatosPagare(codVentaPagare);

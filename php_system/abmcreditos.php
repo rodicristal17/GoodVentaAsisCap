@@ -2667,6 +2667,7 @@ function cuentasacobrardetallado($cobrador,$cliente,$fecha1,$fecha2,$zona,$cod_l
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
+$condicionCreditoPendiente = condicionCreditoPendienteCuentas("cr");
 $condicionCodLocal=" "; 
 if($cod_local!=""){
 $condicionCodLocal=" and vt.cod_local='$cod_local' ";
@@ -2702,8 +2703,7 @@ IFNULL((Select referencias from referenciascliente rf where rf.cod_clienteFk=vt.
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as telefono
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
  
- where IFNULL((select sum(pg.Monto) from pago pg  where cr.idcredito=pg.cod_creditoFK and Tipo='Pago Cuota'),0) <
-	(cr.Monto - cr.descuento) and
+ where ".$condicionCreditoPendiente." and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
 ".$condicionFiltro.$condicionZona.$condicionCodLocal.$condicioncliente.$condicioncobrador." group by vt.cod_clienteFK order by vt.cod_venta desc limit 5";
@@ -2769,7 +2769,7 @@ $totaldeudas=$totaldeudas+$detallesventas[1];
 
 	$sql= "select vt.cod_clienteFK
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
+ where ".$condicionCreditoPendiente." and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
 ".$condicionFiltro.$condicionZona.$condicionCodLocal.$condicioncliente.$condicioncobrador." group by vt.cod_clienteFK ";
@@ -2793,6 +2793,7 @@ function mascuentasacobrardetallado($cobrador,$cliente,$fecha1,$fecha2,$zona,$co
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
+$condicionCreditoPendiente = condicionCreditoPendienteCuentas("cr");
 $condicionCodLocal=" "; 
 if($cod_local!=""){
 $condicionCodLocal=" and vt.cod_local='$cod_local' ";
@@ -2827,7 +2828,7 @@ IFNULL((Select referencias from referenciascliente rf where rf.cod_clienteFk=vt.
 (Select direccion from persona where cod_persona=vt.cod_clienteFK) as direccion,
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as telefono
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
+ where ".$condicionCreditoPendiente." and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
 ".$condicionFiltro.$condicionZona.$condicionCodLocal.$condicioncliente.$condicioncobrador." group by vt.cod_clienteFK order by vt.cod_venta desc   limit ".$registrocargado." , 5 ";
@@ -2951,7 +2952,7 @@ IFNULL((select (pg.Fecha) from pago pg where pg.cod_creditoFK=cr.idcredito and M
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota' ),0) as totalPagoCuota,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Interes'),0) as totalPagoInteres
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where vt.cod_clienteFK='$buscar' and ((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))>0 ".$condicionFiltro.$condicionZona.$condicionCodLocal." "; 
+ where vt.cod_clienteFK='$buscar' and ".condicionCreditoPendienteCuentas("cr")." ".$condicionFiltro.$condicionZona.$condicionCodLocal." "; 
  
  
  // echo($sql);
@@ -3025,6 +3026,11 @@ $cod_clienteFK = mb_convert_encoding((string)($valor['cod_clienteFK']), 'UTF-8',
 $totalPagoCredito = mb_convert_encoding((string)($valor['totalPagoCuota']), 'UTF-8', 'ISO-8859-1');
 $totalPagoInteres = mb_convert_encoding((string)($valor['totalPagoInteres']), 'UTF-8', 'ISO-8859-1');
 $MontoConDescuento=$Monto-$descuento;
+$InteresPendienteGuardado=$tinteres-$totalPagoInteres;
+if($InteresPendienteGuardado<0){
+	$InteresPendienteGuardado=0;
+}
+$CapitalPendienteGuardado=$MontoConDescuento-$totalPagoCredito;
 $MontoSobrante=$MontoConDescuento-$totalPago;
 $deudaActua=0;
 $total_interes=0;
@@ -3035,7 +3041,7 @@ $event=" ";
 $i=0;
 if($nroCancelado==0){
 	
-	if(($Monto+$totalPagoInteres)>($totalPago+$descuento)){
+	if(($Monto+$totalPagoInteres)>($totalPago+$descuento) || $InteresPendienteGuardado>0){
 	$Esado="Pendiente";
 	$TotalSinInteres=$Monto-($totalPagoCredito+$descuento);	
 	if($diff<0){
@@ -3151,6 +3157,11 @@ if($nroCancelado==0){
 	$deudaActua=$MontoConDescuento-$totalPagoCredito;
 	$total=$deudaActua;	
 	}
+
+	if($InteresPendienteGuardado>0 && $CapitalPendienteGuardado<=0 && $deudaActua<$InteresPendienteGuardado){
+		$deudaActua=$InteresPendienteGuardado;
+		$total=$InteresPendienteGuardado;
+	}
 	
 	if($controlventa!=$cod_venta){
 		$paginadetalle=buscar_detalles_venta_en_cuentas_a_cobrar($cod_venta);
@@ -3201,10 +3212,21 @@ if($nroCancelado==0){
 }
 
 
+function condicionCreditoPendienteCuentas($aliasCredito)
+{
+	$aliasCredito = preg_replace('/[^a-zA-Z0-9_]/', '', $aliasCredito);
+	return "(
+		((IFNULL(".$aliasCredito.".Monto,0)-IFNULL(".$aliasCredito.".descuento,0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=".$aliasCredito.".idcredito and pg.tipo='Pago Cuota'),0)) > 0
+		or
+		((IFNULL(".$aliasCredito.".totalinteres,0)+IFNULL(".$aliasCredito.".deudaInteres,0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=".$aliasCredito.".idcredito and pg.tipo='Interes'),0)) > 0
+	)";
+}
+
 function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$num_factura,$cant_cuota)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
+$condicionCreditoPendiente = condicionCreditoPendienteCuentas("cr");
 
 $sqlFiltro= "";
 
@@ -3258,7 +3280,7 @@ if ($cant_cuota != "") {
 		where cr_atrasada.cod_venta=vt.cod_venta
 		and cr_atrasada.plazo!='ENTREGA'
 		and cr_atrasada.fechapago <= '$fechahoy'
-		and ((cr_atrasada.Monto-cr_atrasada.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr_atrasada.idcredito and pg.tipo='Pago Cuota'),0)) > 0
+		and ".condicionCreditoPendienteCuentas("cr_atrasada")."
 	) = $cant_cuota ";
 }
 
@@ -3273,7 +3295,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as telefono,
 		(Select nombre_persona from persona where cod_persona=vt.cod_cobradorFK) as cobradornombre
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
+ where ".$condicionCreditoPendiente." and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
 ".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit 20 ";
@@ -3434,7 +3456,7 @@ $registros[] = array(
 
 $sql= "select cr.plazo
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
+ where ".$condicionCreditoPendiente." and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
 ".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc ";
@@ -3457,6 +3479,7 @@ function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
+$condicionCreditoPendiente = condicionCreditoPendienteCuentas("cr");
 
 $sqlFiltro= "";
 	 if($vendedor!=""){
@@ -3510,7 +3533,7 @@ if ($cant_cuota != "") {
 		where cr_atrasada.cod_venta=vt.cod_venta
 		and cr_atrasada.plazo!='ENTREGA'
 		and cr_atrasada.fechapago <= '$fechahoy'
-		and ((cr_atrasada.Monto-cr_atrasada.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr_atrasada.idcredito and pg.tipo='Pago Cuota'),0)) > 0
+		and ".condicionCreditoPendienteCuentas("cr_atrasada")."
 	) = $cant_cuota ";
 }
 
@@ -3525,7 +3548,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as telefono,
 		(Select nombre_persona from persona where cod_persona=vt.cod_cobradorFK) as cobradornombre
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where (IFNULL((select sum(pg.Monto) from credito pg where pg.idcredito=cr.idcredito),0)- IFNULL((select sum(pg.descuento) from credito pg where pg.idcredito=cr.idcredito),0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0)>0 and
+ where ".$condicionCreditoPendiente." and
  (select count(dtv.estado) from detalle_venta dtv where vt.cod_venta=dtv.cod_ventaFK and dtv.estado='Garantia')=0 and
   IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  
 ".$sqlFiltro."  group by cr.cod_venta order by cr.fechapago asc , vt.cod_venta asc limit ".$registrocargado.", 20 ";
@@ -3671,8 +3694,7 @@ IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limi
 (select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1) as fechapagado,
 (select count(pg.Fecha) from pago pg where pg.cod_creditoFK=cr.idcredito ) as cantidad
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta where
-((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto)
- from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))<=0 and vt.cod_clienteFK='".$buscar."'
+not ".condicionCreditoPendienteCuentas("cr")." and vt.cod_clienteFK='".$buscar."'
  group by cr.idcredito order by cr.cod_venta asc,cr.fechapago asc ";
 
 
@@ -3793,7 +3815,7 @@ IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limi
 (select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1) as fechapagado,
 (select count(pg.Fecha) from pago pg where pg.cod_creditoFK=cr.idcredito ) as cantidad
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta where
-((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))>0 and vt.cod_clienteFK='".$buscar."'
+".condicionCreditoPendienteCuentas("cr")." and vt.cod_clienteFK='".$buscar."'
  group by cr.idcredito order by cr.cod_venta asc,cr.fechapago asc ";
 
 
