@@ -64,7 +64,7 @@ if ($user === '' || $pass === '' || $navegador === '' || verificar_navegador($us
 }
 
 try {
-    $pdo = new PDO("mysql:host=localhost;dbname=syscvxco_ac;charset=utf8mb4", "syscvxco_ac", "syscvxco_ac");
+    $pdo = new PDO("mysql:host=localhost;dbname=syscvxco_ac;charset=utf8mb4", "root", "");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $startTs = strtotime(isset($data['start']) ? $data['start'] : '');

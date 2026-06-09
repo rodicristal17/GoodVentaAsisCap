@@ -4,6 +4,7 @@ var registrocargadoInterConsulta= 0;
 var registroInterConsultaAbierta= 0;
 var cod_interConsulta= "";
 var temporizadorBusquedaGlobalInterConsulta= null;
+var busquedaInterConsultaCancelada= false;
 
 function valorCampoInterConsulta(id) {
     const elemento= document.getElementById(id);
@@ -28,7 +29,7 @@ function clonarOpcionesInterConsulta(origenId, destinoId, usarTextoComoValor= fa
     const nuevasOpciones= [];
     Array.from(origen.options || []).forEach(function(option) {
         const texto= (option.textContent || option.innerText || "").trim();
-        const valor= usarTextoComoValor ? texto : option.value;
+        const valor= texto.toLowerCase() == "todos" ? "" : (usarTextoComoValor ? texto : option.value);
         if (texto == "") {
             return;
         }
@@ -441,6 +442,7 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
     }
 
     if (limite != 0) {
+        busquedaInterConsultaCancelada= false;
         controldebusquedadInformeInterConsulta= false;
         registrocargadoInterConsulta= 0;
         registroInterConsultaAbierta= 0;
@@ -489,6 +491,10 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta) {
+                    if (limite != 0 && busquedaInterConsultaCancelada) {
+                        return;
+                    }
+
                     // Verifica si hay mensajes pendientes en una interconsulta abierta
                     if (cod_interConsulta) {
                         datos["3"].forEach(function(valor) {
@@ -621,13 +627,23 @@ function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto,
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta) {
-                    registrocargadoInterConsulta += Number(datos["4"]);
+                    if (busquedaInterConsultaCancelada || !controldebusquedadInformeInterConsulta) {
+                        return;
+                    }
+
+                    const registrosRecibidos= Number(datos["4"]);
+                    registrocargadoInterConsulta += registrosRecibidos;
                     registroInterConsultaAbierta += Number(datos["7"]);
+                    document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML + datos["2"];
+                    if (registrosRecibidos == 0) {
+                        document.getElementById("tbProcessInformeInterConsulta").style.display="none"
+                        controldebusquedadInformeInterConsulta=false
+                        return;
+                    }
                     if(totalregistroinformeInterConsulta>registrocargadoInterConsulta){
                         var porce=((registrocargadoInterConsulta*100)/totalregistroinformeInterConsulta).toFixed(0)
                         document.getElementById("divProgressInformeInterConsulta").style.width=porce+"%"
 						document.getElementById("divProgressInformeInterConsulta").style.backgroundColor="rgb(76, 175, 80)";
-                        document.getElementById('table_frm_VistaInterConsulta').innerHTML = document.getElementById('table_frm_VistaInterConsulta').innerHTML + datos["2"];
                         buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, ("10 OFFSET "+registrocargadoInterConsulta), ocultar_inactivos, usuario_vinculado, busqueda_global, fecha_desde, fecha_hasta);
                     }else{
                         document.getElementById("tbProcessInformeInterConsulta").style.display="none"
@@ -2022,6 +2038,7 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
 }
 
 function cancelarInformeInterConsulta() {
+    busquedaInterConsultaCancelada= true;
 	controldebusquedadInformeInterConsulta=false
 	document.getElementById("divProgressInformeInterConsulta").style.backgroundColor='#ff5722'
 }
