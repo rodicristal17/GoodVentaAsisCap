@@ -3379,8 +3379,9 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 				if (Respuesta == true) {
 					limpiarcamposusuarios()
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
-					idAbmUsuario = ""
-					buscarabmusuario()
+					idAbmUsuario = "";
+					verCerrarVentanaAbmUsuarios("2","");
+					buscarabmusuario();
 				}
 					
 			} catch (error) {

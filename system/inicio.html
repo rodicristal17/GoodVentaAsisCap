@@ -43,12 +43,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=asistencia-gestion-20260608"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-
-<<<<<<< HEAD
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=recordatorio-entrada-20260609"></script>
-=======
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=venta-local-manual-reset-20260609"></script>
->>>>>>> 753febdb013728a1fae1192c4787120c4d077cbb
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=recordatorio-entrada-venta-local-manual-reset-20260609"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -86,10 +81,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     top: 0;
     left: 0;
     z-index: 20;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(220px, max-content) minmax(240px, 1fr) minmax(0, max-content);
     align-items: center;
-    justify-content: space-between;
-    gap: 14px;
+    justify-content: stretch;
+    gap: 10px;
     width: 100%;
     min-height: 66px;
     margin: 0;
@@ -109,12 +105,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
   }
 
   #principalMenub .dashboard-topbar__center {
-    position: absolute;
-    left: 50%;
-    top: 8px;
+    position: relative;
+    left: auto;
+    top: auto;
     z-index: 2;
-    width: clamp(300px, 34vw, 470px);
-    transform: translateX(-50%);
+    width: min(100%, 470px);
+    min-width: 0;
+    justify-self: center;
+    transform: none;
   }
 
   #principalMenub .dashboard-access-search--topbar {
@@ -187,6 +185,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     justify-content: flex-end;
     min-width: 0;
     margin-left: auto;
+    max-width: 100%;
   }
 
   body > .principal2,
@@ -249,10 +248,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
     display: grid;
-    grid-template-columns: max-content auto auto max-content;
+    grid-template-columns: max-content minmax(0, auto) auto max-content;
     align-items: center;
     gap: 10px;
     width: auto;
+    min-width: 0;
     max-width: none;
     margin: 0;
     min-height: 46px;
@@ -293,11 +293,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
   }
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__asistencia {
-    grid-template-columns: 132px minmax(180px, 220px);
+    grid-template-columns: 132px minmax(130px, 170px);
     grid-template-rows: auto auto;
     align-items: center;
     gap: 4px 8px;
-    min-width: 320px;
+    min-width: 0;
   }
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__btn {
@@ -429,7 +429,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
 
     #principalMenub .dashboard-topbar {
-      flex-wrap: wrap;
+      grid-template-columns: 1fr;
     }
 
     #principalMenub .dashboard-topbar__center {
@@ -438,6 +438,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
       left: auto;
       order: 2;
       width: 100%;
+      max-width: none;
+      justify-self: stretch;
       transform: none;
     }
 

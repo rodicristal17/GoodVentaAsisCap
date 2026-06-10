@@ -9,12 +9,9 @@ var agendaVentaSeleccionada = "";
 var timeoutBuscarHistorialPacienteCalendario = null;
 var ultimaPeticionDoctoresNuevaCita = 0;
 var comentarioAgendamientoEnProceso = false;
-<<<<<<< HEAD
 var agendaConsultoriosGruposColapsados = {};
-=======
 var resumenInsumosConsultorioPeriodo = "dia";
 var resumenInsumosConsultorioSemanaCache = {};
->>>>>>> 9ea71a0d5f9f29aa83ffb8fa90cc212870471827
 
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
