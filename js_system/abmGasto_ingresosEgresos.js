@@ -781,7 +781,7 @@ function comprobarLimiteMotivo(cod_motivo, cod_local) {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
 				   const limite = parseInt(datos["2"]);
-				   const total = parseInt(datos["3"].replace('.',''));
+				   const total = parseInt(datos["3"].toString().replace('.',''));
 
 				   if (!(Number.isNaN(limite)) && total >= limite && limite > 0) {
 					   ver_vetana_informativa("Ha llegado al limite permitido para el "+datos[4]+" motivo de gasto.");
