@@ -2,6 +2,20 @@
 ABM CLIENTES
 */
 var cod_clienteFK= "";
+var guardandoClienteVenta = false;
+
+function estaGuardandoClienteVenta() {
+	return guardandoClienteVenta === true;
+}
+
+function bloquearAccionMientrasGuardaCliente() {
+	if (estaGuardandoClienteVenta()) {
+		ver_vetana_informativa("ESPERE A QUE TERMINE DE GUARDARSE EL CLIENTE");
+		return true;
+	}
+	return false;
+}
+
 function verCerrarAbmClientes(mostrar){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(!mostrar){
@@ -427,6 +441,10 @@ function verificarcamposCliente() {
 }
 
 function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,nombre_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion){
+	if (bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
+	guardandoClienteVenta = true;
 	verCerrarEfectoCargando("1")
 
 	var datos = new FormData();
@@ -467,6 +485,9 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 	        cache:false,
 			contentType: false,
 			processData: false,
+			complete: function(){
+				guardandoClienteVenta = false;
+			},
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
         //Uload progress
@@ -1296,6 +1317,15 @@ function EnviarClienteDesde() {
 			idFkCliente = $(datostr).children('td[id="td_id"]').html();
 			document.getElementById('inptDocumentoClientePresupuesto').value = $(datostr).children('td[id="td_datos_2"]').html();	
 			document.getElementById('inptNombreClientePresupuesto').value = $(datostr).children('td[id="td_datos_1"]').html();
+			idAbmCliente = idFkCliente;
+			document.getElementById('inptNombreApellidoCliente').value = $(datostr).children('td[id="td_datos_1"]').html();
+			document.getElementById('inptNroDocCliente').value = $(datostr).children('td[id="td_datos_2"]').html();
+			document.getElementById('inptNroTelefCliente').value = $(datostr).children('td[id="td_datos_4"]').html();
+			document.getElementById('inptNrowhatsappCliente').value = $(datostr).children('td[id="td_datos_7"]').html();
+			document.getElementById('inptDireccionCliente').value = $(datostr).children('td[id="td_datos_3"]').html();
+			document.getElementById('inptReferenciaCliente').value = $(datostr).children('td[id="td_datos_5"]').html();
+			document.getElementById('inptZonaCliente').value = $(datostr).children('td[id="td_datos_10"]').html();
+			idFKZona = $(datostr).children('td[id="td_datos_9"]').html();
 			abmPresupuesto(idabmPresupuesto, "", idFkCliente, null, null);
 			break;
 		case 'presupuestoDoctor':

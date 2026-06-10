@@ -13183,6 +13183,7 @@ function seleccionarLocalUSer(){
 			document.getElementById("inptFiltroFuncionarioLocal").value = cod_localFKUSer
 		}
 		document.getElementById("inptlocalVenta").value = cod_localFKUSer
+		localVentaCambiadoManual = false;
 		document.getElementById("inptLocalMisDatos").value = cod_localFKUSer
 		document.getElementById("inptlocalAperturaCierre").value = cod_localFKUSer
 		document.getElementById("inptlocalCaja").value = cod_localFKUSer
@@ -13481,7 +13482,21 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 /*ABM NUEVA VENTA*/
 var idabmVenta = ""
 var idGaranteFk="";
-function verCerrarAbmVenta(){
+var localVentaCambiadoManual = false;
+function marcarLocalVentaManual() {
+	localVentaCambiadoManual = true;
+}
+function obtenerLocalVentaParaGuardar(esVentaNueva) {
+	var campoLocal = document.getElementById('inptlocalVenta');
+	if (!campoLocal) {
+		return "";
+	}
+	if (esVentaNueva && !localVentaCambiadoManual && campoLocal.value != "" && cod_localFKUSer != "" && campoLocal.value != cod_localFKUSer) {
+		campoLocal.value = cod_localFKUSer;
+	}
+	return campoLocal.value;
+}
+function verCerrarAbmVenta(modo){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmVenta").style.display==""){
 		if (control_elimino_producto) {
@@ -13499,6 +13514,9 @@ function verCerrarAbmVenta(){
 		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
 		   return
+	   }
+	   if (modo == "nuevo") {
+		   limpiarcamposventa();
 	   }
 	   SeleccTipoComprobanteVenta()
 		document.getElementById("divAbmVenta").style.display=""
@@ -13531,6 +13549,8 @@ function limpiarcamposventa(ctrl) {
 	elementoventa="";
 	idDetalleVenta = "";
 	idabmVenta = ""
+	idFkVenta = ""
+	localVentaCambiadoManual = false;
 	idFkProducto = ""
 	var f = new Date();
 	var dia = f.getDate()
@@ -14050,7 +14070,7 @@ function anhadirProductoEnDetalleVenta() {
 	var inpTotalCostoVenta = document.getElementById('inpTotalCostoVenta').value
 	var inptCostoProductoVenta = document.getElementById('inptCostoProductoVenta').value
 	var inptComisionVenta = document.getElementById('inptComisionVenta').value
-	var inptlocalVenta = document.getElementById('inptlocalVenta').value
+	var inptlocalVenta = obtenerLocalVentaParaGuardar(idabmVenta == "")
 	var inptObservacionDetalleVenta = document.getElementById('inptObservacionDetalleVenta').value
 	var inptDescuentoProductoVenta = document.getElementById('inptDescuentoProductoVenta').value
 	var inptDetallesVentaProductos = document.getElementById('inptDetallesVentaProductos').value
@@ -14276,6 +14296,9 @@ controlDetalle=1;
 var idDetalleVenta = "";
 /*SI SE MODIFICA LA FUNCION VERIFICAR DETALLE VENTA TAMBIEN HAY QUE CAMBIAR VERIFICAR DETALLE VENTA CREDITO*/
 function verificarcamposdetallesventa() {
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
 		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
@@ -14296,7 +14319,7 @@ controldetalle=controldetalle+1;
 	var inptComisionVentaCobrador = document.getElementById('inptComisionVentaCobrador').value
 	var inptCobradorVenta = document.getElementById('inptCobradorVenta').value
 	var inpCodVenta = document.getElementById('inpCodVenta').value
-	var inptlocalVenta = document.getElementById('inptlocalVenta').value
+	var inptlocalVenta = obtenerLocalVentaParaGuardar(idabmVenta == "")
 	var inptGaranteVenta = document.getElementById('inptGaranteVenta').value
 	var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComprobanteVenta').value
 	var inptSeleccPuntoExpedicionVenta = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text() 
@@ -14362,6 +14385,9 @@ controldetalle=controldetalle+1;
 var controlVenta="1";
 
 function VerificarCamposVentaContago(){
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	
 	let control = 0; 
 	$("tr[name=tdDetallePagoOffline]").each(function(i, elementohtml){
@@ -14407,7 +14433,7 @@ controldetalle=controldetalle+1;
 	var inptComisionVentaCobrador = document.getElementById('inptComisionVentaCobrador').value
 	var inptCobradorVenta = document.getElementById('inptCobradorVenta').value
 	var inpCodVenta = document.getElementById('inpCodVenta').value
-	var inptlocalVenta = document.getElementById('inptlocalVenta').value
+	var inptlocalVenta = obtenerLocalVentaParaGuardar(idabmVenta == "")
 	var inptGaranteVenta = document.getElementById('inptGaranteVenta').value
 	var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComprobanteVenta').value
 	var inptSeleccPuntoExpedicionVenta = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text();
@@ -14471,6 +14497,9 @@ controldetalle=controldetalle+1;
 
 
 function verificarcamposdetallesventacredito() {
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	var inptTotalPagado = document.getElementById('inptTotalPagado').value
 	if (inptTotalPagado > 0) {
 		ver_vetana_informativa("NO SE PUEDE AÑADIR DETALLE A LA VENTA POR QUE ESTE YA CUENTA CON UN PAGO")
@@ -14490,7 +14519,7 @@ controldetalle=controldetalle+1;
 	var inptComisionVentaCobrador = document.getElementById('inptComisionVentaCobrador').value
 	var inptCobradorVenta = document.getElementById('inptCobradorVenta').value
 	var inpCodVenta = document.getElementById('inpCodVenta').value
-	var inptlocalVenta = document.getElementById('inptlocalVenta').value
+	var inptlocalVenta = obtenerLocalVentaParaGuardar(idabmVenta == "")
 	var inptGaranteVenta = document.getElementById('inptGaranteVenta').value
 	var inptGaranteVenta = document.getElementById('inptGaranteVenta').value
 	var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComprobanteVenta').value
@@ -14545,6 +14574,9 @@ controldetalle=controldetalle+1;
     abmdetalleventa(inptDescuentoVentaTerminar,nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, '', accion,tipo);
 }
 function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_venta,comisioncobrador,cod_clienteFK,idGaranteFk,TipoVenta,cod_cobradorFK,idFkVendedor1, idFkVendedor2,cod_ventaFK, num_factura, cod_local, nro_comprobante, accion,tipo) {
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -15099,6 +15131,9 @@ function calcular_cuota_desde_venta() {
 	separadordemiles(document.getElementById('inptEntregaConfCredito'))
 }
 function crearcreditodesdeventa() {
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	var inptNroCuotasConfCredito = document.getElementById('inptNroCuotasConfCredito').value
 	var inptMontoPagoConfCredito = document.getElementById('inptMontoPagoConfCredito').value
 	var inptFechaInicioConfCredito = document.getElementById('inptFechaInicioConfCredito').value
@@ -15154,6 +15189,9 @@ function crearcreditodesdeventa() {
     abmcreditosVenta(inptConfirmarPagoEntrega,inptNroCuotasConfCredito, inptMontoPagoConfCredito, inptFechaInicioConfCredito, inputSelectMetodoConfCredito, inptInteresConfCredito, inptDiasConfCredito, inptEntregaConfCredito, inptNroComprobanteConfCredito, idFkVendedor1, idabmVenta);
 }
 function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, interes, dias, entrega, nro_comprobante, cod_vendedorFK, cod_venta) {
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -15449,13 +15487,16 @@ function verificarcamposventa() {
 	if (bloqueoTemporalVerificarVenta) {
 		return false;
 	}
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	var inptFechaVenta = document.getElementById('inptFechaVenta').value
 	var inptClienteVenta = document.getElementById('inptClienteVenta').value
 	var inptSeleccTipoVenta = document.getElementById('inptSeleccTipoVenta').value
 	var inptComisionVentaCobrador = document.getElementById('inptComisionVentaCobrador').value
 	var inptCobradorVenta = document.getElementById('inptCobradorVenta').value
 	var inpCodVenta = document.getElementById('inpCodVenta').value
-	var inptlocalVenta = document.getElementById('inptlocalVenta').value
+	var inptlocalVenta = obtenerLocalVentaParaGuardar(idabmVenta == "")
 var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComprobanteVenta').value
 	var inptSeleccPuntoExpedicionVenta = $("select[id=inptSeleccPuntoExpedicionVenta]").children(":selected").text() 
 	var nrocaja = document.getElementById('pCaja').innerHTML
@@ -15496,6 +15537,9 @@ var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComp
 	abmventa(nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,idGaranteFk,inptFechaVenta, inptSeleccTipoVenta, inpCodVenta, idFkCliente, idFkCobrador, idabmVenta, "Corrido", idFkVendedor1, idFkVendedor2, inptComisionVentaCobrador, inptlocalVenta, accion);
 }
 function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta, TipoVenta, num_factura, cod_clienteFK, cod_cobradorFK, cod_venta, TipoPago, idFkVendedor1, idFkVendedor2, comision, cod_local, accion) {
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -15718,6 +15762,7 @@ function obtenerdatosvistaventa(datostr) {
 
 		document.getElementById('inptComisionVentaCobrador').value = $(datostr).children('td[id="td_datos_22"]').html();
 		document.getElementById('inptlocalVenta').value = $(datostr).children('td[id="td_datos_23"]').html();
+		localVentaCambiadoManual = false;
 		document.getElementById('inptGaranteVenta').value = $(datostr).children('td[id="td_datos_31"]').html();
 		document.getElementById('inptSeleccTipoComprobanteVenta').value = $(datostr).children('td[id="td_datos_32"]').html();
 
@@ -18366,6 +18411,7 @@ function obtenerdatoshistorialventa(datostr) {
 	}
 	document.getElementById('inptComisionVentaCobrador').value = $(datostr).children('td[id="td_datos_22"]').html();
 	document.getElementById('inptlocalVenta').value = $(datostr).children('td[id="td_datos_23"]').html();
+	localVentaCambiadoManual = false;
 	document.getElementById('inptGaranteVenta').value = $(datostr).children('td[id="td_datos_31"]').html();
 	document.getElementById('inptDocClienteVenta').value = $(datostr).children('td[id="td_datos_32"]').html();
 	document.getElementById('inptDocClienteVenta2').value = $(datostr).children('td[id="td_datos_32"]').html();
@@ -20208,6 +20254,7 @@ try {
 	}
 	document.getElementById('inptComisionVentaCobrador').value = $(datostr).children('td[id="td_datos_22"]').html();
 	document.getElementById('inptlocalVenta').value = $(datostr).children('td[id="td_datos_23"]').html();
+	localVentaCambiadoManual = false;
 	document.getElementById('inptGaranteVenta').value = $(datostr).children('td[id="td_datos_31"]').html();
 	document.getElementById('inptSeleccTipoComprobanteVenta').value = $(datostr).children('td[id="td_datos_32"]').html();
 		if(document.getElementById('inptSeleccTipoComprobanteVenta').value=="FACTURA"){

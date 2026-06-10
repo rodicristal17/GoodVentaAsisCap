@@ -590,6 +590,7 @@ function obtenerGastosAsociados(id_gasto) {
 						document.getElementById('divGastoAsociadosGastos').style.display= "";
 						document.getElementById('divNombreProyectoGasto').innerHTML= datos["4"];
 						document.getElementById('divTableProyecto').innerHTML= datos["2"];
+						document.getElementById('inptCantCuotaGasto').value= cantidadGastos;
 					} else {
 						document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'false');
 						document.getElementById('divGastoAsociadosGastos').style.display= "none";
@@ -781,7 +782,7 @@ function comprobarLimiteMotivo(cod_motivo, cod_local) {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
 				   const limite = parseInt(datos["2"]);
-				   const total = parseInt(datos["3"].replace('.',''));
+				   const total = parseInt(datos["3"].toString().replace('.',''));
 
 				   if (!(Number.isNaN(limite)) && total >= limite && limite > 0) {
 					   ver_vetana_informativa("Ha llegado al limite permitido para el "+datos[4]+" motivo de gasto.");

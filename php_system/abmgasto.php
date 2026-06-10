@@ -361,6 +361,9 @@ if ($operacion == "obtenerGastosAsociados") {
 			case 'Rechazado':
 				$estado .= 'secondary">'.$gast['estado'].'</span>';
 				break;
+			case 'Anulado':
+				$estado .= 'secondary">'.$gast['estado'].'</span>';
+				break;
 			case 'pendiente':
 				$fechaActual = date('Y-m-d');
 				$fechaGasto = date('Y-m-d', strtotime($gast['fecha']));
@@ -385,7 +388,7 @@ if ($operacion == "obtenerGastosAsociados") {
 				break;
 		}
 
-		$pagina .= "<table border='1' cellspacing='1' cellpadding='5' class='tableRegistroSearch2'><tr id='tbSelecRegistro' id='tbSelecRegistro' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "").";text-align: center;'>
+		$pagina .= "<table border='1' cellspacing='1' cellpadding='5' class='tableRegistroSearch2'><tr id='tbSelecRegistro' id='tbSelecRegistro' onclick='seleccionarGastosAsociados(this);' style='".($gast['estado']=="Rechazado" || $gast['estado']=="Inactivo" || $gast['estado']=="Anulado" ? "text-decoration: line-through;" : "").";text-align: center;'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$gast['idgastos']."</td>
 			<td  style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
 			<td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>
@@ -1204,6 +1207,95 @@ function registrarCuotasRecurrentes($mysqli, $idBaseSerie, $Arreglo, $cantCuotas
 	$stmtRecurrente->close();
 }
 
+function sincronizarCuotasAsociadasSinEliminar($mysqli, $idBaseSerie, $gastos_asociados, $cantCuotas, $periodicidad, $fechaBaseStr, $Arreglo, $monto, $motivo, $estadoBase, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK, $codProyectoGastoFijo= '') {
+	$fechaBase = DateTime::createFromFormat('Y-m-d', $fechaBaseStr);
+	if ($fechaBase === false || $periodicidad == "") {
+		return;
+	}
+
+	$cantCuotas = intval($cantCuotas);
+	if ($cantCuotas <= 0) {
+		$cantCuotas = count($gastos_asociados);
+	}
+	if ($cantCuotas < 1) {
+		$cantCuotas = 1;
+	}
+
+	$codProyectoGasto= ($codProyectoGastoFijo != '' && is_numeric($codProyectoGastoFijo)) ? $codProyectoGastoFijo : obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivo);
+	$modalidadCredito = 'credito';
+
+	$sqlActualizar = "UPDATE gastos SET arreglo=?, monto=?, motivo=?, fecha=?, estado=?, cod_usuarioFK_edit=?, personales=?, cod_local=?, tipo=?, codCaja=?, codApertura=?, nroboleta=?, banco=?, nrocuenta=?, cod_motivoIngresoEgresoFK=?, cod_interConsultaFK=?, modalidad=?, cod_proyecto_gastoFK=?, cod_usuario_autoriz=NULL, fecha_autoriz=NULL WHERE idgastos=?";
+	$stmtActualizar = $mysqli->prepare($sqlActualizar);
+	$ssActualizar = str_repeat('s', 18).'i';
+
+	$sqlAnular = "UPDATE gastos SET estado='Anulado', cod_usuarioFK_edit=?, cod_usuario_autoriz=NULL, fecha_autoriz=NULL WHERE idgastos=?";
+	$stmtAnular = $mysqli->prepare($sqlAnular);
+
+	$totalExistente = count($gastos_asociados);
+	for ($i = 0; $i < $totalExistente; $i++) {
+		$gasto = $gastos_asociados[$i];
+		$idCuota = intval($gasto['idgastos']);
+		$estadoActual = (string)$gasto['estado'];
+
+		if ($i >= $cantCuotas) {
+			if ($estadoActual != 'Activo' && $estadoActual != 'Anulado') {
+				$stmtAnular->bind_param('si', $cod_usuario, $idCuota);
+				$stmtAnular->execute();
+			}
+			continue;
+		}
+
+		if ($estadoActual == 'Activo') {
+			continue;
+		}
+
+		$fechaCuota = ($i == 0 ? clone $fechaBase : calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $i));
+		if ($fechaCuota == null) {
+			continue;
+		}
+
+		$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
+		$motivoCuota = ($i == 0 ? $motivo : 'Cuota '.($i + 1).' de '.trim($motivo).' (' . intval($idBaseSerie).')');
+		$estadoCuota = ($i == 0 ? $estadoBase : 'pendiente');
+		$stmtActualizar->bind_param($ssActualizar,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estadoCuota,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,$modalidadCredito,$codProyectoGasto,$idCuota);
+		$stmtActualizar->execute();
+	}
+
+	if ($cantCuotas > $totalExistente) {
+		$consultaRecurrente = "Insert into gastos (arreglo,monto,motivo,fecha,estado,cod_usuario,personales,cod_local,tipo,codCaja,codApertura,nroboleta,banco,nrocuenta,cod_motivoIngresoEgresoFK,cod_interConsultaFK,modalidad, cod_proyecto_gastoFK)
+		values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$stmtRecurrente = $mysqli->prepare($consultaRecurrente);
+		$ssRecurrente = str_repeat('s', 18);
+		$estado= 'pendiente';
+
+		for ($i = $totalExistente; $i < $cantCuotas; $i++) {
+			$motivoCuota = 'Cuota '.($i + 1).' de '.trim($motivo).' (' . intval($idBaseSerie).')';
+			$fechaCuota = calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $i);
+			if ($fechaCuota == null) {
+				continue;
+			}
+
+			$fechaCuotaFormat = $fechaCuota->format('Y-m-d');
+			$stmtRecurrente->bind_param($ssRecurrente,$Arreglo,$monto,$motivoCuota,$fechaCuotaFormat,$estado,$cod_usuario,$personales,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$nroboleta, $banco , $nrocuenta,$cod_motivo,$cod_interConsultaFK,$modalidadCredito,$codProyectoGasto);
+			$stmtRecurrente->execute();
+			$idgastos = mysqli_insert_id($mysqli);
+
+			if (!empty($cod_interConsultaFK)) {
+				$cod_mensaje= abmMensaje("", "El gasto $motivoCuota vence hoy ",$fechaCuotaFormat, $cod_interConsultaFK, "", NULL,TRUE);
+				$sql = "UPDATE gastos SET cod_mensajeFK = ? WHERE idgastos = ?";
+				$stmt = $mysqli->prepare($sql);
+				$stmt->bind_param('ii', $cod_mensaje, $idgastos);
+				$stmt->execute();
+				$stmt->close();
+			}
+		}
+		$stmtRecurrente->close();
+	}
+
+	$stmtActualizar->close();
+	$stmtAnular->close();
+}
+
 function abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas= "true", $cod_proyecto_gastoFK= NULL)
 {
 		
@@ -1430,29 +1522,8 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 		$gastos_asociados= obtenerGastosAsociados($idgastos);
 	}
 
-	$cantidadCuotasSerie= 0;
-	foreach ($gastos_asociados as $value) {
-		if ($value['idgastos'] == $idgastos || $value['estado'] != 'Activo') {
-			$cantidadCuotasSerie++;
-		}
-		if ($value['idgastos'] != $idgastos && ($value['estado'] != 'Activo')) {
-			$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-				'gastos',
-				'idgastos',
-				$value['idgastos'],
-				'Solicitud de eliminacion de cuota asociada de gasto.',
-				$cod_usuario,
-				'Cuota asociada del gasto: '.$idgastos
-			);
-			if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-				echo json_encode($respuestaSolicitud);
-				exit;
-			}
-		}
-	}
-	
-	if ($cantidadCuotasSerie > 1 && $estado != 'Inactivo') {
-		registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantidadCuotasSerie, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK, $codProyectoSerie);
+	if (count($gastos_asociados) > 1 && $estado != 'Inactivo') {
+		sincronizarCuotasAsociadasSinEliminar($mysqli, $idgastos, $gastos_asociados, $cantCuotas, $periodicidad, $fecha, $Arreglo, $monto, $motivo, $estado, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK, $codProyectoSerie);
 	}
 	if (isset($stmt) && $stmt) {
 		$stmt->close();
@@ -1637,6 +1708,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	$totalEstado['Activo']= 0;
 	$totalEstado['Inactivo']= 0;
 	$totalEstado['Rechazado']= 0;
+	$totalEstado['Anulado']= 0;
 	$totalEstado['pendiente']= 0;
 	$totalEstado['solicitado']= 0;
 
@@ -1852,6 +1924,8 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				$styleEstado= "background-color: #585f08;color: #ffffff;";
 			} else if ($estado == 'Activo') {
 				$styleEstado= "background-color: #085f1c;color: #ffffff;";
+			} else if ($estado == 'Anulado') {
+				$styleEstado= "background-color: #6c757d;color: #ffffff;";
 			}
 	
 			// Se formate el nombre de la interconsulta
@@ -1910,14 +1984,14 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	
 			$paginaMotivo .= "<li class='list-group-item' style='padding: 0; padding-left: 0.5rem;'>
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
-				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
+				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" || $estado=="Anulado" ? "text-decoration: line-through;" : "")."'>
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:10%'>".$motivo."</td>
 				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
 				<td  id='td_datos_16' style='display: none;'>".$interconsulta_nombre."</td>
 				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
-				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.')."</td>
+				<td style='width:10%'>". number_format(($estado == 'pendiente' || $estado == 'Anulado' ? 0 : $monto),'0',',','.')."</td>
 				<td  id='td_datos_23' style='width:5%'>".$modalidad."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>

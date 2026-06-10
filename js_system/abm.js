@@ -1491,6 +1491,10 @@ function buscarDatosPagare(cod_venta) {
 }
 
 function imprimirPagare(cod_venta) {
+    if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+        return false;
+    }
+
     var codVentaPagare = "";
     if (cod_venta != undefined && cod_venta != "") {
         codVentaPagare = cod_venta;
