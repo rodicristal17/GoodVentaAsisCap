@@ -1065,11 +1065,11 @@ function convertirTextoDocumentoInterconsulta($texto) {
     }
 
     function obtenerVistaInterConsulta($filtros= array(), $limite= 0) {
+        $cantRegistros= count(obtenerInterConsulta($filtros, 0));
         if ($limite === 0 || $limite === '0' || $limite === '') {
             $limite = 100;
         }
         $registros= obtenerInterConsulta($filtros, $limite);
-        $cantRegistros= count($registros);
 
         $pagina= '';
         $datalist= '';

@@ -1983,6 +1983,9 @@ function obtenerDatosPresupuesto(elemento) {
 	document.getElementById('inptNroDocCliente').value= $(elemento).children('td[id="td_datos_5"]').html();
 	document.getElementById('inptNroRucCliente').value= $(elemento).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptNrowhatsappCliente').value= $(elemento).children('td[id="td_datos_14"]').html();
+	document.getElementById('inptNroTelefCliente').value= "";
+	document.getElementById('inptDireccionCliente').value= "";
+	document.getElementById('inptReferenciaCliente').value= "";
 	document.getElementById('inptZonaCliente').value= $(elemento).children('td[id="td_datos_11"]').html();
 	document.getElementById('inptFechaNacCliente').value= $(elemento).children('td[id="td_datos_"]').html();
 	idFKZona= $(elemento).children('td[id="td_datos_12"]').html();
@@ -2103,14 +2106,38 @@ function verCerrarAbmDetallesPresupuestoDoc(mostrar){
 
 var tipo_plan= "";
 function presupuestoAVenta(){
+	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+		return false;
+	}
+
 	if ((document.getElementById('inptTOTALPresupuestoFORM').value == "0" && document.getElementById('inptTOTALPresupuestoFORMPrioritario').value == "0") ||
 		(document.getElementById('inptTOTALPresupuestoFORM').value == "" && document.getElementById('inptTOTALPresupuestoFORMPrioritario').value == "")) {
 		ver_vetana_informativa("Faltan datos", "Favor armar el presupuesto primeramente", "error");
 		return false;
 	}
 	const codClientePresupuesto = idFkCliente;
-	const documentoClientePresupuesto = document.getElementById('inptDocumentoClientePresupuesto').value.split('-')[0];
+	const documentoClientePresupuesto = String(document.getElementById('inptDocumentoClientePresupuesto').value || "").split('-')[0].trim();
 	const nombreClientePresupuesto = document.getElementById('inptNombreClientePresupuesto').value;
+
+	if (codClientePresupuesto == "" || documentoClientePresupuesto == "" || nombreClientePresupuesto == "") {
+		ver_vetana_informativa("Faltan datos del cliente", "Se debe seleccionar un cliente valido para concretar la venta.", "advertencia");
+		return false;
+	}
+
+	var documentoAbmCliente = String(document.getElementById('inptNroDocCliente').value || "").split('-')[0].trim();
+	if (String(idAbmCliente || "") != String(codClientePresupuesto) || documentoAbmCliente != documentoClientePresupuesto) {
+		document.getElementById('inptNombreApellidoCliente').value = nombreClientePresupuesto;
+		document.getElementById('inptNroDocCliente').value = documentoClientePresupuesto;
+		document.getElementById('inptNroTelefCliente').value = "";
+		document.getElementById('inptNrowhatsappCliente').value = "";
+		document.getElementById('inptDireccionCliente').value = "";
+		document.getElementById('inptReferenciaCliente').value = "";
+		idAbmCliente = codClientePresupuesto;
+	}
+
+	if (!verificarDatosCliente(true)) {
+		return false;
+	}
 
 	limpiarcamposventa("2");
 

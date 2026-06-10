@@ -14,12 +14,14 @@ if($filtro1=="3"){
 $condicion=" and cr.fechapago<='$fechahoy'";
 }
 $condicionpago="";
+$condicionSaldoCapital="((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))";
+$condicionSaldoInteres="((IFNULL(cr.totalinteres,0)+IFNULL(cr.deudaInteres,0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Interes'),0))";
 if($filtro2=="1"){
 	//condicion para saber si esta pagado
-$condicionpago=" and ((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))<=0";
+$condicionpago=" and ".$condicionSaldoCapital."<=0 and ".$condicionSaldoInteres."<=0";
 }
 if($filtro2=="3"){
-$condicionpago=" and ((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))>0";
+$condicionpago=" and (".$condicionSaldoCapital.">0 or ".$condicionSaldoInteres.">0)";
 }
 $condicioncodigo="";
 if($filtro3=="1"){
@@ -129,6 +131,11 @@ $SumadeudaInteres= $SumadeudaInteres +$deudaInteres;
 
 //CALCULAR EL MONTO CON DESCUENTO
 $MontoConDescuento=$Monto-$descuento;
+$InteresPendienteGuardado=$tinteres-$totalPagoInteres;
+if($InteresPendienteGuardado<0){
+	$InteresPendienteGuardado=0;
+}
+$CapitalPendienteGuardado=$MontoConDescuento-$totalPagoCredito;
 /*CALCULAMOS EL MONTO CON DESCUENTO*/
 $MontoSobrante=$MontoConDescuento-$totalPago;
 if($MontoCuotas==0){
@@ -137,11 +144,12 @@ $MontoCuotas=$MontoConDescuento-$totalPago;
 /*VACIAMOS ALGUNAS VARIABLES*/
 $deudaActua=0;
 $total_interes=0;
+$deudaPendienteAgregada=0;
 $stylecolor=" ";
 //CONDICION PARA SABER SI EL CREDITO ES UNA VENTA CANCELADA
 if($nroCancelado==0){
 	//CONDICION PARA SABER SI YA SE PAGO TODO
-	if(($Monto+$totalPagoInteres)>($totalPago+$descuento)){
+	if(($Monto+$totalPagoInteres)>($totalPago+$descuento) || $InteresPendienteGuardado>0){
 			//ESTADO DEL PAGO
 	$Esado="Pendiente";
 	//CONDICION PARA SABER SI HAY DIAS ATRAZADOS
@@ -216,6 +224,7 @@ if($nroCancelado==0){
 	}		
 	}
 			$DeudaPendiente=$DeudaPendiente+$deudaActua;
+			$deudaPendienteAgregada=$deudaActua;
 	}else{
 	
 	$deudaActua=$MontoConDescuento-$totalPagoCredito + $deudaInteres;
@@ -255,6 +264,16 @@ if($nroCancelado==0){
 	}
     	
 	
+}
+
+if($nroCancelado==0 && $InteresPendienteGuardado>0 && $CapitalPendienteGuardado<=0 && $deudaActua<$InteresPendienteGuardado){
+	if($deudaPendienteAgregada>0){
+		$DeudaPendiente=$DeudaPendiente-$deudaPendienteAgregada;
+	}
+	$deudaActua=$InteresPendienteGuardado;
+	$total=$InteresPendienteGuardado;
+	$Esado="Pendiente";
+	$DeudaPendiente=$DeudaPendiente+$deudaActua;
 }
 
  

@@ -266,7 +266,7 @@ function minimizarInformeDictamen() {
 controldebusquedadInformeDictamen= true;
 registrocargadoDictamen= 0;
 totalregistroinformeDictamen= 0;
-function cancelarInformeInterConsulta() {
+function cancelarInformeDictamen() {
 	controldebusquedadInformeDictamen=false
 	document.getElementById("divProgressInformeDictamen").style.backgroundColor='#ff5722'
 }
@@ -388,7 +388,7 @@ function buscarMasInformeDictamen(cod_dictamen,cod_dictamen_completo, asunto, fe
     datos.append("estado", estado);
     datos.append("limite", limite);
 
-    if (!controldebusquedadInformeInterConsulta) {
+    if (!controldebusquedadInformeDictamen) {
         return;
     }
 

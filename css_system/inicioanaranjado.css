@@ -157,8 +157,11 @@ padding: 8px;
 .divRepor0 { overflow: auto; width: 98%; }
 .TableRepor0 { width: 88%; padding: 8px; border-top: 1px dashed rgb(204, 204, 204); border-bottom: 1px dashed rgb(204, 204, 204); height: 100px; }
 .textarea1 { font-size: 11px; font-family: "Merriweather Sans", Arial; height: 94px; text-align: left; width: 95%; border: 1px solid rgb(211, 211, 211); outline: none; resize: none; background-color: rgb(255, 255, 255); border-radius: 4px;}
-.divTablesScrool { overflow: auto; height: 450px; border: 1px solid rgb(223, 223, 223); border-radius: 10px; margin-top: 5px; }
-.divScrollhideen::-webkit-scrollbar { width: 0px; height: 0px; }
+.divTablesScrool { overflow: auto; scrollbar-gutter: stable; height: 450px; border: 1px solid rgb(223, 223, 223); border-radius: 10px; margin-top: 5px; }
+.divScrollhideen { scrollbar-width: thin; scrollbar-color: rgb(134, 134, 134) transparent; -ms-overflow-style: auto; }
+.divScrollhideen::-webkit-scrollbar { width: 8px; height: 8px; }
+.divScrollhideen::-webkit-scrollbar-thumb { background: rgb(134, 134, 134); border-radius: 10px; }
+.divScrollhideen::-webkit-scrollbar-track { background: transparent; }
 .divScroll::-webkit-scrollbar-thumb { background: rgb(134, 134, 134); border-radius: 10px; }
 .divScroll::-webkit-scrollbar-thumb:hover { background: rgb(179, 179, 179); box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 2px 1px; }
 .divScroll::-webkit-scrollbar-thumb:active { background-color: rgb(153, 153, 153); }

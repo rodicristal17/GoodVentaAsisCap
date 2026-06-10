@@ -317,7 +317,74 @@
 .agenda-consultorios-lista{
     display:flex;
     flex-direction:column;
-    gap:0px;
+    gap:6px;
+}
+
+.consultorio-grupo{
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    background: var(--bg-soft);
+    overflow:hidden;
+}
+
+.consultorio-grupo-header{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 8px;
+    background: var(--bg-panel);
+    border-bottom:1px solid var(--border-soft);
+}
+
+.consultorio-grupo-toggle{
+    width:22px;
+    height:22px;
+    border:1px solid var(--border-soft);
+    border-radius:6px;
+    background: var(--bg-soft);
+    color: var(--text-main);
+    font-size:14px;
+    font-weight:700;
+    line-height:18px;
+    cursor:pointer;
+}
+
+.consultorio-grupo-label{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+    color: var(--text-title);
+    font-size:12px;
+    font-weight:700;
+}
+
+.consultorio-grupo-label span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.consultorio-grupo-label input[type="checkbox"]{
+    width:15px;
+    height:15px;
+    cursor:pointer;
+    flex:none;
+}
+
+.consultorio-grupo-contador{
+    color: var(--text-muted);
+    font-size:11px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.consultorio-grupo-body{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    padding:6px;
 }
 
 .item-consultorio{
@@ -473,6 +540,67 @@
     font-size:11px;
     font-weight:500;
     color: var(--text-soft);
+}
+
+.agenda-ocupacion{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    margin-top:1px;
+    font-size:11px;
+    font-weight:600;
+    color: var(--text-muted);
+}
+
+.agenda-ocupacion-label{
+    line-height:1.15;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.agenda-ocupacion-barra{
+    width:100%;
+    height:4px;
+    border-radius:999px;
+    background:rgba(148, 163, 184, 0.24);
+    overflow:hidden;
+}
+
+.agenda-ocupacion-barra span{
+    display:block;
+    height:100%;
+    border-radius:999px;
+    background:#80c583;
+}
+
+.agenda-ocupacion-media .agenda-ocupacion-barra span{
+    background:#dcb645;
+}
+
+.agenda-ocupacion-buena .agenda-ocupacion-barra span{
+    background:#3b833e;
+}
+
+.agenda-ocupacion-alta .agenda-ocupacion-barra span{
+    background:#07488f;
+}
+
+.agenda-ocupacion-sobrecarga .agenda-ocupacion-barra span{
+    background:#c94d4d;
+}
+
+.agenda-ocupacion-turno{
+    color: var(--text-soft);
+    font-size:10px;
+    font-weight:600;
+    line-height:1.1;
+}
+
+.agenda-ocupacion-sin-horario{
+    color: var(--text-soft);
+    font-style:italic;
 }
 
 .agenda-row{
@@ -1814,4 +1942,8 @@
 
 .item-consultorio-check:hover{
     background:#f8fafc;
+}
+
+.consultorio-grupo-body .item-consultorio-check{
+    margin-bottom:0;
 }

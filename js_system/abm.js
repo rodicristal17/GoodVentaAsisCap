@@ -1490,12 +1490,16 @@ function buscarDatosPagare(cod_venta) {
     return consulta;
 }
 
-function imprimirPagare() {
+function imprimirPagare(cod_venta) {
+    if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
+        return false;
+    }
+
     var codVentaPagare = "";
-    if (typeof idabmVenta !== "undefined" && idabmVenta != "") {
+    if (cod_venta != undefined && cod_venta != "") {
+        codVentaPagare = cod_venta;
+    } else if (typeof idabmVenta !== "undefined" && idabmVenta != "") {
         codVentaPagare = idabmVenta;
-    } else if (nroPagare != "" && nroPagare != "0") {
-        codVentaPagare = nroPagare;
     }
 
     var consulta = buscarDatosPagare(codVentaPagare);
@@ -4238,7 +4242,7 @@ if (ventana == "asistencia") {
 +"</tr>"
 +"</table><br><br><center><h1 class='pTituloD' >INFORME DE ASISTENCIA</h1><br></center>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
-document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloInformeAsistencia").innerHTML
+document.getElementById("tbTitulosImpresiones").innerHTML=""
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_InformeAsistencia").innerHTML
 }
 if (ventana == "Agenda") {
