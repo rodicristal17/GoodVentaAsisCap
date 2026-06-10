@@ -1437,7 +1437,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.87";
+var codigodeactualizacion="X-GT-1-JMTG-V1.84";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -32519,6 +32519,8 @@ var productosDisponiblesAbmInsumosCargados = false;
 var productosDisponiblesAbmInsumosCargando = false;
 var callbacksProductosDisponiblesAbmInsumos = [];
 var productosSeleccionadosAbmInsumos = {};
+var abmInsumosFilasPorId = {};
+var variantesAbmInsumos = [];
 
 function verTabInsumos(tab) {
 	var tabs = ["abm", "stock", "movimientos", "alertas"];
@@ -32600,6 +32602,14 @@ function limpiarCamposAbmInsumos() {
 		document.getElementById("inptBuscarProductoInsumo").value = "";
 	}
 	productosSeleccionadosAbmInsumos = {};
+	variantesAbmInsumos = [];
+	if (document.getElementById("chkInsumoTieneVariantes")) {
+		document.getElementById("chkInsumoTieneVariantes").checked = false;
+	}
+	if (document.getElementById("inptTipoVarianteInsumo")) {
+		document.getElementById("inptTipoVarianteInsumo").value = "Tamano";
+	}
+	toggleVariantesInsumo();
 	idAbmInsumos = "";
 	filaAbmInsumos = "";
 }
@@ -32619,12 +32629,28 @@ function verVentanaEditarAbmInsumos() {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
 		return;
 	}
-	document.getElementById("inptNombreInsumo").value = obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_1");
+	var filaDatos = abmInsumosFilasPorId[String(idAbmInsumos)] || {};
+	document.getElementById("inptNombreInsumo").value = filaDatos.nombre || obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_1");
 	document.getElementById("inptDescripcionInsumo").value = obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_2");
 	document.getElementById("inptStockInsumo").value = obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_3");
 	document.getElementById("inptStockMinimoInsumo").value = obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_4");
 	document.getElementById("inptUnidadInsumo").value = obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_5");
 	document.getElementById("inptEstadoInsumo").value = obtenerTextoCeldaAbmInsumos(filaAbmInsumos, "td_datos_6");
+	variantesAbmInsumos = filaDatos.variantes ? JSON.parse(JSON.stringify(filaDatos.variantes)) : [];
+	if (document.getElementById("chkInsumoTieneVariantes")) {
+		document.getElementById("chkInsumoTieneVariantes").checked = String(filaDatos.tiene_variantes || "0") == "1";
+	}
+	if (document.getElementById("inptTipoVarianteInsumo")) {
+		var tipoVariante = filaDatos.tipo_variante || "Tamano";
+		if (tipoVariante == "Tamaño" || tipoVariante == "TamaÃ±o") {
+			tipoVariante = "Tamano";
+		}
+		if (tipoVariante == "Presentación" || tipoVariante == "PresentaciÃ³n") {
+			tipoVariante = "Presentacion";
+		}
+		document.getElementById("inptTipoVarianteInsumo").value = tipoVariante;
+	}
+	toggleVariantesInsumo();
 	document.getElementById("btnAbmInsumosGuardar").value = "Editar datos";
 	productosSeleccionadosAbmInsumos = {};
 	verCerrarVentanaAbmInsumos("1", "2");
@@ -32647,11 +32673,122 @@ function limpiarTextoHtmlAbmInsumos(valor) {
 	return texto.trim();
 }
 
+function toggleVariantesInsumo() {
+	var activo = document.getElementById("chkInsumoTieneVariantes") && document.getElementById("chkInsumoTieneVariantes").checked == true;
+	if (document.getElementById("divVariantesInsumo")) {
+		document.getElementById("divVariantesInsumo").style.display = activo ? "" : "none";
+	}
+	if (document.getElementById("inptStockInsumo")) {
+		document.getElementById("inptStockInsumo").readOnly = activo;
+	}
+	if (document.getElementById("inptStockMinimoInsumo")) {
+		document.getElementById("inptStockMinimoInsumo").readOnly = activo;
+	}
+	if (activo && variantesAbmInsumos.length == 0) {
+		agregarVarianteInsumo();
+	}
+	renderVariantesInsumo();
+}
+
+function agregarVarianteInsumo(variante) {
+	variantesAbmInsumos.push(variante || { id_variante: 0, nombre_variante: "", stock: 0, stock_minimo: 0, estado: "Activo" });
+	renderVariantesInsumo();
+}
+
+function quitarVarianteInsumo(indice) {
+	variantesAbmInsumos.splice(indice, 1);
+	renderVariantesInsumo();
+}
+
+function actualizarVarianteInsumo(indice, campo, valor) {
+	if (!variantesAbmInsumos[indice]) {
+		return;
+	}
+	variantesAbmInsumos[indice][campo] = valor;
+	recalcularStockPadreDesdeVariantes();
+}
+
+function recalcularStockPadreDesdeVariantes() {
+	if (!document.getElementById("chkInsumoTieneVariantes") || document.getElementById("chkInsumoTieneVariantes").checked != true) {
+		return;
+	}
+	var stock = 0;
+	var minimo = 0;
+	for (var i = 0; i < variantesAbmInsumos.length; i++) {
+		if (variantesAbmInsumos[i].estado == "Activo") {
+			stock += Number(variantesAbmInsumos[i].stock || 0);
+			minimo += Number(variantesAbmInsumos[i].stock_minimo || 0);
+		}
+	}
+	var stockTexto = stock.toFixed(3).replace(/\.?0+$/, "");
+	var minimoTexto = minimo.toFixed(3).replace(/\.?0+$/, "");
+	document.getElementById("inptStockInsumo").value = stockTexto == "" ? "0" : stockTexto;
+	document.getElementById("inptStockMinimoInsumo").value = minimoTexto == "" ? "0" : minimoTexto;
+}
+
+function renderVariantesInsumo() {
+	var contenedor = document.getElementById("tableVariantesInsumo");
+	if (!contenedor) {
+		return;
+	}
+	var html = "";
+	for (var i = 0; i < variantesAbmInsumos.length; i++) {
+		var variante = variantesAbmInsumos[i];
+		html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr>";
+		html += "<td class='tdRegistroSearch' style='width:34%'><input class='inputText' type='text' value='" + escaparHtmlAbmInsumos(variante.nombre_variante || "") + "' oninput='actualizarVarianteInsumo(" + i + ", \"nombre_variante\", this.value)' style='width:100%;height:30px'></td>";
+		html += "<td class='tdRegistroSearch' style='width:18%'><input class='inputText' type='number' min='0' step='any' value='" + escaparHtmlAbmInsumos(variante.stock || 0) + "' oninput='actualizarVarianteInsumo(" + i + ", \"stock\", this.value)' style='width:100%;height:30px'></td>";
+		html += "<td class='tdRegistroSearch' style='width:18%'><input class='inputText' type='number' min='0' step='any' value='" + escaparHtmlAbmInsumos(variante.stock_minimo || 0) + "' oninput='actualizarVarianteInsumo(" + i + ", \"stock_minimo\", this.value)' style='width:100%;height:30px'></td>";
+		html += "<td class='tdRegistroSearch' style='width:20%'><select class='inputSelect' onchange='actualizarVarianteInsumo(" + i + ", \"estado\", this.value)' style='width:100%;height:30px'><option value='Activo' " + (variante.estado != "Inactivo" ? "selected" : "") + ">Activo</option><option value='Inactivo' " + (variante.estado == "Inactivo" ? "selected" : "") + ">Inactivo</option></select></td>";
+		html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'><input type='button' class='btn2' value='X' onclick='quitarVarianteInsumo(" + i + ")' style='width:34px;height:26px;padding:0;background:#dc2626;border-radius:7px;'></td>";
+		html += "</tr></table>";
+	}
+	contenedor.innerHTML = html || "<p class='pTituloC' style='padding:10px;text-align:center;color:#607080'>Sin variantes cargadas.</p>";
+	recalcularStockPadreDesdeVariantes();
+}
+
+function validarVariantesAbmInsumos() {
+	if (!document.getElementById("chkInsumoTieneVariantes") || document.getElementById("chkInsumoTieneVariantes").checked != true) {
+		return true;
+	}
+	var nombres = {};
+	var activas = 0;
+	for (var i = 0; i < variantesAbmInsumos.length; i++) {
+		var nombre = String(variantesAbmInsumos[i].nombre_variante || "").trim();
+		if (nombre == "") {
+			ver_vetana_informativa("FALTA INGRESAR EL NOMBRE DE UNA VARIANTE");
+			return false;
+		}
+		var clave = nombre.toLowerCase();
+		if (nombres[clave]) {
+			ver_vetana_informativa("NO SE PERMITEN VARIANTES DUPLICADAS");
+			return false;
+		}
+		nombres[clave] = true;
+		if (variantesAbmInsumos[i].estado == "Activo") {
+			activas++;
+		}
+	}
+	if (activas == 0) {
+		ver_vetana_informativa("DEBE CARGAR AL MENOS UNA VARIANTE ACTIVA");
+		return false;
+	}
+	return true;
+}
+
 function verificarCamposAbmInsumos() {
 	var nombre = document.getElementById("inptNombreInsumo").value;
 	if (nombre == "") {
 		document.getElementById("inptNombreInsumo").focus();
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DEL INSUMO");
+		return;
+	}
+	var descripcion = document.getElementById("inptDescripcionInsumo").value;
+	if (descripcion == "") {
+		document.getElementById("inptDescripcionInsumo").focus();
+		ver_vetana_informativa("FALTO SELECCIONAR LA DESCRIPCION DEL INSUMO");
+		return;
+	}
+	if (validarVariantesAbmInsumos() == false) {
 		return;
 	}
 	var accion = idAbmInsumos != "" ? "editar" : "nuevo";
@@ -32673,6 +32810,9 @@ function abmInsumos(accion) {
 	datos.append("stock_minimo", document.getElementById("inptStockMinimoInsumo").value);
 	datos.append("unidad_medida", document.getElementById("inptUnidadInsumo").value);
 	datos.append("estado", document.getElementById("inptEstadoInsumo").value);
+	datos.append("tiene_variantes", document.getElementById("chkInsumoTieneVariantes") && document.getElementById("chkInsumoTieneVariantes").checked ? "1" : "0");
+	datos.append("tipo_variante", document.getElementById("inptTipoVarianteInsumo") ? document.getElementById("inptTipoVarianteInsumo").value : "");
+	datos.append("variantes", JSON.stringify(variantesAbmInsumos));
 	$("#divProductosInsumo .insumo-producto-check:checked").each(function () {
 		var codProducto = $(this).val();
 		var cantidad = $(this).closest(".insumo-producto-card").find(".insumo-producto-cantidad").val();
@@ -32766,13 +32906,16 @@ function obtenerEstadoBuscarAbmInsumos() {
 
 function renderTablaAbmInsumos(filas) {
 	var html = "";
+	abmInsumosFilasPorId = {};
 	for (var i = 0; i < filas.length; i++) {
 		var fila = filas[i];
+		abmInsumosFilasPorId[String(fila.id_insumo)] = fila;
 		var estado = fila.estado_texto || (fila.estado == "1" ? "Activo" : "Inactivo");
-		html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'>";
+		var nombreListado = fila.nombre + (String(fila.tiene_variantes || "0") == "1" ? " (" + (fila.tipo_variante || "Variantes") + ")" : "");
+		html += "<table class='tableRegistroSearch insumos-abm-table' border='1' cellspacing='0' cellpadding='0' style='width:100%'>";
 		html += "<tr id='tbSelecRegistroInsumos' onclick='ObtenerdatosAbmInsumos(this)'>";
 		html += "<td id='td_id' style='width:8%'>" + escaparHtmlAbmInsumos(fila.id_insumo) + "</td>";
-		html += "<td id='td_datos_1' style='width:22%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.nombre) + "</td>";
+		html += "<td id='td_datos_1' style='width:22%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(nombreListado) + "</td>";
 		html += "<td id='td_datos_2' style='width:30%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.descripcion) + "</td>";
 		html += "<td id='td_datos_3' style='width:10%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.cant_stock) + "</td>";
 		html += "<td id='td_datos_4' style='width:10%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.stock_minimo || 0) + "</td>";
@@ -33093,13 +33236,13 @@ function renderCatalogosDashboardInsumos() {
 	}
 	document.getElementById("inptDashboardInsumosLocal").innerHTML = opcionesLocales;
 
-	var opcionesInsumos = "<option value=''>Seleccionar insumo</option>";
-	for (var j = 0; j < dashboardInsumosInsumos.length; j++) {
-		var insumo = dashboardInsumosInsumos[j];
-		opcionesInsumos += "<option value='" + escaparHtmlAbmInsumos(insumo.id_insumo) + "'>" + escaparHtmlAbmInsumos(insumo.nombre) + "</option>";
-	}
-	document.getElementById("inptDashboardInsumosInsumo").innerHTML = opcionesInsumos;
+	document.getElementById("inptDashboardInsumosInsumo").innerHTML = opcionesInsumosInsumos("Seleccionar insumo");
 	filtrarConsultoriosDashboardInsumos();
+}
+
+function parseValorInsumoVariante(valor) {
+	var partes = String(valor || "").split(":");
+	return { id_insumo: partes[0] || "", id_variante: partes.length > 1 ? partes[1] : "0" };
 }
 
 function filtrarConsultoriosDashboardInsumos() {
@@ -33180,10 +33323,12 @@ function renderTablaDashboardInsumosStock(filas) {
 		html += "<td id='td_local' style='display:none'>" + escaparHtmlAbmInsumos(fila.cod_local) + "</td>";
 		html += "<td id='td_consultorio' style='display:none'>" + escaparHtmlAbmInsumos(fila.id_consultorio) + "</td>";
 		html += "<td id='td_insumo' style='display:none'>" + escaparHtmlAbmInsumos(fila.id_insumo) + "</td>";
+		html += "<td id='td_variante' style='display:none'>" + escaparHtmlAbmInsumos(fila.id_variante || 0) + "</td>";
 		html += "<td style='width:20%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.nombre_local) + "</td>";
 		html += "<td style='width:16%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.nombre_consultorio) + "</td>";
 		html += "<td style='width:8%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.id_insumo) + "</td>";
-		html += "<td style='width:24%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.nombre) + "</td>";
+		var nombreConVariante = fila.nombre + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
+		html += "<td style='width:24%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(nombreConVariante) + "</td>";
 		html += "<td style='width:9%;text-align:center' class='tdRegistroSearch'><input class='dashboard-insumos-stock-input' type='number' min='0' step='any' value='" + escaparHtmlAbmInsumos(fila.cantidad || 0) + "' onclick='event.stopPropagation()'></td>";
 		html += "<td style='width:9%;text-align:center' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.stock_minimo || 0) + "</td>";
 		html += "<td style='width:8%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.unidad_medida) + "</td>";
@@ -33201,16 +33346,16 @@ function seleccionarFilaDashboardInsumos(fila) {
 	document.getElementById("inptDashboardInsumosLocal").value = $(fila).children("#td_local").html();
 	filtrarConsultoriosDashboardInsumos();
 	document.getElementById("inptDashboardInsumosConsultorio").value = $(fila).children("#td_consultorio").html();
-	document.getElementById("inptDashboardInsumosInsumo").value = $(fila).children("#td_insumo").html();
+	document.getElementById("inptDashboardInsumosInsumo").value = $(fila).children("#td_insumo").html() + ":" + ($(fila).children("#td_variante").html() || "0");
 	document.getElementById("inptDashboardInsumosCantidad").value = $(fila).find(".dashboard-insumos-stock-input").val();
 }
 
 function guardarDashboardInsumosStock() {
 	var codLocal = document.getElementById("inptDashboardInsumosLocal").value;
 	var idConsultorio = document.getElementById("inptDashboardInsumosConsultorio").value;
-	var idInsumo = document.getElementById("inptDashboardInsumosInsumo").value;
+	var seleccion = parseValorInsumoVariante(document.getElementById("inptDashboardInsumosInsumo").value);
 	var cantidad = document.getElementById("inptDashboardInsumosCantidad").value;
-	guardarDashboardInsumosStockDatos(idInsumo, codLocal, idConsultorio, cantidad);
+	guardarDashboardInsumosStockDatos(seleccion.id_insumo, codLocal, idConsultorio, cantidad, seleccion.id_variante);
 }
 
 function guardarDashboardInsumosStockDesdeFila(boton) {
@@ -33219,11 +33364,12 @@ function guardarDashboardInsumosStockDesdeFila(boton) {
 		$(fila).children("#td_insumo").html(),
 		$(fila).children("#td_local").html(),
 		$(fila).children("#td_consultorio").html(),
-		$(fila).find(".dashboard-insumos-stock-input").val()
+		$(fila).find(".dashboard-insumos-stock-input").val(),
+		$(fila).children("#td_variante").html() || "0"
 	);
 }
 
-function guardarDashboardInsumosStockDatos(idInsumo, codLocal, idConsultorio, cantidad) {
+function guardarDashboardInsumosStockDatos(idInsumo, codLocal, idConsultorio, cantidad, idVariante) {
 	if (codLocal == "" || idConsultorio == "" || idInsumo == "" || cantidad === "") {
 		ver_vetana_informativa("Faltan datos", "Seleccione sucursal, consultorio, insumo y cantidad.", "error");
 		return;
@@ -33235,6 +33381,7 @@ function guardarDashboardInsumosStockDatos(idInsumo, codLocal, idConsultorio, ca
 		"passu": passuser,
 		"navegador": navegador,
 		"id_insumo": idInsumo,
+		"id_variante": idVariante || "0",
 		"cod_local": codLocal,
 		"id_consultorio": idConsultorio,
 		"cantidad": cantidad,
@@ -33282,11 +33429,25 @@ function opcionesInsumosInsumos(textoInicial, filtro) {
 		var id = String(insumo.id_insumo || "");
 		var nombre = String(insumo.nombre || "");
 		var unidad = String(insumo.unidad_medida || "");
-		var etiqueta = id + " | " + nombre + (unidad != "" ? " (" + unidad + ")" : "");
-		if (textoFiltro != "" && etiqueta.toLowerCase().indexOf(textoFiltro) < 0) {
-			continue;
+		if (String(insumo.tiene_variantes || "0") == "1") {
+			var variantes = insumo.variantes || [];
+			for (var j = 0; j < variantes.length; j++) {
+				if (variantes[j].estado == "Inactivo") {
+					continue;
+				}
+				var etiquetaVariante = id + " | " + nombre + " - " + (variantes[j].nombre_variante || "") + (unidad != "" ? " (" + unidad + ")" : "");
+				if (textoFiltro != "" && etiquetaVariante.toLowerCase().indexOf(textoFiltro) < 0) {
+					continue;
+				}
+				html += "<option value='" + escaparHtmlAbmInsumos(id + ":" + (variantes[j].id_variante || 0)) + "'>" + escaparHtmlAbmInsumos(etiquetaVariante) + "</option>";
+			}
+		} else {
+			var etiqueta = id + " | " + nombre + (unidad != "" ? " (" + unidad + ")" : "");
+			if (textoFiltro != "" && etiqueta.toLowerCase().indexOf(textoFiltro) < 0) {
+				continue;
+			}
+			html += "<option value='" + escaparHtmlAbmInsumos(id + ":0") + "'>" + escaparHtmlAbmInsumos(etiqueta) + "</option>";
 		}
-		html += "<option value='" + escaparHtmlAbmInsumos(id) + "'>" + escaparHtmlAbmInsumos(etiqueta) + "</option>";
 	}
 	return html;
 }
@@ -33350,13 +33511,17 @@ function filtrarConsultoriosGenericoInsumos(idLocal, idConsultorio) {
 }
 
 function agregarDetalleMovimientoInsumo() {
-	var idInsumo = document.getElementById("inptMovimientoDetalleInsumo").value;
+	var seleccion = parseValorInsumoVariante(document.getElementById("inptMovimientoDetalleInsumo").value);
+	var idInsumo = seleccion.id_insumo;
+	var idVariante = seleccion.id_variante || "0";
 	var cantidad = document.getElementById("inptMovimientoDetalleCantidad").value;
 	if (idInsumo == "" && document.getElementById("inptMovimientoBuscarInsumo") && document.getElementById("inptMovimientoBuscarInsumo").value.trim() != "") {
 		var selectInsumo = document.getElementById("inptMovimientoDetalleInsumo");
 		if (selectInsumo && selectInsumo.options.length > 1) {
 			selectInsumo.selectedIndex = 1;
-			idInsumo = selectInsumo.value;
+			seleccion = parseValorInsumoVariante(selectInsumo.value);
+			idInsumo = seleccion.id_insumo;
+			idVariante = seleccion.id_variante || "0";
 		}
 	}
 	if (idInsumo == "" || cantidad == "" || Number(cantidad) <= 0) {
@@ -33365,15 +33530,23 @@ function agregarDetalleMovimientoInsumo() {
 	}
 	var nombre = "";
 	var unidad = "";
+	var nombreVariante = "";
 	for (var i = 0; i < dashboardInsumosInsumos.length; i++) {
 		if (String(dashboardInsumosInsumos[i].id_insumo) == String(idInsumo)) {
 			nombre = dashboardInsumosInsumos[i].nombre;
 			unidad = dashboardInsumosInsumos[i].unidad_medida || "";
+			var variantes = dashboardInsumosInsumos[i].variantes || [];
+			for (var v = 0; v < variantes.length; v++) {
+				if (String(variantes[v].id_variante || "0") == String(idVariante)) {
+					nombreVariante = variantes[v].nombre_variante || "";
+					break;
+				}
+			}
 			break;
 		}
 	}
 	for (var j = 0; j < movimientoInsumosDetalle.length; j++) {
-		if (String(movimientoInsumosDetalle[j].id_insumo) == String(idInsumo)) {
+		if (String(movimientoInsumosDetalle[j].id_insumo) == String(idInsumo) && String(movimientoInsumosDetalle[j].id_variante || "0") == String(idVariante)) {
 			movimientoInsumosDetalle[j].cantidad = Number(movimientoInsumosDetalle[j].cantidad) + Number(cantidad);
 			renderDetalleCargaMovimientoInsumo();
 			document.getElementById("inptMovimientoDetalleCantidad").value = "";
@@ -33381,7 +33554,7 @@ function agregarDetalleMovimientoInsumo() {
 			return;
 		}
 	}
-	movimientoInsumosDetalle.push({ id_insumo: idInsumo, nombre: nombre, unidad_medida: unidad, cantidad: cantidad });
+	movimientoInsumosDetalle.push({ id_insumo: idInsumo, id_variante: idVariante, nombre: nombre, nombre_variante: nombreVariante, unidad_medida: unidad, cantidad: cantidad });
 	renderDetalleCargaMovimientoInsumo();
 	document.getElementById("inptMovimientoDetalleCantidad").value = "";
 	document.getElementById("inptMovimientoDetalleInsumo").value = "";
@@ -33399,8 +33572,9 @@ function renderDetalleCargaMovimientoInsumo() {
 	var html = "";
 	for (var i = 0; i < movimientoInsumosDetalle.length; i++) {
 		var fila = movimientoInsumosDetalle[i];
+		var nombre = fila.nombre + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
 		html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr>";
-		html += "<td class='tdRegistroSearch' style='width:70%'>" + escaparHtmlAbmInsumos(fila.nombre) + "</td>";
+		html += "<td class='tdRegistroSearch' style='width:70%'>" + escaparHtmlAbmInsumos(nombre) + "</td>";
 		html += "<td class='tdRegistroSearch' style='width:20%;text-align:center'>" + escaparHtmlAbmInsumos(fila.cantidad) + "</td>";
 		html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'><input type='button' class='btn2' value='X' style='width:36px;height:26px;padding:0;border-radius:7px;background:#dc2626' onclick='quitarDetalleMovimientoInsumo(" + i + ")'></td>";
 		html += "</tr></table>";
@@ -33426,6 +33600,7 @@ function guardarMovimientoInsumo() {
 	datos.append("funt", "guardar_movimiento");
 	for (var i = 0; i < movimientoInsumosDetalle.length; i++) {
 		datos.append("id_insumo[]", movimientoInsumosDetalle[i].id_insumo);
+		datos.append("id_variante[]", movimientoInsumosDetalle[i].id_variante || "0");
 		datos.append("cantidad[]", movimientoInsumosDetalle[i].cantidad);
 	}
 	$.ajax({
@@ -33513,8 +33688,9 @@ function verDetalleMovimientoInsumos(grupoMovimiento) {
 				var html = "";
 				for (var i = 0; i < filas.length; i++) {
 					var f = filas[i];
+					var nombreDetalle = f.nombre_insumo + (f.nombre_variante ? " - " + f.nombre_variante : "");
 					html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr>";
-					html += "<td class='tdRegistroSearch' style='width:55%'>" + escaparHtmlAbmInsumos(f.nombre_insumo) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:55%'>" + escaparHtmlAbmInsumos(nombreDetalle) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:20%;text-align:center'>" + escaparHtmlAbmInsumos(f.cantidad) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:15%'>" + escaparHtmlAbmInsumos(f.unidad_medida) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'>" + escaparHtmlAbmInsumos(f.insumo_id) + "</td>";
@@ -33545,10 +33721,11 @@ function listarAlertasStockInsumos() {
 				var html = "";
 				for (var i = 0; i < filas.length; i++) {
 					var f = filas[i];
+					var nombreAlerta = f.nombre_insumo + (f.nombre_variante ? " - " + f.nombre_variante : "");
 					html += "<table class='tableRegistroSearch insumo-stock-bajo' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr>";
 					html += "<td class='tdRegistroSearch' style='width:22%'>" + escaparHtmlAbmInsumos(f.nombre_local) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:18%'>" + escaparHtmlAbmInsumos(f.nombre_consultorio) + "</td>";
-					html += "<td class='tdRegistroSearch' style='width:26%'>" + escaparHtmlAbmInsumos(f.nombre_insumo) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:26%'>" + escaparHtmlAbmInsumos(nombreAlerta) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:12%;text-align:center'>" + escaparHtmlAbmInsumos(f.cantidad) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:12%;text-align:center'>" + escaparHtmlAbmInsumos(f.stock_minimo) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'>" + escaparHtmlAbmInsumos(f.diferencia) + "</td>";

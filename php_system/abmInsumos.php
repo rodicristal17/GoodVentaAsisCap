@@ -62,6 +62,9 @@ function ObtenerDatos($operacion)
             $estado = $_POST['estado'];
             $productos = isset($_POST['productos']) ? $_POST['productos'] : [];
             $cantidades = isset($_POST['cantidades']) ? $_POST['cantidades'] : [];
+            $tiene_variantes = isset($_POST['tiene_variantes']) ? $_POST['tiene_variantes'] : 0;
+            $tipo_variante = isset($_POST['tipo_variante']) ? $_POST['tipo_variante'] : "";
+            $variantes = isset($_POST['variantes']) ? $_POST['variantes'] : [];
 
             $id_insumo = mb_convert_encoding((string)($id_insumo), 'ISO-8859-1', 'UTF-8');
             $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
@@ -70,8 +73,9 @@ function ObtenerDatos($operacion)
             $stock_minimo = mb_convert_encoding((string)($stock_minimo), 'ISO-8859-1', 'UTF-8');
             $unidad_medida = mb_convert_encoding((string)($unidad_medida), 'ISO-8859-1', 'UTF-8');
             $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
+            $tipo_variante = mb_convert_encoding((string)($tipo_variante), 'ISO-8859-1', 'UTF-8');
 
-            abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion);
+            abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion, $tiene_variantes, $tipo_variante, $variantes);
             break;
         case "buscar":
             $codigo = isset($_POST["codigo"]) ? mb_convert_encoding((string)($_POST["codigo"]), 'ISO-8859-1', 'UTF-8') : "";
@@ -120,10 +124,11 @@ function ObtenerDatos($operacion)
             break;
         case "dashboard_guardar_stock":
             $id_insumo = isset($_POST['id_insumo']) ? mb_convert_encoding((string)($_POST['id_insumo']), 'ISO-8859-1', 'UTF-8') : "";
+            $id_variante = isset($_POST['id_variante']) ? mb_convert_encoding((string)($_POST['id_variante']), 'ISO-8859-1', 'UTF-8') : "0";
             $cod_local = isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : "";
             $id_consultorio = isset($_POST['id_consultorio']) ? mb_convert_encoding((string)($_POST['id_consultorio']), 'ISO-8859-1', 'UTF-8') : "";
             $cantidad = isset($_POST['cantidad']) ? mb_convert_encoding((string)($_POST['cantidad']), 'ISO-8859-1', 'UTF-8') : "";
-            guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad);
+            guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad, $id_variante);
             break;
         case "guardar_movimiento":
             guardarMovimientoInsumo();
@@ -156,6 +161,54 @@ function agregarColumnaSiNoExiste($mysqli, $tabla, $columna, $definicion)
     }
 }
 
+function modificarColumnaSiExisteInsumos($mysqli, $tabla, $columna, $definicion)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+    $columna = preg_replace('/[^a-zA-Z0-9_]/', '', $columna);
+    $result = $mysqli->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
+    if ($result && $result->num_rows > 0) {
+        $fila = $result->fetch_assoc();
+        if (isset($fila["Type"]) && strtolower($fila["Type"]) === "decimal(12,3)") {
+            return;
+        }
+        if (!$mysqli->query("ALTER TABLE `$tabla` MODIFY COLUMN $definicion")) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo actualizar la columna $columna: " . $mysqli->error));
+            exit;
+        }
+    }
+}
+
+function indiceExisteInsumos($mysqli, $tabla, $indice)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+    $indice = preg_replace('/[^a-zA-Z0-9_]/', '', $indice);
+    $result = $mysqli->query("SHOW INDEX FROM `$tabla` WHERE Key_name='".$indice."'");
+    return $result && $result->num_rows > 0;
+}
+
+function agregarIndiceSiNoExisteInsumos($mysqli, $tabla, $indice, $definicion)
+{
+    if (!indiceExisteInsumos($mysqli, $tabla, $indice)) {
+        $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+        if (!$mysqli->query("ALTER TABLE `$tabla` ADD $definicion")) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo crear el indice $indice: " . $mysqli->error));
+            exit;
+        }
+    }
+}
+
+function quitarIndiceSiExisteInsumos($mysqli, $tabla, $indice)
+{
+    if (indiceExisteInsumos($mysqli, $tabla, $indice)) {
+        $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+        $indice = preg_replace('/[^a-zA-Z0-9_]/', '', $indice);
+        if (!$mysqli->query("ALTER TABLE `$tabla` DROP INDEX `$indice`")) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo actualizar el indice $indice: " . $mysqli->error));
+            exit;
+        }
+    }
+}
+
 function limpiarTextoHtmlInsumos($valor)
 {
     $texto = (string)$valor;
@@ -168,9 +221,48 @@ function limpiarTextoHtmlInsumos($valor)
     return trim($texto);
 }
 
+function descripcionInsumoPermitida($descripcion)
+{
+    $opciones = array('Descartable', 'Ortodoncia', 'General', 'Endodoncia', 'Cirugia');
+    return in_array($descripcion, $opciones, true);
+}
+
+function normalizarNumeroDecimalInsumos($valor)
+{
+    $numero = str_replace(",", ".", trim((string)$valor));
+    return is_numeric($numero) ? (float)$numero : 0;
+}
+
+function asegurarTablaVariantesInsumos($mysqli)
+{
+    $sql = "CREATE TABLE IF NOT EXISTS insumo_variantes (
+        id_variante INT NOT NULL AUTO_INCREMENT,
+        insumo_id INT NOT NULL,
+        nombre_variante VARCHAR(120) NOT NULL,
+        stock DECIMAL(12,3) NOT NULL DEFAULT 0,
+        stock_minimo DECIMAL(12,3) NOT NULL DEFAULT 0,
+        estado ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_variante),
+        UNIQUE KEY uq_insumo_variante (insumo_id, nombre_variante),
+        KEY idx_variante_insumo (insumo_id),
+        KEY idx_variante_estado (estado)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar variantes de insumos: " . $mysqli->error));
+        exit;
+    }
+}
+
 function asegurarEstructuraInsumos($mysqli)
 {
-    agregarColumnaSiNoExiste($mysqli, "insumosconsl", "stock_minimo", "stock_minimo INT NOT NULL DEFAULT 0");
+    agregarColumnaSiNoExiste($mysqli, "insumosconsl", "stock_minimo", "stock_minimo DECIMAL(12,3) NOT NULL DEFAULT 0");
+    agregarColumnaSiNoExiste($mysqli, "insumosconsl", "tiene_variantes", "tiene_variantes TINYINT(1) NOT NULL DEFAULT 0");
+    agregarColumnaSiNoExiste($mysqli, "insumosconsl", "tipo_variante", "tipo_variante VARCHAR(60) NULL");
+    modificarColumnaSiExisteInsumos($mysqli, "insumosconsl", "cant_stock", "cant_stock DECIMAL(12,3) NOT NULL DEFAULT 0");
+    modificarColumnaSiExisteInsumos($mysqli, "insumosconsl", "stock_minimo", "stock_minimo DECIMAL(12,3) NOT NULL DEFAULT 0");
+    asegurarTablaVariantesInsumos($mysqli);
     asegurarTablaInsumoProducto($mysqli);
     asegurarTablaStockDashboardInsumos($mysqli);
 
@@ -196,6 +288,7 @@ function asegurarEstructuraInsumos($mysqli)
         exit;
     }
     agregarColumnaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
+    agregarColumnaSiNoExiste($mysqli, "movimientos_insumos", "id_variante", "id_variante INT NULL");
 
 }
 
@@ -224,7 +317,112 @@ function existeTablaInsumos($mysqli, $tabla)
     return $result && $result->num_rows > 0;
 }
 
-function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion)
+function normalizarVariantesInsumoPost($variantes)
+{
+    if (is_string($variantes)) {
+        $decodificado = json_decode($variantes, true);
+        $variantes = is_array($decodificado) ? $decodificado : array();
+    }
+    if (!is_array($variantes)) {
+        return array();
+    }
+
+    $normalizadas = array();
+    foreach ($variantes as $variante) {
+        if (!is_array($variante)) {
+            continue;
+        }
+        $nombre = limpiarTextoHtmlInsumos(isset($variante["nombre_variante"]) ? $variante["nombre_variante"] : "");
+        if ($nombre === "") {
+            continue;
+        }
+        $estado = isset($variante["estado"]) && strcasecmp((string)$variante["estado"], "Inactivo") === 0 ? "Inactivo" : "Activo";
+        $normalizadas[] = array(
+            "id_variante" => isset($variante["id_variante"]) ? (int)$variante["id_variante"] : 0,
+            "nombre_variante" => $nombre,
+            "stock" => normalizarNumeroDecimalInsumos(isset($variante["stock"]) ? $variante["stock"] : 0),
+            "stock_minimo" => normalizarNumeroDecimalInsumos(isset($variante["stock_minimo"]) ? $variante["stock_minimo"] : 0),
+            "estado" => $estado
+        );
+    }
+    return $normalizadas;
+}
+
+function validarVariantesInsumo($variantes, $requiereActiva)
+{
+    $nombres = array();
+    $activas = 0;
+    foreach ($variantes as $variante) {
+        $clave = mb_strtolower($variante["nombre_variante"], 'UTF-8');
+        if (isset($nombres[$clave])) {
+            return "No se permiten variantes duplicadas para el mismo insumo.";
+        }
+        $nombres[$clave] = true;
+        if ($variante["estado"] === "Activo") {
+            $activas++;
+        }
+    }
+    if ($requiereActiva && $activas == 0) {
+        return "Debe cargar al menos una variante activa.";
+    }
+    return "";
+}
+
+function guardarVariantesInsumo($mysqli, $idInsumo, $variantes)
+{
+    $idsVigentes = array();
+    foreach ($variantes as $variante) {
+        $idVariante = (int)$variante["id_variante"];
+        $nombre = $variante["nombre_variante"];
+        $stock = (float)$variante["stock"];
+        $stockMinimo = (float)$variante["stock_minimo"];
+        $estado = $variante["estado"];
+        if ($idVariante > 0) {
+            $stmt = $mysqli->prepare("UPDATE insumo_variantes
+                SET nombre_variante=?, stock=?, stock_minimo=?, estado=?, updated_at=NOW()
+                WHERE id_variante=? AND insumo_id=?");
+            $stmt->bind_param("sddsii", $nombre, $stock, $stockMinimo, $estado, $idVariante, $idInsumo);
+            $stmt->execute();
+            $idsVigentes[] = $idVariante;
+        } else {
+            $stmt = $mysqli->prepare("INSERT INTO insumo_variantes (insumo_id, nombre_variante, stock, stock_minimo, estado)
+                VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("isdds", $idInsumo, $nombre, $stock, $stockMinimo, $estado);
+            $stmt->execute();
+            $idsVigentes[] = (int)$mysqli->insert_id;
+        }
+    }
+
+    if (count($idsVigentes) > 0) {
+        $ids = implode(",", array_map("intval", $idsVigentes));
+        $mysqli->query("UPDATE insumo_variantes SET estado='Inactivo', updated_at=NOW()
+            WHERE insumo_id='".(int)$idInsumo."' AND id_variante NOT IN (".$ids.")");
+    } else {
+        $mysqli->query("UPDATE insumo_variantes SET estado='Inactivo', updated_at=NOW()
+            WHERE insumo_id='".(int)$idInsumo."'");
+    }
+}
+
+function obtenerVariantesInsumo($mysqli, $idInsumo)
+{
+    $variantes = array();
+    if ((int)$idInsumo <= 0 || !existeTablaInsumos($mysqli, "insumo_variantes")) {
+        return $variantes;
+    }
+    $result = $mysqli->query("SELECT id_variante, insumo_id, nombre_variante, stock, stock_minimo, estado
+        FROM insumo_variantes
+        WHERE insumo_id='".(int)$idInsumo."'
+        ORDER BY estado ASC, nombre_variante ASC");
+    if ($result) {
+        while ($fila = $result->fetch_assoc()) {
+            $fila["nombre_variante"] = mb_convert_encoding((string)$fila["nombre_variante"], "UTF-8", "ISO-8859-1");
+            $variantes[] = $fila;
+        }
+    }
+    return $variantes;
+}
+
+function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion, $tiene_variantes = 0, $tipo_variante = "", $variantes = array())
 {
     $mysqli = conectar_al_servidor();
     asegurarEstructuraInsumos($mysqli);
@@ -235,10 +433,34 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $uni
     }
 
     $estado_db = ($estado === 'Activo') ? 1 : 0;
-    $stock_minimo = (int)$stock_minimo;
+    $cant_stock = normalizarNumeroDecimalInsumos($cant_stock);
+    $stock_minimo = normalizarNumeroDecimalInsumos($stock_minimo);
     $nombre = limpiarTextoHtmlInsumos($nombre);
     $descripcion = limpiarTextoHtmlInsumos($descripcion);
     $unidad_medida = limpiarTextoHtmlInsumos($unidad_medida);
+    $tiene_variantes = ((string)$tiene_variantes === "1" || strcasecmp((string)$tiene_variantes, "true") === 0) ? 1 : 0;
+    $tipo_variante = limpiarTextoHtmlInsumos($tipo_variante);
+    $variantesNormalizadas = normalizarVariantesInsumoPost($variantes);
+
+    if (!descripcionInsumoPermitida($descripcion)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Selecciona una descripcion valida para el insumo."));
+        exit;
+    }
+    $errorVariantes = validarVariantesInsumo($variantesNormalizadas, $tiene_variantes == 1);
+    if ($errorVariantes !== "") {
+        echo json_encode(array("1" => "ERROR", "mensaje" => $errorVariantes));
+        exit;
+    }
+    if ($tiene_variantes == 1) {
+        $cant_stock = 0;
+        $stock_minimo = 0;
+        foreach ($variantesNormalizadas as $variante) {
+            if ($variante["estado"] === "Activo") {
+                $cant_stock += (float)$variante["stock"];
+                $stock_minimo += (float)$variante["stock_minimo"];
+            }
+        }
+    }
 
     if ($operacion === "editar" && solicitudEliminadoEsEstadoInactivo($estado_db)) {
         $user = solicitudEliminadoValorPost('useru', '0');
@@ -255,18 +477,18 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $uni
     }
 
     if ($operacion === "nuevo") {
-        $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado)
-                VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado, tiene_variantes, tipo_variante)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     } else { // editar
-        $sql = "UPDATE insumosconsl SET nombre=?, descripcion=?, cant_stock=?, stock_minimo=?, unidad_medida=?, estado=?
+        $sql = "UPDATE insumosconsl SET nombre=?, descripcion=?, cant_stock=?, stock_minimo=?, unidad_medida=?, estado=?, tiene_variantes=?, tipo_variante=?
                 WHERE id_insumo=?";
     }
     
     $stmt = $mysqli->prepare($sql);
     if ($operacion === "nuevo") {
-        $stmt->bind_param("ssiisi", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado_db);
+        $stmt->bind_param("ssddsiis", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado_db, $tiene_variantes, $tipo_variante);
     } else {
-        $stmt->bind_param("ssiisii", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado_db, $id_insumo);
+        $stmt->bind_param("ssddsiisi", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado_db, $tiene_variantes, $tipo_variante, $id_insumo);
     }
 
     if (!$stmt->execute()) {
@@ -278,6 +500,7 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $uni
     if ($operacion === "nuevo") {
         $id_insumo = $mysqli->insert_id;
     }
+    guardarVariantesInsumo($mysqli, (int)$id_insumo, $tiene_variantes == 1 ? $variantesNormalizadas : array());
 
     // Gestionar productos asociados
     mysqli_query($mysqli, "DELETE FROM insumo_producto WHERE id_insumo=$id_insumo");
@@ -346,7 +569,7 @@ function buscarInsumos($id_insumo, $nombre, $descripcion, $unidad_medida, $estad
         $condiciones[] = "estado = 1"; // Default to active if no state is specified
     }
 
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado, tiene_variantes, tipo_variante
             FROM insumosconsl";
     if (!empty($condiciones)) {
         $sql .= " WHERE " . implode(" AND ", $condiciones);
@@ -373,7 +596,9 @@ function buscarInsumos($id_insumo, $nombre, $descripcion, $unidad_medida, $estad
         $fila['nombre'] = limpiarTextoHtmlInsumos($fila['nombre']);
         $fila['descripcion'] = limpiarTextoHtmlInsumos($fila['descripcion']);
         $fila['unidad_medida'] = limpiarTextoHtmlInsumos($fila['unidad_medida']);
+        $fila['tipo_variante'] = limpiarTextoHtmlInsumos(isset($fila['tipo_variante']) ? $fila['tipo_variante'] : '');
         $fila['estado'] = ($fila['estado'] == 1) ? 'Activo' : 'Inactivo';
+        $fila['variantes'] = obtenerVariantesInsumo($mysqli, $fila['id_insumo']);
         $filas[] = $fila;
     }
 
@@ -451,12 +676,13 @@ function asegurarTablaStockDashboardInsumos($mysqli)
     $sql = "CREATE TABLE IF NOT EXISTS insumo_stock_consultorio (
         id_stock INT NOT NULL AUTO_INCREMENT,
         id_insumo INT NOT NULL,
+        id_variante INT NOT NULL DEFAULT 0,
         cod_local INT NOT NULL,
         id_consultorio INT NOT NULL,
         cantidad DECIMAL(12,3) NOT NULL DEFAULT 0,
         fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id_stock),
-        UNIQUE KEY uq_insumo_local_consultorio (id_insumo, cod_local, id_consultorio),
+        UNIQUE KEY uq_insumo_local_consultorio_variante (id_insumo, id_variante, cod_local, id_consultorio),
         KEY idx_insumo_stock_local (cod_local),
         KEY idx_insumo_stock_consultorio (id_consultorio)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
@@ -464,12 +690,20 @@ function asegurarTablaStockDashboardInsumos($mysqli)
         echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar la tabla de stock: " . $mysqli->error));
         exit;
     }
+    agregarColumnaSiNoExiste($mysqli, "insumo_stock_consultorio", "id_variante", "id_variante INT NOT NULL DEFAULT 0");
+    quitarIndiceSiExisteInsumos($mysqli, "insumo_stock_consultorio", "uq_insumo_local_consultorio");
+    agregarIndiceSiNoExisteInsumos(
+        $mysqli,
+        "insumo_stock_consultorio",
+        "uq_insumo_local_consultorio_variante",
+        "UNIQUE KEY uq_insumo_local_consultorio_variante (id_insumo, id_variante, cod_local, id_consultorio)"
+    );
 }
 
 function obtenerCatalogosDashboardInsumos()
 {
     $mysqli = conectar_al_servidor();
-    asegurarTablaStockDashboardInsumos($mysqli);
+    asegurarEstructuraInsumos($mysqli);
 
     $locales = [];
     $resultLocales = $mysqli->query("SELECT cod_local, Nombre FROM local WHERE estado='Activo' ORDER BY Nombre ASC");
@@ -490,11 +724,13 @@ function obtenerCatalogosDashboardInsumos()
     }
 
     $insumos = [];
-    $resultInsumos = $mysqli->query("SELECT id_insumo, nombre, unidad_medida, stock_minimo FROM insumosconsl WHERE estado=1 ORDER BY nombre ASC");
+    $resultInsumos = $mysqli->query("SELECT id_insumo, nombre, unidad_medida, stock_minimo, tiene_variantes, tipo_variante FROM insumosconsl WHERE estado=1 ORDER BY nombre ASC");
     if ($resultInsumos) {
         while ($fila = $resultInsumos->fetch_assoc()) {
             $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
             $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+            $fila["tipo_variante"] = mb_convert_encoding((string)(isset($fila["tipo_variante"]) ? $fila["tipo_variante"] : ""), "UTF-8", "ISO-8859-1");
+            $fila["variantes"] = obtenerVariantesInsumo($mysqli, $fila["id_insumo"]);
             $insumos[] = $fila;
         }
     }
@@ -506,7 +742,7 @@ function obtenerCatalogosDashboardInsumos()
 function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
 {
     $mysqli = conectar_al_servidor();
-    asegurarTablaStockDashboardInsumos($mysqli);
+    asegurarEstructuraInsumos($mysqli);
 
     $codLocal = (int)$cod_local;
     $idConsultorio = (int)$id_consultorio;
@@ -514,72 +750,92 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
     $filas = [];
 
     if ($codLocal > 0 && $idConsultorio > 0) {
-        $sql = "SELECT i.id_insumo, i.nombre, i.descripcion, i.unidad_medida,
+        $sql = "SELECT i.id_insumo, COALESCE(v.id_variante, 0) AS id_variante,
+                       i.nombre, i.descripcion, i.unidad_medida, i.tiene_variantes, i.tipo_variante,
+                       COALESCE(v.nombre_variante, '') AS nombre_variante,
                        l.cod_local, l.Nombre AS nombre_local,
                        c.id_consultorio, c.nombre AS nombre_consultorio,
                        COALESCE(s.cantidad, 0) AS cantidad,
-                       i.stock_minimo
+                       IF(i.tiene_variantes=1, COALESCE(v.stock_minimo, 0), i.stock_minimo) AS stock_minimo
                 FROM insumosconsl i
+                LEFT JOIN insumo_variantes v
+                    ON v.insumo_id = i.id_insumo
+                    AND i.tiene_variantes = 1
+                    AND v.estado = 'Activo'
                 JOIN local l ON l.cod_local = ?
                 JOIN consultorios c ON c.id_consultorio = ? AND c.cod_localFk = l.cod_local
                 LEFT JOIN insumo_stock_consultorio s
                     ON s.id_insumo = i.id_insumo
+                    AND s.id_variante = COALESCE(v.id_variante, 0)
                     AND s.cod_local = l.cod_local
                     AND s.id_consultorio = c.id_consultorio
-                WHERE i.estado = 1";
+                WHERE i.estado = 1 AND (i.tiene_variantes = 0 OR v.id_variante IS NOT NULL)";
         $tipos = "ii";
         $parametros = [$codLocal, $idConsultorio];
         if ($buscar !== "") {
-            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR i.id_insumo = ?)";
-            $tipos .= "ssi";
+            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR v.nombre_variante LIKE ? OR i.id_insumo = ?)";
+            $tipos .= "sssi";
             $like = "%" . $buscar . "%";
+            $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = (int)$buscar;
         }
         $sql .= " ORDER BY i.nombre ASC";
     } elseif ($codLocal > 0) {
-        $sql = "SELECT i.id_insumo, i.nombre, i.descripcion, i.unidad_medida,
+        $sql = "SELECT i.id_insumo, COALESCE(v.id_variante, 0) AS id_variante,
+                       i.nombre, i.descripcion, i.unidad_medida, i.tiene_variantes, i.tipo_variante,
+                       COALESCE(v.nombre_variante, '') AS nombre_variante,
                        l.cod_local, l.Nombre AS nombre_local,
                        c.id_consultorio, c.nombre AS nombre_consultorio,
                        COALESCE(s.cantidad, 0) AS cantidad,
-                       i.stock_minimo
+                       IF(i.tiene_variantes=1, COALESCE(v.stock_minimo, 0), i.stock_minimo) AS stock_minimo
                 FROM consultorios c
                 JOIN local l ON l.cod_local = c.cod_localFk
                 JOIN insumosconsl i ON i.estado = 1
+                LEFT JOIN insumo_variantes v
+                    ON v.insumo_id = i.id_insumo
+                    AND i.tiene_variantes = 1
+                    AND v.estado = 'Activo'
                 LEFT JOIN insumo_stock_consultorio s
                     ON s.id_insumo = i.id_insumo
+                    AND s.id_variante = COALESCE(v.id_variante, 0)
                     AND s.cod_local = l.cod_local
                     AND s.id_consultorio = c.id_consultorio
-                WHERE l.cod_local = ? AND UPPER(c.estado)='ACTIVO'";
+                WHERE l.cod_local = ? AND UPPER(c.estado)='ACTIVO' AND (i.tiene_variantes = 0 OR v.id_variante IS NOT NULL)";
         $tipos = "i";
         $parametros = [$codLocal];
         if ($buscar !== "") {
-            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR i.id_insumo = ?)";
-            $tipos .= "ssi";
+            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR v.nombre_variante LIKE ? OR i.id_insumo = ?)";
+            $tipos .= "sssi";
             $like = "%" . $buscar . "%";
+            $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = (int)$buscar;
         }
         $sql .= " ORDER BY c.nombre ASC, i.nombre ASC";
     } else {
-        $sql = "SELECT i.id_insumo, i.nombre, i.descripcion, i.unidad_medida,
+        $sql = "SELECT i.id_insumo, s.id_variante,
+                       i.nombre, i.descripcion, i.unidad_medida, i.tiene_variantes, i.tipo_variante,
+                       COALESCE(v.nombre_variante, '') AS nombre_variante,
                        l.cod_local, l.Nombre AS nombre_local,
                        c.id_consultorio, c.nombre AS nombre_consultorio,
                        s.cantidad,
-                       i.stock_minimo
+                       IF(i.tiene_variantes=1, COALESCE(v.stock_minimo, 0), i.stock_minimo) AS stock_minimo
                 FROM insumo_stock_consultorio s
                 JOIN insumosconsl i ON i.id_insumo = s.id_insumo
+                LEFT JOIN insumo_variantes v ON v.id_variante = s.id_variante
                 JOIN local l ON l.cod_local = s.cod_local
                 JOIN consultorios c ON c.id_consultorio = s.id_consultorio
-                WHERE i.estado = 1";
+                WHERE i.estado = 1 AND (i.tiene_variantes = 0 OR v.estado = 'Activo')";
         $tipos = "";
         $parametros = [];
         if ($buscar !== "") {
-            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR i.id_insumo = ?)";
-            $tipos .= "ssi";
+            $sql .= " AND (i.nombre LIKE ? OR i.descripcion LIKE ? OR v.nombre_variante LIKE ? OR i.id_insumo = ?)";
+            $tipos .= "sssi";
             $like = "%" . $buscar . "%";
+            $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = (int)$buscar;
@@ -609,6 +865,8 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
         $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
         $fila["descripcion"] = mb_convert_encoding((string)$fila["descripcion"], "UTF-8", "ISO-8859-1");
         $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+        $fila["nombre_variante"] = mb_convert_encoding((string)(isset($fila["nombre_variante"]) ? $fila["nombre_variante"] : ""), "UTF-8", "ISO-8859-1");
+        $fila["tipo_variante"] = mb_convert_encoding((string)(isset($fila["tipo_variante"]) ? $fila["tipo_variante"] : ""), "UTF-8", "ISO-8859-1");
         $fila["nombre_local"] = mb_convert_encoding((string)$fila["nombre_local"], "UTF-8", "ISO-8859-1");
         $fila["nombre_consultorio"] = mb_convert_encoding((string)$fila["nombre_consultorio"], "UTF-8", "ISO-8859-1");
         $filas[] = $fila;
@@ -618,12 +876,13 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
     exit;
 }
 
-function guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad)
+function guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad, $id_variante = 0)
 {
     $mysqli = conectar_al_servidor();
-    asegurarTablaStockDashboardInsumos($mysqli);
+    asegurarEstructuraInsumos($mysqli);
 
     $idInsumo = (int)$id_insumo;
+    $idVariante = (int)$id_variante;
     $codLocal = (int)$cod_local;
     $idConsultorio = (int)$id_consultorio;
     $cantidad = str_replace(",", ".", trim((string)$cantidad));
@@ -641,16 +900,20 @@ function guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $
         echo json_encode(array("1" => "ERROR", "mensaje" => "El consultorio no pertenece a la sucursal seleccionada."));
         exit;
     }
+    if (!validarVariantePerteneceInsumo($mysqli, $idInsumo, $idVariante)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "La variante seleccionada no pertenece al insumo."));
+        exit;
+    }
 
-    $sql = "INSERT INTO insumo_stock_consultorio (id_insumo, cod_local, id_consultorio, cantidad)
-            VALUES (?, ?, ?, ?)
+    $sql = "INSERT INTO insumo_stock_consultorio (id_insumo, id_variante, cod_local, id_consultorio, cantidad)
+            VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE cantidad=VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP";
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         echo json_encode(array("1" => "ERROR", "mensaje" => "Error al preparar guardado: " . $mysqli->error));
         exit;
     }
-    $stmt->bind_param("iiid", $idInsumo, $codLocal, $idConsultorio, $cantidadNumero);
+    $stmt->bind_param("iiiid", $idInsumo, $idVariante, $codLocal, $idConsultorio, $cantidadNumero);
     if (!$stmt->execute()) {
         echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo guardar el stock: " . $stmt->error));
         exit;
@@ -665,22 +928,37 @@ function obtenerUsuarioIdInsumos()
     return isset($_POST['useru']) ? (int)$_POST['useru'] : null;
 }
 
-function obtenerStockActualInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio)
+function validarVariantePerteneceInsumo($mysqli, $idInsumo, $idVariante)
 {
-    $stmt = $mysqli->prepare("SELECT cantidad FROM insumo_stock_consultorio WHERE id_insumo=? AND cod_local=? AND id_consultorio=?");
-    $stmt->bind_param("iii", $idInsumo, $codLocal, $idConsultorio);
+    if ((int)$idVariante === 0) {
+        $result = $mysqli->query("SELECT tiene_variantes FROM insumosconsl WHERE id_insumo='".(int)$idInsumo."' LIMIT 1");
+        if ($result && ($fila = $result->fetch_assoc())) {
+            return (int)$fila["tiene_variantes"] === 0;
+        }
+        return false;
+    }
+    $stmt = $mysqli->prepare("SELECT id_variante FROM insumo_variantes WHERE id_variante=? AND insumo_id=? AND estado='Activo'");
+    $stmt->bind_param("ii", $idVariante, $idInsumo);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
+}
+
+function obtenerStockActualInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $idVariante = 0)
+{
+    $stmt = $mysqli->prepare("SELECT cantidad FROM insumo_stock_consultorio WHERE id_insumo=? AND id_variante=? AND cod_local=? AND id_consultorio=?");
+    $stmt->bind_param("iiii", $idInsumo, $idVariante, $codLocal, $idConsultorio);
     $stmt->execute();
     $result = $stmt->get_result();
     $fila = $result->fetch_assoc();
     return $fila ? (float)$fila["cantidad"] : 0;
 }
 
-function guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $cantidad)
+function guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $cantidad, $idVariante = 0)
 {
-    $stmt = $mysqli->prepare("INSERT INTO insumo_stock_consultorio (id_insumo, cod_local, id_consultorio, cantidad)
-        VALUES (?, ?, ?, ?)
+    $stmt = $mysqli->prepare("INSERT INTO insumo_stock_consultorio (id_insumo, id_variante, cod_local, id_consultorio, cantidad)
+        VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE cantidad=VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP");
-    $stmt->bind_param("iiid", $idInsumo, $codLocal, $idConsultorio, $cantidad);
+    $stmt->bind_param("iiiid", $idInsumo, $idVariante, $codLocal, $idConsultorio, $cantidad);
     return $stmt->execute();
 }
 
@@ -691,9 +969,11 @@ function guardarMovimientoInsumo()
 
     $tipo = isset($_POST["tipo"]) ? strtolower(trim($_POST["tipo"])) : "";
     $idsInsumos = isset($_POST["id_insumo"]) ? $_POST["id_insumo"] : [];
+    $idsVariantes = isset($_POST["id_variante"]) ? $_POST["id_variante"] : [];
     $cantidades = isset($_POST["cantidad"]) ? $_POST["cantidad"] : [];
     if (!is_array($idsInsumos)) {
         $idsInsumos = [$idsInsumos];
+        $idsVariantes = [$idsVariantes];
         $cantidades = [$cantidades];
     }
     $codLocal = isset($_POST["cod_local"]) ? (int)$_POST["cod_local"] : 0;
@@ -712,12 +992,16 @@ function guardarMovimientoInsumo()
     try {
         for ($i = 0; $i < count($idsInsumos); $i++) {
             $idInsumo = (int)$idsInsumos[$i];
+            $idVariante = isset($idsVariantes[$i]) ? (int)$idsVariantes[$i] : 0;
             $cantidad = isset($cantidades[$i]) ? (float)str_replace(",", ".", $cantidades[$i]) : 0;
             if ($idInsumo <= 0 || $cantidad <= 0) {
                 throw new Exception("Hay insumos incompletos en el movimiento.");
             }
+            if (!validarVariantePerteneceInsumo($mysqli, $idInsumo, $idVariante)) {
+                throw new Exception("Debe seleccionar una variante valida para el insumo.");
+            }
 
-            $actual = obtenerStockActualInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio);
+            $actual = obtenerStockActualInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $idVariante);
             if ($tipo === "entrada") {
                 $nuevoStock = $actual + $cantidad;
             } elseif ($tipo === "salida") {
@@ -729,13 +1013,13 @@ function guardarMovimientoInsumo()
                 $nuevoStock = $cantidad;
             }
 
-            if (!guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $nuevoStock)) {
+            if (!guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $nuevoStock, $idVariante)) {
                 throw new Exception("No se pudo actualizar el stock.");
             }
 
-            $stmt = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssiiidsis", $grupoMovimiento, $tipo, $idInsumo, $codLocal, $idConsultorio, $cantidad, $motivo, $usuario, $fecha);
+            $stmt = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, id_variante, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssiiiidsis", $grupoMovimiento, $tipo, $idInsumo, $idVariante, $codLocal, $idConsultorio, $cantidad, $motivo, $usuario, $fecha);
             if (!$stmt->execute()) {
                 throw new Exception($stmt->error);
             }
@@ -841,16 +1125,18 @@ function detalleMovimientoInsumos()
 
     if (strpos($grupo, "mov_") === 0 && preg_match('/^mov_([0-9]+)$/', $grupo, $coincidencias)) {
         $idMovimiento = (int)$coincidencias[1];
-        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida
+        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida, COALESCE(v.nombre_variante, '') AS nombre_variante
             FROM movimientos_insumos m
             JOIN insumosconsl i ON i.id_insumo = m.insumo_id
+            LEFT JOIN insumo_variantes v ON v.id_variante = IFNULL(m.id_variante, 0)
             WHERE m.id=?
             ORDER BY i.nombre");
         $stmt->bind_param("i", $idMovimiento);
     } else {
-        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida
+        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida, COALESCE(v.nombre_variante, '') AS nombre_variante
             FROM movimientos_insumos m
             JOIN insumosconsl i ON i.id_insumo = m.insumo_id
+            LEFT JOIN insumo_variantes v ON v.id_variante = IFNULL(m.id_variante, 0)
             WHERE m.grupo_movimiento=?
             ORDER BY i.nombre");
         $stmt->bind_param("s", $grupo);
@@ -860,6 +1146,7 @@ function detalleMovimientoInsumos()
     $filas = [];
     while ($fila = $result->fetch_assoc()) {
         $fila["nombre_insumo"] = mb_convert_encoding((string)$fila["nombre_insumo"], "UTF-8", "ISO-8859-1");
+        $fila["nombre_variante"] = mb_convert_encoding((string)$fila["nombre_variante"], "UTF-8", "ISO-8859-1");
         $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
         $fila["motivo"] = mb_convert_encoding((string)$fila["motivo"], "UTF-8", "ISO-8859-1");
         $filas[] = $fila;
@@ -872,18 +1159,27 @@ function listarAlertasStockInsumos()
 {
     $mysqli = conectar_al_servidor();
     asegurarEstructuraInsumos($mysqli);
-    $sql = "SELECT s.*, i.nombre AS nombre_insumo, i.unidad_medida, i.stock_minimo, l.Nombre AS nombre_local, c.nombre AS nombre_consultorio,
-               (s.cantidad - i.stock_minimo) AS diferencia
+    $sql = "SELECT s.*, i.nombre AS nombre_insumo, i.unidad_medida,
+               COALESCE(v.nombre_variante, '') AS nombre_variante,
+               IF(i.tiene_variantes=1, COALESCE(v.stock_minimo, 0), i.stock_minimo) AS stock_minimo,
+               l.Nombre AS nombre_local, c.nombre AS nombre_consultorio,
+               (s.cantidad - IF(i.tiene_variantes=1, COALESCE(v.stock_minimo, 0), i.stock_minimo)) AS diferencia
         FROM insumo_stock_consultorio s
         JOIN insumosconsl i ON i.id_insumo=s.id_insumo
+        LEFT JOIN insumo_variantes v ON v.id_variante=s.id_variante
         JOIN local l ON l.cod_local=s.cod_local
         JOIN consultorios c ON c.id_consultorio=s.id_consultorio
-        WHERE i.estado=1 AND i.stock_minimo > 0 AND s.cantidad < i.stock_minimo
-        ORDER BY l.Nombre, c.nombre, i.nombre";
+        WHERE i.estado=1
+          AND (
+              (i.tiene_variantes=0 AND i.stock_minimo > 0 AND s.id_variante=0 AND s.cantidad < i.stock_minimo)
+              OR
+              (i.tiene_variantes=1 AND v.estado='Activo' AND v.stock_minimo > 0 AND s.cantidad < v.stock_minimo)
+          )
+        ORDER BY l.Nombre, c.nombre, i.nombre, v.nombre_variante";
     $result = $mysqli->query($sql);
     $filas = [];
     while ($fila = $result->fetch_assoc()) {
-        foreach (["nombre_insumo", "unidad_medida", "nombre_local", "nombre_consultorio"] as $campo) {
+        foreach (["nombre_insumo", "nombre_variante", "unidad_medida", "nombre_local", "nombre_consultorio"] as $campo) {
             $fila[$campo] = mb_convert_encoding((string)$fila[$campo], "UTF-8", "ISO-8859-1");
         }
         $filas[] = $fila;
@@ -942,7 +1238,7 @@ function BuscarRegistro($codigo, $nombre, $estado)
         $parametros[] = (strcasecmp($estado, "Activo") === 0 || $estado === "1") ? 1 : 0;
     }
 
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado, tiene_variantes, tipo_variante
             FROM insumosconsl";
     if (count($condiciones) > 0) {
         $sql .= " WHERE " . implode(" AND ", $condiciones);
@@ -969,7 +1265,9 @@ function BuscarRegistro($codigo, $nombre, $estado)
         $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
         $fila["descripcion"] = mb_convert_encoding((string)$fila["descripcion"], "UTF-8", "ISO-8859-1");
         $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+        $fila["tipo_variante"] = mb_convert_encoding((string)(isset($fila["tipo_variante"]) ? $fila["tipo_variante"] : ""), "UTF-8", "ISO-8859-1");
         $fila["estado_texto"] = ((int)$fila["estado"] === 1) ? "Activo" : "Inactivo";
+        $fila["variantes"] = obtenerVariantesInsumo($mysqli, $fila["id_insumo"]);
         $filas[] = $fila;
     }
 
@@ -986,7 +1284,7 @@ function buscarporcodigoeditar($buscar)
 {
     $mysqli = conectar_al_servidor();
     asegurarEstructuraInsumos($mysqli);
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado, tiene_variantes, tipo_variante
             FROM insumosconsl
             WHERE id_insumo = ?";
     $stmt = $mysqli->prepare($sql);
@@ -1008,7 +1306,9 @@ function buscarporcodigoeditar($buscar)
     $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
     $fila["descripcion"] = mb_convert_encoding((string)$fila["descripcion"], "UTF-8", "ISO-8859-1");
     $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
+    $fila["tipo_variante"] = mb_convert_encoding((string)(isset($fila["tipo_variante"]) ? $fila["tipo_variante"] : ""), "UTF-8", "ISO-8859-1");
     $fila["estado_texto"] = ((int)$fila["estado"] === 1) ? "Activo" : "Inactivo";
+    $fila["variantes"] = obtenerVariantesInsumo($mysqli, $fila["id_insumo"]);
 
     echo json_encode(array("1" => "exito", "fila" => $fila), JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
@@ -1021,8 +1321,8 @@ function guardarInsumoPagina($operacion)
     $id_insumo = isset($_POST['id_insumo']) ? (int)$_POST['id_insumo'] : 0;
     $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
     $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : '';
-    $cant_stock = isset($_POST['cant_stock']) && $_POST['cant_stock'] !== '' ? (int)$_POST['cant_stock'] : 0;
-    $stock_minimo = isset($_POST['stock_minimo']) && $_POST['stock_minimo'] !== '' ? (int)$_POST['stock_minimo'] : 0;
+    $cant_stock = isset($_POST['cant_stock']) && $_POST['cant_stock'] !== '' ? normalizarNumeroDecimalInsumos($_POST['cant_stock']) : 0;
+    $stock_minimo = isset($_POST['stock_minimo']) && $_POST['stock_minimo'] !== '' ? normalizarNumeroDecimalInsumos($_POST['stock_minimo']) : 0;
     $unidad_medida = isset($_POST['unidad_medida']) ? trim($_POST['unidad_medida']) : '';
     $estado = isset($_POST['estado']) && $_POST['estado'] === 'Inactivo' ? 0 : 1;
     $productos = isset($_POST['productos']) && is_array($_POST['productos']) ? $_POST['productos'] : [];
@@ -1030,6 +1330,10 @@ function guardarInsumoPagina($operacion)
 
     if ($nombre === '') {
         return array("tipo" => "err", "mensaje" => "El campo Nombre es obligatorio.");
+    }
+
+    if (!descripcionInsumoPermitida($descripcion)) {
+        return array("tipo" => "err", "mensaje" => "Selecciona una descripcion valida para el insumo.");
     }
 
     if ($operacion === 'editar' && $id_insumo <= 0) {
@@ -1056,13 +1360,13 @@ function guardarInsumoPagina($operacion)
         $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado)
                 VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param("ssiisi", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado);
+        $stmt->bind_param("ssddsi", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado);
     } else {
         $sql = "UPDATE insumosconsl
                 SET nombre = ?, descripcion = ?, cant_stock = ?, stock_minimo = ?, unidad_medida = ?, estado = ?
                 WHERE id_insumo = ?";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param("ssiisii", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $id_insumo);
+        $stmt->bind_param("ssddsii", $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $id_insumo);
     }
 
     if (!$stmt || !$stmt->execute()) {
@@ -1120,7 +1424,7 @@ function cargarInsumosPagina()
 {
     $mysqli = conectar_al_servidor();
     $filas = [];
-    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
+    $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado, tiene_variantes, tipo_variante
             FROM insumosconsl
             ORDER BY nombre ASC";
     $result = $mysqli->query($sql);
@@ -1489,7 +1793,14 @@ $productos_lista = cargarProductosListaPagina();
 
         <div class="campo">
           <label>Descripción</label>
-          <textarea name="descripcion" id="campo-descripcion" placeholder="Descripción (opcional)"></textarea>
+          <select name="descripcion" id="campo-descripcion" required>
+            <option value="">Seleccionar</option>
+            <option value="Descartable">Descartable</option>
+            <option value="Ortodoncia">Ortodoncia</option>
+            <option value="General">General</option>
+            <option value="Endodoncia">Endodoncia</option>
+            <option value="Cirugia">Cirugia</option>
+          </select>
         </div>
 
         <div class="fila-campos">

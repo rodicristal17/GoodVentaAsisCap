@@ -810,10 +810,10 @@ function renderResumenInsumosDiaConsultorioAgenda(idConsultorio, fecha){
             cantidad = normalizarCantidadInsumoAgenda(insumo.cantidad);
             if(cantidad <= 0){ continue; }
 
-            clave = String(insumo.id_insumo || insumo.nombre) + "|" + String(insumo.unidad_medida || '');
+            clave = String(insumo.id_insumo || insumo.nombre) + ":" + String(insumo.id_variante || 0) + "|" + String(insumo.unidad_medida || '');
             if(!acumulados[clave]){
                 acumulados[clave] = {
-                    nombre: insumo.nombre || 'Insumo',
+                    nombre: (insumo.nombre || 'Insumo') + (insumo.nombre_variante ? " - " + insumo.nombre_variante : ""),
                     unidad: insumo.unidad_medida || '',
                     cantidad: 0
                 };
@@ -2049,20 +2049,65 @@ function renderPrevisionInsumosAgenda(evento){
     }
     html += "<div class='agenda-insumos-lista'>";
     for(var i = 0; i < insumos.length; i++){
+        var insumo = insumos[i];
+        var selectorVariante = "<span class='agenda-ayuda-inline'>-</span>";
+        if(String(insumo.tiene_variantes || "0") == "1"){
+            selectorVariante = "<select class='catalogo-selectBuscador' style='height:28px;min-width:150px;padding:2px 6px;' onchange='guardarVarianteInsumoAgenda(" + escaparHtmlAgenda(evento.id || 0) + "," + escaparHtmlAgenda(insumo.id_insumo) + ",this.value)'>";
+            selectorVariante += "<option value=''>Seleccionar " + escaparHtmlAgenda(insumo.tipo_variante || "variante") + "</option>";
+            var variantes = insumo.variantes || [];
+            for(var v = 0; v < variantes.length; v++){
+                selectorVariante += "<option value='" + escaparHtmlAgenda(variantes[v].id_variante) + "' " + (String(variantes[v].id_variante) == String(insumo.id_variante || "0") ? "selected" : "") + ">" + escaparHtmlAgenda(variantes[v].nombre_variante) + "</option>";
+            }
+            selectorVariante += "</select>";
+        }
         html += "<div class='agenda-insumo-item'>"
-            + "<span>" + escaparHtmlAgenda(insumos[i].nombre) + "</span>"
-            + "<b>" + escaparHtmlAgenda(insumos[i].cantidad) + " " + escaparHtmlAgenda(insumos[i].unidad_medida) + "</b>"
+            + "<span>" + escaparHtmlAgenda(insumo.nombre) + "</span>"
+            + selectorVariante
+            + "<b>" + escaparHtmlAgenda(insumo.cantidad) + " " + escaparHtmlAgenda(insumo.unidad_medida) + "</b>"
             + "</div>";
     }
     html += "</div>";
     if((evento.insumos_faltantes || []).length > 0){
         html += "<div class='agenda-insumos-faltantes'>";
         for(var j = 0; j < evento.insumos_faltantes.length; j++){
-            html += "<span>" + escaparHtmlAgenda(evento.insumos_faltantes[j].nombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + " para el minimo</span>";
+            var faltanteNombre = evento.insumos_faltantes[j].nombre + (evento.insumos_faltantes[j].nombre_variante ? " - " + evento.insumos_faltantes[j].nombre_variante : "");
+            html += "<span>" + escaparHtmlAgenda(faltanteNombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + " para el minimo</span>";
         }
         html += "</div>";
     }
     cont.innerHTML = html;
+}
+
+function guardarVarianteInsumoAgenda(idAgenda, idInsumo, idVariante){
+    if(!idAgenda || !idInsumo || !idVariante){
+        return;
+    }
+    obtener_datos_user();
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "id_agenda": idAgenda,
+            "id_insumo": idInsumo,
+            "id_variante": idVariante,
+            "funt": "guardarVarianteInsumoAgenda"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"])){
+                    cargarAgendaConsultoriosDesdePHP(function(){ verDetalleAgenda(idAgenda); });
+                }else{
+                    ver_vetana_informativa(resp.mensaje || "No se pudo guardar la variante.", "", "error");
+                }
+            }catch(error){
+                console.error(error, responseText);
+            }
+        }
+    });
 }
 
 function obtenerEtiquetaVentaAgenda(venta){

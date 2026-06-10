@@ -127,6 +127,10 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
             obtenerPrevisionInsumosAgendaEndpoint($mysqli);
             break;
 
+        case 'guardarVarianteInsumoAgenda':
+            guardarVarianteInsumoAgenda($mysqli, $useru);
+            break;
+
         case 'buscarDoctoresDisponiblesCita':
             buscarDoctoresDisponiblesCita($mysqli);
             break;
@@ -266,6 +270,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         id INT NOT NULL AUTO_INCREMENT,
         id_agenda INT NOT NULL,
         id_insumo INT NOT NULL,
+        id_variante INT NOT NULL DEFAULT 0,
         cantidad_prevista DECIMAL(12,3) NOT NULL DEFAULT 0,
         cantidad_confirmada DECIMAL(12,3) NULL,
         unidad_medida VARCHAR(40) NULL,
@@ -278,6 +283,10 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         KEY idx_agenda_consumo_insumo (id_insumo)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
     $mysqli->query($sqlConsumo);
+    agregarColumnaAgendaSiNoExiste($mysqli, "insumosconsl", "tiene_variantes", "tiene_variantes TINYINT(1) NOT NULL DEFAULT 0");
+    agregarColumnaAgendaSiNoExiste($mysqli, "insumosconsl", "tipo_variante", "tipo_variante VARCHAR(60) NULL");
+    asegurarTablaVariantesAgenda($mysqli);
+    agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "id_variante", "id_variante INT NOT NULL DEFAULT 0");
     agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "stock_descontado", "stock_descontado TINYINT(1) NOT NULL DEFAULT 0");
     agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "cantidad_descontada", "cantidad_descontada DECIMAL(12,3) NOT NULL DEFAULT 0");
     agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "fecha_descontado", "fecha_descontado DATETIME NULL");
@@ -305,16 +314,20 @@ function asegurarEstructuraAgendaInsumos($mysqli)
     $sqlStock = "CREATE TABLE IF NOT EXISTS insumo_stock_consultorio (
         id_stock INT NOT NULL AUTO_INCREMENT,
         id_insumo INT NOT NULL,
+        id_variante INT NOT NULL DEFAULT 0,
         cod_local INT NOT NULL,
         id_consultorio INT NOT NULL,
         cantidad DECIMAL(12,3) NOT NULL DEFAULT 0,
         fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id_stock),
-        UNIQUE KEY uq_insumo_local_consultorio (id_insumo, cod_local, id_consultorio),
+        UNIQUE KEY uq_insumo_local_consultorio_variante (id_insumo, id_variante, cod_local, id_consultorio),
         KEY idx_insumo_stock_local (cod_local),
         KEY idx_insumo_stock_consultorio (id_consultorio)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
     $mysqli->query($sqlStock);
+    agregarColumnaAgendaSiNoExiste($mysqli, "insumo_stock_consultorio", "id_variante", "id_variante INT NOT NULL DEFAULT 0");
+    quitarIndiceAgendaSiExiste($mysqli, "insumo_stock_consultorio", "uq_insumo_local_consultorio");
+    agregarIndiceAgendaSiNoExiste($mysqli, "insumo_stock_consultorio", "uq_insumo_local_consultorio_variante", "UNIQUE KEY uq_insumo_local_consultorio_variante (id_insumo, id_variante, cod_local, id_consultorio)");
 
     $sqlMovimientos = "CREATE TABLE IF NOT EXISTS movimientos_insumos (
         id_movimiento INT NOT NULL AUTO_INCREMENT,
@@ -333,6 +346,26 @@ function asegurarEstructuraAgendaInsumos($mysqli)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
     $mysqli->query($sqlMovimientos);
     agregarColumnaAgendaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
+    agregarColumnaAgendaSiNoExiste($mysqli, "movimientos_insumos", "id_variante", "id_variante INT NOT NULL DEFAULT 0");
+}
+
+function asegurarTablaVariantesAgenda($mysqli)
+{
+    $sql = "CREATE TABLE IF NOT EXISTS insumo_variantes (
+        id_variante INT NOT NULL AUTO_INCREMENT,
+        insumo_id INT NOT NULL,
+        nombre_variante VARCHAR(120) NOT NULL,
+        stock DECIMAL(12,3) NOT NULL DEFAULT 0,
+        stock_minimo DECIMAL(12,3) NOT NULL DEFAULT 0,
+        estado ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_variante),
+        UNIQUE KEY uq_insumo_variante (insumo_id, nombre_variante),
+        KEY idx_variante_insumo (insumo_id),
+        KEY idx_variante_estado (estado)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    $mysqli->query($sql);
 }
 
 function agregarColumnaAgendaSiNoExiste($mysqli, $tabla, $columna, $definicion)
@@ -342,6 +375,31 @@ function agregarColumnaAgendaSiNoExiste($mysqli, $tabla, $columna, $definicion)
     $result = $mysqli->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
     if ($result && $result->num_rows == 0) {
         $mysqli->query("ALTER TABLE `$tabla` ADD COLUMN $definicion");
+    }
+}
+
+function indiceAgendaExiste($mysqli, $tabla, $indice)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+    $indice = preg_replace('/[^a-zA-Z0-9_]/', '', $indice);
+    $result = $mysqli->query("SHOW INDEX FROM `$tabla` WHERE Key_name='".$indice."'");
+    return $result && $result->num_rows > 0;
+}
+
+function quitarIndiceAgendaSiExiste($mysqli, $tabla, $indice)
+{
+    if (indiceAgendaExiste($mysqli, $tabla, $indice)) {
+        $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+        $indice = preg_replace('/[^a-zA-Z0-9_]/', '', $indice);
+        $mysqli->query("ALTER TABLE `$tabla` DROP INDEX `$indice`");
+    }
+}
+
+function agregarIndiceAgendaSiNoExiste($mysqli, $tabla, $indice, $definicion)
+{
+    if (!indiceAgendaExiste($mysqli, $tabla, $indice)) {
+        $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+        $mysqli->query("ALTER TABLE `$tabla` ADD $definicion");
     }
 }
 
@@ -389,11 +447,12 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
         }
     }
 
-    $sqlConsumos = "SELECT ac.id, ac.id_insumo,
+    $sqlConsumos = "SELECT ac.id, ac.id_insumo, IFNULL(ac.id_variante, 0) AS id_variante,
             IF(ac.cantidad_confirmada IS NULL, ac.cantidad_prevista, ac.cantidad_confirmada) AS cantidad,
-            i.nombre
+            i.nombre, i.tiene_variantes, COALESCE(v.nombre_variante, '') AS nombre_variante
         FROM agenda_consumo_insumos ac
         INNER JOIN insumosconsl i ON i.id_insumo = ac.id_insumo
+        LEFT JOIN insumo_variantes v ON v.id_variante = ac.id_variante
         WHERE ac.id_agenda = '".$idAgenda."'
           AND IFNULL(ac.stock_descontado, 0) = 0
           AND IF(ac.cantidad_confirmada IS NULL, ac.cantidad_prevista, ac.cantidad_confirmada) > 0
@@ -410,16 +469,27 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
     if (count($consumos) == 0) {
         return 0;
     }
+    $faltanVariantes = array();
+    foreach ($consumos as $consumo) {
+        if ((int)$consumo["tiene_variantes"] === 1 && (int)$consumo["id_variante"] <= 0) {
+            $faltanVariantes[] = normalizarTextoUtf8($consumo["nombre"]);
+        }
+    }
+    if (count($faltanVariantes) > 0) {
+        throw new Exception("Faltan seleccionar variantes de insumos: ".implode(", ", $faltanVariantes).".");
+    }
 
     $grupoMovimiento = "agenda_".$idAgenda."_".date("YmdHis");
     foreach ($consumos as $consumo) {
         $idConsumo = (int)$consumo["id"];
         $idInsumo = (int)$consumo["id_insumo"];
+        $idVariante = (int)$consumo["id_variante"];
         $cantidad = normalizarNumeroAgenda($consumo["cantidad"]);
-        $nombreInsumo = normalizarTextoUtf8($consumo["nombre"]);
+        $nombreInsumo = normalizarTextoUtf8($consumo["nombre"].($consumo["nombre_variante"] != "" ? " - ".$consumo["nombre_variante"] : ""));
 
         $resultStock = $mysqli->query("SELECT cantidad FROM insumo_stock_consultorio
             WHERE id_insumo = '".$idInsumo."'
+              AND id_variante = '".$idVariante."'
               AND cod_local = '".$codLocal."'
               AND id_consultorio = '".$consultorio."'
             LIMIT 1 FOR UPDATE");
@@ -432,10 +502,10 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
         }
 
         $nuevoStock = $stockActual - $cantidad;
-        $stmtStock = $mysqli->prepare("INSERT INTO insumo_stock_consultorio (id_insumo, cod_local, id_consultorio, cantidad)
-            VALUES (?, ?, ?, ?)
+        $stmtStock = $mysqli->prepare("INSERT INTO insumo_stock_consultorio (id_insumo, id_variante, cod_local, id_consultorio, cantidad)
+            VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE cantidad=VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP");
-        $stmtStock->bind_param("iiid", $idInsumo, $codLocal, $consultorio, $nuevoStock);
+        $stmtStock->bind_param("iiiid", $idInsumo, $idVariante, $codLocal, $consultorio, $nuevoStock);
         if (!$stmtStock->execute()) {
             throw new Exception("No se pudo descontar el stock de ".$nombreInsumo.".");
         }
@@ -443,9 +513,9 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
         $motivo = "Salida automatica por cita atendida #".$idAgenda;
         $fecha = date("Y-m-d H:i:s");
         $tipo = "salida";
-        $stmtMov = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmtMov->bind_param("ssiiidsis", $grupoMovimiento, $tipo, $idInsumo, $codLocal, $consultorio, $cantidad, $motivo, $usuario, $fecha);
+        $stmtMov = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, id_variante, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmtMov->bind_param("ssiiiidsis", $grupoMovimiento, $tipo, $idInsumo, $idVariante, $codLocal, $consultorio, $cantidad, $motivo, $usuario, $fecha);
         if (!$stmtMov->execute()) {
             throw new Exception("No se pudo registrar el movimiento de insumo.");
         }
@@ -504,6 +574,72 @@ function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda)
     }
 
     return array_values($insumos);
+}
+
+function obtenerVariantesAgendaInsumo($mysqli, $idInsumo)
+{
+    $variantes = array();
+    $result = $mysqli->query("SELECT id_variante, nombre_variante, stock, stock_minimo, estado
+        FROM insumo_variantes
+        WHERE insumo_id='".(int)$idInsumo."' AND estado='Activo'
+        ORDER BY nombre_variante ASC");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $row["nombre_variante"] = normalizarTextoUtf8($row["nombre_variante"]);
+            $variantes[] = $row;
+        }
+    }
+    return $variantes;
+}
+
+function obtenerVariantesSeleccionadasAgenda($mysqli, $idAgenda)
+{
+    $selecciones = array();
+    $result = $mysqli->query("SELECT id_insumo, id_variante FROM agenda_consumo_insumos WHERE id_agenda='".(int)$idAgenda."'");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $selecciones[(int)$row["id_insumo"]] = (int)$row["id_variante"];
+        }
+    }
+    return $selecciones;
+}
+
+function guardarVarianteInsumoAgenda($mysqli, $useru)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+    $idAgenda = isset($_POST["id_agenda"]) ? (int)$_POST["id_agenda"] : 0;
+    $idInsumo = isset($_POST["id_insumo"]) ? (int)$_POST["id_insumo"] : 0;
+    $idVariante = isset($_POST["id_variante"]) ? (int)$_POST["id_variante"] : 0;
+    if ($idAgenda <= 0 || $idInsumo <= 0 || $idVariante <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione una variante valida."));
+    }
+    $resultValida = $mysqli->query("SELECT id_variante FROM insumo_variantes WHERE id_variante='".$idVariante."' AND insumo_id='".$idInsumo."' AND estado='Activo' LIMIT 1");
+    if (!$resultValida || $resultValida->num_rows == 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "La variante no corresponde al insumo."));
+    }
+
+    $insumos = obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda);
+    $cantidad = 0;
+    $unidad = "";
+    foreach ($insumos as $insumo) {
+        if ((int)$insumo["id_insumo"] === $idInsumo) {
+            $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
+            $unidad = limpiar($mysqli, $insumo["unidad_medida"]);
+            break;
+        }
+    }
+    if ($cantidad <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "El insumo no esta previsto en esta cita."));
+    }
+
+    $stmt = $mysqli->prepare("INSERT INTO agenda_consumo_insumos (id_agenda, id_insumo, id_variante, cantidad_prevista, unidad_medida, usuario_confirmo, fecha_confirmo)
+        VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE id_variante=VALUES(id_variante), cantidad_prevista=VALUES(cantidad_prevista), unidad_medida=VALUES(unidad_medida), usuario_confirmo=VALUES(usuario_confirmo), fecha_confirmo=NOW()");
+    $stmt->bind_param("iiidsi", $idAgenda, $idInsumo, $idVariante, $cantidad, $unidad, $useru);
+    if (!$stmt->execute()) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $stmt->error));
+    }
+    responderJsonCalendar(array("1" => "exito", "mensaje" => "Variante guardada."));
 }
 
 function buscarVentasPacienteAgenda($mysqli)
@@ -626,7 +762,9 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
         return array();
     }
 
-    $resultBase = $mysqli->query("SELECT b.id_insumo, b.cantidad, i.nombre, i.unidad_medida, i.stock_minimo
+    $seleccionesVariantes = obtenerVariantesSeleccionadasAgenda($mysqli, $idAgenda);
+
+    $resultBase = $mysqli->query("SELECT b.id_insumo, b.cantidad, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante
         FROM agenda_insumo_base b
         INNER JOIN insumosconsl i ON i.id_insumo = b.id_insumo
         WHERE b.estado = 'activo'");
@@ -641,7 +779,11 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
                     "cantidad" => 0,
                     "stock_minimo" => normalizarNumeroAgenda($row["stock_minimo"]),
                     "stock" => null,
-                    "faltante" => 0
+                    "faltante" => 0,
+                    "tiene_variantes" => (int)$row["tiene_variantes"],
+                    "tipo_variante" => normalizarTextoUtf8($row["tipo_variante"]),
+                    "id_variante" => isset($seleccionesVariantes[$id]) ? (int)$seleccionesVariantes[$id] : 0,
+                    "variantes" => obtenerVariantesAgendaInsumo($mysqli, $id)
                 );
             }
             $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
@@ -656,12 +798,12 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
         }
     }
     if (count($ids) > 0) {
-        $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.nombre, i.unidad_medida, i.stock_minimo
+        $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante
                 FROM detalle_venta dv
                 INNER JOIN insumo_producto ip ON ip.cod_producto = dv.cod_productoFK
                 INNER JOIN insumosconsl i ON i.id_insumo = ip.id_insumo
                 WHERE dv.cod_detalle IN (".implode(",", $ids).")
-                GROUP BY ip.id_insumo, i.nombre, i.unidad_medida, i.stock_minimo";
+                GROUP BY ip.id_insumo, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante";
         $resultTrat = $mysqli->query($sql);
         if ($resultTrat) {
             while ($row = $resultTrat->fetch_assoc()) {
@@ -674,7 +816,11 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
                         "cantidad" => 0,
                         "stock_minimo" => normalizarNumeroAgenda($row["stock_minimo"]),
                         "stock" => null,
-                        "faltante" => 0
+                        "faltante" => 0,
+                        "tiene_variantes" => (int)$row["tiene_variantes"],
+                        "tipo_variante" => normalizarTextoUtf8($row["tipo_variante"]),
+                        "id_variante" => isset($seleccionesVariantes[$id]) ? (int)$seleccionesVariantes[$id] : 0,
+                        "variantes" => obtenerVariantesAgendaInsumo($mysqli, $id)
                     );
                 }
                 $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
@@ -685,14 +831,29 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
     if ($consultorio > 0) {
         $codLocal = obtenerCodLocalConsultorioAgenda($mysqli, $consultorio);
         foreach ($insumos as $id => $insumo) {
-            $resultStock = $mysqli->query("SELECT cantidad FROM insumo_stock_consultorio WHERE id_insumo = '".$id."' AND cod_local = '".$codLocal."' AND id_consultorio = '".(int)$consultorio."' LIMIT 1");
+            $idVariante = (int)(isset($insumos[$id]["id_variante"]) ? $insumos[$id]["id_variante"] : 0);
+            $stockMinimo = normalizarNumeroAgenda($insumos[$id]["stock_minimo"]);
+            if ((int)$insumos[$id]["tiene_variantes"] === 1) {
+                $stockMinimo = 0;
+                $insumos[$id]["nombre_variante"] = "";
+                foreach ($insumos[$id]["variantes"] as $variante) {
+                    if ((int)$variante["id_variante"] === $idVariante) {
+                        $stockMinimo = normalizarNumeroAgenda($variante["stock_minimo"]);
+                        $insumos[$id]["nombre_variante"] = $variante["nombre_variante"];
+                        break;
+                    }
+                }
+            } else {
+                $insumos[$id]["nombre_variante"] = "";
+            }
+            $resultStock = $mysqli->query("SELECT cantidad FROM insumo_stock_consultorio WHERE id_insumo = '".$id."' AND id_variante = '".$idVariante."' AND cod_local = '".$codLocal."' AND id_consultorio = '".(int)$consultorio."' LIMIT 1");
             $stock = 0;
             if ($resultStock && ($rowStock = $resultStock->fetch_assoc())) {
                 $stock = normalizarNumeroAgenda($rowStock["cantidad"]);
             }
-            $stockMinimo = normalizarNumeroAgenda($insumos[$id]["stock_minimo"]);
             $stockDespues = $stock - normalizarNumeroAgenda($insumos[$id]["cantidad"]);
             $insumos[$id]["stock"] = $stock;
+            $insumos[$id]["stock_minimo"] = $stockMinimo;
             $insumos[$id]["faltante"] = $stockMinimo > 0 ? max(0, $stockMinimo - $stockDespues) : 0;
         }
     }
@@ -1834,7 +1995,7 @@ function cargarAgenda($mysqli, $useru){
 
         $faltantes = array();
         foreach ($insumosPrevistos as $indiceInsumo => $insumo) {
-            $clave = $eventos[$i]["consultorio"]."-".$insumo["id_insumo"];
+            $clave = $eventos[$i]["consultorio"]."-".$insumo["id_insumo"]."-".(isset($insumo["id_variante"]) ? (int)$insumo["id_variante"] : 0);
             if (!isset($stockProyectado[$clave])) {
                 $stockProyectado[$clave] = normalizarNumeroAgenda($insumo["stock"]);
             }
