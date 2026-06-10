@@ -1460,7 +1460,77 @@ var EntregaPagare=0;
         // window.open(URL, 'Imprimir', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,left = 0');
 // }
 
-function imprimirPagare() {
+function buscarDatosPagare(cod_venta) {
+    if (cod_venta == "" || cod_venta == undefined) {
+        ver_vetana_informativa("FALTO INICIAR LA VENTA");
+        return false;
+    }
+
+    verCerrarEfectoCargando("1");
+    obtener_datos_user();
+    var consulta = $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "cod_venta": cod_venta,
+            "funt": "buscarDatosPagare"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
+        type: "post",
+        error: function (jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "buscarDatosPagare");
+        }
+    });
+
+    consulta.always(function () {
+        verCerrarEfectoCargando("");
+    });
+
+    return consulta;
+}
+
+function imprimirPagare(cod_venta) {
+    var codVentaPagare = "";
+    if (cod_venta != undefined && cod_venta != "") {
+        codVentaPagare = cod_venta;
+    } else if (typeof idabmVenta !== "undefined" && idabmVenta != "") {
+        codVentaPagare = idabmVenta;
+    }
+
+    var consulta = buscarDatosPagare(codVentaPagare);
+    if (consulta === false) {
+        return false;
+    }
+
+    consulta.done(function (responseText) {
+        try {
+            var datos = $.parseJSON(responseText);
+            var Respuesta = respuestaJqueryAjax(datos["1"]);
+            if (Respuesta == true) {
+                imprimirPagareConDatos(datos["2"]);
+            }
+        } catch (error) {
+            ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+            var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+            GuardarArchivosLog(titulo);
+        }
+    });
+}
+
+function imprimirPagareConDatos(datosPagare) {
+
+    if (datosPagare != undefined) {
+        nroPagare = datosPagare.cod_venta;
+        facturanroPagare = datosPagare.factura;
+        vencimientopagare = datosPagare.vencimiento;
+        totalesRecibo = datosPagare.total;
+        EntregaPagare = datosPagare.entrega;
+        ZonaRecibo = datosPagare.cliente_direccion;
+        telefonoRecino = datosPagare.cliente_telefono;
+        ZonaReciboGarante = datosPagare.garante_direccion;
+        telefonoRecinoGarante = datosPagare.garante_telefono;
+    }
 
     if (EntregaPagare == "") {
         EntregaPagare = "0";
@@ -1469,7 +1539,7 @@ function imprimirPagare() {
     var t = QuitarSeparadorMilValor(totalesRecibo);
     EntregaPagare = QuitarSeparadorMilValor(EntregaPagare);
 
-    var totalpagare = Number(t) - Number(EntregaPagare);
+    var totalpagare = Number(t);
 
     var totaletrasRecibo = numeroALetras(totalpagare, {
         plural: 'GUARANIES',
@@ -1509,6 +1579,10 @@ function imprimirPagare() {
     var vencimientoTexto = diaV + "/" + mesV + "/" + anhoVencimiendo;
 
     ImportePagare = totalpagare;
+    var nombreDeudor = datosPagare != undefined ? datosPagare.cliente : document.getElementById("inptClienteVenta").value;
+    var documentoDeudor = datosPagare != undefined ? datosPagare.cliente_documento : document.getElementById("inptDocClienteVenta").value;
+    var nombreGarante = datosPagare != undefined ? datosPagare.garante : document.getElementById("inptGaranteVenta").value;
+    var documentoGarante = datosPagare != undefined ? datosPagare.garante_documento : document.getElementById("inptDocGaranteVenta").value;
 
     function armarParrafoConGuion(texto) {
         return '<p class="parrafo-guion">' + texto + ' <span class="guion-final">- - - - - - - - -</span></p>';
@@ -1629,16 +1703,16 @@ function imprimirPagare() {
     + '            <td style="width:50%; text-align:left;">'
     + '                <div class="firma-linea"></div>'
     + '                <p class="pTituloC centrado"><b>DEUDOR</b></p>'
-    + '                <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + document.getElementById("inptClienteVenta").value + '</p>'
-    + '                <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + document.getElementById("inptDocClienteVenta").value + '</p>'
+    + '                <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + nombreDeudor + '</p>'
+    + '                <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + documentoDeudor + '</p>'
     + '                <p class="pTituloC"><b>DIRECCIÓN:</b>&nbsp;&nbsp;' + ZonaRecibo + '</p>'
     + '                <p class="pTituloC"><b>TELEF.:</b>&nbsp;&nbsp;' + telefonoRecino + '</p>'
     + '            </td>'
     + '            <td style="width:50%; text-align:left;">'
     + '                <div class="firma-linea"></div>'
     + '                <p class="pTituloC centrado"><b>CODEUDOR</b></p>'
-    + '                <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + document.getElementById("inptGaranteVenta").value + '</p>'
-    + '                <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + document.getElementById("inptDocGaranteVenta").value + '</p>'
+    + '                <p class="pTituloC"><b>NOMBRE:</b>&nbsp;&nbsp;' + nombreGarante + '</p>'
+    + '                <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + documentoGarante + '</p>'
     + '                <p class="pTituloC"><b>DIRECCIÓN:</b>&nbsp;&nbsp;' + ZonaReciboGarante + '</p>'
     + '                <p class="pTituloC"><b>TELEF.:</b>&nbsp;&nbsp;' + telefonoRecinoGarante + '</p>'
     + '            </td>'
@@ -5334,7 +5408,7 @@ tb.classList.add("presupuesto-print-body");
 tb.innerHTML = document.getElementById("tdTablaPresupuesto").innerHTML;
 
 // Eliminacion ventana ayuda
-Array.from(tb.querySelectorAll("div")).forEach(function (div) {
+Array.from(tb.children).forEach(function (div) {
 	div.children[0].remove();
 });
 

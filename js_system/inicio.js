@@ -251,6 +251,13 @@ window.onload = function () {
 			}
 		}
 	});
+	document.getElementById('inptContenidoAbmMensaje').addEventListener('blur', function() {
+		setTimeout(function() {
+			if (document.getElementById('dropdown-menciones')) {
+				document.getElementById('dropdown-menciones').style.display= "none";
+			}
+		}, 150);
+	});
 	document.getElementById('inptContenidoAbmMensaje').addEventListener('keydown', function(e) {
 		contadorLongitudMensaje = document.getElementById('inptContenidoAbmMensaje').innerText.length;
 		
@@ -1430,7 +1437,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.85";
+var codigodeactualizacion="X-GT-1-JMTG-V1.87";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -16467,8 +16474,7 @@ function verCerrarHistorialVenta(){
 	if(document.getElementById("divHistorialVenta").style.display==""){
 	
 	if(controldebusquedadHistorialVenta==true){
-		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
-	return
+		cancelarHistorialVenta()
 }
 document.getElementById("tdEfectoHistorialVenta").className="magictime vanishOut"
 	$("div[id=divHistorialVenta]").fadeOut(500);
@@ -17255,6 +17261,15 @@ function obtenerelementohistroialventa(datos) {
 	idFkVenta = $(datos).children('td[id="td_datos_8"]').html();
 	codVentaCambio = $(datos).children('td[id="td_datos_8"]').html();
 }
+
+function imprimirPagareDesdeHistorialVenta() {
+	if (codVentaVentanas == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UNA VENTA");
+		return false;
+	}
+	imprimirPagare(codVentaVentanas);
+}
+
 function limpiarcamposhistorialventa(){
 	
 	if(controldebusquedadHistorialVenta==true){
@@ -32539,6 +32554,20 @@ function verTabInsumos(tab) {
 	}
 }
 
+function toggleHistorialMovimientosInsumos(mostrar) {
+	var contenedor = document.getElementById("contenedorHistorialMovimientosInsumos");
+	var boton = document.getElementById("btnToggleHistorialMovimientosInsumos");
+	if (!contenedor) {
+		return;
+	}
+	var visible = contenedor.style.display !== "none";
+	var nuevoVisible = typeof mostrar === "boolean" ? mostrar : !visible;
+	contenedor.style.display = nuevoVisible ? "" : "none";
+	if (boton) {
+		boton.value = nuevoVisible ? "Ocultar historial" : "Ver historial";
+	}
+}
+
 function verCerrarVentanaAbmInsumos(d, l) {
 	verTabInsumos("abm");
 	if (d == "1") {
@@ -32838,6 +32867,9 @@ function cargarProductosDisponiblesAbmInsumos(callback) {
 		success: function (responseText) {
 			productosDisponiblesAbmInsumosCargando = false;
 			try {
+				if (String(responseText || "").trim() == "") {
+					throw new Error("Respuesta vacia de abmInsumos.php al cargar tratamientos");
+				}
 				var datos = $.parseJSON(responseText);
 				if (respuestaJqueryAjax(datos["1"]) != true) {
 					callbacksProductosDisponiblesAbmInsumos = [];
@@ -32852,7 +32884,7 @@ function cargarProductosDisponiblesAbmInsumos(callback) {
 			} catch (error) {
 				callbacksProductosDisponiblesAbmInsumos = [];
 				ver_vetana_informativa("NO SE PUDO CARGAR LA LISTA DE PRODUCTOS");
-				GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
+				GuardarArchivosLog("Error cargarProductosDisponiblesAbmInsumos: " + error + " \r\n Consola: " + responseText);
 			}
 		}
 	});
@@ -32895,6 +32927,29 @@ function agregarFilaProductoInsumo(codProducto, cantidad) {
 	renderProductosInsumoSeleccionables();
 }
 
+function seleccionarTodosProductosInsumo() {
+	if (productosDisponiblesAbmInsumosCargados == false) {
+		cargarProductosDisponiblesAbmInsumos(function () {
+			seleccionarTodosProductosInsumo();
+		});
+		return;
+	}
+	if (productosDisponiblesAbmInsumos.length == 0) {
+		ver_vetana_informativa("No hay tratamientos disponibles para seleccionar.");
+		return;
+	}
+	for (var i = 0; i < productosDisponiblesAbmInsumos.length; i++) {
+		var cod = String(productosDisponiblesAbmInsumos[i].cod_producto || "");
+		if (cod == "") {
+			continue;
+		}
+		if (!productosSeleccionadosAbmInsumos.hasOwnProperty(cod)) {
+			productosSeleccionadosAbmInsumos[cod] = 1;
+		}
+	}
+	renderProductosInsumoSeleccionables();
+}
+
 function renderProductosInsumoSeleccionables(seleccionados) {
 	if (seleccionados) {
 		productosSeleccionadosAbmInsumos = seleccionados;
@@ -32920,7 +32975,8 @@ function renderProductosInsumoSeleccionables(seleccionados) {
 		var producto = productosDisponiblesAbmInsumos[i];
 		var cod = String(producto.cod_producto || "");
 		var nombreProducto = producto.nombre_producto || "";
-		if (filtro != "" && nombreProducto.toLowerCase().indexOf(filtro) < 0 && cod.toLowerCase().indexOf(filtro) < 0) {
+		var etiquetaProducto = cod + " | " + nombreProducto;
+		if (filtro != "" && etiquetaProducto.toLowerCase().indexOf(filtro) < 0) {
 			continue;
 		}
 		visibles++;
@@ -32928,7 +32984,7 @@ function renderProductosInsumoSeleccionables(seleccionados) {
 		var cantidad = checked ? productosSeleccionadosAbmInsumos[cod] : 1;
 		html += "<label class='insumo-producto-card" + (checked ? " insumo-producto-card--activo" : "") + "'>";
 		html += "<input type='checkbox' class='insumo-producto-check' value='" + escaparHtmlAbmInsumos(cod) + "' " + (checked ? "checked" : "") + " onchange='toggleProductoInsumoSeleccionado(this)'>";
-		html += "<span class='insumo-producto-nombre'>" + escaparHtmlAbmInsumos(nombreProducto) + "</span>";
+		html += "<span class='insumo-producto-nombre'>" + escaparHtmlAbmInsumos(etiquetaProducto) + "</span>";
 		html += "<input type='number' class='inputText insumo-producto-cantidad' value='" + escaparHtmlAbmInsumos(cantidad) + "' min='0.01' step='any' " + (checked ? "" : "disabled") + " onclick='event.stopPropagation()' onchange='actualizarCantidadProductoInsumo(this)'>";
 		html += "</label>";
 	}
@@ -33226,12 +33282,42 @@ function opcionesLocalesInsumos(textoInicial) {
 	return html;
 }
 
-function opcionesInsumosInsumos(textoInicial) {
+function opcionesInsumosInsumos(textoInicial, filtro) {
 	var html = "<option value=''>" + (textoInicial || "Seleccionar") + "</option>";
+	var textoFiltro = String(filtro || "").toLowerCase().trim();
 	for (var i = 0; i < dashboardInsumosInsumos.length; i++) {
-		html += "<option value='" + escaparHtmlAbmInsumos(dashboardInsumosInsumos[i].id_insumo) + "'>" + escaparHtmlAbmInsumos(dashboardInsumosInsumos[i].nombre) + "</option>";
+		var insumo = dashboardInsumosInsumos[i];
+		var id = String(insumo.id_insumo || "");
+		var nombre = String(insumo.nombre || "");
+		var unidad = String(insumo.unidad_medida || "");
+		var etiqueta = id + " | " + nombre + (unidad != "" ? " (" + unidad + ")" : "");
+		if (textoFiltro != "" && etiqueta.toLowerCase().indexOf(textoFiltro) < 0) {
+			continue;
+		}
+		html += "<option value='" + escaparHtmlAbmInsumos(id) + "'>" + escaparHtmlAbmInsumos(etiqueta) + "</option>";
 	}
 	return html;
+}
+
+function actualizarComboMovimientoDetalleInsumo() {
+	if (!document.getElementById("inptMovimientoDetalleInsumo")) {
+		return;
+	}
+	var filtro = document.getElementById("inptMovimientoBuscarInsumo") ? document.getElementById("inptMovimientoBuscarInsumo").value : "";
+	document.getElementById("inptMovimientoDetalleInsumo").innerHTML = opcionesInsumosInsumos("Seleccionar", filtro);
+}
+
+function filtrarComboMovimientoDetalleInsumo(evento) {
+	actualizarComboMovimientoDetalleInsumo();
+	if (evento && evento.keyCode == 13) {
+		var select = document.getElementById("inptMovimientoDetalleInsumo");
+		if (select && select.options.length > 1) {
+			select.selectedIndex = 1;
+			if (document.getElementById("inptMovimientoDetalleCantidad")) {
+				document.getElementById("inptMovimientoDetalleCantidad").focus();
+			}
+		}
+	}
 }
 
 function prepararCombosOperativosInsumos() {
@@ -33241,11 +33327,11 @@ function prepararCombosOperativosInsumos() {
 			document.getElementById(locales[i]).innerHTML = opcionesLocalesInsumos(locales[i].indexOf("filtro") === 0 ? "Todos" : "Seleccionar");
 		}
 	}
-	var insumos = ["inptMovimientoDetalleInsumo", "filtroMovimientoInsumo"];
-	for (var j = 0; j < insumos.length; j++) {
-		if (document.getElementById(insumos[j])) {
-			document.getElementById(insumos[j]).innerHTML = opcionesInsumosInsumos(insumos[j].indexOf("filtro") === 0 ? "Todos" : "Seleccionar");
-		}
+	if (document.getElementById("inptMovimientoDetalleInsumo")) {
+		actualizarComboMovimientoDetalleInsumo();
+	}
+	if (document.getElementById("filtroMovimientoInsumo")) {
+		document.getElementById("filtroMovimientoInsumo").innerHTML = opcionesInsumosInsumos("Todos");
 	}
 	var hoy = new Date().toISOString().slice(0, 10);
 	if (document.getElementById("inptMovimientoInsumoFecha") && document.getElementById("inptMovimientoInsumoFecha").value == "") {
@@ -33274,6 +33360,13 @@ function filtrarConsultoriosGenericoInsumos(idLocal, idConsultorio) {
 function agregarDetalleMovimientoInsumo() {
 	var idInsumo = document.getElementById("inptMovimientoDetalleInsumo").value;
 	var cantidad = document.getElementById("inptMovimientoDetalleCantidad").value;
+	if (idInsumo == "" && document.getElementById("inptMovimientoBuscarInsumo") && document.getElementById("inptMovimientoBuscarInsumo").value.trim() != "") {
+		var selectInsumo = document.getElementById("inptMovimientoDetalleInsumo");
+		if (selectInsumo && selectInsumo.options.length > 1) {
+			selectInsumo.selectedIndex = 1;
+			idInsumo = selectInsumo.value;
+		}
+	}
 	if (idInsumo == "" || cantidad == "" || Number(cantidad) <= 0) {
 		ver_vetana_informativa("Seleccione un insumo y una cantidad valida.", "", "error");
 		return;
@@ -33292,12 +33385,14 @@ function agregarDetalleMovimientoInsumo() {
 			movimientoInsumosDetalle[j].cantidad = Number(movimientoInsumosDetalle[j].cantidad) + Number(cantidad);
 			renderDetalleCargaMovimientoInsumo();
 			document.getElementById("inptMovimientoDetalleCantidad").value = "";
+			document.getElementById("inptMovimientoDetalleInsumo").value = "";
 			return;
 		}
 	}
 	movimientoInsumosDetalle.push({ id_insumo: idInsumo, nombre: nombre, unidad_medida: unidad, cantidad: cantidad });
 	renderDetalleCargaMovimientoInsumo();
 	document.getElementById("inptMovimientoDetalleCantidad").value = "";
+	document.getElementById("inptMovimientoDetalleInsumo").value = "";
 }
 
 function quitarDetalleMovimientoInsumo(indice) {

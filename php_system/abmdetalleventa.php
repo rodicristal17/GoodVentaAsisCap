@@ -215,6 +215,14 @@ $cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8'
 
 }	
 
+if($operacion=="buscarDatosPagare")
+{
+	$cod_ventaFK=$_POST['cod_venta'];
+$cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
+	BuscarDatosPagare($cod_ventaFK);
+
+}	
+
 if($operacion=="productosCompradoscliente")
 {
 	$cod_ventaFK=$_POST['buscar'];
@@ -1270,6 +1278,76 @@ if ( ! $stmt->execute()) {
 return $cod_venta;
 
 
+}
+
+
+function BuscarDatosPagare($cod_venta)
+{
+	if($cod_venta==""){
+		$informacion =array("1" => "camposvacio");
+		echo json_encode($informacion);
+		exit;
+	}
+
+	$mysqli=conectar_al_servidor();
+	$sql= "select vt.cod_venta, vt.num_factura, vt.puntoexpedicion, vt.total_venta, vt.descuento, vt.pago,
+	(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as cliente,
+	(Select direccion from persona where cod_persona=vt.cod_clienteFK) as cliente_direccion,
+	(Select email from persona where cod_persona=vt.cod_clienteFK) as cliente_referencia,
+	(Select telefono from persona where cod_persona=vt.cod_clienteFK) as cliente_telefono,
+	(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as cliente_documento,
+	(Select nombre_persona from persona where cod_persona=vt.idGaranteFk) as garante,
+	(Select direccion from persona where cod_persona=vt.idGaranteFk) as garante_direccion,
+	(Select email from persona where cod_persona=vt.idGaranteFk) as garante_referencia,
+	(Select telefono from persona where cod_persona=vt.idGaranteFk) as garante_telefono,
+	(Select ci_cliente from cliente where cod_cliente=vt.idGaranteFk) as garante_documento,
+	IFNULL((Select sum(cr.Monto) from credito cr where cr.cod_venta=vt.cod_venta and cr.tipo='ENTREGA'),0) as entrega_credito,
+	(Select fechapago from credito cr where cr.cod_venta=vt.cod_venta and IFNULL(cr.tipo,'')!='ENTREGA' order by cr.fechapago desc limit 1) as vencimiento
+	from venta vt where vt.cod_venta=? limit 1";
+
+	$stmt = $mysqli->prepare($sql);
+	$stmt->bind_param('s', $cod_venta);
+	if ( ! $stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+
+	$result = $stmt->get_result();
+	if (mysqli_num_rows($result)==0) {
+		mysqli_close($mysqli);
+		$informacion =array("1" => "N");
+		echo json_encode($informacion);
+		exit;
+	}
+
+	$valor= mysqli_fetch_assoc($result);
+	$puntoexpedicion=mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF-8', 'ISO-8859-1');
+	$num_factura=mb_convert_encoding((string)($valor['num_factura']), 'UTF-8', 'ISO-8859-1');
+	$factura = $puntoexpedicion!="" ? $puntoexpedicion."-".$num_factura : $num_factura;
+	$entrega = floatval($valor['entrega_credito']) > 0 ? $valor['entrega_credito'] : $valor['pago'];
+	$zonaCliente = trim(mb_convert_encoding((string)($valor['cliente_direccion']), 'UTF-8', 'ISO-8859-1')."-".mb_convert_encoding((string)($valor['cliente_referencia']), 'UTF-8', 'ISO-8859-1'), "-");
+	$zonaGarante = trim(mb_convert_encoding((string)($valor['garante_direccion']), 'UTF-8', 'ISO-8859-1')."-".mb_convert_encoding((string)($valor['garante_referencia']), 'UTF-8', 'ISO-8859-1'), "-");
+
+	$datos = array(
+		"cod_venta" => mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1'),
+		"factura" => $factura,
+		"total" => number_format($valor['total_venta'],'0',',','.'),
+		"entrega" => number_format($entrega,'0',',','.'),
+		"vencimiento" => mb_convert_encoding((string)($valor['vencimiento']), 'UTF-8', 'ISO-8859-1'),
+		"cliente" => mb_convert_encoding((string)($valor['cliente']), 'UTF-8', 'ISO-8859-1'),
+		"cliente_documento" => mb_convert_encoding((string)($valor['cliente_documento']), 'UTF-8', 'ISO-8859-1'),
+		"cliente_direccion" => $zonaCliente,
+		"cliente_telefono" => mb_convert_encoding((string)($valor['cliente_telefono']), 'UTF-8', 'ISO-8859-1'),
+		"garante" => mb_convert_encoding((string)($valor['garante']), 'UTF-8', 'ISO-8859-1'),
+		"garante_documento" => mb_convert_encoding((string)($valor['garante_documento']), 'UTF-8', 'ISO-8859-1'),
+		"garante_direccion" => $zonaGarante,
+		"garante_telefono" => mb_convert_encoding((string)($valor['garante_telefono']), 'UTF-8', 'ISO-8859-1')
+	);
+
+	mysqli_close($mysqli);
+	$informacion =array("1" => "exito","2" => $datos);
+	echo json_encode($informacion);
+	exit;
 }
 
 

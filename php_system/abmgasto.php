@@ -1647,7 +1647,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	$registros= array();
 
 	// Agrega el ingreso de los cierres de caja
-	$registroMontosCobrados= Arqueo($fecha1,$fecha2,'','',$cod_local,"","","","","","","","")[7];
+	$registroMontosCobrados= Arqueo($fecha1,$fecha2,'','',$cod_local,"","","","",$usuario,"","","")[7];
 	$registrosZona['ingreso'][-1]= array();
 	foreach ($registroMontosCobrados as $key => $value) {
 		// Crea un registro ficticio

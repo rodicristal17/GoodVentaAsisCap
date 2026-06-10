@@ -34,7 +34,7 @@
                     "cod_usuarioFK" => $user
                 );
                 
-                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 100;
 
                 buscarVistaPacienteConInterConsulta($filtros, $limite);
                 break;
@@ -74,7 +74,7 @@
                     'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
-                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 100;
 
                 obtenerVistaInterConsulta($filtros, $limite);
                 break;
@@ -1065,8 +1065,10 @@ function convertirTextoDocumentoInterconsulta($texto) {
     }
 
     function obtenerVistaInterConsulta($filtros= array(), $limite= 0) {
-        $cantRegistros= obtenerInterConsulta($filtros);
-        $cantRegistros= count($cantRegistros);
+        $cantRegistros= count(obtenerInterConsulta($filtros, 0));
+        if ($limite === 0 || $limite === '0' || $limite === '') {
+            $limite = 100;
+        }
         $registros= obtenerInterConsulta($filtros, $limite);
 
         $pagina= '';
@@ -1121,7 +1123,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 $registrosMens= obtenerMensaje(array(
                     'fecha_creacion' => "> '".(new DateTime())->format('Y-m-d H:i:s')."'",
                     "cod_interConsultaFK" => $value["cod_interConsulta"],
-                ));
+                ), 1);
                 foreach ($registrosMens as $valueMens) {
                     if ($valueMens['estado'] == 'activo') {
                         $fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));

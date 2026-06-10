@@ -1,5 +1,31 @@
 <?php
 
+if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
+}
+
+if (!defined('ABM_CALENDAR_JSON_FATAL_HANDLER')) {
+    define('ABM_CALENDAR_JSON_FATAL_HANDLER', true);
+    ob_start();
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        $tiposFatales = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR);
+        if ($error && in_array($error['type'], $tiposFatales)) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=UTF-8');
+                http_response_code(200);
+            }
+            echo json_encode(array(
+                "1" => "Error",
+                "mensaje" => "Error interno al procesar calendario: " . $error['message']
+            ), JSON_INVALID_UTF8_SUBSTITUTE);
+        }
+    });
+}
+
 include_once 'verificar_navegador.php';
 include_once 'buscar_nivel.php';
 include_once 'classTable.php';
@@ -8,6 +34,18 @@ include_once 'solicitud_eliminado_helper.php';
 include_once 'abmAgenda.php';
 
 date_default_timezone_set('America/Asuncion');
+
+function responderJsonCalendar($datos)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=UTF-8');
+    }
+    echo json_encode($datos, JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
 
 $useru= "";
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
@@ -212,6 +250,18 @@ function asegurarEstructuraAgendaInsumos($mysqli)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
     $mysqli->query($sqlBase);
 
+    $sqlInsumoProducto = "CREATE TABLE IF NOT EXISTS insumo_producto (
+        id INT NOT NULL AUTO_INCREMENT,
+        id_insumo INT NOT NULL,
+        cod_producto VARCHAR(45) NOT NULL,
+        cantidad DECIMAL(12,3) NOT NULL DEFAULT 1,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_insumo_producto (id_insumo, cod_producto),
+        KEY idx_insumo_producto_insumo (id_insumo),
+        KEY idx_insumo_producto_producto (cod_producto)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    $mysqli->query($sqlInsumoProducto);
+
     $sqlConsumo = "CREATE TABLE IF NOT EXISTS agenda_consumo_insumos (
         id INT NOT NULL AUTO_INCREMENT,
         id_agenda INT NOT NULL,
@@ -228,6 +278,10 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         KEY idx_agenda_consumo_insumo (id_insumo)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
     $mysqli->query($sqlConsumo);
+    agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "stock_descontado", "stock_descontado TINYINT(1) NOT NULL DEFAULT 0");
+    agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "cantidad_descontada", "cantidad_descontada DECIMAL(12,3) NOT NULL DEFAULT 0");
+    agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "fecha_descontado", "fecha_descontado DATETIME NULL");
+    agregarColumnaAgendaSiNoExiste($mysqli, "agenda_consumo_insumos", "usuario_desconto", "usuario_desconto INT NULL");
 
     $sqlAjustes = "CREATE TABLE IF NOT EXISTS agenda_consumo_ajustes (
         id INT NOT NULL AUTO_INCREMENT,
@@ -247,6 +301,48 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         KEY idx_agenda_ajuste_insumo (id_insumo)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
     $mysqli->query($sqlAjustes);
+
+    $sqlStock = "CREATE TABLE IF NOT EXISTS insumo_stock_consultorio (
+        id_stock INT NOT NULL AUTO_INCREMENT,
+        id_insumo INT NOT NULL,
+        cod_local INT NOT NULL,
+        id_consultorio INT NOT NULL,
+        cantidad DECIMAL(12,3) NOT NULL DEFAULT 0,
+        fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_stock),
+        UNIQUE KEY uq_insumo_local_consultorio (id_insumo, cod_local, id_consultorio),
+        KEY idx_insumo_stock_local (cod_local),
+        KEY idx_insumo_stock_consultorio (id_consultorio)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    $mysqli->query($sqlStock);
+
+    $sqlMovimientos = "CREATE TABLE IF NOT EXISTS movimientos_insumos (
+        id_movimiento INT NOT NULL AUTO_INCREMENT,
+        grupo_movimiento VARCHAR(40) NULL,
+        tipo VARCHAR(20) NOT NULL,
+        insumo_id INT NOT NULL,
+        sucursal_id INT NOT NULL,
+        consultorio_id INT NOT NULL,
+        cantidad DECIMAL(12,3) NOT NULL DEFAULT 0,
+        motivo VARCHAR(255) NOT NULL,
+        usuario_id INT NULL,
+        fecha DATETIME NOT NULL,
+        PRIMARY KEY (id_movimiento),
+        KEY idx_mov_insumo (insumo_id),
+        KEY idx_mov_grupo (grupo_movimiento)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    $mysqli->query($sqlMovimientos);
+    agregarColumnaAgendaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
+}
+
+function agregarColumnaAgendaSiNoExiste($mysqli, $tabla, $columna, $definicion)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+    $columna = preg_replace('/[^a-zA-Z0-9_]/', '', $columna);
+    $result = $mysqli->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
+    if ($result && $result->num_rows == 0) {
+        $mysqli->query("ALTER TABLE `$tabla` ADD COLUMN $definicion");
+    }
 }
 
 function normalizarNumeroAgenda($valor)
@@ -255,25 +351,183 @@ function normalizarNumeroAgenda($valor)
     return is_numeric($valor) ? (float)$valor : 0;
 }
 
+function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
+{
+    $idAgenda = (int)$idAgenda;
+    $usuario = (int)$useru;
+    if ($idAgenda <= 0) {
+        throw new Exception("Falta el agendamiento para descontar insumos.");
+    }
+
+    $resultAgenda = $mysqli->query("SELECT a.id_agenda, a.id_consultorio, a.cod_ventaFK, a.cod_detalle_ventaFK, p.nombre_persona
+        FROM agenda a
+        LEFT JOIN persona p ON p.cod_persona = a.id_paciente
+        WHERE a.id_agenda = '".$idAgenda."' LIMIT 1");
+    if (!$resultAgenda || !($agenda = $resultAgenda->fetch_assoc())) {
+        throw new Exception("No se encontro la cita para descontar insumos.");
+    }
+
+    $consultorio = (int)$agenda["id_consultorio"];
+    $codLocal = obtenerCodLocalConsultorioAgenda($mysqli, $consultorio);
+    if ($consultorio <= 0 || $codLocal <= 0) {
+        throw new Exception("La cita no tiene consultorio/local valido para descontar insumos.");
+    }
+
+    $resultConsumo = $mysqli->query("SELECT COUNT(*) AS total FROM agenda_consumo_insumos WHERE id_agenda = '".$idAgenda."'");
+    $totalConsumo = ($resultConsumo && ($rowTotal = $resultConsumo->fetch_assoc())) ? (int)$rowTotal["total"] : 0;
+    if ($totalConsumo == 0) {
+        $insumos = obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda);
+        foreach ($insumos as $insumo) {
+            $idInsumo = (int)$insumo["id_insumo"];
+            $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
+            $unidad = limpiar($mysqli, $insumo["unidad_medida"]);
+            if ($idInsumo > 0 && $cantidad > 0) {
+                $mysqli->query("INSERT INTO agenda_consumo_insumos (id_agenda, id_insumo, cantidad_prevista, unidad_medida)
+                    VALUES ('".$idAgenda."', '".$idInsumo."', '".$cantidad."', '".$unidad."')
+                    ON DUPLICATE KEY UPDATE cantidad_prevista=VALUES(cantidad_prevista), unidad_medida=VALUES(unidad_medida)");
+            }
+        }
+    }
+
+    $sqlConsumos = "SELECT ac.id, ac.id_insumo,
+            IF(ac.cantidad_confirmada IS NULL, ac.cantidad_prevista, ac.cantidad_confirmada) AS cantidad,
+            i.nombre
+        FROM agenda_consumo_insumos ac
+        INNER JOIN insumosconsl i ON i.id_insumo = ac.id_insumo
+        WHERE ac.id_agenda = '".$idAgenda."'
+          AND IFNULL(ac.stock_descontado, 0) = 0
+          AND IF(ac.cantidad_confirmada IS NULL, ac.cantidad_prevista, ac.cantidad_confirmada) > 0
+        FOR UPDATE";
+    $resultConsumos = $mysqli->query($sqlConsumos);
+    if (!$resultConsumos) {
+        throw new Exception("No se pudieron obtener los insumos de la cita.");
+    }
+
+    $consumos = array();
+    while ($row = $resultConsumos->fetch_assoc()) {
+        $consumos[] = $row;
+    }
+    if (count($consumos) == 0) {
+        return 0;
+    }
+
+    $grupoMovimiento = "agenda_".$idAgenda."_".date("YmdHis");
+    foreach ($consumos as $consumo) {
+        $idConsumo = (int)$consumo["id"];
+        $idInsumo = (int)$consumo["id_insumo"];
+        $cantidad = normalizarNumeroAgenda($consumo["cantidad"]);
+        $nombreInsumo = normalizarTextoUtf8($consumo["nombre"]);
+
+        $resultStock = $mysqli->query("SELECT cantidad FROM insumo_stock_consultorio
+            WHERE id_insumo = '".$idInsumo."'
+              AND cod_local = '".$codLocal."'
+              AND id_consultorio = '".$consultorio."'
+            LIMIT 1 FOR UPDATE");
+        $stockActual = 0;
+        if ($resultStock && ($rowStock = $resultStock->fetch_assoc())) {
+            $stockActual = normalizarNumeroAgenda($rowStock["cantidad"]);
+        }
+        if ($stockActual < $cantidad) {
+            throw new Exception("Stock insuficiente de ".$nombreInsumo." en el consultorio. Stock actual: ".$stockActual.", requerido: ".$cantidad.".");
+        }
+
+        $nuevoStock = $stockActual - $cantidad;
+        $stmtStock = $mysqli->prepare("INSERT INTO insumo_stock_consultorio (id_insumo, cod_local, id_consultorio, cantidad)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE cantidad=VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP");
+        $stmtStock->bind_param("iiid", $idInsumo, $codLocal, $consultorio, $nuevoStock);
+        if (!$stmtStock->execute()) {
+            throw new Exception("No se pudo descontar el stock de ".$nombreInsumo.".");
+        }
+
+        $motivo = "Salida automatica por cita atendida #".$idAgenda;
+        $fecha = date("Y-m-d H:i:s");
+        $tipo = "salida";
+        $stmtMov = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmtMov->bind_param("ssiiidsis", $grupoMovimiento, $tipo, $idInsumo, $codLocal, $consultorio, $cantidad, $motivo, $usuario, $fecha);
+        if (!$stmtMov->execute()) {
+            throw new Exception("No se pudo registrar el movimiento de insumo.");
+        }
+
+        $mysqli->query("UPDATE agenda_consumo_insumos
+            SET stock_descontado = 1,
+                cantidad_descontada = '".$cantidad."',
+                fecha_descontado = NOW(),
+                usuario_desconto = '".$usuario."',
+                estado = IF(estado = 'previsto', 'confirmado', estado),
+                cantidad_confirmada = IF(cantidad_confirmada IS NULL, cantidad_prevista, cantidad_confirmada),
+                usuario_confirmo = IF(usuario_confirmo IS NULL, '".$usuario."', usuario_confirmo),
+                fecha_confirmo = IF(fecha_confirmo IS NULL, NOW(), fecha_confirmo)
+            WHERE id = '".$idConsumo."' LIMIT 1");
+    }
+
+    return count($consumos);
+}
+
+function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda)
+{
+    $idAgenda = (int)$idAgenda;
+    $insumos = array();
+
+    $resultBase = $mysqli->query("SELECT b.id_insumo, b.cantidad, i.unidad_medida
+        FROM agenda_insumo_base b
+        INNER JOIN insumosconsl i ON i.id_insumo = b.id_insumo
+        WHERE b.estado = 'activo'");
+    if ($resultBase) {
+        while ($row = $resultBase->fetch_assoc()) {
+            $id = (int)$row["id_insumo"];
+            if (!isset($insumos[$id])) {
+                $insumos[$id] = array("id_insumo" => $id, "cantidad" => 0, "unidad_medida" => normalizarTextoUtf8($row["unidad_medida"]));
+            }
+            $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
+        }
+    }
+
+    $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.unidad_medida
+        FROM agenda_tratamientos at
+        INNER JOIN detalle_venta dv ON dv.cod_detalle = at.cod_detalle_ventaFK
+        INNER JOIN insumo_producto ip ON ip.cod_producto = dv.cod_productoFK
+        INNER JOIN insumosconsl i ON i.id_insumo = ip.id_insumo
+        WHERE at.id_agenda = '".$idAgenda."'
+          AND at.estado <> 'cancelado'
+        GROUP BY ip.id_insumo, i.unidad_medida";
+    $resultTratamientos = $mysqli->query($sql);
+    if ($resultTratamientos) {
+        while ($row = $resultTratamientos->fetch_assoc()) {
+            $id = (int)$row["id_insumo"];
+            if (!isset($insumos[$id])) {
+                $insumos[$id] = array("id_insumo" => $id, "cantidad" => 0, "unidad_medida" => normalizarTextoUtf8($row["unidad_medida"]));
+            }
+            $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
+        }
+    }
+
+    return array_values($insumos);
+}
+
 function buscarVentasPacienteAgenda($mysqli)
 {
     $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
     if ($paciente == '') {
-        echo json_encode(array("1" => "exito", "ventas" => array()));
-        exit;
+        responderJsonCalendar(array("1" => "exito", "ventas" => array()));
     }
 
     $sql = "SELECT v.cod_venta, v.num_factura, v.puntoexpedicion, v.fecha_venta, v.estadocuenta,
                    IFNULL(v.apodo,'') AS apodo, IFNULL(p.nombre_persona,'') AS paciente
             FROM venta v
             LEFT JOIN persona p ON p.cod_persona = v.cod_clienteFK
-            WHERE v.cod_clienteFK = '".$paciente."'
-              AND IFNULL(v.estado,'Activo') <> 'Inactivo'
+            LEFT JOIN cliente c ON c.cod_cliente = v.cod_clienteFK
+            WHERE (
+                    v.cod_clienteFK = '".$paciente."'
+                    OR c.ci_cliente = '".$paciente."'
+                    OR p.nombre_persona LIKE '%".$paciente."%'
+              )
+              AND UPPER(IFNULL(v.estado,'Activo')) <> 'INACTIVO'
             ORDER BY v.fecha_venta DESC, v.cod_venta DESC";
     $result = $mysqli->query($sql);
     if (!$result) {
-        echo json_encode(array("1" => "Error", "mensaje" => $mysqli->error));
-        exit;
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $mysqli->error));
     }
 
     $ventas = array();
@@ -289,8 +543,7 @@ function buscarVentasPacienteAgenda($mysqli)
         );
     }
 
-    echo json_encode(array("1" => "exito", "ventas" => $ventas), JSON_INVALID_UTF8_SUBSTITUTE);
-    exit;
+    responderJsonCalendar(array("1" => "exito", "ventas" => $ventas));
 }
 
 function listarTratamientosVentaAgenda($mysqli)
@@ -373,7 +626,7 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
         return array();
     }
 
-    $resultBase = $mysqli->query("SELECT b.id_insumo, b.cantidad, i.nombre, i.unidad_medida
+    $resultBase = $mysqli->query("SELECT b.id_insumo, b.cantidad, i.nombre, i.unidad_medida, i.stock_minimo
         FROM agenda_insumo_base b
         INNER JOIN insumosconsl i ON i.id_insumo = b.id_insumo
         WHERE b.estado = 'activo'");
@@ -386,6 +639,7 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
                     "nombre" => normalizarTextoUtf8($row["nombre"]),
                     "unidad_medida" => normalizarTextoUtf8($row["unidad_medida"]),
                     "cantidad" => 0,
+                    "stock_minimo" => normalizarNumeroAgenda($row["stock_minimo"]),
                     "stock" => null,
                     "faltante" => 0
                 );
@@ -402,12 +656,12 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
         }
     }
     if (count($ids) > 0) {
-        $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.nombre, i.unidad_medida
+        $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.nombre, i.unidad_medida, i.stock_minimo
                 FROM detalle_venta dv
                 INNER JOIN insumo_producto ip ON ip.cod_producto = dv.cod_productoFK
                 INNER JOIN insumosconsl i ON i.id_insumo = ip.id_insumo
                 WHERE dv.cod_detalle IN (".implode(",", $ids).")
-                GROUP BY ip.id_insumo, i.nombre, i.unidad_medida";
+                GROUP BY ip.id_insumo, i.nombre, i.unidad_medida, i.stock_minimo";
         $resultTrat = $mysqli->query($sql);
         if ($resultTrat) {
             while ($row = $resultTrat->fetch_assoc()) {
@@ -418,6 +672,7 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
                         "nombre" => normalizarTextoUtf8($row["nombre"]),
                         "unidad_medida" => normalizarTextoUtf8($row["unidad_medida"]),
                         "cantidad" => 0,
+                        "stock_minimo" => normalizarNumeroAgenda($row["stock_minimo"]),
                         "stock" => null,
                         "faltante" => 0
                     );
@@ -435,8 +690,10 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
             if ($resultStock && ($rowStock = $resultStock->fetch_assoc())) {
                 $stock = normalizarNumeroAgenda($rowStock["cantidad"]);
             }
+            $stockMinimo = normalizarNumeroAgenda($insumos[$id]["stock_minimo"]);
+            $stockDespues = $stock - normalizarNumeroAgenda($insumos[$id]["cantidad"]);
             $insumos[$id]["stock"] = $stock;
-            $insumos[$id]["faltante"] = max(0, $insumos[$id]["cantidad"] - $stock);
+            $insumos[$id]["faltante"] = $stockMinimo > 0 ? max(0, $stockMinimo - $stockDespues) : 0;
         }
     }
 
@@ -1014,6 +1271,25 @@ function guardarCita($mysqli, $useru){
             ON DUPLICATE KEY UPDATE cantidad_prevista=VALUES(cantidad_prevista), unidad_medida=VALUES(unidad_medida)");
     }
 
+    if (strtoupper($estado) == "ATENDIDO") {
+        $insumosDescontados = 0;
+        try {
+            $mysqli->begin_transaction();
+            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru);
+            $mysqli->commit();
+        } catch (Exception $e) {
+            $mysqli->rollback();
+            $mysqli->query("DELETE FROM agenda_consumo_insumos WHERE id_agenda = '".$id_agenda."'");
+            $mysqli->query("DELETE FROM agenda_tratamientos WHERE id_agenda = '".$id_agenda."'");
+            $mysqli->query("DELETE FROM agenda WHERE id_agenda = '".$id_agenda."' LIMIT 1");
+            echo json_encode(array("1" => "Error", "mensaje" => $e->getMessage()));
+            exit;
+        }
+        if ($insumosDescontados > 0) {
+            crearComentario($id_agenda, "@{0}: @{".$useru."} desconto automaticamente los insumos por cita atendida.");
+        }
+    }
+
     crearComentario($id_agenda, "@{0}: @{".$useru."} a creado la cita.");
 
     echo json_encode(array(
@@ -1098,6 +1374,7 @@ function obtenerDiasFeriados($mysqli, $filtros){
 }
 
 function actualizarCita($mysqli, $useru){
+    asegurarEstructuraAgendaInsumos($mysqli);
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
     $hora_inicio = isset($_POST['hora_inicio']) ? limpiar($mysqli, $_POST['hora_inicio']) : '';
     $hora_fin = isset($_POST['hora_fin']) ? limpiar($mysqli, $_POST['hora_fin']) : '';
@@ -1157,12 +1434,28 @@ function actualizarCita($mysqli, $useru){
         LIMIT 1
     ";
 
-    if(!$mysqli->query($sql)){
+    $debeDescontarInsumos = strtoupper((string)$estado) == "ATENDIDO"
+        && strtoupper((string)(isset($agendaAnterior["estado"]) ? $agendaAnterior["estado"] : "")) != "ATENDIDO";
+
+    $insumosDescontados = 0;
+    $mysqli->begin_transaction();
+    try {
+        if(!$mysqli->query($sql)){
+            throw new Exception($mysqli->error);
+        }
+
+        if ($debeDescontarInsumos) {
+            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru);
+        }
+
+        $mysqli->commit();
+    } catch (Exception $e) {
+        $mysqli->rollback();
         echo json_encode(array(
             "1" => "Error al actualizar cita",
             "mensaje" => "No se pudo actualizar el agendamiento",
             "sql" => $sql,
-            "mysql" => $mysqli->error
+            "mysql" => $e->getMessage()
         ));
         exit;
     }
@@ -1173,6 +1466,9 @@ function actualizarCita($mysqli, $useru){
         "estado" => $estado,
         "motivo" => $motivo
     ));
+    if ($insumosDescontados > 0) {
+        crearComentario($id_agenda, "@{0}: @{".$useru."} desconto automaticamente los insumos por cita atendida.");
+    }
 
     echo json_encode(array(
         "1" => "exito",
@@ -1187,6 +1483,7 @@ function actualizarMotivoCita($mysqli, $useru){
 
 
 function actualizarPresupuestoAgenda($mysqli, $useru){
+    asegurarEstructuraAgendaInsumos($mysqli);
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
     $cod_presupuestoFK = isset($_POST['cod_presupuestoFK']) ? limpiar($mysqli, $_POST['cod_presupuestoFK']) : '';
     $campos = array();
@@ -1222,12 +1519,27 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
         LIMIT 1
     ";
 
-    if(!$mysqli->query($sql)){
+    $debeDescontarInsumos = strtoupper((string)(isset($agendaAnterior["estado"]) ? $agendaAnterior["estado"] : "")) != "ATENDIDO";
+
+    $insumosDescontados = 0;
+    $mysqli->begin_transaction();
+    try {
+        if(!$mysqli->query($sql)){
+            throw new Exception($mysqli->error);
+        }
+
+        if ($debeDescontarInsumos) {
+            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru);
+        }
+
+        $mysqli->commit();
+    } catch (Exception $e) {
+        $mysqli->rollback();
         echo json_encode(array(
             "1" => "Error al actualizar presupuesto",
             "mensaje" => "No se pudo asociar el presupuesto al agendamiento",
             "sql" => $sql,
-            "mysql" => $mysqli->error
+            "mysql" => $e->getMessage()
         ));
         exit;
     }
@@ -1235,6 +1547,9 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
     registrarComentariosCambiosAgenda($id_agenda, $useru, $agendaAnterior, array(
         "cod_presupuestoFK" => $cod_presupuestoFK,
     ));
+    if ($insumosDescontados > 0) {
+        crearComentario($id_agenda, "@{0}: @{".$useru."} desconto automaticamente los insumos por cita atendida.");
+    }
 
     echo json_encode(array(
         "1" => "exito",
@@ -1276,6 +1591,8 @@ function normalizarTextoUtf8($valor){
 function cargarAgenda($mysqli, $useru){
     asegurarEstructuraAgendaInsumos($mysqli);
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $fecha_desde = isset($_POST['fecha_desde']) ? limpiar($mysqli, $_POST['fecha_desde']) : '';
+    $fecha_hasta = isset($_POST['fecha_hasta']) ? limpiar($mysqli, $_POST['fecha_hasta']) : '';
     $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
     $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
     $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
@@ -1408,7 +1725,9 @@ function cargarAgenda($mysqli, $useru){
     =========================== */
 	
 	$condicion="";
-	if($fecha!=""){
+	if($fecha_desde!="" && $fecha_hasta!=""){
+		$condicion.=" and a.fecha between '".$fecha_desde."' and '".$fecha_hasta."'";
+	}else if($fecha!=""){
 		$condicion.=" and a.fecha = '".$fecha."'";
 	}
 	
@@ -1452,9 +1771,9 @@ function cargarAgenda($mysqli, $useru){
             (SELECT nombre_persona FROM persona JOIN evoluciontratamiento et ON et.cod_usuraioFK = cod_persona WHERE a.id_agenda = et.cod_agendaFK order by et.cod_evoluciontratamiento desc limit 1) AS nombre_doctor_tratamiento,
             (SELECT fecha FROM evoluciontratamiento et WHERE et.cod_agendaFK = a.id_agenda order by et.cod_evoluciontratamiento desc limit 1) AS fecha_tratamiento,
             (SELECT GROUP_CONCAT(CONCAT(p.nombre_producto, '(', et.nro,'%)') SEPARATOR '<br>') FROM evoluciontratamiento et JOIN detalle_venta dv ON et.cod_detalle_venta = dv.cod_detalle JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE cod_agendaFK = a.id_agenda) AS nombre_tratamiento,
-            (IFNULL((SELECT p.nombre_producto FROM detalle_venta dv JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE dv.cod_detalle = a.cod_detalle_ventaFK), '')) AS nombre_tratamiento_pendiente,
+            (IFNULL((SELECT CONCAT(p.nombre_producto, ' (', IFNULL(dv.progreso_porcentaje,0), '%)') FROM detalle_venta dv JOIN producto p ON p.cod_producto= dv.cod_productoFK WHERE dv.cod_detalle = a.cod_detalle_ventaFK), '')) AS nombre_tratamiento_pendiente,
             (SELECT GROUP_CONCAT(at.cod_detalle_ventaFK ORDER BY at.id ASC SEPARATOR ',') FROM agenda_tratamientos at WHERE at.id_agenda = a.id_agenda AND at.estado <> 'cancelado') AS tratamientos_ids,
-            (SELECT GROUP_CONCAT(p2.nombre_producto ORDER BY p2.nombre_producto ASC SEPARATOR '<br>') FROM agenda_tratamientos at2 JOIN detalle_venta dv2 ON dv2.cod_detalle = at2.cod_detalle_ventaFK JOIN producto p2 ON p2.cod_producto = dv2.cod_productoFK WHERE at2.id_agenda = a.id_agenda AND at2.estado <> 'cancelado') AS tratamientos_agenda,
+            (SELECT GROUP_CONCAT(CONCAT(p2.nombre_producto, ' (', IFNULL(dv2.progreso_porcentaje,0), '%)') ORDER BY p2.nombre_producto ASC SEPARATOR '<br>') FROM agenda_tratamientos at2 JOIN detalle_venta dv2 ON dv2.cod_detalle = at2.cod_detalle_ventaFK JOIN producto p2 ON p2.cod_producto = dv2.cod_productoFK WHERE at2.id_agenda = a.id_agenda AND at2.estado <> 'cancelado') AS tratamientos_agenda,
             p.nombre_persona
         FROM agenda a
         INNER JOIN persona p ON p.cod_persona = a.id_paciente
@@ -1588,10 +1907,12 @@ function cargarAgenda($mysqli, $useru){
                 $stockProyectado[$clave] = normalizarNumeroAgenda($insumo["stock"]);
             }
             $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
+            $stockMinimo = normalizarNumeroAgenda($insumo["stock_minimo"]);
             $faltante = 0;
             if ($entraProyeccion) {
-                $faltante = max(0, $cantidad - $stockProyectado[$clave]);
-                $stockProyectado[$clave] -= $cantidad;
+                $stockDespues = $stockProyectado[$clave] - $cantidad;
+                $faltante = $stockMinimo > 0 ? max(0, $stockMinimo - $stockDespues) : 0;
+                $stockProyectado[$clave] = $stockDespues;
             } else {
                 $faltante = normalizarNumeroAgenda($insumo["faltante"]);
             }

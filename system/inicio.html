@@ -7,6 +7,8 @@
 <meta name="viewport"
 content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
 <title>GoodVenta</title>
+<link rel="icon" type="image/png" href="/GoodVentaAsisCap/iconos/logoApp.png" />
+<link rel="shortcut icon" href="/GoodVentaAsisCap/favicon.ico" />
 
 <div  id='divPresentacion' style=' z-index: 1; position: fixed; top: 0px; left: 0px; width: 100%;  background-color: #f4f5f6; height: 100%;'>
 <table style='height:100%;width:100%;' id='tdEfectoDivPresentacion'><tr><td>
@@ -2817,7 +2819,7 @@ onclick='abrirInformeLogInactivos()' style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu'
-src='/GoodVentaAsisCap/iconos/log_inactivos.svg' />
+src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22%3E%3Crect x=%2212%22 y=%2210%22 width=%2272%22 height=%2276%22 rx=%2212%22 fill=%22%23f8fafc%22/%3E%3Crect x=%2212%22 y=%2210%22 width=%2272%22 height=%2276%22 rx=%2212%22 fill=%22none%22 stroke=%22%23334155%22 stroke-width=%225%22/%3E%3Cpath d=%22M30 26h36M30 40h26M30 54h22%22 fill=%22none%22 stroke=%22%2364748b%22 stroke-width=%226%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2263%22 cy=%2263%22 r=%2218%22 fill=%22%23fee2e2%22 stroke=%22%23dc2626%22 stroke-width=%225%22/%3E%3Cpath d=%22M55 55l16 16M71 55L55 71%22 fill=%22none%22 stroke=%22%23dc2626%22 stroke-width=%226%22 stroke-linecap=%22round%22/%3E%3C/svg%3E' />
 <p class='pTitulo4'>Log de inactivos</p>
 <center>
 <div id='divMinimizadoInformeLogInactivos' style='display:none'
@@ -9740,9 +9742,12 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
 </tr>
 </table>
 <div style='margin-top:18px;border:1px solid #d9e1e8;border-radius:8px;overflow:hidden;background:#fbfcfd;'>
-<div style='padding:10px 14px;background:#eef4f8;border-bottom:1px solid #d9e1e8;display:flex;align-items:center;justify-content:space-between;'>
+<div style='padding:10px 14px;background:#eef4f8;border-bottom:1px solid #d9e1e8;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;'>
 <p class='pTituloC' style='font-weight:bold;color:#2f526f;margin:0'>Tratamientos que usan este insumo</p>
+<div class='insumos-productos-toolbar'>
+<input type='button' value='Seleccionar todos' class='btn4 insumos-action-btn insumos-select-all-btn' onclick='seleccionarTodosProductosInsumo()'>
 <input type='text' class='inputText' id='inptBuscarProductoInsumo' placeholder='Buscar tratamiento' onkeyup='renderProductosInsumoSeleccionables()' style='width:240px;height:30px;border-radius:8px;'>
+</div>
 </div>
 <div id='divProductosInsumo' class='insumos-productos-checklist'></div>
 </div>
@@ -9827,7 +9832,7 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
       <div class='form-row'><label>Consultorio</label><select class='inputSelect' id='inptMovimientoInsumoConsultorio'></select></div>
       <div class='form-row'><label>Fecha</label><input class='inputText' type='date' id='inptMovimientoInsumoFecha'></div>
       <div class='form-row insumos-grid-span'><label>Motivo</label><input class='inputText' type='text' id='inptMovimientoInsumoMotivo' placeholder='Obligatorio'></div>
-      <div class='form-row'><label>Insumo</label><select class='inputSelect' id='inptMovimientoDetalleInsumo'></select></div>
+      <div class='form-row insumos-selector-movimiento'><label>Insumo</label><input class='inputText' type='text' id='inptMovimientoBuscarInsumo' placeholder='Buscar por codigo o nombre' onkeyup='filtrarComboMovimientoDetalleInsumo(event)'><select class='inputSelect' id='inptMovimientoDetalleInsumo'></select></div>
       <div class='form-row'><label>Cantidad</label><input class='inputText' type='number' min='0.001' step='any' id='inptMovimientoDetalleCantidad'></div>
     </div>
     <div class='insumos-movimiento-acciones'>
@@ -9839,10 +9844,16 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
       <div class='div_cuerpo_table' id='tableMovimientoInsumosDetalle' style='height:120px;width:100%;box-sizing:border-box;'></div>
     </div>
   </section>
-  <section class='presupuesto-panel dashboard-insumos-listado'>
-    <div class='insumos-movimientos-layout'>
-      <div class='insumos-movimientos-historial'>
+  <section class='presupuesto-panel dashboard-insumos-listado insumos-movimientos-historial-panel'>
+    <div class='insumos-movimientos-toggle-head'>
+      <div>
         <div class='panel-title'>Historial de movimientos</div>
+        <span class='panel-subtitle'>Consulte movimientos anteriores solo cuando lo necesite.</span>
+      </div>
+      <input type='button' value='Ver historial' class='btn4 insumos-action-btn' id='btnToggleHistorialMovimientosInsumos' onclick='toggleHistorialMovimientosInsumos()' style='width:135px'>
+    </div>
+    <div class='insumos-movimientos-layout' id='contenedorHistorialMovimientosInsumos' style='display:none;'>
+      <div class='insumos-movimientos-historial'>
         <div class='insumos-form-grid insumos-filtros-compactos insumos-movimientos-filtros'>
           <div class='form-row'><label>Desde</label><input class='inputText' type='date' id='filtroMovimientoDesde'></div>
           <div class='form-row'><label>Hasta</label><input class='inputText' type='date' id='filtroMovimientoHasta'></div>
@@ -12169,6 +12180,10 @@ title='Cerrar Ventana' onclick='vercerrarOpcionesHistorialVenta("2")' />
 
 <input type="button" value="Ver más detalles" class="btn1"
 onclick="editarventaselecc(); verCerrarAbmVenta();">
+<br>
+<br>
+<input type="button" value="Imprimir Pagaré" class="btn1"
+onclick="imprimirPagareDesdeHistorialVenta()">
 <br>
 <br>
 <input type="button" value="Eliminar" class="btn1" onclick="vercerrareliminaregistroventa(1)">
@@ -25066,14 +25081,14 @@ onclick='buscarvistaaperturacierrecaja()' />
 </div>
 
 <div class='modal-filtros-catalogo' id='modalAbmConsultorioAgenda' style='display:none;'>
-    <div class='modal-filtros-box modal-cita-box' style='max-width:1200px;width: 800px;'>
+    <div class='modal-filtros-box modal-cita-box modal-consultorio-resumen-box'>
         <div class='modal-filtros-header'>
             <h3>Datos del <b id="tituloAbmConsultorioAgenda"></b></h3>
             <button type='button' class='btn-cerrar-modal' onclick='vercerrarModalAbmConsultorioAgenda(false)'>×</button>
         </div>
 
-        <div class='modal-filtros-body modal-cita-grid' style='display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:14px;'>
-          <section class="form-section" style="display: grid;margin-inline: 10px;">
+        <div class='modal-filtros-body modal-cita-grid modal-consultorio-resumen-grid'>
+          <section class="form-section modal-consultorio-resumen-lateral">
             <div class='filtro-grupo' style="display: none;">
                 <label>ID consultorio</label>
                 <input type='text' id='inptIDAbmConsultorioAgenda' class='catalogo-selectBuscador' />
@@ -25088,7 +25103,7 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <label>Doctor/a</label>
                 <select id='inptDoctorAbmConsultorioAgenda' class='inputTextDisable'></select>
             </div>
-            <div class="agenda-card">
+            <div class="agenda-card agenda-card-resumen-consultorio">
               <p class="agenda-card-title">Resumen del día</p>
               <div class="agenda-resumen-item">
                 <span>Total citas</span>
@@ -25122,11 +25137,21 @@ onclick='buscarvistaaperturacierrecaja()' />
                 <b id="lblConDeudabmConsultorioAgenda">0</b>
               </div>
             </div>
+            <div class="agenda-card agenda-card-insumos-dia">
+              <div class="agenda-insumos-dia-head">
+                <p class="agenda-card-title" id="tituloResumenInsumosConsultorioAgenda">Insumos del d&iacute;a</p>
+                <button type="button" class="agenda-insumos-periodo-btn" id="btnResumenInsumosSemanaConsultorioAgenda" onclick="toggleResumenInsumosConsultorioAgenda()">Semana</button>
+              </div>
+              <span class="agenda-insumos-periodo-label" id="lblResumenInsumosPeriodoConsultorioAgenda"></span>
+              <div id="divResumenInsumosDiaConsultorioAgenda" class="agenda-insumos-dia-lista">
+                <span class="agenda-ayuda-inline">Sin insumos previstos.</span>
+              </div>
+            </div>
           </section>
-          <section class="presupuesto-panel" style="min-width:0;margin-inline:10px;padding:5px;">
+          <section class="presupuesto-panel modal-consultorio-resumen-agenda">
             <span class="agenda-card-title">Consultas del dia</span>
-            <div class="agenda-grid-wrapper" style="height:400px;margin-top:8px;">
-                <div id="agendaGridResumenConsultorio" class="agenda-grid-wrapper"></div>
+            <div class="agenda-grid-wrapper agenda-grid-wrapper-resumen-consultorio">
+                <div id="agendaGridResumenConsultorio"></div>
             </div>
           </section>
         </div>
@@ -25165,8 +25190,8 @@ onclick='buscarvistaaperturacierrecaja()' />
             </div>
 
             <div class='filtro-grupo'>
-                <label>Venta / apodo</label>
-                <select id='inptVentaAgenda' class='catalogo-selectBuscador' onchange="cargarTratamientosVentaAgenda('inptVentaAgenda','divTratamientosNuevaCitaAgenda','')">
+                <label>Cod / Venta / apodo</label>
+                <select id='inptVentaAgenda' class='catalogo-selectBuscador agenda-venta-select-columnas' onchange="cargarTratamientosVentaAgenda('inptVentaAgenda','divTratamientosNuevaCitaAgenda','')">
                     <option value=''>Sin venta seleccionada</option>
                 </select>
             </div>
@@ -25310,8 +25335,8 @@ onclick='buscarvistaaperturacierrecaja()' />
 
         <div class='modal-filtros-body'>
             <div class='filtro-grupo'>
-                <label>Venta / apodo</label>
-                <select id='inptVentaAsignarTratamientoAgenda' class='catalogo-selectBuscador'
+                <label>Cod / Venta / apodo</label>
+                <select id='inptVentaAsignarTratamientoAgenda' class='catalogo-selectBuscador agenda-venta-select-columnas'
                         onchange="cargarTratamientosVentaAgenda('inptVentaAsignarTratamientoAgenda','divTratamientosAgenda',idAbmAgenda)"
                         style="width: 98%;">
                     <option value=''>Sin venta seleccionada</option>
@@ -25385,8 +25410,8 @@ onclick='buscarvistaaperturacierrecaja()' />
                 </div>
 
                 <div class='detalle-item detalle-item-full'>
-                    <span class='detalle-label'>Venta / apodo</span>
-                    <div class='detalle-valor' id='detAgendaVentaAsignada'>Sin venta seleccionada</div>
+                    <span class='detalle-label'>Cod / Venta / apodo</span>
+                    <div class='detalle-valor agenda-venta-texto-columnas' id='detAgendaVentaAsignada'>Sin venta seleccionada</div>
                 </div>
 
                 <div class='detalle-item detalle-item-full'>

@@ -1,4 +1,29 @@
 <?php
+if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
+}
+
+if (!defined('ABM_INSUMOS_JSON_FATAL_HANDLER')) {
+    define('ABM_INSUMOS_JSON_FATAL_HANDLER', true);
+    ob_start();
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        $tiposFatales = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR);
+        if ($error && in_array($error['type'], $tiposFatales)) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=UTF-8');
+                http_response_code(200);
+            }
+            echo json_encode(array(
+                "1" => "ERROR",
+                "mensaje" => "Error interno al procesar insumos: " . $error['message']
+            ), JSON_INVALID_UTF8_SUBSTITUTE);
+        }
+    });
+}
 // ── Conexión ───────────────────────────────────────────────────────────────────
 require_once("conexion.php");
 require_once("solicitud_eliminado_helper.php");
@@ -20,7 +45,10 @@ function ObtenerDatos($operacion)
         echo json_encode($informacion);
         exit;
     }
-    asegurarEstructuraInsumos(conectar_al_servidor());
+
+    if ($operacion === "obtener_productos_lista") {
+        obtenerProductosLista();
+    }
 
     switch ($operacion) {
         case "nuevo":
@@ -143,6 +171,7 @@ function limpiarTextoHtmlInsumos($valor)
 function asegurarEstructuraInsumos($mysqli)
 {
     agregarColumnaSiNoExiste($mysqli, "insumosconsl", "stock_minimo", "stock_minimo INT NOT NULL DEFAULT 0");
+    asegurarTablaInsumoProducto($mysqli);
     asegurarTablaStockDashboardInsumos($mysqli);
 
     $sqlMovimientos = "CREATE TABLE IF NOT EXISTS movimientos_insumos (
@@ -168,6 +197,31 @@ function asegurarEstructuraInsumos($mysqli)
     }
     agregarColumnaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
 
+}
+
+function asegurarTablaInsumoProducto($mysqli)
+{
+    $sql = "CREATE TABLE IF NOT EXISTS insumo_producto (
+        id INT NOT NULL AUTO_INCREMENT,
+        id_insumo INT NOT NULL,
+        cod_producto VARCHAR(45) NOT NULL,
+        cantidad DECIMAL(12,3) NOT NULL DEFAULT 1,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_insumo_producto (id_insumo, cod_producto),
+        KEY idx_insumo_producto_insumo (id_insumo),
+        KEY idx_insumo_producto_producto (cod_producto)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    if (!$mysqli->query($sql)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar la tabla de tratamientos por insumo: " . $mysqli->error));
+        exit;
+    }
+}
+
+function existeTablaInsumos($mysqli, $tabla)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+    $result = $mysqli->query("SHOW TABLES LIKE '".$tabla."'");
+    return $result && $result->num_rows > 0;
 }
 
 function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $unidad_medida, $estado, $productos, $cantidades, $operacion)
@@ -330,6 +384,11 @@ function buscarInsumos($id_insumo, $nombre, $descripcion, $unidad_medida, $estad
 function obtenerProductosAsociados($id_insumo)
 {
     $mysqli = conectar_al_servidor();
+    if (!existeTablaInsumos($mysqli, "insumo_producto")) {
+        echo json_encode(array("1" => "exito", "productos" => array()), JSON_INVALID_UTF8_SUBSTITUTE);
+        exit;
+    }
+
     $sql = "SELECT ip.cod_producto, p.nombre_producto, ip.cantidad
             FROM insumo_producto ip
             JOIN producto p ON ip.cod_producto = p.cod_producto
@@ -836,7 +895,10 @@ function listarAlertasStockInsumos()
 function obtenerProductosLista()
 {
     $mysqli = conectar_al_servidor();
-    $sql = "SELECT cod_producto, nombre_producto FROM producto ORDER BY nombre_producto ASC";
+    $sql = "SELECT cod_producto, nombre_producto
+            FROM producto
+            WHERE UPPER(IFNULL(estado,'Activo')) = 'ACTIVO'
+            ORDER BY nombre_producto ASC, cod_producto ASC";
     $result = mysqli_query($mysqli, $sql);
     if (!$result) {
         echo json_encode(array("1" => "ERROR", "mensaje" => "Error al cargar productos: " . $mysqli->error), JSON_INVALID_UTF8_SUBSTITUTE);
@@ -854,6 +916,7 @@ function obtenerProductosLista()
 function BuscarRegistro($codigo, $nombre, $estado)
 {
     $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
     $condiciones = [];
     $tipos = "";
     $parametros = [];
@@ -922,6 +985,7 @@ function BuscarMasRegistro($codigo, $nombre, $estado, $registrocargado)
 function buscarporcodigoeditar($buscar)
 {
     $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
     $sql = "SELECT id_insumo, nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado
             FROM insumosconsl
             WHERE id_insumo = ?";
