@@ -32,6 +32,7 @@ include_once 'classTable.php';
 include_once 'conexion.php';
 include_once 'solicitud_eliminado_helper.php';
 include_once 'abmAgenda.php';
+include_once 'abmusuarios.php';
 
 date_default_timezone_set('America/Asuncion');
 
@@ -844,6 +845,12 @@ function buscarDoctoresDisponiblesCita($mysqli){
     $condicionLocal = "";
     $condicionConsultorioLocal = "";
     $condicionHorarioLocal = " AND hu.cod_localFK IS NOT NULL";
+    if (function_exists('asegurarEstructuraHorarioUsuarioEsperado')) {
+        asegurarEstructuraHorarioUsuarioEsperado($mysqli);
+    }
+    $condicionHorarioVigente = " AND IFNULL(hu.estado_horario,'activo')='activo'
+        AND (hu.vigente_desde IS NULL OR hu.vigente_desde <= '".$fecha."')
+        AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta >= '".$fecha."')";
     if ($cod_local != "") {
         $condicionLocal = " AND c.cod_localFk = '".$cod_local."'";
         $condicionHorarioLocal = " AND hu.cod_localFK = '".$cod_local."'";
@@ -868,6 +875,7 @@ function buscarDoctoresDisponiblesCita($mysqli){
         AND u.estado = 'Activo'
         ".$condicionHorarioLocal."
         AND hu.dia_semana = '".$dia_semana."'
+        ".$condicionHorarioVigente."
         ".$condicionConsultorioLocal."
         GROUP BY u.cod_usuario, p.nombre_persona
         ORDER BY p.nombre_persona ASC";
@@ -1603,6 +1611,12 @@ function cargarAgenda($mysqli, $useru){
         $fecha = date('Y-m-d');
     }
     $dia_semana_agenda = obtenerDiaSemanaAgenda($fecha);
+    if (function_exists('asegurarEstructuraHorarioUsuarioEsperado')) {
+        asegurarEstructuraHorarioUsuarioEsperado($mysqli);
+    }
+    $condicionHorarioVigenteAgenda = " AND IFNULL(hu.estado_horario,'activo')='activo'
+        AND (hu.vigente_desde IS NULL OR hu.vigente_desde <= '".$fecha."')
+        AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta >= '".$fecha."')";
 
     $consultorios = array();
     $eventos = array();
@@ -1629,12 +1643,14 @@ function cargarAgenda($mysqli, $useru){
                 FROM horario_usuario hu
                 WHERE hu.cod_usuarioFK = c.cod_doctorFK
                 AND hu.cod_localFK = c.cod_localFk
-                AND hu.dia_semana = '".$dia_semana_agenda."') AS horario_inicio_dia,
+                AND hu.dia_semana = '".$dia_semana_agenda."'
+                ".$condicionHorarioVigenteAgenda.") AS horario_inicio_dia,
             (SELECT TIME_FORMAT(MAX(hu.hora_salida), '%H:%i')
                 FROM horario_usuario hu
                 WHERE hu.cod_usuarioFK = c.cod_doctorFK
                 AND hu.cod_localFK = c.cod_localFk
                 AND hu.dia_semana = '".$dia_semana_agenda."'
+                ".$condicionHorarioVigenteAgenda."
                 AND hu.hora_salida IS NOT NULL) AS horario_fin_dia,
             (SELECT GROUP_CONCAT(
                     CONCAT(
@@ -1647,7 +1663,8 @@ function cargarAgenda($mysqli, $useru){
                 FROM horario_usuario hu
                 WHERE hu.cod_usuarioFK = c.cod_doctorFK
                 AND hu.cod_localFK = c.cod_localFk
-                AND hu.dia_semana = '".$dia_semana_agenda."') AS horarios_dia,
+                AND hu.dia_semana = '".$dia_semana_agenda."'
+                ".$condicionHorarioVigenteAgenda.") AS horarios_dia,
             c.descripcion,
             c.cod_doctorFK,
             c.color

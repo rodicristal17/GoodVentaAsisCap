@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=insumos-tratamientos-checklist-20260606" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=recordatorio-entrada-20260609" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignar-tratamiento-inline-20260606" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -41,10 +41,10 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
-<script src="/GoodVentaAsisCap/js_system/abm.js?x=presupuesto-print-a4-20260606"></script>
+<script src="/GoodVentaAsisCap/js_system/abm.js?x=asistencia-gestion-20260608"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=insumos-tratamientos-checklist-20260606"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=recordatorio-entrada-20260609"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -55,7 +55,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-porcentaje-20260602"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
-<script src="../js_system/abmAsistencia.js?x=salida-ubicacion-20260529"></script>
+<script src="../js_system/abmAsistencia.js?x=recordatorio-entrada-20260609"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
@@ -288,6 +288,108 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     box-shadow: 0 5px 12px rgba(22, 163, 74, 0.18) !important;
   }
 
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__asistencia {
+    grid-template-columns: 132px minmax(180px, 220px);
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 320px;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__btn {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100% !important;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__estado-asistencia {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 18px;
+    padding: 2px 7px;
+    font-size: 10px;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: stretch;
+    align-content: center;
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: #f8fafc;
+    box-sizing: border-box;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-copy span,
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-copy strong {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.1;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-copy span {
+    color: #344054;
+    font-size: 10px;
+    font-weight: 900;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-copy strong {
+    color: #667085;
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-barra {
+    width: 100%;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e4e7ec;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-barra span {
+    display: block;
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: #2563eb;
+    transition: width 0.28s ease;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--sin-jornada .perfil-widget__progreso-barra {
+    display: none;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--pendiente .perfil-widget__progreso-barra span {
+    background: #94a3b8;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--sin-entrada .perfil-widget__progreso-barra span {
+    background: #2563eb;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--en-jornada .perfil-widget__progreso-barra span {
+    background: #16a34a;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--finalizada .perfil-widget__progreso-barra span {
+    background: #64748b;
+  }
+
   #principalMenub .dashboard-topbar__jornada .perfil-widget__registro {
     grid-column: auto;
     width: auto !important;
@@ -405,6 +507,19 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
       grid-template-columns: max-content auto auto;
       width: 100%;
       max-width: none;
+    }
+
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__asistencia {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+      min-width: 0;
+    }
+
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__btn,
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__estado-asistencia,
+    #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada {
+      grid-column: 1;
+      grid-row: auto;
     }
 
     #principalMenub .dashboard-topbar__jornada .perfil-widget__registro {
@@ -1491,11 +1606,40 @@ style='display:none' class='divMinimizado'>
             <p class="perfil-widget__fecha" id="pfechaactual"></p>
         </div>
 
-        <input id="btnRegistrarAsistencia"
-               type="button"
-               value="Marcar entrada"
-               class="btn4 perfil-widget__btn"
-               onclick="registrarAsistencia();" />
+        <div class="perfil-widget__asistencia">
+            <input id="btnRegistrarAsistencia"
+                   type="button"
+                   value="Marcar entrada"
+                   class="btn4 perfil-widget__btn"
+                   onclick="registrarAsistencia();" />
+            <div class="perfil-widget__estado-asistencia" id="estadoAsistenciaUsuario" aria-live="polite">
+                <span class="perfil-widget__estado-dot"></span>
+                <span id="textoEstadoAsistencia">Verificando jornada</span>
+            </div>
+            <div class="perfil-widget__progreso-jornada perfil-widget__progreso-jornada--sin-jornada" id="progresoJornadaProgramadaTopbar" aria-live="polite">
+                <div class="perfil-widget__progreso-copy">
+                    <span id="estadoProgresoJornadaTopbar">Hoy sin jornada programada</span>
+                    <strong id="textoProgresoJornadaTopbar">Avance horario programado &middot; 0%</strong>
+                </div>
+                <div class="perfil-widget__progreso-barra" aria-hidden="true">
+                    <span id="barraProgresoJornadaTopbar"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="perfil-widget__recordatorio-entrada" id="recordatorioEntradaPendiente" aria-live="polite">
+            <div class="perfil-widget__recordatorio-copy">
+                <strong>Entrada pendiente</strong>
+                <span>Tu jornada programada est&aacute; en curso y a&uacute;n no registraste entrada.</span>
+                <small>Pod&eacute;s marcar tu entrada ahora o continuar usando el sistema. Esta acci&oacute;n quedar&aacute; registrada para control administrativo.</small>
+                <small>La barra indica avance horario programado, no asistencia confirmada.</small>
+            </div>
+            <div class="perfil-widget__recordatorio-actions">
+                <button type="button" class="perfil-widget__recordatorio-primary" onclick="marcarEntradaDesdeRecordatorio()">Marcar entrada</button>
+                <button type="button" onclick="posponerRecordatorioEntradaPendiente()">Recordarme en 10 min</button>
+                <button type="button" onclick="continuarSinMarcarEntradaPendiente()">Continuar sin marcar</button>
+            </div>
+        </div>
 
         <div class="solicitud-eliminacion-pendiente-widget" id="contenedorSolicitudEliminadoPendiente" style="display:none">
             <button type="button" class="solicitud-eliminacion-pendiente-button" onclick="toggleDropdownSolicitudEliminado()" title="Solicitudes de eliminacion pendientes">
@@ -1511,7 +1655,7 @@ style='display:none' class='divMinimizado'>
             </div>
         </div>
 
-        <table class="perfil-widget__registro" id="tableRegistroEntrada">
+        <table class="perfil-widget__registro" id="tableRegistroEntrada" style="display:none">
             <thead>
                 <tr class="tableCabeceraRegistro">
                     <td class="td_registro">Fecha de entrada</td>
@@ -3229,7 +3373,7 @@ style='width: 70px;'>
 <td>
 <center>
 
-<div id='divAbmUsuario2' style='display:none;width:96vw;max-width:1120px;min-height:auto;max-height:92vh;overflow:auto;box-sizing:border-box;' class='divAbms'>
+<div id='divAbmUsuario2' style='display:none;width:98vw;max-width:none;height:94vh;min-height:0;overflow:hidden;box-sizing:border-box;' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -3303,87 +3447,77 @@ title='Volver Atras' onclick='verCerrarVentanaAbmUsuarios("2","")' />
 
 <center>
 <div id='funcionarioFormularioEdicion' style='overflow:auto;padding:0 12px 12px 12px;box-sizing:border-box;'>
-<div style='display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:14px;'>
-<div class='divMenuFloat3' style='float:none;width:calc(50% - 7px);min-width:320px;max-width:540px;margin:0;padding:0;'>
-<div class='divMenuf' style='width:100%;height:100%;box-sizing:border-box;padding:14px;text-align:left;'>
-<p class='pTituloC' style='font-size:13px;margin-bottom:12px;'>Foto Perfil</p>
-<div style='padding:14px;border:1px solid rgb(226,226,226);border-radius:10px;background-color:rgb(249,249,249);text-align:center;'>
+<div class='funcionario-form-layout' style='display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:14px;'>
+<div class='divMenuFloat3 funcionario-form-column funcionario-form-column--datos' style='float:none;width:38%;min-width:320px;max-width:540px;margin:0;padding:0;'>
+<div class='divMenuf funcionario-form-card' style='width:100%;height:100%;box-sizing:border-box;padding:14px;text-align:left;'>
+<div class='funcionario-profile-strip'>
 <div id='imgFotoPerfil1'
 onclick='verCerrarVisorImagen("1","Perfil")'
-class='imgFotoCi' style='background-image:url(/GoodVentaAsisCap/iconos/sinperfil.png);width:220px;height:190px;margin:0 auto 12px auto;border-radius:10px;'></div>
-<input type='button' value='Explorar' class='btn4' onclick='ExploradorImagenCliente("Perfil")' style='width:130px;' />
+class='imgFotoCi funcionario-profile-strip__avatar' style='background-image:url(/GoodVentaAsisCap/iconos/sinperfil.png);'></div>
+<div class='funcionario-profile-strip__copy'>
+<span>Perfil del funcionario</span>
+<strong id='funcionarioFormNombre'>Funcionario</strong>
+<small id='funcionarioFormCargo'>Cargo o funci&oacute;n</small>
+<em id='funcionarioFormEstado'>Estado laboral</em>
+</div>
+<input type='button' value='Cambiar foto' class='btn4 funcionario-profile-strip__action' onclick='ExploradorImagenCliente("Perfil")' />
 </div>
 
-<div style='margin-top:14px;'>
+<section class='funcionario-form-section'>
+<div class='funcionario-form-section__head'>
+<strong>Datos personales</strong>
+<span>Identificaci&oacute;n y contacto</span>
+</div>
+<div class='funcionario-form-grid'>
+<div class='funcionario-form-field funcionario-form-field--full'>
 <p class='pTituloC'>Usuario :</p>
 <input class='inputText' type='text' placeholder='Obligatorio (*)'
 id='inptNombreApellidoUsuario' style='width:100%;box-sizing:border-box;' />
 </div>
-
-<div style='margin-top:12px;'>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Nro Documento :</p>
 <input class='inputText' type='text' placeholder='Obligatorio (*)'
 id='inptNroDocUsuario' style='width:100%;box-sizing:border-box;' />
 </div>
-
-<div style='display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;'>
-<div style='flex:1 1 220px;'>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Nro Telef. :</p>
 <input class='inputText' type='text' placeholder=''
 id='inptNroTelefUsuario' style='width:100%;box-sizing:border-box;' />
 </div>
-<div style='flex:1 1 220px;'>
+<div class='funcionario-form-field funcionario-form-field--full'>
 <p class='pTituloC'>Nro Telef. de Referencia :</p>
 <input class='inputText' type='text' placeholder=''
 id='inptNroTelefReferenciaUser' style='width:100%;box-sizing:border-box;' />
 </div>
+<div class='funcionario-form-field funcionario-form-field--full'>
+<p class='pTituloC'>Direcci&oacute;n :</p>
+<textarea class='inputText' id='inptDireccionUser' style='width:100%;min-height:76px;box-sizing:border-box;resize:vertical;'></textarea>
 </div>
+</div>
+</section>
 
-<div style='display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;'>
-<div style='flex:1 1 220px;'>
+<section class='funcionario-form-section'>
+<div class='funcionario-form-section__head'>
+<strong>Datos administrativos</strong>
+<span>Sucursal, estado y funci&oacute;n</span>
+</div>
+<div class='funcionario-form-grid'>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Fecha creaci&oacute;n :</p>
 <input class='inputText' type='date' id='inptFechaCreacionMUser' style='width:100%;box-sizing:border-box;'>
 </div>
-<div style='flex:1 1 220px;'>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Estado:</p>
 <select class='inputSelect' id='inptEstadoUser' style='width:100%;box-sizing:border-box;'>
 <option value="Activo">ACTIVO</option>
 <option value="Inactivo">INACTIVO</option>
 </select>
 </div>
-</div>
-
-<div style='margin-top:12px;'>
-<p class='pTituloC'>Direcci&oacute;n :</p>
-<textarea class='inputText' id='inptDireccionUser' style='width:100%;min-height:96px;box-sizing:border-box;resize:vertical;'></textarea>
-</div>
-</div>
-</div>
-
-<div class='divMenuFloat3' style='float:none;width:calc(50% - 7px);min-width:320px;max-width:540px;margin:0;padding:0;'>
-<div class='divMenuf' style='width:100%;height:100%;box-sizing:border-box;padding:14px;text-align:left;'>
-<div style='display:flex;flex-wrap:wrap;gap:12px;'>
-<div style='flex:1 1 220px;'>
-<p class='pTituloC'>Login :</p>
-<input class='inputText' type='text' placeholder='Obligatorio (*)'
-id='inptClaveAcceso' style='width:100%;box-sizing:border-box;' />
-</div>
-<div style='flex:1 1 220px;'>
-<p class='pTituloC'>Acciones de contrase&ntilde;a :</p>
-<input type='hidden' id='inptContrasenhaUser' />
-<input class='inputText' type='Password' placeholder='Clave temporal o nueva clave'
-id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display:none;' />
-<button type='button' class='btn5 funcionario-password-action' onclick='habilitarCambioContrasenhaFuncionario()'>Restablecer contrase&ntilde;a</button>
-<p class='funcionario-field-help'>La contrase&ntilde;a actual no se muestra ni se edita directamente.</p>
-</div>
-</div>
-
-<div style='display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;'>
-<div style='flex:1 1 220px;'>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Local :</p>
 <select class='inputSelect' id='inptlocaluser' style='width:100%;box-sizing:border-box;'></select>
 </div>
-<div style='flex:1 1 220px;'>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Tipo Usuario :</p>
 <select class='inputSelect' id='inptTipoUsuUser' style='width:100%;box-sizing:border-box;'>
 <option value="">SELECCIONAR</option>
@@ -3392,42 +3526,140 @@ id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display
 </select>
 </div>
 </div>
+</section>
 
-<div style='margin-top:12px;'>
+<section class='funcionario-form-section'>
+<div class='funcionario-form-section__head'>
+<strong>Seguridad / acceso</strong>
+<span>Credenciales y permisos del sistema</span>
+</div>
+<div class='funcionario-form-grid'>
+<div class='funcionario-form-field'>
+<p class='pTituloC'>Login :</p>
+<input class='inputText' type='text' placeholder='Obligatorio (*)'
+id='inptClaveAcceso' style='width:100%;box-sizing:border-box;' />
+</div>
+<div class='funcionario-form-field'>
 <p class='pTituloC'>Rol de acceso :</p>
 <select class='inputSelect' id='inptAccesoUser' style='width:100%;box-sizing:border-box;'>
 <option value="Administrador">ADMINISTRADOR</option>
 <option value="Vendedor">VENDEDOR</option>
 </select>
 </div>
+<div class='funcionario-form-field funcionario-form-field--full'>
+<p class='pTituloC'>Acciones de contrase&ntilde;a :</p>
+<input type='hidden' id='inptContrasenhaUser' />
+<input class='inputText' type='Password' placeholder='Clave temporal o nueva clave'
+id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display:none;' />
+<button type='button' class='btn5 funcionario-password-action' onclick='habilitarCambioContrasenhaFuncionario()'>Restablecer contrase&ntilde;a</button>
+<p class='funcionario-field-help'>La contrase&ntilde;a actual no se muestra ni se edita directamente.</p>
+</div>
+</div>
+</section>
 
-<div style='margin-top:12px;'>
+<section class='funcionario-form-section'>
+<div class='funcionario-form-section__head'>
+<strong>Relacionamiento</strong>
+<span>Notas administrativas internas</span>
+</div>
+<div class='funcionario-form-field funcionario-form-field--full'>
 <p class='pTituloC'>Tipo de relacionamiento:</p>
-<textarea class='inputText' id='inptTipoRelacionamientoUser' style='width:100%;min-height:86px;box-sizing:border-box;resize:vertical;'></textarea>
+<textarea class='inputText' id='inptTipoRelacionamientoUser' style='width:100%;min-height:70px;box-sizing:border-box;resize:vertical;'></textarea>
+</div>
+</section>
+</div>
 </div>
 
-  <div style='margin-top:14px;'>
-    <div style='display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;'>
-      <p class='pTituloC'>Dias laborales:</p>
-      <input type='button' value='Agregar horario' class='btn5' onclick='agregarFilaHorarioUsuario();' />
+<div class='divMenuFloat3 funcionario-form-column funcionario-form-column--jornada' style='float:none;width:calc(62% - 14px);min-width:360px;max-width:none;margin:0;padding:0;'>
+<div class='divMenuf funcionario-form-card funcionario-form-card--right' style='width:100%;height:100%;box-sizing:border-box;padding:14px;text-align:left;'>
+<div class='jornada-mes-resumen-card' id='resumenJornadaMesUsuario'>
+  <div class='jornada-mes-resumen-card__head'>
+    <div>
+      <p class='pTituloC jornada-mes-resumen-card__title'>Jornada laboral esperada del mes</p>
+      <span id='resumenJornadaMesTituloUsuario'>Mes actual</span>
     </div>
-    <table class='tableCabeceraRegistro' style='width:100%;'>
-      <tr>
-        <td class='td_registro' style='width:22%;'>DIA</td>
-        <td class='td_registro' style='width:22%;'>LOCAL</td>
-        <td class='td_registro' style='width:22%;'>HORA ENTRADA</td>
-        <td class='td_registro' style='width:22%;'>HORA SALIDA</td>
-        <td class='td_registro' style='width:12%;'>ACCION</td>
-      </tr>
-    </table>
-    <div style='max-height:220px;overflow-y:auto;border:1px solid rgb(226,226,226);border-top:none;border-radius:0 0 10px 10px;background-color:rgb(255,255,255);'>
-      <table id='tableHorariosUsuario' border='0' cellspacing='0' cellpadding='5' style='width:100%;border-collapse:collapse;box-sizing:border-box;'>
-        <tbody id='tbodyHorariosUsuario'></tbody>
-      </table>
-    </div>
+  </div>
+  <div class='jornada-mes-resumen-card__metrics' id='resumenJornadaMesMetricasUsuario'>Sin jornada laboral esperada cargada.</div>
+  <div class='jornada-mes-resumen-card__list' id='resumenJornadaMesListaUsuario'>
+    <div class='jornada-mes-resumen-card__empty'>La previsualizaci&oacute;n se actualiza con la plantilla semanal activa.</div>
+  </div>
+  <div class='jornada-mes-resumen-card__actions'>
+    <button type='button' onclick='verCalendarioCompletoJornadaUsuario()'>Ver calendario completo</button>
+    <button type='button' onclick='editarJornadaLaboralUsuario()'>Editar jornada</button>
   </div>
 </div>
 </div>
+</div>
+
+  <div class='jornada-esperada-card'>
+    <div class='jornada-esperada-header'>
+      <div>
+        <p class='pTituloC jornada-esperada-title'>Jornada laboral esperada</p>
+        <span>Definí los días y horarios que este funcionario debe trabajar. Esta información alimenta el Informe de Asistencia.</span>
+      </div>
+      <input type='button' value='Agregar día laboral' class='btn5' onclick='agregarFilaHorarioUsuario();' />
+    </div>
+    <div class='jornada-esperada-actions'>
+      <button type='button' onclick="aplicarPlantillaHorarioUsuario('completa_lunes_viernes')">Jornada completa L-V</button>
+      <button type='button' onclick="aplicarPlantillaHorarioUsuario('medio_manana_lunes_viernes')">Media jornada ma&ntilde;ana</button>
+      <button type='button' onclick="aplicarPlantillaHorarioUsuario('medio_tarde_lunes_viernes')">Media jornada tarde</button>
+      <button type='button' onclick="aplicarPlantillaHorarioUsuario('tres_veces_semana')">Tres veces/semana</button>
+      <button type='button' onclick="aplicarPlantillaHorarioUsuario('solo_sabados')">Solo sábados</button>
+      <button type='button' onclick="aplicarPlantillaHorarioUsuario('turno_noche')">Turno noche</button>
+    </div>
+    <div class='jornada-esperada-help'>Si el horario cambia desde una fecha, no borres el anterior: cerrá la vigencia y creá uno nuevo.</div>
+    <div class='jornada-seccion-label'>Plantilla semanal activa</div>
+    <div class='jornada-esperada-table-wrap'>
+      <table id='tableHorariosUsuario' class='jornada-esperada-table' border='0' cellspacing='0' cellpadding='5'>
+        <thead>
+          <tr>
+            <th>Día</th>
+            <th>Local</th>
+            <th>Tipo</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Descanso</th>
+            <th>Horas esperadas</th>
+            <th>Vigencia</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id='tbodyHorariosUsuario'></tbody>
+      </table>
+    </div>
+    <div class='jornada-esperada-summary' id='resumenJornadaEsperadaUsuario'>Sin jornada laboral esperada cargada.</div>
+    <div class='jornada-calendario-shell'>
+      <div class='jornada-calendario-title'>
+        <strong>Calendario esperado del mes</strong>
+        <span id='tituloCalendarioEsperadoUsuario'>Mes actual</span>
+      </div>
+      <div class='jornada-calendario-resumen' id='resumenCalendarioEsperadoUsuario'>El calendario se actualiza con la plantilla semanal activa.</div>
+      <div class='jornada-calendario-leyenda' aria-label='Leyenda del calendario esperado'>
+        <span class='jornada-leyenda-item jornada-leyenda--completa'>Jornada completa</span>
+        <span class='jornada-leyenda-item jornada-leyenda--medio'>Media jornada</span>
+        <span class='jornada-leyenda-item jornada-leyenda--parcial'>Jornada parcial</span>
+        <span class='jornada-leyenda-item jornada-leyenda--noche'>Turno noche</span>
+        <span class='jornada-leyenda-item jornada-leyenda--libre'>Descanso</span>
+        <span class='jornada-leyenda-item jornada-leyenda--especial'>Feriado / permiso / reposo</span>
+      </div>
+      <div class='jornada-calendario-dias' aria-hidden='true'>
+        <span>Lun</span>
+        <span>Mar</span>
+        <span>Mi&eacute;</span>
+        <span>Jue</span>
+        <span>Vie</span>
+        <span>S&aacute;b</span>
+        <span>Dom</span>
+      </div>
+      <div class='jornada-calendario-grid' id='calendarioEsperadoUsuario'></div>
+      <div class='jornada-calendario-detalle' id='detalleCalendarioEsperadoUsuario'>Seleccion&aacute; un d&iacute;a del calendario para ver el detalle esperado.</div>
+    </div>
+    <div class='jornada-excepciones-shell'>
+      <strong>Excepciones y cambios puntuales</strong>
+      <span>Base preparada para permisos, vacaciones, reposos, cambios de horario y trabajo extra por fecha.</span>
+    </div>
+  </div>
 
 <div class='divMenuFloat3' style='float:none;width:100%;margin:0;padding:0;' id='divHistorialPersonasUsuario'>
 <div class='divMenuf' style='width:100%;box-sizing:border-box;padding:14px;text-align:left;'>
@@ -21482,15 +21714,43 @@ ZONA
                         </select>
                       </td>
 
+                      <td style="width:15%;">
+                        <p class="pTituloC">Funcionario</p>
+                        <input class="inputText" type="text" id="inptInformeAsistencia2" placeholder="Todos" style="width:220px" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
+                      </td>
+
+                      <td style="width:15%;">
+                        <p class="pTituloC">Estado / incidencia</p>
+                        <select class="inputSelect" id="inptEstadoInformeAsistencia" style="width:190px" onchange="obtenerVistaInformeAsistencia()">
+                          <option value="">Todos</option>
+                          <option value="incidencias">Con incidencias</option>
+                          <option value="sin_salida">Sin salida</option>
+                          <option value="revisar">A revisar</option>
+                          <option value="ausente">Ausente</option>
+                          <option value="parcial">Parcial</option>
+                          <option value="cumplido">Cumplido</option>
+                          <option value="sin_calendario">Sin calendario</option>
+                        </select>
+                      </td>
+
                       <td style="width:60%;text-align:right">
                         <input type="button" style="margin-top: 17px;" value="Buscar" class="btn4"
                           onclick="obtenerVistaInformeAsistencia()">
+                        <input type="button" style="margin-top: 17px;width:120px;background-color:#6b7280;" value="Limpiar filtros" class="btn4"
+                          onclick="limpiarFiltrosInformeAsistencia()">
                         <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('asistencia')"
                           style="width:100px;background-color: rgb(58 58 58);">
                       </td>
                     </tr>
                   </tbody>
                 </table>
+                <div class="asistencia-periodo-atajos" aria-label="Accesos rapidos de periodo">
+                  <button type="button" onclick="aplicarPeriodoRapidoInformeAsistencia('hoy')">Hoy</button>
+                  <button type="button" onclick="aplicarPeriodoRapidoInformeAsistencia('ayer')">Ayer</button>
+                  <button type="button" onclick="aplicarPeriodoRapidoInformeAsistencia('semana')">Esta semana</button>
+                  <button type="button" onclick="aplicarPeriodoRapidoInformeAsistencia('mes')">Este mes</button>
+                  <button type="button" onclick="aplicarPeriodoRapidoInformeAsistencia('mes_anterior')">Mes anterior</button>
+                </div>
               </div>
 
               <div class="divMenuf" style="    width: 97%;">
@@ -21521,32 +21781,15 @@ ZONA
                     </tr>
                   </tbody>
                 </table>
-                <table class="tableCabeceraRegistro" id="tdTituloAudiProducto">
-                  <tbody>
-                    <tr>
-                      <td class="td_registro" style="width:9%;">
-                        <input class="inputfiltro" type="number" id="inptInformeAsistencia1" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
-                      </td>
-                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia1')"></td>
-                      <td class="td_registro" style="width:19%;">
-                        <input class="inputfiltro" type="text" id="inptInformeAsistencia2" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
-                      </td>
-                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia2')"></td>
-                      <td class="td_registro" style="width:19%;">
-                        <input class="inputfiltro" type="Date" id="inptInformeAsistencia3" onkeyup="if(event.keyCode == 13){obtenerVistaInformeAsistencia()}">
-                      </td>
-                      <td style="width: 1%;"><img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptInformeAsistencia3')"></td>
-                      <td class="td_registro" style="width:10%;">
-                      </td>
-                      <td class="td_registro" style="width:10%;">
-                      </td>
-                      <td class="td_registro" style="width:10%;">
-                      </td>
-                      <td class="td_registro" style="width:20%;">
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <input type="hidden" id="inptInformeAsistencia1">
+                <input type="hidden" id="inptInformeAsistencia3">
+                <div class="asistencia-filtros-aplicados" id="resumenFiltrosInformeAsistencia">
+                  <strong>Filtros aplicados</strong>
+                  <span>Periodo: Hoy</span>
+                  <span>Local: Todos</span>
+                  <span>Funcionario: Todos</span>
+                  <span>Estado: Todos</span>
+                </div>
                 <div class="divTablesScrool" id="TableScroollAudiProducto2" style="height: 300px;">
                   <div class="div_cuerpo_table" id="table_InformeAsistencia"
                     style="height: auto;border:none;width: 100%;">
@@ -21568,12 +21811,12 @@ ZONA
                     <tbody>
                       <tr>
                         <td style="width:15%;text-align:left">
-                          <p class="pTituloC">Total Registro:</p>
+                          <p class="pTituloC">Funcionarios evaluados:</p>
                           <input class="inputTextDisable" type="text" disabled="" id="inptTotalRegistoInformeAsistencia"
                             style="width:120px;text-align:center">
                         </td>
                         <td style="width:15%;text-align:left">
-                          <p class="pTituloC">Total minutos:</p>
+                          <p class="pTituloC">Total trabajado:</p>
                           <input class="inputTextDisable" type="text" disabled="" id="inptTotalMinutosInformeAsistencia"
                             style="width:120px;text-align:center">
                         </td>

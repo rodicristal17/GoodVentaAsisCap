@@ -6,6 +6,7 @@
 require("conexion.php");
 
 include("verificar_navegador.php");
+include_once("abmusuarios.php");
 function verificar()
 {
 	
@@ -119,9 +120,15 @@ exit;
 function buscarHorariosUsuarioPerfil($mysqli,$cod_usuario)
 {
 	$horarios=array();
+	if (function_exists('asegurarEstructuraHorarioUsuarioEsperado')) {
+		asegurarEstructuraHorarioUsuarioEsperado($mysqli);
+	}
 	$sql= "SELECT dia_semana,cod_localFK,TIME_FORMAT(hora_entrada,'%H:%i') AS hora_entrada,TIME_FORMAT(hora_salida,'%H:%i') AS hora_salida
 		FROM horario_usuario
 		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL
+		AND IFNULL(estado_horario,'activo')='activo'
+		AND (vigente_desde IS NULL OR vigente_desde <= CURDATE())
+		AND (vigente_hasta IS NULL OR vigente_hasta >= CURDATE())
 		ORDER BY FIELD(dia_semana,'lunes','martes','miercoles','jueves','viernes','sabado','domingo'), hora_entrada ASC, id ASC";
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt) {

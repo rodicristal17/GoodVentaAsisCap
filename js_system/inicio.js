@@ -134,7 +134,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=recordatorio-entrada-20260609")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -541,6 +541,42 @@ function textoNormalizadoFuncionario(texto) {
 		.normalize("NFD")
 		.replace(/[\u0300-\u036f]/g, "")
 		.trim();
+}
+
+function actualizarCabeceraFormularioFuncionario() {
+	var nombre = document.getElementById("inptNombreApellidoUsuario");
+	var cargo = document.getElementById("inptTipoUsuUser");
+	var estado = document.getElementById("inptEstadoUser");
+	var nombreSalida = document.getElementById("funcionarioFormNombre");
+	var cargoSalida = document.getElementById("funcionarioFormCargo");
+	var estadoSalida = document.getElementById("funcionarioFormEstado");
+	var textoEstado = estado && estado.value ? estado.value : "Estado laboral";
+
+	if (nombreSalida) {
+		nombreSalida.innerHTML = escaparHtmlFuncionario(nombre && nombre.value ? nombre.value : "Funcionario");
+	}
+	if (cargoSalida) {
+		cargoSalida.innerHTML = escaparHtmlFuncionario(cargo && cargo.value ? cargo.value : "Cargo o funcion");
+	}
+	if (estadoSalida) {
+		estadoSalida.innerHTML = escaparHtmlFuncionario(textoEstado);
+		estadoSalida.className = textoNormalizadoFuncionario(textoEstado) == "activo" ? "is-active" : (textoEstado == "Estado laboral" ? "" : "is-inactive");
+	}
+}
+
+function inicializarCabeceraFormularioFuncionario() {
+	var ids = ["inptNombreApellidoUsuario", "inptTipoUsuUser", "inptEstadoUser"];
+	for (var i = 0; i < ids.length; i++) {
+		var campo = document.getElementById(ids[i]);
+		if (!campo) { continue; }
+		campo.addEventListener("input", actualizarCabeceraFormularioFuncionario);
+		campo.addEventListener("change", actualizarCabeceraFormularioFuncionario);
+	}
+	actualizarCabeceraFormularioFuncionario();
+}
+
+if (document.addEventListener) {
+	document.addEventListener("DOMContentLoaded", inicializarCabeceraFormularioFuncionario);
 }
 
 function obtenerHorariosFuncionario(registro) {
@@ -1317,6 +1353,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 							horarios_usuario: datos["18"] || []
 						};
 						actualizarEstadoPerfilUsuarioActual();
+						if (typeof actualizarProgresoJornadaTopbarUsuario == "function") {
+							actualizarProgresoJornadaTopbarUsuario();
+						}
 						
 						// Se indica el local
 						document.getElementById('inptLocalMisDatos').value = cod_localFKUSer;
@@ -1634,7 +1673,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=recordatorio-entrada-20260609")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -1904,6 +1943,8 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptNroTelefReferenciaUser').value = $(datostr).children('td[id="td_datos_12"]').html();
 	document.getElementById('inptDireccionUser').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptFechaCreacionMUser').value = $(datostr).children('td[id="td_datos_15"]').html();
+	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
+	reiniciarJustificacionesJornadaMesUsuario();
 
 	limpiarHorariosUsuario();
 	cargarHorariosUsuarioDesdeJson($(datostr).children('td[id="td_datos_22"]').text());
@@ -1912,9 +1953,9 @@ function obtenerdatosabmusuario(datostr) {
 	$("div[id=imgFotoPerfil1]").css({"background-image":"url("+fotocliente3+")"}) 
     extcliente3=""; 
 	
-	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
-    document.getElementById('btnEditarUsuario').style.backgroundColor="";
-    document.getElementById('btnAbmUsuario').value = "Editar datos";
+	document.getElementById('btnEditarUsuario').style.backgroundColor="";
+    document.getElementById('btnAbmUsuario').value = "ACTUALIZAR DATOS";
+	actualizarCabeceraFormularioFuncionario();
 
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
 	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
@@ -1964,57 +2005,6 @@ function obtenerOpcionesLocalHorarioUsuario(localSeleccionado) {
 	return opciones;
 }
 
-function agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida, codLocalFK) {
-	var tbody = document.getElementById("tbodyHorariosUsuario");
-	if (!tbody) {
-		return;
-	}
-
-	dia = dia || "lunes";
-	horaEntrada = horaEntrada || "";
-	horaSalida = horaSalida || "";
-	codLocalFK = codLocalFK || (document.getElementById("inptlocaluser") ? document.getElementById("inptlocaluser").value : "");
-
-	var fila = document.createElement("tr");
-	fila.className = "filaHorarioUsuario";
-	fila.innerHTML =
-		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
-			"<select class='inputSelect horarioUsuarioDia' style='width:100%;box-sizing:border-box;'>" +
-				obtenerOpcionesDiaHorarioUsuario(dia) +
-			"</select>" +
-		"</td>" +
-		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
-			"<select class='inputSelect horarioUsuarioLocal' style='width:100%;box-sizing:border-box;'>" +
-				obtenerOpcionesLocalHorarioUsuario(codLocalFK) +
-			"</select>" +
-		"</td>" +
-		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
-			"<input type='time' class='inputText horarioUsuarioEntrada' value='" + horaEntrada + "' style='width:100%;box-sizing:border-box;' />" +
-		"</td>" +
-		"<td style='width:22%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);'>" +
-			"<input type='time' class='inputText horarioUsuarioSalida' value='" + horaSalida + "' style='width:100%;box-sizing:border-box;' />" +
-		"</td>" +
-		"<td style='width:12%;padding:6px 8px;border-bottom:1px solid rgb(238,238,238);text-align:center;'>" +
-			"<input type='button' value='Eliminar' class='btn4' onclick='eliminarFilaHorarioUsuario(this);' />" +
-		"</td>";
-
-	tbody.appendChild(fila);
-}
-
-function eliminarFilaHorarioUsuario(boton) {
-	var fila = boton ? boton.closest("tr") : null;
-	if (fila) {
-		fila.parentNode.removeChild(fila);
-	}
-}
-
-function limpiarHorariosUsuario() {
-	var tbody = document.getElementById("tbodyHorariosUsuario");
-	if (tbody) {
-		tbody.innerHTML = "";
-	}
-}
-
 function cargarHorarioUsuarioDesdeRegistro(dia, horaEntrada, horaSalida, codLocalFK) {
 	horaEntrada = $.trim(horaEntrada || "");
 	horaSalida = $.trim(horaSalida || "");
@@ -2026,62 +2016,1239 @@ function cargarHorarioUsuarioDesdeRegistro(dia, horaEntrada, horaSalida, codLoca
 	agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida, codLocalFK);
 }
 
+function obtenerOpcionesTipoJornadaUsuario(tipoSeleccionado) {
+	var tipos = [
+		["completa", "Jornada completa"],
+		["medio_dia_manana", "Media jornada ma\u00f1ana"],
+		["medio_dia_tarde", "Media jornada tarde"],
+		["parcial", "Jornada parcial"],
+		["noche", "Turno noche"],
+		["especial", "Feriado / permiso / reposo"],
+		["no_laboral", "D\u00eda no laboral"]
+	];
+	var opciones = "";
+	for (var i = 0; i < tipos.length; i++) {
+		var seleccionado = tipos[i][0] == tipoSeleccionado ? " selected" : "";
+		opciones += "<option value='" + tipos[i][0] + "'" + seleccionado + ">" + tipos[i][1] + "</option>";
+	}
+	return opciones;
+}
+
+function obtenerOpcionesEstadoHorarioUsuario(estadoSeleccionado) {
+	estadoSeleccionado = estadoSeleccionado || "activo";
+	return "<option value='activo'" + (estadoSeleccionado == "activo" ? " selected" : "") + ">Activo</option>"
+		+ "<option value='inactivo'" + (estadoSeleccionado == "inactivo" ? " selected" : "") + ">Inactivo</option>";
+}
+
+function obtenerFechaHoyHorarioUsuario() {
+	var fecha = new Date();
+	return fecha.getFullYear() + "-" + String(fecha.getMonth() + 1).padStart(2, "0") + "-" + String(fecha.getDate()).padStart(2, "0");
+}
+
+function minutosDesdeHoraUsuario(hora) {
+	if (!hora || !/^\d{2}:\d{2}$/.test(hora)) { return null; }
+	var partes = hora.split(":");
+	return (parseInt(partes[0], 10) * 60) + parseInt(partes[1], 10);
+}
+
+function calcularMinutosEsperadosHorarioUsuario(entrada, salida, descansoInicio, descansoFin, tipoJornada) {
+	if (tipoJornada == "no_laboral") { return 0; }
+	var inicio = minutosDesdeHoraUsuario(entrada);
+	var fin = minutosDesdeHoraUsuario(salida);
+	if (inicio === null || fin === null) { return 0; }
+	if (fin <= inicio && tipoJornada == "noche") { fin += 1440; }
+	if (fin <= inicio) { return 0; }
+	var minutos = fin - inicio;
+	var descansoI = minutosDesdeHoraUsuario(descansoInicio);
+	var descansoF = minutosDesdeHoraUsuario(descansoFin);
+	if (descansoI !== null && descansoF !== null && descansoF > descansoI && descansoI >= inicio && descansoF <= fin) {
+		minutos -= (descansoF - descansoI);
+	}
+	return Math.max(0, minutos);
+}
+
+function formatearHorasEsperadasUsuario(minutos) {
+	var horas = Math.round((parseInt(minutos || 0, 10) / 60) * 100) / 100;
+	return String(horas).replace(".", ",") + " h";
+}
+
+function obtenerDatosFilaHorarioUsuario(fila) {
+	return {
+		dia: fila.querySelector(".horarioUsuarioDia").value,
+		cod_localFK: fila.querySelector(".horarioUsuarioLocal").value,
+		tipo_jornada: fila.querySelector(".horarioUsuarioTipo").value,
+		hora_entrada: fila.querySelector(".horarioUsuarioEntrada").value,
+		hora_salida: fila.querySelector(".horarioUsuarioSalida").value,
+		descanso_inicio: fila.querySelector(".horarioUsuarioDescansoInicio").value,
+		descanso_fin: fila.querySelector(".horarioUsuarioDescansoFin").value,
+		vigente_desde: fila.querySelector(".horarioUsuarioVigenteDesde").value,
+		vigente_hasta: fila.querySelector(".horarioUsuarioVigenteHasta").value,
+		estado_horario: fila.querySelector(".horarioUsuarioEstado").value,
+		observacion: fila.querySelector(".horarioUsuarioObservacion").value
+	};
+}
+
+function actualizarFilaHorarioUsuario(elemento) {
+	var fila = elemento && elemento.closest ? elemento.closest("tr") : null;
+	if (!fila) { return; }
+	var datos = obtenerDatosFilaHorarioUsuario(fila);
+	var minutos = calcularMinutosEsperadosHorarioUsuario(datos.hora_entrada, datos.hora_salida, datos.descanso_inicio, datos.descanso_fin, datos.tipo_jornada);
+	var salidaHoras = fila.querySelector(".horarioUsuarioHoras");
+	if (salidaHoras) {
+		salidaHoras.innerHTML = formatearHorasEsperadasUsuario(minutos);
+		salidaHoras.dataset.minutos = minutos;
+	}
+	actualizarResumenJornadaEsperadaUsuario();
+	renderCalendarioEsperadoUsuario();
+}
+
+function agregarFilaHorarioUsuario(dia, horaEntrada, horaSalida, codLocalFK, tipoJornada, descansoInicio, descansoFin, vigenteDesde, vigenteHasta, estadoHorario, observacion) {
+	var tbody = document.getElementById("tbodyHorariosUsuario");
+	if (!tbody) { return; }
+
+	dia = dia || "lunes";
+	horaEntrada = horaEntrada || "";
+	horaSalida = horaSalida || "";
+	codLocalFK = codLocalFK || (document.getElementById("inptlocaluser") ? document.getElementById("inptlocaluser").value : "");
+	tipoJornada = tipoJornada || "parcial";
+	descansoInicio = descansoInicio || "";
+	descansoFin = descansoFin || "";
+	vigenteDesde = vigenteDesde || obtenerFechaHoyHorarioUsuario();
+	vigenteHasta = vigenteHasta || "";
+	estadoHorario = estadoHorario || "activo";
+	observacion = observacion || "";
+	var minutos = calcularMinutosEsperadosHorarioUsuario(horaEntrada, horaSalida, descansoInicio, descansoFin, tipoJornada);
+
+	var fila = document.createElement("tr");
+	fila.className = "filaHorarioUsuario";
+	fila.innerHTML =
+		"<td><select class='inputSelect horarioUsuarioDia' style='width:100%;box-sizing:border-box;'>" + obtenerOpcionesDiaHorarioUsuario(dia) + "</select></td>" +
+		"<td><select class='inputSelect horarioUsuarioLocal' style='width:100%;box-sizing:border-box;'>" + obtenerOpcionesLocalHorarioUsuario(codLocalFK) + "</select></td>" +
+		"<td><select class='inputSelect horarioUsuarioTipo' style='width:100%;box-sizing:border-box;'>" + obtenerOpcionesTipoJornadaUsuario(tipoJornada) + "</select></td>" +
+		"<td><input type='time' class='inputText horarioUsuarioEntrada' value='" + horaEntrada + "' style='width:100%;box-sizing:border-box;' /></td>" +
+		"<td><input type='time' class='inputText horarioUsuarioSalida' value='" + horaSalida + "' style='width:100%;box-sizing:border-box;' /></td>" +
+		"<td><div class='jornada-descanso-fields'><input type='time' class='inputText horarioUsuarioDescansoInicio' value='" + descansoInicio + "'><input type='time' class='inputText horarioUsuarioDescansoFin' value='" + descansoFin + "'></div></td>" +
+		"<td><span class='horarioUsuarioHoras' data-minutos='" + minutos + "'>" + formatearHorasEsperadasUsuario(minutos) + "</span></td>" +
+		"<td><div class='jornada-vigencia-fields'><input type='date' class='inputText horarioUsuarioVigenteDesde' value='" + vigenteDesde + "'><input type='date' class='inputText horarioUsuarioVigenteHasta' value='" + vigenteHasta + "'></div><input type='text' class='inputText horarioUsuarioObservacion' placeholder='Observacion' value='" + escaparHtmlFuncionario(observacion) + "'></td>" +
+		"<td><select class='inputSelect horarioUsuarioEstado' style='width:100%;box-sizing:border-box;'>" + obtenerOpcionesEstadoHorarioUsuario(estadoHorario) + "</select></td>" +
+		"<td class='jornada-acciones'><button type='button' onclick='duplicarFilaHorarioUsuario(this)'>Copiar</button><button type='button' onclick='cerrarVigenciaHorarioUsuario(this)'>Cerrar</button><button type='button' onclick='eliminarFilaHorarioUsuario(this)'>Eliminar</button></td>";
+
+	tbody.appendChild(fila);
+	var controles = fila.querySelectorAll("input, select");
+	for (var i = 0; i < controles.length; i++) {
+		controles[i].addEventListener("change", function () { actualizarFilaHorarioUsuario(this); });
+		controles[i].addEventListener("input", function () { actualizarFilaHorarioUsuario(this); });
+	}
+	actualizarFilaHorarioUsuario(fila.querySelector(".horarioUsuarioEntrada"));
+}
+
+function eliminarFilaHorarioUsuario(boton) {
+	var fila = boton ? boton.closest("tr") : null;
+	if (fila) { fila.parentNode.removeChild(fila); }
+	actualizarResumenJornadaEsperadaUsuario();
+	renderCalendarioEsperadoUsuario();
+}
+
+function duplicarFilaHorarioUsuario(boton) {
+	var fila = boton ? boton.closest("tr") : null;
+	if (!fila) { return; }
+	var datos = obtenerDatosFilaHorarioUsuario(fila);
+	agregarFilaHorarioUsuario(datos.dia, datos.hora_entrada, datos.hora_salida, datos.cod_localFK, datos.tipo_jornada, datos.descanso_inicio, datos.descanso_fin, datos.vigente_desde, datos.vigente_hasta, datos.estado_horario, datos.observacion);
+}
+
+function cerrarVigenciaHorarioUsuario(boton) {
+	var fila = boton ? boton.closest("tr") : null;
+	if (!fila) { return; }
+	var fecha = new Date();
+	fecha.setDate(fecha.getDate() - 1);
+	var hasta = fecha.getFullYear() + "-" + String(fecha.getMonth() + 1).padStart(2, "0") + "-" + String(fecha.getDate()).padStart(2, "0");
+	fila.querySelector(".horarioUsuarioVigenteHasta").value = hasta;
+	fila.querySelector(".horarioUsuarioEstado").value = "inactivo";
+	actualizarFilaHorarioUsuario(fila.querySelector(".horarioUsuarioVigenteHasta"));
+}
+
+function limpiarHorariosUsuario() {
+	var tbody = document.getElementById("tbodyHorariosUsuario");
+	if (tbody) { tbody.innerHTML = ""; }
+	actualizarResumenJornadaEsperadaUsuario();
+	renderCalendarioEsperadoUsuario();
+}
+
 function cargarHorariosUsuarioDesdeJson(horariosJson) {
 	horariosJson = $.trim(horariosJson || "");
-
-	if (horariosJson == "") {
-		return false;
-	}
-
+	if (horariosJson == "") { return false; }
 	try {
 		var horarios = JSON.parse(horariosJson);
-
-		if (!Array.isArray(horarios) || horarios.length == 0) {
-			return false;
-		}
-
+		if (!Array.isArray(horarios) || horarios.length == 0) { return false; }
 		for (var i = 0; i < horarios.length; i++) {
 			agregarFilaHorarioUsuario(
 				horarios[i].dia || "lunes",
 				horarios[i].hora_entrada || "",
 				horarios[i].hora_salida || "",
-				horarios[i].cod_localFK || ""
+				horarios[i].cod_localFK || "",
+				horarios[i].tipo_jornada || "parcial",
+				horarios[i].descanso_inicio || "",
+				horarios[i].descanso_fin || "",
+				horarios[i].vigente_desde || "",
+				horarios[i].vigente_hasta || "",
+				horarios[i].estado_horario || "activo",
+				horarios[i].observacion || ""
 			);
 		}
-
 		return true;
 	} catch (error) {
 		return false;
 	}
 }
 
+function validarFilaHorarioUsuario(datos, indice) {
+	if (datos.tipo_jornada != "no_laboral") {
+		if (datos.hora_entrada == "" || datos.hora_salida == "") {
+			ver_vetana_informativa("Falta entrada o salida en la fila " + indice + " de la jornada laboral esperada.");
+			return false;
+		}
+		var inicio = minutosDesdeHoraUsuario(datos.hora_entrada);
+		var fin = minutosDesdeHoraUsuario(datos.hora_salida);
+		if (inicio === null || fin === null) {
+			ver_vetana_informativa("Horario invalido en la fila " + indice + ".");
+			return false;
+		}
+		if (fin <= inicio && datos.tipo_jornada != "noche") {
+			ver_vetana_informativa("La salida debe ser posterior a la entrada en la fila " + indice + ".");
+			return false;
+		}
+	}
+	var descansoI = minutosDesdeHoraUsuario(datos.descanso_inicio);
+	var descansoF = minutosDesdeHoraUsuario(datos.descanso_fin);
+	if ((datos.descanso_inicio != "" || datos.descanso_fin != "") && (descansoI === null || descansoF === null || descansoF <= descansoI)) {
+		ver_vetana_informativa("El descanso debe tener inicio y fin validos en la fila " + indice + ".");
+		return false;
+	}
+	if (datos.vigente_desde != "" && datos.vigente_hasta != "" && datos.vigente_hasta < datos.vigente_desde) {
+		ver_vetana_informativa("La vigencia hasta no puede ser menor a la vigencia desde en la fila " + indice + ".");
+		return false;
+	}
+	return true;
+}
+
+function rangosHorarioSeSolapan(a, b) {
+	var desdeA = a.vigente_desde || "1900-01-01";
+	var hastaA = a.vigente_hasta || "2999-12-31";
+	var desdeB = b.vigente_desde || "1900-01-01";
+	var hastaB = b.vigente_hasta || "2999-12-31";
+	return desdeA <= hastaB && desdeB <= hastaA;
+}
+
 function obtenerHorariosUsuarioFormulario() {
 	var horarios = [];
 	var filas = document.querySelectorAll("#tbodyHorariosUsuario tr");
+	for (var i = 0; i < filas.length; i++) {
+		var datos = obtenerDatosFilaHorarioUsuario(filas[i]);
+		if (datos.hora_entrada == "" && datos.hora_salida == "" && datos.tipo_jornada != "no_laboral") { continue; }
+		if (!validarFilaHorarioUsuario(datos, i + 1)) { return null; }
+		var minutos = calcularMinutosEsperadosHorarioUsuario(datos.hora_entrada, datos.hora_salida, datos.descanso_inicio, datos.descanso_fin, datos.tipo_jornada);
+		for (var j = 0; j < horarios.length; j++) {
+			if (horarios[j].estado_horario == "activo" && datos.estado_horario == "activo" && horarios[j].dia == datos.dia && String(horarios[j].cod_localFK) == String(datos.cod_localFK) && rangosHorarioSeSolapan(horarios[j], datos)) {
+				ver_vetana_informativa("Hay horarios activos solapados para " + datos.dia + " en el mismo local.");
+				return null;
+			}
+		}
+		horarios.push({
+			dia: datos.dia,
+			cod_localFK: datos.cod_localFK,
+			tipo_jornada: datos.tipo_jornada,
+			hora_entrada: datos.hora_entrada,
+			hora_salida: datos.hora_salida,
+			descanso_inicio: datos.descanso_inicio,
+			descanso_fin: datos.descanso_fin,
+			horas_esperadas_minutos: minutos,
+			jornada_equivalente: Math.round((minutos / 480) * 100) / 100,
+			vigente_desde: datos.vigente_desde,
+			vigente_hasta: datos.vigente_hasta,
+			estado_horario: datos.estado_horario,
+			observacion: datos.observacion
+		});
+	}
+	return horarios;
+}
+
+function aplicarPlantillaHorarioUsuario(tipo) {
+	var tbody = document.getElementById("tbodyHorariosUsuario");
+	if (!tbody) { return; }
+	if (tbody.children.length > 0 && !confirm("Esto reemplazara las filas actuales de jornada laboral esperada. Continuar?")) { return; }
+	limpiarHorariosUsuario();
+	var diasLV = ["lunes", "martes", "miercoles", "jueves", "viernes"];
+	var filas = [];
+	if (tipo == "completa_lunes_viernes") {
+		for (var i = 0; i < diasLV.length; i++) { filas.push([diasLV[i], "07:30", "17:30", "completa", "12:00", "14:00"]); }
+	} else if (tipo == "medio_manana_lunes_viernes") {
+		for (var j = 0; j < diasLV.length; j++) { filas.push([diasLV[j], "07:30", "12:00", "medio_dia_manana", "", ""]); }
+	} else if (tipo == "medio_tarde_lunes_viernes") {
+		for (var k = 0; k < diasLV.length; k++) { filas.push([diasLV[k], "14:00", "18:00", "medio_dia_tarde", "", ""]); }
+	} else if (tipo == "tres_veces_semana") {
+		filas = [["lunes", "14:00", "18:00", "parcial", "", ""], ["miercoles", "14:00", "18:00", "parcial", "", ""], ["viernes", "14:00", "18:00", "parcial", "", ""]];
+	} else if (tipo == "solo_sabados") {
+		filas = [["sabado", "07:30", "12:00", "medio_dia_manana", "", ""]];
+	} else if (tipo == "turno_noche") {
+		for (var n = 0; n < diasLV.length; n++) { filas.push([diasLV[n], "18:00", "22:00", "noche", "", ""]); }
+	}
+	for (var x = 0; x < filas.length; x++) {
+		agregarFilaHorarioUsuario(filas[x][0], filas[x][1], filas[x][2], "", filas[x][3], filas[x][4], filas[x][5], obtenerFechaHoyHorarioUsuario());
+	}
+}
+
+function actualizarResumenJornadaEsperadaUsuario() {
+	var resumen = document.getElementById("resumenJornadaEsperadaUsuario");
+	if (!resumen) { return; }
+	var filas = document.querySelectorAll("#tbodyHorariosUsuario tr");
+	var minutos = 0;
+	var activos = 0;
+	for (var i = 0; i < filas.length; i++) {
+		var datos = obtenerDatosFilaHorarioUsuario(filas[i]);
+		if (datos.estado_horario != "activo") { continue; }
+		activos++;
+		minutos += calcularMinutosEsperadosHorarioUsuario(datos.hora_entrada, datos.hora_salida, datos.descanso_inicio, datos.descanso_fin, datos.tipo_jornada);
+	}
+	if (activos == 0) {
+		resumen.innerHTML = "Sin jornada laboral esperada cargada.";
+		return;
+	}
+	resumen.innerHTML = activos + " dias/turnos activos · " + formatearHorasEsperadasUsuario(minutos) + " esperadas por ciclo semanal · " + (Math.round((minutos / 480) * 100) / 100).toString().replace(".", ",") + " jornadas equivalentes.";
+}
+
+function obtenerDiaClaveHorarioUsuario(fecha) {
+	var claves = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+	return claves[fecha.getDay()];
+}
+
+function nombreMesHorarioUsuario(fecha) {
+	var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+	return meses[fecha.getMonth()] + " " + fecha.getFullYear();
+}
+
+var calendarioEsperadoUsuarioCache = {};
+var calendarioEsperadoUsuarioSeleccionado = "";
+var intervaloResumenJornadaMesUsuario = null;
+var intervaloProgresoJornadaTopbarUsuario = null;
+var jornadaJustificacionesMesUsuarioCache = {};
+var jornadaJustificacionesMesUsuarioKey = "";
+var jornadaJustificacionesMesUsuarioPendienteKey = "";
+var recordatorioEntradaPendienteMostradoKey = "";
+var recordatorioEntradaPendienteTimer = null;
+var recordatorioEntradaPendienteMarcando = false;
+
+function fechaIsoHorarioUsuario(fecha) {
+	return fecha.getFullYear() + "-" + String(fecha.getMonth() + 1).padStart(2, "0") + "-" + String(fecha.getDate()).padStart(2, "0");
+}
+
+function fechaCortaHorarioUsuario(fecha) {
+	return String(fecha.getDate()).padStart(2, "0") + "/" + String(fecha.getMonth() + 1).padStart(2, "0") + "/" + fecha.getFullYear();
+}
+
+function nombreDiaSemanaHorarioUsuario(fecha) {
+	var dias = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+	return dias[fecha.getDay()];
+}
+
+function etiquetaTipoJornadaUsuario(tipo) {
+	var etiquetas = {
+		completa: "Jornada completa",
+		medio_dia_manana: "Media jornada ma\u00f1ana",
+		medio_dia_tarde: "Media jornada tarde",
+		parcial: "Jornada parcial",
+		noche: "Turno noche",
+		especial: "Feriado / permiso / reposo",
+		no_laboral: "D\u00eda no laboral"
+	};
+	return etiquetas[tipo] || String(tipo || "D\u00eda no laboral").replace(/_/g, " ");
+}
+
+function claseTipoJornadaCalendarioUsuario(tipo, minutos) {
+	if (parseInt(minutos || 0, 10) <= 0 || tipo == "no_laboral") { return "libre"; }
+	if (tipo == "completa") { return "completa"; }
+	if (tipo == "medio_dia_manana" || tipo == "medio_dia_tarde") { return "medio"; }
+	if (tipo == "parcial") { return "parcial"; }
+	if (tipo == "noche") { return "noche"; }
+	if (tipo == "especial") { return "especial"; }
+	return "esperado";
+}
+
+function renderResumenCeldaCalendarioEsperadoUsuario(datos) {
+	if (!datos || parseInt(datos.minutos || 0, 10) <= 0) {
+		return escaparHtmlFuncionario(datos && datos.es_domingo ? "Descanso" : "No laboral");
+	}
+	var partes = [datos.tipo_texto, datos.horas_texto];
+	if (datos.horario) { partes.push(datos.horario); }
+	var html = "";
+	for (var i = 0; i < partes.length; i++) {
+		if ($.trim(partes[i] || "") == "") { continue; }
+		if (html != "") { html += " <i aria-hidden='true'>&middot;</i> "; }
+		html += escaparHtmlFuncionario(partes[i]).replace(/-/g, "&ndash;");
+	}
+	return html;
+}
+
+function textoHorarioResumenJornadaUsuario(texto) {
+	return escaparHtmlFuncionario(texto || "-").replace(/-/g, "&ndash;");
+}
+
+function diaCortoResumenJornadaUsuario(nombreDia) {
+	var dias = {
+		Domingo: "Dom",
+		Lunes: "Lun",
+		Martes: "Mar",
+		Miercoles: "Mie",
+		Jueves: "Jue",
+		Viernes: "Vie",
+		Sabado: "Sab"
+	};
+	return dias[nombreDia] || String(nombreDia || "").substring(0, 3);
+}
+
+function obtenerRangoMinutosResumenJornadaUsuario(horario, tipo) {
+	horario = $.trim(horario || "");
+	if (horario.indexOf("-") == -1) { return null; }
+	var partes = horario.split("-");
+	var inicio = minutosDesdeHoraUsuario($.trim(partes[0] || ""));
+	var fin = minutosDesdeHoraUsuario($.trim(partes[1] || ""));
+	if (inicio === null || fin === null) { return null; }
+	if (fin <= inicio && tipo == "noche") { fin += 1440; }
+	if (fin <= inicio) { return null; }
+	return { inicio: inicio, fin: fin };
+}
+
+function obtenerDescansoMinutosResumenJornadaUsuario(descanso, rango) {
+	descanso = $.trim(descanso || "");
+	if (!rango || descanso.indexOf("-") == -1) { return null; }
+	var partes = descanso.split("-");
+	var inicio = minutosDesdeHoraUsuario($.trim(partes[0] || ""));
+	var fin = minutosDesdeHoraUsuario($.trim(partes[1] || ""));
+	if (inicio === null || fin === null) { return null; }
+	if (fin <= inicio) { fin += 1440; }
+	if (inicio < rango.inicio || fin > rango.fin || fin <= inicio) { return null; }
+	return { inicio: inicio, fin: fin };
+}
+
+function calcularEstadoHoyJornadaProgramadaUsuario(datos) {
+	var sinJornada = {
+		estado: "No laboral",
+		clase: "libre",
+		porcentaje: 0,
+		mostrar_barra: false
+	};
+	if (!datos || parseInt(datos.minutos || 0, 10) <= 0) { return sinJornada; }
+	var rango = obtenerRangoMinutosResumenJornadaUsuario(datos.horario, datos.tipo);
+	if (!rango) { return sinJornada; }
+	var ahora = new Date();
+	var minutoActual = (ahora.getHours() * 60) + ahora.getMinutes();
+	var descanso = obtenerDescansoMinutosResumenJornadaUsuario(datos.descanso, rango);
+	var minutosTotales = parseInt(datos.minutos || 0, 10);
+	var estado = "En curso";
+	var clase = "curso";
+	var minutosTranscurridos = 0;
+
+	if (minutoActual < rango.inicio) {
+		estado = "Pendiente";
+		clase = "pendiente";
+	} else if (minutoActual >= rango.fin) {
+		estado = "Finalizada";
+		clase = "finalizado";
+		minutosTranscurridos = minutosTotales;
+	} else {
+		minutosTranscurridos = minutoActual - rango.inicio;
+		if (descanso) {
+			if (minutoActual <= descanso.inicio) {
+				// Todavia no descuenta descanso.
+			} else if (minutoActual < descanso.fin) {
+				minutosTranscurridos -= (minutoActual - descanso.inicio);
+			} else {
+				minutosTranscurridos -= (descanso.fin - descanso.inicio);
+			}
+		}
+	}
+
+	minutosTranscurridos = Math.max(0, Math.min(minutosTotales, minutosTranscurridos));
+	var porcentaje = minutosTotales > 0 ? Math.round((minutosTranscurridos / minutosTotales) * 100) : 0;
+	return {
+		estado: estado,
+		clase: clase,
+		porcentaje: Math.max(0, Math.min(100, porcentaje)),
+		mostrar_barra: true
+	};
+}
+
+function normalizarListaHorariosTopbarUsuario(horarios) {
+	if (Array.isArray(horarios)) { return horarios; }
+	if (typeof horarios == "string" && $.trim(horarios) != "") {
+		try {
+			var parsed = JSON.parse(horarios);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch (error) {
+			return [];
+		}
+	}
+	return [];
+}
+
+function normalizarHoraTopbarUsuario(hora) {
+	hora = $.trim(hora || "");
+	return /^\d{2}:\d{2}/.test(hora) ? hora.substring(0, 5) : "";
+}
+
+function obtenerJornadaProgramadaHoyTopbarUsuario() {
+	var perfil = typeof datosPerfilUsuarioActual != "undefined" ? datosPerfilUsuarioActual : {};
+	var horarios = normalizarListaHorariosTopbarUsuario(perfil.horarios_usuario || []);
+	var hoy = new Date();
+	var fechaHoy = fechaIsoHorarioUsuario(hoy);
+	var diaHoy = obtenerDiaClaveHorarioUsuario(hoy);
+	var turnos = [];
+	var minutosTotales = 0;
+
+	for (var i = 0; i < horarios.length; i++) {
+		var horario = horarios[i] || {};
+		var dia = $.trim(horario.dia || horario.dia_semana || "");
+		var estadoHorario = $.trim(horario.estado_horario || "activo");
+		var vigenteDesde = $.trim(horario.vigente_desde || "");
+		var vigenteHasta = $.trim(horario.vigente_hasta || "");
+		var entrada = normalizarHoraTopbarUsuario(horario.hora_entrada);
+		var salida = normalizarHoraTopbarUsuario(horario.hora_salida);
+		var tipo = $.trim(horario.tipo_jornada || "parcial");
+		var descansoInicio = normalizarHoraTopbarUsuario(horario.descanso_inicio);
+		var descansoFin = normalizarHoraTopbarUsuario(horario.descanso_fin);
+		if (!horario.tipo_jornada && entrada != "" && salida != "") {
+			var inicioTurno = minutosDesdeHoraUsuario(entrada);
+			var finTurno = minutosDesdeHoraUsuario(salida);
+			if (inicioTurno !== null && finTurno !== null && finTurno <= inicioTurno) {
+				tipo = "noche";
+			}
+		}
+
+		if (estadoHorario == "inactivo" || dia != diaHoy) { continue; }
+		if (vigenteDesde != "" && fechaHoy < vigenteDesde) { continue; }
+		if (vigenteHasta != "" && fechaHoy > vigenteHasta) { continue; }
+		if (entrada == "" || salida == "" || tipo == "no_laboral") { continue; }
+
+		var minutos = parseInt(horario.horas_esperadas_minutos || 0, 10);
+		if (!minutos || minutos <= 0) {
+			minutos = calcularMinutosEsperadosHorarioUsuario(entrada, salida, descansoInicio, descansoFin, tipo);
+		}
+		if (minutos <= 0) { continue; }
+
+		var rango = obtenerRangoMinutosResumenJornadaUsuario(entrada + "-" + salida, tipo);
+		if (!rango) { continue; }
+		var descanso = descansoInicio && descansoFin ? descansoInicio + "-" + descansoFin : "";
+		turnos.push({
+			tipo: tipo,
+			horario: entrada + "-" + salida,
+			descanso: descanso,
+			minutos: minutos,
+			rango: rango
+		});
+		minutosTotales += minutos;
+	}
+
+	turnos.sort(function (a, b) {
+		return a.rango.inicio - b.rango.inicio;
+	});
+
+	if (turnos.length == 0 || minutosTotales <= 0) { return null; }
+	return {
+		turnos: turnos,
+		minutos: minutosTotales,
+		horario: turnos[0].horario,
+		descanso: turnos[0].descanso,
+		tipo: turnos[0].tipo
+	};
+}
+
+function calcularAvanceTopbarJornadaUsuario(datos) {
+	if (!datos || !datos.turnos || datos.turnos.length == 0 || parseInt(datos.minutos || 0, 10) <= 0) {
+		return {
+			estado: "Hoy sin jornada programada",
+			detalle: "Sin horario esperado para hoy",
+			clase: "sin-jornada",
+			porcentaje: 0,
+			mostrar_barra: false
+		};
+	}
+
+	var ahora = new Date();
+	var minutoActual = (ahora.getHours() * 60) + ahora.getMinutes();
+	var minutosTranscurridos = 0;
+	var primerInicio = datos.turnos[0].rango.inicio;
+	var ultimoFin = datos.turnos[datos.turnos.length - 1].rango.fin;
+	var dentroDeFranja = false;
+
+	for (var i = 0; i < datos.turnos.length; i++) {
+		var turno = datos.turnos[i];
+		var rango = turno.rango;
+		var descanso = obtenerDescansoMinutosResumenJornadaUsuario(turno.descanso, rango);
+		var avanceTurno = 0;
+
+		if (minutoActual >= rango.fin) {
+			avanceTurno = turno.minutos;
+		} else if (minutoActual > rango.inicio) {
+			dentroDeFranja = true;
+			avanceTurno = minutoActual - rango.inicio;
+			if (descanso) {
+				if (minutoActual <= descanso.inicio) {
+					// Todavia no descuenta descanso.
+				} else if (minutoActual < descanso.fin) {
+					avanceTurno -= (minutoActual - descanso.inicio);
+				} else {
+					avanceTurno -= (descanso.fin - descanso.inicio);
+				}
+			}
+		} else if (minutoActual >= rango.inicio && minutoActual < rango.fin) {
+			dentroDeFranja = true;
+		}
+
+		minutosTranscurridos += Math.max(0, Math.min(turno.minutos, avanceTurno));
+	}
+
+	var porcentaje = datos.minutos > 0 ? Math.round((minutosTranscurridos / datos.minutos) * 100) : 0;
+	porcentaje = Math.max(0, Math.min(100, porcentaje));
+
+	if (minutoActual < primerInicio) {
+		return { estado: "Jornada pendiente", detalle: "Avance horario programado &middot; " + porcentaje + "%", clase: "pendiente", porcentaje: porcentaje, mostrar_barra: true };
+	}
+	var entradaConfirmada = typeof asistenciaUsuarioTieneEntradaHoy != "undefined" && asistenciaUsuarioTieneEntradaHoy;
+	if (minutoActual >= ultimoFin) {
+		if (!entradaConfirmada) {
+			return { estado: "Jornada sin entrada registrada", detalle: "Pendiente de regularizaci&oacute;n &middot; Avance horario programado " + porcentaje + "%", clase: "finalizada", porcentaje: porcentaje, mostrar_barra: true };
+		}
+		return { estado: "Jornada finalizada", detalle: "Avance horario programado &middot; " + porcentaje + "%", clase: "finalizada", porcentaje: porcentaje, mostrar_barra: true };
+	}
+	if (!dentroDeFranja) {
+		return { estado: "Jornada pendiente", detalle: "Avance horario programado &middot; " + porcentaje + "%", clase: "pendiente", porcentaje: porcentaje, mostrar_barra: true };
+	}
+
+	var entradaAbierta = typeof cod_asistencia != "undefined" && $.trim(cod_asistencia || "") != "";
+	entradaConfirmada = entradaConfirmada || entradaAbierta;
+	return {
+		estado: entradaConfirmada ? "En jornada" : "Sin entrada registrada",
+		detalle: "Avance horario programado &middot; " + porcentaje + "%",
+		clase: entradaConfirmada ? "en-jornada" : "sin-entrada",
+		porcentaje: porcentaje,
+		mostrar_barra: true
+	};
+}
+
+function actualizarProgresoJornadaTopbarUsuario() {
+	var contenedor = document.getElementById("progresoJornadaProgramadaTopbar");
+	if (!contenedor) { return; }
+	var estadoTexto = document.getElementById("estadoProgresoJornadaTopbar");
+	var detalleTexto = document.getElementById("textoProgresoJornadaTopbar");
+	var barra = document.getElementById("barraProgresoJornadaTopbar");
+	var datos = obtenerJornadaProgramadaHoyTopbarUsuario();
+	var avance = calcularAvanceTopbarJornadaUsuario(datos);
+	var clases = [
+		"perfil-widget__progreso-jornada--sin-jornada",
+		"perfil-widget__progreso-jornada--pendiente",
+		"perfil-widget__progreso-jornada--sin-entrada",
+		"perfil-widget__progreso-jornada--en-jornada",
+		"perfil-widget__progreso-jornada--finalizada"
+	];
+
+	for (var i = 0; i < clases.length; i++) {
+		contenedor.classList.remove(clases[i]);
+	}
+	contenedor.classList.add("perfil-widget__progreso-jornada--" + avance.clase);
+	contenedor.title = datos ? ("Jornada programada: " + (datos.horario || "-")) : "Hoy sin jornada programada";
+
+	if (estadoTexto) { estadoTexto.innerHTML = escaparHtmlFuncionario(avance.estado); }
+	if (detalleTexto) { detalleTexto.innerHTML = avance.detalle; }
+	if (barra) { barra.style.width = (avance.mostrar_barra ? avance.porcentaje : 0) + "%"; }
+	evaluarRecordatorioEntradaPendiente();
+}
+
+function claveRecordatorioEntradaPendiente(sufijo) {
+	var usuario = typeof userid != "undefined" ? userid : "0";
+	return "recordatorioEntradaPendiente_" + sufijo + "_" + usuario + "_" + fechaIsoHorarioUsuario(new Date());
+}
+
+function fechaHoraSqlLocalRecordatorioEntrada(fecha) {
+	fecha = fecha || new Date();
+	return fecha.getFullYear() + "-" +
+		String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+		String(fecha.getDate()).padStart(2, "0") + " " +
+		String(fecha.getHours()).padStart(2, "0") + ":" +
+		String(fecha.getMinutes()).padStart(2, "0") + ":" +
+		String(fecha.getSeconds()).padStart(2, "0");
+}
+
+function obtenerFechaHoraAccesoRecordatorioEntrada() {
+	var key = claveRecordatorioEntradaPendiente("acceso");
+	var valor = "";
+	try {
+		valor = localStorage.getItem(key) || "";
+		if (valor == "") {
+			valor = fechaHoraSqlLocalRecordatorioEntrada(new Date());
+			localStorage.setItem(key, valor);
+		}
+	} catch (error) {
+		valor = fechaHoraSqlLocalRecordatorioEntrada(new Date());
+	}
+	return valor;
+}
+
+function obtenerContextoRecordatorioEntradaPendiente() {
+	if (recordatorioEntradaPendienteMarcando) { return null; }
+	if (typeof asistenciaUsuarioVerificada == "undefined" || !asistenciaUsuarioVerificada) { return null; }
+	var datos = obtenerJornadaProgramadaHoyTopbarUsuario();
+	if (!datos) { return null; }
+	var avance = calcularAvanceTopbarJornadaUsuario(datos);
+	if (!avance || avance.clase != "sin-entrada") { return null; }
+	return {
+		datos: datos,
+		avance: avance,
+		fecha: fechaIsoHorarioUsuario(new Date()),
+		entrada_registrada: (typeof asistenciaUsuarioTieneEntradaHoy != "undefined" && asistenciaUsuarioTieneEntradaHoy) ? "SI" : "NO"
+	};
+}
+
+function obtenerResumenJornadaRecordatorioEntrada(datos, avance) {
+	var turnos = [];
+	if (datos && Array.isArray(datos.turnos)) {
+		for (var i = 0; i < datos.turnos.length; i++) {
+			turnos.push({
+				tipo: datos.turnos[i].tipo || "",
+				horario: datos.turnos[i].horario || "",
+				descanso: datos.turnos[i].descanso || "",
+				minutos: datos.turnos[i].minutos || 0
+			});
+		}
+	}
+	return {
+		fecha: fechaIsoHorarioUsuario(new Date()),
+		horario_principal: datos && datos.horario ? datos.horario : "",
+		descanso_principal: datos && datos.descanso ? datos.descanso : "",
+		minutos_programados: datos && datos.minutos ? datos.minutos : 0,
+		estado_visual: avance && avance.estado ? avance.estado : "",
+		porcentaje_avance: avance && avance.porcentaje ? avance.porcentaje : 0,
+		turnos: turnos
+	};
+}
+
+function registrarEventoRecordatorioEntradaPendiente(accion, contexto, recordatorioMostrado) {
+	if (typeof $ == "undefined" || typeof obtener_datos_user != "function") { return; }
+	contexto = contexto || obtenerContextoRecordatorioEntradaPendiente();
+	var datosJornada = contexto ? contexto.datos : obtenerJornadaProgramadaHoyTopbarUsuario();
+	var avance = contexto ? contexto.avance : calcularAvanceTopbarJornadaUsuario(datosJornada);
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "registrarRecordatorioEntrada");
+	datos.append("fecha_jornada", fechaIsoHorarioUsuario(new Date()));
+	datos.append("fecha_hora_acceso", obtenerFechaHoraAccesoRecordatorioEntrada());
+	datos.append("jornada_programada", JSON.stringify(obtenerResumenJornadaRecordatorioEntrada(datosJornada, avance)));
+	datos.append("entrada_registrada", (typeof asistenciaUsuarioTieneEntradaHoy != "undefined" && asistenciaUsuarioTieneEntradaHoy) ? "SI" : "NO");
+	datos.append("recordatorio_mostrado", recordatorioMostrado ? "SI" : "NO");
+	datos.append("accion_elegida", accion);
+	datos.append("modulo", "dashboard_topbar_jornada");
+	datos.append("cod_asistencia", typeof cod_asistencia != "undefined" ? cod_asistencia : "");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false
+	});
+}
+
+function ocultarRecordatorioEntradaPendiente() {
+	var aviso = document.getElementById("recordatorioEntradaPendiente");
+	if (aviso) { aviso.classList.remove("is-visible"); }
+}
+
+function pausarRecordatorioEntradaPendienteMarcacion() {
+	recordatorioEntradaPendienteMarcando = true;
+	ocultarRecordatorioEntradaPendiente();
+}
+
+function liberarRecordatorioEntradaPendienteMarcacion() {
+	recordatorioEntradaPendienteMarcando = false;
+	evaluarRecordatorioEntradaPendiente();
+}
+
+function mostrarRecordatorioEntradaPendiente(contexto) {
+	var aviso = document.getElementById("recordatorioEntradaPendiente");
+	if (!aviso || !contexto) { return; }
+	aviso.classList.add("is-visible");
+	var key = claveRecordatorioEntradaPendiente("mostrado");
+	if (recordatorioEntradaPendienteMostradoKey != key) {
+		recordatorioEntradaPendienteMostradoKey = key;
+		registrarEventoRecordatorioEntradaPendiente("recordatorio_mostrado", contexto, true);
+	}
+}
+
+function registrarJornadaFinalizadaSinEntradaSiCorresponde() {
+	if (typeof asistenciaUsuarioVerificada == "undefined" || !asistenciaUsuarioVerificada) { return; }
+	if (typeof asistenciaUsuarioTieneEntradaHoy != "undefined" && asistenciaUsuarioTieneEntradaHoy) { return; }
+	var datos = obtenerJornadaProgramadaHoyTopbarUsuario();
+	if (!datos) { return; }
+	var avance = calcularAvanceTopbarJornadaUsuario(datos);
+	if (!avance || avance.estado != "Jornada sin entrada registrada") { return; }
+	var key = claveRecordatorioEntradaPendiente("finalizada_sin_entrada");
+	try {
+		if (localStorage.getItem(key) == "1") { return; }
+		localStorage.setItem(key, "1");
+	} catch (error) {
+	}
+	registrarEventoRecordatorioEntradaPendiente("jornada_finalizada_sin_entrada", {
+		datos: datos,
+		avance: avance,
+		fecha: fechaIsoHorarioUsuario(new Date()),
+		entrada_registrada: "NO"
+	}, false);
+}
+
+function evaluarRecordatorioEntradaPendiente() {
+	var contexto = obtenerContextoRecordatorioEntradaPendiente();
+	if (!contexto) {
+		registrarJornadaFinalizadaSinEntradaSiCorresponde();
+		ocultarRecordatorioEntradaPendiente();
+		return;
+	}
+	var ahora = Date.now();
+	var pospuestoHasta = 0;
+	var continuar = "";
+	try {
+		pospuestoHasta = parseInt(localStorage.getItem(claveRecordatorioEntradaPendiente("pospuesto_hasta")) || "0", 10);
+		continuar = localStorage.getItem(claveRecordatorioEntradaPendiente("continuar")) || "";
+	} catch (error) {
+		pospuestoHasta = 0;
+		continuar = "";
+	}
+	if (continuar == "1" || pospuestoHasta > ahora) {
+		ocultarRecordatorioEntradaPendiente();
+		return;
+	}
+	mostrarRecordatorioEntradaPendiente(contexto);
+}
+
+function posponerRecordatorioEntradaPendiente() {
+	var contexto = obtenerContextoRecordatorioEntradaPendiente();
+	try {
+		localStorage.setItem(claveRecordatorioEntradaPendiente("pospuesto_hasta"), String(Date.now() + 600000));
+	} catch (error) {
+	}
+	recordatorioEntradaPendienteMostradoKey = "";
+	registrarEventoRecordatorioEntradaPendiente("recordar_mas_tarde", contexto, true);
+	ocultarRecordatorioEntradaPendiente();
+	if (recordatorioEntradaPendienteTimer) { clearTimeout(recordatorioEntradaPendienteTimer); }
+	recordatorioEntradaPendienteTimer = setTimeout(function () {
+		evaluarRecordatorioEntradaPendiente();
+	}, 600000);
+}
+
+function continuarSinMarcarEntradaPendiente() {
+	var contexto = obtenerContextoRecordatorioEntradaPendiente();
+	try {
+		localStorage.setItem(claveRecordatorioEntradaPendiente("continuar"), "1");
+	} catch (error) {
+	}
+	registrarEventoRecordatorioEntradaPendiente("continuar_sin_marcar", contexto, true);
+	ocultarRecordatorioEntradaPendiente();
+}
+
+function marcarEntradaDesdeRecordatorio() {
+	var contexto = obtenerContextoRecordatorioEntradaPendiente();
+	registrarEventoRecordatorioEntradaPendiente("marcar_entrada", contexto, true);
+	pausarRecordatorioEntradaPendienteMarcacion();
+	if (typeof registrarAsistencia == "function") {
+		registrarAsistencia();
+	}
+}
+
+function inicializarProgresoJornadaTopbarUsuario() {
+	actualizarProgresoJornadaTopbarUsuario();
+	if (intervaloProgresoJornadaTopbarUsuario) { return; }
+	intervaloProgresoJornadaTopbarUsuario = setInterval(function () {
+		actualizarProgresoJornadaTopbarUsuario();
+	}, 60000);
+}
+
+if (document.addEventListener) {
+	document.addEventListener("DOMContentLoaded", inicializarProgresoJornadaTopbarUsuario);
+}
+
+function renderProgresoHoyJornadaUsuario(estadoHoy, compacto) {
+	if (!estadoHoy || !estadoHoy.mostrar_barra) { return ""; }
+	return "<div class='" + (compacto ? "jornada-hoy-mini__progress" : "jornada-hoy-progress") + "'>" +
+		"<span>Avance de jornada programada</span>" +
+		"<div><i style='width:" + estadoHoy.porcentaje + "%'></i></div>" +
+		"<strong>" + estadoHoy.porcentaje + "%</strong>" +
+	"</div>";
+}
+
+function reiniciarJustificacionesJornadaMesUsuario() {
+	jornadaJustificacionesMesUsuarioCache = {};
+	jornadaJustificacionesMesUsuarioKey = "";
+	jornadaJustificacionesMesUsuarioPendienteKey = "";
+}
+
+function claveJustificacionesJornadaMesUsuario(inicio, fin) {
+	var codUsuario = $.trim(idAbmUsuario || "");
+	if (codUsuario == "" || !inicio || !fin) { return ""; }
+	return codUsuario + "|" + fechaIsoHorarioUsuario(inicio) + "|" + fechaIsoHorarioUsuario(fin);
+}
+
+function agregarJustificacionJornadaMesUsuario(mapa, fecha, texto) {
+	fecha = $.trim(fecha || "").substring(0, 10);
+	texto = $.trim(texto || "");
+	if (fecha == "" || texto == "") { return; }
+	if (!mapa[fecha]) { mapa[fecha] = []; }
+	for (var i = 0; i < mapa[fecha].length; i++) {
+		if (mapa[fecha][i] == texto) { return; }
+	}
+	mapa[fecha].push(texto);
+}
+
+function solicitarJustificacionesJornadaMesUsuario(inicio, fin) {
+	var clave = claveJustificacionesJornadaMesUsuario(inicio, fin);
+	if (clave == "") {
+		reiniciarJustificacionesJornadaMesUsuario();
+		return;
+	}
+	if (clave == jornadaJustificacionesMesUsuarioKey || clave == jornadaJustificacionesMesUsuarioPendienteKey) { return; }
+
+	jornadaJustificacionesMesUsuarioCache = {};
+	jornadaJustificacionesMesUsuarioKey = "";
+	jornadaJustificacionesMesUsuarioPendienteKey = clave;
+
+	if (typeof $ == "undefined" || typeof obtener_datos_user != "function") { return; }
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "buscar");
+	datos.append("cod_usuario", idAbmUsuario);
+	datos.append("fecha_desde", fechaIsoHorarioUsuario(inicio));
+	datos.append("fecha_hasta", fechaIsoHorarioUsuario(fin));
+	datos.append("limite", "0");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function (responseText) {
+			if (jornadaJustificacionesMesUsuarioPendienteKey != clave) { return; }
+			var mapa = {};
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] == "exito" && Array.isArray(respuesta.registros)) {
+					for (var i = 0; i < respuesta.registros.length; i++) {
+						agregarJustificacionJornadaMesUsuario(mapa, respuesta.registros[i].fecha, respuesta.registros[i].justificacion);
+					}
+				}
+			} catch (error) {
+				mapa = {};
+			}
+			jornadaJustificacionesMesUsuarioCache = mapa;
+			jornadaJustificacionesMesUsuarioKey = clave;
+			jornadaJustificacionesMesUsuarioPendienteKey = "";
+			renderCalendarioEsperadoUsuario();
+		},
+		error: function () {
+			if (jornadaJustificacionesMesUsuarioPendienteKey != clave) { return; }
+			jornadaJustificacionesMesUsuarioCache = {};
+			jornadaJustificacionesMesUsuarioKey = clave;
+			jornadaJustificacionesMesUsuarioPendienteKey = "";
+		}
+	});
+}
+
+function renderJustificacionJornadaMesUsuario(fecha) {
+	var textos = jornadaJustificacionesMesUsuarioCache[fecha] || [];
+	if (!textos.length) {
+		return "<span class='jornada-mes-resumen-card__justificacion jornada-mes-resumen-card__justificacion--empty'>&mdash;</span>";
+	}
+	var texto = textos.join(" | ");
+	return "<span class='jornada-mes-resumen-card__justificacion' title='" + escaparHtmlFuncionario(texto) + "'>" + escaparHtmlFuncionario(texto) + "</span>";
+}
+
+function renderFranjaHoyJornadaMesUsuario(datosHoy, estadoHoy) {
+	if (!datosHoy || !estadoHoy) { return ""; }
+	var tipoTexto = datosHoy.minutos > 0 ? datosHoy.tipo_texto : (datosHoy.es_domingo ? "Descanso" : "D\u00eda no laboral");
+	return "<div class='jornada-hoy-mini jornada-hoy-mini--" + estadoHoy.clase + "'>" +
+		"<div class='jornada-hoy-mini__copy'>" +
+			"<span>Hoy: " + escaparHtmlFuncionario(diaCortoResumenJornadaUsuario(datosHoy.dia_nombre) + " " + datosHoy.fecha_corta.substring(0, 5)) + "</span>" +
+			"<strong>" + escaparHtmlFuncionario(tipoTexto) + " <i aria-hidden='true'>&middot;</i> " + escaparHtmlFuncionario(estadoHoy.estado) + "</strong>" +
+			"<small>Referencia basada en la jornada programada, no en asistencia confirmada.</small>" +
+		"</div>" +
+		renderProgresoHoyJornadaUsuario(estadoHoy, true) +
+	"</div>";
+}
+
+function programarActualizacionResumenJornadaMesUsuario() {
+	if (intervaloResumenJornadaMesUsuario || !document.getElementById("resumenJornadaMesUsuario")) { return; }
+	intervaloResumenJornadaMesUsuario = setInterval(function () {
+		renderCalendarioEsperadoUsuario();
+	}, 60000);
+}
+
+function renderResumenJornadaMesUsuario(inicio, diasEsperados, minutosMes, horarioPrincipal, descansoPrincipal) {
+	var card = document.getElementById("resumenJornadaMesUsuario");
+	if (!card) { return; }
+	var titulo = document.getElementById("resumenJornadaMesTituloUsuario");
+	var metricas = document.getElementById("resumenJornadaMesMetricasUsuario");
+	var lista = document.getElementById("resumenJornadaMesListaUsuario");
+	if (titulo) { titulo.innerHTML = escaparHtmlFuncionario(nombreMesHorarioUsuario(inicio)); }
+	if (metricas) {
+		metricas.innerHTML =
+			"<div class='jornada-mes-resumen-card__metric'><span>D&iacute;as esperados</span><strong>" + diasEsperados + "</strong></div>" +
+			"<div class='jornada-mes-resumen-card__metric'><span>Horas esperadas</span><strong>" + formatearHorasEsperadasUsuario(minutosMes) + "</strong></div>" +
+			"<div class='jornada-mes-resumen-card__metric'><span>Horario principal</span><strong>" + (horarioPrincipal ? textoHorarioResumenJornadaUsuario(horarioPrincipal) : "-") + "</strong></div>" +
+			"<div class='jornada-mes-resumen-card__metric'><span>Descanso</span><strong>" + (descansoPrincipal ? textoHorarioResumenJornadaUsuario(descansoPrincipal) : "-") + "</strong></div>";
+	}
+	if (!lista) { return; }
+	var claves = Object.keys(calendarioEsperadoUsuarioCache || {}).sort();
+	var html = "";
+	var hoyIso = fechaIsoHorarioUsuario(new Date());
+	var datosHoy = calendarioEsperadoUsuarioCache[hoyIso] || null;
+	var estadoHoy = calcularEstadoHoyJornadaProgramadaUsuario(datosHoy);
+	for (var i = 0; i < claves.length; i++) {
+		var datos = calendarioEsperadoUsuarioCache[claves[i]];
+		var esHoy = datos && datos.fecha == hoyIso;
+		if (!datos || (datos.minutos <= 0 && datos.turnos.length == 0 && !esHoy)) { continue; }
+		var tipoTexto = datos.minutos > 0 ? datos.tipo_texto : (datos.es_domingo ? "Descanso" : "D\u00eda no laboral");
+		var claseEstado = datos.minutos > 0 ? datos.clase_estado : "libre";
+		var estadoFila = esHoy ? estadoHoy : null;
+		html += "<div class='jornada-mes-resumen-card__row" + (esHoy ? " jornada-mes-resumen-card__row--today" : "") + "'>" +
+			"<span class='jornada-mes-resumen-card__date'>" + escaparHtmlFuncionario(diaCortoResumenJornadaUsuario(datos.dia_nombre) + " " + datos.fecha_corta.substring(0, 5)) + (esHoy ? " <b>Hoy</b>" : "") + "</span>" +
+			"<span class='jornada-mes-resumen-card__badge jornada-mes-resumen-card__badge--" + escaparHtmlFuncionario(claseEstado) + "'>" + escaparHtmlFuncionario(tipoTexto) + "</span>" +
+			"<span class='jornada-mes-resumen-card__hours'>" + escaparHtmlFuncionario(datos.minutos > 0 ? formatearHorasEsperadasUsuario(datos.minutos) : "0 h") + "</span>" +
+			"<span class='jornada-mes-resumen-card__schedule'>" + textoHorarioResumenJornadaUsuario(datos.horario || "-") + "</span>" +
+			renderJustificacionJornadaMesUsuario(datos.fecha) +
+			(esHoy ? "<div class='jornada-hoy-row-detail'><span class='jornada-hoy-status jornada-hoy-status--" + estadoFila.clase + "'>" + escaparHtmlFuncionario(estadoFila.estado) + "</span>" + renderProgresoHoyJornadaUsuario(estadoFila, false) + "</div>" : "") +
+		"</div>";
+	}
+	lista.innerHTML = html ? renderFranjaHoyJornadaMesUsuario(datosHoy, estadoHoy) + "<div class='jornada-mes-resumen-card__list-head'><span>D&iacute;a</span><span>Tipo</span><span>Horas</span><span>Horario</span><span>Justificaci&oacute;n</span></div>" + html : "<div class='jornada-mes-resumen-card__empty'>Sin d&iacute;as laborales configurados para este mes.</div>";
+	programarActualizacionResumenJornadaMesUsuario();
+}
+
+function enfocarSeccionJornadaUsuario(selector) {
+	var elemento = document.querySelector(selector);
+	if (!elemento) { return; }
+	if (elemento.scrollIntoView) {
+		elemento.scrollIntoView({ behavior: "smooth", block: "start" });
+	}
+	elemento.classList.add("jornada-bloque-enfocado");
+	setTimeout(function () {
+		elemento.classList.remove("jornada-bloque-enfocado");
+	}, 1400);
+}
+
+function verCalendarioCompletoJornadaUsuario() {
+	enfocarSeccionJornadaUsuario("#funcionarioFormularioEdicion .jornada-calendario-shell");
+}
+
+function editarJornadaLaboralUsuario() {
+	enfocarSeccionJornadaUsuario("#funcionarioFormularioEdicion .jornada-esperada-card");
+}
+
+function obtenerTextoLocalHorarioUsuario(fila) {
+	var selector = fila.querySelector(".horarioUsuarioLocal");
+	if (!selector || !selector.options || selector.selectedIndex < 0) { return ""; }
+	return selector.options[selector.selectedIndex].text || "";
+}
+
+function sumarFrecuenciaCalendarioUsuario(frecuencias, clave) {
+	if (!clave) { return; }
+	frecuencias[clave] = (frecuencias[clave] || 0) + 1;
+}
+
+function obtenerClaveFrecuenteCalendarioUsuario(frecuencias) {
+	var claves = Object.keys(frecuencias || {});
+	var mayor = "";
+	var cantidad = 0;
+	for (var i = 0; i < claves.length; i++) {
+		if (frecuencias[claves[i]] > cantidad) {
+			mayor = claves[i];
+			cantidad = frecuencias[claves[i]];
+		}
+	}
+	return mayor;
+}
+
+function obtenerDatosDiaCalendarioEsperadoUsuario(fecha, filas) {
+	var fechaTexto = fechaIsoHorarioUsuario(fecha);
+	var clave = obtenerDiaClaveHorarioUsuario(fecha);
+	var turnos = [];
+	var minutosDia = 0;
 
 	for (var i = 0; i < filas.length; i++) {
-		var dia = filas[i].querySelector(".horarioUsuarioDia");
-		var local = filas[i].querySelector(".horarioUsuarioLocal");
-		var entrada = filas[i].querySelector(".horarioUsuarioEntrada");
-		var salida = filas[i].querySelector(".horarioUsuarioSalida");
+		var datos = obtenerDatosFilaHorarioUsuario(filas[i]);
+		if (datos.estado_horario != "activo" || datos.dia != clave) { continue; }
+		if (datos.vigente_desde && fechaTexto < datos.vigente_desde) { continue; }
+		if (datos.vigente_hasta && fechaTexto > datos.vigente_hasta) { continue; }
 
-		if (!dia || !local || !entrada || !salida) {
-			continue;
-		}
-
-		if (entrada.value == "" && salida.value == "") {
-			continue;
-		}
-
-		horarios.push({
-			dia: dia.value,
-			cod_localFK: local.value,
-			hora_entrada: entrada.value,
-			hora_salida: salida.value
+		var minutos = calcularMinutosEsperadosHorarioUsuario(datos.hora_entrada, datos.hora_salida, datos.descanso_inicio, datos.descanso_fin, datos.tipo_jornada);
+		var horario = datos.hora_entrada && datos.hora_salida ? datos.hora_entrada + "-" + datos.hora_salida : "";
+		var descanso = datos.descanso_inicio && datos.descanso_fin ? datos.descanso_inicio + "-" + datos.descanso_fin : "";
+		minutosDia += minutos;
+		turnos.push({
+			tipo: datos.tipo_jornada || "parcial",
+			tipo_texto: etiquetaTipoJornadaUsuario(datos.tipo_jornada || "parcial"),
+			minutos: minutos,
+			horario: horario,
+			descanso: descanso,
+			local: obtenerTextoLocalHorarioUsuario(filas[i]),
+			observacion: datos.observacion || ""
 		});
 	}
 
-	return horarios;
+	var turnosLaborales = [];
+	for (var j = 0; j < turnos.length; j++) {
+		if (turnos[j].minutos > 0) { turnosLaborales.push(turnos[j]); }
+	}
+	var turnoPrincipal = turnosLaborales[0] || turnos[0] || null;
+	var tipoPrincipal = turnoPrincipal ? turnoPrincipal.tipo : "no_laboral";
+	var etiquetaPrincipal = minutosDia > 0 ? etiquetaTipoJornadaUsuario(tipoPrincipal) : "D\u00eda no laboral";
+	if (turnosLaborales.length > 1) { etiquetaPrincipal = turnosLaborales.length + " turnos"; }
+
+	return {
+		fecha: fechaTexto,
+		fecha_corta: fechaCortaHorarioUsuario(fecha),
+		dia_numero: fecha.getDate(),
+		dia_nombre: nombreDiaSemanaHorarioUsuario(fecha),
+		es_domingo: fecha.getDay() == 0,
+		minutos: minutosDia,
+		horas_texto: minutosDia > 0 ? formatearHorasEsperadasUsuario(minutosDia) : "No laboral",
+		tipo: tipoPrincipal,
+		tipo_texto: etiquetaPrincipal,
+		clase_estado: claseTipoJornadaCalendarioUsuario(tipoPrincipal, minutosDia),
+		horario: turnoPrincipal && turnoPrincipal.horario ? turnoPrincipal.horario : "",
+		descanso: turnoPrincipal && turnoPrincipal.descanso ? turnoPrincipal.descanso : "",
+		local: turnoPrincipal && turnoPrincipal.local ? turnoPrincipal.local : "",
+		observacion: turnoPrincipal && turnoPrincipal.observacion ? turnoPrincipal.observacion : "",
+		turnos: turnos
+	};
+}
+
+function renderDetalleDiaCalendarioEsperadoUsuario(datos) {
+	var detalle = document.getElementById("detalleCalendarioEsperadoUsuario");
+	if (!detalle || !datos) { return; }
+	var estadoTexto = datos.minutos > 0 ? "Laboral esperado" : (datos.es_domingo ? "Descanso" : "No laboral");
+	var tipoDetalle = datos.minutos > 0 ? datos.tipo_texto : (datos.es_domingo ? "Domingo" : "Sin jornada laboral");
+	var estadoDetalle = datos.minutos > 0 ? estadoTexto : "Sin jornada";
+	var turnosHtml = "";
+	if (datos.turnos.length > 1) {
+		turnosHtml = "<div class='jornada-detalle-turnos'>";
+		for (var i = 0; i < datos.turnos.length; i++) {
+			var turno = datos.turnos[i];
+			turnosHtml += "<span>" + escaparHtmlFuncionario(turno.tipo_texto) + " - " + escaparHtmlFuncionario(turno.horario || "-") + " - " + formatearHorasEsperadasUsuario(turno.minutos) + "</span>";
+		}
+		turnosHtml += "</div>";
+	}
+	detalle.innerHTML =
+		"<div class='jornada-detalle-head'>" +
+			"<strong>" + escaparHtmlFuncionario(datos.dia_nombre + " " + datos.fecha_corta) + "</strong>" +
+			"<span class='jornada-detalle-badge jornada-detalle-badge--" + datos.clase_estado + "'>" + escaparHtmlFuncionario(estadoTexto) + "</span>" +
+		"</div>" +
+		"<div class='jornada-detalle-grid'>" +
+			"<div><span>Tipo de jornada</span><strong>" + escaparHtmlFuncionario(tipoDetalle) + "</strong></div>" +
+			"<div><span>Horario esperado</span><strong>" + escaparHtmlFuncionario(datos.horario || "-") + "</strong></div>" +
+			"<div><span>Descanso</span><strong>" + escaparHtmlFuncionario(datos.descanso || "-") + "</strong></div>" +
+			"<div><span>Horas esperadas</span><strong>" + escaparHtmlFuncionario(datos.minutos > 0 ? formatearHorasEsperadasUsuario(datos.minutos) : "0 h") + "</strong></div>" +
+			"<div><span>Local</span><strong>" + escaparHtmlFuncionario(datos.local || "-") + "</strong></div>" +
+			"<div><span>Estado</span><strong>" + escaparHtmlFuncionario(estadoDetalle) + "</strong></div>" +
+		"</div>" +
+		turnosHtml +
+		(datos.observacion ? "<div class='jornada-detalle-observacion'>" + escaparHtmlFuncionario(datos.observacion) + "</div>" : "") +
+		"<div class='jornada-detalle-acciones'>" +
+			"<button type='button' disabled>Editar este dia</button>" +
+			"<button type='button' disabled>Agregar excepcion</button>" +
+			"<button type='button' disabled>Copiar horario</button>" +
+		"</div>";
+}
+
+function seleccionarDiaCalendarioEsperadoUsuario(fechaTexto) {
+	calendarioEsperadoUsuarioSeleccionado = fechaTexto;
+	var datos = calendarioEsperadoUsuarioCache[fechaTexto];
+	if (!datos) { return; }
+	var celdas = document.querySelectorAll("#calendarioEsperadoUsuario .jornada-cal-dia");
+	for (var i = 0; i < celdas.length; i++) {
+		celdas[i].classList.remove("jornada-cal-dia--seleccionado");
+	}
+	var celda = document.querySelector("#calendarioEsperadoUsuario [data-fecha='" + fechaTexto + "']");
+	if (celda) { celda.classList.add("jornada-cal-dia--seleccionado"); }
+	renderDetalleDiaCalendarioEsperadoUsuario(datos);
+}
+
+function renderCalendarioEsperadoUsuario() {
+	var contenedor = document.getElementById("calendarioEsperadoUsuario");
+	var titulo = document.getElementById("tituloCalendarioEsperadoUsuario");
+	var resumen = document.getElementById("resumenCalendarioEsperadoUsuario");
+	var detalle = document.getElementById("detalleCalendarioEsperadoUsuario");
+	if (!contenedor) { return; }
+	var hoy = new Date();
+	var inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+	var fin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+	if (titulo) { titulo.innerHTML = nombreMesHorarioUsuario(inicio); }
+	var filas = document.querySelectorAll("#tbodyHorariosUsuario tr");
+	var html = "";
+	var diasEsperados = 0;
+	var minutosMes = 0;
+	var horariosFrecuentes = {};
+	var descansosFrecuentes = {};
+	var primerSeleccionable = "";
+	calendarioEsperadoUsuarioCache = {};
+
+	var inicioSemana = inicio.getDay() == 0 ? 6 : inicio.getDay() - 1;
+	for (var vacio = 0; vacio < inicioSemana; vacio++) {
+		html += "<div class='jornada-cal-dia jornada-cal-dia--vacio' aria-hidden='true'></div>";
+	}
+
+	for (var dia = 1; dia <= fin.getDate(); dia++) {
+		var fecha = new Date(inicio.getFullYear(), inicio.getMonth(), dia);
+		var datosDia = obtenerDatosDiaCalendarioEsperadoUsuario(fecha, filas);
+		calendarioEsperadoUsuarioCache[datosDia.fecha] = datosDia;
+		if (!primerSeleccionable || datosDia.minutos > 0 && calendarioEsperadoUsuarioCache[primerSeleccionable] && calendarioEsperadoUsuarioCache[primerSeleccionable].minutos == 0) {
+			primerSeleccionable = datosDia.fecha;
+		}
+		if (datosDia.minutos > 0) {
+			diasEsperados++;
+			minutosMes += datosDia.minutos;
+			sumarFrecuenciaCalendarioUsuario(horariosFrecuentes, datosDia.horario);
+			sumarFrecuenciaCalendarioUsuario(descansosFrecuentes, datosDia.descanso);
+		}
+		var clasesDia = "jornada-cal-dia jornada-cal-dia--" + datosDia.clase_estado + (datosDia.es_domingo ? " jornada-cal-dia--domingo" : "") + (datosDia.minutos <= 0 ? " jornada-cal-dia--descanso" : "");
+		html += "<button type='button' class='" + clasesDia + "' data-fecha='" + datosDia.fecha + "' onclick='seleccionarDiaCalendarioEsperadoUsuario(\"" + datosDia.fecha + "\")' title='" + escaparHtmlFuncionario(datosDia.dia_nombre + " " + datosDia.fecha_corta) + "'>" +
+			"<strong>" + String(dia).padStart(2, "0") + "</strong>" +
+			"<span class='jornada-cal-info'>" + renderResumenCeldaCalendarioEsperadoUsuario(datosDia) + "</span>" +
+		"</button>";
+	}
+	contenedor.innerHTML = html;
+	if (resumen) {
+		var horarioPrincipal = obtenerClaveFrecuenteCalendarioUsuario(horariosFrecuentes);
+		var descansoPrincipal = obtenerClaveFrecuenteCalendarioUsuario(descansosFrecuentes);
+		resumen.innerHTML =
+			"<div><strong>" + escaparHtmlFuncionario(nombreMesHorarioUsuario(inicio)) + "</strong><span>Vista previa generada desde la plantilla semanal activa.</span></div>" +
+			"<div class='jornada-calendario-resumen-metricas'>" +
+				"<span>Dias esperados: <strong>" + diasEsperados + "</strong></span>" +
+				"<span>Horas esperadas: <strong>" + formatearHorasEsperadasUsuario(minutosMes) + "</strong></span>" +
+				"<span>Jornadas equivalentes: <strong>" + (Math.round((minutosMes / 480) * 100) / 100).toString().replace(".", ",") + "</strong></span>" +
+				"<span>Horario principal: <strong>" + escaparHtmlFuncionario(horarioPrincipal || "-") + "</strong></span>" +
+				"<span>Descanso: <strong>" + escaparHtmlFuncionario(descansoPrincipal || "-") + "</strong></span>" +
+			"</div>";
+	}
+	solicitarJustificacionesJornadaMesUsuario(inicio, fin);
+	renderResumenJornadaMesUsuario(inicio, diasEsperados, minutosMes, obtenerClaveFrecuenteCalendarioUsuario(horariosFrecuentes), obtenerClaveFrecuenteCalendarioUsuario(descansosFrecuentes));
+	if (primerSeleccionable) {
+		seleccionarDiaCalendarioEsperadoUsuario(calendarioEsperadoUsuarioCache[calendarioEsperadoUsuarioSeleccionado] ? calendarioEsperadoUsuarioSeleccionado : primerSeleccionable);
+	} else if (detalle) {
+		detalle.innerHTML = "Sin dias para mostrar en el calendario esperado.";
+	}
 }
 
 function verificarcamposusuario() {
@@ -2105,6 +3272,9 @@ function verificarcamposusuario() {
 	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
 
 	const horariosUsuario = obtenerHorariosUsuarioFormulario();
+	if (horariosUsuario === null) {
+		return false;
+	}
 	if (inptNombreApellidoUsuario == "") {
 		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO")
 		return false;
@@ -2512,6 +3682,8 @@ function limpiarcamposusuarios() {
 	}
 	document.getElementById('inptRegistroSeleccUser').value = ""
 	
+	idAbmUsuario = "";
+	reiniciarJustificacionesJornadaMesUsuario();
 	limpiarHorariosUsuario();
 
 	const fecahActual= new Date();
@@ -2527,8 +3699,8 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptEstadoUser').value = "Activo";
 	document.getElementById('btnAbmUsuario').value = "Guardar datos";
 	document.getElementById('btnEditarUsuario').style.backgroundColor="#b7b7b7";
+	actualizarCabeceraFormularioFuncionario();
 	document.getElementById('divTableHistorialPersonasUsuarios').innerHTML="";
-	idAbmUsuario = "";
 	seleccionarLocalUSer()
 	mostrarFormularioFuncionario()
 }

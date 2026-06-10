@@ -339,6 +339,89 @@ function normalizarHoraUsuario($hora)
 	return "";
 }
 
+function asegurarEstructuraHorarioUsuarioEsperado($mysqli)
+{
+	$columnas = array(
+		"tipo_jornada" => "VARCHAR(30) DEFAULT 'parcial'",
+		"descanso_inicio" => "TIME DEFAULT NULL",
+		"descanso_fin" => "TIME DEFAULT NULL",
+		"horas_esperadas_minutos" => "INT DEFAULT NULL",
+		"jornada_equivalente" => "DECIMAL(6,2) DEFAULT NULL",
+		"vigente_desde" => "DATE DEFAULT NULL",
+		"vigente_hasta" => "DATE DEFAULT NULL",
+		"estado_horario" => "VARCHAR(15) DEFAULT 'activo'",
+		"observacion" => "VARCHAR(255) DEFAULT NULL"
+	);
+
+	foreach ($columnas as $columna => $definicion) {
+		$sqlExiste = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'horario_usuario' AND column_name = ?";
+		$stmt = $mysqli->prepare($sqlExiste);
+		if (!$stmt) { continue; }
+		$s = 's';
+		$stmt->bind_param($s, $columna);
+		if (!$stmt->execute()) {
+			$stmt->close();
+			continue;
+		}
+		$total = 0;
+		$stmt->bind_result($total);
+		$stmt->fetch();
+		$stmt->close();
+		if ((int)$total == 0) {
+			$mysqli->query("ALTER TABLE horario_usuario ADD COLUMN ".$columna." ".$definicion);
+		}
+	}
+}
+
+function normalizarFechaHorarioUsuario($fecha)
+{
+	$fecha = trim((string)$fecha);
+	return preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) ? $fecha : null;
+}
+
+function normalizarTipoJornadaUsuario($tipo)
+{
+	$tipo = trim((string)$tipo);
+	$permitidos = array("completa", "medio_dia_manana", "medio_dia_tarde", "parcial", "noche", "especial", "no_laboral");
+	return in_array($tipo, $permitidos, true) ? $tipo : "parcial";
+}
+
+function normalizarEstadoHorarioUsuario($estado)
+{
+	$estado = trim((string)$estado);
+	return $estado == "inactivo" ? "inactivo" : "activo";
+}
+
+function calcularMinutosJornadaUsuario($hora_entrada, $hora_salida, $descanso_inicio, $descanso_fin, $tipo_jornada)
+{
+	if ($tipo_jornada == "no_laboral") {
+		return 0;
+	}
+
+	$entrada = strtotime("2000-01-01 ".$hora_entrada);
+	$salida = strtotime("2000-01-01 ".$hora_salida);
+	if ($entrada === false || $salida === false) {
+		return 0;
+	}
+	if ($salida <= $entrada && $tipo_jornada == "noche") {
+		$salida = strtotime("2000-01-02 ".$hora_salida);
+	}
+	if ($salida <= $entrada) {
+		return 0;
+	}
+
+	$minutos = (int)floor(($salida - $entrada) / 60);
+	if ($descanso_inicio != "" && $descanso_fin != "") {
+		$descansoInicio = strtotime("2000-01-01 ".$descanso_inicio);
+		$descansoFin = strtotime("2000-01-01 ".$descanso_fin);
+		if ($descansoInicio !== false && $descansoFin !== false && $descansoFin > $descansoInicio && $descansoInicio >= $entrada && $descansoFin <= $salida) {
+			$minutos -= (int)floor(($descansoFin - $descansoInicio) / 60);
+		}
+	}
+
+	return max(0, $minutos);
+}
+
 function obtenerHorariosUsuarioPost()
 {
 	$horariosJson = isset($_POST["horarios_usuario_json"]) ? json_decode((string)$_POST["horarios_usuario_json"], true) : array();
@@ -355,14 +438,40 @@ function obtenerHorariosUsuarioPost()
 
 		$dia = isset($horario["dia"]) ? (string)$horario["dia"] : "";
 		$cod_localFK = isset($horario["cod_localFK"]) ? (string)$horario["cod_localFK"] : "";
+		$tipo_jornada = normalizarTipoJornadaUsuario(isset($horario["tipo_jornada"]) ? $horario["tipo_jornada"] : "");
 		$hora_entrada = isset($horario["hora_entrada"]) ? normalizarHoraUsuario($horario["hora_entrada"]) : "";
-		$hora_salida = isset($horario["hora_salida"]) ? normalizarHoraUsuario($horario["hora_salida"]) : NULL;
+		$hora_salida = isset($horario["hora_salida"]) ? normalizarHoraUsuario($horario["hora_salida"]) : "";
+		$descanso_inicio = isset($horario["descanso_inicio"]) ? normalizarHoraUsuario($horario["descanso_inicio"]) : "";
+		$descanso_fin = isset($horario["descanso_fin"]) ? normalizarHoraUsuario($horario["descanso_fin"]) : "";
+		$vigente_desde = normalizarFechaHorarioUsuario(isset($horario["vigente_desde"]) ? $horario["vigente_desde"] : "");
+		$vigente_hasta = normalizarFechaHorarioUsuario(isset($horario["vigente_hasta"]) ? $horario["vigente_hasta"] : "");
+		$estado_horario = normalizarEstadoHorarioUsuario(isset($horario["estado_horario"]) ? $horario["estado_horario"] : "");
+		$observacion = isset($horario["observacion"]) ? substr((string)$horario["observacion"], 0, 255) : "";
+
+		if ($tipo_jornada == "no_laboral") {
+			$hora_entrada = $hora_entrada != "" ? $hora_entrada : "00:00:00";
+			$hora_salida = $hora_salida != "" ? $hora_salida : "00:00:00";
+		}
+		if ($hora_entrada == "") {
+			continue;
+		}
+		$minutos = calcularMinutosJornadaUsuario($hora_entrada, $hora_salida, $descanso_inicio, $descanso_fin, $tipo_jornada);
+		$jornada_equivalente = $minutos > 0 ? round($minutos / 480, 2) : 0;
 
 		$horarios[] = array(
 			"dia_semana" => $dia,
 			"cod_localFK" => $cod_localFK,
 			"hora_entrada" => $hora_entrada,
-			"hora_salida" => $hora_salida
+			"hora_salida" => $hora_salida != "" ? $hora_salida : NULL,
+			"tipo_jornada" => $tipo_jornada,
+			"descanso_inicio" => $descanso_inicio != "" ? $descanso_inicio : NULL,
+			"descanso_fin" => $descanso_fin != "" ? $descanso_fin : NULL,
+			"horas_esperadas_minutos" => $minutos,
+			"jornada_equivalente" => $jornada_equivalente,
+			"vigente_desde" => $vigente_desde,
+			"vigente_hasta" => $vigente_hasta,
+			"estado_horario" => $estado_horario,
+			"observacion" => $observacion
 		);
 	}
 
@@ -371,9 +480,16 @@ function obtenerHorariosUsuarioPost()
 
 function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK)
 {
+	asegurarEstructuraHorarioUsuarioEsperado($mysqli);
+
 	$consultaInactivar = "UPDATE horario_usuario
-		SET cod_localFK=NULL, fecha_edit=NOW(), cod_usuarioFK_edit=?
-		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL";
+		SET estado_horario='inactivo',
+			vigente_hasta=IF(vigente_hasta IS NULL, DATE_SUB(CURDATE(), INTERVAL 1 DAY), vigente_hasta),
+			fecha_edit=NOW(),
+			cod_usuarioFK_edit=?
+		WHERE cod_usuarioFK=?
+		AND cod_localFK IS NOT NULL
+		AND (estado_horario IS NULL OR estado_horario='activo')";
 
 	$stmtInactivar = $mysqli->prepare($consultaInactivar);
 	if (!$stmtInactivar) {
@@ -396,8 +512,10 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 	}
 
 	$consultaInsert = "INSERT INTO horario_usuario
-		(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,cod_localFK,cod_usuarioFK_create)
-		VALUES (?,?,?,?,?,?)";
+		(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,cod_localFK,cod_usuarioFK_create,
+		tipo_jornada,descanso_inicio,descanso_fin,horas_esperadas_minutos,jornada_equivalente,
+		vigente_desde,vigente_hasta,estado_horario,observacion)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 	$stmtInsert = $mysqli->prepare($consultaInsert);
 	if (!$stmtInsert) {
@@ -410,9 +528,35 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 		$cod_local_horario = isset($horario["cod_localFK"]) && $horario["cod_localFK"] != "" ? $horario["cod_localFK"] : $cod_localFK;
 		$hora_entrada = $horario["hora_entrada"];
 		$hora_salida = $horario["hora_salida"];
+		$tipo_jornada = isset($horario["tipo_jornada"]) ? $horario["tipo_jornada"] : "parcial";
+		$descanso_inicio = isset($horario["descanso_inicio"]) ? $horario["descanso_inicio"] : NULL;
+		$descanso_fin = isset($horario["descanso_fin"]) ? $horario["descanso_fin"] : NULL;
+		$horas_esperadas_minutos = isset($horario["horas_esperadas_minutos"]) ? (int)$horario["horas_esperadas_minutos"] : NULL;
+		$jornada_equivalente = isset($horario["jornada_equivalente"]) ? (float)$horario["jornada_equivalente"] : NULL;
+		$vigente_desde = isset($horario["vigente_desde"]) && $horario["vigente_desde"] != "" ? $horario["vigente_desde"] : date('Y-m-d');
+		$vigente_hasta = isset($horario["vigente_hasta"]) && $horario["vigente_hasta"] != "" ? $horario["vigente_hasta"] : NULL;
+		$estado_horario = isset($horario["estado_horario"]) ? $horario["estado_horario"] : "activo";
+		$observacion = isset($horario["observacion"]) ? $horario["observacion"] : "";
 
-		$ss='ssssss';
-		$stmtInsert->bind_param($ss,$cod_usuario,$dia_semana,$hora_entrada,$hora_salida,$cod_local_horario,$cod_usuario_accion);
+		$ss='sssssssssidssss';
+		$stmtInsert->bind_param(
+			$ss,
+			$cod_usuario,
+			$dia_semana,
+			$hora_entrada,
+			$hora_salida,
+			$cod_local_horario,
+			$cod_usuario_accion,
+			$tipo_jornada,
+			$descanso_inicio,
+			$descanso_fin,
+			$horas_esperadas_minutos,
+			$jornada_equivalente,
+			$vigente_desde,
+			$vigente_hasta,
+			$estado_horario,
+			$observacion
+		);
 
 		if (!$stmtInsert->execute()) {
 			echo trigger_error('The query execution failed; MySQL said ('.$stmtInsert->errno.') '.$stmtInsert->error, E_USER_ERROR);
@@ -428,6 +572,7 @@ function buscarHorariosUsuario($mysqli,$cod_usuario)
 	if (!$mysqli) {
 		$mysqli = conectar_al_servidor();
 	}
+	asegurarEstructuraHorarioUsuarioEsperado($mysqli);
 
 	$horarios = array();
 
@@ -435,9 +580,19 @@ function buscarHorariosUsuario($mysqli,$cod_usuario)
 			dia_semana,
 			cod_localFK,
 			TIME_FORMAT(hora_entrada,'%H:%i') AS hora_entrada,
-			TIME_FORMAT(hora_salida,'%H:%i') AS hora_salida
+			TIME_FORMAT(hora_salida,'%H:%i') AS hora_salida,
+			IFNULL(tipo_jornada,'parcial') AS tipo_jornada,
+			TIME_FORMAT(descanso_inicio,'%H:%i') AS descanso_inicio,
+			TIME_FORMAT(descanso_fin,'%H:%i') AS descanso_fin,
+			IFNULL(horas_esperadas_minutos,0) AS horas_esperadas_minutos,
+			IFNULL(jornada_equivalente,0) AS jornada_equivalente,
+			IFNULL(vigente_desde,'') AS vigente_desde,
+			IFNULL(vigente_hasta,'') AS vigente_hasta,
+			IFNULL(estado_horario,'activo') AS estado_horario,
+			IFNULL(observacion,'') AS observacion
 		FROM horario_usuario
 		WHERE cod_usuarioFK=? AND cod_localFK IS NOT NULL
+		AND (estado_horario IS NULL OR estado_horario='activo')
 		ORDER BY FIELD(dia_semana,'lunes','martes','miercoles','jueves','viernes','sabado','domingo'), hora_entrada ASC, id ASC";
 
 	$stmt = $mysqli->prepare($consulta);
@@ -459,7 +614,16 @@ function buscarHorariosUsuario($mysqli,$cod_usuario)
 			"dia" => mb_convert_encoding((string)($valor["dia_semana"]), 'UTF-8', 'ISO-8859-1'),
 			"cod_localFK" => mb_convert_encoding((string)($valor["cod_localFK"]), 'UTF-8', 'ISO-8859-1'),
 			"hora_entrada" => mb_convert_encoding((string)($valor["hora_entrada"]), 'UTF-8', 'ISO-8859-1'),
-			"hora_salida" => mb_convert_encoding((string)($valor["hora_salida"]), 'UTF-8', 'ISO-8859-1')
+			"hora_salida" => mb_convert_encoding((string)($valor["hora_salida"]), 'UTF-8', 'ISO-8859-1'),
+			"tipo_jornada" => mb_convert_encoding((string)($valor["tipo_jornada"]), 'UTF-8', 'ISO-8859-1'),
+			"descanso_inicio" => mb_convert_encoding((string)($valor["descanso_inicio"]), 'UTF-8', 'ISO-8859-1'),
+			"descanso_fin" => mb_convert_encoding((string)($valor["descanso_fin"]), 'UTF-8', 'ISO-8859-1'),
+			"horas_esperadas_minutos" => mb_convert_encoding((string)($valor["horas_esperadas_minutos"]), 'UTF-8', 'ISO-8859-1'),
+			"jornada_equivalente" => mb_convert_encoding((string)($valor["jornada_equivalente"]), 'UTF-8', 'ISO-8859-1'),
+			"vigente_desde" => mb_convert_encoding((string)($valor["vigente_desde"]), 'UTF-8', 'ISO-8859-1'),
+			"vigente_hasta" => mb_convert_encoding((string)($valor["vigente_hasta"]), 'UTF-8', 'ISO-8859-1'),
+			"estado_horario" => mb_convert_encoding((string)($valor["estado_horario"]), 'UTF-8', 'ISO-8859-1'),
+			"observacion" => mb_convert_encoding((string)($valor["observacion"]), 'UTF-8', 'ISO-8859-1')
 		);
 	}
 
@@ -645,7 +809,8 @@ if($operacion=="editar"){
 		"acceso" => $acceso,
 		"cod_localFK" => $cod_localFK,
 		"tipo" => $tipo,
-		"fecha_creacion" => $fecha_creacion
+		"fecha_creacion" => $fecha_creacion,
+		"horarios_usuario" => json_encode($horarios_usuario)
 	),$cod_usuario_accion,"Administracion");
 }
 
@@ -933,6 +1098,7 @@ function obtenerDatosUsuarioAuditoria($mysqli,$cod_usuario)
 		}
 	}
 	$stmt->close();
+	$datos["horarios_usuario"] = json_encode(buscarHorariosUsuario($mysqli,$cod_usuario));
 	return $datos;
 }
 
@@ -954,7 +1120,8 @@ function registrarHistorialCambiosUsuario($mysqli,$cod_usuario,$anterior,$nuevo,
 		"acceso" => "Rol de acceso",
 		"cod_localFK" => "Sucursal principal",
 		"tipo" => "Tipo de usuario",
-		"fecha_creacion" => "Fecha de ingreso/creacion"
+		"fecha_creacion" => "Fecha de ingreso/creacion",
+		"horarios_usuario" => "Jornada laboral esperada"
 	);
 	$sql="INSERT INTO usuario_historial_cambios
 		(cod_usuarioFK,campo,valor_anterior,valor_nuevo,fecha_hora,cod_usuario_modifico,origen,estado)

@@ -4238,7 +4238,7 @@ if (ventana == "asistencia") {
 +"</tr>"
 +"</table><br><br><center><h1 class='pTituloD' >INFORME DE ASISTENCIA</h1><br></center>"
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
-document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloInformeAsistencia").innerHTML
+document.getElementById("tbTitulosImpresiones").innerHTML=""
 document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_InformeAsistencia").innerHTML
 }
 if (ventana == "Agenda") {
