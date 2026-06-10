@@ -44,7 +44,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=asistencia-gestion-20260608"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
+<<<<<<< HEAD
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=recordatorio-entrada-20260609"></script>
+=======
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=venta-local-manual-reset-20260609"></script>
+>>>>>>> 753febdb013728a1fae1192c4787120c4d077cbb
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -1383,7 +1387,7 @@ style='display:none' class='divMinimizado'>
 </table>
 
 <table class='divMenub' id='divMenuVenta' data-access-key="nueva_venta"
-onclick='verCerrarAbmVenta()' style='width:20%;text-align:center'>
+onclick='verCerrarAbmVenta("nuevo")' style='width:20%;text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu'
@@ -13614,7 +13618,7 @@ placeholder='Auto completado' />
 <td style='width:100%'>
 <p class='pTituloC' >Local :</p>
 <select class="inputSelect" id="inptlocalVenta"
-style='width:110px'></select>
+onchange="marcarLocalVentaManual()" style='width:110px'></select>
 </td>
 </tr>
 </table>
