@@ -846,7 +846,8 @@ cursor:pointer;
 		}
 		
 			 .divScroll::-webkit-scrollbar {
-    display: ;  /* Ocultar scroll */
+    width: 8px;
+    height: 8px;
 }
 .divPrincipalrepor {
 	width:1150px;
@@ -913,15 +914,27 @@ cursor:pointer;
 }
 .divTablesScrool {
 	    overflow: auto;
+    scrollbar-gutter: stable;
     height: 450px;
     border: solid 1px #dfdfdf;
     border-radius: 10px;
     margin-top: 5px;
 }
+.divScrollhideen {
+  scrollbar-width: thin;
+  scrollbar-color: #868686 transparent;
+  -ms-overflow-style: auto;
+}
 .divScrollhideen::-webkit-scrollbar {
-  width:0px;    
-  height: 0px;   
-  display: ; 
+  width: 8px;
+  height: 8px;
+}
+.divScrollhideen::-webkit-scrollbar-thumb {
+  background: #868686;
+  border-radius: 10px;
+}
+.divScrollhideen::-webkit-scrollbar-track {
+  background: transparent;
 }
 	 
 .divScroll::-webkit-scrollbar-thumb {
