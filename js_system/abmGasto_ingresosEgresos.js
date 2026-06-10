@@ -590,6 +590,7 @@ function obtenerGastosAsociados(id_gasto) {
 						document.getElementById('divGastoAsociadosGastos').style.display= "";
 						document.getElementById('divNombreProyectoGasto').innerHTML= datos["4"];
 						document.getElementById('divTableProyecto').innerHTML= datos["2"];
+						document.getElementById('inptCantCuotaGasto').value= cantidadGastos;
 					} else {
 						document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'false');
 						document.getElementById('divGastoAsociadosGastos').style.display= "none";
