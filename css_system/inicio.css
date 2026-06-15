@@ -15699,23 +15699,12 @@ text-align: justify;
 }
 
 .dashboard-topbar__center {
-<<<<<<< Updated upstream
-    position: relative;
-    left: auto;
-    top: auto;
-    z-index: 2;
-    width: min(100%, 470px);
-    min-width: 0;
-    justify-self: center;
-    transform: none;
-=======
     position: absolute;
     left: 44%;
     top: 8px;
     z-index: 2;
     width: clamp(220px, 20vw, 280px);
     transform: translateX(-50%);
->>>>>>> Stashed changes
 }
 
 .dashboard-access-search--topbar {
@@ -15788,11 +15777,7 @@ text-align: justify;
     justify-content: flex-end;
     min-width: 0;
     margin-left: auto;
-<<<<<<< Updated upstream
-    max-width: 100%;
-=======
     overflow: visible;
->>>>>>> Stashed changes
 }
 
 .dashboard-home-button {
@@ -16190,11 +16175,7 @@ button.dashboard-summary-item:hover {
 
 .dashboard-topbar__jornada .perfil-widget__jornada {
     display: grid;
-<<<<<<< Updated upstream
-    grid-template-columns: max-content minmax(0, auto) auto max-content;
-=======
     grid-template-columns: max-content auto max-content;
->>>>>>> Stashed changes
     align-items: center;
     gap: 10px;
     width: auto;
@@ -16241,19 +16222,11 @@ button.dashboard-summary-item:hover {
 }
 
 .dashboard-topbar__jornada .perfil-widget__asistencia {
-<<<<<<< Updated upstream
-    grid-template-columns: 132px minmax(130px, 170px);
-    grid-template-rows: auto auto;
-    align-items: center;
-    gap: 4px 8px;
-    min-width: 0;
-=======
     grid-template-columns: 132px minmax(180px, 220px) 30px;
     grid-template-rows: auto auto;
     align-items: center;
     gap: 4px 8px;
     min-width: 358px;
->>>>>>> Stashed changes
 }
 
 .dashboard-topbar__jornada .perfil-widget__btn {
