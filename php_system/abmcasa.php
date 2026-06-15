@@ -109,19 +109,6 @@ $stmt1->bind_param($ss,$nombre,$estado);
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'local',
-		'cod_local',
-		$cod_local,
-		'Solicitud de eliminacion de local.',
-		$user,
-		'Local: '.$nombre
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update local set Nombre=?,estado=? where cod_local=?";	
 $stmt1 = $mysqli->prepare($consulta1);

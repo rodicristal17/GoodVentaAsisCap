@@ -93,16 +93,12 @@ exit;
 }
 	$result = $stmt->get_result();
 	while ($row = $result->fetch_assoc()) {
-		$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-			'nrofactura',
-			'Cod_Nro',
-			$row['Cod_Nro'],
-			'Solicitud de eliminacion de numeracion anterior de factura.',
-			$cod_usuarioFk,
-			'Numeracion anterior local '.$cod_localfk.' caja '.$nrocaja
-		);
-		if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-			echo json_encode($respuestaSolicitud);
+		$sqlInactivar = "UPDATE nrofactura SET estado='Inactivo', cod_usuarioFk=? WHERE Cod_Nro=?";
+		$stmtInactivar = $mysqli->prepare($sqlInactivar);
+		$codNroAnterior = $row['Cod_Nro'];
+		$stmtInactivar->bind_param('ss',$cod_usuarioFk,$codNroAnterior);
+		if (!$stmtInactivar->execute()) {
+			echo trigger_error('The query execution failed; MySQL said ('.$stmtInactivar->errno.') '.$stmtInactivar->error, E_USER_ERROR);
 			exit;
 		}
 	}

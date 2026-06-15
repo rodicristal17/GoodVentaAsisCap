@@ -765,18 +765,6 @@ $stmt2->bind_param($ss,$FechaNac,$rut_cliente,$Calificacion,$whapp,$estado,$idzo
 if($operacion=="editar")
 {
 
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'cliente',
-		'cod_cliente',
-		$cod_persona,
-		'Solicitud de eliminacion de cliente.',
-		$user,
-		'Cliente: '.$nombre_persona
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update persona set nombre_persona=Upper(?),direccion=Upper(?),telefono=Upper(?),email=Upper(?) where cod_persona=?";	
 
@@ -908,15 +896,17 @@ exit;
 date_default_timezone_set('America/Anguilla');    
 $fecha_inser_edit = date('Y-m-d | h:i:sa', time());	
 
-$respuesta = registrarSolicitudEliminacionGenerica(
-	'antecedente_paciente',
-	'idantecedente_paciente',
-	$cod_antecedente_paciente,
-	'Solicitud de eliminacion de antecedente de paciente.',
-	$user,
-	'Antecedente: '.$cod_antecedente_paciente
-);
-echo json_encode($respuesta);	
+$mysqli=conectar_al_servidor();
+$consulta1="Update antecedente_paciente set estado='Inactivo', cod_usuario=? where idantecedente_paciente=?";
+$stmt1 = $mysqli->prepare($consulta1);
+$stmt1->bind_param('ss',$user,$cod_antecedente_paciente);
+if (!$stmt1->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+exit;
+}
+mysqli_close($mysqli);
+$informacion =array("1" => "exito");
+echo json_encode($informacion);
 exit;
 
 }

@@ -1141,15 +1141,18 @@ function eliminarDiaFeriado($mysqli, $useru){
         exit;
     }
 
-    $respuesta = registrarSolicitudEliminacionGenerica(
-        'dias_feriados',
-        'id',
-        $id,
-        'Solicitud de eliminacion de dia feriado.',
-        $useru,
-        'Dia feriado: '.$id
-    );
-    echo json_encode($respuesta);
+    $sql = "UPDATE dias_feriados SET estado='Inactivo', cod_usuarioFK_edit=?, fecha_edit=NOW() WHERE id=?";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se pudo preparar la eliminacion."));
+        exit;
+    }
+    $stmt->bind_param('ss', $useru, $id);
+    if (!$stmt->execute()) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se pudo eliminar el feriado."));
+        exit;
+    }
+    echo json_encode(array("1" => "exito"));
     exit;
 }
 

@@ -49,6 +49,17 @@ $descuento = quitarseparadormiles($descuento);
 $pagado1 = quitarseparadormiles($pagado1);
 	$pagado2=$_POST['pagado2'];
 $pagado2 = quitarseparadormiles($pagado2);
+	if($operacion=="editar")
+	{
+		registrarSolicitudEliminacionGenerica(
+			"compra",
+			"cod_compra",
+			$cod_compra,
+			"Solicitud automatica por edicion de compra.",
+			$user,
+			"archivo: abmcompra.php | funcion: verificar | funt: editar | cod_compra: ".$cod_compra." | fecha_compra: ".$fecha_compra." | cod_proveedorFK: ".$cod_proveedorFK." | num_comprobante: ".$num_comprobante." | cod_local: ".$cod_local
+		);
+	}
 	abm($cod_compra,$fecha_compra,$cod_proveedorFK,$num_comprobante,$cod_local,$descuento,$pagado1,$pagado2,$operacion);
 
 }
@@ -104,6 +115,30 @@ $nrocheque=$_POST['nrocheque'];
 $nrocheque = mb_convert_encoding((string)($nrocheque), 'ISO-8859-1', 'UTF-8');
 $cod_compraFk=$_POST['cod_compraFk'];
 $cod_compraFk = mb_convert_encoding((string)($cod_compraFk), 'ISO-8859-1', 'UTF-8');
+
+if($operacion=="editarpago")
+{
+	registrarSolicitudEliminacionGenerica(
+		"pagosdecompra",
+		"codpago",
+		$codpago,
+		"Solicitud automatica por edicion de pago de compra.",
+		$user,
+		"archivo: abmcompra.php | funcion: verificar | funt: editarpago | codpago: ".$codpago." | cod_compraFk: ".$cod_compraFk." | monto: ".$monto." | estado: ".$estado
+	);
+}
+
+if($operacion=="eliminarpago")
+{
+	registrarSolicitudEliminacionGenerica(
+		"pagosdecompra",
+		"codpago",
+		$codpago,
+		"Solicitud automatica por eliminacion de pago de compra.",
+		$user,
+		"archivo: abmcompra.php | funcion: verificar | funt: eliminarpago | codpago: ".$codpago." | cod_compraFk: ".$cod_compraFk." | monto: ".$monto." | estado: ".$estado
+	);
+}
 
 addPagos($codpago,$nrocheque,$monto,$fechaapagar,$fechadelpago,$tipo,$estado,$cod_compraFk,$operacion);
 
@@ -297,17 +332,28 @@ $fecha_inser_edit = date('Y-m-d | h:i:sa', time());
 $user=$_POST['useru'];
 $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
-$respuesta = registrarSolicitudEliminacionGenerica(
-	'compra',
-	'cod_compra',
+registrarSolicitudEliminacionGenerica(
+	"compra",
+	"cod_compra",
 	$cod_compra,
 	$motivo,
 	$user,
-	'Compra: '.$cod_compra
+	"archivo: abmcompra.php | funcion: eliminarcompra | funt: eliminarcompra | cod_compra: ".$cod_compra." | motivo: ".$motivo
 );
-$respuesta["2"] = isset($respuesta["2"]) ? $respuesta["2"] : $cod_compra;
-$respuesta["4"] = $cod_compra;
-echo json_encode($respuesta);
+
+$mysqli=conectar_al_servidor();
+$consulta1="Update compra set estado='Inactivo',motivoeliminar=?,cod_user_edit=?,fecha_edit=? where cod_compra=?";
+$stmt1 = $mysqli->prepare($consulta1);
+$ss='ssss';
+$stmt1->bind_param($ss,$motivo,$user,$fecha_inser_edit,$cod_compra);
+if (!$stmt1->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+exit;
+}
+
+mysqli_close($mysqli);
+$informacion =array("1" => "exito","2" => $cod_compra,"4" => $cod_compra);
+echo json_encode($informacion);
 exit;
 	
 }
@@ -346,7 +392,6 @@ $stmt1->bind_param($ss,$nrocheque,$monto,$fechaapagar,$fechadelpago,$tipo,$estad
 
 if($operacion=="editarpago")
 {
-
 $consulta1="Update pagosdecompra set monto=?,nrocheque=?,fechaapagar=?,fechadelpago=?,tipo=?,estado=?,cod_compraFk=?,cod_user_edit=?,fecha_edit=? where codpago=?";	
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssssssss';

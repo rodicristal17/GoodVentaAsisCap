@@ -106,19 +106,6 @@ $stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantven
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'listado',
-		'idlistado',
-		$idlistado,
-		'Solicitud de eliminacion de listado.',
-		$user,
-		'Listado: '.$idlistado
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update listado set cant=?,fecha=?,estado=?,cod_producto=?,cod_cobrador=?,cantvendido=?,cod_local=? where idlistado=?";	/*Sentencia para editar registros*/
 /*La sentencia update es utilizado para editar datos y esta compuesto por 

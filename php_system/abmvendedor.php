@@ -154,19 +154,6 @@ $stmt1->bind_param($ss,$nombre,$nrotelef,$estado,$cod_localfk);
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'vendedor',
-		'idvendedor',
-		$idvendedor,
-		'Solicitud de eliminacion de vendedor.',
-		$user,
-		'Vendedor: '.$nombre
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update vendedor set nombre=?,nrotelef=?,estado=?,cod_localfk=? where idvendedor=?";	
 $stmt1 = $mysqli->prepare($consulta1);

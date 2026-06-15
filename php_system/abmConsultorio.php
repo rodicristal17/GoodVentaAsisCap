@@ -121,19 +121,6 @@ $stmt1->bind_param($ss,$nombre,$descripcion,$color,$estado,$cod_local,$cod_docto
 
 if($operacion=="editar")
 {
-if ($estado !== NULL && solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'consultorios',
-		'cod_Consultorio',
-		$cod_Consultorio,
-		'Solicitud de eliminacion de consultorio.',
-		$user,
-		'Consultorio: '.$cod_Consultorio
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $parametros = array();
 $atributos = "";

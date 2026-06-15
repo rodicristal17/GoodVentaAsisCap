@@ -72,6 +72,18 @@ $tipo_comprobante = mb_convert_encoding((string)($tipo_comprobante), 'ISO-8859-1
 $puntoexpedicion=$_POST['puntoexpedicion'];
 $puntoexpedicion = mb_convert_encoding((string)($puntoexpedicion), 'ISO-8859-1', 'UTF-8');
 
+if($operacion=="editar")
+{
+	registrarSolicitudEliminacionGenerica(
+		"venta",
+		"cod_venta",
+		$cod_venta,
+		"Solicitud automatica por edicion de venta.",
+		$user,
+		"archivo: abmventa.php | funcion: verificar | funt: editar | cod_venta: ".$cod_venta." | fecha_venta: ".$fecha_venta." | cod_clienteFK: ".$cod_clienteFK." | num_factura: ".$num_factura." | cod_cobradorFK: ".$cod_cobradorFK." | cod_local: ".$cod_local
+	);
+}
+
 abm($puntoexpedicion,$tipo_comprobante,$cod_venta,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comision,$cod_local,$idGaranteFk,$operacion);
 
 }
@@ -445,6 +457,14 @@ $total=$_POST['total'];
 $total = quitarseparadormiles($total);
 $cod_ventaFK=$_POST['cod_ventaFK'];
 $cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_ventaFK,
+	"Solicitud automatica por refinanciacion total de venta.",
+	$user,
+	"archivo: abmventa.php | funcion: verificar | funt: refinanciartotalventa | cod_ventaFK: ".$cod_ventaFK." | total: ".$total
+);
 abmactualizarTotal($total,$cod_ventaFK);
 
 }
@@ -526,6 +546,15 @@ $nrofactura = mb_convert_encoding((string)($nrofactura), 'ISO-8859-1', 'UTF-8');
 $TipoRecibo =$_POST['TipoRecibo'];
 $TipoRecibo = mb_convert_encoding((string)($TipoRecibo), 'ISO-8859-1', 'UTF-8');
 
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_venta,
+	"Solicitud automatica por actualizacion de numero de factura.",
+	$user,
+	"archivo: abmventa.php | funcion: verificar | funt: actualizarnrofactura | cod_venta: ".$cod_venta." | puntoexpedicion: ".$puntoexpedicion." | nrofactura: ".$nrofactura." | TipoRecibo: ".$TipoRecibo
+);
+
 actualizarnrofactura($TipoRecibo,$cod_venta,$puntoexpedicion,$nrofactura);
 
 }
@@ -539,6 +568,15 @@ $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8');
 
 $cobrador =$_POST['cobrador'];
 $cobrador = mb_convert_encoding((string)($cobrador), 'ISO-8859-1', 'UTF-8');
+
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_venta,
+	"Solicitud automatica por actualizacion de cobrador.",
+	$user,
+	"archivo: abmventa.php | funcion: verificar | funt: actualizarCobrador | cod_venta: ".$cod_venta." | cobrador: ".$cobrador
+);
 
 actualizarCobrador($cod_venta,$cobrador);
 
@@ -576,6 +614,15 @@ $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8');
 $cobrador =$_POST['cobrador'];
 $cobrador = mb_convert_encoding((string)($cobrador), 'ISO-8859-1', 'UTF-8');
 
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_venta,
+	"Solicitud automatica por asignacion de cobrador externo.",
+	$user,
+	"archivo: abmventa.php | funcion: verificar | funt: AsignarCobrador | cod_venta: ".$cod_venta." | cobrador: ".$cobrador
+);
+
 AsignarCobrador($cod_venta,$cobrador);
 
 }
@@ -593,6 +640,15 @@ $cod_ventaAsignarCod_local = mb_convert_encoding((string)($cod_ventaAsignarCod_l
 
 $inptlocalAsignarLocal =$_POST['inptlocalAsignarLocal'];
 $inptlocalAsignarLocal = mb_convert_encoding((string)($inptlocalAsignarLocal), 'ISO-8859-1', 'UTF-8');
+
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_ventaAsignarCod_local,
+	"Solicitud automatica por asignacion de local.",
+	$user,
+	"archivo: abmventa.php | funcion: verificar | funt: abmAsignarLocal | cod_venta: ".$cod_ventaAsignarCod_local." | cod_local: ".$inptlocalAsignarLocal
+);
 
 abmAsignarLocal($cod_ventaAsignarCod_local,$inptlocalAsignarLocal);
 
@@ -823,6 +879,22 @@ exit;
 $mysqli=conectar_al_servidor(); 
 if($operacion=="nuevo") 
 {
+$resumenSolicitudCancelacion = json_encode(array(
+	"tipo" => "cancelacion_venta",
+	"montodevuelto" => base64_encode($montodevuelto),
+	"motivo" => base64_encode($motivo),
+	"fecha" => base64_encode($fecha),
+	"cod_usuarioFK" => base64_encode($cod_usuarioFK)
+));
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_venta,
+	$motivo,
+	$cod_usuarioFK,
+	$resumenSolicitudCancelacion,
+	""
+);
 $consulta1="Insert into cancelaciones (montodevuelto,motivo,fecha,cod_venta,cod_usuarioFK)
 values(?,?,?,?,?)";
 $stmt1 = $mysqli->prepare($consulta1);
@@ -967,140 +1039,29 @@ date_default_timezone_set('America/Anguilla');
 $user=$_POST['useru'];
 $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
-$cantDetalle = contarRelacionSolicitudVenta($mysqli, 'detalle_venta', 'cod_ventaFK', $cod_venta);
-$cantCredito = contarRelacionSolicitudVenta($mysqli, 'credito', 'cod_venta', $cod_venta);
-$cantPago = contarRelacionSolicitudVenta($mysqli, 'pago', 'cod_venta_fk', $cod_venta);
-$cantGarantia = contarRelacionSolicitudVenta($mysqli, 'garantias', 'cod_ventaFK', $cod_venta);
-
-$resumen = "Venta: ".$cod_venta;
-if ($nroFactura != "") {
-	$resumen .= " | Factura: ".$nroFactura;
-}
-$resumen .= " | Relacionados: ".$cantDetalle." detalle(s), ".$cantCredito." credito(s), ".$cantPago." pago(s), ".$cantGarantia." garantia(s)";
-
-$respuesta = registrarSolicitudEliminacionGenerica(
-	'venta',
-	'cod_venta',
+$fecha_inser_edit = date('Y-m-d H:i:s', time());
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
 	$cod_venta,
 	$motivo,
 	$user,
-	$resumen
+	"archivo: abmventa.php | funcion: eliminarventa | funt: eliminarVenta | cod_venta: ".$cod_venta." | motivo: ".$motivo." | nroFactura: ".$nroFactura
 );
-
-if (!isset($respuesta["1"]) || $respuesta["1"] != "exito") {
-	mysqli_close($mysqli);
-	echo json_encode($respuesta);
-	exit;
+$consulta1="Update venta set estado='Inactivo',cod_user_edit=?,fecha_edit=? where cod_venta=?";
+$stmt1 = $mysqli->prepare($consulta1);
+$ss='sss';
+$stmt1->bind_param($ss,$user,$fecha_inser_edit,$cod_venta);
+if (!$stmt1->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+exit;
 }
-
-$idSolicitud = isset($respuesta["3"]) ? $respuesta["3"] : 0;
-registrarRelacionadosSolicitudVenta($mysqli, $idSolicitud, $cod_venta);
 
  mysqli_close($mysqli); 
-$respuesta["2"] = "Solicitud de eliminacion de venta registrada.";
-echo json_encode($respuesta);	
+$informacion =array("1" => "exito","2" => $cod_venta);
+echo json_encode($informacion);
 exit;
 	
-}
-
-function contarRelacionSolicitudVenta($mysqli, $tabla, $columna, $cod_venta) {
-	if (!solicitudEliminadoColumnaExiste($mysqli, $tabla, $columna)) {
-		return 0;
-	}
-	$sql = "SELECT COUNT(*) AS total FROM `".$tabla."` WHERE `".$columna."` = ?";
-	$stmt = $mysqli->prepare($sql);
-	if (!$stmt) {
-		return 0;
-	}
-	$stmt->bind_param('s', $cod_venta);
-	if (!$stmt->execute()) {
-		$stmt->close();
-		return 0;
-	}
-	$result = $stmt->get_result();
-	$row = $result ? $result->fetch_assoc() : null;
-	$stmt->close();
-	return isset($row['total']) ? intval($row['total']) : 0;
-}
-
-function registrarRelacionadosSolicitudVenta($mysqli, $idSolicitud, $cod_venta) {
-	if (intval($idSolicitud) <= 0) {
-		return;
-	}
-	registrarRelacionadosSolicitudVentaDesdeSql(
-		$mysqli,
-		$idSolicitud,
-		"SELECT cod_detalle AS id, CONCAT('Detalle venta: ', cod_detalle, ' | Producto: ', cod_productoFK, ' | Estado: ', estado) AS resumen FROM detalle_venta WHERE cod_ventaFK = ?",
-		'detalle_venta',
-		'cod_detalle',
-		'estado',
-		1,
-		$cod_venta
-	);
-	registrarRelacionadosSolicitudVentaDesdeSql(
-		$mysqli,
-		$idSolicitud,
-		"SELECT idcredito AS id, CONCAT('Credito: ', idcredito, ' | Plazo: ', plazo, ' | Estado: ', Esado) AS resumen FROM credito WHERE cod_venta = ?",
-		'credito',
-		'idcredito',
-		'Esado',
-		1,
-		$cod_venta
-	);
-	$requiereInactivacionPago = solicitudEliminadoColumnaExiste($mysqli, 'pago', 'estado') ? 1 : 0;
-	registrarRelacionadosSolicitudVentaDesdeSql(
-		$mysqli,
-		$idSolicitud,
-		"SELECT idPago AS id, CONCAT('Pago: ', idPago, ' | Monto: ', Monto, ' | Tipo: ', Tipo) AS resumen FROM pago WHERE cod_venta_fk = ?",
-		'pago',
-		'idPago',
-		$requiereInactivacionPago == 1 ? 'estado' : '',
-		$requiereInactivacionPago,
-		$cod_venta
-	);
-	registrarRelacionadosSolicitudVentaDesdeSql(
-		$mysqli,
-		$idSolicitud,
-		"SELECT idgarantia AS id, CONCAT('Garantia: ', idgarantia, ' | Estado: ', estado) AS resumen FROM garantias WHERE cod_ventaFK = ?",
-		'garantias',
-		'idgarantia',
-		'estado',
-		1,
-		$cod_venta
-	);
-}
-
-function registrarRelacionadosSolicitudVentaDesdeSql($mysqli, $idSolicitud, $sql, $tabla, $pkColumna, $estadoColumna, $requiereInactivacion, $cod_venta) {
-	if (!solicitudEliminadoColumnaExiste($mysqli, $tabla, $pkColumna)) {
-		return;
-	}
-	$stmt = $mysqli->prepare($sql);
-	if (!$stmt) {
-		return;
-	}
-	$stmt->bind_param('s', $cod_venta);
-	if (!$stmt->execute()) {
-		$stmt->close();
-		return;
-	}
-	$result = $stmt->get_result();
-	while ($row = $result->fetch_assoc()) {
-		$respuesta = registrarDetalleSolicitudEliminacionGenerica(
-			$idSolicitud,
-			$tabla,
-			$pkColumna,
-			$row['id'],
-			isset($row['resumen']) ? $row['resumen'] : '',
-			$estadoColumna,
-			$requiereInactivacion
-		);
-		if (!isset($respuesta["1"]) || $respuesta["1"] != "exito") {
-			$stmt->close();
-			echo json_encode($respuesta);
-			exit;
-		}
-	}
-	$stmt->close();
 }
 
 function eliminarcreditos($cod_venta){

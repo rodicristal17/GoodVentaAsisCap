@@ -136,19 +136,6 @@ if($pagado=="PENDIENTE"){
 	}
 	if($funt=="editar")
 	{
-		if (solicitudEliminadoEsEstadoInactivo($estado)) {
-			$user = solicitudEliminadoValorPost('useru', '0');
-			$respuesta = registrarSolicitudEliminacionGenerica(
-				'cheque',
-				'idcheque',
-				$idAbmCheque,
-				'Solicitud de eliminacion de cheque.',
-				$user,
-				'Cheque: '.$nroCheque
-			);
-			echo json_encode($respuesta);
-			exit;
-		}
     
     $consulta="Update cheque set fecemi='$fechaemi', nroche='$nroCheque', fecven='$fechaven', orden=upper('$orden'), concep=upper('$concepto'), importe=$importe, pagado=$pagado, cod_bancoFK=$banco,estado='$estado' where idcheque=$idAbmCheque";	
 

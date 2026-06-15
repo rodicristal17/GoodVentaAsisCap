@@ -124,20 +124,6 @@ if($valor==1)
 	}
 	if($funt=="editar")
 	{
-		if (solicitudEliminadoEsEstadoInactivo($Estado)) {
-			$user = solicitudEliminadoValorPost('useru', '0');
-			$respuesta = registrarSolicitudEliminacionGenerica(
-				'impuesto',
-				'cod_Impuesto',
-				$cod_Impuesto,
-				'Solicitud de eliminacion de impuesto.',
-				$user,
-				'Impuesto: '.$descripcion,
-				'Estado'
-			);
-			echo json_encode($respuesta);
-			exit;
-		}
         
         
     

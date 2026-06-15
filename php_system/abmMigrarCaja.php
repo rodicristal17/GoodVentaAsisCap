@@ -60,6 +60,18 @@ $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 $cod_cajaApertura = mb_convert_encoding((string)($cod_cajaApertura), 'ISO-8859-1', 'UTF-8');	
 
 
+if($operacion=="editar")
+{
+	registrarSolicitudEliminacionGenerica(
+		"migrar_caja",
+		"idmigrar_caja",
+		$cod_MigrarCaja,
+		"Solicitud automatica por edicion de migracion de caja.",
+		$user,
+		"archivo: abmMigrarCaja.php | funcion: verificar | funt: editar | idmigrar_caja: ".$cod_MigrarCaja." | monto: ".$monto." | usu_RecibirFK: ".$usu_RecibirFK." | estado: ".$estado." | cod_cajaApertura: ".$cod_cajaApertura
+	);
+}
+
 	abm($cod_MigrarCaja,$monto,$obs,$usu_RecibirFK,$estado,$user,$cod_cajaApertura,$operacion);
 
 }
@@ -111,6 +123,14 @@ $idabm = mb_convert_encoding((string)($idabm), 'ISO-8859-1', 'UTF-8');
 
 $codApertura=$_POST['codApertura'];
 $codApertura = mb_convert_encoding((string)($codApertura), 'ISO-8859-1', 'UTF-8');	
+	registrarSolicitudEliminacionGenerica(
+		"migrar_caja",
+		"idmigrar_caja",
+		$idabm,
+		"Solicitud automatica por asignacion de caja destino.",
+		$user,
+		"archivo: abmMigrarCaja.php | funcion: verificar | funt: nuevoCajaEscritorio | idmigrar_caja: ".$idabm." | codApertura: ".$codApertura
+	);
 	nuevoCajaEscritorio( $idabm,$codApertura);
 
 }	
@@ -394,19 +414,6 @@ $stmt1->bind_param($ss,$obs,$monto,$cod_cajaApertura,$estado,$usu_RecibirFK,$use
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'migrar_caja',
-		'idmigrar_caja',
-		$cod_MigrarCaja,
-		'Solicitud de eliminacion de migracion de caja.',
-		$user,
-		'Migracion de caja: '.$cod_MigrarCaja
-	);
-	echo json_encode($respuesta);
-	exit;
-}
-
 $consulta1="Update migrar_caja set obs=?, fecha=now(), monto=?,    estado=?,  cod_usuRecibeFK=?, cod_UsuEnviaFK=? where idmigrar_caja=?";	
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssss';

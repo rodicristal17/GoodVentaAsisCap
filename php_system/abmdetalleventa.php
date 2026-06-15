@@ -88,6 +88,17 @@ $datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comproban
 $cod_ventaFK=$datosventa[0];
 $num_factura=$datosventa[1];
 }
+if($operacion=="editar" && $cod_ventaFK!="")
+{
+	registrarSolicitudEliminacionGenerica(
+		"venta",
+		"cod_venta",
+		$cod_ventaFK,
+		"Solicitud automatica por edicion de detalle de venta.",
+		$user,
+		"archivo: abmdetalleventa.php | funcion: verificar | funt: editar | cod_ventaFK: ".$cod_ventaFK." | num_factura: ".$num_factura." | nro_comprobante: ".$nro_comprobante
+	);
+}
 abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$nro_comprobante,$operacion);
 
 }
@@ -108,6 +119,14 @@ $MetodoPagoCambio=$_POST['MetodoPagoCambio'];
 $MetodoPagoCambio = mb_convert_encoding((string)($MetodoPagoCambio), 'ISO-8859-1', 'UTF-8');
 $Local_FK=$_POST['Local_FK'];
 $Local_FK = mb_convert_encoding((string)($Local_FK), 'ISO-8859-1', 'UTF-8');
+registrarSolicitudEliminacionGenerica(
+	"detalle_venta",
+	"cod_detalle",
+	$cod_detalle,
+	"Solicitud automatica por cambio de producto en venta.",
+	$user,
+	"archivo: abmdetalleventa.php | funcion: verificar | funt: cambio | cod_detalle: ".$cod_detalle." | cod_ventaFK: ".$cod_ventaFK." | cantidaCambio: ".$cantidaCambio." | CodProductocompraCambio: ".$CodProductocompraCambio." | MetodoPagoCambio: ".$MetodoPagoCambio
+);
 cambiar($cod_detalle,$cod_ventaFK,$cantidaCambio,$CodProductocompraCambio,$MetodoPagoCambio,$user,$Local_FK);
 
 }
@@ -169,6 +188,15 @@ $fecha = mb_convert_encoding((string)($fecha), 'ISO-8859-1', 'UTF-8');
 
 $estado=$_POST['estado'];
 $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
+
+registrarSolicitudEliminacionGenerica(
+	"garantias",
+	"idgarantia",
+	$idgarantia,
+	"Solicitud automatica por edicion de uso de garantia.",
+	$user,
+	"archivo: abmdetalleventa.php | funcion: verificar | funt: editarusogarantia | idgarantia: ".$idgarantia." | fecha: ".$fecha." | estado: ".$estado
+);
 
 editarusogarantia($idgarantia,$fecha,$estado,$user);
 
@@ -769,6 +797,15 @@ exit;
 }
 $motivo="Devolucion";
 
+registrarSolicitudEliminacionGenerica(
+	"detalle_venta",
+	"cod_detalle",
+	$cod_detalle,
+	"Solicitud automatica por devolucion de detalle de venta.",
+	isset($_POST['useru']) ? mb_convert_encoding((string)($_POST['useru']), 'ISO-8859-1', 'UTF-8') : "0",
+	"archivo: abmdetalleventa.php | funcion: quitarDevolucion | funt: quitarDevolucion | cod_detalle: ".$cod_detalle." | cod_productoFK: ".$cod_productoFK." | cod_ventaFK: ".$cod_ventaFK." | cantidaCambio: ".$cantidaCambio
+);
+
 $mysqli=conectar_al_servidor(); 
 
 
@@ -824,6 +861,14 @@ exit;
 
 
 $mysqli=conectar_al_servidor();
+registrarSolicitudEliminacionGenerica(
+	"detalle_venta",
+	"cod_detalle",
+	$cod_detalle,
+	"Solicitud automatica por quitar detalle de garantia.",
+	isset($_POST['useru']) ? mb_convert_encoding((string)($_POST['useru']), 'ISO-8859-1', 'UTF-8') : "0",
+	"archivo: abmdetalleventa.php | funcion: quitardegarantia | funt: quitardegarantia | cod_detalle: ".$cod_detalle
+);
 $consulta1="update detalle_venta set estado='Activo' where cod_detalle=? ";
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='s';
@@ -950,61 +995,71 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 	$descuento= str_replace('.','',$descuento);
 	$monto= intval($monto) - intval($descuento);
 
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'detalle_venta',
-		'cod_detalle',
-		$cod_detalle,
-		'Solicitud de eliminacion de detalle de venta. Motivo: '.$motivo,
-		$user,
-		'Venta: '.$cod_ventaFK.' | Producto: '.$codProducto.' | Descuento: '.$descuento.' | Subtotal nuevo: '.$monto,
-		'estado'
-	);
-	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
-		echo json_encode($respuesta);
+	$mysqli=conectar_al_servidor();
+	$consulta1="SELECT dtv.cantidad_detalle, dtv.cod_productoFK, vt.cod_local
+		from detalle_venta dtv inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
+		where dtv.cod_detalle=? limit 1";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss='s';
+	$stmt1->bind_param($ss,$cod_detalle);
+	if (!$stmt1->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	exit;
+	}
+	$result = $stmt1->get_result();
+	$detalle = $result ? $result->fetch_assoc() : null;
+	$stmt1->close();
+	if (!$detalle) {
+		$informacion = array("1" => "camposvacio");
+		echo json_encode($informacion);
 		exit;
 	}
-	$idSolicitud = isset($respuesta["3"]) ? $respuesta["3"] : 0;
-	if ($idSolicitud > 0) {
-		registrarCreditosVentaEnSolicitudEliminacion($idSolicitud, $cod_ventaFK);
+
+	$codProductoEliminado = $codProducto != "" ? $codProducto : $detalle['cod_productoFK'];
+	registrarSolicitudEliminacionGenerica(
+		"detalle_venta",
+		"cod_detalle",
+		$cod_detalle,
+		$motivo,
+		$user,
+		"archivo: abmdetalleventa.php | funcion: quitarproducto | funt: eliminar | cod_detalle: ".$cod_detalle." | cod_ventaFK: ".$cod_ventaFK." | codProducto: ".$codProductoEliminado." | cantidad: ".$detalle['cantidad_detalle']." | cod_local: ".$detalle['cod_local']
+	);
+
+	$consulta1="delete from detalle_venta where cod_detalle=? ";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$stmt1->bind_param($ss,$cod_detalle);
+	if (!$stmt1->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	exit;
 	}
+	$stmt1->close();
+	mysqli_close($mysqli);
+
+	editar_cantidad($codProductoEliminado,$detalle['cantidad_detalle'],"suma",$detalle['cod_local']);
+	registrarDetalleVentaEliminado($motivo,$codProductoEliminado,$user,$cod_ventaFK);
 
 	$subtotal = obtenerTotal($cod_ventaFK);
+	actualizarTotal($cod_ventaFK,$subtotal);
 
-	$informacion = array("1" => "exito", "2" => number_format($subtotal, '0', ',', '.'), "3" => $cod_ventaFK, "4" => "Solicitud de eliminacion registrada.");
+	$informacion = array("1" => "exito", "2" => number_format($subtotal, '0', ',', '.'), "3" => $cod_ventaFK, "4" => "");
 	echo json_encode($informacion);
 	exit;
 }
 
-
-function registrarCreditosVentaEnSolicitudEliminacion($idSolicitud, $cod_venta){
-		$mysqli=conectar_al_servidor();
-		$consulta="SELECT idcredito FROM credito WHERE cod_venta=?";
-	$stmt = $mysqli->prepare($consulta);
-	$stmt->bind_param('s', $cod_venta);
-
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
-	$result = $stmt->get_result();
-	while ($row = $result->fetch_assoc()) {
-		$respuesta = registrarDetalleSolicitudEliminacionGenerica(
-			$idSolicitud,
-			'credito',
-			'idcredito',
-			$row['idcredito'],
-			'Credito de venta: '.$cod_venta,
-			'Esado',
-			1
-		);
-		if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
-			echo json_encode($respuesta);
-			exit;
-		}
+function registrarDetalleVentaEliminado($motivo,$codProducto,$user,$cod_ventaFK)
+{
+	$mysqli=conectar_al_servidor();
+	$consulta1="Insert into detallesventaeliminado (motivo,fecha,cod_producto,cod_user_insert,fecha_insert,cod_ventaFK)
+	values(?,Current_Date,?,?,CURRENT_TIMESTAMP,?)";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss='ssss';
+	$stmt1->bind_param($ss,$motivo,$codProducto,$user,$cod_ventaFK);
+	if (!$stmt1->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	exit;
 	}
 	mysqli_close($mysqli);
 }
-
 
 function editar_cantidad($idproductos,$cantidad,$t,$cod_localfk){
       

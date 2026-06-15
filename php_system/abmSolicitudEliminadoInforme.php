@@ -625,6 +625,183 @@ function inactivarDetallesSolicitudEliminado($mysqli, $idSolicitud) {
     }
 }
 
+function datosEspecialesSolicitudEliminado($solicitud) {
+    $resumen = isset($solicitud['registro_resumen']) ? (string)$solicitud['registro_resumen'] : '';
+    $datos = json_decode($resumen, true);
+    return is_array($datos) ? $datos : array();
+}
+
+function valorEspecialSolicitudEliminado($datos, $clave, $defecto = '') {
+    if (!isset($datos[$clave])) {
+        return $defecto;
+    }
+    $valor = base64_decode((string)$datos[$clave], true);
+    return $valor === false ? $defecto : $valor;
+}
+
+function aplicarEliminacionDetalleCompraSolicitudEliminado($mysqli, $codDetalle) {
+    $sql = "SELECT dc.cod_productoFK, dc.cantidad_detalle_compra, dc.cod_compraFK, cp.cod_local
+            FROM detalle_compra dc
+            INNER JOIN compra cp ON cp.cod_compra = dc.cod_compraFK
+            WHERE dc.cod_detalle_compra = ?
+            LIMIT 1";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar el detalle de compra.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('s', $codDetalle);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo consultar el detalle de compra.", "3" => $stmt->error));
+    }
+    $result = $stmt->get_result();
+    $detalle = $result ? $result->fetch_assoc() : null;
+    $stmt->close();
+    if (!$detalle) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se encontro el detalle de compra solicitado."));
+    }
+
+    $stmt = $mysqli->prepare("DELETE FROM detalle_compra WHERE cod_detalle_compra = ? LIMIT 1");
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar la eliminacion del detalle de compra.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('s', $codDetalle);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo eliminar el detalle de compra.", "3" => $stmt->error));
+    }
+    $stmt->close();
+
+    $stmt = $mysqli->prepare("UPDATE stocklocales SET cantidad = (cantidad - ?) WHERE cod_productofk = ? AND cod_localfk = ?");
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar el ajuste de stock de compra.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('sss', $detalle['cantidad_detalle_compra'], $detalle['cod_productoFK'], $detalle['cod_local']);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo ajustar el stock de compra.", "3" => $stmt->error));
+    }
+    $stmt->close();
+}
+
+function aplicarEliminacionPagoCreditoSolicitudEliminado($mysqli, $solicitud) {
+    $codCredito = isset($solicitud['registro_pk_valor']) ? $solicitud['registro_pk_valor'] : '';
+    $datos = datosEspecialesSolicitudEliminado($solicitud);
+    $motivo = valorEspecialSolicitudEliminado($datos, 'motivo', 'Eliminado por solicitud aprobada');
+    $monto = valorEspecialSolicitudEliminado($datos, 'monto', '0');
+    $cuota = valorEspecialSolicitudEliminado($datos, 'cuota', 'XX');
+    $nrofactura = valorEspecialSolicitudEliminado($datos, 'nrofactura', '');
+    $user = isset($solicitud['id_usuario_solicitud']) ? $solicitud['id_usuario_solicitud'] : '';
+
+    $stmt = $mysqli->prepare("DELETE FROM pago WHERE cod_creditoFK = ?");
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar la eliminacion del pago de credito.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('s', $codCredito);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo eliminar el pago de credito.", "3" => $stmt->error));
+    }
+    $stmt->close();
+
+    $stmt = $mysqli->prepare("INSERT INTO pagoseliminados (motivo, monto, cuota, fecha, cod_usuario, nroventa)
+                              VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?)");
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar el historial del pago eliminado.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('sssss', $motivo, $monto, $cuota, $user, $nrofactura);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo registrar el historial del pago eliminado.", "3" => $stmt->error));
+    }
+    $stmt->close();
+}
+
+function aplicarCancelacionVentaSolicitudEliminado($mysqli, $solicitud) {
+    $codVenta = isset($solicitud['registro_pk_valor']) ? $solicitud['registro_pk_valor'] : '';
+    $datos = datosEspecialesSolicitudEliminado($solicitud);
+    $montodevuelto = valorEspecialSolicitudEliminado($datos, 'montodevuelto', '0');
+    $motivo = valorEspecialSolicitudEliminado($datos, 'motivo', 'Cancelacion aprobada por solicitud');
+    $fecha = valorEspecialSolicitudEliminado($datos, 'fecha', date('Y-m-d'));
+    $codUsuario = valorEspecialSolicitudEliminado($datos, 'cod_usuarioFK', isset($solicitud['id_usuario_solicitud']) ? $solicitud['id_usuario_solicitud'] : '');
+
+    $stmt = $mysqli->prepare("INSERT INTO cancelaciones (montodevuelto, motivo, fecha, cod_venta, cod_usuarioFK)
+                              VALUES (?, ?, ?, ?, ?)");
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar la cancelacion de venta.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('sssss', $montodevuelto, $motivo, $fecha, $codVenta, $codUsuario);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo registrar la cancelacion de venta.", "3" => $stmt->error));
+    }
+    $stmt->close();
+
+    $stmt = $mysqli->prepare("SELECT dtv.cod_productoFK, dtv.cantidad_detalle, vt.cod_local
+                              FROM detalle_venta dtv
+                              INNER JOIN venta vt ON vt.cod_venta = dtv.cod_ventaFK
+                              WHERE dtv.cod_ventaFK = ?");
+    if (!$stmt) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar el detalle de venta cancelada.", "3" => $mysqli->error));
+    }
+    $stmt->bind_param('s', $codVenta);
+    if (!$stmt->execute()) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo consultar el detalle de venta cancelada.", "3" => $stmt->error));
+    }
+    $result = $stmt->get_result();
+    $detalles = array();
+    while ($row = $result->fetch_assoc()) {
+        $detalles[] = $row;
+    }
+    $stmt->close();
+
+    foreach ($detalles as $detalle) {
+        $stmt = $mysqli->prepare("UPDATE stocklocales SET cantidad = (cantidad + ?) WHERE cod_productofk = ? AND cod_localfk = ?");
+        if (!$stmt) {
+            responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo preparar el ajuste de stock de venta.", "3" => $mysqli->error));
+        }
+        $stmt->bind_param('sss', $detalle['cantidad_detalle'], $detalle['cod_productoFK'], $detalle['cod_local']);
+        if (!$stmt->execute()) {
+            responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo ajustar el stock de venta.", "3" => $stmt->error));
+        }
+        $stmt->close();
+    }
+}
+
+function aplicarEliminacionEspecialSolicitudEliminado($mysqli, $solicitud) {
+    $tabla = isset($solicitud['tabla_nombre']) ? strtolower((string)$solicitud['tabla_nombre']) : '';
+    $pkColumna = isset($solicitud['registro_pk_columna']) ? strtolower((string)$solicitud['registro_pk_columna']) : '';
+    $estadoColumna = isset($solicitud['estado_columna']) ? (string)$solicitud['estado_columna'] : '';
+
+    if ($tabla == 'detalle_compra' && $pkColumna == 'cod_detalle_compra') {
+        aplicarEliminacionDetalleCompraSolicitudEliminado($mysqli, $solicitud['registro_pk_valor']);
+        return true;
+    }
+
+    if ($tabla == 'pago' && $pkColumna == 'cod_creditofk') {
+        aplicarEliminacionPagoCreditoSolicitudEliminado($mysqli, $solicitud);
+        return true;
+    }
+
+    if ($tabla == 'venta' && $pkColumna == 'cod_venta' && $estadoColumna == '') {
+        $datos = datosEspecialesSolicitudEliminado($solicitud);
+        if (isset($datos['tipo']) && $datos['tipo'] == 'cancelacion_venta') {
+            aplicarCancelacionVentaSolicitudEliminado($mysqli, $solicitud);
+            return true;
+        }
+    }
+
+    if ($tabla != 'pago' || $pkColumna != 'idpago') {
+        return false;
+    }
+
+    include_once("abmpagos.php");
+    if (!function_exists('aplicarEliminacionHistorialPago')) {
+        responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo cargar la eliminacion especial de pago."));
+    }
+
+    $codPago = isset($solicitud['registro_pk_valor']) ? $solicitud['registro_pk_valor'] : '';
+    $datosPagos = buscardatospagos($codPago, "1");
+    $codVenta = $datosPagos[0];
+    $user = isset($solicitud['id_usuario_solicitud']) ? $solicitud['id_usuario_solicitud'] : '';
+    aplicarEliminacionHistorialPago($codPago, $codVenta, $user, false);
+    return true;
+}
+
 function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
     if (!solicitudEliminadoTieneDestino($solicitud)) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "La solicitud no tiene tabla, columna o codigo del registro a eliminar. No se puede aprobar."));
@@ -633,6 +810,10 @@ function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
     $idSolicitud = isset($solicitud['id_solicitud_eliminado']) ? intval($solicitud['id_solicitud_eliminado']) : 0;
     if ($idSolicitud > 0) {
         inactivarDetallesSolicitudEliminado($mysqli, $idSolicitud);
+    }
+
+    if (aplicarEliminacionEspecialSolicitudEliminado($mysqli, $solicitud)) {
+        return;
     }
 
     $tabla = $solicitud['tabla_nombre'];

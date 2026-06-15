@@ -1,5 +1,6 @@
 <?php
 require_once("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include_once('quitarseparadormiles.php');
 include_once("verificar_navegador.php");
 include_once("buscar_nivel.php");
@@ -195,6 +196,15 @@ $comision = quitarseparadormiles($comision);
 
 $idPagoComision=$_POST['idPagoComision'];
 
+registrarSolicitudEliminacionGenerica(
+	"pago",
+	"idPago",
+	$idPagoComision,
+	"Solicitud automatica por edicion de comision de pago.",
+	$user,
+	"archivo: abmpagos.php | funcion: verificarOperacionPagos | funt: editarcomision | idPago: ".$idPagoComision." | comision: ".$comision,
+	""
+);
 
 cambiarcomision($idPagoComision,$comision);
 
@@ -206,7 +216,7 @@ if($operacion=="eliminarhistorialpago" )
 $codPago=$_POST['codPago'];
 $codPago = mb_convert_encoding((string)($codPago), 'ISO-8859-1', 'UTF-8');
 
-$codVenta=$_POST['codVenta'];
+$codVenta=isset($_POST['codVenta']) ? $_POST['codVenta'] : '';
 $codVenta = mb_convert_encoding((string)($codVenta), 'ISO-8859-1', 'UTF-8');
 
 quitarhistorialpago($codPago,$codVenta);
@@ -478,6 +488,16 @@ if ($operacion == "guardarNroComprobante") {
 	$nro_comprobante = mb_convert_encoding((string)($nro_comprobante), 'ISO-8859-1', 'UTF-8');
 	$fecha_facturado=$_POST['fecha_facturado'];
 	$fecha_facturado = mb_convert_encoding((string)($fecha_facturado), 'ISO-8859-1', 'UTF-8');
+
+	registrarSolicitudEliminacionGenerica(
+		"pago",
+		"idPago",
+		$cod_pago,
+		"Solicitud automatica por actualizacion de comprobante de pago.",
+		$user,
+		"archivo: abmpagos.php | funcion: verificarOperacionPagos | funt: guardarNroComprobante | idPago: ".$cod_pago." | nro_comprobante: ".$nro_comprobante." | fecha_facturado: ".$fecha_facturado,
+		""
+	);
 
 	guardarNroComprobante($cod_pago, $nro_comprobante, $fecha_facturado);
 }
@@ -1364,34 +1384,54 @@ $NroFactura=1;
 /*Funcion para insertar,modificar o eliminar registros*/
 function quitarpago($idFkVenta,$cod_creditoFK,$motivo,$monto,$cuota,$nrofactura,$user)
 {
-	
-$datosPagos=buscardatospagos($cod_creditoFK,"2");
+	if($cod_creditoFK==""){
+		$informacion =array("1" => "camposvacio");
+		echo json_encode($informacion);
+		exit;
+	}
 
-$mysqli=conectar_al_servidor(); 
-$consulta1="delete from pago where cod_creditoFK='$cod_creditoFK' ";	
+	$datosPagos=buscardatospagos($cod_creditoFK,"2");
+	$resumenSolicitudPago = json_encode(array(
+		"motivo" => base64_encode($motivo),
+		"monto" => base64_encode($monto),
+		"cuota" => base64_encode($cuota),
+		"nrofactura" => base64_encode($nrofactura)
+	));
+	registrarSolicitudEliminacionGenerica(
+		"pago",
+		"cod_creditoFK",
+		$cod_creditoFK,
+		$motivo,
+		$user,
+		$resumenSolicitudPago,
+		""
+	);
 
-$stmt1 = $mysqli->prepare($consulta1);
-if (!$stmt1->execute()) {
-	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
+	$mysqli=conectar_al_servidor();
+	$consulta1="delete from pago where cod_creditoFK='$cod_creditoFK' ";
 
-}
+	$stmt1 = $mysqli->prepare($consulta1);
+	if (!$stmt1->execute()) {
 
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	exit;
 
-$consulta1="Insert into pagoseliminados (motivo, monto, cuota, fecha, cod_usuario, nroventa)
-values('$motivo','$monto','$cuota',CURRENT_TIMESTAMP,'$user','$nrofactura')";
-$stmt1 = $mysqli->prepare($consulta1);
-if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-
-}
+	}
 
 
-$informacion =array("1" => "exito");
-echo json_encode($informacion);	
-exit;
+	$consulta1="Insert into pagoseliminados (motivo, monto, cuota, fecha, cod_usuario, nroventa)
+	values('$motivo','$monto','$cuota',CURRENT_TIMESTAMP,'$user','$nrofactura')";
+	$stmt1 = $mysqli->prepare($consulta1);
+	if (!$stmt1->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	exit;
+
+	}
+
+
+	$informacion =array("1" => "exito");
+	echo json_encode($informacion);
+	exit;
 
 }
 
@@ -1400,11 +1440,31 @@ exit;
 
 function quitarhistorialpago($cod_pago,$codVenta)
 {
-	
+	if($cod_pago==""){
+		$informacion =array("1" => "camposvacio");
+		echo json_encode($informacion);
+		exit;
+	}
+
+	$user=isset($_POST['useru']) ? $_POST['useru'] : '0';
+	$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
+	registrarSolicitudEliminacionGenerica(
+		"pago",
+		"idPago",
+		$cod_pago,
+		"Solicitud automatica por eliminacion de historial de pago.",
+		$user,
+		"archivo: abmpagos.php | funcion: quitarhistorialpago | funt: eliminarhistorialpago | idPago: ".$cod_pago." | codVenta: ".$codVenta,
+		""
+	);
+	aplicarEliminacionHistorialPago($cod_pago,$codVenta,$user);
+}
+
+function aplicarEliminacionHistorialPago($cod_pago,$codVenta,$user = '', $responder = true)
+{
 
 $datosPagos=buscardatospagos($cod_pago,"1");
-
-
+$codVenta = $codVenta != "" ? $codVenta : $datosPagos[0];
 $mysqli=conectar_al_servidor(); 
 $consulta1="delete from pago where idPago='$cod_pago' ";
 $stmt1 = $mysqli->prepare($consulta1);
@@ -1414,7 +1474,10 @@ exit;
 
 }
 
-$user=$_POST['useru'];
+if($user==""){
+	$user=isset($_POST['useru']) ? $_POST['useru'] : '0';
+	$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
+}
 
 $MontoPago=number_format($datosPagos[1],'0',',','.');
 $consulta1="Insert into pagoseliminados (motivo, monto, cuota, fecha, cod_usuario, nroventa,cod_ventaFK)
@@ -1501,8 +1564,11 @@ if($datosPagos[4]!='Interes' ){
 	
 
 $informacion =array("1" => "exito");
-echo json_encode($informacion);	
-exit;
+if ($responder) {
+	echo json_encode($informacion);
+	exit;
+}
+return $informacion;
 
 }
 

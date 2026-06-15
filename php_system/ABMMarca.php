@@ -128,20 +128,6 @@ if($valor==1)
 	}
 	if($funt=="editar")
 	{
-		if (solicitudEliminadoEsEstadoInactivo($Estado)) {
-			$user = solicitudEliminadoValorPost('useru', '0');
-			$respuesta = registrarSolicitudEliminacionGenerica(
-				'marcas',
-				'cod_marcas',
-				$cod_marcas,
-				'Solicitud de eliminacion de marca.',
-				$user,
-				'Marca: '.$descripcion,
-				'Estado'
-			);
-			echo json_encode($respuesta);
-			exit;
-		}
         
         
     

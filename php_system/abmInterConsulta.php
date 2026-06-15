@@ -151,18 +151,7 @@
                     'cod_mencion' => $cod_mencion
                 ), 1)[0];
 
-                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-                    'menciones',
-                    'cod_mencion',
-                    $cod_mencion,
-                    'Solicitud de eliminacion de mencion.',
-                    $user,
-                    'Mencion de '.$registroMenc['nombre_persona']
-                );
-                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-                    echo json_encode($respuestaSolicitud);
-                    break;
-                }
+                abmMencion($cod_mencion, null, null, 1, 'inactivo');
                 
                 // Se registra el cambio por auditoria
                 $fechaActual= new DateTime();
@@ -407,17 +396,12 @@
             exit;
         }
 
-        // Solicita inactivar la interconsulta original
-        $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-            'interconsulta',
-            'cod_interConsulta',
-            $cod_interConsulta,
-            'Solicitud de eliminacion por union de interconsultas.',
-            $cod_usuarioFK,
-            'Interconsulta unida hacia: '.$cod_interConsulta_destino
-        );
-        if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-            echo json_encode($respuestaSolicitud);
+        $sql= "UPDATE interconsulta SET estado='inactivo', cod_usuarioFK_edit=? WHERE cod_interConsulta=?";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('ii',$cod_usuarioFK,$cod_interConsulta);
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al inactivar interconsulta original: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
             exit;
         }
     }
@@ -1783,21 +1767,6 @@ function convertirTextoDocumentoInterconsulta($texto) {
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('ssssiiii',$asunto, $observacion, $estado, $tipo, $cod_ventaFK,$cod_usuarioFK_create, $cod_localFK, $monto_limite);
         } else {
-            if ($estado != NULL && solicitudEliminadoEsEstadoInactivo($estado)) {
-                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-                    'interconsulta',
-                    'cod_interConsulta',
-                    $cod_interConsulta,
-                    'Solicitud de eliminacion de interconsulta.',
-                    $cod_usuarioFK_edit,
-                    'Interconsulta: '.$cod_interConsulta
-                );
-                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-                    echo json_encode($respuestaSolicitud);
-                    exit;
-                }
-                return $cod_interConsulta;
-            }
             // Obtiene los datos de la interconsulta antes que sea modificada
             $interconsulta_original= obtenerInterConsulta(array(
                 "cod_interConsulta" => $cod_interConsulta

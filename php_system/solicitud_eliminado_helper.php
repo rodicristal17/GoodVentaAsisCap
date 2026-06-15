@@ -118,14 +118,12 @@ function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $mo
     $codUsuario = trim((string)$codUsuario);
     $registroResumen = trim((string)$registroResumen);
     $estadoColumna = trim((string)$estadoColumna);
-    if ($estadoColumna === '') {
-        $estadoColumna = 'estado';
-    }
+    $requiereEstado = $estadoColumna !== '';
 
     if ($tabla === '' || $pkColumna === '' || $pkValor === '') {
         return array("1" => "error", "2" => "No se recibio el registro a eliminar.");
     }
-    if (!solicitudEliminadoIdentificadorValido($tabla) || !solicitudEliminadoIdentificadorValido($pkColumna) || !solicitudEliminadoIdentificadorValido($estadoColumna)) {
+    if (!solicitudEliminadoIdentificadorValido($tabla) || !solicitudEliminadoIdentificadorValido($pkColumna) || ($requiereEstado && !solicitudEliminadoIdentificadorValido($estadoColumna))) {
         return array("1" => "error", "2" => "La tabla o columna indicada no es valida.");
     }
     if ($motivo === '') {
@@ -144,7 +142,7 @@ function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $mo
         mysqli_close($mysqli);
         return array("1" => "error", "2" => "No se pudo validar la tabla o la columna principal.");
     }
-    if (!solicitudEliminadoColumnaExiste($mysqli, $tabla, $estadoColumna)) {
+    if ($requiereEstado && !solicitudEliminadoColumnaExiste($mysqli, $tabla, $estadoColumna)) {
         if ($estadoColumna === 'estado' && solicitudEliminadoColumnaExiste($mysqli, $tabla, 'Esado')) {
             $estadoColumna = 'Esado';
         } else {

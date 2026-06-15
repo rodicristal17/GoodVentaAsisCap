@@ -462,19 +462,6 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $uni
         }
     }
 
-    if ($operacion === "editar" && solicitudEliminadoEsEstadoInactivo($estado_db)) {
-        $user = solicitudEliminadoValorPost('useru', '0');
-        $respuesta = registrarSolicitudEliminacionGenerica(
-            'insumosconsl',
-            'id_insumo',
-            $id_insumo,
-            'Solicitud de eliminacion de insumo.',
-            $user,
-            'Insumo: '.$nombre
-        );
-        echo json_encode($respuesta);
-        exit;
-    }
 
     if ($operacion === "nuevo") {
         $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado, tiene_variantes, tipo_variante)
@@ -518,19 +505,14 @@ function abm($id_insumo, $nombre, $descripcion, $cant_stock, $stock_minimo, $uni
 
 function eliminarInsumo($id_insumo)
 {
-    $user = solicitudEliminadoValorPost('useru', '0');
-    $respuesta = registrarSolicitudEliminacionGenerica(
-        'insumosconsl',
-        'id_insumo',
-        $id_insumo,
-        'Solicitud de eliminacion de insumo.',
-        $user,
-        'Insumo: '.$id_insumo
-    );
-    if (isset($respuesta["1"]) && $respuesta["1"] == "exito") {
-        $respuesta["mensaje"] = "Solicitud de eliminacion de insumo registrada.";
+    $mysqli = conectar_al_servidor();
+    $stmt = $mysqli->prepare("UPDATE insumosconsl SET estado='Inactivo' WHERE id_insumo=?");
+    $stmt->bind_param("i", $id_insumo);
+    if (!$stmt->execute()) {
+        echo json_encode(array("1" => "error", "mensaje" => "No se pudo eliminar el insumo."));
+        exit;
     }
-    echo json_encode($respuesta);
+    echo json_encode(array("1" => "exito", "mensaje" => "Insumo eliminado correctamente."));
     exit;
 }
 
@@ -1340,21 +1322,6 @@ function guardarInsumoPagina($operacion)
         return array("tipo" => "err", "mensaje" => "Selecciona un insumo para editar.");
     }
 
-    if ($operacion === 'editar' && solicitudEliminadoEsEstadoInactivo($estado)) {
-        $user = solicitudEliminadoValorPost('useru', '0');
-        $respuesta = registrarSolicitudEliminacionGenerica(
-            'insumosconsl',
-            'id_insumo',
-            $id_insumo,
-            'Solicitud de eliminacion de insumo.',
-            $user,
-            'Insumo: '.$nombre
-        );
-        if (isset($respuesta["1"]) && $respuesta["1"] == "exito") {
-            return array("tipo" => "ok", "mensaje" => "Solicitud de eliminacion registrada.");
-        }
-        return array("tipo" => "err", "mensaje" => isset($respuesta["2"]) ? $respuesta["2"] : "No se pudo registrar la solicitud.");
-    }
 
     if ($operacion === 'nuevo') {
         $sql = "INSERT INTO insumosconsl (nombre, descripcion, cant_stock, stock_minimo, unidad_medida, estado)
@@ -1404,20 +1371,14 @@ function eliminarInsumoPagina()
         return array("tipo" => "err", "mensaje" => "Selecciona un insumo para eliminar.");
     }
 
-    $user = solicitudEliminadoValorPost('useru', '0');
-    $respuesta = registrarSolicitudEliminacionGenerica(
-        'insumosconsl',
-        'id_insumo',
-        $id_insumo,
-        'Solicitud de eliminacion de insumo.',
-        $user,
-        'Insumo: '.$id_insumo
-    );
-    if (isset($respuesta["1"]) && $respuesta["1"] == "exito") {
-        return array("tipo" => "ok", "mensaje" => "Solicitud de eliminacion registrada.");
+    $mysqli = conectar_al_servidor();
+    $stmt = $mysqli->prepare("UPDATE insumosconsl SET estado='Inactivo' WHERE id_insumo=?");
+    $stmt->bind_param("i", $id_insumo);
+    if ($stmt->execute()) {
+        return array("tipo" => "ok", "mensaje" => "Insumo eliminado correctamente.");
     }
 
-    return array("tipo" => "err", "mensaje" => isset($respuesta["2"]) ? $respuesta["2"] : "No se pudo registrar la solicitud.");
+    return array("tipo" => "err", "mensaje" => "No se pudo eliminar el insumo.");
 }
 
 function cargarInsumosPagina()

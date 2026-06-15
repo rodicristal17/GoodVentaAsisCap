@@ -152,19 +152,6 @@ $stmt2->bind_param($ss,$idzona,$usu,$con,$estado,$accesocliente,$accesoproducto,
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'cobrador',
-		'cod_cobrador',
-		$cod_persona,
-		'Solicitud de eliminacion de cobrador.',
-		$user,
-		'Cobrador: '.$nombre_persona
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update persona set nombre_persona=?,telefono=? where cod_persona=?";	
 $stmt1 = $mysqli->prepare($consulta1);

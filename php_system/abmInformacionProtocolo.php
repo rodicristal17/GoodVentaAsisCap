@@ -176,21 +176,6 @@
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('sssi', $nombre, $descripcion, $estado, $cod_usuarioFK_create);
         } else {
-            if ($estado !== null && solicitudEliminadoEsEstadoInactivo($estado)) {
-                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-                    'informacion_protocolo',
-                    'id',
-                    $id,
-                    'Solicitud de eliminacion de informacion de protocolo.',
-                    $cod_usuarioFK_create,
-                    'Informacion protocolo: '.$id
-                );
-                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-                    echo json_encode($respuestaSolicitud);
-                    exit;
-                }
-                return $id;
-            }
             $parametros = array();
             $atributos = "";
             $ss = "";

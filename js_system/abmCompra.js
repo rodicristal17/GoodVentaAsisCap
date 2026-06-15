@@ -295,7 +295,11 @@ function abmDetalleCompra(tipocompra,timbrado,tipofactura,editPrecioLista,precio
 			   if (Respuesta == true) {	                    
 					idAbmCompra=datos["2"]
 					verCerrarOpcionDetalleCompra("2")
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					if (accion == "quitar") {
+						ver_vetana_informativa("SOLICITUD DE ELIMINACION REGISTRADA...")
+					} else {
+						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					}
 					document.getElementById("inptProductoCompra").value = ""
 					document.getElementById("inptCantProductoCompra").value = ""
 					document.getElementById("inptCostoProductoCompra").value = ""
@@ -650,7 +654,11 @@ function abmPagoDeCompra(nrocheque,monto,tipo,estado,fechaapagar,fechadelpago,co
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {	
 
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					if (accion == "eliminarpago" || estado == "Inactivo" || estado == "0") {
+						ver_vetana_informativa("SOLICITUD DE ELIMINACION REGISTRADA...")
+					} else {
+						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					}
 					limpiarCamposPagosCompra()
 					buscarhistorialdepagocompra()
 

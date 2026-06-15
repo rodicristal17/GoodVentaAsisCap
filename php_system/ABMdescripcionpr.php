@@ -124,20 +124,6 @@ if($valor==1)
 	}
 	if($funt=="editar")
 	{
-		if (solicitudEliminadoEsEstadoInactivo($Estado)) {
-			$user = solicitudEliminadoValorPost('useru', '0');
-			$respuesta = registrarSolicitudEliminacionGenerica(
-				'categoria',
-				'cod_categoria',
-				$cod_categoria,
-				'Solicitud de eliminacion de categoria.',
-				$user,
-				'Categoria: '.$descripcion,
-				'Estado'
-			);
-			echo json_encode($respuesta);
-			exit;
-		}
         
         
     

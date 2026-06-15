@@ -107,19 +107,6 @@ $stmt1->bind_param($ss,$nombre,$estado,$encargado);
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'zona',
-		'idzona',
-		$idzona,
-		'Solicitud de eliminacion de zona.',
-		$user,
-		'Zona: '.$nombre
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update zona set nombre=?,estado=?,encargado=? where idzona=?";	
 $stmt1 = $mysqli->prepare($consulta1);

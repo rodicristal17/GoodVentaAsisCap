@@ -399,21 +399,18 @@ $pagina .= "
 function eliminar($idSolicitudCredito)
 {
 
+$mysqli=conectar_al_servidor();
 $user = solicitudEliminadoValorPost('useru', '0');
-$respuesta = registrarSolicitudEliminacionGenerica(
-	'solicitudcredito',
-	'idSolicitudCredito',
-	$idSolicitudCredito,
-	'Solicitud de eliminacion de solicitud de credito.',
-	$user,
-	'Solicitud credito: '.$idSolicitudCredito
-);
-if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
-	echo json_encode($respuesta);
+$consulta1="Update solicitudcredito set estado='Inactivo', cod_usuarioFK=? where idSolicitudCredito=?";
+$stmt1 = $mysqli->prepare($consulta1);
+$stmt1->bind_param('ss',$user,$idSolicitudCredito);
+if (!$stmt1->execute()) {
+	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 	exit;
 }
+mysqli_close($mysqli);
 
-$informacion =array("1" => "exito", "2" => "Solicitud de eliminacion registrada.");
+$informacion =array("1" => "exito", "2" => "Solicitud de credito eliminada.");
 echo json_encode($informacion);	
 exit;
 
@@ -508,18 +505,6 @@ $stmt1 = $mysqli->prepare($consulta1);
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'solicitudcredito',
-		'idSolicitudCredito',
-		$idAbm,
-		'Solicitud de eliminacion de solicitud de credito.',
-		$cod_usu,
-		'Solicitud credito: '.$idAbm
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update solicitudcredito set  estado=Upper(?),cod_localFK=Upper(?), cod_clienteFK=Upper(?), cod_codeudorFK=Upper(?), cod_usuarioFK=$cod_usu ,observacion='$observacion' where idSolicitudCredito=?";	
 

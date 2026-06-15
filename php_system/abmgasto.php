@@ -103,6 +103,18 @@ if (!is_numeric($cod_proyecto_gastoFK)) {
 		}
 	}
 
+	if($operacion=="editar")
+	{
+		registrarSolicitudEliminacionGenerica(
+			"gastos",
+			"idgastos",
+			$idgastos,
+			"Solicitud automatica por edicion de gasto.",
+			$user,
+			"archivo: abmgasto.php | funcion: verificarOperacionGasto | funt: editar | idgastos: ".$idgastos." | monto: ".$monto." | motivo: ".$motivo." | fecha: ".$fecha." | estado: ".$estado." | cod_local: ".$cod_local." | tipo: ".$tipo
+		);
+	}
+
 	$informacion= abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas, $cod_proyecto_gastoFK);
 	echo json_encode($informacion);	
 	exit;
@@ -912,16 +924,11 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	}
 
 	// SE cambia a inactivo el motivo original
-	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-		'motivos_ingreso_egreso',
-		'cod_motivo_ingreso_egreso',
-		$cod_motivoIngresoEgreso,
-		'Solicitud de eliminacion por combinacion de motivos de ingreso/egreso.',
-		$cod_usuarioFK,
-		'Motivo combinado hacia: '.$cod_motivoIngresoEgreso_dest
-	);
-	if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-		echo json_encode($respuestaSolicitud);
+	$sql= "UPDATE motivos_ingreso_egreso SET estado='inactivo' WHERE cod_motivo_ingreso_egreso = ?";
+	$stmt = $mysqli->prepare($sql);
+	$stmt->bind_param('i',$cod_motivoIngresoEgreso);
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
 
@@ -1283,16 +1290,7 @@ if ($mantener_estado_por_documento_firmado && isset($datos_gasto[0]['estado'])) 
 }
 
 if ($estado == "Inactivo") {
-	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-		'gastos',
-		'idgastos',
-		$idgastos,
-		'Solicitud de eliminacion de gasto.',
-		$cod_usuario,
-		'Gasto: '.$idgastos.' - '.$motivo
-	);
-	echo json_encode($respuestaSolicitud);
-	exit;
+	// La baja directa de gastos no esta dentro del flujo de solicitud de eliminacion permitido.
 }
 
 $parametros = array();
@@ -1436,18 +1434,15 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 			$cantidadCuotasSerie++;
 		}
 		if ($value['idgastos'] != $idgastos && ($value['estado'] != 'Activo')) {
-			$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-				'gastos',
-				'idgastos',
-				$value['idgastos'],
-				'Solicitud de eliminacion de cuota asociada de gasto.',
-				$cod_usuario,
-				'Cuota asociada del gasto: '.$idgastos
-			);
-			if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-				echo json_encode($respuestaSolicitud);
+			$sql = "UPDATE gastos SET estado='Inactivo', cod_usuarioFK_edit=? WHERE idgastos=?";
+			$stmtInactivarCuota = $mysqli->prepare($sql);
+			$idGastoCuota = $value['idgastos'];
+			$stmtInactivarCuota->bind_param('ii', $cod_usuario, $idGastoCuota);
+			if (!$stmtInactivarCuota->execute()) {
+				echo trigger_error('The query execution failed; MySQL said ('.$stmtInactivarCuota->errno.') '.$stmtInactivarCuota->error, E_USER_ERROR);
 				exit;
 			}
+			$stmtInactivarCuota->close();
 		}
 	}
 
@@ -2577,19 +2572,6 @@ exit;
 
 $fechaActual= new DateTime();
 $fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
-
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-		'motivos_ingreso_egreso',
-		'cod_motivo_ingreso_egreso',
-		$idabm,
-		'Solicitud de eliminacion de motivo de ingreso/egreso.',
-		$cod_usuarioFK,
-		'Motivo: '.$motivo
-	);
-	echo json_encode($respuestaSolicitud);
-	exit;
-}
 
 $mysqli=conectar_al_servidor();
 

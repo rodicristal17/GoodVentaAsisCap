@@ -109,19 +109,6 @@ $stmt1->bind_param($ss,$comision,$totalrecaudado,$sueldo,$fecha,$cod_persona,$es
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'sueldo',
-		'idsueldo',
-		$idsueldo,
-		'Solicitud de eliminacion de sueldo.',
-		$user,
-		'Sueldo: '.$idsueldo
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $consulta1="Update sueldo set comision=?,totalrecaudado=?,sueldo=?,fecha=?,codpersona=?,estado=?,tipo=?,tipouser=? where idsueldo=?";	
 

@@ -246,22 +246,6 @@
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('ss', $descripcion, $estado);
         } else {
-            if ($estado != null && solicitudEliminadoEsEstadoInactivo($estado)) {
-                $user = solicitudEliminadoValorPost('useru', '0');
-                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-                    'tipo_trabajo_mecanico_dental',
-                    'cod_tipo_trabajo_mecanico_dental',
-                    $cod_tipo_trabajo,
-                    'Solicitud de eliminacion de tipo de trabajo mecanico dental.',
-                    $user,
-                    'Tipo trabajo mecanico dental: '.$descripcion
-                );
-                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-                    echo json_encode($respuestaSolicitud);
-                    exit;
-                }
-                return $cod_tipo_trabajo;
-            }
             $atributos = "";
             $ss = "";
             $parametros = [];
@@ -396,21 +380,6 @@
             $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('iisssssssiii', $cod_ventaFK, $cod_tipo_trabajoFK, $observacion, $colorimetro, $costo, $fecha_entrega, $fecha_retiro,$estado,$cod_usuario,$cod_especialistaFK,$cod_localFK,$cod_mecanicoDentalFK);
         } else {
-            if ($estado != null && solicitudEliminadoEsEstadoInactivo($estado)) {
-                $respuestaSolicitud = registrarSolicitudEliminacionGenerica(
-                    'trabajo_mecanico_dental',
-                    'cod_trabajo_mecanico_dental',
-                    $cod_trabajo_mecanico_dental,
-                    'Solicitud de eliminacion de trabajo mecanico dental.',
-                    $cod_usuario,
-                    'Trabajo mecanico dental: '.$cod_trabajo_mecanico_dental
-                );
-                if (isset($respuestaSolicitud["1"]) && $respuestaSolicitud["1"] != "exito") {
-                    echo json_encode($respuestaSolicitud);
-                    exit;
-                }
-                return $cod_trabajo_mecanico_dental;
-            }
             $atributos = "";
             $ss = "";
             $parametros = [];

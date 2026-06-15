@@ -93,19 +93,6 @@ if($operacion=="EliminarAgendamiento")
 
 function CambiarEstadoAgendamiento($cod_agen,$estado)
 {
-	if (solicitudEliminadoEsEstadoInactivo($estado)) {
-		$user = solicitudEliminadoValorPost('useru', '0');
-		$respuesta = registrarSolicitudEliminacionGenerica(
-			'agendamiento',
-			'cod_agendamiento',
-			$cod_agen,
-			'Solicitud de eliminacion de agendamiento.',
-			$user,
-			'Agendamiento: '.$cod_agen
-		);
-		echo json_encode($respuesta);
-		exit;
-	}
 	$mysqli=conectar_al_servidor();
 
     
@@ -231,19 +218,6 @@ function abm($MedicoFK,$useru,$Cod_Agendamiento,$Cod_PacienteFK,$FechaRecepcion,
 	}
 	if($operacion=="editar")
 	{
-		if (isset($Estado) && solicitudEliminadoEsEstadoInactivo($Estado)) {
-			$user = solicitudEliminadoValorPost('useru', '0');
-			$respuesta = registrarSolicitudEliminacionGenerica(
-				'agendamiento',
-				'idagendamiento',
-				$Cod_Agendamiento,
-				'Solicitud de eliminacion de agendamiento.',
-				$user,
-				'Agendamiento: '.$Cod_Agendamiento
-			);
-			echo json_encode($respuesta);
-			exit;
-		}
         
     $consulta="Update agendamiento set cod_UsuarioFK=?, Cod_PacienteFK=?, fecha=?, tipo=?, fecha_hora_ag=?, estado=?, cod_consultasFK=?, edad=?, descripcion=?,turno=? where idagendamiento=?";	
 

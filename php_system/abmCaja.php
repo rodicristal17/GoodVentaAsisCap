@@ -41,6 +41,18 @@ $cod_localFK = mb_convert_encoding((string)($cod_localFK), 'ISO-8859-1', 'UTF-8'
 $estado=$_POST['estado'];
 $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 
+if($operacion=="editar")
+{
+	registrarSolicitudEliminacionGenerica(
+		"caja",
+		"idcaja",
+		$idcaja,
+		"Solicitud automatica por edicion de caja.",
+		$user,
+		"archivo: abmCaja.php | funcion: verificar | funt: editar | idcaja: ".$idcaja." | cajanro: ".$cajanro." | puntoexpedicion: ".$puntoexpedicion." | cod_localFK: ".$cod_localFK." | estado: ".$estado
+	);
+}
+
 	abm($idcaja,$cajanro,$puntoexpedicion,$cod_localFK,$estado,$operacion);
 
 }
@@ -109,19 +121,6 @@ $stmt1->bind_param($ss,$cajanro,$puntoexpedicion,$cod_localFK,$estado,$user,$fec
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'caja',
-		'idcaja',
-		$idcaja,
-		'Solicitud de eliminacion de caja.',
-		$user,
-		'Caja: '.$cajanro.' - Punto: '.$puntoexpedicion
-	);
-	echo json_encode($respuesta);
-	exit;
-}
-
 $consulta1="Update caja set cajanro=?,puntoexpedicion=?,cod_localFK=?,estado=?,cod_user_edit=?,fecha_edit=?  where idcaja=?";	
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='sssssss';

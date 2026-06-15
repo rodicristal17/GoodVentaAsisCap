@@ -164,19 +164,6 @@ if($valor>0)
 	
 	if($funt=="editar")
 	{
-		if (solicitudEliminadoEsEstadoInactivo($estado)) {
-			$user = solicitudEliminadoValorPost('useru', '0');
-			$respuesta = registrarSolicitudEliminacionGenerica(
-				'listado_niveles',
-				'cod_niveles',
-				$cod_niveles,
-				'Solicitud de eliminacion de nivel.',
-				$user,
-				'Nivel: '.$nombre
-			);
-			echo json_encode($respuesta);
-			exit;
-		}
         
     $consulta="Update listado_niveles set nombre=upper(?),  estado=?  where cod_niveles=?";	
 	$stmt = $mysqli->prepare($consulta);

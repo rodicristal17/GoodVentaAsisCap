@@ -92,20 +92,6 @@ $stmt1 = $mysqli->prepare($consulta1);
 
 if($operacion=="editar")
 {
-if (solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'tipopago',
-		'cod_tipoPago',
-		$cod_tipoPago,
-		'Solicitud de eliminacion de tipo de pago.',
-		$user,
-		'Tipo de pago: '.$nombre
-	);
-	echo json_encode($respuesta);
-	exit;
-}
-
 $consulta1="Update tipopago set nombre=?,datos=?,estado=? where cod_tipoPago=?";	
 $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssss';

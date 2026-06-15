@@ -169,19 +169,6 @@ $stmt1->bind_param('siiss',$motivo,$cod_clienteAgenda,$Cod_cobrador,$fechaCompro
 
 if($operacion=="editar")
 {
-if ($estado !== NULL && solicitudEliminadoEsEstadoInactivo($estado)) {
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'visitascliente',
-		'cod_VisitasCliente',
-		$idAgenda,
-		'Solicitud de eliminacion de agenda.',
-		$user,
-		'Agenda: '.$idAgenda
-	);
-	echo json_encode($respuesta);
-	exit;
-}
 
 $parametros = array();
 $atributos = "";

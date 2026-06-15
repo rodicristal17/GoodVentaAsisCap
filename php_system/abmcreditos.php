@@ -338,6 +338,15 @@ $interes=$_POST['interes'];
 $interes = quitarseparadormiles($interes);
 $dias=$_POST['dias'];
 $dias = mb_convert_encoding((string)($dias), 'ISO-8859-1', 'UTF-8');
+	registrarSolicitudEliminacionGenerica(
+		"credito",
+		"idcredito",
+		$codCredito,
+		"Solicitud automatica por edicion de credito.",
+		$user,
+		"archivo: abmcreditos.php | funcion: verificar | funt: editarestecredito | idcredito: ".$codCredito." | fechapago: ".$date." | monto: ".$monto." | descuento: ".$descuento." | interes: ".$interes,
+		"Esado"
+	);
 	editarestecredito($codCredito,$date,$monto,$descuento,$interes,$dias);
 
 }
@@ -384,6 +393,15 @@ $total = quitarseparadormiles($total);
 $Monto=$_POST['Monto'];
 $Monto = quitarseparadormiles($Monto);
 
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_venta,
+	"Solicitud automatica por refinanciacion de credito en cambio.",
+	$user,
+	"archivo: abmcreditos.php | funcion: verificar | funt: refinanciarencambio | cod_venta: ".$cod_venta." | metodopago: ".$metodopago." | iniciopago: ".$iniciopago." | nroCuota: ".$nroCuota." | total: ".$total." | Monto: ".$Monto
+);
+
 refinanciarencambio($cod_venta,$metodopago,$iniciopago,$nroCuota,$total,$Monto,$dias,$interes);
 
 }
@@ -402,6 +420,16 @@ $descuento=$_POST['descuento'];
 $descuento = quitarseparadormiles($descuento);
 $tipo=$_POST['tipo'];
 $tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
+
+registrarSolicitudEliminacionGenerica(
+	"credito",
+	"idcredito",
+	$idcredito,
+	"Solicitud automatica por edicion de cuenta de credito.",
+	$user,
+	"archivo: abmcreditos.php | funcion: verificar | funt: editarcuenta | idcredito: ".$idcredito." | cod_venta: ".$cod_venta." | fecha: ".$fecha." | tipo: ".$tipo." | descuento: ".$descuento,
+	"Esado"
+);
 
 editarcuota($cod_venta,$idcredito,$fecha,$tipo,$descuento);
 
@@ -467,6 +495,18 @@ $idcredito=$_POST['idcredito'];
 $idcredito = mb_convert_encoding((string)($idcredito), 'ISO-8859-1', 'UTF-8');
 $dias=$_POST['dias'];
 $dias = mb_convert_encoding((string)($dias), 'ISO-8859-1', 'UTF-8');
+if($operacion=="editarcreditorefin")
+{
+	registrarSolicitudEliminacionGenerica(
+		"credito",
+		"idcredito",
+		$idcredito,
+		"Solicitud automatica por edicion de credito refinanciado.",
+		$user,
+		"archivo: abmcreditos.php | funcion: verificar | funt: editarcreditorefin | idcredito: ".$idcredito." | cod_venta: ".$cod_venta." | plazo: ".$plazo." | Monto: ".$Monto." | fechapago: ".$fechapago,
+		"Esado"
+	);
+}
 abmcreditorefin($plazo,$Monto,$fechapago,$descuento,$interes,$dias,$cod_venta,$idcredito,$operacion);
 
 }
@@ -493,6 +533,14 @@ $interes=$_POST['interes'];
 $interes = quitarseparadormiles($interes);
 $descuento=$_POST['descuento'];
 $descuento = quitarseparadormiles($descuento);
+registrarSolicitudEliminacionGenerica(
+	"venta",
+	"cod_venta",
+	$cod_venta,
+	"Solicitud automatica por refinanciacion de cuotas.",
+	$user,
+	"archivo: abmcreditos.php | funcion: verificar | funt: refinanciarcuotas | cod_venta: ".$cod_venta." | iniciopago: ".$iniciopago." | nroCuota: ".$nroCuota." | total: ".$total." | Monto: ".$Monto." | metodopago: ".$metodopago
+);
 RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago,$user);
 
 }
@@ -778,32 +826,21 @@ function RefinanciarCuotasRestantes($cod_venta, $iniciopago, $nroCuota, $total, 
 
 function eliminarestecreditos($idcredito)
 {
-	/* No elimina ningun registro, solo actualiza el estado del credito
-	$consulta = "delete from pago where  cod_creditoFK='$idcredito' ";
+	if($idcredito==""){
+		return;
+	}
 
+	$mysqli=conectar_al_servidor();
+	$consulta="update credito set Esado='inactivo' where idcredito=?";
 	$stmt = $mysqli->prepare($consulta);
+	$stmt->bind_param('s',$idcredito);
 
 	if (! $stmt->execute()) {
 		echo $mysqli->error;
 		exit;
 	}
-
-	$consulta = "delete from credito where  idcredito='$idcredito' ";
-*/
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'credito',
-		'idcredito',
-		$idcredito,
-		'Solicitud de eliminacion de credito.',
-		$user,
-		'Credito: '.$idcredito,
-		'Esado'
-	);
-	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
-		echo json_encode($respuesta);
-		exit;
-	}
+	$stmt->close();
+	mysqli_close($mysqli);
 }
 
 
@@ -873,22 +910,29 @@ echo json_encode($informacion);
 exit;
 }
 
-	$user = solicitudEliminadoValorPost('useru', '0');
-	$respuesta = registrarSolicitudEliminacionGenerica(
-		'credito',
-		'idcredito',
+	$user=isset($_POST['useru']) ? $_POST['useru'] : '0';
+	$user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
+	registrarSolicitudEliminacionGenerica(
+		"credito",
+		"idcredito",
 		$idcredito,
-		'Solicitud de eliminacion de credito por refinanciacion.',
+		"Solicitud automatica por eliminacion de credito refinanciado.",
 		$user,
-		'Credito: '.$idcredito.' | Venta: '.$cod_venta,
-		'Esado'
+		"archivo: abmcreditos.php | funcion: eliminarcreditorefin | funt: eliminarcreditorefin | idcredito: ".$idcredito." | cod_venta: ".$cod_venta,
+		"Esado"
 	);
-	if (isset($respuesta["1"]) && $respuesta["1"] != "exito") {
-		echo json_encode($respuesta);
+
+	$mysqli=conectar_al_servidor();
+	$consulta="update credito set Esado='inactivo' where idcredito=?";
+	$stmt = $mysqli->prepare($consulta);
+	$stmt->bind_param('s',$idcredito);
+	if (! $stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
+	mysqli_close($mysqli);
 
-$informacion =array("1" => "exito", "2" => "Solicitud de eliminacion registrada.");
+$informacion =array("1" => "exito");
 echo json_encode($informacion);	
 exit;
 

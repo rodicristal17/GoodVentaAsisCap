@@ -5,6 +5,7 @@ $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
 include("buscar_nivel.php");
 require("conexion.php");
+require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("classTable.php");
 
@@ -61,6 +62,19 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	if($controllocal==0){
 		$cod_local=buscarlocaluser($user);
 	}
+}
+
+if($operacion=="quitar")
+{
+	registrarSolicitudEliminacionGenerica(
+		"detalle_compra",
+		"cod_detalle_compra",
+		$cod_detalle_compra,
+		"Solicitud automatica por quitar detalle de compra.",
+		$user,
+		"archivo: abmdetallecompra.php | funcion: verificar | funt: quitar | cod_detalle_compra: ".$cod_detalle_compra." | cod_compraFK: ".$cod_compraFK." | cod_productoFK: ".$cod_productoFK." | cantidad: ".$cantidad_detalle_compra,
+		""
+	);
 }
 
 if($cod_compraFK==""){
