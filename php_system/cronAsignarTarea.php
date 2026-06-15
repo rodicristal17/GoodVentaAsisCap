@@ -114,7 +114,7 @@ function generarTareasDiariasAutomaticas()
             $sqlUsuariosRol = "SELECT cod_usuario
                                FROM usuario
                                WHERE estado = 'Activo'
-                               AND tipo = ?
+                               AND TRIM(tipo) = ?
                                ORDER BY cod_usuario ASC";
             $stmtUsuariosRol = $mysqli->prepare($sqlUsuariosRol);
 

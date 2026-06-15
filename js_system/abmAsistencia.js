@@ -1,6 +1,8 @@
 var cod_asistencia= "";
 var asistenciaUsuarioVerificada = false;
 var asistenciaUsuarioTieneEntradaHoy = false;
+var asistenciaUsuarioRegistrosHoy = [];
+var asistenciaUsuarioUltimoEstadoReal = null;
 
 function formatearFechaLocalAsistencia(fecha) {
 	var anio = fecha.getFullYear();
@@ -66,8 +68,14 @@ function actualizarEstadoVisualAsistencia(estado, detalle) {
 			boton.value = "Marcar entrada";
 			boton.title = "Registrar entrada de la jornada";
 		}
-		if (estadoVisual) { estadoVisual.title = ""; }
-		if (textoEstado) textoEstado.innerHTML = asistenciaUsuarioTieneEntradaHoy ? "Entrada registrada" : "Sin entrada registrada";
+		var textoCerrado = asistenciaUsuarioTieneEntradaHoy ? "Salida registrada" : "Sin entrada registrada";
+		var tituloCerrado = "";
+		if (detalle && typeof detalle == "object") {
+			textoCerrado = detalle.estado || textoCerrado;
+			tituloCerrado = detalle.ultima_marcacion || detalle.detalle || "";
+		}
+		if (estadoVisual) { estadoVisual.title = tituloCerrado; }
+		if (textoEstado) textoEstado.innerHTML = textoCerrado;
 		return;
 	}
 
@@ -216,6 +224,12 @@ function registrarAsistencia() {
 							cod_asistencia= datos['cod_asistencia'];
 							asistenciaUsuarioVerificada = true;
 							asistenciaUsuarioTieneEntradaHoy = true;
+							asistenciaUsuarioRegistrosHoy = [{
+								cod_asistencia: datos['cod_asistencia'],
+								fecha: formatearFechaLocalAsistencia(new Date()),
+								hora_entrada: datos['hora_entrada'],
+								hora_salida: ""
+							}];
 							actualizarEstadoVisualAsistencia("abierta", datos['hora_entrada']);
 							mostrarJustificacionAsistencia('entrada_tardia', datos);
 						} else {
@@ -771,6 +785,8 @@ function obtenerAsistenciaUsuario() {
 	document.getElementById("btnRegistrarAsistencia").disabled = true;
 	asistenciaUsuarioVerificada = false;
 	asistenciaUsuarioTieneEntradaHoy = false;
+	asistenciaUsuarioRegistrosHoy = [];
+	asistenciaUsuarioUltimoEstadoReal = null;
 	actualizarEstadoVisualAsistencia("procesando", "Verificando jornada");
 	let fechaActual= new Date();
 	
@@ -829,7 +845,11 @@ function obtenerAsistenciaUsuario() {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				if (Respuesta == "exito") {
-					let registros= datos["registros"];
+					let registros= Array.isArray(datos["registros"]) ? datos["registros"] : [];
+					asistenciaUsuarioRegistrosHoy = registros;
+					asistenciaUsuarioUltimoEstadoReal = (typeof calcularAvanceRealJornada == "function")
+						? calcularAvanceRealJornada(fechaActual, asistenciaUsuarioRegistrosHoy, (typeof obtenerJornadaProgramadaHoyTopbarUsuario == "function" ? obtenerJornadaProgramadaHoyTopbarUsuario() : null), new Date())
+						: null;
 					tablaRegistros= document.getElementById("tableRegistroEntrada");
 					document.getElementById("btnRegistrarAsistencia").disabled = false;
 					asistenciaUsuarioVerificada = true;
@@ -854,7 +874,7 @@ function obtenerAsistenciaUsuario() {
 					} else {
 						cod_asistencia= "";
 						tablaRegistros.style.display= 'none';
-						actualizarEstadoVisualAsistencia("cerrada");
+						actualizarEstadoVisualAsistencia("cerrada", asistenciaUsuarioUltimoEstadoReal);
 					}
 				} else {
 					asistenciaUsuarioVerificada = false;

@@ -90,7 +90,7 @@ function buscar_usuarios_por_rol_tarea_programada($mysqli, $rol_operativo)
     $sql = "SELECT cod_usuario
             FROM usuario
             WHERE estado = 'Activo'
-            AND tipo = ?
+            AND TRIM(tipo) = ?
             ORDER BY cod_usuario ASC";
 
     $stmt = $mysqli->prepare($sql);
@@ -115,6 +115,13 @@ function buscar_usuarios_por_rol_tarea_programada($mysqli, $rol_operativo)
     return $usuarios;
 }
 
+function condicionar_rol_operativo_activo_tarea_programada($alias = "ln")
+{
+    return " AND ".$alias.".tipo = 'Administrativo'
+             AND ".$alias.".estado = 'Activo'
+             AND UPPER(TRIM(".$alias.".nombre)) <> 'SIN ACCESO'";
+}
+
 function existe_columna_tarea_programada($mysqli, $tabla, $columna)
 {
     $tabla = mysqli_real_escape_string($mysqli, $tabla);
@@ -131,6 +138,411 @@ function existe_columna_tarea_programada($mysqli, $tabla, $columna)
     $result->free();
 
     return $existe;
+}
+
+function normalizar_tipo_tarea_personal($tipo)
+{
+    $tipo = strtoupper(trim((string)$tipo));
+
+    if ($tipo == "DIARIA") {
+        $tipo = "DIARIO";
+    }
+
+    if ($tipo == "PUNTUAL") {
+        $tipo = "CASUAL";
+    }
+
+    if ($tipo != "DIARIO" && $tipo != "CASUAL" && $tipo != "RAPIDA") {
+        $tipo = "CASUAL";
+    }
+
+    return $tipo;
+}
+
+function etiqueta_tipo_tarea_personal($tipo, $observacion = "")
+{
+    $tipo = normalizar_tipo_tarea_personal($tipo);
+    $observacionPlano = strtolower(str_replace("\xc3\xa1", "a", (string)$observacion));
+
+    if ($tipo == "RAPIDA" || strpos($observacionPlano, "tarea rapida") !== false) {
+        return array("clave" => "rapidas", "texto" => "Rapida");
+    }
+
+    if ($tipo == "DIARIO") {
+        return array("clave" => "diarias", "texto" => "Diaria");
+    }
+
+    return array("clave" => "puntuales", "texto" => "Puntual");
+}
+
+function etiqueta_prioridad_tarea_personal($prioridad)
+{
+    $prioridad = strtoupper(trim((string)$prioridad));
+
+    if ($prioridad == "IMPORTANTE" || $prioridad == "ALTA") {
+        return "Importante";
+    }
+
+    if ($prioridad == "CRITICA" || $prioridad == "CRITICA" || $prioridad == "URGENTE") {
+        return "Critica";
+    }
+
+    return "Normal";
+}
+
+function construir_observacion_tarea_personal($prioridad, $comentario, $origen)
+{
+    $partes = array();
+    $origen = trim((string)$origen);
+    $comentario = trim((string)$comentario);
+    $prioridad = etiqueta_prioridad_tarea_personal($prioridad);
+
+    if ($origen != "") {
+        $partes[] = "Origen: ".$origen;
+    }
+
+    $partes[] = "Prioridad: ".$prioridad;
+
+    if ($comentario != "") {
+        $partes[] = "Comentario: ".$comentario;
+    }
+
+    return implode(" | ", $partes);
+}
+
+function extraer_meta_tarea_personal($observacion, $tipo_texto)
+{
+    $meta = array(
+        "prioridad" => "Normal",
+        "origen" => "",
+        "comentario" => ""
+    );
+
+    $partes = explode("|", (string)$observacion);
+
+    foreach ($partes as $parte) {
+        $parte = trim($parte);
+        $parteLower = strtolower($parte);
+
+        if (strpos($parteLower, "prioridad:") === 0) {
+            $meta["prioridad"] = trim(substr($parte, strlen("Prioridad:")));
+        } else if (strpos($parteLower, "origen:") === 0) {
+            $meta["origen"] = trim(substr($parte, strlen("Origen:")));
+        } else if (strpos($parteLower, "comentario:") === 0) {
+            $meta["comentario"] = trim(substr($parte, strlen("Comentario:")));
+        }
+    }
+
+    if ($meta["prioridad"] == "") {
+        $meta["prioridad"] = "Normal";
+    }
+
+    if ($meta["origen"] == "") {
+        $meta["origen"] = strtolower($tipo_texto) == "rapida" ? "Funcionario" : "Administracion";
+    }
+
+    $meta["prioridad"] = ucfirst(strtolower($meta["prioridad"]));
+    $meta["origen"] = ucfirst(strtolower($meta["origen"]));
+
+    return $meta;
+}
+
+function obtener_html_tareas_usuario_gestion_diaria($mysqli, $cod_usuario, $nombre_responsable, $rol_operativo = "")
+{
+    date_default_timezone_set('America/Asuncion');
+
+    $fecha_actual = date("Y-m-d");
+    $momento_actual = time();
+    $cod_usuario = trim((string)$cod_usuario);
+    $rol_operativo = trim((string)$rol_operativo);
+    $nombre_responsable = trim((string)$nombre_responsable);
+
+    $resumen = array(
+        "html" => "",
+        "total" => 0,
+        "pendientes" => 0,
+        "completadas" => 0,
+        "atrasadas" => 0,
+        "proceso" => 0,
+        "canceladas" => 0,
+        "diarias" => 0,
+        "puntuales" => 0,
+        "rapidas" => 0
+    );
+
+    if ($cod_usuario == "") {
+        return $resumen;
+    }
+
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+
+    if ($tieneColumnasAsignadasRol) {
+        $selectAsignacion = ",
+                tpa.tipo_asignacion,
+                tpa.rol_operativoFK";
+        $condicionUsuario = "(
+                tpa.cod_usuarioFK = ?
+                OR (
+                    tpa.tipo_asignacion = 'ROL'
+                    AND tpa.rol_operativoFK = ?
+                    AND (tpa.cod_usuarioFK IS NULL OR tpa.cod_usuarioFK = '' OR tpa.cod_usuarioFK = '0')
+                )
+            )";
+        $tipos = "sss";
+        $parametros = array($cod_usuario, $rol_operativo, $fecha_actual);
+    } else {
+        $selectAsignacion = ",
+                'USUARIO' AS tipo_asignacion,
+                '' AS rol_operativoFK";
+        $condicionUsuario = "tpa.cod_usuarioFK = ?";
+        $tipos = "ss";
+        $parametros = array($cod_usuario, $fecha_actual);
+    }
+
+    $sql = "SELECT
+                tpa.cod_tarea_asignada,
+                tpa.estado_tarea,
+                tpa.observacion_admin,
+                tpa.observacion_usuario,
+                tpa.fecha_completada,
+                DATE_FORMAT(tpa.fecha_completada, '%H:%i') AS hora_completada_format,
+                DATE_FORMAT(tpa.fecha_insert, '%d/%m %H:%i') AS fecha_insert_format,
+                tp.nombre,
+                TIME_FORMAT(tp.hora, '%H:%i') AS hora_format,
+                tp.tipo
+                ".$selectAsignacion."
+            FROM tareas_programadas_asignadas tpa
+            INNER JOIN tareas_programadas tp
+                ON tp.id = tpa.cod_tareaFK
+            WHERE ".$condicionUsuario."
+            AND tpa.fecha_tarea = ?
+            ORDER BY
+                CASE
+                    WHEN tpa.estado_tarea = 'Pendiente' AND tp.hora IS NOT NULL AND CONCAT(tpa.fecha_tarea, ' ', tp.hora) < NOW() THEN 1
+                    WHEN tpa.estado_tarea = 'Pendiente' THEN 2
+                    WHEN tpa.estado_tarea = 'En Proceso' THEN 3
+                    WHEN tpa.estado_tarea = 'Completada' THEN 4
+                    ELSE 5
+                END,
+                CASE WHEN tp.hora IS NULL THEN 1 ELSE 0 END,
+                tp.hora ASC,
+                tpa.fecha_insert DESC";
+
+    $stmt = $mysqli->prepare($sql);
+
+    if (!$stmt) {
+        return $resumen;
+    }
+
+    bind_param_tarea_programada($stmt, $tipos, $parametros);
+
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return $resumen;
+    }
+
+    $result = $stmt->get_result();
+
+    $grupos = array(
+        "diarias" => "",
+        "puntuales" => "",
+        "rapidas" => ""
+    );
+
+    while ($valor = mysqli_fetch_assoc($result)) {
+        $resumen["total"]++;
+
+        $cod_tarea_asignada = (int)$valor["cod_tarea_asignada"];
+        $nombre = convertir_utf8_tarea_programada($valor["nombre"]);
+        $hora = convertir_utf8_tarea_programada($valor["hora_format"]);
+        $tipo = convertir_utf8_tarea_programada($valor["tipo"]);
+        $estado_tarea = convertir_utf8_tarea_programada($valor["estado_tarea"]);
+        $observacion_admin = convertir_utf8_tarea_programada($valor["observacion_admin"]);
+        $observacion_usuario = convertir_utf8_tarea_programada($valor["observacion_usuario"]);
+        $fecha_insert = convertir_utf8_tarea_programada($valor["fecha_insert_format"]);
+        $hora_completada = convertir_utf8_tarea_programada($valor["hora_completada_format"]);
+        $fecha_completada_raw = isset($valor["fecha_completada"]) ? (string)$valor["fecha_completada"] : "";
+
+        if ($hora == "") {
+            $hora = "--:--";
+        }
+
+        $momento_tarea = false;
+        if ($hora != "--:--") {
+            $momento_tarea = strtotime($fecha_actual." ".$hora.":00");
+        }
+
+        $estaAtrasada = ($estado_tarea == "Pendiente" && $momento_tarea !== false && $momento_tarea < $momento_actual);
+        $tipoInfo = etiqueta_tipo_tarea_personal($tipo, $observacion_admin." ".$observacion_usuario);
+        $metaTarea = extraer_meta_tarea_personal($observacion_admin != "" ? $observacion_admin : $observacion_usuario, $tipoInfo["texto"]);
+        $completadaTarde = false;
+
+        if ($estado_tarea == "Completada" && $momento_tarea !== false && $fecha_completada_raw != "") {
+            $momentoCompletada = strtotime($fecha_completada_raw);
+            $completadaTarde = $momentoCompletada !== false && $momentoCompletada > $momento_tarea;
+        }
+
+        if (isset($resumen[$tipoInfo["clave"]])) {
+            $resumen[$tipoInfo["clave"]]++;
+        }
+
+        $textoEstado = "Pendiente";
+        $claseEstado = "asignar-tarea__task-status--pendiente";
+        $claseFila = "asignar-tarea__task-row";
+
+        if ($estado_tarea == "Pendiente") {
+            $resumen["pendientes"]++;
+        }
+
+        if ($estado_tarea == "En Proceso") {
+            $resumen["proceso"]++;
+            $textoEstado = "En proceso";
+            $claseEstado = "asignar-tarea__task-status--proceso";
+        }
+
+        if ($estado_tarea == "Completada") {
+            $resumen["completadas"]++;
+            $textoEstado = $completadaTarde ? "Completada tarde" : "Completada";
+            if ($hora_completada != "") {
+                $textoEstado .= " ".$hora_completada;
+            }
+            $claseEstado = "asignar-tarea__task-status--completada";
+            $claseFila .= " asignar-tarea__task-row--completada";
+            if ($completadaTarde) {
+                $claseEstado = "asignar-tarea__task-status--completada-tarde";
+                $claseFila .= " asignar-tarea__task-row--completada-tarde";
+            }
+        }
+
+        if ($estado_tarea == "Cancelada") {
+            $resumen["canceladas"]++;
+            $textoEstado = "Cancelada";
+            $claseEstado = "asignar-tarea__task-status--cancelada";
+            $claseFila .= " asignar-tarea__task-row--cancelada";
+        }
+
+        if ($estaAtrasada) {
+            $resumen["atrasadas"]++;
+            $textoEstado = "Atrasada";
+            $claseEstado = "asignar-tarea__task-status--atrasada";
+            $claseFila .= " asignar-tarea__task-row--atrasada";
+        }
+
+        $nombre_html = limpiar_html_tarea_programada($nombre);
+        $hora_html = limpiar_html_tarea_programada($hora);
+        $tipo_html = limpiar_html_tarea_programada($tipoInfo["texto"]);
+        $estado_html = limpiar_html_tarea_programada($textoEstado);
+        $responsable_html = limpiar_html_tarea_programada($nombre_responsable);
+        $fecha_insert_html = limpiar_html_tarea_programada($fecha_insert);
+        $hora_completada_html = limpiar_html_tarea_programada($hora_completada);
+        $prioridad_html = limpiar_html_tarea_programada("Prioridad ".strtolower($metaTarea["prioridad"]));
+        $origen_html = limpiar_html_tarea_programada($metaTarea["origen"]);
+        $comentario_html = limpiar_html_tarea_programada($metaTarea["comentario"]);
+
+        $accionHtml = "<span class='asignar-tarea__task-action asignar-tarea__task-action--done' title='Tarea completada'>&#10003;</span>";
+
+        if ($estado_tarea != "Completada" && $estado_tarea != "Cancelada") {
+            $accionHtml = "
+                <label class='asignar-tarea__task-check' title='Marcar como realizada'>
+                    <input type='checkbox' onchange='event.stopPropagation();cambiarEstadoTareaAsignada(this, ".$cod_tarea_asignada.", ".$cod_usuario.")'>
+                    <span></span>
+                </label>";
+        }
+
+        $detalleObservacion = "";
+        if ($comentario_html != "") {
+            $detalleObservacion = "<small class='asignar-tarea__task-note'>".$comentario_html."</small>";
+        }
+
+        $grupos[$tipoInfo["clave"]] .= "
+            <div class='".$claseFila."'>
+                <span class='asignar-tarea__task-time'>".$hora_html."</span>
+                <div class='asignar-tarea__task-copy'>
+                    <strong>".$nombre_html."</strong>
+                    <small>
+                        <span>".$tipo_html."</span>
+                        <span>".$prioridad_html."</span>
+                        <span>".$origen_html."</span>
+                        <span>Responsable: ".$responsable_html."</span>
+                        <span>Asignada ".$fecha_insert_html."</span>
+                    </small>
+                    ".$detalleObservacion."
+                </div>
+                <span class='asignar-tarea__task-status ".$claseEstado."'>".$estado_html."</span>
+                ".$accionHtml."
+            </div>";
+    }
+
+    $stmt->close();
+
+    $secciones = array(
+        array("clave" => "diarias", "titulo" => "Tareas diarias / fijas", "vacio" => "Sin tareas fijas para hoy."),
+        array("clave" => "puntuales", "titulo" => "Tareas puntuales", "vacio" => "Sin tareas puntuales cargadas."),
+        array("clave" => "rapidas", "titulo" => "Tareas agregadas por el funcionario", "vacio" => "Sin tareas rapidas agregadas.")
+    );
+
+    $totalDetalle = (int)$resumen["total"];
+    $resumenTexto = $totalDetalle > 0
+        ? $totalDetalle." tareas - ".$resumen["completadas"]." completadas - ".$resumen["pendientes"]." pendientes - ".$resumen["atrasadas"]." atrasadas"
+        : "Sin tareas para hoy";
+    $resumenTextoHtml = limpiar_html_tarea_programada($resumenTexto);
+    $cod_usuario_html = limpiar_html_tarea_programada($cod_usuario);
+
+    $html = "
+    <div class='asignar-tarea__task-panel'>
+        <div class='asignar-tarea__task-panel-head'>
+            <div>
+                <h3>Tareas del dia</h3>
+                <span>".$resumenTextoHtml."</span>
+            </div>
+            <button type='button' class='asignar-tarea__inline-add-btn' onclick='event.stopPropagation();verFormularioTareaFuncionario(".$cod_usuario_html.", true)'>+ Agregar tarea</button>
+        </div>
+
+        <div class='asignar-tarea__inline-form' id='formAgregarTareaFuncionario_".$cod_usuario_html."' style='display:none;' onclick='event.stopPropagation();'>
+            <div class='asignar-tarea__inline-grid'>
+                <input type='text' class='inputText' id='inptTituloTareaFuncionario_".$cod_usuario_html."' placeholder='Titulo de la tarea'>
+                <input type='time' class='inputText' id='inptHoraTareaFuncionario_".$cod_usuario_html."'>
+                <select class='inputText' id='inptTipoTareaFuncionario_".$cod_usuario_html."'>
+                    <option value='CASUAL'>Tarea puntual</option>
+                    <option value='DIARIO'>Tarea diaria</option>
+                </select>
+                <select class='inputText' id='inptPrioridadTareaFuncionario_".$cod_usuario_html."'>
+                    <option value='Normal'>Normal</option>
+                    <option value='Importante'>Importante</option>
+                </select>
+            </div>
+            <textarea class='inputText asignar-tarea__inline-textarea' id='inptComentarioTareaFuncionario_".$cod_usuario_html."' placeholder='Comentario opcional'></textarea>
+            <div class='asignar-tarea__inline-actions'>
+                <button type='button' onclick='guardarTareaRapidaGestion(".$cod_usuario_html.")'>Guardar</button>
+                <button type='button' onclick='verFormularioTareaFuncionario(".$cod_usuario_html.", false)'>Cancelar</button>
+            </div>
+        </div>
+
+        <div class='asignar-tarea__task-sections'>";
+
+    foreach ($secciones as $seccion) {
+        $clave = $seccion["clave"];
+        $cantidad = isset($resumen[$clave]) ? (int)$resumen[$clave] : 0;
+        $html .= "
+            <section class='asignar-tarea__task-section'>
+                <div class='asignar-tarea__task-section-head'>
+                    <h4>".$seccion["titulo"]."</h4>
+                    <span>".$cantidad."</span>
+                </div>
+                <div class='asignar-tarea__task-list'>".
+                    ($grupos[$clave] != "" ? $grupos[$clave] : "<div class='asignar-tarea__task-empty'>".$seccion["vacio"]."</div>").
+                "</div>
+            </section>";
+    }
+
+    $html .= "
+        </div>
+    </div>";
+
+    $resumen["html"] = $html;
+
+    return $resumen;
 }
 
 function verificar($operacion)
@@ -278,7 +690,38 @@ if($operacion=="cambiarEstadoTareaAsignada")
     $cod_usuario = isset($_POST['useru']) ? $_POST['useru'] : "";
     $cod_usuario = mb_convert_encoding((string)($cod_usuario), 'ISO-8859-1', 'UTF-8');
 
-    cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usuario);
+    $cod_usuario_responsable = isset($_POST['cod_usuario_responsable']) ? $_POST['cod_usuario_responsable'] : "";
+    $cod_usuario_responsable = mb_convert_encoding((string)($cod_usuario_responsable), 'ISO-8859-1', 'UTF-8');
+
+    cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usuario, $cod_usuario_responsable);
+}
+
+if($operacion=="crearTareaRapidaUsuario")
+{
+    $titulo = convertir_post_tarea_programada('titulo');
+    $hora = convertir_post_tarea_programada('hora');
+    $tipo_tarea = convertir_post_tarea_programada('tipo_tarea', 'RAPIDA');
+    $prioridad = convertir_post_tarea_programada('prioridad', 'Normal');
+    $comentario = convertir_post_tarea_programada('comentario');
+    $cod_usuario_destino = convertir_post_tarea_programada('cod_usuario_destino');
+    $origen = convertir_post_tarea_programada('origen', 'funcionario');
+    $cod_usuario_creador = convertir_post_tarea_programada('useru');
+
+    crearTareaRapidaUsuario($titulo, $hora, $tipo_tarea, $prioridad, $comentario, $cod_usuario_destino, $origen, $cod_usuario_creador);
+}
+
+if($operacion=="crearTareaRapidaRol")
+{
+    $titulo = convertir_post_tarea_programada('titulo');
+    $hora = convertir_post_tarea_programada('hora');
+    $tipo_tarea = convertir_post_tarea_programada('tipo_tarea', 'CASUAL');
+    $prioridad = convertir_post_tarea_programada('prioridad', 'Normal');
+    $comentario = convertir_post_tarea_programada('comentario');
+    $rol_operativo = convertir_post_tarea_programada('rol_operativo');
+    $origen = convertir_post_tarea_programada('origen', 'administracion');
+    $cod_usuario_creador = convertir_post_tarea_programada('useru');
+
+    crearTareaRapidaRol($titulo, $hora, $tipo_tarea, $prioridad, $comentario, $rol_operativo, $origen, $cod_usuario_creador);
 }
 
 
@@ -773,7 +1216,424 @@ function guardarTareaDiariaUsuario(
     exit;
 }
 
-function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usuario)
+function crearTareaRapidaUsuario($titulo, $hora, $tipo_tarea, $prioridad, $comentario, $cod_usuario_destino, $origen, $cod_usuario_creador)
+{
+    $titulo = trim((string)$titulo);
+    $hora = trim((string)$hora);
+    $tipo_tarea = normalizar_tipo_tarea_personal($tipo_tarea);
+    $cod_usuario_destino = trim((string)$cod_usuario_destino);
+    $cod_usuario_creador = trim((string)$cod_usuario_creador);
+    $origen = trim((string)$origen);
+
+    if ($titulo == "" || $cod_usuario_destino == "" || $cod_usuario_creador == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $horaValidada = validar_hora_tarea_programada($hora);
+    if ($hora != "" && $horaValidada == "") {
+        $informacion = array("1" => "camposvacio", "mensaje" => "Hora invalida");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    date_default_timezone_set('America/Asuncion');
+
+    if ($horaValidada == "") {
+        $horaValidada = date("H:i:s");
+    }
+
+    $mysqli = conectar_al_servidor();
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+    $tieneColumnasDiariasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_diarias", "tipo_destino")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_diarias", "rol_operativoFK");
+
+    $estado = "pendiente";
+    $fecha_realizado = NULL;
+    $fecha_create = date("Y-m-d H:i:s");
+    $fecha_tarea = date("Y-m-d");
+    $observacion = construir_observacion_tarea_personal($prioridad, $comentario, $origen == "" ? "funcionario" : $origen);
+
+    $consultaTarea = "INSERT INTO tareas_programadas
+                      (nombre,hora,estado,fecha_realizado,cod_usuarioFK,cod_usuarioFK_create,fecha_create,tipo)
+                      VALUES
+                      (?,?,?,?,?,?,?,?)";
+
+    $stmtTarea = $mysqli->prepare($consultaTarea);
+
+    if (!$stmtTarea) {
+        $informacion = array("1" => "error", "mensaje" => "Error al preparar tarea: " . $mysqli->error, "sql" => $consultaTarea);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $ss = "ssssssss";
+    $stmtTarea->bind_param($ss, $titulo, $horaValidada, $estado, $fecha_realizado, $cod_usuario_destino, $cod_usuario_creador, $fecha_create, $tipo_tarea);
+
+    if (!$stmtTarea->execute()) {
+        $informacion = array("1" => "error", "mensaje" => "Error al crear tarea: " . $stmtTarea->error, "sql" => $consultaTarea);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $id_tarea = $stmtTarea->insert_id;
+    $stmtTarea->close();
+
+    if ($tipo_tarea == "DIARIO") {
+        if ($tieneColumnasDiariasRol) {
+            $consultaDiaria = "INSERT INTO tareas_programadas_diarias
+                              (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                tipo_destino,
+                                rol_operativoFK,
+                                estado,
+                                fecha_inicio,
+                                fecha_fin,
+                                lunes,
+                                martes,
+                                miercoles,
+                                jueves,
+                                viernes,
+                                sabado,
+                                domingo,
+                                observacion_admin,
+                                ultima_fecha_generada,
+                                cod_usuarioFK_create,
+                                fecha_insert,
+                                fecha_update
+                              )
+                              VALUES
+                              (?, ?, 'USUARIO', NULL, 'Activo', ?, NULL, 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', ?, NULL, ?, ?, NULL)";
+        } else {
+            $consultaDiaria = "INSERT INTO tareas_programadas_diarias
+                              (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                estado,
+                                fecha_inicio,
+                                fecha_fin,
+                                lunes,
+                                martes,
+                                miercoles,
+                                jueves,
+                                viernes,
+                                sabado,
+                                domingo,
+                                observacion_admin,
+                                ultima_fecha_generada,
+                                cod_usuarioFK_create,
+                                fecha_insert,
+                                fecha_update
+                              )
+                              VALUES
+                              (?, ?, 'Activo', ?, NULL, 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', ?, NULL, ?, ?, NULL)";
+        }
+
+        $stmtDiaria = $mysqli->prepare($consultaDiaria);
+
+        if ($stmtDiaria) {
+            $ssDiaria = "ssssss";
+            $stmtDiaria->bind_param($ssDiaria, $id_tarea, $cod_usuario_destino, $fecha_tarea, $observacion, $cod_usuario_creador, $fecha_create);
+            $stmtDiaria->execute();
+            $stmtDiaria->close();
+        }
+    }
+
+    if ($tieneColumnasAsignadasRol) {
+        $consultaAsignada = "INSERT INTO tareas_programadas_asignadas
+                            (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                tipo_asignacion,
+                                rol_operativoFK,
+                                estado_tarea,
+                                visto,
+                                fecha_tarea,
+                                fecha_visto,
+                                observacion_admin,
+                                observacion_usuario,
+                                fecha_completada,
+                                fecha_insert,
+                                fecha_update
+                            )
+                            VALUES
+                            (?, ?, 'USUARIO', NULL, 'Pendiente', 'No', ?, NULL, ?, NULL, NULL, ?, NULL)";
+    } else {
+        $consultaAsignada = "INSERT INTO tareas_programadas_asignadas
+                            (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                estado_tarea,
+                                visto,
+                                fecha_tarea,
+                                fecha_visto,
+                                observacion_admin,
+                                observacion_usuario,
+                                fecha_completada,
+                                fecha_insert,
+                                fecha_update
+                            )
+                            VALUES
+                            (?, ?, 'Pendiente', 'No', ?, NULL, ?, NULL, NULL, ?, NULL)";
+    }
+
+    $stmtAsignada = $mysqli->prepare($consultaAsignada);
+
+    if (!$stmtAsignada) {
+        $informacion = array("1" => "error", "mensaje" => "Error al preparar asignacion: " . $mysqli->error, "sql" => $consultaAsignada);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $ssAsignada = "sssss";
+    $stmtAsignada->bind_param($ssAsignada, $id_tarea, $cod_usuario_destino, $fecha_tarea, $observacion, $fecha_create);
+
+    if (!$stmtAsignada->execute()) {
+        $informacion = array("1" => "error", "mensaje" => "Error al asignar tarea: " . $stmtAsignada->error, "sql" => $consultaAsignada);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $id_asignada = $stmtAsignada->insert_id;
+    $stmtAsignada->close();
+    mysqli_close($mysqli);
+
+    $informacion = array("1" => "exito", "id_tarea" => $id_tarea, "id_asignada" => $id_asignada);
+    echo json_encode($informacion);
+    exit;
+}
+
+function crearTareaRapidaRol($titulo, $hora, $tipo_tarea, $prioridad, $comentario, $rol_operativo, $origen, $cod_usuario_creador)
+{
+    $titulo = trim((string)$titulo);
+    $hora = trim((string)$hora);
+    $tipo_tarea = normalizar_tipo_tarea_personal($tipo_tarea);
+    $rol_operativo = trim((string)$rol_operativo);
+    $cod_usuario_creador = trim((string)$cod_usuario_creador);
+    $origen = trim((string)$origen);
+
+    if ($titulo == "" || $rol_operativo == "" || $cod_usuario_creador == "") {
+        $informacion = array("1" => "camposvacio");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $horaValidada = validar_hora_tarea_programada($hora);
+    if ($hora != "" && $horaValidada == "") {
+        $informacion = array("1" => "camposvacio", "mensaje" => "Hora invalida");
+        echo json_encode($informacion);
+        exit;
+    }
+
+    date_default_timezone_set('America/Asuncion');
+
+    if ($horaValidada == "") {
+        $horaValidada = date("H:i:s");
+    }
+
+    $mysqli = conectar_al_servidor();
+    $usuariosDestino = buscar_usuarios_por_rol_tarea_programada($mysqli, $rol_operativo);
+
+    if (count($usuariosDestino) == 0) {
+        mysqli_close($mysqli);
+
+        $informacion = array(
+            "1" => "sinusuarios",
+            "mensaje" => "No se encontraron usuarios activos para este rol."
+        );
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
+    $tieneColumnasDiariasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_diarias", "tipo_destino")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_diarias", "rol_operativoFK");
+
+    $estado = "pendiente";
+    $fecha_realizado = NULL;
+    $fecha_create = date("Y-m-d H:i:s");
+    $fecha_tarea = date("Y-m-d");
+    $observacion = construir_observacion_tarea_personal($prioridad, $comentario, $origen == "" ? "administracion" : $origen);
+    $cod_usuario_tarea = $cod_usuario_creador;
+
+    $consultaTarea = "INSERT INTO tareas_programadas
+                      (nombre,hora,estado,fecha_realizado,cod_usuarioFK,cod_usuarioFK_create,fecha_create,tipo)
+                      VALUES
+                      (?,?,?,?,?,?,?,?)";
+
+    $stmtTarea = $mysqli->prepare($consultaTarea);
+
+    if (!$stmtTarea) {
+        $informacion = array("1" => "error", "mensaje" => "Error al preparar tarea: " . $mysqli->error, "sql" => $consultaTarea);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $ss = "ssssssss";
+    $stmtTarea->bind_param($ss, $titulo, $horaValidada, $estado, $fecha_realizado, $cod_usuario_tarea, $cod_usuario_creador, $fecha_create, $tipo_tarea);
+
+    if (!$stmtTarea->execute()) {
+        $informacion = array("1" => "error", "mensaje" => "Error al crear tarea: " . $stmtTarea->error, "sql" => $consultaTarea);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $id_tarea = $stmtTarea->insert_id;
+    $stmtTarea->close();
+
+    if ($tipo_tarea == "DIARIO") {
+        if ($tieneColumnasDiariasRol) {
+            $consultaDiaria = "INSERT INTO tareas_programadas_diarias
+                              (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                tipo_destino,
+                                rol_operativoFK,
+                                estado,
+                                fecha_inicio,
+                                fecha_fin,
+                                lunes,
+                                martes,
+                                miercoles,
+                                jueves,
+                                viernes,
+                                sabado,
+                                domingo,
+                                observacion_admin,
+                                ultima_fecha_generada,
+                                cod_usuarioFK_create,
+                                fecha_insert,
+                                fecha_update
+                              )
+                              VALUES
+                              (?, ?, 'ROL', ?, 'Activo', ?, NULL, 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', ?, NULL, ?, ?, NULL)";
+
+            $stmtDiaria = $mysqli->prepare($consultaDiaria);
+
+            if ($stmtDiaria) {
+                $cod_usuario_null = NULL;
+                $ssDiaria = "sssssss";
+                $stmtDiaria->bind_param($ssDiaria, $id_tarea, $cod_usuario_null, $rol_operativo, $fecha_tarea, $observacion, $cod_usuario_creador, $fecha_create);
+                $stmtDiaria->execute();
+                $stmtDiaria->close();
+            }
+        } else {
+            $consultaDiaria = "INSERT INTO tareas_programadas_diarias
+                              (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                estado,
+                                fecha_inicio,
+                                fecha_fin,
+                                lunes,
+                                martes,
+                                miercoles,
+                                jueves,
+                                viernes,
+                                sabado,
+                                domingo,
+                                observacion_admin,
+                                ultima_fecha_generada,
+                                cod_usuarioFK_create,
+                                fecha_insert,
+                                fecha_update
+                              )
+                              VALUES
+                              (?, ?, 'Activo', ?, NULL, 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', 'Si', ?, NULL, ?, ?, NULL)";
+
+            $stmtDiaria = $mysqli->prepare($consultaDiaria);
+
+            if ($stmtDiaria) {
+                foreach ($usuariosDestino as $cod_usuario_destino) {
+                    $ssDiaria = "ssssss";
+                    $stmtDiaria->bind_param($ssDiaria, $id_tarea, $cod_usuario_destino, $fecha_tarea, $observacion, $cod_usuario_creador, $fecha_create);
+                    $stmtDiaria->execute();
+                }
+
+                $stmtDiaria->close();
+            }
+        }
+    }
+
+    if ($tieneColumnasAsignadasRol) {
+        $consultaAsignada = "INSERT INTO tareas_programadas_asignadas
+                            (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                tipo_asignacion,
+                                rol_operativoFK,
+                                estado_tarea,
+                                visto,
+                                fecha_tarea,
+                                fecha_visto,
+                                observacion_admin,
+                                observacion_usuario,
+                                fecha_completada,
+                                fecha_insert,
+                                fecha_update
+                            )
+                            VALUES
+                            (?, ?, 'ROL', ?, 'Pendiente', 'No', ?, NULL, ?, NULL, NULL, ?, NULL)";
+    } else {
+        $consultaAsignada = "INSERT INTO tareas_programadas_asignadas
+                            (
+                                cod_tareaFK,
+                                cod_usuarioFK,
+                                estado_tarea,
+                                visto,
+                                fecha_tarea,
+                                fecha_visto,
+                                observacion_admin,
+                                observacion_usuario,
+                                fecha_completada,
+                                fecha_insert,
+                                fecha_update
+                            )
+                            VALUES
+                            (?, ?, 'Pendiente', 'No', ?, NULL, ?, NULL, NULL, ?, NULL)";
+    }
+
+    $stmtAsignada = $mysqli->prepare($consultaAsignada);
+
+    if (!$stmtAsignada) {
+        $informacion = array("1" => "error", "mensaje" => "Error al preparar asignacion: " . $mysqli->error, "sql" => $consultaAsignada);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $insertados = 0;
+
+    foreach ($usuariosDestino as $cod_usuario_destino) {
+        if ($tieneColumnasAsignadasRol) {
+            $ssAsignada = "ssssss";
+            $stmtAsignada->bind_param($ssAsignada, $id_tarea, $cod_usuario_destino, $rol_operativo, $fecha_tarea, $observacion, $fecha_create);
+        } else {
+            $ssAsignada = "sssss";
+            $stmtAsignada->bind_param($ssAsignada, $id_tarea, $cod_usuario_destino, $fecha_tarea, $observacion, $fecha_create);
+        }
+
+        if ($stmtAsignada->execute()) {
+            $insertados++;
+        } else {
+            $informacion = array("1" => "error", "mensaje" => "Error al asignar tarea: " . $stmtAsignada->error, "sql" => $consultaAsignada);
+            echo json_encode($informacion);
+            exit;
+        }
+    }
+
+    $stmtAsignada->close();
+    mysqli_close($mysqli);
+
+    $informacion = array("1" => "exito", "id_tarea" => $id_tarea, "insertados" => $insertados);
+    echo json_encode($informacion);
+    exit;
+}
+
+function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usuario, $cod_usuario_responsable = "")
 {
     if ($cod_tarea_asignada == "" || $estado_tarea == "" || $cod_usuario == "") {
         $informacion = array("1" => "camposvacio");
@@ -797,6 +1657,7 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 	 $fecha_insert = date("Y-m-d H:i:s");
 
     $mysqli = conectar_al_servidor();
+    $cod_usuario_validacion = trim((string)$cod_usuario_responsable) != "" ? trim((string)$cod_usuario_responsable) : $cod_usuario;
     $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
         && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
 
@@ -831,7 +1692,7 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 
         $consulta1 = "UPDATE tareas_programadas_asignadas tpa
                       SET estado_tarea = ?,
-                          fecha_completada = '".$fecha_insert."',
+                          fecha_completada = NULL,
                           fecha_update = NOW()
                       WHERE cod_tarea_asignada = ?
                       ".$condicionTareaUsuario;
@@ -851,10 +1712,10 @@ function cambiarEstadoTareaAsignada($cod_tarea_asignada, $estado_tarea, $cod_usu
 
     if ($tieneColumnasAsignadasRol) {
         $ss = "ssss";
-        $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario, $cod_usuario);
+        $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario_validacion, $cod_usuario_validacion);
     } else {
         $ss = "sss";
-        $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario);
+        $stmt1->bind_param($ss, $estado_tarea, $cod_tarea_asignada, $cod_usuario_validacion);
     }
 
     if (!$stmt1->execute()) {
@@ -1242,6 +2103,8 @@ function buscarTareasParaAsignarUsuario($buscar, $tipo, $estado, $cod_usuario, $
     $cod_usuario = mysqli_real_escape_string($mysqli, $cod_usuario);
     $tipo_destino = normalizar_destino_tarea_programada($tipo_destino);
     $rol_operativo = mysqli_real_escape_string($mysqli, $rol_operativo);
+    $tieneColumnasAsignadasRol = existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "tipo_asignacion")
+        && existe_columna_tarea_programada($mysqli, "tareas_programadas_asignadas", "rol_operativoFK");
 
     if ($tipo_destino == "USUARIO" && $cod_usuario == "") {
         $informacion = array("1" => "camposvacio");
@@ -1801,6 +2664,7 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo = ""
             $horario_operativo = isset($valor['horario_operativo']) ? mb_convert_encoding((string)($valor['horario_operativo']), 'UTF-8', 'ISO-8859-1') : "";
 
             $url = resolverFotoUsuarioAsignarTarea($cod_usuario, $url);
+            $resumenTareas = obtener_html_tareas_usuario_gestion_diaria($mysqli, $cod_usuario, $nombre_persona, $tipoUsuario);
 
             $login_html = htmlspecialchars($login, ENT_QUOTES, 'UTF-8');
             $nombre_persona_html = htmlspecialchars($nombre_persona, ENT_QUOTES, 'UTF-8');
@@ -1809,8 +2673,56 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo = ""
             $NombreLocal_html = htmlspecialchars($Nombre, ENT_QUOTES, 'UTF-8');
             $url_html = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
             $horario_html = htmlspecialchars(($horario_operativo != "" ? $horario_operativo : "No configurado"), ENT_QUOTES, 'UTF-8');
+            $totalTareasHoy = (int)$resumenTareas["total"];
+            $tareas_pendientes_hoy = (int)$resumenTareas["pendientes"] + (int)$resumenTareas["proceso"];
+            $tareas_completadas_hoy = (int)$resumenTareas["completadas"];
+            $tareas_atrasadas_hoy = (int)$resumenTareas["atrasadas"];
+            $porcentajeAvance = $totalTareasHoy > 0 ? round(($tareas_completadas_hoy * 100) / $totalTareasHoy) : 0;
+            $estadoJornada = "Sin tareas";
+            $claseJornada = "sin-tareas";
+
+            if ($totalTareasHoy > 0 && $tareas_completadas_hoy >= $totalTareasHoy) {
+                $estadoJornada = "Completa";
+                $claseJornada = "completa";
+            } else if ($tareas_atrasadas_hoy > 0) {
+                $estadoJornada = "Con atrasos";
+                $claseJornada = "atrasada";
+            } else if ($totalTareasHoy > 0) {
+                $estadoJornada = "En curso";
+                $claseJornada = "en-curso";
+            }
+
+            $total_tareas_html = htmlspecialchars((string)$totalTareasHoy, ENT_QUOTES, 'UTF-8');
             $tareas_pendientes_html = htmlspecialchars((string)$tareas_pendientes_hoy, ENT_QUOTES, 'UTF-8');
             $tareas_completadas_html = htmlspecialchars((string)$tareas_completadas_hoy, ENT_QUOTES, 'UTF-8');
+            $tareas_atrasadas_html = htmlspecialchars((string)$tareas_atrasadas_hoy, ENT_QUOTES, 'UTF-8');
+            $porcentaje_html = htmlspecialchars((string)$porcentajeAvance, ENT_QUOTES, 'UTF-8');
+            $estado_jornada_html = htmlspecialchars($estadoJornada, ENT_QUOTES, 'UTF-8');
+            $clase_jornada_html = htmlspecialchars($claseJornada, ENT_QUOTES, 'UTF-8');
+            $stats_funcionario_html = "";
+            $progreso_funcionario_html = "";
+
+            if ($totalTareasHoy > 0) {
+                $stats_funcionario_html = "
+                    <div class='asignar-tarea__user-stats asignar-tarea__user-stats--compact'>
+                        <span><strong>".$total_tareas_html."</strong> tareas</span>
+                        <span><strong>".$tareas_completadas_html."</strong> completadas</span>
+                        <span><strong>".$tareas_pendientes_html."</strong> pendientes</span>
+                        <span><strong>".$tareas_atrasadas_html."</strong> atrasadas</span>
+                    </div>";
+
+                $progreso_funcionario_html = "
+                    <div class='asignar-tarea__progress'>
+                        <div><i style='width:".$porcentaje_html."%'></i></div>
+                        <strong>".$porcentaje_html."%</strong>
+                    </div>";
+            } else {
+                $stats_funcionario_html = "
+                    <div class='asignar-tarea__user-stats asignar-tarea__user-stats--empty'>
+                        <span>Sin tareas para hoy</span>
+                    </div>";
+                $progreso_funcionario_html = "<div class='asignar-tarea__progress asignar-tarea__progress--empty'></div>";
+            }
 
             $onclick_js = "seleccionarUsuarioAsignarTarea(" .
                 json_encode((string)$cod_usuario) . "," .
@@ -1822,35 +2734,41 @@ function buscarUsuariosAsignarTarea($buscar, $tipo, $estado, $rol_operativo = ""
                 json_encode(($horario_operativo != "" ? $horario_operativo : "No configurado")) . "," .
                 json_encode((string)$tareas_pendientes_hoy) . "," .
                 json_encode((string)$tareas_completadas_hoy) .
-            ")";
+            ");toggleFuncionarioAsignarTarea(event," . json_encode((string)$cod_usuario) . ")";
             $onclick_html = htmlspecialchars($onclick_js, ENT_QUOTES, 'UTF-8');
 
             $pagina .= "
             <div 
-                class='asignar-tarea__card asignar-tarea__user-row' 
-                id='usuarioAsignarTarea_".$cod_usuario."'
-                onclick=\"".$onclick_html."\">
+                class='asignar-tarea__card asignar-tarea__user-row asignar-tarea__funcionario-card' 
+                id='usuarioAsignarTarea_".$cod_usuario."'>
 
-                <div class='asignar-tarea__user-main'>
-                    <img src='".$url_html."' class='asignar-tarea__foto' onerror=\"this.src='/GoodVentaAsisCap/iconos/user.png'\" />
+                <div class='asignar-tarea__funcionario-summary' onclick=\"".$onclick_html."\">
+                    <div class='asignar-tarea__user-main'>
+                        <img src='".$url_html."' class='asignar-tarea__foto' onerror=\"this.src='/GoodVentaAsisCap/iconos/user.png'\" />
 
-                    <div class='asignar-tarea__user-copy'>
-                        <p class='asignar-tarea__nombre'>".$nombre_persona_html."</p>
-                        <p class='asignar-tarea__login'>CI: ".$rut_html."</p>
+                        <div class='asignar-tarea__user-copy'>
+                            <p class='asignar-tarea__nombre'>".$nombre_persona_html."</p>
+                            <p class='asignar-tarea__login'>CI: ".$rut_html."</p>
+                        </div>
                     </div>
+
+                    <div class='asignar-tarea__user-meta'>
+                        <span class='asignar-tarea__badge'>".$tipo_html."</span>
+                        <span class='asignar-tarea__chip'>".$NombreLocal_html."</span>
+                        <span class='asignar-tarea__chip'>".$horario_html."</span>
+                        <span class='asignar-tarea__jornada-badge asignar-tarea__jornada-badge--".$clase_jornada_html."'>".$estado_jornada_html."</span>
+                    </div>
+
+                    ".$stats_funcionario_html."
+
+                    ".$progreso_funcionario_html."
+
+                    <span class='asignar-tarea__chevron' aria-hidden='true'></span>
                 </div>
 
-                <div class='asignar-tarea__user-meta'>
-                    <span class='asignar-tarea__badge'>".$tipo_html."</span>
-                    <span class='asignar-tarea__chip'>".$NombreLocal_html."</span>
-                    <span class='asignar-tarea__chip'>".$horario_html."</span>
+                <div class='asignar-tarea__funcionario-detail' id='detalleFuncionarioTarea_".$cod_usuario."' style='display:none;'>
+                    ".$resumenTareas["html"]."
                 </div>
-
-                <div class='asignar-tarea__user-stats'>
-                    <span><strong>".$tareas_pendientes_html."</strong> pendientes</span>
-                    <span><strong>".$tareas_completadas_html."</strong> completadas</span>
-                </div>
-
             </div>";
         }
 
@@ -1884,7 +2802,7 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
 
     $condicionBuscar = "";
     if ($buscar != "") {
-        $condicionBuscar = " AND TRIM(u.tipo) LIKE '%".$buscar."%'";
+        $condicionBuscar = " AND TRIM(ln.nombre) LIKE '%".$buscar."%'";
     }
 
     $condicionEstado = "";
@@ -1897,7 +2815,7 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
                     SELECT COUNT(*)
                     FROM tareas_programadas_asignadas tpa
                     WHERE tpa.tipo_asignacion = 'ROL'
-                    AND tpa.rol_operativoFK = TRIM(u.tipo)
+                    AND tpa.rol_operativoFK = TRIM(ln.nombre)
                     AND tpa.fecha_tarea = CURDATE()
                     AND tpa.estado_tarea IN ('Pendiente','En Proceso')
                 ), 0)";
@@ -1906,7 +2824,7 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
                     SELECT COUNT(*)
                     FROM tareas_programadas_asignadas tpa
                     WHERE tpa.tipo_asignacion = 'ROL'
-                    AND tpa.rol_operativoFK = TRIM(u.tipo)
+                    AND tpa.rol_operativoFK = TRIM(ln.nombre)
                     AND tpa.fecha_tarea = CURDATE()
                     AND tpa.estado_tarea = 'Completada'
                 ), 0)";
@@ -1916,7 +2834,7 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
                     FROM tareas_programadas_asignadas tpa
                     INNER JOIN tareas_programadas tp ON tp.id = tpa.cod_tareaFK
                     WHERE tpa.tipo_asignacion = 'ROL'
-                    AND tpa.rol_operativoFK = TRIM(u.tipo)
+                    AND tpa.rol_operativoFK = TRIM(ln.nombre)
                     AND tpa.fecha_tarea = CURDATE()
                 ), '')";
     } else {
@@ -1931,7 +2849,7 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
                     FROM tareas_programadas_diarias tpd
                     INNER JOIN tareas_programadas tp ON tp.id = tpd.cod_tareaFK
                     WHERE tpd.tipo_destino = 'ROL'
-                    AND tpd.rol_operativoFK = TRIM(u.tipo)
+                    AND tpd.rol_operativoFK = TRIM(ln.nombre)
                     AND tpd.estado = 'Activo'
                 ), '')";
     } else {
@@ -1939,20 +2857,23 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
     }
 
     $sql = "SELECT
-                TRIM(u.tipo) AS rol_operativo,
-                COUNT(*) AS total_usuarios,
-                SUM(CASE WHEN u.estado = 'Activo' THEN 1 ELSE 0 END) AS usuarios_activos,
-                SUM(CASE WHEN u.estado = 'Inactivo' THEN 1 ELSE 0 END) AS usuarios_inactivos,
+                TRIM(ln.nombre) AS rol_operativo,
+                COUNT(u.cod_usuario) AS total_usuarios,
+                IFNULL(SUM(CASE WHEN u.estado = 'Activo' THEN 1 ELSE 0 END), 0) AS usuarios_activos,
+                IFNULL(SUM(CASE WHEN u.estado = 'Inactivo' THEN 1 ELSE 0 END), 0) AS usuarios_inactivos,
                 ".$selectPendientesHoy." AS tareas_pendientes_hoy,
                 ".$selectCompletadasHoy." AS tareas_completadas_hoy,
                 ".$selectTareasHoy." AS tareas_hoy,
                 ".$selectTareasDiarias." AS tareas_diarias
-            FROM usuario u
-            WHERE TRIM(u.tipo) <> ''
+            FROM listado_niveles ln
+            LEFT JOIN usuario u
+                ON TRIM(u.tipo) = TRIM(ln.nombre)
+                ".$condicionEstado."
+            WHERE 1=1
+            ".condicionar_rol_operativo_activo_tarea_programada("ln")."
             ".$condicionBuscar."
-            ".$condicionEstado."
-            GROUP BY TRIM(u.tipo)
-            ORDER BY TRIM(u.tipo) ASC";
+            GROUP BY ln.cod_niveles, TRIM(ln.nombre)
+            ORDER BY TRIM(ln.nombre) ASC";
 
     $stmt = $mysqli->prepare($sql);
 
@@ -2001,35 +2922,78 @@ function buscarRolesAsignarTarea($buscar, $estado = "")
                 json_encode((string)$tareas_completadas_hoy) . "," .
                 json_encode($tareas_hoy_texto) . "," .
                 json_encode($tareas_diarias_texto) .
-            ")";
+            ");toggleRolAsignarTarea(event," . json_encode((string)$idRol) . ")";
             $onclick_html = htmlspecialchars($onclick_js, ENT_QUOTES, 'UTF-8');
+            $idRol_js = htmlspecialchars(json_encode((string)$idRol), ENT_QUOTES, 'UTF-8');
+            $rol_js = htmlspecialchars(json_encode($rol_operativo), ENT_QUOTES, 'UTF-8');
+            $resumen_rol_html = htmlspecialchars("Se asignara a ".$usuarios_activos." usuarios activos del rol ".$rol_operativo.".", ENT_QUOTES, 'UTF-8');
 
             $pagina .= "
             <div 
-                class='asignar-tarea__card asignar-tarea__user-row asignar-tarea__role-row' 
+                class='asignar-tarea__card asignar-tarea__user-row asignar-tarea__role-row asignar-tarea__role-card' 
                 id='rolAsignarTarea_".$idRol."'
-                data-rol='".$rol_html."'
-                onclick=\"".$onclick_html."\">
+                data-rol='".$rol_html."'>
 
-                <div class='asignar-tarea__user-main'>
-                    <div class='asignar-tarea__role-icon'>R</div>
-                    <div class='asignar-tarea__user-copy'>
-                        <p class='asignar-tarea__nombre'>".$rol_html."</p>
-                        <p class='asignar-tarea__login'>".$usuarios_activos." activos / ".$total_usuarios." usuarios</p>
+                <div class='asignar-tarea__role-summary' onclick=\"".$onclick_html."\">
+                    <div class='asignar-tarea__user-main'>
+                        <div class='asignar-tarea__role-icon'>R</div>
+                        <div class='asignar-tarea__user-copy'>
+                            <p class='asignar-tarea__nombre'>".$rol_html."</p>
+                            <p class='asignar-tarea__login'>".$usuarios_activos." activos / ".$total_usuarios." usuarios</p>
+                        </div>
+                    </div>
+
+                    <div class='asignar-tarea__user-meta'>
+                        <span class='asignar-tarea__badge'>ROL</span>
+                        <span class='asignar-tarea__chip' title='".$tareas_hoy_html."'>Hoy: ".$tareas_hoy_html."</span>
+                        <span class='asignar-tarea__chip' title='".$tareas_diarias_html."'>Diarias: ".$tareas_diarias_html."</span>
+                    </div>
+
+                    <div class='asignar-tarea__user-stats'>
+                        <span><strong>".$tareas_pendientes_hoy."</strong> pendientes</span>
+                        <span><strong>".$tareas_completadas_hoy."</strong> completadas</span>
+                    </div>
+
+                    <span class='asignar-tarea__chevron' aria-hidden='true'></span>
+                </div>
+
+                <div class='asignar-tarea__role-detail' id='detalleRolTarea_".$idRol."' style='display:none;'>
+                    <div class='asignar-tarea__task-panel'>
+                        <div class='asignar-tarea__task-panel-head'>
+                            <div>
+                                <h3>Tareas del rol</h3>
+                                <span>".$resumen_rol_html."</span>
+                            </div>
+                            <button type='button' class='asignar-tarea__inline-add-btn' onclick='event.stopPropagation();verFormularioTareaRol(".$idRol_js.", true)'>+ Agregar tarea</button>
+                        </div>
+
+                        <div class='asignar-tarea__inline-form' id='formAgregarTareaRol_".$idRol."' style='display:none;' onclick='event.stopPropagation();'>
+                            <div class='asignar-tarea__inline-grid'>
+                                <input type='text' class='inputText' id='inptTituloTareaRol_".$idRol."' placeholder='Titulo de la tarea'>
+                                <input type='time' class='inputText' id='inptHoraTareaRol_".$idRol."'>
+                                <select class='inputText' id='inptTipoTareaRol_".$idRol."'>
+                                    <option value='CASUAL'>Tarea puntual</option>
+                                    <option value='DIARIO'>Tarea diaria</option>
+                                </select>
+                                <select class='inputText' id='inptPrioridadTareaRol_".$idRol."'>
+                                    <option value='Normal'>Normal</option>
+                                    <option value='Importante'>Importante</option>
+                                </select>
+                            </div>
+                            <textarea class='inputText asignar-tarea__inline-textarea' id='inptComentarioTareaRol_".$idRol."' placeholder='Comentario opcional'></textarea>
+                            <div class='asignar-tarea__inline-actions'>
+                                <button type='button' onclick='guardarTareaRapidaRolGestion(".$idRol_js.", ".$rol_js.")'>Guardar para el rol</button>
+                                <button type='button' onclick='verFormularioTareaRol(".$idRol_js.", false)'>Cancelar</button>
+                            </div>
+                        </div>
+
+                        <div class='asignar-tarea__role-detail-grid'>
+                            <span title='".$tareas_hoy_html."'>Hoy: ".$tareas_hoy_html."</span>
+                            <span title='".$tareas_diarias_html."'>Diarias: ".$tareas_diarias_html."</span>
+                            <span>".$usuarios_activos." usuarios activos recibiran la tarea.</span>
+                        </div>
                     </div>
                 </div>
-
-                <div class='asignar-tarea__user-meta'>
-                    <span class='asignar-tarea__badge'>ROL</span>
-                    <span class='asignar-tarea__chip' title='".$tareas_hoy_html."'>Hoy: ".$tareas_hoy_html."</span>
-                    <span class='asignar-tarea__chip' title='".$tareas_diarias_html."'>Diarias: ".$tareas_diarias_html."</span>
-                </div>
-
-                <div class='asignar-tarea__user-stats'>
-                    <span><strong>".$tareas_pendientes_hoy."</strong> pendientes</span>
-                    <span><strong>".$tareas_completadas_hoy."</strong> completadas</span>
-                </div>
-
             </div>";
         }
 

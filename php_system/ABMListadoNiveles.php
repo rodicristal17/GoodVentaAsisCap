@@ -61,7 +61,9 @@ if($funt=="nuevo" || $funt=="editar")
     $nombre = mb_convert_encoding((string)($nombre), 'ISO-8859-1', 'UTF-8');
 	$estado=$_POST['estado'];
     $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
-	abm($cod_niveles,$nombre,$estado,$funt);
+	$nombre_anterior=isset($_POST['nombre_anterior']) ? $_POST['nombre_anterior'] : "";
+    $nombre_anterior = mb_convert_encoding((string)($nombre_anterior), 'ISO-8859-1', 'UTF-8');
+	abm($cod_niveles,$nombre,$estado,$funt,$nombre_anterior);
 
 }
 
@@ -110,7 +112,7 @@ buscarSelect();
 
 }
 
-function abm($cod_niveles,$nombre,$estado,$funt)
+function abm($cod_niveles,$nombre,$estado,$funt,$nombreAnteriorPost="")
 {
 	
 	if($nombre=="" ){
@@ -120,15 +122,39 @@ exit;
 	}
 
 	$mysqli=conectar_al_servidor();
+	$nombreAnterior="";
+	$nombreActualizado="";
 
-	if($funt=="nuevo")
+	if($funt=="editar")
 	{
-				$consulta= "Select count(*) from listado_niveles where nombre=? and tipo='Administrativo' ";
+		$nombreAnterior=obtenerNombreNivelAdministrativo($mysqli,$cod_niveles);
+		if($nombreAnterior==""){
+			$informacion =array("1" => "error");
+			echo json_encode($informacion);
+			exit;
+		}
+		if(trim($nombreAnteriorPost)!="" && trim($nombreAnteriorPost)!=trim($nombre)){
+			$nombreAnterior=$nombreAnteriorPost;
+		}
+	}
+
+	if($funt=="nuevo" || $funt=="editar")
+	{
+		if($funt=="editar"){
+			$consulta= "Select count(*) from listado_niveles where nombre=upper(?) and tipo='Administrativo' and cod_niveles<>? ";
+		}else{
+			$consulta= "Select count(*) from listado_niveles where nombre=upper(?) and tipo='Administrativo' ";
+		}
 	
 	
 		$stmt = $mysqli->prepare($consulta);
-$ss='s';
-$stmt->bind_param($ss,$nombre); 
+		if($funt=="editar"){
+			$ss='ss';
+			$stmt->bind_param($ss,$nombre,$cod_niveles);
+		}else{
+			$ss='s';
+			$stmt->bind_param($ss,$nombre);
+		}
 
 
 if ( ! $stmt->execute()) {
@@ -143,6 +169,7 @@ while ($stmt->fetch()) {
    
 	 $valor =$valor;
 }
+$stmt->close();
 
 if($valor>0)
 {
@@ -171,24 +198,108 @@ if($valor>0)
     $stmt->bind_param($ss,$nombre,$estado,$cod_niveles); 
        
 	}
-	
+	$usaTransaccion = $funt=="editar";
+	if($usaTransaccion){
+		$mysqli->begin_transaction();
+	}
+
 if ( ! $stmt->execute() ) {
+	if($usaTransaccion){
+		$mysqli->rollback();
+	}
 	$informacion =array("1" => "error");
 	echo json_encode($informacion);	
 	exit;
 }
+$stmt->close();
 if($funt=="nuevo")
 	{
   $cod_nivelesfk=buscarultimaid();
    buscaracceso($cod_nivelesfk);
 	}
 
+if($funt=="editar")
+	{
+		$nombreActualizado=obtenerNombreNivelAdministrativo($mysqli,$cod_niveles);
+		if(!sincronizarNombreRolOperativoNivel($mysqli,$nombreAnterior,$nombreActualizado)){
+			$mysqli->rollback();
+			$informacion =array("1" => "error");
+			echo json_encode($informacion);
+			exit;
+		}
+		$mysqli->commit();
+	}
+
     mysqli_close($mysqli); 
 
     $informacion =array("1" => "exito");
+    if($funt=="editar"){
+    	$informacion["nombre_anterior"]=$nombreAnterior;
+    	$informacion["nombre_actualizado"]=$nombreActualizado;
+    }
     echo json_encode($informacion);	
     exit;
 	
+}
+
+function obtenerNombreNivelAdministrativo($mysqli,$cod_niveles)
+{
+	$nombre="";
+	$sql="SELECT nombre FROM listado_niveles WHERE cod_niveles=? AND tipo='Administrativo' LIMIT 1";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){
+		return $nombre;
+	}
+	$s='s';
+	$stmt->bind_param($s,$cod_niveles);
+	if($stmt->execute()){
+		$result=$stmt->get_result();
+		if($row=$result->fetch_assoc()){
+			$nombre=$row['nombre'];
+		}
+	}
+	$stmt->close();
+	return $nombre;
+}
+
+function existeTablaColumnaNivel($mysqli,$tabla,$columna)
+{
+	$tabla=mysqli_real_escape_string($mysqli,$tabla);
+	$columna=mysqli_real_escape_string($mysqli,$columna);
+	$result=$mysqli->query("SHOW COLUMNS FROM `".$tabla."` LIKE '".$columna."'");
+	if(!$result){
+		return false;
+	}
+	$existe=mysqli_num_rows($result)>0;
+	$result->free();
+	return $existe;
+}
+
+function actualizarTextoRolNivel($mysqli,$tabla,$columna,$nombreAnterior,$nombreNuevo)
+{
+	if($nombreAnterior=="" || $nombreNuevo=="" || trim($nombreAnterior)==trim($nombreNuevo)){
+		return true;
+	}
+	if(!existeTablaColumnaNivel($mysqli,$tabla,$columna)){
+		return true;
+	}
+	$sql="UPDATE `".$tabla."` SET `".$columna."`=? WHERE TRIM(`".$columna."`)=TRIM(?)";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){
+		return false;
+	}
+	$ss='ss';
+	$stmt->bind_param($ss,$nombreNuevo,$nombreAnterior);
+	$ok=$stmt->execute();
+	$stmt->close();
+	return $ok;
+}
+
+function sincronizarNombreRolOperativoNivel($mysqli,$nombreAnterior,$nombreNuevo)
+{
+	return actualizarTextoRolNivel($mysqli,'usuario','tipo',$nombreAnterior,$nombreNuevo)
+		&& actualizarTextoRolNivel($mysqli,'tareas_programadas_asignadas','rol_operativoFK',$nombreAnterior,$nombreNuevo)
+		&& actualizarTextoRolNivel($mysqli,'tareas_programadas_diarias','rol_operativoFK',$nombreAnterior,$nombreNuevo);
 }
 
 
@@ -516,6 +627,7 @@ function buscarSelect()
 	
 		 $pagina="<option value='' >SIN ACCESO</option>";
 		 $paginaAdministrativo="<option value='' >SIN ACCESO</option>";
+		 $paginaRolesOperativos="<option value='' >SELECCIONAR</option>";
    $stmt = $mysqli->prepare($sql);
   
 if ( ! $stmt->execute()) {
@@ -539,6 +651,10 @@ if ( ! $stmt->execute()) {
 		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 			  if($tipo=="Administrativo"){
 		  	   $pagina.="<option value='$cod_niveles' >$nombre</option>";
+		  	   if(strtoupper(trim($nombre))!="SIN ACCESO"){
+		  	   	$nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+		  	   	$paginaRolesOperativos.="<option value='".$nombreSeguro."' >".$nombreSeguro."</option>";
+		  	   }
 			  }
 			
 		  	  
@@ -553,7 +669,7 @@ if ( ! $stmt->execute()) {
  }
  
   mysqli_close($mysqli); 
-$informacion =array("1" => "exito","2" => $pagina,"3"=> $paginaAdministrativo);
+$informacion =array("1" => "exito","2" => $pagina,"3"=> $paginaAdministrativo,"4"=> $paginaRolesOperativos);
 echo json_encode($informacion);	
 exit;
 

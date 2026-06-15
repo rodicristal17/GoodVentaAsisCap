@@ -11,6 +11,7 @@ var dashboardShortcutCatalogLastError = "";
 var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"cargar_compras",
 	"cuentas_a_cobrar",
+	"cobrar_cuota",
 	"cobros_realizados",
 	"expediente_cliente",
 	"historial_venta",
@@ -28,6 +29,7 @@ var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 var DASHBOARD_ACCESS_REGISTRY = {
 	cargar_compras: { sourceSelector: "#divMenuCompra1", permissionKey: "VERCARGADECOMPRAS" },
 	cuentas_a_cobrar: { sourceSelector: "#divMenuCuentasCobar1", permissionKey: "VERCUENTASACOBRAR" },
+	cobrar_cuota: { sourceSelector: "#divMenuCobrarCuota1", permissionKey: "VERCOBRARCUOTA" },
 	cobros_realizados: { sourceSelector: "#divMenuCobrosRealizado1", permissionKey: "VERCOBROSREALIZADOS" },
 	expediente_cliente: { sourceSelector: "#divMenuExpedienteCliente1", permissionKey: "VEREXPEDIENTEDELCLIENTE" },
 	historial_venta: { sourceSelector: "#divMenuHistorialVenta1", permissionKey: "VERHISTORIALVENTA" },
@@ -52,6 +54,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	cargar_sueldo: { sourceSelector: "#divMenuAbmCargarSueldo", permissionKey: "VERCARGARSUELDO" },
 	cuentas_a_pagar: { sourceSelector: "#divMenuCuentasPagar", permissionKey: "VERCUENTASAPAGAR" },
 	consulta_cajas: { sourceSelector: "#divMenuConsultadeCaja", permissionKey: "VERCONSULTADECAJA" },
+	conciliacion_ueno: { sourceSelector: "#divMenuConciliacionUeno", permissionKey: "VERCONCILIACIONUENO" },
 	historial_compras: { sourceSelector: "#divMenuHistorialCompra", permissionKey: "VERHISTORIALCOMPRA" },
 	productos_garantia: { sourceSelector: "#divMenuProductosGarantia", permissionKey: "VERINFORMEGARANTIA" },
 	productos_baja: { sourceSelector: "#divMenuProductosBaja", permissionKey: "VERINFORMEPRODUCTOSDEBAJA" },

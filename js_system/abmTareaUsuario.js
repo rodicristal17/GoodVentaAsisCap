@@ -514,6 +514,471 @@ var codUsuarioSeleccionadoTarea = "";
 var nombreUsuarioSeleccionadoTarea = "";
 var fotoUsuarioSeleccionadoTarea = "";
 var vistaAsignarTarea = "USUARIOS";
+var agendaDiaTareasEstado = {
+    solicitud: 0,
+    cargando: false,
+    tieneRespuesta: false,
+    ultimoHtml: ""
+};
+
+function obtenerValorCampoTareaPersonal(id) {
+    var elemento = document.getElementById(id);
+
+    if (!elemento) {
+        return "";
+    }
+
+    return elemento.value || "";
+}
+
+function setValorCampoTareaPersonal(id, valor) {
+    var elemento = document.getElementById(id);
+
+    if (elemento) {
+        elemento.value = valor;
+    }
+}
+
+function obtenerHoraActualTareaPersonal() {
+    var fecha = new Date();
+    return String(fecha.getHours()).padStart(2, "0") + ":" + String(fecha.getMinutes()).padStart(2, "0");
+}
+
+function crearEstadoAgendaDia(tipo, mensaje, accion) {
+    var clase = "perfil-tareas__estado-panel perfil-tareas__estado-panel--" + tipo;
+    var html = "<div class='" + clase + "'>";
+
+    if (tipo == "cargando") {
+        html += "<div class='perfil-tareas__skeleton'></div><div class='perfil-tareas__skeleton perfil-tareas__skeleton--short'></div>";
+    }
+
+    html += "<strong>" + mensaje + "</strong>";
+
+    if (accion) {
+        html += accion;
+    }
+
+    html += "</div>";
+    return html;
+}
+
+function mostrarEstadoAgendaVacia() {
+    return crearEstadoAgendaDia(
+        "vacio",
+        "Todavia no hay tareas cargadas para hoy.",
+        "<span>Cuando administracion o tu rol generen actividades, apareceran aca ordenadas por hora. Tambien podes agregar una tarea rapida.</span>" +
+        "<button type='button' onclick='verFormularioTareaRapidaAgenda(true)'>+ Agregar tarea rapida</button>" +
+        "<small>Si crees que deberian aparecer tareas fijas, comunicate con administracion.</small>"
+    );
+}
+
+function mostrarEstadoAgendaError() {
+    return crearEstadoAgendaDia(
+        "error",
+        "No pudimos cargar tus tareas. Intenta nuevamente.",
+        "<button type='button' onclick='cargarTareasPendientesAdministrador({forzarEstado:true})'>Reintentar</button>"
+    );
+}
+
+function mostrarEstadoAgendaCargando() {
+    return crearEstadoAgendaDia("cargando", "Cargando agenda del dia...", "");
+}
+
+function setAgendaDiaActualizando(actualizando) {
+    var contenedor = document.getElementById("divTareasAdministrador");
+    var indicador = document.getElementById("spanAgendaDiaActualizando");
+
+    if (contenedor) {
+        contenedor.classList.toggle("perfil-tareas--actualizando", actualizando === true);
+    }
+
+    if (indicador) {
+        indicador.style.display = actualizando === true ? "" : "none";
+    }
+}
+
+function setResumenAgendaDia(totalPendientes, totalProceso, totalAtrasadas, totalCompletadas, totalTareas) {
+    var contador = document.getElementById("spanTareasPendientes");
+    var contadorLabel = document.getElementById("spanTareasPendientesLabel");
+    var btnRapidoHeader = document.getElementById("btnAgendaRapidaHeader");
+    var contadorPendientesResumen = document.getElementById("spanTareasPendientesResumen");
+    var contadorProceso = document.getElementById("spanTareasEnProceso");
+    var contadorAtrasadas = document.getElementById("spanTareasAtrasadas");
+    var contadorCompletadas = document.getElementById("spanTareasCompletadas");
+    var resumen = document.querySelector("#divTareasAdministrador .perfil-tareas__resumen");
+
+    var totalTareasNumero = parseInt(totalTareas, 10) || 0;
+    var totalCompletadasNumero = parseInt(totalCompletadas, 10) || 0;
+    var porcentajeCompletadas = totalTareasNumero > 0 ? Math.round((totalCompletadasNumero * 100) / totalTareasNumero) : 0;
+
+    if (contador) {
+        contador.innerHTML = totalTareasNumero > 0 ? (porcentajeCompletadas + "%") : "Sin tareas";
+    }
+
+    if (contadorLabel) {
+        contadorLabel.innerHTML = totalTareasNumero > 0 ? "completadas" : "para hoy";
+    }
+
+    if (btnRapidoHeader) {
+        btnRapidoHeader.style.display = totalTareasNumero > 0 ? "" : "none";
+    }
+
+    var contenedorContador = contador ? contador.parentNode : null;
+    if (contenedorContador) {
+        contenedorContador.classList.toggle("perfil-tareas__contador--alerta", totalTareasNumero > 0 && (parseInt(totalPendientes, 10) > 0 || parseInt(totalAtrasadas, 10) > 0));
+        contenedorContador.classList.toggle("perfil-tareas__contador--empty", totalTareasNumero == 0);
+    }
+
+    if (contadorPendientesResumen) {
+        contadorPendientesResumen.innerHTML = totalPendientes;
+    }
+
+    if (contadorProceso) {
+        contadorProceso.innerHTML = totalProceso;
+    }
+
+    if (contadorAtrasadas) {
+        contadorAtrasadas.innerHTML = totalAtrasadas;
+    }
+
+    if (contadorCompletadas) {
+        contadorCompletadas.innerHTML = totalCompletadas;
+    }
+
+    if (resumen) {
+        resumen.style.display = totalTareasNumero > 0 ? "grid" : "none";
+    }
+}
+
+function verFormularioTareaRapidaAgenda(mostrar) {
+    var form = document.getElementById("formTareaRapidaAgenda");
+
+    if (!form) {
+        return;
+    }
+
+    form.style.display = mostrar ? "" : "none";
+
+    if (mostrar) {
+        setValorCampoTareaPersonal("inptHoraTareaRapidaAgenda", obtenerHoraActualTareaPersonal());
+        setTimeout(function() {
+            var titulo = document.getElementById("inptTituloTareaRapidaAgenda");
+            if (titulo) {
+                titulo.focus();
+            }
+        }, 80);
+    }
+}
+
+function usarHoraActualTareaRapidaAgenda() {
+    setValorCampoTareaPersonal("inptHoraTareaRapidaAgenda", obtenerHoraActualTareaPersonal());
+}
+
+function crearTareaPersonalizada(datosTarea, alFinalizar) {
+    obtener_datos_user();
+
+    var esRol = datosTarea.tipo_destino == "ROL";
+    var datos = {
+        "useru": userid,
+        "passu": passuser,
+        "navegador": navegador,
+        "funt": esRol ? "crearTareaRapidaRol" : "crearTareaRapidaUsuario",
+        "titulo": datosTarea.titulo || "",
+        "hora": datosTarea.hora || "",
+        "tipo_tarea": datosTarea.tipo_tarea || "RAPIDA",
+        "prioridad": datosTarea.prioridad || "Normal",
+        "comentario": datosTarea.comentario || "",
+        "cod_usuario_destino": datosTarea.cod_usuario_destino || userid,
+        "rol_operativo": datosTarea.rol_operativo || "",
+        "tipo_destino": datosTarea.tipo_destino || "USUARIO",
+        "origen": datosTarea.origen || "funcionario"
+    };
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmTareaProgramada.php",
+        type: "post",
+
+        error: function(jqXHR, textstatus, errorThrowm) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            if (typeof alFinalizar == "function") {
+                alFinalizar(false);
+            }
+        },
+
+        success: function(responseText) {
+            var Respuesta = responseText;
+            console.log("CREAR TAREA PERSONAL:", Respuesta);
+
+            try {
+                var datosRespuesta = $.parseJSON(Respuesta);
+                Respuesta = datosRespuesta["1"];
+                Respuesta = respuestaJqueryAjax(Respuesta);
+
+                if (Respuesta == true) {
+                    if (typeof alFinalizar == "function") {
+                        alFinalizar(true, datosRespuesta);
+                    }
+                    return;
+                }
+
+                if (typeof alFinalizar == "function") {
+                    alFinalizar(false, datosRespuesta);
+                }
+
+            } catch (error) {
+                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+                var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+                GuardarArchivosLog(titulo);
+                if (typeof alFinalizar == "function") {
+                    alFinalizar(false);
+                }
+            }
+        }
+    });
+}
+
+function guardarTareaRapidaAgenda() {
+    var titulo = obtenerValorCampoTareaPersonal("inptTituloTareaRapidaAgenda").trim();
+
+    if (titulo == "") {
+        ver_vetana_informativa("FALTO INGRESAR EL TITULO DE LA TAREA");
+        return;
+    }
+
+    var btn = document.getElementById("btnGuardarTareaRapidaAgenda");
+    if (btn) {
+        btn.disabled = true;
+    }
+
+    crearTareaPersonalizada({
+        titulo: titulo,
+        hora: obtenerValorCampoTareaPersonal("inptHoraTareaRapidaAgenda"),
+        tipo_tarea: "RAPIDA",
+        prioridad: obtenerValorCampoTareaPersonal("inptPrioridadTareaRapidaAgenda"),
+        comentario: obtenerValorCampoTareaPersonal("inptComentarioTareaRapidaAgenda"),
+        cod_usuario_destino: userid,
+        origen: "funcionario"
+    }, function(exito) {
+        if (btn) {
+            btn.disabled = false;
+        }
+
+        if (exito) {
+            setValorCampoTareaPersonal("inptTituloTareaRapidaAgenda", "");
+            setValorCampoTareaPersonal("inptComentarioTareaRapidaAgenda", "");
+            verFormularioTareaRapidaAgenda(false);
+            cargarTareasPendientesAdministrador({forzarEstado:true});
+            ver_vetana_informativa("TAREA RAPIDA AGREGADA");
+        }
+    });
+}
+
+function verFormularioTareaFuncionario(codUsuario, mostrar) {
+    var form = document.getElementById("formAgregarTareaFuncionario_" + codUsuario);
+
+    if (!form) {
+        return;
+    }
+
+    form.style.display = mostrar ? "" : "none";
+
+    if (mostrar) {
+        setValorCampoTareaPersonal("inptHoraTareaFuncionario_" + codUsuario, obtenerHoraActualTareaPersonal());
+        setTimeout(function() {
+            var titulo = document.getElementById("inptTituloTareaFuncionario_" + codUsuario);
+            if (titulo) {
+                titulo.focus();
+            }
+        }, 80);
+    }
+}
+
+function guardarTareaRapidaGestion(codUsuario) {
+    var titulo = obtenerValorCampoTareaPersonal("inptTituloTareaFuncionario_" + codUsuario).trim();
+
+    if (titulo == "") {
+        ver_vetana_informativa("FALTO INGRESAR EL TITULO DE LA TAREA");
+        return;
+    }
+
+    crearTareaPersonalizada({
+        titulo: titulo,
+        hora: obtenerValorCampoTareaPersonal("inptHoraTareaFuncionario_" + codUsuario),
+        tipo_tarea: obtenerValorCampoTareaPersonal("inptTipoTareaFuncionario_" + codUsuario) || "CASUAL",
+        prioridad: obtenerValorCampoTareaPersonal("inptPrioridadTareaFuncionario_" + codUsuario),
+        comentario: obtenerValorCampoTareaPersonal("inptComentarioTareaFuncionario_" + codUsuario),
+        cod_usuario_destino: codUsuario,
+        origen: "administracion"
+    }, function(exito) {
+        if (exito) {
+            verFormularioTareaFuncionario(codUsuario, false);
+            buscarUsuariosAsignarTarea({
+                mantenerSeleccion: true,
+                expandidos: [String(codUsuario)]
+            });
+            ver_vetana_informativa("TAREA AGREGADA CORRECTAMENTE");
+        }
+    });
+}
+
+function verFormularioTareaRol(idRol, mostrar) {
+    var form = document.getElementById("formAgregarTareaRol_" + idRol);
+
+    if (!form) {
+        return;
+    }
+
+    form.style.display = mostrar ? "" : "none";
+
+    if (mostrar) {
+        setValorCampoTareaPersonal("inptHoraTareaRol_" + idRol, obtenerHoraActualTareaPersonal());
+        setTimeout(function() {
+            var titulo = document.getElementById("inptTituloTareaRol_" + idRol);
+            if (titulo) {
+                titulo.focus();
+            }
+        }, 80);
+    }
+}
+
+function guardarTareaRapidaRolGestion(idRol, rolOperativo) {
+    var titulo = obtenerValorCampoTareaPersonal("inptTituloTareaRol_" + idRol).trim();
+
+    if (titulo == "") {
+        ver_vetana_informativa("FALTO INGRESAR EL TITULO DE LA TAREA");
+        return;
+    }
+
+    crearTareaPersonalizada({
+        titulo: titulo,
+        hora: obtenerValorCampoTareaPersonal("inptHoraTareaRol_" + idRol),
+        tipo_tarea: obtenerValorCampoTareaPersonal("inptTipoTareaRol_" + idRol) || "CASUAL",
+        prioridad: obtenerValorCampoTareaPersonal("inptPrioridadTareaRol_" + idRol),
+        comentario: obtenerValorCampoTareaPersonal("inptComentarioTareaRol_" + idRol),
+        tipo_destino: "ROL",
+        rol_operativo: rolOperativo,
+        origen: "administracion"
+    }, function(exito, datosRespuesta) {
+        if (exito) {
+            verFormularioTareaRol(idRol, false);
+            buscarRolesAsignarTarea({
+                expandidos: [String(idRol)]
+            });
+
+            var mensaje = "TAREA AGREGADA AL ROL";
+            if (datosRespuesta && datosRespuesta.insertados) {
+                mensaje += ". Usuarios vinculados: " + datosRespuesta.insertados;
+            }
+            ver_vetana_informativa(mensaje);
+        } else if (datosRespuesta && datosRespuesta.mensaje) {
+            ver_vetana_informativa(datosRespuesta.mensaje);
+        }
+    });
+}
+
+function obtenerRolesExpandidosAsignarTarea() {
+    var expandidos = [];
+    var detalles = document.querySelectorAll(".asignar-tarea__role-detail");
+
+    for (var i = 0; i < detalles.length; i++) {
+        if (detalles[i].style.display != "none") {
+            expandidos.push(detalles[i].id.replace("detalleRolTarea_", ""));
+        }
+    }
+
+    return expandidos;
+}
+
+function restaurarRolesExpandidosAsignarTarea(expandidos) {
+    if (!expandidos || !expandidos.length) {
+        return;
+    }
+
+    for (var i = 0; i < expandidos.length; i++) {
+        var detalle = document.getElementById("detalleRolTarea_" + expandidos[i]);
+        var card = document.getElementById("rolAsignarTarea_" + expandidos[i]);
+
+        if (detalle) {
+            detalle.style.display = "";
+        }
+
+        if (card) {
+            card.classList.add("asignar-tarea__role-card--abierto");
+            card.classList.add("asignar-tarea__card--activo");
+        }
+    }
+}
+
+function toggleRolAsignarTarea(evento, idRol) {
+    if (evento && evento.stopPropagation) {
+        evento.stopPropagation();
+    }
+
+    var detalle = document.getElementById("detalleRolTarea_" + idRol);
+    var card = document.getElementById("rolAsignarTarea_" + idRol);
+
+    if (!detalle || !card) {
+        return;
+    }
+
+    var abrir = detalle.style.display == "none";
+    detalle.style.display = abrir ? "" : "none";
+    card.classList.toggle("asignar-tarea__role-card--abierto", abrir);
+}
+
+function obtenerFuncionariosExpandidosAsignarTarea() {
+    var expandidos = [];
+    var detalles = document.querySelectorAll(".asignar-tarea__funcionario-detail");
+
+    for (var i = 0; i < detalles.length; i++) {
+        if (detalles[i].style.display != "none") {
+            expandidos.push(detalles[i].id.replace("detalleFuncionarioTarea_", ""));
+        }
+    }
+
+    return expandidos;
+}
+
+function restaurarFuncionariosExpandidosAsignarTarea(expandidos) {
+    if (!expandidos || !expandidos.length) {
+        return;
+    }
+
+    for (var i = 0; i < expandidos.length; i++) {
+        var detalle = document.getElementById("detalleFuncionarioTarea_" + expandidos[i]);
+        var card = document.getElementById("usuarioAsignarTarea_" + expandidos[i]);
+
+        if (detalle) {
+            detalle.style.display = "";
+        }
+
+        if (card) {
+            card.classList.add("asignar-tarea__funcionario-card--abierto");
+        }
+    }
+}
+
+function toggleFuncionarioAsignarTarea(evento, codUsuario) {
+    if (evento && evento.stopPropagation) {
+        evento.stopPropagation();
+    }
+
+    var detalle = document.getElementById("detalleFuncionarioTarea_" + codUsuario);
+    var card = document.getElementById("usuarioAsignarTarea_" + codUsuario);
+
+    if (!detalle || !card) {
+        return;
+    }
+
+    var abrir = detalle.style.display == "none";
+    detalle.style.display = abrir ? "" : "none";
+    card.classList.toggle("asignar-tarea__funcionario-card--abierto", abrir);
+}
+
+function marcarTareaGestionDiaria(control, codTarea, codUsuarioResponsable) {
+    cambiarEstadoTareaAsignada(control, codTarea, codUsuarioResponsable);
+}
 
 function resetSeleccionAsignarTarea(mantenerDestino) {
     codUsuarioSeleccionadoTarea = "";
@@ -578,13 +1043,13 @@ function cambiarVistaAsignarTarea(vista) {
     if (vistaAsignarTarea == "ROLES") {
         setTextoAsignarTarea("kickerPanelAsignarTarea", "Roles");
         setTextoAsignarTarea("tituloPanelAsignarTarea", "Roles operativos");
-        setTextoAsignarTarea("notaPanelAsignarTarea", "Seleccion&aacute; un rol para ver sus tareas.");
+        setTextoAsignarTarea("notaPanelAsignarTarea", "Seleccion&aacute; un rol para preparar la asignaci&oacute;n.");
         setTextoAsignarTarea("boxUsuarioSinSeleccionTarea", "<strong>Seleccion&aacute; un rol</strong><span>Ac&aacute; vas a ver sus usuarios activos, tareas pendientes y tareas configuradas.</span>");
         buscarRolesAsignarTarea();
     } else {
         setTextoAsignarTarea("kickerPanelAsignarTarea", "Usuarios");
         setTextoAsignarTarea("tituloPanelAsignarTarea", "Personal disponible");
-        setTextoAsignarTarea("notaPanelAsignarTarea", "Seleccion&aacute; un funcionario para ver el detalle.");
+        setTextoAsignarTarea("notaPanelAsignarTarea", "Hac&eacute; clic en un funcionario para desplegar sus tareas.");
         setTextoAsignarTarea("boxUsuarioSinSeleccionTarea", "<strong>Seleccion&aacute; un funcionario</strong><span>Ac&aacute; vas a ver su local, rol operativo, horario y resumen de tareas del d&iacute;a.</span>");
         buscarUsuariosAsignarTarea();
     }
@@ -652,7 +1117,9 @@ function seleccionarUsuarioAsignarTarea(codUsuario, nombreUsuario, fotoUsuario, 
         document.getElementById("lblUsuarioCompletadasTarea").innerHTML = tareasCompletadas || "0";
     }
 
-    document.getElementById("boxUsuarioSeleccionadoTarea").style.display = "";
+    if (document.getElementById("boxUsuarioSeleccionadoTarea")) {
+        document.getElementById("boxUsuarioSeleccionadoTarea").style.display = "none";
+    }
 
     if (document.getElementById("boxUsuarioSinSeleccionTarea")) {
         document.getElementById("boxUsuarioSinSeleccionTarea").style.display = "none";
@@ -768,7 +1235,7 @@ function seleccionarRolAsignarTarea(rolOperativo, totalUsuarios, usuariosActivos
     }
 
     if (document.getElementById("boxUsuarioSeleccionadoTarea")) {
-        document.getElementById("boxUsuarioSeleccionadoTarea").style.display = "";
+        document.getElementById("boxUsuarioSeleccionadoTarea").style.display = "none";
     }
 
     if (document.getElementById("boxUsuarioSinSeleccionTarea")) {
@@ -786,10 +1253,14 @@ function seleccionarRolAsignarTarea(rolOperativo, totalUsuarios, usuariosActivos
     }
 }
 
-function buscarRolesAsignarTarea() {
+function buscarRolesAsignarTarea(opciones) {
+    opciones = opciones || {};
+
     var buscar = document.getElementById("inptBuscarUsuarioAsignarTarea").value;
     var rolOperativo = "";
     var estado = document.getElementById("inptBuscarEstadoUsuarioAsignarTarea").value;
+    var contenedor = document.getElementById("contenedorUsuariosAsignarTarea");
+    var expandidos = opciones.expandidos || obtenerRolesExpandidosAsignarTarea();
 
     if (document.getElementById("inptBuscarRolOperativoAsignarTarea")) {
         rolOperativo = document.getElementById("inptBuscarRolOperativoAsignarTarea").value;
@@ -801,7 +1272,14 @@ function buscarRolesAsignarTarea() {
 
     resetSeleccionAsignarTarea(true);
     tipoDestinoAsignarTarea = "ROL";
-    document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = paginacargando;
+
+    if (contenedor) {
+        if ($.trim(contenedor.innerHTML) == "" || contenedor.querySelector(".asignar-tarea__vacio")) {
+            contenedor.innerHTML = paginacargando;
+        } else {
+            contenedor.classList.add("asignar-tarea__contenedor--actualizando");
+        }
+    }
 
     obtener_datos_user();
 
@@ -821,7 +1299,12 @@ function buscarRolesAsignarTarea() {
 
         error: function(jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
-            document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = "";
+            if (contenedor) {
+                contenedor.classList.remove("asignar-tarea__contenedor--actualizando");
+                if ($.trim(contenedor.innerHTML) == "" || contenedor.innerHTML == paginacargando) {
+                    contenedor.innerHTML = "<div class='asignar-tarea__vacio'><p>No pudimos cargar los roles. Intenta nuevamente.</p></div>";
+                }
+            }
         },
 
         success: function(responseText) {
@@ -836,10 +1319,17 @@ function buscarRolesAsignarTarea() {
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if (Respuesta == true) {
-                    document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = datos[2];
+                    if (contenedor) {
+                        contenedor.innerHTML = datos[2];
+                        contenedor.classList.remove("asignar-tarea__contenedor--actualizando");
+                        restaurarRolesExpandidosAsignarTarea(expandidos);
+                    }
                 }
 
             } catch (error) {
+                if (contenedor) {
+                    contenedor.classList.remove("asignar-tarea__contenedor--actualizando");
+                }
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
 
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
@@ -849,18 +1339,31 @@ function buscarRolesAsignarTarea() {
     });
 }
 
-function buscarUsuariosAsignarTarea() {
+function buscarUsuariosAsignarTarea(opciones) {
+    opciones = opciones || {};
+
     var buscar = document.getElementById("inptBuscarUsuarioAsignarTarea").value;
     var tipo = document.getElementById("inptBuscarTipoUsuarioAsignarTarea").value;
     var estado = document.getElementById("inptBuscarEstadoUsuarioAsignarTarea").value;
     var rolOperativo = "";
+    var contenedor = document.getElementById("contenedorUsuariosAsignarTarea");
+    var expandidos = opciones.expandidos || obtenerFuncionariosExpandidosAsignarTarea();
 
     if (document.getElementById("inptBuscarRolOperativoAsignarTarea")) {
         rolOperativo = document.getElementById("inptBuscarRolOperativoAsignarTarea").value;
     }
 
-    resetSeleccionAsignarTarea();
-    document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = paginacargando;
+    if (opciones.mantenerSeleccion !== true) {
+        resetSeleccionAsignarTarea();
+    }
+
+    if (contenedor) {
+        if ($.trim(contenedor.innerHTML) == "" || contenedor.querySelector(".asignar-tarea__vacio")) {
+            contenedor.innerHTML = paginacargando;
+        } else {
+            contenedor.classList.add("asignar-tarea__contenedor--actualizando");
+        }
+    }
 
     obtener_datos_user();
 
@@ -882,7 +1385,12 @@ function buscarUsuariosAsignarTarea() {
 
         error: function(jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
-            document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = "";
+            if (contenedor) {
+                contenedor.classList.remove("asignar-tarea__contenedor--actualizando");
+                if ($.trim(contenedor.innerHTML) == "" || contenedor.innerHTML == paginacargando) {
+                    contenedor.innerHTML = "<div class='asignar-tarea__vacio'><p>No pudimos cargar los funcionarios. Intenta nuevamente.</p></div>";
+                }
+            }
         },
 
         success: function(responseText) {
@@ -897,10 +1405,17 @@ function buscarUsuariosAsignarTarea() {
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if (Respuesta == true) {
-                    document.getElementById("contenedorUsuariosAsignarTarea").innerHTML = datos[2];
+                    if (contenedor) {
+                        contenedor.innerHTML = datos[2];
+                        contenedor.classList.remove("asignar-tarea__contenedor--actualizando");
+                        restaurarFuncionariosExpandidosAsignarTarea(expandidos);
+                    }
                 }
 
             } catch (error) {
+                if (contenedor) {
+                    contenedor.classList.remove("asignar-tarea__contenedor--actualizando");
+                }
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
 
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
@@ -1161,44 +1676,31 @@ function asignarTareaSeleccionadaAUsuario() {
 }
 
 
-function cargarTareasPendientesAdministrador() {
+function cargarTareasPendientesAdministrador(opciones) {
+    opciones = opciones || {};
 
     var lista = document.getElementById("listaTareasAdministrador");
     var vacio = document.getElementById("tareasAdministradorVacio");
-    var contador = document.getElementById("spanTareasPendientes");
-    var contadorPendientesResumen = document.getElementById("spanTareasPendientesResumen");
-    var contadorProceso = document.getElementById("spanTareasEnProceso");
-    var contadorAtrasadas = document.getElementById("spanTareasAtrasadas");
-    var contadorCompletadas = document.getElementById("spanTareasCompletadas");
 
     if (!lista) {
         return;
     }
 
-    lista.innerHTML = paginacargando;
+    agendaDiaTareasEstado.solicitud++;
+    var solicitudActual = agendaDiaTareasEstado.solicitud;
+    var tieneContenidoVisible = $.trim(lista.innerHTML) != "" && lista.innerHTML != paginacargando;
+    var primeraCarga = agendaDiaTareasEstado.tieneRespuesta !== true && !tieneContenidoVisible;
 
-    if (vacio) {
-        vacio.style.display = "none";
-    }
+    agendaDiaTareasEstado.cargando = true;
+    setAgendaDiaActualizando(true);
 
-    if (contador) {
-        contador.innerHTML = "0%";
-    }
-
-    if (contadorPendientesResumen) {
-        contadorPendientesResumen.innerHTML = "0";
-    }
-
-    if (contadorProceso) {
-        contadorProceso.innerHTML = "0";
-    }
-
-    if (contadorAtrasadas) {
-        contadorAtrasadas.innerHTML = "0";
-    }
-
-    if (contadorCompletadas) {
-        contadorCompletadas.innerHTML = "0";
+    if (primeraCarga || opciones.forzarEstado === true && !tieneContenidoVisible) {
+        lista.innerHTML = mostrarEstadoAgendaCargando();
+        lista.style.display = "grid";
+        if (vacio) {
+            vacio.style.display = "none";
+        }
+        setResumenAgendaDia(0, 0, 0, 0, 0);
     }
 
     obtener_datos_user();
@@ -1217,90 +1719,83 @@ function cargarTareasPendientesAdministrador() {
         type: "post",
 
         error: function(jqXHR, textstatus, errorThrowm) {
+            if (solicitudActual != agendaDiaTareasEstado.solicitud) {
+                return;
+            }
+
+            agendaDiaTareasEstado.cargando = false;
+            setAgendaDiaActualizando(false);
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 
-            lista.innerHTML = "";
-
-            if (vacio) {
-                vacio.style.display = "";
+            if (agendaDiaTareasEstado.tieneRespuesta !== true || $.trim(agendaDiaTareasEstado.ultimoHtml) == "") {
+                lista.innerHTML = "";
+                lista.style.display = "none";
+                if (vacio) {
+                    vacio.innerHTML = mostrarEstadoAgendaError();
+                    vacio.style.display = "block";
+                }
+                setResumenAgendaDia(0, 0, 0, 0, 0);
             }
         },
 
         success: function(responseText) {
+            if (solicitudActual != agendaDiaTareasEstado.solicitud) {
+                return;
+            }
 
             var Respuesta = responseText;
-
             console.log("TAREAS PENDIENTES:", Respuesta);
 
             try {
-
                 var datos = $.parseJSON(Respuesta);
 
                 Respuesta = datos["1"];
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if (Respuesta == true) {
+                    var html = datos[2] || "";
+                    var totalPendientes = datos[3] || 0;
+                    var totalTareas = datos[4] || 0;
+                    var totalProceso = datos[5] || 0;
+                    var totalCompletadas = datos[6] || 0;
+                    var totalAtrasadas = datos[8] || 0;
+                    var totalTareasNumero = parseInt(totalTareas, 10) || 0;
 
-					var html = datos[2];
-					var totalPendientes = datos[3];
-					var totalTareas = datos[4];
-					var totalProceso = datos[5] || 0;
-					var totalCompletadas = datos[6] || 0;
-					var totalAtrasadas = datos[8] || 0;
-					var totalTareasNumero = parseInt(totalTareas, 10) || 0;
-					var totalCompletadasNumero = parseInt(totalCompletadas, 10) || 0;
-					var porcentajeCompletadas = totalTareasNumero > 0 ? Math.round((totalCompletadasNumero * 100) / totalTareasNumero) : 0;
+                    agendaDiaTareasEstado.tieneRespuesta = true;
+                    agendaDiaTareasEstado.ultimoHtml = html;
+                    agendaDiaTareasEstado.cargando = false;
+                    setAgendaDiaActualizando(false);
+                    setResumenAgendaDia(totalPendientes, totalProceso, totalAtrasadas, totalCompletadas, totalTareas);
 
-					lista.innerHTML = html;
-
-					if (contador) {
-                        contador.innerHTML = porcentajeCompletadas + "%";
-
-                        var contenedorContador = contador.parentNode;
-
-                        if (contenedorContador) {
-                            if (parseInt(totalPendientes) > 0) {
-                                contenedorContador.classList.add("perfil-tareas__contador--alerta");
-                            } else {
-                                contenedorContador.classList.remove("perfil-tareas__contador--alerta");
-                            }
+                    if (totalTareasNumero > 0) {
+                        lista.innerHTML = html;
+                        lista.style.display = "grid";
+                        if (vacio) {
+                            vacio.style.display = "none";
+                        }
+                    } else {
+                        lista.innerHTML = "";
+                        lista.style.display = "none";
+                        if (vacio) {
+                            vacio.innerHTML = mostrarEstadoAgendaVacia();
+                            vacio.style.display = "block";
                         }
                     }
-
-                    if (contadorPendientesResumen) {
-                        contadorPendientesResumen.innerHTML = totalPendientes;
-                    }
-
-                    if (contadorProceso) {
-                        contadorProceso.innerHTML = totalProceso;
-                    }
-
-                    if (contadorAtrasadas) {
-                        contadorAtrasadas.innerHTML = totalAtrasadas;
-                    }
-
-                    if (contadorCompletadas) {
-                        contadorCompletadas.innerHTML = totalCompletadas;
-                    }
-
-					if (vacio) {
-						if (parseInt(totalTareas) > 0) {
-							vacio.style.display = "none";
-						} else {
-							vacio.style.display = "";
-						}
-					}
-				}
-
-            } catch (error) {
-
-                lista.innerHTML = "";
-
-                if (vacio) {
-                    vacio.style.display = "";
                 }
 
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+            } catch (error) {
+                agendaDiaTareasEstado.cargando = false;
+                setAgendaDiaActualizando(false);
+
+                if (agendaDiaTareasEstado.tieneRespuesta !== true || $.trim(agendaDiaTareasEstado.ultimoHtml) == "") {
+                    lista.innerHTML = "";
+                    lista.style.display = "none";
+                    if (vacio) {
+                        vacio.innerHTML = mostrarEstadoAgendaError();
+                        vacio.style.display = "block";
+                    }
+                    setResumenAgendaDia(0, 0, 0, 0, 0);
+                }
 
                 var titulo = "Error: " + error + " \r\n Consola: " + responseText;
                 GuardarArchivosLog(titulo);
@@ -1310,7 +1805,7 @@ function cargarTareasPendientesAdministrador() {
 }
 
 
-function cambiarEstadoTareaAsignada(check, codTareaAsignada) {
+function cambiarEstadoTareaAsignada(check, codTareaAsignada, codUsuarioResponsable) {
 
     if (!check || !codTareaAsignada) {
         return;
@@ -1324,6 +1819,8 @@ function cambiarEstadoTareaAsignada(check, codTareaAsignada) {
         estadoNuevo = "Pendiente";
     }
 
+    check.disabled = true;
+
     obtener_datos_user();
 
     var datos = {
@@ -1335,6 +1832,10 @@ function cambiarEstadoTareaAsignada(check, codTareaAsignada) {
         "estado_tarea": estadoNuevo
     };
 
+    if (codUsuarioResponsable) {
+        datos.cod_usuario_responsable = codUsuarioResponsable;
+    }
+
     $.ajax({
         data: datos,
         url: "/GoodVentaAsisCap/php_system/abmTareaProgramada.php",
@@ -1342,6 +1843,7 @@ function cambiarEstadoTareaAsignada(check, codTareaAsignada) {
 
         error: function(jqXHR, textstatus, errorThrowm) {
             check.checked = !check.checked;
+            check.disabled = false;
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
         },
 
@@ -1364,17 +1866,24 @@ function cambiarEstadoTareaAsignada(check, codTareaAsignada) {
                         ver_vetana_informativa("TAREA COMPLETADA CORRECTAMENTE");
                     }
 
-                    if (typeof cargarTareasPendientesAdministrador === "function") {
-                        cargarTareasPendientesAdministrador();
+                    if (codUsuarioResponsable) {
+                        buscarUsuariosAsignarTarea({
+                            mantenerSeleccion: true,
+                            expandidos: [String(codUsuarioResponsable)]
+                        });
+                    } else if (typeof cargarTareasPendientesAdministrador === "function") {
+                        cargarTareasPendientesAdministrador({forzarEstado:false});
                     }
 
                 } else {
                     check.checked = !check.checked;
+                    check.disabled = false;
                 }
 
             } catch (error) {
 
                 check.checked = !check.checked;
+                check.disabled = false;
 
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
 

@@ -172,6 +172,8 @@ $styleName="tableRegistroSearch";
 
  if ($valor>0)
  {
+	  $pagina1.="<table class='accesos-list-table'>
+	  <tbody>";
 	  while ($valor= mysqli_fetch_assoc($result))
 	  {
 		  
@@ -182,32 +184,59 @@ $styleName="tableRegistroSearch";
 			  $nombre=mb_convert_encoding((string)($valor['nombre']), 'UTF-8', 'ISO-8859-1');
 			  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
 			  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
+			  $nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+			  $codigoSeguro=htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8');
+			  $formularioSeguro=htmlspecialchars($formulario, ENT_QUOTES, 'UTF-8');
+			  $estadoFila=$accion=="SI" ? "is-enabled" : "is-disabled";
+			  $checked=$accion=="SI" ? " checked" : "";
+			  $textoEstado=$accion=="SI" ? "Habilitado" : "Bloqueado";
+			  $codigoHtml=$codigoSeguro!="" ? "<span class='accesos-item-code'>Codigo: ".$codigoSeguro."</span>" : "";
 			  $tituloacceso="";
 			 if($controltitulo!=$formulario){
-				   $tituloacceso="<p class='ptituloZ'>".$formulario."</p>";
+				   $tituloacceso="<tr class='accesos-group'>
+				   <th colspan='2'>".$formularioSeguro."</th>
+				   </tr>";
 				   $controltitulo=$formulario;
 			 }
-		  	 $inputcheck="<input id='".$idaccesosUser."' type='checkbox' onclick='abmacceso(this)'  />";
+		  	 $inputcheck="<label class='accesos-switch'>
+		  	 <input id='".$idaccesosUser."' type='checkbox' onclick='abmacceso(this)' />
+		  	 <span class='accesos-switch-track'></span>
+		  	 <span class='accesos-switch-text'>".$textoEstado."</span>
+		  	 </label>";
 			 if($accion=="SI"){
-			$inputcheck="<input id='".$idaccesosUser."' type='checkbox'  checked onclick='abmacceso(this)' />";
+			$inputcheck="<label class='accesos-switch'>
+			<input id='".$idaccesosUser."' type='checkbox'".$checked." onclick='abmacceso(this)' />
+			<span class='accesos-switch-track'></span>
+			<span class='accesos-switch-text'>".$textoEstado."</span>
+			</label>";
             $nrodeactivos=$nrodeactivos+1;			
 			 }
 			    	 
 $styleName=CargarStyleTable($styleName);		  	  
 $pagina1.=$tituloacceso."
- <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
- <tr id='tbSelecRegistro' >
-<td  id='td_datos_7' style='width:70%'>".$nombre."</td>
-<td id='td_datos_2' style='width:20%'>".$inputcheck."</td>
-</tr>
-</table>";
+<tr id='tbSelecRegistro' class='accesos-item-row ".$estadoFila."'>
+<td id='td_datos_7' class='accesos-item-info'>
+<span class='accesos-item-title'>".$nombreSeguro."</span>
+<span class='accesos-item-meta'>".$codigoHtml."</span>
+</td>
+<td id='td_datos_2' class='accesos-item-action'>".$inputcheck."</td>
+</tr>";
 	 
 			  
 	  }
+	  $pagina1.="</tbody></table>";
+ }
+ else
+ {
+	  $pagina1="<div class='accesos-empty'>No se encontraron permisos con ese criterio de busqueda.</div>";
  }
   mysqli_close($mysqli);
  
+  if($totalactivos>0){
   $nrodeactivos=($nrodeactivos*100)/$totalactivos;
+  }else{
+  $nrodeactivos=0;
+  }
  
   $informacion =array("1" => 'exito',"2" => $pagina1,"3"=>number_format($nrodeactivos,'0',',','.'));
 echo json_encode($informacion);	

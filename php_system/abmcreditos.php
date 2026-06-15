@@ -3458,6 +3458,7 @@ $pagina.="
 <td id='td_datos_16' style='display:none'>". $puntoexpedicion."</td>
 <td id='td_datos_21' style='display:none'>".  number_format($TotalApagarSinInteres,'0',',','.')."</td>
 <td id='td_datos_23' style='width:5%'>". $nombrevendedor1."</td>
+<td style='width:8%;text-align:center'><input type='button' value='Cobrar cuota' class='btn4' onclick='event.stopPropagation();obtenerdatoscuentaacobrar(this.parentNode.parentNode);abrirCobrarCuotaDesdeCuentas();' style='width:95%;background-color:#16a34a'></td>
 </tr>
 </table>";
 
@@ -3711,6 +3712,7 @@ $pagina.="
 <td id='td_datos_16' style='display:none'>". $puntoexpedicion."</td>
 <td id='td_datos_21' style='display:none'>".  number_format($TotalApagarSinInteres,'0',',','.')."</td>
 <td id='td_datos_23' style='width:5%'>". $nombrevendedor1."</td>
+<td style='width:8%;text-align:center'><input type='button' value='Cobrar cuota' class='btn4' onclick='event.stopPropagation();obtenerdatoscuentaacobrar(this.parentNode.parentNode);abrirCobrarCuotaDesdeCuentas();' style='width:95%;background-color:#16a34a'></td>
 </tr>
 </table>";
 

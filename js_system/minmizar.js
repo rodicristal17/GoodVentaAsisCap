@@ -85,7 +85,7 @@ function verventanasminizados(){
 	control=control+1;
 	}
 	if($("div[id=divMinimizadoConsultarCaja]").is(':visible')){
-	pagina+="<button id='btnMini_"+control+"' onclick='verCerrarInformeConsultaCaja(1)' class='buttonMinimizado'><img class='imgIconoMenuMinimizado' src='/GoodVentaAsisCap/iconos/informedecaja.png' /><br/><label class='pTitulo17'  >Consulta de Cajas</label></button>"
+	pagina+="<button id='btnMini_"+control+"' onclick='verCerrarInformeConsultaCaja(1)' class='buttonMinimizado'><img class='imgIconoMenuMinimizado' src='/GoodVentaAsisCap/iconos/informedecaja.png' /><br/><label class='pTitulo17'  >Control de Caja</label></button>"
 	control=control+1;
 	}
 	if($("div[id=divMinimizadoEgresoIngreso]").is(':visible')){

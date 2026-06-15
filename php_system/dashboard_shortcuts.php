@@ -85,6 +85,7 @@ function dashboard_permission_key($accessKey, $catalogPermission)
     $map = array(
         'cargar_compras' => 'VERCARGADECOMPRAS',
         'cuentas_a_cobrar' => 'VERCUENTASACOBRAR',
+        'cobrar_cuota' => 'VERCOBRARCUOTA',
         'cobros_realizados' => 'VERCOBROSREALIZADOS',
         'expediente_cliente' => 'VEREXPEDIENTEDELCLIENTE',
         'historial_venta' => 'VERHISTORIALVENTA',

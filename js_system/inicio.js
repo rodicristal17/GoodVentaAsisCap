@@ -134,7 +134,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=recordatorio-entrada-20260609")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=gestion-personal-agenda-dashboard-equal-20260613")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -1715,7 +1715,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=recordatorio-entrada-20260609")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=gestion-personal-agenda-dashboard-equal-20260613")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -1990,6 +1990,7 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptFechaCreacionMUser').value = $(datostr).children('td[id="td_datos_15"]').html();
 	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
 	reiniciarJustificacionesJornadaMesUsuario();
+	reiniciarMarcacionesJornadaMesUsuario();
 
 	limpiarHorariosUsuario();
 	cargarHorariosUsuarioDesdeJson($(datostr).children('td[id="td_datos_22"]').text());
@@ -2378,9 +2379,14 @@ var intervaloProgresoJornadaTopbarUsuario = null;
 var jornadaJustificacionesMesUsuarioCache = {};
 var jornadaJustificacionesMesUsuarioKey = "";
 var jornadaJustificacionesMesUsuarioPendienteKey = "";
+var jornadaMarcacionesMesUsuarioCache = {};
+var jornadaMarcacionesMesUsuarioKey = "";
+var jornadaMarcacionesMesUsuarioPendienteKey = "";
 var recordatorioEntradaPendienteMostradoKey = "";
 var recordatorioEntradaPendienteTimer = null;
 var recordatorioEntradaPendienteMarcando = false;
+var recordatorioEntradaPendienteAbrirAlEvaluar = false;
+var recordatorioEntradaPendienteListeners = false;
 
 function fechaIsoHorarioUsuario(fecha) {
 	return fecha.getFullYear() + "-" + String(fecha.getMonth() + 1).padStart(2, "0") + "-" + String(fecha.getDate()).padStart(2, "0");
@@ -2522,6 +2528,245 @@ function calcularEstadoHoyJornadaProgramadaUsuario(datos) {
 	};
 }
 
+function normalizarFechaMarcacionJornada(valor) {
+	valor = $.trim(valor || "");
+	return /^\d{4}-\d{2}-\d{2}/.test(valor) ? valor.substring(0, 10) : "";
+}
+
+function normalizarHoraMarcacionJornada(valor) {
+	valor = $.trim(valor || "");
+	return /^\d{2}:\d{2}/.test(valor) ? valor.substring(0, 5) : "";
+}
+
+function obtenerFinProgramadoMinutosJornada(datos) {
+	if (!datos || !Array.isArray(datos.turnos) || datos.turnos.length == 0) { return null; }
+	var ultimoFin = null;
+	for (var i = 0; i < datos.turnos.length; i++) {
+		var rango = datos.turnos[i] && datos.turnos[i].rango ? datos.turnos[i].rango : obtenerRangoMinutosResumenJornadaUsuario(datos.turnos[i].horario, datos.turnos[i].tipo);
+		if (!rango) { continue; }
+		if (ultimoFin === null || rango.fin > ultimoFin) { ultimoFin = rango.fin; }
+	}
+	return ultimoFin;
+}
+
+function obtenerInicioProgramadoMinutosJornada(datos) {
+	if (!datos || !Array.isArray(datos.turnos) || datos.turnos.length == 0) { return null; }
+	var primerInicio = null;
+	for (var i = 0; i < datos.turnos.length; i++) {
+		var rango = datos.turnos[i] && datos.turnos[i].rango ? datos.turnos[i].rango : obtenerRangoMinutosResumenJornadaUsuario(datos.turnos[i].horario, datos.turnos[i].tipo);
+		if (!rango) { continue; }
+		if (primerInicio === null || rango.inicio < primerInicio) { primerInicio = rango.inicio; }
+	}
+	return primerInicio;
+}
+
+function obtenerRegistrosDiaMarcacionJornada(fechaIso, registros) {
+	fechaIso = normalizarFechaMarcacionJornada(fechaIso);
+	registros = Array.isArray(registros) ? registros : [];
+	var salida = [];
+	for (var i = 0; i < registros.length; i++) {
+		var registro = registros[i] || {};
+		var fechaRegistro = normalizarFechaMarcacionJornada(registro.fecha);
+		if (fechaRegistro == "" && fechaIso != "") { fechaRegistro = fechaIso; }
+		if (fechaIso != "" && fechaRegistro != fechaIso) { continue; }
+		salida.push(registro);
+	}
+	salida.sort(function (a, b) {
+		var horaA = normalizarHoraMarcacionJornada(a.hora_entrada || a.hora_salida);
+		var horaB = normalizarHoraMarcacionJornada(b.hora_entrada || b.hora_salida);
+		if (horaA != horaB) { return horaA < horaB ? -1 : 1; }
+		var codA = parseInt(a.cod_asistencia || 0, 10);
+		var codB = parseInt(b.cod_asistencia || 0, 10);
+		return codA - codB;
+	});
+	return salida;
+}
+
+function agregarIncidenciaMarcacionJornada(lista, texto) {
+	texto = $.trim(texto || "");
+	if (texto == "") { return; }
+	for (var i = 0; i < lista.length; i++) {
+		if (lista[i] == texto) { return; }
+	}
+	lista.push(texto);
+}
+
+function formatearUltimaMarcacionJornada(ultima) {
+	if (!ultima || !ultima.tipo || !ultima.hora) { return ""; }
+	return (ultima.tipo == "entrada" ? "Entrada " : "Salida ") + ultima.hora;
+}
+
+function calcularAvanceRealJornada(fechaIso, registros, datosProgramados, ahora) {
+	fechaIso = normalizarFechaMarcacionJornada(fechaIso) || fechaIsoHorarioUsuario(new Date());
+	ahora = ahora || new Date();
+	var hoyIso = fechaIsoHorarioUsuario(ahora);
+	var esHoy = fechaIso == hoyIso;
+	var esFuturo = fechaIso > hoyIso;
+	var minutosEsperados = datosProgramados && parseInt(datosProgramados.minutos || 0, 10) > 0 ? parseInt(datosProgramados.minutos || 0, 10) : 0;
+	var tipoProgramado = datosProgramados && datosProgramados.tipo ? datosProgramados.tipo : "";
+	var registrosDia = obtenerRegistrosDiaMarcacionJornada(fechaIso, registros);
+	var totalMinutos = 0;
+	var tramos = [];
+	var incidencias = [];
+	var abierto = false;
+	var entradaAbiertaSinSalida = false;
+	var ultimaMarcacion = null;
+	var claves = {};
+	var minutoActual = (ahora.getHours() * 60) + ahora.getMinutes();
+	var inicioProgramado = obtenerInicioProgramadoMinutosJornada(datosProgramados);
+	var finProgramado = obtenerFinProgramadoMinutosJornada(datosProgramados);
+
+	for (var i = 0; i < registrosDia.length; i++) {
+		var registro = registrosDia[i] || {};
+		var entrada = normalizarHoraMarcacionJornada(registro.hora_entrada);
+		var salida = normalizarHoraMarcacionJornada(registro.hora_salida);
+		var clave = entrada + "|" + salida;
+		if (clave != "|" && claves[clave]) {
+			agregarIncidenciaMarcacionJornada(incidencias, "Marcacion duplicada");
+		}
+		claves[clave] = true;
+
+		if (entrada == "" && salida != "") {
+			agregarIncidenciaMarcacionJornada(incidencias, "Salida sin entrada");
+			ultimaMarcacion = { tipo: "salida", hora: salida };
+			continue;
+		}
+		if (entrada == "") { continue; }
+
+		var inicio = minutosDesdeHoraUsuario(entrada);
+		if (inicio === null) {
+			agregarIncidenciaMarcacionJornada(incidencias, "Hora de entrada invalida");
+			continue;
+		}
+
+		if (salida != "") {
+			var fin = minutosDesdeHoraUsuario(salida);
+			if (fin === null) {
+				agregarIncidenciaMarcacionJornada(incidencias, "Hora de salida invalida");
+				ultimaMarcacion = { tipo: "entrada", hora: entrada };
+				continue;
+			}
+			if (fin < inicio) {
+				if (tipoProgramado == "noche") {
+					fin += 1440;
+				} else {
+					agregarIncidenciaMarcacionJornada(incidencias, "Salida anterior a entrada");
+					fin = inicio;
+				}
+			}
+			totalMinutos += Math.max(0, fin - inicio);
+			tramos.push({ entrada: entrada, salida: salida, minutos: Math.max(0, fin - inicio), abierto: false });
+			ultimaMarcacion = { tipo: "salida", hora: salida };
+			continue;
+		}
+
+		ultimaMarcacion = { tipo: "entrada", hora: entrada };
+		if (entradaAbiertaSinSalida) {
+			agregarIncidenciaMarcacionJornada(incidencias, "Dos entradas abiertas");
+		}
+		entradaAbiertaSinSalida = true;
+		if (esHoy) {
+			var finAbierto = minutoActual;
+			if (finAbierto < inicio && tipoProgramado == "noche") { finAbierto += 1440; }
+			if (finAbierto < inicio) {
+				agregarIncidenciaMarcacionJornada(incidencias, "Entrada futura o fuera de orden");
+				finAbierto = inicio;
+			}
+			totalMinutos += Math.max(0, finAbierto - inicio);
+			tramos.push({ entrada: entrada, salida: "Ahora", minutos: Math.max(0, finAbierto - inicio), abierto: true });
+			abierto = true;
+		} else {
+			agregarIncidenciaMarcacionJornada(incidencias, "Falta salida");
+			tramos.push({ entrada: entrada, salida: "", minutos: 0, abierto: true });
+		}
+	}
+
+	var porcentaje = minutosEsperados > 0 ? Math.round((totalMinutos / minutosEsperados) * 100) : (totalMinutos > 0 ? 100 : 0);
+	var porcentajeVisual = Math.max(0, Math.min(100, porcentaje));
+	var textoReal = formatearHorasEsperadasUsuario(totalMinutos);
+	var textoEsperado = minutosEsperados > 0 ? formatearHorasEsperadasUsuario(minutosEsperados) : "sin jornada esperada";
+	var estado = "Sin entrada registrada";
+	var clase = "sin-entrada";
+
+	if (esFuturo && registrosDia.length == 0) {
+		estado = "Pendiente";
+		clase = "pendiente";
+	} else if (registrosDia.length == 0 && minutosEsperados <= 0) {
+		estado = "Sin actividad";
+		clase = "sin-jornada";
+	} else if (registrosDia.length == 0) {
+		if (esHoy && inicioProgramado !== null && minutoActual < inicioProgramado) {
+			estado = "Jornada pendiente";
+			clase = "pendiente";
+		} else if (esHoy && finProgramado !== null && minutoActual >= finProgramado) {
+			estado = "Jornada sin entrada registrada";
+			clase = "observado";
+		} else {
+			estado = "Entrada pendiente";
+			clase = "sin-entrada";
+		}
+	} else if (abierto) {
+		estado = "En jornada";
+		clase = "en-jornada";
+	} else if (minutosEsperados <= 0 && totalMinutos > 0) {
+		estado = "Trabajo fuera de jornada";
+		clase = "extra";
+	} else if (esHoy && ultimaMarcacion && ultimaMarcacion.tipo == "salida" && totalMinutos < minutosEsperados && (finProgramado === null || minutoActual < finProgramado)) {
+		estado = "En pausa / fuera de jornada";
+		clase = "pausa";
+	} else if (minutosEsperados > 0 && totalMinutos > minutosEsperados) {
+		estado = "Supero jornada esperada";
+		clase = "extra";
+	} else if (minutosEsperados > 0 && totalMinutos >= minutosEsperados) {
+		estado = "Jornada completa";
+		clase = "completa";
+	} else if (registrosDia.length > 0) {
+		estado = "Jornada incompleta";
+		clase = "incompleta";
+	}
+
+	if (incidencias.length > 0 && !abierto) {
+		estado = "Revisar marcaciones";
+		clase = "observado";
+	}
+
+	return {
+		estado: estado,
+		clase: clase,
+		detalle: "Real: " + textoReal + " / " + textoEsperado + " &middot; " + porcentaje + "%",
+		texto_real: textoReal,
+		texto_esperado: textoEsperado,
+		minutos_reales: totalMinutos,
+		minutos_esperados: minutosEsperados,
+		porcentaje: porcentaje,
+		porcentaje_visual: porcentajeVisual,
+		mostrar_barra: minutosEsperados > 0 || totalMinutos > 0 || registrosDia.length > 0,
+		abierto: abierto,
+		pausado: !abierto && ultimaMarcacion && ultimaMarcacion.tipo == "salida" && esHoy,
+		ultima_marcacion: formatearUltimaMarcacionJornada(ultimaMarcacion),
+		tramos: tramos,
+		incidencias: incidencias,
+		registros: registrosDia
+	};
+}
+
+function renderBarraPresenciaRealJornada(avance, compacto) {
+	if (!avance) { return ""; }
+	var porcentajeTexto = avance.porcentaje + "%";
+	var clases = (compacto ? "jornada-hoy-mini__progress " : "") + "jornada-real-progress jornada-real-progress--" + escaparHtmlFuncionario(avance.clase || "sin-entrada");
+	var detalle = avance.detalle || "";
+	var ultima = avance.ultima_marcacion ? "Ultima marcacion: " + avance.ultima_marcacion : "";
+	var incidencias = avance.incidencias && avance.incidencias.length ? "Revisar: " + avance.incidencias.join(" | ") : "";
+	return "<div class='" + clases + "'>" +
+		"<span>Avance real segun marcaciones</span>" +
+		"<div><i style='width:" + avance.porcentaje_visual + "%'></i></div>" +
+		"<strong>" + escaparHtmlFuncionario(porcentajeTexto) + "</strong>" +
+		"<small>" + detalle + "</small>" +
+		(ultima ? "<em>" + escaparHtmlFuncionario(ultima) + "</em>" : "") +
+		(incidencias ? "<em class='jornada-real-progress__warning'>" + escaparHtmlFuncionario(incidencias) + "</em>" : "") +
+	"</div>";
+}
+
 function normalizarListaHorariosTopbarUsuario(horarios) {
 	if (Array.isArray(horarios)) { return horarios; }
 	if (typeof horarios == "string" && $.trim(horarios) != "") {
@@ -2617,66 +2862,8 @@ function calcularAvanceTopbarJornadaUsuario(datos) {
 		};
 	}
 
-	var ahora = new Date();
-	var minutoActual = (ahora.getHours() * 60) + ahora.getMinutes();
-	var minutosTranscurridos = 0;
-	var primerInicio = datos.turnos[0].rango.inicio;
-	var ultimoFin = datos.turnos[datos.turnos.length - 1].rango.fin;
-	var dentroDeFranja = false;
-
-	for (var i = 0; i < datos.turnos.length; i++) {
-		var turno = datos.turnos[i];
-		var rango = turno.rango;
-		var descanso = obtenerDescansoMinutosResumenJornadaUsuario(turno.descanso, rango);
-		var avanceTurno = 0;
-
-		if (minutoActual >= rango.fin) {
-			avanceTurno = turno.minutos;
-		} else if (minutoActual > rango.inicio) {
-			dentroDeFranja = true;
-			avanceTurno = minutoActual - rango.inicio;
-			if (descanso) {
-				if (minutoActual <= descanso.inicio) {
-					// Todavia no descuenta descanso.
-				} else if (minutoActual < descanso.fin) {
-					avanceTurno -= (minutoActual - descanso.inicio);
-				} else {
-					avanceTurno -= (descanso.fin - descanso.inicio);
-				}
-			}
-		} else if (minutoActual >= rango.inicio && minutoActual < rango.fin) {
-			dentroDeFranja = true;
-		}
-
-		minutosTranscurridos += Math.max(0, Math.min(turno.minutos, avanceTurno));
-	}
-
-	var porcentaje = datos.minutos > 0 ? Math.round((minutosTranscurridos / datos.minutos) * 100) : 0;
-	porcentaje = Math.max(0, Math.min(100, porcentaje));
-
-	if (minutoActual < primerInicio) {
-		return { estado: "Jornada pendiente", detalle: "Avance horario programado &middot; " + porcentaje + "%", clase: "pendiente", porcentaje: porcentaje, mostrar_barra: true };
-	}
-	var entradaConfirmada = typeof asistenciaUsuarioTieneEntradaHoy != "undefined" && asistenciaUsuarioTieneEntradaHoy;
-	if (minutoActual >= ultimoFin) {
-		if (!entradaConfirmada) {
-			return { estado: "Jornada sin entrada registrada", detalle: "Pendiente de regularizaci&oacute;n &middot; Avance horario programado " + porcentaje + "%", clase: "finalizada", porcentaje: porcentaje, mostrar_barra: true };
-		}
-		return { estado: "Jornada finalizada", detalle: "Avance horario programado &middot; " + porcentaje + "%", clase: "finalizada", porcentaje: porcentaje, mostrar_barra: true };
-	}
-	if (!dentroDeFranja) {
-		return { estado: "Jornada pendiente", detalle: "Avance horario programado &middot; " + porcentaje + "%", clase: "pendiente", porcentaje: porcentaje, mostrar_barra: true };
-	}
-
-	var entradaAbierta = typeof cod_asistencia != "undefined" && $.trim(cod_asistencia || "") != "";
-	entradaConfirmada = entradaConfirmada || entradaAbierta;
-	return {
-		estado: entradaConfirmada ? "En jornada" : "Sin entrada registrada",
-		detalle: "Avance horario programado &middot; " + porcentaje + "%",
-		clase: entradaConfirmada ? "en-jornada" : "sin-entrada",
-		porcentaje: porcentaje,
-		mostrar_barra: true
-	};
+	var registrosHoy = (typeof asistenciaUsuarioRegistrosHoy != "undefined" && Array.isArray(asistenciaUsuarioRegistrosHoy)) ? asistenciaUsuarioRegistrosHoy : [];
+	return calcularAvanceRealJornada(fechaIsoHorarioUsuario(new Date()), registrosHoy, datos, new Date());
 }
 
 function actualizarProgresoJornadaTopbarUsuario() {
@@ -2692,6 +2879,11 @@ function actualizarProgresoJornadaTopbarUsuario() {
 		"perfil-widget__progreso-jornada--pendiente",
 		"perfil-widget__progreso-jornada--sin-entrada",
 		"perfil-widget__progreso-jornada--en-jornada",
+		"perfil-widget__progreso-jornada--pausa",
+		"perfil-widget__progreso-jornada--incompleta",
+		"perfil-widget__progreso-jornada--completa",
+		"perfil-widget__progreso-jornada--extra",
+		"perfil-widget__progreso-jornada--observado",
 		"perfil-widget__progreso-jornada--finalizada"
 	];
 
@@ -2699,11 +2891,11 @@ function actualizarProgresoJornadaTopbarUsuario() {
 		contenedor.classList.remove(clases[i]);
 	}
 	contenedor.classList.add("perfil-widget__progreso-jornada--" + avance.clase);
-	contenedor.title = datos ? ("Jornada programada: " + (datos.horario || "-")) : "Hoy sin jornada programada";
+	contenedor.title = datos ? ("Jornada programada: " + (datos.horario || "-") + " | Presencia real segun marcaciones") : "Hoy sin jornada programada";
 
 	if (estadoTexto) { estadoTexto.innerHTML = escaparHtmlFuncionario(avance.estado); }
 	if (detalleTexto) { detalleTexto.innerHTML = avance.detalle; }
-	if (barra) { barra.style.width = (avance.mostrar_barra ? avance.porcentaje : 0) + "%"; }
+	if (barra) { barra.style.width = (avance.mostrar_barra ? (avance.porcentaje_visual !== undefined ? avance.porcentaje_visual : avance.porcentaje) : 0) + "%"; }
 	evaluarRecordatorioEntradaPendiente();
 }
 
@@ -2805,9 +2997,38 @@ function registrarEventoRecordatorioEntradaPendiente(accion, contexto, recordato
 	});
 }
 
-function ocultarRecordatorioEntradaPendiente() {
+function obtenerBotonDetalleRecordatorioEntradaPendiente() {
+	return document.getElementById("btnDetalleRecordatorioEntrada");
+}
+
+function actualizarIndicadorRecordatorioEntradaPendiente(contexto, abierto) {
+	var boton = obtenerBotonDetalleRecordatorioEntradaPendiente();
+	if (!boton) { return; }
+	if (!contexto) {
+		boton.classList.remove("is-visible");
+		boton.classList.remove("is-alerta");
+		boton.classList.remove("is-open");
+		boton.setAttribute("aria-expanded", "false");
+		boton.title = "Sin avisos de asistencia pendientes";
+		boton.setAttribute("aria-label", "Sin avisos de asistencia pendientes");
+		return;
+	}
+	boton.classList.add("is-visible");
+	boton.classList.toggle("is-alerta", !abierto);
+	boton.classList.toggle("is-open", !!abierto);
+	boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+	boton.title = abierto ? "Ocultar detalle de entrada pendiente" : "Entrada pendiente: ver detalle";
+	boton.setAttribute("aria-label", abierto ? "Ocultar detalle de entrada pendiente" : "Ver detalle de entrada pendiente");
+}
+
+function ocultarRecordatorioEntradaPendiente(mantenerIndicador) {
 	var aviso = document.getElementById("recordatorioEntradaPendiente");
 	if (aviso) { aviso.classList.remove("is-visible"); }
+	if (mantenerIndicador) {
+		actualizarIndicadorRecordatorioEntradaPendiente(obtenerContextoRecordatorioEntradaPendiente(), false);
+	} else {
+		actualizarIndicadorRecordatorioEntradaPendiente(null, false);
+	}
 }
 
 function pausarRecordatorioEntradaPendienteMarcacion() {
@@ -2823,12 +3044,57 @@ function liberarRecordatorioEntradaPendienteMarcacion() {
 function mostrarRecordatorioEntradaPendiente(contexto) {
 	var aviso = document.getElementById("recordatorioEntradaPendiente");
 	if (!aviso || !contexto) { return; }
+	actualizarIndicadorRecordatorioEntradaPendiente(contexto, true);
 	aviso.classList.add("is-visible");
 	var key = claveRecordatorioEntradaPendiente("mostrado");
 	if (recordatorioEntradaPendienteMostradoKey != key) {
 		recordatorioEntradaPendienteMostradoKey = key;
 		registrarEventoRecordatorioEntradaPendiente("recordatorio_mostrado", contexto, true);
 	}
+}
+
+function toggleRecordatorioEntradaPendiente(evento) {
+	if (evento && evento.stopPropagation) { evento.stopPropagation(); }
+	var aviso = document.getElementById("recordatorioEntradaPendiente");
+	if (aviso && aviso.classList.contains("is-visible")) {
+		recordatorioEntradaPendienteAbrirAlEvaluar = false;
+		ocultarRecordatorioEntradaPendiente(true);
+		return;
+	}
+	var contexto = obtenerContextoRecordatorioEntradaPendiente();
+	if (!contexto) {
+		ocultarRecordatorioEntradaPendiente();
+		return;
+	}
+	mostrarRecordatorioEntradaPendiente(contexto);
+}
+
+function cerrarRecordatorioEntradaPendienteManual(evento) {
+	if (evento && evento.stopPropagation) { evento.stopPropagation(); }
+	recordatorioEntradaPendienteAbrirAlEvaluar = false;
+	ocultarRecordatorioEntradaPendiente(true);
+}
+
+function cerrarRecordatorioEntradaPendientePorClickExterior(evento) {
+	var aviso = document.getElementById("recordatorioEntradaPendiente");
+	if (!aviso || !aviso.classList.contains("is-visible")) { return; }
+	var contenedor = aviso.parentNode;
+	if (contenedor && contenedor.contains(evento.target)) { return; }
+	ocultarRecordatorioEntradaPendiente(true);
+}
+
+function cerrarRecordatorioEntradaPendientePorTecla(evento) {
+	if (!evento || evento.key != "Escape") { return; }
+	var aviso = document.getElementById("recordatorioEntradaPendiente");
+	if (!aviso || !aviso.classList.contains("is-visible")) { return; }
+	ocultarRecordatorioEntradaPendiente(true);
+}
+
+function inicializarInteraccionesRecordatorioEntradaPendiente() {
+	if (recordatorioEntradaPendienteListeners || !document.addEventListener) { return; }
+	recordatorioEntradaPendienteListeners = true;
+	document.addEventListener("click", cerrarRecordatorioEntradaPendientePorClickExterior);
+	document.addEventListener("keydown", cerrarRecordatorioEntradaPendientePorTecla);
 }
 
 function registrarJornadaFinalizadaSinEntradaSiCorresponde() {
@@ -2873,7 +3139,12 @@ function evaluarRecordatorioEntradaPendiente() {
 		ocultarRecordatorioEntradaPendiente();
 		return;
 	}
-	mostrarRecordatorioEntradaPendiente(contexto);
+	if (recordatorioEntradaPendienteAbrirAlEvaluar) {
+		recordatorioEntradaPendienteAbrirAlEvaluar = false;
+		mostrarRecordatorioEntradaPendiente(contexto);
+		return;
+	}
+	actualizarIndicadorRecordatorioEntradaPendiente(contexto, false);
 }
 
 function posponerRecordatorioEntradaPendiente() {
@@ -2883,6 +3154,7 @@ function posponerRecordatorioEntradaPendiente() {
 	} catch (error) {
 	}
 	recordatorioEntradaPendienteMostradoKey = "";
+	recordatorioEntradaPendienteAbrirAlEvaluar = true;
 	registrarEventoRecordatorioEntradaPendiente("recordar_mas_tarde", contexto, true);
 	ocultarRecordatorioEntradaPendiente();
 	if (recordatorioEntradaPendienteTimer) { clearTimeout(recordatorioEntradaPendienteTimer); }
@@ -2897,6 +3169,7 @@ function continuarSinMarcarEntradaPendiente() {
 		localStorage.setItem(claveRecordatorioEntradaPendiente("continuar"), "1");
 	} catch (error) {
 	}
+	recordatorioEntradaPendienteAbrirAlEvaluar = false;
 	registrarEventoRecordatorioEntradaPendiente("continuar_sin_marcar", contexto, true);
 	ocultarRecordatorioEntradaPendiente();
 }
@@ -2911,6 +3184,7 @@ function marcarEntradaDesdeRecordatorio() {
 }
 
 function inicializarProgresoJornadaTopbarUsuario() {
+	inicializarInteraccionesRecordatorioEntradaPendiente();
 	actualizarProgresoJornadaTopbarUsuario();
 	if (intervaloProgresoJornadaTopbarUsuario) { return; }
 	intervaloProgresoJornadaTopbarUsuario = setInterval(function () {
@@ -2925,7 +3199,7 @@ if (document.addEventListener) {
 function renderProgresoHoyJornadaUsuario(estadoHoy, compacto) {
 	if (!estadoHoy || !estadoHoy.mostrar_barra) { return ""; }
 	return "<div class='" + (compacto ? "jornada-hoy-mini__progress" : "jornada-hoy-progress") + "'>" +
-		"<span>Avance de jornada programada</span>" +
+		"<span>Avance horario programado</span>" +
 		"<div><i style='width:" + estadoHoy.porcentaje + "%'></i></div>" +
 		"<strong>" + estadoHoy.porcentaje + "%</strong>" +
 	"</div>";
@@ -2937,7 +3211,19 @@ function reiniciarJustificacionesJornadaMesUsuario() {
 	jornadaJustificacionesMesUsuarioPendienteKey = "";
 }
 
+function reiniciarMarcacionesJornadaMesUsuario() {
+	jornadaMarcacionesMesUsuarioCache = {};
+	jornadaMarcacionesMesUsuarioKey = "";
+	jornadaMarcacionesMesUsuarioPendienteKey = "";
+}
+
 function claveJustificacionesJornadaMesUsuario(inicio, fin) {
+	var codUsuario = $.trim(idAbmUsuario || "");
+	if (codUsuario == "" || !inicio || !fin) { return ""; }
+	return codUsuario + "|" + fechaIsoHorarioUsuario(inicio) + "|" + fechaIsoHorarioUsuario(fin);
+}
+
+function claveMarcacionesJornadaMesUsuario(inicio, fin) {
 	var codUsuario = $.trim(idAbmUsuario || "");
 	if (codUsuario == "" || !inicio || !fin) { return ""; }
 	return codUsuario + "|" + fechaIsoHorarioUsuario(inicio) + "|" + fechaIsoHorarioUsuario(fin);
@@ -3012,25 +3298,101 @@ function solicitarJustificacionesJornadaMesUsuario(inicio, fin) {
 	});
 }
 
+function agregarMarcacionJornadaMesUsuario(mapa, registro) {
+	if (!registro) { return; }
+	var fecha = normalizarFechaMarcacionJornada(registro.fecha);
+	if (fecha == "") { return; }
+	if (!mapa[fecha]) { mapa[fecha] = []; }
+	mapa[fecha].push(registro);
+}
+
+function solicitarMarcacionesJornadaMesUsuario(inicio, fin) {
+	var clave = claveMarcacionesJornadaMesUsuario(inicio, fin);
+	if (clave == "") {
+		reiniciarMarcacionesJornadaMesUsuario();
+		return;
+	}
+	if (clave == jornadaMarcacionesMesUsuarioKey || clave == jornadaMarcacionesMesUsuarioPendienteKey) { return; }
+
+	jornadaMarcacionesMesUsuarioCache = {};
+	jornadaMarcacionesMesUsuarioKey = "";
+	jornadaMarcacionesMesUsuarioPendienteKey = clave;
+
+	if (typeof $ == "undefined" || typeof obtener_datos_user != "function") { return; }
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "buscar");
+	datos.append("cod_usuario", idAbmUsuario);
+	datos.append("fecha_desde", fechaIsoHorarioUsuario(inicio));
+	datos.append("fecha_hasta", fechaIsoHorarioUsuario(fin));
+	datos.append("limite", "0");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function (responseText) {
+			if (jornadaMarcacionesMesUsuarioPendienteKey != clave) { return; }
+			var mapa = {};
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] == "exito" && Array.isArray(respuesta.registros)) {
+					for (var i = 0; i < respuesta.registros.length; i++) {
+						agregarMarcacionJornadaMesUsuario(mapa, respuesta.registros[i]);
+					}
+				}
+			} catch (error) {
+				mapa = {};
+			}
+			jornadaMarcacionesMesUsuarioCache = mapa;
+			jornadaMarcacionesMesUsuarioKey = clave;
+			jornadaMarcacionesMesUsuarioPendienteKey = "";
+			renderCalendarioEsperadoUsuario();
+		},
+		error: function () {
+			if (jornadaMarcacionesMesUsuarioPendienteKey != clave) { return; }
+			jornadaMarcacionesMesUsuarioCache = {};
+			jornadaMarcacionesMesUsuarioKey = clave;
+			jornadaMarcacionesMesUsuarioPendienteKey = "";
+		}
+	});
+}
+
+function obtenerMarcacionesJornadaMesUsuario(fecha) {
+	fecha = normalizarFechaMarcacionJornada(fecha);
+	var registros = jornadaMarcacionesMesUsuarioCache[fecha] || [];
+	var hoyIso = fechaIsoHorarioUsuario(new Date());
+	if (fecha == hoyIso && typeof asistenciaUsuarioRegistrosHoy != "undefined" && Array.isArray(asistenciaUsuarioRegistrosHoy) && String(idAbmUsuario || "") == String(userid || "")) {
+		registros = asistenciaUsuarioRegistrosHoy;
+	}
+	return registros;
+}
+
 function renderJustificacionJornadaMesUsuario(fecha) {
 	var textos = jornadaJustificacionesMesUsuarioCache[fecha] || [];
 	if (!textos.length) {
-		return "<span class='jornada-mes-resumen-card__justificacion jornada-mes-resumen-card__justificacion--empty'>&mdash;</span>";
+		return "<div class='jornada-mes-resumen-card__justificacion jornada-mes-resumen-card__justificacion--empty' title='Sin justificaci&oacute;n'>&mdash;</div>";
 	}
 	var texto = textos.join(" | ");
-	return "<span class='jornada-mes-resumen-card__justificacion' title='" + escaparHtmlFuncionario(texto) + "'>" + escaparHtmlFuncionario(texto) + "</span>";
+	return "<div class='jornada-mes-resumen-card__justificacion' title='" + escaparHtmlFuncionario(texto) + "'>" + escaparHtmlFuncionario(texto) + "</div>";
 }
 
-function renderFranjaHoyJornadaMesUsuario(datosHoy, estadoHoy) {
-	if (!datosHoy || !estadoHoy) { return ""; }
+function renderFranjaHoyJornadaMesUsuario(datosHoy, avanceReal) {
+	if (!datosHoy || !avanceReal) { return ""; }
 	var tipoTexto = datosHoy.minutos > 0 ? datosHoy.tipo_texto : (datosHoy.es_domingo ? "Descanso" : "D\u00eda no laboral");
-	return "<div class='jornada-hoy-mini jornada-hoy-mini--" + estadoHoy.clase + "'>" +
+	return "<div class='jornada-hoy-mini jornada-hoy-mini--" + avanceReal.clase + "'>" +
 		"<div class='jornada-hoy-mini__copy'>" +
 			"<span>Hoy: " + escaparHtmlFuncionario(diaCortoResumenJornadaUsuario(datosHoy.dia_nombre) + " " + datosHoy.fecha_corta.substring(0, 5)) + "</span>" +
-			"<strong>" + escaparHtmlFuncionario(tipoTexto) + " <i aria-hidden='true'>&middot;</i> " + escaparHtmlFuncionario(estadoHoy.estado) + "</strong>" +
-			"<small>Referencia basada en la jornada programada, no en asistencia confirmada.</small>" +
+			"<strong>" + escaparHtmlFuncionario(tipoTexto) + " <i aria-hidden='true'>&middot;</i> " + escaparHtmlFuncionario(avanceReal.estado) + "</strong>" +
+			"<small>Esperado: " + textoHorarioResumenJornadaUsuario(datosHoy.horario || "-") + " / " + escaparHtmlFuncionario(datosHoy.minutos > 0 ? formatearHorasEsperadasUsuario(datosHoy.minutos) : "0 h") + ". La barra muestra presencia real registrada.</small>" +
 		"</div>" +
-		renderProgresoHoyJornadaUsuario(estadoHoy, true) +
+		renderBarraPresenciaRealJornada(avanceReal, true) +
 	"</div>";
 }
 
@@ -3060,24 +3422,34 @@ function renderResumenJornadaMesUsuario(inicio, diasEsperados, minutosMes, horar
 	var html = "";
 	var hoyIso = fechaIsoHorarioUsuario(new Date());
 	var datosHoy = calendarioEsperadoUsuarioCache[hoyIso] || null;
-	var estadoHoy = calcularEstadoHoyJornadaProgramadaUsuario(datosHoy);
+	var avanceHoy = datosHoy ? calcularAvanceRealJornada(hoyIso, obtenerMarcacionesJornadaMesUsuario(hoyIso), datosHoy, new Date()) : null;
 	for (var i = 0; i < claves.length; i++) {
 		var datos = calendarioEsperadoUsuarioCache[claves[i]];
 		var esHoy = datos && datos.fecha == hoyIso;
 		if (!datos || (datos.minutos <= 0 && datos.turnos.length == 0 && !esHoy)) { continue; }
 		var tipoTexto = datos.minutos > 0 ? datos.tipo_texto : (datos.es_domingo ? "Descanso" : "D\u00eda no laboral");
 		var claseEstado = datos.minutos > 0 ? datos.clase_estado : "libre";
-		var estadoFila = esHoy ? estadoHoy : null;
-		html += "<div class='jornada-mes-resumen-card__row" + (esHoy ? " jornada-mes-resumen-card__row--today" : "") + "'>" +
+		var avanceReal = calcularAvanceRealJornada(datos.fecha, obtenerMarcacionesJornadaMesUsuario(datos.fecha), datos, new Date());
+		var esperadoHtml = "<div class='jornada-mes-resumen-card__expected'>" +
+			"<span>Horario</span>" +
+			"<strong>" + textoHorarioResumenJornadaUsuario(datos.horario || "-") + "</strong>" +
+			(datos.descanso ? "<small>Descanso " + textoHorarioResumenJornadaUsuario(datos.descanso) + "</small>" : "") +
+			"<em>" + escaparHtmlFuncionario(datos.minutos > 0 ? formatearHorasEsperadasUsuario(datos.minutos) : "0 h") + " esperadas</em>" +
+		"</div>";
+		var estadoHtml = "<div class='jornada-mes-resumen-card__real-status jornada-mes-resumen-card__real-status--" + escaparHtmlFuncionario(avanceReal.clase) + "' title='" + escaparHtmlFuncionario(avanceReal.detalle || avanceReal.estado) + "'>" +
+			escaparHtmlFuncionario(avanceReal.estado) +
+			(avanceReal.ultima_marcacion ? "<small>Ultima marcacion: " + escaparHtmlFuncionario(avanceReal.ultima_marcacion) + "</small>" : "") +
+		"</div>";
+		html += "<div class='jornada-mes-resumen-card__row jornada-mensual-lista__fila" + (esHoy ? " jornada-mes-resumen-card__row--today" : "") + "'>" +
 			"<span class='jornada-mes-resumen-card__date'>" + escaparHtmlFuncionario(diaCortoResumenJornadaUsuario(datos.dia_nombre) + " " + datos.fecha_corta.substring(0, 5)) + (esHoy ? " <b>Hoy</b>" : "") + "</span>" +
 			"<span class='jornada-mes-resumen-card__badge jornada-mes-resumen-card__badge--" + escaparHtmlFuncionario(claseEstado) + "'>" + escaparHtmlFuncionario(tipoTexto) + "</span>" +
-			"<span class='jornada-mes-resumen-card__hours'>" + escaparHtmlFuncionario(datos.minutos > 0 ? formatearHorasEsperadasUsuario(datos.minutos) : "0 h") + "</span>" +
-			"<span class='jornada-mes-resumen-card__schedule'>" + textoHorarioResumenJornadaUsuario(datos.horario || "-") + "</span>" +
+			esperadoHtml +
+			"<div class='jornada-mes-resumen-card__real'>" + renderBarraPresenciaRealJornada(avanceReal, false) + "</div>" +
+			estadoHtml +
 			renderJustificacionJornadaMesUsuario(datos.fecha) +
-			(esHoy ? "<div class='jornada-hoy-row-detail'><span class='jornada-hoy-status jornada-hoy-status--" + estadoFila.clase + "'>" + escaparHtmlFuncionario(estadoFila.estado) + "</span>" + renderProgresoHoyJornadaUsuario(estadoFila, false) + "</div>" : "") +
 		"</div>";
 	}
-	lista.innerHTML = html ? renderFranjaHoyJornadaMesUsuario(datosHoy, estadoHoy) + "<div class='jornada-mes-resumen-card__list-head'><span>D&iacute;a</span><span>Tipo</span><span>Horas</span><span>Horario</span><span>Justificaci&oacute;n</span></div>" + html : "<div class='jornada-mes-resumen-card__empty'>Sin d&iacute;as laborales configurados para este mes.</div>";
+	lista.innerHTML = html ? renderFranjaHoyJornadaMesUsuario(datosHoy, avanceHoy) + "<div class='jornada-mes-resumen-card__list-head jornada-mensual-lista__cabecera'><span>D&iacute;a</span><span>Tipo</span><span>Jornada esperada</span><span>Presencia real</span><span>Estado real</span><span>Justificaci&oacute;n</span></div>" + html : "<div class='jornada-mes-resumen-card__empty'>Sin d&iacute;as laborales configurados para este mes.</div>";
 	programarActualizacionResumenJornadaMesUsuario();
 }
 
@@ -3288,6 +3660,7 @@ function renderCalendarioEsperadoUsuario() {
 			"</div>";
 	}
 	solicitarJustificacionesJornadaMesUsuario(inicio, fin);
+	solicitarMarcacionesJornadaMesUsuario(inicio, fin);
 	renderResumenJornadaMesUsuario(inicio, diasEsperados, minutosMes, obtenerClaveFrecuenteCalendarioUsuario(horariosFrecuentes), obtenerClaveFrecuenteCalendarioUsuario(descansosFrecuentes));
 	if (primerSeleccionable) {
 		seleccionarDiaCalendarioEsperadoUsuario(calendarioEsperadoUsuarioCache[calendarioEsperadoUsuarioSeleccionado] ? calendarioEsperadoUsuarioSeleccionado : primerSeleccionable);
@@ -3730,6 +4103,7 @@ function limpiarcamposusuarios() {
 	
 	idAbmUsuario = "";
 	reiniciarJustificacionesJornadaMesUsuario();
+	reiniciarMarcacionesJornadaMesUsuario();
 	limpiarHorariosUsuario();
 
 	const fecahActual= new Date();
@@ -3824,6 +4198,7 @@ function verCerrarAccesoUsuario(d) {
  document.getElementById("tdEfectoVistaAcceso").className="magictime slideLeftReturn"
 
 		 idAbmAccesoUser="";
+		prepararVistaAccesosUsuario();
 		buscarAccesosUser()
     }else{
 document.getElementById("tdEfectoVistaAcceso").className="magictime slideRight"
@@ -3833,7 +4208,9 @@ $("div[id=divVistaAcceso]").fadeOut(500);
 }
 function buscarAccesosUser() {
 	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
+	prepararVistaAccesosUsuario();
 	document.getElementById("table_abm_accesos_Abm").innerHTML = paginacargando
+	actualizarContadorAccesosVisibles("Cargando permisos...");
 	var buscador=document.getElementById("inptBuscarAccesos").value
 	obtener_datos_user();
 	var datos = {
@@ -3876,6 +4253,7 @@ function buscarAccesosUser() {
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("table_abm_accesos_Abm").innerHTML = ""
+			actualizarContadorAccesosVisibles("No se pudo cargar permisos.");
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -3889,16 +4267,205 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					var datos_buscados1 = datos[2];
              	   document.getElementById("table_abm_accesos_Abm").innerHTML =datos[2]
              	   document.getElementById("inpt_nivel_selecc").value = datos[3]
+             	   actualizarPorcentajeAccesosUsuario();
+             	   actualizarEstadosAccesosCargados();
+             	   actualizarContadorAccesosVisibles("");
 					
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
+				actualizarContadorAccesosVisibles("No se pudo cargar permisos.");
 			}
 		}
 	});
 }
+var procesandoAccesosVisibles=false;
+
+function prepararVistaAccesosUsuario() {
+	var buscador=document.getElementById("inptBuscarAccesos");
+	if(buscador){
+		buscador.placeholder="Buscar por permiso, formulario o codigo";
+	}
+	actualizarPorcentajeAccesosUsuario();
+	actualizarContadorAccesosVisibles("");
+}
+
+function obtenerChecksAccesosVisibles() {
+	var contenedor=document.getElementById("table_abm_accesos_Abm");
+	if(!contenedor){
+		return [];
+	}
+	return Array.prototype.slice.call(contenedor.querySelectorAll("input[type='checkbox']"));
+}
+
+function actualizarPorcentajeAccesosUsuario() {
+	var input=document.getElementById("inpt_nivel_selecc");
+	if(!input){
+		return;
+	}
+	input.value=input.value.toString().replace("%","").trim();
+}
+
+function actualizarEstadoAccesoFila(check) {
+	if(!check){
+		return;
+	}
+	var fila=$(check).closest(".accesos-item-row");
+	if(fila.length==0){
+		fila=$(check).closest("tr");
+	}
+	if(fila.length>0){
+		fila.removeClass("is-enabled is-disabled");
+		fila.addClass(check.checked ? "is-enabled" : "is-disabled");
+	}
+	var texto=$(check).closest(".accesos-switch").find(".accesos-switch-text");
+	if(texto.length>0){
+		texto.html(check.checked ? "Habilitado" : "Bloqueado");
+	}
+}
+
+function actualizarEstadosAccesosCargados() {
+	var checks=obtenerChecksAccesosVisibles();
+	for(var i=0;i<checks.length;i++){
+		actualizarEstadoAccesoFila(checks[i]);
+	}
+}
+
+function actualizarContadorAccesosVisibles(mensaje) {
+	var checks=obtenerChecksAccesosVisibles();
+	var seleccionados=0;
+	for(var i=0;i<checks.length;i++){
+		if(checks[i].checked){
+			seleccionados++;
+		}
+	}
+	var contador=document.getElementById("lblContadorAccesosVisibles");
+	if(contador){
+		contador.innerHTML="Seleccionados: "+seleccionados+" de "+checks.length+" visibles";
+	}
+	var estado=document.getElementById("lblEstadoAccesosVisibles");
+	if(estado && mensaje!==undefined){
+		estado.innerHTML=mensaje;
+	}
+	var deshabilitar=procesandoAccesosVisibles || checks.length==0;
+	var btnMarcar=document.getElementById("btnMarcarAccesosVisibles");
+	var btnDesmarcar=document.getElementById("btnDesmarcarAccesosVisibles");
+	if(btnMarcar){
+		btnMarcar.disabled=deshabilitar;
+	}
+	if(btnDesmarcar){
+		btnDesmarcar.disabled=deshabilitar;
+	}
+}
+
+function bloquearAccesosVisibles(bloquear) {
+	var checks=obtenerChecksAccesosVisibles();
+	for(var i=0;i<checks.length;i++){
+		checks[i].disabled=bloquear;
+	}
+	actualizarContadorAccesosVisibles();
+}
+
+function marcarAccesosVisibles(accion) {
+	if(procesandoAccesosVisibles){
+		return;
+	}
+	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
+	var objetivo=accion=="SI";
+	var checks=obtenerChecksAccesosVisibles();
+	var pendientes=[];
+	for(var i=0;i<checks.length;i++){
+		if(checks[i].checked!=objetivo){
+			pendientes.push(checks[i]);
+		}
+	}
+	if(checks.length==0){
+		actualizarContadorAccesosVisibles("No se encontraron permisos con ese criterio de busqueda.");
+		return;
+	}
+	if(pendientes.length==0){
+		actualizarContadorAccesosVisibles("No hay permisos visibles para actualizar.");
+		return;
+	}
+	var texto=objetivo ? "Confirmas habilitar los permisos visibles actualmente en la lista?" : "Confirmas quitar los permisos visibles actualmente en la lista?";
+	texto+="\nSe modificaran "+pendientes.length+" permisos visibles.";
+	if(!confirm(texto)){
+		return;
+	}
+	procesandoAccesosVisibles=true;
+	bloquearAccesosVisibles(true);
+	procesarAccesosVisiblesPendientes(pendientes,0,accion);
+}
+
+function procesarAccesosVisiblesPendientes(pendientes,indice,accion) {
+	if(indice>=pendientes.length){
+		procesandoAccesosVisibles=false;
+		bloquearAccesosVisibles(false);
+		actualizarContadorAccesosVisibles("Permisos visibles actualizados.");
+		return;
+	}
+	var check=pendientes[indice];
+	var objetivo=accion=="SI";
+	actualizarContadorAccesosVisibles("Actualizando permisos "+(indice+1)+" de "+pendientes.length+"...");
+	guardarAccesoVisible(check,accion)
+	.done(function(responseText) {
+		try {
+			var datos=$.parseJSON(responseText);
+			var Respuesta=respuestaJqueryAjax(datos["1"]);
+			if(Respuesta==true){
+				check.checked=objetivo;
+				actualizarEstadoAccesoFila(check);
+				if(document.getElementById("inpt_nivel_selecc")){
+					document.getElementById("inpt_nivel_selecc").value=datos["2"];
+					actualizarPorcentajeAccesosUsuario();
+				}
+				actualizarContadorAccesosVisibles("Actualizando permisos "+(indice+1)+" de "+pendientes.length+"...");
+				procesarAccesosVisiblesPendientes(pendientes,indice+1,accion);
+			}else{
+				finalizarAccesosVisiblesConError("No se pudo actualizar un permiso visible.");
+			}
+		} catch (error) {
+			var titulo="Error: "+error+" \r\n Consola: "+responseText;
+			GuardarArchivosLog(titulo);
+			finalizarAccesosVisiblesConError("No se pudo actualizar un permiso visible.");
+		}
+	})
+	.fail(function(jqXHR,textstatus,errorThrowm) {
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		finalizarAccesosVisiblesConError("No se pudo completar la actualizacion.");
+	});
+}
+
+function guardarAccesoVisible(check,accion) {
+	var datos=new FormData();
+	obtener_datos_user();
+	datos.append("usuarios_idusario", userid);
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "editar");
+	datos.append("idabm", check.id);
+	datos.append("idAbmUsuario", idAbmUsuario);
+	datos.append("acciones", accion);
+	return $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmAccesos.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false
+	});
+}
+
+function finalizarAccesosVisiblesConError(mensaje) {
+	procesandoAccesosVisibles=false;
+	bloquearAccesosVisibles(false);
+	actualizarContadorAccesosVisibles(mensaje);
+	ver_vetana_informativa(mensaje, "", "error");
+}
+
 function abmacceso(d) {
 	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}	
 	var intpu=$(d)
@@ -3967,6 +4534,9 @@ function abmacceso(d) {
 				if (Respuesta == true) {					
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")	
 					document.getElementById("inpt_nivel_selecc").value=datos["2"];
+					actualizarPorcentajeAccesosUsuario();
+					actualizarEstadoAccesoFila(d);
+					actualizarContadorAccesosVisibles("");
 					}			
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -11580,6 +12150,15 @@ function verCerrarVentanaAbmAperturaCierreCaja1(){
 }
 var controlaperturacierrecaja="ABRIRCERRARCAJA";
 var codCajeroapertura="";
+var cajaCierrePasoActual = 1;
+var cajaCierreFirmaDibujando = false;
+var cajaCierreFirmaLista = false;
+var cajaCierreFirmaPreparada = false;
+var cajaCierreProcesando = false;
+var cajaCierreResumenMedios = {};
+var cajaCierreSeguroUltimo = null;
+var cajaCierreFotoPreviewUrl = "";
+var cajaCierreLoteActual = "";
 function controldecaja() {
 	var caja = document.getElementById('inptcajaAperturaCierreCaja').value
 	var codlocal = document.getElementById('inptlocalAperturaCierre').value
@@ -11657,12 +12236,15 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById('inptFechaAperturaCierreCaja').value=datos[7];
 						document.getElementById('inptMontoAperturaCierreCaja').value=datos[5];
 						document.getElementById('inptResumenInicialAperturaCierre').value=datos[5];
-						document.getElementById('inptMontoRecaudadoCierreCaja').value=datos[10];
+						document.getElementById('inptMontoRecaudadoCierreCaja').value=datos[13] || datos[10];
+						cajaCierreResumenMedios = datos[22] || {};
+						cajaCierreLoteActual = datos[23] || "";
 						document.getElementById('inptcajeroAperturaCierreCaja').value=datos[12];
 						codCajeroapertura=datos[11];
-						document.getElementById('btnAbmAperturaCierreCaja').value="Cerrar caja";
+						document.getElementById('btnAbmAperturaCierreCaja').value="Confirmar cierre";
 						document.getElementById('PTituloApCieCaja').innerHTML="Cerrar caja";
-                        controlaperturacierrecaja="CERRARCERRARCAJA"						
+                        controlaperturacierrecaja="CERRARCERRARCAJA";
+						cajaCierreIniciarFlujo(true);						
 					}else{
 						document.getElementById("inptEstadoAperturaCierreCaja").value="Activo"
 						document.getElementById('inptMontoCierreCaja5').disabled= true;
@@ -11698,6 +12280,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						 document.getElementById('btnAbmAperturaCierreCaja').value="Iniciar caja";
 						 document.getElementById('PTituloApCieCaja').innerHTML="Apertura de caja";
 						 idabmAperturacierrecaja="";
+						 cajaCierreResumenMedios = {};
+						 cajaCierreLoteActual = "";
+						 cajaCierreIniciarFlujo(false);
 
 					}
 					calcularMontoMovimientoAperturaCierreCaja();
@@ -11768,7 +12353,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 				
-				  document.getElementById('inptMontoRecaudadoCierreCaja').value=datos[2];
+				  document.getElementById('inptMontoRecaudadoCierreCaja').value=datos[4] || datos[2];
+				  cajaCierreResumenMedios = datos[6] || cajaCierreResumenMedios || {};
 				  DetalleticketCaja=datos[3];
 				  calcularMontoMovimientoAperturaCierreCaja();
 						
@@ -11809,21 +12395,476 @@ function actualizarResumenEsperadoAperturaCierreCaja() {
 	if (resumenTotal) {
 		resumenTotal.value = formatearMontoAperturaCierreCaja(montoApertura + totalRecaudado);
 	}
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreElemento(id) {
+	return document.getElementById(id);
+}
+
+function cajaCierreSetTexto(id, valor) {
+	const elemento = cajaCierreElemento(id);
+	if (elemento) {
+		elemento.innerHTML = valor;
+	}
+}
+
+function cajaCierreFormatoGs(valor) {
+	return formatearMontoAperturaCierreCaja(Number(valor || 0)) + " Gs.";
+}
+
+function cajaCierreCantidad(id) {
+	const elemento = cajaCierreElemento(id);
+	if (!elemento) {
+		return 0;
+	}
+	let valor = parseInt((elemento.value || "0").toString().replace(/[^\d-]/g, ''), 10);
+	if (isNaN(valor) || valor < 0) {
+		valor = 0;
+	}
+	if (elemento.value !== valor.toString()) {
+		elemento.value = valor;
+	}
+	return valor;
+}
+
+function cajaCierreDenominaciones() {
+	const filas = [
+		{ denominacion: 500, id: 'inptMontoCierreCaja5', subtotal: 'lblCajaDenomSub500' },
+		{ denominacion: 1000, id: 'inptMontoCierreCaja10', subtotal: 'lblCajaDenomSub1000' },
+		{ denominacion: 2000, id: 'inptMontoCierreCaja20', subtotal: 'lblCajaDenomSub2000' },
+		{ denominacion: 5000, id: 'inptMontoCierreCaja50', subtotal: 'lblCajaDenomSub5000' },
+		{ denominacion: 10000, id: 'inptMontoCierreCaja100', subtotal: 'lblCajaDenomSub10000' },
+		{ denominacion: 20000, id: 'inptMontoCierreCaja200', subtotal: 'lblCajaDenomSub20000' },
+		{ denominacion: 50000, id: 'inptMontoCierreCaja500', subtotal: 'lblCajaDenomSub50000' },
+		{ denominacion: 100000, id: 'inptMontoCierreCaja1000', subtotal: 'lblCajaDenomSub100000' }
+	];
+	return filas.map(function (fila) {
+		const cantidad = cajaCierreCantidad(fila.id);
+		return {
+			denominacion: fila.denominacion,
+			cantidad: cantidad,
+			subtotal: cantidad * fila.denominacion,
+			subtotalId: fila.subtotal
+		};
+	});
+}
+
+function cajaCierreTotalContado() {
+	return cajaCierreDenominaciones().reduce(function (total, fila) {
+		return total + fila.subtotal;
+	}, 0);
+}
+
+function cajaCierreEsperado() {
+	return obtenerMontoNumericoAperturaCierreCaja('inptResumenTotalAperturaCierre');
+}
+
+function cajaCierreDiferencia() {
+	return cajaCierreTotalContado() - cajaCierreEsperado();
+}
+
+function cajaCierreEstadoVisual() {
+	return cajaCierreDiferencia() === 0 ? "Caja cuadrada" : "Caja con diferencia";
+}
+
+function cajaCierreEstadoRevision() {
+	const diferencia = Math.abs(cajaCierreDiferencia());
+	if (diferencia === 0) {
+		return "Cerrada";
+	}
+	if (diferencia <= 5000) {
+		return "Diferencia menor";
+	}
+	if (diferencia <= 50000) {
+		return "Pendiente de revision";
+	}
+	return "Pendiente de revision urgente";
+}
+
+function cajaCierreMedio(nombre) {
+	if (!cajaCierreResumenMedios || cajaCierreResumenMedios[nombre] === undefined) {
+		return 0;
+	}
+	return Number(cajaCierreResumenMedios[nombre] || 0);
+}
+
+function cajaCierreTieneFoto() {
+	const input = cajaCierreElemento('inptCajaCierreFoto');
+	return !!(input && input.files && input.files.length > 0);
+}
+
+function cajaCierreActualizarResumenSeguro() {
+	if (!cajaCierreElemento('divCajaCierreWizard')) {
+		return;
+	}
+	const denominaciones = cajaCierreDenominaciones();
+	denominaciones.forEach(function (fila) {
+		cajaCierreSetTexto(fila.subtotalId, cajaCierreFormatoGs(fila.subtotal));
+	});
+
+	const totalContado = cajaCierreTotalContado();
+	const esperado = cajaCierreEsperado();
+	const diferencia = totalContado - esperado;
+	const diferenciaAbs = Math.abs(diferencia);
+	const estado = cajaCierreEstadoVisual();
+	const estadoRevision = cajaCierreEstadoRevision();
+	const transferencia = cajaCierreMedio('total_transferencias');
+	const transferenciaConciliada = cajaCierreMedio('total_transferencias_conciliadas');
+	const tarjetas = cajaCierreMedio('total_tarjetas');
+	const billeterasOtros = cajaCierreMedio('total_billeteras') + cajaCierreMedio('total_otros');
+
+	cajaCierreSetTexto('lblCajaCierreTotalConteo', cajaCierreFormatoGs(totalContado));
+	cajaCierreSetTexto('lblCajaCierreEsperado', cajaCierreFormatoGs(esperado));
+	cajaCierreSetTexto('lblCajaCierreContado', cajaCierreFormatoGs(totalContado));
+	cajaCierreSetTexto('lblCajaCierreDiferencia', cajaCierreFormatoGs(diferencia));
+	cajaCierreSetTexto('lblCajaCierreEstado', estado + " / " + estadoRevision);
+	cajaCierreSetTexto('lblCajaCierreTransferencias', cajaCierreFormatoGs(transferencia));
+	cajaCierreSetTexto('lblCajaCierreTransferenciasConciliadas', cajaCierreFormatoGs(transferenciaConciliada));
+	cajaCierreSetTexto('lblCajaCierreTarjetas', cajaCierreFormatoGs(tarjetas));
+	cajaCierreSetTexto('lblCajaCierreBilleteras', cajaCierreFormatoGs(billeterasOtros));
+	cajaCierreSetTexto('txtCajaCierreMensajeDiferencia', diferencia === 0 ? "La caja cuadra. No se requiere observacion." : "Se detecto una diferencia de " + cajaCierreFormatoGs(diferencia) + ". Para cerrar la caja, selecciona un motivo.");
+
+	cajaCierreSetTexto('lblCajaCierreLoteFinal', cajaCierreLoteActual || loteCaja || "-");
+	cajaCierreSetTexto('lblCajaCierreCajeraFinal', cajaCierreElemento('inptcajeroAperturaCierreCaja') ? cajaCierreElemento('inptcajeroAperturaCierreCaja').value : "-");
+	cajaCierreSetTexto('lblCajaCierreEsperadoFinal', cajaCierreFormatoGs(esperado));
+	cajaCierreSetTexto('lblCajaCierreContadoFinal', cajaCierreFormatoGs(totalContado));
+	cajaCierreSetTexto('lblCajaCierreDiferenciaFinal', cajaCierreFormatoGs(diferencia));
+	cajaCierreSetTexto('lblCajaCierreFotoFinal', cajaCierreTieneFoto() ? "Si" : "No");
+	cajaCierreSetTexto('lblCajaCierreFirmaFinal', cajaCierreFirmaLista ? "Si" : "No");
+	cajaCierreSetTexto('lblCajaCierreEstadoFinal', estado + " / " + estadoRevision);
+
+	const boxDiferencia = cajaCierreElemento('boxCajaCierreDiferencia');
+	if (boxDiferencia) {
+		boxDiferencia.classList.remove('is-ok', 'is-alert', 'is-danger');
+		boxDiferencia.classList.add(diferenciaAbs === 0 ? 'is-ok' : (diferenciaAbs <= 50000 ? 'is-alert' : 'is-danger'));
+	}
+	const btnObservacion = cajaCierreElemento('btnCajaCierrePaso4');
+	if (btnObservacion) {
+		btnObservacion.style.display = diferencia === 0 ? 'none' : '';
+	}
+	const camposObservacion = cajaCierreElemento('divCajaCierreObservacionCampos');
+	if (camposObservacion) {
+		camposObservacion.style.display = diferencia === 0 ? 'none' : 'grid';
+	}
+}
+
+function cajaCierreIniciarFlujo(activo) {
+	const wizard = cajaCierreElemento('divCajaCierreWizard');
+	const botonPrincipal = cajaCierreElemento('btnAbmAperturaCierreCaja');
+	if (wizard) {
+		wizard.style.display = activo ? '' : 'none';
+	}
+	if (botonPrincipal) {
+		botonPrincipal.style.display = activo ? 'none' : '';
+	}
+	if (!activo) {
+		cajaCierrePasoActual = 1;
+		cajaCierreFirmaLista = false;
+		cajaCierreProcesando = false;
+		return;
+	}
+	cajaCierrePasoActual = 1;
+	cajaCierreFotoPreviewUrl = "";
+	const foto = cajaCierreElemento('inptCajaCierreFoto');
+	if (foto) {
+		foto.value = "";
+	}
+	const preview = cajaCierreElemento('divCajaCierreFotoPreview');
+	if (preview) {
+		preview.innerHTML = "Sin foto adjunta";
+	}
+	const motivo = cajaCierreElemento('slcCajaCierreMotivoDiferencia');
+	if (motivo) {
+		motivo.value = "";
+	}
+	const observacion = cajaCierreElemento('txtCajaCierreObservacionDiferencia');
+	if (observacion) {
+		observacion.value = "";
+	}
+	cajaCierreLimpiarFirma();
+	cajaCierreMostrarPaso(1);
+	cajaCierrePrepararFirma();
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreMostrarPaso(paso) {
+	cajaCierrePasoActual = paso;
+	for (let i = 1; i <= 6; i++) {
+		const panel = cajaCierreElemento('cajaCierrePaso' + i);
+		const boton = cajaCierreElemento('btnCajaCierrePaso' + i);
+		if (panel) {
+			panel.classList.toggle('is-active', i === paso);
+		}
+		if (boton) {
+			boton.classList.toggle('is-active', i === paso);
+			boton.classList.toggle('is-complete', i < paso);
+		}
+	}
+	if (paso === 5) {
+		cajaCierrePrepararFirma();
+	}
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreIrPaso(paso) {
+	if (!cajaCierreElemento('divCajaCierreWizard') || cajaCierreElemento('divCajaCierreWizard').style.display === 'none') {
+		return;
+	}
+	for (let i = 1; i < paso; i++) {
+		if (!cajaCierreValidarPaso(i, true)) {
+			cajaCierreMostrarPaso(i);
+			cajaCierreValidarPaso(i, false);
+			return;
+		}
+	}
+	cajaCierreMostrarPaso(paso);
+}
+
+function cajaCierreContinuar() {
+	if (!cajaCierreValidarPaso(cajaCierrePasoActual, false)) {
+		return;
+	}
+	let siguiente = cajaCierrePasoActual + 1;
+	if (cajaCierrePasoActual === 3 && cajaCierreDiferencia() === 0) {
+		siguiente = 5;
+	}
+	if (siguiente > 6) {
+		siguiente = 6;
+	}
+	cajaCierreMostrarPaso(siguiente);
+}
+
+function cajaCierreMensaje(mensaje, silencioso) {
+	if (!silencioso) {
+		ver_vetana_informativa(mensaje);
+	}
+	return false;
+}
+
+function cajaCierreValidarPaso(paso, silencioso) {
+	cajaCierreActualizarResumenSeguro();
+	if (paso === 1) {
+		if (cajaCierreEsperado() > 0 && cajaCierreTotalContado() === 0) {
+			return cajaCierreMensaje("Debe cargar el conteo por denominacion antes de continuar.", silencioso);
+		}
+	}
+	if (paso === 2) {
+		if (!cajaCierreTieneFoto()) {
+			return cajaCierreMensaje("Debe adjuntar una foto del dinero contado.", silencioso);
+		}
+	}
+	if (paso === 4 && cajaCierreDiferencia() !== 0) {
+		const motivo = cajaCierreElemento('slcCajaCierreMotivoDiferencia') ? cajaCierreElemento('slcCajaCierreMotivoDiferencia').value : "";
+		const observacion = cajaCierreElemento('txtCajaCierreObservacionDiferencia') ? cajaCierreElemento('txtCajaCierreObservacionDiferencia').value.trim() : "";
+		if (motivo === "") {
+			return cajaCierreMensaje("Debe seleccionar un motivo para cerrar con diferencia.", silencioso);
+		}
+		if (motivo === "Otro" && observacion === "") {
+			return cajaCierreMensaje("Debe escribir una observacion cuando el motivo es Otro.", silencioso);
+		}
+	}
+	if (paso === 5) {
+		if (!cajaCierreFirmaLista) {
+			return cajaCierreMensaje("Debe registrar la firma de la cajera.", silencioso);
+		}
+	}
+	return true;
+}
+
+function cajaCierreValidarAntesDeCerrar() {
+	if (cajaCierreProcesando) {
+		return false;
+	}
+	for (let i = 1; i <= 5; i++) {
+		if (!cajaCierreValidarPaso(i, true)) {
+			cajaCierreMostrarPaso(i);
+			cajaCierreValidarPaso(i, false);
+			return false;
+		}
+	}
+	cajaCierreMostrarPaso(6);
+	return true;
+}
+
+function cajaCierreFotoSeleccionada(event) {
+	const input = event.target;
+	if (!input || !input.files || input.files.length === 0) {
+		cajaCierreActualizarResumenSeguro();
+		return;
+	}
+	const archivo = input.files[0];
+	const permitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+	if (permitidos.indexOf(archivo.type) === -1) {
+		ver_vetana_informativa("La foto debe ser JPG, PNG o WEBP.");
+		input.value = "";
+		cajaCierreQuitarFoto();
+		return;
+	}
+	if (archivo.size > 5242880) {
+		ver_vetana_informativa("La foto no puede superar 5 MB.");
+		input.value = "";
+		cajaCierreQuitarFoto();
+		return;
+	}
+	if (cajaCierreFotoPreviewUrl) {
+		URL.revokeObjectURL(cajaCierreFotoPreviewUrl);
+	}
+	cajaCierreFotoPreviewUrl = URL.createObjectURL(archivo);
+	const preview = cajaCierreElemento('divCajaCierreFotoPreview');
+	if (preview) {
+		preview.innerHTML = "<img src='" + cajaCierreFotoPreviewUrl + "' alt='Foto del dinero contado'>";
+	}
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreQuitarFoto() {
+	const input = cajaCierreElemento('inptCajaCierreFoto');
+	if (input) {
+		input.value = "";
+	}
+	if (cajaCierreFotoPreviewUrl) {
+		URL.revokeObjectURL(cajaCierreFotoPreviewUrl);
+		cajaCierreFotoPreviewUrl = "";
+	}
+	const preview = cajaCierreElemento('divCajaCierreFotoPreview');
+	if (preview) {
+		preview.innerHTML = "Sin foto adjunta";
+	}
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierrePrepararFirma() {
+	const canvas = cajaCierreElemento('canvasCajaCierreFirma');
+	if (!canvas || cajaCierreFirmaPreparada) {
+		return;
+	}
+	const ctx = canvas.getContext('2d');
+	ctx.lineWidth = 2.6;
+	ctx.lineCap = 'round';
+	ctx.lineJoin = 'round';
+	ctx.strokeStyle = '#172536';
+	canvas.addEventListener('pointerdown', cajaCierreFirmaIniciar);
+	canvas.addEventListener('pointermove', cajaCierreFirmaMover);
+	canvas.addEventListener('pointerup', cajaCierreFirmaFin);
+	canvas.addEventListener('pointerleave', cajaCierreFirmaFin);
+	cajaCierreFirmaPreparada = true;
+}
+
+function cajaCierrePuntoFirma(event) {
+	const canvas = cajaCierreElemento('canvasCajaCierreFirma');
+	const rect = canvas.getBoundingClientRect();
+	return {
+		x: (event.clientX - rect.left) * (canvas.width / rect.width),
+		y: (event.clientY - rect.top) * (canvas.height / rect.height)
+	};
+}
+
+function cajaCierreFirmaIniciar(event) {
+	event.preventDefault();
+	const canvas = cajaCierreElemento('canvasCajaCierreFirma');
+	const ctx = canvas.getContext('2d');
+	const punto = cajaCierrePuntoFirma(event);
+	cajaCierreFirmaDibujando = true;
+	ctx.beginPath();
+	ctx.moveTo(punto.x, punto.y);
+}
+
+function cajaCierreFirmaMover(event) {
+	if (!cajaCierreFirmaDibujando) {
+		return;
+	}
+	event.preventDefault();
+	const canvas = cajaCierreElemento('canvasCajaCierreFirma');
+	const ctx = canvas.getContext('2d');
+	const punto = cajaCierrePuntoFirma(event);
+	ctx.lineTo(punto.x, punto.y);
+	ctx.stroke();
+	cajaCierreFirmaLista = true;
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreFirmaFin(event) {
+	if (!cajaCierreFirmaDibujando) {
+		return;
+	}
+	event.preventDefault();
+	cajaCierreFirmaDibujando = false;
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreLimpiarFirma() {
+	const canvas = cajaCierreElemento('canvasCajaCierreFirma');
+	if (canvas) {
+		const ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+	cajaCierreFirmaLista = false;
+	cajaCierreActualizarResumenSeguro();
+}
+
+function cajaCierreFirmaData() {
+	const canvas = cajaCierreElemento('canvasCajaCierreFirma');
+	if (!canvas || !cajaCierreFirmaLista) {
+		return "";
+	}
+	return canvas.toDataURL('image/png');
+}
+
+function cajaCierreObtenerPayloadSeguro() {
+	const motivo = cajaCierreElemento('slcCajaCierreMotivoDiferencia') ? cajaCierreElemento('slcCajaCierreMotivoDiferencia').value : "";
+	const observacion = cajaCierreElemento('txtCajaCierreObservacionDiferencia') ? cajaCierreElemento('txtCajaCierreObservacionDiferencia').value.trim() : "";
+	return {
+		id_arqueocaja: idabmAperturacierrecaja,
+		lote: cajaCierreLoteActual || loteCaja,
+		local: cajaCierreElemento('inptlocalAperturaCierre') ? cajaCierreElemento('inptlocalAperturaCierre').value : "",
+		caja: cajaCierreElemento('inptcajaAperturaCierreCaja') ? cajaCierreElemento('inptcajaAperturaCierreCaja').value : "",
+		cajera: cajaCierreElemento('inptcajeroAperturaCierreCaja') ? cajaCierreElemento('inptcajeroAperturaCierreCaja').value : "",
+		fecha_apertura: cajaCierreElemento('inptFechaAperturaCierreCaja') ? cajaCierreElemento('inptFechaAperturaCierreCaja').value : "",
+		fecha_cierre: cajaCierreElemento('inptFechaCierreAperturaCierreCaja') ? cajaCierreElemento('inptFechaCierreAperturaCierreCaja').value : "",
+		denominaciones: cajaCierreDenominaciones(),
+		efectivo_esperado: cajaCierreEsperado(),
+		efectivo_contado: cajaCierreTotalContado(),
+		diferencia_efectivo: cajaCierreDiferencia(),
+		estado_cierre: cajaCierreEstadoVisual(),
+		estado_revision: cajaCierreEstadoRevision(),
+		medios: cajaCierreResumenMedios || {},
+		motivo_diferencia: motivo,
+		observacion_diferencia: observacion,
+		foto_adjunta: cajaCierreTieneFoto() ? "SI" : "NO",
+		firma_adjunta: cajaCierreFirmaLista ? "SI" : "NO",
+		texto_confirmacion: "Confirmo que realice el conteo fisico del dinero, adjunte la evidencia correspondiente y que los datos declarados en este cierre son correctos."
+	};
+}
+
+function cajaCierreSetProcesando(activo) {
+	cajaCierreProcesando = activo;
+	const botones = [
+		cajaCierreElemento('btnAbmAperturaCierreCaja')
+	];
+	const final = document.querySelector('#cajaCierrePaso6 .caja-primary-action');
+	if (final) {
+		botones.push(final);
+	}
+	botones.forEach(function (boton) {
+		if (!boton) {
+			return;
+		}
+		boton.disabled = activo;
+		if (boton.tagName === 'INPUT') {
+			boton.value = activo ? "Procesando cierre..." : "Confirmar cierre";
+		} else {
+			boton.innerHTML = activo ? "Procesando cierre..." : "Confirmar cierre";
+		}
+	});
 }
 
 function calcularMontoMovimientoAperturaCierreCaja() {
-	let total= 0;
-	// Obtiene las cantidades de tipos de monedas y valida
-	const inptMontoCierreCaja5= parseInt(document.getElementById('inptMontoCierreCaja5').value || 0)*500;
-	const inptMontoCierreCaja10= parseInt(document.getElementById('inptMontoCierreCaja10').value || 0)*1000;
-	const inptMontoCierreCaja20= parseInt(document.getElementById('inptMontoCierreCaja20').value || 0)*2000;
-	const inptMontoCierreCaja50= parseInt(document.getElementById('inptMontoCierreCaja50').value || 0)*5000;
-	const inptMontoCierreCaja100= parseInt(document.getElementById('inptMontoCierreCaja100').value || 0)*10000;
-	const inptMontoCierreCaja200= parseInt(document.getElementById('inptMontoCierreCaja200').value || 0)*20000;
-	const inptMontoCierreCaja500= parseInt(document.getElementById('inptMontoCierreCaja500').value || 0)*50000;
-	const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value || 0)*100000;
-
-	total= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
+	const denominaciones = cajaCierreDenominaciones();
+	let total= denominaciones.reduce(function (acumulado, fila) {
+		cajaCierreSetTexto(fila.subtotalId, cajaCierreFormatoGs(fila.subtotal));
+		return acumulado + fila.subtotal;
+	}, 0);
 	document.getElementById('inptResumenCierreAperturaCierre').value= formatearMontoAperturaCierreCaja(total);
 
 	document.getElementById('inptMontoCierreCierreCaja').value= total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -11877,8 +12918,11 @@ function verificarcamposaperturacierredecaja() {
 
 		if(inptFechaCierreAperturaCierreCaja==""){
 			
-			ver_vetana_informativa("FALTO INGRESAR EL MONTO APERTURA")
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DE CIERRE")
 		return false;
+		}
+		if (!cajaCierreValidarAntesDeCerrar()) {
+			return false;
 		}
 	} else {
 		accion = "nuevo";
@@ -11899,6 +12943,15 @@ var loteCaja="";
 
 
 function abmaperturacierrecaja(codusuarioap,cod_local, caja_idcaja, montoapertura,fechaapertura,montocierre,fechacierre,estado,idarqueocaja,cantMoneda5,cantMoneda10,cantMoneda20,cantMoneda50,cantMoneda100,cantMoneda200,cantMoneda500,cantMoneda1000,accion){
+	var payloadSeguro = null;
+	if (accion == "editar") {
+		if (cajaCierreProcesando) {
+			return;
+		}
+		payloadSeguro = cajaCierreObtenerPayloadSeguro();
+		cajaCierreSeguroUltimo = payloadSeguro;
+		cajaCierreSetProcesando(true);
+	}
 verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -11923,6 +12976,14 @@ verCerrarEfectoCargando("1")
 	datos.append("cant50000", cantMoneda500);
 	datos.append("cant100000", cantMoneda1000);
 	datos.append("codusuarioap", codusuarioap)
+	if (accion == "editar") {
+		const foto = document.getElementById('inptCajaCierreFoto');
+		datos.append("cierre_seguro_json", JSON.stringify(payloadSeguro));
+		datos.append("cierre_firma_base64", cajaCierreFirmaData());
+		if (foto && foto.files && foto.files.length > 0) {
+			datos.append("cierre_foto", foto.files[0]);
+		}
+	}
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
@@ -11958,6 +13019,9 @@ verCerrarEfectoCargando("1")
 		
 		error: function (jqXHR, textstatus, errorThrowm) {
 			verCerrarEfectoCargando("")
+			if (accion == "editar") {
+				cajaCierreSetProcesando(false);
+			}
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 			return false;
@@ -11969,17 +13033,26 @@ verCerrarEfectoCargando("1")
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
-				 Respuesta=respuestaJqueryAjax(Respuesta)
+				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					montocierre= parseInt(montocierre.replace('.', ''));
+					montocierre= parseInt((montocierre || "0").toString().replace(/\./g, ''));
 
 					let limite= document.getElementById('inptLimitecaja').value;
-					limite= parseInt(limite.replace('.', ''));
+					limite= parseInt((limite || "0").toString().replace(/\./g, ''));
 
-					if (montocierre > limite) {
-						ver_vetana_informativa("SE RECOMIENDA DEPOSITAR EN LA CENTRAL PARA EVITAR EXCESOS.");
-					} else {
-						ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+					if(estado=="Activo"){
+						if (montocierre > limite) {
+							ver_vetana_informativa("SE RECOMIENDA DEPOSITAR EN LA CENTRAL PARA EVITAR EXCESOS.");
+						} else {
+							ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
+						}
+					}else{
+						if (cajaCierreSeguroUltimo) {
+							cajaCierreSeguroUltimo.id_cierre = datos[3] || "";
+							cajaCierreSeguroUltimo.estado_cierre = datos[4] || cajaCierreSeguroUltimo.estado_cierre;
+							cajaCierreSeguroUltimo.estado_revision = datos[5] || cajaCierreSeguroUltimo.estado_revision;
+						}
+						ver_vetana_informativa((cajaCierreDiferencia() == 0) ? "Caja cerrada correctamente." : "Caja cerrada con diferencia y marcada para revision.");
 					}
 					
 					loteCaja=datos[2];
@@ -11996,10 +13069,16 @@ verCerrarEfectoCargando("1")
 					
 					controldecaja()
 				} else {
+					if (accion == "editar") {
+						cajaCierreSetProcesando(false);
+					}
 					ver_vetana_informativa(datos[2], datos[3]);
 					return false;
 				}
 			} catch (error) {
+				if (accion == "editar") {
+					cajaCierreSetProcesando(false);
+				}
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
@@ -12019,8 +13098,8 @@ function vercerraropcioneimpresionapcie(d,v){
 }
 function vercerrarvistaapcie(d,v){
 	if(d=="1"){
-		document.getElementById("divVistaArqueocierrecaja").style.display=""
-		document.getElementById("tdEfectoArqueoCierroCaja").className="magictime slideLeftReturn"
+		cajaControlEnfocarBuscador()
+		return
 	}else{
 		//document.getElementById("divVistaArqueocierrecaja").style.display="none"
 		document.getElementById("tdEfectoArqueoCierroCaja").className="magictime slideRight"
@@ -12492,17 +13571,32 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
      
 }
 
+function cajaCierreTextoSeguro(valor) {
+	valor = (valor === undefined || valor === null) ? "" : valor.toString();
+	return valor.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function ImprimirTicketReportCierreCaja(){
-	// Obtiene el total
-	const inptMontoCierreCaja5= parseInt(document.getElementById('inptMontoCierreCaja5').value);
-	const inptMontoCierreCaja10= parseInt(document.getElementById('inptMontoCierreCaja10').value);
-	const inptMontoCierreCaja20= parseInt(document.getElementById('inptMontoCierreCaja20').value);
-	const inptMontoCierreCaja50= parseInt(document.getElementById('inptMontoCierreCaja50').value);
-	const inptMontoCierreCaja100= parseInt(document.getElementById('inptMontoCierreCaja100').value);
-	const inptMontoCierreCaja200= parseInt(document.getElementById('inptMontoCierreCaja200').value);
-	const inptMontoCierreCaja500= parseInt(document.getElementById('inptMontoCierreCaja500').value);
-	const inptMontoCierreCaja1000= parseInt(document.getElementById('inptMontoCierreCaja1000').value);
-	const total= inptMontoCierreCaja5+inptMontoCierreCaja10+inptMontoCierreCaja20+inptMontoCierreCaja50+inptMontoCierreCaja100+inptMontoCierreCaja200+inptMontoCierreCaja500+inptMontoCierreCaja1000;
+	const payload = cajaCierreSeguroUltimo || cajaCierreObtenerPayloadSeguro();
+	const medios = payload.medios || {};
+	const firmaData = cajaCierreFirmaData();
+	const denominaciones = (payload.denominaciones || []).slice().sort(function (a, b) {
+		return b.denominacion - a.denominacion;
+	});
+	let filasDenominacion = "";
+	denominaciones.forEach(function (fila) {
+		if (Number(fila.cantidad || 0) <= 0) {
+			return;
+		}
+		filasDenominacion += "<tr>"
+			+"<td style='width:34%;text-align:left'>"+cajaCierreFormatoGs(fila.denominacion)+"</td>"
+			+"<td style='width:22%;text-align:center'>"+cajaCierreTextoSeguro(fila.cantidad)+"</td>"
+			+"<td style='width:44%;text-align:right'>"+cajaCierreFormatoGs(fila.subtotal)+"</td>"
+			+"</tr>";
+	});
+	if (filasDenominacion === "") {
+		filasDenominacion = "<tr><td colspan='3'>Sin denominaciones cargadas</td></tr>";
+	}
 
 	var f = new Date();
 	var dia =f.getDate()
@@ -12521,71 +13615,47 @@ function ImprimirTicketReportCierreCaja(){
 	if(min<10){
 		min="0"+min;
 	}
-pagina="<div  style='background-color:#fff;'>"
+	const fechaImpresion = f.getFullYear()+"-"+mes+"-"+dia+" "+hora+":"+min;
+	const motivo = payload.motivo_diferencia ? "<table class='tableTicket'><tr><td style='width:95px'><b>Motivo:</b></td><td>"+cajaCierreTextoSeguro(payload.motivo_diferencia)+"</td></tr></table>" : "";
+	const observacion = payload.observacion_diferencia ? "<table class='tableTicket'><tr><td style='width:95px'><b>Obs.:</b></td><td>"+cajaCierreTextoSeguro(payload.observacion_diferencia)+"</td></tr></table>" : "";
+	const firma = firmaData ? "<center><img src='"+firmaData+"' style='max-width:220px;max-height:90px;border-bottom:1px solid #222;margin-top:6px'></center>" : "";
+
+pagina="<div style='background-color:#fff;'>"
 +"<center>"
-+"<div class='divTicket' >"
-+"<p class='pTituloTicket1' >REPORTE DE CAJA</p>"
++"<div class='divTicket'>"
++"<p class='pTituloTicket1'>CIERRE DE CAJA</p>"
++"<p class='pTituloTicket1' style='font-size:14px'>"+cajaCierreTextoSeguro(payload.estado_cierre)+"</p>"
 +"<div class='divSeparadorTicket' style='margin-bottom:5px'></div>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:100px'><b>Lote:</b></td>"
-+"<td style=''>"+loteCaja+"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:100px'><b>Fecha Imp.:</b></td>"
-+"<td style=''>"+f.getFullYear()+"-"+mes+"-"+dia+" "+hora+":"+min+"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:60px'><b>Local:</b></td>"
-+"<td style=''>"+ $("select[id=inptlocalAperturaCierre]").children(":selected").text() +"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:60px'><b>Caja:</b></td>"
-+"<td style=''>"+ $("select[id=inptcajaAperturaCierreCaja]").children(":selected").text() +"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:100px'><b>Fecha Inicio :</b></td>"
-+"<td style=''>"+ document.getElementById("inptFechaAperturaCierreCaja").value+"</td>"
-+"</tr>"
-+"</table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:110px'><b>Monto Inicio:</b></td>"
-+"<td style=''>"+document.getElementById("inptMontoAperturaCierreCaja").value+" Gs.</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:110px'><b>Monto Cierre:</b></td>"
-+"<td style=''>"+total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")+" Gs.</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:110px'><b>Total en caja:</b></td>"
-+"<td style=''>"+document.getElementById("inptMontoRecaudadoCierreCaja").value+" Gs.</td>"
-+"</tr>"
-+"</table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:110px'><b>Cajero :</b></td>"
-+"<td style=''>"+document.getElementById("lblUser").innerHTML+"</td>"
-+"</tr>"
-+"</table>"
++"<table class='tableTicket'><tr><td style='width:95px'><b>Lote:</b></td><td>"+cajaCierreTextoSeguro(loteCaja || payload.lote)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:95px'><b>Sucursal:</b></td><td>"+cajaCierreTextoSeguro($("select[id=inptlocalAperturaCierre]").children(":selected").text())+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:95px'><b>Caja:</b></td><td>"+cajaCierreTextoSeguro($("select[id=inptcajaAperturaCierreCaja]").children(":selected").text())+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:95px'><b>Cajera:</b></td><td>"+cajaCierreTextoSeguro(payload.cajera)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:95px'><b>Fecha cierre:</b></td><td>"+cajaCierreTextoSeguro(payload.fecha_cierre)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:95px'><b>Fecha imp.:</b></td><td>"+fechaImpresion+"</td></tr></table>"
++"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
++"<table class='tableTicket'><tr><td style='width:125px'><b>Efectivo esperado:</b></td><td style='text-align:right'>"+cajaCierreFormatoGs(payload.efectivo_esperado)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:125px'><b>Efectivo contado:</b></td><td style='text-align:right'>"+cajaCierreFormatoGs(payload.efectivo_contado)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:125px'><b>Diferencia:</b></td><td style='text-align:right'>"+cajaCierreFormatoGs(payload.diferencia_efectivo)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:125px'><b>Revision:</b></td><td>"+cajaCierreTextoSeguro(payload.estado_revision)+"</td></tr></table>"
++motivo
++observacion
++"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
++"<table class='tableTicket'><tr><td><b>Medios de pago</b></td></tr></table>"
++"<table class='tableTicket'><tr><td>Transferencias</td><td style='text-align:right'>"+cajaCierreFormatoGs(medios.total_transferencias || 0)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td>Transferencias conciliadas</td><td style='text-align:right'>"+cajaCierreFormatoGs(medios.total_transferencias_conciliadas || 0)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td>Tarjetas</td><td style='text-align:right'>"+cajaCierreFormatoGs(medios.total_tarjetas || 0)+"</td></tr></table>"
++"<table class='tableTicket'><tr><td>Billeteras / otros</td><td style='text-align:right'>"+cajaCierreFormatoGs((Number(medios.total_billeteras || 0) + Number(medios.total_otros || 0)))+"</td></tr></table>"
++"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
++"<table class='tableTicket'><tr><td colspan='3'><b>Denominaciones</b></td></tr>"+filasDenominacion+"</table>"
++"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
++"<table class='tableTicket'><tr><td style='width:125px'><b>Foto adjunta:</b></td><td>Si</td></tr></table>"
++"<table class='tableTicket'><tr><td style='width:125px'><b>Firma registrada:</b></td><td>Si</td></tr></table>"
++"<p style='font-size:10px;line-height:14px;text-align:left'>"+cajaCierreTextoSeguro(payload.texto_confirmacion)+"</p>"
++firma
++"<p style='font-size:11px;text-align:center'>"+cajaCierreTextoSeguro(payload.cajera)+"</p>"
 +"</div>"
 +"</center>"
 +"</div>"
-
 
 var ficha=pagina;
 document.getElementById("DivImprimir").innerHTML=ficha;
@@ -12594,8 +13664,6 @@ document.getElementById("DivImprimir").innerHTML=ficha;
 	   localStorage.setItem("tipo", "ticket");
 	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
 	 document.getElementById("DivImprimir").innerHTML = "";
-//buscarDatosVentaticket(idabmVenta)
-     
 }
 
 function ImprimirTicketReportCaja2(){
@@ -16311,6 +17379,52 @@ let DetalleVentaClienteImprimir="";
 let TipoVentaClienteImprimir="";
 let FechaClienteImprimir="";
 
+function modernizarInformePagosCredito() {
+	var contenedor = document.getElementById("table_abm_opciones_pago");
+	if (!contenedor) {
+		return;
+	}
+	var etiquetas = [
+		"Cuota",
+		"F. venc.",
+		"D/A total",
+		"D/A",
+		"Monto cuota",
+		"Interes actual",
+		"Desc.",
+		"Total pagado",
+		"Cuotas pagadas",
+		"Int. pagados",
+		"Deuda interes",
+		"Deuda cuota",
+		"Total deuda",
+		"Estado"
+	];
+	var filas = contenedor.querySelectorAll("tr[id='tbSelecRegistro']");
+	for (var i = 0; i < filas.length; i++) {
+		var fila = filas[i];
+		fila.classList.add("informe-pagos-row");
+		var celdas = fila.children;
+		var visibles = [];
+		for (var j = 0; j < celdas.length; j++) {
+			if (celdas[j].style.display != "none") {
+				visibles.push(celdas[j]);
+			}
+		}
+		for (var k = 0; k < visibles.length; k++) {
+			visibles[k].setAttribute("data-label", etiquetas[k] || "Dato");
+		}
+		var estado = visibles.length ? (visibles[visibles.length - 1].textContent || "").toLowerCase() : "";
+		if (estado.indexOf("pendiente") >= 0) {
+			fila.classList.add("informe-pagos-row--pendiente");
+		} else if (estado.indexOf("pagado") >= 0 || estado.indexOf("cancelado") >= 0) {
+			fila.classList.add("informe-pagos-row--pagado");
+		} else if (estado.indexOf("inactivo") >= 0) {
+			fila.classList.add("informe-pagos-row--inactivo");
+		}
+	}
+}
+
 function buscarcreditos() {
   if(controlacceso("VERPAGOSCREDITO","accion")==false){return;}
 	document.getElementById("table_abm_opciones_pago").innerHTML = paginacargando
@@ -16368,6 +17482,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					var deudaTotalCuenta = datos[4];
 					var deudaActualPago = (datos[17] != undefined && datos[17] != "") ? datos[17] : deudaTotalCuenta;
 					document.getElementById("table_abm_opciones_pago").innerHTML = datos_buscados
+					modernizarInformePagosCredito()
 					document.getElementById("inptTotalPagado").value = datos[3]
 					document.getElementById("inptTotalPagadoOpcionesPago").value = datos[3]
 					document.getElementById("inptDeudaActual").value = deudaTotalCuenta
@@ -16877,6 +17992,9 @@ if(confirm("Estas Seguro que quieres eliminar este pago")){
 					
 					buscararqueo2();
 				}	
+				else if (datos["2"]) {
+					ver_vetana_informativa(datos["2"], "", "error")
+				}
 
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -17566,9 +18684,13 @@ controlInsercionPagos=false
 					document.getElementById("inptMontoCargaPago").value = "";
 					verCerrarCargarPago("2")
 					buscarcreditos()
-
+					
 				}
-			
+				else if (datos["2"]) {
+					ver_vetana_informativa(datos["2"], "", "error")
+					controlInsercionPagos=false
+				}
+
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
@@ -17711,11 +18833,13 @@ function ReImprimirTicketPagos(){
 	var deudaActualsininteres=$(datostr).children('td[id="td_datos_18"]').html();
 	var CuotasNro=$(datostr).children('td[id="td_datos_24"]').html();	
 	const totalPagadoHastaHoy=$(datostr).children('td[id="td_datos_26"]').html();	
+	var ComprobanteUeno=$(datostr).children('td[id="td_datos_28"]').html();
+	var EstadoUeno=$(datostr).children('td[id="td_datos_29"]').html();
 	
 	paginaticket=$(datostr).children('td[id="td_datos_25"]').html();	
 	
 	ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazado,NombreCliente,CiCliente,NroRecibo,tipoventa,
-	totalInteres,deudaActual,totalPagadoHastaHoy,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres)
+	totalInteres,deudaActual,totalPagadoHastaHoy,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres,ComprobanteUeno,EstadoUeno)
 }
 
 
@@ -19809,6 +20933,59 @@ function generarVistaResumenAgendaDeudas(registros) {
 		+ "<tbody>" + filas + "</tbody>"
 		+ "</table>";
 }
+function modernizarCuentasACobrar() {
+	var contenedor = document.getElementById("table_cuentas_a_cobrar");
+	if (!contenedor) {
+		return;
+	}
+	var etiquetas = [
+		"Cliente",
+		"Documento",
+		"Telef.",
+		"Nro. venta",
+		"Producto",
+		"Fecha venc.",
+		"Cuotas atr.",
+		"Dias atr.",
+		"A cobrar",
+		"Total deuda",
+		"Local",
+		"Vendedor"
+	];
+	var filas = contenedor.querySelectorAll("tr[id='tbSelecRegistro']");
+	for (var i = 0; i < filas.length; i++) {
+		var fila = filas[i];
+		fila.classList.add("cuentas-cobrar-row");
+		var tabla = fila;
+		while (tabla && tabla.tagName != "TABLE") {
+			tabla = tabla.parentNode;
+		}
+		if (tabla) {
+			tabla.classList.add("cuentas-cobrar-row-table");
+		}
+		var celdas = fila.children;
+		var visibles = [];
+		for (var j = 0; j < celdas.length; j++) {
+			if (celdas[j].style.display != "none") {
+				visibles.push(celdas[j]);
+			}
+		}
+		for (var k = 0; k < visibles.length; k++) {
+			visibles[k].setAttribute("data-label", etiquetas[k] || "Dato");
+		}
+		var diasCelda = fila.querySelector('td[id="td_datos_10"]');
+		var diasTexto = diasCelda ? (diasCelda.textContent || "0").replace(/\./g, "").replace(",", ".") : "0";
+		var dias = parseInt(diasTexto, 10);
+		if (isNaN(dias)) {
+			dias = 0;
+		}
+		if (dias > 0) {
+			fila.classList.add("cuentas-cobrar-row--vencida");
+		} else {
+			fila.classList.add("cuentas-cobrar-row--al-dia");
+		}
+	}
+}
 function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota) {
 	obtener_datos_user();
 	var datos = {
@@ -19877,6 +21054,7 @@ function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, f
 							break;
 						default:
 							document.getElementById("table_cuentas_a_cobrar").innerHTML = datos_buscados
+							modernizarCuentasACobrar()
 							document.getElementById("inptRegistroRegistrocargadoCuentaAcobrar").value =datos[3]
 							document.getElementById("inptRegistroNroHistorialTotalADeudad").value =  datos[4]
 							document.getElementById("inptRegistroHistorialTotalACobrar").value =  datos[5]
@@ -20088,6 +21266,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 					var datos_buscados = datos[2];
 					
 					document.getElementById("table_cuentas_a_cobrar").innerHTML += datos_buscados
+					modernizarCuentasACobrar()
 					 document.getElementById("inptRegistroRegistrocargadoCuentaAcobrar").value =datos[3]
 	                document.getElementById("inptRegistroNroHistorialTotalADeudad").value =  datos[4]
 	                document.getElementById("inptRegistroHistorialTotalACobrar").value =  datos[5]
@@ -20121,9 +21300,9 @@ var cod_ventaAsignarCod_local="";
 function obtenerdatoscuentaacobrar(datostr) {
 	cancelarInformeCuentaACobrar();
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
-		td.className = ''
+		$(td).removeClass("tableRegistroSelec")
 	});
-	datostr.className = 'tableRegistroSelec'
+	$(datostr).addClass("tableRegistroSelec")
 	cobradorcargarpagos = $(datostr).children('td[id="td_datos_9"]').html();
 	NombreClienteCreditoPagar = "&nbsp;&nbsp;&nbsp;&nbsp;"+ ($(datostr).children('td[id="td_datos_25"]').html()) +"==>>"+ $(datostr).children('td[id="td_datos_24"]').html(); 
 	nrofacturaaeliminar = $(datostr).children('td[id="td_datos_2"]').html();
@@ -20142,6 +21321,9 @@ function obtenerdatoscuentaacobrar(datostr) {
 	document.getElementById("inptMontoCuotaPago").value = $(datostr).children('td[id="td_datos_6"]').html();
 	document.getElementById("inptDescuentoCargaPago").value = "0";
 	document.getElementById("btnCuentasCobrar1").style.backgroundColor = "#2196F3";
+	if (document.getElementById("btnCuentasCobrarCobrarCuota")) {
+		document.getElementById("btnCuentasCobrarCobrarCuota").style.backgroundColor = "#16a34a";
+	}
 	document.getElementById("btnCuentasCobrar2").style.backgroundColor = "#4CAF50";
 	document.getElementById("btnCuentasCobrar3").style.backgroundColor = "#532a6d";
 }
@@ -22270,18 +23452,40 @@ function verCerrarInformeArqueo(){
 	}
 }
 function limpiacamposArqueo(){
-	document.getElementById('inptBuscarCobrosRealizados4').value="";
-    document.getElementById('inptBuscarCobrosRealizados1').value="";
-	document.getElementById('inptBuscarCobrosRealizados3').value="";
-	document.getElementById('inptBuscarCobrosRealizadosF1').value="";
-	document.getElementById('inptBuscarCobrosRealizadosF2').value="";
-	document.getElementById('inptBuscarCobrosRealizados2').value="";
-	document.getElementById('inptlocalCobrosRealizados3').value="";
-	document.getElementById('inptBuscarCobrosRealizados5').value="";
-	document.getElementById('inptTotalRegistoArqueo').value="";
-	document.getElementById('inptTotalArqueo').value="";
-	document.getElementById('inptTotalEfectivoArqueo').value="";
-	document.getElementById('inptTotalTarjetaArqueo').value="";
+	[
+		'inptBuscarCobrosRealizadosGeneral',
+		'inptBuscarCobrosRealizados4',
+		'inptBuscarCobrosRealizados1',
+		'inptBuscarCobrosRealizados3',
+		'inptBuscarCobrosRealizadosF1',
+		'inptBuscarCobrosRealizadosF2',
+		'inptBuscarCobrosRealizadosFF1',
+		'inptBuscarCobrosRealizadosFF2',
+		'inptBuscarCobrosRealizados2',
+		'inptlocalCobrosRealizados3',
+		'inptBuscarCobrosRealizados5',
+		'inptBuscarCobrosRealizados6',
+		'inptBuscarCobrosRealizados7',
+		'inptBuscarCobrosRealizadosCaja',
+		'inptBuscarCobrosRealizadosLote',
+		'inptTotalRegistoArqueo',
+		'inptTotalArqueo',
+		'inptTotalEfectivoArqueo',
+		'inptTotalTarjetaArqueo',
+		'inptTotalTransferenciaArqueo',
+		'inptTotalOtrosArqueo'
+	].forEach(function(id){
+		var elemento = document.getElementById(id);
+		if(elemento){
+			elemento.value = "";
+		}
+	});
+	var masFiltros = document.getElementById("divMasFiltrosCobrosRealizados");
+	if(masFiltros){
+		masFiltros.style.display = "none";
+	}
+	idHistorialPago = "";
+	cod_ventaFKPago = "";
 	document.getElementById("table_arqeo").innerHTML=""
 }
 function minimizarArqueo(){
@@ -22316,6 +23520,27 @@ function checkfiltrosCobrosRealizados(d){
 var cobradorarqueo = "";
 var idHistorialPago = "";
 var cod_ventaFKPago = "";
+function valorArqueo(id) {
+	var elemento = document.getElementById(id);
+	return elemento ? elemento.value : "";
+}
+
+function limpiarFiltrosCobrosRealizados() {
+	limpiacamposArqueo();
+}
+
+function toggleMasFiltrosCobrosRealizados() {
+	var contenedor = document.getElementById("divMasFiltrosCobrosRealizados");
+	if(!contenedor){
+		return;
+	}
+	contenedor.style.display = contenedor.style.display == "none" ? "grid" : "none";
+}
+
+function mostrarEstadoVacioArqueo() {
+	document.getElementById("table_arqeo").innerHTML = "<tr class='arqueo-empty-row'><td colspan='14'>No encontramos cobros con estos filtros. Proba limpiar filtros o ampliar el rango de fechas.</td></tr>";
+}
+
 function normalizarFilaPagoArqueo(fila, indice) {
 	var claseBase = fila.dataset.claseBaseArqueo;
 	if (!claseBase) {
@@ -22336,6 +23561,144 @@ function obtenerdatospagos(datostr) {
 	cod_ventaFKPago = $(datostr).children('td[id="td_datos_10"]').html();
 		document.getElementById("btnEliminarCobros1").style.backgroundColor=" #e99277 "
 
+}
+
+function obtenerDatoFilaArqueo(fila, nombre) {
+	var valor = fila ? fila.getAttribute("data-" + nombre) : "";
+	return valor && valor.toString().trim() !== "" ? valor : "-";
+}
+
+function escaparHtmlArqueo(valor) {
+	return (valor || "").toString()
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function htmlDetalleItemArqueo(titulo, valor) {
+	return "<div class='arqueo-detail-item'><span class='arqueo-detail-label'>" + escaparHtmlArqueo(titulo) + "</span><span class='arqueo-detail-value'>" + escaparHtmlArqueo(valor) + "</span></div>";
+}
+
+function toggleDetalleCobroArqueo(boton) {
+	if(window.event){
+		window.event.cancelBubble = true;
+	}
+	var fila = boton.closest("tr");
+	if(!fila){
+		return;
+	}
+	obtenerdatospagos(fila);
+	var siguiente = fila.nextElementSibling;
+	if(siguiente && siguiente.classList.contains("arqueo-detail-row")){
+		siguiente.parentNode.removeChild(siguiente);
+		return;
+	}
+	$("#divArqueo #table_arqeo tr.arqueo-detail-row").remove();
+	var detalle = document.createElement("tr");
+	detalle.className = "arqueo-detail-row";
+	detalle.innerHTML = "<td colspan='14'><div class='arqueo-detail-panel'>"
+		+ "<p>Este detalle muestra el origen del cobro, quien lo registro y en que caja/lote quedo incluido.</p>"
+		+ "<div class='arqueo-detail-grid'>"
+		+ htmlDetalleItemArqueo("Fecha de pago", obtenerDatoFilaArqueo(fila, "fecha-pago"))
+		+ htmlDetalleItemArqueo("Monto", obtenerDatoFilaArqueo(fila, "monto"))
+		+ htmlDetalleItemArqueo("Metodo de pago", obtenerDatoFilaArqueo(fila, "metodo"))
+		+ htmlDetalleItemArqueo("Tipo de pago", obtenerDatoFilaArqueo(fila, "tipo"))
+		+ htmlDetalleItemArqueo("Cuota", obtenerDatoFilaArqueo(fila, "cuota"))
+		+ htmlDetalleItemArqueo("Comprobante", obtenerDatoFilaArqueo(fila, "comprobante"))
+		+ htmlDetalleItemArqueo("Cliente", obtenerDatoFilaArqueo(fila, "cliente"))
+		+ htmlDetalleItemArqueo("Documento", obtenerDatoFilaArqueo(fila, "documento"))
+		+ htmlDetalleItemArqueo("Nro venta", obtenerDatoFilaArqueo(fila, "venta"))
+		+ htmlDetalleItemArqueo("Factura asociada", obtenerDatoFilaArqueo(fila, "factura"))
+		+ htmlDetalleItemArqueo("Cobrador", obtenerDatoFilaArqueo(fila, "cobrador"))
+		+ htmlDetalleItemArqueo("Caja", obtenerDatoFilaArqueo(fila, "caja"))
+		+ htmlDetalleItemArqueo("Lote caja", obtenerDatoFilaArqueo(fila, "lote"))
+		+ htmlDetalleItemArqueo("Estado de caja", obtenerDatoFilaArqueo(fila, "estado-caja"))
+		+ htmlDetalleItemArqueo("Apertura de caja", obtenerDatoFilaArqueo(fila, "fecha-apertura"))
+		+ htmlDetalleItemArqueo("Cierre de caja", obtenerDatoFilaArqueo(fila, "fecha-cierre"))
+		+ htmlDetalleItemArqueo("Estado del cobro", obtenerDatoFilaArqueo(fila, "estado-cobro"))
+		+ htmlDetalleItemArqueo("Usuario que registro", obtenerDatoFilaArqueo(fila, "cobrador"))
+		+ "</div>"
+		+ "<div class='arqueo-secondary-actions' style='margin-top:10px;justify-content:flex-start'>"
+		+ "<button type='button' class='btn4 arqueo-btn-primary' onclick='reimprimirReciboArqueo(this)'>Reimprimir recibo</button>"
+		+ "<button type='button' class='btn4 arqueo-btn-secondary' onclick='verCerrarVistaCajaApp()'>Ver cajas</button>"
+		+ "</div>"
+		+ "</div></td>";
+	fila.parentNode.insertBefore(detalle, fila.nextSibling);
+}
+
+function reimprimirReciboArqueo(boton) {
+	if(window.event){
+		window.event.cancelBubble = true;
+	}
+	var fila = boton.closest("tr");
+	if(fila && fila.classList.contains("arqueo-detail-row")){
+		fila = fila.previousElementSibling;
+	}
+	if(!fila){
+		ver_vetana_informativa("No se encontro el cobro seleccionado.");
+		return;
+	}
+	obtenerdatospagos(fila);
+	var idPago = ($(fila).children('td[id="td_datos_1"]').html() || "").toString().trim();
+	var codVenta = ($(fila).children('td[id="td_datos_10"]').html() || "").toString().trim();
+	if(idPago === "" || codVenta === ""){
+		ver_vetana_informativa("No se encontro un recibo asociado a este cobro.");
+		return;
+	}
+	if(obtenerDatoFilaArqueo(fila, "estado-cobro").toUpperCase() == "ANULADO"){
+		ver_vetana_informativa("Este cobro esta anulado. El recibo se imprimira con estado ANULADO.");
+	}
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"buscar": codVenta,
+		"funt": "buscarHistorialPagosAReimprimir"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				var respuesta = respuestaJqueryAjax(datos["1"]);
+				if (respuesta == true) {
+					var contenedor = document.createElement("div");
+					contenedor.innerHTML = datos[2] || "";
+					var filas = contenedor.querySelectorAll("tr[id='tbSelecRegistro']");
+					var filaTicket = "";
+					Array.prototype.forEach.call(filas, function(filaHistorial){
+						var primeraCelda = filaHistorial.cells && filaHistorial.cells[0] ? filaHistorial.cells[0].textContent.replace(/\s+/g, " ").trim() : "";
+						if(primeraCelda == idPago){
+							filaTicket = filaHistorial;
+						}
+					});
+					if(filaTicket === ""){
+						ver_vetana_informativa("No se encontro un recibo asociado a este cobro.");
+						return;
+					}
+					elementoPagoReimprimir = filaTicket;
+					registrarAuditoriaReimpresionArqueo(idPago);
+					ReImprimirTicketPagos();
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo="Error: "+error+" \r\n Consola: "+responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+function registrarAuditoriaReimpresionArqueo(idPago) {
+	// Punto de conexion para auditoria de reimpresiones cuando exista endpoint especifico.
 }
 /*
 IMPRIMIR COD. DE BARRAS
@@ -23411,6 +24774,805 @@ if (elementocompra == "") {
 /*
 CONSULTA DE CAJA
 */
+var cajaControlRegistros = [];
+var cajaControlSeleccionActual = null;
+var cajaControlFiltroRapido = "";
+var cajaControlDetalleAbierto = false;
+var cajaControlResumenPeriodoAbierto = false;
+
+function cajaControlEl(id) {
+	return document.getElementById(id);
+}
+
+function cajaControlValor(id) {
+	var elemento = cajaControlEl(id);
+	return elemento ? elemento.value : "";
+}
+
+function cajaControlSetValor(id, valor) {
+	var elemento = cajaControlEl(id);
+	if (elemento) {
+		elemento.value = valor == null ? "" : valor;
+	}
+}
+
+function cajaControlNumero(valor) {
+	if (typeof valor === "number") {
+		return isNaN(valor) ? 0 : valor;
+	}
+	var texto = (valor == null ? "0" : valor).toString().replace(/\./g, "").replace(/,/g, ".").replace(/[^\d.-]/g, "");
+	var numero = parseFloat(texto);
+	return isNaN(numero) ? 0 : numero;
+}
+
+function cajaControlFormato(valor) {
+	var numero = Math.round(cajaControlNumero(valor));
+	var signo = numero < 0 ? "-" : "";
+	var texto = Math.abs(numero).toString();
+	return signo + texto.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function cajaControlEscape(valor) {
+	return $("<div>").text(valor == null ? "" : valor).html();
+}
+
+function cajaControlHoy() {
+	var fecha = new Date();
+	var mes = (fecha.getMonth() + 1).toString();
+	var dia = fecha.getDate().toString();
+	if (mes.length < 2) { mes = "0" + mes; }
+	if (dia.length < 2) { dia = "0" + dia; }
+	return fecha.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function cajaControlFechaDia(valor) {
+	return (valor || "").toString().substring(0, 10);
+}
+
+function cajaControlFechaCorta(valor) {
+	if (!valor) {
+		return "-";
+	}
+	var texto = valor.toString().replace("T", " ");
+	var partes = texto.substring(0, 10).split("-");
+	var hora = texto.substring(11, 16);
+	if (partes.length == 3) {
+		return partes[2] + "/" + partes[1] + "/" + partes[0].substring(2, 4) + (hora ? " " + hora : "");
+	}
+	return texto.substring(0, 16);
+}
+
+function cajaControlFechaDetalle(valor) {
+	if (!valor) {
+		return "-";
+	}
+	var texto = valor.toString().replace("T", " ");
+	var partes = texto.substring(0, 10).split("-");
+	var hora = texto.substring(11, 16);
+	if (partes.length == 3) {
+		return partes[2] + "/" + partes[1] + "/" + partes[0] + (hora ? " " + hora : "");
+	}
+	return texto.substring(0, 16);
+}
+
+function cajaControlEsAbierta(registro) {
+	return (registro.estado || "").toString().toLowerCase() == "activo";
+}
+
+function cajaControlEsCerrada(registro) {
+	return (registro.estado || "").toString().toLowerCase() == "cerrado";
+}
+
+function cajaControlDiferencia(registro) {
+	return cajaControlNumero(registro.diferencia_abs != null ? registro.diferencia_abs : registro.diferencia);
+}
+
+function cajaControlEstadoTexto(registro) {
+	if (cajaControlEsAbierta(registro)) {
+		return "Abierta";
+	}
+	if (cajaControlEsCerrada(registro) && cajaControlDiferencia(registro) > 0) {
+		return "Cerrada con diferencia";
+	}
+	if (cajaControlEsCerrada(registro)) {
+		return "Cerrada";
+	}
+	return registro.estado || "Sin estado";
+}
+
+function cajaControlEstadoClase(registro) {
+	if (cajaControlEsAbierta(registro)) {
+		return "abierta";
+	}
+	if (cajaControlEsCerrada(registro) && cajaControlDiferencia(registro) > 0) {
+		return "diferencia";
+	}
+	if (cajaControlEsCerrada(registro)) {
+		return "cerrada";
+	}
+	return "neutro";
+}
+
+function cajaControlMigracionTexto(registro) {
+	var pendiente = cajaControlNumero(registro.migracion_pendiente);
+	var migrado = cajaControlNumero(registro.total_migrado);
+	var recibido = cajaControlNumero(registro.total_recibido);
+	if (!cajaControlEsCerrada(registro) && migrado <= 0 && recibido <= 0) {
+		return "No aplica";
+	}
+	if (migrado > 0 && recibido > 0 && Math.abs(migrado - recibido) > 0) {
+		return "Recibida con diferencia";
+	}
+	if (migrado > 0 && recibido >= migrado) {
+		return "Recibida por central";
+	}
+	if (migrado > 0 && recibido < migrado) {
+		return "Migrada a central";
+	}
+	if (pendiente > 0) {
+		return "Pendiente de migrar";
+	}
+	return "Sin pendiente";
+}
+
+function cajaControlMigracionClase(registro) {
+	var texto = cajaControlMigracionTexto(registro).toLowerCase();
+	if (texto.indexOf("pendiente") >= 0) {
+		return "pendiente";
+	}
+	if (texto.indexOf("diferencia") >= 0) {
+		return "diferencia";
+	}
+	if (texto.indexOf("migrada") >= 0) {
+		return "migrada";
+	}
+	if (texto.indexOf("recibida") >= 0) {
+		return "recibida";
+	}
+	return "neutro";
+}
+
+function cajaControlSincronizarLocales() {
+	var destino = cajaControlEl("cajaControlLocal");
+	if (!destino) {
+		return;
+	}
+	var origen = document.getElementById("inptlocalVistaApCie");
+	if (origen && origen.innerHTML && destino.options.length <= 1) {
+		destino.innerHTML = origen.innerHTML.replace("SELECCIONAR", "TODAS");
+	}
+	if (destino.options.length == 0) {
+		destino.innerHTML = "<option value=''>TODAS</option>";
+	}
+}
+
+function cajaControlPreparar() {
+	cajaControlSincronizarLocales();
+	if (cajaControlEl("cajaControlCards") && cajaControlEl("cajaControlCards").innerHTML == "") {
+		cajaControlRenderCards([]);
+	}
+	if (cajaControlEl("table_caja_control_lotes") && cajaControlEl("table_caja_control_lotes").innerHTML == "") {
+		cajaControlRenderListado([]);
+	}
+	if (cajaControlEl("cajaControlPanelDetalle") && cajaControlEl("cajaControlPanelDetalle").innerHTML == "") {
+		cajaControlRenderDetalleVacio();
+	}
+}
+
+function cajaControlLimpiarVista() {
+	cajaControlRegistros = [];
+	cajaControlSeleccionActual = null;
+	cajaControlFiltroRapido = "";
+	cajaControlDetalleAbierto = false;
+	cajaControlResumenPeriodoAbierto = false;
+	if (cajaControlEl("table_caja_control_lotes")) {
+		cajaControlEl("table_caja_control_lotes").innerHTML = "";
+	}
+	if (cajaControlEl("cajaControlCards")) {
+		cajaControlEl("cajaControlCards").innerHTML = "";
+	}
+	if (cajaControlEl("cajaControlAlertas")) {
+		cajaControlEl("cajaControlAlertas").innerHTML = "";
+	}
+	if (cajaControlEl("cajaControlTotales")) {
+		cajaControlEl("cajaControlTotales").innerHTML = "";
+	}
+	if (cajaControlEl("cajaControlSeleccionBar")) {
+		cajaControlEl("cajaControlSeleccionBar").innerHTML = "";
+	}
+	cajaControlRenderDetalleVacio();
+	var extendido = cajaControlEl("cajaControlDetalleExtendido");
+	if (extendido) {
+		extendido.style.display = "none";
+	}
+}
+
+function cajaControlLimpiarFiltros() {
+	cajaControlSetValor("cajaControlFechaDesde", "");
+	cajaControlSetValor("cajaControlFechaHasta", "");
+	cajaControlSetValor("cajaControlLocal", "");
+	cajaControlSetValor("cajaControlFiltroCaja", "");
+	cajaControlSetValor("cajaControlFiltroUsuario", "");
+	cajaControlSetValor("cajaControlFiltroEstado", "");
+	cajaControlSetValor("cajaControlFiltroLote", "");
+	cajaControlSetValor("cajaControlBusquedaRapida", "");
+	cajaControlFiltroRapido = "";
+	cajaControlResumenPeriodoAbierto = false;
+	cajaControlBuscar();
+}
+
+function cajaControlEstadoBackend() {
+	var estado = cajaControlValor("cajaControlFiltroEstado");
+	if (estado == "diferencia" || estado == "migracion_pendiente" || estado == "migrada" || estado == "recibida") {
+		return "";
+	}
+	return estado;
+}
+
+function cajaControlBuscar() {
+	if (typeof controlacceso == "function" && controlacceso("VERCONSULTADECAJA","accion") == false) { return; }
+	cajaControlPreparar();
+	var tabla = cajaControlEl("table_caja_control_lotes");
+	if (tabla) {
+		tabla.innerHTML = paginacargando;
+	}
+	cajaControlSeleccionActual = null;
+	cajaControlDetalleAbierto = false;
+	cajaControlRenderDetalleVacio();
+	var extendido = cajaControlEl("cajaControlDetalleExtendido");
+	if (extendido) {
+		extendido.style.display = "none";
+	}
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"caja": cajaControlValor("cajaControlFiltroCaja"),
+		"estado": cajaControlEstadoBackend(),
+		"local": cajaControlValor("cajaControlLocal"),
+		"fechaapertura": cajaControlValor("cajaControlFechaDesde"),
+		"fechafin": cajaControlValor("cajaControlFechaHasta"),
+		"usuario": cajaControlValor("cajaControlFiltroUsuario"),
+		"lote": cajaControlValor("cajaControlFiltroLote"),
+		"funt": "buscarvista"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
+		type: "post",
+		xhr: function () {
+			var xhr = new window.XMLHttpRequest();
+			xhr.upload.addEventListener("progress", function (evt) {
+				var kb = ((evt.loaded * 1) / 1000).toFixed(1);
+				if (kb == "0.0") { kb = 0.1; }
+				cargarConectividad("enviado", kb, "0");
+			}, false);
+			xhr.addEventListener("progress", function (evt) {
+				var kb = ((evt.loaded * 1) / 1000).toFixed(1);
+				if (kb == "0.0") { kb = 0.1; }
+				cargarConectividad("recibido", "0", kb);
+			}, false);
+			return xhr;
+		},
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+			if (tabla) {
+				tabla.innerHTML = "";
+			}
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				var respuesta = respuestaJqueryAjax(datos["1"]);
+				if (respuesta == true) {
+					cajaControlRegistros = datos[10] || [];
+					cajaControlRender();
+					cajaControlActualizarTotalesCompatibles(datos);
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+function cajaControlActualizarTotalesCompatibles(datos) {
+	if (cajaControlEl("inptTotalAperturaArqueocierrecaja")) { cajaControlEl("inptTotalAperturaArqueocierrecaja").value = datos[5] || ""; }
+	if (cajaControlEl("inptTotalCierreArqueocierrecaja")) { cajaControlEl("inptTotalCierreArqueocierrecaja").value = datos[6] || ""; }
+	if (cajaControlEl("inptCobradoArqueocierrecaja")) { cajaControlEl("inptCobradoArqueocierrecaja").value = datos[9] || ""; }
+	if (cajaControlEl("inptTotalIngresoArqueocierrecaja")) { cajaControlEl("inptTotalIngresoArqueocierrecaja").value = datos[7] || ""; }
+	if (cajaControlEl("inptTotalEgresoArqueocierrecaja")) { cajaControlEl("inptTotalEgresoArqueocierrecaja").value = datos[8] || ""; }
+	if (cajaControlEl("inptTotalDiferenciaArqueocierrecaja")) { cajaControlEl("inptTotalDiferenciaArqueocierrecaja").value = datos[4] || ""; }
+}
+
+function cajaControlFiltrarRapido() {
+	cajaControlRender();
+}
+
+function cajaControlFiltrarRegistros() {
+	var busqueda = cajaControlValor("cajaControlBusquedaRapida").toLowerCase();
+	var estado = cajaControlValor("cajaControlFiltroEstado");
+	var registros = cajaControlRegistros.slice(0);
+	registros = registros.filter(function (registro) {
+		var pasaEstado = true;
+		if (estado == "Activo") {
+			pasaEstado = cajaControlEsAbierta(registro);
+		} else if (estado == "Cerrado") {
+			pasaEstado = cajaControlEsCerrada(registro);
+		} else if (estado == "diferencia") {
+			pasaEstado = cajaControlDiferencia(registro) > 0;
+		} else if (estado == "migracion_pendiente") {
+			pasaEstado = cajaControlNumero(registro.migracion_pendiente) > 0;
+		} else if (estado == "migrada") {
+			pasaEstado = cajaControlNumero(registro.total_migrado) > 0 && cajaControlNumero(registro.total_recibido) < cajaControlNumero(registro.total_migrado);
+		} else if (estado == "recibida") {
+			pasaEstado = cajaControlNumero(registro.total_recibido) >= cajaControlNumero(registro.total_migrado) && cajaControlNumero(registro.total_migrado) > 0;
+		}
+		if (!pasaEstado) {
+			return false;
+		}
+		if (cajaControlFiltroRapido != "") {
+			if (cajaControlFiltroRapido == "abiertas_hoy" && !(cajaControlEsAbierta(registro) && cajaControlFechaDia(registro.fechaapertura) == cajaControlHoy())) {
+				return false;
+			}
+			if (cajaControlFiltroRapido == "pendientes_cierre" && !cajaControlEsAbierta(registro)) {
+				return false;
+			}
+			if (cajaControlFiltroRapido == "diferencia" && cajaControlDiferencia(registro) <= 0) {
+				return false;
+			}
+			if (cajaControlFiltroRapido == "migracion_pendiente" && cajaControlNumero(registro.migracion_pendiente) <= 0) {
+				return false;
+			}
+			if (cajaControlFiltroRapido == "migrada" && cajaControlNumero(registro.total_migrado) <= 0) {
+				return false;
+			}
+			if (cajaControlFiltroRapido == "recibida" && cajaControlNumero(registro.total_recibido) <= 0) {
+				return false;
+			}
+			if (cajaControlFiltroRapido == "alertas") {
+				var abiertaAntigua = cajaControlEsAbierta(registro) && cajaControlFechaDia(registro.fechaapertura) < cajaControlHoy();
+				var conDiferencia = cajaControlDiferencia(registro) > 0;
+				var pendienteMigracion = cajaControlNumero(registro.migracion_pendiente) > 0;
+				var migradaSinRecibir = cajaControlNumero(registro.total_migrado) > cajaControlNumero(registro.total_recibido);
+				if (!abiertaAntigua && !conDiferencia && !pendienteMigracion && !migradaSinRecibir) {
+					return false;
+				}
+			}
+		}
+		if (busqueda == "") {
+			return true;
+		}
+		var texto = [
+			registro.lote,
+			registro.cajanro,
+			registro.usuarioap,
+			registro.usuariocie,
+			registro.nombrelocal,
+			registro.estado
+		].join(" ").toLowerCase();
+		return texto.indexOf(busqueda) >= 0;
+	});
+	return registros;
+}
+
+function cajaControlRender() {
+	var registrosFiltrados = cajaControlFiltrarRegistros();
+	cajaControlRenderCards(cajaControlRegistros);
+	cajaControlRenderAlertas(cajaControlRegistros);
+	cajaControlRenderListado(registrosFiltrados);
+	cajaControlRenderTotales(registrosFiltrados);
+	cajaControlRenderSeleccionBar();
+}
+
+function cajaControlContarAlertas(registros) {
+	return cajaControlObtenerAlertas(registros).length;
+}
+
+function cajaControlRenderCards(registros) {
+	var contenedor = cajaControlEl("cajaControlCards");
+	if (!contenedor) {
+		return;
+	}
+	var hoy = cajaControlHoy();
+	var abiertasHoy = 0;
+	var pendientes = 0;
+	var diferencias = 0;
+	var migracionPendiente = 0;
+	var migradas = 0;
+	var recibidas = 0;
+	for (var i = 0; i < registros.length; i++) {
+		var registro = registros[i];
+		if (cajaControlEsAbierta(registro) && cajaControlFechaDia(registro.fechaapertura) == hoy) { abiertasHoy++; }
+		if (cajaControlEsAbierta(registro)) { pendientes++; }
+		if (cajaControlDiferencia(registro) > 0) { diferencias++; }
+		if (cajaControlNumero(registro.migracion_pendiente) > 0) { migracionPendiente++; }
+		if (cajaControlNumero(registro.total_migrado) > 0) { migradas++; }
+		if (cajaControlNumero(registro.total_recibido) > 0) { recibidas++; }
+	}
+	var cards = [
+		["abiertas_hoy", "Cajas abiertas hoy", abiertasHoy, "info"],
+		["pendientes_cierre", "Pendientes de cierre", pendientes, "warning"],
+		["diferencia", "Con diferencia", diferencias, "danger"],
+		["migracion_pendiente", "Migracion pendiente", migracionPendiente, "warning"],
+		["migrada", "Migradas a central", migradas, "info"],
+		["recibida", "Recibidas por central", recibidas, "success"],
+		["alertas", "Alertas", cajaControlContarAlertas(registros), "danger"]
+	];
+	var html = "";
+	for (var c = 0; c < cards.length; c++) {
+		var activa = cajaControlFiltroRapido == cards[c][0] ? " caja-control-card--active" : "";
+		html += "<button class='caja-control-card caja-control-card--" + cards[c][3] + activa + "' onclick='cajaControlAplicarFiltroRapido(\"" + cards[c][0] + "\")'>"
+			+ "<span>" + cards[c][1] + "</span>"
+			+ "<b>" + cards[c][2] + "</b>"
+			+ "</button>";
+	}
+	contenedor.innerHTML = html;
+}
+
+function cajaControlAplicarFiltroRapido(tipo) {
+	cajaControlFiltroRapido = cajaControlFiltroRapido == tipo ? "" : tipo;
+	cajaControlRender();
+}
+
+function cajaControlObtenerAlertas(registros) {
+	var alertas = [];
+	var hoy = cajaControlHoy();
+	var abiertasPorUsuario = {};
+	var abiertasPorCaja = {};
+	var diferencias = 0;
+	var pendientesMigracion = 0;
+	var migradasSinRecibir = 0;
+	for (var i = 0; i < registros.length; i++) {
+		var registro = registros[i];
+		if (cajaControlEsAbierta(registro)) {
+			if (cajaControlFechaDia(registro.fechaapertura) < hoy) {
+				alertas.push({tipo:"warning", texto:"Caja abierta desde " + cajaControlFechaCorta(registro.fechaapertura) + " en " + (registro.nombrelocal || "local sin nombre") + "."});
+			}
+			var usuario = registro.codusuarioap || registro.usuarioap || "sin_usuario";
+			var caja = (registro.cod_local || registro.nombrelocal || "sin_local") + "|" + (registro.caja_idcaja || registro.cajanro || "sin_caja");
+			abiertasPorUsuario[usuario] = abiertasPorUsuario[usuario] || {cantidad:0, nombre:registro.usuarioap || "Usuario"};
+			abiertasPorUsuario[usuario].cantidad++;
+			abiertasPorCaja[caja] = abiertasPorCaja[caja] || {cantidad:0, nombre:(registro.nombrelocal || "Sucursal") + " / " + (registro.cajanro || "Caja")};
+			abiertasPorCaja[caja].cantidad++;
+		}
+		if (cajaControlDiferencia(registro) > 0) {
+			diferencias++;
+		}
+		if (cajaControlNumero(registro.migracion_pendiente) > 0) {
+			pendientesMigracion++;
+		}
+		if (cajaControlNumero(registro.total_migrado) > cajaControlNumero(registro.total_recibido)) {
+			migradasSinRecibir++;
+		}
+	}
+	for (var u in abiertasPorUsuario) {
+		if (abiertasPorUsuario[u].cantidad > 1) {
+			alertas.push({tipo:"danger", texto:abiertasPorUsuario[u].nombre + " tiene " + abiertasPorUsuario[u].cantidad + " cajas abiertas."});
+		}
+	}
+	for (var c in abiertasPorCaja) {
+		if (abiertasPorCaja[c].cantidad > 1) {
+			alertas.push({tipo:"danger", texto:"Hay " + abiertasPorCaja[c].cantidad + " cajas abiertas para " + abiertasPorCaja[c].nombre + "."});
+		}
+	}
+	if (diferencias > 0) {
+		alertas.push({tipo:"warning", texto:"Existen " + diferencias + " cierres con diferencia para revisar."});
+	}
+	if (pendientesMigracion > 0) {
+		alertas.push({tipo:"warning", texto:"Existen " + pendientesMigracion + " cajas con capital pendiente de migrar."});
+	}
+	if (migradasSinRecibir > 0) {
+		alertas.push({tipo:"info", texto:"Hay " + migradasSinRecibir + " migraciones enviadas que aun no figuran recibidas."});
+	}
+	return alertas;
+}
+
+function cajaControlRenderAlertas(registros) {
+	var contenedor = cajaControlEl("cajaControlAlertas");
+	if (!contenedor) {
+		return;
+	}
+	var alertas = cajaControlObtenerAlertas(registros);
+	if (alertas.length == 0) {
+		contenedor.innerHTML = "<button type='button' class='caja-control-alert caja-control-alert--success' onclick='cajaControlAplicarFiltroRapido(\"alertas\")'><b>Sin alertas criticas</b><span>La consola no detecta pendientes fuertes en el resultado actual.</span></button>";
+		return;
+	}
+	var muestra = alertas[0].texto;
+	var html = "<button type='button' class='caja-control-alert caja-control-alert--" + alertas[0].tipo + "' onclick='cajaControlAplicarFiltroRapido(\"alertas\")'>"
+		+ "<b>" + alertas.length + " alertas activas</b>"
+		+ "<span>" + cajaControlEscape(muestra) + (alertas.length > 1 ? " Ver alertas." : "") + "</span>"
+		+ "</button>";
+	contenedor.innerHTML = html;
+}
+
+function cajaControlRenderListado(registros) {
+	var tabla = cajaControlEl("table_caja_control_lotes");
+	if (!tabla) {
+		return;
+	}
+	if (!registros || registros.length == 0) {
+		tabla.innerHTML = "<div class='caja-control-empty caja-control-empty--table'><b>No encontramos cajas con estos filtros</b><span>Prueba limpiar filtros o ampliar el rango de fechas.</span></div>";
+		return;
+	}
+	var html = "";
+	for (var i = 0; i < registros.length; i++) {
+		var registro = registros[i];
+		var id = registro.idarqueocaja || "";
+		var seleccionada = cajaControlSeleccionActual && cajaControlSeleccionActual.idarqueocaja == id ? " caja-control-row--selected" : "";
+		var diferencia = cajaControlNumero(registro.diferencia);
+		var diferenciaClase = Math.abs(diferencia) > 0 ? " caja-control-money--danger" : "";
+		html += "<div class='caja-control-row" + seleccionada + "' onclick='cajaControlSeleccionar(\"" + cajaControlEscape(id) + "\", false)'>"
+			+ "<span><b>" + cajaControlEscape(registro.lote || "-") + "</b></span>"
+			+ "<span>" + cajaControlEscape(registro.nombrelocal || "-") + "</span>"
+			+ "<span>" + cajaControlEscape(registro.cajanro || "-") + "</span>"
+			+ "<span>" + cajaControlEscape(registro.usuarioap || "-") + "</span>"
+			+ "<span>" + cajaControlEscape(cajaControlFechaCorta(registro.fechaapertura)) + "</span>"
+			+ "<span>" + cajaControlEscape(cajaControlFechaCorta(registro.fechacierre)) + "</span>"
+			+ "<span><em class='caja-control-badge caja-control-badge--" + cajaControlEstadoClase(registro) + "'>" + cajaControlEscape(cajaControlEstadoTexto(registro)) + "</em></span>"
+			+ "<span class='caja-control-money" + diferenciaClase + "'>" + cajaControlFormato(diferencia) + "</span>"
+			+ "<span><em class='caja-control-badge caja-control-badge--" + cajaControlMigracionClase(registro) + "'>" + cajaControlEscape(cajaControlMigracionTexto(registro)) + "</em></span>"
+			+ "<span><button class='btn4 caja-control-mini-btn' onclick='event.stopPropagation();cajaControlSeleccionar(\"" + cajaControlEscape(id) + "\", true)'>Detalle</button></span>"
+			+ "</div>";
+	}
+	tabla.innerHTML = html;
+}
+
+function cajaControlRenderTotales(registros) {
+	var contenedor = cajaControlEl("cajaControlTotales");
+	if (!contenedor) {
+		return;
+	}
+	var totales = {
+		apertura:0,
+		cierre:0,
+		cobrado:0,
+		ingreso:0,
+		egreso:0,
+		migrado:0,
+		recibido:0,
+		pendiente:0
+	};
+	for (var i = 0; i < registros.length; i++) {
+		totales.apertura += cajaControlNumero(registros[i].montoapertura);
+		totales.cierre += cajaControlNumero(registros[i].montocierre);
+		totales.cobrado += cajaControlNumero(registros[i].cobros);
+		totales.ingreso += cajaControlNumero(registros[i].ingreso);
+		totales.egreso += cajaControlNumero(registros[i].egreso);
+		totales.migrado += cajaControlNumero(registros[i].total_migrado);
+		totales.recibido += cajaControlNumero(registros[i].total_recibido);
+		totales.pendiente += cajaControlNumero(registros[i].migracion_pendiente);
+	}
+	var items = [
+		["Total apertura", totales.apertura],
+		["Total cierre", totales.cierre],
+		["Total cobrado", totales.cobrado],
+		["Ingresos", totales.ingreso],
+		["Egresos", totales.egreso],
+		["Migrado", totales.migrado],
+		["Recibido", totales.recibido],
+		["Pendiente a migrar", totales.pendiente]
+	];
+	var html = "<b>Resumen del periodo filtrado</b>";
+	for (var i = 0; i < items.length; i++) {
+		html += "<span><small>" + items[i][0] + "</small><strong>" + cajaControlFormato(items[i][1]) + "</strong></span>";
+	}
+	contenedor.innerHTML = html;
+	contenedor.className = "caja-control-totales" + (cajaControlResumenPeriodoAbierto ? " caja-control-totales--open" : "");
+}
+
+function cajaControlBuscarRegistro(id) {
+	for (var i = 0; i < cajaControlRegistros.length; i++) {
+		if ((cajaControlRegistros[i].idarqueocaja || "").toString() == (id || "").toString()) {
+			return cajaControlRegistros[i];
+		}
+	}
+	return null;
+}
+
+function cajaControlSeleccionar(id, abrirDetalle) {
+	var registro = cajaControlBuscarRegistro(id);
+	if (!registro) {
+		return;
+	}
+	cajaControlSeleccionActual = registro;
+	cajaControlPasarRegistroACompatibilidad(registro);
+	if (abrirDetalle === true) {
+		cajaControlDetalleAbierto = true;
+	}
+	cajaControlRender();
+	cajaControlRenderDetalle(registro);
+	if (typeof buscarinformecaja == "function") {
+		buscarinformecaja();
+	}
+}
+
+function cajaControlPasarRegistroACompatibilidad(registro) {
+	idArqeoFk = registro.idarqueocaja || "";
+	cajaControlSetValor("inptBuscarVistaApCie1", registro.cajanro || "");
+	cajaControlSetValor("inptBuscarVistaApCie2", registro.usuarioap || "");
+	cajaControlSetValor("inptBuscarVistaApCie3", cajaControlFormato(registro.montoapertura));
+	cajaControlSetValor("inptBuscarVistaApCie4", cajaControlFormato(registro.montocierre));
+	cajaControlSetValor("inptBuscarVistaApCie5", registro.fechaapertura || "");
+	cajaControlSetValor("inptBuscarVistaApCie6", registro.fechacierre || "");
+	cajaControlSetValor("inptBuscarVistaApCie7", registro.estado || "");
+	cajaControlSetValor("inptBuscarLoteVistaApCie", registro.lote || "");
+	cajaControlSetValor("inptResumenAperturacaja", cajaControlFormato(registro.montoapertura));
+	cajaControlSetValor("inptTotalCant500ConsultarCaja", registro.cant500 || 0);
+	cajaControlSetValor("inptTotalCant1000ConsultarCaja", registro.cant1000 || 0);
+	cajaControlSetValor("inptTotalCant2000ConsultarCaja", registro.cant2000 || 0);
+	cajaControlSetValor("inptTotalCant5000ConsultarCaja", registro.cant5000 || 0);
+	cajaControlSetValor("inptTotalCant10000ConsultarCaja", registro.cant10000 || 0);
+	cajaControlSetValor("inptTotalCant20000ConsultarCaja", registro.cant20000 || 0);
+	cajaControlSetValor("inptTotalCant50000ConsultarCaja", registro.cant50000 || 0);
+	cajaControlSetValor("inptTotalCant100000ConsultarCaja", registro.cant100000 || 0);
+}
+
+function cajaControlRenderDetalleVacio() {
+	var panel = cajaControlEl("cajaControlPanelDetalle");
+	if (!panel) {
+		return;
+	}
+	panel.innerHTML = "<div class='caja-control-empty'><b>Selecciona una caja</b><span>Desde aqui podras imprimir, revisar movimientos y controlar la migracion.</span></div>";
+	panel.className = "divMenuf caja-control-detail-card";
+}
+
+function cajaControlRenderDetalle(registro) {
+	var panel = cajaControlEl("cajaControlPanelDetalle");
+	if (!panel) {
+		return;
+	}
+	panel.className = "divMenuf caja-control-detail-card" + (cajaControlDetalleAbierto ? " caja-control-detail-card--open" : "");
+	var diferencia = cajaControlNumero(registro.diferencia);
+	var acciones = "";
+	if (cajaControlEsAbierta(registro)) {
+		acciones += "<button class='btn4 caja-control-btn-primary' onclick='cajaControlAbrirCierreCaja()'>Completar cierre</button>";
+	}
+	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlMostrarDetalleExtendido()'>Ver resumen completo</button>";
+	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlMostrarDetalleExtendido()'>Ver movimientos</button>";
+	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='vercerraropcioneimpresionapcie(\"1\")'>Imprimir cierre</button>";
+	if (cajaControlNumero(registro.migracion_pendiente) > 0) {
+		acciones += "<button class='btn4 caja-control-btn-primary' onclick='cajaControlAbrirMigracion()'>Registrar migracion</button>";
+	}
+	if (cajaControlNumero(registro.total_migrado) > cajaControlNumero(registro.total_recibido)) {
+		acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlAbrirRecepcion()'>Confirmar recepcion</button>";
+	}
+	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='ver_vetana_informativa(\"Auditoria de caja preparada para conectar con el historial del lote.\")'>Ver auditoria</button>";
+	panel.innerHTML = ""
+		+ "<div class='caja-control-detail-head'>"
+		+ "<div><span>Detalle del lote</span><b>" + cajaControlEscape(registro.lote || "-") + "</b></div>"
+		+ "<button type='button' class='caja-control-detail-close' onclick='cajaControlCerrarDetalle()'>Cerrar</button>"
+		+ "<em class='caja-control-badge caja-control-badge--" + cajaControlEstadoClase(registro) + "'>" + cajaControlEscape(cajaControlEstadoTexto(registro)) + "</em>"
+		+ "</div>"
+		+ "<div class='caja-control-detail-grid'>"
+		+ cajaControlDetalleItem("Sucursal", registro.nombrelocal || "-")
+		+ cajaControlDetalleItem("Caja", registro.cajanro || "-")
+		+ cajaControlDetalleItem("Cajera", registro.usuarioap || "-")
+		+ cajaControlDetalleItem("Apertura", cajaControlFechaDetalle(registro.fechaapertura))
+		+ cajaControlDetalleItem("Cierre", cajaControlFechaDetalle(registro.fechacierre))
+		+ cajaControlDetalleItem("Monto apertura", cajaControlFormato(registro.montoapertura) + " Gs.")
+		+ cajaControlDetalleItem("Total cobrado", cajaControlFormato(registro.cobros) + " Gs.")
+		+ cajaControlDetalleItem("Ingresos", cajaControlFormato(registro.ingreso) + " Gs.")
+		+ cajaControlDetalleItem("Egresos", cajaControlFormato(registro.egreso) + " Gs.")
+		+ cajaControlDetalleItem("Efectivo esperado", cajaControlFormato(registro.efectivo_esperado) + " Gs.")
+		+ cajaControlDetalleItem("Efectivo contado", cajaControlFormato(registro.montocierre) + " Gs.")
+		+ cajaControlDetalleItem("Diferencia", cajaControlFormato(diferencia) + " Gs.", Math.abs(diferencia) > 0 ? "danger" : "success")
+		+ "</div>"
+		+ "<div class='caja-control-migration-box'>"
+		+ "<b>Migracion de capital</b>"
+		+ "<span><small>Estado</small><em class='caja-control-badge caja-control-badge--" + cajaControlMigracionClase(registro) + "'>" + cajaControlEscape(cajaControlMigracionTexto(registro)) + "</em></span>"
+		+ "<span><small>Monto a migrar</small><strong>" + cajaControlFormato(registro.monto_base_migracion) + " Gs.</strong></span>"
+		+ "<span><small>Pendiente</small><strong>" + cajaControlFormato(registro.migracion_pendiente) + " Gs.</strong></span>"
+		+ "<span><small>Migrado</small><strong>" + cajaControlFormato(registro.total_migrado) + " Gs.</strong></span>"
+		+ "<span><small>Recibido</small><strong>" + cajaControlFormato(registro.total_recibido) + " Gs.</strong></span>"
+		+ "</div>"
+		+ "<div class='caja-control-actions'>" + acciones + "</div>";
+}
+
+function cajaControlRenderSeleccionBar() {
+	var barra = cajaControlEl("cajaControlSeleccionBar");
+	if (!barra) {
+		return;
+	}
+	if (!cajaControlSeleccionActual) {
+		barra.innerHTML = "<span>Elige un lote para ver mas informacion.</span>";
+		barra.className = "caja-control-selected-bar";
+		return;
+	}
+	barra.className = "caja-control-selected-bar caja-control-selected-bar--active";
+	barra.innerHTML = "<span><b>Lote seleccionado:</b> " + cajaControlEscape(cajaControlSeleccionActual.lote || "-") + " · " + cajaControlEscape(cajaControlSeleccionActual.usuarioap || "-") + " · " + cajaControlEscape(cajaControlEstadoTexto(cajaControlSeleccionActual)) + "</span>"
+		+ "<button type='button' class='btn4 caja-control-btn-secondary' onclick='cajaControlAbrirDetalleSeleccionado()'>Ver detalle</button>";
+}
+
+function cajaControlAbrirDetalleSeleccionado() {
+	if (!cajaControlSeleccionActual) {
+		ver_vetana_informativa("Selecciona primero un lote del listado.");
+		return;
+	}
+	cajaControlDetalleAbierto = true;
+	cajaControlRenderDetalle(cajaControlSeleccionActual);
+	var panel = cajaControlEl("cajaControlPanelDetalle");
+	if (panel) {
+		panel.scrollIntoView({behavior:"smooth", block:"nearest"});
+	}
+}
+
+function cajaControlCerrarDetalle() {
+	cajaControlDetalleAbierto = false;
+	if (cajaControlSeleccionActual) {
+		cajaControlRenderDetalle(cajaControlSeleccionActual);
+	}
+	var extendido = cajaControlEl("cajaControlDetalleExtendido");
+	if (extendido) {
+		extendido.style.display = "none";
+	}
+}
+
+function cajaControlToggleDetalle() {
+	if (!cajaControlSeleccionActual) {
+		ver_vetana_informativa("Selecciona un lote para abrir el detalle.");
+		return;
+	}
+	cajaControlDetalleAbierto = !cajaControlDetalleAbierto;
+	cajaControlRenderDetalle(cajaControlSeleccionActual);
+}
+
+function cajaControlAlternarResumenPeriodo() {
+	cajaControlResumenPeriodoAbierto = !cajaControlResumenPeriodoAbierto;
+	cajaControlRenderTotales(cajaControlFiltrarRegistros());
+}
+
+function cajaControlDetalleItem(titulo, valor, tipo) {
+	var clase = tipo ? " caja-control-detail-item--" + tipo : "";
+	return "<span class='caja-control-detail-item" + clase + "'><small>" + cajaControlEscape(titulo) + "</small><strong>" + cajaControlEscape(valor) + "</strong></span>";
+}
+
+function cajaControlMostrarDetalleExtendido(noScroll) {
+	var extendido = cajaControlEl("cajaControlDetalleExtendido");
+	if (extendido) {
+		extendido.style.display = "flex";
+		if (noScroll !== true) {
+			extendido.scrollIntoView({behavior:"smooth", block:"nearest"});
+		}
+	}
+}
+
+function cajaControlAbrirCierreCaja() {
+	if (typeof verCerrarVentanaAbmAperturaCierreCaja == "function") {
+		verCerrarVentanaAbmAperturaCierreCaja();
+	}
+}
+
+function cajaControlAbrirMigracion() {
+	if (typeof verCerrarAbmMigrarCaja == "function") {
+		verCerrarAbmMigrarCaja();
+	}
+}
+
+function cajaControlAbrirRecepcion() {
+	if (typeof verCerrarFrmCajaEscritorio == "function") {
+		verCerrarFrmCajaEscritorio();
+	}
+}
+
+function cajaControlEnfocarBuscador() {
+	if (cajaControlEl("divConsultaCaja") && cajaControlEl("divConsultaCaja").style.display != "") {
+		verCerrarInformeConsultaCaja();
+	}
+	cajaControlPreparar();
+	var buscador = cajaControlEl("cajaControlBusquedaRapida") || cajaControlEl("cajaControlFiltroLote");
+	if (buscador) {
+		buscador.focus();
+		buscador.scrollIntoView({behavior:"smooth", block:"center"});
+	}
+	if (cajaControlRegistros.length == 0) {
+		cajaControlBuscar();
+	}
+}
+
 function verCerrarInformeConsultaCaja(){
 	if(document.getElementById("divConsultaCaja").style.display==""){
 		document.getElementById("divMinimizadoConsultarCaja").style.display="none"
@@ -23421,6 +25583,10 @@ function verCerrarInformeConsultaCaja(){
 	if(controlacceso("VERCONSULTADECAJA","accion")==false){return;}
 		document.getElementById("divConsultaCaja").style.display=""
 		 document.getElementById("tdEfectoConsultaCaja").className="magictime slideDownReturn"	
+		 cajaControlPreparar()
+		 if(cajaControlRegistros.length == 0){
+		 	cajaControlBuscar()
+		 }
 	}
 }
 function limpiarcamposbuscadorConsultarCaja(){
@@ -23453,6 +25619,7 @@ function limpiarcamposbuscadorConsultarCaja(){
 					document.getElementById("table_Consultar_caja").innerHTML = ""
 					document.getElementById('table_buscar_opciones_pago').innerHTML = "";
 					document.getElementById('table_buscar_opciones_pago').style.display = "none";
+					cajaControlLimpiarVista()
 }
 function minimizarconsultacaja(){
 	document.getElementById("tdEfectoConsultaCaja").className="magictime slideDown"
@@ -26240,24 +28407,28 @@ function iraenlances(d){
 
 
 function mostrarCargandoArqueo() {
-	document.getElementById("table_arqeo").innerHTML = "<tr class='arqueo-loading-row'><td colspan='12'>" + paginacargando + "</td></tr>";
+	document.getElementById("table_arqeo").innerHTML = "<tr class='arqueo-loading-row'><td colspan='14'>" + paginacargando + "</td></tr>";
 }
 
 function buscararqueo2() {
-var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
-	var cliente = document.getElementById('inptBuscarCobrosRealizados1').value
-	var fechafija = document.getElementById('inptBuscarCobrosRealizados3').value
-	var fecha1 = document.getElementById('inptBuscarCobrosRealizadosF1').value
-	var fecha2 = document.getElementById('inptBuscarCobrosRealizadosF2').value
-	const fecha_facturacion1 = document.getElementById('inptBuscarCobrosRealizadosFF1').value;
-	const fecha_facturacion2 = document.getElementById('inptBuscarCobrosRealizadosFF2').value;
-	var factura = document.getElementById('inptBuscarCobrosRealizados2').value
-	var local = document.getElementById('inptlocalCobrosRealizados3').value
-	var metodo = document.getElementById('inptBuscarCobrosRealizados5').value
-	var condicion = document.getElementById('inptBuscarCobrosRealizados6').value
-	var cedula = document.getElementById('inptBuscarCobrosRealizados7').value
+var cobrador = valorArqueo('inptBuscarCobrosRealizados4')
+	var cliente = valorArqueo('inptBuscarCobrosRealizados1')
+	var fechafija = valorArqueo('inptBuscarCobrosRealizados3')
+	var fecha1 = valorArqueo('inptBuscarCobrosRealizadosF1')
+	var fecha2 = valorArqueo('inptBuscarCobrosRealizadosF2')
+	const fecha_facturacion1 = valorArqueo('inptBuscarCobrosRealizadosFF1');
+	const fecha_facturacion2 = valorArqueo('inptBuscarCobrosRealizadosFF2');
+	var factura = valorArqueo('inptBuscarCobrosRealizados2')
+	var local = valorArqueo('inptlocalCobrosRealizados3')
+	var metodo = valorArqueo('inptBuscarCobrosRealizados5')
+	var condicion = valorArqueo('inptBuscarCobrosRealizados6')
+	var cedula = valorArqueo('inptBuscarCobrosRealizados7')
+	var busqueda_general = valorArqueo('inptBuscarCobrosRealizadosGeneral')
+	var caja = valorArqueo('inptBuscarCobrosRealizadosCaja')
+	var lote = valorArqueo('inptBuscarCobrosRealizadosLote')
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
    idHistorialPago = "";
+   cod_ventaFKPago = "";
 	mostrarCargandoArqueo()
 	obtener_datos_user();
 	var datos = {
@@ -26271,11 +28442,14 @@ var cobrador = document.getElementById('inptBuscarCobrosRealizados4').value
 		"cobrador": cobrador,
 		"cliente": cliente,
 		"cedula": cedula,
+		"busqueda_general": busqueda_general,
 		"factura": factura,
 		"fechafija": fechafija,
 		"metodo": metodo,
 		"local": local,
 		"condicion": condicion,
+		"caja": caja,
+		"lote": lote,
 		"codCaja": "",
 		"desde": "arqueo2",
 		"funt": "arqueo"
@@ -26322,11 +28496,17 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {				   
 					var datos_buscados = datos[2];
-					document.getElementById("table_arqeo").innerHTML = datos_buscados
+					if(datos_buscados && datos_buscados.toString().trim() !== ""){
+						document.getElementById("table_arqeo").innerHTML = datos_buscados
+					}else{
+						mostrarEstadoVacioArqueo()
+					}
 					document.getElementById("inptTotalArqueo").value = datos[3]
 					document.getElementById("inptTotalRegistoArqueo").value = datos[4]
 					document.getElementById("inptTotalEfectivoArqueo").value = datos[5]
 					document.getElementById("inptTotalTarjetaArqueo").value = datos[6]
+					document.getElementById("inptTotalTransferenciaArqueo").value = datos[8] || "0"
+					document.getElementById("inptTotalOtrosArqueo").value = datos[9] || "0"
 		
 				}
 			} catch (error) {
@@ -26348,9 +28528,15 @@ function buscararqueo3() {
 	var local = ""
 	var metodo = ""
 	var codCaja=codCajaApp
+	var condicion = ""
+	var cedula = ""
+	var busqueda_general = ""
+	var caja = ""
+	var lote = ""
 	
 
  idHistorialPago = "";
+ cod_ventaFKPago = "";
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
 	mostrarCargandoArqueo()
 	obtener_datos_user();
@@ -26360,12 +28546,19 @@ function buscararqueo3() {
 		"navegador": navegador,
 		"fecha1": fecha1,
 		"fecha2": fecha2,
+		"fecha_facturacion1": "",
+		"fecha_facturacion2": "",
 		"cobrador": cobrador,
 		"cliente": cliente,
+		"cedula": cedula,
+		"busqueda_general": busqueda_general,
 		"factura": factura,
 		"fechafija": fechafija,
 		"metodo": metodo,
 		"local": local,
+		"condicion": condicion,
+		"caja": caja,
+		"lote": lote,
 		"codCaja": codCaja,
 		"desde": "arqueo3",
 		"funt": "arqueo"
@@ -26412,11 +28605,17 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {				   
 					var datos_buscados = datos[2];
-					document.getElementById("table_arqeo").innerHTML = datos_buscados
+					if(datos_buscados && datos_buscados.toString().trim() !== ""){
+						document.getElementById("table_arqeo").innerHTML = datos_buscados
+					}else{
+						mostrarEstadoVacioArqueo()
+					}
 					document.getElementById("inptTotalArqueo").value = datos[3]
 					document.getElementById("inptTotalRegistoArqueo").value = datos[4]
 					document.getElementById("inptTotalEfectivoArqueo").value = datos[5]
 					document.getElementById("inptTotalTarjetaArqueo").value = datos[6]
+					document.getElementById("inptTotalTransferenciaArqueo").value = datos[8] || "0"
+					document.getElementById("inptTotalOtrosArqueo").value = datos[9] || "0"
 				
 				}
 			} catch (error) {
@@ -27220,6 +29419,7 @@ function AbmListaNiveles(nombre,estado, idabm, accion) {
 	datos.append("funt", accion)
 	datos.append("idabm", idabm)
 	datos.append("nombre", nombre)
+	datos.append("nombre_anterior", document.getElementById("inptRegistroSeleccionadoListaNiveles") ? document.getElementById("inptRegistroSeleccionadoListaNiveles").value : "")
 	datos.append("estado", estado)
 	var OpAjax = $.ajax({
 		data: datos,
@@ -27266,7 +29466,36 @@ function AbmListaNiveles(nombre,estado, idabm, accion) {
 				   LimpiarCamposListaNiveles()
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
 					BuscarAbmListaNiveles()
+					if (datos.nombre_anterior && datos.nombre_actualizado && document.getElementById("inptTipoUsuUser")) {
+						var selectTipoRolEditado = document.getElementById("inptTipoUsuUser")
+						var tipoActualFormulario = selectTipoRolEditado.value
+						if ($.trim(tipoActualFormulario) == $.trim(datos.nombre_anterior)) {
+							var tieneOpcionRolEditado = false
+							for (var iRolEditado = 0; iRolEditado < selectTipoRolEditado.options.length; iRolEditado++) {
+								if ($.trim(selectTipoRolEditado.options[iRolEditado].value) == $.trim(datos.nombre_actualizado)) {
+									tieneOpcionRolEditado = true
+									break
+								}
+							}
+							if (!tieneOpcionRolEditado) {
+								var opcionRolEditado = document.createElement("option")
+								opcionRolEditado.value = datos.nombre_actualizado
+								opcionRolEditado.text = datos.nombre_actualizado
+								selectTipoRolEditado.appendChild(opcionRolEditado)
+							}
+							selectTipoRolEditado.value = datos.nombre_actualizado
+							if (typeof actualizarCabeceraFormularioFuncionario == "function") {
+								actualizarCabeceraFormularioFuncionario()
+							}
+						}
+					}
 					BuscarNivelesSelect()
+					if (typeof buscarabmusuario == "function") {
+						buscarabmusuario()
+					}
+					if (typeof buscarRolesAsignarTarea == "function" && typeof vistaAsignarTarea != "undefined" && vistaAsignarTarea == "ROLES") {
+						buscarRolesAsignarTarea()
+					}
 				}
 			} catch (error) {
 				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
@@ -27584,7 +29813,11 @@ function actualizarVistaAccesoListaNivel(input, accion) {
 }
 function BuscarNivelesSelect() {
 
+	var tipoUsuarioActual = document.getElementById("inptTipoUsuUser") ? document.getElementById("inptTipoUsuUser").value : ""
 	document.getElementById("inptAccesoUser").innerHTML = ""
+	if (document.getElementById("inptTipoUsuUser")) {
+		document.getElementById("inptTipoUsuUser").innerHTML = "<option value=''>SELECCIONAR</option>"
+	}
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -27641,6 +29874,20 @@ function BuscarNivelesSelect() {
 				   
 					var pagina = datos[2];
 					document.getElementById("inptAccesoUser").innerHTML=pagina
+					if (document.getElementById("inptTipoUsuUser") && datos[4]) {
+						var selectTipoUsuario = document.getElementById("inptTipoUsuUser")
+						selectTipoUsuario.innerHTML = datos[4]
+						if (tipoUsuarioActual != "") {
+							selectTipoUsuario.value = tipoUsuarioActual
+							if (selectTipoUsuario.value != tipoUsuarioActual) {
+								var opcionTipoUsuario = document.createElement("option")
+								opcionTipoUsuario.value = tipoUsuarioActual
+								opcionTipoUsuario.text = tipoUsuarioActual
+								selectTipoUsuario.appendChild(opcionTipoUsuario)
+								selectTipoUsuario.value = tipoUsuarioActual
+							}
+						}
+					}
 					
 				}
 			} catch (error) {
@@ -27814,6 +30061,11 @@ function removeToMenu(){
 	$("table[id=divMenuConsultadeCaja]").remove()
 	controladministrativo=controladministrativo+1;		
 	}
+	if( userid != '2' && permisoAccesoUser("VERCONCILIACIONUENO","accion")==false)
+	{
+	$("table[id=divMenuConciliacionUeno]").remove()
+	controladministrativo=controladministrativo+1;		
+	}
 	if( accesosuser["VERLISTADOEGRESOINGRESO"]["accion"]!="SI")
 	{
 	$("table[id=divMenuEgreso_Ingreso]").remove()
@@ -27853,7 +30105,7 @@ function removeToMenu(){
 	}
 	
 	
-	if(controladministrativo==14){
+	if(controladministrativo>=15){
 		document.getElementById("divMenuAdministrativo").style.display="none"
 	}
 	
@@ -29892,6 +32144,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptTipoPagoVenta").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptTipoPagoCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptTipoPagoCreditoParcial").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+					actualizarCampoComprobanteUenoCredito()
+					actualizarCampoComprobanteUenoCreditoParcial()
 					
 				}
 			} catch (error) {
@@ -29909,6 +32163,92 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 
 
 
+
+
+
+function uenoTextoNormalizadoPago(valor) {
+	valor = String(valor || "").toUpperCase();
+	if (valor.normalize) {
+		valor = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	}
+	return valor.replace(/\s+/g, " ").trim();
+}
+
+function esTipoPagoTransferenciaUenoTexto(valor) {
+	return uenoTextoNormalizadoPago(valor).indexOf("TRANSFERENCIA") !== -1;
+}
+
+function normalizarComprobanteUenoInput(valor) {
+	return String(valor || "").replace(/\s+/g, "").trim();
+}
+
+function uenoEscapeHtmlPago(valor) {
+	return String(valor || "").replace(/[&<>"']/g, function (char) {
+		return {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': "&quot;",
+			"'": "&#039;"
+		}[char];
+	});
+}
+
+function actualizarCampoComprobanteUenoCredito() {
+	var contenedor = document.getElementById("tdUenoComprobanteCredito");
+	var select = document.getElementById("inptTipoPagoCredito");
+	if (!contenedor || !select) {
+		return;
+	}
+
+	var esTransferencia = esTipoPagoTransferenciaUenoTexto($('select[id="inptTipoPagoCredito"] option:selected').text());
+	contenedor.style.display = esTransferencia ? "" : "none";
+	if (!esTransferencia) {
+		if (document.getElementById("inptUenoComprobanteCredito")) {
+			document.getElementById("inptUenoComprobanteCredito").value = "";
+		}
+		if (document.getElementById("inptUenoObsCredito")) {
+			document.getElementById("inptUenoObsCredito").value = "";
+		}
+	}
+}
+
+function actualizarCampoComprobanteUenoCreditoParcial() {
+	var contenedor = document.getElementById("tdUenoComprobanteCreditoParcial");
+	var select = document.getElementById("inptTipoPagoCreditoParcial");
+	if (!contenedor || !select) {
+		return;
+	}
+
+	var esTransferencia = esTipoPagoTransferenciaUenoTexto($('select[id="inptTipoPagoCreditoParcial"] option:selected').text());
+	contenedor.style.display = esTransferencia ? "" : "none";
+	if (!esTransferencia) {
+		if (document.getElementById("inptUenoComprobanteCreditoParcial")) {
+			document.getElementById("inptUenoComprobanteCreditoParcial").value = "";
+		}
+		if (document.getElementById("inptUenoObsCreditoParcial")) {
+			document.getElementById("inptUenoObsCreditoParcial").value = "";
+		}
+	}
+}
+
+function obtenerResumenUenoDesdePagos(selector) {
+	var comprobantes = [];
+	var vistos = {};
+	$(selector).each(function(i, elementohtml) {
+		var comprobante = $(elementohtml).children('td[id="td_datos_10"]').text();
+		comprobante = normalizarComprobanteUenoInput(comprobante);
+		if (comprobante !== "" && comprobante !== "-" && !vistos[comprobante]) {
+			vistos[comprobante] = true;
+			comprobantes.push(comprobante);
+		}
+	});
+
+	return {
+		comprobante: comprobantes.join(", "),
+		estado: comprobantes.length > 0 ? "EN VERIFICACION BANCARIA" : ""
+	};
+}
 
 
 
@@ -29955,6 +32295,9 @@ function limpiarEgresoPago(){
 	document.getElementById('inptBancoEgreso').value=""
 	document.getElementById('inptTransaccionEgreso').value=""
 	document.getElementById('inptTipoPagoCredito').value=""
+	document.getElementById('inptUenoComprobanteCredito').value=""
+	document.getElementById('inptUenoObsCredito').value=""
+	actualizarCampoComprobanteUenoCredito()
 }
 
 function anhadirPagoCredito(){
@@ -29972,6 +32315,13 @@ function anhadirPagoCredito(){
 	let totalPagado = document.getElementById('inpTotalPagadoCredito').value;
 	totalaPagar = QuitarSeparadorMilValor(totalaPagar);
 	totalPagado = QuitarSeparadorMilValor(totalPagado);
+	var uenoEsTransferencia = esTipoPagoTransferenciaUenoTexto(tipopago);
+	var uenoComprobante = normalizarComprobanteUenoInput(document.getElementById("inptUenoComprobanteCredito").value);
+	var uenoObservacion = document.getElementById("inptUenoObsCredito").value;
+	if (uenoEsTransferencia && uenoComprobante == "") {
+		ver_vetana_informativa("INGRESE EL NRO. DE COMPROBANTE UENO");
+		return;
+	}
 	
 	
 	
@@ -29999,19 +32349,21 @@ function anhadirPagoCredito(){
 	let fechapago =  anho+"-" + mes + "-" +dia;
 	
   	var codigo=stringGenerador(5);
-	var pagina="<table id='"+codigo+"' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+	var pagina="<table id='"+codigo+"' class='tableRegistroSearch pago-credito-row' border='1' cellspacing='1' cellpadding='5'>"
 +"<tr id='tbSelecRegistro' onclick='SeleccionarPagoCreditoOffline(this)'  name='tdDetallePagoCreditoOffline' >"
 +"<td  id='td_id_1' style='display:none'>"+codigo+"</td>"
 +"<td  id='td_id_2' style='display:none'>"+idtipopago+"</td>"
-+"<td  id='td_datos_1' style='width:33%;'>"+tipopago+"</td>"
-+"<td  id='td_datos_3' style='width:33%'>"+monto+"</td>"
-+"<td  id='td_datos_2' style='width:33%'>"+fechapago+"</td>"
++"<td  id='td_datos_1' style='width:25%;'>"+tipopago+"</td>"
++"<td  id='td_datos_3' style='width:25%'>"+monto+"</td>"
++"<td  id='td_datos_2' style='width:25%'>"+fechapago+"</td>"
++"<td  id='td_datos_10' style='width:25%'>"+(uenoEsTransferencia ? uenoEscapeHtmlPago(uenoComprobante) : "-")+"</td>"
 +"<td  id='td_datos_4' style='display:none'>"+MontoDeposito+"</td>"
 +"<td  id='td_datos_5' style='display:none'>"+MotivoDeposito+"</td>"
 +"<td  id='td_datos_6' style='display:none'>"+nroCuentaDeposito+"</td>"
 +"<td  id='td_datos_7' style='display:none'>"+BancoDeposito+"</td>"
 +"<td  id='td_datos_8' style='display:none'>"+NroBoletaDeposito+"</td>"
 +"<td  id='td_datos_9' style='display:none'>"+valor+"</td>"
++"<td  id='td_datos_11' style='display:none'>"+uenoEscapeHtmlPago(uenoObservacion)+"</td>"
 +"</tr>"
 +"</table>"
 
@@ -30086,6 +32438,16 @@ function abmcargaropcionespago(CargoAdministrativo,MontoTarjeta,totalDeudaCuota,
 	   //////Datos Egreso
 	   var valor=$(elementohtml).children('td[id="td_datos_9"]').html();
 	   datos.append("valor"+control, valor)
+
+	   var uenoComprobante=$(elementohtml).children('td[id="td_datos_10"]').text();
+	   uenoComprobante = normalizarComprobanteUenoInput(uenoComprobante);
+	   if (uenoComprobante == "-") {
+		   uenoComprobante = "";
+	   }
+	   datos.append("ueno_comprobante"+control, uenoComprobante)
+
+	   var uenoObservacion=$(elementohtml).children('td[id="td_datos_11"]').text();
+	   datos.append("ueno_observacion"+control, uenoObservacion)
 	   
 	   if(valor=="SI"){
 		
@@ -30109,6 +32471,7 @@ function abmcargaropcionespago(CargoAdministrativo,MontoTarjeta,totalDeudaCuota,
 	   });
 	 control=control-1;
 	
+	var ticketUeno = obtenerResumenUenoDesdePagos('tr[name=tdDetallePagoCreditoOffline]');
 	
 	verCerrarEfectoCargando("")
 	obtener_datos_user();
@@ -30189,10 +32552,14 @@ deudaActual=datos["4"];
 		totalinteres=separadordemilesnumero(totalinteres)
 		 // guardarendriverimpresion(idFkVenta, "PAGO CUOTA","pendiente", caja, cod_localFKUSer, diaatrazado, totalventa,totalDescuento,totalpagado,interespagado,totalinteres,TotalInteresActual,deuda,cuotasNro,pagado,nrofactura,userid)
 		 ReImprimirDivTickeFacturaPago(FechaPago,Cajero,plazoRecibo,pagado,diaatrazado,NombreCliente,CiCliente,nrofactura,tipoventa,
-	totalInteres,deudaActual,totalpagado,totalDescuento,totalventa,0,deudaActualsininteres)
+	totalInteres,deudaActual,totalpagado,totalDescuento,totalventa,0,deudaActualsininteres,ticketUeno.comprobante,ticketUeno.estado)
 		 
 		// ImprimirReciboDinero(plazoRecibo,pagado,NombreCliente,CiCliente,nrofactura) 
 		 controlInsercionPagos=false
+				}
+				else if (datos["2"]) {
+					ver_vetana_informativa(datos["2"], "", "error")
+					controlInsercionPagos=false
 				}
 
 			} catch (error) {
@@ -30212,6 +32579,9 @@ function limpiarCamposAnhadirPagosCredito(){
 	document.getElementById('div_opciones_pago_credito').innerHTML = ""
 	document.getElementById('inptTotalaPagarCredito').value = ""
 	document.getElementById('inpTotalPagadoCredito').value = ""
+	document.getElementById('inptUenoComprobanteCredito').value = ""
+	document.getElementById('inptUenoObsCredito').value = ""
+	actualizarCampoComprobanteUenoCredito()
 	elementopagocreditoseleccionado = "";
 }
 
@@ -30263,6 +32633,9 @@ function limpiarEgresoPagoParcial(){
 	document.getElementById('inptBancoEgresoParcial').value=""
 	document.getElementById('inptTransaccionEgresoParcial').value=""
 	document.getElementById('inptTipoPagoCreditoParcial').value=""
+	document.getElementById('inptUenoComprobanteCreditoParcial').value=""
+	document.getElementById('inptUenoObsCreditoParcial').value=""
+	actualizarCampoComprobanteUenoCreditoParcial()
 }
 
 
@@ -30294,6 +32667,13 @@ function anhadirPagoCreditoParcial(){
 	let totalPagado = document.getElementById('inpTotalPagadoCreditoParcial').value;
 	totalaPagar = QuitarSeparadorMilValor(totalaPagar);
 	totalPagado = QuitarSeparadorMilValor(totalPagado);
+	var uenoEsTransferencia = esTipoPagoTransferenciaUenoTexto(tipopago);
+	var uenoComprobante = normalizarComprobanteUenoInput(document.getElementById("inptUenoComprobanteCreditoParcial").value);
+	var uenoObservacion = document.getElementById("inptUenoObsCreditoParcial").value;
+	if (uenoEsTransferencia && uenoComprobante == "") {
+		ver_vetana_informativa("INGRESE EL NRO. DE COMPROBANTE UENO");
+		return;
+	}
 	
 	
 	
@@ -30321,19 +32701,21 @@ function anhadirPagoCreditoParcial(){
 	let fechapago =  anho+"-" + mes + "-" +dia;
 	
   	var codigo=stringGenerador(5);
-	var pagina="<table id='"+codigo+"' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+	var pagina="<table id='"+codigo+"' class='tableRegistroSearch pago-credito-row' border='1' cellspacing='1' cellpadding='5'>"
 +"<tr id='tbSelecRegistro' onclick='SeleccionarPagoCreditoParcialOffline(this)'  name='tdDetallePagoCreditoParcialOffline' >"
 +"<td  id='td_id_1' style='display:none'>"+codigo+"</td>"
 +"<td  id='td_id_2' style='display:none'>"+idtipopago+"</td>"
-+"<td  id='td_datos_1' style='width:33%;'>"+tipopago+"</td>"
-+"<td  id='td_datos_3' style='width:33%'>"+monto+"</td>"
-+"<td  id='td_datos_2' style='width:33%'>"+fechapago+"</td>"
++"<td  id='td_datos_1' style='width:25%;'>"+tipopago+"</td>"
++"<td  id='td_datos_3' style='width:25%'>"+monto+"</td>"
++"<td  id='td_datos_2' style='width:25%'>"+fechapago+"</td>"
++"<td  id='td_datos_10' style='width:25%'>"+(uenoEsTransferencia ? uenoEscapeHtmlPago(uenoComprobante) : "-")+"</td>"
 +"<td  id='td_datos_4' style='display:none'>"+MontoDeposito+"</td>"
 +"<td  id='td_datos_5' style='display:none'>"+MotivoDeposito+"</td>"
 +"<td  id='td_datos_6' style='display:none'>"+nroCuentaDeposito+"</td>"
 +"<td  id='td_datos_7' style='display:none'>"+BancoDeposito+"</td>"
 +"<td  id='td_datos_8' style='display:none'>"+NroBoletaDeposito+"</td>"
 +"<td  id='td_datos_9' style='display:none'>"+valor+"</td>"
++"<td  id='td_datos_11' style='display:none'>"+uenoEscapeHtmlPago(uenoObservacion)+"</td>"
 +"</tr>"
 +"</table>"
 
@@ -30406,6 +32788,16 @@ function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento
 	     //////Datos Egreso
 	   var valor=$(elementohtml).children('td[id="td_datos_9"]').html();
 	   datos.append("valor"+control, valor)
+
+	   var uenoComprobante=$(elementohtml).children('td[id="td_datos_10"]').text();
+	   uenoComprobante = normalizarComprobanteUenoInput(uenoComprobante);
+	   if (uenoComprobante == "-") {
+		   uenoComprobante = "";
+	   }
+	   datos.append("ueno_comprobante"+control, uenoComprobante)
+
+	   var uenoObservacion=$(elementohtml).children('td[id="td_datos_11"]').text();
+	   datos.append("ueno_observacion"+control, uenoObservacion)
 	   
 	   if(valor=="SI"){
 		
@@ -30432,6 +32824,7 @@ function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento
 	   });
 	 control=control-1;
 	
+	var ticketUeno = obtenerResumenUenoDesdePagos(name);
 	
 	
 	obtener_datos_user();
@@ -30536,7 +32929,7 @@ function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento
     // guardarendriverimpresion(idFkVenta, "PAGO CUOTA","pendiente", caja, cod_localFKUSer, diaatrazado, subtotal,descuento,totalpagado,interespagado,totalinteres,TotalInteresActual,deudaActual,cuotasNro,total,nrofactura,userid)
 	
     ReImprimirDivTickeFacturaPago(FechaPago,Cajero,plazoRecibo,pagado,diaatrazado,nombrecliente,cicliente,nrofactura,tipoventa,
-	totalinteres,deudaActual,totalpagado,TotalDescuento,totalventa,0,deudaActualsininteres)
+	totalinteres,deudaActual,totalpagado,TotalDescuento,totalventa,0,deudaActualsininteres,ticketUeno.comprobante,ticketUeno.estado)
 	
 	document.getElementById('inptMontoCargoAdministrativoCuotaPago').value = "" ;
 
@@ -30568,6 +32961,9 @@ function limpiarCamposAnhadirPagosCreditoParcial(){
 	document.getElementById('div_opciones_pago_credito_parcial').innerHTML = ""
 	document.getElementById('inptTotalaPagarCreditoParcial').value = ""
 	document.getElementById('inpTotalPagadoCreditoParcial').value = ""
+	document.getElementById('inptUenoComprobanteCreditoParcial').value = ""
+	document.getElementById('inptUenoObsCreditoParcial').value = ""
+	actualizarCampoComprobanteUenoCreditoParcial()
 	elementopagocreditoparcialseleccionado = "";
 }
 

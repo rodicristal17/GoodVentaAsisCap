@@ -4011,9 +4011,30 @@ function obtenerFilasArqueoOrdenadasParaImpresion(){
 		return "";
 	}
 
+	function filaVisibleParaImpresion(fila){
+		return !fila.classList.contains("arqueo-detail-row")
+			&& !fila.classList.contains("arqueo-empty-row")
+			&& !fila.classList.contains("arqueo-loading-row");
+	}
+
+	function limpiarFilaArqueoParaImpresion(fila){
+		var clon = fila.cloneNode(true);
+		if(clon.classList.contains("arqueo-section-row") && clon.cells[0]){
+			clon.cells[0].colSpan = 13;
+		}
+		Array.prototype.slice.call(clon.cells).forEach(function(celda){
+			if(celda.classList.contains("arqueo-actions-print") || celda.querySelector(".arqueo-actions")){
+				celda.parentNode.removeChild(celda);
+			}
+		});
+		return clon;
+	}
+
 	function celdasVisibles(fila){
 		return Array.prototype.filter.call(fila.cells, function(celda){
-			return ((celda.getAttribute("style") || "").toLowerCase().indexOf("display:none") === -1);
+			return ((celda.getAttribute("style") || "").toLowerCase().indexOf("display:none") === -1)
+				&& !celda.classList.contains("arqueo-actions-print")
+				&& !celda.querySelector(".arqueo-actions");
 		});
 	}
 
@@ -4056,11 +4077,11 @@ function obtenerFilasArqueoOrdenadasParaImpresion(){
 
 	function compararFilas(filaA, filaB){
 		var columnasOrden = [
-			{ indice: 11, tipo: "texto" },
-			{ indice: 0, tipo: "texto" },
-			{ indice: 5, tipo: "fecha" },
-			{ indice: 3, tipo: "texto" },
-			{ indice: 4, tipo: "numero" }
+			{ indice: 9, tipo: "texto" },
+			{ indice: 1, tipo: "texto" },
+			{ indice: 0, tipo: "fecha" },
+			{ indice: 4, tipo: "texto" },
+			{ indice: 5, tipo: "numero" }
 		];
 
 		for(var i = 0; i < columnasOrden.length; i++){
@@ -4076,13 +4097,16 @@ function obtenerFilasArqueoOrdenadasParaImpresion(){
 	var grupos = [];
 	var grupoActual = { titulo: null, filas: [] };
 	Array.prototype.forEach.call(tablaArqueo.rows, function(fila){
+		if(!filaVisibleParaImpresion(fila)){
+			return;
+		}
 		if(fila.classList.contains("arqueo-section-row")){
 			if(grupoActual.titulo || grupoActual.filas.length > 0){
 				grupos.push(grupoActual);
 			}
-			grupoActual = { titulo: fila.cloneNode(true), filas: [] };
+			grupoActual = { titulo: limpiarFilaArqueoParaImpresion(fila), filas: [] };
 		}else{
-			grupoActual.filas.push(fila.cloneNode(true));
+			grupoActual.filas.push(limpiarFilaArqueoParaImpresion(fila));
 		}
 	});
 	if(grupoActual.titulo || grupoActual.filas.length > 0){
@@ -4103,7 +4127,16 @@ function obtenerFilasArqueoOrdenadasParaImpresion(){
 
 function obtenerTablaArqueoOrdenadaParaImpresion(encabezadoArqueo){
 	var filasArqueo = obtenerFilasArqueoOrdenadasParaImpresion();
-	var encabezado = encabezadoArqueo ? encabezadoArqueo.outerHTML : "";
+	var encabezado = "";
+	if(encabezadoArqueo){
+		var encabezadoClonado = encabezadoArqueo.cloneNode(true);
+		Array.prototype.slice.call(encabezadoClonado.cells).forEach(function(celda){
+			if(celda.classList.contains("arqueo-actions-print")){
+				celda.parentNode.removeChild(celda);
+			}
+		});
+		encabezado = encabezadoClonado.outerHTML;
+	}
 	return "<table class='tableCabeceraRegistro' style='width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;'>"
 		+"<thead style='display:table-header-group;'>"+encabezado+"</thead>"
 		+"<tbody>"+filasArqueo+"</tbody>"
@@ -4149,21 +4182,24 @@ function obtenerCabeceraArqueoParaImpresion(fechaimpresion){
 		+tdFiltro("Local", obtenerTextoSelect("inptlocalCobrosRealizados3", "TODOS"))
 		+tdFiltro("Fecha Inicio", obtenerValor("inptBuscarCobrosRealizadosF1", "TODOS"))
 		+tdFiltro("Fecha Fin", obtenerValor("inptBuscarCobrosRealizadosF2", "TODOS"))
-		+tdFiltro("Fecha Facturacion Inicio", obtenerValor("inptBuscarCobrosRealizadosFF1", "TODOS"))
-		+tdFiltro("Fecha Facturacion Fin", obtenerValor("inptBuscarCobrosRealizadosFF2", "TODOS"))
+		+tdFiltro("Metodo", obtenerTextoSelect("inptBuscarCobrosRealizados5", "TODOS"))
+		+tdFiltro("Busqueda general", obtenerValor("inptBuscarCobrosRealizadosGeneral", "TODOS"))
 		+tdFiltro("Fecha de Impresion", fechaimpresion)
 		+"</tr>"
 		+"<tr>"
+		+tdFiltro("Fecha Facturacion Inicio", obtenerValor("inptBuscarCobrosRealizadosFF1", "TODOS"))
+		+tdFiltro("Fecha Facturacion Fin", obtenerValor("inptBuscarCobrosRealizadosFF2", "TODOS"))
 		+tdFiltro("Cliente", obtenerValor("inptBuscarCobrosRealizados1", "TODOS"))
 		+tdFiltro("Documento", obtenerValor("inptBuscarCobrosRealizados7", "TODOS"))
 		+tdFiltro("Nro Factura", obtenerValor("inptBuscarCobrosRealizados2", "TODOS"))
 		+tdFiltro("Fecha Pago", obtenerValor("inptBuscarCobrosRealizados3", "TODOS"))
-		+tdFiltro("Metodo", obtenerTextoSelect("inptBuscarCobrosRealizados5", "TODOS"))
 		+tdFiltro("Condicion", obtenerTextoSelect("inptBuscarCobrosRealizados6", "TODOS"))
 		+tdFiltro("Cobrador", obtenerValor("inptBuscarCobrosRealizados4", "TODOS"))
+		+tdFiltro("Caja", obtenerValor("inptBuscarCobrosRealizadosCaja", "TODOS"))
+		+tdFiltro("Lote Caja", obtenerValor("inptBuscarCobrosRealizadosLote", "TODOS"))
 		+"</tr>"
 		+"</table>"
-		+"<br><br><center><h1 class='pTituloD'>COBROS REALIZADOS</h1><br></center>";
+		+"<br><br><center><h1 class='pTituloD'>CONTROL DE COBROS REALIZADOS</h1><br></center>";
 }
 
 function ordenimpresion(ventana){
@@ -4701,7 +4737,7 @@ paginaPie =
 +"<p class='pTituloC' >"+ document.getElementById("inptTotalRegistroProductoComprados").value+"</p>"
 +"</td>"
 +"<td style='width:20%;text-align:left'>"
-+"<p class='pTituloC'><b>Total Compra</b></p>"
++"<p class='pTituloC'><b>Total recaudado</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalRegistroProductosComprados").value+"</p>"
 +"</td>"
 +"<td style='width:60%;text-align:left'>"
@@ -4720,15 +4756,29 @@ if (ventana == "arqueo") {
 paginaPie =
 "<br><br><table class='TableRepor0' style='width:100%'>"
 +"<tr>"
-+"<td style='width:20%;text-align:left'>"
++"<td style='width:14%;text-align:left'>"
 +"<p class='pTituloC'><b>Registro </b></p>"
 +"<p class='pTituloC' >"+ document.getElementById("inptTotalRegistoArqueo").value+"</p>"
 +"</td>"
-+"<td style='width:20%;text-align:left'>"
-+"<p class='pTituloC'><b>Total Compra</b></p>"
++"<td style='width:18%;text-align:left'>"
++"<p class='pTituloC'><b>Total recaudado</b></p>"
 +"<p class='pTituloC' >"+document.getElementById("inptTotalArqueo").value+"</p>"
 +"</td>"
-+"<td style='width:60%;text-align:left'>"
++"<td style='width:17%;text-align:left'>"
++"<p class='pTituloC'><b>Efectivo</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptTotalEfectivoArqueo").value+"</p>"
++"</td>"
++"<td style='width:17%;text-align:left'>"
++"<p class='pTituloC'><b>Tarjeta</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptTotalTarjetaArqueo").value+"</p>"
++"</td>"
++"<td style='width:17%;text-align:left'>"
++"<p class='pTituloC'><b>Transferencia</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptTotalTransferenciaArqueo").value+"</p>"
++"</td>"
++"<td style='width:17%;text-align:left'>"
++"<p class='pTituloC'><b>Otros</b></p>"
++"<p class='pTituloC' >"+document.getElementById("inptTotalOtrosArqueo").value+"</p>"
 +"</td>"
 +"</tr>"
 +"</table>"
@@ -6108,7 +6158,7 @@ document.getElementById("DivImprimir").innerHTML=ficha;
 let TituloRecibo="";
 
 
-function ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazado,NombreCliente,CiCliente,NroRecibo,tipoventa,totalInteres,deudaActual,totalpagado,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres){
+function ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazado,NombreCliente,CiCliente,NroRecibo,tipoventa,totalInteres,deudaActual,totalpagado,totaldescuento,TotalVenta,InteresActual,deudaActualsininteres,ComprobanteUeno,EstadoUeno){
 
 
 // if(cod_localFKUSer =="3" || cod_localFKUSer =="4" || cod_localFKUSer =="5"){
@@ -6116,6 +6166,27 @@ function ReImprimirDivTickeFacturaPago(Fecha,Cajero,CuotasNro,Pagado,DiasAtrazad
 // }else{
 	// TituloRecibo="ASISCAP";
 // }
+
+ComprobanteUeno = String(ComprobanteUeno || "");
+EstadoUeno = String(EstadoUeno || "");
+var limpiarTextoTicket = function(valor) {
+	return String(valor || "").replace(/[&<>"']/g, function (char) {
+		return {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': "&quot;",
+			"'": "&#039;"
+		}[char];
+	});
+};
+var bloqueUeno = "";
+if (ComprobanteUeno != "") {
+	bloqueUeno = "<div style='width:90%;border:solid 1px #3f7ba3;background:#eef7ff;padding:6px;margin-top:6px;font-size:12px;text-align:left;'>"
+	+"<b>Transferencia bancaria:</b> pago registrado con comprobante Ueno <b>"+limpiarTextoTicket(ComprobanteUeno)+"</b>."
+	+"<br><b>Estado:</b> "+limpiarTextoTicket(EstadoUeno || "EN VERIFICACION BANCARIA")
+	+"</div>";
+}
 
 
 pagina="<br><div style='background-color:#fff;'>"
@@ -6199,6 +6270,7 @@ pagina="<br><div style='background-color:#fff;'>"
 +"</td>"
 +"</tr></table>"
 +"</div>"
++bloqueUeno
 +"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
 
 +"</div>"
