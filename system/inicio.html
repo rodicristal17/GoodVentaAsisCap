@@ -22,7 +22,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
+<<<<<<< Updated upstream
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=insumos-columnas-recordatorio-entrada-20260610" />
+=======
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gestion-personal-agenda-dashboard-equal-20260613" />
+>>>>>>> Stashed changes
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignar-tratamiento-inline-20260606" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -41,18 +45,27 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
-<script src="/GoodVentaAsisCap/js_system/abm.js?x=asistencia-gestion-20260608"></script>
+<script src="/GoodVentaAsisCap/js_system/abm.js?x=cobros-realizados-console-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
+<<<<<<< Updated upstream
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=funcionario-editar-seleccion-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=20260529b"></script>
+=======
+
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=cobros-realizados-console-20260612"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=cobrar-cuota-20260611"></script>
+>>>>>>> Stashed changes
 
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
-<script src="/GoodVentaAsisCap/js_system/minmizar.js?x=x-ios.v2"></script>
+<script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
+<script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-seguro-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-json-fix-20260608"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=agenda-dia-porcentaje-20260602"></script>   
+<script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
 <script src="../js_system/abmAsistencia.js?x=recordatorio-entrada-20260609"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
@@ -88,9 +101,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     gap: 10px;
     width: 100%;
     min-height: 66px;
+    max-height: 72px;
     margin: 0;
     padding: 8px 18px;
     box-sizing: border-box;
+    overflow: visible;
     border-bottom: 1px solid rgba(148, 163, 184, 0.32);
     background: rgba(248, 250, 252, 0.92);
     backdrop-filter: blur(14px);
@@ -105,6 +120,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
   }
 
   #principalMenub .dashboard-topbar__center {
+<<<<<<< Updated upstream
     position: relative;
     left: auto;
     top: auto;
@@ -113,6 +129,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     min-width: 0;
     justify-self: center;
     transform: none;
+=======
+    position: absolute;
+    left: 44%;
+    top: 8px;
+    z-index: 2;
+    width: clamp(220px, 20vw, 280px);
+    transform: translateX(-50%);
+>>>>>>> Stashed changes
   }
 
   #principalMenub .dashboard-access-search--topbar {
@@ -185,7 +209,107 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     justify-content: flex-end;
     min-width: 0;
     margin-left: auto;
+<<<<<<< Updated upstream
     max-width: 100%;
+=======
+    overflow: visible;
+  }
+
+  #principalMenub .header-asistencia-compacta {
+    position: relative;
+    overflow: visible;
+  }
+
+  #principalMenub .header-asistencia-chip {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    padding: 0;
+    border: 1px solid #d8e2ee;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #2563eb;
+    cursor: pointer;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 5px 12px rgba(15, 23, 42, 0.08);
+    box-sizing: border-box;
+  }
+
+  #principalMenub .header-asistencia-chip.is-visible {
+    display: inline-flex;
+  }
+
+  #principalMenub .header-asistencia-chip.is-alerta {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  #principalMenub .header-asistencia-chip.is-open {
+    border-color: #93c5fd;
+    background: #2563eb;
+    color: #ffffff;
+  }
+
+  #principalMenub .header-asistencia-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 130;
+    width: min(430px, calc(100vw - 28px));
+    display: none;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 9px;
+    padding: 14px 14px 12px;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #60a5fa;
+    border-radius: 12px;
+    background: #f8fbff;
+    color: #172033;
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.18);
+    box-sizing: border-box;
+  }
+
+  #principalMenub .header-asistencia-popover.is-visible {
+    display: grid;
+  }
+
+  #principalMenub .header-asistencia-popover__close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  #principalMenub .header-asistencia-popover__close:hover {
+    background: #e0ecff;
+    color: #1d4ed8;
+  }
+
+  #principalMenub .header-asistencia-popover__content {
+    padding-right: 24px;
+>>>>>>> Stashed changes
   }
 
   body > .principal2,
@@ -248,7 +372,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
     display: grid;
+<<<<<<< Updated upstream
     grid-template-columns: max-content minmax(0, auto) auto max-content;
+=======
+    grid-template-columns: max-content auto max-content;
+>>>>>>> Stashed changes
     align-items: center;
     gap: 10px;
     width: auto;
@@ -256,7 +384,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     max-width: none;
     margin: 0;
     min-height: 46px;
+    max-height: 62px;
     padding: 5px 8px 5px 12px;
+    overflow: visible;
     border-color: #d8e2ee !important;
     border-radius: 14px !important;
     background: #ffffff !important;
@@ -293,11 +423,19 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
   }
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__asistencia {
+<<<<<<< Updated upstream
     grid-template-columns: 132px minmax(130px, 170px);
     grid-template-rows: auto auto;
     align-items: center;
     gap: 4px 8px;
     min-width: 0;
+=======
+    grid-template-columns: 132px minmax(180px, 220px) 30px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 358px;
+>>>>>>> Stashed changes
   }
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__btn {
@@ -327,6 +465,16 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     border-radius: 10px;
     background: #f8fafc;
     box-sizing: border-box;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .header-asistencia-chip {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .header-asistencia-popover {
+    right: 0;
   }
 
   #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-copy {
@@ -390,6 +538,24 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     background: #16a34a;
   }
 
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--pausa .perfil-widget__progreso-barra span,
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--pendiente .perfil-widget__progreso-barra span {
+    background: #94a3b8;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--incompleta .perfil-widget__progreso-barra span,
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--observado .perfil-widget__progreso-barra span {
+    background: #f97316;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--completa .perfil-widget__progreso-barra span {
+    background: #16a34a;
+  }
+
+  #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--extra .perfil-widget__progreso-barra span {
+    background: #0ea5e9;
+  }
+
   #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada--finalizada .perfil-widget__progreso-barra span {
     background: #64748b;
   }
@@ -429,7 +595,12 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
 
     #principalMenub .dashboard-topbar {
+<<<<<<< Updated upstream
       grid-template-columns: 1fr;
+=======
+      flex-wrap: wrap;
+      max-height: none;
+>>>>>>> Stashed changes
     }
 
     #principalMenub .dashboard-topbar__center {
@@ -465,6 +636,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
       width: auto;
       max-width: none;
+      max-height: none;
     }
   }
 
@@ -510,14 +682,15 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     }
 
     #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada {
-      grid-template-columns: max-content auto auto;
+      grid-template-columns: max-content minmax(0, 1fr) max-content;
       width: 100%;
       max-width: none;
+      max-height: none;
     }
 
     #principalMenub .dashboard-topbar__jornada .perfil-widget__asistencia {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto;
+      grid-template-columns: minmax(0, 1fr) 30px;
+      grid-template-rows: auto auto auto;
       min-width: 0;
     }
 
@@ -526,6 +699,17 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada {
       grid-column: 1;
       grid-row: auto;
+    }
+
+    #principalMenub .dashboard-topbar__jornada .header-asistencia-chip {
+      grid-column: 2;
+      grid-row: 1 / 3;
+    }
+
+    #principalMenub .header-asistencia-popover {
+      left: 0;
+      right: 0;
+      width: auto;
     }
 
     #principalMenub .dashboard-topbar__jornada .perfil-widget__registro {
@@ -1324,6 +1508,22 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuCobrarCuota1' data-access-key="cobrar_cuota"
+onclick='verCerrarCobrarCuota("1")' style='width:20%;text-align:center' title='Registrar pago de una cuota pendiente'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/pago-en-efectivo.png' />
+<p class='pTitulo4'>Cobrar cuota</p>
+<center>
+<div id='divMinimizadoCobrarCuota1'
+style='display:none' class='divMinimizado'>
+</div>
+</center>
+</td>
+</tr>
+</table>
+
 <table  class='divMenub' id='divMenuCobrosRealizado1' data-access-key="cobros_realizados"
 onclick='verCerrarInformeArqueo()'  style='width:20%;text-align:center'>
 <tr>
@@ -1565,11 +1765,16 @@ style='display:none' class='divMinimizado'>
             <div>
                 <p class="perfil-tareas__eyebrow">Jornada laboral</p>
                 <p class="perfil-tareas__titulo">Agenda del día</p>
-                <p class="perfil-tareas__subtitulo">Actividades fijadas por el Administrador</p>
+                <p class="perfil-tareas__subtitulo">Tus actividades aparecen autom&aacute;ticamente seg&uacute;n tu rol, local y horario laboral.</p>
             </div>
 
-            <div class="perfil-tareas__contador">
-                <span id="spanTareasPendientes">0%</span> completadas
+            <div class="perfil-tareas__header-actions">
+                <span class="perfil-tareas__actualizando" id="spanAgendaDiaActualizando" style="display:none;">Actualizando...</span>
+                <button type="button" class="perfil-tareas__quick-btn" id="btnAgendaRapidaHeader" onclick="verFormularioTareaRapidaAgenda(true)">+ Agregar tarea r&aacute;pida</button>
+                <div class="perfil-tareas__contador">
+                    <span id="spanTareasPendientes">Sin tareas</span>
+                    <small id="spanTareasPendientesLabel">para hoy</small>
+                </div>
             </div>
 
         </div>
@@ -1593,26 +1798,45 @@ style='display:none' class='divMinimizado'>
             </div>
         </div>
 
+        <div class="perfil-tareas__quick-form" id="formTareaRapidaAgenda" style="display:none;">
+            <div class="perfil-tareas__quick-grid">
+                <input type="text" class="inputText" id="inptTituloTareaRapidaAgenda" placeholder="T&iacute;tulo de la tarea">
+                <div class="perfil-tareas__time-field">
+                    <input type="time" class="inputText" id="inptHoraTareaRapidaAgenda">
+                    <button type="button" onclick="usarHoraActualTareaRapidaAgenda()">Ahora</button>
+                </div>
+                <select class="inputText" id="inptPrioridadTareaRapidaAgenda">
+                    <option value="Normal">Normal</option>
+                    <option value="Importante">Importante</option>
+                </select>
+            </div>
+            <textarea class="inputText perfil-tareas__quick-textarea" id="inptComentarioTareaRapidaAgenda" placeholder="Comentario opcional"></textarea>
+            <div class="perfil-tareas__quick-actions">
+                <button type="button" id="btnGuardarTareaRapidaAgenda" onclick="guardarTareaRapidaAgenda()">Guardar</button>
+                <button type="button" onclick="verFormularioTareaRapidaAgenda(false)">Cancelar</button>
+            </div>
+        </div>
+
         <div class="perfil-tareas__lista" id="listaTareasAdministrador">
             <!-- Las tareas se cargan desde JavaScript -->
         </div>
 
         <div class="perfil-tareas__vacio" id="tareasAdministradorVacio">
-            No tenes actividades asignadas para hoy.
+            Hoy no ten&eacute;s actividades asignadas.
         </div>
 
     </div>
     <!-- FIN AGENDA DIARIA ASIGNADA POR EL ADMINISTRADOR -->
 
 
-    <section class="perfil-widget__jornada">
+    <section class="perfil-widget__jornada header-asistencia-compacta">
 
         <div class="perfil-widget__clock">
             <input type="text" id="inptreloj2" class="inputReloj2 perfil-widget__hora" readonly />
             <p class="perfil-widget__fecha" id="pfechaactual"></p>
         </div>
 
-        <div class="perfil-widget__asistencia">
+        <div class="perfil-widget__asistencia header-asistencia-status">
             <input id="btnRegistrarAsistencia"
                    type="button"
                    value="Marcar entrada"
@@ -1625,22 +1849,30 @@ style='display:none' class='divMinimizado'>
             <div class="perfil-widget__progreso-jornada perfil-widget__progreso-jornada--sin-jornada" id="progresoJornadaProgramadaTopbar" aria-live="polite">
                 <div class="perfil-widget__progreso-copy">
                     <span id="estadoProgresoJornadaTopbar">Hoy sin jornada programada</span>
-                    <strong id="textoProgresoJornadaTopbar">Avance horario programado &middot; 0%</strong>
+                    <strong id="textoProgresoJornadaTopbar">Avance real seg&uacute;n marcaciones &middot; 0%</strong>
                 </div>
                 <div class="perfil-widget__progreso-barra" aria-hidden="true">
                     <span id="barraProgresoJornadaTopbar"></span>
                 </div>
             </div>
+            <button type="button"
+                    class="header-asistencia-chip"
+                    id="btnDetalleRecordatorioEntrada"
+                    onclick="toggleRecordatorioEntradaPendiente(event)"
+                    aria-controls="recordatorioEntradaPendiente"
+                    aria-expanded="false"
+                    title="Ver detalle de asistencia">i</button>
         </div>
 
-        <div class="perfil-widget__recordatorio-entrada" id="recordatorioEntradaPendiente" aria-live="polite">
-            <div class="perfil-widget__recordatorio-copy">
+        <div class="perfil-widget__recordatorio-entrada header-asistencia-popover" id="recordatorioEntradaPendiente" aria-live="polite" role="dialog" aria-label="Detalle de entrada pendiente">
+            <button type="button" class="header-asistencia-popover__close" onclick="cerrarRecordatorioEntradaPendienteManual(event)" aria-label="Cerrar detalle de asistencia">&times;</button>
+            <div class="perfil-widget__recordatorio-copy header-asistencia-popover__content">
                 <strong>Entrada pendiente</strong>
                 <span>Tu jornada programada est&aacute; en curso y a&uacute;n no registraste entrada.</span>
                 <small>Pod&eacute;s marcar tu entrada ahora o continuar usando el sistema. Esta acci&oacute;n quedar&aacute; registrada para control administrativo.</small>
-                <small>La barra indica avance horario programado, no asistencia confirmada.</small>
+                <small>La barra indica presencia real acumulada seg&uacute;n marcaciones.</small>
             </div>
-            <div class="perfil-widget__recordatorio-actions">
+            <div class="perfil-widget__recordatorio-actions header-asistencia-popover__actions">
                 <button type="button" class="perfil-widget__recordatorio-primary" onclick="marcarEntradaDesdeRecordatorio()">Marcar entrada</button>
                 <button type="button" onclick="posponerRecordatorioEntradaPendiente()">Recordarme en 10 min</button>
                 <button type="button" onclick="continuarSinMarcarEntradaPendiente()">Continuar sin marcar</button>
@@ -2272,6 +2504,21 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuCobrarCuota2'
+onclick='verCerrarCobrarCuota("1")' style='text-align:center' title='Registrar pago de una cuota pendiente'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/pago-en-efectivo.png' />
+<p class='pTitulo4'>Cobrar cuota</p>
+<center>
+<div id='divMinimizadoCobrarCuota2' style='display:none'
+class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
 <table class='divMenub' id='divMenuCuentasPagar'
 onclick='verCerrarInformeCuentasAPagar(1)' style=';text-align:center'>
 <tr>
@@ -2294,9 +2541,26 @@ onclick="verCerrarInformeConsultaCaja(1)" style="text-align:center">
 <td>
 <img class="imgIconoMenu"
 src="/GoodVentaAsisCap/iconos/informedecaja.png">
-<p class="pTitulo4">Consulta de cajas</p>
+<p class="pTitulo4">Control de caja</p>
 <center>
 <div id='divMinimizadoConsultarCaja'
+style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</tbody>
+</table>
+
+<table class="divMenub" id='divMenuConciliacionUeno'
+onclick="verCerrarConciliacionUeno(1)" style="text-align:center">
+<tbody>
+<tr>
+<td>
+<img class="imgIconoMenu"
+src="/GoodVentaAsisCap/iconos/banco.png">
+<p class="pTitulo4">Conciliacion Ueno</p>
+<center>
+<div id='divMinimizadoConciliacionUeno'
 style='display:none' class='divMinimizado'></div>
 </center>
 </td>
@@ -3586,7 +3850,7 @@ id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display
     </div>
   </div>
   <div class='jornada-mes-resumen-card__metrics' id='resumenJornadaMesMetricasUsuario'>Sin jornada laboral esperada cargada.</div>
-  <div class='jornada-mes-resumen-card__list' id='resumenJornadaMesListaUsuario'>
+  <div class='jornada-mes-resumen-card__list jornada-mensual-lista' id='resumenJornadaMesListaUsuario'>
     <div class='jornada-mes-resumen-card__empty'>La previsualizaci&oacute;n se actualiza con la plantilla semanal activa.</div>
   </div>
   <div class='jornada-mes-resumen-card__actions'>
@@ -4397,50 +4661,57 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <tr>
 <td>
 <center>
-<div class='divAbms' style='display:;width:800px'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Datos <b style='font-size: 30px;' >Accesos</b> y <b style='font-size: 30px;' >Restrinciones</b></p>
-</td>
-<td style='width:5%'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='verCerrarAccesoUsuario("2")' />
-</td>
-</tr>
-</table>
+<div class='divAbms accesos-modal' style='display:;'>
+<div class='accesos-header'>
+<div class='accesos-header-main'>
+<p class='pTituloB accesos-title'>Administrar accesos y restricciones</p>
+<p class='accesos-subtitle'>Gestiona los permisos efectivos asignados a este usuario.</p>
+</div>
+<button type='button' class='accesos-close-btn' title='Cerrar Ventana' onclick='verCerrarAccesoUsuario("2")'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar' />
+</button>
+</div>
  
 
-<center>
-<div class='divMenuf'>
-<table style='width:100%'>
-<tr>
-<td>
-<p class='pTituloC' >Usuario :</p>
-<input type="text" class="inputTextDisable" id="inpt_user_selecc"
-autocomplete="off" style='width:250px' disabled>
-</td>
-<td>
-<p class='pTituloC' >Nivel de Acceso :</p>
-<input type="text" class="inputTextDisable" id="inpt_nivel_selecc"
-autocomplete="off" style='width:50px' disabled>
-</td>
-</tr>
-</table>
+<div class='divMenuf accesos-summary'>
+<label class='accesos-summary-card'>
+<span>Usuario</span>
+<input type="text" class="inputTextDisable" id="inpt_user_selecc" autocomplete="off" disabled>
+</label>
+<label class='accesos-summary-card accesos-summary-card-small'>
+<span>Permisos habilitados</span>
+<span class='accesos-percent-field'>
+<input type="text" class="inputTextDisable" id="inpt_nivel_selecc" autocomplete="off" disabled>
+<b>%</b>
+</span>
+</label>
 </div>
-<div class='divMenuf'>
+<div class='divMenuf accesos-body'>
 <center>
 <table style="width:100%">
 <tbody><tr>
 <td style="width:99%;text-align:left">
 <p class="pTituloC">Buscar :</p>
-<input class="inputText" type="text" placeholder="Descripción" id="inptBuscarAccesos" onkeyup="if(event.keyCode == 13){buscarAccesosUser()}" style="width: 322px;">
-<input type="button" value="Buscar" class="btn4" onclick="buscarAccesosUser()">
+<input class="inputText" type="text" placeholder="Buscar por permiso, formulario o codigo" id="inptBuscarAccesos" onkeyup="if(event.keyCode == 13){buscarAccesosUser()}">
+<input type="button" value="Buscar" class="btn4 accesos-search-btn" onclick="buscarAccesosUser()">
 </td>
 <td>
 </td>
 </tr>
 </tbody></table>
+<div class='accesos-actions'>
+<button type='button' class='btn4 accesos-action-btn accesos-action-enable' id='btnMarcarAccesosVisibles' onclick='marcarAccesosVisibles("SI")'>Marcar visibles</button>
+<button type='button' class='btn4 accesos-action-btn accesos-action-disable' id='btnDesmarcarAccesosVisibles' onclick='marcarAccesosVisibles("NO")'>Desmarcar visibles</button>
+</div>
+<div class='accesos-toolbar-meta'>
+<p class='accesos-counter' id='lblContadorAccesosVisibles'>Seleccionados: 0 de 0 visibles</p>
+<p class='accesos-status' id='lblEstadoAccesosVisibles'></p>
+<p class='accesos-autosave-info'>Los cambios se guardan automaticamente al marcar o desmarcar un permiso.</p>
+</div>
+<div class='accesos-table-head'>
+<span>Formulario / permiso</span>
+<span>Accion</span>
+</div>
 <table class="tableCabeceraRegistro">
 <tbody>
 <tr>
@@ -4457,7 +4728,10 @@ ACCION
 </center>
  
 </div>
-</center>
+<div class='accesos-footer'>
+<p>Estas acciones solo afectan los permisos visibles en la lista actual.</p>
+<button type='button' class='btn4 accesos-footer-close' onclick='verCerrarAccesoUsuario("2")'>Cerrar</button>
+</div>
 </div>
 
 </center>
@@ -8634,7 +8908,7 @@ title='Cerrar Ventana' onclick='verCerrarHistorialCompra()' />
 <input class='inputText' type='Date' id='inptBuscarInfHistorialCompraF1' style='width:135px' />
 </td>
 <td style='width:35%;'>
-<p class='pTituloC' >Fecha Fin</p>
+<p class='pTituloC' >Fecha fin</p>
 <input class='inputText' type='Date' id='inptBuscarInfHistorialCompraF2' style='width:135px' />
 </td>
 <td style='width:70%;text-align:right'>
@@ -12480,11 +12754,11 @@ onclick='vercerrarActualizarCobrador("1")'>
 <tr>
 <td>
 <center>
-<div class='divPrincipalrepor' style='min-height:500px;width:1200px'>
-<table class='tableMenuZ'>
+<div class='divPrincipalrepor cuentas-cobrar-modal' style='min-height:500px;width:1200px'>
+<table class='tableMenuZ cuentas-cobrar-header'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Cuentas a <b style='font-size: 30px;' >Cobrar</b></p>
+<p class='pTituloB'>Cuentas a Cobrar</p>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
@@ -12495,10 +12769,14 @@ title='Minimizar Ventana' onclick='minimizarcuentascobrar()' />
 title='Cerrar Ventana' onclick='verCerrarCuentasACobrar()' />
 </td>
 </tr>
-</table> 
+</table>
+<div class='cuentas-cobrar-guide'>
+<b>Guia rapida</b>
+<span>Filtra por fecha o por datos del cliente, selecciona una cuenta y usa Registrar pago. Ver venta abre el detalle de la operacion.</span>
+</div>
 <center>
 
-<table class='divMenuf' style='width:98%;'>
+<table class='divMenuf cuentas-cobrar-filters' style='width:98%;'>
 <tr>
 <td style='width:13%;'>
 <p class='pTituloC' >Fecha inicio
@@ -12514,40 +12792,40 @@ id='inptBuscarCuentasAcobrarF2' style='width:135px' />
 </td>
 <td style='width:70%;text-align:right'>
 
-<input type="button" value="Buscar" class="btn4"
+<input type="button" value="Buscar cuentas" class="btn4 cuentas-cobrar-search"
 onclick='buscarcuentaacobrar()'>
 </td>
 </tr>
 </table>
 
-<div class='divMenuf' style='width:98%' >
-<table style="width:100%">
+<div class='divMenuf cuentas-cobrar-card' style='width:98%' >
+<table style="width:100%" class='cuentas-cobrar-toolbar'>
 <tbody><tr>
 <td style="width:50%;text-align:left">
-<input type="button" value="Imprimir" class="btn4" onclick='ordenimpresion("cuentasacobrar")' style="width:100px;background-color: rgb(58 58 58);">
+<input type="button" value="Imprimir listado" class="btn4 cuentas-cobrar-print" onclick='ordenimpresion("cuentasacobrar")' style="width:130px;background-color: rgb(58 58 58);">
 </td>
 <td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltrosCuentasACobrar(1)" style='width: 80px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar1"
-checked> Todos</p>
+<p class="pTitulo8 cuentas-cobrar-check" onclick="checkfiltrosCuentasACobrar(1)" style='width: 80px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar1"
+checked> Todas</p>
 </td>
 <td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltrosCuentasACobrar(2)" style='width: 120px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar2"> Rango
-de Fecha </p>
+<p class="pTitulo8 cuentas-cobrar-check" onclick="checkfiltrosCuentasACobrar(2)" style='width: 120px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar2"> Rango
+de fecha </p>
 </td>
 <td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltrosCuentasACobrar(3)" style='width: 155px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar3"> Menor
-a la fecha Inicio.</p>
+<p class="pTitulo8 cuentas-cobrar-check" onclick="checkfiltrosCuentasACobrar(3)" style='width: 155px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar3"> Hasta
+fecha inicio</p>
 </td>
 <td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltrosCuentasACobrar(4)" style='width: 155px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar4"> Mayor
-a la fecha Inicio</p>
+<p class="pTitulo8 cuentas-cobrar-check" onclick="checkfiltrosCuentasACobrar(4)" style='width: 155px;'> <input type="checkbox" id="checkfiltrosCuentasACobrar4"> Desde
+fecha inicio</p>
 </td>
 </tr>
 </tbody>
 </table>
-<div style='overflow:auto;' class='divScrollhideen'
+<div style='overflow:auto;' class='divScrollhideen cuentas-cobrar-table-head-wrap'
 id='TableScroollCuentasACobrar1'>
-<table class="tableCabeceraRegistro" style='width:1600px;'
+<table class="tableCabeceraRegistro cuentas-cobrar-table-head" style='width:1600px;'
 id='tdTituloImpreCuenta'>
 <tbody>
 <tr>
@@ -12557,16 +12835,17 @@ id='tdTituloImpreCuenta'>
 <td class="td_registro" style="width:5%;">NRO VENTA</td>
 <td class="td_registro" style="width:10%;">PRODUCTO</td>
 <td class="td_registro" style="width:15%;">FECHA VENC.</td>
-<td class="td_registro" style="width:5%;">C/A</td>
-<td class="td_registro" style="width:5%;">D/A</td>
+<td class="td_registro" style="width:5%;">CUOTAS ATR.</td>
+<td class="td_registro" style="width:5%;">DIAS ATR.</td>
 <td class="td_registro" style="width:5%;">A COBRAR</td>
 <td class="td_registro" style="width:5%;">TOTAL DEUDA</td>
 <td class="td_registro" style="width:5%;">LOCAL</td>
 <td class="td_registro" style="width:5%;">VENDEDOR</td>
+<td class="td_registro" style="width:8%;">ACCION</td>
 </tr>
 </tbody>
 </table>
-<table class="tableCabeceraRegistro" style='width:1600px;'>
+<table class="tableCabeceraRegistro cuentas-cobrar-filter-row" style='width:1600px;'>
 <tbody>
 <tr>
 <td class="td_registro" style="width:10%;">
@@ -12635,13 +12914,14 @@ id="inptBuscarCuentasCobrar6"></select>
 </td>
 <td class="td_registro" style="width:5%;" ><select class="inputfiltro" id="inptBuscarCuentasCobrar7">
 </select></td>
+<td class="td_registro" style="width:8%;"></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class='divTablesScrool' id='TableScroollCuentasACobrar2'
+<div class='divTablesScrool cuentas-cobrar-table-scroll' id='TableScroollCuentasACobrar2'
 style='height:250px'>
-<div class="div_cuerpo_table " id="table_cuentas_a_cobrar" style='min-height:200px;height:auto;width:1600px;border:none;'>
+<div class="div_cuerpo_table cuentas-cobrar-table-body" id="table_cuentas_a_cobrar" style='min-height:200px;height:auto;width:1600px;border:none;'>
 </div>
 </div>
 <table style='width:100%;height:50px;display:none' id='tbProcessInformeCuentaACobrar'>
@@ -12656,15 +12936,15 @@ style='height:250px'>
 </table>
 </div>
 
-<table class='divMenuf' style='width:98%'>
+<table class='divMenuf cuentas-cobrar-summary' style='width:98%'>
 <tr>
 <td style='width:35%;'>
-<p class='pTituloC'>Registro
-Selecc..</p>
+<p class='pTituloC'>Cuenta seleccionada</p>
 <input class='inputTextDisable' type='text' disabled id='inptRegistroSeleccCuentasAcobrar' style='width:50%' />
-<input id='btnCuentasCobrar1' type="button" value="Cargar Pago" class="btn4" onclick='verCerrarCargarPagoDesdeCuentas("1")' style=" background-color: #ccc;width:15%">
-<input id='btnCuentasCobrar2' type="button" value="Mas detalles..." class="btn4" onclick='irAventaDesdeCuentas()' style=" background-color: #ccc;width:15%">
-<input id='btnCuentasCobrar3' type="button" value="Asignar Local" class="btn4" onclick='vercerrarAsignarLocal()' style=" background-color: #ccc;width:15%">
+<input id='btnCuentasCobrar1' type="button" value="Registrar pago" class="btn4 cuentas-cobrar-primary" onclick='verCerrarCargarPagoDesdeCuentas("1")' style=" background-color: #ccc;width:15%">
+<input id='btnCuentasCobrarCobrarCuota' type="button" value="Cobrar cuota" class="btn4 cuentas-cobrar-primary" onclick='abrirCobrarCuotaDesdeCuentas()' style=" background-color: #ccc;width:15%">
+<input id='btnCuentasCobrar2' type="button" value="Ver venta" class="btn4 cuentas-cobrar-secondary" onclick='irAventaDesdeCuentas()' style=" background-color: #ccc;width:15%">
+<input id='btnCuentasCobrar3' type="button" value="Asignar local" class="btn4 cuentas-cobrar-tertiary" onclick='vercerrarAsignarLocal()' style=" background-color: #ccc;width:15%">
 </td>
 
 <td style='width:5%;'>
@@ -12678,7 +12958,7 @@ Selecc..</p>
 </td>
 
 <td style='width:5%;'>
-<p class='pTituloC'>Total a deuda :</p>
+<p class='pTituloC'>Total deuda :</p>
 <input class='inputTextDisable' type='text' disabled id='inptRegistroNroHistorialTotalADeudad' style='width:130px' />
 </td>
 
@@ -12691,6 +12971,200 @@ Selecc..</p>
 </td>
 </tr>
 </table>
+</div>
+
+<div class='principal2 cobrar-cuota-overlay' style='display:none' id='divCobrarCuota'>
+<table style='width:100%;height:100%' id='tdEfectoCobrarCuota'>
+<tr>
+<td>
+<center>
+<div class='divPrincipalrepor cobrar-cuota' style='width:min(96vw,1380px);min-height:620px'>
+<table class='tableMenuZ cobrar-cuota__header'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Cobrar cuota</p>
+<span class='cobrar-cuota__subtitle'>Busc&aacute; el cliente, seleccion&aacute; el plan y registr&aacute; el cobro.</span>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
+</td>
+</tr>
+</table>
+
+<div class='cobrar-cuota__guide'>
+<b>Flujo r&aacute;pido</b>
+<span>Buscar cliente &rarr; Seleccionar plan &rarr; Elegir cuota &rarr; Registrar cobro</span>
+</div>
+
+<div class='cobrar-cuota__layout'>
+<section class='cobrar-cuota__panel cobrar-cuota__panel--left'>
+<div class='cobrar-cuota__section-title'>
+<span>1</span>
+<div>
+<b>Buscar cliente</b>
+<small>Ingresa cedula o nombre y presiona Enter.</small>
+</div>
+</div>
+<div class='cobrar-cuota__search-grid cobrar-cuota__buscador-simple'>
+<label class='cobrar-cuota__search-main'><b>Buscar por cedula o nombre del cliente</b><input class='inputText' type='text' id='inptCobrarCuotaBuscar' placeholder='Ingresa cedula o nombre del cliente' onkeydown='cobrarCuotaBuscarEnter(event)'></label>
+<input type='hidden' id='inptCobrarCuotaDocumento'>
+<input type='hidden' id='inptCobrarCuotaNombre'>
+<input type='hidden' id='inptCobrarCuotaVenta'>
+<input type='hidden' id='inptCobrarCuotaTelefono'>
+<div class='cobrar-cuota__search-actions'>
+<input type='button' value='Buscar' class='btn4 cobrar-cuota__btn-principal' onclick='cobrarCuotaBuscar()'>
+<input type='button' value='Limpiar' class='btn4 cobrar-cuota__btn-secundario' onclick='cobrarCuotaLimpiar()'>
+</div>
+</div>
+
+<div class='cobrar-cuota__section-title cobrar-cuota__section-title--results'>
+<span>2</span>
+<div>
+<b>Clientes encontrados</b>
+<small>Eleg&iacute; el cliente correcto.</small>
+</div>
+</div>
+<div class='cobrar-cuota__cards' id='divCobrarCuotaClientes'>
+<div class='cobrar-cuota__placeholder'><b>Ingresa una cedula o nombre</b><span>La busqueda mostrara clientes con planes pendientes.</span></div>
+</div>
+
+<div class='cobrar-cuota__section-title cobrar-cuota__section-title--results'>
+<span>3</span>
+<div>
+<b>Planes vendidos del cliente</b>
+<small>Seleccion&aacute; el plan correcto para ver sus cuotas.</small>
+</div>
+</div>
+<div class='cobrar-cuota__cards cobrar-cuota__planes' id='divCobrarCuotaPlanes'>
+<div class='cobrar-cuota__placeholder'><b>Selecciona un cliente</b><span>Aqui apareceran sus planes vendidos ordenados por fecha.</span></div>
+</div>
+
+<div id='divCobrarCuotaPlanSeleccionado'></div>
+
+<div class='cobrar-cuota__section-title cobrar-cuota__section-title--results'>
+<span>4</span>
+<div>
+<b>Cuotas del plan seleccionado</b>
+<small>Se muestran todas las cuotas del plan. Las cuotas pagadas quedan visibles para control y trazabilidad.</small>
+</div>
+</div>
+<div class='cobrar-cuota__summary-line'>
+<label><b>Cuotas pendientes</b><input class='inputTextDisable' type='text' id='inptCobrarCuotaTotalResultados' disabled></label>
+<label><b>Saldo del plan</b><input class='inputTextDisable' type='text' id='inptCobrarCuotaTotalSaldo' disabled></label>
+</div>
+<div class='cobrar-cuota__filters' id='divCobrarCuotaFiltros'>
+<button type='button' class='cobrar-cuota__filter cobrar-cuota__filter--active' data-cobrar-filtro='todas' onclick='cobrarCuotaCambiarFiltro("todas")'>Todas</button>
+<button type='button' class='cobrar-cuota__filter' data-cobrar-filtro='pendientes' onclick='cobrarCuotaCambiarFiltro("pendientes")'>Pendientes</button>
+<button type='button' class='cobrar-cuota__filter' data-cobrar-filtro='pagadas' onclick='cobrarCuotaCambiarFiltro("pagadas")'>Pagadas</button>
+<button type='button' class='cobrar-cuota__filter' data-cobrar-filtro='parciales' onclick='cobrarCuotaCambiarFiltro("parciales")'>Parciales</button>
+</div>
+<div class='cobrar-cuota__table-wrap'>
+<table class='tableCabeceraRegistro cobrar-cuota__table-head'>
+<tbody>
+<tr>
+<td class='td_registro' style='width:6%'>SEL.</td>
+<td class='td_registro' style='width:13%'>CUOTA</td>
+<td class='td_registro' style='width:14%'>VENCIMIENTO</td>
+<td class='td_registro' style='width:14%'>MONTO</td>
+<td class='td_registro' style='width:14%'>PAGADO</td>
+<td class='td_registro' style='width:14%'>SALDO</td>
+<td class='td_registro' style='width:12%'>ESTADO</td>
+<td class='td_registro' style='width:13%'>ACCION</td>
+</tr>
+</tbody>
+</table>
+<div class='div_cuerpo_table cobrar-cuota__table-body' id='table_cobrar_cuota_resultados'></div>
+</div>
+</section>
+
+<aside class='cobrar-cuota__panel cobrar-cuota__panel--right'>
+<div class='cobrar-cuota__section-title'>
+<span>5</span>
+<div>
+<b>Cuota seleccionada</b>
+<small>Revisa el cliente, venta y saldo antes de cobrar.</small>
+</div>
+</div>
+<div id='divCobrarCuotaSeleccionada'>
+<div class='cobrar-cuota__placeholder'>
+<b>Selecciona una cuota</b>
+<span>Primero selecciona un plan y luego una cuota pendiente.</span>
+</div>
+</div>
+
+<div class='cobrar-cuota__section-title cobrar-cuota__section-title--pay'>
+<span>6</span>
+<div>
+<b>Registrar cobro</b>
+<small>Complet&aacute; la forma de pago y confirm&aacute;.</small>
+</div>
+</div>
+<div class='cobrar-cuota__pay-grid'>
+<label><b>Fecha de pago</b><input class='inputText' type='date' id='inptCobrarCuotaFechaPago' onchange='cobrarCuotaInvalidarMovimientoUenoPorEdicion()'></label>
+<label><b>Forma de pago</b><select class='inputSelect' id='inptCobrarCuotaTipoPago' onchange='cobrarCuotaActualizarFormaPago()'></select></label>
+<label><b>Monto a cobrar</b><input class='inputText' type='text' id='inptCobrarCuotaMontoCobrar' onkeyup='separadordemiles(this);cobrarCuotaCalcularVuelto();cobrarCuotaInvalidarMovimientoUenoPorEdicion();cobrarCuotaActualizarResumenUeno()'></label>
+</div>
+<div id='divCobrarCuotaEfectivo' class='cobrar-cuota__pay-grid'>
+<label><b>Monto recibido</b><input class='inputText' type='text' id='inptCobrarCuotaMontoRecibido' onkeyup='separadordemiles(this);cobrarCuotaCalcularVuelto()'></label>
+<label><b>Vuelto</b><input class='inputTextDisable' type='text' id='inptCobrarCuotaVuelto' disabled></label>
+</div>
+<div id='divCobrarCuotaTransferencia' class='cobrar-cuota__transfer' style='display:none'>
+<div class='cobrar-cuota__pay-grid'>
+<label><b>Comprobante transferencia</b><input class='inputText' type='text' id='inptCobrarCuotaComprobante' onkeyup='cobrarCuotaInvalidarMovimientoUenoPorEdicion()'></label>
+<label><b>Banco</b><input class='inputText' type='text' id='inptCobrarCuotaBanco' value='Ueno'></label>
+</div>
+<div id='divCobrarCuotaUeno' class='cobrar-cuota__ueno'></div>
+</div>
+<label class='cobrar-cuota__obs'><b>Observacion</b><textarea id='txtCobrarCuotaObservacion' rows='3'></textarea></label>
+<div class='cobrar-cuota__actions'>
+<input type='button' value='Registrar cobro' id='btnCobrarCuotaRegistrar' class='btn4 cobrar-cuota__btn-principal' onclick='cobrarCuotaRegistrar()'>
+<input type='button' value='Nuevo cobro' class='btn4 cobrar-cuota__btn-secundario' onclick='cobrarCuotaLimpiar()'>
+</div>
+<div id='divCobrarCuotaResultado'></div>
+</aside>
+</div>
+</div>
+</center>
+</td>
+</tr>
+</table>
+<div class='cobrar-cuota-confirmacion' id='divCobrarCuotaConfirmacion' style='display:none' role='dialog' aria-modal='true' aria-labelledby='tituloCobrarCuotaConfirmacion'>
+<div class='cobrar-cuota-confirmacion__backdrop' onclick='cobrarCuotaCerrarConfirmacion()'></div>
+<div class='cobrar-cuota-confirmacion__modal' tabindex='-1'>
+<div class='cobrar-cuota-confirmacion__header'>
+<div>
+<p id='tituloCobrarCuotaConfirmacion'>Confirmar cobro</p>
+<span>Verific&aacute; los datos antes de confirmar. Esta acci&oacute;n generar&aacute; el registro del cobro.</span>
+</div>
+<button type='button' class='cobrar-cuota-confirmacion__close' onclick='cobrarCuotaCerrarConfirmacion()' aria-label='Cerrar confirmacion'>&times;</button>
+</div>
+<div class='cobrar-cuota-confirmacion__body' id='divCobrarCuotaConfirmacionResumen'></div>
+<div class='cobrar-cuota-confirmacion__actions'>
+<input type='button' value='Cancelar' class='btn4 cobrar-cuota-confirmacion__btn-cancelar' onclick='cobrarCuotaCerrarConfirmacion()'>
+<input type='button' value='Confirmar cobro' id='btnCobrarCuotaConfirmarRegistro' class='btn4 cobrar-cuota-confirmacion__btn-confirmar' onclick='cobrarCuotaConfirmarRegistro()'>
+</div>
+</div>
+</div>
+
+<div class='cobrar-cuota-confirmacion cobrar-cuota-exito' id='divCobrarCuotaExito' style='display:none' role='dialog' aria-modal='true' aria-labelledby='tituloCobrarCuotaExito'>
+<div class='cobrar-cuota-confirmacion__backdrop'></div>
+<div class='cobrar-cuota-confirmacion__modal cobrar-cuota-exito__modal' tabindex='-1'>
+<div class='cobrar-cuota-confirmacion__header cobrar-cuota-exito__header'>
+<div class='cobrar-cuota-exito__check' aria-hidden='true'>&#10003;</div>
+<div>
+<p id='tituloCobrarCuotaExito'>Pago realizado con &eacute;xito</p>
+<span id='lblCobrarCuotaExitoMensaje'>El pago fue registrado correctamente.</span>
+</div>
+</div>
+<div class='cobrar-cuota-confirmacion__body cobrar-cuota-exito__body' id='divCobrarCuotaExitoResumen'></div>
+<div class='cobrar-cuota-confirmacion__actions cobrar-cuota-exito__actions'>
+<input type='button' value='Imprimir recibo' id='btnCobrarCuotaExitoImprimir' class='btn4 cobrar-cuota-confirmacion__btn-cancelar' onclick='cobrarCuotaImprimirRecibo()'>
+<input type='button' value='Registrar otro pago de este plan' id='btnCobrarCuotaExitoOtroPlan' class='btn4 cobrar-cuota-confirmacion__btn-confirmar cobrar-cuota-exito__btn-principal' onclick='cobrarCuotaRegistrarOtroPagoPlan()'>
+<input type='button' value='Nuevo cobro' class='btn4 cobrar-cuota-confirmacion__btn-cancelar' onclick='cobrarCuotaNuevoCobroDesdeExito()'>
+</div>
+</div>
+</div>
 </div>
 
 <div class='principal2' style='display:none' id='divFiltrosCuentasACobrar'>
@@ -14284,14 +14758,14 @@ style='background-color: #b7b7b7;'>
 
             </div>
 
-            <div class="asignar-tarea__workspace">
+            <div class="asignar-tarea__workspace asignar-tarea__workspace--full" style="grid-template-columns:minmax(0, 1fr);">
                 <section class="asignar-tarea__usuarios-panel">
                     <div class="asignar-tarea__panel-header">
                         <div>
                             <p class="asignar-tarea__panel-kicker" id="kickerPanelAsignarTarea">Usuarios</p>
                             <h3 id="tituloPanelAsignarTarea">Personal disponible</h3>
                         </div>
-                        <span class="asignar-tarea__panel-note" id="notaPanelAsignarTarea">Seleccion&aacute; un funcionario para ver el detalle.</span>
+                        <span class="asignar-tarea__panel-note" id="notaPanelAsignarTarea">Hac&eacute; clic en un funcionario para desplegar sus tareas.</span>
                     </div>
 
                     <div class="asignar-tarea__contenedor" id="contenedorUsuariosAsignarTarea">
@@ -14301,7 +14775,7 @@ style='background-color: #b7b7b7;'>
                     </div>
                 </section>
 
-                <aside class="asignar-tarea__detalle-panel">
+                <aside class="asignar-tarea__detalle-panel asignar-tarea__detalle-panel--oculto" aria-hidden="true" style="display:none !important;">
                     <div class="asignar-tarea__detalle-vacio" id="boxUsuarioSinSeleccionTarea">
                         <strong>Seleccion&aacute; un funcionario</strong>
                         <span>Ac&aacute; vas a ver su local, rol operativo, horario y resumen de tareas del d&iacute;a.</span>
@@ -16002,7 +16476,7 @@ ESTUDIOS
 <tr>
 <td>
 <center>
-<div style='width:700px;display:' class='divAbms'>
+<div style='width:780px;display:' class='divAbms'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -16574,11 +17048,11 @@ style='width:80%;height: 40px;border-radius: 12px;' />
 <tr>
 <td>
 <center>
-<div style='width:98%;min-height: 500px;' class='divAbms'>
-<table class='tableMenuZ'>
+<div style='width:98%;min-height: 500px;' class='divAbms informe-pagos-modal'>
+<table class='tableMenuZ informe-pagos-header'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Informe de  <b style='font-size: 30px;' >Pagos</b> <b style='font-size: 15px;' id='BClienteCredito' ></b> </p>
+<p class='pTituloB'>Plan de <b style='font-size: 30px;' >pagos</b> <b style='font-size: 15px;' id='BClienteCredito' ></b> </p>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/editar.png' class='iconoBtn'
@@ -16586,7 +17060,7 @@ title='Editar Creditos' onclick='verCerrarEditarCredito()' />
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/imprimir.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='ImprimirExtracto()' />
+title='Imprimir plan de pagos' onclick='ImprimirExtracto()' />
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
@@ -16596,7 +17070,11 @@ title='Cerrar Ventana y Limpiar Campos' onclick='vercerrarpagos("","")' />
 </table>
 
 <center>
-<div style='overflow:auto;width:97%'>
+<div class='informe-pagos-guide'>
+<b>Guia rapida</b>
+<span>Selecciona una cuota para preparar el cobro. Usa pago parcial cuando el cliente abona solo una parte y revisa el historial antes de reimprimir.</span>
+</div>
+<div style='overflow:auto;width:97%' class='informe-pagos-content'>
 
 <div class='divMenuFloat3' style='width:26%;display:none'>
 <div class='divMenuf'>
@@ -16698,13 +17176,13 @@ onclick='verificarcreditos()' id='btnAbmGenerarCuotas' />
 </div>
 
 
-<div class='divMenuf' style='width:98%' >
+<div class='divMenuf informe-pagos-card' style='width:98%' >
  
 <center>
 
 <div style='overflow:auto;' class='divScrollhideen'
 id='TableScroollCredito1'>
-<table class="tableCabeceraRegistro" style='width:1250px;'>
+<table class="tableCabeceraRegistro informe-pagos-table-head" style='width:1250px;'>
 <tbody>
 <tr>
 <td class="td_registro" style="width:5%;">CUOTA</td>
@@ -16726,7 +17204,7 @@ id='TableScroollCredito1'>
 </tbody>
 </table>
 </div>
-<div class='divTablesScrool' id='TableScroollCredito2' style='height:400px'>
+<div class='divTablesScrool informe-pagos-table-scroll' id='TableScroollCredito2' style='height:400px'>
 
 <div class="div_cuerpo_table" id="table_abm_opciones_pago"
 style='min-height:200px;height:auto;width:1250px;border:none;'>
@@ -16734,7 +17212,7 @@ style='min-height:200px;height:auto;width:1250px;border:none;'>
 
 </div>
 <br>
-<table style='width:100%'>
+<table style='width:100%' class='informe-pagos-summary'>
 <tr>
 
 <td style='width:12%;'>
@@ -16760,10 +17238,10 @@ id='inptTotalDescuentoOpcionesPago' style='width:100px;' />
 <p class='pTituloC' >Deuda Actual</p>
 <input class='inputTextDisable' type='text' disabled
 id='inptDeudaActual' style='width:100px;' />
-<input type='Button' value='Cargar Pagos Parciales' class='btn4'
+<input type='Button' value='Registrar pago parcial' class='btn4 informe-pagos-primary'
 onclick='verCerrarCargarPago("1")'
 style='background-color: #2196F3;width:160px' />
-<input type='Button' value='Historial de pagos' class='btn4'
+<input type='Button' value='Ver historial de pagos' class='btn4 informe-pagos-secondary'
 onclick='vercerrarhistorialdepagorimprimir("1")'
 style='background-color: #4CAF50;width:130px' />
 </td>
@@ -16789,7 +17267,7 @@ style='background-color: #4CAF50;width:130px' />
 <tr>
 <td>
 <center>
-<div style='width:700px;display:' class='divAbms'>
+<div style='width:780px;display:' class='divAbms pago-credito-modal'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -16803,42 +17281,49 @@ title='Cerrar Ventana' onclick='verCerrarVentanaAnhadirPagoCredito("")' />
 </table>
 <br>
 <center>
-<div class='divMenuf'>
+<div class='divMenuf pago-credito-form'>
 <table style='width:95%'>
 <tr>
 <td style='width:10%;text-align:left'>
 <p class='pTituloC' >Tipo :</p>
 <select class='inputSelect'
-id='inptTipoPagoCredito' style='width:150px;text-align:center' ></select>
+id='inptTipoPagoCredito' onchange='actualizarCampoComprobanteUenoCredito()' style='width:150px;text-align:center' ></select>
 </td>
 <td style='width:50%;text-align:left'>
 <p class='pTituloC' >Monto :</p>
 <input class='inputText' type='text' id='inptMontoPagosCredito' style='width:150px' onkeyup="separadordemiles(this)" />
-<input type='button' Value='Agregar' class='btn5'  onclick='anhadirPagpEgreso()' style='width:100px'/>
+<input type='button' Value='Agregar' class='btn5 pago-credito-add'  onclick='anhadirPagpEgreso()' style='width:100px'/>
 </td>
-<td style='width:40%'></td>
+<td style='width:40%;text-align:left;display:none' id='tdUenoComprobanteCredito'>
+<p class='pTituloC'>Nro. comprobante Ueno</p>
+<input class='inputText' type='text' id='inptUenoComprobanteCredito' style='width:170px' />
+<input class='inputText' type='text' id='inptUenoObsCredito' placeholder='Observacion' style='width:130px' />
+</td>
 </tr>
 </table>
 </div>
-<div class='divMenuf'>
-<table class="tableCabeceraRegistro">
+<div class='divMenuf pago-credito-list'>
+<table class="tableCabeceraRegistro pago-credito-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:33%;">
+<td class="td_registro" style="width:25%;">
 TIPO
 </td>
-<td class="td_registro" style="width:33%;">
+<td class="td_registro" style="width:25%;">
 MONTO
 </td>
-<td class="td_registro" style="width:33%;">
+<td class="td_registro" style="width:25%;">
 FECHA
+</td>
+<td class="td_registro" style="width:25%;">
+COMPROBANTE
 </td>
 </tr>
 </tbody>
 </table>
 <div class="div_cuerpo_table" id="div_opciones_pago_credito"></div>
 </div>
-<div class='divMenuf'>
+<div class='divMenuf pago-credito-summary'>
 <table style='width:95%'>
 <tr>
 <td style='width:25%;text-align:left'>
@@ -16858,7 +17343,7 @@ id='inpTotalPagadoCredito' style='width:150px;text-align:center' />
 
 </td>
 <td style='width:25%'>
-<input type='Button' value='CARGAR PAGOS' class='btn5' id='btnFinalizarVentaContado'
+<input type='Button' value='CARGAR PAGOS' class='btn5 pago-credito-submit' id='btnFinalizarVentaContado'
 onclick='verificarConfirmaciondepago()' style='     height: 29px;font-size: 16px;width: 100%;border-radius: 11px;' />
 </td>
 </tr>
@@ -16945,7 +17430,7 @@ onclick='EliminarPagoCredito()' style=' height: 42px;font-size: 20px;width: 100%
 <tr>
 <td>
 <center>
-<div style='width:700px;display:' class='divAbms'>
+<div style='width:780px;display:' class='divAbms pago-credito-modal'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
@@ -16959,42 +17444,49 @@ title='Cerrar Ventana' onclick='verCerrarVentanaAnhadirPagoCreditoParcial("")' /
 </table>
 <br>
 <center>
-<div class='divMenuf'>
+<div class='divMenuf pago-credito-form'>
 <table style='width:95%'>
 <tr>
 <td style='width:10%;text-align:left'>
 <p class='pTituloC' >Tipo :</p>
 <select class='inputSelect'
-id='inptTipoPagoCreditoParcial' style='width:150px;text-align:center' ></select>
+id='inptTipoPagoCreditoParcial' onchange='actualizarCampoComprobanteUenoCreditoParcial()' style='width:150px;text-align:center' ></select>
 </td>
 <td style='width:50%;text-align:left'>
 <p class='pTituloC' >Monto :</p>
 <input class='inputText' type='text' id='inptMontoPagosCreditoParcial' style='width:150px' onkeyup="separadordemiles(this)" />
-<input type='button' Value='Agregar' class='btn5'  onclick='anhadirPagoEgresoParcial()' style='width:100px'/>
+<input type='button' Value='Agregar' class='btn5 pago-credito-add'  onclick='anhadirPagoEgresoParcial()' style='width:100px'/>
 </td>
-<td style='width:40%'></td>
+<td style='width:40%;text-align:left;display:none' id='tdUenoComprobanteCreditoParcial'>
+<p class='pTituloC'>Nro. comprobante Ueno</p>
+<input class='inputText' type='text' id='inptUenoComprobanteCreditoParcial' style='width:170px' />
+<input class='inputText' type='text' id='inptUenoObsCreditoParcial' placeholder='Observacion' style='width:130px' />
+</td>
 </tr>
 </table>
 </div>
-<div class='divMenuf'>
-<table class="tableCabeceraRegistro">
+<div class='divMenuf pago-credito-list'>
+<table class="tableCabeceraRegistro pago-credito-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:33%;">
+<td class="td_registro" style="width:25%;">
 TIPO
 </td>
-<td class="td_registro" style="width:33%;">
+<td class="td_registro" style="width:25%;">
 MONTO
 </td>
-<td class="td_registro" style="width:33%;">
+<td class="td_registro" style="width:25%;">
 FECHA
+</td>
+<td class="td_registro" style="width:25%;">
+COMPROBANTE
 </td>
 </tr>
 </tbody>
 </table>
 <div class="div_cuerpo_table" id="div_opciones_pago_credito_parcial"></div>
 </div>
-<div class='divMenuf'>
+<div class='divMenuf pago-credito-summary'>
 <table style='width:95%'>
 <tr>
 <td style='width:25%;text-align:left'>
@@ -17014,7 +17506,7 @@ id='inpTotalPagadoCreditoParcial' style='width:150px;text-align:center' />
 
 </td>
 <td style='width:25%'>
-<input type='Button' value='GUARDAR PAGO' class='btn5' id='btnFinalizarVentaContado'
+<input type='Button' value='GUARDAR PAGO' class='btn5 pago-credito-submit' id='btnFinalizarVentaContado'
 onclick='verificarcargarpagoTipoPago()' style='height: 29px;font-size: 16px;width: 100%;border-radius: 11px;' />
 </td>
 </tr>
@@ -17613,11 +18105,11 @@ style='height: 380px;'></div>
 <tr>
 <td>
 <center>
-<div style='width:334px;min-height: 300px;display:' class='divAbms'>
-<table class='tableMenuZ'>
+<div style='width:334px;min-height: 300px;display:' class='divAbms confirmar-pago-modal'>
+<table class='tableMenuZ confirmar-pago-header'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Confirmar  <b style='font-size: 30px;' >Pago</b></p>
+<p class='pTituloB'>Confirmar <b style='font-size: 30px;' >Pago</b></p>
 </td>
 
 <td style='width:5%;text-align:center'>
@@ -17636,12 +18128,12 @@ title='Cerrar Ventana' onclick='vercerrarconfirmarpagos("")' />
 </table>
 <center>
 
-<div class='divMenuf'>
+<div class='divMenuf confirmar-pago-body'>
 <br>
 <table style='width:100%'>
 <tr>
 <td style='width:100%;'>
-<p class='pTituloC' >Cargo Administrativo:</p>
+<p class='pTituloC' >Cargo administrativo:</p>
 <input class='inputText' type='text'  id='inptMontoCargoAdministrativo'
 onkeyup='calcular_total_Pago()' style='width:150px;' />
 </td>
@@ -17671,7 +18163,7 @@ disabled />
 <tr>
 
 <td style='width:50%'>
-<p class='pTituloC'>Total a Pagar:</p>
+<p class='pTituloC'>Total a pagar:</p>
 <input class='inputTextDisable' type='text' id='inptMontoAPagar'
 disabled style='width:150px' />
 </td>
@@ -17686,7 +18178,7 @@ disabled style='width:150px' />
 <tr>
 
 <td style='width:50%'>
-<p class='pTituloC'>Fecha de Pago:</p>
+<p class='pTituloC'>Fecha de pago:</p>
 <input class='inputTextDisable' type='Date' id='inptFechaPagoConfirmar'
 disabled style='width:160px' />
 </td>
@@ -17719,7 +18211,7 @@ style='width:160px' placeholder='Obligatorio' />
 <tr>
 
 <td style='width:100%'>
-<p class='pTituloC' >Dias Atrazado :</p>
+<p class='pTituloC' >Dias atrasados:</p>
 <input class='inputTextDisable' type='text' id='inptDiasAtrazadoAPagar'
 disabled style='width:100px' />
 </td>
@@ -17730,10 +18222,10 @@ disabled style='width:100px' />
 <tr>
 
 <td style='width:100%'>
-<p class='pTituloC' >Monto en Efectivo:</p>
+<p class='pTituloC' >Monto en efectivo:</p>
 <input class='inputTextDisable' disabled  type='text' id='inptMontoClienteAPagar'
 onkeyup='separadordemiles(this)' style='width:150px;' />
-<input type='button' class='btn5' onclick='verCerrarVentanaAnhadirPagoCredito("1")' value='Opciones Pago' style=' width: 120px;background-color: #fb4747;' />
+<input type='button' class='btn5 confirmar-pago-secondary' onclick='verCerrarVentanaAnhadirPagoCredito("1")' value='Formas de pago' style=' width: 120px;background-color: #fb4747;' />
 </td>
 </tr>
 </table>
@@ -17778,13 +18270,13 @@ style='width:150px' onkeyup='separadordemiles(this)' />
 <p class='pTituloC' >Cobrador :</p>
 <input class='inputTextDisable' type='text' id='inptCobradorConfirmar'
 disabled style='width:150px' />
-<input type="button" value="Buscar" class="btn4"
+<input type="button" value="Buscar cobrador" class="btn4 confirmar-pago-search"
 onclick='vercerrarvistacobrador("1","confimarpago")'>
 </td>
 </tr>
 </table>
 <br>
-<input type='Button' value='Guardar' class='btn1'
+<input type='Button' value='Procesar pago' class='btn1 confirmar-pago-primary'
 onclick='verificarConfirmaciondepago()' />
 <br>
 </div>
@@ -19307,174 +19799,159 @@ RESPONSABLE
 
 
 
-<table class='divMenuF' >
-<tr>
-<td style='width:10%;' >
-<p class='pTituloC' >Fecha inicio</p>
-<input class='inputText' type='Date' id='inptBuscarCobrosRealizadosF1' style='width:135px' />
-</td>
-<td style='width:3%;' >
-</td>
-<td style='width:10%;' >
-<p class='pTituloC'   >Fecha Fin</p>
-<input class='inputText' type='Date' id='inptBuscarCobrosRealizadosF2' style='width:135px' />
-</td>
-<td style='width:3%;' >
-</td>
-<td style='width:14%;' >
-<p class='pTituloC'  >Local</p>
-<select class="inputSelect" id="inptlocalCobrosRealizados3" style='width:125px'>
+<div class="arqueo-console">
+  <p class="arqueo-guide">Consulta cobros ya registrados, revisa su caja/lote y reimprimi recibos individuales.</p>
 
-</select>
-</td>
-<td style='width:10%;' >
-<p class='pTituloC' >Fecha facturacion inicio</p>
-<input class='inputText' type='Date' id='inptBuscarCobrosRealizadosFF1' style='width:135px' />
-</td>
-<td style='width:3%;' >
-</td>
-<td style='width:10%;' >
-<p class='pTituloC'   >Fecha facturacion fin</p>
-<input class='inputText' type='Date' id='inptBuscarCobrosRealizadosFF2' style='width:135px' />
-</td>
-<td style='' >
-<input type="button" style='margin: auto;' value="Buscar" class="btn4" onclick='buscararqueo2()' >
-<input type="button" style='margin: auto;width:125px;background-color:#ff5722' value="Cajas de Cobradores" class="btn4" onclick='verCerrarVistaCajaApp()' >
-</td>
-</tr>
-</table>
+  <div class="arqueo-filters">
+    <div class="arqueo-field">
+      <label>Fecha desde</label>
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosF1" />
+    </div>
+    <div class="arqueo-field">
+      <label>Fecha hasta</label>
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosF2" />
+    </div>
+    <div class="arqueo-field">
+      <label>Local / sucursal</label>
+      <select class="inputSelect" id="inptlocalCobrosRealizados3"></select>
+    </div>
+    <div class="arqueo-field">
+      <label>Metodo de pago</label>
+      <select class="inputSelect" id="inptBuscarCobrosRealizados5">
+        <option value="">Todos</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Tarjeta">Tarjeta</option>
+        <option value="Otros">Otros</option>
+      </select>
+    </div>
+    <div class="arqueo-field arqueo-field--search">
+      <label>Buscador general</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizadosGeneral"
+        placeholder="Cliente, documento, venta, factura, comprobante o recibo"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <button type="button" class="btn4 arqueo-btn-primary" onclick="buscararqueo2()">Buscar</button>
+    <button type="button" class="btn4 arqueo-btn-secondary" onclick="limpiarFiltrosCobrosRealizados()">Limpiar filtros</button>
+    <button type="button" class="btn4 arqueo-btn-secondary" onclick="toggleMasFiltrosCobrosRealizados()">Mas filtros</button>
+    <button type="button" class="btn4 arqueo-btn-pdf" onclick='ordenimpresion("arqueo")'>Exportar PDF</button>
+    <button type="button" class="btn4 arqueo-btn-caja" onclick="verCerrarVistaCajaApp()">Ver cajas</button>
+  </div>
 
-<div class='divMenuF'>
-<table style="width:98%">
-<tbody><tr>
-<td style="width:80%;text-align:left">
-<input type="button" value="Imprimir" class="btn4" onclick='ordenimpresion("arqueo")'  style="width:100px;background-color: rgb(58 58 58);">
-</td>
-<td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltrosCobrosRealizados(2)"  style='width: 120px;'> <input type="checkbox" id="checkfiltrosCobrosRealizados2" > Rango de Fecha </p>
-</td>
-<td style='width:10%;text-align:left'>
-<p class="pTitulo8" onclick="checkfiltrosCobrosRealizados(1)" style='width: 100px;'> <input type="checkbox" id="checkfiltrosCobrosRealizados1"  checked > Todos</p>
-</td></tr>
-</tbody>
-</table>
-<div style='overflow:auto;' class='divScrollhideen divTablesScrool' id='TableScroollArqeo1'>
-  <table class="tableCabeceraRegistro" id='tdTituloImpreArqueo'>
-    <thead>
-      <tr class="arqueo-header-row">
-        <td class="td_registro" style="width:15%;">CLIENTE</td>
-        <td class="td_registro" style="width:10%;">DOCUMENTO</td>
-        <td class="td_registro" style="width:15%;">FECHA FACTURADO</td>
-        <td class="td_registro" style="width:10%;">NRO FACTURA</td>
-        <td class="td_registro" style="width:5%;">NRO VENTA</td>
-        <td class="td_registro" style="width:15%;">FECHA PAGO</td>
-        <td class="td_registro" style="width:10%;">MONTO</td>
-        <td class="td_registro" style="width:10%;">METODO</td>
-        <td class="td_registro" style="width:10%;">TIPO</td>
-        <td class="td_registro" style="width:5%;">CUOTA</td>
-        <td class="td_registro" style="width:10%;">CONDICION</td>
-        <td class="td_registro" style="width:10%;">COBRADOR</td>
-      </tr>
-      <tr class="arqueo-filter-row">
-        <td class="td_registro" style="width:15%;">
-          <span class="arqueo-filter-cell">
-            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados1'
-              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados1')" />
-          </span>
-        </td>
-        <td class="td_registro" style="width:10%;">
-          <span class="arqueo-filter-cell">
-            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados7'
-              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados7')" />
-          </span>
-        </td>
-        <td class="td_registro" style="width:15%;"></td>
-        <td class="td_registro" style="width:10%;">
-          <span class="arqueo-filter-cell">
-            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados2'
-              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados2')" />
-          </span>
-        </td>
-        <td class="td_registro" style="width:5%;"></td>
-        <td class="td_registro" style="width:15%;">
-          <span class="arqueo-filter-cell">
-            <input class='inputfiltro' type='date' id='inptBuscarCobrosRealizados3'
-              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados3')" />
-          </span>
-        </td>
-        <td class="td_registro" style="width:10%;"></td>
-        <td class="td_registro" style="width:10%;">
-          <span class="arqueo-filter-cell">
-            <select class="inputfiltro" id="inptBuscarCobrosRealizados5">
-              <option value="">Todos</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Tarjeta">Tarjeta</option>
-            </select>
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados5')" />
-          </span>
-        </td>
-        <td class="td_registro" style="width:10%;"></td>
-        <td class="td_registro" style="width:5%;"></td>
-        <td class="td_registro" style="width:10%;">
-          <span class="arqueo-filter-cell">
-            <select class="inputfiltro" id="inptBuscarCobrosRealizados6">
-              <option value="">TODOS</option>
-              <option value="CREDITO">CREDITO</option>
-              <option value="CONTADO">CONTADO</option>
-            </select>
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados6')" />
-          </span>
-        </td>
-        <td class="td_registro" style="width:10%;">
-          <span class="arqueo-filter-cell">
-            <input placeholder='Parecido a' class='inputfiltro' type='text' id='inptBuscarCobrosRealizados4'
-              onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
-            <img class='inptLimpiarBP' src='/GoodVentaAsisCap/iconos/limpiar.png'
-              onclick="vaciar('inptBuscarCobrosRealizados4')" />
-          </span>
-        </td>
-      </tr>
-    </thead>
-    <tbody id="table_arqeo"></tbody>
-  </table>
+  <input type="checkbox" id="checkfiltrosCobrosRealizados1" checked style="display:none" />
+  <input type="checkbox" id="checkfiltrosCobrosRealizados2" style="display:none" />
+
+  <div class="arqueo-extra-filters" id="divMasFiltrosCobrosRealizados" style="display:none">
+    <div class="arqueo-field">
+      <label>Cliente</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizados1"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <div class="arqueo-field">
+      <label>Documento</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizados7"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <div class="arqueo-field">
+      <label>Nro factura</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizados2"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <div class="arqueo-field">
+      <label>Fecha pago exacta</label>
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizados3" />
+    </div>
+    <div class="arqueo-field">
+      <label>Facturacion desde</label>
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosFF1" />
+    </div>
+    <div class="arqueo-field">
+      <label>Facturacion hasta</label>
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosFF2" />
+    </div>
+    <div class="arqueo-field">
+      <label>Cobrador</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizados4"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <div class="arqueo-field">
+      <label>Caja</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizadosCaja"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <div class="arqueo-field">
+      <label>Lote caja</label>
+      <input class="inputText" type="text" id="inptBuscarCobrosRealizadosLote"
+        onkeyup="if(event.keyCode == 13){buscararqueo2()}" />
+    </div>
+    <div class="arqueo-field">
+      <label>Condicion</label>
+      <select class="inputSelect" id="inptBuscarCobrosRealizados6">
+        <option value="">Todos</option>
+        <option value="CREDITO">Credito</option>
+        <option value="CONTADO">Contado</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="arqueo-table-card">
+    <div class="arqueo-table-copy">Usa el icono de impresora para reimprimir el recibo del cobro. Usa el icono de detalle para revisar mas informacion.</div>
+    <div style="overflow:auto;" class="divScrollhideen divTablesScrool" id="TableScroollArqeo1">
+      <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
+        <thead>
+          <tr class="arqueo-header-row">
+            <td class="td_registro" style="width:9%;">FECHA PAGO</td>
+            <td class="td_registro" style="width:16%;">CLIENTE</td>
+            <td class="td_registro" style="width:8%;">DOCUMENTO</td>
+            <td class="td_registro" style="width:6%;">VENTA</td>
+            <td class="td_registro" style="width:9%;">FACTURA</td>
+            <td class="td_registro" style="width:8%;">MONTO</td>
+            <td class="td_registro" style="width:8%;">METODO</td>
+            <td class="td_registro" style="width:8%;">TIPO</td>
+            <td class="td_registro" style="width:7%;">CUOTA</td>
+            <td class="td_registro" style="width:12%;">COBRADOR</td>
+            <td class="td_registro" style="width:8%;">CAJA</td>
+            <td class="td_registro" style="width:8%;">LOTE CAJA</td>
+            <td class="td_registro" style="width:9%;">ESTADO</td>
+            <td class="td_registro arqueo-actions-print" style="width:8%;">ACCIONES</td>
+          </tr>
+        </thead>
+        <tbody id="table_arqeo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="arqueo-summary">
+    <div class="arqueo-chip">
+      <span>Registros</span>
+      <input class="inputTextDisable" type="text" disabled id="inptTotalRegistoArqueo" />
+    </div>
+    <div class="arqueo-chip">
+      <span>Total recaudado</span>
+      <input class="inputTextDisable" type="text" disabled id="inptTotalArqueo" />
+    </div>
+    <div class="arqueo-chip">
+      <span>Efectivo</span>
+      <input class="inputTextDisable" type="text" disabled id="inptTotalEfectivoArqueo" />
+    </div>
+    <div class="arqueo-chip">
+      <span>Tarjeta</span>
+      <input class="inputTextDisable" type="text" disabled id="inptTotalTarjetaArqueo" />
+    </div>
+    <div class="arqueo-chip">
+      <span>Transferencia</span>
+      <input class="inputTextDisable" type="text" disabled id="inptTotalTransferenciaArqueo" />
+    </div>
+    <div class="arqueo-chip">
+      <span>Otros</span>
+      <input class="inputTextDisable" type="text" disabled id="inptTotalOtrosArqueo" />
+    </div>
+    <div class="arqueo-secondary-actions">
+      <button type="button" class="btn4 arqueo-btn-secondary" onclick="verCerrarVentanaCargarNroFactura(true)">Ver / editar factura</button>
+      <input type="button" value="Anular cobro" class="btn4" id="btnEliminarCobros1" onclick="abmeliminarestepagohistorial()" />
+    </div>
+  </div>
 </div>
-
-</div>
-<table  class='divMenuF' >
-<tr>
-<td style='width:15%;text-align:left'>
-<p class='pTituloC' >Registro :</p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalRegistoArqueo'  style='width:120px;text-align:center'/>
-</td>
-<td style='width:17%;text-align:left'>
-<p class='pTituloC' >Total Recaudado :</p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalArqueo' style='width:150px;' />
-</td>
-<td style='width:17%;text-align:left'>
-<p class='pTituloC' >Total en Efectivo :</p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalEfectivoArqueo' style='width:150px;' />
-</td>
-<td style='width:17%;text-align:left'>
-<p class='pTituloC' >Total en Tarjeta :</p>
-<input class='inputTextDisable' type='text' disabled id='inptTotalTarjetaArqueo' style='width:150px;' />
-</td>
-<td style='width:30%;text-align:right'>
-<input type="button" value="Cargar Nro factura" class="btn4" onclick="verCerrarVentanaCargarNroFactura(true)" style="background-color: rgb(33, 150, 243); width: 40%;">
-<input type="button" value="Eliminar" class="btn4"  id='btnEliminarCobros1'  style="width:100px;background-color: #ccc;" onclick='abmeliminarestepagohistorial()' >
-
-</td>
-</tr>
-</table>
 <br>
 </center>
 </div>
@@ -24504,11 +24981,12 @@ LOCAL
 <tr>
 <td>
 <center>
-<div class='divPrincipalrepor' style='width:1200px;margin-left:40px'>
+<div class='divPrincipalrepor caja-control-shell' style='width:min(1500px, calc(100vw - 70px));margin-left:30px'>
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Consulta de <b style='font-size: 30px;' >Caja</b></p>
+<p class='pTituloB caja-control-title'>Centro de Control de <b style='font-size: 30px;' >Caja</b></p>
+<span class='caja-control-subtitle'>Control diario de cajas, cierres, diferencias y migraciones de capital.</span>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
@@ -24521,7 +24999,85 @@ title='Cerrar Ventana' onclick='verCerrarInformeConsultaCaja()' />
 </tr>
 </table>
 <br>
-<center style='display:flex;justify-content:space-between;'>
+<div class='caja-control-guide'>
+<b>Guia rapida</b>
+<span>Selecciona una caja del listado y usa Detalle para revisar cierre, impresion, movimientos o migracion.</span>
+</div>
+<div class='caja-control-cards' id='cajaControlCards'></div>
+<div class='caja-control-alertas' id='cajaControlAlertas'></div>
+<div class='divMenuf caja-control-filter-card'>
+<div class='caja-control-section-head'>
+<div>
+<p class='caja-control-section-title'>Filtros de busqueda</p>
+<p class='caja-control-section-help'>Filtra por fecha, sucursal, cajera, caja, lote o estado. El listado se actualiza sin abrir otra ventana.</p>
+</div>
+</div>
+<div class='caja-control-filters'>
+<label>Fecha desde<input class='inputText' type='date' id='cajaControlFechaDesde'></label>
+<label>Fecha hasta<input class='inputText' type='date' id='cajaControlFechaHasta'></label>
+<label>Sucursal<select class='inputSelect' id='cajaControlLocal'></select></label>
+<label>Estado
+<select class='inputSelect' id='cajaControlFiltroEstado'>
+<option value=''>Todas</option>
+<option value='Activo'>Abierta</option>
+<option value='Cerrado'>Cerrada</option>
+<option value='diferencia'>Cerrada con diferencia</option>
+<option value='migracion_pendiente'>Migracion pendiente</option>
+<option value='migrada'>Migrada a central</option>
+<option value='recibida'>Recibida por central</option>
+</select>
+</label>
+<label class='caja-control-search'>Buscar lote/cajera<input class='inputText' type='text' id='cajaControlBusquedaRapida' placeholder='Lote, caja, cajera...' oninput='cajaControlFiltrarRapido()'></label>
+<details class='caja-control-more-filters'>
+<summary>Mas filtros</summary>
+<div>
+<label>Caja<input class='inputText' type='text' id='cajaControlFiltroCaja' placeholder='Caja'></label>
+<label>Usuario especifico<input class='inputText' type='text' id='cajaControlFiltroUsuario' placeholder='Nombre'></label>
+<label>Lote exacto<input class='inputText' type='text' id='cajaControlFiltroLote' placeholder='Lote'></label>
+</div>
+</details>
+<div class='caja-control-filter-actions'>
+<input type='button' value='Buscar' class='btn4 caja-control-btn-primary' onclick='cajaControlBuscar()'>
+<input type='button' value='Limpiar filtros' class='btn4 caja-control-btn-secondary' onclick='cajaControlLimpiarFiltros()'>
+</div>
+</div>
+</div>
+<div class='caja-control-workspace'>
+<div class='divMenuf caja-control-list-card'>
+<div class='caja-control-section-head'>
+<div>
+<p class='caja-control-section-title'>Cajas y lotes</p>
+<p class='caja-control-section-help'>Consola principal de control. Selecciona un lote y abre Detalle solo cuando necesites revisar datos secundarios.</p>
+</div>
+<div class='caja-control-table-actions'>
+<button type='button' class='btn4 caja-control-btn-secondary' onclick='cajaControlAlternarResumenPeriodo()'>Ver resumen del periodo</button>
+<button type='button' class='btn4 caja-control-btn-secondary' onclick='cajaControlToggleDetalle()'>Detalle</button>
+</div>
+</div>
+<div class='caja-control-table-head'>
+<span>Lote</span>
+<span>Sucursal</span>
+<span>Caja</span>
+<span>Cajera</span>
+<span>Apertura</span>
+<span>Cierre</span>
+<span>Estado</span>
+<span>Diferencia</span>
+<span>Migracion</span>
+<span>Accion</span>
+</div>
+<div class='div_cuerpo_table caja-control-table-body' id='table_caja_control_lotes'></div>
+<div class='caja-control-selected-bar' id='cajaControlSeleccionBar'></div>
+<div class='caja-control-totales' id='cajaControlTotales'></div>
+</div>
+<div class='divMenuf caja-control-detail-card' id='cajaControlPanelDetalle'>
+<div class='caja-control-empty'>
+<b>Selecciona una caja</b>
+<span>El resumen, movimientos y control de migracion apareceran aca.</span>
+</div>
+</div>
+</div>
+<center id='cajaControlDetalleExtendido' class='caja-control-detalle-extendido caja-control-print-panel' style='display:none;justify-content:space-between;'>
   <div style="width: 75%;">
 <div class='divMenuf' >
 
@@ -24533,8 +25089,8 @@ title='Cerrar Ventana' onclick='verCerrarInformeConsultaCaja()' />
 placeholder='Seleccionar una caja'
 id='inptBuscarVistaApCie1' style='width:87px'
 disabled />
-<input type='button' value='Buscar' class='btn4'
-onclick='vercerrarvistaapcie("1","1")'>
+<input type='button' value='Listado' class='btn4'
+onclick='cajaControlEnfocarBuscador()'>
 </td>
 <td style='width:10%'>
 <p class='pTituloC' >Monto Apertura
@@ -24808,6 +25364,458 @@ style='width:95%;' />
 </div>
 
 </center>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
+
+<div class='principal2' style='display:none' id='divConciliacionUeno'>
+<table style='width:100%;height:100%' id='tdEfectoConciliacionUeno'>
+<tr>
+<td>
+<center>
+<div class='divPrincipalrepor ueno-modal' style='width:1220px;margin-left:30px'>
+<table class='tableMenuZ ueno-header'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB'>Conciliacion Ueno</p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
+</td>
+</tr>
+</table>
+<div class='ueno-guide'>
+<b>Mesa administrativa</b>
+<span>Mesa de control: consulta, trazabilidad y revision de movimientos Ueno. Los pagos deben procesarse desde el modulo de caja/cobros.</span>
+</div>
+<center>
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-import-card'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>1. Importar extracto bancario</p>
+<p class='ueno-section-help'>Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.</p>
+</div>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:11%;text-align:left'>
+<p class='pTituloC'>Fecha del extracto</p>
+<input class='inputText' type='date' id='inptUenoFechaExtracto' style='width:130px'>
+</td>
+<td style='width:11%;text-align:left'>
+<p class='pTituloC'>Periodo desde</p>
+<input class='inputText' type='date' id='inptUenoPeriodoDesde' style='width:130px'>
+</td>
+<td style='width:11%;text-align:left'>
+<p class='pTituloC'>Periodo hasta</p>
+<input class='inputText' type='date' id='inptUenoPeriodoHasta' style='width:130px'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Cuenta</p>
+<input class='inputText' type='text' id='inptUenoCuenta' style='width:135px'>
+</td>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Denominacion / titular</p>
+<input class='inputText' type='text' id='inptUenoDenominacion' style='width:190px'>
+</td>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Archivo seleccionado</p>
+<input class='inputTextDisable' type='text' id='inptUenoArchivo' disabled style='width:190px'>
+</td>
+<td style='width:9%;text-align:left'>
+<p class='pTituloC'>Movimientos leidos</p>
+<input class='inputTextDisable' type='text' id='inptUenoCantidadLeida' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:10%;text-align:right'>
+<input type='file' id='uenoArchivoExtracto' accept='.xls,.xlsx,.csv' style='display:none'>
+<input type='button' value='Seleccionar extracto' class='btn4 ueno-btn-secondary' onclick='uenoSeleccionarArchivo()' style='width:150px'>
+<input type='button' value='Importar extracto' class='btn4 ueno-btn-primary' onclick='uenoGuardarImportacion()' style='width:145px;background-color:#2196F3'>
+</td>
+</tr>
+</table>
+<table style='width:98%'>
+<tr>
+<td style='width:38%;text-align:left'>
+<p class='pTituloC'>Huella del archivo</p>
+<input class='inputTextDisable' type='text' id='inptUenoHash' disabled style='width:96%'>
+</td>
+<td style='width:22%;text-align:left'>
+<p class='pTituloC'>Observacion de importacion</p>
+<input class='inputText' type='text' id='txtUenoObservacionImportacion' style='width:96%'>
+</td>
+<td style='width:13%;text-align:left'>
+<p class='pTituloC'>Credito del extracto</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalCreditoPreview' disabled style='width:120px;text-align:right'>
+</td>
+<td style='width:13%;text-align:left'>
+<p class='pTituloC'>Debito del extracto</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalDebitoPreview' disabled style='width:120px;text-align:right'>
+</td>
+<td style='width:14%;text-align:left'>
+<div id='divUenoResumenImportacion' style='min-height:36px'></div>
+</td>
+</tr>
+</table>
+</div>
+
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-preview-card'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>2. Vista previa del extracto</p>
+<p class='ueno-section-help'>Se muestran las primeras filas para revisar el formato. La importacion procesa todos los movimientos leidos.</p>
+</div>
+</div>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:10%;">F. CONF.</td>
+<td class="td_registro" style="width:10%;">F. TRANS.</td>
+<td class="td_registro" style="width:16%;">COMPROBANTE</td>
+<td class="td_registro" style="width:24%;">DESCRIPCION</td>
+<td class="td_registro" style="width:16%;">CONCEPTO</td>
+<td class="td_registro" style="width:12%;">DEBITO</td>
+<td class="td_registro" style="width:12%;">CREDITO</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_preview" style='height:140px;'></div>
+</div>
+
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-tesoreria-card' style='clear:both;width:96%;margin-left:1%'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>3. Control diario de tesoreria</p>
+<p class='ueno-section-help'>Compara el total acreditado por Ueno contra las transferencias registradas en GoodVenta para la fecha seleccionada.</p>
+</div>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Fecha de cierre</p>
+<input class='inputText' type='date' id='inptUenoTesoreriaFechaOperativa' style='width:125px'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Fecha banco Ueno</p>
+<input class='inputText' type='date' id='inptUenoTesoreriaFechaBancaria' style='width:125px'>
+</td>
+<td style='width:14%;text-align:left'>
+<p class='pTituloC'>Local o codigo</p>
+<input class='inputText' type='text' id='inptUenoTesoreriaLocal' style='width:145px'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC'>Esperados</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesCierresEsperados' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC'>Realizados</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesCierresRealizados' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC'>Pendientes</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesCierresPendientes' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC'>Observados</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesCierresObservacion' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:22%;text-align:right'>
+<input type='button' value='Revisar tesoreria' class='btn4 ueno-btn-primary' onclick='uenoBuscarResumenTesoreria()' style='width:155px'>
+</td>
+</tr>
+</table>
+<table style='width:98%'>
+<tr>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Total Ueno banco</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesTotalUeno' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Transferencias GV</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesTotalGV' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Diferencia banco/GV</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesDiferencia' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Ya conciliado</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesConciliado' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Pendiente de conciliar</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesPendiente' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Observado / rechazado</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesObservado' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Sin comprobante</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesSinComprobante' disabled style='width:80px;text-align:center'>
+</td>
+<td style='width:16%;text-align:left'>
+<p class='pTituloC'>Saldo Ueno disponible</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesDisponible' disabled style='width:120px;text-align:right'>
+</td>
+</tr>
+</table>
+<table style='width:98%'>
+<tr>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Movimientos sin aplicar</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesSinAplicar' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:88%;text-align:left'>
+<div id='divUenoTesoreriaEstado' style='min-height:26px'></div>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:13%;">LOCAL</td>
+<td class="td_registro" style="width:7%;">TURNO</td>
+<td class="td_registro" style="width:7%;">CAJA</td>
+<td class="td_registro" style="width:7%;">LOTE</td>
+<td class="td_registro" style="width:9%;">APERTURA</td>
+<td class="td_registro" style="width:9%;">CIERRE</td>
+<td class="td_registro" style="width:6%;">CAJA</td>
+<td class="td_registro" style="width:8%;">TRANSF. GV</td>
+<td class="td_registro" style="width:8%;">CONC.</td>
+<td class="td_registro" style="width:7%;">PEND.</td>
+<td class="td_registro" style="width:6%;">OBS.</td>
+<td class="td_registro" style="width:4%;">S/C</td>
+<td class="td_registro" style="width:9%;">ESTADO</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_resumen_tesoreria" style='height:180px;'></div>
+</div>
+
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-half-card' style='width:47%;float:left;margin-left:1%'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>4. Extractos importados</p>
+<p class='ueno-section-help'>Selecciona una importacion para ver sus movimientos bancarios abajo.</p>
+</div>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:20%;text-align:left'>
+<p class='pTituloC'>Desde</p>
+<input class='inputText' type='date' id='inptUenoBuscarDesde' style='width:120px'>
+</td>
+<td style='width:20%;text-align:left'>
+<p class='pTituloC'>Hasta</p>
+<input class='inputText' type='date' id='inptUenoBuscarHasta' style='width:120px'>
+</td>
+<td style='width:20%;text-align:left'>
+<p class='pTituloC'>Extractos encontrados</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalImportaciones' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:40%;text-align:right'>
+<input type='button' value='Buscar extractos' class='btn4 ueno-btn-secondary' onclick='uenoBuscarImportaciones()' style='width:135px'>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:8%;">ID</td>
+<td class="td_registro" style="width:12%;">CUENTA</td>
+<td class="td_registro" style="width:10%;">FECHA</td>
+<td class="td_registro" style="width:24%;">ARCHIVO</td>
+<td class="td_registro" style="width:14%;">IMPORTADO</td>
+<td class="td_registro" style="width:8%;">MOV.</td>
+<td class="td_registro" style="width:8%;">CRED.</td>
+<td class="td_registro" style="width:8%;">DEB.</td>
+<td class="td_registro" style="width:8%;">ESTADO</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_importaciones" style='height:220px;'></div>
+</div>
+
+<div class='divMenuf ueno-card ueno-half-card ueno-main-card' style='width:47%;float:left;margin-left:1%'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>5. Movimientos Ueno - mesa de trabajo</p>
+<p class='ueno-section-help'>Pantalla administrativa de consulta. El saldo disponible se muestra para control; no se procesan pagos desde esta mesa.</p>
+</div>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Desde</p>
+<input class='inputText' type='date' id='inptUenoMovDesde' style='width:115px'>
+</td>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Hasta</p>
+<input class='inputText' type='date' id='inptUenoMovHasta' style='width:115px'>
+</td>
+<td style='width:22%;text-align:left'>
+<p class='pTituloC'>Comprobante</p>
+<input class='inputText' type='text' id='inptUenoMovComprobante' style='width:125px'>
+</td>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Estado</p>
+<select class='inputSelect' id='inptUenoMovEstado' style='width:115px'>
+<option value=''>TODOS</option>
+<option value='disponible'>DISPONIBLE</option>
+<option value='registrado'>REGISTRADO</option>
+<option value='asignado_parcial'>ASIGNADO PARCIAL</option>
+<option value='asignado_total'>ASIGNADO TOTAL</option>
+</select>
+</td>
+<td style='width:24%;text-align:right'>
+<input type='button' value='Buscar movimientos' class='btn4 ueno-btn-secondary' onclick='uenoBuscarMovimientos()' style='width:150px'>
+</td>
+</tr>
+</table>
+<div class='ueno-quick-filters' id='divUenoMovFiltrosRapidos'>
+<button type='button' class='ueno-quick-filter ueno-quick-filter--active' data-ueno-mov-filter='todos' onclick='uenoCambiarFiltroRapidoMovimientos("todos")'>Todos <span id='lblUenoChipTodos'>0</span></button>
+<button type='button' class='ueno-quick-filter' data-ueno-mov-filter='disponibles' onclick='uenoCambiarFiltroRapidoMovimientos("disponibles")'>Disponibles <span id='lblUenoChipDisponibles'>0</span></button>
+<button type='button' class='ueno-quick-filter' data-ueno-mov-filter='parciales' onclick='uenoCambiarFiltroRapidoMovimientos("parciales")'>Parciales <span id='lblUenoChipParciales'>0</span></button>
+<button type='button' class='ueno-quick-filter' data-ueno-mov-filter='conciliados' onclick='uenoCambiarFiltroRapidoMovimientos("conciliados")'>Conciliados <span id='lblUenoChipConciliados'>0</span></button>
+<button type='button' class='ueno-quick-filter' data-ueno-mov-filter='con_saldo' onclick='uenoCambiarFiltroRapidoMovimientos("con_saldo")'>Con saldo <span id='lblUenoChipConSaldo'>0</span></button>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:20%;text-align:left'>
+<p class='pTituloC'>Registros</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalMovimientos' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:25%;text-align:left'>
+<p class='pTituloC'>Total creditos banco</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalCreditos' disabled style='width:120px;text-align:right'>
+</td>
+<td style='width:25%;text-align:left'>
+<p class='pTituloC'>Total debitos banco</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalDebitos' disabled style='width:120px;text-align:right'>
+</td>
+<td style='width:30%'></td>
+</tr>
+</table>
+<div class='ueno-movement-summary' id='divUenoMovResumenEstados'>
+<span><b>Disponibles</b><strong id='lblUenoMovDisponibles'>0</strong></span>
+<span><b>Parciales</b><strong id='lblUenoMovParciales'>0</strong></span>
+<span><b>Conciliados</b><strong id='lblUenoMovConciliados'>0</strong></span>
+<span><b>Saldo disponible</b><strong id='lblUenoMovSaldoDisponible'>0</strong></span>
+</div>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:7%;">F. CONF.</td>
+<td class="td_registro" style="width:7%;">F. TRANS.</td>
+<td class="td_registro" style="width:11%;">COMPROBANTE</td>
+<td class="td_registro" style="width:18%;">DESCRIPCION</td>
+<td class="td_registro" style="width:11%;">CONCEPTO</td>
+<td class="td_registro" style="width:7%;">DEB.</td>
+<td class="td_registro" style="width:8%;">CREDITO</td>
+<td class="td_registro" style="width:8%;">APLICADO</td>
+<td class="td_registro" style="width:8%;">DISP.</td>
+<td class="td_registro" style="width:7%;">ESTADO</td>
+<td class="td_registro" style="width:8%;">ACCION</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_movimientos" style='height:360px;'></div>
+</div>
+
+<div class='divMenuf ueno-card ueno-support-card ueno-pagos-card' style='clear:both;width:96%;margin-left:1%'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>6. Control y trazabilidad de movimientos</p>
+<p class='ueno-section-help'>Selecciona Ver detalle en la tabla para revisar el movimiento. Esta mesa no registra pagos ni aplica saldos a cuotas.</p>
+</div>
+</div>
+<div class='ueno-assignment-flow'>
+<div class='ueno-step-card ueno-step-card--movement'>
+<div class='ueno-step-heading'><span>1</span><b>Detalle del movimiento</b></div>
+<div id='divUenoMovimientoSeleccionado' class='ueno-selected-movement'>
+<div class='ueno-selected-empty'>
+<b>Detalle del movimiento</b>
+<span>Usa Ver detalle para consultar fecha, comprobante, monto, disponible, estado y trazabilidad. Para registrar un cobro, ingresa al modulo Caja / Cobrar cuota.</span>
+</div>
+</div>
+</div>
+
+<div class='ueno-step-card ueno-step-card--control'>
+<div class='ueno-step-heading'><span>2</span><b>Acciones permitidas</b></div>
+<div class='ueno-control-note'>
+<b>Solo consulta administrativa</b>
+<span>Desde esta mesa podes revisar movimientos, aplicaciones ya realizadas y auditoria. Las acciones de cobro y conciliacion se realizan unicamente desde Caja / Cobrar cuota.</span>
+</div>
+</div>
+</div>
+
+<div class='ueno-legacy-fields' style='display:none'>
+<input class='inputTextDisable' type='text' id='inptUenoManualIdPago' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualFactura' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualComprobante' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualMonto' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualEstado' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualTotalCandidatos' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualCliente' disabled>
+<input class='inputTextDisable' type='text' id='inptUenoManualCobrador' disabled>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_candidatos_manual"></div>
+</div>
+<div id='divUenoResumenConciliacion' style='width:98%;min-height:28px;text-align:left'></div>
+</div>
+
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-audit-card' style='clear:both;width:96%;margin-left:1%'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>7. Auditoria y trazabilidad</p>
+<p class='ueno-section-help'>Consulta importaciones, conciliaciones y asignaciones ya realizadas. Es una vista de control, no el area principal de trabajo.</p>
+</div>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:14%;text-align:left'>
+<p class='pTituloC'>Desde</p>
+<input class='inputText' type='date' id='inptUenoAuditDesde' style='width:125px'>
+</td>
+<td style='width:14%;text-align:left'>
+<p class='pTituloC'>Hasta</p>
+<input class='inputText' type='date' id='inptUenoAuditHasta' style='width:125px'>
+</td>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Accion o palabra clave</p>
+<input class='inputText' type='text' id='inptUenoAuditAccion' style='width:160px'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Registros</p>
+<input class='inputTextDisable' type='text' id='inptUenoAuditTotal' disabled style='width:90px;text-align:center'>
+</td>
+<td style='width:42%;text-align:right'>
+<input type='button' value='Buscar auditoria' class='btn4 ueno-btn-secondary' onclick='uenoBuscarAuditoria()' style='width:140px'>
+</td>
+</tr>
+</table>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:5%;">ID</td>
+<td class="td_registro" style="width:12%;">FECHA</td>
+<td class="td_registro" style="width:14%;">ACCION</td>
+<td class="td_registro" style="width:12%;">TABLA</td>
+<td class="td_registro" style="width:8%;">FACTURA</td>
+<td class="td_registro" style="width:7%;">MOV.</td>
+<td class="td_registro" style="width:10%;">ANTES</td>
+<td class="td_registro" style="width:10%;">AHORA</td>
+<td class="td_registro" style="width:8%;">MONTO</td>
+<td class="td_registro" style="width:5%;">USER</td>
+<td class="td_registro" style="width:9%;">OBS.</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_auditoria" style='height:130px;'></div>
+</div>
 </div>
 </center>
 </td>
@@ -28103,7 +29111,10 @@ TIPO
 <td class="td_registro" style="width:15%;">
 FECHA
 </td>
-<td class="td_registro" style="width:40%;">
+<td class="td_registro" style="width:15%;">
+ESTADO
+</td>
+<td class="td_registro" style="width:25%;">
 COBRADOR
 </td>
 </tr>
@@ -30789,6 +31800,125 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
     </label>
   </section>
 
+  <section class='caja-cierre-wizard' id='divCajaCierreWizard' style='display:none'>
+    <div class='caja-wizard-steps' aria-label='Pasos del cierre de caja'>
+      <button type='button' class='caja-wizard-step is-active' id='btnCajaCierrePaso1' onclick='cajaCierreIrPaso(1)'><b>1</b><span>Conteo</span></button>
+      <button type='button' class='caja-wizard-step' id='btnCajaCierrePaso2' onclick='cajaCierreIrPaso(2)'><b>2</b><span>Evidencia</span></button>
+      <button type='button' class='caja-wizard-step' id='btnCajaCierrePaso3' onclick='cajaCierreIrPaso(3)'><b>3</b><span>Resumen</span></button>
+      <button type='button' class='caja-wizard-step' id='btnCajaCierrePaso4' onclick='cajaCierreIrPaso(4)'><b>4</b><span>Observacion</span></button>
+      <button type='button' class='caja-wizard-step' id='btnCajaCierrePaso5' onclick='cajaCierreIrPaso(5)'><b>5</b><span>Firma</span></button>
+      <button type='button' class='caja-wizard-step' id='btnCajaCierrePaso6' onclick='cajaCierreIrPaso(6)'><b>6</b><span>Cierre</span></button>
+    </div>
+
+    <div class='caja-wizard-content'>
+      <div class='caja-cierre-step is-active' id='cajaCierrePaso1'>
+        <div>
+          <span>Paso 1 de 6</span>
+          <h3>Conteo de efectivo por denominacion</h3>
+          <p>Carga la cantidad de billetes y monedas contadas. El sistema calculara automaticamente el total efectivo declarado.</p>
+        </div>
+        <div class='caja-step-result'>
+          <span>Total efectivo contado</span>
+          <strong id='lblCajaCierreTotalConteo'>0 Gs.</strong>
+          <button type='button' class='btn4 caja-step-button' onclick='cajaCierreContinuar()'>Continuar a evidencia</button>
+        </div>
+      </div>
+
+      <div class='caja-cierre-step' id='cajaCierrePaso2'>
+        <div>
+          <span>Paso 2 de 6</span>
+          <h3>Foto del dinero contado</h3>
+          <p>Adjunta una foto clara del dinero contado. Esta imagen quedara guardada como respaldo interno del cierre.</p>
+        </div>
+        <div class='caja-evidencia-box'>
+          <input type='file' id='inptCajaCierreFoto' accept='image/jpeg,image/png,image/webp' capture='environment' onchange='cajaCierreFotoSeleccionada(event)' />
+          <div class='caja-foto-preview' id='divCajaCierreFotoPreview'>Sin foto adjunta</div>
+          <button type='button' class='btn4 caja-secondary-action' onclick='cajaCierreQuitarFoto()'>Quitar foto</button>
+          <button type='button' class='btn4 caja-step-button' onclick='cajaCierreContinuar()'>Continuar a resumen</button>
+        </div>
+      </div>
+
+      <div class='caja-cierre-step' id='cajaCierrePaso3'>
+        <div>
+          <span>Paso 3 de 6</span>
+          <h3>Resumen comparativo</h3>
+          <p>El efectivo fisico se compara separado de transferencias, tarjetas y billeteras.</p>
+        </div>
+        <div class='caja-comparativo-grid'>
+          <div><span>Efectivo esperado</span><strong id='lblCajaCierreEsperado'>0 Gs.</strong></div>
+          <div><span>Efectivo contado</span><strong id='lblCajaCierreContado'>0 Gs.</strong></div>
+          <div id='boxCajaCierreDiferencia'><span>Diferencia efectivo</span><strong id='lblCajaCierreDiferencia'>0 Gs.</strong></div>
+          <div><span>Estado</span><strong id='lblCajaCierreEstado'>Caja cuadrada</strong></div>
+          <div><span>Transferencias</span><strong id='lblCajaCierreTransferencias'>0 Gs.</strong></div>
+          <div><span>Transferencias conciliadas</span><strong id='lblCajaCierreTransferenciasConciliadas'>0 Gs.</strong></div>
+          <div><span>Tarjetas</span><strong id='lblCajaCierreTarjetas'>0 Gs.</strong></div>
+          <div><span>Billeteras / otros</span><strong id='lblCajaCierreBilleteras'>0 Gs.</strong></div>
+        </div>
+        <button type='button' class='btn4 caja-step-button' onclick='cajaCierreContinuar()'>Continuar</button>
+      </div>
+
+      <div class='caja-cierre-step' id='cajaCierrePaso4'>
+        <div>
+          <span>Paso 4 de 6</span>
+          <h3>Observacion por diferencia</h3>
+          <p id='txtCajaCierreMensajeDiferencia'>Solo se solicita motivo cuando la caja no cuadra.</p>
+        </div>
+        <div class='caja-observacion-grid' id='divCajaCierreObservacionCampos'>
+          <label>
+            <span>Motivo</span>
+            <select id='slcCajaCierreMotivoDiferencia' class='inputSelect' onchange='cajaCierreActualizarResumenSeguro()'>
+              <option value=''>Seleccionar motivo</option>
+              <option value='Falta revisar efectivo'>Falta revisar efectivo</option>
+              <option value='Pago cargado con forma incorrecta'>Pago cargado con forma incorrecta</option>
+              <option value='Egreso no registrado'>Egreso no registrado</option>
+              <option value='Transferencia cargada como efectivo'>Transferencia cargada como efectivo</option>
+              <option value='Diferencia menor'>Diferencia menor</option>
+              <option value='Error de carga'>Error de carga</option>
+              <option value='Otro'>Otro</option>
+            </select>
+          </label>
+          <label>
+            <span>Observacion</span>
+            <textarea id='txtCajaCierreObservacionDiferencia' class='inputText' rows='3' onkeyup='cajaCierreActualizarResumenSeguro()'></textarea>
+          </label>
+        </div>
+        <button type='button' class='btn4 caja-step-button' onclick='cajaCierreContinuar()'>Continuar a firma</button>
+      </div>
+
+      <div class='caja-cierre-step' id='cajaCierrePaso5'>
+        <div>
+          <span>Paso 5 de 6</span>
+          <h3>Firma interna de la cajera</h3>
+          <p>Confirmo que realice el conteo fisico del dinero, adjunte la evidencia correspondiente y que los datos declarados son correctos.</p>
+        </div>
+        <div class='caja-firma-box'>
+          <canvas id='canvasCajaCierreFirma' width='520' height='170'></canvas>
+          <button type='button' class='btn4 caja-secondary-action' onclick='cajaCierreLimpiarFirma()'>Limpiar firma</button>
+          <button type='button' class='btn4 caja-step-button' onclick='cajaCierreContinuar()'>Continuar a cierre</button>
+        </div>
+      </div>
+
+      <div class='caja-cierre-step' id='cajaCierrePaso6'>
+        <div>
+          <span>Paso 6 de 6</span>
+          <h3>Confirmar cierre de caja</h3>
+          <p>Al confirmar, el lote queda cerrado y bloqueado para edicion directa.</p>
+        </div>
+        <div class='caja-final-grid'>
+          <div><span>Lote</span><strong id='lblCajaCierreLoteFinal'>-</strong></div>
+          <div><span>Cajera</span><strong id='lblCajaCierreCajeraFinal'>-</strong></div>
+          <div><span>Efectivo esperado</span><strong id='lblCajaCierreEsperadoFinal'>0 Gs.</strong></div>
+          <div><span>Efectivo contado</span><strong id='lblCajaCierreContadoFinal'>0 Gs.</strong></div>
+          <div><span>Diferencia</span><strong id='lblCajaCierreDiferenciaFinal'>0 Gs.</strong></div>
+          <div><span>Foto adjunta</span><strong id='lblCajaCierreFotoFinal'>No</strong></div>
+          <div><span>Firma registrada</span><strong id='lblCajaCierreFirmaFinal'>No</strong></div>
+          <div><span>Estado</span><strong id='lblCajaCierreEstadoFinal'>Caja cuadrada</strong></div>
+        </div>
+        <button type='button' class='btn1 caja-primary-action' onclick='verificarcamposaperturacierredecaja()'>Confirmar cierre</button>
+      </div>
+    </div>
+  </section>
+
   <div class='caja-main-grid'>
     <section class='caja-cash-panel'>
       <div class='caja-panel-heading'>
@@ -30800,35 +31930,35 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
       <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoCierreCierreCaja' style='display: none;' onkeyup='separadordemiles(this)' />
       <div class='caja-denomination-grid'>
         <label class='caja-denomination-item'>
-          <span>500 gs.</span>
+          <span>500 gs.<small id='lblCajaDenomSub500'>0</small></span>
           <input id='inptMontoCierreCaja5' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>1.000 gs.</span>
+          <span>1.000 gs.<small id='lblCajaDenomSub1000'>0</small></span>
           <input id='inptMontoCierreCaja10' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>2.000 gs.</span>
+          <span>2.000 gs.<small id='lblCajaDenomSub2000'>0</small></span>
           <input id='inptMontoCierreCaja20' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>5.000 gs.</span>
+          <span>5.000 gs.<small id='lblCajaDenomSub5000'>0</small></span>
           <input id='inptMontoCierreCaja50' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>10.000 gs.</span>
+          <span>10.000 gs.<small id='lblCajaDenomSub10000'>0</small></span>
           <input id='inptMontoCierreCaja100' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>20.000 gs.</span>
+          <span>20.000 gs.<small id='lblCajaDenomSub20000'>0</small></span>
           <input id='inptMontoCierreCaja200' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>50.000 gs.</span>
+          <span>50.000 gs.<small id='lblCajaDenomSub50000'>0</small></span>
           <input id='inptMontoCierreCaja500' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
         <label class='caja-denomination-item'>
-          <span>100.000 gs.</span>
+          <span>100.000 gs.<small id='lblCajaDenomSub100000'>0</small></span>
           <input id='inptMontoCierreCaja1000' class="inputText" type="number" min="0" disabled onkeyup="calcularMontoMovimientoAperturaCierreCaja()" onchange="calcularMontoMovimientoAperturaCierreCaja()"/>
         </label>
       </div>
@@ -30852,11 +31982,11 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
           <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoAperturaCierreCaja' onkeyup='separadordemiles(this);calcularMontoMovimientoAperturaCierreCaja()' />
         </label>
         <label class='caja-ticket-row'>
-          <span>Total recaudado</span>
+          <span>Mov. efectivo neto</span>
           <input class='inputTextDisable' type='text' id='inptMontoRecaudadoCierreCaja' disabled />
         </label>
         <label class='caja-ticket-row caja-ticket-row--total'>
-          <span>Total esperado</span>
+          <span>Efectivo esperado</span>
           <input id='inptResumenTotalAperturaCierre' type="text" readonly>
         </label>
       </div>
