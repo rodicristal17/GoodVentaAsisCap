@@ -2,7 +2,6 @@
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
 require_once("conexion.php");
-require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("abmpagos.php");
@@ -45,17 +44,6 @@ $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $codusuarioap=$_POST['codusuarioap'];
 $codusuarioap = mb_convert_encoding((string)($codusuarioap), 'ISO-8859-1', 'UTF-8');
 $codusuarioce = $user;
-if($operacion=="editar")
-{
-	registrarSolicitudEliminacionGenerica(
-		"arqueocaja",
-		"idarqueocaja",
-		$idarqueocaja,
-		"Solicitud automatica por cierre o edicion de caja.",
-		$user,
-		"archivo: abmaperturacierrecaja.php | funcion: verificar | funt: editar | idarqueocaja: ".$idarqueocaja." | cod_local: ".$cod_local." | caja_idcaja: ".$caja_idcaja." | montocierre: ".$montocierre." | estado: ".$estado
-	);
-}
 abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,$montocierre,$fechaapertura,$fechacierre,$estado,$codusuarioap,$codusuarioce,$operacion);
 
 }
@@ -945,10 +933,11 @@ if ($lote != "") {
 
 $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertura, fechacierre, estado, codusuarioap, codusuarioce,cod_local,
 (Select cajanro from caja l where l.idcaja=caja_idcaja) as cajanro,
-(ifnull((Select sum(Monto) from pago where codApertura=idarqueocaja),0)) as cobros,
+(ifnull((Select sum(pg.Monto) from pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk where pg.Monto>0 and pg.codApertura=idarqueocaja),0)) as cobros,
 (ifnull((Select sum(pg.Monto) from pago pg left join tipopago tp on tp.cod_tipoPago=pg.cod_tipoPagoFK where pg.Monto>0 and pg.codApertura=idarqueocaja and UPPER(COALESCE(tp.nombre, pg.tipopago, '')) LIKE '%EFECTIVO%'),0)) as pagos_efectivo,
-(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and tipo='Egreso'),0)) as egreso,
-(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and tipo='Ingreso'),0)) as ingreso,
+(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and estado='Activo' and tipo='Egreso'),0)) as egreso,
+(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and estado='Activo' and tipo='Ingreso'),0)) as ingreso,
+(ifnull((Select sum(monto) from gastos where codApertura=idarqueocaja and estado='Activo' and tipo='Deposito'),0)) as deposito,
 (ifnull((Select sum(monto) from migrar_caja where cod_caja_desdeFK=idarqueocaja),0)) as total_migrado,
 (ifnull((Select sum(monto) from migrar_caja where cod_caja_hastaFK=idarqueocaja),0)) as total_recibido,
 (Select cajanro from caja l where l.idcaja=caja_idcaja) as cajanro,lote,
@@ -1024,6 +1013,7 @@ $cobros = mb_convert_encoding((string)($valor['cobros']), 'UTF-8', 'ISO-8859-1')
 $pagos_efectivo = mb_convert_encoding((string)($valor['pagos_efectivo']), 'UTF-8', 'ISO-8859-1'); 
 $egreso = mb_convert_encoding((string)($valor['egreso']), 'UTF-8', 'ISO-8859-1'); 
 $ingreso = mb_convert_encoding((string)($valor['ingreso']), 'UTF-8', 'ISO-8859-1'); 
+$deposito = mb_convert_encoding((string)($valor['deposito']), 'UTF-8', 'ISO-8859-1'); 
 $total_migrado = mb_convert_encoding((string)($valor['total_migrado']), 'UTF-8', 'ISO-8859-1'); 
 $total_recibido = mb_convert_encoding((string)($valor['total_recibido']), 'UTF-8', 'ISO-8859-1'); 
 
@@ -1031,6 +1021,7 @@ if ($cobros == "") {$cobros=0;}
 if ($pagos_efectivo == "") {$pagos_efectivo=0;}
 if ($egreso == "") {$egreso=0;}
 if ($ingreso == "") {$ingreso=0;}
+if ($deposito == "") {$deposito=0;}
 if ($total_migrado == "") {$total_migrado=0;}
 if ($total_recibido == "") {$total_recibido=0;}
 
@@ -1043,7 +1034,7 @@ $TotalRecibido = $TotalRecibido + $total_recibido;
 $TotalApertura += $montoapertura;
 $TotalCierre += $montocierre;
 
-$efectivoEsperado = ((float)$montoapertura + (float)$pagos_efectivo + (float)$ingreso + (float)$total_recibido) - ((float)$egreso + (float)$total_migrado);
+$efectivoEsperado = ((float)$montoapertura + (float)$cobros + (float)$ingreso + (float)$total_recibido) - ((float)$egreso + (float)$total_migrado + (float)$deposito);
 $montoBaseMigracion = ((float)$montocierre > 0) ? (float)$montocierre : $efectivoEsperado;
 $diferencia = 0;
 if (strtolower($estado) == "cerrado") {
@@ -1115,6 +1106,7 @@ $registros[]= array(
 	'pagos_efectivo' => (float)$pagos_efectivo,
 	'ingreso' => (float)$ingreso,
 	'egreso' => (float)$egreso,
+	'deposito' => (float)$deposito,
 	'efectivo_esperado' => $efectivoEsperado,
 	'diferencia' => $diferencia,
 	'diferencia_abs' => abs($diferencia),

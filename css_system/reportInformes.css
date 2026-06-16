@@ -525,3 +525,294 @@
     print-color-adjust: exact;
   }
 }
+
+/* Impresion de reportes de caja en hoja carta */
+@page caja-print-letter {
+  size: Letter portrait;
+  margin: 7mm;
+}
+
+.caja-print-letter {
+  width: min(100%, 202mm);
+  margin: 0 auto;
+  box-sizing: border-box;
+  position: relative;
+  color: #1f2933;
+  background: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  line-height: 1.22;
+  isolation: isolate;
+}
+
+.caja-print-letter *,
+.caja-print-letter *::before,
+.caja-print-letter *::after {
+  box-sizing: border-box;
+}
+
+.caja-print-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 118mm;
+  max-width: 72%;
+  max-height: 72%;
+  object-fit: contain;
+  opacity: 0.06;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.caja-print-header,
+.caja-print-section,
+.caja-print-columns {
+  position: relative;
+  z-index: 1;
+}
+
+.caja-print-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 5mm;
+  align-items: flex-start;
+  padding-bottom: 2.5mm;
+  margin-bottom: 2.5mm;
+  border-bottom: 2px solid #1f2933;
+}
+
+.caja-print-kicker {
+  margin: 0 0 1mm;
+  color: #586575;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.caja-print-header h1 {
+  margin: 0 0 1.5mm;
+  color: #111827;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.caja-print-badge {
+  display: inline-block;
+  padding: 1mm 2mm;
+  border: 1px solid #9aa6b2;
+  border-radius: 3px;
+  color: #1f2933;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.caja-print-badge.is-ok,
+.caja-print-metric.is-ok {
+  border-color: #198754;
+  color: #11623c;
+}
+
+.caja-print-badge.is-alert,
+.caja-print-metric.is-alert {
+  border-color: #b7791f;
+  color: #8a5a12;
+}
+
+.caja-print-header-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.2mm;
+  min-width: 48mm;
+}
+
+.caja-print-section {
+  width: 100%;
+  margin: 0 0 2.5mm;
+  padding: 2mm;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+}
+
+.caja-print-section h2 {
+  margin: 0 0 1.5mm;
+  color: #111827;
+  font-size: 10px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.caja-print-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.6mm;
+}
+
+.caja-print-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.caja-print-data {
+  min-height: 8.5mm;
+  padding: 1.4mm;
+  border: 1px solid #e2e8f0;
+  border-radius: 2px;
+  background: #f8fafc;
+}
+
+.caja-print-data span,
+.caja-print-metric span {
+  display: block;
+  margin-bottom: 0.4mm;
+  color: #64748b;
+  font-size: 7.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.caja-print-data strong,
+.caja-print-metric strong {
+  display: block;
+  color: #111827;
+  font-size: 9.5px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.caja-print-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.6mm;
+}
+
+.caja-print-metrics--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.caja-print-metric {
+  padding: 2mm;
+  border: 1px solid #cbd5e1;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.caja-print-metric strong {
+  font-size: 13px;
+  text-align: right;
+}
+
+.caja-print-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 2.5mm;
+  align-items: start;
+}
+
+.caja-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: Arial, sans-serif;
+}
+
+.caja-print-table th,
+.caja-print-table td {
+  padding: 1.1mm 1.3mm;
+  border: 1px solid #d7dee8;
+  color: #111827;
+  font-size: 9px;
+  line-height: 1.15;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.caja-print-table th {
+  background: #eef2f7;
+  color: #334155;
+  font-weight: 700;
+  text-align: left;
+}
+
+.caja-print-money {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.caja-print-center {
+  text-align: center;
+}
+
+.caja-print-empty {
+  color: #64748b;
+  text-align: center;
+}
+
+.caja-print-confirmation {
+  margin: 1.6mm 0 0;
+  color: #334155;
+  font-size: 8.5px;
+  line-height: 1.22;
+}
+
+.caja-print-signatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8mm;
+  margin-top: 3mm;
+}
+
+.caja-print-sign-box {
+  min-height: 16mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.caja-print-sign-empty {
+  min-height: 8mm;
+}
+
+.caja-print-sign-image {
+  display: block;
+  max-width: 58mm;
+  max-height: 16mm;
+  object-fit: contain;
+  margin: 0 auto 1.4mm;
+}
+
+.caja-print-sign-line {
+  min-height: 7mm;
+  padding-top: 1mm;
+  border-top: 1px solid #111827;
+  text-align: center;
+}
+
+.caja-print-sign-line strong,
+.caja-print-sign-line span {
+  display: block;
+  color: #111827;
+  font-size: 8.5px;
+  line-height: 1.15;
+}
+
+.caja-print-sign-line span {
+  color: #4b5563;
+}
+
+@media print {
+  .caja-print-letter {
+    page: caja-print-letter;
+    width: 100% !important;
+  }
+
+  .caja-print-letter,
+  .caja-print-letter * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
