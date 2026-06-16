@@ -609,6 +609,7 @@ function cargarAgendaConsultorios(){
             + "<span id='td_datos_3'>"+consultorios[i].nombre_doctor+"</span>"
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
             + renderOccupancyIndicatorAgenda(ocupacionConsultorio)
+            + renderInsumosDiaConsultorioDropdownAgenda(consultorios[i].id, fecha)
 
             + "<span id='td_datos_5' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.total + "</span>"
             + "<span id='td_datos_6' class='agenda-consultorio-sub' style='display:none;'>" + contador_cita.confirmadas + "</span>"
@@ -837,8 +838,7 @@ function cargarResumenAbmConsultorioAgenda(){
     document.getElementById('lblAtendidobmConsultorioAgenda').innerHTML = totales.Atendido;
     document.getElementById('lblConDeudabmConsultorioAgenda').innerHTML = totales.ConDeuda;
 
-    renderResumenInsumosDiaConsultorioAgenda(consultorio, fecha);
-    renderAgendaResumenConsultorio(consultorio, fecha);
+    cargarProyeccionInsumosConsultorioAgenda(consultorio, fecha);
 }
 
 function actualizarCabeceraResumenConsultorioAgenda(fecha){
@@ -870,6 +870,183 @@ function formatearCantidadInsumoAgenda(valor){
         return String(Math.round(numero));
     }
     return numero.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha){
+    var acumulados = {};
+    var orden = [];
+    var estadosPrevistos = {
+        AGENDADO: true,
+        CONFIRMADO: true,
+        CONFIRMADOCONDEUDA: true,
+        PRIMERACONSULTA: true
+    };
+    var eventos = agendaConsultoriosData.eventos || [];
+    var i, j, evento, insumos, insumo, clave, cantidad, stock, minimo, faltante;
+
+    for(i = 0; i < eventos.length; i++){
+        evento = eventos[i];
+        if(
+            String(evento.fecha) !== String(fecha) ||
+            String(evento.consultorio) !== String(idConsultorio) ||
+            !estadosPrevistos[String(evento.estado || '').toUpperCase()]
+        ){
+            continue;
+        }
+
+        insumos = evento.insumos_previstos || [];
+        for(j = 0; j < insumos.length; j++){
+            insumo = insumos[j];
+            cantidad = normalizarCantidadInsumoAgenda(insumo.cantidad);
+            if(cantidad <= 0){ continue; }
+
+            clave = String(insumo.id_insumo || insumo.nombre) + ":" + String(insumo.id_variante || 0) + "|" + String(insumo.unidad_medida || '');
+            stock = normalizarCantidadInsumoAgenda(insumo.stock);
+            minimo = normalizarCantidadInsumoAgenda(insumo.stock_minimo);
+            faltante = normalizarCantidadInsumoAgenda(insumo.faltante);
+
+            if(!acumulados[clave]){
+                acumulados[clave] = {
+                    nombre: (insumo.nombre || 'Insumo') + (insumo.nombre_variante ? " - " + insumo.nombre_variante : ""),
+                    unidad: insumo.unidad_medida || '',
+                    cantidad: 0,
+                    stock: stock,
+                    minimo: minimo,
+                    faltante: 0
+                };
+                orden.push(clave);
+            }
+
+            acumulados[clave].cantidad += cantidad;
+            acumulados[clave].stock = Math.max(acumulados[clave].stock, stock);
+            acumulados[clave].minimo = Math.max(acumulados[clave].minimo, minimo);
+            acumulados[clave].faltante += faltante;
+        }
+    }
+
+    orden.sort(function(a, b){
+        return acumulados[a].nombre.localeCompare(acumulados[b].nombre);
+    });
+
+    return orden.map(function(clave){
+        var item = acumulados[clave];
+        var saldo = item.stock - item.cantidad;
+        item.estado_stock = item.faltante > 0 || item.stock <= 0 || saldo < 0 ? 'critico' : (saldo <= item.minimo ? 'bajo' : 'ok');
+        return item;
+    });
+}
+
+function renderInsumosDiaConsultorioDropdownAgenda(idConsultorio, fecha){
+    var insumos = obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha);
+    var html = "";
+    var i, item, detalleStock;
+
+    if(insumos.length === 0){
+        return "<details class='agenda-insumos-dia-dropdown' onclick='event.stopPropagation()'>"
+            + "<summary>Insumos en el d&iacute;a <b>0</b></summary>"
+            + "<div class='agenda-insumos-dia-dropdown-body'><span class='agenda-ayuda-inline'>Sin insumos previstos.</span></div>"
+            + "</details>";
+    }
+
+    html += "<details class='agenda-insumos-dia-dropdown' onclick='event.stopPropagation()'>"
+        + "<summary>Insumos en el d&iacute;a <b>" + insumos.length + "</b></summary>"
+        + "<div class='agenda-insumos-dia-dropdown-body'>";
+
+    for(i = 0; i < insumos.length; i++){
+        item = insumos[i];
+        detalleStock = "Stock " + formatearCantidadInsumoAgenda(item.stock)
+            + " / usa " + formatearCantidadInsumoAgenda(item.cantidad)
+            + (item.minimo > 0 ? " / min " + formatearCantidadInsumoAgenda(item.minimo) : "");
+        html += "<div class='agenda-insumo-dia-chip agenda-insumo-dia-chip-" + item.estado_stock + "' title='" + escaparAtributoListaAgenda(detalleStock) + "'>"
+            + "<span>" + escaparHtmlAgenda(item.nombre) + "</span>"
+            + "<b>" + escaparHtmlAgenda(formatearCantidadInsumoAgenda(item.cantidad)) + " " + escaparHtmlAgenda(item.unidad) + "</b>"
+            + "<small>" + escaparHtmlAgenda(detalleStock) + "</small>"
+            + "</div>";
+    }
+
+    html += "</div></details>";
+    return html;
+}
+
+function cargarProyeccionInsumosConsultorioAgenda(idConsultorio, fecha){
+    var contenedor = document.getElementById('divProyeccionInsumosConsultorioAgenda');
+    var consultorio = obtenerConsultorioAgendaPorId(idConsultorio);
+    var codLocal = consultorio ? (consultorio.cod_localFk || '') : '';
+
+    if(!contenedor){ return; }
+    contenedor.innerHTML = "<span class='agenda-ayuda-inline'>Cargando proyecci&oacute;n de insumos...</span>";
+
+    obtener_datos_user();
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "fecha_base": fecha,
+            "id_sucursal": codLocal,
+            "id_consultorio": idConsultorio,
+            "funt": "proyeccionInsumosConsultorioAgenda"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) === true){
+                    renderProyeccionInsumosConsultorioAgenda(resp);
+                }else{
+                    contenedor.innerHTML = "<span class='agenda-ayuda-inline'>" + escaparHtmlAgenda(resp.mensaje || 'No se pudo cargar la proyeccion.') + "</span>";
+                }
+            }catch(error){
+                contenedor.innerHTML = "<span class='agenda-ayuda-inline'>No se pudo interpretar la proyeccion.</span>";
+            }
+        },
+        error: function(){
+            contenedor.innerHTML = "<span class='agenda-ayuda-inline'>No se pudo conectar para cargar la proyeccion.</span>";
+        }
+    });
+}
+
+function renderProyeccionInsumosConsultorioAgenda(resp){
+    var contenedor = document.getElementById('divProyeccionInsumosConsultorioAgenda');
+    var proyeccion = resp.proyeccion || [];
+    var compras = resp.compras || [];
+    var html = "";
+    var i, item, clase;
+
+    if(!contenedor){ return; }
+
+    if(proyeccion.length === 0){
+        contenedor.innerHTML = "<span class='agenda-ayuda-inline'>No hay agenda futura con insumos para proyectar.</span>";
+        return;
+    }
+
+    html += "<div class='agenda-proyeccion-lista'>";
+    for(i = 0; i < proyeccion.length; i++){
+        item = proyeccion[i];
+        clase = item.requiere_compra ? "agenda-proyeccion-item-critico" : "agenda-proyeccion-item-ok";
+        html += "<div class='agenda-proyeccion-item " + clase + "'>"
+            + "<div><strong>" + escaparHtmlAgenda(item.nombre) + "</strong>"
+            + (item.estimado ? "<small>Estimado por variantes</small>" : "")
+            + "<span>Alcanza hasta: " + escaparHtmlAgenda(item.alcanza_hasta) + "</span></div>"
+            + "<b>" + escaparHtmlAgenda(formatearCantidadInsumoAgenda(item.stock_actual)) + " / " + escaparHtmlAgenda(formatearCantidadInsumoAgenda(item.consumo_futuro)) + " " + escaparHtmlAgenda(item.unidad) + "</b>"
+            + "</div>";
+    }
+    html += "</div>";
+
+    if(compras.length > 0){
+        html += "<div class='agenda-proyeccion-compras'><p class='agenda-card-title'>Compras sugeridas</p>";
+        for(i = 0; i < compras.length; i++){
+            item = compras[i];
+            html += "<div class='agenda-proyeccion-compra'>"
+                + "<span>" + escaparHtmlAgenda(item.nombre) + "</span>"
+                + "<b>Comprar " + escaparHtmlAgenda(formatearCantidadInsumoAgenda(item.comprar)) + " " + escaparHtmlAgenda(item.unidad) + "</b>"
+                + "</div>";
+        }
+        html += "</div>";
+    }
+
+    contenedor.innerHTML = html;
 }
 
 function obtenerFechaAgendaDesdeInput(valor){
@@ -1687,14 +1864,12 @@ function formatOccupancyLabel(ocupacion){
 }
 
 function renderOccupancyIndicatorAgenda(ocupacion){
-    var label = formatOccupancyLabel(ocupacion);
     var anchoBarra = ocupacion && ocupacion.availableMinutes > 0 ? Math.min(100, Math.max(0, ocupacion.percent)) : 0;
+    var porcentajeVisual = anchoBarra;
     var title = '';
 
     if(!ocupacion || ocupacion.availableMinutes <= 0){
-        return "<div class='agenda-ocupacion agenda-ocupacion-sin-horario' title='Sin horario disponible'>"
-            + "<span class='agenda-ocupacion-label'>" + label + "</span>"
-            + "</div>";
+        return "<span class='agenda-ocupacion-circulo agenda-ocupacion-circulo-sin-horario' title='Sin horario disponible'><b>--</b></span>";
     }
 
     title = "Ocupaci\u00f3n del d\u00eda\n"
@@ -1704,11 +1879,7 @@ function renderOccupancyIndicatorAgenda(ocupacion){
         + "Almuerzo: " + AGENDA_OCUPACION_ALMUERZO_INICIO + "-" + AGENDA_OCUPACION_ALMUERZO_FIN + "\n"
         + "Horario del d\u00eda: " + ocupacion.schedule.inicioTexto + "-" + ocupacion.schedule.finTexto;
 
-    return "<div class='agenda-ocupacion agenda-ocupacion-" + ocupacion.level + "' title='" + escaparAtributoListaAgenda(title) + "'>"
-        + "<span class='agenda-ocupacion-label'>" + label + "</span>"
-        + "<div class='agenda-ocupacion-barra'><span style='width:" + anchoBarra + "%'></span></div>"
-        + (ocupacion.schedule.tieneTurnoNoche ? "<span class='agenda-ocupacion-turno'>Turno noche hasta " + ocupacion.schedule.finTexto + "</span>" : "")
-        + "</div>";
+    return "<span class='agenda-ocupacion-circulo agenda-ocupacion-circulo-" + ocupacion.level + "' style='--ocupacion-valor:" + porcentajeVisual + "%' title='" + escaparAtributoListaAgenda(title) + "'><b>" + ocupacion.percent + "%</b></span>";
 }
 
 function obtenerHoraVisualAgenda(h){

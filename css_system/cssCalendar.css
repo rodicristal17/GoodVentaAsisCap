@@ -530,10 +530,17 @@
     align-items:flex-start;
     background: var(--sticky-bg);
     min-width:220px;
+    min-height:72px;
     box-sizing:border-box;
+    padding-right:64px;
     position:sticky;
     top:0;
     z-index:15;
+}
+
+.agenda-celda-consultorio > span:not(.agenda-ocupacion-circulo),
+.agenda-celda-consultorio > details{
+    max-width:100%;
 }
 
 .agenda-consultorio-sub{
@@ -543,6 +550,8 @@
 }
 
 .agenda-ocupacion{
+    --ocupacion-color:#80c583;
+    --ocupacion-valor:0%;
     width:100%;
     display:flex;
     flex-direction:column;
@@ -551,6 +560,177 @@
     font-size:11px;
     font-weight:600;
     color: var(--text-muted);
+}
+
+.agenda-ocupacion-circulo{
+    --ocupacion-color:#80c583;
+    --ocupacion-valor:0%;
+    position:absolute;
+    top:11px;
+    right:12px;
+    width:44px;
+    height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:conic-gradient(var(--ocupacion-color) var(--ocupacion-valor), rgba(148, 163, 184, 0.2) 0);
+    box-shadow:inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+.agenda-ocupacion-circulo-baja{
+    --ocupacion-color:#80c583;
+}
+
+.agenda-ocupacion-circulo::before{
+    content:"";
+    position:absolute;
+    inset:5px;
+    border-radius:50%;
+    background:var(--sticky-bg);
+}
+
+.agenda-ocupacion-circulo b{
+    position:relative;
+    z-index:1;
+    max-width:35px;
+    overflow:hidden;
+    color:var(--text-title);
+    font-size:10px;
+    font-weight:800;
+    line-height:1;
+    text-align:center;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-ocupacion-circulo-media{
+    --ocupacion-color:#dcb645;
+}
+
+.agenda-ocupacion-circulo-buena{
+    --ocupacion-color:#3b833e;
+}
+
+.agenda-ocupacion-circulo-alta{
+    --ocupacion-color:#07488f;
+}
+
+.agenda-ocupacion-circulo-sobrecarga{
+    --ocupacion-color:#c94d4d;
+}
+
+.agenda-ocupacion-circulo-sin-horario{
+    --ocupacion-color:#cbd5e1;
+    --ocupacion-valor:100%;
+}
+
+.agenda-insumos-dia-dropdown{
+    position:relative;
+    width:100%;
+    margin-top:2px;
+    color:var(--text-title);
+    font-size:10px;
+    font-weight:800;
+}
+
+.agenda-insumos-dia-dropdown summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    min-height:20px;
+    padding:3px 7px;
+    border:1px solid var(--border-soft);
+    border-radius:7px;
+    background:rgba(238, 244, 251, 0.78);
+    cursor:pointer;
+    list-style:none;
+}
+
+.agenda-insumos-dia-dropdown summary::-webkit-details-marker{
+    display:none;
+}
+
+.agenda-insumos-dia-dropdown summary::after{
+    content:"";
+    width:0;
+    height:0;
+    border-left:4px solid transparent;
+    border-right:4px solid transparent;
+    border-top:5px solid var(--text-soft);
+    transition:transform .18s ease;
+}
+
+.agenda-insumos-dia-dropdown[open] summary::after{
+    transform:rotate(180deg);
+}
+
+.agenda-insumos-dia-dropdown summary b{
+    min-width:18px;
+    padding:2px 5px;
+    border-radius:999px;
+    background:#ffffff;
+    color:#173451;
+    font-size:9px;
+    text-align:center;
+}
+
+.agenda-insumos-dia-dropdown-body{
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;
+    right:-56px;
+    z-index:42;
+    display:grid;
+    gap:5px;
+    max-height:210px;
+    overflow:auto;
+    padding:6px;
+    border:1px solid var(--border-color);
+    border-radius:8px;
+    background:var(--bg-panel-solid);
+    box-shadow:0 10px 24px rgba(15, 23, 42, 0.16);
+}
+
+.agenda-insumo-dia-chip{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    gap:2px 7px;
+    padding:5px 6px;
+    border-left:4px solid #3b833e;
+    border-radius:6px;
+    background:#f0fbf4;
+    color:#173451;
+}
+
+.agenda-insumo-dia-chip span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-insumo-dia-chip b{
+    color:#173451;
+    font-size:10px;
+}
+
+.agenda-insumo-dia-chip small{
+    grid-column:1 / -1;
+    color:#52616f;
+    font-size:9px;
+    font-weight:700;
+}
+
+.agenda-insumo-dia-chip-bajo{
+    border-left-color:#dcb645;
+    background:#fff8dd;
+}
+
+.agenda-insumo-dia-chip-critico{
+    border-left-color:#c94d4d;
+    background:#fff0f0;
 }
 
 .agenda-ocupacion-label{
@@ -575,16 +755,32 @@
     background:#80c583;
 }
 
+.agenda-ocupacion-media{
+    --ocupacion-color:#dcb645;
+}
+
 .agenda-ocupacion-media .agenda-ocupacion-barra span{
     background:#dcb645;
+}
+
+.agenda-ocupacion-buena{
+    --ocupacion-color:#3b833e;
 }
 
 .agenda-ocupacion-buena .agenda-ocupacion-barra span{
     background:#3b833e;
 }
 
+.agenda-ocupacion-alta{
+    --ocupacion-color:#07488f;
+}
+
 .agenda-ocupacion-alta .agenda-ocupacion-barra span{
     background:#07488f;
+}
+
+.agenda-ocupacion-sobrecarga{
+    --ocupacion-color:#c94d4d;
 }
 
 .agenda-ocupacion-sobrecarga .agenda-ocupacion-barra span{
@@ -599,6 +795,8 @@
 }
 
 .agenda-ocupacion-sin-horario{
+    --ocupacion-color:#cbd5e1;
+    --ocupacion-valor:100%;
     color: var(--text-soft);
     font-style:italic;
 }
@@ -947,15 +1145,21 @@
 }
 
 .modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral{
-    display:flex;
-    flex-direction:column;
-    flex-wrap:nowrap;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    grid-template-rows:auto 1fr;
     align-items:stretch;
-    gap:8px;
+    gap:10px 12px;
     margin-inline:0;
     margin-bottom:0;
     min-width:0;
     min-height:0;
+    height:100%;
+}
+
+.modal-consultorio-resumen-grid{
+    grid-template-columns:1fr;
+    justify-content:stretch;
 }
 
 .modal-consultorio-resumen-lateral .filtro-grupo{
@@ -997,10 +1201,106 @@
 }
 
 .agenda-card-resumen-consultorio{
-    min-height:auto;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
     overflow:visible;
     padding:8px;
     box-shadow:var(--shadow-sm);
+    grid-column:1;
+    align-self:stretch;
+}
+
+.agenda-card-proyeccion-insumos{
+    display:flex;
+    flex-direction:column;
+    min-height:260px;
+    overflow:hidden;
+    padding:9px;
+    box-shadow:var(--shadow-sm);
+    grid-column:2;
+    align-self:stretch;
+}
+
+.agenda-proyeccion-insumos-lista{
+    flex:1;
+    min-height:0;
+    display:grid;
+    align-content:start;
+    gap:7px;
+    max-height:100%;
+    overflow:auto;
+    padding-right:3px;
+}
+
+.agenda-proyeccion-lista{
+    display:grid;
+    gap:7px;
+}
+
+.agenda-proyeccion-item{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    gap:8px;
+    align-items:center;
+    padding:8px;
+    border-left:4px solid #3b833e;
+    border-radius:8px;
+    background:#f0fbf4;
+    color:#173451;
+}
+
+.agenda-proyeccion-item div{
+    display:grid;
+    gap:2px;
+    min-width:0;
+}
+
+.agenda-proyeccion-item strong,
+.agenda-proyeccion-compra span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-proyeccion-item span,
+.agenda-proyeccion-item small{
+    color:#52616f;
+    font-size:10px;
+    font-weight:700;
+}
+
+.agenda-proyeccion-item b{
+    color:#173451;
+    font-size:11px;
+    white-space:nowrap;
+}
+
+.agenda-proyeccion-item-critico{
+    border-left-color:#c94d4d;
+    background:#fff0f0;
+}
+
+.agenda-proyeccion-compras{
+    display:grid;
+    gap:6px;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px solid var(--border-soft);
+}
+
+.agenda-proyeccion-compra{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:7px 8px;
+    border-radius:8px;
+    background:#fff8dd;
+    color:#173451;
+    font-size:11px;
+    font-weight:800;
 }
 
 .agenda-resumen-kpi-grid{
@@ -1861,7 +2161,8 @@
     }
 
     .modal-consultorio-resumen-grid{
-        grid-template-columns:minmax(282px, 300px) minmax(0, 1fr);
+        grid-template-columns:1fr;
+        justify-content:stretch;
         gap:12px;
         padding:12px;
     }
@@ -1976,23 +2277,18 @@
 
     .modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral{
         display:grid;
-        grid-template-columns:repeat(2, minmax(0, 1fr));
+        grid-template-columns:1fr;
         gap:8px;
     }
 
     .agenda-card-resumen-consultorio,
-    .agenda-card-insumos-dia{
+    .agenda-card-proyeccion-insumos{
         min-height:0;
     }
 
     .agenda-card-resumen-consultorio,
-    .agenda-card-insumos-dia,
-    .modal-consultorio-resumen-agenda{
+    .agenda-card-proyeccion-insumos{
         grid-column:1 / -1;
-    }
-
-    .modal-consultorio-resumen-agenda{
-        min-height:420px;
     }
 
     .modal-consultorio-resumen-meta span{
@@ -2001,14 +2297,11 @@
 }
 
 @media only screen and (max-width: 560px){
-    .modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral,
+.modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral,
     .agenda-resumen-kpi-grid{
         grid-template-columns:1fr;
     }
 
-    .modal-consultorio-resumen-agenda{
-        min-height:360px;
-    }
 }
 
  

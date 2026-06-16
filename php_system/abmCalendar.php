@@ -136,6 +136,10 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
             generarInformeInsumosAgendaEndpoint($mysqli, $useru);
             break;
 
+        case 'proyeccionInsumosConsultorioAgenda':
+            proyeccionInsumosConsultorioAgendaEndpoint($mysqli);
+            break;
+
         case 'catalogosInformeInsumosAgenda':
             catalogosInformeInsumosAgendaEndpoint($mysqli, $useru);
             break;
@@ -1077,7 +1081,7 @@ function generarInformeInsumosAgendaEndpoint($mysqli, $useru)
             $stockActual = obtenerStockActualInformeInsumosAgenda($mysqli, $item["id_insumo"], $item["id_variante"], $idSucursal, $idConsultorio);
             $stockMinimo = obtenerStockMinimoInformeInsumosAgenda($mysqli, $item["id_insumo"], $item["id_variante"]);
             $stockCorriendo = $stockActual;
-            $alcanzaHasta = "Alcanza hasta el final del periodo proyectado";
+            $alcanzaHasta = formatearFechaInformeInsumosAgenda($ultimaFecha);
             $dias = isset($consumoDiarioFuturo[$clave]) ? $consumoDiarioFuturo[$clave]["dias"] : array();
             ksort($dias);
             foreach ($dias as $fecha => $cantidadDia) {
@@ -1172,6 +1176,118 @@ function catalogosInformeInsumosAgendaEndpoint($mysqli, $useru)
         "1" => "exito",
         "locales" => $locales,
         "consultorios" => $consultorios
+    ));
+}
+
+function proyeccionInsumosConsultorioAgendaEndpoint($mysqli)
+{
+    $idSucursal = isset($_POST["id_sucursal"]) ? (int)$_POST["id_sucursal"] : 0;
+    $idConsultorio = isset($_POST["id_consultorio"]) ? (int)$_POST["id_consultorio"] : 0;
+
+    if ($idConsultorio <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione un consultorio."));
+    }
+
+    if ($idSucursal <= 0) {
+        $resultConsultorio = $mysqli->query("SELECT cod_localFk FROM consultorios WHERE id_consultorio='".(int)$idConsultorio."' LIMIT 1");
+        if ($resultConsultorio && ($rowConsultorio = $resultConsultorio->fetch_assoc())) {
+            $idSucursal = (int)$rowConsultorio["cod_localFk"];
+        }
+    }
+
+    if ($idSucursal <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudo determinar la sucursal del consultorio."));
+    }
+
+    $historicoCache = array();
+    $contexto = array(
+        "cod_local" => $idSucursal,
+        "id_consultorio" => $idConsultorio
+    );
+    $hoy = date("Y-m-d");
+    $ultimaFecha = obtenerUltimaFechaFuturaInformeInsumosAgenda($mysqli, $hoy, $idSucursal, $idConsultorio);
+    $proyeccion = array();
+    $compras = array();
+    $consumoFuturo = array();
+    $consumoDiarioFuturo = array();
+    $hayEstimadas = false;
+
+    if ($ultimaFecha !== "") {
+        $citasFuturas = obtenerCitasInsumosInformeAgenda($mysqli, $hoy, $ultimaFecha, $idSucursal, $idConsultorio);
+        foreach ($citasFuturas as $cita) {
+            $insumos = obtenerInsumosPrevistosAgenda($mysqli, (int)$cita["id_agenda"], (int)$cita["cod_ventaFK"], $cita["tratamientos_ids"], (int)$cita["id_consultorio"]);
+            foreach ($insumos as $insumo) {
+                $items = resolverVariantesInformeInsumosAgenda($mysqli, $insumo, $contexto, $historicoCache);
+                foreach ($items as $item) {
+                    if ($item["cantidad"] <= 0) {
+                        continue;
+                    }
+                    agregarItemInformeInsumosAgenda($consumoFuturo, $item);
+                    if (!isset($consumoDiarioFuturo[$item["clave"]])) {
+                        $consumoDiarioFuturo[$item["clave"]] = array("dias" => array());
+                    }
+                    if (!isset($consumoDiarioFuturo[$item["clave"]]["dias"][$cita["fecha"]])) {
+                        $consumoDiarioFuturo[$item["clave"]]["dias"][$cita["fecha"]] = 0;
+                    }
+                    $consumoDiarioFuturo[$item["clave"]]["dias"][$cita["fecha"]] += $item["cantidad"];
+                    if ($item["estimado"]) {
+                        $hayEstimadas = true;
+                    }
+                }
+            }
+        }
+
+        ordenarItemsInformeInsumosAgenda($consumoFuturo);
+
+        foreach ($consumoFuturo as $clave => $item) {
+            $stockActual = obtenerStockActualInformeInsumosAgenda($mysqli, $item["id_insumo"], $item["id_variante"], $idSucursal, $idConsultorio);
+            $stockMinimo = obtenerStockMinimoInformeInsumosAgenda($mysqli, $item["id_insumo"], $item["id_variante"]);
+            $stockCorriendo = $stockActual;
+            $alcanzaHasta = formatearFechaInformeInsumosAgenda($ultimaFecha);
+            $dias = isset($consumoDiarioFuturo[$clave]) ? $consumoDiarioFuturo[$clave]["dias"] : array();
+            ksort($dias);
+            foreach ($dias as $fecha => $cantidadDia) {
+                if ($stockCorriendo < $cantidadDia) {
+                    $alcanzaHasta = formatearFechaInformeInsumosAgenda($fecha);
+                    break;
+                }
+                $stockCorriendo -= $cantidadDia;
+            }
+
+            $comprar = max(0, ($item["cantidad"] + $stockMinimo) - $stockActual);
+            $proyeccion[$clave] = array(
+                "nombre" => $item["nombre"],
+                "unidad" => $item["unidad"],
+                "stock_actual" => $stockActual,
+                "consumo_futuro" => $item["cantidad"],
+                "alcanza_hasta" => $alcanzaHasta,
+                "ultima_fecha" => $ultimaFecha,
+                "estimado" => $item["estimado"],
+                "requiere_compra" => $comprar > 0
+            );
+
+            if ($comprar > 0) {
+                $compras[$clave] = array(
+                    "nombre" => $item["nombre"],
+                    "unidad" => $item["unidad"],
+                    "stock_actual" => $stockActual,
+                    "consumo_futuro" => $item["cantidad"],
+                    "stock_minimo" => $stockMinimo,
+                    "comprar" => $comprar
+                );
+            }
+        }
+
+        ordenarItemsInformeInsumosAgenda($proyeccion);
+        ordenarItemsInformeInsumosAgenda($compras);
+    }
+
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "ultima_fecha" => $ultimaFecha,
+        "hay_estimadas" => $hayEstimadas,
+        "proyeccion" => array_values($proyeccion),
+        "compras" => array_values($compras)
     ));
 }
 

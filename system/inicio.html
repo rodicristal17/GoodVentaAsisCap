@@ -23,7 +23,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=insumos-columnas-recordatorio-entrada-gestion-personal-agenda-dashboard-equal-20260613" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignar-tratamiento-inline-20260606" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=resumen-proyeccion-modal-dos-columnas-20260616" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -42,7 +42,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=cobros-realizados-console-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=funcionario-editar-seleccion-cobros-realizados-console-20260612"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=stock-unidad-junto-stock-actual-20260616"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=cobrar-cuota-20260611"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -51,7 +51,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-seguro-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=informe-insumos-agenda-popup-20260615"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=insumos-dia-proyeccion-consultorio-20260616"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
@@ -10305,7 +10305,7 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
   </section>
   <section class='presupuesto-panel dashboard-insumos-listado'>
     <div class='dashboard-insumos-listado-head'><div><div class='panel-title'>Stock por sucursal y consultorio</div><span class='panel-subtitle' id='lblDashboardInsumosResumen'>Seleccione una sucursal y consultorio para cargar stock.</span></div></div>
-    <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:17%'>SUCURSAL</td><td class='td_registro' style='width:14%'>CONSULTORIO</td><td class='td_registro' style='width:23%'>INSUMO / VARIANTE</td><td class='td_registro' style='width:10%'>STOCK ACTUAL</td><td class='td_registro' style='width:8%'>MINIMO</td><td class='td_registro' style='width:8%'>DIF.</td><td class='td_registro' style='width:8%'>ESTADO</td><td class='td_registro' style='width:6%'>UNIDAD</td><td class='td_registro' style='width:6%'></td></tr></table>
+    <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:17%'>SUCURSAL</td><td class='td_registro' style='width:14%'>CONSULTORIO</td><td class='td_registro' style='width:23%'>INSUMO / VARIANTE</td><td class='td_registro' style='width:10%'>STOCK ACTUAL</td><td class='td_registro' style='width:6%'>UNIDAD</td><td class='td_registro' style='width:8%'>MINIMO</td><td class='td_registro' style='width:8%'>DIF.</td><td class='td_registro' style='width:8%'>ESTADO</td><td class='td_registro' style='width:6%'></td></tr></table>
     <div class='div_cuerpo_table dashboard-insumos-tabla' id='tableDashboardInsumosStock'></div>
   </section>
 </div>
@@ -26644,21 +26644,11 @@ function escaparHtmlInformeInsumosAgenda(valor){
               </div>
               </div>
             </div>
-            <div class="agenda-card agenda-card-insumos-dia">
-              <div class="agenda-insumos-dia-head">
-                <p class="agenda-card-title" id="tituloResumenInsumosConsultorioAgenda">Insumos del d&iacute;a</p>
-                <button type="button" class="agenda-insumos-periodo-btn" id="btnResumenInsumosSemanaConsultorioAgenda" onclick="toggleResumenInsumosConsultorioAgenda()">Semana</button>
+            <div class="agenda-card agenda-card-proyeccion-insumos">
+              <p class="agenda-card-title">Proyecci&oacute;n de insumos</p>
+              <div id="divProyeccionInsumosConsultorioAgenda" class="agenda-proyeccion-insumos-lista">
+                <span class="agenda-ayuda-inline">Seleccione un consultorio para ver hasta cu&aacute;ndo alcanza el stock.</span>
               </div>
-              <span class="agenda-insumos-periodo-label" id="lblResumenInsumosPeriodoConsultorioAgenda"></span>
-              <div id="divResumenInsumosDiaConsultorioAgenda" class="agenda-insumos-dia-lista">
-                <span class="agenda-ayuda-inline">Sin insumos previstos.</span>
-              </div>
-            </div>
-          </section>
-          <section class="presupuesto-panel modal-consultorio-resumen-agenda">
-            <span class="agenda-card-title">Consultas del dia</span>
-            <div class="agenda-grid-wrapper agenda-grid-wrapper-resumen-consultorio">
-                <div id="agendaGridResumenConsultorio"></div>
             </div>
           </section>
         </div>

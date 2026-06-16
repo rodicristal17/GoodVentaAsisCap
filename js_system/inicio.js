@@ -37108,10 +37108,10 @@ function renderTablaDashboardInsumosStock(filas) {
 		var nombreConVariante = fila.nombre + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
 		html += "<td style='width:23%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(nombreConVariante) + "</td>";
 		html += "<td style='width:10%;text-align:center' class='tdRegistroSearch'><input class='dashboard-insumos-stock-input' type='number' min='0' step='any' value='" + escaparHtmlAbmInsumos(fila.cantidad || 0) + "' onclick='event.stopPropagation()'></td>";
+		html += "<td style='width:6%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.unidad_medida) + "</td>";
 		html += "<td style='width:8%;text-align:center' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.stock_minimo || 0) + "</td>";
 		html += "<td style='width:8%;text-align:center' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(diferencia.toFixed(2).replace(/\.00$/, "")) + "</td>";
 		html += "<td style='width:8%;text-align:center' class='tdRegistroSearch'><span class='insumo-stock-pill insumo-stock-pill--" + estadoStock.clase + "'>" + escaparHtmlAbmInsumos(estadoStock.texto) + "</span></td>";
-		html += "<td style='width:6%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.unidad_medida) + "</td>";
 		html += "<td style='width:6%;text-align:center' class='tdRegistroSearch'><input type='button' class='btn4' value='OK' style='width:48px;height:28px;padding:0;border-radius:7px' onclick='guardarDashboardInsumosStockDesdeFila(this);event.stopPropagation();'></td>";
 		html += "</tr></table>";
 	}
