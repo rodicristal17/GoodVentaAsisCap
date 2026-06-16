@@ -2,7 +2,6 @@
 include_once('quitarseparadormiles.php');
 include_once("buscar_nivel.php");
 require_once("conexion.php");
-require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("abmpagos.php");
@@ -45,17 +44,6 @@ $estado = mb_convert_encoding((string)($estado), 'ISO-8859-1', 'UTF-8');
 $codusuarioap=$_POST['codusuarioap'];
 $codusuarioap = mb_convert_encoding((string)($codusuarioap), 'ISO-8859-1', 'UTF-8');
 $codusuarioce = $user;
-if($operacion=="editar")
-{
-	registrarSolicitudEliminacionGenerica(
-		"arqueocaja",
-		"idarqueocaja",
-		$idarqueocaja,
-		"Solicitud automatica por cierre o edicion de caja.",
-		$user,
-		"archivo: abmaperturacierrecaja.php | funcion: verificar | funt: editar | idarqueocaja: ".$idarqueocaja." | cod_local: ".$cod_local." | caja_idcaja: ".$caja_idcaja." | montocierre: ".$montocierre." | estado: ".$estado
-	);
-}
 abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,$montocierre,$fechaapertura,$fechacierre,$estado,$codusuarioap,$codusuarioce,$operacion);
 
 }
