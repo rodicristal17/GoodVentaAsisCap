@@ -12089,6 +12089,7 @@ function verCerrarVentanaAbmAperturaCierreCaja(){
 		  document.getElementById('inptFechaAperturaCierreCaja').value =  anho+"-" + mes + "-" +dia +"T"+hora+":"+minuto;
 		  
 	  }		
+		cajaAperturaCierreAplicarModo(controlaperturacierrecaja!="ABRIRCERRARCAJA" ? "cierre" : "apertura");
 		document.getElementById("divAbmAperturaCierreCaja").style.display=""
 		 document.getElementById("tdEfectoAbmAperturaCierreCaja").className="magictime slideDownReturn"
 		document.getElementById("imgVolverCerrarApCieCaja").style.display=""
@@ -12145,6 +12146,7 @@ function verCerrarVentanaAbmAperturaCierreCaja1(){
 		  document.getElementById('inptFechaAperturaCierreCaja').value =  anho+"-" + mes + "-" +dia +"T"+hora+":"+minuto;
 		  
 	  }		
+		cajaAperturaCierreAplicarModo(controlaperturacierrecaja!="ABRIRCERRARCAJA" ? "cierre" : "apertura");
 		
 	}
 }
@@ -12164,6 +12166,7 @@ function controldecaja() {
 	var codlocal = document.getElementById('inptlocalAperturaCierre').value
 	document.getElementById('PTituloApCieCaja').innerHTML="Cargando datos de caja...";
 	document.getElementById('btnAbmAperturaCierreCaja').value="Cargando...";
+	cajaAperturaCierreAplicarModo("cargando");
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -12241,8 +12244,6 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						cajaCierreLoteActual = datos[23] || "";
 						document.getElementById('inptcajeroAperturaCierreCaja').value=datos[12];
 						codCajeroapertura=datos[11];
-						document.getElementById('btnAbmAperturaCierreCaja').value="Confirmar cierre";
-						document.getElementById('PTituloApCieCaja').innerHTML="Cerrar caja";
                         controlaperturacierrecaja="CERRARCERRARCAJA";
 						cajaCierreIniciarFlujo(true);						
 					}else{
@@ -12277,8 +12278,6 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById('inptcajeroAperturaCierreCaja').value=document.getElementById("lblUser").innerHTML;
 						 controlaperturacierrecaja="ABRIRCERRARCAJA"	
 						 codCajeroapertura=userid
-						 document.getElementById('btnAbmAperturaCierreCaja').value="Iniciar caja";
-						 document.getElementById('PTituloApCieCaja').innerHTML="Apertura de caja";
 						 idabmAperturacierrecaja="";
 						 cajaCierreResumenMedios = {};
 						 cajaCierreLoteActual = "";
@@ -12387,10 +12386,14 @@ function actualizarResumenEsperadoAperturaCierreCaja() {
 	const montoApertura = obtenerMontoNumericoAperturaCierreCaja('inptMontoAperturaCierreCaja');
 	const totalRecaudado = obtenerMontoNumericoAperturaCierreCaja('inptMontoRecaudadoCierreCaja');
 	const resumenInicial = document.getElementById('inptResumenInicialAperturaCierre');
+	const resumenMontoApertura = document.getElementById('inptMontoAperturaCierreCajaResumen');
 	const resumenTotal = document.getElementById('inptResumenTotalAperturaCierre');
 
 	if (resumenInicial) {
 		resumenInicial.value = formatearMontoAperturaCierreCaja(montoApertura);
+	}
+	if (resumenMontoApertura) {
+		resumenMontoApertura.value = formatearMontoAperturaCierreCaja(montoApertura);
 	}
 	if (resumenTotal) {
 		resumenTotal.value = formatearMontoAperturaCierreCaja(montoApertura + totalRecaudado);
@@ -12549,9 +12552,106 @@ function cajaCierreActualizarResumenSeguro() {
 	}
 }
 
+function cajaCierreMostrarElemento(id, visible, displayMode) {
+	const elemento = cajaCierreElemento(id);
+	if (elemento) {
+		elemento.style.display = visible ? (displayMode || '') : 'none';
+	}
+}
+
+function cajaAperturaCierreSetHtml(id, valor) {
+	const elemento = cajaCierreElemento(id);
+	if (elemento) {
+		elemento.innerHTML = valor;
+	}
+}
+
+function cajaAperturaCierreAplicarModo(modo) {
+	const modos = {
+		cargando: {
+			clase: 'is-modo-cargando',
+			tituloModal: "<b style='font-size: 30px;' >Caja</b>",
+			tituloMenu: "Cargando datos de caja...",
+			etiqueta: "Cargando",
+			tituloModo: "Consultando estado de caja",
+			descripcion: "Se esta verificando si corresponde abrir una caja nueva o cerrar un lote activo.",
+			tituloTicket: "Cargando datos",
+			fechaEtiqueta: "Fecha apertura",
+			montoEtiqueta: "Monto inicial",
+			boton: "Cargando...",
+			botonVisible: true,
+			botonDisabled: true,
+			cierreActivo: false
+		},
+		apertura: {
+			clase: 'is-modo-apertura',
+			tituloModal: "<b style='font-size: 30px;' >Apertura</b> de Caja",
+			tituloMenu: "Apertura de caja",
+			etiqueta: "Apertura",
+			tituloModo: "Nueva apertura de caja",
+			descripcion: "Carga el monto inicial para iniciar el lote de caja.",
+			tituloTicket: "Datos de apertura",
+			fechaEtiqueta: "Fecha apertura",
+			montoEtiqueta: "Monto inicial",
+			boton: "Iniciar caja",
+			botonVisible: true,
+			botonDisabled: false,
+			cierreActivo: false
+		},
+		cierre: {
+			clase: 'is-modo-cierre',
+			tituloModal: "<b style='font-size: 30px;' >Cierre</b> de Caja",
+			tituloMenu: "Cerrar caja",
+			etiqueta: "Cierre",
+			tituloModo: "Lote activo encontrado",
+			descripcion: "Completa el conteo, la evidencia y la firma para cerrar el lote actual.",
+			tituloTicket: "Ticket de cierre",
+			fechaEtiqueta: "Fecha apertura del lote",
+			montoEtiqueta: "Monto inicial",
+			boton: "Confirmar cierre",
+			botonVisible: false,
+			botonDisabled: false,
+			cierreActivo: true
+		}
+	};
+	const config = modos[modo] || modos.apertura;
+	const cierreActivo = config.cierreActivo;
+	const contenedor = cajaCierreElemento('divAbmAperturaCierreCaja');
+	if (contenedor) {
+		contenedor.classList.remove('is-modo-cargando', 'is-modo-apertura', 'is-modo-cierre');
+		contenedor.classList.add(config.clase);
+	}
+	cajaCierreMostrarElemento('divCajaAperturaPanel', !cierreActivo);
+	cajaCierreMostrarElemento('divCajaCierreResumenGrid', cierreActivo);
+	if (!cierreActivo) {
+		cajaCierreMostrarElemento('divCajaCierreWizard', false);
+	}
+
+	cajaAperturaCierreSetHtml('lblCajaTicketTitulo', config.tituloTicket);
+	cajaAperturaCierreSetHtml('lblTituloAperturaCierreCaja', config.tituloModal);
+	cajaAperturaCierreSetHtml('PTituloApCieCaja', config.tituloMenu);
+	cajaAperturaCierreSetHtml('lblCajaModoEtiqueta', config.etiqueta);
+	cajaAperturaCierreSetHtml('lblCajaModoTitulo', config.tituloModo);
+	cajaAperturaCierreSetHtml('lblCajaModoDescripcion', config.descripcion);
+	cajaAperturaCierreSetHtml('lblFechaOperacionCaja', config.fechaEtiqueta);
+	cajaAperturaCierreSetHtml('lblCajaMontoInicial', config.montoEtiqueta);
+
+	const botonPrincipal = cajaCierreElemento('btnAbmAperturaCierreCaja');
+	if (botonPrincipal) {
+		botonPrincipal.value = config.boton;
+		botonPrincipal.disabled = config.botonDisabled;
+		botonPrincipal.style.display = config.botonVisible ? '' : 'none';
+	}
+}
+
+function cajaCierreAplicarModoVisual(cierreActivo) {
+	cajaAperturaCierreAplicarModo(cierreActivo ? "cierre" : "apertura");
+}
+
 function cajaCierreIniciarFlujo(activo) {
 	const wizard = cajaCierreElemento('divCajaCierreWizard');
 	const botonPrincipal = cajaCierreElemento('btnAbmAperturaCierreCaja');
+	cajaAperturaCierreAplicarModo(activo ? "cierre" : "apertura");
 	if (wizard) {
 		wizard.style.display = activo ? '' : 'none';
 	}
@@ -12873,11 +12973,13 @@ function calcularMontoMovimientoAperturaCierreCaja() {
 
 var idabmAperturacierrecaja="";
 function verificarcamposaperturacierredecaja() {
-	
-	var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
-	movimiento= movimiento.replace(/\./g, '');
-	if(movimiento=="...." || movimiento==""){
-		return;
+	var esCierreCaja = idabmAperturacierrecaja != "";
+	if(esCierreCaja){
+		var movimiento = document.getElementById("inptMontoRecaudadoCierreCaja").value
+		movimiento= movimiento.replace(/\./g, '');
+		if(movimiento=="...." || movimiento==""){
+			return;
+		}
 	}
 
 	// Obtiene las cantidades de tipos de monedas y valida
@@ -12913,7 +13015,7 @@ function verificarcamposaperturacierredecaja() {
 		}
   
 	var accion = "";
-	if (idabmAperturacierrecaja != "") {
+	if (esCierreCaja) {
 		accion = "editar";
 
 		if(inptFechaCierreAperturaCierreCaja==""){
@@ -13337,87 +13439,45 @@ document.getElementById("DivImprimir").innerHTML=ficha;
 }
 
 function ImprimirTicketReportCaja(){
-	var f = new Date();
-	var dia =f.getDate()
-	if(dia<10){
-		dia="0"+dia;
-	}
-	var mes =f.getMonth()+1
-	if(mes<10){
-		mes="0"+mes;
-	}
-	var hora =f.getHours()
-	if(hora<10){
-		hora="0"+hora;
-	}
-	var min =f.getMinutes()
-	if(min<10){
-		min="0"+min;
-	}
-pagina="<div  style='background-color:#fff;'>"
-+"<center>"
-+"<div class='divTicket' >"
-+"<p class='pTituloTicket1' >REPORTE DE CAJA</p>"
-+"<div class='divSeparadorTicket' style='margin-bottom:5px'></div>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:100px'><b>Lote:</b></td>"
-+"<td style=''>"+loteCaja+"</td>"
-+"</tr>"
-+"</table>"
+	var fechaImpresion = cajaReporteFechaImpresion();
+	var montoInicio = cajaReporteValorElemento("inptMontoAperturaCierreCaja");
+	var montoInicioTexto = montoInicio ? montoInicio + " Gs." : "-";
+	var pagina =
+	"<div class='caja-print-letter caja-print-letter--apertura'>"
+	+cajaReporteMarcaAgua()
+	+"<div class='caja-print-header'>"
+	+"<div>"
+	+"<p class='caja-print-kicker'>Documento de apertura</p>"
+	+"<h1>REPORTE DE CAJA</h1>"
+	+"<span class='caja-print-badge'>Apertura</span>"
+	+"</div>"
+	+"<div class='caja-print-header-meta'>"
+	+cajaReporteDato("Fecha impresion", fechaImpresion)
+	+cajaReporteDato("Lote", loteCaja || "-")
+	+"</div>"
+	+"</div>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Datos de la caja</h2>"
+	+"<div class='caja-print-grid'>"
+	+cajaReporteDato("Local", cajaReporteSelectTexto("select[id=inptlocalAperturaCierre]"))
+	+cajaReporteDato("Caja", cajaReporteSelectTexto("select[id=inptcajaAperturaCierreCaja]"))
+	+cajaReporteDato("Fecha inicio", cajaReporteValorElemento("inptFechaAperturaCierreCaja"))
+	+cajaReporteDato("Cajero", cajaReporteValorElemento("lblUser"))
+	+"</div>"
+	+"</section>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Resumen de apertura</h2>"
+	+"<div class='caja-print-metrics caja-print-metrics--single'>"
+	+cajaReporteMetrica("Monto inicio", montoInicioTexto)
+	+"</div>"
+	+"</section>"
+	+"<section class='caja-print-section caja-print-signatures'>"
+	+cajaReporteFirmaBloque("Firma del cajero", cajaReporteValorElemento("lblUser"), "")
+	+cajaReporteFirmaBloque("Firma de control", "", "")
+	+"</section>"
+	+"</div>";
 
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:100px'><b>Fecha Imp.:</b></td>"
-+"<td style=''>"+f.getFullYear()+"-"+mes+"-"+dia+" "+hora+":"+min+"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:60px'><b>Local:</b></td>"
-+"<td style=''>"+ $("select[id=inptlocalAperturaCierre]").children(":selected").text() +"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:60px'><b>Caja:</b></td>"
-+"<td style=''>"+ $("select[id=inptcajaAperturaCierreCaja]").children(":selected").text() +"</td>"
-+"</tr>"
-+"</table>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:100px'><b>Fecha Inicio :</b></td>"
-+"<td style=''>"+ document.getElementById("inptFechaAperturaCierreCaja").value+"</td>"
-+"</tr>"
-+"</table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:110px'><b>Monto Inicio:</b></td>"
-+"<td style=''>"+document.getElementById("inptMontoAperturaCierreCaja").value+" Gs.</td>"
-+"</tr>"
-+"</table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px' ></div>"
-+"<table class='tableTicket'>"
-+"<tr>"
-+"<td style='width:110px'><b>Cajero :</b></td>"
-+"<td style=''>"+document.getElementById("lblUser").innerHTML+"</td>"
-+"</tr>"
-+"</table>"
-+"</div>"
-+"</center>"
-+"</div>"
-
-
-var ficha=pagina;
-document.getElementById("DivImprimir").innerHTML=ficha;
-   var documento= document.getElementById("DivImprimir").innerHTML;
-     localStorage.setItem("reporte", documento);
-	   localStorage.setItem("tipo", "ticket");
-	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
-	 document.getElementById("DivImprimir").innerHTML = "";
-//buscarDatosVentaticket(idabmVenta)
-     
+	cajaReporteAbrirCarta(pagina);
 }
 
 function ImprimirTicketDespacho(){
@@ -13576,6 +13636,91 @@ function cajaCierreTextoSeguro(valor) {
 	return valor.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function cajaReporteFechaImpresion() {
+	var f = new Date();
+	var dia = f.getDate();
+	if (dia < 10) {
+		dia = "0" + dia;
+	}
+	var mes = f.getMonth() + 1;
+	if (mes < 10) {
+		mes = "0" + mes;
+	}
+	var hora = f.getHours();
+	if (hora < 10) {
+		hora = "0" + hora;
+	}
+	var min = f.getMinutes();
+	if (min < 10) {
+		min = "0" + min;
+	}
+	return f.getFullYear() + "-" + mes + "-" + dia + " " + hora + ":" + min;
+}
+
+function cajaReporteValorElemento(id) {
+	const elemento = document.getElementById(id);
+	if (!elemento) {
+		return "";
+	}
+	if (elemento.value !== undefined) {
+		return elemento.value || "";
+	}
+	return elemento.textContent || elemento.innerText || elemento.innerHTML || "";
+}
+
+function cajaReporteSelectTexto(selector) {
+	return $(selector).children(":selected").text() || "";
+}
+
+function cajaReporteDato(etiqueta, valor) {
+	valor = (valor === undefined || valor === null || valor === "") ? "-" : valor;
+	return "<div class='caja-print-data'>"
+		+"<span>"+cajaCierreTextoSeguro(etiqueta)+"</span>"
+		+"<strong>"+cajaCierreTextoSeguro(valor)+"</strong>"
+		+"</div>";
+}
+
+function cajaReporteMetrica(etiqueta, valor, clase) {
+	clase = clase ? " " + clase : "";
+	return "<div class='caja-print-metric"+clase+"'>"
+		+"<span>"+cajaCierreTextoSeguro(etiqueta)+"</span>"
+		+"<strong>"+cajaCierreTextoSeguro(valor)+"</strong>"
+		+"</div>";
+}
+
+function cajaReporteFilaTabla(etiqueta, valor, claseValor) {
+	claseValor = claseValor ? " class='"+claseValor+"'" : "";
+	return "<tr><td>"+cajaCierreTextoSeguro(etiqueta)+"</td><td"+claseValor+">"+cajaCierreTextoSeguro(valor)+"</td></tr>";
+}
+
+function cajaReporteFirmaBloque(etiqueta, nombre, firmaData) {
+	const firma = firmaData ? "<img src='"+firmaData+"' class='caja-print-sign-image' />" : "<div class='caja-print-sign-empty'></div>";
+	return "<div class='caja-print-sign-box'>"
+		+firma
+		+"<div class='caja-print-sign-line'>"
+		+"<strong>"+cajaCierreTextoSeguro(etiqueta)+"</strong>"
+		+"<span>"+cajaCierreTextoSeguro(nombre || "")+"</span>"
+		+"</div>"
+		+"</div>";
+}
+
+function cajaReporteMarcaAgua() {
+	return "<img class='caja-print-watermark' src='/GoodVentaAsisCap/iconos/Logo.png' onerror=\"this.onerror=null;this.src='/GoodVentaAsisCap/iconos/Logo.jpg';\" />";
+}
+
+function cajaReporteAbrirCarta(pagina) {
+	const contenedor = document.getElementById("DivImprimir");
+	let documento = pagina;
+	if (contenedor) {
+		contenedor.innerHTML = pagina;
+		documento = contenedor.innerHTML;
+		contenedor.innerHTML = "";
+	}
+	localStorage.setItem("reporte", documento);
+	localStorage.setItem("tipo", "reporte-carta");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
+}
+
 function ImprimirTicketReportCierreCaja(){
 	const payload = cajaCierreSeguroUltimo || cajaCierreObtenerPayloadSeguro();
 	const medios = payload.medios || {};
@@ -13589,81 +13734,87 @@ function ImprimirTicketReportCierreCaja(){
 			return;
 		}
 		filasDenominacion += "<tr>"
-			+"<td style='width:34%;text-align:left'>"+cajaCierreFormatoGs(fila.denominacion)+"</td>"
-			+"<td style='width:22%;text-align:center'>"+cajaCierreTextoSeguro(fila.cantidad)+"</td>"
-			+"<td style='width:44%;text-align:right'>"+cajaCierreFormatoGs(fila.subtotal)+"</td>"
+			+"<td>"+cajaCierreFormatoGs(fila.denominacion)+"</td>"
+			+"<td class='caja-print-center'>"+cajaCierreTextoSeguro(fila.cantidad)+"</td>"
+			+"<td class='caja-print-money'>"+cajaCierreFormatoGs(fila.subtotal)+"</td>"
 			+"</tr>";
 	});
 	if (filasDenominacion === "") {
-		filasDenominacion = "<tr><td colspan='3'>Sin denominaciones cargadas</td></tr>";
+		filasDenominacion = "<tr><td colspan='3' class='caja-print-empty'>Sin denominaciones cargadas</td></tr>";
 	}
 
-	var f = new Date();
-	var dia =f.getDate()
-	if(dia<10){
-		dia="0"+dia;
-	}
-	var mes =f.getMonth()+1
-	if(mes<10){
-		mes="0"+mes;
-	}
-	var hora =f.getHours()
-	if(hora<10){
-		hora="0"+hora;
-	}
-	var min =f.getMinutes()
-	if(min<10){
-		min="0"+min;
-	}
-	const fechaImpresion = f.getFullYear()+"-"+mes+"-"+dia+" "+hora+":"+min;
-	const motivo = payload.motivo_diferencia ? "<table class='tableTicket'><tr><td style='width:95px'><b>Motivo:</b></td><td>"+cajaCierreTextoSeguro(payload.motivo_diferencia)+"</td></tr></table>" : "";
-	const observacion = payload.observacion_diferencia ? "<table class='tableTicket'><tr><td style='width:95px'><b>Obs.:</b></td><td>"+cajaCierreTextoSeguro(payload.observacion_diferencia)+"</td></tr></table>" : "";
-	const firma = firmaData ? "<center><img src='"+firmaData+"' style='max-width:220px;max-height:90px;border-bottom:1px solid #222;margin-top:6px'></center>" : "";
+	const fechaImpresion = cajaReporteFechaImpresion();
+	const diferenciaClase = Number(payload.diferencia_efectivo || 0) === 0 ? "is-ok" : "is-alert";
+	const motivo = payload.motivo_diferencia ? cajaReporteFilaTabla("Motivo", payload.motivo_diferencia) : "";
+	const observacion = payload.observacion_diferencia ? cajaReporteFilaTabla("Observacion", payload.observacion_diferencia) : "";
+	const filasDiferencia = motivo + observacion;
+	const pagina =
+	"<div class='caja-print-letter caja-print-letter--cierre'>"
+	+cajaReporteMarcaAgua()
+	+"<div class='caja-print-header'>"
+	+"<div>"
+	+"<p class='caja-print-kicker'>Documento de cierre</p>"
+	+"<h1>CIERRE DE CAJA</h1>"
+	+"<span class='caja-print-badge "+diferenciaClase+"'>"+cajaCierreTextoSeguro(payload.estado_cierre)+"</span>"
+	+"</div>"
+	+"<div class='caja-print-header-meta'>"
+	+cajaReporteDato("Fecha impresion", fechaImpresion)
+	+cajaReporteDato("Revision", payload.estado_revision)
+	+"</div>"
+	+"</div>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Datos del lote</h2>"
+	+"<div class='caja-print-grid'>"
+	+cajaReporteDato("Lote", loteCaja || payload.lote)
+	+cajaReporteDato("Sucursal", cajaReporteSelectTexto("select[id=inptlocalAperturaCierre]"))
+	+cajaReporteDato("Caja", cajaReporteSelectTexto("select[id=inptcajaAperturaCierreCaja]"))
+	+cajaReporteDato("Cajera", payload.cajera)
+	+cajaReporteDato("Fecha apertura", payload.fecha_apertura)
+	+cajaReporteDato("Fecha cierre", payload.fecha_cierre)
+	+"</div>"
+	+"</section>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Resumen de efectivo</h2>"
+	+"<div class='caja-print-metrics'>"
+	+cajaReporteMetrica("Efectivo esperado", cajaCierreFormatoGs(payload.efectivo_esperado))
+	+cajaReporteMetrica("Efectivo contado", cajaCierreFormatoGs(payload.efectivo_contado))
+	+cajaReporteMetrica("Diferencia", cajaCierreFormatoGs(payload.diferencia_efectivo), diferenciaClase)
+	+"</div>"
+	+"</section>"
+	+(filasDiferencia ? "<section class='caja-print-section'><h2>Detalle de diferencia</h2><table class='caja-print-table'>"+filasDiferencia+"</table></section>" : "")
+	+"<div class='caja-print-columns'>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Medios de pago</h2>"
+	+"<table class='caja-print-table'>"
+	+cajaReporteFilaTabla("Transferencias", cajaCierreFormatoGs(medios.total_transferencias || 0), "caja-print-money")
+	+cajaReporteFilaTabla("Transferencias conciliadas", cajaCierreFormatoGs(medios.total_transferencias_conciliadas || 0), "caja-print-money")
+	+cajaReporteFilaTabla("Tarjetas", cajaCierreFormatoGs(medios.total_tarjetas || 0), "caja-print-money")
+	+cajaReporteFilaTabla("Billeteras / otros", cajaCierreFormatoGs((Number(medios.total_billeteras || 0) + Number(medios.total_otros || 0))), "caja-print-money")
+	+"</table>"
+	+"</section>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Denominaciones</h2>"
+	+"<table class='caja-print-table caja-print-denominations'>"
+	+"<thead><tr><th>Denominacion</th><th>Cant.</th><th>Subtotal</th></tr></thead>"
+	+"<tbody>"+filasDenominacion+"</tbody>"
+	+"</table>"
+	+"</section>"
+	+"</div>"
+	+"<section class='caja-print-section'>"
+	+"<h2>Respaldo y confirmacion</h2>"
+	+"<div class='caja-print-grid caja-print-grid--two'>"
+	+cajaReporteDato("Foto adjunta", payload.foto_adjunta || (cajaCierreTieneFoto() ? "SI" : "NO"))
+	+cajaReporteDato("Firma registrada", payload.firma_adjunta || (firmaData ? "SI" : "NO"))
+	+"</div>"
+	+"<p class='caja-print-confirmation'>"+cajaCierreTextoSeguro(payload.texto_confirmacion)+"</p>"
+	+"</section>"
+	+"<section class='caja-print-section caja-print-signatures'>"
+	+cajaReporteFirmaBloque("Firma de la cajera", payload.cajera, firmaData)
+	+cajaReporteFirmaBloque("Firma de control", "", "")
+	+"</section>"
+	+"</div>";
 
-pagina="<div style='background-color:#fff;'>"
-+"<center>"
-+"<div class='divTicket'>"
-+"<p class='pTituloTicket1'>CIERRE DE CAJA</p>"
-+"<p class='pTituloTicket1' style='font-size:14px'>"+cajaCierreTextoSeguro(payload.estado_cierre)+"</p>"
-+"<div class='divSeparadorTicket' style='margin-bottom:5px'></div>"
-+"<table class='tableTicket'><tr><td style='width:95px'><b>Lote:</b></td><td>"+cajaCierreTextoSeguro(loteCaja || payload.lote)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:95px'><b>Sucursal:</b></td><td>"+cajaCierreTextoSeguro($("select[id=inptlocalAperturaCierre]").children(":selected").text())+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:95px'><b>Caja:</b></td><td>"+cajaCierreTextoSeguro($("select[id=inptcajaAperturaCierreCaja]").children(":selected").text())+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:95px'><b>Cajera:</b></td><td>"+cajaCierreTextoSeguro(payload.cajera)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:95px'><b>Fecha cierre:</b></td><td>"+cajaCierreTextoSeguro(payload.fecha_cierre)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:95px'><b>Fecha imp.:</b></td><td>"+fechaImpresion+"</td></tr></table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
-+"<table class='tableTicket'><tr><td style='width:125px'><b>Efectivo esperado:</b></td><td style='text-align:right'>"+cajaCierreFormatoGs(payload.efectivo_esperado)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:125px'><b>Efectivo contado:</b></td><td style='text-align:right'>"+cajaCierreFormatoGs(payload.efectivo_contado)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:125px'><b>Diferencia:</b></td><td style='text-align:right'>"+cajaCierreFormatoGs(payload.diferencia_efectivo)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:125px'><b>Revision:</b></td><td>"+cajaCierreTextoSeguro(payload.estado_revision)+"</td></tr></table>"
-+motivo
-+observacion
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
-+"<table class='tableTicket'><tr><td><b>Medios de pago</b></td></tr></table>"
-+"<table class='tableTicket'><tr><td>Transferencias</td><td style='text-align:right'>"+cajaCierreFormatoGs(medios.total_transferencias || 0)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td>Transferencias conciliadas</td><td style='text-align:right'>"+cajaCierreFormatoGs(medios.total_transferencias_conciliadas || 0)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td>Tarjetas</td><td style='text-align:right'>"+cajaCierreFormatoGs(medios.total_tarjetas || 0)+"</td></tr></table>"
-+"<table class='tableTicket'><tr><td>Billeteras / otros</td><td style='text-align:right'>"+cajaCierreFormatoGs((Number(medios.total_billeteras || 0) + Number(medios.total_otros || 0)))+"</td></tr></table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
-+"<table class='tableTicket'><tr><td colspan='3'><b>Denominaciones</b></td></tr>"+filasDenominacion+"</table>"
-+"<div class='divSeparadorTicket' style='margin-top:5px;margin-bottom:5px'></div>"
-+"<table class='tableTicket'><tr><td style='width:125px'><b>Foto adjunta:</b></td><td>Si</td></tr></table>"
-+"<table class='tableTicket'><tr><td style='width:125px'><b>Firma registrada:</b></td><td>Si</td></tr></table>"
-+"<p style='font-size:10px;line-height:14px;text-align:left'>"+cajaCierreTextoSeguro(payload.texto_confirmacion)+"</p>"
-+firma
-+"<p style='font-size:11px;text-align:center'>"+cajaCierreTextoSeguro(payload.cajera)+"</p>"
-+"</div>"
-+"</center>"
-+"</div>"
-
-var ficha=pagina;
-document.getElementById("DivImprimir").innerHTML=ficha;
-   var documento= document.getElementById("DivImprimir").innerHTML;
-     localStorage.setItem("reporte", documento);
-	   localStorage.setItem("tipo", "ticket");
-	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
-	 document.getElementById("DivImprimir").innerHTML = "";
+	cajaReporteAbrirCarta(pagina);
 }
 
 function ImprimirTicketReportCaja2(){

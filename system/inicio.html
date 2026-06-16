@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=insumos-columnas-recordatorio-entrada-gestion-personal-agenda-dashboard-equal-20260613" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=caja-apertura-panel-20260616" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignar-tratamiento-inline-20260606" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -42,14 +42,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=cobros-realizados-console-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=funcionario-editar-seleccion-cobros-realizados-console-20260612"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=caja-print-letter-watermark-20260616"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=cobrar-cuota-20260611"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-seguro-20260612"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-recibo-duplicado-banco-efectivo-20260616"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=informe-insumos-agenda-popup-20260615"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -13069,7 +13069,7 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 <label><b>Monto a cobrar</b><input class='inputText' type='text' id='inptCobrarCuotaMontoCobrar' onkeyup='separadordemiles(this);cobrarCuotaCalcularVuelto();cobrarCuotaInvalidarMovimientoUenoPorEdicion();cobrarCuotaActualizarResumenUeno()'></label>
 </div>
 <div id='divCobrarCuotaEfectivo' class='cobrar-cuota__pay-grid'>
-<label><b>Monto recibido</b><input class='inputText' type='text' id='inptCobrarCuotaMontoRecibido' onkeyup='separadordemiles(this);cobrarCuotaCalcularVuelto()'></label>
+<label><b>Monto recibido</b><input class='inputText' type='text' id='inptCobrarCuotaMontoRecibido' disabled onkeyup='separadordemiles(this);cobrarCuotaCalcularVuelto()'></label>
 <label><b>Vuelto</b><input class='inputTextDisable' type='text' id='inptCobrarCuotaVuelto' disabled></label>
 </div>
 <div id='divCobrarCuotaTransferencia' class='cobrar-cuota__transfer' style='display:none'>
@@ -31990,7 +31990,7 @@ USUARIO.
 <table class='tableMenuZ caja-apertura-titlebar'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'><b style='font-size: 30px;' >Apertura / Cierre</b> de Caja
+<p class='pTituloB' id='lblTituloAperturaCierreCaja'><b style='font-size: 30px;' >Apertura</b> de Caja
 </p>
 </td>
 <td style='width:5%;text-align:center'>
@@ -32023,7 +32023,7 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
       </div>
     </div>
     <label class='caja-context-item'>
-      <span>Fecha apertura</span>
+      <span id='lblFechaOperacionCaja'>Fecha apertura</span>
       <input class='inputText' type='datetime-local' id='inptFechaAperturaCierreCaja' />
     </label>
     <label class='caja-context-item caja-context-status'>
@@ -32033,6 +32033,28 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
         <option value="Cerrado">CERRADO</option>
       </select>
     </label>
+  </section>
+
+  <section class='caja-modo-panel' id='divCajaModoPanel'>
+    <span id='lblCajaModoEtiqueta'>Apertura</span>
+    <h3 id='lblCajaModoTitulo'>Nueva apertura de caja</h3>
+    <p id='lblCajaModoDescripcion'>Carga el monto inicial para iniciar el lote de caja.</p>
+  </section>
+
+  <section class='caja-apertura-panel' id='divCajaAperturaPanel'>
+    <div class='caja-panel-heading'>
+      <div>
+        <span>Apertura</span>
+        <h3>Datos de apertura</h3>
+      </div>
+    </div>
+    <div class='caja-apertura-form'>
+      <label class='caja-ticket-row'>
+        <span id='lblCajaMontoInicial'>Monto inicial</span>
+        <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoAperturaCierreCaja' onkeyup='separadordemiles(this);calcularMontoMovimientoAperturaCierreCaja()' />
+      </label>
+      <input type='button' value='Iniciar caja' class='btn1 caja-primary-action' onclick='verificarcamposaperturacierredecaja()' id='btnAbmAperturaCierreCaja' />
+    </div>
   </section>
 
   <section class='caja-cierre-wizard' id='divCajaCierreWizard' style='display:none'>
@@ -32128,6 +32150,7 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
         </div>
         <div class='caja-firma-box'>
           <canvas id='canvasCajaCierreFirma' width='520' height='170'></canvas>
+          <p class='caja-firma-ayuda'>Firma dentro del recuadro con el dedo, mouse o lapiz tactil. Si necesitas repetirla, usa limpiar firma.</p>
           <button type='button' class='btn4 caja-secondary-action' onclick='cajaCierreLimpiarFirma()'>Limpiar firma</button>
           <button type='button' class='btn4 caja-step-button' onclick='cajaCierreContinuar()'>Continuar a cierre</button>
         </div>
@@ -32154,8 +32177,8 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
     </div>
   </section>
 
-  <div class='caja-main-grid'>
-    <section class='caja-cash-panel'>
+  <div class='caja-main-grid' id='divCajaCierreResumenGrid' style='display:none'>
+    <section class='caja-cash-panel' id='divCajaArqueoCierre'>
       <div class='caja-panel-heading'>
         <div>
           <span>Arqueo de efectivo</span>
@@ -32208,29 +32231,28 @@ onclick='verCerrarVentanaAbmAperturaCierreCaja("2","")' />
         <div class='caja-panel-heading'>
           <div>
             <span>Resumen</span>
-            <h3>Ticket de caja</h3>
+            <h3 id='lblCajaTicketTitulo'>Datos de apertura</h3>
           </div>
         </div>
         <input id='inptResumenInicialAperturaCierre' type="hidden" readonly>
         <label class='caja-ticket-row'>
           <span>Monto inicial</span>
-          <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoAperturaCierreCaja' onkeyup='separadordemiles(this);calcularMontoMovimientoAperturaCierreCaja()' />
+          <input class='inputTextDisable' type='text' id='inptMontoAperturaCierreCajaResumen' disabled />
         </label>
-        <label class='caja-ticket-row'>
+        <label class='caja-ticket-row' id='rowCajaMovEfectivo'>
           <span>Mov. efectivo neto</span>
           <input class='inputTextDisable' type='text' id='inptMontoRecaudadoCierreCaja' disabled />
         </label>
-        <label class='caja-ticket-row caja-ticket-row--total'>
+        <label class='caja-ticket-row caja-ticket-row--total' id='rowCajaEfectivoEsperado'>
           <span>Efectivo esperado</span>
           <input id='inptResumenTotalAperturaCierre' type="text" readonly>
         </label>
       </div>
       <div class='caja-summary-actions'>
-        <label class='caja-context-item'>
+        <label class='caja-context-item' id='rowFechaCierreAperturaCierre'>
           <span>Fecha cierre</span>
           <input class='inputText' type='datetime-local' id='inptFechaCierreAperturaCierreCaja' />
         </label>
-        <input type='button' value='Cerrar caja' class='btn1 caja-primary-action' onclick='verificarcamposaperturacierredecaja()' id='btnAbmAperturaCierreCaja' />
       </div>
     </aside>
   </div>

@@ -9,7 +9,7 @@
   <meta name="msapplicaction-navbutton-color" content="#000" />
    <meta  name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
     <title>IMPRIMIR</title>
-	<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/reportInformes.css?x=presupuesto-print-a4-20260606b" />
+	<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/reportInformes.css?x=caja-print-letter-watermark-20260616" />
 
 
 	<script>
@@ -25,7 +25,13 @@
 				presupuestoPrintStyle.innerHTML = "@page{size:A4 landscape;margin:8mm;}@media print{body.body-presupuesto-print{margin:0!important;background:#fff!important;}body.body-presupuesto-print #divimpr{width:100%!important;}}";
 				document.head.appendChild(presupuestoPrintStyle);
 			}
-			if(tipo=="factura" || tipo=='ticket'){
+			if (pagina && pagina.indexOf("caja-print-letter") >= 0) {
+				document.body.classList.add("body-caja-print-letter");
+				var cajaPrintStyle = document.createElement("style");
+				cajaPrintStyle.innerHTML = "@page{size:Letter portrait;margin:7mm;}@media print{body.body-caja-print-letter{margin:0!important;background:#fff!important;}body.body-caja-print-letter #divimpr{width:100%!important;}}";
+				document.head.appendChild(cajaPrintStyle);
+			}
+			if(tipo=="factura" || tipo=='ticket' || tipo=="reporte-carta"){
 			
 			  window.print();
           
