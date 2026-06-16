@@ -139,6 +139,9 @@ function ObtenerDatos($operacion)
         case "detalle_movimiento":
             detalleMovimientoInsumos();
             break;
+        case "reporte_movimiento":
+            generarInformeMovimientoInsumos();
+            break;
         case "listar_alertas_stock":
             listarAlertasStockInsumos();
             break;
@@ -1134,6 +1137,102 @@ function detalleMovimientoInsumos()
         $filas[] = $fila;
     }
     echo json_encode(array("1" => "exito", "filas" => $filas), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function generarInformeMovimientoInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+    $grupo = isset($_POST["grupo_movimiento"]) ? trim((string)$_POST["grupo_movimiento"]) : "";
+    if ($grupo === "") {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Movimiento no seleccionado."));
+        exit;
+    }
+
+    if (strpos($grupo, "mov_") === 0 && preg_match('/^mov_([0-9]+)$/', $grupo, $coincidencias)) {
+        $idMovimiento = (int)$coincidencias[1];
+        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida, COALESCE(v.nombre_variante, '') AS nombre_variante, l.Nombre AS nombre_local, c.nombre AS nombre_consultorio
+            FROM movimientos_insumos m
+            JOIN insumosconsl i ON i.id_insumo = m.insumo_id
+            JOIN local l ON l.cod_local = m.sucursal_id
+            JOIN consultorios c ON c.id_consultorio = m.consultorio_id
+            LEFT JOIN insumo_variantes v ON v.id_variante = IFNULL(m.id_variante, 0)
+            WHERE m.id=?
+            ORDER BY i.nombre");
+        $stmt->bind_param("i", $idMovimiento);
+    } else {
+        $stmt = $mysqli->prepare("SELECT m.*, i.nombre AS nombre_insumo, i.unidad_medida, COALESCE(v.nombre_variante, '') AS nombre_variante, l.Nombre AS nombre_local, c.nombre AS nombre_consultorio
+            FROM movimientos_insumos m
+            JOIN insumosconsl i ON i.id_insumo = m.insumo_id
+            JOIN local l ON l.cod_local = m.sucursal_id
+            JOIN consultorios c ON c.id_consultorio = m.consultorio_id
+            LEFT JOIN insumo_variantes v ON v.id_variante = IFNULL(m.id_variante, 0)
+            WHERE m.grupo_movimiento=?
+            ORDER BY i.nombre");
+        $stmt->bind_param("s", $grupo);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $filas = [];
+    while ($fila = $result->fetch_assoc()) {
+        foreach (["nombre_insumo", "nombre_variante", "unidad_medida", "motivo", "tipo", "nombre_local", "nombre_consultorio"] as $campo) {
+            $fila[$campo] = mb_convert_encoding((string)$fila[$campo], "UTF-8", "ISO-8859-1");
+        }
+        $filas[] = $fila;
+    }
+    if (count($filas) === 0) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se encontro detalle para el movimiento seleccionado."));
+        exit;
+    }
+
+    $fecha = $filas[0]["fecha"];
+    $sucursal = $filas[0]["nombre_local"];
+    $consultorio = $filas[0]["nombre_consultorio"];
+    $tipo = $filas[0]["tipo"];
+    $motivo = $filas[0]["motivo"] === "" ? "Sin motivo" : $filas[0]["motivo"];
+    $fechaFormato = date("d/m/Y H:i", strtotime($fecha));
+
+    $html = "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Informe de movimiento de insumos</title>";
+    $html .= "<style>";
+    $html .= "body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;color:#19324a;}";
+    $html .= ".wrap{max-width:960px;margin:0 auto;background:#fff;padding:22px;border:1px solid #d6e0ea;border-radius:12px;}";
+    $html .= "h1{margin:0 0 8px;font-size:24px;color:#0d3f78;}";
+    $html .= "p{margin:2px 0;color:#35516f;}";
+    $html .= "table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;}";
+    $html .= "th,td{border:1px solid #dce4ee;padding:8px 10px;text-align:left;}";
+    $html .= "th{background:#f0f6ff;}";
+    $html .= "tfoot td{font-weight:700;background:#f7fafc;}";
+    $html .= "</style></head><body>";
+    $html .= "<div class='wrap'>";
+    $html .= "<h1>Informe de repuestos de insumos</h1>";
+    $html .= "<p><strong>Fecha del movimiento:</strong> " . htmlspecialchars($fechaFormato, ENT_QUOTES, 'UTF-8') . "</p>";
+    $html .= "<p><strong>Sucursal:</strong> " . htmlspecialchars($sucursal, ENT_QUOTES, 'UTF-8') . "</p>";
+    $html .= "<p><strong>Consultorio:</strong> " . htmlspecialchars($consultorio, ENT_QUOTES, 'UTF-8') . "</p>";
+    $html .= "<p><strong>Tipo:</strong> " . htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8') . "</p>";
+    $html .= "<p><strong>Motivo:</strong> " . htmlspecialchars($motivo, ENT_QUOTES, 'UTF-8') . "</p>";
+    $html .= "<table><thead><tr><th>Insumo</th><th>Variante</th><th style='text-align:center'>Cantidad</th><th>Unidad</th></tr></thead><tbody>";
+
+    $totalCantidad = 0;
+    for ($i = 0; $i < count($filas); $i++) {
+        $fila = $filas[$i];
+        $cantidad = (float)$fila["cantidad"];
+        $totalCantidad += $cantidad;
+        $html .= "<tr>";
+        $html .= "<td>" . htmlspecialchars((string)$fila["nombre_insumo"], ENT_QUOTES, 'UTF-8') . "</td>";
+        $html .= "<td>" . htmlspecialchars((string)$fila["nombre_variante"], ENT_QUOTES, 'UTF-8') . "</td>";
+        $html .= "<td style='text-align:center'>" . number_format($cantidad, 3, ".", "") . "</td>";
+        $html .= "<td>" . htmlspecialchars((string)$fila["unidad_medida"], ENT_QUOTES, 'UTF-8') . "</td>";
+        $html .= "</tr>";
+    }
+
+    $html .= "</tbody><tfoot>";
+    $html .= "<tr><td colspan='2'><strong>Cantidad total</strong></td><td style='text-align:center'><strong>" . number_format($totalCantidad, 3, ".", "") . "</strong></td><td></td></tr>";
+    $html .= "</tfoot></table>";
+    $html .= "<p style='font-size:11px;color:#6a7f99;margin-top:18px;'>Informe generado desde el historial de movimientos de insumos.</p>";
+    $html .= "</div></body></html>";
+
+    echo json_encode(array("1" => "exito", "html" => $html), JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
 

@@ -132,6 +132,14 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
             guardarVarianteInsumoAgenda($mysqli, $useru);
             break;
 
+        case 'generarInformeInsumosAgenda':
+            generarInformeInsumosAgendaEndpoint($mysqli, $useru);
+            break;
+
+        case 'catalogosInformeInsumosAgenda':
+            catalogosInformeInsumosAgendaEndpoint($mysqli, $useru);
+            break;
+
         case 'buscarDoctoresDisponiblesCita':
             buscarDoctoresDisponiblesCita($mysqli);
             break;
@@ -481,6 +489,7 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
     }
 
     $grupoMovimiento = "agenda_".$idAgenda."_".date("YmdHis");
+    $totalDescontados = 0;
     foreach ($consumos as $consumo) {
         $idConsumo = (int)$consumo["id"];
         $idInsumo = (int)$consumo["id_insumo"];
@@ -499,7 +508,13 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
             $stockActual = normalizarNumeroAgenda($rowStock["cantidad"]);
         }
         if ($stockActual < $cantidad) {
-            throw new Exception("Stock insuficiente de ".$nombreInsumo." en el consultorio. Stock actual: ".$stockActual.", requerido: ".$cantidad.".");
+            $mysqli->query("UPDATE agenda_consumo_insumos
+                SET estado = IF(estado = 'previsto', 'confirmado', estado),
+                    cantidad_confirmada = IF(cantidad_confirmada IS NULL, cantidad_prevista, cantidad_confirmada),
+                    usuario_confirmo = IF(usuario_confirmo IS NULL, '".$usuario."', usuario_confirmo),
+                    fecha_confirmo = IF(fecha_confirmo IS NULL, NOW(), fecha_confirmo)
+                WHERE id = '".$idConsumo."' LIMIT 1");
+            continue;
         }
 
         $nuevoStock = $stockActual - $cantidad;
@@ -531,9 +546,10 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
                 usuario_confirmo = IF(usuario_confirmo IS NULL, '".$usuario."', usuario_confirmo),
                 fecha_confirmo = IF(fecha_confirmo IS NULL, NOW(), fecha_confirmo)
             WHERE id = '".$idConsumo."' LIMIT 1");
+        $totalDescontados++;
     }
 
-    return count($consumos);
+    return $totalDescontados;
 }
 
 function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda)
@@ -555,14 +571,16 @@ function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda)
         }
     }
 
-    $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.unidad_medida
+    $sql = "SELECT ip.id_insumo,
+            IF(LOWER(TRIM(i.descripcion)) = 'descartable', MAX(ip.cantidad), SUM(ip.cantidad)) AS cantidad,
+            i.unidad_medida
         FROM agenda_tratamientos at
         INNER JOIN detalle_venta dv ON dv.cod_detalle = at.cod_detalle_ventaFK
         INNER JOIN insumo_producto ip ON ip.cod_producto = dv.cod_productoFK
         INNER JOIN insumosconsl i ON i.id_insumo = ip.id_insumo
         WHERE at.id_agenda = '".$idAgenda."'
           AND at.estado <> 'cancelado'
-        GROUP BY ip.id_insumo, i.unidad_medida";
+        GROUP BY ip.id_insumo, i.unidad_medida, i.descripcion";
     $resultTratamientos = $mysqli->query($sql);
     if ($resultTratamientos) {
         while ($row = $resultTratamientos->fetch_assoc()) {
@@ -799,12 +817,14 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
         }
     }
     if (count($ids) > 0) {
-        $sql = "SELECT ip.id_insumo, SUM(ip.cantidad) AS cantidad, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante
+        $sql = "SELECT ip.id_insumo,
+                    IF(LOWER(TRIM(i.descripcion)) = 'descartable', MAX(ip.cantidad), SUM(ip.cantidad)) AS cantidad,
+                    i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante
                 FROM detalle_venta dv
                 INNER JOIN insumo_producto ip ON ip.cod_producto = dv.cod_productoFK
                 INNER JOIN insumosconsl i ON i.id_insumo = ip.id_insumo
                 WHERE dv.cod_detalle IN (".implode(",", $ids).")
-                GROUP BY ip.id_insumo, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante";
+                GROUP BY ip.id_insumo, i.descripcion, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante";
         $resultTrat = $mysqli->query($sql);
         if ($resultTrat) {
             while ($row = $resultTrat->fetch_assoc()) {
@@ -950,6 +970,572 @@ function obtenerPrevisionInsumosAgendaEndpoint($mysqli)
     }
     echo json_encode(array("1" => "exito", "insumos" => $insumos, "faltantes" => $faltantes), JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
+}
+
+function generarInformeInsumosAgendaEndpoint($mysqli, $useru)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+
+    $periodo = isset($_POST["periodo"]) ? strtolower(limpiar($mysqli, $_POST["periodo"])) : "dia";
+    $fechaBase = isset($_POST["fecha_base"]) ? limpiar($mysqli, $_POST["fecha_base"]) : date("Y-m-d");
+    $tipoAlcance = isset($_POST["tipo_alcance"]) ? strtolower(limpiar($mysqli, $_POST["tipo_alcance"])) : "sucursal";
+    $idSucursal = isset($_POST["id_sucursal"]) ? (int)$_POST["id_sucursal"] : 0;
+    $idConsultorio = isset($_POST["id_consultorio"]) ? (int)$_POST["id_consultorio"] : 0;
+
+    if ($periodo !== "semana") {
+        $periodo = "dia";
+    }
+    if ($tipoAlcance !== "consultorio") {
+        $tipoAlcance = "sucursal";
+        $idConsultorio = 0;
+    }
+    if ($idSucursal <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione una sucursal."));
+    }
+    if ($tipoAlcance === "consultorio" && $idConsultorio <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione un consultorio."));
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaBase)) {
+        $fechaBase = date("Y-m-d");
+    }
+
+    $rango = obtenerRangoInformeInsumosAgenda($fechaBase, $periodo);
+    $historicoCache = array();
+    $contexto = array(
+        "cod_local" => $idSucursal,
+        "id_consultorio" => $tipoAlcance === "consultorio" ? $idConsultorio : 0
+    );
+
+    $citasPeriodo = obtenerCitasInsumosInformeAgenda($mysqli, $rango["desde"], $rango["hasta"], $idSucursal, $idConsultorio);
+    $detalleDias = array();
+    $resumenPeriodo = array();
+    $hayEstimadas = false;
+
+    foreach ($citasPeriodo as $cita) {
+        $insumos = obtenerInsumosPrevistosAgenda($mysqli, (int)$cita["id_agenda"], (int)$cita["cod_ventaFK"], $cita["tratamientos_ids"], (int)$cita["id_consultorio"]);
+        foreach ($insumos as $insumo) {
+            $items = resolverVariantesInformeInsumosAgenda($mysqli, $insumo, $contexto, $historicoCache);
+            foreach ($items as $item) {
+                if ($item["cantidad"] <= 0) {
+                    continue;
+                }
+                if (!isset($detalleDias[$cita["fecha"]])) {
+                    $detalleDias[$cita["fecha"]] = array();
+                }
+                agregarItemInformeInsumosAgenda($detalleDias[$cita["fecha"]], $item);
+                agregarItemInformeInsumosAgenda($resumenPeriodo, $item);
+                if ($item["estimado"]) {
+                    $hayEstimadas = true;
+                }
+            }
+        }
+    }
+
+    ksort($detalleDias);
+    ordenarItemsInformeInsumosAgenda($resumenPeriodo);
+    foreach ($detalleDias as $fecha => $itemsDia) {
+        ordenarItemsInformeInsumosAgenda($detalleDias[$fecha]);
+    }
+
+    $hoy = date("Y-m-d");
+    $ultimaFecha = obtenerUltimaFechaFuturaInformeInsumosAgenda($mysqli, $hoy, $idSucursal, $idConsultorio);
+    $proyeccion = array();
+    $compras = array();
+    $consumoFuturo = array();
+    $consumoDiarioFuturo = array();
+
+    if ($ultimaFecha !== "") {
+        $citasFuturas = obtenerCitasInsumosInformeAgenda($mysqli, $hoy, $ultimaFecha, $idSucursal, $idConsultorio);
+        foreach ($citasFuturas as $cita) {
+            $insumos = obtenerInsumosPrevistosAgenda($mysqli, (int)$cita["id_agenda"], (int)$cita["cod_ventaFK"], $cita["tratamientos_ids"], (int)$cita["id_consultorio"]);
+            foreach ($insumos as $insumo) {
+                $items = resolverVariantesInformeInsumosAgenda($mysqli, $insumo, $contexto, $historicoCache);
+                foreach ($items as $item) {
+                    if ($item["cantidad"] <= 0) {
+                        continue;
+                    }
+                    agregarItemInformeInsumosAgenda($consumoFuturo, $item);
+                    if (!isset($consumoDiarioFuturo[$item["clave"]])) {
+                        $consumoDiarioFuturo[$item["clave"]] = array(
+                            "item" => $item,
+                            "dias" => array()
+                        );
+                    }
+                    if (!isset($consumoDiarioFuturo[$item["clave"]]["dias"][$cita["fecha"]])) {
+                        $consumoDiarioFuturo[$item["clave"]]["dias"][$cita["fecha"]] = 0;
+                    }
+                    $consumoDiarioFuturo[$item["clave"]]["dias"][$cita["fecha"]] += $item["cantidad"];
+                    if ($item["estimado"]) {
+                        $hayEstimadas = true;
+                    }
+                }
+            }
+        }
+        ordenarItemsInformeInsumosAgenda($consumoFuturo);
+
+        foreach ($consumoFuturo as $clave => $item) {
+            $stockActual = obtenerStockActualInformeInsumosAgenda($mysqli, $item["id_insumo"], $item["id_variante"], $idSucursal, $idConsultorio);
+            $stockMinimo = obtenerStockMinimoInformeInsumosAgenda($mysqli, $item["id_insumo"], $item["id_variante"]);
+            $stockCorriendo = $stockActual;
+            $alcanzaHasta = "Alcanza hasta el final del periodo proyectado";
+            $dias = isset($consumoDiarioFuturo[$clave]) ? $consumoDiarioFuturo[$clave]["dias"] : array();
+            ksort($dias);
+            foreach ($dias as $fecha => $cantidadDia) {
+                if ($stockCorriendo < $cantidadDia) {
+                    $alcanzaHasta = formatearFechaInformeInsumosAgenda($fecha);
+                    break;
+                }
+                $stockCorriendo -= $cantidadDia;
+            }
+
+            $proyeccion[$clave] = array(
+                "nombre" => $item["nombre"],
+                "unidad" => $item["unidad"],
+                "stock_actual" => $stockActual,
+                "consumo_futuro" => $item["cantidad"],
+                "alcanza_hasta" => $alcanzaHasta,
+                "ultima_fecha" => $ultimaFecha,
+                "estimado" => $item["estimado"]
+            );
+
+            $stockFinal = $stockActual - $item["cantidad"];
+            $comprar = max(0, ($item["cantidad"] + $stockMinimo) - $stockActual);
+            if ($comprar > 0) {
+                $faltanteAgenda = max(0, $item["cantidad"] - $stockActual);
+                $paraMinimo = max(0, $stockMinimo - max(0, $stockActual - $item["cantidad"]));
+                $motivo = $faltanteAgenda > 0
+                    ? formatearCantidadInformeInsumosAgenda($faltanteAgenda)." para cubrir agenda + ".formatearCantidadInformeInsumosAgenda($paraMinimo)." para volver al minimo"
+                    : "Al finalizar quedaria debajo del minimo";
+                $compras[$clave] = array(
+                    "nombre" => $item["nombre"],
+                    "unidad" => $item["unidad"],
+                    "stock_actual" => $stockActual,
+                    "consumo_futuro" => $item["cantidad"],
+                    "stock_minimo" => $stockMinimo,
+                    "comprar" => $comprar,
+                    "motivo" => $motivo
+                );
+            }
+        }
+        ordenarItemsInformeInsumosAgenda($proyeccion);
+        ordenarItemsInformeInsumosAgenda($compras);
+    }
+
+    $meta = obtenerMetaInformeInsumosAgenda($mysqli, $idSucursal, $idConsultorio, $useru, $tipoAlcance, $periodo, $rango);
+    $html = generarHtmlInformeInsumosAgenda($meta, $resumenPeriodo, $detalleDias, $proyeccion, $compras, $ultimaFecha, $hayEstimadas);
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "html" => $html,
+        "archivo" => "informe_insumos_".$periodo."_".$rango["desde"].".pdf"
+    ));
+}
+
+function catalogosInformeInsumosAgendaEndpoint($mysqli, $useru)
+{
+    $verTodos = isset($_POST['ver_todos_consoltorios']) ? limpiar($mysqli, $_POST['ver_todos_consoltorios']) : 'true';
+    $condicionPermiso = $verTodos == 'false' ? " AND c.cod_doctorFK = '".(int)$useru."'" : "";
+
+    $locales = array();
+    $consultorios = array();
+
+    $sqlConsultorios = "SELECT c.id_consultorio, c.nombre, c.cod_localFk, l.Nombre AS nombre_local
+        FROM consultorios c
+        LEFT JOIN local l ON l.cod_local = c.cod_localFk
+        WHERE UPPER(c.estado) = 'ACTIVO' ".$condicionPermiso."
+        ORDER BY l.Nombre ASC, c.nombre ASC";
+    $resultConsultorios = $mysqli->query($sqlConsultorios);
+    if (!$resultConsultorios) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudieron cargar los consultorios: ".$mysqli->error));
+    }
+
+    $localesVistos = array();
+    while ($row = $resultConsultorios->fetch_assoc()) {
+        $codLocal = (int)$row["cod_localFk"];
+        $nombreLocal = normalizarTextoUtf8($row["nombre_local"]);
+        if ($codLocal > 0 && !isset($localesVistos[$codLocal])) {
+            $localesVistos[$codLocal] = true;
+            $locales[] = array(
+                "cod_local" => $codLocal,
+                "Nombre" => $nombreLocal != "" ? $nombreLocal : "Sucursal ".$codLocal
+            );
+        }
+        $consultorios[] = array(
+            "id_consultorio" => (int)$row["id_consultorio"],
+            "id" => (int)$row["id_consultorio"],
+            "nombre" => normalizarTextoUtf8($row["nombre"]),
+            "cod_localFk" => $codLocal,
+            "nombre_local" => $nombreLocal
+        );
+    }
+
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "locales" => $locales,
+        "consultorios" => $consultorios
+    ));
+}
+
+function obtenerRangoInformeInsumosAgenda($fechaBase, $periodo)
+{
+    $fecha = DateTime::createFromFormat("Y-m-d", $fechaBase);
+    if (!$fecha) {
+        $fecha = new DateTime();
+    }
+    if ($periodo === "semana") {
+        $diaSemana = (int)$fecha->format("N");
+        $inicio = clone $fecha;
+        $inicio->modify("-".($diaSemana - 1)." days");
+        $fin = clone $inicio;
+        $fin->modify("+6 days");
+        return array("desde" => $inicio->format("Y-m-d"), "hasta" => $fin->format("Y-m-d"));
+    }
+    return array("desde" => $fecha->format("Y-m-d"), "hasta" => $fecha->format("Y-m-d"));
+}
+
+function obtenerCitasInsumosInformeAgenda($mysqli, $desde, $hasta, $codLocal, $idConsultorio)
+{
+    $condicionConsultorio = $idConsultorio > 0 ? " AND a.id_consultorio = '".(int)$idConsultorio."'" : "";
+    $sql = "SELECT a.id_agenda, a.id_consultorio, a.cod_ventaFK, a.cod_detalle_ventaFK, a.fecha,
+                   (SELECT GROUP_CONCAT(at.cod_detalle_ventaFK ORDER BY at.id ASC SEPARATOR ',')
+                    FROM agenda_tratamientos at
+                    WHERE at.id_agenda = a.id_agenda AND at.estado <> 'cancelado') AS tratamientos_ids
+            FROM agenda a
+            INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
+            WHERE a.fecha BETWEEN '".$desde."' AND '".$hasta."'
+              AND c.cod_localFk = '".(int)$codLocal."'
+              ".$condicionConsultorio."
+              AND UPPER(IFNULL(a.estado,'')) IN ('AGENDADO','CONFIRMADO','CONFIRMADOCONDEUDA','PRIMERACONSULTA')
+            ORDER BY a.fecha ASC, a.hora_inicio ASC, a.id_agenda ASC";
+    $result = $mysqli->query($sql);
+    $citas = array();
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $ids = array();
+            if ($row["tratamientos_ids"] != "") {
+                foreach (explode(",", $row["tratamientos_ids"]) as $id) {
+                    $id = (int)$id;
+                    if ($id > 0) {
+                        $ids[] = $id;
+                    }
+                }
+            } elseif ((int)$row["cod_detalle_ventaFK"] > 0) {
+                $ids[] = (int)$row["cod_detalle_ventaFK"];
+            }
+            if (count($ids) == 0) {
+                continue;
+            }
+            $row["tratamientos_ids"] = $ids;
+            $citas[] = $row;
+        }
+    }
+    return $citas;
+}
+
+function resolverVariantesInformeInsumosAgenda($mysqli, $insumo, $contexto, &$historicoCache)
+{
+    $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
+    $tieneVariantes = (int)(isset($insumo["tiene_variantes"]) ? $insumo["tiene_variantes"] : 0);
+    $idVariante = (int)(isset($insumo["id_variante"]) ? $insumo["id_variante"] : 0);
+    $nombreVariante = isset($insumo["nombre_variante"]) ? $insumo["nombre_variante"] : "";
+    if ($tieneVariantes !== 1 || $idVariante > 0) {
+        return array(crearItemInformeInsumosAgenda($insumo, $idVariante, $nombreVariante, $cantidad, false));
+    }
+
+    $idInsumo = (int)$insumo["id_insumo"];
+    if (!isset($historicoCache[$idInsumo])) {
+        $historicoCache[$idInsumo] = obtenerDistribucionHistoricaVariantesAgenda($mysqli, $idInsumo, $contexto);
+    }
+    $distribucion = $historicoCache[$idInsumo];
+    $items = array();
+    foreach ($distribucion as $dist) {
+        $cantidadEstimada = $cantidad * normalizarNumeroAgenda($dist["ratio"]);
+        if ($cantidadEstimada <= 0) {
+            continue;
+        }
+        $items[] = crearItemInformeInsumosAgenda($insumo, (int)$dist["id_variante"], $dist["nombre_variante"], $cantidadEstimada, true);
+    }
+    if (count($items) == 0) {
+        $items[] = crearItemInformeInsumosAgenda($insumo, 0, "", $cantidad, true);
+    }
+    return $items;
+}
+
+function obtenerDistribucionHistoricaVariantesAgenda($mysqli, $idInsumo, $contexto)
+{
+    $condicionConsultorio = ((int)$contexto["id_consultorio"] > 0) ? " AND m.consultorio_id = '".(int)$contexto["id_consultorio"]."'" : "";
+    $sql = "SELECT m.id_variante, v.nombre_variante, SUM(m.cantidad) AS total
+            FROM movimientos_insumos m
+            INNER JOIN insumo_variantes v ON v.id_variante = m.id_variante
+            WHERE m.insumo_id = '".(int)$idInsumo."'
+              AND m.id_variante > 0
+              AND m.sucursal_id = '".(int)$contexto["cod_local"]."'
+              ".$condicionConsultorio."
+              AND LOWER(m.tipo) = 'salida'
+              AND m.fecha >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            GROUP BY m.id_variante, v.nombre_variante
+            ORDER BY total DESC";
+    $result = $mysqli->query($sql);
+    $filas = array();
+    $total = 0;
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $row["total"] = normalizarNumeroAgenda($row["total"]);
+            $total += $row["total"];
+            $filas[] = $row;
+        }
+    }
+    if ($total > 0) {
+        foreach ($filas as $i => $fila) {
+            $filas[$i]["ratio"] = $fila["total"] / $total;
+            $filas[$i]["nombre_variante"] = normalizarTextoUtf8($fila["nombre_variante"]);
+        }
+        return $filas;
+    }
+
+    $variantes = obtenerVariantesAgendaInsumo($mysqli, $idInsumo);
+    $cantidadVariantes = count($variantes);
+    if ($cantidadVariantes == 0) {
+        return array();
+    }
+    $dist = array();
+    foreach ($variantes as $variante) {
+        $dist[] = array(
+            "id_variante" => (int)$variante["id_variante"],
+            "nombre_variante" => $variante["nombre_variante"],
+            "ratio" => 1 / $cantidadVariantes
+        );
+    }
+    return $dist;
+}
+
+function crearItemInformeInsumosAgenda($insumo, $idVariante, $nombreVariante, $cantidad, $estimado)
+{
+    $nombre = normalizarTextoUtf8($insumo["nombre"]);
+    $nombreVariante = normalizarTextoUtf8($nombreVariante);
+    $unidad = normalizarTextoUtf8($insumo["unidad_medida"]);
+    $etiqueta = $nombre.($nombreVariante != "" ? " - ".$nombreVariante : "");
+    return array(
+        "clave" => (int)$insumo["id_insumo"].":".(int)$idVariante."|".$unidad,
+        "id_insumo" => (int)$insumo["id_insumo"],
+        "id_variante" => (int)$idVariante,
+        "nombre" => $etiqueta,
+        "unidad" => $unidad,
+        "cantidad" => normalizarNumeroAgenda($cantidad),
+        "estimado" => $estimado
+    );
+}
+
+function agregarItemInformeInsumosAgenda(&$lista, $item)
+{
+    $clave = $item["clave"];
+    if (!isset($lista[$clave])) {
+        $lista[$clave] = $item;
+        return;
+    }
+    $lista[$clave]["cantidad"] += normalizarNumeroAgenda($item["cantidad"]);
+    $lista[$clave]["estimado"] = $lista[$clave]["estimado"] || $item["estimado"];
+}
+
+function ordenarItemsInformeInsumosAgenda(&$lista)
+{
+    uasort($lista, function ($a, $b) {
+        return strcasecmp($a["nombre"], $b["nombre"]);
+    });
+}
+
+function obtenerUltimaFechaFuturaInformeInsumosAgenda($mysqli, $hoy, $codLocal, $idConsultorio)
+{
+    $condicionConsultorio = $idConsultorio > 0 ? " AND a.id_consultorio = '".(int)$idConsultorio."'" : "";
+    $sql = "SELECT MAX(a.fecha) AS ultima
+            FROM agenda a
+            INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
+            WHERE a.fecha >= '".$hoy."'
+              AND c.cod_localFk = '".(int)$codLocal."'
+              ".$condicionConsultorio."
+              AND UPPER(IFNULL(a.estado,'')) IN ('AGENDADO','CONFIRMADO','CONFIRMADOCONDEUDA','PRIMERACONSULTA')
+              AND (
+                EXISTS (SELECT 1 FROM agenda_tratamientos at WHERE at.id_agenda = a.id_agenda AND at.estado <> 'cancelado')
+                OR IFNULL(a.cod_detalle_ventaFK,0) > 0
+              )";
+    $result = $mysqli->query($sql);
+    if ($result && ($row = $result->fetch_assoc()) && $row["ultima"] != "") {
+        return $row["ultima"];
+    }
+    return "";
+}
+
+function obtenerStockActualInformeInsumosAgenda($mysqli, $idInsumo, $idVariante, $codLocal, $idConsultorio)
+{
+    $condicionConsultorio = $idConsultorio > 0 ? " AND id_consultorio = '".(int)$idConsultorio."'" : "";
+    $sql = "SELECT SUM(cantidad) AS stock
+            FROM insumo_stock_consultorio
+            WHERE id_insumo = '".(int)$idInsumo."'
+              AND id_variante = '".(int)$idVariante."'
+              AND cod_local = '".(int)$codLocal."'
+              ".$condicionConsultorio;
+    $result = $mysqli->query($sql);
+    if ($result && ($row = $result->fetch_assoc())) {
+        return normalizarNumeroAgenda($row["stock"]);
+    }
+    return 0;
+}
+
+function obtenerStockMinimoInformeInsumosAgenda($mysqli, $idInsumo, $idVariante)
+{
+    if ((int)$idVariante > 0) {
+        $result = $mysqli->query("SELECT stock_minimo FROM insumo_variantes WHERE id_variante='".(int)$idVariante."' LIMIT 1");
+        if ($result && ($row = $result->fetch_assoc())) {
+            return normalizarNumeroAgenda($row["stock_minimo"]);
+        }
+    }
+    $result = $mysqli->query("SELECT stock_minimo FROM insumosconsl WHERE id_insumo='".(int)$idInsumo."' LIMIT 1");
+    if ($result && ($row = $result->fetch_assoc())) {
+        return normalizarNumeroAgenda($row["stock_minimo"]);
+    }
+    return 0;
+}
+
+function obtenerMetaInformeInsumosAgenda($mysqli, $codLocal, $idConsultorio, $useru, $tipoAlcance, $periodo, $rango)
+{
+    $sucursal = "";
+    $resultLocal = $mysqli->query("SELECT Nombre FROM local WHERE cod_local='".(int)$codLocal."' LIMIT 1");
+    if ($resultLocal && ($row = $resultLocal->fetch_assoc())) {
+        $sucursal = normalizarTextoUtf8($row["Nombre"]);
+    }
+    $consultorio = "";
+    if ($idConsultorio > 0) {
+        $resultConsultorio = $mysqli->query("SELECT nombre FROM consultorios WHERE id_consultorio='".(int)$idConsultorio."' LIMIT 1");
+        if ($resultConsultorio && ($row = $resultConsultorio->fetch_assoc())) {
+            $consultorio = normalizarTextoUtf8($row["nombre"]);
+        }
+    }
+    $usuario = "";
+    $resultUsuario = $mysqli->query("SELECT p.nombre_persona FROM usuario u INNER JOIN persona p ON p.cod_persona = u.cod_usuario WHERE u.cod_usuario='".(int)$useru."' LIMIT 1");
+    if ($resultUsuario && ($row = $resultUsuario->fetch_assoc())) {
+        $usuario = normalizarTextoUtf8($row["nombre_persona"]);
+    }
+    return array(
+        "clinica" => "Clinident",
+        "sucursal" => $sucursal,
+        "consultorio" => $consultorio,
+        "tipo_alcance" => $tipoAlcance,
+        "periodo" => $periodo === "semana" ? "Semana" : "Dia",
+        "rango" => $rango,
+        "generado" => date("d/m/Y H:i"),
+        "usuario" => $usuario
+    );
+}
+
+function generarHtmlInformeInsumosAgenda($meta, $resumen, $detalleDias, $proyeccion, $compras, $ultimaFecha, $hayEstimadas)
+{
+    $periodoTexto = $meta["rango"]["desde"] == $meta["rango"]["hasta"]
+        ? formatearFechaInformeInsumosAgenda($meta["rango"]["desde"])
+        : formatearFechaInformeInsumosAgenda($meta["rango"]["desde"])." al ".formatearFechaInformeInsumosAgenda($meta["rango"]["hasta"]);
+
+    $html = "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Informe de insumos</title>";
+    $html .= "<style>
+        body{font-family:Arial,sans-serif;color:#172033;margin:0;background:#f6f7fb;}
+        .page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:14mm;box-sizing:border-box;}
+        .header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #e5e7eb;padding-bottom:10px;margin-bottom:14px;}
+        .header img{width:70px;max-height:54px;object-fit:contain;}
+        .header h1{font-size:22px;margin:0;color:#111827;}
+        .header p{margin:2px 0;font-size:12px;color:#4b5563;}
+        .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:5px 18px;margin:10px 0 14px;font-size:12px;color:#374151;}
+        h2{font-size:15px;margin:18px 0 8px;color:#111827;border-bottom:1px solid #e5e7eb;padding-bottom:5px;}
+        h3{font-size:13px;margin:13px 0 6px;color:#1f2937;}
+        table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:11.5px;}
+        th{background:#f3f4f6;color:#111827;text-align:left;border:1px solid #d1d5db;padding:6px;}
+        td{border:1px solid #e5e7eb;padding:6px;vertical-align:top;}
+        .num{text-align:right;white-space:nowrap;}
+        .muted{color:#6b7280;font-size:11px;}
+        .empty{padding:10px;border:1px solid #e5e7eb;background:#fafafa;color:#6b7280;font-size:12px;}
+        .note{font-size:11px;color:#6b7280;margin:6px 0 12px;}
+        .actions{position:sticky;top:0;background:#111827;color:#fff;padding:8px 14px;text-align:right;}
+        .actions button{border:0;border-radius:6px;padding:7px 12px;cursor:pointer;}
+        @media print{body{background:#fff}.actions{display:none}.page{width:auto;margin:0;padding:10mm;}}
+    </style></head><body>";
+    $html .= "<div class='actions'><button onclick='window.print()'>Generar PDF</button></div><div class='page'>";
+    $html .= "<div class='header'><img src='/GoodVentaAsisCap/iconos/Logo.jpg' alt='Logo'><div><h1>Informe de insumos</h1><p>".escaparHtmlAgenda($meta["clinica"])."</p><p>Periodo: ".escaparHtmlAgenda($periodoTexto)."</p></div></div>";
+    $html .= "<div class='meta'><div><b>Sucursal:</b> ".escaparHtmlAgenda($meta["sucursal"])."</div>";
+    $html .= "<div><b>Consultorio:</b> ".escaparHtmlAgenda($meta["consultorio"] != "" ? $meta["consultorio"] : "Sucursal completa")."</div>";
+    $html .= "<div><b>Generado:</b> ".escaparHtmlAgenda($meta["generado"])."</div>";
+    $html .= "<div><b>Usuario:</b> ".escaparHtmlAgenda($meta["usuario"])."</div></div>";
+
+    $html .= "<h2>Resumen de insumos del periodo seleccionado</h2>";
+    $html .= tablaItemsInformeInsumosAgenda($resumen, array("Insumo / Variante", "Cantidad requerida", "Unidad"), "No se encontraron citas agendadas o confirmadas con tratamientos cargados para el periodo seleccionado.");
+
+    $html .= "<h2>Detalle por dia</h2>";
+    if (count($detalleDias) == 0) {
+        $html .= "<div class='empty'>No se encontraron citas agendadas o confirmadas con tratamientos cargados para el periodo seleccionado.</div>";
+    } else {
+        foreach ($detalleDias as $fecha => $items) {
+            $html .= "<h3>".escaparHtmlAgenda(nombreDiaInformeInsumosAgenda($fecha)." ".formatearFechaInformeInsumosAgenda($fecha))."</h3>";
+            $html .= tablaItemsInformeInsumosAgenda($items, array("Insumo / Variante", "Cantidad", "Unidad"), "Sin insumos previstos para este dia.");
+        }
+    }
+
+    $html .= "<h2>Proyeccion de alcance del stock</h2>";
+    if ($ultimaFecha == "" || count($proyeccion) == 0) {
+        $html .= "<div class='empty'>No hay insumos para proyectar segun la agenda futura cargada.</div>";
+    } else {
+        $html .= "<table><thead><tr><th>Insumo / Variante</th><th class='num'>Stock actual</th><th class='num'>Consumo futuro proyectado</th><th>Alcanza hasta</th><th>Ultima fecha proyectada</th></tr></thead><tbody>";
+        foreach ($proyeccion as $item) {
+            $html .= "<tr><td>".escaparHtmlAgenda($item["nombre"]).($item["estimado"] ? " <span class='muted'>(estimado)</span>" : "")."</td><td class='num'>".formatearCantidadInformeInsumosAgenda($item["stock_actual"])."</td><td class='num'>".formatearCantidadInformeInsumosAgenda($item["consumo_futuro"])."</td><td>".escaparHtmlAgenda($item["alcanza_hasta"])."</td><td>".escaparHtmlAgenda(formatearFechaInformeInsumosAgenda($item["ultima_fecha"]))."</td></tr>";
+        }
+        $html .= "</tbody></table>";
+    }
+
+    $html .= "<h2>Lista de compras sugerida</h2>";
+    if (count($compras) == 0) {
+        $html .= "<div class='empty'>No hay compras sugeridas segun la agenda futura y el stock minimo actual.</div>";
+    } else {
+        $html .= "<table><thead><tr><th>Insumo / Variante</th><th class='num'>Stock actual</th><th class='num'>Consumo futuro</th><th class='num'>Stock minimo</th><th class='num'>Comprar</th><th>Motivo</th></tr></thead><tbody>";
+        foreach ($compras as $item) {
+            $html .= "<tr><td>".escaparHtmlAgenda($item["nombre"])."</td><td class='num'>".formatearCantidadInformeInsumosAgenda($item["stock_actual"])."</td><td class='num'>".formatearCantidadInformeInsumosAgenda($item["consumo_futuro"])."</td><td class='num'>".formatearCantidadInformeInsumosAgenda($item["stock_minimo"])."</td><td class='num'><b>".formatearCantidadInformeInsumosAgenda($item["comprar"])."</b></td><td>".escaparHtmlAgenda($item["motivo"])."</td></tr>";
+        }
+        $html .= "</tbody></table>";
+    }
+
+    if ($hayEstimadas) {
+        $html .= "<p class='note'>*Cantidad estimada segun consumo historico de los ultimos 30 dias porque algunas citas aun no tienen variante seleccionada.</p>";
+    }
+    $html .= "</div></body></html>";
+    return $html;
+}
+
+function tablaItemsInformeInsumosAgenda($items, $encabezados, $mensajeVacio)
+{
+    if (count($items) == 0) {
+        return "<div class='empty'>".escaparHtmlAgenda($mensajeVacio)."</div>";
+    }
+    $html = "<table><thead><tr><th>".escaparHtmlAgenda($encabezados[0])."</th><th class='num'>".escaparHtmlAgenda($encabezados[1])."</th><th>".escaparHtmlAgenda($encabezados[2])."</th></tr></thead><tbody>";
+    foreach ($items as $item) {
+        $html .= "<tr><td>".escaparHtmlAgenda($item["nombre"]).($item["estimado"] ? " <span class='muted'>(estimado)</span>" : "")."</td><td class='num'>".formatearCantidadInformeInsumosAgenda($item["cantidad"])."</td><td>".escaparHtmlAgenda($item["unidad"])."</td></tr>";
+    }
+    $html .= "</tbody></table>";
+    return $html;
+}
+
+function formatearCantidadInformeInsumosAgenda($valor)
+{
+    $numero = normalizarNumeroAgenda($valor);
+    if (abs($numero - round($numero)) < 0.0001) {
+        return (string)round($numero);
+    }
+    return rtrim(rtrim(number_format($numero, 3, '.', ''), '0'), '.');
+}
+
+function formatearFechaInformeInsumosAgenda($fecha)
+{
+    $timestamp = strtotime($fecha);
+    return $timestamp ? date("d/m/Y", $timestamp) : $fecha;
+}
+
+function nombreDiaInformeInsumosAgenda($fecha)
+{
+    $dias = array("Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado");
+    $timestamp = strtotime($fecha);
+    return $timestamp ? $dias[(int)date("w", $timestamp)] : "";
 }
 
 function obtenerDiaSemanaAgenda($fecha){

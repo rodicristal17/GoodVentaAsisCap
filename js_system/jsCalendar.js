@@ -12,6 +12,9 @@ var comentarioAgendamientoEnProceso = false;
 var agendaConsultoriosGruposColapsados = {};
 var resumenInsumosConsultorioPeriodo = "dia";
 var resumenInsumosConsultorioSemanaCache = {};
+var informeInsumosAgendaLocales = [];
+var informeInsumosAgendaConsultorios = [];
+var informeInsumosAgendaCatalogosCargados = false;
 
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
@@ -824,6 +827,8 @@ function cargarResumenAbmConsultorioAgenda(){
     var fecha = document.getElementById('inptFechaAbmConsultorioAgenda').value || document.getElementById('inptFechaAgenda').value;
     var totales = calcularTotalesResumenAgenda(fecha, '', consultorio);
 
+    actualizarCabeceraResumenConsultorioAgenda(fecha);
+
     document.getElementById('lblTotalCitasbmConsultorioAgenda').innerHTML = totales.total;
     document.getElementById('lblConfirmadasbmConsultorioAgenda').innerHTML = totales.confirmadas;
     document.getElementById('lblPendientesbmConsultorioAgenda').innerHTML = totales.pendientes;
@@ -834,6 +839,24 @@ function cargarResumenAbmConsultorioAgenda(){
 
     renderResumenInsumosDiaConsultorioAgenda(consultorio, fecha);
     renderAgendaResumenConsultorio(consultorio, fecha);
+}
+
+function actualizarCabeceraResumenConsultorioAgenda(fecha){
+    var labelFecha = document.getElementById('lblResumenConsultorioFecha');
+    var labelDoctor = document.getElementById('lblResumenConsultorioDoctor');
+    var selectDoctor = document.getElementById('inptDoctorAbmConsultorioAgenda');
+    var textoDoctor = '';
+
+    if(selectDoctor && selectDoctor.selectedIndex >= 0){
+        textoDoctor = selectDoctor.options[selectDoctor.selectedIndex].text || '';
+    }
+
+    if(labelFecha){
+        labelFecha.innerHTML = "Fecha: " + escaparHtmlAgenda(fecha || '');
+    }
+    if(labelDoctor){
+        labelDoctor.innerHTML = "Doctor/a: " + escaparHtmlAgenda(textoDoctor || 'Sin asignar');
+    }
 }
 
 function normalizarCantidadInsumoAgenda(valor){
@@ -885,6 +908,269 @@ function obtenerPeriodoResumenInsumosConsultorio(fecha, periodo){
     }
 
     return { desde: fecha, hasta: fecha, etiqueta: fecha || '' };
+}
+
+function abrirModalInformeInsumosAgenda(){
+    var modal = document.getElementById('modalInformeInsumosAgenda');
+    var overlay = document.getElementById('overlayInformeInsumosAgenda');
+    var fechaAgenda = document.getElementById('inptFechaAgenda') ? document.getElementById('inptFechaAgenda').value : '';
+    var hoy = formatearFechaInput(new Date());
+
+    if(!modal || !overlay){
+        ver_vetana_informativa("No se encontro el modal de informe de insumos. Actualice la pagina e intente nuevamente.", "", "error");
+        return;
+    }
+
+    document.getElementById('inptInformeInsumosPeriodo').value = 'dia';
+    document.getElementById('inptInformeInsumosFechaBase').value = fechaAgenda || hoy;
+    document.getElementById('inptInformeInsumosAlcance').value = 'sucursal';
+
+    cargarCatalogosInformeInsumosAgenda(function(){
+        cargarSucursalesInformeInsumosAgenda();
+        actualizarAlcanceInformeInsumosAgenda();
+
+        overlay.style.display = '';
+        modal.style.display = '';
+    });
+}
+
+function cerrarModalInformeInsumosAgenda(){
+    if(document.getElementById('overlayInformeInsumosAgenda')){
+        document.getElementById('overlayInformeInsumosAgenda').style.display = 'none';
+    }
+    if(document.getElementById('modalInformeInsumosAgenda')){
+        document.getElementById('modalInformeInsumosAgenda').style.display = 'none';
+    }
+}
+
+function cargarSucursalesInformeInsumosAgenda(){
+    var select = document.getElementById('inptInformeInsumosSucursal');
+    var filtroLocal = document.getElementById('inptLocalAgendaFiltro');
+    var actuales = {};
+    var opciones = "";
+    var seleccion = filtroLocal ? (filtroLocal.value || '') : '';
+    var i, c, idLocal, nombreLocal;
+
+    if(!select){ return; }
+
+    for(i = 0; i < informeInsumosAgendaLocales.length; i++){
+        idLocal = String(informeInsumosAgendaLocales[i].cod_local || '');
+        if(idLocal == '' || actuales[idLocal]){ continue; }
+        actuales[idLocal] = true;
+        nombreLocal = informeInsumosAgendaLocales[i].Nombre || ("Sucursal " + idLocal);
+        opciones += "<option value='" + escaparHtmlAgenda(idLocal) + "'>" + escaparHtmlAgenda(nombreLocal) + "</option>";
+    }
+
+    if(opciones == ''){
+        for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
+            c = agendaConsultoriosData.consultorios[i];
+            idLocal = String(c.cod_localFk || '');
+            if(idLocal == '' || actuales[idLocal]){ continue; }
+            actuales[idLocal] = true;
+            nombreLocal = c.nombre_local || ("Sucursal " + idLocal);
+            opciones += "<option value='" + escaparHtmlAgenda(idLocal) + "'>" + escaparHtmlAgenda(nombreLocal) + "</option>";
+        }
+    }
+
+    if(opciones == '' && filtroLocal){
+        for(i = 0; i < filtroLocal.options.length; i++){
+            if(filtroLocal.options[i].value != ''){
+                opciones += "<option value='" + escaparHtmlAgenda(filtroLocal.options[i].value) + "'>" + escaparHtmlAgenda(filtroLocal.options[i].text) + "</option>";
+            }
+        }
+    }
+
+    select.innerHTML = opciones || "<option value=''>Sin sucursales</option>";
+    if(seleccion != ''){
+        select.value = seleccion;
+    }else if(typeof cod_localFKUSer !== "undefined" && cod_localFKUSer){
+        select.value = cod_localFKUSer;
+    }
+    cargarConsultoriosInformeInsumosAgenda();
+}
+
+function cargarConsultoriosInformeInsumosAgenda(){
+    var select = document.getElementById('inptInformeInsumosConsultorio');
+    var sucursal = document.getElementById('inptInformeInsumosSucursal') ? document.getElementById('inptInformeInsumosSucursal').value : '';
+    var opciones = "<option value=''>Seleccionar consultorio</option>";
+    var filtroConsultorio = document.getElementById('inptConsultorioAgendaFiltro');
+    var seleccion = filtroConsultorio ? (filtroConsultorio.value || '') : '';
+    var listaConsultorios = informeInsumosAgendaConsultorios.length > 0 ? informeInsumosAgendaConsultorios : agendaConsultoriosData.consultorios;
+    var i, c;
+
+    if(!select){ return; }
+
+    for(i = 0; i < listaConsultorios.length; i++){
+        c = listaConsultorios[i];
+        if(sucursal != '' && String(c.cod_localFk) != String(sucursal)){ continue; }
+        opciones += "<option value='" + escaparHtmlAgenda(c.id || c.id_consultorio) + "'>" + escaparHtmlAgenda(c.nombre) + "</option>";
+    }
+
+    select.innerHTML = opciones;
+    if(seleccion != ''){
+        select.value = seleccion;
+    }
+}
+
+function cargarCatalogosInformeInsumosAgenda(callback){
+    if(informeInsumosAgendaCatalogosCargados === true){
+        if(typeof callback === "function"){ callback(); }
+        return;
+    }
+
+    obtener_datos_user();
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "ver_todos_consoltorios": controlacceso2("VERTODOSLOSCONSULTORIOS", "accion"),
+            "funt": "catalogosInformeInsumosAgenda"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) === true){
+                    informeInsumosAgendaLocales = resp.locales || [];
+                    informeInsumosAgendaConsultorios = resp.consultorios || [];
+                    informeInsumosAgendaCatalogosCargados = true;
+                    if(typeof callback === "function"){ callback(); }
+                }else{
+                    if(!usarCatalogosInformeInsumosAgendaFallback(callback)){
+                        ver_vetana_informativa(resp.mensaje || "No se pudieron cargar sucursales y consultorios.", "", "error");
+                    }
+                }
+            }catch(error){
+                GuardarArchivosLog("Error cargarCatalogosInformeInsumosAgenda: " + error + " \r\n Consola: " + responseText);
+                if(!usarCatalogosInformeInsumosAgendaFallback(callback)){
+                    ver_vetana_informativa("No se pudieron cargar los datos del informe de insumos.", "", "error");
+                }
+            }
+        },
+        error: function(jqXHR, textstatus){
+            if(!usarCatalogosInformeInsumosAgendaFallback(callback)){
+                manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            }
+        }
+    });
+}
+
+function usarCatalogosInformeInsumosAgendaFallback(callback){
+    if(!agendaConsultoriosData || !agendaConsultoriosData.consultorios || agendaConsultoriosData.consultorios.length === 0){
+        return false;
+    }
+    informeInsumosAgendaLocales = [];
+    informeInsumosAgendaConsultorios = agendaConsultoriosData.consultorios;
+    informeInsumosAgendaCatalogosCargados = true;
+    if(typeof callback === "function"){ callback(); }
+    return true;
+}
+
+function actualizarAlcanceInformeInsumosAgenda(){
+    var alcance = document.getElementById('inptInformeInsumosAlcance') ? document.getElementById('inptInformeInsumosAlcance').value : 'sucursal';
+    var grupo = document.getElementById('grupoInformeInsumosConsultorio');
+    if(grupo){
+        grupo.style.display = alcance === 'consultorio' ? '' : 'none';
+    }
+}
+
+function generarInformeInsumosAgendaPdf(){
+    var periodo = document.getElementById('inptInformeInsumosPeriodo').value;
+    var fechaBase = document.getElementById('inptInformeInsumosFechaBase').value;
+    var alcance = document.getElementById('inptInformeInsumosAlcance').value;
+    var sucursal = document.getElementById('inptInformeInsumosSucursal').value;
+    var consultorio = document.getElementById('inptInformeInsumosConsultorio').value;
+    var ventanaInforme;
+
+    if(fechaBase == ''){
+        ver_vetana_informativa("Seleccione una fecha base.", "", "error");
+        return;
+    }
+    if(sucursal == ''){
+        ver_vetana_informativa("Seleccione una sucursal.", "", "error");
+        return;
+    }
+    if(alcance === 'consultorio' && consultorio == ''){
+        ver_vetana_informativa("Seleccione un consultorio.", "", "error");
+        return;
+    }
+
+    ventanaInforme = window.open('', '_blank');
+    if(!ventanaInforme){
+        ver_vetana_informativa("No se pudo abrir la vista previa. Habilite ventanas emergentes para generar el PDF.", "", "error");
+        return;
+    }
+    ventanaInforme.document.open();
+    ventanaInforme.document.write("<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Preparando informe</title></head><body style='font-family:Arial,sans-serif;padding:18px;color:#172033;'>Preparando informe de insumos...</body></html>");
+    ventanaInforme.document.close();
+
+    obtener_datos_user();
+    verCerrarEfectoCargando("1");
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "periodo": periodo,
+            "fecha_base": fechaBase,
+            "tipo_alcance": alcance,
+            "id_sucursal": sucursal,
+            "id_consultorio": alcance === 'consultorio' ? consultorio : '',
+            "funt": "generarInformeInsumosAgenda"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            verCerrarEfectoCargando();
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) === true){
+                    abrirVentanaInformeInsumosAgenda(resp.html || "", resp.archivo || "informe_insumos.pdf", ventanaInforme);
+                    cerrarModalInformeInsumosAgenda();
+                }else{
+                    escribirErrorVentanaInformeInsumosAgenda(ventanaInforme, resp.mensaje || "No se pudo generar el informe.");
+                    ver_vetana_informativa(resp.mensaje || "No se pudo generar el informe.", "", "error");
+                }
+            }catch(error){
+                escribirErrorVentanaInformeInsumosAgenda(ventanaInforme, "No se pudo preparar el informe de insumos.");
+                ver_vetana_informativa("No se pudo preparar el informe de insumos.", "", "error");
+                GuardarArchivosLog("Error generarInformeInsumosAgendaPdf: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus, errorThrowm){
+            verCerrarEfectoCargando();
+            escribirErrorVentanaInformeInsumosAgenda(ventanaInforme, "No se pudo conectar con el servidor para generar el informe.");
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function abrirVentanaInformeInsumosAgenda(html, archivo, ventanaExistente){
+    var ventana = ventanaExistente || window.open('', '_blank');
+    if(!ventana){
+        ver_vetana_informativa("No se pudo abrir la vista previa. Habilite ventanas emergentes para generar el PDF.", "", "error");
+        return;
+    }
+    ventana.document.open();
+    ventana.document.write(html);
+    ventana.document.close();
+    setTimeout(function(){
+        try{
+            ventana.document.title = archivo;
+            ventana.focus();
+        }catch(e){}
+    }, 250);
+}
+
+function escribirErrorVentanaInformeInsumosAgenda(ventana, mensaje){
+    if(!ventana){ return; }
+    try{
+        ventana.document.open();
+        ventana.document.write("<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Error informe</title></head><body style='font-family:Arial,sans-serif;padding:18px;color:#991b1b;'><h3>No se pudo generar el informe de insumos</h3><p>" + escaparHtmlAgenda(mensaje || '') + "</p></body></html>");
+        ventana.document.close();
+    }catch(e){}
 }
 
 function toggleResumenInsumosConsultorioAgenda(){
@@ -1044,8 +1330,8 @@ function renderResumenInsumosDiaConsultorioAgenda(idConsultorio, fecha){
     for(i = 0; i < orden.length; i++){
         insumo = acumulados[orden[i]];
         html += "<div class='agenda-insumo-item agenda-insumo-item-dia'>"
-            + "<span>" + escaparHtmlAgenda(insumo.nombre) + "</span>"
-            + "<b>" + escaparHtmlAgenda(formatearCantidadInsumoAgenda(insumo.cantidad)) + " " + escaparHtmlAgenda(insumo.unidad) + "</b>"
+            + "<span class='agenda-insumo-nombre'>" + escaparHtmlAgenda(insumo.nombre) + "</span>"
+            + "<b class='agenda-insumo-cantidad'>" + escaparHtmlAgenda(formatearCantidadInsumoAgenda(insumo.cantidad)) + " " + escaparHtmlAgenda(insumo.unidad) + "</b>"
             + "</div>";
     }
     html += "</div>";
@@ -1671,13 +1957,14 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
 
     var MiColor = "#0d6efd";
 
-    if(e.estado == "AGENDADO"){ MiColor = "#80c583"; }	
-    else if(e.estado == "CONFIRMADO"){ MiColor = "#3b833e"; } 	
-    else if(e.estado == "ATENDIDO"){ MiColor = "#833b3b"; }	
-    else if(e.estado == "CANCELADO"){ MiColor = "#6c757d"; }	
-    else if(e.estado == "ENESPERA"){ MiColor = "#dcb645"; }
-    else if(e.estado == "CONFIRMADOCONDEUDA"){ MiColor = "#07488f"; }	
-    else if(e.estado == "PRIMERACONSULTA"){ MiColor = "#9d457c"; }
+    if(e.estado == "AGENDADO"){ MiColor = "linear-gradient(135deg,#80c583,#64ad69)"; }
+    else if(e.estado == "CONFIRMADO"){ MiColor = "linear-gradient(135deg,#3ba7c2,#2b8ca4)"; }
+    else if(e.estado == "ATENDIDO"){ MiColor = "linear-gradient(135deg,#9f3a3a,#833b3b)"; }
+    else if(e.estado == "CANCELADO"){ MiColor = "linear-gradient(135deg,#e06565,#c94d4d)"; }
+    else if(e.estado == "ENESPERA"){ MiColor = "linear-gradient(135deg,#dcb645,#c59a25)"; }
+    else if(e.estado == "AUSENTE"){ MiColor = "linear-gradient(135deg,#8c97a6,#6c757d)"; }
+    else if(e.estado == "CONFIRMADOCONDEUDA"){ MiColor = "linear-gradient(135deg,#07488f,#0b63bd)"; }
+    else if(e.estado == "PRIMERACONSULTA"){ MiColor = "linear-gradient(135deg,#9d457c,#843768)"; }
     // --- AGREGADO PARA FERIADOS ---
     else if(e.estado == "FERIADO"){ MiColor = "rgba(255, 0, 0, 0.7)"; } // Rojo translúcido
 	 
@@ -1721,12 +2008,14 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "data-fin='" + e.fin + "' "
     + "style='" + estilos + "' "
     + "onclick='clickEventoAgenda(\"" + e.id + "\", event)'>"
-    + "<span class='paciente'>" + advertencia_datos_incompletos + e.paciente + "</span>"
+    + "<div class='agenda-evento-head'>"
+    + "<span class='paciente'>" + advertencia_datos_incompletos + escaparHtmlAgenda(e.paciente || '') + "</span>"
+    + "<span class='hora agenda-evento-hora'>" + escaparHtmlAgenda(e.inicio || '') + " - " + escaparHtmlAgenda(e.fin || '') + "</span>"
+    + "</div>"
     + badgesAgenda
-    + "<span class='nombre_doctor'>" + (e.nombre_doctor || '') + "</span>"
+    + "<span class='nombre_doctor'>" + escaparHtmlAgenda(e.nombre_doctor || '') + "</span>"
     + "<span class='ci_cliente' style='display: none;'>" + (e.ci_cliente || '') + "</span>"
     + tratamientosHtml
-    + "<span class='hora'>" + e.inicio + " - " + e.fin + "</span>"
     + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
     + "</div>";
 }
@@ -1749,8 +2038,9 @@ function renderTratamientosEventoAgenda(textoTratamientos){
         nombre = coincidencia ? coincidencia[1].trim() : texto;
         porcentaje = coincidencia ? Math.max(0, Math.min(100, parseInt(coincidencia[2], 10))) : 0;
 
-        html += "<span class='agenda-evento-tratamiento'>"
+        html += "<span class='agenda-evento-tratamiento' style='--avance-tratamiento:" + porcentaje + "%'>"
             + "<span class='agenda-evento-tratamiento-nombre'>" + escaparHtmlAgenda(nombre) + "</span>"
+            + "<span class='agenda-evento-tratamiento-progreso'><span></span></span>"
             + "<b>" + porcentaje + "%</b>"
             + "</span>";
     }

@@ -1763,7 +1763,6 @@ function quitarpago($idFkVenta,$cod_creditoFK,$motivo,$monto,$cuota,$nrofactura,
 		exit;
 	}
 
-<<<<<<< Updated upstream
 	$datosPagos=buscardatospagos($cod_creditoFK,"2");
 	$resumenSolicitudPago = json_encode(array(
 		"motivo" => base64_encode($motivo),
@@ -1780,14 +1779,10 @@ function quitarpago($idFkVenta,$cod_creditoFK,$motivo,$monto,$cuota,$nrofactura,
 		$resumenSolicitudPago,
 		""
 	);
-=======
-$mysqli=conectar_al_servidor(); 
-pago_bloquear_lote_cerrado_por_credito($cod_creditoFK);
-ueno_pago_bloquear_eliminacion_ueno($mysqli, "cod_creditoFK", $cod_creditoFK);
-$consulta1="delete from pago where cod_creditoFK='$cod_creditoFK' ";	
->>>>>>> Stashed changes
 
 	$mysqli=conectar_al_servidor();
+	pago_bloquear_lote_cerrado_por_credito($cod_creditoFK);
+	ueno_pago_bloquear_eliminacion_ueno($mysqli, "cod_creditoFK", $cod_creditoFK);
 	$consulta1="delete from pago where cod_creditoFK='$cod_creditoFK' ";
 
 	$stmt1 = $mysqli->prepare($consulta1);

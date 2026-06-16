@@ -3273,6 +3273,7 @@ border-radius: 50%;
 #overlayNuevoPacienteAgenda,
 #overlayAsignarTratamientoAgenda,
 #overlayDetalleAgenda,
+#overlayInformeInsumosAgenda,
 #overlayFiltrosAgenda {
   z-index: 3200 !important;
 }
@@ -3283,6 +3284,7 @@ border-radius: 50%;
 #modalNuevoPacienteAgenda,
 #modalAsignarTratamientoAgenda,
 #modalDetalleAgenda,
+#modalInformeInsumosAgenda,
 #modalFiltrosAgenda {
   z-index: 3201 !important;
 }
@@ -6064,6 +6066,592 @@ textarea:focus, select:focus {
 @media (max-width: 980px) {
   .dashboard-insumos-grid,
   .dashboard-insumos-carga-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Insumos: vistas compactas y de bajo ruido visual */
+#divAbmInsumos .insumos-module-shell {
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #f6f8fb;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
+  color: #1f2937;
+}
+
+#divAbmInsumos .insumos-module-shell > .tableMenuZ {
+  height: 54px;
+  border: 0;
+  border-bottom: 1px solid #dde5ee;
+  background: #ffffff;
+}
+
+#divAbmInsumos .insumos-module-shell > .tableMenuZ .pTituloB {
+  margin: 0;
+  padding-left: 18px;
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+#divAbmInsumos .insumos-module-shell > .tableMenuZ .pTituloB b {
+  font-size: 22px !important;
+}
+
+#divAbmInsumos .insumos-tabs {
+  gap: 4px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #dde5ee;
+  background: #ffffff;
+}
+
+#divAbmInsumos .insumos-tab-btn {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0 14px;
+  background: transparent;
+  color: #5b6878;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .insumos-tab-btn:hover {
+  background: #eef4f8;
+  color: #172033;
+}
+
+#divAbmInsumos .insumos-tab-btn.activo {
+  border-color: #c7d7e7;
+  background: #eaf3fb;
+  color: #0f5f99;
+  box-shadow: inset 0 -2px 0 #0f5f99;
+}
+
+#divAbmInsumos .insumos-tab-btn span {
+  min-width: 18px;
+  height: 18px;
+  margin-left: 7px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .insumos-tab-contenido {
+  height: calc(90vh - 103px);
+  padding: 12px;
+  background: #f6f8fb;
+}
+
+#divAbmInsumos #divAbmInsumos1,
+#divAbmInsumos #divAbmInsumos2 {
+  height: calc(90vh - 127px) !important;
+  background: #f6f8fb !important;
+}
+
+#divAbmInsumos #divAbmInsumos2 > .tableMenuZ {
+  margin-bottom: 10px;
+  border: 1px solid #dde5ee;
+  border-radius: 8px;
+  background: #ffffff;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+#divAbmInsumos #divAbmInsumos2 > .tableMenuZ td {
+  padding: 10px 12px;
+}
+
+#divAbmInsumos #divAbmInsumos2 > .tableMenuZ .pTituloB {
+  margin: 0;
+  color: #172033;
+  font-size: 17px;
+}
+
+#divAbmInsumos #divAbmInsumos2 > .tableMenuZ .pTituloB b {
+  font-size: 22px !important;
+}
+
+#divAbmInsumos #divAbmInsumos2 .divMenuf {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid #dde5ee !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+#divAbmInsumos .insumos-list-toolbar {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) auto auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid #dde5ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+#divAbmInsumos .insumos-search-box {
+  display: grid;
+  gap: 5px;
+}
+
+#divAbmInsumos .insumos-search-box label {
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .insumos-search-box > div {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 92px;
+  gap: 8px;
+}
+
+#divAbmInsumos .insumos-search-box .inputText {
+  width: 100% !important;
+}
+
+#divAbmInsumos .insumos-status-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 3px;
+  border: 1px solid #d8e2ec;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+#divAbmInsumos .insumos-status-filter label {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border-radius: 6px;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#divAbmInsumos .insumos-status-filter label:has(input:checked) {
+  background: #eaf3fb;
+  color: #0f5f99;
+}
+
+#divAbmInsumos .insumos-primary-action {
+  min-width: 132px;
+  height: 34px !important;
+  margin: 0 !important;
+  background: #1769aa !important;
+}
+
+#divAbmInsumos .insumos-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#divAbmInsumos .insumos-summary-strip span {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid #dde5ee;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .insumos-summary-strip b {
+  color: #172033;
+  font-size: 18px;
+}
+
+#divAbmInsumos .insumo-cell-title {
+  color: #172033;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+#divAbmInsumos .insumo-cell-sub {
+  margin-top: 3px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+#divAbmInsumos .insumo-variant-pill,
+#divAbmInsumos .insumo-stock-pill,
+#divAbmInsumos .insumo-estado-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#divAbmInsumos .insumo-variant-pill {
+  margin-right: 4px;
+  background: #eef4f8;
+  color: #405163;
+}
+
+#divAbmInsumos .insumo-stock-pill--ok {
+  background: #e8f6ee;
+  color: #14783d;
+}
+
+#divAbmInsumos .insumo-stock-pill--bajo {
+  background: #fff4dc;
+  color: #98620f;
+}
+
+#divAbmInsumos .insumo-stock-pill--sin {
+  background: #fdecec;
+  color: #a33535;
+}
+
+#divAbmInsumos .insumo-stock-pill--inactivo {
+  background: #eef1f5;
+  color: #667085;
+}
+
+#divAbmInsumos .insumo-estado-pill--activo {
+  background: #edf7f1;
+  color: #287246;
+}
+
+#divAbmInsumos .insumo-estado-pill--inactivo {
+  background: #eef1f5;
+  color: #667085;
+}
+
+#divAbmInsumos .insumos-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  margin: 2px;
+  padding: 0 8px;
+  border: 1px solid #cbd8e6;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1769aa;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#divAbmInsumos .insumos-row-action--quiet {
+  color: #5f6c7b;
+  background: #f8fafc;
+}
+
+#divAbmInsumos .insumos-row-action:hover {
+  background: #eaf3fb;
+}
+
+#divAbmInsumos .insumos-editor {
+  display: grid;
+  gap: 12px;
+}
+
+#divAbmInsumos .insumos-form-section {
+  padding: 12px;
+  border: 1px solid #dde5ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+#divAbmInsumos .insumos-form-section--oculta {
+  display: none;
+}
+
+#divAbmInsumos .insumos-form-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+#divAbmInsumos .insumos-form-section-head > span {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #eaf3fb;
+  color: #0f5f99;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .insumos-form-section-head b {
+  display: block;
+  color: #172033;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+#divAbmInsumos .insumos-form-section-head small {
+  display: block;
+  margin-top: 2px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#divAbmInsumos .insumos-editor-grid {
+  display: grid;
+  gap: 10px;
+}
+
+#divAbmInsumos .insumos-editor-grid-principal {
+  grid-template-columns: minmax(260px, 1.4fr) minmax(160px, 0.8fr) minmax(140px, 0.6fr) minmax(130px, 0.5fr);
+}
+
+#divAbmInsumos .insumos-editor-grid-stock {
+  grid-template-columns: minmax(150px, 0.4fr) minmax(150px, 0.4fr) minmax(230px, 1fr);
+  align-items: end;
+}
+
+#divAbmInsumos .insumos-variant-toggle {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #d8e2ec;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #405163;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#divAbmInsumos .insumos-variant-toggle input {
+  width: 15px;
+  height: 15px;
+}
+
+#divAbmInsumos .presupuesto-panel,
+#divAbmInsumos .dashboard-insumos-filtros,
+#divAbmInsumos .dashboard-insumos-carga,
+#divAbmInsumos .dashboard-insumos-listado {
+  border: 1px solid #dde5ee;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+#divAbmInsumos .dashboard-insumos-grid {
+  grid-template-columns: minmax(320px, 0.85fr) minmax(420px, 1.25fr);
+  gap: 12px;
+  padding: 0 0 12px;
+}
+
+#divAbmInsumos .dashboard-insumos-listado {
+  margin: 0;
+  padding: 12px;
+}
+
+#divAbmInsumos .dashboard-insumos-filtros,
+#divAbmInsumos .dashboard-insumos-carga {
+  padding: 12px;
+}
+
+#divAbmInsumos .dashboard-insumos-filtros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+
+#divAbmInsumos .dashboard-insumos-filtros .panel-title,
+#divAbmInsumos .dashboard-insumos-carga .panel-title,
+#divAbmInsumos .insumos-movimiento-carga .panel-title {
+  grid-column: 1 / -1;
+}
+
+#divAbmInsumos .dashboard-insumos-filtros .form-row,
+#divAbmInsumos .dashboard-insumos-carga .form-row {
+  min-width: 0;
+}
+
+#divAbmInsumos .panel-title {
+  margin: 0 0 8px;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .panel-subtitle {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#divAbmInsumos .form-row label,
+#divAbmInsumos .pTituloC {
+  color: #4b5563 !important;
+  font-size: 11px;
+  font-weight: 900 !important;
+  line-height: 1.25;
+}
+
+#divAbmInsumos .inputText,
+#divAbmInsumos .inputSelect {
+  min-height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #172033;
+  box-sizing: border-box;
+}
+
+#divAbmInsumos .btn4,
+#divAbmInsumos .btn1,
+#divAbmInsumos .btn2 {
+  min-height: 32px;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divAbmInsumos .tableCabeceraRegistro {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #d8e2ec;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: #edf3f8;
+}
+
+#divAbmInsumos .tableCabeceraRegistro .td_registro {
+  height: 30px;
+  border-color: #d8e2ec;
+  background: #edf3f8;
+  color: #405163;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+#divAbmInsumos .div_cuerpo_table {
+  border: 1px solid #d8e2ec;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: #ffffff;
+}
+
+#divAbmInsumos .tableRegistroSearch {
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+#divAbmInsumos .tableRegistroSearch tr {
+  transition: background 0.15s ease;
+}
+
+#divAbmInsumos .tableRegistroSearch tr:hover {
+  background: #f4f8fb;
+}
+
+#divAbmInsumos .insumos-row-editable {
+  cursor: pointer;
+}
+
+#divAbmInsumos .insumos-row-editable:hover .insumo-cell-title {
+  color: #0f5f99;
+}
+
+#divAbmInsumos .tdRegistroSearch {
+  height: 34px;
+  border: 0 !important;
+  border-bottom: 1px solid #edf1f5 !important;
+  color: #253244;
+  font-size: 11px;
+}
+
+#divAbmInsumos .insumos-abm-listado {
+  height: calc(100% - 238px) !important;
+}
+
+#divAbmInsumos #divAbmInsumos1 > table:last-child {
+  margin-top: 10px;
+  border: 1px solid #dde5ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+#divAbmInsumos #divAbmInsumos1 > table:last-child td {
+  padding: 8px 10px;
+}
+
+#divAbmInsumos .insumos-productos-checklist {
+  max-height: 240px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  background: #f8fafc;
+}
+
+#divAbmInsumos .insumo-producto-card {
+  min-height: 40px;
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+#divAbmInsumos .insumos-movimiento-carga {
+  margin: 0 0 12px;
+  padding: 12px;
+}
+
+#divAbmInsumos .insumos-movimiento-datos {
+  grid-template-columns: 130px repeat(3, minmax(150px, 1fr));
+}
+
+#divAbmInsumos .insumos-movimiento-acciones {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#divAbmInsumos .insumo-stock-bajo .tdRegistroSearch {
+  background: #fff7f7;
+  color: #7f1d1d;
+}
+
+@media (max-width: 980px) {
+  #divAbmInsumos .insumos-tab-contenido {
+    padding: 10px;
+  }
+
+  #divAbmInsumos .dashboard-insumos-grid,
+  #divAbmInsumos .dashboard-insumos-filtros,
+  #divAbmInsumos .insumos-movimiento-datos,
+  #divAbmInsumos .insumos-movimientos-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #divAbmInsumos .insumos-productos-checklist {
     grid-template-columns: 1fr;
   }
 }
@@ -15699,7 +16287,6 @@ text-align: justify;
 }
 
 .dashboard-topbar__center {
-<<<<<<< Updated upstream
     position: relative;
     left: auto;
     top: auto;
@@ -15708,14 +16295,6 @@ text-align: justify;
     min-width: 0;
     justify-self: center;
     transform: none;
-=======
-    position: absolute;
-    left: 44%;
-    top: 8px;
-    z-index: 2;
-    width: clamp(220px, 20vw, 280px);
-    transform: translateX(-50%);
->>>>>>> Stashed changes
 }
 
 .dashboard-access-search--topbar {
@@ -15788,11 +16367,8 @@ text-align: justify;
     justify-content: flex-end;
     min-width: 0;
     margin-left: auto;
-<<<<<<< Updated upstream
     max-width: 100%;
-=======
     overflow: visible;
->>>>>>> Stashed changes
 }
 
 .dashboard-home-button {
@@ -16190,11 +16766,7 @@ button.dashboard-summary-item:hover {
 
 .dashboard-topbar__jornada .perfil-widget__jornada {
     display: grid;
-<<<<<<< Updated upstream
     grid-template-columns: max-content minmax(0, auto) auto max-content;
-=======
-    grid-template-columns: max-content auto max-content;
->>>>>>> Stashed changes
     align-items: center;
     gap: 10px;
     width: auto;
@@ -16241,19 +16813,11 @@ button.dashboard-summary-item:hover {
 }
 
 .dashboard-topbar__jornada .perfil-widget__asistencia {
-<<<<<<< Updated upstream
-    grid-template-columns: 132px minmax(130px, 170px);
-    grid-template-rows: auto auto;
-    align-items: center;
-    gap: 4px 8px;
-    min-width: 0;
-=======
     grid-template-columns: 132px minmax(180px, 220px) 30px;
     grid-template-rows: auto auto;
     align-items: center;
     gap: 4px 8px;
     min-width: 358px;
->>>>>>> Stashed changes
 }
 
 .dashboard-topbar__jornada .perfil-widget__btn {

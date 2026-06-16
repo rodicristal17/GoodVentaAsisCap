@@ -658,7 +658,7 @@
     position:absolute;
     box-sizing:border-box;
     border-radius:10px;
-    padding:0px 5px;
+    padding:5px 7px 6px;
     color:#fff;
     box-shadow:0 10px 18px rgba(0,0,0,0.12);
     cursor:grab;
@@ -669,6 +669,14 @@
     z-index:5;
 }
 
+.agenda-evento-head{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) max-content;
+    align-items:start;
+    gap:6px;
+    min-width:0;
+}
+
 .agenda-evento:active{
     cursor:grabbing;
 }
@@ -676,10 +684,12 @@
 .agenda-evento .paciente{
     display:block;
     font-size:13px;
-    font-weight:bold;
+    font-weight:800;
+    line-height:1.12;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    text-shadow:0 1px 1px rgba(0,0,0,0.16);
 }
 
 .agenda-evento .hora,
@@ -690,6 +700,30 @@
     overflow:hidden;
     text-overflow:ellipsis;
     opacity:0.95;
+}
+
+.agenda-evento .agenda-evento-hora{
+    align-self:start;
+    padding:2px 5px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.88);
+    color:#173451;
+    font-size:9px;
+    font-weight:800;
+    line-height:1;
+    box-shadow:0 2px 6px rgba(15,23,42,0.10);
+}
+
+.agenda-evento .nombre_doctor{
+    display:block;
+    margin-top:1px;
+    font-size:10px;
+    font-weight:700;
+    line-height:1.12;
+    opacity:0.82;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .dragging-evento,
@@ -729,7 +763,7 @@
 
 .estado-AGENDADO{ background:linear-gradient(135deg,#8a63e8,#7351d8); }
 .estado-CONFIRMADO{ background:linear-gradient(135deg,#3ba7c2,#2b8ca4); }
-.estado-ATENDIDO{ background:linear-gradient(135deg,#38b36b,#2c9658); }
+.estado-ATENDIDO{ background:linear-gradient(135deg,#9f3a3a,#833b3b); }
 .estado-CANCELADO{ background:linear-gradient(135deg,#e06565,#c94d4d); }
 
 .modal-filtros-overlay{
@@ -868,18 +902,48 @@
 }
 
 .modal-consultorio-resumen-box{
-    max-width:980px;
-    width:min(980px, calc(100vw - 40px));
+    max-width:1180px;
+    width:min(1180px, calc(100vw - 40px));
     max-height:calc(100vh - 34px);
 }
 
 .modal-consultorio-resumen-grid{
     display:grid;
-    grid-template-columns:275px minmax(0, 1fr);
-    gap:16px;
+    grid-template-columns:minmax(292px, 305px) minmax(0, 1fr);
+    gap:14px;
     min-height:0;
-    height:clamp(480px, calc(100vh - 170px), 580px);
+    height:clamp(500px, calc(100vh - 170px), 640px);
     padding:12px 18px;
+}
+
+.modal-consultorio-resumen-titulo{
+    display:grid;
+    gap:6px;
+    min-width:0;
+}
+
+.modal-consultorio-resumen-meta{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+}
+
+.modal-consultorio-resumen-meta span{
+    display:inline-flex;
+    align-items:center;
+    min-height:24px;
+    max-width:260px;
+    padding:3px 8px;
+    overflow:hidden;
+    border:1px solid var(--chip-border);
+    border-radius:999px;
+    background:var(--chip-bg);
+    color:var(--chip-text);
+    font-size:11px;
+    font-weight:800;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
 .modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral{
@@ -887,11 +951,23 @@
     flex-direction:column;
     flex-wrap:nowrap;
     align-items:stretch;
-    gap:9px;
+    gap:8px;
     margin-inline:0;
     margin-bottom:0;
     min-width:0;
     min-height:0;
+}
+
+.modal-consultorio-resumen-lateral .filtro-grupo{
+    gap:5px;
+    margin-bottom:0;
+}
+
+.modal-consultorio-resumen-lateral .catalogo-selectBuscador,
+.modal-consultorio-resumen-lateral .inputTextDisable{
+    min-height:36px;
+    height:36px;
+    font-size:11px;
 }
 
 .modal-consultorio-resumen-agenda{
@@ -901,7 +977,9 @@
     min-height:0;
     height:100%;
     margin-inline:0;
-    padding:5px;
+    padding:8px;
+    border-radius:12px;
+    background:var(--bg-panel-solid);
 }
 
 .agenda-grid-wrapper-resumen-consultorio{
@@ -909,7 +987,9 @@
     min-height:0;
     height:auto;
     margin-top:8px;
-    border-radius:0;
+    border:1px solid var(--border-color);
+    border-radius:10px;
+    background:var(--bg-panel-solid);
 }
 
 #agendaGridResumenConsultorio{
@@ -919,8 +999,68 @@
 .agenda-card-resumen-consultorio{
     min-height:auto;
     overflow:visible;
-    padding:9px 10px;
+    padding:8px;
     box-shadow:var(--shadow-sm);
+}
+
+.agenda-resumen-kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:5px;
+}
+
+.agenda-resumen-kpi{
+    display:grid;
+    justify-items:start;
+    align-content:center;
+    gap:1px;
+    min-height:40px;
+    padding:5px 7px;
+    border:1px solid var(--border-soft);
+    border-left:3px solid var(--primary);
+    border-radius:7px;
+    background:var(--bg-soft);
+    color:var(--text-muted);
+    box-sizing:border-box;
+}
+
+.agenda-resumen-kpi b{
+    color:var(--text-title);
+    font-size:18px;
+    font-weight:900;
+    line-height:1;
+}
+
+.agenda-resumen-kpi span{
+    max-width:100%;
+    overflow:hidden;
+    color:var(--text-muted);
+    font-size:9px;
+    font-weight:800;
+    line-height:1.1;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-resumen-kpi--confirmadas,
+.agenda-resumen-kpi--atendido{
+    border-left-color:#38b36b;
+}
+
+.agenda-resumen-kpi--pendientes{
+    border-left-color:#dcb645;
+}
+
+.agenda-resumen-kpi--canceladas{
+    border-left-color:#e06565;
+}
+
+.agenda-resumen-kpi--primera{
+    border-left-color:#9d457c;
+}
+
+.agenda-resumen-kpi--deuda{
+    border-left-color:#07488f;
 }
 
 .filtro-grupo-full{
@@ -1202,19 +1342,20 @@
 
 .agenda-evento-tratamientos{
     display:grid;
-    gap:2px;
-    margin-top:2px;
+    gap:3px;
+    margin-top:3px;
 }
 
 .agenda-evento-tratamiento{
-    display:flex;
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 42px max-content;
     align-items:center;
-    justify-content:space-between;
-    gap:6px;
+    gap:5px;
     min-width:0;
     font-size:10px;
     font-weight:700;
     line-height:1.15;
+    color:rgba(255,255,255,0.94);
 }
 
 .agenda-evento-tratamiento-nombre{
@@ -1222,6 +1363,22 @@
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
+}
+
+.agenda-evento-tratamiento-progreso{
+    display:block;
+    height:5px;
+    overflow:hidden;
+    border-radius:999px;
+    background:rgba(255,255,255,0.32);
+}
+
+.agenda-evento-tratamiento-progreso span{
+    display:block;
+    width:var(--avance-tratamiento, 0%);
+    height:100%;
+    border-radius:inherit;
+    background:rgba(255,255,255,0.95);
 }
 
 .agenda-evento-tratamiento b{
@@ -1386,10 +1543,10 @@
 .agenda-card-insumos-dia{
     flex:1;
     margin-top:0;
-    min-height:150px;
+    min-height:210px;
     max-height:none;
     overflow:hidden;
-    padding:9px 10px;
+    padding:9px;
     box-shadow:var(--shadow-sm);
 }
 
@@ -1427,7 +1584,7 @@
 
 .agenda-insumos-dia-lista{
     display:grid;
-    gap:5px;
+    gap:4px;
     max-height:calc(100% - 42px);
     overflow:auto;
     padding-right:2px;
@@ -1452,7 +1609,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:12px;
+    gap:8px;
     padding:6px 8px;
     border:1px solid #dbe3ea;
     border-radius:8px;
@@ -1465,7 +1622,28 @@
 }
 
 .agenda-insumo-item-dia{
-    padding:5px 7px;
+    min-height:28px;
+    padding:4px 6px;
+}
+
+.agenda-insumo-nombre{
+    min-width:0;
+    overflow:hidden;
+    color:var(--text-main);
+    font-size:11px;
+    font-weight:700;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-insumo-cantidad{
+    flex:0 0 auto;
+    padding:2px 6px;
+    border-radius:999px;
+    background:var(--chip-bg);
+    color:var(--text-title);
+    font-size:10px;
+    font-weight:900;
 }
 
 .agenda-insumos-faltantes{
@@ -1678,6 +1856,16 @@
         grid-template-columns:1fr;
     }
 
+    .modal-consultorio-resumen-box{
+        width:calc(100vw - 24px);
+    }
+
+    .modal-consultorio-resumen-grid{
+        grid-template-columns:minmax(282px, 300px) minmax(0, 1fr);
+        gap:12px;
+        padding:12px;
+    }
+
     .detalle-agenda-body{
         grid-template-columns:minmax(360px, 1fr) minmax(240px, 300px);
         grid-template-rows:minmax(230px, 1fr) minmax(230px, 1fr);
@@ -1777,6 +1965,49 @@
 
     .modal-filtros-header h3{
         font-size:20px;
+    }
+
+    .modal-consultorio-resumen-grid{
+        grid-template-columns:1fr;
+        height:auto;
+        max-height:calc(100vh - 150px);
+        overflow:auto;
+    }
+
+    .modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:8px;
+    }
+
+    .agenda-card-resumen-consultorio,
+    .agenda-card-insumos-dia{
+        min-height:0;
+    }
+
+    .agenda-card-resumen-consultorio,
+    .agenda-card-insumos-dia,
+    .modal-consultorio-resumen-agenda{
+        grid-column:1 / -1;
+    }
+
+    .modal-consultorio-resumen-agenda{
+        min-height:420px;
+    }
+
+    .modal-consultorio-resumen-meta span{
+        max-width:100%;
+    }
+}
+
+@media only screen and (max-width: 560px){
+    .modal-consultorio-resumen-grid .modal-consultorio-resumen-lateral,
+    .agenda-resumen-kpi-grid{
+        grid-template-columns:1fr;
+    }
+
+    .modal-consultorio-resumen-agenda{
+        min-height:360px;
     }
 }
 
