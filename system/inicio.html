@@ -22,8 +22,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=caja-apertura-panel-20260616" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignar-tratamiento-inline-20260606" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=caja-apertura-panel-20260616" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=asignacion-consultorios-20260615-zfix2" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -51,7 +52,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-recibo-duplicado-banco-efectivo-20260616"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=informe-insumos-agenda-popup-20260615"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=asignacion-consultorios-20260615-dia1"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
@@ -26134,6 +26135,7 @@ onclick='buscarvistaaperturacierrecaja()' />
  
         <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
             <button class="btn-accion-principal" onclick="verCerrarModalFeriados(true)">Feriados</button>
+            <button class="btn-filtro" onclick="verCerrarModalAsignarConsultorios(true)">Asignar consultorios</button>
             <span class='chip-filtro'>Fecha: hoy</span>
             <span class='chip-filtro'>Consultorios: todos</span>
         </div>
@@ -26574,6 +26576,54 @@ function escaparHtmlInformeInsumosAgenda(valor){
                     <button type='button' class='btn-filtro' onclick='listarDiasFeriadosAgenda()'>Buscar</button>
                 </div>
                 <div id='tableFeriadosAgenda' class='feriados-lista'></div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div class='modal-filtros-overlay' id='overlayAsignacionConsultoriosAgenda' onclick='verCerrarModalAsignarConsultorios(false)' style='display:none;z-index:3200;'></div>
+<div class='modal-filtros-catalogo' id='modalAsignacionConsultoriosAgenda' style='display:none;z-index:3201;'>
+    <div class='modal-filtros-box modal-cita-box modal-asignacion-consultorios-box'>
+        <div class='modal-filtros-header'>
+            <div class='modal-header-info'>
+                <p class='modal-etiqueta'>Agenda</p>
+                <h3>Asignar consultorios</h3>
+                <span id='lblDiaAsignacionConsultorio'>-</span>
+            </div>
+            <button type='button' class='btn-cerrar-modal' onclick='verCerrarModalAsignarConsultorios(false)'>×</button>
+        </div>
+
+        <div class='modal-filtros-body agenda-asignacion-layout'>
+            <section class='form-section'>
+                <div class='filtro-grupo'>
+                    <label>Día</label>
+                    <select id='inptDiaAsignacionConsultorio' class='catalogo-selectBuscador' onchange='listarAsignacionesConsultoriosAgenda()'>
+                        <option value='lunes'>Lunes</option>
+                        <option value='martes'>Martes</option>
+                        <option value='miercoles'>Miércoles</option>
+                        <option value='jueves'>Jueves</option>
+                        <option value='viernes'>Viernes</option>
+                        <option value='sabado'>Sábado</option>
+                        <option value='domingo'>Domingo</option>
+                    </select>
+                </div>
+                <div class='filtro-grupo'>
+                    <label>Local</label>
+                    <select id='inptLocalAsignacionConsultorio' class='catalogo-selectBuscador' onchange='listarAsignacionesConsultoriosAgenda()'></select>
+                </div>
+                <div class='filtro-grupo'>
+                    <label>Consultorio</label>
+                    <select id='inptConsultorioAsignacion' class='catalogo-selectBuscador'></select>
+                </div>
+                <div class='filtro-grupo'>
+                    <label>Doctor/a y horario</label>
+                    <select id='inptHorarioAsignacionConsultorio' class='catalogo-selectBuscador'></select>
+                </div>
+                <button type='button' class='btn-accion-principal' onclick='guardarAsignacionConsultorioAgenda()'>Guardar asignación</button>
+            </section>
+
+            <section class='presupuesto-panel agenda-asignacion-panel'>
+                <div id='tableAsignacionesConsultoriosAgenda' class='asignacion-consultorio-lista'></div>
             </section>
         </div>
     </div>

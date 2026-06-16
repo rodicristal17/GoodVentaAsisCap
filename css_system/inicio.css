@@ -3269,6 +3269,7 @@ border-radius: 50%;
 #divAddFotos { z-index: 3100 !important; }
 #overlayNuevaCita,
 #overlayFeriadosAgenda,
+#overlayAsignacionConsultoriosAgenda,
 #overlayBuscarPacienteAgenda,
 #overlayNuevoPacienteAgenda,
 #overlayAsignarTratamientoAgenda,
@@ -3279,6 +3280,7 @@ border-radius: 50%;
 }
 #modalNuevaCita,
 #modalFeriadosAgenda,
+#modalAsignacionConsultoriosAgenda,
 #modalAbmConsultorioAgenda,
 #modalBuscarPacienteAgenda,
 #modalNuevoPacienteAgenda,

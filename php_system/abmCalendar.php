@@ -155,6 +155,18 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
         case 'eliminarDiaFeriado':
             eliminarDiaFeriado($mysqli, $useru);
             break;
+
+        case 'listarAsignacionesConsultorios':
+            listarAsignacionesConsultorios($mysqli);
+            break;
+
+        case 'guardarAsignacionConsultorio':
+            guardarAsignacionConsultorio($mysqli, $useru);
+            break;
+
+        case 'eliminarAsignacionConsultorio':
+            eliminarAsignacionConsultorio($mysqli, $useru);
+            break;
             
     
         default:
@@ -410,6 +422,210 @@ function agregarIndiceAgendaSiNoExiste($mysqli, $tabla, $indice, $definicion)
         $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
         $mysqli->query("ALTER TABLE `$tabla` ADD $definicion");
     }
+}
+
+function asegurarEstructuraConsultorioDoctorAsignacion($mysqli)
+{
+    if (function_exists('asegurarEstructuraHorarioUsuarioEsperado')) {
+        asegurarEstructuraHorarioUsuarioEsperado($mysqli);
+    }
+
+    $sql = "CREATE TABLE IF NOT EXISTS consultorio_doctor_asignacion (
+        id_asignacion INT NOT NULL AUTO_INCREMENT,
+        id_consultorio INT NOT NULL,
+        id_horario_usuario INT NOT NULL,
+        estado ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
+        fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP,
+        cod_usuarioFK_create INT NULL,
+        fecha_edit DATETIME NULL,
+        cod_usuarioFK_edit INT NULL,
+        PRIMARY KEY (id_asignacion),
+        KEY idx_asig_horario_estado (id_horario_usuario, estado),
+        KEY idx_asig_consultorio_estado (id_consultorio, estado)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    $mysqli->query($sql);
+
+    agregarIndiceAgendaSiNoExiste($mysqli, "consultorio_doctor_asignacion", "idx_asig_horario_estado", "KEY idx_asig_horario_estado (id_horario_usuario, estado)");
+    agregarIndiceAgendaSiNoExiste($mysqli, "consultorio_doctor_asignacion", "idx_asig_consultorio_estado", "KEY idx_asig_consultorio_estado (id_consultorio, estado)");
+    agregarIndiceAgendaSiNoExiste($mysqli, "horario_usuario", "idx_horario_doctor_dia", "KEY idx_horario_doctor_dia (cod_usuarioFK, dia_semana, hora_entrada, hora_salida)");
+    agregarIndiceAgendaSiNoExiste($mysqli, "horario_usuario", "idx_horario_local_dia", "KEY idx_horario_local_dia (cod_localFK, dia_semana)");
+}
+
+function obtenerHorarioAsignacionConsultorio($mysqli, $idHorario)
+{
+    $idHorario = (int)$idHorario;
+    if ($idHorario <= 0) {
+        return null;
+    }
+
+    $sql = "SELECT
+            hu.id,
+            hu.cod_usuarioFK,
+            hu.dia_semana,
+            hu.hora_entrada,
+            hu.hora_salida,
+            hu.cod_localFK,
+            p.nombre_persona
+        FROM horario_usuario hu
+        INNER JOIN usuario u ON u.cod_usuario = hu.cod_usuarioFK
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        WHERE hu.id = '".$idHorario."'
+        AND u.tipo = 'DOCTOR'
+        AND u.estado = 'Activo'
+        AND IFNULL(hu.estado_horario,'activo') = 'activo'
+        LIMIT 1";
+
+    $result = $mysqli->query($sql);
+    if (!$result || !($row = $result->fetch_assoc())) {
+        return null;
+    }
+
+    return $row;
+}
+
+function obtenerConsultorioAsignacion($mysqli, $idConsultorio)
+{
+    $idConsultorio = (int)$idConsultorio;
+    if ($idConsultorio <= 0) {
+        return null;
+    }
+
+    $sql = "SELECT c.id_consultorio, c.nombre, c.cod_localFk, IFNULL(l.Nombre,'') AS nombre_local
+        FROM consultorios c
+        LEFT JOIN local l ON l.cod_local = c.cod_localFk
+        WHERE c.id_consultorio = '".$idConsultorio."'
+        AND c.estado = 'Activo'
+        LIMIT 1";
+
+    $result = $mysqli->query($sql);
+    if (!$result || !($row = $result->fetch_assoc())) {
+        return null;
+    }
+
+    return $row;
+}
+
+function validarHorarioAsignacionConsultorio($horario)
+{
+    if (!$horario) {
+        return "No se encontro el horario laboral seleccionado.";
+    }
+
+    if ((int)$horario["cod_localFK"] <= 0) {
+        return "El horario laboral seleccionado no tiene local definido.";
+    }
+
+    if ($horario["hora_salida"] == null || $horario["hora_salida"] == "" || $horario["hora_salida"] == "00:00:00") {
+        return "El horario laboral seleccionado no tiene hora de salida.";
+    }
+
+    $entrada = strtotime("2000-01-01 ".$horario["hora_entrada"]);
+    $salida = strtotime("2000-01-01 ".$horario["hora_salida"]);
+    if ($entrada === false || $salida === false || $salida <= $entrada) {
+        return "El horario laboral seleccionado tiene un rango invalido.";
+    }
+
+    return "";
+}
+
+function buscarConflictoAsignacionConsultorio($mysqli, $consultorio, $horario, $idActual)
+{
+    $idActual = (int)$idActual;
+    $doctor = (int)$horario["cod_usuarioFK"];
+    $dia = limpiar($mysqli, $horario["dia_semana"]);
+    $horaEntrada = limpiar($mysqli, $horario["hora_entrada"]);
+    $horaSalida = limpiar($mysqli, $horario["hora_salida"]);
+    $idConsultorio = (int)$consultorio["id_consultorio"];
+    $excluir = $idActual > 0 ? " AND a.id_asignacion <> '".$idActual."' " : "";
+
+    $sqlDoctor = "SELECT
+            a.id_asignacion,
+            c.nombre AS consultorio,
+            IFNULL(l.Nombre,'') AS local,
+            TIME_FORMAT(hu.hora_entrada, '%H:%i') AS hora_entrada,
+            TIME_FORMAT(hu.hora_salida, '%H:%i') AS hora_salida
+        FROM consultorio_doctor_asignacion a
+        INNER JOIN horario_usuario hu ON hu.id = a.id_horario_usuario
+        INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
+        LEFT JOIN local l ON l.cod_local = c.cod_localFk
+        WHERE a.estado = 'activo'
+        ".$excluir."
+        AND hu.cod_usuarioFK = '".$doctor."'
+        AND hu.dia_semana = '".$dia."'
+        AND IFNULL(hu.estado_horario,'activo') = 'activo'
+        AND hu.hora_salida IS NOT NULL
+        AND hu.hora_entrada < '".$horaSalida."'
+        AND hu.hora_salida > '".$horaEntrada."'
+        LIMIT 1";
+
+    $resultDoctor = $mysqli->query($sqlDoctor);
+    if ($resultDoctor && ($row = $resultDoctor->fetch_assoc())) {
+        return "El doctor ya esta asignado a ".$row["consultorio"]." de ".$row["hora_entrada"]." a ".$row["hora_salida"].".";
+    }
+
+    $sqlConsultorio = "SELECT
+            a.id_asignacion,
+            p.nombre_persona AS doctor,
+            TIME_FORMAT(hu.hora_entrada, '%H:%i') AS hora_entrada,
+            TIME_FORMAT(hu.hora_salida, '%H:%i') AS hora_salida
+        FROM consultorio_doctor_asignacion a
+        INNER JOIN horario_usuario hu ON hu.id = a.id_horario_usuario
+        INNER JOIN usuario u ON u.cod_usuario = hu.cod_usuarioFK
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        WHERE a.estado = 'activo'
+        ".$excluir."
+        AND a.id_consultorio = '".$idConsultorio."'
+        AND hu.dia_semana = '".$dia."'
+        AND IFNULL(hu.estado_horario,'activo') = 'activo'
+        AND hu.hora_salida IS NOT NULL
+        AND hu.hora_entrada < '".$horaSalida."'
+        AND hu.hora_salida > '".$horaEntrada."'
+        LIMIT 1";
+
+    $resultConsultorio = $mysqli->query($sqlConsultorio);
+    if ($resultConsultorio && ($row = $resultConsultorio->fetch_assoc())) {
+        return "El consultorio ya esta asignado a ".$row["doctor"]." de ".$row["hora_entrada"]." a ".$row["hora_salida"].".";
+    }
+
+    return "";
+}
+
+function obtenerProfesionalAsignadoConsultorioHorario($mysqli, $idConsultorio, $fecha, $horaInicio, $horaFin)
+{
+    asegurarEstructuraConsultorioDoctorAsignacion($mysqli);
+
+    $idConsultorio = (int)$idConsultorio;
+    $fecha = limpiar($mysqli, $fecha);
+    $horaInicio = limpiar($mysqli, $horaInicio);
+    $horaFin = limpiar($mysqli, $horaFin);
+    $dia = obtenerDiaSemanaAgenda($fecha);
+
+    if ($idConsultorio <= 0 || $dia == '' || $horaInicio == '' || $horaFin == '') {
+        return 0;
+    }
+
+    $sql = "SELECT hu.cod_usuarioFK
+        FROM consultorio_doctor_asignacion a
+        INNER JOIN horario_usuario hu ON hu.id = a.id_horario_usuario
+        INNER JOIN usuario u ON u.cod_usuario = hu.cod_usuarioFK
+        WHERE a.estado = 'activo'
+        AND a.id_consultorio = '".$idConsultorio."'
+        AND hu.dia_semana = '".$dia."'
+        AND IFNULL(hu.estado_horario,'activo') = 'activo'
+        AND hu.hora_salida IS NOT NULL
+        AND hu.hora_entrada <= '".$horaInicio."'
+        AND hu.hora_salida >= '".$horaFin."'
+        AND u.tipo = 'DOCTOR'
+        AND u.estado = 'Activo'
+        ORDER BY hu.hora_entrada DESC, a.id_asignacion DESC
+        LIMIT 1";
+
+    $result = $mysqli->query($sql);
+    if ($result && ($row = $result->fetch_assoc())) {
+        return (int)$row["cod_usuarioFK"];
+    }
+
+    return 0;
 }
 
 function normalizarNumeroAgenda($valor)
@@ -1557,6 +1773,24 @@ function obtenerDiaSemanaAgenda($fecha){
     return $dias[(int)date('w', $timestamp)];
 }
 
+function normalizarDiaSemanaAgenda($dia){
+    $dia = strtolower(trim((string)$dia));
+    $dia = strtr($dia, array(
+        'á' => 'a',
+        'é' => 'e',
+        'í' => 'i',
+        'ó' => 'o',
+        'ú' => 'u'
+    ));
+
+    $diasValidos = array('domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado');
+    if (in_array($dia, $diasValidos, true)) {
+        return $dia;
+    }
+
+    return '';
+}
+
 function escaparHtmlAgenda($valor){
     return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
 }
@@ -1738,6 +1972,221 @@ function eliminarDiaFeriado($mysqli, $useru){
         echo json_encode(array("1" => "Error", "mensaje" => "No se pudo eliminar el feriado."));
         exit;
     }
+    echo json_encode(array("1" => "exito"));
+    exit;
+}
+
+function listarAsignacionesConsultorios($mysqli){
+    asegurarEstructuraConsultorioDoctorAsignacion($mysqli);
+
+    $dia = isset($_POST['dia']) ? limpiar($mysqli, $_POST['dia']) : '';
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
+    $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
+
+    $dia_semana = normalizarDiaSemanaAgenda($dia);
+    if ($dia_semana == '') {
+        if ($fecha == '') {
+            $fecha = date('Y-m-d');
+        }
+        $dia_semana = obtenerDiaSemanaAgenda($fecha);
+    }
+
+    if ($dia_semana == '') {
+        echo json_encode(array("1" => "Error", "mensaje" => "Dia invalido"));
+        exit;
+    }
+
+    $condicionLocalConsultorio = "";
+    $condicionLocalHorario = "";
+    $condicionLocalAsignacion = "";
+    if ($cod_local != "") {
+        $condicionLocalConsultorio = " AND c.cod_localFk = '".$cod_local."' ";
+        $condicionLocalHorario = " AND hu.cod_localFK = '".$cod_local."' ";
+        $condicionLocalAsignacion = " AND c.cod_localFk = '".$cod_local."' ";
+    }
+
+    $consultoriosOptions = "<option value=''>Seleccionar consultorio</option>";
+    $sqlConsultorios = "SELECT c.id_consultorio, c.nombre, IFNULL(l.Nombre,'') AS local
+        FROM consultorios c
+        LEFT JOIN local l ON l.cod_local = c.cod_localFk
+        WHERE c.estado = 'Activo' ".$condicionLocalConsultorio."
+        ORDER BY c.cod_localFk ASC, c.nombre ASC";
+    $resultConsultorios = $mysqli->query($sqlConsultorios);
+    if ($resultConsultorios) {
+        while ($row = $resultConsultorios->fetch_assoc()) {
+            $nombre = normalizarTextoUtf8($row["nombre"]);
+            $local = normalizarTextoUtf8($row["local"]);
+            $consultoriosOptions .= "<option value='".(int)$row["id_consultorio"]."'>".escaparHtmlAgenda($nombre." - ".$local)."</option>";
+        }
+    }
+
+    $horariosOptions = "<option value=''>Seleccionar doctor y horario</option>";
+    $sqlHorarios = "SELECT
+            hu.id,
+            hu.cod_usuarioFK,
+            p.nombre_persona,
+            IFNULL(l.Nombre,'') AS local,
+            TIME_FORMAT(hu.hora_entrada, '%H:%i') AS hora_entrada,
+            TIME_FORMAT(hu.hora_salida, '%H:%i') AS hora_salida
+        FROM horario_usuario hu
+        INNER JOIN usuario u ON u.cod_usuario = hu.cod_usuarioFK
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        LEFT JOIN local l ON l.cod_local = hu.cod_localFK
+        WHERE u.tipo = 'DOCTOR'
+        AND u.estado = 'Activo'
+        AND IFNULL(hu.estado_horario,'activo') = 'activo'
+        AND hu.dia_semana = '".$dia_semana."'
+        AND hu.cod_localFK IS NOT NULL
+        AND hu.hora_salida IS NOT NULL
+        AND hu.hora_salida > hu.hora_entrada
+        ".$condicionLocalHorario."
+        ORDER BY l.Nombre ASC, p.nombre_persona ASC, hu.hora_entrada ASC";
+        //echo json_encode($sqlHorarios);exit;
+    $resultHorarios = $mysqli->query($sqlHorarios);
+    $totalHorarios = 0;
+    if ($resultHorarios) {
+        while ($row = $resultHorarios->fetch_assoc()) {
+            $totalHorarios++;
+            $doctor = normalizarTextoUtf8($row["nombre_persona"]);
+            $local = normalizarTextoUtf8($row["local"]);
+            $label = $doctor." - ".$row["hora_entrada"]." a ".$row["hora_salida"]." - ".$local;
+            $horariosOptions .= "<option value='".(int)$row["id"]."'>".escaparHtmlAgenda($label)."</option>";
+        }
+    }
+    if ($totalHorarios == 0) {
+        $horariosOptions .= "<option value='' disabled>Sin horarios activos con hora de salida para este dia/local</option>";
+    }
+
+    $html = "";
+    $sqlAsignaciones = "SELECT
+            a.id_asignacion,
+            c.nombre AS consultorio,
+            IFNULL(lc.Nombre,'') AS local_consultorio,
+            p.nombre_persona AS doctor,
+            TIME_FORMAT(hu.hora_entrada, '%H:%i') AS hora_entrada,
+            TIME_FORMAT(hu.hora_salida, '%H:%i') AS hora_salida
+        FROM consultorio_doctor_asignacion a
+        INNER JOIN consultorios c ON c.id_consultorio = a.id_consultorio
+        INNER JOIN horario_usuario hu ON hu.id = a.id_horario_usuario
+        INNER JOIN usuario u ON u.cod_usuario = hu.cod_usuarioFK
+        INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+        LEFT JOIN local lc ON lc.cod_local = c.cod_localFk
+        WHERE a.estado = 'activo'
+        AND c.estado = 'Activo'
+        AND u.tipo = 'DOCTOR'
+        AND u.estado = 'Activo'
+        AND IFNULL(hu.estado_horario,'activo') = 'activo'
+        AND hu.dia_semana = '".$dia_semana."'
+        AND hu.hora_salida IS NOT NULL
+        ".$condicionLocalAsignacion."
+        ORDER BY c.cod_localFk ASC, c.nombre ASC, hu.hora_entrada ASC";
+    $resultAsignaciones = $mysqli->query($sqlAsignaciones);
+    if ($resultAsignaciones) {
+        while ($row = $resultAsignaciones->fetch_assoc()) {
+            $html .= "<div class='asignacion-consultorio-item'>";
+            $html .= "<div class='asignacion-consultorio-info'>";
+            $html .= "<b>".escaparHtmlAgenda(normalizarTextoUtf8($row["consultorio"]))."</b>";
+            $html .= "<span>".escaparHtmlAgenda(normalizarTextoUtf8($row["doctor"]))."</span>";
+            $html .= "<small>".escaparHtmlAgenda($row["hora_entrada"]." - ".$row["hora_salida"]." | ".normalizarTextoUtf8($row["local_consultorio"]))."</small>";
+            $html .= "</div>";
+            $html .= "<button type='button' class='btn-filtro btn-asignacion-quitar' onclick='eliminarAsignacionConsultorioAgenda(".(int)$row["id_asignacion"].")'>Quitar</button>";
+            $html .= "</div>";
+        }
+    }
+
+    if ($html == "") {
+        $html = "<div class='asignacion-consultorio-vacia'>Sin asignaciones para ".$dia_semana.".</div>";
+    }
+
+    echo json_encode(array(
+        "1" => "exito",
+        "fecha" => $fecha,
+        "dia" => $dia_semana,
+        "consultorios_options" => $consultoriosOptions,
+        "horarios_options" => $horariosOptions,
+        "html" => $html
+    ), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function guardarAsignacionConsultorio($mysqli, $useru){
+    asegurarEstructuraConsultorioDoctorAsignacion($mysqli);
+
+    $id_consultorio = isset($_POST['id_consultorio']) ? (int)$_POST['id_consultorio'] : 0;
+    $id_horario_usuario = isset($_POST['id_horario_usuario']) ? (int)$_POST['id_horario_usuario'] : 0;
+
+    if ($id_consultorio <= 0 || $id_horario_usuario <= 0) {
+        echo json_encode(array("1" => "Error", "mensaje" => "Debe seleccionar consultorio y horario."));
+        exit;
+    }
+
+    $consultorio = obtenerConsultorioAsignacion($mysqli, $id_consultorio);
+    if (!$consultorio) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se encontro el consultorio activo."));
+        exit;
+    }
+
+    $horario = obtenerHorarioAsignacionConsultorio($mysqli, $id_horario_usuario);
+    $mensajeHorario = validarHorarioAsignacionConsultorio($horario);
+    if ($mensajeHorario != "") {
+        echo json_encode(array("1" => "Error", "mensaje" => $mensajeHorario));
+        exit;
+    }
+
+    if ((int)$consultorio["cod_localFk"] != (int)$horario["cod_localFK"]) {
+        echo json_encode(array("1" => "Error", "mensaje" => "El local del horario no coincide con el local del consultorio."));
+        exit;
+    }
+
+    $conflicto = buscarConflictoAsignacionConsultorio($mysqli, $consultorio, $horario, 0);
+    if ($conflicto != "") {
+        echo json_encode(array("1" => "Error", "mensaje" => $conflicto), JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $usuario = (int)$useru;
+    $stmt = $mysqli->prepare("INSERT INTO consultorio_doctor_asignacion
+        (id_consultorio, id_horario_usuario, estado, fecha_create, cod_usuarioFK_create)
+        VALUES (?, ?, 'activo', NOW(), ?)");
+    if (!$stmt) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se pudo preparar la asignacion."));
+        exit;
+    }
+    $stmt->bind_param("iii", $id_consultorio, $id_horario_usuario, $usuario);
+    if (!$stmt->execute()) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se pudo guardar la asignacion.", "mysql" => $stmt->error));
+        exit;
+    }
+    $stmt->close();
+
+    echo json_encode(array("1" => "exito", "mensaje" => "Asignacion guardada correctamente."));
+    exit;
+}
+
+function eliminarAsignacionConsultorio($mysqli, $useru){
+    asegurarEstructuraConsultorioDoctorAsignacion($mysqli);
+
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    if ($id <= 0) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se encontro la asignacion."));
+        exit;
+    }
+
+    $usuario = (int)$useru;
+    $stmt = $mysqli->prepare("UPDATE consultorio_doctor_asignacion
+        SET estado='inactivo', fecha_edit=NOW(), cod_usuarioFK_edit=?
+        WHERE id_asignacion=? LIMIT 1");
+    if (!$stmt) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se pudo preparar la eliminacion."));
+        exit;
+    }
+    $stmt->bind_param("ii", $usuario, $id);
+    if (!$stmt->execute()) {
+        echo json_encode(array("1" => "Error", "mensaje" => "No se pudo quitar la asignacion.", "mysql" => $stmt->error));
+        exit;
+    }
+    $stmt->close();
+
     echo json_encode(array("1" => "exito"));
     exit;
 }
@@ -1972,8 +2421,12 @@ function guardarCita($mysqli, $useru){
         exit;
     }
 
+    $idProfesional = obtenerProfesionalAsignadoConsultorioHorario($mysqli, $consultorio, $fecha, $inicio, $fin);
+    $idProfesionalSql = $idProfesional > 0 ? "'".$idProfesional."'" : "NULL";
+
     $sql = "INSERT INTO agenda (
                 id_paciente,
+                id_profesional,
                 id_consultorio,
                 fecha,
                 hora_inicio,
@@ -1986,6 +2439,7 @@ function guardarCita($mysqli, $useru){
                 cod_detalle_ventaFK
             ) VALUES (
                 '".$paciente."',
+                ".$idProfesionalSql.",
                 '".$consultorio."',
                 '".$fecha."',
                 '".$inicio."',
@@ -2182,6 +2636,19 @@ function actualizarCita($mysqli, $useru){
 
     $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
 
+    if (($hora_inicio != '' || $hora_fin != '') && !empty($agendaAnterior)) {
+        $inicioProfesional = $hora_inicio != '' ? $hora_inicio : (isset($agendaAnterior["hora_inicio"]) ? $agendaAnterior["hora_inicio"] : "");
+        $finProfesional = $hora_fin != '' ? $hora_fin : (isset($agendaAnterior["hora_fin"]) ? $agendaAnterior["hora_fin"] : "");
+        $idProfesional = obtenerProfesionalAsignadoConsultorioHorario(
+            $mysqli,
+            isset($agendaAnterior["id_consultorio"]) ? $agendaAnterior["id_consultorio"] : "",
+            isset($agendaAnterior["fecha"]) ? $agendaAnterior["fecha"] : "",
+            $inicioProfesional,
+            $finProfesional
+        );
+        $campos[] = "id_profesional = ".($idProfesional > 0 ? "'".$idProfesional."'" : "NULL");
+    }
+
     $campos[] = "creado_por = '".$useru."'";
     $campos[] = "creado_en = NOW()";
 
@@ -2348,6 +2815,7 @@ function normalizarTextoUtf8($valor){
 
 function cargarAgenda($mysqli, $useru){
     asegurarEstructuraAgendaInsumos($mysqli);
+    asegurarEstructuraConsultorioDoctorAsignacion($mysqli);
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
     $fecha_desde = isset($_POST['fecha_desde']) ? limpiar($mysqli, $_POST['fecha_desde']) : '';
     $fecha_hasta = isset($_POST['fecha_hasta']) ? limpiar($mysqli, $_POST['fecha_hasta']) : '';
@@ -2376,11 +2844,11 @@ function cargarAgenda($mysqli, $useru){
        CONSULTORIOS
     =========================== */
 	$sqlFiltro="";
-	if($cod_local!=""){
+    if($cod_local!=""){
 		$sqlFiltro.=" and c.cod_localFk = '".$cod_local."'";
 	}
     if ($ver_todos_consoltorios == 'false') {
-        $sqlFiltro .= " AND c.cod_doctorFK = '".$useru."'";
+        $sqlFiltro .= " AND (c.cod_doctorFK = '".$useru."' OR FIND_IN_SET('".$useru."', IFNULL(asig.cod_doctores,'')) > 0)";
     }
 	
     $sqlConsultorios = "
@@ -2388,21 +2856,21 @@ function cargarAgenda($mysqli, $useru){
             c.nombre,
             c.cod_localFk,
             l.Nombre AS nombre_local,
-            (SELECT nombre_persona FROM persona WHERE cod_persona= c.cod_doctorFK) AS nombre_doctor,
-            (SELECT TIME_FORMAT(MIN(hu.hora_entrada), '%H:%i')
+            IFNULL(asig.nombres_doctores, (SELECT nombre_persona FROM persona WHERE cod_persona= c.cod_doctorFK)) AS nombre_doctor,
+            IFNULL(TIME_FORMAT(asig.horario_inicio_dia, '%H:%i'), (SELECT TIME_FORMAT(MIN(hu.hora_entrada), '%H:%i')
                 FROM horario_usuario hu
                 WHERE hu.cod_usuarioFK = c.cod_doctorFK
                 AND hu.cod_localFK = c.cod_localFk
                 AND hu.dia_semana = '".$dia_semana_agenda."'
-                ".$condicionHorarioVigenteAgenda.") AS horario_inicio_dia,
-            (SELECT TIME_FORMAT(MAX(hu.hora_salida), '%H:%i')
+                ".$condicionHorarioVigenteAgenda.")) AS horario_inicio_dia,
+            IFNULL(TIME_FORMAT(asig.horario_fin_dia, '%H:%i'), (SELECT TIME_FORMAT(MAX(hu.hora_salida), '%H:%i')
                 FROM horario_usuario hu
                 WHERE hu.cod_usuarioFK = c.cod_doctorFK
                 AND hu.cod_localFK = c.cod_localFk
                 AND hu.dia_semana = '".$dia_semana_agenda."'
                 ".$condicionHorarioVigenteAgenda."
-                AND hu.hora_salida IS NOT NULL) AS horario_fin_dia,
-            (SELECT GROUP_CONCAT(
+                AND hu.hora_salida IS NOT NULL)) AS horario_fin_dia,
+            IFNULL(asig.horarios_dia, (SELECT GROUP_CONCAT(
                     CONCAT(
                         TIME_FORMAT(hu.hora_entrada, '%H:%i'),
                         IF(hu.hora_salida IS NULL, '', CONCAT(' - ', TIME_FORMAT(hu.hora_salida, '%H:%i')))
@@ -2414,12 +2882,55 @@ function cargarAgenda($mysqli, $useru){
                 WHERE hu.cod_usuarioFK = c.cod_doctorFK
                 AND hu.cod_localFK = c.cod_localFk
                 AND hu.dia_semana = '".$dia_semana_agenda."'
-                ".$condicionHorarioVigenteAgenda.") AS horarios_dia,
+                ".$condicionHorarioVigenteAgenda.")) AS horarios_dia,
             c.descripcion,
-            c.cod_doctorFK,
+            IFNULL(asig.cod_doctorFK, c.cod_doctorFK) AS cod_doctorFK,
             c.color
         FROM consultorios c
         LEFT JOIN local l ON l.cod_local = c.cod_localFk
+        LEFT JOIN (
+            SELECT
+                a.id_consultorio,
+                SUBSTRING_INDEX(GROUP_CONCAT(hu.cod_usuarioFK ORDER BY hu.hora_entrada ASC SEPARATOR ','), ',', 1) AS cod_doctorFK,
+                GROUP_CONCAT(hu.cod_usuarioFK ORDER BY hu.hora_entrada ASC SEPARATOR ',') AS cod_doctores,
+                MIN(hu.hora_entrada) AS horario_inicio_dia,
+                MAX(hu.hora_salida) AS horario_fin_dia,
+                GROUP_CONCAT(
+                    CONCAT(
+                        p.nombre_persona,
+                        ' (',
+                        TIME_FORMAT(hu.hora_entrada, '%H:%i'),
+                        ' - ',
+                        TIME_FORMAT(hu.hora_salida, '%H:%i'),
+                        ')'
+                    )
+                    ORDER BY hu.hora_entrada ASC
+                    SEPARATOR ' | '
+                ) AS nombres_doctores,
+                GROUP_CONCAT(
+                    CONCAT(
+                        TIME_FORMAT(hu.hora_entrada, '%H:%i'),
+                        ' - ',
+                        TIME_FORMAT(hu.hora_salida, '%H:%i')
+                    )
+                    ORDER BY hu.hora_entrada ASC
+                    SEPARATOR ' | '
+                ) AS horarios_dia
+            FROM consultorio_doctor_asignacion a
+            INNER JOIN consultorios ca ON ca.id_consultorio = a.id_consultorio
+            INNER JOIN horario_usuario hu ON hu.id = a.id_horario_usuario
+            INNER JOIN usuario u ON u.cod_usuario = hu.cod_usuarioFK
+            INNER JOIN persona p ON p.cod_persona = u.cod_usuario
+            WHERE a.estado = 'activo'
+            AND ca.estado = 'Activo'
+            AND u.tipo = 'DOCTOR'
+            AND u.estado = 'Activo'
+            AND IFNULL(hu.estado_horario,'activo') = 'activo'
+            AND hu.dia_semana = '".$dia_semana_agenda."'
+            AND hu.cod_localFK = ca.cod_localFk
+            AND hu.hora_salida IS NOT NULL
+            GROUP BY a.id_consultorio
+        ) asig ON asig.id_consultorio = c.id_consultorio
         WHERE  c.estado = 'Activo' ".$sqlFiltro."
         ORDER BY c.cod_localFk asc ,c.nombre ASC ";
 
@@ -2458,7 +2969,21 @@ function cargarAgenda($mysqli, $useru){
         $condicionOcupacion.=" and c.cod_localFk = '".$cod_local."'";
     }
     if ($ver_todos_consoltorios == 'false') {
-        $condicionOcupacion .= " AND c.cod_doctorFK = '".$useru."'";
+        $condicionOcupacion .= " AND (
+            c.cod_doctorFK = '".$useru."'
+            OR EXISTS (
+                SELECT 1
+                FROM consultorio_doctor_asignacion a_vis
+                INNER JOIN horario_usuario hu_vis ON hu_vis.id = a_vis.id_horario_usuario
+                WHERE a_vis.id_consultorio = c.id_consultorio
+                AND a_vis.estado = 'activo'
+                AND hu_vis.cod_usuarioFK = '".$useru."'
+                AND hu_vis.dia_semana = '".$dia_semana_agenda."'
+                AND IFNULL(hu_vis.estado_horario,'activo') = 'activo'
+                AND hu_vis.hora_salida IS NOT NULL
+                LIMIT 1
+            )
+        )";
     }
 
     $sqlEventosOcupacion = "SELECT
@@ -2770,10 +3295,13 @@ function moverCita($mysqli, $useru){
     }
 
     $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+    $idProfesional = obtenerProfesionalAsignadoConsultorioHorario($mysqli, $id_consultorio, $fecha, $hora_inicio, $hora_fin);
+    $idProfesionalSql = $idProfesional > 0 ? "'".$idProfesional."'" : "NULL";
 
     $sql = "
         UPDATE agenda SET
             id_consultorio = '".$id_consultorio."',
+            id_profesional = ".$idProfesionalSql.",
             fecha = '".$fecha."',
             hora_inicio = '".$hora_inicio."',
             hora_fin = '".$hora_fin."',
@@ -2816,10 +3344,22 @@ function redimensionarCita($mysqli, $useru){
     }
 
     $agendaAnterior = obtenerAgendaAuditoria($mysqli, $id_agenda);
+    $idProfesional = 0;
+    if (!empty($agendaAnterior)) {
+        $idProfesional = obtenerProfesionalAsignadoConsultorioHorario(
+            $mysqli,
+            isset($agendaAnterior["id_consultorio"]) ? $agendaAnterior["id_consultorio"] : "",
+            isset($agendaAnterior["fecha"]) ? $agendaAnterior["fecha"] : "",
+            isset($agendaAnterior["hora_inicio"]) ? $agendaAnterior["hora_inicio"] : "",
+            $hora_fin
+        );
+    }
+    $idProfesionalSql = $idProfesional > 0 ? "'".$idProfesional."'" : "NULL";
 
     $sql = "
         UPDATE agenda SET
             hora_fin = '".$hora_fin."',
+            id_profesional = ".$idProfesionalSql.",
             creado_por = '".$useru."',
             creado_en = NOW()
         WHERE id_agenda = '".$id_agenda."'

@@ -606,7 +606,7 @@ function cargarAgendaConsultorios(){
             + "<span id='td_id' style='display:none;'>"+consultorios[i].id+"</span>"
             + "<span id='td_datos_2' style='text-decoration: underline; color: blue;'>"+consultorios[i].nombre+"</span>"
             + "<span id='td_datos_4' style='display:none;'>"+consultorios[i].cod_doctorFK+"</span>"
-            + "<span id='td_datos_3'>"+consultorios[i].nombre_doctor+"</span>"
+            + "<span id='td_datos_3' class='agenda-consultorio-doctor'>"+consultorios[i].nombre_doctor+"</span>"
             + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
             + renderOccupancyIndicatorAgenda(ocupacionConsultorio)
 
@@ -2225,6 +2225,7 @@ function actualizarResumenFiltrosAgenda(){
     }
 
     document.getElementById('agendaFiltrosActivos').innerHTML = '<button class="btn-accion-principal" onclick="verCerrarModalFeriados(true)">Feriados</button>'
+        + '<button class="btn-filtro" onclick="verCerrarModalAsignarConsultorios(true)">Asignar consultorios</button>'
         + "<span class='chip-filtro'>Fecha: " + fecha + "</span>"
         + "<span class='chip-filtro'>Consultorios: " + textoConsultorio + "</span>";
 }
@@ -2324,6 +2325,24 @@ function parsearFechaInputAgenda(valor){
 function obtenerDiaSemanaAgenda(fecha){
     var dias = ['Domingo', 'Lunes', 'Martes', 'Mi\u00e9rcoles', 'Jueves', 'Viernes', 'S\u00e1bado'];
     return dias[fecha.getDay()];
+}
+
+function obtenerDiaSemanaAgendaValor(fecha){
+    var dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    return dias[fecha.getDay()];
+}
+
+function formatearDiaSemanaAgendaTexto(valor){
+    var dias = {
+        'domingo': 'Domingo',
+        'lunes': 'Lunes',
+        'martes': 'Martes',
+        'miercoles': 'Mi\u00e9rcoles',
+        'jueves': 'Jueves',
+        'viernes': 'Viernes',
+        'sabado': 'S\u00e1bado'
+    };
+    return dias[valor] || valor || '';
 }
 
 function formatearFechaVisibleAgenda(fecha){
@@ -2534,6 +2553,195 @@ function eliminarDiaFeriadoAgenda(id){
                 }
             } catch(error) {
                 GuardarArchivosLog("Error eliminarDiaFeriadoAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function cargarLocalesModalAsignacionConsultoriosAgenda(){
+    var origen = document.getElementById('inptLocalAgendaFiltro');
+    var destino = document.getElementById('inptLocalAsignacionConsultorio');
+    var valorActual = '';
+
+    if(!origen || !destino){
+        return;
+    }
+
+    valorActual = destino.value || origen.value || '';
+    var opciones = "<option value=''>Todos</option>";
+    for(var i = 0; i < origen.options.length; i++){
+        if(origen.options[i].value == ''){
+            continue;
+        }
+        opciones += "<option value='" + origen.options[i].value + "'>" + origen.options[i].text + "</option>";
+    }
+    destino.innerHTML = opciones;
+    if(valorActual !== ''){
+        destino.value = valorActual;
+    }
+}
+
+function verCerrarModalAsignarConsultorios(mostrar){
+    var overlay = document.getElementById('overlayAsignacionConsultoriosAgenda');
+    var modal = document.getElementById('modalAsignacionConsultoriosAgenda');
+
+    if(!overlay || !modal){
+        return;
+    }
+
+    if(mostrar){
+        cargarLocalesModalAsignacionConsultoriosAgenda();
+        var fechaAgenda = document.getElementById('inptFechaAgenda') ? document.getElementById('inptFechaAgenda').value : '';
+        var fechaBase = parsearFechaInputAgenda(fechaAgenda || formatearFechaInput(new Date()));
+        if(document.getElementById('inptDiaAsignacionConsultorio') && fechaBase){
+            document.getElementById('inptDiaAsignacionConsultorio').value = obtenerDiaSemanaAgendaValor(fechaBase);
+        }
+        overlay.style.setProperty('position', 'fixed', 'important');
+        overlay.style.setProperty('z-index', '3200', 'important');
+        modal.style.setProperty('position', 'fixed', 'important');
+        modal.style.setProperty('z-index', '3201', 'important');
+        overlay.style.display = '';
+        modal.style.display = '';
+        listarAsignacionesConsultoriosAgenda();
+    }else{
+        overlay.style.display = 'none';
+        modal.style.display = 'none';
+    }
+}
+
+function listarAsignacionesConsultoriosAgenda(){
+    var tabla = document.getElementById('tableAsignacionesConsultoriosAgenda');
+    var selectConsultorio = document.getElementById('inptConsultorioAsignacion');
+    var selectHorario = document.getElementById('inptHorarioAsignacionConsultorio');
+    var selectDia = document.getElementById('inptDiaAsignacionConsultorio');
+    var selectLocal = document.getElementById('inptLocalAsignacionConsultorio');
+    var lblDia = document.getElementById('lblDiaAsignacionConsultorio');
+
+    if(!tabla || !selectConsultorio || !selectHorario){
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "dia": selectDia ? selectDia.value : "",
+            "cod_local": selectLocal ? selectLocal.value : "",
+            "funt": "listarAsignacionesConsultorios"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        beforeSend: function(){
+            tabla.innerHTML = paginacargando;
+        },
+        error: function(jqXHR, textstatus){
+            tabla.innerHTML = "";
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    selectConsultorio.innerHTML = resp["consultorios_options"] || "<option value=''>Sin consultorios</option>";
+                    selectHorario.innerHTML = resp["horarios_options"] || "<option value=''>Sin horarios</option>";
+                    tabla.innerHTML = resp["html"] || "";
+                    if(lblDia){
+                        lblDia.innerHTML = formatearDiaSemanaAgendaTexto(resp["dia"]);
+                    }
+                }else{
+                    tabla.innerHTML = "";
+                    alert(resp["mensaje"] || "No se pudieron cargar las asignaciones");
+                }
+            }catch(error){
+                tabla.innerHTML = "";
+                GuardarArchivosLog("Error listarAsignacionesConsultoriosAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        }
+    });
+}
+
+function guardarAsignacionConsultorioAgenda(){
+    var consultorio = document.getElementById('inptConsultorioAsignacion').value;
+    var horario = document.getElementById('inptHorarioAsignacionConsultorio').value;
+
+    if(consultorio == ''){
+        alert('Debe seleccionar el consultorio');
+        return;
+    }
+
+    if(horario == ''){
+        alert('Debe seleccionar el doctor y horario');
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "id_consultorio": consultorio,
+            "id_horario_usuario": horario,
+            "funt": "guardarAsignacionConsultorio"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    document.getElementById('inptConsultorioAsignacion').value = '';
+                    document.getElementById('inptHorarioAsignacionConsultorio').value = '';
+                    listarAsignacionesConsultoriosAgenda();
+                    cargarAgendaConsultoriosDesdePHP();
+                }else{
+                    alert(resp["mensaje"] || "No se pudo guardar la asignacion");
+                }
+            }catch(error){
+                GuardarArchivosLog("Error guardarAsignacionConsultorioAgenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function(jqXHR, textstatus){
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        }
+    });
+}
+
+function eliminarAsignacionConsultorioAgenda(id){
+    if(!confirm('¿Quitar esta asignacion?')){
+        return;
+    }
+
+    obtener_datos_user();
+
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "id": id,
+            "funt": "eliminarAsignacionConsultorio"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        success: function(responseText){
+            try{
+                var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(resp["1"]) == true){
+                    listarAsignacionesConsultoriosAgenda();
+                    cargarAgendaConsultoriosDesdePHP();
+                }else{
+                    alert(resp["mensaje"] || "No se pudo quitar la asignacion");
+                }
+            }catch(error){
+                GuardarArchivosLog("Error eliminarAsignacionConsultorioAgenda: " + error + " \r\n Consola: " + responseText);
             }
         },
         error: function(jqXHR, textstatus){
@@ -3746,7 +3954,7 @@ function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
                 if (typeof responseText === "string") {
                     resp = $.parseJSON(responseText);
                 }
-
+console.log(responseText);
                 var Respuesta = resp["1"];
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
