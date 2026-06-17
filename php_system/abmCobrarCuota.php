@@ -322,6 +322,7 @@ function cc_listar_planes_cliente($usuario)
 	$sql = "SELECT
 		vt.cod_venta, vt.num_factura, vt.puntoexpedicion, vt.fecha_venta, vt.cod_clienteFK,
 		vt.cod_cobradorFK, vt.cod_local, vt.apodo, vt.TipoVenta, vt.estadocuenta,
+		(IFNULL(vt.total_venta,0)-IFNULL(vt.descuento,0)) AS total_venta_neta,
 		pe.nombre_persona AS cliente, pe.telefono, cl.ci_cliente,
 		IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona=vt.cod_cobradorFK LIMIT 1),'') AS cobrador,
 		IFNULL((SELECT Nombre FROM local WHERE cod_local=vt.cod_local LIMIT 1),'') AS local_nombre,
@@ -336,7 +337,7 @@ function cc_listar_planes_cliente($usuario)
 		WHERE $where
 		GROUP BY vt.cod_venta, vt.num_factura, vt.puntoexpedicion, vt.fecha_venta, vt.cod_clienteFK,
 			vt.cod_cobradorFK, vt.cod_local, vt.apodo, vt.TipoVenta, vt.estadocuenta,
-			pe.nombre_persona, pe.telefono, cl.ci_cliente
+			vt.total_venta, vt.descuento, pe.nombre_persona, pe.telefono, cl.ci_cliente
 		ORDER BY IFNULL(vt.fecha_venta, '2999-12-31') ASC, vt.cod_venta ASC";
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt || !$stmt->execute()) {
@@ -362,6 +363,8 @@ function cc_listar_planes_cliente($usuario)
 			"producto" => cc_from_db($row["productos"] != "" ? $row["productos"] : "Venta sin detalle visible"),
 			"estado" => cc_from_db($row["estadocuenta"]),
 			"tipo_venta" => cc_from_db($row["TipoVenta"]),
+			"total_venta" => (int)$row["total_venta_neta"],
+			"total_venta_fmt" => cc_numero($row["total_venta_neta"]),
 			"cuotas_pendientes" => (int)$row["cuotas_pendientes"],
 			"saldo_pendiente_total" => (int)$row["saldo_total"],
 			"saldo_pendiente_total_fmt" => cc_numero($row["saldo_total"]),
@@ -418,7 +421,9 @@ function cc_datos_cuota_desde_row($row)
 		"cobrador" => cc_from_db($row["cobrador"]),
 		"local_id" => (int)$row["cod_local"],
 		"local" => cc_from_db($row["local_nombre"]),
-		"tipo_venta" => cc_from_db($row["TipoVenta"])
+		"tipo_venta" => cc_from_db($row["TipoVenta"]),
+		"total_venta" => isset($row["total_venta_neta"]) ? (int)$row["total_venta_neta"] : 0,
+		"total_venta_fmt" => isset($row["total_venta_neta"]) ? cc_numero($row["total_venta_neta"]) : "0"
 	);
 }
 
@@ -437,6 +442,7 @@ function cc_listar_cuotas_venta($usuario)
 	$sql = "SELECT
 		cr.idcredito, cr.plazo, cr.fechapago, cr.cod_venta, cr.Monto, cr.descuento, cr.totalinteres, cr.deudaInteres, cr.Esado,
 		vt.num_factura, vt.puntoexpedicion, vt.fecha_venta, vt.tipo_comprobante, vt.cod_clienteFK, vt.cod_cobradorFK, vt.cod_local, vt.apodo, vt.TipoVenta,
+		(IFNULL(vt.total_venta,0)-IFNULL(vt.descuento,0)) AS total_venta_neta,
 		pe.nombre_persona AS cliente, pe.telefono,
 		cl.ci_cliente,
 		IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona=vt.cod_cobradorFK LIMIT 1),'') AS cobrador,
@@ -465,7 +471,11 @@ function cc_listar_cuotas_venta($usuario)
 	$cuotas = array();
 	$total_saldo = 0;
 	$total_pendientes = 0;
+	$total_venta = 0;
 	while ($row = mysqli_fetch_assoc($result)) {
+		if ($total_venta <= 0 && isset($row["total_venta_neta"])) {
+			$total_venta = (int)$row["total_venta_neta"];
+		}
 		$cuota = cc_datos_cuota_desde_row($row);
 		if ($cuota["saldo_pendiente_num"] > 0 && $cuota["estado"] != "Anulada") {
 			$total_saldo += $cuota["saldo_pendiente_num"];
@@ -479,7 +489,10 @@ function cc_listar_cuotas_venta($usuario)
 		"cuotas" => $cuotas,
 		"total" => $total_pendientes,
 		"total_cuotas" => count($cuotas),
-		"saldo_total" => cc_numero($total_saldo)
+		"saldo_total" => cc_numero($total_saldo),
+		"saldo_total_num" => $total_saldo,
+		"total_venta" => $total_venta,
+		"total_venta_fmt" => cc_numero($total_venta)
 	));
 }
 
@@ -522,6 +535,7 @@ function cc_buscar_cuotas($usuario)
 	$sql = "SELECT
 		cr.idcredito, cr.plazo, cr.fechapago, cr.cod_venta, cr.Monto, cr.descuento, cr.totalinteres, cr.deudaInteres, cr.Esado,
 		vt.num_factura, vt.puntoexpedicion, vt.tipo_comprobante, vt.cod_clienteFK, vt.cod_cobradorFK, vt.cod_local, vt.apodo, vt.TipoVenta,
+		(IFNULL(vt.total_venta,0)-IFNULL(vt.descuento,0)) AS total_venta_neta,
 		pe.nombre_persona AS cliente, pe.telefono,
 		cl.ci_cliente,
 		IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona=vt.cod_cobradorFK LIMIT 1),'') AS cobrador,
@@ -595,7 +609,9 @@ function cc_buscar_cuotas($usuario)
 			"cobrador" => cc_from_db($row["cobrador"]),
 			"local_id" => (int)$row["cod_local"],
 			"local" => cc_from_db($row["local_nombre"]),
-			"tipo_venta" => cc_from_db($row["TipoVenta"])
+			"tipo_venta" => cc_from_db($row["TipoVenta"]),
+			"total_venta" => isset($row["total_venta_neta"]) ? (int)$row["total_venta_neta"] : 0,
+			"total_venta_fmt" => isset($row["total_venta_neta"]) ? cc_numero($row["total_venta_neta"]) : "0"
 		);
 		$datos_js = htmlspecialchars(json_encode($datos), ENT_QUOTES, 'UTF-8');
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;

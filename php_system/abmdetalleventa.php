@@ -96,7 +96,9 @@ if($operacion=="editar" && $cod_ventaFK!="")
 		$cod_ventaFK,
 		"Solicitud automatica por edicion de detalle de venta.",
 		$user,
-		"archivo: abmdetalleventa.php | funcion: verificar | funt: editar | cod_ventaFK: ".$cod_ventaFK." | num_factura: ".$num_factura." | nro_comprobante: ".$nro_comprobante
+		"archivo: abmdetalleventa.php | funcion: verificar | funt: editar | cod_ventaFK: ".$cod_ventaFK." | num_factura: ".$num_factura." | nro_comprobante: ".$nro_comprobante,
+		"estado",
+		"Activo"
 	);
 }
 abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$nro_comprobante,$operacion);
@@ -125,7 +127,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_detalle,
 	"Solicitud automatica por cambio de producto en venta.",
 	$user,
-	"archivo: abmdetalleventa.php | funcion: verificar | funt: cambio | cod_detalle: ".$cod_detalle." | cod_ventaFK: ".$cod_ventaFK." | cantidaCambio: ".$cantidaCambio." | CodProductocompraCambio: ".$CodProductocompraCambio." | MetodoPagoCambio: ".$MetodoPagoCambio
+	"archivo: abmdetalleventa.php | funcion: verificar | funt: cambio | cod_detalle: ".$cod_detalle." | cod_ventaFK: ".$cod_ventaFK." | cantidaCambio: ".$cantidaCambio." | CodProductocompraCambio: ".$CodProductocompraCambio." | MetodoPagoCambio: ".$MetodoPagoCambio,
+	"estado",
+	"Activo"
 );
 cambiar($cod_detalle,$cod_ventaFK,$cantidaCambio,$CodProductocompraCambio,$MetodoPagoCambio,$user,$Local_FK);
 
@@ -195,7 +199,9 @@ registrarSolicitudEliminacionGenerica(
 	$idgarantia,
 	"Solicitud automatica por edicion de uso de garantia.",
 	$user,
-	"archivo: abmdetalleventa.php | funcion: verificar | funt: editarusogarantia | idgarantia: ".$idgarantia." | fecha: ".$fecha." | estado: ".$estado
+	"archivo: abmdetalleventa.php | funcion: verificar | funt: editarusogarantia | idgarantia: ".$idgarantia." | fecha: ".$fecha." | estado: ".$estado,
+	"estado",
+	$estado
 );
 
 editarusogarantia($idgarantia,$fecha,$estado,$user);
@@ -803,7 +809,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_detalle,
 	"Solicitud automatica por devolucion de detalle de venta.",
 	isset($_POST['useru']) ? mb_convert_encoding((string)($_POST['useru']), 'ISO-8859-1', 'UTF-8') : "0",
-	"archivo: abmdetalleventa.php | funcion: quitarDevolucion | funt: quitarDevolucion | cod_detalle: ".$cod_detalle." | cod_productoFK: ".$cod_productoFK." | cod_ventaFK: ".$cod_ventaFK." | cantidaCambio: ".$cantidaCambio
+	"archivo: abmdetalleventa.php | funcion: quitarDevolucion | funt: quitarDevolucion | cod_detalle: ".$cod_detalle." | cod_productoFK: ".$cod_productoFK." | cod_ventaFK: ".$cod_ventaFK." | cantidaCambio: ".$cantidaCambio,
+	"estado",
+	"Activo"
 );
 
 $mysqli=conectar_al_servidor(); 
@@ -867,7 +875,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_detalle,
 	"Solicitud automatica por quitar detalle de garantia.",
 	isset($_POST['useru']) ? mb_convert_encoding((string)($_POST['useru']), 'ISO-8859-1', 'UTF-8') : "0",
-	"archivo: abmdetalleventa.php | funcion: quitardegarantia | funt: quitardegarantia | cod_detalle: ".$cod_detalle
+	"archivo: abmdetalleventa.php | funcion: quitardegarantia | funt: quitardegarantia | cod_detalle: ".$cod_detalle,
+	"estado",
+	"Activo"
 );
 $consulta1="update detalle_venta set estado='Activo' where cod_detalle=? ";
 $stmt1 = $mysqli->prepare($consulta1);
@@ -1022,7 +1032,9 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 		$cod_detalle,
 		$motivo,
 		$user,
-		"archivo: abmdetalleventa.php | funcion: quitarproducto | funt: eliminar | cod_detalle: ".$cod_detalle." | cod_ventaFK: ".$cod_ventaFK." | codProducto: ".$codProductoEliminado." | cantidad: ".$detalle['cantidad_detalle']." | cod_local: ".$detalle['cod_local']
+		"archivo: abmdetalleventa.php | funcion: quitarproducto | funt: eliminar | cod_detalle: ".$cod_detalle." | cod_ventaFK: ".$cod_ventaFK." | codProducto: ".$codProductoEliminado." | cantidad: ".$detalle['cantidad_detalle']." | cod_local: ".$detalle['cod_local'],
+		"estado",
+		"Activo"
 	);
 
 	$consulta1="delete from detalle_venta where cod_detalle=? ";

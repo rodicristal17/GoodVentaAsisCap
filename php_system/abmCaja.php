@@ -49,7 +49,9 @@ if($operacion=="editar")
 		$idcaja,
 		"Solicitud automatica por edicion de caja.",
 		$user,
-		"archivo: abmCaja.php | funcion: verificar | funt: editar | idcaja: ".$idcaja." | cajanro: ".$cajanro." | puntoexpedicion: ".$puntoexpedicion." | cod_localFK: ".$cod_localFK." | estado: ".$estado
+		"archivo: abmCaja.php | funcion: verificar | funt: editar | idcaja: ".$idcaja." | cajanro: ".$cajanro." | puntoexpedicion: ".$puntoexpedicion." | cod_localFK: ".$cod_localFK." | estado: ".$estado,
+		"estado",
+		$estado
 	);
 }
 

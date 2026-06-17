@@ -110,7 +110,44 @@ function solicitudEliminadoObtenerResumen($mysqli, $tabla, $pkColumna, $pkValor)
     return implode(' | ', $partes);
 }
 
-function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $motivo, $codUsuario, $registroResumen, $estadoColumna = 'estado') {
+function solicitudEliminadoObtenerEstadoNuevo($estadoNuevo, $estadoNuevoRecibido) {
+    if ($estadoNuevoRecibido) {
+        return $estadoNuevo;
+    }
+    return null;
+}
+
+function solicitudEliminadoObtenerEstadoActual($mysqli, $tabla, $pkColumna, $pkValor, $estadoColumna) {
+    if (!solicitudEliminadoIdentificadorValido($tabla) || !solicitudEliminadoIdentificadorValido($pkColumna) || !solicitudEliminadoIdentificadorValido($estadoColumna)) {
+        return array("ok" => false, "existe" => false, "estado" => "");
+    }
+
+    $sql = "SELECT `".$estadoColumna."` AS estado_actual
+            FROM `".$tabla."`
+            WHERE `".$pkColumna."` = ?
+            LIMIT 1";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return array("ok" => false, "existe" => false, "estado" => "");
+    }
+    $stmt->bind_param('s', $pkValor);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return array("ok" => false, "existe" => false, "estado" => "");
+    }
+
+    $result = $stmt->get_result();
+    $row = $result ? $result->fetch_assoc() : null;
+    $stmt->close();
+
+    if (!$row) {
+        return array("ok" => true, "existe" => false, "estado" => "");
+    }
+
+    return array("ok" => true, "existe" => true, "estado" => isset($row['estado_actual']) ? $row['estado_actual'] : "");
+}
+
+function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $motivo, $codUsuario, $registroResumen, $estadoColumna = 'estado', $estadoNuevo = null) {
     $tabla = trim((string)$tabla);
     $pkColumna = trim((string)$pkColumna);
     $pkValor = trim((string)$pkValor);
@@ -119,6 +156,8 @@ function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $mo
     $registroResumen = trim((string)$registroResumen);
     $estadoColumna = trim((string)$estadoColumna);
     $requiereEstado = $estadoColumna !== '';
+    $estadoNuevoRecibido = func_num_args() >= 8;
+    $estadoNuevo = solicitudEliminadoObtenerEstadoNuevo($estadoNuevo, $estadoNuevoRecibido);
 
     if ($tabla === '' || $pkColumna === '' || $pkValor === '') {
         return array("1" => "error", "2" => "No se recibio el registro a eliminar.");
@@ -131,6 +170,12 @@ function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $mo
     }
     if ($codUsuario === '') {
         $codUsuario = solicitudEliminadoValorPost('useru', '0');
+    }
+    if (!$requiereEstado) {
+        return array("1" => "exito", "2" => "No se registro solicitud: no se indico columna de estado.");
+    }
+    if (!solicitudEliminadoEsEstadoInactivo($estadoNuevo)) {
+        return array("1" => "exito", "2" => "No se registro solicitud: el estado nuevo no es Inactivo.");
     }
 
     $mysqli = conectar_al_servidor();
@@ -149,6 +194,20 @@ function registrarSolicitudEliminacionGenerica($tabla, $pkColumna, $pkValor, $mo
             mysqli_close($mysqli);
             return array("1" => "error", "2" => "No se pudo validar la columna de estado.");
         }
+    }
+
+    $estadoActual = solicitudEliminadoObtenerEstadoActual($mysqli, $tabla, $pkColumna, $pkValor, $estadoColumna);
+    if (!$estadoActual["ok"]) {
+        mysqli_close($mysqli);
+        return array("1" => "error", "2" => "No se pudo validar el estado actual.");
+    }
+    if (!$estadoActual["existe"]) {
+        mysqli_close($mysqli);
+        return array("1" => "error", "2" => "No se encontro el registro a eliminar.");
+    }
+    if (solicitudEliminadoEsEstadoInactivo($estadoActual["estado"])) {
+        mysqli_close($mysqli);
+        return array("1" => "exito", "2" => "No se registro solicitud: el registro ya estaba Inactivo.");
     }
 
     $sql = "SELECT id_solicitud_eliminado

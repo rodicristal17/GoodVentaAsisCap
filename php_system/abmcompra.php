@@ -57,7 +57,9 @@ $pagado2 = quitarseparadormiles($pagado2);
 			$cod_compra,
 			"Solicitud automatica por edicion de compra.",
 			$user,
-			"archivo: abmcompra.php | funcion: verificar | funt: editar | cod_compra: ".$cod_compra." | fecha_compra: ".$fecha_compra." | cod_proveedorFK: ".$cod_proveedorFK." | num_comprobante: ".$num_comprobante." | cod_local: ".$cod_local
+			"archivo: abmcompra.php | funcion: verificar | funt: editar | cod_compra: ".$cod_compra." | fecha_compra: ".$fecha_compra." | cod_proveedorFK: ".$cod_proveedorFK." | num_comprobante: ".$num_comprobante." | cod_local: ".$cod_local,
+			"estado",
+			"Activo"
 		);
 	}
 	abm($cod_compra,$fecha_compra,$cod_proveedorFK,$num_comprobante,$cod_local,$descuento,$pagado1,$pagado2,$operacion);
@@ -124,7 +126,9 @@ if($operacion=="editarpago")
 		$codpago,
 		"Solicitud automatica por edicion de pago de compra.",
 		$user,
-		"archivo: abmcompra.php | funcion: verificar | funt: editarpago | codpago: ".$codpago." | cod_compraFk: ".$cod_compraFk." | monto: ".$monto." | estado: ".$estado
+		"archivo: abmcompra.php | funcion: verificar | funt: editarpago | codpago: ".$codpago." | cod_compraFk: ".$cod_compraFk." | monto: ".$monto." | estado: ".$estado,
+		"estado",
+		$estado
 	);
 }
 
@@ -136,7 +140,9 @@ if($operacion=="eliminarpago")
 		$codpago,
 		"Solicitud automatica por eliminacion de pago de compra.",
 		$user,
-		"archivo: abmcompra.php | funcion: verificar | funt: eliminarpago | codpago: ".$codpago." | cod_compraFk: ".$cod_compraFk." | monto: ".$monto." | estado: ".$estado
+		"archivo: abmcompra.php | funcion: verificar | funt: eliminarpago | codpago: ".$codpago." | cod_compraFk: ".$cod_compraFk." | monto: ".$monto." | estado: ".$estado,
+		"estado",
+		$estado
 	);
 }
 
@@ -338,7 +344,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_compra,
 	$motivo,
 	$user,
-	"archivo: abmcompra.php | funcion: eliminarcompra | funt: eliminarcompra | cod_compra: ".$cod_compra." | motivo: ".$motivo
+	"archivo: abmcompra.php | funcion: eliminarcompra | funt: eliminarcompra | cod_compra: ".$cod_compra." | motivo: ".$motivo,
+	"estado",
+	"Inactivo"
 );
 
 $mysqli=conectar_al_servidor();

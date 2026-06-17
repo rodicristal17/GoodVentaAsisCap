@@ -877,11 +877,21 @@ function cobrarCuotaCargarCuotas(ventaId) {
 					if (cobrarCuotaPlanSeleccionado) {
 						cobrarCuotaPlanSeleccionado.cuotas_pendientes = respuesta.total || "0";
 						cobrarCuotaPlanSeleccionado.saldo_pendiente_total_fmt = respuesta.saldo_total || "0";
+						cobrarCuotaPlanSeleccionado.saldo_pendiente_total = respuesta.saldo_total_num !== undefined ? Number(respuesta.saldo_total_num || 0) : cobrarCuotaNumero(respuesta.saldo_total || "0");
+						if (respuesta.total_venta !== undefined) {
+							cobrarCuotaPlanSeleccionado.total_venta = Number(respuesta.total_venta || 0);
+							cobrarCuotaPlanSeleccionado.total_venta_fmt = respuesta.total_venta_fmt || cobrarCuotaFormato(respuesta.total_venta || 0);
+						}
 						var ventaPlanActual = String(cobrarCuotaPlanSeleccionado.cod_venta || cobrarCuotaPlanSeleccionado.venta_id || "");
 						for (var i = 0; i < cobrarCuotaPlanes.length; i++) {
 							if (String(cobrarCuotaPlanes[i].cod_venta || cobrarCuotaPlanes[i].venta_id || "") == ventaPlanActual) {
 								cobrarCuotaPlanes[i].cuotas_pendientes = respuesta.total || "0";
 								cobrarCuotaPlanes[i].saldo_pendiente_total_fmt = respuesta.saldo_total || "0";
+								cobrarCuotaPlanes[i].saldo_pendiente_total = respuesta.saldo_total_num !== undefined ? Number(respuesta.saldo_total_num || 0) : cobrarCuotaNumero(respuesta.saldo_total || "0");
+								if (respuesta.total_venta !== undefined) {
+									cobrarCuotaPlanes[i].total_venta = Number(respuesta.total_venta || 0);
+									cobrarCuotaPlanes[i].total_venta_fmt = respuesta.total_venta_fmt || cobrarCuotaFormato(respuesta.total_venta || 0);
+								}
 							}
 						}
 						cobrarCuotaRenderPlanSeleccionado(cobrarCuotaPlanSeleccionado);
@@ -1786,6 +1796,13 @@ function cobrarCuotaCrearPagoRegistrado(titulo, detalle, tipo, opciones) {
 	var montoAplicado = Number(opciones.montoAplicado !== undefined ? opciones.montoAplicado : (contexto.monto || 0)) || 0;
 	var saldoCuotaAnterior = Number(cuota.saldo_pendiente_num || contexto.saldo || 0) || 0;
 	var saldoCuotaRestante = Math.max(0, saldoCuotaAnterior - montoAplicado);
+	var totalVenta = Number(plan.total_venta || cuota.total_venta || 0) || 0;
+	var totalVentaFmt = plan.total_venta_fmt || cuota.total_venta_fmt || (totalVenta > 0 ? cobrarCuotaFormato(totalVenta) : "");
+	var saldoVentaAnterior = Number(plan.saldo_pendiente_total || cuota.saldo_pendiente_total || 0) || 0;
+	if (saldoVentaAnterior <= 0) {
+		saldoVentaAnterior = cobrarCuotaNumero(plan.saldo_pendiente_total_fmt || cuota.saldo_pendiente_total_fmt || cuota.saldo_pendiente || saldoCuotaAnterior);
+	}
+	var saldoVentaRestante = Math.max(0, saldoVentaAnterior - montoAplicado);
 	var disponibleAnterior = opciones.disponibleAnterior !== undefined ? Number(opciones.disponibleAnterior || 0) : Number(ueno.monto_disponible || 0);
 	var disponibleNuevo = opciones.disponibleNuevo !== undefined ? Number(opciones.disponibleNuevo || 0) : Math.max(0, disponibleAnterior - montoAplicado);
 	var saldoAplicadoUeno = opciones.saldoAplicadoUeno !== undefined ? Number(opciones.saldoAplicadoUeno || 0) : (ueno.id_movimiento ? Math.max(0, disponibleAnterior - disponibleNuevo) : 0);
@@ -1816,6 +1833,12 @@ function cobrarCuotaCrearPagoRegistrado(titulo, detalle, tipo, opciones) {
 		pagadoTotal: cuota.pagado_total || "0",
 		tipoVenta: cuota.tipo_venta || plan.tipo_venta || "",
 		totalPlan: plan.saldo_pendiente_total_fmt || "",
+		totalVenta: totalVenta,
+		totalVentaFmt: totalVentaFmt,
+		saldoVentaAnterior: saldoVentaAnterior,
+		saldoVentaAnteriorFmt: cobrarCuotaFormato(saldoVentaAnterior),
+		saldoVentaRestante: saldoVentaRestante,
+		saldoVentaRestanteFmt: cobrarCuotaFormato(saldoVentaRestante),
 		montoAplicado: montoAplicado,
 		montoAplicadoFmt: cobrarCuotaFormato(montoAplicado),
 		formaPago: contexto.textoTipo || "",
@@ -1858,6 +1881,10 @@ function cobrarCuotaCrearReciboDesdePago(pago) {
 		pagadoTotal: pago.pagadoTotal || "",
 		tipoVenta: pago.tipoVenta || "",
 		totalPlan: pago.totalPlan || "",
+		totalVenta: pago.totalVentaFmt || "",
+		totalVentaNum: pago.totalVenta || 0,
+		saldoVentaAnterior: pago.saldoVentaAnteriorFmt || "",
+		saldoVentaRestante: pago.saldoVentaRestanteFmt || "",
 		monto: pago.montoAplicadoFmt || "0",
 		formaPago: pago.formaPago || "",
 		banco: pago.banco || "",
@@ -1903,6 +1930,12 @@ function cobrarCuotaRestaurarBoton() {
 function cobrarCuotaCrearRecibo(monto, formaPago, comprobante, estado) {
 	var saldoAnterior = cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0;
 	var saldoRestante = Math.max(0, saldoAnterior - (Number(monto) || 0));
+	var totalVenta = Number((cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.total_venta) || (cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.total_venta) || 0) || 0;
+	var saldoVentaAnterior = Number(cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.saldo_pendiente_total || 0) || 0;
+	if (saldoVentaAnterior <= 0) {
+		saldoVentaAnterior = cobrarCuotaNumero((cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.saldo_pendiente_total_fmt) || (cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.saldo_pendiente) || saldoAnterior);
+	}
+	var saldoVentaRestante = Math.max(0, saldoVentaAnterior - (Number(monto) || 0));
 	return {
 		fecha: cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "",
 		cliente: cobrarCuotaSeleccionada ? cobrarCuotaSeleccionada.cliente : "",
@@ -1918,6 +1951,10 @@ function cobrarCuotaCrearRecibo(monto, formaPago, comprobante, estado) {
 		pagadoTotal: cobrarCuotaSeleccionada ? cobrarCuotaSeleccionada.pagado_total : "",
 		tipoVenta: cobrarCuotaSeleccionada ? cobrarCuotaSeleccionada.tipo_venta : "",
 		totalPlan: cobrarCuotaPlanSeleccionado ? (cobrarCuotaPlanSeleccionado.saldo_pendiente_total_fmt || "") : "",
+		totalVenta: (cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.total_venta_fmt) || (cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.total_venta_fmt) || (totalVenta > 0 ? cobrarCuotaFormato(totalVenta) : ""),
+		totalVentaNum: totalVenta,
+		saldoVentaAnterior: cobrarCuotaFormato(saldoVentaAnterior),
+		saldoVentaRestante: cobrarCuotaFormato(saldoVentaRestante),
 		monto: cobrarCuotaFormato(monto),
 		formaPago: formaPago,
 		comprobante: cobrarCuotaMaskComprobante(comprobante || ""),
@@ -2110,8 +2147,8 @@ function cobrarCuotaImprimirRecibo() {
 	var diasAtraso = cobrarCuotaReciboDiasAtraso(fechaVencimiento, fechaPago);
 	var concepto = cobrarCuotaReciboConcepto(r);
 	var monto = cobrarCuotaReciboValor(r.monto, "0");
-	var totalCuota = cobrarCuotaReciboValor(r.saldoCuotaAnterior || r.montoCuota || r.totalPlan || r.monto, "0");
-	var saldoActual = cobrarCuotaReciboValor(r.saldoCuotaRestante || "0", "0");
+	var totalCuota = cobrarCuotaReciboValor(r.totalVenta || r.totalVentaFmt || r.montoVenta || r.total_factura || r.saldoCuotaAnterior || r.montoCuota || r.totalPlan || r.monto, "0");
+	var saldoActual = cobrarCuotaReciboValor(r.saldoVentaRestante || r.saldoActualVenta || r.saldoActual || r.saldoCuotaRestante || "0", "0");
 	var estadoRecibo = cobrarCuotaReciboValor(r.estado || r.estadoFinalCuota, "Registrado");
 	var tipoPagoCorto = cobrarCuotaReciboTipoCorto(r.formaPago);
 	var descripcionCuota = cobrarCuotaEscape("PAGO DE CUOTA--" + cobrarCuotaReciboValor(r.cuota, ""));
@@ -2163,6 +2200,7 @@ function cobrarCuotaImprimirRecibo() {
 		+ ".cobrar-cuota-recibo-title{font-family:Arial,sans-serif;font-size:24px;font-weight:800;margin:0;text-align:center;line-height:24px;letter-spacing:0;}"
 		+ ".cobrar-cuota-recibo-address{font-size:8px;font-family:Arial,sans-serif;line-height:10px;margin:1px 0 0;text-align:center;}"
 		+ ".cobrar-cuota-recibo-label{display:inline-block;font-size:10px;font-weight:800;line-height:11px;background:#eceff3;border-radius:2px;padding:1px 8px;margin-top:2px;}"
+		+ ".cobrar-cuota-recibo-marca{display:inline-block;margin-left:6px;font-size:9px;font-weight:800;line-height:11px;border:1px solid #111;border-radius:2px;padding:1px 7px;}"
 		+ ".cobrar-cuota-recibo-head{text-align:center;margin-bottom:3mm;}"
 		+ ".cobrar-cuota-recibo-data{width:100%;margin-top:1mm;table-layout:fixed;}"
 		+ ".cobrar-cuota-recibo-data .tableTicket{width:98%;font-size:8px;line-height:10px;margin:0;font-family:Arial,sans-serif;}"
@@ -2185,55 +2223,59 @@ function cobrarCuotaImprimirRecibo() {
 		+ "@media print{.cobrar-cuota-recibo-copy{height:131mm;}.cobrar-cuota-recibo-separador{height:6mm;}}"
 		+ "</style>";
 
-	var copia = "<div class='cobrar-cuota-recibo-copy'>"
-		+ "<div class='divTicket cobrar-cuota-recibo-print'>"
-		+ "<img class='cobrar-cuota-recibo-watermark' src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' />"
-		+ "<div class='cobrar-cuota-recibo-content'>"
-		+ "<div class='cobrar-cuota-recibo-head'>"
-		+ "<p class='cobrar-cuota-recibo-title'>CLINIDENT</p>"
-		+ "<p class='cobrar-cuota-recibo-address'>Humait&aacute; esq. Dr. Bottrel<br>Cel: (0982) 104 622<br>Villarrica - Paraguay</p>"
-		+ "<span class='cobrar-cuota-recibo-label'>RECIBO DE DINERO</span>"
-		+ "</div>"
-		+ "<table class='cobrar-cuota-recibo-data'>"
-		+ "<tr>"
-		+ "<td style='width:50%'>"
-		+ cobrarCuotaReciboFila("Numero", numeroRecibo, "80px")
-		+ cobrarCuotaReciboFila("Cliente", r.cliente, "60px")
-		+ cobrarCuotaReciboFila("RUC o C.I.", r.cedula, "85px")
-		+ "</td>"
-		+ "<td style='width:50%'>"
-		+ cobrarCuotaReciboFila("Fecha", fechaPago, "60px")
-		+ cobrarCuotaReciboFila("Cajero", r.cajero, "60px")
-		+ cobrarCuotaReciboFila("D. Atrasado", diasAtraso + " Dia(s)", "100px")
-		+ "</td>"
-		+ "</tr>"
-		+ "</table>"
-		+ "<p class='cobrar-cuota-recibo-concepto'><b>EN CONCEPTO DE :</b>" + cobrarCuotaEscape(concepto) + "</p>"
-		+ "<table class='cobrar-cuota-recibo-body'><tr><td style='width:67%;padding-right:4mm;'>"
-		+ "<table class='tableTicket cobrar-cuota-recibo-header'>"
-		+ "<tr>"
-		+ "<td style='width:16%;'>FECHA P.</td>"
-		+ "<td style='width:16%;'>FECHA<br>VENC.</td>"
-		+ "<td style='width:34%;'>DESCRIPCION</td>"
-		+ "<td style='width:15%;'>TIPO</td>"
-		+ "<td style='width:19%;text-align:right;'>IMPORTE</td>"
-		+ "</tr>"
-		+ "</table>"
-		+ detalleCuota
-		+ "</td>"
-		+ "<td style='width:33%;'>"
-		+ "<table class='cobrar-cuota-recibo-totales'>"
-		+ "<tr><td>TOTAL FACTURA:</td><td>" + cobrarCuotaEscape(totalCuota) + " Gs.</td></tr>"
-		+ "<tr><td>TOTAL PAGADO:</td><td>" + cobrarCuotaEscape(monto) + " Gs.</td></tr>"
-		+ "<tr><td>TOTAL DESCUENTO:</td><td>0 Gs.</td></tr>"
-		+ "<tr><td>SALDO ACTUAL:</td><td>" + cobrarCuotaEscape(saldoActual) + " Gs.</td></tr>"
-		+ "</table>"
-		+ "</td>"
-		+ "</tr></table>"
-		+ detalleUeno
-		+ "</div>"
-		+ "</div>";
-	var pagina = estilos + copia + "<div class='cobrar-cuota-recibo-separador'></div>" + copia;
+	var construirCopiaRecibo = function(marca) {
+		return "<div class='cobrar-cuota-recibo-copy'>"
+			+ "<div class='divTicket cobrar-cuota-recibo-print'>"
+			+ "<img class='cobrar-cuota-recibo-watermark' src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' />"
+			+ "<div class='cobrar-cuota-recibo-content'>"
+			+ "<div class='cobrar-cuota-recibo-head'>"
+			+ "<p class='cobrar-cuota-recibo-title'>CLINIDENT</p>"
+			+ "<p class='cobrar-cuota-recibo-address'>Humait&aacute; esq. Dr. Bottrel<br>Cel: (0982) 104 622<br>Villarrica - Paraguay</p>"
+			+ "<span class='cobrar-cuota-recibo-label'>RECIBO DE DINERO</span>"
+			+ "<span class='cobrar-cuota-recibo-marca'>" + cobrarCuotaEscape(marca) + "</span>"
+			+ "</div>"
+			+ "<table class='cobrar-cuota-recibo-data'>"
+			+ "<tr>"
+			+ "<td style='width:50%'>"
+			+ cobrarCuotaReciboFila("Numero", numeroRecibo, "80px")
+			+ cobrarCuotaReciboFila("Cliente", r.cliente, "60px")
+			+ cobrarCuotaReciboFila("RUC o C.I.", r.cedula, "85px")
+			+ "</td>"
+			+ "<td style='width:50%'>"
+			+ cobrarCuotaReciboFila("Fecha", fechaPago, "60px")
+			+ cobrarCuotaReciboFila("Cajero", r.cajero, "60px")
+			+ cobrarCuotaReciboFila("D. Atrasado", diasAtraso + " Dia(s)", "100px")
+			+ "</td>"
+			+ "</tr>"
+			+ "</table>"
+			+ "<p class='cobrar-cuota-recibo-concepto'><b>EN CONCEPTO DE :</b>" + cobrarCuotaEscape(concepto) + "</p>"
+			+ "<table class='cobrar-cuota-recibo-body'><tr><td style='width:67%;padding-right:4mm;'>"
+			+ "<table class='tableTicket cobrar-cuota-recibo-header'>"
+			+ "<tr>"
+			+ "<td style='width:16%;'>FECHA P.</td>"
+			+ "<td style='width:16%;'>FECHA<br>VENC.</td>"
+			+ "<td style='width:34%;'>DESCRIPCION</td>"
+			+ "<td style='width:15%;'>TIPO</td>"
+			+ "<td style='width:19%;text-align:right;'>IMPORTE</td>"
+			+ "</tr>"
+			+ "</table>"
+			+ detalleCuota
+			+ "</td>"
+			+ "<td style='width:33%;'>"
+			+ "<table class='cobrar-cuota-recibo-totales'>"
+			+ "<tr><td>TOTAL FACTURA:</td><td>" + cobrarCuotaEscape(totalCuota) + " Gs.</td></tr>"
+			+ "<tr><td>TOTAL PAGADO:</td><td>" + cobrarCuotaEscape(monto) + " Gs.</td></tr>"
+			+ "<tr><td>TOTAL DESCUENTO:</td><td>0 Gs.</td></tr>"
+			+ "<tr><td>SALDO ACTUAL:</td><td>" + cobrarCuotaEscape(saldoActual) + " Gs.</td></tr>"
+			+ "</table>"
+			+ "</td>"
+			+ "</tr></table>"
+			+ detalleUeno
+			+ "</div>"
+			+ "</div>"
+			+ "</div>";
+	};
+	var pagina = estilos + construirCopiaRecibo("ORIGINAL") + "<div class='cobrar-cuota-recibo-separador'></div>" + construirCopiaRecibo("DUPLICADO");
 
 	var contenedor = document.getElementById("DivImprimir");
 	if (contenedor) {

@@ -345,7 +345,8 @@ $dias = mb_convert_encoding((string)($dias), 'ISO-8859-1', 'UTF-8');
 		"Solicitud automatica por edicion de credito.",
 		$user,
 		"archivo: abmcreditos.php | funcion: verificar | funt: editarestecredito | idcredito: ".$codCredito." | fechapago: ".$date." | monto: ".$monto." | descuento: ".$descuento." | interes: ".$interes,
-		"Esado"
+		"Esado",
+		"PENDIENTE"
 	);
 	editarestecredito($codCredito,$date,$monto,$descuento,$interes,$dias);
 
@@ -399,7 +400,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_venta,
 	"Solicitud automatica por refinanciacion de credito en cambio.",
 	$user,
-	"archivo: abmcreditos.php | funcion: verificar | funt: refinanciarencambio | cod_venta: ".$cod_venta." | metodopago: ".$metodopago." | iniciopago: ".$iniciopago." | nroCuota: ".$nroCuota." | total: ".$total." | Monto: ".$Monto
+	"archivo: abmcreditos.php | funcion: verificar | funt: refinanciarencambio | cod_venta: ".$cod_venta." | metodopago: ".$metodopago." | iniciopago: ".$iniciopago." | nroCuota: ".$nroCuota." | total: ".$total." | Monto: ".$Monto,
+	"estado",
+	"Activo"
 );
 
 refinanciarencambio($cod_venta,$metodopago,$iniciopago,$nroCuota,$total,$Monto,$dias,$interes);
@@ -428,7 +431,8 @@ registrarSolicitudEliminacionGenerica(
 	"Solicitud automatica por edicion de cuenta de credito.",
 	$user,
 	"archivo: abmcreditos.php | funcion: verificar | funt: editarcuenta | idcredito: ".$idcredito." | cod_venta: ".$cod_venta." | fecha: ".$fecha." | tipo: ".$tipo." | descuento: ".$descuento,
-	"Esado"
+	"Esado",
+	"PENDIENTE"
 );
 
 editarcuota($cod_venta,$idcredito,$fecha,$tipo,$descuento);
@@ -504,7 +508,8 @@ if($operacion=="editarcreditorefin")
 		"Solicitud automatica por edicion de credito refinanciado.",
 		$user,
 		"archivo: abmcreditos.php | funcion: verificar | funt: editarcreditorefin | idcredito: ".$idcredito." | cod_venta: ".$cod_venta." | plazo: ".$plazo." | Monto: ".$Monto." | fechapago: ".$fechapago,
-		"Esado"
+		"Esado",
+		"PENDIENTE"
 	);
 }
 abmcreditorefin($plazo,$Monto,$fechapago,$descuento,$interes,$dias,$cod_venta,$idcredito,$operacion);
@@ -539,7 +544,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_venta,
 	"Solicitud automatica por refinanciacion de cuotas.",
 	$user,
-	"archivo: abmcreditos.php | funcion: verificar | funt: refinanciarcuotas | cod_venta: ".$cod_venta." | iniciopago: ".$iniciopago." | nroCuota: ".$nroCuota." | total: ".$total." | Monto: ".$Monto." | metodopago: ".$metodopago
+	"archivo: abmcreditos.php | funcion: verificar | funt: refinanciarcuotas | cod_venta: ".$cod_venta." | iniciopago: ".$iniciopago." | nroCuota: ".$nroCuota." | total: ".$total." | Monto: ".$Monto." | metodopago: ".$metodopago,
+	"estado",
+	"Activo"
 );
 RefinanciarCuotasRestantes($cod_venta,$iniciopago,$nroCuota,$total,$Monto,$descuento,$interes,$dias,$metodopago,$user);
 
@@ -919,7 +926,8 @@ exit;
 		"Solicitud automatica por eliminacion de credito refinanciado.",
 		$user,
 		"archivo: abmcreditos.php | funcion: eliminarcreditorefin | funt: eliminarcreditorefin | idcredito: ".$idcredito." | cod_venta: ".$cod_venta,
-		"Esado"
+		"Esado",
+		"inactivo"
 	);
 
 	$mysqli=conectar_al_servidor();
@@ -1239,9 +1247,14 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 		$creditosPendientes= buscarcreditos($cod_venta, true);
 		
 		$i= 0;
-		while ($entrega > 0) {
-			$montoCuota = ($entrega >= $Monto) ? $Monto : $entrega;
-			$entrega -= $Monto;
+		while ($entrega > 0 && isset($creditosPendientes[$i])) {
+			$montoCredito = floatval($creditosPendientes[$i]['Monto']);
+			$montoCuota = ($entrega >= $montoCredito) ? $montoCredito : $entrega;
+			if ($montoCuota <= 0) {
+				$i++;
+				continue;
+			}
+			$entrega -= $montoCuota;
 			$nrofactura=buscarnrofactura();
 			
 			$consulta="Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK,num_comprobante,fecha_facturado)
@@ -1786,6 +1799,7 @@ function buscarcreditos($buscar, $llamado_desde_funcion = false)
 {
 	$mysqli = conectar_al_servidor();
 	$fechahoy = date('Y-m-d');
+	$condicionSoloCuotas = $llamado_desde_funcion ? " and UPPER(TRIM(IFNULL(cr.plazo,'')))!='ENTREGA' and UPPER(TRIM(IFNULL(cr.tipo,'')))!='ENTREGA' " : "";
 	$sql = "select vt.cod_clienteFK,cr.plazo,cr.deudaInteres,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,cr.Nro_recibo,
 datediff(cr.fechapago,'" . $fechahoy . "') as diff,vt.total_venta,interes,dias,vt.pago as entrega,
 total,(totalinteres + deudaInteres) as totalinteres ,totaldeuda,cr.descuento,
@@ -1796,7 +1810,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito),0
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota' ),0) as totalPagoCuota,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Interes'),0) as totalPagoInteres
  from  credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
- where vt.cod_venta='$buscar' order by FIELD(Esado, 'PAGADO', 'PENDIENTE', 'inactivo'), idcredito";
+ where vt.cod_venta='$buscar' $condicionSoloCuotas order by FIELD(Esado, 'PAGADO', 'PENDIENTE', 'inactivo'), idcredito";
 	$pagina = "";
 	$paginaextracto = "";
 	$interes = "0";

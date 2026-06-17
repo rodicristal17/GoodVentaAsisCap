@@ -80,7 +80,9 @@ if($operacion=="editar")
 		$cod_venta,
 		"Solicitud automatica por edicion de venta.",
 		$user,
-		"archivo: abmventa.php | funcion: verificar | funt: editar | cod_venta: ".$cod_venta." | fecha_venta: ".$fecha_venta." | cod_clienteFK: ".$cod_clienteFK." | num_factura: ".$num_factura." | cod_cobradorFK: ".$cod_cobradorFK." | cod_local: ".$cod_local
+		"archivo: abmventa.php | funcion: verificar | funt: editar | cod_venta: ".$cod_venta." | fecha_venta: ".$fecha_venta." | cod_clienteFK: ".$cod_clienteFK." | num_factura: ".$num_factura." | cod_cobradorFK: ".$cod_cobradorFK." | cod_local: ".$cod_local,
+		"estado",
+		"Activo"
 	);
 }
 
@@ -463,7 +465,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_ventaFK,
 	"Solicitud automatica por refinanciacion total de venta.",
 	$user,
-	"archivo: abmventa.php | funcion: verificar | funt: refinanciartotalventa | cod_ventaFK: ".$cod_ventaFK." | total: ".$total
+	"archivo: abmventa.php | funcion: verificar | funt: refinanciartotalventa | cod_ventaFK: ".$cod_ventaFK." | total: ".$total,
+	"estado",
+	"Activo"
 );
 abmactualizarTotal($total,$cod_ventaFK);
 
@@ -552,7 +556,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_venta,
 	"Solicitud automatica por actualizacion de numero de factura.",
 	$user,
-	"archivo: abmventa.php | funcion: verificar | funt: actualizarnrofactura | cod_venta: ".$cod_venta." | puntoexpedicion: ".$puntoexpedicion." | nrofactura: ".$nrofactura." | TipoRecibo: ".$TipoRecibo
+	"archivo: abmventa.php | funcion: verificar | funt: actualizarnrofactura | cod_venta: ".$cod_venta." | puntoexpedicion: ".$puntoexpedicion." | nrofactura: ".$nrofactura." | TipoRecibo: ".$TipoRecibo,
+	"estado",
+	"Activo"
 );
 
 actualizarnrofactura($TipoRecibo,$cod_venta,$puntoexpedicion,$nrofactura);
@@ -575,7 +581,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_venta,
 	"Solicitud automatica por actualizacion de cobrador.",
 	$user,
-	"archivo: abmventa.php | funcion: verificar | funt: actualizarCobrador | cod_venta: ".$cod_venta." | cobrador: ".$cobrador
+	"archivo: abmventa.php | funcion: verificar | funt: actualizarCobrador | cod_venta: ".$cod_venta." | cobrador: ".$cobrador,
+	"estado",
+	"Activo"
 );
 
 actualizarCobrador($cod_venta,$cobrador);
@@ -620,7 +628,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_venta,
 	"Solicitud automatica por asignacion de cobrador externo.",
 	$user,
-	"archivo: abmventa.php | funcion: verificar | funt: AsignarCobrador | cod_venta: ".$cod_venta." | cobrador: ".$cobrador
+	"archivo: abmventa.php | funcion: verificar | funt: AsignarCobrador | cod_venta: ".$cod_venta." | cobrador: ".$cobrador,
+	"estado",
+	"Activo"
 );
 
 AsignarCobrador($cod_venta,$cobrador);
@@ -647,7 +657,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_ventaAsignarCod_local,
 	"Solicitud automatica por asignacion de local.",
 	$user,
-	"archivo: abmventa.php | funcion: verificar | funt: abmAsignarLocal | cod_venta: ".$cod_ventaAsignarCod_local." | cod_local: ".$inptlocalAsignarLocal
+	"archivo: abmventa.php | funcion: verificar | funt: abmAsignarLocal | cod_venta: ".$cod_ventaAsignarCod_local." | cod_local: ".$inptlocalAsignarLocal,
+	"estado",
+	"Activo"
 );
 
 abmAsignarLocal($cod_ventaAsignarCod_local,$inptlocalAsignarLocal);
@@ -893,7 +905,8 @@ registrarSolicitudEliminacionGenerica(
 	$motivo,
 	$cod_usuarioFK,
 	$resumenSolicitudCancelacion,
-	""
+	"estado",
+	"Activo"
 );
 $consulta1="Insert into cancelaciones (montodevuelto,motivo,fecha,cod_venta,cod_usuarioFK)
 values(?,?,?,?,?)";
@@ -1046,7 +1059,9 @@ registrarSolicitudEliminacionGenerica(
 	$cod_venta,
 	$motivo,
 	$user,
-	"archivo: abmventa.php | funcion: eliminarventa | funt: eliminarVenta | cod_venta: ".$cod_venta." | motivo: ".$motivo." | nroFactura: ".$nroFactura
+	"archivo: abmventa.php | funcion: eliminarventa | funt: eliminarVenta | cod_venta: ".$cod_venta." | motivo: ".$motivo." | nroFactura: ".$nroFactura,
+	"estado",
+	"Inactivo"
 );
 $consulta1="Update venta set estado='Inactivo',cod_user_edit=?,fecha_edit=? where cod_venta=?";
 $stmt1 = $mysqli->prepare($consulta1);

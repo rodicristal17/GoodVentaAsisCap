@@ -6198,7 +6198,7 @@ pagina="<br><div style='background-color:#fff;'>"
 +"<p class='pTituloTicket2'>Humaitá esq. Dr. Bottrel <br> Cel: (0982) 104 622   <br> Villarrica - Paraguay </p>"
 +"<div class='divSeparadorTicket' style='margin-bottom:5px'></div>"
 
-+"<p class='pTituloTicket1' style='font-size:12px;' ><b style='font-size: 15px;font-weight: 800;'>RECIBO DE DINERO</b></p>"
++"<p class='pTituloTicket1' style='font-size:12px;' ><b style='font-size: 15px;font-weight: 800;'>RECIBO DE DINERO</b> <span style='display:inline-block;margin-left:8px;border:1px solid #111;border-radius:3px;padding:1px 7px;font-size:11px;font-weight:800;'>__TIPO_RECIBO__</span></p>"
 
 +"<table style='width:100%; margin-left: 30px;'>"
 +"<td style='width:50%'>"
@@ -6279,7 +6279,7 @@ pagina="<br><div style='background-color:#fff;'>"
 
 	
 // var ficha="<!DOCTYPE html><html><head></head><body>"+pagina+pagina+"</body></html>";
-var ficha=pagina+"<br><br><br>"+pagina;
+var ficha=pagina.replace(/__TIPO_RECIBO__/g,"ORIGINAL")+"<br><br><br>"+pagina.replace(/__TIPO_RECIBO__/g,"DUPLICADO");
 document.getElementById("DivImprimir").innerHTML=ficha;
    var documento= document.getElementById("DivImprimir").innerHTML;
      localStorage.setItem("reporte", documento);

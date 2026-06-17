@@ -68,7 +68,9 @@ if($operacion=="editar")
 		$cod_MigrarCaja,
 		"Solicitud automatica por edicion de migracion de caja.",
 		$user,
-		"archivo: abmMigrarCaja.php | funcion: verificar | funt: editar | idmigrar_caja: ".$cod_MigrarCaja." | monto: ".$monto." | usu_RecibirFK: ".$usu_RecibirFK." | estado: ".$estado." | cod_cajaApertura: ".$cod_cajaApertura
+		"archivo: abmMigrarCaja.php | funcion: verificar | funt: editar | idmigrar_caja: ".$cod_MigrarCaja." | monto: ".$monto." | usu_RecibirFK: ".$usu_RecibirFK." | estado: ".$estado." | cod_cajaApertura: ".$cod_cajaApertura,
+		"estado",
+		$estado
 	);
 }
 
@@ -129,7 +131,9 @@ $codApertura = mb_convert_encoding((string)($codApertura), 'ISO-8859-1', 'UTF-8'
 		$idabm,
 		"Solicitud automatica por asignacion de caja destino.",
 		$user,
-		"archivo: abmMigrarCaja.php | funcion: verificar | funt: nuevoCajaEscritorio | idmigrar_caja: ".$idabm." | codApertura: ".$codApertura
+		"archivo: abmMigrarCaja.php | funcion: verificar | funt: nuevoCajaEscritorio | idmigrar_caja: ".$idabm." | codApertura: ".$codApertura,
+		"estado",
+		"Activo"
 	);
 	nuevoCajaEscritorio( $idabm,$codApertura);
 

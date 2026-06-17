@@ -203,7 +203,8 @@ registrarSolicitudEliminacionGenerica(
 	"Solicitud automatica por edicion de comision de pago.",
 	$user,
 	"archivo: abmpagos.php | funcion: verificarOperacionPagos | funt: editarcomision | idPago: ".$idPagoComision." | comision: ".$comision,
-	""
+	"anulado",
+	"NO"
 );
 
 cambiarcomision($idPagoComision,$comision);
@@ -495,17 +496,6 @@ if ($operacion == "guardarNroComprobante") {
 	$nro_comprobante = mb_convert_encoding((string)($nro_comprobante), 'ISO-8859-1', 'UTF-8');
 	$fecha_facturado=$_POST['fecha_facturado'];
 	$fecha_facturado = mb_convert_encoding((string)($fecha_facturado), 'ISO-8859-1', 'UTF-8');
-
-	registrarSolicitudEliminacionGenerica(
-		"pago",
-		"idPago",
-		$cod_pago,
-		"Solicitud automatica por actualizacion de comprobante de pago.",
-		$user,
-		"archivo: abmpagos.php | funcion: verificarOperacionPagos | funt: guardarNroComprobante | idPago: ".$cod_pago." | nro_comprobante: ".$nro_comprobante." | fecha_facturado: ".$fecha_facturado,
-		""
-	);
-
 	guardarNroComprobante($cod_pago, $nro_comprobante, $fecha_facturado);
 }
 
@@ -1370,7 +1360,10 @@ function cargarpagos($CargoAdministrativo, $MontoEfectivo, $MontoTarjeta, $MontD
 	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Pago Cuota'),0) as totalPago,
 	IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Interes'),0) as totalPagoInteres
 	from credito cr inner join venta vt on vt.cod_venta=cr.cod_venta
-	where cr.cod_venta='$cod_venta' and IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Pago Cuota'),0) < (cr.Monto-cr.descuento)order by cr.idcredito asc";
+	where cr.cod_venta='$cod_venta'
+	and UPPER(TRIM(IFNULL(cr.plazo,'')))!='ENTREGA'
+	and UPPER(TRIM(IFNULL(cr.tipo,'')))!='ENTREGA'
+	and IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and tipo='Pago Cuota'),0) < (cr.Monto-cr.descuento) order by cr.idcredito asc";
 	$pagado = $MontoTarjeta + $MontoEfectivo;
 	$clientenombre = "";
 	$nrodocliente = "";
@@ -1777,7 +1770,8 @@ function quitarpago($idFkVenta,$cod_creditoFK,$motivo,$monto,$cuota,$nrofactura,
 		$motivo,
 		$user,
 		$resumenSolicitudPago,
-		""
+		"anulado",
+		"NO"
 	);
 
 	$mysqli=conectar_al_servidor();
@@ -1830,7 +1824,8 @@ function quitarhistorialpago($cod_pago,$codVenta)
 		"Solicitud automatica por eliminacion de historial de pago.",
 		$user,
 		"archivo: abmpagos.php | funcion: quitarhistorialpago | funt: eliminarhistorialpago | idPago: ".$cod_pago." | codVenta: ".$codVenta,
-		""
+		"anulado",
+		"NO"
 	);
 	aplicarEliminacionHistorialPago($cod_pago,$codVenta,$user);
 }

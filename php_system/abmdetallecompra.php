@@ -73,7 +73,8 @@ if($operacion=="quitar")
 		"Solicitud automatica por quitar detalle de compra.",
 		$user,
 		"archivo: abmdetallecompra.php | funcion: verificar | funt: quitar | cod_detalle_compra: ".$cod_detalle_compra." | cod_compraFK: ".$cod_compraFK." | cod_productoFK: ".$cod_productoFK." | cantidad: ".$cantidad_detalle_compra,
-		""
+		"estado",
+		"Activo"
 	);
 }
 
