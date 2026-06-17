@@ -3505,7 +3505,9 @@ function actualizarPrevisionNuevaCitaAgenda(){
     var modalAsignarVisible = document.getElementById('modalAsignarTratamientoAgenda') && document.getElementById('modalAsignarTratamientoAgenda').style.display !== 'none';
     var cont = modalAsignarVisible ? document.getElementById('detAgendaInsumosPrevistos') : document.getElementById('divPrevisionInsumosNuevaCita');
     if(!cont){ return; }
-    if(agendaTratamientosSeleccionados.length === 0){
+    var estadoAgenda = document.getElementById('inptEstadoNuevaCita') ? document.getElementById('inptEstadoNuevaCita').value : "";
+    var esPrimeraConsulta = String(estadoAgenda || "").toUpperCase() === "PRIMERACONSULTA";
+    if(agendaTratamientosSeleccionados.length === 0 && !esPrimeraConsulta){
         cont.innerHTML = "<span class='agenda-alerta-inline'>Falta seleccionar tratamiento</span>";
         return;
     }
@@ -3518,6 +3520,7 @@ function actualizarPrevisionNuevaCitaAgenda(){
             "cod_venta": agendaVentaSeleccionada,
             "consultorio": document.getElementById('inptConsultorioAgenda') ? document.getElementById('inptConsultorioAgenda').value : "",
             "detalles": agendaTratamientosSeleccionados,
+            "estado": estadoAgenda,
             "funt": "obtenerPrevisionInsumosAgenda"
         },
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",

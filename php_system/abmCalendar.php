@@ -638,7 +638,97 @@ function normalizarNumeroAgenda($valor)
     return is_numeric($valor) ? (float)$valor : 0;
 }
 
-function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
+function esEstadoPrimeraConsultaAgenda($estado)
+{
+    return strtoupper(trim((string)$estado)) === "PRIMERACONSULTA";
+}
+
+function obtenerProductoPrimeraConsultaAgenda($mysqli)
+{
+    $sql = "SELECT cod_producto, nombre_producto
+        FROM producto
+        WHERE LOWER(TRIM(nombre_producto)) = 'primera consulta'
+          AND UPPER(IFNULL(estado,'ACTIVO')) NOT IN ('INACTIVO','ELIMINADO')
+        ORDER BY cod_producto ASC
+        LIMIT 1";
+    $result = $mysqli->query($sql);
+    if ($result && ($row = $result->fetch_assoc())) {
+        return array(
+            "cod_producto" => (string)$row["cod_producto"],
+            "nombre_producto" => normalizarTextoUtf8($row["nombre_producto"])
+        );
+    }
+    return null;
+}
+
+function agendaEsPrimeraConsulta($mysqli, $idAgenda, $estadoForzado = "")
+{
+    if (esEstadoPrimeraConsultaAgenda($estadoForzado)) {
+        return true;
+    }
+    $idAgenda = (int)$idAgenda;
+    if ($idAgenda <= 0) {
+        return false;
+    }
+    $result = $mysqli->query("SELECT estado FROM agenda WHERE id_agenda = '".$idAgenda."' LIMIT 1");
+    return $result && ($row = $result->fetch_assoc()) && esEstadoPrimeraConsultaAgenda($row["estado"]);
+}
+
+function agregarInsumoPrevistoAgenda(&$insumos, $row, $cantidad)
+{
+    $id = (int)$row["id_insumo"];
+    if (!isset($insumos[$id])) {
+        $insumos[$id] = array(
+            "id_insumo" => $id,
+            "nombre" => isset($row["nombre"]) ? normalizarTextoUtf8($row["nombre"]) : "",
+            "unidad_medida" => normalizarTextoUtf8($row["unidad_medida"]),
+            "cantidad" => 0,
+            "stock_minimo" => isset($row["stock_minimo"]) ? normalizarNumeroAgenda($row["stock_minimo"]) : 0,
+            "stock" => null,
+            "faltante" => 0,
+            "tiene_variantes" => isset($row["tiene_variantes"]) ? (int)$row["tiene_variantes"] : 0,
+            "tipo_variante" => isset($row["tipo_variante"]) ? normalizarTextoUtf8($row["tipo_variante"]) : "",
+            "id_variante" => 0,
+            "variantes" => array()
+        );
+    }
+    $insumos[$id]["cantidad"] += normalizarNumeroAgenda($cantidad);
+}
+
+function agregarInsumosProductoPrimeraConsultaAgenda($mysqli, &$insumos, $conDetalleCompleto = false)
+{
+    $producto = obtenerProductoPrimeraConsultaAgenda($mysqli);
+    if (!$producto) {
+        return null;
+    }
+
+    $campos = $conDetalleCompleto
+        ? "ip.id_insumo,
+            IF(LOWER(TRIM(i.descripcion)) = 'descartable', MAX(ip.cantidad), SUM(ip.cantidad)) AS cantidad,
+            i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante"
+        : "ip.id_insumo,
+            IF(LOWER(TRIM(i.descripcion)) = 'descartable', MAX(ip.cantidad), SUM(ip.cantidad)) AS cantidad,
+            i.unidad_medida";
+    $grupo = $conDetalleCompleto
+        ? "ip.id_insumo, i.descripcion, i.nombre, i.unidad_medida, i.stock_minimo, i.tiene_variantes, i.tipo_variante"
+        : "ip.id_insumo, i.unidad_medida, i.descripcion";
+
+    $codProducto = mysqli_real_escape_string($mysqli, $producto["cod_producto"]);
+    $sql = "SELECT ".$campos."
+        FROM insumo_producto ip
+        INNER JOIN insumosconsl i ON i.id_insumo = ip.id_insumo
+        WHERE ip.cod_producto = '".$codProducto."'
+        GROUP BY ".$grupo;
+    $result = $mysqli->query($sql);
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            agregarInsumoPrevistoAgenda($insumos, $row, $row["cantidad"]);
+        }
+    }
+    return $producto;
+}
+
+function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForzado = "")
 {
     $idAgenda = (int)$idAgenda;
     $usuario = (int)$useru;
@@ -663,7 +753,7 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
     $resultConsumo = $mysqli->query("SELECT COUNT(*) AS total FROM agenda_consumo_insumos WHERE id_agenda = '".$idAgenda."'");
     $totalConsumo = ($resultConsumo && ($rowTotal = $resultConsumo->fetch_assoc())) ? (int)$rowTotal["total"] : 0;
     if ($totalConsumo == 0) {
-        $insumos = obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda);
+        $insumos = obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda, $estadoForzado);
         foreach ($insumos as $insumo) {
             $idInsumo = (int)$insumo["id_insumo"];
             $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
@@ -772,7 +862,7 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru)
     return $totalDescontados;
 }
 
-function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda)
+function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda, $estadoForzado = "")
 {
     $idAgenda = (int)$idAgenda;
     $insumos = array();
@@ -789,6 +879,10 @@ function obtenerInsumosPrevistosAgendaSinPrepararEstructura($mysqli, $idAgenda)
             }
             $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
         }
+    }
+
+    if (agendaEsPrimeraConsulta($mysqli, $idAgenda, $estadoForzado)) {
+        agregarInsumosProductoPrimeraConsultaAgenda($mysqli, $insumos, false);
     }
 
     $sql = "SELECT ip.id_insumo,
@@ -981,12 +1075,13 @@ function obtenerCodLocalConsultorioAgenda($mysqli, $idConsultorio)
     return 0;
 }
 
-function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detalles = array(), $consultorio = 0)
+function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detalles = array(), $consultorio = 0, $estadoAgenda = "")
 {
     asegurarEstructuraAgendaInsumos($mysqli);
     $idAgenda = (int)$idAgenda;
     $codVenta = (int)$codVenta;
     $insumos = array();
+    $esPrimeraConsulta = agendaEsPrimeraConsulta($mysqli, $idAgenda, $estadoAgenda);
 
     if ($idAgenda > 0 && count($detalles) == 0) {
         $resultDetalles = $mysqli->query("SELECT cod_detalle_ventaFK FROM agenda_tratamientos WHERE id_agenda = '".$idAgenda."' AND estado <> 'cancelado'");
@@ -997,7 +1092,7 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
         }
     }
 
-    if (count($detalles) == 0) {
+    if (count($detalles) == 0 && !$esPrimeraConsulta) {
         return array();
     }
 
@@ -1027,6 +1122,10 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
             }
             $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
         }
+    }
+
+    if ($esPrimeraConsulta) {
+        agregarInsumosProductoPrimeraConsultaAgenda($mysqli, $insumos, true);
     }
 
     $ids = array();
@@ -1066,6 +1165,13 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
                 }
                 $insumos[$id]["cantidad"] += normalizarNumeroAgenda($row["cantidad"]);
             }
+        }
+    }
+
+    foreach ($insumos as $id => $insumo) {
+        $insumos[$id]["id_variante"] = isset($seleccionesVariantes[$id]) ? (int)$seleccionesVariantes[$id] : (int)(isset($insumos[$id]["id_variante"]) ? $insumos[$id]["id_variante"] : 0);
+        if ((int)(isset($insumos[$id]["tiene_variantes"]) ? $insumos[$id]["tiene_variantes"] : 0) === 1 && count($insumos[$id]["variantes"]) == 0) {
+            $insumos[$id]["variantes"] = obtenerVariantesAgendaInsumo($mysqli, $id);
         }
     }
 
@@ -1177,11 +1283,12 @@ function obtenerPrevisionInsumosAgendaEndpoint($mysqli)
     $idAgenda = isset($_POST['id_agenda']) ? (int)$_POST['id_agenda'] : 0;
     $codVenta = isset($_POST['cod_venta']) ? (int)$_POST['cod_venta'] : 0;
     $consultorio = isset($_POST['consultorio']) ? (int)$_POST['consultorio'] : 0;
+    $estadoAgenda = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : "";
     $detalles = isset($_POST['detalles']) ? $_POST['detalles'] : array();
     if (!is_array($detalles)) {
         $detalles = $detalles != '' ? explode(",", $detalles) : array();
     }
-    $insumos = obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta, $detalles, $consultorio);
+    $insumos = obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta, $detalles, $consultorio, $estadoAgenda);
     $faltantes = array();
     foreach ($insumos as $insumo) {
         if (normalizarNumeroAgenda($insumo["faltante"]) > 0) {
@@ -2589,7 +2696,7 @@ function guardarCita($mysqli, $useru){
         }
     }
 
-    $insumos = obtenerInsumosPrevistosAgenda($mysqli, $id_agenda, $codVenta, $idsDetalles, (int)$consultorio);
+    $insumos = obtenerInsumosPrevistosAgenda($mysqli, $id_agenda, $codVenta, $idsDetalles, (int)$consultorio, $estado);
     foreach ($insumos as $insumo) {
         $idInsumo = (int)$insumo["id_insumo"];
         $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
@@ -2786,7 +2893,8 @@ function actualizarCita($mysqli, $useru){
         }
 
         if ($debeDescontarInsumos) {
-            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru);
+            $estadoAnteriorDescuento = isset($agendaAnterior["estado"]) ? $agendaAnterior["estado"] : "";
+            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru, $estadoAnteriorDescuento);
         }
 
         $mysqli->commit();
@@ -2870,7 +2978,8 @@ function actualizarPresupuestoAgenda($mysqli, $useru){
         }
 
         if ($debeDescontarInsumos) {
-            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru);
+            $estadoAnteriorDescuento = isset($agendaAnterior["estado"]) ? $agendaAnterior["estado"] : "";
+            $insumosDescontados = descontarInsumosAgendaAtendida($mysqli, $id_agenda, $useru, $estadoAnteriorDescuento);
         }
 
         $mysqli->commit();
@@ -3244,8 +3353,17 @@ function cargarAgenda($mysqli, $useru){
             $nombre_doctor = $row["nombre_doctor_presupesto"];
         }
 
+        $esPrimeraConsultaEvento = esEstadoPrimeraConsultaAgenda($row["estado"]);
+        $productoPrimeraConsultaEvento = $esPrimeraConsultaEvento ? obtenerProductoPrimeraConsultaAgenda($mysqli) : null;
+        $nombrePrimeraConsultaEvento = $productoPrimeraConsultaEvento ? $productoPrimeraConsultaEvento["nombre_producto"] : "Primera consulta";
         $nombresTratamientos = $row["tratamientos_agenda"] != "" ? $row["tratamientos_agenda"] : $row["nombre_tratamiento"];
         $nombrePendiente = $row["tratamientos_agenda"] != "" ? $row["tratamientos_agenda"] : $row["nombre_tratamiento_pendiente"];
+        if ($esPrimeraConsultaEvento && trim((string)$nombresTratamientos) == "") {
+            $nombresTratamientos = $nombrePrimeraConsultaEvento;
+        }
+        if ($esPrimeraConsultaEvento && trim((string)$nombrePendiente) == "") {
+            $nombrePendiente = $nombrePrimeraConsultaEvento;
+        }
         $tratamientosIds = array();
         if ($row["tratamientos_ids"] != "") {
             $partesTratamientos = explode(",", $row["tratamientos_ids"]);
@@ -3283,7 +3401,7 @@ function cargarAgenda($mysqli, $useru){
             "nombre_doctor" => $nombre_doctor,
             "nombres_tratamiento" => normalizarTextoUtf8($nombresTratamientos),
             "nombre_tratamiento_pendiente" => normalizarTextoUtf8($nombrePendiente),
-            "sin_tratamiento" => count($tratamientosIds) == 0,
+            "sin_tratamiento" => count($tratamientosIds) == 0 && !$esPrimeraConsultaEvento,
             "riesgo_insumos" => false,
             "insumos_previstos" => array(),
             "insumos_faltantes" => array(),
@@ -3296,7 +3414,7 @@ function cargarAgenda($mysqli, $useru){
     for ($i = 0; $i < count($eventos); $i++) {
         $estadoEvento = strtoupper((string)$eventos[$i]["estado"]);
         $entraProyeccion = in_array($estadoEvento, array("AGENDADO", "CONFIRMADO", "CONFIRMADOCONDEUDA", "PRIMERACONSULTA"));
-        if (count($eventos[$i]["tratamientos_ids"]) == 0) {
+        if (count($eventos[$i]["tratamientos_ids"]) == 0 && !esEstadoPrimeraConsultaAgenda($eventos[$i]["estado"])) {
             continue;
         }
 
@@ -3305,7 +3423,8 @@ function cargarAgenda($mysqli, $useru){
             (int)$eventos[$i]["id"],
             (int)$eventos[$i]["cod_ventaFK"],
             $eventos[$i]["tratamientos_ids"],
-            (int)$eventos[$i]["consultorio"]
+            (int)$eventos[$i]["consultorio"],
+            $eventos[$i]["estado"]
         );
 
         $faltantes = array();

@@ -2013,11 +2013,11 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuPresupuestoProductoDoc' title='Nuevo Tratamiento' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
+<table class='divMenub' id='divMenuPresupuestoProductoDoc' title='Nueva Venta' onclick='verCerrarAbmDetallesPresupuestoDoc(true)' style='text-align:center'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/presupuesto.png' />
-<p class='pTitulo4'>Nuevo Tratamiento</p>
+<p class='pTitulo4'>Nueva Venta</p>
 <center>
 <div id='divMinimizadoSalidadDepositoDoc' style='display:none' class='divMinimizado'></div>
 </center>
@@ -26729,7 +26729,7 @@ function escaparHtmlInformeInsumosAgenda(valor){
 
             <div class='filtro-grupo'>
                 <label>Estado</label>
-                <select id='inptEstadoNuevaCita' class='catalogo-selectBuscador'>
+                <select id='inptEstadoNuevaCita' class='catalogo-selectBuscador' onchange='actualizarPrevisionNuevaCitaAgenda()'>
                     <option style='background:#80c583;color:#ffff' value='AGENDADO'>Agendado</option>
                     <option style='background:#3b833e;color:#ffff'  value='CONFIRMADO'>Confirmado</option>
                     <option style='background:#833b3b;color:#ffff'  value='ATENDIDO'>Atendido</option>
@@ -26927,7 +26927,7 @@ function escaparHtmlInformeInsumosAgenda(valor){
                     <span class='detalle-label'>Doctor/a</span>
                     <div class='detalle-valor'>
                       <span id='detAgendaPresupuesto'></span>
-                      <input type="button" value="Nuevo Tratamiento" class="btn4 detalle-agenda-action" onclick="cargarTratamientoDesdeAgenda();">
+                      <input type="button" value="Nueva Venta" class="btn4 detalle-agenda-action" onclick="cargarTratamientoDesdeAgenda();">
                       <input type="button" value="Ver historial clinico" class="btn4 detalle-agenda-action" onclick="verHistorialDesdeConsultorio()">
                     </div>
                 </div>

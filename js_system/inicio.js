@@ -1518,7 +1518,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.87";
+var codigodeactualizacion="X-GT-1-JMTG-V1.84";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -37047,7 +37047,7 @@ function renderProductosInsumoSeleccionables(seleccionados) {
 		var cantidad = checked ? productosSeleccionadosAbmInsumos[cod] : 1;
 		html += "<label class='insumo-producto-card" + (checked ? " insumo-producto-card--activo" : "") + "'>";
 		html += "<input type='checkbox' class='insumo-producto-check' value='" + escaparHtmlAbmInsumos(cod) + "' " + (checked ? "checked" : "") + " onchange='toggleProductoInsumoSeleccionado(this)'>";
-		html += "<span class='insumo-producto-nombre'>" + escaparHtmlAbmInsumos(etiquetaProducto) + "</span>";
+		html += "<span class='insumo-producto-nombre' title='" + escaparHtmlAbmInsumos(etiquetaProducto) + "'>" + escaparHtmlAbmInsumos(etiquetaProducto) + "</span>";
 		html += "<input type='number' class='inputText insumo-producto-cantidad' value='" + escaparHtmlAbmInsumos(cantidad) + "' min='0.01' step='any' " + (checked ? "" : "disabled") + " onclick='event.stopPropagation()' onchange='actualizarCantidadProductoInsumo(this)'>";
 		html += "</label>";
 	}
