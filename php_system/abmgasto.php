@@ -111,7 +111,9 @@ if (!is_numeric($cod_proyecto_gastoFK)) {
 			$idgastos,
 			"Solicitud automatica por edicion de gasto.",
 			$user,
-			"archivo: abmgasto.php | funcion: verificarOperacionGasto | funt: editar | idgastos: ".$idgastos." | monto: ".$monto." | motivo: ".$motivo." | fecha: ".$fecha." | estado: ".$estado." | cod_local: ".$cod_local." | tipo: ".$tipo
+			"archivo: abmgasto.php | funcion: verificarOperacionGasto | funt: editar | idgastos: ".$idgastos." | monto: ".$monto." | motivo: ".$motivo." | fecha: ".$fecha." | estado: ".$estado." | cod_local: ".$cod_local." | tipo: ".$tipo,
+			"estado",
+			$estado
 		);
 	}
 

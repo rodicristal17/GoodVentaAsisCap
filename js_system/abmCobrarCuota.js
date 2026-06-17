@@ -2163,6 +2163,7 @@ function cobrarCuotaImprimirRecibo() {
 		+ ".cobrar-cuota-recibo-title{font-family:Arial,sans-serif;font-size:24px;font-weight:800;margin:0;text-align:center;line-height:24px;letter-spacing:0;}"
 		+ ".cobrar-cuota-recibo-address{font-size:8px;font-family:Arial,sans-serif;line-height:10px;margin:1px 0 0;text-align:center;}"
 		+ ".cobrar-cuota-recibo-label{display:inline-block;font-size:10px;font-weight:800;line-height:11px;background:#eceff3;border-radius:2px;padding:1px 8px;margin-top:2px;}"
+		+ ".cobrar-cuota-recibo-marca{display:inline-block;margin-left:6px;font-size:9px;font-weight:800;line-height:11px;border:1px solid #111;border-radius:2px;padding:1px 7px;}"
 		+ ".cobrar-cuota-recibo-head{text-align:center;margin-bottom:3mm;}"
 		+ ".cobrar-cuota-recibo-data{width:100%;margin-top:1mm;table-layout:fixed;}"
 		+ ".cobrar-cuota-recibo-data .tableTicket{width:98%;font-size:8px;line-height:10px;margin:0;font-family:Arial,sans-serif;}"
@@ -2185,55 +2186,59 @@ function cobrarCuotaImprimirRecibo() {
 		+ "@media print{.cobrar-cuota-recibo-copy{height:131mm;}.cobrar-cuota-recibo-separador{height:6mm;}}"
 		+ "</style>";
 
-	var copia = "<div class='cobrar-cuota-recibo-copy'>"
-		+ "<div class='divTicket cobrar-cuota-recibo-print'>"
-		+ "<img class='cobrar-cuota-recibo-watermark' src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' />"
-		+ "<div class='cobrar-cuota-recibo-content'>"
-		+ "<div class='cobrar-cuota-recibo-head'>"
-		+ "<p class='cobrar-cuota-recibo-title'>CLINIDENT</p>"
-		+ "<p class='cobrar-cuota-recibo-address'>Humait&aacute; esq. Dr. Bottrel<br>Cel: (0982) 104 622<br>Villarrica - Paraguay</p>"
-		+ "<span class='cobrar-cuota-recibo-label'>RECIBO DE DINERO</span>"
-		+ "</div>"
-		+ "<table class='cobrar-cuota-recibo-data'>"
-		+ "<tr>"
-		+ "<td style='width:50%'>"
-		+ cobrarCuotaReciboFila("Numero", numeroRecibo, "80px")
-		+ cobrarCuotaReciboFila("Cliente", r.cliente, "60px")
-		+ cobrarCuotaReciboFila("RUC o C.I.", r.cedula, "85px")
-		+ "</td>"
-		+ "<td style='width:50%'>"
-		+ cobrarCuotaReciboFila("Fecha", fechaPago, "60px")
-		+ cobrarCuotaReciboFila("Cajero", r.cajero, "60px")
-		+ cobrarCuotaReciboFila("D. Atrasado", diasAtraso + " Dia(s)", "100px")
-		+ "</td>"
-		+ "</tr>"
-		+ "</table>"
-		+ "<p class='cobrar-cuota-recibo-concepto'><b>EN CONCEPTO DE :</b>" + cobrarCuotaEscape(concepto) + "</p>"
-		+ "<table class='cobrar-cuota-recibo-body'><tr><td style='width:67%;padding-right:4mm;'>"
-		+ "<table class='tableTicket cobrar-cuota-recibo-header'>"
-		+ "<tr>"
-		+ "<td style='width:16%;'>FECHA P.</td>"
-		+ "<td style='width:16%;'>FECHA<br>VENC.</td>"
-		+ "<td style='width:34%;'>DESCRIPCION</td>"
-		+ "<td style='width:15%;'>TIPO</td>"
-		+ "<td style='width:19%;text-align:right;'>IMPORTE</td>"
-		+ "</tr>"
-		+ "</table>"
-		+ detalleCuota
-		+ "</td>"
-		+ "<td style='width:33%;'>"
-		+ "<table class='cobrar-cuota-recibo-totales'>"
-		+ "<tr><td>TOTAL FACTURA:</td><td>" + cobrarCuotaEscape(totalCuota) + " Gs.</td></tr>"
-		+ "<tr><td>TOTAL PAGADO:</td><td>" + cobrarCuotaEscape(monto) + " Gs.</td></tr>"
-		+ "<tr><td>TOTAL DESCUENTO:</td><td>0 Gs.</td></tr>"
-		+ "<tr><td>SALDO ACTUAL:</td><td>" + cobrarCuotaEscape(saldoActual) + " Gs.</td></tr>"
-		+ "</table>"
-		+ "</td>"
-		+ "</tr></table>"
-		+ detalleUeno
-		+ "</div>"
-		+ "</div>";
-	var pagina = estilos + copia + "<div class='cobrar-cuota-recibo-separador'></div>" + copia;
+	var construirCopiaRecibo = function(marca) {
+		return "<div class='cobrar-cuota-recibo-copy'>"
+			+ "<div class='divTicket cobrar-cuota-recibo-print'>"
+			+ "<img class='cobrar-cuota-recibo-watermark' src='/GoodVentaAsisCap/iconos/iconoEmpresa.JPG' />"
+			+ "<div class='cobrar-cuota-recibo-content'>"
+			+ "<div class='cobrar-cuota-recibo-head'>"
+			+ "<p class='cobrar-cuota-recibo-title'>CLINIDENT</p>"
+			+ "<p class='cobrar-cuota-recibo-address'>Humait&aacute; esq. Dr. Bottrel<br>Cel: (0982) 104 622<br>Villarrica - Paraguay</p>"
+			+ "<span class='cobrar-cuota-recibo-label'>RECIBO DE DINERO</span>"
+			+ "<span class='cobrar-cuota-recibo-marca'>" + cobrarCuotaEscape(marca) + "</span>"
+			+ "</div>"
+			+ "<table class='cobrar-cuota-recibo-data'>"
+			+ "<tr>"
+			+ "<td style='width:50%'>"
+			+ cobrarCuotaReciboFila("Numero", numeroRecibo, "80px")
+			+ cobrarCuotaReciboFila("Cliente", r.cliente, "60px")
+			+ cobrarCuotaReciboFila("RUC o C.I.", r.cedula, "85px")
+			+ "</td>"
+			+ "<td style='width:50%'>"
+			+ cobrarCuotaReciboFila("Fecha", fechaPago, "60px")
+			+ cobrarCuotaReciboFila("Cajero", r.cajero, "60px")
+			+ cobrarCuotaReciboFila("D. Atrasado", diasAtraso + " Dia(s)", "100px")
+			+ "</td>"
+			+ "</tr>"
+			+ "</table>"
+			+ "<p class='cobrar-cuota-recibo-concepto'><b>EN CONCEPTO DE :</b>" + cobrarCuotaEscape(concepto) + "</p>"
+			+ "<table class='cobrar-cuota-recibo-body'><tr><td style='width:67%;padding-right:4mm;'>"
+			+ "<table class='tableTicket cobrar-cuota-recibo-header'>"
+			+ "<tr>"
+			+ "<td style='width:16%;'>FECHA P.</td>"
+			+ "<td style='width:16%;'>FECHA<br>VENC.</td>"
+			+ "<td style='width:34%;'>DESCRIPCION</td>"
+			+ "<td style='width:15%;'>TIPO</td>"
+			+ "<td style='width:19%;text-align:right;'>IMPORTE</td>"
+			+ "</tr>"
+			+ "</table>"
+			+ detalleCuota
+			+ "</td>"
+			+ "<td style='width:33%;'>"
+			+ "<table class='cobrar-cuota-recibo-totales'>"
+			+ "<tr><td>TOTAL FACTURA:</td><td>" + cobrarCuotaEscape(totalCuota) + " Gs.</td></tr>"
+			+ "<tr><td>TOTAL PAGADO:</td><td>" + cobrarCuotaEscape(monto) + " Gs.</td></tr>"
+			+ "<tr><td>TOTAL DESCUENTO:</td><td>0 Gs.</td></tr>"
+			+ "<tr><td>SALDO ACTUAL:</td><td>" + cobrarCuotaEscape(saldoActual) + " Gs.</td></tr>"
+			+ "</table>"
+			+ "</td>"
+			+ "</tr></table>"
+			+ detalleUeno
+			+ "</div>"
+			+ "</div>"
+			+ "</div>";
+	};
+	var pagina = estilos + construirCopiaRecibo("ORIGINAL") + "<div class='cobrar-cuota-recibo-separador'></div>" + construirCopiaRecibo("DUPLICADO");
 
 	var contenedor = document.getElementById("DivImprimir");
 	if (contenedor) {

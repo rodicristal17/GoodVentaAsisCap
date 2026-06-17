@@ -84,6 +84,18 @@ function saneamientoSolicitudEsGastoCuotaAsociada($solicitud) {
         && strpos($motivo, 'cuota asociada de gasto.') !== false;
 }
 
+function saneamientoSolicitudEsCierreOEdicionCaja($solicitud) {
+    $motivo = strtolower(trim(isset($solicitud['motivo']) ? (string)$solicitud['motivo'] : ''));
+    $motivo = rtrim($motivo, " \t\n\r\0\x0B.");
+    return $motivo === 'solicitud automatica por cierre o edicion de caja';
+}
+
+function saneamientoSolicitudEsEdicionGasto($solicitud) {
+    $motivo = strtolower(trim(isset($solicitud['motivo']) ? (string)$solicitud['motivo'] : ''));
+    $motivo = rtrim($motivo, " \t\n\r\0\x0B.");
+    return $motivo === 'solicitud automatica por edicion de gasto';
+}
+
 function saneamientoSolicitudEsSensible($solicitud) {
     if (saneamientoSolicitudEsGastoCuotaAsociada($solicitud)) {
         return array(false, '');
@@ -449,6 +461,36 @@ function saneamientoProcesarSolicitud($mysqli, $idSolicitud, $codUsuario, &$resu
         return;
     }
 
+    if (saneamientoSolicitudEsCierreOEdicionCaja($solicitud)) {
+        $obs = 'Saneamiento automatico: aprobada por motivo de cierre o edicion de caja; no se ejecuto inactivacion.';
+        $errorResolver = saneamientoResolverSolicitud($mysqli, $idSolicitud, 'aprobada', $codUsuario, $obs);
+        if ($errorResolver !== '') {
+            $mysqli->rollback();
+            $resumen['errores']++;
+            $items[] = array($idSolicitud, 'error', $errorResolver);
+            return;
+        }
+        $mysqli->commit();
+        $resumen['procesadas_automaticamente']++;
+        $items[] = array($idSolicitud, 'procesada automaticamente', $obs);
+        return;
+    }
+
+    if (saneamientoSolicitudEsEdicionGasto($solicitud)) {
+        $obs = 'Saneamiento automatico: aprobada por motivo de edicion de gasto; no se ejecuto inactivacion.';
+        $errorResolver = saneamientoResolverSolicitud($mysqli, $idSolicitud, 'aprobada', $codUsuario, $obs);
+        if ($errorResolver !== '') {
+            $mysqli->rollback();
+            $resumen['errores']++;
+            $items[] = array($idSolicitud, 'error', $errorResolver);
+            return;
+        }
+        $mysqli->commit();
+        $resumen['procesadas_automaticamente']++;
+        $items[] = array($idSolicitud, 'procesada automaticamente', $obs);
+        return;
+    }
+
     $esGastoCuotaAsociada = saneamientoSolicitudEsGastoCuotaAsociada($solicitud);
     list($esSensible, $motivoSensible) = saneamientoSolicitudEsSensible($solicitud);
     if ($esSensible) {
@@ -480,21 +522,6 @@ function saneamientoProcesarSolicitud($mysqli, $idSolicitud, $codUsuario, &$resu
 
     if (!saneamientoIdentificadorValido($tabla) || !saneamientoIdentificadorValido($pkColumna)) {
         $obs = 'Saneamiento automatico: requiere revision. La tabla o columna principal no es valida.';
-        $errorObs = saneamientoActualizarObservacionPendiente($mysqli, $idSolicitud, $obs);
-        if ($errorObs !== '') {
-            $mysqli->rollback();
-            $resumen['errores']++;
-            $items[] = array($idSolicitud, 'error', $errorObs);
-            return;
-        }
-        $mysqli->commit();
-        $resumen['requieren_revision']++;
-        $items[] = array($idSolicitud, 'requiere revision', $obs);
-        return;
-    }
-
-    if (!$esGastoCuotaAsociada && !saneamientoSolicitudPareceGenerica($solicitud)) {
-        $obs = 'Saneamiento automatico: requiere revision. No hay huella suficiente de registrarSolicitudEliminacionGenerica.';
         $errorObs = saneamientoActualizarObservacionPendiente($mysqli, $idSolicitud, $obs);
         if ($errorObs !== '') {
             $mysqli->rollback();
