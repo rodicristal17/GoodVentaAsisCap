@@ -4060,7 +4060,7 @@ function onAgendaResizeEnd(ev){
     resetAgendaResizeState();
 }
 
-function cambiarEstadoAgendaDesdeModal(nuevoEstado){
+function cambiarEstadoAgendaDesdeModal(nuevoEstado, opciones){
     var idAgenda = document.getElementById('detAgendaId').innerHTML;
 
     if(idAgenda == ''){
@@ -4068,7 +4068,7 @@ function cambiarEstadoAgendaDesdeModal(nuevoEstado){
         return;
     }
 
-    actualizarAgenda(idAgenda, '', '', nuevoEstado);
+    actualizarAgenda(idAgenda, '', '', nuevoEstado, opciones);
 }
 
 function actualizarHorarioAgendaDesdeModal(){
@@ -4094,7 +4094,8 @@ function actualizarHorarioAgendaDesdeModal(){
     actualizarAgenda(idAgenda, horaInicio, horaFin, '');
 }
 
-function actualizarAgenda(idAgenda, horaInicio, horaFin, estado){
+function actualizarAgenda(idAgenda, horaInicio, horaFin, estado, opciones){
+    opciones = opciones || {};
     obtener_datos_user();
 
     var datos = {
@@ -4130,10 +4131,21 @@ console.log(responseText);
                 Respuesta = respuestaJqueryAjax(Respuesta);
 
                 if (Respuesta == true) {
-                    cerrarDetalleAgenda();
-                    cargarAgendaConsultoriosDesdePHP();
-                    ventanaAnterior.pop();
-                    limpiarFichaPacienteCalendario();
+                    if (opciones.mantenerDetalle === true) {
+                        if (typeof idAbmAgenda !== "undefined") {
+                            idAbmAgenda = idAgenda;
+                        }
+                        cargarAgendaConsultoriosDesdePHP(function () {
+                            if (typeof idAbmAgenda !== "undefined") {
+                                idAbmAgenda = idAgenda;
+                            }
+                        });
+                    } else {
+                        cerrarDetalleAgenda();
+                        cargarAgendaConsultoriosDesdePHP();
+                        ventanaAnterior.pop();
+                        limpiarFichaPacienteCalendario();
+                    }
                 } else {
                     alert(resp["mensaje"] || "No se pudo actualizar el horario.");
                 }
