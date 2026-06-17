@@ -3657,7 +3657,7 @@ function buscarAgendamiento($mysqli){
         if($row["estado"] == "Confirmado"){
             $estadoColor = "#32c782";
         }else if($row["estado"] == "Cancelado"){
-            $estadoColor = "#858585";
+            $estadoColor = "#6c757d";
         }
 
         $html .= "<tr class='tr_registro' "

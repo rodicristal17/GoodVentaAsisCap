@@ -974,7 +974,7 @@
 .estado-AGENDADO{ background:linear-gradient(135deg,#8a63e8,#7351d8); }
 .estado-CONFIRMADO{ background:linear-gradient(135deg,#3ba7c2,#2b8ca4); }
 .estado-ATENDIDO{ background:linear-gradient(135deg,#9f3a3a,#833b3b); }
-.estado-CANCELADO{ background:linear-gradient(135deg,#e06565,#c94d4d); }
+.estado-CANCELADO{ background:#6c757d; }
 
 .modal-filtros-overlay{
     position:fixed;

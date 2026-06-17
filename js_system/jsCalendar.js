@@ -2131,7 +2131,7 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     if(e.estado == "AGENDADO"){ MiColor = "linear-gradient(135deg,#80c583,#64ad69)"; }
     else if(e.estado == "CONFIRMADO"){ MiColor = "linear-gradient(135deg,#3ba7c2,#2b8ca4)"; }
     else if(e.estado == "ATENDIDO"){ MiColor = "linear-gradient(135deg,#9f3a3a,#833b3b)"; }
-    else if(e.estado == "CANCELADO"){ MiColor = "linear-gradient(135deg,#e06565,#c94d4d)"; }
+    else if(e.estado == "CANCELADO"){ MiColor = "#6c757d"; }
     else if(e.estado == "ENESPERA"){ MiColor = "linear-gradient(135deg,#dcb645,#c59a25)"; }
     else if(e.estado == "AUSENTE"){ MiColor = "linear-gradient(135deg,#8c97a6,#6c757d)"; }
     else if(e.estado == "CONFIRMADOCONDEUDA"){ MiColor = "linear-gradient(135deg,#07488f,#0b63bd)"; }
