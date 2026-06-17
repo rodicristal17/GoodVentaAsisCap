@@ -2674,6 +2674,32 @@ function vincularTratamientoCalendario(id_agenda, cod_tratamiento) {
 
 
 let id_detalle_tratamientoConsulta = '';
+let contextoPorcentajeProgresoConsulta = null;
+
+function guardarContextoPorcentajeProgresoConsulta() {
+	contextoPorcentajeProgresoConsulta = {
+		cod_venta: cod_ventaFKConsulta,
+		cod_cliente: cod_clienteConsulta,
+		id_agenda: (typeof idAbmAgenda !== "undefined" ? idAbmAgenda : "")
+	};
+
+	if (contextoPorcentajeProgresoConsulta.id_agenda == "" && document.getElementById("detAgendaId")) {
+		contextoPorcentajeProgresoConsulta.id_agenda = document.getElementById("detAgendaId").innerHTML;
+	}
+}
+
+function restaurarContextoPorcentajeProgresoConsulta() {
+	if (!contextoPorcentajeProgresoConsulta) {
+		return;
+	}
+
+	cod_ventaFKConsulta = contextoPorcentajeProgresoConsulta.cod_venta || cod_ventaFKConsulta;
+	cod_clienteConsulta = contextoPorcentajeProgresoConsulta.cod_cliente || cod_clienteConsulta;
+
+	if (typeof idAbmAgenda !== "undefined" && contextoPorcentajeProgresoConsulta.id_agenda != "") {
+		idAbmAgenda = contextoPorcentajeProgresoConsulta.id_agenda;
+	}
+}
 /* PORCENTAJE DE TRATAMIENTOS */
 function obtenerdatostrConsultaTratamiento(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
@@ -2683,6 +2709,7 @@ function obtenerdatostrConsultaTratamiento(datostr) {
 	datostr.className = 'tableRegistroSelec'
 	id_detalle_tratamientoConsulta = $(datostr).children('td[id="td_id_1"]').html();
 	let porcentaje = $(datostr).children('td[id="td_datos_1"]').html()
+	guardarContextoPorcentajeProgresoConsulta()
 	mostrarValorSlider(parseInt(porcentaje))
 	verCerrarCargarPorcentajeProgreso()
 	verEvolucion()
@@ -2695,6 +2722,7 @@ function verCerrarCargarPorcentajeProgreso(){
 	document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display="none"
 	mostrarValorSlider(0)
 	verCerrarAbmConsulta();
+	restaurarContextoPorcentajeProgresoConsulta()
 	}else{		
 		
 		$("div[id=divCargarTratamientoPorcentajeProgreso]").fadeIn(500);
@@ -2710,7 +2738,12 @@ function mostrarValorSlider(valor) {
   }
 
 function guardarPorcentajeProgreso(){
+		 restaurarContextoPorcentajeProgresoConsulta()
 		 let porcentaje = document.getElementById("inpt_progreso_tratamiento_oculto").value;
+		 let codVentaConsultaProgreso = cod_ventaFKConsulta;
+		 let idAgendaProgreso = (contextoPorcentajeProgresoConsulta && contextoPorcentajeProgresoConsulta.id_agenda != "")
+			 ? contextoPorcentajeProgresoConsulta.id_agenda
+			 : (typeof idAbmAgenda !== "undefined" ? idAbmAgenda : "");
 			obtener_datos_user();
 			 var datos = {
 			 "useru":userid,
@@ -2718,7 +2751,7 @@ function guardarPorcentajeProgreso(){
 			 "navegador": navegador, 
 			 "id_detalle_tratamientoConsulta": id_detalle_tratamientoConsulta, 
 			 "porcentaje": porcentaje, 
-			 "cod_agendaFK": idAbmAgenda,
+			 "cod_agendaFK": idAgendaProgreso,
 			"funt": "guardarPorcentajeProgreso"
 			};
 	 $.ajax({
@@ -2745,10 +2778,13 @@ function guardarPorcentajeProgreso(){
 			
 			if (Respuesta == "exito") {
 				verCerrarCargarPorcentajeProgreso()
+		 restaurarContextoPorcentajeProgresoConsulta()
 		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
- buscarDetalleVentaConsulta(cod_ventaFKConsulta);
- if (idAbmAgenda) {
-	cambiarEstadoAgendaDesdeModal("ATENDIDO");
+ if (codVentaConsultaProgreso != "") {
+	buscarDetalleVentaConsulta(codVentaConsultaProgreso);
+ }
+ if (idAgendaProgreso && typeof actualizarAgenda === "function") {
+	actualizarAgenda(idAgendaProgreso, "", "", "ATENDIDO", { mantenerDetalle: true });
  }
 			}
 			}catch(error)
