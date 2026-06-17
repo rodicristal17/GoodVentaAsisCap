@@ -877,11 +877,21 @@ function cobrarCuotaCargarCuotas(ventaId) {
 					if (cobrarCuotaPlanSeleccionado) {
 						cobrarCuotaPlanSeleccionado.cuotas_pendientes = respuesta.total || "0";
 						cobrarCuotaPlanSeleccionado.saldo_pendiente_total_fmt = respuesta.saldo_total || "0";
+						cobrarCuotaPlanSeleccionado.saldo_pendiente_total = respuesta.saldo_total_num !== undefined ? Number(respuesta.saldo_total_num || 0) : cobrarCuotaNumero(respuesta.saldo_total || "0");
+						if (respuesta.total_venta !== undefined) {
+							cobrarCuotaPlanSeleccionado.total_venta = Number(respuesta.total_venta || 0);
+							cobrarCuotaPlanSeleccionado.total_venta_fmt = respuesta.total_venta_fmt || cobrarCuotaFormato(respuesta.total_venta || 0);
+						}
 						var ventaPlanActual = String(cobrarCuotaPlanSeleccionado.cod_venta || cobrarCuotaPlanSeleccionado.venta_id || "");
 						for (var i = 0; i < cobrarCuotaPlanes.length; i++) {
 							if (String(cobrarCuotaPlanes[i].cod_venta || cobrarCuotaPlanes[i].venta_id || "") == ventaPlanActual) {
 								cobrarCuotaPlanes[i].cuotas_pendientes = respuesta.total || "0";
 								cobrarCuotaPlanes[i].saldo_pendiente_total_fmt = respuesta.saldo_total || "0";
+								cobrarCuotaPlanes[i].saldo_pendiente_total = respuesta.saldo_total_num !== undefined ? Number(respuesta.saldo_total_num || 0) : cobrarCuotaNumero(respuesta.saldo_total || "0");
+								if (respuesta.total_venta !== undefined) {
+									cobrarCuotaPlanes[i].total_venta = Number(respuesta.total_venta || 0);
+									cobrarCuotaPlanes[i].total_venta_fmt = respuesta.total_venta_fmt || cobrarCuotaFormato(respuesta.total_venta || 0);
+								}
 							}
 						}
 						cobrarCuotaRenderPlanSeleccionado(cobrarCuotaPlanSeleccionado);
@@ -1786,6 +1796,13 @@ function cobrarCuotaCrearPagoRegistrado(titulo, detalle, tipo, opciones) {
 	var montoAplicado = Number(opciones.montoAplicado !== undefined ? opciones.montoAplicado : (contexto.monto || 0)) || 0;
 	var saldoCuotaAnterior = Number(cuota.saldo_pendiente_num || contexto.saldo || 0) || 0;
 	var saldoCuotaRestante = Math.max(0, saldoCuotaAnterior - montoAplicado);
+	var totalVenta = Number(plan.total_venta || cuota.total_venta || 0) || 0;
+	var totalVentaFmt = plan.total_venta_fmt || cuota.total_venta_fmt || (totalVenta > 0 ? cobrarCuotaFormato(totalVenta) : "");
+	var saldoVentaAnterior = Number(plan.saldo_pendiente_total || cuota.saldo_pendiente_total || 0) || 0;
+	if (saldoVentaAnterior <= 0) {
+		saldoVentaAnterior = cobrarCuotaNumero(plan.saldo_pendiente_total_fmt || cuota.saldo_pendiente_total_fmt || cuota.saldo_pendiente || saldoCuotaAnterior);
+	}
+	var saldoVentaRestante = Math.max(0, saldoVentaAnterior - montoAplicado);
 	var disponibleAnterior = opciones.disponibleAnterior !== undefined ? Number(opciones.disponibleAnterior || 0) : Number(ueno.monto_disponible || 0);
 	var disponibleNuevo = opciones.disponibleNuevo !== undefined ? Number(opciones.disponibleNuevo || 0) : Math.max(0, disponibleAnterior - montoAplicado);
 	var saldoAplicadoUeno = opciones.saldoAplicadoUeno !== undefined ? Number(opciones.saldoAplicadoUeno || 0) : (ueno.id_movimiento ? Math.max(0, disponibleAnterior - disponibleNuevo) : 0);
@@ -1816,6 +1833,12 @@ function cobrarCuotaCrearPagoRegistrado(titulo, detalle, tipo, opciones) {
 		pagadoTotal: cuota.pagado_total || "0",
 		tipoVenta: cuota.tipo_venta || plan.tipo_venta || "",
 		totalPlan: plan.saldo_pendiente_total_fmt || "",
+		totalVenta: totalVenta,
+		totalVentaFmt: totalVentaFmt,
+		saldoVentaAnterior: saldoVentaAnterior,
+		saldoVentaAnteriorFmt: cobrarCuotaFormato(saldoVentaAnterior),
+		saldoVentaRestante: saldoVentaRestante,
+		saldoVentaRestanteFmt: cobrarCuotaFormato(saldoVentaRestante),
 		montoAplicado: montoAplicado,
 		montoAplicadoFmt: cobrarCuotaFormato(montoAplicado),
 		formaPago: contexto.textoTipo || "",
@@ -1858,6 +1881,10 @@ function cobrarCuotaCrearReciboDesdePago(pago) {
 		pagadoTotal: pago.pagadoTotal || "",
 		tipoVenta: pago.tipoVenta || "",
 		totalPlan: pago.totalPlan || "",
+		totalVenta: pago.totalVentaFmt || "",
+		totalVentaNum: pago.totalVenta || 0,
+		saldoVentaAnterior: pago.saldoVentaAnteriorFmt || "",
+		saldoVentaRestante: pago.saldoVentaRestanteFmt || "",
 		monto: pago.montoAplicadoFmt || "0",
 		formaPago: pago.formaPago || "",
 		banco: pago.banco || "",
@@ -1903,6 +1930,12 @@ function cobrarCuotaRestaurarBoton() {
 function cobrarCuotaCrearRecibo(monto, formaPago, comprobante, estado) {
 	var saldoAnterior = cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0;
 	var saldoRestante = Math.max(0, saldoAnterior - (Number(monto) || 0));
+	var totalVenta = Number((cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.total_venta) || (cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.total_venta) || 0) || 0;
+	var saldoVentaAnterior = Number(cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.saldo_pendiente_total || 0) || 0;
+	if (saldoVentaAnterior <= 0) {
+		saldoVentaAnterior = cobrarCuotaNumero((cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.saldo_pendiente_total_fmt) || (cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.saldo_pendiente) || saldoAnterior);
+	}
+	var saldoVentaRestante = Math.max(0, saldoVentaAnterior - (Number(monto) || 0));
 	return {
 		fecha: cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "",
 		cliente: cobrarCuotaSeleccionada ? cobrarCuotaSeleccionada.cliente : "",
@@ -1918,6 +1951,10 @@ function cobrarCuotaCrearRecibo(monto, formaPago, comprobante, estado) {
 		pagadoTotal: cobrarCuotaSeleccionada ? cobrarCuotaSeleccionada.pagado_total : "",
 		tipoVenta: cobrarCuotaSeleccionada ? cobrarCuotaSeleccionada.tipo_venta : "",
 		totalPlan: cobrarCuotaPlanSeleccionado ? (cobrarCuotaPlanSeleccionado.saldo_pendiente_total_fmt || "") : "",
+		totalVenta: (cobrarCuotaPlanSeleccionado && cobrarCuotaPlanSeleccionado.total_venta_fmt) || (cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.total_venta_fmt) || (totalVenta > 0 ? cobrarCuotaFormato(totalVenta) : ""),
+		totalVentaNum: totalVenta,
+		saldoVentaAnterior: cobrarCuotaFormato(saldoVentaAnterior),
+		saldoVentaRestante: cobrarCuotaFormato(saldoVentaRestante),
 		monto: cobrarCuotaFormato(monto),
 		formaPago: formaPago,
 		comprobante: cobrarCuotaMaskComprobante(comprobante || ""),
@@ -2110,8 +2147,8 @@ function cobrarCuotaImprimirRecibo() {
 	var diasAtraso = cobrarCuotaReciboDiasAtraso(fechaVencimiento, fechaPago);
 	var concepto = cobrarCuotaReciboConcepto(r);
 	var monto = cobrarCuotaReciboValor(r.monto, "0");
-	var totalCuota = cobrarCuotaReciboValor(r.saldoCuotaAnterior || r.montoCuota || r.totalPlan || r.monto, "0");
-	var saldoActual = cobrarCuotaReciboValor(r.saldoCuotaRestante || "0", "0");
+	var totalCuota = cobrarCuotaReciboValor(r.totalVenta || r.totalVentaFmt || r.montoVenta || r.total_factura || r.saldoCuotaAnterior || r.montoCuota || r.totalPlan || r.monto, "0");
+	var saldoActual = cobrarCuotaReciboValor(r.saldoVentaRestante || r.saldoActualVenta || r.saldoActual || r.saldoCuotaRestante || "0", "0");
 	var estadoRecibo = cobrarCuotaReciboValor(r.estado || r.estadoFinalCuota, "Registrado");
 	var tipoPagoCorto = cobrarCuotaReciboTipoCorto(r.formaPago);
 	var descripcionCuota = cobrarCuotaEscape("PAGO DE CUOTA--" + cobrarCuotaReciboValor(r.cuota, ""));
