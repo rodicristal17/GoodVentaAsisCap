@@ -661,6 +661,9 @@ function cc_buscar_movimiento_ueno($usuario)
 		$condicion .= " AND nro_comprobante LIKE '%$compSql%'";
 	}
 	$fechaSql = $mysqli->real_escape_string($fecha_pago);
+	if ($fecha_pago != "") {
+		$condicion .= " AND (fecha_confirmacion='$fechaSql' OR fecha_transaccion='$fechaSql')";
+	}
 	$ordenFecha = $fecha_pago != ""
 		? "CASE WHEN fecha_confirmacion='$fechaSql' OR fecha_transaccion='$fechaSql' THEN 0 ELSE 1 END,"
 		: "";
@@ -676,7 +679,7 @@ function cc_buscar_movimiento_ueno($usuario)
 			CASE WHEN $monto>0 AND monto_disponible>$monto THEN 0 ELSE 1 END,
 			fecha_confirmacion DESC,
 			id_movimiento DESC
-		LIMIT 8";
+		LIMIT 80";
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt || !$stmt->execute()) {
 		$error = $stmt ? $stmt->error : $mysqli->error;
@@ -693,7 +696,7 @@ function cc_buscar_movimiento_ueno($usuario)
 	}
 	$total = count($filas);
 	if ($total > 1) {
-		$html .= "<div class='cobrar-cuota__ueno-warning'><b>Hay varios movimientos similares</b><span>Usa solo el que coincida exactamente con el comprobante completo ingresado.</span></div>";
+		$html .= "<div class='cobrar-cuota__ueno-warning'><b>Hay varios movimientos disponibles</b><span>Selecciona la transferencia que corresponda a este cobro.</span></div>";
 	}
 	foreach ($filas as $row) {
 		$comprobanteRealDb = cc_comprobante_normalizado($row["nro_comprobante"]);
@@ -714,12 +717,10 @@ function cc_buscar_movimiento_ueno($usuario)
 		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"));
 		$montoValido = ($monto > 0 && $disponible > 0 && $monto <= $disponible);
 		$pagoParcialSugerido = ($monto > 0 && $disponible > 0 && $monto > $disponible);
-		$puedeUsar = ($coincidenciaExacta && $estadoDisponible && ($montoValido || $pagoParcialSugerido));
+		$puedeUsar = ($estadoDisponible && ($montoValido || $pagoParcialSugerido));
 		$saldoRestante = $monto > 0 ? max(0, $disponible - min($monto, $disponible)) : $disponible;
 		$mensajeAccion = "Usar este movimiento";
-		if (!$coincidenciaExacta) {
-			$mensajeAccion = "Ingresa comprobante completo";
-		} elseif (!$estadoDisponible || $disponible <= 0) {
+		if (!$estadoDisponible || $disponible <= 0) {
 			$mensajeAccion = "Movimiento no disponible";
 		} elseif ($monto <= 0) {
 			$mensajeAccion = "Ingresa monto";
@@ -750,9 +751,11 @@ function cc_buscar_movimiento_ueno($usuario)
 			$primer = $datos;
 		}
 		$datos_js = htmlspecialchars(json_encode($datos), ENT_QUOTES, 'UTF-8');
-		$badgeComprobante = $coincidenciaExacta
-			? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Coincidencia exacta</span>"
-			: "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--warn'>Similar</span>";
+		$badgeComprobante = $comprobante == ""
+			? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Seleccionable</span>"
+			: ($coincidenciaExacta
+				? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Coincidencia exacta</span>"
+				: "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--warn'>Similar</span>");
 		$badgeFecha = $fecha_pago == ""
 			? ""
 			: ($fechaCoincide
@@ -774,13 +777,8 @@ function cc_buscar_movimiento_ueno($usuario)
 			. $accion
 			. "</div>";
 	}
-	if ($total > 0) {
-		$html .= "<div class='cobrar-cuota__ueno-pending-action'>"
-			. "<button type='button' onclick='cobrarCuotaRegistrarPendienteUeno()'>No encuentro el movimiento &middot; Registrar pendiente</button>"
-			. "</div>";
-	}
 	if ($html == "") {
-		$html = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No encontramos un movimiento Ueno disponible con esos datos. Puedes registrar el pago como pendiente de conciliacion bancaria.</div>";
+		$html = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No encontramos una transferencia Ueno disponible para la fecha de pago seleccionada. Ajusta el monto, la fecha o revisa los movimientos importados.</div>";
 	}
 	mysqli_close($mysqli);
 	cc_json(array("1" => "exito", "2" => $html, "3" => $total, "4" => $primer, "5" => $tieneExacta ? "SI" : "NO"));
@@ -864,6 +862,14 @@ function cc_conciliar_transferencia($usuario)
 	$comprobante = cc_post("comprobante");
 	$cod_credito = cc_post("cod_credito");
 	$monto = cc_monto(isset($_POST["monto"]) ? $_POST["monto"] : "");
+	if ($id_movimiento != "") {
+		$idMovPreview = $mysqli->real_escape_string($id_movimiento);
+		$resMovPreview = $mysqli->query("SELECT nro_comprobante FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovPreview' AND tipo_movimiento='credito' LIMIT 1");
+		$movPreview = $resMovPreview ? $resMovPreview->fetch_assoc() : null;
+		if ($movPreview) {
+			$comprobante = cc_comprobante_normalizado($movPreview["nro_comprobante"]);
+		}
+	}
 	if ($id_movimiento == "" || $comprobante == "" || $cod_credito == "" || $monto <= 0) {
 		mysqli_close($mysqli);
 		cc_json(array("1" => "camposvacio", "2" => "Faltan datos para conciliar con Ueno"));

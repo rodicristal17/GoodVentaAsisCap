@@ -716,6 +716,22 @@ function ueno_pago_movimiento_post($control)
 	return preg_replace('/[^0-9]/', '', (string)$valor);
 }
 
+function ueno_pago_comprobante_movimiento($mysqli, $idMovimiento)
+{
+	if ($idMovimiento == "" || !ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+		return "";
+	}
+
+	$idMovimientoSql = $mysqli->real_escape_string($idMovimiento);
+	$result = $mysqli->query("SELECT nro_comprobante FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovimientoSql' LIMIT 1");
+	if (!$result || $result->num_rows == 0) {
+		return "";
+	}
+	$row = $result->fetch_assoc();
+	$comprobante = trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$row["nro_comprobante"]));
+	return $comprobante;
+}
+
 function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $idMovimientoPermitido = "")
 {
 	if ($comprobante == "" || !ueno_pago_tabla_existe($mysqli, "pago_transferencia_conciliacion")) {
@@ -850,10 +866,10 @@ function ueno_pago_validar_transferencias($totalregistro)
 			$comprobanteUeno = ueno_pago_comprobante_post($control);
 			$idMovimientoUeno = ueno_pago_movimiento_post($control);
 			$montoTransferencia = isset($_POST['monto'.$control]) ? quitarseparadormiles($_POST['monto'.$control]) : 0;
-			if ($comprobanteUeno == "") {
-				$informacion = array("1" => "camposvacio", "2" => "Falta numero de comprobante Ueno para transferencia");
-				echo json_encode($informacion);
-				exit;
+			$exigirMovimientoUeno = isset($_POST['exigir_movimiento_ueno']) ? $_POST['exigir_movimiento_ueno'] : "NO";
+			$exigirMovimientoUeno = mb_convert_encoding((string)$exigirMovimientoUeno, 'ISO-8859-1', 'UTF-8');
+			if ($exigirMovimientoUeno == "SI" && $idMovimientoUeno == "") {
+				ueno_pago_responder_error("movimientorequerido", "Debe seleccionar una transferencia Ueno disponible para registrar este cobro.");
 			}
 			if ($idMovimientoUeno != "" && ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
 				$idMovimientoSql = $mysqli->real_escape_string($idMovimientoUeno);
@@ -866,12 +882,15 @@ function ueno_pago_validar_transferencias($totalregistro)
 				if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado ya no esta disponible.");
 				}
-				if (trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$movimiento["nro_comprobante"])) !== $comprobanteUeno) {
-					ueno_pago_responder_error("movimientoinvalido", "El comprobante ingresado no coincide con el movimiento Ueno seleccionado.");
-				}
+				$comprobanteUeno = trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$movimiento["nro_comprobante"]));
 				if ((int)$movimiento["monto_disponible"] < (int)$montoTransferencia) {
 					ueno_pago_responder_error("saldouenoinsuficiente", "El movimiento Ueno seleccionado no tiene saldo suficiente para este cobro.");
 				}
+			}
+			if ($comprobanteUeno == "") {
+				$informacion = array("1" => "camposvacio", "2" => "Falta numero de comprobante Ueno para transferencia");
+				echo json_encode($informacion);
+				exit;
 			}
 			ueno_pago_validar_comprobante_no_reutilizado($mysqli, $comprobanteUeno, "", $idMovimientoUeno);
 		}
@@ -3701,6 +3720,12 @@ $monto = quitarseparadormiles($monto);
 $uenoComprobante = ueno_pago_comprobante_post($control);
 $uenoObservacion = ueno_pago_observacion_post($control);
 $uenoIdMovimiento = ueno_pago_movimiento_post($control);
+if ($uenoIdMovimiento != "") {
+	$uenoComprobanteMovimiento = ueno_pago_comprobante_movimiento($mysqli, $uenoIdMovimiento);
+	if ($uenoComprobanteMovimiento != "") {
+		$uenoComprobante = $uenoComprobanteMovimiento;
+	}
+}
 $uenoGrupoPagoRegistro = $uenoGrupoPago;
 $uenoGrupoMovimiento = ueno_pago_grupo_movimiento($mysqli, $uenoComprobante, $uenoIdMovimiento);
 if ($uenoGrupoMovimiento != "") {

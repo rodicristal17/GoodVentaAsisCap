@@ -105,9 +105,6 @@ function cobrarCuotaTieneMovimientoUenoValido() {
 	if (cobrarCuotaContextoUeno.puede_usar === false || cobrarCuotaContextoUeno.monto_valido === false) {
 		return false;
 	}
-	if (cobrarCuotaContextoUeno.coincidencia_exacta === false) {
-		return false;
-	}
 	return true;
 }
 
@@ -355,10 +352,8 @@ function cobrarCuotaActualizarEtiquetaBotonRegistrar() {
 	var transferencia = cobrarCuotaEsTransferenciaTexto(texto);
 	if (transferencia && cobrarCuotaTieneMovimientoUenoValido()) {
 		btn.value = "Registrar y conciliar";
-	} else if (transferencia && cobrarCuotaUenoBusquedaActiva && cobrarCuotaUenoResultadosTotal > 0) {
-		btn.value = "Selecciona movimiento Ueno";
 	} else if (transferencia) {
-		btn.value = "Registrar pendiente de conciliacion";
+		btn.value = "Selecciona transferencia Ueno";
 	} else {
 		btn.value = "Registrar cobro";
 	}
@@ -373,14 +368,14 @@ function cobrarCuotaActualizarBotonRegistrar() {
 	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
 	var texto = select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
 	var transferencia = cobrarCuotaEsTransferenciaTexto(texto);
-	var bloquearPorUeno = transferencia && !cobrarCuotaTieneMovimientoUenoValido() && cobrarCuotaUenoBusquedaActiva && cobrarCuotaUenoResultadosTotal > 0;
+	var bloquearPorUeno = transferencia && !cobrarCuotaTieneMovimientoUenoValido();
 	btn.disabled = cobrarCuotaProcesando || !cobrarCuotaSeleccionada || !cobrarCuotaSeleccionada.idcredito || !cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada) || bloquearPorUeno;
 	if (!cobrarCuotaSeleccionada || !cobrarCuotaSeleccionada.idcredito) {
 		btn.title = "Selecciona una cuota para registrar el cobro";
 	} else if (!cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada)) {
 		btn.title = "Esta cuota no se puede cobrar porque ya esta pagada o anulada";
 	} else if (bloquearPorUeno) {
-		btn.title = "Hay movimientos Ueno candidatos. Selecciona uno con comprobante exacto o corrige la busqueda.";
+		btn.title = "Selecciona una transferencia Ueno disponible para registrar el cobro.";
 	} else {
 		btn.title = "";
 	}
@@ -1167,7 +1162,7 @@ function cobrarCuotaBuscarMovimientoUeno() {
 	var fechaPago = cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "";
 	if (comprobante == "" && monto == "") {
 		cobrarCuotaResetBusquedaUeno();
-		contenedor.innerHTML = "<div class='cobrar-cuota__ueno-empty'>Ingresa comprobante o monto para buscar un movimiento Ueno candidato.</div>";
+		contenedor.innerHTML = "<div class='cobrar-cuota__ueno-empty'>Ingresa el monto a cobrar para buscar transferencias Ueno disponibles.</div>";
 		cobrarCuotaActualizarBotonRegistrar();
 		return;
 	}
@@ -1227,7 +1222,7 @@ function cobrarCuotaUsarMovimientoUeno(movimiento) {
 	var montoActual = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
 	var disponibleMovimiento = Number(movimiento.monto_disponible || 0);
 	var pagoParcialSugerido = movimiento.pago_parcial_sugerido === true || (movimiento.monto_valido === false && disponibleMovimiento > 0 && montoActual > disponibleMovimiento);
-	if (movimiento.puede_usar === false || movimiento.coincidencia_exacta === false || (movimiento.monto_valido === false && !pagoParcialSugerido)) {
+	if (movimiento.puede_usar === false || (movimiento.monto_valido === false && !pagoParcialSugerido)) {
 		cobrarCuotaAuditar(
 			"INTENTO_USAR_MOVIMIENTO_UENO_BLOQUEADO",
 			"rechazado",
@@ -1237,7 +1232,7 @@ function cobrarCuotaUsarMovimientoUeno(movimiento) {
 			movimiento.comprobante_masked || "",
 			movimiento.mensaje_accion || "Movimiento Ueno no habilitado para aplicar"
 		);
-		cobrarCuotaAviso(movimiento.mensaje_accion || "Para usar el movimiento se requiere comprobante exacto, saldo disponible y monto valido.", "error");
+		cobrarCuotaAviso(movimiento.mensaje_accion || "Para usar el movimiento se requiere saldo disponible y monto valido.", "error");
 		return;
 	}
 	if (pagoParcialSugerido) {
@@ -1306,26 +1301,7 @@ function cobrarCuotaQuitarMovimientoUeno() {
 }
 
 function cobrarCuotaRegistrarPendienteUeno() {
-	if (!confirm("No se usara ningun movimiento Ueno de la lista. Deseas registrar este cobro como pendiente de conciliacion?")) {
-		return;
-	}
-	cobrarCuotaForzarPendienteUeno = true;
-	var contexto = cobrarCuotaObtenerContextoRegistro();
-	cobrarCuotaForzarPendienteUeno = false;
-	if (!contexto) {
-		return;
-	}
-	contexto.forzarPendienteUeno = true;
-	cobrarCuotaAuditar(
-		"REGISTRAR_PENDIENTE_UENO_SOLICITADO",
-		"pendiente_solicitado",
-		"pendiente_conciliacion",
-		contexto.monto,
-		contexto.textoTipo,
-		cobrarCuotaMaskComprobante(contexto.comprobante || ""),
-		"El usuario eligio registrar pendiente aunque habia movimientos Ueno candidatos"
-	);
-	cobrarCuotaAbrirConfirmacion(contexto);
+	cobrarCuotaAviso("Para cobrar con transferencia debes seleccionar una transferencia Ueno disponible.", "error");
 }
 
 function cobrarCuotaObtenerContextoRegistro() {
@@ -1376,12 +1352,8 @@ function cobrarCuotaObtenerContextoRegistro() {
 	}
 	var transferencia = cobrarCuotaEsTransferenciaTexto(textoTipo);
 	var comprobante = cobrarCuotaId("inptCobrarCuotaComprobante") ? cobrarCuotaId("inptCobrarCuotaComprobante").value.replace(/\s+/g, "").trim() : "";
-	if (transferencia && comprobante == "") {
-		cobrarCuotaAviso("Ingresa el numero de comprobante de transferencia");
-		return null;
-	}
-	if (transferencia && !cobrarCuotaForzarPendienteUeno && !cobrarCuotaTieneMovimientoUenoValido() && cobrarCuotaUenoBusquedaActiva && cobrarCuotaUenoResultadosTotal > 0) {
-		cobrarCuotaAviso("Hay movimientos Ueno candidatos. Selecciona uno con comprobante exacto o corrige la busqueda antes de registrar pendiente.", "error");
+	if (transferencia && !cobrarCuotaTieneMovimientoUenoValido()) {
+		cobrarCuotaAviso("Selecciona una transferencia Ueno disponible para registrar el cobro.", "error");
 		return null;
 	}
 	if (transferencia && cobrarCuotaContextoUeno && cobrarCuotaContextoUeno.id_movimiento && !cobrarCuotaTieneMovimientoUenoValido()) {
@@ -1595,6 +1567,7 @@ function cobrarCuotaEjecutarRegistro(contexto) {
 	datos.append("CargoAdministrativo", "0");
 	datos.append("cod_local", typeof cod_localFKUSer !== "undefined" ? cod_localFKUSer : (cobrarCuotaSeleccionada.local_id || ""));
 	datos.append("totalregistro", "1");
+	datos.append("exigir_movimiento_ueno", transferencia ? "SI" : "NO");
 	datos.append("idtipopago1", idTipoPago);
 	datos.append("monto1", cobrarCuotaFormato(monto));
 	datos.append("valor1", select && select.options[select.selectedIndex] ? (select.options[select.selectedIndex].id || "NO") : "NO");
