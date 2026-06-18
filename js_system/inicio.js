@@ -134,7 +134,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=gestion-personal-agenda-dashboard-equal-20260613")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-guia-ayuda-amigable-20260618")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -1715,7 +1715,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=gestion-personal-agenda-dashboard-equal-20260613")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-guia-ayuda-amigable-20260618")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")

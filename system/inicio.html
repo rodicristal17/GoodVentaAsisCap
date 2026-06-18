@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=insumos-columnas-recordatorio-entrada-gestion-personal-agenda-dashboard-equal-20260613" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-guia-ayuda-amigable-20260618" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=resumen-proyeccion-modal-dos-columnas-20260616" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -49,7 +49,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-obligatorio-v2-20260618"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ayuda-guia-20260618"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=insumos-dia-proyeccion-consultorio-20260616"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -12957,7 +12957,84 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 
 <div class='cobrar-cuota__guide'>
 <b>Flujo r&aacute;pido</b>
-<span>Buscar cliente &rarr; Seleccionar plan &rarr; Elegir cuota &rarr; Registrar cobro</span>
+<span class='cobrar-cuota__guide-steps'>
+<em><strong>1</strong>Buscar cliente</em>
+<i aria-hidden='true'>&rarr;</i>
+<em><strong>2</strong>Seleccionar plan</em>
+<i aria-hidden='true'>&rarr;</i>
+<em><strong>3</strong>Elegir cuota</em>
+<i aria-hidden='true'>&rarr;</i>
+<em><strong>4</strong>Registrar cobro</em>
+</span>
+<button type='button' id='btnCobrarCuotaAyuda' class='cobrar-cuota__guide-help-btn' onclick='cobrarCuotaToggleAyuda()' aria-expanded='false' aria-controls='divCobrarCuotaAyuda'><span class='cobrar-cuota__guide-help-icon'>?</span><span>Ayuda</span><span class='cobrar-cuota__guide-help-arrow' aria-hidden='true'>&#9662;</span></button>
+<div id='divCobrarCuotaAyuda' class='cobrar-cuota__guide-help' style='display:none'>
+<div class='cobrar-cuota__guide-help-head'>
+<div>
+<strong>Gu&iacute;a completa de cobro</strong>
+<span>Un recorrido corto para registrar la cuota sin saltear datos importantes.</span>
+</div>
+<small>Revisar antes de confirmar</small>
+</div>
+<div class='cobrar-cuota__guide-help-grid'>
+<div class='cobrar-cuota__guide-help-card'>
+<span class='cobrar-cuota__guide-help-badge'>1</span>
+<div>
+<strong>Buscar cliente</strong>
+<p>Ingresa c&eacute;dula, nombre o alias y presiona Enter o Buscar. La pantalla listar&aacute; los clientes con cuotas pendientes.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card'>
+<span class='cobrar-cuota__guide-help-badge'>2</span>
+<div>
+<strong>Seleccionar plan</strong>
+<p>Si el cliente tiene varias ventas, elige el plan correcto. Al seleccionarlo se cargan sus cuotas, saldo y estado actual.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card'>
+<span class='cobrar-cuota__guide-help-badge'>3</span>
+<div>
+<strong>Elegir cuota</strong>
+<p>Selecciona una cuota pendiente o parcial. El sistema completa el saldo pendiente como monto sugerido para cobrar.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card'>
+<span class='cobrar-cuota__guide-help-badge'>4</span>
+<div>
+<strong>Definir pago</strong>
+<p>Confirma la fecha de pago, forma de pago y monto. Puedes ajustar el monto si el cobro ser&aacute; parcial.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--cash'>
+<span class='cobrar-cuota__guide-help-badge'>5</span>
+<div>
+<strong>Si es efectivo</strong>
+<p>Indica el monto recibido y revisa el vuelto calculado antes de registrar.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--transfer'>
+<span class='cobrar-cuota__guide-help-badge'>6</span>
+<div>
+<strong>Si es transferencia</strong>
+<p>La fecha de pago filtra las transferencias Ueno disponibles. Debes elegir una transferencia de la lista para poder registrar el cobro.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--partial'>
+<span class='cobrar-cuota__guide-help-badge'>7</span>
+<div>
+<strong>Uso parcial</strong>
+<p>Si la transferencia no alcanza, se puede usar como pago parcial. Si sobra saldo, puedes aplicar solo una parte y dejar el resto disponible.</p>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--confirm'>
+<span class='cobrar-cuota__guide-help-badge'>8</span>
+<div>
+<strong>Confirmar</strong>
+<p>Presiona Registrar cobro, revisa el resumen y confirma. Al finalizar puedes imprimir el recibo o cargar otro pago del mismo plan.</p>
+</div>
+</div>
+</div>
+<div class='cobrar-cuota__guide-help-note'><b>Antes de confirmar</b><span>Verifica cliente, plan, cuota, fecha y monto. En transferencias, confirma que la Ueno seleccionada sea la correcta.</span></div>
+</div>
 </div>
 
 <div class='cobrar-cuota__layout'>

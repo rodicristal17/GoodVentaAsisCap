@@ -144,6 +144,27 @@ function cobrarCuotaClonarSimple(objeto) {
 	return copia;
 }
 
+function cobrarCuotaToggleAyuda(forzarEstado) {
+	var panel = cobrarCuotaId("divCobrarCuotaAyuda");
+	var btn = cobrarCuotaId("btnCobrarCuotaAyuda");
+	if (!panel) {
+		return;
+	}
+	var visible = panel.style.display != "none" && panel.style.display != "";
+	var abrir = typeof forzarEstado == "boolean" ? forzarEstado : !visible;
+	panel.style.display = abrir ? "block" : "none";
+	if (btn) {
+		btn.setAttribute("aria-expanded", abrir ? "true" : "false");
+		if (btn.classList) {
+			if (abrir) {
+				btn.classList.add("cobrar-cuota__guide-help-btn--open");
+			} else {
+				btn.classList.remove("cobrar-cuota__guide-help-btn--open");
+			}
+		}
+	}
+}
+
 function cobrarCuotaAviso(texto, tipo) {
 	if (typeof ver_vetana_informativa === "function") {
 		ver_vetana_informativa(texto, "", tipo || "");
@@ -218,6 +239,7 @@ function cobrarCuotaPreparar(contexto) {
 	cobrarCuotaUltimoRecibo = null;
 	cobrarCuotaUltimoPagoRegistrado = null;
 	cobrarCuotaFiltroEstado = "todas";
+	cobrarCuotaToggleAyuda(false);
 	cobrarCuotaSetHoy();
 	cobrarCuotaLimpiarResultado();
 	cobrarCuotaCargarTiposPago(function() {
