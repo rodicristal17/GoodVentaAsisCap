@@ -723,22 +723,61 @@ function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $i
 	}
 
 	$comprobanteSql = $mysqli->real_escape_string($comprobante);
+	$joinMovimiento = "";
+	$condicionMovimiento = "";
+	if ($idMovimientoPermitido != "" && ueno_pago_tabla_existe($mysqli, "ueno_movimiento_pago")) {
+		$idMovimientoSql = $mysqli->real_escape_string($idMovimientoPermitido);
+		$joinMovimiento = " LEFT JOIN ueno_movimiento_pago ump
+			ON ump.cod_pagoFK=pago_transferencia_conciliacion.cod_pagoFK
+			AND ump.estado='activo'
+			AND ump.id_movimiento='$idMovimientoSql'";
+		$condicionMovimiento = " AND ump.id IS NULL";
+	}
 	$condicionGrupo = "";
 	if ($grupoPago != "") {
 		$condicionGrupo = " AND IFNULL(grupo_pago,'')!='" . $mysqli->real_escape_string($grupoPago) . "'";
 	}
 	$sql = "SELECT COUNT(*) AS total
 		FROM pago_transferencia_conciliacion
+		$joinMovimiento
 		WHERE activo='SI'
 		AND nro_comprobante_informado='$comprobanteSql'
 		AND estado_conciliacion NOT IN ('anulado','rechazado')
-		$condicionGrupo";
+		$condicionGrupo
+		$condicionMovimiento";
 	$result = $mysqli->query($sql);
 	if (!$result) {
 		return false;
 	}
 	$row = $result->fetch_assoc();
 	return (int)$row["total"] > 0;
+}
+
+function ueno_pago_grupo_movimiento($mysqli, $comprobante, $idMovimiento)
+{
+	if ($comprobante == "" || $idMovimiento == "" || !ueno_pago_tabla_existe($mysqli, "ueno_movimiento_pago")) {
+		return "";
+	}
+
+	$comprobanteSql = $mysqli->real_escape_string($comprobante);
+	$idMovimientoSql = $mysqli->real_escape_string($idMovimiento);
+	$sql = "SELECT pc.grupo_pago
+		FROM pago_transferencia_conciliacion pc
+		INNER JOIN ueno_movimiento_pago ump ON ump.cod_pagoFK=pc.cod_pagoFK
+		WHERE pc.activo='SI'
+		AND pc.nro_comprobante_informado='$comprobanteSql'
+		AND pc.estado_conciliacion NOT IN ('anulado','rechazado')
+		AND ump.estado='activo'
+		AND ump.id_movimiento='$idMovimientoSql'
+		AND IFNULL(pc.grupo_pago,'')!=''
+		ORDER BY pc.id ASC
+		LIMIT 1";
+	$result = $mysqli->query($sql);
+	if (!$result || $result->num_rows == 0) {
+		return "";
+	}
+	$row = $result->fetch_assoc();
+	return (string)$row["grupo_pago"];
 }
 
 function ueno_pago_validar_comprobante_no_reutilizado($mysqli, $comprobante, $grupoPago = "", $idMovimientoPermitido = "")
@@ -824,7 +863,7 @@ function ueno_pago_validar_transferencias($totalregistro)
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado no esta disponible para cobrar cuotas.");
 				}
 				$estadoMovimiento = strtolower(trim((string)$movimiento["estado"]));
-				if (in_array($estadoMovimiento, array("conciliado", "conciliada", "anulado", "anulada", "rechazado", "rechazada"))) {
+				if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado ya no esta disponible.");
 				}
 				if (trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$movimiento["nro_comprobante"])) !== $comprobanteUeno) {
@@ -3662,6 +3701,11 @@ $monto = quitarseparadormiles($monto);
 $uenoComprobante = ueno_pago_comprobante_post($control);
 $uenoObservacion = ueno_pago_observacion_post($control);
 $uenoIdMovimiento = ueno_pago_movimiento_post($control);
+$uenoGrupoPagoRegistro = $uenoGrupoPago;
+$uenoGrupoMovimiento = ueno_pago_grupo_movimiento($mysqli, $uenoComprobante, $uenoIdMovimiento);
+if ($uenoGrupoMovimiento != "") {
+	$uenoGrupoPagoRegistro = $uenoGrupoMovimiento;
+}
 
 $ControlGA=$CargoAdministrativo;
 
@@ -3712,7 +3756,7 @@ if($ControlMonto==$monto && $ControlRestaMonto==0 ){
 }
 
 
-abm($CargoAdministrativo,$cajapredeterminada,$codApertura,$cod_creditoFK,$Fecha,$cod_cobradorFK,$cod_venta,$totalDeudaCuota,$totalInteres,$monto,$MontoTarjeta,$descuento,$nrofactura,$operacion,$idtipopago,$controlTipoPago,$uenoComprobante,$uenoObservacion,$uenoGrupoPago,$uenoIdMovimiento);
+abm($CargoAdministrativo,$cajapredeterminada,$codApertura,$cod_creditoFK,$Fecha,$cod_cobradorFK,$cod_venta,$totalDeudaCuota,$totalInteres,$monto,$MontoTarjeta,$descuento,$nrofactura,$operacion,$idtipopago,$controlTipoPago,$uenoComprobante,$uenoObservacion,$uenoGrupoPagoRegistro,$uenoIdMovimiento);
 } 
 }
 

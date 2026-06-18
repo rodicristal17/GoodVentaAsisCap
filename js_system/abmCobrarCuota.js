@@ -129,6 +129,7 @@ function cobrarCuotaMovimientoUenoSeguro(movimiento) {
 		coincidencia_exacta: movimiento.coincidencia_exacta === true,
 		fecha_pago_coincide: movimiento.fecha_pago_coincide === true,
 		monto_valido: movimiento.monto_valido !== false,
+		pago_parcial_sugerido: movimiento.pago_parcial_sugerido === true,
 		puede_usar: movimiento.puede_usar !== false
 	};
 }
@@ -1223,18 +1224,35 @@ function cobrarCuotaUsarMovimientoUeno(movimiento) {
 	if (!movimiento || !movimiento.id_movimiento) {
 		return;
 	}
-	if (movimiento.puede_usar === false || movimiento.coincidencia_exacta === false || movimiento.monto_valido === false) {
+	var montoActual = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
+	var disponibleMovimiento = Number(movimiento.monto_disponible || 0);
+	var pagoParcialSugerido = movimiento.pago_parcial_sugerido === true || (movimiento.monto_valido === false && disponibleMovimiento > 0 && montoActual > disponibleMovimiento);
+	if (movimiento.puede_usar === false || movimiento.coincidencia_exacta === false || (movimiento.monto_valido === false && !pagoParcialSugerido)) {
 		cobrarCuotaAuditar(
 			"INTENTO_USAR_MOVIMIENTO_UENO_BLOQUEADO",
 			"rechazado",
 			"validacion_visual",
-			cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : ""),
+			montoActual,
 			"Transferencia",
 			movimiento.comprobante_masked || "",
 			movimiento.mensaje_accion || "Movimiento Ueno no habilitado para aplicar"
 		);
 		cobrarCuotaAviso(movimiento.mensaje_accion || "Para usar el movimiento se requiere comprobante exacto, saldo disponible y monto valido.", "error");
 		return;
+	}
+	if (pagoParcialSugerido) {
+		var saldoCuota = cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0;
+		var montoParcial = saldoCuota > 0 ? Math.min(disponibleMovimiento, saldoCuota) : disponibleMovimiento;
+		if (montoParcial <= 0) {
+			cobrarCuotaAviso("El movimiento Ueno seleccionado no tiene saldo disponible.", "error");
+			return;
+		}
+		cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", cobrarCuotaFormato(montoParcial));
+		cobrarCuotaSetValor("inptCobrarCuotaMontoRecibido", cobrarCuotaFormato(montoParcial));
+		cobrarCuotaCalcularVuelto();
+		movimiento.monto_valido = true;
+		movimiento.pago_parcial_sugerido = true;
+		cobrarCuotaAviso("Se usara el saldo disponible como pago parcial.");
 	}
 	cobrarCuotaContextoUeno = cobrarCuotaMovimientoUenoSeguro(movimiento);
 	cobrarCuotaAuditar(

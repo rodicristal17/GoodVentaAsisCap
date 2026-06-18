@@ -650,7 +650,9 @@ function cc_buscar_movimiento_ueno($usuario)
 	$monto = cc_monto(isset($_POST["monto"]) ? $_POST["monto"] : "");
 	$fecha_pago = cc_fecha(cc_post("fecha_pago"));
 	$id_movimiento = cc_post("id_movimiento");
-	$condicion = "tipo_movimiento='credito' AND monto_disponible>0";
+	$condicion = "tipo_movimiento='credito'
+		AND monto_disponible>0
+		AND LOWER(IFNULL(estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada')";
 	if ($id_movimiento != "") {
 		$condicion .= " AND id_movimiento='" . $mysqli->real_escape_string($id_movimiento) . "'";
 	}
@@ -709,9 +711,10 @@ function cc_buscar_movimiento_ueno($usuario)
 		$importe = (int)$row["importe_credito"];
 		$estado = cc_from_db($row["estado"]);
 		$estadoNormalizado = strtolower(trim($estado));
-		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "anulado", "anulada", "rechazado", "rechazada"));
+		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"));
 		$montoValido = ($monto > 0 && $disponible > 0 && $monto <= $disponible);
-		$puedeUsar = ($coincidenciaExacta && $estadoDisponible && $montoValido);
+		$pagoParcialSugerido = ($monto > 0 && $disponible > 0 && $monto > $disponible);
+		$puedeUsar = ($coincidenciaExacta && $estadoDisponible && ($montoValido || $pagoParcialSugerido));
 		$saldoRestante = $monto > 0 ? max(0, $disponible - min($monto, $disponible)) : $disponible;
 		$mensajeAccion = "Usar este movimiento";
 		if (!$coincidenciaExacta) {
@@ -721,7 +724,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		} elseif ($monto <= 0) {
 			$mensajeAccion = "Ingresa monto";
 		} elseif ($monto > $disponible) {
-			$mensajeAccion = "Monto supera disponible";
+			$mensajeAccion = "Usar como pago parcial";
 		}
 		$datos = array(
 			"id_movimiento" => (int)$row["id_movimiento"],
@@ -737,6 +740,7 @@ function cc_buscar_movimiento_ueno($usuario)
 			"coincidencia_exacta" => $coincidenciaExacta,
 			"fecha_pago_coincide" => $fechaCoincide,
 			"monto_valido" => $montoValido,
+			"pago_parcial_sugerido" => $pagoParcialSugerido,
 			"puede_usar" => $puedeUsar,
 			"saldo_restante" => $saldoRestante,
 			"saldo_restante_fmt" => cc_numero($saldoRestante),
@@ -894,7 +898,7 @@ function cc_conciliar_transferencia($usuario)
 			throw new Exception("El comprobante ingresado no coincide con el movimiento Ueno seleccionado. Debe revisarse desde conciliacion.");
 		}
 		$estadoMovimiento = strtolower(trim(cc_from_db($movimiento["estado"])));
-		if (in_array($estadoMovimiento, array("conciliado", "conciliada", "anulado", "anulada", "rechazado", "rechazada"))) {
+		if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
 			throw new Exception("El movimiento Ueno seleccionado ya no esta disponible.");
 		}
 		if ((int)$movimiento["monto_disponible"] <= 0) {
