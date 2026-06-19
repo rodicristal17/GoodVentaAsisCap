@@ -21185,6 +21185,7 @@ function limpiarCamposCuentasAcobrar(){
 	document.getElementById("inptRegistroHistorialTotalACobrar").value = "";
 	document.getElementById("inptBuscarCuentasAcobrarF1").value = "";
 	document.getElementById("inptBuscarCuentasAcobrarF2").value = "";
+	document.getElementById("inptFiltroDiasAtrasadosCuentas").value = "";
 	// document.getElementById("inptBuscarCuentasCobrar1").value = "";
 	// document.getElementById("inptBuscarCuentasCobrar2").value = "";
 	document.getElementById("inptBuscarCuentasCobrar3").value = "";
@@ -21325,8 +21326,9 @@ function modernizarCuentasACobrar() {
 		}
 	}
 }
-function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota) {
+function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota, dias_atrasados) {
 	obtener_datos_user();
+	dias_atrasados = dias_atrasados || "";
 	var datos = {
 		"useru": userid,
 		"passu": passuser,
@@ -21344,6 +21346,7 @@ function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, f
 		"funt": "cuentasacobrar",
 		"nro_venta": nro_venta,
 		"cant_cuota": cant_cuota,
+		"dias_atrasados": dias_atrasados,
 	};
 	$.ajax({
 		data: datos,
@@ -21467,6 +21470,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	var vendedor = document.getElementById("inptBuscarCuentasCobrar7").value
 	const nro_venta = document.getElementById("inptBuscarCuentasCobrar4").value
 	const cant_cuota = document.getElementById("inptBuscarCuentasCobrar8").value
+	const dias_atrasados = document.getElementById("inptFiltroDiasAtrasadosCuentas").value
 	
 	if(controldebusquedadInformeCuentaCobrar==true){
 		ver_vetana_informativa("CANCELE LA BUSQUEDA ACTUAL PARA CONTINUAR")
@@ -21479,7 +21483,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	document.getElementById("inptRegistroHistorialTotalACobrar").value =  ""
 	document.getElementById("table_cuentas_a_cobrar").innerHTML = paginacargando
 
-	buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota);
+	buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, filtrofecha, codlocal, filtro,vendedor ,nro_venta, cant_cuota, dias_atrasados);
 }
 
 function buscarmascuentaacobrar(c) {
@@ -21527,6 +21531,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	var vendedor = document.getElementById("inptBuscarCuentasCobrar7").value
 	const nro_venta = document.getElementById("inptBuscarCuentasCobrar4").value
 	const cant_cuota = document.getElementById("inptBuscarCuentasCobrar8").value
+	const dias_atrasados = document.getElementById("inptFiltroDiasAtrasadosCuentas").value
 	if(c=="1"){
 		controldebusquedadInformeCuentaCobrar=true
 	}
@@ -21560,6 +21565,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 		"funt": "mascuentasacobrar",
 		"nro_venta": nro_venta,
 		"cant_cuota": cant_cuota,
+		"dias_atrasados": dias_atrasados,
 	};
 	$.ajax({
 		data: datos,

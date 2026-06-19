@@ -12766,7 +12766,16 @@ id='inptBuscarCuentasAcobrarF1' style='width:135px' />
 <input class='inputText' type='Date'
 id='inptBuscarCuentasAcobrarF2' style='width:135px' />
 </td>
-<td style='width:70%;text-align:right'>
+<td style='width:16%;'>
+<p class='pTituloC' >Dias atrasados</p>
+<select class='inputSelect' id='inptFiltroDiasAtrasadosCuentas' style='width:145px'>
+<option value=''>Todos</option>
+<option value='0_60'>0 - 60 dias</option>
+<option value='60_90'>60 - 90 dias</option>
+<option value='90_mas'>Mayores a 90 dias</option>
+</select>
+</td>
+<td style='width:54%;text-align:right'>
 
 <input type="button" value="Buscar cuentas" class="btn4 cuentas-cobrar-search"
 onclick='buscarcuentaacobrar()'>

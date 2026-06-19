@@ -163,13 +163,16 @@ $nro_venta = mb_convert_encoding((string)($nro_venta), 'ISO-8859-1', 'UTF-8');
 $cant_cuota=$_POST['cant_cuota'];
 $cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
 
+$dias_atrasados=isset($_POST['dias_atrasados']) ? $_POST['dias_atrasados'] : "";
+$dias_atrasados = mb_convert_encoding((string)($dias_atrasados), 'ISO-8859-1', 'UTF-8');
+
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-$informacion = cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota);
+$informacion = cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota,$dias_atrasados);
 echo json_encode($informacion);	
 exit;
 }
@@ -203,13 +206,16 @@ $nro_venta = mb_convert_encoding((string)($nro_venta), 'ISO-8859-1', 'UTF-8');
 $cant_cuota=$_POST['cant_cuota'];
 $cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
 
+$dias_atrasados=isset($_POST['dias_atrasados']) ? $_POST['dias_atrasados'] : "";
+$dias_atrasados = mb_convert_encoding((string)($dias_atrasados), 'ISO-8859-1', 'UTF-8');
+
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-$informacion = cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota);
+$informacion = cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$nro_venta,$cant_cuota,$dias_atrasados);
 echo json_encode($informacion);	
 exit;
 }
@@ -249,13 +255,16 @@ $nro_venta = mb_convert_encoding((string)($nro_venta), 'ISO-8859-1', 'UTF-8');
 $cant_cuota=$_POST['cant_cuota'];
 $cant_cuota = mb_convert_encoding((string)($cant_cuota), 'ISO-8859-1', 'UTF-8');
 
+$dias_atrasados=isset($_POST['dias_atrasados']) ? $_POST['dias_atrasados'] : "";
+$dias_atrasados = mb_convert_encoding((string)($dias_atrasados), 'ISO-8859-1', 'UTF-8');
+
 // if($codlocal==""){
 // $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	// if($controllocal==0){
 		// $codlocal=buscarlocaluser($user);
 	// }
 // }
-mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_venta,$cant_cuota);
+mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_venta,$cant_cuota,$dias_atrasados);
 
 }
 
@@ -3280,7 +3289,40 @@ function condicionCreditoPendienteCuentas($aliasCredito)
 	)";
 }
 
-function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$num_factura,$cant_cuota)
+function condicionCreditoEntregaCuentas($aliasCredito)
+{
+	$aliasCredito = preg_replace('/[^a-zA-Z0-9_]/', '', $aliasCredito);
+	return "(UPPER(TRIM(IFNULL(".$aliasCredito.".plazo,'')))='ENTREGA' or UPPER(TRIM(IFNULL(".$aliasCredito.".tipo,'')))='ENTREGA')";
+}
+
+function condicionCreditoCuotaCuentas($aliasCredito)
+{
+	return "not ".condicionCreditoEntregaCuentas($aliasCredito);
+}
+
+function condicionDiasAtrasadosCuentas($dias_atrasados,$fechahoy)
+{
+	$dias_atrasados = preg_replace('/[^a-zA-Z0-9_]/', '', $dias_atrasados);
+	if($dias_atrasados==""){
+		return "";
+	}
+	$cuotasPendientes = "(select count(*) from credito cr_dias_cuota_pendiente where cr_dias_cuota_pendiente.cod_venta=vt.cod_venta and ".condicionCreditoCuotaCuentas("cr_dias_cuota_pendiente")." and ".condicionCreditoPendienteCuentas("cr_dias_cuota_pendiente").")";
+	$fechaCuotaAtrasada = "(select MIN(cr_dias_cuota.fechapago) from credito cr_dias_cuota where cr_dias_cuota.cod_venta=vt.cod_venta and ".condicionCreditoCuotaCuentas("cr_dias_cuota")." and cr_dias_cuota.fechapago <= '$fechahoy' and ".condicionCreditoPendienteCuentas("cr_dias_cuota").")";
+	$fechaEntregaAtrasada = "(select MIN(cr_dias_entrega.fechapago) from credito cr_dias_entrega where cr_dias_entrega.cod_venta=vt.cod_venta and ".condicionCreditoEntregaCuentas("cr_dias_entrega")." and cr_dias_entrega.fechapago <= '$fechahoy' and ".condicionCreditoPendienteCuentas("cr_dias_entrega").")";
+	$diasAtraso = "IFNULL(DATEDIFF('$fechahoy',IF(".$cuotasPendientes.">0,".$fechaCuotaAtrasada.",".$fechaEntregaAtrasada.")),0)";
+	if($dias_atrasados=="0_60"){
+		return " and ".$diasAtraso.">=0 and ".$diasAtraso."<=60 ";
+	}
+	if($dias_atrasados=="60_90"){
+		return " and ".$diasAtraso.">60 and ".$diasAtraso."<=90 ";
+	}
+	if($dias_atrasados=="90_mas"){
+		return " and ".$diasAtraso.">90 ";
+	}
+	return "";
+}
+
+function cuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$vendedor,$num_factura,$cant_cuota,$dias_atrasados)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
@@ -3336,11 +3378,13 @@ if ($cant_cuota != "") {
 		Select count(*)
 		from credito cr_atrasada
 		where cr_atrasada.cod_venta=vt.cod_venta
-		and cr_atrasada.plazo!='ENTREGA'
+		and ".condicionCreditoCuotaCuentas("cr_atrasada")."
 		and cr_atrasada.fechapago <= '$fechahoy'
 		and ".condicionCreditoPendienteCuentas("cr_atrasada")."
 	) = $cant_cuota ";
 }
+
+$sqlFiltro .= condicionDiasAtrasadosCuentas($dias_atrasados,$fechahoy);
 
 	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.tipo_comprobante,vt.puntoexpedicion,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.totalinteres,cr.descuento,vt.TipoVenta,
@@ -3534,7 +3578,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_factura,$cant_cuota)
+function mascuentasacobrar($filtro,$fecha1,$fecha2,$cliente,$documento,$telefono,$producto,$filtrofecha,$codlocal,$registrocargado,$totalcobrar,$totaldeuda,$vendedor,$nro_factura,$cant_cuota,$dias_atrasados)
 {
 $mysqli=conectar_al_servidor();
 $fechahoy=date('Y-m-d');	
@@ -3590,11 +3634,13 @@ if ($cant_cuota != "") {
 		Select count(*)
 		from credito cr_atrasada
 		where cr_atrasada.cod_venta=vt.cod_venta
-		and cr_atrasada.plazo!='ENTREGA'
+		and ".condicionCreditoCuotaCuentas("cr_atrasada")."
 		and cr_atrasada.fechapago <= '$fechahoy'
 		and ".condicionCreditoPendienteCuentas("cr_atrasada")."
 	) = $cant_cuota ";
 }
+
+$sqlFiltro .= condicionDiasAtrasadosCuentas($dias_atrasados,$fechahoy);
 
 	$sql= "select cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,datediff(cr.fechapago,'".$fechahoy."') as diff,vt.tipo_comprobante,vt.puntoexpedicion,vt.cod_cobradorFK,vt.num_factura,vt.total_venta,vt.num_factura,
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=vt.cod_venta),0) as totalPago,cr.totalinteres,cr.descuento,vt.TipoVenta,

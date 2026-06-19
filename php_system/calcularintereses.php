@@ -16,6 +16,8 @@ $condicion=" and cr.fechapago<='$fechahoy'";
 $condicionpago="";
 $condicionSaldoCapital="((cr.Monto-cr.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Pago Cuota'),0))";
 $condicionSaldoInteres="((IFNULL(cr.totalinteres,0)+IFNULL(cr.deudaInteres,0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito and pg.tipo='Interes'),0))";
+$condicionSaldoCapitalCuota="((cr_cuota.Monto-cr_cuota.descuento)-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr_cuota.idcredito and pg.tipo='Pago Cuota'),0))";
+$condicionSaldoInteresCuota="((IFNULL(cr_cuota.totalinteres,0)+IFNULL(cr_cuota.deudaInteres,0))-IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr_cuota.idcredito and pg.tipo='Interes'),0))";
 if($filtro2=="1"){
 	//condicion para saber si esta pagado
 $condicionpago=" and ".$condicionSaldoCapital."<=0 and ".$condicionSaldoInteres."<=0";
@@ -31,7 +33,7 @@ if($filtro3=="2"){
 $condicioncodigo=" and vt.cod_venta='$buscar'";
 }
 	
-$sql= "select vt.cod_clienteFK,vt.TipoVenta,vt.puntoexpedicion,cr.plazo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,
+$sql= "select vt.cod_clienteFK,vt.TipoVenta,vt.puntoexpedicion,cr.plazo,cr.tipo,cr.fechapago,cr.cod_venta,cr.Monto,cr.idcredito,cr.Esado,
 cr.Nro_recibo,datediff(cr.fechapago,
 (select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1)) as diff,
 vt.total_venta,interes,dias,vt.pago as entrega,cr.deudaInteres,
@@ -45,6 +47,7 @@ IFNULL((select sum(pg.Monto) from pago pg where pg.cod_creditoFK=cr.idcredito an
 IFNULL((select sum(pg.Monto) from pago pg where pg.cod_venta_fk=cr.cod_venta),0) as totalPagoVenta,
 IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as nroCancelado,
 (Select count(fechapago) from credito where cod_venta=vt.cod_venta and plazo!='ENTREGA' ) as nroCouta,
+(Select count(*) from credito cr_cuota where cr_cuota.cod_venta=vt.cod_venta and UPPER(TRIM(IFNULL(cr_cuota.plazo,'')))!='ENTREGA' and UPPER(TRIM(IFNULL(cr_cuota.tipo,'')))!='ENTREGA' and (".$condicionSaldoCapitalCuota.">0 or ".$condicionSaldoInteresCuota.">0)) as cuotasPendientesNoEntrega,
 (Select ci_cliente from cliente where cod_cliente=cod_clienteFK) as documentocliente,
 (select pg.Fecha from pago pg where pg.cod_creditoFK=cr.idcredito order by pg.Fecha desc limit 1) as fechapagado,
 (select count(pg.Fecha) from pago pg where pg.cod_creditoFK=cr.idcredito ) as cantidad
@@ -85,7 +88,7 @@ $nroRegistro=$valor;
 $controlStyle="";
 $controlVentas="";
 $diff2=0;
-$DiasAtrazo="";
+$DiasAtrazo=0;
 $SumadeudaInteres=0;
 if ($valor>0)
 {
@@ -96,6 +99,7 @@ $FechaPagoCredito = mb_convert_encoding((string)($valor['FechaPagoCredito']), 'U
 $deudaInteres = mb_convert_encoding((string)($valor['deudaInteres']), 'UTF-8', 'ISO-8859-1');
 $idcredito = mb_convert_encoding((string)($valor['idcredito']), 'UTF-8', 'ISO-8859-1');     
 $plazo = mb_convert_encoding((string)($valor['plazo']), 'UTF-8', 'ISO-8859-1');  
+$tipoCredito = mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 $fechapago = mb_convert_encoding((string)($valor['fechapago']), 'UTF-8', 'ISO-8859-1');          
 $cod_venta = mb_convert_encoding((string)($valor['cod_venta']), 'UTF-8', 'ISO-8859-1');          
 $Monto = mb_convert_encoding((string)($valor['Monto']), 'UTF-8', 'ISO-8859-1'); 
@@ -119,6 +123,7 @@ $puntoexpedicion = mb_convert_encoding((string)($valor['puntoexpedicion']), 'UTF
 $clientenombre = mb_convert_encoding((string)($valor['clientenombre']), 'UTF-8', 'ISO-8859-1');
 $documentocliente = mb_convert_encoding((string)($valor['documentocliente']), 'UTF-8', 'ISO-8859-1');
 $nroCouta = mb_convert_encoding((string)($valor['nroCouta']), 'UTF-8', 'ISO-8859-1');
+$cuotasPendientesNoEntrega = mb_convert_encoding((string)($valor['cuotasPendientesNoEntrega']), 'UTF-8', 'ISO-8859-1');
 $TipoVenta = mb_convert_encoding((string)($valor['TipoVenta']), 'UTF-8', 'ISO-8859-1');
 $totalPagoVenta = mb_convert_encoding((string)($valor['totalPagoVenta']), 'UTF-8', 'ISO-8859-1');
 $totalPagoCredito = mb_convert_encoding((string)($valor['totalPagoCredito']), 'UTF-8', 'ISO-8859-1');//TOTAL PAGADO EN CUOTA
@@ -145,6 +150,10 @@ $MontoCuotas=$MontoConDescuento-$totalPago;
 $deudaActua=0;
 $total_interes=0;
 $deudaPendienteAgregada=0;
+$diff2=0;
+$diff2ParaDiasAtrasados=0;
+$esCreditoEntrega=(strtoupper(trim($plazo))=="ENTREGA" || strtoupper(trim($tipoCredito))=="ENTREGA");
+$tomarCreditoParaDiasAtrasados=(!$esCreditoEntrega || intval($cuotasPendientesNoEntrega)<=0);
 $stylecolor=" ";
 //CONDICION PARA SABER SI EL CREDITO ES UNA VENTA CANCELADA
 if($nroCancelado==0){
@@ -166,12 +175,17 @@ if($nroCancelado==0){
 	$TotalApagarSinInteres=$TotalApagarSinInteres+($MontoConDescuento-($totalPagoCredito));
 	//CALCULAMOS EL NRO DE CUOTAS ATRAZADAS
 	$nrodecuotasatrazado=$nrodecuotasatrazado+1;
-	//CONDICION PARA SABER SI HAY INTERESES EN %
-	if($interes!=0){
-		/*CALCULAMOS EL DIA DE GRACIA*/
 	$fechahoy=date('Y-m-d');	
 	$datetime1= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$fechahoy)))); 
 	$datetime3= new DateTime(date('y-m-d',strtotime(str_replace('/','-',$fechapago))));	
+	$interval2=$datetime3->diff($datetime1);
+    $diff2=$interval2->format('%a');
+	if($tomarCreditoParaDiasAtrasados){
+    $diff2ParaDiasAtrasados=$diff2;
+	}
+	//CONDICION PARA SABER SI HAY INTERESES EN %
+	if($interes!=0){
+		/*CALCULAMOS EL DIA DE GRACIA*/
 	$Fecha1=strtotime($FechaUltimoPago);
 	$Fecha2=strtotime($fechapago);
 	if($FechaPagoCredito=="0" ){
@@ -187,10 +201,6 @@ if($nroCancelado==0){
     $diff=$interval->format('%a');
 	
 	
-	
-	$interval2=$datetime3->diff($datetime1);
-    $diff2=$interval2->format('%a');
-
 	
 	$diasGracia=$diff2-$dias;
 	if($diasGracia>0){
@@ -297,9 +307,9 @@ $TotalEnInteres=$TotalEnInteres+$total_interes;
 $TotalEnDeuda=$TotalEnDeuda+$total;
 $TotalEnPagado=$TotalEnPagado+$totalPago;
 $TotalAPagar=$TotalAPagar+$deudaActua;
-$TotalDiasAtrasado=$TotalDiasAtrasado+$diff2;
-if($DiasAtrazo==""){
-	$DiasAtrazo=$diff2;
+$TotalDiasAtrasado=$TotalDiasAtrasado+$diff2ParaDiasAtrasados;
+if($diff2ParaDiasAtrasados>$DiasAtrazo){
+	$DiasAtrazo=$diff2ParaDiasAtrasados;
 	
 }
 
