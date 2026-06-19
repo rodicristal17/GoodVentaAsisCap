@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-ueno-card-v2-20260618" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=usuario-contrato-chip-inline-20260619" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=resumen-proyeccion-modal-dos-columnas-20260616" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -42,7 +42,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=registro-clinico-seguro-v2-20260529"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=recibo-original-duplicado-20260617"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=stock-unidad-junto-stock-actual-20260616"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=usuario-contrato-chip-inline-20260619"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=cobrar-cuota-20260611"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -3789,6 +3789,18 @@ id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display
 <p class='pTituloC'>Tipo de relacionamiento:</p>
 <textarea class='inputText' id='inptTipoRelacionamientoUser' style='width:100%;min-height:70px;box-sizing:border-box;resize:vertical;'></textarea>
 </div>
+<div class='funcionario-form-field funcionario-form-field--full'>
+<p class='pTituloC'>Contrato vigente hasta :</p>
+<input class='inputText' type='date' id='inptFechaVencimientoContratoUser' style='width:100%;box-sizing:border-box;'>
+<div class='funcionario-contrato-progress' id='funcionarioContratoProgress'>
+  <div class='funcionario-contrato-progress__top'>
+    <strong id='funcionarioContratoProgressTexto'>Sin fecha de contrato</strong>
+    <span id='funcionarioContratoProgressPorcentaje'>0%</span>
+  </div>
+  <div class='funcionario-contrato-progress__bar'><i id='funcionarioContratoProgressBarra'></i></div>
+  <small id='funcionarioContratoProgressDetalle'>Carga la fecha de ingreso y la fecha de vencimiento del contrato.</small>
+</div>
+</div>
 </section>
 </div>
 </div>
@@ -3985,6 +3997,7 @@ onclick='verificarcamposusuario();verCerrarVentanaAbmUsuarios("2","");buscarabmu
           <span id='funcionarioPanelLocal'>Sucursal principal</span>
           <span id='funcionarioPanelTelefono'>Telefono</span>
           <span id='funcionarioPanelEstado'>Estado laboral</span>
+          <span class='funcionario-contrato-chip funcionario-contrato-chip--sin-datos' id='funcionarioPanelContrato'>Tiempo contrato cumplido: 0%</span>
           <span id='funcionarioPanelAcceso'>Estado de acceso</span>
         </div>
         <div class='funcionario-progress'>

@@ -70,10 +70,12 @@ $tipo_relacion=$_POST['tipo_relacion'];
 $tipo_relacion = mb_convert_encoding((string)($tipo_relacion), 'ISO-8859-1', 'UTF-8');
 $fecha_creacion = $_POST['fecha_creacion'];
 $fecha_creacion = mb_convert_encoding((string)($fecha_creacion), 'ISO-8859-1', 'UTF-8');
+$fecha_vencimiento_contrato = isset($_POST['fecha_vencimiento_contrato']) ? $_POST['fecha_vencimiento_contrato'] : "";
+$fecha_vencimiento_contrato = mb_convert_encoding((string)($fecha_vencimiento_contrato), 'ISO-8859-1', 'UTF-8');
 
 $horarios_usuario = obtenerHorariosUsuarioPost();
 
-abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$horarios_usuario,$user,$operacion);
+abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$user,$operacion);
 }
 
  
@@ -317,6 +319,33 @@ exit;
 	
 	
 	
+}
+
+function normalizarFechaUsuarioContrato($fecha)
+{
+	$fecha = trim((string)$fecha);
+	return preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) ? $fecha : NULL;
+}
+
+function asegurarCampoVencimientoContratoUsuario($mysqli)
+{
+	$sqlExiste = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuario' AND column_name = ?";
+	$stmt = $mysqli->prepare($sqlExiste);
+	if (!$stmt) { return; }
+	$columna = "fecha_vencimiento_contrato";
+	$s = 's';
+	$stmt->bind_param($s, $columna);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		return;
+	}
+	$total = 0;
+	$stmt->bind_result($total);
+	$stmt->fetch();
+	$stmt->close();
+	if ((int)$total == 0) {
+		$mysqli->query("ALTER TABLE usuario ADD COLUMN fecha_vencimiento_contrato DATE DEFAULT NULL AFTER fecha_creacion");
+	}
 }
 
 
@@ -631,7 +660,7 @@ function buscarHorariosUsuario($mysqli,$cod_usuario)
 	return $horarios;
 }
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$horarios_usuario,$cod_usuario_accion,$operacion)
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$cod_usuario_accion,$operacion)
 {
 
 
@@ -643,6 +672,8 @@ exit;
 }
 
 $mysqli=conectar_al_servidor(); 
+asegurarCampoVencimientoContratoUsuario($mysqli);
+$fecha_vencimiento_contrato = normalizarFechaUsuarioContrato($fecha_vencimiento_contrato);
 $datosAnterioresAuditoria=array();
 if($operacion=="editar"){
 	$datosAnterioresAuditoria=obtenerDatosUsuarioAuditoria($mysqli,$cod_usuario);
@@ -689,11 +720,11 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='sssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion);
 
-$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion)
-values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW())";
+$consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion,fecha_vencimiento_contrato)
+values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW(),?)";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssss';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo);
+$ss='ssssssss';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_vencimiento_contrato);
 
 $con=rand(5, 1500);
 
@@ -719,10 +750,10 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion,$cod_persona);
 
-$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=? where cod_usuario=? ";
+$consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=?,fecha_vencimiento_contrato=? where cod_usuario=? ";
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssissi';
-$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$cod_usuario);
+$ss='sssssisssi';
+$stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$fecha_vencimiento_contrato,$cod_usuario);
 
 }
 
@@ -798,6 +829,7 @@ if($operacion=="editar"){
 		"cod_localFK" => $cod_localFK,
 		"tipo" => $tipo,
 		"fecha_creacion" => $fecha_creacion,
+		"fecha_vencimiento_contrato" => $fecha_vencimiento_contrato,
 		"horarios_usuario" => json_encode($horarios_usuario)
 	),$cod_usuario_accion,"Administracion");
 }
@@ -886,6 +918,7 @@ return $idusario;
 function BuscarRegistro($codigo,$documento,$usuario,$estado,$local)
 {
 $mysqli=conectar_al_servidor();
+asegurarCampoVencimientoContratoUsuario($mysqli);
 
 $sqlFiltro= "where us.estado= '$estado' ";
 if($codigo!=""){
@@ -904,7 +937,7 @@ if($local!=""){
 
 
 $sql= "select us.cod_usuario,us.rut_usuario,us.login,us.estado,us.acceso,us.cod_localFK,pr.nombre_persona,pr.telefono,
-pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,
+pr.tipo_relacion, pr.direccion,pr.telefono_referencia,us.fecha_creacion,IFNULL(us.fecha_vencimiento_contrato,'') as fecha_vencimiento_contrato,
 (select Nombre from local where cod_local= us.cod_localFK limit 1 ) as local,tipo,url
  from  persona pr inner join  usuario us on us.cod_usuario=pr.cod_persona ".$sqlFiltro;
  
@@ -942,6 +975,7 @@ $telefono_referencia = mb_convert_encoding((string)($valor['telefono_referencia'
 $direccion = mb_convert_encoding((string)($valor['direccion']), 'UTF-8', 'ISO-8859-1');
 $tipo_relacion = mb_convert_encoding((string)($valor['tipo_relacion']), 'UTF-8', 'ISO-8859-1');
 $fecha_creacion = mb_convert_encoding((string)($valor['fecha_creacion']), 'UTF-8', 'ISO-8859-1');
+$fecha_vencimiento_contrato = mb_convert_encoding((string)($valor['fecha_vencimiento_contrato']), 'UTF-8', 'ISO-8859-1');
 
 $horarios_usuario_json = buscarHorariosUsuario($mysqli,$cod_usuario);
 $horarios_usuario_json = json_encode($horarios_usuario_json);
@@ -966,6 +1000,7 @@ $horarios_usuario_json = json_encode($horarios_usuario_json);
 <td  id='td_datos_13' style='display:none'>".$direccion."</td>
 <td  id='td_datos_14' style='display:none'>".$tipo_relacion."</td>
 <td  id='td_datos_15' style='display:none'>".$fecha_creacion."</td>
+<td  id='td_datos_16' style='display:none'>".$fecha_vencimiento_contrato."</td>
 <td id='td_datos_22' style='display: none'>".$horarios_usuario_json."</td>
 </tr>
 </table>";
@@ -989,6 +1024,7 @@ $registros[] = array(
 	'direccion' => $direccion,
 	'tipo_relacion' => $tipo_relacion,
 	'fecha_creacion' => $fecha_creacion,
+	'fecha_vencimiento_contrato' => $fecha_vencimiento_contrato,
 	'horarios_usuario' => json_decode($horarios_usuario_json, true),
 );
 }
@@ -1066,9 +1102,10 @@ function tablaUsuarioExiste($mysqli,$tabla)
 
 function obtenerDatosUsuarioAuditoria($mysqli,$cod_usuario)
 {
+	asegurarCampoVencimientoContratoUsuario($mysqli);
 	$datos=array();
 	$sql="SELECT pr.nombre_persona,pr.telefono,pr.telefono_referencia,pr.direccion,pr.tipo_relacion,
-		us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,us.tipo,us.fecha_creacion
+		us.rut_usuario,us.login,us.password,us.estado,us.acceso,us.cod_localFK,us.tipo,us.fecha_creacion,IFNULL(us.fecha_vencimiento_contrato,'') as fecha_vencimiento_contrato
 		FROM persona pr INNER JOIN usuario us ON us.cod_usuario=pr.cod_persona
 		WHERE us.cod_usuario=? LIMIT 1";
 	$stmt=$mysqli->prepare($sql);
@@ -1109,6 +1146,7 @@ function registrarHistorialCambiosUsuario($mysqli,$cod_usuario,$anterior,$nuevo,
 		"cod_localFK" => "Sucursal principal",
 		"tipo" => "Tipo de usuario",
 		"fecha_creacion" => "Fecha de ingreso/creacion",
+		"fecha_vencimiento_contrato" => "Contrato vigente hasta",
 		"horarios_usuario" => "Jornada laboral esperada"
 	);
 	$sql="INSERT INTO usuario_historial_cambios

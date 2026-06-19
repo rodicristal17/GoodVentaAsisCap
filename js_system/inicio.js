@@ -134,7 +134,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-ueno-card-v2-20260618")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=usuario-contrato-chip-inline-20260619")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -543,6 +543,159 @@ function textoNormalizadoFuncionario(texto) {
 		.trim();
 }
 
+function parseFechaContratoFuncionario(fecha) {
+	fecha = String(fecha || "").trim();
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || fecha == "0000-00-00") {
+		return null;
+	}
+	var partes = fecha.split("-");
+	var fechaObj = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+	if (isNaN(fechaObj.getTime())) {
+		return null;
+	}
+	return fechaObj;
+}
+
+function formatearFechaContratoFuncionario(fecha) {
+	if (!fecha) {
+		return "-";
+	}
+	var dia = String(fecha.getDate()).padStart(2, "0");
+	var mes = String(fecha.getMonth() + 1).padStart(2, "0");
+	return dia + "/" + mes + "/" + fecha.getFullYear();
+}
+
+function describirPlazoVencimientoContratoFuncionario(fin, hoy) {
+	var diaMs = 24 * 60 * 60 * 1000;
+	var dias = Math.ceil((fin - hoy) / diaMs);
+	if (dias < 0) {
+		var diasVencido = Math.abs(dias);
+		return diasVencido == 1 ? "Vencio ayer" : "Vencio hace " + diasVencido + " dias";
+	}
+	if (dias == 0) {
+		return "Vence hoy";
+	}
+	if (dias == 1) {
+		return "Vence manana";
+	}
+	return "Vence en " + dias + " dias";
+}
+
+function calcularProgresoContratoFuncionario(fechaCreacion, fechaVencimiento) {
+	var inicio = parseFechaContratoFuncionario(fechaCreacion);
+	var fin = parseFechaContratoFuncionario(fechaVencimiento);
+	var hoy = new Date();
+	hoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+	var diaMs = 24 * 60 * 60 * 1000;
+
+	if (!inicio && !fin) {
+		return {
+			porcentaje: 0,
+			dias_restantes: null,
+			clase: "funcionario-contrato-progress funcionario-contrato-progress--sin-datos",
+			texto: "Sin fechas completas",
+			detalle: "Carga la fecha de ingreso y la fecha de vencimiento del contrato."
+		};
+	}
+
+	if (!inicio && fin) {
+		var diasRestantesSinInicio = Math.ceil((fin - hoy) / diaMs);
+		return {
+			porcentaje: 0,
+			dias_restantes: diasRestantesSinInicio,
+			clase: "funcionario-contrato-progress funcionario-contrato-progress--sin-datos",
+			texto: "Falta fecha de ingreso",
+			detalle: describirPlazoVencimientoContratoFuncionario(fin, hoy) + " (" + formatearFechaContratoFuncionario(fin) + "). Carga la fecha de ingreso para calcular el porcentaje cumplido."
+		};
+	}
+
+	if (inicio && !fin) {
+		return {
+			porcentaje: 0,
+			dias_restantes: null,
+			clase: "funcionario-contrato-progress funcionario-contrato-progress--sin-datos",
+			texto: "Sin fecha de vencimiento",
+			detalle: "Carga la fecha de vencimiento del contrato para calcular el porcentaje cumplido."
+		};
+	}
+
+	if (fin <= inicio) {
+		return {
+			porcentaje: 0,
+			dias_restantes: null,
+			clase: "funcionario-contrato-progress funcionario-contrato-progress--sin-datos",
+			texto: "Fechas de contrato inconsistentes",
+			detalle: "El vencimiento debe ser posterior a la fecha de ingreso."
+		};
+	}
+
+	var diasTotales = Math.ceil((fin - inicio) / diaMs);
+	var diasCumplidos = Math.floor((hoy - inicio) / diaMs);
+	var diasRestantes = Math.ceil((fin - hoy) / diaMs);
+	var vencido = hoy > fin;
+	diasCumplidos = Math.max(0, Math.min(diasCumplidos, diasTotales));
+	var porcentaje = Math.round((diasCumplidos / diasTotales) * 100);
+
+	return {
+		porcentaje: vencido ? 100 : porcentaje,
+		dias_restantes: diasRestantes,
+		clase: "funcionario-contrato-progress" + (vencido ? " funcionario-contrato-progress--vencido" : ""),
+		texto: vencido ? "Contrato vencido" : porcentaje + "% del contrato cumplido",
+		detalle: vencido
+			? "Vencio el " + formatearFechaContratoFuncionario(fin) + "."
+			: "Cumplidos " + diasCumplidos + " de " + diasTotales + " dias. Vence el " + formatearFechaContratoFuncionario(fin) + "."
+	};
+}
+
+function actualizarProgresoContratoUsuario() {
+	var contenedor = document.getElementById("funcionarioContratoProgress");
+	if (!contenedor) {
+		return;
+	}
+	var fechaCreacion = document.getElementById("inptFechaCreacionMUser") ? document.getElementById("inptFechaCreacionMUser").value : "";
+	var fechaVencimiento = document.getElementById("inptFechaVencimientoContratoUser") ? document.getElementById("inptFechaVencimientoContratoUser").value : "";
+	var progreso = calcularProgresoContratoFuncionario(fechaCreacion, fechaVencimiento);
+	var texto = document.getElementById("funcionarioContratoProgressTexto");
+	var porcentaje = document.getElementById("funcionarioContratoProgressPorcentaje");
+	var barra = document.getElementById("funcionarioContratoProgressBarra");
+	var detalle = document.getElementById("funcionarioContratoProgressDetalle");
+
+	contenedor.className = progreso.clase;
+	if (texto) texto.textContent = progreso.texto;
+	if (porcentaje) porcentaje.textContent = progreso.porcentaje + "%";
+	if (barra) barra.style.width = progreso.porcentaje + "%";
+	if (detalle) detalle.textContent = progreso.detalle;
+}
+
+function actualizarProgresoContratoPanelFuncionario(registro) {
+	var contenedor = document.getElementById("funcionarioPanelContrato");
+	if (!contenedor) {
+		return;
+	}
+	var progreso = calcularProgresoContratoFuncionario(
+		registro ? registro.fecha_creacion : "",
+		registro ? registro.fecha_vencimiento_contrato : ""
+	);
+	var clase = "funcionario-contrato-chip";
+	if (progreso.clase.indexOf("funcionario-contrato-progress--vencido") >= 0) {
+		clase += " funcionario-contrato-chip--vencido";
+	} else if (progreso.clase.indexOf("funcionario-contrato-progress--sin-datos") >= 0) {
+		clase += " funcionario-contrato-chip--sin-datos";
+	}
+
+	contenedor.className = clase;
+	contenedor.style.setProperty("--contrato-progress", progreso.porcentaje + "%");
+	contenedor.style.background = "linear-gradient(90deg, rgb(181, 237, 200) 0%, rgb(181, 237, 200) " + progreso.porcentaje + "%, #f8fafc " + progreso.porcentaje + "%, #f8fafc 100%)";
+	if (progreso.dias_restantes !== null && typeof progreso.dias_restantes != "undefined") {
+		contenedor.textContent = progreso.dias_restantes >= 0
+			? "Tiempo contrato restante: " + progreso.dias_restantes + " dias"
+			: "Tiempo contrato vencido: " + Math.abs(progreso.dias_restantes) + " dias";
+	} else {
+		contenedor.textContent = progreso.texto;
+	}
+	contenedor.title = progreso.detalle;
+}
+
 function actualizarCabeceraFormularioFuncionario() {
 	var nombre = document.getElementById("inptNombreApellidoUsuario");
 	var cargo = document.getElementById("inptTipoUsuUser");
@@ -572,7 +725,15 @@ function inicializarCabeceraFormularioFuncionario() {
 		campo.addEventListener("input", actualizarCabeceraFormularioFuncionario);
 		campo.addEventListener("change", actualizarCabeceraFormularioFuncionario);
 	}
+	var idsContrato = ["inptFechaCreacionMUser", "inptFechaVencimientoContratoUser"];
+	for (var j = 0; j < idsContrato.length; j++) {
+		var campoContrato = document.getElementById(idsContrato[j]);
+		if (!campoContrato) { continue; }
+		campoContrato.addEventListener("input", actualizarProgresoContratoUsuario);
+		campoContrato.addEventListener("change", actualizarProgresoContratoUsuario);
+	}
 	actualizarCabeceraFormularioFuncionario();
+	actualizarProgresoContratoUsuario();
 }
 
 if (document.addEventListener) {
@@ -840,6 +1001,7 @@ function cargarFormularioUsuarioDesdeRegistro(registro) {
 	if (document.getElementById('inptNroTelefReferenciaUser')) document.getElementById('inptNroTelefReferenciaUser').value = registro.telefono_referencia || "";
 	if (document.getElementById('inptDireccionUser')) document.getElementById('inptDireccionUser').value = registro.direccion || "";
 	if (document.getElementById('inptFechaCreacionMUser')) document.getElementById('inptFechaCreacionMUser').value = registro.fecha_creacion || "";
+	if (document.getElementById('inptFechaVencimientoContratoUser')) document.getElementById('inptFechaVencimientoContratoUser').value = registro.fecha_vencimiento_contrato || "";
 
 	reiniciarJustificacionesJornadaMesUsuario();
 	limpiarHorariosUsuario();
@@ -852,6 +1014,7 @@ function cargarFormularioUsuarioDesdeRegistro(registro) {
 	if (document.getElementById('btnEditarUsuario')) document.getElementById('btnEditarUsuario').style.backgroundColor = "";
 	if (document.getElementById('btnAbmUsuario')) document.getElementById('btnAbmUsuario').value = "ACTUALIZAR DATOS";
 	actualizarCabeceraFormularioFuncionario();
+	actualizarProgresoContratoUsuario();
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
 	return true;
 }
@@ -896,6 +1059,7 @@ function actualizarPanelRapidoFuncionario(registro) {
 	document.getElementById("funcionarioPanelLocal").innerHTML = escaparHtmlFuncionario(registro.local || "Sucursal sin definir");
 	document.getElementById("funcionarioPanelTelefono").innerHTML = escaparHtmlFuncionario(registro.telefono || "Telefono sin cargar");
 	document.getElementById("funcionarioPanelEstado").innerHTML = escaparHtmlFuncionario(registro.estado || "Estado sin definir");
+	actualizarProgresoContratoPanelFuncionario(registro);
 	document.getElementById("funcionarioPanelAcceso").innerHTML = escaparHtmlFuncionario(obtenerEstadoAccesoFuncionario(registro));
 	document.getElementById("funcionarioPanelProgresoTexto").innerHTML = "Perfil completado: " + completitud.porcentaje + "%";
 	document.getElementById("funcionarioPanelProgresoBarra").style.width = completitud.porcentaje + "%";
@@ -907,6 +1071,21 @@ function actualizarPanelRapidoFuncionario(registro) {
 function valorFichaFuncionario(label, valor, valorAnterior) {
 	var anterior = valorAnterior ? "<small class='funcionario-evidencia'>Dato anterior: <s>" + escaparHtmlFuncionario(valorAnterior) + "</s></small>" : "";
 	return "<div class='funcionario-ficha__dato'><span>" + escaparHtmlFuncionario(label) + "</span><strong>" + escaparHtmlFuncionario(valor || "-") + "</strong>" + anterior + "</div>";
+}
+
+function renderProgresoContratoFichaFuncionario(registro) {
+	var progreso = calcularProgresoContratoFuncionario(
+		registro ? registro.fecha_creacion : "",
+		registro ? registro.fecha_vencimiento_contrato : ""
+	);
+	return "<div class='" + escaparHtmlFuncionario(progreso.clase) + "'>" +
+		"<div class='funcionario-contrato-progress__top'>" +
+			"<strong>" + escaparHtmlFuncionario(progreso.texto) + "</strong>" +
+			"<span>" + escaparHtmlFuncionario(progreso.porcentaje + "%") + "</span>" +
+		"</div>" +
+		"<div class='funcionario-contrato-progress__bar'><i style='width:" + escaparHtmlFuncionario(progreso.porcentaje + "%") + "'></i></div>" +
+		"<small>" + escaparHtmlFuncionario(progreso.detalle) + "</small>" +
+	"</div>";
 }
 
 function renderHorariosFichaFuncionario(registro) {
@@ -944,6 +1123,7 @@ function actualizarFichaFuncionario(registro) {
 		valorFichaFuncionario("Telefono/WhatsApp", registro.telefono) +
 		valorFichaFuncionario("Cedula/documento", registro.rut_usuario) +
 		valorFichaFuncionario("Sucursal principal", registro.local) +
+		valorFichaFuncionario("Contrato vigente hasta", registro.fecha_vencimiento_contrato) +
 		valorFichaFuncionario("Perfil", completitud.porcentaje + "% completo") +
 		"</div>" +
 		(completitud.pendientes.length > 0 ? "<div class='funcionario-ficha__pendientes'><strong>Datos pendientes</strong><ul><li>" + completitud.pendientes.map(escaparHtmlFuncionario).join("</li><li>") + "</li></ul></div>" : "<div class='funcionario-empty-state'>100% completo.</div>");
@@ -964,8 +1144,10 @@ function actualizarFichaFuncionario(registro) {
 		valorFichaFuncionario("Sucursal principal", registro.local) +
 		valorFichaFuncionario("Tipo de relacion", registro.tipo_relacion) +
 		valorFichaFuncionario("Fecha de ingreso/creacion", registro.fecha_creacion) +
+		valorFichaFuncionario("Contrato vigente hasta", registro.fecha_vencimiento_contrato) +
 		valorFichaFuncionario("Estado laboral", registro.estado) +
-		"</div>";
+		"</div>" +
+		renderProgresoContratoFichaFuncionario(registro);
 
 	document.getElementById("funcionarioFichaAccesoSeccion").innerHTML =
 		"<div class='funcionario-ficha__grid'>" +
@@ -1715,7 +1897,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-ueno-card-v2-20260618")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=usuario-contrato-chip-inline-20260619")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -1988,6 +2170,7 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('inptNroTelefReferenciaUser').value = $(datostr).children('td[id="td_datos_12"]').html();
 	document.getElementById('inptDireccionUser').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptFechaCreacionMUser').value = $(datostr).children('td[id="td_datos_15"]').html();
+	document.getElementById('inptFechaVencimientoContratoUser').value = $(datostr).children('td[id="td_datos_16"]').html();
 	idAbmUsuario = $(datostr).children('td[id="td_id"]').html();
 	reiniciarJustificacionesJornadaMesUsuario();
 	reiniciarMarcacionesJornadaMesUsuario();
@@ -2002,6 +2185,7 @@ function obtenerdatosabmusuario(datostr) {
 	document.getElementById('btnEditarUsuario').style.backgroundColor="";
     document.getElementById('btnAbmUsuario').value = "ACTUALIZAR DATOS";
 	actualizarCabeceraFormularioFuncionario();
+	actualizarProgresoContratoUsuario();
 
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
 	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
@@ -3688,6 +3872,7 @@ function verificarcamposusuario() {
 	const inptNroTelefReferenciaUser= document.getElementById('inptNroTelefReferenciaUser').value;
 	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
 	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
+	const inptFechaVencimientoContratoUser = document.getElementById('inptFechaVencimientoContratoUser').value;
 
 	const horariosUsuario = obtenerHorariosUsuarioFormulario();
 	if (horariosUsuario === null) {
@@ -3721,9 +3906,9 @@ function verificarcamposusuario() {
 		accion = "nuevo";
 		if(controlacceso("INSERTARLISTADOUSUARIO","accion")==false){return;}
 	}
-	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,horariosUsuario,idAbmUsuario, accion);
+	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,inptFechaVencimientoContratoUser,horariosUsuario,idAbmUsuario, accion);
 }
-function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,horarios_usuario,cod_persona, accion) {
+function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,fecha_vencimiento_contrato,horarios_usuario,cod_persona, accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -3748,6 +3933,7 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("ext", extcliente3)
 	datos.append("horarios_usuario_json", JSON.stringify(horarios_usuario));
 	datos.append("fecha_creacion", fecha_creacion);
+	datos.append("fecha_vencimiento_contrato", fecha_vencimiento_contrato);
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
@@ -4108,6 +4294,7 @@ function limpiarcamposusuarios() {
 
 	const fecahActual= new Date();
 	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth()).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
+	document.getElementById('inptFechaVencimientoContratoUser').value = "";
 	
 		$("div[id=imgFotoPerfil1]").css({"background-image":"url(/GoodVentaAsisCap/iconos/sinperfil.png)"})
 		fotocliente3="/GoodVentaAsisCap/iconos/sinperfil.png";
@@ -4120,6 +4307,7 @@ function limpiarcamposusuarios() {
 	document.getElementById('btnAbmUsuario').value = "Guardar datos";
 	document.getElementById('btnEditarUsuario').style.backgroundColor="#b7b7b7";
 	actualizarCabeceraFormularioFuncionario();
+	actualizarProgresoContratoUsuario();
 	document.getElementById('divTableHistorialPersonasUsuarios').innerHTML="";
 	seleccionarLocalUSer()
 	mostrarFormularioFuncionario()
