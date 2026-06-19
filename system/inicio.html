@@ -23,7 +23,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=usuario-contrato-chip-inline-20260619" /><link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=resumen-proyeccion-modal-dos-columnas-20260616" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-responsive-20260619" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -51,7 +51,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-card-v2-20260618"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=insumos-dia-proyeccion-consultorio-20260616"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-consultorios-responsive-20260619"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js"></script>
@@ -26240,7 +26240,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 
     <div class='agenda-layout'>
         <div class='agenda-sidebar'>
-            <div class='agenda-card'>
+            <div class='agenda-card agenda-card-resumen-dia'>
                 <p class='agenda-card-title'>Resumen del día</p>
                 <div class='agenda-resumen-item'>
                     <span>Total citas</span>
@@ -26277,8 +26277,11 @@ onclick='buscarvistaaperturacierrecaja()' />
 				
             </div>
 
-            <div class='agenda-card'>
-                <p class='agenda-card-title'>Consultorios</p>
+            <div class='agenda-card agenda-card-consultorios' id='cardConsultoriosAgenda'>
+                <div class='agenda-card-title-row'>
+                    <p class='agenda-card-title'>Consultorios</p>
+                    <button type='button' class='agenda-card-title-action' id='btnPlegarConsultoriosAgenda' onclick='alternarPlegadoConsultoriosAgenda()' title='Replegar consultorios'>Replegar</button>
+                </div>
                 <div id='listaConsultoriosAgenda' class='agenda-consultorios-lista'></div>
             </div>
         </div>

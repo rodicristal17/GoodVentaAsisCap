@@ -10,6 +10,7 @@ var timeoutBuscarHistorialPacienteCalendario = null;
 var ultimaPeticionDoctoresNuevaCita = 0;
 var comentarioAgendamientoEnProceso = false;
 var agendaConsultoriosGruposColapsados = {};
+var agendaConsultoriosCardPlegadoResponsiveInicializado = false;
 var resumenInsumosConsultorioPeriodo = "dia";
 var resumenInsumosConsultorioSemanaCache = {};
 var informeInsumosAgendaLocales = [];
@@ -253,6 +254,7 @@ function renderListaConsultoriosAgenda(){
     }
 
     cont.innerHTML = html;
+    prepararPlegadoResponsiveConsultoriosAgenda();
     actualizarEstadoGruposConsultoriosAgenda();
 }
 
@@ -380,6 +382,8 @@ function actualizarEstadoGruposConsultoriosAgenda(){
             contador.innerHTML = seleccionados + '/' + checks.length;
         }
     }
+
+    actualizarBotonPlegadoConsultoriosAgenda();
 }
 
 function toggleGrupoConsultoriosAgenda(boton){
@@ -402,6 +406,67 @@ function toggleGrupoConsultoriosAgenda(boton){
 
     grupoClave = grupo.getAttribute('data-grupo') || '';
     agendaConsultoriosGruposColapsados[grupoClave] = colapsado;
+    actualizarBotonPlegadoConsultoriosAgenda();
+}
+
+function esPantallaChicaAgenda(){
+    if(typeof window === "undefined" || typeof window.matchMedia !== "function"){
+        return false;
+    }
+
+    return window.matchMedia("(max-width: 1200px)").matches;
+}
+
+function prepararPlegadoResponsiveConsultoriosAgenda(){
+    var card = document.getElementById('cardConsultoriosAgenda');
+
+    if(!card){
+        return;
+    }
+
+    if(esPantallaChicaAgenda()){
+        if(!agendaConsultoriosCardPlegadoResponsiveInicializado){
+            card.classList.add('agenda-card-consultorios--replegado');
+            agendaConsultoriosCardPlegadoResponsiveInicializado = true;
+        }
+    }else{
+        card.classList.remove('agenda-card-consultorios--replegado');
+        agendaConsultoriosCardPlegadoResponsiveInicializado = false;
+    }
+
+    actualizarBotonPlegadoConsultoriosAgenda();
+}
+
+function actualizarBotonPlegadoConsultoriosAgenda(){
+    var boton = document.getElementById('btnPlegarConsultoriosAgenda');
+    var card = document.getElementById('cardConsultoriosAgenda');
+    var replegado;
+
+    if(!boton || !card){
+        return;
+    }
+
+    replegado = card.classList.contains('agenda-card-consultorios--replegado');
+    boton.innerHTML = replegado ? 'Desplegar' : 'Replegar';
+    boton.setAttribute('title', replegado ? 'Desplegar consultorios' : 'Replegar consultorios');
+    boton.setAttribute('aria-label', replegado ? 'Desplegar consultorios' : 'Replegar consultorios');
+    boton.setAttribute('aria-expanded', replegado ? 'false' : 'true');
+}
+
+function alternarPlegadoConsultoriosAgenda(){
+    var card = document.getElementById('cardConsultoriosAgenda');
+
+    if(!card){
+        return;
+    }
+
+    card.classList.toggle('agenda-card-consultorios--replegado');
+    agendaConsultoriosCardPlegadoResponsiveInicializado = true;
+    actualizarBotonPlegadoConsultoriosAgenda();
+}
+
+if(typeof window !== "undefined"){
+    window.addEventListener('resize', prepararPlegadoResponsiveConsultoriosAgenda);
 }
 
 

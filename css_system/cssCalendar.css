@@ -301,6 +301,38 @@
     font-weight:700;
 }
 
+.agenda-card-title-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:5px;
+}
+
+.agenda-card-title-row .agenda-card-title{
+    margin:0;
+}
+
+.agenda-card-title-action{
+    display:none;
+    flex:none;
+    align-items:center;
+    justify-content:center;
+    min-height:28px;
+    padding:4px 9px;
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    background:var(--bg-soft);
+    color:var(--text-main);
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.agenda-card-title-action:hover{
+    filter:brightness(1.03);
+}
+
 .agenda-resumen-item{
     display:flex;
     justify-content:space-between;
@@ -2247,6 +2279,23 @@
 @media only screen and (max-width: 1200px){
     .agenda-layout{
         grid-template-columns:1fr;
+    }
+
+    .agenda-card-resumen-dia{
+        display:none;
+    }
+
+    .agenda-card-title-action{
+        display:inline-flex;
+    }
+
+    .agenda-card-consultorios--replegado{
+        min-height:0;
+        overflow:visible;
+    }
+
+    .agenda-card-consultorios--replegado .agenda-consultorios-lista{
+        display:none;
     }
 
     .modal-consultorio-resumen-box{
