@@ -12570,9 +12570,19 @@ function formatearMontoAperturaCierreCaja(valor) {
 	return valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function cajaCierreEsperadoBackend() {
+	if (cajaCierreResumenMedios && cajaCierreResumenMedios.efectivo_esperado !== undefined && cajaCierreResumenMedios.efectivo_esperado !== null && cajaCierreResumenMedios.efectivo_esperado !== "") {
+		const valor = cajaCierreResumenMedios.efectivo_esperado.toString().replace(/\./g, '').replace(',', '.');
+		const numero = Number(valor);
+		return isNaN(numero) ? 0 : numero;
+	}
+	return null;
+}
+
 function actualizarResumenEsperadoAperturaCierreCaja() {
 	const montoApertura = obtenerMontoNumericoAperturaCierreCaja('inptMontoAperturaCierreCaja');
 	const totalRecaudado = obtenerMontoNumericoAperturaCierreCaja('inptMontoRecaudadoCierreCaja');
+	const esperadoBackend = cajaCierreEsperadoBackend();
 	const resumenInicial = document.getElementById('inptResumenInicialAperturaCierre');
 	const resumenMontoApertura = document.getElementById('inptMontoAperturaCierreCajaResumen');
 	const resumenTotal = document.getElementById('inptResumenTotalAperturaCierre');
@@ -12584,7 +12594,7 @@ function actualizarResumenEsperadoAperturaCierreCaja() {
 		resumenMontoApertura.value = formatearMontoAperturaCierreCaja(montoApertura);
 	}
 	if (resumenTotal) {
-		resumenTotal.value = formatearMontoAperturaCierreCaja(montoApertura + totalRecaudado);
+		resumenTotal.value = formatearMontoAperturaCierreCaja(esperadoBackend !== null ? esperadoBackend : (montoApertura + totalRecaudado));
 	}
 	cajaCierreActualizarResumenSeguro();
 }

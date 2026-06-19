@@ -389,6 +389,20 @@ function caja_cierre_sumar_pagos($mysqli, $idArqeoFk, $condicion = "")
 	return caja_cierre_sumar_sql($mysqli, $sql);
 }
 
+function caja_cierre_sumar_pagos_informe($mysqli, $idArqeoFk)
+{
+	$idArqeoFk = $mysqli->real_escape_string($idArqeoFk);
+	$sql = "select IFNULL(sum(pg.Monto),0) as total
+	from (
+		select sum(pg.Monto) as Monto
+		from pago pg
+		inner join venta vt on cod_venta=pg.cod_venta_fk
+		where pg.Monto>0 and pg.codApertura='$idArqeoFk'
+		group by nrofactura,cod_venta_fk
+	) pg";
+	return caja_cierre_sumar_sql($mysqli, $sql);
+}
+
 function caja_cierre_sumar_gastos($mysqli, $idArqeoFk, $tipo)
 {
 	$idArqeoFk = $mysqli->real_escape_string($idArqeoFk);
@@ -422,8 +436,8 @@ function caja_cierre_transferencias_conciliadas($mysqli, $idArqeoFk)
 
 function caja_cierre_calcular_resumen_medios($mysqli, $idArqeoFk, $montoInicio)
 {
-	$textoPago = "UPPER(COALESCE(tp.nombre, pg.tipopago, ''))";
-	$totalPagos = caja_cierre_sumar_pagos($mysqli, $idArqeoFk);
+	$textoPago = "UPPER(COALESCE(tp.nombre, ''))";
+	$totalPagos = caja_cierre_sumar_pagos_informe($mysqli, $idArqeoFk);
 	$pagosEfectivo = caja_cierre_sumar_pagos($mysqli, $idArqeoFk, "$textoPago LIKE '%EFECTIVO%'");
 	$transferencias = caja_cierre_sumar_pagos($mysqli, $idArqeoFk, "$textoPago LIKE '%TRANSFER%'");
 	$tarjetas = caja_cierre_sumar_pagos($mysqli, $idArqeoFk, "$textoPago LIKE '%TARJ%' OR $textoPago LIKE '%DEBITO%' OR $textoPago LIKE '%CREDITO%'");
@@ -434,9 +448,10 @@ function caja_cierre_calcular_resumen_medios($mysqli, $idArqeoFk, $montoInicio)
 	}
 	$ingresos = caja_cierre_sumar_gastos($mysqli, $idArqeoFk, "Ingreso");
 	$egresos = caja_cierre_sumar_gastos($mysqli, $idArqeoFk, "Egreso");
+	$depositos = caja_cierre_sumar_gastos($mysqli, $idArqeoFk, "Deposito");
 	$cajaRecibida = caja_cierre_sumar_migracion($mysqli, $idArqeoFk, "cod_caja_hastaFK");
 	$cajaEnviada = caja_cierre_sumar_migracion($mysqli, $idArqeoFk, "cod_caja_desdeFK");
-	$movimientoEfectivo = $pagosEfectivo + $ingresos + $cajaRecibida - $egresos - $cajaEnviada;
+	$movimientoEfectivo = $totalPagos + $ingresos + $cajaRecibida - $egresos - $cajaEnviada - $depositos;
 	$efectivoEsperado = (int)$montoInicio + $movimientoEfectivo;
 
 	return array(
@@ -451,6 +466,7 @@ function caja_cierre_calcular_resumen_medios($mysqli, $idArqeoFk, $montoInicio)
 		'total_otros' => $otros,
 		'total_ingresos' => $ingresos,
 		'total_egresos' => $egresos,
+		'total_depositos' => $depositos,
 		'total_caja_recibida' => $cajaRecibida,
 		'total_caja_enviada' => $cajaEnviada
 	);
@@ -1489,8 +1505,8 @@ $montoapertura=Obtenermontoapertura($idArqeoFk);
 
 $datosdeEgresos=datosdeEgresos($idArqeoFk);
 $datosdeIngreso=datosdeIngreso($idArqeoFk); 
-$totalPagado=($totalPagado+$datosdeIngreso[0]+$montoapertura + $datosdeCajaRecibir[1])-($datosdeEgresos[0] + $datosdeCajaEnviado[1] );
 $resumenCierre=caja_cierre_calcular_resumen_medios($mysqli,$idArqeoFk,$montoapertura);
+$totalPagado=$resumenCierre['efectivo_esperado'];
  $informacion =array(
 	"1" => "exito",
 	"2" =>  number_format($totalPagado,'0',',','.'),
