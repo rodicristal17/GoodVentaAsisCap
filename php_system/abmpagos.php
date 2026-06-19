@@ -468,6 +468,11 @@ $MontoTarjeta = quitarseparadormiles($MontoTarjeta);
 
 $cod_cobradorFK=$_POST['cod_cobradorFK'];
 $cod_cobradorFK = mb_convert_encoding((string)($cod_cobradorFK), 'ISO-8859-1', 'UTF-8');
+$origen_cobro=isset($_POST['origen_cobro']) ? $_POST['origen_cobro'] : "";
+$origen_cobro = mb_convert_encoding((string)($origen_cobro), 'ISO-8859-1', 'UTF-8');
+if($origen_cobro=="COBRAR_CUOTA"){
+	$cod_cobradorFK=$user;
+}
 
 $nrofactura=$_POST['nrofactura'];
 $nrofactura = mb_convert_encoding((string)($nrofactura), 'ISO-8859-1', 'UTF-8');

@@ -1575,10 +1575,11 @@ function cobrarCuotaEjecutarRegistro(contexto) {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "cargartipospagoscredito");
+	datos.append("origen_cobro", "COBRAR_CUOTA");
 	datos.append("Fecha", fecha);
 	datos.append("totalDeudaCuota", cobrarCuotaFormato(cobrarCuotaSeleccionada.saldo_cuota_num || saldo));
 	datos.append("cod_creditoFK", cobrarCuotaSeleccionada.idcredito);
-	datos.append("cod_cobradorFK", cobrarCuotaSeleccionada.cobrador_id || userid);
+	datos.append("cod_cobradorFK", userid);
 	datos.append("cod_venta", cobrarCuotaSeleccionada.venta_id || cobrarCuotaSeleccionada.cod_venta);
 	datos.append("totalInteres", cobrarCuotaFormato(cobrarCuotaSeleccionada.saldo_interes_num || 0));
 	datos.append("nrofactura", "");
