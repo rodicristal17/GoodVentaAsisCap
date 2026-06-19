@@ -49,7 +49,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-control-20260612"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-card-v2-20260618"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-multiple-parcial-20260619"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-consultorios-responsive-20260619"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -13037,14 +13037,14 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 <span class='cobrar-cuota__guide-help-badge'>6</span>
 <div>
 <strong>Si es transferencia</strong>
-<p>La fecha de pago filtra las transferencias Ueno disponibles. Debes elegir una transferencia de la lista para poder registrar el cobro.</p>
+<p>La fecha de pago filtra las transferencias Ueno disponibles. Puedes marcar una o varias cuotas y elegir una transferencia que cubra el total.</p>
 </div>
 </div>
 <div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--partial'>
 <span class='cobrar-cuota__guide-help-badge'>7</span>
 <div>
 <strong>Uso parcial</strong>
-<p>Si la transferencia no alcanza, se puede usar como pago parcial. Si sobra saldo, puedes aplicar solo una parte y dejar el resto disponible.</p>
+<p>Si el monto no cubre todo lo marcado, se aplica en orden: cuotas completas primero y la ultima alcanzada queda parcial.</p>
 </div>
 </div>
 <div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--confirm'>
@@ -13055,7 +13055,7 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 </div>
 </div>
 </div>
-<div class='cobrar-cuota__guide-help-note'><b>Antes de confirmar</b><span>Verifica cliente, plan, cuota, fecha y monto. En transferencias, confirma que la Ueno seleccionada sea la correcta.</span></div>
+<div class='cobrar-cuota__guide-help-note'><b>Antes de confirmar</b><span>Verifica cliente, plan, cuotas, fecha y monto. En transferencias, confirma que la Ueno seleccionada sea la correcta.</span></div>
 </div>
 </div>
 

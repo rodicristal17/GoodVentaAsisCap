@@ -1,4 +1,5 @@
 var cobrarCuotaSeleccionada = null;
+var cobrarCuotaSeleccionadas = [];
 var cobrarCuotaClienteSeleccionado = null;
 var cobrarCuotaPlanSeleccionado = null;
 var cobrarCuotaClientes = [];
@@ -144,6 +145,247 @@ function cobrarCuotaClonarSimple(objeto) {
 	return copia;
 }
 
+function cobrarCuotaTextoTipoPagoActual() {
+	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
+	return select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+}
+
+function cobrarCuotaEsTransferenciaActual() {
+	return cobrarCuotaEsTransferenciaTexto(cobrarCuotaTextoTipoPagoActual());
+}
+
+function cobrarCuotaObtenerCuotasSeleccionadas() {
+	var cuotas = [];
+	var usados = {};
+	var i, cuota, id;
+	if (Array.isArray(cobrarCuotaSeleccionadas)) {
+		for (i = 0; i < cobrarCuotaSeleccionadas.length; i++) {
+			cuota = cobrarCuotaSeleccionadas[i];
+			id = cuota && cuota.idcredito ? String(cuota.idcredito) : "";
+			if (id != "" && !usados[id] && cobrarCuotaEsCuotaCobrable(cuota)) {
+				usados[id] = true;
+				cuotas.push(cuota);
+			}
+		}
+	}
+	if (cuotas.length == 0 && cobrarCuotaSeleccionada && cobrarCuotaSeleccionada.idcredito && cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada)) {
+		cuotas.push(cobrarCuotaSeleccionada);
+	}
+	cobrarCuotaSeleccionadas = cuotas;
+	cobrarCuotaSeleccionada = cuotas.length > 0 ? cuotas[cuotas.length - 1] : null;
+	return cuotas.slice(0);
+}
+
+function cobrarCuotaEstaSeleccionada(idcredito) {
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	for (var i = 0; i < cuotas.length; i++) {
+		if (String(cuotas[i].idcredito) == String(idcredito)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function cobrarCuotaTotalSeleccionadas(cuotas) {
+	cuotas = cuotas || cobrarCuotaObtenerCuotasSeleccionadas();
+	var total = 0;
+	for (var i = 0; i < cuotas.length; i++) {
+		total += Number(cuotas[i].saldo_pendiente_num || 0);
+	}
+	return total;
+}
+
+function cobrarCuotaOrdenarCuotasSeleccionadas(cuotas) {
+	cuotas = cuotas || cobrarCuotaObtenerCuotasSeleccionadas();
+	var mapa = {};
+	for (var i = 0; i < cuotas.length; i++) {
+		if (cuotas[i] && cuotas[i].idcredito) {
+			mapa[String(cuotas[i].idcredito)] = cuotas[i];
+		}
+	}
+	var ordenadas = [];
+	for (var j = 0; j < cobrarCuotaCuotas.length; j++) {
+		var id = String(cobrarCuotaCuotas[j].idcredito || "");
+		if (mapa[id]) {
+			ordenadas.push(mapa[id]);
+			delete mapa[id];
+		}
+	}
+	for (var clave in mapa) {
+		if (Object.prototype.hasOwnProperty.call(mapa, clave)) {
+			ordenadas.push(mapa[clave]);
+		}
+	}
+	return ordenadas;
+}
+
+function cobrarCuotaCalcularAplicaciones(cuotas, monto) {
+	cuotas = cobrarCuotaOrdenarCuotasSeleccionadas(cuotas);
+	monto = Number(monto) || 0;
+	var restante = monto;
+	var aplicaciones = [];
+	for (var i = 0; i < cuotas.length; i++) {
+		var saldo = Number(cuotas[i].saldo_pendiente_num || 0);
+		var aplicado = Math.min(Math.max(0, restante), saldo);
+		if (aplicado > 0) {
+			aplicaciones.push({
+				cuota: cuotas[i],
+				monto: aplicado,
+				saldoAnterior: saldo,
+				saldoRestante: Math.max(0, saldo - aplicado),
+				parcial: aplicado < saldo
+			});
+			restante -= aplicado;
+		}
+	}
+	return aplicaciones;
+}
+
+function cobrarCuotaMantenerSoloSeleccionActual() {
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	var cuota = cobrarCuotaSeleccionada || (cuotas.length > 0 ? cuotas[0] : null);
+	if (cuota && cuota.idcredito && cobrarCuotaEsCuotaCobrable(cuota)) {
+		cobrarCuotaSeleccionada = cuota;
+		cobrarCuotaSeleccionadas = [cuota];
+	} else {
+		cobrarCuotaSeleccionada = null;
+		cobrarCuotaSeleccionadas = [];
+	}
+}
+
+function cobrarCuotaAgregarSeleccion(cuota) {
+	if (!cuota || !cuota.idcredito || !cobrarCuotaEsCuotaCobrable(cuota)) {
+		return;
+	}
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	var existe = false;
+	for (var i = 0; i < cuotas.length; i++) {
+		if (String(cuotas[i].idcredito) == String(cuota.idcredito)) {
+			cuotas[i] = cuota;
+			existe = true;
+			break;
+		}
+	}
+	if (!existe) {
+		cuotas.push(cuota);
+	}
+	cobrarCuotaSeleccionadas = cuotas;
+	cobrarCuotaSeleccionada = cuota;
+}
+
+function cobrarCuotaQuitarSeleccion(idcredito) {
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	var nuevas = [];
+	for (var i = 0; i < cuotas.length; i++) {
+		if (String(cuotas[i].idcredito) != String(idcredito)) {
+			nuevas.push(cuotas[i]);
+		}
+	}
+	cobrarCuotaSeleccionadas = nuevas;
+	cobrarCuotaSeleccionada = nuevas.length > 0 ? nuevas[nuevas.length - 1] : null;
+}
+
+function cobrarCuotaActualizarEstadoMonto() {
+	var monto = cobrarCuotaId("inptCobrarCuotaMontoCobrar");
+	if (!monto) {
+		return;
+	}
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	monto.readOnly = false;
+	monto.title = cuotas.length > 1 ? "El monto se aplicara en orden a las cuotas seleccionadas; puede dejar la ultima como parcial." : "";
+}
+
+function cobrarCuotaActualizarMontosDesdeSeleccion(forzarSimple) {
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	if (cuotas.length == 0) {
+		cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", "");
+		cobrarCuotaSetValor("inptCobrarCuotaMontoRecibido", "");
+		cobrarCuotaSetValor("inptCobrarCuotaVuelto", "");
+		cobrarCuotaActualizarEstadoMonto();
+		return;
+	}
+	var total = cobrarCuotaTotalSeleccionadas(cuotas);
+	if (cuotas.length > 1) {
+		cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", cobrarCuotaFormato(total));
+		var recibidoActual = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoRecibido") ? cobrarCuotaId("inptCobrarCuotaMontoRecibido").value : "");
+		if (recibidoActual < total) {
+			cobrarCuotaSetValor("inptCobrarCuotaMontoRecibido", cobrarCuotaFormato(total));
+		}
+	} else if (forzarSimple !== false) {
+		cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", cuotas[0].saldo_pendiente || cobrarCuotaFormato(total));
+		cobrarCuotaSetValor("inptCobrarCuotaMontoRecibido", cuotas[0].saldo_pendiente || cobrarCuotaFormato(total));
+	}
+	cobrarCuotaActualizarEstadoMonto();
+	cobrarCuotaCalcularVuelto();
+}
+
+function cobrarCuotaRenderSeleccionActual() {
+	var contenedor = cobrarCuotaId("divCobrarCuotaSeleccionada");
+	if (!contenedor) {
+		return;
+	}
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	if (cuotas.length == 0) {
+		contenedor.innerHTML = "<div class='cobrar-cuota__placeholder'><b>Selecciona una cuota</b><span>Primero selecciona un plan y luego una cuota pendiente.</span></div>";
+		return;
+	}
+	if (cuotas.length == 1) {
+		var cuota = cuotas[0];
+		contenedor.innerHTML = "<div class='cobrar-cuota__selected-card'>"
+			+ "<div class='cobrar-cuota__selected-title'>Cuota seleccionada</div>"
+			+ "<div class='cobrar-cuota__selected-grid'>"
+			+ "<span><b>Cliente</b>" + cobrarCuotaEscape(cuota.cliente) + "</span>"
+			+ "<span><b>Cedula</b>" + cobrarCuotaEscape(cuota.cedula) + "</span>"
+			+ (cuota.alias ? "<span><b>Alias / apodo</b>" + cobrarCuotaEscape(cuota.alias) + "</span>" : "")
+			+ "<span><b>Venta</b>" + cobrarCuotaEscape(cuota.venta) + "</span>"
+			+ "<span class='cobrar-cuota__wide'><b>Producto / plan</b>" + cobrarCuotaEscape(cuota.producto) + "</span>"
+			+ "<span><b>Cuota</b>" + cobrarCuotaEscape(cuota.cuota) + "</span>"
+			+ "<span><b>Vencimiento</b>" + cobrarCuotaEscape(cuota.fecha_vencimiento) + "</span>"
+			+ "<span><b>Monto cuota</b>" + cobrarCuotaEscape(cuota.monto_cuota) + "</span>"
+			+ "<span><b>Pagado</b>" + cobrarCuotaEscape(cuota.pagado_total || "0") + "</span>"
+			+ "<span><b>Interes pendiente</b>" + cobrarCuotaEscape(cuota.saldo_interes) + "</span>"
+			+ "<span><b>Saldo pendiente</b>" + cobrarCuotaEscape(cuota.saldo_pendiente) + "</span>"
+			+ "<span><b>Estado</b>" + cobrarCuotaEscape(cuota.estado) + "</span>"
+			+ "</div>"
+			+ "</div>";
+		return;
+	}
+	var total = cobrarCuotaTotalSeleccionadas(cuotas);
+	var detalle = "";
+	for (var i = 0; i < cuotas.length; i++) {
+		detalle += "<span><b>Cuota " + cobrarCuotaEscape(cuotas[i].cuota) + "</b>"
+			+ "Venc. " + cobrarCuotaEscape(cuotas[i].fecha_vencimiento || "-")
+			+ " - Saldo " + cobrarCuotaEscape(cuotas[i].saldo_pendiente || "0") + "</span>";
+	}
+	contenedor.innerHTML = "<div class='cobrar-cuota__selected-card'>"
+		+ "<div class='cobrar-cuota__selected-title'>Cuotas seleccionadas</div>"
+		+ "<div class='cobrar-cuota__selected-grid'>"
+		+ "<span><b>Cliente</b>" + cobrarCuotaEscape(cuotas[0].cliente) + "</span>"
+		+ "<span><b>Cedula</b>" + cobrarCuotaEscape(cuotas[0].cedula) + "</span>"
+		+ "<span><b>Venta</b>" + cobrarCuotaEscape(cuotas[0].venta) + "</span>"
+		+ "<span><b>Cantidad</b>" + cuotas.length + " cuotas</span>"
+		+ "<span class='cobrar-cuota__wide'><b>Total seleccionado</b>" + cobrarCuotaEscape(cobrarCuotaFormato(total)) + " Gs.</span>"
+		+ detalle
+		+ "</div>"
+		+ "</div>";
+}
+
+function cobrarCuotaActualizarSeleccionVisual(forzarMonto) {
+	cobrarCuotaObtenerCuotasSeleccionadas();
+	cobrarCuotaActualizarMontosDesdeSeleccion(forzarMonto);
+	cobrarCuotaRenderSeleccionActual();
+	if (cobrarCuotaCuotas.length > 0) {
+		cobrarCuotaRenderCuotas();
+	} else {
+		cobrarCuotaMarcarFila("");
+	}
+	if (cobrarCuotaEsTransferenciaActual()) {
+		cobrarCuotaBuscarMovimientoUeno();
+	}
+	cobrarCuotaActualizarResumenUeno();
+	cobrarCuotaActualizarBotonRegistrar();
+}
+
 function cobrarCuotaToggleAyuda(forzarEstado) {
 	var panel = cobrarCuotaId("divCobrarCuotaAyuda");
 	var btn = cobrarCuotaId("btnCobrarCuotaAyuda");
@@ -231,6 +473,7 @@ function cobrarCuotaPreparar(contexto) {
 	cobrarCuotaContextoUeno = null;
 	cobrarCuotaResetBusquedaUeno();
 	cobrarCuotaSeleccionada = null;
+	cobrarCuotaSeleccionadas = [];
 	cobrarCuotaClienteSeleccionado = null;
 	cobrarCuotaPlanSeleccionado = null;
 	cobrarCuotaClientes = [];
@@ -338,7 +581,7 @@ function cobrarCuotaSeleccionarTipoPorTexto(texto) {
 
 function cobrarCuotaActualizarFormaPago() {
 	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
-	var texto = select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+	var texto = cobrarCuotaTextoTipoPagoActual();
 	var transferencia = cobrarCuotaEsTransferenciaTexto(texto);
 	var panelTransfer = cobrarCuotaId("divCobrarCuotaTransferencia");
 	var panelEfectivo = cobrarCuotaId("divCobrarCuotaEfectivo");
@@ -357,6 +600,13 @@ function cobrarCuotaActualizarFormaPago() {
 			ueno.innerHTML = "";
 		}
 	}
+	cobrarCuotaActualizarEstadoMonto();
+	if (cobrarCuotaCuotas.length > 0) {
+		cobrarCuotaRenderCuotas();
+	} else {
+		cobrarCuotaMarcarFila("");
+	}
+	cobrarCuotaRenderSeleccionActual();
 	cobrarCuotaActualizarEtiquetaBotonRegistrar();
 	cobrarCuotaActualizarBotonRegistrar();
 	if (transferencia) {
@@ -369,13 +619,15 @@ function cobrarCuotaActualizarEtiquetaBotonRegistrar() {
 	if (!btn || cobrarCuotaProcesando) {
 		return;
 	}
-	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
-	var texto = select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+	var texto = cobrarCuotaTextoTipoPagoActual();
 	var transferencia = cobrarCuotaEsTransferenciaTexto(texto);
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
 	if (transferencia && cobrarCuotaTieneMovimientoUenoValido()) {
-		btn.value = "Registrar y conciliar";
+		btn.value = cuotas.length > 1 ? "Registrar y conciliar " + cuotas.length + " cuotas" : "Registrar y conciliar";
 	} else if (transferencia) {
 		btn.value = "Selecciona transferencia Ueno";
+	} else if (cuotas.length > 1) {
+		btn.value = "Registrar " + cuotas.length + " cuotas";
 	} else {
 		btn.value = "Registrar cobro";
 	}
@@ -387,17 +639,36 @@ function cobrarCuotaActualizarBotonRegistrar() {
 		return;
 	}
 	cobrarCuotaActualizarEtiquetaBotonRegistrar();
-	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
-	var texto = select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+	var texto = cobrarCuotaTextoTipoPagoActual();
 	var transferencia = cobrarCuotaEsTransferenciaTexto(texto);
 	var bloquearPorUeno = transferencia && !cobrarCuotaTieneMovimientoUenoValido();
-	btn.disabled = cobrarCuotaProcesando || !cobrarCuotaSeleccionada || !cobrarCuotaSeleccionada.idcredito || !cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada) || bloquearPorUeno;
-	if (!cobrarCuotaSeleccionada || !cobrarCuotaSeleccionada.idcredito) {
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
+	if (transferencia && cobrarCuotaTieneMovimientoUenoValido()) {
+		var totalSeleccionado = cobrarCuotaTotalSeleccionadas(cuotas);
+		var montoSolicitado = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
+		if (cuotas.length > 1) {
+			montoSolicitado = totalSeleccionado;
+		}
+		if (montoSolicitado > Number(cobrarCuotaContextoUeno.monto_disponible || 0)) {
+			bloquearPorUeno = true;
+		}
+	}
+	var seleccionValida = cuotas.length > 0;
+	for (var i = 0; i < cuotas.length; i++) {
+		if (!cobrarCuotaEsCuotaCobrable(cuotas[i])) {
+			seleccionValida = false;
+			break;
+		}
+	}
+	btn.disabled = cobrarCuotaProcesando || !seleccionValida || bloquearPorUeno;
+	if (!seleccionValida) {
 		btn.title = "Selecciona una cuota para registrar el cobro";
-	} else if (!cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada)) {
+	} else if (cuotas.length == 1 && !cobrarCuotaEsCuotaCobrable(cuotas[0])) {
 		btn.title = "Esta cuota no se puede cobrar porque ya esta pagada o anulada";
 	} else if (bloquearPorUeno) {
-		btn.title = "Selecciona una transferencia Ueno disponible para registrar el cobro.";
+		btn.title = transferencia && cobrarCuotaTieneMovimientoUenoValido()
+			? "El movimiento Ueno seleccionado no cubre el monto total."
+			: "Selecciona una transferencia Ueno disponible para registrar el cobro.";
 	} else {
 		btn.title = "";
 	}
@@ -447,6 +718,7 @@ function cobrarCuotaLimpiarFlujo(mostrarInicial) {
 
 function cobrarCuotaLimpiarSeleccion() {
 	cobrarCuotaSeleccionada = null;
+	cobrarCuotaSeleccionadas = [];
 	cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", "");
 	cobrarCuotaSetValor("inptCobrarCuotaMontoRecibido", "");
 	cobrarCuotaSetValor("inptCobrarCuotaVuelto", "");
@@ -460,6 +732,7 @@ function cobrarCuotaLimpiarSeleccion() {
 	if (contenedor) {
 		contenedor.innerHTML = "<div class='cobrar-cuota__placeholder'><b>Selecciona una cuota</b><span>Primero selecciona un plan y luego una cuota pendiente.</span></div>";
 	}
+	cobrarCuotaActualizarEstadoMonto();
 	cobrarCuotaMarcarFila("");
 	cobrarCuotaActualizarResumenUeno();
 	cobrarCuotaActualizarBotonRegistrar();
@@ -469,6 +742,7 @@ function cobrarCuotaLimpiarDatosCobroActual(limpiarResultado) {
 	cobrarCuotaContextoUeno = null;
 	cobrarCuotaResetBusquedaUeno();
 	cobrarCuotaSeleccionada = null;
+	cobrarCuotaSeleccionadas = [];
 	cobrarCuotaConfirmacionPendiente = null;
 	cobrarCuotaSetHoy(true);
 	cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", "");
@@ -490,6 +764,7 @@ function cobrarCuotaLimpiarDatosCobroActual(limpiarResultado) {
 		ueno.innerHTML = "";
 	}
 	cobrarCuotaMarcarFila("");
+	cobrarCuotaActualizarEstadoMonto();
 	if (limpiarResultado !== false) {
 		cobrarCuotaLimpiarResultado();
 	}
@@ -951,14 +1226,20 @@ function cobrarCuotaRenderCuotas() {
 			continue;
 		}
 		totalVisibles++;
-		var seleccionado = cobrarCuotaSeleccionada && String(cobrarCuotaSeleccionada.idcredito) == String(cuota.idcredito);
+		var seleccionado = cobrarCuotaEstaSeleccionada(cuota.idcredito);
 		var cobrable = cobrarCuotaEsCuotaCobrable(cuota);
 		var estadoSlug = cobrarCuotaEstadoSlug(cuota.estado);
-		var accion = cobrable
-			? "<input type='button' value='Cobrar esta cuota' class='btn4 cobrar-cuota__btn-tabla' onclick='cobrarCuotaSeleccionarPorId(\"" + cobrarCuotaEscape(cuota.idcredito) + "\")'>"
-			: "<span class='cobrar-cuota__accion-segura'>" + (cobrarCuotaNormalizarTexto(cuota.estado) == "PAGADA" ? "Cobro registrado" : "No cobrable") + "</span>";
+		var controlSeleccion = "";
+		var accion = "";
+		if (cobrable) {
+			controlSeleccion = "<input type='checkbox' name='cobrarCuotaCheck' " + (seleccionado ? "checked" : "") + " onclick='cobrarCuotaToggleSeleccionPorId(\"" + cobrarCuotaEscape(cuota.idcredito) + "\", this.checked)'>";
+			accion = "<input type='button' value='" + (seleccionado ? "Quitar" : "Agregar cuota") + "' class='btn4 cobrar-cuota__btn-tabla' onclick='cobrarCuotaToggleSeleccionPorId(\"" + cobrarCuotaEscape(cuota.idcredito) + "\")'>";
+		} else {
+			controlSeleccion = "<span class='cobrar-cuota__radio-placeholder'></span>";
+			accion = "<span class='cobrar-cuota__accion-segura'>" + (cobrarCuotaNormalizarTexto(cuota.estado) == "PAGADA" ? "Cobro registrado" : "No cobrable") + "</span>";
+		}
 		html += "<table class='tableRegistroSearch cobrar-cuota__result-table' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' class='cobrar-cuota__result-row" + (seleccionado ? " cobrar-cuota__result-row--selected" : "") + (!cobrable ? " cobrar-cuota__result-row--locked" : "") + "' data-cobrar-cuota-id='" + cobrarCuotaEscape(cuota.idcredito) + "'>"
-			+ "<td data-label='Seleccionar' style='width:6%;text-align:center'>" + (cobrable ? "<input type='radio' name='cobrarCuotaRadio' " + (seleccionado ? "checked" : "") + " onclick='cobrarCuotaSeleccionarPorId(\"" + cobrarCuotaEscape(cuota.idcredito) + "\")'>" : "<span class='cobrar-cuota__radio-placeholder'></span>") + "</td>"
+			+ "<td data-label='Seleccionar' style='width:6%;text-align:center'>" + controlSeleccion + "</td>"
 			+ "<td data-label='Cuota' style='width:13%;text-align:center'>" + cobrarCuotaEscape(cuota.cuota) + "</td>"
 			+ "<td data-label='Vencimiento' style='width:14%;text-align:center'>" + cobrarCuotaEscape(cuota.fecha_vencimiento) + "</td>"
 			+ "<td data-label='Monto' style='width:14%;text-align:right'>" + cobrarCuotaEscape(cuota.monto_cuota) + "</td>"
@@ -988,47 +1269,49 @@ function cobrarCuotaSeleccionarPorId(idcredito) {
 	cobrarCuotaSeleccionar(cuota);
 }
 
+function cobrarCuotaToggleSeleccionPorId(idcredito, forzarEstado) {
+	var cuota = cobrarCuotaBuscarCuotaPorId(idcredito);
+	if (!cuota) {
+		cobrarCuotaAviso("No se encontro la cuota seleccionada", "error");
+		return;
+	}
+	if (!cobrarCuotaEsCuotaCobrable(cuota)) {
+		cobrarCuotaAviso("Esta cuota ya no puede cobrarse. Queda visible solo para control y trazabilidad.", "error");
+		return;
+	}
+	var estaSeleccionada = cobrarCuotaEstaSeleccionada(idcredito);
+	var agregar = typeof forzarEstado == "boolean" ? forzarEstado : !estaSeleccionada;
+	if (agregar) {
+		cobrarCuotaAgregarSeleccion(cuota);
+	} else {
+		cobrarCuotaQuitarSeleccion(idcredito);
+	}
+	cobrarCuotaActualizarSeleccionVisual(true);
+}
+
 function cobrarCuotaSeleccionar(cuota) {
 	cobrarCuotaSeleccionada = cuota || null;
+	cobrarCuotaSeleccionadas = cobrarCuotaSeleccionada ? [cobrarCuotaSeleccionada] : [];
 	if (!cobrarCuotaSeleccionada) {
 		return;
 	}
 	if (cobrarCuotaPlanSeleccionado && String(cobrarCuotaSeleccionada.venta_id || cobrarCuotaSeleccionada.cod_venta) != String(cobrarCuotaPlanSeleccionado.cod_venta || cobrarCuotaPlanSeleccionado.venta_id)) {
 		cobrarCuotaSeleccionada = null;
+		cobrarCuotaSeleccionadas = [];
 		cobrarCuotaAviso("La cuota seleccionada no pertenece al plan elegido", "error");
 		cobrarCuotaActualizarBotonRegistrar();
 		return;
 	}
 	if (!cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada)) {
 		cobrarCuotaSeleccionada = null;
+		cobrarCuotaSeleccionadas = [];
 		cobrarCuotaAviso("No se puede cobrar una cuota pagada o anulada", "error");
 		cobrarCuotaActualizarBotonRegistrar();
 		return;
 	}
 	cobrarCuotaMarcarFila(cobrarCuotaSeleccionada.idcredito);
-	cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", cobrarCuotaSeleccionada.saldo_pendiente || "");
-	cobrarCuotaSetValor("inptCobrarCuotaMontoRecibido", cobrarCuotaSeleccionada.saldo_pendiente || "");
-	cobrarCuotaCalcularVuelto();
-	var contenedor = cobrarCuotaId("divCobrarCuotaSeleccionada");
-	if (contenedor) {
-		contenedor.innerHTML = "<div class='cobrar-cuota__selected-card'>"
-			+ "<div class='cobrar-cuota__selected-title'>Cuota seleccionada</div>"
-			+ "<div class='cobrar-cuota__selected-grid'>"
-			+ "<span><b>Cliente</b>" + cobrarCuotaEscape(cuota.cliente) + "</span>"
-			+ "<span><b>Cedula</b>" + cobrarCuotaEscape(cuota.cedula) + "</span>"
-			+ (cuota.alias ? "<span><b>Alias / apodo</b>" + cobrarCuotaEscape(cuota.alias) + "</span>" : "")
-			+ "<span><b>Venta</b>" + cobrarCuotaEscape(cuota.venta) + "</span>"
-			+ "<span class='cobrar-cuota__wide'><b>Producto / plan</b>" + cobrarCuotaEscape(cuota.producto) + "</span>"
-			+ "<span><b>Cuota</b>" + cobrarCuotaEscape(cuota.cuota) + "</span>"
-			+ "<span><b>Vencimiento</b>" + cobrarCuotaEscape(cuota.fecha_vencimiento) + "</span>"
-			+ "<span><b>Monto cuota</b>" + cobrarCuotaEscape(cuota.monto_cuota) + "</span>"
-			+ "<span><b>Pagado</b>" + cobrarCuotaEscape(cuota.pagado_total || "0") + "</span>"
-			+ "<span><b>Interes pendiente</b>" + cobrarCuotaEscape(cuota.saldo_interes) + "</span>"
-			+ "<span><b>Saldo pendiente</b>" + cobrarCuotaEscape(cuota.saldo_pendiente) + "</span>"
-			+ "<span><b>Estado</b>" + cobrarCuotaEscape(cuota.estado) + "</span>"
-			+ "</div>"
-			+ "</div>";
-	}
+	cobrarCuotaActualizarMontosDesdeSeleccion(true);
+	cobrarCuotaRenderSeleccionActual();
 	cobrarCuotaBuscarMovimientoUeno();
 	cobrarCuotaActualizarResumenUeno();
 	cobrarCuotaActualizarBotonRegistrar();
@@ -1042,12 +1325,16 @@ function cobrarCuotaMarcarFila(idcredito) {
 	var filas = contenedor.querySelectorAll("[data-cobrar-cuota-id]");
 	for (var i = 0; i < filas.length; i++) {
 		filas[i].classList.remove("cobrar-cuota__result-row--selected");
-		var seleccionada = String(filas[i].getAttribute("data-cobrar-cuota-id")) == String(idcredito);
-		var radio = filas[i].querySelector("input[type='radio']");
-		if (radio) {
-			radio.checked = seleccionada && String(idcredito || "") != "";
+		var idFila = filas[i].getAttribute("data-cobrar-cuota-id");
+		var seleccionada = cobrarCuotaEstaSeleccionada(idFila);
+		if (String(idcredito || "") != "" && String(idFila) == String(idcredito)) {
+			seleccionada = true;
 		}
-		if (seleccionada && String(idcredito || "") != "") {
+		var control = filas[i].querySelector("input[type='radio'], input[type='checkbox']");
+		if (control) {
+			control.checked = seleccionada;
+		}
+		if (seleccionada) {
 			filas[i].classList.add("cobrar-cuota__result-row--selected");
 		}
 	}
@@ -1066,12 +1353,20 @@ function cobrarCuotaBuscarSiguienteCuotaCubierta(sobrante) {
 	if (sobrante <= 0) {
 		return null;
 	}
+	var seleccionadas = cobrarCuotaObtenerCuotasSeleccionadas();
 	for (var i = 0; i < cobrarCuotaCuotas.length; i++) {
 		var cuota = cobrarCuotaCuotas[i];
 		if (!cobrarCuotaEsCuotaCobrable(cuota)) {
 			continue;
 		}
-		if (cobrarCuotaSeleccionada && String(cuota.idcredito) == String(cobrarCuotaSeleccionada.idcredito)) {
+		var yaSeleccionada = false;
+		for (var j = 0; j < seleccionadas.length; j++) {
+			if (String(cuota.idcredito) == String(seleccionadas[j].idcredito)) {
+				yaSeleccionada = true;
+				break;
+			}
+		}
+		if (yaSeleccionada) {
 			continue;
 		}
 		if (Number(cuota.saldo_pendiente_num || 0) > 0 && Number(cuota.saldo_pendiente_num || 0) <= sobrante) {
@@ -1085,9 +1380,10 @@ function cobrarCuotaResumenUeno() {
 	if (!cobrarCuotaContextoUeno || !cobrarCuotaContextoUeno.id_movimiento) {
 		return null;
 	}
+	var cuotas = cobrarCuotaObtenerCuotasSeleccionadas();
 	var disponible = Number(cobrarCuotaContextoUeno.monto_disponible || 0);
 	var montoSolicitado = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
-	var saldoCuota = cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0;
+	var saldoCuota = cuotas.length > 1 ? cobrarCuotaTotalSeleccionadas(cuotas) : (cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0);
 	var baseAplicar = montoSolicitado > 0 ? montoSolicitado : saldoCuota;
 	var montoAplicable = Math.min(baseAplicar, disponible);
 	if (saldoCuota > 0) {
@@ -1111,6 +1407,7 @@ function cobrarCuotaResumenUeno() {
 		montoSolicitado: montoSolicitado,
 		montoAplicable: montoAplicable,
 		saldoCuota: saldoCuota,
+		cantidadCuotas: cuotas.length,
 		resultado: resultado,
 		diferencia: diferencia,
 		mensaje: mensaje,
@@ -1131,7 +1428,11 @@ function cobrarCuotaRenderResumenUeno() {
 		+ "<span><small>Resultado</small><strong>" + cobrarCuotaEscape(resumen.mensaje) + "</strong></span>"
 		+ "</div>";
 	if (resumen.resultado == "falta") {
-		html += "<div class='cobrar-cuota__ueno-note'>La cuota quedara como Pago parcial si registras este monto.</div>";
+		if (resumen.cantidadCuotas > 1) {
+			html += "<div class='cobrar-cuota__ueno-note'>El movimiento no cubre todas las cuotas seleccionadas. Se aplicara en orden y la ultima cuota alcanzada quedara parcial.</div>";
+		} else {
+			html += "<div class='cobrar-cuota__ueno-note'>La cuota quedara como Pago parcial si registras este monto.</div>";
+		}
 		if (resumen.montoAplicable > 0 && resumen.montoSolicitado != resumen.montoAplicable) {
 			html += "<button type='button' class='cobrar-cuota__ueno-mini-btn' onclick='cobrarCuotaUsarDisponibleUeno()'>Usar disponible como pago parcial</button>";
 		}
@@ -1258,7 +1559,8 @@ function cobrarCuotaUsarMovimientoUeno(movimiento) {
 		return;
 	}
 	if (pagoParcialSugerido) {
-		var saldoCuota = cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0;
+		var cuotasSeleccionadas = cobrarCuotaObtenerCuotasSeleccionadas();
+		var saldoCuota = cuotasSeleccionadas.length > 1 ? cobrarCuotaTotalSeleccionadas(cuotasSeleccionadas) : (cobrarCuotaSeleccionada ? Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0) : 0);
 		var montoParcial = saldoCuota > 0 ? Math.min(disponibleMovimiento, saldoCuota) : disponibleMovimiento;
 		if (montoParcial <= 0) {
 			cobrarCuotaAviso("El movimiento Ueno seleccionado no tiene saldo disponible.", "error");
@@ -1269,7 +1571,7 @@ function cobrarCuotaUsarMovimientoUeno(movimiento) {
 		cobrarCuotaCalcularVuelto();
 		movimiento.monto_valido = true;
 		movimiento.pago_parcial_sugerido = true;
-		cobrarCuotaAviso("Se usara el saldo disponible como pago parcial.");
+		cobrarCuotaAviso(cuotasSeleccionadas.length > 1 ? "Se usara el saldo disponible y la ultima cuota alcanzada quedara parcial." : "Se usara el saldo disponible como pago parcial.");
 	}
 	cobrarCuotaContextoUeno = cobrarCuotaMovimientoUenoSeguro(movimiento);
 	cobrarCuotaAuditar(
@@ -1334,35 +1636,11 @@ function cobrarCuotaObtenerContextoRegistro() {
 		cobrarCuotaAviso("No tiene permiso para registrar cobros", "error");
 		return null;
 	}
-	if (!cobrarCuotaSeleccionada || !cobrarCuotaSeleccionada.idcredito) {
-		cobrarCuotaAviso("Selecciona una cuota antes de registrar el cobro");
-		return null;
-	}
-	if (!cobrarCuotaEsCuotaCobrable(cobrarCuotaSeleccionada)) {
-		cobrarCuotaAviso("No se puede cobrar una cuota pagada o anulada", "error");
-		return null;
-	}
 	if (typeof idabmAperturacierrecaja !== "undefined" && idabmAperturacierrecaja == "") {
 		cobrarCuotaAviso("Falta iniciar una caja antes de registrar cobros");
 		if (typeof verCerrarVentanaAbmAperturaCierreCaja1 === "function") {
 			verCerrarVentanaAbmAperturaCierreCaja1();
 		}
-		return null;
-	}
-	var monto = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
-	var saldo = Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0);
-	if (monto <= 0) {
-		cobrarCuotaAviso("Ingresa un monto mayor a cero");
-		return null;
-	}
-	if (monto > saldo) {
-		cobrarCuotaAviso("No se puede cobrar mas que el saldo pendiente");
-		cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", cobrarCuotaSeleccionada.saldo_pendiente || "");
-		return null;
-	}
-	var fecha = cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "";
-	if (fecha == "") {
-		cobrarCuotaAviso("Ingresa la fecha de pago");
 		return null;
 	}
 	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
@@ -1373,6 +1651,40 @@ function cobrarCuotaObtenerContextoRegistro() {
 		return null;
 	}
 	var transferencia = cobrarCuotaEsTransferenciaTexto(textoTipo);
+	var cuotasSeleccionadas = cobrarCuotaObtenerCuotasSeleccionadas();
+	if (cuotasSeleccionadas.length == 0) {
+		cobrarCuotaAviso("Selecciona una cuota antes de registrar el cobro");
+		return null;
+	}
+	for (var i = 0; i < cuotasSeleccionadas.length; i++) {
+		if (!cobrarCuotaEsCuotaCobrable(cuotasSeleccionadas[i])) {
+			cobrarCuotaAviso("No se puede cobrar una cuota pagada o anulada", "error");
+			return null;
+		}
+	}
+	cobrarCuotaSeleccionada = cuotasSeleccionadas[0];
+	var monto = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
+	var esMultiple = cuotasSeleccionadas.length > 1;
+	var saldo = esMultiple ? cobrarCuotaTotalSeleccionadas(cuotasSeleccionadas) : Number(cobrarCuotaSeleccionada.saldo_pendiente_num || 0);
+	if (monto <= 0) {
+		cobrarCuotaAviso("Ingresa un monto mayor a cero");
+		return null;
+	}
+	if (monto > saldo) {
+		cobrarCuotaAviso("No se puede cobrar mas que el saldo pendiente");
+		cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", esMultiple ? cobrarCuotaFormato(saldo) : (cobrarCuotaSeleccionada.saldo_pendiente || ""));
+		return null;
+	}
+	var aplicaciones = cobrarCuotaCalcularAplicaciones(cuotasSeleccionadas, monto);
+	if (aplicaciones.length == 0) {
+		cobrarCuotaAviso("El monto no alcanza para aplicar a las cuotas seleccionadas.");
+		return null;
+	}
+	var fecha = cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "";
+	if (fecha == "") {
+		cobrarCuotaAviso("Ingresa la fecha de pago");
+		return null;
+	}
 	var comprobante = cobrarCuotaId("inptCobrarCuotaComprobante") ? cobrarCuotaId("inptCobrarCuotaComprobante").value.replace(/\s+/g, "").trim() : "";
 	if (transferencia && !cobrarCuotaTieneMovimientoUenoValido()) {
 		cobrarCuotaAviso("Selecciona una transferencia Ueno disponible para registrar el cobro.", "error");
@@ -1401,7 +1713,11 @@ function cobrarCuotaObtenerContextoRegistro() {
 		banco: transferencia && cobrarCuotaId("inptCobrarCuotaBanco") ? cobrarCuotaId("inptCobrarCuotaBanco").value : "",
 		montoRecibido: cobrarCuotaId("inptCobrarCuotaMontoRecibido") ? cobrarCuotaId("inptCobrarCuotaMontoRecibido").value : "",
 		vuelto: cobrarCuotaId("inptCobrarCuotaVuelto") ? cobrarCuotaId("inptCobrarCuotaVuelto").value : "",
-		observacion: cobrarCuotaId("txtCobrarCuotaObservacion") ? cobrarCuotaId("txtCobrarCuotaObservacion").value : ""
+		observacion: cobrarCuotaId("txtCobrarCuotaObservacion") ? cobrarCuotaId("txtCobrarCuotaObservacion").value : "",
+		cuotas: cuotasSeleccionadas,
+		aplicaciones: aplicaciones,
+		multiple: esMultiple,
+		totalSeleccionado: saldo
 	};
 }
 
@@ -1432,8 +1748,11 @@ function cobrarCuotaConfirmacionSeccion(titulo, contenido) {
 }
 
 function cobrarCuotaRenderConfirmacion(contexto) {
-	if (!contexto || !cobrarCuotaSeleccionada) { return ""; }
-	var cuota = cobrarCuotaSeleccionada;
+	if (!contexto) { return ""; }
+	var cuotas = contexto.cuotas && contexto.cuotas.length ? contexto.cuotas : cobrarCuotaObtenerCuotasSeleccionadas();
+	if (!cuotas.length) { return ""; }
+	var cuota = cuotas[0];
+	var esMultiple = cuotas.length > 1;
 	var cliente = "";
 	cliente += cobrarCuotaConfirmacionFila("Cliente", cuota.cliente || "");
 	cliente += cobrarCuotaConfirmacionFila("Cedula", cuota.cedula || "");
@@ -1441,11 +1760,32 @@ function cobrarCuotaRenderConfirmacion(contexto) {
 	cliente += cobrarCuotaConfirmacionFila("Alias / apodo", cuota.alias || "");
 
 	var detalleCuota = "";
-	detalleCuota += cobrarCuotaConfirmacionFila("Producto / plan", cuota.producto || "", "cobrar-cuota-confirmacion__row--wide");
-	detalleCuota += cobrarCuotaConfirmacionFila("Cuota", cuota.cuota || "");
-	detalleCuota += cobrarCuotaConfirmacionFila("Vencimiento", cuota.fecha_vencimiento || "");
-	detalleCuota += cobrarCuotaConfirmacionFilaMonto("Monto cuota", cuota.monto_cuota || "");
-	detalleCuota += cobrarCuotaConfirmacionFilaMonto("Saldo pendiente", cuota.saldo_pendiente || "");
+	if (esMultiple) {
+		var detalleSeleccion = "";
+		var aplicaciones = contexto.aplicaciones && contexto.aplicaciones.length ? contexto.aplicaciones : cobrarCuotaCalcularAplicaciones(cuotas, contexto.monto || 0);
+		for (var i = 0; i < aplicaciones.length; i++) {
+			detalleSeleccion += "Cuota " + (aplicaciones[i].cuota.cuota || "-") + " / aplica " + cobrarCuotaFormato(aplicaciones[i].monto) + " Gs.";
+			if (aplicaciones[i].saldoRestante > 0) {
+				detalleSeleccion += " / queda " + cobrarCuotaFormato(aplicaciones[i].saldoRestante) + " Gs.";
+			}
+			if (i < aplicaciones.length - 1) {
+				detalleSeleccion += " | ";
+			}
+		}
+		detalleCuota += cobrarCuotaConfirmacionFila("Producto / plan", cuota.producto || "", "cobrar-cuota-confirmacion__row--wide");
+		detalleCuota += cobrarCuotaConfirmacionFila("Cuotas", detalleSeleccion, "cobrar-cuota-confirmacion__row--wide");
+		detalleCuota += cobrarCuotaConfirmacionFila("Cantidad", aplicaciones.length + " cuotas con aplicacion");
+		detalleCuota += cobrarCuotaConfirmacionFilaMonto("Saldo total seleccionado", cobrarCuotaFormato(contexto.totalSeleccionado || contexto.monto) + " Gs.");
+		if ((contexto.totalSeleccionado || 0) > (contexto.monto || 0)) {
+			detalleCuota += cobrarCuotaConfirmacionFilaMonto("Saldo que quedara", cobrarCuotaFormato((contexto.totalSeleccionado || 0) - (contexto.monto || 0)) + " Gs.");
+		}
+	} else {
+		detalleCuota += cobrarCuotaConfirmacionFila("Producto / plan", cuota.producto || "", "cobrar-cuota-confirmacion__row--wide");
+		detalleCuota += cobrarCuotaConfirmacionFila("Cuota", cuota.cuota || "");
+		detalleCuota += cobrarCuotaConfirmacionFila("Vencimiento", cuota.fecha_vencimiento || "");
+		detalleCuota += cobrarCuotaConfirmacionFilaMonto("Monto cuota", cuota.monto_cuota || "");
+		detalleCuota += cobrarCuotaConfirmacionFilaMonto("Saldo pendiente", cuota.saldo_pendiente || "");
+	}
 
 	var pago = "";
 	pago += cobrarCuotaConfirmacionFila("Fecha de pago", contexto.fecha || "");
@@ -1478,9 +1818,15 @@ function cobrarCuotaRenderConfirmacion(contexto) {
 				"<span class='cobrar-cuota-confirmacion__value'>No se vinculara un movimiento Ueno ahora; quedara para conciliacion bancaria.</span>" +
 			"</div>";
 		}
+		if (esMultiple) {
+			pago += cobrarCuotaConfirmacionFila("Aplicacion", "Se registrara y conciliara un pago por cada cuota alcanzada por el monto.", "cobrar-cuota-confirmacion__row--wide");
+		}
 	} else {
 		pago += cobrarCuotaConfirmacionFilaMonto("Monto recibido", contexto.montoRecibido ? contexto.montoRecibido + " Gs." : "");
 		pago += cobrarCuotaConfirmacionFilaMonto("Vuelto", contexto.vuelto ? contexto.vuelto + " Gs." : "");
+		if (esMultiple) {
+			pago += cobrarCuotaConfirmacionFila("Aplicacion", "Se registrara un pago por cada cuota alcanzada por el monto.", "cobrar-cuota-confirmacion__row--wide");
+		}
 	}
 	pago += cobrarCuotaConfirmacionFila("Observacion", contexto.observacion || "", "cobrar-cuota-confirmacion__row--wide");
 
@@ -1541,9 +1887,373 @@ function cobrarCuotaRegistrar() {
 	cobrarCuotaAbrirConfirmacion(contexto);
 }
 
+function cobrarCuotaCrearDatosRegistroCuota(contexto, cuota, monto, nrofactura) {
+	var select = contexto.select || cobrarCuotaId("inptCobrarCuotaTipoPago");
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "cargartipospagoscredito");
+	datos.append("origen_cobro", "COBRAR_CUOTA");
+	datos.append("Fecha", contexto.fecha);
+	datos.append("totalDeudaCuota", cobrarCuotaFormato(cuota.saldo_cuota_num || monto));
+	datos.append("cod_creditoFK", cuota.idcredito);
+	datos.append("cod_cobradorFK", userid);
+	datos.append("cod_venta", cuota.venta_id || cuota.cod_venta);
+	datos.append("totalInteres", cobrarCuotaFormato(cuota.saldo_interes_num || 0));
+	datos.append("nrofactura", nrofactura || "");
+	datos.append("descuento", "0");
+	datos.append("MontoTarjeta", "0");
+	datos.append("codcaja", typeof cajapredeterminada !== "undefined" ? cajapredeterminada : "");
+	datos.append("codApertura", typeof idabmAperturacierrecaja !== "undefined" ? idabmAperturacierrecaja : "");
+	datos.append("CargoAdministrativo", "0");
+	datos.append("cod_local", typeof cod_localFKUSer !== "undefined" ? cod_localFKUSer : (cuota.local_id || ""));
+	datos.append("totalregistro", "1");
+	datos.append("exigir_movimiento_ueno", contexto.transferencia ? "SI" : "NO");
+	datos.append("idtipopago1", contexto.idTipoPago);
+	datos.append("monto1", cobrarCuotaFormato(monto));
+	datos.append("valor1", select && select.options[select.selectedIndex] ? (select.options[select.selectedIndex].id || "NO") : "NO");
+	datos.append("ueno_comprobante1", contexto.transferencia ? (contexto.comprobante || "") : "");
+	datos.append("ueno_id_movimiento1", contexto.transferencia && cobrarCuotaContextoUeno ? (cobrarCuotaContextoUeno.id_movimiento || "") : "");
+	datos.append("ueno_observacion1", contexto.transferencia ? (contexto.observacion || "") : "");
+	return datos;
+}
+
+function cobrarCuotaCrearPagoRegistradoMultiple(contexto, resultados, nrofactura, titulo, detalle, tipo) {
+	resultados = resultados || [];
+	var plan = cobrarCuotaClonarSimple(cobrarCuotaPlanSeleccionado || {});
+	var esTransferencia = !!contexto.transferencia || cobrarCuotaEsTransferenciaTexto(contexto.textoTipo || "");
+	var ueno = esTransferencia ? cobrarCuotaClonarSimple(contexto.uenoInicial || cobrarCuotaContextoUeno || {}) : {};
+	var total = 0;
+	var detalles = [];
+	var parciales = 0;
+	for (var i = 0; i < resultados.length; i++) {
+		var cuota = resultados[i].cuota || {};
+		var monto = Number(resultados[i].monto || cuota.saldo_pendiente_num || 0) || 0;
+		var saldoAnteriorCuota = Number(cuota.saldo_pendiente_num || monto || 0) || 0;
+		var saldoRestanteCuota = Math.max(0, saldoAnteriorCuota - monto);
+		if (saldoRestanteCuota > 0) {
+			parciales++;
+		}
+		total += monto;
+		detalles.push({
+			cuota: cuota.cuota || "",
+			fechaVencimiento: cuota.fecha_vencimiento || "",
+			producto: cuota.producto || "",
+			monto: cobrarCuotaFormato(monto),
+			montoNum: monto,
+			saldoCuotaAnterior: cobrarCuotaFormato(saldoAnteriorCuota),
+			saldoCuotaRestante: cobrarCuotaFormato(saldoRestanteCuota),
+			saldoCuotaRestanteNum: saldoRestanteCuota,
+			estado: saldoRestanteCuota > 0 ? "Pago parcial" : "Pagada"
+		});
+	}
+	var primera = resultados.length > 0 ? (resultados[0].cuota || {}) : {};
+	var totalVenta = Number(plan.total_venta || primera.total_venta || 0) || 0;
+	var saldoVentaAnterior = Number(plan.saldo_pendiente_total || contexto.totalSeleccionado || total) || 0;
+	if (saldoVentaAnterior <= 0) {
+		saldoVentaAnterior = cobrarCuotaNumero(plan.saldo_pendiente_total_fmt || primera.saldo_pendiente_total_fmt || cobrarCuotaFormato(total));
+	}
+	var saldoVentaRestante = Math.max(0, saldoVentaAnterior - total);
+	var disponibleAnterior = contexto.disponibleAnterior !== undefined ? Number(contexto.disponibleAnterior || 0) : Number(ueno.monto_disponible || 0);
+	var disponibleNuevo = contexto.disponibleNuevo !== undefined ? Number(contexto.disponibleNuevo || 0) : (esTransferencia ? Math.max(0, disponibleAnterior - total) : 0);
+	var saldoAplicadoUeno = contexto.saldoAplicadoUeno !== undefined ? Number(contexto.saldoAplicadoUeno || 0) : (esTransferencia ? Math.max(0, disponibleAnterior - disponibleNuevo) : 0);
+	var mensaje = "El pago de las cuotas seleccionadas fue registrado correctamente.";
+	if (esTransferencia && contexto.conciliadoUeno) {
+		mensaje = "El pago de las cuotas seleccionadas fue registrado y conciliado correctamente con Banco Ueno.";
+	} else if (esTransferencia) {
+		mensaje = "El pago de las cuotas seleccionadas fue registrado, pero queda pendiente de conciliacion bancaria.";
+	}
+	return {
+		titulo: titulo || "Cuotas cobradas correctamente",
+		mensaje: mensaje,
+		detalle: detalle || "",
+		tipo: tipo || "exito",
+		multiple: true,
+		detalles: detalles,
+		cantidadCuotas: detalles.length,
+		numero: nrofactura || "",
+		nroRecibo: nrofactura || "",
+		fecha: contexto.fecha || "",
+		cliente: primera.cliente || plan.cliente || "",
+		cedula: primera.cedula || plan.cedula || "",
+		venta: primera.venta || plan.venta || plan.cod_venta || "",
+		codVenta: primera.venta_id || primera.cod_venta || plan.venta_id || plan.cod_venta || "",
+		cuota: detalles.map(function(item) { return item.cuota; }).join(", "),
+		fechaVencimiento: detalles.length > 0 ? detalles[0].fechaVencimiento : "",
+		producto: primera.producto || plan.producto || "",
+		totalVenta: totalVenta,
+		totalVentaFmt: (plan.total_venta_fmt || primera.total_venta_fmt || (totalVenta > 0 ? cobrarCuotaFormato(totalVenta) : "")),
+		totalPlan: plan.saldo_pendiente_total_fmt || "",
+		saldoVentaAnterior: saldoVentaAnterior,
+		saldoVentaAnteriorFmt: cobrarCuotaFormato(saldoVentaAnterior),
+		saldoVentaRestante: saldoVentaRestante,
+		saldoVentaRestanteFmt: cobrarCuotaFormato(saldoVentaRestante),
+		montoAplicado: total,
+		montoAplicadoFmt: cobrarCuotaFormato(total),
+		formaPago: contexto.textoTipo || "",
+		banco: esTransferencia ? (contexto.banco || "Ueno") : "",
+		comprobante: esTransferencia ? cobrarCuotaMaskComprobante(contexto.comprobante || ueno.nro_comprobante || ueno.comprobante_masked || "") : "",
+		movimientoUeno: esTransferencia ? (ueno.comprobante_masked || cobrarCuotaMaskComprobante(ueno.nro_comprobante || "") || ueno.id_movimiento || "") : "",
+		idMovimientoUeno: esTransferencia ? (ueno.id_movimiento || "") : "",
+		saldoDisponibleAnterior: disponibleAnterior,
+		saldoDisponibleAnteriorFmt: cobrarCuotaFormato(disponibleAnterior),
+		saldoAplicadoUeno: saldoAplicadoUeno,
+		saldoAplicadoUenoFmt: cobrarCuotaFormato(saldoAplicadoUeno),
+		saldoDisponibleRestante: esTransferencia ? disponibleNuevo : 0,
+		saldoDisponibleRestanteFmt: cobrarCuotaFormato(esTransferencia ? disponibleNuevo : 0),
+		saldoFavor: esTransferencia ? Math.max(0, disponibleNuevo) : 0,
+		saldoFavorFmt: cobrarCuotaFormato(esTransferencia ? Math.max(0, disponibleNuevo) : 0),
+		saldoCuotaAnterior: total,
+		saldoCuotaAnteriorFmt: cobrarCuotaFormato(total),
+		saldoCuotaRestante: 0,
+		saldoCuotaRestanteFmt: "0",
+		estadoFinalCuota: parciales > 0 ? (detalles.length + " cuotas aplicadas, " + parciales + " parcial") : (detalles.length + " cuotas pagadas"),
+		estadoFinalMovimiento: contexto.estadoMovimiento || (esTransferencia ? (disponibleNuevo > 0 ? "Parcial" : "Conciliado") : "No aplica"),
+		cajero: (typeof lblUser !== "undefined" && lblUser ? lblUser.innerHTML : "")
+	};
+}
+
+function cobrarCuotaFinalizarRegistroMultiple(contexto, resultados, nrofactura, titulo, detalle, tipo) {
+	var ventaActual = cobrarCuotaPlanSeleccionado ? (cobrarCuotaPlanSeleccionado.cod_venta || cobrarCuotaPlanSeleccionado.venta_id) : "";
+	var pagoRegistrado = cobrarCuotaCrearPagoRegistradoMultiple(contexto, resultados, nrofactura, titulo, detalle, tipo);
+	cobrarCuotaUltimoPagoRegistrado = pagoRegistrado;
+	cobrarCuotaUltimoRecibo = cobrarCuotaCrearReciboDesdePago(pagoRegistrado);
+	cobrarCuotaProcesando = false;
+	cobrarCuotaLimpiarDatosCobroActual(false);
+	cobrarCuotaRestaurarBoton();
+	cobrarCuotaMostrarResultado(titulo || "Cuotas cobradas correctamente", detalle || "Pago registrado.", tipo || "exito");
+	cobrarCuotaAviso(titulo || "Cuotas cobradas correctamente");
+	if (ventaActual != "") {
+		cobrarCuotaCargarCuotas(ventaActual);
+	}
+	cobrarCuotaMostrarModalExito(pagoRegistrado);
+}
+
+function cobrarCuotaConciliarTransferenciaMultiple(contexto, cuota, monto, callback) {
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "conciliar_transferencia");
+	datos.append("id_movimiento", cobrarCuotaContextoUeno ? (cobrarCuotaContextoUeno.id_movimiento || "") : "");
+	datos.append("comprobante", contexto.comprobante || "");
+	datos.append("cod_credito", cuota.idcredito || "");
+	datos.append("monto", cobrarCuotaFormato(monto));
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmCobrarCuota.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] == "exito") {
+					var disponibleAnterior = Number(cobrarCuotaContextoUeno ? cobrarCuotaContextoUeno.monto_disponible || 0 : 0);
+					var disponibleNuevo = respuesta.monto_disponible !== undefined ? Number(respuesta.monto_disponible || 0) : Math.max(0, disponibleAnterior - Number(monto || 0));
+					if (cobrarCuotaContextoUeno) {
+						cobrarCuotaContextoUeno.monto_disponible = disponibleNuevo;
+						cobrarCuotaContextoUeno.monto_disponible_fmt = cobrarCuotaFormato(disponibleNuevo);
+					}
+					callback(null, {
+						respuesta: respuesta,
+						disponibleAnterior: disponibleAnterior,
+						disponibleNuevo: disponibleNuevo,
+						saldoAplicado: monto,
+						detalle: respuesta["2"] || "Pago conciliado con Banco Ueno"
+					});
+					return;
+				}
+				callback(respuesta["2"] || "No se pudo conciliar automaticamente", { respuesta: respuesta });
+			} catch (error) {
+				callback("No se pudo interpretar la respuesta de conciliacion", { error: error, responseText: responseText });
+			}
+		},
+		error: function() {
+			callback("Error de conexion al conciliar con Ueno", {});
+		}
+	});
+}
+
+function cobrarCuotaEjecutarRegistroMultiple(contexto) {
+	var cuotas = contexto.cuotas && contexto.cuotas.length ? contexto.cuotas : cobrarCuotaObtenerCuotasSeleccionadas();
+	var aplicaciones = contexto.aplicaciones && contexto.aplicaciones.length ? contexto.aplicaciones : cobrarCuotaCalcularAplicaciones(cuotas, contexto.monto || 0);
+	if (!aplicaciones.length) {
+		return false;
+	}
+	cobrarCuotaProcesando = true;
+	var modalConfirmacion = cobrarCuotaId("divCobrarCuotaConfirmacion");
+	if (modalConfirmacion) { modalConfirmacion.style.display = "none"; }
+	cobrarCuotaConfirmacionPendiente = null;
+	var btn = cobrarCuotaId("btnCobrarCuotaRegistrar");
+	if (btn) {
+		btn.disabled = true;
+		btn.value = "Procesando...";
+	}
+	obtener_datos_user();
+	var indice = 0;
+	var resultados = [];
+	var nrofactura = "";
+	var ventaActual = cobrarCuotaPlanSeleccionado ? (cobrarCuotaPlanSeleccionado.cod_venta || cobrarCuotaPlanSeleccionado.venta_id) : "";
+	var transferencia = !!contexto.transferencia;
+	var disponibleInicial = transferencia && cobrarCuotaContextoUeno ? Number(cobrarCuotaContextoUeno.monto_disponible || 0) : 0;
+	var disponibleActual = disponibleInicial;
+	var saldoAplicadoUeno = 0;
+	contexto.uenoInicial = transferencia ? cobrarCuotaClonarSimple(cobrarCuotaContextoUeno) : {};
+	contexto.disponibleAnterior = disponibleInicial;
+	var registrarSiguiente = function() {
+		if (indice >= aplicaciones.length) {
+			contexto.disponibleNuevo = disponibleActual;
+			contexto.saldoAplicadoUeno = saldoAplicadoUeno;
+			contexto.conciliadoUeno = transferencia;
+			contexto.estadoMovimiento = transferencia ? (disponibleActual > 0 ? "Parcial" : "Conciliado") : "No aplica";
+			cobrarCuotaFinalizarRegistroMultiple(
+				contexto,
+				resultados,
+				nrofactura,
+				transferencia ? "Cuotas cobradas y conciliadas con Banco Ueno" : "Cuotas cobradas correctamente",
+				resultados.length + (transferencia ? " cuotas con pago conciliado." : " cuotas con pago registrado."),
+				"exito"
+			);
+			if (transferencia) {
+				if (typeof uenoBuscarMovimientos === "function") {
+					uenoBuscarMovimientos();
+				}
+				if (typeof uenoBuscarPagosPendientes === "function") {
+					uenoBuscarPagosPendientes();
+				}
+			}
+			return;
+		}
+		var aplicacion = aplicaciones[indice];
+		var cuota = aplicacion.cuota;
+		var montoCuota = Number(aplicacion.monto || 0);
+		if (montoCuota <= 0 || !cobrarCuotaEsCuotaCobrable(cuota)) {
+			cobrarCuotaProcesando = false;
+			cobrarCuotaRestaurarBoton();
+			cobrarCuotaAviso("Una de las cuotas seleccionadas ya no tiene saldo pendiente.", "error");
+			if (ventaActual != "") {
+				cobrarCuotaCargarCuotas(ventaActual);
+			}
+			return;
+		}
+		if (transferencia && cobrarCuotaContextoUeno && Number(cobrarCuotaContextoUeno.monto_disponible || 0) < montoCuota) {
+			cobrarCuotaProcesando = false;
+			cobrarCuotaRestaurarBoton();
+			cobrarCuotaAviso("El movimiento Ueno ya no tiene saldo suficiente para la siguiente cuota.", "error");
+			if (ventaActual != "") {
+				cobrarCuotaCargarCuotas(ventaActual);
+			}
+			return;
+		}
+		cobrarCuotaSeleccionada = cuota;
+		cobrarCuotaSeleccionadas = [cuota];
+		var datos = cobrarCuotaCrearDatosRegistroCuota(contexto, cuota, montoCuota, nrofactura);
+		$.ajax({
+			data: datos,
+			url: "/GoodVentaAsisCap/php_system/abmpagos.php",
+			type: "post",
+			cache: false,
+			contentType: false,
+			processData: false,
+			error: function(jqXHR, textstatus) {
+				cobrarCuotaProcesando = false;
+				cobrarCuotaRestaurarBoton();
+				if (typeof manejadordeerroresjquery === "function") {
+					manejadordeerroresjquery(jqXHR.status, textstatus, "cobrarCuotaRegistrarMultiple");
+				}
+				if (resultados.length > 0 && ventaActual != "") {
+					cobrarCuotaCargarCuotas(ventaActual);
+				}
+			},
+			success: function(responseText) {
+				try {
+					var respuesta = $.parseJSON(responseText);
+					if (respuesta["1"] == "exito") {
+						if (nrofactura == "" && respuesta["8"]) {
+							nrofactura = respuesta["8"];
+						}
+						var continuarLuegoDeRegistro = function(datosConciliacion) {
+							datosConciliacion = datosConciliacion || {};
+							resultados.push({ cuota: cuota, monto: montoCuota, respuesta: respuesta, conciliacion: datosConciliacion.respuesta || null });
+							cobrarCuotaAuditar(
+								transferencia ? "REGISTRAR_Y_CONCILIAR_UENO_MULTIPLE" : "REGISTRAR_COBRO_MULTIPLE_EFECTIVO",
+								"registrado",
+								transferencia ? "conciliado_ueno" : "no_aplica",
+								montoCuota,
+								contexto.textoTipo,
+								transferencia ? contexto.comprobante : "",
+								transferencia ? "Cobro multiple por transferencia conciliado desde Cobrar cuota" : "Cobro multiple en efectivo desde Cobrar cuota"
+							);
+							indice++;
+							registrarSiguiente();
+						};
+						if (transferencia && cobrarCuotaContextoUeno && cobrarCuotaContextoUeno.id_movimiento) {
+							cobrarCuotaConciliarTransferenciaMultiple(contexto, cuota, montoCuota, function(errorConciliacion, datosConciliacion) {
+								if (errorConciliacion) {
+									cobrarCuotaAuditar(
+										"REGISTRAR_TRANSFERENCIA_MULTIPLE_PENDIENTE",
+										"registrado",
+										"pendiente_conciliacion",
+										montoCuota,
+										contexto.textoTipo,
+										contexto.comprobante,
+										errorConciliacion
+									);
+									contexto.disponibleNuevo = disponibleActual;
+									contexto.saldoAplicadoUeno = saldoAplicadoUeno;
+									contexto.conciliadoUeno = false;
+									contexto.estadoMovimiento = "Pendiente de conciliacion";
+									cobrarCuotaFinalizarRegistroMultiple(
+										contexto,
+										resultados.concat([{ cuota: cuota, monto: montoCuota, respuesta: respuesta, conciliacion: datosConciliacion ? datosConciliacion.respuesta : null }]),
+										nrofactura,
+										"Pago registrado",
+										errorConciliacion + ". Se detuvo el cobro multiple para evitar duplicar el movimiento.",
+										"pendiente"
+									);
+									return;
+								}
+								disponibleActual = Number(datosConciliacion.disponibleNuevo || 0);
+								saldoAplicadoUeno += Number(datosConciliacion.saldoAplicado || montoCuota || 0);
+								continuarLuegoDeRegistro(datosConciliacion);
+							});
+						} else {
+							continuarLuegoDeRegistro();
+						}
+						return;
+					}
+					cobrarCuotaProcesando = false;
+					cobrarCuotaRestaurarBoton();
+					cobrarCuotaAviso(respuesta["2"] || "No se pudo registrar una de las cuotas seleccionadas", "error");
+					if (resultados.length > 0 && ventaActual != "") {
+						cobrarCuotaCargarCuotas(ventaActual);
+					}
+				} catch (error) {
+					cobrarCuotaProcesando = false;
+					cobrarCuotaRestaurarBoton();
+					cobrarCuotaAviso("No se pudo interpretar la respuesta del cobro multiple", "error");
+					if (typeof GuardarArchivosLog === "function") {
+						GuardarArchivosLog("Error cobrarCuotaRegistrarMultiple: " + error + " \r\n Consola: " + responseText);
+					}
+				}
+			}
+		});
+	};
+	registrarSiguiente();
+	return true;
+}
+
 function cobrarCuotaEjecutarRegistro(contexto) {
 	contexto = contexto || cobrarCuotaObtenerContextoRegistro();
 	if (!contexto || cobrarCuotaProcesando) { return; }
+	if (contexto.multiple) {
+		cobrarCuotaEjecutarRegistroMultiple(contexto);
+		return;
+	}
 	var monto = contexto.monto;
 	var saldo = contexto.saldo;
 	var fecha = contexto.fecha;
@@ -1881,6 +2591,8 @@ function cobrarCuotaCrearPagoRegistrado(titulo, detalle, tipo, opciones) {
 function cobrarCuotaCrearReciboDesdePago(pago) {
 	pago = pago || {};
 	return {
+		numero: pago.numero || pago.nroRecibo || "",
+		nroRecibo: pago.nroRecibo || pago.numero || "",
 		fecha: pago.fecha || "",
 		cliente: pago.cliente || "",
 		cedula: pago.cedula || "",
@@ -1900,6 +2612,9 @@ function cobrarCuotaCrearReciboDesdePago(pago) {
 		saldoVentaAnterior: pago.saldoVentaAnteriorFmt || "",
 		saldoVentaRestante: pago.saldoVentaRestanteFmt || "",
 		monto: pago.montoAplicadoFmt || "0",
+		detalles: Array.isArray(pago.detalles) ? pago.detalles : [],
+		multiple: pago.multiple === true,
+		cantidadCuotas: pago.cantidadCuotas || (Array.isArray(pago.detalles) ? pago.detalles.length : 0),
 		formaPago: pago.formaPago || "",
 		banco: pago.banco || "",
 		comprobante: pago.comprobante || "",
@@ -1999,10 +2714,27 @@ function cobrarCuotaRenderResumenPagoExitoso(pago) {
 	var datosCuota = "";
 	datosCuota += cobrarCuotaConfirmacionFila("Venta", pago.venta || pago.codVenta || "");
 	datosCuota += cobrarCuotaConfirmacionFila("Cliente", pago.cliente || "");
-	datosCuota += cobrarCuotaConfirmacionFila("Cuota aplicada", pago.cuota || "");
-	datosCuota += cobrarCuotaConfirmacionFila("Saldo anterior", (pago.saldoCuotaAnteriorFmt || "0") + " Gs.");
-	datosCuota += cobrarCuotaConfirmacionFila("Saldo pendiente", (pago.saldoCuotaRestanteFmt || "0") + " Gs.");
-	datosCuota += cobrarCuotaConfirmacionFila("Estado final", pago.estadoFinalCuota || "");
+	if (pago.multiple && pago.detalles && pago.detalles.length > 1) {
+		var detalleCuotas = "";
+		for (var i = 0; i < pago.detalles.length; i++) {
+			detalleCuotas += "Cuota " + (pago.detalles[i].cuota || "-") + " / " + (pago.detalles[i].monto || "0") + " Gs.";
+			if (pago.detalles[i].saldoCuotaRestanteNum > 0) {
+				detalleCuotas += " / queda " + (pago.detalles[i].saldoCuotaRestante || "0") + " Gs.";
+			}
+			if (i < pago.detalles.length - 1) {
+				detalleCuotas += " | ";
+			}
+		}
+		datosCuota += cobrarCuotaConfirmacionFila("Cuotas aplicadas", detalleCuotas, "cobrar-cuota-confirmacion__row--wide");
+		datosCuota += cobrarCuotaConfirmacionFila("Cantidad", pago.detalles.length + " cuotas");
+		datosCuota += cobrarCuotaConfirmacionFila("Saldo anterior del plan", (pago.saldoVentaAnteriorFmt || "0") + " Gs.");
+		datosCuota += cobrarCuotaConfirmacionFila("Saldo pendiente del plan", (pago.saldoVentaRestanteFmt || "0") + " Gs.");
+	} else {
+		datosCuota += cobrarCuotaConfirmacionFila("Cuota aplicada", pago.cuota || "");
+		datosCuota += cobrarCuotaConfirmacionFila("Saldo anterior", (pago.saldoCuotaAnteriorFmt || "0") + " Gs.");
+		datosCuota += cobrarCuotaConfirmacionFila("Saldo pendiente", (pago.saldoCuotaRestanteFmt || "0") + " Gs.");
+		datosCuota += cobrarCuotaConfirmacionFila("Estado final", pago.estadoFinalCuota || "");
+	}
 
 	var datosUeno = "";
 	if (pago.idMovimientoUeno || pago.movimientoUeno) {
@@ -2126,6 +2858,9 @@ function cobrarCuotaReciboDiasAtraso(fechaVencimiento, fechaPago) {
 }
 
 function cobrarCuotaReciboConcepto(r) {
+	if (r.detalles && r.detalles.length > 1 && r.venta) {
+		return "Pago de cuotas seleccionadas - Factura nro: " + r.venta;
+	}
 	if (r.venta) {
 		return "Factura nro: " + r.venta;
 	}
@@ -2165,10 +2900,6 @@ function cobrarCuotaImprimirRecibo() {
 	var saldoActual = cobrarCuotaReciboValor(r.saldoVentaRestante || r.saldoActualVenta || r.saldoActual || r.saldoCuotaRestante || "0", "0");
 	var estadoRecibo = cobrarCuotaReciboValor(r.estado || r.estadoFinalCuota, "Registrado");
 	var tipoPagoCorto = cobrarCuotaReciboTipoCorto(r.formaPago);
-	var descripcionCuota = cobrarCuotaEscape("PAGO DE CUOTA--" + cobrarCuotaReciboValor(r.cuota, ""));
-	if (r.producto) {
-		descripcionCuota += "<br>" + cobrarCuotaEscape(String(r.producto).toUpperCase());
-	}
 	var detalleUeno = "";
 	if (r.banco) {
 		detalleUeno += "<br><b>Banco:</b> " + cobrarCuotaEscape(r.banco);
@@ -2193,15 +2924,30 @@ function cobrarCuotaImprimirRecibo() {
 			+ "</div>";
 	}
 
-	var detalleCuota = "<table class='tableTicket cobrar-cuota-recibo-detalle'>"
-		+ "<tr>"
-		+ "<td class='cobrar-cuota-recibo-fecha'>" + cobrarCuotaEscape(fechaPago) + "</td>"
-		+ "<td class='cobrar-cuota-recibo-fecha'>" + cobrarCuotaEscape(fechaVencimiento) + "</td>"
-		+ "<td class='cobrar-cuota-recibo-desc'>" + descripcionCuota + "</td>"
-		+ "<td class='cobrar-cuota-recibo-tipo'>" + cobrarCuotaEscape(tipoPagoCorto) + "</td>"
-		+ "<td class='cobrar-cuota-recibo-importe'><b>" + cobrarCuotaEscape(monto) + " Gs.</b></td>"
-		+ "</tr>"
-		+ "</table>";
+	var detallesRecibo = (r.detalles && r.detalles.length) ? r.detalles : [{
+		cuota: r.cuota || "",
+		fechaVencimiento: r.fechaVencimiento || r.vencimiento || "",
+		producto: r.producto || "",
+		monto: monto
+	}];
+	var detalleCuota = "";
+	for (var i = 0; i < detallesRecibo.length; i++) {
+		var detalle = detallesRecibo[i] || {};
+		var descripcionCuota = cobrarCuotaEscape("PAGO DE CUOTA--" + cobrarCuotaReciboValor(detalle.cuota, ""));
+		var productoDetalle = detalle.producto || r.producto || "";
+		if (productoDetalle) {
+			descripcionCuota += "<br>" + cobrarCuotaEscape(String(productoDetalle).toUpperCase());
+		}
+		detalleCuota += "<table class='tableTicket cobrar-cuota-recibo-detalle'>"
+			+ "<tr>"
+			+ "<td class='cobrar-cuota-recibo-fecha'>" + cobrarCuotaEscape(fechaPago) + "</td>"
+			+ "<td class='cobrar-cuota-recibo-fecha'>" + cobrarCuotaEscape(cobrarCuotaReciboValor(detalle.fechaVencimiento || fechaVencimiento, "-")) + "</td>"
+			+ "<td class='cobrar-cuota-recibo-desc'>" + descripcionCuota + "</td>"
+			+ "<td class='cobrar-cuota-recibo-tipo'>" + cobrarCuotaEscape(tipoPagoCorto) + "</td>"
+			+ "<td class='cobrar-cuota-recibo-importe'><b>" + cobrarCuotaEscape(cobrarCuotaReciboValor(detalle.monto, monto)) + " Gs.</b></td>"
+			+ "</tr>"
+			+ "</table>";
+	}
 
 	var estilos = "<style>"
 		+ "@page{size:A4 portrait;margin:0.45cm;}"
