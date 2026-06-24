@@ -178,6 +178,8 @@ abm($nombredescripcionAnt,$precio_compraAnt,$precio_ventaAnt,$stockAnt,$cod_barr
 	
 	$ConStock=$_POST["ConStock"];
  	$ConStock=mb_convert_encoding((string)($ConStock), 'ISO-8859-1', 'UTF-8');
+	$riesgo=isset($_POST["riesgo"]) ? $_POST["riesgo"] : "";
+ 	$riesgo=mb_convert_encoding((string)($riesgo), 'ISO-8859-1', 'UTF-8');
 	
 	if($local==""){
 $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
@@ -185,7 +187,7 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$local=buscarlocaluser($user);
 	}
 }
- 	BuscarRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$ConStock);
+ 	BuscarRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$ConStock,$riesgo);
  }
  if($operacion=="buscarmas"){
 	 
@@ -208,6 +210,8 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
  	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	$ConStock=$_POST["ConStock"];
  	$ConStock=mb_convert_encoding((string)($ConStock), 'ISO-8859-1', 'UTF-8');
+	$riesgo=isset($_POST["riesgo"]) ? $_POST["riesgo"] : "";
+ 	$riesgo=mb_convert_encoding((string)($riesgo), 'ISO-8859-1', 'UTF-8');
 	
 	$registrocargado=$_POST["registrocargado"];
  	$registrocargado=mb_convert_encoding((string)($registrocargado), 'ISO-8859-1', 'UTF-8');
@@ -217,7 +221,29 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 		$local=buscarlocaluser($user);
 	}
 }
- 	BuscarMasRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$registrocargado,$ConStock);
+ 	BuscarMasRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$registrocargado,$ConStock,$riesgo);
+ }
+
+ if($operacion=="editar_riesgo_financiero"){
+	$cod_producto=$_POST["cod_producto"];
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
+	$nivel=$_POST["nivel"];
+ 	$nivel=mb_convert_encoding((string)($nivel), 'ISO-8859-1', 'UTF-8');
+	$motivo=$_POST["motivo"];
+ 	$motivo=mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
+ 	EditarRiesgoFinancieroProducto($cod_producto,$nivel,$motivo,$user);
+ }
+
+ if($operacion=="riesgo_automatico_financiero"){
+	$cod_producto=$_POST["cod_producto"];
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
+ 	VolverRiesgoFinancieroAutomaticoProducto($cod_producto,$user);
+ }
+
+ if($operacion=="obtener_riesgo_tratamiento"){
+	$cod_producto=$_POST["cod_producto"];
+ 	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
+ 	ObtenerNivelRiesgoTratamiento($cod_producto);
  }
 
  if($operacion=="buscarporcodigoeditar"){
@@ -590,7 +616,7 @@ $paginaprecios=buscardetallesprecios($cod_producto, $precio_producto,$comision);
 	exit;
 }
     
-$informacion =array("1" => "exito","2" => $cod_producto,"3" => $nombre_producto,"4" => $precio_producto,"5" => $cod_barra);
+$informacion =array("1" => "exito","2" => $cod_producto,"3" => $nombre_producto,"4" => $precio_producto,"5" => $cod_barra,"6" => $descripcion_producto);
 echo json_encode($informacion);	
 exit;
 }
@@ -892,6 +918,108 @@ exit;
 
 
 
+function ProductoTemporalidadColumnas()
+{
+	return array(
+		"usa_temporalidad" => "TINYINT(1) NOT NULL DEFAULT 0",
+		"temporalidad_tipo" => "VARCHAR(40) NULL",
+		"temporalidad_intervalo_recomendado" => "INT NULL",
+		"temporalidad_intervalo_minimo" => "INT NULL",
+		"temporalidad_intervalo_maximo" => "INT NULL",
+		"temporalidad_sesiones_estimadas" => "INT NULL",
+		"temporalidad_duracion_sillon" => "INT NULL",
+		"temporalidad_observacion" => "VARCHAR(255) NULL"
+	);
+}
+
+function ProductoTemporalidadCamposDisponibles($mysqli,$forzar = false)
+{
+	static $disponibles = null;
+	if ($disponibles !== null && !$forzar) {
+		return $disponibles;
+	}
+	$disponibles = array();
+	foreach (ProductoTemporalidadColumnas() as $campo => $definicion) {
+		$stmt = $mysqli->prepare("SHOW COLUMNS FROM producto LIKE ?");
+		if ($stmt) {
+			$stmt->bind_param("s", $campo);
+			if ($stmt->execute()) {
+				$result = $stmt->get_result();
+				$disponibles[$campo] = mysqli_num_rows($result) > 0;
+			} else {
+				$disponibles[$campo] = false;
+			}
+		} else {
+			$disponibles[$campo] = false;
+		}
+	}
+	return $disponibles;
+}
+
+function AsegurarTemporalidadProducto($mysqli)
+{
+	$disponibles = ProductoTemporalidadCamposDisponibles($mysqli);
+	foreach (ProductoTemporalidadColumnas() as $campo => $definicion) {
+		if (empty($disponibles[$campo])) {
+			$mysqli->query("ALTER TABLE producto ADD COLUMN ".$campo." ".$definicion);
+		}
+	}
+	ProductoTemporalidadCamposDisponibles($mysqli,true);
+}
+
+function ProductoTemporalidadSelectSql($mysqli, $alias = "pr")
+{
+	$disponibles = ProductoTemporalidadCamposDisponibles($mysqli);
+	$partes = array();
+	$defaults = array(
+		"usa_temporalidad" => "0",
+		"temporalidad_tipo" => "''",
+		"temporalidad_intervalo_recomendado" => "20",
+		"temporalidad_intervalo_minimo" => "15",
+		"temporalidad_intervalo_maximo" => "40",
+		"temporalidad_sesiones_estimadas" => "NULL",
+		"temporalidad_duracion_sillon" => "NULL",
+		"temporalidad_observacion" => "''"
+	);
+	foreach ($defaults as $campo => $default) {
+		$partes[] = (!empty($disponibles[$campo]) ? "IFNULL(".$alias.".".$campo.", ".$default.")" : $default)." AS ".$campo;
+	}
+	return implode(",\n", $partes);
+}
+
+function EnteroTemporalidadProducto($campo)
+{
+	if (!isset($_POST[$campo])) { return null; }
+	$valor = trim((string)$_POST[$campo]);
+	if ($valor == "") { return null; }
+	$valor = str_replace(",", ".", $valor);
+	return is_numeric($valor) ? (int)round((float)$valor) : null;
+}
+
+function GuardarTemporalidadProducto($mysqli,$cod_producto)
+{
+	AsegurarTemporalidadProducto($mysqli);
+	$usa = isset($_POST["usa_temporalidad"]) && (string)$_POST["usa_temporalidad"] == "1" ? 1 : 0;
+	$tipo = isset($_POST["temporalidad_tipo"]) ? mb_convert_encoding((string)$_POST["temporalidad_tipo"], 'ISO-8859-1', 'UTF-8') : "";
+	$intervalo = EnteroTemporalidadProducto("temporalidad_intervalo_recomendado");
+	$minimo = EnteroTemporalidadProducto("temporalidad_intervalo_minimo");
+	$maximo = EnteroTemporalidadProducto("temporalidad_intervalo_maximo");
+	$sesiones = EnteroTemporalidadProducto("temporalidad_sesiones_estimadas");
+	$duracion = EnteroTemporalidadProducto("temporalidad_duracion_sillon");
+	$observacion = isset($_POST["temporalidad_observacion"]) ? mb_convert_encoding((string)$_POST["temporalidad_observacion"], 'ISO-8859-1', 'UTF-8') : "";
+	if ($intervalo !== null && $intervalo < 0) { $intervalo = 0; }
+	if ($minimo !== null && $minimo < 0) { $minimo = 0; }
+	if ($maximo !== null && $maximo < 0) { $maximo = 0; }
+	if ($sesiones !== null && $sesiones < 0) { $sesiones = 0; }
+	if ($duracion !== null && $duracion < 0) { $duracion = 0; }
+	$stmt = $mysqli->prepare("UPDATE producto SET usa_temporalidad=?, temporalidad_tipo=?, temporalidad_intervalo_recomendado=?, temporalidad_intervalo_minimo=?, temporalidad_intervalo_maximo=?, temporalidad_sesiones_estimadas=?, temporalidad_duracion_sillon=?, temporalidad_observacion=? WHERE cod_producto=? LIMIT 1");
+	if (!$stmt) { return; }
+	$stmt->bind_param("isiiiiiss", $usa, $tipo, $intervalo, $minimo, $maximo, $sesiones, $duracion, $observacion, $cod_producto);
+	$stmt->execute();
+}
+
+
+
 function abm($nombredescripcionAnt,$precio_compraAnt,$precio_ventaAnt,$stockAnt,$cod_barraAnt,$linkproducto,$codFabricaFK,$CodProveedorFK,$tipo,$cod_producto,$cod_barra,$cod_categoriaFK,$cod_marcasFK,$cod_ImpuestoFK,$porcentaje,$nombre_producto,$descripcion_producto,$unidad_producto,$precio_producto,$precio_compra,$cod_localFK,$comision,$stock_producto,$estado,$operacion)
 {
 
@@ -951,6 +1079,8 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.
 exit;
 }
 
+ActualizarRiesgoAutomaticoProductoSiCorresponde($mysqli,$cod_producto,$precio_producto,$user,$fecha_inser_edit);
+GuardarTemporalidadProducto($mysqli,$cod_producto);
 nuevoTablaDetallePrecio($cod_producto,$precio_compra,$porcentaje);
 
 }
@@ -967,6 +1097,8 @@ if (!$stmt1->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
+ActualizarRiesgoAutomaticoProductoSiCorresponde($mysqli,$cod_producto,$precio_producto,$user,$fecha_inser_edit);
+GuardarTemporalidadProducto($mysqli,$cod_producto);
 }
 
 
@@ -1106,7 +1238,299 @@ return $nroOrden;
 
 }
 
-function BuscarRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$ConStock)
+function ProductoRiesgoCaseSql($campoPrecio)
+{
+	return "CASE
+		WHEN CAST(".$campoPrecio." AS DECIMAL(18,2)) <= 350000 THEN 1
+		WHEN CAST(".$campoPrecio." AS DECIMAL(18,2)) <= 800000 THEN 2
+		WHEN CAST(".$campoPrecio." AS DECIMAL(18,2)) <= 1500000 THEN 3
+		WHEN CAST(".$campoPrecio." AS DECIMAL(18,2)) <= 3000000 THEN 4
+		ELSE 5
+	END";
+}
+
+function ProductoRiesgoCamposDisponibles($mysqli)
+{
+	static $disponible = null;
+	if($disponible !== null){
+		return $disponible;
+	}
+	$sql = "SHOW COLUMNS FROM producto LIKE 'nivel_riesgo_financiero'";
+	$stmt = $mysqli->prepare($sql);
+	if(!$stmt || !$stmt->execute()){
+		$disponible = false;
+		return $disponible;
+	}
+	$result = $stmt->get_result();
+	$disponible = mysqli_num_rows($result) > 0;
+	return $disponible;
+}
+
+function ProductoRiesgoAuditoriaDisponible($mysqli)
+{
+	static $disponible = null;
+	if($disponible !== null){
+		return $disponible;
+	}
+	$sql = "SHOW TABLES LIKE 'producto_riesgo_auditoria'";
+	$stmt = $mysqli->prepare($sql);
+	if(!$stmt || !$stmt->execute()){
+		$disponible = false;
+		return $disponible;
+	}
+	$result = $stmt->get_result();
+	$disponible = mysqli_num_rows($result) > 0;
+	return $disponible;
+}
+
+function ProductoRiesgoSelectSql($mysqli)
+{
+	$caseNivel = ProductoRiesgoCaseSql("pr.precio_producto");
+	if(ProductoRiesgoCamposDisponibles($mysqli)){
+		return "COALESCE(pr.nivel_riesgo_financiero, ".$caseNivel.") as nivel_riesgo_financiero,
+		COALESCE(NULLIF(pr.nivel_riesgo_origen,''),'automatico') as nivel_riesgo_origen,
+		COALESCE(pr.nivel_riesgo_observacion,'') as nivel_riesgo_observacion,
+		(Select nombre_persona from persona pra where pra.cod_persona=pr.nivel_riesgo_actualizado_por limit 1) as riesgo_actualizado_por,
+		pr.nivel_riesgo_actualizado_en";
+	}
+	return $caseNivel." as nivel_riesgo_financiero,
+		'automatico' as nivel_riesgo_origen,
+		'' as nivel_riesgo_observacion,
+		'' as riesgo_actualizado_por,
+		'' as nivel_riesgo_actualizado_en";
+}
+
+function ProductoRiesgoCondicionSql($riesgo,$mysqli)
+{
+	$riesgo = trim((string)$riesgo);
+	if($riesgo == ""){
+		return "";
+	}
+	$caseNivel = ProductoRiesgoCaseSql("pr.precio_producto");
+	if(ProductoRiesgoCamposDisponibles($mysqli)){
+		$campoNivel = "COALESCE(pr.nivel_riesgo_financiero, ".$caseNivel.")";
+	}else{
+		$campoNivel = $caseNivel;
+	}
+	if($riesgo == "alto"){
+		return " and ".$campoNivel." in (4,5) ";
+	}
+	if(in_array($riesgo, array("1","2","3","4","5"))){
+		return " and ".$campoNivel." = ".intval($riesgo)." ";
+	}
+	return "";
+}
+
+function CalcularNivelRiesgoFinancieroProducto($precio)
+{
+	$precio = floatval($precio);
+	if($precio <= 350000){ return 1; }
+	if($precio <= 800000){ return 2; }
+	if($precio <= 1500000){ return 3; }
+	if($precio <= 3000000){ return 4; }
+	return 5;
+}
+
+function NormalizarNivelRiesgoFinancieroProducto($nivel)
+{
+	$nivel = intval($nivel);
+	if($nivel < 1){ return 1; }
+	if($nivel > 5){ return 5; }
+	return $nivel;
+}
+
+function TextoNivelRiesgoFinancieroProducto($nivel)
+{
+	$nivel = NormalizarNivelRiesgoFinancieroProducto($nivel);
+	if($nivel == 1){ return "N1 Bajo"; }
+	if($nivel == 2){ return "N2 Moderado"; }
+	if($nivel == 3){ return "N3 Controlado"; }
+	if($nivel == 4){ return "N4 Alto"; }
+	return "N5 Critico";
+}
+
+function TooltipNivelRiesgoFinancieroProducto($nivel)
+{
+	$nivel = NormalizarNivelRiesgoFinancieroProducto($nivel);
+	if($nivel == 1){ return "Bajo riesgo financiero. Puede realizarse al inicio del plan."; }
+	if($nivel == 2){ return "Riesgo moderado. Recomendado con entrega inicial o primera cuota."; }
+	if($nivel == 3){ return "Riesgo controlado. Requiere avance inicial del plan."; }
+	if($nivel == 4){ return "Alto riesgo. Requiere control administrativo."; }
+	return "Riesgo critico. Requiere autorizacion o anticipo importante.";
+}
+
+function BadgeNivelRiesgoFinancieroProducto($nivel)
+{
+	$nivel = NormalizarNivelRiesgoFinancieroProducto($nivel);
+	$texto = htmlspecialchars(TextoNivelRiesgoFinancieroProducto($nivel), ENT_QUOTES, 'UTF-8');
+	$title = htmlspecialchars(TooltipNivelRiesgoFinancieroProducto($nivel), ENT_QUOTES, 'UTF-8');
+	return "<span class='catalogo-riesgo-badge riesgo-nivel-".$nivel."' title='".$title."'>".$texto."</span>";
+}
+
+function RegistrarAuditoriaRiesgoFinancieroProducto($mysqli,$cod_producto,$nivelAnterior,$nivelNuevo,$origenAnterior,$origenNuevo,$motivo,$precioProducto,$user)
+{
+	if(!ProductoRiesgoAuditoriaDisponible($mysqli)){
+		return;
+	}
+	$consulta1 = "INSERT INTO producto_riesgo_auditoria
+	(cod_productoFK,nivel_anterior,nivel_nuevo,origen_anterior,origen_nuevo,motivo,precio_producto,cod_usuarioFK,fecha_hora)
+	values(?,?,?,?,?,?,?,?,NOW())";
+	$stmt1 = $mysqli->prepare($consulta1);
+	if(!$stmt1){
+		return;
+	}
+	$ss = 'siisssds';
+	$stmt1->bind_param($ss,$cod_producto,$nivelAnterior,$nivelNuevo,$origenAnterior,$origenNuevo,$motivo,$precioProducto,$user);
+	$stmt1->execute();
+}
+
+function DatosRiesgoActualProducto($mysqli,$cod_producto)
+{
+	$datos = array("nivel" => "", "origen" => "", "precio" => 0);
+	$consulta = "select nivel_riesgo_financiero,nivel_riesgo_origen,precio_producto from producto where cod_producto=? limit 1";
+	$stmt = $mysqli->prepare($consulta);
+	if(!$stmt){
+		return $datos;
+	}
+	$ss='s';
+	$stmt->bind_param($ss,$cod_producto);
+	if(!$stmt->execute()){
+		return $datos;
+	}
+	$result = $stmt->get_result();
+	if($valor = mysqli_fetch_assoc($result)){
+		$datos["nivel"] = $valor["nivel_riesgo_financiero"];
+		$datos["origen"] = $valor["nivel_riesgo_origen"];
+		$datos["precio"] = $valor["precio_producto"];
+	}
+	return $datos;
+}
+
+function ActualizarRiesgoAutomaticoProductoSiCorresponde($mysqli,$cod_producto,$precio_producto,$user,$fecha)
+{
+	if(!ProductoRiesgoCamposDisponibles($mysqli)){
+		return;
+	}
+	$actual = DatosRiesgoActualProducto($mysqli,$cod_producto);
+	$origenActual = strtolower(trim((string)$actual["origen"]));
+	if($origenActual == "manual"){
+		return;
+	}
+	$nivelNuevo = CalcularNivelRiesgoFinancieroProducto($precio_producto);
+	$consulta1 = "Update producto set nivel_riesgo_financiero=?, nivel_riesgo_origen='automatico', nivel_riesgo_actualizado_por=?, nivel_riesgo_actualizado_en=NOW() where cod_producto=?";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss='iss';
+	$stmt1->bind_param($ss,$nivelNuevo,$user,$cod_producto);
+	if(!$stmt1->execute()){
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+		exit;
+	}
+	if(strval($actual["nivel"]) != strval($nivelNuevo)){
+		RegistrarAuditoriaRiesgoFinancieroProducto($mysqli,$cod_producto,intval($actual["nivel"]),$nivelNuevo,$actual["origen"],"automatico","Recalculo automatico por precio de venta",$precio_producto,$user);
+	}
+}
+
+function EditarRiesgoFinancieroProducto($cod_producto,$nivel,$motivo,$user)
+{
+	$motivo = trim((string)$motivo);
+	if($cod_producto=="" || $nivel=="" || $motivo==""){
+		$informacion =array("1" => "CAMPOSVACIOS");
+		echo json_encode($informacion);
+		exit;
+	}
+	$nivel = NormalizarNivelRiesgoFinancieroProducto($nivel);
+	$mysqli=conectar_al_servidor();
+	if(!ProductoRiesgoCamposDisponibles($mysqli)){
+		$informacion =array("1" => "SINMIGRACION","2" => "Ejecuta primero actualizacion_17062026_riesgo_financiero_productos.sql.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$actual = DatosRiesgoActualProducto($mysqli,$cod_producto);
+	$consulta1 = "Update producto set nivel_riesgo_financiero=?, nivel_riesgo_origen='manual', nivel_riesgo_observacion=?, nivel_riesgo_actualizado_por=?, nivel_riesgo_actualizado_en=NOW() where cod_producto=?";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss='isis';
+	$stmt1->bind_param($ss,$nivel,$motivo,$user,$cod_producto);
+	if(!$stmt1->execute()){
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+		exit;
+	}
+	RegistrarAuditoriaRiesgoFinancieroProducto($mysqli,$cod_producto,intval($actual["nivel"]),$nivel,$actual["origen"],"manual",$motivo,$actual["precio"],$user);
+	$informacion =array("1" => "exito","2" => $cod_producto);
+	echo json_encode($informacion);
+	exit;
+}
+
+function VolverRiesgoFinancieroAutomaticoProducto($cod_producto,$user)
+{
+	if($cod_producto==""){
+		$informacion =array("1" => "CAMPOSVACIOS");
+		echo json_encode($informacion);
+		exit;
+	}
+	$mysqli=conectar_al_servidor();
+	if(!ProductoRiesgoCamposDisponibles($mysqli)){
+		$informacion =array("1" => "SINMIGRACION","2" => "Ejecuta primero actualizacion_17062026_riesgo_financiero_productos.sql.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$actual = DatosRiesgoActualProducto($mysqli,$cod_producto);
+	$nivelNuevo = CalcularNivelRiesgoFinancieroProducto($actual["precio"]);
+	$consulta1 = "Update producto set nivel_riesgo_financiero=?, nivel_riesgo_origen='automatico', nivel_riesgo_observacion='', nivel_riesgo_actualizado_por=?, nivel_riesgo_actualizado_en=NOW() where cod_producto=?";
+	$stmt1 = $mysqli->prepare($consulta1);
+	$ss='iss';
+	$stmt1->bind_param($ss,$nivelNuevo,$user,$cod_producto);
+	if(!$stmt1->execute()){
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+		exit;
+	}
+	RegistrarAuditoriaRiesgoFinancieroProducto($mysqli,$cod_producto,intval($actual["nivel"]),$nivelNuevo,$actual["origen"],"automatico","Volver a calculo automatico",$actual["precio"],$user);
+	$informacion =array("1" => "exito","2" => $cod_producto);
+	echo json_encode($informacion);
+	exit;
+}
+
+function ObtenerNivelRiesgoTratamiento($cod_producto)
+{
+	if($cod_producto==""){
+		$informacion =array("1" => "CAMPOSVACIOS");
+		echo json_encode($informacion);
+		exit;
+	}
+	$mysqli=conectar_al_servidor();
+	$selectRiesgo=ProductoRiesgoSelectSql($mysqli);
+	$sql = "select pr.cod_producto,pr.precio_producto,".$selectRiesgo."
+	from producto pr
+	where pr.cod_producto=? limit 1";
+	$stmt = $mysqli->prepare($sql);
+	$ss='s';
+	$stmt->bind_param($ss,$cod_producto);
+	if(!$stmt->execute()){
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+	$result = $stmt->get_result();
+	if($valor = mysqli_fetch_assoc($result)){
+		$nivel = NormalizarNivelRiesgoFinancieroProducto($valor["nivel_riesgo_financiero"]);
+		$informacion =array(
+			"1" => "exito",
+			"cod_producto" => $valor["cod_producto"],
+			"precio_producto" => $valor["precio_producto"],
+			"nivel_riesgo_financiero" => $nivel,
+			"nivel_riesgo_texto" => TextoNivelRiesgoFinancieroProducto($nivel),
+			"nivel_riesgo_origen" => $valor["nivel_riesgo_origen"],
+			"nivel_riesgo_observacion" => $valor["nivel_riesgo_observacion"],
+			"riesgo_actualizado_por" => $valor["riesgo_actualizado_por"],
+			"nivel_riesgo_actualizado_en" => $valor["nivel_riesgo_actualizado_en"]
+		);
+		echo json_encode($informacion);
+		exit;
+	}
+	$informacion =array("1" => "NoExiste");
+	echo json_encode($informacion);
+	exit;
+}
+
+function BuscarRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$ConStock,$riesgo="")
 {
 $mysqli=conectar_al_servidor();
 $condicionLocal="";
@@ -1147,7 +1571,9 @@ if($ConStock=="sinstock"){
 $condicionstockCondi="and stk.cantidad <= 0 ";
 }
 
-
+$condicionRiesgo=ProductoRiesgoCondicionSql($riesgo,$mysqli);
+$selectRiesgo=ProductoRiesgoSelectSql($mysqli);
+$selectTemporalidad=ProductoTemporalidadSelectSql($mysqli,"pr");
 
 
 $sql= "select pr.tipo,pr.cod_barra,pr.porcentaje,pr.cod_producto,pr.nombre_producto,pr.descripcion_producto,
@@ -1159,10 +1585,12 @@ pr.precio_producto,pr.precio_compra,stk.cantidad as stock_producto,pr.comision,p
 (select descripcion from impuesto where cod_Impuesto= pr.cod_ImpuestoFK limit 1 ) as NombreImpuesto,
 (select descripcion from marcas where cod_marcas= pr.cod_marcasFK limit 1 ) as NombreMarca,
 pr.fecha_insert,pr.fecha_edit,
+".$selectRiesgo.",
+".$selectTemporalidad.",
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_insert )as insertadopor,
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_edit )as editadopor
  from  producto pr inner join stocklocales stk on stk.cod_productofk=pr.cod_producto
-where pr.estado='".$estado."'  ".$condicionMarca.$condicionCategria.$condicionLocal.$condicionCodigo.$condicionProducto.$condicionstock.$condicionproveedor.$condicionstockCondi." order by pr.nombre_producto asc limit 100 "; 	
+where pr.estado='".$estado."'  ".$condicionMarca.$condicionCategria.$condicionLocal.$condicionCodigo.$condicionProducto.$condicionstock.$condicionproveedor.$condicionstockCondi.$condicionRiesgo." order by pr.nombre_producto asc limit 100 "; 	
 $stmt = $mysqli->prepare($sql);
 $pagina = "";   
 if ( ! $stmt->execute()) {
@@ -1208,6 +1636,20 @@ $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', '
 $editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
 $fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
 $fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
+$nivel_riesgo_financiero = mb_convert_encoding((string)($valor['nivel_riesgo_financiero']), 'UTF-8', 'ISO-8859-1');
+$nivel_riesgo_origen = mb_convert_encoding((string)($valor['nivel_riesgo_origen']), 'UTF-8', 'ISO-8859-1');
+$nivel_riesgo_observacion = mb_convert_encoding((string)($valor['nivel_riesgo_observacion']), 'UTF-8', 'ISO-8859-1');
+$riesgo_actualizado_por = mb_convert_encoding((string)($valor['riesgo_actualizado_por']), 'UTF-8', 'ISO-8859-1');
+$nivel_riesgo_actualizado_en = mb_convert_encoding((string)($valor['nivel_riesgo_actualizado_en']), 'UTF-8', 'ISO-8859-1');
+$usa_temporalidad = mb_convert_encoding((string)($valor['usa_temporalidad']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_tipo = mb_convert_encoding((string)($valor['temporalidad_tipo']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_intervalo_recomendado = mb_convert_encoding((string)($valor['temporalidad_intervalo_recomendado']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_intervalo_minimo = mb_convert_encoding((string)($valor['temporalidad_intervalo_minimo']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_intervalo_maximo = mb_convert_encoding((string)($valor['temporalidad_intervalo_maximo']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_sesiones_estimadas = mb_convert_encoding((string)($valor['temporalidad_sesiones_estimadas']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_duracion_sillon = mb_convert_encoding((string)($valor['temporalidad_duracion_sillon']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_observacion = mb_convert_encoding((string)($valor['temporalidad_observacion']), 'UTF-8', 'ISO-8859-1');
+$badge_riesgo_financiero = BadgeNivelRiesgoFinancieroProducto($nivel_riesgo_financiero);
 //anhadirStockA($stock_producto,$cod_producto,$cod_localFK);
 $totalcostos=$precio_compra*$stock_producto;
 $styleName=CargarStyleTable($styleName);
@@ -1224,10 +1666,11 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_3' style='display:none'>".$unidad_producto."</td>
 <td  id='td_datos_6' style='width:10%'>".number_format($stock_producto,'2',',','.')."</td>
 <td  id='td_datos_4' style='width:10%'>".number_format($precio_producto,'0',',','.') ."</td>
+<td  id='td_datos_105_label' class='catalogo-riesgo-cell' style='width:10%'>".$badge_riesgo_financiero."</td>
 <td  id='td_datos_5' style='width:10%'>".number_format($precio_compra,'0',',','.')."</td>
 <td  id='td_datos_18' style='display:none'>".number_format($totalcostos,'0',',','.')."</td>
 <td  id='td_datos_22' style='width:10%'>".$proveedor."</td>
-<td  id='' style='width:10%'>".$localnombre."</td>
+<td  id='td_datos_local_nombre' class='catalogo-local-cell' style='width:10%'>".$localnombre."</td>
 <td  id='td_datos_7' style='display:none'>".$cod_localFK."</td>
 <td  id='td_datos_8' style='display:none'>".$comision."</td>
 <td  id='td_datos_9' style='display:none'>".$estado."</td>
@@ -1243,6 +1686,19 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_102' style='display:none'>".$fecha_insert."</td>
 <td  id='td_datos_103' style='display:none'>".$fecha_edit."</td>
 <td  id='td_datos_104' style='display:none'>".$link."</td>
+<td  id='td_datos_105' style='display:none'>".$nivel_riesgo_financiero."</td>
+<td  id='td_datos_106' style='display:none'>".$nivel_riesgo_origen."</td>
+<td  id='td_datos_107' style='display:none'>".$nivel_riesgo_observacion."</td>
+<td  id='td_datos_108' style='display:none'>".$riesgo_actualizado_por."</td>
+<td  id='td_datos_109' style='display:none'>".$nivel_riesgo_actualizado_en."</td>
+<td  id='td_datos_120' style='display:none'>".$usa_temporalidad."</td>
+<td  id='td_datos_121' style='display:none'>".$temporalidad_tipo."</td>
+<td  id='td_datos_122' style='display:none'>".$temporalidad_intervalo_recomendado."</td>
+<td  id='td_datos_123' style='display:none'>".$temporalidad_intervalo_minimo."</td>
+<td  id='td_datos_124' style='display:none'>".$temporalidad_intervalo_maximo."</td>
+<td  id='td_datos_125' style='display:none'>".$temporalidad_sesiones_estimadas."</td>
+<td  id='td_datos_126' style='display:none'>".$temporalidad_duracion_sillon."</td>
+<td  id='td_datos_127' style='display:none'>".$temporalidad_observacion."</td>
 </tr>
 </table>";
 
@@ -1252,7 +1708,7 @@ $styleName=CargarStyleTable($styleName);
 
 $sql= "select pr.tipo
  from  producto pr inner join stocklocales stk on stk.cod_productofk=pr.cod_producto
-where pr.estado='".$estado."'  ".$condicionMarca.$condicionCategria.$condicionLocal.$condicionCodigo.$condicionProducto.$condicionstock.$condicionproveedor.$condicionstockCondi." order by pr.nombre_producto asc  "; 	
+where pr.estado='".$estado."'  ".$condicionMarca.$condicionCategria.$condicionLocal.$condicionCodigo.$condicionProducto.$condicionstock.$condicionproveedor.$condicionstockCondi.$condicionRiesgo." order by pr.nombre_producto asc  "; 	
   $stmt = $mysqli->prepare($sql); 
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
@@ -1266,7 +1722,7 @@ echo json_encode($informacion);
 exit;
 }
 
-function BuscarMasRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$registrocargado,$ConStock)
+function BuscarMasRegistro($codigo,$producto,$marca,$categoria,$stock,$proveedor,$estado,$local,$registrocargado,$ConStock,$riesgo="")
 {
 $mysqli=conectar_al_servidor();
 $condicionLocal="";
@@ -1307,9 +1763,12 @@ if($ConStock=="sinstock"){
 $condicionstockCondi="and stk.cantidad <= 0 ";
 }
 
+$condicionRiesgo=ProductoRiesgoCondicionSql($riesgo,$mysqli);
+$selectRiesgo=ProductoRiesgoSelectSql($mysqli);
+$selectTemporalidad=ProductoTemporalidadSelectSql($mysqli,"pr");
 
 
-$sql= "select pr.tipo,pr.cod_barra,pr.porcentaje,pr.cod_producto,pr.nombre_producto,pr.descripcion_producto,pr.unidad_producto,stk.cod_localFK,cod_categoriaFK,cod_marcasFK,cod_ImpuestoFK,
+$sql= "select pr.tipo,pr.cod_barra,pr.porcentaje,pr.cod_producto,pr.nombre_producto,pr.descripcion_producto,pr.unidad_producto,stk.cod_localFK,cod_categoriaFK,cod_marcasFK,cod_ImpuestoFK,pr.link,
 pr.precio_producto,pr.precio_compra,stk.cantidad as stock_producto,pr.comision,pr.estado,pr.CodProveedor,
 (Select nombre_persona from persona where cod_persona=pr.CodProveedor limit 1) as proveedor,
 (select Nombre from local where cod_local= stk.cod_localFK limit 1 ) as localnombre,
@@ -1317,10 +1776,12 @@ pr.precio_producto,pr.precio_compra,stk.cantidad as stock_producto,pr.comision,p
 (select descripcion from impuesto where cod_Impuesto= pr.cod_ImpuestoFK limit 1 ) as NombreImpuesto,
 (select descripcion from marcas where cod_marcas= pr.cod_marcasFK limit 1 ) as NombreMarca,
 pr.fecha_insert,pr.fecha_edit,
+".$selectRiesgo.",
+".$selectTemporalidad.",
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_insert )as insertadopor,
 (Select nombre_persona from persona pra where pra.cod_persona=cod_user_edit )as editadopor
  from  producto pr inner join stocklocales stk on stk.cod_productofk=pr.cod_producto
-where pr.estado='".$estado."'  ".$condicionMarca.$condicionCategria.$condicionLocal.$condicionCodigo.$condicionProducto.$condicionstock.$condicionproveedor.$condicionstockCondi." order by pr.nombre_producto asc limit ".$registrocargado.", 100 "; 	
+where pr.estado='".$estado."'  ".$condicionMarca.$condicionCategria.$condicionLocal.$condicionCodigo.$condicionProducto.$condicionstock.$condicionproveedor.$condicionstockCondi.$condicionRiesgo." order by pr.nombre_producto asc limit ".$registrocargado.", 100 "; 	
 $stmt = $mysqli->prepare($sql);
 $pagina = "";   
 if ( ! $stmt->execute()) {
@@ -1339,6 +1800,7 @@ while ($valor= mysqli_fetch_assoc($result))
 
 
 
+$link = mb_convert_encoding((string)($valor['link']), 'UTF-8', 'ISO-8859-1');
 $cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
 $nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
 $descripcion_producto = mb_convert_encoding((string)($valor['descripcion_producto']), 'UTF-8', 'ISO-8859-1');          
@@ -1366,6 +1828,20 @@ $insertadopor = mb_convert_encoding((string)($valor['insertadopor']), 'UTF-8', '
 $editadopor = mb_convert_encoding((string)($valor['editadopor']), 'UTF-8', 'ISO-8859-1'); 
 $fecha_insert = mb_convert_encoding((string)($valor['fecha_insert']), 'UTF-8', 'ISO-8859-1'); 
 $fecha_edit = mb_convert_encoding((string)($valor['fecha_edit']), 'UTF-8', 'ISO-8859-1'); 
+$nivel_riesgo_financiero = mb_convert_encoding((string)($valor['nivel_riesgo_financiero']), 'UTF-8', 'ISO-8859-1');
+$nivel_riesgo_origen = mb_convert_encoding((string)($valor['nivel_riesgo_origen']), 'UTF-8', 'ISO-8859-1');
+$nivel_riesgo_observacion = mb_convert_encoding((string)($valor['nivel_riesgo_observacion']), 'UTF-8', 'ISO-8859-1');
+$riesgo_actualizado_por = mb_convert_encoding((string)($valor['riesgo_actualizado_por']), 'UTF-8', 'ISO-8859-1');
+$nivel_riesgo_actualizado_en = mb_convert_encoding((string)($valor['nivel_riesgo_actualizado_en']), 'UTF-8', 'ISO-8859-1');
+$usa_temporalidad = mb_convert_encoding((string)($valor['usa_temporalidad']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_tipo = mb_convert_encoding((string)($valor['temporalidad_tipo']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_intervalo_recomendado = mb_convert_encoding((string)($valor['temporalidad_intervalo_recomendado']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_intervalo_minimo = mb_convert_encoding((string)($valor['temporalidad_intervalo_minimo']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_intervalo_maximo = mb_convert_encoding((string)($valor['temporalidad_intervalo_maximo']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_sesiones_estimadas = mb_convert_encoding((string)($valor['temporalidad_sesiones_estimadas']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_duracion_sillon = mb_convert_encoding((string)($valor['temporalidad_duracion_sillon']), 'UTF-8', 'ISO-8859-1');
+$temporalidad_observacion = mb_convert_encoding((string)($valor['temporalidad_observacion']), 'UTF-8', 'ISO-8859-1');
+$badge_riesgo_financiero = BadgeNivelRiesgoFinancieroProducto($nivel_riesgo_financiero);
 //anhadirStockA($stock_producto,$cod_producto,$cod_localFK);
 $totalcostos=$precio_compra*$stock_producto;
 $styleName=CargarStyleTable($styleName);
@@ -1382,10 +1858,11 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_3' style='display:none'>".$unidad_producto."</td>
 <td  id='td_datos_6' style='width:10%'>".number_format($stock_producto,'2',',','.')."</td>
 <td  id='td_datos_4' style='width:10%'>".number_format($precio_producto,'0',',','.') ."</td>
+<td  id='td_datos_105_label' class='catalogo-riesgo-cell' style='width:10%'>".$badge_riesgo_financiero."</td>
 <td  id='td_datos_5' style='width:10%'>".number_format($precio_compra,'0',',','.')."</td>
 <td  id='td_datos_18' style='display:none'>".number_format($totalcostos,'0',',','.')."</td>
 <td  id='td_datos_22' style='width:10%'>".$proveedor."</td>
-<td  id='' style='width:10%'>".$localnombre."</td>
+<td  id='td_datos_local_nombre' class='catalogo-local-cell' style='width:10%'>".$localnombre."</td>
 <td  id='td_datos_7' style='display:none'>".$cod_localFK."</td>
 <td  id='td_datos_8' style='display:none'>".$comision."</td>
 <td  id='td_datos_9' style='display:none'>".$estado."</td>
@@ -1400,6 +1877,20 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_101' style='display:none'>".$editadopor."</td>
 <td  id='td_datos_102' style='display:none'>".$fecha_insert."</td>
 <td  id='td_datos_103' style='display:none'>".$fecha_edit."</td>
+<td  id='td_datos_104' style='display:none'>".$link."</td>
+<td  id='td_datos_105' style='display:none'>".$nivel_riesgo_financiero."</td>
+<td  id='td_datos_106' style='display:none'>".$nivel_riesgo_origen."</td>
+<td  id='td_datos_107' style='display:none'>".$nivel_riesgo_observacion."</td>
+<td  id='td_datos_108' style='display:none'>".$riesgo_actualizado_por."</td>
+<td  id='td_datos_109' style='display:none'>".$nivel_riesgo_actualizado_en."</td>
+<td  id='td_datos_120' style='display:none'>".$usa_temporalidad."</td>
+<td  id='td_datos_121' style='display:none'>".$temporalidad_tipo."</td>
+<td  id='td_datos_122' style='display:none'>".$temporalidad_intervalo_recomendado."</td>
+<td  id='td_datos_123' style='display:none'>".$temporalidad_intervalo_minimo."</td>
+<td  id='td_datos_124' style='display:none'>".$temporalidad_intervalo_maximo."</td>
+<td  id='td_datos_125' style='display:none'>".$temporalidad_sesiones_estimadas."</td>
+<td  id='td_datos_126' style='display:none'>".$temporalidad_duracion_sillon."</td>
+<td  id='td_datos_127' style='display:none'>".$temporalidad_observacion."</td>
 </tr>
 </table>";
 

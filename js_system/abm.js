@@ -4202,6 +4202,268 @@ function obtenerCabeceraArqueoParaImpresion(fechaimpresion){
 		+"<br><br><center><h1 class='pTituloD'>CONTROL DE COBROS REALIZADOS</h1><br></center>";
 }
 
+function presupuestoPrintEscapar(valor){
+	return String(valor == null ? "" : valor)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
+function presupuestoPrintTexto(valor, defecto){
+	var texto = String(valor == null ? "" : valor).replace(/\s+/g, " ").trim();
+	return texto == "" ? (defecto || "-") : texto;
+}
+
+function presupuestoPrintValorElemento(id, defecto){
+	var elemento = document.getElementById(id);
+	if(!elemento){
+		return defecto || "-";
+	}
+	var valor = "value" in elemento ? elemento.value : elemento.textContent;
+	return presupuestoPrintTexto(valor, defecto);
+}
+
+function presupuestoPrintMonto(valor){
+	var texto = presupuestoPrintTexto(valor, "0");
+	if(/^0(\s*Gs\.?)?$/i.test(texto)){
+		return "0 Gs.";
+	}
+	return /Gs\.?$/i.test(texto) ? texto : texto + " Gs.";
+}
+
+function presupuestoPrintTextoCelda(celda){
+	if(!celda){
+		return "";
+	}
+	var clon = celda.cloneNode(true);
+	Array.prototype.forEach.call(clon.querySelectorAll("button,input,select,textarea,.btn-eliminar,.presupuesto-doc-trash-btn"), function(elemento){
+		elemento.remove();
+	});
+	return presupuestoPrintTexto(clon.textContent, "");
+}
+
+function presupuestoPrintUbicacionTratamiento(celdaTratamiento){
+	if(!celdaTratamiento){
+		return "";
+	}
+	var linea = celdaTratamiento.querySelector(".odontograma-presupuesto-linea");
+	if(!linea){
+		return "";
+	}
+	var clon = linea.cloneNode(true);
+	Array.prototype.forEach.call(clon.querySelectorAll("button,input,select,textarea"), function(elemento){
+		elemento.remove();
+	});
+	return presupuestoPrintTexto(clon.textContent, "");
+}
+
+function presupuestoPrintNombreTratamiento(celdaTratamiento){
+	if(!celdaTratamiento){
+		return "";
+	}
+	var clon = celdaTratamiento.cloneNode(true);
+	Array.prototype.forEach.call(clon.querySelectorAll(".odontograma-presupuesto-linea,button,input,select,textarea"), function(elemento){
+		elemento.remove();
+	});
+	return presupuestoPrintTexto(clon.textContent, "Tratamiento");
+}
+
+function presupuestoPrintObtenerTratamientos(idContenedor){
+	var contenedor = document.getElementById(idContenedor);
+	if(!contenedor){
+		return [];
+	}
+	return Array.prototype.map.call(contenedor.querySelectorAll("table.tableRegistroSearch"), function(tabla){
+		var fila = tabla.querySelector("tr[name='tdDetallePresupuesto']");
+		if(!fila){
+			return null;
+		}
+		var celdaTratamiento = fila.querySelector("#td_datos_2");
+		var cantidad = fila.querySelector("#td_datos_3 span")
+			? fila.querySelector("#td_datos_3 span").textContent
+			: presupuestoPrintTextoCelda(fila.querySelector("#td_datos_8") || fila.querySelector("#td_datos_3"));
+		return {
+			codigo: presupuestoPrintTextoCelda(fila.querySelector("#td_datos_1")),
+			tratamiento: presupuestoPrintNombreTratamiento(celdaTratamiento),
+			ubicacion: presupuestoPrintUbicacionTratamiento(celdaTratamiento),
+			cantidad: presupuestoPrintTexto(cantidad, "1"),
+			precio: presupuestoPrintMonto(presupuestoPrintTextoCelda(fila.querySelector("#td_datos_4") || fila.querySelector("#td_datos_10"))),
+			total: presupuestoPrintMonto(presupuestoPrintTextoCelda(fila.querySelector("#td_datos_5") || fila.querySelector("#td_datos_11"))),
+			motivo: presupuestoPrintTextoCelda(fila.querySelector("#td_datos_16"))
+		};
+	}).filter(function(item){
+		return item != null;
+	});
+}
+
+function presupuestoPrintObtenerCuotas(idContenedor){
+	var contenedor = document.getElementById(idContenedor);
+	if(!contenedor){
+		return [];
+	}
+	return Array.prototype.map.call(contenedor.querySelectorAll("table.tableRegistroSearch"), function(tabla){
+		var celdas = tabla.querySelectorAll("td");
+		if(celdas.length < 4){
+			return null;
+		}
+		return {
+			cuotas: presupuestoPrintTexto(celdas[0].textContent, "-"),
+			plan: presupuestoPrintTexto(celdas[1].textContent, "-"),
+			descripcion: presupuestoPrintTexto(celdas[2].textContent, "-"),
+			total: presupuestoPrintMonto(celdas[3].textContent),
+			seleccionada: tabla.classList.contains("is-selected"),
+			sugerida: tabla.classList.contains("is-suggested")
+		};
+	}).filter(function(item){
+		return item != null;
+	});
+}
+
+function presupuestoPrintRenderTratamientos(items){
+	if(!items.length){
+		return "<div class='presupuesto-print-empty'>Sin tratamientos cargados para este plan.</div>";
+	}
+	return "<table class='presupuesto-print-table presupuesto-print-treatment-table'>"
+		+"<thead><tr><th>Codigo</th><th>Tratamiento</th><th>Cantidad</th><th>Precio</th><th>Total</th></tr></thead>"
+		+"<tbody>"
+		+items.map(function(item){
+			var ubicacion = item.ubicacion ? "<span class='presupuesto-print-location'>"+presupuestoPrintEscapar(item.ubicacion)+"</span>" : "";
+			var motivo = item.motivo
+				? "<tr class='presupuesto-print-treatment-reason-row'><td></td><td colspan='4'><b>POR QUE REALIZAR: </b>"+presupuestoPrintEscapar(item.motivo)+"</td></tr>"
+				: "";
+			return "<tr class='presupuesto-print-treatment-main-row'>"
+				+"<td>"+presupuestoPrintEscapar(item.codigo)+"</td>"
+				+"<td><strong>"+presupuestoPrintEscapar(item.tratamiento)+"</strong>"+ubicacion+"</td>"
+				+"<td>"+presupuestoPrintEscapar(item.cantidad)+"</td>"
+				+"<td class='presupuesto-print-money'>"+presupuestoPrintEscapar(item.precio)+"</td>"
+				+"<td class='presupuesto-print-money'>"+presupuestoPrintEscapar(item.total)+"</td>"
+				+"</tr>"+motivo;
+		}).join("")
+		+"</tbody></table>";
+}
+
+function presupuestoPrintRenderCuotas(items){
+	if(!items.length){
+		return "<div class='presupuesto-print-empty'>Sin opciones de pago cargadas.</div>";
+	}
+	return "<div class='presupuesto-print-payment-list'><table class='presupuesto-print-table presupuesto-print-payment-table'>"
+		+"<thead><tr><th>Cuotas</th><th>Plan de pago</th><th>Descripcion</th><th>Total</th></tr></thead>"
+		+"<tbody>"
+		+items.map(function(item){
+			var marca = item.seleccionada ? " <span>Seleccionada</span>" : (item.sugerida ? " <span>Recomendada</span>" : "");
+			var clase = item.seleccionada ? " class='is-selected'" : (item.sugerida ? " class='is-suggested'" : "");
+			return "<tr"+clase+">"
+				+"<td><strong>"+presupuestoPrintEscapar(item.cuotas)+"</strong>"+marca+"</td>"
+				+"<td>"+presupuestoPrintEscapar(item.plan)+"</td>"
+				+"<td>"+presupuestoPrintEscapar(item.descripcion)+"</td>"
+				+"<td class='presupuesto-print-money'>"+presupuestoPrintEscapar(item.total)+"</td>"
+				+"</tr>";
+		}).join("")
+		+"</tbody></table></div>";
+}
+
+function presupuestoPrintObtenerCuotaCierre(items){
+	if(!items.length){
+		return "Pendiente de seleccion";
+	}
+	var cuota = items.filter(function(item){
+		return item.seleccionada;
+	})[0] || items.filter(function(item){
+		return item.sugerida;
+	})[0];
+	if(!cuota){
+		return "Pendiente de seleccion";
+	}
+	return cuota.cuotas+" - "+cuota.descripcion+" - "+cuota.total;
+}
+
+function presupuestoPrintOpcionCierre(texto, marcada){
+	return "<span class='presupuesto-print-option"+(marcada ? " is-marked" : "")+"'><i></i>"+presupuestoPrintEscapar(texto)+"</span>";
+}
+
+function presupuestoPrintRenderPlan(datos){
+	return "<article class='presupuesto-print-plan presupuesto-print-plan--"+datos.tipo+"'>"
+		+"<header class='presupuesto-print-plan-head'>"
+		+"<div>"
+		+"<span>"+presupuestoPrintEscapar(datos.etiqueta)+"</span>"
+		+"<h2>"+presupuestoPrintEscapar(datos.titulo)+"</h2>"
+		+"<p>"+presupuestoPrintEscapar(datos.descripcion)+"</p>"
+		+"</div>"
+		+"<strong>"+presupuestoPrintEscapar(datos.total)+"</strong>"
+		+"</header>"
+		+"<section class='presupuesto-print-plan-section presupuesto-print-treatment-section'>"
+		+"<h3>Tratamientos incluidos</h3>"
+		+presupuestoPrintRenderTratamientos(datos.tratamientos)
+		+"</section>"
+		+"<section class='presupuesto-print-plan-section presupuesto-print-payment-section'>"
+		+"<h3>Cuotas disponibles</h3>"
+		+presupuestoPrintRenderCuotas(datos.cuotas)
+		+"<footer><span>Total presupuesto:</span><strong>"+presupuestoPrintEscapar(datos.total)+"</strong></footer>"
+		+"</section>"
+		+"</article>";
+}
+
+function presupuestoPrintCrearDocumento(fechaimpresion){
+	var planTotal = {
+		tipo: "total",
+		etiqueta: "Plan completo",
+		titulo: "Plan de rehabilitacion total",
+		descripcion: "Incluye todos los tratamientos propuestos para completar la rehabilitacion.",
+		total: presupuestoPrintMonto(presupuestoPrintValorElemento("inptTOTALPresupuestoFORM", "0")),
+		tratamientos: presupuestoPrintObtenerTratamientos("table_vista_producto_presupuestoDetalle"),
+		cuotas: presupuestoPrintObtenerCuotas("table_vista_detalles_presupuesto")
+	};
+	var planProvisorio = {
+		tipo: "provisorio",
+		etiqueta: "Plan inicial",
+		titulo: "Plan provisorio",
+		descripcion: "Incluye los tratamientos prioritarios para iniciar el proceso o trabajar por etapas.",
+		total: presupuestoPrintMonto(presupuestoPrintValorElemento("inptTOTALPresupuestoFORMPrioritario", "0")),
+		tratamientos: presupuestoPrintObtenerTratamientos("table_vista_producto_presupuestoDetalle_prioritario"),
+		cuotas: presupuestoPrintObtenerCuotas("table_vista_detalles_presupuesto_prioritario")
+	};
+	var paciente = presupuestoPrintValorElemento("inptNombreClientePresupuesto", "Sin seleccionar");
+	var cedula = presupuestoPrintValorElemento("inptDocumentoClientePresupuesto", "-");
+	var usuario = presupuestoPrintValorElemento("presupuestoResumenUsuario", "-");
+	var profesional = presupuestoPrintValorElemento("presupuestoResumenProfesional", "-");
+	var numero = presupuestoPrintValorElemento("presupuestoResumenNumero", "Pendiente");
+	var planSeleccionado = presupuestoPrintValorElemento("inptSelecctPlanPresupuesto", "total").toLowerCase();
+	var modalidadSeleccionada = presupuestoPrintValorElemento("inptSelecctModalidadPresupuesto", "CREDITO").toUpperCase();
+	var cuotaCierre = presupuestoPrintObtenerCuotaCierre(planSeleccionado == "prioritario" ? planProvisorio.cuotas : planTotal.cuotas);
+
+	return "<div class='presupuesto-print-page presupuesto-print-proposal'>"
+		+"<section class='presupuesto-print-carga'>"
+		+"<div class='presupuesto-print-doc-head'>"
+		+"<div class='presupuesto-print-brand'><img src='/GoodVentaAsisCap/iconos/Logo.jpg' alt='Clinica'><div><strong>Presupuesto odontologico</strong><span>Documento para comparar planes y cerrar la venta</span></div></div>"
+		+"<div class='presupuesto-print-doc-info'><span>Nro. presupuesto: "+presupuestoPrintEscapar(numero)+"</span><span>Fecha: "+presupuestoPrintEscapar(fechaimpresion)+"</span></div>"
+		+"</div>"
+		+"<h1>Carga del presupuesto</h1>"
+		+"<div class='presupuesto-print-carga-grid'>"
+		+"<label><span>Documento:</span><strong>"+presupuestoPrintEscapar(cedula)+"</strong></label>"
+		+"<label class='presupuesto-print-carga-nombre'><span>Nombre:</span><strong>"+presupuestoPrintEscapar(paciente)+"</strong></label>"
+		+"<div class='presupuesto-print-atencion'><label><span>Atendido por:</span><strong>"+presupuestoPrintEscapar(usuario)+"</strong></label><label><span>Profesional:</span><strong>"+presupuestoPrintEscapar(profesional)+"</strong></label></div>"
+		+"</div>"
+		+"</section>"
+		+"<section class='presupuesto-print-plans'>"
+		+presupuestoPrintRenderPlan(planTotal)
+		+presupuestoPrintRenderPlan(planProvisorio)
+		+"</section>"
+		+"<section class='presupuesto-print-cierre'>"
+		+"<header><h3>Confirmacion para cierre de venta</h3><p>Completar cuando el paciente elija el plan y la modalidad.</p></header>"
+		+"<div class='presupuesto-print-cierre-grid'>"
+		+"<div class='presupuesto-print-cierre-card'><span>Plan elegido</span><div>"+presupuestoPrintOpcionCierre("Plan rehabilitacion total", planSeleccionado != "prioritario")+presupuestoPrintOpcionCierre("Plan provisorio", planSeleccionado == "prioritario")+"</div></div>"
+		+"<div class='presupuesto-print-cierre-card'><span>Modalidad elegida</span><div>"+presupuestoPrintOpcionCierre("Contado", modalidadSeleccionada == "CONTADO")+presupuestoPrintOpcionCierre("Credito", modalidadSeleccionada != "CONTADO")+"</div></div>"
+		+"<div class='presupuesto-print-cierre-card'><span>Cuota seleccionada</span><strong>"+presupuestoPrintEscapar(cuotaCierre)+"</strong></div>"
+		+"<div class='presupuesto-print-cierre-card'><span>Vigencia del presupuesto</span><strong>Valido hasta: ____ / ____ / ______</strong><small>Valores sujetos a evaluacion clinica y cambios del plan.</small></div>"
+		+"</div>"
+		+"<p class='presupuesto-print-cierre-note'>El plan provisorio corresponde a una primera etapa de tratamiento y no reemplaza el plan completo recomendado.</p>"
+		+"<div class='presupuesto-print-firmas'><div><span>Firma del paciente</span></div><div><span>Aclaracion</span></div><div><span>Recepcion / asesor</span></div></div>"
+		+"</section>"
+		+"</div>";
+}
+
 function ordenimpresion(ventana){
 	var pagina=""
 	var tipoReporte="reporte"
@@ -4827,6 +5089,8 @@ const apertura= parseInt(document.getElementById("inptResumenAperturacaja").valu
 const ingreso= parseInt(document.getElementById("inptResumenTotalIngreso").value.replace(/\./g, ''));
 const recaudado= parseInt(document.getElementById("inptResumenTotalRecaudado").value.replace(/\./g, ''));
 const transferencia= parseInt(document.getElementById("inptResumenTransferencia").value.replace(/\./g, ''));
+const uenoConciliadoElemento = document.getElementById("inptResumenUenoConciliado");
+const uenoConciliadoTexto = uenoConciliadoElemento ? (uenoConciliadoElemento.value || "0") : "0";
 
 const totalEgreso= migrado + montoCierre + egreso;
 const totalIngreso= apertura + ingreso + recaudado;
@@ -4898,6 +5162,16 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"<p class='pTituloC' >"+ document.getElementById("inptResumenTotalRecaudado").value+"</p>"
+		+"</td>"
+		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
+		+"</td>"
+	+"</tr>"
+	+"<tr>"
+		+"<td style='text-align:left;border: 1px solid rgb(206, 206, 206);'>"
+		+"<p class='pTituloC'>Cobros conciliados Ueno Bank<br><span style='font-size:9px;color:#555;'>Control bancario, no suma al efectivo</span></p>"
+		+"</td>"
+		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
+		+"<p class='pTituloC' >"+ uenoConciliadoTexto+"</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
@@ -5008,6 +5282,13 @@ paginaPie += "<div style='width: 20%;'>"
 +"<p class='pTituloC'><b>Transferencia</b></p>"
 +"</td><td style='width: 45%;'>"
 +"<p class='pTituloC' >"+document.getElementById("inptResumenTransferencia").value+"</p>"
++"</td>"
++"</tr>"
++"<tr>"
++"<td style='text-align:left'>"
++"<p class='pTituloC'><b>Ueno conciliado</b></p>"
++"</td><td style='width: 45%;'>"
++"<p class='pTituloC' >"+uenoConciliadoTexto+"</p>"
 +"</td>"
 +"</tr>"
 +"</table>"
@@ -5422,6 +5703,11 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
 }
 
 if (ventana == "Presupuesto") {
+	var documento = presupuestoPrintCrearDocumento(fechaimpresion);
+	localStorage.setItem("reporte", documento);
+	localStorage.setItem("tipo", tipoReporte);
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
+	return false;
 	
 		pagina =
 "<table class='TableRepor0 presupuesto-print-meta' style='width:100%'>"

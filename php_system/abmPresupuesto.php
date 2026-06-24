@@ -35,12 +35,11 @@ function verificarOperacionPresupuesto($operacion)
                 'fecha_inicio' => isset($_POST['fecha_inicio']) ? mb_convert_encoding((string)($_POST['fecha_inicio']), 'ISO-8859-1', 'UTF-8') : null,
                 'fecha_fin' => isset($_POST['fecha_fin']) ? mb_convert_encoding((string)($_POST['fecha_fin']), 'ISO-8859-1', 'UTF-8') : null,
             );
-            $limite = (isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : NULL);
+            $limite = (isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 25);
+            $offset = (isset($_POST['offset']) ? mb_convert_encoding((string)($_POST['offset']), 'ISO-8859-1', 'UTF-8') : 0);
 
-            $result= obtenerPresupuesto($filtro);
-            $totalRegistros= count($result);
-
-            $result= obtenerPresupuesto($filtro, $limite);
+            $totalRegistros= contarPresupuesto($filtro);
+            $result= obtenerPresupuesto($filtro, $limite, $offset);
             
             $pagina= "";
             foreach ($result as $value) {
@@ -144,6 +143,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
     foreach ($registros as $value) {
         //$nroId = rand(1, 1000);
         $paginaprecios=buscardetallesprecios($value['cod_producto'], $value['precio'],0);
+        $justificacionPresupuesto = htmlspecialchars(isset($value['justificacion_presupuesto']) ? $value['justificacion_presupuesto'] : '', ENT_QUOTES, 'UTF-8');
 
         $nroId = $value['id'];
         $elemento= "<table id='tdDetalleVenta_".$nroId."' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
@@ -163,6 +163,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
 			. "<td  id='td_datos_13' style='display:none'>".$value['es_alternativo']."</td>"
 			. "<td  id='td_datos_14' style='display:none'>".$value['cod_producto']."</td>"
 			. "<td  id='td_datos_15' style='display:none'>".$paginaprecios."</td>"
+			. "<td  id='td_datos_16' style='display:none'>".$justificacionPresupuesto."</td>"
 			. "</tr>"
 			. "</table>";
         if ($value['es_alternativo'] != 1 && $value['es_alternativo'] != "1") {
@@ -176,7 +177,7 @@ function obtenerVistaDetallesPresupuesto($filtro, $limite) {
     echo json_encode(array("1" => "exito", "2" => $registros, "3" => $pagina, "4" => $paginaPrioritario));
 }
 
-function obtenerPresupuesto($filtros = array(), $limite = 0)
+function obtenerSqlFiltroPresupuesto($filtros = array())
 {
     $sqlFiltro = "";
     foreach ($filtros as $key => $value) {
@@ -221,10 +222,57 @@ function obtenerPresupuesto($filtros = array(), $limite = 0)
         }
     }
 
+    return $sqlFiltro;
+}
+
+function normalizarLimitePresupuesto($limite = 0, $offset = 0)
+{
+    $limite = (int)$limite;
+    $offset = (int)$offset;
+
+    if ($limite <= 0) {
+        return "";
+    }
+
+    if ($limite > 100) {
+        $limite = 100;
+    }
+
+    if ($offset < 0) {
+        $offset = 0;
+    }
+
+    return "LIMIT $limite OFFSET $offset";
+}
+
+function contarPresupuesto($filtros = array())
+{
+    $sqlFiltro = obtenerSqlFiltroPresupuesto($filtros);
+    $sql = "SELECT COUNT(*) AS total FROM presupuesto p $sqlFiltro";
+
+    $mysqli = conectar_al_servidor();
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt->execute()) {
+        $informacion = array("1" => "error", "mensaje" => "Error al contar presupuesto: " . $stmt->error, "sql" => $sql);
+        echo json_encode($informacion);
+        exit;
+    }
+
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    return isset($row['total']) ? (int)$row['total'] : 0;
+}
+
+function obtenerPresupuesto($filtros = array(), $limite = 0, $offset = 0)
+{
+    $sqlFiltro = obtenerSqlFiltroPresupuesto($filtros);
+
     if ($limite == 0) {
         $limite = '';
     } else {
-        $limite = "LIMIT $limite";
+        $limite = normalizarLimitePresupuesto($limite, $offset);
     }
 
     $sql = "SELECT 
@@ -386,7 +434,8 @@ function obtenerDetallesPresupuesto($filtros = array(), $limite = 0)
             (precio * cantidad) AS subTotal,
             (SELECT nombre_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as nombre_producto,
             (SELECT cod_barra FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_barra,
-            (SELECT cod_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_producto
+            (SELECT cod_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as cod_producto,
+            (SELECT descripcion_producto FROM producto WHERE cod_producto = dp.cod_productoFK) as justificacion_presupuesto
             FROM detalles_presupuesto dp
             $sqlFiltro ORDER BY dp.id DESC $limite";
 

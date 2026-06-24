@@ -50,18 +50,31 @@ function generarinforme($idArqeoFk){
 	$datosventas=datosdepagosventas($idArqeoFk);
 	if($datosventas[0]==""){
 	$styleName=CargarStyleTable($styleName);
-	$pagina.="<p class='ptituloZ'>PAGOS REALIZADOS</p>
+	$pagina.="<p class='ptituloZ'>COBRO DE CUOTAS</p>
 <table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 <tr >
 <td id='' style='width:30%' >NO SE ENCONTRARON REGISTROS</td>
 </tr>
 </table>";
 	}else{
-		$pagina.="<p class='ptituloZ'>PAGOS REALIZADOS</p>".$datosventas[0];
+		$pagina.="<p class='ptituloZ'>COBRO DE CUOTAS</p>".$datosventas[0];
 	}
 	$totalpagos=$datosventas[1];
 	$totaltarjeta=$datosventas[2];
 	$totalefectivo=$datosventas[3];
+	
+	$datosUeno=datosdeCobrosConciliadosUeno($idArqeoFk);
+	if($datosUeno[0]==""){
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="<p class='ptituloZ'>COBROS CONCILIADOS CON UENO BANK</p>
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr >
+<td id='' style='width:30%' >NO SE ENCONTRARON REGISTROS</td>
+</tr>
+</table>";
+	}else{
+		$pagina.="<p class='ptituloZ'>COBROS CONCILIADOS CON UENO BANK</p>".$datosUeno[0];
+	}
 	
 	
 $datosIngreso=datosdeIngreso($idArqeoFk);
@@ -146,6 +159,9 @@ $datosdeCajaRecibir=datosdeCajaRecibir($idArqeoFk);
 		$pagina.="<p class='ptituloZ'>CAJA RECIBIDO</p>".$datosdeCajaRecibir[0];
 	}
 $totalCajaRecibido=$datosdeCajaRecibir[1];
+$totalUenoConciliado=$datosUeno[1];
+$operacionesUeno=$datosUeno[2];
+$cuotasUeno=$datosUeno[3];
 
 
 $montoinicio=ObtenerTotalCaja($idArqeoFk);
@@ -158,7 +174,7 @@ $total=($ingresos+$totalpagos+ $totalCajaRecibido)-($egresos + $totalCajaEnviado
 $total=$montoinicio+$total;
 $informacion =array("1" => "exito","2" => $pagina,"3" => number_format($ingresos,'0',',','.'),"4" => number_format($egresos,'0',',','.')
 ,"5" => number_format($total,'0',',','.'),"6" => number_format($totaltarjeta,'0',',','.'),"7" => number_format($totalefectivo,'0',',','.'),
-"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'),"11" => number_format($totalpagos,'0',',','.'),"12" => number_format($montoinicio,'0',',','.'));
+"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'),"11" => number_format($totalpagos,'0',',','.'),"12" => number_format($montoinicio,'0',',','.'),"13" => number_format($totalUenoConciliado,'0',',','.'),"14" => $operacionesUeno,"15" => $cuotasUeno);
 echo json_encode($informacion);	
 exit;
 }
@@ -241,6 +257,210 @@ $datos[1]=$totalPagado;
 $datos[2]=$totaltarjeta;
 $datos[3]=$totalefectivo;
 return $datos;
+}
+
+function informe_caja_tabla_existe($mysqli, $tabla)
+{
+	$tabla = $mysqli->real_escape_string($tabla);
+	$sql = "SHOW TABLES LIKE '$tabla'";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt || !$stmt->execute()) {
+		return false;
+	}
+	$result = $stmt->get_result();
+	return mysqli_num_rows($result) > 0;
+}
+
+function informe_caja_ueno_texto($valor)
+{
+	return mb_convert_encoding((string)$valor, 'UTF-8', 'ISO-8859-1');
+}
+
+function informe_caja_ueno_escape($valor)
+{
+	return htmlspecialchars(informe_caja_ueno_texto($valor), ENT_QUOTES, 'UTF-8');
+}
+
+function informe_caja_ueno_numero($valor)
+{
+	return number_format((int)$valor, 0, ',', '.');
+}
+
+function informe_caja_ueno_estado_visual($estadoConciliacion, $montoPago, $montoAplicado)
+{
+	$estado = strtolower(trim((string)$estadoConciliacion));
+	if ($montoAplicado > 0 && $montoAplicado < $montoPago) {
+		return "Parcial";
+	}
+	if ($estado == "conciliado_ueno" || $montoAplicado >= $montoPago) {
+		return "Conciliada";
+	}
+	if ($estado == "pendiente_conciliacion") {
+		return "Parcial";
+	}
+	if ($estado == "observado") {
+		return "Observada";
+	}
+	if ($estado == "rechazado") {
+		return "Rechazada";
+	}
+	if ($estado == "anulado") {
+		return "Anulada";
+	}
+	return $estadoConciliacion;
+}
+
+function informe_caja_ueno_tipo_aplicacion($montoAplicado, $montoPago, $montoCuota, $cuotasMovimiento)
+{
+	if ((int)$cuotasMovimiento > 1) {
+		return "Aplicacion a varias cuotas";
+	}
+	if ((int)$montoAplicado < (int)$montoPago) {
+		return "Pago parcial";
+	}
+	if ((int)$montoCuota > 0 && (int)$montoAplicado < (int)$montoCuota) {
+		return "Pago parcial";
+	}
+	return "Cuota completa";
+}
+
+function datosdeCobrosConciliadosUeno($idArqeoFk)
+{
+	$mysqli=conectar_al_servidor();
+	$datos = array("", 0, 0, 0);
+	if (!informe_caja_tabla_existe($mysqli, "pago_transferencia_conciliacion") || !informe_caja_tabla_existe($mysqli, "ueno_movimiento_pago") || !informe_caja_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+		return $datos;
+	}
+
+	$fechaAperturaUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechaapertura AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '1000-01-01 00:00:00')";
+	$fechaCierreUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechacierre AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '9999-12-31 23:59:59')";
+	$sql = "SELECT
+		ump.id AS id_asignacion, ump.id_movimiento, ump.cod_pagoFK, ump.monto_aplicado,
+		ump.fecha_hora_asociacion, umb.nro_comprobante, umb.fecha_confirmacion,
+		pc.nro_comprobante_informado, pc.monto_pago, pc.estado_conciliacion,
+		p.idPago, p.Monto AS monto_pago_real, p.nrofactura, p.cod_venta_fk, p.cod_creditoFK, IFNULL(p.titulocuota,'') AS titulocuota,
+		IFNULL(cr.plazo,'') AS plazo, IFNULL(cr.Monto,0) AS monto_cuota, IFNULL(cr.descuento,0) AS descuento_cuota,
+		IFNULL(vt.num_factura,'') AS num_factura, IFNULL(vt.puntoexpedicion,'') AS puntoexpedicion,
+		IFNULL(vt.apodo,'') AS alias_venta, IFNULL(pe.nombre_persona,'') AS paciente, IFNULL(cl.ci_cliente,'') AS cedula,
+		IFNULL(usu.nombre_persona,'') AS usuario_conciliador,
+		(SELECT COUNT(DISTINCT ump2.cod_pagoFK)
+			FROM ueno_movimiento_pago ump2
+			INNER JOIN pago p2 ON p2.idPago=ump2.cod_pagoFK
+			WHERE ump2.id_movimiento=ump.id_movimiento
+			AND ump2.estado='activo'
+			AND p2.codApertura=ar.idarqueocaja
+			AND ump2.usuario_asocio=ar.codusuarioap
+		) AS cuotas_movimiento
+		FROM arqueocaja ar
+		INNER JOIN pago p ON p.codApertura=ar.idarqueocaja
+		INNER JOIN ueno_movimiento_pago ump ON ump.cod_pagoFK=p.idPago
+		INNER JOIN ueno_movimiento_bancario umb ON umb.id_movimiento=ump.id_movimiento
+		INNER JOIN pago_transferencia_conciliacion pc ON pc.cod_pagoFK=p.idPago AND pc.activo='SI'
+		LEFT JOIN credito cr ON cr.idcredito=p.cod_creditoFK
+		LEFT JOIN venta vt ON vt.cod_venta=p.cod_venta_fk
+		LEFT JOIN persona pe ON pe.cod_persona=vt.cod_clienteFK
+		LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
+		LEFT JOIN persona usu ON usu.cod_persona=ump.usuario_asocio
+		WHERE ar.idarqueocaja=?
+		AND ump.estado='activo'
+		AND umb.tipo_movimiento='credito'
+		AND ump.usuario_asocio=ar.codusuarioap
+		AND ump.fecha_hora_asociacion>=$fechaAperturaUeno
+		AND ump.fecha_hora_asociacion<=$fechaCierreUeno
+		AND pc.estado_conciliacion IN ('conciliado_ueno','pendiente_conciliacion','parcial','parcialmente_conciliado')
+		ORDER BY ump.fecha_hora_asociacion DESC, umb.nro_comprobante ASC, p.cod_venta_fk ASC, cr.plazo ASC, p.idPago ASC";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return $datos;
+	}
+	$ss = 's';
+	$stmt->bind_param($ss, $idArqeoFk);
+	if (!$stmt->execute()) {
+		return $datos;
+	}
+
+	$result = $stmt->get_result();
+	$valor= mysqli_num_rows($result);
+	if ($valor<=0) {
+		return $datos;
+	}
+
+	$styleName="tableRegistroSearch";
+	$pagina = "";
+	$totalAplicado = 0;
+	$operaciones = array();
+	$filas = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$montoAplicado = (int)$row['monto_aplicado'];
+		$montoPago = (int)$row['monto_pago'];
+		$montoCuota = (int)$row['monto_cuota'] - (int)$row['descuento_cuota'];
+		if ($montoCuota < 0) {
+			$montoCuota = 0;
+		}
+		$ventaNumero = trim((string)$row['puntoexpedicion']) != "" || trim((string)$row['num_factura']) != ""
+			? trim((string)$row['puntoexpedicion'])."-".trim((string)$row['num_factura'])
+			: (string)$row['cod_venta_fk'];
+		$cuota = trim((string)$row['titulocuota']) != "" ? $row['titulocuota'] : (trim((string)$row['plazo']) != "" ? $row['plazo'] : $row['nrofactura']);
+		$estadoVisual = informe_caja_ueno_estado_visual($row['estado_conciliacion'], $montoPago, $montoAplicado);
+		$tipoAplicacion = informe_caja_ueno_tipo_aplicacion($montoAplicado, $montoPago, $montoCuota, $row['cuotas_movimiento']);
+		$operaciones[(string)$row['id_movimiento']] = true;
+		$totalAplicado += $montoAplicado;
+		$filas[] = array(
+			"fecha" => $row['fecha_hora_asociacion'],
+			"comprobante" => $row['nro_comprobante'] != "" ? $row['nro_comprobante'] : $row['nro_comprobante_informado'],
+			"paciente" => $row['paciente'],
+			"cedula" => $row['cedula'],
+			"venta" => $ventaNumero,
+			"alias_venta" => $row['alias_venta'],
+			"cuota" => $cuota,
+			"monto_cuota" => $montoCuota,
+			"monto_aplicado" => $montoAplicado,
+			"tipo" => $tipoAplicacion,
+			"usuario" => $row['usuario_conciliador'],
+			"estado" => $estadoVisual
+		);
+	}
+
+	$styleName=CargarStyleTable($styleName);
+	$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:60%;text-align:left;padding:5px;line-height:18px;' ><b>Resumen de conciliaciones Ueno</b><br>".count($operaciones)." operaciones / ".count($filas)." cuotas conciliadas. No forma parte del efectivo a rendir.</td>
+<td id='' style='width:20%'>".informe_caja_ueno_numero($totalAplicado)." </td>
+<td id='' style='width:20%'>Ueno Bank</td>
+</tr>
+</table>";
+
+	foreach ($filas as $fila) {
+		$styleName=CargarStyleTable($styleName);
+		$paciente = trim((string)$fila['paciente']) != "" ? $fila['paciente'] : "Sin paciente";
+		if (trim((string)$fila['cedula']) != "") {
+			$paciente .= " - ".$fila['cedula'];
+		}
+		$venta = trim((string)$fila['venta']) != "" ? $fila['venta'] : "-";
+		if (trim((string)$fila['alias_venta']) != "") {
+			$venta .= " / ".$fila['alias_venta'];
+		}
+		$detalle = "<b>".informe_caja_ueno_escape($fila['fecha'])."</b><br>"
+			."Comprobante: ".informe_caja_ueno_escape($fila['comprobante'])."<br>"
+			."Paciente: ".informe_caja_ueno_escape($paciente)."<br>"
+			."Venta: ".informe_caja_ueno_escape($venta)." | Cuota: ".informe_caja_ueno_escape($fila['cuota'])."<br>"
+			."Tipo: ".informe_caja_ueno_escape($fila['tipo'])." | Estado: ".informe_caja_ueno_escape($fila['estado']);
+		$pagina.="
+<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro'>
+<td id='' style='width:60%;text-align:left;padding:5px;line-height:18px;' >".$detalle."</td>
+<td id='' style='width:20%'>".informe_caja_ueno_numero($fila['monto_aplicado'])." &nbsp&nbsp(UENO)</td>
+<td id='' style='width:20%;line-height:18px;'>Cuota: ".informe_caja_ueno_numero($fila['monto_cuota'])."<br>".informe_caja_ueno_escape($fila['usuario'])."</td>
+</tr>
+</table>";
+	}
+
+	$datos[0]=$pagina;
+	$datos[1]=$totalAplicado;
+	$datos[2]=count($operaciones);
+	$datos[3]=count($filas);
+	return $datos;
 }
 
 

@@ -10,6 +10,121 @@
 
     date_default_timezone_set('America/Asuncion');
 
+    function normalizarLimiteListadoInterConsulta($limite, $maximo=30) {
+        $limite = trim((string)$limite);
+        if ($limite === "" || $limite === "0") {
+            return (string)$maximo;
+        }
+        if (preg_match('/^\s*(\d+)(\s+OFFSET\s+\d+)?\s*$/i', $limite, $partes)) {
+            $cantidad = min((int)$partes[1], (int)$maximo);
+            $offset = isset($partes[2]) ? $partes[2] : "";
+            return trim($cantidad.$offset);
+        }
+        return (string)$maximo;
+    }
+
+    function normalizarTipoHiloInterConsulta($valor) {
+        $texto = trim((string)$valor);
+        $transliterado = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $texto);
+        if ($transliterado === false || $transliterado === "") {
+            $transliterado = @iconv('ISO-8859-1', 'ASCII//TRANSLIT//IGNORE', $texto);
+        }
+        if ($transliterado !== false && $transliterado !== "") {
+            $texto = $transliterado;
+        }
+        $texto = strtolower($texto);
+        $texto = preg_replace('/[^a-z0-9]+/', '_', $texto);
+        return trim($texto, '_');
+    }
+
+    function obtenerCategoriasHilosInterConsulta() {
+        return array(
+            'pagos_egresos' => array(
+                'nombre' => 'Pagos y Egresos',
+                'tipos' => array('pagos', 'pago', 'compras', 'compra', 'egresos', 'egreso')
+            ),
+            'judiciales' => array(
+                'nombre' => 'Judiciales',
+                'tipos' => array('judicial', 'judiciales')
+            ),
+            'administrativo_clinico' => array(
+                'nombre' => 'Administrativo y Clinico',
+                'tipos' => array('administrativo', 'clinico', 'interno')
+            )
+        );
+    }
+
+    function obtenerCategoriaPrincipalHilo($tipoOriginal) {
+        $tipo = normalizarTipoHiloInterConsulta($tipoOriginal);
+        foreach (obtenerCategoriasHilosInterConsulta() as $categoria => $datos) {
+            if ($tipo == $categoria) {
+                return $categoria;
+            }
+            if (in_array($tipo, $datos['tipos'])) {
+                return $categoria;
+            }
+        }
+        return '';
+    }
+
+    function obtenerNombreCategoriaHilo($categoria) {
+        $categorias = obtenerCategoriasHilosInterConsulta();
+        return isset($categorias[$categoria]) ? $categorias[$categoria]['nombre'] : 'Hilos';
+    }
+
+    function condicionCategoriaHiloInterConsulta($categoria) {
+        $categorias = obtenerCategoriasHilosInterConsulta();
+        if (!isset($categorias[$categoria])) {
+            return "";
+        }
+
+        $tipos = array();
+        foreach ($categorias[$categoria]['tipos'] as $tipo) {
+            $tipos[] = "'".addslashes($tipo)."'";
+        }
+        $condicion = "LOWER(TRIM(IFNULL(ic.tipo, ''))) IN (".implode(',', $tipos).")";
+
+        // Compatibilidad: existen hilos historicos sin tipo. No se migra ni se
+        // pisa el valor; solo se mantienen visibles en la categoria operativa
+        // mas amplia hasta que el usuario decida su reclasificacion.
+        if ($categoria == 'administrativo_clinico') {
+            $condicion = "(".$condicion." OR TRIM(IFNULL(ic.tipo, '')) = '')";
+        }
+
+        return $condicion;
+    }
+
+    function condicionSubtipoHiloInterConsulta($tipoOriginal) {
+        $tipo = normalizarTipoHiloInterConsulta($tipoOriginal);
+        if ($tipo == "") {
+            return "";
+        }
+
+        $equivalentes = array(
+            'pagos' => array('pagos', 'pago'),
+            'pago' => array('pagos', 'pago'),
+            'compras' => array('compras', 'compra'),
+            'compra' => array('compras', 'compra'),
+            'egresos' => array('egresos', 'egreso'),
+            'egreso' => array('egresos', 'egreso'),
+            'judicial' => array('judicial', 'judiciales'),
+            'judiciales' => array('judicial', 'judiciales'),
+            'clinico' => array('clinico'),
+            'administrativo' => array('administrativo'),
+            'interno' => array('interno')
+        );
+
+        if (!isset($equivalentes[$tipo])) {
+            return "ic.tipo LIKE '%".addslashes($tipoOriginal)."%'";
+        }
+
+        $valores = array();
+        foreach ($equivalentes[$tipo] as $valor) {
+            $valores[] = "'".addslashes($valor)."'";
+        }
+        return "LOWER(TRIM(IFNULL(ic.tipo, ''))) IN (".implode(',', $valores).")";
+    }
+
     function verificarOperacionInterConsulta($funt) {
         $user = $_POST['useru'];
         $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
@@ -54,12 +169,14 @@
                 $busqueda_global= isset($_POST['busqueda_global']) ? mb_convert_encoding((string)($_POST['busqueda_global']), 'ISO-8859-1', 'UTF-8') : null;
                 $fecha_desde= isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
                 $fecha_hasta= isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
+                $categoria_principal= isset($_POST['categoria_principal']) ? mb_convert_encoding((string)($_POST['categoria_principal']), 'ISO-8859-1', 'UTF-8') : 'pagos_egresos';
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
                     'asunto'=> $asunto,
                     'estado'=> $estado,
                     'tipo'=> $tipo,
+                    'categoria_principal'=> $categoria_principal,
                     'mencion'=> $mencion,
                     'cod_ventaFK'=> $cod_ventaFK,
                     'cod_usuarioFK'=> $cod_usuarioFK,
@@ -74,7 +191,8 @@
                     'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
-                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 100;
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 30;
+                $limite= normalizarLimiteListadoInterConsulta($limite, 30);
 
                 obtenerVistaInterConsulta($filtros, $limite);
                 break;
@@ -1048,12 +1166,34 @@ function convertirTextoDocumentoInterconsulta($texto) {
         return $paginaMensajes;
     }
 
-    function obtenerVistaInterConsulta($filtros= array(), $limite= 0) {
-        $cantRegistros= count(obtenerInterConsulta($filtros, 0));
-        if ($limite === 0 || $limite === '0' || $limite === '') {
-            $limite = 100;
+    function obtenerConteosCategoriasInterConsulta($filtros= array()) {
+        $conteos = array();
+        foreach (array_keys(obtenerCategoriasHilosInterConsulta()) as $categoria) {
+            $filtrosCategoria = $filtros;
+            $filtrosCategoria['categoria_principal'] = $categoria;
+            $conteos[$categoria] = obtenerCantidadInterConsulta($filtrosCategoria);
         }
+        return $conteos;
+    }
+
+    function obtenerVistaEstadoVacioHilosInterConsulta($categoria) {
+        $nombreCategoria = obtenerNombreCategoriaHilo($categoria);
+        return '<div class="hilos-empty-state" role="status">
+            <strong>No se encontraron hilos de '.htmlspecialchars($nombreCategoria, ENT_QUOTES, 'UTF-8').' con los filtros seleccionados.</strong>
+            <span>Puede limpiar los filtros o crear un nuevo hilo dentro de la categoria activa.</span>
+            <div class="hilos-empty-state__actions">
+                <button type="button" class="hilos-empty-state__button hilos-empty-state__button--secondary" onclick="limpiarFiltrosInterConsulta()">Limpiar filtros</button>
+                <button type="button" class="hilos-empty-state__button hilos-empty-state__button--primary" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, \'divListadoInterConsulta\');">Nuevo hilo</button>
+            </div>
+        </div>';
+    }
+
+    function obtenerVistaInterConsulta($filtros= array(), $limite= 0) {
+        $cantRegistros= obtenerCantidadInterConsulta($filtros);
+        $limite = normalizarLimiteListadoInterConsulta($limite, 30);
         $registros= obtenerInterConsulta($filtros, $limite);
+        $conteosCategorias = obtenerConteosCategoriasInterConsulta($filtros);
+        $categoriaActiva = isset($filtros['categoria_principal']) ? $filtros['categoria_principal'] : 'pagos_egresos';
 
         $pagina= '';
         $datalist= '';
@@ -1154,7 +1294,11 @@ function convertirTextoDocumentoInterconsulta($texto) {
             $datalist .= '<option data-id="'.$value['cod_interConsulta'].'" value="'.$value['asunto'].'">';
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist));
+        if ($pagina == "") {
+            $pagina = obtenerVistaEstadoVacioHilosInterConsulta($categoriaActiva);
+        }
+
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist, "9" => $conteosCategorias));
     }
 
     function obtenerVistaMensaje($filtros= [], $limite= 0) {
@@ -1595,7 +1739,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
         return $cod_mensaje;
     }
 
-    function obtenerInterConsulta($filtros= [], $limite= 0) {
+    function construirFiltrosInterConsulta($filtros= []) {
         $sqlFiltro= "";
         $sqlFiltroMenciones= "";
         $sqlFiltroMensaje= "";
@@ -1628,6 +1772,14 @@ function convertirTextoDocumentoInterconsulta($texto) {
                     } else {
                         $sqlFiltro .= "ic.estado = '$value'";
                     }
+                    break;
+                case 'tipo':
+                    $condicionSubtipo = condicionSubtipoHiloInterConsulta($value);
+                    $sqlFiltro .= $condicionSubtipo != "" ? $condicionSubtipo : "1=1";
+                    break;
+                case 'categoria_principal':
+                    $condicionCategoria = condicionCategoriaHiloInterConsulta($value);
+                    $sqlFiltro .= $condicionCategoria != "" ? $condicionCategoria : "1=1";
                     break;
                 case 'ocultar_inactivos':
                     $sqlFiltro .= "ic.estado != 'inactivo'";
@@ -1689,6 +1841,31 @@ function convertirTextoDocumentoInterconsulta($texto) {
             }
         }
 
+        return array($sqlFiltro, $sqlFiltroMenciones, $sqlFiltroMensaje, $sqlFiltroFechaLimite);
+    }
+
+    function obtenerCantidadInterConsulta($filtros= []) {
+        list($sqlFiltro) = construirFiltrosInterConsulta($filtros);
+        $sql= "SELECT COUNT(*) AS total FROM interconsulta ic $sqlFiltro";
+
+        $mysqli=conectar_al_servidor();
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt || !$stmt->execute()) {
+            $mensajeError = $stmt ? $stmt->error : mysqli_error($mysqli);
+            $informacion =array("1" => "error", "mensaje" => "Error al contar interconsultas: " . $mensajeError, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        return intval($row["total"]);
+    }
+
+    function obtenerInterConsulta($filtros= [], $limite= 0) {
+        list($sqlFiltro, $sqlFiltroMenciones, $sqlFiltroMensaje, $sqlFiltroFechaLimite) = construirFiltrosInterConsulta($filtros);
+
         if ($limite === 0 || $limite === '0') {
             $limite = '';
         } else {
@@ -1700,6 +1877,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) AS nombre_local,
             (SELECT vt.cod_clienteFK from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS cod_clienteFK,
             (SELECT vt.num_factura from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS num_factura,
+            (SELECT vt.apodo from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS apodo_venta,
             (SELECT SUM(monto) FROM gastos WHERE cod_interConsultaFK = ic.cod_interConsulta) AS total_gastos,
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
@@ -1867,6 +2045,14 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 $fechaActual = $fechaActual->format('Y-m-d H:i:s');
                 abmMensaje(null, $mensaje, $fechaActual, $cod_interConsulta, $cod_usuarioFK_edit, NULL);
             }
+        }
+
+        $tipoProyectoGasto= $tipo;
+        if (empty($tipoProyectoGasto) && isset($interconsulta_original[0]['tipo'])) {
+            $tipoProyectoGasto= $interconsulta_original[0]['tipo'];
+        }
+        if (function_exists('obtenerOCrearProyectoGastoParaInterConsulta') && obtenerCategoriaPrincipalHilo($tipoProyectoGasto) == 'pagos_egresos') {
+            obtenerOCrearProyectoGastoParaInterConsulta($cod_interConsulta, $asunto);
         }
 
         $stmt->close();
