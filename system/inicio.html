@@ -3794,6 +3794,18 @@ id='inptContrasenhaUserTemporal' style='width:100%;box-sizing:border-box;display
 <p class='pTituloC'>Tipo de relacionamiento:</p>
 <textarea class='inputText' id='inptTipoRelacionamientoUser' style='width:100%;min-height:70px;box-sizing:border-box;resize:vertical;'></textarea>
 </div>
+<div class='funcionario-form-field funcionario-form-field--full'>
+<p class='pTituloC'>Contrato vigente hasta :</p>
+<input class='inputText' type='date' id='inptFechaVencimientoContratoUser' style='width:100%;box-sizing:border-box;'>
+<div class='funcionario-contrato-progress' id='funcionarioContratoProgress'>
+  <div class='funcionario-contrato-progress__top'>
+    <strong id='funcionarioContratoProgressTexto'>Sin fecha de contrato</strong>
+    <span id='funcionarioContratoProgressPorcentaje'>0%</span>
+  </div>
+  <div class='funcionario-contrato-progress__bar'><i id='funcionarioContratoProgressBarra'></i></div>
+  <small id='funcionarioContratoProgressDetalle'>Carga la fecha de ingreso y la fecha de vencimiento del contrato.</small>
+</div>
+</div>
 </section>
 </div>
 </div>
@@ -13137,7 +13149,16 @@ id='inptBuscarCuentasAcobrarF1' style='width:135px' />
 <input class='inputText' type='Date'
 id='inptBuscarCuentasAcobrarF2' style='width:135px' />
 </td>
-<td style='width:70%;text-align:right'>
+<td style='width:16%;'>
+<p class='pTituloC' >Dias atrasados</p>
+<select class='inputSelect' id='inptFiltroDiasAtrasadosCuentas' style='width:145px'>
+<option value=''>Todos</option>
+<option value='0_60'>0 - 60 dias</option>
+<option value='60_90'>60 - 90 dias</option>
+<option value='90_mas'>Mayores a 90 dias</option>
+</select>
+</td>
+<td style='width:54%;text-align:right'>
 
 <input type="button" value="Buscar cuentas" class="btn4 cuentas-cobrar-search"
 onclick='buscarcuentaacobrar()'>
@@ -13399,14 +13420,14 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 <span class='cobrar-cuota__guide-help-badge'>6</span>
 <div>
 <strong>Si es transferencia</strong>
-<p>La fecha de pago filtra las transferencias Ueno disponibles. Debes elegir una transferencia de la lista para poder registrar el cobro.</p>
+<p>La fecha de pago filtra las transferencias Ueno disponibles. Puedes marcar una o varias cuotas y elegir una transferencia que cubra el total.</p>
 </div>
 </div>
 <div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--partial'>
 <span class='cobrar-cuota__guide-help-badge'>7</span>
 <div>
 <strong>Uso parcial</strong>
-<p>Si la transferencia no alcanza, se puede usar como pago parcial. Si sobra saldo, puedes aplicar solo una parte y dejar el resto disponible.</p>
+<p>Si el monto no cubre todo lo marcado, se aplica en orden: cuotas completas primero y la ultima alcanzada queda parcial.</p>
 </div>
 </div>
 <div class='cobrar-cuota__guide-help-card cobrar-cuota__guide-help-card--confirm'>
@@ -13417,7 +13438,7 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 </div>
 </div>
 </div>
-<div class='cobrar-cuota__guide-help-note'><b>Antes de confirmar</b><span>Verifica cliente, plan, cuota, fecha y monto. En transferencias, confirma que la Ueno seleccionada sea la correcta.</span></div>
+<div class='cobrar-cuota__guide-help-note'><b>Antes de confirmar</b><span>Verifica cliente, plan, cuotas, fecha y monto. En transferencias, confirma que la Ueno seleccionada sea la correcta.</span></div>
 </div>
 </div>
 
@@ -26610,7 +26631,7 @@ onclick='buscarvistaaperturacierrecaja()' />
 
     <div class='agenda-layout'>
         <div class='agenda-sidebar'>
-            <div class='agenda-card'>
+            <div class='agenda-card agenda-card-resumen-dia'>
                 <p class='agenda-card-title'>Resumen del día</p>
                 <div class='agenda-resumen-item'>
                     <span>Total citas</span>
@@ -26647,8 +26668,11 @@ onclick='buscarvistaaperturacierrecaja()' />
 				
             </div>
 
-            <div class='agenda-card'>
-                <p class='agenda-card-title'>Consultorios</p>
+            <div class='agenda-card agenda-card-consultorios' id='cardConsultoriosAgenda'>
+                <div class='agenda-card-title-row'>
+                    <p class='agenda-card-title'>Consultorios</p>
+                    <button type='button' class='agenda-card-title-action' id='btnPlegarConsultoriosAgenda' onclick='alternarPlegadoConsultoriosAgenda()' title='Replegar consultorios'>Replegar</button>
+                </div>
                 <div id='listaConsultoriosAgenda' class='agenda-consultorios-lista'></div>
             </div>
         </div>

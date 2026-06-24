@@ -751,6 +751,7 @@ function cc_buscar_movimiento_ueno($usuario)
 			$primer = $datos;
 		}
 		$datos_js = htmlspecialchars(json_encode($datos), ENT_QUOTES, 'UTF-8');
+		$comprobanteVisible = $comprobanteReal != "" ? $comprobanteReal : $comprobanteMasked;
 		$badgeComprobante = $comprobante == ""
 			? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Seleccionable</span>"
 			: ($coincidenciaExacta
@@ -766,7 +767,10 @@ function cc_buscar_movimiento_ueno($usuario)
 			: "<input type='button' value='" . cc_escape_texto($mensajeAccion) . "' class='btn4 cobrar-cuota__btn-secundario cobrar-cuota__ueno-action-disabled' disabled>";
 		$html .= "<div class='cobrar-cuota__ueno-item'>"
 			. "<div class='cobrar-cuota__ueno-card-body'>"
-			. "<div class='cobrar-cuota__ueno-card-head'><b class='cobrar-cuota__ueno-date-main'>" . cc_escape_texto($fechaMovimientoVisual != "" ? $fechaMovimientoVisual : "Sin fecha") . "</b><span>Comprobante " . cc_escape_texto($comprobanteMasked) . "</span>" . $badgeComprobante . $badgeFecha . "</div>"
+			. "<div class='cobrar-cuota__ueno-card-top'>"
+			. "<div class='cobrar-cuota__ueno-card-head'><b class='cobrar-cuota__ueno-date-main'>" . cc_escape_texto($fechaMovimientoVisual != "" ? $fechaMovimientoVisual : "Sin fecha") . "</b><span class='cobrar-cuota__ueno-comprobante'>Comprobante <strong>" . cc_escape_texto($comprobanteVisible) . "</strong></span><div class='cobrar-cuota__ueno-badges'>" . $badgeComprobante . $badgeFecha . "</div></div>"
+			. "<div class='cobrar-cuota__ueno-card-action'>" . $accion . "</div>"
+			. "</div>"
 			. "<div class='cobrar-cuota__ueno-card-grid'>"
 			. "<span><small>Saldo restante</small><strong>" . cc_numero($saldoRestante) . "</strong></span>"
 			. "<span><small>Importe</small><strong>" . cc_numero($importe) . "</strong></span>"
@@ -774,7 +778,6 @@ function cc_buscar_movimiento_ueno($usuario)
 			. "<span><small>Estado</small><strong>" . cc_escape_texto($estado != "" ? $estado : "-") . "</strong></span>"
 			. "</div>"
 			. "</div>"
-			. $accion
 			. "</div>";
 	}
 	if ($html == "") {
