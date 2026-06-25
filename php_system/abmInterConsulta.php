@@ -1739,7 +1739,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
         return $cod_mensaje;
     }
 
-    function construirFiltrosInterConsulta($filtros= []) {
+    function construirFiltrosInterConsulta($filtros= array()) {
         $sqlFiltro= "";
         $sqlFiltroMenciones= "";
         $sqlFiltroMensaje= "";
@@ -1844,7 +1844,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
         return array($sqlFiltro, $sqlFiltroMenciones, $sqlFiltroMensaje, $sqlFiltroFechaLimite);
     }
 
-    function obtenerCantidadInterConsulta($filtros= []) {
+    function obtenerCantidadInterConsulta($filtros= array()) {
         list($sqlFiltro) = construirFiltrosInterConsulta($filtros);
         $sql= "SELECT COUNT(*) AS total FROM interconsulta ic $sqlFiltro";
 
@@ -1860,10 +1860,10 @@ function convertirTextoDocumentoInterconsulta($texto) {
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
         $stmt->close();
-        return intval($row["total"]);
+        return isset($row["total"]) ? intval($row["total"]) : 0;
     }
 
-    function obtenerInterConsulta($filtros= [], $limite= 0) {
+    function obtenerInterConsulta($filtros= array(), $limite= 0) {
         list($sqlFiltro, $sqlFiltroMenciones, $sqlFiltroMensaje, $sqlFiltroFechaLimite) = construirFiltrosInterConsulta($filtros);
 
         if ($limite === 0 || $limite === '0') {
