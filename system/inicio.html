@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=cierre-ueno-cajero-20260624" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=comparativa-gerencial-ui-20260625-v5" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,7 +43,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=historial-clinico-acceso-20260618"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=cierre-ueno-resumen-20260624"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=cierre-ueno-resumen-20260624"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=comparativa-gerencial-ui-20260625-v5"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=cobrar-cuota-20260611"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -1246,6 +1246,286 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         </div>
                       </section>
 
+                    </div>
+
+                    <style id="dashboardComparativaVentasCobranzasEstilos">
+                      #dashboardComparativaVentasCobranzas {
+                        clear: both !important;
+                        width: 100% !important;
+                        margin: 0 0 12px !important;
+                        padding: 14px 16px 16px !important;
+                        border: 1px solid #d9e6f2 !important;
+                        border-radius: 8px !important;
+                        background: rgba(255, 255, 255, 0.96) !important;
+                        box-shadow: 0 10px 24px rgba(18, 31, 53, 0.08) !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-header {
+                        display: flex !important;
+                        align-items: flex-start !important;
+                        justify-content: space-between !important;
+                        gap: 14px !important;
+                        padding: 0 0 10px !important;
+                        margin: 0 !important;
+                        border-bottom: 0 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-card__title {
+                        margin: 0 !important;
+                        color: #172033 !important;
+                        font-size: 15px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.15 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-card__subtitle {
+                        margin: 3px 0 0 !important;
+                        color: #475467 !important;
+                        font-size: 11px !important;
+                        font-weight: 800 !important;
+                        line-height: 1.25 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-actions {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: flex-end !important;
+                        gap: 12px !important;
+                        flex: 0 0 auto !important;
+                        margin-left: auto !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-permission {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        gap: 6px !important;
+                        min-height: 32px !important;
+                        padding: 0 14px !important;
+                        border: 1px solid #e4e7ec !important;
+                        border-radius: 999px !important;
+                        background: #f8fafc !important;
+                        color: #344054 !important;
+                        box-shadow: 0 6px 16px rgba(18, 31, 53, 0.05) !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-detail-button {
+                        min-height: 36px !important;
+                        padding: 0 18px !important;
+                        border: 1px solid #25b46b !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        color: #159947 !important;
+                        box-shadow: 0 6px 16px rgba(21, 153, 71, 0.08) !important;
+                        cursor: pointer !important;
+                        font-size: 12px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-body {
+                        min-height: 136px !important;
+                        padding-top: 2px !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-layout {
+                        width: 100% !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(650px, 0.46fr) minmax(0, 1fr) !important;
+                        gap: 16px !important;
+                        align-items: stretch !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-layout--tabla-completa {
+                        display: block !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stats {
+                        min-width: 0 !important;
+                        display: grid !important;
+                        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                        gap: 10px !important;
+                        align-items: stretch !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat {
+                        min-width: 0 !important;
+                        min-height: 124px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: space-between !important;
+                        gap: 14px !important;
+                        padding: 18px !important;
+                        border: 1px solid #e4e7ec !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04) !important;
+                        box-sizing: border-box !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat > div,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat__copy {
+                        min-width: 0 !important;
+                        display: grid !important;
+                        gap: 8px !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat span,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat__label {
+                        color: #475467 !important;
+                        font-size: 12px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.25 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat strong,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat__value {
+                        display: block !important;
+                        color: #159947 !important;
+                        font-size: 28px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                        letter-spacing: 0 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat small,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat__note {
+                        color: #667085 !important;
+                        font-size: 10px !important;
+                        font-weight: 800 !important;
+                        line-height: 1.25 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat em,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat__icon {
+                        width: 50px !important;
+                        height: 50px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        flex: 0 0 auto !important;
+                        border-radius: 999px !important;
+                        background: #dcfce7 !important;
+                        color: #159947 !important;
+                        font-style: normal !important;
+                        font-size: 22px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat--negativo em,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat--negativo .dashboard-comparativa-stat__icon {
+                        background: #fee2e2 !important;
+                        color: #dc2626 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-table-wrap {
+                        min-width: 0 !important;
+                        overflow-x: auto !important;
+                        border: 1px solid #e4e7ec !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-table {
+                        width: 100% !important;
+                        min-width: 1080px !important;
+                        border-collapse: collapse !important;
+                        table-layout: fixed !important;
+                        background: #ffffff !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-col-sucursal {
+                        width: 17% !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-col-var {
+                        width: 7% !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-table th,
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-table td {
+                        height: 29px !important;
+                        padding: 6px 11px !important;
+                        border: 0 !important;
+                        border-bottom: 1px solid #edf1f5 !important;
+                        color: #344054 !important;
+                        font-size: 11px !important;
+                        font-weight: 800 !important;
+                        line-height: 1.2 !important;
+                        vertical-align: middle !important;
+                        box-sizing: border-box !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-table th {
+                        height: 34px !important;
+                        background: #f8fafc !important;
+                        color: #475467 !important;
+                        font-size: 10px !important;
+                        font-weight: 900 !important;
+                        text-align: left !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-table td:first-child {
+                        white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-money {
+                        text-align: right !important;
+                        white-space: nowrap !important;
+                        font-variant-numeric: tabular-nums !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-percent {
+                        text-align: center !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-var {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        gap: 4px !important;
+                        color: #159947 !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                        font-variant-numeric: tabular-nums !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-var--negativo {
+                        color: #dc2626 !important;
+                      }
+                      #dashboardComparativaVentasCobranzas .dashboard-comparativa-var--neutral {
+                        color: #667085 !important;
+                      }
+                      @media (max-width: 1220px) {
+                        #dashboardComparativaVentasCobranzas .dashboard-comparativa-layout {
+                          grid-template-columns: 1fr !important;
+                        }
+                      }
+                      @media (max-width: 700px) {
+                        #dashboardComparativaVentasCobranzas .dashboard-comparativa-header,
+                        #dashboardComparativaVentasCobranzas .dashboard-comparativa-actions {
+                          align-items: stretch !important;
+                          flex-direction: column !important;
+                        }
+                        #dashboardComparativaVentasCobranzas .dashboard-comparativa-stats {
+                          grid-template-columns: 1fr !important;
+                        }
+                      }
+                    </style>
+
+                    <section class="dashboard-card dashboard-card--comparativa-financiera" id="dashboardComparativaVentasCobranzas" style="display:none;">
+                      <div class="dashboard-card__header dashboard-comparativa-header">
+                        <div>
+                          <h2 class="dashboard-card__title">Comparativa autom&aacute;tica de Ventas y Cobranza</h2>
+                          <p class="dashboard-card__subtitle">Mes actual hasta hoy vs. mismo periodo del mes anterior</p>
+                        </div>
+                        <div class="dashboard-comparativa-actions">
+                          <span class="dashboard-comparativa-permission"><span aria-hidden="true">&#128274;</span> Visible seg&uacute;n permisos</span>
+                          <button type="button" class="dashboard-comparativa-detail-button" onclick="abrirDetalleComparativaVentasCobranzas()">Ver detalle</button>
+                        </div>
+                      </div>
+                      <div class="dashboard-card__body dashboard-comparativa-body" id="dashboardComparativaVentasCobranzasBody">
+                        <div class="dashboard-comparativa-loading">
+                          <span></span><span></span><span></span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div class="dashboard-comparativa-modal" id="modalComparativaVentasCobranzas" style="display:none;">
+                      <div class="dashboard-comparativa-modal__backdrop" onclick="cerrarDetalleComparativaVentasCobranzas()"></div>
+                      <div class="dashboard-comparativa-modal__panel">
+                        <div class="dashboard-comparativa-modal__header">
+                          <div>
+                            <p class="dashboard-section-eyebrow">Control gerencial</p>
+                            <h3>Comparativa autom&aacute;tica de Ventas y Cobranza</h3>
+                            <p id="dashboardComparativaDetallePeriodos">Mes actual hasta hoy vs. mismo periodo del mes anterior</p>
+                          </div>
+                          <button type="button" class="dashboard-comparativa-modal__close" onclick="cerrarDetalleComparativaVentasCobranzas()" aria-label="Cerrar detalle">x</button>
+                        </div>
+                        <div class="dashboard-comparativa-modal__body" id="dashboardComparativaDetalleBody"></div>
+                      </div>
                     </div>
 
                     <script>

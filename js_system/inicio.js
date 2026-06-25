@@ -4568,6 +4568,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 				if (typeof inicializarAccesosRapidosUsuario === "function") {
 					inicializarAccesosRapidosUsuario();
 				}
+				if (typeof inicializarComparativaVentasCobranzas === "function") {
+					inicializarComparativaVentasCobranzas();
+				}
 					buscarabmCasaOption()
 					buscarabmCasaOptionCuentas()
 					buscarCobradorSelec()
@@ -32923,6 +32926,356 @@ function permisoAccesoUser(frm,accion){
 		return false;
 	}
 	return String(acceso[accion]).trim().toUpperCase() == "SI";
+}
+
+var comparativaVentasCobranzasCache = null;
+var comparativaVentasCobranzasCargando = false;
+
+function usuarioPuedeVerComparativaVentasCobranzas(){
+	if(typeof userid !== "undefined" && String(userid) == "2"){
+		return true;
+	}
+	if(typeof permisoAccesoUser != "function"){
+		return false;
+	}
+	return permisoAccesoUser("VERCOMPARATIVAVENTASCOBRANZAS", "accion");
+}
+
+function inicializarComparativaVentasCobranzas(){
+	var card = document.getElementById("dashboardComparativaVentasCobranzas");
+	if(!card){
+		return;
+	}
+	if(!usuarioPuedeVerComparativaVentasCobranzas()){
+		card.style.display = "none";
+		return;
+	}
+	card.style.display = "";
+	renderCargandoComparativaVentasCobranzas();
+	cargarComparativaVentasCobranzas(false);
+}
+
+function renderCargandoComparativaVentasCobranzas(){
+	var body = document.getElementById("dashboardComparativaVentasCobranzasBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-comparativa-loading'>"
+		+ "<span></span><span></span><span></span>"
+		+ "</div>";
+}
+
+function renderErrorComparativaVentasCobranzas(mensaje){
+	var body = document.getElementById("dashboardComparativaVentasCobranzasBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-comparativa-state dashboard-comparativa-state--error'>"
+		+ "<strong>No se pudo cargar la comparativa</strong>"
+		+ "<span>" + escaparHtmlComparativaVentasCobranzas(mensaje || "Intenta nuevamente en unos segundos.") + "</span>"
+		+ "<button type='button' onclick='cargarComparativaVentasCobranzas(true)'>Reintentar</button>"
+		+ "</div>";
+}
+
+function cargarComparativaVentasCobranzas(forzar){
+	var card = document.getElementById("dashboardComparativaVentasCobranzas");
+	if(!card || !usuarioPuedeVerComparativaVentasCobranzas()){
+		if(card){ card.style.display = "none"; }
+		return;
+	}
+	if(comparativaVentasCobranzasCargando){
+		return;
+	}
+	if(comparativaVentasCobranzasCache && !forzar){
+		renderComparativaVentasCobranzas(comparativaVentasCobranzasCache);
+		return;
+	}
+
+	comparativaVentasCobranzasCargando = true;
+	renderCargandoComparativaVentasCobranzas();
+	obtener_datos_user();
+
+	$.ajax({
+		data: {
+			useru: userid,
+			passu: passuser,
+			navegador: navegador,
+			funt: "comparativa"
+		},
+		url: "/GoodVentaAsisCap/php_system/dashboard_comparativa_ventas_cobranzas.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			comparativaVentasCobranzasCargando = false;
+			renderErrorComparativaVentasCobranzas("No se pudo consultar el servidor.");
+			if(typeof manejadordeerroresjquery == "function"){
+				manejadordeerroresjquery(jqXHR.status, textstatus, "comparativa");
+			}
+		},
+		success: function (responseText) {
+			comparativaVentasCobranzasCargando = false;
+			try {
+				var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
+				var respuesta = datos["1"];
+				if(datos["1"] == "NI"){
+					if(card){ card.style.display = "none"; }
+					return;
+				}
+				if(typeof respuestaJqueryAjax == "function"){
+					respuesta = respuestaJqueryAjax(respuesta);
+				}
+				if(respuesta === true || datos["1"] == "exito"){
+					comparativaVentasCobranzasCache = datos;
+					renderComparativaVentasCobranzas(datos);
+					if(detalleComparativaVentasCobranzasAbierto()){
+						renderDetalleComparativaVentasCobranzas(datos);
+					}
+					return;
+				}
+				renderErrorComparativaVentasCobranzas(datos["2"] || "Respuesta no reconocida.");
+			} catch (error) {
+				renderErrorComparativaVentasCobranzas("La respuesta recibida no tiene el formato esperado.");
+				if(typeof GuardarArchivosLog == "function"){
+					GuardarArchivosLog("Error comparativa ventas cobranzas: " + error + " \r\n Consola: " + responseText);
+				}
+			}
+		}
+	});
+}
+
+function escaparHtmlComparativaVentasCobranzas(valor){
+	return (valor || "").toString().replace(/[&<>"']/g, function(caracter){
+		return {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': "&quot;",
+			"'": "&#039;"
+		}[caracter];
+	});
+}
+
+function nombreSucursalComparativaVentasCobranzas(nombre){
+	nombre = (nombre || "").toString();
+	nombre = nombre.replace(/^CLINIDENT\s+/i, "");
+	nombre = nombre.replace(/\s*\([^)]*\)\s*/g, " ");
+	nombre = nombre.replace(/\s+/g, " ").trim();
+	return nombre || "Sucursal";
+}
+
+function numeroComparativaVentasCobranzas(valor){
+	valor = parseInt(valor || 0, 10);
+	if(isNaN(valor)){
+		valor = 0;
+	}
+	var negativo = valor < 0;
+	var texto = Math.abs(valor).toString();
+	texto = texto.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+	return (negativo ? "-" : "") + texto;
+}
+
+function monedaComparativaVentasCobranzas(valor){
+	return "Gs. " + numeroComparativaVentasCobranzas(valor);
+}
+
+function claseVariacionComparativaVentasCobranzas(variacion){
+	var tipo = variacion && variacion.tipo ? variacion.tipo : "neutral";
+	if(tipo == "positivo"){ return "dashboard-comparativa-var dashboard-comparativa-var--positivo"; }
+	if(tipo == "negativo"){ return "dashboard-comparativa-var dashboard-comparativa-var--negativo"; }
+	return "dashboard-comparativa-var dashboard-comparativa-var--neutral";
+}
+
+function iconoVariacionComparativaVentasCobranzas(variacion){
+	var indicador = variacion && variacion.indicador ? variacion.indicador : "neutral";
+	if(indicador == "up"){ return "&uarr;"; }
+	if(indicador == "down"){ return "&darr;"; }
+	return "&minus;";
+}
+
+function htmlVariacionComparativaVentasCobranzas(variacion){
+	var texto = variacion && variacion.texto ? variacion.texto : "0,0%";
+	return "<span class='" + claseVariacionComparativaVentasCobranzas(variacion) + "'>"
+		+ escaparHtmlComparativaVentasCobranzas(texto)
+		+ " <b>" + iconoVariacionComparativaVentasCobranzas(variacion) + "</b>"
+		+ "</span>";
+}
+
+function etiquetaRegistrosComparativaVentasCobranzas(valor){
+	valor = parseInt(valor || 0, 10);
+	if(isNaN(valor)){
+		valor = 0;
+	}
+	return numeroComparativaVentasCobranzas(valor) + (valor == 1 ? " reg." : " regs.");
+}
+
+function htmlIndicadorGeneralComparativa(titulo, variacion, valorPrincipal, nota){
+	var tipo = variacion && variacion.tipo ? variacion.tipo : "neutral";
+	var textoValor = valorPrincipal != undefined && valorPrincipal !== null ? valorPrincipal : ((variacion && variacion.texto) ? variacion.texto : "0,0%");
+	var textoNota = nota || "vs. mismo periodo mes anterior";
+	var claseValor = tipo == "positivo" ? "dashboard-comparativa-var--positivo" : (tipo == "negativo" ? "dashboard-comparativa-var--negativo" : "dashboard-comparativa-var--neutral");
+	return "<article class='dashboard-comparativa-stat dashboard-comparativa-stat--" + escaparHtmlComparativaVentasCobranzas(tipo) + "'>"
+		+ "<div class='dashboard-comparativa-stat__copy'>"
+		+ "<span class='dashboard-comparativa-stat__label'>" + escaparHtmlComparativaVentasCobranzas(titulo) + "</span>"
+		+ "<strong class='dashboard-comparativa-stat__value " + claseValor + "'>"
+		+ escaparHtmlComparativaVentasCobranzas(textoValor)
+		+ "</strong>"
+		+ "<small class='dashboard-comparativa-stat__note'>" + escaparHtmlComparativaVentasCobranzas(textoNota) + "</small>"
+		+ "</div>"
+		+ "<em class='dashboard-comparativa-stat__icon' aria-hidden='true'>" + iconoVariacionComparativaVentasCobranzas(variacion) + "</em>"
+		+ "</article>";
+}
+
+function htmlFilasComparativaVentasCobranzas(datos){
+	var sucursales = datos && datos.sucursales ? datos.sucursales : [];
+	var html = "";
+	if(!sucursales.length){
+		return "<tr><td colspan='10' class='dashboard-comparativa-empty-table'>Sin sucursales autorizadas para visualizar.</td></tr>";
+	}
+	for(var i = 0; i < sucursales.length; i++){
+		var sucursal = sucursales[i] || {};
+		html += "<tr>"
+			+ "<td><span class='dashboard-comparativa-row-index'>" + (i + 1) + ".</span> " + escaparHtmlComparativaVentasCobranzas(nombreSucursalComparativaVentasCobranzas(sucursal.sucursalNombre)) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.ventasActual) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.ventasAnterior) + "</td>"
+			+ "<td class='dashboard-comparativa-percent'>" + htmlVariacionComparativaVentasCobranzas(sucursal.variacionVentas) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + numeroComparativaVentasCobranzas(sucursal.creditosActual) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + numeroComparativaVentasCobranzas(sucursal.creditosAnterior) + "</td>"
+			+ "<td class='dashboard-comparativa-percent'>" + htmlVariacionComparativaVentasCobranzas(sucursal.variacionCreditos) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.cobranzaActual) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.cobranzaAnterior) + "</td>"
+			+ "<td class='dashboard-comparativa-percent'>" + htmlVariacionComparativaVentasCobranzas(sucursal.variacionCobranza) + "</td>"
+			+ "</tr>";
+	}
+	return html;
+}
+
+function htmlTablaComparativaVentasCobranzas(datos){
+	return "<div class='dashboard-comparativa-table-wrap'>"
+		+ "<table class='dashboard-comparativa-table'>"
+		+ "<colgroup>"
+		+ "<col class='dashboard-comparativa-col-sucursal'>"
+		+ "<col><col><col class='dashboard-comparativa-col-var'>"
+		+ "<col><col><col class='dashboard-comparativa-col-var'>"
+		+ "<col><col><col class='dashboard-comparativa-col-var'>"
+		+ "</colgroup>"
+		+ "<thead><tr>"
+		+ "<th>Sucursal</th>"
+		+ "<th>Ventas actual</th>"
+		+ "<th>Ventas mes pasado</th>"
+		+ "<th>Var. %</th>"
+		+ "<th>Reg. cr&eacute;dito actual</th>"
+		+ "<th>Reg. cr&eacute;dito mes pasado</th>"
+		+ "<th>Var. %</th>"
+		+ "<th>Cobranza actual</th>"
+		+ "<th>Cobranza mes pasado</th>"
+		+ "<th>Var. %</th>"
+		+ "</tr></thead>"
+		+ "<tbody>" + htmlFilasComparativaVentasCobranzas(datos) + "</tbody>"
+		+ "</table>"
+		+ "</div>";
+}
+
+function htmlContenidoComparativaVentasCobranzas(datos, detalle){
+	var resumen = datos && datos.resumenGeneral ? datos.resumenGeneral : {};
+	var html = "";
+	if(detalle){
+		html += "<div class='dashboard-comparativa-periodos'>"
+			+ "<span><b>Periodo actual</b>" + textoPeriodoComparativaVentasCobranzas(datos.periodoActual) + "</span>"
+			+ "<span><b>Periodo anterior</b>" + textoPeriodoComparativaVentasCobranzas(datos.periodoAnterior) + "</span>"
+			+ "</div>";
+	}
+	html += "<div class='dashboard-comparativa-layout" + (detalle ? " dashboard-comparativa-layout--detalle" : " dashboard-comparativa-layout--tabla-completa") + "'>";
+	if(detalle){
+		html += "<div class='dashboard-comparativa-stats'>"
+			+ htmlIndicadorGeneralComparativa("Ventas acumuladas", resumen.variacionVentas)
+			+ htmlIndicadorGeneralComparativa("Cobranza acumulada", resumen.variacionCobranza)
+			+ htmlIndicadorGeneralComparativa(
+				"Ventas a credito",
+				resumen.variacionCreditos,
+				etiquetaRegistrosComparativaVentasCobranzas(resumen.creditosActual),
+				((resumen.variacionCreditos && resumen.variacionCreditos.texto) ? resumen.variacionCreditos.texto : "0,0%") + " vs. mismo periodo mes anterior"
+			)
+			+ "</div>";
+	}
+	html += htmlTablaComparativaVentasCobranzas(datos)
+		+ "</div>";
+	if(datos && datos.sinMovimientos){
+		html += "<p class='dashboard-comparativa-empty-note'>Sin movimientos registrados en el periodo</p>";
+	}
+	return html;
+}
+
+function renderComparativaVentasCobranzas(datos){
+	var card = document.getElementById("dashboardComparativaVentasCobranzas");
+	var body = document.getElementById("dashboardComparativaVentasCobranzasBody");
+	if(!card || !body){
+		return;
+	}
+	card.style.display = "";
+	body.innerHTML = htmlContenidoComparativaVentasCobranzas(datos, false);
+}
+
+function formatoFechaHoraComparativaVentasCobranzas(valor){
+	valor = (valor || "").toString();
+	if(valor.length < 10){
+		return "-";
+	}
+	var fecha = valor.substr(0, 10).split("-");
+	var hora = valor.length >= 16 ? valor.substr(11, 5) : "";
+	if(fecha.length != 3){
+		return valor;
+	}
+	return fecha[2] + "/" + fecha[1] + "/" + fecha[0] + (hora ? " " + hora : "");
+}
+
+function textoPeriodoComparativaVentasCobranzas(periodo){
+	if(!periodo){
+		return " - ";
+	}
+	return " " + formatoFechaHoraComparativaVentasCobranzas(periodo.desde) + " al " + formatoFechaHoraComparativaVentasCobranzas(periodo.hasta);
+}
+
+function detalleComparativaVentasCobranzasAbierto(){
+	var modal = document.getElementById("modalComparativaVentasCobranzas");
+	return !!(modal && modal.style.display != "none");
+}
+
+function abrirDetalleComparativaVentasCobranzas(){
+	if(!usuarioPuedeVerComparativaVentasCobranzas()){
+		return;
+	}
+	var modal = document.getElementById("modalComparativaVentasCobranzas");
+	if(!modal){
+		return;
+	}
+	modal.style.display = "flex";
+	if(comparativaVentasCobranzasCache){
+		renderDetalleComparativaVentasCobranzas(comparativaVentasCobranzasCache);
+	}else{
+		var body = document.getElementById("dashboardComparativaDetalleBody");
+		if(body){
+			body.innerHTML = "<div class='dashboard-comparativa-loading'><span></span><span></span><span></span></div>";
+		}
+		cargarComparativaVentasCobranzas(true);
+	}
+}
+
+function cerrarDetalleComparativaVentasCobranzas(){
+	var modal = document.getElementById("modalComparativaVentasCobranzas");
+	if(modal){
+		modal.style.display = "none";
+	}
+}
+
+function renderDetalleComparativaVentasCobranzas(datos){
+	var body = document.getElementById("dashboardComparativaDetalleBody");
+	var periodos = document.getElementById("dashboardComparativaDetallePeriodos");
+	if(periodos){
+		periodos.innerHTML = "Actual:" + textoPeriodoComparativaVentasCobranzas(datos.periodoActual)
+			+ " &nbsp;|&nbsp; Anterior:" + textoPeriodoComparativaVentasCobranzas(datos.periodoAnterior);
+	}
+	if(body){
+		body.innerHTML = htmlContenidoComparativaVentasCobranzas(datos, true);
+	}
 }
 
 /*
