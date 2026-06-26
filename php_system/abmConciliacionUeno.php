@@ -2424,9 +2424,17 @@ function ueno_buscar_auditoria($usuario)
 
 	$sql = "SELECT a.id_auditoria, a.fecha_hora, a.accion, a.tabla_afectada, a.registro_id, a.cod_pagoFK,
 		a.id_movimiento, a.estado_anterior, a.estado_nuevo, a.monto, a.usuario, a.observacion,
-		IFNULL(p.nrofactura,'') AS nrofactura
+		IFNULL(p.nrofactura,'') AS nrofactura,
+		IFNULL(per.nombre_persona,'') AS cliente_nombre,
+		IFNULL(cl.ci_cliente,'') AS cliente_doc,
+		IF(IFNULL(p.titulocuota,'')!='', p.titulocuota, IFNULL(cr.plazo,'')) AS cuota_detalle,
+		IFNULL(vt.cod_venta,'') AS cod_venta
 		FROM ueno_auditoria_conciliacion a
 		LEFT JOIN pago p ON p.idPago=a.cod_pagoFK
+		LEFT JOIN credito cr ON cr.idcredito=p.cod_creditoFK
+		LEFT JOIN venta vt ON vt.cod_venta=p.cod_venta_fk
+		LEFT JOIN persona per ON per.cod_persona=vt.cod_clienteFK
+		LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
 		WHERE a.id_auditoria!='0' $condicion
 		ORDER BY a.id_auditoria DESC
 		LIMIT 250";
@@ -2442,19 +2450,36 @@ function ueno_buscar_auditoria($usuario)
 	$styleName = "tableRegistroSearch";
 	while ($row = mysqli_fetch_assoc($result)) {
 		$total++;
+		$clienteCuota = "";
+		if (trim((string)$row["cliente_nombre"]) != "") {
+			$clienteCuota = trim((string)$row["cliente_nombre"]);
+			if (trim((string)$row["cliente_doc"]) != "") {
+				$clienteCuota .= " (" . trim((string)$row["cliente_doc"]) . ")";
+			}
+		}
+		if (trim((string)$row["cuota_detalle"]) != "") {
+			$clienteCuota .= ($clienteCuota != "" ? " / " : "") . "Cuota: " . trim((string)$row["cuota_detalle"]);
+		}
+		if (trim((string)$row["cod_venta"]) != "") {
+			$clienteCuota .= ($clienteCuota != "" ? " / " : "") . "Venta: " . trim((string)$row["cod_venta"]);
+		}
+		if ($clienteCuota == "") {
+			$clienteCuota = "-";
+		}
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
 		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>"
-			. "<td style='width:5%;text-align:center'>" . (int)$row["id_auditoria"] . "</td>"
-			. "<td style='width:12%'>" . ueno_escape_html($row["fecha_hora"]) . "</td>"
-			. "<td style='width:14%'>" . ueno_escape_html($row["accion"]) . "</td>"
-			. "<td style='width:12%'>" . ueno_escape_html($row["tabla_afectada"]) . "</td>"
-			. "<td style='width:8%'>" . ueno_escape_html($row["nrofactura"]) . "</td>"
-			. "<td style='width:7%;text-align:center'>" . ueno_escape_html($row["id_movimiento"]) . "</td>"
-			. "<td style='width:10%'>" . ueno_escape_html($row["estado_anterior"]) . "</td>"
-			. "<td style='width:10%'>" . ueno_escape_html($row["estado_nuevo"]) . "</td>"
-			. "<td style='width:8%;text-align:right'>" . ueno_numero($row["monto"]) . "</td>"
-			. "<td style='width:5%;text-align:center'>" . ueno_escape_html($row["usuario"]) . "</td>"
-			. "<td style='width:9%'>" . ueno_escape_html($row["observacion"]) . "</td>"
+			. "<td style='width:4%;text-align:center'>" . (int)$row["id_auditoria"] . "</td>"
+			. "<td style='width:10%'>" . ueno_escape_html($row["fecha_hora"]) . "</td>"
+			. "<td style='width:11%'>" . ueno_escape_html($row["accion"]) . "</td>"
+			. "<td style='width:10%'>" . ueno_escape_html($row["tabla_afectada"]) . "</td>"
+			. "<td style='width:7%'>" . ueno_escape_html($row["nrofactura"]) . "</td>"
+			. "<td style='width:5%;text-align:center'>" . ueno_escape_html($row["id_movimiento"]) . "</td>"
+			. "<td style='width:13%'>" . ueno_escape_html($clienteCuota) . "</td>"
+			. "<td style='width:8%'>" . ueno_escape_html($row["estado_anterior"]) . "</td>"
+			. "<td style='width:8%'>" . ueno_escape_html($row["estado_nuevo"]) . "</td>"
+			. "<td style='width:7%;text-align:right'>" . ueno_numero($row["monto"]) . "</td>"
+			. "<td style='width:4%;text-align:center'>" . ueno_escape_html($row["usuario"]) . "</td>"
+			. "<td style='width:13%'>" . ueno_escape_html($row["observacion"]) . "</td>"
 			. "</tr></table>";
 	}
 	mysqli_close($mysqli);

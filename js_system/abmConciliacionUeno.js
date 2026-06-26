@@ -288,7 +288,7 @@ function uenoModernizarTabla(idTabla, etiquetas, indiceEstado) {
 		for (var k = 0; k < visibles.length; k++) {
 			var etiqueta = etiquetas[k] || "Dato";
 			visibles[k].setAttribute("data-label", etiqueta);
-			if (etiqueta == "Descripcion" || etiqueta == "Concepto" || etiqueta == "Obs." || etiqueta == "Archivo") {
+			if (etiqueta == "Descripcion" || etiqueta == "Concepto" || etiqueta == "Obs." || etiqueta == "Archivo" || etiqueta == "Cliente/Cuota") {
 				visibles[k].setAttribute("title", String(visibles[k].textContent || "").trim());
 			}
 		}
@@ -391,7 +391,7 @@ function uenoModernizarVista() {
 	uenoAgregarSeparadoresFechaMovimientos();
 	uenoModernizarTabla("table_ueno_candidatos_manual", ["ID", "F. conf.", "Comprobante", "Descripcion", "Credito", "Disponible", "Estado", "Coinc.", "Accion"], 6);
 	uenoModernizarTabla("table_ueno_pagos_pendientes", ["Cliente", "CI", "Venta", "Cuota/Pago", "Venc.", "Saldo pend.", "Monto sug.", "Estado", "Coinc.", "Accion"], 7);
-	uenoModernizarTabla("table_ueno_auditoria", ["ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Antes", "Ahora", "Monto", "User", "Obs."], 7);
+	uenoModernizarTabla("table_ueno_auditoria", ["ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Cliente/Cuota", "Antes", "Ahora", "Monto", "User", "Obs."], 8);
 }
 
 function uenoMarcarImportacionSeleccionada(idImportacion) {
