@@ -27,8 +27,9 @@
                 $nombre= isset($_POST['nombre']) ? mb_convert_encoding((string)($_POST['nombre']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado= empty($estado) ? 'activo' : strtolower($estado);
+                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
 
-                $id= abmProyectoGasto($id, $nombre, $estado);
+                $id= abmProyectoGasto($id, $nombre, $estado, $cod_interConsultaFK);
                 echo json_encode(array("1" => "exito", "id" => $id));
                 break;
             case 'buscarVista':
@@ -56,12 +57,15 @@
                 $nombre= isset($_POST['nombre']) ? mb_convert_encoding((string)($_POST['nombre']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado= isset($_POST['estado']) ? mb_convert_encoding((string)($_POST['estado']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado= empty($estado) ? null : strtolower($estado);
+                $cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? mb_convert_encoding((string)($_POST['cod_interConsultaFK']), 'ISO-8859-1', 'UTF-8') : null;
 
                 $filtros= array(
                     'id'=> $id,
                     'nombre'=> $nombre,
                     'estado'=> $estado,
                     'ocultar_inactivo'=> 'true',
+                    'cod_interConsultaFK'=> $cod_interConsultaFK,
+                    'incluir_sin_gastos'=> (!empty($cod_interConsultaFK) ? 'true' : null),
                 );
 
                 $registros= obtenerProyectoGasto($filtros);
@@ -187,8 +191,80 @@
         echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $monto_total));
     }
 
+    function asegurarTablaInterConsultaProyectoGasto() {
+        static $tablaAsegurada= false;
+        if ($tablaAsegurada) {
+            return;
+        }
+
+        $mysqli= conectar_al_servidor();
+        $sql= "CREATE TABLE IF NOT EXISTS interconsulta_proyecto_gasto (
+            id INT NOT NULL AUTO_INCREMENT,
+            cod_interConsultaFK INT NOT NULL,
+            cod_proyecto_gastoFK INT NOT NULL,
+            estado ENUM('activo','inactivo') DEFAULT 'activo',
+            fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+            fecha_edit DATETIME NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_interconsulta_proyecto (cod_interConsultaFK, cod_proyecto_gastoFK),
+            KEY idx_ipg_hilo (cod_interConsultaFK),
+            KEY idx_ipg_proyecto (cod_proyecto_gastoFK)
+        ) ENGINE=InnoDB DEFAULT CHARSET=latin1";
+        if (!$mysqli->query($sql)) {
+            $informacion = array("1" => "error", "mensaje" => "Error al preparar relacion hilo-proyecto: " . $mysqli->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $sqlBackfill= "INSERT IGNORE INTO interconsulta_proyecto_gasto (cod_interConsultaFK, cod_proyecto_gastoFK, estado)
+            SELECT DISTINCT g.cod_interConsultaFK, g.cod_proyecto_gastoFK, 'activo'
+            FROM gastos g
+            WHERE g.cod_interConsultaFK IS NOT NULL
+                AND g.cod_interConsultaFK <> ''
+                AND g.cod_interConsultaFK <> 0
+                AND g.cod_proyecto_gastoFK IS NOT NULL
+                AND g.cod_proyecto_gastoFK <> ''
+                AND g.cod_proyecto_gastoFK <> 0";
+        if (!$mysqli->query($sqlBackfill)) {
+            $informacion = array("1" => "error", "mensaje" => "Error al sincronizar proyectos historicos del hilo: " . $mysqli->error, "sql" => $sqlBackfill);
+            echo json_encode($informacion);
+            exit;
+        }
+
+        $mysqli->close();
+        $tablaAsegurada= true;
+    }
+
+    function vincularProyectoGastoInterConsulta($cod_interConsultaFK, $cod_proyecto_gastoFK, $estado= 'activo') {
+        if (empty($cod_interConsultaFK) || empty($cod_proyecto_gastoFK) || !is_numeric($cod_interConsultaFK) || !is_numeric($cod_proyecto_gastoFK)) {
+            return;
+        }
+
+        asegurarTablaInterConsultaProyectoGasto();
+        $mysqli= conectar_al_servidor();
+        $sql= "INSERT INTO interconsulta_proyecto_gasto (cod_interConsultaFK, cod_proyecto_gastoFK, estado)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE estado = VALUES(estado), fecha_edit = NOW()";
+        $stmt= $mysqli->prepare($sql);
+        $codInter= intval($cod_interConsultaFK);
+        $codProyecto= intval($cod_proyecto_gastoFK);
+        $stmt->bind_param('iis', $codInter, $codProyecto, $estado);
+        if (!$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "Error al vincular proyecto con hilo: " . $stmt->error, "sql" => $sql);
+            echo json_encode($informacion);
+            exit;
+        }
+        $stmt->close();
+        $mysqli->close();
+    }
+
     function obtenerProyectoGasto($filtros= array(), $limite= 0) {
+        asegurarTablaInterConsultaProyectoGasto();
         $incluir_sin_gastos= isset($filtros['incluir_sin_gastos']) && $filtros['incluir_sin_gastos'] == 'true';
+        if (!empty($filtros['cod_interConsultaFK'])) {
+            $incluir_sin_gastos= true;
+        }
+        $codInterConsultaFiltro= (!empty($filtros['cod_interConsultaFK']) && is_numeric($filtros['cod_interConsultaFK'])) ? intval($filtros['cod_interConsultaFK']) : 0;
         $sqlFiltro= $incluir_sin_gastos ? "WHERE 1=1" : "WHERE EXISTS (SELECT 1 FROM gastos g WHERE g.cod_proyecto_gastoFK = pg.id AND g.estado!= 'Inactivo')";
         foreach ($filtros as $key => $value) {
             if (empty($value)) {continue;}
@@ -204,6 +280,24 @@
                     break;
                 case 'ocultar_inactivo':
                     $sqlFiltro .= "pg.estado != 'inactivo'";
+                    break;
+                case 'cod_interConsultaFK':
+                    if (is_numeric($value)) {
+                        $codInter= intval($value);
+                        $sqlFiltro .= "(EXISTS (
+                            SELECT 1 FROM interconsulta_proyecto_gasto ipg
+                            WHERE ipg.cod_proyecto_gastoFK = pg.id
+                                AND ipg.cod_interConsultaFK = $codInter
+                                AND ipg.estado = 'activo'
+                        ) OR EXISTS (
+                            SELECT 1 FROM gastos gh
+                            WHERE gh.cod_proyecto_gastoFK = pg.id
+                                AND gh.cod_interConsultaFK = $codInter
+                                AND gh.estado != 'Inactivo'
+                        ))";
+                    } else {
+                        $sqlFiltro .= "1=1";
+                    }
                     break;
                 default:
                     if (is_numeric($value)) {
@@ -221,10 +315,11 @@
             $limite = "LIMIT $limite";
         }
 
+        $filtroTotalesProyecto= $codInterConsultaFiltro > 0 ? " AND g.cod_interConsultaFK = $codInterConsultaFiltro" : "";
         $sql= "SELECT 
             pg.* ,
-            IFNULL((SELECT SUM(g.monto) FROM gastos g WHERE g.cod_proyecto_gastoFK = pg.id), 0) as monto_total,
-            IFNULL((SELECT COUNT(*) FROM gastos g WHERE g.cod_proyecto_gastoFK = pg.id), 0) as cantidad_gastos
+            IFNULL((SELECT SUM(g.monto) FROM gastos g WHERE g.cod_proyecto_gastoFK = pg.id $filtroTotalesProyecto), 0) as monto_total,
+            IFNULL((SELECT COUNT(*) FROM gastos g WHERE g.cod_proyecto_gastoFK = pg.id $filtroTotalesProyecto), 0) as cantidad_gastos
             FROM proyectos_gasto pg
             $sqlFiltro ORDER BY pg.nombre ASC $limite";
 
@@ -250,7 +345,7 @@
         return $registros;
     }
 
-    function abmProyectoGasto($id, $nombre, $estado) {
+    function abmProyectoGasto($id, $nombre, $estado, $cod_interConsultaFK= null) {
         $mysqli = conectar_al_servidor();
 
         if (empty($id)) {
@@ -300,6 +395,9 @@
         }
 
         $stmt->close();
+        if (!empty($cod_interConsultaFK)) {
+            vincularProyectoGastoInterConsulta($cod_interConsultaFK, $id);
+        }
         return $id;
     }
 

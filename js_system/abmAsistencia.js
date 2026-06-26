@@ -30,7 +30,17 @@ function actualizarEstadoVisualAsistencia(estado, detalle) {
 	var estadoVisual = document.getElementById("estadoAsistenciaUsuario");
 	var textoEstado = document.getElementById("textoEstadoAsistencia");
 	var jornada = obtenerContenedorJornadaAsistencia(estadoVisual || boton);
-	if (typeof actualizarProgresoJornadaTopbarUsuario == "function") {
+	if (estado === "procesando" && typeof mostrarCargaProgresoJornadaTopbarUsuario == "function") {
+		var textoCarga = (detalle && String(detalle).toLowerCase().indexOf("registrando") >= 0)
+			? "Actualizando jornada..."
+			: "Cargando horario esperado...";
+		var detalleCarga = (detalle && String(detalle).toLowerCase().indexOf("registrando") >= 0)
+			? "Guardando marcacion y recalculando avance..."
+			: "Consultando jornada y marcaciones...";
+		setTimeout(function () {
+			mostrarCargaProgresoJornadaTopbarUsuario(textoCarga, detalleCarga);
+		}, 0);
+	} else if (typeof actualizarProgresoJornadaTopbarUsuario == "function") {
 		setTimeout(actualizarProgresoJornadaTopbarUsuario, 0);
 	}
 	if (typeof evaluarRecordatorioEntradaPendiente == "function") {

@@ -3,6 +3,7 @@ require("conexion.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
+include_once("producto_riesgo_financiero_helper.php");
 
 $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
@@ -56,7 +57,11 @@ if($operacion=="guardarPorcentajeProgreso")
     $porcentaje = mb_convert_encoding((string)($porcentaje), 'ISO-8859-1', 'UTF-8'); 
 	$cod_agendaFK=$_POST['cod_agendaFK'];
     $cod_agendaFK = mb_convert_encoding((string)($cod_agendaFK), 'ISO-8859-1', 'UTF-8'); 
-	guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$cod_agendaFK);
+	$cod_venta=isset($_POST['cod_venta']) ? $_POST['cod_venta'] : "";
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8'); 
+	$observacion=isset($_POST['observacion']) ? $_POST['observacion'] : "";
+    $observacion = mb_convert_encoding((string)($observacion), 'ISO-8859-1', 'UTF-8'); 
+	guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$cod_agendaFK,$cod_venta,$observacion);
 }
 
 	
@@ -119,8 +124,14 @@ if($operacion=="nuevo" || $operacion=="editar" )
 	
 	$apodo=$_POST['apodo'];
     $apodo = mb_convert_encoding((string)($apodo), 'ISO-8859-1', 'UTF-8'); 
+
+	$cod_detalle_tratamiento=isset($_POST['cod_detalle_tratamiento']) ? $_POST['cod_detalle_tratamiento'] : "";
+    $cod_detalle_tratamiento = mb_convert_encoding((string)($cod_detalle_tratamiento), 'ISO-8859-1', 'UTF-8'); 
+
+	$avance_tratamiento=isset($_POST['avance_tratamiento']) ? $_POST['avance_tratamiento'] : "0";
+    $avance_tratamiento = mb_convert_encoding((string)($avance_tratamiento), 'ISO-8859-1', 'UTF-8'); 
 	
-	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion);
+	abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion,$cod_detalle_tratamiento,$avance_tratamiento);
 }	
 
 
@@ -202,6 +213,103 @@ if($operacion=="vincularTratamientoAgenda")
 	vincularTratamientoAgenda($id_agenda,$cod_detalle);
 }
 
+if($operacion=="crearPlanDefinitivoDesdeSugerido")
+{
+	$cod_venta=$_POST['cod_venta'];
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8');
+	crearPlanDefinitivoDesdeSugeridoConsulta($cod_venta,$user);
+}
+
+if($operacion=="guardarBorradorPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$motivo=isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : "";
+	guardarBorradorPlanDefinitivoConsulta($plan_id,$motivo,$user);
+}
+
+if($operacion=="confirmarPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	confirmarPlanDefinitivoConsulta($plan_id,$user);
+}
+
+if($operacion=="moverItemPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$item_id=$_POST['item_id'];
+    $item_id = mb_convert_encoding((string)($item_id), 'ISO-8859-1', 'UTF-8');
+	$direccion=$_POST['direccion'];
+    $direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
+	$motivo=isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : "";
+	moverItemPlanDefinitivoConsulta($plan_id,$item_id,$direccion,$motivo,$user);
+}
+
+if($operacion=="actualizarObservacionItemPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$item_id=$_POST['item_id'];
+    $item_id = mb_convert_encoding((string)($item_id), 'ISO-8859-1', 'UTF-8');
+	$observacion=isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : "";
+	$motivo=isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : "";
+	actualizarObservacionItemPlanDefinitivoConsulta($plan_id,$item_id,$observacion,$motivo,$user);
+}
+
+if($operacion=="quitarItemPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$item_id=$_POST['item_id'];
+    $item_id = mb_convert_encoding((string)($item_id), 'ISO-8859-1', 'UTF-8');
+	$motivo=isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : "";
+	quitarItemPlanDefinitivoConsulta($plan_id,$item_id,$motivo,$user);
+}
+
+if($operacion=="buscarVentasAnexablesPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	buscarVentasAnexablesPlanDefinitivoConsulta($plan_id);
+}
+
+if($operacion=="anexarTratamientosPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$detalle_ids=isset($_POST['detalle_ids']) ? mb_convert_encoding((string)($_POST['detalle_ids']), 'ISO-8859-1', 'UTF-8') : "";
+	$motivo=isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : "";
+	anexarTratamientosPlanDefinitivoConsulta($plan_id,$detalle_ids,$motivo,$user);
+}
+
+if($operacion=="obtenerHistorialPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	obtenerHistorialPlanDefinitivoConsulta($plan_id);
+}
+
+if($operacion=="buscarPlanesMadreCliente")
+{
+	$cod_cliente=isset($_POST['cod_cliente']) ? $_POST['cod_cliente'] : "";
+    $cod_cliente = mb_convert_encoding((string)($cod_cliente), 'ISO-8859-1', 'UTF-8');
+	buscarPlanesMadreClienteConsulta($cod_cliente);
+}
+
+if($operacion=="asignarVentaPlanMadre")
+{
+	$cod_venta=isset($_POST['cod_venta']) ? $_POST['cod_venta'] : "";
+    $cod_venta = mb_convert_encoding((string)($cod_venta), 'ISO-8859-1', 'UTF-8');
+	$plan_id=isset($_POST['plan_id']) ? $_POST['plan_id'] : "";
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$modo=isset($_POST['modo']) ? $_POST['modo'] : "";
+    $modo = mb_convert_encoding((string)($modo), 'ISO-8859-1', 'UTF-8');
+	$apodo=isset($_POST['apodo']) ? $_POST['apodo'] : "";
+	asignarVentaPlanMadreConsulta($cod_venta,$plan_id,$modo,$apodo,$user);
+}
+
 
 }
 
@@ -223,6 +331,7 @@ if($buscar!=""){
 	$filtroBuscar = " and concat(pr.nombre_producto,' ',IFNULL(dtv.descripcion,''),' ',IFNULL(vt.num_factura,'')) like '%".$buscar."%' ";
 }
 
+$selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
 $sql= "SELECT 
 		dtv.cod_detalle,
 		dtv.descripcion,
@@ -230,6 +339,7 @@ $sql= "SELECT
 		dtv.progreso_porcentaje,
 		dtv.estado,
 		pr.nombre_producto,
+		".$selectRiesgo.",
 		vt.cod_venta,
 		vt.num_factura,
         vt.apodo,
@@ -267,6 +377,8 @@ while ($row= mysqli_fetch_assoc($result))
 	$apodo = mb_convert_encoding((string)($row['apodo']), 'UTF-8', 'ISO-8859-1');
 	$nombre_cliente = mb_convert_encoding((string)($row['nombre_cliente']), 'UTF-8', 'ISO-8859-1');
 	$cod_detalle_ventaFK = mb_convert_encoding((string)($row['cod_detalle_ventaFK']), 'UTF-8', 'ISO-8859-1');
+	$nivel_riesgo_financiero = isset($row['nivel_riesgo_financiero']) ? $row['nivel_riesgo_financiero'] : 1;
+	$badge_riesgo_financiero = ProductoRiesgoFinancieroBadgeHtml($nivel_riesgo_financiero, "tratamiento-agenda-risk");
 	$seleccionado = ($cod_detalle_ventaFK == $cod_detalle) ? " tratamiento-agenda-card--activo" : "";
 	$detalle = trim($nombre_producto." ".$descripcion);
 	$detalleAttr = htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8');
@@ -283,7 +395,7 @@ while ($row= mysqli_fetch_assoc($result))
 		</div>
 		<div class='tratamiento-agenda-card__meta'>
 			<span>Num. venta: ".htmlspecialchars($num_factura, ENT_QUOTES, 'UTF-8')."</span>
-			<span>Progreso: ".htmlspecialchars($progreso_porcentaje, ENT_QUOTES, 'UTF-8')."%</span>
+			<span class='tratamiento-agenda-card__badges'>".$badge_riesgo_financiero."<span class='tratamiento-agenda-progreso'>".htmlspecialchars($progreso_porcentaje, ENT_QUOTES, 'UTF-8')."%</span></span>
 		</div>
 	</div>";
 }
@@ -346,10 +458,25 @@ function  verEvolucion($cod_venta)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "SELECT nro,(select nombre_persona from persona where cod_persona=cod_usuraioFK) as usuario, fecha FROM evoluciontratamiento WHERE cod_detalle_venta = '$cod_venta'";
+$tienePorcentajeAnterior = columnaExisteConsulta($mysqli,"evoluciontratamiento","porcentaje_anterior");
+$tieneObservacion = columnaExisteConsulta($mysqli,"evoluciontratamiento","observacion");
+$selectExtra = "";
+if ($tienePorcentajeAnterior) {
+	$selectExtra .= ", porcentaje_anterior";
+}
+if ($tieneObservacion) {
+	$selectExtra .= ", observacion";
+}
+
+$sql= "SELECT nro,(select nombre_persona from persona where cod_persona=cod_usuraioFK) as usuario, fecha ".$selectExtra."
+FROM evoluciontratamiento
+WHERE cod_detalle_venta = ?
+ORDER BY fecha DESC, cod_evoluciontratamiento DESC
+LIMIT 20";
 
  
 $stmt = $mysqli->prepare($sql);
+$stmt->bind_param("s", $cod_venta);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
@@ -358,78 +485,30 @@ exit;
 $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
-$styleName="tableRegistroSearch";
 $pagina="";
 
 if ($valor>0)
 {
+$pagina .= "<div class='tratamiento-evolucion-lista'>";
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
 $nro = mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');   
 $usuario = mb_convert_encoding((string)($valor['usuario']), 'UTF-8', 'ISO-8859-1');   
 $fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');   
- 
- 
-$styleName=CargarStyleTable($styleName);
-	  $pagina.="
-<style>
-.timeline {
-  position: relative;
-  margin: 2px 0;
-  padding-left: 5px;
-  border-left: 3px solid #4a90e2;
+ $porcentajeAnterior = ($tienePorcentajeAnterior && isset($valor['porcentaje_anterior'])) ? mb_convert_encoding((string)($valor['porcentaje_anterior']), 'UTF-8', 'ISO-8859-1') : "";
+ $observacion = ($tieneObservacion && isset($valor['observacion'])) ? mb_convert_encoding((string)($valor['observacion']), 'UTF-8', 'ISO-8859-1') : "";
+ $fechaMostrar = $fecha != "" ? date("d/m/Y H:i", strtotime($fecha)) : "";
+ $descripcion = $porcentajeAnterior !== "" ? htmlspecialchars($porcentajeAnterior, ENT_QUOTES, 'UTF-8')."% &rarr; ".htmlspecialchars($nro, ENT_QUOTES, 'UTF-8')."%" : htmlspecialchars($nro, ENT_QUOTES, 'UTF-8')."%";
+ $pagina .= "<article class='tratamiento-evolucion-item'>"
+	."<strong>".$descripcion."</strong>"
+	."<span>".htmlspecialchars($usuario, ENT_QUOTES, 'UTF-8')." &middot; ".htmlspecialchars($fechaMostrar, ENT_QUOTES, 'UTF-8')."</span>"
+	.($observacion != "" ? "<p>".htmlspecialchars($observacion, ENT_QUOTES, 'UTF-8')."</p>" : "")
+	."</article>";
 }
-.timeline-item {
-  position: relative;
-  margin-bottom: 2px;
-}
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 4px;
-  width: 14px;
-  height: 14px;
-  background-color: #4a90e2;
-  border-radius: 50%;
-}
-.timeline-content {
-  background-color: #f9f9f9;
-  padding: 5px 7px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-.timeline-content .description {
-  font-weight: bold;
-  margin-bottom: 2px;
-}
-.timeline-content .meta {
-  font-size: 12px;
-  color: #666;
-  border-top: 1px solid #ddd;
-  margin-top: 2px;
-  padding-top: 2px;
-}
-</style>
-
-<div class='timeline'>
-  <div class='timeline-item'>
-    <div class='timeline-content'>
-      <div class='description'>
-         ".htmlspecialchars($nro)." %
-      </div>
-      <div class='meta'>
-       ".htmlspecialchars($usuario)." - ".htmlspecialchars($fecha)."
-      </div>
-    </div>
-  </div>
- 
-</div>
-
-"; 
- 
-}
+$pagina .= "</div>";
+} else {
+	$pagina = "<div class='tratamiento-evolucion-vacio'>Sin evoluciones registradas todav&iacute;a.</div>";
 }
  
 $informacion =array("1" => "exito","2" => $pagina );
@@ -460,38 +539,221 @@ function actualizarApodo($cod_venta,$apodo)
 }
 
 
-function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$cod_agendaFK)
+function columnaExisteConsulta($mysqli,$tabla,$columna)
 {
-     $mysqli = conectar_al_servidor();
- 
-	$consulta1 = "UPDATE detalle_venta SET progreso_porcentaje = '$porcentaje' WHERE cod_detalle = '$id_detalle_tratamientoConsulta'";
+	$stmt = $mysqli->prepare("SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+	if (!$stmt) { return false; }
+	$stmt->bind_param("ss", $tabla, $columna);
+	if (!$stmt->execute()) { return false; }
+	$result = $stmt->get_result();
+	$row = mysqli_fetch_assoc($result);
+	return $row && (int)$row["total"] > 0;
+}
 
-    $stmt1 = $mysqli->prepare($consulta1);
-    
+function tablaExisteConsulta($mysqli,$tabla)
+{
+	$stmt = $mysqli->prepare("SELECT COUNT(*) AS total FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+	if (!$stmt) { return false; }
+	$stmt->bind_param("s", $tabla);
+	if (!$stmt->execute()) { return false; }
+	$result = $stmt->get_result();
+	$row = mysqli_fetch_assoc($result);
+	return $row && (int)$row["total"] > 0;
+}
 
-    if (!$stmt1->execute()) {
-        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-        exit;
-    }
-	
+function responderConsultaJson($estado,$mensaje="",$extra=array())
+{
+	$informacion = array("1" => $estado, "mensaje" => $mensaje);
+	foreach ($extra as $clave => $valor) {
+		$informacion[$clave] = $valor;
+	}
+	echo json_encode($informacion);
+	exit;
+}
+
+function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$cod_agendaFK,$cod_venta,$observacion)
+{
+    $mysqli = conectar_al_servidor();
 	$user=$_POST['useru'];
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
-	
-	$consulta1 = "insert into evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK)VALUES('$id_detalle_tratamientoConsulta',$user,'$porcentaje',now(),'$cod_agendaFK') ";
 
-    $stmt1 = $mysqli->prepare($consulta1);
-    
+	$id_detalle_tratamientoConsulta = trim((string)$id_detalle_tratamientoConsulta);
+	$cod_venta = trim((string)$cod_venta);
+	$porcentaje = str_replace("%", "", trim((string)$porcentaje));
+	$porcentaje = str_replace(",", ".", $porcentaje);
+	if (!ctype_digit($id_detalle_tratamientoConsulta)) {
+		responderConsultaJson("camposvacio","No se pudo identificar el tratamiento a evolucionar.");
+	}
+	if (!is_numeric($porcentaje)) {
+		responderConsultaJson("camposvacio","El porcentaje de progreso no es valido.");
+	}
+	$porcentaje = (int)round((float)$porcentaje);
+	if ($porcentaje < 0) { $porcentaje = 0; }
+	if ($porcentaje > 100) { $porcentaje = 100; }
 
-    if (!$stmt1->execute()) {
-        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-        exit;
-    }
-		
- 
-    $informacion = array("1" => "exito");
+	$sqlDetalle = "SELECT dtv.cod_detalle, dtv.cod_ventaFK, dtv.progreso_porcentaje, dtv.estado, dtv.estado_tratamiento, pr.nombre_producto
+		FROM detalle_venta dtv
+		INNER JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		WHERE dtv.cod_detalle = ?";
+	if ($cod_venta != "") {
+		$sqlDetalle .= " AND dtv.cod_ventaFK = ?";
+	}
+	$sqlDetalle .= " LIMIT 1";
+	$stmtDetalle = $mysqli->prepare($sqlDetalle);
+	if (!$stmtDetalle) {
+		responderConsultaJson("error","No se pudo preparar la validacion del tratamiento.");
+	}
+	if ($cod_venta != "") {
+		$stmtDetalle->bind_param("ss", $id_detalle_tratamientoConsulta, $cod_venta);
+	} else {
+		$stmtDetalle->bind_param("s", $id_detalle_tratamientoConsulta);
+	}
+	if (!$stmtDetalle->execute()) {
+		responderConsultaJson("error","No se pudo validar el tratamiento.");
+	}
+	$resultDetalle = $stmtDetalle->get_result();
+	if (!($detalle = mysqli_fetch_assoc($resultDetalle))) {
+		responderConsultaJson("error","El tratamiento no pertenece a la venta o paciente activo.");
+	}
+	$porcentajeAnterior = normalizarPorcentajePlanTratamientoConsulta($detalle["progreso_porcentaje"]);
+
+	$stmtUpdate = $mysqli->prepare("UPDATE detalle_venta SET progreso_porcentaje = ? WHERE cod_detalle = ? LIMIT 1");
+	if (!$stmtUpdate) {
+		responderConsultaJson("error","No se pudo preparar el guardado del progreso.");
+	}
+	$stmtUpdate->bind_param("is", $porcentaje, $id_detalle_tratamientoConsulta);
+	if (!$stmtUpdate->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmtUpdate->errno.') '.$stmtUpdate->error, E_USER_ERROR);
+		exit;
+	}
+
+	$tienePorcentajeAnterior = columnaExisteConsulta($mysqli,"evoluciontratamiento","porcentaje_anterior");
+	$tieneObservacion = columnaExisteConsulta($mysqli,"evoluciontratamiento","observacion");
+	$codAgendaValor = trim((string)$cod_agendaFK);
+	$codAgendaValor = ctype_digit($codAgendaValor) ? (int)$codAgendaValor : null;
+	if ($tienePorcentajeAnterior && $tieneObservacion) {
+		$stmtEvolucion = $mysqli->prepare("INSERT INTO evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK,porcentaje_anterior,observacion) VALUES (?,?,?,NOW(),?,?,?)");
+		if (!$stmtEvolucion) {
+			responderConsultaJson("error","No se pudo preparar el historial de evolucion.");
+		}
+		$stmtEvolucion->bind_param("ssiiis", $id_detalle_tratamientoConsulta, $user, $porcentaje, $codAgendaValor, $porcentajeAnterior, $observacion);
+	} else {
+		$stmtEvolucion = $mysqli->prepare("INSERT INTO evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK) VALUES (?,?,?,NOW(),?)");
+		if (!$stmtEvolucion) {
+			responderConsultaJson("error","No se pudo preparar el historial de evolucion.");
+		}
+		$stmtEvolucion->bind_param("ssii", $id_detalle_tratamientoConsulta, $user, $porcentaje, $codAgendaValor);
+	}
+	if (!$stmtEvolucion->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmtEvolucion->errno.') '.$stmtEvolucion->error, E_USER_ERROR);
+		exit;
+	}
+
+	$estadoClase = normalizarEstadoPlanTratamientoConsulta($detalle["estado"], $detalle["estado_tratamiento"], $porcentaje);
+	$estadoTexto = textoEstadoPlanTratamientoConsulta($estadoClase);
+    $informacion = array(
+		"1" => "exito",
+		"porcentaje_anterior" => $porcentajeAnterior,
+		"porcentaje_nuevo" => $porcentaje,
+		"estado_clase" => $estadoClase,
+		"estado_texto" => $estadoTexto
+	);
     mysqli_close($mysqli);
     echo json_encode($informacion);
     exit;
+}
+
+function asegurarConsultaTratamientoColumnaConsulta($mysqli)
+{
+	if (columnaExisteConsulta($mysqli,"consulta","cod_detalle_ventaFK")) {
+		return true;
+	}
+	$stmt = $mysqli->prepare("ALTER TABLE consulta ADD COLUMN cod_detalle_ventaFK INT NULL AFTER cod_clienteFK");
+	return ($stmt && $stmt->execute());
+}
+
+function obtenerTratamientoPlanMadreRegistroConsulta($mysqli,$cod_detalle_tratamiento,$cod_venta)
+{
+	$cod_detalle_tratamiento = trim((string)$cod_detalle_tratamiento);
+	$cod_venta = trim((string)$cod_venta);
+	if ($cod_detalle_tratamiento == "" || !ctype_digit($cod_detalle_tratamiento) || $cod_venta == "") {
+		return null;
+	}
+	$contexto = obtenerContextoPlanDefinitivoConsulta($mysqli,$cod_venta);
+	if (!$contexto) {
+		return null;
+	}
+	$plan = obtenerPlanMadreAsignadoVentaRowConsulta($mysqli,$contexto["paciente_id"],$contexto["cedula"],$cod_venta);
+	if (!$plan) {
+		return null;
+	}
+
+	$sql = "SELECT pi.id AS plan_item_id, pi.plan_definitivo_id, pi.detalle_venta_id, pi.venta_id,
+			dtv.cod_detalle, dtv.progreso_porcentaje, dtv.estado, dtv.estado_tratamiento,
+			pr.nombre_producto
+		FROM plan_definitivo_tratamiento_items pi
+		INNER JOIN detalle_venta dtv ON dtv.cod_detalle = pi.detalle_venta_id
+		INNER JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		WHERE pi.plan_definitivo_id = ?
+		AND pi.detalle_venta_id = ?
+		AND pi.activo = 1
+		AND IFNULL(dtv.estado,'') <> 'eliminado'
+		".ProductoClinicoWhereSqlConsulta("pr")."
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return null;
+	}
+	$planId = (string)$plan["id"];
+	$stmt->bind_param("ss", $planId, $cod_detalle_tratamiento);
+	if (!$stmt->execute()) {
+		return null;
+	}
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) {
+		return null;
+	}
+	$row["nombre_producto"] = mb_convert_encoding((string)$row["nombre_producto"], 'UTF-8', 'ISO-8859-1');
+	$row["plan_madre"] = $plan;
+	return $row;
+}
+
+function registrarEvolucionTratamientoConsultaRegistro($mysqli,$detalle,$user,$porcentaje,$cod_agendamiento,$observacion)
+{
+	$idDetalle = (string)$detalle["cod_detalle"];
+	$porcentaje = normalizarPorcentajePlanTratamientoConsulta($porcentaje);
+	$porcentajeAnterior = normalizarPorcentajePlanTratamientoConsulta($detalle["progreso_porcentaje"]);
+
+	$stmtUpdate = $mysqli->prepare("UPDATE detalle_venta SET progreso_porcentaje = ? WHERE cod_detalle = ? LIMIT 1");
+	if (!$stmtUpdate) {
+		return array("ok" => false, "mensaje" => "No se pudo preparar el guardado del avance.");
+	}
+	$stmtUpdate->bind_param("is", $porcentaje, $idDetalle);
+	if (!$stmtUpdate->execute()) {
+		return array("ok" => false, "mensaje" => "No se pudo guardar el avance del tratamiento.");
+	}
+
+	$tienePorcentajeAnterior = columnaExisteConsulta($mysqli,"evoluciontratamiento","porcentaje_anterior");
+	$tieneObservacion = columnaExisteConsulta($mysqli,"evoluciontratamiento","observacion");
+	$codAgendaValor = trim((string)$cod_agendamiento);
+	$codAgendaValor = ctype_digit($codAgendaValor) ? (int)$codAgendaValor : null;
+	if ($tienePorcentajeAnterior && $tieneObservacion) {
+		$stmtEvolucion = $mysqli->prepare("INSERT INTO evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK,porcentaje_anterior,observacion) VALUES (?,?,?,NOW(),?,?,?)");
+		if (!$stmtEvolucion) {
+			return array("ok" => false, "mensaje" => "No se pudo preparar el historial de evolucion.");
+		}
+		$stmtEvolucion->bind_param("ssiiis", $idDetalle, $user, $porcentaje, $codAgendaValor, $porcentajeAnterior, $observacion);
+	} else {
+		$stmtEvolucion = $mysqli->prepare("INSERT INTO evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK) VALUES (?,?,?,NOW(),?)");
+		if (!$stmtEvolucion) {
+			return array("ok" => false, "mensaje" => "No se pudo preparar el historial de evolucion.");
+		}
+		$stmtEvolucion->bind_param("ssii", $idDetalle, $user, $porcentaje, $codAgendaValor);
+	}
+	if (!$stmtEvolucion->execute()) {
+		return array("ok" => false, "mensaje" => "No se pudo registrar la evolucion del tratamiento.");
+	}
+	return array("ok" => true, "porcentaje_anterior" => $porcentajeAnterior, "porcentaje_nuevo" => $porcentaje);
 }
 
 
@@ -561,64 +823,98 @@ $mysqli->close();
 }
  
 
-function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion)
+function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha,$cod_estecialista,$cod_agendamiento,$cod_venta,$cod_clienteFK,$apodo,$operacion,$cod_detalle_tratamiento,$avance_tratamiento)
 {
-    if ($trabajoreali == "") {
-        $informacion = array("1" => "camposvacio");
-        echo json_encode($informacion);    
-        exit;
+    if (trim((string)$trabajoreali) == "") {
+        responderConsultaJson("camposvacio","Debe registrar la evolucion del tratamiento realizado.");
+    }
+    $cod_detalle_tratamiento = trim((string)$cod_detalle_tratamiento);
+    if ($cod_detalle_tratamiento == "" || !ctype_digit($cod_detalle_tratamiento)) {
+        responderConsultaJson("camposvacio","Seleccione el tratamiento realizado del plan madre.");
     }
 
     $mysqli = conectar_al_servidor();
+	if (!asegurarConsultaTratamientoColumnaConsulta($mysqli)) {
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo preparar el vinculo entre consulta y tratamiento.");
+	}
+	$detallePlan = obtenerTratamientoPlanMadreRegistroConsulta($mysqli,$cod_detalle_tratamiento,$cod_venta);
+	if (!$detallePlan) {
+		mysqli_close($mysqli);
+		responderConsultaJson("error","Seleccione un tratamiento activo que pertenezca al plan madre.");
+	}
+	$avance_tratamiento = normalizarPorcentajePlanTratamientoConsulta($avance_tratamiento);
+	$mysqli->autocommit(false);
 
     if ($operacion == "nuevo") {
         $consulta1 = "INSERT INTO consulta (
             cod_ventaFK, fecha, cod_usuarioFK, cod_agendamientoFK, estado,
-            trabajo_realizado, proximo_trabajo, motivoconsulta, diagnostico,cod_clienteFK) VALUES (?, ?, ?, ?, 'Activo', ?, ?, ?, ?,?)";
+            trabajo_realizado, proximo_trabajo, motivoconsulta, diagnostico, cod_clienteFK, cod_detalle_ventaFK) VALUES (?, ?, ?, ?, 'Activo', ?, ?, ?, ?, ?, ?)";
 
         $stmt1 = $mysqli->prepare($consulta1);
-        $ss = 'sssssssss';
-        $stmt1->bind_param($ss, $cod_venta, $fecha, $cod_estecialista, $cod_agendamiento, $trabajoreali, $prxtrabajo, $motivo, $diagnostico,$cod_clienteFK);
+		if (!$stmt1) {
+			$mysqli->rollback();
+			mysqli_close($mysqli);
+			responderConsultaJson("error","No se pudo preparar el registro clinico.");
+		}
+        $ss = 'ssssssssss';
+        $stmt1->bind_param($ss, $cod_venta, $fecha, $cod_estecialista, $cod_agendamiento, $trabajoreali, $prxtrabajo, $motivo, $diagnostico, $cod_clienteFK, $cod_detalle_tratamiento);
     }
 
     if ($operacion == "editar") {
         $consulta1 = "UPDATE consulta SET
             cod_ventaFK = ?, fecha = ?, cod_usuarioFK = ?, cod_agendamientoFK = ?, 
-            trabajo_realizado = ?, proximo_trabajo = ?, motivoconsulta = ?, diagnostico = ?,cod_clienteFK = ?
+            trabajo_realizado = ?, proximo_trabajo = ?, motivoconsulta = ?, diagnostico = ?, cod_clienteFK = ?, cod_detalle_ventaFK = ?
             WHERE cod_consulta = ?";
         
         $stmt1 = $mysqli->prepare($consulta1);
-        $ss = 'ssssssssss';
+		if (!$stmt1) {
+			$mysqli->rollback();
+			mysqli_close($mysqli);
+			responderConsultaJson("error","No se pudo preparar la actualizacion del registro clinico.");
+		}
+        $ss = 'sssssssssss';
         $stmt1->bind_param($ss, $cod_venta, $fecha, $cod_estecialista, $cod_agendamiento, 
-                                $trabajoreali, $prxtrabajo, $motivo, $diagnostico, $cod_clienteFK, $cod_consulta);
+                                $trabajoreali, $prxtrabajo, $motivo, $diagnostico, $cod_clienteFK, $cod_detalle_tratamiento, $cod_consulta);
     }
+
+	if (!isset($stmt1)) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		responderConsultaJson("error","Operacion de registro clinico no valida.");
+	}
 
     if (!$stmt1->execute()) {
-        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-        exit;
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+        responderConsultaJson("error","No se pudo guardar el registro clinico.");
     }
 
-
-
-	$consulta1 = "UPDATE venta SET apodo = '$apodo' WHERE cod_venta = '$cod_venta'";
-
-    $stmt1 = $mysqli->prepare($consulta1);
-    
-
-    if (!$stmt1->execute()) {
-        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-        exit;
-    }
-	
-	
-    // Obtener el ID insertado si es nuevo
     if ($operacion == "nuevo") {
         $cod_consulta = $mysqli->insert_id;
-        $informacion = array("1" => "exito", "2" => $cod_consulta);
-    } else {
-        $informacion = array("1" => "exito", "2" => $cod_consulta);
+		$evolucion = registrarEvolucionTratamientoConsultaRegistro($mysqli,$detallePlan,$cod_estecialista,$avance_tratamiento,$cod_agendamiento,$trabajoreali);
+		if (!$evolucion["ok"]) {
+			$mysqli->rollback();
+			mysqli_close($mysqli);
+			responderConsultaJson("error",$evolucion["mensaje"]);
+		}
     }
 
+	$stmtVenta = $mysqli->prepare("UPDATE venta SET apodo = ? WHERE cod_venta = ?");
+	if (!$stmtVenta) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo preparar la actualizacion del beneficiario.");
+	}
+	$stmtVenta->bind_param("ss", $apodo, $cod_venta);
+    if (!$stmtVenta->execute()) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+        responderConsultaJson("error","No se pudo actualizar el beneficiario de la venta.");
+    }
+	
+	$mysqli->commit();
+    $informacion = array("1" => "exito", "2" => $cod_consulta);
     mysqli_close($mysqli);
     echo json_encode($informacion);
     exit;
@@ -779,12 +1075,27 @@ function  buscarHistorialConsulta($cod_venta)
 {
 $mysqli=conectar_al_servidor();
 
-$sql= "select cod_consulta ,cod_ventaFK ,fecha ,cod_usuarioFK ,cod_agendamientoFK ,estado ,trabajo_realizado ,proximo_trabajo,motivoconsulta,diagnostico,(select nombre_persona from persona where cod_persona=cod_usuarioFK) as especialista
- from  consulta  
-where  cod_ventaFK='$cod_venta' order by cod_consulta desc";
+$tieneVinculoTratamiento = asegurarConsultaTratamientoColumnaConsulta($mysqli);
+$selectTratamiento = "'' AS cod_detalle_ventaFK, '' AS tratamiento_realizado_nombre";
+$joinTratamiento = "";
+if ($tieneVinculoTratamiento) {
+	$selectTratamiento = "c.cod_detalle_ventaFK, pr.nombre_producto AS tratamiento_realizado_nombre";
+	$joinTratamiento = " LEFT JOIN detalle_venta dtv ON dtv.cod_detalle = c.cod_detalle_ventaFK
+		LEFT JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK ";
+}
+
+$sql= "SELECT c.cod_consulta, c.cod_ventaFK, c.fecha, c.cod_usuarioFK, c.cod_agendamientoFK, c.estado,
+ c.trabajo_realizado, c.proximo_trabajo, c.motivoconsulta, c.diagnostico,
+ ".$selectTratamiento.",
+ (select nombre_persona from persona where cod_persona=c.cod_usuarioFK) as especialista
+ FROM consulta c
+ ".$joinTratamiento."
+ WHERE c.cod_ventaFK = ?
+ ORDER BY c.cod_consulta DESC";
 
  
 $stmt = $mysqli->prepare($sql);
+$stmt->bind_param("s", $cod_venta);
 if ( ! $stmt->execute()) {
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
@@ -808,6 +1119,8 @@ $proximo_trabajo = mb_convert_encoding((string)($valor['proximo_trabajo']), 'UTF
 $motivoconsulta = mb_convert_encoding((string)($valor['motivoconsulta']), 'UTF-8', 'ISO-8859-1');  
 $diagnostico = mb_convert_encoding((string)($valor['diagnostico']), 'UTF-8', 'ISO-8859-1');  
 $especialista = mb_convert_encoding((string)($valor['especialista']), 'UTF-8', 'ISO-8859-1');  
+$cod_detalle_ventaFK = mb_convert_encoding((string)($valor['cod_detalle_ventaFK']), 'UTF-8', 'ISO-8859-1');  
+$tratamiento_realizado_nombre = mb_convert_encoding((string)($valor['tratamiento_realizado_nombre']), 'UTF-8', 'ISO-8859-1');  
 
 $especialistaMostrar = trim($especialista) != "" ? $especialista : "Profesional";
 $partesEspecialista = preg_split('/\s+/', trim($especialistaMostrar));
@@ -846,8 +1159,11 @@ $trabajoDataHtml = htmlspecialchars($trabajo_realizado, ENT_QUOTES, 'UTF-8');
 $proximoDataHtml = htmlspecialchars($proximo_trabajo, ENT_QUOTES, 'UTF-8');
 $motivoDataHtml = htmlspecialchars($motivoconsulta, ENT_QUOTES, 'UTF-8');
 $diagnosticoDataHtml = htmlspecialchars($diagnostico, ENT_QUOTES, 'UTF-8');
+$tratamientoDataHtml = htmlspecialchars($tratamiento_realizado_nombre, ENT_QUOTES, 'UTF-8');
+$detalleTratamientoDataHtml = htmlspecialchars($cod_detalle_ventaFK, ENT_QUOTES, 'UTF-8');
 $fechaHoraConsultaHtml = htmlspecialchars($fechaConsulta, ENT_QUOTES, 'UTF-8').($horaConsulta != "" ? " &middot; ".htmlspecialchars($horaConsulta, ENT_QUOTES, 'UTF-8') : "");
 $motivoVisible = trim($motivoconsulta) != "" ? $motivoconsulta : "Sin motivo registrado";
+$tratamientoVisible = trim($tratamiento_realizado_nombre) != "" ? $tratamiento_realizado_nombre : "Sin tratamiento vinculado";
 $trabajoVisible = trim($trabajo_realizado) != "" ? $trabajo_realizado : "Sin registro cargado";
 $proximoVisible = trim($proximo_trabajo) != "" ? $proximo_trabajo : "Sin registro cargado";
 $zonaVisible = trim($diagnostico) != "" ? $diagnostico : "Sin zona de trabajo registrada";
@@ -865,25 +1181,36 @@ $pagina .= "
   data-proximo='".$proximoDataHtml."'
   data-motivo='".$motivoDataHtml."'
   data-diagnostico='".$diagnosticoDataHtml."'
+  data-tratamiento='".$tratamientoDataHtml."'
+  data-detalletratamiento='".$detalleTratamientoDataHtml."'
 >
-  <div class='consulta-history-item__header'>
+  <div class='consulta-history-item__rail'>
     <div class='consulta-history-item__avatar' aria-hidden='true'>".htmlspecialchars($inicialesEspecialista, ENT_QUOTES, 'UTF-8')."</div>
-    <div class='consulta-history-item__identity'>
-      <span class='consulta-history-item__number'>Consulta N&deg; ".$codConsultaHtml."</span>
-      <strong>".htmlspecialchars($especialistaMostrar, ENT_QUOTES, 'UTF-8')."</strong>
-      <span>Especialista</span>
+  </div>
+  <div class='consulta-history-item__content'>
+    <div class='consulta-history-item__header'>
+      <div class='consulta-history-item__identity'>
+        <span class='consulta-history-item__number'>Consulta N&deg; ".$codConsultaHtml."</span>
+        <strong>".htmlspecialchars($especialistaMostrar, ENT_QUOTES, 'UTF-8')."</strong>
+        <span>Especialista</span>
+      </div>
+      <time class='consulta-history-item__date'>".$fechaHoraConsultaHtml."</time>
+      <h3 style='display:none;'>Consulta Nº $cod_consulta</h3>
     </div>
-    <time class='consulta-history-item__date'>".$fechaHoraConsultaHtml."</time>
-    <h3 style='display:none;'>Consulta Nº $cod_consulta</h3>
+    <div class='consulta-history-item__main'>
+      <span>Tratamiento realizado</span>
+      <strong>".nl2br(htmlspecialchars($tratamientoVisible, ENT_QUOTES, 'UTF-8'))."</strong>
+      <p>".nl2br(htmlspecialchars($trabajoVisible, ENT_QUOTES, 'UTF-8'))."</p>
+    </div>
+    <div class='consulta-history-item__meta'>
+      <span><b>Motivo</b>".nl2br(htmlspecialchars($motivoVisible, ENT_QUOTES, 'UTF-8'))."</span>
+      <span><b>Zona</b>".nl2br(htmlspecialchars($zonaVisible, ENT_QUOTES, 'UTF-8'))."</span>
+      <span><b>Pr&oacute;xima</b>".nl2br(htmlspecialchars($proximoVisible, ENT_QUOTES, 'UTF-8'))."</span>
+    </div>
+    <div class='consulta-history-item__actions'>
+      <button type='button' class='consulta-history-item__recetario' onclick='event.stopPropagation(); abrirRecetarioIndicacionesDesdeConsultaId(\"".$codConsultaHtml."\")'>Receta / indicaciones</button>
+    </div>
   </div>
-  <div class='consulta-history-item__body'>
-    <p><strong>Motivo Consulta:</strong><span>".nl2br(htmlspecialchars($motivoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
-    <p><strong>Trabajos Realizados:</strong><span>".nl2br(htmlspecialchars($trabajoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
-    <p><strong>Zona de Trabajo:</strong><span>".nl2br(htmlspecialchars($zonaVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
-    <p><strong>Pr&oacute;xima Consulta:</strong><span>".nl2br(htmlspecialchars($proximoVisible, ENT_QUOTES, 'UTF-8'))."</span></p>
-  </div>
-  <button type='button' class='consulta-history-item__recetario' onclick='event.stopPropagation(); abrirRecetarioIndicacionesDesdeConsultaId(\"".$codConsultaHtml."\")'>Emitir receta / indicaciones</button>
-  <span class='consulta-history-item__action'>Ver detalle</span>
 </div>
 ";
  
@@ -895,75 +1222,2962 @@ echo json_encode($informacion);
 exit;
 }
 
+function responderPlanDefinitivoConsulta($estado,$mensaje="",$extra=array())
+{
+	$informacion = array("1" => $estado, "mensaje" => $mensaje);
+	foreach ($extra as $clave => $valor) {
+		$informacion[$clave] = $valor;
+	}
+	echo json_encode($informacion);
+	exit;
+}
+
+function planDefinitivoTablasDisponiblesConsulta($mysqli)
+{
+	$tablas = array("plan_definitivo_tratamiento", "plan_definitivo_tratamiento_items", "plan_definitivo_tratamiento_historial");
+	foreach ($tablas as $tabla) {
+		$stmt = $mysqli->prepare("SELECT COUNT(*) AS total FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+		if (!$stmt) { return false; }
+		$stmt->bind_param("s", $tabla);
+		if (!$stmt->execute()) { return false; }
+		$result = $stmt->get_result();
+		$row = mysqli_fetch_assoc($result);
+		if (!$row || (int)$row["total"] == 0) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user)
+{
+	$rol = "";
+	$stmt = $mysqli->prepare("SELECT tipo FROM usuario WHERE cod_usuario = ? LIMIT 1");
+	if ($stmt) {
+		$stmt->bind_param("s", $user);
+		if ($stmt->execute()) {
+			$result = $stmt->get_result();
+			if ($row = mysqli_fetch_assoc($result)) {
+				$rol = isset($row["tipo"]) ? $row["tipo"] : "";
+			}
+		}
+	}
+	return $rol;
+}
+
+function obtenerNombreUsuarioPlanDefinitivoConsulta($mysqli,$user)
+{
+	$nombre = "Usuario";
+	$stmt = $mysqli->prepare("SELECT nombre_persona FROM persona WHERE cod_persona = ? LIMIT 1");
+	if ($stmt) {
+		$stmt->bind_param("s", $user);
+		if ($stmt->execute()) {
+			$result = $stmt->get_result();
+			if ($row = mysqli_fetch_assoc($result)) {
+				$nombre = mb_convert_encoding((string)$row["nombre_persona"], 'UTF-8', 'ISO-8859-1');
+			}
+		}
+	}
+	return $nombre;
+}
+
+function obtenerContextoPlanDefinitivoConsulta($mysqli,$cod_venta)
+{
+	$sql = "SELECT vt.cod_venta, vt.cod_clienteFK, vt.apodo, vt.fecha_venta, vt.num_factura,
+		cl.ci_cliente, cl.rut_cliente, p.nombre_persona
+		FROM venta vt
+		INNER JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK
+		INNER JOIN persona p ON p.cod_persona = cl.cod_cliente
+		WHERE vt.cod_venta = ?
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("s", $cod_venta);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) { return null; }
+	$ventaBaseDefinitiva = (string)$row["cod_venta"];
+	return array(
+		"venta_base_id" => $ventaBaseDefinitiva,
+		"venta_actual_id" => (string)$row["cod_venta"],
+		"paciente_id" => (string)$row["cod_clienteFK"],
+		"cedula" => mb_convert_encoding((string)$row["ci_cliente"], 'UTF-8', 'ISO-8859-1'),
+		"rut_cliente" => mb_convert_encoding((string)$row["rut_cliente"], 'UTF-8', 'ISO-8859-1'),
+		"paciente" => mb_convert_encoding((string)$row["nombre_persona"], 'UTF-8', 'ISO-8859-1'),
+		"apodo" => mb_convert_encoding((string)$row["apodo"], 'UTF-8', 'ISO-8859-1'),
+		"num_factura" => mb_convert_encoding((string)$row["num_factura"], 'UTF-8', 'ISO-8859-1'),
+		"fecha_venta" => (string)$row["fecha_venta"]
+	);
+}
+
+function obtenerPlanDefinitivoActivoConsulta($mysqli,$venta_base_id)
+{
+	$sql = "SELECT pd.*, (SELECT nombre_persona FROM persona WHERE cod_persona = pd.doctor_cabecera_id LIMIT 1) AS doctor_nombre,
+		(SELECT nombre_persona FROM persona WHERE cod_persona = pd.actualizado_por LIMIT 1) AS actualizado_nombre
+		FROM plan_definitivo_tratamiento pd
+		WHERE pd.venta_base_id = ? AND pd.activo = 1
+		ORDER BY pd.id DESC
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("s", $venta_base_id);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) { return null; }
+	$row["doctor_nombre"] = mb_convert_encoding((string)$row["doctor_nombre"], 'UTF-8', 'ISO-8859-1');
+	$row["actualizado_nombre"] = mb_convert_encoding((string)$row["actualizado_nombre"], 'UTF-8', 'ISO-8859-1');
+	return $row;
+}
+
+function obtenerPlanDefinitivoActivoPacienteConsulta($mysqli,$paciente_id,$cedula)
+{
+	$paciente_id = trim((string)$paciente_id);
+	$cedula = trim((string)$cedula);
+	if ($paciente_id == "" && $cedula == "") { return null; }
+	$sql = "SELECT pd.*, (SELECT nombre_persona FROM persona WHERE cod_persona = pd.doctor_cabecera_id LIMIT 1) AS doctor_nombre,
+		(SELECT nombre_persona FROM persona WHERE cod_persona = pd.actualizado_por LIMIT 1) AS actualizado_nombre
+		FROM plan_definitivo_tratamiento pd
+		LEFT JOIN venta vb ON vb.cod_venta = pd.venta_base_id
+		WHERE pd.activo = 1 AND (pd.paciente_id = ? OR pd.cedula = ?)
+		ORDER BY
+			CASE WHEN vb.cod_venta IS NULL THEN 1 ELSE 0 END,
+			vb.fecha_venta ASC,
+			vb.cod_venta ASC,
+			CASE
+				WHEN pd.estado = 'definido' THEN 0
+				WHEN pd.estado = 'modificado' THEN 1
+				WHEN pd.estado = 'borrador' THEN 2
+				ELSE 3
+			END,
+			pd.id DESC
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("ss", $paciente_id, $cedula);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) { return null; }
+	$row["doctor_nombre"] = mb_convert_encoding((string)$row["doctor_nombre"], 'UTF-8', 'ISO-8859-1');
+	$row["actualizado_nombre"] = mb_convert_encoding((string)$row["actualizado_nombre"], 'UTF-8', 'ISO-8859-1');
+	return $row;
+}
+
+function obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id)
+{
+	$sql = "SELECT * FROM plan_definitivo_tratamiento WHERE id = ? AND activo = 1 LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("s", $plan_id);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) { return null; }
+	return $row;
+}
+
+function obtenerDatosPacientePlanMadreConsulta($mysqli,$cod_cliente)
+{
+	$cod_cliente = trim((string)$cod_cliente);
+	if ($cod_cliente == "") { return null; }
+	$sql = "SELECT cl.cod_cliente, cl.ci_cliente, cl.rut_cliente, p.nombre_persona
+		FROM cliente cl
+		INNER JOIN persona p ON p.cod_persona = cl.cod_cliente
+		WHERE cl.cod_cliente = ?
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("s", $cod_cliente);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) { return null; }
+	return array(
+		"paciente_id" => (string)$row["cod_cliente"],
+		"cedula" => mb_convert_encoding((string)$row["ci_cliente"], 'UTF-8', 'ISO-8859-1'),
+		"rut_cliente" => mb_convert_encoding((string)$row["rut_cliente"], 'UTF-8', 'ISO-8859-1'),
+		"paciente" => mb_convert_encoding((string)$row["nombre_persona"], 'UTF-8', 'ISO-8859-1')
+	);
+}
+
+function obtenerPlanesMadrePacienteConsulta($mysqli,$paciente_id,$cedula)
+{
+	$paciente_id = trim((string)$paciente_id);
+	$cedula = trim((string)$cedula);
+	if ($paciente_id == "" && $cedula == "") { return array(); }
+	$sql = "SELECT pd.*,
+		vb.apodo AS apodo_base,
+		vb.num_factura AS venta_base_numero,
+		vb.fecha_venta AS venta_base_fecha,
+		((SELECT COUNT(DISTINCT pi.venta_id) FROM plan_definitivo_tratamiento_items pi WHERE pi.plan_definitivo_id = pd.id AND pi.activo = 1)
+			+ CASE WHEN pd.venta_base_id IS NOT NULL AND pd.venta_base_id <> ''
+				AND NOT EXISTS (SELECT 1 FROM plan_definitivo_tratamiento_items pi_base WHERE pi_base.plan_definitivo_id = pd.id AND pi_base.venta_id = pd.venta_base_id AND pi_base.activo = 1 LIMIT 1)
+				THEN 1 ELSE 0 END) AS ventas_asignadas,
+		(SELECT COUNT(*) FROM plan_definitivo_tratamiento_items pi WHERE pi.plan_definitivo_id = pd.id AND pi.activo = 1) AS tratamientos_asignados
+		FROM plan_definitivo_tratamiento pd
+		LEFT JOIN venta vb ON vb.cod_venta = pd.venta_base_id
+		WHERE pd.activo = 1 AND (pd.paciente_id = ? OR pd.cedula = ?)
+		ORDER BY pd.fecha_creacion ASC, pd.id ASC";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return array(); }
+	$stmt->bind_param("ss", $paciente_id, $cedula);
+	if (!$stmt->execute()) { return array(); }
+	$result = $stmt->get_result();
+	$planes = array();
+	$numero = 1;
+	while ($row = mysqli_fetch_assoc($result)) {
+		$apodo = mb_convert_encoding((string)$row["apodo_base"], 'UTF-8', 'ISO-8859-1');
+		if (trim($apodo) == "") { $apodo = "Sin beneficiario"; }
+		$row["plan_madre_numero"] = $numero;
+		$row["plan_madre_apodo"] = $apodo;
+		$row["plan_madre_label"] = "Plan madre #".$numero." - ".$apodo;
+		$row["venta_base_numero"] = mb_convert_encoding((string)$row["venta_base_numero"], 'UTF-8', 'ISO-8859-1');
+		$row["ventas_asignadas"] = (int)$row["ventas_asignadas"];
+		$row["tratamientos_asignados"] = (int)$row["tratamientos_asignados"];
+		$planes[] = $row;
+		$numero++;
+	}
+	return $planes;
+}
+
+function buscarPlanMadreEnListaConsulta($planes,$plan_id)
+{
+	foreach ($planes as $plan) {
+		if ((string)$plan["id"] == (string)$plan_id) {
+			return $plan;
+		}
+	}
+	return null;
+}
+
+function obtenerPlanMadreAsignadoVentaConsulta($mysqli,$paciente_id,$cedula,$cod_venta)
+{
+	$cod_venta = trim((string)$cod_venta);
+	if ($cod_venta == "") { return null; }
+	$sql = "SELECT pd.id, COUNT(pi.id) AS items_venta
+		FROM plan_definitivo_tratamiento pd
+		INNER JOIN plan_definitivo_tratamiento_items pi ON pi.plan_definitivo_id = pd.id AND pi.activo = 1
+		WHERE pd.activo = 1
+		AND pi.venta_id = ?
+		AND (pd.paciente_id = ? OR pd.cedula = ?)
+		GROUP BY pd.id
+		ORDER BY pd.fecha_creacion ASC, pd.id ASC
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("sss", $cod_venta, $paciente_id, $cedula);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) {
+		$stmtBase = $mysqli->prepare("SELECT pd.id, 0 AS items_venta
+			FROM plan_definitivo_tratamiento pd
+			WHERE pd.activo = 1
+			AND pd.venta_base_id = ?
+			AND (pd.paciente_id = ? OR pd.cedula = ?)
+			ORDER BY pd.fecha_creacion ASC, pd.id ASC
+			LIMIT 1");
+		if (!$stmtBase) { return null; }
+		$stmtBase->bind_param("sss", $cod_venta, $paciente_id, $cedula);
+		if (!$stmtBase->execute()) { return null; }
+		$resultBase = $stmtBase->get_result();
+		if (!($row = mysqli_fetch_assoc($resultBase))) { return null; }
+	}
+	$planes = obtenerPlanesMadrePacienteConsulta($mysqli,$paciente_id,$cedula);
+	$plan = buscarPlanMadreEnListaConsulta($planes,$row["id"]);
+	if (!$plan) { return null; }
+	$plan["items_venta"] = (int)$row["items_venta"];
+	return $plan;
+}
+
+function obtenerPlanMadreAsignadoVentaRowConsulta($mysqli,$paciente_id,$cedula,$cod_venta)
+{
+	$info = obtenerPlanMadreAsignadoVentaConsulta($mysqli,$paciente_id,$cedula,$cod_venta);
+	if (!$info) { return null; }
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$info["id"]);
+	if (!$plan) { return null; }
+	foreach ($info as $clave => $valor) {
+		$plan[$clave] = $valor;
+	}
+	$doctor = "";
+	$actualizado = "";
+	$stmt = $mysqli->prepare("SELECT
+		(SELECT nombre_persona FROM persona WHERE cod_persona = ? LIMIT 1) AS doctor_nombre,
+		(SELECT nombre_persona FROM persona WHERE cod_persona = ? LIMIT 1) AS actualizado_nombre");
+	if ($stmt) {
+		$stmt->bind_param("ss", $plan["doctor_cabecera_id"], $plan["actualizado_por"]);
+		if ($stmt->execute()) {
+			$row = mysqli_fetch_assoc($stmt->get_result());
+			if ($row) {
+				$doctor = mb_convert_encoding((string)$row["doctor_nombre"], 'UTF-8', 'ISO-8859-1');
+				$actualizado = mb_convert_encoding((string)$row["actualizado_nombre"], 'UTF-8', 'ISO-8859-1');
+			}
+		}
+	}
+	$plan["doctor_nombre"] = $doctor;
+	$plan["actualizado_nombre"] = $actualizado;
+	return $plan;
+}
+
+function normalizarVentaBasePlanDefinitivoConsulta($mysqli,&$plan,$ventaBaseDefinitiva)
+{
+	$ventaBaseDefinitiva = trim((string)$ventaBaseDefinitiva);
+	if (!$plan || $ventaBaseDefinitiva == "" || (string)$plan["venta_base_id"] == $ventaBaseDefinitiva) {
+		return;
+	}
+	$planId = (string)$plan["id"];
+	$stmtPlan = $mysqli->prepare("UPDATE plan_definitivo_tratamiento SET venta_base_id = ? WHERE id = ? AND activo = 1 LIMIT 1");
+	if ($stmtPlan) {
+		$stmtPlan->bind_param("ss", $ventaBaseDefinitiva, $planId);
+		$stmtPlan->execute();
+	}
+	$stmtItems = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET origen = CASE WHEN venta_id = ? THEN 'plan_principal' ELSE 'venta_anexada' END WHERE plan_definitivo_id = ? AND activo = 1");
+	if ($stmtItems) {
+		$stmtItems->bind_param("ss", $ventaBaseDefinitiva, $planId);
+		$stmtItems->execute();
+	}
+	$plan["venta_base_id"] = $ventaBaseDefinitiva;
+}
+
+function obtenerFechaVentaBasePlanDefinitivoConsulta($mysqli,$ventaBaseId)
+{
+	$ventaBaseId = trim((string)$ventaBaseId);
+	if ($ventaBaseId == "") { return ""; }
+	$stmt = $mysqli->prepare("SELECT fecha_venta FROM venta WHERE cod_venta = ? LIMIT 1");
+	if (!$stmt) { return ""; }
+	$stmt->bind_param("s", $ventaBaseId);
+	if (!$stmt->execute()) { return ""; }
+	$result = $stmt->get_result();
+	if ($row = mysqli_fetch_assoc($result)) {
+		return (string)$row["fecha_venta"];
+	}
+	return "";
+}
+
+function obtenerFechaVentaMasAntiguaItemsPlanConsulta($mysqli,$planId)
+{
+	$planId = trim((string)$planId);
+	if ($planId == "") { return ""; }
+	$stmt = $mysqli->prepare("SELECT MIN(v.fecha_venta) AS fecha_venta FROM plan_definitivo_tratamiento_items i INNER JOIN venta v ON v.cod_venta = i.venta_id WHERE i.plan_definitivo_id = ? AND i.activo = 1");
+	if (!$stmt) { return ""; }
+	$stmt->bind_param("s", $planId);
+	if (!$stmt->execute()) { return ""; }
+	$result = $stmt->get_result();
+	if ($row = mysqli_fetch_assoc($result)) {
+		return (string)$row["fecha_venta"];
+	}
+	return "";
+}
+
+function registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$version,$accion,$descripcion,$valor_anterior,$valor_nuevo,$motivo,$usuario_id,$rol)
+{
+	$accion = mb_convert_encoding((string)$accion, 'ISO-8859-1', 'UTF-8');
+	$descripcion = mb_convert_encoding((string)$descripcion, 'ISO-8859-1', 'UTF-8');
+	$valor_anterior = mb_convert_encoding((string)$valor_anterior, 'ISO-8859-1', 'UTF-8');
+	$valor_nuevo = mb_convert_encoding((string)$valor_nuevo, 'ISO-8859-1', 'UTF-8');
+	$motivo = mb_convert_encoding((string)$motivo, 'ISO-8859-1', 'UTF-8');
+	$rol = mb_convert_encoding((string)$rol, 'ISO-8859-1', 'UTF-8');
+	$sql = "INSERT INTO plan_definitivo_tratamiento_historial
+		(plan_definitivo_id, version, accion, descripcion, valor_anterior, valor_nuevo, motivo, usuario_id, rol, fecha_hora)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return false; }
+	$stmt->bind_param("sisssssss", $plan_id, $version, $accion, $descripcion, $valor_anterior, $valor_nuevo, $motivo, $usuario_id, $rol);
+	return $stmt->execute();
+}
+
+function planDefinitivoRequiereMotivoConsulta($plan)
+{
+	$estado = strtolower(trim((string)$plan["estado"]));
+	return ($estado == "definido" || $estado == "modificado");
+}
+
+function versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user)
+{
+	$version = (int)$plan["version_actual"];
+	if (planDefinitivoRequiereMotivoConsulta($plan)) {
+		if (trim((string)$motivo) == "") {
+			return array("ok" => false, "mensaje" => "Debe indicar el motivo de modificacion del plan madre.");
+		}
+		$version++;
+		$estado = "modificado";
+		$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento SET estado = ?, version_actual = ?, fecha_actualizacion = NOW(), actualizado_por = ? WHERE id = ? LIMIT 1");
+		if (!$stmt) {
+			return array("ok" => false, "mensaje" => "No se pudo preparar la actualizacion del plan.");
+		}
+		$stmt->bind_param("siss", $estado, $version, $user, $plan["id"]);
+		if (!$stmt->execute()) {
+			return array("ok" => false, "mensaje" => "No se pudo versionar el plan madre.");
+		}
+		return array("ok" => true, "version" => $version, "estado" => $estado);
+	}
+	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento SET fecha_actualizacion = NOW(), actualizado_por = ? WHERE id = ? LIMIT 1");
+	if ($stmt) {
+		$stmt->bind_param("ss", $user, $plan["id"]);
+		$stmt->execute();
+	}
+	return array("ok" => true, "version" => $version, "estado" => $plan["estado"]);
+}
+
+function ProductoTemporalidadSelectSqlConsulta($mysqli, $alias = "pr")
+{
+	$campos = array(
+		"usa_temporalidad" => "0",
+		"temporalidad_tipo" => "''",
+		"temporalidad_intervalo_recomendado" => "20",
+		"temporalidad_intervalo_minimo" => "15",
+		"temporalidad_intervalo_maximo" => "40",
+		"temporalidad_sesiones_estimadas" => "NULL",
+		"temporalidad_duracion_sillon" => "NULL",
+		"temporalidad_observacion" => "''"
+	);
+	$partes = array();
+	foreach ($campos as $campo => $default) {
+		$partes[] = (columnaExisteConsulta($mysqli, "producto", $campo) ? "IFNULL(".$alias.".".$campo.", ".$default.")" : $default)." AS ".$campo;
+	}
+	return implode(", ", $partes);
+}
+
+function FechaPlanificadaTratamientoSelectSqlConsulta($mysqli, $detalleAlias = "dtv")
+{
+	if (!tablaExisteConsulta($mysqli, "agenda") || !columnaExisteConsulta($mysqli, "agenda", "fecha") || !columnaExisteConsulta($mysqli, "agenda", "cod_detalle_ventaFK")) {
+		return "NULL AS fecha_planificada";
+	}
+	$condicionDetalle = "a.cod_detalle_ventaFK = ".$detalleAlias.".cod_detalle";
+	if (tablaExisteConsulta($mysqli, "agenda_tratamientos") && columnaExisteConsulta($mysqli, "agenda_tratamientos", "cod_detalle_ventaFK")) {
+		$condicionEstadoTratamiento = columnaExisteConsulta($mysqli, "agenda_tratamientos", "estado") ? " AND IFNULL(at.estado,'') <> 'cancelado'" : "";
+		$condicionDetalle = "(".$condicionDetalle." OR EXISTS (SELECT 1 FROM agenda_tratamientos at WHERE at.id_agenda = a.id_agenda AND at.cod_detalle_ventaFK = ".$detalleAlias.".cod_detalle".$condicionEstadoTratamiento."))";
+	}
+	$condicionEstado = columnaExisteConsulta($mysqli, "agenda", "estado") ? " AND UPPER(IFNULL(a.estado,'')) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA')" : "";
+	return "(SELECT MIN(a.fecha) FROM agenda a WHERE ".$condicionDetalle.$condicionEstado.") AS fecha_planificada";
+}
+
+function FechaEvolucionTratamientoSelectSqlConsulta($mysqli, $detalleAlias = "dtv")
+{
+	if (!tablaExisteConsulta($mysqli, "evoluciontratamiento") || !columnaExisteConsulta($mysqli, "evoluciontratamiento", "fecha") || !columnaExisteConsulta($mysqli, "evoluciontratamiento", "cod_detalle_venta")) {
+		return "NULL AS fecha_inicio_tratamiento, NULL AS fecha_ultima_evolucion";
+	}
+	return "(SELECT MIN(et.fecha) FROM evoluciontratamiento et WHERE et.cod_detalle_venta = ".$detalleAlias.".cod_detalle) AS fecha_inicio_tratamiento,
+		(SELECT MAX(et.fecha) FROM evoluciontratamiento et WHERE et.cod_detalle_venta = ".$detalleAlias.".cod_detalle) AS fecha_ultima_evolucion";
+}
+
+function ProductoClinicoWhereSqlConsulta($productoAlias = "pr")
+{
+	$alias = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$productoAlias);
+	if ($alias == "") { $alias = "pr"; }
+	return " AND UPPER(TRIM(".$alias.".nombre_producto)) NOT IN ('CREDITO','INTERES','GASTO ADMINISTRATIVO','CORRETAJE')";
+}
+
+function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
+{
+	$cod_venta = mysqli_real_escape_string($mysqli, $cod_venta);
+	$selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
+	$selectTemporalidad = ProductoTemporalidadSelectSqlConsulta($mysqli, "pr");
+	$selectFechaPlanificada = FechaPlanificadaTratamientoSelectSqlConsulta($mysqli, "dtv");
+	$selectFechaEvolucion = FechaEvolucionTratamientoSelectSqlConsulta($mysqli, "dtv");
+	$selectAlcanceOdontologico = columnaExisteConsulta($mysqli, "producto", "alcance_odontologico")
+		? "pr.alcance_odontologico"
+		: "'no_requiere' AS alcance_odontologico";
+	$sql= "select dtv.descripcion, pr.cod_producto, dtv.cantidad_detalle, pr.nombre_producto, pr.precio_producto, vt.fecha_venta,
+		dtv.cod_detalle, dtv.cod_ventaFK as venta_id, estado_tratamiento, progreso_porcentaje, dtv.estado, ".$selectAlcanceOdontologico.", ".$selectRiesgo.", ".$selectTemporalidad.", ".$selectFechaPlanificada.", ".$selectFechaEvolucion."
+		from producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
+		inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
+		where dtv.cod_ventaFK='$cod_venta'
+		".ProductoClinicoWhereSqlConsulta("pr")."
+		order by dtv.cod_detalle asc";
+
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt || !$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
+		exit;
+	}
+
+	$result = $stmt->get_result();
+	$tratamientos = array();
+	$ordenNatural = 0;
+	while ($valor = mysqli_fetch_assoc($result)) {
+		$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
+		$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');
+		$cod_detalle = mb_convert_encoding((string)($valor['cod_detalle']), 'UTF-8', 'ISO-8859-1');
+		$cod_producto = mb_convert_encoding((string)($valor['cod_producto']), 'UTF-8', 'ISO-8859-1');
+		$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'UTF-8', 'ISO-8859-1');
+		$estado_tratamiento = mb_convert_encoding((string)($valor['estado_tratamiento']), 'UTF-8', 'ISO-8859-1');
+		$progreso_porcentaje = mb_convert_encoding((string)($valor['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1');
+		$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1');
+		$nivel_riesgo_financiero = isset($valor['nivel_riesgo_financiero']) ? $valor['nivel_riesgo_financiero'] : 1;
+		$precio_producto = isset($valor['precio_producto']) ? (float)$valor['precio_producto'] : 0;
+		$progreso_numero = normalizarPorcentajePlanTratamientoConsulta($progreso_porcentaje);
+		$estadoClase = normalizarEstadoPlanTratamientoConsulta($estado, $estado_tratamiento, $progreso_numero);
+		$estadoTexto = textoEstadoPlanTratamientoConsulta($estadoClase);
+		$grupoPlan = grupoPlanTratamientoConsulta($estadoClase, $progreso_numero);
+		$nivel_riesgo_financiero = ProductoRiesgoFinancieroNormalizar($nivel_riesgo_financiero);
+		$alcance_odontologico = isset($valor["alcance_odontologico"]) ? mb_convert_encoding((string)$valor["alcance_odontologico"], 'UTF-8', 'ISO-8859-1') : "no_requiere";
+		$temporalidad_tipo = isset($valor["temporalidad_tipo"]) ? mb_convert_encoding((string)$valor["temporalidad_tipo"], 'UTF-8', 'ISO-8859-1') : "";
+		$temporalidad_observacion = isset($valor["temporalidad_observacion"]) ? mb_convert_encoding((string)$valor["temporalidad_observacion"], 'UTF-8', 'ISO-8859-1') : "";
+		$ubicacion_odontograma = obtenerUbicacionOdontogramaDetalleConsulta($mysqli, $cod_detalle, $alcance_odontologico);
+		$ordenNatural++;
+
+		$tratamientos[] = array(
+			"descripcion" => $descripcion,
+			"nombre_producto" => $nombre_producto,
+			"cod_detalle" => $cod_detalle,
+			"cod_producto" => $cod_producto,
+			"venta_id" => (string)$valor["venta_id"],
+			"fecha_venta" => isset($valor["fecha_venta"]) ? (string)$valor["fecha_venta"] : "",
+			"cantidad_detalle" => $cantidad_detalle,
+			"estado_tratamiento" => $estado_tratamiento,
+			"estado" => $estado,
+			"estado_clase" => $estadoClase,
+			"estado_texto" => $estadoTexto,
+			"avance" => $progreso_numero,
+			"nivel_riesgo_financiero" => $nivel_riesgo_financiero,
+			"alcance_odontologico" => $alcance_odontologico,
+			"ubicacion_odontograma" => $ubicacion_odontograma,
+			"riesgo_orden" => $nivel_riesgo_financiero,
+			"precio_producto" => $precio_producto,
+			"usa_temporalidad" => isset($valor["usa_temporalidad"]) ? (int)$valor["usa_temporalidad"] : 0,
+			"temporalidad_tipo" => $temporalidad_tipo,
+			"temporalidad_intervalo_recomendado" => isset($valor["temporalidad_intervalo_recomendado"]) ? (int)$valor["temporalidad_intervalo_recomendado"] : 20,
+			"temporalidad_intervalo_minimo" => isset($valor["temporalidad_intervalo_minimo"]) ? (int)$valor["temporalidad_intervalo_minimo"] : 15,
+			"temporalidad_intervalo_maximo" => isset($valor["temporalidad_intervalo_maximo"]) ? (int)$valor["temporalidad_intervalo_maximo"] : 40,
+			"temporalidad_sesiones_estimadas" => isset($valor["temporalidad_sesiones_estimadas"]) ? (int)$valor["temporalidad_sesiones_estimadas"] : 0,
+			"temporalidad_duracion_sillon" => isset($valor["temporalidad_duracion_sillon"]) ? (int)$valor["temporalidad_duracion_sillon"] : 0,
+			"temporalidad_observacion" => $temporalidad_observacion,
+			"fecha_planificada" => isset($valor["fecha_planificada"]) ? (string)$valor["fecha_planificada"] : "",
+			"fecha_inicio_tratamiento" => isset($valor["fecha_inicio_tratamiento"]) ? (string)$valor["fecha_inicio_tratamiento"] : "",
+			"fecha_ultima_evolucion" => isset($valor["fecha_ultima_evolucion"]) ? (string)$valor["fecha_ultima_evolucion"] : "",
+			"orden_natural" => $ordenNatural,
+			"grupo_plan" => $grupoPlan
+		);
+	}
+	return $tratamientos;
+}
+
+function aplanarGruposPlanSugeridoConsulta($gruposPlan)
+{
+	$items = array();
+	foreach (array("continuar", "siguientes", "finalizados") as $grupo) {
+		if (!isset($gruposPlan[$grupo])) { continue; }
+		foreach ($gruposPlan[$grupo] as $tratamiento) {
+			$items[] = $tratamiento;
+		}
+	}
+	return $items;
+}
+
+function nivelToValue($nivel)
+{
+	$texto = strtolower(trim((string)$nivel));
+	if ($texto == "" || $texto == "sin nivel" || $texto == "null") {
+		return 0;
+	}
+	if (is_numeric($texto)) {
+		$valor = (int)$texto;
+		return ($valor >= 1 && $valor <= 5) ? $valor : 0;
+	}
+	if (preg_match('/n\s*([1-5])/', $texto, $m)) {
+		return (int)$m[1];
+	}
+	if (preg_match('/\b([1-5])\b/', $texto, $m)) {
+		return (int)$m[1];
+	}
+	return 0;
+}
+
+function planRiskItemValueConsulta($item)
+{
+	$nivel = isset($item["nivel_riesgo_financiero"]) ? $item["nivel_riesgo_financiero"] : (isset($item["nivel_riesgo_snapshot"]) ? $item["nivel_riesgo_snapshot"] : "");
+	return nivelToValue($nivel);
+}
+
+function planRiskOrdenConsulta($item)
+{
+	if (isset($item["orden"])) { return (float)$item["orden"]; }
+	if (isset($item["orden_natural"])) { return (float)$item["orden_natural"]; }
+	if (isset($item["cod_detalle"])) { return (float)$item["cod_detalle"]; }
+	if (isset($item["detalle_venta_id"])) { return (float)$item["detalle_venta_id"]; }
+	return 0;
+}
+
+function normalizarFechaPlanConsulta($fecha)
+{
+	$fecha = trim((string)$fecha);
+	if ($fecha == "" || $fecha == "0000-00-00" || $fecha == "0000-00-00 00:00:00") {
+		return "";
+	}
+	if (preg_match('/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})/', $fecha, $m)) {
+		$fecha = $m[3]."-".$m[2]."-".$m[1];
+	}
+	$timestamp = strtotime($fecha);
+	return $timestamp ? date("Y-m-d", $timestamp) : "";
+}
+
+function sumarDiasFechaPlanConsulta($fecha,$dias)
+{
+	$fecha = normalizarFechaPlanConsulta($fecha);
+	if ($fecha == "") { $fecha = date("Y-m-d"); }
+	$dias = (int)$dias;
+	$timestamp = strtotime($fecha." ".($dias >= 0 ? "+" : "").$dias." days");
+	return $timestamp ? date("Y-m-d", $timestamp) : $fecha;
+}
+
+function diasEntreFechasPlanConsulta($desde,$hasta)
+{
+	$desde = normalizarFechaPlanConsulta($desde);
+	$hasta = normalizarFechaPlanConsulta($hasta);
+	if ($desde == "" || $hasta == "") { return 0; }
+	try {
+		$d1 = new DateTime($desde);
+		$d2 = new DateTime($hasta);
+		return (int)$d1->diff($d2)->format("%r%a");
+	} catch (Exception $e) {
+		return 0;
+	}
+}
+
+function formatearFechaPlanConsulta($fecha)
+{
+	$fecha = normalizarFechaPlanConsulta($fecha);
+	return $fecha != "" ? date("d/m/Y", strtotime($fecha)) : "";
+}
+
+function nombreMesCortoPlanConsulta($mes)
+{
+	$mes = (int)$mes;
+	$meses = array(
+		1 => "Ene",
+		2 => "Feb",
+		3 => "Mar",
+		4 => "Abr",
+		5 => "May",
+		6 => "Jun",
+		7 => "Jul",
+		8 => "Ago",
+		9 => "Set",
+		10 => "Oct",
+		11 => "Nov",
+		12 => "Dic"
+	);
+	return isset($meses[$mes]) ? $meses[$mes] : "";
+}
+
+function formatearMesPlanConsulta($fecha)
+{
+	$fecha = normalizarFechaPlanConsulta($fecha);
+	if ($fecha == "") { return ""; }
+	$timestamp = strtotime($fecha);
+	if (!$timestamp) { return ""; }
+	return nombreMesCortoPlanConsulta((int)date("n", $timestamp))." ".date("Y", $timestamp);
+}
+
+function ticksMesesPlanRiskConsulta($fechaBase,$maxDays)
+{
+	$fechaBase = normalizarFechaPlanConsulta($fechaBase);
+	$maxDays = max(0, (int)$maxDays);
+	if ($fechaBase == "") {
+		$ticks = array();
+		$salto = $maxDays > 240 ? 60 : 30;
+		for ($dia = 0; $dia <= $maxDays; $dia += $salto) {
+			$ticks[] = array("dia" => $dia, "mes" => "Mes ".(int)round($dia / 30), "detalle" => "D".$dia);
+		}
+		if (count($ticks) == 0 || end($ticks)["dia"] != $maxDays) {
+			$ticks[] = array("dia" => $maxDays, "mes" => "Mes ".(int)round($maxDays / 30), "detalle" => "D".$maxDays);
+		}
+		return $ticks;
+	}
+	try {
+		$base = new DateTime($fechaBase);
+		$fin = clone $base;
+		$fin->modify("+".$maxDays." days");
+		$saltoMeses = $maxDays > 420 ? 3 : ($maxDays > 210 ? 2 : 1);
+		$ticks = array();
+		$cursor = clone $base;
+		while ($cursor <= $fin) {
+			$dia = max(0, (int)$base->diff($cursor)->format("%a"));
+			$ticks[] = array(
+				"dia" => $dia,
+				"mes" => formatearMesPlanConsulta($cursor->format("Y-m-d")),
+				"detalle" => "D".$dia." ".$cursor->format("d/m")
+			);
+			$cursor->modify("+".$saltoMeses." month");
+		}
+		if (count($ticks) == 0 || end($ticks)["dia"] < $maxDays) {
+			$ticks[] = array(
+				"dia" => $maxDays,
+				"mes" => formatearMesPlanConsulta($fin->format("Y-m-d")),
+				"detalle" => "D".$maxDays." ".$fin->format("d/m")
+			);
+		}
+		return $ticks;
+	} catch (Exception $e) {
+		return array(array("dia" => 0, "mes" => "Mes 0", "detalle" => "D0"), array("dia" => $maxDays, "mes" => "Mes ".(int)round($maxDays / 30), "detalle" => "D".$maxDays));
+	}
+}
+
+function ventasDesdeItemsPlanConsulta($items)
+{
+	$ventas = array();
+	foreach ($items as $item) {
+		$venta = "";
+		if (isset($item["venta_id"])) { $venta = (string)$item["venta_id"]; }
+		elseif (isset($item["cod_ventaFK"])) { $venta = (string)$item["cod_ventaFK"]; }
+		elseif (isset($item["cod_venta"])) { $venta = (string)$item["cod_venta"]; }
+		$venta = preg_replace('/[^0-9]/', '', $venta);
+		if ($venta != "") {
+			$ventas[$venta] = (int)$venta;
+		}
+	}
+	return array_values($ventas);
+}
+
+function formatoMontoCortoPlanRiskConsulta($monto)
+{
+	$monto = (float)$monto;
+	if ($monto >= 1000000) {
+		$valor = $monto / 1000000;
+		return rtrim(rtrim(number_format($valor, 1, ",", "."), "0"), ",")."M";
+	}
+	if ($monto >= 1000) {
+		return number_format(round($monto / 1000), 0, ",", ".")."k";
+	}
+	return number_format($monto, 0, ",", ".");
+}
+
+function obtenerPagosMensualesPlanConsulta($mysqli,$ventas,$fechaBase)
+{
+	if (!tablaExisteConsulta($mysqli, "pago") || !tablaExisteConsulta($mysqli, "credito")) {
+		return array();
+	}
+	$ventasLimpias = array();
+	foreach ($ventas as $venta) {
+		$venta = (int)$venta;
+		if ($venta > 0) { $ventasLimpias[$venta] = $venta; }
+	}
+	if (count($ventasLimpias) == 0) {
+		return array();
+	}
+	$fechaBase = normalizarFechaPlanConsulta($fechaBase);
+	$listaVentas = implode(",", array_values($ventasLimpias));
+	$campoVentaPago = columnaExisteConsulta($mysqli, "pago", "cod_venta_fk") ? "NULLIF(p.cod_venta_fk,0)" : "NULL";
+	$campoTipoPago = columnaExisteConsulta($mysqli, "pago", "tipo") ? "p.tipo" : "''";
+	$sql = "
+		SELECT
+			DATE_FORMAT(p.Fecha, '%Y-%m-01') AS mes_fecha,
+			SUM(IFNULL(p.Monto,0)) AS monto_pagado,
+			COUNT(DISTINCT p.cod_creditoFK) AS cuotas_pagadas,
+			COUNT(*) AS pagos_realizados,
+			GROUP_CONCAT(DISTINCT COALESCE(".$campoVentaPago.", cr.cod_venta) ORDER BY COALESCE(".$campoVentaPago.", cr.cod_venta) SEPARATOR ', ') AS ventas,
+			SUM(CASE WHEN ".$campoTipoPago." = 'Interes' THEN IFNULL(p.Monto,0) ELSE 0 END) AS monto_interes
+		FROM pago p
+		LEFT JOIN credito cr ON cr.idcredito = p.cod_creditoFK
+		WHERE COALESCE(".$campoVentaPago.", cr.cod_venta) IN (".$listaVentas.")
+			AND IFNULL(p.Monto,0) > 0
+			AND p.Fecha IS NOT NULL
+			AND p.Fecha >= '1000-01-01'
+		GROUP BY DATE_FORMAT(p.Fecha, '%Y-%m-01')
+		ORDER BY mes_fecha ASC";
+	$result = $mysqli->query($sql);
+	if (!$result) {
+		return array();
+	}
+	$pagos = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$mesFecha = normalizarFechaPlanConsulta($row["mes_fecha"]);
+		if ($mesFecha == "") { continue; }
+		$dayOffset = $fechaBase != "" ? max(0, diasEntreFechasPlanConsulta($fechaBase,$mesFecha)) : 0;
+		$monto = isset($row["monto_pagado"]) ? (float)$row["monto_pagado"] : 0;
+		$interes = isset($row["monto_interes"]) ? (float)$row["monto_interes"] : 0;
+		$pagos[] = array(
+			"fecha" => $mesFecha,
+			"mes" => formatearMesPlanConsulta($mesFecha),
+			"dayOffset" => $dayOffset,
+			"monto" => $monto,
+			"montoTexto" => number_format($monto, 0, ",", ".")." Gs.",
+			"montoCorto" => formatoMontoCortoPlanRiskConsulta($monto),
+			"montoInteres" => $interes,
+			"cuotas" => isset($row["cuotas_pagadas"]) ? (int)$row["cuotas_pagadas"] : 0,
+			"pagos" => isset($row["pagos_realizados"]) ? (int)$row["pagos_realizados"] : 0,
+			"ventas" => isset($row["ventas"]) ? (string)$row["ventas"] : ""
+		);
+	}
+	return $pagos;
+}
+
+function etiquetaTemporalidadTipoPlanConsulta($tipo)
+{
+	$tipo = strtolower(trim((string)$tipo));
+	if ($tipo == "evolutivo") { return "Evolutivo"; }
+	if ($tipo == "recurrente") { return "Recurrente"; }
+	if ($tipo == "control_periodico") { return "Control periodico"; }
+	if ($tipo == "unico") { return "Unico"; }
+	return "Sin configurar";
+}
+
+function enteroTemporalidadPlanConsulta($item,$campo,$default)
+{
+	if (!isset($item[$campo]) || trim((string)$item[$campo]) == "" || !is_numeric($item[$campo])) {
+		return (int)$default;
+	}
+	return (int)$item[$campo];
+}
+
+function obtenerTemporalidadItemPlanConsulta($item)
+{
+	$configurada = isset($item["usa_temporalidad"]) && (int)$item["usa_temporalidad"] == 1;
+	$intervalo = enteroTemporalidadPlanConsulta($item, "temporalidad_intervalo_recomendado", 20);
+	$minimo = enteroTemporalidadPlanConsulta($item, "temporalidad_intervalo_minimo", 15);
+	$maximo = enteroTemporalidadPlanConsulta($item, "temporalidad_intervalo_maximo", 40);
+	if ($intervalo <= 0) { $intervalo = 20; }
+	if ($minimo <= 0) { $minimo = max(1, $intervalo - 5); }
+	if ($maximo <= 0) { $maximo = max($intervalo, $minimo + 20); }
+	if ($maximo < $minimo) { $maximo = $minimo; }
+	$tipo = isset($item["temporalidad_tipo"]) ? (string)$item["temporalidad_tipo"] : "";
+	$observacion = isset($item["temporalidad_observacion"]) ? (string)$item["temporalidad_observacion"] : "";
+	return array(
+		"configurada" => $configurada,
+		"tipo" => $tipo,
+		"tipo_label" => etiquetaTemporalidadTipoPlanConsulta($tipo),
+		"intervalo" => $intervalo,
+		"minimo" => $minimo,
+		"maximo" => $maximo,
+		"sesiones" => enteroTemporalidadPlanConsulta($item, "temporalidad_sesiones_estimadas", 0),
+		"duracion" => enteroTemporalidadPlanConsulta($item, "temporalidad_duracion_sillon", 0),
+		"observacion" => $observacion
+	);
+}
+
+function detalleIdPlanRiskConsulta($item)
+{
+	if (isset($item["cod_detalle"])) { return (string)$item["cod_detalle"]; }
+	if (isset($item["detalle_venta_id"])) { return (string)$item["detalle_venta_id"]; }
+	return "";
+}
+
+function fechaInicioCurvaPlanConsulta($items,$fechaInicio)
+{
+	$base = normalizarFechaPlanConsulta($fechaInicio);
+	if ($base == "") { $base = date("Y-m-d"); }
+	return $base;
+}
+
+function estadoTemporalPlanConsulta($temporalidad,$fechaPlanificada,$paso,$diasDesdeAnterior,$fechaReal = "")
+{
+	if (!$temporalidad["configurada"]) { return array("label" => "Sin configuracion", "clase" => "sin-configuracion"); }
+	if ($fechaReal != "") {
+		if ($paso <= 1) { return array("label" => "Inicio real", "clase" => "real"); }
+		if ($diasDesdeAnterior < $temporalidad["minimo"]) { return array("label" => "Adelantado", "clase" => "adelantado"); }
+		if ($diasDesdeAnterior > $temporalidad["maximo"]) { return array("label" => "Atrasado", "clase" => "atrasado"); }
+		return array("label" => "Evolucionado", "clase" => "real");
+	}
+	if ($fechaPlanificada == "") { return array("label" => "Proyectado", "clase" => "proyectado"); }
+	if ($paso <= 1) { return array("label" => "Inicio", "clase" => "inicio"); }
+	if ($diasDesdeAnterior < $temporalidad["minimo"]) { return array("label" => "Adelantado", "clase" => "adelantado"); }
+	if ($diasDesdeAnterior > $temporalidad["maximo"]) { return array("label" => "Atrasado", "clase" => "atrasado"); }
+	return array("label" => "En tiempo", "clase" => "en-tiempo");
+}
+
+function buildAutomaticSuggestionCurve($items,$fechaInicio = "")
+{
+	$ordenados = $items;
+	usort($ordenados, function($a, $b) {
+		$riesgoA = planRiskItemValueConsulta($a);
+		$riesgoB = planRiskItemValueConsulta($b);
+		$riesgoA = $riesgoA > 0 ? $riesgoA : 99;
+		$riesgoB = $riesgoB > 0 ? $riesgoB : 99;
+		if ($riesgoA != $riesgoB) {
+			return $riesgoA < $riesgoB ? -1 : 1;
+		}
+		$ordenA = planRiskOrdenConsulta($a);
+		$ordenB = planRiskOrdenConsulta($b);
+		if ($ordenA == $ordenB) { return 0; }
+		return $ordenA < $ordenB ? -1 : 1;
+	});
+	return buildTreatmentRiskCurve($ordenados,$fechaInicio,false);
+}
+
+function planRiskNombreTratamientoConsulta($item)
+{
+	if (isset($item["nombre_producto_actual"]) && trim((string)$item["nombre_producto_actual"]) != "") { return (string)$item["nombre_producto_actual"]; }
+	if (isset($item["nombre_producto"]) && trim((string)$item["nombre_producto"]) != "") { return (string)$item["nombre_producto"]; }
+	if (isset($item["nombre_tratamiento_snapshot"]) && trim((string)$item["nombre_tratamiento_snapshot"]) != "") { return (string)$item["nombre_tratamiento_snapshot"]; }
+	return "Tratamiento";
+}
+
+function planRiskVentaOrigenConsulta($item)
+{
+	$venta = isset($item["venta_id"]) ? "#".(string)$item["venta_id"] : "";
+	$origen = "";
+	if (isset($item["origen"])) {
+		$origen = (string)$item["origen"] == "venta_anexada" ? "Anexada" : "Principal";
+	}
+	if ($venta == "") { return $origen != "" ? $origen : "Sin venta"; }
+	return $origen != "" ? $venta." ".$origen : $venta;
+}
+
+function planRiskMontoConsulta($item)
+{
+	if (isset($item["precio_producto"]) && is_numeric($item["precio_producto"])) { return (float)$item["precio_producto"]; }
+	if (isset($item["monto"]) && is_numeric($item["monto"])) { return (float)$item["monto"]; }
+	return 0;
+}
+
+function buildTreatmentRiskCurve($items,$fechaInicio = "",$usarFechasReales = true)
+{
+	$puntos = array();
+	$paso = 1;
+	$fechaBase = fechaInicioCurvaPlanConsulta($items,$fechaInicio);
+	$fechaSugerida = $fechaBase;
+	$fechaAnteriorGrafico = "";
+	$intervaloAnterior = 0;
+	foreach ($items as $item) {
+		$valor = planRiskItemValueConsulta($item);
+		$monto = planRiskMontoConsulta($item);
+		$temporalidad = obtenerTemporalidadItemPlanConsulta($item);
+		if ($paso > 1) {
+			$fechaSugerida = sumarDiasFechaPlanConsulta($fechaSugerida, $intervaloAnterior > 0 ? $intervaloAnterior : 20);
+		}
+		$fechaPlanificada = $usarFechasReales && isset($item["fecha_planificada"]) ? normalizarFechaPlanConsulta($item["fecha_planificada"]) : "";
+		$fechaInicioTratamiento = $usarFechasReales && isset($item["fecha_inicio_tratamiento"]) ? normalizarFechaPlanConsulta($item["fecha_inicio_tratamiento"]) : "";
+		$fechaUltimaEvolucion = $usarFechasReales && isset($item["fecha_ultima_evolucion"]) ? normalizarFechaPlanConsulta($item["fecha_ultima_evolucion"]) : "";
+		$fechaReal = $fechaUltimaEvolucion != "" ? $fechaUltimaEvolucion : $fechaInicioTratamiento;
+		$fechaOrigenClase = "proyectado";
+		$fechaOrigenTexto = "Proyectado";
+		if ($fechaReal != "") {
+			$fechaGrafico = $fechaReal;
+			$fechaOrigenClase = "real";
+			$fechaOrigenTexto = "Evolucion real";
+		} elseif ($fechaPlanificada != "") {
+			$fechaGrafico = $fechaPlanificada;
+			$fechaOrigenClase = "agenda";
+			$fechaOrigenTexto = "Agenda";
+		} else {
+			$fechaGrafico = $fechaSugerida;
+		}
+		$diasDesdeAnterior = $fechaAnteriorGrafico != "" ? diasEntreFechasPlanConsulta($fechaAnteriorGrafico, $fechaGrafico) : 0;
+		$estadoTemporal = estadoTemporalPlanConsulta($temporalidad,$fechaPlanificada,$paso,$diasDesdeAnterior,$fechaReal);
+		$dayOffset = max(0, diasEntreFechasPlanConsulta($fechaBase,$fechaGrafico));
+		$puntos[] = array(
+			"paso" => $paso,
+			"detalleId" => detalleIdPlanRiskConsulta($item),
+			"tratamiento" => planRiskNombreTratamientoConsulta($item),
+			"nivelLabel" => $valor > 0 ? ProductoRiesgoFinancieroTexto($valor) : "Sin nivel",
+			"nivelValue" => $valor,
+			"estado" => isset($item["estado_texto"]) ? (string)$item["estado_texto"] : "",
+			"ventaOrigen" => planRiskVentaOrigenConsulta($item),
+			"monto" => $monto,
+			"montoTexto" => $monto > 0 ? number_format($monto, 0, ",", ".")." Gs." : "",
+			"fechaBase" => $fechaBase,
+			"fechaSugerida" => $fechaSugerida,
+			"fechaPlanificada" => $fechaPlanificada,
+			"fechaInicioTratamiento" => $fechaInicioTratamiento,
+			"fechaUltimaEvolucion" => $fechaUltimaEvolucion,
+			"fechaGrafico" => $fechaGrafico,
+			"fechaGraficoTexto" => formatearFechaPlanConsulta($fechaGrafico),
+			"fechaOrigenClase" => $fechaOrigenClase,
+			"fechaOrigenTexto" => $fechaOrigenTexto,
+			"dayOffset" => $dayOffset,
+			"intervaloRecomendadoDias" => $temporalidad["intervalo"],
+			"intervaloMinimoDias" => $temporalidad["minimo"],
+			"intervaloMaximoDias" => $temporalidad["maximo"],
+			"diasDesdeAnterior" => $diasDesdeAnterior,
+			"estadoTemporal" => $estadoTemporal["label"],
+			"estadoTemporalClase" => $estadoTemporal["clase"],
+			"usaTemporalidad" => $temporalidad["configurada"] ? 1 : 0,
+			"temporalidadTipo" => $temporalidad["tipo_label"],
+			"temporalidadObservacion" => $temporalidad["observacion"]
+		);
+		$fechaAnteriorGrafico = $fechaGrafico;
+		$intervaloAnterior = $temporalidad["intervalo"];
+		$paso++;
+	}
+	return $puntos;
+}
+
+function promedioPlanRiskConsulta($valores)
+{
+	$limpios = array();
+	foreach ($valores as $valor) {
+		if ($valor > 0) { $limpios[] = $valor; }
+	}
+	if (count($limpios) == 0) { return 0; }
+	return array_sum($limpios) / count($limpios);
+}
+
+function analyzeRiskProgression($curve)
+{
+	if (count($curve) == 0) {
+		return array("inicio" => "Sin datos", "inicio_clase" => "neutral", "progresion" => "Sin datos", "progresion_clase" => "neutral");
+	}
+	$valores = array();
+	foreach ($curve as $punto) {
+		if ((int)$punto["nivelValue"] > 0) { $valores[] = (int)$punto["nivelValue"]; }
+	}
+	if (count($valores) == 0) {
+		return array("inicio" => "Sin nivel", "inicio_clase" => "medio", "progresion" => "Sin nivel", "progresion_clase" => "medio");
+	}
+	$primero = $valores[0];
+	$inicio = $primero <= 2 ? "Bajo" : ($primero == 3 ? "Medio" : "Alto");
+	$inicioClase = $primero <= 2 ? "bajo" : ($primero == 3 ? "medio" : "alto");
+	foreach ($curve as $punto) {
+		$nivel = (int)$punto["nivelValue"];
+		$dias = isset($punto["dayOffset"]) ? (int)$punto["dayOffset"] : (($punto["paso"] - 1) * 20);
+		if ($nivel >= 5 && $dias <= 30) {
+			return array("inicio" => $inicio, "inicio_clase" => $inicioClase, "progresion" => "Riesgo alto adelantado", "progresion_clase" => "alto");
+		}
+		if ($nivel >= 4 && $dias <= 15) {
+			return array("inicio" => $inicio, "inicio_clase" => $inicioClase, "progresion" => "Riesgo alto adelantado", "progresion_clase" => "alto");
+		}
+	}
+	$cantidad = count($valores);
+	$mitad = max(1, (int)ceil($cantidad / 2));
+	$primeros = array_slice($valores, 0, $mitad);
+	$ultimos = array_slice($valores, -$mitad);
+	$promedioInicio = promedioPlanRiskConsulta($primeros);
+	$promedioFinal = promedioPlanRiskConsulta($ultimos);
+	$tieneAltoTemprano = false;
+	for ($i = 0; $i < min(2, $cantidad); $i++) {
+		if ($valores[$i] >= 4) { $tieneAltoTemprano = true; }
+	}
+	if ($cantidad > 1 && $promedioInicio > ($promedioFinal + 0.6)) {
+		$progresion = "Invertida";
+		$progresionClase = "alto";
+	} elseif ($tieneAltoTemprano || $promedioInicio >= 3.5) {
+		$progresion = "Acelerada";
+		$progresionClase = "medio";
+	} else {
+		$progresion = "Equilibrada";
+		$progresionClase = "bajo";
+	}
+	return array("inicio" => $inicio, "inicio_clase" => $inicioClase, "progresion" => $progresion, "progresion_clase" => $progresionClase);
+}
+
+function analyzeTemporalDensity($curve)
+{
+	if (count($curve) == 0) {
+		return array("label" => "Sin datos", "clase" => "neutral", "warning" => "");
+	}
+	$dias = array();
+	foreach ($curve as $punto) {
+		$dias[] = isset($punto["dayOffset"]) ? (int)$punto["dayOffset"] : 0;
+	}
+	sort($dias);
+	for ($i = 0; $i < count($dias); $i++) {
+		$totalVentana = 0;
+		for ($j = $i; $j < count($dias); $j++) {
+			if (($dias[$j] - $dias[$i]) <= 15) {
+				$totalVentana++;
+			}
+		}
+		if ($totalVentana > 2) {
+			return array("label" => "Alta frecuencia", "clase" => "alto", "warning" => "Alta frecuencia de atenciones: este paciente tiene mas de 2 visitas en 15 dias.");
+		}
+	}
+	return array("label" => "Normal", "clase" => "bajo", "warning" => "");
+}
+
+function analyzeTemporalidadPlanConsulta($curve)
+{
+	if (count($curve) == 0) {
+		return array("label" => "Sin datos", "clase" => "neutral");
+	}
+	$sinConfig = 0;
+	$adelantados = 0;
+	$atrasados = 0;
+	foreach ($curve as $punto) {
+		if (empty($punto["usaTemporalidad"])) { $sinConfig++; }
+		$estado = isset($punto["estadoTemporalClase"]) ? (string)$punto["estadoTemporalClase"] : "";
+		if ($estado == "adelantado") { $adelantados++; }
+		if ($estado == "atrasado") { $atrasados++; }
+	}
+	if ($sinConfig > 0) { return array("label" => "Sin configuracion completa", "clase" => "medio"); }
+	if ($adelantados > 0) { return array("label" => "Muy concentrada", "clase" => "alto"); }
+	if ($atrasados > 0) { return array("label" => "Con atrasos", "clase" => "medio"); }
+	return array("label" => "Correcta", "clase" => "bajo");
+}
+
+function calculatePlanDeviation($actualCurve, $referenceCurve)
+{
+	$total = min(count($actualCurve), count($referenceCurve));
+	if ($total == 0) {
+		return array("label" => "Sin referencia", "clase" => "neutral", "valor" => null);
+	}
+	$suma = 0;
+	$comparados = 0;
+	for ($i = 0; $i < $total; $i++) {
+		$actual = (int)$actualCurve[$i]["nivelValue"];
+		$referencia = (int)$referenceCurve[$i]["nivelValue"];
+		if ($actual <= 0 || $referencia <= 0) { continue; }
+		$desvioRiesgo = abs($actual - $referencia);
+		$diaActual = isset($actualCurve[$i]["dayOffset"]) ? (int)$actualCurve[$i]["dayOffset"] : (($i + 1) * 20);
+		$diaReferencia = isset($referenceCurve[$i]["dayOffset"]) ? (int)$referenceCurve[$i]["dayOffset"] : (($i + 1) * 20);
+		$desvioTemporal = min(2, abs($diaActual - $diaReferencia) / 30);
+		$suma += ($desvioRiesgo + $desvioTemporal);
+		$comparados++;
+	}
+	if ($comparados == 0) {
+		return array("label" => "Sin nivel", "clase" => "neutral", "valor" => null);
+	}
+	$promedio = $suma / $comparados;
+	if ($promedio <= 0.7) { return array("label" => "Bajo", "clase" => "bajo", "valor" => $promedio); }
+	if ($promedio <= 1.5) { return array("label" => "Medio", "clase" => "medio", "valor" => $promedio); }
+	return array("label" => "Alto", "clase" => "alto", "valor" => $promedio);
+}
+
+function planRiskTooltipConsulta($punto)
+{
+	$partes = array(
+		"Paso ".$punto["paso"],
+		$punto["tratamiento"],
+		"Nivel: ".$punto["nivelLabel"],
+		"Origen fecha: ".$punto["fechaOrigenTexto"],
+		"Inicio real: ".(formatearFechaPlanConsulta($punto["fechaInicioTratamiento"]) != "" ? formatearFechaPlanConsulta($punto["fechaInicioTratamiento"]) : "Sin evolucion"),
+		"Ultima evolucion: ".(formatearFechaPlanConsulta($punto["fechaUltimaEvolucion"]) != "" ? formatearFechaPlanConsulta($punto["fechaUltimaEvolucion"]) : "Sin evolucion"),
+		"Fecha sugerida: ".(formatearFechaPlanConsulta($punto["fechaSugerida"]) != "" ? formatearFechaPlanConsulta($punto["fechaSugerida"]) : "Sin fecha"),
+		"Fecha planificada: ".(formatearFechaPlanConsulta($punto["fechaPlanificada"]) != "" ? formatearFechaPlanConsulta($punto["fechaPlanificada"]) : "Sin agenda"),
+		"Intervalo recomendado: ".$punto["intervaloRecomendadoDias"]." dias",
+		"Dias desde anterior: ".$punto["diasDesdeAnterior"],
+		"Estado temporal: ".$punto["estadoTemporal"],
+		"Estado: ".($punto["estado"] != "" ? $punto["estado"] : "Sin estado"),
+		"Venta: ".$punto["ventaOrigen"]
+	);
+	if ($punto["montoTexto"] != "") {
+		$partes[] = "Monto: ".$punto["montoTexto"];
+	}
+	return htmlspecialchars(implode("\n", $partes), ENT_QUOTES, "UTF-8");
+}
+
+function planRiskNivelNombreConsulta($nivel)
+{
+	$nivel = (int)$nivel;
+	if ($nivel == 1) { return "N1 Bajo"; }
+	if ($nivel == 2) { return "N2 Moderado"; }
+	if ($nivel == 3) { return "N3 Controlado"; }
+	if ($nivel == 4) { return "N4 Alto"; }
+	if ($nivel == 5) { return "N5 Critico"; }
+	return "Sin nivel";
+}
+
+function planRiskPointFlagsConsulta($punto)
+{
+	$flags = array();
+	$nivel = isset($punto["nivelValue"]) ? (int)$punto["nivelValue"] : 0;
+	$dias = isset($punto["dayOffset"]) ? (int)$punto["dayOffset"] : 0;
+	if (($nivel >= 5 && $dias <= 30) || ($nivel >= 4 && $dias <= 15)) {
+		$flags[] = "alto_temprano";
+	}
+	if (isset($punto["estadoTemporalClase"]) && $punto["estadoTemporalClase"] == "adelantado") {
+		$flags[] = "adelantado";
+	}
+	if ($nivel <= 0) {
+		$flags[] = "sin_nivel";
+	}
+	return $flags;
+}
+
+function planRiskSmoothPathConsulta($coords)
+{
+	if (count($coords) == 0) { return ""; }
+	$path = "M ".$coords[0]["x"]." ".$coords[0]["y"];
+	for ($i = 1; $i < count($coords); $i++) {
+		$prev = $coords[$i - 1];
+		$actual = $coords[$i];
+		$midX = round(($prev["x"] + $actual["x"]) / 2, 2);
+		$path .= " C ".$midX." ".$prev["y"].", ".$midX." ".$actual["y"].", ".$actual["x"]." ".$actual["y"];
+	}
+	return $path;
+}
+
+function renderPlanRiskChartPathConsulta($curve, $maxDays, $width, $height, $left, $top, $right, $bottom, $tipo)
+{
+	$plotWidth = $width - $left - $right;
+	$plotHeight = $height - $top - $bottom;
+	$coords = array();
+	$markers = "";
+	$count = count($curve);
+	for ($i = 0; $i < $count; $i++) {
+		$punto = $curve[$i];
+		$valor = (int)$punto["nivelValue"];
+		$dia = isset($punto["dayOffset"]) ? (int)$punto["dayOffset"] : (($punto["paso"] - 1) * 20);
+		$x = $left + (($maxDays <= 0) ? ($plotWidth / 2) : ($dia * ($plotWidth / $maxDays)));
+		$y = $top + ((5 - max(0, min(5, $valor))) * ($plotHeight / 5));
+		$coords[] = array("x" => round($x, 2), "y" => round($y, 2));
+		$claseNivel = $valor > 0 ? " nivel-".$valor : " is-missing";
+		$claseFecha = isset($punto["fechaOrigenClase"]) ? " fecha-".preg_replace('/[^a-z0-9_-]/', '', strtolower((string)$punto["fechaOrigenClase"])) : "";
+		$label = $valor > 0 ? "N".$valor : "?";
+		$flags = $tipo == "actual" ? planRiskPointFlagsConsulta($punto) : array();
+		$flagClass = "";
+		foreach ($flags as $flag) {
+			$flagClass .= " is-".preg_replace('/[^a-z0-9_-]/', '', strtolower((string)$flag));
+		}
+		$mostrarLabel = ($tipo == "actual" && ($i == 0 || $i == ($count - 1) || count($flags) > 0));
+		$labelTexto = $mostrarLabel ? "<text class='plan-risk-point-label' x='".round($x, 2)."' y='".round($y - 10, 2)."'>".$label."</text>" : "";
+		$alertaTexto = "";
+		if (in_array("alto_temprano", $flags)) {
+			$alertaTexto = "<text class='plan-risk-alert-label' x='".round($x, 2)."' y='".round($y - 23, 2)."'>Alerta</text>";
+		}
+		$markers .= "<g class='plan-risk-point plan-risk-point--".$tipo.$claseFecha.$claseNivel.$flagClass."' tabindex='0'><title>".planRiskTooltipConsulta($punto)."</title><circle cx='".round($x, 2)."' cy='".round($y, 2)."' r='".($tipo == "referencia" ? "4" : "5")."'></circle>".$labelTexto.$alertaTexto."</g>";
+	}
+	$path = count($coords) > 1 ? "<path class='plan-risk-line plan-risk-line--".$tipo."' d='".planRiskSmoothPathConsulta($coords)."'></path>" : "";
+	return $path.$markers;
+}
+
+function planRiskPagoTooltipConsulta($pago)
+{
+	$partes = array(
+		"Pagos por mes",
+		"Mes: ".$pago["mes"],
+		"Monto abonado: ".$pago["montoTexto"],
+		"Cuotas con pago: ".$pago["cuotas"],
+		"Pagos registrados: ".$pago["pagos"]
+	);
+	if ((float)$pago["montoInteres"] > 0) {
+		$partes[] = "Interes incluido: ".number_format((float)$pago["montoInteres"], 0, ",", ".")." Gs.";
+	}
+	if (trim((string)$pago["ventas"]) != "") {
+		$partes[] = "Ventas: ".$pago["ventas"];
+	}
+	return htmlspecialchars(implode("\n", $partes), ENT_QUOTES, "UTF-8");
+}
+
+function renderPlanRiskPaymentBarsConsulta($pagosMensuales, $maxDays, $width, $height, $left, $top, $right, $bottom)
+{
+	if (count($pagosMensuales) == 0 || $maxDays <= 0) {
+		return "";
+	}
+	$plotWidth = $width - $left - $right;
+	$plotHeight = $height - $top - $bottom;
+	$yBase = $top + $plotHeight;
+	$barMaxHeight = max(34, min(74, $plotHeight * 0.36));
+	$maxMonto = 0;
+	foreach ($pagosMensuales as $pago) {
+		$maxMonto = max($maxMonto, isset($pago["monto"]) ? (float)$pago["monto"] : 0);
+	}
+	if ($maxMonto <= 0) {
+		return "";
+	}
+	$barWidth = max(18, min(42, $plotWidth / max(5, count($pagosMensuales) * 1.45)));
+	$html = "<g class='plan-risk-payments-layer'>";
+	$html .= "<text class='plan-risk-payment-scale-label' x='".($width - $right)."' y='".($top + 11)."'>Max pago ".htmlspecialchars(formatoMontoCortoPlanRiskConsulta($maxMonto), ENT_QUOTES, "UTF-8")."</text>";
+	foreach ($pagosMensuales as $pago) {
+		$monto = isset($pago["monto"]) ? (float)$pago["monto"] : 0;
+		if ($monto <= 0) { continue; }
+		$dia = isset($pago["dayOffset"]) ? (int)$pago["dayOffset"] : 0;
+		$dia = max(0, min($maxDays, $dia));
+		$x = $left + ($dia * ($plotWidth / $maxDays));
+		$barHeight = max(5, ($monto / $maxMonto) * $barMaxHeight);
+		$y = $yBase - $barHeight;
+		$xRect = $x - ($barWidth / 2);
+		$cuotas = isset($pago["cuotas"]) ? (int)$pago["cuotas"] : 0;
+		$labelCuotas = $cuotas == 1 ? "1 cuota" : $cuotas." cuotas";
+		$html .= "<g class='plan-risk-payment-bar' tabindex='0'><title>".planRiskPagoTooltipConsulta($pago)."</title>";
+		$html .= "<rect x='".round($xRect, 2)."' y='".round($y, 2)."' width='".round($barWidth, 2)."' height='".round($barHeight, 2)."' rx='5'></rect>";
+		$html .= "<text class='plan-risk-payment-label' x='".round($x, 2)."' y='".round(max($top + 18, $y - 5), 2)."'>".htmlspecialchars($pago["montoCorto"], ENT_QUOTES, "UTF-8")."</text>";
+		if ($barWidth >= 24) {
+			$html .= "<text class='plan-risk-payment-count' x='".round($x, 2)."' y='".round($yBase - 7, 2)."'>".htmlspecialchars($labelCuotas, ENT_QUOTES, "UTF-8")."</text>";
+		}
+		$html .= "</g>";
+	}
+	$html .= "</g>";
+	return $html;
+}
+
+function renderPlanRiskChart($actualCurve, $referenceCurve = array(), $modo = "definitivo", $pagosMensuales = array())
+{
+	$mostrarReferencia = ($modo == "definitivo" && count($referenceCurve) > 0);
+	$referenciaAnalisis = $mostrarReferencia ? $referenceCurve : $actualCurve;
+	$analisis = analyzeRiskProgression($actualCurve);
+	$temporalidadAnalisis = analyzeTemporalidadPlanConsulta($actualCurve);
+	$frecuenciaAnalisis = analyzeTemporalDensity($actualCurve);
+	$desvio = calculatePlanDeviation($actualCurve, $referenciaAnalisis);
+	$sinNivel = false;
+	foreach ($actualCurve as $punto) {
+		if ((int)$punto["nivelValue"] <= 0) { $sinNivel = true; break; }
+	}
+	$tituloCurvaActual = $modo == "definitivo" ? "Plan madre" : "Sugerencia autom&aacute;tica";
+	$maxPuntos = max(1, count($actualCurve), count($referenceCurve));
+	$maxDays = 0;
+	$fechaBaseGrafico = "";
+	foreach (array_merge($actualCurve, $referenceCurve) as $punto) {
+		if ($fechaBaseGrafico == "" && isset($punto["fechaBase"])) { $fechaBaseGrafico = $punto["fechaBase"]; }
+		$maxDays = max($maxDays, isset($punto["dayOffset"]) ? (int)$punto["dayOffset"] : 0);
+	}
+	foreach ($pagosMensuales as $pagoMensual) {
+		$maxDays = max($maxDays, isset($pagoMensual["dayOffset"]) ? (int)$pagoMensual["dayOffset"] : 0);
+	}
+	if ($maxDays <= 0) { $maxDays = max(20, ($maxPuntos - 1) * 20); }
+	$width = max(680, min(1500, ($maxDays * 8) + 120));
+	$height = 250;
+	$left = 92;
+	$right = 32;
+	$top = 22;
+	$bottom = 50;
+	$plotWidth = $width - $left - $right;
+	$plotHeight = $height - $top - $bottom;
+	$svg = "";
+	if (count($actualCurve) > 0) {
+		$svg .= "<svg class='plan-risk-svg' width='".$width."' height='".$height."' viewBox='0 0 ".$width." ".$height."' role='img' aria-label='Resumen grafico de riesgo financiero y temporalidad'>";
+		for ($nivel = 1; $nivel <= 5; $nivel++) {
+			$y = $top + ((5 - $nivel) * ($plotHeight / 5));
+			$svg .= "<line class='plan-risk-grid' x1='".$left."' y1='".round($y, 2)."' x2='".($width - $right)."' y2='".round($y, 2)."'></line>";
+			$svg .= "<text class='plan-risk-axis-label' x='10' y='".round($y + 4, 2)."'>".htmlspecialchars(planRiskNivelNombreConsulta($nivel), ENT_QUOTES, "UTF-8")."</text>";
+		}
+		$svg .= "<line class='plan-risk-axis' x1='".$left."' y1='".$top."' x2='".$left."' y2='".($top + $plotHeight)."'></line>";
+		$svg .= "<line class='plan-risk-axis' x1='".$left."' y1='".($top + $plotHeight)."' x2='".($width - $right)."' y2='".($top + $plotHeight)."'></line>";
+		$ticks = ticksMesesPlanRiskConsulta($fechaBaseGrafico,$maxDays);
+		foreach ($ticks as $tick) {
+			$dia = isset($tick["dia"]) ? (int)$tick["dia"] : 0;
+			if ($dia < 0 || $dia > $maxDays) { continue; }
+			$x = $left + ($dia * ($plotWidth / $maxDays));
+			$svg .= "<line class='plan-risk-tick' x1='".round($x, 2)."' y1='".($top + $plotHeight)."' x2='".round($x, 2)."' y2='".($top + $plotHeight + 5)."'></line>";
+			$svg .= "<text class='plan-risk-month-label' x='".round($x, 2)."' y='".($height - 24)."'>".htmlspecialchars($tick["mes"], ENT_QUOTES, "UTF-8")."</text>";
+			$svg .= "<text class='plan-risk-date-label' x='".round($x, 2)."' y='".($height - 8)."'>".htmlspecialchars($tick["detalle"], ENT_QUOTES, "UTF-8")."</text>";
+		}
+		$svg .= renderPlanRiskPaymentBarsConsulta($pagosMensuales, $maxDays, $width, $height, $left, $top, $right, $bottom);
+		if ($mostrarReferencia) {
+			$svg .= renderPlanRiskChartPathConsulta($referenceCurve, $maxDays, $width, $height, $left, $top, $right, $bottom, "referencia");
+		}
+		$svg .= renderPlanRiskChartPathConsulta($actualCurve, $maxDays, $width, $height, $left, $top, $right, $bottom, "actual");
+		$svg .= "</svg>";
+	}
+	$desvioDetalle = $desvio["valor"] === null ? "" : " <small>".number_format($desvio["valor"], 1, ".", "")."</small>";
+	$warnings = "";
+	if ($sinNivel) {
+		$warnings .= "<div class='plan-risk-warning plan-risk-warning--nivel'>Hay tratamientos sin nivel de riesgo cargado.</div>";
+	}
+	if ($frecuenciaAnalisis["warning"] != "") {
+		$warnings .= "<div class='plan-risk-warning plan-risk-warning--frecuencia'>".$frecuenciaAnalisis["warning"]."</div>";
+	}
+	if ($analisis["progresion"] == "Riesgo alto adelantado") {
+		$warnings .= "<div class='plan-risk-warning plan-risk-warning--alto-temprano'>Se detect&oacute; un N4 o N5 demasiado temprano en la ruta.</div>";
+	}
+	if ($modo == "definitivo" && !$mostrarReferencia) {
+		$warnings .= "<div class='plan-risk-warning plan-risk-warning--referencia'>No se encontr&oacute; curva de referencia autom&aacute;tica.</div>";
+	}
+	$fechaInicioPlanTexto = $fechaBaseGrafico != "" ? formatearFechaPlanConsulta($fechaBaseGrafico) : "";
+	$fechaInicioDetalle = $fechaInicioPlanTexto != "" ? " <small>".$fechaInicioPlanTexto."</small>" : "";
+	$cuerpoGrafico = count($actualCurve) == 0
+		? "<div class='plan-risk-empty'>No hay tratamientos suficientes para generar el gr&aacute;fico.</div>"
+		: "<div class='plan-risk-chart-scroll'>".$svg."</div>";
+	return "
+<section class='plan-risk-card plan-risk-card--".$modo."'>
+	<div class='plan-risk-card__head'>
+		<div>
+			<strong>Resumen gr&aacute;fico de la ruta</strong>
+			<span>Proyecci&oacute;n del riesgo financiero seg&uacute;n orden y temporalidad del plan</span>
+		</div>
+		<div class='plan-risk-legend'>
+			<span class='plan-risk-legend__actual'>Ruta realizada / ".$tituloCurvaActual."</span>
+			".($mostrarReferencia ? "<span class='plan-risk-legend__referencia'>Ruta esperada / sugerida</span>" : "")."
+			".(count($pagosMensuales) > 0 ? "<span class='plan-risk-legend__pagos'>Monto abonado mensual</span>" : "")."
+			<span class='plan-risk-legend__alerta'>Punto con alerta</span>
+		</div>
+	</div>
+	<div class='plan-risk-indicators'>
+		<span class='plan-risk-chip plan-risk-chip--".$analisis["inicio_clase"]."'><b>Inicio venta base</b>".$analisis["inicio"].$fechaInicioDetalle."</span>
+		<span class='plan-risk-chip plan-risk-chip--".$analisis["progresion_clase"]."'><b>Progresi&oacute;n</b>".$analisis["progresion"]."</span>
+		<span class='plan-risk-chip plan-risk-chip--".$temporalidadAnalisis["clase"]."'><b>Temporalidad</b>".$temporalidadAnalisis["label"]."</span>
+		<span class='plan-risk-chip plan-risk-chip--".$frecuenciaAnalisis["clase"]."'><b>Frecuencia</b>".$frecuenciaAnalisis["label"]."</span>
+		<span class='plan-risk-chip plan-risk-chip--".$desvio["clase"]."'><b>Desv&iacute;o vs sugerencia</b>".$desvio["label"].$desvioDetalle."</span>
+	</div>
+	".$cuerpoGrafico."
+	".$warnings."
+</section>";
+}
+
  
+function normalizarPorcentajePlanTratamientoConsulta($valor)
+{
+	$valor = str_replace("%", "", trim((string)$valor));
+	$valor = str_replace(",", ".", $valor);
+	$valor = is_numeric($valor) ? (int)round((float)$valor) : 0;
+	if ($valor < 0) { return 0; }
+	if ($valor > 100) { return 100; }
+	return $valor;
+}
+
+function textoContienePlanTratamientoConsulta($texto, $opciones)
+{
+	$texto = strtolower(trim((string)$texto));
+	foreach ($opciones as $opcion) {
+		if (strpos($texto, $opcion) !== false) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function normalizarEstadoPlanTratamientoConsulta($estado, $estado_tratamiento, $avance)
+{
+	$texto = strtolower(trim((string)$estado." ".(string)$estado_tratamiento));
+	if ($avance >= 100 || textoContienePlanTratamientoConsulta($texto, array("completado", "finalizado", "finalizada"))) {
+		return "completado";
+	}
+	if (textoContienePlanTratamientoConsulta($texto, array("eliminado", "anulado", "cancelado", "inactivo"))) {
+		return "cancelado";
+	}
+	if (($avance > 0 && $avance < 100) || textoContienePlanTratamientoConsulta($texto, array("proceso", "iniciado", "iniciada"))) {
+		return "proceso";
+	}
+	return "pendiente";
+}
+
+function textoEstadoPlanTratamientoConsulta($estado)
+{
+	if ($estado == "completado") { return "Completado"; }
+	if ($estado == "proceso") { return "En proceso"; }
+	if ($estado == "cancelado") { return "Anulado"; }
+	return "Pendiente";
+}
+
+function grupoPlanTratamientoConsulta($estado, $avance)
+{
+	if ($estado == "completado" || $estado == "cancelado" || $avance >= 100) {
+		return "finalizados";
+	}
+	if ($estado == "proceso" || ($avance > 0 && $avance < 100)) {
+		return "continuar";
+	}
+	return "siguientes";
+}
+
+function compararNumeroPlanTratamientoConsulta($a, $b, $campo, $direccion = "asc")
+{
+	$valorA = isset($a[$campo]) ? (float)$a[$campo] : 0;
+	$valorB = isset($b[$campo]) ? (float)$b[$campo] : 0;
+	if ($valorA == $valorB) {
+		return 0;
+	}
+	$resultado = $valorA < $valorB ? -1 : 1;
+	return $direccion == "desc" ? ($resultado * -1) : $resultado;
+}
+
+function compararTextoPlanTratamientoConsulta($a, $b, $campo)
+{
+	$valorA = isset($a[$campo]) ? strtolower((string)$a[$campo]) : "";
+	$valorB = isset($b[$campo]) ? strtolower((string)$b[$campo]) : "";
+	return strcmp($valorA, $valorB);
+}
+
+function ordenarGrupoPlanTratamientoConsulta(&$grupo, $tipo)
+{
+	usort($grupo, function($a, $b) use ($tipo) {
+		if ($tipo == "continuar") {
+			return compararNumeroPlanTratamientoConsulta($a, $b, "riesgo_orden")
+				?: compararNumeroPlanTratamientoConsulta($a, $b, "orden_natural")
+				?: compararNumeroPlanTratamientoConsulta($a, $b, "avance", "desc")
+				?: compararTextoPlanTratamientoConsulta($a, $b, "nombre_producto");
+		}
+		if ($tipo == "siguientes") {
+			return compararNumeroPlanTratamientoConsulta($a, $b, "riesgo_orden")
+				?: compararNumeroPlanTratamientoConsulta($a, $b, "orden_natural")
+				?: compararNumeroPlanTratamientoConsulta($a, $b, "precio_producto")
+				?: compararTextoPlanTratamientoConsulta($a, $b, "nombre_producto");
+		}
+		return compararNumeroPlanTratamientoConsulta($a, $b, "orden_natural")
+			?: compararTextoPlanTratamientoConsulta($a, $b, "nombre_producto");
+	});
+}
+
+function ordenarTratamientosPlanSugerido($tratamientos)
+{
+	$grupos = array(
+		"continuar" => array(),
+		"siguientes" => array(),
+		"finalizados" => array()
+	);
+	foreach ($tratamientos as $tratamiento) {
+		$grupo = isset($tratamiento["grupo_plan"]) ? $tratamiento["grupo_plan"] : "siguientes";
+		if (!isset($grupos[$grupo])) {
+			$grupo = "siguientes";
+		}
+		$grupos[$grupo][] = $tratamiento;
+	}
+	ordenarGrupoPlanTratamientoConsulta($grupos["continuar"], "continuar");
+	ordenarGrupoPlanTratamientoConsulta($grupos["siguientes"], "siguientes");
+	ordenarGrupoPlanTratamientoConsulta($grupos["finalizados"], "finalizados");
+	return $grupos;
+}
+
+function ayudaCardPlanTratamientoConsulta($tratamiento)
+{
+	if ($tratamiento["grupo_plan"] == "continuar") {
+		return "Ya iniciado, conviene continuarlo.";
+	}
+	if ($tratamiento["grupo_plan"] == "finalizados") {
+		return $tratamiento["estado_clase"] == "cancelado" ? "Tratamiento no activo." : "Tratamiento ya finalizado.";
+	}
+	return "Siguiente sugerido segun riesgo y orden natural.";
+}
+
+function odontogramaTablasDisponiblesConsulta($mysqli)
+{
+	$res = $mysqli->query("SHOW TABLES LIKE 'odontograma_tratamiento_links'");
+	return $res && $res->num_rows > 0;
+}
+
+function textoSuperficieOdontogramaConsulta($superficie)
+{
+	$mapa = array(
+		"mesial" => "Mesial",
+		"distal" => "Distal",
+		"vestibular" => "Vestibular",
+		"lingual_palatina" => "Lingual / Palatina",
+		"oclusal_incisal" => "Oclusal / Incisal"
+	);
+	return isset($mapa[$superficie]) ? $mapa[$superficie] : $superficie;
+}
+
+function normalizarArcadaOdontogramaConsulta($arcada)
+{
+	$arcada = strtolower(str_replace(" ", "_", trim((string)$arcada)));
+	if ($arcada == "superior_e_inferior" || $arcada == "superior_inferior" || $arcada == "ambas_arcadas") {
+		return "ambas";
+	}
+	return $arcada;
+}
+
+function textoArcadaOdontogramaConsulta($arcada)
+{
+	$arcada = normalizarArcadaOdontogramaConsulta($arcada);
+	if ($arcada == "ambas") { return "Arcada superior e inferior"; }
+	if ($arcada == "superior") { return "Arcada superior"; }
+	if ($arcada == "inferior") { return "Arcada inferior"; }
+	return "Arcada ".str_replace("_", " ", $arcada);
+}
+
+function textoAlcanceOdontogramaConsulta($alcance)
+{
+	$mapa = array(
+		"no_requiere" => "No requiere odontograma",
+		"boca_completa" => "Boca completa",
+		"arcada" => "Arcada",
+		"cuadrante" => "Cuadrante",
+		"pieza_dental" => "Pieza dental",
+		"pieza_superficie" => "Pieza + superficie"
+	);
+	$alcance = strtolower(trim((string)$alcance));
+	return isset($mapa[$alcance]) ? $mapa[$alcance] : "Pieza dental";
+}
+
+function textoUbicacionOdontogramaConsulta($link)
+{
+	if (!$link) { return ""; }
+	if ((int)$link["boca_completa"] == 1) { return "Boca completa"; }
+	if (trim((string)$link["arcada"]) != "") { return textoArcadaOdontogramaConsulta($link["arcada"]); }
+	if (trim((string)$link["cuadrante"]) != "") { return "Cuadrante ".str_replace("_", " ", $link["cuadrante"]); }
+	$texto = trim((string)$link["pieza"]) != "" ? "Pieza ".$link["pieza"] : "";
+	$superficies = array();
+	if (trim((string)$link["superficies_json"]) != "") {
+		$dec = json_decode($link["superficies_json"], true);
+		if (is_array($dec)) {
+			foreach ($dec as $sup) {
+				$superficies[] = textoSuperficieOdontogramaConsulta($sup);
+			}
+		}
+	}
+	if (count($superficies) > 0) {
+		$texto .= " &middot; ".implode(", ", $superficies);
+	}
+	return trim($texto);
+}
+
+function baseUbicacionOdontogramaConsulta($alcance, $falta)
+{
+	$alcance = strtolower(trim((string)$alcance));
+	return array(
+		"texto" => "",
+		"falta" => $falta,
+		"requiere" => ($alcance != "" && $alcance != "no_requiere"),
+		"alcance" => $alcance,
+		"pieza" => "",
+		"superficies_json" => "",
+		"arcada" => "",
+		"cuadrante" => "",
+		"boca_completa" => 0
+	);
+}
+
+function obtenerUbicacionOdontogramaDetalleConsulta($mysqli, $detalleId, $alcance)
+{
+	$alcance = strtolower(trim((string)$alcance));
+	$requiere = ($alcance != "" && $alcance != "no_requiere");
+	if (!odontogramaTablasDisponiblesConsulta($mysqli)) {
+		return baseUbicacionOdontogramaConsulta($alcance, false);
+	}
+	$stmt = $mysqli->prepare("SELECT pieza, superficies_json, arcada, cuadrante, boca_completa FROM odontograma_tratamiento_links WHERE detalle_venta_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1");
+	if (!$stmt) {
+		return baseUbicacionOdontogramaConsulta($alcance, $requiere);
+	}
+	$stmt->bind_param("s", $detalleId);
+	if (!$stmt->execute()) {
+		return baseUbicacionOdontogramaConsulta($alcance, $requiere);
+	}
+	$row = $stmt->get_result()->fetch_assoc();
+	if (!$row) {
+		$base = baseUbicacionOdontogramaConsulta($alcance, $requiere);
+		$base["texto"] = $requiere ? "Falta ubicar en odontograma" : "";
+		return $base;
+	}
+	$texto = textoUbicacionOdontogramaConsulta($row);
+	$row["texto"] = $texto != "" ? $texto : "Falta ubicar en odontograma";
+	$row["falta"] = false;
+	$row["requiere"] = $requiere;
+	$row["alcance"] = $alcance;
+	return $row;
+}
+
+function tipoUbicacionVisualOdontogramaConsulta($ubicacion)
+{
+	if (!is_array($ubicacion) || !empty($ubicacion["falta"])) { return "pendiente"; }
+	if ((int)$ubicacion["boca_completa"] == 1) { return "boca-completa"; }
+	if (trim((string)$ubicacion["arcada"]) != "") {
+		$arcada = normalizarArcadaOdontogramaConsulta($ubicacion["arcada"]);
+		if ($arcada == "superior") { return "arcada-superior"; }
+		if ($arcada == "inferior") { return "arcada-inferior"; }
+		return "ambas-arcadas";
+	}
+	if (trim((string)$ubicacion["pieza"]) != "") { return "pieza"; }
+	if (trim((string)$ubicacion["cuadrante"]) != "") { return "ambas-arcadas"; }
+	return "pendiente";
+}
+
+function primeraSuperficieUbicacionOdontogramaConsulta($ubicacion)
+{
+	if (!is_array($ubicacion)) { return ""; }
+	if (trim((string)$ubicacion["superficies_json"]) != "") {
+		$dec = json_decode($ubicacion["superficies_json"], true);
+		if (is_array($dec) && count($dec) > 0) {
+			return (string)$dec[0];
+		}
+	}
+	return "";
+}
+
+function iconoUbicacionOdontogramaConsulta($tipo, $pieza)
+{
+	$piezaHtml = htmlspecialchars((string)$pieza, ENT_QUOTES, "UTF-8");
+	if ($tipo == "pieza") {
+		return "<span class='odontograma-location-icon odontograma-icon-pieza mini-diente-perfil' aria-hidden='true'><svg viewBox='0 0 44 44'><path class='icon-tooth-root' d='M17 23 C18 28 19 35 22 40 C25 35 26 28 27 23 C24 25 20 25 17 23 Z'></path><path class='icon-tooth-crown' d='M12 9 C16 3 28 3 32 9 C34 16 30 23 24 26 C22 24 20 24 18 26 C12 23 10 16 12 9 Z'></path></svg>".($piezaHtml != "" ? "<b>".$piezaHtml."</b>" : "")."</span>";
+	}
+	if ($tipo == "arcada-superior") {
+		return "<span class='odontograma-location-icon odontograma-icon-arcada-superior' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M8 28 C13 14 31 14 36 28'></path><circle cx='14' cy='27' r='2.5'></circle><circle cx='22' cy='23' r='2.5'></circle><circle cx='30' cy='27' r='2.5'></circle></svg></span>";
+	}
+	if ($tipo == "arcada-inferior") {
+		return "<span class='odontograma-location-icon odontograma-icon-arcada-inferior' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M8 16 C13 30 31 30 36 16'></path><circle cx='14' cy='17' r='2.5'></circle><circle cx='22' cy='21' r='2.5'></circle><circle cx='30' cy='17' r='2.5'></circle></svg></span>";
+	}
+	if ($tipo == "ambas-arcadas") {
+		return "<span class='odontograma-location-icon odontograma-icon-ambas-arcadas' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M9 20 C14 9 30 9 35 20'></path><path d='M9 24 C14 35 30 35 35 24'></path><circle cx='16' cy='20' r='2'></circle><circle cx='22' cy='17' r='2'></circle><circle cx='28' cy='20' r='2'></circle><circle cx='16' cy='24' r='2'></circle><circle cx='22' cy='27' r='2'></circle><circle cx='28' cy='24' r='2'></circle></svg></span>";
+	}
+	if ($tipo == "boca-completa") {
+		return "<span class='odontograma-location-icon odontograma-icon-boca-completa' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M7 22 C10 8 34 8 37 22 C34 36 10 36 7 22 Z'></path><path d='M12 20 C17 15 27 15 32 20'></path><path d='M12 24 C17 29 27 29 32 24'></path><path d='M22 15 L22 29'></path></svg></span>";
+	}
+	return "<span class='odontograma-location-icon odontograma-icon-pendiente' aria-hidden='true'><svg viewBox='0 0 44 44'><circle cx='22' cy='22' r='13'></circle><path d='M22 14 L22 30'></path><path d='M14 22 L30 22'></path></svg></span>";
+}
+
+function renderizarUbicacionOdontogramaConsulta($ubicacion, $claseBase)
+{
+	if (!is_array($ubicacion) || trim((string)$ubicacion["texto"]) == "") {
+		return "";
+	}
+	$tipo = tipoUbicacionVisualOdontogramaConsulta($ubicacion);
+	$falta = !empty($ubicacion["falta"]);
+	$texto = $falta ? "Ubicaci&oacute;n pendiente" : htmlspecialchars((string)$ubicacion["texto"], ENT_QUOTES, "UTF-8");
+	$detalle = $falta ? "Requiere: ".htmlspecialchars(textoAlcanceOdontogramaConsulta($ubicacion["alcance"]), ENT_QUOTES, "UTF-8") : "";
+	if ($tipo == "boca-completa" && !$falta) { $detalle = "Aplica a todos los dientes"; }
+	if (($tipo == "arcada-superior" || $tipo == "arcada-inferior" || $tipo == "ambas-arcadas") && !$falta) { $detalle = "Ubicaci&oacute;n general"; }
+	$clase = $claseBase." tratamiento-ubicacion-visual tratamiento-ubicacion-".$tipo.($falta ? " ".$claseBase."--falta tratamiento-ubicacion-pendiente" : " tratamiento-ubicacion-completa");
+	$contenido = iconoUbicacionOdontogramaConsulta($tipo, isset($ubicacion["pieza"]) ? $ubicacion["pieza"] : "")."<span class='tratamiento-ubicacion-texto'><b>".$texto."</b>".($detalle != "" ? "<small>".$detalle."</small>" : "")."</span>";
+	if ($falta) {
+		return "<span class='".$clase."'>".$contenido."</span>";
+	}
+	$pieza = htmlspecialchars((string)$ubicacion["pieza"], ENT_QUOTES, "UTF-8");
+	$arcada = htmlspecialchars((string)$ubicacion["arcada"], ENT_QUOTES, "UTF-8");
+	$cuadrante = htmlspecialchars((string)$ubicacion["cuadrante"], ENT_QUOTES, "UTF-8");
+	$boca = ((int)$ubicacion["boca_completa"] == 1) ? "1" : "";
+	$superficie = htmlspecialchars(primeraSuperficieUbicacionOdontogramaConsulta($ubicacion), ENT_QUOTES, "UTF-8");
+	$onclick = "event.stopPropagation(); if (typeof odontogramaEnfocarUbicacionFicha == 'function') { odontogramaEnfocarUbicacionFicha('".$pieza."','".$arcada."','".$cuadrante."','".$boca."','".$superficie."'); }";
+	return "<button type='button' class='".$clase."' title='Ver ubicaci&oacute;n en odontograma' onclick=\"".$onclick."\">".$contenido."</button>";
+}
+
+function resumenTemporalDesdePuntoPlanConsulta($punto)
+{
+	return array(
+		"intervalo" => isset($punto["intervaloRecomendadoDias"]) ? (int)$punto["intervaloRecomendadoDias"] : 20,
+		"fecha_sugerida" => isset($punto["fechaSugerida"]) ? (string)$punto["fechaSugerida"] : "",
+		"fecha_planificada" => isset($punto["fechaPlanificada"]) ? (string)$punto["fechaPlanificada"] : "",
+		"fecha_inicio_tratamiento" => isset($punto["fechaInicioTratamiento"]) ? (string)$punto["fechaInicioTratamiento"] : "",
+		"fecha_ultima_evolucion" => isset($punto["fechaUltimaEvolucion"]) ? (string)$punto["fechaUltimaEvolucion"] : "",
+		"fecha_origen" => isset($punto["fechaOrigenTexto"]) ? (string)$punto["fechaOrigenTexto"] : "Proyectado",
+		"fecha_origen_clase" => isset($punto["fechaOrigenClase"]) ? (string)$punto["fechaOrigenClase"] : "proyectado",
+		"dias_desde_anterior" => isset($punto["diasDesdeAnterior"]) ? (int)$punto["diasDesdeAnterior"] : 0,
+		"estado" => isset($punto["estadoTemporal"]) ? (string)$punto["estadoTemporal"] : "Proyectado",
+		"estado_clase" => isset($punto["estadoTemporalClase"]) ? (string)$punto["estadoTemporalClase"] : "proyectado",
+		"configurada" => !empty($punto["usaTemporalidad"]),
+		"tipo" => isset($punto["temporalidadTipo"]) ? (string)$punto["temporalidadTipo"] : "Sin configurar"
+	);
+}
+
+function asignarResumenTemporalItemsPlanConsulta(&$items,$curve)
+{
+	$mapa = array();
+	foreach ($curve as $punto) {
+		if (isset($punto["detalleId"]) && trim((string)$punto["detalleId"]) != "") {
+			$mapa[(string)$punto["detalleId"]] = resumenTemporalDesdePuntoPlanConsulta($punto);
+		}
+	}
+	for ($i = 0; $i < count($items); $i++) {
+		$id = detalleIdPlanRiskConsulta($items[$i]);
+		if ($id != "" && isset($mapa[$id])) {
+			$items[$i]["temporalidad_resumen"] = $mapa[$id];
+		} elseif (isset($curve[$i])) {
+			$items[$i]["temporalidad_resumen"] = resumenTemporalDesdePuntoPlanConsulta($curve[$i]);
+		}
+	}
+}
+
+function asignarResumenTemporalGruposPlanConsulta(&$gruposPlan,$curve)
+{
+	$mapa = array();
+	foreach ($curve as $punto) {
+		if (isset($punto["detalleId"]) && trim((string)$punto["detalleId"]) != "") {
+			$mapa[(string)$punto["detalleId"]] = resumenTemporalDesdePuntoPlanConsulta($punto);
+		}
+	}
+	foreach ($gruposPlan as $grupo => &$items) {
+		for ($i = 0; $i < count($items); $i++) {
+			$id = detalleIdPlanRiskConsulta($items[$i]);
+			if ($id != "" && isset($mapa[$id])) {
+				$items[$i]["temporalidad_resumen"] = $mapa[$id];
+			}
+		}
+	}
+	unset($items);
+}
+
+function renderTemporalidadTratamientoConsulta($item,$claseBase)
+{
+	$resumen = isset($item["temporalidad_resumen"]) && is_array($item["temporalidad_resumen"]) ? $item["temporalidad_resumen"] : null;
+	if (!$resumen) {
+		$temporalidad = obtenerTemporalidadItemPlanConsulta($item);
+		$resumen = array(
+			"intervalo" => $temporalidad["intervalo"],
+			"fecha_sugerida" => "",
+			"fecha_planificada" => isset($item["fecha_planificada"]) ? normalizarFechaPlanConsulta($item["fecha_planificada"]) : "",
+			"fecha_inicio_tratamiento" => isset($item["fecha_inicio_tratamiento"]) ? normalizarFechaPlanConsulta($item["fecha_inicio_tratamiento"]) : "",
+			"fecha_ultima_evolucion" => isset($item["fecha_ultima_evolucion"]) ? normalizarFechaPlanConsulta($item["fecha_ultima_evolucion"]) : "",
+			"fecha_origen" => "Proyectado",
+			"fecha_origen_clase" => "proyectado",
+			"dias_desde_anterior" => 0,
+			"estado" => $temporalidad["configurada"] ? "Proyectado" : "Sin configuracion",
+			"estado_clase" => $temporalidad["configurada"] ? "proyectado" : "sin-configuracion",
+			"configurada" => $temporalidad["configurada"],
+			"tipo" => $temporalidad["tipo_label"]
+		);
+	}
+	$chips = array();
+	$chips[] = "<span class='tratamiento-temporalidad-chip'>Cada ".(int)$resumen["intervalo"]." dias</span>";
+	if (normalizarFechaPlanConsulta($resumen["fecha_sugerida"]) != "") {
+		$chips[] = "<span class='tratamiento-temporalidad-chip'>Sugerida ".htmlspecialchars(formatearFechaPlanConsulta($resumen["fecha_sugerida"]), ENT_QUOTES, "UTF-8")."</span>";
+	}
+	if (normalizarFechaPlanConsulta($resumen["fecha_planificada"]) != "") {
+		$chips[] = "<span class='tratamiento-temporalidad-chip tratamiento-temporalidad-chip--agenda'>Agenda ".htmlspecialchars(formatearFechaPlanConsulta($resumen["fecha_planificada"]), ENT_QUOTES, "UTF-8")."</span>";
+	}
+	if (normalizarFechaPlanConsulta($resumen["fecha_inicio_tratamiento"]) != "") {
+		$chips[] = "<span class='tratamiento-temporalidad-chip tratamiento-temporalidad-chip--real'>Inicio real ".htmlspecialchars(formatearFechaPlanConsulta($resumen["fecha_inicio_tratamiento"]), ENT_QUOTES, "UTF-8")."</span>";
+	}
+	if (normalizarFechaPlanConsulta($resumen["fecha_ultima_evolucion"]) != "") {
+		$chips[] = "<span class='tratamiento-temporalidad-chip tratamiento-temporalidad-chip--real'>Evolucion ".htmlspecialchars(formatearFechaPlanConsulta($resumen["fecha_ultima_evolucion"]), ENT_QUOTES, "UTF-8")."</span>";
+	}
+	if ((int)$resumen["dias_desde_anterior"] > 0) {
+		$chips[] = "<span class='tratamiento-temporalidad-chip'>D+".(int)$resumen["dias_desde_anterior"]." desde anterior</span>";
+	}
+	$estadoClase = htmlspecialchars((string)$resumen["estado_clase"], ENT_QUOTES, "UTF-8");
+	$chips[] = "<span class='tratamiento-temporalidad-chip tratamiento-temporalidad-chip--".$estadoClase."'>".htmlspecialchars((string)$resumen["estado"], ENT_QUOTES, "UTF-8")."</span>";
+	if (empty($resumen["configurada"])) {
+		$chips[] = "<span class='tratamiento-temporalidad-chip tratamiento-temporalidad-chip--sin-configuracion'>Sin temporalidad configurada</span>";
+	}
+	return "<div class='".$claseBase." tratamiento-temporalidad-chips'>".implode("", $chips)."</div>";
+}
+
+function renderizarItemPlanTratamientoConsulta($tratamiento, $numero, &$styleName)
+{
+	$styleName = CargarStyleTable($styleName);
+	$nombre = htmlspecialchars($tratamiento["nombre_producto"], ENT_QUOTES, "UTF-8");
+	$nombreJs = htmlspecialchars(json_encode((string)$tratamiento["nombre_producto"]), ENT_QUOTES, "UTF-8");
+	$descripcion = htmlspecialchars($tratamiento["descripcion"], ENT_QUOTES, "UTF-8");
+	$ayuda = htmlspecialchars(ayudaCardPlanTratamientoConsulta($tratamiento), ENT_QUOTES, "UTF-8");
+	$estadoClase = $tratamiento["estado_clase"];
+	$estadoTexto = htmlspecialchars($tratamiento["estado_texto"], ENT_QUOTES, "UTF-8");
+	$avance = (int)$tratamiento["avance"];
+	$cod_detalle = htmlspecialchars($tratamiento["cod_detalle"], ENT_QUOTES, "UTF-8");
+	$venta_id = htmlspecialchars((string)$tratamiento["venta_id"], ENT_QUOTES, "UTF-8");
+	$cod_producto = htmlspecialchars((string)$tratamiento["cod_producto"], ENT_QUOTES, "UTF-8");
+	$alcance_odontologico = htmlspecialchars((string)$tratamiento["alcance_odontologico"], ENT_QUOTES, "UTF-8");
+	$badge_riesgo_financiero = ProductoRiesgoFinancieroBadgeHtml($tratamiento["nivel_riesgo_financiero"], "consulta-treatment-risk");
+	$descripcionHtml = $descripcion != "" ? "<span class='plan-tratamientos-descripcion'>".$descripcion."</span>" : "";
+	$ubicacionHtml = renderizarUbicacionOdontogramaConsulta($tratamiento["ubicacion_odontograma"], "plan-tratamientos-ubicacion");
+	$temporalidadHtml = renderTemporalidadTratamientoConsulta($tratamiento, "plan-tratamientos-temporalidad");
+	$asignarUbicacionHtml = (!empty($tratamiento["ubicacion_odontograma"]["falta"]))
+		? "<button type='button' class='odontograma-plan-ubicar-btn' onclick='event.stopPropagation(); odontogramaAsignarTratamientoFicha(\"".$cod_detalle."\",\"".$venta_id."\",\"".$cod_producto."\",".$nombreJs.",\"".$alcance_odontologico."\")'>Asignar ubicaci&oacute;n</button>"
+		: "";
+
+return "
+<table class='$styleName consulta-treatment-row plan-tratamientos-card plan-tratamientos-card--".$tratamiento["grupo_plan"]." consulta-treatment-row--$estadoClase' border='1' cellspacing='1' cellpadding='5'>
+<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' data-detalle-tratamiento='".$cod_detalle."' data-tratamiento-nombre='".$nombre."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."'>
+<td class='consulta-treatment-row__qty plan-tratamientos-numero' style='width:5%;text-aling:center'>".$numero."</td>
+<td class='consulta-treatment-row__name plan-tratamientos-info' style='width:60%'>
+<strong>".$nombre."</strong>
+<span class='plan-tratamientos-ayuda-card'>".$ayuda."</span>
+".$descripcionHtml."
+".$ubicacionHtml."
+".$asignarUbicacionHtml."
+".$temporalidadHtml."
+</td>
+<td class='consulta-treatment-row__progress plan-tratamientos-badges' style='width:25%;text-align: center;'>
+".$badge_riesgo_financiero."
+<span class='consulta-treatment-status consulta-treatment-status--$estadoClase'>$estadoTexto</span>
+<span class='consulta-treatment-percent plan-tratamientos-progreso'>$avance%</span>
+</td>
+<td id='td_datos_1' style='Display:none'>".$avance."</td>
+<td id='td_id_1' style='display:none'>".$cod_detalle."</td>
+</tr>
+</table>";
+}
+
+function renderizarSeccionPlanTratamientoConsulta($titulo, $ayuda, $tratamientos, $vacio, $grupo, &$styleName)
+{
+	$pagina = "
+<section class='plan-tratamientos-seccion plan-tratamientos-seccion--".$grupo."' data-plan-seccion='".$grupo."'>
+	<div class='plan-tratamientos-seccion-head'>
+		<div>
+			<strong>".$titulo."</strong>
+			<span>".$ayuda."</span>
+		</div>
+		<em>".count($tratamientos)."</em>
+	</div>
+	<div class='plan-tratamientos-lista'>";
+	if (count($tratamientos) == 0) {
+		$pagina .= "<div class='plan-tratamientos-vacio'>".$vacio."</div>";
+	} else {
+		$numero = 1;
+		foreach ($tratamientos as $tratamiento) {
+			$pagina .= renderizarItemPlanTratamientoConsulta($tratamiento, $numero, $styleName);
+			$numero++;
+		}
+	}
+	$pagina .= "
+	</div>
+</section>";
+	return $pagina;
+}
+
+function textoEstadoPlanDefinitivoConsulta($estado)
+{
+	$estado = strtolower(trim((string)$estado));
+	if ($estado == "definido") { return "Definido"; }
+	if ($estado == "modificado") { return "Modificado"; }
+	if ($estado == "borrador") { return "Borrador"; }
+	return "Sin definir";
+}
+
+function etiquetaEstadoPlanDefinitivoConsulta($estado,$version)
+{
+	$estado = strtolower(trim((string)$estado));
+	$version = (int)$version;
+	if ($estado == "borrador") { return "Borrador"; }
+	if ($estado == "modificado") { return "Modificado &middot; Versi&oacute;n ".$version; }
+	if ($estado == "definido") { return "Definido &middot; Ruta vigente"; }
+	return "Sin definir";
+}
+
+function etiquetaTabPlanDefinitivoConsulta($estado,$version,$existe)
+{
+	if (!$existe) { return "Plan madre &middot; Pendiente"; }
+	$estado = strtolower(trim((string)$estado));
+	$version = (int)$version;
+	if ($estado == "borrador") { return "Plan madre &middot; Borrador"; }
+	if ($estado == "modificado") { return "Plan madre &middot; Versi&oacute;n ".$version; }
+	return "Plan madre &middot; Asignado";
+}
+
+function obtenerItemsPlanDefinitivoConsulta($mysqli,$plan_id)
+{
+	$selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
+	$selectTemporalidad = ProductoTemporalidadSelectSqlConsulta($mysqli, "pr");
+	$selectFechaPlanificada = FechaPlanificadaTratamientoSelectSqlConsulta($mysqli, "dtv");
+	$selectFechaEvolucion = FechaEvolucionTratamientoSelectSqlConsulta($mysqli, "dtv");
+	$selectAlcanceOdontologico = columnaExisteConsulta($mysqli, "producto", "alcance_odontologico")
+		? "pr.alcance_odontologico"
+		: "'no_requiere' AS alcance_odontologico";
+	$sql = "SELECT i.*, vt.num_factura, vt.apodo, vt.fecha_venta, vt.cod_clienteFK,
+		dtv.estado, dtv.estado_tratamiento, dtv.progreso_porcentaje,
+		COALESCE(pr.nombre_producto, i.nombre_tratamiento_snapshot) AS nombre_producto_actual,
+		pr.precio_producto,
+		".$selectAlcanceOdontologico.", ".$selectRiesgo.", ".$selectTemporalidad.", ".$selectFechaPlanificada.", ".$selectFechaEvolucion."
+		FROM plan_definitivo_tratamiento_items i
+		INNER JOIN detalle_venta dtv ON dtv.cod_detalle = i.detalle_venta_id
+		INNER JOIN venta vt ON vt.cod_venta = i.venta_id
+		LEFT JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		WHERE i.plan_definitivo_id = ? AND i.activo = 1
+		".ProductoClinicoWhereSqlConsulta("pr")."
+		ORDER BY i.orden ASC, i.id ASC";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return array(); }
+	$stmt->bind_param("s", $plan_id);
+	if (!$stmt->execute()) { return array(); }
+	$result = $stmt->get_result();
+	$items = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$avance = normalizarPorcentajePlanTratamientoConsulta($row["progreso_porcentaje"]);
+		$estadoClase = normalizarEstadoPlanTratamientoConsulta($row["estado"], $row["estado_tratamiento"], $avance);
+		$row["estado_clase"] = $estadoClase;
+		$row["estado_texto"] = textoEstadoPlanTratamientoConsulta($estadoClase);
+		$row["avance"] = $avance;
+		$row["nombre_producto_actual"] = mb_convert_encoding((string)$row["nombre_producto_actual"], 'UTF-8', 'ISO-8859-1');
+		$row["nombre_tratamiento_snapshot"] = mb_convert_encoding((string)$row["nombre_tratamiento_snapshot"], 'UTF-8', 'ISO-8859-1');
+		$row["observacion_clinica"] = mb_convert_encoding((string)$row["observacion_clinica"], 'UTF-8', 'ISO-8859-1');
+		$row["etapa"] = mb_convert_encoding((string)$row["etapa"], 'UTF-8', 'ISO-8859-1');
+		$row["apodo"] = mb_convert_encoding((string)$row["apodo"], 'UTF-8', 'ISO-8859-1');
+		$row["num_factura"] = mb_convert_encoding((string)$row["num_factura"], 'UTF-8', 'ISO-8859-1');
+		$row["nivel_riesgo_financiero"] = isset($row["nivel_riesgo_financiero"]) ? $row["nivel_riesgo_financiero"] : $row["nivel_riesgo_snapshot"];
+		$row["alcance_odontologico"] = isset($row["alcance_odontologico"]) ? $row["alcance_odontologico"] : "no_requiere";
+		$row["precio_producto"] = isset($row["precio_producto"]) ? (float)$row["precio_producto"] : 0;
+		$row["usa_temporalidad"] = isset($row["usa_temporalidad"]) ? (int)$row["usa_temporalidad"] : 0;
+		$row["temporalidad_tipo"] = isset($row["temporalidad_tipo"]) ? mb_convert_encoding((string)$row["temporalidad_tipo"], 'UTF-8', 'ISO-8859-1') : "";
+		$row["temporalidad_intervalo_recomendado"] = isset($row["temporalidad_intervalo_recomendado"]) ? (int)$row["temporalidad_intervalo_recomendado"] : 20;
+		$row["temporalidad_intervalo_minimo"] = isset($row["temporalidad_intervalo_minimo"]) ? (int)$row["temporalidad_intervalo_minimo"] : 15;
+		$row["temporalidad_intervalo_maximo"] = isset($row["temporalidad_intervalo_maximo"]) ? (int)$row["temporalidad_intervalo_maximo"] : 40;
+		$row["temporalidad_sesiones_estimadas"] = isset($row["temporalidad_sesiones_estimadas"]) ? (int)$row["temporalidad_sesiones_estimadas"] : 0;
+		$row["temporalidad_duracion_sillon"] = isset($row["temporalidad_duracion_sillon"]) ? (int)$row["temporalidad_duracion_sillon"] : 0;
+		$row["temporalidad_observacion"] = isset($row["temporalidad_observacion"]) ? mb_convert_encoding((string)$row["temporalidad_observacion"], 'UTF-8', 'ISO-8859-1') : "";
+		$row["fecha_planificada"] = isset($row["fecha_planificada"]) ? (string)$row["fecha_planificada"] : "";
+		$row["fecha_inicio_tratamiento"] = isset($row["fecha_inicio_tratamiento"]) ? (string)$row["fecha_inicio_tratamiento"] : "";
+		$row["fecha_ultima_evolucion"] = isset($row["fecha_ultima_evolucion"]) ? (string)$row["fecha_ultima_evolucion"] : "";
+		$row["ubicacion_odontograma"] = obtenerUbicacionOdontogramaDetalleConsulta($mysqli, $row["detalle_venta_id"], $row["alcance_odontologico"]);
+		$items[] = $row;
+	}
+	return $items;
+}
+
+function renderizarItemPlanDefinitivoConsulta($item,$numero,$plan_id,$editable)
+{
+	$itemId = htmlspecialchars((string)$item["id"], ENT_QUOTES, "UTF-8");
+	$planId = htmlspecialchars((string)$plan_id, ENT_QUOTES, "UTF-8");
+	$detalleOdontograma = htmlspecialchars((string)$item["detalle_venta_id"], ENT_QUOTES, "UTF-8");
+	$nombre = trim((string)$item["nombre_producto_actual"]) != "" ? $item["nombre_producto_actual"] : $item["nombre_tratamiento_snapshot"];
+	$nombreHtml = htmlspecialchars($nombre, ENT_QUOTES, "UTF-8");
+	$nombreJs = htmlspecialchars(json_encode((string)$nombre), ENT_QUOTES, "UTF-8");
+	$venta = htmlspecialchars((string)$item["venta_id"], ENT_QUOTES, "UTF-8");
+	$ventaVisible = trim((string)$item["num_factura"]) != "" ? (string)$item["num_factura"] : (string)$item["venta_id"];
+	$ventaVisibleHtml = htmlspecialchars($ventaVisible, ENT_QUOTES, "UTF-8");
+	$producto = htmlspecialchars((string)$item["producto_id"], ENT_QUOTES, "UTF-8");
+	$alcanceOdontologico = htmlspecialchars((string)$item["alcance_odontologico"], ENT_QUOTES, "UTF-8");
+	$origen = (string)$item["origen"] == "venta_anexada" ? "Venta anexada" : "Plan principal";
+	$origenHtml = htmlspecialchars($origen, ENT_QUOTES, "UTF-8");
+	$estadoClase = htmlspecialchars((string)$item["estado_clase"], ENT_QUOTES, "UTF-8");
+	$estadoTexto = htmlspecialchars((string)$item["estado_texto"], ENT_QUOTES, "UTF-8");
+	$avance = (int)$item["avance"];
+	$observacion = trim((string)$item["observacion_clinica"]);
+	$observacionHtml = $observacion != "" ? "<p class='plan-definitivo-observacion'><strong>Observaci&oacute;n:</strong> ".nl2br(htmlspecialchars($observacion, ENT_QUOTES, "UTF-8"))."</p>" : "";
+	$etapa = trim((string)$item["etapa"]);
+	$etapaHtml = $etapa != "" ? "<span class='plan-definitivo-etapa'>".htmlspecialchars($etapa, ENT_QUOTES, "UTF-8")."</span>" : "";
+	$badge_riesgo_financiero = ProductoRiesgoFinancieroBadgeHtml($item["nivel_riesgo_financiero"], "consulta-treatment-risk");
+	$editableClass = $editable ? "" : " plan-definitivo-readonly-item";
+	$finalizadoClass = ($estadoClase == "completado" || $estadoClase == "cancelado") ? " plan-ruta-finalizado" : "";
+	$nodoTexto = ($estadoClase == "completado") ? "&#10003;" : $numero;
+	$nodoTitulo = ($estadoClase == "completado") ? "Paso ".$numero." completado" : "Paso ".$numero;
+	$ubicacionHtml = renderizarUbicacionOdontogramaConsulta($item["ubicacion_odontograma"], "plan-definitivo-ubicacion");
+	$temporalidadHtml = renderTemporalidadTratamientoConsulta($item, "plan-definitivo-temporalidad");
+	$asignarUbicacionHtml = (!empty($item["ubicacion_odontograma"]["falta"]))
+		? "<button type='button' class='odontograma-plan-ubicar-btn' onclick='event.stopPropagation(); odontogramaAsignarTratamientoFicha(\"".$detalleOdontograma."\",\"".$venta."\",\"".$producto."\",".$nombreJs.",\"".$alcanceOdontologico."\")'>Asignar ubicaci&oacute;n</button>"
+		: "";
+
+	return "
+<article class='plan-definitivo-item plan-ruta-item plan-definitivo-item--".$estadoClase.$editableClass.$finalizadoClass."' role='listitem' onclick='obtenerDatosPlanDefinitivoTratamientoConsulta(this)' data-plan-id='".$planId."' data-plan-item='".$itemId."' data-plan-numero='".$numero."' data-detalle-odontograma='".$detalleOdontograma."' data-detalle-tratamiento='".$detalleOdontograma."' data-tratamiento-venta='".$venta."' data-tratamiento-nombre='".$nombreHtml."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."' data-observacion='".htmlspecialchars($observacion, ENT_QUOTES, "UTF-8")."'>
+	<div class='plan-ruta-nodo' title='".$nodoTitulo."'><span>".$nodoTexto."</span></div>
+	<div class='plan-definitivo-item__body'>
+		<div class='plan-definitivo-item__top'>
+			<strong>".$nombreHtml."</strong>
+			<span>Paso ".$numero." de la ruta cl&iacute;nica</span>
+		</div>
+		<div class='plan-ruta-origen'>Venta #".$ventaVisibleHtml." &middot; ".$origenHtml."</div>
+		<div class='plan-ruta-ubicacion'>".$ubicacionHtml.$asignarUbicacionHtml."</div>
+		".$temporalidadHtml."
+		<div class='plan-definitivo-item__badges'>
+			".$badge_riesgo_financiero."
+			<span class='consulta-treatment-status consulta-treatment-status--".$estadoClase."'>".$estadoTexto."</span>
+			<span class='consulta-treatment-percent'>".$avance."%</span>
+			".$etapaHtml."
+		</div>
+		".$observacionHtml."
+	</div>
+	<div class='plan-definitivo-item__actions plan-definitivo-edit-only'>
+		<button type='button' class='plan-definitivo-icon-btn' title='Subir' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",-1)'>&uarr;</button>
+		<button type='button' class='plan-definitivo-icon-btn' title='Bajar' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",1)'>&darr;</button>
+		<button type='button' class='plan-definitivo-icon-btn' title='Editar observacion' onclick='editarObservacionItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\")'>&hellip;</button>
+		<button type='button' class='plan-definitivo-icon-btn plan-definitivo-icon-btn--remove' title='Quitar de esta ruta' onclick='quitarItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\")'>x</button>
+	</div>
+</article>";
+}
+
+function renderizarListaPlanDefinitivoConsulta($items,$plan_id,$editable)
+{
+	$pagina = "<div class='plan-definitivo-lista plan-definitivo-ruta' role='list'>";
+	if (count($items) == 0) {
+		$pagina .= "<div class='plan-definitivo-empty-inline'>La ruta cl&iacute;nica todav&iacute;a no tiene tratamientos.</div>";
+	}
+	$numero = 1;
+	foreach ($items as $item) {
+		$pagina .= renderizarItemPlanDefinitivoConsulta($item,$numero,$plan_id,$editable);
+		$numero++;
+	}
+	$pagina .= "</div>";
+	return $pagina;
+}
+
+function renderizarPlanDefinitivoConsulta($mysqli,$cod_venta,$tratamientosSugeridos,&$metaPlanDefinitivo)
+{
+	$metaPlanDefinitivo = array(
+		"existe" => false,
+		"estado" => "sin_definir",
+		"version" => 0,
+		"tab_label" => "Plan madre &middot; Pendiente",
+		"vista_inicial" => "sugerido"
+	);
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		$metaPlanDefinitivo["tab_label"] = "Plan madre &middot; Pendiente";
+		return "
+<div class='plan-definitivo-panel plan-definitivo-panel--empty'>
+	<div class='plan-definitivo-empty'>
+		<strong>Plan madre pendiente de activar</strong>
+		<span>Aplic&aacute; la actualizaci&oacute;n SQL del plan madre para habilitar esta ruta cl&iacute;nica.</span>
+	</div>
+</div>";
+	}
+
+	$contexto = obtenerContextoPlanDefinitivoConsulta($mysqli,$cod_venta);
+	if ($contexto) {
+		$metaPlanDefinitivo["venta_base_id"] = (string)$contexto["venta_base_id"];
+		$metaPlanDefinitivo["venta_actual_id"] = (string)$contexto["venta_actual_id"];
+	}
+	$plan = $contexto ? obtenerPlanMadreAsignadoVentaRowConsulta($mysqli,$contexto["paciente_id"],$contexto["cedula"],$cod_venta) : obtenerPlanDefinitivoActivoConsulta($mysqli,$cod_venta);
+	if (!$plan) {
+		$ventaBaseCrear = $contexto ? (string)$contexto["venta_base_id"] : (string)$cod_venta;
+		$ventaBase = htmlspecialchars($ventaBaseCrear, ENT_QUOTES, "UTF-8");
+		$codCliente = $contexto ? htmlspecialchars((string)$contexto["paciente_id"], ENT_QUOTES, "UTF-8") : "";
+		return "
+<div class='plan-definitivo-panel plan-definitivo-panel--empty' data-plan-venta-base='".$ventaBase."'>
+	<div class='plan-definitivo-header'>
+		<div>
+			<h4>Plan madre pendiente</h4>
+			<span>Esta venta todav&iacute;a no tiene sus tratamientos anexados a un plan madre.</span>
+		</div>
+		<em class='plan-definitivo-status plan-definitivo-status--sin-definir'>Pendiente</em>
+	</div>
+	<div class='plan-definitivo-empty'>
+		<strong>Anex&aacute; los tratamientos a un plan madre</strong>
+		<span>Eleg&iacute; el plan madre donde se fusionan los tratamientos de esta venta, o cre&aacute; uno nuevo para otro Apodo/beneficiario.</span>
+		<div class='plan-definitivo-empty__actions'>
+			<button type='button' class='plan-definitivo-primary' onclick='abrirAsignarPlanMadreVentaConsulta(\"".$ventaBase."\",\"".$codCliente."\",\"\")'>Anexar a plan madre</button>
+			<button type='button' class='plan-definitivo-secondary' onclick='crearPlanDefinitivoDesdeSugeridoConsulta(\"".$ventaBase."\")'>Crear plan madre desde esta venta</button>
+			<button type='button' class='plan-definitivo-secondary' onclick='mostrarGuiaPlanDefinitivoConsulta()'>Gu&iacute;a r&aacute;pida</button>
+		</div>
+	</div>
+</div>";
+	}
+
+	$planId = htmlspecialchars((string)$plan["id"], ENT_QUOTES, "UTF-8");
+	$estado = strtolower((string)$plan["estado"]);
+	$estadoTexto = textoEstadoPlanDefinitivoConsulta($estado);
+	$estadoCompleto = etiquetaEstadoPlanDefinitivoConsulta($estado,(int)$plan["version_actual"]);
+	$doctor = trim((string)$plan["doctor_nombre"]) != "" ? $plan["doctor_nombre"] : "Doctor actual";
+	$doctorHtml = htmlspecialchars($doctor, ENT_QUOTES, "UTF-8");
+	$version = (int)$plan["version_actual"];
+	$fechaActualizacion = trim((string)$plan["fecha_actualizacion"]) != "" ? date("d/m/Y H:i", strtotime($plan["fecha_actualizacion"])) : "";
+	$editable = ($estado == "borrador");
+	$editableClass = $editable ? " is-editing" : "";
+	$items = obtenerItemsPlanDefinitivoConsulta($mysqli,$plan["id"]);
+	$metaPlanDefinitivo["existe"] = true;
+	$metaPlanDefinitivo["estado"] = $estado;
+	$metaPlanDefinitivo["version"] = $version;
+	$metaPlanDefinitivo["venta_base_id"] = (string)$plan["venta_base_id"];
+	$metaPlanDefinitivo["tab_label"] = etiquetaTabPlanDefinitivoConsulta($estado,$version,true);
+	$metaPlanDefinitivo["vista_inicial"] = "definitivo";
+	$esVentaBaseCentral = ((string)$plan["venta_base_id"] == (string)$cod_venta);
+	$planMadreNumero = isset($plan["plan_madre_numero"]) ? (int)$plan["plan_madre_numero"] : 0;
+	$planMadreApodo = isset($plan["plan_madre_apodo"]) ? trim((string)$plan["plan_madre_apodo"]) : "Sin beneficiario";
+	$planMadreTitulo = $planMadreNumero > 0 ? "Plan madre #".$planMadreNumero : "Plan madre";
+	$planMadreTituloHtml = htmlspecialchars($planMadreTitulo, ENT_QUOTES, "UTF-8");
+	$planMadreApodoHtml = htmlspecialchars($planMadreApodo, ENT_QUOTES, "UTF-8");
+	$ayudaEstado = "Esta venta pertenece a ".$planMadreTituloHtml." - ".$planMadreApodoHtml.". Cualquier modificaci&oacute;n quedar&aacute; registrada.";
+	if ($estado == "borrador") {
+		$ayudaEstado = "Este plan madre todav&iacute;a no fue confirmado. Pod&eacute;s continuar la edici&oacute;n y confirmar la ruta cuando est&eacute; lista.";
+	}
+	if ($estado == "modificado") {
+		$ayudaEstado = "La ruta fue modificada con trazabilidad. El orden cl&iacute;nico se conserva seg&uacute;n la versi&oacute;n vigente.";
+	}
+	if (!$esVentaBaseCentral) {
+		$ventaBaseCentral = htmlspecialchars((string)$plan["venta_base_id"], ENT_QUOTES, "UTF-8");
+		$ayudaEstado = "Esta venta est&aacute; asignada a ".$planMadreTituloHtml." - ".$planMadreApodoHtml.", creado desde la venta #".$ventaBaseCentral.".";
+	}
+
+	$accionesLectura = "";
+	if ($estado == "definido" || $estado == "modificado") {
+		$accionesLectura = "<button type='button' class='plan-definitivo-secondary plan-definitivo-readonly-action' onclick='editarPlanDefinitivoConsulta(\"".$planId."\")'>Editar ruta</button>";
+	}
+	$textoGuardar = $estado == "borrador" ? "Guardar borrador" : "Guardar cambios";
+	$accionConfirmar = $estado == "borrador"
+		? "<button type='button' class='plan-definitivo-primary plan-definitivo-edit-only' onclick='confirmarPlanDefinitivoConsulta(\"".$planId."\")'>Confirmar plan</button>"
+		: "";
+	$fechaInicioPlan = obtenerFechaVentaBasePlanDefinitivoConsulta($mysqli,$plan["venta_base_id"]);
+	if ($fechaInicioPlan == "") {
+		$fechaInicioPlan = obtenerFechaVentaMasAntiguaItemsPlanConsulta($mysqli,$plan["id"]);
+	}
+	if ($fechaInicioPlan == "") {
+		$fechaInicioPlan = isset($plan["fecha_creacion"]) ? $plan["fecha_creacion"] : (isset($plan["fecha_actualizacion"]) ? $plan["fecha_actualizacion"] : "");
+	}
+	$curvaPlanDefinitivo = buildTreatmentRiskCurve($items,$fechaInicioPlan);
+	$curvaReferenciaPlan = buildAutomaticSuggestionCurve($items,$fechaInicioPlan);
+	$pagosMensualesPlan = obtenerPagosMensualesPlanConsulta($mysqli, ventasDesdeItemsPlanConsulta($items), $fechaInicioPlan);
+	asignarResumenTemporalItemsPlanConsulta($items,$curvaPlanDefinitivo);
+
+	return "
+<div class='plan-definitivo-panel".$editableClass."' data-plan-id='".$planId."' data-plan-estado='".htmlspecialchars($estado, ENT_QUOTES, "UTF-8")."'>
+	<div class='plan-definitivo-header'>
+		<div>
+			<h4>".$planMadreTituloHtml." - ".$planMadreApodoHtml."</h4>
+			<span>Ruta cl&iacute;nica agrupada bajo esta c&eacute;dula.</span>
+		</div>
+		<em class='plan-definitivo-status plan-definitivo-status--".htmlspecialchars($estado, ENT_QUOTES, "UTF-8")."'>".$estadoCompleto."</em>
+	</div>
+	<div class='plan-definitivo-meta'>
+		<span><strong>Doctor</strong>".$doctorHtml."</span>
+		<span><strong>Versi&oacute;n</strong>".$version."</span>
+		<span><strong>&Uacute;ltima actualizaci&oacute;n</strong>".htmlspecialchars($fechaActualizacion, ENT_QUOTES, "UTF-8")."</span>
+	</div>
+	<div class='plan-definitivo-context'>".$ayudaEstado."</div>
+	<div class='plan-definitivo-actions'>
+		".$accionesLectura."
+		<button type='button' class='plan-definitivo-secondary plan-definitivo-edit-only' onclick='guardarBorradorPlanDefinitivoConsulta(\"".$planId."\")'>".$textoGuardar."</button>
+		<button type='button' class='plan-definitivo-secondary plan-definitivo-edit-only' onclick='abrirAnexarTratamientosPlanDefinitivoConsulta(\"".$planId."\")'>Anexar tratamientos</button>
+		".$accionConfirmar."
+		<button type='button' class='plan-definitivo-secondary' onclick='verHistorialPlanDefinitivoConsulta(\"".$planId."\")'>Ver historial</button>
+	</div>
+	".renderizarListaPlanDefinitivoConsulta($items,$plan["id"],$editable)."
+	".renderPlanRiskChart($curvaPlanDefinitivo,$curvaReferenciaPlan,"definitivo",$pagosMensualesPlan)."
+</div>";
+}
+
+function renderizarTabsPlanesConsulta($planSugeridoHtml,$planDefinitivoHtml,$metaPlanDefinitivo)
+{
+	$vistaInicial = (!empty($metaPlanDefinitivo["existe"])) ? "definitivo" : "sugerido";
+	$labelDefinitivo = isset($metaPlanDefinitivo["tab_label"]) ? $metaPlanDefinitivo["tab_label"] : "Plan madre &middot; Pendiente";
+	$activoDefinitivo = $vistaInicial == "definitivo";
+	$activoSugerido = !$activoDefinitivo;
+	$ariaDefinitivo = $activoDefinitivo ? "true" : "false";
+	$ariaSugerido = $activoSugerido ? "true" : "false";
+	return "
+<div class='consulta-plan-tabs' data-consulta-plan-tabs data-vista-inicial='".$vistaInicial."' data-plan-definitivo-existe='".(!empty($metaPlanDefinitivo["existe"]) ? "1" : "0")."'>
+	<div class='consulta-plan-tabs__nav' role='tablist' aria-label='Plan de tratamientos'>
+		<button type='button' id='consultaPlanDefinitivoTab' class='consulta-plan-tab consulta-plan-tab--definitivo".($activoDefinitivo ? " is-active" : "")."' role='tab' aria-selected='".$ariaDefinitivo."' aria-controls='consultaPlanDefinitivoPanel' data-plan-tab-button='definitivo' onclick='cambiarTabPlanConsulta(this,\"definitivo\")'><span class='consulta-plan-tab__icon' aria-hidden='true'>&#10003;</span><span>".$labelDefinitivo."</span></button>
+		<button type='button' id='consultaPlanSugeridoTab' class='consulta-plan-tab consulta-plan-tab--sugerido".($activoSugerido ? " is-active" : "")."' role='tab' aria-selected='".$ariaSugerido."' aria-controls='consultaPlanSugeridoPanel' data-plan-tab-button='sugerido' onclick='cambiarTabPlanConsulta(this,\"sugerido\")'><span class='consulta-plan-tab__icon' aria-hidden='true'>&#10022;</span><span>Sugerencia autom&aacute;tica</span></button>
+	</div>
+	<div id='consultaPlanDefinitivoPanel' class='consulta-plan-tabs__panel".($activoDefinitivo ? " is-active" : "")."' role='tabpanel' aria-labelledby='consultaPlanDefinitivoTab' data-plan-tab='definitivo'>".$planDefinitivoHtml."</div>
+	<div id='consultaPlanSugeridoPanel' class='consulta-plan-tabs__panel".($activoSugerido ? " is-active" : "")."' role='tabpanel' aria-labelledby='consultaPlanSugeridoTab' data-plan-tab='sugerido'>".$planSugeridoHtml."</div>
+</div>";
+}
+
+function crearPlanDefinitivoDesdeSugeridoConsulta($cod_venta,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$contexto = obtenerContextoPlanDefinitivoConsulta($mysqli,$cod_venta);
+	if (!$contexto) {
+		responderPlanDefinitivoConsulta("error","No se pudo identificar la venta base del paciente.");
+	}
+	$ventaBaseDefinitiva = (string)$cod_venta;
+	$tratamientos = obtenerTratamientosVentaPlanConsulta($mysqli,$ventaBaseDefinitiva);
+	if (count($tratamientos) == 0) {
+		responderPlanDefinitivoConsulta("camposvacio","No hay tratamientos para crear el plan madre.");
+	}
+	$itemsOrdenados = aplanarGruposPlanSugeridoConsulta(ordenarTratamientosPlanSugerido($tratamientos));
+	$cedula = mb_convert_encoding((string)$contexto["cedula"], 'ISO-8859-1', 'UTF-8');
+	$paciente_id = $contexto["paciente_id"];
+	$estado = "borrador";
+	$version = 1;
+	$activo = 1;
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+
+	$mysqli->autocommit(false);
+	$stmt = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento
+		(cedula, paciente_id, venta_base_id, doctor_cabecera_id, estado, version_actual, fecha_creacion, creado_por, fecha_actualizacion, actualizado_por, activo)
+		VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, NOW(), ?, ?)");
+	if (!$stmt) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","No se pudo preparar la creacion del plan madre.");
+	}
+	$stmt->bind_param("sssssisii", $cedula, $paciente_id, $ventaBaseDefinitiva, $user, $estado, $version, $user, $user, $activo);
+	if (!$stmt->execute()) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","No se pudo crear el plan madre.");
+	}
+	$plan_id = $mysqli->insert_id;
+	$stmtItem = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento_items
+		(plan_definitivo_id, venta_id, detalle_venta_id, producto_id, nombre_tratamiento_snapshot, nivel_riesgo_snapshot, orden, origen, activo, fecha_agregado, agregado_por)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 'plan_principal', 1, NOW(), ?)");
+	if (!$stmtItem) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","No se pudo preparar el detalle del plan madre.");
+	}
+	$orden = 1;
+	foreach ($itemsOrdenados as $tratamiento) {
+		$ventaItem = (string)$tratamiento["venta_id"];
+		$detalleItem = (string)$tratamiento["cod_detalle"];
+		$productoItem = (string)$tratamiento["cod_producto"];
+		$nombre = mb_convert_encoding((string)$tratamiento["nombre_producto"], 'ISO-8859-1', 'UTF-8');
+		$nivel = (int)$tratamiento["nivel_riesgo_financiero"];
+		$stmtItem->bind_param("sssssiis", $plan_id, $ventaItem, $detalleItem, $productoItem, $nombre, $nivel, $orden, $user);
+		if (!$stmtItem->execute()) {
+			$mysqli->rollback();
+			responderPlanDefinitivoConsulta("error","No se pudieron copiar los tratamientos sugeridos.");
+		}
+		$orden++;
+	}
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,1,"creacion","Se creo el plan madre.", "", "Estado: Borrador", "", $user, $rol);
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,1,"creacion_desde_plan_sugerido","Se creo el plan madre desde esta venta.", "", count($itemsOrdenados)." tratamientos copiados", "", $user, $rol);
+	$mysqli->commit();
+	responderPlanDefinitivoConsulta("exito","Plan madre creado como borrador.", array("plan_id" => $plan_id));
+}
+
+function guardarBorradorPlanDefinitivoConsulta($plan_id,$motivo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	if (!$plan) {
+		responderPlanDefinitivoConsulta("error","No se encontro el plan madre.");
+	}
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"guardado_borrador","Se guardo el plan madre como borrador.", "", "Borrador guardado", $motivo, $user, $rol);
+	responderPlanDefinitivoConsulta("exito","Borrador guardado.");
+}
+
+function confirmarPlanDefinitivoConsulta($plan_id,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	if (!$plan) {
+		responderPlanDefinitivoConsulta("error","No se encontro el plan madre.");
+	}
+	$estadoAnterior = $plan["estado"];
+	$version = (int)$plan["version_actual"];
+	if ($version < 1) { $version = 1; }
+	$estado = "definido";
+	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento SET estado = ?, version_actual = ?, fecha_actualizacion = NOW(), actualizado_por = ? WHERE id = ? LIMIT 1");
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar la confirmacion.");
+	}
+	$stmt->bind_param("siss", $estado, $version, $user, $plan_id);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudo confirmar el plan madre.");
+	}
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$version,"confirmacion","Se confirmo el plan madre.", "Estado: ".$estadoAnterior, "Estado: Definido", "", $user, $rol);
+	responderPlanDefinitivoConsulta("exito","Plan madre confirmado.");
+}
+
+function obtenerItemPlanDefinitivoConsulta($mysqli,$plan_id,$item_id)
+{
+	$sql = "SELECT * FROM plan_definitivo_tratamiento_items WHERE id = ? AND plan_definitivo_id = ? AND activo = 1 LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return null; }
+	$stmt->bind_param("ss", $item_id, $plan_id);
+	if (!$stmt->execute()) { return null; }
+	$result = $stmt->get_result();
+	if (!($row = mysqli_fetch_assoc($result))) { return null; }
+	$row["nombre_tratamiento_snapshot"] = mb_convert_encoding((string)$row["nombre_tratamiento_snapshot"], 'UTF-8', 'ISO-8859-1');
+	$row["observacion_clinica"] = mb_convert_encoding((string)$row["observacion_clinica"], 'UTF-8', 'ISO-8859-1');
+	return $row;
+}
+
+function moverItemPlanDefinitivoConsulta($plan_id,$item_id,$direccion,$motivo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	$item = obtenerItemPlanDefinitivoConsulta($mysqli,$plan_id,$item_id);
+	if (!$plan || !$item) {
+		responderPlanDefinitivoConsulta("error","No se encontro el item del plan madre.");
+	}
+	$direccion = (int)$direccion;
+	$comparador = $direccion < 0 ? "<" : ">";
+	$ordenSql = $direccion < 0 ? "DESC" : "ASC";
+	$sql = "SELECT * FROM plan_definitivo_tratamiento_items
+		WHERE plan_definitivo_id = ? AND activo = 1 AND orden ".$comparador." ?
+		ORDER BY orden ".$ordenSql.", id ".$ordenSql." LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar el cambio de orden.");
+	}
+	$stmt->bind_param("si", $plan_id, $item["orden"]);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudo buscar la posicion destino.");
+	}
+	$result = $stmt->get_result();
+	if (!($otro = mysqli_fetch_assoc($result))) {
+		responderPlanDefinitivoConsulta("exito","El tratamiento ya esta en el limite de la ruta.");
+	}
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+	$stmtUp = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET orden = ? WHERE id = ? LIMIT 1");
+	if (!$stmtUp) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar el reordenamiento.");
+	}
+	$ordenItem = (int)$item["orden"];
+	$ordenOtro = (int)$otro["orden"];
+	$stmtUp->bind_param("is", $ordenOtro, $item_id);
+	$stmtUp->execute();
+	$stmtUp->bind_param("is", $ordenItem, $otro["id"]);
+	$stmtUp->execute();
+	$descripcion = "Se cambio el orden de ".$item["nombre_tratamiento_snapshot"].".";
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"cambio_orden",$descripcion,"Orden ".$ordenItem,"Orden ".$ordenOtro,$motivo,$user,$rol);
+	responderPlanDefinitivoConsulta("exito","Orden actualizado.");
+}
+
+function actualizarObservacionItemPlanDefinitivoConsulta($plan_id,$item_id,$observacion,$motivo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	$item = obtenerItemPlanDefinitivoConsulta($mysqli,$plan_id,$item_id);
+	if (!$plan || !$item) {
+		responderPlanDefinitivoConsulta("error","No se encontro el item del plan madre.");
+	}
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+	$observacionDb = mb_convert_encoding((string)$observacion, 'ISO-8859-1', 'UTF-8');
+	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET observacion_clinica = ? WHERE id = ? AND plan_definitivo_id = ? LIMIT 1");
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar la observacion.");
+	}
+	$stmt->bind_param("sss", $observacionDb, $item_id, $plan_id);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudo guardar la observacion.");
+	}
+	$descripcion = "Se modifico la observacion clinica de ".$item["nombre_tratamiento_snapshot"].".";
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"observacion_modificada",$descripcion,$item["observacion_clinica"],$observacion,$motivo,$user,$rol);
+	responderPlanDefinitivoConsulta("exito","Observacion guardada.");
+}
+
+function quitarItemPlanDefinitivoConsulta($plan_id,$item_id,$motivo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	$item = obtenerItemPlanDefinitivoConsulta($mysqli,$plan_id,$item_id);
+	if (!$plan || !$item) {
+		responderPlanDefinitivoConsulta("error","No se encontro el item del plan madre.");
+	}
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET activo = 0 WHERE id = ? AND plan_definitivo_id = ? LIMIT 1");
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar la baja del item.");
+	}
+	$stmt->bind_param("ss", $item_id, $plan_id);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudo quitar el tratamiento de la ruta.");
+	}
+	$descripcion = "Se quito ".$item["nombre_tratamiento_snapshot"]." de esta ruta.";
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"tratamiento_quitado",$descripcion,"Incluido en ruta","Quitado de ruta",$motivo,$user,$rol);
+	responderPlanDefinitivoConsulta("exito","Tratamiento quitado solo de la ruta.");
+}
+
+function buscarVentasAnexablesPlanDefinitivoConsulta($plan_id)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	if (!$plan) {
+		responderPlanDefinitivoConsulta("error","No se encontro el plan madre.");
+	}
+	$cedula = $plan["cedula"];
+	$paciente_id = $plan["paciente_id"];
+	$selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
+	$sql = "SELECT vt.cod_venta, vt.fecha_venta, vt.num_factura, vt.apodo, vt.cod_clienteFK,
+		p.nombre_persona, cl.ci_cliente,
+		dtv.cod_detalle, dtv.descripcion, dtv.estado, dtv.estado_tratamiento, dtv.progreso_porcentaje,
+		pr.cod_producto, pr.nombre_producto, ".$selectRiesgo.",
+		(SELECT COUNT(*) FROM plan_definitivo_tratamiento_items pi WHERE pi.plan_definitivo_id = ? AND pi.detalle_venta_id = dtv.cod_detalle AND pi.activo = 1) AS ya_incluido
+		FROM venta vt
+		INNER JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK
+		INNER JOIN persona p ON p.cod_persona = cl.cod_cliente
+		INNER JOIN detalle_venta dtv ON dtv.cod_ventaFK = vt.cod_venta
+		INNER JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		WHERE (vt.cod_clienteFK = ? OR cl.ci_cliente = ?)
+		AND IFNULL(dtv.estado,'') <> 'eliminado'
+		".ProductoClinicoWhereSqlConsulta("pr")."
+		ORDER BY vt.cod_venta DESC, dtv.cod_detalle ASC
+		LIMIT 300";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar la busqueda de ventas anexables.");
+	}
+	$stmt->bind_param("sss", $plan_id, $paciente_id, $cedula);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudieron consultar ventas anexables.");
+	}
+	$result = $stmt->get_result();
+	$ventas = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$ventaId = (string)$row["cod_venta"];
+		if (!isset($ventas[$ventaId])) {
+			$origen = ($ventaId == (string)$plan["venta_base_id"]) ? "Plan principal" : "Venta separada";
+			$ventas[$ventaId] = array(
+				"cod_venta" => $ventaId,
+				"fecha_venta" => $row["fecha_venta"],
+				"num_factura" => mb_convert_encoding((string)$row["num_factura"], 'UTF-8', 'ISO-8859-1'),
+				"apodo" => mb_convert_encoding((string)$row["apodo"], 'UTF-8', 'ISO-8859-1'),
+				"paciente" => mb_convert_encoding((string)$row["nombre_persona"], 'UTF-8', 'ISO-8859-1'),
+				"ci_cliente" => mb_convert_encoding((string)$row["ci_cliente"], 'UTF-8', 'ISO-8859-1'),
+				"origen" => $origen,
+				"items" => array()
+			);
+		}
+		$avance = normalizarPorcentajePlanTratamientoConsulta($row["progreso_porcentaje"]);
+		$estadoClase = normalizarEstadoPlanTratamientoConsulta($row["estado"], $row["estado_tratamiento"], $avance);
+		$ventas[$ventaId]["items"][] = array(
+			"cod_detalle" => $row["cod_detalle"],
+			"nombre_producto" => mb_convert_encoding((string)$row["nombre_producto"], 'UTF-8', 'ISO-8859-1'),
+			"nivel_riesgo_financiero" => $row["nivel_riesgo_financiero"],
+			"estado_texto" => textoEstadoPlanTratamientoConsulta($estadoClase),
+			"ya_incluido" => (int)$row["ya_incluido"]
+		);
+	}
+	$pagina = "<div class='plan-definitivo-anexar-lista'>";
+	if (count($ventas) == 0) {
+		$pagina .= "<div class='plan-definitivo-empty-inline'>No se encontraron ventas asociadas a la misma c&eacute;dula/paciente.</div>";
+	}
+	foreach ($ventas as $venta) {
+		$fecha = $venta["fecha_venta"] != "" ? date("d/m/Y", strtotime($venta["fecha_venta"])) : "";
+		$alias = trim($venta["apodo"]) != "" ? $venta["apodo"] : $venta["paciente"];
+		$pagina .= "<section class='plan-definitivo-anexar-venta'>"
+			."<div class='plan-definitivo-anexar-venta__head'>"
+			."<strong>Venta #".htmlspecialchars($venta["cod_venta"], ENT_QUOTES, "UTF-8")."</strong>"
+			."<span>Paciente/Alias: ".htmlspecialchars($alias, ENT_QUOTES, "UTF-8")." &middot; Fecha: ".htmlspecialchars($fecha, ENT_QUOTES, "UTF-8")." &middot; ".htmlspecialchars($venta["origen"], ENT_QUOTES, "UTF-8")."</span>"
+			."</div>";
+		foreach ($venta["items"] as $item) {
+			$incluido = $item["ya_incluido"] > 0;
+			$badge = ProductoRiesgoFinancieroBadgeHtml($item["nivel_riesgo_financiero"], "consulta-treatment-risk");
+			$pagina .= "<label class='plan-definitivo-anexar-item".($incluido ? " is-included" : "")."'>"
+				."<input type='checkbox' value='".htmlspecialchars((string)$item["cod_detalle"], ENT_QUOTES, "UTF-8")."' ".($incluido ? "disabled" : "").">"
+				."<span>".htmlspecialchars($item["nombre_producto"], ENT_QUOTES, "UTF-8")."</span>"
+				.$badge
+				."<em>".htmlspecialchars($item["estado_texto"], ENT_QUOTES, "UTF-8")."</em>"
+				.($incluido ? "<b>Ya incluido</b>" : "")
+				."</label>";
+		}
+		$pagina .= "</section>";
+	}
+	$pagina .= "</div>";
+	responderPlanDefinitivoConsulta("exito","", array("2" => $pagina));
+}
+
+function anexarTratamientosPlanDefinitivoConsulta($plan_id,$detalle_ids,$motivo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	if (!$plan) {
+		responderPlanDefinitivoConsulta("error","No se encontro el plan madre.");
+	}
+	$ids = array();
+	foreach (explode(",", $detalle_ids) as $id) {
+		$id = trim($id);
+		if ($id != "" && ctype_digit($id)) {
+			$ids[] = $id;
+		}
+	}
+	if (count($ids) == 0) {
+		responderPlanDefinitivoConsulta("camposvacio","Seleccione al menos un tratamiento para anexar.");
+	}
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+	$stmtOrden = $mysqli->prepare("SELECT COALESCE(MAX(orden),0) AS max_orden FROM plan_definitivo_tratamiento_items WHERE plan_definitivo_id = ? AND activo = 1");
+	$stmtOrden->bind_param("s", $plan_id);
+	$stmtOrden->execute();
+	$rowOrden = mysqli_fetch_assoc($stmtOrden->get_result());
+	$orden = (int)$rowOrden["max_orden"];
+	$selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
+	$stmtDato = $mysqli->prepare("SELECT dtv.cod_detalle, dtv.cod_ventaFK, dtv.cod_productoFK, pr.nombre_producto, ".$selectRiesgo."
+		FROM detalle_venta dtv
+		INNER JOIN venta vt ON vt.cod_venta = dtv.cod_ventaFK
+		INNER JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK
+		INNER JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		WHERE dtv.cod_detalle = ?
+		AND (vt.cod_clienteFK = ? OR cl.ci_cliente = ?)
+		".ProductoClinicoWhereSqlConsulta("pr")."
+		LIMIT 1");
+	$stmtExiste = $mysqli->prepare("SELECT COUNT(*) AS total FROM plan_definitivo_tratamiento_items WHERE plan_definitivo_id = ? AND detalle_venta_id = ? AND activo = 1");
+	$stmtDesactivarOtros = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET activo = 0 WHERE detalle_venta_id = ? AND plan_definitivo_id <> ? AND activo = 1");
+	$stmtInsert = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento_items
+		(plan_definitivo_id, venta_id, detalle_venta_id, producto_id, nombre_tratamiento_snapshot, nivel_riesgo_snapshot, orden, origen, activo, fecha_agregado, agregado_por)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 'venta_anexada', 1, NOW(), ?)");
+	if (!$stmtDato || !$stmtExiste || !$stmtDesactivarOtros || !$stmtInsert) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar el anexo de tratamientos.");
+	}
+	$agregados = 0;
+	$nombres = array();
+	foreach ($ids as $detalle_id) {
+		$stmtDato->bind_param("sss", $detalle_id, $plan["paciente_id"], $plan["cedula"]);
+		$stmtDato->execute();
+		$resultDato = $stmtDato->get_result();
+		if (!($row = mysqli_fetch_assoc($resultDato))) {
+			continue;
+		}
+		$stmtDesactivarOtros->bind_param("ss", $detalle_id, $plan_id);
+		$stmtDesactivarOtros->execute();
+		$stmtExiste->bind_param("ss", $plan_id, $detalle_id);
+		$stmtExiste->execute();
+		$rowExiste = mysqli_fetch_assoc($stmtExiste->get_result());
+		if ((int)$rowExiste["total"] > 0) {
+			continue;
+		}
+		$orden++;
+		$nombreUtf8 = mb_convert_encoding((string)$row["nombre_producto"], 'UTF-8', 'ISO-8859-1');
+		$nombreDb = mb_convert_encoding((string)$nombreUtf8, 'ISO-8859-1', 'UTF-8');
+		$nivel = ProductoRiesgoFinancieroNormalizar($row["nivel_riesgo_financiero"]);
+		$ventaItem = (string)$row["cod_ventaFK"];
+		$detalleItem = (string)$row["cod_detalle"];
+		$productoItem = (string)$row["cod_productoFK"];
+		$stmtInsert->bind_param("sssssiis", $plan_id, $ventaItem, $detalleItem, $productoItem, $nombreDb, $nivel, $orden, $user);
+		if ($stmtInsert->execute()) {
+			$agregados++;
+			$nombres[] = $nombreUtf8." (venta #".$ventaItem.")";
+			registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"tratamiento_anexado","Se anexo ".$nombreUtf8." desde venta #".$ventaItem.".","","Venta #".$ventaItem,$motivo,$user,$rol);
+		}
+	}
+	if ($agregados == 0) {
+		responderPlanDefinitivoConsulta("exito","No se agregaron tratamientos nuevos.");
+	}
+	responderPlanDefinitivoConsulta("exito","Tratamientos anexados: ".$agregados.".");
+}
+
+function buscarPlanesMadreClienteConsulta($cod_cliente)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$paciente = obtenerDatosPacientePlanMadreConsulta($mysqli,$cod_cliente);
+	if (!$paciente) {
+		responderPlanDefinitivoConsulta("camposvacio","Seleccione un cliente valido.");
+	}
+	$planes = obtenerPlanesMadrePacienteConsulta($mysqli,$paciente["paciente_id"],$paciente["cedula"]);
+	$salida = array();
+	foreach ($planes as $plan) {
+		$salida[] = array(
+			"id" => (string)$plan["id"],
+			"numero" => (int)$plan["plan_madre_numero"],
+			"apodo" => (string)$plan["plan_madre_apodo"],
+			"label" => (string)$plan["plan_madre_label"],
+			"estado" => textoEstadoPlanDefinitivoConsulta($plan["estado"]),
+			"version" => (int)$plan["version_actual"],
+			"venta_base_id" => (string)$plan["venta_base_id"],
+			"ventas_asignadas" => (int)$plan["ventas_asignadas"],
+			"tratamientos_asignados" => (int)$plan["tratamientos_asignados"]
+		);
+	}
+	responderPlanDefinitivoConsulta("exito","", array(
+		"planes" => $salida,
+		"paciente" => $paciente["paciente"],
+		"cedula" => $paciente["cedula"]
+	));
+}
+
+function actualizarApodoVentaPlanMadreConsulta($mysqli,$cod_venta,$apodo,$soloSiVacio=true)
+{
+	$apodo = trim((string)$apodo);
+	if ($cod_venta == "" || $apodo == "") { return; }
+	$apodoDb = mb_convert_encoding($apodo, 'ISO-8859-1', 'UTF-8');
+	if ($soloSiVacio) {
+		$stmt = $mysqli->prepare("UPDATE venta SET apodo = ? WHERE cod_venta = ? AND IFNULL(apodo,'') = '' LIMIT 1");
+	} else {
+		$stmt = $mysqli->prepare("UPDATE venta SET apodo = ? WHERE cod_venta = ? LIMIT 1");
+	}
+	if ($stmt) {
+		$stmt->bind_param("ss", $apodoDb, $cod_venta);
+		$stmt->execute();
+	}
+}
+
+function anexarVentaCompletaPlanMadreConsulta($mysqli,$plan,$cod_venta,$user,$motivo,$origenBase)
+{
+	$planId = (string)$plan["id"];
+	$selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
+	$stmtOrden = $mysqli->prepare("SELECT COALESCE(MAX(orden),0) AS max_orden FROM plan_definitivo_tratamiento_items WHERE plan_definitivo_id = ? AND activo = 1");
+	if (!$stmtOrden) { return array("ok" => false, "mensaje" => "No se pudo preparar el orden del plan madre."); }
+	$stmtOrden->bind_param("s", $planId);
+	$stmtOrden->execute();
+	$rowOrden = mysqli_fetch_assoc($stmtOrden->get_result());
+	$orden = (int)$rowOrden["max_orden"];
+	$sql = "SELECT dtv.cod_detalle, dtv.cod_ventaFK, dtv.cod_productoFK, pr.nombre_producto, ".$selectRiesgo."
+		FROM detalle_venta dtv
+		INNER JOIN venta vt ON vt.cod_venta = dtv.cod_ventaFK
+		INNER JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK
+		INNER JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		WHERE dtv.cod_ventaFK = ?
+		AND (vt.cod_clienteFK = ? OR cl.ci_cliente = ?)
+		AND IFNULL(dtv.estado,'') <> 'eliminado'
+		".ProductoClinicoWhereSqlConsulta("pr")."
+		ORDER BY dtv.cod_detalle ASC";
+	$stmtDato = $mysqli->prepare($sql);
+	$stmtExiste = $mysqli->prepare("SELECT COUNT(*) AS total FROM plan_definitivo_tratamiento_items WHERE plan_definitivo_id = ? AND detalle_venta_id = ? AND activo = 1");
+	$stmtDesactivarOtros = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET activo = 0 WHERE detalle_venta_id = ? AND plan_definitivo_id <> ? AND activo = 1");
+	$stmtInsert = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento_items
+		(plan_definitivo_id, venta_id, detalle_venta_id, producto_id, nombre_tratamiento_snapshot, nivel_riesgo_snapshot, orden, origen, activo, fecha_agregado, agregado_por)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), ?)");
+	if (!$stmtDato || !$stmtExiste || !$stmtDesactivarOtros || !$stmtInsert) {
+		return array("ok" => false, "mensaje" => "No se pudo preparar la anexion al plan madre.");
+	}
+	$stmtDato->bind_param("sss", $cod_venta, $plan["paciente_id"], $plan["cedula"]);
+	if (!$stmtDato->execute()) {
+		return array("ok" => false, "mensaje" => "No se pudieron leer los tratamientos de la venta.");
+	}
+	$result = $stmtDato->get_result();
+	$agregados = 0;
+	$leidos = 0;
+	$origen = $origenBase ? "plan_principal" : "venta_anexada";
+	while ($row = mysqli_fetch_assoc($result)) {
+		$leidos++;
+		$detalleItem = (string)$row["cod_detalle"];
+		$stmtDesactivarOtros->bind_param("ss", $detalleItem, $planId);
+		$stmtDesactivarOtros->execute();
+		$stmtExiste->bind_param("ss", $planId, $detalleItem);
+		$stmtExiste->execute();
+		$rowExiste = mysqli_fetch_assoc($stmtExiste->get_result());
+		if ((int)$rowExiste["total"] > 0) {
+			continue;
+		}
+		$orden++;
+		$nombreUtf8 = mb_convert_encoding((string)$row["nombre_producto"], 'UTF-8', 'ISO-8859-1');
+		$nombreDb = mb_convert_encoding((string)$nombreUtf8, 'ISO-8859-1', 'UTF-8');
+		$nivel = ProductoRiesgoFinancieroNormalizar($row["nivel_riesgo_financiero"]);
+		$ventaItem = (string)$row["cod_ventaFK"];
+		$productoItem = (string)$row["cod_productoFK"];
+		$stmtInsert->bind_param("sssssiiss", $planId, $ventaItem, $detalleItem, $productoItem, $nombreDb, $nivel, $orden, $origen, $user);
+		if ($stmtInsert->execute()) {
+			$agregados++;
+		}
+	}
+	return array("ok" => true, "agregados" => $agregados, "leidos" => $leidos);
+}
+
+function desactivarPlanesMadreVaciosConsulta($mysqli,$paciente_id,$cedula,$planActivoId,$user)
+{
+	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento pd
+		SET pd.activo = 0, pd.fecha_actualizacion = NOW(), pd.actualizado_por = ?
+		WHERE pd.activo = 1
+		AND pd.id <> ?
+		AND (pd.paciente_id = ? OR pd.cedula = ?)
+		AND NOT EXISTS (
+			SELECT 1
+			FROM plan_definitivo_tratamiento_items pi
+			WHERE pi.plan_definitivo_id = pd.id
+			AND pi.activo = 1
+			LIMIT 1
+		)");
+	if ($stmt) {
+		$stmt->bind_param("ssss", $user, $planActivoId, $paciente_id, $cedula);
+		$stmt->execute();
+	}
+}
+
+function crearPlanMadreDesdeVentaConsulta($mysqli,$contexto,$apodo,$user)
+{
+	$cod_venta = (string)$contexto["venta_actual_id"];
+	if (trim((string)$apodo) != "") {
+		actualizarApodoVentaPlanMadreConsulta($mysqli,$cod_venta,$apodo,false);
+	}
+	$cedula = mb_convert_encoding((string)$contexto["cedula"], 'ISO-8859-1', 'UTF-8');
+	$paciente_id = $contexto["paciente_id"];
+	$estado = "borrador";
+	$version = 1;
+	$activo = 1;
+	$stmt = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento
+		(cedula, paciente_id, venta_base_id, doctor_cabecera_id, estado, version_actual, fecha_creacion, creado_por, fecha_actualizacion, actualizado_por, activo)
+		VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, NOW(), ?, ?)");
+	if (!$stmt) {
+		return array("ok" => false, "mensaje" => "No se pudo preparar la creacion del plan madre.");
+	}
+	$stmt->bind_param("sssssisii", $cedula, $paciente_id, $cod_venta, $user, $estado, $version, $user, $user, $activo);
+	if (!$stmt->execute()) {
+		return array("ok" => false, "mensaje" => "No se pudo crear el plan madre.");
+	}
+	$planId = $mysqli->insert_id;
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$planId);
+	$resultado = anexarVentaCompletaPlanMadreConsulta($mysqli,$plan,$cod_venta,$user,"Creacion de plan madre desde venta #".$cod_venta,true);
+	if (!$resultado["ok"]) { return $resultado; }
+	if ((int)$resultado["leidos"] == 0) {
+		return array("ok" => false, "mensaje" => "La venta no tiene tratamientos activos para anexar al plan madre.");
+	}
+	desactivarPlanesMadreVaciosConsulta($mysqli,$paciente_id,$contexto["cedula"],$planId,$user);
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$alias = trim((string)$apodo) != "" ? $apodo : "Sin beneficiario";
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$planId,1,"creacion","Se creo el plan madre ".$alias." desde venta #".$cod_venta.".","","".$resultado["agregados"]." tratamientos anexados","",$user,$rol);
+	return array("ok" => true, "plan_id" => $planId, "agregados" => $resultado["agregados"]);
+}
+
+function asignarVentaPlanMadreConsulta($cod_venta,$plan_id,$modo,$apodo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$modo = strtolower(trim((string)$modo));
+	if ($modo == "pendiente") {
+		responderPlanDefinitivoConsulta("exito","La venta quedo pendiente de anexar a un plan madre.");
+	}
+	$contexto = obtenerContextoPlanDefinitivoConsulta($mysqli,$cod_venta);
+	if (!$contexto) {
+		responderPlanDefinitivoConsulta("error","No se pudo identificar la venta.");
+	}
+	$mysqli->autocommit(false);
+	if ($modo == "nuevo") {
+		$resultadoNuevo = crearPlanMadreDesdeVentaConsulta($mysqli,$contexto,$apodo,$user);
+		if (!$resultadoNuevo["ok"]) {
+			$mysqli->rollback();
+			responderPlanDefinitivoConsulta("error",$resultadoNuevo["mensaje"]);
+		}
+		$mysqli->commit();
+		responderPlanDefinitivoConsulta("exito","Nuevo plan madre creado. Tratamientos anexados: ".$resultadoNuevo["agregados"].".", array("plan_id" => $resultadoNuevo["plan_id"], "agregados" => $resultadoNuevo["agregados"]));
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	if (!$plan) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","No se encontro el plan madre seleccionado.");
+	}
+	if ((string)$plan["paciente_id"] != (string)$contexto["paciente_id"] && trim((string)$plan["cedula"]) != trim((string)$contexto["cedula"])) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","El plan madre no corresponde a esta cedula.");
+	}
+	$planes = obtenerPlanesMadrePacienteConsulta($mysqli,$contexto["paciente_id"],$contexto["cedula"]);
+	$planInfo = buscarPlanMadreEnListaConsulta($planes,$plan_id);
+	$aliasPlan = $planInfo ? $planInfo["plan_madre_apodo"] : "";
+	if (trim((string)$apodo) != "") {
+		actualizarApodoVentaPlanMadreConsulta($mysqli,$cod_venta,$apodo,true);
+	} elseif (trim((string)$aliasPlan) != "" && $aliasPlan != "Sin beneficiario") {
+		actualizarApodoVentaPlanMadreConsulta($mysqli,$cod_venta,$aliasPlan,true);
+	}
+	$motivo = "Anexion de tratamientos de venta #".$cod_venta." al plan madre.";
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+	$resultado = anexarVentaCompletaPlanMadreConsulta($mysqli,$plan,$cod_venta,$user,$motivo,((string)$plan["venta_base_id"] == (string)$cod_venta));
+	if (!$resultado["ok"]) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error",$resultado["mensaje"]);
+	}
+	if ((int)$resultado["leidos"] == 0) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("camposvacio","La venta no tiene tratamientos activos para anexar al plan madre.");
+	}
+	desactivarPlanesMadreVaciosConsulta($mysqli,$contexto["paciente_id"],$contexto["cedula"],$plan_id,$user);
+	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"venta_asignada","Se anexaron tratamientos de la venta #".$cod_venta." al plan madre.","","".$resultado["agregados"]." tratamientos anexados",$motivo,$user,$rol);
+	$mysqli->commit();
+	$mensajeAnexo = (int)$resultado["agregados"] > 0 ? "Tratamientos anexados al plan madre: ".$resultado["agregados"]."." : "Esta venta ya estaba anexada a ese plan madre.";
+	responderPlanDefinitivoConsulta("exito",$mensajeAnexo, array("plan_id" => $plan_id, "agregados" => (int)$resultado["agregados"]));
+}
+
+function etiquetaAccionHistorialPlanDefinitivoConsulta($accion)
+{
+	$accion = (string)$accion;
+	$mapa = array(
+		"creacion" => "Creacion del plan",
+		"creacion_desde_plan_sugerido" => "Creacion desde sugerencia",
+		"guardado_borrador" => "Borrador guardado",
+		"confirmacion" => "Plan confirmado",
+		"cambio_orden" => "Cambio de orden",
+		"observacion_modificada" => "Observacion modificada",
+		"tratamiento_quitado" => "Tratamiento quitado",
+		"tratamiento_anexado" => "Tratamiento anexado",
+		"venta_asignada" => "Tratamientos anexados a plan madre"
+	);
+	if (isset($mapa[$accion])) {
+		return $mapa[$accion];
+	}
+	$texto = trim(ucwords(str_replace("_", " ", $accion)));
+	return $texto != "" ? $texto : "Accion registrada";
+}
+
+function renderValorHistorialPlanDefinitivoConsulta($titulo,$valor)
+{
+	$valor = mb_convert_encoding((string)$valor, 'UTF-8', 'ISO-8859-1');
+	if (trim($valor) == "") {
+		return "";
+	}
+	return "<div class='plan-definitivo-historial-valor'>"
+		."<b>".htmlspecialchars($titulo, ENT_QUOTES, "UTF-8")."</b>"
+		."<span>".nl2br(htmlspecialchars($valor, ENT_QUOTES, "UTF-8"))."</span>"
+		."</div>";
+}
+
+function obtenerHistorialPlanDefinitivoConsulta($plan_id)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$sql = "SELECT h.*, p.nombre_persona
+		FROM plan_definitivo_tratamiento_historial h
+		LEFT JOIN persona p ON p.cod_persona = h.usuario_id
+		WHERE h.plan_definitivo_id = ?
+		ORDER BY h.fecha_hora DESC, h.id DESC";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar el historial.");
+	}
+	$stmt->bind_param("s", $plan_id);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudo consultar el historial.");
+	}
+	$result = $stmt->get_result();
+	$pagina = "<div class='plan-definitivo-historial-lista'>";
+	if (mysqli_num_rows($result) == 0) {
+		$pagina .= "<div class='plan-definitivo-empty-inline'>Sin historial registrado todav&iacute;a.</div>";
+	}
+	while ($row = mysqli_fetch_assoc($result)) {
+		$fecha = $row["fecha_hora"] != "" ? date("d/m/Y H:i", strtotime($row["fecha_hora"])) : "";
+		$usuario = mb_convert_encoding((string)$row["nombre_persona"], 'UTF-8', 'ISO-8859-1');
+		if (trim($usuario) == "") { $usuario = "Usuario"; }
+		$descripcion = mb_convert_encoding((string)$row["descripcion"], 'UTF-8', 'ISO-8859-1');
+		$motivo = mb_convert_encoding((string)$row["motivo"], 'UTF-8', 'ISO-8859-1');
+		$accion = mb_convert_encoding((string)$row["accion"], 'UTF-8', 'ISO-8859-1');
+		$rol = mb_convert_encoding((string)$row["rol"], 'UTF-8', 'ISO-8859-1');
+		$usuarioRol = htmlspecialchars($usuario, ENT_QUOTES, "UTF-8").($rol != "" ? " &middot; ".htmlspecialchars($rol, ENT_QUOTES, "UTF-8") : "");
+		$valorAnterior = renderValorHistorialPlanDefinitivoConsulta("Antes", $row["valor_anterior"]);
+		$valorNuevo = renderValorHistorialPlanDefinitivoConsulta("Despues", $row["valor_nuevo"]);
+		$cambios = ($valorAnterior != "" || $valorNuevo != "")
+			? "<div class='plan-definitivo-historial-cambio'>".$valorAnterior.$valorNuevo."</div>"
+			: "";
+		$pagina .= "<article class='plan-definitivo-historial-item'>"
+			."<div class='plan-definitivo-historial-top'>"
+				."<time>".htmlspecialchars($fecha, ENT_QUOTES, "UTF-8")."</time>"
+				."<em>Versi&oacute;n ".htmlspecialchars((string)$row["version"], ENT_QUOTES, "UTF-8")."</em>"
+			."</div>"
+			."<span class='plan-definitivo-historial-accion'>".htmlspecialchars(etiquetaAccionHistorialPlanDefinitivoConsulta($accion), ENT_QUOTES, "UTF-8")."</span>"
+			."<strong>".$usuarioRol."</strong>"
+			."<span class='plan-definitivo-historial-desc'>".htmlspecialchars($descripcion, ENT_QUOTES, "UTF-8")."</span>"
+			.$cambios
+			.($motivo != "" ? "<p class='plan-definitivo-historial-motivo'>Motivo: ".htmlspecialchars($motivo, ENT_QUOTES, "UTF-8")."</p>" : "")
+			."</article>";
+	}
+	$pagina .= "</div>";
+	responderPlanDefinitivoConsulta("exito","", array("2" => $pagina));
+}
+
 function  buscarDetalleCompradoConsulta($cod_venta)
 {
 $mysqli=conectar_al_servidor();
-
-$sql= "select dtv.descripcion , pr.cod_producto,dtv.cantidad_detalle,pr.nombre_producto,dtv.cod_detalle ,estado_tratamiento,progreso_porcentaje, dtv.estado
- from  producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
- inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
-where dtv.cod_ventaFK='$cod_venta'";
-
- 
-$stmt = $mysqli->prepare($sql);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-}
- 
-$result = $stmt->get_result();
-$valor= mysqli_num_rows($result);
-$nroRegistro=$valor;
+$cod_venta = mysqli_real_escape_string($mysqli, $cod_venta);
 $styleName="tableRegistroSearch";
-$pagina="";
-
-if ($valor>0)
-{
-while ($valor= mysqli_fetch_assoc($result))
-{  
-
-$descripcion = mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');   
-$nombre_producto = mb_convert_encoding((string)($valor['nombre_producto']), 'UTF-8', 'ISO-8859-1');          
-$cod_detalle = mb_convert_encoding((string)($valor['cod_detalle']), 'UTF-8', 'ISO-8859-1');          
-$cantidad_detalle = mb_convert_encoding((string)($valor['cantidad_detalle']), 'UTF-8', 'ISO-8859-1');  
-$estado_tratamiento = mb_convert_encoding((string)($valor['estado_tratamiento']), 'UTF-8', 'ISO-8859-1'); 
-$progreso_porcentaje = mb_convert_encoding((string)($valor['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1'); 
-$estado = mb_convert_encoding((string)($valor['estado']), 'UTF-8', 'ISO-8859-1'); 
-
-$Style='';
-$estadoClase = 'pendiente';
-$estadoTexto = 'Pendiente';
-$progreso_numero = max(0, min(100, (int)$progreso_porcentaje));
-if ($estado == "eliminado" || $estado == "anulado" || $estado == "cancelado") {
-	$estadoClase = 'cancelado';
-	$estadoTexto = 'Anulado';
-} elseif ($progreso_numero >= 100) {
-	$estadoClase = 'completado';
-	$estadoTexto = 'Completado';
-} elseif ($progreso_numero > 0) {
-	$estadoClase = 'proceso';
-	$estadoTexto = 'En proceso';
+$tratamientos = obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta);
+$fechaBaseSugerida = "";
+if (count($tratamientos) > 0 && isset($tratamientos[0]["fecha_venta"])) {
+	$fechaBaseSugerida = (string)$tratamientos[0]["fecha_venta"];
+}
+if ($fechaBaseSugerida == "") {
+	$fechaBaseSugerida = obtenerFechaVentaBasePlanDefinitivoConsulta($mysqli,$cod_venta);
 }
 
-// $descripcionDetalleVenta=buscardescripcionDetalleVenta($cod_detalle);
- $styleName=CargarStyleTable($styleName);
-$pagina.="
-<table class='$styleName consulta-treatment-row consulta-treatment-row--$estadoClase' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' $Style> 
-<td class='consulta-treatment-row__qty' style='width:5%;text-aling:center'>".number_format($cantidad_detalle,'0',',','.')."</td>
-<td class='consulta-treatment-row__name' style='width:60%'><strong>$nombre_producto</strong><span>$descripcion</span></td> 
-<td class='consulta-treatment-row__progress' style='width:25%;text-align: center;'>
-<span class='consulta-treatment-status consulta-treatment-status--$estadoClase'>$estadoTexto</span>
-<span class='consulta-treatment-percent'>$progreso_numero%</span>
-</td> 
-<td id='td_datos_1' style='Display:none'>$progreso_porcentaje </td> 
-<td id='td_id_1' style='display:none'> $cod_detalle </td> 
-</tr>
-</table>";
- 
+$gruposPlan = ordenarTratamientosPlanSugerido($tratamientos);
+$curvaSugerida = buildAutomaticSuggestionCurve($tratamientos,$fechaBaseSugerida);
+$pagosMensualesSugeridos = obtenerPagosMensualesPlanConsulta($mysqli, ventasDesdeItemsPlanConsulta($tratamientos), $fechaBaseSugerida);
+asignarResumenTemporalGruposPlanConsulta($gruposPlan,$curvaSugerida);
+$metaPlanDefinitivo = array();
+$planDefinitivoHtml = renderizarPlanDefinitivoConsulta($mysqli,$cod_venta,$tratamientos,$metaPlanDefinitivo);
+$ventaBaseCrear = isset($metaPlanDefinitivo["venta_base_id"]) && trim((string)$metaPlanDefinitivo["venta_base_id"]) != "" ? $metaPlanDefinitivo["venta_base_id"] : $cod_venta;
+$ventaBase = htmlspecialchars((string)$ventaBaseCrear, ENT_QUOTES, "UTF-8");
+$avisoSugeridoHtml = "";
+if (!empty($metaPlanDefinitivo["existe"])) {
+	$avisoSugeridoHtml = "
+	<div class='plan-sugerido-aviso-secundario'>
+		<span>Esta es una referencia calculada autom&aacute;ticamente. La ruta cl&iacute;nica vigente se encuentra en el Plan madre.</span>
+		<button type='button' class='plan-definitivo-secondary' onclick='volverARutaVigentePlanConsulta(this)'>Volver a la ruta vigente</button>
+	</div>";
+} else {
+	$avisoSugeridoHtml = "
+	<div class='plan-sugerido-aviso-secundario plan-sugerido-aviso-secundario--inicio'>
+		<span>Us&aacute; esta sugerencia como punto de partida para crear la ruta cl&iacute;nica.</span>
+		<button type='button' class='plan-definitivo-primary' onclick='crearPlanDefinitivoDesdeSugeridoConsulta(\"".$ventaBase."\")'>Crear plan madre</button>
+	</div>";
 }
-}
+$planSugeridoHtml = "
+<div class='plan-tratamientos-panel plan-sugerido-wrapper' data-plan-vista='plan_sugerido'>
+	<div class='plan-tratamientos-header plan-sugerido-header'>
+		<div>
+			<strong>Sugerencia autom&aacute;tica</strong>
+			<p class='plan-tratamientos-ayuda'>Referencia calculada por el sistema seg&uacute;n estado y riesgo financiero.</p>
+			<div class='plan-tratamientos-chips'>
+				<span>En proceso primero</span>
+				<span>Pendientes N1 - N5</span>
+				<span>Finalizados al final</span>
+			</div>
+		</div>
+		<label class='plan-tratamientos-vista'>
+			<span>Vista</span>
+			<select onchange='cambiarVistaPlanTratamientosConsulta(this)'>
+				<option value='plan_sugerido' selected>Sugerencia autom&aacute;tica</option>
+				<option value='todos'>Todos</option>
+				<option value='continuar'>En proceso</option>
+				<option value='siguientes'>Pendientes</option>
+				<option value='finalizados'>Finalizados</option>
+			</select>
+		</label>
+	</div>
+	".$avisoSugeridoHtml."
+	<div class='plan-tratamientos-contenido'>";
+$planSugeridoHtml .= renderizarSeccionPlanTratamientoConsulta("Continuar", "Ya iniciados, conviene continuarlos.", $gruposPlan["continuar"], "No hay tratamientos en proceso.", "continuar", $styleName);
+$planSugeridoHtml .= renderizarSeccionPlanTratamientoConsulta("Siguientes sugeridos", "Ordenado por riesgo y orden natural.", $gruposPlan["siguientes"], "No hay tratamientos pendientes.", "siguientes", $styleName);
+$planSugeridoHtml .= renderizarSeccionPlanTratamientoConsulta("Finalizados", "Tratamientos que ya no cuentan como prioridad activa.", $gruposPlan["finalizados"], "No hay tratamientos finalizados.", "finalizados", $styleName);
+$planSugeridoHtml .= renderPlanRiskChart($curvaSugerida,array(),"sugerencia",$pagosMensualesSugeridos);
+$planSugeridoHtml .= "
+	</div>
+</div>";
+
+$pagina = renderizarTabsPlanesConsulta($planSugeridoHtml,$planDefinitivoHtml,$metaPlanDefinitivo);
   
 $informacion =array("1" => "exito","2" => $pagina );
 echo json_encode($informacion);	
@@ -986,11 +4200,22 @@ function buscarConsulta($Paciente,$local,$num_factura) {
     if($num_factura!=""){
 		$sqlFiltro=" and num_factura like '%".$num_factura."%' ";
 	}
+
+	$planesMadreDisponibles = planDefinitivoTablasDisponiblesConsulta($mysqli);
+	$condicionTratamientoClinicoPorcentaje = ProductoClinicoWhereSqlConsulta("pr_por");
+	$condicionTratamientoClinicoTotal = ProductoClinicoWhereSqlConsulta("pr_tot");
+	$planDefinitivoSelect = ",
+    '' as plan_definitivo_id,
+    '' as plan_definitivo_venta_base_id,
+    '' as plan_definitivo_estado,
+	0 as plan_definitivo_version,
+    0 as plan_definitivo_items_venta";
 	
     $sql= "Select  nombre_persona as paciente,cl.ci_cliente,cl.cod_cliente,num_factura,cod_venta,apodo, vt.cod_local as cod_local_venta, 
-    (select sum(progreso_porcentaje) from detalle_venta where cod_ventaFK=cod_venta) as porcentaje , 
+    (select sum(dtv_por.progreso_porcentaje) from detalle_venta dtv_por inner join producto pr_por on pr_por.cod_producto=dtv_por.cod_productoFK where dtv_por.cod_ventaFK=vt.cod_venta".$condicionTratamientoClinicoPorcentaje.") as porcentaje , 
     (select Nombre from local where cod_local=vt.cod_local) as nombre_local , 
-    (select count(*) from detalle_venta where cod_ventaFK=cod_venta) as totalporcentaje
+    (select count(*) from detalle_venta dtv_tot inner join producto pr_tot on pr_tot.cod_producto=dtv_tot.cod_productoFK where dtv_tot.cod_ventaFK=vt.cod_venta".$condicionTratamientoClinicoTotal.") as totalporcentaje
+    ".$planDefinitivoSelect."
     from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
     inner join persona p on cod_cliente=cod_persona
     where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$sqlFiltro." limit 100;";
@@ -1019,6 +4244,10 @@ function buscarConsulta($Paciente,$local,$num_factura) {
             $nombre_local=mb_convert_encoding((string)($valor['nombre_local']), 'UTF-8', 'ISO-8859-1');
             $porcentaje = $valor['porcentaje'];
             $totalporcentaje = $valor['totalporcentaje'];
+            $planMadreInfo = null;
+            if ($planesMadreDisponibles) {
+                $planMadreInfo = obtenerPlanMadreAsignadoVentaConsulta($mysqli,$cod_cliente,$ci_cliente,$cod_venta);
+            }
 
             $registros[] = array(
                 "num_factura" => $num_factura,
@@ -1032,6 +4261,14 @@ function buscarConsulta($Paciente,$local,$num_factura) {
                 "nombre_local" => $nombre_local,
                 "porcentaje" => $porcentaje,
                 "totalporcentaje" => $totalporcentaje,
+                "plan_definitivo_id" => $planMadreInfo ? mb_convert_encoding((string)($planMadreInfo['id']), 'UTF-8', 'ISO-8859-1') : "",
+                "plan_definitivo_venta_base_id" => $planMadreInfo ? mb_convert_encoding((string)($planMadreInfo['venta_base_id']), 'UTF-8', 'ISO-8859-1') : "",
+                "plan_definitivo_estado" => $planMadreInfo ? mb_convert_encoding((string)($planMadreInfo['estado']), 'UTF-8', 'ISO-8859-1') : "",
+                "plan_definitivo_version" => $planMadreInfo ? (int)$planMadreInfo['version_actual'] : 0,
+                "plan_definitivo_items_venta" => $planMadreInfo ? (int)$planMadreInfo['items_venta'] : 0,
+                "plan_madre_numero" => $planMadreInfo ? (int)$planMadreInfo['plan_madre_numero'] : 0,
+                "plan_madre_apodo" => $planMadreInfo ? mb_convert_encoding((string)($planMadreInfo['plan_madre_apodo']), 'UTF-8', 'ISO-8859-1') : "",
+                "plan_madre_label" => $planMadreInfo ? mb_convert_encoding((string)($planMadreInfo['plan_madre_label']), 'UTF-8', 'ISO-8859-1') : "",
             );
         }
     }
@@ -1052,10 +4289,12 @@ function buscarSelectorTratamiento($Paciente,$local,$num_factura) {
 function detalleTratamientoDatos($buscar) {
     $mysqli = conectar_al_servidor();
 
-    $sql = "SELECT pr.cod_producto, pr.nombre_producto, dtv.estado, dtv.progreso_porcentaje 
+    $selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
+    $sql = "SELECT pr.cod_producto, pr.nombre_producto, dtv.estado, dtv.progreso_porcentaje, ".$selectRiesgo." 
             FROM producto pr 
             INNER JOIN detalle_venta dtv ON dtv.cod_productoFK = pr.cod_producto
-            WHERE dtv.cod_ventaFK = '$buscar'";
+            WHERE dtv.cod_ventaFK = '$buscar'
+            ".ProductoClinicoWhereSqlConsulta("pr");
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt->execute()) {
@@ -1069,6 +4308,7 @@ function detalleTratamientoDatos($buscar) {
     $proceso = 0;
     $completados = 0;
     $cancelados = 0;
+    $activos = 0;
     $html = "<ul class='clinical-treatment-list'>";
 
     if ($valor > 0) {
@@ -1078,6 +4318,8 @@ function detalleTratamientoDatos($buscar) {
             $progreso_porcentaje = mb_convert_encoding((string)($row['progreso_porcentaje']), 'UTF-8', 'ISO-8859-1');
             $progreso_porcentaje = max(0, min(100, (int)$progreso_porcentaje));
             $nombre_producto_html = htmlspecialchars($nombre_producto, ENT_QUOTES, 'UTF-8');
+            $nivel_riesgo_financiero = isset($row['nivel_riesgo_financiero']) ? $row['nivel_riesgo_financiero'] : 1;
+            $badge_riesgo_financiero = ProductoRiesgoFinancieroBadgeHtml($nivel_riesgo_financiero, "clinical-treatment-risk");
             $estado_normalizado = strtolower(trim($estado));
             $estado_clase = "pendiente";
             $estado_texto = "Pendiente";
@@ -1090,17 +4332,21 @@ function detalleTratamientoDatos($buscar) {
                 $estado_clase = "completado";
                 $estado_texto = "Completado";
                 $completados++;
+                $activos++;
             } elseif ($progreso_porcentaje > 0) {
                 $estado_clase = "proceso";
                 $estado_texto = "En proceso";
                 $proceso++;
+                $activos++;
             } else {
                 $pendientes++;
+                $activos++;
             }
 
             $html .= "
             <li class='clinical-treatment-item clinical-treatment-item--".$estado_clase."'>
                 <span class='clinical-treatment-name'>".$nombre_producto_html."</span>
+                ".$badge_riesgo_financiero."
                 <span class='clinical-treatment-status'>".$estado_texto."</span>
                 <span class='clinical-treatment-progress'>".$progreso_porcentaje."%</span>
             </li>";
@@ -1115,7 +4361,8 @@ function detalleTratamientoDatos($buscar) {
         "pendientes" => $pendientes,
         "proceso" => $proceso,
         "completados" => $completados,
-        "cancelados" => $cancelados
+        "cancelados" => $cancelados,
+        "activos" => $activos
     );
 }
 
@@ -1134,6 +4381,14 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
         $cod_venta= $valor['cod_venta'];
         $apodo= $valor['apodo'];
         $nombre_local= $valor['nombre_local'];
+        $planDefinitivoId = isset($valor['plan_definitivo_id']) ? $valor['plan_definitivo_id'] : "";
+        $planDefinitivoVentaBaseId = isset($valor['plan_definitivo_venta_base_id']) ? $valor['plan_definitivo_venta_base_id'] : "";
+        $planDefinitivoEstado = isset($valor['plan_definitivo_estado']) ? $valor['plan_definitivo_estado'] : "";
+        $planDefinitivoVersion = isset($valor['plan_definitivo_version']) ? (int)$valor['plan_definitivo_version'] : 0;
+        $planDefinitivoItemsVenta = isset($valor['plan_definitivo_items_venta']) ? (int)$valor['plan_definitivo_items_venta'] : 0;
+        $planMadreNumero = isset($valor['plan_madre_numero']) ? (int)$valor['plan_madre_numero'] : 0;
+        $planMadreApodo = isset($valor['plan_madre_apodo']) ? $valor['plan_madre_apodo'] : "";
+        $planMadreLabel = isset($valor['plan_madre_label']) ? $valor['plan_madre_label'] : "";
         $porcentaje = $valor['porcentaje'];
         $totalporcentaje = $valor['totalporcentaje'];
         $totalporcentaje = $totalporcentaje * 100;
@@ -1155,6 +4410,8 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
         }
 
         $detalleTratamiento = detalleTratamientoDatos($cod_venta);
+        $tratamientosActivos = isset($detalleTratamiento["activos"]) ? (int)$detalleTratamiento["activos"] : 0;
+        $totalTratamientosRegistro = $detalleTratamiento["pendientes"] + $detalleTratamiento["proceso"] + $detalleTratamiento["completados"] + $detalleTratamiento["cancelados"];
         $claveGrupo = $cod_cliente != "" ? $cod_cliente : $ci_cliente."_".$paciente;
 
         if (!isset($gruposPaciente[$claveGrupo])) {
@@ -1168,6 +4425,13 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
                 "pendientes" => 0,
                 "proceso" => 0,
                 "completados" => 0,
+                "plan_definitivo_id" => "",
+                "plan_definitivo_venta_base_id" => "",
+                "plan_definitivo_base_titulo" => "",
+                "plan_definitivo_estado" => "",
+                "plan_definitivo_version" => 0,
+                "planes_madre" => array(),
+                "plan_grupos" => array(),
                 "registros" => array()
             );
         }
@@ -1184,20 +4448,127 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
         $tituloRegistro = $num_factura != "" ? "Venta #".$numFacturaHtml : "C&oacute;digo venta #".$codVentaHtml;
         $codigoVisible = $num_factura != "" ? $numFacturaHtml : $codVentaHtml;
         $apodoActualHtml = htmlspecialchars($apodo, ENT_QUOTES, 'UTF-8');
-        $apodoBadgeHtml = trim($apodo) != "" ? "<span class='clinical-card__nickname'>Apodo: ".$apodoActualHtml."</span>" : "";
+        $apodoBadgeHtml = trim($apodo) != "" ? "<span class='clinical-card__nickname'>Apodo/beneficiario: ".$apodoActualHtml."</span>" : "";
         $pacienteOcultoRegistro = htmlspecialchars($paciente.($apodo != "" ? " (".$apodo.")" : ""), ENT_QUOTES, 'UTF-8');
+        $tienePlanDefinitivo = trim((string)$planDefinitivoId) != "";
+        $esVentaBasePlanDefinitivo = $tienePlanDefinitivo && ((string)$planDefinitivoVentaBaseId == (string)$cod_venta);
+        $ventaIncluidaPlanDefinitivo = $tienePlanDefinitivo && ($planDefinitivoItemsVenta > 0 || $esVentaBasePlanDefinitivo);
+        $tratamientosConteoPlan = $ventaIncluidaPlanDefinitivo ? (int)$planDefinitivoItemsVenta : $totalTratamientosRegistro;
+        $estadoPlanDefinitivoTexto = textoEstadoPlanDefinitivoConsulta($planDefinitivoEstado);
+        $planDefinitivoCardClass = $ventaIncluidaPlanDefinitivo ? " clinical-record-card--plan-asignado" : " clinical-record-card--plan-pendiente";
+        $planDefinitivoMarkerHtml = "";
+        $planAsignarBtnHtml = "";
+        $planGrupoKey = "pendiente";
+        $planGrupoOrden = 9999;
+        $planGrupoClase = "pendiente";
+        $planGrupoTitulo = "Pendiente de anexar";
+        $planGrupoSubtitulo = "Ventas cuyos tratamientos todav&iacute;a no forman parte de un plan madre.";
+        $planGrupoDetalle = "Estas ventas deben anexarse a un plan madre antes de quedar dentro de una ruta cl&iacute;nica activa.";
+        $planGrupoBeneficiario = "";
+        $planGrupoNumero = "!";
+        if ($ventaIncluidaPlanDefinitivo) {
+            $beneficiarioPlanMadre = trim($planMadreApodo) != "" ? $planMadreApodo : "Sin beneficiario";
+            $labelPlanMadre = trim($planMadreLabel) != "" ? $planMadreLabel : ("Plan madre #".$planMadreNumero);
+            $labelPlanMadreHtml = htmlspecialchars($labelPlanMadre, ENT_QUOTES, 'UTF-8');
+            $planDefinitivoMarkerHtml = "<span class='clinical-plan-mini-marker clinical-plan-mini-marker--base' title='Tratamientos anexados a un plan madre'><span aria-hidden='true'>".$planMadreNumero."</span>Anexado a ".htmlspecialchars($labelPlanMadre, ENT_QUOTES, 'UTF-8')."</span>";
+            $gruposPaciente[$claveGrupo]["planes_madre"][(string)$planDefinitivoId] = array(
+                "numero" => $planMadreNumero,
+                "apodo" => htmlspecialchars($planMadreApodo, ENT_QUOTES, 'UTF-8'),
+                "label" => $labelPlanMadreHtml
+            );
+            $planGrupoKey = "plan_".$planDefinitivoId;
+            $planGrupoOrden = $planMadreNumero > 0 ? $planMadreNumero : 500;
+            $planGrupoClase = "asignado";
+            $planGrupoTitulo = $labelPlanMadreHtml;
+            $planGrupoSubtitulo = "Plan integral de tratamiento";
+            $planGrupoDetalle = "Plan madre activo: tratamientos fusionados bajo este plan.";
+            $planGrupoBeneficiario = "Apodo/beneficiario: ".htmlspecialchars($beneficiarioPlanMadre, ENT_QUOTES, 'UTF-8');
+            $planGrupoNumero = $planMadreNumero > 0 ? (string)$planMadreNumero : "#";
+        } else {
+            if ($tratamientosActivos <= 0) {
+                $planGrupoKey = "sin_activos";
+                $planGrupoOrden = 10000;
+                $planGrupoClase = "inactivo";
+                $planGrupoTitulo = "Sin tratamientos activos";
+                $planGrupoSubtitulo = "Ventas anuladas o sin tratamientos disponibles para fusionar.";
+                $planGrupoDetalle = "Estas ventas quedan visibles como historial, pero no se anexan a un plan madre activo.";
+                $planGrupoNumero = "-";
+                $planDefinitivoMarkerHtml = "<span class='clinical-plan-mini-marker clinical-plan-mini-marker--inactive' title='No hay tratamientos activos para fusionar al plan madre'><span aria-hidden='true'>!</span>Sin tratamientos activos</span>";
+                $planAsignarBtnHtml = "<span class='clinical-plan-assign-note'>No anexable</span>";
+            } else {
+                $planDefinitivoMarkerHtml = "<span class='clinical-plan-mini-marker clinical-plan-mini-marker--pending' title='Tratamientos pendientes de anexar a un plan madre'><span aria-hidden='true'>!</span>Pendiente de anexar</span>";
+                $planAsignarBtnHtml = "<button type='button' class='clinical-plan-assign-btn' onclick='event.stopPropagation(); abrirAsignarPlanMadreVentaConsulta(\"".$codVentaHtml."\",\"".htmlspecialchars($cod_cliente, ENT_QUOTES, 'UTF-8')."\",\"".$apodoActualHtml."\")'>Anexar a plan madre</button>";
+            }
+        }
+        if (!isset($gruposPaciente[$claveGrupo]["plan_grupos"][$planGrupoKey])) {
+            $gruposPaciente[$claveGrupo]["plan_grupos"][$planGrupoKey] = array(
+                "orden" => $planGrupoOrden,
+                "clase" => $planGrupoClase,
+                "titulo" => $planGrupoTitulo,
+                "subtitulo" => $planGrupoSubtitulo,
+                "detalle" => $planGrupoDetalle,
+                "beneficiario" => $planGrupoBeneficiario,
+                "numero" => $planGrupoNumero,
+                "venta_base_id" => htmlspecialchars((string)$planDefinitivoVentaBaseId, ENT_QUOTES, 'UTF-8'),
+                "ventas" => 0,
+                "tratamientos" => 0,
+                "base" => null,
+                "registros" => array()
+            );
+        }
+        $gruposPaciente[$claveGrupo]["plan_grupos"][$planGrupoKey]["ventas"]++;
+        $gruposPaciente[$claveGrupo]["plan_grupos"][$planGrupoKey]["tratamientos"] += $tratamientosConteoPlan;
+        if ($tienePlanDefinitivo && $gruposPaciente[$claveGrupo]["plan_definitivo_id"] == "") {
+            $gruposPaciente[$claveGrupo]["plan_definitivo_id"] = htmlspecialchars((string)$planDefinitivoId, ENT_QUOTES, 'UTF-8');
+            $gruposPaciente[$claveGrupo]["plan_definitivo_venta_base_id"] = htmlspecialchars((string)$planDefinitivoVentaBaseId, ENT_QUOTES, 'UTF-8');
+            $gruposPaciente[$claveGrupo]["plan_definitivo_base_titulo"] = "Venta #".htmlspecialchars((string)$planDefinitivoVentaBaseId, ENT_QUOTES, 'UTF-8');
+            $gruposPaciente[$claveGrupo]["plan_definitivo_estado"] = htmlspecialchars($estadoPlanDefinitivoTexto, ENT_QUOTES, 'UTF-8');
+            $gruposPaciente[$claveGrupo]["plan_definitivo_version"] = $planDefinitivoVersion;
+        }
+        if ($esVentaBasePlanDefinitivo) {
+            $gruposPaciente[$claveGrupo]["plan_definitivo_base_titulo"] = $tituloRegistro;
+        }
 
-        $gruposPaciente[$claveGrupo]["registros"][] = array(
+        $datosOcultosRegistroHtml = "
+          <div style='display:none;'>
+            <span id='td_datos_1'>".$pacienteOcultoRegistro."</span>
+            <span id='td_datos_2'>".$ciHidden."</span>
+            <span id='td_datos_3'>".$numFacturaHtml."</span>
+            <span id='td_datos_4'></span>
+            <span id='td_datos_5'>".$codVentaHtml."</span>
+            <span id='td_datos_6'>".htmlspecialchars($cod_cliente, ENT_QUOTES, 'UTF-8')."</span>
+            <span id='td_datos_7'>".$apodoActualHtml."</span>
+            <span id='td_datos_8'>".$localHtml."</span>
+            <span id='td_datos_9'>".$codLocalVentaHtml."</span>
+          </div>";
+        $eyebrowRegistro = "Registro cl&iacute;nico";
+        if ($ventaIncluidaPlanDefinitivo) {
+            $eyebrowRegistro = $esVentaBasePlanDefinitivo ? "Venta base del plan madre" : "Plan anexado";
+        }
+        $rolPlanRegistroClass = "";
+        if ($ventaIncluidaPlanDefinitivo) {
+            $rolPlanRegistroClass = $esVentaBasePlanDefinitivo ? " clinical-record-card--plan-madre-base" : " clinical-record-card--plan-hijo";
+        }
+
+        $registroVista = array(
             "orden" => $ordenEstado[$estadoClase],
             "indice" => $indiceRegistro,
+            "es_base" => $esVentaBasePlanDefinitivo,
+            "titulo" => $tituloRegistro,
+            "estado_clase" => $estadoClase,
+            "estado_texto" => $estadoTexto,
+            "porcentaje" => $resultadoPorcentaje,
+            "tratamientos_count" => $tratamientosConteoPlan,
+            "datos_html" => $datosOcultosRegistroHtml,
             "html" => "
-        <div class='tarjeta-paciente clinical-record-card clinical-record-card--".$estadoClase."' onclick='ObtenerdatosAbmConsulta(this)' onkeyup='if(event.keyCode==13||event.keyCode==32){ObtenerdatosAbmConsulta(this)}' role='button' tabindex='0' title='Abrir historial cl&iacute;nico' aria-label='Abrir historial cl&iacute;nico del paciente'>
+        <div class='tarjeta-paciente clinical-record-card clinical-record-card--".$estadoClase.$planDefinitivoCardClass.$rolPlanRegistroClass."' onclick='ObtenerdatosAbmConsulta(this)' onkeyup='if(event.keyCode==13||event.keyCode==32){ObtenerdatosAbmConsulta(this)}' role='button' tabindex='0' title='Abrir historial cl&iacute;nico' aria-label='Abrir historial cl&iacute;nico del paciente'>
           <div class='clinical-record-card__header'>
             <div>
-              <span class='clinical-record-card__eyebrow'>Registro cl&iacute;nico</span>
+              <span class='clinical-record-card__eyebrow'>".$eyebrowRegistro."</span>
               <div class='clinical-record-card__title-row'>
                 <h3>".$tituloRegistro."</h3>
                 ".$apodoBadgeHtml."
+                ".$planDefinitivoMarkerHtml."
               </div>
             </div>
             <div class='clinical-progress-badge clinical-progress-badge--".$estadoClase."'>
@@ -1207,7 +4578,6 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
           </div>
 
           <div class='clinical-record-meta'>
-            <span><strong>C&oacute;digo venta</strong>".$codigoVisible."</span>
             <span><strong>Local</strong>".$localHtml."</span>
           </div>
 
@@ -1217,44 +4587,141 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
           </div>
 
           <span class='clinical-record-action'>Ver evoluci&oacute;n</span>
+          ".$planAsignarBtnHtml."
 
-          <div style='display:none;'>
-            <span id='td_datos_1'>".$pacienteOcultoRegistro."</span>
-            <span id='td_datos_2'>".$ciHidden."</span>
-            <span id='td_datos_3'>".$numFacturaHtml."</span>
-            <span id='td_datos_4'></span> 
-            <span id='td_datos_5'>".$codVentaHtml."</span> 
-            <span id='td_datos_6'>".htmlspecialchars($cod_cliente, ENT_QUOTES, 'UTF-8')."</span> 
-            <span id='td_datos_7'>".$apodoActualHtml."</span> 
-            <span id='td_datos_8'>".$localHtml."</span> 
-            <span id='td_datos_9'>".$codLocalVentaHtml."</span> 
-          </div>
+          ".$datosOcultosRegistroHtml."
         </div>"
         );
+        $gruposPaciente[$claveGrupo]["registros"][] = $registroVista;
+        $gruposPaciente[$claveGrupo]["plan_grupos"][$planGrupoKey]["registros"][] = $registroVista;
+        if ($esVentaBasePlanDefinitivo) {
+            $gruposPaciente[$claveGrupo]["plan_grupos"][$planGrupoKey]["base"] = $registroVista;
+        }
     }
 
     foreach ($gruposPaciente as $grupo) {
-        usort($grupo["registros"], function($a, $b) {
-            if ($a["orden"] == $b["orden"]) {
-                if ($a["indice"] == $b["indice"]) {
-                    return 0;
-                }
-                return ($a["indice"] < $b["indice"]) ? -1 : 1;
-            }
-            return ($a["orden"] < $b["orden"]) ? -1 : 1;
-        });
-
         $cantidadRegistros = count($grupo["registros"]);
         $textoRegistros = $cantidadRegistros == 1 ? "1 registro encontrado" : $cantidadRegistros." registros encontrados";
         $registrosHtml = "";
 
-        foreach ($grupo["registros"] as $registro) {
-            $registrosHtml .= $registro["html"];
+        $planGrupos = $grupo["plan_grupos"];
+        uasort($planGrupos, function($a, $b) {
+            if ($a["orden"] == $b["orden"]) {
+                return strcmp($a["titulo"], $b["titulo"]);
+            }
+            return ($a["orden"] < $b["orden"]) ? -1 : 1;
+        });
+        foreach ($planGrupos as $planGrupo) {
+            usort($planGrupo["registros"], function($a, $b) {
+                if ($a["orden"] == $b["orden"]) {
+                    if ($a["indice"] == $b["indice"]) {
+                        return 0;
+                    }
+                    return ($a["indice"] < $b["indice"]) ? -1 : 1;
+                }
+                return ($a["orden"] < $b["orden"]) ? -1 : 1;
+            });
+            $ventasPlanTexto = $planGrupo["ventas"] == 1 ? "1 venta" : $planGrupo["ventas"]." ventas";
+            $tratamientosPlanTexto = $planGrupo["tratamientos"] == 1 ? "1 tratamiento" : $planGrupo["tratamientos"]." tratamientos";
+            $registrosPlanHtml = "";
+            $esGrupoPlanMadre = $planGrupo["clase"] == "asignado";
+            $registroBasePlan = ($esGrupoPlanMadre && isset($planGrupo["base"]) && is_array($planGrupo["base"])) ? $planGrupo["base"] : null;
+            foreach ($planGrupo["registros"] as $registro) {
+                if ($esGrupoPlanMadre && $registroBasePlan !== null && !empty($registro["es_base"])) {
+                    continue;
+                }
+                $registrosPlanHtml .= $registro["html"];
+            }
+            if ($esGrupoPlanMadre && trim($registrosPlanHtml) == "") {
+                $registrosPlanHtml = "<div class='clinical-plan-empty-children'>Sin ventas anexadas adicionales.</div>";
+            }
+
+            $planHeaderHtml = "";
+            if ($esGrupoPlanMadre) {
+                $registroActivoPlan = $registroBasePlan;
+                if ($registroActivoPlan === null && isset($planGrupo["registros"][0])) {
+                    $registroActivoPlan = $planGrupo["registros"][0];
+                }
+                $ventaMadreTitulo = $registroBasePlan !== null ? $registroBasePlan["titulo"] : "Venta base #".$planGrupo["venta_base_id"];
+                if (trim((string)$planGrupo["venta_base_id"]) == "" && $registroBasePlan === null) {
+                    $ventaMadreTitulo = "Venta base pendiente";
+                }
+                $tratamientosBasePlan = ($registroBasePlan !== null && isset($registroBasePlan["tratamientos_count"])) ? (int)$registroBasePlan["tratamientos_count"] : 0;
+                $tratamientosAnexadosPlan = max(0, (int)$planGrupo["tratamientos"] - $tratamientosBasePlan);
+                $detalleContenidoPlan = $planGrupo["subtitulo"];
+                if ($tratamientosBasePlan > 0 || $tratamientosAnexadosPlan > 0) {
+                    $detalleContenidoPlan = "Venta base: ".$tratamientosBasePlan." tratamientos &middot; Anexados: ".$tratamientosAnexadosPlan;
+                }
+                $datosPlanActivoHtml = "";
+                $atributosPlanActivo = "";
+                $clasePlanActivo = "";
+                $accionPlanActivo = "<span class='clinical-plan-row-action'>Abrir plan madre</span>";
+                if ($registroActivoPlan !== null) {
+                    $datosPlanActivoHtml = $registroActivoPlan["datos_html"];
+                    $atributosPlanActivo = " onclick='ObtenerdatosAbmConsulta(this)' onkeyup='if(event.keyCode==13||event.keyCode==32){ObtenerdatosAbmConsulta(this)}' role='button' tabindex='0' title='Abrir plan madre' aria-label='Abrir plan madre'";
+                } else {
+                    $clasePlanActivo = " clinical-plan-master-row--readonly";
+                    $accionPlanActivo = "<span class='clinical-plan-row-action clinical-plan-row-action--muted'>Venta base no visible</span>";
+                }
+                $planHeaderHtml = "
+            <div class='tarjeta-paciente clinical-plan-master-row".$clasePlanActivo."'".$atributosPlanActivo.">
+              <span class='clinical-plan-tree-icon clinical-plan-tree-icon--madre' aria-hidden='true'>".$planGrupo["numero"]."</span>
+              <span class='clinical-plan-master-row__kind'>Plan madre</span>
+              <strong>".$ventaMadreTitulo."</strong>
+              <span class='clinical-plan-master-row__beneficiary'>".$planGrupo["beneficiario"]."</span>
+              <span class='clinical-plan-master-row__name'>".$detalleContenidoPlan."</span>
+              <em>".$ventasPlanTexto." / ".$tratamientosPlanTexto."</em>
+              ".$accionPlanActivo."
+              ".$datosPlanActivoHtml."
+            </div>";
+            } else {
+                $planHeaderHtml = "
+            <div class='clinical-plan-section__header'>
+              <span class='clinical-plan-section__badge' aria-hidden='true'>".$planGrupo["numero"]."</span>
+              <div>
+                <strong>".$planGrupo["titulo"]."</strong>
+                <small>".$planGrupo["subtitulo"]."</small>
+              </div>
+              <em>".$ventasPlanTexto." / ".$tratamientosPlanTexto."</em>
+            </div>";
+            }
+            $registrosHtml .= "
+          <section class='clinical-plan-section clinical-plan-section--".$planGrupo["clase"]."'>
+            ".$planHeaderHtml."
+            <div class='clinical-records-grid'>".$registrosPlanHtml."</div>
+          </section>";
         }
+
+        $planDefinitivoResumenHtml = "";
+        if (!empty($grupo["planes_madre"])) {
+            $chipsPlanesMadre = "";
+            foreach ($grupo["planes_madre"] as $planGrupo) {
+                $chipsPlanesMadre .= "<span class='clinical-patient-plan-chip'><b>#".$planGrupo["numero"]."</b>".$planGrupo["apodo"]."</span>";
+            }
+            $planDefinitivoResumenHtml = "
+              <div class='clinical-patient-plan-banner'>
+                <span class='clinical-patient-plan-banner__icon' aria-hidden='true'>&#10003;</span>
+                <div>
+                  <strong>Planes madre asignados</strong>
+                  <small>Ventas agrupadas por Apodo/beneficiario de esta c&eacute;dula.</small>
+                  <div class='clinical-patient-plan-chips'>".$chipsPlanesMadre."</div>
+                </div>
+              </div>";
+        } else {
+            $planDefinitivoResumenHtml = "
+              <div class='clinical-patient-plan-banner clinical-patient-plan-banner--pending'>
+                <span class='clinical-patient-plan-banner__icon' aria-hidden='true'>!</span>
+                <div>
+                  <strong>Sin ventas asignadas a plan madre</strong>
+                  <small>Las ventas pendientes pueden asignarse a un plan madre existente o crear uno nuevo.</small>
+                </div>
+              </div>";
+        }
+        $claseResumenPaciente = "clinical-patient-summary-card".(!empty($grupo["planes_madre"]) ? " clinical-patient-summary-card--has-plan" : "");
 
         $pagina .= "
         <section class='clinical-patient-result-group'>
-          <div class='clinical-patient-summary-card'>
+          <div class='".$claseResumenPaciente."'>
             <div class='clinical-patient-summary-card__main'>
               <p>Paciente encontrado</p>
               <h3>".$grupo["paciente_html"]."</h3>
@@ -1263,6 +4730,7 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
                 <span><strong>Registros</strong>".$cantidadRegistros."</span>
               </div>
             </div>
+            ".$planDefinitivoResumenHtml."
             <div class='clinical-patient-summary-card__stats'>
               <span><strong>".$grupo["pendientes"]."</strong><small>Pendientes</small></span>
               <span><strong>".$grupo["proceso"]."</strong><small>En proceso</small></span>
@@ -1273,11 +4741,11 @@ function buscarVistaConsulta($Paciente,$local,$num_factura) {
           <div class='clinical-records-header'>
             <div>
               <p>".$textoRegistros." para ".$grupo["paciente_html"]."</p>
-              <h3>Tratamientos y registros</h3>
+              <h3>Planes madre y ventas</h3>
             </div>
           </div>
 
-          <div class='clinical-records-grid'>
+          <div class='clinical-plan-hierarchy'>
             ".$registrosHtml."
           </div>
         </section>";

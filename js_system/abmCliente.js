@@ -288,7 +288,7 @@ function obtenerdatosabmCliente(datostr){
     extcliente2="";
 	buscarmasreferenciasclientes();
 	buscarFotosCliente()
-  document.getElementById('btnAbmCliente').value="Editar datos";
+  document.getElementById('btnAbmCliente').value="Actualizar y guardar";
   document.getElementById('btnEditarClientes').style.backgroundColor="";
   document.getElementById('btnAuditoriaClientes').style.backgroundColor="#673ab7";
   document.getElementById('btnUbiClientes').style.backgroundColor="";
@@ -1337,8 +1337,29 @@ function EnviarClienteDesde() {
 			idFkCliente = $(datostr).children('td[id="td_id"]').html();
 			document.getElementById('inptDocumentoClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_2"]').html();	
 			document.getElementById('inptNombreClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_1"]').html();
+			if (document.getElementById('inptTelefonoClientePresupuestoDoc')) {
+				document.getElementById('inptTelefonoClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_4"]').html();
+			}
+			if (document.getElementById('inptWhatsappClientePresupuestoDoc')) {
+				document.getElementById('inptWhatsappClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_7"]').html();
+			}
+			if (document.getElementById('inptDireccionClientePresupuestoDoc')) {
+				document.getElementById('inptDireccionClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_3"]').html();
+			}
+			idAbmCliente = idFkCliente;
+			document.getElementById('inptNombreApellidoCliente').value = $(datostr).children('td[id="td_datos_1"]').html();
+			document.getElementById('inptNroDocCliente').value = $(datostr).children('td[id="td_datos_2"]').html();
+			document.getElementById('inptNroTelefCliente').value = $(datostr).children('td[id="td_datos_4"]').html();
+			document.getElementById('inptNrowhatsappCliente').value = $(datostr).children('td[id="td_datos_7"]').html();
+			document.getElementById('inptDireccionCliente').value = $(datostr).children('td[id="td_datos_3"]').html();
+			document.getElementById('inptReferenciaCliente').value = $(datostr).children('td[id="td_datos_5"]').html();
+			document.getElementById('inptZonaCliente').value = $(datostr).children('td[id="td_datos_10"]').html();
+			idFKZona = $(datostr).children('td[id="td_datos_9"]').html();
 			if (typeof actualizarResumenPacientePresupuestoDoc === "function") {
 				actualizarResumenPacientePresupuestoDoc();
+			}
+			if (typeof cargarOdontogramaPresupuestoDoctor === "function") {
+				cargarOdontogramaPresupuestoDoctor();
 			}
 			if (typeof verPasoPresupuestoDoc === "function") {
 				verPasoPresupuestoDoc(1);
@@ -2299,7 +2320,7 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
 			var Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = (typeof Respuesta === "string") ? $.parseJSON(Respuesta) : Respuesta;
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
                 if (Respuesta == true) {
@@ -2368,7 +2389,7 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
 			} catch (error) {
 				verCerrarEfectoCargando("");
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-                var titulo="Error: "+error+" \r\n Consola: "+responseText
+                var titulo="Error: "+error+" \r\n Consola: "+(typeof responseText === "string" ? responseText : JSON.stringify(responseText))
 				GuardarArchivosLog(titulo)
 			}
 		}

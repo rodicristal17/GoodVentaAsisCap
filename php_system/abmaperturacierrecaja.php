@@ -79,6 +79,15 @@ buscarmoviemientocaja($idArqeoFk);
 
 }	
 
+if($operacion=="buscar_conciliaciones_ueno_cierre")
+{
+$idArqeoFk=$_POST['idArqeoFk'];
+$idArqeoFk = mb_convert_encoding((string)($idArqeoFk), 'ISO-8859-1', 'UTF-8');
+$informacion = caja_cierre_buscar_conciliaciones_ueno($idArqeoFk,$user);
+echo json_encode($informacion);
+exit;
+}
+
 if($operacion=="buscarvista")
 {
 $caja=$_POST['caja'];
@@ -424,14 +433,247 @@ function caja_cierre_transferencias_conciliadas($mysqli, $idArqeoFk)
 	if (!caja_cierre_tabla_existe($mysqli, "pago_transferencia_conciliacion")) {
 		return 0;
 	}
+	if (!caja_cierre_tabla_existe($mysqli, "ueno_movimiento_pago") || !caja_cierre_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+		return 0;
+	}
 	$idArqeoFk = $mysqli->real_escape_string($idArqeoFk);
-	$sql = "select IFNULL(sum(p.Monto),0) as total
-	from pago_transferencia_conciliacion pc
-	inner join pago p on p.idPago=pc.cod_pagoFK
-	where p.codApertura='$idArqeoFk'
+	$fechaAperturaUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechaapertura AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '1000-01-01 00:00:00')";
+	$fechaCierreUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechacierre AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '9999-12-31 23:59:59')";
+	$sql = "select IFNULL(sum(ump.monto_aplicado),0) as total
+	from arqueocaja ar
+	inner join pago p on p.codApertura=ar.idarqueocaja
+	inner join pago_transferencia_conciliacion pc on pc.cod_pagoFK=p.idPago
+	inner join ueno_movimiento_pago ump on ump.cod_pagoFK=p.idPago
+	inner join ueno_movimiento_bancario umb on umb.id_movimiento=ump.id_movimiento
+	where ar.idarqueocaja='$idArqeoFk'
 	and pc.activo='SI'
-	and pc.estado_conciliacion='conciliado_ueno'";
+	and pc.estado_conciliacion IN ('conciliado_ueno','pendiente_conciliacion','parcial','parcialmente_conciliado')
+	and ump.estado='activo'
+	and ump.usuario_asocio=ar.codusuarioap
+	and umb.tipo_movimiento='credito'
+	and ump.fecha_hora_asociacion>=$fechaAperturaUeno
+	and ump.fecha_hora_asociacion<=$fechaCierreUeno";
 	return caja_cierre_sumar_sql($mysqli, $sql);
+}
+
+function caja_cierre_ueno_texto($valor)
+{
+	return mb_convert_encoding((string)$valor, 'UTF-8', 'ISO-8859-1');
+}
+
+function caja_cierre_ueno_numero($valor)
+{
+	return number_format((int)$valor, 0, ',', '.');
+}
+
+function caja_cierre_ueno_usuario_puede_ver($usuario, $infoCaja)
+{
+	if ((string)$usuario == (string)$infoCaja['codusuarioap']) {
+		return true;
+	}
+	if ((string)$usuario == "2") {
+		return true;
+	}
+	if (!function_exists("controldeaccesoacasas")) {
+		return false;
+	}
+	$permisos = array("VERCONSULTADECAJA", "VERCONCILIACIONUENO", "VERCIERRESTESORERIA");
+	foreach ($permisos as $permiso) {
+		if (controldeaccesoacasas($usuario, $permiso, " u.accion='SI' ") == 1) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function caja_cierre_ueno_estado_visual($estadoConciliacion, $montoPago, $montoAplicado)
+{
+	$estado = strtolower(trim((string)$estadoConciliacion));
+	if ($montoAplicado > 0 && $montoAplicado < $montoPago) {
+		return "Parcial";
+	}
+	if ($estado == "conciliado_ueno" || $montoAplicado >= $montoPago) {
+		return "Conciliada";
+	}
+	if ($estado == "pendiente_conciliacion") {
+		return "Parcial";
+	}
+	if ($estado == "observado") {
+		return "Observada";
+	}
+	if ($estado == "rechazado") {
+		return "Rechazada";
+	}
+	if ($estado == "anulado") {
+		return "Anulada";
+	}
+	return $estadoConciliacion;
+}
+
+function caja_cierre_ueno_tipo_aplicacion($montoAplicado, $montoPago, $montoCuota, $cuotasMovimiento)
+{
+	if ((int)$cuotasMovimiento > 1) {
+		return "Aplicacion a varias cuotas";
+	}
+	if ((int)$montoAplicado < (int)$montoPago) {
+		return "Pago parcial";
+	}
+	if ((int)$montoCuota > 0 && (int)$montoAplicado < (int)$montoCuota) {
+		return "Pago parcial";
+	}
+	return "Cuota completa";
+}
+
+function caja_cierre_buscar_conciliaciones_ueno($idArqeoFk, $usuarioActual)
+{
+	$mysqli = conectar_al_servidor();
+	$respuestaVacia = array(
+		"1" => "exito",
+		"resumen" => array(
+			"operaciones" => 0,
+			"cuotas" => 0,
+			"total_aplicado" => 0,
+			"total_aplicado_texto" => "0"
+		),
+		"filas" => array()
+	);
+
+	if (!caja_cierre_tabla_existe($mysqli, "pago_transferencia_conciliacion") || !caja_cierre_tabla_existe($mysqli, "ueno_movimiento_pago") || !caja_cierre_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+		mysqli_close($mysqli);
+		$respuestaVacia["tablas_disponibles"] = "NO";
+		return $respuestaVacia;
+	}
+
+	try {
+		$infoCaja = caja_cierre_obtener_arqueo($mysqli, $idArqeoFk);
+		if (!$infoCaja) {
+			throw new Exception("No se encontro el lote de caja.");
+		}
+		if (!caja_cierre_ueno_usuario_puede_ver($usuarioActual, $infoCaja)) {
+			mysqli_close($mysqli);
+			return array("1" => "NI", "2" => "No tiene permiso para consultar las conciliaciones de este cierre.");
+		}
+
+		$fechaAperturaUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechaapertura AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '1000-01-01 00:00:00')";
+		$fechaCierreUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechacierre AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '9999-12-31 23:59:59')";
+
+		$sql = "SELECT
+			ar.idarqueocaja, ar.lote, ar.codusuarioap, ar.fechaapertura, ar.fechacierre,
+			ump.id AS id_asignacion, ump.id_movimiento, ump.cod_pagoFK, ump.monto_aplicado,
+			ump.usuario_asocio, ump.fecha_hora_asociacion, ump.estado AS estado_asignacion,
+			IFNULL(ump.observacion,'') AS observacion_asignacion,
+			umb.nro_comprobante, umb.fecha_confirmacion, umb.fecha_transaccion,
+			IFNULL(umb.descripcion,'') AS descripcion_banco, IFNULL(umb.concepto,'') AS concepto_banco,
+			umb.importe_credito, umb.monto_disponible, umb.estado AS estado_movimiento,
+			pc.id AS id_control_ueno, pc.grupo_pago, pc.nro_comprobante_informado, pc.monto_pago,
+			pc.estado_conciliacion, IFNULL(pc.observacion,'') AS observacion_conciliacion,
+			p.idPago, p.Monto AS monto_pago_real, p.Fecha AS fecha_pago, p.tipo, p.tipopago, p.nrofactura,
+			p.cod_venta_fk, p.cod_creditoFK, IFNULL(p.descripcion,'') AS descripcion_pago, IFNULL(p.titulocuota,'') AS titulocuota,
+			IFNULL(cr.plazo,'') AS plazo, IFNULL(cr.Monto,0) AS monto_cuota, IFNULL(cr.descuento,0) AS descuento_cuota,
+			IFNULL(vt.num_factura,'') AS num_factura, IFNULL(vt.puntoexpedicion,'') AS puntoexpedicion,
+			IFNULL(vt.apodo,'') AS alias_venta, IFNULL(vt.cod_clienteFK,'') AS cod_clienteFK,
+			IFNULL(pe.nombre_persona,'') AS paciente, IFNULL(cl.ci_cliente,'') AS cedula,
+			IFNULL(usu.nombre_persona,'') AS usuario_conciliador,
+			(SELECT COUNT(DISTINCT ump2.cod_pagoFK)
+				FROM ueno_movimiento_pago ump2
+				INNER JOIN pago p2 ON p2.idPago=ump2.cod_pagoFK
+				WHERE ump2.id_movimiento=ump.id_movimiento
+				AND ump2.estado='activo'
+				AND p2.codApertura=ar.idarqueocaja
+				AND ump2.usuario_asocio=ar.codusuarioap
+			) AS cuotas_movimiento
+			FROM arqueocaja ar
+			INNER JOIN pago p ON p.codApertura=ar.idarqueocaja
+			INNER JOIN ueno_movimiento_pago ump ON ump.cod_pagoFK=p.idPago
+			INNER JOIN ueno_movimiento_bancario umb ON umb.id_movimiento=ump.id_movimiento
+			INNER JOIN pago_transferencia_conciliacion pc ON pc.cod_pagoFK=p.idPago AND pc.activo='SI'
+			LEFT JOIN credito cr ON cr.idcredito=p.cod_creditoFK
+			LEFT JOIN venta vt ON vt.cod_venta=p.cod_venta_fk
+			LEFT JOIN persona pe ON pe.cod_persona=vt.cod_clienteFK
+			LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
+			LEFT JOIN persona usu ON usu.cod_persona=ump.usuario_asocio
+			WHERE ar.idarqueocaja=?
+			AND ump.estado='activo'
+			AND umb.tipo_movimiento='credito'
+			AND ump.usuario_asocio=ar.codusuarioap
+			AND ump.fecha_hora_asociacion>=$fechaAperturaUeno
+			AND ump.fecha_hora_asociacion<=$fechaCierreUeno
+			AND pc.estado_conciliacion IN ('conciliado_ueno','pendiente_conciliacion','parcial','parcialmente_conciliado')
+			ORDER BY ump.fecha_hora_asociacion DESC, umb.nro_comprobante ASC, p.cod_venta_fk ASC, cr.plazo ASC, p.idPago ASC";
+		$stmt = $mysqli->prepare($sql);
+		if (!$stmt) {
+			throw new Exception($mysqli->error);
+		}
+		$ss = 's';
+		$stmt->bind_param($ss, $idArqeoFk);
+		if (!$stmt->execute()) {
+			throw new Exception($stmt->error);
+		}
+		$result = $stmt->get_result();
+		$filas = array();
+		$operaciones = array();
+		$totalAplicado = 0;
+		while ($row = mysqli_fetch_assoc($result)) {
+			$montoAplicado = (int)$row['monto_aplicado'];
+			$montoPago = (int)$row['monto_pago'];
+			$montoCuota = (int)$row['monto_cuota'] - (int)$row['descuento_cuota'];
+			if ($montoCuota < 0) {
+				$montoCuota = 0;
+			}
+			$ventaNumero = trim((string)$row['puntoexpedicion']) != "" || trim((string)$row['num_factura']) != ""
+				? trim((string)$row['puntoexpedicion'])."-".trim((string)$row['num_factura'])
+				: (string)$row['cod_venta_fk'];
+			$cuota = trim((string)$row['titulocuota']) != "" ? $row['titulocuota'] : (trim((string)$row['plazo']) != "" ? $row['plazo'] : $row['nrofactura']);
+			$estadoVisual = caja_cierre_ueno_estado_visual($row['estado_conciliacion'], $montoPago, $montoAplicado);
+			$operaciones[(string)$row['id_movimiento']] = true;
+			$totalAplicado += $montoAplicado;
+			$filas[] = array(
+				"id_asignacion" => (int)$row['id_asignacion'],
+				"id_movimiento" => (int)$row['id_movimiento'],
+				"cod_pago" => (int)$row['cod_pagoFK'],
+				"fecha_conciliacion" => caja_cierre_ueno_texto($row['fecha_hora_asociacion']),
+				"fecha_banco" => caja_cierre_ueno_texto($row['fecha_confirmacion']),
+				"comprobante" => caja_cierre_ueno_texto($row['nro_comprobante'] != "" ? $row['nro_comprobante'] : $row['nro_comprobante_informado']),
+				"paciente" => caja_cierre_ueno_texto($row['paciente']),
+				"cedula" => caja_cierre_ueno_texto($row['cedula']),
+				"venta" => caja_cierre_ueno_texto($ventaNumero),
+				"alias_venta" => caja_cierre_ueno_texto($row['alias_venta']),
+				"cuota" => caja_cierre_ueno_texto($cuota),
+				"monto_cuota" => $montoCuota,
+				"monto_cuota_texto" => caja_cierre_ueno_numero($montoCuota),
+				"monto_pago" => $montoPago,
+				"monto_pago_texto" => caja_cierre_ueno_numero($montoPago),
+				"monto_aplicado" => $montoAplicado,
+				"monto_aplicado_texto" => caja_cierre_ueno_numero($montoAplicado),
+				"tipo_aplicacion" => caja_cierre_ueno_texto(caja_cierre_ueno_tipo_aplicacion($montoAplicado, $montoPago, $montoCuota, $row['cuotas_movimiento'])),
+				"usuario_conciliador" => caja_cierre_ueno_texto($row['usuario_conciliador']),
+				"estado" => caja_cierre_ueno_texto($estadoVisual),
+				"estado_raw" => caja_cierre_ueno_texto($row['estado_conciliacion']),
+				"observacion" => caja_cierre_ueno_texto($row['observacion_asignacion'] != "" ? $row['observacion_asignacion'] : $row['observacion_conciliacion'])
+			);
+		}
+
+		$respuesta = array(
+			"1" => "exito",
+			"resumen" => array(
+				"id_arqueocaja" => $infoCaja['idarqueocaja'],
+				"lote" => caja_cierre_ueno_texto($infoCaja['lote']),
+				"usuario_cajero" => (string)$infoCaja['usuarioap'],
+				"fecha_apertura" => caja_cierre_ueno_texto($infoCaja['fechaapertura']),
+				"fecha_cierre" => caja_cierre_ueno_texto($infoCaja['fechacierre']),
+				"operaciones" => count($operaciones),
+				"cuotas" => count($filas),
+				"total_aplicado" => $totalAplicado,
+				"total_aplicado_texto" => caja_cierre_ueno_numero($totalAplicado)
+			),
+			"filas" => $filas
+		);
+		mysqli_close($mysqli);
+		return $respuesta;
+	} catch (Exception $e) {
+		mysqli_close($mysqli);
+		return array("1" => "error", "2" => $e->getMessage());
+	}
 }
 
 function caja_cierre_calcular_resumen_medios($mysqli, $idArqeoFk, $montoInicio)
@@ -924,7 +1166,9 @@ if ($fechaapertura != "") {
 }
 
 if ($fechafin != "") {
-    $sqlFiltro.= " AND DATE_FORMAT(COALESCE(NULLIF(fechacierre,''), fechaapertura), '%Y-%m-%d') <= '$fechafin'";
+    $fechaCierreFiltro = "NULLIF(NULLIF(CAST(fechacierre AS CHAR), ''), '0000-00-00 00:00:00')";
+    $fechaAperturaFiltro = "NULLIF(NULLIF(CAST(fechaapertura AS CHAR), ''), '0000-00-00 00:00:00')";
+    $sqlFiltro.= " AND DATE_FORMAT(COALESCE($fechaCierreFiltro, $fechaAperturaFiltro), '%Y-%m-%d') <= '$fechafin'";
 }
 
 if($caja!=""){
@@ -982,6 +1226,7 @@ $TotalCierre = 0;
 $TotalIngreso = 0;
 $TotalEgreso = 0;
 $TotalCobros = 0;
+$TotalCobrosEfectivo = 0;
 $TotalMigrado = 0;
 $TotalRecibido = 0;
 $TotalPendienteMigracion = 0;
@@ -1044,13 +1289,14 @@ if ($total_recibido == "") {$total_recibido=0;}
 $TotalIngreso =  $TotalIngreso +$ingreso ;
 $TotalEgreso =$TotalEgreso +$egreso ;
 $TotalCobros = $TotalCobros + $cobros;
+$TotalCobrosEfectivo = $TotalCobrosEfectivo + $pagos_efectivo;
 $TotalMigrado = $TotalMigrado + $total_migrado;
 $TotalRecibido = $TotalRecibido + $total_recibido;
 
 $TotalApertura += $montoapertura;
 $TotalCierre += $montocierre;
 
-$efectivoEsperado = ((float)$montoapertura + (float)$cobros + (float)$ingreso + (float)$total_recibido) - ((float)$egreso + (float)$total_migrado + (float)$deposito);
+$efectivoEsperado = ((float)$montoapertura + (float)$pagos_efectivo + (float)$ingreso + (float)$total_recibido) - ((float)$egreso + (float)$total_migrado + (float)$deposito);
 $montoBaseMigracion = ((float)$montocierre > 0) ? (float)$montocierre : $efectivoEsperado;
 $diferencia = 0;
 if (strtolower($estado) == "cerrado") {
@@ -1143,7 +1389,7 @@ $registros[]= array(
 }
 
 
-$Totaldiferencia = ($TotalCobros + $TotalIngreso) - $TotalEgreso;
+$Totaldiferencia = ($TotalCobrosEfectivo + $TotalIngreso) - $TotalEgreso;
 
 return array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>number_format($Totaldiferencia,'0',',','.'),"5"=>number_format($TotalApertura,'0',',','.'),"6"=>number_format($TotalCierre,'0',',','.'),"7"=>number_format($TotalIngreso,'0',',','.'),"8"=>number_format($TotalEgreso,'0',',','.'),"9"=>number_format($TotalCobros,'0',',','.'), "10" => $registros, "11"=>number_format($TotalMigrado,'0',',','.'), "12"=>number_format($TotalRecibido,'0',',','.'), "13"=>number_format($TotalPendienteMigracion,'0',',','.'));
 }

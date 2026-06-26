@@ -30,6 +30,24 @@ echo json_encode($informacion);
 exit;
 }
 
+if($operacion=="obtener_crear_interconsulta_movimiento")
+{
+	$motivo= isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : '';
+	$tipo= isset($_POST['tipo']) ? mb_convert_encoding((string)($_POST['tipo']), 'ISO-8859-1', 'UTF-8') : 'Egreso';
+	$cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : '';
+	$cod_motivo= isset($_POST['cod_motivoFK']) ? mb_convert_encoding((string)($_POST['cod_motivoFK']), 'ISO-8859-1', 'UTF-8') : '';
+	if (trim($motivo) == '' && is_numeric($cod_motivo)) {
+		$registrosMotivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
+		if (isset($registrosMotivo[4][0]['descripcion'])) {
+			$motivo= $registrosMotivo[4][0]['descripcion'];
+		}
+	}
+	$cod_interConsulta= obtenerOCrearInterConsultaMovimientoFinanciero($motivo, $tipo, $user, $cod_local);
+	$informacion =array("1" => "exito", "2" => $cod_interConsulta, "3" => mb_convert_encoding((string)$motivo, 'UTF-8', 'ISO-8859-1'));
+	echo json_encode($informacion);
+	exit;
+}
+
 if($operacion=="nuevo" || $operacion=="editar")
 {	
 	$idgastos=$_POST['idgastos'];
@@ -320,7 +338,9 @@ $necesita_autorizacion = mb_convert_encoding((string)($necesita_autorizacion), '
 
 if($operacion=="buscaroption")
 {
-	buscaroption();
+	$categoria= isset($_POST['categoria']) ? $_POST['categoria'] : '';
+	$categoria= mb_convert_encoding((string)($categoria), 'ISO-8859-1', 'UTF-8');
+	buscaroption($categoria);
 }
 
 if ($operacion == "aprobarMovimiento") {
@@ -1100,14 +1120,16 @@ function calcularFechaCuotaRecurrente($fechaBase, $periodicidad, $indice) {
 
 function obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivoPrimeraCuota) {
 	$codProyectoGasto= null;
+	$codInterConsulta= null;
 
-	$sql= "SELECT cod_proyecto_gastoFK, motivo FROM gastos WHERE idgastos = ? LIMIT 1";
+	$sql= "SELECT cod_proyecto_gastoFK, motivo, cod_interConsultaFK FROM gastos WHERE idgastos = ? LIMIT 1";
 	$stmt= $mysqli->prepare($sql);
 	$stmt->bind_param('i', $idBaseSerie);
 	$stmt->execute();
 	$result= $stmt->get_result();
 	if ($row= $result->fetch_assoc()) {
 		$codProyectoGasto= $row['cod_proyecto_gastoFK'];
+		$codInterConsulta= $row['cod_interConsultaFK'];
 		if (trim((string)$row['motivo']) != "") {
 			$motivoPrimeraCuota= $row['motivo'];
 		}
@@ -1119,17 +1141,10 @@ function obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivoPrim
 		$nombreProyecto= "Gasto recurrente ".$idBaseSerie;
 	}
 
-	$proyectos= obtenerProyectoGasto(array(
-		'nombre_exacto' => $nombreProyecto,
-		'incluir_sin_gastos' => 'true',
-	), 1);
-	if (count($proyectos) > 0) {
-		$codProyectoGasto= $proyectos[0]['id'];
-		abmProyectoGasto($codProyectoGasto, null, 'activo');
-	} else if (!empty($codProyectoGasto)) {
-		abmProyectoGasto($codProyectoGasto, $nombreProyecto, 'activo');
+	if (!empty($codProyectoGasto)) {
+		abmProyectoGasto($codProyectoGasto, $nombreProyecto, 'activo', $codInterConsulta);
 	} else {
-		$codProyectoGasto= abmProyectoGasto('', $nombreProyecto, 'activo');
+		$codProyectoGasto= abmProyectoGasto('', $nombreProyecto." - serie ".$idBaseSerie, 'activo', $codInterConsulta);
 	}
 
 	$sql= "UPDATE gastos SET cod_proyecto_gastoFK = ? WHERE idgastos = ?";
@@ -1141,7 +1156,114 @@ function obtenerOCrearProyectoGastoParaCuotas($mysqli, $idBaseSerie, $motivoPrim
 	return $codProyectoGasto;
 }
 
+function obtenerNombreProyectoGastoInterConsulta($cod_interConsultaFK, $nombreFallback= '') {
+	$nombreProyecto= trim((string)$nombreFallback);
+	if (!empty($cod_interConsultaFK) && function_exists('obtenerInterConsulta')) {
+		$registros= obtenerInterConsulta(array(
+			'cod_interConsulta' => $cod_interConsultaFK
+		), 1);
+		if (isset($registros[0]) && trim((string)$registros[0]['asunto']) != '') {
+			$nombreProyecto= trim((string)$registros[0]['asunto']);
+		}
+	}
+	if ($nombreProyecto == '') {
+		$nombreProyecto= 'Hilo financiero '.$cod_interConsultaFK;
+	}
+	return $nombreProyecto;
+}
+
+function crearInterConsultaParaGasto($motivo, $tipo, $cod_usuario, $cod_local) {
+	if (!function_exists('abmInterConsulta')) {
+		return '';
+	}
+	$asunto= trim((string)$motivo);
+	if ($asunto == '') {
+		$asunto= 'Movimiento financiero';
+	}
+	$tipoHilo= (strtolower(trim((string)$tipo)) == 'ingreso') ? 'pago' : 'egreso';
+	return abmInterConsulta('', $asunto, 'Hilo creado automaticamente desde Resumen de flujo financiero.', 'activo', $tipoHilo, NULL, $cod_usuario, $cod_usuario, $cod_local, 0);
+}
+
+function obtenerOCrearInterConsultaMovimientoFinanciero($motivo, $tipo, $cod_usuario, $cod_local) {
+	$asunto= trim((string)$motivo);
+	if ($asunto == '') {
+		$asunto= 'Movimiento financiero';
+	}
+	$tipoHilo= (strtolower(trim((string)$tipo)) == 'ingreso') ? 'pago' : 'egreso';
+	$mysqli= conectar_al_servidor();
+	$sql= "SELECT cod_interConsulta FROM interconsulta WHERE estado <> 'inactivo' AND UPPER(TRIM(asunto)) = UPPER(TRIM(?)) AND LOWER(TRIM(IFNULL(tipo, ''))) IN (?, ?) ";
+	$tipoPlural= ($tipoHilo == 'pago') ? 'pagos' : 'egresos';
+	$parametros= array($asunto, $tipoHilo, $tipoPlural);
+	$ss= "sss";
+	if (is_numeric($cod_local) && intval($cod_local) > 0) {
+		$sql .= "AND cod_localFK = ? ";
+		$parametros[]= intval($cod_local);
+		$ss .= "i";
+	}
+	$sql .= "ORDER BY cod_interConsulta DESC LIMIT 1";
+	$stmt= $mysqli->prepare($sql);
+	$refs= array();
+	foreach ($parametros as $key => $valor) {
+		$refs[$key]= &$parametros[$key];
+	}
+	call_user_func_array(array($stmt, 'bind_param'), array_merge(array($ss), $refs));
+	$stmt->execute();
+	$result= $stmt->get_result();
+	if ($row= $result->fetch_assoc()) {
+		$stmt->close();
+		return $row['cod_interConsulta'];
+	}
+	$stmt->close();
+	return crearInterConsultaParaGasto($asunto, $tipo, $cod_usuario, $cod_local);
+}
+
+function obtenerOCrearProyectoGastoParaInterConsulta($cod_interConsultaFK, $nombreFallback= '', $codProyectoSolicitado= '') {
+	if (empty($cod_interConsultaFK) || !is_numeric($cod_interConsultaFK)) {
+		return (is_numeric($codProyectoSolicitado) ? $codProyectoSolicitado : '');
+	}
+
+	if (is_numeric($codProyectoSolicitado) && intval($codProyectoSolicitado) > 0) {
+		$codProyecto= intval($codProyectoSolicitado);
+		if (function_exists('vincularProyectoGastoInterConsulta')) {
+			vincularProyectoGastoInterConsulta($cod_interConsultaFK, $codProyecto);
+		}
+		return $codProyecto;
+	}
+
+	$nombreProyecto= obtenerNombreProyectoGastoInterConsulta($cod_interConsultaFK, $nombreFallback);
+	$proyectos= obtenerProyectoGasto(array(
+		'nombre_exacto' => $nombreProyecto,
+		'cod_interConsultaFK' => $cod_interConsultaFK,
+		'incluir_sin_gastos' => 'true',
+	), 1);
+	if (count($proyectos) > 0) {
+		$codProyecto= $proyectos[0]['id'];
+		if (function_exists('vincularProyectoGastoInterConsulta')) {
+			vincularProyectoGastoInterConsulta($cod_interConsultaFK, $codProyecto);
+		}
+		return $codProyecto;
+	}
+
+	$proyectos= obtenerProyectoGasto(array(
+		'nombre_exacto' => $nombreProyecto,
+		'incluir_sin_gastos' => 'true',
+	), 1);
+	if (count($proyectos) > 0) {
+		$codProyecto= $proyectos[0]['id'];
+		if (function_exists('vincularProyectoGastoInterConsulta')) {
+			vincularProyectoGastoInterConsulta($cod_interConsultaFK, $codProyecto);
+		}
+		return $codProyecto;
+	}
+
+	return abmProyectoGasto('', $nombreProyecto, 'activo', $cod_interConsultaFK);
+}
+
 function obtenerProyectoGastoSerie($mysqli, $idgastos, $codProyectoGastoSolicitado= '') {
+	if (is_numeric($codProyectoGastoSolicitado) && intval($codProyectoGastoSolicitado) > 0) {
+		return intval($codProyectoGastoSolicitado);
+	}
+
 	$sql= "SELECT g.cod_proyecto_gastoFK, g.cod_gasto_padre, gp.cod_proyecto_gastoFK AS cod_proyecto_padre
 		FROM gastos g
 		LEFT JOIN gastos gp ON gp.idgastos = g.cod_gasto_padre
@@ -1227,6 +1349,21 @@ echo json_encode($informacion);
 exit;
 }
 
+if (empty($cod_interConsultaFK)) {
+	$cod_interConsultaFK= crearInterConsultaParaGasto($motivo, $tipo, $cod_usuario, $cod_local);
+}
+
+$cantCuotas = isset($_POST['cantCuotas']) ? intval($_POST['cantCuotas']) : 0;
+$periodicidad = isset($_POST['periodicidad']) ? mb_convert_encoding((string)$_POST['periodicidad'], 'ISO-8859-1', 'UTF-8') : '';
+$proyectoSolicitado= trim((string)$cod_proyecto_gastoFK);
+if ($proyectoSolicitado == "0") {
+	$proyectoSolicitado= "";
+	$cod_proyecto_gastoFK= NULL;
+}
+if (!empty($cod_interConsultaFK) && is_numeric($proyectoSolicitado) && intval($proyectoSolicitado) > 0) {
+	$cod_proyecto_gastoFK= obtenerOCrearProyectoGastoParaInterConsulta($cod_interConsultaFK, $motivo, $proyectoSolicitado);
+}
+
 // Se evalua si el monto no supera el presupuesto establecido para la interconsulta
 if ($cod_interConsultaFK) {
 	$registroInterConsulta= obtenerInterConsulta(array(
@@ -1241,8 +1378,6 @@ if ($cod_interConsultaFK) {
 	}
 }
 
-$cantCuotas = isset($_POST['cantCuotas']) ? intval($_POST['cantCuotas']) : 0;
-$periodicidad = isset($_POST['periodicidad']) ? mb_convert_encoding((string)$_POST['periodicidad'], 'ISO-8859-1', 'UTF-8') : '';
 $modalidad= (($cantCuotas > 1) ? 'credito' : 'contado');
 
 $mysqli=conectar_al_servidor();
@@ -1413,7 +1548,7 @@ exit;
 if($operacion=='nuevo'){
 	$idgastos = mysqli_insert_id($mysqli);
 	if (intval($cantCuotas) > 1 && $periodicidad != "") {
-		registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK);
+		registrarCuotasRecurrentes($mysqli, $idgastos, $Arreglo, $cantCuotas, $periodicidad, $fecha, $monto, $motivo, $cod_usuario, $personales, $cod_local, $tipo, $codcaja, $idaperturacierrecaja, $nroboleta, $banco, $nrocuenta, $cod_motivo, $cod_interConsultaFK, $cod_proyecto_gastoFK);
 	}
 }
 
@@ -1618,8 +1753,516 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 			);
 		}
 	}
-	
+
 	return $registros;
+}
+
+function flujoGastoTextoSeguro($valor) {
+	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
+function flujoGastoTablaExiste($mysqli, $tabla) {
+	$tabla= $mysqli->real_escape_string($tabla);
+	$result= $mysqli->query("SHOW TABLES LIKE '$tabla'");
+	return $result && $result->num_rows > 0;
+}
+
+function flujoGastoResumenConciliacionUeno($idgastos, $montoTotal) {
+	static $mysqliConciliacion= null;
+	static $tablaDisponible= null;
+	$resumen= array(
+		'disponible' => false,
+		'monto_total' => intval($montoTotal),
+		'conciliado' => 0,
+		'pendiente' => intval($montoTotal),
+		'estado' => 'sin-conciliar',
+		'texto' => 'Sin conciliar',
+		'asignaciones' => 0,
+	);
+	if ($idgastos == "" || intval($idgastos) <= 0 || intval($montoTotal) <= 0) {
+		return $resumen;
+	}
+	if ($mysqliConciliacion === null) {
+		$mysqliConciliacion= conectar_al_servidor();
+	}
+	if ($tablaDisponible === null) {
+		$tablaDisponible= flujoGastoTablaExiste($mysqliConciliacion, "ueno_movimiento_gasto");
+	}
+	if (!$tablaDisponible) {
+		return $resumen;
+	}
+	$id= intval($idgastos);
+	$sql= "SELECT IFNULL(SUM(monto_aplicado),0) AS conciliado, COUNT(*) AS asignaciones
+		FROM ueno_movimiento_gasto
+		WHERE idgastos=$id AND estado='activo'";
+	$result= $mysqliConciliacion->query($sql);
+	if (!$result || !($row= $result->fetch_assoc())) {
+		return $resumen;
+	}
+	$conciliado= intval($row['conciliado']);
+	$pendiente= max(0, intval($montoTotal) - $conciliado);
+	$estado= 'sin-conciliar';
+	$texto= 'Sin conciliar';
+	if ($conciliado >= intval($montoTotal) && intval($montoTotal) > 0) {
+		$estado= 'conciliado';
+		$texto= 'Conciliado';
+	} else if ($conciliado > 0) {
+		$estado= 'parcial';
+		$texto= 'Parcial';
+	}
+	$resumen['disponible']= true;
+	$resumen['conciliado']= $conciliado;
+	$resumen['pendiente']= $pendiente;
+	$resumen['estado']= $estado;
+	$resumen['texto']= $texto;
+	$resumen['asignaciones']= intval($row['asignaciones']);
+	return $resumen;
+}
+
+function construirIndicadorConciliacionUenoGasto($resumen) {
+	if (!$resumen['disponible']) {
+		return "";
+	}
+	return "<span class='flujo-ueno-status flujo-ueno-status--".$resumen['estado']."' title='Conciliado: ".number_format($resumen['conciliado'], 0, ',', '.')." Gs. | Pendiente: ".number_format($resumen['pendiente'], 0, ',', '.')." Gs.'>"
+		."<b>".$resumen['texto']."</b>"
+		."<small>Conc. ".number_format($resumen['conciliado'], 0, ',', '.')." / Pend. ".number_format($resumen['pendiente'], 0, ',', '.')."</small>"
+		."</span>";
+}
+
+function construirBotonConciliarEgresoUeno($gasto, $grupo= '') {
+	$idgastos= isset($gasto['idgastos']) ? trim((string)$gasto['idgastos']) : '';
+	$tipo= strtolower(trim((string)(isset($gasto['tipo']) ? $gasto['tipo'] : '')));
+	if ($idgastos == "" || $tipo != "egreso") {
+		return "";
+	}
+	return "<button type='button' class='flujo-ueno-conciliar-btn' title='Conciliar este gasto con un egreso del extracto bancario' onclick='abrirConciliacionEgresoUenoDesdeBoton(event, this)'"
+		." data-idgastos='".flujoGastoTextoSeguro($idgastos)."'"
+		." data-grupo='".flujoGastoTextoSeguro($grupo)."'"
+		." data-concepto='".flujoGastoTextoSeguro(isset($gasto['motivo']) ? $gasto['motivo'] : '')."'>"
+		."<span>&#8644;</span><b>Conciliar</b>"
+		."</button>";
+}
+
+function flujoGastoFechaObjeto($fecha) {
+	if (empty($fecha)) {
+		return null;
+	}
+	$fecha= substr((string)$fecha, 0, 10);
+	$obj= DateTime::createFromFormat('!Y-m-d', $fecha);
+	return ($obj === false ? null : $obj);
+}
+
+function flujoGastoFechaCorta($fecha) {
+	$obj= flujoGastoFechaObjeto($fecha);
+	if ($obj) {
+		return $obj->format('d/m/Y');
+	}
+	return flujoGastoTextoSeguro($fecha);
+}
+
+function obtenerResumenCuotasProgramadas($gastosSerie) {
+	$hoy= new DateTime('today');
+	$total= count($gastosSerie);
+	$pagadas= 0;
+	$vencidas= 0;
+	$futuras= 0;
+	$proximoFecha= null;
+	$proximoTexto= "";
+
+	foreach ($gastosSerie as $gasto) {
+		$estado= strtolower(trim((string)$gasto['estado']));
+		$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
+		if ($estado == 'activo') {
+			$pagadas++;
+			continue;
+		}
+		if ($fechaObj && $fechaObj <= $hoy) {
+			$vencidas++;
+			continue;
+		}
+		if ($fechaObj) {
+			$futuras++;
+			if ($proximoFecha === null || $fechaObj < $proximoFecha) {
+				$proximoFecha= $fechaObj;
+				$proximoTexto= $fechaObj->format('d/m/Y');
+			}
+		}
+	}
+
+	if ($total <= 0) {
+		$tipo= 'sin-cuotas';
+		$texto= 'Sin cuotas';
+		$icono= '-';
+	} else if ($vencidas > 0) {
+		$tipo= 'vencido';
+		$texto= 'Cuota vencida';
+		$icono= '!';
+	} else if ($futuras > 0) {
+		$tipo= 'programado';
+		$texto= 'Programado';
+		$icono= '&#128197;';
+	} else {
+		$tipo= 'al-dia';
+		$texto= 'Al d&iacute;a';
+		$icono= '&#10003;';
+	}
+
+	return array(
+		'tipo' => $tipo,
+		'texto' => $texto,
+		'icono' => $icono,
+		'total' => $total,
+		'pagadas' => $pagadas,
+		'vencidas' => $vencidas,
+		'futuras' => $futuras,
+		'proximo' => $proximoTexto,
+	);
+}
+
+function obtenerEtiquetaCuotaProgramada($gasto) {
+	$estado= strtolower(trim((string)$gasto['estado']));
+	if ($estado == 'activo') {
+		return array('tipo' => 'pagado', 'texto' => 'Pagado');
+	}
+	$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
+	if ($fechaObj && $fechaObj <= new DateTime('today')) {
+		return array('tipo' => 'vencido', 'texto' => 'Vencido');
+	}
+	if ($estado == 'rechazado') {
+		return array('tipo' => 'sin-cuotas', 'texto' => 'Rechazado');
+	}
+	return array('tipo' => 'programado', 'texto' => 'Programado');
+}
+
+function construirIndicadorCuotasProgramadas($resumen) {
+	return "<span class='cuotas-programadas-badge cuotas-programadas-badge--".$resumen['tipo']."'>"
+		."<span>".$resumen['icono']."</span>"
+		."<b>".$resumen['texto']."</b>"
+		."</span>";
+}
+
+function construirMetaCuotasProgramadas($resumen) {
+	$proximo= $resumen['proximo'] ? $resumen['proximo'] : 'Sin vencimientos';
+	return "<div class='cuotas-programadas-meta'>"
+		."<span>Cuotas: <b>".$resumen['pagadas']."/".$resumen['total']."</b> pagadas</span>"
+		."<span>Pr&oacute;ximo venc.: <b>".flujoGastoTextoSeguro($proximo)."</b></span>"
+		."</div>";
+}
+
+function flujoGastoEsCuotaProgramada($gasto) {
+	$modalidad= strtolower(trim((string)(isset($gasto['modalidad']) ? $gasto['modalidad'] : '')));
+	$codPadre= trim((string)(isset($gasto['cod_gasto_padre']) ? $gasto['cod_gasto_padre'] : ''));
+	return ($modalidad == 'credito' || ($codPadre != '' && $codPadre != '0'));
+}
+
+function filtrarGastosCuotasProgramadas($gastos) {
+	$filtrados= array();
+	foreach ($gastos as $gasto) {
+		if (flujoGastoEsCuotaProgramada($gasto)) {
+			$filtrados[]= $gasto;
+		}
+	}
+	return $filtrados;
+}
+
+function flujoGastoNombreProyecto($codProyectoGasto) {
+	static $cache= array();
+	$codProyectoGasto= trim((string)$codProyectoGasto);
+	if ($codProyectoGasto == "" || $codProyectoGasto == "0" || !is_numeric($codProyectoGasto)) {
+		return "";
+	}
+	if (isset($cache[$codProyectoGasto])) {
+		return $cache[$codProyectoGasto];
+	}
+	$nombre= "";
+	if (function_exists('obtenerProyectoGasto')) {
+		$proyectos= obtenerProyectoGasto(array(
+			'id' => $codProyectoGasto,
+			'incluir_sin_gastos' => 'true',
+		), 1);
+		if (isset($proyectos[0]) && isset($proyectos[0]['nombre'])) {
+			$nombre= trim((string)$proyectos[0]['nombre']);
+		}
+	}
+	if ($nombre == "") {
+		$nombre= "Proyecto ".$codProyectoGasto;
+	}
+	$cache[$codProyectoGasto]= $nombre;
+	return $nombre;
+}
+
+function construirSubgrupoFlujoConcepto($titulo, $contenido, $total, $tipo= 'proyecto', $detalle= '') {
+	if (trim((string)$contenido) == "") {
+		return "";
+	}
+	$total= intval($total);
+	$badge= "Detalle";
+	if ($tipo == 'pago' || $tipo == 'aislado') {
+		$badge= "Pago unico";
+	} else if ($tipo == 'proyecto') {
+		$badge= "Proyecto";
+	}
+	$esProyecto= ($tipo == 'proyecto');
+	return "<li class='list-group-item flujo-concepto-subgrupo flujo-concepto-subgrupo--".$tipo."'>"
+		."<div class='flujo-concepto-subgrupo__head'".($esProyecto ? " onclick='alternarSubgrupoFlujoConcepto(event, this)'" : "").">"
+		."<span class='flujo-concepto-subgrupo__badge'>".$badge."</span>"
+		."<strong>".flujoGastoTextoSeguro($titulo)."</strong>"
+		.($detalle != "" ? "<small>".flujoGastoTextoSeguro($detalle)."</small>" : "")
+		."<b>".number_format($total, 0, ',', '.')." Gs.</b>"
+		.($esProyecto ? "<button type='button' class='flujo-concepto-subgrupo__toggle' title='Expandir o contraer proyecto'>-</button>" : "")
+		."</div>"
+		."<ul class='list-group list-group-flush flujo-concepto-subgrupo__items'>".$contenido."</ul>"
+		."</li>";
+}
+
+function construirBotonCrearProyectoHilo($gasto, $compacto= false) {
+	$codInterConsulta= trim((string)(isset($gasto['cod_interConsultaFK']) ? $gasto['cod_interConsultaFK'] : ''));
+	if ($codInterConsulta == "" || $codInterConsulta == "0") {
+		return "";
+	}
+
+	$nombreHilo= trim((string)(isset($gasto['interconsulta_nombre']) ? $gasto['interconsulta_nombre'] : ''));
+	$sugerencia= $nombreHilo;
+	if ($sugerencia == "" && isset($gasto['descripcion'])) {
+		$sugerencia= trim((string)$gasto['descripcion']);
+	}
+	if ($sugerencia == "" && isset($gasto['motivo'])) {
+		$sugerencia= trim((string)$gasto['motivo']);
+	}
+	$codConcepto= trim((string)(isset($gasto['cod_motivoIngresoEgresoFK']) ? $gasto['cod_motivoIngresoEgresoFK'] : ''));
+	$nombreConcepto= trim((string)(isset($gasto['motivo']) ? $gasto['motivo'] : ''));
+	$tipoMovimiento= trim((string)(isset($gasto['tipo']) ? $gasto['tipo'] : 'Egreso'));
+	$codLocal= trim((string)(isset($gasto['cod_local']) ? $gasto['cod_local'] : ''));
+
+	$claseCompacto= $compacto ? " flujo-proyecto-hilo-btn--compacto" : "";
+	return "<button type='button' class='flujo-proyecto-hilo-btn".$claseCompacto."' title='Crear proyecto para este hilo' onclick='crearProyectoGastoDesdeBotonHilo(event, this)'"
+		." data-cod-interconsulta='".flujoGastoTextoSeguro($codInterConsulta)."'"
+		." data-nombre-hilo='".flujoGastoTextoSeguro($nombreHilo)."'"
+		." data-sugerencia-proyecto='".flujoGastoTextoSeguro($sugerencia)."'"
+		." data-concepto-id='".flujoGastoTextoSeguro($codConcepto)."'"
+		." data-concepto-nombre='".flujoGastoTextoSeguro($nombreConcepto)."'"
+		." data-tipo-movimiento='".flujoGastoTextoSeguro($tipoMovimiento)."'"
+		." data-local-id='".flujoGastoTextoSeguro($codLocal)."'>"
+		."<span>+</span><b>Proyecto</b>"
+		."</button>";
+}
+
+function flujoGastoCeldaOculta($id, $valor) {
+	return "<td id='".$id."' style='display:none'>".flujoGastoTextoSeguro($valor)."</td>";
+}
+
+function construirCeldasOcultasGastoFila($gasto) {
+	return flujoGastoCeldaOculta('td_datos_1', number_format(intval(isset($gasto['monto']) ? $gasto['monto'] : 0), 0, ',', '.'))
+		.flujoGastoCeldaOculta('td_datos_2', isset($gasto['motivo']) ? $gasto['motivo'] : '')
+		.flujoGastoCeldaOculta('td_datos_3', isset($gasto['fecha']) ? $gasto['fecha'] : '')
+		.flujoGastoCeldaOculta('td_datos_5', isset($gasto['estado']) ? $gasto['estado'] : '')
+		.flujoGastoCeldaOculta('td_datos_6', isset($gasto['tipo']) ? $gasto['tipo'] : '')
+		.flujoGastoCeldaOculta('td_datos_7', isset($gasto['cod_local']) ? $gasto['cod_local'] : '')
+		.flujoGastoCeldaOculta('td_datos_8', isset($gasto['nroboleta']) ? $gasto['nroboleta'] : '')
+		.flujoGastoCeldaOculta('td_datos_9', isset($gasto['banco']) ? $gasto['banco'] : '')
+		.flujoGastoCeldaOculta('td_datos_10', isset($gasto['nrocuenta']) ? $gasto['nrocuenta'] : '')
+		.flujoGastoCeldaOculta('td_datos_11', isset($gasto['arreglo']) ? $gasto['arreglo'] : '')
+		.flujoGastoCeldaOculta('td_datos_12', isset($gasto['url1']) ? $gasto['url1'] : '')
+		.flujoGastoCeldaOculta('td_datos_13', isset($gasto['descripcion']) ? $gasto['descripcion'] : '')
+		.flujoGastoCeldaOculta('td_datos_14', isset($gasto['motivo']) ? $gasto['motivo'] : '')
+		.flujoGastoCeldaOculta('td_datos_15', isset($gasto['cod_interConsultaFK']) ? $gasto['cod_interConsultaFK'] : '')
+		.flujoGastoCeldaOculta('td_datos_16', isset($gasto['interconsulta_nombre']) ? $gasto['interconsulta_nombre'] : '')
+		.flujoGastoCeldaOculta('td_datos_17', isset($gasto['cod_usuario_autoriz']) ? $gasto['cod_usuario_autoriz'] : '')
+		.flujoGastoCeldaOculta('td_datos_18', isset($gasto['usuario_autoriz_nombre']) ? $gasto['usuario_autoriz_nombre'] : '')
+		.flujoGastoCeldaOculta('td_datos_19', isset($gasto['fecha_autoriz']) ? $gasto['fecha_autoriz'] : '')
+		.flujoGastoCeldaOculta('td_datos_20', isset($gasto['cod_motivoIngresoEgresoFK']) ? $gasto['cod_motivoIngresoEgresoFK'] : '')
+		.flujoGastoCeldaOculta('td_datos_21', isset($gasto['usuarionombre']) ? $gasto['usuarionombre'] : '')
+		.flujoGastoCeldaOculta('td_datos_22', isset($gasto['cod_proyecto_gastoFK']) ? $gasto['cod_proyecto_gastoFK'] : '')
+		.flujoGastoCeldaOculta('td_datos_23', isset($gasto['modalidad']) ? $gasto['modalidad'] : '')
+		.flujoGastoCeldaOculta('td_datos_24', isset($gasto['cod_gasto_padre']) ? $gasto['cod_gasto_padre'] : '')
+		.flujoGastoCeldaOculta('td_datos_25', isset($gasto['url_documento_firmado']) ? $gasto['url_documento_firmado'] : '');
+}
+
+function construirDetalleCuotasProgramadas($gastosSerie, $resumen) {
+	if (count($gastosSerie) <= 1) {
+		return "";
+	}
+	$total= count($gastosSerie);
+	$gastoBase= isset($gastosSerie[0]) ? $gastosSerie[0] : array();
+	$botonCrearProyectoHilo= construirBotonCrearProyectoHilo($gastoBase, true);
+	$filas= "";
+	foreach ($gastosSerie as $indice => $gasto) {
+		$estado= obtenerEtiquetaCuotaProgramada($gasto);
+		$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno(isset($gasto['idgastos']) ? $gasto['idgastos'] : '', isset($gasto['monto']) ? $gasto['monto'] : 0);
+		$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+		$acciones= "<span style='color:#4b5563;font-size:8pt;'>Cerrada</span>";
+		if ($estadoOriginal != 'activo') {
+			$acciones= "<button type='button' title='Editar cuota' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#2f80ed;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>Editar</button>";
+			if ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado') {
+				$acciones .= " <button type='button' title='Aprobar cuota' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)' style='border:0;background:#078b35;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>OK</button>"
+					." <button type='button' title='Rechazar cuota' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)' style='border:0;background:#c92323;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>X</button>";
+			}
+		}
+		$acciones .= construirBotonConciliarEgresoUeno($gasto, 'Cuotas programadas');
+		$filas .= "<tr>"
+			."<td id='td_id' style='display:none'>".flujoGastoTextoSeguro(isset($gasto['idgastos']) ? $gasto['idgastos'] : '')."</td>"
+			."<td>".($indice + 1)."/".$total."</td>"
+			."<td>".flujoGastoFechaCorta(isset($gasto['fecha']) ? $gasto['fecha'] : '')."</td>"
+			."<td><span class='cuotas-programadas-estado cuotas-programadas-estado--".$estado['tipo']."'>".$estado['texto']."</span></td>"
+			."<td>".number_format(intval($gasto['monto']), 0, ',', '.')." Gs.".$indicadorConciliacionUeno."</td>"
+			."<td>".$acciones."</td>"
+			.construirCeldasOcultasGastoFila($gasto)
+			."</tr>";
+	}
+
+	return "<tr class='cuotas-programadas-row' style='display:none;'>"
+		."<td colspan='32'>"
+		."<div class='cuotas-programadas-panel'>"
+		."<div class='cuotas-programadas-panel__head'>"
+		."<strong>Cuotas programadas</strong>"
+		."<div class='cuotas-programadas-panel__actions'>"
+		.$botonCrearProyectoHilo
+		.construirIndicadorCuotasProgramadas($resumen)
+		."</div>"
+		."</div>"
+		."<table class='cuotas-programadas-table'>"
+		."<thead><tr><th>Cuota</th><th>Vencimiento</th><th>Estado</th><th>Monto</th><th>Acciones</th></tr></thead>"
+		."<tbody>".$filas."</tbody>"
+		."</table>"
+		."</div>"
+		."</td>"
+		."</tr>";
+}
+
+function construirTablaCuotasProyectoFlujo($gastosSerie, $resumen) {
+	if (count($gastosSerie) < 1) {
+		return "";
+	}
+	$total= count($gastosSerie);
+	$gastoBase= isset($gastosSerie[0]) ? $gastosSerie[0] : array();
+	$botonCrearProyectoHilo= construirBotonCrearProyectoHilo($gastoBase, true);
+	$filas= "";
+	foreach ($gastosSerie as $indice => $gasto) {
+		$idCuota= isset($gasto['idgastos']) ? $gasto['idgastos'] : '';
+		if ($idCuota == '') {
+			continue;
+		}
+		$estado= obtenerEtiquetaCuotaProgramada($gasto);
+		$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idCuota, isset($gasto['monto']) ? $gasto['monto'] : 0);
+		$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+		$acciones= "<span style='color:#4b5563;font-size:8pt;'>Cerrada</span>";
+		if ($estadoOriginal != 'activo') {
+			$acciones= "<button type='button' title='Editar cuota' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#2f80ed;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>Editar</button>";
+			if ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado') {
+				$acciones .= " <button type='button' title='Aprobar cuota' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)' style='border:0;background:#078b35;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>OK</button>"
+					." <button type='button' title='Rechazar cuota' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)' style='border:0;background:#c92323;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>X</button>";
+			}
+		}
+		$acciones .= construirBotonConciliarEgresoUeno($gasto, 'Cuotas programadas');
+		$filas .= "<tr id='tbSelecRegistro'>"
+			."<td id='td_id' style='display:none'>".flujoGastoTextoSeguro($idCuota)."</td>"
+			."<td>".($indice + 1)."/".$total."</td>"
+			."<td>".flujoGastoFechaCorta(isset($gasto['fecha']) ? $gasto['fecha'] : '')."</td>"
+			."<td><span class='cuotas-programadas-estado cuotas-programadas-estado--".$estado['tipo']."'>".$estado['texto']."</span></td>"
+			."<td>".number_format(intval($gasto['monto']), 0, ',', '.')." Gs.".$indicadorConciliacionUeno."</td>"
+			."<td>".$acciones."</td>"
+			.construirCeldasOcultasGastoFila($gasto)
+			."</tr>";
+	}
+	if ($filas == "") {
+		return "";
+	}
+	return "<div class='cuotas-programadas-panel cuotas-programadas-panel--proyecto'>"
+		."<div class='cuotas-programadas-panel__head'>"
+		."<strong>Cuotas del proyecto</strong>"
+		."<div class='cuotas-programadas-panel__actions'>".$botonCrearProyectoHilo.construirIndicadorCuotasProgramadas($resumen)."</div>"
+		."</div>"
+		."<table class='cuotas-programadas-table'>"
+		."<thead><tr><th>Cuota</th><th>Vencimiento</th><th>Estado</th><th>Monto</th><th>Acciones</th></tr></thead>"
+		."<tbody>".$filas."</tbody>"
+		."</table>"
+		."</div>";
+}
+
+function construirLinkInterconsultaFlujoGasto($gasto) {
+	$codInterConsulta= trim((string)(isset($gasto['cod_interConsultaFK']) ? $gasto['cod_interConsultaFK'] : ''));
+	$interconsultaNombre= trim((string)(isset($gasto['interconsulta_nombre']) ? $gasto['interconsulta_nombre'] : ''));
+	if ($interconsultaNombre == "" && $codInterConsulta != "") {
+		$interconsultaNombre= "Hilo ".$codInterConsulta;
+	}
+	if ($interconsultaNombre == "") {
+		$interconsultaNombre= "Sin hilo";
+	}
+	$interconsultaElemento= flujoGastoTextoSeguro($interconsultaNombre);
+	if ($codInterConsulta != "") {
+		$registrosMens= obtenerMensaje(array(
+			'fecha_creacion' => "> '".(new DateTime())->format('Y-m-d H:i:s')."'",
+			"cod_interConsultaFK" => $codInterConsulta,
+		));
+		foreach ($registrosMens as $valueMens) {
+			if ($valueMens['estado'] == 'activo') {
+				$fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));
+				$fechaActual = new DateTime();
+				$diasRestantes = $fechaMensaje->diff($fechaActual->setTime(0, 0, 0));
+				$interconsultaElemento .= ' <i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').')';
+			}
+		}
+		return "<button type='button' class='flujo-pago-unico-hilo' onclick='event.stopPropagation();obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsultaElemento."</button>";
+	}
+	return "<span class='flujo-pago-unico-hilo flujo-pago-unico-hilo--vacio'>".$interconsultaElemento."</span>";
+}
+
+function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '') {
+	$idGasto= isset($gasto['idgastos']) ? $gasto['idgastos'] : '';
+	if ($idGasto == '') {
+		return "";
+	}
+	$monto= intval(isset($gasto['monto']) ? $gasto['monto'] : 0);
+	$estado= obtenerEtiquetaCuotaProgramada($gasto);
+	$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+	$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idGasto, $monto);
+	$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+	$botonConciliarUeno= construirBotonConciliarEgresoUeno($gasto, $tituloZona);
+	$acciones= "<button type='button' title='Editar movimiento' aria-label='Editar movimiento' onclick='editarGastoDesdeFila(event, this)' class='flujo-pago-unico-editar'>"
+		."<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar'>"
+		."</button>".$botonConciliarUeno;
+	if ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado') {
+		$acciones .= "<button type='button' title='Aprobar pago' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok'>OK</button>"
+			."<button type='button' title='Rechazar pago' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--rechazar'>X</button>";
+	}
+	$claseFila= ($estadoOriginal == 'rechazado' || $estadoOriginal == 'inactivo') ? " flujo-pago-unico-table__row--anulado" : "";
+	$usuario= isset($gasto['usuarionombre']) ? $gasto['usuarionombre'] : '';
+	$local= isset($gasto['nombrelocal']) ? $gasto['nombrelocal'] : '';
+	$tipo= isset($gasto['tipo']) ? $gasto['tipo'] : '';
+	$motivo= isset($gasto['motivo']) ? $gasto['motivo'] : '';
+	$fecha= isset($gasto['fecha']) ? $gasto['fecha'] : '';
+	$modalidadElemento= "<span class='flujo-modalidad-badge flujo-modalidad-badge--aislado'>Pago aislado</span>";
+	$styleEstado= "";
+	$fechaGasto= flujoGastoFechaObjeto($fecha);
+	$fechaHoy= new DateTime('today');
+	if (($estadoOriginal == 'solicitado' || $estadoOriginal == 'pendiente') && $fechaGasto && $fechaGasto <= $fechaHoy) {
+		$styleEstado= "background-color: #ff5050;color: #ffffff;";
+	} else if ($estadoOriginal == 'pendiente' || ($estadoOriginal == 'solicitado' && $fechaGasto && $fechaGasto > $fechaHoy)) {
+		$styleEstado= "background-color: #585f08;color: #ffffff;";
+	} else if ($estadoOriginal == 'activo') {
+		$styleEstado= "background-color: #085f1c;color: #ffffff;";
+	}
+
+	return "<div class='flujo-pago-unico-card'>"
+		."<table class='flujo-pago-unico-table flujo-pago-unico-table--encabezado'>"
+		."<tbody><tr id='tbSelecRegistro' class='flujo-pago-unico-table__row".$claseFila."' onclick='obtenerdatosabmGasto(this)'>"
+		."<td id='td_id' class='flujo-pago-unico-ref' style='".$styleEstado."'>".flujoGastoTextoSeguro($idGasto)."</td>"
+		."<td class='flujo-pago-unico-concepto'>".flujoGastoTextoSeguro($motivo)."</td>"
+		."<td class='flujo-pago-unico-interconsulta'>".construirLinkInterconsultaFlujoGasto($gasto)."</td>"
+		."<td class='flujo-pago-unico-monto'>".number_format($monto, 0, ',', '.').$indicadorConciliacionUeno."</td>"
+		."<td class='flujo-pago-unico-estado'><span class='cuotas-programadas-estado cuotas-programadas-estado--".$estado['tipo']."'>".$estado['texto']."</span></td>"
+		."<td class='flujo-pago-unico-acciones'><div class='flujo-ueno-acciones'>".$acciones."</div></td>"
+		."<td class='flujo-pago-unico-modalidad'>".$modalidadElemento."</td>"
+		."<td class='flujo-pago-unico-tipo'>".flujoGastoTextoSeguro($tipo)."</td>"
+		."<td class='flujo-pago-unico-fecha'>".flujoGastoFechaCorta($fecha)."</td>"
+		."<td class='flujo-pago-unico-usuario'>".flujoGastoTextoSeguro($usuario)."</td>"
+		."<td class='flujo-pago-unico-local'>".flujoGastoTextoSeguro($local)."</td>"
+		.construirCeldasOcultasGastoFila($gasto)
+		."</tr></tbody>"
+		."</table>"
+		."</div>";
 }
 
 function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder= 'DESC')
@@ -1746,6 +2389,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		}
 	}
 
+ $seriesCuotasRenderizadas= array();
  foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
@@ -1791,6 +2435,8 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	  foreach ($cod_motivos as $cod_motivo => $gastos) {
 		$totalMonto= 0;
 		$paginaMotivo= "";
+		$pagosUnicosMotivo= array();
+		$gruposProyectoMotivo= array();
 		$registro_autorizacion_necesario= false;
 		// Obtiene el nombre del motivo
 		if ($cod_motivo == -1) {
@@ -1799,6 +2445,45 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
 		}
 		foreach ($gastos as $valor) {
+			$montoOriginal= isset($valor['monto']) ? intval($valor['monto']) : 0;
+			$estadoOriginal= isset($valor['estado']) ? $valor['estado'] : '';
+			if ($estadoOriginal == 'Activo') {
+				$totalMonto += $montoOriginal;
+			}
+			if (isset($totalEstado[$estadoOriginal])) {
+				$totalEstado[$estadoOriginal] += $montoOriginal;
+			}
+
+			$gastosSerieCuotas= array();
+			$tieneCuotasProgramadas= false;
+			$resumenCuotasProgramadas= null;
+			$detalleCuotasProgramadas= "";
+			$indicadorCuotasProgramadas= "";
+			$metaCuotasProgramadas= "";
+			$controlCuotasProgramadas= "<td class='cuotas-programadas-control'></td>";
+			$codProyectoSerie= trim((string)(isset($valor['cod_proyecto_gastoFK']) ? $valor['cod_proyecto_gastoFK'] : ''));
+			$esCuotaProgramada= flujoGastoEsCuotaProgramada($valor);
+			if ($codProyectoSerie != "" && $codProyectoSerie != "0" && $esCuotaProgramada) {
+				$claveSerieRenderizada= $cod_motivo."|".$codProyectoSerie;
+				if (isset($seriesCuotasRenderizadas[$claveSerieRenderizada])) {
+					continue;
+				}
+				$gastosSerieCuotas= filtrarGastosCuotasProgramadas(obtenerGastosAsociados($valor['idgastos']));
+				if (count($gastosSerieCuotas) < 1) {
+					$gastosSerieCuotas= array($valor);
+				}
+				if (count($gastosSerieCuotas) > 0) {
+					$seriesCuotasRenderizadas[$claveSerieRenderizada]= true;
+					$tieneCuotasProgramadas= true;
+					$valor= $gastosSerieCuotas[0];
+					$resumenCuotasProgramadas= obtenerResumenCuotasProgramadas($gastosSerieCuotas);
+					$detalleCuotasProgramadas= "";
+					$indicadorCuotasProgramadas= construirIndicadorCuotasProgramadas($resumenCuotasProgramadas);
+					$metaCuotasProgramadas= construirMetaCuotasProgramadas($resumenCuotasProgramadas);
+					$controlCuotasProgramadas= "<td class='cuotas-programadas-control'><span class='cuotas-programadas-toggle' data-cuotas-toggle>+</span></td>";
+				}
+			}
+
 			$idgastos=mb_convert_encoding((string)($valor['idgastos']), 'UTF-8', 'ISO-8859-1');
 			$interconsulta_nombre= mb_convert_encoding((string)($valor['interconsulta_nombre']), 'UTF-8', 'ISO-8859-1');
 			$cod_interConsultaFK= mb_convert_encoding((string)($valor['cod_interConsultaFK']), 'UTF-8', 'ISO-8859-1');
@@ -1833,11 +2518,23 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			if ($idgastos == "") {
 				$funcion= "";
 			}
-
-			if ($estado == 'Activo') {
-				$totalMonto += intval($monto);
+			if ($tieneCuotasProgramadas) {
+				$funcion= "alternarCuotasProgramadas(event, this)";
 			}
-			if (isset($totalEstado[$estado])) {$totalEstado[$estado] += intval($monto);}
+			$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idgastos, $monto);
+			$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+			$botonConciliarUeno= construirBotonConciliarEgresoUeno($valor, $titulo);
+			$botonEditarGasto= "<td style='width:4%;text-align:center;vertical-align:middle;'></td>";
+			if ($idgastos != "" || $botonConciliarUeno != "") {
+				$botonEditarGasto= "<td class='flujo-ueno-acciones-cell' style='width:7%;text-align:center;vertical-align:middle;'>
+					<div class='flujo-ueno-acciones'>
+					<button type='button' title='Editar movimiento' aria-label='Editar movimiento' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#ffffff;border-radius:4px;width:28px;height:24px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:2px;box-shadow:0 0 0 1px rgba(0,0,0,0.18);'>
+						<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar' style='width:15px;height:15px;display:block;'>
+					</button>
+					".$botonConciliarUeno."
+					</div>
+				</td>";
+			}
 			$styleEstado = "";
 			$fechaHoy = new DateTime();
 			$fechaGasto = DateTime::createFromFormat('Y-m-d', $fecha);
@@ -1849,6 +2546,9 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				$styleEstado= "background-color: #585f08;color: #ffffff;";
 			} else if ($estado == 'Activo') {
 				$styleEstado= "background-color: #085f1c;color: #ffffff;";
+			}
+			if ($tieneCuotasProgramadas && $resumenCuotasProgramadas && $resumenCuotasProgramadas['tipo'] == 'vencido') {
+				$registro_autorizacion_necesario= true;
 			}
 	
 			// Se formate el nombre de la interconsulta
@@ -1868,7 +2568,18 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				}
 			}
 
+			$modalidadElemento= flujoGastoTextoSeguro($modalidad);
+			$modalidadLower= strtolower(trim((string)$modalidad));
+			if ($tieneCuotasProgramadas) {
+				$modalidadElemento= "<span class='flujo-modalidad-badge flujo-modalidad-badge--serie'>Serie de cuotas</span>";
+			} else if ($modalidadLower == 'contado') {
+				$modalidadElemento= "<span class='flujo-modalidad-badge flujo-modalidad-badge--aislado'>Pago aislado</span>";
+			}
+
 			$styleName=CargarStyleTable($styleName);
+			$resumenCuotasFila= $tieneCuotasProgramadas
+				? "<td class='cuotas-programadas-resumen'>".$indicadorCuotasProgramadas.$metaCuotasProgramadas."</td>"
+				: "<td class='cuotas-programadas-resumen cuotas-programadas-resumen--vacio'></td>";
 			if ($estado == 'Activo') {
 				$paginaImprimir .= "
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
@@ -1905,17 +2616,19 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 					</table>";
 			}
 	
-			$paginaMotivo .= "<li class='list-group-item' style='padding: 0; padding-left: 0.5rem;'>
+			$filaMovimientoFlujo = "<li class='list-group-item' style='padding: 0; padding-left: 0.5rem;'>
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 				<tr id='tbSelecRegistro' onclick='$funcion' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
+				".$controlCuotasProgramadas."
 				<td id='td_id' style='width:5%; background-color: #efeded;color:red; $styleEstado'>".$idgastos."</td>
 				<td  id='td_datos_2' style='width:10%'>".$motivo."</td>
-				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
+				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='event.stopPropagation();obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
 				<td  id='td_datos_16' style='display: none;'>".$interconsulta_nombre."</td>
-				<td  style='width:15%'>".$descripcion."</td>
 				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
-				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.')."</td>
-				<td  id='td_datos_23' style='width:5%'>".$modalidad."</td>
+				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.').$indicadorConciliacionUeno."</td>
+				".$resumenCuotasFila."
+				".$botonEditarGasto."
+				<td  id='td_datos_23' style='width:5%'>".$modalidadElemento."</td>
 				<td  id='td_datos_6' style='width:5%'>".$tipo."</td>
 				<td  id='td_datos_3' style='width:15%'>".$fecha."</td>
 				<td  id='td_datos_8' style='display: none;'>".$nroboleta."</td>
@@ -1938,19 +2651,74 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  id='td_datos_24' style='display:none'>".$cod_gasto_padre."</td>
 				<td  id='td_datos_22' style='display:none'>".$cod_proyecto_gastoFK."</td>
 				</tr>
+				".$detalleCuotasProgramadas."
 				</table>
 			</li>";
+			if ($tieneCuotasProgramadas) {
+				$claveProyecto= ($cod_proyecto_gastoFK != "" && $cod_proyecto_gastoFK != "0") ? $cod_proyecto_gastoFK : "serie_".$idgastos;
+				if (!isset($gruposProyectoMotivo[$claveProyecto])) {
+					$nombreProyecto= ($cod_proyecto_gastoFK != "" && $cod_proyecto_gastoFK != "0")
+						? flujoGastoNombreProyecto($cod_proyecto_gastoFK)
+						: "Serie de cuotas ".$idgastos;
+					$totalProyecto= 0;
+					foreach ($gastosSerieCuotas as $gastoProyectoCuota) {
+						$totalProyecto += intval(isset($gastoProyectoCuota['monto']) ? $gastoProyectoCuota['monto'] : 0);
+					}
+					$gruposProyectoMotivo[$claveProyecto]= array(
+						'titulo' => $nombreProyecto,
+						'detalle' => ($resumenCuotasProgramadas ? "Cuotas: ".$resumenCuotasProgramadas['pagadas']."/".$resumenCuotasProgramadas['total'] : ""),
+						'total' => $totalProyecto,
+						'html' => construirTablaCuotasProyectoFlujo($gastosSerieCuotas, $resumenCuotasProgramadas),
+					);
+				}
+			} else {
+				$pagosUnicosMotivo[]= array(
+					'titulo' => "Pago unico - Ref. ".$idgastos,
+					'detalle' => flujoGastoFechaCorta($fecha),
+					'total' => intval($monto),
+					'html' => construirPagoUnicoFlujoConcepto($valor, $titulo),
+				);
+			}
+		}
+
+		foreach ($pagosUnicosMotivo as $pagoUnicoMotivo) {
+			$paginaMotivo .= construirSubgrupoFlujoConcepto($pagoUnicoMotivo['titulo'], $pagoUnicoMotivo['html'], $pagoUnicoMotivo['total'], 'pago', $pagoUnicoMotivo['detalle']);
+		}
+		foreach ($gruposProyectoMotivo as $grupoProyectoMotivo) {
+			$paginaMotivo .= construirSubgrupoFlujoConcepto($grupoProyectoMotivo['titulo'], $grupoProyectoMotivo['html'], $grupoProyectoMotivo['total'], 'proyecto', $grupoProyectoMotivo['detalle']);
 		}
 
 		$styleRegistroColor2= $styleRegistroColor;
 		if ($registro_autorizacion_necesario) {
 			$styleRegistroColor2= "#ff5050;color: #ffffff;";
 		}
+		$botonAgregarMovimientoContextual= "";
+		$botonConciliarConceptoUeno= "";
+		if ($cod_motivo != -1) {
+			$tipoMovimientoContexto= ($zona == 'ingreso') ? "Ingreso" : "Egreso";
+			$botonAgregarMovimientoContextual= "<button type='button' class='flujo-concepto-add' title='Agregar movimiento a este concepto' onclick='abrirMovimientoFinancieroDesdeBotonConcepto(event, this)'"
+				." data-tipo-movimiento='".flujoGastoTextoSeguro($tipoMovimientoContexto)."'"
+				." data-categoria-flujo='".flujoGastoTextoSeguro($titulo)."'"
+				." data-categoria-codigo='".flujoGastoTextoSeguro($zona)."'"
+				." data-concepto-id='".flujoGastoTextoSeguro($cod_motivo)."'"
+				." data-concepto-nombre='".flujoGastoTextoSeguro($titulo_motivo)."'>"
+				."<span>+</span>"
+				."</button>";
+			if ($zona != 'ingreso') {
+				$botonConciliarConceptoUeno= "<button type='button' class='flujo-concepto-conciliar' title='Conciliar gastos pendientes de este concepto con egresos del extracto bancario' onclick='abrirConciliacionEgresoUenoDesdeConcepto(event, this)'"
+					." data-cod-motivo='".flujoGastoTextoSeguro($cod_motivo)."'"
+					." data-categoria-flujo='".flujoGastoTextoSeguro($titulo)."'"
+					." data-concepto-nombre='".flujoGastoTextoSeguro($titulo_motivo)."'>"
+					."<span>&#8644;</span>"
+					."</button>";
+			}
+		}
 
  		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;gap: 0;min-height: 0;">'.
 			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
 				'<h6><b>'.$titulo_motivo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
-				($cod_motivo == -1 ? '' : '<img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" style="height: 35px; width: 35px;" title="Añadir registro" onclick="verCerrarVentanaAbmGasto(true, true);document.getElementById(\'inptMotivoMisGastos\').value= \''.$titulo_motivo.'\';">').
+				$botonAgregarMovimientoContextual.
+				$botonConciliarConceptoUeno.
 			'</div>'.
 			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
 				$paginaMotivo.
@@ -2594,16 +3362,42 @@ exit;
 	
 }
 
-function buscaroption()
+function obtenerEtiquetaCategoriaMotivo($categoria)
+{
+	switch ($categoria) {
+		case 'ingreso':
+			return 'Ingresos';
+		case 'directo':
+			return 'Costos Variables';
+		case 'operativo':
+			return 'Gastos Fijos';
+		default:
+			return 'Sin Categorizar';
+	}
+}
+
+function buscaroption($categoriaFiltro= '')
 {
 	$mysqli=conectar_al_servidor();
-	
-		$sql= "Select * from motivos_ingreso_egreso where estado='activo' order by descripcion asc  ";
-		
-		
-		 $pagina="<option  value='' >SELECCIONAR</option>";       
+	$categoriasPermitidas= array('ingreso', 'directo', 'operativo');
+	$categoriaFiltro= trim((string)$categoriaFiltro);
+	if (!in_array($categoriaFiltro, $categoriasPermitidas)) {
+		$categoriaFiltro= '';
+	}
+
+	$sqlFiltroCategoria= "";
+	if ($categoriaFiltro != "") {
+		$sqlFiltroCategoria= " and categoria=?";
+	}
+
+	$sql= "Select * from motivos_ingreso_egreso where estado='activo' $sqlFiltroCategoria order by FIELD(categoria, 'ingreso', 'directo', 'operativo'), categoria IS NULL, descripcion asc";
+
+	$pagina="<option  value='' >SELECCIONAR</option>";
    $paginaList = "";
    $stmt = $mysqli->prepare($sql);
+	if ($categoriaFiltro != "") {
+		$stmt->bind_param('s', $categoriaFiltro);
+	}
 
 if ( ! $stmt->execute()) {
    echo "Error";
@@ -2613,6 +3407,7 @@ if ( ! $stmt->execute()) {
 	$result = $stmt->get_result();
  $valor= mysqli_num_rows($result);
  $nroRegistro= $valor;
+ $categoriaActual= "";
  
  if ($valor>0)
  {
@@ -2621,11 +3416,26 @@ if ( ! $stmt->execute()) {
 		  
 		      $cod_motivo_ingreso_egreso=$valor['cod_motivo_ingreso_egreso'];
 		  	  $descripcion=mb_convert_encoding((string)($valor['descripcion']), 'UTF-8', 'ISO-8859-1');
-			    	
-			  $pagina.="<option  value='$cod_motivo_ingreso_egreso' >".$descripcion."</option>";     
+			  $categoria= mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
+			  if ($categoria == "") {
+				$categoria= "sinCategoria";
+			  }
+
+			  if ($categoriaFiltro == "" && $categoriaActual != $categoria) {
+				if ($categoriaActual != "") {
+					$pagina.="</optgroup>";
+				}
+				$categoriaActual= $categoria;
+				$pagina.="<optgroup label='".obtenerEtiquetaCategoriaMotivo($categoria)."'>";
+			  }
+
+			  $pagina.="<option  value='$cod_motivo_ingreso_egreso' data-categoria='".$categoria."' >".$descripcion."</option>";
 			  
 			  $paginaList.="<option id='$cod_motivo_ingreso_egreso' value='".$descripcion."'></option>";	
 	  }
+ }
+ if ($categoriaFiltro == "" && $categoriaActual != "") {
+	$pagina.="</optgroup>";
  }
  
  

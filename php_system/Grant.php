@@ -592,7 +592,7 @@ function grant_tarea_payload(PDO $pdo, $tarea)
     if (isset($tarea['sucursal']) && $tarea['sucursal'] === 'Villa Morra') {
         $class = 'bar-villamorra';
     }
-    if (isset($tarea['sucursal']) && ($tarea['sucursal'] === 'Cerro Corá' || $tarea['sucursal'] === 'Cerro CorÃ¡' || $tarea['sucursal'] === 'Cerro CorÃƒÂ¡')) {
+    if (isset($tarea['sucursal']) && ($tarea['sucursal'] === 'Cerro Corá' || $tarea['sucursal'] === 'Cerro Corá' || $tarea['sucursal'] === 'Cerro Corá')) {
         $class = 'bar-CerroCora';
     }
     if (isset($tarea['sucursal']) && $tarea['sucursal'] === 'Oviedo') {
@@ -2277,7 +2277,7 @@ if (ob_get_length()) {
             fill: #7c3aed !important;
         }
 
-        .bar-CerroCorÃ¡ .bar,
+        .bar-CerroCorá .bar,
         .bar-CerroCorá .bar {
             fill: #0ea5e9 !important;
         }
@@ -5033,7 +5033,7 @@ if (ob_get_length()) {
                 '.lower-text,.upper-text{fill:#667085;font-size:10px;}',
                 '.arrow{stroke:#94a3b8;fill:none;}',
                 '.bar-general .bar{fill:#64748b;}',
-                '.bar-CerroCora .bar,.bar-CerroCorÃ¡ .bar,.bar-CerroCorá .bar{fill:#0ea5e9;}',
+                '.bar-CerroCora .bar,.bar-CerroCorá .bar,.bar-CerroCorá .bar{fill:#0ea5e9;}',
                 '.bar-villamorra .bar{fill:#7c3aed;}',
                 '.bar-Oviedo .bar{fill:#f97316;}',
                 '.bar-SanLorenzo .bar{fill:#2563eb;}',
@@ -5198,7 +5198,7 @@ if (ob_get_length()) {
                 + '.gantt-print-svg .arrow{stroke:#94a3b8!important;fill:none!important;}'
                 + '.gantt-print-svg .bar-progress{fill:rgba(255,255,255,.28)!important;}'
                 + '.gantt-print-svg .bar-general .bar{fill:#64748b!important;}'
-                + '.gantt-print-svg .bar-CerroCora .bar,.gantt-print-svg .bar-CerroCorÃ¡ .bar,.gantt-print-svg .bar-CerroCorá .bar{fill:#0ea5e9!important;}'
+                + '.gantt-print-svg .bar-CerroCora .bar,.gantt-print-svg .bar-CerroCorá .bar,.gantt-print-svg .bar-CerroCorá .bar{fill:#0ea5e9!important;}'
                 + '.gantt-print-svg .bar-villamorra .bar{fill:#7c3aed!important;}'
                 + '.gantt-print-svg .bar-Oviedo .bar{fill:#f97316!important;}'
                 + '.gantt-print-svg .bar-SanLorenzo .bar{fill:#2563eb!important;}'

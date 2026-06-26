@@ -526,6 +526,1436 @@
   }
 }
 
+.presupuesto-print-proposal {
+  width: 100%;
+  max-width: 281mm;
+  margin: 0 auto;
+  padding: 0;
+  color: #172033;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+  text-align: left;
+}
+
+.presupuesto-print-proposal .presupuesto-print-logo {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 3mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-logo img {
+  width: 34mm;
+  max-height: 18mm;
+  object-fit: contain;
+}
+
+.presupuesto-print-proposal .presupuesto-print-hero,
+.presupuesto-print-proposal .presupuesto-print-summary,
+.presupuesto-print-proposal .presupuesto-print-plan,
+.presupuesto-print-proposal .presupuesto-print-note,
+.presupuesto-print-proposal .presupuesto-print-signatures {
+  border: 1px solid #d8e3ed;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.55fr);
+  gap: 5mm;
+  align-items: start;
+  margin: 0 0 4mm;
+  padding: 5mm;
+  border-color: #b9d6ea;
+  background: #f7fbff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-hero p {
+  margin: 0 0 2mm;
+  color: #0f766e;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-hero h1 {
+  margin: 0 0 2mm;
+  color: #173b57;
+  font-size: 24px;
+  line-height: 1.08;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-hero span {
+  display: block;
+  max-width: 92mm;
+  color: #53697d;
+  font-size: 10.5px;
+  line-height: 1.42;
+  font-weight: 700;
+}
+
+.presupuesto-print-proposal dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2mm;
+  margin: 0;
+}
+
+.presupuesto-print-proposal dl div {
+  min-height: 15mm;
+  padding: 2.2mm 2.5mm;
+  border: 1px solid #dbe7f1;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.presupuesto-print-proposal dt {
+  margin: 0 0 1mm;
+  color: #708295;
+  font-size: 7.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal dd {
+  margin: 0;
+  color: #1e3448;
+  font-size: 9.2px;
+  line-height: 1.22;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.presupuesto-print-proposal .presupuesto-print-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3mm;
+  margin: 0 0 4mm;
+  padding: 3mm;
+  background: #f8fafc;
+}
+
+.presupuesto-print-proposal .presupuesto-print-summary div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1mm 3mm;
+  padding: 3mm;
+  border: 1px solid #cfdeea;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-summary span,
+.presupuesto-print-proposal .presupuesto-print-summary small {
+  color: #64748b;
+  font-size: 8.3px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-summary strong {
+  grid-row: span 2;
+  color: #0f766e;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4mm;
+  align-items: start;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan {
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan > header {
+  padding: 4mm;
+  border-bottom: 1px solid #d8e3ed;
+  background: #f8fbff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan--provisorio > header {
+  background: #f7fcf9;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan > header span {
+  display: inline-block;
+  margin: 0 0 2mm;
+  padding: 1mm 2mm;
+  border-radius: 6px;
+  background: #e8f2fb;
+  color: #1f5b82;
+  font-size: 7.6px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan--provisorio > header span {
+  background: #e6f6ee;
+  color: #157347;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan h2 {
+  margin: 0;
+  color: #173b57;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan p {
+  margin: 1.4mm 0 2.5mm;
+  color: #5c7184;
+  font-size: 9px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan header div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 3mm;
+  padding-top: 2mm;
+  border-top: 1px solid #dbe7f1;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan header strong {
+  color: #0f766e;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan header small {
+  color: #6b7f91;
+  font-size: 8.4px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan section {
+  padding: 3mm 3.5mm 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan section:last-child {
+  padding-bottom: 3.5mm;
+}
+
+.presupuesto-print-proposal h3 {
+  margin: 0 0 2mm;
+  color: #244960;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 1px solid #d7e2eb;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table th {
+  padding: 2mm 1.5mm;
+  background: #2f6f9c;
+  color: #ffffff;
+  font-size: 7.4px;
+  line-height: 1.15;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table td {
+  padding: 2mm 1.5mm;
+  border-top: 1px solid #e4edf4;
+  color: #24384a;
+  font-size: 8px;
+  line-height: 1.2;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(1),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(1) {
+  width: 13%;
+  text-align: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(2),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(2) {
+  width: 43%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(3),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(3) {
+  width: 9%;
+  text-align: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(4),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(4),
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(5),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(5) {
+  width: 17.5%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table td strong {
+  display: block;
+  color: #172033;
+  font-size: 8.4px;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-location {
+  margin-top: 1mm;
+  color: #0f766e;
+  font-size: 7.5px;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-reason {
+  margin-top: 1.3mm;
+  padding: 1.5mm;
+  border-left: 2px solid #9ac7e4;
+  background: #f7fbff;
+  color: #4b6174;
+  font-size: 7.5px;
+  line-height: 1.28;
+  font-weight: 700;
+}
+
+.presupuesto-print-proposal .presupuesto-print-reason b {
+  color: #1f5b82;
+}
+
+.presupuesto-print-proposal .presupuesto-print-money {
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th,
+.presupuesto-print-proposal .presupuesto-print-payment-table td {
+  font-size: 7.2px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table span {
+  display: inline-block;
+  margin-left: 1mm;
+  padding: .5mm 1.2mm;
+  border-radius: 5px;
+  background: #fff3cd;
+  color: #8a5a00;
+  font-size: 6.5px;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-empty {
+  padding: 5mm;
+  border: 1px dashed #cbd8e3;
+  border-radius: 7px;
+  color: #6b7f91;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-note {
+  margin: 4mm 0 0;
+  padding: 3mm 4mm;
+  background: #fbfcfd;
+}
+
+.presupuesto-print-proposal .presupuesto-print-note p {
+  margin: 0;
+  color: #52677a;
+  font-size: 8.8px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.presupuesto-print-proposal .presupuesto-print-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4mm;
+  margin-top: 4mm;
+  padding: 8mm 4mm 4mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-signatures div {
+  min-height: 16mm;
+  border-top: 1px solid #6b7f91;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-signatures span {
+  color: #52677a;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+@media print {
+  .presupuesto-print-proposal {
+    max-width: none;
+  }
+
+  .presupuesto-print-proposal .presupuesto-print-plan,
+  .presupuesto-print-proposal .presupuesto-print-table tr,
+  .presupuesto-print-proposal .presupuesto-print-note,
+  .presupuesto-print-proposal .presupuesto-print-signatures {
+    break-inside: avoid;
+  }
+}
+
+.body-presupuesto-print {
+  background: #edf5fb !important;
+}
+
+.body-presupuesto-print #divimpr {
+  background: #edf5fb !important;
+}
+
+.presupuesto-print-proposal,
+.presupuesto-print-proposal *,
+.presupuesto-print-proposal *::before,
+.presupuesto-print-proposal *::after {
+  box-sizing: border-box;
+}
+
+.presupuesto-print-proposal {
+  width: 100%;
+  max-width: 281mm;
+  margin: 0 auto;
+  padding: 0;
+  background: #edf5fb;
+  color: #173b57;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+  font-size: 7.6px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga,
+.presupuesto-print-proposal .presupuesto-print-plan,
+.presupuesto-print-proposal .presupuesto-print-cierre {
+  border: 1px solid #c7dbe9;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga {
+  margin: 0 0 3mm;
+  padding: 3.2mm 5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-doc-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5mm;
+  align-items: center;
+  margin: 0 0 3mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 2.5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand img {
+  width: 16mm;
+  height: 10mm;
+  object-fit: contain;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand strong {
+  display: block;
+  color: #173b57;
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand span {
+  display: block;
+  margin-top: .7mm;
+  color: #6a7f91;
+  font-size: 7.2px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.presupuesto-print-proposal .presupuesto-print-doc-info {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 2mm;
+  justify-content: end;
+}
+
+.presupuesto-print-proposal .presupuesto-print-doc-info span {
+  min-height: 6mm;
+  padding: 1.5mm 2.5mm;
+  border: 1px solid #cfe0eb;
+  border-radius: 6px;
+  background: #f7fbfe;
+  color: #2c4357;
+  font-size: 7.2px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga h1 {
+  margin: 0 0 3mm;
+  color: #71879b;
+  font-size: 8.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga-grid {
+  display: grid;
+  grid-template-columns: 37mm minmax(0, 1fr) 76mm;
+  gap: 4mm;
+  align-items: end;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga label {
+  display: block;
+  min-width: 0;
+  margin: 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga label span {
+  display: block;
+  margin: 0 0 2mm;
+  color: #5f7489;
+  font-size: 7.4px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga label strong {
+  display: block;
+  width: 100%;
+  min-height: 8mm;
+  padding: 2.2mm 3mm;
+  overflow: hidden;
+  border: 1px solid #bdd3e5;
+  border-radius: 5px;
+  background: #f8fbfe;
+  color: #2c4357;
+  font-size: 7.6px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4mm;
+  align-items: end;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga-actions span {
+  display: flex;
+  min-height: 8mm;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3mm;
+  border-radius: 10px;
+  background: #179756;
+  color: #fff;
+  font-size: 7.3px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.presupuesto-print-proposal .presupuesto-print-atencion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-atencion label strong {
+  font-size: 7.1px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5mm;
+  align-items: start;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan {
+  overflow: hidden;
+  min-height: 132mm;
+  padding: 2.5mm;
+  break-inside: avoid;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan--total {
+  border-color: #0aa96b;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan--provisorio {
+  border-color: #168bd0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 29mm;
+  gap: 3mm;
+  align-items: start;
+  padding: 0 0 2.5mm;
+  border: 0;
+  background: transparent;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head div {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head span {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 4.5mm;
+  align-items: center;
+  margin: 0 0 1.7mm;
+  padding: .8mm 2.2mm;
+  border-radius: 8px;
+  background: #e9faf1;
+  color: #168354;
+  font-size: 6.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan--provisorio .presupuesto-print-plan-head span {
+  background: #eaf5fd;
+  color: #1976aa;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan h2 {
+  margin: 0;
+  color: #173b57;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan p {
+  margin: 1.2mm 0 0;
+  color: #60788c;
+  font-size: 7.4px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head > strong {
+  display: flex;
+  min-height: 8mm;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 1mm 2mm;
+  border: 1px solid #d5e4ef;
+  border-radius: 5px;
+  background: #f6fbff;
+  color: #2f6f9c;
+  font-size: 8.2px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section {
+  padding: 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section + .presupuesto-print-plan-section {
+  margin-top: 4mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section h3 {
+  margin: 0 0 1.5mm;
+  color: #7a8fa2;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table {
+  width: 100%;
+  table-layout: fixed;
+  overflow: hidden;
+  border: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 5px 5px 0 0;
+  background: #fff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table th {
+  height: 7mm;
+  padding: 1.5mm 1.2mm;
+  border: 0;
+  background: #2f6f9c;
+  color: #fff;
+  font-size: 7px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table th:first-child {
+  border-radius: 5px 0 0 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table th:last-child {
+  border-radius: 0 5px 0 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table td {
+  padding: 1.9mm 1.4mm;
+  border-top: 1px solid #d7e2eb;
+  color: #24384a;
+  font-size: 6.9px;
+  font-weight: 700;
+  line-height: 1.18;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table {
+  border-bottom: 1px solid #168bd0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(1),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(1) {
+  width: 10%;
+  text-align: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(2),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(2) {
+  width: 44%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(3),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(3) {
+  width: 11%;
+  text-align: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(4),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(4),
+.presupuesto-print-proposal .presupuesto-print-treatment-table th:nth-child(5),
+.presupuesto-print-proposal .presupuesto-print-treatment-table td:nth-child(5) {
+  width: 17.5%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-main-row td {
+  border-left: 1px solid #168bd0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-main-row td:last-child {
+  border-right: 1px solid #168bd0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table td strong {
+  display: inline;
+  color: #172033;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-location {
+  display: block;
+  margin-top: .8mm;
+  color: #6f7f8f;
+  font-size: 6.4px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-reason-row td {
+  padding: 2.3mm 2.6mm 2.7mm;
+  border-right: 1px solid #168bd0;
+  border-left: 1px solid #168bd0;
+  border-top: 0;
+  background: #f9fbfd;
+  color: #556b7f;
+  font-size: 7.8px;
+  font-weight: 700;
+  line-height: 1.38;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-reason-row td:first-child {
+  border-right: 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-reason-row b {
+  color: #168354;
+  font-size: 7.8px;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-money {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-list {
+  min-height: 54mm;
+  border: 1px solid #d7e2eb;
+  border-top: 0;
+  background: #fff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table {
+  border-radius: 5px 5px 0 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th,
+.presupuesto-print-proposal .presupuesto-print-payment-table td {
+  font-size: 6.8px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th:nth-child(1),
+.presupuesto-print-proposal .presupuesto-print-payment-table td:nth-child(1) {
+  width: 19%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th:nth-child(2),
+.presupuesto-print-proposal .presupuesto-print-payment-table td:nth-child(2) {
+  width: 26%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th:nth-child(3),
+.presupuesto-print-proposal .presupuesto-print-payment-table td:nth-child(3) {
+  width: 30%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th:nth-child(4),
+.presupuesto-print-proposal .presupuesto-print-payment-table td:nth-child(4) {
+  width: 25%;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table tr.is-selected td,
+.presupuesto-print-proposal .presupuesto-print-payment-table tr.is-suggested td {
+  border-top: 1px solid #18aa6b;
+  border-bottom: 1px solid #18aa6b;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table tr.is-selected td:first-child,
+.presupuesto-print-proposal .presupuesto-print-payment-table tr.is-suggested td:first-child {
+  border-left: 1px solid #18aa6b;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table tr.is-selected td:last-child,
+.presupuesto-print-proposal .presupuesto-print-payment-table tr.is-suggested td:last-child {
+  border-right: 1px solid #18aa6b;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table td strong {
+  display: inline;
+  color: #244960;
+  font-size: 6.8px;
+  font-weight: 900;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 4mm;
+  margin-left: 1.4mm;
+  padding: .6mm 1.8mm;
+  border-radius: 6px;
+  background: #fff3cd;
+  color: #8a5a00;
+  font-size: 6px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 35mm;
+  gap: 4mm;
+  align-items: center;
+  margin-top: 2.5mm;
+  padding: 2.5mm 3mm;
+  border-radius: 5px;
+  background: #168bd0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section footer span {
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section footer strong {
+  display: flex;
+  min-height: 8mm;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1mm 2.5mm;
+  border-radius: 5px;
+  background: #f6fbff;
+  color: #168bd0;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.presupuesto-print-proposal .presupuesto-print-empty {
+  min-height: 39mm;
+  padding: 13mm 4mm;
+  border: 1px dashed #c7dbe9;
+  border-radius: 5px;
+  background: #fff;
+  color: #6f8395;
+  font-size: 7.5px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre {
+  margin-top: 3mm;
+  padding: 3mm;
+  border-color: #b9d6ea;
+  break-inside: avoid;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4mm;
+  align-items: center;
+  margin: 0 0 2.2mm;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre h3 {
+  margin: 0;
+  color: #173b57;
+  font-size: 9.4px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre p {
+  margin: 0;
+  color: #657b8f;
+  font-size: 7.2px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.25fr 1.2fr;
+  gap: 2.5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card {
+  min-height: 19mm;
+  padding: 2.2mm;
+  border: 1px solid #d7e6f0;
+  border-radius: 6px;
+  background: #f9fcff;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card > span {
+  display: block;
+  margin: 0 0 1.8mm;
+  color: #64788b;
+  font-size: 6.8px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card strong {
+  display: block;
+  color: #173b57;
+  font-size: 7.7px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card small {
+  display: block;
+  margin-top: 1mm;
+  color: #657b8f;
+  font-size: 6.5px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.presupuesto-print-proposal .presupuesto-print-option {
+  display: flex;
+  align-items: center;
+  gap: 1.5mm;
+  margin-top: 1mm;
+  color: #23394d;
+  font-size: 7px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.presupuesto-print-proposal .presupuesto-print-option i {
+  width: 3.4mm;
+  height: 3.4mm;
+  border: 1px solid #6f8799;
+  border-radius: 2px;
+  background: #fff;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.presupuesto-print-proposal .presupuesto-print-option.is-marked i {
+  border-color: #16965f;
+  background: #e9faf1;
+}
+
+.presupuesto-print-proposal .presupuesto-print-option.is-marked i::after {
+  content: "";
+  position: absolute;
+  left: .85mm;
+  top: .35mm;
+  width: 1.2mm;
+  height: 2mm;
+  border: solid #16965f;
+  border-width: 0 .45mm .45mm 0;
+  transform: rotate(45deg);
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-note {
+  margin: 2.5mm 0 0;
+  padding: 1.8mm 2.4mm;
+  border-left: 2px solid #168bd0;
+  background: #f4f9fd;
+  color: #40596f;
+  font-size: 7.4px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.presupuesto-print-proposal .presupuesto-print-firmas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7mm;
+  margin-top: 5mm;
+  padding: 0 5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-firmas div {
+  min-height: 8mm;
+  border-top: 1px solid #6f8799;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.presupuesto-print-proposal .presupuesto-print-firmas span {
+  color: #52677a;
+  font-size: 6.9px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-head {
+  padding: 0 0 2.5mm;
+  border: 0;
+  background: transparent;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-head div {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-head span {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 4.5mm;
+  align-items: center;
+  margin: 0 0 1.7mm;
+  padding: .8mm 2.2mm;
+  border-radius: 8px;
+  background: #e9faf1;
+  color: #168354;
+  font-size: 6.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan.presupuesto-print-plan--provisorio .presupuesto-print-plan-head span {
+  background: #eaf5fd;
+  color: #1976aa;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-head > strong {
+  display: flex;
+  min-height: 8mm;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 1mm 2mm;
+  border: 1px solid #d5e4ef;
+  border-radius: 5px;
+  background: #f6fbff;
+  color: #2f6f9c;
+  font-size: 8.2px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-section {
+  padding: 0;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-section:last-child {
+  padding: 0;
+}
+
+@media print {
+  .body-presupuesto-print,
+  .body-presupuesto-print #divimpr,
+  .presupuesto-print-proposal {
+    background: #edf5fb !important;
+  }
+
+  .presupuesto-print-proposal {
+    max-width: none;
+  }
+
+  .presupuesto-print-proposal .presupuesto-print-plan,
+  .presupuesto-print-proposal .presupuesto-print-carga,
+  .presupuesto-print-proposal .presupuesto-print-table tr {
+    break-inside: avoid;
+  }
+}
+
+.body-presupuesto-print #divimpr {
+  max-width: 287mm;
+  margin: 0 auto;
+}
+
+.presupuesto-print-proposal {
+  max-width: 287mm;
+}
+
+/* Ajuste compacto para A4 horizontal */
+.presupuesto-print-proposal .presupuesto-print-carga {
+  margin-bottom: 2mm;
+  padding: 2.4mm 4mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-doc-head {
+  gap: 4mm;
+  margin-bottom: 2mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand img {
+  width: 13mm;
+  height: 8mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand strong {
+  font-size: 9.4px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-brand span {
+  font-size: 6.6px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-doc-info span {
+  min-height: 5.2mm;
+  padding: 1.2mm 2mm;
+  font-size: 6.8px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga h1 {
+  margin-bottom: 2mm;
+  font-size: 7.8px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga-grid {
+  grid-template-columns: 34mm minmax(0, 1fr) 72mm;
+  gap: 3mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga label span {
+  margin-bottom: 1.3mm;
+  font-size: 6.7px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-carga label strong {
+  min-height: 6.4mm;
+  padding: 1.5mm 2.2mm;
+  font-size: 7px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-atencion {
+  gap: 2mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plans {
+  gap: 3.5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan {
+  min-height: 116mm;
+  padding: 2mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head {
+  grid-template-columns: minmax(0, 1fr) 28mm;
+  gap: 2mm;
+  padding-bottom: 1.7mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan h2 {
+  font-size: 10.8px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan p {
+  margin-top: .8mm;
+  font-size: 6.8px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head span,
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-head span {
+  min-height: 3.8mm;
+  margin-bottom: 1mm;
+  padding: .6mm 1.8mm;
+  font-size: 6.1px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-head > strong,
+.presupuesto-print-proposal .presupuesto-print-plan .presupuesto-print-plan-head > strong {
+  min-height: 6.6mm;
+  padding: .8mm 1.7mm;
+  font-size: 7.4px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section + .presupuesto-print-plan-section {
+  margin-top: 2.6mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section h3 {
+  margin-bottom: 1mm;
+  font-size: 7.2px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table th {
+  height: 5.8mm;
+  padding: 1.05mm 1mm;
+  font-size: 6.4px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-table td {
+  padding: 1.25mm 1.1mm;
+  font-size: 6.3px;
+  line-height: 1.13;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-table td strong {
+  font-size: 6.5px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-location {
+  margin-top: .45mm;
+  font-size: 5.8px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-reason-row td {
+  padding: 1.8mm 2mm 2mm;
+  font-size: 7.3px;
+  line-height: 1.3;
+}
+
+.presupuesto-print-proposal .presupuesto-print-treatment-reason-row b {
+  font-size: 7.3px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-list {
+  min-height: 42mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table th,
+.presupuesto-print-proposal .presupuesto-print-payment-table td,
+.presupuesto-print-proposal .presupuesto-print-payment-table td strong {
+  font-size: 6.1px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-payment-table span {
+  min-height: 3.2mm;
+  margin-left: .8mm;
+  padding: .45mm 1.2mm;
+  font-size: 5.5px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section footer {
+  grid-template-columns: minmax(0, 1fr) 31mm;
+  gap: 3mm;
+  margin-top: 1.8mm;
+  padding: 1.7mm 2.3mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section footer span {
+  font-size: 8.3px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-plan-section footer strong {
+  min-height: 6.6mm;
+  padding: .8mm 2mm;
+  font-size: 9.7px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre {
+  margin-top: 2mm;
+  padding: 2.2mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre header {
+  margin-bottom: 1.5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre h3 {
+  font-size: 8.4px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre p {
+  font-size: 6.5px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-grid {
+  gap: 2mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card {
+  min-height: 15.5mm;
+  padding: 1.7mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card > span {
+  margin-bottom: 1.2mm;
+  font-size: 6.1px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card strong {
+  font-size: 6.9px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-card small {
+  font-size: 5.9px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-option {
+  gap: 1.1mm;
+  margin-top: .8mm;
+  font-size: 6.3px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-option i {
+  width: 3mm;
+  height: 3mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-cierre-note {
+  margin-top: 1.7mm;
+  padding: 1.3mm 2mm;
+  font-size: 6.7px;
+}
+
+.presupuesto-print-proposal .presupuesto-print-firmas {
+  gap: 6mm;
+  margin-top: 3.8mm;
+  padding: 0 5mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-firmas div {
+  min-height: 6.7mm;
+}
+
+.presupuesto-print-proposal .presupuesto-print-firmas span {
+  font-size: 6.2px;
+}
+
+@media print {
+  .body-presupuesto-print {
+    width: 100% !important;
+  }
+
+  .body-presupuesto-print #divimpr {
+    max-width: 287mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .presupuesto-print-proposal {
+    width: 100% !important;
+    max-width: 287mm !important;
+  }
+}
+
 /* Impresion de reportes de caja en hoja carta */
 @page caja-print-letter {
   size: Letter portrait;

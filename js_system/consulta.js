@@ -1716,6 +1716,9 @@ function ObtenerdatosAbmConsulta(elemento) {
 			document.getElementById("inptApodoConsulta").value= elemento.querySelector('#td_datos_7')?.textContent.trim();
 			buscarDetalleVentaConsulta(cod_ventaFKConsulta)
 			buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
+			if (typeof cargarOdontogramaFichaClinica == "function") {
+				cargarOdontogramaFichaClinica();
+			}
 			if (typeof buscarHistorialRecetariosDesdeConsulta == "function") {
 				buscarHistorialRecetariosDesdeConsulta()
 			}
@@ -1828,16 +1831,18 @@ function buscarPacienteConsulta(){
 
 
 
-function buscarDetalleVentaConsulta(cod_ventaFKConsulta) {
+function buscarDetalleVentaConsulta(cod_ventaConsultaDetalle, modoSilencioso) {
 // if(controlacceso("BUSCARLISTADOCOBRADORES","accion")==false){return;}
  			
-	document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = paginacargando
+	if (!modoSilencioso) {
+		document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = paginacargando
+	}
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
 		"passu": passuser,
 		"navegador": navegador,
-		"cod_venta": cod_ventaFKConsulta,
+		"cod_venta": cod_ventaConsultaDetalle,
 		"funt": "buscarDetalleCompradoConsulta"
 	};
 	$.ajax({
@@ -1869,9 +1874,14 @@ function buscarDetalleVentaConsulta(cod_ventaFKConsulta) {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
           manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = ''
+			if (!modoSilencioso) {
+				document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = ''
+			}
 		},
 		success: function (responseText) {
+			if (cod_ventaFKConsulta != "" && String(cod_ventaConsultaDetalle) != String(cod_ventaFKConsulta)) {
+				return;
+			}
 			var Respuesta = responseText;
 			console.log(Respuesta)
 			document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = ''
@@ -1882,6 +1892,10 @@ function buscarDetalleVentaConsulta(cod_ventaFKConsulta) {
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					document.getElementById("divPreConsultaDetalle_Consulta").innerHTML = datos_buscados
+					inicializarTabsPlanConsulta(document.getElementById("divPreConsultaDetalle_Consulta"));
+					if (typeof cargarTratamientosPlanMadreParaConsulta == "function") {
+						cargarTratamientosPlanMadreParaConsulta();
+					}
 				// cod_personaFK="";
 					
 					var f = new Date();
@@ -1990,6 +2004,9 @@ if(document.getElementById("divAbmConsulta").style.display==""){
 document.getElementById("tdEfectoAbmConsulta").className="magictime vanishOut"
 	$("div[id=divAbmConsulta]").fadeOut(500);
 	cod_consulta = "";
+	window.tabPlanConsultaSeleccionado = "";
+	window.tabPlanConsultaVenta = "";
+	window.forzarTabPlanDefinitivoConsulta = false;
  
 	limpiarcamposConsulta()
 document.getElementById('btn_flotante_consulta').style.display= 'none'
@@ -2052,6 +2069,12 @@ function prepararFormularioNuevaConsulta(){
 	document.getElementById("inptDiagnosticoConsulta").value=""; 
 	document.getElementById("inptTrabajoRealizadoConsulta").value=""; 
 	document.getElementById("inptProximaConsultaConsulta").value=""; 
+	if (document.getElementById("inptAvanceTratamientoConsulta")) {
+		document.getElementById("inptAvanceTratamientoConsulta").value = "0";
+	}
+	if (typeof cargarTratamientosPlanMadreParaConsulta == "function") {
+		cargarTratamientosPlanMadreParaConsulta();
+	}
  
 	document.getElementById("btnAbmConsulta").value="Guardar registro clínico"
  
@@ -2075,6 +2098,8 @@ function VerificarAbmConsulta() {
 	let inptProximaConsultaConsulta  = document.getElementById("inptProximaConsultaConsulta").value
 	let inptFechaConsulta  = document.getElementById("inptFechaConsulta").value
 	let inptApodoConsulta  = document.getElementById("inptApodoConsulta").value
+	let inptTratamientoPlanMadreConsulta = document.getElementById("inptTratamientoPlanMadreConsulta") ? document.getElementById("inptTratamientoPlanMadreConsulta").value : "";
+	let inptAvanceTratamientoConsulta = document.getElementById("inptAvanceTratamientoConsulta") ? document.getElementById("inptAvanceTratamientoConsulta").value : "0";
 	
 	var cod_especialista = userid;
 	actualizarResponsableRegistroConsulta();
@@ -2088,10 +2113,27 @@ function VerificarAbmConsulta() {
 		ver_vetana_informativa("Falto agregar un motivo")
 		return
 	}
+
+	if(inptTratamientoPlanMadreConsulta==""){
+		if (document.getElementById("inptTratamientoPlanMadreConsulta")) {
+			document.getElementById("inptTratamientoPlanMadreConsulta").focus()
+		}
+		ver_vetana_informativa("Seleccione el tratamiento realizado del plan madre")
+		return
+	}
 	
 	if(inptTrabajoRealizadoConsulta==""){
 		document.getElementById("inptTrabajoRealizadoConsulta").focus()
-		ver_vetana_informativa("Falto Agregar el trabajo realizado")
+		ver_vetana_informativa("Falto agregar la evolucion del tratamiento realizado")
+		return
+	}
+
+	inptAvanceTratamientoConsulta = parseInt(inptAvanceTratamientoConsulta, 10);
+	if (isNaN(inptAvanceTratamientoConsulta) || inptAvanceTratamientoConsulta < 0 || inptAvanceTratamientoConsulta > 100) {
+		if (document.getElementById("inptAvanceTratamientoConsulta")) {
+			document.getElementById("inptAvanceTratamientoConsulta").focus()
+		}
+		ver_vetana_informativa("El avance del tratamiento debe estar entre 0 y 100")
 		return
 	}
 	
@@ -2106,7 +2148,7 @@ function VerificarAbmConsulta() {
 		accion = "editar";
 	}
 	
-	AbmConsulta(inptApodoConsulta,inptMotivoConsulta,inptDiagnosticoConsulta,inptTrabajoRealizadoConsulta,inptProximaConsultaConsulta,inptFechaConsulta,cod_consulta,cod_especialista,accion)
+	AbmConsulta(inptApodoConsulta,inptMotivoConsulta,inptDiagnosticoConsulta,inptTrabajoRealizadoConsulta,inptProximaConsultaConsulta,inptFechaConsulta,cod_consulta,cod_especialista,accion,inptTratamientoPlanMadreConsulta,inptAvanceTratamientoConsulta)
 
 }
 
@@ -2197,7 +2239,7 @@ function actualizarApodo(apodo,accion) {
 
 
 
-function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consulta,cod_especialista,accion) {	
+function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_consulta,cod_especialista,accion,cod_detalle_tratamiento,avance_tratamiento) {	
 		
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
@@ -2218,6 +2260,8 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 	datos.append("cod_venta", cod_ventaFKConsulta) 
 	datos.append("cod_clienteConsulta", cod_clienteConsulta) 
 	datos.append("apodo", apodo) 
+	datos.append("cod_detalle_tratamiento", cod_detalle_tratamiento || "") 
+	datos.append("avance_tratamiento", avance_tratamiento || "0") 
  
 	var OpAjax = $.ajax({
 		data: datos,
@@ -2271,7 +2315,10 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 					}
 
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
+					buscarDetalleVentaConsulta(cod_ventaFKConsulta, true)
 					verCerrarAbmDetalleConsulta(false)
+				} else if (datos.mensaje) {
+					ver_vetana_informativa(datos.mensaje)
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -2292,6 +2339,9 @@ function abrirModal(el) {
   document.getElementById('modalMotivo').value = el.dataset.motivo;
   document.getElementById('modalDiagnostico').value = el.dataset.diagnostico;
   document.getElementById('modalEspecialista').value = el.dataset.especialista;
+  if (document.getElementById('modalTratamiento')) {
+    document.getElementById('modalTratamiento').value = el.dataset.tratamiento || "Sin tratamiento vinculado";
+  }
 
   document.getElementById("modalConsulta").style.display = "block";
 }
@@ -2300,11 +2350,71 @@ function cerrarModal() {
   document.getElementById("modalConsulta").style.display = "none";
 }
 
+function actualizarEstadoCuentaConsultaVisual(estadoForzado) {
+	var campo = document.getElementById("inptEstadoCuentaConsulta");
+	var contenedor = document.querySelector("#divAbmConsulta .consulta-account-status");
+	if (!campo || !contenedor) {
+		return;
+	}
+	contenedor.classList.remove(
+		"consulta-account-status--neutral",
+		"consulta-account-status--loading",
+		"consulta-account-status--ok",
+		"consulta-account-status--warning",
+		"consulta-account-status--danger"
+	);
+	if (estadoForzado == "loading") {
+		campo.value = "Consultando estado de cuenta...";
+		campo.removeAttribute("title");
+		contenedor.classList.add("consulta-account-status--loading");
+		return;
+	}
+	if (estadoForzado == "error") {
+		campo.value = "No se pudo verificar el estado.";
+		campo.removeAttribute("title");
+		contenedor.classList.add("consulta-account-status--danger");
+		return;
+	}
+	var textoOriginal = (campo.value || "").trim();
+	if (textoOriginal == "") {
+		campo.value = "Sin estado de cuenta registrado.";
+		campo.removeAttribute("title");
+		contenedor.classList.add("consulta-account-status--neutral");
+		return;
+	}
+	var texto = textoOriginal.toLowerCase();
+	if (texto.normalize) {
+		texto = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	}
+	var cuotas = 0;
+	var dias = 0;
+	var matchCuotas = texto.match(/vencidas:\s*(\d+)/) || texto.match(/(\d+)\s*cuotas/);
+	var matchDias = texto.match(/total de\s*(\d+)/) || texto.match(/(\d+)\s*dias/);
+	if (matchCuotas) {
+		cuotas = parseInt(matchCuotas[1], 10) || 0;
+	}
+	if (matchDias) {
+		dias = parseInt(matchDias[1], 10) || 0;
+	}
+	campo.setAttribute("title", textoOriginal);
+	if (cuotas == 0 && dias == 0) {
+		campo.value = "Sin cuotas vencidas\nCuenta al dia";
+		contenedor.classList.add("consulta-account-status--ok");
+		return;
+	}
+	campo.value = (cuotas == 1 ? "1 cuota vencida" : cuotas + " cuotas vencidas") + "\n" + dias + " dias de atraso";
+	if (dias >= 60 || cuotas >= 3) {
+		contenedor.classList.add("consulta-account-status--danger");
+	} else {
+		contenedor.classList.add("consulta-account-status--warning");
+	}
+}
+
  
 function vercuotasatrazadas(cod_ventaFKConsulta) {
 // if(controlacceso("BUSCARLISTADOCOBRADORES","accion")==false){return;}
  			
-	document.getElementById("inptEstadoCuentaConsulta").value = ""
+	actualizarEstadoCuentaConsultaVisual("loading");
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -2341,6 +2451,7 @@ function vercuotasatrazadas(cod_ventaFKConsulta) {
 		beforeSend: function () {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
+          actualizarEstadoCuentaConsultaVisual("error");
           manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 		},
 		success: function (responseText) {
@@ -2352,9 +2463,13 @@ function vercuotasatrazadas(cod_ventaFKConsulta) {
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("inptEstadoCuentaConsulta").value= datos_buscados	 
+					document.getElementById("inptEstadoCuentaConsulta").value= datos_buscados
+					actualizarEstadoCuentaConsultaVisual();
+				} else {
+					actualizarEstadoCuentaConsultaVisual("error");
 				}
 			} catch (error) {
+					actualizarEstadoCuentaConsultaVisual("error");
 					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 					GuardarArchivosLog(titulo)
@@ -2673,6 +2788,395 @@ function vincularTratamientoCalendario(id_agenda, cod_tratamiento) {
 }
 
 
+function cambiarVistaPlanTratamientosConsulta(selectVista) {
+	var panel = selectVista ? selectVista.closest(".plan-tratamientos-panel") : null;
+	if (!panel) { return; }
+	var vista = selectVista.value || "plan_sugerido";
+	panel.setAttribute("data-plan-vista", vista);
+	var secciones = panel.querySelectorAll(".plan-tratamientos-seccion");
+	for (var i = 0; i < secciones.length; i++) {
+		var grupo = secciones[i].getAttribute("data-plan-seccion") || "";
+		var visible = vista === "plan_sugerido" || vista === "todos" || vista === grupo;
+		secciones[i].style.display = visible ? "" : "none";
+	}
+}
+
+var motivosEdicionPlanDefinitivoConsulta = {};
+
+function activarTabPlanConsulta(contenedor, tab) {
+	if (!contenedor) { return; }
+	var botones = contenedor.querySelectorAll(".consulta-plan-tabs__nav button");
+	for (var i = 0; i < botones.length; i++) {
+		var activoBoton = botones[i].getAttribute("data-plan-tab-button") === tab;
+		botones[i].classList.toggle("is-active", activoBoton);
+		botones[i].setAttribute("aria-selected", activoBoton ? "true" : "false");
+		botones[i].setAttribute("tabindex", activoBoton ? "0" : "-1");
+	}
+	var paneles = contenedor.querySelectorAll(".consulta-plan-tabs__panel");
+	for (var j = 0; j < paneles.length; j++) {
+		var activo = paneles[j].getAttribute("data-plan-tab") === tab;
+		paneles[j].classList.toggle("is-active", activo);
+		paneles[j].setAttribute("aria-hidden", activo ? "false" : "true");
+	}
+	contenedor.setAttribute("data-vista-actual", tab);
+}
+
+function cambiarTabPlanConsulta(boton, tab) {
+	var contenedor = boton ? boton.closest("[data-consulta-plan-tabs]") : null;
+	if (!contenedor) { return; }
+	activarTabPlanConsulta(contenedor, tab);
+	window.tabPlanConsultaSeleccionado = tab;
+	window.tabPlanConsultaVenta = typeof cod_ventaFKConsulta != "undefined" ? cod_ventaFKConsulta : "";
+}
+
+function moverTabPlanConsulta(event, boton) {
+	if (!event || !boton) { return; }
+	var tecla = event.key || event.keyCode;
+	if (tecla !== "ArrowRight" && tecla !== "ArrowLeft" && tecla !== 39 && tecla !== 37) { return; }
+	event.preventDefault();
+	var contenedor = boton.closest("[data-consulta-plan-tabs]");
+	if (!contenedor) { return; }
+	var botones = contenedor.querySelectorAll(".consulta-plan-tabs__nav button");
+	if (botones.length == 0) { return; }
+	var indice = 0;
+	for (var i = 0; i < botones.length; i++) {
+		if (botones[i] === boton) { indice = i; break; }
+	}
+	var direccion = (tecla === "ArrowRight" || tecla === 39) ? 1 : -1;
+	var nuevoIndice = (indice + direccion + botones.length) % botones.length;
+	var nuevoBoton = botones[nuevoIndice];
+	var tab = nuevoBoton.getAttribute("data-plan-tab-button") || "definitivo";
+	cambiarTabPlanConsulta(nuevoBoton, tab);
+	nuevoBoton.focus();
+}
+
+function inicializarTabsPlanConsulta(root) {
+	var base = root || document;
+	var contenedor = base.querySelector ? base.querySelector("[data-consulta-plan-tabs]") : null;
+	if (!contenedor) { return; }
+	var botones = contenedor.querySelectorAll(".consulta-plan-tabs__nav button");
+	for (var i = 0; i < botones.length; i++) {
+		if (!botones[i].getAttribute("data-plan-tab-keyboard")) {
+			botones[i].setAttribute("data-plan-tab-keyboard", "1");
+			botones[i].onkeydown = function (event) { moverTabPlanConsulta(event, this); };
+		}
+	}
+	var tab = contenedor.getAttribute("data-vista-inicial") || "sugerido";
+	if (window.forzarTabPlanDefinitivoConsulta) {
+		tab = "definitivo";
+		window.forzarTabPlanDefinitivoConsulta = false;
+	} else if (
+		window.tabPlanConsultaSeleccionado &&
+		window.tabPlanConsultaVenta &&
+		typeof cod_ventaFKConsulta != "undefined" &&
+		window.tabPlanConsultaVenta == cod_ventaFKConsulta
+	) {
+		tab = window.tabPlanConsultaSeleccionado;
+	}
+	activarTabPlanConsulta(contenedor, tab);
+}
+
+function volverARutaVigentePlanConsulta(origen) {
+	var contenedor = origen ? origen.closest("[data-consulta-plan-tabs]") : document.querySelector("[data-consulta-plan-tabs]");
+	if (!contenedor) { return; }
+	var boton = contenedor.querySelector("[data-plan-tab-button='definitivo']");
+	if (boton) {
+		cambiarTabPlanConsulta(boton, "definitivo");
+		boton.focus();
+	}
+}
+
+function obtenerPanelPlanDefinitivoConsulta(planId) {
+	return document.querySelector(".plan-definitivo-panel[data-plan-id='" + planId + "']");
+}
+
+function refrescarPlanDefinitivoConsulta() {
+	if (cod_ventaFKConsulta != "") {
+		window.forzarTabPlanDefinitivoConsulta = true;
+		buscarDetalleVentaConsulta(cod_ventaFKConsulta);
+	}
+}
+
+function ajaxPlanDefinitivoConsulta(funt, datosExtra, callback) {
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": funt
+	};
+	for (var clave in datosExtra) {
+		if (Object.prototype.hasOwnProperty.call(datosExtra, clave)) {
+			datos[clave] = datosExtra[clave];
+		}
+	}
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+		},
+		success: function (responseText) {
+			try {
+				var datosRespuesta = $.parseJSON(responseText);
+				if (datosRespuesta["1"] == "exito") {
+					if (typeof callback == "function") {
+						callback(true, datosRespuesta);
+					}
+					return;
+				}
+				ver_vetana_informativa(datosRespuesta.mensaje || "No se pudo completar la accion.");
+				if (typeof callback == "function") {
+					callback(false, datosRespuesta);
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+function asegurarModalPlanDefinitivoConsulta() {
+	var existente = document.getElementById("modalPlanDefinitivoConsulta");
+	if (existente) { return existente; }
+	var overlay = document.createElement("div");
+	overlay.id = "overlayPlanDefinitivoConsulta";
+	overlay.className = "plan-definitivo-modal-overlay";
+	overlay.style.display = "none";
+	overlay.onclick = function () { cerrarModalPlanDefinitivoConsulta(); };
+	document.body.appendChild(overlay);
+	var modal = document.createElement("div");
+	modal.id = "modalPlanDefinitivoConsulta";
+	modal.className = "plan-definitivo-modal";
+	modal.style.display = "none";
+	modal.innerHTML = "<div class='plan-definitivo-modal__head'>" +
+		"<div><h3 id='modalPlanDefinitivoTitulo'>Plan madre</h3><span id='modalPlanDefinitivoSubtitulo'></span></div>" +
+		"<button type='button' onclick='cerrarModalPlanDefinitivoConsulta()'>&times;</button>" +
+		"</div><div class='plan-definitivo-modal__body' id='modalPlanDefinitivoCuerpo'></div>" +
+		"<div class='plan-definitivo-modal__footer' id='modalPlanDefinitivoFooter'></div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function abrirModalPlanDefinitivoConsulta(titulo, subtitulo, cuerpo, footer) {
+	asegurarModalPlanDefinitivoConsulta();
+	document.getElementById("modalPlanDefinitivoTitulo").innerHTML = titulo || "Plan madre";
+	document.getElementById("modalPlanDefinitivoSubtitulo").innerHTML = subtitulo || "";
+	document.getElementById("modalPlanDefinitivoCuerpo").innerHTML = cuerpo || "";
+	document.getElementById("modalPlanDefinitivoFooter").innerHTML = footer || "";
+	document.getElementById("overlayPlanDefinitivoConsulta").style.display = "";
+	document.getElementById("modalPlanDefinitivoConsulta").style.display = "";
+}
+
+function cerrarModalPlanDefinitivoConsulta() {
+	var overlay = document.getElementById("overlayPlanDefinitivoConsulta");
+	var modal = document.getElementById("modalPlanDefinitivoConsulta");
+	if (overlay) { overlay.style.display = "none"; }
+	if (modal) { modal.style.display = "none"; }
+}
+
+function solicitarMotivoPlanDefinitivoConsulta(planId, callback) {
+	var cuerpo = "<div class='plan-definitivo-motivo-box'>" +
+		"<p>Esta ruta ya fue definida. Los cambios quedar&aacute;n registrados en el historial.</p>" +
+		"<label>Motivo de modificaci&oacute;n</label>" +
+		"<textarea id='txtMotivoPlanDefinitivoConsulta' class='textarea-agenda' placeholder='Ej.: estudio necesario antes de continuar'></textarea>" +
+		"</div>";
+	var footer = "<button type='button' class='plan-definitivo-secondary' onclick='cerrarModalPlanDefinitivoConsulta()'>Cancelar</button>" +
+		"<button type='button' class='plan-definitivo-primary' onclick='confirmarMotivoPlanDefinitivoConsulta(\"" + planId + "\")'>Continuar edici&oacute;n</button>";
+	abrirModalPlanDefinitivoConsulta("Modificar plan madre", "Trazabilidad de cambios", cuerpo, footer);
+	window.callbackMotivoPlanDefinitivoConsulta = callback;
+	setTimeout(function () {
+		var campo = document.getElementById("txtMotivoPlanDefinitivoConsulta");
+		if (campo) { campo.focus(); }
+	}, 80);
+}
+
+function confirmarMotivoPlanDefinitivoConsulta(planId) {
+	var campo = document.getElementById("txtMotivoPlanDefinitivoConsulta");
+	var motivo = campo ? campo.value.trim() : "";
+	if (motivo == "") {
+		ver_vetana_informativa("Debe indicar el motivo de modificacion.");
+		return;
+	}
+	motivosEdicionPlanDefinitivoConsulta[planId] = motivo;
+	cerrarModalPlanDefinitivoConsulta();
+	if (typeof window.callbackMotivoPlanDefinitivoConsulta == "function") {
+		window.callbackMotivoPlanDefinitivoConsulta(motivo);
+	}
+	window.callbackMotivoPlanDefinitivoConsulta = null;
+}
+
+function ejecutarConMotivoPlanDefinitivoConsulta(planId, callback) {
+	var panel = obtenerPanelPlanDefinitivoConsulta(planId);
+	var estado = panel ? (panel.getAttribute("data-plan-estado") || "") : "";
+	if (estado == "definido" || estado == "modificado") {
+		if (motivosEdicionPlanDefinitivoConsulta[planId]) {
+			callback(motivosEdicionPlanDefinitivoConsulta[planId]);
+			return;
+		}
+		solicitarMotivoPlanDefinitivoConsulta(planId, callback);
+		return;
+	}
+	callback("");
+}
+
+function editarPlanDefinitivoConsulta(planId) {
+	ejecutarConMotivoPlanDefinitivoConsulta(planId, function () {
+		var panel = obtenerPanelPlanDefinitivoConsulta(planId);
+		if (panel) {
+			panel.classList.add("is-editing");
+		}
+	});
+}
+
+function crearPlanDefinitivoDesdeSugeridoConsulta(codVenta) {
+	ajaxPlanDefinitivoConsulta("crearPlanDefinitivoDesdeSugerido", { "cod_venta": codVenta }, function (ok, datos) {
+		if (!ok) { return; }
+		ver_vetana_informativa(datos.mensaje || "Plan madre creado.");
+		refrescarPlanDefinitivoConsulta();
+	});
+}
+
+function guardarBorradorPlanDefinitivoConsulta(planId) {
+	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
+		ajaxPlanDefinitivoConsulta("guardarBorradorPlanDefinitivo", { "plan_id": planId, "motivo": motivo }, function (ok, datos) {
+			if (!ok) { return; }
+			ver_vetana_informativa(datos.mensaje || "Borrador guardado.");
+			refrescarPlanDefinitivoConsulta();
+		});
+	});
+}
+
+function confirmarPlanDefinitivoConsulta(planId) {
+	ajaxPlanDefinitivoConsulta("confirmarPlanDefinitivo", { "plan_id": planId }, function (ok, datos) {
+		if (!ok) { return; }
+		delete motivosEdicionPlanDefinitivoConsulta[planId];
+		ver_vetana_informativa(datos.mensaje || "Plan madre confirmado.");
+		refrescarPlanDefinitivoConsulta();
+	});
+}
+
+function moverItemPlanDefinitivoConsulta(event, planId, itemId, direccion) {
+	if (event) { event.stopPropagation(); }
+	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
+		ajaxPlanDefinitivoConsulta("moverItemPlanDefinitivo", {
+			"plan_id": planId,
+			"item_id": itemId,
+			"direccion": direccion,
+			"motivo": motivo
+		}, function (ok) {
+			if (ok) { refrescarPlanDefinitivoConsulta(); }
+		});
+	});
+}
+
+function editarObservacionItemPlanDefinitivoConsulta(event, planId, itemId) {
+	if (event) { event.stopPropagation(); }
+	var card = document.querySelector(".plan-definitivo-item[data-plan-item='" + itemId + "']");
+	var actual = card ? (card.getAttribute("data-observacion") || "") : "";
+	var actualSeguro = actual.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	var cuerpo = "<label class='plan-definitivo-modal-label'>Observaci&oacute;n cl&iacute;nica breve</label>" +
+		"<textarea id='txtObservacionPlanDefinitivoConsulta' class='textarea-agenda' style='min-height:120px;'>" + actualSeguro + "</textarea>";
+	var footer = "<button type='button' class='plan-definitivo-secondary' onclick='cerrarModalPlanDefinitivoConsulta()'>Cancelar</button>" +
+		"<button type='button' class='plan-definitivo-primary' onclick='guardarObservacionItemPlanDefinitivoConsulta(\"" + planId + "\",\"" + itemId + "\")'>Guardar observaci&oacute;n</button>";
+	abrirModalPlanDefinitivoConsulta("Editar observaci&oacute;n", "Plan madre", cuerpo, footer);
+}
+
+function guardarObservacionItemPlanDefinitivoConsulta(planId, itemId) {
+	var campo = document.getElementById("txtObservacionPlanDefinitivoConsulta");
+	var observacion = campo ? campo.value : "";
+	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
+		ajaxPlanDefinitivoConsulta("actualizarObservacionItemPlanDefinitivo", {
+			"plan_id": planId,
+			"item_id": itemId,
+			"observacion": observacion,
+			"motivo": motivo
+		}, function (ok, datos) {
+			if (!ok) { return; }
+			cerrarModalPlanDefinitivoConsulta();
+			ver_vetana_informativa(datos.mensaje || "Observacion guardada.");
+			refrescarPlanDefinitivoConsulta();
+		});
+	});
+}
+
+function quitarItemPlanDefinitivoConsulta(event, planId, itemId) {
+	if (event) { event.stopPropagation(); }
+	if (!confirm("Quitar este tratamiento solo del plan madre?")) {
+		return;
+	}
+	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
+		ajaxPlanDefinitivoConsulta("quitarItemPlanDefinitivo", {
+			"plan_id": planId,
+			"item_id": itemId,
+			"motivo": motivo
+		}, function (ok, datos) {
+			if (!ok) { return; }
+			ver_vetana_informativa(datos.mensaje || "Tratamiento quitado de la ruta.");
+			refrescarPlanDefinitivoConsulta();
+		});
+	});
+}
+
+function abrirAnexarTratamientosPlanDefinitivoConsulta(planId) {
+	ajaxPlanDefinitivoConsulta("buscarVentasAnexablesPlanDefinitivo", { "plan_id": planId }, function (ok, datos) {
+		if (!ok) { return; }
+		var cuerpo = "<p class='plan-definitivo-modal-help'>Solo se muestran ventas asociadas a la misma c&eacute;dula/paciente. Revis&aacute; paciente o alias antes de anexar.</p>" + (datos[2] || "");
+		var footer = "<button type='button' class='plan-definitivo-secondary' onclick='cerrarModalPlanDefinitivoConsulta()'>Cancelar</button>" +
+			"<button type='button' class='plan-definitivo-primary' onclick='anexarSeleccionadosPlanDefinitivoConsulta(\"" + planId + "\")'>Anexar seleccionados</button>";
+		abrirModalPlanDefinitivoConsulta("Anexar tratamientos de otras ventas", "Plan madre", cuerpo, footer);
+	});
+}
+
+function anexarSeleccionadosPlanDefinitivoConsulta(planId) {
+	var seleccionados = [];
+	var checks = document.querySelectorAll("#modalPlanDefinitivoConsulta .plan-definitivo-anexar-item input[type='checkbox']:checked");
+	for (var i = 0; i < checks.length; i++) {
+		seleccionados.push(checks[i].value);
+	}
+	if (seleccionados.length == 0) {
+		ver_vetana_informativa("Seleccione al menos un tratamiento.");
+		return;
+	}
+	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
+		ajaxPlanDefinitivoConsulta("anexarTratamientosPlanDefinitivo", {
+			"plan_id": planId,
+			"detalle_ids": seleccionados.join(","),
+			"motivo": motivo
+		}, function (ok, datos) {
+			if (!ok) { return; }
+			cerrarModalPlanDefinitivoConsulta();
+			ver_vetana_informativa(datos.mensaje || "Tratamientos anexados.");
+			refrescarPlanDefinitivoConsulta();
+		});
+	});
+}
+
+function verHistorialPlanDefinitivoConsulta(planId) {
+	ajaxPlanDefinitivoConsulta("obtenerHistorialPlanDefinitivo", { "plan_id": planId }, function (ok, datos) {
+		if (!ok) { return; }
+		var footer = "<button type='button' class='plan-definitivo-primary' onclick='cerrarModalPlanDefinitivoConsulta()'>Entendido</button>";
+		abrirModalPlanDefinitivoConsulta("Historial del plan madre", "Trazabilidad cl&iacute;nica", datos[2] || "", footer);
+	});
+}
+
+function mostrarGuiaPlanDefinitivoConsulta() {
+	var cuerpo = "<ol class='plan-definitivo-guia'>" +
+		"<li>La Sugerencia autom&aacute;tica es calculada por el sistema seg&uacute;n estado y riesgo financiero.</li>" +
+		"<li>El Plan madre agrupa la ruta cl&iacute;nica de un beneficiario bajo la misma c&eacute;dula.</li>" +
+		"<li>Cuando esta venta ya pertenece a un Plan madre, se abre como vista principal.</li>" +
+		"<li>El Plan madre no cambia autom&aacute;ticamente aunque cambie la sugerencia.</li>" +
+		"<li>Cualquier modificaci&oacute;n del Plan madre queda registrada en el historial.</li>" +
+		"<li>Pod&eacute;s consultar la sugerencia autom&aacute;tica como referencia cuando lo necesites.</li>" +
+		"</ol>";
+	var footer = "<button type='button' class='plan-definitivo-primary' onclick='cerrarModalPlanDefinitivoConsulta()'>Entendido</button>";
+	abrirModalPlanDefinitivoConsulta("Plan sugerido y Plan madre", "Gu&iacute;a r&aacute;pida", cuerpo, footer);
+}
+
+
 let id_detalle_tratamientoConsulta = '';
 let contextoPorcentajeProgresoConsulta = null;
 
@@ -2700,6 +3204,112 @@ function restaurarContextoPorcentajeProgresoConsulta() {
 		idAbmAgenda = contextoPorcentajeProgresoConsulta.id_agenda;
 	}
 }
+
+let tratamientoProgresoActualConsulta = {
+	id: "",
+	nombre: "",
+	porcentaje: 0,
+	estado: "",
+	estadoClase: ""
+};
+
+function escaparHtmlConsulta(valor) {
+	return String(valor || "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function normalizarAvanceTratamientoConsulta(valor) {
+	valor = parseInt(valor, 10);
+	if (isNaN(valor)) { valor = 0; }
+	if (valor < 0) { valor = 0; }
+	if (valor > 100) { valor = 100; }
+	return valor;
+}
+
+function cargarTratamientosPlanMadreParaConsulta() {
+	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
+	if (!select) { return; }
+	var hint = document.getElementById("consultaTratamientoPlanHint");
+	var valorActual = select.value || "";
+	var panelPlanMadre = document.querySelector("#divPreConsultaDetalle_Consulta #consultaPlanDefinitivoPanel .plan-definitivo-panel[data-plan-id]");
+	var planIdActivo = panelPlanMadre ? (panelPlanMadre.getAttribute("data-plan-id") || "") : "";
+	var items = panelPlanMadre ? panelPlanMadre.querySelectorAll(".plan-definitivo-item[data-detalle-tratamiento]") : [];
+	var usados = {};
+	var opciones = [];
+
+	for (var i = 0; i < items.length; i++) {
+		var item = items[i];
+		var detalle = item.getAttribute("data-detalle-tratamiento") || "";
+		var planItem = item.getAttribute("data-plan-id") || "";
+		if (planIdActivo != "" && planItem != "" && planItem != planIdActivo) { continue; }
+		if (detalle == "" || usados[detalle]) { continue; }
+		usados[detalle] = true;
+		var nombre = item.getAttribute("data-tratamiento-nombre") || ($(item).find(".plan-definitivo-item__top strong").first().text() || "Tratamiento");
+		var avance = normalizarAvanceTratamientoConsulta(item.getAttribute("data-tratamiento-avance") || "0");
+		var estado = item.getAttribute("data-tratamiento-estado") || ($(item).find(".consulta-treatment-status").first().text() || "Pendiente");
+		var venta = item.getAttribute("data-tratamiento-venta") || "";
+		var origen = ($(item).find(".plan-ruta-origen").first().text() || "").split("\u00b7")[0].trim();
+		if (origen != "") { venta = origen; }
+		opciones.push({
+			detalle: detalle,
+			nombre: nombre,
+			avance: avance,
+			estado: estado,
+			venta: venta
+		});
+	}
+
+	select.innerHTML = "";
+	var placeholder = document.createElement("option");
+	placeholder.value = "";
+	placeholder.textContent = opciones.length ? "Seleccionar tratamiento del plan madre" : "Sin tratamientos planificados en plan madre";
+	select.appendChild(placeholder);
+
+	for (var j = 0; j < opciones.length; j++) {
+		var opcion = document.createElement("option");
+		opcion.value = opciones[j].detalle;
+		opcion.textContent = opciones[j].nombre + " - " + opciones[j].avance + "%" + (opciones[j].venta ? " - " + opciones[j].venta : "");
+		opcion.dataset.nombre = opciones[j].nombre;
+		opcion.dataset.avance = opciones[j].avance;
+		opcion.dataset.estado = opciones[j].estado;
+		opcion.dataset.venta = opciones[j].venta;
+		select.appendChild(opcion);
+	}
+
+	select.disabled = opciones.length == 0;
+	if (valorActual != "" && usados[valorActual]) {
+		select.value = valorActual;
+	}
+	if (hint && opciones.length == 0) {
+		hint.textContent = planIdActivo == "" ? "Esta venta todavia no tiene un plan madre activo." : "Este plan madre todavia no tiene tratamientos activos para evolucionar.";
+	}
+	sincronizarTratamientoRealizadoConsulta();
+}
+
+function sincronizarTratamientoRealizadoConsulta() {
+	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
+	var avance = document.getElementById("inptAvanceTratamientoConsulta");
+	var hint = document.getElementById("consultaTratamientoPlanHint");
+	if (!select) { return; }
+	var opcion = select.options[select.selectedIndex];
+	if (!opcion || select.value == "") {
+		if (avance) { avance.value = "0"; }
+		if (hint && !select.disabled) {
+			hint.textContent = "Seleccione un tratamiento planificado para registrar su evolucion.";
+		}
+		return;
+	}
+	var avanceActual = normalizarAvanceTratamientoConsulta(opcion.dataset.avance || "0");
+	if (avance) { avance.value = avanceActual; }
+	if (hint) {
+		hint.textContent = "Tratamiento: " + (opcion.dataset.nombre || "Tratamiento") + " - Avance actual " + avanceActual + "% - " + (opcion.dataset.estado || "Pendiente");
+	}
+}
+
 /* PORCENTAJE DE TRATAMIENTOS */
 function obtenerdatostrConsultaTratamiento(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
@@ -2707,43 +3317,174 @@ function obtenerdatostrConsultaTratamiento(datostr) {
 
 	});
 	datostr.className = 'tableRegistroSelec'
-	id_detalle_tratamientoConsulta = $(datostr).children('td[id="td_id_1"]').html();
-	let porcentaje = $(datostr).children('td[id="td_datos_1"]').html()
+	id_detalle_tratamientoConsulta = datostr.getAttribute("data-detalle-tratamiento") || $(datostr).children('td[id="td_id_1"]').html();
+	let porcentaje = datostr.getAttribute("data-tratamiento-avance") || $(datostr).children('td[id="td_datos_1"]').html();
+	let nombre = datostr.getAttribute("data-tratamiento-nombre") || ($(datostr).find(".consulta-treatment-row__name strong").first().text() || "Tratamiento");
+	let estado = datostr.getAttribute("data-tratamiento-estado") || ($(datostr).find(".consulta-treatment-status").first().text() || "");
+	let estadoClase = datostr.getAttribute("data-tratamiento-estado-clase") || "";
 	guardarContextoPorcentajeProgresoConsulta()
-	mostrarValorSlider(parseInt(porcentaje))
-	verCerrarCargarPorcentajeProgreso()
+	tratamientoProgresoActualConsulta = {
+		id: id_detalle_tratamientoConsulta,
+		nombre: nombre,
+		porcentaje: parseInt(porcentaje, 10) || 0,
+		estado: estado,
+		estadoClase: estadoClase
+	};
+	abrirModalEvolucionTratamientoConsulta(tratamientoProgresoActualConsulta);
 	verEvolucion()
-	verCerrarAbmConsulta();
+}
+
+function obtenerDatosPlanDefinitivoTratamientoConsulta(item) {
+	if (!item) { return; }
+	var seleccionados = document.querySelectorAll(".plan-definitivo-item.is-selected");
+	for (var i = 0; i < seleccionados.length; i++) {
+		seleccionados[i].classList.remove("is-selected");
+	}
+	item.classList.add("is-selected");
+	id_detalle_tratamientoConsulta = item.getAttribute("data-detalle-tratamiento") || item.getAttribute("data-detalle-odontograma") || "";
+	var codVentaTratamiento = item.getAttribute("data-tratamiento-venta") || "";
+	var porcentaje = item.getAttribute("data-tratamiento-avance") || "0";
+	var nombre = item.getAttribute("data-tratamiento-nombre") || ($(item).find(".plan-definitivo-item__top strong").first().text() || "Tratamiento");
+	var estado = item.getAttribute("data-tratamiento-estado") || ($(item).find(".consulta-treatment-status").first().text() || "");
+	var estadoClase = item.getAttribute("data-tratamiento-estado-clase") || "";
+	guardarContextoPorcentajeProgresoConsulta();
+	if (contextoPorcentajeProgresoConsulta && codVentaTratamiento != "") {
+		contextoPorcentajeProgresoConsulta.cod_venta_evolucion = codVentaTratamiento;
+	}
+	tratamientoProgresoActualConsulta = {
+		id: id_detalle_tratamientoConsulta,
+		nombre: nombre,
+		porcentaje: parseInt(porcentaje, 10) || 0,
+		estado: estado,
+		estadoClase: estadoClase
+	};
+	abrirModalEvolucionTratamientoConsulta(tratamientoProgresoActualConsulta);
+	verEvolucion();
+}
+
+function asegurarModalEvolucionTratamientoConsulta() {
+	var existente = document.getElementById("modalEvolucionTratamientoConsulta");
+	if (existente) { return existente; }
+	var overlay = document.createElement("div");
+	overlay.id = "overlayEvolucionTratamientoConsulta";
+	overlay.className = "tratamiento-evolucion-overlay";
+	overlay.style.display = "none";
+	overlay.onclick = function () { cerrarModalEvolucionTratamientoConsulta(); };
+	document.body.appendChild(overlay);
+	var modal = document.createElement("div");
+	modal.id = "modalEvolucionTratamientoConsulta";
+	modal.className = "tratamiento-evolucion-modal";
+	modal.style.display = "none";
+	modal.innerHTML = "" +
+		"<div class='tratamiento-evolucion-modal__head'>" +
+		"	<div><span>Evoluci&oacute;n del tratamiento</span><h3 id='tituloEvolucionTratamientoConsulta'>Tratamiento</h3></div>" +
+		"	<button type='button' title='Cerrar' onclick='cerrarModalEvolucionTratamientoConsulta()'>&times;</button>" +
+		"</div>" +
+		"<div class='tratamiento-evolucion-modal__body'>" +
+		"	<div class='tratamiento-evolucion-resumen'>" +
+		"		<span><strong>Actual</strong><b id='lblProgresoActualTratamientoConsulta'>0%</b></span>" +
+		"		<span><strong>Nuevo</strong><b id='lblProgresoNuevoTratamientoConsulta'>0%</b></span>" +
+		"		<span><strong>Estado</strong><b id='lblEstadoTratamientoConsulta'>Pendiente</b></span>" +
+		"	</div>" +
+		"	<input type='range' id='porcentajeEvolucionTratamientoConsulta' class='tratamiento-evolucion-range' min='0' max='100' value='0' oninput='mostrarValorSlider(this.value)'>" +
+		"	<div class='tratamiento-evolucion-quick'>" +
+		"		<button type='button' onclick='seleccionarPorcentajeEvolucionConsulta(0)'>0%</button>" +
+		"		<button type='button' onclick='seleccionarPorcentajeEvolucionConsulta(25)'>25%</button>" +
+		"		<button type='button' onclick='seleccionarPorcentajeEvolucionConsulta(50)'>50%</button>" +
+		"		<button type='button' onclick='seleccionarPorcentajeEvolucionConsulta(75)'>75%</button>" +
+		"		<button type='button' class='tratamiento-evolucion-quick__done' onclick='seleccionarPorcentajeEvolucionConsulta(100)'>Realizado</button>" +
+		"	</div>" +
+		"	<div class='tratamiento-evolucion-confirm' id='confirmarCompletadoTratamientoConsulta' style='display:none;'>" +
+		"		<label><input type='checkbox' id='chkConfirmarTratamientoCompletado'> Confirmo que este tratamiento debe quedar como completado.</label>" +
+		"	</div>" +
+		"	<label class='tratamiento-evolucion-observacion'>Observaci&oacute;n breve <textarea id='txtObservacionEvolucionTratamientoConsulta' class='textarea-agenda' placeholder='Opcional'></textarea></label>" +
+		"	<div class='tratamiento-evolucion-historial'>" +
+		"		<div class='tratamiento-evolucion-historial__head'><strong>Historial reciente</strong><span>&Uacute;ltimas evoluciones</span></div>" +
+		"		<div id='divEvolucionTratamientoConsulta' class='tratamiento-evolucion-historial__list'></div>" +
+		"	</div>" +
+		"</div>" +
+		"<div class='tratamiento-evolucion-modal__footer'>" +
+		"	<button type='button' class='tratamiento-evolucion-secondary' onclick='cerrarModalEvolucionTratamientoConsulta()'>Cancelar</button>" +
+		"	<button type='button' class='tratamiento-evolucion-primary' onclick='guardarPorcentajeProgreso()'>Guardar evoluci&oacute;n</button>" +
+		"</div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function abrirModalEvolucionTratamientoConsulta(datosTratamiento) {
+	asegurarModalEvolucionTratamientoConsulta();
+	document.getElementById("tituloEvolucionTratamientoConsulta").innerHTML = escaparHtmlConsulta(datosTratamiento.nombre);
+	document.getElementById("lblProgresoActualTratamientoConsulta").textContent = datosTratamiento.porcentaje + "%";
+	document.getElementById("lblEstadoTratamientoConsulta").textContent = datosTratamiento.estado || "Pendiente";
+	document.getElementById("txtObservacionEvolucionTratamientoConsulta").value = "";
+	var check = document.getElementById("chkConfirmarTratamientoCompletado");
+	if (check) { check.checked = false; }
+	mostrarValorSlider(datosTratamiento.porcentaje);
+	document.getElementById("overlayEvolucionTratamientoConsulta").style.display = "";
+	document.getElementById("modalEvolucionTratamientoConsulta").style.display = "";
+}
+
+function cerrarModalEvolucionTratamientoConsulta() {
+	var overlay = document.getElementById("overlayEvolucionTratamientoConsulta");
+	var modal = document.getElementById("modalEvolucionTratamientoConsulta");
+	if (overlay) { overlay.style.display = "none"; }
+	if (modal) { modal.style.display = "none"; }
 }
 
 function verCerrarCargarPorcentajeProgreso(){
-
-	if(document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display==""){
-	document.getElementById("divCargarTratamientoPorcentajeProgreso").style.display="none"
-	mostrarValorSlider(0)
-	verCerrarAbmConsulta();
-	restaurarContextoPorcentajeProgresoConsulta()
-	}else{		
-		
-		$("div[id=divCargarTratamientoPorcentajeProgreso]").fadeIn(500);
+	cerrarModalEvolucionTratamientoConsulta();
+	var legacy = document.getElementById("divCargarTratamientoPorcentajeProgreso");
+	if (legacy) {
+		legacy.style.display = "none";
 	}
 }
 
+function seleccionarPorcentajeEvolucionConsulta(valor) {
+	mostrarValorSlider(valor);
+}
 
 function mostrarValorSlider(valor) {
-	
-    document.getElementById("valor_slider_progreso_tratamiento").textContent = valor;
-    document.getElementById("porcentaje").value = valor;
-    document.getElementById("inpt_progreso_tratamiento_oculto").value = valor;
+	valor = parseInt(valor, 10);
+	if (isNaN(valor)) { valor = 0; }
+	if (valor < 0) { valor = 0; }
+	if (valor > 100) { valor = 100; }
+	var lblNuevo = document.getElementById("lblProgresoNuevoTratamientoConsulta");
+	var rangeNuevo = document.getElementById("porcentajeEvolucionTratamientoConsulta");
+	if (lblNuevo) { lblNuevo.textContent = valor + "%"; }
+	if (rangeNuevo) { rangeNuevo.value = valor; }
+	var confirmar = document.getElementById("confirmarCompletadoTratamientoConsulta");
+	if (confirmar) {
+		confirmar.style.display = (valor >= 100 && tratamientoProgresoActualConsulta.porcentaje < 100) ? "" : "none";
+	}
+	var legacyValor = document.getElementById("valor_slider_progreso_tratamiento");
+	var legacyRange = document.getElementById("porcentaje");
+	var legacyOculto = document.getElementById("inpt_progreso_tratamiento_oculto");
+    if (legacyValor) { legacyValor.textContent = valor; }
+    if (legacyRange) { legacyRange.value = valor; }
+    if (legacyOculto) { legacyOculto.value = valor; }
   }
 
 function guardarPorcentajeProgreso(){
 		 restaurarContextoPorcentajeProgresoConsulta()
-		 let porcentaje = document.getElementById("inpt_progreso_tratamiento_oculto").value;
-		 let codVentaConsultaProgreso = cod_ventaFKConsulta;
+		 let codVentaConsultaVista = cod_ventaFKConsulta;
+		 let codVentaConsultaProgreso = (contextoPorcentajeProgresoConsulta && contextoPorcentajeProgresoConsulta.cod_venta_evolucion)
+			 ? contextoPorcentajeProgresoConsulta.cod_venta_evolucion
+			 : codVentaConsultaVista;
 		 let idAgendaProgreso = (contextoPorcentajeProgresoConsulta && contextoPorcentajeProgresoConsulta.id_agenda != "")
 			 ? contextoPorcentajeProgresoConsulta.id_agenda
 			 : (typeof idAbmAgenda !== "undefined" ? idAbmAgenda : "");
+		 let inputNuevo = document.getElementById("porcentajeEvolucionTratamientoConsulta");
+		 let inputLegacy = document.getElementById("inpt_progreso_tratamiento_oculto");
+		 let porcentaje = inputNuevo ? inputNuevo.value : (inputLegacy ? inputLegacy.value : 0);
+		 porcentaje = parseInt(porcentaje, 10) || 0;
+		 if (porcentaje >= 100 && tratamientoProgresoActualConsulta.porcentaje < 100) {
+			var check = document.getElementById("chkConfirmarTratamientoCompletado");
+			if (!check || !check.checked) {
+				ver_vetana_informativa("Para marcarlo como realizado, confirmá primero la evolución.");
+				return;
+			}
+		 }
+		 let observacion = document.getElementById("txtObservacionEvolucionTratamientoConsulta") ? document.getElementById("txtObservacionEvolucionTratamientoConsulta").value : "";
 			obtener_datos_user();
 			 var datos = {
 			 "useru":userid,
@@ -2752,6 +3493,8 @@ function guardarPorcentajeProgreso(){
 			 "id_detalle_tratamientoConsulta": id_detalle_tratamientoConsulta, 
 			 "porcentaje": porcentaje, 
 			 "cod_agendaFK": idAgendaProgreso,
+			 "cod_venta": codVentaConsultaProgreso,
+			 "observacion": observacion,
 			"funt": "guardarPorcentajeProgreso"
 			};
 	 $.ajax({
@@ -2777,24 +3520,70 @@ function guardarPorcentajeProgreso(){
           Respuesta=datos["1"];  
 			
 			if (Respuesta == "exito") {
-				verCerrarCargarPorcentajeProgreso()
-		 restaurarContextoPorcentajeProgresoConsulta()
-		 ver_vetana_informativa('CARGADO CORRECTAMENTE...');
- if (codVentaConsultaProgreso != "") {
-	buscarDetalleVentaConsulta(codVentaConsultaProgreso);
+				actualizarTarjetaTratamientoConsulta(id_detalle_tratamientoConsulta, (datos.porcentaje_nuevo !== undefined ? datos.porcentaje_nuevo : porcentaje), datos.estado_texto || "", datos.estado_clase || "");
+				cerrarModalEvolucionTratamientoConsulta();
+				ver_vetana_informativa('EVOLUCIÓN GUARDADA');
+				var codVentaRefrescar = codVentaConsultaVista || codVentaConsultaProgreso;
+				if (codVentaRefrescar != "") {
+					setTimeout(function () {
+						buscarDetalleVentaConsulta(codVentaRefrescar, true);
+					}, 450);
+				}
+ if (idAgendaProgreso) {
+	if (typeof cambiarEstadoAgendaDesdeModal === "function") {
+		cambiarEstadoAgendaDesdeModal("ATENDIDO");
+	} else if (typeof actualizarAgenda === "function") {
+		actualizarAgenda(idAgendaProgreso, "", "", "ATENDIDO", { mantenerDetalle: true });
+	}
  }
- if (idAgendaProgreso && typeof actualizarAgenda === "function") {
-	actualizarAgenda(idAgendaProgreso, "", "", "ATENDIDO", { mantenerDetalle: true });
- }
+			} else {
+				ver_vetana_informativa(datos.mensaje || "No se pudo guardar la evolución.");
 			}
 			}catch(error)
 				{
-					
+					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
 				}
 			}
 			});
 	
 	
+}
+
+function actualizarTarjetaTratamientoConsulta(idDetalle, porcentaje, estadoTexto, estadoClase) {
+	var items = document.querySelectorAll("#divPreConsultaDetalle_Consulta [data-detalle-tratamiento='" + idDetalle + "']");
+	if (!items.length) {
+		items = document.querySelectorAll("#divPreConsultaDetalle_Consulta [data-detalle-odontograma='" + idDetalle + "']");
+	}
+	if (!items.length) { return; }
+	var estados = ["pendiente", "proceso", "completado", "cancelado"];
+	for (var i = 0; i < items.length; i++) {
+		var item = items[i];
+		item.setAttribute("data-tratamiento-avance", porcentaje);
+		if (estadoTexto) { item.setAttribute("data-tratamiento-estado", estadoTexto); }
+		if (estadoClase) { item.setAttribute("data-tratamiento-estado-clase", estadoClase); }
+		var porcentajeEl = item.querySelector(".consulta-treatment-percent");
+		if (porcentajeEl) { porcentajeEl.textContent = porcentaje + "%"; }
+		var estadoEl = item.querySelector(".consulta-treatment-status");
+		if (estadoEl && estadoTexto) {
+			estadoEl.textContent = estadoTexto;
+			estadoEl.className = "consulta-treatment-status consulta-treatment-status--" + (estadoClase || "pendiente");
+		}
+		if (item.classList && estadoClase) {
+			for (var j = 0; j < estados.length; j++) {
+				item.classList.remove("consulta-treatment-row--" + estados[j]);
+				item.classList.remove("plan-definitivo-item--" + estados[j]);
+			}
+			item.classList.add("consulta-treatment-row--" + estadoClase);
+			if (item.classList.contains("plan-definitivo-item")) {
+				item.classList.add("plan-definitivo-item--" + estadoClase);
+				item.classList.toggle("plan-ruta-finalizado", estadoClase == "completado" || estadoClase == "cancelado");
+				var nodo = item.querySelector(".plan-ruta-nodo span");
+				if (nodo) {
+					nodo.innerHTML = estadoClase == "completado" ? "&#10003;" : (item.getAttribute("data-plan-numero") || nodo.innerHTML);
+				}
+			}
+		}
+	}
 }
 
 
@@ -2803,7 +3592,10 @@ function guardarPorcentajeProgreso(){
 
 function verEvolucion(){
 	 
-		 document.getElementById("divTable_evolucionTratamiento").innerHTML=""
+		 var contenedorEvolucion = document.getElementById("divEvolucionTratamientoConsulta") || document.getElementById("divTable_evolucionTratamiento");
+		 if (contenedorEvolucion) {
+			contenedorEvolucion.innerHTML = "<div class='tratamiento-evolucion-vacio'>Cargando historial...</div>";
+		 }
 		 
 			obtener_datos_user();
 				 var datos = {
@@ -2858,7 +3650,10 @@ function verEvolucion(){
 			if (Respuesta == "exito") {
 				
 		   var datos_buscados=datos[2];		 
-			document.getElementById("divTable_evolucionTratamiento").innerHTML=datos_buscados	 
+			var contenedorEvolucion = document.getElementById("divEvolucionTratamientoConsulta") || document.getElementById("divTable_evolucionTratamiento");
+			if (contenedorEvolucion) {
+				contenedorEvolucion.innerHTML=datos_buscados;
+			}
  
 			}
 			}catch(error)

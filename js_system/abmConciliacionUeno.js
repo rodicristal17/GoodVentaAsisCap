@@ -306,11 +306,89 @@ function uenoModernizarTabla(idTabla, etiquetas, indiceEstado) {
 	}
 }
 
+function uenoNormalizarFechaAgrupacion(valor) {
+	valor = String(valor || "").trim();
+	if (valor == "") { return ""; }
+	var partesIso = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+	if (partesIso) {
+		return partesIso[1] + "-" + partesIso[2] + "-" + partesIso[3];
+	}
+	var partesLocal = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+	if (partesLocal) {
+		return partesLocal[3] + "-" + partesLocal[2] + "-" + partesLocal[1];
+	}
+	return "";
+}
+
+function uenoFechaAgrupacionDesdeFila(fila) {
+	if (!fila) { return ""; }
+	var celdas = fila.children || [];
+	var visibles = [];
+	for (var i = 0; i < celdas.length; i++) {
+		if (celdas[i].style.display != "none") {
+			visibles.push(celdas[i]);
+		}
+	}
+	var fechaTransaccion = visibles[1] ? visibles[1].textContent : "";
+	var fechaConfirmacion = visibles[0] ? visibles[0].textContent : "";
+	return uenoNormalizarFechaAgrupacion(fechaTransaccion) || uenoNormalizarFechaAgrupacion(fechaConfirmacion);
+}
+
+function uenoEtiquetaMesAgrupacion(fechaIso) {
+	var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+	var partes = fechaIso.split("-");
+	var mes = Number(partes[1] || 0) - 1;
+	return (meses[mes] || "Mes") + " " + partes[0];
+}
+
+function uenoEtiquetaDiaAgrupacion(fechaIso) {
+	var dias = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+	var partes = fechaIso.split("-");
+	var fecha = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]), 12, 0, 0);
+	var diaSemana = dias[fecha.getDay()] || "Dia";
+	return diaSemana + " " + partes[2] + "/" + partes[1] + "/" + partes[0];
+}
+
+function uenoCrearSeparadorFecha(tipo, texto) {
+	var separador = document.createElement("div");
+	separador.className = "ueno-date-separator ueno-date-separator--" + tipo;
+	separador.innerHTML = "<span>" + uenoEscapeHtml(texto) + "</span>";
+	return separador;
+}
+
+function uenoAgregarSeparadoresFechaMovimientos() {
+	var contenedor = document.getElementById("table_ueno_movimientos");
+	if (!contenedor) { return; }
+	var separadoresActuales = contenedor.querySelectorAll(".ueno-date-separator");
+	for (var i = 0; i < separadoresActuales.length; i++) {
+		separadoresActuales[i].parentNode.removeChild(separadoresActuales[i]);
+	}
+	var tablas = Array.prototype.slice.call(contenedor.querySelectorAll("table.ueno-row-table"));
+	var mesActual = "";
+	var diaActual = "";
+	for (var j = 0; j < tablas.length; j++) {
+		var fila = tablas[j].querySelector("tr");
+		var fecha = uenoFechaAgrupacionDesdeFila(fila);
+		if (fecha == "") { continue; }
+		var mes = fecha.substr(0, 7);
+		if (mes != mesActual) {
+			contenedor.insertBefore(uenoCrearSeparadorFecha("mes", uenoEtiquetaMesAgrupacion(fecha)), tablas[j]);
+			mesActual = mes;
+			diaActual = "";
+		}
+		if (fecha != diaActual) {
+			contenedor.insertBefore(uenoCrearSeparadorFecha("dia", uenoEtiquetaDiaAgrupacion(fecha)), tablas[j]);
+			diaActual = fecha;
+		}
+	}
+}
+
 function uenoModernizarVista() {
 	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito"], null);
 	uenoModernizarTabla("table_ueno_resumen_tesoreria", ["Local", "Turno", "Caja", "Lote", "Apertura", "Cierre", "Caja", "Transf. GV", "Conc.", "Pend.", "Obs.", "S/C", "Estado"], 12);
 	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
 	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Accion"], 9);
+	uenoAgregarSeparadoresFechaMovimientos();
 	uenoModernizarTabla("table_ueno_candidatos_manual", ["ID", "F. conf.", "Comprobante", "Descripcion", "Credito", "Disponible", "Estado", "Coinc.", "Accion"], 6);
 	uenoModernizarTabla("table_ueno_pagos_pendientes", ["Cliente", "CI", "Venta", "Cuota/Pago", "Venc.", "Saldo pend.", "Monto sug.", "Estado", "Coinc.", "Accion"], 7);
 	uenoModernizarTabla("table_ueno_auditoria", ["ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Antes", "Ahora", "Monto", "User", "Obs."], 7);

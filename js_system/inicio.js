@@ -1,6 +1,18 @@
 
 
 var controlMenuWd=1;
+
+if (typeof $ !== "undefined" && $.parseJSON && !$.parseJSON.aceptaObjetoAjax) {
+	var parseJSONOriginalGoodVenta = $.parseJSON;
+	$.parseJSON = function (respuesta) {
+		if (typeof respuesta !== "string") {
+			return respuesta;
+		}
+		return parseJSONOriginalGoodVenta.call(this, respuesta);
+	};
+	$.parseJSON.aceptaObjetoAjax = true;
+}
+
 function MeniWindows(){
 	if(controlMenuWd==0){
 		document.getElementById("divMenuWindowsB").style.display="none";
@@ -39,6 +51,77 @@ document.getElementById(elemento).style.fontSize="18px";
 
 function vaciar(txt){
 	document.getElementById(txt).value="";
+}
+
+function parsearRespuestaAjaxFlexible(responseText) {
+	if (typeof responseText === "string") {
+		return $.parseJSON(responseText);
+	}
+	return responseText || {};
+}
+
+function textoRespuestaAjaxFlexible(responseText) {
+	if (typeof responseText === "string") {
+		return responseText;
+	}
+	try {
+		return JSON.stringify(responseText);
+	} catch (error) {
+		return String(responseText);
+	}
+}
+
+function cambiarTabFichaClinicaConsulta(tab) {
+	var raiz = document.getElementById("divAbmConsulta");
+	if (!raiz) {
+		return false;
+	}
+	var destino = tab || "plan";
+	window.consultaFichaTabActiva = destino;
+	var botones = raiz.querySelectorAll("[data-consulta-tab-button]");
+	for (var i = 0; i < botones.length; i++) {
+		var boton = botones[i];
+		var activo = boton.getAttribute("data-consulta-tab-button") == destino;
+		if (boton.classList) {
+			boton.classList.toggle("is-active", activo);
+		}
+		boton.setAttribute("aria-selected", activo ? "true" : "false");
+	}
+	var paneles = raiz.querySelectorAll("[data-consulta-tab-panel]");
+	for (var j = 0; j < paneles.length; j++) {
+		var panel = paneles[j];
+		var panelActivo = panel.getAttribute("data-consulta-tab-panel") == destino;
+		if (panel.classList) {
+			panel.classList.toggle("is-active", panelActivo);
+		}
+		if (panelActivo) {
+			panel.removeAttribute("hidden");
+			panel.style.removeProperty("display");
+		} else {
+			panel.setAttribute("hidden", "hidden");
+			panel.style.setProperty("display", "none", "important");
+		}
+	}
+	if (destino == "odontograma" && typeof cargarOdontogramaFichaClinica == "function") {
+		setTimeout(function () {
+			try {
+				cargarOdontogramaFichaClinica();
+			} catch (error) {
+				console.error("No se pudo refrescar el odontograma de la ficha clinica:", error);
+			}
+		}, 80);
+	}
+	return false;
+}
+
+function prepararTabsFichaClinicaConsulta() {
+	cambiarTabFichaClinicaConsulta(window.consultaFichaTabActiva || "plan");
+}
+
+if (document.addEventListener) {
+	document.addEventListener("DOMContentLoaded", function () {
+		prepararTabsFichaClinicaConsulta();
+	});
 }
 
 function verCerrarMenub(d){
@@ -134,7 +217,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=usuario-contrato-chip-inline-20260619")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=flujo-resumen-neto-20260624")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -484,6 +567,15 @@ var ControlCobradorUser="";
 var CodCobradorUser="";
 var funcionariosDirectorioCache = [];
 var funcionarioSeleccionadoCache = null;
+var funcionarioFiltroRrhhActivo = "todos";
+var funcionarioDetalleExpandidoRrhh = "";
+var funcionarioLegajoDocumentosCache = {};
+var funcionarioLegajoDocumentosCargados = {};
+var funcionarioLegajoDocumentosCargando = {};
+var funcionarioSancionesHistorialCache = [];
+var funcionarioLegajoTipoDocumentoActivo = "";
+var miPerfilLegajoTipoDocumentoActivo = "";
+var legajoContratoCargaPendiente = null;
 var datosPerfilUsuarioActual = {};
 
 function normalizarFotoUsuario(urlFoto) {
@@ -885,6 +977,1089 @@ function cargarOpcionesDirectorioFuncionarios(registros) {
 	}
 }
 
+function contarDiasHastaFuncionario(fecha) {
+	if (!fecha || String(fecha).length < 10) {
+		return null;
+	}
+	var partes = String(fecha).substring(0, 10).split("-");
+	if (partes.length != 3) {
+		return null;
+	}
+	var destino = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10));
+	var hoy = new Date();
+	hoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+	if (isNaN(destino.getTime())) {
+		return null;
+	}
+	return Math.round((destino.getTime() - hoy.getTime()) / 86400000);
+}
+
+function esDocumentoContratoLegajo(tipoDocumento) {
+	var tipo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	return tipo == "contrato_laboral" || tipo == "contrato_firmado";
+}
+
+function obtenerDocumentoContratoActualFuncionario(registro) {
+	if (!registro || !registro.cod_usuario) {
+		return null;
+	}
+	var documentos = funcionarioLegajoDocumentosCache[String(registro.cod_usuario)] || [];
+	for (var i = 0; i < documentos.length; i++) {
+		if (esDocumentoContratoLegajo(documentos[i].tipo_documento || documentos[i].tipo || "")) {
+			return documentos[i];
+		}
+	}
+	return null;
+}
+
+function fechaContratoDesdeDocumento(valor) {
+	valor = $.trim(valor || "");
+	return valor.length >= 10 ? valor.substring(0, 10) : "";
+}
+
+function contratoSinVencimientoActivo(valor) {
+	var texto = textoNormalizadoFuncionario(valor);
+	return texto == "1" || texto == "si" || texto == "true" || texto == "sin vencimiento";
+}
+
+function obtenerEstadoContratoFuncionario(registro) {
+	var contratoActual = obtenerDocumentoContratoActualFuncionario(registro);
+	var fechaInicio = fechaContratoDesdeDocumento(registro.fecha_inicio_contrato || registro.contrato_fecha_inicio || (contratoActual && contratoActual.fecha_inicio_contrato) || "");
+	var fechaFin = fechaContratoDesdeDocumento(registro.fecha_fin_contrato || registro.contrato_fecha_fin || (contratoActual && contratoActual.fecha_fin_contrato) || "");
+	var sinVencimiento = contratoSinVencimientoActivo(registro.contrato_sin_vencimiento || (contratoActual && contratoActual.contrato_sin_vencimiento) || "");
+	var tieneReferencia = $.trim(registro.tipo_relacion || "") != "" || $.trim(registro.fecha_creacion || "") != "" || !!(contratoActual && contratoActual.url_archivo);
+	if (sinVencimiento && fechaInicio != "") {
+		return { texto: "Vigente", clase: "ok", porVencer: false, alerta: "" };
+	}
+	if (fechaFin != "") {
+		var dias = contarDiasHastaFuncionario(fechaFin);
+		if (dias !== null) {
+			if (dias < 0) return { texto: "Vencido", clase: "danger", porVencer: true, alerta: "Contrato vencido" };
+			if (dias <= 15) return { texto: "Vence en " + dias + " dias", clase: "orange", porVencer: true, alerta: "Contrato vence en " + dias + " dias" };
+			if (dias <= 60) return { texto: "Vence en " + dias + " dias", clase: "warning", porVencer: true, alerta: "Contrato por vencer" };
+			return { texto: "Vigente", clase: "ok", porVencer: false, alerta: "" };
+		}
+	}
+	if (tieneReferencia) {
+		return { texto: "Sin fechas cargadas", clase: "warning", porVencer: false, alerta: "Contrato sin fechas estructuradas" };
+	}
+	return { texto: "Por cargar", clase: "warning", porVencer: false, alerta: "Contrato pendiente de carga" };
+}
+
+function obtenerDefinicionDocumentosLegajoFuncionario() {
+	return [
+		{ id: "cedula_identidad", nombre: "Cedula de identidad", critico: true, rapido: true },
+		{ id: "contrato_laboral", nombre: "Contrato firmado", critico: true, rapido: true },
+		{ id: "antecedente_policial", nombre: "Antecedente policial", critico: true, rapido: true },
+		{ id: "reglamento_interno", nombre: "Reglamento interno", critico: true, rapido: true },
+		{ id: "confidencialidad", nombre: "Confidencialidad", critico: true, rapido: true },
+		{ id: "constancia_ips", nombre: "Constancia IPS", critico: true, rapido: false },
+		{ id: "constancia_mtess", nombre: "Constancia MTESS", critico: true, rapido: false },
+		{ id: "curriculum_vitae", nombre: "Curriculum Vitae", critico: false, rapido: false },
+		{ id: "antecedente_judicial", nombre: "Antecedente judicial", critico: true, rapido: false },
+		{ id: "croquis_domicilio", nombre: "Croquis de domicilio", critico: false, rapido: false },
+		{ id: "sanciones_amonestaciones", nombre: "Sanciones y amonestaciones", critico: false, rapido: false },
+		{ id: "metas_mes", nombre: "Metas del mes", critico: false, rapido: false },
+		{ id: "vacaciones", nombre: "Vacaciones", critico: false, rapido: false },
+		{ id: "titulos_academicos", nombre: "Titulos academicos", critico: false, rapido: false }
+	];
+}
+
+function obtenerDefinicionDocumentosFichaFuncionario() {
+	return [
+		{ id: "cedula_identidad", nombre: "Cedula de identidad", critico: true, rapido: true, aliases: ["cedula", "cedula_de_identidad"] },
+		{ id: "contrato_laboral", nombre: "Contrato firmado", critico: true, rapido: true, aliases: ["contrato_firmado"] },
+		{ id: "constancia_ips", nombre: "Constancia IPS", critico: true, rapido: false },
+		{ id: "constancia_mtess", nombre: "Constancia MTESS", critico: true, rapido: false },
+		{ id: "titulos_academicos", nombre: "Titulos academicos", critico: false, rapido: false, aliases: ["titulo_academico", "titulos"] },
+		{ id: "reglamento_interno", nombre: "Reglamento interno firmado", critico: true, rapido: true, aliases: ["reglamento_interno_firmado"] },
+		{ id: "confidencialidad", nombre: "Confidencialidad firmada", critico: true, rapido: true, aliases: ["confidencialidad_firmada"] },
+		{ id: "antecedente_policial", nombre: "Antecedente policial", critico: true, rapido: true },
+		{ id: "curriculum_vitae", nombre: "Curriculum Vitae", critico: false, rapido: false, aliases: ["curriculum", "cv"] },
+		{ id: "croquis_domicilio", nombre: "Croquis de domicilio", critico: false, rapido: false }
+	];
+}
+
+function normalizarTipoDocumentoLegajo(tipo) {
+	return textoNormalizadoFuncionario(tipo).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function claseEstadoDocumentoLegajo(estado) {
+	var estadoNorm = textoNormalizadoFuncionario(estado);
+	if (estadoNorm == "completo" || estadoNorm == "ok" || estadoNorm == "vigente" || estadoNorm == "sin novedades") return "ok";
+	if (estadoNorm == "en revision" || estadoNorm == "cargado" || estadoNorm == "pendiente de revision") return "purple";
+	if (estadoNorm == "por vencer" || estadoNorm == "sin fechas cargadas" || estadoNorm == "pendiente de archivo" || estadoNorm == "pendiente de respaldo digital") return "warning";
+	if (estadoNorm == "vencido" || estadoNorm == "rechazado") return "danger";
+	if (estadoNorm == "pendiente" || estadoNorm == "por cargar" || estadoNorm == "no cargado" || estadoNorm == "sin archivo digital") return "danger";
+	return "muted";
+}
+
+function documentoLegajoRequiereRevision(tipoDocumento) {
+	var tipo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	var criticos = {
+		contrato_laboral: true,
+		contrato_firmado: true,
+		constancia_ips: true,
+		constancia_mtess: true,
+		antecedente_policial: true,
+		antecedente_judicial: true,
+		reglamento_interno: true,
+		confidencialidad: true
+	};
+	return !!criticos[tipo];
+}
+
+function obtenerDocumentoLegajoActualPorTipo(codUsuario) {
+	var documentos = funcionarioLegajoDocumentosCache[String(codUsuario)] || [];
+	var mapa = {};
+	for (var i = 0; i < documentos.length; i++) {
+		var tipo = normalizarTipoDocumentoLegajo(documentos[i].tipo_documento || documentos[i].tipo || "");
+		if (tipo != "" && !mapa[tipo]) {
+			mapa[tipo] = documentos[i];
+		}
+	}
+	return mapa;
+}
+
+function estadoBaseDocumentoLegajo(registro, documento, resumen) {
+	if (documento.id == "cedula_identidad" && $.trim(registro.rut_usuario || "") != "") {
+		return { estado: "Completo", clase: "ok", completo: true };
+	}
+	if (documento.id == "croquis_domicilio" && $.trim(registro.direccion || "") != "") {
+		return { estado: "Completo", clase: "ok", completo: true };
+	}
+	if (documento.id == "contrato_laboral" || documento.id == "contrato_firmado") {
+		return { estado: resumen.contrato.texto, clase: resumen.contrato.clase, completo: resumen.contrato.clase == "ok" };
+	}
+	if (documento.id == "constancia_ips") {
+		return { estado: resumen.ips.texto, clase: resumen.ips.clase, completo: textoNormalizadoFuncionario(resumen.ips.texto) == "ok" };
+	}
+	if (documento.id == "sanciones_amonestaciones") {
+		return { estado: resumen.incidentes > 0 ? "Abierto" : "Sin novedades", clase: resumen.incidentes > 0 ? "danger" : "ok", completo: resumen.incidentes == 0 };
+	}
+	if (documento.id == "vacaciones") {
+		return { estado: resumen.vacaciones.texto, clase: resumen.vacaciones.clase, completo: resumen.vacaciones.clase == "ok" };
+	}
+	return { estado: "Pendiente", clase: documento.critico ? "danger" : "warning", completo: false };
+}
+
+function estadoContratoDesdeDocumentoLegajo(documento) {
+	if (!documento || !documento.actual || !documento.actual.url_archivo || !esDocumentoContratoLegajo(documento.id)) {
+		return null;
+	}
+	var actual = documento.actual;
+	var inicio = fechaContratoDesdeDocumento(actual.fecha_inicio_contrato || "");
+	var fin = fechaContratoDesdeDocumento(actual.fecha_fin_contrato || "");
+	var sinVencimiento = contratoSinVencimientoActivo(actual.contrato_sin_vencimiento || "");
+	if (inicio == "" || (!sinVencimiento && fin == "")) {
+		return {
+			estado: "Sin fechas cargadas",
+			clase: "warning",
+			completo: false,
+			mensaje: "Archivo cargado, pero faltan fechas"
+		};
+	}
+	if (sinVencimiento) {
+		return null;
+	}
+	var dias = contarDiasHastaFuncionario(fin);
+	if (dias !== null && dias < 0) {
+		return {
+			estado: "Vencido",
+			clase: "danger",
+			completo: false,
+			mensaje: "Requiere actualizacion"
+		};
+	}
+	return null;
+}
+
+function aplicarReglasVisualesDocumentoLegajo(documento, base, opciones) {
+	opciones = opciones || {};
+	var requiereArchivo = opciones.requerirArchivoDigital === true;
+	var actual = documento.actual;
+	var tieneArchivo = actual && actual.url_archivo;
+	var estadoNorm = textoNormalizadoFuncionario(documento.estado);
+
+	documento.tieneArchivo = !!tieneArchivo;
+	documento.tieneDatoFicha = base && base.completo === true;
+	documento.mensaje = "";
+
+	if (requiereArchivo && !tieneArchivo) {
+		documento.estado = "Sin archivo digital";
+		documento.clase = documento.critico ? "danger" : "warning";
+		documento.completo = false;
+		documento.mensaje = documento.tieneDatoFicha ? "Dato verificado en ficha, falta respaldo digital" : "Pendiente de archivo digital";
+		return documento;
+	}
+
+	if (tieneArchivo) {
+		var contrato = estadoContratoDesdeDocumentoLegajo(documento);
+		if (contrato) {
+			documento.estado = contrato.estado;
+			documento.clase = contrato.clase;
+			documento.completo = false;
+			documento.mensaje = contrato.mensaje;
+			return documento;
+		}
+		if (estadoNorm == "en revision" || estadoNorm == "cargado") {
+			documento.estado = "Pendiente de revision";
+			documento.clase = "purple";
+			documento.completo = false;
+			documento.mensaje = "Archivo cargado, pendiente de validacion";
+			return documento;
+		}
+		if (estadoNorm == "rechazado") {
+			documento.estado = "Rechazado";
+			documento.clase = "danger";
+			documento.completo = false;
+			documento.mensaje = "Requiere actualizacion";
+			return documento;
+		}
+		if (estadoNorm == "vencido") {
+			documento.estado = "Vencido";
+			documento.clase = "danger";
+			documento.completo = false;
+			documento.mensaje = "Requiere actualizacion";
+			return documento;
+		}
+		if (documento.completo) {
+			documento.estado = "Completo";
+			documento.clase = "ok";
+			documento.mensaje = "Archivo cargado";
+		}
+	}
+	return documento;
+}
+
+function calcularDocumentosLegajoFuncionario(registro, resumen, definicionesPersonalizadas, opciones) {
+	resumen = resumen || {
+		contrato: obtenerEstadoContratoFuncionario(registro),
+		ips: { texto: $.trim(registro.ips_estado || "") != "" ? registro.ips_estado : "No cargado", clase: textoNormalizadoFuncionario(registro.ips_estado || "") == "ok" ? "ok" : "warning" },
+		vacaciones: { texto: $.trim(registro.vacaciones_disponibles || "") != "" ? registro.vacaciones_disponibles + " dias" : "Pendiente modulo", clase: $.trim(registro.vacaciones_disponibles || "") != "" ? "ok" : "muted" },
+		incidentes: parseInt(registro.incidentes_abiertos || "0", 10) || 0
+	};
+	var definiciones = definicionesPersonalizadas || obtenerDefinicionDocumentosLegajoFuncionario();
+	var actuales = obtenerDocumentoLegajoActualPorTipo(registro.cod_usuario);
+	var documentos = [];
+	var completos = 0;
+	var docsValidar = 0;
+	var faltantes = [];
+
+	for (var i = 0; i < definiciones.length; i++) {
+		var def = definiciones[i];
+		var actual = actuales[def.id] || null;
+		if (!actual && def.aliases && def.aliases.length) {
+			for (var a = 0; a < def.aliases.length; a++) {
+				if (actuales[def.aliases[a]]) {
+					actual = actuales[def.aliases[a]];
+					break;
+				}
+			}
+		}
+		var base = estadoBaseDocumentoLegajo(registro, def, resumen);
+		var estado = base.estado;
+		var clase = base.clase;
+		var completo = base.completo;
+		if (actual) {
+			estado = actual.estado || "Cargado";
+			clase = claseEstadoDocumentoLegajo(estado);
+			completo = clase == "ok";
+		}
+		var documentoCalculado = aplicarReglasVisualesDocumentoLegajo({
+			id: def.id,
+			nombre: def.nombre,
+			critico: def.critico,
+			rapido: def.rapido,
+			estado: estado,
+			clase: clase,
+			completo: completo,
+			actual: actual
+		}, base, opciones);
+		var estadoNorm = textoNormalizadoFuncionario(documentoCalculado.estado);
+		var estadoOriginalNorm = textoNormalizadoFuncionario(estado);
+		if (estadoOriginalNorm == "en revision" || estadoOriginalNorm == "cargado" || estadoNorm == "pendiente de revision") {
+			docsValidar++;
+		}
+		if (documentoCalculado.completo) {
+			completos++;
+		} else {
+			faltantes.push(def.nombre);
+		}
+		documentos.push(documentoCalculado);
+	}
+
+	return {
+		documentos: documentos,
+		porcentaje: Math.round((completos / definiciones.length) * 100),
+		faltantes: faltantes,
+		docsValidar: docsValidar
+	};
+}
+
+function obtenerResumenRrhhFuncionario(registro) {
+	var completitud = calcularCompletitudFuncionario(registro);
+	var horarios = obtenerHorariosFuncionario(registro);
+	var acceso = obtenerEstadoAccesoFuncionario(registro);
+	var estadoNormalizado = textoNormalizadoFuncionario(registro.estado || "");
+	var contrato = obtenerEstadoContratoFuncionario(registro);
+	var ipsEstado = $.trim(registro.ips_estado || "") != "" ? registro.ips_estado : "No cargado";
+	var ipsClase = textoNormalizadoFuncionario(ipsEstado) == "ok" ? "ok" : "warning";
+	var asistenciaTexto = horarios.length == 0 ? "Sin horario" : "Programada";
+	var asistenciaClase = horarios.length == 0 ? "warning" : "ok";
+	var vacacionesTexto = $.trim(registro.vacaciones_disponibles || "") != "" ? registro.vacaciones_disponibles + " dias" : "Pendiente modulo";
+	var vacacionesClase = $.trim(registro.vacaciones_disponibles || "") != "" ? "ok" : "muted";
+	var asistenciaControl = normalizarResumenControlFuncionario(registro.asistencia_resumen, {
+		estado: horarios.length == 0 ? "sin_horario" : "programada",
+		texto: asistenciaTexto,
+		clase: asistenciaClase,
+		icono: horarios.length == 0 ? "calendar" : "clock",
+		contador: "0",
+		tooltip: asistenciaTexto
+	});
+	var reposoControl = normalizarResumenControlFuncionario(registro.reposo_resumen, {
+		estado: "sin_reposo",
+		texto: "Sin reposo",
+		clase: "ok",
+		icono: "plus",
+		contador: "0",
+		tooltip: "Sin reposos activos"
+	});
+	var permisoControl = normalizarResumenControlFuncionario(registro.permiso_vacacion_resumen, {
+		estado: "sin_permiso",
+		texto: "Sin permiso",
+		clase: "ok",
+		icono: "calendar",
+		contador: "0",
+		tooltip: "Sin permisos ni vacaciones activas"
+	});
+	var solicitudesPendientes = parseInt(registro.solicitudes_pendientes || "0", 10);
+	if (isNaN(solicitudesPendientes)) solicitudesPendientes = 0;
+	var solicitudesAusenciaPendientes = parseInt(registro.solicitudes_ausencia_pendientes || "0", 10);
+	if (isNaN(solicitudesAusenciaPendientes)) solicitudesAusenciaPendientes = 0;
+	solicitudesPendientes = Math.max(solicitudesPendientes, solicitudesAusenciaPendientes);
+	var docsValidar = parseInt(registro.documentos_por_validar || "0", 10);
+	if (isNaN(docsValidar)) docsValidar = 0;
+	var incidentes = parseInt(registro.incidentes_abiertos || "0", 10);
+	if (isNaN(incidentes)) incidentes = 0;
+	var sanciones = normalizarResumenSancionesFuncionario(registro.sanciones_resumen);
+	var seguimiento = normalizarResumenSeguimientoFuncionario(registro.seguimiento_resumen || registro.seguimiento || {});
+	var ausencias = parseInt(asistenciaControl.ausencias_periodo || registro.ausencias_sin_justificar || "0", 10);
+	if (isNaN(ausencias)) ausencias = 0;
+	var estadoDocumental = calcularDocumentosLegajoFuncionario(registro, {
+		contrato: contrato,
+		ips: { texto: ipsEstado, clase: ipsClase },
+		vacaciones: { texto: vacacionesTexto, clase: vacacionesClase },
+		incidentes: incidentes
+	});
+	var legajoFaltantes = estadoDocumental.faltantes.slice(0);
+	docsValidar = Math.max(docsValidar, estadoDocumental.docsValidar);
+	var alertas = [];
+	var estadoGeneral = "OK";
+	var estadoClase = "ok";
+	var accesoClase = acceso == "Acceso habilitado" ? "ok" : (acceso == "Acceso bloqueado" ? "danger" : "muted");
+
+	if (estadoNormalizado != "activo") {
+		estadoGeneral = "Inactivo";
+		estadoClase = "muted";
+		alertas.push("Funcionario inactivo");
+		if (acceso == "Acceso habilitado") {
+			estadoGeneral = "Riesgo alto";
+			estadoClase = "danger";
+			alertas.push("Inactivo con acceso habilitado");
+		}
+	}
+	if (estadoDocumental.porcentaje < 55) {
+		estadoGeneral = "Riesgo alto";
+		estadoClase = "danger";
+		alertas.push("Legajo critico incompleto");
+	} else if (estadoDocumental.porcentaje < 100 && estadoGeneral == "OK") {
+		estadoGeneral = "Atencion";
+		estadoClase = "warning";
+		alertas.push("Legajo incompleto");
+	}
+	if (contrato.clase == "danger") {
+		estadoGeneral = "Riesgo alto";
+		estadoClase = "danger";
+	}
+	if (contrato.alerta != "") {
+		alertas.push(contrato.alerta);
+	}
+	if (textoNormalizadoFuncionario(ipsEstado) != "ok") {
+		if (estadoGeneral == "OK") {
+			estadoGeneral = "Atencion";
+			estadoClase = "warning";
+		}
+		alertas.push("IPS pendiente de carga/revision");
+	}
+	if (horarios.length == 0) {
+		if (estadoGeneral == "OK") {
+			estadoGeneral = "Atencion";
+			estadoClase = "warning";
+		}
+		alertas.push("Horario laboral sin cargar");
+	}
+	if (solicitudesPendientes > 0) {
+		if (estadoGeneral == "OK") {
+			estadoGeneral = "Atencion";
+			estadoClase = "warning";
+		}
+		alertas.push(solicitudesPendientes + " solicitudes pendientes");
+	}
+	if (ausencias > 0 || incidentes > 0) {
+		estadoGeneral = "Riesgo alto";
+		estadoClase = "danger";
+		if (ausencias > 0) alertas.push(ausencias + " ausencias sin justificar");
+		if (incidentes > 0) alertas.push(incidentes + " incidentes abiertos");
+	}
+	if (docsValidar > 0) {
+		if (estadoGeneral == "OK") {
+			estadoGeneral = "Atencion";
+			estadoClase = "warning";
+		}
+		alertas.push(docsValidar + " documentos por validar");
+	}
+	if (sanciones.total > 0) {
+		if (estadoGeneral == "OK") {
+			estadoGeneral = "Atencion";
+			estadoClase = "warning";
+		}
+		alertas.push(sanciones.total == 1 ? "1 sancion registrada" : sanciones.total + " sanciones registradas");
+	}
+	if (alertas.length == 0) {
+		alertas.push("Sin alertas preventivas visibles");
+	}
+
+	return {
+		completitud: { porcentaje: estadoDocumental.porcentaje, pendientes: legajoFaltantes, completo: estadoDocumental.porcentaje >= 100 },
+		perfilCompletitud: completitud,
+		estadoGeneral: estadoGeneral,
+		estadoClase: estadoClase,
+		contrato: contrato,
+		ips: { texto: ipsEstado, clase: ipsClase, pendiente: textoNormalizadoFuncionario(ipsEstado) != "ok" },
+		asistencia: {
+			texto: asistenciaControl.texto || asistenciaTexto,
+			clase: asistenciaControl.clase || asistenciaClase,
+			ausencias: ausencias,
+			control: asistenciaControl
+		},
+		reposo: reposoControl,
+		vacaciones: { texto: permisoControl.texto || vacacionesTexto, clase: permisoControl.clase || vacacionesClase, control: permisoControl },
+		legajo: { texto: estadoDocumental.porcentaje + "% - " + legajoFaltantes.length + " faltan", clase: estadoDocumental.porcentaje >= 100 ? "ok" : "purple", faltantes: legajoFaltantes },
+		solicitudes: { texto: solicitudesPendientes > 0 ? solicitudesPendientes + " pendientes" : "Sin pendientes", clase: solicitudesPendientes > 0 ? "info" : "muted", pendientes: solicitudesPendientes },
+		seguimiento: seguimiento,
+		hilo: seguimiento,
+		acceso: { texto: acceso, clase: accesoClase },
+		docsValidar: docsValidar,
+		incidentes: incidentes,
+		sanciones: sanciones,
+		alertas: alertas
+	};
+}
+
+function chipRrhhFuncionario(texto, clase) {
+	return "<span class='funcionario-chip funcionario-chip--" + escaparHtmlFuncionario(clase || "muted") + "'>" + escaparHtmlFuncionario(texto || "-") + "</span>";
+}
+
+function normalizarResumenControlFuncionario(resumen, respaldo) {
+	resumen = resumen && typeof resumen == "object" ? resumen : {};
+	respaldo = respaldo || {};
+	return {
+		estado: resumen.estado || respaldo.estado || "",
+		texto: resumen.texto || respaldo.texto || "-",
+		clase: resumen.clase || respaldo.clase || "muted",
+		icono: resumen.icono || respaldo.icono || "dot",
+		contador: (resumen.contador === 0 || resumen.contador === "0") ? "0" : (resumen.contador || respaldo.contador || "0"),
+		tooltip: resumen.tooltip || respaldo.tooltip || "",
+		fecha_desde: resumen.fecha_desde || "",
+		fecha_hasta: resumen.fecha_hasta || "",
+		tipo: resumen.tipo || "",
+		ausencias_periodo: resumen.ausencias_periodo || resumen.ausencias || 0,
+		tardanzas_periodo: resumen.tardanzas_periodo || 0,
+		id: resumen.id || ""
+	};
+}
+
+function normalizarResumenSancionesFuncionario(resumen) {
+	resumen = resumen && typeof resumen == "object" ? resumen : {};
+	var total = parseInt(resumen.total || "0", 10);
+	var activas = parseInt(resumen.activas || "0", 10);
+	var pendientes = parseInt(resumen.pendientes || "0", 10);
+	if (isNaN(total)) total = 0;
+	if (isNaN(activas)) activas = 0;
+	if (isNaN(pendientes)) pendientes = 0;
+	return {
+		total: total,
+		activas: activas,
+		pendientes: pendientes,
+		recientes: Array.isArray(resumen.recientes) ? resumen.recientes : []
+	};
+}
+
+function normalizarResumenSeguimientoFuncionario(resumen) {
+	resumen = resumen && typeof resumen == "object" ? resumen : {};
+	var pendientes = parseInt(resumen.pendientes || "0", 10);
+	var mensajes = parseInt(resumen.mensajes || "0", 10);
+	if (isNaN(pendientes)) pendientes = 0;
+	if (isNaN(mensajes)) mensajes = 0;
+	var codInterConsulta = String(resumen.cod_interConsulta || resumen.cod_interConsultaFK || resumen.cod_hilo || "");
+	var vinculado = resumen.vinculado === true || resumen.vinculado === "true" || resumen.vinculado === "1" || (codInterConsulta !== "" && codInterConsulta !== "0");
+	var texto = resumen.texto || "";
+	if (texto == "") {
+		if (!vinculado) {
+			texto = "Sin seguimiento vinculado";
+		} else if (pendientes > 0) {
+			texto = pluralFuncionario(pendientes, "mensaje sin leer", "mensajes sin leer");
+		} else {
+			texto = "Seguimiento vinculado";
+		}
+	}
+	return {
+		vinculado: vinculado,
+		cod_interConsulta: codInterConsulta,
+		asunto: resumen.asunto || "",
+		estado: resumen.estado || "",
+		tipo: resumen.tipo || "",
+		texto: texto,
+		clase: resumen.clase || (pendientes > 0 ? "info" : (vinculado ? "ok" : "muted")),
+		pendientes: pendientes,
+		mensajes: mensajes,
+		fecha_vinculacion: resumen.fecha_vinculacion || "",
+		fecha_actualizacion: resumen.fecha_actualizacion || "",
+		creador: resumen.creador || "",
+		observacion: resumen.observacion || ""
+	};
+}
+
+function iconoControlFuncionario(nombre) {
+	var iconos = {
+		check: "&#10003;",
+		x: "&#10005;",
+		clock: "&#9201;",
+		calendar: "&#128197;",
+		shield: "&#128737;",
+		alert: "&#9888;",
+		plus: "&#43;",
+		plane: "&#9992;",
+		user: "&#128100;",
+		dot: "&#8226;"
+	};
+	return iconos[nombre] || iconos.dot;
+}
+
+function renderIndicadorControlFuncionario(resumen, tipo) {
+	resumen = normalizarResumenControlFuncionario(resumen, {});
+	var titulo = resumen.tooltip || resumen.texto || "";
+	return "<span class='funcionario-control-status funcionario-control-status--" + escaparHtmlFuncionario(resumen.clase || "muted") + " funcionario-control-status--" + escaparHtmlFuncionario(tipo || "general") + "' title='" + escaparHtmlFuncionario(titulo) + "'>" +
+		"<span class='funcionario-control-status__chip'><i aria-hidden='true'>" + iconoControlFuncionario(resumen.icono) + "</i><strong>" + escaparHtmlFuncionario(resumen.texto) + "</strong></span>" +
+		"<span class='funcionario-control-status__badge'>" + escaparHtmlFuncionario(resumen.contador || "0") + "</span>" +
+	"</span>";
+}
+
+function textoFechaCortaFuncionario(fecha) {
+	if (!fecha || String(fecha).length < 10) {
+		return "";
+	}
+	var partes = String(fecha).substring(0, 10).split("-");
+	return partes.length == 3 ? partes[2] + "/" + partes[1] : fecha;
+}
+
+function renderSituacionHoyFuncionario(resumen) {
+	if (!resumen) {
+		return "";
+	}
+	return "<div class='funcionario-control-lista'>" +
+		"<div><span>Asistencia</span>" + renderIndicadorControlFuncionario(resumen.asistencia.control, "asistencia") + "</div>" +
+		"<div><span>Reposo medico</span>" + renderIndicadorControlFuncionario(resumen.reposo, "reposo") + "</div>" +
+		"<div><span>Permiso/Vacaciones</span>" + renderIndicadorControlFuncionario(resumen.vacaciones.control, "permiso") + "</div>" +
+	"</div>";
+}
+
+function renderProximasNovedadesFuncionario(registro) {
+	var proximas = Array.isArray(registro && registro.proximas_ausencias) ? registro.proximas_ausencias : [];
+	if (proximas.length == 0) {
+		return "<div class='funcionario-control-empty'>Sin novedades aprobadas proximas.</div>";
+	}
+	var html = "<div class='funcionario-panel-lista'>";
+	for (var i = 0; i < proximas.length; i++) {
+		var item = proximas[i];
+		var rango = textoFechaCortaFuncionario(item.fecha_desde) + (item.fecha_hasta && item.fecha_hasta != item.fecha_desde ? " al " + textoFechaCortaFuncionario(item.fecha_hasta) : "");
+		html += "<div class='funcionario-panel-row'><strong>" + escaparHtmlFuncionario(rango) + "</strong><span>" + escaparHtmlFuncionario(textoTipoAusenciaFuncionario(item.tipo) + " aprobada") + "</span></div>";
+	}
+	html += "</div>";
+	return html;
+}
+
+function textoTipoAusenciaFuncionario(tipo) {
+	if (tipo == "reposo_medico") return "Reposo medico";
+	if (tipo == "vacaciones") return "Vacaciones";
+	return "Permiso";
+}
+
+function textoEstadoAusenciaFuncionario(estado) {
+	if (estado == "aprobado") return "Aprobada";
+	if (estado == "rechazado") return "Rechazada";
+	if (estado == "pendiente_documento") return "Pendiente de documento";
+	if (estado == "por_validar") return "Por validar";
+	if (estado == "cancelado") return "Cancelada";
+	return "Pendiente";
+}
+
+function renderPendientesControlFuncionario(registro) {
+	var solicitudes = Array.isArray(registro && registro.solicitudes_ausencia) ? registro.solicitudes_ausencia : [];
+	var pendientes = solicitudes.filter(function(item) {
+		return ["pendiente", "pendiente_documento", "por_validar"].indexOf(item.estado) >= 0;
+	});
+	if (pendientes.length == 0) {
+		return "<div class='funcionario-control-empty'>Sin pendientes de asistencia.</div>";
+	}
+	var html = "<div class='funcionario-panel-lista'>";
+	for (var i = 0; i < pendientes.length; i++) {
+		var item = pendientes[i];
+		var rango = textoFechaCortaFuncionario(item.fecha_desde) + (item.fecha_hasta && item.fecha_hasta != item.fecha_desde ? " al " + textoFechaCortaFuncionario(item.fecha_hasta) : "");
+		html += "<div class='funcionario-panel-row funcionario-panel-row--acciones'>" +
+			"<strong>" + escaparHtmlFuncionario(textoTipoAusenciaFuncionario(item.tipo)) + "</strong>" +
+			"<span>" + escaparHtmlFuncionario(rango + " - " + textoEstadoAusenciaFuncionario(item.estado)) + "</span>" +
+			"<div><button type='button' onclick='responderSolicitudAusenciaFuncionario(\"" + escaparHtmlFuncionario(item.id) + "\", \"aprobado\")'>Aprobar</button><button type='button' onclick='responderSolicitudAusenciaFuncionario(\"" + escaparHtmlFuncionario(item.id) + "\", \"rechazado\")'>Rechazar</button></div>" +
+		"</div>";
+	}
+	html += "</div>";
+	return html;
+}
+
+function responderSolicitudAusenciaFuncionario(idSolicitud, estado) {
+	var observacion = "";
+	if (estado == "rechazado") {
+		observacion = window.prompt("Motivo del rechazo", "") || "";
+	}
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"funt": "responderSolicitudAusenciaUsuario",
+		"id_solicitud": idSolicitud,
+		"estado": estado,
+		"observacion": observacion
+	};
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Solicitud actualizada.");
+					buscarabmusuario();
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo actualizar la solicitud.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo actualizar la solicitud.");
+			}
+		}
+	});
+}
+
+function aplicarFiltroHiloFuncionarioSeleccionado(intentos) {
+	intentos = intentos || 0;
+	if (!funcionarioSeleccionadoCache || !funcionarioSeleccionadoCache.cod_usuario) {
+		return;
+	}
+	var selectParticipante = document.getElementById("inptUsuariosInterConsulta");
+	var busquedaGlobal = document.getElementById("inptBuscarInterConsultaGlobal");
+	var filtroPorParticipante = false;
+	if (selectParticipante) {
+		selectParticipante.value = String(funcionarioSeleccionadoCache.cod_usuario);
+		if (selectParticipante.value != String(funcionarioSeleccionadoCache.cod_usuario) && intentos < 8) {
+			setTimeout(function() {
+				aplicarFiltroHiloFuncionarioSeleccionado(intentos + 1);
+			}, 250);
+			return;
+		}
+		filtroPorParticipante = selectParticipante.value == String(funcionarioSeleccionadoCache.cod_usuario);
+	}
+	if (busquedaGlobal) {
+		busquedaGlobal.value = filtroPorParticipante ? "" : (funcionarioSeleccionadoCache.nombre_persona || "");
+	}
+	if (typeof buscarPacientesConInterConsultas == "function") {
+		buscarPacientesConInterConsultas();
+	}
+}
+
+function obtenerSeguimientoFuncionarioSeleccionado() {
+	if (!funcionarioSeleccionadoCache && idAbmUsuario != "") {
+		seleccionarFuncionarioDesdeDirectorio(idAbmUsuario);
+	}
+	if (!funcionarioSeleccionadoCache) {
+		return null;
+	}
+	return normalizarResumenSeguimientoFuncionario(funcionarioSeleccionadoCache.seguimiento_resumen || {});
+}
+
+function abrirSeguimientoPorCodigoFuncionario(codInterConsulta) {
+	if (!codInterConsulta) {
+		ver_vetana_informativa("Este funcionario no tiene seguimiento principal vinculado.");
+		return;
+	}
+	if (typeof verCerrarVentanaListadoInterConsulta != "function" || typeof buscarInterConsultasYContenido != "function") {
+		ver_vetana_informativa("El modulo de hilos no esta disponible en esta vista.");
+		return;
+	}
+	verCerrarVentanaListadoInterConsulta(true);
+	setTimeout(function() {
+		buscarInterConsultasYContenido(codInterConsulta);
+	}, 350);
+}
+
+function actualizarSeguimientoFuncionarioEnCache(codUsuario, resumen) {
+	if (!resumen || typeof resumen != "object") {
+		return;
+	}
+	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
+		if (String(funcionariosDirectorioCache[i].cod_usuario) == String(codUsuario)) {
+			funcionariosDirectorioCache[i].seguimiento_resumen = resumen;
+		}
+	}
+	if (funcionarioSeleccionadoCache && String(funcionarioSeleccionadoCache.cod_usuario) == String(codUsuario)) {
+		funcionarioSeleccionadoCache.seguimiento_resumen = resumen;
+		actualizarPanelRapidoFuncionario(funcionarioSeleccionadoCache);
+	}
+	filtrarDirectorioFuncionarios();
+}
+
+function abrirSeguimientoFuncionarioSeleccionado() {
+	if (!funcionarioSeleccionadoCache && idAbmUsuario != "") {
+		seleccionarFuncionarioDesdeDirectorio(idAbmUsuario);
+	}
+	if (!funcionarioSeleccionadoCache) {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	var seguimiento = obtenerSeguimientoFuncionarioSeleccionado();
+	if (!seguimiento || !seguimiento.vinculado || !seguimiento.cod_interConsulta) {
+		var opcion = window.prompt("Este funcionario no tiene seguimiento principal. Escriba V para vincular un hilo existente o C para crear uno nuevo.", "V") || "";
+		opcion = textoNormalizadoFuncionario(opcion);
+		if (opcion == "c") {
+			crearSeguimientoFuncionarioSeleccionado();
+		} else if (opcion == "v") {
+			abrirSelectorSeguimientoFuncionario();
+		}
+		return;
+	}
+	abrirSeguimientoPorCodigoFuncionario(seguimiento.cod_interConsulta);
+}
+
+function abrirHiloFuncionarioSeleccionado() {
+	abrirSeguimientoFuncionarioSeleccionado();
+}
+
+function asegurarModalSeguimientoFuncionario() {
+	var modal = document.getElementById("modalSeguimientoFuncionario");
+	if (modal) {
+		return modal;
+	}
+	modal = document.createElement("div");
+	modal.id = "modalSeguimientoFuncionario";
+	modal.className = "funcionario-sanciones-modal";
+	modal.style.display = "none";
+	modal.innerHTML = "<div class='funcionario-sanciones-modal__box'>" +
+		"<div class='funcionario-sanciones-modal__head'><strong>Seleccionar seguimiento</strong><button type='button' onclick='cerrarSelectorSeguimientoFuncionario()'>&times;</button></div>" +
+		"<div class='funcionario-sanciones-modal__body' id='modalSeguimientoFuncionarioBody'></div>" +
+	"</div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function cerrarSelectorSeguimientoFuncionario() {
+	var modal = document.getElementById("modalSeguimientoFuncionario");
+	if (modal) {
+		modal.style.display = "none";
+	}
+}
+
+function renderSelectorSeguimientoFuncionario(registros, codUsuario) {
+	registros = Array.isArray(registros) ? registros : [];
+	var html = "";
+	if (registros.length == 0) {
+		return "<div class='funcionario-detail-empty'>No se encontraron hilos vinculados a este funcionario.</div>" +
+			"<div class='funcionario-detail-actions'>" +
+				"<button type='button' class='funcionario-detail-action' onclick='vincularSeguimientoFuncionarioSeleccionado(\"" + escaparHtmlFuncionario(codUsuario) + "\")'>Ingresar codigo</button>" +
+				"<button type='button' class='funcionario-detail-action' onclick='crearSeguimientoFuncionarioSeleccionado(\"" + escaparHtmlFuncionario(codUsuario) + "\")'>Crear seguimiento</button>" +
+			"</div>";
+	}
+	html = "<div class='funcionario-sanciones-lista'>";
+	for (var i = 0; i < registros.length; i++) {
+		var item = registros[i];
+		var codInter = item.cod_interConsulta || "";
+		var asunto = item.asunto || "Sin asunto";
+		var estado = item.estado || "Sin estado";
+		var fecha = item.fecha_creacion || "";
+		var creador = item.nombre_persona_creador || "";
+		html += "<div class='funcionario-sanciones-row'>" +
+			"<div><strong>#" + escaparHtmlFuncionario(codInter) + " - " + escaparHtmlFuncionario(asunto) + "</strong>" +
+			"<span>" + escaparHtmlFuncionario(estado + (fecha ? " - " + fecha : "") + (creador ? " - " + creador : "")) + "</span></div>" +
+			"<div class='funcionario-sanciones-row__actions'>" +
+				"<button type='button' onclick='cerrarSelectorSeguimientoFuncionario();abrirSeguimientoPorCodigoFuncionario(\"" + escaparHtmlFuncionario(codInter) + "\")'>Ver</button>" +
+				"<button type='button' onclick='cerrarSelectorSeguimientoFuncionario();vincularSeguimientoFuncionarioConCodigo(\"" + escaparHtmlFuncionario(codUsuario) + "\", \"" + escaparHtmlFuncionario(codInter) + "\")'>Vincular</button>" +
+			"</div>" +
+		"</div>";
+	}
+	html += "</div><div class='funcionario-detail-actions'>" +
+		"<button type='button' class='funcionario-detail-action' onclick='vincularSeguimientoFuncionarioSeleccionado(\"" + escaparHtmlFuncionario(codUsuario) + "\")'>Ingresar codigo</button>" +
+		"<button type='button' class='funcionario-detail-action' onclick='crearSeguimientoFuncionarioSeleccionado(\"" + escaparHtmlFuncionario(codUsuario) + "\")'>Crear seguimiento</button>" +
+	"</div>";
+	return html;
+}
+
+function abrirSelectorSeguimientoFuncionario(codUsuario) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	if (!funcionarioSeleccionadoCache || String(funcionarioSeleccionadoCache.cod_usuario) != String(codUsuario)) {
+		seleccionarFuncionarioDesdeDirectorio(codUsuario);
+	}
+	var modal = asegurarModalSeguimientoFuncionario();
+	var cuerpo = document.getElementById("modalSeguimientoFuncionarioBody");
+	if (cuerpo) {
+		cuerpo.innerHTML = "<div class='funcionario-detail-empty'>Buscando hilos vinculados al funcionario...</div>";
+	}
+	modal.style.display = "";
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "buscarInterConsultas");
+	datos.append("cod_usuarioFK", userid);
+	datos.append("usuario_vinculado", codUsuario);
+	datos.append("ocultar_inactivos", "true");
+	datos.append("limite", 20);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmInterConsulta.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					document.getElementById("modalSeguimientoFuncionarioBody").innerHTML = renderSelectorSeguimientoFuncionario(respuesta["3"], codUsuario);
+				} else {
+					document.getElementById("modalSeguimientoFuncionarioBody").innerHTML = renderSelectorSeguimientoFuncionario([], codUsuario);
+				}
+			} catch (error) {
+				document.getElementById("modalSeguimientoFuncionarioBody").innerHTML = renderSelectorSeguimientoFuncionario([], codUsuario);
+			}
+		}
+	});
+}
+
+function vincularSeguimientoFuncionarioSeleccionado(codUsuario) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	if (!funcionarioSeleccionadoCache || String(funcionarioSeleccionadoCache.cod_usuario) != String(codUsuario)) {
+		seleccionarFuncionarioDesdeDirectorio(codUsuario);
+	}
+	var seguimientoActual = obtenerSeguimientoFuncionarioSeleccionado() || normalizarResumenSeguimientoFuncionario({});
+	var codInterConsulta = window.prompt("Codigo del hilo existente que sera el seguimiento principal", seguimientoActual.cod_interConsulta || "") || "";
+	codInterConsulta = $.trim(codInterConsulta);
+	if (codInterConsulta == "") {
+		return;
+	}
+	if (!/^\d+$/.test(codInterConsulta)) {
+		ver_vetana_informativa("Indique un codigo de hilo valido.");
+		return;
+	}
+	vincularSeguimientoFuncionarioConCodigo(codUsuario, codInterConsulta);
+}
+
+function vincularSeguimientoFuncionarioConCodigo(codUsuario, codInterConsulta) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "" || !codInterConsulta) {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	if (!funcionarioSeleccionadoCache || String(funcionarioSeleccionadoCache.cod_usuario) != String(codUsuario)) {
+		seleccionarFuncionarioDesdeDirectorio(codUsuario);
+	}
+	codInterConsulta = $.trim(String(codInterConsulta));
+	if (!/^\d+$/.test(codInterConsulta)) {
+		ver_vetana_informativa("Indique un codigo de hilo valido.");
+		return;
+	}
+	var seguimientoActual = obtenerSeguimientoFuncionarioSeleccionado() || normalizarResumenSeguimientoFuncionario({});
+	var motivo = "";
+	if (seguimientoActual.vinculado && seguimientoActual.cod_interConsulta && String(seguimientoActual.cod_interConsulta) != String(codInterConsulta)) {
+		if (!window.confirm("Este funcionario ya tiene un seguimiento principal. Desea reemplazarlo?")) {
+			return;
+		}
+		motivo = window.prompt("Motivo del cambio de seguimiento principal", "") || "";
+		if ($.trim(motivo) == "") {
+			ver_vetana_informativa("Indique el motivo del cambio.");
+			return;
+		}
+	}
+	var observacion = window.prompt("Observacion del vinculo", seguimientoActual.observacion || "") || "";
+	obtener_datos_user();
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "vincularSeguimientoFuncionario",
+			"cod_usuarioFK": codUsuario,
+			"cod_interConsultaFK": codInterConsulta,
+			"observacion": observacion,
+			"motivo": motivo
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					var resumen = respuesta["3"] || {};
+					actualizarSeguimientoFuncionarioEnCache(codUsuario, resumen);
+					ver_vetana_informativa(respuesta["2"] || "Seguimiento vinculado.");
+					buscarabmusuario();
+					abrirSeguimientoPorCodigoFuncionario(resumen.cod_interConsulta || codInterConsulta);
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo vincular el seguimiento.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo vincular el seguimiento.");
+			}
+		}
+	});
+}
+
+function crearSeguimientoFuncionarioSeleccionado(codUsuario) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	if (!funcionarioSeleccionadoCache || String(funcionarioSeleccionadoCache.cod_usuario) != String(codUsuario)) {
+		seleccionarFuncionarioDesdeDirectorio(codUsuario);
+	}
+	var seguimientoActual = obtenerSeguimientoFuncionarioSeleccionado() || normalizarResumenSeguimientoFuncionario({});
+	var nombre = funcionarioSeleccionadoCache ? (funcionarioSeleccionadoCache.nombre_persona || "Funcionario") : "Funcionario";
+	var asunto = window.prompt("Asunto del seguimiento", "Seguimiento administrativo - " + nombre) || "";
+	if ($.trim(asunto) == "") {
+		return;
+	}
+	var observacion = window.prompt("Observacion inicial", "Hilo principal de seguimiento administrativo del funcionario.") || "";
+	var motivo = "";
+	if (seguimientoActual.vinculado && seguimientoActual.cod_interConsulta) {
+		if (!window.confirm("Este funcionario ya tiene un seguimiento principal. Desea crear uno nuevo y reemplazar el vinculo actual?")) {
+			return;
+		}
+		motivo = window.prompt("Motivo del cambio de seguimiento principal", "") || "";
+		if ($.trim(motivo) == "") {
+			ver_vetana_informativa("Indique el motivo del cambio.");
+			return;
+		}
+	}
+	obtener_datos_user();
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "crearSeguimientoFuncionario",
+			"cod_usuarioFK": codUsuario,
+			"asunto": asunto,
+			"observacion": observacion,
+			"motivo": motivo
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					var resumen = respuesta["3"] || {};
+					actualizarSeguimientoFuncionarioEnCache(codUsuario, resumen);
+					ver_vetana_informativa(respuesta["2"] || "Seguimiento creado.");
+					buscarabmusuario();
+					if (resumen.cod_interConsulta) {
+						abrirSeguimientoPorCodigoFuncionario(resumen.cod_interConsulta);
+					}
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo crear el seguimiento.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo crear el seguimiento.");
+			}
+		}
+	});
+}
+
+function aplicarFiltroRrhhFuncionarios(filtro) {
+	funcionarioFiltroRrhhActivo = filtro || "todos";
+	var botones = document.querySelectorAll("[data-filtro-rrhh]");
+	for (var i = 0; i < botones.length; i++) {
+		botones[i].className = botones[i].getAttribute("data-filtro-rrhh") == funcionarioFiltroRrhhActivo ? "funcionario-filter funcionario-filter--active" : "funcionario-filter";
+	}
+	filtrarDirectorioFuncionarios();
+}
+
+function exportarConsolaFuncionariosPdf() {
+	var registros = filtrarRegistrosFuncionarios(funcionariosDirectorioCache || []);
+	var filas = registros.map(function(registro) {
+		var resumen = obtenerResumenRrhhFuncionario(registro);
+		var alertas = obtenerAlertasVisiblesFuncionario(registro, resumen).map(function(alerta) { return alerta.texto; }).join(", ");
+		return "<tr><td>" + escaparHtmlFuncionario(registro.nombre_persona || "") + "</td><td>" + escaparHtmlFuncionario(registro.tipo || "") + "</td><td>" + escaparHtmlFuncionario(registro.local || "") + "</td><td>" + escaparHtmlFuncionario(resumen.estadoGeneral) + "</td><td>" + escaparHtmlFuncionario(resumen.contrato.texto) + "</td><td>" + escaparHtmlFuncionario(alertas || "Sin alertas relevantes") + "</td><td>" + escaparHtmlFuncionario(resumen.sanciones.total > 0 ? pluralFuncionario(resumen.sanciones.total, "sancion", "sanciones") : "Sin sanciones") + "</td><td>" + escaparHtmlFuncionario(resumen.acceso.texto) + "</td></tr>";
+	}).join("");
+	var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Funcionarios RRHH</title><style>body{font-family:Arial,sans-serif;color:#172033;padding:18px;}h1{font-size:20px;margin:0 0 4px;}p{margin:0 0 14px;color:#667085;font-size:12px;}table{width:100%;border-collapse:collapse;font-size:11px;}th,td{border:1px solid #d8e2ee;padding:7px;text-align:left;}th{background:#f2f6fb;}</style></head><body><h1>Funcionarios</h1><p>Consola de RR.HH. - vista administrativa</p><table><thead><tr><th>Funcionario</th><th>Cargo</th><th>Sucursal</th><th>Estado</th><th>Contrato</th><th>Alertas y novedades</th><th>Sanciones</th><th>Acceso</th></tr></thead><tbody>" + filas + "</tbody></table></body></html>";
+	var ventana = window.open("", "_blank");
+	if (!ventana) {
+		ver_vetana_informativa("No se pudo abrir la vista de impresion.");
+		return;
+	}
+	ventana.document.open();
+	ventana.document.write(html);
+	ventana.document.close();
+	ventana.focus();
+	ventana.print();
+}
+
+function cumpleFiltroRrhhFuncionario(resumen) {
+	switch (funcionarioFiltroRrhhActivo) {
+		case "riesgo": return resumen.estadoGeneral == "Riesgo alto";
+		case "ips": return resumen.ips.pendiente;
+		case "contrato": return resumen.contrato.porVencer || resumen.contrato.texto == "Por cargar" || resumen.contrato.texto == "Sin fechas cargadas";
+		case "solicitudes": return resumen.solicitudes.pendientes > 0;
+		case "legajo": return resumen.completitud.porcentaje < 100;
+		case "ausencias": return resumen.asistencia.ausencias > 0;
+		case "documentos": return resumen.docsValidar > 0;
+		case "incidentes": return resumen.incidentes > 0;
+		case "sanciones": return resumen.sanciones && resumen.sanciones.total > 0;
+		default: return true;
+	}
+}
+
 function filtrarRegistrosFuncionarios(registros) {
 	var texto = textoNormalizadoFuncionario(document.getElementById("inptBuscarFuncionarioUniversal") ? document.getElementById("inptBuscarFuncionarioUniversal").value : "");
 	var cargo = document.getElementById("inptFiltroFuncionarioCargo") ? document.getElementById("inptFiltroFuncionarioCargo").value : "";
@@ -899,6 +2074,7 @@ function filtrarRegistrosFuncionarios(registros) {
 		var completitud = calcularCompletitudFuncionario(registro);
 		var estadoAcceso = obtenerEstadoAccesoFuncionario(registro);
 		var horarios = obtenerHorariosFuncionario(registro);
+		var resumenRrhh = obtenerResumenRrhhFuncionario(registro);
 		var textoRegistro = textoNormalizadoFuncionario([
 			registro.nombre_persona,
 			registro.rut_usuario,
@@ -906,7 +2082,8 @@ function filtrarRegistrosFuncionarios(registros) {
 			registro.login,
 			registro.tipo,
 			registro.local,
-			registro.acceso
+			registro.acceso,
+			resumenRrhh.sanciones && resumenRrhh.sanciones.total > 0 ? "sanciones" : ""
 		].join(" "));
 
 		if (texto != "" && textoRegistro.indexOf(texto) == -1) return false;
@@ -917,47 +2094,326 @@ function filtrarRegistrosFuncionarios(registros) {
 		if (filtroSinAcceso && estadoAcceso != "Sin acceso al sistema") return false;
 		if (filtroPerfilIncompleto && completitud.porcentaje >= 100) return false;
 		if (filtroSinHorario && horarios.length > 0) return false;
+		if (!cumpleFiltroRrhhFuncionario(resumenRrhh)) return false;
 		return true;
 	});
 }
 
+function pluralFuncionario(cantidad, singular, plural) {
+	cantidad = parseInt(cantidad || "0", 10) || 0;
+	return cantidad + " " + (cantidad == 1 ? singular : plural);
+}
+
+function textoFechasContratoFuncionario(registro) {
+	var inicio = textoFechaCortaFuncionario(registro.fecha_inicio_contrato || "");
+	var fin = textoFechaCortaFuncionario(registro.fecha_fin_contrato || "");
+	if (inicio != "" && fin != "") {
+		return inicio + " - " + fin;
+	}
+	if (inicio != "") {
+		return "Desde " + inicio;
+	}
+	if (fin != "") {
+		return "Hasta " + fin;
+	}
+	return "Fechas pendientes";
+}
+
+function textoFechaControlFuncionario(control) {
+	control = normalizarResumenControlFuncionario(control, {});
+	var desde = textoFechaCortaFuncionario(control.fecha_desde || "");
+	var hasta = textoFechaCortaFuncionario(control.fecha_hasta || "");
+	if (desde != "" && hasta != "" && desde != hasta) {
+		return desde + " al " + hasta;
+	}
+	if (hasta != "") {
+		return "hasta " + hasta;
+	}
+	if (desde != "") {
+		return "desde " + desde;
+	}
+	return "";
+}
+
+function renderChipAlertaFuncionario(alerta) {
+	var clase = alerta.clase || "muted";
+	var titulo = alerta.titulo || alerta.texto || "";
+	return "<span class='funcionario-alert-chip funcionario-alert-chip--" + escaparHtmlFuncionario(clase) + "' title='" + escaparHtmlFuncionario(titulo) + "'>" + escaparHtmlFuncionario(alerta.texto || "") + "</span>";
+}
+
+function obtenerAlertasVisiblesFuncionario(registro, resumen) {
+	var alertas = [];
+	var asistencia = normalizarResumenControlFuncionario(resumen.asistencia.control, {});
+	var reposo = normalizarResumenControlFuncionario(resumen.reposo, {});
+	var permiso = normalizarResumenControlFuncionario(resumen.vacaciones.control, {});
+	var estadoAsistencia = textoNormalizadoFuncionario(asistencia.estado);
+	var estadoReposo = textoNormalizadoFuncionario(reposo.estado);
+	var estadoPermiso = textoNormalizadoFuncionario(permiso.estado);
+	var fechaControl = "";
+
+	if (["presente", "programada", "dia_libre"].indexOf(estadoAsistencia) == -1) {
+		if (estadoAsistencia == "tardanza") {
+			alertas.push({ texto: asistencia.contador && asistencia.contador != "0" ? "Tardanza (" + asistencia.contador + ")" : "Tardanza", clase: asistencia.clase || "orange", titulo: asistencia.tooltip });
+		} else if (estadoAsistencia == "ausente") {
+			alertas.push({ texto: asistencia.contador && asistencia.contador != "0" ? "Ausencias " + asistencia.contador : "Ausente", clase: asistencia.clase || "danger", titulo: asistencia.tooltip });
+		} else if (estadoAsistencia == "sin_horario") {
+			alertas.push({ texto: "Sin horario", clase: "warning", titulo: asistencia.tooltip });
+		} else if (estadoAsistencia != "") {
+			alertas.push({ texto: asistencia.texto, clase: asistencia.clase || "info", titulo: asistencia.tooltip });
+		}
+	}
+
+	if (estadoReposo != "" && estadoReposo != "sin_reposo") {
+		fechaControl = textoFechaControlFuncionario(reposo);
+		alertas.push({ texto: fechaControl != "" ? reposo.texto + " " + fechaControl : reposo.texto, clase: reposo.clase || "warning", titulo: reposo.tooltip });
+	}
+
+	if (estadoPermiso != "" && estadoPermiso != "sin_permiso") {
+		fechaControl = textoFechaControlFuncionario(permiso);
+		alertas.push({ texto: fechaControl != "" ? permiso.texto + " " + fechaControl : permiso.texto, clase: permiso.clase || "info", titulo: permiso.tooltip });
+	}
+
+	if (resumen.ips && resumen.ips.pendiente) {
+		alertas.push({ texto: "IPS pendiente", clase: resumen.ips.clase || "warning", titulo: resumen.ips.texto });
+	}
+	if (resumen.completitud && resumen.completitud.porcentaje < 100) {
+		alertas.push({ texto: "Legajo " + resumen.completitud.porcentaje + "% - faltan " + resumen.completitud.pendientes.length, clase: "purple", titulo: "Legajo documental incompleto" });
+	}
+	if (resumen.docsValidar > 0) {
+		alertas.push({ texto: pluralFuncionario(resumen.docsValidar, "doc por validar", "docs por validar"), clase: "purple", titulo: "Documentos cargados pendientes de revision" });
+	}
+	if (resumen.solicitudes && resumen.solicitudes.pendientes > 0) {
+		alertas.push({ texto: pluralFuncionario(resumen.solicitudes.pendientes, "solicitud pendiente", "solicitudes pendientes"), clase: "info", titulo: "Solicitudes de funcionario pendientes" });
+	}
+	if (resumen.seguimiento && resumen.seguimiento.vinculado && resumen.seguimiento.pendientes > 0) {
+		alertas.push({ texto: pluralFuncionario(resumen.seguimiento.pendientes, "mensaje sin leer", "mensajes sin leer"), clase: "info", titulo: "Seguimiento administrativo con mensajes sin leer" });
+	}
+	if (resumen.acceso && resumen.acceso.texto != "Acceso habilitado") {
+		alertas.push({ texto: resumen.acceso.texto, clase: resumen.acceso.clase || "warning", titulo: "Situacion de acceso" });
+	}
+	if (resumen.sanciones && resumen.sanciones.total > 0) {
+		alertas.push({
+			texto: pluralFuncionario(resumen.sanciones.total, "sancion", "sanciones") + (resumen.sanciones.pendientes > 0 ? " - pendiente" : ""),
+			clase: resumen.sanciones.pendientes > 0 ? "warning" : "danger",
+			titulo: "Medidas disciplinarias registradas"
+		});
+	}
+	return alertas;
+}
+
+function renderAlertasVisiblesFuncionario(registro, resumen) {
+	var alertas = obtenerAlertasVisiblesFuncionario(registro, resumen);
+	if (alertas.length == 0) {
+		return "";
+	}
+	var html = "";
+	for (var i = 0; i < alertas.length; i++) {
+		html += renderChipAlertaFuncionario(alertas[i]);
+	}
+	return html;
+}
+
+function renderListaDetalleFuncionario(items, maximo, vacio) {
+	items = Array.isArray(items) ? items : [];
+	if (items.length == 0) {
+		return "<div class='funcionario-detail-empty'>" + escaparHtmlFuncionario(vacio || "Sin registros visibles.") + "</div>";
+	}
+	var limite = maximo || items.length;
+	var html = "<ul class='funcionario-detail-list'>";
+	for (var i = 0; i < items.length && i < limite; i++) {
+		html += "<li>" + escaparHtmlFuncionario(items[i]) + "</li>";
+	}
+	if (items.length > limite) {
+		html += "<li>+" + (items.length - limite) + " pendientes mas.</li>";
+	}
+	return html + "</ul>";
+}
+
+function renderSancionesRecientesFuncionario(resumen) {
+	var sanciones = resumen.sanciones && Array.isArray(resumen.sanciones.recientes) ? resumen.sanciones.recientes : [];
+	if (sanciones.length == 0) {
+		return "<div class='funcionario-detail-empty'>No registra sanciones activas.</div>";
+	}
+	var html = "<div class='funcionario-detail-list funcionario-detail-list--rows'>";
+	for (var i = 0; i < sanciones.length && i < 3; i++) {
+		var sancion = sanciones[i];
+		html += "<div class='funcionario-detail-row'>" +
+			"<strong>" + escaparHtmlFuncionario(textoFechaCortaFuncionario(sancion.fecha || "") + " - " + (sancion.tipo || "Sancion")) + "</strong>" +
+			"<span>" + escaparHtmlFuncionario((sancion.motivo || "Sin motivo") + " · " + (sancion.estado || "activa") + " · " + (sancion.notificacion_estado || "pendiente")) + "</span>" +
+		"</div>";
+	}
+	return html + "</div>";
+}
+
+function botonDetalleFuncionario(cod, texto, accion, clase) {
+	return "<button type='button' class='funcionario-detail-action " + escaparHtmlFuncionario(clase || "") + "' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + cod + "\");" + accion + "'>" + escaparHtmlFuncionario(texto) + "</button>";
+}
+
+function renderDetalleExpandidoFuncionarioRrhh(registro) {
+	var resumen = obtenerResumenRrhhFuncionario(registro);
+	var cod = escaparHtmlFuncionario(registro.cod_usuario);
+	var contratoFechas = textoFechasContratoFuncionario(registro);
+	var proximas = renderProximasNovedadesFuncionario(registro);
+	var pendientesControl = renderPendientesControlFuncionario(registro);
+	var alertas = renderAlertasVisiblesFuncionario(registro, resumen);
+	var sancionesTexto = resumen.sanciones.total > 0 ? pluralFuncionario(resumen.sanciones.total, "sancion registrada", "sanciones registradas") : "Sin sanciones activas";
+	var seguimiento = resumen.seguimiento || resumen.hilo || normalizarResumenSeguimientoFuncionario({});
+	var seguimientoTexto = seguimiento.vinculado ? seguimiento.texto : "Sin seguimiento vinculado";
+	var seguimientoAsunto = seguimiento.vinculado ? ("#" + seguimiento.cod_interConsulta + " - " + (seguimiento.asunto || "Seguimiento administrativo")) : "No hay hilo principal vinculado.";
+	var seguimientoMeta = seguimiento.vinculado ? ((seguimiento.estado || "Sin estado") + (seguimiento.fecha_actualizacion ? " - " + seguimiento.fecha_actualizacion : "")) : "Vincula un hilo existente o crea uno nuevo desde estas acciones.";
+	var accionesSeguimiento = seguimiento.vinculado ?
+		(
+			botonDetalleFuncionario(cod, "Ver seguimiento", "abrirSeguimientoFuncionarioSeleccionado();") +
+			botonDetalleFuncionario(cod, "Cambiar seguimiento", "abrirSelectorSeguimientoFuncionario();")
+		) :
+		(
+			botonDetalleFuncionario(cod, "Vincular seguimiento", "abrirSelectorSeguimientoFuncionario();") +
+			botonDetalleFuncionario(cod, "Crear seguimiento", "crearSeguimientoFuncionarioSeleccionado();")
+		);
+
+	return "<section class='funcionario-row-detail' id='funcionarioDetalle_" + cod + "'>" +
+		"<div class='funcionario-detail-grid'>" +
+			"<div class='funcionario-detail-card funcionario-detail-card--laboral'>" +
+				"<h4>Estado laboral y documental</h4>" +
+				"<div class='funcionario-detail-metrics'>" +
+					"<div><span>Contrato</span>" + chipRrhhFuncionario(resumen.contrato.texto, resumen.contrato.clase) + "<small>" + escaparHtmlFuncionario(contratoFechas) + "</small></div>" +
+					"<div><span>IPS</span>" + chipRrhhFuncionario(resumen.ips.texto, resumen.ips.clase) + "</div>" +
+					"<div><span>Legajo</span>" + chipRrhhFuncionario(resumen.legajo.texto, resumen.legajo.clase) + "<small>" + escaparHtmlFuncionario(resumen.docsValidar > 0 ? resumen.docsValidar + " por validar" : "Sin validaciones pendientes") + "</small></div>" +
+				"</div>" +
+				"<div class='funcionario-detail-subblock'><span>Documentos faltantes</span>" + renderListaDetalleFuncionario(resumen.legajo.faltantes, 5, "Legajo completo.") + "</div>" +
+				"<div class='funcionario-detail-actions'>" +
+					botonDetalleFuncionario(cod, "Ver legajo", "abrirFichaFuncionarioSeleccionado(\"documentos\");") +
+					botonDetalleFuncionario(cod, "Cargar contrato", "prepararCargaDocumentoLegajo(\"contrato_laboral\");") +
+				"</div>" +
+			"</div>" +
+			"<div class='funcionario-detail-card funcionario-detail-card--asistencia'>" +
+				"<h4>Asistencia y ausencias</h4>" +
+				"<div class='funcionario-detail-control'>" +
+					"<div><span>Hoy</span>" + renderIndicadorControlFuncionario(resumen.asistencia.control, "asistencia") + "</div>" +
+					"<div><span>Reposo</span>" + renderIndicadorControlFuncionario(resumen.reposo, "reposo") + "</div>" +
+					"<div><span>Permiso/Vac.</span>" + renderIndicadorControlFuncionario(resumen.vacaciones.control, "permiso") + "</div>" +
+				"</div>" +
+				"<div class='funcionario-detail-subblock'><span>Proximas novedades</span>" + proximas + "</div>" +
+				"<div class='funcionario-detail-subblock'><span>Pendientes de asistencia</span>" + pendientesControl + "</div>" +
+				"<div class='funcionario-detail-actions'>" +
+					botonDetalleFuncionario(cod, "Ver asistencia", "abrirFichaFuncionarioSeleccionado(\"horarios\");") +
+					botonDetalleFuncionario(cod, "Registrar reposo", "registrarSolicitudAusenciaFuncionarioRapida(\"reposo_medico\", \"" + cod + "\");") +
+					botonDetalleFuncionario(cod, "Registrar permiso", "registrarSolicitudAusenciaFuncionarioRapida(\"permiso\", \"" + cod + "\");") +
+					botonDetalleFuncionario(cod, "Registrar vacaciones", "registrarSolicitudAusenciaFuncionarioRapida(\"vacaciones\", \"" + cod + "\");") +
+				"</div>" +
+			"</div>" +
+			"<div class='funcionario-detail-card funcionario-detail-card--seguimiento'>" +
+				"<h4>Seguimiento administrativo</h4>" +
+				"<div class='funcionario-detail-metrics'>" +
+					"<div><span>Sanciones</span><strong>" + escaparHtmlFuncionario(sancionesTexto) + "</strong></div>" +
+					"<div><span>Solicitudes</span><strong>" + escaparHtmlFuncionario(resumen.solicitudes.texto) + "</strong></div>" +
+					"<div><span>Seguimiento</span><strong>" + escaparHtmlFuncionario(seguimientoTexto) + "</strong></div>" +
+				"</div>" +
+				"<div class='funcionario-detail-subblock'><span>Hilo principal</span><div class='funcionario-detail-list funcionario-detail-list--rows'><div class='funcionario-detail-row'><strong>" + escaparHtmlFuncionario(seguimientoAsunto) + "</strong><span>" + escaparHtmlFuncionario(seguimientoMeta) + "</span></div></div></div>" +
+				"<div class='funcionario-detail-subblock'><span>Alertas visibles</span><div class='funcionario-alertas funcionario-alertas--detail'>" + (alertas || "<span class='funcionario-detail-empty'>Sin alertas relevantes.</span>") + "</div></div>" +
+				"<div class='funcionario-detail-subblock'><span>Sanciones recientes</span>" + renderSancionesRecientesFuncionario(resumen) + "</div>" +
+				"<div class='funcionario-detail-actions'>" +
+					botonDetalleFuncionario(cod, "Registrar sancion", "registrarSancionFuncionarioRapida(\"" + cod + "\");", "funcionario-detail-action--sensible") +
+					botonDetalleFuncionario(cod, "Ver historial", "abrirHistorialSancionesFuncionario(\"" + cod + "\");") +
+					botonDetalleFuncionario(cod, "Solicitudes", "verCerrarVentanaTareasProgramadas(true, false, \"\");") +
+					accionesSeguimiento +
+				"</div>" +
+			"</div>" +
+			"<div class='funcionario-detail-card funcionario-detail-card--acceso'>" +
+				"<h4>Acceso y seguridad</h4>" +
+				"<div class='funcionario-detail-metrics'>" +
+					"<div><span>Estado</span>" + chipRrhhFuncionario(resumen.acceso.texto, resumen.acceso.clase) + "</div>" +
+					"<div><span>Rol actual</span><strong>" + escaparHtmlFuncionario(registro.acceso || "Sin rol") + "</strong></div>" +
+					"<div><span>Usuario</span><strong>" + escaparHtmlFuncionario(registro.login || "Sin usuario") + "</strong></div>" +
+				"</div>" +
+				"<div class='funcionario-detail-actions'>" +
+					botonDetalleFuncionario(cod, "Gestionar acceso", "verCerrarAccesoUsuario(\"1\");") +
+					botonDetalleFuncionario(cod, "Editar funcionario", "verVentanaEditarUsuario();") +
+				"</div>" +
+			"</div>" +
+		"</div>" +
+	"</section>";
+}
+
+function renderFilaFuncionarioRrhh(registro) {
+	var foto = normalizarFotoUsuario(registro.url);
+	var resumen = obtenerResumenRrhhFuncionario(registro);
+	var cod = escaparHtmlFuncionario(registro.cod_usuario);
+	var expandido = String(funcionarioDetalleExpandidoRrhh) == String(registro.cod_usuario);
+	var estadoFuncionario = textoNormalizadoFuncionario(registro.estado || "") != "activo" ? chipRrhhFuncionario(registro.estado || "Inactivo", "muted") : "";
+	var alertas = renderAlertasVisiblesFuncionario(registro, resumen);
+	var html = "<article class='funcionario-row funcionario-row--rrhh funcionario-row--resumen" + (expandido ? " funcionario-row--expanded" : "") + "' id='funcionarioRow_" + cod + "' onclick='seleccionarFuncionarioDesdeDirectorio(\"" + cod + "\")' role='button' tabindex='0' onkeydown='activarSeleccionFuncionarioRrhh(event,\"" + cod + "\")'>" +
+		"<div class='funcionario-row__person'><img class='funcionario-row__avatar' src='" + escaparHtmlFuncionario(foto) + "' onerror=\"this.src='/GoodVentaAsisCap/iconos/sinperfil.png'\" alt='' /><div class='funcionario-cell funcionario-cell--persona'><strong>" + escaparHtmlFuncionario(registro.nombre_persona || "Sin nombre") + "</strong><small>" + escaparHtmlFuncionario(registro.tipo || "Sin cargo") + " - " + escaparHtmlFuncionario(registro.local || "Sin sucursal") + "</small>" + estadoFuncionario + "</div></div>" +
+		"<div class='funcionario-cell funcionario-cell--contrato'>" + chipRrhhFuncionario(resumen.contrato.texto, resumen.contrato.clase) + "<small>" + escaparHtmlFuncionario(textoFechasContratoFuncionario(registro)) + "</small></div>" +
+		"<div class='funcionario-alertas'>" + alertas + "</div>" +
+		"<div class='funcionario-row__actions'>" +
+			"<button type='button' class='funcionario-row__quick' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + cod + "\");abrirFichaFuncionarioSeleccionado(\"resumen\");'>Ficha</button>" +
+			"<button type='button' class='funcionario-row__toggle' aria-expanded='" + (expandido ? "true" : "false") + "' aria-controls='funcionarioDetalle_" + cod + "' title='" + (expandido ? "Contraer detalle" : "Expandir detalle") + "' onclick='alternarDetalleFuncionarioRrhh(\"" + cod + "\", event)' onkeydown='activarTeclaDetalleFuncionarioRrhh(event,\"" + cod + "\")'><span>" + (expandido ? "&#9650;" : "&#9660;") + "</span></button>" +
+		"</div>" +
+	"</article>";
+	if (expandido) {
+		html += renderDetalleExpandidoFuncionarioRrhh(registro);
+	}
+	return html;
+}
+
+function activarSeleccionFuncionarioRrhh(event, codUsuario) {
+	if (!event || (event.keyCode != 13 && event.keyCode != 32)) {
+		return;
+	}
+	event.preventDefault();
+	seleccionarFuncionarioDesdeDirectorio(codUsuario);
+}
+
+function activarTeclaDetalleFuncionarioRrhh(event, codUsuario) {
+	if (!event || (event.keyCode != 13 && event.keyCode != 32)) {
+		return;
+	}
+	event.preventDefault();
+	alternarDetalleFuncionarioRrhh(codUsuario, event);
+}
+
+function alternarDetalleFuncionarioRrhh(codUsuario, event) {
+	if (event) {
+		event.stopPropagation();
+		event.preventDefault();
+	}
+	funcionarioDetalleExpandidoRrhh = String(funcionarioDetalleExpandidoRrhh) == String(codUsuario) ? "" : String(codUsuario);
+	filtrarDirectorioFuncionarios();
+}
+
 function renderDirectorioFuncionarios(registros) {
+	registros = Array.isArray(registros) ? registros : [];
 	var contenedor = document.getElementById("funcionariosDirectorioLista");
 	var vacio = document.getElementById("funcionariosDirectorioVacio");
 	if (!contenedor) {
 		return;
 	}
 
+	if (funcionarioDetalleExpandidoRrhh != "") {
+		var expandidoVisible = false;
+		for (var v = 0; v < registros.length; v++) {
+			if (String(registros[v].cod_usuario) == String(funcionarioDetalleExpandidoRrhh)) {
+				expandidoVisible = true;
+				break;
+			}
+		}
+		if (!expandidoVisible) {
+			funcionarioDetalleExpandidoRrhh = "";
+		}
+	}
+
 	var html = "";
 	for (var i = 0; i < registros.length; i++) {
-		var registro = registros[i];
-		var foto = normalizarFotoUsuario(registro.url);
-		var completitud = calcularCompletitudFuncionario(registro);
-		var estadoAcceso = obtenerEstadoAccesoFuncionario(registro);
-		var estadoClase = textoNormalizadoFuncionario(registro.estado) == "activo" ? "funcionario-badge--success" : "funcionario-badge--muted";
-		var accesoClase = estadoAcceso == "Acceso habilitado" ? "funcionario-badge--success" : (estadoAcceso == "Acceso bloqueado" ? "funcionario-badge--danger" : "funcionario-badge--muted");
-
-		html += "<article class='funcionario-row' id='funcionarioRow_" + escaparHtmlFuncionario(registro.cod_usuario) + "' onclick='seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\")'>" +
-			"<img class='funcionario-row__avatar' src='" + escaparHtmlFuncionario(foto) + "' onerror=\"this.src='/GoodVentaAsisCap/iconos/sinperfil.png'\" alt='' />" +
-			"<div class='funcionario-row__person'><strong>" + escaparHtmlFuncionario(registro.nombre_persona || "Sin nombre") + "</strong><small>" + escaparHtmlFuncionario(registro.login || "Sin usuario de acceso") + "</small></div>" +
-			"<span>" + escaparHtmlFuncionario(registro.rut_usuario || "-") + "</span>" +
-			"<span>" + escaparHtmlFuncionario(registro.tipo || "Sin cargo") + "</span>" +
-			"<span>" + escaparHtmlFuncionario(registro.local || "Sin local") + "</span>" +
-			"<span>" + escaparHtmlFuncionario(registro.telefono || "-") + "</span>" +
-			"<span class='funcionario-badge " + estadoClase + "'>" + escaparHtmlFuncionario(registro.estado || "-") + "</span>" +
-			"<span class='funcionario-badge " + accesoClase + "'>" + escaparHtmlFuncionario(estadoAcceso) + "</span>" +
-			"<div class='funcionario-row__progress'><div><span style='width:" + completitud.porcentaje + "%'></span></div><small>" + completitud.porcentaje + "%</small></div>" +
-			"<div class='funcionario-row__actions'>" +
-				"<button type='button' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\");abrirFichaFuncionarioSeleccionado(\"resumen\");'>Ver</button>" +
-				"<button type='button' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\");verVentanaEditarUsuario();'>Editar</button>" +
-				"<button type='button' onclick='event.stopPropagation();seleccionarFuncionarioDesdeDirectorio(\"" + escaparHtmlFuncionario(registro.cod_usuario) + "\");verCerrarVentanaTareasProgramadas(true, false, \"\");'>Tareas</button>" +
-			"</div>" +
-		"</article>";
+		html += renderFilaFuncionarioRrhh(registros[i]);
 	}
 
 	contenedor.innerHTML = html;
 	if (vacio) {
 		vacio.style.display = registros.length == 0 ? "" : "none";
+	}
+	if (funcionarioSeleccionadoCache && funcionarioSeleccionadoCache.cod_usuario) {
+		$("#funcionarioRow_" + funcionarioSeleccionadoCache.cod_usuario).addClass("funcionario-row--selected");
 	}
 }
 
@@ -1037,40 +2493,893 @@ function seleccionarFuncionarioDesdeDirectorio(codUsuario) {
 	}
 }
 
+function fechaHoyFuncionarioRrhh() {
+	if (typeof obtenerFechaHoyHorarioUsuario == "function") {
+		return obtenerFechaHoyHorarioUsuario();
+	}
+	var hoy = new Date();
+	var mes = hoy.getMonth() + 1;
+	var dia = hoy.getDate();
+	return hoy.getFullYear() + "-" + (mes < 10 ? "0" + mes : mes) + "-" + (dia < 10 ? "0" + dia : dia);
+}
+
+function registrarSolicitudAusenciaFuncionarioRapida(tipo, codUsuario) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	var etiqueta = textoTipoAusenciaFuncionario(tipo);
+	var fechaDesde = window.prompt("Fecha desde para " + etiqueta + " (AAAA-MM-DD)", fechaHoyFuncionarioRrhh()) || "";
+	if (fechaDesde == "") { return; }
+	var fechaHasta = window.prompt("Fecha hasta para " + etiqueta + " (AAAA-MM-DD)", fechaDesde) || "";
+	if (fechaHasta == "") { return; }
+	var motivo = window.prompt("Motivo u observacion", "") || "";
+	if (fechaHasta < fechaDesde) {
+		ver_vetana_informativa("La fecha hasta no puede ser menor a la fecha desde.");
+		return;
+	}
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "guardarSolicitudAusenciaUsuario");
+	datos.append("cod_usuarioFK", codUsuario);
+	datos.append("tipo", tipo);
+	datos.append("fecha_desde", fechaDesde);
+	datos.append("fecha_hasta", fechaHasta);
+	datos.append("hora_desde", "");
+	datos.append("hora_hasta", "");
+	datos.append("motivo", motivo);
+	datos.append("nombre_archivo", "");
+	datos.append("archivo", "");
+	datos.append("ext", "");
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		processData: false,
+		contentType: false,
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Solicitud registrada.");
+					buscarabmusuario();
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo registrar la solicitud.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo registrar la solicitud.");
+			}
+		}
+	});
+}
+
+function leerEvidenciaSancionFuncionario(callback) {
+	if (!window.confirm("Desea adjuntar una evidencia o constancia?")) {
+		callback({ archivo: "", nombre: "", ext: "" });
+		return;
+	}
+	var input = document.createElement("input");
+	input.type = "file";
+	input.accept = ".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx";
+	input.style.display = "none";
+	input.onchange = function() {
+		if (!input.files || input.files.length == 0) {
+			callback({ archivo: "", nombre: "", ext: "" });
+			document.body.removeChild(input);
+			return;
+		}
+		var archivo = input.files[0];
+		var nombre = archivo.name || "evidencia";
+		var ext = nombre.indexOf(".") >= 0 ? nombre.split(".").pop().toLowerCase() : "";
+		var permitidos = ["pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"];
+		if (permitidos.indexOf(ext) == -1) {
+			ver_vetana_informativa("Formato no permitido. Usa PDF, imagen, DOC o DOCX.");
+			document.body.removeChild(input);
+			return;
+		}
+		if (archivo.size > 15728640) {
+			ver_vetana_informativa("La evidencia no puede superar 15 MB.");
+			document.body.removeChild(input);
+			return;
+		}
+		var reader = new FileReader();
+		reader.onload = function(evento) {
+			callback({ archivo: evento.target.result || "", nombre: nombre, ext: ext });
+			document.body.removeChild(input);
+		};
+		reader.onerror = function() {
+			ver_vetana_informativa("No se pudo leer la evidencia.");
+			document.body.removeChild(input);
+		};
+		reader.readAsDataURL(archivo);
+	};
+	document.body.appendChild(input);
+	input.click();
+}
+
+function registrarSancionFuncionarioRapida(codUsuario) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	var fecha = window.prompt("Fecha de la sancion (AAAA-MM-DD)", fechaHoyFuncionarioRrhh()) || "";
+	if (fecha == "") { return; }
+	var tipo = window.prompt("Tipo o categoria", "Amonestacion") || "";
+	if (tipo == "") { return; }
+	var motivo = window.prompt("Motivo", "") || "";
+	if (motivo == "") {
+		ver_vetana_informativa("Indique el motivo de la sancion.");
+		return;
+	}
+	var descripcion = window.prompt("Descripcion breve", motivo) || "";
+	var notificacion = window.prompt("Estado de notificacion: pendiente_firma, pendiente_revision, notificada o no_corresponde", "pendiente_firma") || "pendiente_firma";
+	leerEvidenciaSancionFuncionario(function(evidencia) {
+		obtener_datos_user();
+		var datos = new FormData();
+		datos.append("useru", userid);
+		datos.append("passu", passuser);
+		datos.append("navegador", navegador);
+		datos.append("funt", "guardarSancionFuncionario");
+		datos.append("cod_usuarioFK", codUsuario);
+		datos.append("fecha", fecha);
+		datos.append("tipo", tipo);
+		datos.append("motivo", motivo);
+		datos.append("descripcion", descripcion);
+		datos.append("observaciones", "");
+		datos.append("notificacion", notificacion);
+		datos.append("nombre_archivo", evidencia.nombre || "");
+		datos.append("archivo", evidencia.archivo || "");
+		datos.append("ext", evidencia.ext || "");
+		verCerrarEfectoCargando("1");
+		$.ajax({
+			data: datos,
+			url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+			type: "post",
+			processData: false,
+			contentType: false,
+			complete: function() {
+				verCerrarEfectoCargando("");
+			},
+			success: function(responseText) {
+				try {
+					var respuesta = $.parseJSON(responseText);
+					if (respuestaJqueryAjax(respuesta["1"]) == true) {
+						ver_vetana_informativa("Sancion registrada.");
+						buscarabmusuario();
+					} else {
+						ver_vetana_informativa(respuesta["2"] || "No se pudo registrar la sancion.");
+					}
+				} catch (error) {
+					ver_vetana_informativa("No se pudo registrar la sancion.");
+				}
+			}
+		});
+	});
+}
+
+function asegurarModalSancionesFuncionario() {
+	var modal = document.getElementById("modalSancionesFuncionario");
+	if (modal) {
+		return modal;
+	}
+	modal = document.createElement("div");
+	modal.id = "modalSancionesFuncionario";
+	modal.className = "funcionario-sanciones-modal";
+	modal.style.display = "none";
+	modal.innerHTML = "<div class='funcionario-sanciones-modal__box'>" +
+		"<div class='funcionario-sanciones-modal__head'><strong>Historial de sanciones</strong><button type='button' onclick='cerrarHistorialSancionesFuncionario()'>&times;</button></div>" +
+		"<div class='funcionario-sanciones-modal__body' id='modalSancionesFuncionarioBody'></div>" +
+	"</div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function cerrarHistorialSancionesFuncionario() {
+	var modal = document.getElementById("modalSancionesFuncionario");
+	if (modal) {
+		modal.style.display = "none";
+	}
+}
+
+function renderHistorialSancionesFuncionario(registros, codUsuario) {
+	registros = Array.isArray(registros) ? registros : [];
+	if (registros.length == 0) {
+		return "<div class='funcionario-detail-empty'>No hay sanciones registradas para este funcionario.</div>" +
+			"<div class='funcionario-detail-actions'><button type='button' class='funcionario-detail-action funcionario-detail-action--sensible' onclick='registrarSancionFuncionarioRapida(\"" + escaparHtmlFuncionario(codUsuario) + "\")'>Registrar sancion</button></div>";
+	}
+	var html = "<div class='funcionario-sanciones-lista'>";
+	for (var i = 0; i < registros.length; i++) {
+		var item = registros[i];
+		var anulable = textoNormalizadoFuncionario(item.estado) != "anulada";
+		html += "<div class='funcionario-sanciones-row'>" +
+			"<div><strong>" + escaparHtmlFuncionario(textoFechaCortaFuncionario(item.fecha || "") + " - " + (item.tipo || "Sancion")) + "</strong>" +
+			"<span>" + escaparHtmlFuncionario((item.motivo || "Sin motivo") + " · " + (item.estado || "activa") + " · " + (item.notificacion_estado || "pendiente")) + "</span></div>" +
+			"<p>" + escaparHtmlFuncionario(item.descripcion || item.observaciones || "") + "</p>" +
+			"<div class='funcionario-sanciones-row__actions'>" +
+				(item.documento_url ? "<button type='button' onclick='window.open(\"" + escaparHtmlFuncionario(item.documento_url) + "\", \"_blank\")'>Ver evidencia</button>" : "") +
+				(anulable ? "<button type='button' onclick='editarSancionFuncionarioRapida(\"" + escaparHtmlFuncionario(item.id) + "\", \"" + escaparHtmlFuncionario(codUsuario) + "\")'>Editar</button>" : "") +
+				(anulable ? "<button type='button' onclick='anularSancionFuncionarioRapida(\"" + escaparHtmlFuncionario(item.id) + "\", \"" + escaparHtmlFuncionario(codUsuario) + "\")'>Anular</button>" : "") +
+			"</div>" +
+		"</div>";
+	}
+	html += "</div><div class='funcionario-detail-actions'><button type='button' class='funcionario-detail-action funcionario-detail-action--sensible' onclick='registrarSancionFuncionarioRapida(\"" + escaparHtmlFuncionario(codUsuario) + "\")'>Registrar sancion</button></div>";
+	return html;
+}
+
+function abrirHistorialSancionesFuncionario(codUsuario) {
+	codUsuario = codUsuario || (funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	asegurarModalSancionesFuncionario();
+	var cuerpo = document.getElementById("modalSancionesFuncionarioBody");
+	if (cuerpo) {
+		cuerpo.innerHTML = "<div class='funcionario-detail-empty'>Cargando sanciones...</div>";
+	}
+	document.getElementById("modalSancionesFuncionario").style.display = "";
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "buscarSancionesFuncionario",
+			"cod_usuarioFK": codUsuario
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					funcionarioSancionesHistorialCache = Array.isArray(respuesta["2"]) ? respuesta["2"] : [];
+					document.getElementById("modalSancionesFuncionarioBody").innerHTML = renderHistorialSancionesFuncionario(respuesta["2"], codUsuario);
+				} else {
+					document.getElementById("modalSancionesFuncionarioBody").innerHTML = "<div class='funcionario-detail-empty'>" + escaparHtmlFuncionario(respuesta["2"] || "No se pudo consultar sanciones.") + "</div>";
+				}
+			} catch (error) {
+				document.getElementById("modalSancionesFuncionarioBody").innerHTML = "<div class='funcionario-detail-empty'>No se pudo consultar sanciones.</div>";
+			}
+		}
+	});
+}
+
+function obtenerSancionHistorialCache(idSancion) {
+	for (var i = 0; i < funcionarioSancionesHistorialCache.length; i++) {
+		if (String(funcionarioSancionesHistorialCache[i].id) == String(idSancion)) {
+			return funcionarioSancionesHistorialCache[i];
+		}
+	}
+	return null;
+}
+
+function editarSancionFuncionarioRapida(idSancion, codUsuario) {
+	var actual = obtenerSancionHistorialCache(idSancion);
+	if (!actual) {
+		ver_vetana_informativa("No se pudo identificar la sancion.");
+		return;
+	}
+	var fecha = window.prompt("Fecha de la sancion (AAAA-MM-DD)", actual.fecha || fechaHoyFuncionarioRrhh()) || "";
+	if (fecha == "") { return; }
+	var tipo = window.prompt("Tipo o categoria", actual.tipo || "Amonestacion") || "";
+	if (tipo == "") { return; }
+	var motivo = window.prompt("Motivo", actual.motivo || "") || "";
+	if (motivo == "") {
+		ver_vetana_informativa("Indique el motivo de la sancion.");
+		return;
+	}
+	var descripcion = window.prompt("Descripcion breve", actual.descripcion || motivo) || "";
+	var observaciones = window.prompt("Observaciones", actual.observaciones || "") || "";
+	var notificacion = window.prompt("Estado de notificacion", actual.notificacion_estado || "pendiente_firma") || "pendiente_firma";
+	obtener_datos_user();
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "editarSancionFuncionario",
+			"id_sancion": idSancion,
+			"fecha": fecha,
+			"tipo": tipo,
+			"motivo": motivo,
+			"descripcion": descripcion,
+			"observaciones": observaciones,
+			"notificacion": notificacion
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Sancion actualizada.");
+					abrirHistorialSancionesFuncionario(codUsuario);
+					buscarabmusuario();
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo editar la sancion.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo editar la sancion.");
+			}
+		}
+	});
+}
+
+function anularSancionFuncionarioRapida(idSancion, codUsuario) {
+	var motivo = window.prompt("Motivo de anulacion", "") || "";
+	if (motivo == "") {
+		return;
+	}
+	obtener_datos_user();
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "anularSancionFuncionario",
+			"id_sancion": idSancion,
+			"motivo": motivo
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Sancion anulada.");
+					abrirHistorialSancionesFuncionario(codUsuario);
+					buscarabmusuario();
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo anular la sancion.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo anular la sancion.");
+			}
+		}
+	});
+}
+
+function renderListaPanelRrhh(items, maximo) {
+	if (!items || items.length == 0) {
+		return "<li>Sin pendientes visibles.</li>";
+	}
+	var limite = maximo || items.length;
+	var html = "";
+	for (var i = 0; i < items.length && i < limite; i++) {
+		html += "<li>" + escaparHtmlFuncionario(items[i]) + "</li>";
+	}
+	if (items.length > limite) {
+		html += "<li>+" + (items.length - limite) + " pendientes mas.</li>";
+	}
+	return html;
+}
+
+function accionPrincipalDocumentoLegajo(documento) {
+	if (!documento.actual || !documento.actual.url_archivo) {
+		return { texto: "Cargar archivo", accion: "cargar" };
+	}
+	var estadoNorm = textoNormalizadoFuncionario(documento.estado);
+	if (estadoNorm == "en revision" || estadoNorm == "cargado" || estadoNorm == "pendiente de revision") {
+		return { texto: "Validar documento", accion: "validar" };
+	}
+	return { texto: "Ver documento", accion: "ver" };
+}
+
+function renderBotonDocumentoLegajo(documento) {
+	var accion = accionPrincipalDocumentoLegajo(documento);
+	var id = escaparHtmlFuncionario(documento.id);
+	if (!documento.actual || !documento.actual.url_archivo) {
+		return "<div class='funcionario-legajo-doc__actions'><button type='button' onclick='event.stopPropagation();prepararCargaDocumentoLegajo(\"" + id + "\")'>" + accion.texto + "</button></div>";
+	}
+	var estadoNorm = textoNormalizadoFuncionario(documento.estado);
+	var html = "<div class='funcionario-legajo-doc__actions'>" +
+		"<button type='button' onclick='event.stopPropagation();verDocumentoLegajoFuncionario(\"" + id + "\")'>Ver documento</button>";
+	if (estadoNorm == "en revision" || estadoNorm == "cargado" || estadoNorm == "pendiente de revision") {
+		html += "<button type='button' onclick='event.stopPropagation();validarDocumentoLegajoFuncionario(\"" + id + "\")'>Validar documento</button>";
+	}
+	if (esDocumentoContratoLegajo(documento.id) && estadoNorm == "sin fechas cargadas") {
+		html += "<button type='button' onclick='event.stopPropagation();prepararCargaDocumentoLegajo(\"" + id + "\")'>Completar datos</button>";
+	}
+	html += "<button type='button' onclick='event.stopPropagation();prepararCargaDocumentoLegajo(\"" + id + "\")'>Actualizar</button>";
+	return html + "</div>";
+}
+
+function renderBotonRapidoDocumentoLegajo(documento) {
+	var accion = accionPrincipalDocumentoLegajo(documento);
+	var id = escaparHtmlFuncionario(documento.id);
+	if (accion.accion == "ver") {
+		return "<button type='button' onclick='event.stopPropagation();verDocumentoLegajoFuncionario(\"" + id + "\")'>Ver doc.</button>";
+	}
+	if (accion.accion == "validar") {
+		return "<button type='button' onclick='event.stopPropagation();validarDocumentoLegajoFuncionario(\"" + id + "\")'>Validar</button>";
+	}
+	return "<button type='button' onclick='event.stopPropagation();prepararCargaDocumentoLegajo(\"" + id + "\")'>Cargar archivo</button>";
+}
+
+function renderLegajoRapidoPanelFuncionario(registro) {
+	var contenedor = document.getElementById("funcionarioPanelRrhhLegajoLista");
+	if (!contenedor) {
+		return;
+	}
+	if (!registro) {
+		contenedor.innerHTML = "<div class='funcionario-legajo-rapido__empty'>Selecciona un funcionario.</div>";
+		return;
+	}
+	var documentos = calcularDocumentosLegajoFuncionario(registro).documentos.filter(function(documento) {
+		return documento.rapido;
+	});
+	var html = "";
+	for (var i = 0; i < documentos.length; i++) {
+		html += "<div class='funcionario-legajo-rapido__row'>" +
+			"<strong>" + escaparHtmlFuncionario(documentos[i].nombre) + "</strong>" +
+			chipRrhhFuncionario(documentos[i].estado, documentos[i].clase) +
+			renderBotonRapidoDocumentoLegajo(documentos[i]) +
+		"</div>";
+	}
+	contenedor.innerHTML = html || "<div class='funcionario-legajo-rapido__empty'>Sin documentos configurados.</div>";
+}
+
+function cargarDocumentosLegajoFuncionario(codUsuario, forzar, callback) {
+	codUsuario = String(codUsuario || "");
+	if (codUsuario == "") {
+		if (typeof callback == "function") callback();
+		return;
+	}
+	if (!forzar && funcionarioLegajoDocumentosCargados[codUsuario]) {
+		if (typeof callback == "function") callback();
+		return;
+	}
+	if (funcionarioLegajoDocumentosCargando[codUsuario]) {
+		if (typeof callback == "function") {
+			setTimeout(function() {
+				cargarDocumentosLegajoFuncionario(codUsuario, false, callback);
+			}, 250);
+		}
+		return;
+	}
+	funcionarioLegajoDocumentosCargando[codUsuario] = true;
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "buscarDocumentosLegajoUsuario",
+			"cod_usuarioFK": codUsuario
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		success: function(responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					funcionarioLegajoDocumentosCache[codUsuario] = Array.isArray(datos["2"]) ? datos["2"] : [];
+					funcionarioLegajoDocumentosCargados[codUsuario] = true;
+				}
+			} catch (error) {}
+		},
+		complete: function() {
+			funcionarioLegajoDocumentosCargando[codUsuario] = false;
+			if (typeof callback == "function") callback();
+		}
+	});
+}
+
+function obtenerDefinicionDocumentoLegajo(tipoDocumento) {
+	var tipo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	var listasDefiniciones = [
+		obtenerDefinicionDocumentosFichaFuncionario(),
+		obtenerDefinicionDocumentosLegajoFuncionario()
+	];
+	for (var l = 0; l < listasDefiniciones.length; l++) {
+		var definiciones = listasDefiniciones[l];
+		for (var i = 0; i < definiciones.length; i++) {
+			if (definiciones[i].id == tipo) {
+				return definiciones[i];
+			}
+			if (definiciones[i].aliases && definiciones[i].aliases.length) {
+				for (var a = 0; a < definiciones[i].aliases.length; a++) {
+					if (definiciones[i].aliases[a] == tipo) {
+						return definiciones[i];
+					}
+				}
+			}
+		}
+	}
+	return { id: tipo, nombre: tipoDocumento, critico: documentoLegajoRequiereRevision(tipo), rapido: false };
+}
+
+function obtenerDocumentoLegajoSeleccionado(tipoDocumento) {
+	if (!funcionarioSeleccionadoCache) {
+		return null;
+	}
+	var tipo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	var documentos = calcularDocumentosLegajoFuncionario(funcionarioSeleccionadoCache).documentos;
+	for (var i = 0; i < documentos.length; i++) {
+		if (documentos[i].id == tipo) {
+			return documentos[i];
+		}
+	}
+	return null;
+}
+
+function obtenerDocumentoLegajoParaContratoModal(origen, tipoDocumento) {
+	return origen == "mi_perfil" ? obtenerDocumentoLegajoMiPerfil(tipoDocumento) : obtenerDocumentoLegajoSeleccionado(tipoDocumento);
+}
+
+function asegurarModalFechasContratoLegajo() {
+	var modal = document.getElementById("legajoContratoFechaModal");
+	if (modal) {
+		return modal;
+	}
+	modal = document.createElement("div");
+	modal.id = "legajoContratoFechaModal";
+	modal.className = "legajo-contrato-modal";
+	modal.innerHTML =
+		"<div class='legajo-contrato-modal__box'>" +
+			"<div class='legajo-contrato-modal__head'>" +
+				"<div><strong>Datos del contrato</strong><small>Completa las fechas para calcular vencimientos.</small></div>" +
+				"<button type='button' onclick='cerrarModalFechasContratoLegajo()'>x</button>" +
+			"</div>" +
+			"<div class='legajo-contrato-modal__body'>" +
+				"<p id='legajoContratoArchivoNombre'></p>" +
+				"<label><span>Fecha de inicio</span><input type='date' id='legajoContratoFechaInicioInput'></label>" +
+				"<label><span>Fecha de vencimiento</span><input type='date' id='legajoContratoFechaFinInput'></label>" +
+				"<label class='legajo-contrato-modal__check'><input type='checkbox' id='legajoContratoSinVencimientoInput' onchange='actualizarEstadoFechaFinContratoLegajo()'><span>Contrato sin vencimiento definido</span></label>" +
+				"<small id='legajoContratoFechaError'></small>" +
+			"</div>" +
+			"<div class='legajo-contrato-modal__actions'>" +
+				"<button type='button' onclick='cerrarModalFechasContratoLegajo()'>Cancelar</button>" +
+				"<button type='button' class='legajo-contrato-modal__primary' onclick='confirmarFechasContratoLegajo()'>Continuar</button>" +
+			"</div>" +
+		"</div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function actualizarEstadoFechaFinContratoLegajo() {
+	var sinVencimiento = document.getElementById("legajoContratoSinVencimientoInput");
+	var fechaFin = document.getElementById("legajoContratoFechaFinInput");
+	if (!sinVencimiento || !fechaFin) {
+		return;
+	}
+	fechaFin.disabled = sinVencimiento.checked;
+	if (sinVencimiento.checked) {
+		fechaFin.value = "";
+	}
+}
+
+function abrirModalFechasContratoLegajo(origen, tipoDocumento, archivo, nombreArchivo, ext) {
+	var modal = asegurarModalFechasContratoLegajo();
+	var documento = obtenerDocumentoLegajoParaContratoModal(origen, tipoDocumento);
+	var actual = documento && documento.actual ? documento.actual : {};
+	legajoContratoCargaPendiente = {
+		origen: origen,
+		tipoDocumento: tipoDocumento,
+		archivo: archivo,
+		nombreArchivo: nombreArchivo,
+		ext: ext
+	};
+	document.getElementById("legajoContratoArchivoNombre").innerHTML = "Archivo: " + escaparHtmlFuncionario(nombreArchivo || "documento");
+	document.getElementById("legajoContratoFechaInicioInput").value = fechaContratoDesdeDocumento(actual.fecha_inicio_contrato || "");
+	document.getElementById("legajoContratoFechaFinInput").value = fechaContratoDesdeDocumento(actual.fecha_fin_contrato || "");
+	document.getElementById("legajoContratoSinVencimientoInput").checked = contratoSinVencimientoActivo(actual.contrato_sin_vencimiento || "");
+	document.getElementById("legajoContratoFechaError").innerHTML = "";
+	actualizarEstadoFechaFinContratoLegajo();
+	modal.className = "legajo-contrato-modal legajo-contrato-modal--open";
+}
+
+function cerrarModalFechasContratoLegajo() {
+	var modal = document.getElementById("legajoContratoFechaModal");
+	if (modal) {
+		modal.className = "legajo-contrato-modal";
+	}
+	legajoContratoCargaPendiente = null;
+}
+
+function confirmarFechasContratoLegajo() {
+	if (!legajoContratoCargaPendiente) {
+		return;
+	}
+	var fechaInicio = document.getElementById("legajoContratoFechaInicioInput").value;
+	var fechaFin = document.getElementById("legajoContratoFechaFinInput").value;
+	var sinVencimiento = document.getElementById("legajoContratoSinVencimientoInput").checked;
+	var error = document.getElementById("legajoContratoFechaError");
+	if (fechaInicio == "") {
+		if (error) error.innerHTML = "Carga la fecha de inicio del contrato.";
+		return;
+	}
+	if (!sinVencimiento && fechaFin == "") {
+		if (error) error.innerHTML = "Carga la fecha de vencimiento o marca sin vencimiento.";
+		return;
+	}
+	if (!sinVencimiento && fechaFin < fechaInicio) {
+		if (error) error.innerHTML = "La fecha de vencimiento no puede ser anterior al inicio.";
+		return;
+	}
+	var pendiente = legajoContratoCargaPendiente;
+	var datosContrato = {
+		fecha_inicio_contrato: fechaInicio,
+		fecha_fin_contrato: sinVencimiento ? "" : fechaFin,
+		contrato_sin_vencimiento: sinVencimiento ? "1" : "0"
+	};
+	cerrarModalFechasContratoLegajo();
+	leerArchivoLegajoYGuardar(pendiente.origen, pendiente.tipoDocumento, pendiente.archivo, pendiente.nombreArchivo, pendiente.ext, datosContrato);
+}
+
+function leerArchivoLegajoYGuardar(origen, tipoDocumento, archivo, nombreArchivo, ext, datosContrato) {
+	var reader = new FileReader();
+	reader.onload = function(evento) {
+		if (origen == "mi_perfil") {
+			guardarDocumentoLegajoMiPerfil(tipoDocumento, nombreArchivo, ext, evento.target.result, datosContrato);
+		} else {
+			guardarDocumentoLegajoFuncionario(tipoDocumento, nombreArchivo, ext, evento.target.result, datosContrato);
+		}
+	};
+	reader.readAsDataURL(archivo);
+}
+
+function actualizarFechasContratoRegistroLocal(codUsuario, tipoDocumento, datosContrato) {
+	if (!datosContrato || !esDocumentoContratoLegajo(tipoDocumento)) {
+		return;
+	}
+	var aplicar = function(registro) {
+		if (!registro || String(registro.cod_usuario) != String(codUsuario)) {
+			return;
+		}
+		registro.fecha_inicio_contrato = datosContrato.fecha_inicio_contrato || "";
+		registro.fecha_fin_contrato = datosContrato.fecha_fin_contrato || "";
+		registro.contrato_sin_vencimiento = datosContrato.contrato_sin_vencimiento || "0";
+	};
+	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
+		aplicar(funcionariosDirectorioCache[i]);
+	}
+	aplicar(funcionarioSeleccionadoCache);
+	if (datosPerfilUsuarioActual && String(datosPerfilUsuarioActual.cod_usuario) == String(codUsuario)) {
+		aplicar(datosPerfilUsuarioActual);
+	}
+}
+
+function prepararCargaDocumentoLegajo(tipoDocumento) {
+	if (!funcionarioSeleccionadoCache) {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	funcionarioLegajoTipoDocumentoActivo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	var input = document.getElementById("funcionarioLegajoArchivoInput");
+	if (input) {
+		input.value = "";
+		input.click();
+	}
+}
+
+function subirDocumentoLegajoSeleccionado(input) {
+	if (!funcionarioSeleccionadoCache || !funcionarioLegajoTipoDocumentoActivo) {
+		return;
+	}
+	if (!input || !input.files || input.files.length == 0) {
+		return;
+	}
+	var archivo = input.files[0];
+	var nombre = archivo.name || "documento";
+	var ext = nombre.indexOf(".") >= 0 ? nombre.split(".").pop().toLowerCase() : "";
+	var permitidos = ["pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"];
+	if (permitidos.indexOf(ext) == -1) {
+		ver_vetana_informativa("Formato no permitido. Usa PDF, imagen, DOC o DOCX.");
+		input.value = "";
+		return;
+	}
+	if (archivo.size > 15728640) {
+		ver_vetana_informativa("El documento no puede superar 15 MB.");
+		input.value = "";
+		return;
+	}
+	var tipoActivo = funcionarioLegajoTipoDocumentoActivo;
+	if (esDocumentoContratoLegajo(tipoActivo)) {
+		abrirModalFechasContratoLegajo("funcionario", tipoActivo, archivo, nombre, ext);
+		input.value = "";
+		return;
+	}
+	leerArchivoLegajoYGuardar("funcionario", tipoActivo, archivo, nombre, ext, null);
+	input.value = "";
+}
+
+function guardarDocumentoLegajoFuncionario(tipoDocumento, nombreArchivo, ext, archivoBase64, datosContrato) {
+	var definicion = obtenerDefinicionDocumentoLegajo(tipoDocumento);
+	var estadoInicial = documentoLegajoRequiereRevision(tipoDocumento) ? "En revision" : "Completo";
+	var codUsuario = funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "";
+	if (codUsuario == "") {
+		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
+		return;
+	}
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "guardarDocumentoLegajoUsuario");
+	datos.append("cod_usuarioFK", codUsuario);
+	datos.append("tipo_documento", definicion.id);
+	datos.append("nombre_documento", definicion.nombre);
+	datos.append("nombre_archivo", nombreArchivo);
+	datos.append("archivo", archivoBase64);
+	datos.append("ext", ext);
+	datos.append("estado", estadoInicial);
+	datos.append("observacion", "");
+	datos.append("fecha_inicio_contrato", datosContrato && datosContrato.fecha_inicio_contrato ? datosContrato.fecha_inicio_contrato : "");
+	datos.append("fecha_fin_contrato", datosContrato && datosContrato.fecha_fin_contrato ? datosContrato.fecha_fin_contrato : "");
+	datos.append("contrato_sin_vencimiento", datosContrato && datosContrato.contrato_sin_vencimiento ? datosContrato.contrato_sin_vencimiento : "0");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		processData: false,
+		contentType: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Documento cargado correctamente.");
+					actualizarFechasContratoRegistroLocal(codUsuario, tipoDocumento, datosContrato);
+					cargarDocumentosLegajoFuncionario(codUsuario, true, function() {
+						actualizarPanelRapidoFuncionario(funcionarioSeleccionadoCache);
+						actualizarFichaFuncionario(funcionarioSeleccionadoCache);
+						filtrarDirectorioFuncionarios();
+					});
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar el documento.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo cargar el documento.");
+			}
+		}
+	});
+}
+
+function verDocumentoLegajoFuncionario(tipoDocumento) {
+	var documento = obtenerDocumentoLegajoSeleccionado(tipoDocumento);
+	if (!documento || !documento.actual || !documento.actual.url_archivo) {
+		prepararCargaDocumentoLegajo(tipoDocumento);
+		return;
+	}
+	window.open(documento.actual.url_archivo, "_blank");
+}
+
+function validarDocumentoLegajoFuncionario(tipoDocumento) {
+	var documento = obtenerDocumentoLegajoSeleccionado(tipoDocumento);
+	if (!documento || !documento.actual || !documento.actual.id) {
+		prepararCargaDocumentoLegajo(tipoDocumento);
+		return;
+	}
+	var codUsuario = funcionarioSeleccionadoCache ? funcionarioSeleccionadoCache.cod_usuario : "";
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "actualizarEstadoDocumentoLegajoUsuario");
+	datos.append("id_documento", documento.actual.id);
+	datos.append("cod_usuarioFK", codUsuario);
+	datos.append("estado", "Completo");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		processData: false,
+		contentType: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Documento validado.");
+					cargarDocumentosLegajoFuncionario(codUsuario, true, function() {
+						actualizarPanelRapidoFuncionario(funcionarioSeleccionadoCache);
+						actualizarFichaFuncionario(funcionarioSeleccionadoCache);
+						filtrarDirectorioFuncionarios();
+					});
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo validar el documento.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo validar el documento.");
+			}
+		}
+	});
+}
+
+function actualizarDetalleRrhhFuncionario(registro) {
+	var vacio = document.getElementById("funcionarioPanelRrhhVacio");
+	var contenido = document.getElementById("funcionarioPanelRrhhContenido");
+	if (!contenido) {
+		return;
+	}
+	if (!registro) {
+		if (vacio) vacio.style.display = "";
+		contenido.style.display = "none";
+		return;
+	}
+	var resumen = obtenerResumenRrhhFuncionario(registro);
+	if (vacio) vacio.style.display = "none";
+	contenido.style.display = "";
+	document.getElementById("funcionarioPanelRrhhFoto").src = normalizarFotoUsuario(registro.url);
+	document.getElementById("funcionarioPanelRrhhNombre").innerHTML = escaparHtmlFuncionario(registro.nombre_persona || "Funcionario");
+	document.getElementById("funcionarioPanelRrhhCargo").innerHTML = escaparHtmlFuncionario((registro.tipo || "Sin cargo") + " - " + (registro.local || "Sin sucursal"));
+	document.getElementById("funcionarioPanelRrhhContrato").innerHTML = escaparHtmlFuncionario(resumen.contrato.texto);
+	if (document.getElementById("funcionarioPanelRrhhAsistencia")) {
+		document.getElementById("funcionarioPanelRrhhAsistencia").innerHTML = escaparHtmlFuncionario(resumen.asistencia.texto);
+	}
+	if (document.getElementById("funcionarioPanelRrhhReposo")) {
+		document.getElementById("funcionarioPanelRrhhReposo").innerHTML = escaparHtmlFuncionario(resumen.reposo.texto);
+	}
+	if (document.getElementById("funcionarioPanelRrhhPermiso")) {
+		document.getElementById("funcionarioPanelRrhhPermiso").innerHTML = escaparHtmlFuncionario(resumen.vacaciones.texto);
+	}
+	document.getElementById("funcionarioPanelRrhhLegajo").innerHTML = escaparHtmlFuncionario(resumen.legajo.texto);
+	document.getElementById("funcionarioPanelRrhhSolicitudes").innerHTML = escaparHtmlFuncionario(resumen.solicitudes.texto);
+	document.getElementById("funcionarioPanelRrhhHilo").innerHTML = escaparHtmlFuncionario(resumen.seguimiento.texto);
+	if (document.getElementById("funcionarioPanelRrhhSanciones")) {
+		document.getElementById("funcionarioPanelRrhhSanciones").innerHTML = resumen.sanciones.total > 0 ? escaparHtmlFuncionario(pluralFuncionario(resumen.sanciones.total, "sancion", "sanciones")) : "Sin sanciones";
+	}
+	document.getElementById("funcionarioPanelRrhhPendientes").innerHTML = renderListaPanelRrhh(resumen.legajo.faltantes, 6);
+	if (document.getElementById("funcionarioPanelRrhhSituacionHoy")) {
+		document.getElementById("funcionarioPanelRrhhSituacionHoy").innerHTML = renderSituacionHoyFuncionario(resumen);
+	}
+	if (document.getElementById("funcionarioPanelRrhhProximas")) {
+		document.getElementById("funcionarioPanelRrhhProximas").innerHTML = renderProximasNovedadesFuncionario(registro);
+	}
+	if (document.getElementById("funcionarioPanelRrhhPendientesControl")) {
+		document.getElementById("funcionarioPanelRrhhPendientesControl").innerHTML = renderPendientesControlFuncionario(registro);
+	}
+	renderLegajoRapidoPanelFuncionario(registro);
+	cargarDocumentosLegajoFuncionario(registro.cod_usuario, false, function() {
+		if (funcionarioSeleccionadoCache && String(funcionarioSeleccionadoCache.cod_usuario) == String(registro.cod_usuario)) {
+			renderLegajoRapidoPanelFuncionario(funcionarioSeleccionadoCache);
+			var resumenActualizado = obtenerResumenRrhhFuncionario(funcionarioSeleccionadoCache);
+			document.getElementById("funcionarioPanelRrhhLegajo").innerHTML = escaparHtmlFuncionario(resumenActualizado.legajo.texto);
+			document.getElementById("funcionarioPanelRrhhPendientes").innerHTML = renderListaPanelRrhh(resumenActualizado.legajo.faltantes, 6);
+		}
+	});
+}
+
 function actualizarPanelRapidoFuncionario(registro) {
 	if (arguments.length > 0) {
 		funcionarioSeleccionadoCache = registro;
 	}
 	registro = funcionarioSeleccionadoCache;
-	var vacio = document.getElementById("funcionarioPanelVacio");
-	var contenido = document.getElementById("funcionarioPanelContenido");
-	if (!registro || !contenido) {
-		if (vacio) vacio.style.display = "";
-		if (contenido) contenido.style.display = "none";
+	actualizarDetalleRrhhFuncionario(registro);
+
+	if (!registro) {
+		$(".funcionario-row").removeClass("funcionario-row--selected");
 		return;
 	}
-
-	var completitud = calcularCompletitudFuncionario(registro);
-	if (vacio) vacio.style.display = "none";
-	contenido.style.display = "";
-	document.getElementById("funcionarioPanelFoto").src = normalizarFotoUsuario(registro.url);
-	document.getElementById("funcionarioPanelNombre").innerHTML = escaparHtmlFuncionario(registro.nombre_persona || "Funcionario");
-	document.getElementById("funcionarioPanelCargo").innerHTML = escaparHtmlFuncionario(registro.tipo || "Cargo o funcion");
-	document.getElementById("funcionarioPanelLocal").innerHTML = escaparHtmlFuncionario(registro.local || "Sucursal sin definir");
-	document.getElementById("funcionarioPanelTelefono").innerHTML = escaparHtmlFuncionario(registro.telefono || "Telefono sin cargar");
-	document.getElementById("funcionarioPanelEstado").innerHTML = escaparHtmlFuncionario(registro.estado || "Estado sin definir");
-	actualizarProgresoContratoPanelFuncionario(registro);
-	document.getElementById("funcionarioPanelAcceso").innerHTML = escaparHtmlFuncionario(obtenerEstadoAccesoFuncionario(registro));
-	document.getElementById("funcionarioPanelProgresoTexto").innerHTML = "Perfil completado: " + completitud.porcentaje + "%";
-	document.getElementById("funcionarioPanelProgresoBarra").style.width = completitud.porcentaje + "%";
 
 	$(".funcionario-row").removeClass("funcionario-row--selected");
 	$("#funcionarioRow_" + registro.cod_usuario).addClass("funcionario-row--selected");
 }
 
-function valorFichaFuncionario(label, valor, valorAnterior) {
+function valorFichaFuncionario(label, valor, valorAnterior, extraClase) {
 	var anterior = valorAnterior ? "<small class='funcionario-evidencia'>Dato anterior: <s>" + escaparHtmlFuncionario(valorAnterior) + "</s></small>" : "";
-	return "<div class='funcionario-ficha__dato'><span>" + escaparHtmlFuncionario(label) + "</span><strong>" + escaparHtmlFuncionario(valor || "-") + "</strong>" + anterior + "</div>";
+	var clase = "funcionario-ficha__dato" + (extraClase ? " " + extraClase : "");
+	var valorVisible = (valor === 0 || valor === "0") ? "0" : (valor || "-");
+	return "<div class='" + clase + "'><span>" + escaparHtmlFuncionario(label) + "</span><strong>" + escaparHtmlFuncionario(valorVisible) + "</strong>" + anterior + "</div>";
 }
 
 function renderProgresoContratoFichaFuncionario(registro) {
@@ -1102,6 +3411,598 @@ function renderHorariosFichaFuncionario(registro) {
 	}
 	html += "</tbody></table>";
 	return html;
+}
+
+function renderLegajoFichaFuncionario(registro) {
+	var resumen = obtenerResumenRrhhFuncionario(registro);
+	var estadoDocumental = calcularDocumentosLegajoFuncionario(registro, resumen, obtenerDefinicionDocumentosFichaFuncionario(), { requerirArchivoDigital: true });
+	var docs = estadoDocumental.documentos;
+	var html = "<div class='funcionario-documentos-shell'>" +
+		"<div class='funcionario-legajo-scroll'>" +
+		"<div class='funcionario-legajo-checklist'>";
+	for (var i = 0; i < docs.length; i++) {
+		var tieneArchivo = docs[i].actual && docs[i].actual.url_archivo ? "1" : "0";
+		var textoAuxiliar = textoAuxiliarDocumentoFichaFuncionario(docs[i]);
+		var clasesDoc = "funcionario-legajo-doc" +
+			(docs[i].completo ? " funcionario-legajo-doc--completo" : " funcionario-legajo-doc--pendiente") +
+			(docs[i].critico && !docs[i].completo ? " funcionario-legajo-doc--critico" : "");
+		html += "<div class='" + clasesDoc + "' data-completo='" + (docs[i].completo ? "1" : "0") + "' data-archivo='" + tieneArchivo + "' data-critico='" + (docs[i].critico ? "1" : "0") + "'>" +
+			"<strong>" + escaparHtmlFuncionario(docs[i].nombre) + "</strong>" +
+			chipRrhhFuncionario(docs[i].estado, docs[i].clase) +
+			(textoAuxiliar != "" ? "<small>" + escaparHtmlFuncionario(textoAuxiliar) + "</small>" : "") +
+			renderBotonDocumentoLegajo(docs[i]) +
+		"</div>";
+	}
+	html += "</div></div></div>";
+	return html;
+}
+
+function textoAuxiliarDocumentoFichaFuncionario(documento) {
+	if (documento.mensaje) {
+		return documento.mensaje;
+	}
+	if (esDocumentoContratoLegajo(documento.id) && documento.actual) {
+		var inicioContrato = fechaContratoDesdeDocumento(documento.actual.fecha_inicio_contrato || "");
+		var finContrato = fechaContratoDesdeDocumento(documento.actual.fecha_fin_contrato || "");
+		var sinVencimiento = contratoSinVencimientoActivo(documento.actual.contrato_sin_vencimiento || "");
+		if (inicioContrato != "" || finContrato != "" || sinVencimiento) {
+			return "Inicio: " + (inicioContrato || "-") + " | " + (sinVencimiento ? "Sin vencimiento" : "Vence: " + (finContrato || "-"));
+		}
+	}
+	if (documento.actual && documento.actual.fecha_carga) {
+		return "Cargado: " + documento.actual.fecha_carga;
+	}
+	if (documento.completo) {
+		return "Dato verificado en ficha";
+	}
+	if (documento.actual && documento.actual.url_archivo) {
+		return "Archivo pendiente de revision";
+	}
+	var estadoNorm = textoNormalizadoFuncionario(documento.estado);
+	if (estadoNorm == "sin fechas cargadas") {
+		return "Fechas pendientes de carga";
+	}
+	if (estadoNorm == "por cargar" || estadoNorm == "no cargado") {
+		return "Sin archivo digital";
+	}
+	return "";
+}
+
+function documentoLegajoCumplidoParaMiPerfil(documento) {
+	var estadoNorm = textoNormalizadoFuncionario(documento.estado);
+	if (documento.actual && documento.actual.url_archivo) {
+		return estadoNorm != "rechazado" && estadoNorm != "inactivo";
+	}
+	return false;
+}
+
+function obtenerRegistroMiPerfilParaDocumentos() {
+	var registro = {};
+	for (var clave in datosPerfilUsuarioActual) {
+		if (Object.prototype.hasOwnProperty.call(datosPerfilUsuarioActual, clave)) {
+			registro[clave] = datosPerfilUsuarioActual[clave];
+		}
+	}
+	registro.cod_usuario = registro.cod_usuario || userid || "";
+	var campoNombre = document.getElementById("inptNombreMisDatos");
+	var campoCedula = document.getElementById("inptCedulaMisDatos");
+	var campoDireccion = document.getElementById("inptDireccionMisDatos");
+	var campoRelacion = document.getElementById("inptRelacionamientoMisDatos");
+	var campoFecha = document.getElementById("inptFechaCreacionMisDatos");
+	if (campoNombre) registro.nombre_persona = campoNombre.value;
+	if (campoCedula) registro.rut_usuario = campoCedula.value;
+	if (campoDireccion) registro.direccion = campoDireccion.value;
+	if (campoRelacion) registro.tipo_relacion = campoRelacion.value;
+	if (campoFecha) registro.fecha_creacion = campoFecha.value;
+	return registro;
+}
+
+function calcularDocumentosLegajoMiPerfil(registro) {
+	var estadoDocumental = calcularDocumentosLegajoFuncionario(registro, null, obtenerDefinicionDocumentosFichaFuncionario());
+	var documentos = estadoDocumental.documentos || [];
+	var cumplidos = 0;
+	var pendientes = [];
+	var enRevision = 0;
+	for (var i = 0; i < documentos.length; i++) {
+		var documento = documentos[i];
+		var estadoNorm = textoNormalizadoFuncionario(documento.estado);
+		var tieneArchivo = documento.actual && documento.actual.url_archivo;
+		if (tieneArchivo && (estadoNorm == "en revision" || estadoNorm == "cargado")) {
+			enRevision++;
+		}
+		if (documentoLegajoCumplidoParaMiPerfil(documento)) {
+			cumplidos++;
+		} else {
+			pendientes.push("Falta documento: " + documento.nombre + ".");
+		}
+	}
+	return {
+		documentos: documentos,
+		porcentaje: documentos.length > 0 ? Math.round((cumplidos / documentos.length) * 100) : 0,
+		faltantes: pendientes,
+		docsValidar: enRevision,
+		completos: cumplidos
+	};
+}
+
+function obtenerDocumentoLegajoMiPerfil(tipoDocumento) {
+	var registro = obtenerRegistroMiPerfilParaDocumentos();
+	var tipo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	var documentos = calcularDocumentosLegajoMiPerfil(registro).documentos;
+	for (var i = 0; i < documentos.length; i++) {
+		if (documentos[i].id == tipo) {
+			return documentos[i];
+		}
+	}
+	return null;
+}
+
+function renderBotonesDocumentoMiPerfil(documento) {
+	var id = escaparHtmlFuncionario(documento.id);
+	if (documento.actual && documento.actual.url_archivo) {
+		return "<div class='mi-perfil-documento__actions'>" +
+			"<button type='button' onclick='event.stopPropagation();verDocumentoLegajoMiPerfil(\"" + id + "\")'>Ver</button>" +
+			"<button type='button' onclick='event.stopPropagation();prepararCargaDocumentoLegajoMiPerfil(\"" + id + "\")'>Reemplazar</button>" +
+		"</div>";
+	}
+	return "<div class='mi-perfil-documento__actions'><button type='button' onclick='event.stopPropagation();prepararCargaDocumentoLegajoMiPerfil(\"" + id + "\")'>Cargar</button></div>";
+}
+
+function renderDocumentosMiPerfil() {
+	var lista = document.getElementById("miPerfilDocumentosLegajoLista");
+	var resumen = document.getElementById("miPerfilDocumentosResumen");
+	if (!lista && !resumen) {
+		return;
+	}
+	var registro = obtenerRegistroMiPerfilParaDocumentos();
+	if (!registro.cod_usuario) {
+		if (lista) lista.innerHTML = "<div class='mi-perfil-documentos__empty'>No se pudo identificar el usuario.</div>";
+		return;
+	}
+	var codUsuario = String(registro.cod_usuario || "");
+	if (!funcionarioLegajoDocumentosCargados[codUsuario] && !(funcionarioLegajoDocumentosCache[codUsuario] && funcionarioLegajoDocumentosCache[codUsuario].length)) {
+		if (resumen) {
+			resumen.innerHTML =
+				"<span><strong>-</strong><small>Legajo documental</small></span>" +
+				"<span><strong>-</strong><small>Pendientes</small></span>" +
+				"<span><strong>-</strong><small>En revision</small></span>";
+		}
+		if (lista) lista.innerHTML = "<div class='mi-perfil-documentos__empty'>Cargando documentos...</div>";
+		return;
+	}
+	var estadoDocumental = calcularDocumentosLegajoMiPerfil(registro);
+	if (resumen) {
+		resumen.innerHTML =
+			"<span><strong>" + estadoDocumental.porcentaje + "%</strong><small>Legajo documental</small></span>" +
+			"<span><strong>" + estadoDocumental.faltantes.length + "</strong><small>Pendientes</small></span>" +
+			"<span><strong>" + estadoDocumental.docsValidar + "</strong><small>En revision</small></span>";
+	}
+	if (!lista) {
+		return;
+	}
+	var docs = estadoDocumental.documentos;
+	var html = "";
+	for (var i = 0; i < docs.length; i++) {
+		var tieneArchivo = docs[i].actual && docs[i].actual.url_archivo;
+		var textoAuxiliar = tieneArchivo ? textoAuxiliarDocumentoFichaFuncionario(docs[i]) : "Sin archivo digital";
+		var estadoTexto = tieneArchivo ? docs[i].estado : "No cargado";
+		var estadoClase = tieneArchivo ? docs[i].clase : (docs[i].critico ? "danger" : "warning");
+		var cumplidoMiPerfil = documentoLegajoCumplidoParaMiPerfil(docs[i]);
+		if (textoAuxiliar == "" && !cumplidoMiPerfil) {
+			textoAuxiliar = "Pendiente de carga";
+		}
+		var clasesDoc = "mi-perfil-documento funcionario-legajo-doc" +
+			(cumplidoMiPerfil ? " funcionario-legajo-doc--completo" : " funcionario-legajo-doc--pendiente") +
+			(docs[i].critico && !cumplidoMiPerfil ? " funcionario-legajo-doc--critico" : "");
+		html += "<div class='" + clasesDoc + "'>" +
+			"<strong>" + escaparHtmlFuncionario(docs[i].nombre) + "</strong>" +
+			chipRrhhFuncionario(estadoTexto, estadoClase) +
+			(textoAuxiliar != "" ? "<small>" + escaparHtmlFuncionario(textoAuxiliar) + "</small>" : "") +
+			renderBotonesDocumentoMiPerfil(docs[i]) +
+		"</div>";
+	}
+	lista.innerHTML = html || "<div class='mi-perfil-documentos__empty'>Sin documentos configurados.</div>";
+	actualizarEstadoPerfilUsuarioActual();
+}
+
+function cargarDocumentosLegajoMiPerfil(forzar) {
+	var codUsuario = String(userid || (datosPerfilUsuarioActual && datosPerfilUsuarioActual.cod_usuario) || "");
+	if (codUsuario == "") {
+		renderDocumentosMiPerfil();
+		return;
+	}
+	if (!forzar && funcionarioLegajoDocumentosCargados[codUsuario]) {
+		renderDocumentosMiPerfil();
+		return;
+	}
+	if (funcionarioLegajoDocumentosCargando[codUsuario]) {
+		setTimeout(function() {
+			cargarDocumentosLegajoMiPerfil(false);
+		}, 250);
+		return;
+	}
+	funcionarioLegajoDocumentosCargando[codUsuario] = true;
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "buscarMisDocumentosLegajoUsuario"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		success: function(responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					funcionarioLegajoDocumentosCache[codUsuario] = Array.isArray(datos["2"]) ? datos["2"] : [];
+					funcionarioLegajoDocumentosCargados[codUsuario] = true;
+				}
+			} catch (error) {}
+		},
+		complete: function() {
+			funcionarioLegajoDocumentosCargando[codUsuario] = false;
+			renderDocumentosMiPerfil();
+		}
+	});
+}
+
+function prepararCargaDocumentoLegajoMiPerfil(tipoDocumento) {
+	if (!userid) {
+		ver_vetana_informativa("No se pudo identificar el usuario.");
+		return;
+	}
+	miPerfilLegajoTipoDocumentoActivo = normalizarTipoDocumentoLegajo(tipoDocumento);
+	var input = document.getElementById("miPerfilLegajoArchivoInput");
+	if (input) {
+		input.value = "";
+		input.click();
+	}
+}
+
+function subirDocumentoLegajoMiPerfilSeleccionado(input) {
+	if (!miPerfilLegajoTipoDocumentoActivo) {
+		return;
+	}
+	if (!input || !input.files || input.files.length == 0) {
+		return;
+	}
+	var archivo = input.files[0];
+	var nombre = archivo.name || "documento";
+	var ext = nombre.indexOf(".") >= 0 ? nombre.split(".").pop().toLowerCase() : "";
+	var permitidos = ["pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"];
+	if (permitidos.indexOf(ext) == -1) {
+		ver_vetana_informativa("Formato no permitido. Usa PDF, imagen, DOC o DOCX.");
+		input.value = "";
+		return;
+	}
+	if (archivo.size > 15728640) {
+		ver_vetana_informativa("El documento no puede superar 15 MB.");
+		input.value = "";
+		return;
+	}
+	var tipoActivo = miPerfilLegajoTipoDocumentoActivo;
+	if (esDocumentoContratoLegajo(tipoActivo)) {
+		abrirModalFechasContratoLegajo("mi_perfil", tipoActivo, archivo, nombre, ext);
+		input.value = "";
+		return;
+	}
+	leerArchivoLegajoYGuardar("mi_perfil", tipoActivo, archivo, nombre, ext, null);
+	input.value = "";
+}
+
+function guardarDocumentoLegajoMiPerfil(tipoDocumento, nombreArchivo, ext, archivoBase64, datosContrato) {
+	var definicion = obtenerDefinicionDocumentoLegajo(tipoDocumento);
+	var codUsuario = String(userid || "");
+	if (codUsuario == "") {
+		ver_vetana_informativa("No se pudo identificar el usuario.");
+		return;
+	}
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "guardarMiDocumentoLegajoUsuario");
+	datos.append("tipo_documento", definicion.id);
+	datos.append("nombre_documento", definicion.nombre);
+	datos.append("nombre_archivo", nombreArchivo);
+	datos.append("archivo", archivoBase64);
+	datos.append("ext", ext);
+	datos.append("observacion", "");
+	datos.append("fecha_inicio_contrato", datosContrato && datosContrato.fecha_inicio_contrato ? datosContrato.fecha_inicio_contrato : "");
+	datos.append("fecha_fin_contrato", datosContrato && datosContrato.fecha_fin_contrato ? datosContrato.fecha_fin_contrato : "");
+	datos.append("contrato_sin_vencimiento", datosContrato && datosContrato.contrato_sin_vencimiento ? datosContrato.contrato_sin_vencimiento : "0");
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		processData: false,
+		contentType: false,
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Documento cargado correctamente. Queda pendiente de revision.");
+					actualizarFechasContratoRegistroLocal(codUsuario, tipoDocumento, datosContrato);
+					cargarDocumentosLegajoMiPerfil(true);
+					if (funcionarioSeleccionadoCache && String(funcionarioSeleccionadoCache.cod_usuario) == codUsuario) {
+						cargarDocumentosLegajoFuncionario(codUsuario, true, function() {
+							actualizarPanelRapidoFuncionario(funcionarioSeleccionadoCache);
+							actualizarFichaFuncionario(funcionarioSeleccionadoCache);
+							filtrarDirectorioFuncionarios();
+						});
+					}
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar el documento.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo cargar el documento.");
+			}
+		}
+	});
+}
+
+function verDocumentoLegajoMiPerfil(tipoDocumento) {
+	var documento = obtenerDocumentoLegajoMiPerfil(tipoDocumento);
+	if (!documento || !documento.actual || !documento.actual.url_archivo) {
+		prepararCargaDocumentoLegajoMiPerfil(tipoDocumento);
+		return;
+	}
+	window.open(documento.actual.url_archivo, "_blank");
+}
+
+function mostrarFormularioSolicitudAusenciaMiPerfil(mostrar) {
+	var form = document.getElementById("miPerfilSolicitudAusenciaForm");
+	if (!form) {
+		return;
+	}
+	form.style.display = mostrar ? "" : "none";
+	if (mostrar) {
+		var hoy = obtenerFechaHoyHorarioUsuario();
+		if (document.getElementById("miPerfilSolicitudFechaDesde") && document.getElementById("miPerfilSolicitudFechaDesde").value == "") {
+			document.getElementById("miPerfilSolicitudFechaDesde").value = hoy;
+		}
+		if (document.getElementById("miPerfilSolicitudFechaHasta") && document.getElementById("miPerfilSolicitudFechaHasta").value == "") {
+			document.getElementById("miPerfilSolicitudFechaHasta").value = hoy;
+		}
+		actualizarCamposSolicitudAusenciaMiPerfil();
+	}
+}
+
+function actualizarCamposSolicitudAusenciaMiPerfil() {
+	var tipo = document.getElementById("miPerfilSolicitudTipo") ? document.getElementById("miPerfilSolicitudTipo").value : "";
+	var parcial = document.getElementById("miPerfilSolicitudParcial") && document.getElementById("miPerfilSolicitudParcial").checked;
+	var mostrarHoras = tipo == "permiso" && parcial;
+	var checks = document.getElementsByClassName("mi-perfil-solicitud-parcial");
+	var horas = document.getElementsByClassName("mi-perfil-solicitud-horas");
+	for (var i = 0; i < checks.length; i++) {
+		checks[i].style.display = tipo == "permiso" ? "" : "none";
+	}
+	for (var j = 0; j < horas.length; j++) {
+		horas[j].style.display = mostrarHoras ? "" : "none";
+	}
+	if (!mostrarHoras) {
+		if (document.getElementById("miPerfilSolicitudHoraDesde")) document.getElementById("miPerfilSolicitudHoraDesde").value = "";
+		if (document.getElementById("miPerfilSolicitudHoraHasta")) document.getElementById("miPerfilSolicitudHoraHasta").value = "";
+	}
+}
+
+function leerArchivoSolicitudAusenciaMiPerfil(callback) {
+	var input = document.getElementById("miPerfilSolicitudArchivo");
+	if (!input || !input.files || input.files.length == 0) {
+		callback({archivo: "", nombre: "", ext: ""});
+		return;
+	}
+	var archivo = input.files[0];
+	var nombre = archivo.name || "adjunto";
+	var ext = nombre.indexOf(".") >= 0 ? nombre.split(".").pop().toLowerCase() : "";
+	var permitidos = ["pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"];
+	if (permitidos.indexOf(ext) == -1) {
+		ver_vetana_informativa("Formato no permitido. Usa PDF, imagen, DOC o DOCX.");
+		return;
+	}
+	if (archivo.size > 15728640) {
+		ver_vetana_informativa("El adjunto no puede superar 15 MB.");
+		return;
+	}
+	var reader = new FileReader();
+	reader.onload = function(evento) {
+		callback({archivo: evento.target.result || "", nombre: nombre, ext: ext});
+	};
+	reader.onerror = function() {
+		ver_vetana_informativa("No se pudo leer el adjunto.");
+	};
+	reader.readAsDataURL(archivo);
+}
+
+function limpiarFormularioSolicitudAusenciaMiPerfil() {
+	var ids = [
+		"miPerfilSolicitudMotivo",
+		"miPerfilSolicitudHoraDesde",
+		"miPerfilSolicitudHoraHasta",
+		"miPerfilSolicitudArchivo"
+	];
+	for (var i = 0; i < ids.length; i++) {
+		if (document.getElementById(ids[i])) {
+			document.getElementById(ids[i]).value = "";
+		}
+	}
+	if (document.getElementById("miPerfilSolicitudParcial")) {
+		document.getElementById("miPerfilSolicitudParcial").checked = false;
+	}
+}
+
+function enviarSolicitudAusenciaMiPerfil() {
+	var tipo = document.getElementById("miPerfilSolicitudTipo") ? document.getElementById("miPerfilSolicitudTipo").value : "";
+	var fechaDesde = document.getElementById("miPerfilSolicitudFechaDesde") ? document.getElementById("miPerfilSolicitudFechaDesde").value : "";
+	var fechaHasta = document.getElementById("miPerfilSolicitudFechaHasta") ? document.getElementById("miPerfilSolicitudFechaHasta").value : "";
+	var horaDesde = document.getElementById("miPerfilSolicitudHoraDesde") ? document.getElementById("miPerfilSolicitudHoraDesde").value : "";
+	var horaHasta = document.getElementById("miPerfilSolicitudHoraHasta") ? document.getElementById("miPerfilSolicitudHoraHasta").value : "";
+	var motivo = document.getElementById("miPerfilSolicitudMotivo") ? document.getElementById("miPerfilSolicitudMotivo").value : "";
+	if (tipo == "" || fechaDesde == "" || fechaHasta == "") {
+		ver_vetana_informativa("Faltan datos de la solicitud.");
+		return;
+	}
+	if (fechaHasta < fechaDesde) {
+		ver_vetana_informativa("La fecha hasta no puede ser menor a la fecha desde.");
+		return;
+	}
+	if (tipo == "permiso" && (horaDesde != "" || horaHasta != "") && (horaDesde == "" || horaHasta == "")) {
+		ver_vetana_informativa("Carga hora desde y hora hasta para permisos por hora.");
+		return;
+	}
+	leerArchivoSolicitudAusenciaMiPerfil(function(adjunto) {
+		obtener_datos_user();
+		var datos = new FormData();
+		datos.append("useru", userid);
+		datos.append("passu", passuser);
+		datos.append("navegador", navegador);
+		datos.append("funt", "guardarMiSolicitudAusenciaUsuario");
+		datos.append("tipo", tipo);
+		datos.append("fecha_desde", fechaDesde);
+		datos.append("fecha_hasta", fechaHasta);
+		datos.append("hora_desde", horaDesde);
+		datos.append("hora_hasta", horaHasta);
+		datos.append("motivo", motivo);
+		datos.append("nombre_archivo", adjunto.nombre || "");
+		datos.append("archivo", adjunto.archivo || "");
+		datos.append("ext", adjunto.ext || "");
+		verCerrarEfectoCargando("1");
+		$.ajax({
+			data: datos,
+			url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+			type: "post",
+			processData: false,
+			contentType: false,
+			complete: function() {
+				verCerrarEfectoCargando("");
+			},
+			success: function(responseText) {
+				try {
+					var respuesta = $.parseJSON(responseText);
+					if (respuestaJqueryAjax(respuesta["1"]) == true) {
+						ver_vetana_informativa("Solicitud enviada correctamente.");
+						limpiarFormularioSolicitudAusenciaMiPerfil();
+						mostrarFormularioSolicitudAusenciaMiPerfil(false);
+						cargarSolicitudesAusenciaMiPerfil();
+					} else {
+						ver_vetana_informativa(respuesta["2"] || "No se pudo enviar la solicitud.");
+					}
+				} catch (error) {
+					ver_vetana_informativa("No se pudo enviar la solicitud.");
+				}
+			}
+		});
+	});
+}
+
+function rangoSolicitudAusenciaFuncionario(item) {
+	var rango = textoFechaCortaFuncionario(item.fecha_desde);
+	if (item.fecha_hasta && item.fecha_hasta != item.fecha_desde) {
+		rango += " al " + textoFechaCortaFuncionario(item.fecha_hasta);
+	}
+	if (item.tipo == "permiso" && item.hora_desde && item.hora_hasta) {
+		rango += " " + String(item.hora_desde).substring(0, 5) + "-" + String(item.hora_hasta).substring(0, 5);
+	}
+	return rango;
+}
+
+function renderSolicitudesAusenciaMiPerfil(registros) {
+	var lista = document.getElementById("miPerfilSolicitudesAusenciaLista");
+	var resumen = document.getElementById("miPerfilSolicitudesResumen");
+	if (!lista) {
+		return;
+	}
+	registros = Array.isArray(registros) ? registros : [];
+	var pendientes = registros.filter(function(item) {
+		return ["pendiente", "pendiente_documento", "por_validar"].indexOf(item.estado) >= 0;
+	}).length;
+	if (resumen) {
+		resumen.innerHTML = pendientes > 0 ? pendientes + " pendientes" : "Sin pendientes";
+	}
+	if (registros.length == 0) {
+		lista.innerHTML = "<div class='mi-perfil-documentos__empty'>Todavia no registraste solicitudes.</div>";
+		return;
+	}
+	var html = "";
+	for (var i = 0; i < registros.length; i++) {
+		var item = registros[i];
+		var puedeCancelar = ["pendiente", "pendiente_documento", "por_validar"].indexOf(item.estado) >= 0;
+		html += "<div class='mi-perfil-solicitud-row mi-perfil-solicitud-row--" + escaparHtmlFuncionario(item.estado || "pendiente") + "'>" +
+			"<div><strong>" + escaparHtmlFuncionario(textoTipoAusenciaFuncionario(item.tipo)) + "</strong><span>" + escaparHtmlFuncionario(rangoSolicitudAusenciaFuncionario(item)) + "</span></div>" +
+			"<small>" + escaparHtmlFuncionario(textoEstadoAusenciaFuncionario(item.estado)) + "</small>" +
+			(puedeCancelar ? "<button type='button' onclick='cancelarSolicitudAusenciaMiPerfil(\"" + escaparHtmlFuncionario(item.id) + "\")'>Cancelar</button>" : "") +
+		"</div>";
+	}
+	lista.innerHTML = html;
+}
+
+function cargarSolicitudesAusenciaMiPerfil() {
+	if (!document.getElementById("miPerfilSolicitudesAusenciaLista")) {
+		return;
+	}
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "buscarMisSolicitudesAusenciaUsuario"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					renderSolicitudesAusenciaMiPerfil(respuesta["2"]);
+				}
+			} catch (error) {
+				renderSolicitudesAusenciaMiPerfil([]);
+			}
+		}
+	});
+}
+
+function cancelarSolicitudAusenciaMiPerfil(idSolicitud) {
+	obtener_datos_user();
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "cancelarSolicitudAusenciaUsuario",
+			"id_solicitud": idSolicitud
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		complete: function() {
+			verCerrarEfectoCargando("");
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa("Solicitud cancelada.");
+					cargarSolicitudesAusenciaMiPerfil();
+					if (typeof buscarabmusuario == "function") {
+						buscarabmusuario();
+					}
+				} else {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cancelar la solicitud.");
+				}
+			} catch (error) {
+				ver_vetana_informativa("No se pudo cancelar la solicitud.");
+			}
+		}
+	});
 }
 
 function actualizarFichaFuncionario(registro) {
@@ -1159,6 +4060,9 @@ function actualizarFichaFuncionario(registro) {
 		"<div class='funcionario-ficha__actions funcionario-ficha__actions--inline'><button type='button' onclick='habilitarCambioContrasenhaFuncionario();mostrarFormularioFuncionario();'>Restablecer contrasena</button><button type='button' onclick='verVentanaEditarUsuario()'>Bloquear o desbloquear acceso</button></div>";
 
 	document.getElementById("funcionarioFichaHorariosSeccion").innerHTML = renderHorariosFichaFuncionario(registro);
+	if (document.getElementById("funcionarioFichaDocumentosSeccion")) {
+		document.getElementById("funcionarioFichaDocumentosSeccion").innerHTML = renderLegajoFichaFuncionario(registro);
+	}
 }
 
 function activarTabFichaFuncionario(tab) {
@@ -1339,6 +4243,30 @@ function inicializarLayoutMiPerfil() {
 					"<div class='mi-perfil-grid'><label data-mi-perfil-slot='telefono'></label><label data-mi-perfil-slot='contacto'></label><label data-mi-perfil-slot='direccion'></label></div>" +
 				"</section>" +
 				"<section class='mi-perfil-card mi-perfil-card--compact' data-mi-perfil-slot='domicilio'></section>" +
+				"<section class='mi-perfil-solicitudes'>" +
+					"<div class='mi-perfil-card__title'><strong>Mis solicitudes</strong><small>Reposos, permisos y vacaciones.</small></div>" +
+					"<div class='mi-perfil-solicitudes__toolbar'><button type='button' onclick='mostrarFormularioSolicitudAusenciaMiPerfil(true)'>Nueva solicitud</button><span id='miPerfilSolicitudesResumen'>Sin pendientes</span></div>" +
+					"<div class='mi-perfil-solicitudes__form' id='miPerfilSolicitudAusenciaForm' style='display:none;'>" +
+						"<div class='mi-perfil-grid'>" +
+							"<label class='mi-perfil-field'><span>Tipo de solicitud</span><select id='miPerfilSolicitudTipo' onchange='actualizarCamposSolicitudAusenciaMiPerfil()'><option value='reposo_medico'>Reposo medico</option><option value='permiso'>Permiso</option><option value='vacaciones'>Vacaciones</option></select></label>" +
+							"<label class='mi-perfil-field'><span>Fecha desde</span><input type='date' id='miPerfilSolicitudFechaDesde'></label>" +
+							"<label class='mi-perfil-field'><span>Fecha hasta</span><input type='date' id='miPerfilSolicitudFechaHasta'></label>" +
+							"<label class='mi-perfil-field mi-perfil-solicitud-parcial'><span>Permiso por horas</span><input type='checkbox' id='miPerfilSolicitudParcial' onchange='actualizarCamposSolicitudAusenciaMiPerfil()'></label>" +
+							"<label class='mi-perfil-field mi-perfil-solicitud-horas'><span>Hora desde</span><input type='time' id='miPerfilSolicitudHoraDesde'></label>" +
+							"<label class='mi-perfil-field mi-perfil-solicitud-horas'><span>Hora hasta</span><input type='time' id='miPerfilSolicitudHoraHasta'></label>" +
+							"<label class='mi-perfil-field mi-perfil-field--wide'><span>Motivo / comentario</span><textarea id='miPerfilSolicitudMotivo'></textarea></label>" +
+							"<label class='mi-perfil-field mi-perfil-field--wide'><span>Adjuntar archivo</span><input type='file' id='miPerfilSolicitudArchivo' accept='.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx'></label>" +
+						"</div>" +
+						"<div class='mi-perfil-solicitudes__actions'><button type='button' onclick='mostrarFormularioSolicitudAusenciaMiPerfil(false)'>Cancelar</button><button type='button' onclick='enviarSolicitudAusenciaMiPerfil()'>Enviar solicitud</button></div>" +
+					"</div>" +
+					"<div class='mi-perfil-solicitudes__lista' id='miPerfilSolicitudesAusenciaLista'></div>" +
+				"</section>" +
+				"<section class='mi-perfil-documentos'>" +
+					"<div class='mi-perfil-card__title'><strong>Documentos de mi legajo</strong><small>Carga y consulta los documentos solicitados por RRHH.</small></div>" +
+					"<div class='mi-perfil-documentos__summary' id='miPerfilDocumentosResumen'></div>" +
+					"<div class='mi-perfil-documentos__lista' id='miPerfilDocumentosLegajoLista'></div>" +
+					"<input type='file' id='miPerfilLegajoArchivoInput' accept='.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx' style='display:none;' onchange='subirDocumentoLegajoMiPerfilSeleccionado(this)' />" +
+				"</section>" +
 				"<details class='mi-perfil-card mi-perfil-system' open>" +
 					"<summary><span>Datos del sistema</span><small>Acceso y datos administrativos.</small></summary>" +
 					"<div class='mi-perfil-grid'><label data-mi-perfil-slot='user'></label><label data-mi-perfil-slot='local'></label><label data-mi-perfil-slot='fecha'></label><div data-mi-perfil-slot='password'></div></div>" +
@@ -1399,10 +4327,23 @@ function inicializarLayoutMiPerfil() {
 		ayudaPass.innerHTML = "Si no necesitas cambiarla, deja este campo sin completar.";
 		slotPassword.appendChild(ayudaPass);
 	}
+	renderDocumentosMiPerfil();
+	actualizarCamposSolicitudAusenciaMiPerfil();
+	cargarSolicitudesAusenciaMiPerfil();
 }
 
 function actualizarEstadoPerfilUsuarioActual() {
 	var completitud = calcularCompletitudFuncionario(datosPerfilUsuarioActual);
+	var registroDocumentos = obtenerRegistroMiPerfilParaDocumentos();
+	var codUsuario = String(registroDocumentos.cod_usuario || "");
+	var incluirLegajo = !!document.getElementById("miPerfilDocumentosLegajoLista") && !!funcionarioLegajoDocumentosCargados[codUsuario];
+	var legajo = incluirLegajo ? calcularDocumentosLegajoMiPerfil(registroDocumentos) : null;
+	var pendientesTotales = completitud.pendientes.slice();
+	if (legajo) {
+		pendientesTotales = pendientesTotales.concat(legajo.faltantes);
+	}
+	var completoTotal = completitud.completo && (!legajo || legajo.faltantes.length == 0);
+	var porcentajeAlerta = legajo ? Math.min(completitud.porcentaje, legajo.porcentaje) : completitud.porcentaje;
 	var indicador = document.getElementById("perfilIncompletoIndicadorTopbar");
 	var progreso = document.getElementById("miPerfilProgresoTexto");
 	var pendientes = document.getElementById("miPerfilPendientes");
@@ -1412,31 +4353,41 @@ function actualizarEstadoPerfilUsuarioActual() {
 	var nombreCabecera = document.getElementById("miPerfilNombreCabecera");
 
 	if (progreso) {
-		progreso.innerHTML = "Perfil completado: " + completitud.porcentaje + "%";
+		progreso.innerHTML = legajo
+			? "Perfil: " + completitud.porcentaje + "%<span>Legajo documental: " + legajo.porcentaje + "%</span>"
+			: "Perfil completado: " + completitud.porcentaje + "%";
 	}
 	if (pendientes) {
-		pendientes.innerHTML = completitud.pendientes.length == 0 ? "<span>Sin datos pendientes.</span>" : "<ul><li>" + completitud.pendientes.map(escaparHtmlFuncionario).join("</li><li>") + "</li></ul>";
-		pendientes.style.display = completitud.pendientes.length == 0 ? "none" : "";
+		pendientes.innerHTML = pendientesTotales.length == 0 ? "<span>Sin pendientes.</span>" : "<ul><li>" + pendientesTotales.map(escaparHtmlFuncionario).join("</li><li>") + "</li></ul>";
+		pendientes.style.display = pendientesTotales.length == 0 ? "none" : "";
 	}
 	if (status) {
-		status.style.display = completitud.completo ? "none" : "";
+		status.style.display = completoTotal ? "none" : "";
+		var tituloStatus = status.querySelector("strong");
+		var textoStatus = status.querySelector("p");
+		if (tituloStatus) {
+			tituloStatus.innerHTML = legajo ? "Tu ficha esta incompleta." : "Tu perfil esta incompleto.";
+		}
+		if (textoStatus) {
+			textoStatus.innerHTML = legajo ? "Completa los datos o documentos pendientes para mantener actualizada tu ficha laboral." : "Completa los datos pendientes para mantener actualizada tu ficha laboral.";
+		}
 	}
 	if (resumenEstado) {
-		resumenEstado.innerHTML = completitud.completo ? "Perfil completo" : "Faltan " + completitud.pendientes.length + " datos";
+		resumenEstado.innerHTML = completoTotal ? "Ficha completa" : "Faltan " + pendientesTotales.length + " pendientes";
 	}
 	if (botonPendientes) {
-		botonPendientes.style.display = completitud.completo ? "none" : "";
+		botonPendientes.style.display = completoTotal ? "none" : "";
 	}
 	if (nombreCabecera) {
 		nombreCabecera.innerHTML = escaparHtmlFuncionario(datosPerfilUsuarioActual.nombre_persona || (document.getElementById("inptNombreMisDatos") ? document.getElementById("inptNombreMisDatos").value : "Funcionario"));
 	}
 	if (indicador) {
-		if (completitud.completo) {
+		if (completoTotal) {
 			indicador.style.display = "none";
 		} else {
 			indicador.style.display = "";
-			indicador.className = completitud.porcentaje < 70 ? "dashboard-topbar-user__status dashboard-topbar-user__status--danger" : "dashboard-topbar-user__status dashboard-topbar-user__status--warning";
-			indicador.title = "Tu perfil esta incompleto";
+			indicador.className = porcentajeAlerta < 70 ? "dashboard-topbar-user__status dashboard-topbar-user__status--danger" : "dashboard-topbar-user__status dashboard-topbar-user__status--warning";
+			indicador.title = legajo ? "Tu ficha esta incompleta" : "Tu perfil esta incompleto";
 		}
 	}
 }
@@ -1457,11 +4408,26 @@ function enfocarPendienteMiPerfil() {
 	var password = document.getElementById("inptPassMisDatos");
 	if (password && password.style.display != "none" && $.trim(password.value) == "") {
 		password.focus();
+		return;
+	}
+	var registroDocumentos = obtenerRegistroMiPerfilParaDocumentos();
+	var codUsuario = String(registroDocumentos.cod_usuario || "");
+	if (document.getElementById("miPerfilDocumentosLegajoLista") && funcionarioLegajoDocumentosCargados[codUsuario]) {
+		var legajo = calcularDocumentosLegajoMiPerfil(registroDocumentos);
+		if (legajo.faltantes.length > 0) {
+			var bloqueDocumentos = document.querySelector(".mi-perfil-documentos");
+			if (bloqueDocumentos && bloqueDocumentos.scrollIntoView) {
+				bloqueDocumentos.scrollIntoView({behavior: "smooth", block: "start"});
+			}
+		}
 	}
 }
 
 function buscar_datos_del_usuario() {	
 	verCerrarEfectoCargando("1")
+	if (typeof mostrarCargaProgresoJornadaTopbarUsuario == "function") {
+		mostrarCargaProgresoJornadaTopbarUsuario("Cargando horario esperado...", "Consultando jornada laboral asignada...");
+	}
 	//document.getElementById("divPresentacion").style.display = "none"
 	 
 	obtener_datos_user();
@@ -1577,6 +4543,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 							horarios_usuario: datos["18"] || []
 						};
 						actualizarEstadoPerfilUsuarioActual();
+						if (document.getElementById("miPerfilDocumentosLegajoLista")) {
+							cargarDocumentosLegajoMiPerfil(true);
+						}
 						if (typeof actualizarProgresoJornadaTopbarUsuario == "function") {
 							actualizarProgresoJornadaTopbarUsuario();
 						}
@@ -1598,6 +4567,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 				removeToMenu()
 				if (typeof inicializarAccesosRapidosUsuario === "function") {
 					inicializarAccesosRapidosUsuario();
+				}
+				if (typeof inicializarComparativaVentasCobranzas === "function") {
+					inicializarComparativaVentasCobranzas();
 				}
 					buscarabmCasaOption()
 					buscarabmCasaOptionCuentas()
@@ -1897,7 +4869,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=usuario-contrato-chip-inline-20260619")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=flujo-resumen-neto-20260624")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -2019,7 +4991,7 @@ function cerrarSesion2() {
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = typeof Respuesta === "string" ? $.parseJSON(Respuesta) : Respuesta;
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
@@ -2073,6 +5045,32 @@ function verCerrarAuditoria(mostrar){
 /*
 ABM USUARIOS
 */
+function ajustarAnchoVentanaFuncionarios() {
+	var overlay = document.getElementById("divAbmUsuario");
+	var efecto = document.getElementById("tdEfectoAbmUsuario");
+	var listado = document.getElementById("divAbmUsuario1");
+	var ficha = document.getElementById("divAbmUsuario2");
+	if (overlay) {
+		overlay.style.setProperty("padding", "8px", "important");
+		overlay.style.setProperty("box-sizing", "border-box", "important");
+	}
+	if (efecto) {
+		efecto.style.setProperty("width", "100%", "important");
+		efecto.style.setProperty("max-width", "none", "important");
+	}
+	if (listado) {
+		listado.style.setProperty("width", "calc(100vw - 16px)", "important");
+		listado.style.setProperty("max-width", "none", "important");
+		listado.style.setProperty("margin", "0", "important");
+	}
+	if (ficha) {
+		ficha.style.setProperty("width", "calc(100vw - 16px)", "important");
+		ficha.style.setProperty("max-width", "none", "important");
+		ficha.style.setProperty("overflow-x", "hidden", "important");
+		ficha.style.setProperty("overflow-y", "hidden", "important");
+	}
+}
+
 function verCerrarAbmUsuarios(){
 	document.getElementById("divSegundoPlano").style.display="none";
 if(document.getElementById("divAbmUsuario").style.display==""){
@@ -2086,6 +5084,7 @@ if(controlacceso("VERLISTADOUSUARIO","accion")==false){return;}
 
 document.getElementById("divAbmUsuario").style.display=""
   document.getElementById("tdEfectoAbmUsuario").className="magictime slideDownReturn"
+  ajustarAnchoVentanaFuncionarios();
 }
 }
 function verCerrarMisDatos(d){
@@ -2096,6 +5095,8 @@ function verCerrarMisDatos(d){
 	  document.getElementById("tdEfectoAbmMisDatos").className="magictime slideDownReturn"
 	  inicializarLayoutMiPerfil();
 	  actualizarEstadoPerfilUsuarioActual();
+	  cargarDocumentosLegajoMiPerfil(false);
+	  cargarSolicitudesAusenciaMiPerfil();
 	}else{
 	document.getElementById("tdEfectoAbmMisDatos").className="magictime vanishOut"
 	$("div[id=divCambiarMisDatosPersonales]").fadeOut(500);	
@@ -2129,9 +5130,11 @@ function verCerrarVentanaAbmUsuarios(d, l) {
 		document.getElementById('divAbmUsuario1').style.display = "none"
 		$("div[id=divAbmUsuario2]").fadeIn(250)
 		mostrarFormularioFuncionario()
+		ajustarAnchoVentanaFuncionarios();
 	} else {
 		$("div[id=divAbmUsuario1]").fadeIn(250)
 		document.getElementById('divAbmUsuario2').style.display = "none"
+		ajustarAnchoVentanaFuncionarios();
 	}
 }
 function verVentanaEditarUsuario() {
@@ -3050,6 +6053,37 @@ function calcularAvanceTopbarJornadaUsuario(datos) {
 	return calcularAvanceRealJornada(fechaIsoHorarioUsuario(new Date()), registrosHoy, datos, new Date());
 }
 
+function mostrarCargaProgresoJornadaTopbarUsuario(titulo, detalle) {
+	var contenedor = document.getElementById("progresoJornadaProgramadaTopbar");
+	if (!contenedor) { return; }
+	var estadoTexto = document.getElementById("estadoProgresoJornadaTopbar");
+	var detalleTexto = document.getElementById("textoProgresoJornadaTopbar");
+	var barra = document.getElementById("barraProgresoJornadaTopbar");
+	var clases = [
+		"perfil-widget__progreso-jornada--sin-jornada",
+		"perfil-widget__progreso-jornada--pendiente",
+		"perfil-widget__progreso-jornada--sin-entrada",
+		"perfil-widget__progreso-jornada--en-jornada",
+		"perfil-widget__progreso-jornada--pausa",
+		"perfil-widget__progreso-jornada--incompleta",
+		"perfil-widget__progreso-jornada--completa",
+		"perfil-widget__progreso-jornada--extra",
+		"perfil-widget__progreso-jornada--observado",
+		"perfil-widget__progreso-jornada--finalizada",
+		"perfil-widget__progreso-jornada--cargando"
+	];
+
+	for (var i = 0; i < clases.length; i++) {
+		contenedor.classList.remove(clases[i]);
+	}
+
+	contenedor.classList.add("perfil-widget__progreso-jornada--cargando");
+	contenedor.title = "Cargando horario esperado y marcaciones de la jornada";
+	if (estadoTexto) { estadoTexto.innerHTML = escaparHtmlFuncionario(titulo || "Cargando horario esperado..."); }
+	if (detalleTexto) { detalleTexto.innerHTML = escaparHtmlFuncionario(detalle || "Consultando jornada y marcaciones..."); }
+	if (barra) { barra.style.width = "100%"; }
+}
+
 function actualizarProgresoJornadaTopbarUsuario() {
 	var contenedor = document.getElementById("progresoJornadaProgramadaTopbar");
 	if (!contenedor) { return; }
@@ -3068,7 +6102,8 @@ function actualizarProgresoJornadaTopbarUsuario() {
 		"perfil-widget__progreso-jornada--completa",
 		"perfil-widget__progreso-jornada--extra",
 		"perfil-widget__progreso-jornada--observado",
-		"perfil-widget__progreso-jornada--finalizada"
+		"perfil-widget__progreso-jornada--finalizada",
+		"perfil-widget__progreso-jornada--cargando"
 	];
 
 	for (var i = 0; i < clases.length; i++) {
@@ -3768,9 +6803,27 @@ function renderDetalleDiaCalendarioEsperadoUsuario(datos) {
 		(datos.observacion ? "<div class='jornada-detalle-observacion'>" + escaparHtmlFuncionario(datos.observacion) + "</div>" : "") +
 		"<div class='jornada-detalle-acciones'>" +
 			"<button type='button' disabled>Editar este dia</button>" +
-			"<button type='button' disabled>Agregar excepcion</button>" +
+			"<button type='button' onclick='prepararSolicitudAusenciaDesdeCalendario(\"" + escaparHtmlFuncionario(datos.fecha) + "\")'>Solicitar ausencia</button>" +
 			"<button type='button' disabled>Copiar horario</button>" +
 		"</div>";
+}
+
+function prepararSolicitudAusenciaDesdeCalendario(fechaTexto) {
+	if (idAbmUsuario && userid && String(idAbmUsuario) != String(userid)) {
+		ver_vetana_informativa("La solicitud desde calendario se habilita para el propio perfil del funcionario.");
+		return;
+	}
+	verCerrarMisDatos(1);
+	setTimeout(function() {
+		mostrarFormularioSolicitudAusenciaMiPerfil(true);
+		if (document.getElementById("miPerfilSolicitudFechaDesde")) {
+			document.getElementById("miPerfilSolicitudFechaDesde").value = fechaTexto;
+		}
+		if (document.getElementById("miPerfilSolicitudFechaHasta")) {
+			document.getElementById("miPerfilSolicitudFechaHasta").value = fechaTexto;
+		}
+		actualizarCamposSolicitudAusenciaMiPerfil();
+	}, 180);
 }
 
 function seleccionarDiaCalendarioEsperadoUsuario(fechaTexto) {
@@ -4086,6 +7139,7 @@ function AbmEditarMisDatos() {
 					datosPerfilUsuarioActual.telefono_referencia = telefono_referencia;
 					datosPerfilUsuarioActual.login = user;
 					actualizarEstadoPerfilUsuarioActual();
+					renderDocumentosMiPerfil();
 					document.getElementById("inptPassMisDatos").value = "";
 					document.getElementById("inptPassMisDatos").style.display = "none";
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")					
@@ -5798,6 +8852,94 @@ var precio_ventaAnt = ""
 var stockAnt = ""
 var cod_barraAnt = ""
 
+function obtenerValorCeldaProductoTemporalidad(fila, id, defecto) {
+	if (!fila) {
+		return defecto;
+	}
+	var celda = $(fila).children('td[id="' + id + '"]');
+	if (celda.length == 0) {
+		return defecto;
+	}
+	var valor = celda.html();
+	if (valor === undefined || valor === null) {
+		return defecto;
+	}
+	return valor;
+}
+
+function setValorProductoTemporalidad(id, valor) {
+	var elemento = document.getElementById(id);
+	if (!elemento) {
+		return;
+	}
+	elemento.value = (valor === undefined || valor === null) ? "" : valor;
+}
+
+function setTemporalidadProductoDefaults() {
+	var usa = document.getElementById("inptUsaTemporalidadProducto");
+	if (usa) {
+		usa.checked = false;
+	}
+	setValorProductoTemporalidad("inptTemporalidadTipoProducto", "unico");
+	setValorProductoTemporalidad("inptTemporalidadIntervaloProducto", "20");
+	setValorProductoTemporalidad("inptTemporalidadMinimoProducto", "15");
+	setValorProductoTemporalidad("inptTemporalidadMaximoProducto", "40");
+	setValorProductoTemporalidad("inptTemporalidadSesionesProducto", "");
+	setValorProductoTemporalidad("inptTemporalidadDuracionProducto", "");
+	setValorProductoTemporalidad("inptTemporalidadObservacionProducto", "");
+	toggleTemporalidadProducto();
+}
+
+function toggleTemporalidadProducto() {
+	var usa = document.getElementById("inptUsaTemporalidadProducto");
+	var card = document.getElementById("productoTemporalidadCard");
+	if (!usa) {
+		return;
+	}
+	var activo = usa.checked;
+	if (card) {
+		if (activo) {
+			card.className = card.className.replace(/\bis-disabled\b/g, "").replace(/\s+/g, " ").trim();
+		} else if (card.className.indexOf("is-disabled") == -1) {
+			card.className += " is-disabled";
+		}
+	}
+	var campos = document.querySelectorAll("[data-temporalidad-campo]");
+	for (var i = 0; i < campos.length; i++) {
+		campos[i].disabled = !activo;
+	}
+}
+
+function cargarTemporalidadProductoDesdeFila(fila) {
+	var usaValor = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_120", "0");
+	var usa = document.getElementById("inptUsaTemporalidadProducto");
+	if (usa) {
+		usa.checked = String(usaValor) == "1";
+	}
+	setValorProductoTemporalidad("inptTemporalidadTipoProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_121", "unico") || "unico");
+	setValorProductoTemporalidad("inptTemporalidadIntervaloProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_122", "20") || "20");
+	setValorProductoTemporalidad("inptTemporalidadMinimoProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_123", "15") || "15");
+	setValorProductoTemporalidad("inptTemporalidadMaximoProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_124", "40") || "40");
+	setValorProductoTemporalidad("inptTemporalidadSesionesProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_125", ""));
+	setValorProductoTemporalidad("inptTemporalidadDuracionProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_126", ""));
+	setValorProductoTemporalidad("inptTemporalidadObservacionProducto", obtenerValorCeldaProductoTemporalidad(fila, "td_datos_127", ""));
+	toggleTemporalidadProducto();
+}
+
+function datosTemporalidadProducto() {
+	var usa = document.getElementById("inptUsaTemporalidadProducto");
+	return {
+		usa_temporalidad: usa && usa.checked ? "1" : "0",
+		temporalidad_tipo: document.getElementById("inptTemporalidadTipoProducto") ? document.getElementById("inptTemporalidadTipoProducto").value : "unico",
+		temporalidad_intervalo_recomendado: document.getElementById("inptTemporalidadIntervaloProducto") ? document.getElementById("inptTemporalidadIntervaloProducto").value : "20",
+		temporalidad_intervalo_minimo: document.getElementById("inptTemporalidadMinimoProducto") ? document.getElementById("inptTemporalidadMinimoProducto").value : "15",
+		temporalidad_intervalo_maximo: document.getElementById("inptTemporalidadMaximoProducto") ? document.getElementById("inptTemporalidadMaximoProducto").value : "40",
+		temporalidad_sesiones_estimadas: document.getElementById("inptTemporalidadSesionesProducto") ? document.getElementById("inptTemporalidadSesionesProducto").value : "",
+		temporalidad_duracion_sillon: document.getElementById("inptTemporalidadDuracionProducto") ? document.getElementById("inptTemporalidadDuracionProducto").value : "",
+		temporalidad_observacion: document.getElementById("inptTemporalidadObservacionProducto") ? document.getElementById("inptTemporalidadObservacionProducto").value : ""
+	};
+}
+
 function obtenerdatosabmProducto(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
@@ -5847,7 +8989,9 @@ cod_barraAnt = $(datostr).children('td[id="td_datos_19"]').html();
 	idFkProductoMarca = $(datostr).children('td[id="td_datos_15"]').html();
 	idFkProductoTipoImpuesto = $(datostr).children('td[id="td_datos_16"]').html();
 	codProveedorAbmProducto = $(datostr).children('td[id="td_datos_23"]').html();
+	cargarTemporalidadProductoDesdeFila(datostr);
 	cargarInsumosProductoAbmProducto(idAbmProducto);
+	actualizarFichaCatalogoProductoDesdeFila(datostr);
 		document.getElementById('btnAbmProducto').value ="Editar Datos";
 			// document.getElementById("tdAnhaMasPrecios").style.display=""
 				document.getElementById("btnVerConfigPrecios").style.backgroundColor=""
@@ -6007,6 +9151,15 @@ function abmproducto(linkproducto,codFabricaFK,CodProveedorFK,tipoproducto,codBa
 	datos.append("precio_ventaAnt", precio_ventaAnt)
 	datos.append("stockAnt", stockAnt)
 	datos.append("cod_barraAnt", cod_barraAnt)
+	var temporalidadProducto = datosTemporalidadProducto();
+	datos.append("usa_temporalidad", temporalidadProducto.usa_temporalidad)
+	datos.append("temporalidad_tipo", temporalidadProducto.temporalidad_tipo)
+	datos.append("temporalidad_intervalo_recomendado", temporalidadProducto.temporalidad_intervalo_recomendado)
+	datos.append("temporalidad_intervalo_minimo", temporalidadProducto.temporalidad_intervalo_minimo)
+	datos.append("temporalidad_intervalo_maximo", temporalidadProducto.temporalidad_intervalo_maximo)
+	datos.append("temporalidad_sesiones_estimadas", temporalidadProducto.temporalidad_sesiones_estimadas)
+	datos.append("temporalidad_duracion_sillon", temporalidadProducto.temporalidad_duracion_sillon)
+	datos.append("temporalidad_observacion", temporalidadProducto.temporalidad_observacion)
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
@@ -6081,11 +9234,417 @@ function checkestadoproductos(d){
 	if(d=="1"){
 	document.getElementById('inptSeleccEstadoBuscarProducto1').checked=true
 		document.getElementById('inptSeleccEstadoBuscarProducto2').checked=false	
+		if(document.getElementById('selectEstadoCatalogoProducto')){
+			document.getElementById('selectEstadoCatalogoProducto').value="Activo"
+		}
 	}else{
 		
 		document.getElementById('inptSeleccEstadoBuscarProducto1').checked=false
 		document.getElementById('inptSeleccEstadoBuscarProducto2').checked=true
+		if(document.getElementById('selectEstadoCatalogoProducto')){
+			document.getElementById('selectEstadoCatalogoProducto').value="Inactivo"
+		}
 	}
+}
+
+function sincronizarEstadoCatalogoProducto(){
+	var selector=document.getElementById('selectEstadoCatalogoProducto');
+	if(!selector){return;}
+	if(selector.value=="Inactivo"){
+		checkestadoproductos(2);
+	}else{
+		checkestadoproductos(1);
+	}
+}
+
+function abrirGuiaCatalogoProductos(){
+	var guia=document.getElementById("catalogoGuiaProductos");
+	if(guia){guia.style.display="flex";}
+}
+
+function cerrarGuiaCatalogoProductos(){
+	var guia=document.getElementById("catalogoGuiaProductos");
+	if(guia){guia.style.display="none";}
+}
+
+function enfocarInsumosCatalogoProducto(){
+	abrirFichaCatalogoProducto();
+	var panel=document.getElementById("table_abm_producto_insumos");
+	if(panel && panel.scrollIntoView){
+		panel.scrollIntoView({block:"nearest", behavior:"smooth"});
+	}
+}
+
+function abrirFichaCatalogoProducto(){
+	if(idAbmProducto==""){
+		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO");
+		return;
+	}
+	var panel=document.getElementById("catalogoPanelProducto");
+	if(panel){panel.style.display="block";}
+}
+
+function cerrarFichaCatalogoProducto(){
+	var panel=document.getElementById("catalogoPanelProducto");
+	if(panel){panel.style.display="none";}
+}
+
+function catalogoProductoTextoPlano(valor){
+	var div=document.createElement("div");
+	div.innerHTML=valor == null ? "" : String(valor);
+	return (div.textContent || div.innerText || "").trim();
+}
+
+function catalogoProductoTextoCelda(fila, id){
+	var celda=$(fila).children('td[id="'+id+'"]');
+	if(celda.length==0){return "";}
+	return catalogoProductoTextoPlano(celda.html());
+}
+
+function catalogoProductoNumero(valor){
+	var limpio=String(valor == null ? "" : valor).replace(/\./g,"").replace(",",".").replace(/[^\d.-]/g,"");
+	var numero=Number(limpio);
+	return isNaN(numero) ? 0 : numero;
+}
+
+function catalogoProductoClaseEstado(estado){
+	return String(estado || "").toLowerCase()=="activo" ? "catalogo-status--activo" : "catalogo-status--inactivo";
+}
+
+function catalogoRiesgoNivelDesdePrecio(precioVenta){
+	var precio=catalogoProductoNumero(precioVenta);
+	if(precio<=350000){return 1;}
+	if(precio<=800000){return 2;}
+	if(precio<=1500000){return 3;}
+	if(precio<=3000000){return 4;}
+	return 5;
+}
+
+function catalogoRiesgoNormalizarNivel(nivel, precioVenta){
+	var numero=parseInt(catalogoProductoTextoPlano(nivel),10);
+	if(isNaN(numero) || numero<1 || numero>5){
+		return catalogoRiesgoNivelDesdePrecio(precioVenta);
+	}
+	return numero;
+}
+
+function catalogoRiesgoInfo(nivel){
+	nivel=catalogoRiesgoNormalizarNivel(nivel, "0");
+	if(nivel==1){
+		return {label:"N1 Bajo", clase:"riesgo-nivel-1", title:"Bajo riesgo financiero. Puede realizarse al inicio del plan.", recomendacion:"Tratamiento de bajo riesgo. Puede realizarse al inicio del plan."};
+	}
+	if(nivel==2){
+		return {label:"N2 Moderado", clase:"riesgo-nivel-2", title:"Riesgo moderado. Recomendado con entrega inicial o primera cuota.", recomendacion:"Tratamiento de costo moderado. Recomendado con entrega inicial o primera cuota pagada."};
+	}
+	if(nivel==3){
+		return {label:"N3 Controlado", clase:"riesgo-nivel-3", title:"Riesgo controlado. Requiere avance inicial del plan.", recomendacion:"Tratamiento de costo medio. Conviene realizarlo cuando el paciente ya demostro cumplimiento."};
+	}
+	if(nivel==4){
+		return {label:"N4 Alto", clase:"riesgo-nivel-4", title:"Alto riesgo. Requiere control administrativo.", recomendacion:"Tratamiento de alto compromiso economico. Requiere control administrativo, cuotas pagadas o autorizacion."};
+	}
+	return {label:"N5 Critico", clase:"riesgo-nivel-5", title:"Riesgo critico. Requiere autorizacion o anticipo importante.", recomendacion:"Tratamiento de muy alto valor. No realizar al inicio del plan salvo autorizacion administrativa, anticipo importante o avance suficiente de cuotas."};
+}
+
+function catalogoRiesgoBadgeHtml(nivel){
+	var info=catalogoRiesgoInfo(nivel);
+	return "<span class='catalogo-riesgo-badge "+info.clase+"' title='"+escaparHtmlAbmInsumos(info.title)+"'>"+escaparHtmlAbmInsumos(info.label)+"</span>";
+}
+
+function catalogoRiesgoOrigenTexto(origen){
+	origen=String(origen || "").toLowerCase();
+	if(origen=="manual"){return "Manual";}
+	return "Automatico";
+}
+
+var catalogoRiesgoProductoActual={nivel:1,precio:"",origen:"automatico",observacion:"",usuario:"",fecha:""};
+
+function actualizarPanelRiesgoCatalogoProducto(nivel, precioVenta, origen, observacion, usuario, fecha){
+	nivel=catalogoRiesgoNormalizarNivel(nivel, precioVenta);
+	var info=catalogoRiesgoInfo(nivel);
+	catalogoRiesgoProductoActual={nivel:nivel,precio:precioVenta,origen:origen || "automatico",observacion:observacion || "",usuario:usuario || "",fecha:fecha || ""};
+	var badge=document.getElementById("catalogoFichaRiesgoBadge");
+	if(badge){badge.innerHTML=catalogoRiesgoBadgeHtml(nivel);}
+	setTextoCatalogoProducto("catalogoFichaRiesgoPrecio", precioVenta ? precioVenta+" Gs." : "-");
+	setTextoCatalogoProducto("catalogoFichaRiesgoOrigen", catalogoRiesgoOrigenTexto(origen));
+	setTextoCatalogoProducto("catalogoFichaRiesgoUsuario", usuario);
+	setTextoCatalogoProducto("catalogoFichaRiesgoFecha", fecha);
+	var recomendacion=info.recomendacion;
+	if(String(observacion || "").trim()!=""){
+		recomendacion+=" Motivo manual: "+observacion;
+	}
+	setTextoCatalogoProducto("catalogoFichaRiesgoRecomendacion", recomendacion);
+	var alerta=document.getElementById("catalogoFichaRiesgoAlerta");
+	if(alerta){
+		alerta.className="catalogo-riesgo-alerta";
+		alerta.textContent="";
+		if(nivel==4){
+			alerta.className+=" catalogo-riesgo-alerta--alto";
+			alerta.textContent="Alto riesgo financiero. Revisar avance de pago antes de realizar.";
+		}
+		if(nivel==5){
+			alerta.className+=" catalogo-riesgo-alerta--critico";
+			alerta.textContent="Riesgo critico. Requiere autorizacion administrativa o anticipo importante.";
+		}
+	}
+}
+
+function prepararFilasCatalogoProductos(){
+	var contenedor=document.getElementById("table_abm_producto");
+	if(!contenedor){return;}
+	var filas=contenedor.querySelectorAll('tr[id="tbSelecRegistro"]');
+	for(var i=0;i<filas.length;i++){
+		var fila=filas[i];
+		var estado=catalogoProductoTextoCelda(fila,"td_datos_9") || "Activo";
+		var stock=catalogoProductoNumero(catalogoProductoTextoCelda(fila,"td_datos_6"));
+		var precioVenta=catalogoProductoTextoCelda(fila,"td_datos_4");
+		var nivelRiesgo=catalogoRiesgoNormalizarNivel(catalogoProductoTextoCelda(fila,"td_datos_105"), precioVenta);
+		fila.setAttribute("data-estado-producto", estado.toLowerCase());
+		fila.setAttribute("data-riesgo-financiero", nivelRiesgo);
+		if(stock<=0){
+			fila.setAttribute("data-stock-state","sin-stock");
+		}else if(stock<=5){
+			fila.setAttribute("data-stock-state","bajo-stock");
+		}else{
+			fila.setAttribute("data-stock-state","con-stock");
+		}
+		var celdaEstado=fila.querySelector(".catalogo-estado-cell");
+		if(!celdaEstado){
+			celdaEstado=document.createElement("td");
+			celdaEstado.className="tdRegistroSearch catalogo-estado-cell";
+			celdaEstado.style.width="4%";
+			fila.appendChild(celdaEstado);
+		}
+		celdaEstado.innerHTML="<span class='"+catalogoProductoClaseEstado(estado)+"'>"+escaparHtmlAbmInsumos(estado)+"</span>";
+		var celdaRiesgo=fila.querySelector(".catalogo-riesgo-cell");
+		if(celdaRiesgo && celdaRiesgo.innerHTML.replace(/\s/g,"")==""){
+			celdaRiesgo.innerHTML=catalogoRiesgoBadgeHtml(nivelRiesgo);
+		}
+	}
+	actualizarEstadoResultadosCatalogoProductos();
+}
+
+function actualizarEstadoResultadosCatalogoProductos(){
+	var contenedor=document.getElementById("table_abm_producto");
+	var vacio=document.getElementById("catalogoProductosEmpty");
+	if(!contenedor || !vacio){return;}
+	var hayResultados=contenedor.querySelector('tr[id="tbSelecRegistro"]')!=null;
+	var hayContenido=contenedor.innerHTML.replace(/\s/g,"")!=""; 
+	vacio.style.display=(!hayResultados && !hayContenido) ? "grid" : "none";
+}
+
+function limpiarEstadoResultadosCatalogoProductos(){
+	var vacio=document.getElementById("catalogoProductosEmpty");
+	if(vacio){vacio.style.display="none";}
+}
+
+function setTextoCatalogoProducto(id, valor){
+	var elemento=document.getElementById(id);
+	if(elemento){elemento.textContent=valor && String(valor).trim()!="" ? valor : "-";}
+}
+
+function limpiarFichaCatalogoProducto(){
+	var vacio=document.getElementById("catalogoProductoVacio");
+	var ficha=document.getElementById("catalogoProductoFicha");
+	var barra=document.getElementById("catalogoProductoSeleccionBar");
+	if(vacio){vacio.style.display="none";}
+	if(ficha){ficha.style.display="block";}
+	if(barra){barra.style.display="none";}
+	cerrarFichaCatalogoProducto();
+}
+
+function actualizarFichaCatalogoProductoDesdeFila(fila){
+	var vacio=document.getElementById("catalogoProductoVacio");
+	var ficha=document.getElementById("catalogoProductoFicha");
+	var barra=document.getElementById("catalogoProductoSeleccionBar");
+	if(vacio){vacio.style.display="none";}
+	if(ficha){ficha.style.display="block";}
+	var nombre=catalogoProductoTextoCelda(fila,"td_datos_1");
+	var descripcion=catalogoProductoTextoCelda(fila,"td_datos_2");
+	var codigo=catalogoProductoTextoCelda(fila,"td_datos_19") || catalogoProductoTextoCelda(fila,"td_id");
+	var marca=catalogoProductoTextoCelda(fila,"td_datos_13");
+	var categoria=catalogoProductoTextoCelda(fila,"td_datos_11");
+	var proveedor=catalogoProductoTextoCelda(fila,"td_datos_22");
+	var local=catalogoProductoTextoCelda(fila,"td_datos_local_nombre") || catalogoProductoTextoCelda(fila,"td_datos_10");
+	var stock=catalogoProductoTextoCelda(fila,"td_datos_6");
+	var precioVenta=catalogoProductoTextoCelda(fila,"td_datos_4");
+	var precioLista=catalogoProductoTextoCelda(fila,"td_datos_5");
+	var estado=catalogoProductoTextoCelda(fila,"td_datos_9") || "Activo";
+	var nivelRiesgo=catalogoRiesgoNormalizarNivel(catalogoProductoTextoCelda(fila,"td_datos_105"), precioVenta);
+	var origenRiesgo=catalogoProductoTextoCelda(fila,"td_datos_106") || "automatico";
+	var observacionRiesgo=catalogoProductoTextoCelda(fila,"td_datos_107");
+	var usuarioRiesgo=catalogoProductoTextoCelda(fila,"td_datos_108");
+	var fechaRiesgo=catalogoProductoTextoCelda(fila,"td_datos_109");
+	setTextoCatalogoProducto("catalogoFichaNombre", nombre);
+	setTextoCatalogoProducto("catalogoFichaDescripcion", descripcion);
+	setTextoCatalogoProducto("catalogoFichaCodigo", codigo);
+	setTextoCatalogoProducto("catalogoFichaMarca", marca);
+	setTextoCatalogoProducto("catalogoFichaCategoria", categoria);
+	setTextoCatalogoProducto("catalogoFichaProveedor", proveedor);
+	setTextoCatalogoProducto("catalogoFichaLocal", local);
+	setTextoCatalogoProducto("catalogoFichaStock", stock);
+	setTextoCatalogoProducto("catalogoFichaPrecioVenta", precioVenta);
+	setTextoCatalogoProducto("catalogoFichaPrecioLista", precioLista);
+	setTextoCatalogoProducto("catalogoProductoSeleccionNombre", nombre);
+	var metaSeleccion=[];
+	if(codigo!=""){metaSeleccion.push("Cod. "+codigo);}
+	if(categoria!=""){metaSeleccion.push(categoria);}
+	if(stock!=""){metaSeleccion.push("Stock "+stock);}
+	metaSeleccion.push(catalogoRiesgoInfo(nivelRiesgo).label);
+	setTextoCatalogoProducto("catalogoProductoSeleccionMeta", metaSeleccion.join(" | "));
+	if(barra){barra.style.display="flex";}
+	var estadoEl=document.getElementById("catalogoFichaEstado");
+	if(estadoEl){
+		estadoEl.textContent=estado;
+		estadoEl.className="catalogo-status "+catalogoProductoClaseEstado(estado);
+	}
+	actualizarPanelRiesgoCatalogoProducto(nivelRiesgo, precioVenta, origenRiesgo, observacionRiesgo, usuarioRiesgo, fechaRiesgo);
+}
+
+function abrirModalEditarRiesgoCatalogo(){
+	if(idAbmProducto==""){
+		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO");
+		return;
+	}
+	if(controlacceso("EDITARLISTADOPRODUCTOS","accion")==false){return;}
+	var modal=document.getElementById("catalogoRiesgoModal");
+	var nivel=document.getElementById("inptCatalogoRiesgoNivel");
+	var motivo=document.getElementById("inptCatalogoRiesgoMotivo");
+	if(nivel){nivel.value=String(catalogoRiesgoProductoActual.nivel || 1);}
+	if(motivo){motivo.value=catalogoRiesgoProductoActual.observacion || "";}
+	if(modal){modal.style.display="flex";}
+}
+
+function cerrarModalEditarRiesgoCatalogo(){
+	var modal=document.getElementById("catalogoRiesgoModal");
+	if(modal){modal.style.display="none";}
+}
+
+function guardarRiesgoFinancieroCatalogo(){
+	if(idAbmProducto==""){
+		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO");
+		return;
+	}
+	var nivel=document.getElementById("inptCatalogoRiesgoNivel") ? document.getElementById("inptCatalogoRiesgoNivel").value : "";
+	var motivo=document.getElementById("inptCatalogoRiesgoMotivo") ? document.getElementById("inptCatalogoRiesgoMotivo").value : "";
+	if(String(motivo || "").trim()==""){
+		ver_vetana_informativa("INGRESA EL MOTIVO DEL CAMBIO");
+		return;
+	}
+	obtener_datos_user();
+	var datos={
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_producto": idAbmProducto,
+		"nivel": nivel,
+		"motivo": motivo,
+		"funt": "editar_riesgo_financiero"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		},
+		success: function(responseText){
+			try{
+				var datos=$.parseJSON(responseText);
+				if(datos["1"]=="SINMIGRACION"){
+					ver_vetana_informativa(datos["2"] || "Ejecuta primero la actualizacion SQL de riesgo financiero.");
+					return;
+				}
+				var ok=respuestaJqueryAjax(datos["1"]);
+				if(ok==true){
+					cerrarModalEditarRiesgoCatalogo();
+					ver_vetana_informativa("RIESGO FINANCIERO ACTUALIZADO");
+					buscarabmproducto();
+				}
+			}catch(error){
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+				GuardarArchivosLog("Error: "+error+" \r\n Consola: "+responseText);
+			}
+		}
+	});
+}
+
+function volverAutomaticoRiesgoCatalogo(){
+	if(idAbmProducto==""){
+		ver_vetana_informativa("DEBES SELECCIONAR UN PRODUCTO");
+		return;
+	}
+	if(controlacceso("EDITARLISTADOPRODUCTOS","accion")==false){return;}
+	if(!confirm("Volver a calcular el riesgo financiero segun el precio de venta?")){
+		return;
+	}
+	obtener_datos_user();
+	var datos={
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_producto": idAbmProducto,
+		"funt": "riesgo_automatico_financiero"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		},
+		success: function(responseText){
+			try{
+				var datos=$.parseJSON(responseText);
+				if(datos["1"]=="SINMIGRACION"){
+					ver_vetana_informativa(datos["2"] || "Ejecuta primero la actualizacion SQL de riesgo financiero.");
+					return;
+				}
+				var ok=respuestaJqueryAjax(datos["1"]);
+				if(ok==true){
+					ver_vetana_informativa("RIESGO FINANCIERO RECALCULADO");
+					buscarabmproducto();
+				}
+			}catch(error){
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
+				GuardarArchivosLog("Error: "+error+" \r\n Consola: "+responseText);
+			}
+		}
+	});
+}
+
+function obtenerNivelRiesgoTratamiento(productoId, callback){
+	if(!productoId){
+		if(typeof callback=="function"){callback(null);}
+		return;
+	}
+	obtener_datos_user();
+	var datos={
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"cod_producto": productoId,
+		"funt": "obtener_riesgo_tratamiento"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
+		type: "post",
+		error: function () {
+			if(typeof callback=="function"){callback(null);}
+		},
+		success: function(responseText){
+			try{
+				var datos=$.parseJSON(responseText);
+				if(datos["1"]=="exito"){
+					if(typeof callback=="function"){callback(datos);}
+				}else{
+					if(typeof callback=="function"){callback(null);}
+				}
+			}catch(error){
+				if(typeof callback=="function"){callback(null);}
+			}
+		}
+	});
 }
 var registrocargadoproductos="";
 var totalregistroproductos="";
@@ -6096,6 +9655,7 @@ function cancelarCargaProducto(){
 }
 function buscarabmproducto() {
 if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
+	sincronizarEstadoCatalogoProducto();
 	var codigo = document.getElementById('inptBuscarProducto1').value
 	var producto = document.getElementById('inptBuscarProducto2').value
 	var marca = document.getElementById('inptBuscarProducto3').value
@@ -6105,6 +9665,7 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 	var estado = ""
 	var local = document.getElementById('inptBuscarProducto7').value
 	var ConStock = document.getElementById('inptBuscarProducto8').value
+	var riesgo = document.getElementById('inptBuscarProductoRiesgo') ? document.getElementById('inptBuscarProductoRiesgo').value : ""
 	
 	if(document.getElementById('inptSeleccEstadoBuscarProducto1').checked==true){
 		estado = "Activo"
@@ -6118,6 +9679,8 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 	controldebusquedadProductos=true
 	document.getElementById("inptRegistoCargadoProducto").value = "";
 	document.getElementById("table_abm_producto").innerHTML = paginacargando
+	limpiarEstadoResultadosCatalogoProductos();
+	limpiarFichaCatalogoProducto();
 	limpiarPanelInsumosProductoAbmProducto("Seleccione un producto para ver sus insumos.");
     document.getElementById("tbProcessProducto").style.display="none"
 	obtener_datos_user();
@@ -6134,6 +9697,7 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 		"proveedor": proveedor,
 		"estado": estado,
 		"local": local,
+		"riesgo": riesgo,
 		"funt": "buscar"
 	};
 	$.ajax({
@@ -6181,6 +9745,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				var datos_buscados = datos[2];
 				
 					document.getElementById("table_abm_producto").innerHTML = datos_buscados
+					prepararFilasCatalogoProductos();
 					document.getElementById("inptRegistoCargadoProducto").value = datos[3];
 						registrocargadoproductos=Number(datos[99]);
 					totalregistroproductos=Number(datos[100]);
@@ -6209,6 +9774,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 }
 function buscarabmmasproducto(c) {
 if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
+	sincronizarEstadoCatalogoProducto();
 	var codigo = document.getElementById('inptBuscarProducto1').value
 	var producto = document.getElementById('inptBuscarProducto2').value
 	var marca = document.getElementById('inptBuscarProducto3').value
@@ -6218,6 +9784,7 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 	var estado = ""
 	var local = document.getElementById('inptBuscarProducto7').value
 	var ConStock = document.getElementById('inptBuscarProducto8').value
+	var riesgo = document.getElementById('inptBuscarProductoRiesgo') ? document.getElementById('inptBuscarProductoRiesgo').value : ""
 	
 	if(document.getElementById('inptSeleccEstadoBuscarProducto1').checked==true){
 		estado = "Activo"
@@ -6250,6 +9817,7 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 		"proveedor": proveedor,
 		"estado": estado,
 		"local": local,
+		"riesgo": riesgo,
 		"registrocargado": registrocargadoproductos,
 		"funt": "buscarmas"
 	};
@@ -6299,6 +9867,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				var datos_buscados = datos[2];
 				
 					document.getElementById("table_abm_mas_producto").innerHTML = datos_buscados
+					prepararFilasCatalogoProductos();
 					document.getElementById("inptRegistoCargadoProducto").value = datos[3];
 						registrocargadoproductos=Number(datos[99]);
 					
@@ -6344,6 +9913,7 @@ function limpiarcamposproducto() {
 	document.getElementById('inptCategoriaProducto').value = "";
 	document.getElementById('inptCodBarraProducto').value = "";
 	document.getElementById('inptProveesorProducto').value = "";
+	setTemporalidadProductoDefaults();
 	
 	document.getElementById('inptCodFabricaProducto').value= "";
 	
@@ -6368,6 +9938,7 @@ cod_barraAnt = ""
 	if (document.getElementById('table_abm_producto_insumos')) {
 		limpiarPanelInsumosProductoAbmProducto("Seleccione un producto para ver sus insumos.");
 	}
+	limpiarFichaCatalogoProducto();
 	document.getElementById('inptEstadoProducto').value = "Activo";
 	document.getElementById('btnAbmProducto').value ="Guardar Datos";
 		// document.getElementById("tdAnhaMasPrecios").style.display="none"
@@ -6437,7 +10008,7 @@ function limpiarPanelInsumosProductoAbmProducto(mensaje) {
 	if (!document.getElementById("table_abm_producto_insumos")) {
 		return;
 	}
-	document.getElementById("table_abm_producto_insumos").innerHTML = "<p class='pTituloC' style='padding:14px;text-align:center;color:#607080'>" + escaparHtmlAbmInsumos(mensaje || "") + "</p>";
+	document.getElementById("table_abm_producto_insumos").innerHTML = "<div class='catalogo-panel-note'>" + escaparHtmlAbmInsumos(mensaje || "") + "</div>";
 }
 
 function renderInsumosProductoAbmProducto(insumos) {
@@ -6445,30 +10016,18 @@ function renderInsumosProductoAbmProducto(insumos) {
 		return;
 	}
 	if (insumos.length == 0) {
-		document.getElementById("table_abm_producto_insumos").innerHTML = "<p class='pTituloC' style='padding:12px;text-align:center;color:#607080'>Este producto no tiene insumos asociados.</p>";
+		document.getElementById("table_abm_producto_insumos").innerHTML = "<div class='catalogo-panel-note'>Este producto todavia no tiene insumos configurados.</div>";
 		return;
 	}
-	var html = "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'>";
-	html += "<tr>";
-	html += "<td class='tdRegistroSearch' style='width:8%;font-weight:bold'>Cod.</td>";
-	html += "<td class='tdRegistroSearch' style='width:34%;font-weight:bold'>Insumo</td>";
-	html += "<td class='tdRegistroSearch' style='width:28%;font-weight:bold'>Descripcion</td>";
-	html += "<td class='tdRegistroSearch' style='width:10%;font-weight:bold'>Cant.</td>";
-	html += "<td class='tdRegistroSearch' style='width:10%;font-weight:bold'>Unidad</td>";
-	html += "<td class='tdRegistroSearch' style='width:10%;font-weight:bold'>Estado</td>";
-	html += "</tr>";
+	var html = "<div class='catalogo-insumos-list'>";
 	for (var i = 0; i < insumos.length; i++) {
 		var fila = insumos[i];
-		html += "<tr>";
-		html += "<td class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.id_insumo) + "</td>";
-		html += "<td class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.nombre) + "</td>";
-		html += "<td class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.descripcion) + "</td>";
-		html += "<td class='tdRegistroSearch' style='text-align:center'>" + escaparHtmlAbmInsumos(fila.cantidad) + "</td>";
-		html += "<td class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.unidad_medida) + "</td>";
-		html += "<td class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.estado_texto) + "</td>";
-		html += "</tr>";
+		html += "<div class='catalogo-insumo-item'>";
+		html += "<div><strong>" + escaparHtmlAbmInsumos(fila.nombre) + "</strong><span>" + escaparHtmlAbmInsumos(fila.descripcion || fila.estado_texto || "") + "</span></div>";
+		html += "<div class='catalogo-insumo-cant'>" + escaparHtmlAbmInsumos(fila.cantidad) + " " + escaparHtmlAbmInsumos(fila.unidad_medida) + "</div>";
+		html += "</div>";
 	}
-	html += "</table>";
+	html += "</div>";
 	document.getElementById("table_abm_producto_insumos").innerHTML = html;
 }
 function limpiarcamposbuscarproductos(){
@@ -6482,6 +10041,13 @@ function limpiarcamposbuscarproductos(){
 	document.getElementById('inptBuscarProducto4').value=""
 	document.getElementById('inptBuscarProducto5').value=""
 	document.getElementById('inptBuscarProducto6').value=""
+	if(document.getElementById('inptBuscarProducto8')){
+		document.getElementById('inptBuscarProducto8').value=""
+	}
+	if(document.getElementById('inptBuscarProductoRiesgo')){
+		document.getElementById('inptBuscarProductoRiesgo').value=""
+	}
+	checkestadoproductos(1)
 	
 	document.getElementById('inptRegistoCargadoProducto').value=""
 	document.getElementById('inptRegistroSeleccProducto').value=""
@@ -6489,6 +10055,9 @@ function limpiarcamposbuscarproductos(){
 	
 	document.getElementById('table_abm_producto').innerHTML=""
 	document.getElementById('table_abm_producto_detalles_precios').innerHTML=""
+	limpiarEstadoResultadosCatalogoProductos();
+	limpiarFichaCatalogoProducto();
+	limpiarPanelInsumosProductoAbmProducto("Seleccione un producto para ver sus insumos.");
 
 }
 var idFkProducto = ""
@@ -6582,9 +10151,44 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 }
 
 
+function mostrarResultadosProductoVenta(mostrar) {
+	var contenedor = document.querySelector("#divAbmVenta .venta-producto-vista-superior");
+	var vista = document.getElementById("DivVistaOdontologia");
+	if (contenedor) {
+		if (mostrar) {
+			contenedor.classList.add("venta-producto-vista-superior-activa");
+		} else {
+			contenedor.classList.remove("venta-producto-vista-superior-activa");
+		}
+	}
+	if (vista) {
+		vista.style.display = mostrar ? "" : "none";
+	}
+}
+
+function buscarProductoVentaDesdeEntrada() {
+	var codigo = document.getElementById("inptCodProductoVenta") ? document.getElementById("inptCodProductoVenta").value.trim() : "";
+	var producto = document.getElementById("inptProductoVenta") ? document.getElementById("inptProductoVenta").value.trim() : "";
+	if (codigo != "") {
+		mostrarResultadosProductoVenta(false);
+		buscarproductoporcodigo("venta");
+		return;
+	}
+	if (producto != "") {
+		buscarvistaproductodesdeventa();
+		return;
+	}
+	ver_vetana_informativa("ESCRIBI EL CODIGO O EL NOMBRE DEL PRODUCTO")
+}
+
 function buscarvistaproductodesdeventa() {
 	var buscador = document.getElementById('inptProductoVenta').value
 	var local = document.getElementById("inptlocalVenta").value;
+	if (buscador.trim() == "") {
+		ver_vetana_informativa("ESCRIBI EL NOMBRE DEL PRODUCTO")
+		return false;
+	}
+	mostrarResultadosProductoVenta(true);
 	document.getElementById("table_vista_producto_venta").innerHTML = paginacargando
 	obtener_datos_user();
 	var datos = {
@@ -6626,6 +10230,7 @@ function buscarvistaproductodesdeventa() {
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("table_vista_producto_venta").innerHTML = ''
+			mostrarResultadosProductoVenta(false);
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -6660,6 +10265,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				
 					document.getElementById('btnfocusProducto').focus();
 				}else{
+					mostrarResultadosProductoVenta(false);
 					ver_vetana_informativa("PRODUCTO NO ECONTRADO")
 				}
 				}
@@ -6667,6 +10273,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
+				mostrarResultadosProductoVenta(false);
 			}
 		}
 	});
@@ -6997,6 +10604,9 @@ StockVenta = $(datostr).children('td[id="td_datos_15"]').html();
 		document.getElementById('inptCantProductoVenta').focus();
 		calcularTotalVentasCosto(document.getElementById('inptCostoProductoVenta'))
 		buscardetallespreciodesdevista("vistaventa");
+		if (typeof mostrarResultadosProductoVenta == "function") {
+			mostrarResultadosProductoVenta(false);
+		}
 }
 
 
@@ -7055,6 +10665,9 @@ function EnviarProductoDesde() {
 		// document.getElementById('inptObservacionDetalleVenta').value = "";
 		// document.getElementById("inptCostoProductoVenta").value= $("#inpTSeleccCosto option:first").val();
 		// preciocostocredito=QuitarSeparadorMilValor(document.getElementById("inptCostoProductoVenta").value)
+		}
+		if (typeof mostrarResultadosProductoVenta == "function") {
+			mostrarResultadosProductoVenta(false);
 		}
 	}
 	
@@ -7186,6 +10799,9 @@ function buscarproductoporcodigo(d) {
 		var local = document.getElementById("inptlocalVenta").value;
 		// document.getElementById('btnAddDetallesaVenta').style.backgroundColor = "#b7b7b7";
 		document.getElementById('btnSolicitarDescuento').style.backgroundColor = "#b7b7b7";
+		if (typeof mostrarResultadosProductoVenta == "function") {
+			mostrarResultadosProductoVenta(false);
+		}
 	}
 	if(d=="compra"){
 		var buscador = document.getElementById('inptCodProductoCompra').value
@@ -7710,7 +11326,7 @@ function AbmMarca(descripcion,Estado,idabm,accion) {
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
@@ -7721,7 +11337,7 @@ function AbmMarca(descripcion,Estado,idabm,accion) {
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 		}
@@ -9473,7 +13089,7 @@ function abmdetallesprecio(precio, descripcion, comision,Porcentaje,preciocuota 
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
@@ -9485,7 +13101,7 @@ function abmdetallesprecio(precio, descripcion, comision,Porcentaje,preciocuota 
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 
@@ -11171,7 +14787,215 @@ function limpiarcamposVendedor() {
 var idFkVendedor1 = ""
 var idFkVendedor2 = ""
 var controlseleccvistavendedor = ""
+function textoVentaNormalizado(valor) {
+	valor = String(valor || "").toUpperCase();
+	if (valor.normalize) {
+		valor = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	}
+	return valor.replace(/\s+/g, " ").trim();
+}
+
+function tokensTextoVenta(valor) {
+	return textoVentaNormalizado(valor).split(" ").filter(function(token) {
+		return token.length > 1 && token != "CLINIDENT";
+	});
+}
+
+function puntajeCoincidenciaTextoVenta(valorA, valorB) {
+	var tokensA = tokensTextoVenta(valorA);
+	var tokensB = tokensTextoVenta(valorB);
+	var usados = {};
+	var puntaje = 0;
+	for (var i = 0; i < tokensA.length; i++) {
+		for (var j = 0; j < tokensB.length; j++) {
+			if (!usados[j] && tokensA[i] == tokensB[j]) {
+				usados[j] = true;
+				puntaje++;
+				break;
+			}
+		}
+	}
+	return puntaje;
+}
+
+function nombreUsuarioVentaActual() {
+	var etiqueta = document.getElementById("lblUser");
+	if (etiqueta && textoVentaNormalizado(etiqueta.innerText) != "USUARIO CONECTADO") {
+		return etiqueta.innerText.trim();
+	}
+	if (typeof datosPerfilUsuarioActual != "undefined" && datosPerfilUsuarioActual && datosPerfilUsuarioActual.nombre_persona) {
+		return String(datosPerfilUsuarioActual.nombre_persona).trim();
+	}
+	if (typeof nombreuser != "undefined" && nombreuser) {
+		return String(nombreuser).trim();
+	}
+	if (typeof userid != "undefined") {
+		return localStorage.getItem("nombreUsuario" + userid) || "";
+	}
+	return "";
+}
+
+function aplicarVendedorVentaDesdeRespuesta(responseText, nombreReferencia) {
+	var campo = document.getElementById("inptVendedorVenta1");
+	if (!campo) {
+		return false;
+	}
+	try {
+		var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
+		if (!datos || datos["1"] != "exito") {
+			return false;
+		}
+		nombreReferencia = nombreReferencia || nombreUsuarioVentaActual();
+		var nombreNormalizado = textoVentaNormalizado(nombreReferencia);
+		var codUsuario = String(
+			(typeof datosPerfilUsuarioActual != "undefined" && datosPerfilUsuarioActual && datosPerfilUsuarioActual.cod_usuario)
+				? datosPerfilUsuarioActual.cod_usuario
+				: (typeof userid != "undefined" ? userid : "")
+		);
+		var filaElegida = null;
+		var mejorPuntaje = 0;
+		var tokensReferencia = tokensTextoVenta(nombreReferencia);
+		var puntajeMinimo = tokensReferencia.length > 1 ? 2 : 1;
+		var contenedor = $("<div>").html(datos["2"] || "");
+		contenedor.find("tr[id=tbSelecRegistro]").each(function() {
+			var idVendedor = $(this).children('td[id="td_id"]').text().trim();
+			var nombreVendedor = $(this).children('td[id="td_datos_1"]').text().trim();
+			if (codUsuario != "" && idVendedor == codUsuario) {
+				filaElegida = this;
+				return false;
+			}
+			if (textoVentaNormalizado(nombreVendedor) == nombreNormalizado) {
+				filaElegida = this;
+				return false;
+			}
+			var puntaje = puntajeCoincidenciaTextoVenta(nombreReferencia, nombreVendedor);
+			if (puntaje >= puntajeMinimo && puntaje > mejorPuntaje) {
+				mejorPuntaje = puntaje;
+				filaElegida = this;
+			}
+		});
+		if (filaElegida) {
+			idFkVendedor1 = $(filaElegida).children('td[id="td_id"]').text().trim();
+			campo.value = $(filaElegida).children('td[id="td_datos_1"]').text().trim();
+			return idFkVendedor1 != "";
+		}
+	} catch (error) {
+	}
+	return false;
+}
+
+function resolverVendedorVentaDesdeServicio(nombreReferencia, codlocal, esperarRespuesta) {
+	var resuelto = false;
+	obtener_datos_user();
+	$.ajax({
+		async: !esperarRespuesta,
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"buscar": "",
+			"codlocal": codlocal || "",
+			"funt": "buscarvista"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
+		type: "post",
+		success: function(responseText) {
+			resuelto = aplicarVendedorVentaDesdeRespuesta(responseText, nombreReferencia);
+		}
+	});
+	return resuelto || idFkVendedor1 != "";
+}
+
+function resolverVendedorVentaPorDefecto(esperarRespuesta) {
+	var campo = document.getElementById("inptVendedorVenta1");
+	if (!campo) {
+		return false;
+	}
+	if (idFkVendedor1 != "") {
+		return true;
+	}
+	var nombreUsuario = nombreUsuarioVentaActual();
+	if (campo.value == "" && nombreUsuario != "") {
+		campo.value = nombreUsuario;
+	}
+	var nombreReferencia = campo.value || nombreUsuario;
+	if (nombreReferencia == "") {
+		return false;
+	}
+	var codLocalUsuario = typeof cod_localFKUSer != "undefined" ? cod_localFKUSer : "";
+	if (resolverVendedorVentaDesdeServicio(nombreReferencia, codLocalUsuario, esperarRespuesta)) {
+		return true;
+	}
+	if (codLocalUsuario != "") {
+		if (resolverVendedorVentaDesdeServicio(nombreReferencia, "", esperarRespuesta)) {
+			return true;
+		}
+	}
+	if (typeof userid != "undefined" && userid != "" && nombreUsuario != "") {
+		idFkVendedor1 = userid;
+		campo.value = nombreUsuario;
+		return true;
+	}
+	return false;
+}
+
+function fijarVendedorVentaUsuarioActual(esperarRespuesta) {
+	var campo = document.getElementById("inptVendedorVenta1");
+	if (!campo) {
+		return false;
+	}
+	var nombreUsuario = nombreUsuarioVentaActual();
+	if (nombreUsuario != "") {
+		campo.value = nombreUsuario;
+	}
+	idFkVendedor1 = "";
+	var codLocalUsuario = typeof cod_localFKUSer != "undefined" ? cod_localFKUSer : "";
+	if (nombreUsuario != "") {
+		if (resolverVendedorVentaDesdeServicio(nombreUsuario, codLocalUsuario, esperarRespuesta)) {
+			return true;
+		}
+		if (codLocalUsuario != "" && resolverVendedorVentaDesdeServicio(nombreUsuario, "", esperarRespuesta)) {
+			return true;
+		}
+	}
+	if (typeof userid != "undefined" && userid != "") {
+		idFkVendedor1 = userid;
+		return true;
+	}
+	return false;
+}
+
+function asegurarVendedorVentaAntesDeGuardar() {
+	return fijarVendedorVentaUsuarioActual(true);
+}
+
+function asignarVendedorVentaPorDefecto(forzar) {
+	var campo = document.getElementById("inptVendedorVenta1");
+	if (!campo) {
+		return;
+	}
+	if (forzar) {
+		fijarVendedorVentaUsuarioActual(false);
+		return;
+	}
+	if (!forzar && idFkVendedor1 != "" && campo.value != "") {
+		return;
+	}
+	var nombreUsuario = nombreUsuarioVentaActual();
+	if (nombreUsuario != "" && (forzar || campo.value == "")) {
+		campo.value = nombreUsuario;
+	}
+	if (nombreUsuario == "" || (!forzar && idFkVendedor1 != "")) {
+		return;
+	}
+	resolverVendedorVentaPorDefecto(false);
+}
+
 function vercerrarvistavendedor(d, ventana) {
+	if (ventana == "venta1") {
+		fijarVendedorVentaUsuarioActual(false);
+		return;
+	}
 
 	if (d == "1") {
 		document.getElementById("divVistaVendedor").style.display = ""
@@ -11285,8 +15109,9 @@ function obtenerdatosvistavendedor(datostr) {
 	datostr.className = 'tableRegistroSelec'
 
 	if (controlseleccvistavendedor == "venta1") {
-		idFkVendedor1 = $(datostr).children('td[id="td_id"]').html();
-		document.getElementById('inptVendedorVenta1').value = $(datostr).children('td[id="td_datos_1"]').html();
+		fijarVendedorVentaUsuarioActual(false);
+		document.getElementById("divVistaVendedor").style.display = "none";
+		return;
 
 	}
 	if (controlseleccvistavendedor == "venta2") {
@@ -12433,7 +16258,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						document.getElementById('inptcajeroAperturaCierreCaja').value=datos[12];
 						codCajeroapertura=datos[11];
                         controlaperturacierrecaja="CERRARCERRARCAJA";
-						cajaCierreIniciarFlujo(true);						
+						cajaCierreIniciarFlujo(true);
+						cajaCierreBuscarUenoCierre(idabmAperturacierrecaja, "cierre");
 					}else{
 						document.getElementById("inptEstadoAperturaCierreCaja").value="Activo"
 						document.getElementById('inptMontoCierreCaja5').disabled= true;
@@ -12469,6 +16295,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						 idabmAperturacierrecaja="";
 						 cajaCierreResumenMedios = {};
 						 cajaCierreLoteActual = "";
+						 cajaCierreUenoLimpiar("cierre");
 						 cajaCierreIniciarFlujo(false);
 
 					}
@@ -12553,6 +16380,151 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 			}
 		}
 	});
+}
+
+var cajaCierreUenoUltimo = {};
+function cajaCierreUenoConfig(destino) {
+	if (destino === "consulta") {
+		return {
+			body: "divConsultaCajaUenoBody",
+			operaciones: "lblConsultaCajaUenoOperaciones",
+			cuotas: "lblConsultaCajaUenoCuotas",
+			total: "lblConsultaCajaUenoTotal",
+			vacio: "No se registraron cobros conciliados con Ueno Bank durante este cierre."
+		};
+	}
+	return {
+		body: "divCajaCierreUenoBody",
+		operaciones: "lblCajaCierreUenoOperaciones",
+		cuotas: "lblCajaCierreUenoCuotas",
+		total: "lblCajaCierreUenoTotal",
+		vacio: "No se registraron cobros conciliados con Ueno Bank durante este cierre."
+	};
+}
+
+function cajaCierreUenoSetTexto(id, valor) {
+	const elemento = document.getElementById(id);
+	if (elemento) {
+		elemento.innerHTML = valor;
+	}
+}
+
+function cajaCierreUenoClaseEstado(estado) {
+	estado = (estado || "").toString().toLowerCase();
+	if (estado.indexOf("parcial") >= 0 || estado.indexOf("pendiente") >= 0) {
+		return "is-warning";
+	}
+	if (estado.indexOf("concili") >= 0) {
+		return "is-ok";
+	}
+	if (estado.indexOf("anul") >= 0 || estado.indexOf("rechaz") >= 0 || estado.indexOf("revers") >= 0) {
+		return "is-danger";
+	}
+	return "is-muted";
+}
+
+function cajaCierreUenoLimpiar(destino, mensaje) {
+	const config = cajaCierreUenoConfig(destino);
+	cajaCierreUenoSetTexto(config.operaciones, "0");
+	cajaCierreUenoSetTexto(config.cuotas, "0");
+	cajaCierreUenoSetTexto(config.total, "0 Gs.");
+	cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty'>" + cajaCierreTextoSeguro(mensaje || config.vacio) + "</div>");
+}
+
+function cajaCierreBuscarUenoCierre(idArqueo, destino) {
+	destino = destino || "cierre";
+	const config = cajaCierreUenoConfig(destino);
+	if (!document.getElementById(config.body)) {
+		return;
+	}
+	if (!idArqueo) {
+		cajaCierreUenoLimpiar(destino, destino === "consulta" ? "Selecciona una caja para ver sus conciliaciones Ueno." : config.vacio);
+		return;
+	}
+	cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty'>Cargando conciliaciones Ueno...</div>");
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"idArqeoFk": idArqueo,
+		"funt": "buscar_conciliaciones_ueno_cierre"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+			cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty caja-ueno-empty--alert'>No se pudo cargar el control Ueno.</div>");
+		},
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				var respuesta = respuestaJqueryAjax(datos["1"]);
+				if (respuesta == true) {
+					cajaCierreRenderUenoCierre(datos, destino);
+				} else if (datos["1"] == "NI") {
+					cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty caja-ueno-empty--alert'>No tiene permiso para ver estas conciliaciones.</div>");
+				} else {
+					cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty caja-ueno-empty--alert'>" + cajaCierreTextoSeguro(datos["2"] || "No se pudo cargar el control Ueno.") + "</div>");
+				}
+			} catch (error) {
+				cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty caja-ueno-empty--alert'>No se pudo interpretar el control Ueno.</div>");
+				var titulo = "Error: " + error + " \r\n Consola: " + responseText;
+				GuardarArchivosLog(titulo);
+			}
+		}
+	});
+}
+
+function cajaCierreRenderUenoCierre(datos, destino) {
+	const config = cajaCierreUenoConfig(destino);
+	const resumen = datos.resumen || {};
+	const filas = datos.filas || [];
+	cajaCierreUenoUltimo[destino || "cierre"] = datos;
+	cajaCierreUenoSetTexto(config.operaciones, cajaCierreTextoSeguro(resumen.operaciones || 0));
+	cajaCierreUenoSetTexto(config.cuotas, cajaCierreTextoSeguro(resumen.cuotas || 0));
+	cajaCierreUenoSetTexto(config.total, cajaCierreTextoSeguro(resumen.total_aplicado_texto || "0") + " Gs.");
+
+	if (filas.length === 0) {
+		cajaCierreUenoSetTexto(config.body, "<div class='caja-ueno-empty'>" + cajaCierreTextoSeguro(config.vacio) + "</div>");
+		return;
+	}
+
+	var html = ""
+		+ "<div class='caja-ueno-table'>"
+		+ "<div class='caja-ueno-row caja-ueno-row--head'>"
+		+ "<span>Conciliacion</span>"
+		+ "<span>Comprobante</span>"
+		+ "<span>Paciente</span>"
+		+ "<span>Venta / alias</span>"
+		+ "<span>Cuota</span>"
+		+ "<span>Monto cuota</span>"
+		+ "<span>Aplicado</span>"
+		+ "<span>Tipo</span>"
+		+ "<span>Usuario</span>"
+		+ "<span>Estado</span>"
+		+ "</div>";
+	filas.forEach(function (fila) {
+		const ventaAlias = (fila.venta || "-") + (fila.alias_venta ? " / " + fila.alias_venta : "");
+		const paciente = (fila.paciente || "Sin paciente") + (fila.cedula ? " - " + fila.cedula : "");
+		const estado = fila.estado || "-";
+		html += "<div class='caja-ueno-row'>"
+			+ "<span data-label='Conciliacion'>" + cajaCierreTextoSeguro(fila.fecha_conciliacion || "-") + "</span>"
+			+ "<span data-label='Comprobante'>" + cajaCierreTextoSeguro(fila.comprobante || "-") + "</span>"
+			+ "<span data-label='Paciente'>" + cajaCierreTextoSeguro(paciente) + "</span>"
+			+ "<span data-label='Venta / alias'>" + cajaCierreTextoSeguro(ventaAlias) + "</span>"
+			+ "<span data-label='Cuota'>" + cajaCierreTextoSeguro(fila.cuota || "-") + "</span>"
+			+ "<span data-label='Monto cuota' class='caja-ueno-money'>" + cajaCierreTextoSeguro(fila.monto_cuota_texto || "0") + " Gs.</span>"
+			+ "<span data-label='Aplicado' class='caja-ueno-money'>" + cajaCierreTextoSeguro(fila.monto_aplicado_texto || "0") + " Gs.</span>"
+			+ "<span data-label='Tipo'>" + cajaCierreTextoSeguro(fila.tipo_aplicacion || "-") + "</span>"
+			+ "<span data-label='Usuario'>" + cajaCierreTextoSeguro(fila.usuario_conciliador || "-") + "</span>"
+			+ "<span data-label='Estado'><b class='caja-ueno-status " + cajaCierreUenoClaseEstado(estado) + "'>" + cajaCierreTextoSeguro(estado) + "</b></span>"
+			+ "</div>";
+	});
+	html += "</div>";
+	cajaCierreUenoSetTexto(config.body, html);
 }
 
 function obtenerMontoNumericoAperturaCierreCaja(id) {
@@ -14640,7 +18612,9 @@ function seleccionarLocalUSer(){
 			//document.getElementById("inptlocalsolicitudCredito").value = cod_localFKUSer
 			
 		
-		document.getElementById("inptLocalAgendaFiltro").value = cod_localFKUSer
+		if (document.getElementById("inptLocalAgendaFiltro")) {
+			document.getElementById("inptLocalAgendaFiltro").value = controlacceso2("VERTODOSLOSCONSULTORIOS", "accion") ? "" : cod_localFKUSer
+		}
 		document.getElementById("inptBuscarUsuario4").value = cod_localFKUSer
 		if (document.getElementById("inptFiltroFuncionarioLocal")) {
 			document.getElementById("inptFiltroFuncionarioLocal").value = cod_localFKUSer
@@ -14982,6 +18956,7 @@ function verCerrarAbmVenta(modo){
 		   limpiarcamposventa();
 	   }
 	   SeleccTipoComprobanteVenta()
+	   asignarVendedorVentaPorDefecto(false)
 		document.getElementById("divAbmVenta").style.display=""
 		document.getElementById("tdEfectoAbmVenta").className="magictime slideDownReturn"
 	
@@ -15128,6 +19103,7 @@ document.getElementById("inptEntregaConfCredito").disabled=false
 	idFkVendedor1 = ""
 	idFkVendedor2 = ""
 	idGaranteFk = ""
+	asignarVendedorVentaPorDefecto(true)
 	document.getElementById('table_abm_detalle_venta').innerHTML = ""
 	idFkCliente = "10";
 	
@@ -15355,7 +19331,7 @@ function EditarDatosClienteDesdeVenta(ocultar_datos_extras= false){
 	idFKZona= $(datostr).children('td[id="td_datos_9"]').html();
     extcliente1="";
     extcliente2="";
-  document.getElementById('btnAbmCliente').value="Editar datos";
+  document.getElementById('btnAbmCliente').value="Actualizar y guardar";
   document.getElementById('divAbmCliente').style.display="";
   document.getElementById("btnVolverAtrasCliente").style.display="none"
 		document.getElementById("btnCerrarAtrasCliente").style.display=""
@@ -15638,6 +19614,9 @@ function limpiarCamposAnhadirProductosVenta() {
 	// document.getElementById('btnAddDetallesaVenta').style.backgroundColor = "#b7b7b7";
 	document.getElementById('btnSolicitarDescuento').style.backgroundColor = "#b7b7b7";
 	idFkProducto = ""
+	if (typeof mostrarResultadosProductoVenta == "function") {
+		mostrarResultadosProductoVenta(false);
+	}
 }
 
 var elemSeleccDetalleProdVentaOff="";
@@ -15793,7 +19772,7 @@ controldetalle=controldetalle+1;
 		inpCodVenta = "";
 	}
 
-	if (idFkVendedor1 == "") {
+	if (!asegurarVendedorVentaAntesDeGuardar()) {
 		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR")
 		return false;
 	}
@@ -15908,7 +19887,7 @@ controldetalle=controldetalle+1;
 		inpCodVenta = "";
 	}
 
-	if (idFkVendedor1 == "") {
+	if (!asegurarVendedorVentaAntesDeGuardar()) {
 		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR")
 		return false;
 	}
@@ -15995,6 +19974,10 @@ controldetalle=controldetalle+1;
 		inpCodVenta = "";
 	}
 
+	if (!asegurarVendedorVentaAntesDeGuardar()) {
+		ver_vetana_informativa("FALTO SELECCIONAR UN VENDEDOR")
+		return false;
+	}
 	if (inptFechaVenta == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR UNA FECHA")
 		return false;
@@ -16036,10 +20019,261 @@ controldetalle=controldetalle+1;
 	var tipo="2"
     abmdetalleventa(inptDescuentoVentaTerminar,nrocaja,inptSeleccPuntoExpedicionVenta,inptSeleccTipoComprobanteVenta,inptFechaVenta,inptComisionVentaCobrador,idFkCliente,idGaranteFk,inptSeleccTipoVenta,idFkCobrador,idFkVendedor1, idFkVendedor2, idabmVenta, inpCodVenta, inptlocalVenta, '', accion,tipo);
 }
+var planMadreVentaArgumentosPendientes = null;
+var planMadreVentaConfirmada = false;
+var planMadreVentaSeleccionActual = null;
+var planMadreVentaContextoModal = null;
+
+function escaparHtmlPlanMadreVenta(valor) {
+	return String(valor == null ? "" : valor)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function ventaDebeSolicitarPlanMadre(cod_clienteFK, accion) {
+	cod_clienteFK = String(cod_clienteFK || "");
+	return accion == "nuevo" && cod_clienteFK != "" && cod_clienteFK != "7";
+}
+
+function asegurarModalPlanMadreVenta() {
+	var existente = document.getElementById("modalPlanMadreVenta");
+	if (existente) { return existente; }
+	var overlay = document.createElement("div");
+	overlay.id = "overlayPlanMadreVenta";
+	overlay.className = "plan-definitivo-modal-overlay";
+	overlay.style.display = "none";
+	overlay.onclick = function () { cerrarModalPlanMadreVenta(); };
+	document.body.appendChild(overlay);
+	var modal = document.createElement("div");
+	modal.id = "modalPlanMadreVenta";
+	modal.className = "plan-definitivo-modal plan-madre-venta-modal";
+	modal.style.display = "none";
+	modal.innerHTML = "<div class='plan-definitivo-modal__head'>"
+		+ "<div><h3 id='modalPlanMadreVentaTitulo'>Anexar a plan madre</h3><span id='modalPlanMadreVentaSubtitulo'></span></div>"
+		+ "<button type='button' onclick='cerrarModalPlanMadreVenta()'>&times;</button>"
+		+ "</div><div class='plan-definitivo-modal__body' id='modalPlanMadreVentaCuerpo'></div>"
+		+ "<div class='plan-definitivo-modal__footer' id='modalPlanMadreVentaFooter'></div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function abrirModalPlanMadreVenta(titulo, subtitulo, cuerpo, footer) {
+	asegurarModalPlanMadreVenta();
+	document.getElementById("modalPlanMadreVentaTitulo").innerHTML = titulo || "Anexar a plan madre";
+	document.getElementById("modalPlanMadreVentaSubtitulo").innerHTML = subtitulo || "";
+	document.getElementById("modalPlanMadreVentaCuerpo").innerHTML = cuerpo || "";
+	document.getElementById("modalPlanMadreVentaFooter").innerHTML = footer || "";
+	document.getElementById("overlayPlanMadreVenta").style.display = "";
+	document.getElementById("modalPlanMadreVenta").style.display = "";
+}
+
+function cerrarModalPlanMadreVenta() {
+	var overlay = document.getElementById("overlayPlanMadreVenta");
+	var modal = document.getElementById("modalPlanMadreVenta");
+	if (overlay) { overlay.style.display = "none"; }
+	if (modal) { modal.style.display = "none"; }
+}
+
+function cargarPlanesMadreClienteVenta(codCliente, callback) {
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "buscarPlanesMadreCliente",
+			"cod_cliente": codCliente
+		},
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+			if (typeof callback == "function") { callback(false, {}); }
+		},
+		success: function (responseText) {
+			try {
+				var datos = parsearRespuestaAjaxFlexible(responseText);
+				var ok = respuestaJqueryAjax(datos["1"]) == true;
+				if (typeof callback == "function") { callback(ok, datos); }
+			} catch (error) {
+				GuardarArchivosLog("Error planes madre venta: " + error + " \r\n Consola: " + textoRespuestaAjaxFlexible(responseText));
+				if (typeof callback == "function") { callback(false, {}); }
+			}
+		}
+	});
+}
+
+function mostrarSelectorPlanMadreVenta(datos, contexto) {
+	var planes = datos.planes || [];
+	var paciente = datos.paciente || "";
+	var cedula = datos.cedula || "";
+	var checkedNuevo = planes.length == 0 ? " checked" : "";
+	var cuerpo = "<div class='plan-madre-venta-selector'>"
+		+ "<p class='plan-definitivo-modal-help'>Los tratamientos de esta venta se van a anexar al plan madre elegido.</p>"
+		+ "<div class='plan-madre-venta-paciente'><strong>" + escaparHtmlPlanMadreVenta(paciente) + "</strong><span>CI: " + escaparHtmlPlanMadreVenta(cedula) + "</span></div>";
+	if (planes.length > 0) {
+		cuerpo += "<div class='plan-madre-venta-opciones'>";
+		for (var i = 0; i < planes.length; i++) {
+			var plan = planes[i];
+			var checked = i == 0 ? " checked" : "";
+			cuerpo += "<label class='plan-madre-venta-opcion'>"
+				+ "<input type='radio' name='radioPlanMadreVenta' value='" + escaparHtmlPlanMadreVenta(plan.id) + "' data-apodo='" + escaparHtmlPlanMadreVenta(plan.apodo || "") + "'" + checked + ">"
+				+ "<span><b>" + escaparHtmlPlanMadreVenta(plan.label || ("Plan madre #" + plan.numero)) + "</b>"
+				+ "<small>" + escaparHtmlPlanMadreVenta(plan.estado || "") + " - " + escaparHtmlPlanMadreVenta(plan.ventas_asignadas || "0") + " ventas - " + escaparHtmlPlanMadreVenta(plan.tratamientos_asignados || "0") + " tratamientos</small></span>"
+				+ "</label>";
+		}
+		cuerpo += "</div>";
+	}
+	cuerpo += "<label class='plan-madre-venta-opcion plan-madre-venta-opcion--nuevo'>"
+		+ "<input type='radio' name='radioPlanMadreVenta' value='nuevo'" + checkedNuevo + ">"
+		+ "<span><b>Crear nuevo plan madre</b><small>Crear otro agrupador y anexar all&iacute; estos tratamientos.</small></span>"
+		+ "</label>"
+		+ "<label class='plan-madre-venta-nuevo-apodo'><span>Apodo/beneficiario</span><input type='text' id='inptPlanMadreVentaApodo' placeholder='Ej.: Carlitos, Yecy, sin definir'></label>"
+		+ "</div>";
+	var footer = "<button type='button' class='plan-definitivo-secondary' onclick='continuarVentaSinPlanMadre()'>Dejar pendiente</button>"
+		+ "<button type='button' class='plan-definitivo-secondary' onclick='cerrarModalPlanMadreVenta()'>Cancelar</button>"
+		+ "<button type='button' class='plan-definitivo-primary' onclick='confirmarSeleccionPlanMadreVenta()'>Anexar tratamientos</button>";
+	planMadreVentaContextoModal = contexto;
+	abrirModalPlanMadreVenta("Anexar tratamientos a plan madre", "Seleccion&aacute; d&oacute;nde fusionar esta venta", cuerpo, footer);
+}
+
+function solicitarPlanMadreAntesGuardarVenta(argumentos, codCliente) {
+	planMadreVentaArgumentosPendientes = argumentos;
+	cargarPlanesMadreClienteVenta(codCliente, function (ok, datos) {
+		if (!ok) {
+			planMadreVentaSeleccionActual = { modo: "pendiente" };
+			planMadreVentaConfirmada = true;
+			var args = planMadreVentaArgumentosPendientes || [];
+			planMadreVentaArgumentosPendientes = null;
+			abmdetalleventa.apply(null, args);
+			return;
+		}
+		mostrarSelectorPlanMadreVenta(datos, { tipo: "preventa" });
+	});
+	return false;
+}
+
+function obtenerSeleccionPlanMadreVenta() {
+	var seleccionado = document.querySelector("input[name='radioPlanMadreVenta']:checked");
+	if (!seleccionado) {
+		ver_vetana_informativa("Seleccione un plan madre.");
+		return null;
+	}
+	if (seleccionado.value == "nuevo") {
+		var apodo = document.getElementById("inptPlanMadreVentaApodo") ? document.getElementById("inptPlanMadreVentaApodo").value.trim() : "";
+		if (apodo == "") {
+			ver_vetana_informativa("Indique el Apodo/beneficiario del nuevo plan madre.");
+			return null;
+		}
+		return { modo: "nuevo", plan_id: "", apodo: apodo };
+	}
+	return {
+		modo: "existente",
+		plan_id: seleccionado.value,
+		apodo: seleccionado.getAttribute("data-apodo") || ""
+	};
+}
+
+function confirmarSeleccionPlanMadreVenta() {
+	var seleccion = obtenerSeleccionPlanMadreVenta();
+	if (!seleccion) { return; }
+	cerrarModalPlanMadreVenta();
+	if (planMadreVentaContextoModal && planMadreVentaContextoModal.tipo == "directo") {
+		asignarVentaAPlanMadrePostGuardado(planMadreVentaContextoModal.cod_venta, seleccion, true);
+		planMadreVentaContextoModal = null;
+		return;
+	}
+	planMadreVentaSeleccionActual = seleccion;
+	planMadreVentaConfirmada = true;
+	var args = planMadreVentaArgumentosPendientes || [];
+	planMadreVentaArgumentosPendientes = null;
+	planMadreVentaContextoModal = null;
+	abmdetalleventa.apply(null, args);
+}
+
+function continuarVentaSinPlanMadre() {
+	cerrarModalPlanMadreVenta();
+	var seleccion = { modo: "pendiente" };
+	if (planMadreVentaContextoModal && planMadreVentaContextoModal.tipo == "directo") {
+		planMadreVentaContextoModal = null;
+		return;
+	}
+	planMadreVentaSeleccionActual = seleccion;
+	planMadreVentaConfirmada = true;
+	var args = planMadreVentaArgumentosPendientes || [];
+	planMadreVentaArgumentosPendientes = null;
+	planMadreVentaContextoModal = null;
+	abmdetalleventa.apply(null, args);
+}
+
+function asignarVentaAPlanMadrePostGuardado(codVenta, seleccion, refrescarVista) {
+	if (!seleccion || seleccion.modo == "pendiente" || !codVenta) { return; }
+	obtener_datos_user();
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "asignarVentaPlanMadre",
+			"cod_venta": codVenta,
+			"modo": seleccion.modo,
+			"plan_id": seleccion.plan_id || "",
+			"apodo": seleccion.apodo || ""
+		},
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
+		type: "post",
+		complete: function () {
+			verCerrarEfectoCargando("");
+		},
+		success: function (responseText) {
+			try {
+				var datos = parsearRespuestaAjaxFlexible(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					ver_vetana_informativa(datos.mensaje || "Tratamientos anexados al plan madre.");
+					if (refrescarVista && typeof buscarVistaConsulta == "function") {
+						buscarVistaConsulta();
+					}
+					if (refrescarVista && typeof refrescarPlanDefinitivoConsulta == "function") {
+						refrescarPlanDefinitivoConsulta();
+					}
+					return;
+				}
+				ver_vetana_informativa(datos.mensaje || "No se pudieron anexar los tratamientos al plan madre.");
+			} catch (error) {
+				GuardarArchivosLog("Error asignar plan madre: " + error + " \r\n Consola: " + textoRespuestaAjaxFlexible(responseText));
+			}
+		}
+	});
+}
+
+function abrirAsignarPlanMadreVentaConsulta(codVenta, codCliente, apodoActual) {
+	if (!codVenta || !codCliente) {
+		ver_vetana_informativa("No se pudo identificar la venta o el cliente.");
+		return;
+	}
+	cargarPlanesMadreClienteVenta(codCliente, function (ok, datos) {
+		if (!ok) {
+			ver_vetana_informativa("No se pudieron consultar los planes madre.");
+			return;
+		}
+		mostrarSelectorPlanMadreVenta(datos, { tipo: "directo", cod_venta: codVenta, apodo: apodoActual || "" });
+	});
+}
+
 function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_venta,comisioncobrador,cod_clienteFK,idGaranteFk,TipoVenta,cod_cobradorFK,idFkVendedor1, idFkVendedor2,cod_ventaFK, num_factura, cod_local, nro_comprobante, accion,tipo) {
 	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
 		return false;
 	}
+	if (!planMadreVentaConfirmada && ventaDebeSolicitarPlanMadre(cod_clienteFK, accion)) {
+		return solicitarPlanMadreAntesGuardarVenta(Array.prototype.slice.call(arguments), cod_clienteFK);
+	}
+	var seleccionPlanMadreVenta = planMadreVentaSeleccionActual;
+	planMadreVentaConfirmada = false;
+	planMadreVentaSeleccionActual = null;
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -16108,7 +20342,7 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 				 Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
@@ -16117,6 +20351,7 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 									
 					idabmVenta = datos["3"]
 					idFkVenta = datos["3"]
+					asignarVentaAPlanMadrePostGuardado(idabmVenta, seleccionPlanMadreVenta, false);
 					var nrofactura = datos["4"]
                     var contador=0;            
 					document.getElementById('inpCodVenta').disabled = true
@@ -16158,13 +20393,20 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 						if (!tipo_plan || tipo_plan == "") {
 							tipo_plan= document.getElementById('inptSelecctPlanPresupuesto').value;
 						}
-						abmPresupuesto(idabmPresupuesto, null, null,datos["3"], tipo_plan);
+						if (typeof odontogramaMigrarPresupuestoAVenta == "function") {
+							odontogramaMigrarPresupuestoAVenta(idabmPresupuesto, datos["3"]);
+						}
+						var cantCuotasPresupuesto = null;
+						if (typeof obtenerCuotasPresupuestoSeleccionadas == "function") {
+							cantCuotasPresupuesto = obtenerCuotasPresupuestoSeleccionadas();
+						}
+						abmPresupuesto(idabmPresupuesto, cantCuotasPresupuesto, null,datos["3"], tipo_plan);
 					}
 				}
 
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 
@@ -16222,7 +20464,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			console.log(Respuesta)
 			document.getElementById("table_abm_detalle_venta").innerHTML = ''
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 
 				 Respuesta=respuestaJqueryAjax(Respuesta)
@@ -16324,7 +20566,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 		}
@@ -16717,8 +20959,8 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 			verCerrarEfectoCargando("")
 			Respuesta = responseText;
 			console.log(Respuesta)
-			
-				var datos = $.parseJSON(Respuesta);
+			try {
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 								
 				 Respuesta=respuestaJqueryAjax(Respuesta)
@@ -16794,10 +21036,9 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 					 return false;
 
 				}
-				try {
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 
@@ -17064,7 +21305,7 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 	        Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
@@ -17084,7 +21325,7 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 				
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 
@@ -17545,7 +21786,7 @@ function abmconfirmarPagoContado() {
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
@@ -17599,7 +21840,7 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 
@@ -21248,7 +25489,11 @@ function escaparHtmlAgendaDeuda(valor) {
 }
 function generarVistaResumenAgendaDeudas(registros) {
 	var filas = "";
+	var totalCuotasAtrasadas = 0;
 	if (!Array.isArray(registros)) {
+		if (typeof actualizarDeudaDetalleAgenda === "function") {
+			actualizarDeudaDetalleAgenda(0, "");
+		}
 		return '<div class="text-secondary" style="padding: 8px;">No tiene cuotas atrasadas.</div>';
 	}
 
@@ -21259,6 +25504,7 @@ function generarVistaResumenAgendaDeudas(registros) {
 		}
 
 		var nroVenta = element["nrof"] || element["num_factura"] || element["cod_venta"] || "";
+		totalCuotasAtrasadas += cuotasAtrasadas;
 		filas += "<tr>"
 			+ "<td style='padding:5px;text-align:left;border-bottom:1px solid #d7d7d7;'>" + escaparHtmlAgendaDeuda(nroVenta) + "</td>"
 			+ "<td style='padding:5px;text-align:center;border-bottom:1px solid #d7d7d7;'>" + escaparHtmlAgendaDeuda(cuotasAtrasadas) + "</td>"
@@ -21266,14 +25512,13 @@ function generarVistaResumenAgendaDeudas(registros) {
 	});
 
 	if (filas == "") {
+		if (typeof actualizarDeudaDetalleAgenda === "function") {
+			actualizarDeudaDetalleAgenda(0, "");
+		}
 		return '<div class="text-secondary" style="padding: 8px;">No tiene cuotas atrasadas.</div>';
 	}
 
-	// Caso en el cual si existan cuotas pendientes
-	document.getElementById('btnConfirmAgendamiento').style.display= "none";
-    document.getElementById('btnConfirmDeudaAgendamiento').style.display= "";
-
-	return "<table style='width:100%;border-collapse:collapse;font-size:11px;background:#fff;'>"
+	var html = "<table style='width:100%;border-collapse:collapse;font-size:11px;background:#fff;'>"
 		+ "<thead>"
 		+ "<tr>"
 		+ "<th style='padding:5px;text-align:left;background:#f3f5f7;border-bottom:1px solid #cfd6dd;'>Nro. Venta</th>"
@@ -21282,6 +25527,12 @@ function generarVistaResumenAgendaDeudas(registros) {
 		+ "</thead>"
 		+ "<tbody>" + filas + "</tbody>"
 		+ "</table>";
+
+	if (typeof actualizarDeudaDetalleAgenda === "function") {
+		actualizarDeudaDetalleAgenda(totalCuotasAtrasadas, html);
+	}
+
+	return html;
 }
 function modernizarCuentasACobrar() {
 	var contenedor = document.getElementById("table_cuentas_a_cobrar");
@@ -21387,12 +25638,18 @@ function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, f
 			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
 			controldebusquedadInformeCuentaCobrar=false
 			document.getElementById('detAgendaDeudasPendientes').innerHTML= "";
+			if (typeof actualizarDeudaDetalleAgenda === "function") {
+				actualizarDeudaDetalleAgenda(0, "");
+			}
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
 			console.log(Respuesta)
 			document.getElementById("table_cuentas_a_cobrar").innerHTML = ''
 			document.getElementById('detAgendaDeudasPendientes').innerHTML= "";
+			if (typeof resetDeudaDetalleAgenda === "function") {
+				resetDeudaDetalleAgenda();
+			}
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -21429,7 +25686,8 @@ function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, f
 			} catch (error) {
 				controldebusquedadInformeCuentaCobrar=false
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
+				var consolaError = typeof responseText === "string" ? responseText : JSON.stringify(responseText);
+				var titulo="Error: "+error+" \r\n Consola: "+consolaError
 				GuardarArchivosLog(titulo)
 			}
 		}
@@ -25958,6 +30216,9 @@ function limpiarcamposbuscadorConsultarCaja(){
 					document.getElementById("inptResumenAperturacaja").value = ""
 					document.getElementById("inptResumenTotalIngreso").value = ""
 					document.getElementById("inptResumenTotalRecaudado").value = ""
+					if (document.getElementById("inptResumenUenoConciliado")) {
+						document.getElementById("inptResumenUenoConciliado").value = ""
+					}
 					document.getElementById("inptResumenCajaRecibido").value = ""
 					document.getElementById("inptResumenCajaMigrado").value = ""
 					document.getElementById("inptResumenTotalEgreso").value = "" 
@@ -25974,6 +30235,7 @@ function limpiarcamposbuscadorConsultarCaja(){
 					document.getElementById("table_Consultar_caja").innerHTML = ""
 					document.getElementById('table_buscar_opciones_pago').innerHTML = "";
 					document.getElementById('table_buscar_opciones_pago').style.display = "none";
+					cajaCierreUenoLimpiar("consulta", "Selecciona una caja para ver sus conciliaciones Ueno.");
 					cajaControlLimpiarVista()
 }
 function minimizarconsultacaja(){
@@ -25995,6 +30257,9 @@ function buscarinformecaja() {
 					 
 					document.getElementById("inptResumenTotalIngreso").value = "..."
 					document.getElementById("inptResumenTotalRecaudado").value = "..."
+					if (document.getElementById("inptResumenUenoConciliado")) {
+						document.getElementById("inptResumenUenoConciliado").value = "..."
+					}
 					document.getElementById("inptResumenCajaRecibido").value = "..."
 					document.getElementById("inptResumenCajaMigrado").value = "..."
 					document.getElementById("inptResumenTotalEgreso").value = "..."  
@@ -26066,6 +30331,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptResumenTotalCaja").value =  datos[5]
 					document.getElementById("inptResumenTotalIngreso").value =  datos[3]
 					document.getElementById("inptResumenTotalRecaudado").value = datos[7]
+					if (document.getElementById("inptResumenUenoConciliado")) {
+						document.getElementById("inptResumenUenoConciliado").value = datos[13] || "0"
+					}
 					document.getElementById("inptResumenCajaRecibido").value = datos[10]
 					document.getElementById("inptResumenCajaMigrado").value = datos[9]
 					document.getElementById("inptResumenTotalEgreso").value = datos[4]
@@ -28658,6 +32926,356 @@ function permisoAccesoUser(frm,accion){
 		return false;
 	}
 	return String(acceso[accion]).trim().toUpperCase() == "SI";
+}
+
+var comparativaVentasCobranzasCache = null;
+var comparativaVentasCobranzasCargando = false;
+
+function usuarioPuedeVerComparativaVentasCobranzas(){
+	if(typeof userid !== "undefined" && String(userid) == "2"){
+		return true;
+	}
+	if(typeof permisoAccesoUser != "function"){
+		return false;
+	}
+	return permisoAccesoUser("VERCOMPARATIVAVENTASCOBRANZAS", "accion");
+}
+
+function inicializarComparativaVentasCobranzas(){
+	var card = document.getElementById("dashboardComparativaVentasCobranzas");
+	if(!card){
+		return;
+	}
+	if(!usuarioPuedeVerComparativaVentasCobranzas()){
+		card.style.display = "none";
+		return;
+	}
+	card.style.display = "";
+	renderCargandoComparativaVentasCobranzas();
+	cargarComparativaVentasCobranzas(false);
+}
+
+function renderCargandoComparativaVentasCobranzas(){
+	var body = document.getElementById("dashboardComparativaVentasCobranzasBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-comparativa-loading'>"
+		+ "<span></span><span></span><span></span>"
+		+ "</div>";
+}
+
+function renderErrorComparativaVentasCobranzas(mensaje){
+	var body = document.getElementById("dashboardComparativaVentasCobranzasBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-comparativa-state dashboard-comparativa-state--error'>"
+		+ "<strong>No se pudo cargar la comparativa</strong>"
+		+ "<span>" + escaparHtmlComparativaVentasCobranzas(mensaje || "Intenta nuevamente en unos segundos.") + "</span>"
+		+ "<button type='button' onclick='cargarComparativaVentasCobranzas(true)'>Reintentar</button>"
+		+ "</div>";
+}
+
+function cargarComparativaVentasCobranzas(forzar){
+	var card = document.getElementById("dashboardComparativaVentasCobranzas");
+	if(!card || !usuarioPuedeVerComparativaVentasCobranzas()){
+		if(card){ card.style.display = "none"; }
+		return;
+	}
+	if(comparativaVentasCobranzasCargando){
+		return;
+	}
+	if(comparativaVentasCobranzasCache && !forzar){
+		renderComparativaVentasCobranzas(comparativaVentasCobranzasCache);
+		return;
+	}
+
+	comparativaVentasCobranzasCargando = true;
+	renderCargandoComparativaVentasCobranzas();
+	obtener_datos_user();
+
+	$.ajax({
+		data: {
+			useru: userid,
+			passu: passuser,
+			navegador: navegador,
+			funt: "comparativa"
+		},
+		url: "/GoodVentaAsisCap/php_system/dashboard_comparativa_ventas_cobranzas.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			comparativaVentasCobranzasCargando = false;
+			renderErrorComparativaVentasCobranzas("No se pudo consultar el servidor.");
+			if(typeof manejadordeerroresjquery == "function"){
+				manejadordeerroresjquery(jqXHR.status, textstatus, "comparativa");
+			}
+		},
+		success: function (responseText) {
+			comparativaVentasCobranzasCargando = false;
+			try {
+				var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
+				var respuesta = datos["1"];
+				if(datos["1"] == "NI"){
+					if(card){ card.style.display = "none"; }
+					return;
+				}
+				if(typeof respuestaJqueryAjax == "function"){
+					respuesta = respuestaJqueryAjax(respuesta);
+				}
+				if(respuesta === true || datos["1"] == "exito"){
+					comparativaVentasCobranzasCache = datos;
+					renderComparativaVentasCobranzas(datos);
+					if(detalleComparativaVentasCobranzasAbierto()){
+						renderDetalleComparativaVentasCobranzas(datos);
+					}
+					return;
+				}
+				renderErrorComparativaVentasCobranzas(datos["2"] || "Respuesta no reconocida.");
+			} catch (error) {
+				renderErrorComparativaVentasCobranzas("La respuesta recibida no tiene el formato esperado.");
+				if(typeof GuardarArchivosLog == "function"){
+					GuardarArchivosLog("Error comparativa ventas cobranzas: " + error + " \r\n Consola: " + responseText);
+				}
+			}
+		}
+	});
+}
+
+function escaparHtmlComparativaVentasCobranzas(valor){
+	return (valor || "").toString().replace(/[&<>"']/g, function(caracter){
+		return {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': "&quot;",
+			"'": "&#039;"
+		}[caracter];
+	});
+}
+
+function nombreSucursalComparativaVentasCobranzas(nombre){
+	nombre = (nombre || "").toString();
+	nombre = nombre.replace(/^CLINIDENT\s+/i, "");
+	nombre = nombre.replace(/\s*\([^)]*\)\s*/g, " ");
+	nombre = nombre.replace(/\s+/g, " ").trim();
+	return nombre || "Sucursal";
+}
+
+function numeroComparativaVentasCobranzas(valor){
+	valor = parseInt(valor || 0, 10);
+	if(isNaN(valor)){
+		valor = 0;
+	}
+	var negativo = valor < 0;
+	var texto = Math.abs(valor).toString();
+	texto = texto.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+	return (negativo ? "-" : "") + texto;
+}
+
+function monedaComparativaVentasCobranzas(valor){
+	return "Gs. " + numeroComparativaVentasCobranzas(valor);
+}
+
+function claseVariacionComparativaVentasCobranzas(variacion){
+	var tipo = variacion && variacion.tipo ? variacion.tipo : "neutral";
+	if(tipo == "positivo"){ return "dashboard-comparativa-var dashboard-comparativa-var--positivo"; }
+	if(tipo == "negativo"){ return "dashboard-comparativa-var dashboard-comparativa-var--negativo"; }
+	return "dashboard-comparativa-var dashboard-comparativa-var--neutral";
+}
+
+function iconoVariacionComparativaVentasCobranzas(variacion){
+	var indicador = variacion && variacion.indicador ? variacion.indicador : "neutral";
+	if(indicador == "up"){ return "&uarr;"; }
+	if(indicador == "down"){ return "&darr;"; }
+	return "&minus;";
+}
+
+function htmlVariacionComparativaVentasCobranzas(variacion){
+	var texto = variacion && variacion.texto ? variacion.texto : "0,0%";
+	return "<span class='" + claseVariacionComparativaVentasCobranzas(variacion) + "'>"
+		+ escaparHtmlComparativaVentasCobranzas(texto)
+		+ " <b>" + iconoVariacionComparativaVentasCobranzas(variacion) + "</b>"
+		+ "</span>";
+}
+
+function etiquetaRegistrosComparativaVentasCobranzas(valor){
+	valor = parseInt(valor || 0, 10);
+	if(isNaN(valor)){
+		valor = 0;
+	}
+	return numeroComparativaVentasCobranzas(valor) + (valor == 1 ? " reg." : " regs.");
+}
+
+function htmlIndicadorGeneralComparativa(titulo, variacion, valorPrincipal, nota){
+	var tipo = variacion && variacion.tipo ? variacion.tipo : "neutral";
+	var textoValor = valorPrincipal != undefined && valorPrincipal !== null ? valorPrincipal : ((variacion && variacion.texto) ? variacion.texto : "0,0%");
+	var textoNota = nota || "vs. mismo periodo mes anterior";
+	var claseValor = tipo == "positivo" ? "dashboard-comparativa-var--positivo" : (tipo == "negativo" ? "dashboard-comparativa-var--negativo" : "dashboard-comparativa-var--neutral");
+	return "<article class='dashboard-comparativa-stat dashboard-comparativa-stat--" + escaparHtmlComparativaVentasCobranzas(tipo) + "'>"
+		+ "<div class='dashboard-comparativa-stat__copy'>"
+		+ "<span class='dashboard-comparativa-stat__label'>" + escaparHtmlComparativaVentasCobranzas(titulo) + "</span>"
+		+ "<strong class='dashboard-comparativa-stat__value " + claseValor + "'>"
+		+ escaparHtmlComparativaVentasCobranzas(textoValor)
+		+ "</strong>"
+		+ "<small class='dashboard-comparativa-stat__note'>" + escaparHtmlComparativaVentasCobranzas(textoNota) + "</small>"
+		+ "</div>"
+		+ "<em class='dashboard-comparativa-stat__icon' aria-hidden='true'>" + iconoVariacionComparativaVentasCobranzas(variacion) + "</em>"
+		+ "</article>";
+}
+
+function htmlFilasComparativaVentasCobranzas(datos){
+	var sucursales = datos && datos.sucursales ? datos.sucursales : [];
+	var html = "";
+	if(!sucursales.length){
+		return "<tr><td colspan='10' class='dashboard-comparativa-empty-table'>Sin sucursales autorizadas para visualizar.</td></tr>";
+	}
+	for(var i = 0; i < sucursales.length; i++){
+		var sucursal = sucursales[i] || {};
+		html += "<tr>"
+			+ "<td><span class='dashboard-comparativa-row-index'>" + (i + 1) + ".</span> " + escaparHtmlComparativaVentasCobranzas(nombreSucursalComparativaVentasCobranzas(sucursal.sucursalNombre)) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.ventasActual) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.ventasAnterior) + "</td>"
+			+ "<td class='dashboard-comparativa-percent'>" + htmlVariacionComparativaVentasCobranzas(sucursal.variacionVentas) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + numeroComparativaVentasCobranzas(sucursal.creditosActual) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + numeroComparativaVentasCobranzas(sucursal.creditosAnterior) + "</td>"
+			+ "<td class='dashboard-comparativa-percent'>" + htmlVariacionComparativaVentasCobranzas(sucursal.variacionCreditos) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.cobranzaActual) + "</td>"
+			+ "<td class='dashboard-comparativa-money'>" + monedaComparativaVentasCobranzas(sucursal.cobranzaAnterior) + "</td>"
+			+ "<td class='dashboard-comparativa-percent'>" + htmlVariacionComparativaVentasCobranzas(sucursal.variacionCobranza) + "</td>"
+			+ "</tr>";
+	}
+	return html;
+}
+
+function htmlTablaComparativaVentasCobranzas(datos){
+	return "<div class='dashboard-comparativa-table-wrap'>"
+		+ "<table class='dashboard-comparativa-table'>"
+		+ "<colgroup>"
+		+ "<col class='dashboard-comparativa-col-sucursal'>"
+		+ "<col><col><col class='dashboard-comparativa-col-var'>"
+		+ "<col><col><col class='dashboard-comparativa-col-var'>"
+		+ "<col><col><col class='dashboard-comparativa-col-var'>"
+		+ "</colgroup>"
+		+ "<thead><tr>"
+		+ "<th>Sucursal</th>"
+		+ "<th>Ventas actual</th>"
+		+ "<th>Ventas mes pasado</th>"
+		+ "<th>Var. %</th>"
+		+ "<th>Reg. cr&eacute;dito actual</th>"
+		+ "<th>Reg. cr&eacute;dito mes pasado</th>"
+		+ "<th>Var. %</th>"
+		+ "<th>Cobranza actual</th>"
+		+ "<th>Cobranza mes pasado</th>"
+		+ "<th>Var. %</th>"
+		+ "</tr></thead>"
+		+ "<tbody>" + htmlFilasComparativaVentasCobranzas(datos) + "</tbody>"
+		+ "</table>"
+		+ "</div>";
+}
+
+function htmlContenidoComparativaVentasCobranzas(datos, detalle){
+	var resumen = datos && datos.resumenGeneral ? datos.resumenGeneral : {};
+	var html = "";
+	if(detalle){
+		html += "<div class='dashboard-comparativa-periodos'>"
+			+ "<span><b>Periodo actual</b>" + textoPeriodoComparativaVentasCobranzas(datos.periodoActual) + "</span>"
+			+ "<span><b>Periodo anterior</b>" + textoPeriodoComparativaVentasCobranzas(datos.periodoAnterior) + "</span>"
+			+ "</div>";
+	}
+	html += "<div class='dashboard-comparativa-layout" + (detalle ? " dashboard-comparativa-layout--detalle" : " dashboard-comparativa-layout--tabla-completa") + "'>";
+	if(detalle){
+		html += "<div class='dashboard-comparativa-stats'>"
+			+ htmlIndicadorGeneralComparativa("Ventas acumuladas", resumen.variacionVentas)
+			+ htmlIndicadorGeneralComparativa("Cobranza acumulada", resumen.variacionCobranza)
+			+ htmlIndicadorGeneralComparativa(
+				"Ventas a credito",
+				resumen.variacionCreditos,
+				etiquetaRegistrosComparativaVentasCobranzas(resumen.creditosActual),
+				((resumen.variacionCreditos && resumen.variacionCreditos.texto) ? resumen.variacionCreditos.texto : "0,0%") + " vs. mismo periodo mes anterior"
+			)
+			+ "</div>";
+	}
+	html += htmlTablaComparativaVentasCobranzas(datos)
+		+ "</div>";
+	if(datos && datos.sinMovimientos){
+		html += "<p class='dashboard-comparativa-empty-note'>Sin movimientos registrados en el periodo</p>";
+	}
+	return html;
+}
+
+function renderComparativaVentasCobranzas(datos){
+	var card = document.getElementById("dashboardComparativaVentasCobranzas");
+	var body = document.getElementById("dashboardComparativaVentasCobranzasBody");
+	if(!card || !body){
+		return;
+	}
+	card.style.display = "";
+	body.innerHTML = htmlContenidoComparativaVentasCobranzas(datos, false);
+}
+
+function formatoFechaHoraComparativaVentasCobranzas(valor){
+	valor = (valor || "").toString();
+	if(valor.length < 10){
+		return "-";
+	}
+	var fecha = valor.substr(0, 10).split("-");
+	var hora = valor.length >= 16 ? valor.substr(11, 5) : "";
+	if(fecha.length != 3){
+		return valor;
+	}
+	return fecha[2] + "/" + fecha[1] + "/" + fecha[0] + (hora ? " " + hora : "");
+}
+
+function textoPeriodoComparativaVentasCobranzas(periodo){
+	if(!periodo){
+		return " - ";
+	}
+	return " " + formatoFechaHoraComparativaVentasCobranzas(periodo.desde) + " al " + formatoFechaHoraComparativaVentasCobranzas(periodo.hasta);
+}
+
+function detalleComparativaVentasCobranzasAbierto(){
+	var modal = document.getElementById("modalComparativaVentasCobranzas");
+	return !!(modal && modal.style.display != "none");
+}
+
+function abrirDetalleComparativaVentasCobranzas(){
+	if(!usuarioPuedeVerComparativaVentasCobranzas()){
+		return;
+	}
+	var modal = document.getElementById("modalComparativaVentasCobranzas");
+	if(!modal){
+		return;
+	}
+	modal.style.display = "flex";
+	if(comparativaVentasCobranzasCache){
+		renderDetalleComparativaVentasCobranzas(comparativaVentasCobranzasCache);
+	}else{
+		var body = document.getElementById("dashboardComparativaDetalleBody");
+		if(body){
+			body.innerHTML = "<div class='dashboard-comparativa-loading'><span></span><span></span><span></span></div>";
+		}
+		cargarComparativaVentasCobranzas(true);
+	}
+}
+
+function cerrarDetalleComparativaVentasCobranzas(){
+	var modal = document.getElementById("modalComparativaVentasCobranzas");
+	if(modal){
+		modal.style.display = "none";
+	}
+}
+
+function renderDetalleComparativaVentasCobranzas(datos){
+	var body = document.getElementById("dashboardComparativaDetalleBody");
+	var periodos = document.getElementById("dashboardComparativaDetallePeriodos");
+	if(periodos){
+		periodos.innerHTML = "Actual:" + textoPeriodoComparativaVentasCobranzas(datos.periodoActual)
+			+ " &nbsp;|&nbsp; Anterior:" + textoPeriodoComparativaVentasCobranzas(datos.periodoAnterior);
+	}
+	if(body){
+		body.innerHTML = htmlContenidoComparativaVentasCobranzas(datos, true);
+	}
 }
 
 /*
@@ -32393,7 +37011,7 @@ function abmTipoPagosVentaContado(idVentaFK) {
 			Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = parsearRespuestaAjaxFlexible(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
@@ -32444,7 +37062,7 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
 			}
 
@@ -36677,10 +41295,10 @@ function verVentanaEditarAbmInsumos() {
 	}
 	if (document.getElementById("inptTipoVarianteInsumo")) {
 		var tipoVariante = filaDatos.tipo_variante || "Tamano";
-		if (tipoVariante == "Tamaño" || tipoVariante == "TamaÃ±o") {
+		if (tipoVariante == "Tamaño" || tipoVariante == "Tamaño") {
 			tipoVariante = "Tamano";
 		}
-		if (tipoVariante == "Presentación" || tipoVariante == "PresentaciÃ³n") {
+		if (tipoVariante == "Presentación" || tipoVariante == "Presentación") {
 			tipoVariante = "Presentacion";
 		}
 		document.getElementById("inptTipoVarianteInsumo").value = tipoVariante;
@@ -38860,7 +43478,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			var Respuesta = responseText;
 			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
+				var datos = (typeof Respuesta === "string") ? $.parseJSON(Respuesta) : Respuesta;
 				Respuesta = datos["1"];				
                Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
@@ -38880,7 +43498,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-			var titulo="Error: "+error+" \r\n Consola: "+responseText
+			var titulo="Error: "+error+" \r\n Consola: "+(typeof responseText === "string" ? responseText : JSON.stringify(responseText))
 				GuardarArchivosLog(titulo)
 			}
 		}

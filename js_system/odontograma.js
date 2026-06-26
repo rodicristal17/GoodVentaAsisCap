@@ -1,0 +1,2570 @@
+var odontogramaEstados = {
+	ficha: null,
+	presupuesto: null
+};
+
+var odontogramaPiezas = {
+	superior: ["18","17","16","15","14","13","12","11","21","22","23","24","25","26","27","28"],
+	inferior: ["48","47","46","45","44","43","42","41","31","32","33","34","35","36","37","38"]
+};
+
+var odontogramaFilas = [
+	{ clase: "temporal-superior", denticion: "temporal", izquierda: ["55","54","53","52","51"], derecha: ["61","62","63","64","65"] },
+	{ clase: "permanente-superior", denticion: "permanente", izquierda: ["18","17","16","15","14","13","12","11"], derecha: ["21","22","23","24","25","26","27","28"] },
+	{ clase: "permanente-inferior", denticion: "permanente", izquierda: ["48","47","46","45","44","43","42","41"], derecha: ["31","32","33","34","35","36","37","38"] },
+	{ clase: "temporal-inferior", denticion: "temporal", izquierda: ["85","84","83","82","81"], derecha: ["71","72","73","74","75"] }
+];
+
+var odontogramaSuperficies = [
+	{ id: "vestibular", nombre: "Vestibular" },
+	{ id: "mesial", nombre: "Mesial" },
+	{ id: "oclusal_incisal", nombre: "Oclusal / Incisal" },
+	{ id: "distal", nombre: "Distal" },
+	{ id: "lingual_palatina", nombre: "Lingual / Palatina" }
+];
+
+var odontogramaModos = [
+	{ id: "explorar", nombre: "Explorar" },
+	{ id: "asignar", nombre: "Asignar tratamiento" },
+	{ id: "hallazgo", nombre: "Situacion actual" },
+	{ id: "editar", nombre: "Editar" }
+];
+
+var odontogramaFiltros = [
+	{ id: "todo", nombre: "Todo" },
+	{ id: "situacion", nombre: "Situacion actual" },
+	{ id: "tratamientos", nombre: "Tratamientos" },
+	{ id: "realizados", nombre: "Realizados" }
+];
+
+var odontogramaPasosClinicos = [
+	{
+		id: "situacion",
+		numero: "1",
+		titulo: "Situacion actual",
+		texto: "Marca hallazgos actuales: caries, ausencias, obturaciones o protesis existentes.",
+		modo: "hallazgo",
+		filtro: "situacion"
+	},
+	{
+		id: "tratamientos",
+		numero: "2",
+		titulo: "Tratamientos",
+		texto: "Selecciona tratamientos y vinculalos a pieza, superficie, arcada o boca completa.",
+		modo: "asignar",
+		filtro: "tratamientos"
+	},
+	{
+		id: "revision",
+		numero: "3",
+		titulo: "Revision",
+		texto: "Revisa ubicaciones, pendientes e historial antes de guardar o convalidar.",
+		modo: "editar",
+		filtro: "todo"
+	}
+];
+
+var odontogramaContextosConfig = {
+	ficha: {
+		titulo: "Odontograma clinico",
+		mostrarPasosClinicos: true,
+		mostrarRevision: true,
+		mostrarHistorial: true,
+		mostrarDeshacer: true,
+		mostrarGuia: true,
+		mostrarConvalidar: true,
+		leyendaExpandida: false,
+		modos: ["explorar", "asignar", "hallazgo", "editar"],
+		filtros: ["todo", "situacion", "tratamientos", "realizados"],
+		mostrarCuadrantes: true,
+		superficiesAvanzadas: true,
+		pasos: odontogramaPasosClinicos
+	},
+	presupuesto: {
+		titulo: "Odontograma del presupuesto",
+		mostrarPasosClinicos: false,
+		mostrarRevision: false,
+		mostrarHistorial: false,
+		mostrarDeshacer: false,
+		mostrarGuia: false,
+		mostrarConvalidar: false,
+		leyendaExpandida: false,
+		modos: ["hallazgo", "asignar"],
+		filtros: ["situacion", "tratamientos"],
+		mostrarCuadrantes: false,
+		superficiesAvanzadas: false,
+		pasos: [
+			{
+				id: "situacion",
+				numero: "2",
+				titulo: "Situacion actual",
+				texto: "Marca solo lo necesario para preparar el presupuesto.",
+				modo: "hallazgo",
+				filtro: "situacion"
+			},
+			{
+				id: "tratamientos",
+				numero: "3",
+				titulo: "Tratamientos",
+				texto: "Selecciona piezas o ubicaciones y vincula tratamientos.",
+				modo: "asignar",
+				filtro: "tratamientos"
+			}
+		]
+	}
+};
+
+function odontogramaConfig(contexto) {
+	return odontogramaContextosConfig[contexto] || odontogramaContextosConfig.ficha;
+}
+
+function odontogramaEscape(valor) {
+	return String(valor == null ? "" : valor)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function odontogramaEstadoInicial(extra) {
+	var base = {
+		modo: "hallazgo",
+		pasoClinico: "situacion",
+		filtroVisual: "todo",
+		ayudaContextual: "",
+		piezaSeleccionada: "",
+		ubicacionActual: null,
+		tratamientoSeleccionado: null,
+		tratamientoPendiente: null,
+		mensajeFlash: "",
+		leyendaVisible: false
+	};
+	extra = extra || {};
+	Object.keys(extra).forEach(function (key) {
+		base[key] = extra[key];
+	});
+	return base;
+}
+
+function odontogramaNormalizarAlcance(alcance) {
+	alcance = String(alcance || "").toLowerCase();
+	return ["no_requiere", "boca_completa", "arcada", "cuadrante", "pieza_dental", "pieza_superficie"].indexOf(alcance) >= 0
+		? alcance
+		: "pieza_dental";
+}
+
+function odontogramaTextoAlcance(alcance) {
+	var mapa = {
+		no_requiere: "No requiere odontograma",
+		boca_completa: "Boca completa",
+		arcada: "Arcada",
+		cuadrante: "Cuadrante",
+		pieza_dental: "Pieza dental",
+		pieza_superficie: "Pieza + superficie"
+	};
+	return mapa[odontogramaNormalizarAlcance(alcance)] || "Pieza dental";
+}
+
+function odontogramaTextoSuperficie(superficie) {
+	var mapa = {
+		mesial: "Mesial",
+		distal: "Distal",
+		vestibular: "Vestibular",
+		lingual_palatina: "Lingual / Palatina",
+		oclusal_incisal: "Oclusal / Incisal"
+	};
+	return mapa[superficie] || superficie || "";
+}
+
+function odontogramaParsearRespuesta(respuesta) {
+	if (typeof respuesta === "string") {
+		return $.parseJSON(respuesta);
+	}
+	return respuesta || {};
+}
+
+function odontogramaApi(accion, datos, callback) {
+	obtener_datos_user();
+	datos = datos || {};
+	datos.useru = userid;
+	datos.passu = passuser;
+	datos.navegador = navegador;
+	datos.accion = accion;
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmOdontograma.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+			if (typeof callback === "function") {
+				callback(false, { "1": "error", mensaje: "No se pudo conectar con odontograma." });
+			}
+		},
+		success: function (responseText) {
+			try {
+				var datosRespuesta = odontogramaParsearRespuesta(responseText);
+				var estado = datosRespuesta["1"] || datosRespuesta[1] || datosRespuesta["0"] || datosRespuesta[0];
+				if (estado == "requiere_motivo") {
+					if (typeof callback === "function") {
+						callback(false, datosRespuesta);
+					}
+					return;
+				}
+				var ok = respuestaJqueryAjax(estado) == true;
+				if (typeof callback === "function") {
+					callback(ok, datosRespuesta);
+				}
+			} catch (error) {
+				GuardarArchivosLog("Error odontograma: " + error + " \r\n Consola: " + responseText);
+				if (typeof callback === "function") {
+					callback(false, { "1": "error", mensaje: responseText });
+				}
+			}
+		}
+	});
+}
+
+function odontogramaDatosBaseFicha() {
+	return {
+		paciente_id: cod_clienteConsulta || "",
+		cedula: document.getElementById("inptCIConsulta") ? document.getElementById("inptCIConsulta").value : "",
+		venta_id: cod_ventaFKConsulta || ""
+	};
+}
+
+function odontogramaDatosBasePresupuesto() {
+	return {
+		paciente_id: idFkCliente || "",
+		cedula: document.getElementById("inptDocumentoClientePresupuestoDoc") ? document.getElementById("inptDocumentoClientePresupuestoDoc").value : "",
+		presupuesto_id: idabmPresupuesto || ""
+	};
+}
+
+function cargarOdontogramaFichaClinica() {
+	var contenedor = document.getElementById("odontogramaFichaClinica");
+	if (!contenedor) { return; }
+	if (!cod_clienteConsulta && !cod_ventaFKConsulta) {
+		contenedor.innerHTML = "<div class='odontograma-empty'>Seleccione un paciente para ver el odontograma.</div>";
+		return;
+	}
+	contenedor.innerHTML = "<div class='odontograma-empty'>Cargando odontograma...</div>";
+	var base = odontogramaDatosBaseFicha();
+	odontogramaApi("obtenerOdontogramaPaciente", base, function (ok, datos) {
+		if (!ok) {
+			contenedor.innerHTML = "<div class='odontograma-error'>" + odontogramaEscape(datos.mensaje || "No se pudo cargar el odontograma.") + "</div>";
+			return;
+		}
+		var previo = odontogramaEstados.ficha || {};
+		odontogramaEstados.ficha = odontogramaEstadoInicial({
+			tipo: "ficha",
+			contenedor: "odontogramaFichaClinica",
+			base: base,
+			datos: datos,
+			pasoClinico: previo.pasoClinico || "situacion",
+			modo: previo.modo || "hallazgo",
+			filtroVisual: previo.filtroVisual || "todo",
+			mensajeFlash: previo.mensajeFlash || "",
+			leyendaVisible: previo.leyendaVisible || false,
+			piezaSeleccionada: previo.piezaSeleccionada || "",
+			ubicacionActual: null,
+			tratamientoPendiente: null
+		});
+		odontogramaRender("ficha");
+	});
+}
+
+function cargarOdontogramaPresupuestoDoctor() {
+	var contenedor = document.getElementById("odontogramaPresupuestoDoctor");
+	if (!contenedor) { return; }
+	var base = odontogramaDatosBasePresupuesto();
+	if (!base.paciente_id && !base.cedula) {
+		contenedor.innerHTML = "<div class='odontograma-empty'>Seleccione un paciente para activar el odontograma del presupuesto.</div>";
+		return;
+	}
+	contenedor.innerHTML = "<div class='odontograma-empty'>Cargando odontograma...</div>";
+	odontogramaApi("obtenerOdontogramaPaciente", base, function (ok, datos) {
+		if (!ok) {
+			contenedor.innerHTML = "<div class='odontograma-error'>" + odontogramaEscape(datos.mensaje || "No se pudo cargar el odontograma.") + "</div>";
+			return;
+		}
+		var previo = odontogramaEstados.presupuesto || {};
+		odontogramaEstados.presupuesto = odontogramaEstadoInicial({
+			tipo: "presupuesto",
+			contenedor: "odontogramaPresupuestoDoctor",
+			base: base,
+			datos: datos,
+			pasoClinico: previo.pasoClinico || "situacion",
+			modo: previo.modo || "hallazgo",
+			filtroVisual: previo.filtroVisual || "todo",
+			ayudaContextual: previo.ayudaContextual || "",
+			mensajeFlash: previo.mensajeFlash || "",
+			leyendaVisible: previo.leyendaVisible || false,
+			piezaSeleccionada: previo.piezaSeleccionada || "",
+			tratamientoSeleccionado: previo.tratamientoSeleccionado || null,
+			ubicacionActual: previo.ubicacionActual || null,
+			tratamientoPendiente: previo.tratamientoPendiente || null
+		});
+		odontogramaRender("presupuesto");
+	});
+}
+
+function odontogramaRefrescar(contexto) {
+	if (contexto == "presupuesto") {
+		cargarOdontogramaPresupuestoDoctor();
+		return;
+	}
+	cargarOdontogramaFichaClinica();
+}
+
+function odontogramaCompletarEstado(estado) {
+	if (!estado.modo) { estado.modo = estado.tratamientoPendiente ? "asignar" : "explorar"; }
+	if (!estado.pasoClinico) { estado.pasoClinico = estado.modo == "asignar" ? "tratamientos" : "situacion"; }
+	if (!estado.filtroVisual) { estado.filtroVisual = "todo"; }
+	if (estado.ayudaContextual == null) { estado.ayudaContextual = ""; }
+	if (estado.mensajeFlash == null) { estado.mensajeFlash = ""; }
+	if (estado.leyendaVisible == null) { estado.leyendaVisible = false; }
+}
+
+function odontogramaResumenProgreso(estado) {
+	var links = estado && estado.datos && estado.datos.links ? estado.datos.links.length : 0;
+	var pendientes = estado && estado.datos && estado.datos.tratamientos_sin_ubicacion ? estado.datos.tratamientos_sin_ubicacion.length : 0;
+	var hallazgos = estado && estado.datos && estado.datos.marcas ? estado.datos.marcas.length : 0;
+	var total = links + pendientes;
+	return {
+		ubicados: links,
+		pendientes: pendientes,
+		hallazgos: hallazgos,
+		total: total,
+		texto: total ? (links + "/" + total + " tratamientos ubicados") : "Sin tratamientos por ubicar"
+	};
+}
+
+function odontogramaRender(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	odontogramaCompletarEstado(estado);
+	var contenedor = document.getElementById(estado.contenedor);
+	if (!contenedor) { return; }
+	var datos = estado.datos || {};
+	var odo = datos.odontograma || {};
+	var estadoTexto = odo.estado ? odo.estado : "borrador";
+	var convalidado = estadoTexto == "convalidado";
+	var config = odontogramaConfig(contexto);
+	var titulo = config.titulo;
+	var progreso = odontogramaResumenProgreso(estado);
+	var html = "";
+	html += "<section class='odontograma-wrapper odontograma-" + contexto + "'>";
+	html += "<div class='odontograma-header odontograma-layout'>";
+	html += "<div><strong>" + titulo + "</strong><span class='odontograma-progreso'>" + odontogramaEscape(progreso.texto) + " &middot; Hallazgos " + odontogramaEscape(progreso.hallazgos) + (contexto == "ficha" ? " &middot; Estado: " + odontogramaEscape(estadoTexto) : "") + "</span></div>";
+	html += "<div class='odontograma-header__actions'>";
+	if (config.mostrarHistorial) {
+		html += "<span class='odontograma-badge odontograma-badge--" + odontogramaEscape(estadoTexto) + "'>" + odontogramaEscape(estadoTexto) + " v" + odontogramaEscape(odo.version_actual || "1") + "</span>";
+		html += "<button type='button' class='odontograma-historial-btn' title='Historial completo' onclick='odontogramaVerHistorialCompleto(\"" + contexto + "\")'>Historial</button>";
+	}
+	if (config.mostrarDeshacer) {
+		html += "<button type='button' class='odontograma-deshacer' title='Deshacer ultima accion' onclick='odontogramaDeshacer(\"" + contexto + "\")'>Deshacer</button>";
+	}
+	if (config.mostrarGuia) {
+		html += "<button type='button' title='Guia rapida' onclick='odontogramaMostrarGuia(\"" + contexto + "\")'>?</button>";
+	}
+	if (!config.leyendaExpandida && contexto == "presupuesto") {
+		html += "<button type='button' class='odontograma-leyenda-toggle' onclick='odontogramaToggleLeyenda(\"" + contexto + "\")'>" + (estado.leyendaVisible ? "Ocultar leyenda" : "Ver leyenda") + "</button>";
+	}
+	if (config.mostrarConvalidar) {
+		html += "<button type='button' class='odontograma-btn-primary' onclick='odontogramaConvalidar(\"" + contexto + "\")'>" + (convalidado ? "Convalidado" : "Convalidar") + "</button>";
+	}
+	html += "</div></div>";
+	html += odontogramaRenderPasosClinicos(contexto);
+	html += odontogramaRenderToolbar(contexto);
+	html += odontogramaRenderAyudaContextual(contexto);
+	html += odontogramaRenderRevisionClinica(contexto);
+	html += "<div class='odontograma-main odontograma-main--paso-" + odontogramaEscape(estado.pasoClinico) + "'>";
+	html += "<aside class='odontograma-panel-situacion'>" + odontogramaRenderPanelSituacionActual(contexto) + "</aside>";
+	html += "<div class='odontograma-canvas'>" + odontogramaRenderDiagrama(contexto) + odontogramaRenderSituacionMarcadaResumen(contexto) + "</div>";
+	html += "<aside class='odontograma-panel-pieza' id='odontogramaPanel_" + contexto + "'>" + odontogramaRenderPanel(contexto) + "</aside>";
+	html += "</div>";
+	if (contexto == "ficha") {
+		html += odontogramaRenderTratamientosSinUbicacion(contexto);
+	}
+	html += "</section>";
+	contenedor.innerHTML = html;
+}
+
+function odontogramaRenderPasosClinicos(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var config = odontogramaConfig(contexto);
+	if (!config.mostrarPasosClinicos) { return ""; }
+	var pasos = config.pasos || odontogramaPasosClinicos;
+	var html = "<div class='odontograma-guia-pasos'>";
+	pasos.forEach(function (paso) {
+		var activo = estado.pasoClinico == paso.id ? " odontograma-paso-activo" : "";
+		html += "<button type='button' class='odontograma-paso" + activo + "' onclick='odontogramaCambiarPasoClinico(\"" + contexto + "\",\"" + paso.id + "\")'>"
+			+ "<b class='odontograma-paso-numero'>" + odontogramaEscape(paso.numero || "") + "</b>"
+			+ "<span class='odontograma-paso-copy'><strong>" + odontogramaEscape(paso.titulo) + "</strong><em>" + odontogramaEscape(paso.texto) + "</em></span>"
+			+ "</button>";
+	});
+	html += "</div>";
+	return html;
+}
+
+function odontogramaPasoClinicoActual(estado) {
+	var config = odontogramaConfig(estado && estado.tipo ? estado.tipo : "ficha");
+	var pasos = config.pasos || odontogramaPasosClinicos;
+	for (var i = 0; i < pasos.length; i++) {
+		if (pasos[i].id == estado.pasoClinico) {
+			return pasos[i];
+		}
+	}
+	return pasos[0] || odontogramaPasosClinicos[0];
+}
+
+function odontogramaRenderRevisionClinica(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!odontogramaConfig(contexto).mostrarRevision) { return ""; }
+	if (!estado || estado.pasoClinico != "revision") { return ""; }
+	var progreso = odontogramaResumenProgreso(estado);
+	var odo = estado.datos && estado.datos.odontograma ? estado.datos.odontograma : {};
+	var estadoTexto = odo.estado || "borrador";
+	var convalidacion = "";
+	if (odo.fecha_convalidacion) {
+		convalidacion = "<span>Convalidado el " + odontogramaEscape(odo.fecha_convalidacion) + "</span>";
+	} else if (String(estadoTexto).toLowerCase() == "modificado") {
+		convalidacion = "<span>Modificado despues de convalidacion.</span>";
+	}
+	return "<div class='odontograma-revision odontograma-auditoria'>"
+		+ "<strong>Pendiente de completar</strong>"
+		+ "<span>Hallazgos cargados: " + odontogramaEscape(progreso.hallazgos) + "</span>"
+		+ "<span>Tratamientos ubicados: " + odontogramaEscape(progreso.ubicados) + "/" + odontogramaEscape(progreso.total) + "</span>"
+		+ "<span>Faltan ubicar: " + odontogramaEscape(progreso.pendientes) + "</span>"
+		+ convalidacion
+		+ "</div>";
+}
+
+function odontogramaRenderToolbar(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var html = "<div class='odontograma-toolbar'>";
+	html += odontogramaRenderModos(contexto);
+	html += odontogramaRenderFiltros(contexto);
+	html += "<div class='odontograma-toolbar-actions'>" + odontogramaRenderAtajosUbicacion(contexto) + "</div>";
+	html += "</div>";
+	html += odontogramaRenderTratamientoActivo(contexto);
+	return html;
+}
+
+function odontogramaRenderModos(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var config = odontogramaConfig(contexto);
+	var modosPermitidos = config.modos || odontogramaModos.map(function (modo) { return modo.id; });
+	var trActivo = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	var modoActual = trActivo ? "asignar" : estado.modo;
+	var html = "<div class='odontograma-modos'>";
+	odontogramaModos.forEach(function (modo) {
+		if (modosPermitidos.indexOf(modo.id) < 0) { return; }
+		var activo = modoActual == modo.id ? " odontograma-modo-activo" : "";
+		html += "<button type='button' class='odontograma-modo" + activo + "' onclick='odontogramaCambiarModo(\"" + contexto + "\",\"" + modo.id + "\")'>" + odontogramaEscape(modo.nombre) + "</button>";
+	});
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderFiltros(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var config = odontogramaConfig(contexto);
+	var filtrosPermitidos = config.filtros || odontogramaFiltros.map(function (filtro) { return filtro.id; });
+	var html = "<div class='odontograma-filtro-visual'>";
+	odontogramaFiltros.forEach(function (filtro) {
+		if (filtrosPermitidos.indexOf(filtro.id) < 0) { return; }
+		var activo = estado.filtroVisual == filtro.id ? " is-active" : "";
+		html += "<button type='button' class='" + activo + "' onclick='odontogramaCambiarFiltro(\"" + contexto + "\",\"" + filtro.id + "\")'>" + odontogramaEscape(filtro.nombre) + "</button>";
+	});
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderTratamientoActivo(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var tr = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	if (!tr) { return ""; }
+	var ubicacion = estado.ubicacionActual ? odontogramaTextoUbicacion(estado.ubicacionActual) : "Falta ubicar";
+	return "<div class='odontograma-active-treatment odontograma-tratamiento-activo'>"
+		+ "<span>Asignando tratamiento</span>"
+		+ "<strong>" + odontogramaEscape(tr.nombre || "Tratamiento") + "</strong>"
+		+ "<em>Requiere: " + odontogramaEscape(odontogramaTextoAlcance(tr.alcance)) + "</em>"
+		+ "<b class='" + (estado.ubicacionActual ? "is-ready" : "") + "'>" + odontogramaEscape(ubicacion) + "</b>"
+		+ "<button type='button' onclick='odontogramaCancelarAsignacion(\"" + contexto + "\")'>Cancelar asignacion</button>"
+		+ "</div>";
+}
+
+function odontogramaAyudaActual(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (estado.mensajeFlash) { return estado.mensajeFlash; }
+	var tr = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	if (contexto == "presupuesto") {
+		if (tr) {
+			if (estado.piezaSeleccionada) {
+				return "Asignando: " + (tr.nombre || "tratamiento") + ". Confirma la pieza o ubicacion para agregarla al presupuesto.";
+			}
+			return "Selecciona una pieza, arcada o boca completa para ubicar " + (tr.nombre || "el tratamiento") + ".";
+		}
+		if (estado.piezaSeleccionada) {
+			return "Pieza " + estado.piezaSeleccionada + " seleccionada. Puedes marcar situacion actual o pasar a tratamientos.";
+		}
+		if (estado.ubicacionActual) {
+			return odontogramaTextoUbicacion(estado.ubicacionActual) + " seleccionado.";
+		}
+		return estado.pasoClinico == "tratamientos"
+			? "Selecciona piezas y busca un tratamiento para agregarlo al resumen."
+			: "Selecciona una o varias piezas para marcar la situacion actual cuando corresponda.";
+	}
+	if (tr) {
+		if (estado.piezaSeleccionada) {
+			if (odontogramaPiezaMarcadaAusente(estado, estado.piezaSeleccionada)) {
+				return "Paso 2: pieza " + estado.piezaSeleccionada + " marcada como ausente en Situacion actual. Verifica si corresponde asignar " + (tr.nombre || "este tratamiento") + ".";
+			}
+			return "Asignando: " + (tr.nombre || "tratamiento") + ". Estas editando la pieza " + estado.piezaSeleccionada + "; elegi superficie, pieza, arcada o boca completa segun corresponda.";
+		}
+		return "Asignando: " + (tr.nombre || "tratamiento") + ". Toca la pieza, arcada o boca completa correspondiente.";
+	}
+	if (estado.pasoClinico == "tratamientos" && estado.piezaSeleccionada && odontogramaPiezaMarcadaAusente(estado, estado.piezaSeleccionada)) {
+		return "Paso 2: la pieza " + estado.piezaSeleccionada + " esta marcada como ausente. Se sugieren tratamientos de rehabilitacion o revision antes de vincular.";
+	}
+	if (estado.piezaSeleccionada) {
+		return "Estas editando la pieza " + estado.piezaSeleccionada + ". La ficha derecha muestra vistas, superficies, tratamientos, hallazgos e historial.";
+	}
+	if (estado.ubicacionActual) {
+		return odontogramaTextoUbicacion(estado.ubicacionActual) + " seleccionado en el odontograma.";
+	}
+	if (estado.modo == "hallazgo") {
+		return "Paso 1: marca la situacion actual del paciente. Toca una pieza y registra caries, ausencias, obturaciones o protesis existentes.";
+	}
+	if (estado.modo == "editar") {
+		return "Paso 3: revisa tratamientos, hallazgos y trazabilidad. Podes editar, quitar vinculos o deshacer.";
+	}
+	if (estado.modo == "asignar") {
+		return "Paso 2: selecciona un tratamiento y toca la pieza, superficie, arcada o boca completa correspondiente.";
+	}
+	return "Primero revisa como esta la boca. Despues vincula tratamientos y finalmente convalida.";
+}
+
+function odontogramaRenderAyudaContextual(contexto) {
+	return "<div class='odontograma-ayuda-contextual'>" + odontogramaEscape(odontogramaAyudaActual(contexto)) + "</div>";
+}
+
+function odontogramaRenderAtajosUbicacion(contexto) {
+	var config = odontogramaConfig(contexto);
+	var html = "<div class='odontograma-quick-actions selector-ubicacion-grafica'>"
+		+ "<button type='button' class='selector-boca-completa-card' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"boca_completa\",\"\")'>" + odontogramaIconoUbicacion("boca-completa", "") + "<span>Boca completa</span></button>"
+		+ "<button type='button' class='selector-arcada-card' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"arcada\",\"superior\")'>" + odontogramaIconoUbicacion("arcada-superior", "") + "<span>Arcada sup.</span></button>"
+		+ "<button type='button' class='selector-arcada-card' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"arcada\",\"inferior\")'>" + odontogramaIconoUbicacion("arcada-inferior", "") + "<span>Arcada inf.</span></button>"
+		+ "<button type='button' class='selector-arcada-card' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"arcada\",\"ambas\")'>" + odontogramaIconoUbicacion("ambas-arcadas", "") + "<span>Ambas</span></button>";
+	if (config.mostrarCuadrantes) {
+		html += "<button type='button' title='Cuadrante superior derecho' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"cuadrante\",\"1\")'>C1</button>"
+			+ "<button type='button' title='Cuadrante superior izquierdo' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"cuadrante\",\"2\")'>C2</button>"
+			+ "<button type='button' title='Cuadrante inferior izquierdo' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"cuadrante\",\"3\")'>C3</button>"
+			+ "<button type='button' title='Cuadrante inferior derecho' onclick='odontogramaSeleccionGeneral(\"" + contexto + "\",\"cuadrante\",\"4\")'>C4</button>";
+	}
+	html += "<button type='button' onclick='odontogramaLimpiarSeleccion(\"" + contexto + "\")'>Limpiar</button></div>";
+	return html;
+}
+
+function odontogramaRenderDiagrama(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var config = odontogramaConfig(contexto);
+	var html = "<div class='odontograma-diagrama'>";
+	html += "<div class='odontograma-tablero'>";
+	html += "<span class='odontograma-eje odontograma-eje--vertical'></span>";
+	html += "<span class='odontograma-eje odontograma-eje--horizontal'></span>";
+	html += "<span class='odontograma-cuadrante-label odontograma-cuadrante-label--sd'>Superior derecho</span>";
+	html += "<span class='odontograma-cuadrante-label odontograma-cuadrante-label--si'>Superior izquierdo</span>";
+	html += "<span class='odontograma-cuadrante-label odontograma-cuadrante-label--id'>Inferior derecho</span>";
+	html += "<span class='odontograma-cuadrante-label odontograma-cuadrante-label--ii'>Inferior izquierdo</span>";
+	odontogramaFilas.forEach(function (fila) {
+		html += odontogramaRenderFila(contexto, fila);
+	});
+	html += "</div>";
+	if (config.leyendaExpandida || contexto != "presupuesto" || (estado && estado.leyendaVisible)) {
+		html += odontogramaRenderLeyenda(contexto);
+	}
+	html += "</div>";
+	return html;
+}
+
+function odontogramaTextoMarcaResumen(tipo) {
+	var mapa = {
+		caries: "Caries",
+		obturacion: "Obturacion existente",
+		pieza_ausente: "Ausente",
+		extraccion_indicada: "Extraccion indicada",
+		protesis_prevista: "Protesis prevista",
+		protesis_existente: "Protesis existente"
+	};
+	return mapa[tipo] || odontogramaTextoMarca(tipo);
+}
+
+function odontogramaClaseColorMarcaResumen(marca) {
+	var color = String(marca && marca.color ? marca.color : "").toLowerCase();
+	var tipo = String(marca && marca.tipo_marca ? marca.tipo_marca : "");
+	if (color == "azul" || tipo == "obturacion" || tipo == "protesis_existente") { return "azul"; }
+	if (color == "gris" || tipo == "pieza_ausente") { return "gris"; }
+	return "rojo";
+}
+
+function odontogramaRenderSituacionMarcadaResumen(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (contexto != "presupuesto" || !estado || ["situacion", "tratamientos"].indexOf(estado.pasoClinico) < 0) { return ""; }
+	var marcas = (estado.datos && estado.datos.marcas ? estado.datos.marcas : []).slice();
+	marcas.sort(function (a, b) {
+		return Number(a.id || 0) - Number(b.id || 0);
+	});
+	var html = "<section class='odontograma-situacion-resumen' aria-label='Croquis y situacion de los dientes'>";
+	html += "<header><strong>Croquis y situacion de los dientes</strong><span>Ayuda memoria antes de tratamientos</span></header>";
+	if (!marcas.length) {
+		html += "<p>Aun no se marcaron hallazgos.</p></section>";
+		return html;
+	}
+	html += "<ul>";
+	marcas.forEach(function (marca) {
+		var pieza = marca.pieza || "-";
+		var info = odontogramaInfoPiezaFDI(pieza);
+		var superficie = marca.superficie ? odontogramaTextoSuperficiePieza(marca.superficie, info) : "";
+		var claseColor = odontogramaClaseColorMarcaResumen(marca);
+		html += "<li>"
+			+ "<i class='odontograma-situacion-resumen-dot odontograma-situacion-resumen-dot--" + odontogramaEscape(claseColor) + "'></i>"
+			+ "<b>Pieza " + odontogramaEscape(pieza) + "</b>"
+			+ "<span>" + odontogramaEscape(odontogramaTextoMarcaResumen(marca.tipo_marca)) + "</span>"
+			+ (superficie ? "<em>" + odontogramaEscape(superficie) + "</em>" : "")
+			+ "</li>";
+	});
+	html += "</ul></section>";
+	return html;
+}
+
+function odontogramaRenderFila(contexto, fila) {
+	var html = "<div class='odontograma-fila odontograma-fila--" + fila.clase + "'>";
+	html += odontogramaRenderGrupoPiezas(contexto, fila.izquierda, fila.denticion, "izquierda");
+	html += "<span class='odontograma-centro'></span>";
+	html += odontogramaRenderGrupoPiezas(contexto, fila.derecha, fila.denticion, "derecha");
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderGrupoPiezas(contexto, piezas, denticion, lado) {
+	var html = "<div class='odontograma-grupo odontograma-grupo--" + lado + "'>";
+	piezas.forEach(function (pieza) {
+		html += odontogramaRenderPieza(contexto, pieza, denticion);
+	});
+	html += "</div>";
+	return html;
+}
+
+function odontogramaDenticionPieza(pieza) {
+	return /^[5-8]/.test(String(pieza || "")) ? "temporal" : "permanente";
+}
+
+function odontogramaTipoPieza(pieza) {
+	var digito = String(pieza || "").slice(-1);
+	var temporal = odontogramaDenticionPieza(pieza) == "temporal";
+	if (digito == "1" || digito == "2") { return "incisivo"; }
+	if (digito == "3") { return "canino"; }
+	if (temporal && (digito == "4" || digito == "5")) { return "molar"; }
+	if (digito == "4" || digito == "5") { return "premolar"; }
+	return "molar";
+}
+
+function odontogramaInfoPiezaFDI(pieza) {
+	var texto = String(pieza || "");
+	var cuadrante = texto.charAt(0);
+	var tipo = odontogramaTipoPieza(pieza);
+	var denticion = odontogramaDenticionPieza(pieza);
+	var mapaCuadrante = {
+		"1": { arcada: "superior", lado: "derecho", etiqueta: "Superior derecho" },
+		"2": { arcada: "superior", lado: "izquierdo", etiqueta: "Superior izquierdo" },
+		"3": { arcada: "inferior", lado: "izquierdo", etiqueta: "Inferior izquierdo" },
+		"4": { arcada: "inferior", lado: "derecho", etiqueta: "Inferior derecho" },
+		"5": { arcada: "superior", lado: "derecho", etiqueta: "Superior derecho" },
+		"6": { arcada: "superior", lado: "izquierdo", etiqueta: "Superior izquierdo" },
+		"7": { arcada: "inferior", lado: "izquierdo", etiqueta: "Inferior izquierdo" },
+		"8": { arcada: "inferior", lado: "derecho", etiqueta: "Inferior derecho" }
+	};
+	var mapaTipo = {
+		incisivo: "Incisivo",
+		canino: "Canino",
+		premolar: "Premolar",
+		molar: "Molar"
+	};
+	var ubicacion = mapaCuadrante[cuadrante] || { arcada: "", lado: "", etiqueta: "" };
+	var anterior = tipo == "incisivo" || tipo == "canino";
+	return {
+		pieza: texto,
+		cuadrante: cuadrante,
+		denticion: denticion,
+		denticionTexto: denticion == "temporal" ? "Temporal" : "Permanente",
+		arcada: ubicacion.arcada,
+		arcadaTexto: ubicacion.arcada == "superior" ? "Superior" : (ubicacion.arcada == "inferior" ? "Inferior" : ""),
+		lado: ubicacion.lado,
+		ladoTexto: ubicacion.lado == "derecho" ? "Derecho" : (ubicacion.lado == "izquierdo" ? "Izquierdo" : ""),
+		ubicacionTexto: ubicacion.etiqueta,
+		tipo: tipo,
+		tipoTexto: mapaTipo[tipo] || "",
+		superficieCentral: anterior ? "Incisal" : "Oclusal"
+	};
+}
+
+function odontogramaMetaPiezaTexto(info) {
+	var partes = [];
+	if (info.denticionTexto) { partes.push(info.denticionTexto); }
+	if (info.ubicacionTexto) { partes.push(info.ubicacionTexto); }
+	if (info.tipoTexto) { partes.push(info.tipoTexto); }
+	return partes.join(" - ");
+}
+
+function odontogramaSvgPathsPieza(tipo) {
+	var mapas = {
+		incisivo: {
+			outline: 23,
+			vestibular: "M20 8 C27 5 37 5 44 8 L40 19 C35 17 29 17 24 19 Z",
+			mesial: "M14 13 C10 23 10 41 14 51 L23 43 C20 36 20 28 23 21 Z",
+			distal: "M50 13 C54 23 54 41 50 51 L41 43 C44 36 44 28 41 21 Z",
+			lingual_palatina: "M20 56 C27 59 37 59 44 56 L40 45 C35 47 29 47 24 45 Z",
+			oclusal_incisal: "M24 21 C29 18 35 18 40 21 L40 43 C35 46 29 46 24 43 Z",
+			center: 11
+		},
+		canino: {
+			outline: 24,
+			vestibular: "M16 11 C24 4 40 4 48 11 L39 22 C35 18 29 18 25 22 Z",
+			mesial: "M11 16 C5 25 6 40 13 50 L22 42 C18 35 18 29 22 23 Z",
+			distal: "M53 16 C59 25 58 40 51 50 L42 42 C46 35 46 29 42 23 Z",
+			lingual_palatina: "M16 54 C24 60 40 60 48 54 L40 45 C35 49 29 49 24 45 Z",
+			oclusal_incisal: "M24 23 L32 17 L40 23 C45 31 45 38 40 43 C35 48 29 48 24 43 C19 38 19 31 24 23 Z",
+			center: 12
+		},
+		premolar: {
+			outline: 25,
+			vestibular: "M15 10 C24 4 40 4 49 10 L42 19 C36 15 28 15 22 19 Z",
+			mesial: "M10 15 C4 24 4 40 10 49 L19 42 C15 36 15 28 19 22 Z",
+			distal: "M54 15 C60 24 60 40 54 49 L45 42 C49 36 49 28 45 22 Z",
+			lingual_palatina: "M15 54 C24 60 40 60 49 54 L42 45 C36 49 28 49 22 45 Z",
+			oclusal_incisal: "M22 22 C28 18 36 18 42 22 C46 28 46 36 42 42 C36 46 28 46 22 42 C18 36 18 28 22 22 Z",
+			center: 13
+		},
+		molar: {
+			outline: 27,
+			vestibular: "M13 10 C22 3 42 3 51 10 L43 20 C36 16 28 16 21 20 Z",
+			mesial: "M9 14 C2 24 2 41 10 51 L20 43 C16 36 16 28 20 21 Z",
+			distal: "M55 14 C62 24 62 41 54 51 L44 43 C48 36 48 28 44 21 Z",
+			lingual_palatina: "M13 54 C22 61 42 61 51 54 L43 44 C36 49 28 49 21 44 Z",
+			oclusal_incisal: "M21 21 C28 16 36 16 43 21 C49 28 49 36 43 43 C36 48 28 48 21 43 C15 36 15 28 21 21 Z",
+			center: 14
+		}
+	};
+	return mapas[tipo] || mapas.premolar;
+}
+
+function odontogramaEsVerdadero(valor) {
+	return valor === true || valor === 1 || String(valor || "") == "1";
+}
+
+function odontogramaArcadaPieza(pieza) {
+	var primerDigito = String(pieza || "").charAt(0);
+	return ["1", "2", "5", "6"].indexOf(primerDigito) >= 0 ? "superior" : "inferior";
+}
+
+function odontogramaNormalizarArcada(arcada) {
+	arcada = String(arcada || "").toLowerCase().replace(/\s+/g, "_");
+	if (arcada == "superior_e_inferior" || arcada == "superior_inferior" || arcada == "ambas_arcadas") {
+		return "ambas";
+	}
+	return arcada;
+}
+
+function odontogramaTextoArcada(arcada) {
+	arcada = odontogramaNormalizarArcada(arcada);
+	if (arcada == "ambas") { return "Arcada superior e inferior"; }
+	if (arcada == "superior") { return "Arcada superior"; }
+	if (arcada == "inferior") { return "Arcada inferior"; }
+	return "Arcada " + String(arcada || "").replace(/_/g, " ");
+}
+
+function odontogramaArcadaIncluyePieza(arcada, pieza) {
+	arcada = odontogramaNormalizarArcada(arcada);
+	if (arcada == "ambas") { return true; }
+	return arcada && arcada == odontogramaArcadaPieza(pieza);
+}
+
+function odontogramaCuadrantePieza(pieza) {
+	var primerDigito = String(pieza || "").charAt(0);
+	var mapa = { "1": "1", "5": "1", "2": "2", "6": "2", "3": "3", "7": "3", "4": "4", "8": "4" };
+	return mapa[primerDigito] || "";
+}
+
+function odontogramaNormalizarCuadrante(cuadrante) {
+	cuadrante = String(cuadrante || "").toLowerCase();
+	var mapa = {
+		"1": "1",
+		"cuadrante_1": "1",
+		"superior_derecho": "1",
+		"2": "2",
+		"cuadrante_2": "2",
+		"superior_izquierdo": "2",
+		"3": "3",
+		"cuadrante_3": "3",
+		"inferior_izquierdo": "3",
+		"4": "4",
+		"cuadrante_4": "4",
+		"inferior_derecho": "4"
+	};
+	return mapa[cuadrante] || cuadrante;
+}
+
+function odontogramaUbicacionIncluyePieza(ubicacion, pieza) {
+	if (!ubicacion) { return false; }
+	if (odontogramaEsVerdadero(ubicacion.boca_completa)) { return true; }
+	if (ubicacion.arcada && odontogramaArcadaIncluyePieza(ubicacion.arcada, pieza)) { return true; }
+	if (ubicacion.cuadrante && odontogramaNormalizarCuadrante(ubicacion.cuadrante) == odontogramaCuadrantePieza(pieza)) { return true; }
+	if (ubicacion.pieza && String(ubicacion.pieza) == String(pieza)) { return true; }
+	return false;
+}
+
+function odontogramaUbicacionEsGeneral(ubicacion) {
+	return !!ubicacion && (odontogramaEsVerdadero(ubicacion.boca_completa) || !!ubicacion.arcada || !!ubicacion.cuadrante);
+}
+
+function odontogramaMarcaVisiblePorFiltro(marca, filtro) {
+	if (!filtro || filtro == "todo") { return true; }
+	var tipo = String(marca.tipo_marca || "");
+	var realizada = tipo == "obturacion" || tipo == "protesis_existente";
+	if (filtro == "situacion" || filtro == "hallazgos") {
+		return ["caries", "obturacion", "extraccion_indicada", "pieza_ausente", "protesis_prevista", "protesis_existente"].indexOf(tipo) >= 0;
+	}
+	if (filtro == "realizados") {
+		return realizada;
+	}
+	if (filtro == "tratamientos") {
+		return false;
+	}
+	return true;
+}
+
+function odontogramaLinkVisiblePorFiltro(link, filtro) {
+	if (!filtro || filtro == "todo") { return true; }
+	var completado = String(link.estado_link || "") == "completado" || Number(link.progreso_actual || 0) >= 100;
+	if (filtro == "situacion" || filtro == "hallazgos") { return false; }
+	if (filtro == "tratamientos") { return !completado; }
+	if (filtro == "realizados") { return completado; }
+	return true;
+}
+
+function odontogramaMapaPieza(contexto, pieza) {
+	var estado = odontogramaEstados[contexto];
+	var filtro = estado.filtroVisual || "todo";
+	var filtroMarcas = contexto == "presupuesto" && filtro == "tratamientos" ? "situacion" : filtro;
+	var marcas = (estado.datos.marcas || []).filter(function (m) {
+		return String(m.pieza) == String(pieza) && odontogramaMarcaVisiblePorFiltro(m, filtroMarcas);
+	});
+	var todosLinks = estado.datos.links || [];
+	var links = todosLinks.filter(function (l) {
+		return String(l.pieza || "") == String(pieza) && odontogramaLinkVisiblePorFiltro(l, filtro);
+	});
+	var linksGenerales = todosLinks.filter(function (l) {
+		return !l.pieza && odontogramaUbicacionIncluyePieza(l, pieza) && odontogramaLinkVisiblePorFiltro(l, filtro);
+	});
+	var superficies = {};
+	var clases = [];
+	var marcadores = {};
+	marcas.forEach(function (m) {
+		var tipoMarca = String(m.tipo_marca || "");
+		if (m.superficie) {
+			superficies[m.superficie] = m.color || "rojo";
+		} else if (["caries", "obturacion", "pieza_ausente", "extraccion_indicada", "protesis_prevista", "protesis_existente"].indexOf(tipoMarca) < 0) {
+			clases.push("has-marca-" + (m.color || "rojo"));
+		}
+		if (tipoMarca == "caries") {
+			clases.push("has-caries");
+			marcadores.caries = true;
+		}
+		if (tipoMarca == "obturacion") {
+			clases.push("has-obturacion");
+			marcadores.obturacion = true;
+		}
+		if (tipoMarca == "pieza_ausente") {
+			clases.push("is-ausente");
+		}
+		if (tipoMarca == "extraccion_indicada") {
+			clases.push("is-extraccion");
+		}
+		if (tipoMarca == "protesis_prevista") {
+			clases.push("is-protesis-prevista");
+			marcadores.protesisPrevista = true;
+		}
+		if (tipoMarca == "protesis_existente") {
+			clases.push("is-protesis-existente");
+			marcadores.protesisExistente = true;
+		}
+	});
+	links.forEach(function (l) {
+		var color = (String(l.estado_link || "") == "completado" || Number(l.progreso_actual || 0) >= 100) ? "azul" : "rojo";
+		var lista = [];
+		try { lista = l.superficies_json ? JSON.parse(l.superficies_json) : []; } catch (e) { lista = []; }
+		if (lista.length) {
+			lista.forEach(function (sup) { superficies[sup] = color; });
+		} else {
+			clases.push("has-link-" + color);
+		}
+	});
+	linksGenerales.forEach(function (l) {
+		var color = (String(l.estado_link || "") == "completado" || Number(l.progreso_actual || 0) >= 100) ? "azul" : "rojo";
+		clases.push("is-region-link-" + color);
+	});
+	if (estado.ubicacionActual && odontogramaUbicacionIncluyePieza(estado.ubicacionActual, pieza)) {
+		clases.push(odontogramaUbicacionEsGeneral(estado.ubicacionActual) ? "is-region-preview" : "is-location-preview");
+	}
+	return { superficies: superficies, clases: clases, marcadores: marcadores, total: marcas.length + links.length + linksGenerales.length };
+}
+
+function odontogramaMapaPiezaPanel(contexto, pieza) {
+	var estado = odontogramaEstados[contexto];
+	var marcas = (estado.datos.marcas || []).filter(function (m) {
+		return String(m.pieza) == String(pieza);
+	});
+	var todosLinks = estado.datos.links || [];
+	var links = todosLinks.filter(function (l) {
+		return String(l.pieza || "") == String(pieza);
+	});
+	var linksGenerales = todosLinks.filter(function (l) {
+		return !l.pieza && odontogramaUbicacionIncluyePieza(l, pieza);
+	});
+	var superficies = {};
+	var clases = [];
+	var marcadores = {};
+	marcas.forEach(function (m) {
+		var tipoMarca = String(m.tipo_marca || "");
+		if (m.superficie) {
+			superficies[m.superficie] = m.color || "rojo";
+		} else if (["caries", "obturacion", "pieza_ausente", "extraccion_indicada", "protesis_prevista", "protesis_existente"].indexOf(tipoMarca) < 0) {
+			clases.push("has-marca-" + (m.color || "rojo"));
+		}
+		if (tipoMarca == "caries") {
+			clases.push("has-caries");
+			marcadores.caries = true;
+		}
+		if (tipoMarca == "obturacion") {
+			clases.push("has-obturacion");
+			marcadores.obturacion = true;
+		}
+		if (tipoMarca == "pieza_ausente") {
+			clases.push("is-ausente");
+			marcadores.ausente = true;
+		}
+		if (tipoMarca == "extraccion_indicada") {
+			clases.push("is-extraccion");
+			marcadores.extraccion = true;
+		}
+		if (tipoMarca == "protesis_prevista") {
+			clases.push("is-protesis-prevista");
+			marcadores.protesisPrevista = true;
+		}
+		if (tipoMarca == "protesis_existente") {
+			clases.push("is-protesis-existente");
+			marcadores.protesisExistente = true;
+		}
+	});
+	links.forEach(function (l) {
+		var color = odontogramaLinkCompletado(l) ? "azul" : "rojo";
+		var lista = odontogramaSuperficiesLink(l);
+		if (lista.length) {
+			lista.forEach(function (sup) { superficies[sup] = color; });
+		} else {
+			clases.push("has-link-" + color);
+		}
+	});
+	linksGenerales.forEach(function (l) {
+		clases.push(odontogramaLinkCompletado(l) ? "is-region-link-azul" : "is-region-link-rojo");
+	});
+	if (estado.ubicacionActual && odontogramaUbicacionIncluyePieza(estado.ubicacionActual, pieza)) {
+		clases.push(odontogramaUbicacionEsGeneral(estado.ubicacionActual) ? "is-region-preview" : "is-location-preview");
+	}
+	return {
+		superficies: superficies,
+		clases: clases,
+		marcadores: marcadores,
+		marcas: marcas,
+		links: links,
+		linksGenerales: linksGenerales,
+		total: marcas.length + links.length + linksGenerales.length
+	};
+}
+
+function odontogramaRenderPieza(contexto, pieza, denticion) {
+	var mapa = odontogramaMapaPieza(contexto, pieza);
+	var tipo = odontogramaTipoPieza(pieza);
+	var paths = odontogramaSvgPathsPieza(tipo);
+	var seleccionada = odontogramaEstados[contexto].piezaSeleccionada == pieza ? " is-selected" : "";
+	var clase = "odontograma-pieza odontograma-pieza-anatomica odontograma-pieza--" + denticion + " odontograma-pieza--" + tipo + " " + mapa.clases.join(" ") + seleccionada;
+	var badge = mapa.total ? "<span class='odontograma-pieza__count'>" + mapa.total + "</span>" : "";
+	var html = "<button type='button' class='" + clase + "' data-pieza='" + pieza + "' title='Pieza " + pieza + "' onclick='odontogramaSeleccionarPieza(event,\"" + contexto + "\",\"" + pieza + "\")'>";
+	html += "<span class='odontograma-pieza__numero'>" + pieza + "</span>";
+	html += badge;
+	html += "<span class='odontograma-pieza__marcadores'>" + odontogramaRenderMarcadoresPieza(mapa) + "</span>";
+	html += odontogramaRenderProtesisPieza(mapa);
+	html += "<svg class='odontograma-svg' viewBox='0 0 64 64' aria-hidden='true'>";
+	html += "<circle class='odontograma-tooth-outline' cx='32' cy='32' r='" + paths.outline + "'></circle>";
+	html += odontogramaSvgSurface(contexto, pieza, "vestibular", paths.vestibular, mapa.superficies);
+	html += odontogramaSvgSurface(contexto, pieza, "mesial", paths.mesial, mapa.superficies);
+	html += odontogramaSvgSurface(contexto, pieza, "distal", paths.distal, mapa.superficies);
+	html += odontogramaSvgSurface(contexto, pieza, "lingual_palatina", paths.lingual_palatina, mapa.superficies);
+	html += odontogramaSvgSurface(contexto, pieza, "oclusal_incisal", paths.oclusal_incisal, mapa.superficies);
+	html += "<circle class='odontograma-tooth-centerline' cx='32' cy='32' r='" + paths.center + "'></circle>";
+	html += "</svg></button>";
+	return html;
+}
+
+function odontogramaRenderMarcadoresPieza(mapa) {
+	var html = "";
+	if (mapa.marcadores.caries) {
+		html += "<i class='odontograma-marker odontograma-marker--caries'></i>";
+	}
+	if (mapa.marcadores.obturacion) {
+		html += "<i class='odontograma-marker odontograma-marker--obturacion'></i>";
+	}
+	return html;
+}
+
+function odontogramaRenderProtesisPieza(mapa) {
+	if (mapa.marcadores.protesisExistente) {
+		return "<span class='odontograma-protesis odontograma-protesis--existente'></span>";
+	}
+	if (mapa.marcadores.protesisPrevista) {
+		return "<span class='odontograma-protesis odontograma-protesis--prevista'></span>";
+	}
+	return "";
+}
+
+function odontogramaSvgSurface(contexto, pieza, superficie, points, mapa) {
+	var color = mapa[superficie] || "";
+	var clase = "odontograma-superficie superficie-" + superficie + (color ? " odontograma-superficie--" + color : "");
+	return "<path class='" + clase + "' d='" + points + "' onclick='odontogramaSeleccionarSuperficie(event,\"" + contexto + "\",\"" + pieza + "\",\"" + superficie + "\")'></path>";
+}
+
+function odontogramaTipoUbicacionVisual(ubicacion, falta) {
+	if (falta) { return "pendiente"; }
+	if (!ubicacion) { return "pendiente"; }
+	if (odontogramaEsVerdadero(ubicacion.boca_completa)) { return "boca-completa"; }
+	if (ubicacion.arcada) {
+		var arcada = odontogramaNormalizarArcada(ubicacion.arcada);
+		if (arcada == "ambas") { return "ambas-arcadas"; }
+		if (arcada == "superior") { return "arcada-superior"; }
+		if (arcada == "inferior") { return "arcada-inferior"; }
+		return "ambas-arcadas";
+	}
+	if (ubicacion.pieza) { return "pieza"; }
+	if (ubicacion.cuadrante) { return "ambas-arcadas"; }
+	return "pendiente";
+}
+
+function odontogramaIconoUbicacion(tipo, pieza) {
+	var clase = "odontograma-location-icon odontograma-icon-" + tipo;
+	if (tipo == "pieza") {
+		return "<span class='" + clase + " mini-diente-perfil mini-diente-perfil-" + odontogramaTipoPieza(pieza) + "' aria-hidden='true'>"
+			+ "<svg viewBox='0 0 44 44'><path class='icon-tooth-root' d='M17 23 C18 28 19 35 22 40 C25 35 26 28 27 23 C24 25 20 25 17 23 Z'></path><path class='icon-tooth-crown' d='M12 9 C16 3 28 3 32 9 C34 16 30 23 24 26 C22 24 20 24 18 26 C12 23 10 16 12 9 Z'></path></svg>"
+			+ (pieza ? "<b>" + odontogramaEscape(pieza) + "</b>" : "")
+			+ "</span>";
+	}
+	if (tipo == "arcada-superior") {
+		return "<span class='" + clase + "' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M8 28 C13 14 31 14 36 28'></path><circle cx='14' cy='27' r='2.5'></circle><circle cx='22' cy='23' r='2.5'></circle><circle cx='30' cy='27' r='2.5'></circle></svg></span>";
+	}
+	if (tipo == "arcada-inferior") {
+		return "<span class='" + clase + "' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M8 16 C13 30 31 30 36 16'></path><circle cx='14' cy='17' r='2.5'></circle><circle cx='22' cy='21' r='2.5'></circle><circle cx='30' cy='17' r='2.5'></circle></svg></span>";
+	}
+	if (tipo == "ambas-arcadas") {
+		return "<span class='" + clase + "' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M9 20 C14 9 30 9 35 20'></path><path d='M9 24 C14 35 30 35 35 24'></path><circle cx='16' cy='20' r='2'></circle><circle cx='22' cy='17' r='2'></circle><circle cx='28' cy='20' r='2'></circle><circle cx='16' cy='24' r='2'></circle><circle cx='22' cy='27' r='2'></circle><circle cx='28' cy='24' r='2'></circle></svg></span>";
+	}
+	if (tipo == "boca-completa") {
+		return "<span class='" + clase + "' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M7 22 C10 8 34 8 37 22 C34 36 10 36 7 22 Z'></path><path d='M12 20 C17 15 27 15 32 20'></path><path d='M12 24 C17 29 27 29 32 24'></path><path d='M22 15 L22 29'></path></svg></span>";
+	}
+	return "<span class='" + clase + "' aria-hidden='true'><svg viewBox='0 0 44 44'><circle cx='22' cy='22' r='13'></circle><path d='M22 14 L22 30'></path><path d='M14 22 L30 22'></path></svg></span>";
+}
+
+function odontogramaDatosUbicacionVisual(ubicacion, falta, alcance) {
+	var tipo = odontogramaTipoUbicacionVisual(ubicacion, falta);
+	var texto = falta ? "Ubicacion pendiente" : odontogramaTextoUbicacion(ubicacion);
+	var detalle = "";
+	if (tipo == "pieza" && ubicacion) {
+		var superficies = odontogramaSuperficiesUbicacion(ubicacion).map(function (sup) {
+			return odontogramaTextoSuperficiePieza(sup, odontogramaInfoPiezaFDI(ubicacion.pieza));
+		});
+		if (superficies.length) {
+			texto = "Pieza " + ubicacion.pieza + " - " + superficies.join(", ");
+		}
+	}
+	if (tipo == "boca-completa") { detalle = "Aplica a todos los dientes"; }
+	if (tipo == "arcada-superior" || tipo == "arcada-inferior" || tipo == "ambas-arcadas") { detalle = "Ubicacion general"; }
+	if (tipo == "pendiente" && alcance) { detalle = "Requiere: " + odontogramaTextoAlcance(alcance); }
+	return { tipo: tipo, texto: texto, detalle: detalle };
+}
+
+function odontogramaRenderUbicacionVisual(contexto, ubicacion, opciones) {
+	opciones = opciones || {};
+	var falta = !!opciones.falta;
+	var datos = odontogramaDatosUbicacionVisual(ubicacion, falta, opciones.alcance || "");
+	var pieza = ubicacion && ubicacion.pieza ? ubicacion.pieza : "";
+	var arcada = ubicacion && ubicacion.arcada ? ubicacion.arcada : "";
+	var cuadrante = ubicacion && ubicacion.cuadrante ? ubicacion.cuadrante : "";
+	var boca = ubicacion && odontogramaEsVerdadero(ubicacion.boca_completa) ? "1" : "";
+	var superficies = odontogramaSuperficiesUbicacion(ubicacion);
+	var superficie = superficies.length ? superficies[0] : "";
+	var clase = "tratamiento-ubicacion-visual tratamiento-ubicacion-" + datos.tipo + (falta ? " tratamiento-ubicacion-pendiente" : " tratamiento-ubicacion-completa");
+	var contenido = odontogramaIconoUbicacion(datos.tipo, pieza)
+		+ "<span class='tratamiento-ubicacion-texto'><b>" + odontogramaEscape(datos.texto || "Ubicacion pendiente") + "</b>"
+		+ (datos.detalle ? "<small>" + odontogramaEscape(datos.detalle) + "</small>" : "")
+		+ "</span>";
+	if (falta) {
+		return "<span class='" + clase + "'>" + contenido + "</span>";
+	}
+	return "<button type='button' class='" + clase + "' title='Ver ubicacion en odontograma' onclick='event.stopPropagation(); odontogramaEnfocarUbicacion(\"" + contexto + "\",\"" + odontogramaEscape(pieza) + "\",\"" + odontogramaEscape(arcada) + "\",\"" + odontogramaEscape(cuadrante) + "\",\"" + odontogramaEscape(boca) + "\",\"" + odontogramaEscape(superficie) + "\")'>" + contenido + "</button>";
+}
+
+function odontogramaRenderLeyenda(contexto) {
+	var config = odontogramaConfig(contexto || "ficha");
+	var estado = odontogramaEstados[contexto] || {};
+	var expandida = config.leyendaExpandida || !!estado.leyendaVisible;
+	var claseEstado = expandida ? " is-open" : " is-collapsed";
+	var textoToggle = expandida ? "Contraer leyenda" : "Expandir leyenda";
+	var seccionTratamientos = contexto == "presupuesto"
+		? "<section><b>Tratamientos</b>"
+			+ "<span><i class='odonto-dot odonto-red'></i>Tratamiento pendiente</span>"
+			+ "<span><i class='odonto-dot odonto-blue'></i>Tratamiento realizado</span></section>"
+		: "<section><b>Tratamientos</b>"
+			+ "<span><i class='odonto-x odonto-red'></i>Extraccion indicada</span>"
+			+ "<span><i class='odonto-bridge odonto-red'></i>Protesis prevista</span>"
+			+ "<span><i class='odonto-dot odonto-red'></i>Tratamiento pendiente</span>"
+			+ "<span><i class='odonto-dot odonto-blue'></i>Tratamiento realizado</span></section>";
+	var contenido = expandida
+		? "<div class='odontograma-leyenda__contenido'>"
+			+ "<section><b>Colores</b>"
+			+ "<span><i class='odonto-dot odonto-red'></i>Rojo: observado / indicado / pendiente</span>"
+			+ "<span><i class='odonto-dot odonto-blue'></i>Azul: realizado / existente</span>"
+			+ "<span><i class='odonto-dot odonto-gray'></i>Gris: ausente / no aplicable</span></section>"
+			+ "<section><b>Situacion actual</b>"
+			+ "<span><i class='odonto-dot odonto-red'></i>Caries observada</span>"
+			+ "<span><i class='odonto-x odonto-blue'></i>Pieza ausente</span>"
+			+ "<span><i class='odonto-dot odonto-blue'></i>Obturacion existente</span>"
+			+ "<span><i class='odonto-bridge odonto-blue'></i>Protesis existente</span></section>"
+			+ seccionTratamientos
+			+ "<section><b>Ubicacion</b>"
+			+ "<span>" + odontogramaIconoUbicacion("pieza", "") + "Pieza especifica</span>"
+			+ "<span>" + odontogramaIconoUbicacion("arcada-superior", "") + "Arcada superior</span>"
+			+ "<span>" + odontogramaIconoUbicacion("arcada-inferior", "") + "Arcada inferior</span>"
+			+ "<span>" + odontogramaIconoUbicacion("ambas-arcadas", "") + "Ambas arcadas</span>"
+			+ "<span>" + odontogramaIconoUbicacion("boca-completa", "") + "Boca completa</span>"
+			+ "<span>" + odontogramaIconoUbicacion("pendiente", "") + "Ubicacion pendiente</span></section>"
+			+ "</div>"
+		: "";
+	return "<aside class='odontograma-leyenda odontograma-leyenda-fija" + claseEstado + "' aria-expanded='" + (expandida ? "true" : "false") + "'>"
+		+ "<button type='button' class='odontograma-leyenda__toggle' title='" + textoToggle + "' aria-label='" + textoToggle + "' onclick='odontogramaToggleLeyenda(\"" + contexto + "\")'>"
+		+ "<strong class='odontograma-leyenda__titulo'>Leyenda</strong>"
+		+ "<span class='odontograma-leyenda__chips' aria-hidden='true'><i class='odonto-dot odonto-red'></i><i class='odonto-dot odonto-blue'></i><i class='odonto-dot odonto-gray'></i></span>"
+		+ "<span class='odontograma-leyenda__estado'>" + (expandida ? "-" : "+") + "</span>"
+		+ "</button>"
+		+ contenido
+		+ "</aside>";
+}
+
+function odontogramaToggleLeyenda(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.leyendaVisible = !estado.leyendaVisible;
+	odontogramaRender(contexto);
+}
+
+function odontogramaSuperficiesLink(link) {
+	var lista = [];
+	try { lista = link && link.superficies_json ? JSON.parse(link.superficies_json) : []; } catch (e) { lista = []; }
+	return Array.isArray(lista) ? lista : [];
+}
+
+function odontogramaSuperficiesUbicacion(ubicacion) {
+	var lista = [];
+	if (!ubicacion) { return lista; }
+	if (ubicacion.superficie) { lista.push(ubicacion.superficie); }
+	try {
+		var dec = ubicacion.superficies_json ? JSON.parse(ubicacion.superficies_json) : [];
+		if (Array.isArray(dec)) {
+			dec.forEach(function (sup) {
+				if (lista.indexOf(sup) < 0) { lista.push(sup); }
+			});
+		}
+	} catch (e) {
+		lista = lista;
+	}
+	return lista;
+}
+
+function odontogramaLinkCompletado(link) {
+	var estadoLink = String(link && link.estado_link ? link.estado_link : "").toLowerCase();
+	var estadoTratamiento = String(link && link.estado_tratamiento_actual ? link.estado_tratamiento_actual : "").toLowerCase();
+	return estadoLink == "completado" || estadoTratamiento == "realizado" || estadoTratamiento == "completado" || Number(link && link.progreso_actual ? link.progreso_actual : 0) >= 100;
+}
+
+function odontogramaTextoEstadoLink(link) {
+	if (odontogramaLinkCompletado(link)) { return "Completado"; }
+	if (link && link.estado_tratamiento_actual) { return link.estado_tratamiento_actual; }
+	return link && link.estado_link ? link.estado_link : "Pendiente";
+}
+
+function odontogramaTextoMarca(tipo) {
+	var mapa = {
+		caries: "Caries observada",
+		obturacion: "Obturacion existente",
+		pieza_ausente: "Pieza ausente",
+		extraccion_indicada: "Extraccion indicada",
+		protesis_prevista: "Protesis prevista",
+		protesis_existente: "Protesis existente"
+	};
+	return mapa[tipo] || String(tipo || "Marca clinica").replace(/_/g, " ");
+}
+
+function odontogramaTextoSuperficiePieza(superficie, info) {
+	if (superficie == "oclusal_incisal") {
+		return info && info.superficieCentral ? info.superficieCentral : "Oclusal / Incisal";
+	}
+	return odontogramaTextoSuperficie(superficie);
+}
+
+function odontogramaSuperficieActiva(contexto, pieza, superficie) {
+	var estado = odontogramaEstados[contexto];
+	var ubicacion = estado ? estado.ubicacionActual : null;
+	if (!ubicacion || String(ubicacion.pieza || "") != String(pieza)) { return false; }
+	if (ubicacion.superficie && ubicacion.superficie == superficie) { return true; }
+	var lista = [];
+	try { lista = ubicacion.superficies_json ? JSON.parse(ubicacion.superficies_json) : []; } catch (e) { lista = []; }
+	return lista.indexOf(superficie) >= 0;
+}
+
+function odontogramaTextoContextoGeneral(link, pieza) {
+	if (odontogramaEsVerdadero(link.boca_completa)) {
+		return "Boca completa - Aplica tambien a esta pieza";
+	}
+	if (link.arcada) {
+		return odontogramaTextoArcada(link.arcada) + " - Aplica a esta pieza";
+	}
+	if (link.cuadrante) {
+		return "Cuadrante " + odontogramaNormalizarCuadrante(link.cuadrante) + " - Incluye esta pieza";
+	}
+	return (link.ubicacion_texto || ("Incluye pieza " + pieza)) + " - Aplica a esta pieza";
+}
+
+function odontogramaRenderContextoPasoTratamientos(contexto, pieza, mapa) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado || estado.pasoClinico != "tratamientos") { return ""; }
+	var trActivo = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	var marcas = mapa.marcas || [];
+	var ausente = !!mapa.marcadores.ausente;
+	var html = "<section class='odontograma-panel-section odontograma-contexto-tratamientos" + (ausente ? " odontograma-contexto-tratamientos--alerta" : "") + "'>";
+	html += "<strong>Contexto para tratamientos</strong>";
+	if (ausente) {
+		html += "<div class='odontograma-contexto-alerta'><b>Pieza marcada como ausente en el paso 1.</b><span>Revisar antes de asignar restauraciones, caries u obturaciones sobre esta pieza.</span></div>";
+		html += "<div class='odontograma-sugerencias-clinicas'><span>Compatibles: protesis, implante, puente o revision.</span><span>Si continua igual, el sistema pedira confirmacion.</span></div>";
+	} else if (marcas.length) {
+		html += "<div class='odontograma-contexto-chips'>";
+		marcas.slice(0, 4).forEach(function (marca) {
+			html += "<span>" + odontogramaEscape(odontogramaTextoMarca(marca.tipo_marca)) + "</span>";
+		});
+		html += "</div>";
+	} else {
+		html += "<p>Sin hallazgos registrados en el paso 1 para esta pieza.</p>";
+	}
+	if (trActivo) {
+		html += "<p>Tratamiento activo: <b>" + odontogramaEscape(trActivo.nombre || "Tratamiento") + "</b></p>";
+	}
+	html += "</section>";
+	return html;
+}
+
+function odontogramaRenderPasoGuiaAsignacion(numero, titulo, detalle, estadoClase, ayuda) {
+	return "<article class='odontograma-asignacion-paso " + estadoClase + "'>"
+		+ "<b>" + odontogramaEscape(numero) + "</b>"
+		+ "<div><strong>" + odontogramaEscape(titulo) + "</strong>"
+		+ "<span>" + odontogramaEscape(detalle) + "</span>"
+		+ (ayuda ? "<small>" + odontogramaEscape(ayuda) + "</small>" : "")
+		+ "</div></article>";
+}
+
+function odontogramaRenderGuiaAsignacionPresupuesto(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var trActivo = estado.tratamientoPendiente || estado.tratamientoSeleccionado;
+	var tieneTratamiento = !!(trActivo && (trActivo.nombre || trActivo.producto_id));
+	var tieneUbicacion = !!estado.ubicacionActual;
+	var tratamientoTexto = tieneTratamiento ? (trActivo.nombre || "Tratamiento seleccionado") : "Falta elegir tratamiento";
+	var ubicacionTexto = tieneUbicacion
+		? odontogramaTextoUbicacion(estado.ubicacionActual)
+		: (estado.piezaSeleccionada ? "Pieza " + estado.piezaSeleccionada + " enfocada" : "Falta elegir pieza o ubicacion");
+	var listo = tieneTratamiento && tieneUbicacion;
+	var estadoTexto = listo ? "Listo para agregar al presupuesto" : (tieneTratamiento ? "Ahora elegi la ubicacion" : "Primero selecciona el tratamiento");
+	var ayudaTexto = listo ? "Presiona Agregar tratamiento para continuar con el siguiente." : "Segui el orden: tratamiento, ubicacion y agregar.";
+	var html = "<div class='odontograma-asignacion-guia'>";
+	html += "<header class='odontograma-asignacion-guia-head'>"
+		+ "<div><strong>Guia rapida de asignacion</strong><span>Orden recomendado para avanzar sin dudas</span></div>"
+		+ "<em class='" + (listo ? "is-ready" : "is-pending") + "'>" + odontogramaEscape(estadoTexto) + "</em>"
+		+ "</header>";
+	html += "<div class='odontograma-asignacion-pasos'>";
+	html += odontogramaRenderPasoGuiaAsignacion("1", "Tratamiento", tratamientoTexto, tieneTratamiento ? "is-complete" : "is-active", tieneTratamiento ? "Seleccionado" : "Busca y selecciona uno");
+	html += odontogramaRenderPasoGuiaAsignacion("2", "Ubicacion", ubicacionTexto, tieneUbicacion ? "is-complete" : (tieneTratamiento ? "is-active" : "is-pending"), tieneUbicacion ? "Seleccionada" : "Toca pieza, arcada o boca completa");
+	html += odontogramaRenderPasoGuiaAsignacion("3", "Confirmar", listo ? "Agregar tratamiento" : "Aun falta completar", listo ? "is-active is-ready" : "is-pending", listo ? "Usa el boton verde" : "Se habilita al completar 1 y 2");
+	html += "</div>";
+	html += "<p class='odontograma-asignacion-ayuda'>" + odontogramaEscape(ayudaTexto) + "</p>";
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderPanelSituacionActual(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var paso = odontogramaPasoClinicoActual(estado);
+	var pieza = estado.piezaSeleccionada;
+	if (contexto == "presupuesto" && estado.pasoClinico == "tratamientos") {
+		return odontogramaRenderGuiaAsignacionPresupuesto(contexto);
+	}
+	var html = "<div class='odontograma-situacion-card'>";
+	html += "<header class='odontograma-situacion-head'>"
+		+ "<b>" + odontogramaEscape(paso.numero || "1") + "</b>"
+		+ "<div><strong>" + odontogramaEscape(paso.titulo || "Situacion actual") + "</strong><span>" + odontogramaEscape(paso.texto || "") + "</span></div>"
+		+ "</header>";
+	if (!pieza) {
+		if (contexto == "presupuesto") {
+			html += "<div class='odontograma-situacion-empty odontograma-situacion-empty--compacta'>"
+				+ "<strong>Selecciona una o varias piezas para continuar.</strong>"
+				+ "<span>Usa boca completa o arcadas cuando el tratamiento no dependa de una pieza puntual.</span>"
+				+ "</div></div>";
+			return html;
+		}
+		html += "<div class='odontograma-situacion-empty'>"
+			+ "<strong>Selecciona una pieza</strong>"
+			+ "<span>Los hallazgos y la ubicacion actual se mostraran aca para trabajar el paso activo.</span>"
+			+ "</div></div>";
+		return html;
+	}
+	var info = odontogramaInfoPiezaFDI(pieza);
+	var mapa = odontogramaMapaPiezaPanel(contexto, pieza);
+	var ubicacionTexto = estado.ubicacionActual && odontogramaUbicacionIncluyePieza(estado.ubicacionActual, pieza)
+		? odontogramaTextoUbicacion(estado.ubicacionActual)
+		: "Pieza " + pieza + " seleccionada";
+	html += "<section class='odontograma-situacion-pieza'>"
+		+ "<span>Pieza seleccionada</span>"
+		+ "<strong>" + odontogramaEscape(pieza) + "</strong>"
+		+ "<small>" + odontogramaEscape(odontogramaMetaPiezaTexto(info)) + "</small>"
+		+ "</section>";
+	html += "<section class='odontograma-panel-section odontograma-ubicacion-actual'>"
+		+ "<strong>Ubicacion actual</strong>"
+		+ "<p>" + odontogramaEscape(ubicacionTexto) + "</p>"
+		+ "</section>";
+	html += odontogramaRenderSelectorSuperficiesActual(contexto, pieza, info);
+	html += odontogramaRenderContextoPasoTratamientos(contexto, pieza, mapa);
+	html += odontogramaRenderHallazgosPieza(contexto, pieza, mapa.marcas, info);
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderSelectorSuperficiesActual(contexto, pieza, info) {
+	var estado = odontogramaEstados[contexto];
+	var trActivo = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	if (contexto == "presupuesto") { return ""; }
+	if (trActivo) { return ""; }
+	var seleccionadas = estado.ubicacionActual && String(estado.ubicacionActual.pieza || "") == String(pieza)
+		? odontogramaSuperficiesUbicacion(estado.ubicacionActual)
+		: [];
+	var todas = seleccionadas.length == odontogramaSuperficies.length;
+	var html = "<section class='odontograma-panel-section odontograma-selector-superficies'>"
+		+ "<strong>Seleccion de superficies</strong>"
+		+ "<p>Toca una cara del grafico para agregarla o quitarla.</p>"
+		+ "<div class='odontograma-superficie-controles'>"
+		+ "<button type='button' class='" + (!seleccionadas.length ? "is-active" : "") + "' onclick='odontogramaSeleccionarPiezaCompleta(\"" + contexto + "\",\"" + odontogramaEscape(pieza) + "\")'>Pieza completa</button>"
+		+ "<button type='button' class='" + (todas ? "is-active" : "") + "' onclick='odontogramaSeleccionarTodasSuperficies(\"" + contexto + "\",\"" + odontogramaEscape(pieza) + "\")'>Todas las superficies</button>"
+		+ "</div>";
+	if (seleccionadas.length) {
+		html += "<div class='odontograma-superficies-seleccionadas'>";
+		seleccionadas.forEach(function (sup) {
+			html += "<span>" + odontogramaEscape(odontogramaTextoSuperficiePieza(sup, info)) + "</span>";
+		});
+		html += "</div>";
+	}
+	html += "</section>";
+	return html;
+}
+
+function odontogramaRenderPanel(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var config = odontogramaConfig(contexto);
+	var pieza = estado.piezaSeleccionada;
+	if (!pieza) {
+		if (contexto == "presupuesto") {
+			return "<div class='odontograma-ficha-pieza odontograma-ficha-pieza--empty odontograma-ficha-pieza--compacta odontograma-panel-empty'>"
+				+ "<strong>Selecciona una pieza</strong>"
+				+ "<span>El detalle aparecera cuando elijas una pieza o una ubicacion.</span>"
+				+ "</div>";
+		}
+		return "<div class='odontograma-ficha-pieza odontograma-ficha-pieza--empty odontograma-panel-empty'>"
+			+ "<strong>Selecciona una pieza</strong>"
+			+ "<span>Toca una pieza del odontograma para ver sus hallazgos, tratamientos vinculados y superficies.</span>"
+			+ "</div>";
+	}
+	var info = odontogramaInfoPiezaFDI(pieza);
+	var mapa = odontogramaMapaPiezaPanel(contexto, pieza);
+	var totalLinks = mapa.links.length + mapa.linksGenerales.length;
+	var ausente = !!mapa.marcadores.ausente;
+	var trActivo = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	var claseAusente = ausente ? " odontograma-pieza-ausente-panel" : "";
+	var html = "<div class='odontograma-ficha-pieza" + claseAusente + "'>";
+	html += "<header class='odontograma-ficha-header'>"
+		+ "<div class='odontograma-ficha-header__main'>"
+		+ "<span class='odontograma-ficha-kicker'>Pieza seleccionada</span>"
+		+ "<strong class='odontograma-pieza-numero-grande'>" + odontogramaEscape(pieza) + "</strong>"
+		+ "<span class='odontograma-pieza-meta'>" + odontogramaEscape(odontogramaMetaPiezaTexto(info)) + "</span>"
+		+ "</div>";
+	if (config.mostrarHistorial) {
+		html += "<button type='button' class='odontograma-ficha-historial' onclick='odontogramaVerHistorialPieza(\"" + contexto + "\",\"" + odontogramaEscape(pieza) + "\")'>Historial</button>";
+	}
+	html += "</header>";
+	if (ausente) {
+		html += "<div class='odontograma-panel-alerta'>Esta pieza esta marcada como ausente.</div>";
+	}
+	if (trActivo) {
+		html += "<div class='odontograma-panel-contexto'>Asignando: <strong>" + odontogramaEscape(trActivo.nombre || "Tratamiento") + "</strong>. Elegi la superficie correspondiente en pieza " + odontogramaEscape(pieza) + ".</div>";
+	}
+	if (config.superficiesAvanzadas || (trActivo && odontogramaNormalizarAlcance(trActivo.alcance) == "pieza_superficie")) {
+		html += "<div class='odontograma-pieza-vistas'>"
+			+ odontogramaRenderVistaSuperiorAmpliada(contexto, pieza, mapa, info)
+			+ (config.superficiesAvanzadas ? odontogramaRenderVistaPerfil(contexto, pieza, mapa, info) : "")
+			+ "</div>";
+	}
+	html += "<div class='odontograma-pieza-resumen'>"
+		+ "<span><b>" + totalLinks + "</b> tratamientos</span>"
+		+ "<span><b>" + mapa.marcas.length + "</b> situaciones</span>"
+		+ (config.superficiesAvanzadas ? "<span><b>" + info.superficieCentral + "</b> superficie central</span>" : "")
+		+ "</div>";
+	html += odontogramaRenderTratamientosGrupo(contexto, pieza, mapa.links, "Tratamientos de esta pieza", "odontograma-tratamientos-pieza", false);
+	html += odontogramaRenderTratamientosGrupo(contexto, pieza, mapa.linksGenerales, "Tratamientos generales aplicables", "odontograma-tratamientos-generales", true);
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderVistaSuperiorAmpliada(contexto, pieza, mapa, info) {
+	var paths = odontogramaSvgPathsPieza(info.tipo);
+	var clase = "odontograma-vista-superior odontograma-pieza-anatomica odontograma-vista-superior--" + info.denticion + " odontograma-vista-superior--" + info.tipo + " " + mapa.clases.join(" ");
+	var html = "<section class='" + clase + "'>"
+		+ "<div class='odontograma-vista-title'><strong>Vista superior</strong><span>Seleccion de superficies</span></div>"
+		+ "<div class='odontograma-superior-canvas'>"
+		+ "<span class='odontograma-superior-label odontograma-superior-label--vestibular'>Vestibular</span>"
+		+ "<span class='odontograma-superior-label odontograma-superior-label--mesial'>Mesial</span>"
+		+ "<span class='odontograma-superior-label odontograma-superior-label--distal'>Distal</span>"
+		+ "<span class='odontograma-superior-label odontograma-superior-label--lingual'>Lingual / Palatina</span>"
+		+ "<svg class='odontograma-svg odontograma-svg-ampliado' viewBox='0 0 64 64' aria-hidden='true'>"
+		+ "<circle class='odontograma-tooth-outline' cx='32' cy='32' r='" + paths.outline + "'></circle>"
+		+ odontogramaSvgSurfacePanel(contexto, pieza, "vestibular", paths.vestibular, mapa.superficies, info)
+		+ odontogramaSvgSurfacePanel(contexto, pieza, "mesial", paths.mesial, mapa.superficies, info)
+		+ odontogramaSvgSurfacePanel(contexto, pieza, "distal", paths.distal, mapa.superficies, info)
+		+ odontogramaSvgSurfacePanel(contexto, pieza, "lingual_palatina", paths.lingual_palatina, mapa.superficies, info)
+		+ odontogramaSvgSurfacePanel(contexto, pieza, "oclusal_incisal", paths.oclusal_incisal, mapa.superficies, info)
+		+ "<circle class='odontograma-tooth-centerline' cx='32' cy='32' r='" + paths.center + "'></circle>"
+		+ "</svg>"
+		+ "<span class='odontograma-superior-label odontograma-superior-label--centro'>" + odontogramaEscape(info.superficieCentral) + "</span>"
+		+ "</div></section>";
+	return html;
+}
+
+function odontogramaSvgSurfacePanel(contexto, pieza, superficie, points, superficies, info) {
+	var color = superficies[superficie] || "";
+	var activa = odontogramaSuperficieActiva(contexto, pieza, superficie) ? " is-active" : "";
+	var clase = "odontograma-superficie odontograma-superficie-panel superficie-" + superficie + (color ? " odontograma-superficie--" + color : "") + activa;
+	return "<path class='" + clase + "' data-label='" + odontogramaEscape(odontogramaTextoSuperficiePieza(superficie, info)) + "' d='" + points + "' onclick='odontogramaSeleccionarSuperficie(event,\"" + contexto + "\",\"" + pieza + "\",\"" + superficie + "\")'></path>";
+}
+
+function odontogramaRenderVistaPerfil(contexto, pieza, mapa, info) {
+	var perfil = odontogramaPerfilPaths(info.tipo);
+	var clase = "odontograma-vista-perfil" + (mapa.marcadores.ausente ? " odontograma-pieza-ausente-panel" : "");
+	var dienteClase = "odontograma-diente-perfil odontograma-diente-perfil-" + info.tipo + " odontograma-diente-perfil-" + info.denticion + (info.denticion == "temporal" ? " odontograma-diente-temporal" : "");
+	var tieneRojo = mapa.marcadores.caries || mapa.marcadores.extraccion || mapa.marcadores.protesisPrevista || odontogramaMapaTieneColor(mapa, "rojo");
+	var tieneAzul = mapa.marcadores.obturacion || mapa.marcadores.protesisExistente || odontogramaMapaTieneColor(mapa, "azul");
+	var html = "<section class='" + clase + "'>"
+		+ "<div class='odontograma-vista-title'><strong>Vista perfil</strong><span>" + odontogramaEscape(info.tipoTexto || "Pieza") + "</span></div>"
+		+ "<svg class='" + dienteClase + "' viewBox='0 0 120 150' aria-hidden='true'>"
+		+ "<path class='odontograma-perfil-raiz' d='" + perfil.raiz + "'></path>";
+	if (perfil.raiz2) {
+		html += "<path class='odontograma-perfil-raiz odontograma-perfil-raiz--secundaria' d='" + perfil.raiz2 + "'></path>";
+	}
+	html += "<path class='odontograma-perfil-corona' d='" + perfil.corona + "'></path>"
+		+ "<path class='odontograma-perfil-cuello' d='" + perfil.cuello + "'></path>";
+	if (tieneRojo) {
+		html += "<circle class='odontograma-perfil-marca odontograma-perfil-marca--rojo' cx='78' cy='48' r='7'></circle>";
+	}
+	if (tieneAzul) {
+		html += "<circle class='odontograma-perfil-marca odontograma-perfil-marca--azul' cx='44' cy='57' r='6'></circle>";
+	}
+	if (mapa.marcadores.protesisPrevista || mapa.marcadores.protesisExistente) {
+		html += "<path class='odontograma-perfil-protesis" + (mapa.marcadores.protesisExistente ? " odontograma-perfil-protesis--azul" : " odontograma-perfil-protesis--rojo") + "' d='M32 32 C50 18 72 18 90 32'></path>";
+	}
+	if (mapa.marcadores.ausente) {
+		html += "<g class='odontograma-perfil-ausente-x'><path d='M34 34 L88 104'></path><path d='M88 34 L34 104'></path></g>";
+	}
+	html += "</svg></section>";
+	return html;
+}
+
+function odontogramaPerfilPaths(tipo) {
+	var mapas = {
+		incisivo: {
+			corona: "M42 24 C49 15 70 15 78 24 C81 38 78 55 69 66 C62 72 51 72 44 66 C37 55 38 38 42 24 Z",
+			cuello: "M43 64 C54 70 66 70 77 64",
+			raiz: "M49 67 C55 78 58 104 60 134 C62 104 66 78 72 67 C65 73 56 73 49 67 Z"
+		},
+		canino: {
+			corona: "M39 28 C48 12 72 12 82 28 C79 47 69 62 61 70 C52 62 42 47 39 28 Z",
+			cuello: "M43 64 C55 72 68 72 79 64",
+			raiz: "M50 68 C56 83 59 111 60 140 C63 111 67 83 74 68 C66 74 57 74 50 68 Z"
+		},
+		premolar: {
+			corona: "M34 29 C42 16 78 16 86 29 C88 45 80 62 69 70 C63 65 57 65 51 70 C40 62 32 45 34 29 Z",
+			cuello: "M39 66 C52 73 68 73 81 66",
+			raiz: "M47 69 C54 83 58 110 59 138 C63 110 67 83 74 69 C66 75 55 75 47 69 Z"
+		},
+		molar: {
+			corona: "M27 32 C36 14 84 14 93 32 C96 50 86 66 73 73 C66 68 55 68 47 73 C34 66 24 50 27 32 Z",
+			cuello: "M34 68 C49 76 72 76 87 68",
+			raiz: "M42 71 C45 88 43 112 37 138 C52 119 58 91 55 73 C50 77 46 76 42 71 Z",
+			raiz2: "M78 71 C75 88 77 112 83 138 C68 119 62 91 65 73 C70 77 74 76 78 71 Z"
+		}
+	};
+	return mapas[tipo] || mapas.premolar;
+}
+
+function odontogramaMapaTieneColor(mapa, color) {
+	var superficies = mapa && mapa.superficies ? mapa.superficies : {};
+	for (var key in superficies) {
+		if (superficies.hasOwnProperty(key) && superficies[key] == color) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function odontogramaRenderTratamientosGrupo(contexto, pieza, links, titulo, clase, generales) {
+	var html = "<section class='odontograma-panel-section " + clase + "'><strong>" + odontogramaEscape(titulo) + "</strong>";
+	if (!links.length) {
+		html += "<p>" + (generales ? "No hay tratamientos generales que incluyan esta pieza." : "Sin tratamientos especificos vinculados a esta pieza.") + "</p></section>";
+		return html;
+	}
+	links.forEach(function (l) {
+		var superficies = odontogramaSuperficiesLink(l).map(function (sup) {
+			return odontogramaTextoSuperficie(sup);
+		}).join(", ");
+		var ubicacion = generales ? odontogramaTextoContextoGeneral(l, pieza) : (l.ubicacion_texto || ("Pieza " + pieza));
+		if (!generales && superficies) {
+			ubicacion = "Pieza " + pieza + " - " + superficies;
+		}
+		var referencia = l.venta_id ? "Venta #" + l.venta_id : (l.presupuesto_id ? "Presupuesto #" + l.presupuesto_id : "Sin venta");
+		var riesgo = l.nivel_riesgo_snapshot ? odontogramaTextoRiesgo(l.nivel_riesgo_snapshot) : "";
+		var ubicacionVisual = odontogramaRenderUbicacionVisual(contexto, l, { falta: false, alcance: l.alcance_odontologico || "" });
+		html += "<article class='odontograma-link-item odontograma-tratamiento-ficha-card" + (generales ? " odontograma-tratamiento-general-card" : "") + "'>"
+			+ "<div><b>" + odontogramaEscape(l.nombre_tratamiento_snapshot || "Tratamiento") + "</b>"
+			+ ubicacionVisual
+			+ "<span>" + odontogramaEscape(ubicacion) + "</span>"
+			+ "<small>" + odontogramaEscape(referencia) + " &middot; " + odontogramaEscape(odontogramaTextoEstadoLink(l)) + (riesgo ? " &middot; " + odontogramaEscape(riesgo) : "") + "</small></div>"
+			+ "<div class='odontograma-link-actions'>"
+			+ "<button type='button' onclick='odontogramaEditarLink(\"" + contexto + "\",\"" + odontogramaEscape(l.id) + "\")'>Editar</button>"
+			+ "<button type='button' title='Quitar ubicacion' onclick='odontogramaEliminarLink(\"" + contexto + "\",\"" + odontogramaEscape(l.id) + "\")'>Quitar</button>"
+			+ "</div>"
+			+ "</article>";
+	});
+	html += "</section>";
+	return html;
+}
+
+function odontogramaRenderHallazgosPieza(contexto, pieza, marcas, info) {
+	var html = "<section class='odontograma-panel-section odontograma-hallazgos-pieza'><strong>Hallazgos / situacion actual</strong>";
+	if (!marcas.length) {
+		html += "<p>Sin hallazgos registrados en esta pieza.</p>";
+	} else {
+		marcas.forEach(function (m) {
+			var superficie = m.superficie ? odontogramaTextoSuperficiePieza(m.superficie, info) : "Pieza completa";
+			var color = m.color ? " odontograma-marca-card--" + m.color : "";
+			html += "<article class='odontograma-link-item odontograma-marca-card" + color + "'>"
+				+ "<div><b>" + odontogramaEscape(odontogramaTextoMarca(m.tipo_marca)) + "</b><span>" + odontogramaEscape(superficie) + "</span></div>"
+				+ "<button type='button' title='Eliminar marca' onclick='odontogramaEliminarMarca(\"" + contexto + "\",\"" + odontogramaEscape(m.id) + "\")'>x</button>"
+				+ "</article>";
+		});
+	}
+	html += "<div class='odontograma-panel-actions odontograma-hallazgo-actions'>"
+		+ "<button type='button' onclick='odontogramaGuardarMarcaRapida(\"" + contexto + "\",\"caries\",\"observado\",\"rojo\")'>+ Caries</button>"
+		+ "<button type='button' onclick='odontogramaGuardarMarcaRapida(\"" + contexto + "\",\"pieza_ausente\",\"existente\",\"gris\")'>+ Ausente</button>"
+		+ "<button type='button' onclick='odontogramaGuardarMarcaRapida(\"" + contexto + "\",\"obturacion\",\"realizado\",\"azul\")'>+ Obturacion</button>";
+	if (contexto == "ficha") {
+		html += "<button type='button' onclick='odontogramaGuardarMarcaRapida(\"" + contexto + "\",\"extraccion_indicada\",\"indicado\",\"rojo\")'>+ Extraccion</button>"
+			+ "<button type='button' onclick='odontogramaGuardarMarcaRapida(\"" + contexto + "\",\"protesis_prevista\",\"indicado\",\"rojo\")'>+ Protesis prev.</button>";
+	}
+	html += "<button type='button' onclick='odontogramaGuardarMarcaRapida(\"" + contexto + "\",\"protesis_existente\",\"existente\",\"azul\")'>+ Protesis exist.</button>"
+		+ "</div></section>";
+	return html;
+}
+
+function odontogramaRenderSuperficiesAmpliadas(contexto, pieza, mapa, info) {
+	mapa = mapa || odontogramaMapaPiezaPanel(contexto, pieza);
+	info = info || odontogramaInfoPiezaFDI(pieza);
+	var botones = [
+		{ id: "vestibular", clase: "superficie-vestibular" },
+		{ id: "mesial", clase: "superficie-mesial" },
+		{ id: "oclusal_incisal", clase: "superficie-oclusal" },
+		{ id: "distal", clase: "superficie-distal" },
+		{ id: "lingual_palatina", clase: "superficie-lingual" }
+	];
+	var html = "<div class='odontograma-superficies-ampliadas'>";
+	botones.forEach(function (sup) {
+		var color = mapa.superficies[sup.id] || "";
+		var activa = odontogramaSuperficieActiva(contexto, pieza, sup.id);
+		var clase = sup.clase + (color ? " is-marcada is-marcada-" + color : "") + (activa ? " is-active" : "");
+		html += "<button type='button' class='" + clase + "' onclick='odontogramaSeleccionarSuperficie(event,\"" + contexto + "\",\"" + pieza + "\",\"" + sup.id + "\")'>"
+			+ "<span>" + odontogramaEscape(odontogramaTextoSuperficiePieza(sup.id, info)) + "</span>"
+			+ (color ? "<i aria-hidden='true'></i>" : "")
+			+ "</button>";
+	});
+	html += "</div>";
+	return html;
+}
+
+function odontogramaRenderTratamientosSinUbicacion(contexto) {
+	var estado = odontogramaEstados[contexto];
+	var items = estado.datos.tratamientos_sin_ubicacion || [];
+	var html = "<section class='odontograma-sin-ubicacion odontograma-tratamientos-pendientes'><div class='odontograma-subhead'><strong>Tratamientos sin ubicacion</strong><span>" + items.length + "</span></div>";
+	if (!items.length) {
+		html += "<div class='odontograma-empty-inline'>Todos los tratamientos con alcance odontologico tienen ubicacion.</div>";
+	} else {
+		html += "<div class='odontograma-pendientes-grid'>";
+		items.slice(0, 8).forEach(function (item) {
+			var activo = estado.tratamientoPendiente && String(estado.tratamientoPendiente.detalle_venta_id || "") == String(item.detalle_venta_id || "");
+			html += "<article class='odontograma-sin-ubicacion-item odontograma-tratamiento-card" + (activo ? " odontograma-tratamiento-activo-card" : "") + "' onclick='odontogramaAsignarTratamientoFicha(\"" + odontogramaEscape(item.detalle_venta_id) + "\",\"" + odontogramaEscape(item.venta_id) + "\",\"" + odontogramaEscape(item.producto_id) + "\",\"" + odontogramaEscape(item.nombre_tratamiento) + "\",\"" + odontogramaEscape(item.alcance_odontologico) + "\")'>"
+				+ "<div><strong>" + odontogramaEscape(item.nombre_tratamiento) + "</strong><span>Venta #" + odontogramaEscape(item.venta_id) + " &middot; " + odontogramaEscape(odontogramaTextoAlcance(item.alcance_odontologico)) + "</span><em>" + odontogramaEscape(odontogramaTextoRiesgo(item.nivel_riesgo_financiero)) + "</em></div>"
+				+ "<button type='button' onclick='event.stopPropagation(); odontogramaAsignarTratamientoFicha(\"" + odontogramaEscape(item.detalle_venta_id) + "\",\"" + odontogramaEscape(item.venta_id) + "\",\"" + odontogramaEscape(item.producto_id) + "\",\"" + odontogramaEscape(item.nombre_tratamiento) + "\",\"" + odontogramaEscape(item.alcance_odontologico) + "\")'>Asignar</button>"
+				+ "</article>";
+		});
+		html += "</div>";
+	}
+	html += "</section>";
+	return html;
+}
+
+function odontogramaTextoRiesgo(nivel) {
+	nivel = Number(nivel || 1);
+	var mapa = {
+		1: "N1 Bajo",
+		2: "N2 Moderado",
+		3: "N3 Controlado",
+		4: "N4 Alto",
+		5: "N5 Critico"
+	};
+	return mapa[nivel] || ("N" + nivel);
+}
+
+function odontogramaCambiarModo(contexto, modo) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var config = odontogramaConfig(contexto);
+	if (config.modos && config.modos.indexOf(modo) < 0) { return; }
+	estado.modo = modo;
+	if (modo == "hallazgo") {
+		estado.pasoClinico = "situacion";
+		estado.filtroVisual = "situacion";
+	} else if (modo == "asignar") {
+		estado.pasoClinico = "tratamientos";
+		estado.filtroVisual = "tratamientos";
+	} else if (modo == "editar") {
+		estado.pasoClinico = "revision";
+		estado.filtroVisual = "todo";
+	}
+	if (modo != "asignar" && !estado.tratamientoPendiente && contexto != "presupuesto") {
+		estado.ubicacionActual = null;
+	}
+	odontogramaRender(contexto);
+}
+
+function odontogramaCambiarPasoClinico(contexto, pasoId) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var pasos = odontogramaConfig(contexto).pasos || odontogramaPasosClinicos;
+	var paso = null;
+	for (var i = 0; i < pasos.length; i++) {
+		if (pasos[i].id == pasoId) {
+			paso = pasos[i];
+			break;
+		}
+	}
+	if (!paso) { return; }
+	estado.pasoClinico = paso.id;
+	estado.modo = paso.modo;
+	estado.filtroVisual = paso.filtro;
+	estado.mensajeFlash = paso.texto;
+	if (paso.id != "tratamientos" && !estado.tratamientoPendiente) {
+		estado.ubicacionActual = null;
+	}
+	odontogramaRender(contexto);
+}
+
+function odontogramaCambiarFiltro(contexto, filtro) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.filtroVisual = filtro;
+	odontogramaRender(contexto);
+}
+
+function odontogramaCancelarAsignacion(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.tratamientoPendiente = null;
+	estado.tratamientoSeleccionado = null;
+	estado.ubicacionActual = null;
+	estado.mensajeFlash = "Asignacion cancelada. Podes seleccionar otro tratamiento o explorar una pieza.";
+	if (contexto == "presupuesto") {
+		estado.modo = "explorar";
+	}
+	odontogramaRender(contexto);
+}
+
+function odontogramaEditarLink(contexto, linkId) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var links = estado.datos.links || [];
+	var link = null;
+	for (var i = 0; i < links.length; i++) {
+		if (String(links[i].id) == String(linkId)) {
+			link = links[i];
+			break;
+		}
+	}
+	if (!link) { return; }
+	estado.modo = "asignar";
+	estado.tratamientoPendiente = {
+		detalle_venta_id: link.detalle_venta_id || "",
+		presupuesto_item_id: link.presupuesto_item_id || "",
+		venta_id: link.venta_id || "",
+		producto_id: link.producto_id || "",
+		nombre: link.nombre_tratamiento_snapshot || "Tratamiento",
+		alcance: odontogramaNormalizarAlcance(link.alcance_odontologico)
+	};
+	estado.tratamientoSeleccionado = estado.tratamientoPendiente;
+	estado.ubicacionActual = null;
+	estado.mensajeFlash = "Editando ubicacion de " + (link.nombre_tratamiento_snapshot || "tratamiento") + ". Toca la nueva ubicacion.";
+	odontogramaRender(contexto);
+}
+
+function odontogramaAsegurarModalHistorial() {
+	var existente = document.getElementById("modalOdontogramaHistorial");
+	if (existente) { return existente; }
+	var overlay = document.createElement("div");
+	overlay.id = "overlayOdontogramaHistorial";
+	overlay.className = "odontograma-historial-overlay";
+	overlay.style.display = "none";
+	overlay.onclick = function () { odontogramaCerrarModalHistorial(); };
+	document.body.appendChild(overlay);
+	var modal = document.createElement("div");
+	modal.id = "modalOdontogramaHistorial";
+	modal.className = "odontograma-historial-modal";
+	modal.style.display = "none";
+	modal.innerHTML = "<div class='odontograma-historial-modal__head'>"
+		+ "<div><h3 id='modalOdontogramaHistorialTitulo'>Historial del odontograma</h3><span id='modalOdontogramaHistorialSubtitulo'></span></div>"
+		+ "<button type='button' onclick='odontogramaCerrarModalHistorial()'>&times;</button>"
+		+ "</div><div class='odontograma-historial-modal__body' id='modalOdontogramaHistorialCuerpo'></div>"
+		+ "<div class='odontograma-historial-modal__footer'><button type='button' class='odontograma-btn-primary' onclick='odontogramaCerrarModalHistorial()'>Entendido</button></div>";
+	document.body.appendChild(modal);
+	return modal;
+}
+
+function odontogramaAbrirModalHistorial(titulo, subtitulo, cuerpo) {
+	odontogramaAsegurarModalHistorial();
+	document.getElementById("modalOdontogramaHistorialTitulo").innerHTML = titulo || "Historial del odontograma";
+	document.getElementById("modalOdontogramaHistorialSubtitulo").innerHTML = subtitulo || "";
+	document.getElementById("modalOdontogramaHistorialCuerpo").innerHTML = cuerpo || "";
+	document.getElementById("overlayOdontogramaHistorial").style.display = "";
+	document.getElementById("modalOdontogramaHistorial").style.display = "flex";
+}
+
+function odontogramaCerrarModalHistorial() {
+	var overlay = document.getElementById("overlayOdontogramaHistorial");
+	var modal = document.getElementById("modalOdontogramaHistorial");
+	if (overlay) { overlay.style.display = "none"; }
+	if (modal) { modal.style.display = "none"; }
+}
+
+function odontogramaTextoAccionHistorial(accion) {
+	var mapa = {
+		crear_odontograma: "Creacion del odontograma",
+		modificar_convalidado: "Modificacion sobre convalidado",
+		vincular_tratamiento: "Tratamiento ubicado",
+		actualizar_ubicacion_tratamiento: "Ubicacion modificada",
+		agregar_marca: "Hallazgo agregado",
+		eliminar_marca: "Hallazgo eliminado",
+		quitar_vinculo_tratamiento: "Ubicacion quitada",
+		convalidar_odontograma: "Odontograma convalidado",
+		deshacer_accion: "Accion deshecha",
+		migrar_presupuesto_venta: "Presupuesto vinculado a venta"
+	};
+	if (mapa[accion]) { return mapa[accion]; }
+	return String(accion || "Accion").replace(/_/g, " ").replace(/\b\w/g, function (letra) {
+		return letra.toUpperCase();
+	});
+}
+
+function odontogramaEtiquetaCampoHistorial(campo) {
+	var mapa = {
+		pieza: "Pieza",
+		superficie: "Superficie",
+		superficies_json: "Superficies",
+		arcada: "Arcada",
+		cuadrante: "Cuadrante",
+		boca_completa: "Boca completa",
+		estado_marca: "Estado",
+		tipo_marca: "Tipo",
+		color: "Color",
+		alcance: "Alcance",
+		motivo: "Motivo"
+	};
+	return mapa[campo] || String(campo || "").replace(/_/g, " ");
+}
+
+function odontogramaValorLegibleHistorial(valor, nivel) {
+	var texto;
+	if (valor == null) { return ""; }
+	nivel = nivel || 0;
+	if (nivel > 2) { return ""; }
+	if (typeof valor == "number" || typeof valor == "boolean") { return String(valor); }
+	if (typeof valor == "string") {
+		texto = valor.replace(/^\s+|\s+$/g, "");
+		if (texto == "") { return ""; }
+		if (texto.charAt(0) == "{" || texto.charAt(0) == "[") {
+			try {
+				return odontogramaValorLegibleHistorial(JSON.parse(texto), nivel + 1);
+			} catch (error) {}
+		}
+		return texto;
+	}
+	if (Object.prototype.toString.call(valor) == "[object Array]") {
+		var partesArray = [];
+		for (var i = 0; i < valor.length && i < 8; i++) {
+			var itemArray = odontogramaValorLegibleHistorial(valor[i], nivel + 1);
+			if (itemArray) { partesArray.push(itemArray); }
+		}
+		return partesArray.join(", ");
+	}
+	if (typeof valor == "object") {
+		var partes = [];
+		for (var key in valor) {
+			if (!valor.hasOwnProperty(key)) { continue; }
+			var item = odontogramaValorLegibleHistorial(valor[key], nivel + 1);
+			if (item == "") { continue; }
+			if (key == "superficie") { item = odontogramaTextoSuperficie(item); }
+			if (key == "superficies_json") {
+				item = item.split(", ").map(function (superficie) {
+					return odontogramaTextoSuperficie(superficie);
+				}).join(", ");
+			}
+			if (key == "boca_completa") {
+				item = (String(item) == "1" || String(item).toLowerCase() == "true") ? "Si" : "No";
+			}
+			partes.push(odontogramaEtiquetaCampoHistorial(key) + ": " + item);
+			if (partes.length >= 8) { break; }
+		}
+		return partes.join(" | ");
+	}
+	return String(valor);
+}
+
+function odontogramaRenderBloqueCambioHistorial(titulo, valor) {
+	var texto = odontogramaValorLegibleHistorial(valor, 0);
+	if (!texto) { return ""; }
+	return "<div class='odontograma-historial-valor'>"
+		+ "<b>" + odontogramaEscape(titulo) + "</b>"
+		+ "<span>" + odontogramaEscape(texto) + "</span>"
+		+ "</div>";
+}
+
+function odontogramaRenderListaHistorial(items, mensajeVacio) {
+	if (!items || !items.length) {
+		return "<div class='odontograma-historial-empty'>" + odontogramaEscape(mensajeVacio || "Sin historial registrado.") + "</div>";
+	}
+	var html = "<div class='odontograma-historial-lista'>";
+	items.forEach(function (h) {
+		var meta = [];
+		var antes = odontogramaRenderBloqueCambioHistorial("Antes", h.valor_anterior);
+		var despues = odontogramaRenderBloqueCambioHistorial("Despues", h.valor_nuevo);
+		if (h.pieza) { meta.push("Pieza " + h.pieza); }
+		if (h.superficie) { meta.push(odontogramaTextoSuperficie(h.superficie)); }
+		if (h.venta_id) { meta.push("Venta #" + h.venta_id); }
+		if (h.presupuesto_id) { meta.push("Presupuesto #" + h.presupuesto_id); }
+		html += "<article class='odontograma-historial-item'>"
+			+ "<div class='odontograma-historial-top'>"
+				+ "<time>" + odontogramaEscape(h.fecha_hora || "") + "</time>"
+				+ "<em>Version " + odontogramaEscape(h.version || "1") + "</em>"
+			+ "</div>"
+			+ "<strong>" + odontogramaEscape(odontogramaTextoAccionHistorial(h.accion || "")) + "</strong>"
+			+ "<span class='odontograma-historial-user'>" + odontogramaEscape(h.usuario_nombre || "Usuario") + "</span>";
+		if (meta.length) {
+			html += "<div class='odontograma-historial-meta'>" + odontogramaEscape(meta.join(" / ")) + "</div>";
+		}
+		if (h.descripcion) {
+			html += "<p>" + odontogramaEscape(h.descripcion) + "</p>";
+		}
+		if (antes || despues) {
+			html += "<div class='odontograma-historial-cambio'>" + antes + despues + "</div>";
+		}
+		if (h.motivo) {
+			html += "<p class='odontograma-historial-motivo'>Motivo: " + odontogramaEscape(h.motivo) + "</p>";
+		}
+		html += "</article>";
+	});
+	html += "</div>";
+	return html;
+}
+
+function odontogramaCargarHistorial(contexto, callback) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	odontogramaApi("obtenerHistorialOdontograma", estado.base, function (ok, datos) {
+		var historial = ok ? (datos.historial || []) : (estado.datos.historial || []);
+		if (ok) { estado.datos.historial = historial; }
+		if (typeof callback == "function") {
+			callback(historial, ok);
+		}
+	});
+}
+
+function odontogramaVerHistorialCompleto(contexto) {
+	odontogramaAbrirModalHistorial(
+		"Historial del odontograma",
+		"Auditoria de cambios, usuario y version",
+		"<div class='odontograma-historial-empty'>Cargando historial...</div>"
+	);
+	odontogramaCargarHistorial(contexto, function (historial) {
+		var cuerpo = document.getElementById("modalOdontogramaHistorialCuerpo");
+		if (cuerpo) {
+			cuerpo.innerHTML = odontogramaRenderListaHistorial(historial, "Sin historial registrado para este odontograma.");
+		}
+	});
+}
+
+function odontogramaVerHistorialPieza(contexto, pieza) {
+	odontogramaAbrirModalHistorial(
+		"Historial de pieza " + odontogramaEscape(pieza || ""),
+		"Cambios realizados sobre la pieza seleccionada",
+		"<div class='odontograma-historial-empty'>Cargando historial...</div>"
+	);
+	odontogramaCargarHistorial(contexto, function (historial) {
+		var items = (historial || []).filter(function (h) {
+			return !pieza || String(h.pieza || "") == String(pieza);
+		});
+		var cuerpo = document.getElementById("modalOdontogramaHistorialCuerpo");
+		if (cuerpo) {
+			cuerpo.innerHTML = odontogramaRenderListaHistorial(items, "Sin historial visible para esta pieza.");
+		}
+	});
+}
+
+function odontogramaMostrarLeyendaCompleta() {
+	var mensaje = "Caries observada: punto rojo.<br>"
+		+ "Obturacion realizada: punto azul o superficie azul.<br>"
+		+ "Diente ausente: X azul.<br>"
+		+ "Extraccion prevista: X roja.<br>"
+		+ "Protesis prevista: puente rojo.<br>"
+		+ "Protesis existente: puente azul.<br>"
+		+ "Rojo indica observado, pendiente o indicado. Azul indica realizado o existente.";
+	ver_vetana_informativa("Leyenda del odontograma", mensaje, "info");
+}
+
+function odontogramaResaltarTratamientosRelacionados(contexto, pieza) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado || !pieza) { return; }
+	document.querySelectorAll(".odontograma-plan-resaltado").forEach(function (el) {
+		el.classList.remove("odontograma-plan-resaltado");
+	});
+	var links = (estado.datos.links || []).filter(function (l) {
+		return String(l.pieza || "") == String(pieza) || (!l.pieza && odontogramaUbicacionIncluyePieza(l, pieza));
+	});
+	links.forEach(function (link) {
+		var detalle = link.detalle_venta_id || "";
+		if (!detalle) { return; }
+		document.querySelectorAll("[data-detalle-tratamiento='" + detalle + "'], [data-detalle-odontograma='" + detalle + "']").forEach(function (el) {
+			el.classList.add("odontograma-plan-resaltado");
+		});
+	});
+}
+
+function odontogramaPiezaMarcadaAusente(estado, pieza) {
+	if (!estado || !pieza) { return false; }
+	var marcas = estado.datos && estado.datos.marcas ? estado.datos.marcas : [];
+	for (var i = 0; i < marcas.length; i++) {
+		if (String(marcas[i].pieza) == String(pieza) && String(marcas[i].tipo_marca || "") == "pieza_ausente") {
+			return true;
+		}
+	}
+	return false;
+}
+
+function odontogramaEnfocarUbicacionFicha(pieza, arcada, cuadrante, bocaCompleta, superficie) {
+	odontogramaEnfocarUbicacion("ficha", pieza, arcada, cuadrante, bocaCompleta, superficie);
+}
+
+function odontogramaEnfocarUbicacion(contexto, pieza, arcada, cuadrante, bocaCompleta, superficie) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) {
+		if (contexto == "ficha" && typeof cargarOdontogramaFichaClinica == "function") {
+			cargarOdontogramaFichaClinica();
+		}
+		return;
+	}
+	var ubicacion = {};
+	pieza = String(pieza || "");
+	arcada = String(arcada || "");
+	cuadrante = String(cuadrante || "");
+	superficie = String(superficie || "");
+	if (bocaCompleta && String(bocaCompleta) != "0") {
+		ubicacion.boca_completa = 1;
+		estado.piezaSeleccionada = "";
+		estado.mensajeFlash = "Boca completa seleccionada. El tratamiento aplica a todas las piezas.";
+	} else if (arcada) {
+		ubicacion.arcada = odontogramaNormalizarArcada(arcada);
+		estado.piezaSeleccionada = "";
+		estado.mensajeFlash = odontogramaTextoArcada(arcada) + " seleccionada en el odontograma.";
+	} else if (cuadrante) {
+		ubicacion.cuadrante = cuadrante;
+		estado.piezaSeleccionada = "";
+		estado.mensajeFlash = "Cuadrante " + odontogramaNormalizarCuadrante(cuadrante) + " seleccionado en el odontograma.";
+	} else if (pieza) {
+		ubicacion.pieza = pieza;
+		ubicacion.denticion = odontogramaDenticionPieza(pieza);
+		if (superficie) {
+			ubicacion.superficie = superficie;
+			ubicacion.superficies_json = JSON.stringify([superficie]);
+		}
+		estado.piezaSeleccionada = pieza;
+		estado.mensajeFlash = "Pieza " + pieza + " enfocada desde la ubicacion del tratamiento.";
+	}
+	estado.ubicacionActual = Object.keys(ubicacion).length ? ubicacion : null;
+	odontogramaRender(contexto);
+}
+
+function odontogramaSeleccionarPieza(evento, contexto, pieza) {
+	if (evento) { evento.stopPropagation(); }
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.piezaSeleccionada = pieza;
+	var pendiente = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	var alcance = pendiente ? odontogramaNormalizarAlcance(pendiente.alcance) : "";
+	var piezaAusente = odontogramaPiezaMarcadaAusente(estado, pieza);
+	if (!pendiente) {
+		estado.ubicacionActual = null;
+		if (estado.pasoClinico == "tratamientos" && piezaAusente) {
+			estado.mensajeFlash = "Pieza " + pieza + " seleccionada: esta marcada como ausente en Situacion actual. Revisar tratamientos compatibles.";
+		} else if (contexto == "presupuesto") {
+			estado.mensajeFlash = "Pieza " + pieza + " seleccionada. Puedes marcar situacion actual o asignar un tratamiento.";
+		} else {
+			estado.mensajeFlash = "Pieza " + pieza + " seleccionada. El panel izquierdo muestra hallazgos y ubicacion actual; la ficha derecha muestra tratamientos y superficies.";
+		}
+		odontogramaResaltarTratamientosRelacionados(contexto, pieza);
+		odontogramaRender(contexto);
+		return;
+	}
+	if (pendiente && alcance == "boca_completa") {
+		odontogramaAplicarUbicacion(contexto, { boca_completa: 1 });
+		return;
+	}
+	if (pendiente && alcance == "arcada") {
+		odontogramaAplicarUbicacion(contexto, { arcada: odontogramaArcadaPieza(pieza) });
+		return;
+	}
+	if (pendiente && alcance == "cuadrante") {
+		odontogramaAplicarUbicacion(contexto, { cuadrante: odontogramaCuadrantePieza(pieza) });
+		return;
+	}
+	if (pendiente && alcance == "pieza_dental") {
+		odontogramaAplicarUbicacion(contexto, { pieza: pieza, denticion: odontogramaDenticionPieza(pieza) });
+		return;
+	}
+	if (pendiente && alcance == "pieza_superficie") {
+		estado.mensajeFlash = piezaAusente
+			? "Pieza " + pieza + " marcada como ausente. Confirma si corresponde elegir una superficie para este tratamiento."
+			: "Pieza " + pieza + " seleccionada. Elegi una superficie en la vista ampliada o en los botones tactiles.";
+		odontogramaRender(contexto);
+		return;
+	}
+	odontogramaRender(contexto);
+}
+
+function odontogramaSeleccionarSuperficie(evento, contexto, pieza, superficie) {
+	if (evento) { evento.stopPropagation(); }
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.piezaSeleccionada = pieza;
+	var pendiente = estado.tratamientoPendiente || (contexto == "presupuesto" ? estado.tratamientoSeleccionado : null);
+	if (pendiente) {
+		var alcance = odontogramaNormalizarAlcance(pendiente.alcance);
+		if (alcance == "boca_completa") {
+			odontogramaAplicarUbicacion(contexto, { boca_completa: 1 });
+			return;
+		}
+		if (alcance == "arcada") {
+			odontogramaAplicarUbicacion(contexto, { arcada: odontogramaArcadaPieza(pieza) });
+			return;
+		}
+		if (alcance == "cuadrante") {
+			odontogramaAplicarUbicacion(contexto, { cuadrante: odontogramaCuadrantePieza(pieza) });
+			return;
+		}
+		odontogramaAplicarUbicacion(contexto, { pieza: pieza, denticion: odontogramaDenticionPieza(pieza), superficie: superficie, superficies_json: JSON.stringify([superficie]) });
+		return;
+	}
+	var ubicacionBase = estado.ubicacionActual && String(estado.ubicacionActual.pieza || "") == String(pieza)
+		? estado.ubicacionActual
+		: { pieza: pieza, denticion: odontogramaDenticionPieza(pieza) };
+	var lista = odontogramaSuperficiesUbicacion(ubicacionBase);
+	var indice = lista.indexOf(superficie);
+	if (indice >= 0) {
+		lista.splice(indice, 1);
+	} else {
+		lista.push(superficie);
+	}
+	if (lista.length) {
+		estado.ubicacionActual = {
+			pieza: pieza,
+			denticion: odontogramaDenticionPieza(pieza),
+			superficie: lista[0],
+			superficies_json: JSON.stringify(lista)
+		};
+	} else {
+		estado.ubicacionActual = null;
+	}
+	var info = odontogramaInfoPiezaFDI(pieza);
+	var textoSeleccion = lista.length
+		? lista.map(function (sup) { return odontogramaTextoSuperficiePieza(sup, info); }).join(", ")
+		: "pieza completa";
+	estado.mensajeFlash = "Seleccion actual en pieza " + pieza + ": " + textoSeleccion + ". Podes agregar o quitar superficies y luego guardar el hallazgo.";
+	odontogramaResaltarTratamientosRelacionados(contexto, pieza);
+	odontogramaRender(contexto);
+}
+
+function odontogramaSeleccionarPiezaCompleta(contexto, pieza) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.piezaSeleccionada = pieza;
+	estado.ubicacionActual = null;
+	estado.mensajeFlash = "Pieza " + pieza + " completa seleccionada. El proximo hallazgo se guardara sin superficie especifica.";
+	odontogramaRender(contexto);
+}
+
+function odontogramaSeleccionarTodasSuperficies(contexto, pieza) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var lista = odontogramaSuperficies.map(function (sup) { return sup.id; });
+	estado.piezaSeleccionada = pieza;
+	estado.ubicacionActual = {
+		pieza: pieza,
+		denticion: odontogramaDenticionPieza(pieza),
+		superficie: lista[0],
+		superficies_json: JSON.stringify(lista)
+	};
+	estado.mensajeFlash = "Todas las superficies de la pieza " + pieza + " quedaron seleccionadas para el proximo hallazgo.";
+	odontogramaRender(contexto);
+}
+
+function odontogramaSeleccionGeneral(contexto, tipo, valor) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var ubicacion = {};
+	if (tipo == "boca_completa") {
+		ubicacion.boca_completa = 1;
+	} else if (tipo == "arcada") {
+		ubicacion.arcada = valor;
+	} else if (tipo == "cuadrante") {
+		ubicacion.cuadrante = valor;
+	}
+	if (contexto == "ficha" && !estado.tratamientoPendiente) {
+		estado.ubicacionActual = ubicacion;
+		estado.piezaSeleccionada = "";
+		odontogramaRender(contexto);
+		return;
+	}
+	odontogramaAplicarUbicacion(contexto, ubicacion);
+}
+
+function odontogramaAplicarUbicacion(contexto, ubicacion) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	if (contexto == "presupuesto" && estado.tratamientoPendiente) {
+		estado.ubicacionActual = ubicacion;
+		odontogramaRender(contexto);
+		odontogramaGuardarLink(contexto, estado.tratamientoPendiente, ubicacion);
+		return;
+	}
+	if (contexto == "presupuesto") {
+		estado.ubicacionActual = ubicacion;
+		odontogramaRender(contexto);
+		return;
+	}
+	if (contexto == "ficha" && estado.tratamientoPendiente) {
+		estado.ubicacionActual = ubicacion;
+		odontogramaRender(contexto);
+		odontogramaGuardarLink(contexto, estado.tratamientoPendiente, ubicacion);
+		return;
+	}
+	odontogramaRender(contexto);
+}
+
+function odontogramaTextoUbicacion(ubicacion) {
+	if (!ubicacion) { return "Falta ubicar"; }
+	if (odontogramaEsVerdadero(ubicacion.boca_completa)) { return "Boca completa"; }
+	if (ubicacion.arcada) { return odontogramaTextoArcada(ubicacion.arcada); }
+	if (ubicacion.cuadrante) { return "Cuadrante " + odontogramaNormalizarCuadrante(ubicacion.cuadrante); }
+	var texto = ubicacion.pieza ? "Pieza " + ubicacion.pieza : "";
+	var superficies = odontogramaSuperficiesUbicacion(ubicacion).map(function (sup) {
+		return odontogramaTextoSuperficiePieza(sup, ubicacion.pieza ? odontogramaInfoPiezaFDI(ubicacion.pieza) : null);
+	});
+	if (superficies.length) {
+		texto += " - " + superficies.join(", ");
+	}
+	return texto || "Falta ubicar";
+}
+
+function odontogramaPrepararTratamientoPresupuesto(codProducto, nombre) {
+	var estado = odontogramaEstados.presupuesto;
+	if (!estado) {
+		odontogramaEstados.presupuesto = odontogramaEstadoInicial({
+			tipo: "presupuesto",
+			contenedor: "odontogramaPresupuestoDoctor",
+			base: odontogramaDatosBasePresupuesto(),
+			datos: { odontograma: {}, marcas: [], links: [], historial: [], tratamientos_sin_ubicacion: [] },
+			modo: "asignar"
+		});
+		cargarOdontogramaPresupuestoDoctor();
+	}
+	odontogramaApi("obtenerAlcanceProducto", { producto_id: codProducto }, function (ok, datos) {
+		var producto = ok ? datos.producto : { cod_producto: codProducto, nombre_producto: nombre, alcance_odontologico: "pieza_dental" };
+		var alcance = odontogramaNormalizarAlcance(producto.alcance_odontologico);
+		var ubicacion = alcance == "boca_completa" ? { boca_completa: 1 } : null;
+		if (!odontogramaEstados.presupuesto) { return; }
+		odontogramaEstados.presupuesto.tratamientoSeleccionado = {
+			producto_id: producto.cod_producto || codProducto,
+			nombre: producto.nombre_producto || nombre,
+			alcance: alcance
+		};
+		odontogramaEstados.presupuesto.modo = "asignar";
+		odontogramaEstados.presupuesto.pasoClinico = "tratamientos";
+		odontogramaEstados.presupuesto.filtroVisual = "tratamientos";
+		odontogramaEstados.presupuesto.mensajeFlash = "Asignando: " + (producto.nombre_producto || nombre) + ". Toca la ubicacion antes de agregar el tratamiento.";
+		odontogramaEstados.presupuesto.ubicacionActual = ubicacion;
+		odontogramaEstados.presupuesto.tratamientoPendiente = null;
+		odontogramaRender("presupuesto");
+	});
+}
+
+function odontogramaVincularDetallePresupuestoAgregado(presupuestoItemId, codProducto, nombreProducto) {
+	var estado = odontogramaEstados.presupuesto;
+	if (!estado) { return; }
+	var tr = estado.tratamientoSeleccionado || { producto_id: codProducto, nombre: nombreProducto, alcance: "pieza_dental" };
+	var ubicacion = estado.ubicacionActual;
+	odontogramaActualizarFilaPresupuesto(presupuestoItemId, ubicacion ? odontogramaTextoUbicacion(ubicacion) : "Falta ubicar", !ubicacion, tr, ubicacion);
+	if (typeof sincronizarResumenDetallePresupuestoDoc == "function") {
+		sincronizarResumenDetallePresupuestoDoc();
+	}
+	if (!ubicacion || tr.alcance == "no_requiere") {
+		estado.tratamientoSeleccionado = null;
+		estado.ubicacionActual = null;
+		odontogramaRender("presupuesto");
+		return;
+	}
+	var payload = Object.assign({}, estado.base, ubicacion, {
+		presupuesto_id: idabmPresupuesto || estado.base.presupuesto_id,
+		presupuesto_item_id: presupuestoItemId,
+		producto_id: tr.producto_id || codProducto,
+		nombre_tratamiento: tr.nombre || nombreProducto,
+		alcance_odontologico: tr.alcance || "pieza_dental",
+		origen: "presupuesto"
+	});
+	odontogramaApi("guardarLinkTratamientoOdontograma", payload, function (ok, datos) {
+		if (ok) {
+			odontogramaActualizarFilaPresupuesto(presupuestoItemId, datos.ubicacion_texto || odontogramaTextoUbicacion(ubicacion), false, tr, ubicacion);
+			if (typeof sincronizarResumenDetallePresupuestoDoc == "function") {
+				sincronizarResumenDetallePresupuestoDoc();
+			}
+			estado.tratamientoSeleccionado = null;
+			estado.ubicacionActual = null;
+			odontogramaRefrescar("presupuesto");
+		}
+	});
+}
+
+function odontogramaActualizarFilaPresupuesto(presupuestoItemId, ubicacionTexto, falta, tratamiento, ubicacionVisualDatos) {
+	var tablas = document.querySelectorAll("#tdDetalleVenta_" + presupuestoItemId);
+	tablas.forEach(function (tabla) {
+		var celda = tabla.querySelector("#td_datos_2");
+		if (!celda) { return; }
+		var existente = celda.querySelector(".odontograma-presupuesto-linea");
+		if (existente) { existente.remove(); }
+		var div = document.createElement("div");
+		div.className = "odontograma-presupuesto-linea" + (falta ? " odontograma-presupuesto-linea--falta" : "");
+		var visual = odontogramaRenderUbicacionVisual("presupuesto", ubicacionVisualDatos || null, { falta: falta, alcance: tratamiento && tratamiento.alcance ? tratamiento.alcance : "" });
+		var textoBoton = falta ? "Asignar ubicacion" : "Editar ubicacion";
+		div.innerHTML = visual
+			+ "<button type='button' onclick='event.stopPropagation(); odontogramaAsignarItemPresupuesto(\"" + odontogramaEscape(presupuestoItemId) + "\",\"" + odontogramaEscape(tratamiento && tratamiento.producto_id ? tratamiento.producto_id : "") + "\",\"" + odontogramaEscape(tratamiento && tratamiento.nombre ? tratamiento.nombre : celda.childNodes[0].textContent) + "\",\"" + odontogramaEscape(tratamiento && tratamiento.alcance ? tratamiento.alcance : "pieza_dental") + "\")'>" + textoBoton + "</button>";
+		celda.appendChild(div);
+	});
+}
+
+function odontogramaAsignarItemPresupuesto(itemId, productoId, nombre, alcance) {
+	var estado = odontogramaEstados.presupuesto;
+	if (!estado) { return; }
+	estado.tratamientoPendiente = {
+		presupuesto_item_id: itemId,
+		producto_id: productoId,
+		nombre: nombre,
+		alcance: odontogramaNormalizarAlcance(alcance)
+	};
+	estado.tratamientoSeleccionado = estado.tratamientoPendiente;
+	estado.ubicacionActual = null;
+	estado.modo = "asignar";
+	estado.pasoClinico = "tratamientos";
+	estado.filtroVisual = "tratamientos";
+	estado.mensajeFlash = "Asignando: " + nombre + ". Toca la nueva ubicacion en el odontograma.";
+	odontogramaRender("presupuesto");
+}
+
+function odontogramaAsignarTratamientoFicha(detalleId, ventaId, productoId, nombre, alcance) {
+	var estado = odontogramaEstados.ficha;
+	if (!estado) { return; }
+	estado.tratamientoPendiente = {
+		detalle_venta_id: detalleId,
+		venta_id: ventaId,
+		producto_id: productoId,
+		nombre: nombre,
+		alcance: odontogramaNormalizarAlcance(alcance)
+	};
+	estado.modo = "asignar";
+	estado.pasoClinico = "tratamientos";
+	estado.filtroVisual = "tratamientos";
+	estado.ubicacionActual = null;
+	estado.mensajeFlash = "Asignando: " + nombre + ". Toca la pieza, arcada o boca completa correspondiente.";
+	odontogramaRender("ficha");
+}
+
+function odontogramaGuardarLink(contexto, tratamiento, ubicacion, motivo) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado || !tratamiento || !ubicacion) { return; }
+	if (ubicacion.pieza && odontogramaPiezaMarcadaAusente(estado, ubicacion.pieza) && !tratamiento._confirmoPiezaAusente) {
+		if (!confirm("La pieza " + ubicacion.pieza + " esta marcada como ausente/inexistente en Situacion actual. Revise si corresponde asignar " + (tratamiento.nombre || "este tratamiento") + ". Desea continuar igual?")) {
+			estado.mensajeFlash = "Asignacion cancelada para revisar la pieza ausente.";
+			odontogramaRender(contexto);
+			return;
+		}
+		tratamiento._confirmoPiezaAusente = true;
+	}
+	var payload = Object.assign({}, estado.base, ubicacion, {
+		producto_id: tratamiento.producto_id || "",
+		nombre_tratamiento: tratamiento.nombre || "",
+		alcance_odontologico: tratamiento.alcance || "pieza_dental",
+		origen: contexto == "presupuesto" ? "presupuesto" : "ficha_clinica",
+		motivo: motivo || ""
+	});
+	if (tratamiento.detalle_venta_id) {
+		payload.detalle_venta_id = tratamiento.detalle_venta_id;
+		payload.venta_id = tratamiento.venta_id || estado.base.venta_id;
+	}
+	if (tratamiento.presupuesto_item_id) {
+		payload.presupuesto_item_id = tratamiento.presupuesto_item_id;
+		payload.presupuesto_id = idabmPresupuesto || estado.base.presupuesto_id;
+	}
+	odontogramaApi("guardarLinkTratamientoOdontograma", payload, function (ok, datos) {
+		if (!ok && datos["1"] == "requiere_motivo") {
+			var motivoNuevo = prompt(datos.mensaje || "Ingrese motivo de modificacion:");
+			if (motivoNuevo) {
+				odontogramaGuardarLink(contexto, tratamiento, ubicacion, motivoNuevo);
+			} else {
+				odontogramaRefrescar(contexto);
+			}
+			return;
+		}
+		if (!ok) {
+			ver_vetana_informativa("No se pudo guardar ubicacion", datos.mensaje || "", "error");
+			odontogramaRefrescar(contexto);
+			return;
+		}
+		if (tratamiento.presupuesto_item_id) {
+			odontogramaActualizarFilaPresupuesto(tratamiento.presupuesto_item_id, datos.ubicacion_texto, false, tratamiento, ubicacion);
+		}
+		estado.tratamientoPendiente = null;
+		estado.tratamientoSeleccionado = null;
+		estado.ubicacionActual = null;
+		estado.modo = "explorar";
+		estado.mensajeFlash = "Ubicacion guardada correctamente. Podes deshacer si hubo un error.";
+		odontogramaRefrescar(contexto);
+	});
+}
+
+function odontogramaGuardarMarcaRapida(contexto, tipo, estadoMarca, color, motivo) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado || !estado.piezaSeleccionada) { return; }
+	var usarSuperficies = ["caries", "obturacion"].indexOf(tipo) >= 0
+		&& estado.ubicacionActual
+		&& String(estado.ubicacionActual.pieza || "") == String(estado.piezaSeleccionada)
+		&& odontogramaSuperficiesUbicacion(estado.ubicacionActual).length;
+	var superficiesSeleccionadas = usarSuperficies ? odontogramaSuperficiesUbicacion(estado.ubicacionActual) : [];
+	if (superficiesSeleccionadas.length > 1) {
+		odontogramaGuardarMarcaRapidaSuperficies(contexto, tipo, estadoMarca, color, superficiesSeleccionadas, motivo, 0);
+		return;
+	}
+	var payload = Object.assign({}, estado.base, {
+		pieza: estado.piezaSeleccionada,
+		tipo_marca: tipo,
+		estado_marca: estadoMarca,
+		color: color,
+		motivo: motivo || ""
+	});
+	if (superficiesSeleccionadas.length == 1) {
+		payload.superficie = superficiesSeleccionadas[0];
+	}
+	odontogramaApi("guardarMarcaOdontograma", payload, function (ok, datos) {
+		if (!ok && datos["1"] == "requiere_motivo") {
+			var motivoNuevo = prompt(datos.mensaje || "Ingrese motivo de modificacion:");
+			if (motivoNuevo) {
+				odontogramaGuardarMarcaRapida(contexto, tipo, estadoMarca, color, motivoNuevo);
+			}
+			return;
+		}
+		if (ok) {
+			estado.mensajeFlash = "Marca guardada correctamente.";
+			odontogramaRefrescar(contexto);
+		}
+	});
+}
+
+function odontogramaGuardarMarcaRapidaSuperficies(contexto, tipo, estadoMarca, color, superficies, motivo, indice) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado || !estado.piezaSeleccionada) { return; }
+	indice = indice || 0;
+	if (indice >= superficies.length) {
+		estado.mensajeFlash = "Marca guardada en " + superficies.length + " superficies.";
+		odontogramaRefrescar(contexto);
+		return;
+	}
+	var payload = Object.assign({}, estado.base, {
+		pieza: estado.piezaSeleccionada,
+		tipo_marca: tipo,
+		estado_marca: estadoMarca,
+		color: color,
+		superficie: superficies[indice],
+		motivo: motivo || ""
+	});
+	odontogramaApi("guardarMarcaOdontograma", payload, function (ok, datos) {
+		if (!ok && datos["1"] == "requiere_motivo") {
+			var motivoNuevo = prompt(datos.mensaje || "Ingrese motivo de modificacion:");
+			if (motivoNuevo) {
+				odontogramaGuardarMarcaRapidaSuperficies(contexto, tipo, estadoMarca, color, superficies, motivoNuevo, indice);
+			}
+			return;
+		}
+		if (!ok) {
+			ver_vetana_informativa("No se pudo guardar marca", datos.mensaje || "", "error");
+			odontogramaRefrescar(contexto);
+			return;
+		}
+		odontogramaGuardarMarcaRapidaSuperficies(contexto, tipo, estadoMarca, color, superficies, motivo, indice + 1);
+	});
+}
+
+function odontogramaEliminarMarca(contexto, marcaId, motivo) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var payload = Object.assign({}, estado.base, { marca_id: marcaId, motivo: motivo || "" });
+	odontogramaApi("eliminarMarcaOdontograma", payload, function (ok, datos) {
+		if (!ok && datos["1"] == "requiere_motivo") {
+			var motivoNuevo = prompt(datos.mensaje || "Ingrese motivo de modificacion:");
+			if (motivoNuevo) { odontogramaEliminarMarca(contexto, marcaId, motivoNuevo); }
+			return;
+		}
+		if (ok) {
+			estado.mensajeFlash = "Marca quitada correctamente.";
+			odontogramaRefrescar(contexto);
+		}
+	});
+}
+
+function odontogramaEliminarLink(contexto, linkId, motivo) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var payload = Object.assign({}, estado.base, { link_id: linkId, motivo: motivo || "" });
+	odontogramaApi("eliminarLinkTratamientoOdontograma", payload, function (ok, datos) {
+		if (!ok && datos["1"] == "requiere_motivo") {
+			var motivoNuevo = prompt(datos.mensaje || "Ingrese motivo de modificacion:");
+			if (motivoNuevo) { odontogramaEliminarLink(contexto, linkId, motivoNuevo); }
+			return;
+		}
+		if (ok) {
+			estado.mensajeFlash = "Ubicacion quitada correctamente. El tratamiento y la venta se mantienen.";
+			odontogramaRefrescar(contexto);
+		}
+	});
+}
+
+function odontogramaConvalidar(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	var progreso = odontogramaResumenProgreso(estado);
+	if (progreso.pendientes > 0 && !confirm("Hay " + progreso.pendientes + " tratamientos sin ubicacion. Desea convalidar igualmente?")) {
+		return;
+	}
+	odontogramaApi("convalidarOdontograma", estado.base, function (ok, datos) {
+		if (ok) {
+			ver_vetana_informativa("Odontograma convalidado", "La version clinica quedo registrada.", "info");
+			odontogramaRefrescar(contexto);
+		} else {
+			ver_vetana_informativa("No se pudo convalidar", datos.mensaje || "", "error");
+		}
+	});
+}
+
+function odontogramaDeshacer(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	odontogramaApi("deshacerUltimaAccionOdontograma", estado.base, function (ok, datos) {
+		if (ok) {
+			estado.mensajeFlash = "Ultima accion deshecha correctamente.";
+			odontogramaRefrescar(contexto);
+		} else {
+			ver_vetana_informativa("No hay accion para deshacer", datos.mensaje || "", "info");
+		}
+	});
+}
+
+function odontogramaLimpiarSeleccion(contexto) {
+	var estado = odontogramaEstados[contexto];
+	if (!estado) { return; }
+	estado.tratamientoPendiente = null;
+	estado.ubicacionActual = null;
+	estado.piezaSeleccionada = "";
+	if (contexto == "presupuesto") {
+		estado.tratamientoSeleccionado = null;
+	}
+	odontogramaRender(contexto);
+}
+
+function odontogramaMostrarGuia(contexto) {
+	var texto = "1. Primero marca la situacion actual del paciente.<br>"
+		+ "2. Toca una pieza para registrar caries, ausencias, obturaciones o protesis existentes.<br>"
+		+ "3. Ficha de pieza seleccionada: al tocar una pieza, el panel derecho muestra numero grande, vista superior, vista de perfil, tratamientos, hallazgos y superficies.<br>"
+		+ "4. Iconos de ubicacion: diente = pieza, arcada = superior/inferior, boca = todos los dientes, signo + = pendiente.<br>"
+		+ "5. Luego selecciona o agrega tratamientos y vinculalos a su ubicacion.<br>"
+		+ "6. Si requiere superficie, toca la superficie del diente o usa la pieza ampliada del panel.<br>"
+		+ "7. Si te equivocas, usa Deshacer, Editar ubicacion o Quitar ubicacion.<br>"
+		+ "8. Al finalizar, revisa pendientes y convalida. Todo cambio queda en historial.";
+	ver_vetana_informativa("Como completar el odontograma", texto, "info");
+}
+
+function odontogramaMigrarPresupuestoAVenta(presupuestoId, ventaId) {
+	if (!presupuestoId || !ventaId) { return; }
+	var base = odontogramaDatosBasePresupuesto();
+	base.presupuesto_id = presupuestoId;
+	base.venta_id = ventaId;
+	odontogramaApi("migrarLinksPresupuestoAVenta", base, function () {});
+}
