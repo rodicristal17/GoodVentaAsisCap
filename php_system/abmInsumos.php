@@ -120,7 +120,8 @@ function ObtenerDatos($operacion)
             $cod_local = isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : "";
             $id_consultorio = isset($_POST['id_consultorio']) ? mb_convert_encoding((string)($_POST['id_consultorio']), 'ISO-8859-1', 'UTF-8') : "";
             $buscar = isset($_POST['buscar']) ? mb_convert_encoding((string)($_POST['buscar']), 'ISO-8859-1', 'UTF-8') : "";
-            listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar);
+            $descripcion = isset($_POST['descripcion']) ? mb_convert_encoding((string)($_POST['descripcion']), 'ISO-8859-1', 'UTF-8') : "";
+            listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar, $descripcion);
             break;
         case "dashboard_guardar_stock":
             $id_insumo = isset($_POST['id_insumo']) ? mb_convert_encoding((string)($_POST['id_insumo']), 'ISO-8859-1', 'UTF-8') : "";
@@ -709,10 +710,11 @@ function obtenerCatalogosDashboardInsumos()
     }
 
     $insumos = [];
-    $resultInsumos = $mysqli->query("SELECT id_insumo, nombre, unidad_medida, stock_minimo, tiene_variantes, tipo_variante FROM insumosconsl WHERE estado=1 ORDER BY nombre ASC");
+    $resultInsumos = $mysqli->query("SELECT id_insumo, nombre, descripcion, unidad_medida, stock_minimo, tiene_variantes, tipo_variante FROM insumosconsl WHERE estado=1 ORDER BY nombre ASC");
     if ($resultInsumos) {
         while ($fila = $resultInsumos->fetch_assoc()) {
             $fila["nombre"] = mb_convert_encoding((string)$fila["nombre"], "UTF-8", "ISO-8859-1");
+            $fila["descripcion"] = mb_convert_encoding((string)$fila["descripcion"], "UTF-8", "ISO-8859-1");
             $fila["unidad_medida"] = mb_convert_encoding((string)$fila["unidad_medida"], "UTF-8", "ISO-8859-1");
             $fila["tipo_variante"] = mb_convert_encoding((string)(isset($fila["tipo_variante"]) ? $fila["tipo_variante"] : ""), "UTF-8", "ISO-8859-1");
             $fila["variantes"] = obtenerVariantesInsumo($mysqli, $fila["id_insumo"]);
@@ -724,7 +726,7 @@ function obtenerCatalogosDashboardInsumos()
     exit;
 }
 
-function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
+function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar, $descripcion = "")
 {
     $mysqli = conectar_al_servidor();
     asegurarEstructuraInsumos($mysqli);
@@ -732,6 +734,7 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
     $codLocal = (int)$cod_local;
     $idConsultorio = (int)$id_consultorio;
     $buscar = trim((string)$buscar);
+    $descripcion = trim((string)$descripcion);
     $filas = [];
 
     if ($codLocal > 0 && $idConsultorio > 0) {
@@ -766,6 +769,11 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
             $parametros[] = $like;
             $parametros[] = (int)$buscar;
         }
+        if ($descripcion !== "") {
+            $sql .= " AND i.descripcion = ?";
+            $tipos .= "s";
+            $parametros[] = $descripcion;
+        }
         $sql .= " ORDER BY i.nombre ASC";
     } elseif ($codLocal > 0) {
         $sql = "SELECT i.id_insumo, COALESCE(v.id_variante, 0) AS id_variante,
@@ -799,6 +807,11 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
             $parametros[] = $like;
             $parametros[] = (int)$buscar;
         }
+        if ($descripcion !== "") {
+            $sql .= " AND i.descripcion = ?";
+            $tipos .= "s";
+            $parametros[] = $descripcion;
+        }
         $sql .= " ORDER BY c.nombre ASC, i.nombre ASC";
     } else {
         $sql = "SELECT i.id_insumo, s.id_variante,
@@ -824,6 +837,11 @@ function listarStockDashboardInsumos($cod_local, $id_consultorio, $buscar)
             $parametros[] = $like;
             $parametros[] = $like;
             $parametros[] = (int)$buscar;
+        }
+        if ($descripcion !== "") {
+            $sql .= " AND i.descripcion = ?";
+            $tipos .= "s";
+            $parametros[] = $descripcion;
         }
         $sql .= " ORDER BY l.Nombre ASC, c.nombre ASC, i.nombre ASC";
     }

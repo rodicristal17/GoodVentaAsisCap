@@ -6582,7 +6582,7 @@ textarea:focus, select:focus {
 }
 
 #divAbmInsumos .dashboard-insumos-grid {
-  grid-template-columns: minmax(320px, 0.85fr) minmax(420px, 1.25fr);
+  grid-template-columns: 1fr;
   gap: 12px;
   padding: 0 0 12px;
 }
@@ -6599,8 +6599,21 @@ textarea:focus, select:focus {
 
 #divAbmInsumos .dashboard-insumos-filtros {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(170px, 0.9fr) minmax(170px, 0.9fr) minmax(210px, 1.1fr) minmax(220px, 1.2fr) auto;
+  gap: 10px;
   align-items: end;
+}
+
+#divAbmInsumos .dashboard-insumos-filtros-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+#divAbmInsumos #tabInsumosStock .dashboard-insumos-tabla {
+  height: calc(90vh - 270px);
 }
 
 #divAbmInsumos .dashboard-insumos-filtros .panel-title,
@@ -6675,6 +6688,14 @@ textarea:focus, select:focus {
   letter-spacing: 0;
 }
 
+#divAbmInsumos .dashboard-insumos-stock-table .td_registro {
+  border-right: 1px solid #d8e2ec;
+}
+
+#divAbmInsumos .dashboard-insumos-stock-table .td_registro:last-child {
+  border-right: 0;
+}
+
 #divAbmInsumos .div_cuerpo_table {
   border: 1px solid #d8e2ec;
   border-top: 0;
@@ -6711,6 +6732,63 @@ textarea:focus, select:focus {
   border-bottom: 1px solid #edf1f5 !important;
   color: #253244;
   font-size: 11px;
+}
+
+#divAbmInsumos .dashboard-insumos-stock-table,
+#divAbmInsumos #tabInsumosStock .dashboard-insumos-tabla .tableRegistroSearch {
+  table-layout: fixed;
+}
+
+#divAbmInsumos #tabInsumosStock .dashboard-insumos-tabla .tdRegistroSearch {
+  border-right: 1px solid #e1e7ef !important;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+#divAbmInsumos #tabInsumosStock .dashboard-insumos-tabla .tdRegistroSearch:last-child {
+  border-right: 0 !important;
+}
+
+#divAbmInsumos .dashboard-stock-col-local {
+  width: 13%;
+}
+
+#divAbmInsumos .dashboard-stock-col-consultorio {
+  width: 12%;
+}
+
+#divAbmInsumos .dashboard-stock-col-insumo {
+  width: 17%;
+}
+
+#divAbmInsumos .dashboard-stock-col-descripcion {
+  width: 18%;
+}
+
+#divAbmInsumos .dashboard-stock-col-stock {
+  width: 10%;
+  text-align: center;
+}
+
+#divAbmInsumos .dashboard-stock-col-unidad {
+  width: 7%;
+  text-align: center;
+}
+
+#divAbmInsumos .dashboard-stock-col-minimo,
+#divAbmInsumos .dashboard-stock-col-dif,
+#divAbmInsumos .dashboard-stock-col-estado {
+  width: 7%;
+  text-align: center;
+}
+
+#divAbmInsumos .dashboard-stock-col-accion {
+  width: 5%;
+  text-align: center;
+}
+
+#divAbmInsumos .dashboard-stock-col-insumo-cell {
+  text-align: center;
 }
 
 #divAbmInsumos .insumos-abm-listado {

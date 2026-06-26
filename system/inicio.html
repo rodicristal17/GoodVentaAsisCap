@@ -10303,22 +10303,17 @@ style='width:95%;background-color:#b7b7b7;margin-top:19px'>
       <div class='panel-title'>Filtros</div>
       <div class='form-row'><label>Sucursal</label><select class='inputSelect' id='inptDashboardInsumosLocal' onchange='filtrarConsultoriosDashboardInsumos();buscarDashboardInsumosStock();'></select></div>
       <div class='form-row'><label>Consultorio</label><select class='inputSelect' id='inptDashboardInsumosConsultorio' onchange='buscarDashboardInsumosStock()'></select></div>
+      <div class='form-row'><label>Filtrar por descripci&oacute;n</label><select class='inputSelect' id='filtroDashboardInsumosDescripcion' onchange='buscarDashboardInsumosStock()'></select></div>
       <div class='form-row'><label>Buscar insumo</label><input class='inputText' type='text' id='inptDashboardInsumosBuscar' placeholder='Nombre o codigo' onkeyup='if(event.keyCode == 13){buscarDashboardInsumosStock()}' /></div>
-      <input type='button' value='Buscar' class='btn4' onclick='buscarDashboardInsumosStock()' style='width:120px'>
-      <input type='button' value='Limpiar' class='btn2' onclick='limpiarFiltrosDashboardInsumos()' style='width:120px;border-radius:10px;background:#6b7280'>
-    </div>
-    <div class='presupuesto-panel dashboard-insumos-carga'>
-      <div class='panel-title'>Ajuste r&aacute;pido de stock</div>
-      <div class='dashboard-insumos-carga-grid'>
-        <div class='form-row'><label>Insumo</label><select class='inputSelect' id='inptDashboardInsumosInsumo'></select></div>
-        <div class='form-row'><label>Cantidad disponible</label><input class='inputText' type='number' min='0' step='any' id='inptDashboardInsumosCantidad' placeholder='0' /></div>
-        <div class='form-row dashboard-insumos-carga-accion'><input type='button' value='Guardar stock' class='btn4' onclick='guardarDashboardInsumosStock()' style='width:150px'></div>
+      <div class='dashboard-insumos-filtros-acciones'>
+        <input type='button' value='Buscar' class='btn4' onclick='buscarDashboardInsumosStock()' style='width:120px'>
+        <input type='button' value='Limpiar' class='btn2' onclick='limpiarFiltrosDashboardInsumos()' style='width:120px;border-radius:10px;background:#6b7280'>
       </div>
     </div>
   </section>
   <section class='presupuesto-panel dashboard-insumos-listado'>
     <div class='dashboard-insumos-listado-head'><div><div class='panel-title'>Stock por sucursal y consultorio</div><span class='panel-subtitle' id='lblDashboardInsumosResumen'>Seleccione una sucursal y consultorio para cargar stock.</span></div></div>
-    <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:17%'>SUCURSAL</td><td class='td_registro' style='width:14%'>CONSULTORIO</td><td class='td_registro' style='width:23%'>INSUMO / VARIANTE</td><td class='td_registro' style='width:10%'>STOCK ACTUAL</td><td class='td_registro' style='width:6%'>UNIDAD</td><td class='td_registro' style='width:8%'>MINIMO</td><td class='td_registro' style='width:8%'>DIF.</td><td class='td_registro' style='width:8%'>ESTADO</td><td class='td_registro' style='width:6%'></td></tr></table>
+    <table class='tableCabeceraRegistro dashboard-insumos-stock-table' style='width:100%'><tr><td class='td_registro dashboard-stock-col-local'>SUCURSAL</td><td class='td_registro dashboard-stock-col-consultorio'>CONSULTORIO</td><td class='td_registro dashboard-stock-col-insumo'>INSUMO / VARIANTE</td><td class='td_registro dashboard-stock-col-descripcion'>DESCRIPCI&Oacute;N</td><td class='td_registro dashboard-stock-col-stock'>STOCK ACTUAL</td><td class='td_registro dashboard-stock-col-unidad'>UNIDAD</td><td class='td_registro dashboard-stock-col-minimo'>MINIMO</td><td class='td_registro dashboard-stock-col-dif'>DIF.</td><td class='td_registro dashboard-stock-col-estado'>ESTADO</td><td class='td_registro dashboard-stock-col-accion'></td></tr></table>
     <div class='div_cuerpo_table dashboard-insumos-tabla' id='tableDashboardInsumosStock'></div>
   </section>
 </div>
