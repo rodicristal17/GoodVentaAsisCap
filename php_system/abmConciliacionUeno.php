@@ -1175,7 +1175,12 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		: ", 0 AS monto_aplicado_gasto";
 
 	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion,
-		mv.concepto, mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado, imp.nombre_archivo_original $subqueryDebitoAplicado
+		mv.concepto, mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado, imp.nombre_archivo_original,
+		IFNULL((SELECT GROUP_CONCAT(DISTINCT IFNULL(per.nombre_persona, CONCAT('Usuario ', ump.usuario_asocio)) ORDER BY ump.fecha_hora_asociacion ASC SEPARATOR ', ')
+			FROM ueno_movimiento_pago ump
+			LEFT JOIN persona per ON per.cod_persona=ump.usuario_asocio
+			WHERE ump.id_movimiento=mv.id_movimiento AND ump.estado='activo'), '') AS usuarios_conciliacion
+		$subqueryDebitoAplicado
 		FROM ueno_movimiento_bancario mv
 		INNER JOIN ueno_importacion_extracto imp ON imp.id_importacion=mv.id_importacion
 		WHERE mv.id_movimiento!='0' $condicion
@@ -1284,19 +1289,24 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 				. ($estado_clave == "parcial" ? "<small>de " . number_format($baseAplicacion, 0, ",", ".") . "</small><span class='ueno-progress'><i style='width:" . $porcentaje_aplicado . "%'></i></span>" : "")
 				. "</div>"
 			: "<span class='ueno-muted-money'>-</span>";
+		$usuarios_conciliacion = ($credito > 0 && $aplicado > 0) ? trim((string)$row["usuarios_conciliacion"]) : "";
+		$usuarios_html = $usuarios_conciliacion != ""
+			? "<span class='ueno-user-cell' title='" . ueno_escape_html($usuarios_conciliacion) . "'>" . ueno_escape_html($usuarios_conciliacion) . "</span>"
+			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
 		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' class='ueno-movimiento-row ueno-movimiento-row--" . $estado_clave . "' data-ueno-estado='" . $estado_clave . "' data-ueno-disponible='" . $disponible . "' data-ueno-aplicado='" . $aplicado . "'>"
-			. "<td style='width:7%'>" . ueno_escape_html($row["fecha_confirmacion"]) . "</td>"
-			. "<td style='width:7%'>" . ueno_escape_html($row["fecha_transaccion"]) . "</td>"
-			. "<td style='width:11%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
-			. "<td style='width:18%'>" . ueno_escape_html($row["descripcion"]) . "</td>"
-			. "<td style='width:11%'>" . ueno_escape_html($row["concepto"]) . "</td>"
-			. "<td style='width:7%;text-align:right'>" . number_format($debito, 0, ",", ".") . "</td>"
+			. "<td style='width:6%'>" . ueno_escape_html($row["fecha_confirmacion"]) . "</td>"
+			. "<td style='width:6%'>" . ueno_escape_html($row["fecha_transaccion"]) . "</td>"
+			. "<td style='width:10%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
+			. "<td style='width:16%'>" . ueno_escape_html($row["descripcion"]) . "</td>"
+			. "<td style='width:10%'>" . ueno_escape_html($row["concepto"]) . "</td>"
+			. "<td style='width:6%;text-align:right'>" . number_format($debito, 0, ",", ".") . "</td>"
 			. "<td style='width:8%;text-align:right'>" . number_format($credito, 0, ",", ".") . "</td>"
 			. "<td style='width:8%;text-align:right'>" . $aplicado_html . "</td>"
-			. "<td style='width:8%;text-align:right'>" . number_format($disponible, 0, ",", ".") . "</td>"
+			. "<td style='width:7%;text-align:right'>" . number_format($disponible, 0, ",", ".") . "</td>"
 			. "<td style='width:7%'><span class='ueno-status-badge ueno-status-badge--" . $estado_clave . "'>" . ueno_escape_html($estado_visual) . "</span></td>"
-			. "<td style='width:8%;text-align:center'>" . $accion . "</td>"
+			. "<td style='width:7%;text-align:center'>" . $usuarios_html . "</td>"
+			. "<td style='width:9%;text-align:center'>" . $accion . "</td>"
 			. "</tr></table>";
 	}
 	$resumen["saldo_disponible_fmt"] = number_format($resumen["saldo_disponible"], 0, ",", ".");

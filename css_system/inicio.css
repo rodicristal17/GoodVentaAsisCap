@@ -36970,6 +36970,18 @@ button.tratamiento-ubicacion-visual {
   font-weight: 900;
 }
 
+#divConciliacionUeno .ueno-user-cell {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: #334155;
+  font-size: 8.5px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #divConciliacionUeno .ueno-row-action--available {
   background-color: #e2e8f0 !important;
   color: #334155 !important;
