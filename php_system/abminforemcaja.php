@@ -336,8 +336,6 @@ function datosdeCobrosConciliadosUeno($idArqeoFk)
 		return $datos;
 	}
 
-	$fechaAperturaUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechaapertura AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '1000-01-01 00:00:00')";
-	$fechaCierreUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechacierre AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '9999-12-31 23:59:59')";
 	$sql = "SELECT
 		ump.id AS id_asignacion, ump.id_movimiento, ump.cod_pagoFK, ump.monto_aplicado,
 		ump.fecha_hora_asociacion, umb.nro_comprobante, umb.fecha_confirmacion,
@@ -353,7 +351,6 @@ function datosdeCobrosConciliadosUeno($idArqeoFk)
 			WHERE ump2.id_movimiento=ump.id_movimiento
 			AND ump2.estado='activo'
 			AND p2.codApertura=ar.idarqueocaja
-			AND ump2.usuario_asocio=ar.codusuarioap
 		) AS cuotas_movimiento
 		FROM arqueocaja ar
 		INNER JOIN pago p ON p.codApertura=ar.idarqueocaja
@@ -368,9 +365,6 @@ function datosdeCobrosConciliadosUeno($idArqeoFk)
 		WHERE ar.idarqueocaja=?
 		AND ump.estado='activo'
 		AND umb.tipo_movimiento='credito'
-		AND ump.usuario_asocio=ar.codusuarioap
-		AND ump.fecha_hora_asociacion>=$fechaAperturaUeno
-		AND ump.fecha_hora_asociacion<=$fechaCierreUeno
 		AND pc.estado_conciliacion IN ('conciliado_ueno','pendiente_conciliacion','parcial','parcialmente_conciliado')
 		ORDER BY ump.fecha_hora_asociacion DESC, umb.nro_comprobante ASC, p.cod_venta_fk ASC, cr.plazo ASC, p.idPago ASC";
 	$stmt = $mysqli->prepare($sql);

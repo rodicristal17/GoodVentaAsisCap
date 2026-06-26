@@ -437,8 +437,6 @@ function caja_cierre_transferencias_conciliadas($mysqli, $idArqeoFk)
 		return 0;
 	}
 	$idArqeoFk = $mysqli->real_escape_string($idArqeoFk);
-	$fechaAperturaUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechaapertura AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '1000-01-01 00:00:00')";
-	$fechaCierreUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechacierre AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '9999-12-31 23:59:59')";
 	$sql = "select IFNULL(sum(ump.monto_aplicado),0) as total
 	from arqueocaja ar
 	inner join pago p on p.codApertura=ar.idarqueocaja
@@ -449,10 +447,7 @@ function caja_cierre_transferencias_conciliadas($mysqli, $idArqeoFk)
 	and pc.activo='SI'
 	and pc.estado_conciliacion IN ('conciliado_ueno','pendiente_conciliacion','parcial','parcialmente_conciliado')
 	and ump.estado='activo'
-	and ump.usuario_asocio=ar.codusuarioap
-	and umb.tipo_movimiento='credito'
-	and ump.fecha_hora_asociacion>=$fechaAperturaUeno
-	and ump.fecha_hora_asociacion<=$fechaCierreUeno";
+	and umb.tipo_movimiento='credito'";
 	return caja_cierre_sumar_sql($mysqli, $sql);
 }
 
@@ -554,9 +549,6 @@ function caja_cierre_buscar_conciliaciones_ueno($idArqeoFk, $usuarioActual)
 			return array("1" => "NI", "2" => "No tiene permiso para consultar las conciliaciones de este cierre.");
 		}
 
-		$fechaAperturaUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechaapertura AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '1000-01-01 00:00:00')";
-		$fechaCierreUeno = "COALESCE(STR_TO_DATE(NULLIF(NULLIF(CAST(ar.fechacierre AS CHAR), ''), '0000-00-00 00:00:00'), '%Y-%m-%d %H:%i:%s'), '9999-12-31 23:59:59')";
-
 		$sql = "SELECT
 			ar.idarqueocaja, ar.lote, ar.codusuarioap, ar.fechaapertura, ar.fechacierre,
 			ump.id AS id_asignacion, ump.id_movimiento, ump.cod_pagoFK, ump.monto_aplicado,
@@ -580,7 +572,6 @@ function caja_cierre_buscar_conciliaciones_ueno($idArqeoFk, $usuarioActual)
 				WHERE ump2.id_movimiento=ump.id_movimiento
 				AND ump2.estado='activo'
 				AND p2.codApertura=ar.idarqueocaja
-				AND ump2.usuario_asocio=ar.codusuarioap
 			) AS cuotas_movimiento
 			FROM arqueocaja ar
 			INNER JOIN pago p ON p.codApertura=ar.idarqueocaja
@@ -595,9 +586,6 @@ function caja_cierre_buscar_conciliaciones_ueno($idArqeoFk, $usuarioActual)
 			WHERE ar.idarqueocaja=?
 			AND ump.estado='activo'
 			AND umb.tipo_movimiento='credito'
-			AND ump.usuario_asocio=ar.codusuarioap
-			AND ump.fecha_hora_asociacion>=$fechaAperturaUeno
-			AND ump.fecha_hora_asociacion<=$fechaCierreUeno
 			AND pc.estado_conciliacion IN ('conciliado_ueno','pendiente_conciliacion','parcial','parcialmente_conciliado')
 			ORDER BY ump.fecha_hora_asociacion DESC, umb.nro_comprobante ASC, p.cod_venta_fk ASC, cr.plazo ASC, p.idPago ASC";
 		$stmt = $mysqli->prepare($sql);
