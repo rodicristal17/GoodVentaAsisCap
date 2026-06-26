@@ -4568,7 +4568,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 				if (typeof inicializarAccesosRapidosUsuario === "function") {
 					inicializarAccesosRapidosUsuario();
 				}
-				if (typeof inicializarComparativaVentasCobranzas === "function") {
+				if (typeof inicializarComparativaVentasCobranzas === "function"
+					&& typeof usuarioPuedeVerComparativaVentasCobranzas === "function"
+					&& usuarioPuedeVerComparativaVentasCobranzas()) {
 					inicializarComparativaVentasCobranzas();
 				}
 					buscarabmCasaOption()
@@ -4672,7 +4674,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.87";
+var codigodeactualizacion="X-GT-1-JMTG-V1.92";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -16554,9 +16556,11 @@ function cajaCierreEsperadoBackend() {
 function actualizarResumenEsperadoAperturaCierreCaja() {
 	const montoApertura = obtenerMontoNumericoAperturaCierreCaja('inptMontoAperturaCierreCaja');
 	const totalRecaudado = obtenerMontoNumericoAperturaCierreCaja('inptMontoRecaudadoCierreCaja');
+	const uenoConciliado = cajaCierreMedio('total_transferencias_conciliadas');
 	const esperadoBackend = cajaCierreEsperadoBackend();
 	const resumenInicial = document.getElementById('inptResumenInicialAperturaCierre');
 	const resumenMontoApertura = document.getElementById('inptMontoAperturaCierreCajaResumen');
+	const resumenUeno = document.getElementById('inptUenoConciliadoCierreCaja');
 	const resumenTotal = document.getElementById('inptResumenTotalAperturaCierre');
 
 	if (resumenInicial) {
@@ -16564,6 +16568,9 @@ function actualizarResumenEsperadoAperturaCierreCaja() {
 	}
 	if (resumenMontoApertura) {
 		resumenMontoApertura.value = formatearMontoAperturaCierreCaja(montoApertura);
+	}
+	if (resumenUeno) {
+		resumenUeno.value = formatearMontoAperturaCierreCaja(uenoConciliado);
 	}
 	if (resumenTotal) {
 		resumenTotal.value = formatearMontoAperturaCierreCaja(esperadoBackend !== null ? esperadoBackend : (montoApertura + totalRecaudado));
@@ -30029,6 +30036,7 @@ function cajaControlRenderDetalleVacio() {
 	if (!panel) {
 		return;
 	}
+	cajaControlResetDetalleExtendido(panel);
 	panel.innerHTML = "<div class='caja-control-empty'><b>Selecciona una caja</b><span>Desde aqui podras imprimir, revisar movimientos y controlar la migracion.</span></div>";
 	panel.className = "divMenuf caja-control-detail-card";
 }
@@ -30038,14 +30046,21 @@ function cajaControlRenderDetalle(registro) {
 	if (!panel) {
 		return;
 	}
+	var extendido = cajaControlDesmontarDetalleExtendido(panel);
+	var mantenerExtendidoVisible = extendido && extendido.style.display != "none" && cajaControlDetalleAbierto;
 	panel.className = "divMenuf caja-control-detail-card" + (cajaControlDetalleAbierto ? " caja-control-detail-card--open" : "");
+	panel.onclick = cajaControlDetalleAbierto ? function(event) {
+		if (event.target === panel) {
+			cajaControlCerrarDetalle();
+		}
+	} : null;
 	var diferencia = cajaControlNumero(registro.diferencia);
 	var acciones = "";
 	if (cajaControlEsAbierta(registro)) {
 		acciones += "<button class='btn4 caja-control-btn-primary' onclick='cajaControlAbrirCierreCaja()'>Completar cierre</button>";
 	}
-	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlMostrarDetalleExtendido()'>Ver resumen completo</button>";
-	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlMostrarDetalleExtendido()'>Ver movimientos</button>";
+	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlMostrarDetalleExtendido(\"resumen\")'>Ver resumen completo</button>";
+	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='cajaControlMostrarDetalleExtendido(\"movimientos\")'>Ver movimientos</button>";
 	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='vercerraropcioneimpresionapcie(\"1\")'>Imprimir cierre</button>";
 	if (cajaControlNumero(registro.migracion_pendiente) > 0) {
 		acciones += "<button class='btn4 caja-control-btn-primary' onclick='cajaControlAbrirMigracion()'>Registrar migracion</button>";
@@ -30055,6 +30070,7 @@ function cajaControlRenderDetalle(registro) {
 	}
 	acciones += "<button class='btn4 caja-control-btn-secondary' onclick='ver_vetana_informativa(\"Auditoria de caja preparada para conectar con el historial del lote.\")'>Ver auditoria</button>";
 	panel.innerHTML = ""
+		+ "<div class='caja-control-detail-modal' onclick='event.stopPropagation()'>"
 		+ "<div class='caja-control-detail-head'>"
 		+ "<div><span>Detalle del lote</span><b>" + cajaControlEscape(registro.lote || "-") + "</b></div>"
 		+ "<button type='button' class='caja-control-detail-close' onclick='cajaControlCerrarDetalle()'>Cerrar</button>"
@@ -30082,7 +30098,12 @@ function cajaControlRenderDetalle(registro) {
 		+ "<span><small>Migrado</small><strong>" + cajaControlFormato(registro.total_migrado) + " Gs.</strong></span>"
 		+ "<span><small>Recibido</small><strong>" + cajaControlFormato(registro.total_recibido) + " Gs.</strong></span>"
 		+ "</div>"
-		+ "<div class='caja-control-actions'>" + acciones + "</div>";
+		+ "<div class='caja-control-actions'>" + acciones + "</div>"
+		+ "<div class='caja-control-detail-inline' id='cajaControlDetalleExtendidoHost'></div>"
+		+ "</div>";
+	if (mantenerExtendidoVisible) {
+		cajaControlMoverDetalleExtendidoAlModal(true);
+	}
 }
 
 function cajaControlRenderSeleccionBar() {
@@ -30107,10 +30128,6 @@ function cajaControlAbrirDetalleSeleccionado() {
 	}
 	cajaControlDetalleAbierto = true;
 	cajaControlRenderDetalle(cajaControlSeleccionActual);
-	var panel = cajaControlEl("cajaControlPanelDetalle");
-	if (panel) {
-		panel.scrollIntoView({behavior:"smooth", block:"nearest"});
-	}
 }
 
 function cajaControlCerrarDetalle() {
@@ -30143,14 +30160,67 @@ function cajaControlDetalleItem(titulo, valor, tipo) {
 	return "<span class='caja-control-detail-item" + clase + "'><small>" + cajaControlEscape(titulo) + "</small><strong>" + cajaControlEscape(valor) + "</strong></span>";
 }
 
-function cajaControlMostrarDetalleExtendido(noScroll) {
+function cajaControlDesmontarDetalleExtendido(panel) {
 	var extendido = cajaControlEl("cajaControlDetalleExtendido");
-	if (extendido) {
-		extendido.style.display = "flex";
-		if (noScroll !== true) {
-			extendido.scrollIntoView({behavior:"smooth", block:"nearest"});
+	if (!extendido) {
+		return null;
+	}
+	if (panel && panel.contains && panel.contains(extendido)) {
+		if (panel.parentNode) {
+			panel.parentNode.insertBefore(extendido, panel.nextSibling);
+		} else if (document.body) {
+			document.body.appendChild(extendido);
 		}
 	}
+	return extendido;
+}
+
+function cajaControlResetDetalleExtendido(panel) {
+	var extendido = cajaControlDesmontarDetalleExtendido(panel);
+	if (!extendido) {
+		return;
+	}
+	extendido.style.display = "none";
+	extendido.removeAttribute("data-vista");
+	extendido.className = extendido.className.replace(/\s*caja-control-detalle-extendido--modal/g, "");
+}
+
+function cajaControlMoverDetalleExtendidoAlModal(mostrar) {
+	var extendido = cajaControlEl("cajaControlDetalleExtendido");
+	var host = cajaControlEl("cajaControlDetalleExtendidoHost");
+	if (!extendido) {
+		return null;
+	}
+	if (host && extendido.parentNode !== host) {
+		host.appendChild(extendido);
+	}
+	if (extendido.className.indexOf("caja-control-detalle-extendido--modal") == -1) {
+		extendido.className += " caja-control-detalle-extendido--modal";
+	}
+	extendido.style.display = mostrar ? "flex" : "none";
+	return extendido;
+}
+
+function cajaControlMostrarDetalleExtendido(tipo) {
+	if (!cajaControlDetalleAbierto && cajaControlSeleccionActual) {
+		cajaControlDetalleAbierto = true;
+		cajaControlRenderDetalle(cajaControlSeleccionActual);
+	}
+	var extendido = cajaControlMoverDetalleExtendidoAlModal(true);
+	if (!extendido) {
+		return;
+	}
+	var vista = tipo || "resumen";
+	extendido.setAttribute("data-vista", vista);
+	var destino = extendido;
+	if (vista == "movimientos") {
+		destino = cajaControlEl("table_Consultar_caja") || extendido;
+	}
+	setTimeout(function() {
+		if (destino && destino.scrollIntoView) {
+			destino.scrollIntoView({behavior:"smooth", block:"nearest"});
+		}
+	}, 60);
 }
 
 function cajaControlAbrirCierreCaja() {
@@ -30244,6 +30314,28 @@ function minimizarconsultacaja(){
 	document.getElementById("divMinimizadoConsultarCaja").style.display=""
 }
 var cobradorarqueo = "";var elemento="";
+function cajaControlTotalCajaInforme(datos) {
+	var totalServidorTexto = datos[5] || "0";
+	if (datos[16] == "ueno_descontado") {
+		return totalServidorTexto;
+	}
+	var uenoConciliado = Math.abs(cajaControlNumero(datos[13] || "0"));
+	if (uenoConciliado <= 0) {
+		return totalServidorTexto;
+	}
+	var totalServidor = cajaControlNumero(totalServidorTexto);
+	var totalFormulaVieja = cajaControlNumero(datos[12] || "0")
+		+ cajaControlNumero(datos[3] || "0")
+		+ cajaControlNumero(datos[11] || "0")
+		+ cajaControlNumero(datos[10] || "0")
+		- cajaControlNumero(datos[4] || "0")
+		- cajaControlNumero(datos[9] || "0");
+	if (Math.abs(totalServidor - totalFormulaVieja) <= 1) {
+		return cajaControlFormato(totalServidor - uenoConciliado);
+	}
+	return totalServidorTexto;
+}
+
 function buscarinformecaja() {
 	if(controlacceso("VERCONSULTADECAJA","accion")==false){return;}
 	document.getElementById("inptTotalIngresoConsularCaja").value = "..."
@@ -30317,18 +30409,19 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {				   
 					var datos_buscados = datos[2];
+					var totalCajaInforme = cajaControlTotalCajaInforme(datos);
 					document.getElementById("table_Consultar_caja").innerHTML = datos_buscados
 					document.getElementById("inptTotalEfectivoConsultarCaja").value = datos[7]
 					document.getElementById("inptTotalTarjetaConsularCaja").value = datos[6]
 					document.getElementById("inptTotalIngresoConsularCaja").value = datos[3]
 					document.getElementById("inptTotalEgresoConsularCaja").value = datos[4]
-					document.getElementById("inptTotalConsularCaja").value = datos[5]
+					document.getElementById("inptTotalConsularCaja").value = totalCajaInforme
 					document.getElementById("inptTotalDesembolsoConsularCaja").value = datos[8]
 					document.getElementById("inptTotalMigradoConsularCaja").value = datos[9]
 					document.getElementById("inptTotalRecibidoConsularCaja").value = datos[10]
 					
 					 
-					document.getElementById("inptResumenTotalCaja").value =  datos[5]
+					document.getElementById("inptResumenTotalCaja").value =  totalCajaInforme
 					document.getElementById("inptResumenTotalIngreso").value =  datos[3]
 					document.getElementById("inptResumenTotalRecaudado").value = datos[7]
 					if (document.getElementById("inptResumenUenoConciliado")) {

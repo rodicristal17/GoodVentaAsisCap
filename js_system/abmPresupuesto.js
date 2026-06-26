@@ -1106,6 +1106,10 @@ function presupuestoDocPacienteCompleto() {
 	return presupuestoDocPacienteSeleccionado() && presupuestoDocDatosFaltantesPaciente().length == 0;
 }
 
+function presupuestoDocPacienteListoParaAvanzar() {
+	return presupuestoDocPacienteSeleccionado();
+}
+
 function presupuestoDocObtenerResumenTotales() {
 	let cantidad = 0;
 	let total = 0;
@@ -1153,7 +1157,7 @@ function actualizarResumenPacientePresupuestoDoc() {
 			estadoCard.innerHTML = "";
 		} else if (faltantes.length) {
 			estadoCard.className = "presupuesto-paciente-estado is-warning";
-			estadoCard.textContent = "Falta completar: " + faltantes.join(", ") + ".";
+			estadoCard.textContent = "Datos pendientes: " + faltantes.join(", ") + ". Puede continuar.";
 		} else {
 			estadoCard.className = "presupuesto-paciente-estado is-ok";
 			estadoCard.textContent = "Ficha completa. La doctora solo debe corroborar y continuar.";
@@ -1176,7 +1180,7 @@ function presupuestoDocActualizarEstado() {
 	const cantidadTexto = document.getElementById("presupuestoDocCantidadTratamientos");
 	const resumen = presupuestoDocObtenerResumenTotales();
 	const pacienteSeleccionado = presupuestoDocPacienteSeleccionado();
-	const pacienteOk = presupuestoDocPacienteCompleto();
+	const pacienteListo = presupuestoDocPacienteListoParaAvanzar();
 	const pasos = {
 		1: { texto: "Paso 1 de 3: verificar datos del paciente", boton: "Confirmar y continuar" },
 		2: { texto: "Paso 2 de 3: registrar situacion actual", boton: "Continuar a tratamientos" },
@@ -1187,7 +1191,7 @@ function presupuestoDocActualizarEstado() {
 
 	if (contenedor) {
 		contenedor.setAttribute("data-paso", String(paso));
-		contenedor.classList.toggle("presupuesto-sin-paciente", !pacienteOk);
+		contenedor.classList.toggle("presupuesto-sin-paciente", !pacienteListo);
 	}
 	if (etiqueta) {
 		etiqueta.textContent = pasos[paso].texto;
@@ -1196,8 +1200,8 @@ function presupuestoDocActualizarEstado() {
 		btnAnterior.style.display = paso == 1 ? "none" : "";
 	}
 	if (btnPrincipal) {
-		btnPrincipal.textContent = paso == 1 && pacienteSeleccionado && !pacienteOk ? "Completar datos del paciente" : pasos[paso].boton;
-		btnPrincipal.disabled = (paso == 1 && !pacienteSeleccionado) || (paso > 1 && !pacienteOk) || (paso == 3 && resumen.cantidad == 0);
+		btnPrincipal.textContent = pasos[paso].boton;
+		btnPrincipal.disabled = (paso == 1 && !pacienteSeleccionado) || (paso > 1 && !pacienteListo) || (paso == 3 && resumen.cantidad == 0);
 		btnPrincipal.classList.toggle("is-disabled", btnPrincipal.disabled);
 	}
 	if (cantidadTexto) {
@@ -1206,20 +1210,20 @@ function presupuestoDocActualizarEstado() {
 	if (totalTexto) {
 		totalTexto.textContent = separadordemilesnumero(resumen.total);
 	}
-	presupuestoDocActualizarStepper(paso > 3 ? 3 : paso, pacienteOk, resumen.cantidad > 0);
+	presupuestoDocActualizarStepper(paso > 3 ? 3 : paso, pacienteListo, resumen.cantidad > 0);
 	presupuestoDocActualizarAccionesPlanes();
 }
 
-function presupuestoDocActualizarStepper(paso, pacienteOk, tieneTratamientos) {
+function presupuestoDocActualizarStepper(paso, pacienteListo, tieneTratamientos) {
 	for (let i = 1; i <= 3; i++) {
 		const boton = document.getElementById("presupuestoPasoBtn" + i);
 		if (!boton) {
 			continue;
 		}
-		const habilitado = i == 1 || (i == 2 && pacienteOk) || (i == 3 && pacienteOk);
+		const habilitado = i == 1 || (i == 2 && pacienteListo) || (i == 3 && pacienteListo);
 		boton.disabled = !habilitado;
 		boton.classList.toggle("is-active", i == paso);
-		boton.classList.toggle("is-complete", (i == 1 && pacienteOk && paso > 1) || (i == 2 && paso > 2) || (i == 3 && tieneTratamientos && paso >= 3));
+		boton.classList.toggle("is-complete", (i == 1 && pacienteListo && paso > 1) || (i == 2 && paso > 2) || (i == 3 && tieneTratamientos && paso >= 3));
 		boton.setAttribute("aria-current", i == paso ? "step" : "false");
 	}
 }
@@ -1235,9 +1239,6 @@ function presupuestoDocAccionPrincipal() {
 		if (!presupuestoDocPacienteSeleccionado()) {
 			ver_vetana_informativa("Faltan datos", "Selecciona el paciente antes de continuar.", "error");
 			return false;
-		}
-		if (!presupuestoDocPacienteCompleto()) {
-			return presupuestoDocCompletarDatosPaciente();
 		}
 		return verPasoPresupuestoDoc(2);
 	}
@@ -2110,8 +2111,8 @@ function verPasoPresupuestoDoc(paso) {
 	if (paso > 3) {
 		paso = 3;
 	}
-	if (paso > 1 && !presupuestoDocPacienteCompleto()) {
-		ver_vetana_informativa("Faltan datos del paciente", "Antes de pasar con la doctora deben estar completos cedula, telefono/WhatsApp y direccion.", "advertencia");
+	if (paso > 1 && !presupuestoDocPacienteListoParaAvanzar()) {
+		ver_vetana_informativa("Faltan datos", "Selecciona el paciente antes de continuar.", "error");
 		paso = 1;
 	}
 	pasoVistaPresupuestoDoc = paso;
@@ -2841,9 +2842,8 @@ function tieneTratamientosPresupuestoDoctor() {
 }
 
 function validarPresupuestoDoctorListo() {
-	if (!presupuestoDocPacienteCompleto()) {
-		ver_vetana_informativa("Faltan datos del paciente", "Completa cedula, telefono/WhatsApp y direccion antes de definir los planes.", "advertencia");
-		presupuestoDocCompletarDatosPaciente();
+	if (!presupuestoDocPacienteListoParaAvanzar()) {
+		ver_vetana_informativa("Faltan datos", "Selecciona el paciente antes de definir los planes.", "error");
 		return false;
 	}
 
@@ -3406,40 +3406,64 @@ function cancelarListadoPresupuesto() {
 	}
 }
 
+function obtenerValorCeldaPresupuesto(elemento, celdaId) {
+	const celda = $(elemento).children('td[id="' + celdaId + '"]');
+	return celda.length ? (celda.html() || "") : "";
+}
+
+function asignarValorElementoPresupuesto(elementoId, valor) {
+	const elemento = document.getElementById(elementoId);
+	if (elemento) {
+		elemento.value = valor || "";
+	}
+}
+
+function obtenerValorElementoPresupuesto(elementoId) {
+	const elemento = document.getElementById(elementoId);
+	return elemento ? (elemento.value || "") : "";
+}
+
 function obtenerDatosPresupuesto(elemento) {
 	cancelarListadoPresupuesto();
-    idabmPresupuesto = $(elemento).children('td[id="td_id"]').html();
+    idabmPresupuesto = obtenerValorCeldaPresupuesto(elemento, "td_id");
 	const registroSeleccionadoPresupuesto = document.getElementById('inptRegistroSeleccPresupuesto');
 	if (registroSeleccionadoPresupuesto) {
-		registroSeleccionadoPresupuesto.value = idabmPresupuesto + " - " + $(elemento).children('td[id="td_datos_4"]').html();
+		registroSeleccionadoPresupuesto.value = idabmPresupuesto + " - " + obtenerValorCeldaPresupuesto(elemento, "td_datos_4");
 	}
-    document.getElementById('inptCodigoPresupuesto').value = $(elemento).children('td[id="td_id"]').html();
-    totalPresupuesto= $(elemento).children('td[id="td_datos_7"]').html();
-    totalPresupuestoPrioritario= $(elemento).children('td[id="td_datos_8"]').html();
-    document.getElementById('inptTotalPresupuesto2').innerHTML = $(elemento).children('td[id="td_datos_7"]').html();
-    document.getElementById('inptTOTALPresupuestoFORM').value = $(elemento).children('td[id="td_datos_7"]').html();
-    document.getElementById('inptTOTALPresupuestoFORMPrioritario').value = $(elemento).children('td[id="td_datos_8"]').html();
+    document.getElementById('inptCodigoPresupuesto').value = idabmPresupuesto;
+    totalPresupuesto= obtenerValorCeldaPresupuesto(elemento, "td_datos_7");
+    totalPresupuestoPrioritario= obtenerValorCeldaPresupuesto(elemento, "td_datos_8");
+    document.getElementById('inptTotalPresupuesto2').innerHTML = totalPresupuesto;
+    document.getElementById('inptTOTALPresupuestoFORM').value = totalPresupuesto;
+    document.getElementById('inptTOTALPresupuestoFORMPrioritario').value = totalPresupuestoPrioritario;
 
     document.getElementById('table_vista_producto_presupuestoDetalle').innerHTML = "";$(elemento).children('td[id="td_datos_"]').html();
     document.getElementById('table_vista_detalles_presupuesto').innerHTML = "";$(elemento).children('td[id="td_datos_"]').html();
     document.getElementById('table_vista_detalles_presupuesto_prioritario').innerHTML = "";$(elemento).children('td[id="td_datos_"]').html();
-	buscarDetallesPresupuesto($(elemento).children('td[id="td_id"]').html());
+	buscarDetallesPresupuesto(idabmPresupuesto);
 
-    document.getElementById('inptDocumentoClientePresupuesto').value= $(elemento).children('td[id="td_datos_5"]').html();
-    document.getElementById('inptNombreClientePresupuesto').value= $(elemento).children('td[id="td_datos_4"]').html();
-    idFkCliente= $(elemento).children('td[id="td_datos_3"]').html();
-    idAbmCliente= $(elemento).children('td[id="td_datos_3"]').html();
+    document.getElementById('inptDocumentoClientePresupuesto').value= obtenerValorCeldaPresupuesto(elemento, "td_datos_5");
+    document.getElementById('inptNombreClientePresupuesto').value= obtenerValorCeldaPresupuesto(elemento, "td_datos_4");
+    idFkCliente= obtenerValorCeldaPresupuesto(elemento, "td_datos_3");
+    idAbmCliente= idFkCliente;
 	verCerrarAbmDetallesPresupuesto(true, false);
-	document.getElementById('inptNombreApellidoCliente').value= $(elemento).children('td[id="td_datos_4"]').html();
-	document.getElementById('inptNroDocCliente').value= $(elemento).children('td[id="td_datos_5"]').html();
-	document.getElementById('inptNroRucCliente').value= $(elemento).children('td[id="td_datos_13"]').html();
-	document.getElementById('inptNrowhatsappCliente').value= $(elemento).children('td[id="td_datos_14"]').html();
-	document.getElementById('inptNroTelefCliente').value= "";
-	document.getElementById('inptDireccionCliente').value= "";
-	document.getElementById('inptReferenciaCliente').value= "";
-	document.getElementById('inptZonaCliente').value= $(elemento).children('td[id="td_datos_11"]').html();
-	document.getElementById('inptFechaNacCliente').value= $(elemento).children('td[id="td_datos_"]').html();
-	idFKZona= $(elemento).children('td[id="td_datos_12"]').html();
+	asignarValorElementoPresupuesto('inptNombreApellidoCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_4"));
+	asignarValorElementoPresupuesto('inptNroDocCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_5"));
+	asignarValorElementoPresupuesto('inptNroRucCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_13"));
+	asignarValorElementoPresupuesto('inptNrowhatsappCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_14"));
+	asignarValorElementoPresupuesto('inptNroTelefCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_16"));
+	asignarValorElementoPresupuesto('inptDireccionCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_17"));
+	asignarValorElementoPresupuesto('inptReferenciaCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_18"));
+	asignarValorElementoPresupuesto('inptZonaCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_11"));
+	asignarValorElementoPresupuesto('inptFechaNacCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_15"));
+	asignarValorElementoPresupuesto('inptLugrarTrabajoCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_19"));
+	asignarValorElementoPresupuesto('inptDireccionTrabajoCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_20"));
+	asignarValorElementoPresupuesto('inptSalarioCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_21"));
+	asignarValorElementoPresupuesto('inptAntiguedadCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_22"));
+	asignarValorElementoPresupuesto('inptNroTelefTrabajoCliente1', obtenerValorCeldaPresupuesto(elemento, "td_datos_23"));
+	asignarValorElementoPresupuesto('inptNroTelefTrabajoCliente2', obtenerValorCeldaPresupuesto(elemento, "td_datos_24"));
+	asignarValorElementoPresupuesto('inptAccesoCreditoCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_25"));
+	idFKZona= obtenerValorCeldaPresupuesto(elemento, "td_datos_12");
 	
 	verificarDatosCliente(true);
 	actualizarResumenPresupuestoVenta();
@@ -3626,8 +3650,14 @@ function presupuestoAVenta(){
 	document.getElementById('inptClienteVenta').value= nombreClientePresupuesto;
 	document.getElementById('inptClienteVenta2').value= nombreClientePresupuesto;
 	idFkCliente= codClientePresupuesto;
-	if (documentoClientePresupuesto != "") {
-		buscarClientePorCiVista(inptDocClienteVenta,'inptDocClienteVenta', 'inptClienteVenta', 'venta');
+	asignarValorElementoPresupuesto('inptDireccionVenta', obtenerValorElementoPresupuesto('inptDireccionCliente'));
+	asignarValorElementoPresupuesto('inptTelefVenta', obtenerValorElementoPresupuesto('inptNroTelefCliente') || obtenerValorElementoPresupuesto('inptNrowhatsappCliente'));
+	asignarValorElementoPresupuesto('inptAccesoCreditoVentaCliente', obtenerValorElementoPresupuesto('inptAccesoCreditoCliente'));
+	if (document.getElementById("btnMasInfoClienteVenta")) {
+		document.getElementById("btnMasInfoClienteVenta").style.display='';
+	}
+	if (document.getElementById("btnNuevoClienteVenta")) {
+		document.getElementById("btnNuevoClienteVenta").style.display='none';
 	}
 
 	// Agrega los productos

@@ -62,6 +62,16 @@ function verificarOperacionPresupuesto($operacion)
                         <td id="td_datos_13" style="display: none;">'.$value['rut_cliente'].'</td>
                         <td id="td_datos_14" style="display: none;">'.$value['whapp'].'</td>
                         <td id="td_datos_15" style="display: none;">'.$value['fechanac'].'</td>
+                        <td id="td_datos_16" style="display: none;">'.$value['telefono_cliente'].'</td>
+                        <td id="td_datos_17" style="display: none;">'.$value['direccion_cliente'].'</td>
+                        <td id="td_datos_18" style="display: none;">'.$value['referencia_cliente'].'</td>
+                        <td id="td_datos_19" style="display: none;">'.$value['lugar_trabajo_cliente'].'</td>
+                        <td id="td_datos_20" style="display: none;">'.$value['direccion_trabajo_cliente'].'</td>
+                        <td id="td_datos_21" style="display: none;">'.$value['salario_cliente'].'</td>
+                        <td id="td_datos_22" style="display: none;">'.$value['antiguedad_cliente'].'</td>
+                        <td id="td_datos_23" style="display: none;">'.$value['telefono_trabajo_1_cliente'].'</td>
+                        <td id="td_datos_24" style="display: none;">'.$value['telefono_trabajo_2_cliente'].'</td>
+                        <td id="td_datos_25" style="display: none;">'.$value['acceso_credito_cliente'].'</td>
                     </tr>
                 </table>';
             }
@@ -284,6 +294,16 @@ function obtenerPresupuesto($filtros = array(), $limite = 0, $offset = 0)
             (SELECT c.fechanac FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as fechanac,
             (SELECT c.rut_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as rut_cliente,
             (SELECT c.ci_cliente FROM cliente c WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as ci_cliente,
+            (SELECT pe.telefono FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as telefono_cliente,
+            (SELECT pe.direccion FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as direccion_cliente,
+            (SELECT pe.email FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as referencia_cliente,
+            (SELECT c.lugardetrabajo FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as lugar_trabajo_cliente,
+            (SELECT c.direcciontrab FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as direccion_trabajo_cliente,
+            (SELECT c.salario FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as salario_cliente,
+            (SELECT c.antiguedad FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as antiguedad_cliente,
+            (SELECT c.teleftrab1 FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as telefono_trabajo_1_cliente,
+            (SELECT c.teleftrab2 FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as telefono_trabajo_2_cliente,
+            (SELECT c.accesocredito FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as acceso_credito_cliente,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_alternativo = 0), 0) AS monto_total,
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_prioritario = 1), 0) AS monto_total_prioritario,
             (SELECT num_factura FROM venta WHERE cod_venta = p.cod_ventaFK) AS num_factura,

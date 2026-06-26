@@ -1913,6 +1913,10 @@ function convertirTextoDocumentoInterconsulta($texto) {
             FIELD(ic.estado, 'proceso', 'pendiente', 'finalizado', 'inactivo'),
             ic.cod_interConsulta DESC $limite";
 
+
+
+        set_time_limit(2147483647);
+
         $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {

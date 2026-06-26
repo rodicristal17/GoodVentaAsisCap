@@ -4270,6 +4270,29 @@ function presupuestoPrintNombreTratamiento(celdaTratamiento){
 	return presupuestoPrintTexto(clon.textContent, "Tratamiento");
 }
 
+function presupuestoPrintMotivoTratamiento(tabla, fila){
+	var motivo = presupuestoPrintTextoCelda(fila.querySelector("#td_datos_16"));
+	if(motivo != "" && motivo != "-"){
+		return motivo;
+	}
+
+	var filaJustificacion = tabla.querySelector(".presupuesto-tratamiento-justificacion");
+	if(!filaJustificacion){
+		return "";
+	}
+
+	var textoJustificacion = filaJustificacion.querySelector("p");
+	if(textoJustificacion){
+		return presupuestoPrintTexto(textoJustificacion.textContent, "");
+	}
+
+	var clon = filaJustificacion.cloneNode(true);
+	Array.prototype.forEach.call(clon.querySelectorAll("span,button,input,select,textarea"), function(elemento){
+		elemento.remove();
+	});
+	return presupuestoPrintTexto(clon.textContent, "");
+}
+
 function presupuestoPrintObtenerTratamientos(idContenedor){
 	var contenedor = document.getElementById(idContenedor);
 	if(!contenedor){
@@ -4291,7 +4314,7 @@ function presupuestoPrintObtenerTratamientos(idContenedor){
 			cantidad: presupuestoPrintTexto(cantidad, "1"),
 			precio: presupuestoPrintMonto(presupuestoPrintTextoCelda(fila.querySelector("#td_datos_4") || fila.querySelector("#td_datos_10"))),
 			total: presupuestoPrintMonto(presupuestoPrintTextoCelda(fila.querySelector("#td_datos_5") || fila.querySelector("#td_datos_11"))),
-			motivo: presupuestoPrintTextoCelda(fila.querySelector("#td_datos_16"))
+			motivo: presupuestoPrintMotivoTratamiento(tabla, fila)
 		};
 	}).filter(function(item){
 		return item != null;
@@ -4462,6 +4485,68 @@ function presupuestoPrintCrearDocumento(fechaimpresion){
 		+"<div class='presupuesto-print-firmas'><div><span>Firma del paciente</span></div><div><span>Aclaracion</span></div><div><span>Recepcion / asesor</span></div></div>"
 		+"</section>"
 		+"</div>";
+}
+
+function reporteCajaElemento(id) {
+	return document.getElementById(id);
+}
+
+function reporteCajaValor(id, defecto) {
+	var elemento = reporteCajaElemento(id);
+	if (!elemento) {
+		return defecto == null ? "" : defecto;
+	}
+	if (typeof elemento.value != "undefined") {
+		return elemento.value == null ? (defecto == null ? "" : defecto) : elemento.value;
+	}
+	return elemento.innerHTML == null ? (defecto == null ? "" : defecto) : elemento.innerHTML;
+}
+
+function reporteCajaNumero(id) {
+	var valor = reporteCajaValor(id, "0").toString().replace(/\./g, "").replace(/,/g, ".").replace(/[^\d.-]/g, "");
+	var numero = parseFloat(valor);
+	return isNaN(numero) ? 0 : numero;
+}
+
+function reporteCajaHtml(id) {
+	var elemento = reporteCajaElemento(id);
+	return elemento ? elemento.innerHTML : "";
+}
+
+function reporteCajaCampoListo(id) {
+	var elemento = reporteCajaElemento(id);
+	if (!elemento || typeof elemento.value == "undefined") {
+		return false;
+	}
+	var valor = (elemento.value || "").toString().trim();
+	return valor != "" && valor != "...";
+}
+
+function reporteCajaListoParaImprimir() {
+	var requeridos = [
+		"inptBuscarLoteVistaApCie",
+		"inptBuscarVistaApCie5",
+		"inptBuscarVistaApCie2",
+		"inptResumenAperturacaja",
+		"inptTotalConsularCaja",
+		"inptResumenTotalRecaudado",
+		"inptTotalCant500ConsultarCaja"
+	];
+	for (var i = 0; i < requeridos.length; i++) {
+		if (!reporteCajaCampoListo(requeridos[i])) {
+			if (typeof ver_vetana_informativa == "function") {
+				ver_vetana_informativa("El reporte de caja todavia se esta cargando. Selecciona una caja y espera unos segundos antes de imprimir.");
+			}
+			return false;
+		}
+	}
+	if (!reporteCajaElemento("tdTituloImpreConsultarCaja") || !reporteCajaElemento("table_Consultar_caja")) {
+		if (typeof ver_vetana_informativa == "function") {
+			ver_vetana_informativa("No se encontro el detalle de caja para imprimir. Vuelve a abrir la consulta de caja.");
+		}
+		return false;
+	}
+	return true;
 }
 
 function ordenimpresion(ventana){
@@ -5053,25 +5138,28 @@ document.getElementById("tbDatosImpresiones").innerHTML=obtenerTablaArqueoOrdena
 }
 if (ventana == "arqueocaja") {
 	
+	if (!reporteCajaListoParaImprimir()) {
+		return;
+	}
 	
 	pagina =
 "<table class='TableRepor0' style='width:100%'>"
 +"<tr>"
 +"<td style='width:20%;text-align:left'>"
 +"<p class='pTituloC'><b>LOTE:</b></p>"
-+"<p class='pTituloC' >"+document.getElementById("inptBuscarLoteVistaApCie").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptBuscarLoteVistaApCie")+"</p>"
 +"</td>"
 +"<td style='width:20%;text-align:left'>"
 +"<p class='pTituloC'><b>FECHA INICIO:</b></p>"
-+"<p class='pTituloC' >"+document.getElementById("inptBuscarVistaApCie5").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptBuscarVistaApCie5")+"</p>"
 +"</td>"
 +"<td style='width:20%;text-align:left'>"
 +"<p class='pTituloC'><b>FECHA FIN:</b></p>"
-+"<p class='pTituloC' >"+document.getElementById("inptBuscarVistaApCie6").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptBuscarVistaApCie6")+"</p>"
 +"</td>"
 +"<td style='width:20%;text-align:left'>"
 +"<p class='pTituloC'><b>USUARIO:</b></p>"
-+"<p class='pTituloC' >"+document.getElementById("inptBuscarVistaApCie2").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptBuscarVistaApCie2")+"</p>"
 +"</td>"
 
 +"<td style='width:20%;text-align:left'>"
@@ -5082,27 +5170,26 @@ if (ventana == "arqueocaja") {
 +"</table><br><br><center><h1 class='pTituloD' >CONSULTAR CAJA</h1><br></center>"
 
 let paginaPie= "<br><div style='display: flex;justify-content: space-between;'>";
-const migrado= parseInt(document.getElementById("inptResumenCajaMigrado").value.replace(/\./g, ''));
-const montoCierre= parseInt(document.getElementById("inptTotalConsularCaja").value.replace(/\./g, ''));
-const egreso= parseInt(document.getElementById("inptResumenTotalEgreso").value.replace(/\./g, ''));
-const apertura= parseInt(document.getElementById("inptResumenAperturacaja").value.replace(/\./g, ''));
-const ingreso= parseInt(document.getElementById("inptResumenTotalIngreso").value.replace(/\./g, ''));
-const recaudado= parseInt(document.getElementById("inptResumenTotalRecaudado").value.replace(/\./g, ''));
-const transferencia= parseInt(document.getElementById("inptResumenTransferencia").value.replace(/\./g, ''));
-const uenoConciliadoElemento = document.getElementById("inptResumenUenoConciliado");
-const uenoConciliadoTexto = uenoConciliadoElemento ? (uenoConciliadoElemento.value || "0") : "0";
+const migrado= reporteCajaNumero("inptResumenCajaMigrado");
+const montoCierre= reporteCajaNumero("inptTotalConsularCaja");
+const egreso= reporteCajaNumero("inptResumenTotalEgreso");
+const apertura= reporteCajaNumero("inptResumenAperturacaja");
+const ingreso= reporteCajaNumero("inptResumenTotalIngreso");
+const recaudado= reporteCajaNumero("inptResumenTotalRecaudado");
+const transferencia= reporteCajaNumero("inptResumenTransferencia");
+const uenoConciliadoTexto = reporteCajaValor("inptResumenUenoConciliado", "0");
 
 const totalEgreso= migrado + montoCierre + egreso;
 const totalIngreso= apertura + ingreso + recaudado;
 
-let sumatoriaTipoMoneda= (parseInt(document.getElementById("inptTotalCant500ConsultarCaja").value.replace(/\./g, ''))*500)
-+ (parseInt(document.getElementById("inptTotalCant1000ConsultarCaja").value.replace(/\./g, ''))*1000)
-+ (parseInt(document.getElementById("inptTotalCant2000ConsultarCaja").value.replace(/\./g, ''))*2000)
-+ (parseInt(document.getElementById("inptTotalCant5000ConsultarCaja").value.replace(/\./g, ''))*5000)
-+ (parseInt(document.getElementById("inptTotalCant10000ConsultarCaja").value.replace(/\./g, ''))*10000)
-+ (parseInt(document.getElementById("inptTotalCant20000ConsultarCaja").value.replace(/\./g, ''))*20000)
-+ (parseInt(document.getElementById("inptTotalCant50000ConsultarCaja").value.replace(/\./g, ''))*50000)
-+ (parseInt(document.getElementById("inptTotalCant100000ConsultarCaja").value.replace(/\./g, ''))*100000);
+let sumatoriaTipoMoneda= (reporteCajaNumero("inptTotalCant500ConsultarCaja")*500)
++ (reporteCajaNumero("inptTotalCant1000ConsultarCaja")*1000)
++ (reporteCajaNumero("inptTotalCant2000ConsultarCaja")*2000)
++ (reporteCajaNumero("inptTotalCant5000ConsultarCaja")*5000)
++ (reporteCajaNumero("inptTotalCant10000ConsultarCaja")*10000)
++ (reporteCajaNumero("inptTotalCant20000ConsultarCaja")*20000)
++ (reporteCajaNumero("inptTotalCant50000ConsultarCaja")*50000)
++ (reporteCajaNumero("inptTotalCant100000ConsultarCaja")*100000);
 
 paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style='width:100%'>"
 	+"<tr>"
@@ -5121,7 +5208,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC'>Apertura de caja</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' >"+ document.getElementById("inptResumenAperturacaja").value+"</p>"
+		+"<p class='pTituloC' >"+ reporteCajaValor("inptResumenAperturacaja")+"</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
@@ -5133,7 +5220,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' >"+ document.getElementById("inptResumenCajaMigrado").value+"</p>"
+		+"<p class='pTituloC' >"+ reporteCajaValor("inptResumenCajaMigrado", "0")+"</p>"
 		+"</td>"
 	+"</tr>"
 	+"<tr>"
@@ -5141,7 +5228,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC'>Monto recibido</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' >"+ document.getElementById("inptResumenCajaRecibido").value+"</p>"
+		+"<p class='pTituloC' >"+ reporteCajaValor("inptResumenCajaRecibido", "0")+"</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
@@ -5151,7 +5238,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC'>Monto ingresado</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' >"+ document.getElementById("inptResumenTotalIngreso").value+"</p>"
+		+"<p class='pTituloC' >"+ reporteCajaValor("inptResumenTotalIngreso", "0")+"</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
@@ -5161,7 +5248,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC'>Monto recaudado</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' >"+ document.getElementById("inptResumenTotalRecaudado").value+"</p>"
+		+"<p class='pTituloC' >"+ reporteCajaValor("inptResumenTotalRecaudado", "0")+"</p>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
@@ -5183,7 +5270,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
 		+"</td>"
 		+"<td style='width:20%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' >"+ document.getElementById("inptResumenTotalEgreso").value+"</p>"
+		+"<p class='pTituloC' >"+ reporteCajaValor("inptResumenTotalEgreso", "0")+"</p>"
 		+"</td>"
 	+"</tr>"
 +"</table>"
@@ -5193,7 +5280,7 @@ paginaPie += "<div style='width: 50%;'><table class='tableRegistroSearch2' style
 		+"<p class='pTituloC'>Monto de cierre</p>"
 		+"</td>"
 		+"<td style='width:40%;text-align:right;border: 1px solid rgb(206, 206, 206);'>"
-		+"<p class='pTituloC' style=' font-size: 17px; font-weight: 800;' >"+ document.getElementById("inptTotalConsularCaja").value+"</p>"
+		+"<p class='pTituloC' style=' font-size: 17px; font-weight: 800;' >"+ reporteCajaValor("inptTotalConsularCaja", "0")+"</p>"
 		+"</td>"
 	+"</tr>"
 +"</table>";
@@ -5251,37 +5338,37 @@ paginaPie += "<div style='width: 20%;'>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>Efectivo </b></p>"
 +"</td><td style='width: 45%;'>"
-+"<p class='pTituloC' >"+ document.getElementById("inptTotalEfectivoConsultaCaja").value+"</p>"
++"<p class='pTituloC' >"+ reporteCajaValor("inptTotalEfectivoConsultaCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>Tarjeta de Credito</b></p>"
 +"</td><td style='width: 45%;'>"
-+"<p class='pTituloC' >"+document.getElementById("inptTotalTarjetaConsultaCaja").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptTotalTarjetaConsultaCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>Tarjeta de Debito</b></p>"
 +"</td><td style='width: 45%;'>"
-+"<p class='pTituloC' >"+document.getElementById("inptTotalDebitoConsultaCaja").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptTotalDebitoConsultaCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>Billetera Virtual</b></p>"
 +"</td><td style='width: 45%;'>"
-+"<p class='pTituloC' >"+document.getElementById("inptTotalBilleteraConsultaCaja").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptTotalBilleteraConsultaCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>Giro Movil</b></p>"
 +"</td><td style='width: 45%;'>"
-+"<p class='pTituloC' >"+document.getElementById("inptTotalGiroMovilConsultaCaja").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptTotalGiroMovilConsultaCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>Transferencia</b></p>"
 +"</td><td style='width: 45%;'>"
-+"<p class='pTituloC' >"+document.getElementById("inptResumenTransferencia").value+"</p>"
++"<p class='pTituloC' >"+reporteCajaValor("inptResumenTransferencia", "0")+"</p>"
 +"</td>"
 +"</tr>"
 +"<tr>"
@@ -5304,49 +5391,49 @@ paginaPie += "<div style='width: 20%;'>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>500 gs.: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant500ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant500ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>1.000 gs.: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant1000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant1000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>2.000 gs: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant2000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant2000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>5.000 gs: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant5000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant5000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>10.000 gs: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant10000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant10000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>20.000 gs: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant20000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant20000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>50.000 gs: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant50000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant50000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr><tr>"
 +"<td style='text-align:left'>"
 +"<p class='pTituloC'><b>100.000 gs: </b></p>"
 +"</td><td style='width: 50%;'>"
-+"<p class='pTituloC'>"+document.getElementById("inptTotalCant100000ConsultarCaja").value+"</p>"
++"<p class='pTituloC'>"+reporteCajaValor("inptTotalCant100000ConsultarCaja", "0")+"</p>"
 +"</td>"
 +"</tr>"
 
@@ -5361,11 +5448,12 @@ paginaPie += "<div style='width: 20%;'>"
 +"</table>"
 +"</div>";
 
-const totalCaja= QuitarSeparadorMilValor(document.getElementById("inptTotalConsularCaja").value) ;
+const totalCaja= reporteCajaNumero("inptTotalConsularCaja") ;
+const diferenciaCajaMoneda = Number(sumatoriaTipoMoneda) - Number(totalCaja);
 
 paginaPie += "</div>";
 paginaPie += "<div>"
-+"<p class='pTituloC' style='font-size: 1.5rem'><b>DIFERENCIA ENTRE MONTO DE CIERRE Y CANTIDAD MONETARIA: "+ ( Number(sumatoriaTipoMoneda) - Number(totalCaja) ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') +" gs.</p>"
++"<p class='pTituloC' style='font-size: 1.5rem'><b>DIFERENCIA ENTRE MONTO DE CIERRE Y CANTIDAD MONETARIA: "+ formatearMontoCajaFirmado(diferenciaCajaMoneda) +" gs.</p>"
 + "</div>"
 + "<br>"
 + "<br>"
@@ -5380,8 +5468,8 @@ paginaPie += "<div>"
 
 document.getElementById("divCabeceraImpresiones").innerHTML=pagina
 document.getElementById("divPieImpresiones").innerHTML=paginaPie
-document.getElementById("tbTitulosImpresiones").innerHTML=document.getElementById("tdTituloImpreConsultarCaja").innerHTML
-document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById("table_Consultar_caja").innerHTML
+document.getElementById("tbTitulosImpresiones").innerHTML=reporteCajaHtml("tdTituloImpreConsultarCaja")
+document.getElementById("tbDatosImpresiones").innerHTML=reporteCajaHtml("table_Consultar_caja")
 }
 if (ventana == "catalago") {
 document.getElementById("divCabeceraImpresiones").innerHTML="<br>"
@@ -6107,6 +6195,13 @@ function QuitarSeparadorMilValor(inputs) {
 
 
 }
+
+function formatearMontoCajaFirmado(valor) {
+	var numero = Math.round(Number(valor) || 0);
+	var signo = numero < 0 ? "-" : "";
+	return signo + Math.abs(numero).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 function separadordemiles(input) {
 	if (input.value==""){
 		return;

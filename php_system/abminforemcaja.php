@@ -169,12 +169,16 @@ $montoinicio=ObtenerTotalCaja($idArqeoFk);
 $ingresos=$totalingreso;
 $egresos=$totalegreso;
 $Desembolso=0; 
-$total=($ingresos+$totalpagos+ $totalCajaRecibido)-($egresos + $totalCajaEnviado + $totalDeposito);
+$totalPagosCaja=$totalpagos-$totalUenoConciliado;
+if($totalPagosCaja<0){
+	$totalPagosCaja=0;
+}
+$total=($ingresos+$totalPagosCaja+ $totalCajaRecibido)-($egresos + $totalCajaEnviado + $totalDeposito);
 
 $total=$montoinicio+$total;
 $informacion =array("1" => "exito","2" => $pagina,"3" => number_format($ingresos,'0',',','.'),"4" => number_format($egresos,'0',',','.')
 ,"5" => number_format($total,'0',',','.'),"6" => number_format($totaltarjeta,'0',',','.'),"7" => number_format($totalefectivo,'0',',','.'),
-"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'),"11" => number_format($totalpagos,'0',',','.'),"12" => number_format($montoinicio,'0',',','.'),"13" => number_format($totalUenoConciliado,'0',',','.'),"14" => $operacionesUeno,"15" => $cuotasUeno);
+"8" => number_format($Desembolso,'0',',','.'),"9" => number_format($totalCajaEnviado,'0',',','.'),"10" => number_format($totalCajaRecibido,'0',',','.'),"11" => number_format($totalpagos,'0',',','.'),"12" => number_format($montoinicio,'0',',','.'),"13" => number_format($totalUenoConciliado,'0',',','.'),"14" => $operacionesUeno,"15" => $cuotasUeno,"16" => "ueno_descontado");
 echo json_encode($informacion);	
 exit;
 }

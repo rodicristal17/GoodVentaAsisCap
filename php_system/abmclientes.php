@@ -35,6 +35,7 @@ $sms = mb_convert_encoding((string)($sms), 'ISO-8859-1', 'UTF-8');
 
 $FechaNac=$_POST['FechaNac'];
 $FechaNac = mb_convert_encoding((string)($FechaNac), 'ISO-8859-1', 'UTF-8');
+$FechaNac = cliente_normalizar_fecha_mysql($FechaNac);
 
 $cod_persona=$_POST['cod_persona'];
 $cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
@@ -62,7 +63,7 @@ $idzonaFk = mb_convert_encoding((string)($idzonaFk), 'ISO-8859-1', 'UTF-8');
 $lugardetrabajo=$_POST['lugardetrabajo'];
 $lugardetrabajo = mb_convert_encoding((string)($lugardetrabajo), 'ISO-8859-1', 'UTF-8');
 $salario=$_POST['salario'];
-$salario = quitarseparadormiles($salario);
+$salario = cliente_normalizar_numero_nullable($salario);
 $antiguedad=$_POST['antiguedad'];
 $antiguedad = mb_convert_encoding((string)($antiguedad), 'ISO-8859-1', 'UTF-8');
 $teleftrab1=$_POST['teleftrab1'];
@@ -334,6 +335,44 @@ buscarDocumentosGaleriaFoto($idcliente,$descripcion);
 }
 
 
+}
+
+
+function cliente_responder_error($mensaje, $detalle = "")
+{
+	$informacion = array("1" => "error", "2" => $mensaje);
+	if ($detalle != "") {
+		$informacion["3"] = $detalle;
+	}
+	echo json_encode($informacion);
+	exit;
+}
+
+function cliente_normalizar_fecha_mysql($fecha)
+{
+	$fecha = trim((string)$fecha);
+	if ($fecha == "") {
+		return "0000-00-00";
+	}
+	if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+		return $fecha;
+	}
+	if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $fecha, $partes)) {
+		return $partes[3] . "-" . $partes[2] . "-" . $partes[1];
+	}
+	if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fecha, $partes)) {
+		return $partes[3] . "-" . $partes[2] . "-" . $partes[1];
+	}
+	return $fecha;
+}
+
+function cliente_normalizar_numero_nullable($valor)
+{
+	$valor = trim((string)$valor);
+	if ($valor == "") {
+		return null;
+	}
+	return quitarseparadormiles($valor);
 }
 
 
@@ -737,8 +776,8 @@ if(count($result[4]) > 0) {
 	}  
 }
 	/*AUDITORIA*/
-	date_default_timezone_set('America/Anguilla');    
-$fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
+	date_default_timezone_set('America/Asuncion');    
+$fecha_inser_edit = date('Y-m-d H:i:s', time()); 
 	 $user=$_POST['useru'];
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
@@ -749,15 +788,24 @@ if($operacion=="nuevo")
 $consulta1="Insert into persona (nombre_persona,direccion,telefono,email)
 values(Upper(?),Upper(?),Upper(?),Upper(?))";
 $stmt1 = $mysqli->prepare($consulta1);
+if (!$stmt1) {
+	cliente_responder_error("No se pudo preparar el guardado de persona.", $mysqli->error);
+}
 $ss='ssss';
 $stmt1->bind_param($ss,$nombre_persona,$direccion,$telefono,$email);
 
-$consulta2="Insert into cliente (fechanac,rut_cliente,Calificacion,cod_cliente,whapp,estado,idzonaFk,ci_cliente,lugardetrabajo,salario,antiguedad,teleftrab1,teleftrab2,direcciontrab,cod_user_insert,fecha_insert,accesocredito,sms)
-values(?,?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+$consulta2="Insert into cliente (fechanac,rut_cliente,Calificacion,cod_cliente,whapp,estado,idzonaFk,ci_cliente,lugardetrabajo,salario,antiguedad,teleftrab1,teleftrab2,direcciontrab,cod_user_insert,fecha_insert,accesocredito,sms,foto1,foto2,fecha_edicion_referencia,obsTrabajo)
+values(?,?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 $stmt2 = $mysqli->prepare($consulta2);
-$ss='sssssssssssssssss';
-$stmt2->bind_param($ss,$FechaNac,$rut_cliente,$Calificacion,$whapp,$estado,$idzonaFk,$ci_cliente,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$user,$fecha_inser_edit,$accesocredito,$sms);
+if (!$stmt2) {
+	cliente_responder_error("No se pudo preparar el guardado del cliente.", $mysqli->error);
+}
+$foto1Inicial = "";
+$foto2Inicial = "";
+$obsTrabajoInicial = "";
+$ss='sssssssssssssssssssss';
+$stmt2->bind_param($ss,$FechaNac,$rut_cliente,$Calificacion,$whapp,$estado,$idzonaFk,$ci_cliente,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$user,$fecha_inser_edit,$accesocredito,$sms,$foto1Inicial,$foto2Inicial,$fecha_inser_edit,$obsTrabajoInicial);
 
 }
 
@@ -769,6 +817,9 @@ if($operacion=="editar")
 $consulta1="Update persona set nombre_persona=Upper(?),direccion=Upper(?),telefono=Upper(?),email=Upper(?) where cod_persona=?";	
 
 $stmt1 = $mysqli->prepare($consulta1);
+if (!$stmt1) {
+	cliente_responder_error("No se pudo preparar la actualizacion de persona.", $mysqli->error);
+}
 $ss='sssss';
 $stmt1->bind_param($ss,$nombre_persona,$direccion,$telefono,$email,$cod_persona);
 
@@ -776,6 +827,9 @@ $stmt1->bind_param($ss,$nombre_persona,$direccion,$telefono,$email,$cod_persona)
 $consulta2="update cliente set fechanac=?,rut_cliente=?,Calificacion=?,whapp=?,estado=?,idzonaFk=?,ci_cliente=?,lugardetrabajo=?,salario=?,antiguedad=?,teleftrab1=?,teleftrab2=?,direcciontrab=?,cod_user_edit=?,fecha_edit=?,accesocredito=?,sms=? where cod_cliente=? ";	
 
 $stmt2 = $mysqli->prepare($consulta2);
+if (!$stmt2) {
+	cliente_responder_error("No se pudo preparar la actualizacion del cliente.", $mysqli->error);
+}
 $ss='ssssssssssssssssss';
 $stmt2->bind_param($ss,$FechaNac,$rut_cliente,$Calificacion,$whapp,$estado,$idzonaFk,$ci_cliente,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$user,$fecha_inser_edit,$accesocredito,$sms,$cod_persona);
 
@@ -786,20 +840,12 @@ $stmt2->bind_param($ss,$FechaNac,$rut_cliente,$Calificacion,$whapp,$estado,$idzo
 
 
 if (!$stmt1->execute()) {
-	
-
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-
+	cliente_responder_error("No se pudo guardar los datos personales del cliente.", $stmt1->error);
 }
 
 
 if (!$stmt2->execute()) {
-	
-
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
-
+	cliente_responder_error("No se pudo guardar los datos del cliente.", $stmt2->error);
 }
 
 if($operacion=="nuevo") {

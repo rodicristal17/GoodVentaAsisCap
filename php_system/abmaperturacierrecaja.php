@@ -693,16 +693,22 @@ function caja_cierre_calcular_resumen_medios($mysqli, $idArqeoFk, $montoInicio)
 	$depositos = caja_cierre_sumar_gastos($mysqli, $idArqeoFk, "Deposito");
 	$cajaRecibida = caja_cierre_sumar_migracion($mysqli, $idArqeoFk, "cod_caja_hastaFK");
 	$cajaEnviada = caja_cierre_sumar_migracion($mysqli, $idArqeoFk, "cod_caja_desdeFK");
-	$movimientoEfectivo = $totalPagos + $ingresos + $cajaRecibida - $egresos - $cajaEnviada - $depositos;
+	$transferenciasConciliadas = caja_cierre_transferencias_conciliadas($mysqli, $idArqeoFk);
+	$pagosCaja = $totalPagos - $transferenciasConciliadas;
+	if ($pagosCaja < 0) {
+		$pagosCaja = 0;
+	}
+	$movimientoEfectivo = $pagosCaja + $ingresos + $cajaRecibida - $egresos - $cajaEnviada - $depositos;
 	$efectivoEsperado = (int)$montoInicio + $movimientoEfectivo;
 
 	return array(
 		'pagos_total' => $totalPagos,
+		'pagos_caja' => $pagosCaja,
 		'pagos_efectivo' => $pagosEfectivo,
 		'movimiento_efectivo' => $movimientoEfectivo,
 		'efectivo_esperado' => $efectivoEsperado,
 		'total_transferencias' => $transferencias,
-		'total_transferencias_conciliadas' => caja_cierre_transferencias_conciliadas($mysqli, $idArqeoFk),
+		'total_transferencias_conciliadas' => $transferenciasConciliadas,
 		'total_tarjetas' => $tarjetas,
 		'total_billeteras' => $billeteras,
 		'total_otros' => $otros,
@@ -1081,8 +1087,8 @@ if ( ! $stmt->execute()) {
 		  	  $codusuarioce=mb_convert_encoding((string)($valor['codusuarioce']), 'UTF-8', 'ISO-8859-1');
 		  	  $lote=mb_convert_encoding((string)($valor['lote']), 'UTF-8', 'ISO-8859-1');
 		  	  $usuarioap=mb_convert_encoding((string)($valor['usuarioap']), 'UTF-8', 'ISO-8859-1');
-		  	  $totalRecaudado=ObtenerTotalCaja($idarqueocaja,$montoapertura);
 		  	  $resumenCierre=caja_cierre_calcular_resumen_medios($mysqli,$idarqueocaja,$montoapertura);
+		  	  $totalRecaudado=$resumenCierre['efectivo_esperado'];
 		  	 			  
 	  }
 	  
@@ -1140,7 +1146,8 @@ if ( ! $stmt->execute()) {
 		  
 		      $idarqueocaja=$valor['idarqueocaja'];
 		  	  $montoapertura=mb_convert_encoding((string)($valor['montoapertura']), 'UTF-8', 'ISO-8859-1');
-		  	  $totalRecaudado=ObtenerTotalCaja($idarqueocaja,$montoapertura);
+		  	  $resumenCierre=caja_cierre_calcular_resumen_medios($mysqli,$idarqueocaja,$montoapertura);
+		  	  $totalRecaudado=$resumenCierre['efectivo_esperado'];
 		  	 			  
 	  } 
 	

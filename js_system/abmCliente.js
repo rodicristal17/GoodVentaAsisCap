@@ -610,7 +610,7 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 
 //limpiarcamposCliente()
 volverAtrasCliente();
-			} else if (datos[1] == 'EX') {
+				} else if (datos[1] == 'EX') {
 				if (confirm('Usar datos del cliente existente')) {
 					const regCliente= datos[2];
 					console.info(regCliente);
@@ -633,6 +633,11 @@ volverAtrasCliente();
 					document.getElementById('inptNroTelefTrabajoCliente1').value = regCliente['tefeftrab1'];
 					document.getElementById('inptNroTelefTrabajoCliente2').value = regCliente['teleftrab2'];
 					document.getElementById('inptAccesoCreditoCliente').value = regCliente['accesocredito'];
+				}
+			} else if (datos[1] == 'error') {
+				ver_vetana_informativa("No se pudo guardar el cliente", datos[2] || "Revise los datos e intente nuevamente.", "error");
+				if (datos[3] && typeof GuardarArchivosLog == "function") {
+					GuardarArchivosLog("Error al guardar cliente: " + datos[3]);
 				}
 			}
 			

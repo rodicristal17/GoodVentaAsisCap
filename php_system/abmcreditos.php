@@ -582,12 +582,15 @@ if($operacion=="nuevocreditorefin")
 {
 
 
-$consulta1="Insert into credito (plazo,fechapago,cod_venta,Monto,descuento,Esado,Nro_recibo,interes,dias,deudaInteres)
-values(?,?,?,?,?,'Pendiente','0',?,?,0)";
+$totalCreditoRefin=$Monto;
+$nroventaCredito=$cod_venta;
+
+$consulta1="Insert into credito (plazo,fechapago,cod_venta,Monto,descuento,Esado,Nro_recibo,interes,dias,totalinteres,totaldeuda,total,deudaInteres,nroventa)
+values(?,?,?,?,?,'Pendiente','0',?,?,0,?,?,0,?)";
 
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='sssssss';
-$stmt1->bind_param($ss,$plazo,$fechapago,$cod_venta,$Monto,$descuento,$interes,$dias);
+$ss='ssssssssss';
+$stmt1->bind_param($ss,$plazo,$fechapago,$cod_venta,$Monto,$descuento,$interes,$dias,$totalCreditoRefin,$totalCreditoRefin,$nroventaCredito);
 
 
 
@@ -614,7 +617,7 @@ $stmt1->bind_param($ss,$plazo,$fechapago,$cod_venta,$Monto,$descuento,$interes,$
 if (!$stmt1->execute()) {
 	
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -1038,8 +1041,8 @@ function generarCuotas($cod_venta,$Monto,$metodopago,$iniciopago,$nroCuota,$inte
 			$cuota="1/".$nroCuota;
 			
 		$mysqli=conectar_al_servidor(); 
-	$consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,tipo,dias,interes , deudaInteres)
-			values('$cuota',(select fecha_venta from venta where cod_venta='$cod_venta' limit 1),'$cod_venta','$entrega','Pendiente','0','ENTREGA','$dias','$interes',0)";		
+	$consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,tipo,dias,interes,totalinteres,totaldeuda,total,descuento,deudaInteres,nroventa)
+			values('$cuota',(select fecha_venta from venta where cod_venta='$cod_venta' limit 1),'$cod_venta','$entrega','Pendiente','0','ENTREGA','$dias','$interes',0,'$entrega','$entrega',0,0,'$cod_venta')";		
 
 	$stmt = $mysqli->prepare($consulta);
 
@@ -1120,6 +1123,7 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 {
 	$mysqli = conectar_al_servidor();
 	$nro_comprobante = $mysqli->real_escape_string($nro_comprobante);
+	$nroventaCredito = trim((string)$nro_comprobante) != "" ? $nro_comprobante : $mysqli->real_escape_string($cod_venta);
 	$fecha_facturado = date('Y-m-d');
 
 	eliminarcreditos($cod_venta);
@@ -1133,8 +1137,8 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 	if ($entrega > 0 && $pagoentrega == "SI") {
 		$cuotas = "Entrega";
 
-		$consulta = "Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,tipo,dias,interes,total,totaldeuda,deudaInteres)
-				values('$cuotas',(select fecha_venta from venta where cod_venta='$cod_venta' limit 1),'$cod_venta','$entrega','Pendiente','0','ENTREGA','$dias','$interes','$entrega','$entrega',0)";
+		$consulta = "Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,tipo,dias,interes,totalinteres,totaldeuda,total,descuento,deudaInteres,nroventa)
+				values('$cuotas',(select fecha_venta from venta where cod_venta='$cod_venta' limit 1),'$cod_venta','$entrega','Pendiente','0','ENTREGA','$dias','$interes',0,'$entrega','$entrega',0,0,'$nroventaCredito')";
 
 		$stmt = $mysqli->prepare($consulta);
 
@@ -1213,7 +1217,7 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 				$cuotaSobrante = $cuotaSobrante + $s;
 			}
 		}
-		insertarcuotas(($nc) . "/" . $totalcuotas, $fecha, $cod_venta, $cuotaSobrante, "Pendiente", " ", 0, $dias, $interes, $cuotaSobrante);
+		insertarcuotas(($nc) . "/" . $totalcuotas, $fecha, $cod_venta, $cuotaSobrante, "Pendiente", " ", 0, $dias, $interes, $cuotaSobrante, $nroventaCredito);
 		$pendiente = $pendiente - $cuotaSobrante;
 		
 		$a++;
@@ -1248,7 +1252,7 @@ function generarCuotasdesdeventa($idGaranteFk, $pagoentrega, $cod_venta, $Monto,
 			$F = $F + 15;
 		}
 		$fecha = date("Y-m-d H:i:s", $fecha);
-		insertarcuotas(($nc + 1) . "/" . ($nroCuota + 1), $fecha, $cod_venta, $pendiente, "Pendiente", " ", 0, $dias, $interes, $pendiente);
+		insertarcuotas(($nc + 1) . "/" . ($nroCuota + 1), $fecha, $cod_venta, $pendiente, "Pendiente", " ", 0, $dias, $interes, $pendiente, $nroventaCredito);
 	}
 	
 	// Se insertan los pagos parciales en caso de 
@@ -1718,10 +1722,12 @@ exit;
  mysqli_close($mysqli);
 }
 	
-function insertarcuotas($plazo, $fechapago, $cod_venta, $Monto, $Esado,$Nro_recibo,$descuento,$dias,$interes,$total){
+function insertarcuotas($plazo, $fechapago, $cod_venta, $Monto, $Esado,$Nro_recibo,$descuento,$dias,$interes,$total,$nroventa=""){
 		$mysqli=conectar_al_servidor();
-			$consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,dias,interes,total,descuento,deudaInteres)
-			values('$plazo','$fechapago','$cod_venta','$Monto','$Esado','$Nro_recibo','$dias','$interes','$total','$descuento',0)";	
+			$nroventaCredito = trim((string)$nroventa) != "" ? $nroventa : $cod_venta;
+			$nroventaCredito = $mysqli->real_escape_string($nroventaCredito);
+			$consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,dias,interes,totalinteres,totaldeuda,total,descuento,deudaInteres,nroventa)
+			values('$plazo','$fechapago','$cod_venta','$Monto','$Esado','$Nro_recibo','$dias','$interes',0,'$total','$total','$descuento',0,'$nroventaCredito')";	
 
 	$stmt = $mysqli->prepare($consulta);
 

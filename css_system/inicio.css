@@ -10366,6 +10366,16 @@ text-align: justify;
   text-align: right;
 }
 
+#divAbmAperturaCierreCaja .caja-ticket-row--ueno {
+  color: #2d6f8f;
+}
+
+#divAbmAperturaCierreCaja .caja-ticket-row--ueno input {
+  border-color: #b8d5e8;
+  background: #f2f9fc;
+  color: #2d6f8f;
+}
+
 #divAbmAperturaCierreCaja .caja-ticket-row--total {
   border-bottom: none;
   padding: 12px;
@@ -40289,11 +40299,52 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConsultaCaja .caja-control-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, max-content));
+  gap: 10px;
   justify-content: flex-end;
+  align-items: center;
   margin-top: 12px;
+}
+
+#divConsultaCaja .caja-control-actions .btn4 {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  min-width: 136px !important;
+  min-height: 38px !important;
+  height: auto !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+#divConsultaCaja .caja-control-actions .caja-control-btn-primary {
+  min-width: 128px !important;
+  border-color: #157347 !important;
+  background: #177245 !important;
+  color: #ffffff !important;
+}
+
+#divConsultaCaja .caja-control-actions .caja-control-btn-secondary {
+  border-color: #c4d3e3 !important;
+  background: #ffffff !important;
+  color: #1f2a3d !important;
+}
+
+#divConsultaCaja .caja-control-actions .caja-control-btn-secondary:hover {
+  border-color: #7aa7d9 !important;
+  background: #f4f9ff !important;
+}
+
+#divConsultaCaja .caja-control-detail-inline {
+  width: 100%;
+  margin-top: 14px;
 }
 
 #divConsultaCaja .caja-control-totales {
@@ -40670,6 +40721,111 @@ button.tratamiento-ubicacion-visual {
 
 #divConsultaCaja .caja-control-print-panel > div:nth-child(2) {
   display: none !important;
+}
+
+#divConsultaCaja .caja-control-detail-card.caja-control-detail-card--open {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 22px;
+  border: 0;
+  border-radius: 0;
+  background: rgba(15, 23, 42, .58);
+  box-shadow: none;
+  overflow-y: auto;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detail-modal {
+  width: min(1280px, calc(100vw - 44px));
+  max-height: calc(100vh - 44px);
+  overflow: auto;
+  padding: 18px 20px;
+  border: 1px solid #cfe0f1;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detail-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detail-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-migration-box {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-actions {
+  justify-content: flex-end;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detail-inline {
+  border-top: 1px solid #e1e9f2;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detalle-extendido--modal {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start !important;
+  width: 100%;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detalle-extendido--modal > div {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detalle-extendido--modal .divMenuf {
+  margin-top: 8px;
+  border-radius: 10px;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detalle-extendido--modal table {
+  width: 100%;
+}
+
+#divConsultaCaja .caja-control-detail-card--open .caja-control-detalle-extendido--modal .div_cuerpo_table {
+  max-width: 100%;
+  overflow: auto;
+}
+
+#divConsultaCaja .caja-control-detail-card--open #table_Consultar_caja {
+  height: min(38vh, 360px) !important;
+}
+
+@media (max-width: 900px) {
+  #divConsultaCaja .caja-control-detail-card.caja-control-detail-card--open {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  #divConsultaCaja .caja-control-detail-card--open .caja-control-detail-modal {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 14px;
+  }
+
+  #divConsultaCaja .caja-control-detail-card--open .caja-control-detail-grid,
+  #divConsultaCaja .caja-control-detail-card--open .caja-control-migration-box {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #divConsultaCaja .caja-control-detail-card--open #table_Consultar_caja {
+    height: 280px !important;
+  }
 }
 
 @media (max-width: 1100px) {

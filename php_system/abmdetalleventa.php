@@ -548,6 +548,30 @@ exit;
 
 
 
+function obtenerNroVentaDetalle($mysqli,$cod_venta,$fallback){
+	$fallback=trim((string)$fallback);
+	if($fallback!=""){
+		return $fallback;
+	}
+
+	$cod_venta_sql=$mysqli->real_escape_string($cod_venta);
+	$sql="select concat(ifnull(puntoexpedicion,''),if(ifnull(puntoexpedicion,'')!='','-',''),ifnull(num_factura,'')) as nroventa from venta where cod_venta='$cod_venta_sql' limit 1";
+	$stmt=$mysqli->prepare($sql);
+	if($stmt && $stmt->execute()){
+		$result=$stmt->get_result();
+		if($valor=mysqli_fetch_assoc($result)){
+			$nroventa=trim((string)$valor['nroventa']);
+			if($nroventa!=""){
+				return $nroventa;
+			}
+		}
+	}
+
+	return $cod_venta;
+}
+
+
+
 
 function abm($fecha_venta,$tipo,$cod_ventaFK,$num_factura,$nro_comprobante,$operacion)
 {
@@ -556,6 +580,7 @@ $mysqli=conectar_al_servidor();
 $control=1;	
 $totalRegistro=$_POST['totalRegistro'];
 $totalRegistro = mb_convert_encoding((string)($totalRegistro), 'ISO-8859-1', 'UTF-8');
+$nroventaDetalle=obtenerNroVentaDetalle($mysqli,$cod_ventaFK,$nro_comprobante);
 
 
 
@@ -600,11 +625,11 @@ if($cod_productoFK!="10001"){
 
 if($cantidad_detalle!="" || $cod_productoFK!="" || $cod_ventaFK!=""  ){
 
-$consulta1="Insert into detalle_venta (cantidad_detalle,descuento,cod_productoFK,precio_producto,cod_ventaFK,subtotal,subPrecioCompra,estado,comision,detalleproducto,cod_aperturaCajaFK)
-values(?,?,?,?,?,?,?,'Activo',?,?,?)";
+$consulta1="Insert into detalle_venta (cantidad_detalle,descuento,cod_productoFK,precio_producto,cod_ventaFK,subtotal,subPrecioCompra,estado,comision,detalleproducto,cod_aperturaCajaFK,nroventa)
+values(?,?,?,?,?,?,?,'Activo',?,?,?,?)";
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='ssssssssss';
-$stmt1->bind_param($ss,$cantidad_detalle,$descuento,$cod_productoFK,$precio_producto,$cod_ventaFK,$subtotal,$subPrecioCompra,$comision,$detalleproducto,$cod_aperturaCajaFK);
+$ss='sssssssssss';
+$stmt1->bind_param($ss,$cantidad_detalle,$descuento,$cod_productoFK,$precio_producto,$cod_ventaFK,$subtotal,$subPrecioCompra,$comision,$detalleproducto,$cod_aperturaCajaFK,$nroventaDetalle);
 
 if (!$stmt1->execute()) {
 	
@@ -647,8 +672,9 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.
 exit;
 }
 
-$consulta="Insert into credito (plazo, 	fechapago, cod_venta, Monto, Esado,Nro_recibo,descuento)
-			values('Contado','$fecha_venta','$cod_venta','$Monto','Pendiente','0','$descuento')";
+$nroventaCredito = trim((string)$nro_comprobante) != "" ? $nro_comprobante : $cod_venta;
+$consulta="Insert into credito (plazo,fechapago,cod_venta,Monto,Esado,Nro_recibo,dias,interes,totalinteres,totaldeuda,total,descuento,deudaInteres,nroventa)
+			values('Contado','$fecha_venta','$cod_venta','$Monto','Pendiente','0','0','0','0','$Monto','$Monto','$descuento',0,'$nroventaCredito')";
 			
 $stmt = $mysqli->prepare($consulta);
 if ( ! $stmt->execute()) {
@@ -708,6 +734,7 @@ $totalRegistro=$_POST['TotalRegistro'];
 $totalRegistro = mb_convert_encoding((string)($totalRegistro), 'ISO-8859-1', 'UTF-8');
 
 $motivo='Cambio';
+$nroventaDetalle=obtenerNroVentaDetalle($mysqli,$cod_ventaFK,"");
 
 while($control<=$totalRegistro){
 	
@@ -740,15 +767,15 @@ $subtotal=($cantidad_detalle*$precio_producto)-$descuento;
 	
 if($cantidad_detalle!="" || $cod_productoFK!="" || $cod_ventaFK!=""  ){
 
-$consulta1="Insert into detalle_venta (cantidad_detalle,descuento,cod_productoFK,precio_producto,cod_ventaFK,subtotal,subPrecioCompra,estado,comision,detalleproducto)
-values(?,?,?,?,?,?,?,'Activo',?,?)";
+$consulta1="Insert into detalle_venta (cantidad_detalle,descuento,cod_productoFK,precio_producto,cod_ventaFK,subtotal,subPrecioCompra,estado,comision,detalleproducto,cod_aperturaCajaFK,nroventa)
+values(?,?,?,?,?,?,?,'Activo',?,?,0,?)";
 $stmt1 = $mysqli->prepare($consulta1);
-$ss='sssssssss';
-$stmt1->bind_param($ss,$cantidad_detalle,$descuento,$cod_productoFK,$precio_producto,$cod_ventaFK,$subtotal,$subPrecioCompra,$comision,$detalleproducto);
+$ss='ssssssssss';
+$stmt1->bind_param($ss,$cantidad_detalle,$descuento,$cod_productoFK,$precio_producto,$cod_ventaFK,$subtotal,$subPrecioCompra,$comision,$detalleproducto,$nroventaDetalle);
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -1267,6 +1294,10 @@ exit;
 function iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$descuento,$cod_local,$idGaranteFk){
 	
 	$mysqli=conectar_al_servidor(); 
+	$codSolicitudCreditoFK = trim((string)$codSolicitudCreditoFK);
+	if($codSolicitudCreditoFK=="" || !is_numeric($codSolicitudCreditoFK)){
+		$codSolicitudCreditoFK="0";
+	}
 	
 	if($num_factura==""){
 	if($tipo_comprobante=="FACTURA"){
@@ -1280,14 +1311,14 @@ function iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,
 	}
 	}
 		/*AUDITORIA*/
-	date_default_timezone_set('America/Anguilla');    
-$fecha_inser_edit = date('Y-m-d | h:i:sa', time()); 
+	date_default_timezone_set('America/Asuncion');    
+$fecha_inser_edit = date('Y-m-d H:i:s', time()); 
 	 $user=$_POST['useru'];
     $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
 
 
-	$consulta1="Insert into venta (idGaranteFk,fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2,comision,descuento,cod_local,tipo_comprobante,puntoexpedicion,codnrofactura,cod_user_insert,fecha_insert,codSolicitudCreditoFK)
-values($idGaranteFk,'$fecha_venta','0',$cod_usuarioFK,$cod_clienteFK,'$num_factura',$cod_cobradorFK,'$TipoVenta','$TipoPago','$vendedor1','$vendedor2','$comisioncobrador','$descuento',$cod_local,'$tipo_comprobante','$puntoexpedicion','$codnrofactura','$user','$fecha_inser_edit','$codSolicitudCreditoFK')";
+	$consulta1="Insert into venta (idGaranteFk,fecha_venta,total_venta,cod_usuarioFK,cod_clienteFK,num_factura,pago,cod_cobradorFK,TipoVenta,TipoPago,Vendedor1,Vendedor2,comision,descuento,cod_local,tipo_comprobante,puntoexpedicion,codnrofactura,cod_user_insert,fecha_insert,codSolicitudCreditoFK,apodo)
+values($idGaranteFk,'$fecha_venta','0',$cod_usuarioFK,$cod_clienteFK,'$num_factura',0,$cod_cobradorFK,'$TipoVenta','$TipoPago','$vendedor1','$vendedor2','$comisioncobrador','$descuento',$cod_local,'$tipo_comprobante','$puntoexpedicion','$codnrofactura','$user','$fecha_inser_edit','$codSolicitudCreditoFK','')";
 
 // echo($consulta1);
 // exit;
@@ -1299,7 +1330,7 @@ exit;
 
 }
 
-if($codSolicitudCreditoFK!="" || $codSolicitudCreditoFK!="0" ){
+if($codSolicitudCreditoFK!="" && $codSolicitudCreditoFK!="0" ){
 	$detalleVenta=$puntoexpedicion.'-'.$num_factura;
 	EditarSolicitud($codSolicitudCreditoFK,$detalleVenta,$cod_usuarioFK);
 }
@@ -3550,8 +3581,8 @@ $sobranteTotales=$sobranteTotales-$cuota;
 		 }
 		 $fechapago=date("Y-m-d H:i:s",$fecha);
 		 $plazo=($cont+1)."/".($cont+1);
-		 $consulta="Insert into credito (plazo,fechapago, cod_venta, Monto, Esado,Nro_recibo,dias,interes,total,descuento)
-			values('$plazo','$fechapago','$cod_venta','$sobranteTotales','Pendiente','0','$dias','$interes','$sobranteTotales','0')";	
+		 $consulta="Insert into credito (plazo,fechapago,cod_venta,Monto,Esado,Nro_recibo,dias,interes,totalinteres,totaldeuda,total,descuento,deudaInteres,nroventa)
+			values('$plazo','$fechapago','$cod_venta','$sobranteTotales','Pendiente','0','$dias','$interes','0','$sobranteTotales','$sobranteTotales','0',0,'$cod_venta')";	
 
 	$stmt = $mysqli->prepare($consulta);
 
