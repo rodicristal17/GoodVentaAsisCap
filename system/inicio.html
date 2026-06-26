@@ -26144,7 +26144,7 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 </td>
 <td style='width:12%;text-align:left'>
 <p class='pTituloC'>Cuenta</p>
-<input class='inputText' type='text' id='inptUenoCuenta' style='width:135px'>
+<input class='inputText' type='text' id='inptUenoCuenta' style='width:135px' onchange='uenoPrevalidarPreview()'>
 </td>
 <td style='width:18%;text-align:left'>
 <p class='pTituloC'>Denominacion / titular</p>
@@ -26194,19 +26194,20 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>2. Vista previa del extracto</p>
-<p class='ueno-section-help'>Se muestran las primeras filas para revisar el formato. La importacion procesa todos los movimientos leidos.</p>
+<p class='ueno-section-help'>Se muestran las primeras filas para revisar el formato. Los movimientos ya importados se detectan y no se vuelven a migrar.</p>
 </div>
 </div>
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:10%;">F. CONF.</td>
-<td class="td_registro" style="width:10%;">F. TRANS.</td>
-<td class="td_registro" style="width:16%;">COMPROBANTE</td>
-<td class="td_registro" style="width:24%;">DESCRIPCION</td>
+<td class="td_registro" style="width:9%;">F. CONF.</td>
+<td class="td_registro" style="width:9%;">F. TRANS.</td>
+<td class="td_registro" style="width:14%;">COMPROBANTE</td>
+<td class="td_registro" style="width:22%;">DESCRIPCION</td>
 <td class="td_registro" style="width:16%;">CONCEPTO</td>
-<td class="td_registro" style="width:12%;">DEBITO</td>
-<td class="td_registro" style="width:12%;">CREDITO</td>
+<td class="td_registro" style="width:10%;">DEBITO</td>
+<td class="td_registro" style="width:10%;">CREDITO</td>
+<td class="td_registro" style="width:10%;">ESTADO</td>
 </tr>
 </tbody>
 </table>

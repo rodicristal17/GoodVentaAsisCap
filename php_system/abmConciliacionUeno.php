@@ -910,6 +910,190 @@ function ueno_asignar_movimiento_manual($usuario)
 	}
 }
 
+function ueno_normalizar_movimientos_importacion($movimientos, $cuenta)
+{
+	$cantidad_movimientos = 0;
+	$cantidad_creditos = 0;
+	$cantidad_debitos = 0;
+	$total_creditos = 0;
+	$total_debitos = 0;
+	$normalizados = array();
+
+	foreach ($movimientos as $indice => $mov) {
+		if (!is_array($mov)) {
+			continue;
+		}
+		$nro = isset($mov["nro_comprobante"]) ? trim((string)$mov["nro_comprobante"]) : "";
+		$credito = ueno_monto(isset($mov["importe_credito"]) ? $mov["importe_credito"] : 0);
+		$debito = ueno_monto(isset($mov["importe_debito"]) ? $mov["importe_debito"] : 0);
+		if ($nro == "" && $credito == 0 && $debito == 0) {
+			continue;
+		}
+
+		$fecha_confirmacion = ueno_fecha(isset($mov["fecha_confirmacion"]) ? $mov["fecha_confirmacion"] : "");
+		$fecha_transaccion = ueno_fecha(isset($mov["fecha_transaccion"]) ? $mov["fecha_transaccion"] : "");
+		$descripcion = isset($mov["descripcion"]) ? ueno_to_db($mov["descripcion"]) : "";
+		$concepto = isset($mov["concepto"]) ? ueno_to_db($mov["concepto"]) : "";
+		$saldo_banco = isset($mov["saldo_banco"]) && $mov["saldo_banco"] !== "" ? ueno_monto($mov["saldo_banco"]) : null;
+		$tipo_movimiento = $credito > 0 ? "credito" : ($debito > 0 ? "debito" : "otro");
+		$estado = $credito > 0 ? "disponible" : "registrado";
+		$monto_disponible = $credito > 0 ? $credito : 0;
+		$hash_movimiento = sha1($cuenta . "|" . $nro . "|" . $fecha_confirmacion . "|" . $fecha_transaccion . "|" . $credito . "|" . $debito . "|" . $descripcion . "|" . $concepto);
+
+		$normalizados[] = array(
+			"indice" => is_numeric($indice) ? (int)$indice : count($normalizados),
+			"fecha_confirmacion" => $fecha_confirmacion,
+			"fecha_transaccion" => $fecha_transaccion,
+			"nro_comprobante" => ueno_to_db($nro),
+			"descripcion" => $descripcion,
+			"concepto" => $concepto,
+			"importe_debito" => $debito,
+			"importe_credito" => $credito,
+			"tipo_movimiento" => $tipo_movimiento,
+			"saldo_banco" => $saldo_banco,
+			"monto_disponible" => $monto_disponible,
+			"estado" => $estado,
+			"hash_movimiento" => $hash_movimiento
+		);
+
+		$cantidad_movimientos++;
+		if ($credito > 0) {
+			$cantidad_creditos++;
+			$total_creditos += $credito;
+		}
+		if ($debito > 0) {
+			$cantidad_debitos++;
+			$total_debitos += $debito;
+		}
+	}
+
+	return array(
+		"normalizados" => $normalizados,
+		"cantidad_movimientos" => $cantidad_movimientos,
+		"cantidad_creditos" => $cantidad_creditos,
+		"cantidad_debitos" => $cantidad_debitos,
+		"total_creditos" => $total_creditos,
+		"total_debitos" => $total_debitos
+	);
+}
+
+function ueno_buscar_movimientos_existentes_por_hash($mysqli, $hashes)
+{
+	$existentes = array();
+	if (!is_array($hashes) || count($hashes) == 0) {
+		return $existentes;
+	}
+
+	$stmt = $mysqli->prepare("SELECT id_movimiento, id_importacion, hash_movimiento, estado, fecha_hora_registro FROM ueno_movimiento_bancario WHERE hash_movimiento=? LIMIT 1");
+	if (!$stmt) {
+		throw new Exception($mysqli->error);
+	}
+	$hashParametro = "";
+	$stmt->bind_param("s", $hashParametro);
+	$consultados = array();
+
+	foreach ($hashes as $hash) {
+		$hash = (string)$hash;
+		if ($hash == "" || isset($consultados[$hash])) {
+			continue;
+		}
+		$consultados[$hash] = true;
+		$hashParametro = $hash;
+		if (!$stmt->execute()) {
+			throw new Exception($stmt->error);
+		}
+		$result = $stmt->get_result();
+		if ($result && ($row = mysqli_fetch_assoc($result))) {
+			$existentes[$hash] = $row;
+		}
+	}
+
+	return $existentes;
+}
+
+function ueno_prevalidar_importacion($usuario)
+{
+	$mysqli = conectar_al_servidor();
+	if (!ueno_tablas_requeridas_ok($mysqli)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "tablasfaltantes", "2" => "Falta ejecutar actualizacion_10062026_conciliacion_ueno.sql"));
+	}
+
+	$cuenta = ueno_post("cuenta");
+	$json = isset($_POST["movimientos_json"]) ? $_POST["movimientos_json"] : "";
+	if ($cuenta == "" || $json == "") {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "camposvacio", "2" => "Faltan datos para verificar el extracto"));
+	}
+
+	$movimientos = json_decode($json, true);
+	if (!is_array($movimientos)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "jsoninvalido", "2" => "No se pudo interpretar el listado de movimientos"));
+	}
+
+	try {
+		$normalizacion = ueno_normalizar_movimientos_importacion($movimientos, $cuenta);
+		$normalizados = $normalizacion["normalizados"];
+		$hashes = array();
+		foreach ($normalizados as $mov) {
+			$hashes[] = $mov["hash_movimiento"];
+		}
+		$existentes = ueno_buscar_movimientos_existentes_por_hash($mysqli, $hashes);
+		$vistosArchivo = array();
+		$respuestaMovimientos = array();
+		$nuevos = 0;
+		$duplicados = 0;
+
+		foreach ($normalizados as $mov) {
+			$hash = $mov["hash_movimiento"];
+			$estado = "nuevo";
+			$detalle = "Movimiento nuevo, listo para importar";
+			$idMovimiento = "";
+			$idImportacion = "";
+
+			if (isset($existentes[$hash])) {
+				$estado = "ya_importado";
+				$idMovimiento = $existentes[$hash]["id_movimiento"];
+				$idImportacion = $existentes[$hash]["id_importacion"];
+				$detalle = "Ya importado en movimiento #" . $idMovimiento . " / importacion #" . $idImportacion;
+				$duplicados++;
+			} else if (isset($vistosArchivo[$hash])) {
+				$estado = "repetido_archivo";
+				$detalle = "Repetido dentro del mismo archivo";
+				$duplicados++;
+			} else {
+				$nuevos++;
+			}
+
+			$vistosArchivo[$hash] = true;
+			$respuestaMovimientos[] = array(
+				"indice" => $mov["indice"],
+				"estado" => $estado,
+				"detalle" => $detalle,
+				"id_movimiento" => $idMovimiento,
+				"id_importacion" => $idImportacion
+			);
+		}
+
+		mysqli_close($mysqli);
+		ueno_json(array(
+			"1" => "exito",
+			"movimientos_leidos" => $normalizacion["cantidad_movimientos"],
+			"movimientos_nuevos" => $nuevos,
+			"movimientos_duplicados" => $duplicados,
+			"cantidad_creditos" => $normalizacion["cantidad_creditos"],
+			"cantidad_debitos" => $normalizacion["cantidad_debitos"],
+			"total_creditos" => number_format($normalizacion["total_creditos"], 0, ",", "."),
+			"total_debitos" => number_format($normalizacion["total_debitos"], 0, ",", "."),
+			"movimientos" => $respuestaMovimientos
+		));
+	} catch (Exception $e) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $e->getMessage()));
+	}
+}
+
 function ueno_insertar_importacion($usuario)
 {
 	$mysqli = conectar_al_servidor();
@@ -963,63 +1147,57 @@ function ueno_insertar_importacion($usuario)
 		));
 	}
 
-	$cantidad_movimientos = 0;
-	$cantidad_creditos = 0;
-	$cantidad_debitos = 0;
-	$total_creditos = 0;
-	$total_debitos = 0;
-	$normalizados = array();
-
-	foreach ($movimientos as $mov) {
-		if (!is_array($mov)) {
-			continue;
-		}
-		$nro = isset($mov["nro_comprobante"]) ? trim((string)$mov["nro_comprobante"]) : "";
-		$credito = ueno_monto(isset($mov["importe_credito"]) ? $mov["importe_credito"] : 0);
-		$debito = ueno_monto(isset($mov["importe_debito"]) ? $mov["importe_debito"] : 0);
-		if ($nro == "" && $credito == 0 && $debito == 0) {
-			continue;
-		}
-
-		$fecha_confirmacion = ueno_fecha(isset($mov["fecha_confirmacion"]) ? $mov["fecha_confirmacion"] : "");
-		$fecha_transaccion = ueno_fecha(isset($mov["fecha_transaccion"]) ? $mov["fecha_transaccion"] : "");
-		$descripcion = isset($mov["descripcion"]) ? ueno_to_db($mov["descripcion"]) : "";
-		$concepto = isset($mov["concepto"]) ? ueno_to_db($mov["concepto"]) : "";
-		$saldo_banco = isset($mov["saldo_banco"]) && $mov["saldo_banco"] !== "" ? ueno_monto($mov["saldo_banco"]) : null;
-		$tipo_movimiento = $credito > 0 ? "credito" : ($debito > 0 ? "debito" : "otro");
-		$estado = $credito > 0 ? "disponible" : "registrado";
-		$monto_disponible = $credito > 0 ? $credito : 0;
-		$hash_movimiento = sha1($cuenta . "|" . $nro . "|" . $fecha_confirmacion . "|" . $fecha_transaccion . "|" . $credito . "|" . $debito . "|" . $descripcion . "|" . $concepto);
-
-		$normalizados[] = array(
-			"fecha_confirmacion" => $fecha_confirmacion,
-			"fecha_transaccion" => $fecha_transaccion,
-			"nro_comprobante" => ueno_to_db($nro),
-			"descripcion" => $descripcion,
-			"concepto" => $concepto,
-			"importe_debito" => $debito,
-			"importe_credito" => $credito,
-			"tipo_movimiento" => $tipo_movimiento,
-			"saldo_banco" => $saldo_banco,
-			"monto_disponible" => $monto_disponible,
-			"estado" => $estado,
-			"hash_movimiento" => $hash_movimiento
-		);
-
-		$cantidad_movimientos++;
-		if ($credito > 0) {
-			$cantidad_creditos++;
-			$total_creditos += $credito;
-		}
-		if ($debito > 0) {
-			$cantidad_debitos++;
-			$total_debitos += $debito;
-		}
-	}
+	$normalizacion = ueno_normalizar_movimientos_importacion($movimientos, $cuenta);
+	$normalizados = $normalizacion["normalizados"];
+	$cantidad_movimientos = $normalizacion["cantidad_movimientos"];
+	$cantidad_creditos = $normalizacion["cantidad_creditos"];
+	$cantidad_debitos = $normalizacion["cantidad_debitos"];
+	$total_creditos = $normalizacion["total_creditos"];
+	$total_debitos = $normalizacion["total_debitos"];
 
 	if ($cantidad_movimientos == 0) {
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "sinmovimientos", "2" => "No se encontraron movimientos validos"));
+	}
+
+	$hashes = array();
+	foreach ($normalizados as $mov) {
+		$hashes[] = $mov["hash_movimiento"];
+	}
+	try {
+		$existentesAntes = ueno_buscar_movimientos_existentes_por_hash($mysqli, $hashes);
+	} catch (Exception $e) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $e->getMessage()));
+	}
+	$vistosArchivo = array();
+	$nuevosPrevios = 0;
+	foreach ($normalizados as $mov) {
+		$hash = $mov["hash_movimiento"];
+		if (isset($existentesAntes[$hash]) || isset($vistosArchivo[$hash])) {
+			$vistosArchivo[$hash] = true;
+			continue;
+		}
+		$vistosArchivo[$hash] = true;
+		$nuevosPrevios++;
+	}
+	if ($nuevosPrevios == 0) {
+		mysqli_close($mysqli);
+		ueno_json(array(
+			"1" => "exito",
+			"estado_importacion" => "sin_movimientos_nuevos",
+			"2" => "Todos los movimientos del extracto ya fueron importados",
+			"id_importacion" => "",
+			"movimientos_leidos" => $cantidad_movimientos,
+			"movimientos_nuevos" => 0,
+			"movimientos_duplicados" => $cantidad_movimientos,
+			"cantidad_creditos" => $cantidad_creditos,
+			"cantidad_debitos" => $cantidad_debitos,
+			"total_creditos" => number_format($total_creditos, 0, ",", "."),
+			"total_debitos" => number_format($total_debitos, 0, ",", "."),
+			"conciliacion" => ueno_resumen_conciliacion_vacio(),
+			"tabla" => ""
+		));
 	}
 
 	$mysqli->begin_transaction();
@@ -2492,6 +2670,9 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 
 	if ($operacion == "guardar_importacion") {
 		ueno_insertar_importacion($usuario);
+	}
+	if ($operacion == "prevalidar_importacion") {
+		ueno_prevalidar_importacion($usuario);
 	}
 	if ($operacion == "buscar_importaciones") {
 		ueno_buscar_importaciones();

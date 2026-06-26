@@ -6,6 +6,7 @@ var uenoMovimientoTrabajo = null;
 var uenoCuotaGoodVentaSeleccionada = null;
 var uenoFiltroRapidoMovimientos = "todos";
 var uenoMesaSoloConsulta = true;
+var uenoPreviewValidando = false;
 
 function uenoAvisarMesaSoloConsulta() {
 	ver_vetana_informativa("No se puede procesar pagos desde la mesa de trabajo. Utiliza el modulo de caja/cobros.", "", "error");
@@ -384,7 +385,7 @@ function uenoAgregarSeparadoresFechaMovimientos() {
 }
 
 function uenoModernizarVista() {
-	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito"], null);
+	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito", "Estado"], 7);
 	uenoModernizarTabla("table_ueno_resumen_tesoreria", ["Local", "Turno", "Caja", "Lote", "Apertura", "Cierre", "Caja", "Transf. GV", "Conc.", "Pend.", "Obs.", "S/C", "Estado"], 12);
 	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
 	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Usuario", "Accion"], 9);
@@ -809,6 +810,7 @@ function uenoProcesarArchivo(event) {
 				document.getElementById("inptUenoHash").value = hash;
 				document.getElementById("inptUenoCantidadLeida").value = separadordemilesnumero(String(uenoMovimientosPreview.length));
 				uenoRenderPreview(uenoMovimientosPreview);
+				uenoPrevalidarPreview();
 			}).catch(function(errorHash) {
 				ver_vetana_informativa("No se pudo calcular el hash del archivo", String(errorHash), "error");
 			});
@@ -817,6 +819,139 @@ function uenoProcesarArchivo(event) {
 		}
 	};
 	reader.readAsArrayBuffer(file);
+}
+
+function uenoEstadoPreviewTexto(mov) {
+	var estado = mov && mov.estado_importacion_preview ? String(mov.estado_importacion_preview) : "";
+	if (estado == "ya_importado") {
+		return "Ya importado";
+	}
+	if (estado == "repetido_archivo") {
+		return "Repetido en archivo";
+	}
+	if (estado == "nuevo") {
+		return "Nuevo";
+	}
+	if (uenoPreviewValidando) {
+		return "Verificando";
+	}
+	return "Sin verificar";
+}
+
+function uenoEstadoPreviewClase(mov) {
+	var estado = mov && mov.estado_importacion_preview ? String(mov.estado_importacion_preview) : "";
+	if (estado == "ya_importado" || estado == "repetido_archivo") {
+		return " ueno-preview-duplicate";
+	}
+	if (estado == "nuevo") {
+		return " ueno-preview-new";
+	}
+	return "";
+}
+
+function uenoContarPreviewPorEstado() {
+	var resumen = { nuevos: 0, duplicados: 0, sin_verificar: 0 };
+	for (var i = 0; i < uenoMovimientosPreview.length; i++) {
+		var estado = String(uenoMovimientosPreview[i].estado_importacion_preview || "");
+		if (estado == "ya_importado" || estado == "repetido_archivo") {
+			resumen.duplicados++;
+		} else if (estado == "nuevo") {
+			resumen.nuevos++;
+		} else {
+			resumen.sin_verificar++;
+		}
+	}
+	return resumen;
+}
+
+function uenoMostrarResumenPreview(mensajeExtra, alerta) {
+	var contenedor = document.getElementById("divUenoResumenImportacion");
+	if (!contenedor) {
+		return;
+	}
+	var resumen = uenoContarPreviewPorEstado();
+	var clase = alerta ? " ueno-import-summary--alert" : "";
+	var html = "<div class='ueno-import-summary" + clase + "'>"
+		+ "<b>Vista previa</b>"
+		+ "<span>Leidos: " + uenoEscapeHtml(String(uenoMovimientosPreview.length)) + "</span>"
+		+ "<span>Nuevos: " + uenoEscapeHtml(String(resumen.nuevos)) + "</span>"
+		+ "<span>Ya importados: " + uenoEscapeHtml(String(resumen.duplicados)) + "</span>";
+	if (resumen.sin_verificar > 0) {
+		html += "<span>Sin verificar: " + uenoEscapeHtml(String(resumen.sin_verificar)) + "</span>";
+	}
+	if (mensajeExtra) {
+		html += "<span>" + uenoEscapeHtml(mensajeExtra) + "</span>";
+	}
+	html += "</div>";
+	contenedor.innerHTML = html;
+}
+
+function uenoPrevalidarPreview() {
+	if (!uenoMovimientosPreview.length) {
+		uenoMostrarResumenPreview("", false);
+		return;
+	}
+	var cuenta = document.getElementById("inptUenoCuenta") ? document.getElementById("inptUenoCuenta").value : "";
+	if (cuenta == "") {
+		uenoMostrarResumenPreview("Completa la cuenta para verificar duplicados", true);
+		return;
+	}
+	if (!uenoTienePermiso("IMPORTAREXTRACTOUENO")) {
+		return;
+	}
+
+	uenoPreviewValidando = true;
+	uenoRenderPreview(uenoMovimientosPreview);
+	uenoMostrarResumenPreview("Verificando contra la base de datos...", false);
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "prevalidar_importacion");
+	datos.append("cuenta", cuenta);
+	datos.append("movimientos_json", JSON.stringify(uenoMovimientosPreview));
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			uenoPreviewValidando = false;
+			try {
+				var datos = $.parseJSON(responseText);
+				if (datos["1"] != "exito") {
+					uenoMostrarResumenPreview(datos["2"] || "No se pudo verificar duplicados", true);
+					uenoRenderPreview(uenoMovimientosPreview);
+					return;
+				}
+				var movimientos = datos["movimientos"] || [];
+				for (var i = 0; i < movimientos.length; i++) {
+					var item = movimientos[i];
+					var indice = parseInt(item["indice"], 10);
+					if (!isNaN(indice) && uenoMovimientosPreview[indice]) {
+						uenoMovimientosPreview[indice].estado_importacion_preview = item["estado"];
+						uenoMovimientosPreview[indice].detalle_importacion_preview = item["detalle"] || "";
+						uenoMovimientosPreview[indice].id_movimiento_existente = item["id_movimiento"] || "";
+						uenoMovimientosPreview[indice].id_importacion_existente = item["id_importacion"] || "";
+					}
+				}
+				uenoRenderPreview(uenoMovimientosPreview);
+				uenoMostrarResumenPreview("", false);
+			} catch (error) {
+				uenoMostrarResumenPreview("No se pudo interpretar la verificacion", true);
+				uenoRenderPreview(uenoMovimientosPreview);
+			}
+		},
+		error: function(jqXHR, textstatus) {
+			uenoPreviewValidando = false;
+			uenoMostrarResumenPreview("No se pudo verificar duplicados: " + textstatus, true);
+			uenoRenderPreview(uenoMovimientosPreview);
+		}
+	});
 }
 
 function uenoRenderPreview(movimientos) {
@@ -831,14 +966,18 @@ function uenoRenderPreview(movimientos) {
 		if (i >= limitePreview) {
 			continue;
 		}
-		html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr>"
-			+ "<td style='width:10%'>" + uenoEscapeHtml(mov.fecha_confirmacion || "") + "</td>"
-			+ "<td style='width:10%'>" + uenoEscapeHtml(mov.fecha_transaccion || "") + "</td>"
-			+ "<td style='width:16%'>" + uenoEscapeHtml(mov.nro_comprobante || "") + "</td>"
-			+ "<td style='width:24%'>" + uenoEscapeHtml(mov.descripcion || "") + "</td>"
+		var estadoTexto = uenoEstadoPreviewTexto(mov);
+		var detalleEstado = mov.detalle_importacion_preview || "";
+		var titleEstado = detalleEstado ? " title='" + uenoEscapeHtml(detalleEstado) + "'" : "";
+		html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr class='" + uenoEstadoPreviewClase(mov) + "'>"
+			+ "<td style='width:9%'>" + uenoEscapeHtml(mov.fecha_confirmacion || "") + "</td>"
+			+ "<td style='width:9%'>" + uenoEscapeHtml(mov.fecha_transaccion || "") + "</td>"
+			+ "<td style='width:14%'>" + uenoEscapeHtml(mov.nro_comprobante || "") + "</td>"
+			+ "<td style='width:22%'>" + uenoEscapeHtml(mov.descripcion || "") + "</td>"
 			+ "<td style='width:16%'>" + uenoEscapeHtml(mov.concepto || "") + "</td>"
-			+ "<td style='width:12%;text-align:right'>" + uenoEscapeHtml(uenoFormatoMonto(mov.importe_debito || "0")) + "</td>"
-			+ "<td style='width:12%;text-align:right'>" + uenoEscapeHtml(uenoFormatoMonto(mov.importe_credito || "0")) + "</td>"
+			+ "<td style='width:10%;text-align:right'>" + uenoEscapeHtml(uenoFormatoMonto(mov.importe_debito || "0")) + "</td>"
+			+ "<td style='width:10%;text-align:right'>" + uenoEscapeHtml(uenoFormatoMonto(mov.importe_credito || "0")) + "</td>"
+			+ "<td style='width:10%;text-align:center'" + titleEstado + ">" + uenoEscapeHtml(estadoTexto) + "</td>"
 			+ "</tr></table>";
 	}
 	if (movimientos.length > limitePreview) {
@@ -859,6 +998,15 @@ function uenoGuardarImportacion() {
 	}
 	if (uenoMovimientosPreview.length == 0) {
 		ver_vetana_informativa("Primero selecciona y revisa un extracto Ueno");
+		return;
+	}
+	if (uenoPreviewValidando) {
+		ver_vetana_informativa("Espera a que termine la verificacion de movimientos ya importados");
+		return;
+	}
+	var resumenPreview = uenoContarPreviewPorEstado();
+	if (resumenPreview.nuevos == 0 && resumenPreview.sin_verificar == 0) {
+		ver_vetana_informativa("Todos los movimientos del extracto ya fueron importados. No se migrara ningun registro duplicado.", "", "error");
 		return;
 	}
 	var cuenta = document.getElementById("inptUenoCuenta").value;
@@ -927,7 +1075,13 @@ function uenoGuardarImportacion() {
 }
 
 function uenoMostrarResumenImportacion(datos) {
-	var estado = datos["estado_importacion"] == "duplicado_archivo" ? "Archivo repetido" : "Extracto importado";
+	var estado = "Extracto importado";
+	if (datos["estado_importacion"] == "duplicado_archivo") {
+		estado = "Archivo repetido";
+	}
+	if (datos["estado_importacion"] == "sin_movimientos_nuevos") {
+		estado = "Sin movimientos nuevos";
+	}
 	var html = "<div class='ueno-import-summary'>"
 		+ "<b>" + estado + "</b>"
 		+ "<span>Leidos: " + (datos["movimientos_leidos"] || "0") + "</span>"

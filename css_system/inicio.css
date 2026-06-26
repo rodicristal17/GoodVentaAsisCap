@@ -36739,6 +36739,16 @@ button.tratamiento-ubicacion-visual {
   color: #7f1d1d !important;
 }
 
+#divConciliacionUeno .ueno-preview-duplicate td {
+  background: #fff7ed !important;
+  color: #7c2d12 !important;
+}
+
+#divConciliacionUeno .ueno-preview-new td {
+  background: #edfdf4 !important;
+  color: #14532d !important;
+}
+
 #divConciliacionUeno .ueno-row-selected td {
   background: #e0f2fe !important;
   color: #0f3d5e !important;
@@ -37036,6 +37046,13 @@ button.tratamiento-ubicacion-visual {
   border-left-color: #ef4444;
   background: #fff1f2;
   color: #7f1d1d;
+}
+
+#divConciliacionUeno .ueno-import-summary--alert {
+  border-color: #fed7aa;
+  border-left-color: #f97316;
+  background: #fff7ed;
+  color: #7c2d12;
 }
 
 #divConciliacionUeno .ueno-manual-panel {
