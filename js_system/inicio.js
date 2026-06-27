@@ -29399,6 +29399,14 @@ var cajaControlSeleccionActual = null;
 var cajaControlFiltroRapido = "";
 var cajaControlDetalleAbierto = false;
 var cajaControlResumenPeriodoAbierto = false;
+var cajaControlPaginaActual = 1;
+var cajaControlLimitePagina = 20;
+var cajaControlTotalRegistros = 0;
+var cajaControlTotalPaginas = 1;
+var cajaControlDesdeRegistro = 0;
+var cajaControlHastaRegistro = 0;
+var cajaControlBusquedaTimer = null;
+var cajaControlSolicitudActual = 0;
 
 function cajaControlEl(id) {
 	return document.getElementById(id);
@@ -29585,6 +29593,11 @@ function cajaControlLimpiarVista() {
 	cajaControlFiltroRapido = "";
 	cajaControlDetalleAbierto = false;
 	cajaControlResumenPeriodoAbierto = false;
+	cajaControlPaginaActual = 1;
+	cajaControlTotalRegistros = 0;
+	cajaControlTotalPaginas = 1;
+	cajaControlDesdeRegistro = 0;
+	cajaControlHastaRegistro = 0;
 	if (cajaControlEl("table_caja_control_lotes")) {
 		cajaControlEl("table_caja_control_lotes").innerHTML = "";
 	}
@@ -29599,6 +29612,12 @@ function cajaControlLimpiarVista() {
 	}
 	if (cajaControlEl("cajaControlSeleccionBar")) {
 		cajaControlEl("cajaControlSeleccionBar").innerHTML = "";
+	}
+	if (cajaControlEl("cajaControlEstadoListado")) {
+		cajaControlEl("cajaControlEstadoListado").innerHTML = "";
+	}
+	if (cajaControlEl("cajaControlPaginacion")) {
+		cajaControlEl("cajaControlPaginacion").innerHTML = "";
 	}
 	cajaControlRenderDetalleVacio();
 	var extendido = cajaControlEl("cajaControlDetalleExtendido");
@@ -29618,7 +29637,7 @@ function cajaControlLimpiarFiltros() {
 	cajaControlSetValor("cajaControlBusquedaRapida", "");
 	cajaControlFiltroRapido = "";
 	cajaControlResumenPeriodoAbierto = false;
-	cajaControlBuscar();
+	cajaControlBuscar(1);
 }
 
 function cajaControlEstadoBackend() {
@@ -29629,12 +29648,27 @@ function cajaControlEstadoBackend() {
 	return estado;
 }
 
-function cajaControlBuscar() {
+function cajaControlBuscar(pagina) {
 	if (typeof controlacceso == "function" && controlacceso("VERCONSULTADECAJA","accion") == false) { return; }
 	cajaControlPreparar();
+	if (cajaControlBusquedaTimer) {
+		clearTimeout(cajaControlBusquedaTimer);
+		cajaControlBusquedaTimer = null;
+	}
+	pagina = parseInt(pagina == null ? 1 : pagina, 10);
+	if (isNaN(pagina) || pagina <= 0) {
+		pagina = 1;
+	}
+	cajaControlPaginaActual = pagina;
 	var tabla = cajaControlEl("table_caja_control_lotes");
 	if (tabla) {
 		tabla.innerHTML = paginacargando;
+	}
+	if (cajaControlEl("cajaControlEstadoListado")) {
+		cajaControlEl("cajaControlEstadoListado").innerHTML = "<span>Cargando registros de caja...</span>";
+	}
+	if (cajaControlEl("cajaControlPaginacion")) {
+		cajaControlEl("cajaControlPaginacion").innerHTML = "";
 	}
 	cajaControlSeleccionActual = null;
 	cajaControlDetalleAbierto = false;
@@ -29655,8 +29689,12 @@ function cajaControlBuscar() {
 		"fechafin": cajaControlValor("cajaControlFechaHasta"),
 		"usuario": cajaControlValor("cajaControlFiltroUsuario"),
 		"lote": cajaControlValor("cajaControlFiltroLote"),
+		"busqueda": cajaControlValor("cajaControlBusquedaRapida"),
+		"pagina": cajaControlPaginaActual,
+		"limite": cajaControlLimitePagina,
 		"funt": "buscarvista"
 	};
+	var solicitud = ++cajaControlSolicitudActual;
 	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
@@ -29676,17 +29714,38 @@ function cajaControlBuscar() {
 			return xhr;
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
+			if (solicitud != cajaControlSolicitudActual) {
+				return;
+			}
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
 			if (tabla) {
 				tabla.innerHTML = "";
 			}
+			if (cajaControlEl("cajaControlEstadoListado")) {
+				cajaControlEl("cajaControlEstadoListado").innerHTML = "<span>No se pudo cargar el listado. Revisa la conexion o intenta nuevamente.</span>";
+			}
 		},
 		success: function (responseText) {
+			if (solicitud != cajaControlSolicitudActual) {
+				return;
+			}
 			try {
 				var datos = $.parseJSON(responseText);
 				var respuesta = respuestaJqueryAjax(datos["1"]);
 				if (respuesta == true) {
 					cajaControlRegistros = datos[10] || [];
+					cajaControlTotalRegistros = parseInt(datos[14] || datos[3] || 0, 10);
+					cajaControlPaginaActual = parseInt(datos[15] || cajaControlPaginaActual || 1, 10);
+					cajaControlLimitePagina = parseInt(datos[16] || cajaControlLimitePagina || 20, 10);
+					cajaControlTotalPaginas = parseInt(datos[17] || 1, 10);
+					cajaControlDesdeRegistro = parseInt(datos[18] || 0, 10);
+					cajaControlHastaRegistro = parseInt(datos[19] || 0, 10);
+					if (isNaN(cajaControlTotalRegistros)) { cajaControlTotalRegistros = 0; }
+					if (isNaN(cajaControlPaginaActual) || cajaControlPaginaActual <= 0) { cajaControlPaginaActual = 1; }
+					if (isNaN(cajaControlLimitePagina) || cajaControlLimitePagina <= 0) { cajaControlLimitePagina = 20; }
+					if (isNaN(cajaControlTotalPaginas) || cajaControlTotalPaginas <= 0) { cajaControlTotalPaginas = 1; }
+					if (isNaN(cajaControlDesdeRegistro)) { cajaControlDesdeRegistro = 0; }
+					if (isNaN(cajaControlHastaRegistro)) { cajaControlHastaRegistro = 0; }
 					cajaControlRender();
 					cajaControlActualizarTotalesCompatibles(datos);
 				}
@@ -29709,7 +29768,12 @@ function cajaControlActualizarTotalesCompatibles(datos) {
 }
 
 function cajaControlFiltrarRapido() {
-	cajaControlRender();
+	if (cajaControlBusquedaTimer) {
+		clearTimeout(cajaControlBusquedaTimer);
+	}
+	cajaControlBusquedaTimer = setTimeout(function () {
+		cajaControlBuscar(1);
+	}, 350);
 }
 
 function cajaControlFiltrarRegistros() {
@@ -29783,9 +29847,78 @@ function cajaControlRender() {
 	var registrosFiltrados = cajaControlFiltrarRegistros();
 	cajaControlRenderCards(cajaControlRegistros);
 	cajaControlRenderAlertas(cajaControlRegistros);
+	cajaControlRenderEstadoListado(registrosFiltrados);
 	cajaControlRenderListado(registrosFiltrados);
+	cajaControlRenderPaginacion();
 	cajaControlRenderTotales(registrosFiltrados);
 	cajaControlRenderSeleccionBar();
+}
+
+function cajaControlRenderEstadoListado(registrosFiltrados) {
+	var contenedor = cajaControlEl("cajaControlEstadoListado");
+	if (!contenedor) {
+		return;
+	}
+	var total = cajaControlTotalRegistros || 0;
+	var cargados = cajaControlRegistros.length;
+	var visibles = registrosFiltrados ? registrosFiltrados.length : cargados;
+	var busqueda = cajaControlValor("cajaControlBusquedaRapida");
+	if (total <= 0) {
+		contenedor.innerHTML = "<span>Sin registros para los filtros aplicados.</span>";
+		return;
+	}
+	var html = "<span><b>Mostrando " + cajaControlDesdeRegistro + " al " + cajaControlHastaRegistro + "</b> de " + total + " registros encontrados.</span>"
+		+ "<span>Pagina " + cajaControlPaginaActual + " de " + cajaControlTotalPaginas + " - " + cajaControlLimitePagina + " por pagina.</span>"
+		+ "<span>Indicadores y resumen: pagina actual.</span>";
+	if (busqueda != "") {
+		html += "<span>Busqueda: <b>" + cajaControlEscape(busqueda) + "</b></span>";
+	}
+	if (visibles != cargados) {
+		html += "<span>Vista actual: " + visibles + " de " + cargados + " registros cargados en esta pagina.</span>";
+	}
+	contenedor.innerHTML = html;
+}
+
+function cajaControlCambiarPagina(pagina) {
+	pagina = parseInt(pagina, 10);
+	if (isNaN(pagina) || pagina < 1 || pagina > cajaControlTotalPaginas || pagina == cajaControlPaginaActual) {
+		return;
+	}
+	cajaControlBuscar(pagina);
+}
+
+function cajaControlRenderPaginacion() {
+	var contenedor = cajaControlEl("cajaControlPaginacion");
+	if (!contenedor) {
+		return;
+	}
+	if (cajaControlTotalPaginas <= 1) {
+		contenedor.innerHTML = "";
+		return;
+	}
+	var pagina = cajaControlPaginaActual;
+	var total = cajaControlTotalPaginas;
+	var inicio = Math.max(1, pagina - 2);
+	var fin = Math.min(total, pagina + 2);
+	var html = "";
+	html += "<button type='button' class='btn4 caja-control-page-btn' " + (pagina <= 1 ? "disabled" : "onclick='cajaControlCambiarPagina(" + (pagina - 1) + ")'") + ">Anterior</button>";
+	if (inicio > 1) {
+		html += "<button type='button' class='btn4 caja-control-page-btn' onclick='cajaControlCambiarPagina(1)'>1</button>";
+		if (inicio > 2) {
+			html += "<span class='caja-control-page-gap'>...</span>";
+		}
+	}
+	for (var i = inicio; i <= fin; i++) {
+		html += "<button type='button' class='btn4 caja-control-page-btn" + (i == pagina ? " caja-control-page-btn--active" : "") + "' " + (i == pagina ? "disabled" : "onclick='cajaControlCambiarPagina(" + i + ")'") + ">" + i + "</button>";
+	}
+	if (fin < total) {
+		if (fin < total - 1) {
+			html += "<span class='caja-control-page-gap'>...</span>";
+		}
+		html += "<button type='button' class='btn4 caja-control-page-btn' onclick='cajaControlCambiarPagina(" + total + ")'>" + total + "</button>";
+	}
+	html += "<button type='button' class='btn4 caja-control-page-btn' " + (pagina >= total ? "disabled" : "onclick='cajaControlCambiarPagina(" + (pagina + 1) + ")'") + ">Siguiente</button>";
+	contenedor.innerHTML = html;
 }
 
 function cajaControlContarAlertas(registros) {
@@ -29976,7 +30109,7 @@ function cajaControlRenderTotales(registros) {
 		["Recibido", totales.recibido],
 		["Pendiente a migrar", totales.pendiente]
 	];
-	var html = "<b>Resumen del periodo filtrado</b>";
+	var html = "<b>Resumen de registros visibles</b>";
 	for (var i = 0; i < items.length; i++) {
 		html += "<span><small>" + items[i][0] + "</small><strong>" + cajaControlFormato(items[i][1]) + "</strong></span>";
 	}

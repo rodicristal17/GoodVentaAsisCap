@@ -104,8 +104,14 @@ $usuario=$_POST['usuario'];
 $usuario = mb_convert_encoding((string)($usuario), 'ISO-8859-1', 'UTF-8');
 $lote = $_POST['lote'];
 $lote = mb_convert_encoding((string)($lote), 'ISO-8859-1', 'UTF-8');
+$pagina = isset($_POST['pagina']) ? $_POST['pagina'] : 1;
+$pagina = mb_convert_encoding((string)($pagina), 'ISO-8859-1', 'UTF-8');
+$limite = isset($_POST['limite']) ? $_POST['limite'] : 100;
+$limite = mb_convert_encoding((string)($limite), 'ISO-8859-1', 'UTF-8');
+$busqueda = isset($_POST['busqueda']) ? $_POST['busqueda'] : "";
+$busqueda = mb_convert_encoding((string)($busqueda), 'ISO-8859-1', 'UTF-8');
 
-$informacion = buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote);
+$informacion = buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote,$pagina,$limite,$busqueda);
 echo json_encode($informacion);	
 exit;
 }
@@ -1150,41 +1156,91 @@ if ( ! $stmt->execute()) {
 
 
 /*Buscar Registro*/
-function buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote)
+function buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote,$pagina=1,$limite=100,$busqueda="")
 {
 $sqlFiltro= "";
 	
 $mysqli=conectar_al_servidor();
 
+$pagina = (int)$pagina;
+$limite = (int)$limite;
+if ($pagina <= 0) {
+	$pagina = 1;
+}
+if ($limite <= 0) {
+	$limite = 100;
+}
+if ($limite > 100) {
+	$limite = 100;
+}
+
+$fechaaperturaSql = $mysqli->real_escape_string($fechaapertura);
+$fechafinSql = $mysqli->real_escape_string($fechafin);
+$cajaSql = $mysqli->real_escape_string($caja);
+$estadoSql = $mysqli->real_escape_string($estado);
+$localSql = $mysqli->real_escape_string($local);
+$usuarioSql = $mysqli->real_escape_string($usuario);
+$loteSql = $mysqli->real_escape_string($lote);
+$busquedaSql = $mysqli->real_escape_string($busqueda);
+
 if ($fechaapertura != "") {
-    $sqlFiltro.= " AND DATE_FORMAT(fechaapertura, '%Y-%m-%d') >= '$fechaapertura'";
+    $sqlFiltro.= " AND DATE_FORMAT(fechaapertura, '%Y-%m-%d') >= '$fechaaperturaSql'";
 }
 
 if ($fechafin != "") {
     $fechaCierreFiltro = "NULLIF(NULLIF(CAST(fechacierre AS CHAR), ''), '0000-00-00 00:00:00')";
     $fechaAperturaFiltro = "NULLIF(NULLIF(CAST(fechaapertura AS CHAR), ''), '0000-00-00 00:00:00')";
-    $sqlFiltro.= " AND DATE_FORMAT(COALESCE($fechaCierreFiltro, $fechaAperturaFiltro), '%Y-%m-%d') <= '$fechafin'";
+    $sqlFiltro.= " AND DATE_FORMAT(COALESCE($fechaCierreFiltro, $fechaAperturaFiltro), '%Y-%m-%d') <= '$fechafinSql'";
 }
 
 if($caja!=""){
-$sqlFiltro.=" and (Select cajanro from caja l where l.idcaja=caja_idcaja) like '%".$caja."%'";	
+$sqlFiltro.=" and (Select cajanro from caja l where l.idcaja=caja_idcaja) like '%".$cajaSql."%'";
 }
 
 if($estado!=""){
-$sqlFiltro.=" and estado='$estado' ";	
+$sqlFiltro.=" and estado='$estadoSql' ";
 }
 
 if($local!=""){
-$sqlFiltro.=" and ap.cod_local='$local' ";	
+$sqlFiltro.=" and ap.cod_local='$localSql' ";
 }
 
 if($usuario!=""){
-$sqlFiltro.=" and (Select nombre_persona from persona where cod_persona=codusuarioap) like '%".$usuario."%'";		
+$sqlFiltro.=" and (Select nombre_persona from persona where cod_persona=codusuarioap) like '%".$usuarioSql."%'";
 }
 
 if ($lote != "") {
-    $sqlFiltro.= " AND lote like '%$lote%'";
+    $sqlFiltro.= " AND lote like '%$loteSql%'";
 }
+
+if ($busqueda != "") {
+    $sqlFiltro.= " AND (
+		lote like '%$busquedaSql%'
+		OR ap.estado like '%$busquedaSql%'
+		OR (Select cajanro from caja l where l.idcaja=caja_idcaja) like '%$busquedaSql%'
+		OR (Select nombre_persona from persona where cod_persona=codusuarioap) like '%$busquedaSql%'
+		OR (Select nombre_persona from persona where cod_persona=codusuarioce) like '%$busquedaSql%'
+		OR (Select Nombre from local l where l.cod_local=ap.cod_local) like '%$busquedaSql%'
+	)";
+}
+
+$sqlTotal = "Select count(*) as total from arqueocaja ap where estado!='Cancelado' ".$sqlFiltro;
+$stmtTotal = $mysqli->prepare($sqlTotal);
+if (!$stmtTotal || ! $stmtTotal->execute()) {
+echo trigger_error('The query execution failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
+exit;
+}
+$resultTotal = $stmtTotal->get_result();
+$totalRegistros = 0;
+if ($resultTotal && $filaTotal = mysqli_fetch_assoc($resultTotal)) {
+	$totalRegistros = (int)$filaTotal['total'];
+}
+$totalPaginas = $totalRegistros > 0 ? (int)ceil($totalRegistros / $limite) : 1;
+if ($pagina > $totalPaginas) {
+	$pagina = $totalPaginas;
+}
+$paginaActual = $pagina;
+$offset = ($pagina - 1) * $limite;
 
 $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertura, fechacierre, estado, codusuarioap, codusuarioce,cod_local,
 (Select cajanro from caja l where l.idcaja=caja_idcaja) as cajanro,
@@ -1200,7 +1256,7 @@ $sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertu
 (Select nombre_persona from persona where cod_persona=codusuarioce) as usuariocie,
 ap.cant500, ap.cant1000, ap.cant2000, ap.cant5000, ap.cant10000, ap.cant20000, ap.cant50000, ap.cant100000,
 (Select Nombre from local l where l.cod_local=ap.cod_local) as nombrelocal
-from arqueocaja ap where  estado!='Cancelado' ".$sqlFiltro." order by idarqueocaja desc limit 100  ";
+from arqueocaja ap where  estado!='Cancelado' ".$sqlFiltro." order by idarqueocaja desc limit ".$offset.", ".$limite."  ";
 
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
@@ -1385,8 +1441,10 @@ $registros[]= array(
 
 
 $Totaldiferencia = ($TotalCobrosEfectivo + $TotalIngreso) - $TotalEgreso;
+$desdeRegistro = $totalRegistros > 0 ? ($offset + 1) : 0;
+$hastaRegistro = $totalRegistros > 0 ? min($offset + $nroRegistro, $totalRegistros) : 0;
 
-return array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>number_format($Totaldiferencia,'0',',','.'),"5"=>number_format($TotalApertura,'0',',','.'),"6"=>number_format($TotalCierre,'0',',','.'),"7"=>number_format($TotalIngreso,'0',',','.'),"8"=>number_format($TotalEgreso,'0',',','.'),"9"=>number_format($TotalCobros,'0',',','.'), "10" => $registros, "11"=>number_format($TotalMigrado,'0',',','.'), "12"=>number_format($TotalRecibido,'0',',','.'), "13"=>number_format($TotalPendienteMigracion,'0',',','.'));
+return array("1" => "exito","2" => $pagina,"3" => $nroRegistro,"4"=>number_format($Totaldiferencia,'0',',','.'),"5"=>number_format($TotalApertura,'0',',','.'),"6"=>number_format($TotalCierre,'0',',','.'),"7"=>number_format($TotalIngreso,'0',',','.'),"8"=>number_format($TotalEgreso,'0',',','.'),"9"=>number_format($TotalCobros,'0',',','.'), "10" => $registros, "11"=>number_format($TotalMigrado,'0',',','.'), "12"=>number_format($TotalRecibido,'0',',','.'), "13"=>number_format($TotalPendienteMigracion,'0',',','.'), "14"=>$totalRegistros, "15"=>$paginaActual, "16"=>$limite, "17"=>$totalPaginas, "18"=>$desdeRegistro, "19"=>$hastaRegistro);
 }
 
 function buscarcajaapp($fecha1,$fecha2,$cobrador,$estado)

@@ -40648,6 +40648,71 @@ button.tratamiento-ubicacion-visual {
   overflow-y: auto;
 }
 
+#divConsultaCaja .caja-control-list-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-height: 30px;
+  padding: 6px 8px;
+  border-right: 1px solid #e1e9f2;
+  border-left: 1px solid #e1e9f2;
+  background: #f8fafc;
+  color: #475467;
+  font-size: 10.5px;
+  font-weight: 850;
+}
+
+#divConsultaCaja .caja-control-list-status b {
+  color: #172033;
+  font-weight: 950;
+}
+
+#divConsultaCaja .caja-control-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  min-height: 34px;
+  margin-top: 7px;
+}
+
+#divConsultaCaja .caja-control-page-btn {
+  min-width: 34px !important;
+  width: auto !important;
+  min-height: 28px !important;
+  padding: 0 9px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #233044 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+#divConsultaCaja .caja-control-page-btn--active {
+  border-color: #1f7a4d !important;
+  background: #eaf7f0 !important;
+  color: #14543a !important;
+  cursor: default;
+}
+
+#divConsultaCaja .caja-control-page-btn:disabled:not(.caja-control-page-btn--active) {
+  border-color: #e1e9f2 !important;
+  background: #f8fafc !important;
+  color: #94a3b8 !important;
+  cursor: default;
+}
+
+#divConsultaCaja .caja-control-page-gap {
+  min-width: 18px;
+  color: #738196;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 #divConsultaCaja .caja-control-row {
   min-height: 44px;
 }
