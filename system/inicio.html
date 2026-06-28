@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=caja-control-paginacion-20260627" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=presupuesto-nav-20260628" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -66,7 +66,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
 <script src="../js_system/abmRecetarioIndicaciones.js?x=20260605-recetario-historial-grupos"></script>
-<script src="../js_system/abmPresupuesto.js?x=presupuesto-paciente-opcional-20260626"></script>
+<script src="../js_system/abmPresupuesto.js?x=presupuesto-nav-20260628"></script>
 <script src="../js_system/odontograma.js?x=presupuesto-guia-asignacion-20260618"></script>
 <script src="../js_system/abmCliente.js?x=cliente-guardar-json-fechas-20260625"></script>
 <script src="../js_system/abmInformacionProtocolo.js"></script>
@@ -11284,6 +11284,10 @@ ACCION
         </section>
 
       <div id="presupuestoDocTrabajoPanel">
+          <div class="presupuesto-doc-nav presupuesto-rapido-nav" id="presupuestoDocNavegacionRapida">
+            <button type="button" class="presupuesto-accion-secundaria" id="btnPresupuestoRapidoAnterior" onclick="presupuestoDocPasoAnterior()">Volver</button>
+            <button type="button" class="btn4 presupuesto-accion-principal" id="btnPresupuestoRapidoPrincipal" onclick="presupuestoDocAccionPrincipal()">Confirmar y continuar</button>
+          </div>
         <div class="presupuesto-insumos-panel presupuesto-insumos-panel-doc">
           <div class="panel-title">Insumos del tratamiento</div>
           <div class="div_cuerpo_table presupuesto-insumos-lista" id="table_presupuesto_doc_insumos_producto"></div>
@@ -11313,10 +11317,6 @@ ACCION
           </table>
 
           <div class="div_cuerpo_table" id="table_vista_producto_presupuestoDetalle_doctor_resumen" style="background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);"></div>
-          <div class="presupuesto-doc-nav presupuesto-rapido-nav" style="margin-top:18px;">
-            <button type="button" class="presupuesto-accion-secundaria" id="btnPresupuestoRapidoAnterior" onclick="presupuestoDocPasoAnterior()">Volver</button>
-            <button type="button" class="btn4 presupuesto-accion-principal" id="btnPresupuestoRapidoPrincipal" onclick="presupuestoDocAccionPrincipal()">Confirmar y continuar</button>
-          </div>
           </section>
       </div>
       </div>
@@ -25703,13 +25703,6 @@ title='Cerrar Ventana' onclick='verCerrarInformeConsultaCaja()' />
 </td>
 </tr>
 </table>
-<br>
-<div class='caja-control-guide'>
-<b>Guia rapida</b>
-<span>Selecciona una caja del listado y usa Detalle para revisar cierre, impresion, movimientos o migracion.</span>
-</div>
-<div class='caja-control-cards' id='cajaControlCards'></div>
-<div class='caja-control-alertas' id='cajaControlAlertas'></div>
 <div class='divMenuf caja-control-filter-card'>
 <div class='caja-control-section-head'>
 <div>
@@ -26440,16 +26433,17 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:6%;">F. CONF.</td>
-<td class="td_registro" style="width:6%;">F. TRANS.</td>
-<td class="td_registro" style="width:10%;">COMPROBANTE</td>
-<td class="td_registro" style="width:16%;">DESCRIPCION</td>
-<td class="td_registro" style="width:10%;">CONCEPTO</td>
-<td class="td_registro" style="width:6%;">DEB.</td>
-<td class="td_registro" style="width:8%;">CREDITO</td>
-<td class="td_registro" style="width:8%;">APLICADO</td>
-<td class="td_registro" style="width:7%;">DISP.</td>
-<td class="td_registro" style="width:7%;">ESTADO</td>
+<td class="td_registro" style="width:5%;">F. CONF.</td>
+<td class="td_registro" style="width:5%;">F. TRANS.</td>
+<td class="td_registro" style="width:9%;">COMPROBANTE</td>
+<td class="td_registro" style="width:13%;">DESCRIPCION</td>
+<td class="td_registro" style="width:8%;">CONCEPTO</td>
+<td class="td_registro" style="width:5%;">DEB.</td>
+<td class="td_registro" style="width:7%;">CREDITO</td>
+<td class="td_registro" style="width:7%;">APLICADO</td>
+<td class="td_registro" style="width:6%;">DISP.</td>
+<td class="td_registro" style="width:6%;">ESTADO</td>
+<td class="td_registro" style="width:13%;">CLIENTE / VENTA</td>
 <td class="td_registro" style="width:7%;">USUARIO</td>
 <td class="td_registro" style="width:9%;">ACCION</td>
 </tr>
@@ -26548,6 +26542,45 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 </tbody>
 </table>
 <div class="div_cuerpo_table ueno-table-body" id="table_ueno_auditoria" style='height:130px;'></div>
+</div>
+</div>
+
+<div id='divUenoAuditoriaMovimientoPopup' class='ueno-audit-popup' style='display:none'>
+<div class='ueno-audit-dialog'>
+<div class='ueno-audit-dialog-head'>
+<div>
+<p class='ueno-section-title'>Aplicacion del movimiento Ueno</p>
+<p class='ueno-section-help' id='lblUenoAuditPopupContexto'>Trazabilidad del movimiento seleccionado.</p>
+</div>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+title='Cerrar Ventana' onclick='uenoCerrarAuditoriaMovimientoPopup()' />
+</div>
+<div class='ueno-audit-dialog-summary'>
+<span><b>Movimiento</b><strong id='lblUenoAuditPopupMovimiento'>-</strong></span>
+<span><b>Registros</b><strong id='lblUenoAuditPopupTotal'>0</strong></span>
+</div>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:4%;">ID</td>
+<td class="td_registro" style="width:10%;">FECHA</td>
+<td class="td_registro" style="width:11%;">ACCION</td>
+<td class="td_registro" style="width:10%;">TABLA</td>
+<td class="td_registro" style="width:7%;">FACTURA</td>
+<td class="td_registro" style="width:5%;">MOV.</td>
+<td class="td_registro" style="width:13%;">CLIENTE/CUOTA</td>
+<td class="td_registro" style="width:8%;">ANTES</td>
+<td class="td_registro" style="width:8%;">AHORA</td>
+<td class="td_registro" style="width:7%;">MONTO</td>
+<td class="td_registro" style="width:4%;">USER</td>
+<td class="td_registro" style="width:13%;">OBS.</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_auditoria_movimiento" style='height:340px;'></div>
+<div class='ueno-audit-dialog-footer'>
+<input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarAuditoriaMovimientoPopup()' style='width:120px'>
+</div>
 </div>
 </div>
 </center>

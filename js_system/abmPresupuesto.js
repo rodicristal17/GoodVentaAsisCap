@@ -1171,6 +1171,36 @@ function actualizarResumenPacientePresupuestoDoc() {
 	presupuestoDocActualizarEstado();
 }
 
+function presupuestoDocUbicarNavegacionRapida(paso) {
+	const nav = document.getElementById("presupuestoDocNavegacionRapida");
+	const lateral = document.getElementById("presupuestoDocLateralPanel");
+	const productos = document.getElementById("presupuestoDocProductosShell");
+	const trabajo = document.getElementById("presupuestoDocTrabajoPanel");
+	const insumos = trabajo ? trabajo.querySelector(".presupuesto-insumos-panel-doc") : null;
+
+	if (!nav) {
+		return;
+	}
+	if (paso == 3 && lateral && productos) {
+		if (nav.parentNode !== lateral || nav.nextElementSibling !== productos) {
+			lateral.insertBefore(nav, productos);
+		}
+		return;
+	}
+	if (!trabajo) {
+		return;
+	}
+	if (insumos) {
+		if (nav.parentNode !== trabajo || nav.nextElementSibling !== insumos) {
+			trabajo.insertBefore(nav, insumos);
+		}
+		return;
+	}
+	if (nav.parentNode !== trabajo) {
+		trabajo.insertBefore(nav, trabajo.firstChild);
+	}
+}
+
 function presupuestoDocActualizarEstado() {
 	const contenedor = document.getElementById("divAbmDetallesPresupuestoDoc");
 	const etiqueta = document.getElementById("presupuestoDocStepLabel");
@@ -1193,6 +1223,7 @@ function presupuestoDocActualizarEstado() {
 		contenedor.setAttribute("data-paso", String(paso));
 		contenedor.classList.toggle("presupuesto-sin-paciente", !pacienteListo);
 	}
+	presupuestoDocUbicarNavegacionRapida(paso);
 	if (etiqueta) {
 		etiqueta.textContent = pasos[paso].texto;
 	}

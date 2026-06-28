@@ -36599,7 +36599,9 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno #table_ueno_candidatos_manual .ueno-row-table,
 #divConciliacionUeno #table_ueno_pagos_pendientes .ueno-row-table,
 #divConciliacionUeno .ueno-audit-card .ueno-table-head,
-#divConciliacionUeno #table_ueno_auditoria .ueno-row-table {
+#divConciliacionUeno #table_ueno_auditoria .ueno-row-table,
+#divConciliacionUeno .ueno-audit-dialog .ueno-table-head,
+#divConciliacionUeno #table_ueno_auditoria_movimiento .ueno-row-table {
   min-width: 1080px;
 }
 
@@ -36980,7 +36982,8 @@ button.tratamiento-ubicacion-visual {
   font-weight: 900;
 }
 
-#divConciliacionUeno .ueno-user-cell {
+#divConciliacionUeno .ueno-user-cell,
+#divConciliacionUeno .ueno-client-cell {
   display: block;
   max-width: 100%;
   overflow: hidden;
@@ -36990,6 +36993,11 @@ button.tratamiento-ubicacion-visual {
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#divConciliacionUeno .ueno-client-cell {
+  color: #163f64;
+  font-size: 8.8px;
 }
 
 #divConciliacionUeno .ueno-row-action--available {
@@ -37318,6 +37326,87 @@ button.tratamiento-ubicacion-visual {
   color: #475569;
 }
 
+#divConciliacionUeno .ueno-audit-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.42);
+  box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-audit-dialog {
+  width: min(1180px, 96vw);
+  max-height: 86vh;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid #cfe0f3;
+  border-radius: 8px;
+  background: #f8fbff;
+  box-shadow: 0 24px 58px rgba(15, 23, 42, 0.28);
+  box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-audit-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dce7f4;
+}
+
+#divConciliacionUeno .ueno-audit-dialog-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#divConciliacionUeno .ueno-audit-dialog-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid #d8e5f5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divConciliacionUeno .ueno-audit-dialog-summary strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+#divConciliacionUeno #table_ueno_auditoria_movimiento {
+  margin-bottom: 10px;
+}
+
+#divConciliacionUeno .ueno-audit-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
+#divConciliacionUeno .ueno-loading-inline,
+#divConciliacionUeno .ueno-empty-message {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
 #divConciliacionUeno .ueno-row-note {
   display: inline-flex;
   align-items: center;
@@ -37349,6 +37438,16 @@ button.tratamiento-ubicacion-visual {
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+
+  #divConciliacionUeno .ueno-audit-popup {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  #divConciliacionUeno .ueno-audit-dialog {
+    width: 100%;
+    max-height: calc(100vh - 20px);
   }
 
   #divConciliacionUeno .ueno-guide {
@@ -42344,8 +42443,30 @@ button.tratamiento-ubicacion-visual {
   font-size: 11px;
 }
 
-.presupuesto-rapido-nav {
+#divAbmDetallesPresupuestoDoc .presupuesto-rapido-nav {
   align-items: center;
+}
+
+#divAbmDetallesPresupuestoDoc #presupuestoDocTrabajoPanel > .presupuesto-rapido-nav,
+#divAbmDetallesPresupuestoDoc #presupuestoDocLateralPanel > .presupuesto-rapido-nav {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid #d5e4f0;
+  border-left: 4px solid #1f7a68;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(43, 84, 126, 0.07);
+}
+
+#divAbmDetallesPresupuestoDoc #presupuestoDocTrabajoPanel > .presupuesto-rapido-nav .presupuesto-accion-principal,
+#divAbmDetallesPresupuestoDoc #presupuestoDocLateralPanel > .presupuesto-rapido-nav .presupuesto-accion-principal {
+  flex: 1 1 auto;
+  min-width: 210px;
+}
+
+#divAbmDetallesPresupuestoDoc #presupuestoDocTrabajoPanel > .presupuesto-rapido-nav .presupuesto-accion-secundaria,
+#divAbmDetallesPresupuestoDoc #presupuestoDocLateralPanel > .presupuesto-rapido-nav .presupuesto-accion-secundaria {
+  flex: 0 0 auto;
 }
 
 .presupuesto-insumos-compacto {

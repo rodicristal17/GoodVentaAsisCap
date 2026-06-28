@@ -1357,7 +1357,17 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		IFNULL((SELECT GROUP_CONCAT(DISTINCT IFNULL(per.nombre_persona, CONCAT('Usuario ', ump.usuario_asocio)) ORDER BY ump.fecha_hora_asociacion ASC SEPARATOR ', ')
 			FROM ueno_movimiento_pago ump
 			LEFT JOIN persona per ON per.cod_persona=ump.usuario_asocio
-			WHERE ump.id_movimiento=mv.id_movimiento AND ump.estado='activo'), '') AS usuarios_conciliacion
+			WHERE ump.id_movimiento=mv.id_movimiento AND ump.estado='activo'), '') AS usuarios_conciliacion,
+		IFNULL((SELECT GROUP_CONCAT(DISTINCT CONCAT(
+				IFNULL(NULLIF(cli.nombre_persona, ''), 'Cliente sin nombre'),
+				' - Venta ',
+				IFNULL(NULLIF(NULLIF(pag.nroventa, ''), '0'), IFNULL(NULLIF(pag.cod_venta_fk, ''), 'S/N'))
+			) ORDER BY ump_cliente.fecha_hora_asociacion ASC SEPARATOR ', ')
+			FROM ueno_movimiento_pago ump_cliente
+			INNER JOIN pago pag ON pag.idPago=ump_cliente.cod_pagoFK
+			LEFT JOIN venta vt ON vt.cod_venta=pag.cod_venta_fk
+			LEFT JOIN persona cli ON cli.cod_persona=vt.cod_clienteFK
+			WHERE ump_cliente.id_movimiento=mv.id_movimiento AND ump_cliente.estado='activo'), '') AS clientes_conciliacion
 		$subqueryDebitoAplicado
 		FROM ueno_movimiento_bancario mv
 		INNER JOIN ueno_importacion_extracto imp ON imp.id_importacion=mv.id_importacion
@@ -1471,18 +1481,23 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$usuarios_html = $usuarios_conciliacion != ""
 			? "<span class='ueno-user-cell' title='" . ueno_escape_html($usuarios_conciliacion) . "'>" . ueno_escape_html($usuarios_conciliacion) . "</span>"
 			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
+		$clientes_conciliacion = ($credito > 0 && $aplicado > 0) ? trim((string)$row["clientes_conciliacion"]) : "";
+		$clientes_html = $clientes_conciliacion != ""
+			? "<span class='ueno-client-cell' title='" . ueno_escape_html($clientes_conciliacion) . "'>" . ueno_escape_html($clientes_conciliacion) . "</span>"
+			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
 		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' class='ueno-movimiento-row ueno-movimiento-row--" . $estado_clave . "' data-ueno-estado='" . $estado_clave . "' data-ueno-disponible='" . $disponible . "' data-ueno-aplicado='" . $aplicado . "'>"
-			. "<td style='width:6%'>" . ueno_escape_html($row["fecha_confirmacion"]) . "</td>"
-			. "<td style='width:6%'>" . ueno_escape_html($row["fecha_transaccion"]) . "</td>"
-			. "<td style='width:10%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
-			. "<td style='width:16%'>" . ueno_escape_html($row["descripcion"]) . "</td>"
-			. "<td style='width:10%'>" . ueno_escape_html($row["concepto"]) . "</td>"
-			. "<td style='width:6%;text-align:right'>" . number_format($debito, 0, ",", ".") . "</td>"
-			. "<td style='width:8%;text-align:right'>" . number_format($credito, 0, ",", ".") . "</td>"
-			. "<td style='width:8%;text-align:right'>" . $aplicado_html . "</td>"
-			. "<td style='width:7%;text-align:right'>" . number_format($disponible, 0, ",", ".") . "</td>"
-			. "<td style='width:7%'><span class='ueno-status-badge ueno-status-badge--" . $estado_clave . "'>" . ueno_escape_html($estado_visual) . "</span></td>"
+			. "<td style='width:5%'>" . ueno_escape_html($row["fecha_confirmacion"]) . "</td>"
+			. "<td style='width:5%'>" . ueno_escape_html($row["fecha_transaccion"]) . "</td>"
+			. "<td style='width:9%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
+			. "<td style='width:13%'>" . ueno_escape_html($row["descripcion"]) . "</td>"
+			. "<td style='width:8%'>" . ueno_escape_html($row["concepto"]) . "</td>"
+			. "<td style='width:5%;text-align:right'>" . number_format($debito, 0, ",", ".") . "</td>"
+			. "<td style='width:7%;text-align:right'>" . number_format($credito, 0, ",", ".") . "</td>"
+			. "<td style='width:7%;text-align:right'>" . $aplicado_html . "</td>"
+			. "<td style='width:6%;text-align:right'>" . number_format($disponible, 0, ",", ".") . "</td>"
+			. "<td style='width:6%'><span class='ueno-status-badge ueno-status-badge--" . $estado_clave . "'>" . ueno_escape_html($estado_visual) . "</span></td>"
+			. "<td style='width:13%;text-align:left'>" . $clientes_html . "</td>"
 			. "<td style='width:7%;text-align:center'>" . $usuarios_html . "</td>"
 			. "<td style='width:9%;text-align:center'>" . $accion . "</td>"
 			. "</tr></table>";

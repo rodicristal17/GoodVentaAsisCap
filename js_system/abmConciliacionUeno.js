@@ -7,6 +7,7 @@ var uenoCuotaGoodVentaSeleccionada = null;
 var uenoFiltroRapidoMovimientos = "todos";
 var uenoMesaSoloConsulta = true;
 var uenoPreviewValidando = false;
+var uenoAuditoriaMovimientoActual = "";
 
 function uenoAvisarMesaSoloConsulta() {
 	ver_vetana_informativa("No se puede procesar pagos desde la mesa de trabajo. Utiliza el modulo de caja/cobros.", "", "error");
@@ -39,6 +40,7 @@ function verCerrarConciliacionUeno(d) {
 		uenoBuscarResumenTesoreria();
 		uenoBuscarAuditoria();
 	} else {
+		uenoCerrarAuditoriaMovimientoPopup();
 		document.getElementById("divConciliacionUeno").style.display = "none";
 	}
 }
@@ -384,15 +386,24 @@ function uenoAgregarSeparadoresFechaMovimientos() {
 	}
 }
 
+function uenoEtiquetasAuditoria() {
+	return ["ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Cliente/Cuota", "Antes", "Ahora", "Monto", "User", "Obs."];
+}
+
+function uenoModernizarTablaAuditoria(idTabla) {
+	uenoModernizarTabla(idTabla, uenoEtiquetasAuditoria(), 8);
+}
+
 function uenoModernizarVista() {
 	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito", "Estado"], 7);
 	uenoModernizarTabla("table_ueno_resumen_tesoreria", ["Local", "Turno", "Caja", "Lote", "Apertura", "Cierre", "Caja", "Transf. GV", "Conc.", "Pend.", "Obs.", "S/C", "Estado"], 12);
 	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
-	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Usuario", "Accion"], 9);
+	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Cliente / Venta", "Usuario", "Accion"], 9);
 	uenoAgregarSeparadoresFechaMovimientos();
 	uenoModernizarTabla("table_ueno_candidatos_manual", ["ID", "F. conf.", "Comprobante", "Descripcion", "Credito", "Disponible", "Estado", "Coinc.", "Accion"], 6);
 	uenoModernizarTabla("table_ueno_pagos_pendientes", ["Cliente", "CI", "Venta", "Cuota/Pago", "Venc.", "Saldo pend.", "Monto sug.", "Estado", "Coinc.", "Accion"], 7);
-	uenoModernizarTabla("table_ueno_auditoria", ["ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Cliente/Cuota", "Antes", "Ahora", "Monto", "User", "Obs."], 8);
+	uenoModernizarTablaAuditoria("table_ueno_auditoria");
+	uenoModernizarTablaAuditoria("table_ueno_auditoria_movimiento");
 }
 
 function uenoMarcarImportacionSeleccionada(idImportacion) {
@@ -1164,6 +1175,18 @@ function uenoSetTexto(id, valor) {
 	}
 }
 
+function uenoSetValorAuditoria(id, valor) {
+	var elemento = document.getElementById(id);
+	if (!elemento) {
+		return;
+	}
+	if (typeof elemento.value !== "undefined") {
+		elemento.value = valor == null ? "" : valor;
+	} else {
+		elemento.textContent = valor == null ? "" : valor;
+	}
+}
+
 function uenoActualizarFiltrosRapidosMovimientos(resumen) {
 	resumen = resumen || {};
 	uenoSetTexto("lblUenoChipTodos", resumen.total_base || "0");
@@ -1194,20 +1217,48 @@ function uenoCambiarFiltroRapidoMovimientos(filtro) {
 }
 
 function uenoVerAplicacionMovimiento(idMovimiento) {
-	var auditCard = document.querySelector("#divConciliacionUeno .ueno-audit-card");
-	var filtro = document.getElementById("inptUenoAuditAccion");
-	if (filtro) {
-		filtro.value = idMovimiento || "";
+	if (!idMovimiento) {
+		ver_vetana_informativa("No se pudo identificar el movimiento seleccionado.", "", "error");
+		return;
 	}
-	if (auditCard) {
-		auditCard.classList.remove("ueno-collapsed");
-		uenoActualizarIndicadorColapsable(auditCard);
+	uenoMostrarAuditoriaMovimientoPopup(idMovimiento);
+}
+
+function uenoMostrarAuditoriaMovimientoPopup(idMovimiento) {
+	if (!uenoTienePermiso("VERAUDITORIAUENO")) {
+		ver_vetana_informativa("NO TIENES PERMISO PARA VER AUDITORIA UENO", "", "error");
+		return;
 	}
-	uenoBuscarAuditoria();
-	var tabla = document.getElementById("table_ueno_auditoria");
-	if (tabla && tabla.scrollIntoView) {
-		tabla.scrollIntoView({ behavior: "smooth", block: "center" });
+	var popup = document.getElementById("divUenoAuditoriaMovimientoPopup");
+	var tabla = document.getElementById("table_ueno_auditoria_movimiento");
+	if (!popup || !tabla) {
+		var filtro = document.getElementById("inptUenoAuditAccion");
+		if (filtro) {
+			filtro.value = idMovimiento || "";
+		}
+		uenoBuscarAuditoria();
+		return;
 	}
+	uenoAuditoriaMovimientoActual = String(idMovimiento || "");
+	uenoSetTexto("lblUenoAuditPopupMovimiento", uenoAuditoriaMovimientoActual);
+	uenoSetTexto("lblUenoAuditPopupTotal", "0");
+	uenoSetTexto("lblUenoAuditPopupContexto", "Trazabilidad del movimiento seleccionado.");
+	tabla.innerHTML = "<div class='ueno-loading-inline'>Cargando trazabilidad...</div>";
+	popup.style.display = "flex";
+	uenoCargarAuditoria({
+		tablaId: "table_ueno_auditoria_movimiento",
+		totalId: "lblUenoAuditPopupTotal",
+		accion: uenoAuditoriaMovimientoActual,
+		mostrarErrores: true
+	});
+}
+
+function uenoCerrarAuditoriaMovimientoPopup() {
+	var popup = document.getElementById("divUenoAuditoriaMovimientoPopup");
+	if (popup) {
+		popup.style.display = "none";
+	}
+	uenoAuditoriaMovimientoActual = "";
 }
 
 function uenoNumeroTesoreria(valor) {
@@ -1295,13 +1346,27 @@ function uenoBuscarResumenTesoreria() {
 	});
 }
 
-function uenoBuscarAuditoria() {
-	if (!document.getElementById("table_ueno_auditoria")) {
+function uenoCargarAuditoria(opciones) {
+	opciones = opciones || {};
+	var tablaId = opciones.tablaId || "table_ueno_auditoria";
+	var totalId = opciones.totalId || "inptUenoAuditTotal";
+	var tabla = document.getElementById(tablaId);
+	if (!tabla) {
 		return;
 	}
 	if (!uenoTienePermiso("VERAUDITORIAUENO")) {
 		return;
 	}
+
+	var fechaDesde = typeof opciones.fecha_desde !== "undefined"
+		? opciones.fecha_desde
+		: (document.getElementById("inptUenoAuditDesde") ? document.getElementById("inptUenoAuditDesde").value : "");
+	var fechaHasta = typeof opciones.fecha_hasta !== "undefined"
+		? opciones.fecha_hasta
+		: (document.getElementById("inptUenoAuditHasta") ? document.getElementById("inptUenoAuditHasta").value : "");
+	var accion = typeof opciones.accion !== "undefined"
+		? opciones.accion
+		: (document.getElementById("inptUenoAuditAccion") ? document.getElementById("inptUenoAuditAccion").value : "");
 
 	obtener_datos_user();
 	var datos = new FormData();
@@ -1309,9 +1374,9 @@ function uenoBuscarAuditoria() {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "buscar_auditoria");
-	datos.append("fecha_desde", document.getElementById("inptUenoAuditDesde") ? document.getElementById("inptUenoAuditDesde").value : "");
-	datos.append("fecha_hasta", document.getElementById("inptUenoAuditHasta") ? document.getElementById("inptUenoAuditHasta").value : "");
-	datos.append("accion", document.getElementById("inptUenoAuditAccion") ? document.getElementById("inptUenoAuditAccion").value : "");
+	datos.append("fecha_desde", fechaDesde || "");
+	datos.append("fecha_hasta", fechaHasta || "");
+	datos.append("accion", accion || "");
 
 	$.ajax({
 		data: datos,
@@ -1322,20 +1387,49 @@ function uenoBuscarAuditoria() {
 		processData: false,
 		success: function(responseText) {
 			try {
-				var datos = $.parseJSON(responseText);
-				if (datos["1"] == "tablasfaltantes") {
-					document.getElementById("table_ueno_auditoria").innerHTML = "";
-					uenoSetValorTesoreria("inptUenoAuditTotal", "0");
-					uenoModernizarVista();
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] == "tablasfaltantes") {
+					tabla.innerHTML = "";
+					uenoSetValorAuditoria(totalId, "0");
+					if (opciones.mostrarErrores) {
+						ver_vetana_informativa(respuesta["2"] || "Falta configurar auditoria Ueno", "", "error");
+					}
+					uenoModernizarTablaAuditoria(tablaId);
 					return;
 				}
-				if (datos["1"] == "exito") {
-					document.getElementById("table_ueno_auditoria").innerHTML = datos["2"] || "";
-					uenoSetValorTesoreria("inptUenoAuditTotal", datos["3"] || "0");
-					uenoModernizarVista();
+				if (respuesta["1"] == "exito") {
+					tabla.innerHTML = respuesta["2"] || "";
+					uenoSetValorAuditoria(totalId, respuesta["3"] || "0");
+					uenoModernizarTablaAuditoria(tablaId);
+					return;
 				}
-			} catch (error) {}
+				tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo cargar la trazabilidad.</div>";
+				uenoSetValorAuditoria(totalId, "0");
+				if (opciones.mostrarErrores) {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar auditoria Ueno", "", "error");
+				}
+			} catch (error) {
+				tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo interpretar la respuesta de auditoria.</div>";
+				uenoSetValorAuditoria(totalId, "0");
+				if (opciones.mostrarErrores) {
+					ver_vetana_informativa("Error inesperado al cargar auditoria Ueno", String(error), "error");
+				}
+			}
+		},
+		error: function() {
+			tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo conectar con auditoria Ueno.</div>";
+			uenoSetValorAuditoria(totalId, "0");
+			if (opciones.mostrarErrores) {
+				ver_vetana_informativa("No se pudo conectar con auditoria Ueno", "", "error");
+			}
 		}
+	});
+}
+
+function uenoBuscarAuditoria() {
+	uenoCargarAuditoria({
+		tablaId: "table_ueno_auditoria",
+		totalId: "inptUenoAuditTotal"
 	});
 }
 
