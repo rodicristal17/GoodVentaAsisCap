@@ -37538,6 +37538,18 @@ button.tratamiento-ubicacion-visual {
   font-weight: 900;
 }
 
+#divConciliacionUeno .ueno-import-card > table:first-of-type td:last-child {
+  display: flex;
+  flex: 0 0 170px;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+#divConciliacionUeno .ueno-import-card > table:first-of-type td:last-child input[type="button"] {
+  width: 100% !important;
+}
+
 #divConciliacionUeno .ueno-card .inputText,
 #divConciliacionUeno .ueno-card .inputTextDisable,
 #divConciliacionUeno .ueno-card .inputSelect,
@@ -37665,8 +37677,17 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConciliacionUeno .ueno-half-card .ueno-table-head,
-#divConciliacionUeno #table_ueno_importaciones .ueno-row-table {
+#divConciliacionUeno #table_ueno_importaciones .ueno-row-table,
+#divConciliacionUeno #table_ueno_importaciones_modal .ueno-row-table {
   min-width: 980px;
+}
+
+#divConciliacionUeno .ueno-importaciones-dialog .ueno-table-head,
+#divConciliacionUeno .ueno-detalle-importacion-dialog .ueno-table-head,
+#divConciliacionUeno #table_ueno_importaciones_modal .ueno-row-table,
+#divConciliacionUeno #table_ueno_detalle_importacion .ueno-row-table {
+  min-width: 0 !important;
+  width: 100% !important;
 }
 
 #divConciliacionUeno .ueno-main-card .ueno-table-head,
@@ -38468,6 +38489,227 @@ button.tratamiento-ubicacion-visual {
   font-size: 13px;
 }
 
+#divConciliacionUeno .ueno-importaciones-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1020px, calc(100vw - 52px));
+  max-height: calc(100vh - 52px);
+  overflow: hidden;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(980px, calc(100vw - 64px));
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+#divConciliacionUeno .ueno-importaciones-dialog .ueno-audit-dialog-head,
+#divConciliacionUeno .ueno-detalle-importacion-dialog .ueno-audit-dialog-head,
+#divConciliacionUeno .ueno-importaciones-dialog .ueno-audit-dialog-footer,
+#divConciliacionUeno .ueno-detalle-importacion-dialog .ueno-audit-dialog-footer,
+#divConciliacionUeno .ueno-importaciones-dialog .ueno-table-head,
+#divConciliacionUeno .ueno-detalle-importacion-dialog .ueno-table-head {
+  flex: 0 0 auto;
+}
+
+#divConciliacionUeno .ueno-importaciones-dialog .ueno-audit-dialog-head,
+#divConciliacionUeno .ueno-detalle-importacion-dialog .ueno-audit-dialog-head {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) 94px 130px;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #d8e5f5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar label,
+#divConciliacionUeno .ueno-importaciones-toolbar span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar input[type="date"] {
+  width: 100% !important;
+  height: 30px !important;
+  padding: 0 9px !important;
+  border: 1px solid #c8d4e2;
+  border-radius: 6px !important;
+  box-sizing: border-box;
+  color: #172033;
+  font-size: 11px;
+  font-weight: 800;
+  outline: none;
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar input[type="date"]:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar span {
+  min-height: 30px;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid #d8e5f5;
+  border-radius: 8px;
+  background: #f8fbff;
+  box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+#divConciliacionUeno #table_ueno_importaciones_modal,
+#divConciliacionUeno #table_ueno_detalle_importacion {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  margin-bottom: 10px;
+}
+
+#divConciliacionUeno #table_ueno_importaciones_modal {
+  max-height: 330px;
+}
+
+#divConciliacionUeno #table_ueno_detalle_importacion {
+  max-height: 300px;
+}
+
+#divConciliacionUeno .ueno-importaciones-dialog .ueno-table-head .td_registro,
+#divConciliacionUeno .ueno-detalle-importacion-dialog .ueno-table-head .td_registro {
+  height: 26px;
+  padding: 0 3px;
+  font-size: 7.5px;
+}
+
+#divConciliacionUeno #table_ueno_importaciones_modal .ueno-row td,
+#divConciliacionUeno #table_ueno_detalle_importacion .ueno-row td {
+  min-height: 30px;
+  padding: 5px 5px !important;
+  font-size: 8.5px;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#divConciliacionUeno #table_ueno_importaciones_modal .ueno-row td[data-label="Archivo"],
+#divConciliacionUeno #table_ueno_detalle_importacion .ueno-row td[data-label="Detalle"] {
+  font-size: 8px;
+}
+
+#divConciliacionUeno #table_ueno_detalle_importacion .ueno-row td[data-label="Nro."] {
+  color: #0f3d5e !important;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+#divConciliacionUeno #table_ueno_detalle_importacion .ueno-duplicate-detail-row td {
+  min-height: 0;
+  padding: 0 5px 6px !important;
+  background: #fff7ed !important;
+  text-align: left !important;
+}
+
+#divConciliacionUeno .ueno-duplicate-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  background: #fffaf4;
+  box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-duplicate-detail b {
+  color: #9a3412;
+  font-size: 9px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+#divConciliacionUeno .ueno-duplicate-detail span {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #7c2d12;
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-popup {
+  z-index: 90;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-resumen {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-resumen span {
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid #d8e5f5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-resumen b,
+#divConciliacionUeno .ueno-detalle-importacion-resumen strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-resumen b {
+  margin-bottom: 3px;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-resumen strong {
+  color: #0f172a;
+  font-size: 10.5px;
+  font-weight: 900;
+}
+
+#divConciliacionUeno .ueno-detalle-importacion-resumen .ueno-detalle-importacion-wide {
+  grid-column: span 4;
+}
+
 #divConciliacionUeno #table_ueno_auditoria_movimiento {
   margin-bottom: 10px;
 }
@@ -38530,6 +38772,25 @@ button.tratamiento-ubicacion-visual {
   #divConciliacionUeno .ueno-audit-dialog {
     width: 100%;
     max-height: calc(100vh - 20px);
+  }
+
+  #divConciliacionUeno .ueno-importaciones-dialog,
+  #divConciliacionUeno .ueno-detalle-importacion-dialog {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+  }
+
+  #divConciliacionUeno .ueno-importaciones-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  #divConciliacionUeno .ueno-detalle-importacion-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #divConciliacionUeno .ueno-detalle-importacion-resumen .ueno-detalle-importacion-wide {
+    grid-column: span 2;
   }
 
   #divConciliacionUeno .ueno-guide {
@@ -38607,6 +38868,23 @@ button.tratamiento-ubicacion-visual {
   #divConciliacionUeno .ueno-btn-primary,
   #divConciliacionUeno .ueno-btn-secondary {
     width: 100% !important;
+  }
+
+  #divConciliacionUeno .ueno-importaciones-toolbar label,
+  #divConciliacionUeno .ueno-importaciones-toolbar span {
+    flex-basis: 100%;
+  }
+
+  #divConciliacionUeno .ueno-importaciones-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  #divConciliacionUeno .ueno-detalle-importacion-resumen {
+    grid-template-columns: 1fr;
+  }
+
+  #divConciliacionUeno .ueno-detalle-importacion-resumen .ueno-detalle-importacion-wide {
+    grid-column: auto;
   }
 
   #divConciliacionUeno .ueno-selected-grid {

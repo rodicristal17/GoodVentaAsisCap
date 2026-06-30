@@ -8,6 +8,8 @@ var uenoFiltroRapidoMovimientos = "todos";
 var uenoMesaSoloConsulta = true;
 var uenoPreviewValidando = false;
 var uenoAuditoriaMovimientoActual = "";
+var uenoImportacionesModalAbierto = false;
+var uenoDetalleImportacionActual = "";
 
 function uenoAvisarMesaSoloConsulta() {
 	ver_vetana_informativa("No se puede procesar pagos desde la mesa de trabajo. Utiliza el modulo de caja/cobros.", "", "error");
@@ -40,6 +42,8 @@ function verCerrarConciliacionUeno(d) {
 		uenoBuscarResumenTesoreria();
 		uenoBuscarAuditoria();
 	} else {
+		uenoCerrarDetalleImportacionPopup();
+		uenoCerrarModalImportaciones();
 		uenoCerrarAuditoriaMovimientoPopup();
 		document.getElementById("divConciliacionUeno").style.display = "none";
 	}
@@ -398,6 +402,8 @@ function uenoModernizarVista() {
 	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito", "Estado"], 7);
 	uenoModernizarTabla("table_ueno_resumen_tesoreria", ["Local", "Turno", "Caja", "Lote", "Apertura", "Cierre", "Caja", "Transf. GV", "Conc.", "Pend.", "Obs.", "S/C", "Estado"], 12);
 	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
+	uenoModernizarTabla("table_ueno_importaciones_modal", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
+	uenoModernizarTabla("table_ueno_detalle_importacion", ["Nro.", "F. conf.", "F. trans.", "Comprobante", "Detalle", "Deb.", "Cred.", "Disp.", "Duplicado", "Estado"], 9);
 	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Cliente / Venta", "Usuario", "Accion"], 9);
 	uenoAgregarSeparadoresFechaMovimientos();
 	uenoModernizarTabla("table_ueno_candidatos_manual", ["ID", "F. conf.", "Comprobante", "Descripcion", "Credito", "Disponible", "Estado", "Coinc.", "Accion"], 6);
@@ -407,16 +413,19 @@ function uenoModernizarVista() {
 }
 
 function uenoMarcarImportacionSeleccionada(idImportacion) {
-	var contenedor = document.getElementById("table_ueno_importaciones");
-	if (!contenedor) {
-		return;
-	}
-	var filas = contenedor.querySelectorAll("tr");
-	for (var i = 0; i < filas.length; i++) {
-		filas[i].classList.remove("ueno-row-selected");
-		var primeraCelda = filas[i].children && filas[i].children.length ? filas[i].children[0] : null;
-		if (primeraCelda && String(primeraCelda.textContent || "").trim() == String(idImportacion)) {
-			filas[i].classList.add("ueno-row-selected");
+	var contenedores = ["table_ueno_importaciones", "table_ueno_importaciones_modal"];
+	for (var c = 0; c < contenedores.length; c++) {
+		var contenedor = document.getElementById(contenedores[c]);
+		if (!contenedor) {
+			continue;
+		}
+		var filas = contenedor.querySelectorAll("tr");
+		for (var i = 0; i < filas.length; i++) {
+			filas[i].classList.remove("ueno-row-selected");
+			var primeraCelda = filas[i].children && filas[i].children.length ? filas[i].children[0] : null;
+			if (primeraCelda && String(primeraCelda.textContent || "").trim() == String(idImportacion)) {
+				filas[i].classList.add("ueno-row-selected");
+			}
 		}
 	}
 }
@@ -1433,15 +1442,103 @@ function uenoBuscarAuditoria() {
 	});
 }
 
-function uenoBuscarImportaciones() {
+function uenoOpcionesImportacionesModal() {
+	return {
+		tablaId: "table_ueno_importaciones_modal",
+		totalId: "lblUenoModalTotalImportaciones",
+		desdeId: "inptUenoModalBuscarDesde",
+		hastaId: "inptUenoModalBuscarHasta",
+		vista: "modal",
+		mostrarErrores: true
+	};
+}
+
+function uenoAbrirModalImportaciones() {
+	var popup = document.getElementById("divUenoImportacionesPopup");
+	if (!popup) {
+		uenoBuscarImportaciones();
+		return;
+	}
+	uenoImportacionesModalAbierto = true;
+	popup.style.display = "flex";
+	var desdeModal = document.getElementById("inptUenoModalBuscarDesde");
+	var hastaModal = document.getElementById("inptUenoModalBuscarHasta");
+	var desdePrincipal = document.getElementById("inptUenoBuscarDesde");
+	var hastaPrincipal = document.getElementById("inptUenoBuscarHasta");
+	if (desdeModal && desdePrincipal && desdeModal.value == "") {
+		desdeModal.value = desdePrincipal.value;
+	}
+	if (hastaModal && hastaPrincipal && hastaModal.value == "") {
+		hastaModal.value = hastaPrincipal.value;
+	}
+	uenoBuscarImportaciones(uenoOpcionesImportacionesModal());
+}
+
+function uenoCerrarModalImportaciones() {
+	var popup = document.getElementById("divUenoImportacionesPopup");
+	if (popup) {
+		popup.style.display = "none";
+	}
+	uenoImportacionesModalAbierto = false;
+}
+
+function uenoBuscarImportacionesModal() {
+	uenoBuscarImportaciones(uenoOpcionesImportacionesModal());
+}
+
+function uenoResumenDetalleImportacion(importacion) {
+	importacion = importacion || {};
+	var bloques = [
+		["Archivo", importacion["archivo"] || ""],
+		["Cuenta", importacion["cuenta"] || ""],
+		["Titular", importacion["denominacion"] || ""],
+		["Fecha extracto", importacion["fecha_extracto"] || ""],
+		["Periodo", (importacion["periodo_desde"] || "-") + " a " + (importacion["periodo_hasta"] || "-")],
+		["Importado", importacion["fecha_importacion"] || ""],
+		["Movimientos", importacion["movimientos"] || "0"],
+		["Creditos", (importacion["creditos"] || "0") + " / " + (importacion["total_creditos"] || "0")],
+		["Debitos", (importacion["debitos"] || "0") + " / " + (importacion["total_debitos"] || "0")],
+		["Estado", importacion["estado"] || ""],
+		["Usuario", importacion["usuario"] || ""],
+		["Huella", importacion["hash_archivo"] || ""]
+	];
+	var html = "";
+	for (var i = 0; i < bloques.length; i++) {
+		html += "<span><b>" + uenoEscapeHtml(bloques[i][0]) + "</b><strong>" + uenoEscapeHtml(bloques[i][1]) + "</strong></span>";
+	}
+	if (importacion["observacion"]) {
+		html += "<span class='ueno-detalle-importacion-wide'><b>Observacion</b><strong>" + uenoEscapeHtml(importacion["observacion"]) + "</strong></span>";
+	}
+	return html;
+}
+
+function uenoVerDetalleImportacion(idImportacion) {
+	if (!idImportacion) {
+		ver_vetana_informativa("No se pudo identificar el archivo migrado.", "", "error");
+		return;
+	}
+	uenoDetalleImportacionActual = String(idImportacion);
+	uenoMarcarImportacionSeleccionada(idImportacion);
+	var popup = document.getElementById("divUenoDetalleImportacionPopup");
+	var resumen = document.getElementById("divUenoDetalleImportacionResumen");
+	var tabla = document.getElementById("table_ueno_detalle_importacion");
+	if (!popup || !tabla) {
+		uenoSeleccionarImportacion(idImportacion);
+		return;
+	}
+	if (resumen) {
+		resumen.innerHTML = "<div class='ueno-loading-inline'>Cargando detalle del archivo...</div>";
+	}
+	tabla.innerHTML = "";
+	popup.style.display = "flex";
+
 	obtener_datos_user();
 	var datos = new FormData();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
-	datos.append("funt", "buscar_importaciones");
-	datos.append("fecha_desde", document.getElementById("inptUenoBuscarDesde") ? document.getElementById("inptUenoBuscarDesde").value : "");
-	datos.append("fecha_hasta", document.getElementById("inptUenoBuscarHasta") ? document.getElementById("inptUenoBuscarHasta").value : "");
+	datos.append("funt", "detalle_importacion");
+	datos.append("id_importacion", idImportacion);
 
 	$.ajax({
 		data: datos,
@@ -1452,14 +1549,121 @@ function uenoBuscarImportaciones() {
 		processData: false,
 		success: function(responseText) {
 			try {
-				var datos = $.parseJSON(responseText);
-				if (datos["1"] == "exito") {
-					document.getElementById("table_ueno_importaciones").innerHTML = datos["2"];
-					document.getElementById("inptUenoTotalImportaciones").value = datos["3"];
-					uenoModernizarVista();
-					uenoMarcarImportacionSeleccionada(uenoIdImportacionSeleccionada);
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					if (resumen) {
+						resumen.innerHTML = "<div class='ueno-empty-message'>No se pudo cargar el detalle del archivo migrado.</div>";
+					}
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar el detalle del archivo", "", "error");
+					return;
 				}
-			} catch (error) {}
+				var importacion = respuesta["importacion"] || {};
+				if (resumen) {
+					resumen.innerHTML = uenoResumenDetalleImportacion(importacion);
+				}
+				tabla.innerHTML = respuesta["tabla"] || "";
+				var subtitulo = document.getElementById("lblUenoDetalleImportacionSubtitulo");
+				if (subtitulo) {
+					subtitulo.textContent = "Movimientos migrados: " + (respuesta["total_movimientos"] || "0");
+				}
+				uenoModernizarTabla("table_ueno_detalle_importacion", ["Nro.", "F. conf.", "F. trans.", "Comprobante", "Detalle", "Deb.", "Cred.", "Disp.", "Duplicado", "Estado"], 9);
+			} catch (error) {
+				if (resumen) {
+					resumen.innerHTML = "<div class='ueno-empty-message'>No se pudo interpretar el detalle del archivo.</div>";
+				}
+				ver_vetana_informativa("Error inesperado al cargar detalle del archivo", String(error), "error");
+			}
+		},
+		error: function(jqXHR, textstatus) {
+			if (resumen) {
+				resumen.innerHTML = "<div class='ueno-empty-message'>No se pudo conectar con detalle del archivo.</div>";
+			}
+			ver_vetana_informativa("No se pudo cargar detalle del archivo: " + textstatus, "", "error");
+		}
+	});
+}
+
+function uenoCerrarDetalleImportacionPopup() {
+	var popup = document.getElementById("divUenoDetalleImportacionPopup");
+	if (popup) {
+		popup.style.display = "none";
+	}
+}
+
+function uenoCargarImportacionDesdeDetalle() {
+	if (!uenoDetalleImportacionActual) {
+		ver_vetana_informativa("Primero selecciona un archivo migrado.", "", "error");
+		return;
+	}
+	uenoIdImportacionSeleccionada = uenoDetalleImportacionActual;
+	uenoMarcarImportacionSeleccionada(uenoDetalleImportacionActual);
+	uenoBuscarMovimientos(uenoDetalleImportacionActual);
+	uenoCerrarDetalleImportacionPopup();
+	uenoCerrarModalImportaciones();
+}
+
+function uenoBuscarImportaciones(opciones) {
+	opciones = opciones || {};
+	var tablaId = opciones.tablaId || "table_ueno_importaciones";
+	var totalId = opciones.totalId || "inptUenoTotalImportaciones";
+	var desdeId = opciones.desdeId || "inptUenoBuscarDesde";
+	var hastaId = opciones.hastaId || "inptUenoBuscarHasta";
+	var tabla = document.getElementById(tablaId);
+	if (tabla) {
+		tabla.innerHTML = "<div class='ueno-loading-inline'>Cargando archivos migrados...</div>";
+	}
+	uenoSetValorAuditoria(totalId, "0");
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "buscar_importaciones");
+	datos.append("fecha_desde", document.getElementById(desdeId) ? document.getElementById(desdeId).value : "");
+	datos.append("fecha_hasta", document.getElementById(hastaId) ? document.getElementById(hastaId).value : "");
+	datos.append("vista", opciones.vista || "");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] == "exito") {
+					if (tabla) {
+						tabla.innerHTML = respuesta["2"] || "";
+					}
+					uenoSetValorAuditoria(totalId, respuesta["3"] || "0");
+					uenoModernizarTabla(tablaId, ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
+					uenoMarcarImportacionSeleccionada(uenoIdImportacionSeleccionada);
+					return;
+				}
+				if (tabla) {
+					tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo cargar el listado de archivos migrados.</div>";
+				}
+				if (opciones.mostrarErrores) {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar archivos migrados", "", "error");
+				}
+			} catch (error) {
+				if (tabla) {
+					tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo interpretar el listado de archivos migrados.</div>";
+				}
+				if (opciones.mostrarErrores) {
+					ver_vetana_informativa("Error inesperado al cargar archivos migrados", String(error), "error");
+				}
+			}
+		},
+		error: function(jqXHR, textstatus) {
+			if (tabla) {
+				tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo conectar con archivos migrados.</div>";
+			}
+			if (opciones.mostrarErrores) {
+				ver_vetana_informativa("No se pudo cargar archivos migrados: " + textstatus, "", "error");
+			}
 		}
 	});
 }
@@ -1468,6 +1672,9 @@ function uenoSeleccionarImportacion(idImportacion) {
 	uenoIdImportacionSeleccionada = idImportacion;
 	uenoMarcarImportacionSeleccionada(idImportacion);
 	uenoBuscarMovimientos(idImportacion);
+	if (uenoImportacionesModalAbierto) {
+		uenoCerrarModalImportaciones();
+	}
 }
 
 function uenoBuscarMovimientos(idImportacion) {

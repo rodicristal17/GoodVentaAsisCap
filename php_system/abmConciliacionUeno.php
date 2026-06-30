@@ -1011,6 +1011,79 @@ function ueno_buscar_movimientos_existentes_por_hash($mysqli, $hashes)
 	return $existentes;
 }
 
+function ueno_clave_comprobante_monto_movimiento($mov)
+{
+	if (!is_array($mov)) {
+		return "";
+	}
+	$nro = isset($mov["nro_comprobante"]) ? trim((string)$mov["nro_comprobante"]) : "";
+	$credito = isset($mov["importe_credito"]) ? (int)$mov["importe_credito"] : 0;
+	$debito = isset($mov["importe_debito"]) ? (int)$mov["importe_debito"] : 0;
+	$monto = $credito > 0 ? $credito : $debito;
+	if ($nro == "" || $monto <= 0) {
+		return "";
+	}
+	return $nro . "|" . $monto;
+}
+
+function ueno_buscar_movimientos_existentes_por_comprobante_monto($mysqli, $movimientos)
+{
+	$existentes = array();
+	if (!is_array($movimientos) || count($movimientos) == 0) {
+		return $existentes;
+	}
+
+	$stmt = $mysqli->prepare("SELECT mv.id_movimiento, mv.id_importacion, mv.nro_comprobante, mv.importe_credito, mv.importe_debito,
+		imp.nombre_archivo_original, imp.fecha_hora_importacion
+		FROM ueno_movimiento_bancario mv
+		LEFT JOIN ueno_importacion_extracto imp ON imp.id_importacion=mv.id_importacion
+		WHERE mv.nro_comprobante=?
+		AND (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)=?
+		AND (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)>0
+		ORDER BY mv.id_movimiento ASC
+		LIMIT 1");
+	if (!$stmt) {
+		throw new Exception($mysqli->error);
+	}
+	$nroParametro = "";
+	$montoParametro = 0;
+	$stmt->bind_param("si", $nroParametro, $montoParametro);
+	$consultados = array();
+
+	foreach ($movimientos as $mov) {
+		$clave = ueno_clave_comprobante_monto_movimiento($mov);
+		if ($clave == "" || isset($consultados[$clave])) {
+			continue;
+		}
+		$partes = explode("|", $clave);
+		$nroParametro = $partes[0];
+		$montoParametro = (int)$partes[1];
+		$consultados[$clave] = true;
+		if (!$stmt->execute()) {
+			throw new Exception($stmt->error);
+		}
+		$result = $stmt->get_result();
+		if ($result && ($row = mysqli_fetch_assoc($result))) {
+			$existentes[$clave] = $row;
+		}
+	}
+
+	return $existentes;
+}
+
+function ueno_detalle_movimiento_duplicado_comprobante_monto($row)
+{
+	$detalle = "Ya importado por comprobante y monto";
+	if (!is_array($row)) {
+		return $detalle;
+	}
+	$detalle .= " en movimiento #" . $row["id_movimiento"] . " / importacion #" . $row["id_importacion"];
+	if (isset($row["nombre_archivo_original"]) && trim((string)$row["nombre_archivo_original"]) != "") {
+		$detalle .= " / archivo " . ueno_from_db($row["nombre_archivo_original"]);
+	}
+	return $detalle;
+}
+
 function ueno_prevalidar_importacion($usuario)
 {
 	$mysqli = conectar_al_servidor();
@@ -1040,13 +1113,16 @@ function ueno_prevalidar_importacion($usuario)
 			$hashes[] = $mov["hash_movimiento"];
 		}
 		$existentes = ueno_buscar_movimientos_existentes_por_hash($mysqli, $hashes);
-		$vistosArchivo = array();
+		$existentesComprobanteMonto = ueno_buscar_movimientos_existentes_por_comprobante_monto($mysqli, $normalizados);
+		$vistosArchivoHash = array();
+		$vistosArchivoComprobanteMonto = array();
 		$respuestaMovimientos = array();
 		$nuevos = 0;
 		$duplicados = 0;
 
 		foreach ($normalizados as $mov) {
 			$hash = $mov["hash_movimiento"];
+			$claveComprobanteMonto = ueno_clave_comprobante_monto_movimiento($mov);
 			$estado = "nuevo";
 			$detalle = "Movimiento nuevo, listo para importar";
 			$idMovimiento = "";
@@ -1058,15 +1134,28 @@ function ueno_prevalidar_importacion($usuario)
 				$idImportacion = $existentes[$hash]["id_importacion"];
 				$detalle = "Ya importado en movimiento #" . $idMovimiento . " / importacion #" . $idImportacion;
 				$duplicados++;
-			} else if (isset($vistosArchivo[$hash])) {
+			} else if ($claveComprobanteMonto != "" && isset($existentesComprobanteMonto[$claveComprobanteMonto])) {
+				$estado = "ya_importado";
+				$idMovimiento = $existentesComprobanteMonto[$claveComprobanteMonto]["id_movimiento"];
+				$idImportacion = $existentesComprobanteMonto[$claveComprobanteMonto]["id_importacion"];
+				$detalle = ueno_detalle_movimiento_duplicado_comprobante_monto($existentesComprobanteMonto[$claveComprobanteMonto]);
+				$duplicados++;
+			} else if (isset($vistosArchivoHash[$hash])) {
 				$estado = "repetido_archivo";
 				$detalle = "Repetido dentro del mismo archivo";
+				$duplicados++;
+			} else if ($claveComprobanteMonto != "" && isset($vistosArchivoComprobanteMonto[$claveComprobanteMonto])) {
+				$estado = "repetido_archivo";
+				$detalle = "Repetido dentro del mismo archivo por comprobante y monto";
 				$duplicados++;
 			} else {
 				$nuevos++;
 			}
 
-			$vistosArchivo[$hash] = true;
+			$vistosArchivoHash[$hash] = true;
+			if ($claveComprobanteMonto != "") {
+				$vistosArchivoComprobanteMonto[$claveComprobanteMonto] = true;
+			}
 			$respuestaMovimientos[] = array(
 				"indice" => $mov["indice"],
 				"estado" => $estado,
@@ -1166,19 +1255,33 @@ function ueno_insertar_importacion($usuario)
 	}
 	try {
 		$existentesAntes = ueno_buscar_movimientos_existentes_por_hash($mysqli, $hashes);
+		$existentesComprobanteMontoAntes = ueno_buscar_movimientos_existentes_por_comprobante_monto($mysqli, $normalizados);
 	} catch (Exception $e) {
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "error", "2" => $e->getMessage()));
 	}
-	$vistosArchivo = array();
+	$vistosArchivoHash = array();
+	$vistosArchivoComprobanteMonto = array();
 	$nuevosPrevios = 0;
 	foreach ($normalizados as $mov) {
 		$hash = $mov["hash_movimiento"];
-		if (isset($existentesAntes[$hash]) || isset($vistosArchivo[$hash])) {
-			$vistosArchivo[$hash] = true;
+		$claveComprobanteMonto = ueno_clave_comprobante_monto_movimiento($mov);
+		if (
+			isset($existentesAntes[$hash])
+			|| isset($vistosArchivoHash[$hash])
+			|| ($claveComprobanteMonto != "" && isset($existentesComprobanteMontoAntes[$claveComprobanteMonto]))
+			|| ($claveComprobanteMonto != "" && isset($vistosArchivoComprobanteMonto[$claveComprobanteMonto]))
+		) {
+			$vistosArchivoHash[$hash] = true;
+			if ($claveComprobanteMonto != "") {
+				$vistosArchivoComprobanteMonto[$claveComprobanteMonto] = true;
+			}
 			continue;
 		}
-		$vistosArchivo[$hash] = true;
+		$vistosArchivoHash[$hash] = true;
+		if ($claveComprobanteMonto != "") {
+			$vistosArchivoComprobanteMonto[$claveComprobanteMonto] = true;
+		}
 		$nuevosPrevios++;
 	}
 	if ($nuevosPrevios == 0) {
@@ -1217,14 +1320,23 @@ function ueno_insertar_importacion($usuario)
 
 	$nuevos = 0;
 	$duplicados = 0;
+	$vistosInsertadosHash = array();
+	$vistosInsertadosComprobanteMonto = array();
 	$sqlMovimiento = "INSERT INTO ueno_movimiento_bancario
 		(id_importacion, cuenta, fecha_confirmacion, fecha_transaccion, nro_comprobante, descripcion, concepto, importe_debito,
 		importe_credito, tipo_movimiento, saldo_banco, monto_disponible, estado, hash_movimiento)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	$stmtMov = $mysqli->prepare($sqlMovimiento);
+	$sqlExisteComprobanteMonto = "SELECT id_movimiento FROM ueno_movimiento_bancario
+		WHERE nro_comprobante=?
+		AND (CASE WHEN importe_credito>0 THEN importe_credito ELSE importe_debito END)=?
+		AND (CASE WHEN importe_credito>0 THEN importe_credito ELSE importe_debito END)>0
+		LIMIT 1";
+	$stmtExisteComprobanteMonto = $mysqli->prepare($sqlExisteComprobanteMonto);
 
 	foreach ($normalizados as $mov) {
 		$mov_hash_movimiento = $mov["hash_movimiento"];
+		$mov_clave_comprobante_monto = ueno_clave_comprobante_monto_movimiento($mov);
 		$mov_fecha_confirmacion = $mov["fecha_confirmacion"];
 		$mov_fecha_transaccion = $mov["fecha_transaccion"];
 		$mov_nro_comprobante = $mov["nro_comprobante"];
@@ -1247,7 +1359,38 @@ function ueno_insertar_importacion($usuario)
 		$resExiste = $stmtExiste->get_result();
 		if ($resExiste && $resExiste->num_rows > 0) {
 			$duplicados++;
+			$vistosInsertadosHash[$mov_hash_movimiento] = true;
+			if ($mov_clave_comprobante_monto != "") {
+				$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
+			}
 			continue;
+		}
+
+		if (isset($vistosInsertadosHash[$mov_hash_movimiento])) {
+			$duplicados++;
+			continue;
+		}
+
+		if ($mov_clave_comprobante_monto != "") {
+			if (isset($vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto])) {
+				$duplicados++;
+				continue;
+			}
+			$partesComprobanteMonto = explode("|", $mov_clave_comprobante_monto);
+			$existeNroComprobante = $partesComprobanteMonto[0];
+			$existeMonto = (int)$partesComprobanteMonto[1];
+			$stmtExisteComprobanteMonto->bind_param("si", $existeNroComprobante, $existeMonto);
+			if (!$stmtExisteComprobanteMonto->execute()) {
+				$mysqli->rollback();
+				ueno_json(array("1" => "error", "2" => $stmtExisteComprobanteMonto->error));
+			}
+			$resExisteComprobanteMonto = $stmtExisteComprobanteMonto->get_result();
+			if ($resExisteComprobanteMonto && $resExisteComprobanteMonto->num_rows > 0) {
+				$duplicados++;
+				$vistosInsertadosHash[$mov_hash_movimiento] = true;
+				$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
+				continue;
+			}
 		}
 
 		$stmtMov->bind_param(
@@ -1272,6 +1415,10 @@ function ueno_insertar_importacion($usuario)
 			ueno_json(array("1" => "error", "2" => $stmtMov->error));
 		}
 		$nuevos++;
+		$vistosInsertadosHash[$mov_hash_movimiento] = true;
+		if ($mov_clave_comprobante_monto != "") {
+			$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
+		}
 	}
 
 	ueno_auditar_conciliacion(
@@ -1554,6 +1701,7 @@ function ueno_buscar_importaciones()
 
 	$fecha_desde = ueno_fecha(isset($_POST["fecha_desde"]) ? $_POST["fecha_desde"] : "");
 	$fecha_hasta = ueno_fecha(isset($_POST["fecha_hasta"]) ? $_POST["fecha_hasta"] : "");
+	$vista = ueno_post("vista");
 	$condicion = "";
 	if ($fecha_desde != "") {
 		$condicion .= " AND fecha_extracto>='" . $mysqli->real_escape_string($fecha_desde) . "'";
@@ -1579,7 +1727,8 @@ function ueno_buscar_importaciones()
 	while ($row = mysqli_fetch_assoc($result)) {
 		$total++;
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
-		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' onclick='uenoSeleccionarImportacion(" . $row["id_importacion"] . ")'>"
+		$accionFila = $vista == "modal" ? "uenoVerDetalleImportacion(" . (int)$row["id_importacion"] . ")" : "uenoSeleccionarImportacion(" . (int)$row["id_importacion"] . ")";
+		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' onclick='" . $accionFila . "'>"
 			. "<td style='width:8%'>" . $row["id_importacion"] . "</td>"
 			. "<td style='width:12%'>" . ueno_escape_html($row["cuenta"]) . "</td>"
 			. "<td style='width:10%'>" . ueno_escape_html($row["fecha_extracto"]) . "</td>"
@@ -1593,6 +1742,172 @@ function ueno_buscar_importaciones()
 	}
 	mysqli_close($mysqli);
 	ueno_json(array("1" => "exito", "2" => $html, "3" => $total));
+}
+
+function ueno_detalle_importacion()
+{
+	$mysqli = conectar_al_servidor();
+	if (!ueno_tablas_requeridas_ok($mysqli)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "tablasfaltantes", "2" => "Falta ejecutar actualizacion_10062026_conciliacion_ueno.sql"));
+	}
+
+	$id_importacion = (int)ueno_post("id_importacion");
+	if ($id_importacion <= 0) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "camposvacio", "2" => "No se pudo identificar el archivo migrado"));
+	}
+
+	$sqlImportacion = "SELECT id_importacion, cuenta, denominacion, fecha_extracto, periodo_desde, periodo_hasta,
+		nombre_archivo_original, hash_archivo, usuario_importo, fecha_hora_importacion, cantidad_movimientos,
+		cantidad_creditos, cantidad_debitos, total_creditos, total_debitos, estado, observacion
+		FROM ueno_importacion_extracto
+		WHERE id_importacion=?
+		LIMIT 1";
+	$stmtImp = $mysqli->prepare($sqlImportacion);
+	if (!$stmtImp) {
+		$error = $mysqli->error;
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $error));
+	}
+	$stmtImp->bind_param("i", $id_importacion);
+	if (!$stmtImp->execute()) {
+		$error = $stmtImp->error;
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $error));
+	}
+	$resImp = $stmtImp->get_result();
+	if (!$resImp || $resImp->num_rows == 0) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "noencontrado", "2" => "No encontramos el archivo migrado seleccionado"));
+	}
+	$imp = $resImp->fetch_assoc();
+
+	$sqlMovimientos = "SELECT mv.id_movimiento, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion, mv.concepto,
+		mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado,
+		(
+			SELECT COUNT(*)
+			FROM ueno_movimiento_bancario dup
+			WHERE dup.id_movimiento<>mv.id_movimiento
+			AND dup.nro_comprobante=mv.nro_comprobante
+			AND mv.nro_comprobante!=''
+			AND (CASE WHEN dup.importe_credito>0 THEN dup.importe_credito ELSE dup.importe_debito END)=
+				(CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)
+			AND (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)>0
+		) AS duplicados_comprobante_monto,
+		(
+			SELECT GROUP_CONCAT(
+				CONCAT(
+					'#', dup.id_movimiento,
+					' | Importacion ', dup.id_importacion,
+					' | Archivo: ', IFNULL(imp.nombre_archivo_original, ''),
+					' | Importado: ', IFNULL(imp.fecha_hora_importacion, '')
+				)
+				ORDER BY dup.id_movimiento DESC
+				SEPARATOR '||'
+			)
+			FROM ueno_movimiento_bancario dup
+			LEFT JOIN ueno_importacion_extracto imp ON imp.id_importacion=dup.id_importacion
+			WHERE dup.id_movimiento<>mv.id_movimiento
+			AND dup.nro_comprobante=mv.nro_comprobante
+			AND mv.nro_comprobante!=''
+			AND (CASE WHEN dup.importe_credito>0 THEN dup.importe_credito ELSE dup.importe_debito END)=
+				(CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)
+			AND (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)>0
+			LIMIT 5
+		) AS detalle_duplicados
+		FROM ueno_movimiento_bancario mv
+		WHERE mv.id_importacion=?
+		ORDER BY
+			CASE WHEN mv.nro_comprobante REGEXP '^[0-9]+$' THEN 0 ELSE 1 END ASC,
+			CASE WHEN mv.nro_comprobante REGEXP '^[0-9]+$' THEN CAST(mv.nro_comprobante AS UNSIGNED) ELSE 0 END ASC,
+			mv.nro_comprobante ASC,
+			mv.id_movimiento ASC
+		LIMIT 300";
+	$stmtMov = $mysqli->prepare($sqlMovimientos);
+	if (!$stmtMov) {
+		$error = $mysqli->error;
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $error));
+	}
+	$stmtMov->bind_param("i", $id_importacion);
+	if (!$stmtMov->execute()) {
+		$error = $stmtMov->error;
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $error));
+	}
+	$resMov = $stmtMov->get_result();
+	$html = "";
+	$total = 0;
+	$styleName = "tableRegistroSearch";
+	while ($row = mysqli_fetch_assoc($resMov)) {
+		$total++;
+		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
+		$descripcion = trim((string)$row["descripcion"]);
+		$concepto = trim((string)$row["concepto"]);
+		if ($concepto != "" && $concepto != $descripcion) {
+			$descripcion .= ($descripcion != "" ? " / " : "") . $concepto;
+		}
+		$duplicados = (int)$row["duplicados_comprobante_monto"];
+		$detalleDuplicado = $duplicados > 0
+			? "Duplicado (" . $duplicados . ") " . $row["detalle_duplicados"]
+			: "Sin duplicado";
+		$claseDuplicado = $duplicados > 0 ? "ueno-row-note" : "ueno-row-note ueno-row-note--ok";
+		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>"
+			. "<td style='width:5%;text-align:center'>" . number_format($total, 0, ",", ".") . "</td>"
+			. "<td style='width:8%'>" . ueno_escape_html($row["fecha_confirmacion"]) . "</td>"
+			. "<td style='width:8%'>" . ueno_escape_html($row["fecha_transaccion"]) . "</td>"
+			. "<td style='width:11%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
+			. "<td style='width:25%'>" . ueno_escape_html($descripcion) . "</td>"
+			. "<td style='width:8%;text-align:right'>" . number_format($row["importe_debito"], 0, ",", ".") . "</td>"
+			. "<td style='width:8%;text-align:right'>" . number_format($row["importe_credito"], 0, ",", ".") . "</td>"
+			. "<td style='width:8%;text-align:right'>" . number_format($row["monto_disponible"], 0, ",", ".") . "</td>"
+			. "<td style='width:10%'><span class='" . $claseDuplicado . "' title='" . ueno_escape_html($detalleDuplicado) . "'>" . ($duplicados > 0 ? "Duplicado" : "OK") . "</span></td>"
+			. "<td style='width:9%'>" . ueno_escape_html($row["estado"]) . "</td>"
+			. "</tr>";
+		if ($duplicados > 0 && trim((string)$row["detalle_duplicados"]) != "") {
+			$partesDuplicadas = explode("||", (string)$row["detalle_duplicados"]);
+			$htmlDetalle = "";
+			foreach ($partesDuplicadas as $parteDuplicada) {
+				$parteDuplicada = trim($parteDuplicada);
+				if ($parteDuplicada == "") {
+					continue;
+				}
+				$htmlDetalle .= "<span>" . ueno_escape_html($parteDuplicada) . "</span>";
+			}
+			if ($htmlDetalle != "") {
+				$html .= "<tr class='ueno-duplicate-detail-row'><td colspan='10'>"
+					. "<div class='ueno-duplicate-detail'><b>Duplicado encontrado en:</b>" . $htmlDetalle . "</div>"
+					. "</td></tr>";
+			}
+		}
+		$html .= "</table>";
+	}
+	mysqli_close($mysqli);
+	ueno_json(array(
+		"1" => "exito",
+		"importacion" => array(
+			"id_importacion" => $imp["id_importacion"],
+			"cuenta" => ueno_from_db($imp["cuenta"]),
+			"denominacion" => ueno_from_db($imp["denominacion"]),
+			"fecha_extracto" => ueno_from_db($imp["fecha_extracto"]),
+			"periodo_desde" => ueno_from_db($imp["periodo_desde"]),
+			"periodo_hasta" => ueno_from_db($imp["periodo_hasta"]),
+			"archivo" => ueno_from_db($imp["nombre_archivo_original"]),
+			"hash_archivo" => ueno_from_db($imp["hash_archivo"]),
+			"usuario" => ueno_from_db($imp["usuario_importo"]),
+			"fecha_importacion" => ueno_from_db($imp["fecha_hora_importacion"]),
+			"movimientos" => number_format($imp["cantidad_movimientos"], 0, ",", "."),
+			"creditos" => number_format($imp["cantidad_creditos"], 0, ",", "."),
+			"debitos" => number_format($imp["cantidad_debitos"], 0, ",", "."),
+			"total_creditos" => number_format($imp["total_creditos"], 0, ",", "."),
+			"total_debitos" => number_format($imp["total_debitos"], 0, ",", "."),
+			"estado" => ueno_from_db($imp["estado"]),
+			"observacion" => ueno_from_db($imp["observacion"])
+		),
+		"tabla" => $html,
+		"total_movimientos" => $total
+	));
 }
 
 function ueno_buscar_pagos_pendientes()
@@ -2691,6 +3006,9 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 	}
 	if ($operacion == "buscar_importaciones") {
 		ueno_buscar_importaciones();
+	}
+	if ($operacion == "detalle_importacion") {
+		ueno_detalle_importacion();
 	}
 	if ($operacion == "buscar_movimientos") {
 		ueno_buscar_movimientos();

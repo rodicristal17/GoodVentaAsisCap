@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=odontograma-multiple-piezas-20260630" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-detalle-nro-registro-20260630" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -49,7 +49,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-listado-fechas-20260624"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-nro-registro-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ayuda-guia-20260618"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-evolucion-guiada-20260630"></script>
@@ -26162,6 +26162,7 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <input type='file' id='uenoArchivoExtracto' accept='.xls,.xlsx,.csv' style='display:none'>
 <input type='button' value='Seleccionar extracto' class='btn4 ueno-btn-secondary' onclick='uenoSeleccionarArchivo()' style='width:150px'>
 <input type='button' value='Importar extracto' class='btn4 ueno-btn-primary' onclick='uenoGuardarImportacion()' style='width:145px;background-color:#2196F3'>
+<input type='button' value='Archivos migrados' class='btn4 ueno-btn-secondary' onclick='uenoAbrirModalImportaciones()' title='Ver archivos de extracto ya migrados' style='width:145px'>
 </td>
 </tr>
 </table>
@@ -26547,6 +26548,88 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 </tbody>
 </table>
 <div class="div_cuerpo_table ueno-table-body" id="table_ueno_auditoria" style='height:130px;'></div>
+</div>
+</div>
+
+<div id='divUenoImportacionesPopup' class='ueno-audit-popup ueno-importaciones-popup' role='dialog' aria-modal='true' aria-labelledby='lblUenoImportacionesModalTitulo' style='display:none'>
+<div class='ueno-audit-dialog ueno-importaciones-dialog'>
+<div class='ueno-audit-dialog-head'>
+<div>
+<p class='ueno-section-title' id='lblUenoImportacionesModalTitulo'>Archivos migrados</p>
+<p class='ueno-section-help'>Listado de extractos importados. Selecciona un archivo para ver el detalle migrado.</p>
+</div>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar'
+title='Cerrar Ventana' onclick='uenoCerrarModalImportaciones()' />
+</div>
+<div class='ueno-importaciones-toolbar'>
+<label>
+<b>Desde</b>
+<input class='inputText' type='date' id='inptUenoModalBuscarDesde'>
+</label>
+<label>
+<b>Hasta</b>
+<input class='inputText' type='date' id='inptUenoModalBuscarHasta'>
+</label>
+<span>
+<b>Archivos</b>
+<strong id='lblUenoModalTotalImportaciones'>0</strong>
+</span>
+<input type='button' value='Buscar archivos' class='btn4 ueno-btn-secondary' onclick='uenoBuscarImportacionesModal()' style='width:140px'>
+</div>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:8%;">ID</td>
+<td class="td_registro" style="width:12%;">CUENTA</td>
+<td class="td_registro" style="width:10%;">FECHA</td>
+<td class="td_registro" style="width:24%;">ARCHIVO</td>
+<td class="td_registro" style="width:14%;">IMPORTADO</td>
+<td class="td_registro" style="width:8%;">MOV.</td>
+<td class="td_registro" style="width:8%;">CRED.</td>
+<td class="td_registro" style="width:8%;">DEB.</td>
+<td class="td_registro" style="width:8%;">ESTADO</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_importaciones_modal"></div>
+<div class='ueno-audit-dialog-footer'>
+<input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarModalImportaciones()' style='width:120px'>
+</div>
+</div>
+</div>
+
+<div id='divUenoDetalleImportacionPopup' class='ueno-audit-popup ueno-detalle-importacion-popup' role='dialog' aria-modal='true' aria-labelledby='lblUenoDetalleImportacionTitulo' style='display:none'>
+<div class='ueno-audit-dialog ueno-detalle-importacion-dialog'>
+<div class='ueno-audit-dialog-head'>
+<div>
+<p class='ueno-section-title' id='lblUenoDetalleImportacionTitulo'>Detalle del archivo migrado</p>
+<p class='ueno-section-help' id='lblUenoDetalleImportacionSubtitulo'>Movimientos importados desde el extracto seleccionado.</p>
+</div>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar'
+title='Cerrar Ventana' onclick='uenoCerrarDetalleImportacionPopup()' />
+</div>
+<div id='divUenoDetalleImportacionResumen' class='ueno-detalle-importacion-resumen'></div>
+<table class="tableCabeceraRegistro ueno-table-head">
+<tbody>
+<tr>
+<td class="td_registro" style="width:5%;">NRO.</td>
+<td class="td_registro" style="width:8%;">F. CONF.</td>
+<td class="td_registro" style="width:8%;">F. TRANS.</td>
+<td class="td_registro" style="width:11%;">COMPROBANTE</td>
+<td class="td_registro" style="width:25%;">DETALLE</td>
+<td class="td_registro" style="width:8%;">DEB.</td>
+<td class="td_registro" style="width:8%;">CRED.</td>
+<td class="td_registro" style="width:8%;">DISP.</td>
+<td class="td_registro" style="width:10%;">DUP.</td>
+<td class="td_registro" style="width:9%;">ESTADO</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_detalle_importacion"></div>
+<div class='ueno-audit-dialog-footer'>
+<input type='button' value='Cargar en mesa' class='btn4 ueno-btn-primary' onclick='uenoCargarImportacionDesdeDetalle()' style='width:135px'>
+<input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarDetalleImportacionPopup()' style='width:120px'>
+</div>
 </div>
 </div>
 
