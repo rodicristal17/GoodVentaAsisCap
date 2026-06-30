@@ -23199,6 +23199,7 @@ button.dashboard-summary-item:hover {
 #dashboardShortcutPreview {
     display: grid;
     gap: 7px;
+    min-height: 54px;
     max-height: 430px;
     overflow: auto;
 }
@@ -23206,13 +23207,50 @@ button.dashboard-summary-item:hover {
 .dashboard-shortcut-preview-item {
     min-height: 42px;
     display: grid;
-    grid-template-columns: 22px 24px minmax(0, 1fr) 26px 26px 26px;
+    grid-template-columns: 26px 22px 24px minmax(0, 1fr) 26px 26px 26px;
     align-items: center;
     gap: 6px;
     padding: 6px;
     border: 1px solid #edf1f5;
     border-radius: 8px;
     background: #f8fafc;
+}
+
+.dashboard-shortcut-modal--dragging #dashboardShortcutPreview {
+    border-radius: 8px;
+    outline: 2px dashed #93c5fd;
+    outline-offset: 3px;
+}
+
+.dashboard-shortcut-preview-item[draggable="true"],
+.dashboard-shortcut-option[draggable="true"] {
+    cursor: grab;
+}
+
+.dashboard-shortcut-preview-item[draggable="true"]:active,
+.dashboard-shortcut-option[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.dashboard-shortcut-drag-handle {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d9e1ea;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #64748b;
+    cursor: grab;
+    font-size: 12px;
+    font-weight: 950;
+    line-height: 1;
+    touch-action: none;
+}
+
+.dashboard-shortcut-drag-handle:active {
+    cursor: grabbing;
 }
 
 .dashboard-shortcut-preview-item__order {
@@ -23266,6 +23304,17 @@ button.dashboard-summary-item:hover {
     background: #ffffff;
 }
 
+.dashboard-shortcut-preview-item .dashboard-shortcut-drag-handle {
+    color: #64748b;
+    cursor: grab;
+    font-size: 12px;
+    touch-action: none;
+}
+
+.dashboard-shortcut-preview-item .dashboard-shortcut-drag-handle:active {
+    cursor: grabbing;
+}
+
 .dashboard-shortcut-empty {
     padding: 12px;
     border: 1px dashed #cbd5e1;
@@ -23279,6 +23328,7 @@ button.dashboard-summary-item:hover {
 
 .dashboard-shortcut-modal__footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
     padding: 12px 16px;
@@ -24237,6 +24287,52 @@ button.dashboard-summary-item:hover {
     font-weight: 800;
 }
 
+#divFrmVistaConsulta .clinical-plan-subgroup-label {
+    position: relative;
+    min-height: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 9px;
+    padding: 6px 9px;
+    border: 1px solid #d6eadf;
+    border-radius: 7px;
+    background: #f7fffb;
+    color: #516174;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+#divFrmVistaConsulta .clinical-plan-subgroup-label::after {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: -18px;
+    width: 18px;
+    border-top: 1px dashed #d2dde7;
+}
+
+#divFrmVistaConsulta .clinical-plan-subgroup-label strong {
+    color: #0f604f;
+    font-size: 11px;
+    font-weight: 950;
+}
+
+#divFrmVistaConsulta .clinical-plan-subgroup-label span {
+    color: #667085;
+    font-size: 10.5px;
+    font-weight: 800;
+}
+
+#divFrmVistaConsulta .clinical-plan-subgroup-label--anexadas {
+    border-color: #d9dee8;
+    background: #fbfdff;
+}
+
+#divFrmVistaConsulta .clinical-plan-subgroup-label--anexadas strong {
+    color: #475467;
+}
+
 #divFrmVistaConsulta .clinical-plan-section > .clinical-records-grid {
     position: relative;
     grid-template-columns: minmax(0, 1fr);
@@ -24368,8 +24464,8 @@ button.dashboard-summary-item:hover {
 
 #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-list {
     gap: 2px;
-    max-height: 74px;
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
 }
 
 #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-item {
@@ -24837,6 +24933,19 @@ button.dashboard-summary-item:hover {
     font-size: 11px;
     font-weight: 900;
     line-height: 1;
+}
+
+@media (max-width: 1100px) {
+    #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-item {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: flex-start;
+    }
+
+    #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-risk,
+    #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-status,
+    #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-progress {
+        justify-self: start;
+    }
 }
 
 @media (max-width: 760px) {
@@ -27605,27 +27714,150 @@ button.dashboard-summary-item:hover {
     background: #ffffff;
 }
 
-.plan-definitivo-anexar-venta__head {
+.plan-definitivo-anexar-venta-selector {
     display: grid;
-    gap: 2px;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #cfe5df;
+    border-radius: 7px;
+    background: #f6fffb;
+    cursor: pointer;
 }
 
-.plan-definitivo-anexar-venta__head strong {
+.plan-definitivo-anexar-check {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plan-definitivo-anexar-check input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.plan-definitivo-anexar-check__box {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #0f766e;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(15, 118, 110, 0.18);
+}
+
+.plan-definitivo-anexar-check input:checked + .plan-definitivo-anexar-check__box {
+    border-color: #0f766e;
+    background: #0f766e;
+}
+
+.plan-definitivo-anexar-check input:checked + .plan-definitivo-anexar-check__box::after {
+    content: "";
+    width: 6px;
+    height: 12px;
+    border: solid #ffffff;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+    margin-top: -2px;
+}
+
+.plan-definitivo-anexar-check input:focus + .plan-definitivo-anexar-check__box {
+    outline: 3px solid rgba(15, 118, 110, 0.18);
+    outline-offset: 2px;
+}
+
+.plan-definitivo-anexar-main {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.plan-definitivo-anexar-venta-selector strong {
     color: #172033;
     font-size: 13px;
     font-weight: 950;
 }
 
-.plan-definitivo-anexar-venta__head span {
+.plan-definitivo-anexar-venta-selector small {
     color: #667085;
     font-size: 11px;
     font-weight: 750;
     line-height: 1.35;
 }
 
+.plan-definitivo-anexar-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+}
+
+.plan-definitivo-anexar-venta-selector em,
+.plan-definitivo-anexar-venta-selector b {
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 950;
+    white-space: nowrap;
+}
+
+.plan-definitivo-anexar-venta-selector em {
+    color: #475467;
+}
+
+.plan-definitivo-anexar-venta-selector b {
+    padding: 4px 8px;
+    border-radius: 999px;
+    color: #0f6b5d;
+    background: #dff7ef;
+}
+
+.plan-definitivo-anexar-venta-selector.is-partial {
+    border-color: #fedf89;
+    background: #fffbeb;
+}
+
+.plan-definitivo-anexar-venta-selector.is-partial b {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.plan-definitivo-anexar-venta-selector.is-included {
+    cursor: default;
+    opacity: 0.72;
+    background: #f8fafc;
+    border-color: #e4e7ec;
+}
+
+.plan-definitivo-anexar-venta-selector.is-included .plan-definitivo-anexar-check input {
+    cursor: default;
+}
+
+.plan-definitivo-anexar-venta-selector.is-included .plan-definitivo-anexar-check__box {
+    border-color: #98a2b3;
+    background: #f2f4f7;
+    box-shadow: none;
+}
+
+.plan-definitivo-anexar-venta-selector.is-included b {
+    color: #1f7a68;
+    background: #edf7f4;
+}
+
 .plan-definitivo-anexar-item {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
     gap: 8px;
     align-items: center;
     min-height: 34px;
@@ -28165,6 +28397,288 @@ button.dashboard-summary-item:hover {
     box-sizing: border-box;
 }
 
+#divAbmDetalleConsulta .clinical-treatment-select--compat {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-context,
+#divAbmDetalleConsulta .clinical-treatment-plan-list {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px;
+    border: 1px solid #d7e4ec;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-card span,
+#divAbmDetalleConsulta .clinical-treatment-plan-card small,
+#divAbmDetalleConsulta .clinical-treatment-agenda-context span,
+#divAbmDetalleConsulta .clinical-treatment-agenda-context small {
+    color: #667085;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-card strong,
+#divAbmDetalleConsulta .clinical-treatment-agenda-context strong {
+    display: block;
+    color: #172033;
+    font-size: 12px;
+    font-weight: 950;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-card em {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eef6ff;
+    color: #245985;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 950;
+    white-space: nowrap;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-card__stats {
+    display: grid;
+    grid-template-columns: repeat(3, auto auto);
+    gap: 2px 6px;
+    align-items: center;
+    color: #516174;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-card__stats b {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 950;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-context {
+    display: grid;
+    gap: 3px;
+    padding: 9px;
+    border: 1px solid #bfe8d8;
+    border-radius: 8px;
+    background: #f0fbf6;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-context em {
+    color: #0f6b5d;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 950;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-context--warning {
+    border-color: #fed7aa;
+    background: #fff7ed;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert {
+    display: none;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 850;
+    line-height: 1.35;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+    font-weight: 950;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert.is-warning,
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert.is-ok,
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert.is-info {
+    display: block;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert.is-warning {
+    border: 1px solid #fed7aa;
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert.is-ok {
+    border: 1px solid #bfe8d8;
+    background: #f0fbf6;
+    color: #146c57;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-agenda-alert.is-info {
+    border: 1px solid #c7ddf4;
+    background: #eef6ff;
+    color: #245985;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-group {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #e4e7ec;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-group__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: #667085;
+    font-size: 10.5px;
+    font-weight: 850;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-group__head strong {
+    color: #172033;
+    font-size: 11px;
+    font-weight: 950;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    padding: 8px;
+    border: 1px solid #e4e7ec;
+    border-radius: 8px;
+    background: #fbfcfd;
+    color: #344054;
+    text-align: left;
+    cursor: pointer;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option:hover,
+#divAbmDetalleConsulta .clinical-treatment-plan-option.is-selected {
+    border-color: #0f766e;
+    background: #f0fbf6;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option.is-recommended {
+    border-color: #99e6ce;
+    background: #f3fffa;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option.is-suggested {
+    border-color: #c7ddf4;
+    background: #f5faff;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option.is-completed {
+    opacity: 0.82;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__radio {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #98a2b3;
+    border-radius: 999px;
+    background: #ffffff;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option.is-selected .clinical-treatment-plan-option__radio {
+    border-color: #0f766e;
+    box-shadow: inset 0 0 0 5px #ffffff;
+    background: #0f766e;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__body {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__body strong {
+    color: #172033;
+    font-size: 12px;
+    font-weight: 950;
+    overflow-wrap: anywhere;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__body small {
+    color: #667085;
+    font-size: 10.5px;
+    font-weight: 800;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__badges em,
+#divAbmDetalleConsulta .clinical-treatment-plan-badge {
+    min-height: 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 950;
+    line-height: 1;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__badges em {
+    border: 1px solid #d7e4ec;
+    background: #ffffff;
+    color: #42526b;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-badge--recommended {
+    background: #dff7ef;
+    color: #0f6b5d;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-badge--suggested {
+    background: #e0f2fe;
+    color: #245985;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-badge--done {
+    background: #edf7f4;
+    color: #1f7a68;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-badge--warning {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-empty,
+#divAbmDetalleConsulta .clinical-treatment-context-empty {
+    padding: 9px;
+    border: 1px dashed #d8e4ef;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #667085;
+    font-size: 11px;
+    font-weight: 850;
+}
+
 #divAbmDetalleConsulta .clinical-treatment-select-hint {
     color: #516174;
     font-size: 10.5px;
@@ -28200,6 +28714,21 @@ button.dashboard-summary-item:hover {
 }
 
 @media (max-width: 980px) {
+    #divAbmDetalleConsulta .clinical-treatment-plan-card {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    #divAbmDetalleConsulta .clinical-treatment-plan-card__stats {
+        grid-template-columns: repeat(3, auto auto);
+        justify-content: start;
+    }
+
+    #divAbmDetalleConsulta .clinical-treatment-plan-group__head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
     #divAbmConsulta .clinical-consultation-layout {
         grid-template-columns: 1fr;
     }
@@ -28297,14 +28826,28 @@ button.dashboard-summary-item:hover {
         align-self: flex-start;
     }
 
+    .plan-definitivo-anexar-venta-selector {
+        grid-template-columns: 34px minmax(0, 1fr);
+        align-items: flex-start;
+    }
+
     .plan-definitivo-anexar-item {
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .plan-definitivo-anexar-summary {
+        grid-column: 2;
+        justify-content: flex-start;
+    }
+
+    .plan-definitivo-anexar-venta-selector em,
+    .plan-definitivo-anexar-venta-selector b {
+        justify-self: start;
     }
 
     .plan-definitivo-anexar-item .riesgo-financiero-badge,
     .plan-definitivo-anexar-item em,
     .plan-definitivo-anexar-item b {
-        grid-column: 2;
         justify-self: start;
     }
 }

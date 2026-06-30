@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=presupuesto-nav-20260628" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=consulta-plan-madre-agenda-20260629" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -40,11 +40,11 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/consulta.js?x=historial-clinico-acceso-20260618"></script>
+<script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-plan-madre-agenda-20260629"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=caja-control-paginacion-20260627"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=cobrar-cuota-20260611"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
@@ -16151,16 +16151,16 @@ style='background-color: #b7b7b7;'>
               <!-- Panel Derecho -->
               <div class="modal-filtros-overlay" id="overlayAbmDetalleConsulta" onclick="verCerrarAbmDetalleConsulta(false)" style="display: none;"></div>
               <div class="modal-filtros-catalogo" id="divAbmDetalleConsulta" style='display:none;z-index:12;'>
-                <div class="div_ContenedorDatos modal-filtros-box modal-detalle-agenda-box" style='max-width:900px;'>
-                  <div class='modal-filtros-header' style='padding:14px 18px;'>
+                <div class="div_ContenedorDatos modal-filtros-box modal-detalle-agenda-box consulta-nueva-modal-shell">
+                  <div class='modal-filtros-header'>
                     <div class='modal-header-info'>
                       <p class='modal-etiqueta'>Registro clínico</p>
                       <h3>Nueva consulta</h3>
                       <span>Motivo, diagnóstico, procedimiento realizado y próximo paso</span>
                     </div>
-                    <button type='button' class='btn-cerrar-modal' onclick='verCerrarAbmDetalleConsulta(false)'>&times;</button>
+                    <button type='button' class='btn-cerrar-modal clinical-register-close' title='Cerrar nueva consulta' aria-label='Cerrar nueva consulta' onclick='verCerrarAbmDetalleConsulta(false)'>&times;</button>
                   </div>
-                  <div class='modal-filtros-body' style='padding:12px;'>
+                  <div class='modal-filtros-body'>
 
                   <input type="hidden" id="inptEspecialistaConsulta">
                   <div class="clinical-register-meta">
@@ -16182,15 +16182,18 @@ style='background-color: #b7b7b7;'>
                     <!-- Fila principal -->
                     <div class="columna-consulta">
                       <!-- Motivo Consulta -->
-                      <div class="clinical-register-field">
+                      <div class="clinical-register-field clinical-register-field--motivo">
                         <p class="pTitulo5">Motivo de consulta:</p>
                         <textarea class="textarea-agenda" placeholder="Ej.: Dolor, control, revisi&oacute;n, urgencia..." id="inptMotivoConsulta" style="min-height:78px;"></textarea>
                       </div>
 
                       <!-- Tratamiento realizado / evolucion -->
-                      <div class="clinical-register-field">
+                      <div class="clinical-register-field clinical-register-field--tratamiento">
                         <p class="pTitulo5">Tratamiento realizado:</p>
-                        <select class="catalogo-selectBuscador clinical-treatment-select" id="inptTratamientoPlanMadreConsulta" onchange="sincronizarTratamientoRealizadoConsulta()">
+                        <div class="clinical-treatment-plan-context" id="consultaPlanMadreResumen"></div>
+                        <div class="clinical-treatment-agenda-alert" id="consultaTratamientoAgendaAviso"></div>
+                        <div class="clinical-treatment-plan-list" id="consultaTratamientoPlanLista" role="list" tabindex="-1"></div>
+                        <select class="catalogo-selectBuscador clinical-treatment-select clinical-treatment-select--compat" id="inptTratamientoPlanMadreConsulta" onchange="sincronizarTratamientoRealizadoConsulta()">
                           <option value="">Cargando tratamientos del plan madre...</option>
                         </select>
                         <div class="clinical-treatment-select-hint" id="consultaTratamientoPlanHint">Seleccione un tratamiento planificado para registrar su evoluci&oacute;n.</div>
