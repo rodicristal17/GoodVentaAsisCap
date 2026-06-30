@@ -582,6 +582,7 @@ function GuardarRegistroDetallePreCOnsulta(datos) {
 var controlVentanaConsulta="";
 function verCerrarAbmVistaConsulta(controlVentana, volverAtras= false) { 
 	if(document.getElementById("divFrmVistaConsulta").style.display==""){ 
+		cerrarModalConsultaLecturaSiAbierta();
 		$("div[id=divFrmVistaConsulta]").fadeOut(500);	
 		
 		if (volverAtras && ventanaAnterior.length > 0) {
@@ -1609,6 +1610,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						var contenedorVistaConsulta = document.getElementById("table_frm_VistaConsulta");
 						contenedorVistaConsulta.classList.add("vista-consulta-results--loaded");
 						contenedorVistaConsulta.innerHTML = datos_buscados
+						autoSeleccionarVentaAtencionAgendaConsulta();
 					} else {
 						mostrarEstadoVistaConsultaClinica("sinResultados");
 					}
@@ -1634,6 +1636,273 @@ let cod_ventaFKConsulta="";
 let cod_clienteConsulta = "";
 let cod_localVentaConsulta = "";
 let nombre_localVentaConsulta = "";
+let contextoAtencionAgendaConsulta = {
+	activo: false,
+	id_agenda: "",
+	cod_venta: "",
+	cod_cliente: "",
+	paciente: "",
+	cedula: "",
+	fecha: "",
+	horario: "",
+	doctor: "",
+	tratamientos_ids: [],
+	tratamientos_texto: [],
+	autoseleccionPendiente: false
+};
+
+function normalizarIdsAgendaConsulta(ids) {
+	var salida = [];
+	var mapa = {};
+	if (!ids) { return salida; }
+	for (var i = 0; i < ids.length; i++) {
+		var id = String(ids[i] || "").trim();
+		if (id != "" && !mapa[id]) {
+			mapa[id] = true;
+			salida.push(id);
+		}
+	}
+	return salida;
+}
+
+function textosTratamientosAgendaConsulta(texto) {
+	var partes = String(texto || "").split(/<br\s*\/?>/i);
+	var salida = [];
+	for (var i = 0; i < partes.length; i++) {
+		var limpio = partes[i].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+		if (limpio != "") { salida.push(limpio); }
+	}
+	return salida;
+}
+
+function limpiarContextoAtencionAgendaConsulta() {
+	if (typeof idAbmAgenda !== "undefined") {
+		idAbmAgenda = "";
+	}
+	contextoAtencionAgendaConsulta = {
+		activo: false,
+		id_agenda: "",
+		cod_venta: "",
+		cod_cliente: "",
+		paciente: "",
+		cedula: "",
+		fecha: "",
+		horario: "",
+		doctor: "",
+		tratamientos_ids: [],
+		tratamientos_texto: [],
+		autoseleccionPendiente: false
+	};
+	contextoAgendaPlanMadreConsulta = {
+		id_agenda: "",
+		cargado: false,
+		agenda: { existe: false },
+		tratamientos: [],
+		ids: [],
+		idsMapa: {}
+	};
+	var guia = document.getElementById("consultaAgendaAtencionGuia");
+	if (guia) {
+		guia.style.display = "none";
+		guia.innerHTML = "";
+	}
+	var marcados = document.querySelectorAll("#divPreConsultaDetalle_Consulta .plan-definitivo-item--agenda-target");
+	for (var i = 0; i < marcados.length; i++) {
+		marcados[i].classList.remove("plan-definitivo-item--agenda-target");
+		var badge = marcados[i].querySelector(".consulta-agenda-target-badge");
+		if (badge && badge.parentNode) { badge.parentNode.removeChild(badge); }
+	}
+}
+
+function prepararAtencionAgendaParaConsulta(evento, autoseleccionar) {
+	evento = evento || {};
+	var ids = normalizarIdsAgendaConsulta(evento.tratamientos_ids || []);
+	if (ids.length == 0 && evento.cod_detalle_ventaFK) {
+		ids = normalizarIdsAgendaConsulta([evento.cod_detalle_ventaFK]);
+	}
+	contextoAtencionAgendaConsulta = {
+		activo: true,
+		id_agenda: String(evento.id || "").trim(),
+		cod_venta: String(evento.cod_ventaFK || "").trim(),
+		cod_cliente: String(evento.cod_cliente || evento.id_paciente || "").trim(),
+		paciente: String(evento.paciente || "").trim(),
+		cedula: String(evento.ci_cliente || "").replace(/\./g, "").trim(),
+		fecha: String(evento.fecha || "").trim(),
+		horario: (String(evento.inicio || "").trim() + (evento.fin ? " a " + String(evento.fin).trim() : "")).trim(),
+		doctor: String(evento.nombre_doctor || "").trim(),
+		tratamientos_ids: ids,
+		tratamientos_texto: textosTratamientosAgendaConsulta(evento.nombres_tratamiento || evento.nombre_tratamiento_pendiente || ""),
+		autoseleccionPendiente: autoseleccionar === true
+	};
+	if (typeof idAbmAgenda !== "undefined" && contextoAtencionAgendaConsulta.id_agenda != "") {
+		idAbmAgenda = contextoAtencionAgendaConsulta.id_agenda;
+	}
+	contextoAgendaPlanMadreConsulta = {
+		id_agenda: "",
+		cargado: false,
+		agenda: { existe: false },
+		tratamientos: [],
+		ids: [],
+		idsMapa: {}
+	};
+}
+
+function autoSeleccionarVentaAtencionAgendaConsulta() {
+	if (!contextoAtencionAgendaConsulta.activo || !contextoAtencionAgendaConsulta.autoseleccionPendiente) { return; }
+	var tarjetas = document.querySelectorAll("#table_frm_VistaConsulta .tarjeta-paciente");
+	if (!tarjetas.length) { return; }
+	var objetivo = null;
+	for (var i = 0; i < tarjetas.length; i++) {
+		var venta = tarjetas[i].querySelector("#td_datos_5");
+		if (venta && String(venta.textContent || "").trim() == contextoAtencionAgendaConsulta.cod_venta) {
+			objetivo = tarjetas[i];
+			break;
+		}
+	}
+	if (!objetivo && contextoAtencionAgendaConsulta.cod_venta != "") {
+		contextoAtencionAgendaConsulta.autoseleccionPendiente = false;
+		return;
+	}
+	if (!objetivo) { objetivo = tarjetas[0]; }
+	contextoAtencionAgendaConsulta.autoseleccionPendiente = false;
+	setTimeout(function () {
+		ObtenerdatosAbmConsulta(objetivo);
+	}, 30);
+}
+
+function renderizarGuiaAtencionAgendaConsulta() {
+	var guia = document.getElementById("consultaAgendaAtencionGuia");
+	if (!guia) { return; }
+	if (!contextoAtencionAgendaConsulta.activo) {
+		guia.style.display = "none";
+		guia.innerHTML = "";
+		return;
+	}
+	var ctx = contextoAtencionAgendaConsulta;
+	var fecha = ctx.fecha;
+	if (fecha && fecha.indexOf("-") > -1) {
+		var partesFecha = fecha.split("-");
+		if (partesFecha.length == 3) { fecha = partesFecha[2] + "/" + partesFecha[1] + "/" + partesFecha[0]; }
+	}
+	var tratamientos = "";
+	if (ctx.tratamientos_texto.length > 0) {
+		for (var i = 0; i < ctx.tratamientos_texto.length; i++) {
+			tratamientos += "<span>" + escaparHtmlConsulta(ctx.tratamientos_texto[i]) + "</span>";
+		}
+	} else {
+		tratamientos = "<span class='consulta-agenda-guide__empty'>Esta cita no tiene tratamiento seleccionado.</span>";
+	}
+	guia.innerHTML = ""
+		+ "<div class='consulta-agenda-guide__main'>"
+		+ "	<div><span>Atencion desde calendario</span><strong>Tratamiento de esta cita</strong><small>" + escaparHtmlConsulta(fecha || "Fecha no definida") + (ctx.horario ? " - " + escaparHtmlConsulta(ctx.horario) : "") + (ctx.doctor ? " - " + escaparHtmlConsulta(ctx.doctor) : "") + "</small></div>"
+		+ "	<div class='consulta-agenda-guide__treatments'>" + tratamientos + "</div>"
+		+ "</div>"
+		+ "<div class='consulta-agenda-guide__actions'>"
+		+ "	<button type='button' class='consulta-agenda-guide__primary' onclick='abrirNuevaConsultaGuiadaDesdeAgendaConsulta()'>Registrar evolucion</button>"
+		+ "	<button type='button' onclick='cambiarTabFichaClinicaConsulta(\"plan\")'>Ver plan madre</button>"
+		+ "	<button type='button' onclick='cambiarTabFichaClinicaConsulta(\"evolucion\")'>Ver historial</button>"
+		+ "</div>";
+	guia.style.display = "";
+}
+
+function destacarTratamientosAgendaEnPlanConsulta() {
+	var items = document.querySelectorAll("#divPreConsultaDetalle_Consulta .plan-definitivo-item[data-detalle-tratamiento]");
+	var mapa = {};
+	var ids = contextoAtencionAgendaConsulta.tratamientos_ids || [];
+	if (!contextoAtencionAgendaConsulta.activo || ids.length == 0) {
+		for (var q = 0; q < items.length; q++) {
+			items[q].classList.remove("plan-definitivo-item--agenda-target");
+		}
+		return;
+	}
+	for (var i = 0; i < ids.length; i++) { mapa[String(ids[i])] = true; }
+	for (var j = 0; j < items.length; j++) {
+		var detalle = items[j].getAttribute("data-detalle-tratamiento") || "";
+		var esObjetivo = !!mapa[String(detalle)];
+		items[j].classList.toggle("plan-definitivo-item--agenda-target", esObjetivo);
+		var top = items[j].querySelector(".plan-definitivo-item__top");
+		var badge = items[j].querySelector(".consulta-agenda-target-badge");
+		if (esObjetivo && top && !badge) {
+			var etiqueta = document.createElement("em");
+			etiqueta.className = "consulta-agenda-target-badge";
+			etiqueta.textContent = "Tratamiento de esta cita";
+			top.appendChild(etiqueta);
+		} else if (!esObjetivo && badge && badge.parentNode) {
+			badge.parentNode.removeChild(badge);
+		}
+	}
+}
+
+function aplicarContextoAtencionAgendaEnFicha() {
+	if (!contextoAtencionAgendaConsulta.activo) {
+		renderizarGuiaAtencionAgendaConsulta();
+		return;
+	}
+	if (contextoAtencionAgendaConsulta.cod_venta != "" && cod_ventaFKConsulta != "" && String(contextoAtencionAgendaConsulta.cod_venta) != String(cod_ventaFKConsulta)) {
+		limpiarContextoAtencionAgendaConsulta();
+		renderizarGuiaAtencionAgendaConsulta();
+		return;
+	}
+	if (contextoAtencionAgendaConsulta.id_agenda != "") {
+		cod_Agendamiento = contextoAtencionAgendaConsulta.id_agenda;
+		if (typeof idAbmAgenda !== "undefined") {
+			idAbmAgenda = contextoAtencionAgendaConsulta.id_agenda;
+		}
+	}
+	renderizarGuiaAtencionAgendaConsulta();
+	destacarTratamientosAgendaEnPlanConsulta();
+	if (typeof cambiarTabFichaClinicaConsulta == "function") {
+		cambiarTabFichaClinicaConsulta("evolucion");
+	}
+}
+
+function obtenerDetallePreferidoAgendaConsulta(opciones) {
+	if (!contextoAtencionAgendaConsulta.activo) { return ""; }
+	var mapaOpciones = {};
+	var primeraCoincidencia = "";
+	for (var i = 0; i < opciones.length; i++) {
+		mapaOpciones[String(opciones[i].detalle)] = opciones[i];
+	}
+	var candidatos = normalizarIdsAgendaConsulta(contextoAtencionAgendaConsulta.tratamientos_ids || []);
+	var idsAgenda = contextoAgendaPlanMadreConsulta.ids || [];
+	for (var a = 0; a < idsAgenda.length; a++) {
+		candidatos.push(String(idsAgenda[a]));
+	}
+	candidatos = normalizarIdsAgendaConsulta(candidatos);
+	for (var j = 0; j < candidatos.length; j++) {
+		var opcion = mapaOpciones[String(candidatos[j])];
+		if (!opcion) { continue; }
+		if (primeraCoincidencia == "") { primeraCoincidencia = opcion.detalle; }
+		if (opcion.avance < 100 && String(opcion.estadoClase || "").toLowerCase() != "completado") {
+			return opcion.detalle;
+		}
+	}
+	return primeraCoincidencia;
+}
+
+function preseleccionarTratamientoAgendaConsulta(opciones, forzar) {
+	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
+	if (!select || !contextoAtencionAgendaConsulta.activo) { return false; }
+	if (select.value != "" && forzar !== true) { return false; }
+	var detalle = obtenerDetallePreferidoAgendaConsulta(opciones || []);
+	if (detalle == "") { return false; }
+	select.value = detalle;
+	sincronizarTratamientoRealizadoConsulta();
+	destacarTratamientosAgendaEnPlanConsulta();
+	return true;
+}
+
+function abrirNuevaConsultaGuiadaDesdeAgendaConsulta() {
+	if (typeof cambiarTabFichaClinicaConsulta == "function") {
+		cambiarTabFichaClinicaConsulta("evolucion");
+	}
+	verCerrarAbmDetalleConsulta(true);
+	setTimeout(function () {
+		if (typeof cargarTratamientosPlanMadreParaConsulta == "function") {
+			cargarTratamientosPlanMadreParaConsulta(false);
+		}
+	}, 120);
+}
 
 function obtenerNombreResponsableConsulta() {
 	var nombre = "";
@@ -1727,6 +1996,7 @@ function ObtenerdatosAbmConsulta(elemento) {
 			buscarResumenAntecedenteConsulta()
 			buscarVistaGaleriaFoto();
 			verCerrarAbmConsulta()
+			aplicarContextoAtencionAgendaEnFicha();
 			break;
 		case "interConsulta":
 			document.getElementById("inptNombreClienteAbmInterConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
@@ -1896,6 +2166,7 @@ function buscarDetalleVentaConsulta(cod_ventaConsultaDetalle, modoSilencioso) {
 					if (typeof cargarTratamientosPlanMadreParaConsulta == "function") {
 						cargarTratamientosPlanMadreParaConsulta();
 					}
+					aplicarContextoAtencionAgendaEnFicha();
 				// cod_personaFK="";
 					
 					var f = new Date();
@@ -2001,6 +2272,7 @@ function buscarabmConsultaParaConsulta(cod_ventaFKConsulta) {
 
 function verCerrarAbmConsulta(){
 if(document.getElementById("divAbmConsulta").style.display==""){
+cerrarModalConsultaLecturaSiAbierta()
 document.getElementById("tdEfectoAbmConsulta").className="magictime vanishOut"
 	$("div[id=divAbmConsulta]").fadeOut(500);
 	cod_consulta = "";
@@ -2008,7 +2280,8 @@ document.getElementById("tdEfectoAbmConsulta").className="magictime vanishOut"
 	window.tabPlanConsultaVenta = "";
 	window.forzarTabPlanDefinitivoConsulta = false;
  
-	limpiarcamposConsulta()
+limpiarcamposConsulta()
+limpiarContextoAtencionAgendaConsulta()
 document.getElementById('btn_flotante_consulta').style.display= 'none'
 verCerrarAbmDetalleConsulta(false);
 verCerrarAbmVistaConsulta("consulta");
@@ -2019,25 +2292,75 @@ verCerrarAbmVistaConsulta("consulta");
 }
 }
 
+function ajustarVisualModalNuevaConsulta() {
+	var modal = document.getElementById("divAbmDetalleConsulta");
+	if (!modal) { return; }
+	var shell = modal.querySelector(".consulta-nueva-modal-shell") || modal.querySelector(".modal-detalle-agenda-box");
+	var cuerpo = modal.querySelector(".modal-filtros-body");
+	var lista = document.getElementById("consultaTratamientoPlanLista");
+	modal.style.alignItems = "flex-start";
+	modal.style.padding = "32px 24px";
+	modal.style.overflow = "auto";
+	if (shell) {
+		shell.style.width = "min(1000px, calc(100vw - 48px))";
+		shell.style.maxWidth = "1000px";
+		shell.style.maxHeight = "calc(100vh - 64px)";
+		shell.style.display = "flex";
+		shell.style.flexDirection = "column";
+		shell.style.margin = "0 auto";
+		shell.style.borderRadius = "14px";
+	}
+	if (cuerpo) {
+		cuerpo.style.flex = "1 1 auto";
+		cuerpo.style.minHeight = "0";
+		cuerpo.style.overflow = "auto";
+	}
+	if (lista) {
+		lista.style.maxHeight = "clamp(230px, 34vh, 360px)";
+		lista.style.overflowY = "auto";
+		lista.style.alignContent = "start";
+		lista.style.padding = "8px";
+		lista.style.border = "1px solid #d9e4ee";
+		lista.style.borderRadius = "10px";
+		lista.style.background = "#f8fafc";
+		lista.style.boxSizing = "border-box";
+	}
+	modal.scrollTop = 0;
+	if (cuerpo) { cuerpo.scrollTop = 0; }
+}
+
 function verCerrarAbmDetalleConsulta(mostrar){
 	const detalle = document.getElementById("divAbmDetalleConsulta");
 	if (!detalle) { return; }
+	const overlay = document.getElementById("overlayAbmDetalleConsulta");
 
 	if (mostrar === true) {
 		prepararFormularioNuevaConsulta();
 		detalle.style.display = "";
-		document.getElementById("overlayAbmDetalleConsulta").style.display= "";
+		if (overlay) { overlay.style.display= ""; }
+		setTimeout(ajustarVisualModalNuevaConsulta, 0);
 		return;
 	}
 
 	if (mostrar === false) {
 		detalle.style.display = "none";
-		document.getElementById("overlayAbmDetalleConsulta").style.display= "none";
+		if (overlay) { overlay.style.display= "none"; }
+		prepararFormularioNuevaConsulta();
 		return;
 	}
 
-	detalle.style.display = detalle.style.display == "" ? "none" : "";
-	document.getElementById("overlayAbmDetalleConsulta").style.display = detalle.style.display == "" ? "none" : "";
+	var abrir = detalle.style.display != "";
+	if (abrir) {
+		prepararFormularioNuevaConsulta();
+	}
+	detalle.style.display = abrir ? "" : "none";
+	if (overlay) { overlay.style.display = abrir ? "" : "none"; }
+	if (abrir) {
+		setTimeout(ajustarVisualModalNuevaConsulta, 0);
+	}
+	if (!abrir) {
+		prepararFormularioNuevaConsulta();
+	}
 }
 
 
@@ -2072,8 +2395,14 @@ function prepararFormularioNuevaConsulta(){
 	if (document.getElementById("inptAvanceTratamientoConsulta")) {
 		document.getElementById("inptAvanceTratamientoConsulta").value = "0";
 	}
+	if (document.getElementById("inptTratamientoPlanMadreConsulta")) {
+		document.getElementById("inptTratamientoPlanMadreConsulta").value = "";
+	}
+	if (document.getElementById("consultaTratamientoPlanHint")) {
+		document.getElementById("consultaTratamientoPlanHint").textContent = "Seleccione un tratamiento planificado para registrar su evolucion.";
+	}
 	if (typeof cargarTratamientosPlanMadreParaConsulta == "function") {
-		cargarTratamientosPlanMadreParaConsulta();
+		cargarTratamientosPlanMadreParaConsulta(false);
 	}
  
 	document.getElementById("btnAbmConsulta").value="Guardar registro clínico"
@@ -2115,7 +2444,9 @@ function VerificarAbmConsulta() {
 	}
 
 	if(inptTratamientoPlanMadreConsulta==""){
-		if (document.getElementById("inptTratamientoPlanMadreConsulta")) {
+		if (document.getElementById("consultaTratamientoPlanLista")) {
+			document.getElementById("consultaTratamientoPlanLista").focus()
+		} else if (document.getElementById("inptTratamientoPlanMadreConsulta")) {
 			document.getElementById("inptTratamientoPlanMadreConsulta").focus()
 		}
 		ver_vetana_informativa("Seleccione el tratamiento realizado del plan madre")
@@ -2309,9 +2640,15 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					cod_consulta = datos[2];
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
-					if (idAbmAgenda) {
+					var mensajeOk = "DATOS CARGADO CORRECTAMENTE...";
+					if (datos.agenda_imprevista_creada == "1") {
+						mensajeOk = "DATOS CARGADO CORRECTAMENTE. Se creo un agendamiento imprevisto para la atencion realizada.";
+					}
+					ver_vetana_informativa(mensajeOk)
+					if (idAbmAgenda && datos.agenda_actualizar_original != "0") {
 					    actualizarAgenda(idAbmAgenda, '', '', "ATENDIDO");
+					} else if (datos.agenda_imprevista_creada == "1" && typeof cargarAgendaConsultoriosDesdePHP == "function") {
+						cargarAgendaConsultoriosDesdePHP();
 					}
 
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
@@ -2347,7 +2684,14 @@ function abrirModal(el) {
 }
  
 function cerrarModal() {
-  document.getElementById("modalConsulta").style.display = "none";
+  cerrarModalConsultaLecturaSiAbierta();
+}
+
+function cerrarModalConsultaLecturaSiAbierta() {
+  var modal = document.getElementById("modalConsulta");
+  if (modal) {
+    modal.style.display = "none";
+  }
 }
 
 function actualizarEstadoCuentaConsultaVisual(estadoForzado) {
@@ -3124,32 +3468,32 @@ function quitarItemPlanDefinitivoConsulta(event, planId, itemId) {
 function abrirAnexarTratamientosPlanDefinitivoConsulta(planId) {
 	ajaxPlanDefinitivoConsulta("buscarVentasAnexablesPlanDefinitivo", { "plan_id": planId }, function (ok, datos) {
 		if (!ok) { return; }
-		var cuerpo = "<p class='plan-definitivo-modal-help'>Solo se muestran ventas asociadas a la misma c&eacute;dula/paciente. Revis&aacute; paciente o alias antes de anexar.</p>" + (datos[2] || "");
+		var cuerpo = "<p class='plan-definitivo-modal-help'>Solo se muestran ventas asociadas a la misma c&eacute;dula/paciente. Se anexa la venta completa con todos sus tratamientos activos.</p>" + (datos[2] || "");
 		var footer = "<button type='button' class='plan-definitivo-secondary' onclick='cerrarModalPlanDefinitivoConsulta()'>Cancelar</button>" +
-			"<button type='button' class='plan-definitivo-primary' onclick='anexarSeleccionadosPlanDefinitivoConsulta(\"" + planId + "\")'>Anexar seleccionados</button>";
+			"<button type='button' class='plan-definitivo-primary' onclick='anexarSeleccionadosPlanDefinitivoConsulta(\"" + planId + "\")'>Anexar ventas seleccionadas</button>";
 		abrirModalPlanDefinitivoConsulta("Anexar tratamientos de otras ventas", "Plan madre", cuerpo, footer);
 	});
 }
 
 function anexarSeleccionadosPlanDefinitivoConsulta(planId) {
 	var seleccionados = [];
-	var checks = document.querySelectorAll("#modalPlanDefinitivoConsulta .plan-definitivo-anexar-item input[type='checkbox']:checked");
+	var checks = document.querySelectorAll("#modalPlanDefinitivoConsulta .plan-definitivo-anexar-venta-selector input[type='checkbox']:checked");
 	for (var i = 0; i < checks.length; i++) {
 		seleccionados.push(checks[i].value);
 	}
 	if (seleccionados.length == 0) {
-		ver_vetana_informativa("Seleccione al menos un tratamiento.");
+		ver_vetana_informativa("Seleccione al menos una venta.");
 		return;
 	}
 	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
 		ajaxPlanDefinitivoConsulta("anexarTratamientosPlanDefinitivo", {
 			"plan_id": planId,
-			"detalle_ids": seleccionados.join(","),
+			"venta_ids": seleccionados.join(","),
 			"motivo": motivo
 		}, function (ok, datos) {
 			if (!ok) { return; }
 			cerrarModalPlanDefinitivoConsulta();
-			ver_vetana_informativa(datos.mensaje || "Tratamientos anexados.");
+			ver_vetana_informativa(datos.mensaje || "Ventas anexadas.");
 			refrescarPlanDefinitivoConsulta();
 		});
 	});
@@ -3230,11 +3574,276 @@ function normalizarAvanceTratamientoConsulta(valor) {
 	return valor;
 }
 
-function cargarTratamientosPlanMadreParaConsulta() {
+let contextoAgendaPlanMadreConsulta = {
+	id_agenda: "",
+	cargado: false,
+	agenda: { existe: false },
+	tratamientos: [],
+	ids: [],
+	idsMapa: {}
+};
+
+function obtenerIdAgendaActualConsulta() {
+	var id = (typeof idAbmAgenda !== "undefined" ? String(idAbmAgenda || "").trim() : "");
+	if (id == "" && document.getElementById("detAgendaId")) {
+		id = String(document.getElementById("detAgendaId").innerHTML || "").trim();
+	}
+	return id;
+}
+
+function cargarContextoAgendaPlanMadreConsulta(callback) {
+	var idAgenda = obtenerIdAgendaActualConsulta();
+	if (idAgenda == "") {
+		contextoAgendaPlanMadreConsulta = {
+			id_agenda: "",
+			cargado: true,
+			agenda: { existe: false },
+			tratamientos: [],
+			ids: [],
+			idsMapa: {}
+		};
+		if (typeof callback == "function") { callback(); }
+		return;
+	}
+	if (contextoAgendaPlanMadreConsulta.cargado && contextoAgendaPlanMadreConsulta.id_agenda == idAgenda) {
+		if (typeof callback == "function") { callback(); }
+		return;
+	}
+	contextoAgendaPlanMadreConsulta = {
+		id_agenda: idAgenda,
+		cargado: false,
+		agenda: { existe: false },
+		tratamientos: [],
+		ids: [],
+		idsMapa: {}
+	};
+	ajaxPlanDefinitivoConsulta("obtenerContextoAgendaConsulta", { "id_agenda": idAgenda }, function (ok, datos) {
+		var ids = [];
+		var mapa = {};
+		if (ok && datos.ids && datos.ids.length) {
+			ids = datos.ids;
+			for (var i = 0; i < ids.length; i++) {
+				mapa[String(ids[i])] = true;
+			}
+		}
+		contextoAgendaPlanMadreConsulta = {
+			id_agenda: idAgenda,
+			cargado: true,
+			agenda: ok && datos.agenda ? datos.agenda : { existe: false },
+			tratamientos: ok && datos.tratamientos ? datos.tratamientos : [],
+			ids: ids,
+			idsMapa: mapa
+		};
+		if (typeof callback == "function") { callback(); }
+	});
+}
+
+function etiquetaFechaHoraAgendaConsulta(agenda) {
+	if (!agenda || !agenda.existe) { return ""; }
+	var partes = [];
+	if (agenda.fecha) { partes.push(agenda.fecha); }
+	if (agenda.hora_inicio || agenda.hora_fin) {
+		partes.push((agenda.hora_inicio || "--:--") + " a " + (agenda.hora_fin || "--:--"));
+	}
+	return partes.join(" - ");
+}
+
+function nombresTratamientosAgendaConsulta() {
+	var tratamientos = contextoAgendaPlanMadreConsulta.tratamientos || [];
+	var nombres = [];
+	for (var i = 0; i < tratamientos.length; i++) {
+		if (tratamientos[i].nombre) { nombres.push(tratamientos[i].nombre); }
+	}
+	return nombres;
+}
+
+function obtenerSiguienteSugeridoPlanMadreConsulta(opciones) {
+	for (var i = 0; i < opciones.length; i++) {
+		var estadoClase = String(opciones[i].estadoClase || "").toLowerCase();
+		if (opciones[i].avance < 100 && estadoClase != "completado" && estadoClase != "cancelado") {
+			return opciones[i].detalle;
+		}
+	}
+	return "";
+}
+
+function renderizarContextoPlanMadreConsulta(opciones) {
+	var contenedor = document.getElementById("consultaPlanMadreResumen");
+	if (!contenedor) { return; }
+	var panelPlanMadre = document.querySelector("#divPreConsultaDetalle_Consulta #consultaPlanDefinitivoPanel .plan-definitivo-panel[data-plan-id]");
+	if (!panelPlanMadre) {
+		contenedor.innerHTML = "<div class='clinical-treatment-context-empty'>Esta venta todavia no tiene plan madre activo.</div>";
+		return;
+	}
+	var planLabel = panelPlanMadre.getAttribute("data-plan-label") || ($(panelPlanMadre).find(".plan-definitivo-header h4").first().text() || "Plan madre");
+	var estado = ($(panelPlanMadre).find(".plan-definitivo-status").first().text() || "").trim();
+	var total = opciones.length;
+	var completados = 0;
+	var proceso = 0;
+	for (var i = 0; i < opciones.length; i++) {
+		if (opciones[i].avance >= 100 || String(opciones[i].estadoClase).toLowerCase() == "completado") { completados++; }
+		else if (opciones[i].avance > 0) { proceso++; }
+	}
+	var agenda = contextoAgendaPlanMadreConsulta.agenda || { existe: false };
+	var agendaHtml = "";
+	if (agenda.existe) {
+		var nombres = nombresTratamientosAgendaConsulta();
+		agendaHtml = "<div class='clinical-treatment-agenda-context'>" +
+			"<strong>Cita del calendario</strong>" +
+			"<span>" + escaparHtmlConsulta(etiquetaFechaHoraAgendaConsulta(agenda) || "Fecha no definida") + "</span>" +
+			(nombres.length ? "<em>Recomendado: " + escaparHtmlConsulta(nombres.join(", ")) + "</em><small>Insumos odontologicos contemplados para este tratamiento.</small>" : "<em>Sin tratamiento vinculado desde calendario.</em><small>Al guardar un tratamiento se registrara como imprevisto.</small>") +
+			"</div>";
+	} else {
+		agendaHtml = "<div class='clinical-treatment-agenda-context clinical-treatment-agenda-context--warning'><strong>Sin cita de calendario vinculada</strong><span>La seleccion se guardara como evolucion clinica del plan madre.</span></div>";
+	}
+	contenedor.innerHTML = "<div class='clinical-treatment-plan-card'>" +
+		"<div><span>Plan madre activo</span><strong>" + escaparHtmlConsulta(planLabel) + "</strong><small>Ruta clinica agrupada &middot; Orden sugerido N1 a N5</small></div>" +
+		"<div class='clinical-treatment-plan-card__stats'><b>" + total + "</b><span>Tratamientos</span><b>" + proceso + "</b><span>En proceso</span><b>" + completados + "</b><span>100%</span></div>" +
+		(estado ? "<em>" + escaparHtmlConsulta(estado) + "</em>" : "") +
+		"</div>" + agendaHtml;
+}
+
+function etiquetaGrupoTratamientoPlanMadreConsulta(item) {
+	var origen = String(item && item.origen ? item.origen : "").toLowerCase();
+	return origen.indexOf("anexada") >= 0 ? "Venta anexada" : "Venta base";
+}
+
+function renderizarOpcionTratamientoPlanMadreConsulta(item, contexto) {
+	contexto = contexto || {};
+	var recomendado = !!contexto.recomendado;
+	var sugerido = !!contexto.sugerido;
+	var completado = !!contexto.completado;
+	var seleccionado = !!contexto.seleccionado;
+	var hayAgenda = !!contexto.hayAgenda;
+	var clases = "clinical-treatment-plan-option" +
+		(seleccionado ? " is-selected" : "") +
+		(recomendado ? " is-recommended" : "") +
+		(sugerido ? " is-suggested" : "") +
+		(completado ? " is-completed" : "");
+	var badges = "";
+	if (recomendado) { badges += "<b class='clinical-treatment-plan-badge clinical-treatment-plan-badge--recommended'>" + (contextoAtencionAgendaConsulta.activo ? "Tratamiento de esta cita" : "Recomendado agenda") + "</b>"; }
+	if (sugerido) { badges += "<b class='clinical-treatment-plan-badge clinical-treatment-plan-badge--suggested'>Siguiente sugerido</b>"; }
+	if (completado) { badges += "<b class='clinical-treatment-plan-badge clinical-treatment-plan-badge--done'>Evolucionado al 100%</b>"; }
+	if (hayAgenda && !recomendado) { badges += "<b class='clinical-treatment-plan-badge clinical-treatment-plan-badge--warning'>No agendado para esta cita</b>"; }
+	return "<button type='button' class='" + clases + "' role='listitem' data-detalle='" + escaparHtmlConsulta(item.detalle) + "' onclick='seleccionarTratamientoPlanMadreConsulta(\"" + escaparHtmlConsulta(item.detalle) + "\")'>" +
+		"<span class='clinical-treatment-plan-option__radio' aria-hidden='true'></span>" +
+		"<span class='clinical-treatment-plan-option__body'>" +
+			"<strong>" + escaparHtmlConsulta(item.nombre) + "</strong>" +
+			"<small>" + escaparHtmlConsulta(item.estado) + " &middot; Avance " + item.avance + "%</small>" +
+			"<span class='clinical-treatment-plan-option__badges'><em>" + escaparHtmlConsulta(item.riesgoTexto || ("N" + item.riesgo)) + "</em>" + badges + "</span>" +
+		"</span>" +
+	"</button>";
+}
+
+function compactarListaTratamientosPlanMadreConsulta() {
+	var lista = document.getElementById("consultaTratamientoPlanLista");
+	if (!lista) { return; }
+	lista.style.maxHeight = "clamp(230px, 34vh, 360px)";
+	lista.style.overflowY = "auto";
+	lista.style.alignContent = "start";
+	lista.style.padding = "8px";
+	lista.style.border = "1px solid #d9e4ee";
+	lista.style.borderRadius = "10px";
+	lista.style.background = "#f8fafc";
+	lista.style.boxSizing = "border-box";
+	var opciones = lista.querySelectorAll(".clinical-treatment-plan-option");
+	for (var i = 0; i < opciones.length; i++) {
+		opciones[i].style.minHeight = "48px";
+		opciones[i].style.padding = "6px 8px";
+		opciones[i].style.gridTemplateColumns = "22px minmax(0, 1fr)";
+		opciones[i].style.gap = "7px";
+	}
+	var rutas = lista.querySelectorAll(".clinical-treatment-plan-option__route");
+	for (var j = 0; j < rutas.length; j++) {
+		rutas[j].style.display = "none";
+	}
+}
+
+function renderizarTratamientosPlanMadreVisualConsulta(opciones) {
+	var lista = document.getElementById("consultaTratamientoPlanLista");
+	if (!lista) { return; }
+	renderizarContextoPlanMadreConsulta(opciones);
+	if (!opciones.length) {
+		lista.innerHTML = "<div class='clinical-treatment-plan-empty'>No hay tratamientos activos vinculados al plan madre.</div>";
+		return;
+	}
+	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
+	var seleccionado = select ? String(select.value || "") : "";
+	var recomendados = contextoAgendaPlanMadreConsulta.idsMapa || {};
+	var hayAgenda = contextoAgendaPlanMadreConsulta.agenda && contextoAgendaPlanMadreConsulta.agenda.existe;
+	var siguiente = obtenerSiguienteSugeridoPlanMadreConsulta(opciones);
+	var grupos = [];
+	var indices = {};
+	var destacados = [];
+	for (var i = 0; i < opciones.length; i++) {
+		var tipoGrupo = etiquetaGrupoTratamientoPlanMadreConsulta(opciones[i]);
+		var clave = tipoGrupo + "||" + opciones[i].venta;
+		if (!indices[clave]) {
+			indices[clave] = { titulo: opciones[i].venta || "Venta sin numero", tipo: tipoGrupo, items: [] };
+			grupos.push(indices[clave]);
+		}
+		indices[clave].items.push(opciones[i]);
+		if (recomendados[String(opciones[i].detalle)]) {
+			destacados.push(opciones[i]);
+		}
+	}
+	grupos.sort(function (a, b) {
+		if (a.tipo == b.tipo) { return 0; }
+		return a.tipo == "Venta base" ? -1 : 1;
+	});
+	var html = "<div class='clinical-treatment-plan-tree'>" +
+		"<div class='clinical-treatment-plan-tree__head'><span>Plan madre</span><strong>Venta base / Ventas anexadas</strong><small>Seleccione el tratamiento realizado para registrar la evolucion.</small></div>";
+	if (destacados.length) {
+		html += "<section class='clinical-treatment-plan-recommended'>" +
+			"<div class='clinical-treatment-plan-group__head'><strong>Recomendado para esta cita</strong><span>Tratamiento vinculado desde agenda</span></div>";
+		for (var d = 0; d < destacados.length; d++) {
+			var destacado = destacados[d];
+			html += renderizarOpcionTratamientoPlanMadreConsulta(destacado, {
+				recomendado: true,
+				sugerido: false,
+				completado: destacado.avance >= 100 || String(destacado.estadoClase).toLowerCase() == "completado",
+				seleccionado: String(destacado.detalle) == seleccionado,
+				hayAgenda: hayAgenda
+			});
+		}
+		html += "</section>";
+	}
+	for (var g = 0; g < grupos.length; g++) {
+		html += "<section class='clinical-treatment-plan-group clinical-treatment-plan-group--" + (grupos[g].tipo == "Venta anexada" ? "anexada" : "base") + "'>" +
+			"<div class='clinical-treatment-plan-group__head'><strong>" + escaparHtmlConsulta(grupos[g].tipo) + "</strong><span>" + escaparHtmlConsulta(grupos[g].titulo) + " &middot; " + grupos[g].items.length + " tratamientos</span></div>";
+		for (var j = 0; j < grupos[g].items.length; j++) {
+			var item = grupos[g].items[j];
+			var recomendado = !!recomendados[String(item.detalle)];
+			var sugerido = !recomendado && String(item.detalle) == String(siguiente);
+			var completado = item.avance >= 100 || String(item.estadoClase).toLowerCase() == "completado";
+			html += renderizarOpcionTratamientoPlanMadreConsulta(item, {
+				recomendado: recomendado,
+				sugerido: sugerido,
+				completado: completado,
+				seleccionado: String(item.detalle) == seleccionado,
+				hayAgenda: hayAgenda
+			});
+		}
+		html += "</section>";
+	}
+	html += "</div>";
+	lista.innerHTML = html;
+	compactarListaTratamientosPlanMadreConsulta();
+}
+
+function seleccionarTratamientoPlanMadreConsulta(detalle) {
+	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
+	if (!select) { return; }
+	select.value = detalle;
+	sincronizarTratamientoRealizadoConsulta();
+}
+
+function cargarTratamientosPlanMadreParaConsulta(conservarSeleccion) {
 	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
 	if (!select) { return; }
 	var hint = document.getElementById("consultaTratamientoPlanHint");
-	var valorActual = select.value || "";
+	var mantenerSeleccion = conservarSeleccion !== false;
+	var valorActual = mantenerSeleccion ? (select.value || "") : "";
 	var panelPlanMadre = document.querySelector("#divPreConsultaDetalle_Consulta #consultaPlanDefinitivoPanel .plan-definitivo-panel[data-plan-id]");
 	var planIdActivo = panelPlanMadre ? (panelPlanMadre.getAttribute("data-plan-id") || "") : "";
 	var items = panelPlanMadre ? panelPlanMadre.querySelectorAll(".plan-definitivo-item[data-detalle-tratamiento]") : [];
@@ -3259,7 +3868,11 @@ function cargarTratamientosPlanMadreParaConsulta() {
 			nombre: nombre,
 			avance: avance,
 			estado: estado,
-			venta: venta
+			estadoClase: item.getAttribute("data-tratamiento-estado-clase") || "",
+			venta: venta,
+			origen: item.getAttribute("data-tratamiento-origen") || "",
+			riesgo: item.getAttribute("data-tratamiento-riesgo") || "",
+			riesgoTexto: item.getAttribute("data-tratamiento-riesgo-texto") || ($(item).find(".riesgo-financiero-badge").first().text() || "")
 		});
 	}
 
@@ -3276,17 +3889,28 @@ function cargarTratamientosPlanMadreParaConsulta() {
 		opcion.dataset.nombre = opciones[j].nombre;
 		opcion.dataset.avance = opciones[j].avance;
 		opcion.dataset.estado = opciones[j].estado;
+		opcion.dataset.estadoClase = opciones[j].estadoClase;
 		opcion.dataset.venta = opciones[j].venta;
+		opcion.dataset.origen = opciones[j].origen;
+		opcion.dataset.riesgo = opciones[j].riesgo;
+		opcion.dataset.riesgoTexto = opciones[j].riesgoTexto;
 		select.appendChild(opcion);
 	}
 
 	select.disabled = opciones.length == 0;
-	if (valorActual != "" && usados[valorActual]) {
+	select.value = "";
+	if (mantenerSeleccion && valorActual != "" && usados[valorActual]) {
 		select.value = valorActual;
 	}
 	if (hint && opciones.length == 0) {
 		hint.textContent = planIdActivo == "" ? "Esta venta todavia no tiene un plan madre activo." : "Este plan madre todavia no tiene tratamientos activos para evolucionar.";
 	}
+	renderizarTratamientosPlanMadreVisualConsulta(opciones);
+	cargarContextoAgendaPlanMadreConsulta(function () {
+		preseleccionarTratamientoAgendaConsulta(opciones, contextoAtencionAgendaConsulta.activo && !mantenerSeleccion);
+		renderizarTratamientosPlanMadreVisualConsulta(opciones);
+		sincronizarTratamientoRealizadoConsulta();
+	});
 	sincronizarTratamientoRealizadoConsulta();
 }
 
@@ -3294,19 +3918,50 @@ function sincronizarTratamientoRealizadoConsulta() {
 	var select = document.getElementById("inptTratamientoPlanMadreConsulta");
 	var avance = document.getElementById("inptAvanceTratamientoConsulta");
 	var hint = document.getElementById("consultaTratamientoPlanHint");
+	var aviso = document.getElementById("consultaTratamientoAgendaAviso");
 	if (!select) { return; }
 	var opcion = select.options[select.selectedIndex];
+	var cards = document.querySelectorAll("#consultaTratamientoPlanLista .clinical-treatment-plan-option");
+	for (var i = 0; i < cards.length; i++) {
+		cards[i].classList.remove("is-selected");
+	}
 	if (!opcion || select.value == "") {
 		if (avance) { avance.value = "0"; }
 		if (hint && !select.disabled) {
 			hint.textContent = "Seleccione un tratamiento planificado para registrar su evolucion.";
 		}
+		if (aviso) {
+			aviso.className = "clinical-treatment-agenda-alert";
+			aviso.innerHTML = "";
+		}
 		return;
+	}
+	var cardsSeleccionadas = document.querySelectorAll("#consultaTratamientoPlanLista .clinical-treatment-plan-option[data-detalle='" + select.value + "']");
+	for (var j = 0; j < cardsSeleccionadas.length; j++) {
+		cardsSeleccionadas[j].classList.add("is-selected");
 	}
 	var avanceActual = normalizarAvanceTratamientoConsulta(opcion.dataset.avance || "0");
 	if (avance) { avance.value = avanceActual; }
 	if (hint) {
 		hint.textContent = "Tratamiento: " + (opcion.dataset.nombre || "Tratamiento") + " - Avance actual " + avanceActual + "% - " + (opcion.dataset.estado || "Pendiente");
+	}
+	if (aviso) {
+		var agenda = contextoAgendaPlanMadreConsulta.agenda || { existe: false };
+		var mapa = contextoAgendaPlanMadreConsulta.idsMapa || {};
+		var ids = contextoAgendaPlanMadreConsulta.ids || [];
+		if (agenda.existe && ids.length > 0 && !mapa[String(select.value)]) {
+			aviso.className = "clinical-treatment-agenda-alert is-warning";
+			aviso.innerHTML = "<strong>Atencion: tratamiento distinto al agendado.</strong><span>Los insumos odontologicos contemplados corresponden al tratamiento recomendado de la cita. Al guardar se creara un agendamiento imprevisto atendido.</span>";
+		} else if (agenda.existe && ids.length == 0) {
+			aviso.className = "clinical-treatment-agenda-alert is-warning";
+			aviso.innerHTML = "<strong>Esta cita no tiene tratamiento vinculado desde calendario.</strong><span>Se permite registrar la evolucion, pero al guardar se creara un agendamiento imprevisto atendido.</span>";
+		} else if (agenda.existe) {
+			aviso.className = "clinical-treatment-agenda-alert is-ok";
+			aviso.innerHTML = "<strong>Tratamiento recomendado para esta cita.</strong><span>Los insumos odontologicos de este tratamiento ya fueron contemplados.</span>";
+		} else {
+			aviso.className = "clinical-treatment-agenda-alert is-info";
+			aviso.innerHTML = "<strong>Sin cita de calendario vinculada.</strong><span>La evolucion se registrara dentro del plan madre seleccionado.</span>";
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-var DASHBOARD_SHORTCUT_MAX = 15;
+var DASHBOARD_SHORTCUT_MAX = 20;
 var dashboardShortcutCatalog = [];
 var dashboardShortcutCatalogByKey = {};
 var dashboardShortcutSelectedKeys = [];
@@ -7,6 +7,8 @@ var dashboardShortcutCatalogLoaded = false;
 var dashboardShortcutCatalogLoading = false;
 var dashboardShortcutCatalogCallbacks = [];
 var dashboardShortcutCatalogLastError = "";
+var dashboardShortcutDragSource = "";
+var dashboardShortcutPointerDrag = null;
 
 var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"cargar_compras",
@@ -630,12 +632,13 @@ function crearModalAccesosRapidos() {
 		"<div class='dashboard-shortcut-modal__preview'>" +
 		"<div class='dashboard-shortcut-modal__preview-header'>" +
 		"<strong>Seleccionados</strong>" +
-		"<small>Usa las flechas para ordenar</small>" +
+		"<small>Arrastra para ordenar. Tambien podes usar las flechas.</small>" +
 		"</div>" +
-		"<div id='dashboardShortcutPreview'></div>" +
+		"<div id='dashboardShortcutPreview' ondragover='dashboardShortcutHandleDragOver(event)' ondrop='dashboardShortcutDropEnPreview(event)'></div>" +
 		"</div>" +
 		"</div>" +
 		"<div class='dashboard-shortcut-modal__footer'>" +
+		"<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='dashboardShortcutResetToDefault()'>Restablecer predeterminado</button>" +
 		"<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='cerrarModalAccesosRapidos()'>Cancelar</button>" +
 		"<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--primary' onclick='guardarAccesosRapidosUsuario()'>Guardar cambios</button>" +
 		"</div>" +
@@ -715,6 +718,192 @@ function dashboardShortcutRemove(accessKey) {
 	renderDashboardShortcutModalContent();
 }
 
+function dashboardShortcutGetInsertIndex(targetKey, fallbackIndex) {
+	if (!targetKey) {
+		return fallbackIndex;
+	}
+
+	var index = dashboardShortcutSelectedKeys.indexOf(targetKey);
+	return index === -1 ? fallbackIndex : index;
+}
+
+function dashboardShortcutInsertKeyAt(accessKey, targetIndex) {
+	if (!accessKey || !dashboardShortcutCatalogByKey[accessKey]) {
+		return false;
+	}
+
+	var currentIndex = dashboardShortcutSelectedKeys.indexOf(accessKey);
+
+	if (currentIndex === -1 && dashboardShortcutSelectedKeys.length >= DASHBOARD_SHORTCUT_MAX) {
+		ver_vetana_informativa("Limite de accesos", "Solo podes seleccionar hasta " + DASHBOARD_SHORTCUT_MAX + " accesos rapidos.", "advertencia");
+		return false;
+	}
+
+	if (currentIndex !== -1) {
+		dashboardShortcutSelectedKeys.splice(currentIndex, 1);
+		if (targetIndex > currentIndex) {
+			targetIndex--;
+		}
+	}
+
+	targetIndex = parseInt(targetIndex, 10);
+	if (isNaN(targetIndex)) {
+		targetIndex = dashboardShortcutSelectedKeys.length;
+	}
+	targetIndex = Math.max(0, Math.min(targetIndex, dashboardShortcutSelectedKeys.length));
+	dashboardShortcutSelectedKeys.splice(targetIndex, 0, accessKey);
+	return true;
+}
+
+function dashboardShortcutResetToDefault() {
+	if (!dashboardShortcutCatalogLoaded) {
+		cargarDashboardAccessCatalog(function (success) {
+			if (success) {
+				dashboardShortcutResetToDefault();
+			}
+		});
+		return;
+	}
+
+	var keys = [];
+	for (var i = 0; i < DASHBOARD_SHORTCUT_DEFAULT_KEYS.length; i++) {
+		var key = DASHBOARD_SHORTCUT_DEFAULT_KEYS[i];
+		if (dashboardShortcutCatalogByKey[key]) {
+			keys.push(key);
+		}
+	}
+
+	if (keys.length == 0) {
+		ver_vetana_informativa("Sin accesos predeterminados", "No hay accesos predeterminados disponibles para este usuario.", "advertencia");
+		return;
+	}
+
+	dashboardShortcutSelectedKeys = keys.slice(0, DASHBOARD_SHORTCUT_MAX);
+	renderDashboardShortcutModalContent();
+}
+
+function dashboardShortcutHandleDragStart(event, accessKey, source) {
+	dashboardShortcutDragSource = source || "preview";
+
+	if (event && event.dataTransfer) {
+		event.dataTransfer.effectAllowed = source == "catalog" ? "copyMove" : "move";
+		event.dataTransfer.setData("text/plain", accessKey);
+		event.dataTransfer.setData("application/x-dashboard-access-key", accessKey);
+	}
+
+	var modal = document.getElementById("dashboardShortcutModal");
+	if (modal) {
+		modal.classList.add("dashboard-shortcut-modal--dragging");
+	}
+}
+
+function dashboardShortcutHandleDragEnd() {
+	dashboardShortcutDragSource = "";
+	var modal = document.getElementById("dashboardShortcutModal");
+	if (modal) {
+		modal.classList.remove("dashboard-shortcut-modal--dragging");
+	}
+}
+
+function dashboardShortcutHandleDragOver(event) {
+	if (event) {
+		event.preventDefault();
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = dashboardShortcutDragSource == "catalog" ? "copy" : "move";
+		}
+	}
+}
+
+function dashboardShortcutDropEnPreview(event, targetKey) {
+	if (event) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
+
+	var accessKey = "";
+	if (event && event.dataTransfer) {
+		accessKey = event.dataTransfer.getData("application/x-dashboard-access-key") || event.dataTransfer.getData("text/plain");
+	}
+
+	if (!accessKey) {
+		return;
+	}
+
+	var targetIndex = dashboardShortcutGetInsertIndex(targetKey, dashboardShortcutSelectedKeys.length);
+	if (dashboardShortcutInsertKeyAt(accessKey, targetIndex)) {
+		renderDashboardShortcutModalContent();
+	}
+	dashboardShortcutHandleDragEnd();
+}
+
+function dashboardShortcutStartPointerDrag(event, accessKey) {
+	if (!event || !accessKey) {
+		return;
+	}
+	if (event.pointerType == "mouse" && event.button !== 0) {
+		return;
+	}
+
+	event.preventDefault();
+	dashboardShortcutPointerDrag = {
+		accessKey: accessKey,
+		pointerId: event.pointerId
+	};
+
+	try {
+		event.currentTarget.setPointerCapture(event.pointerId);
+	} catch (error) {}
+
+	document.addEventListener("pointermove", dashboardShortcutPointerMove);
+	document.addEventListener("pointerup", dashboardShortcutPointerEnd);
+	document.addEventListener("pointercancel", dashboardShortcutPointerEnd);
+
+	var modal = document.getElementById("dashboardShortcutModal");
+	if (modal) {
+		modal.classList.add("dashboard-shortcut-modal--dragging");
+	}
+}
+
+function dashboardShortcutPointerMove(event) {
+	if (!dashboardShortcutPointerDrag || event.pointerId !== dashboardShortcutPointerDrag.pointerId) {
+		return;
+	}
+
+	var preview = document.getElementById("dashboardShortcutPreview");
+	if (!preview) {
+		return;
+	}
+
+	var element = document.elementFromPoint(event.clientX, event.clientY);
+	var item = element && element.closest ? element.closest(".dashboard-shortcut-preview-item") : null;
+	var targetIndex = dashboardShortcutSelectedKeys.length;
+
+	if (item && preview.contains(item)) {
+		var targetKey = item.getAttribute("data-shortcut-key") || "";
+		var rect = item.getBoundingClientRect();
+		targetIndex = dashboardShortcutSelectedKeys.indexOf(targetKey);
+		if (event.clientY > rect.top + (rect.height / 2)) {
+			targetIndex++;
+		}
+	}
+
+	if (dashboardShortcutInsertKeyAt(dashboardShortcutPointerDrag.accessKey, targetIndex)) {
+		renderDashboardShortcutModalContent();
+	}
+}
+
+function dashboardShortcutPointerEnd(event) {
+	if (dashboardShortcutPointerDrag && event && event.pointerId !== dashboardShortcutPointerDrag.pointerId) {
+		return;
+	}
+
+	dashboardShortcutPointerDrag = null;
+	document.removeEventListener("pointermove", dashboardShortcutPointerMove);
+	document.removeEventListener("pointerup", dashboardShortcutPointerEnd);
+	document.removeEventListener("pointercancel", dashboardShortcutPointerEnd);
+	dashboardShortcutHandleDragEnd();
+}
+
 function renderDashboardShortcutModalContent() {
 	var catalogContainer = document.getElementById("dashboardShortcutCatalog");
 	var previewContainer = document.getElementById("dashboardShortcutPreview");
@@ -767,7 +956,7 @@ function renderDashboardShortcutModalContent() {
 				var checked = dashboardShortcutIsSelected(item.access_key) ? "checked" : "";
 				var disabled = !checked && dashboardShortcutSelectedKeys.length >= DASHBOARD_SHORTCUT_MAX ? "disabled" : "";
 
-				catalogHtml += "<label class='dashboard-shortcut-option'>";
+				catalogHtml += "<label class='dashboard-shortcut-option' draggable='true' data-shortcut-catalog-key='" + dashboardShortcutEscape(item.access_key) + "' ondragstart='dashboardShortcutHandleDragStart(event,\"" + dashboardShortcutEscape(item.access_key) + "\",\"catalog\")' ondragend='dashboardShortcutHandleDragEnd()'>";
 				catalogHtml += "<input type='checkbox' " + checked + " " + disabled + " onchange='dashboardShortcutToggle(\"" + dashboardShortcutEscape(item.access_key) + "\", this.checked)' />";
 				catalogHtml += "<img src='" + dashboardShortcutEscape(item.icon_src || dashboardShortcutIcon(item.access_key)) + "' alt='' />";
 				catalogHtml += "<span>" + dashboardShortcutEscape(dashboardShortcutLabel(item.access_key, item)) + "</span>";
@@ -790,7 +979,8 @@ function renderDashboardShortcutModalContent() {
 			var key = dashboardShortcutSelectedKeys[k];
 			var accessData = dashboardShortcutCatalogByKey[key] || {};
 
-			previewHtml += "<div class='dashboard-shortcut-preview-item'>";
+			previewHtml += "<div class='dashboard-shortcut-preview-item' draggable='true' data-shortcut-key='" + dashboardShortcutEscape(key) + "' ondragstart='dashboardShortcutHandleDragStart(event,\"" + dashboardShortcutEscape(key) + "\",\"preview\")' ondragover='dashboardShortcutHandleDragOver(event)' ondrop='dashboardShortcutDropEnPreview(event,\"" + dashboardShortcutEscape(key) + "\")' ondragend='dashboardShortcutHandleDragEnd()'>";
+			previewHtml += "<button type='button' class='dashboard-shortcut-drag-handle' title='Arrastrar para ordenar' onpointerdown='dashboardShortcutStartPointerDrag(event,\"" + dashboardShortcutEscape(key) + "\")'>::</button>";
 			previewHtml += "<span class='dashboard-shortcut-preview-item__order'>" + (k + 1) + "</span>";
 			previewHtml += "<img src='" + dashboardShortcutEscape(dashboardShortcutIcon(key)) + "' alt='' />";
 			previewHtml += "<span class='dashboard-shortcut-preview-item__label'>" + dashboardShortcutEscape(dashboardShortcutLabel(key, accessData)) + "</span>";

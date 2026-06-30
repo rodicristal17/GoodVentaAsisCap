@@ -312,8 +312,8 @@ function dashboard_save_user_shortcuts($mysqli, $user)
         dashboard_json(array('1' => 'error', '2' => 'Selecciona al menos un acceso'));
     }
 
-    if (count($shortcuts) > 15) {
-        dashboard_json(array('1' => 'error', '2' => 'Solo se permiten hasta 15 accesos rapidos'));
+    if (count($shortcuts) > 20) {
+        dashboard_json(array('1' => 'error', '2' => 'Solo se permiten hasta 20 accesos rapidos'));
     }
 
     $ids = array();
