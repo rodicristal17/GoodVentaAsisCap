@@ -1158,9 +1158,8 @@ if ( ! $stmt->execute()) {
 /*Buscar Registro*/
 function buscarvista($fechaapertura,$fechafin,$caja,$estado,$local,$usuario,$lote,$pagina=1,$limite=100,$busqueda="")
 {
-$sqlFiltro= "";
-	
 $mysqli=conectar_al_servidor();
+$sqlFiltro = "";
 
 $pagina = (int)$pagina;
 $limite = (int)$limite;
@@ -1260,14 +1259,39 @@ from arqueocaja ap where  estado!='Cancelado' ".$sqlFiltro." order by idarqueoca
 
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
-if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
-exit;
+if (!$stmt || ! $stmt->execute()) {
+	$errno = $stmt ? $stmt->errno : $mysqli->errno;
+	$error = $stmt ? $stmt->error : $mysqli->error;
+	echo trigger_error('The query execution failed; MySQL said ('.$errno.') '.$error, E_USER_ERROR);
+	exit;
 }
-
 $result = $stmt->get_result();
-$valor= mysqli_num_rows($result);
-$nroRegistro=$valor;
+$filas = array();
+if ($result) {
+	while ($fila = mysqli_fetch_assoc($result)) {
+		$filas[] = $fila;
+	}
+}
+$nroRegistro=count($filas);
+$totalesPagos = array();
+$totalesGastos = array();
+$totalesMigracion = array();
+foreach ($filas as $fila) {
+	$idTotales = isset($fila['idarqueocaja']) ? (string)$fila['idarqueocaja'] : "";
+	$totalesPagos[$idTotales] = array(
+		'cobros' => isset($fila['cobros']) ? $fila['cobros'] : 0,
+		'pagos_efectivo' => isset($fila['pagos_efectivo']) ? $fila['pagos_efectivo'] : 0
+	);
+	$totalesGastos[$idTotales] = array(
+		'egreso' => isset($fila['egreso']) ? $fila['egreso'] : 0,
+		'ingreso' => isset($fila['ingreso']) ? $fila['ingreso'] : 0,
+		'deposito' => isset($fila['deposito']) ? $fila['deposito'] : 0
+	);
+	$totalesMigracion[$idTotales] = array(
+		'total_migrado' => isset($fila['total_migrado']) ? $fila['total_migrado'] : 0,
+		'total_recibido' => isset($fila['total_recibido']) ? $fila['total_recibido'] : 0
+	);
+}
 $styleName="tableRegistroSearch";
 
 $Totaldiferencia = 0;
@@ -1284,10 +1308,18 @@ $TotalPendienteMigracion = 0;
 
 $registros = array();
 
-if ($valor>0)
+if ($nroRegistro>0)
 {
-while ($valor= mysqli_fetch_assoc($result))
+foreach ($filas as $valor)
 {  
+$idTotales = isset($valor['idarqueocaja']) ? (string)$valor['idarqueocaja'] : "";
+$valor['cobros'] = isset($totalesPagos[$idTotales]) ? $totalesPagos[$idTotales]['cobros'] : 0;
+$valor['pagos_efectivo'] = isset($totalesPagos[$idTotales]) ? $totalesPagos[$idTotales]['pagos_efectivo'] : 0;
+$valor['egreso'] = isset($totalesGastos[$idTotales]) ? $totalesGastos[$idTotales]['egreso'] : 0;
+$valor['ingreso'] = isset($totalesGastos[$idTotales]) ? $totalesGastos[$idTotales]['ingreso'] : 0;
+$valor['deposito'] = isset($totalesGastos[$idTotales]) ? $totalesGastos[$idTotales]['deposito'] : 0;
+$valor['total_migrado'] = isset($totalesMigracion[$idTotales]) ? $totalesMigracion[$idTotales]['total_migrado'] : 0;
+$valor['total_recibido'] = isset($totalesMigracion[$idTotales]) ? $totalesMigracion[$idTotales]['total_recibido'] : 0;
 $lote = mb_convert_encoding((string)($valor['lote']), 'UTF-8', 'ISO-8859-1'); 
 $idarqueocaja = mb_convert_encoding((string)($valor['idarqueocaja']), 'UTF-8', 'ISO-8859-1'); 
 $caja_idcaja = mb_convert_encoding((string)($valor['caja_idcaja']), 'UTF-8', 'ISO-8859-1');          

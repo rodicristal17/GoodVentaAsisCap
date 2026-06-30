@@ -1,0 +1,9 @@
+CREATE DATABASE IF NOT EXISTS `syscvxco_ac`
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
+
+CREATE USER IF NOT EXISTS 'goodtech'@'localhost' IDENTIFIED BY 'CAMBIAR_PASSWORD_MYSQL';
+ALTER USER 'goodtech'@'localhost' IDENTIFIED BY 'CAMBIAR_PASSWORD_MYSQL';
+
+GRANT ALL PRIVILEGES ON `syscvxco_ac`.* TO 'goodtech'@'localhost';
+FLUSH PRIVILEGES;
