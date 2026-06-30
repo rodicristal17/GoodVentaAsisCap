@@ -25105,6 +25105,27 @@ button.dashboard-summary-item:hover {
     object-fit: contain;
 }
 
+.detalle-action-evolution {
+    min-height: 36px;
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.detalle-tratamientos-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 210px;
+}
+
+.detalle-tratamientos-actions .detalle-primary-action,
+.detalle-tratamientos-actions .detalle-secondary-action {
+    min-height: 34px;
+    white-space: nowrap;
+}
+
 #divAbmConsulta .consulta-ficha-body {
     display: block !important;
     flex: 1 1 auto;
@@ -25126,6 +25147,110 @@ button.dashboard-summary-item:hover {
 
 #divAbmConsulta .clinical-summary-card {
     order: 1;
+}
+
+#divAbmConsulta .consulta-agenda-guide {
+    order: 3;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #bfe8d8;
+    border-left: 4px solid #1f7a68;
+    border-radius: 10px;
+    background: #f3fffa;
+    box-shadow: 0 10px 22px rgba(31, 122, 104, 0.08);
+}
+
+#divAbmConsulta .consulta-agenda-guide__main {
+    min-width: 260px;
+    flex: 1 1 420px;
+    display: grid;
+    gap: 8px;
+}
+
+#divAbmConsulta .consulta-agenda-guide__main > div:first-child {
+    display: grid;
+    gap: 2px;
+}
+
+#divAbmConsulta .consulta-agenda-guide__main > div:first-child > span {
+    color: #1f7a68;
+    font-size: 10px;
+    font-weight: 950;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+#divAbmConsulta .consulta-agenda-guide__main strong {
+    color: #172033;
+    font-size: 16px;
+    font-weight: 950;
+    line-height: 1.15;
+}
+
+#divAbmConsulta .consulta-agenda-guide__main small {
+    color: #516174;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+#divAbmConsulta .consulta-agenda-guide__treatments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#divAbmConsulta .consulta-agenda-guide__treatments span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 8px;
+    border: 1px solid #cfe5df;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #172033;
+    font-size: 10.5px;
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+#divAbmConsulta .consulta-agenda-guide__treatments .consulta-agenda-guide__empty {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+#divAbmConsulta .consulta-agenda-guide__actions {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+#divAbmConsulta .consulta-agenda-guide__actions button {
+    min-height: 32px;
+    padding: 7px 10px;
+    border: 1px solid #cfe5df;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1f4f46;
+    font-size: 11px;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+#divAbmConsulta .consulta-agenda-guide__actions .consulta-agenda-guide__primary {
+    border-color: #1f7a68;
+    background: #1f7a68;
+    color: #ffffff;
+    box-shadow: 0 8px 16px rgba(31, 122, 104, 0.18);
 }
 
 #divAbmConsulta .clinical-content-grid {
@@ -25842,6 +25967,186 @@ button.dashboard-summary-item:hover {
 
 #divAbmConsulta .consulta-history-item__recetario {
     background: #ffffff;
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-item--latest {
+    border-left-width: 4px;
+    border-color: #bfe8d8;
+    border-left-color: #1f7a68;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fffc 100%);
+    box-shadow: 0 12px 26px rgba(31, 122, 104, 0.08);
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-item--compact {
+    background: #ffffff;
+}
+
+#divAbmConsulta .consulta-treatment-evolution {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 1px solid #d8ebe6;
+    border-radius: 8px;
+    background: #f7fffb;
+}
+
+#divAbmConsulta .consulta-treatment-evolution--completado {
+    border-color: #bfe8d8;
+    background: #f0fbf6;
+}
+
+#divAbmConsulta .consulta-treatment-evolution--proceso {
+    border-color: #fed7aa;
+    background: #fffaf0;
+}
+
+#divAbmConsulta .consulta-treatment-evolution__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#divAbmConsulta .consulta-treatment-evolution__head div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+#divAbmConsulta .consulta-treatment-evolution__head span {
+    color: #1f7a68;
+    font-size: 9.5px;
+    font-weight: 950;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+#divAbmConsulta .consulta-treatment-evolution__head strong {
+    color: #172033;
+    font-size: 15px;
+    font-weight: 950;
+    line-height: 1.1;
+}
+
+#divAbmConsulta .consulta-treatment-evolution__head em {
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #1f7a68;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 950;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#divAbmConsulta .consulta-treatment-progress {
+    display: grid;
+    gap: 5px;
+}
+
+#divAbmConsulta .consulta-treatment-progress__bar {
+    height: 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        #cbd5e1 0 var(--avance-anterior, 0%),
+        #1f7a68 var(--avance-anterior, 0%) var(--avance-actual, 0%),
+        #e7edf3 var(--avance-actual, 0%) 100%
+    );
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+}
+
+#divAbmConsulta .consulta-treatment-progress__info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+#divAbmConsulta .consulta-treatment-progress__info span,
+#divAbmConsulta .consulta-treatment-progress__info b {
+    color: #516174;
+    font-size: 10.5px;
+    font-weight: 850;
+    line-height: 1.25;
+}
+
+#divAbmConsulta .consulta-treatment-progress__info b {
+    color: #1f7a68;
+    font-weight: 950;
+}
+
+#divAbmConsulta .consulta-treatment-evolution__steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#divAbmConsulta .consulta-history-item--compact .consulta-treatment-evolution__steps {
+    max-height: 42px;
+    overflow: hidden;
+}
+
+#divAbmConsulta .consulta-treatment-evolution-step {
+    min-width: 112px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 2px 6px;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #d8e4ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #344054;
+}
+
+#divAbmConsulta .consulta-treatment-evolution-step b {
+    grid-row: span 2;
+    min-width: 36px;
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #eefaf6;
+    color: #1f7a68;
+    font-size: 11px;
+    font-weight: 950;
+}
+
+#divAbmConsulta .consulta-treatment-evolution-step strong {
+    min-width: 0;
+    color: #172033;
+    font-size: 10.5px;
+    font-weight: 950;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#divAbmConsulta .consulta-treatment-evolution-step small {
+    color: #667085;
+    font-size: 9.5px;
+    font-weight: 850;
+    line-height: 1;
+}
+
+#divAbmConsulta .consulta-treatment-evolution-step.is-current {
+    border-color: #1f7a68;
+    box-shadow: 0 5px 12px rgba(31, 122, 104, 0.12);
+}
+
+#divAbmConsulta .consulta-treatment-evolution-step.is-finished b {
+    background: #dff7ef;
+    color: #0f604f;
 }
 
 #divAbmConsulta .consulta-comments-feed {
@@ -26608,6 +26913,29 @@ button.dashboard-summary-item:hover {
 #divAbmConsulta .plan-definitivo-item.is-selected {
     border-color: #1a8a78;
     box-shadow: 0 8px 18px rgba(26, 138, 120, 0.14);
+}
+
+#divAbmConsulta .plan-definitivo-item--agenda-target {
+    border-color: #1f7a68;
+    border-left-width: 4px;
+    background: #f3fffa;
+    box-shadow: 0 10px 22px rgba(31, 122, 104, 0.12);
+}
+
+#divAbmConsulta .consulta-agenda-target-badge {
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 3px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #dff7ef;
+    color: #0f604f;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 950;
+    line-height: 1;
 }
 
 #divAbmConsulta .plan-definitivo-item--completado,
@@ -28275,14 +28603,45 @@ button.dashboard-summary-item:hover {
     font-weight: 700;
 }
 
-#divAbmDetalleConsulta .modal-detalle-agenda-box {
-    border-radius: 12px;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+#divAbmDetalleConsulta {
+    align-items: flex-start;
+    padding: 32px 24px;
+    overflow: auto;
+}
+
+#divAbmDetalleConsulta .consulta-nueva-modal-shell {
+    width: min(1000px, calc(100vw - 48px));
+    max-width: 1000px;
+    max-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    border-radius: 14px;
+    background: #f6f8fb;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+}
+
+#divAbmDetalleConsulta .modal-filtros-header {
+    flex: 0 0 auto;
+    padding: 14px 18px;
+    background: #ffffff;
 }
 
 #divAbmDetalleConsulta .modal-filtros-body {
+    flex: 1 1 auto;
+    min-height: 0;
     display: grid;
     gap: 14px;
+    padding: 14px;
+    overflow: auto;
+}
+
+#divAbmDetalleConsulta .clinical-register-close {
+    flex: 0 0 40px;
+    border: 1px solid #e4e7ec;
+    background: #ffffff;
+    color: #344054;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 #divAbmDetalleConsulta .clinical-register-meta {
@@ -28361,6 +28720,7 @@ button.dashboard-summary-item:hover {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+    align-items: start !important;
 }
 
 #divAbmDetalleConsulta .clinical-register-form-grid .columna-consulta {
@@ -28369,6 +28729,8 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmDetalleConsulta .clinical-register-field {
+    order: 3;
+    align-self: start;
     min-width: 0;
     display: grid;
     gap: 5px;
@@ -28411,6 +28773,16 @@ button.dashboard-summary-item:hover {
     display: grid;
     gap: 8px;
     min-width: 0;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-list {
+    max-height: clamp(230px, 34vh, 360px);
+    align-content: start;
+    padding: 8px;
+    border: 1px solid #d9e4ee;
+    border-radius: 10px;
+    background: #f8fafc;
+    overflow: auto;
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-card {
@@ -28532,36 +28904,82 @@ button.dashboard-summary-item:hover {
 
 #divAbmDetalleConsulta .clinical-treatment-plan-group {
     display: grid;
-    gap: 6px;
-    padding: 8px;
+    gap: 5px;
+    padding: 6px;
     border: 1px solid #e4e7ec;
     border-radius: 8px;
     background: #ffffff;
+}
+
+#divAbmDetalleConsulta .clinical-register-field--motivo {
+    order: 1;
+    grid-column: 1 / -1;
+}
+
+#divAbmDetalleConsulta .clinical-register-field--tratamiento {
+    order: 2;
+    grid-column: 1 / -1;
+}
+
+#divAbmDetalleConsulta .clinical-register-field .pTitulo5::before {
+    min-width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 7px;
+    border-radius: 999px;
+    background: #eefaf6;
+    color: #1f7a68;
+    font-size: 10px;
+    font-weight: 950;
+    line-height: 1;
+}
+
+#divAbmDetalleConsulta .clinical-register-field--motivo .pTitulo5::before {
+    content: "1";
+}
+
+#divAbmDetalleConsulta .clinical-register-field--tratamiento .pTitulo5::before {
+    content: "2";
+}
+
+#divAbmDetalleConsulta .clinical-register-field:not(.clinical-register-field--motivo):not(.clinical-register-field--tratamiento) .pTitulo5::before {
+    content: "3";
+}
+
+#divAbmDetalleConsulta .clinical-register-field:has(#inptDiagnosticoConsulta) .pTitulo5::before {
+    content: "3";
+}
+
+#divAbmDetalleConsulta .clinical-register-field:has(#inptProximaConsultaConsulta) .pTitulo5::before {
+    content: "4";
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-group__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
     color: #667085;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 850;
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-group__head strong {
     color: #172033;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 950;
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-option {
     width: 100%;
     display: grid;
-    grid-template-columns: 26px minmax(0, 1fr);
-    gap: 8px;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 7px;
     align-items: start;
-    padding: 8px;
+    min-height: 48px;
+    padding: 6px 8px;
     border: 1px solid #e4e7ec;
     border-radius: 8px;
     background: #fbfcfd;
@@ -28591,8 +29009,8 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-option__radio {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     border: 2px solid #98a2b3;
     border-radius: 999px;
     background: #ffffff;
@@ -28607,19 +29025,20 @@ button.dashboard-summary-item:hover {
 #divAbmDetalleConsulta .clinical-treatment-plan-option__body {
     min-width: 0;
     display: grid;
-    gap: 3px;
+    gap: 2px;
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-option__body strong {
     color: #172033;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 950;
+    line-height: 1.22;
     overflow-wrap: anywhere;
 }
 
 #divAbmDetalleConsulta .clinical-treatment-plan-option__body small {
     color: #667085;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 800;
 }
 
@@ -28631,12 +29050,12 @@ button.dashboard-summary-item:hover {
 
 #divAbmDetalleConsulta .clinical-treatment-plan-option__badges em,
 #divAbmDetalleConsulta .clinical-treatment-plan-badge {
-    min-height: 20px;
+    min-height: 18px;
     display: inline-flex;
     align-items: center;
-    padding: 3px 7px;
+    padding: 2px 6px;
     border-radius: 999px;
-    font-size: 10px;
+    font-size: 9.5px;
     font-style: normal;
     font-weight: 950;
     line-height: 1;
@@ -28679,6 +29098,70 @@ button.dashboard-summary-item:hover {
     font-weight: 850;
 }
 
+#divAbmDetalleConsulta .clinical-treatment-plan-tree {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-tree__head {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid #d8ebe6;
+    border-radius: 8px;
+    background: #f7fffb;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-tree__head span {
+    color: #1f7a68;
+    font-size: 10px;
+    font-weight: 950;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-tree__head strong {
+    color: #172033;
+    font-size: 12px;
+    font-weight: 950;
+    line-height: 1.2;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-tree__head small {
+    color: #667085;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-recommended {
+    display: grid;
+    gap: 5px;
+    padding: 6px;
+    border: 1px solid #99e6ce;
+    border-radius: 8px;
+    background: #f3fffa;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-group--base {
+    border-color: #cfe5df;
+    background: #ffffff;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-group--anexada {
+    border-color: #d9e1ea;
+    background: #fbfcfd;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-option__route {
+    display: none;
+}
+
+#divAbmDetalleConsulta .clinical-treatment-plan-group--anexada .clinical-treatment-plan-option__route {
+    color: #516174;
+}
+
 #divAbmDetalleConsulta .clinical-treatment-select-hint {
     color: #516174;
     font-size: 10.5px;
@@ -28702,10 +29185,11 @@ button.dashboard-summary-item:hover {
 }
 
 #divAbmDetalleConsulta .clinical-register-footer {
+    flex: 0 0 auto;
     justify-content: flex-end;
-    padding: 0;
-    border-top: none;
-    background: transparent;
+    padding: 12px 14px;
+    border-top: 1px solid #e4e7ec;
+    background: #ffffff;
 }
 
 #divAbmDetalleConsulta #btnAbmConsulta {
@@ -28915,13 +29399,30 @@ button.dashboard-summary-item:hover {
 }
 
 .selector-ubicacion-grafica button.selector-arcada-card,
-.selector-ubicacion-grafica button.selector-boca-completa-card {
+.selector-ubicacion-grafica button.selector-boca-completa-card,
+.selector-ubicacion-grafica button.selector-multiple-card {
     min-height: 38px;
     display: inline-grid;
     grid-template-columns: 28px minmax(0, auto);
     gap: 6px;
     align-items: center;
     padding: 4px 8px 4px 5px;
+}
+
+.selector-ubicacion-grafica button.selector-multiple-card.is-active {
+    border-color: #1f7a68;
+    background: #e8f8ef;
+    color: #176452;
+    box-shadow: 0 0 0 2px rgba(31, 122, 104, .12);
+}
+
+.selector-ubicacion-grafica button.selector-multiple-ok {
+    min-height: 38px;
+    padding: 4px 14px;
+    border-color: #1f7a68;
+    background: #1f7a68;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(31, 122, 104, .18);
 }
 
 .selector-ubicacion-grafica button span {
@@ -30089,6 +30590,18 @@ button.dashboard-summary-item:hover {
     border: 1px solid rgba(31, 122, 104, .6);
     background: rgba(31, 122, 104, .16);
     box-shadow: 0 0 0 2px rgba(31, 122, 104, .08);
+    opacity: 1;
+}
+
+.odontograma-pieza.is-multiple-preview {
+    border-color: #0f766e;
+    background: #ecfdf7;
+}
+
+.odontograma-pieza.is-multiple-preview::before {
+    border: 1px dashed rgba(15, 118, 110, .72);
+    background: rgba(15, 118, 110, .18);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, .09);
     opacity: 1;
 }
 
@@ -31323,6 +31836,11 @@ button.tratamiento-ubicacion-visual {
     box-shadow: inset 0 0 0 1px rgba(124, 58, 237, .18);
 }
 
+.odontograma-icon-piezas-multiples {
+    color: #0f766e;
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, .2);
+}
+
 .odontograma-icon-pendiente {
     color: #b45309;
     box-shadow: inset 0 0 0 1px rgba(180, 83, 9, .2);
@@ -31340,6 +31858,12 @@ button.tratamiento-ubicacion-visual {
     border-color: #ddd6fe;
     background: #f5f3ff;
     color: #6d28d9;
+}
+
+.tratamiento-ubicacion-piezas-multiples {
+    border-color: #99f6e4;
+    background: #ecfdf7;
+    color: #0f766e;
 }
 
 .tratamiento-ubicacion-pieza {
@@ -31752,6 +32276,21 @@ button.tratamiento-ubicacion-visual {
 }
 
 @media (max-width: 640px) {
+    #divAbmDetalleConsulta {
+        padding: 12px;
+    }
+
+    #divAbmDetalleConsulta .consulta-nueva-modal-shell {
+        width: calc(100vw - 24px);
+        max-height: calc(100vh - 24px);
+    }
+
+    #divAbmDetalleConsulta .modal-filtros-header,
+    #divAbmDetalleConsulta .modal-filtros-body,
+    #divAbmDetalleConsulta .clinical-register-footer {
+        padding: 12px;
+    }
+
     #divAbmConsulta .consulta-ficha-header > div {
         align-items: flex-start !important;
     }

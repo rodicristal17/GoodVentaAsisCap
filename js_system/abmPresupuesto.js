@@ -51,6 +51,16 @@ var presupuestoDocBusquedaSilenciosa = false;
 var idAgendaPresupuestoDoctorActiva = "";
 var idPacientePresupuestoDoctorActivo = "";
 
+function presupuestoDocOdontogramaAutoActivo() {
+	return typeof odontogramaPresupuestoEstaAgregandoAutomatico == "function" && odontogramaPresupuestoEstaAgregandoAutomatico();
+}
+
+function presupuestoDocNotificarAutoOdontogramaError(opciones, mensaje) {
+	if (opciones && opciones.origenOdontogramaAuto && typeof odontogramaPresupuestoAutoFinalizar == "function") {
+		odontogramaPresupuestoAutoFinalizar(false, mensaje);
+	}
+}
+
 function presupuestoDocMoverModalPlanesAlBody(modalPlanes) {
 	if (modalPlanes && document.body && modalPlanes.parentNode !== document.body) {
 		document.body.appendChild(modalPlanes);
@@ -288,6 +298,7 @@ function buscarvistaproductoPresupuesto() {
 	if (vistaPresupuestoOrigen == 'doctor') {
 		buscador = document.getElementById('inptProductoPresupuestoDoc').value;
 		cod_productoFK= document.getElementById('inptCodigoPresupuestoDoc').value;
+		presupuestoDocMostrarResultadosBusqueda(true);
 		document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = paginacargando
 		presupuestoDocSetEstadoBusqueda("Actualizando resultados por nombre...", "buscar");
 		limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
@@ -337,6 +348,7 @@ function buscarvistaproductoPresupuesto() {
 			presupuestoDocBusquedaSilenciosa = false;
 			if (vistaPresupuestoOrigen == "doctor") {
 				document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = ''
+				presupuestoDocMostrarResultadosBusqueda(false);
 				presupuestoDocSetEstadoBusqueda("No se pudo actualizar la busqueda. Intente nuevamente.", "alerta");
 			} else {
 				document.getElementById("table_vista_producto_Presupuesto").innerHTML = ''
@@ -360,6 +372,7 @@ function buscarvistaproductoPresupuesto() {
 				var datos_buscados = datos[2];
 				if(datos_buscados!=""){
 					if (vistaPresupuestoOrigen == "doctor") {
+						presupuestoDocMostrarResultadosBusqueda(true);
 						document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = datos_buscados;
 						presupuestoDocSetEstadoBusqueda("Lista actualizada. Seleccione un tratamiento.", "ok");
 					} else {
@@ -367,6 +380,7 @@ function buscarvistaproductoPresupuesto() {
 					}
 				}else{
 					if (vistaPresupuestoOrigen == "doctor") {
+						presupuestoDocMostrarResultadosBusqueda(false);
 						presupuestoDocSetEstadoBusqueda("Sin resultados para esa busqueda.", "alerta");
 					}
 					if (!presupuestoDocBusquedaSilenciosa) {
@@ -403,13 +417,15 @@ function obtenerdatosvistaproductodesdePresupuesto(datostr) {
 	if (vistaPresupuestoOrigen == "doctor") {
 		document.getElementById('inptCodigoPresupuestoDoc').value = $(datostr).children('td[id="td_datos_13"]').html();
 		document.getElementById('inptProductoPresupuestoDoc').value = $(datostr).children('td[id="td_datos_1"]').html();
+		document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = "";
+		presupuestoDocMostrarResultadosBusqueda(false);
 		//document.getElementById('inpTSeleccCostoPresupuestoDoc').innerHTML = $(datostr).children('td[id="td_datos_11"]').html();
 		document.getElementById('inptCantidadPresupuestoDoc').value = "1";
 		document.getElementById('inptPrecioPresupuestoDoc').value = $(datostr).children('td[id="td_datos_4"]').html();
 		if (typeof odontogramaPrepararTratamientoPresupuesto == "function") {
 			odontogramaPrepararTratamientoPresupuesto(idFkProducto, document.getElementById('inptProductoPresupuestoDoc').value);
 		}
-		presupuestoDocSetEstadoBusqueda("Tratamiento seleccionado. Revise cantidad y agregue.", "ok");
+		presupuestoDocSetEstadoBusqueda("Tratamiento seleccionado. Toque una pieza en el odontograma para agregarlo.", "ok");
 		//document.getElementById('inptCantidadPresupuestoDoc').focus();
 	} else {
 		document.getElementById('inptCodigoPresupuesto').value = $(datostr).children('td[id="td_datos_13"]').html();
@@ -425,7 +441,7 @@ function obtenerdatosvistaproductodesdePresupuesto(datostr) {
 
 function obtenerContenedoresInsumosPresupuesto(vistaOrigen) {
 	if (vistaOrigen == "doctor") {
-		return ["table_presupuesto_doc_insumos_producto"];
+		return document.getElementById("table_presupuesto_doc_insumos_producto") ? ["table_presupuesto_doc_insumos_producto"] : [];
 	}
 	return ["table_presupuesto_insumos_producto", "table_presupuesto_insumos_producto_prioritario"];
 }
@@ -828,7 +844,12 @@ function cargarInsumosProductoPresupuesto(codProducto, vistaOrigen) {
 		return;
 	}
 
-	obtenerContenedoresInsumosPresupuesto(vistaOrigen).forEach(function (contenedorId) {
+	var contenedores = obtenerContenedoresInsumosPresupuesto(vistaOrigen);
+	if (contenedores.length == 0) {
+		return;
+	}
+
+	contenedores.forEach(function (contenedorId) {
 		var contenedor = document.getElementById(contenedorId);
 		if (contenedor) {
 			contenedor.innerHTML = paginacargando;
@@ -925,6 +946,12 @@ function seleccionarpreciospresupuesto(datos) {
 }
 
 function limpirarAddPresupuesto(vistaOrigen){
+	if (vistaOrigen == "doctor" && presupuestoDocOdontogramaAutoActivo()) {
+		if (typeof presupuestoDocSetEstadoBusqueda == "function") {
+			presupuestoDocSetEstadoBusqueda("Tratamiento activo. Toque otra pieza para repetirlo o busque otro tratamiento.", "ok");
+		}
+		return;
+	}
 	justificacionProductoPresupuestoSeleccionado = "";
 	if (vistaOrigen == "doctor") {
 		document.getElementById('inptCodigoPresupuestoDoc').value = ""
@@ -962,6 +989,8 @@ function buscarproductoporcodigoPresupuesto(vistaOrigen= 'presupuesto') {
 	}
 	verCerrarEfectoCargando("1")
 	if (vistaOrigen == "doctor") {
+		presupuestoDocMostrarResultadosBusqueda(false);
+		document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = "";
 		presupuestoDocSetEstadoBusqueda("Buscando codigo exacto...", "buscar");
 	}
 	obtener_datos_user();
@@ -1003,6 +1032,7 @@ function buscarproductoporcodigoPresupuesto(vistaOrigen= 'presupuesto') {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			verCerrarEfectoCargando("2")
 			if (vistaOrigen == "doctor") {
+				presupuestoDocMostrarResultadosBusqueda(false);
 				presupuestoDocSetEstadoBusqueda("No se pudo buscar el codigo. Intente nuevamente.", "alerta");
 			}
 		},
@@ -1023,6 +1053,8 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					cargarInsumosProductoPresupuesto(idFkProducto, vistaOrigen == "doctor" ? "doctor" : "presupuesto");
 
 					if (vistaOrigen == "doctor") {
+						document.getElementById("table_vista_producto_Presupuesto_doctor").innerHTML = "";
+						presupuestoDocMostrarResultadosBusqueda(false);
 						document.getElementById('inptCodigoPresupuestoDoc').value = datos["5"];
 						document.getElementById('inptProductoPresupuestoDoc').value = datos["3"];
 						document.getElementById('inptCantidadPresupuestoDoc').value = "1";
@@ -1030,7 +1062,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						if (typeof odontogramaPrepararTratamientoPresupuesto == "function") {
 							odontogramaPrepararTratamientoPresupuesto(idFkProducto, datos["3"]);
 						}
-						presupuestoDocSetEstadoBusqueda("Tratamiento encontrado por codigo. Revise cantidad y agregue.", "ok");
+						presupuestoDocSetEstadoBusqueda("Tratamiento encontrado. Toque una pieza en el odontograma para agregarlo.", "ok");
 					} else {
 						document.getElementById('inptCodigoPresupuesto').value = datos["5"];
 						document.getElementById('inptProductoPresupuesto').value = datos["3"];
@@ -1042,11 +1074,13 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						calcular_total_Presupuesto()
 					}
 				} else if (vistaOrigen == "doctor") {
+					presupuestoDocMostrarResultadosBusqueda(false);
 					presupuestoDocSetEstadoBusqueda("No se encontro un tratamiento con ese codigo.", "alerta");
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				if (vistaOrigen == "doctor") {
+					presupuestoDocMostrarResultadosBusqueda(false);
 					presupuestoDocSetEstadoBusqueda("No se pudo leer la respuesta del codigo.", "alerta");
 				}
 					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxPresupuesto(responseText)
@@ -1318,7 +1352,15 @@ function presupuestoDocSetEstadoBusqueda(texto, tipo) {
 }
 
 function presupuestoDocMostrarEstadoInicialBusqueda() {
+	presupuestoDocMostrarResultadosBusqueda(false);
 	presupuestoDocSetEstadoBusqueda("Escriba un nombre para ver resultados en vivo o ingrese un codigo exacto.", "info");
+}
+
+function presupuestoDocMostrarResultadosBusqueda(mostrar) {
+	const contenedor = document.getElementById("presupuestoDocResultadosBusqueda");
+	if (contenedor) {
+		contenedor.style.display = mostrar ? "" : "none";
+	}
 }
 
 function presupuestoDocLimpiarResultadosBusqueda(texto, tipo) {
@@ -1326,12 +1368,22 @@ function presupuestoDocLimpiarResultadosBusqueda(texto, tipo) {
 	if (tabla) {
 		tabla.innerHTML = "";
 	}
+	presupuestoDocMostrarResultadosBusqueda(false);
 	presupuestoDocSetEstadoBusqueda(texto, tipo || "info");
 }
 
 function presupuestoDocLimpiarProductoSeleccionadoBusqueda() {
 	idFkProducto = "";
 	justificacionProductoPresupuestoSeleccionado = "";
+	if (!presupuestoDocOdontogramaAutoActivo() && typeof odontogramaEstados != "undefined" && odontogramaEstados.presupuesto) {
+		odontogramaEstados.presupuesto.tratamientoSeleccionado = null;
+		odontogramaEstados.presupuesto.ubicacionActual = null;
+		odontogramaEstados.presupuesto.ubicacionAutomaticaPendiente = null;
+		odontogramaEstados.presupuesto.mensajeFlash = "Busca y selecciona el tratamiento antes de tocar la pieza.";
+		if (typeof odontogramaRender == "function") {
+			odontogramaRender("presupuesto");
+		}
+	}
 	["inptPrecioPresupuestoDoc", "inptCantidadPresupuestoDoc", "inptTotalPresupuestoDoc"].forEach(function (idCampo) {
 		const campo = document.getElementById(idCampo);
 		if (campo) {
@@ -1339,6 +1391,67 @@ function presupuestoDocLimpiarProductoSeleccionadoBusqueda() {
 		}
 	});
 	limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
+}
+
+function presupuestoDocLimpiarSeleccionTratamiento(mensaje, tipo) {
+	clearTimeout(presupuestoDocBusquedaTimer);
+	idFkProducto = "";
+	justificacionProductoPresupuestoSeleccionado = "";
+	[
+		"inptCodigoPresupuestoDoc",
+		"inptProductoPresupuestoDoc",
+		"inptPrecioPresupuestoDoc",
+		"inpTSeleccCostoPresupuestoDoc",
+		"inptCantidadPresupuestoDoc",
+		"inptTotalPresupuestoDoc"
+	].forEach(function (idCampo) {
+		const campo = document.getElementById(idCampo);
+		if (campo) {
+			campo.value = "";
+		}
+	});
+	const tabla = document.getElementById("table_vista_producto_Presupuesto_doctor");
+	if (tabla) {
+		tabla.innerHTML = "";
+	}
+	presupuestoDocMostrarResultadosBusqueda(false);
+	limpiarPanelInsumosProductoPresupuesto("Seleccione un tratamiento para ver sus insumos.", "doctor");
+	presupuestoDocSetEstadoBusqueda(mensaje || "Busque o ingrese un nuevo tratamiento.", tipo || "info");
+}
+
+function presupuestoDocBuscarTratamientoInteligente() {
+	const codigoInput = document.getElementById("inptCodigoPresupuestoDoc");
+	const nombreInput = document.getElementById("inptProductoPresupuestoDoc");
+	const codigo = codigoInput?.value.trim() || "";
+	const nombre = nombreInput?.value.trim() || "";
+	clearTimeout(presupuestoDocBusquedaTimer);
+
+	if (codigo) {
+		if (nombreInput) {
+			nombreInput.value = "";
+		}
+		presupuestoDocLimpiarProductoSeleccionadoBusqueda();
+		presupuestoDocSetEstadoBusqueda("Buscando tratamiento por codigo...", "buscar");
+		buscarproductoporcodigoPresupuesto("doctor");
+		return false;
+	}
+
+	if (nombre) {
+		if (codigoInput) {
+			codigoInput.value = "";
+		}
+		if (nombre.length < 3) {
+			presupuestoDocLimpiarResultadosBusqueda("Escriba al menos 3 letras para buscar por nombre.", "alerta");
+			return false;
+		}
+		presupuestoDocLimpiarProductoSeleccionadoBusqueda();
+		presupuestoDocSetEstadoBusqueda("Actualizando resultados por nombre...", "buscar");
+		buscarvistaproductoPresupuesto("doctor");
+		return false;
+	}
+
+	presupuestoDocLimpiarResultadosBusqueda("Ingrese un codigo o escriba al menos 3 letras del tratamiento.", "alerta");
+	return false;
 }
 
 function presupuestoDocBusquedaDinamica(evento, tipo) {
@@ -1358,6 +1471,7 @@ function presupuestoDocBusquedaDinamica(evento, tipo) {
 		if (tablaResultados) {
 			tablaResultados.innerHTML = "";
 		}
+		presupuestoDocMostrarResultadosBusqueda(false);
 		if (esEnter) {
 			buscarproductoporcodigoPresupuesto("doctor");
 			return;
@@ -1366,7 +1480,7 @@ function presupuestoDocBusquedaDinamica(evento, tipo) {
 			presupuestoDocLimpiarResultadosBusqueda("Escriba un nombre para ver resultados en vivo o ingrese un codigo exacto.", "info");
 			return;
 		}
-		presupuestoDocSetEstadoBusqueda("Codigo listo. Presione Enter o Buscar codigo para buscar coincidencia exacta.", "info");
+		presupuestoDocSetEstadoBusqueda("Codigo listo. Presione Enter o Seleccionar tratamiento para buscar coincidencia exacta.", "info");
 		return;
 	}
 
@@ -2710,11 +2824,16 @@ function generarTabla() {
 	actualizarResumenPresupuestoVenta();
 }
  
-function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad, codigo_ficticio_presupuesto, nombre_producto, total_presupuesto,es_precio_contado, es_prioritario, es_alternativo, justificacion_presupuesto) {
+function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, cantidad, codigo_ficticio_presupuesto, nombre_producto, total_presupuesto,es_precio_contado, es_prioritario, es_alternativo, justificacion_presupuesto, opciones) {
 	obtener_datos_user();
+	opciones = opciones || {};
 	justificacion_presupuesto = justificacion_presupuesto || justificacionProductoPresupuestoSeleccionado || "";
 	const esPrioritario = es_prioritario === true || es_prioritario === 1 || es_prioritario === "1";
 	const esAlternativo = es_alternativo === true || es_alternativo === 1 || es_alternativo === "1";
+	const esAutoOdontograma = opciones.origenOdontogramaAuto === true || opciones.origenOdontogramaAuto === "1";
+	if (esAutoOdontograma) {
+		presupuestoDocDropDestinoPlan = "";
+	}
 	precio = QuitarSeparadorMilValor(precio || 0);
 	cantidad = QuitarSeparadorMilValor(cantidad || 0);
 	if (!total_presupuesto || total_presupuesto == "0") {
@@ -2765,6 +2884,7 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			console.error(jqXHR.status,textstatus,errorThrowm);
 			ver_vetana_informativa("Lo sentimos, ha ocurrido un error", "", "error");
+			presupuestoDocNotificarAutoOdontogramaError(opciones, "No se pudo agregar el tratamiento al detalle del plan.");
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -2856,11 +2976,13 @@ function abmDetallesPresupuesto(cod_presupuestoFK, cod_productoFK, precio, canti
 					}
 				} else {
 					ver_vetana_informativa("No se pudo guardar el tratamiento", datos["mensaje"] || "El presupuesto no corresponde al paciente seleccionado.", "error");
+					presupuestoDocNotificarAutoOdontogramaError(opciones, datos["mensaje"] || "No se pudo guardar el tratamiento en el presupuesto.");
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
+				presupuestoDocNotificarAutoOdontogramaError(opciones, "No se pudo completar el agregado automatico.");
 			}
 		}
 	});
@@ -3028,6 +3150,7 @@ function crearPresupuestoDoctorSiHaceFalta(callback) {
 			verCerrarEfectoCargando("");
 			if (!idabmPresupuesto) {
 				ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Intente agregar el tratamiento nuevamente.", "error");
+				presupuestoDocNotificarAutoOdontogramaError({ origenOdontogramaAuto: presupuestoDocOdontogramaAutoActivo() }, "No se pudo crear el presupuesto para agregar el tratamiento.");
 				return;
 			}
 			callback();
@@ -3036,12 +3159,14 @@ function crearPresupuestoDoctorSiHaceFalta(callback) {
 			presupuestoGuardando = false;
 			verCerrarEfectoCargando("");
 			ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Revise la conexion e intente agregar el tratamiento nuevamente.", "error");
+			presupuestoDocNotificarAutoOdontogramaError({ origenOdontogramaAuto: presupuestoDocOdontogramaAutoActivo() }, "No se pudo crear el presupuesto para agregar el tratamiento.");
 		}
 	});
 	return false;
 }
 
-function anhadirPrPresupuesto() {
+function anhadirPrPresupuesto(opciones) {
+	opciones = opciones || {};
 	let entrega = "";
 
 	let inptCodigoPresupuesto = "";
@@ -3086,27 +3211,32 @@ function anhadirPrPresupuesto() {
 	if (inptCodigoPresupuesto != "") {
 		if (!idFkCliente) {
 			ver_vetana_informativa("Faltan datos", "Favor seleccionar el cliente", "error");
+			presupuestoDocNotificarAutoOdontogramaError(opciones, "Seleccione el paciente antes de agregar el tratamiento.");
 			return false;
 		}
 
 		if (inptCantidadPresupuesto <= 0 || inptCantidadPresupuesto == "") {
 			ver_vetana_informativa("Faltan datos", "FAVOR AGREGAR CANTIDAD");
+			presupuestoDocNotificarAutoOdontogramaError(opciones, "Ingrese una cantidad valida para agregar el tratamiento.");
 			return false;
 		}
 
 		if (vistaPresupuestoOrigen == "historial") {
 			if (inptPrecioPresupuesto <= 0 || inptPrecioPresupuesto == "") {
 				ver_vetana_informativa("Faltan datos", "FAVOR AGREGAR EL PRECIO");
+				presupuestoDocNotificarAutoOdontogramaError(opciones, "Ingrese un precio valido para agregar el tratamiento.");
 				return false;
 			}
 	
 			if (inptTotalPresupuesto == "0" || inptTotalPresupuesto == "") {
 				ver_vetana_informativa("Faltan datos", "TOTAL NO VALIDO");
+				presupuestoDocNotificarAutoOdontogramaError(opciones, "El total del tratamiento no es valido.");
 				return false;
 			}
 		} else {
 			if (inptPrecioPresupuesto <= 0 || inptPrecioPresupuesto == "") {
 				ver_vetana_informativa("Faltan datos", "Error al seleccionar el producto.");
+				presupuestoDocNotificarAutoOdontogramaError(opciones, "Revise el producto seleccionado antes de tocar la pieza.");
 				return false;
 			}
 		}
@@ -3114,18 +3244,20 @@ function anhadirPrPresupuesto() {
 		if (!idabmPresupuesto) {
 			if (vistaPresupuestoOrigen == "doctor") {
 				return crearPresupuestoDoctorSiHaceFalta(function () {
-					anhadirPrPresupuesto();
+					anhadirPrPresupuesto(opciones);
 				});
 			}
 
 			ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Vuelva a seleccionar el cliente e intente nuevamente.", "error");
+			presupuestoDocNotificarAutoOdontogramaError(opciones, "No se pudo crear el presupuesto para agregar el tratamiento.");
 			return false;
 		}
 
 		// Agrega al presupuesto existente
-		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado, inptPrioritarioPresupuesto, inptAlternativoPresupuesto, justificacionProductoPresupuestoSeleccionado);
+		abmDetallesPresupuesto(idabmPresupuesto, idFkProducto, inptPrecioPresupuesto.replace('.', ''), inptCantidadPresupuesto, inptCodigoPresupuesto, inptProductoPresupuesto,inptTotalPresupuesto,inpPrecioContado, inptPrioritarioPresupuesto, inptAlternativoPresupuesto, justificacionProductoPresupuestoSeleccionado, opciones);
 	} else {
 		ver_vetana_informativa("Faltan datos", "Favor seleccionar un producto", "error");
+		presupuestoDocNotificarAutoOdontogramaError(opciones, "Seleccione un tratamiento antes de tocar la pieza.");
 		return false;
 	}
 }

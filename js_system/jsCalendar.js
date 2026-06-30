@@ -3596,6 +3596,7 @@ function actualizarAccionesDetalleAgenda(evento){
     var btnFinal = document.getElementById("btnEstadoFinalAgendamiento");
     var btnReprogramar = document.getElementById("detAgendaFooterReprogramar");
     var btnReprogramarCabecera = document.getElementById("detAgendaBtnReprogramar");
+    var btnEvolucionar = document.getElementById("detAgendaBtnEvolucionarTratamiento");
     var btnPrimeraConsulta = document.getElementById("detAgendaMenuPrimeraConsulta");
     var btnCancelar = document.getElementById("detAgendaMenuCancelar");
     var estadoOriginal = String(evento.estado || "").toUpperCase();
@@ -3608,6 +3609,9 @@ function actualizarAccionesDetalleAgenda(evento){
     var puedeReprogramar = !esFinal;
     if(btnReprogramar){ btnReprogramar.style.display = puedeReprogramar ? "" : "none"; }
     if(btnReprogramarCabecera){ btnReprogramarCabecera.style.display = puedeReprogramar ? "" : "none"; }
+    if(btnEvolucionar){
+        btnEvolucionar.textContent = evento.sin_tratamiento ? "Abrir ficha clinica" : "Evolucionar tratamiento";
+    }
     if(btnPrimeraConsulta){
         btnPrimeraConsulta.style.display = (estadoOriginal === "PRIMERACONSULTA" || esFinal) ? "none" : "";
     }
@@ -4084,6 +4088,9 @@ function verCerrarAsignarTratamiento(mostrar){
 }
 
 function cerrarDetalleAgenda(){
+    if (typeof cerrarModalConsultaLecturaSiAbierta == "function") {
+        cerrarModalConsultaLecturaSiAbierta();
+    }
     verCerrarAsignarTratamiento(false);
     cerrarMasAccionesDetalleAgenda();
     cerrarReprogramacionDetalleAgenda();
@@ -5170,10 +5177,16 @@ function buscarHistorialPacienteCalendario(controlVentana) {
     });
 }
 
-function verHistorialDesdeConsultorio() {
+function verHistorialDesdeConsultorio(modoEvolucion) {
     const cedula= document.getElementById('detAgendaCedula').textContent.replaceAll('.', '');
+    var evento = agendaEventoDetalleActual || (typeof obtenerEventoPorId == "function" ? obtenerEventoPorId(idAbmAgenda) : null);
 
     if (cedula) {
+        if (modoEvolucion === true && typeof prepararAtencionAgendaParaConsulta == "function") {
+            prepararAtencionAgendaParaConsulta(evento || {}, true);
+        } else if (typeof limpiarContextoAtencionAgendaConsulta == "function") {
+            limpiarContextoAtencionAgendaConsulta();
+        }
         cerrarDetalleAgenda();
         cerrarAgendaConsultorios();
         verCerrarAbmVistaConsulta('consulta');

@@ -1345,6 +1345,134 @@ exit;
 
 
 
+function obtenerEvolucionesTratamientoHistorialConsulta($mysqli,$cod_detalle,$cod_agendamiento,$cod_usuario,$fecha_consulta)
+{
+	$cod_detalle = trim((string)$cod_detalle);
+	if ($cod_detalle == "" || !ctype_digit($cod_detalle) || !tablaExisteConsulta($mysqli,"evoluciontratamiento")) {
+		return array("items" => array(), "actual" => null);
+	}
+
+	$tienePorcentajeAnterior = columnaExisteConsulta($mysqli,"evoluciontratamiento","porcentaje_anterior");
+	$tieneObservacion = columnaExisteConsulta($mysqli,"evoluciontratamiento","observacion");
+	$selectExtra = "";
+	if ($tienePorcentajeAnterior) { $selectExtra .= ", et.porcentaje_anterior"; }
+	if ($tieneObservacion) { $selectExtra .= ", et.observacion"; }
+
+	$sql = "SELECT et.cod_evoluciontratamiento, et.cod_detalle_venta, et.cod_usuraioFK, et.nro, et.fecha, et.cod_agendaFK,
+			p.nombre_persona AS profesional ".$selectExtra."
+		FROM evoluciontratamiento et
+		LEFT JOIN persona p ON p.cod_persona = et.cod_usuraioFK
+		WHERE et.cod_detalle_venta = ?
+		ORDER BY et.fecha ASC, et.cod_evoluciontratamiento ASC
+		LIMIT 30";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) { return array("items" => array(), "actual" => null); }
+	$stmt->bind_param("s", $cod_detalle);
+	if (!$stmt->execute()) { return array("items" => array(), "actual" => null); }
+	$result = $stmt->get_result();
+	$items = array();
+	$actual = null;
+	$anteriorInferido = 0;
+	$cod_agendamiento = trim((string)$cod_agendamiento);
+	$cod_usuario = trim((string)$cod_usuario);
+	$fechaConsultaDia = "";
+	$tsConsulta = strtotime((string)$fecha_consulta);
+	if ($tsConsulta !== false) {
+		$fechaConsultaDia = date("Y-m-d", $tsConsulta);
+	}
+
+	while ($row = mysqli_fetch_assoc($result)) {
+		$nuevo = normalizarPorcentajePlanTratamientoConsulta($row["nro"]);
+		$anterior = $tienePorcentajeAnterior && isset($row["porcentaje_anterior"])
+			? normalizarPorcentajePlanTratamientoConsulta($row["porcentaje_anterior"])
+			: $anteriorInferido;
+		$profesional = mb_convert_encoding((string)$row["profesional"], 'UTF-8', 'ISO-8859-1');
+		if (trim($profesional) == "") { $profesional = "Profesional"; }
+		$observacion = $tieneObservacion && isset($row["observacion"]) ? mb_convert_encoding((string)$row["observacion"], 'UTF-8', 'ISO-8859-1') : "";
+		$fecha = (string)$row["fecha"];
+		$fechaDia = "";
+		$fechaMostrar = "";
+		$ts = strtotime($fecha);
+		if ($ts !== false) {
+			$fechaDia = date("Y-m-d", $ts);
+			$fechaMostrar = date("d/m/Y", $ts);
+		}
+		$item = array(
+			"id" => (string)$row["cod_evoluciontratamiento"],
+			"usuario_id" => (string)$row["cod_usuraioFK"],
+			"profesional" => $profesional,
+			"anterior" => $anterior,
+			"nuevo" => $nuevo,
+			"delta" => max(0, $nuevo - $anterior),
+			"fecha" => $fecha,
+			"fecha_dia" => $fechaDia,
+			"fecha_mostrar" => $fechaMostrar,
+			"agenda_id" => (string)$row["cod_agendaFK"],
+			"observacion" => $observacion
+		);
+		$items[] = $item;
+		if ($cod_agendamiento != "" && (string)$row["cod_agendaFK"] == $cod_agendamiento) {
+			$actual = $item;
+		} elseif ($actual === null && $cod_usuario != "" && $fechaConsultaDia != "" && (string)$row["cod_usuraioFK"] == $cod_usuario && $fechaDia == $fechaConsultaDia) {
+			$actual = $item;
+		}
+		$anteriorInferido = $nuevo;
+	}
+	if ($actual === null && count($items) > 0) {
+		$actual = $items[count($items) - 1];
+	}
+	return array("items" => $items, "actual" => $actual);
+}
+
+function renderizarEvolucionTratamientoHistorialConsulta($evoluciones)
+{
+	$items = isset($evoluciones["items"]) ? $evoluciones["items"] : array();
+	$actual = isset($evoluciones["actual"]) ? $evoluciones["actual"] : null;
+	if (!$actual && count($items) == 0) { return ""; }
+	if (!$actual && count($items) > 0) { $actual = $items[count($items) - 1]; }
+
+	$anterior = isset($actual["anterior"]) ? (int)$actual["anterior"] : 0;
+	$nuevo = isset($actual["nuevo"]) ? (int)$actual["nuevo"] : 0;
+	$delta = isset($actual["delta"]) ? (int)$actual["delta"] : max(0, $nuevo - $anterior);
+	$estado = $nuevo >= 100 ? "Finalizado" : ($nuevo > 0 ? "En proceso" : "Pendiente");
+	$estadoClase = $nuevo >= 100 ? "completado" : ($nuevo > 0 ? "proceso" : "pendiente");
+	$profesionalActual = isset($actual["profesional"]) ? $actual["profesional"] : "Profesional";
+	$fechaActual = isset($actual["fecha_mostrar"]) ? $actual["fecha_mostrar"] : "";
+	$styleBarra = "--avance-anterior: ".$anterior."%; --avance-actual: ".$nuevo."%;";
+
+	$html = "<div class='consulta-treatment-evolution consulta-treatment-evolution--".$estadoClase."'>"
+		."<div class='consulta-treatment-evolution__head'>"
+			."<div><span>Avance registrado</span><strong>".$anterior."% &rarr; ".$nuevo."%</strong></div>"
+			."<em>".$estado."</em>"
+		."</div>"
+		."<div class='consulta-treatment-progress' style='".$styleBarra."'>"
+			."<div class='consulta-treatment-progress__bar' aria-hidden='true'></div>"
+			."<div class='consulta-treatment-progress__info'>"
+				."<span>".htmlspecialchars($profesionalActual, ENT_QUOTES, 'UTF-8').($fechaActual != "" ? " &middot; ".htmlspecialchars($fechaActual, ENT_QUOTES, 'UTF-8') : "")."</span>"
+				."<b>".($delta > 0 ? "+".$delta."% en esta consulta" : "Sin aumento de porcentaje")."</b>"
+			."</div>"
+		."</div>";
+
+	if (count($items) > 0) {
+		$html .= "<div class='consulta-treatment-evolution__steps'>";
+		foreach ($items as $item) {
+			$esActual = $actual && isset($actual["id"]) && $item["id"] == $actual["id"];
+			$claseActual = $esActual ? " is-current" : "";
+			$claseFinal = ((int)$item["nuevo"] >= 100) ? " is-finished" : "";
+			$html .= "<span class='consulta-treatment-evolution-step".$claseActual.$claseFinal."'>"
+				."<b>".(int)$item["nuevo"]."%</b>"
+				."<strong>".htmlspecialchars($item["profesional"], ENT_QUOTES, 'UTF-8')."</strong>"
+				."<small>".htmlspecialchars($item["fecha_mostrar"], ENT_QUOTES, 'UTF-8')."</small>"
+				."</span>";
+		}
+		$html .= "</div>";
+	}
+	$html .= "</div>";
+	return $html;
+}
+
+
+
 function  buscarHistorialConsulta($cod_venta)
 {
 $mysqli=conectar_al_servidor();
@@ -1383,11 +1511,14 @@ $pagina="";
 
 if ($valor>0)
 {
+$indiceConsultaHistorial = 0;
 while ($valor= mysqli_fetch_assoc($result))
 {  
 
 $cod_consulta = mb_convert_encoding((string)($valor['cod_consulta']), 'UTF-8', 'ISO-8859-1');   
 $fecha = mb_convert_encoding((string)($valor['fecha']), 'UTF-8', 'ISO-8859-1');          
+$cod_usuario_consulta = mb_convert_encoding((string)($valor['cod_usuarioFK']), 'UTF-8', 'ISO-8859-1');
+$cod_agendamiento_consulta = mb_convert_encoding((string)($valor['cod_agendamientoFK']), 'UTF-8', 'ISO-8859-1');
 $trabajo_realizado = mb_convert_encoding((string)($valor['trabajo_realizado']), 'UTF-8', 'ISO-8859-1');          
 $proximo_trabajo = mb_convert_encoding((string)($valor['proximo_trabajo']), 'UTF-8', 'ISO-8859-1');  
 $motivoconsulta = mb_convert_encoding((string)($valor['motivoconsulta']), 'UTF-8', 'ISO-8859-1');  
@@ -1441,13 +1572,19 @@ $tratamientoVisible = trim($tratamiento_realizado_nombre) != "" ? $tratamiento_r
 $trabajoVisible = trim($trabajo_realizado) != "" ? $trabajo_realizado : "Sin registro cargado";
 $proximoVisible = trim($proximo_trabajo) != "" ? $proximo_trabajo : "Sin registro cargado";
 $zonaVisible = trim($diagnostico) != "" ? $diagnostico : "Sin zona de trabajo registrada";
+$evolucionTratamientoHtml = "";
+if (trim($cod_detalle_ventaFK) != "") {
+	$evolucionesTratamiento = obtenerEvolucionesTratamientoHistorialConsulta($mysqli,$cod_detalle_ventaFK,$cod_agendamiento_consulta,$cod_usuario_consulta,$fecha);
+	$evolucionTratamientoHtml = renderizarEvolucionTratamientoHistorialConsulta($evolucionesTratamiento);
+}
+$claseConsultaReciente = $indiceConsultaHistorial == 0 ? " consulta-history-item--latest" : " consulta-history-item--compact";
 
 $pagina .= "
 <div 
  onclick='abrirModal(this)'  
   role='button' tabindex='0'
   aria-label='Ver consulta número $cod_consulta' 
-  class='tarjeta-consulta consulta-item consulta-history-item'
+  class='tarjeta-consulta consulta-item consulta-history-item".$claseConsultaReciente."'
   data-codconsulta='".$codConsultaHtml."'
   data-fecha='".$fechaDataHtml."'
   data-especialista='".$especialistaDataHtml."'
@@ -1476,6 +1613,7 @@ $pagina .= "
       <strong>".nl2br(htmlspecialchars($tratamientoVisible, ENT_QUOTES, 'UTF-8'))."</strong>
       <p>".nl2br(htmlspecialchars($trabajoVisible, ENT_QUOTES, 'UTF-8'))."</p>
     </div>
+    ".$evolucionTratamientoHtml."
     <div class='consulta-history-item__meta'>
       <span><b>Motivo</b>".nl2br(htmlspecialchars($motivoVisible, ENT_QUOTES, 'UTF-8'))."</span>
       <span><b>Zona</b>".nl2br(htmlspecialchars($zonaVisible, ENT_QUOTES, 'UTF-8'))."</span>
@@ -1487,6 +1625,7 @@ $pagina .= "
   </div>
 </div>
 ";
+$indiceConsultaHistorial++;
  
 }
 }
@@ -3023,10 +3162,29 @@ function textoAlcanceOdontogramaConsulta($alcance)
 		"arcada" => "Arcada",
 		"cuadrante" => "Cuadrante",
 		"pieza_dental" => "Pieza dental",
-		"pieza_superficie" => "Pieza + superficie"
+		"pieza_superficie" => "Pieza + superficie",
+		"piezas_multiples" => "Varias piezas"
 	);
 	$alcance = strtolower(trim((string)$alcance));
 	return isset($mapa[$alcance]) ? $mapa[$alcance] : "Pieza dental";
+}
+
+function piezasUbicacionOdontogramaConsulta($link)
+{
+	$piezas = array();
+	if (!$link || !isset($link["piezas_json"]) || trim((string)$link["piezas_json"]) == "") {
+		return $piezas;
+	}
+	$dec = json_decode($link["piezas_json"], true);
+	if (is_array($dec)) {
+		foreach ($dec as $pieza) {
+			$pieza = trim((string)$pieza);
+			if ($pieza != "" && !in_array($pieza, $piezas, true)) {
+				$piezas[] = $pieza;
+			}
+		}
+	}
+	return $piezas;
 }
 
 function textoUbicacionOdontogramaConsulta($link)
@@ -3035,6 +3193,8 @@ function textoUbicacionOdontogramaConsulta($link)
 	if ((int)$link["boca_completa"] == 1) { return "Boca completa"; }
 	if (trim((string)$link["arcada"]) != "") { return textoArcadaOdontogramaConsulta($link["arcada"]); }
 	if (trim((string)$link["cuadrante"]) != "") { return "Cuadrante ".str_replace("_", " ", $link["cuadrante"]); }
+	$piezas = piezasUbicacionOdontogramaConsulta($link);
+	if (count($piezas) > 0) { return "Piezas ".implode(", ", $piezas); }
 	$texto = trim((string)$link["pieza"]) != "" ? "Pieza ".$link["pieza"] : "";
 	$superficies = array();
 	if (trim((string)$link["superficies_json"]) != "") {
@@ -3060,6 +3220,7 @@ function baseUbicacionOdontogramaConsulta($alcance, $falta)
 		"requiere" => ($alcance != "" && $alcance != "no_requiere"),
 		"alcance" => $alcance,
 		"pieza" => "",
+		"piezas_json" => "",
 		"superficies_json" => "",
 		"arcada" => "",
 		"cuadrante" => "",
@@ -3074,7 +3235,8 @@ function obtenerUbicacionOdontogramaDetalleConsulta($mysqli, $detalleId, $alcanc
 	if (!odontogramaTablasDisponiblesConsulta($mysqli)) {
 		return baseUbicacionOdontogramaConsulta($alcance, false);
 	}
-	$stmt = $mysqli->prepare("SELECT pieza, superficies_json, arcada, cuadrante, boca_completa FROM odontograma_tratamiento_links WHERE detalle_venta_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1");
+	$selectPiezasJson = columnaExisteConsulta($mysqli, "odontograma_tratamiento_links", "piezas_json") ? "piezas_json" : "'' AS piezas_json";
+	$stmt = $mysqli->prepare("SELECT pieza, ".$selectPiezasJson.", superficies_json, arcada, cuadrante, boca_completa FROM odontograma_tratamiento_links WHERE detalle_venta_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1");
 	if (!$stmt) {
 		return baseUbicacionOdontogramaConsulta($alcance, $requiere);
 	}
@@ -3100,6 +3262,7 @@ function tipoUbicacionVisualOdontogramaConsulta($ubicacion)
 {
 	if (!is_array($ubicacion) || !empty($ubicacion["falta"])) { return "pendiente"; }
 	if ((int)$ubicacion["boca_completa"] == 1) { return "boca-completa"; }
+	if (count(piezasUbicacionOdontogramaConsulta($ubicacion)) > 0) { return "piezas-multiples"; }
 	if (trim((string)$ubicacion["arcada"]) != "") {
 		$arcada = normalizarArcadaOdontogramaConsulta($ubicacion["arcada"]);
 		if ($arcada == "superior") { return "arcada-superior"; }
@@ -3141,6 +3304,9 @@ function iconoUbicacionOdontogramaConsulta($tipo, $pieza)
 	if ($tipo == "boca-completa") {
 		return "<span class='odontograma-location-icon odontograma-icon-boca-completa' aria-hidden='true'><svg viewBox='0 0 44 44'><path d='M7 22 C10 8 34 8 37 22 C34 36 10 36 7 22 Z'></path><path d='M12 20 C17 15 27 15 32 20'></path><path d='M12 24 C17 29 27 29 32 24'></path><path d='M22 15 L22 29'></path></svg></span>";
 	}
+	if ($tipo == "piezas-multiples") {
+		return "<span class='odontograma-location-icon odontograma-icon-piezas-multiples' aria-hidden='true'><svg viewBox='0 0 44 44'><circle cx='14' cy='16' r='5'></circle><circle cx='28' cy='16' r='5'></circle><circle cx='21' cy='29' r='5'></circle><path d='M14 21 L21 24'></path><path d='M28 21 L21 24'></path></svg></span>";
+	}
 	return "<span class='odontograma-location-icon odontograma-icon-pendiente' aria-hidden='true'><svg viewBox='0 0 44 44'><circle cx='22' cy='22' r='13'></circle><path d='M22 14 L22 30'></path><path d='M14 22 L30 22'></path></svg></span>";
 }
 
@@ -3154,6 +3320,7 @@ function renderizarUbicacionOdontogramaConsulta($ubicacion, $claseBase)
 	$texto = $falta ? "Ubicaci&oacute;n pendiente" : htmlspecialchars((string)$ubicacion["texto"], ENT_QUOTES, "UTF-8");
 	$detalle = $falta ? "Requiere: ".htmlspecialchars(textoAlcanceOdontogramaConsulta($ubicacion["alcance"]), ENT_QUOTES, "UTF-8") : "";
 	if ($tipo == "boca-completa" && !$falta) { $detalle = "Aplica a todos los dientes"; }
+	if ($tipo == "piezas-multiples" && !$falta) { $detalle = "Seleccion multiple"; }
 	if (($tipo == "arcada-superior" || $tipo == "arcada-inferior" || $tipo == "ambas-arcadas") && !$falta) { $detalle = "Ubicaci&oacute;n general"; }
 	$clase = $claseBase." tratamiento-ubicacion-visual tratamiento-ubicacion-".$tipo.($falta ? " ".$claseBase."--falta tratamiento-ubicacion-pendiente" : " tratamiento-ubicacion-completa");
 	$contenido = iconoUbicacionOdontogramaConsulta($tipo, isset($ubicacion["pieza"]) ? $ubicacion["pieza"] : "")."<span class='tratamiento-ubicacion-texto'><b>".$texto."</b>".($detalle != "" ? "<small>".$detalle."</small>" : "")."</span>";
@@ -3165,7 +3332,8 @@ function renderizarUbicacionOdontogramaConsulta($ubicacion, $claseBase)
 	$cuadrante = htmlspecialchars((string)$ubicacion["cuadrante"], ENT_QUOTES, "UTF-8");
 	$boca = ((int)$ubicacion["boca_completa"] == 1) ? "1" : "";
 	$superficie = htmlspecialchars(primeraSuperficieUbicacionOdontogramaConsulta($ubicacion), ENT_QUOTES, "UTF-8");
-	$onclick = "event.stopPropagation(); if (typeof odontogramaEnfocarUbicacionFicha == 'function') { odontogramaEnfocarUbicacionFicha('".$pieza."','".$arcada."','".$cuadrante."','".$boca."','".$superficie."'); }";
+	$piezas = htmlspecialchars(implode(",", piezasUbicacionOdontogramaConsulta($ubicacion)), ENT_QUOTES, "UTF-8");
+	$onclick = "event.stopPropagation(); if (typeof odontogramaEnfocarUbicacionFicha == 'function') { odontogramaEnfocarUbicacionFicha('".$pieza."','".$arcada."','".$cuadrante."','".$boca."','".$superficie."','".$piezas."'); }";
 	return "<button type='button' class='".$clase."' title='Ver ubicaci&oacute;n en odontograma' onclick=\"".$onclick."\">".$contenido."</button>";
 }
 

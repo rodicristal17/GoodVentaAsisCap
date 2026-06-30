@@ -60,7 +60,18 @@ function odontoTablasDisponibles($mysqli)
             return false;
         }
     }
-    return odontoColumnaExiste($mysqli, "producto", "alcance_odontologico");
+    if (!odontoColumnaExiste($mysqli, "producto", "alcance_odontologico")) {
+        return false;
+    }
+    return odontoAsegurarColumnaPiezasMultiples($mysqli);
+}
+
+function odontoAsegurarColumnaPiezasMultiples($mysqli)
+{
+    if (odontoColumnaExiste($mysqli, "odontograma_tratamiento_links", "piezas_json")) {
+        return true;
+    }
+    return $mysqli->query("ALTER TABLE odontograma_tratamiento_links ADD COLUMN piezas_json TEXT NULL AFTER pieza") ? true : false;
 }
 
 function odontoUtf8($valor)
@@ -71,8 +82,26 @@ function odontoUtf8($valor)
 function odontoNormalizarAlcance($alcance)
 {
     $alcance = strtolower(trim((string)$alcance));
-    $permitidos = array("no_requiere", "boca_completa", "arcada", "cuadrante", "pieza_dental", "pieza_superficie");
+    $permitidos = array("no_requiere", "boca_completa", "arcada", "cuadrante", "pieza_dental", "pieza_superficie", "piezas_multiples");
     return in_array($alcance, $permitidos) ? $alcance : "pieza_dental";
+}
+
+function odontoForzarUnidadPiezaPresupuesto()
+{
+    return odontoPost("unidad_pieza_presupuesto") == "1";
+}
+
+function odontoEsTratamientoUnidadPieza($nombre)
+{
+    return stripos((string)$nombre, "RESTO RADICULAR") !== false;
+}
+
+function odontoAlcanceSeguroProducto($alcance, $nombre, $forzarUnidadPieza)
+{
+    if ($forzarUnidadPieza || odontoEsTratamientoUnidadPieza($nombre)) {
+        return "pieza_dental";
+    }
+    return odontoNormalizarAlcance($alcance);
 }
 
 function odontoTextoSuperficie($superficie)
@@ -85,6 +114,35 @@ function odontoTextoSuperficie($superficie)
         "oclusal_incisal" => "Oclusal / Incisal"
     );
     return isset($mapa[$superficie]) ? $mapa[$superficie] : $superficie;
+}
+
+function odontoNormalizarPiezasJson($piezasJson)
+{
+    $piezasJson = trim((string)$piezasJson);
+    if ($piezasJson == "") {
+        return null;
+    }
+    $dec = json_decode($piezasJson, true);
+    if (!is_array($dec)) {
+        return null;
+    }
+    $piezas = array();
+    foreach ($dec as $pieza) {
+        $pieza = preg_replace('/[^0-9]/', '', (string)$pieza);
+        if ($pieza == "" || strlen($pieza) > 2) {
+            continue;
+        }
+        if (!in_array($pieza, $piezas)) {
+            $piezas[] = $pieza;
+        }
+    }
+    return count($piezas) > 0 ? json_encode($piezas) : null;
+}
+
+function odontoPiezasJsonArray($piezasJson)
+{
+    $dec = json_decode((string)$piezasJson, true);
+    return is_array($dec) ? $dec : array();
 }
 
 function odontoNormalizarArcadaTexto($arcada)
@@ -121,6 +179,12 @@ function odontoUbicacionTexto($link)
     }
     if (!empty($link["cuadrante"])) {
         return "Cuadrante ".str_replace("_", " ", $link["cuadrante"]);
+    }
+    if (!empty($link["piezas_json"])) {
+        $piezas = odontoPiezasJsonArray($link["piezas_json"]);
+        if (count($piezas) > 0) {
+            return "Piezas ".implode(", ", $piezas);
+        }
     }
     $texto = "";
     if (!empty($link["pieza"])) {
@@ -346,7 +410,7 @@ function odontoObtenerAlcanceProducto($mysqli, $productoId)
         "producto" => array(
             "cod_producto" => odontoUtf8($row["cod_producto"]),
             "nombre_producto" => odontoUtf8($row["nombre_producto"]),
-            "alcance_odontologico" => odontoNormalizarAlcance($row["alcance_odontologico"]),
+            "alcance_odontologico" => odontoAlcanceSeguroProducto($row["alcance_odontologico"], $row["nombre_producto"], odontoForzarUnidadPiezaPresupuesto()),
             "nivel_riesgo_financiero" => odontoObtenerRiesgoProducto($mysqli, $row["cod_producto"])
         )
     ));
@@ -423,12 +487,14 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
     $nombre = trim(odontoPost("nombre_tratamiento"));
     $alcance = odontoNormalizarAlcance(odontoPost("alcance_odontologico", "pieza_dental"));
     $pieza = trim(odontoPost("pieza"));
+    $piezasJson = odontoNormalizarPiezasJson(odontoPost("piezas_json"));
     $denticion = trim(odontoPost("denticion", "permanente"));
     $superficiesJson = odontoNormalizarSuperficies(odontoPost("superficie"), odontoPost("superficies_json"));
     $arcada = trim(odontoPost("arcada"));
     $cuadrante = trim(odontoPost("cuadrante"));
     $bocaCompleta = odontoPost("boca_completa") == "1" ? 1 : 0;
     $origen = trim(odontoPost("origen", "ficha_clinica"));
+    $forzarUnidadPieza = odontoForzarUnidadPiezaPresupuesto();
     $estadoLink = "pendiente";
     $riesgo = null;
 
@@ -440,7 +506,7 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
         $productoId = (string)$datos["cod_productoFK"];
         $nombre = (string)$datos["nombre_producto"];
         $ventaId = (string)$datos["cod_ventaFK"];
-        $alcance = odontoNormalizarAlcance($datos["alcance_odontologico"]);
+        $alcance = odontoAlcanceSeguroProducto($datos["alcance_odontologico"], $nombre, $forzarUnidadPieza);
         $riesgo = isset($datos["nivel_riesgo_financiero"]) ? (int)$datos["nivel_riesgo_financiero"] : null;
         $avance = isset($datos["progreso_porcentaje"]) ? (int)$datos["progreso_porcentaje"] : 0;
         $estadoLink = $avance >= 100 ? "completado" : ($avance > 0 ? "en_proceso" : "pendiente");
@@ -452,7 +518,7 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
         $productoId = (string)$datos["cod_productoFK"];
         $nombre = (string)$datos["nombre_producto"];
         $presupuestoId = (string)$datos["cod_presupuestoFK"];
-        $alcance = odontoNormalizarAlcance($datos["alcance_odontologico"]);
+        $alcance = odontoAlcanceSeguroProducto($datos["alcance_odontologico"], $nombre, $forzarUnidadPieza);
         $riesgo = isset($datos["nivel_riesgo_financiero"]) ? (int)$datos["nivel_riesgo_financiero"] : null;
     } else {
         $riesgo = odontoObtenerRiesgoProducto($mysqli, $productoId);
@@ -465,26 +531,50 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
             $row = $stmt->get_result()->fetch_assoc();
             if ($row) {
                 $nombre = (string)$row["nombre_producto"];
-                $alcance = odontoNormalizarAlcance($row["alcance_odontologico"]);
+                $alcance = odontoAlcanceSeguroProducto($row["alcance_odontologico"], $nombre, $forzarUnidadPieza);
             }
         }
+    }
+
+    $alcance = odontoAlcanceSeguroProducto($alcance, $nombre, $forzarUnidadPieza);
+    if ($piezasJson != null) {
+        $alcance = "piezas_multiples";
+        $pieza = null;
+        $superficiesJson = null;
+        $arcada = null;
+        $cuadrante = null;
+        $bocaCompleta = 0;
+    } elseif ($bocaCompleta == 1) {
+        $alcance = "boca_completa";
+    } elseif ($arcada != "") {
+        $alcance = "arcada";
+        $arcada = odontoNormalizarArcadaTexto($arcada);
+    } elseif ($cuadrante != "") {
+        $alcance = "cuadrante";
+    }
+    if ($forzarUnidadPieza && $pieza == "" && $piezasJson == null) {
+        odontoResponder("error", array("mensaje" => "Seleccione una pieza dentaria para guardar el tratamiento."));
     }
 
     if ($alcance == "boca_completa") {
         $bocaCompleta = 1;
         $pieza = null;
+        $piezasJson = null;
         $superficiesJson = null;
         $arcada = null;
         $cuadrante = null;
     } elseif ($alcance == "arcada") {
         $pieza = null;
+        $piezasJson = null;
         $superficiesJson = null;
         $cuadrante = null;
     } elseif ($alcance == "cuadrante") {
         $pieza = null;
+        $piezasJson = null;
         $superficiesJson = null;
         $arcada = null;
     } elseif ($alcance == "pieza_dental") {
+        $piezasJson = null;
         $superficiesJson = null;
     }
 
@@ -508,6 +598,7 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
 
     $ubicacionNuevo = array(
         "pieza" => $pieza,
+        "piezas_json" => $piezasJson,
         "superficies_json" => $superficiesJson,
         "arcada" => $arcada,
         "cuadrante" => $cuadrante,
@@ -518,13 +609,14 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
         $linkId = (int)$linkExistente["id"];
         $valorAnterior = json_encode(array(
             "pieza" => $linkExistente["pieza"],
+            "piezas_json" => isset($linkExistente["piezas_json"]) ? $linkExistente["piezas_json"] : null,
             "superficies_json" => $linkExistente["superficies_json"],
             "arcada" => $linkExistente["arcada"],
             "cuadrante" => $linkExistente["cuadrante"],
             "boca_completa" => $linkExistente["boca_completa"]
         ));
-        $stmt = $mysqli->prepare("UPDATE odontograma_tratamiento_links SET venta_id=?, detalle_venta_id=?, presupuesto_id=?, presupuesto_item_id=?, producto_id=?, nombre_tratamiento_snapshot=?, nivel_riesgo_snapshot=?, alcance_odontologico=?, pieza=?, denticion=?, superficies_json=?, arcada=?, cuadrante=?, boca_completa=?, origen=?, estado_link=?, actualizado_por=?, fecha_actualizacion=NOW() WHERE id=? LIMIT 1");
-        $stmt->bind_param("iiiississssssissii", $ventaId, $detalleId, $presupuestoId, $presupuestoItemId, $productoId, $nombre, $riesgo, $alcance, $pieza, $denticion, $superficiesJson, $arcada, $cuadrante, $bocaCompleta, $origen, $estadoLink, $user, $linkId);
+        $stmt = $mysqli->prepare("UPDATE odontograma_tratamiento_links SET venta_id=?, detalle_venta_id=?, presupuesto_id=?, presupuesto_item_id=?, producto_id=?, nombre_tratamiento_snapshot=?, nivel_riesgo_snapshot=?, alcance_odontologico=?, pieza=?, piezas_json=?, denticion=?, superficies_json=?, arcada=?, cuadrante=?, boca_completa=?, origen=?, estado_link=?, actualizado_por=?, fecha_actualizacion=NOW() WHERE id=? LIMIT 1");
+        $stmt->bind_param("iiiississsssssissii", $ventaId, $detalleId, $presupuestoId, $presupuestoItemId, $productoId, $nombre, $riesgo, $alcance, $pieza, $piezasJson, $denticion, $superficiesJson, $arcada, $cuadrante, $bocaCompleta, $origen, $estadoLink, $user, $linkId);
         if (!$stmt->execute()) {
             odontoResponder("error", array("mensaje" => "No se pudo actualizar la ubicacion."));
         }
@@ -532,8 +624,8 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
         $descripcion = "Se actualizo la ubicacion odontologica de ".odontoUtf8($nombre).".";
         odontoRegistrarHistorial($mysqli, $odontograma["id"], $odontograma["version_actual"], $accion, $descripcion, $pieza, null, null, $linkId, $productoId, $ventaId, $detalleId, $presupuestoId, $presupuestoItemId, $motivo, $user, $valorAnterior, json_encode($ubicacionNuevo));
     } else {
-        $stmt = $mysqli->prepare("INSERT INTO odontograma_tratamiento_links (odontograma_id, venta_id, detalle_venta_id, presupuesto_id, presupuesto_item_id, producto_id, nombre_tratamiento_snapshot, nivel_riesgo_snapshot, alcance_odontologico, pieza, denticion, superficies_json, arcada, cuadrante, boca_completa, origen, estado_link, creado_por, actualizado_por) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("iiiiississssssissii", $odontograma["id"], $ventaId, $detalleId, $presupuestoId, $presupuestoItemId, $productoId, $nombre, $riesgo, $alcance, $pieza, $denticion, $superficiesJson, $arcada, $cuadrante, $bocaCompleta, $origen, $estadoLink, $user, $user);
+        $stmt = $mysqli->prepare("INSERT INTO odontograma_tratamiento_links (odontograma_id, venta_id, detalle_venta_id, presupuesto_id, presupuesto_item_id, producto_id, nombre_tratamiento_snapshot, nivel_riesgo_snapshot, alcance_odontologico, pieza, piezas_json, denticion, superficies_json, arcada, cuadrante, boca_completa, origen, estado_link, creado_por, actualizado_por) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("iiiiississsssssissii", $odontograma["id"], $ventaId, $detalleId, $presupuestoId, $presupuestoItemId, $productoId, $nombre, $riesgo, $alcance, $pieza, $piezasJson, $denticion, $superficiesJson, $arcada, $cuadrante, $bocaCompleta, $origen, $estadoLink, $user, $user);
         if (!$stmt->execute()) {
             odontoResponder("error", array("mensaje" => "No se pudo guardar la ubicacion."));
         }
