@@ -35202,7 +35202,7 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divFinalizarVentaAContado .pago-contado-modal {
-  width: min(1080px, calc(100vw - 24px)) !important;
+  width: min(1320px, calc(100vw - 24px)) !important;
   min-height: auto !important;
   max-height: calc(100vh - 18px);
   border: 1px solid #d8e2ec;
@@ -35250,6 +35250,10 @@ button.tratamiento-ubicacion-visual {
   align-items: start;
 }
 
+#divFinalizarVentaAContado .pago-contado-body--ueno {
+  grid-template-columns: minmax(245px, 0.7fr) minmax(390px, 1fr) minmax(360px, 1fr);
+}
+
 #divFinalizarVentaAContado .pago-contado-panel {
   min-width: 0;
   border: 1px solid #e1e8f0;
@@ -35264,7 +35268,13 @@ button.tratamiento-ubicacion-visual {
 
 #divFinalizarVentaAContado .pago-contado-panel--method {
   display: grid;
-  grid-template-rows: auto auto auto minmax(94px, auto) auto auto;
+  grid-template-rows: auto auto minmax(128px, auto) auto auto;
+  padding: 10px;
+}
+
+#divFinalizarVentaAContado .pago-contado-panel--conciliation {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   padding: 10px;
 }
 
@@ -35386,6 +35396,15 @@ button.tratamiento-ubicacion-visual {
   box-sizing: border-box;
 }
 
+#divFinalizarVentaAContado .pago-contado-panel--conciliation .pago-contado-conciliar {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 #divFinalizarVentaAContado .pago-contado-conciliar-head {
   display: flex;
   align-items: center;
@@ -35417,6 +35436,44 @@ button.tratamiento-ubicacion-visual {
   font-weight: 900;
 }
 
+#divFinalizarVentaAContado .pago-contado-ueno-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82px;
+  gap: 6px;
+  align-items: end;
+  min-width: 0;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-filter label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: #526274;
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-filter-clear {
+  width: 82px !important;
+  height: 32px !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  border: 1px solid #b7d4f2 !important;
+  color: #19558a !important;
+  font-size: 10px !important;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado #lblPagoContadoFiltroUenoInfo {
+  grid-column: 1 / -1;
+  min-height: 13px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 #divFinalizarVentaAContado #lblPagoContadoUenoAyuda {
   min-width: 0;
   color: #667085;
@@ -35428,6 +35485,10 @@ button.tratamiento-ubicacion-visual {
   white-space: nowrap;
 }
 
+#divFinalizarVentaAContado .pago-contado-panel--conciliation #lblPagoContadoUenoAyuda {
+  white-space: normal;
+}
+
 #divFinalizarVentaAContado .pago-contado-ueno {
   max-height: 96px;
   overflow: auto;
@@ -35436,6 +35497,11 @@ button.tratamiento-ubicacion-visual {
   border-radius: 7px;
   background: #ffffff;
   box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado .pago-contado-panel--conciliation .pago-contado-ueno {
+  min-height: 192px;
+  max-height: calc(100vh - 228px);
 }
 
 #divFinalizarVentaAContado .pago-contado-ueno-warning,
@@ -35632,7 +35698,7 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divFinalizarVentaAContado #div_opciones_pago {
-  height: 124px !important;
+  height: 168px !important;
   margin: 0 !important;
   padding: 6px;
   border: 0 !important;
@@ -35730,6 +35796,7 @@ button.tratamiento-ubicacion-visual {
   }
 
   #divFinalizarVentaAContado .pago-contado-conciliar-head,
+  #divFinalizarVentaAContado .pago-contado-ueno-filter,
   #divFinalizarVentaAContado .pago-contado-ueno-item,
   #divFinalizarVentaAContado .pago-contado-ueno-selected {
     grid-template-columns: 1fr;
@@ -35740,12 +35807,18 @@ button.tratamiento-ubicacion-visual {
   }
 
   #divFinalizarVentaAContado .pago-contado-conciliar-head .btn4,
+  #divFinalizarVentaAContado .pago-contado-ueno-filter-clear,
   #divFinalizarVentaAContado .pago-contado-ueno-btn {
     width: 100% !important;
   }
 
   #divFinalizarVentaAContado #div_opciones_pago {
     height: 28vh !important;
+  }
+
+  #divFinalizarVentaAContado .pago-contado-panel--conciliation .pago-contado-ueno {
+    min-height: 150px;
+    max-height: 240px;
   }
 }
 
@@ -44592,13 +44665,26 @@ button.tratamiento-ubicacion-visual {
 }
 
 /* Venta guiada desde presupuesto */
+#divAbmVenta {
+  overflow: hidden !important;
+}
+
+#divAbmVenta #tdEfectoAbmVenta > tbody > tr > td {
+  vertical-align: top;
+  padding-top: 3px;
+  box-sizing: border-box;
+}
+
 #divAbmVenta .venta-confirmacion-modal {
-  width: min(1120px, calc(100vw - 42px)) !important;
-  max-height: calc(100vh - 36px);
+  width: min(1360px, calc(100vw - 24px)) !important;
+  height: 95vh;
+  min-height: 0 !important;
+  max-height: calc(100vh - 12px);
   overflow: hidden;
   background: #f7f9fc;
   border: 1px solid #d8e3ee;
   border-radius: 10px;
+  box-sizing: border-box;
   box-shadow: 0 20px 50px rgba(24, 39, 64, 0.22);
 }
 
@@ -44607,15 +44693,30 @@ button.tratamiento-ubicacion-visual {
   border-bottom: 1px solid #d7e2ed;
 }
 
+#divAbmVenta .tableMenuZ td {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+#divAbmVenta .tableMenuZ .iconoBtn {
+  width: 28px;
+  height: 28px;
+}
+
 #divAbmVenta .pTituloRepor2 {
   color: #173653 !important;
 }
 
+#divAbmVenta #pNroFactuaCaja {
+  font-size: clamp(23px, 2vw, 28px) !important;
+}
+
 #divAbmVenta .venta-confirmacion-body {
-  width: calc(100% - 24px);
-  max-height: calc(100vh - 118px);
-  overflow: auto;
-  padding: 10px 12px 16px;
+  width: calc(100% - 18px);
+  max-height: calc(100vh - 52px);
+  overflow: hidden;
+  padding: 4px 8px 5px;
+  box-sizing: border-box;
 }
 
 #divAbmVenta .venta-confirmacion-shell {
@@ -44634,12 +44735,12 @@ button.tratamiento-ubicacion-visual {
 #divAbmVenta .venta-confirmacion-panel {
   display: grid;
   grid-template-columns: minmax(140px, 0.85fr) minmax(150px, 0.85fr) minmax(250px, 1.2fr);
-  gap: 8px 10px;
+  gap: 5px 10px;
   align-items: end;
   width: 100% !important;
   height: auto !important;
   margin: 0;
-  padding: 10px 12px !important;
+  padding: 6px 9px !important;
   background: #ffffff !important;
   border: 1px solid #d7e2ed;
   border-radius: 8px;
@@ -44681,13 +44782,23 @@ button.tratamiento-ubicacion-visual {
 
 #divAbmVenta .venta-confirmacion-panel table:nth-child(2) td:nth-child(3) {
   grid-column: 3;
+  display: grid;
+  grid-template-columns: minmax(118px, 170px) auto auto;
+  gap: 6px;
+  align-items: end;
+  justify-content: start;
+}
+
+#divAbmVenta .venta-confirmacion-panel table:nth-child(2) td:nth-child(3) .pTituloC {
+  grid-column: 1 / -1;
 }
 
 #divAbmVenta .venta-confirmacion-panel .pTituloC {
-  margin: 0 0 5px;
+  margin: 0 0 3px;
   color: #58718a !important;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
+  line-height: 1.1;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -44695,7 +44806,7 @@ button.tratamiento-ubicacion-visual {
 #divAbmVenta .venta-confirmacion-panel input[type="text"],
 #divAbmVenta .venta-confirmacion-panel select {
   width: 100% !important;
-  height: 32px;
+  height: 28px;
   box-sizing: border-box;
   border: 1px solid #c7d8e8 !important;
   border-radius: 7px;
@@ -44707,7 +44818,7 @@ button.tratamiento-ubicacion-visual {
 #divAbmVenta .venta-confirmacion-panel input[type="button"] {
   width: auto !important;
   min-width: 76px;
-  height: 32px;
+  height: 28px;
   margin-left: 6px;
   border-radius: 7px;
 }
@@ -44733,10 +44844,16 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divAbmVenta #inptDocClienteVenta {
-  display: inline-block;
-  width: calc(100% - 88px) !important;
-  min-width: 130px;
+  display: block;
+  width: 100% !important;
+  min-width: 0;
   vertical-align: middle;
+}
+
+#divAbmVenta #btnMasInfoClienteVenta,
+#divAbmVenta #btnNuevoClienteVenta {
+  align-self: end;
+  margin-left: 0;
 }
 
 #divAbmVenta .venta-vendedor-ayuda {
@@ -44759,7 +44876,7 @@ button.tratamiento-ubicacion-visual {
 
 #divAbmVenta .tableVenta1 {
   width: 100% !important;
-  margin-top: 10px !important;
+  margin-top: 4px !important;
   padding: 0;
   background: transparent;
   border: 0;
@@ -44787,6 +44904,10 @@ button.tratamiento-ubicacion-visual {
   width: 100% !important;
 }
 
+#divAbmVenta .venta-producto-vista-superior.venta-producto-vista-superior-activa > tbody > tr > td:last-child {
+  display: none !important;
+}
+
 #divAbmVenta .venta-producto-vista-superior.venta-producto-vista-superior-activa #DivVistaOdontologia {
   display: table !important;
 }
@@ -44796,7 +44917,7 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divAbmVenta .venta-producto-entrada {
-  margin: 0 0 6px !important;
+  margin: 0 0 3px !important;
   border-spacing: 6px 0 !important;
 }
 
@@ -44813,10 +44934,11 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divAbmVenta .venta-producto-entrada .pTituloC {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   color: #58718a !important;
   font-size: 10px;
   font-weight: 800;
+  line-height: 1.1;
 }
 
 #divAbmVenta #divtdProducto {
@@ -44859,7 +44981,7 @@ button.tratamiento-ubicacion-visual {
 
 #divAbmVenta #btnBuscarProductoVenta {
   width: 86px !important;
-  height: 32px;
+  height: 30px;
   border-radius: 7px;
   background: #159466 !important;
   color: #ffffff !important;
@@ -44872,13 +44994,13 @@ button.tratamiento-ubicacion-visual {
 
 #divAbmVenta #inpTotalCostoVenta {
   width: 100% !important;
-  height: 32px;
+  height: 30px;
   box-sizing: border-box;
 }
 
 #divAbmVenta #btnAddDetallesaVenta {
   width: 130px !important;
-  height: 32px;
+  height: 30px;
   border-radius: 7px;
 }
 
@@ -44893,6 +45015,8 @@ button.tratamiento-ubicacion-visual {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0;
+  line-height: 1.05;
+  padding: 3px 5px !important;
 }
 
 #divAbmVenta #inptTotalVenta2.DivTotalVenta {
@@ -44909,95 +45033,159 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divAbmVenta .venta-resumen-footer {
-  margin-top: 4px !important;
-  padding: 6px 8px;
-  background: #ffffff;
-  border: 1px solid #d7e2ed;
-  border-radius: 8px;
+  margin-top: 3px !important;
+  display: block;
+  padding: 6px 12px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #d8e6f2;
+  border-radius: 10px;
   border-spacing: 0 !important;
+  box-sizing: border-box;
+  box-shadow: 0 10px 28px rgba(25, 52, 78, 0.08);
+}
+
+#divAbmVenta .venta-resumen-footer tbody {
+  display: block;
 }
 
 #divAbmVenta .venta-resumen-footer tr {
   display: grid;
-  grid-template-columns: 108px 108px minmax(390px, 1fr) 170px;
-  gap: 10px;
+  grid-template-columns: minmax(150px, 1fr) minmax(160px, 1fr) minmax(330px, 1.55fr) minmax(230px, 0.95fr);
+  gap: 7px 18px;
   align-items: center;
+  min-height: 62px !important;
 }
 
 #divAbmVenta .venta-resumen-footer td {
+  position: relative;
   width: auto !important;
   min-width: 0;
 }
 
 #divAbmVenta .venta-resumen-footer .pTituloC {
-  margin: 0 0 3px;
+  margin: 0 0 4px !important;
   color: #58718a !important;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.1;
   text-transform: uppercase;
 }
 
 #divAbmVenta .venta-resumen-footer input[type="text"] {
-  height: 30px;
+  height: 34px !important;
+  width: 100% !important;
+  padding: 0 16px 0 48px !important;
   box-sizing: border-box;
-  border-radius: 6px;
+  border: 1px solid #d7dde6 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #14253a;
+  font-size: 16px;
+  font-weight: 900;
+  text-align: left !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+#divAbmVenta .venta-resumen-footer td:nth-child(1)::before,
+#divAbmVenta .venta-resumen-footer td:nth-child(2)::before,
+#divAbmVenta .venta-pagado-footer::before {
+  content: "Gs.";
+  position: absolute;
+  left: 16px;
+  top: 24px;
+  z-index: 1;
+  color: #14253a;
+  font-size: 16px;
+  font-weight: 900;
+  pointer-events: none;
 }
 
 #divAbmVenta .venta-acciones-footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(142px, 1fr) 164px;
   align-items: end;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 18px;
 }
 
 #divAbmVenta .venta-pagado-footer {
+  position: relative;
   display: grid;
   gap: 0;
-  margin-right: auto;
+  margin-right: 0;
+  min-width: 0;
 }
 
 #divAbmVenta .venta-acciones-footer input[type="button"] {
-  height: 30px;
-  min-width: 94px;
-  border-radius: 7px;
+  width: 100% !important;
+  min-width: 0;
+  height: 34px !important;
+  margin-bottom: 0;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #169653 !important;
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(22, 150, 83, 0.2);
 }
 
 #divAbmVenta .venta-acciones-footer #btnFinalizarVenta {
-  min-width: 170px;
+  min-width: 0;
 }
 
 #divAbmVenta .venta-total-final-cell {
   display: grid;
-  align-self: stretch;
+  align-self: center;
   align-items: center;
+  padding-left: 14px;
+  border-left: 1px solid #e1e8f0;
 }
 
 #divAbmVenta .venta-total-final {
   display: grid;
-  gap: 2px;
-  padding: 6px 9px;
-  background: #f8fbff;
-  border: 1px solid #cfe0ee;
-  border-radius: 8px;
+  gap: 5px;
+  align-content: center;
+  justify-items: center;
+  height: 60px !important;
+  min-height: 60px !important;
+  padding: 5px 12px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fcfb 100%);
+  border: 1px solid #cfe5e2;
+  border-radius: 9px;
+  box-sizing: border-box;
 }
 
 #divAbmVenta .venta-total-final span {
   color: #58718a;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
   text-transform: uppercase;
+  order: 2;
 }
 
 #divAbmVenta .venta-total-final #inptTotalVenta2.DivTotalVenta {
   display: block;
+  width: auto !important;
+  height: auto !important;
   min-height: 0;
+  margin: 0 !important;
   padding: 0;
   background: transparent;
   border: 0;
-  color: #173653;
-  font-size: 26px;
+  color: #071d3a;
+  font-size: 25px;
   line-height: 1.05;
-  text-align: right;
+  text-align: center;
+  white-space: nowrap;
+  order: 1;
+}
+
+#divAbmVenta .venta-total-final #inptTotalVenta2.DivTotalVenta::before {
+  content: "Gs. ";
 }
 
 #divAbmVenta .venta-total-guia {
@@ -45031,8 +45219,10 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divAbmVenta #table_abm_detalle_venta {
-  min-height: 380px;
-  height: min(52vh, 450px) !important;
+  min-height: 0;
+  height: clamp(270px, calc(100vh - 475px), 405px) !important;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: #ffffff;
   border: 1px solid #d7e2ed;
   border-top: 0;
@@ -45083,8 +45273,8 @@ button.tratamiento-ubicacion-visual {
 
 #divAbmVenta .tableVenta1 > center > table:last-of-type,
 #divAbmVenta .tableVenta1 center > table:last-of-type {
-  margin-top: 8px;
-  padding: 10px;
+  margin-top: 4px;
+  padding: 6px 10px !important;
   background: #ffffff;
   border: 1px solid #d7e2ed;
   border-radius: 8px;
@@ -45096,6 +45286,36 @@ button.tratamiento-ubicacion-visual {
   color: #ffffff !important;
   border-radius: 8px;
   box-shadow: 0 8px 18px rgba(21, 148, 102, 0.22);
+}
+
+@media (max-height: 820px) {
+  #divAbmVenta #tdEfectoAbmVenta > tbody > tr > td {
+    padding-top: 2px;
+  }
+
+  #divAbmVenta .venta-confirmacion-body {
+    max-height: calc(100vh - 48px);
+    padding-top: 3px;
+    padding-bottom: 4px;
+  }
+
+  #divAbmVenta .venta-confirmacion-panel {
+    padding: 5px 8px !important;
+  }
+
+  #divAbmVenta #table_abm_detalle_venta {
+    height: clamp(225px, calc(100vh - 470px), 335px) !important;
+  }
+
+  #divAbmVenta .venta-resumen-footer {
+    padding: 5px 10px !important;
+  }
+}
+
+@media (min-height: 1000px) {
+  #divAbmVenta #table_abm_detalle_venta {
+    height: clamp(350px, calc(100vh - 510px), 500px) !important;
+  }
 }
 
 .venta-tratamientos-overlay {

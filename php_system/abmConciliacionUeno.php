@@ -1798,6 +1798,7 @@ function ueno_buscar_movimientos_cobro($usuario)
 
 	$result = $stmt->get_result();
 	$movimientos = array();
+	$movimientosVistos = array();
 	while ($row = mysqli_fetch_assoc($result)) {
 		$comprobanteReal = ueno_comprobante_normalizado(ueno_from_db($row["nro_comprobante"]));
 		$fechaMovimientoDb = trim((string)$row["fecha_confirmacion"]) != "" ? $row["fecha_confirmacion"] : $row["fecha_transaccion"];
@@ -1805,6 +1806,11 @@ function ueno_buscar_movimientos_cobro($usuario)
 		$fechaMovimientoVisual = ueno_fecha_visual($fechaMovimientoDb);
 		$disponible = (int)$row["monto_disponible"];
 		$importe = (int)$row["importe_credito"];
+		$claveMovimientoVisible = $comprobanteReal . "|" . $fechaMovimiento . "|" . $importe;
+		if ($comprobanteReal != "" && isset($movimientosVistos[$claveMovimientoVisible])) {
+			continue;
+		}
+		$movimientosVistos[$claveMovimientoVisible] = true;
 		$estado = ueno_from_db($row["estado"]);
 		$estadoNormalizado = strtolower(trim($estado));
 		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"));

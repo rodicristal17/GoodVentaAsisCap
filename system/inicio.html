@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=pago-contado-conciliar-div-20260701" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=venta-modal-fit-alto-20260701" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,7 +43,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=pago-contado-conciliar-div-20260701"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=pago-contado-sin-ultimo-vuelto-20260701"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -14481,7 +14481,7 @@ value='Ver Creditos' class='btn4'
 onclick='vercerrarpagos("1")'
 style=';width: 100px; background-color: #2196F3;'>
 <input id='btnFinalizarVenta' type='button'
-value='Finalizar Venta' class='btn4'
+value='Añadir Pago' class='btn4'
 onclick='if (verificarDatosCliente(false)){guardaryfinalizarventa()}'
 style='width: 150px; background-color: #2196F3;display:none'>
 <input id='btnCancelarVenta' type='hidden' value='Cancelar'>
@@ -14885,14 +14885,6 @@ title='Cerrar Ventana' onclick='verCerrarConfigCredito("")' />
 </div>
 </div>
 
-<div class='pago-contado-conciliar' id='divPagoContadoConciliarUeno' style='display:none'>
-<div class='pago-contado-conciliar-head'>
-<div><b>Conciliar transferencia</b><span id='lblPagoContadoUenoAyuda'>Selecciona una transferencia Ueno disponible para este pago.</span></div>
-<input type='button' value='Buscar' class='btn4' onclick='pagoContadoBuscarMovimientosUeno(false)' />
-</div>
-<div id='divPagoContadoUeno' class='pago-contado-ueno'></div>
-</div>
-
 <div class='pago-contado-list'>
 <table class='tableCabeceraRegistro pago-contado-table-head'>
 <tbody>
@@ -14915,6 +14907,22 @@ title='Cerrar Ventana' onclick='verCerrarConfigCredito("")' />
 
 <div class='pago-contado-actions'>
 <input type='Button' value='TERMINAR VENTA' class='btn5' id='btnFinalizarVentaContado' onclick='VerificarCamposVentaContago()' />
+</div>
+</section>
+
+<section class='pago-contado-panel pago-contado-panel--conciliation' id='divPagoContadoConciliarUeno' style='display:none'>
+<div class='pago-contado-section-title'><span>3</span><div><b>Conciliacion Ueno</b><small>Transferencias disponibles</small></div></div>
+<div class='pago-contado-conciliar'>
+<div class='pago-contado-conciliar-head'>
+<div><b>Conciliar transferencia</b><span id='lblPagoContadoUenoAyuda'>Selecciona una transferencia Ueno disponible para este pago.</span></div>
+<input type='button' value='Buscar' class='btn4' onclick='pagoContadoBuscarMovimientosUeno(false)' />
+</div>
+<div class='pago-contado-ueno-filter'>
+<label><b>Monto o codigo</b><input class='inputText' type='text' id='inptPagoContadoFiltroUeno' placeholder='Filtrar movimientos' onkeyup='pagoContadoFiltrarMovimientosUeno()' onchange='pagoContadoFiltrarMovimientosUeno()' /></label>
+<input type='button' value='Limpiar' class='btn4 pago-contado-ueno-filter-clear' onclick='pagoContadoLimpiarFiltroUeno()' />
+<span id='lblPagoContadoFiltroUenoInfo'></span>
+</div>
+<div id='divPagoContadoUeno' class='pago-contado-ueno'></div>
 </div>
 </section>
 </div>

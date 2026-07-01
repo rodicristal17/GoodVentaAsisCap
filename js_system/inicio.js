@@ -217,7 +217,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=pago-contado-conciliar-div-20260701")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=venta-modal-fit-alto-20260701")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -4674,7 +4674,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.93";
+var codigodeactualizacion="X-GT-1-JMTG-V1.94";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -4871,7 +4871,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=pago-contado-conciliar-div-20260701")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=venta-modal-fit-alto-20260701")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -21961,8 +21961,6 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 					document.getElementById("divConfirmarNroDeFactura").style.display=""
 					ImprimirFacrtura1()
 					 }
-					 document.getElementById("divVueltoVentaAContado").style.display="";
-                     document.getElementById("tdEfectoVueltoVentaContado").className="magictime vanishIn"
 				}
 
 			} catch (error) {
@@ -37575,8 +37573,6 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 					document.getElementById("divConfirmarNroDeFactura").style.display=""
 					ImprimirFacrtura1()
 					 }
-					 document.getElementById("divVueltoVentaAContado").style.display="";
-                     document.getElementById("tdEfectoVueltoVentaContado").className="magictime vanishIn"
 				}
 				else if (datos["2"]) {
 					ver_vetana_informativa(datos["2"], "", "error")
@@ -37613,6 +37609,7 @@ function limpiarCamposAnhadirPagos(){
 	if (document.getElementById("divPagoContadoUeno")) {
 		document.getElementById("divPagoContadoUeno").innerHTML = "";
 	}
+	pagoContadoResetFiltroUeno(true);
 	actualizarCampoComprobanteUenoVenta()
 	elementopagoseleccionado = "";
 }
@@ -37707,6 +37704,8 @@ function uenoEscapeHtmlPago(valor) {
 
 var pagoContadoMovimientoUeno = null;
 var pagoContadoUenoTimer = null;
+var pagoContadoMovimientosUeno = [];
+var pagoContadoVerTodosUeno = false;
 
 function pagoContadoId(id) {
 	return document.getElementById(id);
@@ -37774,7 +37773,83 @@ function pagoContadoMovimientoPayload(movimiento) {
 	}
 }
 
-function pagoContadoRenderMovimientosUeno(movimientos, verTodos) {
+function pagoContadoDigitosFiltro(valor) {
+	return String(valor || "").replace(/\D/g, "");
+}
+
+function pagoContadoTextoFiltro(valor) {
+	return uenoTextoNormalizadoPago(valor).replace(/[^A-Z0-9]/g, "");
+}
+
+function pagoContadoFiltroUenoActivo(valor) {
+	return pagoContadoTextoFiltro(valor) != "" || pagoContadoDigitosFiltro(valor) != "";
+}
+
+function pagoContadoActualizarFiltroUenoInfo(total, visibles, filtroActivo) {
+	var info = pagoContadoId("lblPagoContadoFiltroUenoInfo");
+	if (!info) {
+		return;
+	}
+	if (total <= 0) {
+		info.innerHTML = "";
+		return;
+	}
+	if (filtroActivo) {
+		info.innerHTML = "Mostrando " + visibles + " de " + total + " movimientos";
+		return;
+	}
+	info.innerHTML = total == 1 ? "1 movimiento disponible" : total + " movimientos disponibles";
+}
+
+function pagoContadoMovimientoCoincideFiltroUeno(movimiento, filtro) {
+	movimiento = movimiento || {};
+	var textoFiltro = pagoContadoTextoFiltro(filtro);
+	var digitosFiltro = pagoContadoDigitosFiltro(filtro);
+	if (textoFiltro == "" && digitosFiltro == "") {
+		return true;
+	}
+
+	var codigoTexto = [
+		movimiento.id_movimiento,
+		movimiento.nro_comprobante,
+		movimiento.comprobante_masked
+	].join(" ");
+	if (textoFiltro != "" && pagoContadoTextoFiltro(codigoTexto).indexOf(textoFiltro) !== -1) {
+		return true;
+	}
+	if (digitosFiltro != "" && pagoContadoDigitosFiltro(codigoTexto).indexOf(digitosFiltro) !== -1) {
+		return true;
+	}
+
+	if (digitosFiltro != "") {
+		var montoTexto = [
+			movimiento.monto_disponible,
+			movimiento.monto_disponible_fmt,
+			movimiento.importe_credito,
+			movimiento.importe_credito_fmt
+		].join(" ");
+		if (pagoContadoDigitosFiltro(montoTexto).indexOf(digitosFiltro) !== -1) {
+			return true;
+		}
+
+		var montoDisponible = Number(movimiento.monto_disponible || 0);
+		var importeCredito = Number(movimiento.importe_credito || 0);
+		var filtroNumero = Number(digitosFiltro);
+		if (!isNaN(filtroNumero) && filtroNumero > 0 && digitosFiltro.length >= 4) {
+			var tolerancia = Math.max(1000, Math.round(filtroNumero * 0.02));
+			if (!isNaN(montoDisponible) && Math.abs(montoDisponible - filtroNumero) <= tolerancia) {
+				return true;
+			}
+			if (!isNaN(importeCredito) && Math.abs(importeCredito - filtroNumero) <= tolerancia) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+function pagoContadoPintarMovimientosUeno(movimientos, verTodos, filtroActivo) {
 	var contenedor = pagoContadoId("divPagoContadoUeno");
 	if (!contenedor) {
 		return;
@@ -37782,9 +37857,9 @@ function pagoContadoRenderMovimientosUeno(movimientos, verTodos) {
 	movimientos = Array.isArray(movimientos) ? movimientos : [];
 	if (movimientos.length == 0) {
 		pagoContadoMensajeUeno(
-			verTodos ? "No hay transferencias Ueno disponibles." : "No encontramos transferencias para la fecha de venta.",
+			filtroActivo ? "Sin coincidencias para el filtro ingresado." : (verTodos ? "No hay transferencias Ueno disponibles." : "No encontramos transferencias para la fecha de venta."),
 			"",
-			!verTodos
+			!verTodos && !filtroActivo
 		);
 		return;
 	}
@@ -37824,6 +37899,51 @@ function pagoContadoRenderMovimientosUeno(movimientos, verTodos) {
 		html += "<button type='button' class='pago-contado-ueno-link pago-contado-ueno-link--footer' onclick='pagoContadoBuscarMovimientosUeno(true)'>Ver disponibles de otras fechas</button>";
 	}
 	contenedor.innerHTML = html;
+}
+
+function pagoContadoAplicarFiltroMovimientosUeno() {
+	var input = pagoContadoId("inptPagoContadoFiltroUeno");
+	var filtro = input ? input.value : "";
+	var filtroActivo = pagoContadoFiltroUenoActivo(filtro);
+	var movimientos = Array.isArray(pagoContadoMovimientosUeno) ? pagoContadoMovimientosUeno : [];
+	var filtrados = [];
+
+	for (var i = 0; i < movimientos.length; i++) {
+		if (pagoContadoMovimientoCoincideFiltroUeno(movimientos[i], filtro)) {
+			filtrados.push(movimientos[i]);
+		}
+	}
+
+	pagoContadoActualizarFiltroUenoInfo(movimientos.length, filtrados.length, filtroActivo);
+	pagoContadoPintarMovimientosUeno(filtrados, pagoContadoVerTodosUeno, filtroActivo);
+}
+
+function pagoContadoRenderMovimientosUeno(movimientos, verTodos) {
+	pagoContadoMovimientosUeno = Array.isArray(movimientos) ? movimientos : [];
+	pagoContadoVerTodosUeno = !!verTodos;
+	pagoContadoAplicarFiltroMovimientosUeno();
+}
+
+function pagoContadoFiltrarMovimientosUeno() {
+	pagoContadoAplicarFiltroMovimientosUeno();
+}
+
+function pagoContadoLimpiarFiltroUeno() {
+	var input = pagoContadoId("inptPagoContadoFiltroUeno");
+	if (input) {
+		input.value = "";
+		input.focus();
+	}
+	pagoContadoAplicarFiltroMovimientosUeno();
+}
+
+function pagoContadoResetFiltroUeno(limpiarInput) {
+	if (limpiarInput && pagoContadoId("inptPagoContadoFiltroUeno")) {
+		pagoContadoId("inptPagoContadoFiltroUeno").value = "";
+	}
+	pagoContadoMovimientosUeno = [];
+	pagoContadoVerTodosUeno = false;
+	pagoContadoActualizarFiltroUenoInfo(0, 0, false);
 }
 
 function pagoContadoMostrarMovimientoUeno() {
@@ -37892,9 +38012,13 @@ function pagoContadoBuscarMovimientosUeno(verTodos) {
 		monto = pagoContadoId("inptSaldoPagoVentaContado").value;
 	}
 	if (pagoContadoNumero(monto) <= 0) {
+		pagoContadoResetFiltroUeno(false);
 		pagoContadoMensajeUeno("Ingrese el monto para buscar transferencias disponibles.", "", false);
 		return;
 	}
+	pagoContadoMovimientosUeno = [];
+	pagoContadoVerTodosUeno = !!verTodos;
+	pagoContadoActualizarFiltroUenoInfo(0, 0, false);
 	var contenedor = pagoContadoId("divPagoContadoUeno");
 	if (contenedor) {
 		contenedor.innerHTML = "<div class='pago-contado-ueno-empty'>Buscando transferencias Ueno...</div>";
@@ -37920,6 +38044,7 @@ function pagoContadoBuscarMovimientosUeno(verTodos) {
 			if (typeof manejadordeerroresjquery === "function") {
 				manejadordeerroresjquery(jqXHR.status, textstatus, "pagoContadoBuscarMovimientosUeno");
 			}
+			pagoContadoResetFiltroUeno(false);
 			pagoContadoMensajeUeno("No se pudo consultar el listado Ueno.", "pago-contado-ueno-empty--error", false);
 		},
 		success: function(responseText) {
@@ -37929,8 +38054,10 @@ function pagoContadoBuscarMovimientosUeno(verTodos) {
 					pagoContadoRenderMovimientosUeno(respuesta.movimientos || [], verTodos);
 					return;
 				}
+				pagoContadoResetFiltroUeno(false);
 				pagoContadoMensajeUeno(respuesta["2"] || "No se pudo buscar transferencias Ueno.", "pago-contado-ueno-empty--error", false);
 			} catch (error) {
+				pagoContadoResetFiltroUeno(false);
 				pagoContadoMensajeUeno("No se pudo interpretar el listado Ueno.", "pago-contado-ueno-empty--error", false);
 			}
 		}
@@ -38024,12 +38151,14 @@ function actualizarCampoComprobanteUenoVenta() {
 	}
 
 	var esTransferencia = esTipoPagoTransferenciaUenoTexto($('select[id="inptTipoPagoVenta"] option:selected').text());
+	$("#divFinalizarVentaAContado .pago-contado-body").toggleClass("pago-contado-body--ueno", esTransferencia);
 	contenedor.style.display = esTransferencia ? "" : "none";
 	if (conciliacion) {
 		conciliacion.style.display = esTransferencia ? "" : "none";
 	}
 	if (!esTransferencia) {
 		pagoContadoResetMovimientoUeno(true);
+		pagoContadoResetFiltroUeno(true);
 		if (document.getElementById("inptUenoComprobanteVenta")) {
 			document.getElementById("inptUenoComprobanteVenta").value = "";
 		}
