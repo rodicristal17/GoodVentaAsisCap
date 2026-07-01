@@ -472,6 +472,7 @@ $origen_cobro=isset($_POST['origen_cobro']) ? $_POST['origen_cobro'] : "";
 $origen_cobro = mb_convert_encoding((string)($origen_cobro), 'ISO-8859-1', 'UTF-8');
 if($origen_cobro=="COBRAR_CUOTA"){
 	$cod_cobradorFK=$user;
+	$Fecha=pago_fecha_actual_bd();
 }
 
 $nrofactura=$_POST['nrofactura'];
@@ -561,6 +562,22 @@ function guardarNroComprobante($cod_pago, $num_comprobante, $fecha_facturado) {
 	$informacion =array("1" => "exito");
 	echo json_encode($informacion);	
 	exit;
+}
+
+function pago_fecha_actual_bd()
+{
+	$fecha=date('Y-m-d');
+	$mysqli=conectar_al_servidor();
+	if($mysqli){
+		$resultado=$mysqli->query("SELECT CURDATE() AS fecha_actual");
+		if($resultado && $fila=$resultado->fetch_assoc()){
+			if(isset($fila['fecha_actual']) && $fila['fecha_actual']!=""){
+				$fecha=$fila['fecha_actual'];
+			}
+		}
+		mysqli_close($mysqli);
+	}
+	return $fecha;
 }
 
 function ueno_pago_tabla_existe($mysqli, $tabla)
@@ -3053,16 +3070,6 @@ $registros[]= array(
 );
 
 $tipopago=$metodoPagoMostrado;
-if(strtoupper(trim($metodoPagoMostrado))=="EFECTIVO"){
-	$totalPagadoEfectivo=$totalPagadoEfectivo+$Monto;
-}else if(strpos(strtoupper(trim($metodoPagoMostrado)),"TARJETA")!==false){
-	$totalPagadoTarjeta=$totalPagadoTarjeta+$Monto;
-}else if(strpos(strtoupper(trim($metodoPagoMostrado)),"TRANSFER")!==false){
-	$totalPagadoTransferencia=$totalPagadoTransferencia+$Monto;
-}else{
-	$totalPagadoOtros=$totalPagadoOtros+$Monto;
-}
-
 $style='';
 $nrof=trim($num_comprobante);
 if($nrof==""){
@@ -3075,12 +3082,20 @@ $fechaPagoCompleta=trim($Fecha." ".$hora);
 $montoFormateado=number_format($Monto,'0',',','.');
 $estadoCobro="Activo";
 $anuladoNormalizado=strtoupper(trim($anulado));
-if($nroCancelado==0){
-$totalPagado=$Monto+$totalPagado;
+$cobroValido=($nroCancelado==0 && $anuladoNormalizado!="SI" && $anuladoNormalizado!="ANULADO" && $anuladoNormalizado!="1");
+if($cobroValido){
+	$totalPagado=$Monto+$totalPagado;
+	if(strtoupper(trim($metodoPagoMostrado))=="EFECTIVO"){
+		$totalPagadoEfectivo=$totalPagadoEfectivo+$Monto;
+	}else if(strpos(strtoupper(trim($metodoPagoMostrado)),"TARJETA")!==false){
+		$totalPagadoTarjeta=$totalPagadoTarjeta+$Monto;
+	}else if(strpos(strtoupper(trim($metodoPagoMostrado)),"TRANSFER")!==false){
+		$totalPagadoTransferencia=$totalPagadoTransferencia+$Monto;
+	}else{
+		$totalPagadoOtros=$totalPagadoOtros+$Monto;
+	}
 }else{
 	$style='background-color: #FFEB3B;color:#000';
-}
-if($nroCancelado!=0 || $anuladoNormalizado=="SI" || $anuladoNormalizado=="ANULADO" || $anuladoNormalizado=="1"){
 	$estadoCobro="Anulado";
 }
 $cajaNombre=trim($codCajaPago);

@@ -661,9 +661,6 @@ function cc_buscar_movimiento_ueno($usuario)
 		$condicion .= " AND nro_comprobante LIKE '%$compSql%'";
 	}
 	$fechaSql = $mysqli->real_escape_string($fecha_pago);
-	if ($fecha_pago != "") {
-		$condicion .= " AND (fecha_confirmacion='$fechaSql' OR fecha_transaccion='$fechaSql')";
-	}
 	$ordenFecha = $fecha_pago != ""
 		? "CASE WHEN fecha_confirmacion='$fechaSql' OR fecha_transaccion='$fechaSql' THEN 0 ELSE 1 END,"
 		: "";
@@ -781,7 +778,7 @@ function cc_buscar_movimiento_ueno($usuario)
 			. "</div>";
 	}
 	if ($html == "") {
-		$html = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No encontramos una transferencia Ueno disponible para la fecha de pago seleccionada. Ajusta el monto, la fecha o revisa los movimientos importados.</div>";
+		$html = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No encontramos una transferencia Ueno disponible. Ajusta el monto, comprobante o revisa los movimientos importados.</div>";
 	}
 	mysqli_close($mysqli);
 	cc_json(array("1" => "exito", "2" => $html, "3" => $total, "4" => $primer, "5" => $tieneExacta ? "SI" : "NO"));
