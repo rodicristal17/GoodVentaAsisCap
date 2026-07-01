@@ -483,7 +483,8 @@ function cobrarCuotaPreparar(contexto) {
 	cobrarCuotaUltimoPagoRegistrado = null;
 	cobrarCuotaFiltroEstado = "todas";
 	cobrarCuotaToggleAyuda(false);
-	cobrarCuotaSetHoy();
+	cobrarCuotaSetHoy(true);
+	cobrarCuotaBloquearFechaProceso();
 	cobrarCuotaLimpiarResultado();
 	cobrarCuotaCargarTiposPago(function() {
 		cobrarCuotaSeleccionarTipoPorTexto("EFECTIVO");
@@ -514,6 +515,17 @@ function cobrarCuotaSetHoy(forzar) {
 	var dia = String(f.getDate()).padStart(2, "0");
 	var mes = String(f.getMonth() + 1).padStart(2, "0");
 	fecha.value = f.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function cobrarCuotaBloquearFechaProceso() {
+	var fecha = cobrarCuotaId("inptCobrarCuotaFechaPago");
+	if (!fecha) {
+		return;
+	}
+	fecha.readOnly = true;
+	fecha.setAttribute("aria-readonly", "true");
+	fecha.setAttribute("tabindex", "-1");
+	fecha.title = "Fecha automatica del dia de procesamiento";
 }
 
 function cobrarCuotaSetValor(id, valor) {
@@ -1680,6 +1692,7 @@ function cobrarCuotaObtenerContextoRegistro() {
 		cobrarCuotaAviso("El monto no alcanza para aplicar a las cuotas seleccionadas.");
 		return null;
 	}
+	cobrarCuotaSetHoy(true);
 	var fecha = cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "";
 	if (fecha == "") {
 		cobrarCuotaAviso("Ingresa la fecha de pago");

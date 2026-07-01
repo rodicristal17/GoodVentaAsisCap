@@ -50,7 +50,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-nro-registro-20260630"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ayuda-guia-20260618"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-fecha-proceso-20260701"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -13821,7 +13821,7 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 </div>
 </div>
 <div class='cobrar-cuota__pay-grid'>
-<label><b>Fecha de pago</b><input class='inputText' type='date' id='inptCobrarCuotaFechaPago' onchange='cobrarCuotaInvalidarMovimientoUenoPorEdicion()'></label>
+<label><b>Fecha de pago</b><input class='inputText' type='date' id='inptCobrarCuotaFechaPago' readonly onchange='cobrarCuotaInvalidarMovimientoUenoPorEdicion()'></label>
 <label><b>Forma de pago</b><select class='inputSelect' id='inptCobrarCuotaTipoPago' onchange='cobrarCuotaActualizarFormaPago()'></select></label>
 <label><b>Monto a cobrar</b><input class='inputText' type='text' id='inptCobrarCuotaMontoCobrar' onkeyup='separadordemiles(this);cobrarCuotaCalcularVuelto();cobrarCuotaInvalidarMovimientoUenoPorEdicion();cobrarCuotaActualizarResumenUeno()'></label>
 </div>
