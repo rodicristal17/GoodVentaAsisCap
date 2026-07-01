@@ -217,7 +217,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=flujo-resumen-neto-20260624")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=pago-contado-conciliar-div-20260701")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -4871,7 +4871,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=flujo-resumen-neto-20260624")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=pago-contado-conciliar-div-20260701")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -10183,6 +10183,104 @@ function buscarProductoVentaDesdeEntrada() {
 	ver_vetana_informativa("ESCRIBI EL CODIGO O EL NOMBRE DEL PRODUCTO")
 }
 
+function abrirModalTratamientosVenta() {
+	var modal = document.getElementById("divModalTratamientosVenta");
+	if (!modal) {
+		return;
+	}
+	mostrarResultadosProductoVenta(false);
+	modal.style.display = "";
+	var filtro = document.getElementById("inptBuscarTratamientoVentaModal");
+	var producto = document.getElementById("inptProductoVenta");
+	if (filtro && producto) {
+		filtro.value = producto.value || "";
+		setTimeout(function() {
+			filtro.focus();
+			filtro.select();
+		}, 100);
+	}
+	buscarTratamientosVentaModal();
+}
+
+function cerrarModalTratamientosVenta(limpiar) {
+	var modal = document.getElementById("divModalTratamientosVenta");
+	if (modal) {
+		modal.style.display = "none";
+	}
+	if (limpiar) {
+		if (document.getElementById("table_modal_tratamientos_venta")) {
+			document.getElementById("table_modal_tratamientos_venta").innerHTML = "";
+		}
+		if (document.getElementById("inptBuscarTratamientoVentaModal")) {
+			document.getElementById("inptBuscarTratamientoVentaModal").value = "";
+		}
+	}
+}
+
+function buscarTratamientosVentaModalKey(evento) {
+	if (evento && evento.keyCode == 27) {
+		cerrarModalTratamientosVenta(true);
+		return;
+	}
+	if (evento && evento.keyCode == 13) {
+		buscarTratamientosVentaModal();
+	}
+}
+
+function buscarTratamientosVentaModal() {
+	var tabla = document.getElementById("table_modal_tratamientos_venta");
+	if (!tabla) {
+		return;
+	}
+	var buscador = document.getElementById("inptBuscarTratamientoVentaModal") ? document.getElementById("inptBuscarTratamientoVentaModal").value : "";
+	var local = document.getElementById("inptlocalVenta") ? document.getElementById("inptlocalVenta").value : "";
+	if (local == "" && typeof cod_localFKUSer != "undefined") {
+		local = cod_localFKUSer;
+	}
+	tabla.innerHTML = paginacargando;
+	obtener_datos_user();
+	var datos = {
+		"useru": userid,
+		"passu": passuser,
+		"navegador": navegador,
+		"buscar": buscador,
+		"local": local,
+		"funt": "buscartratamientosventa"
+	};
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
+		type: "post",
+		error: function (jqXHR, textstatus, errorThrowm) {
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+			tabla.innerHTML = "";
+		},
+		success: function (responseText) {
+			var Respuesta = responseText;
+			console.log(Respuesta);
+			tabla.innerHTML = "";
+			try {
+				var datos = $.parseJSON(Respuesta);
+				Respuesta = datos["1"];
+				Respuesta=respuestaJqueryAjax(Respuesta);
+				if (Respuesta == true) {
+					var datos_buscados = datos[2];
+					if (datos_buscados != "") {
+						tabla.innerHTML = datos_buscados;
+					} else {
+						tabla.innerHTML = "<div class='venta-tratamientos-empty'>No hay tratamientos activos para mostrar.</div>";
+					}
+				}
+			} catch (error) {
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ");
+				var titulo="Error: "+error+" \r\n Consola: "+responseText;
+				GuardarArchivosLog(titulo);
+				tabla.innerHTML = "";
+			}
+		}
+	});
+}
+
 function buscarvistaproductodesdeventa() {
 	var buscador = document.getElementById('inptProductoVenta').value
 	var local = document.getElementById("inptlocalVenta").value;
@@ -10606,6 +10704,9 @@ StockVenta = $(datostr).children('td[id="td_datos_15"]').html();
 		document.getElementById('inptCantProductoVenta').focus();
 		calcularTotalVentasCosto(document.getElementById('inptCostoProductoVenta'))
 		buscardetallespreciodesdevista("vistaventa");
+		if (typeof cerrarModalTratamientosVenta == "function") {
+			cerrarModalTratamientosVenta(false);
+		}
 		if (typeof mostrarResultadosProductoVenta == "function") {
 			mostrarResultadosProductoVenta(false);
 		}
@@ -19838,10 +19939,24 @@ function VerificarCamposVentaContago(){
 		return false;
 	}
 	
-	let control = 0; 
-	$("tr[name=tdDetallePagoOffline]").each(function(i, elementohtml){
-	control=control+1;
-	});
+	actualizarResumenPagoContado(false);
+	let control = contarPagosVentaOffline();
+
+	if(control <= 0){
+		var metodoPagoVenta = document.getElementById("inptTipoPagoVenta") ? document.getElementById("inptTipoPagoVenta").value : "";
+		var montoPagoVenta = document.getElementById("inptMontoPagosVentas") ? QuitarSeparadorMilValor(document.getElementById("inptMontoPagosVentas").value) : "0";
+		if(metodoPagoVenta != "" || Number(montoPagoVenta) > 0){
+			if(anhadirPago() !== true){
+				return;
+			}
+			control = contarPagosVentaOffline();
+		}
+	}
+
+	if(control <= 0){
+		ver_vetana_informativa("AGREGUE LA FORMA DE PAGO ANTES DE TERMINAR LA VENTA");
+		return;
+	}
 
 	if(control > 0){
 	let totalaPagar = document.getElementById('inptTotalaPagar').value;
@@ -20692,8 +20807,10 @@ function verCerrarConfigCredito(d) {
 			document.getElementById('inptMontoVentaTerminarTarjeta').value = "0"
 			document.getElementById("tdEfectoFinalizarVentaContado").className = ""
 			document.getElementById("divFinalizarVentaAContado").style.display = "";
-			document.getElementById('inptMontoVentaTerminarEfectivo').focus()
-			$("#inptMontoVentaTerminarEfectivo").select();
+			prepararPagoContadoEnModal();
+			if (document.getElementById('inptTipoPagoVenta')) {
+				document.getElementById('inptTipoPagoVenta').focus()
+			}
 		}
 	} else {
 		if (document.getElementById("inptSeleccTipoVenta").value == "CREDITO") {
@@ -21679,6 +21796,9 @@ function calcularDescuento() {
 	document.getElementById('inptMontoVentaTerminarEfectivo').value= totalventa - totaldescuento;
 	console.info("Calculo: ", totalventa - totaldescuento)
 	separadordemiles(document.getElementById('inptMontoVentaTerminarEfectivo'));
+	if (typeof actualizarResumenPagoContado == "function") {
+		actualizarResumenPagoContado(true);
+	}
 }
 
 /*PAGOS AL CONTADO*/
@@ -28104,6 +28224,7 @@ function limpiacamposArqueo(){
 	if(masFiltros){
 		masFiltros.style.display = "none";
 	}
+	checkfiltrosCobrosRealizados(1);
 	idHistorialPago = "";
 	cod_ventaFKPago = "";
 	document.getElementById("table_arqeo").innerHTML=""
@@ -28115,14 +28236,26 @@ function minimizarArqueo(){
 	document.getElementById("divMinimizadoCobrosRealizados2").style.display=""
 }
 function checkfiltrosCobrosRealizados(d){	
+	var checkTodos = document.getElementById('checkfiltrosCobrosRealizados1');
+	var checkRango = document.getElementById('checkfiltrosCobrosRealizados2');
+	var fechaDesde = document.getElementById('inptBuscarCobrosRealizadosF1');
+	var fechaHasta = document.getElementById('inptBuscarCobrosRealizadosF2');
 	if(d=="1"){
-		document.getElementById('checkfiltrosCobrosRealizados1').checked=true
-		document.getElementById('checkfiltrosCobrosRealizados2').checked=false
-		document.getElementById('inptBuscarCobrosRealizadosF1').value = "";
-	    document.getElementById('inptBuscarCobrosRealizadosF2').value = "";	
+		if(checkTodos){ checkTodos.checked=true; }
+		if(checkRango){ checkRango.checked=false; }
+		if(fechaDesde){
+			fechaDesde.value = "";
+			fechaDesde.disabled = true;
+		}
+	    if(fechaHasta){
+			fechaHasta.value = "";
+			fechaHasta.disabled = true;
+		}
 	}else{		
-		document.getElementById('checkfiltrosCobrosRealizados1').checked=false
-		document.getElementById('checkfiltrosCobrosRealizados2').checked=true
+		if(checkTodos){ checkTodos.checked=false; }
+		if(checkRango){ checkRango.checked=true; }
+		if(fechaDesde){ fechaDesde.disabled = false; }
+		if(fechaHasta){ fechaHasta.disabled = false; }
 	var f = new Date();
 	var dia = f.getDate()
 	if (dia < 10) {
@@ -28132,8 +28265,12 @@ function checkfiltrosCobrosRealizados(d){
 	if (mes < 10) {
 		mes = "0" + mes;
 	}
-	document.getElementById('inptBuscarCobrosRealizadosF1').value = f.getFullYear() + "-" + mes + "-" + "01";
-	document.getElementById('inptBuscarCobrosRealizadosF2').value = f.getFullYear() + "-" + mes + "-" + dia;
+	if(fechaDesde && fechaDesde.value == ""){
+		fechaDesde.value = f.getFullYear() + "-" + mes + "-" + "01";
+	}
+	if(fechaHasta && fechaHasta.value == ""){
+		fechaHasta.value = f.getFullYear() + "-" + mes + "-" + dia;
+	}
 		
 	}
 }
@@ -28143,6 +28280,31 @@ var cod_ventaFKPago = "";
 function valorArqueo(id) {
 	var elemento = document.getElementById(id);
 	return elemento ? elemento.value : "";
+}
+
+function rangoFechasCobrosRealizadosActivo() {
+	var checkRango = document.getElementById('checkfiltrosCobrosRealizados2');
+	return checkRango ? checkRango.checked === true : false;
+}
+
+function validarRangoObligatorioArqueo(fechaDesde, fechaHasta, titulo) {
+	if(fechaDesde == "" || fechaHasta == ""){
+		ver_vetana_informativa("Debe completar fecha desde y fecha hasta para usar el rango de " + titulo + ".");
+		return false;
+	}
+	if(fechaDesde > fechaHasta){
+		ver_vetana_informativa("La fecha desde no puede ser mayor a la fecha hasta en el rango de " + titulo + ".");
+		return false;
+	}
+	return true;
+}
+
+function validarRangoOpcionalArqueo(fechaDesde, fechaHasta, titulo) {
+	if(fechaDesde != "" && fechaHasta != "" && fechaDesde > fechaHasta){
+		ver_vetana_informativa("La fecha desde no puede ser mayor a la fecha hasta en el rango de " + titulo + ".");
+		return false;
+	}
+	return true;
 }
 
 function limpiarFiltrosCobrosRealizados() {
@@ -33615,8 +33777,8 @@ var cobrador = valorArqueo('inptBuscarCobrosRealizados4')
 	var fechafija = valorArqueo('inptBuscarCobrosRealizados3')
 	var fecha1 = valorArqueo('inptBuscarCobrosRealizadosF1')
 	var fecha2 = valorArqueo('inptBuscarCobrosRealizadosF2')
-	const fecha_facturacion1 = valorArqueo('inptBuscarCobrosRealizadosFF1');
-	const fecha_facturacion2 = valorArqueo('inptBuscarCobrosRealizadosFF2');
+	var fecha_facturacion1 = valorArqueo('inptBuscarCobrosRealizadosFF1');
+	var fecha_facturacion2 = valorArqueo('inptBuscarCobrosRealizadosFF2');
 	var factura = valorArqueo('inptBuscarCobrosRealizados2')
 	var local = valorArqueo('inptlocalCobrosRealizados3')
 	var metodo = valorArqueo('inptBuscarCobrosRealizados5')
@@ -33625,6 +33787,18 @@ var cobrador = valorArqueo('inptBuscarCobrosRealizados4')
 	var busqueda_general = valorArqueo('inptBuscarCobrosRealizadosGeneral')
 	var caja = valorArqueo('inptBuscarCobrosRealizadosCaja')
 	var lote = valorArqueo('inptBuscarCobrosRealizadosLote')
+	if(rangoFechasCobrosRealizadosActivo()){
+		if(!validarRangoObligatorioArqueo(fecha1, fecha2, "fecha de pago")){
+			return;
+		}
+		fechafija = "";
+	}else{
+		fecha1 = "";
+		fecha2 = "";
+	}
+	if(!validarRangoOpcionalArqueo(fecha_facturacion1, fecha_facturacion2, "facturacion")){
+		return;
+	}
 	document.getElementById("btnEliminarCobros1").style.backgroundColor="#ccc"
    idHistorialPago = "";
    cod_ventaFKPago = "";
@@ -37045,6 +37219,73 @@ function copiarMensajePromo() {
 
 //OPCIONES DE PAGO
 var controlPago = 0;
+
+function contarPagosVentaOffline(){
+	var control = 0;
+	$("tr[name=tdDetallePagoOffline]").each(function(i, elementohtml){
+		control=control+1;
+	});
+	return control;
+}
+
+function obtenerTotalPagadoVentaOffline(){
+	var totalPago=0;
+	$("tr[name=tdDetallePagoOffline]").each(function(i, elementohtml){
+		var total=$(elementohtml).children('td[id="td_datos_3"]').html();
+		total = QuitarSeparadorMilValor(total);
+		totalPago=Number(totalPago)+Number(total);
+	});
+	return totalPago;
+}
+
+function obtenerTotalNetoVentaContado(){
+	var totalventa = document.getElementById('inptTotalVentaTerminar') ? QuitarSeparadorMilValor(document.getElementById('inptTotalVentaTerminar').value) : "0";
+	var totaldescuento = document.getElementById('inptDescuentoVentaTerminar') ? QuitarSeparadorMilValor(document.getElementById('inptDescuentoVentaTerminar').value) : "0";
+	totalventa = Number(totalventa);
+	totaldescuento = Number(totaldescuento);
+	if (isNaN(totalventa)) {
+		totalventa = 0;
+	}
+	if (isNaN(totaldescuento)) {
+		totaldescuento = 0;
+	}
+	var neto = totalventa - totaldescuento;
+	return neto > 0 ? neto : 0;
+}
+
+function actualizarResumenPagoContado(sugerirMonto){
+	if (!document.getElementById('inptTotalaPagar')) {
+		return;
+	}
+	var totalNeto = obtenerTotalNetoVentaContado();
+	var totalPagado = obtenerTotalPagadoVentaOffline();
+	var saldo = totalNeto - totalPagado;
+	if (saldo < 0) {
+		saldo = 0;
+	}
+	if (document.getElementById('inptMontoVentaTerminarEfectivo')) {
+		document.getElementById('inptMontoVentaTerminarEfectivo').value = separadordemilesnumero(totalNeto.toString());
+	}
+	document.getElementById('inptTotalaPagar').value = separadordemilesnumero(totalNeto.toString());
+	if (document.getElementById('inpTotalPagadoVenta')) {
+		document.getElementById('inpTotalPagadoVenta').value = separadordemilesnumero(totalPagado.toString());
+	}
+	if (document.getElementById('inptSaldoPagoVentaContado')) {
+		document.getElementById('inptSaldoPagoVentaContado').value = separadordemilesnumero(saldo.toString());
+	}
+	if (sugerirMonto && document.getElementById('inptMontoPagosVentas')) {
+		document.getElementById('inptMontoPagosVentas').value = saldo > 0 ? separadordemilesnumero(saldo.toString()) : "";
+	}
+	if (document.getElementById('inptVueltoVentaTerminar')) {
+		document.getElementById('inptVueltoVentaTerminar').value = "0";
+	}
+}
+
+function prepararPagoContadoEnModal(){
+	actualizarResumenPagoContado(true);
+	actualizarCampoComprobanteUenoVenta();
+}
+
 function verCerrarVentanaAnhadirPagoVenta(d){
 	if(d=="1"){
 		var controlventa = 0;
@@ -37057,15 +37298,19 @@ function verCerrarVentanaAnhadirPagoVenta(d){
 		ver_vetana_informativa("NO HAY NINGUNA VENTA EN PROCESO");
 		return;
 		}
-		document.getElementById("divOpcionesPago").style.display="";
-		document.getElementById("divFinalizarVentaAContado").style.display="none";
-		document.getElementById('inptTotalaPagar').value = document.getElementById('inptTotalVentaTerminar').value;
+		document.getElementById("divFinalizarVentaAContado").style.display="";
+		prepararPagoContadoEnModal();
+		if (document.getElementById("inptTipoPagoVenta")) {
+			document.getElementById("inptTipoPagoVenta").focus();
+		}
 		}else{
-			document.getElementById("divOpcionesPago").style.display="none";
-			document.getElementById("divFinalizarVentaAContado").style.display="";
+			if (document.getElementById("divOpcionesPago")) {
+				document.getElementById("divOpcionesPago").style.display="none";
+			}
 	}
 }
 function anhadirPago(){
+	actualizarResumenPagoContado(false);
 	let tipopago = $('select[id="inptTipoPagoVenta"] option:selected').text();
 	let idtipopago = document.getElementById("inptTipoPagoVenta").value;
 	let monto = document.getElementById('inptMontoPagosVentas').value
@@ -37085,6 +37330,29 @@ function anhadirPago(){
 	let totalPagado = document.getElementById('inpTotalPagadoVenta').value;
 	totalaPagar = QuitarSeparadorMilValor(totalaPagar);
 	totalPagado = QuitarSeparadorMilValor(totalPagado);
+	var uenoEsTransferencia = esTipoPagoTransferenciaUenoTexto(tipopago);
+	var uenoComprobante = normalizarComprobanteUenoInput(document.getElementById("inptUenoComprobanteVenta").value);
+	var uenoObservacion = document.getElementById("inptUenoObsVenta").value;
+	var uenoIdMovimiento = document.getElementById("inptUenoIdMovimientoVenta") ? document.getElementById("inptUenoIdMovimientoVenta").value : "";
+	if (uenoEsTransferencia && !pagoContadoTieneMovimientoUenoValido()) {
+		ver_vetana_informativa("SELECCIONE UNA TRANSFERENCIA UENO DISPONIBLE");
+		pagoContadoBuscarMovimientosUeno(false);
+		return;
+	}
+	if (uenoEsTransferencia) {
+		var montoTransferencia = Number(QuitarSeparadorMilValor(monto));
+		var disponibleTransferencia = Number(pagoContadoMovimientoUeno ? (pagoContadoMovimientoUeno.monto_disponible || 0) : 0);
+		if (disponibleTransferencia <= 0 || montoTransferencia > disponibleTransferencia) {
+			ver_vetana_informativa("LA TRANSFERENCIA UENO SELECCIONADA NO TIENE SALDO SUFICIENTE");
+			return;
+		}
+		uenoIdMovimiento = pagoContadoMovimientoUeno.id_movimiento || uenoIdMovimiento;
+		uenoComprobante = normalizarComprobanteUenoInput(pagoContadoMovimientoUeno.nro_comprobante || pagoContadoMovimientoUeno.comprobante_masked || uenoComprobante);
+	}
+	if (uenoEsTransferencia && uenoComprobante == "") {
+		ver_vetana_informativa("FALTA EL NRO. DE COMPROBANTE UENO");
+		return;
+	}
 	
 	
 	
@@ -37112,13 +37380,16 @@ function anhadirPago(){
 	let fechapago =  anho+"-" + mes + "-" +dia;
 	
   	var codigo=stringGenerador(5);
-	var pagina="<table id='"+codigo+"' class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'>"
+	var pagina="<table id='"+codigo+"' class='tableRegistroSearch pago-contado-row' border='1' cellspacing='1' cellpadding='5'>"
 +"<tr id='tbSelecRegistro' onclick='SeleccionarPagoOffline(this)'  name='tdDetallePagoOffline' >"
 +"<td  id='td_id_1' style='display:none'>"+codigo+"</td>"
 +"<td  id='td_id_2' style='display:none'>"+idtipopago+"</td>"
-+"<td  id='td_datos_1' style='width:33%;'>"+tipopago+"</td>"
-+"<td  id='td_datos_3' style='width:33%'>"+monto+"</td>"
-+"<td  id='td_datos_2' style='width:33%'>"+fechapago+"</td>"
++"<td  id='td_datos_1' style='width:25%;'>"+tipopago+"</td>"
++"<td  id='td_datos_3' style='width:25%'>"+monto+"</td>"
++"<td  id='td_datos_2' style='width:25%'>"+fechapago+"</td>"
++"<td  id='td_datos_10' style='width:25%'>"+(uenoEsTransferencia ? uenoEscapeHtmlPago(uenoComprobante) : "-")+"</td>"
++"<td  id='td_datos_11' style='display:none'>"+uenoEscapeHtmlPago(uenoObservacion)+"</td>"
++"<td  id='td_datos_12' style='display:none'>"+(uenoEsTransferencia ? uenoEscapeHtmlPago(uenoIdMovimiento) : "")+"</td>"
 +"</tr>"
 +"</table>"
 
@@ -37136,7 +37407,13 @@ controlPago=controlPago+1;
 });
 
 document.getElementById('inptMontoPagosVentas').value = "";
+document.getElementById('inptUenoComprobanteVenta').value = "";
+document.getElementById('inptUenoObsVenta').value = "";
+pagoContadoResetMovimientoUeno(true);
+actualizarCampoComprobanteUenoVenta()
 document.getElementById("inpTotalPagadoVenta").value=separadordemilesnumero(totalPago);
+actualizarResumenPagoContado(true);
+return true;
 }
 function QuitarSeparadorMilValor(inputs) {
 	try {
@@ -37170,6 +37447,7 @@ totalPago = totalPago.toString()
 controlPago=controlPago+1;
 });
 document.getElementById("inpTotalPagadoVenta").value=separadordemilesnumero(totalPago);
+actualizarResumenPagoContado(true);
 
 verCerrarOpcionPago()
 	}
@@ -37204,6 +37482,19 @@ function abmTipoPagosVentaContado(idVentaFK) {
 	   
 	   var monto=$(elementohtml).children('td[id="td_datos_3"]').html();
 	   datos.append("monto"+control, monto)
+
+	   var uenoComprobante=$(elementohtml).children('td[id="td_datos_10"]').text();
+	   uenoComprobante = normalizarComprobanteUenoInput(uenoComprobante);
+	   if (uenoComprobante == "-") {
+		   uenoComprobante = "";
+	   }
+	   datos.append("ueno_comprobante"+control, uenoComprobante)
+
+	   var uenoObservacion=$(elementohtml).children('td[id="td_datos_11"]').text();
+	   datos.append("ueno_observacion"+control, uenoObservacion)
+
+	   var uenoIdMovimiento=$(elementohtml).children('td[id="td_datos_12"]').text();
+	   datos.append("ueno_id_movimiento"+control, uenoIdMovimiento)
 	   
 	   
 	   control=control+1;
@@ -37221,6 +37512,7 @@ function abmTipoPagosVentaContado(idVentaFK) {
     datos.append("codcaja", cajapredeterminada)
     datos.append("codApertura", idabmAperturacierrecaja)
 	datos.append("totalregistro", control)
+	datos.append("exigir_movimiento_ueno", "SI")
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
@@ -37230,6 +37522,7 @@ function abmTipoPagosVentaContado(idVentaFK) {
 		processData: false,
 		error: function (jqXHR, textstatus, errorThrowm) {
 			verCerrarEfectoCargando("")
+			controlVenta="1";
 			return false;
 		},
 		success: function (responseText) {
@@ -37285,11 +37578,19 @@ NroVentas=PuntoExpedicion+"-"+NroVentas
 					 document.getElementById("divVueltoVentaAContado").style.display="";
                      document.getElementById("tdEfectoVueltoVentaContado").className="magictime vanishIn"
 				}
+				else if (datos["2"]) {
+					ver_vetana_informativa(datos["2"], "", "error")
+					controlVenta="1";
+				}
+				else {
+					controlVenta="1";
+				}
 
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxFlexible(responseText)
 				GuardarArchivosLog(titulo)
+				controlVenta="1";
 			}
 
 
@@ -37303,6 +37604,16 @@ function limpiarCamposAnhadirPagos(){
 	document.getElementById('div_opciones_pago').innerHTML = ""
 	document.getElementById('inptTotalaPagar').value = ""
 	document.getElementById('inpTotalPagadoVenta').value = ""
+	if (document.getElementById('inptSaldoPagoVentaContado')) {
+		document.getElementById('inptSaldoPagoVentaContado').value = ""
+	}
+	document.getElementById('inptUenoComprobanteVenta').value = ""
+	document.getElementById('inptUenoObsVenta').value = ""
+	pagoContadoResetMovimientoUeno(true);
+	if (document.getElementById("divPagoContadoUeno")) {
+		document.getElementById("divPagoContadoUeno").innerHTML = "";
+	}
+	actualizarCampoComprobanteUenoVenta()
 	elementopagoseleccionado = "";
 }
 function buscarTipoPagoOption() {
@@ -37343,6 +37654,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptTipoPagoVenta").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptTipoPagoCredito").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 					document.getElementById("inptTipoPagoCreditoParcial").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
+					actualizarCampoComprobanteUenoVenta()
 					actualizarCampoComprobanteUenoCredito()
 					actualizarCampoComprobanteUenoCreditoParcial()
 					
@@ -37391,6 +37703,260 @@ function uenoEscapeHtmlPago(valor) {
 			"'": "&#039;"
 		}[char];
 	});
+}
+
+var pagoContadoMovimientoUeno = null;
+var pagoContadoUenoTimer = null;
+
+function pagoContadoId(id) {
+	return document.getElementById(id);
+}
+
+function pagoContadoNumero(valor) {
+	var numero = Number(QuitarSeparadorMilValor(valor || "0"));
+	return isNaN(numero) ? 0 : numero;
+}
+
+function pagoContadoFormato(valor) {
+	valor = Number(valor || 0);
+	if (isNaN(valor)) {
+		valor = 0;
+	}
+	return separadordemilesnumero(String(valor));
+}
+
+function pagoContadoFechaVenta() {
+	if (pagoContadoId("inptFechaVenta") && pagoContadoId("inptFechaVenta").value != "") {
+		return pagoContadoId("inptFechaVenta").value;
+	}
+	var f = new Date();
+	var dia = f.getDate();
+	if (dia < 10) { dia = "0" + dia; }
+	var mes = f.getMonth() + 1;
+	if (mes < 10) { mes = "0" + mes; }
+	return f.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function pagoContadoEsTransferenciaActual() {
+	return esTipoPagoTransferenciaUenoTexto($('select[id="inptTipoPagoVenta"] option:selected').text());
+}
+
+function pagoContadoTieneMovimientoUenoValido() {
+	return !!(pagoContadoMovimientoUeno && pagoContadoMovimientoUeno.id_movimiento && pagoContadoId("inptUenoIdMovimientoVenta") && pagoContadoId("inptUenoIdMovimientoVenta").value != "");
+}
+
+function pagoContadoResetMovimientoUeno(limpiarComprobante) {
+	pagoContadoMovimientoUeno = null;
+	if (pagoContadoId("inptUenoIdMovimientoVenta")) {
+		pagoContadoId("inptUenoIdMovimientoVenta").value = "";
+	}
+	if (limpiarComprobante && pagoContadoId("inptUenoComprobanteVenta")) {
+		pagoContadoId("inptUenoComprobanteVenta").value = "";
+	}
+}
+
+function pagoContadoMensajeUeno(mensaje, claseExtra, permitirVerTodos) {
+	var contenedor = pagoContadoId("divPagoContadoUeno");
+	if (!contenedor) {
+		return;
+	}
+	var boton = permitirVerTodos
+		? "<button type='button' class='pago-contado-ueno-link' onclick='pagoContadoBuscarMovimientosUeno(true)'>Ver disponibles de otras fechas</button>"
+		: "";
+	contenedor.innerHTML = "<div class='pago-contado-ueno-empty " + (claseExtra || "") + "'><span>" + uenoEscapeHtmlPago(mensaje) + "</span>" + boton + "</div>";
+}
+
+function pagoContadoMovimientoPayload(movimiento) {
+	try {
+		return encodeURIComponent(JSON.stringify(movimiento || {}));
+	} catch (error) {
+		return "";
+	}
+}
+
+function pagoContadoRenderMovimientosUeno(movimientos, verTodos) {
+	var contenedor = pagoContadoId("divPagoContadoUeno");
+	if (!contenedor) {
+		return;
+	}
+	movimientos = Array.isArray(movimientos) ? movimientos : [];
+	if (movimientos.length == 0) {
+		pagoContadoMensajeUeno(
+			verTodos ? "No hay transferencias Ueno disponibles." : "No encontramos transferencias para la fecha de venta.",
+			"",
+			!verTodos
+		);
+		return;
+	}
+	var html = movimientos.length > 1
+		? "<div class='pago-contado-ueno-warning'>Hay varios movimientos disponibles. Selecciona el que corresponde a este pago.</div>"
+		: "";
+	for (var i = 0; i < movimientos.length; i++) {
+		var movimiento = movimientos[i] || {};
+		var puedeUsar = movimiento.puede_usar === true || movimiento.puede_usar === "1" || movimiento.puede_usar === 1;
+		var payload = pagoContadoMovimientoPayload(movimiento);
+		var fecha = movimiento.fecha_movimiento || movimiento.fecha_confirmacion || movimiento.fecha_transaccion || "Sin fecha";
+		var comprobante = movimiento.nro_comprobante || movimiento.comprobante_masked || "-";
+		var descripcion = movimiento.descripcion || movimiento.concepto || "";
+		var badgeFecha = movimiento.fecha_pago_coincide
+			? "<span class='pago-contado-ueno-badge pago-contado-ueno-badge--ok'>Fecha coincide</span>"
+			: "<span class='pago-contado-ueno-badge pago-contado-ueno-badge--warn'>Revisar fecha</span>";
+		var badgeMonto = puedeUsar
+			? "<span class='pago-contado-ueno-badge pago-contado-ueno-badge--ok'>Monto valido</span>"
+			: "<span class='pago-contado-ueno-badge pago-contado-ueno-badge--warn'>" + uenoEscapeHtmlPago(movimiento.mensaje_accion || "Revisar") + "</span>";
+		var accion = puedeUsar && payload != ""
+			? "<button type='button' class='pago-contado-ueno-btn' onclick='pagoContadoSeleccionarMovimientoUeno(\"" + payload + "\")'>Usar</button>"
+			: "<button type='button' class='pago-contado-ueno-btn pago-contado-ueno-btn--disabled' disabled>" + uenoEscapeHtmlPago(movimiento.mensaje_accion || "No disponible") + "</button>";
+		html += "<div class='pago-contado-ueno-item'>"
+			+ "<div class='pago-contado-ueno-item__main'>"
+			+ "<b>" + uenoEscapeHtmlPago(fecha) + "</b>"
+			+ "<span>Comprobante <strong>" + uenoEscapeHtmlPago(comprobante) + "</strong></span>"
+			+ "<small>" + uenoEscapeHtmlPago(descripcion) + "</small>"
+			+ "<div class='pago-contado-ueno-badges'>" + badgeFecha + badgeMonto + "</div>"
+			+ "</div>"
+			+ "<div class='pago-contado-ueno-item__amount'>"
+			+ "<span>Disponible</span><b>" + uenoEscapeHtmlPago(movimiento.monto_disponible_fmt || pagoContadoFormato(movimiento.monto_disponible || 0)) + "</b>"
+			+ accion
+			+ "</div>"
+			+ "</div>";
+	}
+	if (!verTodos) {
+		html += "<button type='button' class='pago-contado-ueno-link pago-contado-ueno-link--footer' onclick='pagoContadoBuscarMovimientosUeno(true)'>Ver disponibles de otras fechas</button>";
+	}
+	contenedor.innerHTML = html;
+}
+
+function pagoContadoMostrarMovimientoUeno() {
+	var contenedor = pagoContadoId("divPagoContadoUeno");
+	if (!contenedor || !pagoContadoMovimientoUeno) {
+		return;
+	}
+	var movimiento = pagoContadoMovimientoUeno;
+	var comprobante = movimiento.nro_comprobante || movimiento.comprobante_masked || "-";
+	var fecha = movimiento.fecha_movimiento || movimiento.fecha_confirmacion || movimiento.fecha_transaccion || "Sin fecha";
+	contenedor.innerHTML = "<div class='pago-contado-ueno-selected'>"
+		+ "<div><b>Transferencia seleccionada</b>"
+		+ "<span>#" + uenoEscapeHtmlPago(movimiento.id_movimiento) + " - " + uenoEscapeHtmlPago(fecha) + " - Comprobante " + uenoEscapeHtmlPago(comprobante) + "</span>"
+		+ "<small>Disponible " + uenoEscapeHtmlPago(movimiento.monto_disponible_fmt || pagoContadoFormato(movimiento.monto_disponible || 0)) + "</small></div>"
+		+ "<button type='button' onclick='pagoContadoQuitarMovimientoUeno()'>Quitar</button>"
+		+ "</div>";
+}
+
+function pagoContadoSeleccionarMovimientoUeno(payload) {
+	var movimiento = payload;
+	if (typeof payload === "string") {
+		try {
+			movimiento = JSON.parse(decodeURIComponent(payload));
+		} catch (error) {
+			movimiento = null;
+		}
+	}
+	if (!movimiento || !movimiento.id_movimiento) {
+		return;
+	}
+	var montoActual = pagoContadoNumero(pagoContadoId("inptMontoPagosVentas") ? pagoContadoId("inptMontoPagosVentas").value : "");
+	var disponible = Number(movimiento.monto_disponible || 0);
+	if (montoActual <= 0) {
+		ver_vetana_informativa("INGRESE EL MONTO A COBRAR");
+		return;
+	}
+	if (disponible <= 0 || montoActual > disponible) {
+		ver_vetana_informativa("LA TRANSFERENCIA UENO SELECCIONADA NO TIENE SALDO SUFICIENTE");
+		return;
+	}
+	pagoContadoMovimientoUeno = movimiento;
+	if (pagoContadoId("inptUenoIdMovimientoVenta")) {
+		pagoContadoId("inptUenoIdMovimientoVenta").value = movimiento.id_movimiento || "";
+	}
+	if (pagoContadoId("inptUenoComprobanteVenta")) {
+		pagoContadoId("inptUenoComprobanteVenta").value = movimiento.nro_comprobante || movimiento.comprobante_masked || "";
+	}
+	pagoContadoMostrarMovimientoUeno();
+}
+
+function pagoContadoQuitarMovimientoUeno() {
+	pagoContadoResetMovimientoUeno(false);
+	pagoContadoBuscarMovimientosUeno(false);
+}
+
+function pagoContadoBuscarMovimientosUeno(verTodos) {
+	if (!pagoContadoEsTransferenciaActual()) {
+		return;
+	}
+	if (pagoContadoUenoTimer) {
+		clearTimeout(pagoContadoUenoTimer);
+		pagoContadoUenoTimer = null;
+	}
+	var monto = pagoContadoId("inptMontoPagosVentas") ? pagoContadoId("inptMontoPagosVentas").value : "";
+	if (monto == "" && pagoContadoId("inptSaldoPagoVentaContado")) {
+		monto = pagoContadoId("inptSaldoPagoVentaContado").value;
+	}
+	if (pagoContadoNumero(monto) <= 0) {
+		pagoContadoMensajeUeno("Ingrese el monto para buscar transferencias disponibles.", "", false);
+		return;
+	}
+	var contenedor = pagoContadoId("divPagoContadoUeno");
+	if (contenedor) {
+		contenedor.innerHTML = "<div class='pago-contado-ueno-empty'>Buscando transferencias Ueno...</div>";
+	}
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "buscar_movimientos_cobro");
+	datos.append("fecha_pago", pagoContadoFechaVenta());
+	datos.append("monto", monto);
+	datos.append("comprobante", pagoContadoId("inptUenoComprobanteVenta") ? pagoContadoId("inptUenoComprobanteVenta").value : "");
+	datos.append("ver_todos", verTodos ? "SI" : "NO");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		error: function(jqXHR, textstatus) {
+			if (typeof manejadordeerroresjquery === "function") {
+				manejadordeerroresjquery(jqXHR.status, textstatus, "pagoContadoBuscarMovimientosUeno");
+			}
+			pagoContadoMensajeUeno("No se pudo consultar el listado Ueno.", "pago-contado-ueno-empty--error", false);
+		},
+		success: function(responseText) {
+			try {
+				var respuesta = parsearRespuestaAjaxFlexible(responseText);
+				if (respuesta["1"] == "exito") {
+					pagoContadoRenderMovimientosUeno(respuesta.movimientos || [], verTodos);
+					return;
+				}
+				pagoContadoMensajeUeno(respuesta["2"] || "No se pudo buscar transferencias Ueno.", "pago-contado-ueno-empty--error", false);
+			} catch (error) {
+				pagoContadoMensajeUeno("No se pudo interpretar el listado Ueno.", "pago-contado-ueno-empty--error", false);
+			}
+		}
+	});
+}
+
+function pagoContadoProgramarBusquedaUeno() {
+	if (!pagoContadoEsTransferenciaActual()) {
+		return;
+	}
+	if (pagoContadoUenoTimer) {
+		clearTimeout(pagoContadoUenoTimer);
+	}
+	pagoContadoUenoTimer = setTimeout(function() {
+		pagoContadoBuscarMovimientosUeno(false);
+	}, 350);
+}
+
+function pagoContadoInvalidarMovimientoUenoPorEdicion() {
+	if (!pagoContadoEsTransferenciaActual()) {
+		return;
+	}
+	if (pagoContadoMovimientoUeno && pagoContadoMovimientoUeno.id_movimiento) {
+		pagoContadoResetMovimientoUeno(false);
+	}
+	pagoContadoProgramarBusquedaUeno();
 }
 
 function actualizarCampoComprobanteUenoCredito() {
@@ -37447,6 +38013,39 @@ function obtenerResumenUenoDesdePagos(selector) {
 		comprobante: comprobantes.join(", "),
 		estado: comprobantes.length > 0 ? "EN VERIFICACION BANCARIA" : ""
 	};
+}
+
+function actualizarCampoComprobanteUenoVenta() {
+	var contenedor = document.getElementById("tdUenoComprobanteVenta");
+	var conciliacion = document.getElementById("divPagoContadoConciliarUeno");
+	var select = document.getElementById("inptTipoPagoVenta");
+	if (!contenedor || !select) {
+		return;
+	}
+
+	var esTransferencia = esTipoPagoTransferenciaUenoTexto($('select[id="inptTipoPagoVenta"] option:selected').text());
+	contenedor.style.display = esTransferencia ? "" : "none";
+	if (conciliacion) {
+		conciliacion.style.display = esTransferencia ? "" : "none";
+	}
+	if (!esTransferencia) {
+		pagoContadoResetMovimientoUeno(true);
+		if (document.getElementById("inptUenoComprobanteVenta")) {
+			document.getElementById("inptUenoComprobanteVenta").value = "";
+		}
+		if (document.getElementById("inptUenoObsVenta")) {
+			document.getElementById("inptUenoObsVenta").value = "";
+		}
+		if (document.getElementById("divPagoContadoUeno")) {
+			document.getElementById("divPagoContadoUeno").innerHTML = "";
+		}
+		return;
+	}
+	if (pagoContadoTieneMovimientoUenoValido()) {
+		pagoContadoMostrarMovimientoUeno();
+	} else {
+		pagoContadoProgramarBusquedaUeno();
+	}
 }
 
 

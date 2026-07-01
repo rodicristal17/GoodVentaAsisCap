@@ -133,6 +133,42 @@ function ueno_escape_html($valor)
 	return htmlspecialchars(ueno_from_db($valor), ENT_QUOTES, 'UTF-8');
 }
 
+function ueno_escape_texto($valor)
+{
+	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
+function ueno_comprobante_normalizado($valor)
+{
+	return trim(preg_replace('/\s+/', '', (string)$valor));
+}
+
+function ueno_mask_comprobante($valor)
+{
+	$valor = ueno_comprobante_normalizado($valor);
+	$largo = strlen($valor);
+	if ($largo <= 0) {
+		return "";
+	}
+	if ($largo <= 2) {
+		return "**";
+	}
+	if ($largo < 7) {
+		return substr($valor, 0, 1) . "***" . substr($valor, -1);
+	}
+	return substr($valor, 0, 3) . "******" . substr($valor, -3);
+}
+
+function ueno_fecha_visual($valor)
+{
+	$fecha = ueno_fecha($valor);
+	if ($fecha == "") {
+		return "";
+	}
+	$time = strtotime($fecha);
+	return $time ? date("d/m/Y", $time) : $fecha;
+}
+
 function ueno_estado_texto($estado)
 {
 	$estado = (string)$estado;
@@ -1691,6 +1727,129 @@ function ueno_buscar_movimientos()
 	));
 }
 
+function ueno_buscar_movimientos_cobro($usuario)
+{
+	$mysqli = conectar_al_servidor();
+	if (!ueno_tablas_requeridas_ok($mysqli)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "tablasfaltantes", "2" => "Falta ejecutar actualizacion_10062026_conciliacion_ueno.sql"));
+	}
+
+	$comprobante = ueno_comprobante_normalizado(ueno_from_db(ueno_post("comprobante")));
+	$monto = isset($_POST["monto"]) ? ueno_monto($_POST["monto"]) : 0;
+	$fecha_pago = ueno_fecha(isset($_POST["fecha_pago"]) ? $_POST["fecha_pago"] : "");
+	$id_movimiento = preg_replace('/[^0-9]/', '', (string)ueno_post("id_movimiento"));
+	$ver_todos = isset($_POST["ver_todos"]) && $_POST["ver_todos"] == "SI";
+
+	$condicion = "mv.tipo_movimiento='credito'
+		AND mv.importe_credito>0
+		AND mv.monto_disponible>0
+		AND LOWER(IFNULL(mv.estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada')
+		AND NOT EXISTS (
+			SELECT 1
+			FROM pago_transferencia_conciliacion pc
+			WHERE pc.activo='SI'
+			AND pc.estado_conciliacion NOT IN ('anulado','rechazado')
+			AND pc.nro_comprobante_informado=mv.nro_comprobante
+			AND NOT EXISTS (
+				SELECT 1
+				FROM ueno_movimiento_pago ump
+				WHERE ump.cod_pagoFK=pc.cod_pagoFK
+				AND ump.estado='activo'
+				AND ump.id_movimiento=mv.id_movimiento
+			)
+		)";
+
+	if ($id_movimiento != "") {
+		$condicion .= " AND mv.id_movimiento='" . $mysqli->real_escape_string($id_movimiento) . "'";
+	}
+	if ($comprobante != "") {
+		$compSql = $mysqli->real_escape_string($comprobante);
+		$condicion .= " AND mv.nro_comprobante LIKE '%$compSql%'";
+	}
+	$ordenFecha = "";
+	if ($fecha_pago != "" && !$ver_todos) {
+		$fechaSql = $mysqli->real_escape_string($fecha_pago);
+		$condicion .= " AND (mv.fecha_confirmacion='$fechaSql' OR mv.fecha_transaccion='$fechaSql')";
+		$ordenFecha = "CASE WHEN mv.fecha_confirmacion='$fechaSql' OR mv.fecha_transaccion='$fechaSql' THEN 0 ELSE 1 END,";
+	}
+
+	$comprobanteSql = $mysqli->real_escape_string($comprobante);
+	$sql = "SELECT mv.id_movimiento, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante,
+		mv.descripcion, mv.concepto, mv.importe_credito, mv.monto_disponible, mv.estado
+		FROM ueno_movimiento_bancario mv
+		WHERE $condicion
+		ORDER BY
+			CASE WHEN '$comprobanteSql'<>'' AND mv.nro_comprobante='$comprobanteSql' THEN 0 ELSE 1 END,
+			CASE WHEN '$comprobanteSql'<>'' AND mv.nro_comprobante LIKE '$comprobanteSql%' THEN 0 ELSE 1 END,
+			$ordenFecha
+			CASE WHEN $monto>0 AND mv.monto_disponible=$monto THEN 0 ELSE 1 END,
+			CASE WHEN $monto>0 AND mv.monto_disponible>$monto THEN 0 ELSE 1 END,
+			mv.fecha_confirmacion DESC,
+			mv.id_movimiento DESC
+		LIMIT 80";
+
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt || !$stmt->execute()) {
+		$error = $stmt ? $stmt->error : $mysqli->error;
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $error));
+	}
+
+	$result = $stmt->get_result();
+	$movimientos = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$comprobanteReal = ueno_comprobante_normalizado(ueno_from_db($row["nro_comprobante"]));
+		$fechaMovimientoDb = trim((string)$row["fecha_confirmacion"]) != "" ? $row["fecha_confirmacion"] : $row["fecha_transaccion"];
+		$fechaMovimiento = ueno_fecha($fechaMovimientoDb);
+		$fechaMovimientoVisual = ueno_fecha_visual($fechaMovimientoDb);
+		$disponible = (int)$row["monto_disponible"];
+		$importe = (int)$row["importe_credito"];
+		$estado = ueno_from_db($row["estado"]);
+		$estadoNormalizado = strtolower(trim($estado));
+		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"));
+		$montoValido = ($monto > 0 && $disponible > 0 && $monto <= $disponible);
+		$fechaCoincide = ($fecha_pago != "" && $fechaMovimiento != "" && $fechaMovimiento == $fecha_pago);
+		$mensajeAccion = "Usar movimiento";
+		if (!$estadoDisponible || $disponible <= 0) {
+			$mensajeAccion = "No disponible";
+		} elseif ($monto <= 0) {
+			$mensajeAccion = "Ingrese monto";
+		} elseif (!$montoValido) {
+			$mensajeAccion = "Saldo insuficiente";
+		}
+		$movimientos[] = array(
+			"id_movimiento" => (int)$row["id_movimiento"],
+			"nro_comprobante" => $comprobanteReal,
+			"comprobante_masked" => ueno_mask_comprobante($comprobanteReal),
+			"fecha_confirmacion" => ueno_from_db($row["fecha_confirmacion"]),
+			"fecha_transaccion" => ueno_from_db($row["fecha_transaccion"]),
+			"fecha_movimiento" => $fechaMovimientoVisual,
+			"descripcion" => ueno_from_db($row["descripcion"]),
+			"concepto" => ueno_from_db($row["concepto"]),
+			"importe_credito" => $importe,
+			"importe_credito_fmt" => number_format($importe, 0, ",", "."),
+			"monto_disponible" => $disponible,
+			"monto_disponible_fmt" => number_format($disponible, 0, ",", "."),
+			"estado" => $estado,
+			"fecha_pago_coincide" => $fechaCoincide,
+			"monto_valido" => $montoValido,
+			"puede_usar" => $estadoDisponible && $montoValido,
+			"mensaje_accion" => $mensajeAccion
+		);
+	}
+
+	$total = count($movimientos);
+	mysqli_close($mysqli);
+	ueno_json(array(
+		"1" => "exito",
+		"movimientos" => $movimientos,
+		"3" => $total,
+		"fecha_pago" => $fecha_pago,
+		"ver_todos" => $ver_todos ? "SI" : "NO"
+	));
+}
+
 function ueno_buscar_importaciones()
 {
 	$mysqli = conectar_al_servidor();
@@ -3012,6 +3171,9 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 	}
 	if ($operacion == "buscar_movimientos") {
 		ueno_buscar_movimientos();
+	}
+	if ($operacion == "buscar_movimientos_cobro") {
+		ueno_buscar_movimientos_cobro($usuario);
 	}
 	if ($operacion == "buscar_pagos_pendientes") {
 		ueno_buscar_pagos_pendientes();

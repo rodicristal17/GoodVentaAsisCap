@@ -880,7 +880,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
         }
 
         $gastosElemento= "";
-        $registrosGastos = buscarGasto("","","",'','','','','','true','', $cod_interConsulta, '', '','NULL','');
+        $registrosGastos = buscarGasto("","","",'','','Egreso','','','true','', $cod_interConsulta, '', '','','');
         $colorFondo= "";
         foreach ($registrosGastos as $key => $gast) {
             $gasto= $gast;
@@ -1882,7 +1882,7 @@ function convertirTextoDocumentoInterconsulta($texto) {
             (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
-            (SELECT COUNT(*) FROM gastos WHERE estado = 'solicitado' AND cod_interConsultaFK = ic.cod_interConsulta) AS cantGastosPendientes,
+            (SELECT COUNT(*) FROM gastos WHERE estado IN ('solicitado','pendiente') AND fecha <= CURDATE() AND cod_interConsultaFK = ic.cod_interConsulta) AS cantGastosPendientes,
             (SELECT COUNT(idgastos) FROM gastos g WHERE g.cod_interConsultaFK = ic.cod_interConsulta) AS cantAsociadoGastos,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta and estado = 'activo' $sqlFiltroMensaje) AS cantMensajesProgramados,

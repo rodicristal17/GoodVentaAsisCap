@@ -696,6 +696,31 @@ function ueno_pago_es_transferencia($mysqli, $codTipoPago)
 	return strpos($nombre, "TRANSFERENCIA") !== false;
 }
 
+function pago_nombre_tipo_pago($mysqli, $codTipoPago, $defecto="Efectivo")
+{
+	if ($codTipoPago == "") {
+		return $defecto;
+	}
+
+	$consulta = "Select nombre from tipopago where cod_tipoPago=? limit 1";
+	$stmt = $mysqli->prepare($consulta);
+	$ss = 's';
+	$stmt->bind_param($ss, $codTipoPago);
+
+	if (!$stmt->execute()) {
+		return $defecto;
+	}
+
+	$result = $stmt->get_result();
+	if (!$result || $result->num_rows == 0) {
+		return $defecto;
+	}
+
+	$valor = $result->fetch_assoc();
+	$nombre = trim((string)$valor['nombre']);
+	return $nombre != "" ? $nombre : $defecto;
+}
+
 function ueno_pago_comprobante_post($control)
 {
 	$valor = isset($_POST['ueno_comprobante'.$control]) ? $_POST['ueno_comprobante'.$control] : "";
@@ -1467,7 +1492,61 @@ exit;
 }
  */
  
- function abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$tipopago,$controlTipoPago,$controlTotal)
+function pago_asegurar_credito_contado($mysqli, $cod_venta, $descuento)
+{
+	$codVentaSql = $mysqli->real_escape_string($cod_venta);
+	$sql = "Select idcredito from credito where cod_venta='$codVentaSql' and plazo='Contado' order by idcredito asc limit 1";
+	$result = $mysqli->query($sql);
+	if ($result && $result->num_rows > 0) {
+		$row = $result->fetch_assoc();
+		$idCredito = $row['idcredito'];
+		$consultaUpdate = "Update credito set descuento=?, totaldeuda=IF(totaldeuda=0,Monto,totaldeuda), total=IF(total=0,Monto,total) where idcredito=?";
+		$stmtUpdate = $mysqli->prepare($consultaUpdate);
+		if ($stmtUpdate) {
+			$ss = 'ss';
+			$stmtUpdate->bind_param($ss, $descuento, $idCredito);
+			if (!$stmtUpdate->execute()) {
+				echo trigger_error('The query execution failed; MySQL said ('.$stmtUpdate->errno.') '.$stmtUpdate->error, E_USER_ERROR);
+				exit;
+			}
+		}
+		return $idCredito;
+	}
+
+	$datosventa = buscardatosventa($cod_venta);
+	if (!isset($datosventa[0]) || !isset($datosventa[1])) {
+		$informacion = array("1" => "camposvacio", "2" => "No se encontro la venta contado para registrar el pago.");
+		echo json_encode($informacion);
+		exit;
+	}
+
+	$fechaVenta = $datosventa[0];
+	$montoVenta = $datosventa[1];
+	$nroventaCredito = isset($datosventa[4]) && trim((string)$datosventa[4]) != "" ? $datosventa[4] : $cod_venta;
+	$estado = "Pendiente";
+	$nroRecibo = "0";
+	$dias = "0";
+	$interes = "0";
+	$totalInteres = "0";
+	$deudaInteres = "0";
+
+	$consulta = "Insert into credito (plazo,fechapago,cod_venta,Monto,Esado,Nro_recibo,dias,interes,totalinteres,totaldeuda,total,descuento,deudaInteres,nroventa)
+	values('Contado',?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	$stmt = $mysqli->prepare($consulta);
+	if (!$stmt) {
+		ueno_pago_responder_error("error", "No se pudo preparar la cuota contado.");
+	}
+	$ss = 'sssssssssssss';
+	$stmt->bind_param($ss, $fechaVenta, $cod_venta, $montoVenta, $estado, $nroRecibo, $dias, $interes, $totalInteres, $montoVenta, $montoVenta, $descuento, $deudaInteres, $nroventaCredito);
+	if (!$stmt->execute()) {
+		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		exit;
+	}
+
+	return $mysqli->insert_id;
+}
+
+ function abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$tipopago,$controlTipoPago,$controlTotal,$uenoComprobante="",$uenoObservacion="",$uenoGrupoPago="",$uenoIdMovimiento="")
 {
 if($cod_venta==""){
 $informacion =array("1" => "camposvacio");
@@ -1483,6 +1562,8 @@ $idpago= "";
 
 $mysqli=conectar_al_servidor(); 
  
+$idCreditoContado = pago_asegurar_credito_contado($mysqli, $cod_venta, $descuento);
+$tipopagoNombreRegistro = pago_nombre_tipo_pago($mysqli, $tipopago, "Efectivo");
 
 // if($controlTotal == "1"){
 // $consulta="delete from credito where  cod_venta='$cod_venta'";
@@ -1505,7 +1586,7 @@ $mysqli=conectar_al_servidor();
 if($monto>0){
 	
 $consulta1="Insert into pago (cod_creditoFK,Monto,Fecha,cod_cobradorFK,cod_venta_fk,comision,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK,nrofactura)
-values((select idcredito from credito where cod_venta='$cod_venta' and plazo='Contado' limit 1),'$monto',CURDATE(),'$datosventa[5]','$cod_venta','$datosventa[18]','Pago Cuota','Efectivo','$cajapredeterminada','$codApertura','$descripcion','$tipopago','$nrofactura')";
+values('$idCreditoContado','$monto',CURDATE(),'$datosventa[5]','$cod_venta','$datosventa[18]','Pago Cuota','$tipopagoNombreRegistro','$cajapredeterminada','$codApertura','$descripcion','$tipopago','$nrofactura')";
 
 
 
@@ -1518,6 +1599,7 @@ exit;
 }
 // Recupera la id del pago
 $idpago= $mysqli->insert_id;
+ueno_pago_registrar_conciliacion($mysqli, $idpago, $tipopago, $monto, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_contado", $uenoIdMovimiento);
 }
  
 
@@ -1872,6 +1954,7 @@ function  cargarPagosDeudas($Monto,$Fecha,$cod_cobradorFK,$cod_creditoFK,$cod_ve
 	 if($Monto!="0"){
 		  	  
 	$mysqli=conectar_al_servidor();
+	$tipopago=pago_nombre_tipo_pago($mysqli,$codtipoPago,$tipopago);
 	$consulta="Insert into pago (Monto,Fecha,cod_creditoFK,cod_cobradorFK,cod_venta_fk,comision,nrofactura,tipo,tipopago,codCaja,codApertura,descripcion,cod_tipoPagoFK) 
 	values('$Monto','$Fecha','$cod_creditoFK','$cod_cobradorFK','$cod_venta',(select comision from venta where cod_venta='$cod_venta'),'$nrofactura','$tipo','$tipopago','$codCaja','$codApertura','$descripcion','$codtipoPago')";	
 	
@@ -2722,57 +2805,123 @@ function arqueo_html($valor, $defecto="-")
 	return htmlspecialchars($valor, ENT_QUOTES, 'UTF-8');
 }
 
+function arqueo_attr($nombre, $valor)
+{
+	return " data-".$nombre."='".arqueo_html($valor)."'";
+}
+
+function arqueo_td($valor, $width, $extra="")
+{
+	$atributos = $extra != "" ? " ".$extra : "";
+	return "<td".$atributos." style='width:".$width."'>".arqueo_html($valor)."</td>";
+}
+
+function arqueo_badge_estado($estado)
+{
+	$estadoTexto = $estado != "" ? $estado : "-";
+	$clase = strtoupper((string)$estadoTexto) == "ANULADO" ? " arqueo-badge--danger" : "";
+	return "<span class='arqueo-badge".$clase."'>".arqueo_html($estadoTexto)."</span>";
+}
+
 /*Buscar */
-function Arqueo($fecha1,$fecha2,$fecha_facturacion1, $fecha_facturacion2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion)
+function Arqueo($fecha1,$fecha2,$fecha_facturacion1, $fecha_facturacion2,$local,$factura,$cliente,$cedula,$fechafija,$cobrador,$metodo,$codCaja,$condicion,$busqueda_general="",$caja="",$lote="")
 {
 
 $mysqli=conectar_al_servidor();
 
  $totalRegistro=0;
 	 $pagina="";
+	 $esc = function($valor) use ($mysqli) {
+		 return $mysqli->real_escape_string((string)$valor);
+	 };
+	 $metodoPagoSql = "UPPER(IFNULL(NULLIF((Select tp.nombre from tipopago tp where tp.cod_tipoPago=pg.cod_tipoPagoFK limit 1),''),IFNULL(pg.tipopago,'')))";
+	 $uenoTransferSql = "IFNULL((Select count(*) from pago_transferencia_conciliacion pc where pc.cod_pagoFK=pg.idPago and pc.activo='SI' limit 1),0)";
 
 	 $sqlFiltro= "";
-	 if($fecha1!="" || $fecha2!=""){
-		 $sqlFiltro .=" and pg.Fecha between'".$fecha1."' and '".$fecha2."'";
-	 }
 	 if($fechafija!=""){
-	   $sqlFiltro .=" and pg.Fecha='".$fechafija."'";		
+	   $sqlFiltro .=" and pg.Fecha='".$esc($fechafija)."'";		
+	 }else{
+		 if($fecha1!="" && $fecha2!=""){
+			 $sqlFiltro .=" and pg.Fecha between '".$esc($fecha1)."' and '".$esc($fecha2)."'";
+		 }else if($fecha1!=""){
+			 $sqlFiltro .=" and pg.Fecha >= '".$esc($fecha1)."'";
+		 }else if($fecha2!=""){
+			 $sqlFiltro .=" and pg.Fecha <= '".$esc($fecha2)."'";
+		 }
 	 }
 	 if($factura!=""){
-	   $sqlFiltro .=" and vt.num_factura like '%".$factura."%'";		
+	   $sqlFiltro .=" and (vt.num_factura like '%".$esc($factura)."%' or pg.nrofactura like '%".$esc($factura)."%' or pg.num_comprobante like '%".$esc($factura)."%')";		
 	 }
 	 if($metodo!=""){
-	   $sqlFiltro .=" and pg.tipopago = '".$metodo."'";		
+	   $metodoNormalizado = strtoupper(trim($metodo));
+	   if($metodoNormalizado=="OTROS"){
+		   $sqlFiltro .=" and ".$uenoTransferSql."=0 and ".$metodoPagoSql." not in ('EFECTIVO','TRANSFERENCIA') and ".$metodoPagoSql." not like '%TARJETA%' and ".$metodoPagoSql." not like '%TRANSFER%'";
+	   }else if($metodoNormalizado=="TRANSFERENCIA"){
+		   $sqlFiltro .=" and (".$metodoPagoSql." like '%TRANSFER%' or ".$uenoTransferSql.">0)";
+	   }else if($metodoNormalizado=="TARJETA"){
+		   $sqlFiltro .=" and ".$uenoTransferSql."=0 and ".$metodoPagoSql." like '%TARJETA%'";
+	   }else{
+		   $sqlFiltro .=" and ".$uenoTransferSql."=0 and ".$metodoPagoSql." = '".$esc($metodoNormalizado)."'";
+	   }
 	 }
 	 if($local!=""){
-	   $sqlFiltro .=" and (Select l.cod_local from local l  where l.cod_local= vt.cod_local limit 1)='".$local."'";		
+	   $localSql = $esc($local);
+	   $sqlFiltro .=" and (vt.cod_local='".$localSql."' or (Select Nombre from local l where l.cod_local=vt.cod_local limit 1) like '%".$localSql."%')";		
 	 }
 	 if($cliente!=""){
-	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=cod_clienteFK limit 1) like '%".$cliente."%'";		
+	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK limit 1) like '%".$esc($cliente)."%'";		
 	 }
 	 if($cobrador!=""){
-	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK limit 1) like '%".$cobrador."%'";		
+	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK limit 1) like '%".$esc($cobrador)."%'";		
 	 }
 	 if($codCaja!=""){
-	   $sqlFiltro .=" and codAperturaApp = '".$codCaja."'";		
+	   $codCajaSql = $esc($codCaja);
+	   $sqlFiltro .=" and (pg.codAperturaApp = '".$codCajaSql."' or pg.codApertura = '".$codCajaSql."' or ap.idarqueocaja = '".$codCajaSql."')";		
 	 }
 	 if($cedula) {
-	   $sqlFiltro .=" and (Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK limit 1) like '%".$cedula."%'";
+	   $sqlFiltro .=" and (Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK limit 1) like '%".$esc($cedula)."%'";
 	 };
 	 if($fecha_facturacion1!=""){
-		$sqlFiltro .=" and pg.fecha_facturado >= '".$fecha_facturacion1;
+		$sqlFiltro .=" and pg.fecha_facturado >= '".$esc($fecha_facturacion1)."'";
 	 }	
 	 if($fecha_facturacion2!=""){
-		$sqlFiltro .=" and pg.fecha_facturado <= '".$fecha_facturacion2;
+		$sqlFiltro .=" and pg.fecha_facturado <= '".$esc($fecha_facturacion2)."'";
 	 }
  
 	 if($condicion!=""){
-	   $sqlFiltro .=" and vt.TipoVenta = '".$condicion."'";		
+	   $sqlFiltro .=" and vt.TipoVenta = '".$esc($condicion)."'";		
+	 }
+	 if($busqueda_general!=""){
+	   $busquedaSql = $esc($busqueda_general);
+	   $sqlFiltro .=" and ((Select nombre_persona from persona where cod_persona=vt.cod_clienteFK limit 1) like '%".$busquedaSql."%' 
+	   or (Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK limit 1) like '%".$busquedaSql."%'
+	   or vt.cod_venta like '%".$busquedaSql."%'
+	   or vt.num_factura like '%".$busquedaSql."%'
+	   or pg.nrofactura like '%".$busquedaSql."%'
+	   or pg.num_comprobante like '%".$busquedaSql."%'
+	   or pg.tipopago like '%".$busquedaSql."%'
+	   or (Select tp.nombre from tipopago tp where tp.cod_tipoPago=pg.cod_tipoPagoFK limit 1) like '%".$busquedaSql."%'
+	   or (Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK limit 1) like '%".$busquedaSql."%'
+	   or pg.codCaja like '%".$busquedaSql."%'
+	   or ap.lote like '%".$busquedaSql."%')";
+	 }
+	 if($caja!=""){
+	   $cajaSql = $esc($caja);
+	   $sqlFiltro .=" and (pg.codCaja like '%".$cajaSql."%' or ap.caja_idcaja like '%".$cajaSql."%' or ap.cajanro like '%".$cajaSql."%' or ap.idarqueocaja like '%".$cajaSql."%')";
+	 }
+	 if($lote!=""){
+	   $sqlFiltro .=" and ap.lote like '%".$esc($lote)."%'";
 	 }
 
 	$sql= "select  vt.TipoVenta,vt.puntoexpedicion,vt.tipo_comprobante,pg.idPago,pg.tipo, pg.Fecha, sum(pg.Monto) as Monto,pg.cod_venta_fk,pg.tipopago,
 	vt.cod_local, pg.cod_cobradorFK, pg.fecha_facturado, pg.num_comprobante,
-	pg.comision,pg.nrofactura,pg.lot, pg.lat,(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
+	pg.comision,pg.nrofactura,pg.lot, pg.lat,pg.codCaja as codCajaPago,pg.codApertura,pg.codAperturaApp,pg.anulado,pg.cod_tipoPagoFK,
+	ap.cajanro as caja_nro,ap.caja_idcaja,ap.lote as lote_caja,ap.estado as estado_caja,
+	date_format(ap.fechaapertura,'%Y-%m-%d %H:%i') as fecha_apertura_caja,
+	date_format(ap.fechacierre,'%Y-%m-%d %H:%i') as fecha_cierre_caja,
+	IFNULL((Select tp.nombre from tipopago tp where tp.cod_tipoPago=pg.cod_tipoPagoFK limit 1),'') as metodo_pago_nombre,
+	IFNULL((Select count(*) from pago_transferencia_conciliacion pc where pc.cod_pagoFK=pg.idPago and pc.activo='SI' limit 1),0) as tiene_transferencia_ueno,
+	(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as nombrecliente,
 	(Select ci_cliente from cliente where cod_cliente=vt.cod_clienteFK) as documento,
 	(Select nombre_persona from persona where cod_persona=pg.cod_cobradorFK) as cobradornombre,date_format(hora ,'%H:%i' ) as hora,
 	(Select Nombre from local l where l.cod_local=vt.cod_local) as nombrelocal,
@@ -2780,7 +2929,8 @@ $mysqli=conectar_al_servidor();
 	IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0) as nroCancelado,
 	vt.num_factura,
 	(Select nombre from zona z where z.idzona=(Select idzonaFk from cliente pr inner join venta vt on vt.cod_clienteFK=pr.cod_cliente where vt.cod_venta=pg.cod_venta_fk)) as nombrezona
-	from  pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk  
+	from  pago pg inner join venta vt on vt.cod_venta=pg.cod_venta_fk
+	left join arqueocaja ap on ap.idarqueocaja=pg.codApertura
 	where pg.Monto>0 ".$sqlFiltro." group by  pg.idPago limit 2500";
 	
 
@@ -2797,6 +2947,8 @@ exit;
 $totalPagado=0;
 $totalPagadoEfectivo=0;
 $totalPagadoTarjeta=0;
+$totalPagadoTransferencia=0;
+$totalPagadoOtros=0;
 $result = $stmt->get_result();
 $valor= mysqli_num_rows($result);
 $nroRegistro=$valor;
@@ -2832,9 +2984,30 @@ $tipo_comprobante=mb_convert_encoding((string)($valor['tipo_comprobante']), 'UTF
 $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 $nroCancelado=mb_convert_encoding((string)($valor['nroCancelado']), 'UTF-8', 'ISO-8859-1');
 $tipopago=mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1');
+$metodo_pago_nombre=mb_convert_encoding((string)($valor['metodo_pago_nombre']), 'UTF-8', 'ISO-8859-1');
+$tiene_transferencia_ueno=mb_convert_encoding((string)($valor['tiene_transferencia_ueno']), 'UTF-8', 'ISO-8859-1');
 $documento=mb_convert_encoding((string)($valor['documento']), 'UTF-8', 'ISO-8859-1');
 $fecha_facturado=mb_convert_encoding((string)($valor['fecha_facturado']), 'UTF-8', 'ISO-8859-1');
 $num_comprobante=mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1');
+$codCajaPago=mb_convert_encoding((string)($valor['codCajaPago']), 'UTF-8', 'ISO-8859-1');
+$codApertura=mb_convert_encoding((string)($valor['codApertura']), 'UTF-8', 'ISO-8859-1');
+$codAperturaApp=mb_convert_encoding((string)($valor['codAperturaApp']), 'UTF-8', 'ISO-8859-1');
+$anulado=mb_convert_encoding((string)($valor['anulado']), 'UTF-8', 'ISO-8859-1');
+$caja_nro=mb_convert_encoding((string)($valor['caja_nro']), 'UTF-8', 'ISO-8859-1');
+$caja_idcaja=mb_convert_encoding((string)($valor['caja_idcaja']), 'UTF-8', 'ISO-8859-1');
+$lote_caja=mb_convert_encoding((string)($valor['lote_caja']), 'UTF-8', 'ISO-8859-1');
+$estado_caja=mb_convert_encoding((string)($valor['estado_caja']), 'UTF-8', 'ISO-8859-1');
+$fecha_apertura_caja=mb_convert_encoding((string)($valor['fecha_apertura_caja']), 'UTF-8', 'ISO-8859-1');
+$fecha_cierre_caja=mb_convert_encoding((string)($valor['fecha_cierre_caja']), 'UTF-8', 'ISO-8859-1');
+$metodoPagoMostrado=trim($metodo_pago_nombre) != "" ? trim($metodo_pago_nombre) : trim($tipopago);
+$metodoPagoNormalizado=strtoupper($metodoPagoMostrado);
+if((int)$tiene_transferencia_ueno > 0 || strpos($metodoPagoNormalizado,"TRANSFER")!==false){
+	$metodoPagoMostrado="Transferencia";
+}else if($metodoPagoNormalizado=="EFECTIVO"){
+	$metodoPagoMostrado="Efectivo";
+}else if(strpos($metodoPagoNormalizado,"TARJETA")!==false){
+	$metodoPagoMostrado=ucwords(strtolower($metodoPagoMostrado));
+}
 
 $registros[]= array(
 	'TipoVenta' => mb_convert_encoding((string)($valor['TipoVenta']), 'UTF-8', 'ISO-8859-1'),
@@ -2860,103 +3033,139 @@ $registros[]= array(
 	'tipo_comprobante'=>mb_convert_encoding((string)($valor['tipo_comprobante']), 'UTF-8', 'ISO-8859-1'),
 	'tipo'=>mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1'),
 	'nroCancelado'=>mb_convert_encoding((string)($valor['nroCancelado']), 'UTF-8', 'ISO-8859-1'),
-	'tipopago'=>mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1'),
+	'tipopago'=>$metodoPagoMostrado,
+	'tipopago_original'=>mb_convert_encoding((string)($valor['tipopago']), 'UTF-8', 'ISO-8859-1'),
+	'metodo_pago_nombre'=>mb_convert_encoding((string)($valor['metodo_pago_nombre']), 'UTF-8', 'ISO-8859-1'),
+	'tiene_transferencia_ueno'=>mb_convert_encoding((string)($valor['tiene_transferencia_ueno']), 'UTF-8', 'ISO-8859-1'),
 	'documento'=>mb_convert_encoding((string)($valor['documento']), 'UTF-8', 'ISO-8859-1'),
 	'fecha_facturado'=>mb_convert_encoding((string)($valor['fecha_facturado']), 'UTF-8', 'ISO-8859-1'),
 	'num_comprobante'=>mb_convert_encoding((string)($valor['num_comprobante']), 'UTF-8', 'ISO-8859-1'),
+	'codCajaPago'=>mb_convert_encoding((string)($valor['codCajaPago']), 'UTF-8', 'ISO-8859-1'),
+	'codApertura'=>mb_convert_encoding((string)($valor['codApertura']), 'UTF-8', 'ISO-8859-1'),
+	'codAperturaApp'=>mb_convert_encoding((string)($valor['codAperturaApp']), 'UTF-8', 'ISO-8859-1'),
+	'anulado'=>mb_convert_encoding((string)($valor['anulado']), 'UTF-8', 'ISO-8859-1'),
+	'caja_nro'=>mb_convert_encoding((string)($valor['caja_nro']), 'UTF-8', 'ISO-8859-1'),
+	'caja_idcaja'=>mb_convert_encoding((string)($valor['caja_idcaja']), 'UTF-8', 'ISO-8859-1'),
+	'lote_caja'=>mb_convert_encoding((string)($valor['lote_caja']), 'UTF-8', 'ISO-8859-1'),
+	'estado_caja'=>mb_convert_encoding((string)($valor['estado_caja']), 'UTF-8', 'ISO-8859-1'),
+	'fecha_apertura_caja'=>mb_convert_encoding((string)($valor['fecha_apertura_caja']), 'UTF-8', 'ISO-8859-1'),
+	'fecha_cierre_caja'=>mb_convert_encoding((string)($valor['fecha_cierre_caja']), 'UTF-8', 'ISO-8859-1'),
 );
 
-if($tipopago=="Efectivo"){
+$tipopago=$metodoPagoMostrado;
+if(strtoupper(trim($metodoPagoMostrado))=="EFECTIVO"){
 	$totalPagadoEfectivo=$totalPagadoEfectivo+$Monto;
-}else{
+}else if(strpos(strtoupper(trim($metodoPagoMostrado)),"TARJETA")!==false){
 	$totalPagadoTarjeta=$totalPagadoTarjeta+$Monto;
+}else if(strpos(strtoupper(trim($metodoPagoMostrado)),"TRANSFER")!==false){
+	$totalPagadoTransferencia=$totalPagadoTransferencia+$Monto;
+}else{
+	$totalPagadoOtros=$totalPagadoOtros+$Monto;
 }
 
 $style='';
-/*if($puntoexpedicion!=""){
-	$nrof=$puntoexpedicion."-".$num_factura;
-}else{
-	$nrof=$num_factura;
-}*/
-$nrof= $num_comprobante;
+$nrof=trim($num_comprobante);
+if($nrof==""){
+	$nrof=trim($nrofactura);
+}
+if($nrof=="" || $nrof=="0000"){
+	$nrof=trim($num_factura);
+}
+$fechaPagoCompleta=trim($Fecha." ".$hora);
+$montoFormateado=number_format($Monto,'0',',','.');
+$estadoCobro="Activo";
+$anuladoNormalizado=strtoupper(trim($anulado));
 if($nroCancelado==0){
 $totalPagado=$Monto+$totalPagado;
 }else{
 	$style='background-color: #FFEB3B;color:#000';
 }
+if($nroCancelado!=0 || $anuladoNormalizado=="SI" || $anuladoNormalizado=="ANULADO" || $anuladoNormalizado=="1"){
+	$estadoCobro="Anulado";
+}
+$cajaNombre=trim($codCajaPago);
+if($cajaNombre==""){
+	$cajaNombre=trim($caja_nro);
+}
+if($cajaNombre==""){
+	$cajaNombre=trim($caja_idcaja);
+}
+$styleAttr=$style!="" ? " style='".$style."'" : "";
+$datosFilaArqueo=arqueo_attr("fecha-pago",$fechaPagoCompleta)
+	.arqueo_attr("monto",$montoFormateado)
+	.arqueo_attr("metodo",$tipopago)
+	.arqueo_attr("tipo",$tipo)
+	.arqueo_attr("cuota",$plazo)
+	.arqueo_attr("comprobante",$nrof)
+	.arqueo_attr("cliente",$nombrecliente)
+	.arqueo_attr("documento",$documento)
+	.arqueo_attr("venta",$cod_venta)
+	.arqueo_attr("factura",$nrof)
+	.arqueo_attr("cobrador",$cobradornombre)
+	.arqueo_attr("caja",$cajaNombre)
+	.arqueo_attr("lote",$lote_caja)
+	.arqueo_attr("estado-caja",$estado_caja)
+	.arqueo_attr("fecha-apertura",$fecha_apertura_caja)
+	.arqueo_attr("fecha-cierre",$fecha_cierre_caja)
+	.arqueo_attr("estado-cobro",$estadoCobro);
+$accionesArqueo="<div class='arqueo-actions'>"
+	."<button type='button' class='arqueo-action-btn' onclick='toggleDetalleCobroArqueo(this)' title='Ver detalle' aria-label='Ver detalle'><img src='/GoodVentaAsisCap/iconos/etiquetamasdetalles.png' alt=''></button>"
+	."<button type='button' class='arqueo-action-btn' onclick='reimprimirReciboArqueo(this)' title='Reimprimir recibo' aria-label='Reimprimir recibo'><img src='/GoodVentaAsisCap/iconos/reeimpresion.png' alt=''></button>"
+	."</div>";
+
+$styleName=CargarStyleTable($styleName);
+$filaArqueo="
+<tr class='$styleName' id='tbSelecRegistro' onclick='obtenerdatospagos(this)'".$styleAttr.$datosFilaArqueo.">
+<td id='td_datos_1' style='display:none'>".arqueo_html($idPago)."</td>
+<td id='td_datos_2' style='display:none'>".arqueo_html($Fecha)."</td>
+<td id='td_datos_3' style='display:none'>".arqueo_html($num_factura)."</td>
+<td id='td_datos_4' style='display:none'>".arqueo_html($plazo)."</td>
+<td id='td_datos_5' style='display:none'>".arqueo_html($montoFormateado)."</td>
+<td id='td_datos_6' style='display:none'>".arqueo_html($comision)."</td>
+<td id='td_datos_7' style='display:none'>".arqueo_html($lot)."</td>
+<td id='td_datos_8' style='display:none'>".arqueo_html($lat)."</td>
+<td id='td_datos_9' style='display:none'>".arqueo_html($nombrecliente)."</td>
+<td id='td_datos_10' style='display:none'>".arqueo_html($cod_venta)."</td>
+<td id='td_datos_11' style='display:none'>".arqueo_html($fecha_facturado)."</td>
+".arqueo_td($fechaPagoCompleta,"9%")
+.arqueo_td($nombrecliente,"16%")
+.arqueo_td($documento,"8%")
+.arqueo_td($cod_venta,"6%")
+.arqueo_td($nrof,"9%")
+.arqueo_td($montoFormateado,"8%")
+.arqueo_td($tipopago,"8%")
+.arqueo_td($tipo,"8%")
+.arqueo_td($plazo,"7%")
+.arqueo_td($cobradornombre,"12%")
+.arqueo_td($cajaNombre,"8%")
+.arqueo_td($lote_caja,"8%")
+."<td style='width:9%'>".arqueo_badge_estado($estadoCobro)."</td>"
+."<td class='arqueo-actions-print' style='width:8%;text-align:center'>".$accionesArqueo."</td>
+</tr>";
 
 if($plazo!="ENTREGA"){
-	$styleName=CargarStyleTable($styleName);
-$paginacuota.="
-<tr class='$styleName' id='tbSelecRegistro' onclick='obtenerdatospagos(this)' style='$style'>
-<td id='td_datos_1' style='display:none' >".$idPago."</td>
-<td id='td_datos_3' style='display:none'>".$num_factura."</td>
-<td id='td_datos_9' style='width:15%'>*".$documento."*<br>".$nombrecliente." </td>
-<td style='width:10%'>".$documento." </td>
-<td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
-<td id=''			 style='width:10%'>".$nrof."</td>
-<td id=''			 style='width:5%'>".$cod_venta."</td>
-<td id='td_datos_2' style='display:none' >".$Fecha."</td>
-<td id='' 			style='width:15%' >".$Fecha." ".$hora."</td>
-<td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
-<td id=''			 style='width:10%'>".$tipopago."</td>
-<td id=''		 	style='width:10%'>".$tipo."</td>
-<td id='td_datos_4' style='width:5%'>".$plazo."</td>
-<td id='td_datos_4' style='width:10%'>".$TipoVenta."</td>
-<td id='td_datos_4' style='width:10%'>".$cobradornombre."</td>
-<td id='' style='display:none'>".$nombrezona."</td>
-
-<td id='td_datos_10' style='display:none'>".$cod_venta."</td>
-
-<td id='td_datos_6' style='display:none'>".$comision."</td>
-<td id='td_datos_7' style='display:none'>".$lot."</td>
-<td id='td_datos_8' style='display:none'>".$lat."</td>
-</tr>";
+	$paginacuota.=$filaArqueo;
 
 }else{
-	$styleName=CargarStyleTable($styleName);
-	$paginaentrega.="
-<tr class='$styleName' id='tbSelecRegistro' onclick='obtenerdatospagos(this)'>
-<td id='td_datos_1' style='display:none' >".$idPago."</td>
-<td id='td_datos_3' style='display:none'>".$num_factura."</td>
-<td id='td_datos_9' style='width:15%'>".$nombrecliente."</td>
-<td style='width:10%'>".$documento."</td>
-<td id='td_datos_11' style='width:15%'>".$fecha_facturado." </td>
-<td id='' style='width:10%'>".$nrof."</td>
-<td id='' style='width:5%'>".$cod_venta."</td>
-<td id='td_datos_2' style='display:none' >".$Fecha."</td>
-<td id='' style='width:15%' >".$Fecha." ".$hora."</td>
-<td id='td_datos_5' style='width:10%'>". number_format($Monto,'0',',','.')."</td>
-<td id=''			 style='width:10%'>".$tipopago."</td>
-<td id=''		 	style='width:10%'>".$tipo."</td>
-<td id='td_datos_4' style='width:5%'>".$plazo."</td>
-<td id='td_datos_4' style='width:10%'>".$TipoVenta."</td>
-<td id='td_datos_4' style='width:10%'>".$cobradornombre."</td>
-<td id='' style='display:none'>".$nombrezona."</td>
-
-<td id='td_datos_10' style='display:none'>".$cod_venta."</td>
-
-<td id='td_datos_6' style='display:none'>".$comision."</td>
-<td id='td_datos_7' style='display:none'>".$lot."</td>
-<td id='td_datos_8' style='display:none'>".$lat."</td>
-</tr>";
+	$paginaentrega.=$filaArqueo;
 }
 
 
 }
 }
 if($paginaentrega!="" && $paginacuota!=""){
-	$pagina="<tr class='arqueo-section-row'><td colspan='12'>Cobros de Entregas</td></tr>".$paginaentrega."<tr class='arqueo-section-row'><td colspan='12'>Cobros de Cuotas</td></tr>".$paginacuota;
+	$pagina="<tr class='arqueo-section-row'><td colspan='14'>Cobros de Entregas</td></tr>".$paginaentrega."<tr class='arqueo-section-row'><td colspan='14'>Cobros de Cuotas</td></tr>".$paginacuota;
 }
 if($paginaentrega!="" && $paginacuota==""){
-	$pagina="<tr class='arqueo-section-row'><td colspan='12'>Cobros de Entregas</td></tr>".$paginaentrega;
+	$pagina="<tr class='arqueo-section-row'><td colspan='14'>Cobros de Entregas</td></tr>".$paginaentrega;
 }
 if($paginaentrega=="" && $paginacuota!=""){
-	$pagina="<tr class='arqueo-section-row'><td colspan='12'>Cobros de Cuotas</td></tr>".$paginacuota;
+	$pagina="<tr class='arqueo-section-row'><td colspan='14'>Cobros de Cuotas</td></tr>".$paginacuota;
 }
    
 return array("1" => "exito","2" => $pagina,"3" =>number_format($totalPagado,'0',',','.'),"4"=>$nroRegistro
-,"5"=>number_format($totalPagadoEfectivo,'0',',','.'),"6"=>number_format($totalPagadoTarjeta,'0',',','.'), "7" => $registros);
+,"5"=>number_format($totalPagadoEfectivo,'0',',','.'),"6"=>number_format($totalPagadoTarjeta,'0',',','.'), "7" => $registros
+,"8"=>number_format($totalPagadoTransferencia,'0',',','.'),"9"=>number_format($totalPagadoOtros,'0',',','.'));
 }
 
 function reeimpresionrecibo($fecha1,$fecha2,$local,$factura,$cliente,$fechafiltro,$cobrador,$metodo)
@@ -3839,8 +4048,10 @@ function addPagos($cod_venta,$cajapredeterminada,$codApertura){
 	$control=1;	
 $totalregistro=$_POST['totalregistro'];
 $totalregistro = mb_convert_encoding((string)($totalregistro), 'ISO-8859-1', 'UTF-8');
+ueno_pago_validar_transferencias($totalregistro);
 
 $controlTipoPago = $totalregistro;
+$uenoGrupoPago = uniqid("uenopago_", true);
 
 $montotarjerta = 0;
 $descuento = 0;
@@ -3856,12 +4067,27 @@ $idtipopago = mb_convert_encoding((string)($idtipopago), 'ISO-8859-1', 'UTF-8');
 $monto=$_POST['monto'.$control];
 $monto = quitarseparadormiles($monto);
 
+$uenoComprobante = ueno_pago_comprobante_post($control);
+$uenoObservacion = ueno_pago_observacion_post($control);
+$uenoIdMovimiento = ueno_pago_movimiento_post($control);
+if ($uenoIdMovimiento != "") {
+	$uenoComprobanteMovimiento = ueno_pago_comprobante_movimiento($mysqli, $uenoIdMovimiento);
+	if ($uenoComprobanteMovimiento != "") {
+		$uenoComprobante = $uenoComprobanteMovimiento;
+	}
+}
+$uenoGrupoPagoRegistro = $uenoGrupoPago;
+$uenoGrupoMovimiento = ueno_pago_grupo_movimiento($mysqli, $uenoComprobante, $uenoIdMovimiento);
+if ($uenoGrupoMovimiento != "") {
+	$uenoGrupoPagoRegistro = $uenoGrupoMovimiento;
+}
+
 
 $control=$control+1;
 $controlTipoPago = $controlTipoPago - 1;
 
 
-abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$idtipopago,$controlTipoPago,$totalregistro);
+abmcontado($cod_venta,$descuento,$monto,$montotarjerta,$cajapredeterminada,$codApertura,$idtipopago,$controlTipoPago,$totalregistro,$uenoComprobante,$uenoObservacion,$uenoGrupoPagoRegistro,$uenoIdMovimiento);
 } 
 
 

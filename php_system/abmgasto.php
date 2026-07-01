@@ -1761,6 +1761,11 @@ function flujoGastoTextoSeguro($valor) {
 	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
 }
 
+function flujoGastoEstaAnulado($gasto) {
+	$estado= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+	return ($estado == 'rechazado' || $estado == 'inactivo');
+}
+
 function flujoGastoTablaExiste($mysqli, $tabla) {
 	$tabla= $mysqli->real_escape_string($tabla);
 	$result= $mysqli->query("SHOW TABLES LIKE '$tabla'");
@@ -1832,7 +1837,7 @@ function construirIndicadorConciliacionUenoGasto($resumen) {
 function construirBotonConciliarEgresoUeno($gasto, $grupo= '') {
 	$idgastos= isset($gasto['idgastos']) ? trim((string)$gasto['idgastos']) : '';
 	$tipo= strtolower(trim((string)(isset($gasto['tipo']) ? $gasto['tipo'] : '')));
-	if ($idgastos == "" || $tipo != "egreso") {
+	if ($idgastos == "" || $tipo != "egreso" || flujoGastoEstaAnulado($gasto)) {
 		return "";
 	}
 	return "<button type='button' class='flujo-ueno-conciliar-btn' title='Conciliar este gasto con un egreso del extracto bancario' onclick='abrirConciliacionEgresoUenoDesdeBoton(event, this)'"
@@ -1866,12 +1871,17 @@ function obtenerResumenCuotasProgramadas($gastosSerie) {
 	$pagadas= 0;
 	$vencidas= 0;
 	$futuras= 0;
+	$anuladas= 0;
 	$proximoFecha= null;
 	$proximoTexto= "";
 
 	foreach ($gastosSerie as $gasto) {
 		$estado= strtolower(trim((string)$gasto['estado']));
 		$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
+		if (flujoGastoEstaAnulado($gasto)) {
+			$anuladas++;
+			continue;
+		}
 		if ($estado == 'activo') {
 			$pagadas++;
 			continue;
@@ -1915,21 +1925,22 @@ function obtenerResumenCuotasProgramadas($gastosSerie) {
 		'pagadas' => $pagadas,
 		'vencidas' => $vencidas,
 		'futuras' => $futuras,
+		'anuladas' => $anuladas,
 		'proximo' => $proximoTexto,
 	);
 }
 
 function obtenerEtiquetaCuotaProgramada($gasto) {
 	$estado= strtolower(trim((string)$gasto['estado']));
+	if (flujoGastoEstaAnulado($gasto)) {
+		return array('tipo' => 'anulado', 'texto' => 'Anulado');
+	}
 	if ($estado == 'activo') {
 		return array('tipo' => 'pagado', 'texto' => 'Pagado');
 	}
 	$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
 	if ($fechaObj && $fechaObj <= new DateTime('today')) {
 		return array('tipo' => 'vencido', 'texto' => 'Vencido');
-	}
-	if ($estado == 'rechazado') {
-		return array('tipo' => 'sin-cuotas', 'texto' => 'Rechazado');
 	}
 	return array('tipo' => 'programado', 'texto' => 'Programado');
 }
@@ -2089,8 +2100,11 @@ function construirDetalleCuotasProgramadas($gastosSerie, $resumen) {
 	foreach ($gastosSerie as $indice => $gasto) {
 		$estado= obtenerEtiquetaCuotaProgramada($gasto);
 		$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
-		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno(isset($gasto['idgastos']) ? $gasto['idgastos'] : '', isset($gasto['monto']) ? $gasto['monto'] : 0);
-		$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+		$indicadorConciliacionUeno= "";
+		if (!flujoGastoEstaAnulado($gasto)) {
+			$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno(isset($gasto['idgastos']) ? $gasto['idgastos'] : '', isset($gasto['monto']) ? $gasto['monto'] : 0);
+			$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+		}
 		$acciones= "<span style='color:#4b5563;font-size:8pt;'>Cerrada</span>";
 		if ($estadoOriginal != 'activo') {
 			$acciones= "<button type='button' title='Editar cuota' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#2f80ed;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>Editar</button>";
@@ -2145,8 +2159,11 @@ function construirTablaCuotasProyectoFlujo($gastosSerie, $resumen) {
 		}
 		$estado= obtenerEtiquetaCuotaProgramada($gasto);
 		$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
-		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idCuota, isset($gasto['monto']) ? $gasto['monto'] : 0);
-		$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+		$indicadorConciliacionUeno= "";
+		if (!flujoGastoEstaAnulado($gasto)) {
+			$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idCuota, isset($gasto['monto']) ? $gasto['monto'] : 0);
+			$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+		}
 		$acciones= "<span style='color:#4b5563;font-size:8pt;'>Cerrada</span>";
 		if ($estadoOriginal != 'activo') {
 			$acciones= "<button type='button' title='Editar cuota' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#2f80ed;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>Editar</button>";
@@ -2217,8 +2234,11 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '') {
 	$monto= intval(isset($gasto['monto']) ? $gasto['monto'] : 0);
 	$estado= obtenerEtiquetaCuotaProgramada($gasto);
 	$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
-	$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idGasto, $monto);
-	$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+	$indicadorConciliacionUeno= "";
+	if (!flujoGastoEstaAnulado($gasto)) {
+		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idGasto, $monto);
+		$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+	}
 	$botonConciliarUeno= construirBotonConciliarEgresoUeno($gasto, $tituloZona);
 	$acciones= "<button type='button' title='Editar movimiento' aria-label='Editar movimiento' onclick='editarGastoDesdeFila(event, this)' class='flujo-pago-unico-editar'>"
 		."<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar'>"
@@ -2227,7 +2247,7 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '') {
 		$acciones .= "<button type='button' title='Aprobar pago' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok'>OK</button>"
 			."<button type='button' title='Rechazar pago' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--rechazar'>X</button>";
 	}
-	$claseFila= ($estadoOriginal == 'rechazado' || $estadoOriginal == 'inactivo') ? " flujo-pago-unico-table__row--anulado" : "";
+	$claseFila= flujoGastoEstaAnulado($gasto) ? " flujo-pago-unico-table__row--anulado" : "";
 	$usuario= isset($gasto['usuarionombre']) ? $gasto['usuarionombre'] : '';
 	$local= isset($gasto['nombrelocal']) ? $gasto['nombrelocal'] : '';
 	$tipo= isset($gasto['tipo']) ? $gasto['tipo'] : '';

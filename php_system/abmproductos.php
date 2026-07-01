@@ -288,6 +288,14 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
  	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
 	buscarvistaVenta($buscar,$local);
  }
+
+   if($operacion=="buscartratamientosventa"){
+ 	$buscar=isset($_POST["buscar"]) ? $_POST["buscar"] : "";
+ 	$buscar=mb_convert_encoding((string)($buscar), 'ISO-8859-1', 'UTF-8');
+	$local=isset($_POST["local"]) ? $_POST["local"] : "";
+ 	$local=mb_convert_encoding((string)($local), 'ISO-8859-1', 'UTF-8');
+	buscarvistaVenta($buscar,$local,300);
+ }
  
     if($operacion=="buscarvistaventaSolicitud"){
  	$buscar=$_POST["buscar"];
@@ -3243,6 +3251,8 @@ $mysqli=conectar_al_servidor();
 $condicionLocal="";
 $condicionCategria="";
 $condicionMarca="";
+$local=$mysqli->real_escape_string($local);
+$buscar=trim($buscar);
 if($local!=""){
 	$condicionLocal=" and stk.cod_localFK='$local' ";
 }
@@ -3262,7 +3272,8 @@ $contador=0;
 
 while(($contador < $total)){
 	if($Buscador[$contador]!=""){
-	$CondicionBuscador1=" and concat(pr.nombre_producto,' ',pr.descripcion_producto) like '%".$Buscador[$contador]."%' ";	
+	$termino=$mysqli->real_escape_string($Buscador[$contador]);
+	$CondicionBuscador1=" and concat(pr.nombre_producto,' ',pr.descripcion_producto) like '%".$termino."%' ";	
 	$CondicionBuscadorTotal1.=$CondicionBuscador1;
 	
 	$CondicionBuscador2="";
@@ -3375,9 +3386,16 @@ exit;
 }
 
 
-function  buscarvistaVenta($buscar,$local)
+function  buscarvistaVenta($buscar,$local,$limite=50)
 {
 $mysqli=conectar_al_servidor();
+$limite = intval($limite);
+if ($limite <= 0) {
+	$limite = 50;
+}
+if ($limite > 500) {
+	$limite = 500;
+}
 $condicionLocal="";
 $condicionCategria="";
 $condicionMarca="";
@@ -3422,7 +3440,7 @@ pr.precio_producto,pr.precio_compra,stk.cantidad as stock_producto,stk.cod_local
 (select descripcion from impuesto where cod_Impuesto= pr.cod_ImpuestoFK limit 1 ) as NombreImpuesto,
 (select descripcion from marcas where cod_marcas= pr.cod_marcasFK limit 1 ) as NombreMarca
  from  producto pr inner join stocklocales stk on stk.cod_productofk=pr.cod_producto
-where  pr.estado='Activo' ".$condicionLocal.$CondicionBuscadorTotalResyltado." limit 50";
+where  pr.estado='Activo' ".$condicionLocal.$CondicionBuscadorTotalResyltado." order by pr.nombre_producto asc limit ".$limite;
 	
 
 

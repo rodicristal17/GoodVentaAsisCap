@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-detalle-nro-registro-20260630" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=pago-contado-conciliar-div-20260701" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,7 +43,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=caja-control-paginacion-20260627"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=pago-contado-conciliar-div-20260701"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -14231,12 +14231,12 @@ onkeyup='separadordemiles(this)' />
 <td style='width: 55%;'>
 
 <p class='pTituloC' style='color:#fff'>Seleccionar un Cliente</p>
-<input class='inputTextDisable' type='text' id='inptClienteVenta' disabled placeholder='Nombre Apellido' style='width:65%' />
-<select class="inputSelect" id='inptAccesoCreditoVentaCliente' style='width:20%' disabled >
+<input class='inputTextDisable' type='text' id='inptClienteVenta' disabled placeholder='Nombre Apellido' style='width:75%' />
+<select class="inputSelect" id='inptAccesoCreditoVentaCliente' style='display:none' disabled >
 <option value="Confirmado">CONFIRMADO</option>
 <option value="Denegado">DENEGADO</option>
 </select>
-<input type="button" value="Cambiar" class="btn4 venta-btn-secundario" onclick='vercerrarvistacliente("1","venta")'style='width:10%'>
+<input type="button" value="Cambiar" class="btn4 venta-btn-secundario" onclick='vercerrarvistacliente("1","venta")'style='width:20%;margin-left:5px'>
 </td>
 
 
@@ -14362,7 +14362,7 @@ Seleccionar un Producto</p>
 id='inptCodProductoVenta' style='width:110px'
 onkeyup="if(event.keyCode == 13){buscarProductoVentaDesdeEntrada()}" />
 <button type='button' id='btnBuscarProductoVenta' class='btn4 venta-btn-buscar-producto' onclick='buscarProductoVentaDesdeEntrada()'>Buscar</button>
-<input class='inputText' type='text' placeholder='Nombre del producto o tratamiento' id='inptProductoVenta' style='width:378px' onkeyup="if(event.keyCode == 13){buscarProductoVentaDesdeEntrada()}" />
+<input class='inputText' type='text' placeholder='Nombre del producto o tratamiento' id='inptProductoVenta' style='width:378px' onclick='abrirModalTratamientosVenta()' onkeyup="if(event.keyCode == 13){buscarProductoVentaDesdeEntrada()}" />
 </td>
 <td style='width:1%;display:none'>
 <img src='/GoodVentaAsisCap/iconos/etiquetamasdetalles.png' onclick='verCerrarAbmMasDetallesVenta("1")' class='imgIconH' title='Añadir más Detalles' />
@@ -14844,132 +14844,136 @@ id='inptDocClienteVenta2' disabled style='width:130px' />
 <tr>
 <td>
 <center>
-<div style='min-height:400px;width:800px;display:' class='divAbms'>
-<table class='tableMenuZ'>
+<div class='divAbms pago-contado-modal' role='dialog' aria-modal='true' aria-labelledby='tituloPagoContado'>
+<table class='tableMenuZ pago-contado-header'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Confirmar <b style='font-size: 30px;' >Pago</b></p>
+<p class='pTituloB' id='tituloPagoContado'>Confirmar <b style='font-size: 30px;' >Pago</b></p>
+<span class='pago-contado-subtitle'>Venta al contado</span>
 </td>
 <td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar'
 title='Cerrar Ventana' onclick='verCerrarConfigCredito("")' />
 </td>
 </tr>
 </table>
 <center>
-<div class='divMenuf'>
+<div class='pago-contado-body'>
+<section class='pago-contado-panel pago-contado-panel--summary'>
+<div class='pago-contado-section-title'><span>1</span><div><b>Resumen de venta</b><small>Datos de facturacion</small></div></div>
+<div class='pago-contado-total-box'>
+<label><b>Total venta</b><input class='inputTextDisable pago-contado-total' type='text' id='inptTotalVentaTerminar' readonly /></label>
+<div class='pago-contado-summary-grid'>
+<label><b>Nro factura</b><input class='inputText' type='text' id='inptNroComprobanteVentaTerminarEfectivo' /></label>
+<label><b>Descuento</b><input class='inputText' type='text' id='inptDescuentoVentaTerminar' onkeyup='separadordemiles(this);calcularDescuento()' /></label>
+<label><b>Neto a cobrar</b><input class='inputTextDisable' type='text' id='inptMontoVentaTerminarEfectivo' readonly /></label>
+<input type='hidden' id='inptMontoVentaTerminarTarjeta' value='0' />
+</div>
+</div>
+</section>
 
+<section class='pago-contado-panel pago-contado-panel--method'>
+<div class='pago-contado-section-title'><span>2</span><div><b>Forma de pago</b><small>Pagos aplicados</small></div></div>
+<div class='pago-contado-pay-grid'>
+<label><b>Forma de pago</b><select class='inputSelect' id='inptTipoPagoVenta' onchange='actualizarCampoComprobanteUenoVenta()'></select></label>
+<label><b>Monto</b><input class='inputText' type='text' id='inptMontoPagosVentas' onkeyup='separadordemiles(this);pagoContadoInvalidarMovimientoUenoPorEdicion();actualizarResumenPagoContado(false)' /></label>
+<input type='button' value='Agregar pago' class='btn5 pago-contado-add' onclick='anhadirPago()' />
+<div class='pago-contado-transfer' id='tdUenoComprobanteVenta' style='display:none'>
+<input type='hidden' id='inptUenoIdMovimientoVenta' />
+<label><b>Nro. comprobante Ueno</b><input class='inputText' type='text' id='inptUenoComprobanteVenta' onkeyup='pagoContadoInvalidarMovimientoUenoPorEdicion()' /></label>
+<label><b>Observacion</b><input class='inputText' type='text' id='inptUenoObsVenta' /></label>
+</div>
+</div>
 
-<div id='divConfCreditoVenta' style='display:'>
-<br>
-<br>
+<div class='pago-contado-conciliar' id='divPagoContadoConciliarUeno' style='display:none'>
+<div class='pago-contado-conciliar-head'>
+<div><b>Conciliar transferencia</b><span id='lblPagoContadoUenoAyuda'>Selecciona una transferencia Ueno disponible para este pago.</span></div>
+<input type='button' value='Buscar' class='btn4' onclick='pagoContadoBuscarMovimientosUeno(false)' />
+</div>
+<div id='divPagoContadoUeno' class='pago-contado-ueno'></div>
+</div>
 
-<table style='width:100%' class='tableVenta1'>
+<div class='pago-contado-list'>
+<table class='tableCabeceraRegistro pago-contado-table-head'>
+<tbody>
 <tr>
-<td style='width:55%'>
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloF'>Total venta :</p>
-<input class='inputText1' type='text'
-id='inptTotalVentaTerminar'/>
+<td class='td_registro' style='width:25%;'>TIPO</td>
+<td class='td_registro' style='width:25%;'>MONTO</td>
+<td class='td_registro' style='width:25%;'>FECHA</td>
+<td class='td_registro' style='width:25%;'>COMPROBANTE</td>
+</tr>
+</tbody>
+</table>
+<div class='div_cuerpo_table' id='div_opciones_pago'></div>
+</div>
+
+<div class='pago-contado-summary-footer'>
+<label><b>Total a pagar</b><input class='inputTextDisable' type='text' disabled id='inptTotalaPagar' /></label>
+<label><b>Total pagado</b><input class='inputTextDisable' type='text' disabled id='inpTotalPagadoVenta' /></label>
+<label><b>Pendiente</b><input class='inputTextDisable' type='text' disabled id='inptSaldoPagoVentaContado' /></label>
+</div>
+
+<div class='pago-contado-actions'>
+<input type='Button' value='TERMINAR VENTA' class='btn5' id='btnFinalizarVentaContado' onclick='VerificarCamposVentaContago()' />
+</div>
+</section>
+</div>
+</center>
+</div>
+</center>
 </td>
 </tr>
 </table>
-
-</td>
-<td style='width:40%;padding:8px'>
-
-<table style='width:100%;display:none'>
-<tr>
-
-<td style='width:100%'>
-<p class='pTituloF_1'>Metodo de pago :</p>
-<select class="inputSelect" id="inptMetodoPagoVenta" style='width:200px;'>
-</select>
-</td>
-</tr>
-</table>
-<br>
-
-<table style='width:100%'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloF_1'>Nro factura :</p>
-<input class='inputText1_2' type='text'
-id='inptNroComprobanteVentaTerminarEfectivo'/>
-</td>
-</tr>
-</table>
-
-<table style='width:100%;'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloF_1'>Aplicar Descuento :</p>
-<input class='inputText1_2' type='text'
-id='inptDescuentoVentaTerminar'
-onkeyup='separadordemiles(this);calcularDescuento()' />
-</td>
-</tr>
-</table>
-<br>
-<table style='width:100%'>
-<tr>
-
-<td style='width:100%'>
-<p class='pTituloF_1'>Monto a Pagar :</p>
-<input class='inputText1_2' type='text'
-id='inptMontoVentaTerminarEfectivo'
-onkeyup="if(event.keyCode == 13){document.getElementById('btnFinalizarVentaContado').focus();}else{calcularVuelto()}" />
-</td>
-</tr>
-</table>
-<br>
-<table style='display:none'>
-<tr>
-<td style='width:100%'>
-<p class='pTituloF_1'>Monto en Tarjeta :</p>
-<input class='inputText1_2' type='text'
-id='inptMontoVentaTerminarTarjeta'
-onkeyup="if(event.keyCode == 13){document.getElementById('btnFinalizarVentaContado').focus();}else{separadordemiles(this)}" />
-</td>
-</tr>
-</table>
-
-
-</td>
-</tr>
-</table>
-
-<br>
-
 </div>
 
 
+<div class='principal2 venta-tratamientos-overlay' style='display:none' id='divModalTratamientosVenta'>
+<table style='width:100%;height:100%;'>
+<tr>
+<td>
 <center>
+<div class='divAbms venta-tratamientos-modal' role='dialog' aria-modal='true' aria-labelledby='tituloModalTratamientosVenta'>
+<table class='tableMenuZ venta-tratamientos-modal__head'>
+<tr>
+<td style='width:100%;text-align:left'>
+<p class='pTituloB' id='tituloModalTratamientosVenta'>Tratamientos <b style='font-size: 30px;'>activos</b></p>
+</td>
+<td style='width:5%;text-align:center'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar'
+title='Cerrar Ventana' onclick='cerrarModalTratamientosVenta(true)' />
+</td>
+</tr>
+</table>
+<div class='divMenuf venta-tratamientos-modal__filters'>
 <table style='width:100%'>
 <tr>
-<td style='width:70%'>
-<input type='Button' value='TERMINAR VENTA' class='btn5' id='btnFinalizarVentaContado'
-onclick='VerificarCamposVentaContago()' style=' height: 42px;font-size: 20px;width: 100%;border-radius: 11px;' />
-</td>
-<td style='width:30%'>
-<input type='Button' value='OPCIONES DE PAGO' class='btn5'
-onclick='verCerrarVentanaAnhadirPagoVenta("1")' style=' height: 42px;font-size: 20px;width: 100%;border-radius: 11px;background-color:rgb(244 67 54)' />
-</td>
-</tr>
-</table>
-</center>
-
-</div>
-</center>
-</div>
-</center>
+<td style='width:100%'>
+<p class='pTituloC'>Buscar tratamiento</p>
+<input class='inputText' type='text' id='inptBuscarTratamientoVentaModal' placeholder='Nombre o descripcion' onkeyup='buscarTratamientosVentaModalKey(event)' />
+<input type='button' value='Buscar' class='btn4' onclick='buscarTratamientosVentaModal()' />
 </td>
 </tr>
 </table>
 </div>
-
+<div class='divMenuf venta-tratamientos-modal__list'>
+<table class="tableCabeceraRegistro">
+<tbody>
+<tr>
+<td class="td_registro" style="width:12%;">CODIGO</td>
+<td class="td_registro" style="width:20%;">TRATAMIENTO</td>
+<td class="td_registro" style="width:10%;">MARCA</td>
+<td class="td_registro" style="width:10%;">PRECIO</td>
+</tr>
+</tbody>
+</table>
+<div class="div_cuerpo_table" id="table_modal_tratamientos_venta"></div>
+</div>
+</div>
+</center>
+</td>
+</tr>
+</table>
+</div>
 
 
 
@@ -17187,94 +17191,7 @@ ESTUDIOS
 
 
 
-<div class='principal2' style='display:none' id='divOpcionesPago'>
-<table style='width:100%;height:100%;' id='tdEfectoAbmTipoPago'>
-<tr>
-<td>
-<center>
-<div style='width:780px;display:' class='divAbms'>
-<table class='tableMenuZ'>
-<tr>
-<td style='width:100%;text-align:left'>
-<p class='pTituloB'>Agregar <b style='font-size: 30px;' >Pago</b></p>
-</td>
-<td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='verCerrarVentanaAnhadirPagoVenta("")' />
-</td>
-</tr>
-</table>
-<br>
-<center>
-<div class='divMenuf'>
-<table style='width:95%'>
-<tr>
-<td style='width:10%;text-align:left'>
-<p class='pTituloC' >Tipo :</p>
-<select class='inputSelect'
-id='inptTipoPagoVenta' style='width:150px;text-align:center' ></select>
-</td>
-<td style='width:50%;text-align:left'>
-<p class='pTituloC' >Monto :</p>
-<input class='inputText' type='text' id='inptMontoPagosVentas' style='width:150px' onkeyup="separadordemiles(this)" />
-<input type='button' Value='Agregar' class='btn5'  onclick='anhadirPago()' style='width:100px'/>
-</td>
-<td style='width:40%'></td>
-</tr>
-</table>
-</div>
-<div class='divMenuf'>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:33%;">
-TIPO
-</td>
-<td class="td_registro" style="width:33%;">
-MONTO
-</td>
-<td class="td_registro" style="width:33%;">
-FECHA
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="div_opciones_pago"></div>
-</div>
-<div class='divMenuf'>
-<table style='width:95%'>
-<tr>
-<td style='width:25%;text-align:left'>
-<p class='pTituloC' >Total a Pagar :</p>
-<input class='inputTextDisable' type='text' disabled
-id='inptTotalaPagar' style='width:150px;text-align:center' />
-</td>
-<td style='width:5%'>
-
-</td>
-<td style='width:25%;text-align:left'>
-<p class='pTituloC' >Total Pagado :</p>
-<input class='inputTextDisable' type='text' disabled
-id='inpTotalPagadoVenta' style='width:150px;text-align:center' />
-</td>
-<td style='width:50%'>
-
-</td>
-<td style='width:25%'>
-<input type='Button' value='TERMINAR VENTA' class='btn5' id='btnFinalizarVentaContado'
-onclick='VerificarCamposVentaContago()' style='     height: 29px;font-size: 16px;width: 100%;border-radius: 11px;' />
-</td>
-</tr>
-</table>
-</div>
-</center>
-<br>
-</div>
-</center>
-</td>
-</tr>
-</table>
-</div>
+<div class='principal2' style='display:none' id='divOpcionesPago'></div>
 <div class='principal2' style='display:none' id='divOpcionPago'>
 <table style='width:100%;height:100%;' >
 <tr>
@@ -18056,7 +17973,7 @@ id='inpTotalPagadoCredito' style='width:150px;text-align:center' />
 
 </td>
 <td style='width:25%'>
-<input type='Button' value='CARGAR PAGOS' class='btn5 pago-credito-submit' id='btnFinalizarVentaContado'
+<input type='Button' value='CARGAR PAGOS' class='btn5 pago-credito-submit' id='btnFinalizarPagoCredito'
 onclick='verificarConfirmaciondepago()' style='     height: 29px;font-size: 16px;width: 100%;border-radius: 11px;' />
 </td>
 </tr>
@@ -18219,7 +18136,7 @@ id='inpTotalPagadoCreditoParcial' style='width:150px;text-align:center' />
 
 </td>
 <td style='width:25%'>
-<input type='Button' value='GUARDAR PAGO' class='btn5 pago-credito-submit' id='btnFinalizarVentaContado'
+<input type='Button' value='GUARDAR PAGO' class='btn5 pago-credito-submit' id='btnFinalizarPagoCreditoParcial'
 onclick='verificarcargarpagoTipoPago()' style='height: 29px;font-size: 16px;width: 100%;border-radius: 11px;' />
 </td>
 </tr>
@@ -20515,11 +20432,18 @@ RESPONSABLE
   <div class="arqueo-filters">
     <div class="arqueo-field">
       <label>Fecha desde</label>
-      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosF1" />
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosF1" disabled />
     </div>
     <div class="arqueo-field">
       <label>Fecha hasta</label>
-      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosF2" />
+      <input class="inputText" type="date" id="inptBuscarCobrosRealizadosF2" disabled />
+    </div>
+    <div class="arqueo-field arqueo-field--range-check">
+      <label>Rango</label>
+      <label class="arqueo-date-range-check">
+        <input type="checkbox" id="checkfiltrosCobrosRealizados2" onchange="checkfiltrosCobrosRealizados(this.checked ? '2' : '1')" />
+        <span>Usar rango</span>
+      </label>
     </div>
     <div class="arqueo-field">
       <label>Local / sucursal</label>
@@ -20549,7 +20473,6 @@ RESPONSABLE
   </div>
 
   <input type="checkbox" id="checkfiltrosCobrosRealizados1" checked style="display:none" />
-  <input type="checkbox" id="checkfiltrosCobrosRealizados2" style="display:none" />
 
   <div class="arqueo-extra-filters" id="divMasFiltrosCobrosRealizados" style="display:none">
     <div class="arqueo-field">

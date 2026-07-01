@@ -33008,7 +33008,7 @@ button.tratamiento-ubicacion-visual {
 #divArqueo .arqueo-filters,
 #divArqueo .arqueo-extra-filters {
     display: grid;
-    grid-template-columns: 126px 126px 160px 140px minmax(280px, 1fr) repeat(5, auto);
+    grid-template-columns: 118px 118px 96px 160px 140px minmax(240px, 1fr) repeat(5, auto);
     gap: 8px;
     align-items: end;
     margin: 0 0 10px;
@@ -33050,6 +33050,38 @@ button.tratamiento-ubicacion-visual {
     font-size: 11px;
     font-weight: 700;
     box-sizing: border-box;
+}
+
+#divArqueo .arqueo-field .inputText:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+#divArqueo .arqueo-date-range-check {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    height: 34px;
+    margin: 0 !important;
+    padding: 0 9px;
+    border: 1px solid #d7dee7;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #172033 !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+#divArqueo .arqueo-date-range-check input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
 }
 
 #divArqueo .arqueo-btn-secondary {
@@ -35161,6 +35193,559 @@ button.tratamiento-ubicacion-visual {
     font-size: 10px;
     font-weight: 900;
     text-transform: uppercase;
+  }
+}
+
+/* Pago contado - metodo de cobranza integrado */
+#divFinalizarVentaAContado #tdEfectoFinalizarVentaContado > tbody > tr > td {
+  padding: 8px;
+}
+
+#divFinalizarVentaAContado .pago-contado-modal {
+  width: min(1080px, calc(100vw - 24px)) !important;
+  min-height: auto !important;
+  max-height: calc(100vh - 18px);
+  border: 1px solid #d8e2ec;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f6f8fb;
+  box-shadow: 0 22px 52px rgba(15, 23, 42, 0.24);
+  box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado .pago-contado-header {
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+#divFinalizarVentaAContado .pago-contado-header td {
+  padding: 10px 16px;
+}
+
+#divFinalizarVentaAContado .pago-contado-header .pTituloB {
+  margin: 0;
+  color: #172033;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+#divFinalizarVentaAContado .pago-contado-subtitle {
+  display: block;
+  margin-top: 2px;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+#divFinalizarVentaAContado .pago-contado-body {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.76fr) minmax(500px, 1.24fr);
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+  align-items: start;
+}
+
+#divFinalizarVentaAContado .pago-contado-panel {
+  min-width: 0;
+  border: 1px solid #e1e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado .pago-contado-panel--summary {
+  padding: 10px;
+}
+
+#divFinalizarVentaAContado .pago-contado-panel--method {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(94px, auto) auto auto;
+  padding: 10px;
+}
+
+#divFinalizarVentaAContado .pago-contado-section-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+#divFinalizarVentaAContado .pago-contado-section-title span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-section-title b,
+#divFinalizarVentaAContado .pago-contado-section-title small {
+  display: block;
+}
+
+#divFinalizarVentaAContado .pago-contado-section-title b {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-section-title small {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+#divFinalizarVentaAContado .pago-contado-total-box,
+#divFinalizarVentaAContado .pago-contado-summary-grid,
+#divFinalizarVentaAContado .pago-contado-pay-grid,
+#divFinalizarVentaAContado .pago-contado-summary-footer {
+  display: grid;
+  gap: 7px;
+}
+
+#divFinalizarVentaAContado .pago-contado-summary-grid {
+  grid-template-columns: 1fr;
+}
+
+#divFinalizarVentaAContado .pago-contado-pay-grid {
+  grid-template-columns: minmax(190px, 1fr) minmax(140px, 0.72fr) 128px;
+  align-items: end;
+}
+
+#divFinalizarVentaAContado .pago-contado-summary-footer {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
+}
+
+#divFinalizarVentaAContado .pago-contado-total-box label,
+#divFinalizarVentaAContado .pago-contado-pay-grid label,
+#divFinalizarVentaAContado .pago-contado-summary-footer label {
+  display: grid;
+  gap: 4px;
+  color: #526274;
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+#divFinalizarVentaAContado .pago-contado-modal .inputText,
+#divFinalizarVentaAContado .pago-contado-modal .inputSelect,
+#divFinalizarVentaAContado .pago-contado-modal .inputTextDisable {
+  width: 100% !important;
+  height: 32px !important;
+  padding: 0 10px !important;
+  border: 1px solid #c8d4e2;
+  border-radius: 6px !important;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+#divFinalizarVentaAContado .pago-contado-modal .inputText:focus,
+#divFinalizarVentaAContado .pago-contado-modal .inputSelect:focus {
+  border-color: #2563eb;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+#divFinalizarVentaAContado .pago-contado-total {
+  height: 58px !important;
+  color: #d71920 !important;
+  font-size: 30px !important;
+  font-weight: 900 !important;
+  text-align: center;
+}
+
+#divFinalizarVentaAContado .pago-contado-transfer {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 7px;
+}
+
+#divFinalizarVentaAContado .pago-contado-conciliar {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px;
+  border: 1px solid #d8e7f4;
+  border-radius: 8px;
+  background: #f8fbff;
+  box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado .pago-contado-conciliar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  min-width: 0;
+}
+
+#divFinalizarVentaAContado .pago-contado-conciliar-head > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+#divFinalizarVentaAContado .pago-contado-conciliar-head b {
+  color: #172033;
+  font-size: 11.5px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-conciliar-head .btn4 {
+  width: 86px !important;
+  height: 28px !important;
+  border-radius: 7px !important;
+  background: #eef6ff !important;
+  border: 1px solid #b7d4f2 !important;
+  color: #19558a !important;
+  font-size: 10px !important;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado #lblPagoContadoUenoAyuda {
+  min-width: 0;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno {
+  max-height: 96px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid #d8e7f4;
+  border-radius: 7px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-warning,
+#divFinalizarVentaAContado .pago-contado-ueno-empty {
+  padding: 7px 9px;
+  border: 1px solid #d8e7f4;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #526274;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-empty--error {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #b42318;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-warning {
+  margin-bottom: 4px;
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item,
+#divFinalizarVentaAContado .pago-contado-ueno-selected {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+  padding: 6px 7px;
+  border: 1px solid #d5e3ef;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item:last-child,
+#divFinalizarVentaAContado .pago-contado-ueno-selected:last-child {
+  margin-bottom: 0;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item__main,
+#divFinalizarVentaAContado .pago-contado-ueno-selected > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item__main b,
+#divFinalizarVentaAContado .pago-contado-ueno-selected b {
+  color: #172033;
+  font-size: 10.5px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item__main span,
+#divFinalizarVentaAContado .pago-contado-ueno-selected span,
+#divFinalizarVentaAContado .pago-contado-ueno-item__main small,
+#divFinalizarVentaAContado .pago-contado-ueno-selected small {
+  overflow: hidden;
+  color: #526274;
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-badge--ok {
+  background: #e9f9ef;
+  color: #087443;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-badge--warn {
+  background: #fff1e8;
+  color: #b54708;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item__amount {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+  color: #526274;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-item__amount b {
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-btn,
+#divFinalizarVentaAContado .pago-contado-ueno-selected button,
+#divFinalizarVentaAContado .pago-contado-ueno-link {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #b7d4f2;
+  border-radius: 7px;
+  background: #eef6ff;
+  color: #19558a;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-btn {
+  width: 64px;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-btn--disabled {
+  width: auto;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-selected {
+  border-color: #a7f3d0;
+  background: #effcf5;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-selected button {
+  justify-self: end;
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #b42318;
+}
+
+#divFinalizarVentaAContado .pago-contado-ueno-link--footer {
+  width: 100%;
+  margin-top: 3px;
+  background: #ffffff;
+}
+
+#divFinalizarVentaAContado .pago-contado-add {
+  width: 128px !important;
+  height: 32px !important;
+  border-radius: 7px !important;
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  font-size: 11.5px !important;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-list {
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+#divFinalizarVentaAContado .pago-contado-table-head {
+  width: 100%;
+  margin: 0;
+  table-layout: fixed;
+}
+
+#divFinalizarVentaAContado .pago-contado-table-head .td_registro {
+  height: 28px;
+  border: 0;
+  background: #315f80;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado #div_opciones_pago {
+  height: 124px !important;
+  margin: 0 !important;
+  padding: 6px;
+  border: 0 !important;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado #div_opciones_pago:empty::before {
+  content: "Sin pagos cargados";
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: #7b8794;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+#divFinalizarVentaAContado .pago-contado-row {
+  width: 100%;
+  margin: 0 0 5px;
+  border: 1px solid #dce5ef !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 7px;
+  background: #ffffff;
+  overflow: hidden;
+  table-layout: fixed;
+  cursor: pointer;
+}
+
+#divFinalizarVentaAContado .pago-contado-row:hover {
+  border-color: #9bc7f1 !important;
+  background: #f0f7ff;
+}
+
+#divFinalizarVentaAContado .pago-contado-row td {
+  height: 29px;
+  padding: 5px 8px !important;
+  border: 0 !important;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 750;
+  box-sizing: border-box;
+}
+
+#divFinalizarVentaAContado .pago-contado-row td[id="td_datos_1"] {
+  color: #172033;
+  font-weight: 900;
+}
+
+#divFinalizarVentaAContado .pago-contado-row td[id="td_datos_3"] {
+  color: #0f766e;
+  font-weight: 900;
+  text-align: right;
+}
+
+#divFinalizarVentaAContado .pago-contado-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+#divFinalizarVentaAContado #btnFinalizarVentaContado {
+  width: 210px !important;
+  height: 34px !important;
+  border-radius: 8px !important;
+  background-color: #169653 !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(22, 150, 83, 0.2);
+}
+
+@media (max-width: 860px) {
+  #divFinalizarVentaAContado .pago-contado-modal {
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 20px);
+  }
+
+  #divFinalizarVentaAContado .pago-contado-body,
+  #divFinalizarVentaAContado .pago-contado-pay-grid,
+  #divFinalizarVentaAContado .pago-contado-summary-footer,
+  #divFinalizarVentaAContado .pago-contado-transfer {
+    grid-template-columns: 1fr;
+  }
+
+  #divFinalizarVentaAContado .pago-contado-body {
+    max-height: calc(100vh - 92px);
+    overflow: auto;
+  }
+
+  #divFinalizarVentaAContado .pago-contado-add,
+  #divFinalizarVentaAContado #btnFinalizarVentaContado {
+    width: 100% !important;
+  }
+
+  #divFinalizarVentaAContado .pago-contado-conciliar-head,
+  #divFinalizarVentaAContado .pago-contado-ueno-item,
+  #divFinalizarVentaAContado .pago-contado-ueno-selected {
+    grid-template-columns: 1fr;
+  }
+
+  #divFinalizarVentaAContado .pago-contado-conciliar-head {
+    display: grid;
+  }
+
+  #divFinalizarVentaAContado .pago-contado-conciliar-head .btn4,
+  #divFinalizarVentaAContado .pago-contado-ueno-btn {
+    width: 100% !important;
+  }
+
+  #divFinalizarVentaAContado #div_opciones_pago {
+    height: 28vh !important;
   }
 }
 
@@ -44513,6 +45098,95 @@ button.tratamiento-ubicacion-visual {
   box-shadow: 0 8px 18px rgba(21, 148, 102, 0.22);
 }
 
+.venta-tratamientos-overlay {
+  z-index: 20;
+}
+
+.venta-tratamientos-modal {
+  width: min(980px, calc(100vw - 48px)) !important;
+  min-height: auto !important;
+  max-height: calc(100vh - 72px);
+  overflow: hidden;
+  padding-bottom: 10px;
+  border-radius: 12px;
+}
+
+.venta-tratamientos-modal__head {
+  width: 96%;
+  margin: 10px auto 0;
+}
+
+.venta-tratamientos-modal__head .pTituloB {
+  margin: 0;
+}
+
+.venta-tratamientos-modal__filters {
+  width: 96%;
+  margin: 8px auto;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+.venta-tratamientos-modal__filters td {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.venta-tratamientos-modal__filters .pTituloC {
+  flex: 0 0 120px;
+  margin: 0 0 7px;
+}
+
+.venta-tratamientos-modal__filters #inptBuscarTratamientoVentaModal {
+  flex: 1 1 auto;
+  min-width: 220px;
+  width: auto !important;
+  box-sizing: border-box;
+}
+
+.venta-tratamientos-modal__filters .btn4 {
+  width: 110px;
+  height: 32px;
+  border-radius: 7px;
+}
+
+.venta-tratamientos-modal__list {
+  width: 96%;
+  margin: 0 auto 10px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.venta-tratamientos-modal__list .tableCabeceraRegistro {
+  width: 100%;
+  border-radius: 7px 7px 0 0;
+  overflow: hidden;
+}
+
+#table_modal_tratamientos_venta {
+  height: min(58vh, 430px);
+  overflow: auto;
+  border: 1px solid #d7e2ed;
+  border-top: 0;
+  box-sizing: border-box;
+}
+
+#table_modal_tratamientos_venta .tableRegistroSearch {
+  cursor: pointer;
+}
+
+#table_modal_tratamientos_venta .tableRegistroSearch:hover {
+  background: #eef7ff;
+}
+
+.venta-tratamientos-empty {
+  padding: 18px;
+  color: #607080;
+  font-weight: 700;
+  text-align: center;
+}
+
 @media (max-width: 980px) {
   #divAbmVenta .venta-confirmacion-panel table:first-child tr,
   #divAbmVenta .venta-confirmacion-panel table:nth-child(2) tr {
@@ -44540,6 +45214,29 @@ button.tratamiento-ubicacion-visual {
   #divAbmVenta .venta-producto-entrada td:last-child {
     grid-column: 1;
     grid-template-columns: 1fr;
+  }
+
+  .venta-tratamientos-modal {
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 28px);
+  }
+
+  .venta-tratamientos-modal__filters td {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .venta-tratamientos-modal__filters .pTituloC {
+    margin: 0;
+  }
+
+  .venta-tratamientos-modal__filters .btn4 {
+    width: 100%;
+  }
+
+  #table_modal_tratamientos_venta {
+    height: 58vh;
   }
 }
 /* Configuracion de credito en cierre de venta */
@@ -46009,6 +46706,12 @@ button.tratamiento-ubicacion-visual {
   color: #a62929;
 }
 
+#table_abm_gasto.flujo-caja-cascada .cuotas-programadas-badge--anulado {
+  border-color: #cdd5df;
+  background: #f4f6f8;
+  color: #52616f;
+}
+
 #table_abm_gasto.flujo-caja-cascada .cuotas-programadas-badge--sin-cuotas {
   border-color: #d6e1ea;
   background: #f2f5f8;
@@ -46456,6 +47159,11 @@ button.tratamiento-ubicacion-visual {
 #table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--vencido {
   background: #fff0f0;
   color: #a62929;
+}
+
+#table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--anulado {
+  background: #f4f6f8;
+  color: #52616f;
 }
 
 #table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--sin-cuotas {
