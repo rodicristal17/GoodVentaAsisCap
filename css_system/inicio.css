@@ -9374,7 +9374,7 @@ html body #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jo
 
 #divListadoInterConsulta .hilos-thread-panel {
   overflow: visible;
-  padding-top: 0;
+  padding: 0 8px 8px;
   border-top: 0;
 }
 
@@ -9424,9 +9424,10 @@ html body #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jo
   box-shadow: inset 0 4px 0 #1c9f58, 0 -1px 8px rgba(43, 84, 126, 0.08);
 }
 
-#divListadoInterConsulta .presupuesto-search-results-head {
-  border-top: 1px solid #ffffff;
-  padding-top: 11px;
+#divListadoInterConsulta .hilos-thread-table-wrap {
+  width: 98%;
+  height: auto;
+  margin: 0 auto;
 }
 
 #divListadoInterConsulta .hilos-category-count {
@@ -9536,6 +9537,10 @@ html body #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jo
 
 #divListadoInterConsulta #table_frm_VistaInterConsulta {
   background: #f8fafc;
+  height: calc(100vh - 320px);
+  min-height: 390px;
+  max-height: 520px;
+  overflow-y: auto;
 }
 
 #divListadoInterConsulta .interconsulta-thread-row {
