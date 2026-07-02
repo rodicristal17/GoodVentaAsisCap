@@ -1,0 +1,1 @@
+﻿ERROR 1061 (42000) at line 1 in file: 'C:\wamp64\www\GoodVentaAsisCap\actualizacion_19062026_interconsulta_indices.sql': Duplicate key name 'idx_mensaje_interconsulta_estado_fecha'

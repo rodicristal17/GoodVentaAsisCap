@@ -1,0 +1,2 @@
+﻿ERROR 1064 (42000) at line 1 in file: 'C:\wamp64\www\GoodVentaAsisCap\actualizacion_10062026_variantes_insumos.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS tiene_variantes TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT' at line 2

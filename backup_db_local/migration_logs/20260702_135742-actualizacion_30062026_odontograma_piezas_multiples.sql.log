@@ -1,0 +1,1 @@
+﻿ERROR 1060 (42S21) at line 1 in file: 'C:\wamp64\www\GoodVentaAsisCap\actualizacion_30062026_odontograma_piezas_multiples.sql': Duplicate column name 'piezas_json'

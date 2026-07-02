@@ -1,0 +1,1 @@
+﻿ERROR 1064 (42000) at line 1 in file: 'C:\wamp64\www\GoodVentaAsisCap\actualizacion_20062026_temporalidad_tratamientos.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS usa_temporalidad TINYINT(1) NOT NULL DEFAULT 0 AFTER nivel_riesgo_' at line 2

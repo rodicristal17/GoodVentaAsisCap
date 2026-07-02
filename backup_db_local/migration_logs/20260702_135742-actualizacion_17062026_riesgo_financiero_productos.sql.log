@@ -1,0 +1,2 @@
+﻿ERROR 1064 (42000) at line 1 in file: 'C:\wamp64\www\GoodVentaAsisCap\actualizacion_17062026_riesgo_financiero_productos.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS nivel_riesgo_financiero TINYINT NULL DEFAULT NULL,
+  ADD COLUMN IF' at line 2

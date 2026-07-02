@@ -7056,7 +7056,6 @@ style='background-color:#5bc572'>
     <div id="divAbmDetallesInterConsulta" class="divAbms interconsulta-detail-modal">
         <div class="interconsulta-detail-header">
           <div class="interconsulta-detail-title-group">
-            <p class="interconsulta-detail-kicker">Vista oficial de conversaci&oacute;n</p>
             <h2 id="tituloInterConsultas">Hilo # - </h2>
             <div class="interconsulta-detail-meta">
               <div class="interconsulta-detail-badges" id="hiloDetalleBadges">
@@ -7202,12 +7201,27 @@ style='background-color:#5bc572'>
                 </div>
                 <div class="card my-3" id="panelMensajeInterConsulta">
                   <div class="card-header" id="cabeceraMensajeInterConsulta">
-                      <div>
+                      <div class="interconsulta-composer-author">
                         <span class="interconsulta-composer-label">Responder como</span>
                         <strong id="nombreUsuarioMensaje">Usuario</strong>
                       </div>
-                      <div class="interconsulta-composer-meta">
-                        <label for="inptFechaAbmMensaje">Fecha/hora</label>
+                      <div class="interconsulta-composer-tools">
+                        <button type="button" class="interconsulta-composer-tool" aria-expanded="false" aria-controls="opcionesFechaMensajeInterConsulta" data-text-open="Fecha" data-text-close="Ocultar fecha" onclick="alternarOpcionesComposerInterConsulta('opcionesFechaMensajeInterConsulta', this)">
+                          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                          <span data-label>Fecha</span>
+                        </button>
+                        <button type="button" class="interconsulta-composer-tool interconsulta-composer-tool--secondary" title="Limpiar mensaje" onclick="limpiarcamposMensaje()">
+                          <i class="fa-solid fa-eraser" aria-hidden="true"></i>
+                          <span>Limpiar</span>
+                        </button>
+                        <button type="button" id="btnDictamenContenidoAbmMensaje" class="interconsulta-composer-tool interconsulta-composer-tool--dictamen" onclick="verificarCamposDictamen()">
+                          <i class="fa-solid fa-file-signature" aria-hidden="true"></i>
+                          <span>Emitir dictamen</span>
+                        </button>
+                        <select id="dictamenAbmMensaje" style="display: none;"></select>
+                      </div>
+                      <div class="interconsulta-composer-meta collapse" id="opcionesFechaMensajeInterConsulta">
+                        <label for="inptFechaAbmMensaje">Fecha/hora del mensaje</label>
                         <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26">
                       </div>
                   </div>
@@ -7217,26 +7231,14 @@ style='background-color:#5bc572'>
                   </div>
                   <div class="card-body">
                       <div id="editorMensajeInterConsulta">
-                        <button type="button" class="interconsulta-attach-action" title="Adjuntar archivo o imagen" onclick="vercerrarcargadefotos('fotoAnexoInterchat')">
+                        <button type="button" class="interconsulta-attach-action" title="Adjuntar archivo o imagen" aria-label="Adjuntar archivo o imagen" onclick="vercerrarcargadefotos('fotoAnexoInterchat')">
                           <span id="imgfotoAnexoInterchat" class="imgFotoProducto"></span>
-                          <strong>Adjuntar</strong>
+                          <span class="interconsulta-attach-action__text">Adjuntar</span>
                         </button>
                         <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" data-placeholder="Escribir respuesta..."></p>
                         <div id="accionesMensajeInterConsulta">
                           <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
                           <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()">
-                          <input type="button" value="Limpiar" class="btn1" onclick="limpiarcamposMensaje()">
-                        </div>
-                      </div>
-                      <div class="interconsulta-admin-action">
-                        <div>
-                          <span class="interconsulta-composer-label">Acci&oacute;n administrativa</span>
-                          <strong>Dictamen / Resoluci&oacute;n</strong>
-                        </div>
-                        <div class="interconsulta-admin-action__controls">
-                          <label for="dictamenAbmMensaje" style="display: none;">Dictamen base</label>
-                          <select id="dictamenAbmMensaje" style="display: none;"></select>
-                          <input id="btnDictamenContenidoAbmMensaje" type="button" value="Emitir dictamen" class="btn1" onclick="verificarCamposDictamen()">
                         </div>
                       </div>
                   </div>

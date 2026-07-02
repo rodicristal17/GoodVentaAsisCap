@@ -569,7 +569,10 @@ function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
     const vinculado= Number(datosHilo.cantAsociadoGastos || 0) > 0 || (codVentaFK != "" && codVentaFK != "0");
     const tieneDictamen= String(opcionesDictamen || "").trim() != "";
 
-    document.getElementById("tituloInterConsultas").textContent= "Hilo #" + codigo + " — " + asunto;
+    const tituloDetalleHilo= "Hilo #" + codigo + " " + String.fromCharCode(8212) + " " + asunto;
+    const tituloDetalle= document.getElementById("tituloInterConsultas");
+    tituloDetalle.textContent= tituloDetalleHilo;
+    tituloDetalle.title= tituloDetalleHilo;
     document.getElementById("tituloInterConsultas2").textContent= asunto;
     document.getElementById("txtUsuarioCreadorInterConsulta").textContent= textoDetalleHilo(datosHilo.nombre_persona_creador, "Sin creador");
     document.getElementById("txtFechaCreadorInterConsulta").textContent= textoDetalleHilo(datosHilo.fecha_creacion, "Sin fecha");
@@ -676,6 +679,80 @@ function inicializarLecturaEditorInterConsulta() {
     }
 }
 
+function actualizarContadorMensajeInterConsulta() {
+    const editorMensaje= document.getElementById("inptContenidoAbmMensaje");
+    const contador= document.getElementById("limiteCaracteresMensajeInterconsulta");
+    if (!editorMensaje || !contador) {
+        return;
+    }
+
+    contador.innerText= editorMensaje.textContent.length;
+}
+
+function ajustarAlturaEditorMensajeInterConsulta() {
+    const editorMensaje= document.getElementById("inptContenidoAbmMensaje");
+    if (!editorMensaje) {
+        return;
+    }
+
+    const alturaMinima= 44;
+    const alturaMaxima= 112;
+    editorMensaje.style.height= alturaMinima + "px";
+
+    const alturaContenido= editorMensaje.scrollHeight;
+    const alturaFinal= Math.min(Math.max(alturaContenido, alturaMinima), alturaMaxima);
+    editorMensaje.style.height= alturaFinal + "px";
+    editorMensaje.style.overflowY= alturaContenido > alturaMaxima ? "auto" : "hidden";
+    actualizarContadorMensajeInterConsulta();
+}
+
+function inicializarComposerMensajeInterConsulta() {
+    const editorMensaje= document.getElementById("inptContenidoAbmMensaje");
+    if (!editorMensaje) {
+        return;
+    }
+
+    if (!editorMensaje.dataset.composerInterconsultaInicializada) {
+        editorMensaje.dataset.composerInterconsultaInicializada= "1";
+        editorMensaje.addEventListener("input", ajustarAlturaEditorMensajeInterConsulta);
+        editorMensaje.addEventListener("keyup", ajustarAlturaEditorMensajeInterConsulta);
+        editorMensaje.addEventListener("paste", function() {
+            setTimeout(ajustarAlturaEditorMensajeInterConsulta, 0);
+        });
+    }
+
+    ajustarAlturaEditorMensajeInterConsulta();
+}
+
+function alternarOpcionesComposerInterConsulta(idPanel, boton) {
+    const panel= document.getElementById(idPanel);
+    if (!panel) {
+        return;
+    }
+
+    const seAbrira= !panel.classList.contains("show");
+    if (typeof bootstrap !== "undefined" && bootstrap.Collapse) {
+        const instancia= bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false });
+        if (seAbrira) {
+            instancia.show();
+        } else {
+            instancia.hide();
+        }
+    } else {
+        panel.classList.toggle("show", seAbrira);
+    }
+
+    if (boton) {
+        const textoAbrir= boton.getAttribute("data-text-open") || "Ver opciones";
+        const textoCerrar= boton.getAttribute("data-text-close") || "Ocultar opciones";
+        const etiqueta= boton.querySelector("[data-label]");
+        if (etiqueta) {
+            etiqueta.textContent= seAbrira ? textoCerrar : textoAbrir;
+        }
+        boton.setAttribute("aria-expanded", seAbrira ? "true" : "false");
+    }
+}
+
 function manejarBusquedaGlobalInterConsulta(event) {
     if (event && event.keyCode == 13) {
         if (temporizadorBusquedaGlobalInterConsulta) {
@@ -699,6 +776,7 @@ document.addEventListener("DOMContentLoaded", function() {
     sincronizarOpcionesRapidasInterConsulta();
     actualizarChipActivoInterConsulta();
     inicializarLecturaEditorInterConsulta();
+    inicializarComposerMensajeInterConsulta();
 });
 window.addEventListener("load", function() {
     actualizarTabsCategoriaHilosInterConsulta();
@@ -706,6 +784,7 @@ window.addEventListener("load", function() {
     sincronizarOpcionesRapidasInterConsulta();
     actualizarChipActivoInterConsulta();
     inicializarLecturaEditorInterConsulta();
+    inicializarComposerMensajeInterConsulta();
 });
 
 function buscarPacientesConInterConsultas() {
@@ -1570,6 +1649,7 @@ function limpiarcamposMensaje() {
 
     contadorLongitudMensaje= 0;
     document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
+    ajustarAlturaEditorMensajeInterConsulta();
 
     // Limpiar campos dictamen
     document.getElementById('dictamenAbmMensaje').value= "";
@@ -1666,6 +1746,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "none";
     
     document.getElementById('tituloInterConsultas').innerHTML= 'Cargando...';
+    document.getElementById('tituloInterConsultas').title= 'Cargando...';
     document.getElementById('tituloInterConsultas2').innerHTML= 'Cargando...';
     document.getElementById('listadoMencionados').innerHTML= '';
     actualizarAvatarStackDetalleHilo();
@@ -1853,6 +1934,34 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
             }
         }
     });
+}
+
+function alternarPanelDictamenInterConsulta(idPanel, boton) {
+    const panel = document.getElementById(idPanel);
+    if (!panel || typeof bootstrap === "undefined" || !bootstrap.Collapse) {
+        return;
+    }
+
+    const seAbrira = !panel.classList.contains("show");
+    const instancia = bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false });
+    const textoAbrir = boton ? (boton.getAttribute("data-text-open") || "Ver detalle") : "Ver detalle";
+    const textoCerrar = boton ? (boton.getAttribute("data-text-close") || "Ocultar detalle") : "Ocultar detalle";
+
+    if (seAbrira) {
+        instancia.show();
+    } else {
+        instancia.hide();
+    }
+
+    if (boton) {
+        const etiqueta = boton.querySelector("[data-label]");
+        if (etiqueta) {
+            etiqueta.textContent = seAbrira ? textoCerrar : textoAbrir;
+        } else {
+            boton.textContent = seAbrira ? textoCerrar : textoAbrir;
+        }
+        boton.setAttribute("aria-expanded", seAbrira ? "true" : "false");
+    }
 }
 
 function verMasMensajesInterconsulta(offset, cod_dictamen) {

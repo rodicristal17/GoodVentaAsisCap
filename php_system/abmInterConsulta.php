@@ -537,6 +537,160 @@ function convertirTextoDocumentoInterconsulta($texto) {
     return nl2br(escaparHtmlInterconsulta($texto), false);
 }
 
+function obtenerResumenDictamenInterconsulta($texto, $limite = 220) {
+    $texto = trim(strip_tags(html_entity_decode((string)(isset($texto) ? $texto : ''), ENT_QUOTES, 'UTF-8')));
+    $texto = preg_replace('/\s+/', ' ', $texto);
+
+    if ($texto === '') {
+        return 'Sin contenido cargado.';
+    }
+
+    if (function_exists('mb_strlen')) {
+        if (mb_strlen($texto, 'UTF-8') > $limite) {
+            return mb_substr($texto, 0, $limite, 'UTF-8').'...';
+        }
+    } else if (strlen($texto) > $limite) {
+        return substr($texto, 0, $limite).'...';
+    }
+
+    return $texto;
+}
+
+function obtenerNombreMesInterconsulta($numeroMes) {
+    $meses = array(
+        1 => 'enero',
+        2 => 'febrero',
+        3 => 'marzo',
+        4 => 'abril',
+        5 => 'mayo',
+        6 => 'junio',
+        7 => 'julio',
+        8 => 'agosto',
+        9 => 'septiembre',
+        10 => 'octubre',
+        11 => 'noviembre',
+        12 => 'diciembre'
+    );
+
+    $numeroMes = intval($numeroMes);
+    return isset($meses[$numeroMes]) ? $meses[$numeroMes] : '';
+}
+
+function obtenerNombreDiaInterconsulta($numeroDia) {
+    $dias = array(
+        1 => 'lunes',
+        2 => 'martes',
+        3 => 'miercoles',
+        4 => 'jueves',
+        5 => 'viernes',
+        6 => 'sabado',
+        7 => 'domingo'
+    );
+
+    $numeroDia = intval($numeroDia);
+    return isset($dias[$numeroDia]) ? $dias[$numeroDia] : '';
+}
+
+function obtenerFechaObjetoInterconsulta($fecha) {
+    try {
+        return new DateTime((string)$fecha);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+function obtenerEtiquetaDiaInterconsulta($fechaObj) {
+    $hoy = new DateTime('today');
+    $ayer = new DateTime('yesterday');
+    $fechaDia = clone $fechaObj;
+    $fechaDia->setTime(0, 0, 0);
+
+    if ($fechaDia->format('Y-m-d') == $hoy->format('Y-m-d')) {
+        return 'Hoy';
+    }
+    if ($fechaDia->format('Y-m-d') == $ayer->format('Y-m-d')) {
+        return 'Ayer';
+    }
+
+    $diaSemana = obtenerNombreDiaInterconsulta($fechaObj->format('N'));
+    $mes = obtenerNombreMesInterconsulta($fechaObj->format('n'));
+
+    return ucfirst($diaSemana).' '.$fechaObj->format('d').' de '.$mes.' de '.$fechaObj->format('Y');
+}
+
+function obtenerSeparadoresCronologiaInterconsulta($fecha, &$mesActual, &$diaActual) {
+    $fechaObj = obtenerFechaObjetoInterconsulta($fecha);
+    if (!$fechaObj) {
+        return '';
+    }
+
+    $html = '';
+    $mesClave = $fechaObj->format('Y-m');
+    $diaClave = $fechaObj->format('Y-m-d');
+
+    if ($mesClave != $mesActual) {
+        $mesActual = $mesClave;
+        $mesTexto = strtoupper(obtenerNombreMesInterconsulta($fechaObj->format('n'))).' '.$fechaObj->format('Y');
+        $html .= '<div class="interconsulta-timeline-separator interconsulta-timeline-separator--month" data-periodo="'.$mesClave.'"><span>'.$mesTexto.'</span></div>';
+    }
+
+    if ($diaClave != $diaActual) {
+        $diaActual = $diaClave;
+        $html .= '<div class="interconsulta-timeline-separator interconsulta-timeline-separator--day" data-fecha="'.$diaClave.'"><span>'.escaparHtmlInterconsulta(obtenerEtiquetaDiaInterconsulta($fechaObj)).'</span></div>';
+    }
+
+    return $html;
+}
+
+function obtenerTextoPlanoInterconsulta($texto) {
+    $texto = str_replace(array('<br>', '<br/>', '<br />'), ' ', (string)$texto);
+    $texto = trim(strip_tags(html_entity_decode($texto, ENT_QUOTES, 'UTF-8')));
+    return preg_replace('/\s+/', ' ', $texto);
+}
+
+function obtenerTipoEventoSistemaInterconsulta($textoPlano) {
+    $texto = mb_strtolower((string)$textoPlano);
+
+    if (strpos($texto, 'rechazo') !== false || strpos($texto, 'rechaz') !== false) {
+        return array('clase' => 'danger', 'icono' => 'fa-circle-xmark');
+    }
+    if (strpos($texto, 'aprobo') !== false || strpos($texto, 'aprob') !== false) {
+        return array('clase' => 'success', 'icono' => 'fa-circle-check');
+    }
+    if (strpos($texto, 'programado') !== false) {
+        return array('clase' => 'warning', 'icono' => 'fa-clock');
+    }
+    if (strpos($texto, 'creo') !== false) {
+        return array('clase' => 'info', 'icono' => 'fa-circle-plus');
+    }
+    if (strpos($texto, 'modifico') !== false || strpos($texto, 'modific') !== false || strpos($texto, 'cambio') !== false || strpos($texto, 'cambi') !== false) {
+        return array('clase' => 'info', 'icono' => 'fa-pen-to-square');
+    }
+
+    return array('clase' => 'neutral', 'icono' => 'fa-circle-info');
+}
+
+function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzado = '') {
+    $textoPlano = obtenerTextoPlanoInterconsulta($contenido);
+    $evento = obtenerTipoEventoSistemaInterconsulta($textoPlano);
+    if ($iconoForzado !== '') {
+        $evento['icono'] = $iconoForzado;
+    }
+
+    $fechaObj = obtenerFechaObjetoInterconsulta($fecha);
+    $fechaCorta = $fechaObj ? $fechaObj->format('d/m/Y H:i') : $fecha;
+    $fechaDia = $fechaObj ? $fechaObj->format('Y-m-d') : '';
+    $titulo = escaparHtmlInterconsulta($textoPlano.' - '.$fechaCorta);
+
+    return '<div class="interconsulta-message-row interconsulta-message-row--system" data-fecha="'.$fechaDia.'">
+        <div class="interconsulta-system-event interconsulta-system-event--'.$evento['clase'].'" title="'.$titulo.'">
+            <i class="fa-solid '.$evento['icono'].'" aria-hidden="true"></i>
+            <span class="interconsulta-system-event__text">'.escaparHtmlInterconsulta($textoPlano).'</span>
+            <time>'.escaparHtmlInterconsulta($fechaCorta).'</time>
+        </div>
+    </div>';
+}
+
     function obtenerBotonMasMensajesInterconsulta($offset, $cod_dictamen = '') {
         $cod_dictamen = $cod_dictamen === null ? '' : (string)$cod_dictamen;
         $codDictamenJs = htmlspecialchars(json_encode($cod_dictamen), ENT_QUOTES, 'UTF-8');
@@ -690,119 +844,51 @@ function convertirTextoDocumentoInterconsulta($texto) {
                     'cod_dictamenFK' => $dictamen['id']
                 ));
                 $cantidadMensajesDictamen = count($registrosMens2);
+                $codDictamen = intval($dictamen['id']);
+                $idPanelResolucion = 'contenedorResolucionInterConsulta'.$codDictamen;
+                $idPanelMensajes = 'contenedorMensajesInterConsulta'.$codDictamen;
+                $asuntoDictamen = escaparHtmlInterconsulta($dictamen['asunto']);
+                $resumenDictamen = escaparHtmlInterconsulta(obtenerResumenDictamenInterconsulta($dictamen['dictamen'], 220));
+                $idDocumentoSeguro = escaparHtmlInterconsulta($idDocumento);
+                $nombreAutorSeguro = escaparHtmlInterconsulta($nombreAutor);
+                $fechaDictamenSeguro = escaparHtmlInterconsulta($fechaDictamen);
+                $urlAutorSeguro = escaparHtmlInterconsulta($urlAutor);
+                $estadoDictamenSeguro = escaparHtmlInterconsulta($estadoDictamen);
+                $textoCantidadMensajes = $cantidadMensajesDictamen.' mensaje'.($cantidadMensajesDictamen == 1 ? '' : 's');
 
                 $pagina .= '<section class="interc-dictamen-card interconsulta-resolution-card">
-                    <div class="card-header interc-dictamen-toggle" type="button" onClick="mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\')" style="
-                        background: linear-gradient(180deg, #f6f0df 0%, #efe5cf 100%);
-                        border: 1px solid #d8ccb2;
-                        border-radius: 12px 12px 0 0;
-                        padding: 0;
-                        overflow: hidden;
-                        cursor: pointer;
-                        display: block;
-                        box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
-                    ">
-                        <div style="
-                            display: flex;
-                            align-items: stretch;
-                            justify-content: space-between;
-                            flex-wrap: wrap;
-                            border-bottom: 1px solid #d9ceb6;
-                            background: rgba(255,255,255,0.25);
-                        ">
-                            <div style="
-                                display: flex;
-                                align-items: center;
-                                gap: 14px;
-                                padding: 14px 18px;
-                                flex: 1 1 360px;
-                            ">
-                                <div style="
-                                    font-size: 18px;
-                                    font-weight: 800;
-                                    color: #1f5f96;
-                                    letter-spacing: 0.4px;
-                                    white-space: nowrap;
-                                ">Resoluci&oacute;n administrativa &middot; NRO: '.$dictamen['id'].'</div>
-                                <div style="
-                                    width: 1px;
-                                    align-self: stretch;
-                                    background-color: #d7ccb7;
-                                "></div>
-                                <div style="
-                                    font-size: 16px;
-                                    font-weight: 700;
-                                    color: #4d4a43;
-                                    letter-spacing: 0.2px;
-                                ">Documento: '.$idDocumento.'</div>
+                    <article class="interc-dictamen-compact">
+                        <div class="interc-dictamen-compact__head">
+                            <div class="interc-dictamen-compact__icon" aria-hidden="true">
+                                <i class="fa-solid fa-file-signature"></i>
                             </div>
-                            <div style="
-                                display: flex;
-                                align-items: center;
-                                text-align: end;
-                                gap: 12px;
-                                padding: 5px 18px;
-                                border-left: 1px solid #d9ceb6;
-                                justify-content: flex-end;
-                                background: rgba(255,255,255,0.18);
-                            ">
-                                <img src="'.$urlAutor.'" alt="Foto de '.$nombreAutor.'" style="
-                                    width: 44px;
-                                    height: 44px;
-                                    border-radius: 8px;
-                                    object-fit: cover;
-                                    background: #d8d8d8;
-                                    border: 1px solid rgba(0,0,0,0.08);
-                                    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-                                ">
-                                <div>
-                                    <div style="
-                                        font-size: 16px;
-                                        font-weight: 700;
-                                        color: #2b2b2b;
-                                        line-height: 1.1;
-                                        width: fit-content;
-                                    ">'.$nombreAutor.'</div>
-                                    <div style="
-                                        font-size: 12px;
-                                        color: #6a6358;
-                                        margin-top: 4px;
-                                        width: fit-content;
-                                    ">'.$fechaDictamen.'</div>
+                            <div class="interc-dictamen-compact__content">
+                                <div class="interc-dictamen-compact__kicker">
+                                    <span>Resoluci&oacute;n administrativa</span>
+                                    <span>Documento '.$idDocumentoSeguro.'</span>
+                                </div>
+                                <h4 class="interc-dictamen-compact__title">'.$asuntoDictamen.'</h4>
+                                <div class="interc-dictamen-compact__meta">
+                                    <span><strong>Responsable:</strong> '.$nombreAutorSeguro.'</span>
+                                    <span><strong>Emitido:</strong> '.$fechaDictamenSeguro.'</span>
+                                    <span><strong>Basado en:</strong> '.$textoCantidadMensajes.'</span>
                                 </div>
                             </div>
+                            <img class="interc-dictamen-compact__avatar" src="'.$urlAutorSeguro.'" alt="Foto de '.$nombreAutorSeguro.'">
                         </div>
-                        <div style="
-                            padding: 0px 5px 0px 5px;
-                            color: #2d2a24;
-                            text-align: start;
-                            background: linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.08) 100%);
-                        ">
-                            <div style="
-                                font-size: 15px;
-                                margin-bottom: 6px;
-                                line-height: 1.35;
-                            ">
-                                <span style="font-weight: 800; color: #2f2a20;">Asunto:</span>
-                                <span>'.$dictamen['asunto'].'</span>
-                            </div>
-                            <div style="
-                                font-size: 15px;
-                                line-height: 1.4;
-                            ">
-                                <span style="font-weight: 800; color: #2f2a20;">Resoluci&oacute;n emitida:</span>
-                                <span>'.$dictamen['dictamen'].'</span>
-                            </div>
-                            <div class="interc-dictamen-origin">
-                                <span>Basado en: '.$cantidadMensajesDictamen.' mensaje'.($cantidadMensajesDictamen == 1 ? '' : 's').' del hilo</span>
-                            </div>
-                        </div>
+                        <p class="interc-dictamen-compact__excerpt">'.$resumenDictamen.'</p>
                         <div class="interc-dictamen-actions">
-                            <span class="interc-dictamen-status-badge interc-dictamen-status-badge--'.$estadoDictamenClase.'" title="Estado administrativo del dictamen">Estado: '.$estadoDictamen.'</span>
-                            <button type="button" class="interc-dictamen-action-btn" onclick="event.stopPropagation();mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\');">Ver resoluci&oacute;n</button>
-                            <button type="button" class="interc-dictamen-action-btn" onclick="event.stopPropagation();mostrarItems(\'contenedorMensajesInterConsulta'.$dictamen['id'].'\');">Ver mensajes relacionados</button>
+                            <span class="interc-dictamen-status-badge interc-dictamen-status-badge--'.$estadoDictamenClase.'" title="Estado administrativo del dictamen">Estado: '.$estadoDictamenSeguro.'</span>
+                            <button type="button" class="interc-dictamen-action-btn" aria-expanded="false" aria-controls="'.$idPanelResolucion.'" data-text-open="Ver resoluci&oacute;n" data-text-close="Ocultar resoluci&oacute;n" onclick="event.stopPropagation();alternarPanelDictamenInterConsulta(\''.$idPanelResolucion.'\', this);">
+                                <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+                                <span data-label>Ver resoluci&oacute;n</span>
+                            </button>
+                            <button type="button" class="interc-dictamen-action-btn" aria-expanded="false" aria-controls="'.$idPanelMensajes.'" data-text-open="Ver mensajes relacionados" data-text-close="Ocultar mensajes" onclick="event.stopPropagation();alternarPanelDictamenInterConsulta(\''.$idPanelMensajes.'\', this);">
+                                <i class="fa-solid fa-comments" aria-hidden="true"></i>
+                                <span data-label>Ver mensajes relacionados</span>
+                            </button>
                         </div>
-                    </div>';
+                    </article>';
                 
                 $paginaMensajes= obtenerVistaTarjetaInterConsuta(array(
                     'cod_interConsultaFK' => $valueInter['cod_interConsulta'],
@@ -816,19 +902,22 @@ function convertirTextoDocumentoInterconsulta($texto) {
                     'cod_dictamenFK' => $dictamen['id']
                 ));
 
-                $pagina .= '<div id="contenedorMensajesInterConsulta'.$dictamen['id'].'" class="collapse show interc-dictamen-body" data-total-mensajes="'.count($registrosMens2).'">
-                    <div class="interc-dictamen-layout">
-                        <div class="interc-dictamen-chat-pane" data-role="dictamen-chat-panel" style="height: 500px;overflow-y: auto;">';
+                $pagina .= '<div id="'.$idPanelResolucion.'" class="collapse interc-dictamen-body interc-dictamen-body--document">
+                    <div class="interc-dictamen-layout interc-dictamen-layout--document">
+                        <div class="interc-dictamen-preview-pane">'
+                            .obtenerVistaDocumentoDictamenInterconsulta($dictamen, $valueInter, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor).
+                        '</div>
+                    </div>
+                </div>';
+
+                $pagina .= '<div id="'.$idPanelMensajes.'" class="collapse interc-dictamen-body interc-dictamen-body--messages" data-total-mensajes="'.count($registrosMens2).'">
+                    <div class="interc-dictamen-chat-pane" data-role="dictamen-chat-panel">';
                 
                 if (count($registrosMens2) > $limiteMensajes) {
                     $pagina .= obtenerBotonMasMensajesInterconsulta($limiteMensajes, $dictamen['id']);
                 }
 
                 $pagina .= '<div data-role="dictamen-mensajes">'.$paginaMensajes.'</div>
-                        </div>
-                        <div class="interc-dictamen-preview-pane">'
-                            .obtenerVistaDocumentoDictamenInterconsulta($dictamen, $valueInter, $idDocumento, $nombreAutor, $fechaDictamen, $estadoDictamen, $estadoColor).
-                        '</div>
                     </div>
                 </div></section>';
             }
@@ -846,14 +935,12 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 "estado" => 'activo'
             ));
 
+            $mesActualProgramados = '';
+            $diaActualProgramados = '';
             foreach ($registrosMens2 as $valueMens) {
-                $paginaMensajes .= '<div class="interconsulta-message-row interconsulta-message-row--system">
-                    <div class="interconsulta-system-event">
-                        <span style="display: none;">'.$valueMens['cod_mensaje'].'</span>
-                        <i class="fa-solid fa-clock"></i>
-                        <p>Mensaje programado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'por el sistema').' para el '.$valueMens['fecha_creacion'].'</p>
-                    </div>
-                </div>';
+                $textoProgramado = 'Mensaje programado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'por el sistema').' para el '.$valueMens['fecha_creacion'];
+                $paginaMensajes .= obtenerSeparadoresCronologiaInterconsulta($valueMens['fecha_creacion'], $mesActualProgramados, $diaActualProgramados);
+                $paginaMensajes .= obtenerVistaEventoSistemaInterconsulta($textoProgramado, $valueMens['fecha_creacion'], 'fa-clock');
             }
             
             $pagina .= '<div id="contenedorMensajesInterConsulta" class="collapse show" data-total-mensajes="'.count($registrosMens).'">
@@ -1092,7 +1179,10 @@ function convertirTextoDocumentoInterconsulta($texto) {
                 "cod_dictamenFK" => isset($filtros['cod_dictamenFK']) ? $filtros['cod_dictamenFK'] : NULL,
                 "sin_dictamen" => isset($filtros['sin_dictamen']) ? $filtros['sin_dictamen'] : NULL,
             ), $limite);
+        $mesActualTimeline = '';
+        $diaActualTimeline = '';
         foreach ($regMensaje as $key => $valueMens) {
+            $paginaMensajes .= obtenerSeparadoresCronologiaInterconsulta($valueMens['fecha_creacion'], $mesActualTimeline, $diaActualTimeline);
             $posicion= 'flex-start';
             $colorTarjeta="#e53935";
             
@@ -1129,20 +1219,20 @@ function convertirTextoDocumentoInterconsulta($texto) {
             $contenidoPlano= mb_strtolower(strip_tags($contenidoMensaje));
             $esEventoSistema= (!$valueMens['cod_usuarioFK'] || $valueMens['cod_usuarioFK'] == "NULL")
                 || strpos($contenidoPlano, ' modifico') !== false
+                || strpos($contenidoPlano, 'modifico') !== false
+                || strpos($contenidoPlano, 'decidio') !== false
+                || strpos($contenidoPlano, 'aprobo') !== false
+                || strpos($contenidoPlano, 'rechazo') !== false
+                || strpos($contenidoPlano, 'creo un nuevo movimiento') !== false
                 || strpos($contenidoPlano, 'fueron unidas') !== false
                 || strpos($contenidoPlano, 'solicito el acceso') !== false;
 
             if ($esEventoSistema) {
-                $paginaMensajes .= '<div class="interconsulta-message-row interconsulta-message-row--system">
-                    <div class="interconsulta-system-event">
-                        <i class="fa-solid fa-circle-info"></i>
-                        <p>'.$contenidoMensaje.'</p>
-                        <time>'.$valueMens['fecha_creacion'].'</time>
-                    </div>
-                </div>';
+                $paginaMensajes .= obtenerVistaEventoSistemaInterconsulta($contenidoMensaje, $valueMens['fecha_creacion']);
             } else {
                 $claseMensajePropio= ($posicion == 'flex-end') ? ' interconsulta-message-row--own' : '';
-                $paginaMensajes .= '<div class="interconsulta-message-row'.$claseMensajePropio.'">
+                $fechaDiaMensaje = substr($valueMens['fecha_creacion'], 0, 10);
+                $paginaMensajes .= '<div class="interconsulta-message-row'.$claseMensajePropio.'" data-fecha="'.$fechaDiaMensaje.'">
                     <article class="interconsulta-message-card">
                         <header class="interconsulta-message-header">
                             <div class="interconsulta-message-author">
