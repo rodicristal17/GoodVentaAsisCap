@@ -1729,6 +1729,104 @@ function subirImagenMensajeInterconsulta(cod_mens) {
 	});
 }
 
+function obtenerCuerpoDetalleInterConsulta() {
+    return document.querySelector("#divAbmDetallesInterConsulta .interconsulta-detail-modal > .divMenuf");
+}
+
+function ejecutarDespuesRenderInterConsulta(callback) {
+    if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(callback);
+        return;
+    }
+
+    setTimeout(callback, 0);
+}
+
+function obtenerScrollLecturaInterConsulta(contenedor) {
+    if (!contenedor) {
+        return obtenerCuerpoDetalleInterConsulta();
+    }
+
+    if (contenedor.id == "table_abm_InterConsulta") {
+        return obtenerCuerpoDetalleInterConsulta() || contenedor;
+    }
+
+    const panelDirecto= contenedor.matches && contenedor.matches('[data-role="dictamen-chat-panel"]') ? contenedor : null;
+    const panelMensajes= panelDirecto || contenedor.querySelector('[data-role="dictamen-chat-panel"]');
+    if (panelMensajes) {
+        const estiloPanel= window.getComputedStyle ? window.getComputedStyle(panelMensajes) : null;
+        const panelTieneScroll= panelMensajes.scrollHeight > panelMensajes.clientHeight;
+        const panelPuedeScroll= !estiloPanel || estiloPanel.overflowY == "auto" || estiloPanel.overflowY == "scroll";
+        if (panelTieneScroll && panelPuedeScroll) {
+            return panelMensajes;
+        }
+    }
+
+    return obtenerCuerpoDetalleInterConsulta() || contenedor;
+}
+
+function obtenerUltimoMensajeInterConsulta(contenedor) {
+    if (!contenedor) {
+        return null;
+    }
+
+    const mensajes= contenedor.querySelectorAll(".interconsulta-message-row, .interconsulta-resolution-card");
+    if (!mensajes.length) {
+        return null;
+    }
+
+    return mensajes[mensajes.length - 1];
+}
+
+function desplazarAlUltimoMensajeInterConsulta(contenedor, suave= false) {
+    const ultimoMensaje= obtenerUltimoMensajeInterConsulta(contenedor);
+    if (!ultimoMensaje) {
+        return;
+    }
+
+    const scrollLectura= obtenerScrollLecturaInterConsulta(contenedor);
+    const esPanelInterno= scrollLectura && contenedor && contenedor.contains(scrollLectura);
+    if (esPanelInterno) {
+        scrollLectura.scrollTop= scrollLectura.scrollHeight;
+        return;
+    }
+
+    if (typeof ultimoMensaje.scrollIntoView == "function") {
+        ultimoMensaje.scrollIntoView({
+            block: "end",
+            behavior: suave ? "smooth" : "auto"
+        });
+    }
+}
+
+function posicionarMensajesRecientesInterConsulta(suave= false) {
+    const timeline= document.getElementById("table_abm_InterConsulta");
+    if (!timeline) {
+        return;
+    }
+
+    timeline.querySelectorAll(".interc-dictamen-chat-pane[data-role='dictamen-chat-panel']").forEach(function(panel) {
+        desplazarAlUltimoMensajeInterConsulta(panel, suave);
+    });
+
+    desplazarAlUltimoMensajeInterConsulta(timeline, suave);
+}
+
+function irUltimoMensajeInterConsulta() {
+    posicionarMensajesRecientesInterConsulta(true);
+}
+
+function preservarScrollCargaAnteriorInterConsulta(scrollLectura, altoAnterior, scrollAnterior) {
+    if (!scrollLectura) {
+        return;
+    }
+
+    ejecutarDespuesRenderInterConsulta(function() {
+        const diferenciaAlto= scrollLectura.scrollHeight - altoAnterior;
+        scrollLectura.scrollTop= scrollAnterior + diferenciaAlto;
+    });
+}
+
 var totalRegistroMensaje= 0;
 function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     obtener_datos_user();
@@ -1844,6 +1942,10 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 
                     document.getElementById("table_abm_InterConsulta").innerHTML= datos["2"];
                     totalRegistroMensaje = datos["5"];
+
+                    ejecutarDespuesRenderInterConsulta(function() {
+                        posicionarMensajesRecientesInterConsulta(false);
+                    });
 
                     // Carga diferida de secciones pesadas para acelerar el primer render.
                     cargarFlujoGastosInterConsulta(codInterConsulta);
@@ -2022,6 +2124,9 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                         throw new Error("No se encontró el contenedor de mensajes.");
                     }
 
+                    const scrollLectura= obtenerScrollLecturaInterConsulta(elemContenedor);
+                    const altoAnterior= scrollLectura ? scrollLectura.scrollHeight : 0;
+                    const scrollAnterior= scrollLectura ? scrollLectura.scrollTop : 0;
                     const panelMensajes = elemContenedor.querySelector('[data-role="dictamen-chat-panel"]') || elemContenedor;
                     const listaMensajes = elemContenedor.querySelector('[data-role="dictamen-mensajes"]');
                     const botonExistente = elemContenedor.querySelector('[data-role="dictamen-boton-mas"]');
@@ -2047,6 +2152,7 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                     } else {
                         elemContenedor.innerHTML = btnMasMensajes + datos["2"] + elemContenedor.innerHTML;
                     }
+                    preservarScrollCargaAnteriorInterConsulta(scrollLectura, altoAnterior, scrollAnterior);
 				} else {
                     throw new Error("Error producido en buscarMasInterConsultas de JavaScript.");
                 }

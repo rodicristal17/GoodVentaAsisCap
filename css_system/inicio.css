@@ -12343,10 +12343,51 @@ text-align: justify;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 12px 14px;
   border-bottom: 1px solid #e5edf4;
   border-radius: 14px 14px 0 0;
   background: #ffffff;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-section-head__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-jump-latest {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #b9dfeb;
+  border-radius: 999px;
+  background: #eef9fc;
+  color: #147d9a;
+  padding: 6px 11px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-jump-latest:hover,
+#divAbmDetallesInterConsulta .interconsulta-jump-latest:focus-visible {
+  border-color: #2ea3c0;
+  background: #e1f5fa;
+  color: #0f6279;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-section-head .interconsulta-jump-latest span {
+  display: inline;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1;
+  text-transform: none;
 }
 
 #divAbmDetallesInterConsulta .interconsulta-section-head span {
@@ -13243,6 +13284,16 @@ text-align: justify;
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
+  }
+
+  #divAbmDetallesInterConsulta .interconsulta-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #divAbmDetallesInterConsulta .interconsulta-section-head__actions,
+  #divAbmDetallesInterConsulta .interconsulta-jump-latest {
+    width: 100%;
   }
 
   #divAbmDetallesInterConsulta .interconsulta-avatar-stack {
