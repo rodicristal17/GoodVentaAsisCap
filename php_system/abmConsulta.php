@@ -254,6 +254,15 @@ if($operacion=="moverItemPlanDefinitivo")
 	moverItemPlanDefinitivoConsulta($plan_id,$item_id,$direccion,$motivo,$user);
 }
 
+if($operacion=="guardarOrdenPlanDefinitivo")
+{
+	$plan_id=$_POST['plan_id'];
+    $plan_id = mb_convert_encoding((string)($plan_id), 'ISO-8859-1', 'UTF-8');
+	$orden_ids=isset($_POST['orden_ids']) ? mb_convert_encoding((string)($_POST['orden_ids']), 'ISO-8859-1', 'UTF-8') : "";
+	$motivo=isset($_POST['motivo']) ? mb_convert_encoding((string)($_POST['motivo']), 'ISO-8859-1', 'UTF-8') : "";
+	guardarOrdenPlanDefinitivoConsulta($plan_id,$orden_ids,$motivo,$user);
+}
+
 if($operacion=="actualizarObservacionItemPlanDefinitivo")
 {
 	$plan_id=$_POST['plan_id'];
@@ -3558,7 +3567,7 @@ function obtenerItemsPlanDefinitivoConsulta($mysqli,$plan_id)
 		LEFT JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
 		WHERE i.plan_definitivo_id = ? AND i.activo = 1
 		".ProductoClinicoWhereSqlConsulta("pr")."
-		ORDER BY nivel_riesgo_financiero ASC, i.orden ASC, i.id ASC";
+		ORDER BY i.orden ASC, i.id ASC";
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt) { return array(); }
 	$stmt->bind_param("s", $plan_id);
@@ -3633,7 +3642,7 @@ function renderizarItemPlanDefinitivoConsulta($item,$numero,$plan_id,$editable)
 		: "";
 
 	return "
-<article class='plan-definitivo-item plan-ruta-item plan-definitivo-item--".$estadoClase.$editableClass.$finalizadoClass."' role='listitem' onclick='obtenerDatosPlanDefinitivoTratamientoConsulta(this)' data-plan-id='".$planId."' data-plan-item='".$itemId."' data-plan-numero='".$numero."' data-detalle-odontograma='".$detalleOdontograma."' data-detalle-tratamiento='".$detalleOdontograma."' data-tratamiento-venta='".$venta."' data-tratamiento-venta-visible='".$ventaVisibleHtml."' data-tratamiento-origen='".$origenHtml."' data-tratamiento-riesgo='".$riesgoValor."' data-tratamiento-riesgo-texto='".htmlspecialchars($riesgoTexto, ENT_QUOTES, "UTF-8")."' data-tratamiento-nombre='".$nombreHtml."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."' data-observacion='".htmlspecialchars($observacion, ENT_QUOTES, "UTF-8")."'>
+<article class='plan-definitivo-item plan-ruta-item plan-definitivo-item--".$estadoClase.$editableClass.$finalizadoClass."' role='listitem' onclick='obtenerDatosPlanDefinitivoTratamientoConsulta(event,this)' data-plan-id='".$planId."' data-plan-item='".$itemId."' data-plan-numero='".$numero."' data-detalle-odontograma='".$detalleOdontograma."' data-detalle-tratamiento='".$detalleOdontograma."' data-tratamiento-venta='".$venta."' data-tratamiento-venta-visible='".$ventaVisibleHtml."' data-tratamiento-origen='".$origenHtml."' data-tratamiento-riesgo='".$riesgoValor."' data-tratamiento-riesgo-texto='".htmlspecialchars($riesgoTexto, ENT_QUOTES, "UTF-8")."' data-tratamiento-nombre='".$nombreHtml."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."' data-observacion='".htmlspecialchars($observacion, ENT_QUOTES, "UTF-8")."'>
 	<div class='plan-ruta-nodo' title='".$nodoTitulo."'><span>".$nodoTexto."</span></div>
 	<div class='plan-definitivo-item__body'>
 		<div class='plan-definitivo-item__top'>
@@ -3652,10 +3661,10 @@ function renderizarItemPlanDefinitivoConsulta($item,$numero,$plan_id,$editable)
 		".$observacionHtml."
 	</div>
 	<div class='plan-definitivo-item__actions plan-definitivo-edit-only'>
-		<button type='button' class='plan-definitivo-icon-btn' title='Subir' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",-1)'>&uarr;</button>
-		<button type='button' class='plan-definitivo-icon-btn' title='Bajar' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",1)'>&darr;</button>
-		<button type='button' class='plan-definitivo-icon-btn' title='Editar observacion' onclick='editarObservacionItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\")'>&hellip;</button>
-		<button type='button' class='plan-definitivo-icon-btn plan-definitivo-icon-btn--remove' title='Quitar de esta ruta' onclick='quitarItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\")'>x</button>
+		<button type='button' class='plan-definitivo-icon-btn plan-definitivo-order-btn' title='Subir' onpointerdown='event.stopPropagation()' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",-1)'>&uarr;</button>
+		<button type='button' class='plan-definitivo-icon-btn plan-definitivo-order-btn' title='Bajar' onpointerdown='event.stopPropagation()' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",1)'>&darr;</button>
+		<button type='button' class='plan-definitivo-icon-btn' title='Editar observacion' onpointerdown='event.stopPropagation()' onclick='editarObservacionItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\")'>&hellip;</button>
+		<button type='button' class='plan-definitivo-icon-btn plan-definitivo-icon-btn--remove' title='Quitar de esta ruta' onpointerdown='event.stopPropagation()' onclick='quitarItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\")'>x</button>
 	</div>
 </article>";
 }
@@ -3765,10 +3774,11 @@ function renderizarPlanDefinitivoConsulta($mysqli,$cod_venta,$tratamientosSugeri
 	if ($estado == "definido" || $estado == "modificado") {
 		$accionesLectura = "<button type='button' class='plan-definitivo-secondary plan-definitivo-readonly-action' onclick='editarPlanDefinitivoConsulta(\"".$planId."\")'>Editar ruta</button>";
 	}
-	$textoGuardar = $estado == "borrador" ? "Guardar borrador" : "Guardar cambios";
 	$accionConfirmar = $estado == "borrador"
 		? "<button type='button' class='plan-definitivo-primary plan-definitivo-edit-only' onclick='confirmarPlanDefinitivoConsulta(\"".$planId."\")'>Confirmar plan</button>"
 		: "";
+	$botonConfirmarOrden = "<button type='button' class='plan-definitivo-primary plan-definitivo-edit-only plan-definitivo-save-order-btn' onclick='guardarOrdenPlanDefinitivoConsulta(\"".$planId."\")'>Confirmar orden</button>";
+	$botonCancelarEdicion = "<button type='button' class='plan-definitivo-secondary plan-definitivo-edit-only' onclick='cancelarEdicionOrdenPlanDefinitivoConsulta(\"".$planId."\")'>Cancelar edici&oacute;n</button>";
 	$fechaInicioPlan = obtenerFechaVentaBasePlanDefinitivoConsulta($mysqli,$plan["venta_base_id"]);
 	if ($fechaInicioPlan == "") {
 		$fechaInicioPlan = obtenerFechaVentaMasAntiguaItemsPlanConsulta($mysqli,$plan["id"]);
@@ -3796,9 +3806,14 @@ function renderizarPlanDefinitivoConsulta($mysqli,$cod_venta,$tratamientosSugeri
 		<span><strong>&Uacute;ltima actualizaci&oacute;n</strong>".htmlspecialchars($fechaActualizacion, ENT_QUOTES, "UTF-8")."</span>
 	</div>
 	<div class='plan-definitivo-context'>".$ayudaEstado."</div>
+	<div class='plan-definitivo-order-notice plan-definitivo-edit-only' data-order-notice='1'>
+		<strong>Orden en edici&oacute;n</strong>
+		<span>Us&aacute; las flechas para acomodar la ruta. El historial se registra al presionar Confirmar orden.</span>
+	</div>
 	<div class='plan-definitivo-actions'>
 		".$accionesLectura."
-		<button type='button' class='plan-definitivo-secondary plan-definitivo-edit-only' onclick='guardarBorradorPlanDefinitivoConsulta(\"".$planId."\")'>".$textoGuardar."</button>
+		".$botonConfirmarOrden."
+		".$botonCancelarEdicion."
 		<button type='button' class='plan-definitivo-secondary plan-definitivo-edit-only' onclick='abrirAnexarTratamientosPlanDefinitivoConsulta(\"".$planId."\")'>Anexar tratamientos</button>
 		".$accionConfirmar."
 		<button type='button' class='plan-definitivo-secondary' onclick='verHistorialPlanDefinitivoConsulta(\"".$planId."\")'>Ver historial</button>
@@ -3998,6 +4013,144 @@ function moverItemPlanDefinitivoConsulta($plan_id,$item_id,$direccion,$motivo,$u
 	$descripcion = "Se cambio el orden de ".$item["nombre_tratamiento_snapshot"].".";
 	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"cambio_orden",$descripcion,"Orden ".$ordenItem,"Orden ".$ordenOtro,$motivo,$user,$rol);
 	responderPlanDefinitivoConsulta("exito","Orden actualizado.");
+}
+
+function normalizarOrdenIdsPlanDefinitivoConsulta($orden_ids)
+{
+	$partes = explode(",", (string)$orden_ids);
+	$ids = array();
+	$vistos = array();
+	foreach ($partes as $id) {
+		$id = trim((string)$id);
+		if ($id == "" || isset($vistos[$id])) {
+			continue;
+		}
+		$vistos[$id] = true;
+		$ids[] = $id;
+	}
+	return $ids;
+}
+
+function resumenOrdenPlanDefinitivoConsulta($items)
+{
+	$lineas = array();
+	$posicion = 1;
+	foreach ($items as $item) {
+		$nombre = isset($item["nombre_utf8"]) ? $item["nombre_utf8"] : (isset($item["nombre_tratamiento_snapshot"]) ? $item["nombre_tratamiento_snapshot"] : "Tratamiento");
+		$lineas[] = "Paso ".$posicion.": ".$nombre;
+		$posicion++;
+	}
+	return implode("\n", $lineas);
+}
+
+function guardarOrdenPlanDefinitivoConsulta($plan_id,$orden_ids,$motivo,$user)
+{
+	$mysqli=conectar_al_servidor();
+	if (!planDefinitivoTablasDisponiblesConsulta($mysqli)) {
+		responderPlanDefinitivoConsulta("error","Debe aplicar la actualizacion SQL del plan madre.");
+	}
+	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
+	if (!$plan) {
+		responderPlanDefinitivoConsulta("error","No se encontro el plan madre.");
+	}
+	$idsOrdenados = normalizarOrdenIdsPlanDefinitivoConsulta($orden_ids);
+	if (count($idsOrdenados) == 0) {
+		responderPlanDefinitivoConsulta("camposvacio","No se recibio el orden del plan madre.");
+	}
+
+	$stmt = $mysqli->prepare("SELECT id, nombre_tratamiento_snapshot, orden FROM plan_definitivo_tratamiento_items WHERE plan_definitivo_id = ? AND activo = 1 ORDER BY orden ASC, id ASC");
+	if (!$stmt) {
+		responderPlanDefinitivoConsulta("error","No se pudo preparar la lectura del orden actual.");
+	}
+	$stmt->bind_param("s", $plan_id);
+	if (!$stmt->execute()) {
+		responderPlanDefinitivoConsulta("error","No se pudo consultar el orden actual.");
+	}
+	$result = $stmt->get_result();
+	$itemsActuales = array();
+	$itemsPorId = array();
+	$idsActuales = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$id = (string)$row["id"];
+		$row["nombre_utf8"] = mb_convert_encoding((string)$row["nombre_tratamiento_snapshot"], 'UTF-8', 'ISO-8859-1');
+		$itemsActuales[] = $row;
+		$itemsPorId[$id] = $row;
+		$idsActuales[] = $id;
+	}
+
+	if (count($idsOrdenados) != count($idsActuales)) {
+		responderPlanDefinitivoConsulta("camposvacio","El orden recibido no coincide con los tratamientos activos del plan madre.");
+	}
+	foreach ($idsOrdenados as $idOrdenado) {
+		if (!isset($itemsPorId[$idOrdenado])) {
+			responderPlanDefinitivoConsulta("camposvacio","El orden incluye un tratamiento que ya no pertenece al plan madre.");
+		}
+	}
+
+	$sinCambios = true;
+	for ($i = 0; $i < count($idsActuales); $i++) {
+		if ((string)$idsActuales[$i] != (string)$idsOrdenados[$i]) {
+			$sinCambios = false;
+			break;
+		}
+	}
+	if ($sinCambios) {
+		responderPlanDefinitivoConsulta("exito","No habia cambios de orden para guardar.");
+	}
+
+	$itemsNuevos = array();
+	$posicionAnterior = array();
+	foreach ($itemsActuales as $indice => $itemActual) {
+		$posicionAnterior[(string)$itemActual["id"]] = $indice + 1;
+	}
+	foreach ($idsOrdenados as $idOrdenado) {
+		$itemsNuevos[] = $itemsPorId[$idOrdenado];
+	}
+
+	$movimientos = array();
+	foreach ($idsOrdenados as $indiceNuevo => $idOrdenado) {
+		$anterior = isset($posicionAnterior[$idOrdenado]) ? (int)$posicionAnterior[$idOrdenado] : 0;
+		$nuevo = $indiceNuevo + 1;
+		if ($anterior != $nuevo) {
+			$nombreMovido = isset($itemsPorId[$idOrdenado]["nombre_utf8"]) ? $itemsPorId[$idOrdenado]["nombre_utf8"] : "Tratamiento";
+			$movimientos[] = $nombreMovido." del paso ".$anterior." al paso ".$nuevo;
+		}
+	}
+
+	$rol = obtenerRolUsuarioPlanDefinitivoConsulta($mysqli,$user);
+	$mysqli->autocommit(false);
+	$versionado = versionarCambioPlanDefinitivoConsulta($mysqli,$plan,$motivo,$user);
+	if (!$versionado["ok"]) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("camposvacio",$versionado["mensaje"]);
+	}
+
+	$stmtUpdate = $mysqli->prepare("UPDATE plan_definitivo_tratamiento_items SET orden = ? WHERE id = ? AND plan_definitivo_id = ? LIMIT 1");
+	if (!$stmtUpdate) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","No se pudo preparar el guardado del orden.");
+	}
+	foreach ($idsOrdenados as $indice => $idOrdenado) {
+		$nuevoOrden = $indice + 1;
+		$stmtUpdate->bind_param("iss", $nuevoOrden, $idOrdenado, $plan_id);
+		if (!$stmtUpdate->execute()) {
+			$mysqli->rollback();
+			responderPlanDefinitivoConsulta("error","No se pudo guardar el nuevo orden del plan madre.");
+		}
+	}
+
+	$antes = resumenOrdenPlanDefinitivoConsulta($itemsActuales);
+	$despues = resumenOrdenPlanDefinitivoConsulta($itemsNuevos);
+	$descripcion = count($movimientos) > 0
+		? "Se actualizo el orden clinico del plan madre: ".implode("; ", $movimientos)."."
+		: "Se actualizo el orden clinico del plan madre.";
+	if (!registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"cambio_orden",$descripcion,$antes,$despues,$motivo,$user,$rol)) {
+		$mysqli->rollback();
+		responderPlanDefinitivoConsulta("error","No se pudo registrar el historial del cambio de orden.");
+	}
+
+	$mysqli->commit();
+	responderPlanDefinitivoConsulta("exito","Orden del plan madre confirmado.");
 }
 
 function actualizarObservacionItemPlanDefinitivoConsulta($plan_id,$item_id,$observacion,$motivo,$user)

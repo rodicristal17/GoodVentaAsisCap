@@ -217,7 +217,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=ueno-egreso-distribucion-20260703")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -4871,7 +4871,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=ueno-egreso-distribucion-20260703")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -44910,6 +44910,7 @@ function verCerrarAbmCargarFotosClientePrincipal(d, ventanaLlamadora= ""){
 				break;
 		}
 	}else{
+		limpiarAvisoCargaFotosClientePrincipal();
 		document.getElementById("divAbmCargarFotosClientePrincipal").style.setProperty("display", "none", "important")
 		document.getElementById("divAbmCargarFotosClientePrincipal").style.setProperty("pointer-events", "none", "important")
 		switch (ventanaControlCargarFotos) {
@@ -44950,6 +44951,10 @@ function soltarArchivoGaleriaPaciente(event) {
 	}
 
 	if (!event.dataTransfer || !event.dataTransfer.files || event.dataTransfer.files.length == 0) {
+		return;
+	}
+
+	if (!validarDescripcionAntesDeArchivoGaleriaPaciente()) {
 		return;
 	}
 
@@ -45017,6 +45022,122 @@ function escaparHtmlGaleriaPaciente(texto) {
 		.replace(/'/g, "&#039;");
 }
 
+function obtenerZonaArchivoCargaFotosClientePrincipal() {
+	var modal = document.getElementById("divAbmCargarFotosClientePrincipal");
+	if (!modal) {
+		return null;
+	}
+	return modal.querySelector(".clinical-upload-zone");
+}
+
+function limpiarAvisoCargaFotosClientePrincipal(idCampo) {
+	var aviso = document.getElementById("mensajeCargaFotosClientePrincipal");
+	var campos = [
+		"inptDescripcionCargarFotosClientesPrincipal",
+		"inptFechaCargarFotosClientePrincipal"
+	];
+	var zonaArchivo = obtenerZonaArchivoCargaFotosClientePrincipal();
+	var i;
+
+	if (!idCampo && aviso) {
+		aviso.style.display = "none";
+		aviso.innerHTML = "";
+	}
+
+	for (i = 0; i < campos.length; i++) {
+		if (!idCampo || idCampo == campos[i]) {
+			var campo = document.getElementById(campos[i]);
+			if (campo) {
+				campo.classList.remove("clinical-gallery-field-error");
+			}
+		}
+	}
+
+	if ((!idCampo || idCampo == "file_2Principal") && zonaArchivo) {
+		zonaArchivo.classList.remove("clinical-gallery-field-error");
+	}
+}
+
+function marcarCampoAvisoCargaFotosClientePrincipal(idCampo) {
+	var campo = document.getElementById(idCampo);
+	var zonaArchivo = obtenerZonaArchivoCargaFotosClientePrincipal();
+
+	if (idCampo == "file_2Principal") {
+		if (zonaArchivo) {
+			zonaArchivo.classList.add("clinical-gallery-field-error");
+			return zonaArchivo;
+		}
+		return null;
+	}
+
+	if (campo) {
+		campo.classList.add("clinical-gallery-field-error");
+		return campo;
+	}
+
+	return null;
+}
+
+function mostrarAvisoCargaFotosClientePrincipal(mensaje, idCampo) {
+	var aviso = document.getElementById("mensajeCargaFotosClientePrincipal");
+	var destino;
+
+	limpiarAvisoCargaFotosClientePrincipal();
+	destino = marcarCampoAvisoCargaFotosClientePrincipal(idCampo);
+
+	if (aviso) {
+		aviso.innerHTML = "<i class='fa-solid fa-triangle-exclamation'></i><span>" + escaparHtmlGaleriaPaciente(mensaje) + "</span>";
+		aviso.style.display = "flex";
+		if (!destino) {
+			destino = aviso;
+		}
+	}
+
+	if (destino && destino.scrollIntoView) {
+		try {
+			destino.scrollIntoView({ behavior: "smooth", block: "center" });
+		} catch (error) {
+			destino.scrollIntoView();
+		}
+	}
+
+	if (destino && destino.focus && destino.type != "hidden" && !destino.disabled) {
+		try {
+			destino.focus();
+		} catch (errorFocus) {}
+	}
+
+	if (typeof ver_vetana_informativa == "function") {
+		ver_vetana_informativa(mensaje, "", "advertencia");
+	}
+}
+
+function validarDescripcionAntesDeArchivoGaleriaPaciente() {
+	var descripcion = document.getElementById("inptDescripcionCargarFotosClientesPrincipal");
+	if (!descripcion || descripcion.value.trim() == "") {
+		mostrarAvisoCargaFotosClientePrincipal("Primero ingrese la descripcion de la imagen.", "inptDescripcionCargarFotosClientesPrincipal");
+		return false;
+	}
+
+	limpiarAvisoCargaFotosClientePrincipal("inptDescripcionCargarFotosClientesPrincipal");
+	return true;
+}
+
+function configurarAvisoCargaFotosClientePrincipal() {
+	var descripcion = document.getElementById("inptDescripcionCargarFotosClientesPrincipal");
+	if (!descripcion || descripcion.getAttribute("data-galeria-aviso-configurado") == "1") {
+		return;
+	}
+
+	descripcion.setAttribute("data-galeria-aviso-configurado", "1");
+	descripcion.addEventListener("input", function() {
+		limpiarAvisoCargaFotosClientePrincipal("inptDescripcionCargarFotosClientesPrincipal");
+	});
+}
+
+document.addEventListener("DOMContentLoaded", configurarAvisoCargaFotosClientePrincipal);
+window.addEventListener("load", configurarAvisoCargaFotosClientePrincipal);
+
 
 function readFileDocPrincipal(input){
 var file = input.files && input.files[0] ? input.files[0] : $("input[name="+input.name+"]")[0].files[0];
@@ -45024,13 +45145,20 @@ if (!file) {
 	return false;
 }
 
+if (!validarDescripcionAntesDeArchivoGaleriaPaciente()) {
+	limpiarArchivoFotos();
+	return false;
+}
+
 var filename= file.name;
 var tamanho = file.size;
 if (tamanho > 10000000){
-	ver_vetana_informativa("EL DOCUMENTO NO PUEDE EXCEDER LOS 100Mb")
+	mostrarAvisoCargaFotosClientePrincipal("EL DOCUMENTO NO PUEDE EXCEDER LOS 10Mb", "file_2Principal")
 	limpiarArchivoFotos();
 	return false
 }
+
+limpiarAvisoCargaFotosClientePrincipal();
 
 file_extension=filename.substring(filename.lastIndexOf('.')+1).toLowerCase();
 
@@ -45105,6 +45233,26 @@ function limpiarArchivoFotos() {
 
 
 function AddCargarFotosClientePrincipal(){
+	var descripcionControl = document.getElementById('inptDescripcionCargarFotosClientesPrincipal').value;
+	var fechaControl = document.getElementById('inptFechaCargarFotosClientePrincipal').value;
+
+	if(descripcionControl.trim() == ""){
+		mostrarAvisoCargaFotosClientePrincipal("FALTO INGRESAR UNA DESCRIPCION", "inptDescripcionCargarFotosClientesPrincipal")
+		return;
+	}
+
+	if(archivoPrincipal ==""){
+		mostrarAvisoCargaFotosClientePrincipal("FALTO SELECCIONAR UN ARCHIVO", "file_2Principal")
+		return;
+	}
+
+	if(fechaControl == ""){
+		mostrarAvisoCargaFotosClientePrincipal("FALTO SELECCIONAR UNA FECHA", "inptFechaCargarFotosClientePrincipal")
+		return;
+	}
+
+	limpiarAvisoCargaFotosClientePrincipal();
+
   	var codigo=stringGenerador(5);
 	if(archivoPrincipal ==""){
 		ver_vetana_informativa("FALTÓ SELECCIONAR UN ARCHIVO")
@@ -45439,6 +45587,8 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 function LimpiarCamposCargarFotosClientePrincipal(){
+	configurarAvisoCargaFotosClientePrincipal();
+	limpiarAvisoCargaFotosClientePrincipal();
 	document.getElementById("btnAddImagenPrincipal").style.backgroundColor="#d5d3d3";
 	document.getElementById("btnEliminarImagenPrincipal").style.backgroundColor="#d5d3d3";
 	document.getElementById("btnVerImagenClientePrincipal").style.backgroundColor="#d5d3d3";

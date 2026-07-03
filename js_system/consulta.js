@@ -3146,6 +3146,7 @@ function cambiarVistaPlanTratamientosConsulta(selectVista) {
 }
 
 var motivosEdicionPlanDefinitivoConsulta = {};
+var ultimoItemMovidoPlanDefinitivoConsulta = {};
 
 function activarTabPlanConsulta(contenedor, tab) {
 	if (!contenedor) { return; }
@@ -3218,6 +3219,11 @@ function inicializarTabsPlanConsulta(root) {
 		tab = window.tabPlanConsultaSeleccionado;
 	}
 	activarTabPlanConsulta(contenedor, tab);
+	var panelesEditando = contenedor.querySelectorAll(".plan-definitivo-panel.is-editing");
+	for (var k = 0; k < panelesEditando.length; k++) {
+		prepararEdicionOrdenPlanDefinitivoConsulta(panelesEditando[k]);
+	}
+	aplicarResaltadoOrdenPlanDefinitivoConsulta(contenedor);
 }
 
 function volverARutaVigentePlanConsulta(origen) {
@@ -3232,6 +3238,120 @@ function volverARutaVigentePlanConsulta(origen) {
 
 function obtenerPanelPlanDefinitivoConsulta(planId) {
 	return document.querySelector(".plan-definitivo-panel[data-plan-id='" + planId + "']");
+}
+
+function tieneOrdenPendientePlanDefinitivoConsulta(planId) {
+	var panel = obtenerPanelPlanDefinitivoConsulta(planId);
+	return !!(panel && panel.classList.contains("is-order-dirty"));
+}
+
+function detenerEventoAccionPlanDefinitivoConsulta(event) {
+	if (!event) { return; }
+	event.preventDefault();
+	event.stopPropagation();
+	if (event.stopImmediatePropagation) {
+		event.stopImmediatePropagation();
+	}
+}
+
+function esAccionInternaPlanDefinitivoConsulta(elemento) {
+	if (!elemento || !elemento.closest) { return false; }
+	return !!elemento.closest(".plan-definitivo-item__actions, button, a, input, textarea, select, .odontograma-plan-ubicar-btn");
+}
+
+function obtenerItemsOrdenPlanDefinitivoConsulta(panel) {
+	if (!panel) { return []; }
+	var lista = panel.querySelector(".plan-definitivo-lista");
+	if (!lista) { return []; }
+	return Array.prototype.slice.call(lista.querySelectorAll(".plan-definitivo-item[data-plan-item]"));
+}
+
+function obtenerIdsOrdenPlanDefinitivoConsulta(panel) {
+	var items = obtenerItemsOrdenPlanDefinitivoConsulta(panel);
+	var ids = [];
+	for (var i = 0; i < items.length; i++) {
+		var id = items[i].getAttribute("data-plan-item") || "";
+		if (id != "") { ids.push(id); }
+	}
+	return ids;
+}
+
+function actualizarNumeracionOrdenPlanDefinitivoConsulta(panel) {
+	var items = obtenerItemsOrdenPlanDefinitivoConsulta(panel);
+	for (var i = 0; i < items.length; i++) {
+		var numero = i + 1;
+		var item = items[i];
+		var completado = item.classList.contains("plan-definitivo-item--completado");
+		var nodo = item.querySelector(".plan-ruta-nodo");
+		var nodoTexto = nodo ? nodo.querySelector("span") : null;
+		var paso = item.querySelector(".plan-definitivo-item__top span");
+		item.setAttribute("data-plan-numero", numero);
+		if (nodo) {
+			nodo.setAttribute("title", completado ? ("Paso " + numero + " completado") : ("Paso " + numero));
+		}
+		if (nodoTexto && !completado) {
+			nodoTexto.textContent = numero;
+		}
+		if (paso) {
+			paso.textContent = "Paso " + numero + " de la ruta clinica";
+		}
+	}
+	actualizarBotonesOrdenPlanDefinitivoConsulta(panel);
+}
+
+function actualizarBotonesOrdenPlanDefinitivoConsulta(panel) {
+	var items = obtenerItemsOrdenPlanDefinitivoConsulta(panel);
+	for (var i = 0; i < items.length; i++) {
+		var botones = items[i].querySelectorAll(".plan-definitivo-order-btn");
+		if (botones.length >= 2) {
+			botones[0].disabled = (i == 0);
+			botones[1].disabled = (i == items.length - 1);
+		}
+	}
+}
+
+function prepararEdicionOrdenPlanDefinitivoConsulta(panel) {
+	if (!panel) { return; }
+	if (!panel.getAttribute("data-order-original")) {
+		panel.setAttribute("data-order-original", obtenerIdsOrdenPlanDefinitivoConsulta(panel).join(","));
+	}
+	actualizarBotonesOrdenPlanDefinitivoConsulta(panel);
+}
+
+function marcarCambioOrdenPlanDefinitivoConsulta(panel, itemId) {
+	if (!panel) { return; }
+	panel.classList.add("is-order-dirty");
+	if (itemId) {
+		ultimoItemMovidoPlanDefinitivoConsulta[panel.getAttribute("data-plan-id") || ""] = itemId;
+		var item = panel.querySelector(".plan-definitivo-item[data-plan-item='" + itemId + "']");
+		if (item) {
+			item.classList.add("plan-definitivo-item--orden-movido");
+			setTimeout(function () {
+				item.classList.remove("plan-definitivo-item--orden-movido");
+			}, 1600);
+		}
+	}
+}
+
+function aplicarResaltadoOrdenPlanDefinitivoConsulta(root) {
+	if (!window.itemPlanDefinitivoResaltarOrden) { return; }
+	var base = root || document;
+	var item = base.querySelector ? base.querySelector(".plan-definitivo-item[data-plan-item='" + window.itemPlanDefinitivoResaltarOrden + "']") : null;
+	if (!item) { return; }
+	item.classList.add("plan-definitivo-item--orden-confirmado");
+	setTimeout(function () {
+		if (item.scrollIntoView) {
+			try {
+				item.scrollIntoView({ behavior: "smooth", block: "center" });
+			} catch (error) {
+				item.scrollIntoView();
+			}
+		}
+	}, 100);
+	setTimeout(function () {
+		item.classList.remove("plan-definitivo-item--orden-confirmado");
+	}, 2600);
+	window.itemPlanDefinitivoResaltarOrden = "";
 }
 
 function refrescarPlanDefinitivoConsulta() {
@@ -3372,6 +3492,7 @@ function editarPlanDefinitivoConsulta(planId) {
 		var panel = obtenerPanelPlanDefinitivoConsulta(planId);
 		if (panel) {
 			panel.classList.add("is-editing");
+			prepararEdicionOrdenPlanDefinitivoConsulta(panel);
 		}
 	});
 }
@@ -3395,6 +3516,10 @@ function guardarBorradorPlanDefinitivoConsulta(planId) {
 }
 
 function confirmarPlanDefinitivoConsulta(planId) {
+	if (tieneOrdenPendientePlanDefinitivoConsulta(planId)) {
+		ver_vetana_informativa("Primero confirme el orden pendiente del plan madre.");
+		return;
+	}
 	ajaxPlanDefinitivoConsulta("confirmarPlanDefinitivo", { "plan_id": planId }, function (ok, datos) {
 		if (!ok) { return; }
 		delete motivosEdicionPlanDefinitivoConsulta[planId];
@@ -3404,21 +3529,83 @@ function confirmarPlanDefinitivoConsulta(planId) {
 }
 
 function moverItemPlanDefinitivoConsulta(event, planId, itemId, direccion) {
-	if (event) { event.stopPropagation(); }
+	detenerEventoAccionPlanDefinitivoConsulta(event);
+	var panel = obtenerPanelPlanDefinitivoConsulta(planId);
+	if (!panel || !panel.classList.contains("is-editing")) {
+		ver_vetana_informativa("Primero presione Editar ruta.");
+		return false;
+	}
+	prepararEdicionOrdenPlanDefinitivoConsulta(panel);
+	var item = panel.querySelector(".plan-definitivo-item[data-plan-item='" + itemId + "']");
+	var lista = item ? item.parentNode : null;
+	if (!item || !lista) {
+		ver_vetana_informativa("No se pudo identificar el tratamiento.");
+		return false;
+	}
+	var items = obtenerItemsOrdenPlanDefinitivoConsulta(panel);
+	var indice = items.indexOf(item);
+	var destinoIndice = indice + (parseInt(direccion, 10) || 0);
+	if (indice < 0 || destinoIndice < 0 || destinoIndice >= items.length) {
+		ver_vetana_informativa("El tratamiento ya esta en el limite de la ruta.");
+		return false;
+	}
+	var destino = items[destinoIndice];
+	if ((parseInt(direccion, 10) || 0) < 0) {
+		lista.insertBefore(item, destino);
+	} else {
+		lista.insertBefore(destino, item);
+	}
+	actualizarNumeracionOrdenPlanDefinitivoConsulta(panel);
+	marcarCambioOrdenPlanDefinitivoConsulta(panel, itemId);
+	return false;
+}
+
+function guardarOrdenPlanDefinitivoConsulta(planId) {
+	var panel = obtenerPanelPlanDefinitivoConsulta(planId);
+	if (!panel) {
+		ver_vetana_informativa("No se encontro el plan madre.");
+		return;
+	}
+	prepararEdicionOrdenPlanDefinitivoConsulta(panel);
+	if (!panel.classList.contains("is-order-dirty")) {
+		ver_vetana_informativa("No hay cambios de orden para guardar.");
+		return;
+	}
+	var ids = obtenerIdsOrdenPlanDefinitivoConsulta(panel);
 	ejecutarConMotivoPlanDefinitivoConsulta(planId, function (motivo) {
-		ajaxPlanDefinitivoConsulta("moverItemPlanDefinitivo", {
+		ajaxPlanDefinitivoConsulta("guardarOrdenPlanDefinitivo", {
 			"plan_id": planId,
-			"item_id": itemId,
-			"direccion": direccion,
+			"orden_ids": ids.join(","),
 			"motivo": motivo
-		}, function (ok) {
-			if (ok) { refrescarPlanDefinitivoConsulta(); }
+		}, function (ok, datos) {
+			if (!ok) { return; }
+			var itemResaltar = ultimoItemMovidoPlanDefinitivoConsulta[planId] || ids[0] || "";
+			window.itemPlanDefinitivoResaltarOrden = itemResaltar;
+			delete motivosEdicionPlanDefinitivoConsulta[planId];
+			delete ultimoItemMovidoPlanDefinitivoConsulta[planId];
+			ver_vetana_informativa(datos.mensaje || "Orden del plan madre confirmado.");
+			refrescarPlanDefinitivoConsulta();
 		});
 	});
 }
 
+function cancelarEdicionOrdenPlanDefinitivoConsulta(planId) {
+	var panel = obtenerPanelPlanDefinitivoConsulta(planId);
+	if (!panel) { return; }
+	if (panel.classList.contains("is-order-dirty") && !confirm("Descartar los movimientos de orden pendientes?")) {
+		return;
+	}
+	delete motivosEdicionPlanDefinitivoConsulta[planId];
+	delete ultimoItemMovidoPlanDefinitivoConsulta[planId];
+	refrescarPlanDefinitivoConsulta();
+}
+
 function editarObservacionItemPlanDefinitivoConsulta(event, planId, itemId) {
-	if (event) { event.stopPropagation(); }
+	detenerEventoAccionPlanDefinitivoConsulta(event);
+	if (tieneOrdenPendientePlanDefinitivoConsulta(planId)) {
+		ver_vetana_informativa("Primero confirme el orden pendiente del plan madre.");
+		return;
+	}
 	var card = document.querySelector(".plan-definitivo-item[data-plan-item='" + itemId + "']");
 	var actual = card ? (card.getAttribute("data-observacion") || "") : "";
 	var actualSeguro = actual.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -3448,7 +3635,11 @@ function guardarObservacionItemPlanDefinitivoConsulta(planId, itemId) {
 }
 
 function quitarItemPlanDefinitivoConsulta(event, planId, itemId) {
-	if (event) { event.stopPropagation(); }
+	detenerEventoAccionPlanDefinitivoConsulta(event);
+	if (tieneOrdenPendientePlanDefinitivoConsulta(planId)) {
+		ver_vetana_informativa("Primero confirme el orden pendiente del plan madre.");
+		return;
+	}
 	if (!confirm("Quitar este tratamiento solo del plan madre?")) {
 		return;
 	}
@@ -3466,6 +3657,10 @@ function quitarItemPlanDefinitivoConsulta(event, planId, itemId) {
 }
 
 function abrirAnexarTratamientosPlanDefinitivoConsulta(planId) {
+	if (tieneOrdenPendientePlanDefinitivoConsulta(planId)) {
+		ver_vetana_informativa("Primero confirme el orden pendiente del plan madre.");
+		return;
+	}
 	ajaxPlanDefinitivoConsulta("buscarVentasAnexablesPlanDefinitivo", { "plan_id": planId }, function (ok, datos) {
 		if (!ok) { return; }
 		var cuerpo = "<p class='plan-definitivo-modal-help'>Solo se muestran ventas asociadas a la misma c&eacute;dula/paciente. Se anexa la venta completa con todos sus tratamientos activos.</p>" + (datos[2] || "");
@@ -3989,8 +4184,16 @@ function obtenerdatostrConsultaTratamiento(datostr) {
 	verEvolucion()
 }
 
-function obtenerDatosPlanDefinitivoTratamientoConsulta(item) {
+function obtenerDatosPlanDefinitivoTratamientoConsulta(event, item) {
+	if (item === undefined) {
+		item = event;
+		event = null;
+	}
 	if (!item) { return; }
+	if (event && esAccionInternaPlanDefinitivoConsulta(event.target)) {
+		detenerEventoAccionPlanDefinitivoConsulta(event);
+		return;
+	}
 	var seleccionados = document.querySelectorAll(".plan-definitivo-item.is-selected");
 	for (var i = 0; i < seleccionados.length; i++) {
 		seleccionados[i].classList.remove("is-selected");

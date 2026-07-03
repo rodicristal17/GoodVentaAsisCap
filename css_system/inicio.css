@@ -6151,6 +6151,36 @@ label {
     font-weight: 800;
 }
 
+#divAbmCargarFotosClientePrincipal .clinical-gallery-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #fed7aa;
+    border-left: 4px solid #f97316;
+    border-radius: 8px;
+    background: #fff7ed;
+    color: #8a3d0b;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+#divAbmCargarFotosClientePrincipal .clinical-gallery-alert i {
+    margin-top: 2px;
+    color: #f97316;
+}
+
+#divAbmCargarFotosClientePrincipal .clinical-gallery-alert span {
+    display: block;
+}
+
+#divAbmCargarFotosClientePrincipal .clinical-gallery-field-error,
+#divAbmCargarFotosClientePrincipal .clinical-upload-zone.clinical-gallery-field-error {
+    border-color: #f97316 !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.16);
+}
+
 #divAbmCargarFotosClientePrincipal .clinical-upload-preview {
     display: grid;
     grid-template-columns: 82px minmax(0, 1fr);
@@ -27829,6 +27859,12 @@ button.dashboard-summary-item:hover {
     background: #f8fafc;
 }
 
+#divAbmConsulta .plan-definitivo-icon-btn:disabled {
+    cursor: not-allowed;
+    opacity: .42;
+    background: #f8fafc;
+}
+
 #divAbmConsulta .plan-definitivo-icon-btn--remove {
     color: #8a3d3d;
 }
@@ -27995,6 +28031,50 @@ button.dashboard-summary-item:hover {
     color: #315b50;
 }
 
+#divAbmConsulta .plan-definitivo-order-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 11px;
+    border: 1px solid #dbeafe;
+    border-left: 4px solid #2f80ed;
+    border-radius: 8px;
+    background: #f7fbff;
+    color: #315f80;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+#divAbmConsulta .plan-definitivo-order-notice strong {
+    color: #183a57;
+    font-size: 12px;
+    font-weight: 950;
+}
+
+#divAbmConsulta .plan-definitivo-order-notice span {
+    line-height: 1.35;
+}
+
+#divAbmConsulta .plan-definitivo-panel.is-order-dirty .plan-definitivo-order-notice {
+    border-color: #fed7aa;
+    border-left-color: #f97316;
+    background: #fff7ed;
+    color: #8a3d0b;
+}
+
+#divAbmConsulta .plan-definitivo-panel.is-order-dirty .plan-definitivo-order-notice strong {
+    color: #9a3412;
+}
+
+#divAbmConsulta .plan-definitivo-save-order-btn {
+    box-shadow: 0 6px 14px rgba(31, 122, 104, 0.16);
+}
+
+#divAbmConsulta .plan-definitivo-panel:not(.is-order-dirty) .plan-definitivo-save-order-btn {
+    opacity: .72;
+}
+
 #divAbmConsulta .plan-definitivo-actions {
     padding-bottom: 2px;
 }
@@ -28013,6 +28093,13 @@ button.dashboard-summary-item:hover {
     border-left: 5px solid #16826b;
     background: #ffffff;
     overflow: visible;
+}
+
+#divAbmConsulta .plan-definitivo-item--orden-movido,
+#divAbmConsulta .plan-definitivo-item--orden-confirmado {
+    border-color: #f97316 !important;
+    background: #fffaf2 !important;
+    box-shadow: 0 10px 24px rgba(249, 115, 22, 0.16) !important;
 }
 
 #divAbmConsulta .plan-definitivo-item.plan-ruta-item::before {
@@ -32523,17 +32610,100 @@ button.tratamiento-ubicacion-visual {
 
 @media (max-width: 980px) {
     .odontograma-diagrama {
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .odontograma-leyenda {
-        width: 190px;
-        max-width: 190px;
+        width: 100%;
+        max-width: none;
     }
 
     .odontograma-leyenda.is-collapsed {
-        width: 48px;
-        max-width: 48px;
+        width: 100%;
+        max-width: none;
+    }
+
+    .odontograma-leyenda.is-collapsed .odontograma-leyenda__toggle {
+        min-height: 36px;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 6px 8px !important;
+    }
+
+    .odontograma-leyenda.is-collapsed .odontograma-leyenda__titulo {
+        writing-mode: horizontal-tb;
+        transform: none;
+    }
+
+    .odontograma-leyenda.is-collapsed .odontograma-leyenda__chips {
+        flex-direction: row;
+    }
+
+    .odontograma-canvas {
+        padding: 8px;
+        overflow: visible;
+    }
+
+    .odontograma-tablero {
+        gap: 10px;
+    }
+
+    .odontograma-fila {
+        grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
+    }
+
+    .odontograma-centro {
+        min-width: 20px;
+    }
+
+    .odontograma-grupo {
+        gap: 2px;
+    }
+
+    .odontograma-pieza {
+        width: 34px;
+        min-width: 34px;
+        min-height: 50px;
+    }
+
+    .odontograma-pieza--incisivo {
+        width: 30px;
+        min-width: 30px;
+    }
+
+    .odontograma-pieza--canino {
+        width: 31px;
+        min-width: 31px;
+    }
+
+    .odontograma-pieza--premolar {
+        width: 33px;
+        min-width: 33px;
+    }
+
+    .odontograma-pieza--molar {
+        width: 35px;
+        min-width: 35px;
+    }
+
+    .odontograma-pieza--temporal {
+        width: 31px;
+        min-width: 31px;
+        min-height: 46px;
+    }
+
+    .odontograma-svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .odontograma-pieza--temporal .odontograma-svg {
+        width: 27px;
+        height: 27px;
+    }
+
+    .odontograma-pieza__numero {
+        font-size: 9px;
     }
 
     #divAbmConsulta .consulta-odontograma-card {
@@ -39234,12 +39404,6 @@ button.tratamiento-ubicacion-visual {
   box-shadow: none;
 }
 
-#divConciliacionUeno .ueno-row-action--egreso {
-  background-color: #dcfce7 !important;
-  color: #166534 !important;
-  box-shadow: none;
-}
-
 #divConciliacionUeno .ueno-import-summary,
 #divConciliacionUeno .ueno-conciliation-summary,
 #divConciliacionUeno .ueno-tesoreria-status {
@@ -45232,6 +45396,44 @@ button.tratamiento-ubicacion-visual {
   }
 }
 
+@media (max-width: 980px) {
+  #presupuestoDocOdontogramaPanel {
+    overflow: visible;
+  }
+
+  #presupuestoDocOdontogramaPanel .odontograma-diagrama,
+  #divAbmDetallesPresupuestoDoc .odontograma-presupuesto .odontograma-diagrama {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  #presupuestoDocOdontogramaPanel .odontograma-leyenda,
+  #presupuestoDocOdontogramaPanel .odontograma-leyenda.is-collapsed,
+  #divAbmDetallesPresupuestoDoc .odontograma-presupuesto .odontograma-leyenda,
+  #divAbmDetallesPresupuestoDoc .odontograma-presupuesto .odontograma-leyenda.is-collapsed {
+    width: 100%;
+    max-width: none;
+  }
+
+  #presupuestoDocOdontogramaPanel .odontograma-leyenda.is-collapsed .odontograma-leyenda__toggle,
+  #divAbmDetallesPresupuestoDoc .odontograma-presupuesto .odontograma-leyenda.is-collapsed .odontograma-leyenda__toggle {
+    min-height: 36px;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 6px 8px !important;
+  }
+
+  #presupuestoDocOdontogramaPanel .odontograma-leyenda.is-collapsed .odontograma-leyenda__titulo,
+  #divAbmDetallesPresupuestoDoc .odontograma-presupuesto .odontograma-leyenda.is-collapsed .odontograma-leyenda__titulo {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
+  #presupuestoDocOdontogramaPanel .odontograma-leyenda.is-collapsed .odontograma-leyenda__chips,
+  #divAbmDetallesPresupuestoDoc .odontograma-presupuesto .odontograma-leyenda.is-collapsed .odontograma-leyenda__chips {
+    flex-direction: row;
+  }
+}
+
 /* Venta guiada desde presupuesto */
 #divAbmVenta {
   overflow: hidden !important;
@@ -47042,18 +47244,6 @@ button.tratamiento-ubicacion-visual {
   text-transform: uppercase;
 }
 
-.conciliacion-egreso-guide {
-  margin: -2px 0 8px;
-  padding: 7px 9px;
-  border: 1px solid #dbeafe;
-  border-left: 4px solid #2f80ed;
-  border-radius: 6px;
-  background: #f0f7ff;
-  color: #315f80;
-  font-size: 11px;
-  font-weight: 800;
-}
-
 .conciliacion-egreso-context-grid,
 .conciliacion-egreso-bank-selected,
 .conciliacion-egreso-filters {
@@ -47180,74 +47370,6 @@ button.tratamiento-ubicacion-visual {
   flex: 1 1 auto;
   color: #244766;
   font-size: 12px;
-}
-
-.conciliacion-egreso-summary {
-  flex: 2 1 420px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  min-height: 34px;
-}
-
-.conciliacion-egreso-summary span {
-  flex: 0 1 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 7px;
-  min-height: 28px;
-  padding: 0 9px;
-  border: 1px solid #d9e6f2;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #5b7087;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.conciliacion-egreso-summary b {
-  color: #66809b;
-  font-size: 8px;
-  text-transform: uppercase;
-}
-
-.conciliacion-egreso-summary strong {
-  color: #183a57;
-  font-size: 11px;
-}
-
-.conciliacion-egreso-summary em {
-  color: #5b7087;
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 900;
-}
-
-.conciliacion-egreso-summary--ok span {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-}
-
-.conciliacion-egreso-summary--ok strong,
-.conciliacion-egreso-summary--ok em {
-  color: #166534;
-}
-
-.conciliacion-egreso-summary--partial span {
-  border-color: #fed7aa;
-  background: #fff7ed;
-}
-
-.conciliacion-egreso-summary--partial strong,
-.conciliacion-egreso-summary--partial em {
-  color: #9a3412;
-}
-
-.conciliacion-egreso-summary--pending span {
-  border-color: #dbeafe;
-  background: #f8fbff;
 }
 
 .conciliacion-egreso-empty {
