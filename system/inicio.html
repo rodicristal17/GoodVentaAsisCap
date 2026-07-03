@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-mesa-modal-clean-20260703" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-egreso-distribucion-20260703" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,19 +43,19 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ueno-mesa-modal-clean-20260703"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ueno-egreso-distribucion-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-modal-clean-20260703"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-egreso-distribucion-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-fecha-proceso-20260701"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-resumen-neto-20260624"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=ueno-egreso-distribucion-20260703"></script>
 <script src="../js_system/abmAsistencia.js?x=jornada-cargando-topbar-20260619"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
@@ -7611,6 +7611,7 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 </section>
 <section class='conciliacion-egreso-panel conciliacion-egreso-panel--distribucion'>
 <div class='panel-title'>Distribucion del egreso</div>
+<div class='conciliacion-egreso-guide'>Agregue uno o varios gastos pendientes hasta cubrir el debito bancario seleccionado.</div>
 <div id='listaDistribucionConciliarEgresoUeno' class='conciliacion-egreso-distribucion'></div>
 <div class='conciliacion-egreso-add-row'>
 <input class='inputText' type='text' id='inptConciliarEgresoUenoBuscarGasto' placeholder='Buscar otro gasto por concepto, descripcion o codigo'>
@@ -7619,8 +7620,8 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <div class='conciliacion-egreso-table conciliacion-egreso-table--gastos' id='tableUenoGastosPendientesConciliar'></div>
 <div class='conciliacion-egreso-footer'>
 <input class='inputText' type='text' id='txtConciliarEgresoUenoObs' placeholder='Observacion de la conciliacion'>
-<span id='lblConciliarEgresoUenoResumen'></span>
-<button type='button' class='btn1' onclick='conciliarEgresoUenoGuardar()'>Guardar conciliacion</button>
+<div id='lblConciliarEgresoUenoResumen' class='conciliacion-egreso-summary'></div>
+<button type='button' class='btn1' onclick='conciliarEgresoUenoGuardar()'>Guardar distribucion</button>
 </div>
 </section>
 </div>

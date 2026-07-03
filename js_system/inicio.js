@@ -217,7 +217,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=ueno-mesa-modal-clean-20260703")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=ueno-egreso-distribucion-20260703")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -4871,7 +4871,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=ueno-mesa-modal-clean-20260703")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=ueno-egreso-distribucion-20260703")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")

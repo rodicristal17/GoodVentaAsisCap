@@ -39234,6 +39234,12 @@ button.tratamiento-ubicacion-visual {
   box-shadow: none;
 }
 
+#divConciliacionUeno .ueno-row-action--egreso {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  box-shadow: none;
+}
+
 #divConciliacionUeno .ueno-import-summary,
 #divConciliacionUeno .ueno-conciliation-summary,
 #divConciliacionUeno .ueno-tesoreria-status {
@@ -47036,6 +47042,18 @@ button.tratamiento-ubicacion-visual {
   text-transform: uppercase;
 }
 
+.conciliacion-egreso-guide {
+  margin: -2px 0 8px;
+  padding: 7px 9px;
+  border: 1px solid #dbeafe;
+  border-left: 4px solid #2f80ed;
+  border-radius: 6px;
+  background: #f0f7ff;
+  color: #315f80;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .conciliacion-egreso-context-grid,
 .conciliacion-egreso-bank-selected,
 .conciliacion-egreso-filters {
@@ -47162,6 +47180,74 @@ button.tratamiento-ubicacion-visual {
   flex: 1 1 auto;
   color: #244766;
   font-size: 12px;
+}
+
+.conciliacion-egreso-summary {
+  flex: 2 1 420px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+}
+
+.conciliacion-egreso-summary span {
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid #d9e6f2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5b7087;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.conciliacion-egreso-summary b {
+  color: #66809b;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.conciliacion-egreso-summary strong {
+  color: #183a57;
+  font-size: 11px;
+}
+
+.conciliacion-egreso-summary em {
+  color: #5b7087;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.conciliacion-egreso-summary--ok span {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.conciliacion-egreso-summary--ok strong,
+.conciliacion-egreso-summary--ok em {
+  color: #166534;
+}
+
+.conciliacion-egreso-summary--partial span {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.conciliacion-egreso-summary--partial strong,
+.conciliacion-egreso-summary--partial em {
+  color: #9a3412;
+}
+
+.conciliacion-egreso-summary--pending span {
+  border-color: #dbeafe;
+  background: #f8fbff;
 }
 
 .conciliacion-egreso-empty {

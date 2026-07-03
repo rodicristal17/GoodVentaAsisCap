@@ -606,6 +606,88 @@ function conciliarEgresoUenoLimpiar() {
 	}
 }
 
+function conciliarEgresoUenoSetCampo(id, valor) {
+	var campo = document.getElementById(id);
+	if (campo) {
+		campo.value = valor || "";
+	}
+}
+
+function conciliarEgresoUenoNormalizarBancoUeno(movimiento) {
+	if (!movimiento || !movimiento.id_movimiento) { return null; }
+	var debito = conciliarEgresoUenoNumero(movimiento.importe_debito || 0);
+	var asignado = conciliarEgresoUenoNumero(movimiento.monto_asignado || movimiento.monto_asignado_gasto || movimiento.monto_aplicado || 0);
+	var saldo = movimiento.saldo_disponible != null
+		? conciliarEgresoUenoNumero(movimiento.saldo_disponible)
+		: conciliarEgresoUenoNumero(movimiento.monto_disponible != null ? movimiento.monto_disponible : Math.max(0, debito - asignado));
+	return {
+		id_movimiento: movimiento.id_movimiento,
+		cuenta: movimiento.cuenta || "",
+		fecha_confirmacion: movimiento.fecha_confirmacion || "",
+		fecha_transaccion: movimiento.fecha_transaccion || "",
+		nro_comprobante: movimiento.nro_comprobante || "",
+		descripcion: movimiento.descripcion || "",
+		concepto: movimiento.concepto || "",
+		importe_debito: debito,
+		importe_debito_fmt: movimiento.importe_debito_fmt || conciliarEgresoUenoFormato(debito),
+		monto_asignado: asignado,
+		monto_asignado_fmt: movimiento.monto_asignado_fmt || movimiento.monto_asignado_gasto_fmt || movimiento.monto_aplicado_fmt || conciliarEgresoUenoFormato(asignado),
+		saldo_disponible: saldo,
+		saldo_disponible_fmt: movimiento.saldo_disponible_fmt || movimiento.monto_disponible_fmt || conciliarEgresoUenoFormato(saldo),
+		estado_conciliacion: movimiento.estado_conciliacion || movimiento.estado_clave || "",
+		estado_conciliacion_texto: movimiento.estado_conciliacion_texto || movimiento.estado || ""
+	};
+}
+
+function conciliarEgresoUenoAbrirDesdeBancoUeno(movimiento) {
+	var banco = conciliarEgresoUenoNormalizarBancoUeno(movimiento);
+	if (!banco) {
+		ver_vetana_informativa("No se pudo identificar el debito bancario.");
+		return;
+	}
+	conciliarEgresoUenoLimpiar();
+	conciliacionEgresoUenoContexto.movimientoBanco = banco;
+	conciliarEgresoUenoMostrarModal(true);
+
+	var chip = document.getElementById("chipContextoConciliarEgresoUeno");
+	if (chip) {
+		chip.textContent = "Debito Ueno seleccionado: " + (banco.nro_comprobante || "sin comprobante") + " - disponible " + (banco.saldo_disponible_fmt || "0") + " Gs.";
+	}
+	var panelGasto = document.getElementById("panelGastoConciliarEgresoUeno");
+	if (panelGasto) {
+		panelGasto.innerHTML = "<div class='conciliacion-egreso-empty conciliacion-egreso-empty--attention'>"
+			+ "<b>Distribucion pendiente</b>"
+			+ "<span>Agregue uno o varios gastos pendientes hasta cubrir el debito bancario seleccionado.</span>"
+			+ "</div>";
+	}
+
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoDesde", banco.fecha_confirmacion);
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoHasta", banco.fecha_confirmacion);
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoComprobante", banco.nro_comprobante);
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoDescripcion", "");
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoMonto", banco.saldo_disponible_fmt);
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoCuenta", banco.cuenta);
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoEstado", "");
+	conciliarEgresoUenoSetCampo("inptConciliarEgresoUenoBuscarGasto", "");
+	if (document.getElementById("chkConciliarEgresoUenoTodos")) {
+		document.getElementById("chkConciliarEgresoUenoTodos").checked = false;
+	}
+
+	conciliarEgresoUenoPintarBanco();
+	conciliarEgresoUenoRenderDistribucion();
+	conciliarEgresoUenoBuscarBanco();
+	conciliarEgresoUenoBuscarGastosPendientes();
+	if (conciliarEgresoUenoNumero(banco.monto_asignado || 0) > 0) {
+		conciliarEgresoUenoAjax("buscar_asignaciones_egreso_banco", {
+			id_movimiento: banco.id_movimiento
+		}, function (respuesta) {
+			if (document.getElementById("tableUenoAsignacionesGasto")) {
+				document.getElementById("tableUenoAsignacionesGasto").innerHTML = respuesta["2"] || "";
+			}
+		});
+	}
+}
+
 function conciliarEgresoUenoPintarGasto(gasto) {
 	var panel = document.getElementById("panelGastoConciliarEgresoUeno");
 	var chip = document.getElementById("chipContextoConciliarEgresoUeno");
@@ -639,9 +721,10 @@ function conciliarEgresoUenoPintarBanco() {
 	var banco = conciliacionEgresoUenoContexto.movimientoBanco;
 	if (!panel) { return; }
 	if (!banco) {
-		panel.innerHTML = "<div class='conciliacion-egreso-empty'>Seleccione un egreso bancario disponible.</div>";
+		panel.innerHTML = "<div class='conciliacion-egreso-empty'>Seleccione un debito bancario disponible.</div>";
 		return;
 	}
+	var estado = banco.estado_conciliacion_texto || banco.estado_conciliacion || "Seleccionado";
 	panel.innerHTML = "<div class='conciliacion-egreso-bank-selected'>"
 		+ "<span><b>Fecha</b>" + conciliarEgresoUenoEscape(banco.fecha_confirmacion || "") + "</span>"
 		+ "<span><b>Cuenta</b>" + conciliarEgresoUenoEscape(banco.cuenta || "") + "</span>"
@@ -649,6 +732,7 @@ function conciliarEgresoUenoPintarBanco() {
 		+ "<span><b>Debito</b>" + conciliarEgresoUenoEscape(banco.importe_debito_fmt || "0") + " Gs.</span>"
 		+ "<span><b>Asignado</b>" + conciliarEgresoUenoEscape(banco.monto_asignado_fmt || "0") + " Gs.</span>"
 		+ "<span><b>Disponible</b>" + conciliarEgresoUenoEscape(banco.saldo_disponible_fmt || "0") + " Gs.</span>"
+		+ "<span><b>Estado</b>" + conciliarEgresoUenoEscape(estado) + "</span>"
 		+ "<span class='conciliacion-egreso-bank-wide'><b>Descripcion</b>" + conciliarEgresoUenoEscape(banco.descripcion || banco.concepto || "") + "</span>"
 		+ "</div>";
 }
@@ -747,9 +831,9 @@ function conciliarEgresoUenoRenderDistribucion() {
 		var item = conciliacionEgresoUenoContexto.distribucion[i];
 		var gasto = item.gasto || {};
 		html += "<div class='conciliacion-egreso-distrib-row'>"
-			+ "<span><b>Grupo</b>" + conciliarEgresoUenoEscape(gasto.grupo || "") + "</span>"
+			+ "<span><b>Egreso " + (i + 1) + "</b>#" + conciliarEgresoUenoEscape(gasto.idgastos || "") + "</span>"
 			+ "<span><b>Concepto</b>" + conciliarEgresoUenoEscape(gasto.concepto || "") + "</span>"
-			+ "<span><b>Movimiento</b>#" + conciliarEgresoUenoEscape(gasto.idgastos || "") + " - " + conciliarEgresoUenoEscape(gasto.descripcion || "") + "</span>"
+			+ "<span><b>Descripcion</b>" + conciliarEgresoUenoEscape(gasto.descripcion || gasto.grupo || "") + "</span>"
 			+ "<span><b>Saldo pend.</b>" + conciliarEgresoUenoEscape(gasto.pendiente_fmt || "0") + " Gs.</span>"
 			+ "<label><b>Monto</b><input class='inputText' type='text' value='" + conciliarEgresoUenoEscape(conciliarEgresoUenoFormato(item.monto || 0)) + "' onkeyup='conciliarEgresoUenoCambiarMontoDistribucion(" + i + ", this.value);separadordemiles(this)' /></label>"
 			+ "<button type='button' class='conciliacion-egreso-remove' title='Quitar gasto' onclick='conciliarEgresoUenoEliminarDistribucion(" + i + ")'>X</button>"
@@ -757,10 +841,13 @@ function conciliarEgresoUenoRenderDistribucion() {
 	}
 	if (html == "") {
 		var requerido = conciliarEgresoUenoMontoRequerido();
+		var banco = conciliacionEgresoUenoContexto.movimientoBanco;
 		html = "<div class='conciliacion-egreso-empty'>"
-			+ (requerido > 0
-				? "Monto requerido: " + conciliarEgresoUenoFormato(requerido) + " Gs. Seleccione un gasto pendiente para aplicarlo."
-				: "Seleccione un gasto pendiente para distribuir el egreso bancario.")
+			+ (banco
+				? "Debito seleccionado por " + conciliarEgresoUenoFormato(banco.saldo_disponible || 0) + " Gs. Agregue uno o varios gastos pendientes."
+				: (requerido > 0
+					? "Monto requerido: " + conciliarEgresoUenoFormato(requerido) + " Gs. Seleccione un gasto pendiente para aplicarlo."
+					: "Seleccione un debito bancario y agregue uno o varios gastos pendientes."))
 			+ "</div>";
 	}
 	contenedor.innerHTML = html;
@@ -775,14 +862,26 @@ function conciliarEgresoUenoActualizarResumen() {
 	var requerido = conciliarEgresoUenoMontoRequerido();
 	var disponible = banco ? conciliarEgresoUenoNumero(banco.saldo_disponible || 0) : 0;
 	var restante = Math.max(0, disponible - total);
-	resumen.innerHTML = "Total a asignar: <b>" + conciliarEgresoUenoFormato(total) + " Gs.</b>"
-		+ (requerido > 0 ? " | Monto requerido: <b>" + conciliarEgresoUenoFormato(requerido) + " Gs.</b>" : "")
-		+ (banco ? " | Saldo bancario restante: <b>" + conciliarEgresoUenoFormato(restante) + " Gs.</b>" : "")
-		+ (banco && total == 0 ? " | Falta seleccionar un gasto pendiente." : "");
+	var cantidad = conciliacionEgresoUenoContexto.distribucion.length;
+	var claseEstado = "conciliacion-egreso-summary";
+	if (banco && total > 0 && restante == 0) {
+		claseEstado += " conciliacion-egreso-summary--ok";
+	} else if (banco && total > 0) {
+		claseEstado += " conciliacion-egreso-summary--partial";
+	} else if (banco) {
+		claseEstado += " conciliacion-egreso-summary--pending";
+	}
+	resumen.className = claseEstado;
+	resumen.innerHTML = "<span><b>Egresos agregados</b><strong>" + cantidad + "</strong></span>"
+		+ "<span><b>Distribuido</b><strong>" + conciliarEgresoUenoFormato(total) + " Gs.</strong></span>"
+		+ (requerido > 0 ? "<span><b>Monto a cubrir</b><strong>" + conciliarEgresoUenoFormato(requerido) + " Gs.</strong></span>" : "")
+		+ (banco ? "<span><b>Saldo pendiente</b><strong>" + conciliarEgresoUenoFormato(restante) + " Gs.</strong></span>" : "")
+		+ (banco && total == 0 ? "<em>Falta agregar un gasto pendiente.</em>" : "")
+		+ (banco && total > 0 && restante == 0 ? "<em>El debito queda cubierto con esta distribucion.</em>" : "");
 }
 
 function conciliarEgresoUenoSeleccionarBanco(banco) {
-	conciliacionEgresoUenoContexto.movimientoBanco = banco || null;
+	conciliacionEgresoUenoContexto.movimientoBanco = conciliarEgresoUenoNormalizarBancoUeno(banco) || null;
 	conciliarEgresoUenoPintarBanco();
 	if (conciliacionEgresoUenoContexto.gastoPrincipal && conciliacionEgresoUenoContexto.distribucion.length == 0) {
 		conciliarEgresoUenoAgregarGastoDistribucion(conciliacionEgresoUenoContexto.gastoPrincipal);

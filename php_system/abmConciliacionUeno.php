@@ -1575,7 +1575,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			)),0) AS sugerencias_migracion"
 		: ", 0 AS monto_aplicado_migracion, '' AS migraciones_conciliacion, '' AS usuarios_migracion, 0 AS sugerencias_migracion";
 
-	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion,
+	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.cuenta, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion,
 		mv.concepto, mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado, imp.nombre_archivo_original,
 		IFNULL((SELECT GROUP_CONCAT(DISTINCT IFNULL(per.nombre_persona, CONCAT('Usuario ', ump.usuario_asocio)) ORDER BY ump.fecha_hora_asociacion ASC SEPARATOR ', ')
 			FROM ueno_movimiento_pago ump
@@ -1662,6 +1662,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$datos_movimiento = array(
 			"id_movimiento" => (int)$row["id_movimiento"],
 			"id_importacion" => (int)$row["id_importacion"],
+			"cuenta" => ueno_from_db($row["cuenta"]),
 			"fecha_confirmacion" => ueno_from_db($row["fecha_confirmacion"]),
 			"fecha_transaccion" => ueno_from_db($row["fecha_transaccion"]),
 			"nro_comprobante" => ueno_from_db($row["nro_comprobante"]),
@@ -1697,9 +1698,14 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		} elseif ($credito > 0) {
 			$accion = "<input type='button' value='Ver aplicacion' class='btn4 ueno-row-action ueno-row-action--view' onclick='uenoVerAplicacionMovimiento(" . (int)$row["id_movimiento"] . ")'>";
 		} elseif ($debito > 0) {
-			$accion = $aplicado > 0
-				? "<input type='button' value='Ver asignaciones' class='btn4 ueno-row-action ueno-row-action--trace' onclick='conciliarEgresoUenoVerAsignacionesBanco(" . (int)$row["id_movimiento"] . ")'>"
-				: "<input type='button' value='Ver detalle' class='btn4 ueno-row-action ueno-row-action--detail' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+			if ($disponible > 0) {
+				$textoAccion = $aplicado > 0 ? "Continuar distrib." : "Distribuir egreso";
+				$accion = "<input type='button' value='" . $textoAccion . "' class='btn4 ueno-row-action ueno-row-action--egreso' onclick='conciliarEgresoUenoAbrirDesdeBancoUeno(" . $datos_js . ")'>";
+			} elseif ($aplicado > 0) {
+				$accion = "<input type='button' value='Ver asignaciones' class='btn4 ueno-row-action ueno-row-action--trace' onclick='conciliarEgresoUenoVerAsignacionesBanco(" . (int)$row["id_movimiento"] . ")'>";
+			} else {
+				$accion = "<input type='button' value='Ver detalle' class='btn4 ueno-row-action ueno-row-action--detail' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+			}
 		} else {
 			$accion = "<span class='ueno-row-note ueno-row-note--muted'>Sin accion</span>";
 		}
