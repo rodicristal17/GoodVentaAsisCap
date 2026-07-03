@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=venta-modal-fit-alto-20260701" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-mesa-modal-clean-20260703" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,13 +43,13 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=pago-contado-sin-ultimo-vuelto-20260701"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=ueno-mesa-modal-clean-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-nro-registro-20260630"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-modal-clean-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-fecha-proceso-20260701"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-evolucion-guiada-20260630"></script>
@@ -26195,35 +26195,39 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 </table>
 <table style='width:98%'>
 <tr>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Total Ueno banco</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesTotalUeno' disabled style='width:110px;text-align:right'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Transferencias GV</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesTotalGV' disabled style='width:110px;text-align:right'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
+<p class='pTituloC'>Migracion interna</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesMigracionInterna' disabled style='width:110px;text-align:right'>
+</td>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Diferencia banco/GV</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesDiferencia' disabled style='width:110px;text-align:right'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Ya conciliado</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesConciliado' disabled style='width:110px;text-align:right'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Pendiente de conciliar</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesPendiente' disabled style='width:110px;text-align:right'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Observado / rechazado</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesObservado' disabled style='width:110px;text-align:right'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:11%;text-align:left'>
 <p class='pTituloC'>Sin comprobante</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesSinComprobante' disabled style='width:80px;text-align:center'>
 </td>
-<td style='width:16%;text-align:left'>
+<td style='width:12%;text-align:left'>
 <p class='pTituloC'>Saldo Ueno disponible</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesDisponible' disabled style='width:120px;text-align:right'>
 </td>
@@ -26306,11 +26310,37 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <div class="div_cuerpo_table ueno-table-body" id="table_ueno_importaciones" style='height:220px;'></div>
 </div>
 
-<div class='divMenuf ueno-card ueno-half-card ueno-main-card' style='width:47%;float:left;margin-left:1%'>
+<div class='divMenuf ueno-card ueno-main-summary-card' style='width:47%;float:left;margin-left:1%'>
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>5. Movimientos Ueno - mesa de trabajo</p>
-<p class='ueno-section-help'>Pantalla administrativa de consulta. El saldo disponible se muestra para control; no se procesan pagos desde esta mesa.</p>
+<p class='ueno-section-help'>Vista compacta de control. Abri la mesa para revisar movimientos, filtros y acciones en pantalla amplia.</p>
+</div>
+<input type='button' value='Abrir mesa de trabajo' class='btn4 ueno-btn-primary' onclick='uenoAbrirMesaTrabajoPopup()' style='width:170px'>
+</div>
+<div class='ueno-workbench-summary'>
+<span><b>Registros</b><strong id='lblUenoMesaCompactTotal'>0</strong></span>
+<span><b>Disponibles</b><strong id='lblUenoMesaCompactDisponibles'>0</strong></span>
+<span><b>Parciales</b><strong id='lblUenoMesaCompactParciales'>0</strong></span>
+<span><b>Conciliados</b><strong id='lblUenoMesaCompactConciliados'>0</strong></span>
+<span><b>Saldo disponible</b><strong id='lblUenoMesaCompactSaldo'>0</strong></span>
+</div>
+</div>
+
+<div id='divUenoMesaTrabajoPopup' class='ueno-audit-popup ueno-workbench-popup' style='display:none'>
+<div class='ueno-audit-dialog ueno-workbench-dialog'>
+<div class='ueno-audit-dialog-head ueno-workbench-dialog-head'>
+<div>
+<p class='ueno-section-title'>Mesa de trabajo Ueno</p>
+<p class='ueno-section-help'>Misma vista del punto 5, ampliada para revisar movimientos con mas espacio.</p>
+</div>
+<input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarMesaTrabajoPopup()' style='width:90px'>
+</div>
+<div class='divMenuf ueno-card ueno-half-card ueno-main-card ueno-workbench-card' style='width:100%;float:none;margin-left:0'>
+<div class='ueno-section-head ueno-workbench-hidden-summary'>
+<div>
+<p class='ueno-section-title'>5. Movimientos Ueno - mesa de trabajo</p>
+<p class='ueno-section-help'>Pantalla administrativa de consulta. El saldo disponible se muestra para control; las cuotas se procesan desde caja y las migraciones internas se confirman manualmente.</p>
 </div>
 </div>
 <table style='width:98%'>
@@ -26342,14 +26372,14 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 </td>
 </tr>
 </table>
-<div class='ueno-quick-filters' id='divUenoMovFiltrosRapidos'>
+<div class='ueno-quick-filters ueno-workbench-hidden-summary' id='divUenoMovFiltrosRapidos'>
 <button type='button' class='ueno-quick-filter ueno-quick-filter--active' data-ueno-mov-filter='todos' onclick='uenoCambiarFiltroRapidoMovimientos("todos")'>Todos <span id='lblUenoChipTodos'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='disponibles' onclick='uenoCambiarFiltroRapidoMovimientos("disponibles")'>Disponibles <span id='lblUenoChipDisponibles'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='parciales' onclick='uenoCambiarFiltroRapidoMovimientos("parciales")'>Parciales <span id='lblUenoChipParciales'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='conciliados' onclick='uenoCambiarFiltroRapidoMovimientos("conciliados")'>Conciliados <span id='lblUenoChipConciliados'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='con_saldo' onclick='uenoCambiarFiltroRapidoMovimientos("con_saldo")'>Con saldo <span id='lblUenoChipConSaldo'>0</span></button>
 </div>
-<table style='width:98%'>
+<table class='ueno-workbench-hidden-summary' style='width:98%'>
 <tr>
 <td style='width:20%;text-align:left'>
 <p class='pTituloC'>Registros</p>
@@ -26366,7 +26396,7 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <td style='width:30%'></td>
 </tr>
 </table>
-<div class='ueno-movement-summary' id='divUenoMovResumenEstados'>
+<div class='ueno-movement-summary ueno-workbench-hidden-summary' id='divUenoMovResumenEstados'>
 <span><b>Disponibles</b><strong id='lblUenoMovDisponibles'>0</strong></span>
 <span><b>Parciales</b><strong id='lblUenoMovParciales'>0</strong></span>
 <span><b>Conciliados</b><strong id='lblUenoMovConciliados'>0</strong></span>
@@ -26393,6 +26423,8 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 </table>
 <div class="div_cuerpo_table ueno-table-body" id="table_ueno_movimientos" style='height:560px;'></div>
 </div>
+</div>
+</div>
 
 <div class='divMenuf ueno-card ueno-support-card ueno-pagos-card' style='clear:both;width:96%;margin-left:1%'>
 <div class='ueno-section-head'>
@@ -26407,7 +26439,7 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <div id='divUenoMovimientoSeleccionado' class='ueno-selected-movement'>
 <div class='ueno-selected-empty'>
 <b>Detalle del movimiento</b>
-<span>Usa Ver detalle para consultar fecha, comprobante, monto, disponible, estado y trazabilidad. Para registrar un cobro, ingresa al modulo Caja / Cobrar cuota.</span>
+<span>Usa Ver detalle para consultar fecha, comprobante, monto, disponible, estado y trazabilidad. Si coincide con un monto migrado, podes confirmarlo como conciliacion interna.</span>
 </div>
 </div>
 </div>
@@ -26416,7 +26448,7 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <div class='ueno-step-heading'><span>2</span><b>Acciones permitidas</b></div>
 <div class='ueno-control-note'>
 <b>Solo consulta administrativa</b>
-<span>Desde esta mesa podes revisar movimientos, aplicaciones ya realizadas y auditoria. Las acciones de cobro y conciliacion se realizan unicamente desde Caja / Cobrar cuota.</span>
+<span>Desde esta mesa podes revisar movimientos, auditoria y confirmar montos migrados sugeridos. Los cobros de cuotas se realizan unicamente desde Caja / Cobrar cuota.</span>
 </div>
 </div>
 </div>

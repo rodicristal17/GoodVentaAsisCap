@@ -85,6 +85,13 @@ function ueno_tablas_egreso_requeridas_ok($mysqli)
 	return ueno_tablas_requeridas_ok($mysqli) && ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
 }
 
+function ueno_tablas_migracion_requeridas_ok($mysqli)
+{
+	return ueno_tablas_requeridas_ok($mysqli)
+		&& ueno_tabla_existe($mysqli, "migrar_caja")
+		&& ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja");
+}
+
 function ueno_monto($valor)
 {
 	$valor = trim((string)$valor);
@@ -335,7 +342,9 @@ function ueno_permisos_equivalentes($codigo)
 	$mapa = array(
 		"VERCONCILIACIONEGRESOUENO" => array("VERCONCILIACIONEGRESOUENO", "VERCONCILIACIONUENO", "VEREXTRACTOSUENO", "VERLISTADOEGRESOINGRESO"),
 		"CONCILIAREGRESOUENO" => array("CONCILIAREGRESOUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO"),
-		"REVERTIRCONCILIACIONEGRESOUENO" => array("REVERTIRCONCILIACIONEGRESOUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO")
+		"REVERTIRCONCILIACIONEGRESOUENO" => array("REVERTIRCONCILIACIONEGRESOUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO"),
+		"VERMIGRACIONUENO" => array("VERMIGRACIONUENO", "VERCONCILIACIONUENO", "VEREXTRACTOSUENO"),
+		"CONCILIARMIGRACIONUENO" => array("CONCILIARMIGRACIONUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO")
 	);
 	return isset($mapa[$codigo]) ? $mapa[$codigo] : array($codigo);
 }
@@ -1514,6 +1523,7 @@ function ueno_insertar_importacion($usuario)
 function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido = "todos")
 {
 	$tieneConciliacionEgresos = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
+	$tieneConciliacionMigracion = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
 	$condicion = "";
 	if ($id_importacion != "") {
 		$condicion .= " AND mv.id_importacion='" . $mysqli->real_escape_string($id_importacion) . "'";
@@ -1534,6 +1544,36 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 	$subqueryDebitoAplicado = $tieneConciliacionEgresos
 		? ", IFNULL((SELECT SUM(umg.monto_aplicado) FROM ueno_movimiento_gasto umg WHERE umg.id_movimiento=mv.id_movimiento AND umg.estado='activo'),0) AS monto_aplicado_gasto"
 		: ", 0 AS monto_aplicado_gasto";
+	$subqueryMigracion = $tieneConciliacionMigracion
+		? ", IFNULL((SELECT SUM(umm.monto_aplicado) FROM ueno_movimiento_migracion_caja umm WHERE umm.id_movimiento=mv.id_movimiento AND umm.estado='activo'),0) AS monto_aplicado_migracion,
+		IFNULL((SELECT GROUP_CONCAT(DISTINCT CONCAT('Caja / Monto migrado #', mc.idmigrar_caja, IF(IFNULL(l.Nombre,'')!='', CONCAT(' - ', l.Nombre), '')) ORDER BY umm.fecha_hora_asociacion ASC SEPARATOR ', ')
+			FROM ueno_movimiento_migracion_caja umm
+			INNER JOIN migrar_caja mc ON mc.idmigrar_caja=umm.idmigrar_caja
+			LEFT JOIN arqueocaja ar ON ar.idarqueocaja=mc.cod_caja_desdeFK
+			LEFT JOIN local l ON l.cod_local=ar.cod_local
+			WHERE umm.id_movimiento=mv.id_movimiento AND umm.estado='activo'), '') AS migraciones_conciliacion,
+		IFNULL((SELECT GROUP_CONCAT(DISTINCT IFNULL(per.nombre_persona, CONCAT('Usuario ', umm.usuario_asocio)) ORDER BY umm.fecha_hora_asociacion ASC SEPARATOR ', ')
+			FROM ueno_movimiento_migracion_caja umm
+			LEFT JOIN persona per ON per.cod_persona=umm.usuario_asocio
+			WHERE umm.id_movimiento=mv.id_movimiento AND umm.estado='activo'), '') AS usuarios_migracion,
+		IFNULL((SELECT COUNT(*)
+			FROM migrar_caja mc_sug
+			WHERE mc_sug.monto=mv.monto_disponible
+			AND mc_sug.monto>0
+			AND IFNULL(mc_sug.estado,'')!='Inactivo'
+			AND mc_sug.fecha IS NOT NULL
+			AND mv.fecha_confirmacion>='" . ueno_migracion_fecha_inicio_sistema() . "'
+			AND mc_sug.fecha BETWEEN GREATEST(DATE_SUB(mv.fecha_confirmacion, INTERVAL 4 DAY), '" . ueno_migracion_fecha_inicio_sistema() . "') AND DATE_ADD(mv.fecha_confirmacion, INTERVAL 1 DAY)
+			AND mv.tipo_movimiento='credito'
+			AND mv.monto_disponible=mv.importe_credito
+			AND mv.monto_disponible>0
+			AND NOT EXISTS (
+				SELECT 1
+				FROM ueno_movimiento_migracion_caja umm_sug
+				WHERE umm_sug.idmigrar_caja=mc_sug.idmigrar_caja
+				AND umm_sug.estado='activo'
+			)),0) AS sugerencias_migracion"
+		: ", 0 AS monto_aplicado_migracion, '' AS migraciones_conciliacion, '' AS usuarios_migracion, 0 AS sugerencias_migracion";
 
 	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion,
 		mv.concepto, mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado, imp.nombre_archivo_original,
@@ -1552,6 +1592,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			LEFT JOIN persona cli ON cli.cod_persona=vt.cod_clienteFK
 			WHERE ump_cliente.id_movimiento=mv.id_movimiento AND ump_cliente.estado='activo'), '') AS clientes_conciliacion
 		$subqueryDebitoAplicado
+		$subqueryMigracion
 		FROM ueno_movimiento_bancario mv
 		INNER JOIN ueno_importacion_extracto imp ON imp.id_importacion=mv.id_importacion
 		WHERE mv.id_movimiento!='0' $condicion
@@ -1582,6 +1623,8 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$credito = (int)$row["importe_credito"];
 		$debito = (int)$row["importe_debito"];
 		$aplicadoDebito = (int)$row["monto_aplicado_gasto"];
+		$aplicadoMigracion = isset($row["monto_aplicado_migracion"]) ? (int)$row["monto_aplicado_migracion"] : 0;
+		$sugerenciasMigracion = isset($row["sugerencias_migracion"]) ? (int)$row["sugerencias_migracion"] : 0;
 		$disponible = (int)$row["monto_disponible"];
 		$aplicado = $credito > 0 ? max(0, $credito - $disponible) : 0;
 		$baseAplicacion = $credito;
@@ -1634,6 +1677,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"monto_disponible_fmt" => number_format($disponible, 0, ",", "."),
 			"monto_asignado_gasto" => $aplicadoDebito,
 			"monto_asignado_gasto_fmt" => number_format($aplicadoDebito, 0, ",", "."),
+			"monto_asignado_migracion" => $aplicadoMigracion,
+			"monto_asignado_migracion_fmt" => number_format($aplicadoMigracion, 0, ",", "."),
+			"sugerencias_migracion" => $sugerenciasMigracion,
 			"estado" => $estado_visual,
 			"estado_clave" => $estado_clave
 		);
@@ -1641,6 +1687,8 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		if ($credito > 0 && $disponible > 0 && $estado_clave != "revisar") {
 			if ($estado_clave == "parcial") {
 				$accion = "<input type='button' value='Ver aplicaciones' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" . (int)$row["id_movimiento"] . ")'>";
+			} else if ($sugerenciasMigracion > 0) {
+				$accion = "<input type='button' value='Ver sugerencia' class='btn4 ueno-row-action ueno-row-action--internal' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
 			} else {
 				$accion = "<input type='button' value='Ver detalle' class='btn4 ueno-row-action ueno-row-action--detail' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
 			}
@@ -1661,10 +1709,21 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 				. "</div>"
 			: "<span class='ueno-muted-money'>-</span>";
 		$usuarios_conciliacion = ($credito > 0 && $aplicado > 0) ? trim((string)$row["usuarios_conciliacion"]) : "";
+		$usuarios_migracion = ($credito > 0 && $aplicadoMigracion > 0) ? trim((string)$row["usuarios_migracion"]) : "";
+		if ($usuarios_migracion != "") {
+			$usuarios_conciliacion .= ($usuarios_conciliacion != "" ? ", " : "") . $usuarios_migracion;
+		}
 		$usuarios_html = $usuarios_conciliacion != ""
 			? "<span class='ueno-user-cell' title='" . ueno_escape_html($usuarios_conciliacion) . "'>" . ueno_escape_html($usuarios_conciliacion) . "</span>"
 			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 		$clientes_conciliacion = ($credito > 0 && $aplicado > 0) ? trim((string)$row["clientes_conciliacion"]) : "";
+		$migraciones_conciliacion = ($credito > 0 && $aplicadoMigracion > 0) ? trim((string)$row["migraciones_conciliacion"]) : "";
+		if ($migraciones_conciliacion != "") {
+			$clientes_conciliacion .= ($clientes_conciliacion != "" ? ", " : "") . $migraciones_conciliacion;
+		}
+		if ($clientes_conciliacion == "" && $sugerenciasMigracion > 0) {
+			$clientes_conciliacion = "Posible monto migrado (" . $sugerenciasMigracion . ")";
+		}
 		$clientes_html = $clientes_conciliacion != ""
 			? "<span class='ueno-client-cell' title='" . ueno_escape_html($clientes_conciliacion) . "'>" . ueno_escape_html($clientes_conciliacion) . "</span>"
 			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
@@ -2221,6 +2280,70 @@ function ueno_scalar($mysqli, $sql)
 	}
 	$row = $result->fetch_row();
 	return $row ? (int)$row[0] : 0;
+}
+
+function ueno_dias_entre_fechas($fecha_inicial, $fecha_final)
+{
+	$fecha_inicial = ueno_fecha($fecha_inicial);
+	$fecha_final = ueno_fecha($fecha_final);
+	if ($fecha_inicial == "" || $fecha_final == "") {
+		return 0;
+	}
+	$inicio = strtotime($fecha_inicial);
+	$fin = strtotime($fecha_final);
+	if ($inicio === false || $fin === false) {
+		return 0;
+	}
+	return (int)floor(($fin - $inicio) / 86400);
+}
+
+function ueno_migracion_fecha_inicio_sistema()
+{
+	return "2026-06-18";
+}
+
+function ueno_migracion_rango_fechas($fecha_banco)
+{
+	$fecha_banco = ueno_fecha($fecha_banco);
+	$fecha_inicio_sistema = ueno_migracion_fecha_inicio_sistema();
+	if ($fecha_banco == "" || $fecha_banco < $fecha_inicio_sistema) {
+		return array("inicio" => "", "fin" => "");
+	}
+	$inicio = date("Y-m-d", strtotime($fecha_banco . " -4 days"));
+	$fin = date("Y-m-d", strtotime($fecha_banco . " +1 day"));
+	if ($inicio < $fecha_inicio_sistema) {
+		$inicio = $fecha_inicio_sistema;
+	}
+	return array("inicio" => $inicio, "fin" => $fin);
+}
+
+function ueno_migracion_advertencia($fecha_migracion, $fecha_banco)
+{
+	$dias = ueno_dias_entre_fechas($fecha_migracion, $fecha_banco);
+	if ($dias < 0) {
+		return array(
+			"requiere" => true,
+			"texto" => "El credito bancario es anterior al monto migrado. Revisar antes de conciliar.",
+			"dias" => $dias
+		);
+	}
+	if ($dias > 3) {
+		return array(
+			"requiere" => true,
+			"texto" => "La acreditacion aparece " . $dias . " dias despues del monto migrado. Confirmar solo si Tesoreria verifico el origen.",
+			"dias" => $dias
+		);
+	}
+	return array(
+		"requiere" => false,
+		"texto" => $dias == 0 ? "Coincidencia del mismo dia." : "Coincidencia dentro del rango normal (" . $dias . " dia/s).",
+		"dias" => $dias
+	);
+}
+
+function ueno_migracion_tabla_faltante_msg()
+{
+	return "Falta ejecutar actualizacion_03072026_conciliacion_ueno_monto_migrado.sql";
 }
 
 function ueno_categoria_flujo_texto($categoria)
@@ -2842,6 +2965,237 @@ function ueno_buscar_asignaciones_egreso_banco($usuario)
 	ueno_json(array("1" => "exito", "2" => $html, "3" => $total));
 }
 
+function ueno_obtener_movimiento_credito_para_migracion($mysqli, $id_movimiento, $bloquear = false)
+{
+	$id_movimiento = (int)$id_movimiento;
+	if ($id_movimiento <= 0) {
+		throw new Exception("Seleccione un movimiento Ueno valido.");
+	}
+	$forUpdate = $bloquear ? " FOR UPDATE" : "";
+	$sql = "SELECT id_movimiento, cuenta, fecha_confirmacion, fecha_transaccion, nro_comprobante,
+		descripcion, concepto, tipo_movimiento, importe_credito, importe_debito, monto_disponible, estado
+		FROM ueno_movimiento_bancario
+		WHERE id_movimiento=$id_movimiento
+		LIMIT 1$forUpdate";
+	$result = $mysqli->query($sql);
+	if (!$result || $result->num_rows == 0) {
+		throw new Exception("No se encontro el movimiento Ueno seleccionado.");
+	}
+	$movimiento = $result->fetch_assoc();
+	if ($movimiento["tipo_movimiento"] != "credito" || (int)$movimiento["importe_credito"] <= 0) {
+		throw new Exception("La conciliacion de monto migrado solo admite creditos bancarios.");
+	}
+	if ((int)$movimiento["monto_disponible"] <= 0) {
+		throw new Exception("El movimiento Ueno ya no tiene saldo disponible.");
+	}
+	if ((int)$movimiento["monto_disponible"] != (int)$movimiento["importe_credito"]) {
+		throw new Exception("La primera etapa solo permite conciliar creditos completos, sin aplicaciones parciales.");
+	}
+	return $movimiento;
+}
+
+function ueno_migracion_caja_query_base($monto, $fecha_banco)
+{
+	$monto = (int)$monto;
+	$fecha_banco = ueno_fecha($fecha_banco);
+	$rango = ueno_migracion_rango_fechas($fecha_banco);
+	$condicionFecha = "AND 1=0";
+	if ($rango["inicio"] != "" && $rango["fin"] != "") {
+		$condicionFecha = "AND mc.fecha BETWEEN '" . $rango["inicio"] . "' AND '" . $rango["fin"] . "'";
+	}
+	return "SELECT mc.idmigrar_caja, mc.obs, mc.fecha, mc.monto, mc.cod_caja_desdeFK, mc.cod_caja_hastaFK,
+		mc.estado, mc.tipo, mc.cod_usuRecibeFK, mc.cod_UsuEnviaFK,
+		IFNULL(per_envia.nombre_persona,'') AS usuario_envia,
+		IFNULL(per_recibe.nombre_persona,'') AS usuario_recibe,
+		IFNULL(ar.fechacierre, ar.fechaapertura) AS fecha_cierre_caja,
+		IFNULL(ar.lote,'') AS lote,
+		IFNULL(l.Nombre,'') AS local_nombre,
+		IFNULL(cj.cajanro,'') AS caja_nombre
+		FROM migrar_caja mc
+		LEFT JOIN arqueocaja ar ON ar.idarqueocaja=mc.cod_caja_desdeFK
+		LEFT JOIN local l ON l.cod_local=ar.cod_local
+		LEFT JOIN caja cj ON cj.idcaja=ar.caja_idcaja
+		LEFT JOIN persona per_envia ON per_envia.cod_persona=mc.cod_UsuEnviaFK
+		LEFT JOIN persona per_recibe ON per_recibe.cod_persona=mc.cod_usuRecibeFK
+		WHERE mc.monto=$monto
+		AND mc.monto>0
+		AND IFNULL(mc.estado,'')!='Inactivo'
+		AND mc.fecha IS NOT NULL
+		$condicionFecha
+		AND NOT EXISTS (
+			SELECT 1
+			FROM ueno_movimiento_migracion_caja umm
+			WHERE umm.idmigrar_caja=mc.idmigrar_caja
+			AND umm.estado='activo'
+		)";
+}
+
+function ueno_migracion_caja_por_id($mysqli, $idmigrar_caja, $monto, $fecha_banco, $bloquear = false)
+{
+	$idmigrar_caja = (int)$idmigrar_caja;
+	if ($idmigrar_caja <= 0) {
+		throw new Exception("Seleccione un monto migrado valido.");
+	}
+	$forUpdate = $bloquear ? " FOR UPDATE" : "";
+	$sql = ueno_migracion_caja_query_base($monto, $fecha_banco) . " AND mc.idmigrar_caja=$idmigrar_caja LIMIT 1$forUpdate";
+	$result = $mysqli->query($sql);
+	if (!$result || $result->num_rows == 0) {
+		throw new Exception("No se encontro un monto migrado pendiente que coincida exactamente con este credito.");
+	}
+	return $result->fetch_assoc();
+}
+
+function ueno_html_sugerencias_migracion($mysqli, $movimiento, $usuario)
+{
+	$monto = (int)$movimiento["monto_disponible"];
+	$fecha_banco = ueno_fecha($movimiento["fecha_confirmacion"]);
+	if ($monto <= 0 || $fecha_banco == "") {
+		return array("html" => "", "total" => 0);
+	}
+	$sql = ueno_migracion_caja_query_base($monto, $fecha_banco) . "
+		ORDER BY ABS(DATEDIFF('$fecha_banco', mc.fecha)) ASC, mc.idmigrar_caja DESC
+		LIMIT 20";
+	$result = $mysqli->query($sql);
+	if (!$result) {
+		throw new Exception($mysqli->error);
+	}
+	$html = "";
+	$total = 0;
+	$styleName = "tableRegistroSearch";
+	while ($row = mysqli_fetch_assoc($result)) {
+		$total++;
+		$advertencia = ueno_migracion_advertencia($row["fecha"], $fecha_banco);
+		$requiereAdvertencia = $advertencia["requiere"] ? "SI" : "NO";
+		$claseNota = $advertencia["requiere"] ? "ueno-migration-warning" : "ueno-migration-ok";
+		$contextoCaja = trim((string)$row["local_nombre"]);
+		if (trim((string)$row["caja_nombre"]) != "") {
+			$contextoCaja .= ($contextoCaja != "" ? " / " : "") . "Caja " . trim((string)$row["caja_nombre"]);
+		}
+		if (trim((string)$row["lote"]) != "") {
+			$contextoCaja .= ($contextoCaja != "" ? " / " : "") . "Lote " . trim((string)$row["lote"]);
+		}
+		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
+		$html .= "<table class='$styleName ueno-migration-suggestion-row' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>"
+			. "<td style='width:8%;text-align:center'>" . (int)$row["idmigrar_caja"] . "</td>"
+			. "<td style='width:10%'>" . ueno_escape_html($row["fecha"]) . "</td>"
+			. "<td style='width:14%;text-align:right'>" . ueno_numero($row["monto"]) . "</td>"
+			. "<td style='width:16%'>" . ueno_escape_html($row["usuario_envia"]) . "</td>"
+			. "<td style='width:20%'>" . ueno_escape_html($contextoCaja) . "</td>"
+			. "<td style='width:18%'><span class='" . $claseNota . "'>" . ueno_escape_html($advertencia["texto"]) . "</span></td>"
+			. "<td style='width:14%;text-align:center'><button type='button' class='btn4 ueno-row-action ueno-row-action--internal' onclick='uenoConfirmarConciliacionMigracion("
+			. (int)$movimiento["id_movimiento"] . "," . (int)$row["idmigrar_caja"] . ",\"" . $requiereAdvertencia . "\")'>Conciliar migracion</button></td>"
+			. "</tr></table>";
+	}
+	if ($html == "") {
+		$html = "<div class='ueno-migration-empty'>No se encontraron montos migrados pendientes con el mismo importe exacto.</div>";
+	}
+	return array("html" => $html, "total" => $total);
+}
+
+function ueno_buscar_sugerencias_migracion($usuario)
+{
+	ueno_requerir_algun_permiso($usuario, array("VERMIGRACIONUENO", "CONCILIARMIGRACIONUENO"));
+	$mysqli = conectar_al_servidor();
+	if (!ueno_tablas_migracion_requeridas_ok($mysqli)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "tablasfaltantes", "2" => ueno_migracion_tabla_faltante_msg()));
+	}
+	try {
+		$movimiento = ueno_obtener_movimiento_credito_para_migracion($mysqli, ueno_post("id_movimiento"));
+		$sugerencias = ueno_html_sugerencias_migracion($mysqli, $movimiento, $usuario);
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "exito", "2" => $sugerencias["html"], "3" => $sugerencias["total"]));
+	} catch (Exception $e) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $e->getMessage()));
+	}
+}
+
+function ueno_conciliar_migracion_caja($usuario)
+{
+	ueno_requerir_permiso($usuario, "CONCILIARMIGRACIONUENO");
+	$mysqli = conectar_al_servidor();
+	if (!ueno_tablas_migracion_requeridas_ok($mysqli)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "tablasfaltantes", "2" => ueno_migracion_tabla_faltante_msg()));
+	}
+	$id_movimiento = (int)ueno_post("id_movimiento");
+	$idmigrar_caja = (int)ueno_post("idmigrar_caja");
+	$confirmar_advertencia = strtoupper(trim((string)ueno_post("confirmar_advertencia"))) == "SI";
+	$observacion = ueno_post("observacion");
+	$mysqli->begin_transaction();
+	try {
+		$movimiento = ueno_obtener_movimiento_credito_para_migracion($mysqli, $id_movimiento, true);
+		$monto = (int)$movimiento["monto_disponible"];
+		$migracion = ueno_migracion_caja_por_id($mysqli, $idmigrar_caja, $monto, $movimiento["fecha_confirmacion"], true);
+		$advertencia = ueno_migracion_advertencia($migracion["fecha"], $movimiento["fecha_confirmacion"]);
+		if ($advertencia["requiere"] && !$confirmar_advertencia) {
+			throw new Exception($advertencia["texto"]);
+		}
+		if ($observacion == "") {
+			$observacion = "Conciliacion interna por monto migrado #" . $idmigrar_caja;
+		}
+		$estadoLink = "activo";
+		$stmt = $mysqli->prepare("INSERT INTO ueno_movimiento_migracion_caja
+			(id_movimiento, idmigrar_caja, monto_aplicado, usuario_asocio, estado, observacion, advertencia)
+			VALUES (?,?,?,?,?,?,?)");
+		if (!$stmt) {
+			throw new Exception($mysqli->error);
+		}
+		$stmt->bind_param("iiiisss", $id_movimiento, $idmigrar_caja, $monto, $usuario, $estadoLink, $observacion, $advertencia["texto"]);
+		if (!$stmt->execute()) {
+			throw new Exception($stmt->error);
+		}
+		$idAsignacion = $stmt->insert_id;
+		$nuevoDisponible = 0;
+		$estadoMovimiento = "asignado_total";
+		$stmtMov = $mysqli->prepare("UPDATE ueno_movimiento_bancario SET monto_disponible=?, estado=? WHERE id_movimiento=? AND monto_disponible=?");
+		if (!$stmtMov) {
+			throw new Exception($mysqli->error);
+		}
+		$stmtMov->bind_param("isii", $nuevoDisponible, $estadoMovimiento, $id_movimiento, $monto);
+		if (!$stmtMov->execute()) {
+			throw new Exception($stmtMov->error);
+		}
+		if ($stmtMov->affected_rows <= 0) {
+			throw new Exception("El saldo disponible del movimiento Ueno cambio durante la conciliacion.");
+		}
+		ueno_auditar_conciliacion(
+			$mysqli,
+			"CONCILIAR_MIGRACION_CAJA",
+			"ueno_movimiento_migracion_caja",
+			$idAsignacion,
+			"",
+			$id_movimiento,
+			$movimiento["estado"],
+			"conciliado_interno",
+			$monto,
+			$usuario,
+			$observacion,
+			array(
+				"idmigrar_caja" => $idmigrar_caja,
+				"fecha_migracion" => ueno_from_db($migracion["fecha"]),
+				"fecha_banco" => ueno_from_db($movimiento["fecha_confirmacion"]),
+				"dias_diferencia" => $advertencia["dias"],
+				"advertencia" => ueno_from_db($advertencia["texto"])
+			)
+		);
+		$mysqli->commit();
+		mysqli_close($mysqli);
+		ueno_json(array(
+			"1" => "exito",
+			"2" => "Monto migrado conciliado internamente.",
+			"monto" => ueno_numero($monto),
+			"id_movimiento" => $id_movimiento,
+			"idmigrar_caja" => $idmigrar_caja
+		));
+	} catch (Exception $e) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $e->getMessage()));
+	}
+}
+
 function ueno_turno_caja($local, $fecha_cierre)
 {
 	$localNormal = strtoupper((string)$local);
@@ -2944,6 +3298,15 @@ function ueno_buscar_resumen_tesoreria($usuario)
 		$total_ueno = ueno_scalar($mysqli, "SELECT IFNULL(SUM(importe_credito),0) FROM ueno_movimiento_bancario WHERE fecha_confirmacion='$fecha_bancaria_sql' AND tipo_movimiento='credito'");
 		$ueno_disponible = ueno_scalar($mysqli, "SELECT IFNULL(SUM(monto_disponible),0) FROM ueno_movimiento_bancario WHERE fecha_confirmacion='$fecha_bancaria_sql' AND tipo_movimiento='credito'");
 		$ueno_sin_aplicar = ueno_scalar($mysqli, "SELECT COUNT(*) FROM ueno_movimiento_bancario WHERE fecha_confirmacion='$fecha_bancaria_sql' AND tipo_movimiento='credito' AND monto_disponible>0");
+		$total_migracion_interna = 0;
+		if (ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja")) {
+			$total_migracion_interna = ueno_scalar($mysqli, "SELECT IFNULL(SUM(umm.monto_aplicado),0)
+				FROM ueno_movimiento_migracion_caja umm
+				INNER JOIN ueno_movimiento_bancario mv ON mv.id_movimiento=umm.id_movimiento
+				WHERE umm.estado='activo'
+				AND mv.fecha_confirmacion='$fecha_bancaria_sql'
+				AND mv.tipo_movimiento='credito'");
+		}
 
 		$sqlCierres = "SELECT ar.idarqueocaja, ar.fechaapertura, ar.fechacierre, ar.estado, ar.lote, ar.montoapertura, ar.montocierre,
 			ar.cod_local, IFNULL(l.Nombre,'') as local_nombre, IFNULL(cj.cajanro,'') as caja_nombre,
@@ -3043,7 +3406,7 @@ function ueno_buscar_resumen_tesoreria($usuario)
 		if ($cierres_pendientes < 0) {
 			$cierres_pendientes = 0;
 		}
-		$diferencia = $total_ueno - $total_gv;
+		$diferencia = $total_ueno - $total_gv - $total_migracion_interna;
 
 		mysqli_close($mysqli);
 		ueno_json(array(
@@ -3057,6 +3420,7 @@ function ueno_buscar_resumen_tesoreria($usuario)
 			"cierres_observacion" => $cierres_con_observacion,
 			"total_ueno" => ueno_numero($total_ueno),
 			"total_gv" => ueno_numero($total_gv),
+			"total_migracion_interna" => ueno_numero($total_migracion_interna),
 			"diferencia" => ueno_numero($diferencia),
 			"total_conciliado" => ueno_numero($total_conciliado),
 			"total_pendiente" => ueno_numero($total_pendiente),
@@ -3094,6 +3458,18 @@ function ueno_buscar_auditoria($usuario)
 		$accionSql = $mysqli->real_escape_string($accion);
 		$condicion .= " AND (a.accion LIKE '%$accionSql%' OR a.observacion LIKE '%$accionSql%' OR a.id_movimiento='$accionSql')";
 	}
+	$tieneMigracionAuditoria = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
+	$camposMigracionAuditoria = $tieneMigracionAuditoria
+		? ", IFNULL(mc.idmigrar_caja,'') AS idmigrar_caja,
+		IFNULL(mc.fecha,'') AS fecha_migracion,
+		IFNULL(mc.monto,0) AS monto_migracion,
+		IFNULL(per_envia.nombre_persona,'') AS usuario_migracion"
+		: ", '' AS idmigrar_caja, '' AS fecha_migracion, 0 AS monto_migracion, '' AS usuario_migracion";
+	$joinsMigracionAuditoria = $tieneMigracionAuditoria
+		? "LEFT JOIN ueno_movimiento_migracion_caja umm ON umm.id=CAST(a.registro_id AS UNSIGNED) AND a.tabla_afectada='ueno_movimiento_migracion_caja'
+		LEFT JOIN migrar_caja mc ON mc.idmigrar_caja=umm.idmigrar_caja
+		LEFT JOIN persona per_envia ON per_envia.cod_persona=mc.cod_UsuEnviaFK"
+		: "";
 
 	$sql = "SELECT a.id_auditoria, a.fecha_hora, a.accion, a.tabla_afectada, a.registro_id, a.cod_pagoFK,
 		a.id_movimiento, a.estado_anterior, a.estado_nuevo, a.monto, a.usuario, a.observacion,
@@ -3102,12 +3478,14 @@ function ueno_buscar_auditoria($usuario)
 		IFNULL(cl.ci_cliente,'') AS cliente_doc,
 		IF(IFNULL(p.titulocuota,'')!='', p.titulocuota, IFNULL(cr.plazo,'')) AS cuota_detalle,
 		IFNULL(vt.cod_venta,'') AS cod_venta
+		$camposMigracionAuditoria
 		FROM ueno_auditoria_conciliacion a
 		LEFT JOIN pago p ON p.idPago=a.cod_pagoFK
 		LEFT JOIN credito cr ON cr.idcredito=p.cod_creditoFK
 		LEFT JOIN venta vt ON vt.cod_venta=p.cod_venta_fk
 		LEFT JOIN persona per ON per.cod_persona=vt.cod_clienteFK
 		LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
+		$joinsMigracionAuditoria
 		WHERE a.id_auditoria!='0' $condicion
 		ORDER BY a.id_auditoria DESC
 		LIMIT 250";
@@ -3135,6 +3513,15 @@ function ueno_buscar_auditoria($usuario)
 		}
 		if (trim((string)$row["cod_venta"]) != "") {
 			$clienteCuota .= ($clienteCuota != "" ? " / " : "") . "Venta: " . trim((string)$row["cod_venta"]);
+		}
+		if (trim((string)$row["idmigrar_caja"]) != "") {
+			$clienteCuota = "Monto migrado #" . trim((string)$row["idmigrar_caja"]);
+			if (trim((string)$row["usuario_migracion"]) != "") {
+				$clienteCuota .= " / Envia: " . trim((string)$row["usuario_migracion"]);
+			}
+			if ((int)$row["monto_migracion"] > 0) {
+				$clienteCuota .= " / " . ueno_numero($row["monto_migracion"]);
+			}
 		}
 		if ($clienteCuota == "") {
 			$clienteCuota = "-";
@@ -3216,6 +3603,12 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 	}
 	if ($operacion == "buscar_asignaciones_egreso_banco") {
 		ueno_buscar_asignaciones_egreso_banco($usuario);
+	}
+	if ($operacion == "buscar_sugerencias_migracion") {
+		ueno_buscar_sugerencias_migracion($usuario);
+	}
+	if ($operacion == "conciliar_migracion_caja") {
+		ueno_conciliar_migracion_caja($usuario);
 	}
 
 	ueno_json(array("1" => "operacioninvalida"));

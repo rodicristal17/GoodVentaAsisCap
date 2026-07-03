@@ -10,6 +10,7 @@ var uenoPreviewValidando = false;
 var uenoAuditoriaMovimientoActual = "";
 var uenoImportacionesModalAbierto = false;
 var uenoDetalleImportacionActual = "";
+var uenoMesaTrabajoModalAbierta = false;
 
 function uenoAvisarMesaSoloConsulta() {
 	ver_vetana_informativa("No se puede procesar pagos desde la mesa de trabajo. Utiliza el modulo de caja/cobros.", "", "error");
@@ -44,6 +45,7 @@ function verCerrarConciliacionUeno(d) {
 	} else {
 		uenoCerrarDetalleImportacionPopup();
 		uenoCerrarModalImportaciones();
+		uenoCerrarMesaTrabajoPopup();
 		uenoCerrarAuditoriaMovimientoPopup();
 		document.getElementById("divConciliacionUeno").style.display = "none";
 	}
@@ -447,8 +449,12 @@ function uenoMostrarMovimientoTrabajo() {
 	var disponible = movimiento["monto_disponible_fmt"] || uenoFormatoMonto(movimiento["monto_disponible"] || "0");
 	var credito = movimiento["importe_credito_fmt"] || uenoFormatoMonto(movimiento["importe_credito"] || "0");
 	var debito = movimiento["importe_debito_fmt"] || uenoFormatoMonto(movimiento["importe_debito"] || "0");
+	var sugerenciasMigracion = Number(movimiento["sugerencias_migracion"] || 0);
 	var accion = "<input type='button' value='Ver trazabilidad' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" + Number(movimiento["id_movimiento"] || 0) + ")'>"
 		+ "<input type='button' value='Limpiar seleccion' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarMovimientoTrabajo(true)' style='width:145px'>";
+	var avisoMigracion = sugerenciasMigracion > 0
+		? "<div class='ueno-migration-hint'><b>Coincidencia sugerida</b><span>Hay " + sugerenciasMigracion + " monto/s migrado/s pendiente/s con este mismo importe exacto.</span></div>"
+		: "";
 
 	contenedor.innerHTML = "<div class='ueno-selected-card'>"
 		+ "<div class='ueno-selected-title'>Detalle del movimiento Ueno</div>"
@@ -461,6 +467,8 @@ function uenoMostrarMovimientoTrabajo() {
 		+ "<span><b>Estado</b>" + uenoEscapeHtml(movimiento["estado"] || "") + "</span>"
 		+ "<span class='ueno-selected-wide'><b>Concepto</b>" + uenoEscapeHtml((movimiento["concepto"] || movimiento["descripcion"] || "")) + "</span>"
 		+ "</div>"
+		+ avisoMigracion
+		+ "<div id='divUenoMigracionSugerida' class='ueno-migration-suggestions'></div>"
 		+ "<div class='ueno-selected-actions'>" + accion + "</div>"
 		+ "</div>";
 }
@@ -499,10 +507,127 @@ function uenoSeleccionarMovimientoTrabajo(movimiento) {
 	uenoIdConciliacionManual = "";
 	uenoMostrarMovimientoTrabajo();
 	uenoLimpiarAsignacionManual();
+	uenoBuscarSugerenciasMigracion();
+	if (uenoMesaTrabajoModalAbierta) {
+		uenoCerrarMesaTrabajoPopup();
+	}
 	var panel = document.getElementById("divUenoMovimientoSeleccionado");
 	if (panel && panel.scrollIntoView) {
 		panel.scrollIntoView({ behavior: "smooth", block: "center" });
 	}
+}
+
+function uenoBuscarSugerenciasMigracion() {
+	var contenedor = document.getElementById("divUenoMigracionSugerida");
+	if (!contenedor || !uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"]) {
+		return;
+	}
+	var credito = uenoNumeroMonto(uenoMovimientoTrabajo["importe_credito"] || uenoMovimientoTrabajo["importe_credito_fmt"] || 0);
+	var disponible = uenoNumeroMonto(uenoMovimientoTrabajo["monto_disponible"] || uenoMovimientoTrabajo["monto_disponible_fmt"] || 0);
+	if (credito <= 0 || disponible <= 0 || credito != disponible) {
+		contenedor.innerHTML = "";
+		return;
+	}
+	contenedor.innerHTML = "<div class='ueno-loading-inline'>Buscando coincidencias con montos migrados...</div>";
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "buscar_sugerencias_migracion");
+	datos.append("id_movimiento", uenoMovimientoTrabajo["id_movimiento"]);
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] == "exito") {
+					contenedor.innerHTML = "<div class='ueno-migration-title'>Posibles conciliaciones internas</div>" + (respuesta["2"] || "");
+					uenoModernizarTabla("divUenoMigracionSugerida", ["ID", "Fecha", "Monto", "Envia", "Caja origen", "Control", "Accion"], 5);
+					return;
+				}
+				if (respuesta["1"] == "tablasfaltantes") {
+					contenedor.innerHTML = "<div class='ueno-migration-empty ueno-migration-empty--alert'>" + uenoEscapeHtml(respuesta["2"] || "Falta configurar conciliacion de migraciones.") + "</div>";
+					return;
+				}
+				if (respuesta["1"] == "NI") {
+					contenedor.innerHTML = "";
+					return;
+				}
+				contenedor.innerHTML = "<div class='ueno-migration-empty'>" + uenoEscapeHtml(respuesta["2"] || "No se pudieron buscar montos migrados.") + "</div>";
+			} catch (error) {
+				contenedor.innerHTML = "<div class='ueno-migration-empty'>No se pudo interpretar la busqueda de montos migrados.</div>";
+			}
+		},
+		error: function() {
+			contenedor.innerHTML = "<div class='ueno-migration-empty'>No se pudo conectar para buscar montos migrados.</div>";
+		}
+	});
+}
+
+function uenoConfirmarConciliacionMigracion(idMovimiento, idMigracion, requiereAdvertencia) {
+	if (!idMovimiento || !idMigracion) {
+		ver_vetana_informativa("No se pudo identificar la migracion seleccionada.", "", "error");
+		return;
+	}
+	var mensaje = "Confirmar conciliacion interna del credito Ueno con el monto migrado #" + idMigracion + "?";
+	if (String(requiereAdvertencia || "") == "SI") {
+		mensaje = "ATENCION: esta coincidencia tiene diferencia de fechas fuera del rango normal. Confirmar solo si Tesoreria verifico que corresponde al monto migrado #" + idMigracion + ".\n\n" + mensaje;
+	}
+	if (!window.confirm(mensaje)) {
+		return;
+	}
+	var observacion = window.prompt("Observacion opcional para la auditoria:", "Conciliacion interna de monto migrado #" + idMigracion);
+	if (observacion === null) {
+		return;
+	}
+	verCerrarEfectoCargando("1");
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "conciliar_migracion_caja");
+	datos.append("id_movimiento", idMovimiento);
+	datos.append("idmigrar_caja", idMigracion);
+	datos.append("confirmar_advertencia", String(requiereAdvertencia || "") == "SI" ? "SI" : "NO");
+	datos.append("observacion", observacion || "");
+
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		error: function(jqXHR, textstatus) {
+			verCerrarEfectoCargando("");
+			manejadordeerroresjquery(jqXHR.status, textstatus, "uenoConfirmarConciliacionMigracion");
+		},
+		success: function(responseText) {
+			verCerrarEfectoCargando("");
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo conciliar el monto migrado.", "", "error");
+					return;
+				}
+				ver_vetana_informativa(respuesta["2"] || "Monto migrado conciliado internamente.", "", "exito");
+				uenoLimpiarMovimientoTrabajo(false);
+				uenoBuscarMovimientos(uenoIdImportacionSeleccionada || "");
+				uenoBuscarResumenTesoreria();
+				uenoBuscarAuditoria();
+			} catch (error) {
+				ver_vetana_informativa("Error inesperado al conciliar migracion.", String(error), "error");
+			}
+		}
+	});
 }
 
 function uenoAsignarMovimientoSeleccionado() {
@@ -1207,6 +1332,11 @@ function uenoActualizarFiltrosRapidosMovimientos(resumen) {
 	uenoSetTexto("lblUenoMovParciales", resumen.parciales || "0");
 	uenoSetTexto("lblUenoMovConciliados", resumen.conciliados || "0");
 	uenoSetTexto("lblUenoMovSaldoDisponible", resumen.saldo_disponible_fmt || "0");
+	uenoSetTexto("lblUenoMesaCompactTotal", resumen.total_base || "0");
+	uenoSetTexto("lblUenoMesaCompactDisponibles", resumen.disponibles || "0");
+	uenoSetTexto("lblUenoMesaCompactParciales", resumen.parciales || "0");
+	uenoSetTexto("lblUenoMesaCompactConciliados", resumen.conciliados || "0");
+	uenoSetTexto("lblUenoMesaCompactSaldo", resumen.saldo_disponible_fmt || "0");
 
 	var contenedor = document.getElementById("divUenoMovFiltrosRapidos");
 	if (!contenedor) {
@@ -1223,6 +1353,24 @@ function uenoCambiarFiltroRapidoMovimientos(filtro) {
 	uenoFiltroRapidoMovimientos = filtro || "todos";
 	uenoActualizarFiltrosRapidosMovimientos({});
 	uenoBuscarMovimientos(uenoIdImportacionSeleccionada || "");
+}
+
+function uenoAbrirMesaTrabajoPopup() {
+	var popup = document.getElementById("divUenoMesaTrabajoPopup");
+	if (!popup) {
+		return;
+	}
+	uenoMesaTrabajoModalAbierta = true;
+	popup.style.display = "flex";
+	uenoModernizarVista();
+}
+
+function uenoCerrarMesaTrabajoPopup() {
+	var popup = document.getElementById("divUenoMesaTrabajoPopup");
+	if (popup) {
+		popup.style.display = "none";
+	}
+	uenoMesaTrabajoModalAbierta = false;
 }
 
 function uenoVerAplicacionMovimiento(idMovimiento) {
@@ -1339,6 +1487,7 @@ function uenoBuscarResumenTesoreria() {
 				uenoSetValorTesoreria("inptUenoTesCierresObservacion", datos["cierres_observacion"]);
 				uenoSetValorTesoreria("inptUenoTesTotalUeno", datos["total_ueno"]);
 				uenoSetValorTesoreria("inptUenoTesTotalGV", datos["total_gv"]);
+				uenoSetValorTesoreria("inptUenoTesMigracionInterna", datos["total_migracion_interna"]);
 				uenoSetValorTesoreria("inptUenoTesDiferencia", datos["diferencia"]);
 				uenoSetValorTesoreria("inptUenoTesConciliado", datos["total_conciliado"]);
 				uenoSetValorTesoreria("inptUenoTesPendiente", datos["total_pendiente"]);

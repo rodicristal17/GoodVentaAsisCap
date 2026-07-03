@@ -38482,6 +38482,44 @@ button.tratamiento-ubicacion-visual {
   overflow-y: auto;
 }
 
+#divConciliacionUeno .ueno-main-summary-card {
+  border-color: #b8d8f7;
+  background: #fbfdff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.08);
+}
+
+#divConciliacionUeno .ueno-main-summary-card .ueno-section-head {
+  align-items: center;
+}
+
+#divConciliacionUeno .ueno-workbench-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 8px;
+  width: 98%;
+}
+
+#divConciliacionUeno .ueno-workbench-summary span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d8e5f5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-workbench-summary strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
 #divConciliacionUeno .ueno-section-head {
   display: flex;
   align-items: flex-start;
@@ -39190,6 +39228,12 @@ button.tratamiento-ubicacion-visual {
   color: #1e3a8a !important;
 }
 
+#divConciliacionUeno .ueno-row-action--internal {
+  background-color: #e0f2fe !important;
+  color: #075985 !important;
+  box-shadow: none;
+}
+
 #divConciliacionUeno .ueno-import-summary,
 #divConciliacionUeno .ueno-conciliation-summary,
 #divConciliacionUeno .ueno-tesoreria-status {
@@ -39475,6 +39519,76 @@ button.tratamiento-ubicacion-visual {
   grid-column: span 3;
 }
 
+#divConciliacionUeno .ueno-migration-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #bae6fd;
+  border-left: 4px solid #0284c7;
+  border-radius: 8px;
+  background: #f0f9ff;
+  color: #075985;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divConciliacionUeno .ueno-migration-hint b {
+  color: #0c4a6e;
+}
+
+#divConciliacionUeno .ueno-migration-suggestions {
+  margin-top: 10px;
+}
+
+#divConciliacionUeno .ueno-migration-title {
+  margin-bottom: 6px;
+  color: #164e63;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+#divConciliacionUeno .ueno-migration-empty {
+  padding: 8px 10px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+#divConciliacionUeno .ueno-migration-empty--alert {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+#divConciliacionUeno .ueno-migration-ok,
+#divConciliacionUeno .ueno-migration-warning {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+#divConciliacionUeno .ueno-migration-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+#divConciliacionUeno .ueno-migration-warning {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
 #divConciliacionUeno .ueno-selected-actions {
   display: flex;
   flex-wrap: wrap;
@@ -39514,6 +39628,49 @@ button.tratamiento-ubicacion-visual {
   background: #f8fbff;
   box-shadow: 0 24px 58px rgba(15, 23, 42, 0.28);
   box-sizing: border-box;
+}
+
+#divConciliacionUeno .ueno-workbench-popup {
+  z-index: 88;
+  padding: 14px;
+}
+
+#divConciliacionUeno .ueno-workbench-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1520px, calc(100vw - 28px));
+  height: calc(100vh - 28px);
+  max-height: calc(100vh - 28px);
+  overflow: hidden;
+  padding: 12px;
+}
+
+#divConciliacionUeno .ueno-workbench-dialog-head {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+#divConciliacionUeno .ueno-workbench-dialog-head .ueno-section-title {
+  color: #123f66;
+  font-size: 17px;
+}
+
+#divConciliacionUeno .ueno-workbench-card {
+  flex: 1 1 auto;
+  width: 100% !important;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+}
+
+#divConciliacionUeno .ueno-workbench-card #table_ueno_movimientos {
+  height: clamp(540px, 68vh, 760px) !important;
+  min-height: 500px;
+}
+
+#divConciliacionUeno .ueno-workbench-card .ueno-workbench-hidden-summary {
+  display: none !important;
 }
 
 #divConciliacionUeno .ueno-audit-dialog-head {
