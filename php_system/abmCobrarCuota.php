@@ -236,7 +236,8 @@ function cc_buscar_clientes_cobro($usuario)
 		cc_json(array("1" => "camposvacio", "2" => "Ingresa una cedula o nombre para buscar."));
 	}
 
-	$saldoExpr = cc_saldo_credito_sql();
+	$saldoExpr = "(GREATEST(0, ((IFNULL(cr.Monto,0)-IFNULL(cr.descuento,0))-IFNULL(pg_total.total_pago_cuota,0)))"
+		. " + GREATEST(0, ((IFNULL(cr.totalinteres,0)+IFNULL(cr.deudaInteres,0))-IFNULL(pg_total.total_pago_interes,0))))";
 	$querySql = $mysqli->real_escape_string($query);
 	$queryDocSql = $mysqli->real_escape_string($query_doc);
 	$condiciones = array(
@@ -267,6 +268,14 @@ function cc_buscar_clientes_cobro($usuario)
 		INNER JOIN venta vt ON vt.cod_venta=cr.cod_venta
 		LEFT JOIN persona pe ON pe.cod_persona=vt.cod_clienteFK
 		LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
+		LEFT JOIN (
+			SELECT
+				cod_creditoFK,
+				SUM(CASE WHEN Tipo='Pago Cuota' THEN Monto ELSE 0 END) AS total_pago_cuota,
+				SUM(CASE WHEN Tipo='Interes' THEN Monto ELSE 0 END) AS total_pago_interes
+			FROM pago
+			GROUP BY cod_creditoFK
+		) pg_total ON pg_total.cod_creditoFK=cr.idcredito
 		WHERE $where
 		GROUP BY vt.cod_clienteFK, pe.nombre_persona, pe.telefono, cl.ci_cliente
 		ORDER BY pe.nombre_persona ASC, vt.cod_clienteFK ASC
@@ -694,6 +703,14 @@ function cc_buscar_movimiento_ueno($usuario)
 	$total = count($filas);
 	if ($total > 1) {
 		$html .= "<div class='cobrar-cuota__ueno-warning'><b>Hay varios movimientos disponibles</b><span>Selecciona la transferencia que corresponda a este cobro.</span></div>";
+		$html .= "<div class='cobrar-cuota__ueno-toolbar'><button type='button' class='cobrar-cuota__ueno-open-modal' onclick='cobrarCuotaAbrirModalUeno()' aria-haspopup='dialog'>Ver grande</button></div>";
+		$html .= "<div class='cobrar-cuota__ueno-filter' role='search' aria-label='Filtrar transferencias Ueno'>"
+			. "<label><b>Comprobante</b><input type='search' id='inptCobrarCuotaFiltroUenoComprobante' class='js-cobrar-cuota-ueno-filtro-comprobante' placeholder='Numero de comprobante' autocomplete='off' aria-label='Filtrar por numero de comprobante' oninput='cobrarCuotaFiltrarMovimientosUeno(this)'></label>"
+			. "<label><b>Monto</b><input type='text' id='inptCobrarCuotaFiltroUenoMonto' class='js-cobrar-cuota-ueno-filtro-monto' placeholder='Monto' inputmode='numeric' autocomplete='off' aria-label='Filtrar por monto' oninput='cobrarCuotaFiltrarMovimientosUeno(this)'></label>"
+			. "<button type='button' onclick='cobrarCuotaLimpiarFiltroMovimientosUeno(this)'>Limpiar</button>"
+			. "<span id='lblCobrarCuotaFiltroUenoResultado' class='js-cobrar-cuota-ueno-filtro-resultado'>" . cc_numero($total) . " transferencias</span>"
+			. "</div>"
+			. "<div id='divCobrarCuotaFiltroUenoVacio' class='cobrar-cuota__ueno-filter-empty js-cobrar-cuota-ueno-filtro-vacio' style='display:none;'>No hay transferencias con ese comprobante o monto.</div>";
 	}
 	foreach ($filas as $row) {
 		$comprobanteRealDb = cc_comprobante_normalizado($row["nro_comprobante"]);
@@ -726,6 +743,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		}
 		$datos = array(
 			"id_movimiento" => (int)$row["id_movimiento"],
+			"nro_comprobante" => $comprobanteReal,
 			"comprobante_masked" => $comprobanteMasked,
 			"fecha_confirmacion" => cc_from_db($row["fecha_confirmacion"]),
 			"fecha_transaccion" => cc_from_db($row["fecha_transaccion"]),
@@ -762,7 +780,12 @@ function cc_buscar_movimiento_ueno($usuario)
 		$accion = $puedeUsar
 			? "<input type='button' value='Usar movimiento' class='btn4 cobrar-cuota__btn-secundario' onclick='cobrarCuotaUsarMovimientoUeno(" . $datos_js . ")'>"
 			: "<input type='button' value='" . cc_escape_texto($mensajeAccion) . "' class='btn4 cobrar-cuota__btn-secundario cobrar-cuota__ueno-action-disabled' disabled>";
-		$html .= "<div class='cobrar-cuota__ueno-item'>"
+		$atributosFiltro = " data-ueno-comprobante='" . htmlspecialchars($comprobanteReal, ENT_QUOTES, 'UTF-8') . "'"
+			. " data-ueno-comprobante-mask='" . htmlspecialchars($comprobanteMasked, ENT_QUOTES, 'UTF-8') . "'"
+			. " data-ueno-importe='" . (int)$importe . "'"
+			. " data-ueno-disponible='" . (int)$disponible . "'"
+			. " data-ueno-saldo='" . (int)$saldoRestante . "'";
+		$html .= "<div class='cobrar-cuota__ueno-item'" . $atributosFiltro . ">"
 			. "<div class='cobrar-cuota__ueno-card-body'>"
 			. "<div class='cobrar-cuota__ueno-card-top'>"
 			. "<div class='cobrar-cuota__ueno-card-head'><b class='cobrar-cuota__ueno-date-main'>" . cc_escape_texto($fechaMovimientoVisual != "" ? $fechaMovimientoVisual : "Sin fecha") . "</b><span class='cobrar-cuota__ueno-comprobante'>Comprobante <strong>" . cc_escape_texto($comprobanteVisible) . "</strong></span><div class='cobrar-cuota__ueno-badges'>" . $badgeComprobante . $badgeFecha . "</div></div>"

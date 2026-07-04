@@ -217,7 +217,7 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-ueno-modal-20260703")
 	}
 	if (temaActual == "black") {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
@@ -4674,7 +4674,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.94";
+var codigodeactualizacion="X-GT-1-JMTG-V1.95";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -4871,7 +4871,7 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-ueno-modal-20260703")
 }
 if(d=="black"){
 	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")

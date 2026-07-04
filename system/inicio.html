@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=cobrar-cuota-ueno-modal-20260703" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,14 +43,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=plan-madre-orden-lote-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=odontograma-tablet-terceros-galeria-aviso-20260703"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=cobrar-cuota-ueno-modal-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-modal-clean-20260703"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-fecha-proceso-20260701"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-modal-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-evolucion-guiada-20260630"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -13854,6 +13854,19 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 </td>
 </tr>
 </table>
+<div class='cobrar-cuota-ueno-modal' id='divCobrarCuotaUenoModal' style='display:none' role='dialog' aria-modal='true' aria-labelledby='tituloCobrarCuotaUenoModal'>
+<div class='cobrar-cuota-ueno-modal__backdrop' onclick='cobrarCuotaCerrarModalUeno()'></div>
+<div class='cobrar-cuota-ueno-modal__box' tabindex='-1'>
+<div class='cobrar-cuota-ueno-modal__header'>
+<div>
+<p id='tituloCobrarCuotaUenoModal'>Transferencias Ueno</p>
+<span>Vista ampliada para filtrar por comprobante o monto y elegir el movimiento correcto.</span>
+</div>
+<button type='button' class='cobrar-cuota-ueno-modal__close' onclick='cobrarCuotaCerrarModalUeno()' aria-label='Cerrar vista ampliada'>&times;</button>
+</div>
+<div class='cobrar-cuota-ueno-modal__body' id='divCobrarCuotaUenoModalCuerpo'></div>
+</div>
+</div>
 <div class='cobrar-cuota-confirmacion' id='divCobrarCuotaConfirmacion' style='display:none' role='dialog' aria-modal='true' aria-labelledby='tituloCobrarCuotaConfirmacion'>
 <div class='cobrar-cuota-confirmacion__backdrop' onclick='cobrarCuotaCerrarConfirmacion()'></div>
 <div class='cobrar-cuota-confirmacion__modal' tabindex='-1'>

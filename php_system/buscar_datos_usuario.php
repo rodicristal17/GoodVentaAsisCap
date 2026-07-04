@@ -38,12 +38,18 @@ function buscardatos($user)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select pr.nombre_persona,us.acceso,us.cod_localFK,url,pr.telefono,pr.direccion,pr.tipo_relacion,pr.telefono_referencia,us.fecha_creacion,us.rut_usuario,us.login,us.tipo,
+		$sql= "Select COALESCE(NULLIF(pr.nombre_persona,''), NULLIF(us.login,''), CONCAT('Usuario ', us.cod_usuario)) as nombre_persona,us.acceso,us.cod_localFK,IFNULL(us.url,'') as url,IFNULL(pr.telefono,'') as telefono,IFNULL(pr.direccion,'') as direccion,IFNULL(pr.tipo_relacion,'') as tipo_relacion,IFNULL(pr.telefono_referencia,'') as telefono_referencia,us.fecha_creacion,us.rut_usuario,us.login,us.tipo,
 		(select Nombre from local where cod_local=us.cod_localFK limit 1) as local_nombre,
 		IFNULL((Select cdu.cod_cobradorFk from cobradorusuario cdu where cdu.cod_usuarioFk=us.cod_usuario),0) as ControlCobra
-		from  persona pr inner join usuario us on us.cod_usuario=pr.cod_persona  where cod_persona=? ";
+		from usuario us left join persona pr on pr.cod_persona=us.cod_usuario where us.cod_usuario=? ";
 
    $stmt = $mysqli->prepare($sql);
+   if (!$stmt) {
+	   error_log('buscar_datos_usuario: no se pudo preparar consulta de perfil: '.$mysqli->error);
+	   $informacion =array("1" =>"error", "2" => "No se pudo preparar la consulta de datos del usuario.");
+	   echo json_encode($informacion);
+	   exit;
+   }
   	$s='s';
 
 //$buscar="".$buscar."";

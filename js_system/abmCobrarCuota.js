@@ -115,6 +115,7 @@ function cobrarCuotaMovimientoUenoSeguro(movimiento) {
 	}
 	return {
 		id_movimiento: movimiento.id_movimiento || "",
+		nro_comprobante: movimiento.nro_comprobante || "",
 		comprobante_masked: movimiento.comprobante_masked || cobrarCuotaMaskComprobante(movimiento.nro_comprobante || ""),
 		fecha_confirmacion: movimiento.fecha_confirmacion || "",
 		fecha_transaccion: movimiento.fecha_transaccion || "",
@@ -130,6 +131,180 @@ function cobrarCuotaMovimientoUenoSeguro(movimiento) {
 		pago_parcial_sugerido: movimiento.pago_parcial_sugerido === true,
 		puede_usar: movimiento.puede_usar !== false
 	};
+}
+
+function cobrarCuotaNormalizarFiltroUeno(valor) {
+	return cobrarCuotaNormalizarTexto(valor).replace(/[^0-9A-Z]/g, "");
+}
+
+function cobrarCuotaNormalizarMontoFiltroUeno(valor) {
+	valor = String(valor || "").trim();
+	if (valor == "") {
+		return "";
+	}
+	return String(Math.round(cobrarCuotaNumero(valor) || 0)).replace(/[^0-9]/g, "");
+}
+
+function cobrarCuotaCoincideMontoUeno(item, filtroMonto) {
+	if (filtroMonto == "") {
+		return true;
+	}
+	var campos = [
+		item.getAttribute("data-ueno-importe") || "",
+		item.getAttribute("data-ueno-disponible") || "",
+		item.getAttribute("data-ueno-saldo") || ""
+	];
+	for (var i = 0; i < campos.length; i++) {
+		var monto = String(Math.round(Number(campos[i]) || 0));
+		if (monto == filtroMonto || monto.indexOf(filtroMonto) !== -1) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function cobrarCuotaResolverContenedorFiltroUeno(origen) {
+	if (origen && origen.nodeType === 1) {
+		if (origen.id == "divCobrarCuotaUeno" || (origen.classList && origen.classList.contains("cobrar-cuota-ueno-modal__body"))) {
+			return origen;
+		}
+		if (origen.closest) {
+			return origen.closest(".cobrar-cuota-ueno-modal__body") || origen.closest("#divCobrarCuotaUeno") || cobrarCuotaId("divCobrarCuotaUeno");
+		}
+	}
+	return cobrarCuotaId("divCobrarCuotaUeno");
+}
+
+function cobrarCuotaBuscarEnFiltroUeno(contenedor, selector, idFallback) {
+	if (contenedor && contenedor.querySelector) {
+		var elemento = contenedor.querySelector(selector);
+		if (elemento) {
+			return elemento;
+		}
+	}
+	return idFallback ? cobrarCuotaId(idFallback) : null;
+}
+
+function cobrarCuotaFiltrarMovimientosUeno(origen) {
+	var contenedor = cobrarCuotaResolverContenedorFiltroUeno(origen);
+	if (!contenedor) {
+		return;
+	}
+	var inputComprobante = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-comprobante", "inptCobrarCuotaFiltroUenoComprobante");
+	var inputMonto = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-monto", "inptCobrarCuotaFiltroUenoMonto");
+	var filtroComprobante = cobrarCuotaNormalizarFiltroUeno(inputComprobante ? inputComprobante.value : "");
+	var filtroMonto = cobrarCuotaNormalizarMontoFiltroUeno(inputMonto ? inputMonto.value : "");
+	var items = contenedor.querySelectorAll(".cobrar-cuota__ueno-item");
+	var visibles = 0;
+	for (var i = 0; i < items.length; i++) {
+		var item = items[i];
+		var comprobante = cobrarCuotaNormalizarFiltroUeno(item.getAttribute("data-ueno-comprobante") || "");
+		var comprobanteMask = cobrarCuotaNormalizarFiltroUeno(item.getAttribute("data-ueno-comprobante-mask") || "");
+		var coincideComprobante = filtroComprobante == ""
+			|| comprobante.indexOf(filtroComprobante) !== -1
+			|| comprobanteMask.indexOf(filtroComprobante) !== -1;
+		var coincideMonto = cobrarCuotaCoincideMontoUeno(item, filtroMonto);
+		var visible = coincideComprobante && coincideMonto;
+		item.style.display = visible ? "" : "none";
+		if (visible) {
+			visibles++;
+		}
+	}
+	var resultado = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-resultado", "lblCobrarCuotaFiltroUenoResultado");
+	if (resultado) {
+		var total = items.length;
+		resultado.textContent = visibles == total
+			? cobrarCuotaFormato(total) + " transferencias"
+			: cobrarCuotaFormato(visibles) + " de " + cobrarCuotaFormato(total) + " transferencias";
+	}
+	var vacio = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-vacio", "divCobrarCuotaFiltroUenoVacio");
+	if (vacio) {
+		vacio.style.display = visibles == 0 && items.length > 0 ? "block" : "none";
+	}
+}
+
+function cobrarCuotaLimpiarFiltroMovimientosUeno(origen) {
+	var contenedor = cobrarCuotaResolverContenedorFiltroUeno(origen);
+	var inputComprobante = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-comprobante", "inptCobrarCuotaFiltroUenoComprobante");
+	var inputMonto = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-monto", "inptCobrarCuotaFiltroUenoMonto");
+	if (inputComprobante) {
+		inputComprobante.value = "";
+	}
+	if (inputMonto) {
+		inputMonto.value = "";
+	}
+	cobrarCuotaFiltrarMovimientosUeno(contenedor);
+	if (inputComprobante) {
+		inputComprobante.focus();
+	}
+}
+
+function cobrarCuotaPrepararModalUeno(cuerpo) {
+	if (!cuerpo) {
+		return;
+	}
+	var nodosConId = cuerpo.querySelectorAll("[id]");
+	for (var i = 0; i < nodosConId.length; i++) {
+		nodosConId[i].id = nodosConId[i].id + "Modal";
+	}
+	var herramientas = cuerpo.querySelector(".cobrar-cuota__ueno-toolbar");
+	if (herramientas && herramientas.parentNode) {
+		herramientas.parentNode.removeChild(herramientas);
+	}
+	var items = Array.prototype.slice.call(cuerpo.querySelectorAll(".cobrar-cuota__ueno-item"));
+	if (items.length == 0) {
+		return;
+	}
+	var grilla = document.createElement("div");
+	grilla.className = "cobrar-cuota-ueno-modal__grid";
+	items[0].parentNode.insertBefore(grilla, items[0]);
+	for (i = 0; i < items.length; i++) {
+		grilla.appendChild(items[i]);
+	}
+}
+
+function cobrarCuotaAbrirModalUeno() {
+	var origen = cobrarCuotaId("divCobrarCuotaUeno");
+	var modal = cobrarCuotaId("divCobrarCuotaUenoModal");
+	var cuerpo = cobrarCuotaId("divCobrarCuotaUenoModalCuerpo");
+	if (!origen || !modal || !cuerpo) {
+		cobrarCuotaAviso("No se encontro la vista ampliada de transferencias Ueno.", "error");
+		return;
+	}
+	if (origen.querySelectorAll(".cobrar-cuota__ueno-item").length == 0) {
+		cobrarCuotaAviso("No hay transferencias Ueno para mostrar en grande.");
+		return;
+	}
+	var filtroComprobante = cobrarCuotaBuscarEnFiltroUeno(origen, ".js-cobrar-cuota-ueno-filtro-comprobante", "inptCobrarCuotaFiltroUenoComprobante");
+	var filtroMonto = cobrarCuotaBuscarEnFiltroUeno(origen, ".js-cobrar-cuota-ueno-filtro-monto", "inptCobrarCuotaFiltroUenoMonto");
+	var valorComprobante = filtroComprobante ? filtroComprobante.value : "";
+	var valorMonto = filtroMonto ? filtroMonto.value : "";
+	cuerpo.innerHTML = origen.innerHTML;
+	cobrarCuotaPrepararModalUeno(cuerpo);
+	var modalComprobante = cobrarCuotaBuscarEnFiltroUeno(cuerpo, ".js-cobrar-cuota-ueno-filtro-comprobante", "");
+	var modalMonto = cobrarCuotaBuscarEnFiltroUeno(cuerpo, ".js-cobrar-cuota-ueno-filtro-monto", "");
+	if (modalComprobante) {
+		modalComprobante.value = valorComprobante;
+	}
+	if (modalMonto) {
+		modalMonto.value = valorMonto;
+	}
+	modal.style.display = "";
+	cobrarCuotaFiltrarMovimientosUeno(cuerpo);
+	if (modalComprobante) {
+		modalComprobante.focus();
+	}
+}
+
+function cobrarCuotaCerrarModalUeno() {
+	var modal = cobrarCuotaId("divCobrarCuotaUenoModal");
+	var cuerpo = cobrarCuotaId("divCobrarCuotaUenoModalCuerpo");
+	if (modal) {
+		modal.style.display = "none";
+	}
+	if (cuerpo) {
+		cuerpo.innerHTML = "";
+	}
 }
 
 function cobrarCuotaClonarSimple(objeto) {
@@ -1524,6 +1699,7 @@ function cobrarCuotaBuscarMovimientoUeno() {
 					cobrarCuotaUenoResultadosTotal = Number(datos["3"] || 0);
 					cobrarCuotaUenoBusquedaActiva = true;
 					cobrarCuotaUenoTieneCoincidenciaExacta = datos["5"] == "SI";
+					cobrarCuotaCerrarModalUeno();
 					contenedor.innerHTML = datos["2"];
 					cobrarCuotaAuditar(
 						"BUSCAR_MOVIMIENTO_UENO",
@@ -1596,6 +1772,7 @@ function cobrarCuotaUsarMovimientoUeno(movimiento) {
 		"Movimiento Ueno seleccionado con comprobante enmascarado"
 	);
 	cobrarCuotaMostrarContextoUeno();
+	cobrarCuotaCerrarModalUeno();
 	cobrarCuotaActualizarFormaPago();
 }
 

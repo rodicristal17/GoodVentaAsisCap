@@ -65,6 +65,14 @@ function buscarabmCasaOption(){
 			
 			},
 				error: function(jqXHR, textstatus, errorThrowm){
+					 var mensaje = "ERROR DE CONEXION CON EL SERVIDOR";
+					 if (jqXHR && jqXHR.status) {
+						 mensaje += " (" + jqXHR.status + ")";
+					 }
+					 console.log("login ajax error", textstatus, errorThrowm, jqXHR ? jqXHR.responseText : "");
+					 ver_vetana_informativa(mensaje,"#")
+	ver_cerrar_ventana_cargando(2);
+					 return false;
 	
 			},
 			success: function(responseText)
@@ -241,6 +249,14 @@ function entrar_al_sistema(datos1,datos2,datos3){
 			contentType: false,
 			processData: false,
 				error: function(jqXHR, textstatus, errorThrowm){
+					 var mensaje = "ERROR DE CONEXION CON EL SERVIDOR";
+					 if (jqXHR && jqXHR.status) {
+						 mensaje += " (" + jqXHR.status + ")";
+					 }
+					 console.log("login ajax error", textstatus, errorThrowm, jqXHR ? jqXHR.responseText : "");
+					 ver_vetana_informativa(mensaje,"#")
+	ver_cerrar_ventana_cargando(2);
+					 return false;
 					 ver_vetana_informativa("ERROR DE CONECCIÓN","#")
 	ver_cerrar_ventana_cargando(2);
 					 return false;
@@ -251,7 +267,15 @@ function entrar_al_sistema(datos1,datos2,datos3){
 			Respuesta=responseText;	
 			
 				console.log(Respuesta)
-			var datos = $.parseJSON(Respuesta);
+			var datos;
+			try {
+				datos = $.parseJSON(Respuesta);
+			} catch (error) {
+				console.log("login respuesta invalida", error, Respuesta);
+				ver_vetana_informativa("RESPUESTA INVALIDA DEL SERVIDOR","#")
+				ver_cerrar_ventana_cargando(2);
+				return false;
+			}
 				Respuesta = datos["1"];
 	
 		 if (Respuesta=="UI")
@@ -264,6 +288,14 @@ function entrar_al_sistema(datos1,datos2,datos3){
 						return false;
 					
 
+			}
+			
+			if (Respuesta=="error")
+			{
+				var mensajeServidor = datos["mensaje"] || "NO SE PUDO INICIAR SESION";
+				ver_vetana_informativa(mensajeServidor,"#")
+				ver_cerrar_ventana_cargando(2);
+				return false;
 			}
 			
 			if (Respuesta!="error")
