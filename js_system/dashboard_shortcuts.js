@@ -25,7 +25,9 @@ var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"historial_presupuestos",
 	"insumos",
 	"migrar_caja",
-	"recibir_caja"
+	"recibir_caja",
+	"diagrama_gant",
+	"agenda_dia"
 ];
 
 var DASHBOARD_ACCESS_REGISTRY = {
@@ -44,6 +46,8 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	insumos: { sourceSelector: "#divMenuInsumos" },
 	migrar_caja: { sourceSelector: "#divMenuMigrarCaja", permissionKey: "VERMIGRARCAJA" },
 	recibir_caja: { sourceSelector: "#divMenuRecibirCaja", permissionKey: "VERRECIBIRCAJA" },
+	diagrama_gant: { sourceSelector: "#divMenuDiagramaGant" },
+	agenda_dia: { sourceSelector: "#divMenuAgendaDia" },
 
 	historial_clinico_evolucion: { sourceSelector: "#divMenuHistorialClinicoEvolucion" },
 	sugerencias_calificaciones: { sourceSelector: "#divMenuSugerenciasyCalificaciones" },
@@ -116,6 +120,237 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	listado_acceso: { sourceSelector: "#divMenuListadoAcceso", permissionKey: "VERLISTADODEACCESO" },
 	listado_niveles: { sourceSelector: "#divMenuListadoNiveles", permissionKey: "VERLISTADODENIVELES" }
 };
+
+function asegurarBotonCerrarModalDashboard(ventana, claseExtra, etiqueta, accionCerrar) {
+	if (!ventana || ventana.querySelector(".dashboard-modal-close")) {
+		return;
+	}
+
+	var boton = document.createElement("button");
+	boton.type = "button";
+	boton.className = "dashboard-modal-close " + claseExtra;
+	boton.title = "Cerrar";
+	boton.setAttribute("aria-label", etiqueta);
+	boton.innerHTML = "&times;";
+	boton.onclick = accionCerrar;
+	ventana.insertBefore(boton, ventana.firstChild);
+}
+
+function crearVentanaDiagramaGantSistema() {
+	var ventana = document.createElement("div");
+	ventana.className = "dashboard-gant-window";
+	ventana.id = "dashboardGantWindow";
+	ventana.style.display = "none";
+	ventana.setAttribute("aria-hidden", "true");
+	ventana.innerHTML =
+		"<div class='dashboard-gant-window__header'>" +
+		"<div>" +
+		"<p class='dashboard-gant-window__eyebrow'>Planificacion</p>" +
+		"<h2>Diagrama de gant</h2>" +
+		"</div>" +
+		"<div class='dashboard-gant-window__actions'>" +
+		"<button type='button' onclick='recargarDiagramaGantSistema()' title='Actualizar diagrama'>" +
+		"<i class='fa-solid fa-rotate-right' aria-hidden='true'></i>" +
+		"<span>Actualizar</span>" +
+		"</button>" +
+		"</div>" +
+		"</div>" +
+		"<div class='dashboard-gant-window__body'>" +
+		"<iframe id='iframeDiagramaGantSistema' title='Diagrama de gant' frameborder='0'></iframe>" +
+		"</div>";
+	asegurarBotonCerrarModalDashboard(ventana, "dashboard-gant-window__close", "Cerrar diagrama de gant", cerrarDiagramaGantSistema);
+	document.body.appendChild(ventana);
+	return ventana;
+}
+
+function obtenerVentanaDiagramaGantSistema() {
+	var ventana = document.getElementById("dashboardGantWindow");
+
+	if (!ventana && document.body) {
+		ventana = crearVentanaDiagramaGantSistema();
+	}
+
+	asegurarBotonCerrarModalDashboard(ventana, "dashboard-gant-window__close", "Cerrar diagrama de gant", cerrarDiagramaGantSistema);
+	return ventana;
+}
+
+function abrirDiagramaGantSistema() {
+	var ventana = obtenerVentanaDiagramaGantSistema();
+	var iframe = document.getElementById("iframeDiagramaGantSistema");
+
+	if (!ventana || !iframe) {
+		return;
+	}
+
+	if (!iframe.getAttribute("src")) {
+		iframe.setAttribute("src", "/GoodVentaAsisCap/php_system/Grant.php?embed=dashboard&modal=1&x=gantt-modal-cierre-20260704");
+	}
+
+	ventana.style.display = "flex";
+	ventana.setAttribute("aria-hidden", "false");
+
+	if (document.body) {
+		document.body.classList.add("dashboard-gant-open");
+	}
+
+	setTimeout(function () {
+		try {
+			iframe.focus();
+		} catch (e) {
+		}
+	}, 120);
+}
+
+function cerrarDiagramaGantSistema() {
+	var ventana = document.getElementById("dashboardGantWindow");
+
+	if (ventana) {
+		ventana.style.display = "none";
+		ventana.setAttribute("aria-hidden", "true");
+	}
+
+	if (document.body) {
+		document.body.classList.remove("dashboard-gant-open");
+	}
+}
+
+function recargarDiagramaGantSistema() {
+	var iframe = document.getElementById("iframeDiagramaGantSistema");
+
+	if (!iframe) {
+		abrirDiagramaGantSistema();
+		return;
+	}
+
+	if (!iframe.getAttribute("src")) {
+		abrirDiagramaGantSistema();
+		return;
+	}
+
+	try {
+		iframe.contentWindow.location.reload();
+	} catch (e) {
+		iframe.setAttribute("src", "/GoodVentaAsisCap/php_system/Grant.php?embed=dashboard&modal=1&x=gantt-modal-cierre-20260704");
+	}
+}
+
+function crearVentanaAgendaDiaSistema() {
+	var ventana = document.createElement("div");
+	ventana.className = "dashboard-agenda-window";
+	ventana.id = "dashboardAgendaDiaWindow";
+	ventana.style.display = "none";
+	ventana.setAttribute("aria-hidden", "true");
+	ventana.innerHTML =
+		"<div class='dashboard-agenda-window__header'>" +
+		"<div>" +
+		"<p class='dashboard-agenda-window__eyebrow'>Jornada laboral</p>" +
+		"<h2>Actividades del dia</h2>" +
+		"</div>" +
+		"<div class='dashboard-agenda-window__actions'>" +
+		"<button type='button' onclick='recargarAgendaDiaSistema()' title='Actualizar actividades'>" +
+		"<i class='fa-solid fa-rotate-right' aria-hidden='true'></i>" +
+		"<span>Actualizar</span>" +
+		"</button>" +
+		"</div>" +
+		"</div>" +
+		"<div class='dashboard-agenda-window__body' id='dashboardAgendaDiaWindowBody'></div>";
+	asegurarBotonCerrarModalDashboard(ventana, "dashboard-agenda-window__close", "Cerrar actividades del dia", cerrarAgendaDiaSistema);
+	document.body.appendChild(ventana);
+	return ventana;
+}
+
+function obtenerVentanaAgendaDiaSistema() {
+	var ventana = document.getElementById("dashboardAgendaDiaWindow");
+
+	if (!ventana && document.body) {
+		ventana = crearVentanaAgendaDiaSistema();
+	}
+
+	asegurarBotonCerrarModalDashboard(ventana, "dashboard-agenda-window__close", "Cerrar actividades del dia", cerrarAgendaDiaSistema);
+	return ventana;
+}
+
+function obtenerWidgetAgendaDiaSistema() {
+	if (typeof organizarDashboardPrincipal === "function") {
+		organizarDashboardPrincipal();
+	}
+
+	return document.querySelector("#dashboardAgendaDiaWindowBody .perfil-widget") ||
+		document.querySelector("#dashboardJornadaBody .perfil-widget") ||
+		document.querySelector(".perfil-app .perfil-widget");
+}
+
+function moverAgendaDiaSistema(contenedor) {
+	var widget = obtenerWidgetAgendaDiaSistema();
+
+	if (!widget || !contenedor) {
+		return false;
+	}
+
+	contenedor.appendChild(widget);
+	widget.classList.add("perfil-widget--agenda-dia-window");
+	return true;
+}
+
+function abrirAgendaDiaSistema() {
+	var ventana = obtenerVentanaAgendaDiaSistema();
+	var cuerpo = document.getElementById("dashboardAgendaDiaWindowBody");
+
+	if (!ventana || !cuerpo) {
+		return;
+	}
+
+	if (!moverAgendaDiaSistema(cuerpo)) {
+		return;
+	}
+
+	ventana.style.display = "flex";
+	ventana.setAttribute("aria-hidden", "false");
+
+	if (document.body) {
+		document.body.classList.add("dashboard-agenda-open");
+	}
+
+	recargarAgendaDiaSistema();
+}
+
+function cerrarAgendaDiaSistema() {
+	var ventana = document.getElementById("dashboardAgendaDiaWindow");
+	var destino = document.getElementById("dashboardJornadaBody");
+	var widget = document.querySelector("#dashboardAgendaDiaWindowBody .perfil-widget");
+
+	if (widget) {
+		widget.classList.remove("perfil-widget--agenda-dia-window");
+		if (destino) {
+			destino.appendChild(widget);
+		}
+	}
+
+	if (ventana) {
+		ventana.style.display = "none";
+		ventana.setAttribute("aria-hidden", "true");
+	}
+
+	if (document.body) {
+		document.body.classList.remove("dashboard-agenda-open");
+	}
+}
+
+function recargarAgendaDiaSistema() {
+	if (typeof cargarTareasPendientesAdministrador === "function") {
+		cargarTareasPendientesAdministrador({ forzarEstado: true });
+	}
+}
+
+if (typeof window !== "undefined" && !window.dashboardGantEscapeReady) {
+	window.dashboardGantEscapeReady = true;
+	window.addEventListener("keydown", function (event) {
+		if (event.key === "Escape") {
+			cerrarDiagramaGantSistema();
+			cerrarAgendaDiaSistema();
+		}
+	});
+}
 
 function dashboardShortcutFormData(funt) {
 	var hasUrlCredentials = false;

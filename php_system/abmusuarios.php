@@ -709,9 +709,27 @@ function obtenerHorariosUsuarioPost()
 	return $horarios;
 }
 
+function responderErrorAbmUsuario($mensaje,$detalle="")
+{
+	$informacion = array("1" => "error", "mensaje" => $mensaje);
+	if ($detalle != "") {
+		$informacion["detalle"] = $detalle;
+	}
+	echo json_encode($informacion);
+	exit;
+}
+
+function usuarioEstaInactivo($estado)
+{
+	return strtolower(trim((string)$estado)) == "inactivo";
+}
+
 function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK)
 {
 	asegurarEstructuraHorarioUsuarioEsperado($mysqli);
+	if (!is_array($horarios_usuario)) {
+		$horarios_usuario = array();
+	}
 
 	$consultaInactivar = "UPDATE horario_usuario
 		SET estado_horario='inactivo',
@@ -724,16 +742,14 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 
 	$stmtInactivar = $mysqli->prepare($consultaInactivar);
 	if (!$stmtInactivar) {
-		echo trigger_error('The query preparation failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
-		exit;
+		responderErrorAbmUsuario("No se pudo preparar la actualizacion de horarios del funcionario.", $mysqli->error);
 	}
 
 	$ss='ss';
 	$stmtInactivar->bind_param($ss,$cod_usuario_accion,$cod_usuario);
 
 	if (!$stmtInactivar->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmtInactivar->errno.') '.$stmtInactivar->error, E_USER_ERROR);
-		exit;
+		responderErrorAbmUsuario("No se pudieron actualizar los horarios anteriores del funcionario.", $stmtInactivar->error);
 	}
 
 	$stmtInactivar->close();
@@ -750,8 +766,7 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 
 	$stmtInsert = $mysqli->prepare($consultaInsert);
 	if (!$stmtInsert) {
-		echo trigger_error('The query preparation failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
-		exit;
+		responderErrorAbmUsuario("No se pudo preparar el guardado de horarios del funcionario.", $mysqli->error);
 	}
 
 	foreach ($horarios_usuario as $horario) {
@@ -790,8 +805,7 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 		);
 
 		if (!$stmtInsert->execute()) {
-			echo trigger_error('The query execution failed; MySQL said ('.$stmtInsert->errno.') '.$stmtInsert->error, E_USER_ERROR);
-			exit;
+			responderErrorAbmUsuario("No se pudo guardar un horario del funcionario.", $stmtInsert->error);
 		}
 	}
 
@@ -1637,10 +1651,14 @@ function calcularResumenesControlFuncionario($mysqli,$cod_usuario,$horarios)
 	);
 }
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$horarios_usuario,$cod_usuario_accion,$operacion)
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$cod_usuario_accion,$operacion)
 {
 
 
+
+if($operacion!="nuevo" && $operacion!="editar"){
+	responderErrorAbmUsuario("No se pudo guardar el funcionario porque la operacion solicitada no es valida.");
+}
 
 if($nombre_persona==""  || $rut_usuario==""  || $login=="" || ($operacion=="nuevo" && $password=="")){
 $informacion =array("1" => "CAMPOSVACIOS");
@@ -1651,6 +1669,10 @@ exit;
 $mysqli=conectar_al_servidor(); 
 asegurarCampoVencimientoContratoUsuario($mysqli);
 $fecha_vencimiento_contrato = normalizarFechaUsuarioContrato($fecha_vencimiento_contrato);
+if (usuarioEstaInactivo($estado)) {
+	$acceso = "4";
+	$horarios_usuario = array();
+}
 $datosAnterioresAuditoria=array();
 if($operacion=="editar"){
 	$datosAnterioresAuditoria=obtenerDatosUsuarioAuditoria($mysqli,$cod_usuario);
@@ -1663,14 +1685,15 @@ $consulta= "Select count(*) from usuario where login=? and password=? and cod_lo
 	
 	
 		$stmt = $mysqli->prepare($consulta);
+if (!$stmt) {
+	responderErrorAbmUsuario("No se pudo preparar la validacion del acceso del funcionario.", $mysqli->error);
+}
 $ss='ssss';
 $stmt->bind_param($ss,$login,$password,$cod_localFK,$cod_usuario);
 
 
 if ( ! $stmt->execute()) {
-	$informacion =array("1" => "error");
-	echo json_encode($informacion);	
-	exit;
+	responderErrorAbmUsuario("No se pudo validar si el usuario ya existe.", $stmt->error);
 }
 
 $valor = 0;
@@ -1694,12 +1717,18 @@ if($operacion=="nuevo")
 $consulta1="Insert into persona (nombre_persona,telefono,telefono_referencia,direccion,tipo_relacion)
 values(?,?,?,?,?)";
 $stmt1 = $mysqli->prepare($consulta1);
+if (!$stmt1) {
+	responderErrorAbmUsuario("No se pudo preparar el guardado de los datos personales del funcionario.", $mysqli->error);
+}
 $ss='sssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion);
 
 $consulta2="Insert into usuario (rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion,fecha_vencimiento_contrato)
 values(?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?, NOW(),?)";
 $stmt2 = $mysqli->prepare($consulta2);
+if (!$stmt2) {
+	responderErrorAbmUsuario("No se pudo preparar el guardado del acceso del funcionario.", $mysqli->error);
+}
 $ss='ssssssss';
 $stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_vencimiento_contrato);
 
@@ -1708,6 +1737,9 @@ $con=rand(5, 1500);
 $consulta3="Insert into cobrador (idzona,usu,cod_cobrador,con,estado)
 values('1',?,(select cod_persona from persona order by cod_persona desc limit 1),?,'Activo')";
 $stmt3 = $mysqli->prepare($consulta3);
+if (!$stmt3) {
+	responderErrorAbmUsuario("No se pudo preparar el vinculo de cobrador del funcionario.", $mysqli->error);
+}
 $ss='ss';
 $stmt3->bind_param($ss,$login,$con);
 
@@ -1715,6 +1747,9 @@ $stmt3->bind_param($ss,$login,$con);
 $consulta4="Insert into cobradorusuario (cod_usuarioFk,cod_cobradorFk)
 values((select cod_persona from persona order by cod_persona desc limit 1),(select cod_persona from persona order by cod_persona desc limit 1))";
 $stmt4 = $mysqli->prepare($consulta4);
+if (!$stmt4) {
+	responderErrorAbmUsuario("No se pudo preparar el vinculo de cobrador y usuario.", $mysqli->error);
+}
 
 }
 
@@ -1724,11 +1759,17 @@ if($operacion=="editar")
 
 $consulta1="Update persona set nombre_persona=?,telefono=?, telefono_referencia=?, direccion=?, tipo_relacion=? where cod_persona=?";	
 $stmt1 = $mysqli->prepare($consulta1);
+if (!$stmt1) {
+	responderErrorAbmUsuario("No se pudo preparar la actualizacion de los datos personales del funcionario.", $mysqli->error);
+}
 $ss='ssssss';
 $stmt1->bind_param($ss,$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion,$cod_persona);
 
 $consulta2="update usuario set rut_usuario=?,login=?,password=?,estado=?,acceso=?,cod_localFK=?,tipo=?,fecha_creacion=?,fecha_vencimiento_contrato=? where cod_usuario=? ";
 $stmt2 = $mysqli->prepare($consulta2);
+if (!$stmt2) {
+	responderErrorAbmUsuario("No se pudo preparar la actualizacion del acceso del funcionario.", $mysqli->error);
+}
 $ss='sssssisssi';
 $stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_creacion,$fecha_vencimiento_contrato,$cod_usuario);
 
@@ -1737,18 +1778,12 @@ $stmt2->bind_param($ss,$rut_usuario,$login,$password,$estado,$acceso,$cod_localF
 
 
 if (!$stmt1->execute()) {
-	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
-exit;
-
+	responderErrorAbmUsuario("No se pudieron guardar los datos personales del funcionario.", $stmt1->error);
 }
 
 
 if (!$stmt2->execute()) {
-	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt2->errno.') '.$stmt2->error, E_USER_ERROR);
-exit;
-
+	responderErrorAbmUsuario("No se pudo guardar el acceso del funcionario.", $stmt2->error);
 }
 
 // Recupera la id del usuario de la ultima insercion
@@ -1758,12 +1793,10 @@ if($operacion=="nuevo")
 {
 	
 if (!$stmt3->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt3->errno.') '.$stmt3->error, E_USER_ERROR);
-exit;
+	responderErrorAbmUsuario("No se pudo guardar el vinculo de cobrador del funcionario.", $stmt3->error);
 }
 if (!$stmt4->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt4->errno.') '.$stmt4->error, E_USER_ERROR);
-exit;
+	responderErrorAbmUsuario("No se pudo guardar el vinculo de cobrador y usuario.", $stmt4->error);
 }
 
 }

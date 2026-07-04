@@ -3293,9 +3293,23 @@ function cargarAgenda($mysqli, $useru){
     $fecha_hasta = isset($_POST['fecha_hasta']) ? limpiar($mysqli, $_POST['fecha_hasta']) : '';
     $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
     $cod_consultorio = isset($_POST['cod_consultorio']) ? limpiar($mysqli, $_POST['cod_consultorio']) : '';
+    $cod_consultorios = isset($_POST['cod_consultorios']) ? limpiar($mysqli, $_POST['cod_consultorios']) : '';
     $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
     $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
     $ver_todos_consoltorios = isset($_POST['ver_todos_consoltorios']) ? limpiar($mysqli, $_POST['ver_todos_consoltorios']) : 'true';
+    $solo_catalogo = isset($_POST['solo_catalogo']) ? limpiar($mysqli, $_POST['solo_catalogo']) : '0';
+    $idsConsultoriosFiltro = array();
+    if ($cod_consultorios != '') {
+        $partesConsultorios = explode(',', $cod_consultorios);
+        foreach ($partesConsultorios as $idConsultorioFiltro) {
+            $idConsultorioFiltro = (int)$idConsultorioFiltro;
+            if ($idConsultorioFiltro > 0) {
+                $idsConsultoriosFiltro[$idConsultorioFiltro] = $idConsultorioFiltro;
+            }
+        }
+        $idsConsultoriosFiltro = array_values($idsConsultoriosFiltro);
+    }
+    $sqlFiltroConsultoriosAgenda = count($idsConsultoriosFiltro) > 0 ? implode(',', $idsConsultoriosFiltro) : '';
 
     if ($fecha == '') {
         $fecha = date('Y-m-d');
@@ -3433,9 +3447,23 @@ function cargarAgenda($mysqli, $useru){
         );
     }
 
+    if ($solo_catalogo == '1' || (count($idsConsultoriosFiltro) == 0 && $cod_consultorio == '')) {
+        echo json_encode(array(
+            "1" => "exito",
+            "consultorios" => $consultorios,
+            "eventos" => array(),
+            "eventos_ocupacion" => array(),
+            "feriados" => array()
+        ));
+        exit;
+    }
+
     $condicionOcupacion = "";
     if($fecha!=""){
         $condicionOcupacion.=" and a.fecha = '".$fecha."'";
+    }
+    if($sqlFiltroConsultoriosAgenda!=""){
+        $condicionOcupacion.=" and a.id_consultorio in (".$sqlFiltroConsultoriosAgenda.")";
     }
     if($cod_local!=""){
         $condicionOcupacion.=" and c.cod_localFk = '".$cod_local."'";
@@ -3506,6 +3534,10 @@ function cargarAgenda($mysqli, $useru){
 	if($cod_consultorio!=""){
 		$condicion.=" and a.id_consultorio = '".$cod_consultorio."'";
 	}
+
+    if($sqlFiltroConsultoriosAgenda!=""){
+        $condicion.=" and a.id_consultorio in (".$sqlFiltroConsultoriosAgenda.")";
+    }
 	
 	if($cod_local!=""){
 		$condicion.=" and c.cod_localFk = '".$cod_local."'";

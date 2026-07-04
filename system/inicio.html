@@ -22,9 +22,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=agenda-gantt-return-20260704" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=historial-clinico-acceso-20260618" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -43,8 +43,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=plan-madre-orden-lote-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=odontograma-tablet-terceros-galeria-aviso-20260703"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=funcionario-inactivar-json-20260704"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=agenda-gantt-return-20260704"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
@@ -52,7 +52,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-modal-clean-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-fecha-proceso-20260701"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-evolucion-guiada-20260630"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-consultorios-liviana-20260704"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-resumen-neto-20260624"></script>
@@ -892,13 +892,13 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <div class="dashboard-principal">
 
                       <div class="dashboard-left-column">
-                      <section class="dashboard-card dashboard-card--jornada" id="dashboardJornadaCard">
+                      <section class="dashboard-card dashboard-card--jornada" id="dashboardJornadaCard" style="display:none;" aria-hidden="true">
                         <div class="dashboard-card__body" id="dashboardJornadaBody"></div>
                       </section>
 
                       </div>
 
-                      <section class="dashboard-card dashboard-card--gantt">
+                      <section class="dashboard-card dashboard-card--gantt" style="display:none;" aria-hidden="true">
                         <div class="dashboard-card__header">
                           <div>
                             <p class="dashboard-card__eyebrow">Planificación</p>
@@ -920,7 +920,8 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <div class="Panel dashboard-gantt-panel">
                       <iframe
                         id="iframeGrant"
-                        src="../php_system/Grant.php?embed=dashboard&x=20260605-scrollbar-unica"
+                        src="about:blank"
+                        data-src="../php_system/Grant.php?embed=dashboard&x=20260704-close-return"
                         width="100%"
                         frameborder="0"
                         scrolling="auto"
@@ -1246,6 +1247,42 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         </div>
                       </section>
 
+                    </div>
+
+                    <div class="dashboard-gant-window" id="dashboardGantWindow" style="display:none;" aria-hidden="true">
+                      <button type="button" class="dashboard-modal-close dashboard-gant-window__close" onclick="cerrarDiagramaGantSistema()" title="Cerrar" aria-label="Cerrar diagrama de gant">&times;</button>
+                      <div class="dashboard-gant-window__header">
+                        <div>
+                          <p class="dashboard-gant-window__eyebrow">Planificaci&oacute;n</p>
+                          <h2>Diagrama de gant</h2>
+                        </div>
+                        <div class="dashboard-gant-window__actions">
+                          <button type="button" onclick="recargarDiagramaGantSistema()" title="Actualizar diagrama">
+                            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                            <span>Actualizar</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="dashboard-gant-window__body">
+                        <iframe id="iframeDiagramaGantSistema" title="Diagrama de gant" frameborder="0"></iframe>
+                      </div>
+                    </div>
+
+                    <div class="dashboard-agenda-window" id="dashboardAgendaDiaWindow" style="display:none;" aria-hidden="true">
+                      <button type="button" class="dashboard-modal-close dashboard-agenda-window__close" onclick="cerrarAgendaDiaSistema()" title="Cerrar" aria-label="Cerrar actividades del dia">&times;</button>
+                      <div class="dashboard-agenda-window__header">
+                        <div>
+                          <p class="dashboard-agenda-window__eyebrow">Jornada laboral</p>
+                          <h2>Actividades del d&iacute;a</h2>
+                        </div>
+                        <div class="dashboard-agenda-window__actions">
+                          <button type="button" onclick="recargarAgendaDiaSistema()" title="Actualizar agenda">
+                            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                            <span>Actualizar</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="dashboard-agenda-window__body" id="dashboardAgendaDiaWindowBody"></div>
                     </div>
 
                     <style id="dashboardComparativaVentasCobranzasEstilos">
@@ -1949,6 +1986,36 @@ style='display:none' class='divMinimizado'>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuDiagramaGant' data-access-key="diagrama_gant" onclick='abrirDiagramaGantSistema()' style='width:20%;text-align:center' title='Abrir diagrama de gant'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/diagrama-gant.png' />
+<p class='pTitulo4'>Diagrama de gant</p>
+<center>
+<div id='divMinimizadoDiagramaGant'
+style='display:none' class='divMinimizado'>
+</div>
+</center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuAgendaDia' data-access-key="agenda_dia" onclick='abrirAgendaDiaSistema()' style='width:20%;text-align:center' title='Abrir actividades del dia'>
+<tr>
+<td>
+<img class='imgIconoMenu'
+src='/GoodVentaAsisCap/iconos/agenda-dia.png' />
+<p class='pTitulo4'>Actividades del d&iacute;a</p>
+<center>
+<div id='divMinimizadoAgendaDia'
+style='display:none' class='divMinimizado'>
+</div>
+</center>
+</td>
+</tr>
+</table>
+
 </td>
 
 
@@ -2002,7 +2069,7 @@ style='display:none' class='divMinimizado'>
 
             <div>
                 <p class="perfil-tareas__eyebrow">Jornada laboral</p>
-                <p class="perfil-tareas__titulo">Agenda del día</p>
+                <p class="perfil-tareas__titulo">Actividades del día</p>
                 <p class="perfil-tareas__subtitulo">Tus actividades aparecen autom&aacute;ticamente seg&uacute;n tu rol, local y horario laboral.</p>
             </div>
 
@@ -26994,7 +27061,7 @@ onclick='buscarvistaaperturacierrecaja()' />
         <div class='catalogo-filtros-activos' id='agendaFiltrosActivos'>
             <button class="btn-accion-principal" onclick="verCerrarModalFeriados(true)">Feriados</button>
             <span class='chip-filtro'>Fecha: hoy</span>
-            <span class='chip-filtro'>Consultorios: todos</span>
+            <span class='chip-filtro'>Consultorios: sin selecci&oacute;n</span>
         </div>
     </div>
 

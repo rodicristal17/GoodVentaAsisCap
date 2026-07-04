@@ -20502,7 +20502,7 @@ body.presupuesto-confirmacion-venta-abierta .modal-backdrop {
 .dashboard-principal {
     width: 100%;
     display: grid;
-    grid-template-columns: minmax(360px, 0.95fr) minmax(520px, 1.35fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
     align-items: stretch;
     margin: 0 0 14px;
@@ -20563,6 +20563,316 @@ body.presupuesto-confirmacion-venta-abierta .modal-backdrop {
 
 .dashboard-card__body {
     min-width: 0;
+}
+
+body.dashboard-gant-open {
+    overflow: hidden;
+}
+
+body.dashboard-agenda-open {
+    overflow: hidden;
+}
+
+.dashboard-gant-window {
+    position: fixed;
+    inset: 14px;
+    z-index: 100020;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.dashboard-gant-window__header {
+    flex: 0 0 auto;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 58px 10px 14px;
+    border-bottom: 1px solid #e4e7ec;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.dashboard-gant-window__eyebrow {
+    margin: 0 0 2px;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.dashboard-gant-window__header h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+.dashboard-gant-window__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-gant-window__actions button {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border: 1px solid #d9e1ea;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #172033;
+    cursor: pointer;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.dashboard-gant-window__actions button:hover {
+    border-color: #cbd5e1;
+    background: #ffffff;
+}
+
+.dashboard-gant-window__actions img {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
+    padding: 0;
+}
+
+.dashboard-gant-window__actions i {
+    width: 15px;
+    color: #2563eb;
+    font-size: 13px;
+    line-height: 1;
+    text-align: center;
+}
+
+.dashboard-gant-window__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    background: #ffffff;
+}
+
+.dashboard-gant-window__body iframe {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 0;
+    background: #ffffff;
+}
+
+.dashboard-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 20;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #172033;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+
+.dashboard-modal-close:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.dashboard-agenda-window {
+    position: fixed;
+    inset: 14px;
+    z-index: 100020;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.dashboard-agenda-window__header {
+    flex: 0 0 auto;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 58px 10px 14px;
+    border-bottom: 1px solid #e4e7ec;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.dashboard-agenda-window__eyebrow {
+    margin: 0 0 2px;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.dashboard-agenda-window__header h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+.dashboard-agenda-window__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-agenda-window__actions button {
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border: 1px solid #d9e1ea;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #172033;
+    cursor: pointer;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.dashboard-agenda-window__actions button:hover {
+    border-color: #cbd5e1;
+    background: #ffffff;
+}
+
+.dashboard-agenda-window__actions i {
+    width: 15px;
+    color: #2563eb;
+    font-size: 13px;
+    line-height: 1;
+    text-align: center;
+}
+
+.dashboard-agenda-window__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 14px;
+    background: #f8fafc;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.dashboard-agenda-window__body .perfil-widget {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.dashboard-agenda-window__body .perfil-widget__usuario {
+    display: none !important;
+}
+
+.dashboard-agenda-window__body .perfil-tareas {
+    min-height: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+        "cabecera"
+        "resumen"
+        "formulario"
+        "contenido";
+    overflow: hidden;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__cabecera {
+    grid-area: cabecera;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__resumen {
+    grid-area: resumen;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__quick-form {
+    grid-area: formulario;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__lista,
+.dashboard-agenda-window__body .perfil-tareas__vacio {
+    grid-area: contenido;
+    min-height: 0;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__lista {
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__vacio {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__estado-panel {
+    min-height: 100%;
+    height: 100%;
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.dashboard-agenda-window__body .perfil-tareas__estado-panel span,
+.dashboard-agenda-window__body .perfil-tareas__estado-panel small {
+    max-width: 470px;
 }
 
 .dashboard-card__body--gantt {
@@ -21966,6 +22276,44 @@ button.dashboard-summary-item:hover {
     }
 
     .dashboard-card {
+        padding: 10px;
+    }
+
+    .dashboard-gant-window {
+        inset: 0;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    .dashboard-gant-window__header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-gant-window__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .dashboard-agenda-window {
+        inset: 0;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    .dashboard-agenda-window__header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-agenda-window__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .dashboard-agenda-window__body {
         padding: 10px;
     }
 

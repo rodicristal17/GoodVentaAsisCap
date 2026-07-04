@@ -1417,6 +1417,8 @@ if ($json_reporte === false) {
     $json_reporte = '[]';
 }
 $grant_dashboard_embed = isset($_GET['embed']) && $_GET['embed'] === 'dashboard';
+$grant_dashboard_modal = isset($_GET['modal']) && $_GET['modal'] === '1';
+$grant_body_class = trim(($grant_dashboard_embed ? 'grant-dashboard-compact' : '') . ' ' . ($grant_dashboard_modal ? 'grant-dashboard-modal' : ''));
 if (ob_get_length()) {
     ob_clean();
 }
@@ -1700,6 +1702,65 @@ if (ob_get_length()) {
             width: 100%;
             margin: 0 auto;
             padding: 8px 12px 12px;
+        }
+
+        .gantt-return-dashboard {
+            position: fixed;
+            top: 12px;
+            right: 14px;
+            z-index: 10050;
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.96);
+            color: #172033;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+        }
+
+        .gantt-return-dashboard:hover {
+            border-color: #93a4b8;
+            background: #ffffff;
+        }
+
+        .gantt-return-dashboard__icon {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 16px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        body.grant-dashboard-modal .gantt-return-dashboard {
+            display: none;
+        }
+
+        body.grant-dashboard-compact:not(.grant-dashboard-modal) .gantt-return-dashboard {
+            width: 38px;
+            min-width: 38px;
+            height: 38px;
+            min-height: 38px;
+            padding: 0;
+            border-radius: 50%;
+        }
+
+        body.grant-dashboard-compact:not(.grant-dashboard-modal) .gantt-return-dashboard span:not(.gantt-return-dashboard__icon) {
+            display: none;
         }
 
         .form-card {
@@ -3016,7 +3077,12 @@ if (ob_get_length()) {
     </style>
 </head>
 
-<body class="<?= $grant_dashboard_embed ? 'grant-dashboard-compact' : '' ?>">
+<body class="<?= htmlspecialchars($grant_body_class, ENT_QUOTES, 'UTF-8') ?>">
+
+    <button type="button" class="gantt-return-dashboard" onclick="volverDashboardDesdeGantt()" title="Volver al dashboard" aria-label="Cerrar diagrama de gant">
+        <span class="gantt-return-dashboard__icon" aria-hidden="true">&times;</span>
+        <span>Cerrar</span>
+    </button>
 
     <div class="header">
         <span>FARAONE CAPITAL SOCIEDAD ANONIMA | Planificación de Expansión Operativa</span>
@@ -3312,6 +3378,28 @@ if (ob_get_length()) {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
     <script>
+        function volverDashboardDesdeGantt() {
+            try {
+                if (window.parent && window.parent !== window) {
+                    if (typeof window.parent.cerrarDiagramaGantSistema === 'function') {
+                        window.parent.cerrarDiagramaGantSistema();
+                        return;
+                    }
+
+                    window.parent.location.href = '/GoodVentaAsisCap/system/inicio.html';
+                    return;
+                }
+            } catch (e) {
+            }
+
+            if (window.history && window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+
+            window.location.href = '/GoodVentaAsisCap/system/inicio.html';
+        }
+
         // allTasks incluye la tarea fantasma __horizon__ que centra la vista cerca de hoy.
         const allTasks = <?= $json ?>;
         const reportTasks = <?= $json_reporte ?>;

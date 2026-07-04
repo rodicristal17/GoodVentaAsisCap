@@ -7041,11 +7041,17 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 					idAbmUsuario = "";
 					verCerrarVentanaAbmUsuarios("2","");
 					buscarabmusuario();
+				} else if (datos["mensaje"]) {
+					ver_vetana_informativa(datos["mensaje"])
 				}
 					
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				var mensajeError="LO SENTIMOS HA OCURRIDO UN ERROR";
+				if(responseText=="" || responseText==null){
+					mensajeError="No se pudo guardar el funcionario. El servidor no devolvio una respuesta valida.";
+				}
+				ver_vetana_informativa(mensajeError)
+				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
 		}

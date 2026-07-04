@@ -20,6 +20,17 @@ var agendaEventoDetalleActual = null;
 var agendaDetalleHistorialCompletoVisible = false;
 var agendaDetalleAccionEnProceso = false;
 
+function obtenerIdsConsultoriosSeleccionadosParaCargaAgenda() {
+    var consultoriosSeleccionados = obtenerConsultoriosSeleccionadosAgenda();
+    var filtroConsultorio = document.getElementById('inptConsultorioAgendaFiltro');
+
+    if(consultoriosSeleccionados.length === 0 && filtroConsultorio && filtroConsultorio.value !== ''){
+        consultoriosSeleccionados.push(String(filtroConsultorio.value));
+    }
+
+    return consultoriosSeleccionados;
+}
+
 function cargarAgendaConsultoriosDesdePHP(callback) {
     obtener_datos_user();
 
@@ -33,6 +44,12 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
     }
     var estado = document.getElementById('inptEstadoAgenda').value || '';
     var fecha = document.getElementById('inptFechaAgenda').value || '';
+    var consultoriosSeleccionadosCarga = obtenerIdsConsultoriosSeleccionadosParaCargaAgenda();
+    var soloCatalogo = consultoriosSeleccionadosCarga.length === 0;
+    if(consultoriosSeleccionadosCarga.length > 0 && obtenerConsultoriosSeleccionadosAgenda().length > 0){
+        consultorio = '';
+        local = '';
+    }
     actualizarTextoFechaAgenda();
 
     var datos = {
@@ -42,6 +59,8 @@ function cargarAgendaConsultoriosDesdePHP(callback) {
         "paciente": paciente,
         "cod_consultorio": consultorio,
         "cod_local": local,
+        "cod_consultorios": consultoriosSeleccionadosCarga.join(','),
+        "solo_catalogo": soloCatalogo ? "1" : "0",
         "fecha": fecha,
         "estado": estado,
         "ver_todos_consoltorios": verTodosConsultorios,
@@ -178,6 +197,7 @@ function iniciarAgendaConsultorios(){
     document.getElementById('inptFechaNuevaCita').value = y + '-' + m + '-' + d;
     actualizarTextoFechaAgenda();
 
+    limpiarSeleccionConsultoriosAgenda();
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -233,10 +253,7 @@ function renderListaConsultoriosAgenda(){
 
         for(var j = 0; j < grupo.consultorios.length; j++){
             c = grupo.consultorios[j];
-            checked = "checked";
-            if(idsSeleccionados.length > 0){
-                checked = idsSeleccionados.indexOf(String(c.id)) >= 0 ? "checked" : "";
-            }
+            checked = idsSeleccionados.indexOf(String(c.id)) >= 0 ? "checked" : "";
             nombreConsultorio = obtenerNombreConsultorioListaAgenda(c, grupo.nombre);
 
             html += ''
@@ -245,7 +262,7 @@ function renderListaConsultoriosAgenda(){
                     + "class='check-consultorio-agenda' "
                     + "value='" + escaparAtributoListaAgenda(c.id) + "' "
                     + checked + " "
-                    + "onchange='actualizarEstadoGruposConsultoriosAgenda();cargarAgendaConsultorios()'>"
+                    + "onchange='cambiarSeleccionConsultoriosAgenda()'>"
                 + "<span class='consultorio-color' style='background:" + escaparAtributoListaAgenda(c.color) + "'></span>"
                 + "<div>"
                     + "<b>" + escaparHtmlListaAgenda(nombreConsultorio) + "</b><br>"
@@ -357,8 +374,12 @@ function seleccionarGrupoConsultoriosAgenda(checkGrupo){
     }
 
     checkGrupo.indeterminate = false;
+    cambiarSeleccionConsultoriosAgenda();
+}
+
+function cambiarSeleccionConsultoriosAgenda(){
     actualizarEstadoGruposConsultoriosAgenda();
-    cargarAgendaConsultorios();
+    cargarAgendaConsultoriosDesdePHP();
 }
 
 function actualizarEstadoGruposConsultoriosAgenda(){
@@ -486,11 +507,23 @@ function obtenerConsultoriosSeleccionadosAgenda(){
     return lista;
 }
 
+function limpiarSeleccionConsultoriosAgenda(){
+    var checks = document.querySelectorAll('#listaConsultoriosAgenda .check-consultorio-agenda, #listaConsultoriosAgenda .check-grupo-consultorio-agenda');
+    var i;
+
+    for(i = 0; i < checks.length; i++){
+        checks[i].checked = false;
+        checks[i].indeterminate = false;
+    }
+
+    actualizarEstadoGruposConsultoriosAgenda();
+}
+
 
 
 function cargarSelectConsultoriosAgenda(){
     var html = "<option value=''>Seleccionar</option>";
-    var htmlFiltro = "<option value=''>Todos</option>";
+    var htmlFiltro = "<option value=''>Seleccionar</option>";
     var i, c;
 
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
@@ -653,9 +686,16 @@ function cargarAgendaConsultorios(){
     var dataHoraRow = '';
     var htmlCuartosHora = '';
 
+    if(consultoriosSeleccionados.length === 0){
+        mostrarAgendaSinConsultoriosSeleccionados();
+        actualizarResumenAgenda(fecha, estado, consultoriosSeleccionados);
+        actualizarResumenFiltrosAgenda();
+        inicializarBarraHorizontalAgenda();
+        return;
+    }
+
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
     if(
-        consultoriosSeleccionados.length === 0 ||
         consultoriosSeleccionados.indexOf(String(agendaConsultoriosData.consultorios[i].id)) >= 0
     ){
         consultorios.push(agendaConsultoriosData.consultorios[i]);
@@ -730,6 +770,21 @@ function cargarAgendaConsultorios(){
     inicializarDragAndDropAgenda();
     inicializarBarraHorizontalAgenda();
     iniciarLineaHoraActualAgenda();
+}
+
+function mostrarAgendaSinConsultoriosSeleccionados(){
+    var contenedor = document.getElementById('agendaGridConsultorios');
+
+    if(!contenedor){
+        return;
+    }
+
+    contenedor.innerHTML = ''
+        + "<div class='agenda-seleccion-vacia'>"
+            + "<div class='agenda-seleccion-vacia__icono'>+</div>"
+            + "<h3>Seleccion&aacute; un local o consultorio</h3>"
+            + "<p>La agenda se cargar&aacute; cuando marques los consultorios que necesit&aacute;s ver.</p>"
+        + "</div>";
 }
 
 function inicializarBarraHorizontalAgenda(){
@@ -2437,6 +2492,10 @@ function calcularTotalesResumenAgenda(fecha, estado, consultorioFiltro){
         ? consultorioFiltro.length > 0
         : consultorioFiltro !== '';
 
+    if(Array.isArray(consultorioFiltro) && consultorioFiltro.length === 0){
+        return totales;
+    }
+
     for(i = 0; i < agendaConsultoriosData.eventos.length; i++){
         e = agendaConsultoriosData.eventos[i];
         if (e.estado === "FERIADO") continue;
@@ -2480,9 +2539,14 @@ function actualizarResumenAgenda(fecha, estado, consultorioFiltro){
 function actualizarResumenFiltrosAgenda(){
     var fecha = document.getElementById('inptFechaAgenda').value || 'hoy';
     var consultorio = document.getElementById('inptConsultorioAgendaFiltro');
-    var textoConsultorio = 'todos';
+    var consultoriosSeleccionados = obtenerConsultoriosSeleccionadosAgenda();
+    var textoConsultorio = 'sin selecci&oacute;n';
 
-    if(consultorio && consultorio.selectedIndex >= 0){
+    if(consultoriosSeleccionados.length > 1){
+        textoConsultorio = consultoriosSeleccionados.length + ' consultorios';
+    }else if(consultoriosSeleccionados.length === 1){
+        textoConsultorio = obtenerNombreConsultorioResumenFiltrosAgenda(consultoriosSeleccionados[0]);
+    }else if(consultorio && consultorio.value !== '' && consultorio.selectedIndex >= 0){
         textoConsultorio = consultorio.options[consultorio.selectedIndex].text;
     }
 
@@ -2490,6 +2554,16 @@ function actualizarResumenFiltrosAgenda(){
         + '<button class="btn-filtro" onclick="verCerrarModalAsignarConsultorios(true)">Asignar consultorios</button>'
         + "<span class='chip-filtro'>Fecha: " + fecha + "</span>"
         + "<span class='chip-filtro'>Consultorios: " + textoConsultorio + "</span>";
+}
+
+function obtenerNombreConsultorioResumenFiltrosAgenda(idConsultorio){
+    var consultorio = obtenerConsultorioAgendaPorId(idConsultorio);
+
+    if(consultorio && consultorio.nombre){
+        return escaparHtmlAgenda(consultorio.nombre);
+    }
+
+    return '1 consultorio';
 }
 
 function cambiarFechaAgenda(dias){
@@ -4130,6 +4204,7 @@ function AbrirAgendaConsultorios(ir_hoy= true){
         document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
     }
     actualizarTextoFechaAgenda();
+    limpiarSeleccionConsultoriosAgenda();
     cargarAgendaConsultoriosDesdePHP();
 }
 
