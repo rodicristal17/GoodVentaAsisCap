@@ -1768,8 +1768,9 @@ function obtenerPlanDefinitivoActivoPacienteConsulta($mysqli,$paciente_id,$cedul
 			CASE
 				WHEN pd.estado = 'definido' THEN 0
 				WHEN pd.estado = 'modificado' THEN 1
-				WHEN pd.estado = 'borrador' THEN 2
-				ELSE 3
+				WHEN pd.estado = 'pendiente_validacion' THEN 2
+				WHEN pd.estado = 'borrador' THEN 3
+				ELSE 4
 			END,
 			pd.id DESC
 		LIMIT 1";
@@ -3521,6 +3522,7 @@ function renderizarSeccionPlanTratamientoConsulta($titulo, $ayuda, $tratamientos
 function textoEstadoPlanDefinitivoConsulta($estado)
 {
 	$estado = strtolower(trim((string)$estado));
+	if ($estado == "pendiente_validacion") { return "Pendiente de validaci&oacute;n cl&iacute;nica"; }
 	if ($estado == "definido") { return "Definido"; }
 	if ($estado == "modificado") { return "Modificado"; }
 	if ($estado == "borrador") { return "Borrador"; }
@@ -3531,6 +3533,7 @@ function etiquetaEstadoPlanDefinitivoConsulta($estado,$version)
 {
 	$estado = strtolower(trim((string)$estado));
 	$version = (int)$version;
+	if ($estado == "pendiente_validacion") { return "Vigente &middot; Pendiente de validaci&oacute;n cl&iacute;nica"; }
 	if ($estado == "borrador") { return "Borrador"; }
 	if ($estado == "modificado") { return "Modificado &middot; Versi&oacute;n ".$version; }
 	if ($estado == "definido") { return "Definido &middot; Ruta vigente"; }
@@ -3542,6 +3545,7 @@ function etiquetaTabPlanDefinitivoConsulta($estado,$version,$existe)
 	if (!$existe) { return "Plan madre &middot; Pendiente"; }
 	$estado = strtolower(trim((string)$estado));
 	$version = (int)$version;
+	if ($estado == "pendiente_validacion") { return "Plan madre &middot; Pendiente validaci&oacute;n"; }
 	if ($estado == "borrador") { return "Plan madre &middot; Borrador"; }
 	if ($estado == "modificado") { return "Plan madre &middot; Versi&oacute;n ".$version; }
 	return "Plan madre &middot; Asignado";
@@ -3762,6 +3766,9 @@ function renderizarPlanDefinitivoConsulta($mysqli,$cod_venta,$tratamientosSugeri
 	if ($estado == "borrador") {
 		$ayudaEstado = "Este plan madre todav&iacute;a no fue confirmado. Pod&eacute;s continuar la edici&oacute;n y confirmar la ruta cuando est&eacute; lista.";
 	}
+	if ($estado == "pendiente_validacion") {
+		$ayudaEstado = "Plan madre vigente generado desde agenda con sugerencia autom&aacute;tica. Puede usarse para agendar y atender, pero queda pendiente de validaci&oacute;n del jefe cl&iacute;nico.";
+	}
 	if ($estado == "modificado") {
 		$ayudaEstado = "La ruta fue modificada con trazabilidad. El orden cl&iacute;nico se conserva seg&uacute;n la versi&oacute;n vigente.";
 	}
@@ -3774,9 +3781,13 @@ function renderizarPlanDefinitivoConsulta($mysqli,$cod_venta,$tratamientosSugeri
 	if ($estado == "definido" || $estado == "modificado") {
 		$accionesLectura = "<button type='button' class='plan-definitivo-secondary plan-definitivo-readonly-action' onclick='editarPlanDefinitivoConsulta(\"".$planId."\")'>Editar ruta</button>";
 	}
-	$accionConfirmar = $estado == "borrador"
-		? "<button type='button' class='plan-definitivo-primary plan-definitivo-edit-only' onclick='confirmarPlanDefinitivoConsulta(\"".$planId."\")'>Confirmar plan</button>"
-		: "";
+	$accionConfirmar = "";
+	if ($estado == "borrador") {
+		$accionConfirmar = "<button type='button' class='plan-definitivo-primary plan-definitivo-edit-only' onclick='confirmarPlanDefinitivoConsulta(\"".$planId."\")'>Confirmar plan</button>";
+	}
+	if ($estado == "pendiente_validacion") {
+		$accionConfirmar = "<button type='button' class='plan-definitivo-primary' onclick='confirmarPlanDefinitivoConsulta(\"".$planId."\")'>Validar plan madre</button>";
+	}
 	$botonConfirmarOrden = "<button type='button' class='plan-definitivo-primary plan-definitivo-edit-only plan-definitivo-save-order-btn' onclick='guardarOrdenPlanDefinitivoConsulta(\"".$planId."\")'>Confirmar orden</button>";
 	$botonCancelarEdicion = "<button type='button' class='plan-definitivo-secondary plan-definitivo-edit-only' onclick='cancelarEdicionOrdenPlanDefinitivoConsulta(\"".$planId."\")'>Cancelar edici&oacute;n</button>";
 	$fechaInicioPlan = obtenerFechaVentaBasePlanDefinitivoConsulta($mysqli,$plan["venta_base_id"]);
@@ -3939,11 +3950,18 @@ function confirmarPlanDefinitivoConsulta($plan_id,$user)
 	$version = (int)$plan["version_actual"];
 	if ($version < 1) { $version = 1; }
 	$estado = "definido";
-	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento SET estado = ?, version_actual = ?, fecha_actualizacion = NOW(), actualizado_por = ? WHERE id = ? LIMIT 1");
+	$stmt = $mysqli->prepare("UPDATE plan_definitivo_tratamiento
+		SET estado = ?,
+			version_actual = ?,
+			doctor_cabecera_id = IF(doctor_cabecera_id IS NULL OR doctor_cabecera_id = 0, ?, doctor_cabecera_id),
+			fecha_actualizacion = NOW(),
+			actualizado_por = ?
+		WHERE id = ?
+		LIMIT 1");
 	if (!$stmt) {
 		responderPlanDefinitivoConsulta("error","No se pudo preparar la confirmacion.");
 	}
-	$stmt->bind_param("siss", $estado, $version, $user, $plan_id);
+	$stmt->bind_param("sisss", $estado, $version, $user, $user, $plan_id);
 	if (!$stmt->execute()) {
 		responderPlanDefinitivoConsulta("error","No se pudo confirmar el plan madre.");
 	}

@@ -4981,9 +4981,399 @@ border-radius: 50%;
 }
 #modalNuevaCita .agenda-tratamientos-lista,
 #modalNuevaCita .agenda-prevision-insumos {
-  max-height: 76px;
+  max-height: 160px;
   overflow-y: auto;
   padding-right: 4px;
+}
+#modalNuevaCita .agenda-plan-madre-estado {
+  min-height: 54px;
+}
+.agenda-plan-madre-estado {
+  display: grid;
+  gap: 8px;
+}
+.agenda-plan-madre-resumen {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid #bfe8d8;
+  border-left: 4px solid #1f9f74;
+  border-radius: 8px;
+  background: #f2fbf7;
+  color: #173b31;
+  box-sizing: border-box;
+}
+.agenda-plan-madre-resumen span,
+.agenda-plan-madre-resumen em,
+.agenda-plan-madre-resumen small {
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.agenda-plan-madre-resumen span {
+  color: #047857;
+  text-transform: uppercase;
+}
+.agenda-plan-madre-resumen strong {
+  color: #172033;
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1.25;
+}
+.agenda-plan-madre-resumen em {
+  color: #166534;
+}
+.agenda-plan-madre-resumen small {
+  color: #667085;
+  font-weight: 750;
+}
+.agenda-plan-madre-resumen--pendiente,
+.agenda-plan-madre-resumen--sin-plan {
+  border-color: #fed7aa;
+  border-left-color: #f59e0b;
+  background: #fff7ed;
+}
+.agenda-plan-madre-resumen--pendiente span,
+.agenda-plan-madre-resumen--sin-plan span,
+.agenda-plan-madre-resumen--pendiente em,
+.agenda-plan-madre-resumen--sin-plan em {
+  color: #9a3412;
+}
+.agenda-plan-madre-alerta {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #7c2d12;
+}
+.agenda-plan-madre-alerta strong {
+  color: #172033;
+  font-size: 13px;
+  font-weight: 950;
+}
+.agenda-plan-madre-alerta span {
+  color: #7c2d12;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.agenda-plan-madre-alerta__btn {
+  justify-self: start;
+  min-width: 190px;
+}
+.agenda-plan-sugerido-preview {
+  display: grid;
+  gap: 7px;
+}
+.agenda-plan-madre-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+}
+.agenda-plan-madre-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid #bfe8d8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+.agenda-plan-madre-chip b {
+  color: #172033;
+}
+.agenda-plan-madre-chip--pendiente {
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+.agenda-planes-madre-lista {
+  display: grid;
+  gap: 10px;
+}
+.agenda-plan-madre-bloque {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  border: 1px solid #bfe8d8;
+  border-radius: 8px;
+  background: #f8fffc;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.agenda-plan-madre-bloque--pendiente {
+  border-color: #fed7aa;
+  background: #fffaf4;
+}
+.agenda-plan-madre-bloque--bloqueado {
+  opacity: 0.58;
+  background: #f8fafc;
+}
+.agenda-plan-madre-bloque--seleccionado {
+  border-color: #1f9f74;
+  box-shadow: inset 0 0 0 1px rgba(31, 159, 116, 0.16);
+}
+.agenda-plan-madre-bloque__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.agenda-plan-madre-bloque__header:hover {
+  background: rgba(31, 122, 104, 0.06);
+}
+.agenda-plan-madre-bloque__numero {
+  min-width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 7px;
+  border-radius: 999px;
+  background: #e9f7f3;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+}
+.agenda-plan-madre-bloque--pendiente .agenda-plan-madre-bloque__numero {
+  background: #ffedd5;
+  color: #9a3412;
+}
+.agenda-plan-madre-bloque__header div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.agenda-plan-madre-bloque__header strong,
+.agenda-plan-madre-bloque__header small,
+.agenda-plan-madre-bloque__header em,
+.agenda-plan-madre-bloque__header b {
+  line-height: 1.2;
+}
+.agenda-plan-madre-bloque__header strong {
+  color: #172033;
+  font-size: 12px;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+.agenda-plan-madre-bloque__header small,
+.agenda-plan-madre-bloque__header em {
+  font-size: 10px;
+  font-weight: 850;
+  font-style: normal;
+}
+.agenda-plan-madre-bloque__header small {
+  color: #047857;
+}
+.agenda-plan-madre-bloque__header em {
+  color: #9a3412;
+}
+.agenda-plan-madre-bloque__header b {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475467;
+  font-size: 10px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+.agenda-plan-madre-bloque__chevron {
+  min-width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 7px;
+  border: 1px solid #d8e4ef;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475467;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+}
+.agenda-plan-madre-bloque--abierto .agenda-plan-madre-bloque__chevron {
+  border-color: #bfe8d8;
+  color: #047857;
+}
+.agenda-plan-madre-bloque__tratamientos {
+  display: none;
+  gap: 7px;
+  max-height: min(310px, 42vh);
+  padding: 0 10px 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.agenda-plan-madre-bloque--abierto .agenda-plan-madre-bloque__tratamientos {
+  display: grid;
+}
+.agenda-plan-madre-bloque > .agenda-ayuda-inline {
+  display: none;
+  margin: 0 10px 10px;
+}
+.agenda-plan-madre-bloque--abierto > .agenda-ayuda-inline {
+  display: block;
+}
+#divTratamientosAgenda {
+  overflow-x: hidden !important;
+}
+#modalDetalleAgenda #divTratamientosAgenda {
+  max-height: min(360px, 44vh) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+#divTratamientosAgenda .tratamiento-agenda-card,
+#modalNuevaCita .agenda-tratamientos-lista .tratamiento-agenda-card {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+#divTratamientosAgenda .tratamiento-agenda-card .riesgo-financiero-badge,
+#divTratamientosAgenda .tratamiento-agenda-estado,
+#divTratamientosAgenda .tratamiento-agenda-progreso,
+#divTratamientosAgenda .tratamiento-agenda-card small,
+#modalNuevaCita .agenda-tratamientos-lista .tratamiento-agenda-card .riesgo-financiero-badge,
+#modalNuevaCita .agenda-tratamientos-lista .tratamiento-agenda-estado,
+#modalNuevaCita .agenda-tratamientos-lista .tratamiento-agenda-progreso,
+#modalNuevaCita .agenda-tratamientos-lista .tratamiento-agenda-card small {
+  justify-self: start;
+  white-space: normal;
+}
+.tratamiento-agenda-card {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #d8e4ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  box-sizing: border-box;
+}
+.tratamiento-agenda-check {
+  cursor: pointer;
+}
+.tratamiento-agenda-check:hover {
+  border-color: #bfe8d8;
+  background: #f8fffc;
+}
+.tratamiento-agenda-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+.tratamiento-agenda-orden {
+  min-width: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #eefaf6;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+}
+.tratamiento-agenda-nombre {
+  min-width: 0;
+  color: #172033;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.tratamiento-agenda-estado,
+.tratamiento-agenda-progreso,
+.tratamiento-agenda-card small {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+.tratamiento-agenda-estado {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: #eefaf6;
+  color: #047857;
+}
+.tratamiento-agenda-estado--proceso {
+  background: #fff7ed;
+  color: #9a3412;
+}
+.tratamiento-agenda-estado--completado {
+  background: #ecfdf5;
+  color: #166534;
+}
+.tratamiento-agenda-estado--cancelado {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.tratamiento-agenda-progreso {
+  color: #475467;
+}
+.tratamiento-agenda-card small {
+  color: #667085;
+}
+.tratamiento-agenda-check--bloqueado,
+.tratamiento-agenda-card--preview {
+  border-style: dashed;
+  background: #f8fafc;
+  color: #667085;
+  cursor: default;
+}
+.tratamiento-agenda-check--bloqueado:hover {
+  border-color: #d8e4ef;
+  background: #f8fafc;
+}
+.tratamiento-agenda-check--bloqueado input[type="checkbox"] {
+  opacity: 0;
+  pointer-events: none;
+}
+.tratamiento-agenda-check--bloqueado .tratamiento-agenda-nombre {
+  color: #667085;
+}
+.tratamiento-agenda-check--bloqueado .tratamiento-agenda-orden {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.tratamiento-agenda-bloqueo {
+  grid-column: 3 / -1;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: normal;
+}
+.detalle-label--secundaria {
+  display: block;
+  margin-top: 8px;
+  color: #667085 !important;
 }
 #modalNuevaCita .doctor-disponible-lista {
   min-height: 62px;
@@ -26550,6 +26940,44 @@ button.dashboard-summary-item:hover {
     background: #f8fafc;
 }
 
+#divAbmConsulta #divHistorial_Consulta .consulta-history-empty-state {
+    width: 100%;
+    min-height: 260px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 18px;
+    border: 1px dashed #c9d7e4;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #667085;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-empty-state strong {
+    color: #172033;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-empty-state span {
+    max-width: 420px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+#divAbmConsulta #divHistorial_Consulta .consulta-history-empty-state--error {
+    border-color: #f6b7b7;
+    background: #fffafa;
+}
+
 #divAbmConsulta #divHistorial_Consulta .consulta-history-item {
     width: 100%;
     min-width: 0;
@@ -27545,6 +27973,12 @@ button.dashboard-summary-item:hover {
     border-color: #e8d7ab;
     background: #fff9e9;
     color: #7a5b14;
+}
+
+#divAbmConsulta .plan-definitivo-status--pendiente_validacion {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #9a3412;
 }
 
 #divAbmConsulta .plan-definitivo-status--definido {

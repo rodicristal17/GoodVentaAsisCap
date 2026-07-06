@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=plan-madre-orden-lote-20260703" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=agenda-tratamientos-bloqueados-20260706" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -40,10 +40,10 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/consulta.js?x=plan-madre-orden-lote-20260703"></script>
+<script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=odontograma-tablet-terceros-galeria-aviso-20260703"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=version-actualizacion-v194-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -52,7 +52,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-modal-clean-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-modal-20260703"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-consultorios-liviana-20260704"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-nueva-cita-limpia-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-resumen-neto-20260624"></script>
@@ -16175,7 +16175,10 @@ style='background-color: #b7b7b7;'>
                 </div>
                 <div class="card-body">
                   <div id="divHistorial_Consulta" class="flex-column gap-2 overflow-auto">
-                    <!-- Consultas din&aacute;micas -->
+                    <div class="consulta-history-empty-state">
+                      <strong>Sin historial de consultas</strong>
+                      <span>Todav&iacute;a no hay consultas, procedimientos ni pr&oacute;ximos pasos registrados para visualizar.</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -27629,17 +27632,17 @@ function escaparHtmlInformeInsumosAgenda(valor){
                 <select id='inptConsultorioAgenda' class='catalogo-selectBuscador' onchange='cargarDoctoresDisponiblesNuevaCita();actualizarPrevisionNuevaCitaAgenda()'></select>
             </div>
 
-            <div class='filtro-grupo'>
-                <label>Cod / Venta / Apodo/beneficiario</label>
-                <select id='inptVentaAgenda' class='catalogo-selectBuscador agenda-venta-select-columnas' onchange="cargarTratamientosVentaAgenda('inptVentaAgenda','divTratamientosNuevaCitaAgenda','')">
-                    <option value=''>Sin venta seleccionada</option>
-                </select>
+            <div class='filtro-grupo filtro-grupo-full'>
+                <label>Plan madre del paciente</label>
+                <div id='divPlanMadreNuevaCitaAgenda' class='agenda-plan-madre-estado'>
+                    <span class='agenda-ayuda-inline'>Seleccione un paciente.</span>
+                </div>
             </div>
 
             <div class='filtro-grupo filtro-grupo-full'>
-                <label>Tratamientos de la venta</label>
+                <label>Tratamientos disponibles para esta cita</label>
                 <div id='divTratamientosNuevaCitaAgenda' class='agenda-tratamientos-lista'>
-                    <p class='agenda-ayuda-inline'>Seleccione una venta para ver sus tratamientos.</p>
+                    <p class='agenda-ayuda-inline'>Seleccione un paciente para ver su plan madre.</p>
                 </div>
             </div>
 
@@ -27769,22 +27772,20 @@ function escaparHtmlInformeInsumosAgenda(valor){
             <div class='modal-header-info'>
                 <p class='modal-etiqueta'>Calendario</p>
                 <h3>Asignar tratamiento</h3>
-                <span>Seleccione un tratamiento comprado para vincularlo con este agendamiento</span>
+                <span>Seleccione uno o varios tratamientos de un solo plan madre para esta cita.</span>
             </div>
             <button type='button' class='btn-cerrar-modal' onclick='verCerrarAsignarTratamiento(false)'>×</button>
         </div>
 
         <div class='modal-filtros-body'>
             <div class='filtro-grupo'>
-                <label>Cod / Venta / Apodo/beneficiario</label>
-                <select id='inptVentaAsignarTratamientoAgenda' class='catalogo-selectBuscador agenda-venta-select-columnas'
-                        onchange="cargarTratamientosVentaAgenda('inptVentaAsignarTratamientoAgenda','divTratamientosAgenda',idAbmAgenda)"
-                        style="width: 98%;">
-                    <option value=''>Sin venta seleccionada</option>
-                </select>
+                <label>Planes madre del paciente</label>
+                <div id='detAgendaPlanMadreEstadoAsignar' class='agenda-plan-madre-estado'>
+                    <span class='agenda-ayuda-inline'>Cargando plan madre...</span>
+                </div>
             </div>
 
-            <div id='divTratamientosAgenda' class='div_cuerpo_table presupuesto-search-table' style='border:none;display:grid;gap:8px;max-height:420px;overflow:auto;padding:2px;'></div>
+            <div id='divTratamientosAgenda' class='div_cuerpo_table presupuesto-search-table' style='border:none;display:grid;gap:8px;max-height:min(420px, 44vh);overflow-y:auto;overflow-x:hidden;padding:2px;'></div>
         </div>
 
         <div class='modal-filtros-footer'>
@@ -27865,15 +27866,16 @@ function escaparHtmlInformeInsumosAgenda(valor){
               <div class='detalle-card-head'>
                 <div>
                   <span class='detalle-section-kicker'>Preparacion de la atencion</span>
-                  <h4>Venta, tratamientos e insumos</h4>
+                  <h4>Plan madre, tratamientos e insumos</h4>
                 </div>
               </div>
               <div class='detalle-prep-block'>
                 <div>
-                  <span class='detalle-label'>Venta asociada</span>
+                  <span class='detalle-label'>Planes madre del paciente</span>
+                  <div class='detalle-valor' id='detAgendaPlanMadreEstado'></div>
+                  <span class='detalle-label detalle-label--secundaria'>Venta de referencia</span>
                   <div class='detalle-valor agenda-venta-texto-columnas' id='detAgendaVentaAsignada'>Sin venta seleccionada</div>
                 </div>
-                <button type='button' class='detalle-secondary-action' onclick='verCerrarAsignarTratamiento(true)'>Seleccionar venta</button>
               </div>
               <div class='detalle-prep-block'>
                 <div>
@@ -27882,7 +27884,7 @@ function escaparHtmlInformeInsumosAgenda(valor){
                 </div>
                 <div class='detalle-tratamientos-actions'>
                   <button type='button' id='detAgendaBtnEvolucionarTratamiento' class='detalle-primary-action detalle-action-evolution' onclick='verHistorialDesdeConsultorio(true)'>Evolucionar tratamiento</button>
-                  <button type='button' class='detalle-secondary-action' onclick='verCerrarAsignarTratamiento(true)'>Asignar tratamientos</button>
+                  <button type='button' id='detAgendaBtnAsignarTratamientos' class='detalle-secondary-action' onclick='verCerrarAsignarTratamiento(true)'>Asignar tratamientos</button>
                 </div>
                 <div id='contenedorAsignarTratamientoAgenda' class='agenda-asignar-tratamiento-anchor'></div>
               </div>

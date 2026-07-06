@@ -2201,6 +2201,34 @@ function buscarDetalleVentaConsulta(cod_ventaConsultaDetalle, modoSilencioso) {
 
 
 
+function estadoVacioHistorialConsulta(modo) {
+	var esError = modo == "error";
+	var titulo = esError ? "No se pudo cargar el historial" : "Sin historial de consultas";
+	var texto = esError
+		? "Intenta nuevamente. Si el problema continua, revisa la conexion o avisa a administracion."
+		: "Todavia no hay consultas, procedimientos ni proximos pasos registrados para visualizar.";
+	return "<div class='consulta-history-empty-state" + (esError ? " consulta-history-empty-state--error" : "") + "'>" +
+		"<strong>" + titulo + "</strong>" +
+		"<span>" + texto + "</span>" +
+		"</div>";
+}
+
+function normalizarHistorialConsultaHtml(html) {
+	var contenido = String(html || "").replace(/<!--[\s\S]*?-->/g, "").trim();
+	if (contenido == "" || contenido == "null" || contenido == "undefined") {
+		return estadoVacioHistorialConsulta();
+	}
+	return html;
+}
+
+function mostrarEstadoHistorialConsulta(modo) {
+	var contenedor = document.getElementById("divHistorial_Consulta");
+	if (contenedor) {
+		contenedor.innerHTML = estadoVacioHistorialConsulta(modo);
+	}
+}
+
+
 function buscarabmConsultaParaConsulta(cod_ventaFKConsulta) {
 // if(controlacceso("BUSCARLISTADOCOBRADORES","accion")==false){return;}
  			
@@ -2242,25 +2270,28 @@ function buscarabmConsultaParaConsulta(cod_ventaFKConsulta) {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
           manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("divHistorial_Consulta").innerHTML = ''
+			mostrarEstadoHistorialConsulta("error")
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("divHistorial_Consulta").innerHTML = ''
+			mostrarEstadoHistorialConsulta()
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
-					document.getElementById("divHistorial_Consulta").innerHTML = datos_buscados	 
+					document.getElementById("divHistorial_Consulta").innerHTML = normalizarHistorialConsultaHtml(datos_buscados)
 					if (typeof buscarHistorialRecetariosDesdeConsulta == "function") {
 						buscarHistorialRecetariosDesdeConsulta()
 					}
+				} else {
+					mostrarEstadoHistorialConsulta()
 				}
 			} catch (error) {
 					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+					mostrarEstadoHistorialConsulta("error")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 					GuardarArchivosLog(titulo)
 			}

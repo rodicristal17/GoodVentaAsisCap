@@ -125,6 +125,14 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
             listarTratamientosVentaAgenda($mysqli);
             break;
 
+        case 'obtenerPlanMadreAgenda':
+            obtenerPlanMadreAgenda($mysqli);
+            break;
+
+        case 'crearPlanMadreSugeridoAgenda':
+            crearPlanMadreSugeridoAgenda($mysqli, $useru);
+            break;
+
         case 'guardarTratamientosAgenda':
             guardarTratamientosAgenda($mysqli, $useru);
             break;
@@ -1111,6 +1119,541 @@ function listarTratamientosVentaAgenda($mysqli)
     exit;
 }
 
+function planMadreTablasDisponiblesAgenda($mysqli)
+{
+    return tablaAgendaExiste($mysqli, "plan_definitivo_tratamiento")
+        && tablaAgendaExiste($mysqli, "plan_definitivo_tratamiento_items")
+        && tablaAgendaExiste($mysqli, "plan_definitivo_tratamiento_historial");
+}
+
+function productoClinicoWhereAgenda($productoAlias = "p")
+{
+    $alias = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$productoAlias);
+    if ($alias == "") { $alias = "p"; }
+    return " AND UPPER(TRIM(".$alias.".nombre_producto)) NOT IN ('CREDITO','INTERES','GASTO ADMINISTRATIVO','CORRETAJE')";
+}
+
+function obtenerPacientePlanMadreAgenda($mysqli, $pacienteId)
+{
+    $pacienteId = (int)$pacienteId;
+    if ($pacienteId <= 0) { return null; }
+    $sql = "SELECT cl.cod_cliente, IFNULL(cl.ci_cliente,'') AS ci_cliente, IFNULL(p.nombre_persona,'') AS nombre_persona
+            FROM cliente cl
+            INNER JOIN persona p ON p.cod_persona = cl.cod_cliente
+            WHERE cl.cod_cliente = '".$pacienteId."'
+            LIMIT 1";
+    $result = $mysqli->query($sql);
+    if (!$result || !($row = $result->fetch_assoc())) {
+        return null;
+    }
+    return array(
+        "paciente_id" => (int)$row["cod_cliente"],
+        "cedula" => normalizarTextoUtf8($row["ci_cliente"]),
+        "paciente" => normalizarTextoUtf8($row["nombre_persona"])
+    );
+}
+
+function textoEstadoPlanMadreAgenda($estado, $version = 1)
+{
+    $estado = strtolower(trim((string)$estado));
+    $version = (int)$version;
+    if ($estado == "pendiente_validacion") { return "Vigente - Pendiente de validacion clinica"; }
+    if ($estado == "definido") { return "Vigente - Validado clinicamente"; }
+    if ($estado == "modificado") { return "Vigente - Modificado v".$version; }
+    if ($estado == "borrador") { return "Borrador"; }
+    return "Vigente";
+}
+
+function obtenerNumeroPlanMadreAgenda($mysqli, $pacienteId, $cedula, $planId)
+{
+    $pacienteId = (int)$pacienteId;
+    $cedulaSql = limpiar($mysqli, $cedula);
+    $planId = (int)$planId;
+    $sql = "SELECT id
+            FROM plan_definitivo_tratamiento
+            WHERE activo = 1
+              AND (paciente_id = '".$pacienteId."' OR cedula = '".$cedulaSql."')
+            ORDER BY fecha_creacion ASC, id ASC";
+    $result = $mysqli->query($sql);
+    $numero = 1;
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            if ((int)$row["id"] === $planId) {
+                return $numero;
+            }
+            $numero++;
+        }
+    }
+    return 1;
+}
+
+function armarPlanMadreAgenda($mysqli, $plan, $paciente)
+{
+    $apodo = "";
+    $ventaBase = (int)$plan["venta_base_id"];
+    if ($ventaBase > 0) {
+        $resultVenta = $mysqli->query("SELECT IFNULL(apodo,'') AS apodo FROM venta WHERE cod_venta = '".$ventaBase."' LIMIT 1");
+        if ($resultVenta && ($rowVenta = $resultVenta->fetch_assoc())) {
+            $apodo = normalizarTextoUtf8($rowVenta["apodo"]);
+        }
+    }
+    if (trim($apodo) == "") { $apodo = "Sin beneficiario"; }
+    $numero = obtenerNumeroPlanMadreAgenda($mysqli, $paciente["paciente_id"], $paciente["cedula"], (int)$plan["id"]);
+    $estadoPlan = strtolower(trim((string)$plan["estado"]));
+    $requiereAprobacion = ($estadoPlan == "borrador" || $estadoPlan == "pendiente_validacion") ? 1 : 0;
+    return array(
+        "id" => (int)$plan["id"],
+        "numero" => $numero,
+        "label" => "Plan madre #".$numero." - ".$apodo,
+        "estado" => normalizarTextoUtf8($plan["estado"]),
+        "estado_texto" => textoEstadoPlanMadreAgenda($plan["estado"], $plan["version_actual"]),
+        "pendiente_validacion" => $estadoPlan == "pendiente_validacion" ? 1 : 0,
+        "requiere_aprobacion" => $requiereAprobacion,
+        "aprobacion_texto" => $requiereAprobacion ? "Falta aprobacion del doctor de cabecera" : "",
+        "version" => (int)$plan["version_actual"],
+        "venta_base_id" => $ventaBase
+    );
+}
+
+function obtenerPlanMadreActivoAgenda($mysqli, $paciente)
+{
+    if (!$paciente) { return null; }
+    $pacienteId = (int)$paciente["paciente_id"];
+    $cedula = limpiar($mysqli, $paciente["cedula"]);
+    $sql = "SELECT pd.*
+            FROM plan_definitivo_tratamiento pd
+            LEFT JOIN venta vb ON vb.cod_venta = pd.venta_base_id
+            WHERE pd.activo = 1
+              AND (pd.paciente_id = '".$pacienteId."' OR pd.cedula = '".$cedula."')
+            ORDER BY
+              CASE WHEN vb.cod_venta IS NULL THEN 1 ELSE 0 END,
+              vb.fecha_venta ASC,
+              vb.cod_venta ASC,
+              CASE
+                WHEN pd.estado = 'definido' THEN 0
+                WHEN pd.estado = 'modificado' THEN 1
+                WHEN pd.estado = 'pendiente_validacion' THEN 2
+                WHEN pd.estado = 'borrador' THEN 3
+                ELSE 4
+              END,
+              pd.id DESC
+            LIMIT 1";
+    $result = $mysqli->query($sql);
+    if (!$result || !($plan = $result->fetch_assoc())) {
+        return null;
+    }
+    return $plan;
+}
+
+function obtenerPlanesMadrePacienteAgenda($mysqli, $paciente)
+{
+    if (!$paciente) { return array(); }
+    $pacienteId = (int)$paciente["paciente_id"];
+    $cedula = limpiar($mysqli, $paciente["cedula"]);
+    $sql = "SELECT pd.*
+            FROM plan_definitivo_tratamiento pd
+            LEFT JOIN venta vb ON vb.cod_venta = pd.venta_base_id
+            WHERE pd.activo = 1
+              AND (pd.paciente_id = '".$pacienteId."' OR pd.cedula = '".$cedula."')
+            ORDER BY
+              CASE WHEN vb.cod_venta IS NULL THEN 1 ELSE 0 END,
+              vb.fecha_venta ASC,
+              vb.cod_venta ASC,
+              CASE
+                WHEN pd.estado = 'definido' THEN 0
+                WHEN pd.estado = 'modificado' THEN 1
+                WHEN pd.estado = 'pendiente_validacion' THEN 2
+                WHEN pd.estado = 'borrador' THEN 3
+                ELSE 4
+              END,
+              pd.id DESC";
+    $result = $mysqli->query($sql);
+    if (!$result) { return array(); }
+    $planes = array();
+    while ($row = $result->fetch_assoc()) {
+        $planes[] = $row;
+    }
+    return $planes;
+}
+
+function normalizarAvanceTratamientoAgenda($avance)
+{
+    $avance = (int)$avance;
+    if ($avance < 0) { $avance = 0; }
+    if ($avance > 100) { $avance = 100; }
+    return $avance;
+}
+
+function estadoTratamientoPlanAgenda($estado, $estadoTratamiento, $avance)
+{
+    $texto = strtolower(trim((string)$estado." ".(string)$estadoTratamiento));
+    if ($avance >= 100 || strpos($texto, "completado") !== false || strpos($texto, "finalizado") !== false || strpos($texto, "finalizada") !== false) {
+        return "completado";
+    }
+    if (strpos($texto, "eliminado") !== false || strpos($texto, "anulado") !== false || strpos($texto, "cancelado") !== false || strpos($texto, "inactivo") !== false) {
+        return "cancelado";
+    }
+    if (($avance > 0 && $avance < 100) || strpos($texto, "proceso") !== false || strpos($texto, "iniciado") !== false || strpos($texto, "iniciada") !== false) {
+        return "proceso";
+    }
+    return "pendiente";
+}
+
+function textoEstadoTratamientoPlanAgenda($estado)
+{
+    if ($estado == "completado") { return "Realizado"; }
+    if ($estado == "proceso") { return "En proceso"; }
+    if ($estado == "cancelado") { return "Anulado"; }
+    return "Pendiente";
+}
+
+function grupoTratamientoPlanAgenda($estado, $avance)
+{
+    if ($estado == "completado" || $estado == "cancelado" || $avance >= 100) { return "finalizados"; }
+    if ($estado == "proceso" || ($avance > 0 && $avance < 100)) { return "continuar"; }
+    return "siguientes";
+}
+
+function compararTratamientoAgenda($a, $b, $campo, $direccion = "asc")
+{
+    $valorA = isset($a[$campo]) ? (float)$a[$campo] : 0;
+    $valorB = isset($b[$campo]) ? (float)$b[$campo] : 0;
+    if ($valorA == $valorB) { return 0; }
+    $resultado = $valorA < $valorB ? -1 : 1;
+    return $direccion == "desc" ? ($resultado * -1) : $resultado;
+}
+
+function ordenarTratamientosPlanAgenda($tratamientos)
+{
+    $grupos = array("continuar" => array(), "siguientes" => array(), "finalizados" => array());
+    foreach ($tratamientos as $tratamiento) {
+        $grupo = isset($tratamiento["grupo_plan"]) ? $tratamiento["grupo_plan"] : "siguientes";
+        if (!isset($grupos[$grupo])) { $grupo = "siguientes"; }
+        $grupos[$grupo][] = $tratamiento;
+    }
+    usort($grupos["continuar"], function($a, $b) {
+        return compararTratamientoAgenda($a, $b, "riesgo_orden")
+            ?: compararTratamientoAgenda($a, $b, "orden_natural")
+            ?: compararTratamientoAgenda($a, $b, "avance", "desc");
+    });
+    usort($grupos["siguientes"], function($a, $b) {
+        return compararTratamientoAgenda($a, $b, "riesgo_orden")
+            ?: compararTratamientoAgenda($a, $b, "orden_natural")
+            ?: compararTratamientoAgenda($a, $b, "precio_producto");
+    });
+    usort($grupos["finalizados"], function($a, $b) {
+        return compararTratamientoAgenda($a, $b, "orden_natural");
+    });
+    $ordenados = array();
+    foreach (array("continuar", "siguientes", "finalizados") as $grupo) {
+        foreach ($grupos[$grupo] as $tratamiento) {
+            $ordenados[] = $tratamiento;
+        }
+    }
+    return $ordenados;
+}
+
+function obtenerTratamientosSugeridosPacienteAgenda($mysqli, $pacienteId, $idAgenda = 0)
+{
+    $pacienteId = (int)$pacienteId;
+    $idAgenda = (int)$idAgenda;
+    $selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "p");
+    $sql = "SELECT dv.cod_detalle, dv.cod_ventaFK, dv.cod_productoFK, dv.cantidad_detalle,
+                   dv.estado, dv.estado_tratamiento, dv.progreso_porcentaje,
+                   p.nombre_producto, p.precio_producto, IFNULL(v.apodo,'') AS apodo,
+                   ".$selectRiesgo.",
+                   IF(at.cod_detalle_ventaFK IS NULL, 0, 1) AS seleccionado
+            FROM detalle_venta dv
+            INNER JOIN venta v ON v.cod_venta = dv.cod_ventaFK
+            INNER JOIN producto p ON p.cod_producto = dv.cod_productoFK
+            LEFT JOIN agenda_tratamientos at
+              ON at.cod_detalle_ventaFK = dv.cod_detalle
+             AND at.id_agenda = '".$idAgenda."'
+             AND at.estado <> 'cancelado'
+            WHERE v.cod_clienteFK = '".$pacienteId."'
+              AND UPPER(IFNULL(v.estado,'Activo')) <> 'INACTIVO'
+              AND IFNULL(dv.estado,'Activo') <> 'Inactivo'
+              ".productoClinicoWhereAgenda("p")."
+            ORDER BY v.fecha_venta ASC, dv.cod_detalle ASC";
+    $result = $mysqli->query($sql);
+    if (!$result) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $mysqli->error));
+    }
+    $items = array();
+    $ordenNatural = 0;
+    while ($row = $result->fetch_assoc()) {
+        $ordenNatural++;
+        $avance = normalizarAvanceTratamientoAgenda($row["progreso_porcentaje"]);
+        $estado = estadoTratamientoPlanAgenda($row["estado"], $row["estado_tratamiento"], $avance);
+        $nivel = ProductoRiesgoFinancieroNormalizar(isset($row["nivel_riesgo_financiero"]) ? $row["nivel_riesgo_financiero"] : 1);
+        $items[] = array(
+            "cod_detalle" => (int)$row["cod_detalle"],
+            "venta_id" => (int)$row["cod_ventaFK"],
+            "producto_id" => normalizarTextoUtf8($row["cod_productoFK"]),
+            "nombre_producto" => normalizarTextoUtf8($row["nombre_producto"]),
+            "apodo" => normalizarTextoUtf8($row["apodo"]),
+            "avance" => $avance,
+            "estado_clase" => $estado,
+            "estado_texto" => textoEstadoTratamientoPlanAgenda($estado),
+            "grupo_plan" => grupoTratamientoPlanAgenda($estado, $avance),
+            "nivel_riesgo_financiero" => $nivel,
+            "nivel_riesgo_texto" => ProductoRiesgoFinancieroTexto($nivel),
+            "nivel_riesgo_clase" => "riesgo-nivel-".$nivel,
+            "riesgo_orden" => $nivel,
+            "precio_producto" => isset($row["precio_producto"]) ? (float)$row["precio_producto"] : 0,
+            "orden_natural" => $ordenNatural,
+            "orden" => 0,
+            "seleccionado" => (int)$row["seleccionado"],
+            "seleccionable" => ($estado == "pendiente" || $estado == "proceso") ? 1 : 0,
+            "origen" => "sugerido"
+        );
+    }
+    $items = ordenarTratamientosPlanAgenda($items);
+    for ($i = 0; $i < count($items); $i++) {
+        $items[$i]["orden"] = $i + 1;
+    }
+    return $items;
+}
+
+function obtenerItemsPlanMadreAgenda($mysqli, $planId, $idAgenda = 0)
+{
+    $planId = (int)$planId;
+    $idAgenda = (int)$idAgenda;
+    $selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "p");
+    $sql = "SELECT i.id AS plan_item_id, i.orden, i.venta_id, i.detalle_venta_id, i.producto_id,
+                   COALESCE(p.nombre_producto, i.nombre_tratamiento_snapshot) AS nombre_producto,
+                   dv.estado, dv.estado_tratamiento, dv.progreso_porcentaje,
+                   IFNULL(v.apodo,'') AS apodo,
+                   ".$selectRiesgo.",
+                   IF(at.cod_detalle_ventaFK IS NULL, 0, 1) AS seleccionado
+            FROM plan_definitivo_tratamiento_items i
+            INNER JOIN detalle_venta dv ON dv.cod_detalle = i.detalle_venta_id
+            INNER JOIN venta v ON v.cod_venta = i.venta_id
+            LEFT JOIN producto p ON p.cod_producto = dv.cod_productoFK
+            LEFT JOIN agenda_tratamientos at
+              ON at.cod_detalle_ventaFK = i.detalle_venta_id
+             AND at.id_agenda = '".$idAgenda."'
+             AND at.estado <> 'cancelado'
+            WHERE i.plan_definitivo_id = '".$planId."'
+              AND i.activo = 1
+              ".productoClinicoWhereAgenda("p")."
+            ORDER BY i.orden ASC, i.id ASC";
+    $result = $mysqli->query($sql);
+    if (!$result) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $mysqli->error));
+    }
+    $items = array();
+    while ($row = $result->fetch_assoc()) {
+        $avance = normalizarAvanceTratamientoAgenda($row["progreso_porcentaje"]);
+        $estado = estadoTratamientoPlanAgenda($row["estado"], $row["estado_tratamiento"], $avance);
+        $nivel = ProductoRiesgoFinancieroNormalizar(isset($row["nivel_riesgo_financiero"]) ? $row["nivel_riesgo_financiero"] : 1);
+        $items[] = array(
+            "plan_item_id" => (int)$row["plan_item_id"],
+            "plan_id" => $planId,
+            "cod_detalle" => (int)$row["detalle_venta_id"],
+            "venta_id" => (int)$row["venta_id"],
+            "producto_id" => normalizarTextoUtf8($row["producto_id"]),
+            "nombre_producto" => normalizarTextoUtf8($row["nombre_producto"]),
+            "apodo" => normalizarTextoUtf8($row["apodo"]),
+            "avance" => $avance,
+            "estado_clase" => $estado,
+            "estado_texto" => textoEstadoTratamientoPlanAgenda($estado),
+            "grupo_plan" => grupoTratamientoPlanAgenda($estado, $avance),
+            "nivel_riesgo_financiero" => $nivel,
+            "nivel_riesgo_texto" => ProductoRiesgoFinancieroTexto($nivel),
+            "nivel_riesgo_clase" => "riesgo-nivel-".$nivel,
+            "orden" => (int)$row["orden"],
+            "seleccionado" => (int)$row["seleccionado"],
+            "seleccionable" => ($estado == "pendiente" || $estado == "proceso") ? 1 : 0,
+            "origen" => "plan_madre"
+        );
+    }
+    return $items;
+}
+
+function obtenerPlanIdsDetallesAgenda($mysqli, $detalles)
+{
+    $ids = array();
+    foreach ($detalles as $detalle) {
+        $detalle = (int)$detalle;
+        if ($detalle > 0) {
+            $ids[] = $detalle;
+        }
+    }
+    if (count($ids) == 0 || !tablaAgendaExiste($mysqli, "plan_definitivo_tratamiento_items")) {
+        return array();
+    }
+    $result = $mysqli->query("SELECT DISTINCT plan_definitivo_id
+        FROM plan_definitivo_tratamiento_items
+        WHERE activo = 1
+          AND detalle_venta_id IN (".implode(",", $ids).")");
+    if (!$result) { return array(); }
+    $planes = array();
+    while ($row = $result->fetch_assoc()) {
+        $planes[] = (int)$row["plan_definitivo_id"];
+    }
+    return array_values(array_unique($planes));
+}
+
+function obtenerPlanMadreAgenda($mysqli)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+    if (!planMadreTablasDisponiblesAgenda($mysqli)) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Debe aplicar la actualizacion SQL del plan madre."));
+    }
+    $pacienteId = isset($_POST["paciente"]) ? (int)$_POST["paciente"] : 0;
+    $idAgenda = isset($_POST["id_agenda"]) ? (int)$_POST["id_agenda"] : 0;
+    $paciente = obtenerPacientePlanMadreAgenda($mysqli, $pacienteId);
+    if (!$paciente) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione un paciente valido."));
+    }
+    $planesPaciente = obtenerPlanesMadrePacienteAgenda($mysqli, $paciente);
+    if (count($planesPaciente) > 0) {
+        $planesRespuesta = array();
+        $tratamientosTodos = array();
+        $planPrincipal = null;
+        $planPrincipalTieneSeleccion = false;
+        $itemsPlanPrincipal = array();
+        foreach ($planesPaciente as $planRow) {
+            $planInfo = armarPlanMadreAgenda($mysqli, $planRow, $paciente);
+            $itemsPlan = obtenerItemsPlanMadreAgenda($mysqli, (int)$planRow["id"], $idAgenda);
+            $tieneSeleccion = false;
+            foreach ($itemsPlan as $itemPlan) {
+                if ((int)$itemPlan["seleccionado"] === 1) {
+                    $tieneSeleccion = true;
+                }
+                $tratamientosTodos[] = $itemPlan;
+            }
+            $planInfo["tratamientos_count"] = count($itemsPlan);
+            $planInfo["seleccionado_en_cita"] = $tieneSeleccion ? 1 : 0;
+            if ($planPrincipal === null || ($tieneSeleccion && !$planPrincipalTieneSeleccion)) {
+                $planPrincipal = $planInfo;
+                $itemsPlanPrincipal = $itemsPlan;
+                $planPrincipalTieneSeleccion = $tieneSeleccion;
+            }
+            $planesRespuesta[] = array(
+                "plan" => $planInfo,
+                "tratamientos" => $itemsPlan
+            );
+        }
+        responderJsonCalendar(array(
+            "1" => "exito",
+            "modo" => "plan_madre",
+            "paciente" => $paciente,
+            "plan" => $planPrincipal,
+            "planes" => $planesRespuesta,
+            "tratamientos" => $tratamientosTodos,
+            "tratamientos_plan_principal" => $itemsPlanPrincipal
+        ));
+    }
+    $sugeridos = obtenerTratamientosSugeridosPacienteAgenda($mysqli, $pacienteId, $idAgenda);
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "modo" => "sin_plan",
+        "paciente" => $paciente,
+        "plan" => null,
+        "tratamientos" => $sugeridos
+    ));
+}
+
+function registrarHistorialPlanMadreAgenda($mysqli, $planId, $version, $accion, $descripcion, $valorAnterior, $valorNuevo, $usuarioId)
+{
+    if (!tablaAgendaExiste($mysqli, "plan_definitivo_tratamiento_historial")) {
+        return;
+    }
+    $rol = "";
+    $resultRol = $mysqli->query("SELECT IFNULL(tipo,'') AS tipo FROM usuario WHERE cod_usuario = '".(int)$usuarioId."' LIMIT 1");
+    if ($resultRol && ($rowRol = $resultRol->fetch_assoc())) {
+        $rol = $rowRol["tipo"];
+    }
+    $stmt = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento_historial
+        (plan_definitivo_id, version, accion, descripcion, valor_anterior, valor_nuevo, motivo, usuario_id, rol, fecha_hora)
+        VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, NOW())");
+    if (!$stmt) { return; }
+    $stmt->bind_param("iissssis", $planId, $version, $accion, $descripcion, $valorAnterior, $valorNuevo, $usuarioId, $rol);
+    $stmt->execute();
+}
+
+function crearPlanMadreSugeridoAgenda($mysqli, $useru)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+    if (!planMadreTablasDisponiblesAgenda($mysqli)) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Debe aplicar la actualizacion SQL del plan madre."));
+    }
+    $pacienteId = isset($_POST["paciente"]) ? (int)$_POST["paciente"] : 0;
+    $paciente = obtenerPacientePlanMadreAgenda($mysqli, $pacienteId);
+    if (!$paciente) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione un paciente valido."));
+    }
+    $planExistente = obtenerPlanMadreActivoAgenda($mysqli, $paciente);
+    if ($planExistente) {
+        $planInfo = armarPlanMadreAgenda($mysqli, $planExistente, $paciente);
+        responderJsonCalendar(array(
+            "1" => "exito",
+            "mensaje" => "El paciente ya tiene plan madre vigente.",
+            "plan" => $planInfo,
+            "tratamientos" => obtenerItemsPlanMadreAgenda($mysqli, (int)$planExistente["id"], 0)
+        ));
+    }
+    $items = obtenerTratamientosSugeridosPacienteAgenda($mysqli, $pacienteId, 0);
+    if (count($items) == 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "El paciente no tiene tratamientos disponibles para generar el plan madre."));
+    }
+    $ventaBase = (int)$items[0]["venta_id"];
+    $cedulaSql = limpiar($mysqli, $paciente["cedula"]);
+    $estado = "pendiente_validacion";
+    $version = 1;
+    $userInt = (int)$useru;
+    $doctorCabeceraId = null;
+
+    $mysqli->begin_transaction();
+    try {
+        $stmtPlan = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento
+            (cedula, paciente_id, venta_base_id, doctor_cabecera_id, estado, version_actual, fecha_creacion, creado_por, fecha_actualizacion, actualizado_por, activo)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, NOW(), ?, 1)");
+        if (!$stmtPlan) {
+            throw new Exception("No se pudo preparar la creacion del plan madre.");
+        }
+        $stmtPlan->bind_param("siiisiii", $cedulaSql, $pacienteId, $ventaBase, $doctorCabeceraId, $estado, $version, $userInt, $userInt);
+        if (!$stmtPlan->execute()) {
+            throw new Exception("No se pudo crear el plan madre.");
+        }
+        $planId = (int)$mysqli->insert_id;
+        $stmtItem = $mysqli->prepare("INSERT INTO plan_definitivo_tratamiento_items
+            (plan_definitivo_id, venta_id, detalle_venta_id, producto_id, nombre_tratamiento_snapshot, nivel_riesgo_snapshot, orden, origen, activo, fecha_agregado, agregado_por)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'plan_principal', 1, NOW(), ?)");
+        if (!$stmtItem) {
+            throw new Exception("No se pudo preparar el detalle del plan madre.");
+        }
+        for ($i = 0; $i < count($items); $i++) {
+            $orden = $i + 1;
+            $ventaId = (int)$items[$i]["venta_id"];
+            $detalleId = (int)$items[$i]["cod_detalle"];
+            $productoId = (string)$items[$i]["producto_id"];
+            $nombre = (string)$items[$i]["nombre_producto"];
+            $nivel = (int)$items[$i]["nivel_riesgo_financiero"];
+            $stmtItem->bind_param("iiissiii", $planId, $ventaId, $detalleId, $productoId, $nombre, $nivel, $orden, $userInt);
+            if (!$stmtItem->execute()) {
+                throw new Exception("No se pudieron copiar los tratamientos sugeridos.");
+            }
+        }
+        registrarHistorialPlanMadreAgenda($mysqli, $planId, 1, "creacion_desde_agenda", "Se genero el plan madre vigente desde agenda.", "", "Pendiente de validacion clinica", $userInt);
+        $mysqli->commit();
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $e->getMessage()));
+    }
+
+    $planNuevo = obtenerPlanMadreActivoAgenda($mysqli, $paciente);
+    $planInfo = armarPlanMadreAgenda($mysqli, $planNuevo, $paciente);
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "mensaje" => "Plan madre vigente generado. Queda pendiente de validacion clinica.",
+        "plan" => $planInfo,
+        "tratamientos" => obtenerItemsPlanMadreAgenda($mysqli, (int)$planNuevo["id"], 0)
+    ));
+}
+
 function obtenerCodLocalConsultorioAgenda($mysqli, $idConsultorio)
 {
     $idConsultorio = (int)$idConsultorio;
@@ -1280,15 +1823,24 @@ function guardarTratamientosAgenda($mysqli, $useru)
             $ids[] = $detalle;
         }
     }
+    if (count($ids) > 0) {
+        $resultVentaPrimerDetalle = $mysqli->query("SELECT cod_ventaFK FROM detalle_venta WHERE cod_detalle = '".$ids[0]."' LIMIT 1");
+        if ($resultVentaPrimerDetalle && ($rowVentaPrimerDetalle = $resultVentaPrimerDetalle->fetch_assoc())) {
+            $codVenta = (int)$rowVentaPrimerDetalle["cod_ventaFK"];
+        }
+    }
+    $planesSeleccionados = obtenerPlanIdsDetallesAgenda($mysqli, $ids);
+    if (count($planesSeleccionados) > 1) {
+        echo json_encode(array("1" => "Error", "mensaje" => "La cita solo puede incluir tratamientos de un plan madre. Para otro plan madre, genere otra cita."));
+        exit;
+    }
 
     $mysqli->begin_transaction();
     try {
         $mysqli->query("DELETE FROM agenda_tratamientos WHERE id_agenda = '".$idAgenda."' AND estado = 'previsto'");
         $primerDetalle = count($ids) > 0 ? $ids[0] : "NULL";
-        if ($codVenta > 0 || count($ids) == 0) {
-            $codVentaSql = $codVenta > 0 ? "'".$codVenta."'" : "NULL";
-            $mysqli->query("UPDATE agenda SET cod_ventaFK = ".$codVentaSql.", cod_detalle_ventaFK = ".$primerDetalle." WHERE id_agenda = '".$idAgenda."' LIMIT 1");
-        }
+        $codVentaSql = $codVenta > 0 ? "'".$codVenta."'" : "NULL";
+        $mysqli->query("UPDATE agenda SET cod_ventaFK = ".$codVentaSql.", cod_detalle_ventaFK = ".$primerDetalle." WHERE id_agenda = '".$idAgenda."' LIMIT 1");
 
         foreach ($ids as $detalle) {
             $resultValida = $mysqli->query("SELECT cod_ventaFK FROM detalle_venta WHERE cod_detalle = '".$detalle."' LIMIT 1");
@@ -1296,9 +1848,6 @@ function guardarTratamientosAgenda($mysqli, $useru)
                 throw new Exception("Tratamiento invalido.");
             }
             $ventaDetalle = (int)$rowValida["cod_ventaFK"];
-            if ($codVenta > 0 && $ventaDetalle != $codVenta) {
-                throw new Exception("El tratamiento no pertenece a la venta seleccionada.");
-            }
             $mysqli->query("INSERT INTO agenda_tratamientos (id_agenda, cod_ventaFK, cod_detalle_ventaFK, creado_por)
                 VALUES ('".$idAgenda."', '".$ventaDetalle."', '".$detalle."', '".(int)$useru."')
                 ON DUPLICATE KEY UPDATE estado='previsto', cod_ventaFK=VALUES(cod_ventaFK)");
@@ -2676,6 +3225,20 @@ function guardarCita($mysqli, $useru){
         if ($detalle > 0) {
             $idsDetalles[] = $detalle;
         }
+    }
+    if (count($idsDetalles) > 0) {
+        $resultVentaPrimerDetalle = $mysqli->query("SELECT cod_ventaFK FROM detalle_venta WHERE cod_detalle = '".$idsDetalles[0]."' LIMIT 1");
+        if ($resultVentaPrimerDetalle && ($rowVentaPrimerDetalle = $resultVentaPrimerDetalle->fetch_assoc())) {
+            $codVenta = (int)$rowVentaPrimerDetalle["cod_ventaFK"];
+        }
+    }
+    $planesSeleccionados = obtenerPlanIdsDetallesAgenda($mysqli, $idsDetalles);
+    if (count($planesSeleccionados) > 1) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "La cita solo puede incluir tratamientos de un plan madre. Para otro plan madre, genere otra cita."
+        ));
+        exit;
     }
     $primerDetalle = count($idsDetalles) > 0 ? $idsDetalles[0] : "NULL";
     $codVentaSql = $codVenta > 0 ? "'".$codVenta."'" : "NULL";
