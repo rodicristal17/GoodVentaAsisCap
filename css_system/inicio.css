@@ -12041,25 +12041,25 @@ text-align: justify;
 }
 
 .extracto-floating-panel{
-  position:absolute;
-  left: 10%;
-  top: 60%;
-  transform:translateY(-38%);
-  width:min(760px,70vw);
-  z-index:2000;
+  position:fixed;
+  left: 50%;
+  top: 52%;
+  transform:translate(-50%, -50%);
+  width:min(1180px, calc(100vw - 42px));
+  z-index:2400;
 }
 
 .extracto-floating-card{
   position:relative;
-  border-radius:10px;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
+  border-radius:12px;
+  box-shadow:0 22px 55px rgba(15,23,42,.22);
   background-color:#fff;
   overflow:hidden;
-  z-index:2001;
+  z-index:2401;
 }
 
 .extracto-floating-card .card-body{
-  max-height:280px;
+  max-height:70vh;
   overflow:auto;
 }
 
@@ -12155,6 +12155,84 @@ text-align: justify;
 #collapseExtracto tfoot{
   border-top: 1px solid #dee2e6;
   border-bottom: hidden;
+}
+
+#collapseExtracto .extracto-gasto-conciliar-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+#collapseExtracto .extracto-gasto-conciliar-actions:empty {
+  display: none;
+}
+
+#collapseExtracto .flujo-ueno-conciliar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 8pt;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.18);
+}
+
+#collapseExtracto .flujo-ueno-conciliar-btn:hover {
+  background: #115e59;
+}
+
+#collapseExtracto .flujo-ueno-conciliar-btn span {
+  font-size: 10pt;
+  line-height: 1;
+}
+
+#collapseExtracto .flujo-ueno-status {
+  display: block;
+  margin-top: 4px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 8pt;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+}
+
+#collapseExtracto .flujo-ueno-status b,
+#collapseExtracto .flujo-ueno-status small {
+  display: block;
+}
+
+#collapseExtracto .flujo-ueno-status--parcial {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+#collapseExtracto .flujo-ueno-status--conciliado {
+  background: #ecfdf3;
+  color: #047857;
+}
+
+@media (max-width: 760px) {
+  .extracto-floating-panel {
+    top: 50%;
+    width: calc(100vw - 20px);
+  }
+
+  .extracto-floating-card .card-body {
+    max-height: 74vh;
+  }
 }
 
 #table_abm_InterConsulta{
@@ -25652,6 +25730,7 @@ button.dashboard-summary-item:hover {
 
 #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-status,
 #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-progress,
+#divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-quantity,
 #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-risk {
     min-height: 16px;
     min-width: 0;
@@ -25977,7 +26056,7 @@ button.dashboard-summary-item:hover {
 
 #divFrmVistaConsulta .clinical-treatment-item {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto auto;
     gap: 5px;
     align-items: center;
     padding: 6px 0;
@@ -25995,6 +26074,21 @@ button.dashboard-summary-item:hover {
     font-weight: 800;
     line-height: 1.25;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#divFrmVistaConsulta .clinical-treatment-quantity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 20px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: #eff8ff;
+    color: #175cd3;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1;
     white-space: nowrap;
 }
 
@@ -26115,6 +26209,7 @@ button.dashboard-summary-item:hover {
     }
 
     #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-risk,
+    #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-quantity,
     #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-status,
     #divFrmVistaConsulta #table_frm_VistaConsulta .clinical-plan-section > .clinical-records-grid .clinical-treatment-progress {
         justify-self: start;

@@ -1,5 +1,6 @@
 <?php
 require_once("conexion.php");
+require_once("ueno_saldo_helper.php");
 require_once("solicitud_eliminado_helper.php");
 include_once('quitarseparadormiles.php');
 include_once("verificar_navegador.php");
@@ -786,28 +787,42 @@ function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $i
 	}
 
 	$comprobanteSql = $mysqli->real_escape_string($comprobante);
-	$joinMovimiento = "";
-	$condicionMovimiento = "";
-	if ($idMovimientoPermitido != "" && ueno_pago_tabla_existe($mysqli, "ueno_movimiento_pago")) {
-		$idMovimientoSql = $mysqli->real_escape_string($idMovimientoPermitido);
-		$joinMovimiento = " LEFT JOIN ueno_movimiento_pago ump
-			ON ump.cod_pagoFK=pago_transferencia_conciliacion.cod_pagoFK
-			AND ump.estado='activo'
-			AND ump.id_movimiento='$idMovimientoSql'";
-		$condicionMovimiento = " AND ump.id IS NULL";
-	}
 	$condicionGrupo = "";
 	if ($grupoPago != "") {
 		$condicionGrupo = " AND IFNULL(grupo_pago,'')!='" . $mysqli->real_escape_string($grupoPago) . "'";
 	}
+
+	if ($idMovimientoPermitido != "") {
+		ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
+		if (ueno_pago_tabla_existe($mysqli, "ueno_movimiento_pago")) {
+			$idMovimientoSql = $mysqli->real_escape_string($idMovimientoPermitido);
+			$sql = "SELECT COUNT(*) AS total
+				FROM pago_transferencia_conciliacion pc
+				INNER JOIN ueno_movimiento_pago ump
+					ON ump.cod_pagoFK=pc.cod_pagoFK
+					AND ump.estado='activo'
+				WHERE pc.activo='SI'
+				AND pc.nro_comprobante_informado='$comprobanteSql'
+				AND pc.estado_conciliacion NOT IN ('anulado','rechazado')
+				AND ump.id_movimiento!='$idMovimientoSql'
+				$condicionGrupo";
+			$result = $mysqli->query($sql);
+			if (!$result) {
+				return false;
+			}
+			$row = $result->fetch_assoc();
+			return (int)$row["total"] > 0;
+		}
+
+		return false;
+	}
+
 	$sql = "SELECT COUNT(*) AS total
 		FROM pago_transferencia_conciliacion
-		$joinMovimiento
 		WHERE activo='SI'
 		AND nro_comprobante_informado='$comprobanteSql'
 		AND estado_conciliacion NOT IN ('anulado','rechazado')
-		$condicionGrupo
-		$condicionMovimiento";
+		$condicionGrupo";
 	$result = $mysqli->query($sql);
 	if (!$result) {
 		return false;
@@ -884,8 +899,11 @@ function ueno_pago_auditar_conciliacion($mysqli, $accion, $tabla, $registroId, $
 
 function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idPago, $idMovimiento, $monto, $usuario, $observacion)
 {
-	if ($idMovimiento == "" || !ueno_pago_tabla_existe($mysqli, "ueno_movimiento_pago") || !ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+	if ($idMovimiento == "" || !ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
 		return;
+	}
+	if (!ueno_saldo_asegurar_tabla_movimiento_pago($mysqli)) {
+		throw new Exception("No se pudo preparar la tabla de aplicaciones Ueno.");
 	}
 
 	$idMovimientoSql = $mysqli->real_escape_string($idMovimiento);
@@ -920,13 +938,15 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 		return;
 	}
 	$montoAplicar = min($montoPago, $saldoPago);
-	if ((int)$movimiento["monto_disponible"] < $montoAplicar) {
-		throw new Exception("El movimiento Ueno seleccionado no tiene saldo disponible suficiente.");
-	}
 
 	$existe = ueno_pago_scalar_int($mysqli, "SELECT COUNT(*) FROM ueno_movimiento_pago WHERE id_movimiento='$idMovimientoSql' AND cod_pagoFK='$idPagoSql' AND estado='activo'");
 	if ($existe > 0) {
 		return;
+	}
+
+	$disponibleCalculado = ueno_saldo_disponible_movimiento($mysqli, $movimiento, $idPago, $idControlUeno);
+	if ((int)$disponibleCalculado < $montoAplicar) {
+		throw new Exception("El movimiento Ueno seleccionado no tiene saldo disponible suficiente.");
 	}
 
 	$observacionLink = trim((string)$observacion);
@@ -948,21 +968,9 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 		throw new Exception($stmtLink->error);
 	}
 
-	$nuevoDisponible = (int)$movimiento["monto_disponible"] - $montoAplicar;
-	$estadoMovimiento = $nuevoDisponible <= 0 ? "asignado_total" : "asignado_parcial";
-	$consultaMov = "UPDATE ueno_movimiento_bancario SET monto_disponible=?, estado=? WHERE id_movimiento=? AND monto_disponible>=?";
-	$stmtMov = $mysqli->prepare($consultaMov);
-	if (!$stmtMov) {
-		throw new Exception($mysqli->error);
-	}
-	$ssss = "ssss";
-	$stmtMov->bind_param($ssss, $nuevoDisponible, $estadoMovimiento, $idMovimiento, $montoAplicar);
-	if (!$stmtMov->execute()) {
-		throw new Exception($stmtMov->error);
-	}
-	if ($stmtMov->affected_rows <= 0) {
-		throw new Exception("El saldo disponible del movimiento Ueno cambio durante el cobro.");
-	}
+	$nuevoDisponible = max(0, (int)$disponibleCalculado - $montoAplicar);
+	$estadoMovimiento = ueno_saldo_estado_credito((int)$movimiento["importe_credito"], $nuevoDisponible);
+	ueno_saldo_sincronizar_movimiento($mysqli, $idMovimiento, $nuevoDisponible, (int)$movimiento["importe_credito"]);
 
 	$totalAplicadoNuevo = $totalAplicadoPago + $montoAplicar;
 	$estadoAnteriorPago = "pendiente_conciliacion";
@@ -977,7 +985,7 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 	if (!$stmtPago) {
 		throw new Exception($mysqli->error);
 	}
-	$stmtPago->bind_param($ssss, $estadoPago, $usuario, $observacionPago, $idControlUeno);
+	$stmtPago->bind_param("ssss", $estadoPago, $usuario, $observacionPago, $idControlUeno);
 	if (!$stmtPago->execute()) {
 		throw new Exception($stmtPago->error);
 	}
@@ -1074,8 +1082,9 @@ function ueno_pago_validar_transferencias($totalregistro)
 				ueno_pago_responder_error("movimientorequerido", "Debe seleccionar una transferencia Ueno disponible para registrar este cobro.");
 			}
 			if ($idMovimientoUeno != "" && ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+				ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
 				$idMovimientoSql = $mysqli->real_escape_string($idMovimientoUeno);
-				$resMovimiento = $mysqli->query("SELECT nro_comprobante, monto_disponible, tipo_movimiento, estado FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovimientoSql' LIMIT 1");
+				$resMovimiento = $mysqli->query("SELECT id_movimiento, nro_comprobante, importe_credito, monto_disponible, tipo_movimiento, estado FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovimientoSql' LIMIT 1");
 				$movimiento = $resMovimiento ? $resMovimiento->fetch_assoc() : null;
 				if (!$movimiento || $movimiento["tipo_movimiento"] != "credito") {
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado no esta disponible para cobrar cuotas.");
@@ -1085,7 +1094,8 @@ function ueno_pago_validar_transferencias($totalregistro)
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado ya no esta disponible.");
 				}
 				$comprobanteUeno = trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$movimiento["nro_comprobante"]));
-				if ((int)$movimiento["monto_disponible"] < (int)$montoTransferencia) {
+				$disponibleCalculado = ueno_saldo_disponible_movimiento($mysqli, $movimiento);
+				if ((int)$disponibleCalculado < (int)$montoTransferencia) {
 					ueno_pago_responder_error("saldouenoinsuficiente", "El movimiento Ueno seleccionado no tiene saldo suficiente para este cobro.");
 				}
 			}
@@ -1179,6 +1189,49 @@ function ueno_pago_registrar_conciliacion($mysqli, $idPago, $codTipoPago, $monto
 	}
 }
 
+function ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $codCredito, $codVenta, $monto, $fecha, $nroFactura, $tipoPago)
+{
+	$idPagoInsertado = (int)$idPagoInsertado;
+	if ($idPagoInsertado > 0) {
+		return $idPagoInsertado;
+	}
+
+	$resultNext = $mysqli->query("SELECT IFNULL(MAX(idPago),0)+1 AS proximo FROM pago");
+	if (!$resultNext) {
+		ueno_pago_responder_error("error", "No se pudo generar el identificador del pago.");
+	}
+	$rowNext = $resultNext->fetch_assoc();
+	$proximoId = (int)$rowNext["proximo"];
+	if ($proximoId <= 0) {
+		ueno_pago_responder_error("error", "No se pudo generar el identificador del pago.");
+	}
+
+	$codCreditoSql = $mysqli->real_escape_string($codCredito);
+	$codVentaSql = $mysqli->real_escape_string($codVenta);
+	$montoSql = (int)$monto;
+	$fechaSql = $mysqli->real_escape_string($fecha);
+	$nroFacturaSql = $mysqli->real_escape_string($nroFactura);
+	$tipoPagoSql = $mysqli->real_escape_string($tipoPago);
+	$sql = "UPDATE pago
+		SET idPago=$proximoId
+		WHERE idPago=0
+		AND cod_creditoFK='$codCreditoSql'
+		AND cod_venta_fk='$codVentaSql'
+		AND Monto=$montoSql
+		AND Fecha='$fechaSql'
+		AND nrofactura='$nroFacturaSql'
+		AND tipo='$tipoPagoSql'
+		ORDER BY hora DESC
+		LIMIT 1";
+	if (!$mysqli->query($sql)) {
+		ueno_pago_responder_error("error", "No se pudo normalizar el identificador del pago.");
+	}
+	if ($mysqli->affected_rows <= 0) {
+		ueno_pago_responder_error("error", "No se pudo normalizar el identificador del pago.");
+	}
+	return $proximoId;
+}
+
 /*Funcion para insertar,modificar o eliminar registros*/
 function abm($CargoAdministrativo,$codCaja,$codApertura,$cod_creditoFK,$Fecha,$cod_cobradorFK,$cod_venta,$totalDeudaCuota,$totalInteres,$MontoCobrado,$MontoTarjeta,$descuento,$nrofactura,$operacion,$cod_TipoPago,$controlTipoPago,$uenoComprobante="",$uenoObservacion="",$uenoGrupoPago="",$uenoIdMovimiento="")
 {
@@ -1247,6 +1300,7 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '
 exit;
 }
 $idPagoInsertado = $mysqli->insert_id;
+$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $cod_creditoFK, $cod_venta, $pago, $Fecha, $nrofactura, "Interes");
 ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $cod_TipoPago, $pago, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_credito", $uenoIdMovimiento);
 }
 $interespagados=$pago;
@@ -1280,6 +1334,7 @@ exit;
 
 }
 $idPagoInsertado = $mysqli->insert_id;
+$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $cod_creditoFK, $cod_venta, $Montopagado, $Fecha, $nrofactura, "Pago Cuota");
 ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $cod_TipoPago, $Montopagado, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_credito", $uenoIdMovimiento);
 
 }
@@ -1313,6 +1368,7 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '
 exit;
 }
 $idPagoInsertado = $mysqli->insert_id;
+$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $cod_creditoFK, $cod_venta, $pago, $Fecha, $nrofactura, "Interes");
 ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $cod_TipoPago, $pago, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_credito", $uenoIdMovimiento);
 }
 
@@ -1344,6 +1400,7 @@ exit;
 
 }
 $idPagoInsertado = $mysqli->insert_id;
+$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $cod_creditoFK, $cod_venta, $Montopagado, $Fecha, $nrofactura, "Pago Cuota");
 ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $cod_TipoPago, $Montopagado, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_credito", $uenoIdMovimiento);
 
 }
@@ -1373,6 +1430,7 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '
 exit;
 }
 $idPagoInsertado = $mysqli->insert_id;
+$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $cod_creditoFK, $cod_venta, $CargoAdministrativo, $Fecha, $nrofactura, "CARGO ADMINISTRATIVO");
 ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $cod_TipoPago, $CargoAdministrativo, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_credito", $uenoIdMovimiento);
 
 }
@@ -1765,6 +1823,7 @@ values(?,?,?,?,?,(select comision from venta where cod_venta='$cod_venta'),?,'CA
 					exit;
 				}
 				$idPagoInsertado = $mysqli->insert_id;
+				$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $idcredito, $cod_venta, $CargoAdministrativo, $Fecha, $nrofactura, "CARGO ADMINISTRATIVO");
 				ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $codTipoPago, $CargoAdministrativo, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_parcial", $uenoIdMovimiento);
 
 				$pagado = $pagado - $CargoAdministrativo;
@@ -1983,6 +2042,7 @@ echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.
 exit;
 }
 $idPagoInsertado = $mysqli->insert_id;
+$idPagoInsertado = ueno_pago_normalizar_id_insertado($mysqli, $idPagoInsertado, $cod_creditoFK, $cod_venta, $Monto, $Fecha, $nrofactura, $tipo);
 ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $codtipoPago, $Monto, $uenoComprobante, $uenoObservacion, $uenoGrupoPago, "pago_parcial", $uenoIdMovimiento);
 	  }
 

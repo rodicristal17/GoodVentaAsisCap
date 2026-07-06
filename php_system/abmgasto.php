@@ -384,6 +384,8 @@ if ($operacion == "obtenerGastosAsociados") {
 	// Prepara la vista
 	$pagina= "";
 	foreach ($gastos as $key => $gast) {
+		$estadoOriginalGasto= strtolower(trim((string)(isset($gast['estado']) ? $gast['estado'] : '')));
+		$gastoPagado= ($estadoOriginalGasto == 'activo');
 		if ($gast['estado'] == 'pendiente' || $gast['estado'] == 'solicitado') {
 			$total_pendiente += $gast['monto'];
 		}
@@ -418,14 +420,21 @@ if ($operacion == "obtenerGastosAsociados") {
 				}
 				break;
 		}
+		$indicadorConciliacionUeno= "";
+		$botonConciliarUeno= "";
+		if (!flujoGastoEstaAnulado($gast) && !$gastoPagado) {
+			$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno(isset($gast['idgastos']) ? $gast['idgastos'] : '', isset($gast['monto']) ? $gast['monto'] : 0);
+			$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+			$botonConciliarUeno= construirBotonConciliarEgresoUeno($gast, 'Extracto de pago');
+		}
 
 		$pagina .= "<table border='1' cellspacing='1' cellpadding='5' class='tableRegistroSearch2'><tr id='tbSelecRegistro' id='tbSelecRegistro' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "").";text-align: center;'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$gast['idgastos']."</td>
 			<td  style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
 			<td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>
 			<td  style='border: none;'>".$gast['descripcion']."</td>
-			<td  id='td_datos_5' style='width: 20%;border: none;'>".$estado."</td>
-			<td  id='td_datos_1' style='width: 15%;border: none;'>". number_format($gast['monto'],'0',',','.')."</td>
+			<td  id='td_datos_5' style='width: 20%;border: none;'>".$estado."<div class='extracto-gasto-conciliar-actions'>".$botonConciliarUeno."</div></td>
+			<td  id='td_datos_1' style='width: 15%;border: none;'>". number_format($gast['monto'],'0',',','.').$indicadorConciliacionUeno."</td>
 			<td  id='td_datos_2' style='width:10%; display: none;'>".$gast['motivo']."</td>
 			<td  id='td_datos_16' style='display: none;'>".$gast['interconsulta_nombre']."</td>
 			<td  id='td_datos_21' style='display: none;'>".$gast['modalidad']."</td>

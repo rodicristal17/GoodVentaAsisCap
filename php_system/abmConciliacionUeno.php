@@ -1,5 +1,6 @@
 <?php
 require_once("conexion.php");
+require_once("ueno_saldo_helper.php");
 include_once("verificar_navegador.php");
 include_once("buscar_nivel.php");
 
@@ -64,6 +65,7 @@ function ueno_tabla_existe($mysqli, $tabla)
 
 function ueno_tablas_requeridas_ok($mysqli)
 {
+	ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
 	$tablas = array(
 		"ueno_importacion_extracto",
 		"ueno_movimiento_bancario",
@@ -466,9 +468,12 @@ function ueno_observar_pago($mysqli, $id_conciliacion, $usuario, $observacion)
 
 function ueno_conciliar_pago_con_movimiento($mysqli, $pago, $movimiento, $usuario, $observacion_link = "", $observacion_pago = "", $monto_aplicar = null)
 {
+	if (!ueno_saldo_asegurar_tabla_movimiento_pago($mysqli)) {
+		throw new Exception("No se pudo preparar la tabla de aplicaciones Ueno.");
+	}
 	$monto_pago_total = (int)$pago["monto_pago"];
 	$monto_pago = $monto_aplicar === null ? $monto_pago_total : (int)$monto_aplicar;
-	$monto_disponible = (int)$movimiento["monto_disponible"];
+	$monto_disponible = ueno_saldo_disponible_movimiento($mysqli, $movimiento, $pago["cod_pagoFK"], $pago["id"]);
 	$importe_credito = isset($movimiento["importe_credito"]) ? (int)$movimiento["importe_credito"] : $monto_disponible;
 	$estado_anterior_pago = isset($pago["estado_conciliacion"]) ? $pago["estado_conciliacion"] : "pendiente_conciliacion";
 	$cod_pagoFK = $pago["cod_pagoFK"];
@@ -505,17 +510,9 @@ function ueno_conciliar_pago_con_movimiento($mysqli, $pago, $movimiento, $usuari
 	}
 
 	$total_aplicado_nuevo = $total_aplicado_pago + $monto_pago;
-	$nuevo_disponible = $monto_disponible - $monto_pago;
-	$estado_movimiento = $nuevo_disponible <= 0 ? "asignado_total" : "asignado_parcial";
-	$consultaMov = "UPDATE ueno_movimiento_bancario SET monto_disponible=?, estado=? WHERE id_movimiento=? AND monto_disponible>=?";
-	$stmtMov = $mysqli->prepare($consultaMov);
-	$stmtMov->bind_param("ssss", $nuevo_disponible, $estado_movimiento, $id_movimiento, $monto_pago);
-	if (!$stmtMov->execute()) {
-		throw new Exception($stmtMov->error);
-	}
-	if ($stmtMov->affected_rows <= 0) {
-		throw new Exception("El saldo disponible del movimiento Ueno cambio durante la conciliacion");
-	}
+	$nuevo_disponible = max(0, $monto_disponible - $monto_pago);
+	$estado_movimiento = ueno_saldo_estado_credito($importe_credito, $nuevo_disponible);
+	ueno_saldo_sincronizar_movimiento($mysqli, $id_movimiento, $nuevo_disponible, $importe_credito);
 
 	$estado_pago = $total_aplicado_nuevo >= $monto_pago_total ? "conciliado_ueno" : "pendiente_conciliacion";
 	if ($observacion_pago == "") {
@@ -590,12 +587,11 @@ function ueno_ejecutar_conciliacion($mysqli, $usuario, $id_importacion = "")
 		$comprobante = $pago["nro_comprobante_informado"];
 		$comprobanteSql = $mysqli->real_escape_string($comprobante);
 
-		$sqlMovCreditos = "SELECT id_movimiento, importe_credito, monto_disponible
+		$sqlMovCreditos = "SELECT id_movimiento, nro_comprobante, importe_credito, monto_disponible, estado
 			FROM ueno_movimiento_bancario
 			WHERE nro_comprobante='$comprobanteSql'
 			AND tipo_movimiento='credito'
 			AND importe_credito>0
-			AND monto_disponible>0
 			$condicionMov
 			ORDER BY id_movimiento ASC
 			FOR UPDATE";
@@ -607,6 +603,7 @@ function ueno_ejecutar_conciliacion($mysqli, $usuario, $id_importacion = "")
 		$cantidadMov = $resultMovCreditos->num_rows;
 		if ($cantidadMov == 1) {
 			$movimiento = $resultMovCreditos->fetch_assoc();
+			$movimiento["monto_disponible"] = ueno_saldo_disponible_movimiento($mysqli, $movimiento, $pago["cod_pagoFK"], $pago["id"]);
 			if ((int)$movimiento["importe_credito"] == (int)$pago["monto_pago"] && (int)$movimiento["monto_disponible"] >= (int)$pago["monto_pago"]) {
 				ueno_conciliar_pago_con_movimiento($mysqli, $pago, $movimiento, $usuario);
 				$resumen["conciliados"]++;
@@ -756,7 +753,7 @@ function ueno_tabla_candidatos_manual($mysqli, $pago)
 	$comprobante = $mysqli->real_escape_string($pago["nro_comprobante_informado"]);
 	$monto = (int)$pago["monto_pago"];
 	$fecha_pago = ueno_fecha($pago["Fecha"]);
-	$condiciones = array("mv.tipo_movimiento='credito'", "mv.importe_credito>0", "mv.monto_disponible>0");
+	$condiciones = array("mv.tipo_movimiento='credito'", "mv.importe_credito>0");
 	$condicion_asistida = array();
 	if ($comprobante != "") {
 		$condicion_asistida[] = "mv.nro_comprobante='$comprobante'";
@@ -800,6 +797,10 @@ function ueno_tabla_candidatos_manual($mysqli, $pago)
 	$total = 0;
 	$styleName = "tableRegistroSearch";
 	while ($row = mysqli_fetch_assoc($result)) {
+		$row["monto_disponible"] = ueno_saldo_disponible_movimiento($mysqli, $row);
+		if ((int)$row["monto_disponible"] <= 0) {
+			continue;
+		}
 		$total++;
 		$score = ueno_score_candidato($pago, $row);
 		$etiqueta = ueno_etiqueta_candidato($pago, $row);
@@ -913,6 +914,7 @@ function ueno_asignar_movimiento_manual($usuario)
 		if ($movimiento["tipo_movimiento"] != "credito" || (int)$movimiento["importe_credito"] <= 0) {
 			throw new Exception("El movimiento seleccionado no es un credito Ueno");
 		}
+		$movimiento["monto_disponible"] = ueno_saldo_disponible_movimiento($mysqli, $movimiento, $pago["cod_pagoFK"], $pago["id"]);
 		if ((int)$movimiento["monto_disponible"] < (int)$pago["monto_pago"]) {
 			if ((int)$movimiento["monto_disponible"] < $monto_aplicar) {
 				throw new Exception("El movimiento Ueno no tiene saldo disponible suficiente");
@@ -1625,7 +1627,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$aplicadoDebito = (int)$row["monto_aplicado_gasto"];
 		$aplicadoMigracion = isset($row["monto_aplicado_migracion"]) ? (int)$row["monto_aplicado_migracion"] : 0;
 		$sugerenciasMigracion = isset($row["sugerencias_migracion"]) ? (int)$row["sugerencias_migracion"] : 0;
-		$disponible = (int)$row["monto_disponible"];
+		$disponible = $credito > 0 ? ueno_saldo_disponible_movimiento($mysqli, $row) : (int)$row["monto_disponible"];
 		$aplicado = $credito > 0 ? max(0, $credito - $disponible) : 0;
 		$baseAplicacion = $credito;
 		if ($debito > 0) {
@@ -1802,22 +1804,8 @@ function ueno_buscar_movimientos_cobro($usuario)
 
 	$condicion = "mv.tipo_movimiento='credito'
 		AND mv.importe_credito>0
-		AND mv.monto_disponible>0
 		AND LOWER(IFNULL(mv.estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada')
-		AND NOT EXISTS (
-			SELECT 1
-			FROM pago_transferencia_conciliacion pc
-			WHERE pc.activo='SI'
-			AND pc.estado_conciliacion NOT IN ('anulado','rechazado')
-			AND pc.nro_comprobante_informado=mv.nro_comprobante
-			AND NOT EXISTS (
-				SELECT 1
-				FROM ueno_movimiento_pago ump
-				WHERE ump.cod_pagoFK=pc.cod_pagoFK
-				AND ump.estado='activo'
-				AND ump.id_movimiento=mv.id_movimiento
-			)
-		)";
+		";
 
 	if ($id_movimiento != "") {
 		$condicion .= " AND mv.id_movimiento='" . $mysqli->real_escape_string($id_movimiento) . "'";
@@ -1863,7 +1851,10 @@ function ueno_buscar_movimientos_cobro($usuario)
 		$fechaMovimientoDb = trim((string)$row["fecha_confirmacion"]) != "" ? $row["fecha_confirmacion"] : $row["fecha_transaccion"];
 		$fechaMovimiento = ueno_fecha($fechaMovimientoDb);
 		$fechaMovimientoVisual = ueno_fecha_visual($fechaMovimientoDb);
-		$disponible = (int)$row["monto_disponible"];
+		$disponible = ueno_saldo_disponible_movimiento($mysqli, $row);
+		if ($disponible <= 0) {
+			continue;
+		}
 		$importe = (int)$row["importe_credito"];
 		$claveMovimientoVisible = $comprobanteReal . "|" . $fechaMovimiento . "|" . $importe;
 		if ($comprobanteReal != "" && isset($movimientosVistos[$claveMovimientoVisible])) {

@@ -482,6 +482,10 @@ function conciliarEgresoUenoFormato(valor) {
 	return String(numero).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function conciliarEgresoUenoValorInputMonto(valor) {
+	return conciliarEgresoUenoFormato(valor).replace(/"/g, "&quot;");
+}
+
 function conciliarEgresoUenoEscape(valor) {
 	return String(valor == null ? "" : valor).replace(/[&<>"']/g, function (char) {
 		return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char];
@@ -720,11 +724,7 @@ function conciliarEgresoUenoAjustarDistribucionAlBanco() {
 }
 
 function conciliarEgresoUenoAplicarMontoRequerido() {
-	if (conciliacionEgresoUenoContexto.distribucion.length > 0) {
-		conciliarEgresoUenoAjustarDistribucionAlBanco();
-		conciliarEgresoUenoRenderDistribucion();
-		return;
-	}
+	// El monto requerido filtra/sugiere egresos bancarios; no debe pisar montos ya cargados.
 	conciliarEgresoUenoActualizarResumen();
 }
 
@@ -746,12 +746,13 @@ function conciliarEgresoUenoRenderDistribucion() {
 	for (var i = 0; i < conciliacionEgresoUenoContexto.distribucion.length; i++) {
 		var item = conciliacionEgresoUenoContexto.distribucion[i];
 		var gasto = item.gasto || {};
+		var montoFila = conciliarEgresoUenoNumero(item.monto || 0);
 		html += "<div class='conciliacion-egreso-distrib-row'>"
 			+ "<span><b>Grupo</b>" + conciliarEgresoUenoEscape(gasto.grupo || "") + "</span>"
 			+ "<span><b>Concepto</b>" + conciliarEgresoUenoEscape(gasto.concepto || "") + "</span>"
 			+ "<span><b>Movimiento</b>#" + conciliarEgresoUenoEscape(gasto.idgastos || "") + " - " + conciliarEgresoUenoEscape(gasto.descripcion || "") + "</span>"
 			+ "<span><b>Saldo pend.</b>" + conciliarEgresoUenoEscape(gasto.pendiente_fmt || "0") + " Gs.</span>"
-			+ "<label><b>Monto</b><input class='inputText' type='text' value='" + conciliarEgresoUenoEscape(conciliarEgresoUenoFormato(item.monto || 0)) + "' onkeyup='conciliarEgresoUenoCambiarMontoDistribucion(" + i + ", this.value);separadordemiles(this)' /></label>"
+			+ "<label><b>Monto</b><input class='inputText conciliacion-egreso-monto-input' type='text' value=\"" + conciliarEgresoUenoValorInputMonto(montoFila) + "\" data-monto=\"" + montoFila + "\" onkeyup='conciliarEgresoUenoCambiarMontoDistribucion(" + i + ", this.value);separadordemiles(this)' /></label>"
 			+ "<button type='button' class='conciliacion-egreso-remove' title='Quitar gasto' onclick='conciliarEgresoUenoEliminarDistribucion(" + i + ")'>X</button>"
 			+ "</div>";
 	}
@@ -764,7 +765,16 @@ function conciliarEgresoUenoRenderDistribucion() {
 			+ "</div>";
 	}
 	contenedor.innerHTML = html;
+	conciliarEgresoUenoNormalizarInputsMontoDistribucion(contenedor);
 	conciliarEgresoUenoActualizarResumen();
+}
+
+function conciliarEgresoUenoNormalizarInputsMontoDistribucion(contenedor) {
+	var inputs = contenedor.querySelectorAll(".conciliacion-egreso-monto-input");
+	for (var i = 0; i < inputs.length; i++) {
+		var monto = conciliarEgresoUenoNumero(inputs[i].getAttribute("data-monto") || inputs[i].value || 0);
+		inputs[i].value = conciliarEgresoUenoFormato(monto);
+	}
 }
 
 function conciliarEgresoUenoActualizarResumen() {

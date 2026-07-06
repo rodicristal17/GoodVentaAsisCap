@@ -24,14 +24,17 @@ CREATE TABLE IF NOT EXISTS `ueno_movimiento_gasto` (
 
 INSERT INTO `listadodeacceso` (`nro`, `formulario`, `codigo`, `nombre`, `accion`, `orden`, `tipo`)
 SELECT 87, 'FORMULARIO CONCILIACION UENO', 'VERCONCILIACIONEGRESOUENO', 'VER CONCILIACION EGRESOS UENO', 'NO', NULL, 'Administrativo'
+FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM `listadodeacceso` WHERE `codigo`='VERCONCILIACIONEGRESOUENO' AND `tipo`='Administrativo');
 
 INSERT INTO `listadodeacceso` (`nro`, `formulario`, `codigo`, `nombre`, `accion`, `orden`, `tipo`)
 SELECT 87, 'FORMULARIO CONCILIACION UENO', 'CONCILIAREGRESOUENO', 'CONCILIAR EGRESOS UENO', 'NO', NULL, 'Administrativo'
+FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM `listadodeacceso` WHERE `codigo`='CONCILIAREGRESOUENO' AND `tipo`='Administrativo');
 
 INSERT INTO `listadodeacceso` (`nro`, `formulario`, `codigo`, `nombre`, `accion`, `orden`, `tipo`)
 SELECT 87, 'FORMULARIO CONCILIACION UENO', 'REVERTIRCONCILIACIONEGRESOUENO', 'REVERTIR CONCILIACION EGRESOS UENO', 'NO', NULL, 'Administrativo'
+FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM `listadodeacceso` WHERE `codigo`='REVERTIRCONCILIACIONEGRESOUENO' AND `tipo`='Administrativo');
 
 INSERT INTO `detallesniveles` (`cod_nivelesfk`, `idlistadodeacceso`, `accion`)

@@ -1,5 +1,6 @@
 <?php
 require_once("conexion.php");
+require_once("ueno_saldo_helper.php");
 include_once("verificar_navegador.php");
 include_once("buscar_nivel.php");
 
@@ -659,9 +660,10 @@ function cc_buscar_movimiento_ueno($usuario)
 	$monto = cc_monto(isset($_POST["monto"]) ? $_POST["monto"] : "");
 	$fecha_pago = cc_fecha(cc_post("fecha_pago"));
 	$id_movimiento = cc_post("id_movimiento");
+	ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
 	$condicion = "tipo_movimiento='credito'
-		AND monto_disponible>0
-		AND LOWER(IFNULL(estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada')";
+		AND importe_credito>0
+		AND LOWER(IFNULL(estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada','duplicado','ignorado')";
 	if ($id_movimiento != "") {
 		$condicion .= " AND id_movimiento='" . $mysqli->real_escape_string($id_movimiento) . "'";
 	}
@@ -698,6 +700,11 @@ function cc_buscar_movimiento_ueno($usuario)
 	$primer = null;
 	$tieneExacta = false;
 	while ($row = mysqli_fetch_assoc($result)) {
+		$disponibleCalculado = ueno_saldo_disponible_movimiento($mysqli, $row);
+		if ($disponibleCalculado <= 0) {
+			continue;
+		}
+		$row["_monto_disponible_calculado"] = $disponibleCalculado;
 		$filas[] = $row;
 	}
 	$total = count($filas);
@@ -724,7 +731,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		$fechaMovimiento = cc_fecha($fechaMovimientoDb);
 		$fechaMovimientoVisual = cc_fecha_visual($fechaMovimientoDb);
 		$fechaCoincide = ($fecha_pago != "" && $fechaMovimiento != "" && $fechaMovimiento == $fecha_pago);
-		$disponible = (int)$row["monto_disponible"];
+		$disponible = isset($row["_monto_disponible_calculado"]) ? (int)$row["_monto_disponible_calculado"] : (int)$row["monto_disponible"];
 		$importe = (int)$row["importe_credito"];
 		$estado = cc_from_db($row["estado"]);
 		$estadoNormalizado = strtolower(trim($estado));
@@ -750,8 +757,8 @@ function cc_buscar_movimiento_ueno($usuario)
 			"fecha_movimiento" => $fechaMovimientoVisual,
 			"importe_credito" => (int)$row["importe_credito"],
 			"importe_credito_fmt" => cc_numero($row["importe_credito"]),
-			"monto_disponible" => (int)$row["monto_disponible"],
-			"monto_disponible_fmt" => cc_numero($row["monto_disponible"]),
+			"monto_disponible" => (int)$disponible,
+			"monto_disponible_fmt" => cc_numero($disponible),
 			"estado" => $estado,
 			"coincidencia_exacta" => $coincidenciaExacta,
 			"fecha_pago_coincide" => $fechaCoincide,
@@ -876,6 +883,7 @@ function cc_conciliar_transferencia($usuario)
 
 	require_once("abmConciliacionUeno.php");
 	$mysqli = conectar_al_servidor();
+	ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
 	if (!ueno_tablas_requeridas_ok($mysqli)) {
 		mysqli_close($mysqli);
 		cc_json(array("1" => "tablasfaltantes", "2" => "Falta ejecutar actualizacion_10062026_conciliacion_ueno.sql"));
@@ -930,7 +938,8 @@ function cc_conciliar_transferencia($usuario)
 		if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
 			throw new Exception("El movimiento Ueno seleccionado ya no esta disponible.");
 		}
-		if ((int)$movimiento["monto_disponible"] <= 0) {
+		$disponibleMovimiento = ueno_saldo_disponible_movimiento($mysqli, $movimiento);
+		if ($disponibleMovimiento <= 0 && (int)$movimiento["monto_disponible"] <= 0) {
 			throw new Exception("El movimiento Ueno seleccionado ya no tiene saldo disponible.");
 		}
 
@@ -954,11 +963,13 @@ function cc_conciliar_transferencia($usuario)
 		$monto_restante = $monto;
 		$monto_total_aplicado = 0;
 		while ($pago = $resPago->fetch_assoc()) {
-			if ($monto_restante <= 0 || (int)$movimiento["monto_disponible"] <= 0) {
+			$disponibleMovimiento = ueno_saldo_disponible_movimiento($mysqli, $movimiento, $pago["cod_pagoFK"], $pago["id"]);
+			$movimiento["monto_disponible"] = $disponibleMovimiento;
+			if ($monto_restante <= 0 || $disponibleMovimiento <= 0) {
 				break;
 			}
 			$saldo_pago = (int)$pago["monto_pago"] - (int)$pago["monto_aplicado"];
-			$monto_aplicar = min($monto_restante, $saldo_pago, (int)$movimiento["monto_disponible"]);
+			$monto_aplicar = min($monto_restante, $saldo_pago, $disponibleMovimiento);
 			if ($monto_aplicar <= 0) {
 				continue;
 			}
@@ -976,7 +987,7 @@ function cc_conciliar_transferencia($usuario)
 			}
 			$monto_total_aplicado += $monto_aplicar;
 			$monto_restante -= $monto_aplicar;
-			$movimiento["monto_disponible"] = (int)$movimiento["monto_disponible"] - $monto_aplicar;
+			$movimiento["monto_disponible"] = max(0, $disponibleMovimiento - $monto_aplicar);
 		}
 
 		if ($monto_total_aplicado <= 0) {

@@ -676,7 +676,7 @@ function cobrarCuotaPreparar(contexto) {
 		cobrarCuotaCargarTiposPago(function() {
 			cobrarCuotaSeleccionarTipoPorTexto("TRANSFERENCIA");
 			cobrarCuotaActualizarFormaPago();
-			cobrarCuotaMostrarContextoUeno();
+			cobrarCuotaBuscarMovimientoUeno(true);
 		});
 	}
 }
@@ -1652,7 +1652,25 @@ function cobrarCuotaUsarDisponibleUeno() {
 	cobrarCuotaActualizarResumenUeno();
 }
 
-function cobrarCuotaBuscarMovimientoUeno() {
+function cobrarCuotaDescontarSaldoUenoLocal(montoAplicado) {
+	var disponibleAnterior = Number(cobrarCuotaContextoUeno ? (cobrarCuotaContextoUeno.monto_disponible || 0) : 0);
+	var saldoAplicado = Math.min(disponibleAnterior, Math.max(0, Number(montoAplicado || 0)));
+	var disponibleNuevo = Math.max(0, disponibleAnterior - saldoAplicado);
+	if (cobrarCuotaContextoUeno) {
+		cobrarCuotaContextoUeno.monto_disponible = disponibleNuevo;
+		cobrarCuotaContextoUeno.monto_disponible_fmt = cobrarCuotaFormato(disponibleNuevo);
+		cobrarCuotaContextoUeno.monto_valido = disponibleNuevo > 0;
+		cobrarCuotaContextoUeno.puede_usar = disponibleNuevo > 0;
+	}
+	return {
+		disponibleAnterior: disponibleAnterior,
+		disponibleNuevo: disponibleNuevo,
+		saldoAplicado: saldoAplicado
+	};
+}
+
+function cobrarCuotaBuscarMovimientoUeno(forzarBusqueda) {
+	forzarBusqueda = forzarBusqueda === true;
 	var select = cobrarCuotaId("inptCobrarCuotaTipoPago");
 	var texto = select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
 	if (!cobrarCuotaEsTransferenciaTexto(texto)) {
@@ -1663,14 +1681,15 @@ function cobrarCuotaBuscarMovimientoUeno() {
 	if (!contenedor) {
 		return;
 	}
-	if (cobrarCuotaTieneMovimientoUenoValido()) {
+	if (!forzarBusqueda && cobrarCuotaTieneMovimientoUenoValido()) {
 		cobrarCuotaMostrarContextoUeno();
 		return;
 	}
 	var comprobante = cobrarCuotaId("inptCobrarCuotaComprobante") ? cobrarCuotaId("inptCobrarCuotaComprobante").value : "";
 	var monto = cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "";
 	var fechaPago = cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "";
-	if (comprobante == "" && monto == "") {
+	var idMovimiento = cobrarCuotaContextoUeno && cobrarCuotaContextoUeno.id_movimiento ? cobrarCuotaContextoUeno.id_movimiento : "";
+	if (comprobante == "" && monto == "" && idMovimiento == "") {
 		cobrarCuotaResetBusquedaUeno();
 		contenedor.innerHTML = "<div class='cobrar-cuota__ueno-empty'>Ingresa el monto a cobrar para buscar transferencias Ueno disponibles.</div>";
 		cobrarCuotaActualizarBotonRegistrar();
@@ -1685,6 +1704,9 @@ function cobrarCuotaBuscarMovimientoUeno() {
 	datos.append("comprobante", comprobante);
 	datos.append("monto", monto);
 	datos.append("fecha_pago", fechaPago);
+	if (forzarBusqueda && idMovimiento != "") {
+		datos.append("id_movimiento", idMovimiento);
+	}
 	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmCobrarCuota.php",
@@ -1700,7 +1722,20 @@ function cobrarCuotaBuscarMovimientoUeno() {
 					cobrarCuotaUenoBusquedaActiva = true;
 					cobrarCuotaUenoTieneCoincidenciaExacta = datos["5"] == "SI";
 					cobrarCuotaCerrarModalUeno();
-					contenedor.innerHTML = datos["2"];
+					if (forzarBusqueda && idMovimiento != "") {
+						if (datos["4"] && datos["4"].id_movimiento) {
+							cobrarCuotaContextoUeno = datos["4"];
+							if (!cobrarCuotaSeleccionada) {
+								cobrarCuotaSetValor("inptCobrarCuotaMontoCobrar", cobrarCuotaContextoUeno.monto_disponible_fmt || cobrarCuotaFormato(cobrarCuotaContextoUeno.monto_disponible || 0));
+							}
+							cobrarCuotaMostrarContextoUeno();
+						} else {
+							cobrarCuotaContextoUeno = null;
+							contenedor.innerHTML = datos["2"];
+						}
+					} else {
+						contenedor.innerHTML = datos["2"];
+					}
 					cobrarCuotaAuditar(
 						"BUSCAR_MOVIMIENTO_UENO",
 						"consulta",
@@ -2382,34 +2417,15 @@ function cobrarCuotaEjecutarRegistroMultiple(contexto) {
 							registrarSiguiente();
 						};
 						if (transferencia && cobrarCuotaContextoUeno && cobrarCuotaContextoUeno.id_movimiento) {
-							cobrarCuotaConciliarTransferenciaMultiple(contexto, cuota, montoCuota, function(errorConciliacion, datosConciliacion) {
-								if (errorConciliacion) {
-									cobrarCuotaAuditar(
-										"REGISTRAR_TRANSFERENCIA_MULTIPLE_PENDIENTE",
-										"registrado",
-										"pendiente_conciliacion",
-										montoCuota,
-										contexto.textoTipo,
-										contexto.comprobante,
-										errorConciliacion
-									);
-									contexto.disponibleNuevo = disponibleActual;
-									contexto.saldoAplicadoUeno = saldoAplicadoUeno;
-									contexto.conciliadoUeno = false;
-									contexto.estadoMovimiento = "Pendiente de conciliacion";
-									cobrarCuotaFinalizarRegistroMultiple(
-										contexto,
-										resultados.concat([{ cuota: cuota, monto: montoCuota, respuesta: respuesta, conciliacion: datosConciliacion ? datosConciliacion.respuesta : null }]),
-										nrofactura,
-										"Pago registrado",
-										errorConciliacion + ". Se detuvo el cobro multiple para evitar duplicar el movimiento.",
-										"pendiente"
-									);
-									return;
-								}
-								disponibleActual = Number(datosConciliacion.disponibleNuevo || 0);
-								saldoAplicadoUeno += Number(datosConciliacion.saldoAplicado || montoCuota || 0);
-								continuarLuegoDeRegistro(datosConciliacion);
+							var datosUeno = cobrarCuotaDescontarSaldoUenoLocal(montoCuota);
+							disponibleActual = datosUeno.disponibleNuevo;
+							saldoAplicadoUeno += Number(datosUeno.saldoAplicado || 0);
+							continuarLuegoDeRegistro({
+								respuesta: respuesta,
+								disponibleAnterior: datosUeno.disponibleAnterior,
+								disponibleNuevo: datosUeno.disponibleNuevo,
+								saldoAplicado: datosUeno.saldoAplicado,
+								detalle: "Pago registrado y conciliado con Banco Ueno"
 							});
 						} else {
 							continuarLuegoDeRegistro();
@@ -2519,7 +2535,32 @@ function cobrarCuotaEjecutarRegistro(contexto) {
 					var estadoRecibo = transferencia ? "Pendiente de conciliacion bancaria" : (monto < saldo ? "Pago parcial registrado" : "Registrado");
 					cobrarCuotaUltimoRecibo = cobrarCuotaCrearRecibo(monto, textoTipo, comprobante, estadoRecibo);
 					if (transferencia && cobrarCuotaContextoUeno && cobrarCuotaContextoUeno.id_movimiento) {
-						cobrarCuotaConciliarTransferencia(comprobante, monto, textoTipo, contexto);
+						var movimientoAntes = cobrarCuotaClonarSimple(cobrarCuotaContextoUeno);
+						var saldoUeno = cobrarCuotaDescontarSaldoUenoLocal(monto);
+						if (cobrarCuotaUltimoRecibo) {
+							cobrarCuotaUltimoRecibo.estado = "Conciliado con Banco Ueno";
+						}
+						var detalle = "Pago registrado y conciliado con Banco Ueno";
+						if (saldoUeno.disponibleNuevo > 0) {
+							detalle += ". Saldo disponible del movimiento: " + cobrarCuotaFormato(saldoUeno.disponibleNuevo) + " Gs.";
+						}
+						cobrarCuotaAuditar("REGISTRAR_Y_CONCILIAR_UENO", "registrado", "conciliado_ueno", monto, textoTipo || "Transferencia", comprobante, detalle);
+						cobrarCuotaFinalizarRegistro("Pago registrado y conciliado con Banco Ueno", detalle, "exito", {
+							contexto: contexto,
+							ueno: movimientoAntes,
+							montoAplicado: monto,
+							saldoAplicadoUeno: saldoUeno.saldoAplicado,
+							disponibleAnterior: saldoUeno.disponibleAnterior,
+							disponibleNuevo: saldoUeno.disponibleNuevo,
+							conciliadoUeno: true,
+							estadoMovimiento: saldoUeno.disponibleNuevo > 0 ? "Parcial" : "Conciliado"
+						});
+						if (typeof uenoBuscarMovimientos === "function") {
+							uenoBuscarMovimientos();
+						}
+						if (typeof uenoBuscarPagosPendientes === "function") {
+							uenoBuscarPagosPendientes();
+						}
 					} else {
 						cobrarCuotaAuditar(
 							transferencia ? "REGISTRAR_TRANSFERENCIA_PENDIENTE" : "REGISTRAR_COBRO",
