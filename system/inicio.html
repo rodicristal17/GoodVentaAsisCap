@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=extracto-gastos-modal-ueno-20260706" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-aplicacion-contable-20260708" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,19 +43,19 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=version-actualizacion-v194-20260706"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=version-actualizacion-v198-flujo-detalle-topbar-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-mesa-modal-clean-20260703"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-aplicacion-contable-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-saldo-calculado-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-nueva-cita-limpia-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=conciliacion-egreso-monto-requerido-20260706"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-periodo-superior-20260707"></script>
 <script src="../js_system/abmAsistencia.js?x=jornada-cargando-topbar-20260619"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
@@ -100,6 +100,10 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     background: rgba(248, 250, 252, 0.92);
     backdrop-filter: blur(14px);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  }
+
+  #principalMenub.dashboard-flujo-detalle-expandido .dashboard-topbar {
+    display: none !important;
   }
 
   #principalMenub .dashboard-topbar__left {
@@ -1574,6 +1578,771 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                       }
                     </style>
 
+                    <style id="dashboardFlujoFinancieroEstilos">
+                      #dashboardFlujoFinanciero {
+                        clear: both !important;
+                        width: 100% !important;
+                        margin: 0 0 12px !important;
+                        padding: 14px 16px 16px !important;
+                        border: 1px solid #d9e6f2 !important;
+                        border-radius: 8px !important;
+                        background: rgba(255, 255, 255, 0.96) !important;
+                        box-shadow: 0 10px 24px rgba(18, 31, 53, 0.08) !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-header {
+                        display: flex !important;
+                        align-items: flex-start !important;
+                        justify-content: space-between !important;
+                        gap: 14px !important;
+                        padding: 0 0 10px !important;
+                        margin: 0 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-card__title {
+                        margin: 0 !important;
+                        color: #172033 !important;
+                        font-size: 15px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.15 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-card__subtitle {
+                        margin: 3px 0 0 !important;
+                        color: #475467 !important;
+                        font-size: 11px !important;
+                        font-weight: 800 !important;
+                        line-height: 1.25 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-actions {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: flex-end !important;
+                        gap: 10px !important;
+                        flex: 0 0 auto !important;
+                        margin-left: auto !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-permission {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        gap: 6px !important;
+                        min-height: 32px !important;
+                        padding: 0 14px !important;
+                        border: 1px solid #e4e7ec !important;
+                        border-radius: 999px !important;
+                        background: #f8fafc !important;
+                        color: #344054 !important;
+                        box-shadow: 0 6px 16px rgba(18, 31, 53, 0.05) !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-refresh {
+                        min-height: 34px !important;
+                        padding: 0 14px !important;
+                        border: 1px solid #25b46b !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        color: #159947 !important;
+                        box-shadow: 0 6px 16px rgba(21, 153, 71, 0.08) !important;
+                        cursor: pointer !important;
+                        font-size: 12px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-body {
+                        min-height: 136px !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-legend {
+                        display: flex !important;
+                        align-items: center !important;
+                        flex-wrap: wrap !important;
+                        gap: 8px 12px !important;
+                        margin: 0 0 9px !important;
+                        color: #475467 !important;
+                        font-size: 10px !important;
+                        font-weight: 900 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-legend span {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        gap: 5px !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-dot {
+                        width: 8px !important;
+                        height: 8px !important;
+                        border-radius: 50% !important;
+                        flex: 0 0 8px !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-dot--resultado {
+                        background: #168a68 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-dot--variables {
+                        background: #e58a12 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-dot--fijos {
+                        background: #e33d3d !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-dot--administracion {
+                        background: #3b6ea8 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-dot--sin-categoria {
+                        background: #7b8794 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-grid {
+                        display: grid !important;
+                        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+                        gap: 10px !important;
+                        align-items: stretch !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-local {
+                        min-width: 0 !important;
+                        min-height: 302px !important;
+                        display: grid !important;
+                        grid-template-rows: auto 168px auto auto !important;
+                        gap: 7px !important;
+                        padding: 9px !important;
+                        border: 1px solid #dce7f0 !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04) !important;
+                        box-sizing: border-box !important;
+                        cursor: pointer !important;
+                        transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-local:hover,
+                      #dashboardFlujoFinanciero .dashboard-flujo-local:focus {
+                        border-color: #8ccdb0 !important;
+                        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08) !important;
+                        outline: 2px solid rgba(22, 138, 104, .12) !important;
+                        transform: translateY(-1px) !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-local--deficit {
+                        border-color: #f3b7b7 !important;
+                        background: #fffafa !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-local__head {
+                        min-width: 0 !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) !important;
+                        gap: 3px !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-local__head strong {
+                        min-width: 0 !important;
+                        color: #172033 !important;
+                        font-size: 12px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.15 !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-local__head span {
+                        color: #168a68 !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.15 !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-chart {
+                        position: relative !important;
+                        width: 92px !important;
+                        max-width: 100% !important;
+                        height: 168px !important;
+                        margin: 0 auto !important;
+                        border-left: 1px dashed #b8c7d4 !important;
+                        border-bottom: 1px solid #b8c7d4 !important;
+                        background: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 41px, #edf2f7 42px) !important;
+                        box-sizing: border-box !important;
+                        overflow: hidden !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-stack {
+                        position: absolute !important;
+                        left: 17px !important;
+                        right: 17px !important;
+                        top: 0 !important;
+                        bottom: 0 !important;
+                        display: flex !important;
+                        flex-direction: column-reverse !important;
+                        align-items: stretch !important;
+                        justify-content: flex-start !important;
+                        border-radius: 6px 6px 0 0 !important;
+                        overflow: hidden !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-income-line {
+                        position: absolute !important;
+                        left: 5px !important;
+                        right: 5px !important;
+                        bottom: var(--flujo-ingreso-line) !important;
+                        z-index: 3 !important;
+                        border-top: 2px dashed rgba(18, 38, 58, .48) !important;
+                        pointer-events: none !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-income-line::after {
+                        content: "Ingreso" !important;
+                        position: absolute !important;
+                        right: 0 !important;
+                        top: -14px !important;
+                        color: #29465f !important;
+                        font-size: 8px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                        background: rgba(255,255,255,.82) !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento {
+                        min-height: 0 !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        padding: 2px !important;
+                        color: #ffffff !important;
+                        text-align: center !important;
+                        box-sizing: border-box !important;
+                        overflow: hidden !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento b,
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento small {
+                        display: block !important;
+                        color: inherit !important;
+                        line-height: 1.05 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento b {
+                        font-size: 10px !important;
+                        font-weight: 900 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento small {
+                        margin-top: 2px !important;
+                        font-size: 8px !important;
+                        font-weight: 900 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--mini b,
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--mini small {
+                        display: none !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--resultado {
+                        background: #168a68 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--variables {
+                        background: #e58a12 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--fijos {
+                        background: #e33d3d !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--administracion {
+                        background: #3b6ea8 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-segmento--sin-categoria {
+                        background: #7b8794 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-resultado {
+                        min-height: 42px !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) !important;
+                        gap: 2px !important;
+                        padding: 7px !important;
+                        border: 1px solid #b9dfc8 !important;
+                        border-radius: 7px !important;
+                        background: #edf8f1 !important;
+                        color: #0f6c3b !important;
+                        text-align: center !important;
+                        box-sizing: border-box !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-resultado--deficit {
+                        border-color: #efb2b2 !important;
+                        background: #fff0f0 !important;
+                        color: #b3261e !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-resultado span,
+                      #dashboardFlujoFinanciero .dashboard-flujo-resultado strong {
+                        display: block !important;
+                        line-height: 1.1 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-resultado span {
+                        font-size: 9px !important;
+                        font-weight: 900 !important;
+                        text-transform: uppercase !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-resultado strong {
+                        font-size: 13px !important;
+                        font-weight: 900 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-lista {
+                        display: grid !important;
+                        gap: 3px !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        list-style: none !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-lista li {
+                        min-width: 0 !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) auto !important;
+                        gap: 5px !important;
+                        color: #475467 !important;
+                        font-size: 9px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.15 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-lista b {
+                        color: #172033 !important;
+                        font-weight: 900 !important;
+                        white-space: nowrap !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-loading {
+                        min-height: 136px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        gap: 8px !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-loading span {
+                        width: 10px !important;
+                        height: 10px !important;
+                        border-radius: 50% !important;
+                        background: #168a68 !important;
+                        animation: dashboardFlujoPulse 1s infinite ease-in-out !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-loading span:nth-child(2) {
+                        animation-delay: .12s !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-loading span:nth-child(3) {
+                        animation-delay: .24s !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-state {
+                        min-height: 136px !important;
+                        display: grid !important;
+                        place-items: center !important;
+                        gap: 8px !important;
+                        padding: 18px !important;
+                        border: 1px solid #e4e7ec !important;
+                        border-radius: 8px !important;
+                        background: #f8fafc !important;
+                        color: #475467 !important;
+                        text-align: center !important;
+                        box-sizing: border-box !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-state strong {
+                        color: #172033 !important;
+                        font-size: 13px !important;
+                        font-weight: 900 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-state span {
+                        color: #667085 !important;
+                        font-size: 11px !important;
+                        font-weight: 800 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-state button {
+                        min-height: 30px !important;
+                        padding: 0 14px !important;
+                        border: 1px solid #25b46b !important;
+                        border-radius: 7px !important;
+                        background: #ffffff !important;
+                        color: #159947 !important;
+                        cursor: pointer !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-modal {
+                        position: fixed !important;
+                        inset: 0 !important;
+                        z-index: 100000 !important;
+                        display: none;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        padding: 16px !important;
+                        box-sizing: border-box !important;
+                      }
+                      .dashboard-flujo-detalle-modal__backdrop {
+                        position: absolute !important;
+                        inset: 0 !important;
+                        background: rgba(15, 23, 42, .52) !important;
+                      }
+                      .dashboard-flujo-detalle-modal__panel {
+                        position: relative !important;
+                        z-index: 1 !important;
+                        width: min(1480px, calc(100vw - 28px)) !important;
+                        height: calc(100vh - 28px) !important;
+                        display: grid !important;
+                        grid-template-rows: auto minmax(0, 1fr) !important;
+                        border: 1px solid #d9e6f2 !important;
+                        border-radius: 10px !important;
+                        background: #ffffff !important;
+                        box-shadow: 0 24px 70px rgba(15, 23, 42, .24) !important;
+                        overflow: hidden !important;
+                      }
+                      .dashboard-flujo-detalle-modal__header {
+                        min-width: 0 !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) auto !important;
+                        gap: 14px !important;
+                        align-items: center !important;
+                        padding: 14px 16px !important;
+                        border-bottom: 1px solid #e4edf5 !important;
+                        background: #f8fafc !important;
+                      }
+                      .dashboard-flujo-detalle-modal__header h3 {
+                        margin: 0 !important;
+                        color: #172033 !important;
+                        font-size: 18px !important;
+                        font-weight: 900 !important;
+                        line-height: 1.15 !important;
+                      }
+                      .dashboard-flujo-detalle-modal__header p {
+                        margin: 4px 0 0 !important;
+                        color: #607487 !important;
+                        font-size: 11px !important;
+                        font-weight: 800 !important;
+                      }
+                      .dashboard-flujo-detalle-modal__actions {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: flex-end !important;
+                        flex-wrap: wrap !important;
+                        gap: 8px !important;
+                      }
+                      .dashboard-flujo-detalle-modal__actions button {
+                        min-height: 32px !important;
+                        padding: 0 12px !important;
+                        border: 1px solid #cbdbe7 !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        color: #29465f !important;
+                        cursor: pointer !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-modal__actions .dashboard-flujo-detalle-primary {
+                        border-color: #25b46b !important;
+                        background: #159947 !important;
+                        color: #ffffff !important;
+                      }
+                      .dashboard-flujo-detalle-modal__close {
+                        width: 32px !important;
+                        padding: 0 !important;
+                        border-color: #ffd0d0 !important;
+                        color: #d92d20 !important;
+                        font-size: 16px !important;
+                      }
+                      .dashboard-flujo-detalle-modal__body {
+                        min-height: 0 !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(320px, 36%) minmax(0, 1fr) !important;
+                        gap: 14px !important;
+                        padding: 14px !important;
+                        overflow: hidden !important;
+                        background: #ffffff !important;
+                      }
+                      .dashboard-flujo-detalle-panel {
+                        min-height: 0 !important;
+                        min-width: 0 !important;
+                        border: 1px solid #e0e8ef !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        overflow: hidden !important;
+                      }
+                      .dashboard-flujo-detalle-panel--grafico {
+                        padding: 14px !important;
+                        display: grid !important;
+                        grid-template-rows: auto minmax(320px, 1fr) auto !important;
+                        gap: 12px !important;
+                      }
+                      .dashboard-flujo-detalle-panel--detalle {
+                        overflow-y: auto !important;
+                        padding: 10px !important;
+                        background: #fbfdff !important;
+                      }
+                      .dashboard-flujo-detalle-title {
+                        display: grid !important;
+                        gap: 4px !important;
+                        color: #172033 !important;
+                      }
+                      .dashboard-flujo-detalle-title span {
+                        color: #607487 !important;
+                        font-size: 10px !important;
+                        font-weight: 900 !important;
+                        text-transform: uppercase !important;
+                      }
+                      .dashboard-flujo-detalle-title strong {
+                        font-size: 18px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-chart {
+                        position: relative !important;
+                        width: min(210px, 68%) !important;
+                        height: 100% !important;
+                        min-height: 330px !important;
+                        margin: 0 auto !important;
+                        border-left: 1px dashed #b8c7d4 !important;
+                        border-bottom: 1px solid #b8c7d4 !important;
+                        background: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 78px, #edf2f7 79px) !important;
+                        overflow: hidden !important;
+                      }
+                      .dashboard-flujo-detalle-stack {
+                        position: absolute !important;
+                        left: 34px !important;
+                        right: 34px !important;
+                        top: 0 !important;
+                        bottom: 0 !important;
+                        display: flex !important;
+                        flex-direction: column-reverse !important;
+                        justify-content: flex-start !important;
+                        border-radius: 9px 9px 0 0 !important;
+                        overflow: hidden !important;
+                      }
+                      .dashboard-flujo-detalle-income-line {
+                        position: absolute !important;
+                        left: 10px !important;
+                        right: 10px !important;
+                        bottom: var(--flujo-detalle-ingreso-line) !important;
+                        z-index: 4 !important;
+                        border-top: 2px dashed rgba(18, 38, 58, .52) !important;
+                        cursor: pointer !important;
+                        transition: border-color .16s ease, filter .16s ease, opacity .16s ease !important;
+                      }
+                      .dashboard-flujo-detalle-income-line::after {
+                        content: "Ingresos 100%" !important;
+                        position: absolute !important;
+                        right: 0 !important;
+                        top: -18px !important;
+                        padding: 2px 4px !important;
+                        background: rgba(255,255,255,.9) !important;
+                        color: #29465f !important;
+                        font-size: 10px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-segmento {
+                        min-height: 0 !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        padding: 5px !important;
+                        color: #ffffff !important;
+                        text-align: center !important;
+                        box-sizing: border-box !important;
+                        overflow: hidden !important;
+                        cursor: pointer !important;
+                        transition: filter .16s ease, opacity .16s ease, box-shadow .16s ease, transform .16s ease !important;
+                      }
+                      .dashboard-flujo-detalle-modal[data-flujo-activo] .dashboard-flujo-detalle-segmento {
+                        opacity: .42 !important;
+                        filter: saturate(.65) brightness(.96) !important;
+                      }
+                      .dashboard-flujo-detalle-modal[data-flujo-activo] .dashboard-flujo-detalle-segmento.is-active {
+                        opacity: 1 !important;
+                        filter: saturate(1.5) brightness(1.08) !important;
+                        box-shadow: inset 0 0 0 3px rgba(255,255,255,.78), 0 0 22px rgba(16, 24, 40, .26) !important;
+                        transform: scaleX(1.08) !important;
+                        z-index: 3 !important;
+                      }
+                      .dashboard-flujo-detalle-modal[data-flujo-activo] .dashboard-flujo-detalle-income-line {
+                        opacity: .35 !important;
+                      }
+                      .dashboard-flujo-detalle-modal[data-flujo-activo="ingreso"] .dashboard-flujo-detalle-income-line,
+                      .dashboard-flujo-detalle-income-line.is-active {
+                        opacity: 1 !important;
+                        border-top-color: #168a68 !important;
+                        filter: drop-shadow(0 0 7px rgba(22, 138, 104, .55)) !important;
+                      }
+                      .dashboard-flujo-detalle-income-line.is-active::after {
+                        color: #0f6c3b !important;
+                        background: #edf8f1 !important;
+                        box-shadow: 0 0 0 1px rgba(22, 138, 104, .25) !important;
+                      }
+                      .dashboard-flujo-detalle-segmento b,
+                      .dashboard-flujo-detalle-segmento span {
+                        display: block !important;
+                        color: inherit !important;
+                        line-height: 1.08 !important;
+                      }
+                      .dashboard-flujo-detalle-segmento b {
+                        font-size: 17px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-segmento span {
+                        margin-top: 3px !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-segmento--mini b,
+                      .dashboard-flujo-detalle-segmento--mini span {
+                        display: none !important;
+                      }
+                      .dashboard-flujo-detalle-resumen {
+                        display: grid !important;
+                        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                        gap: 8px !important;
+                      }
+                      .dashboard-flujo-detalle-resumen article {
+                        min-width: 0 !important;
+                        padding: 9px !important;
+                        border: 1px solid #e0e8ef !important;
+                        border-radius: 7px !important;
+                        background: #f8fafc !important;
+                        color: #475467 !important;
+                      }
+                      .dashboard-flujo-detalle-resumen span,
+                      .dashboard-flujo-detalle-resumen strong {
+                        display: block !important;
+                        line-height: 1.15 !important;
+                      }
+                      .dashboard-flujo-detalle-resumen span {
+                        font-size: 9px !important;
+                        font-weight: 900 !important;
+                        text-transform: uppercase !important;
+                      }
+                      .dashboard-flujo-detalle-resumen strong {
+                        margin-top: 3px !important;
+                        color: #172033 !important;
+                        font-size: 14px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-categoria,
+                      .dashboard-flujo-detalle-concepto {
+                        margin-bottom: 8px !important;
+                        border: 1px solid #d8e3ec !important;
+                        border-radius: 8px !important;
+                        background: #ffffff !important;
+                        overflow: hidden !important;
+                        transition: border-color .16s ease, box-shadow .16s ease, filter .16s ease, opacity .16s ease !important;
+                      }
+                      .dashboard-flujo-detalle-categoria.is-active,
+                      .dashboard-flujo-detalle-concepto.is-active {
+                        border-color: var(--flujo-detalle-color, #8ccdb0) !important;
+                        box-shadow: 0 0 0 2px rgba(22, 138, 104, .08), 0 8px 18px rgba(15, 23, 42, .08) !important;
+                      }
+                      .dashboard-flujo-detalle-categoria.is-active > summary,
+                      .dashboard-flujo-detalle-concepto.is-active > summary {
+                        background: #f0faf4 !important;
+                      }
+                      .dashboard-flujo-detalle-categoria > summary,
+                      .dashboard-flujo-detalle-concepto > summary {
+                        cursor: pointer !important;
+                        list-style: none !important;
+                      }
+                      .dashboard-flujo-detalle-categoria > summary::-webkit-details-marker,
+                      .dashboard-flujo-detalle-concepto > summary::-webkit-details-marker {
+                        display: none !important;
+                      }
+                      .dashboard-flujo-detalle-categoria > summary {
+                        min-height: 54px !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) auto !important;
+                        gap: 3px 10px !important;
+                        align-items: center !important;
+                        padding: 9px 10px 9px 14px !important;
+                        border-left: 6px solid var(--flujo-detalle-color) !important;
+                        background: #f8fafc !important;
+                      }
+                      .dashboard-flujo-detalle-categoria > summary strong,
+                      .dashboard-flujo-detalle-concepto > summary strong {
+                        color: #172033 !important;
+                        font-size: 13px !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-categoria > summary em,
+                      .dashboard-flujo-detalle-concepto > summary em {
+                        color: #607487 !important;
+                        font-size: 10px !important;
+                        font-style: normal !important;
+                        font-weight: 900 !important;
+                      }
+                      .dashboard-flujo-detalle-categoria > summary b,
+                      .dashboard-flujo-detalle-concepto > summary b {
+                        color: #172033 !important;
+                        font-size: 12px !important;
+                        font-weight: 900 !important;
+                        white-space: nowrap !important;
+                      }
+                      .dashboard-flujo-detalle-conceptos {
+                        padding: 8px !important;
+                        background: #fbfdff !important;
+                      }
+                      .dashboard-flujo-detalle-concepto > summary {
+                        min-height: 42px !important;
+                        display: grid !important;
+                        grid-template-columns: minmax(0, 1fr) auto !important;
+                        gap: 3px 8px !important;
+                        align-items: center !important;
+                        padding: 8px 10px !important;
+                        background: #ffffff !important;
+                      }
+                      .dashboard-flujo-detalle-movimientos {
+                        padding: 8px !important;
+                        overflow-x: auto !important;
+                        background: #ffffff !important;
+                      }
+                      .dashboard-flujo-detalle-tabla {
+                        width: 100% !important;
+                        min-width: 760px !important;
+                        border-collapse: collapse !important;
+                        table-layout: fixed !important;
+                      }
+                      .dashboard-flujo-detalle-tabla th,
+                      .dashboard-flujo-detalle-tabla td {
+                        padding: 6px 7px !important;
+                        border-bottom: 1px solid #edf1f5 !important;
+                        color: #344054 !important;
+                        font-size: 10px !important;
+                        font-weight: 800 !important;
+                        line-height: 1.25 !important;
+                        vertical-align: top !important;
+                      }
+                      .dashboard-flujo-detalle-tabla th {
+                        background: #f8fafc !important;
+                        color: #475467 !important;
+                        font-weight: 900 !important;
+                        text-align: left !important;
+                      }
+                      .dashboard-flujo-detalle-tabla .monto {
+                        text-align: right !important;
+                        white-space: nowrap !important;
+                        font-variant-numeric: tabular-nums !important;
+                      }
+                      .dashboard-flujo-detalle-empty {
+                        min-height: 90px !important;
+                        display: grid !important;
+                        place-items: center !important;
+                        color: #667085 !important;
+                        font-size: 12px !important;
+                        font-weight: 900 !important;
+                      }
+                      @keyframes dashboardFlujoPulse {
+                        0%, 80%, 100% { transform: scale(.72); opacity: .55; }
+                        40% { transform: scale(1); opacity: 1; }
+                      }
+                      @media (max-width: 980px) {
+                        #dashboardFlujoFinanciero .dashboard-flujo-grid {
+                          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                        }
+                      }
+                      @media (max-width: 800px) {
+                        #dashboardFlujoFinanciero .dashboard-flujo-header,
+                        #dashboardFlujoFinanciero .dashboard-flujo-actions {
+                          align-items: stretch !important;
+                          flex-direction: column !important;
+                        }
+                        .dashboard-flujo-detalle-modal__body {
+                          grid-template-columns: 1fr !important;
+                          overflow-y: auto !important;
+                        }
+                        .dashboard-flujo-detalle-panel--grafico {
+                          min-height: 620px !important;
+                        }
+                        #dashboardFlujoFinanciero .dashboard-flujo-grid {
+                          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                        }
+                      }
+                      @media (max-width: 560px) {
+                        #dashboardFlujoFinanciero .dashboard-flujo-grid {
+                          grid-template-columns: 1fr !important;
+                        }
+                      }
+                    </style>
+
                     <section class="dashboard-card dashboard-card--comparativa-financiera" id="dashboardComparativaVentasCobranzas" style="display:none;">
                       <div class="dashboard-card__header dashboard-comparativa-header">
                         <div>
@@ -1591,6 +2360,48 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         </div>
                       </div>
                     </section>
+
+                    <section class="dashboard-card dashboard-card--flujo-financiero" id="dashboardFlujoFinanciero" style="display:none;">
+                      <div class="dashboard-card__header dashboard-flujo-header">
+                        <div>
+                          <h2 class="dashboard-card__title">Composici&oacute;n econ&oacute;mica por sucursal</h2>
+                          <p class="dashboard-card__subtitle" id="dashboardFlujoFinancieroSubtitulo">&Uacute;ltimo mes cerrado con escala com&uacute;n</p>
+                        </div>
+                        <div class="dashboard-flujo-actions">
+                          <span class="dashboard-flujo-permission"><span aria-hidden="true">&#128274;</span> Visible seg&uacute;n permisos</span>
+                          <button type="button" class="dashboard-flujo-refresh" onclick="cargarDashboardFlujoFinanciero(true)">Actualizar</button>
+                        </div>
+                      </div>
+                      <div class="dashboard-card__body dashboard-flujo-body" id="dashboardFlujoFinancieroBody">
+                        <div class="dashboard-flujo-loading">
+                          <span></span><span></span><span></span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div class="dashboard-flujo-detalle-modal" id="modalDashboardFlujoFinancieroDetalle" style="display:none;">
+                      <div class="dashboard-flujo-detalle-modal__backdrop" onclick="cerrarDashboardFlujoFinancieroDetalle()"></div>
+                      <div class="dashboard-flujo-detalle-modal__panel" id="dashboardFlujoDetallePanel">
+                        <div class="dashboard-flujo-detalle-modal__header">
+                          <div>
+                            <h3 id="dashboardFlujoDetalleTitulo">Analisis de flujo financiero</h3>
+                            <p id="dashboardFlujoDetalleSubtitulo">Ultimo mes cerrado</p>
+                          </div>
+                          <div class="dashboard-flujo-detalle-modal__actions">
+                            <button type="button" onclick="imprimirVistaDashboardFlujoFinancieroDetalle()">Imprimir vista</button>
+                            <button type="button" onclick="imprimirInformeDashboardFlujoFinancieroDetalle()">Informe formal</button>
+                            <button type="button" onclick="exportarCsvDashboardFlujoFinancieroDetalle()">Exportar CSV</button>
+                            <button type="button" class="dashboard-flujo-detalle-primary" onclick="abrirResumenCompletoDashboardFlujoFinancieroActual()">Abrir resumen completo</button>
+                            <button type="button" class="dashboard-flujo-detalle-modal__close" onclick="cerrarDashboardFlujoFinancieroDetalle()" aria-label="Cerrar analisis">x</button>
+                          </div>
+                        </div>
+                        <div class="dashboard-flujo-detalle-modal__body" id="dashboardFlujoDetalleBody">
+                          <div class="dashboard-flujo-loading">
+                            <span></span><span></span><span></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                     <div class="dashboard-comparativa-modal" id="modalComparativaVentasCobranzas" style="display:none;">
                       <div class="dashboard-comparativa-modal__backdrop" onclick="cerrarDetalleComparativaVentasCobranzas()"></div>
@@ -7759,7 +8570,7 @@ title='Cerrar Ventana' onclick='verCerrarAbmGasto()' />
 <div style='width: 98%;height:auto'>
 <table style='width:100%'>
 <tr>
-<td style='width:18%'>
+<td style='width:16%'>
 <p class="pTituloC">Opciones de Busqueda</p>
 <table style="width:100%">
 <tbody>
@@ -7788,20 +8599,28 @@ Todos</p>
 <p class='pTituloC' >Fecha inicio :</p>
 <input class='inputText' type='Date' id='inptBuscarGastoF1' style='width:130px' onchange="actualizarEncabezadoFlujoGasto()" />
 </td>
-<td style='width:14%;'>
+<td style='width:10%;'>
 <p class='pTituloC' >Fecha fin :</p>
 <input class='inputText' type='Date' id='inptBuscarGastoF2' style='width:130px' onchange="actualizarEncabezadoFlujoGasto()" />
 </td>
-<td style="width:15%;text-align:left">
+<td class="flujo-periodo-filtro" style='width:17%;'>
+<p class='pTituloC'>Flujo actualizado :</p>
+<div class="flujo-periodo-filtro__control">
+  <strong id="txtPeriodoGasto">Periodo actual</strong>
+  <input type="month" id="inptPeriodoMesGasto" class="flujo-caja-periodo__mes flujo-caja-periodo__mes--superior" title="Seleccionar mes" aria-label="Seleccionar mes del flujo" onchange="seleccionarMesFlujoGasto(this.value)" />
+</div>
+<small id="txtPeriodoGastoDetalle">Ingresos -> Costos variables -> Gastos fijos -> Administracion</small>
+</td>
+<td style="width:12%;text-align:left">
 <p class="pTitulo8" style="width: 100%;"> 
 <input type="checkbox" id="inptSeleccEstadoBuscarGasto2" checked style="width: fit-content;margin-right: 5px;">Ocultar inactivos
 </p>
 </td>
-<td style='width:18%;text-align:left'>
+<td style='width:17%;text-align:left'>
 <p class='pTituloC' >Local :</p>
 <select class="inputText" id="inptlocalMisGastosBusca" style="width:180px" onchange="actualizarEncabezadoFlujoGasto()"></select>
 </td>
-<td style='width:25%;text-align: right;'>
+<td style='width:18%;text-align: right;'>
   <input type='Button' value='Buscar' class='btn4' onclick='buscarabmGasto()' />
   <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('gastos')" style="width:100px;background-color: rgb(58 58 58);">
   <input type="button" value="Resumir por motivos" class="btn4" onclick="verCerrarResumenGastosMotivos(true)" style="width:fit-content;background-color: rgb(58 58 58);">
@@ -7823,23 +8642,18 @@ Todos</p>
     <input type="date" id="inptBuscarIngresoEgreso2">
     <input type="text" id="inptBuscarIngresoEgreso1">
   </div>
-  <div class="flujo-caja-periodo" id="panelPeriodoGasto">
-    <div class="flujo-caja-periodo__texto">
-      <span>Flujo actualizado</span>
-      <strong id="txtPeriodoGasto">Periodo actual</strong>
-      <input type="month" id="inptPeriodoMesGasto" class="flujo-caja-periodo__mes" title="Seleccionar mes" aria-label="Seleccionar mes del flujo" onchange="seleccionarMesFlujoGasto(this.value)" />
-      <small id="txtPeriodoGastoDetalle">Ingresos -> Costos variables -> Gastos fijos</small>
+  <div class="flujo-caja-tablero">
+    <section class="flujo-caja-tablero__detalle">
+      <div class="div_cuerpo_table" id="table_abm_gasto" style="height: 500px; width: 100%;"></div>
+      <div class="div_cuerpo_table" id="table_abm_gasto_imprimir" style="display: none;"></div>
+    </section>
+    <aside id="panelComposicionFlujoGasto" class="flujo-composicion" aria-live="polite">
+      <div class="flujo-composicion__vacio">
+        <strong>Composicion sobre ingresos</strong>
+        <span>Busca un periodo para ver ingresos, costos, resultado y conceptos.</span>
+      </div>
+    </aside>
     </div>
-    <div class="flujo-caja-periodo__ruta" aria-hidden="true">
-      <span>Ingresos</span>
-      <i></i>
-      <span>Costos variables</span>
-      <i></i>
-      <span>Gastos fijos</span>
-    </div>
-  </div>
-  <div class="div_cuerpo_table" id="table_abm_gasto" style="height: 500px; width: 100%;"></div>
-  <div class="div_cuerpo_table" id="table_abm_gasto_imprimir" style="display: none;"></div>
 </div>
 <div class="divMenuF flujo-caja-footer">
   <div class="flujo-caja-leyenda">
@@ -26532,17 +27346,18 @@ title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
 <tr>
 <td class="td_registro" style="width:5%;">F. CONF.</td>
 <td class="td_registro" style="width:5%;">F. TRANS.</td>
-<td class="td_registro" style="width:9%;">COMPROBANTE</td>
-<td class="td_registro" style="width:13%;">DESCRIPCION</td>
-<td class="td_registro" style="width:8%;">CONCEPTO</td>
+<td class="td_registro" style="width:8%;">COMPROBANTE</td>
+<td class="td_registro" style="width:11%;">DESCRIPCION</td>
+<td class="td_registro" style="width:7%;">CONCEPTO</td>
 <td class="td_registro" style="width:5%;">DEB.</td>
-<td class="td_registro" style="width:7%;">CREDITO</td>
-<td class="td_registro" style="width:7%;">APLICADO</td>
-<td class="td_registro" style="width:6%;">DISP.</td>
+<td class="td_registro" style="width:6%;">CREDITO</td>
+<td class="td_registro" style="width:6%;">APLICADO</td>
+<td class="td_registro" style="width:5%;">DISP.</td>
 <td class="td_registro" style="width:6%;">ESTADO</td>
-<td class="td_registro" style="width:13%;">CLIENTE / VENTA</td>
-<td class="td_registro" style="width:7%;">USUARIO</td>
-<td class="td_registro" style="width:9%;">ACCION</td>
+<td class="td_registro" style="width:16%;">APLICACION CONTABLE</td>
+<td class="td_registro" style="width:9%;">CLIENTE / VENTA</td>
+<td class="td_registro" style="width:5%;">USUARIO</td>
+<td class="td_registro" style="width:6%;">ACCION</td>
 </tr>
 </tbody>
 </table>
@@ -35001,7 +35816,7 @@ style='color:#673ab7'  > Actualización</span></h1>
 <tr>
 <td style='width:50%;'>
 <center>
-<p class='pTituloActualizacion' onclick='' style='width: 346px;'>Para actualizar presione Ctr+Shift+R</p>
+<p class='pTituloActualizacion' onclick='' style='width: 346px;'>Para actualizar presione Ctrl+Shift+R</p>
 </center>
 </td>
 <td style='width:50%;'>

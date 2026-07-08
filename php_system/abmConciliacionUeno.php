@@ -1729,21 +1729,25 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$clientes_html = $clientes_conciliacion != ""
 			? "<span class='ueno-client-cell' title='" . ueno_escape_html($clientes_conciliacion) . "'>" . ueno_escape_html($clientes_conciliacion) . "</span>"
 			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
+		$aplicacion_contable_html = ($debito > 0 && $aplicado > 0)
+			? ueno_html_aplicacion_contable_debito($mysqli, (int)$row["id_movimiento"])
+			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
 		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' class='ueno-movimiento-row ueno-movimiento-row--" . $estado_clave . "' data-ueno-estado='" . $estado_clave . "' data-ueno-disponible='" . $disponible . "' data-ueno-aplicado='" . $aplicado . "'>"
 			. "<td style='width:5%'>" . ueno_escape_html($row["fecha_confirmacion"]) . "</td>"
 			. "<td style='width:5%'>" . ueno_escape_html($row["fecha_transaccion"]) . "</td>"
-			. "<td style='width:9%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
-			. "<td style='width:13%'>" . ueno_escape_html($row["descripcion"]) . "</td>"
-			. "<td style='width:8%'>" . ueno_escape_html($row["concepto"]) . "</td>"
+			. "<td style='width:8%'>" . ueno_escape_html($row["nro_comprobante"]) . "</td>"
+			. "<td style='width:11%'>" . ueno_escape_html($row["descripcion"]) . "</td>"
+			. "<td style='width:7%'>" . ueno_escape_html($row["concepto"]) . "</td>"
 			. "<td style='width:5%;text-align:right'>" . number_format($debito, 0, ",", ".") . "</td>"
-			. "<td style='width:7%;text-align:right'>" . number_format($credito, 0, ",", ".") . "</td>"
-			. "<td style='width:7%;text-align:right'>" . $aplicado_html . "</td>"
-			. "<td style='width:6%;text-align:right'>" . number_format($disponible, 0, ",", ".") . "</td>"
+			. "<td style='width:6%;text-align:right'>" . number_format($credito, 0, ",", ".") . "</td>"
+			. "<td style='width:6%;text-align:right'>" . $aplicado_html . "</td>"
+			. "<td style='width:5%;text-align:right'>" . number_format($disponible, 0, ",", ".") . "</td>"
 			. "<td style='width:6%'><span class='ueno-status-badge ueno-status-badge--" . $estado_clave . "'>" . ueno_escape_html($estado_visual) . "</span></td>"
-			. "<td style='width:13%;text-align:left'>" . $clientes_html . "</td>"
-			. "<td style='width:7%;text-align:center'>" . $usuarios_html . "</td>"
-			. "<td style='width:9%;text-align:center'>" . $accion . "</td>"
+			. "<td style='width:16%;text-align:left'>" . $aplicacion_contable_html . "</td>"
+			. "<td style='width:9%;text-align:left'>" . $clientes_html . "</td>"
+			. "<td style='width:5%;text-align:center'>" . $usuarios_html . "</td>"
+			. "<td style='width:6%;text-align:center'>" . $accion . "</td>"
 			. "</tr></table>";
 	}
 	$resumen["saldo_disponible_fmt"] = number_format($resumen["saldo_disponible"], 0, ",", ".");
@@ -2350,6 +2354,114 @@ function ueno_categoria_flujo_texto($categoria)
 		return "Gastos fijos";
 	}
 	return "Egresos";
+}
+
+function ueno_es_local_administracion_compartida($codLocal, $localNombre)
+{
+	$codLocal = trim((string)$codLocal);
+	$localNombre = strtoupper(trim((string)$localNombre));
+	return $codLocal == "1" || (strpos($localNombre, "ADMINISTRACION") !== false && strpos($localNombre, "COMPARTIDOS") !== false);
+}
+
+function ueno_categoria_aplicacion_clave($categoria, $codLocal, $localNombre)
+{
+	if (ueno_es_local_administracion_compartida($codLocal, $localNombre)) {
+		return "administracion";
+	}
+	$categoria = strtolower(trim((string)$categoria));
+	if ($categoria == "ingreso") {
+		return "ingresos";
+	}
+	if ($categoria == "directo") {
+		return "variables";
+	}
+	if ($categoria == "operativo") {
+		return "fijos";
+	}
+	return "sin-categoria";
+}
+
+function ueno_categoria_aplicacion_texto($categoria, $codLocal, $localNombre)
+{
+	if (ueno_es_local_administracion_compartida($codLocal, $localNombre)) {
+		return "Administracion / Compartidos";
+	}
+	$categoria = strtolower(trim((string)$categoria));
+	if ($categoria == "ingreso") {
+		return "Ingresos";
+	}
+	if ($categoria == "directo") {
+		return "Costos variables";
+	}
+	if ($categoria == "operativo") {
+		return "Gastos fijos";
+	}
+	return "Sin categorizar";
+}
+
+function ueno_local_aplicacion_texto($codLocal, $localNombre)
+{
+	if (ueno_es_local_administracion_compartida($codLocal, $localNombre)) {
+		return "Compartidos";
+	}
+	$localNombre = trim((string)$localNombre);
+	if ($localNombre == "") {
+		return "Sin local";
+	}
+	$localNombre = preg_replace('/^CLINIDENT\s+/i', '', $localNombre);
+	$localNombre = preg_replace('/\s*\([^)]*\)\s*/', ' ', $localNombre);
+	$localNombre = preg_replace('/\s+/', ' ', $localNombre);
+	return trim($localNombre) != "" ? trim($localNombre) : "Sin local";
+}
+
+function ueno_html_aplicacion_contable_debito($mysqli, $idMovimiento)
+{
+	$idMovimiento = (int)$idMovimiento;
+	static $tablaMovimientoGastoExiste = null;
+	if ($tablaMovimientoGastoExiste === null) {
+		$tablaMovimientoGastoExiste = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
+	}
+	if ($idMovimiento <= 0 || !$tablaMovimientoGastoExiste) {
+		return "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
+	}
+	$sql = "SELECT umg.id, umg.monto_aplicado,
+		g.idgastos, g.motivo AS descripcion, g.cod_local,
+		IFNULL(m.descripcion,'') AS concepto, IFNULL(m.categoria,'') AS categoria, IFNULL(l.Nombre,'') AS local_nombre,
+		(SELECT COUNT(*) FROM ueno_movimiento_gasto umg_total WHERE umg_total.id_movimiento=$idMovimiento AND umg_total.estado='activo') AS total_asignaciones
+		FROM ueno_movimiento_gasto umg
+		INNER JOIN gastos g ON g.idgastos=umg.idgastos
+		LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+		LEFT JOIN local l ON l.cod_local=g.cod_local
+		WHERE umg.id_movimiento=$idMovimiento AND umg.estado='activo'
+		ORDER BY umg.id DESC
+		LIMIT 2";
+	$result = $mysqli->query($sql);
+	if (!$result || $result->num_rows == 0) {
+		return "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
+	}
+	$html = "<button type='button' class='ueno-accounting-cell' onclick='conciliarEgresoUenoVerAsignacionesBanco($idMovimiento)' title='Ver asignaciones contables'>";
+	$totalAsignaciones = 0;
+	while ($row = mysqli_fetch_assoc($result)) {
+		$totalAsignaciones = (int)$row["total_asignaciones"];
+		$clase = ueno_categoria_aplicacion_clave($row["categoria"], $row["cod_local"], $row["local_nombre"]);
+		$categoria = ueno_categoria_aplicacion_texto($row["categoria"], $row["cod_local"], $row["local_nombre"]);
+		$concepto = trim((string)$row["concepto"]);
+		if ($concepto == "") {
+			$concepto = "Sin concepto";
+		}
+		$local = ueno_local_aplicacion_texto($row["cod_local"], $row["local_nombre"]);
+		$monto = "Gs. " . ueno_numero($row["monto_aplicado"]);
+		$detalle = $concepto . " - " . $local . " - " . $monto;
+		$html .= "<span class='ueno-accounting-item ueno-accounting-item--" . ueno_escape_html($clase) . "'>"
+			. "<b>" . ueno_escape_html($categoria) . "</b>"
+			. "<small>" . ueno_escape_html($detalle) . "</small>"
+			. "</span>";
+	}
+	if ($totalAsignaciones > 2) {
+		$html .= "<span class='ueno-accounting-more'>+ " . ($totalAsignaciones - 2) . " asignaciones mas</span>";
+	}
+	$html .= "</button>";
+	return $html;
 }
 
 function ueno_estado_conciliacion_monto($monto_total, $monto_aplicado)

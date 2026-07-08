@@ -406,7 +406,7 @@ function uenoModernizarVista() {
 	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
 	uenoModernizarTabla("table_ueno_importaciones_modal", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
 	uenoModernizarTabla("table_ueno_detalle_importacion", ["Nro.", "F. conf.", "F. trans.", "Comprobante", "Detalle", "Deb.", "Cred.", "Disp.", "Duplicado", "Estado"], 9);
-	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Cliente / Venta", "Usuario", "Accion"], 9);
+	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Aplicacion contable", "Cliente / Venta", "Usuario", "Accion"], 9);
 	uenoAgregarSeparadoresFechaMovimientos();
 	uenoModernizarTabla("table_ueno_candidatos_manual", ["ID", "F. conf.", "Comprobante", "Descripcion", "Credito", "Disponible", "Estado", "Coinc.", "Accion"], 6);
 	uenoModernizarTabla("table_ueno_pagos_pendientes", ["Cliente", "CI", "Venta", "Cuota/Pago", "Venc.", "Saldo pend.", "Monto sug.", "Estado", "Coinc.", "Accion"], 7);

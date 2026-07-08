@@ -1770,6 +1770,345 @@ function flujoGastoTextoSeguro($valor) {
 	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
 }
 
+function flujoGastoTextoResumen($valor) {
+	$texto= (string)$valor;
+	if ($texto == '') {
+		return '';
+	}
+	return mb_check_encoding($texto, 'UTF-8') ? $texto : mb_convert_encoding($texto, 'UTF-8', 'ISO-8859-1');
+}
+
+function flujoGastoNormalizarCategoriaResumen($categoria) {
+	$categoria= trim((string)$categoria);
+	if ($categoria == '' || strtoupper($categoria) == 'NULL') {
+		return 'sinCategoria';
+	}
+	if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo' || $categoria == 'administracion') {
+		return $categoria;
+	}
+	return 'sinCategoria';
+}
+
+function flujoGastoTituloCategoriaResumen($categoria) {
+	switch (flujoGastoNormalizarCategoriaResumen($categoria)) {
+		case 'ingreso':
+			return 'Ingresos';
+		case 'directo':
+			return 'Costos variables';
+		case 'operativo':
+			return 'Gastos fijos';
+		case 'administracion':
+			return 'Administracion asignada';
+		default:
+			return 'Sin categorizar';
+	}
+}
+
+function flujoGastoCrearResumenComposicion() {
+	$resumen= array(
+		'totales' => array(
+			'ingresos' => 0,
+			'costos_variables' => 0,
+			'gastos_fijos' => 0,
+			'administracion_asignada' => 0,
+			'sin_categorizar' => 0,
+			'egresos' => 0,
+			'resultado' => 0,
+		),
+		'categorias' => array(),
+		'administracion_compartida' => null,
+	);
+	foreach (array('ingreso', 'directo', 'operativo', 'administracion', 'sinCategoria') as $categoria) {
+		$resumen['categorias'][$categoria]= array(
+			'codigo' => $categoria,
+			'titulo' => flujoGastoTituloCategoriaResumen($categoria),
+			'total' => 0,
+			'conceptos' => array(),
+		);
+	}
+	return $resumen;
+}
+
+function flujoGastoAsegurarConceptoResumen(&$resumen, $categoria, $codMotivo, $nombreConcepto) {
+	$categoria= flujoGastoNormalizarCategoriaResumen($categoria);
+	$codMotivo= trim((string)$codMotivo);
+	if ($codMotivo == '') {
+		$codMotivo= 'sin_codigo';
+	}
+	if (!isset($resumen['categorias'][$categoria])) {
+		$resumen['categorias'][$categoria]= array(
+			'codigo' => $categoria,
+			'titulo' => flujoGastoTituloCategoriaResumen($categoria),
+			'total' => 0,
+			'conceptos' => array(),
+		);
+	}
+	if (!isset($resumen['categorias'][$categoria]['conceptos'][$codMotivo])) {
+		$resumen['categorias'][$categoria]['conceptos'][$codMotivo]= array(
+			'codigo' => $codMotivo,
+			'nombre' => flujoGastoTextoResumen($nombreConcepto),
+			'total' => 0,
+			'movimientos' => array(),
+		);
+	}
+}
+
+function flujoGastoAgregarMovimientoResumen(&$resumen, $categoria, $codMotivo, $nombreConcepto, $movimiento) {
+	$categoria= flujoGastoNormalizarCategoriaResumen($categoria);
+	$codMotivo= trim((string)$codMotivo);
+	if ($codMotivo == '') {
+		$codMotivo= 'sin_codigo';
+	}
+	flujoGastoAsegurarConceptoResumen($resumen, $categoria, $codMotivo, $nombreConcepto);
+	$estado= isset($movimiento['estado']) ? flujoGastoTextoResumen($movimiento['estado']) : '';
+	$monto= intval(isset($movimiento['monto']) ? $movimiento['monto'] : 0);
+	$montoComputable= flujoGastoEstadoComputableResumen($estado) ? $monto : 0;
+	$resumen['categorias'][$categoria]['conceptos'][$codMotivo]['total'] += $montoComputable;
+	$resumen['categorias'][$categoria]['conceptos'][$codMotivo]['movimientos'][]= array(
+		'id' => flujoGastoTextoResumen(isset($movimiento['idgastos']) ? $movimiento['idgastos'] : ''),
+		'fecha' => flujoGastoTextoResumen(isset($movimiento['fecha']) ? $movimiento['fecha'] : ''),
+		'descripcion' => flujoGastoTextoResumen(isset($movimiento['descripcion']) ? $movimiento['descripcion'] : ''),
+		'estado' => $estado,
+		'tipo' => flujoGastoTextoResumen(isset($movimiento['tipo']) ? $movimiento['tipo'] : ''),
+		'monto' => $monto,
+		'monto_computable' => $montoComputable,
+		'usuario' => flujoGastoTextoResumen(isset($movimiento['usuarionombre']) ? $movimiento['usuarionombre'] : ''),
+		'local' => flujoGastoTextoResumen(isset($movimiento['nombrelocal']) ? $movimiento['nombrelocal'] : ''),
+		'interconsulta' => flujoGastoTextoResumen(isset($movimiento['interconsulta_nombre']) ? $movimiento['interconsulta_nombre'] : ''),
+	);
+}
+
+function flujoGastoFinalizarResumenComposicion($resumen, $ingresos, $costosVariables, $gastosFijos, $sinCategorizar, $administracionAsignada= 0, $administracionCompartida= null) {
+	$ingresos= intval($ingresos);
+	$costosVariables= intval($costosVariables);
+	$gastosFijos= intval($gastosFijos);
+	$sinCategorizar= intval($sinCategorizar);
+	$administracionAsignada= intval($administracionAsignada);
+	$egresos= $costosVariables + $gastosFijos + $administracionAsignada + $sinCategorizar;
+	$resumen['totales']= array(
+		'ingresos' => $ingresos,
+		'costos_variables' => $costosVariables,
+		'gastos_fijos' => $gastosFijos,
+		'administracion_asignada' => $administracionAsignada,
+		'sin_categorizar' => $sinCategorizar,
+		'egresos' => $egresos,
+		'resultado' => $ingresos - $egresos,
+	);
+	if (isset($resumen['categorias']['ingreso'])) {
+		$resumen['categorias']['ingreso']['total']= $ingresos;
+	}
+	if (isset($resumen['categorias']['directo'])) {
+		$resumen['categorias']['directo']['total']= $costosVariables;
+	}
+	if (isset($resumen['categorias']['operativo'])) {
+		$resumen['categorias']['operativo']['total']= $gastosFijos;
+	}
+	if (isset($resumen['categorias']['administracion'])) {
+		$resumen['categorias']['administracion']['total']= $administracionAsignada;
+	}
+	if (isset($resumen['categorias']['sinCategoria'])) {
+		$resumen['categorias']['sinCategoria']['total']= $sinCategorizar;
+	}
+	$resumen['administracion_compartida']= $administracionCompartida;
+	$categoriasOrdenadas= array();
+	foreach (array('ingreso', 'directo', 'operativo', 'administracion', 'sinCategoria') as $categoria) {
+		if (!isset($resumen['categorias'][$categoria])) {
+			continue;
+		}
+		$datosCategoria= $resumen['categorias'][$categoria];
+		$datosCategoria['conceptos']= array_values($datosCategoria['conceptos']);
+		$categoriasOrdenadas[]= $datosCategoria;
+	}
+	$resumen['categorias']= $categoriasOrdenadas;
+	return $resumen;
+}
+
+function flujoGastoEstadoComputableResumen($estado) {
+	$estado= strtolower(trim((string)$estado));
+	return ($estado == 'activo' || $estado == 'pendiente' || $estado == 'solicitado');
+}
+
+function flujoGastoLocalAdministracionCompartida() {
+	return array(
+		'codigo' => '1',
+		'nombre' => 'CLINIDENT (ADMINISTRACION) COMPARTIDOS',
+	);
+}
+
+function flujoGastoLocalesAdministracionDestino() {
+	return array(
+		'3' => 'CLINIDENT CERRO CORA (VILLARRICA)',
+		'5' => 'CLINIDENT VILLA INDUSTRIAL (SAN LORENZO)',
+		'6' => 'CLINIDENT PADRE MOLAS (OVIEDO)',
+		'7' => 'CLINIDENT SANTA LIBRADA (VILLARRICA)',
+		'9' => 'CLINIDENT VILLA MORRA',
+	);
+}
+
+function flujoGastoEsLocalAdministracionCompartida($codLocal) {
+	$origen= flujoGastoLocalAdministracionCompartida();
+	return trim((string)$codLocal) == $origen['codigo'];
+}
+
+function flujoGastoEsLocalDestinoAdministracion($codLocal) {
+	$codLocal= trim((string)$codLocal);
+	$locales= flujoGastoLocalesAdministracionDestino();
+	return isset($locales[$codLocal]);
+}
+
+function flujoGastoFiltrosPermitenAdministracionCompartida($arreglo, $tipo, $usuario, $fecha, $cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos) {
+	$tipo= strtolower(trim((string)$tipo));
+	if ($tipo != '' && $tipo != 'egreso') {
+		return false;
+	}
+	$filtrosEspecificos= array($arreglo, $usuario, $fecha, $cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos);
+	foreach ($filtrosEspecificos as $filtro) {
+		if (trim((string)$filtro) != '') {
+			return false;
+		}
+	}
+	return true;
+}
+
+function flujoGastoCrearInfoAdministracionCompartida($codLocalSeleccionado) {
+	$localesDestino= flujoGastoLocalesAdministracionDestino();
+	$distribuciones= array();
+	foreach ($localesDestino as $codigo => $nombre) {
+		$distribuciones[]= array(
+			'codigo' => $codigo,
+			'nombre' => $nombre,
+			'monto' => 0,
+			'es_local_seleccionado' => trim((string)$codLocalSeleccionado) == $codigo,
+		);
+	}
+	return array(
+		'aplica' => false,
+		'modo' => 'sin_asignacion',
+		'local_origen' => flujoGastoLocalAdministracionCompartida(),
+		'local_destino' => null,
+		'cantidad_locales' => count($localesDestino),
+		'total_origen' => 0,
+		'monto_asignado' => 0,
+		'distribuciones' => $distribuciones,
+	);
+}
+
+function flujoGastoDistribuirMontoAdministracion($monto) {
+	$monto= intval($monto);
+	$locales= flujoGastoLocalesAdministracionDestino();
+	$cantidad= count($locales);
+	$distribucion= array();
+	if ($cantidad <= 0) {
+		return $distribucion;
+	}
+	$base= intdiv($monto, $cantidad);
+	$residuo= $monto % $cantidad;
+	$indice= 0;
+	foreach ($locales as $codigo => $nombre) {
+		$distribucion[$codigo]= $base + ($indice < $residuo ? 1 : 0);
+		$indice++;
+	}
+	return $distribucion;
+}
+
+function flujoGastoPrepararMovimientoAdministracionAsignada($gasto, $montoAsignado, $codLocalDestino, $nombreLocalDestino) {
+	$movimiento= $gasto;
+	$montoOrigen= intval(isset($gasto['monto']) ? $gasto['monto'] : 0);
+	$descripcion= trim((string)(isset($gasto['descripcion']) ? $gasto['descripcion'] : ''));
+	if ($descripcion == '') {
+		$descripcion= trim((string)(isset($gasto['motivo']) ? $gasto['motivo'] : 'Gasto administrativo'));
+	}
+	$movimiento['monto']= intval($montoAsignado);
+	$movimiento['tipo']= 'Egreso';
+	$movimiento['categoria']= 'administracion';
+	$movimiento['nombrelocal']= $nombreLocalDestino;
+	$movimiento['descripcion']= $descripcion.' | Asignacion administrativa 1/'.count(flujoGastoLocalesAdministracionDestino()).' desde '.flujoGastoLocalAdministracionCompartida()['nombre'].' (origen '.number_format($montoOrigen, 0, ',', '.').' Gs.)';
+	$movimiento['es_asignacion_administrativa']= true;
+	$movimiento['monto_origen_administrativo']= $montoOrigen;
+	$movimiento['cod_local_origen_administrativo']= flujoGastoLocalAdministracionCompartida()['codigo'];
+	$movimiento['cod_local_destino_administrativo']= $codLocalDestino;
+	return $movimiento;
+}
+
+function flujoGastoCalcularAdministracionCompartida($fecha1, $fecha2, $estado, $codLocalSeleccionado, $tipo, $ocultar_inactivos, $fechaOrder) {
+	$info= flujoGastoCrearInfoAdministracionCompartida($codLocalSeleccionado);
+	if (!flujoGastoEsLocalDestinoAdministracion($codLocalSeleccionado) && !flujoGastoEsLocalAdministracionCompartida($codLocalSeleccionado)) {
+		return $info;
+	}
+
+	$localesDestino= flujoGastoLocalesAdministracionDestino();
+	$origen= flujoGastoLocalAdministracionCompartida();
+	$registros= buscarGasto('', $fecha1, $fecha2, $estado, $origen['codigo'], 'Egreso', '', '', $ocultar_inactivos, '', '', '', '', '', '', $fechaOrder);
+	$totalOrigen= 0;
+	$gastosElegibles= array();
+	$movimientosAsignados= array();
+
+	foreach ($registros as $gasto) {
+		$estadoGasto= isset($gasto['estado']) ? $gasto['estado'] : '';
+		if (!flujoGastoEstadoComputableResumen($estadoGasto)) {
+			continue;
+		}
+		$monto= intval(isset($gasto['monto']) ? $gasto['monto'] : 0);
+		if ($monto <= 0) {
+			continue;
+		}
+		$categoria= flujoGastoNormalizarCategoriaResumen(isset($gasto['categoria']) ? $gasto['categoria'] : '');
+		if ($categoria == 'ingreso') {
+			continue;
+		}
+		$totalOrigen += $monto;
+		$gastosElegibles[]= $gasto;
+	}
+
+	$totalesPorLocal= flujoGastoDistribuirMontoAdministracion($totalOrigen);
+	if (flujoGastoEsLocalDestinoAdministracion($codLocalSeleccionado) && isset($totalesPorLocal[$codLocalSeleccionado])) {
+		$cantidadLocales= count($localesDestino);
+		$montoObjetivoLocal= intval($totalesPorLocal[$codLocalSeleccionado]);
+		$montosBaseMovimiento= array();
+		$totalBaseLocal= 0;
+		foreach ($gastosElegibles as $indiceGasto => $gastoElegible) {
+			$montoGasto= intval(isset($gastoElegible['monto']) ? $gastoElegible['monto'] : 0);
+			$montoBase= $cantidadLocales > 0 ? intdiv($montoGasto, $cantidadLocales) : 0;
+			$montosBaseMovimiento[$indiceGasto]= $montoBase;
+			$totalBaseLocal += $montoBase;
+		}
+		$diferenciaRedondeo= $montoObjetivoLocal - $totalBaseLocal;
+		foreach ($gastosElegibles as $indiceGasto => $gastoElegible) {
+			$montoAsignadoMovimiento= isset($montosBaseMovimiento[$indiceGasto]) ? $montosBaseMovimiento[$indiceGasto] : 0;
+			if ($diferenciaRedondeo > 0) {
+				$montoAsignadoMovimiento += 1;
+				$diferenciaRedondeo--;
+			}
+			if ($montoAsignadoMovimiento > 0) {
+				$movimientosAsignados[]= flujoGastoPrepararMovimientoAdministracionAsignada($gastoElegible, $montoAsignadoMovimiento, $codLocalSeleccionado, $localesDestino[$codLocalSeleccionado]);
+			}
+		}
+	}
+
+	$distribuciones= array();
+	foreach ($localesDestino as $codigo => $nombre) {
+		$distribuciones[]= array(
+			'codigo' => $codigo,
+			'nombre' => $nombre,
+			'monto' => isset($totalesPorLocal[$codigo]) ? $totalesPorLocal[$codigo] : 0,
+			'es_local_seleccionado' => trim((string)$codLocalSeleccionado) == $codigo,
+		);
+	}
+	$info['aplica']= true;
+	$info['modo']= flujoGastoEsLocalAdministracionCompartida($codLocalSeleccionado) ? 'origen' : 'asignado';
+	$info['total_origen']= $totalOrigen;
+	$info['monto_asignado']= flujoGastoEsLocalDestinoAdministracion($codLocalSeleccionado) && isset($totalesPorLocal[$codLocalSeleccionado]) ? $totalesPorLocal[$codLocalSeleccionado] : 0;
+	$info['distribuciones']= $distribuciones;
+	if (flujoGastoEsLocalDestinoAdministracion($codLocalSeleccionado)) {
+		$info['local_destino']= array(
+			'codigo' => $codLocalSeleccionado,
+			'nombre' => $localesDestino[$codLocalSeleccionado],
+		);
+	}
+	$info['movimientos_asignados']= $movimientosAsignados;
+	return $info;
+}
+
 function flujoGastoEstaAnulado($gasto) {
 	$estado= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
 	return ($estado == 'rechazado' || $estado == 'inactivo');
@@ -2240,23 +2579,29 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '') {
 	if ($idGasto == '') {
 		return "";
 	}
+	$esAsignacionAdministrativa= !empty($gasto['es_asignacion_administrativa']);
 	$monto= intval(isset($gasto['monto']) ? $gasto['monto'] : 0);
 	$estado= obtenerEtiquetaCuotaProgramada($gasto);
 	$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
 	$indicadorConciliacionUeno= "";
-	if (!flujoGastoEstaAnulado($gasto)) {
+	if (!$esAsignacionAdministrativa && !flujoGastoEstaAnulado($gasto)) {
 		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idGasto, $monto);
 		$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
 	}
-	$botonConciliarUeno= construirBotonConciliarEgresoUeno($gasto, $tituloZona);
-	$acciones= "<button type='button' title='Editar movimiento' aria-label='Editar movimiento' onclick='editarGastoDesdeFila(event, this)' class='flujo-pago-unico-editar'>"
-		."<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar'>"
-		."</button>".$botonConciliarUeno;
-	if ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado') {
+	$botonConciliarUeno= $esAsignacionAdministrativa ? "" : construirBotonConciliarEgresoUeno($gasto, $tituloZona);
+	$acciones= $esAsignacionAdministrativa
+		? "<span class='flujo-pago-unico-solo-lectura'>Asignado</span>"
+		: "<button type='button' title='Editar movimiento' aria-label='Editar movimiento' onclick='editarGastoDesdeFila(event, this)' class='flujo-pago-unico-editar'>"
+			."<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar'>"
+			."</button>".$botonConciliarUeno;
+	if (!$esAsignacionAdministrativa && ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado')) {
 		$acciones .= "<button type='button' title='Aprobar pago' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok'>OK</button>"
 			."<button type='button' title='Rechazar pago' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--rechazar'>X</button>";
 	}
 	$claseFila= flujoGastoEstaAnulado($gasto) ? " flujo-pago-unico-table__row--anulado" : "";
+	if ($esAsignacionAdministrativa) {
+		$claseFila .= " flujo-pago-unico-table__row--administracion";
+	}
 	$usuario= isset($gasto['usuarionombre']) ? $gasto['usuarionombre'] : '';
 	$local= isset($gasto['nombrelocal']) ? $gasto['nombrelocal'] : '';
 	$tipo= isset($gasto['tipo']) ? $gasto['tipo'] : '';
@@ -2276,8 +2621,8 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '') {
 
 	return "<div class='flujo-pago-unico-card'>"
 		."<table class='flujo-pago-unico-table flujo-pago-unico-table--encabezado'>"
-		."<tbody><tr id='tbSelecRegistro' class='flujo-pago-unico-table__row".$claseFila."' onclick='obtenerdatosabmGasto(this)'>"
-		."<td id='td_id' class='flujo-pago-unico-ref' style='".$styleEstado."'>".flujoGastoTextoSeguro($idGasto)."</td>"
+		."<tbody><tr id='tbSelecRegistro' class='flujo-pago-unico-table__row".$claseFila."' onclick='".($esAsignacionAdministrativa ? "" : "obtenerdatosabmGasto(this)")."'>"
+		."<td id='td_id' class='flujo-pago-unico-ref' style='".$styleEstado."'>".flujoGastoTextoSeguro($esAsignacionAdministrativa ? "ADM ".$idGasto : $idGasto)."</td>"
 		."<td class='flujo-pago-unico-concepto'>".flujoGastoTextoSeguro($motivo)."</td>"
 		."<td class='flujo-pago-unico-interconsulta'>".construirLinkInterconsultaFlujoGasto($gasto)."</td>"
 		."<td class='flujo-pago-unico-monto'>".number_format($monto, 0, ',', '.').$indicadorConciliacionUeno."</td>"
@@ -2299,8 +2644,10 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	$totalZonaIngresos= 0;
 	$totalZonaCostosDirectos= 0;
 	$totalZonaGastosOperativos= 0;
+	$totalZonaAdministracionAsignada= 0;
 	$totalZonaSinCategorizar= 0;
 	$totalGasto=0;
+	$codLocalSeleccionadoFlujo= trim((string)$cod_local);
 
 	$totalEstado= array();
 	$totalEstado['Activo']= 0;
@@ -2314,6 +2661,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 
 	$registrosZona= array();
 	$registros= array();
+	$resumenComposicionFlujo= flujoGastoCrearResumenComposicion();
 
 	// Agrega el ingreso de los cierres de caja
 	$registroMontosCobrados= Arqueo($fecha1,$fecha2,'','',$cod_local,"","","","",$usuario,"","","")[7];
@@ -2395,11 +2743,11 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			}
 			
 			$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
-			if ($valor['estado'] == 'Activo') {
+			if (flujoGastoEstadoComputableResumen($valor['estado'])) {
 				$totalGasto += $monto;
 			}
 
-			if ($valor['estado'] == 'Activo') {
+			if (flujoGastoEstadoComputableResumen($valor['estado'])) {
 				switch ($categoria) {
 					case 'ingreso':
 						$totalZonaIngresos += $monto;
@@ -2417,6 +2765,41 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			}
 		}
 	}
+
+	$administracionCompartida= null;
+	if (flujoGastoFiltrosPermitenAdministracionCompartida($arreglo, $tipo, $usuario, $fecha, $cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos)) {
+		$administracionCompartida= flujoGastoCalcularAdministracionCompartida($fecha1, $fecha2, $estado, $codLocalSeleccionadoFlujo, $tipo, $ocultar_inactivos, $fechaOrder);
+		if (isset($administracionCompartida['modo']) && $administracionCompartida['modo'] == 'asignado' && intval($administracionCompartida['monto_asignado']) > 0) {
+			if (!isset($registrosZona['administracion'])) {
+				$registrosZona['administracion']= array();
+			}
+			foreach ($administracionCompartida['movimientos_asignados'] as $movimientoAdministrativo) {
+				$codMotivoAdministrativo= trim((string)(isset($movimientoAdministrativo['cod_motivoIngresoEgresoFK']) ? $movimientoAdministrativo['cod_motivoIngresoEgresoFK'] : ''));
+				if ($codMotivoAdministrativo == '') {
+					$codMotivoAdministrativo= 'sin_codigo';
+				}
+				if (!isset($registrosZona['administracion'][$codMotivoAdministrativo])) {
+					$registrosZona['administracion'][$codMotivoAdministrativo]= array();
+				}
+				$registrosZona['administracion'][$codMotivoAdministrativo][]= $movimientoAdministrativo;
+			}
+			$totalZonaAdministracionAsignada= intval($administracionCompartida['monto_asignado']);
+			$totalGasto += $totalZonaAdministracionAsignada;
+		}
+	}
+
+	$registrosZonaOrdenados= array();
+	foreach (array('ingreso', 'directo', 'operativo', 'administracion', 'sinCategoria') as $zonaOrdenada) {
+		if (isset($registrosZona[$zonaOrdenada])) {
+			$registrosZonaOrdenados[$zonaOrdenada]= $registrosZona[$zonaOrdenada];
+		}
+	}
+	foreach ($registrosZona as $zona => $cod_motivos) {
+		if (!isset($registrosZonaOrdenados[$zona])) {
+			$registrosZonaOrdenados[$zona]= $cod_motivos;
+		}
+	}
+	$registrosZona= $registrosZonaOrdenados;
 
  $seriesCuotasRenderizadas= array();
  foreach ($registrosZona as $zona => $cod_motivos) {
@@ -2446,6 +2829,13 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$styleColor= "#DE7258;";
 			$styleRegistroColor= "#EDB5A4;";
 			break;
+		case 'administracion':
+			$idZona= "AdministracionAsignada";
+			$titulo= "Administracion asignada";
+			$totalZona= $totalZonaAdministracionAsignada;
+			$styleColor= "#3B6EA8;";
+			$styleRegistroColor= "#BFD5EE;";
+			break;
 		default:
 			$idZona= "SinCategorizar";
 			$titulo= "Sin Categorizar";
@@ -2470,13 +2860,19 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		// Obtiene el nombre del motivo
 		if ($cod_motivo == -1) {
 			$titulo_motivo= "Movimiento de caja";
+		} else if ($cod_motivo == 'sin_codigo') {
+			$titulo_motivo= "Sin concepto";
 		} else {
 			$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
 		}
+		$idMotivoCollapse= preg_replace('/[^A-Za-z0-9_-]/', '_', 'zonaMotivos'.$idZona.'_'.$cod_motivo);
+		flujoGastoAsegurarConceptoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo);
 		foreach ($gastos as $valor) {
+			flujoGastoAgregarMovimientoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo, $valor);
+			$esAsignacionAdministrativa= !empty($valor['es_asignacion_administrativa']);
 			$montoOriginal= isset($valor['monto']) ? intval($valor['monto']) : 0;
 			$estadoOriginal= isset($valor['estado']) ? $valor['estado'] : '';
-			if ($estadoOriginal == 'Activo') {
+			if (flujoGastoEstadoComputableResumen($estadoOriginal)) {
 				$totalMonto += $montoOriginal;
 			}
 			if (isset($totalEstado[$estadoOriginal])) {
@@ -2492,7 +2888,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$controlCuotasProgramadas= "<td class='cuotas-programadas-control'></td>";
 			$codProyectoSerie= trim((string)(isset($valor['cod_proyecto_gastoFK']) ? $valor['cod_proyecto_gastoFK'] : ''));
 			$esCuotaProgramada= flujoGastoEsCuotaProgramada($valor);
-			if ($codProyectoSerie != "" && $codProyectoSerie != "0" && $esCuotaProgramada) {
+			if (!$esAsignacionAdministrativa && $codProyectoSerie != "" && $codProyectoSerie != "0" && $esCuotaProgramada) {
 				$claveSerieRenderizada= $cod_motivo."|".$codProyectoSerie;
 				if (isset($seriesCuotasRenderizadas[$claveSerieRenderizada])) {
 					continue;
@@ -2547,14 +2943,17 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			if ($idgastos == "") {
 				$funcion= "";
 			}
+			if ($esAsignacionAdministrativa) {
+				$funcion= "";
+			}
 			if ($tieneCuotasProgramadas) {
 				$funcion= "alternarCuotasProgramadas(event, this)";
 			}
-			$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idgastos, $monto);
-			$indicadorConciliacionUeno= construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
-			$botonConciliarUeno= construirBotonConciliarEgresoUeno($valor, $titulo);
+			$resumenConciliacionUeno= $esAsignacionAdministrativa ? array() : flujoGastoResumenConciliacionUeno($idgastos, $monto);
+			$indicadorConciliacionUeno= $esAsignacionAdministrativa ? "" : construirIndicadorConciliacionUenoGasto($resumenConciliacionUeno);
+			$botonConciliarUeno= $esAsignacionAdministrativa ? "" : construirBotonConciliarEgresoUeno($valor, $titulo);
 			$botonEditarGasto= "<td style='width:4%;text-align:center;vertical-align:middle;'></td>";
-			if ($idgastos != "" || $botonConciliarUeno != "") {
+			if (!$esAsignacionAdministrativa && ($idgastos != "" || $botonConciliarUeno != "")) {
 				$botonEditarGasto= "<td class='flujo-ueno-acciones-cell' style='width:7%;text-align:center;vertical-align:middle;'>
 					<div class='flujo-ueno-acciones'>
 					<button type='button' title='Editar movimiento' aria-label='Editar movimiento' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#ffffff;border-radius:4px;width:28px;height:24px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:2px;box-shadow:0 0 0 1px rgba(0,0,0,0.18);'>
@@ -2609,7 +3008,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$resumenCuotasFila= $tieneCuotasProgramadas
 				? "<td class='cuotas-programadas-resumen'>".$indicadorCuotasProgramadas.$metaCuotasProgramadas."</td>"
 				: "<td class='cuotas-programadas-resumen cuotas-programadas-resumen--vacio'></td>";
-			if ($estado == 'Activo') {
+			if (flujoGastoEstadoComputableResumen($estado)) {
 				$paginaImprimir .= "
 				<table class='$styleName' border='1' cellspacing='1' cellpadding='5'>
 				<tr id='tbSelecRegistro' onclick='obtenerdatosabmGasto(this)'>
@@ -2654,7 +3053,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				<td  style='width: 15%;'><div style='width: fit-content; text-decoration: underline; color: blue;' onclick='event.stopPropagation();obtenerdatosabmGasto(this.parentElement.parentElement);ventanaAnterior.push(\"divAbmGasto1\");obtenerDatosInterConsulta(this)'>".$interconsulta_element."</div></td>
 				<td  id='td_datos_16' style='display: none;'>".$interconsulta_nombre."</td>
 				<td  id='td_datos_1' style='display:none'>". number_format($monto,'0',',','.')."</td>
-				<td style='width:10%'>". number_format(($estado == 'pendiente' ? 0 : $monto),'0',',','.').$indicadorConciliacionUeno."</td>
+				<td style='width:10%'>". number_format((flujoGastoEstadoComputableResumen($estado) ? $monto : 0),'0',',','.').$indicadorConciliacionUeno."</td>
 				".$resumenCuotasFila."
 				".$botonEditarGasto."
 				<td  id='td_datos_23' style='width:5%'>".$modalidadElemento."</td>
@@ -2723,7 +3122,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		}
 		$botonAgregarMovimientoContextual= "";
 		$botonConciliarConceptoUeno= "";
-		if ($cod_motivo != -1) {
+		if ($cod_motivo != -1 && $zona != 'administracion') {
 			$tipoMovimientoContexto= ($zona == 'ingreso') ? "Ingreso" : "Egreso";
 			$botonAgregarMovimientoContextual= "<button type='button' class='flujo-concepto-add' title='Agregar movimiento a este concepto' onclick='abrirMovimientoFinancieroDesdeBotonConcepto(event, this)'"
 				." data-tipo-movimiento='".flujoGastoTextoSeguro($tipoMovimientoContexto)."'"
@@ -2744,12 +3143,12 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		}
 
  		$pagina .= '<li class="list-group-item" style="padding: 0; padding-left: 0.5rem;"><div class="card" style="width: 100%; margin: 0;gap: 0;min-height: 0;">'.
-			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'" type="button" onclick="mostrarItems(\'zonaMotivos'.$cod_motivo.'\')">'.
+			'<div class="card-header" style="padding-bottom: 0px; padding-top: 0px;background-color: '.$styleRegistroColor2.'" type="button" onclick="mostrarItems(\''.$idMotivoCollapse.'\')">'.
 				'<h6><b>'.$titulo_motivo.'</b>: <span>'.number_format($totalMonto, 0, ',', '.').'</span> Gs.</h6>'.
 				$botonAgregarMovimientoContextual.
 				$botonConciliarConceptoUeno.
 			'</div>'.
-			'<div class="collapse" id="zonaMotivos'.$cod_motivo.'" style=""><ul class="list-group list-group-flush">'.
+			'<div class="collapse" id="'.$idMotivoCollapse.'" style=""><ul class="list-group list-group-flush">'.
 				$paginaMotivo.
 			'</ul></div>'.
 		'</div></li>';
@@ -2761,6 +3160,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
  }
  
 /*Retornamos los datos obtenidos mediante el JSON */      
+$resumenComposicionFlujo= flujoGastoFinalizarResumenComposicion($resumenComposicionFlujo, $totalZonaIngresos, $totalZonaCostosDirectos, $totalZonaGastosOperativos, $totalZonaSinCategorizar, $totalZonaAdministracionAsignada, $administracionCompartida);
 $informacion =array(
 	"1" => "exito",
 	"2" => $pagina,
@@ -2770,9 +3170,11 @@ $informacion =array(
 	"6" => $totalZonaCostosDirectos,
 	"7" => $totalZonaGastosOperativos,
 	"8" => $totalZonaSinCategorizar,
+	"14" => $totalZonaAdministracionAsignada,
 	"9" => $registros,
 	"10" => $totalEstado,
 	"12" => $paginaImprimir,
+	"13" => $resumenComposicionFlujo,
 );
 return $informacion;
 }

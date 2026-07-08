@@ -48,6 +48,7 @@ function limpiarcamposbuscadoregresoingreso(){
 	document.getElementById("table_abm_gasto_imprimir").innerHTML="";
 	actualizarEncabezadoFlujoGasto();
 	actualizarResumenNetoFlujoGasto(0, 0, 0);
+	actualizarComposicionFlujoGasto(null);
 }
 function minimizarventanaingresoegreso(){
 	conciliarEgresoUenoMostrarModal(false);
@@ -2563,7 +2564,7 @@ function prepararSelectorMesFlujoGasto() {
 		inputMes = document.createElement("input");
 		inputMes.type = "month";
 		inputMes.id = "inptPeriodoMesGasto";
-		inputMes.className = "flujo-caja-periodo__mes";
+		inputMes.className = "flujo-caja-periodo__mes flujo-caja-periodo__mes--superior";
 		titulo.insertAdjacentElement("afterend", inputMes);
 	}
 	inputMes.title = "Seleccionar mes";
@@ -2622,7 +2623,7 @@ function actualizarEncabezadoFlujoGasto() {
 		inputMes.value = obtenerMesPeriodoFlujoGasto(fecha1, fecha2);
 	}
 	if (detalle) {
-		detalle.textContent = obtenerLocalFlujoGasto() + " - Ingresos -> Costos variables -> Gastos fijos";
+		detalle.textContent = obtenerLocalFlujoGasto() + " - Ingresos -> Costos variables -> Gastos fijos -> Administracion";
 	}
 }
 
@@ -2650,14 +2651,15 @@ function formatearMontoResumenFlujoGasto(valor) {
 	return monto.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-function actualizarResumenNetoFlujoGasto(ingresosValor, costosVariablesValor, gastosFijosValor, otrosEgresosValor) {
+function actualizarResumenNetoFlujoGasto(ingresosValor, costosVariablesValor, gastosFijosValor, otrosEgresosValor, administracionValor) {
 	var resumen = document.getElementById("resumenNetoFlujoGasto");
 	if (!resumen) { return; }
 	var ingresos = numeroFlujoGastoDesdeRespuesta(ingresosValor);
 	var costosVariables = numeroFlujoGastoDesdeRespuesta(costosVariablesValor);
 	var gastosFijos = numeroFlujoGastoDesdeRespuesta(gastosFijosValor);
 	var otrosEgresos = numeroFlujoGastoDesdeRespuesta(otrosEgresosValor);
-	var totalEgresos = costosVariables + gastosFijos + otrosEgresos;
+	var administracion = numeroFlujoGastoDesdeRespuesta(administracionValor);
+	var totalEgresos = costosVariables + gastosFijos + administracion + otrosEgresos;
 	var resultado = ingresos - totalEgresos;
 	var estado = resultado > 0 ? "positivo" : (resultado < 0 ? "negativo" : "neutro");
 	var flecha = resultado > 0 ? "&uarr;" : (resultado < 0 ? "&darr;" : "=");
@@ -2677,9 +2679,367 @@ function actualizarResumenNetoFlujoGasto(ingresosValor, costosVariablesValor, ga
 function actualizarResumenNetoFlujoDesdeDatos(datos) {
 	if (!datos) {
 		actualizarResumenNetoFlujoGasto(0, 0, 0);
+		actualizarComposicionFlujoGasto(null);
 		return;
 	}
-	actualizarResumenNetoFlujoGasto(datos[5], datos[6], datos[7], datos[8]);
+	var administracionAsignada = datos[14] || (datos[13] && datos[13].totales ? datos[13].totales.administracion_asignada : 0);
+	actualizarResumenNetoFlujoGasto(datos[5], datos[6], datos[7], datos[8], administracionAsignada);
+	actualizarComposicionFlujoGasto(datos[13] || null, datos);
+}
+
+function escaparHtmlFlujoGasto(valor) {
+	return ((valor === null || typeof valor === "undefined") ? "" : valor + "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function porcentajeFlujoGasto(valor, base) {
+	valor = numeroFlujoGastoDesdeRespuesta(valor);
+	base = numeroFlujoGastoDesdeRespuesta(base);
+	if (base <= 0) { return 0; }
+	return (valor / base) * 100;
+}
+
+function formatearPorcentajeFlujoGasto(valor) {
+	var numero = Math.round((Number(valor) || 0) * 10) / 10;
+	var texto = (Math.abs(numero % 1) < 0.05) ? numero.toFixed(0) : numero.toFixed(1);
+	return texto.replace(".", ",") + "%";
+}
+
+function formatearPorcentajeSobreBaseFlujoGasto(valor, base) {
+	valor = numeroFlujoGastoDesdeRespuesta(valor);
+	base = numeroFlujoGastoDesdeRespuesta(base);
+	if (base <= 0 && valor > 0) {
+		return "sin ingresos";
+	}
+	return formatearPorcentajeFlujoGasto(porcentajeFlujoGasto(valor, base));
+}
+
+function formatearMontoFlujoConSigno(valor) {
+	var numero = numeroFlujoGastoDesdeRespuesta(valor);
+	var signo = numero < 0 ? "-" : "";
+	return signo + formatearMontoResumenFlujoGasto(numero) + " Gs.";
+}
+
+function formatearPorCada100FlujoGasto(valor) {
+	var numero = Math.round((Number(valor) || 0) * 10) / 10;
+	var texto = (Math.abs(numero % 1) < 0.05) ? numero.toFixed(0) : numero.toFixed(1);
+	return texto.replace(".", ",") + " Gs.";
+}
+
+function obtenerTotalesComposicionFlujoGasto(resumen, datosFallback) {
+	var totales = resumen && resumen.totales ? resumen.totales : {};
+	return {
+		ingresos: numeroFlujoGastoDesdeRespuesta(totales.ingresos || (datosFallback ? datosFallback[5] : 0)),
+		costosVariables: numeroFlujoGastoDesdeRespuesta(totales.costos_variables || (datosFallback ? datosFallback[6] : 0)),
+		gastosFijos: numeroFlujoGastoDesdeRespuesta(totales.gastos_fijos || (datosFallback ? datosFallback[7] : 0)),
+		administracion: numeroFlujoGastoDesdeRespuesta(totales.administracion_asignada || (datosFallback ? datosFallback[14] : 0)),
+		sinCategorizar: numeroFlujoGastoDesdeRespuesta(totales.sin_categorizar || (datosFallback ? datosFallback[8] : 0))
+	};
+}
+
+function claseCategoriaComposicionFlujoGasto(codigo) {
+	codigo = (codigo || "") + "";
+	if (codigo == "ingreso") { return "ingresos"; }
+	if (codigo == "directo") { return "variables"; }
+	if (codigo == "operativo") { return "fijos"; }
+	if (codigo == "administracion") { return "administracion"; }
+	return "sin-categoria";
+}
+
+function tituloCategoriaComposicionFlujoGasto(codigo) {
+	if (codigo == "ingreso") { return "Ingresos"; }
+	if (codigo == "directo") { return "Costos variables"; }
+	if (codigo == "operativo") { return "Gastos fijos"; }
+	if (codigo == "administracion") { return "Administracion asignada"; }
+	return "Sin categorizar";
+}
+
+function categoriasComposicionFlujoGasto(resumen) {
+	var categorias = resumen && resumen.categorias ? resumen.categorias : [];
+	var mapa = {};
+	Array.prototype.forEach.call(categorias, function (categoria) {
+		mapa[categoria.codigo || "sinCategoria"] = categoria;
+	});
+	return ["ingreso", "directo", "operativo", "administracion", "sinCategoria"].map(function (codigo) {
+		return mapa[codigo] || {
+			codigo: codigo,
+			titulo: tituloCategoriaComposicionFlujoGasto(codigo),
+			total: 0,
+			conceptos: []
+		};
+	});
+}
+
+function construirSegmentoComposicionFlujoGasto(clase, etiqueta, porcentaje, monto, escala) {
+	var alto = escala > 0 ? Math.max(0, (porcentaje / escala) * 100) : 0;
+	if (porcentaje <= 0 || alto <= 0) {
+		return "";
+	}
+	var claseChico = alto < 9 ? " flujo-composicion-segmento--chico" : "";
+	return "<div class='flujo-composicion-segmento flujo-composicion-segmento--" + clase + claseChico + "' style='height:" + alto + "%' title='" + escaparHtmlFlujoGasto(etiqueta + ": " + formatearPorcentajeFlujoGasto(porcentaje) + " - " + formatearMontoFlujoConSigno(monto)) + "'>"
+		+ "<b>" + formatearPorcentajeFlujoGasto(porcentaje) + "</b>"
+		+ "<span>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(monto)) + "</span>"
+		+ "</div>";
+}
+
+function construirGraficoComposicionFlujoGasto(totales) {
+	var resultado = totales.ingresos - totales.costosVariables - totales.gastosFijos - totales.administracion - totales.sinCategorizar;
+	var totalEgresos = totales.costosVariables + totales.gastosFijos + totales.administracion + totales.sinCategorizar;
+	var sinIngresosConEgresos = totales.ingresos <= 0 && totalEgresos > 0;
+	var baseGrafico = sinIngresosConEgresos ? totalEgresos : totales.ingresos;
+	var porcentajeResultado = sinIngresosConEgresos ? 0 : Math.max(0, porcentajeFlujoGasto(resultado, baseGrafico));
+	var porcentajeVariables = porcentajeFlujoGasto(totales.costosVariables, baseGrafico);
+	var porcentajeFijos = porcentajeFlujoGasto(totales.gastosFijos, baseGrafico);
+	var porcentajeAdministracion = porcentajeFlujoGasto(totales.administracion, baseGrafico);
+	var porcentajeSinCategoria = porcentajeFlujoGasto(totales.sinCategorizar, baseGrafico);
+	var totalGrafico = porcentajeResultado + porcentajeVariables + porcentajeFijos + porcentajeAdministracion + porcentajeSinCategoria;
+	var escala = Math.max(100, totalGrafico || 100);
+	var baseTop = sinIngresosConEgresos ? 100 : (escala > 0 ? ((escala - 100) / escala) * 100 : 0);
+	var claseDeficit = resultado < 0 ? " flujo-composicion-grafico--deficit" : "";
+	var alertaDeficit = resultado < 0
+		? "<div class='flujo-composicion-deficit'>Deficit: " + formatearMontoFlujoConSigno(resultado) + " (" + (sinIngresosConEgresos ? "sin ingresos para cubrir egresos" : formatearPorcentajeFlujoGasto(Math.abs(porcentajeFlujoGasto(resultado, totales.ingresos)))) + ")</div>"
+		: "";
+	return "<div class='flujo-composicion-grafico" + claseDeficit + "'>"
+		+ alertaDeficit
+		+ "<div class='flujo-composicion-eje'><span>" + formatearPorcentajeFlujoGasto(escala) + "</span><span>100%</span><span>50%</span><span>0%</span></div>"
+		+ "<div class='flujo-composicion-barra' style='--flujo-base-top:" + baseTop + "%'>"
+		+ "<div class='flujo-composicion-base-line'><span>Ingresos 100%</span></div>"
+		+ construirSegmentoComposicionFlujoGasto("resultado", "Resultado / utilidad", porcentajeResultado, resultado, escala)
+		+ construirSegmentoComposicionFlujoGasto("variables", "Costos variables", porcentajeVariables, totales.costosVariables, escala)
+		+ construirSegmentoComposicionFlujoGasto("fijos", "Gastos fijos", porcentajeFijos, totales.gastosFijos, escala)
+		+ construirSegmentoComposicionFlujoGasto("administracion", "Administracion asignada", porcentajeAdministracion, totales.administracion, escala)
+		+ construirSegmentoComposicionFlujoGasto("sin-categoria", "Sin categorizar", porcentajeSinCategoria, totales.sinCategorizar, escala)
+		+ "</div>"
+		+ "<div class='flujo-composicion-leyenda'>"
+		+ "<span><i class='flujo-dot flujo-dot--resultado'></i>Resultado</span>"
+		+ "<span><i class='flujo-dot flujo-dot--variables'></i>Costos variables</span>"
+		+ "<span><i class='flujo-dot flujo-dot--fijos'></i>Gastos fijos</span>"
+		+ "<span><i class='flujo-dot flujo-dot--administracion'></i>Administracion</span>"
+		+ "<span><i class='flujo-dot flujo-dot--sin-categoria'></i>Sin categorizar</span>"
+		+ "</div>"
+		+ "</div>";
+}
+
+function construirLecturaPorCada100FlujoGasto(totales) {
+	var resultado = totales.ingresos - totales.costosVariables - totales.gastosFijos - totales.administracion - totales.sinCategorizar;
+	if (totales.ingresos <= 0) {
+		return "<div class='flujo-composicion-lectura'>"
+			+ "<strong>Sin ingresos en el periodo:</strong>"
+			+ "<span class='flujo-composicion-lectura--deficit'><b>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(Math.abs(resultado))) + "</b> quedan como deficit a cubrir</span>"
+			+ "<span><b>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.costosVariables)) + "</b> en costos variables</span>"
+			+ "<span><b>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.gastosFijos)) + "</b> en gastos fijos</span>"
+			+ "<span><b>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.administracion)) + "</b> en administracion asignada</span>"
+			+ "<span><b>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.sinCategorizar)) + "</b> sin categorizar</span>"
+			+ "</div>";
+	}
+	var porcentajeResultado = porcentajeFlujoGasto(resultado, totales.ingresos);
+	var textoResultado = resultado >= 0
+		? "<span><b>" + formatearPorCada100FlujoGasto(porcentajeResultado) + "</b> quedan como resultado</span>"
+		: "<span class='flujo-composicion-lectura--deficit'><b>" + formatearPorCada100FlujoGasto(Math.abs(porcentajeResultado)) + "</b> faltan para cubrir egresos</span>";
+	return "<div class='flujo-composicion-lectura'>"
+		+ "<strong>Por cada 100 Gs. que ingresan:</strong>"
+		+ textoResultado
+		+ "<span><b>" + formatearPorCada100FlujoGasto(porcentajeFlujoGasto(totales.costosVariables, totales.ingresos)) + "</b> van a costos variables</span>"
+		+ "<span><b>" + formatearPorCada100FlujoGasto(porcentajeFlujoGasto(totales.gastosFijos, totales.ingresos)) + "</b> van a gastos fijos</span>"
+		+ "<span><b>" + formatearPorCada100FlujoGasto(porcentajeFlujoGasto(totales.administracion, totales.ingresos)) + "</b> van a administracion asignada</span>"
+		+ "<span><b>" + formatearPorCada100FlujoGasto(porcentajeFlujoGasto(totales.sinCategorizar, totales.ingresos)) + "</b> estan sin categorizar</span>"
+		+ "</div>";
+}
+
+function construirPanelAdministracionCompartidaFlujoGasto(info) {
+	if (!info || !info.aplica) {
+		return "";
+	}
+	var modo = (info.modo || "") + "";
+	var totalOrigen = numeroFlujoGastoDesdeRespuesta(info.total_origen || 0);
+	var montoAsignado = numeroFlujoGastoDesdeRespuesta(info.monto_asignado || 0);
+	var cantidadLocales = numeroFlujoGastoDesdeRespuesta(info.cantidad_locales || 0);
+	var localDestino = info.local_destino || {};
+	var distribuciones = info.distribuciones || [];
+	var titulo = modo == "origen" ? "Distribucion administrativa" : "Administracion asignada";
+	var resumen = modo == "origen"
+		? "Total cargado en Administracion compartidos"
+		: "Parte del gasto administrativo incluida en este local";
+	var filas = distribuciones.map(function (local) {
+		var clase = local.es_local_seleccionado ? " flujo-composicion-admin__local--actual" : "";
+		return "<li class='" + clase + "'>"
+			+ "<span>" + escaparHtmlFlujoGasto(local.nombre || ("Local " + (local.codigo || ""))) + "</span>"
+			+ "<b>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(local.monto || 0)) + "</b>"
+			+ "</li>";
+	}).join("");
+	var datoPrincipal = modo == "origen"
+		? formatearMontoFlujoConSigno(totalOrigen)
+		: formatearMontoFlujoConSigno(montoAsignado);
+	var destino = modo == "asignado" && localDestino.nombre
+		? "<em>" + escaparHtmlFlujoGasto(localDestino.nombre) + "</em>"
+		: "";
+	return "<div class='flujo-composicion-admin'>"
+		+ "<div class='flujo-composicion-admin__head'>"
+		+ "<span>" + escaparHtmlFlujoGasto(titulo) + "</span>"
+		+ "<strong>" + escaparHtmlFlujoGasto(datoPrincipal) + "</strong>"
+		+ "</div>"
+		+ "<p>" + escaparHtmlFlujoGasto(resumen) + "</p>"
+		+ destino
+		+ "<small>Regla: partes iguales entre " + escaparHtmlFlujoGasto(cantidadLocales || distribuciones.length || 0) + " sucursales.</small>"
+		+ (filas ? "<ul>" + filas + "</ul>" : "")
+		+ "</div>";
+}
+
+function construirMovimientoComposicionFlujoGasto(movimiento) {
+	var descripcion = movimiento.descripcion || movimiento.interconsulta || "Movimiento sin descripcion";
+	var estado = movimiento.estado || "";
+	var referencia = movimiento.id ? "#" + movimiento.id : "Caja";
+	return "<tr>"
+		+ "<td>" + escaparHtmlFlujoGasto(movimiento.fecha || "-") + "</td>"
+		+ "<td><b>" + escaparHtmlFlujoGasto(referencia) + "</b><span>" + escaparHtmlFlujoGasto(descripcion) + "</span></td>"
+		+ "<td>" + escaparHtmlFlujoGasto(estado || "-") + "</td>"
+		+ "<td>" + escaparHtmlFlujoGasto(movimiento.usuario || "-") + "</td>"
+		+ "<td class='flujo-composicion-monto'>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(movimiento.monto || 0)) + "</td>"
+		+ "</tr>";
+}
+
+function construirConceptoComposicionFlujoGasto(concepto, totalCategoria, ingresos) {
+	var total = numeroFlujoGastoDesdeRespuesta(concepto.total || 0);
+	var porcentajeCategoria = porcentajeFlujoGasto(total, totalCategoria);
+	var movimientos = concepto.movimientos || [];
+	var filasMovimientos = movimientos.length > 0
+		? movimientos.map(construirMovimientoComposicionFlujoGasto).join("")
+		: "<tr><td colspan='5' class='flujo-composicion-sin-movimientos'>Sin movimientos en el periodo seleccionado.</td></tr>";
+	return "<details class='flujo-composicion-concepto'>"
+		+ "<summary>"
+		+ "<span class='flujo-composicion-concepto__nombre'>" + escaparHtmlFlujoGasto(concepto.nombre || "Concepto sin nombre") + "</span>"
+		+ "<span class='flujo-composicion-concepto__monto'>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(total)) + "</span>"
+		+ "<span class='flujo-composicion-percent'><b>" + formatearPorcentajeFlujoGasto(porcentajeCategoria) + "</b><small>del bloque</small></span>"
+		+ "<span class='flujo-composicion-percent flujo-composicion-percent--secundario'><b>" + formatearPorcentajeSobreBaseFlujoGasto(total, ingresos) + "</b><small>de ingresos</small></span>"
+		+ "<i class='flujo-composicion-mini-bar'><em style='width:" + Math.min(100, Math.max(0, porcentajeCategoria)) + "%'></em></i>"
+		+ "</summary>"
+		+ "<div class='flujo-composicion-movimientos'>"
+		+ "<table><thead><tr><th>Fecha</th><th>Movimiento</th><th>Estado</th><th>Usuario</th><th>Monto</th></tr></thead><tbody>"
+		+ filasMovimientos
+		+ "</tbody></table>"
+		+ "</div>"
+		+ "</details>";
+}
+
+function construirCategoriaComposicionFlujoGasto(categoria, ingresos) {
+	var totalCategoria = numeroFlujoGastoDesdeRespuesta(categoria.total || 0);
+	var codigo = categoria.codigo || "sinCategoria";
+	var clase = claseCategoriaComposicionFlujoGasto(codigo);
+	var conceptos = categoria.conceptos || [];
+	var alerta = (codigo == "sinCategoria")
+		? "<span class='flujo-composicion-alerta'>Debe clasificarse</span>"
+		: "";
+	var contenido = conceptos.length > 0
+		? conceptos.map(function (concepto) {
+			return construirConceptoComposicionFlujoGasto(concepto, totalCategoria, ingresos);
+		}).join("")
+		: "<div class='flujo-composicion-sin-conceptos'>Sin conceptos cargados para este bloque.</div>";
+	return "<details class='flujo-composicion-categoria flujo-composicion-categoria--" + clase + "'>"
+		+ "<summary>"
+		+ "<span><b>" + escaparHtmlFlujoGasto(categoria.titulo || tituloCategoriaComposicionFlujoGasto(codigo)) + "</b>" + alerta + "</span>"
+		+ "<strong>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totalCategoria)) + "</strong>"
+		+ "<em>" + formatearPorcentajeSobreBaseFlujoGasto(totalCategoria, ingresos) + " sobre ingresos</em>"
+		+ "</summary>"
+		+ "<div class='flujo-composicion-conceptos'>" + contenido + "</div>"
+		+ "</details>";
+}
+
+function construirComposicionFlujoGastoHTML(resumen, datosFallback) {
+	var totales = obtenerTotalesComposicionFlujoGasto(resumen, datosFallback);
+	var resultado = totales.ingresos - totales.costosVariables - totales.gastosFijos - totales.administracion - totales.sinCategorizar;
+	var categorias = categoriasComposicionFlujoGasto(resumen);
+	var administracionCompartida = resumen && resumen.administracion_compartida ? resumen.administracion_compartida : null;
+	var claseResultado = resultado < 0 ? " flujo-composicion-estado--deficit" : " flujo-composicion-estado--saludable";
+	return "<div class='flujo-composicion__head'>"
+		+ "<div><span>Composicion sobre ingresos</span><strong>Ingresos (Base 100%)</strong></div>"
+		+ "<button type='button' title='El grafico usa ingresos como 100% y resta todos los egresos.'>i</button>"
+		+ "</div>"
+		+ "<div class='flujo-composicion-base'>"
+		+ "<span>Ingresos del periodo</span>"
+		+ "<strong>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.ingresos)) + "</strong>"
+		+ "</div>"
+		+ construirGraficoComposicionFlujoGasto(totales)
+		+ construirLecturaPorCada100FlujoGasto(totales)
+		+ construirPanelAdministracionCompartidaFlujoGasto(administracionCompartida)
+		+ "<div class='flujo-composicion-estado" + claseResultado + "'>"
+		+ "<span>Margen del periodo</span>"
+		+ "<strong>" + (totales.ingresos <= 0 && resultado < 0 ? "sin ingresos" : formatearPorcentajeFlujoGasto(porcentajeFlujoGasto(resultado, totales.ingresos))) + "</strong>"
+		+ "<em>" + escaparHtmlFlujoGasto(resultado < 0 ? "Deficit" : "Saludable") + "</em>"
+		+ "</div>"
+		+ "<div class='flujo-composicion-desglose'>"
+		+ categorias.map(function (categoria) {
+			return construirCategoriaComposicionFlujoGasto(categoria, totales.ingresos);
+		}).join("")
+		+ "</div>";
+}
+
+function construirComposicionFlujoGastoImpresion(resumen, datosFallback) {
+	if (!resumen && !datosFallback) { return ""; }
+	var totales = obtenerTotalesComposicionFlujoGasto(resumen, datosFallback);
+	var resultado = totales.ingresos - totales.costosVariables - totales.gastosFijos - totales.administracion - totales.sinCategorizar;
+	var categorias = categoriasComposicionFlujoGasto(resumen);
+	var ingresosBase = totales.ingresos;
+	var segmentos = [
+		{ titulo: "Resultado", valor: Math.max(0, resultado), color: "#168a68" },
+		{ titulo: "Costos variables", valor: totales.costosVariables, color: "#e58a12" },
+		{ titulo: "Gastos fijos", valor: totales.gastosFijos, color: "#e33d3d" },
+		{ titulo: "Administracion", valor: totales.administracion, color: "#3b6ea8" },
+		{ titulo: "Sin categorizar", valor: totales.sinCategorizar, color: "#7b8794" }
+	];
+	var baseImpresion = ingresosBase > 0 ? ingresosBase : Math.max(totales.costosVariables + totales.gastosFijos + totales.administracion + totales.sinCategorizar, 1);
+	var barra = segmentos.map(function (segmento) {
+		var pct = porcentajeFlujoGasto(segmento.valor, baseImpresion);
+		if (pct <= 0) { return ""; }
+		return "<span style='display:inline-block;height:18px;width:" + Math.min(160, pct) + "%;background:" + segmento.color + ";vertical-align:top;color:#fff;font-size:10px;text-align:center;line-height:18px;'>" + escaparHtmlFlujoGasto(formatearPorcentajeFlujoGasto(pct)) + "</span>";
+	}).join("");
+	var filasConceptos = categorias.map(function (categoria) {
+		var totalCategoria = numeroFlujoGastoDesdeRespuesta(categoria.total || 0);
+		var filas = "<tr><td colspan='4' style='background:#eef3f7;font-weight:bold;padding:6px;border:1px solid #d8e1ea;'>" + escaparHtmlFlujoGasto(categoria.titulo || "") + " - " + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totalCategoria)) + " (" + formatearPorcentajeSobreBaseFlujoGasto(totalCategoria, ingresosBase) + " sobre ingresos)</td></tr>";
+		(categoria.conceptos || []).forEach(function (concepto) {
+			var total = numeroFlujoGastoDesdeRespuesta(concepto.total || 0);
+			filas += "<tr>"
+				+ "<td style='padding:5px;border:1px solid #e1e7ee;'>" + escaparHtmlFlujoGasto(concepto.nombre || "Concepto") + "</td>"
+				+ "<td style='padding:5px;border:1px solid #e1e7ee;text-align:right;'>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(total)) + "</td>"
+				+ "<td style='padding:5px;border:1px solid #e1e7ee;text-align:right;'>" + formatearPorcentajeFlujoGasto(porcentajeFlujoGasto(total, totalCategoria)) + " del bloque</td>"
+				+ "<td style='padding:5px;border:1px solid #e1e7ee;text-align:right;'>" + formatearPorcentajeSobreBaseFlujoGasto(total, ingresosBase) + " de ingresos</td>"
+				+ "</tr>";
+		});
+		return filas;
+	}).join("");
+	return "<div style='width:100%;box-sizing:border-box;margin:0 0 12px;padding:10px;border:1px solid #cfdbe6;border-radius:6px;background:#fff;font-family:Arial,sans-serif;'>"
+		+ "<h2 style='margin:0 0 8px;font-size:16px;color:#12263a;'>Composicion economica del periodo</h2>"
+		+ "<table style='width:100%;border-collapse:collapse;margin-bottom:8px;'><tr>"
+		+ "<td style='padding:5px;border:1px solid #d8e1ea;'><b>Ingresos base</b><br>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.ingresos)) + "</td>"
+		+ "<td style='padding:5px;border:1px solid #d8e1ea;'><b>Costos variables</b><br>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.costosVariables)) + "</td>"
+		+ "<td style='padding:5px;border:1px solid #d8e1ea;'><b>Gastos fijos</b><br>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.gastosFijos)) + "</td>"
+		+ "<td style='padding:5px;border:1px solid #d8e1ea;'><b>Administracion</b><br>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.administracion)) + "</td>"
+		+ "<td style='padding:5px;border:1px solid #d8e1ea;'><b>Sin categorizar</b><br>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(totales.sinCategorizar)) + "</td>"
+		+ "<td style='padding:5px;border:1px solid #d8e1ea;'><b>" + escaparHtmlFlujoGasto(resultado < 0 ? "Deficit" : "Resultado") + "</b><br>" + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(resultado)) + "</td>"
+		+ "</tr></table>"
+		+ "<div style='width:100%;border:1px solid #ccd7e2;background:#f7fafc;margin-bottom:8px;white-space:nowrap;overflow:visible;'>" + barra + "</div>"
+		+ (resultado < 0 ? "<p style='margin:4px 0 8px;color:#b3261e;font-weight:bold;'>Los egresos superan los ingresos en " + escaparHtmlFlujoGasto(formatearMontoFlujoConSigno(Math.abs(resultado))) + ".</p>" : "")
+		+ "<table style='width:100%;border-collapse:collapse;font-size:11px;'>" + filasConceptos + "</table>"
+		+ "</div>";
+}
+
+function actualizarComposicionFlujoGasto(resumen, datosFallback) {
+	var panel = document.getElementById("panelComposicionFlujoGasto");
+	if (!panel) { return; }
+	if (!resumen && !datosFallback) {
+		panel.innerHTML = "<div class='flujo-composicion__vacio'><strong>Composicion sobre ingresos</strong><span>Busca un periodo para ver ingresos, costos, resultado y conceptos.</span></div>";
+		return;
+	}
+	panel.innerHTML = construirComposicionFlujoGastoHTML(resumen, datosFallback);
+}
+
+function mostrarCargaComposicionFlujoGasto() {
+	var panel = document.getElementById("panelComposicionFlujoGasto");
+	if (!panel) { return; }
+	panel.innerHTML = "<div class='flujo-composicion__vacio'><strong>Cargando composicion...</strong><span>Calculando ingresos, costos, resultado y conceptos.</span></div>";
 }
 
 function aplicarLecturaCascadaGasto() {
@@ -2698,6 +3058,8 @@ function aplicarLecturaCascadaGasto() {
 			card.classList.add("flujo-caja-zona--variables");
 		} else if (texto.indexOf("gastos fijos") !== -1 || texto.indexOf("costos fijos") !== -1) {
 			card.classList.add("flujo-caja-zona--fijos");
+		} else if (texto.indexOf("administracion") !== -1 || texto.indexOf("administración") !== -1) {
+			card.classList.add("flujo-caja-zona--administracion");
 		} else {
 			card.classList.add("flujo-caja-zona--otros");
 		}
@@ -2759,6 +3121,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
     });
 	
 	document.getElementById("table_abm_gasto").innerHTML = paginacargando;
+	mostrarCargaComposicionFlujoGasto();
 	actualizarEncabezadoFlujoGasto();
 	obtener_datos_user();
 	var datos = {
@@ -2812,6 +3175,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			document.getElementById("table_abm_gasto_imprimir").innerHTML = '';
 			document.getElementById("table_abm_gasto").innerHTML = '';
 			actualizarResumenNetoFlujoGasto(0, 0, 0);
+			actualizarComposicionFlujoGasto(null);
 		},
 		success: function (responseText) {
 			var Respuesta = responseText;
@@ -2823,18 +3187,20 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta = datos["1"];
 				if (Respuesta == "UI") {
 					actualizarResumenNetoFlujoGasto(0, 0, 0);
+					actualizarComposicionFlujoGasto(null);
 					ir_a_login()
 					ver_vetana_informativa("USUARIO INCORRECTO VUELVA A INICIAR SESION...")
 					return false;
 				}
 				if (Respuesta == "NI") {
 					actualizarResumenNetoFlujoGasto(0, 0, 0);
+					actualizarComposicionFlujoGasto(null);
 					ver_vetana_informativa("NO TIENES PERMISO PARA CONTINUA")
 					return false;
                   }
 				if (Respuesta == "exito") {
 					var datos_buscados = datos[2];
-					document.getElementById("table_abm_gasto_imprimir").innerHTML = datos[12];
+					document.getElementById("table_abm_gasto_imprimir").innerHTML = construirComposicionFlujoGastoImpresion(datos[13] || null, datos) + (datos[12] || "");
 					document.getElementById("table_abm_gasto").innerHTML = datos[2];
 					aplicarLecturaCascadaGasto();
 					actualizarEncabezadoFlujoGasto();
@@ -2845,6 +3211,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				}
 			} catch (error) {
 				actualizarResumenNetoFlujoGasto(0, 0, 0);
+				actualizarComposicionFlujoGasto(null);
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)

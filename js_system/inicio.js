@@ -4573,6 +4573,11 @@ $("div[id=divPresentacion]").fadeOut(500);
 					&& usuarioPuedeVerComparativaVentasCobranzas()) {
 					inicializarComparativaVentasCobranzas();
 				}
+				if (typeof inicializarDashboardFlujoFinanciero === "function"
+					&& typeof usuarioPuedeVerDashboardFlujoFinanciero === "function"
+					&& usuarioPuedeVerDashboardFlujoFinanciero()) {
+					inicializarDashboardFlujoFinanciero();
+				}
 					buscarabmCasaOption()
 					buscarabmCasaOptionCuentas()
 					buscarCobradorSelec()
@@ -33668,6 +33673,1193 @@ function renderDetalleComparativaVentasCobranzas(datos){
 	if(body){
 		body.innerHTML = htmlContenidoComparativaVentasCobranzas(datos, true);
 	}
+}
+
+var dashboardFlujoFinancieroCache = null;
+var dashboardFlujoFinancieroCargando = false;
+var dashboardFlujoDetalleCache = {};
+var dashboardFlujoDetalleActual = null;
+var dashboardFlujoDetalleCodLocalActual = null;
+var dashboardFlujoDetalleCargando = false;
+var dashboardFlujoDetalleCategoriaFijada = "";
+var dashboardFlujoDetalleCategoriaHover = "";
+
+function usuarioPuedeVerDashboardFlujoFinanciero(){
+	if(typeof userid !== "undefined" && String(userid) == "2"){
+		return true;
+	}
+	if(typeof permisoAccesoUser != "function"){
+		return false;
+	}
+	return permisoAccesoUser("VERLISTADOEGRESOINGRESO", "accion");
+}
+
+function inicializarDashboardFlujoFinanciero(){
+	var card = document.getElementById("dashboardFlujoFinanciero");
+	if(!card){
+		return;
+	}
+	if(!usuarioPuedeVerDashboardFlujoFinanciero()){
+		card.style.display = "none";
+		return;
+	}
+	card.style.display = "";
+	renderCargandoDashboardFlujoFinanciero();
+	cargarDashboardFlujoFinanciero(false);
+}
+
+function renderCargandoDashboardFlujoFinanciero(){
+	var body = document.getElementById("dashboardFlujoFinancieroBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-flujo-loading'>"
+		+ "<span></span><span></span><span></span>"
+		+ "</div>";
+}
+
+function renderErrorDashboardFlujoFinanciero(mensaje){
+	var body = document.getElementById("dashboardFlujoFinancieroBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-flujo-state dashboard-flujo-state--error'>"
+		+ "<strong>No se pudo cargar el flujo financiero</strong>"
+		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(mensaje || "Intenta nuevamente en unos segundos.") + "</span>"
+		+ "<button type='button' onclick='cargarDashboardFlujoFinanciero(true)'>Reintentar</button>"
+		+ "</div>";
+}
+
+function cargarDashboardFlujoFinanciero(forzar){
+	var card = document.getElementById("dashboardFlujoFinanciero");
+	if(!card || !usuarioPuedeVerDashboardFlujoFinanciero()){
+		if(card){ card.style.display = "none"; }
+		return;
+	}
+	if(dashboardFlujoFinancieroCargando){
+		return;
+	}
+	if(dashboardFlujoFinancieroCache && !forzar){
+		renderDashboardFlujoFinanciero(dashboardFlujoFinancieroCache);
+		return;
+	}
+
+	dashboardFlujoFinancieroCargando = true;
+	renderCargandoDashboardFlujoFinanciero();
+	obtener_datos_user();
+
+	$.ajax({
+		data: {
+			useru: userid,
+			passu: passuser,
+			navegador: navegador,
+			funt: "resumen"
+		},
+		url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			dashboardFlujoFinancieroCargando = false;
+			renderErrorDashboardFlujoFinanciero("No se pudo consultar el servidor.");
+			if(typeof manejadordeerroresjquery == "function"){
+				manejadordeerroresjquery(jqXHR.status, textstatus, "dashboard_flujo_financiero");
+			}
+		},
+		success: function (responseText) {
+			dashboardFlujoFinancieroCargando = false;
+			try {
+				var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
+				var respuesta = datos["1"];
+				if(datos["1"] == "NI"){
+					if(card){ card.style.display = "none"; }
+					return;
+				}
+				if(datos["1"] == "UI"){
+					if(typeof ir_a_login == "function"){
+						ir_a_login();
+					}
+					return;
+				}
+				if(typeof respuestaJqueryAjax == "function"){
+					respuesta = respuestaJqueryAjax(respuesta);
+				}
+				if(respuesta === true || datos["1"] == "exito"){
+					dashboardFlujoFinancieroCache = datos;
+					renderDashboardFlujoFinanciero(datos);
+					return;
+				}
+				renderErrorDashboardFlujoFinanciero(datos["2"] || "Respuesta no reconocida.");
+			} catch (error) {
+				renderErrorDashboardFlujoFinanciero("La respuesta recibida no tiene el formato esperado.");
+				if(typeof GuardarArchivosLog == "function"){
+					GuardarArchivosLog("Error dashboard flujo financiero: " + error + " \r\n Consola: " + responseText);
+				}
+			}
+		}
+	});
+}
+
+function escaparHtmlDashboardFlujoFinanciero(valor){
+	if(typeof escaparHtmlComparativaVentasCobranzas == "function"){
+		return escaparHtmlComparativaVentasCobranzas(valor);
+	}
+	return (valor || "").toString().replace(/[&<>"']/g, function(caracter){
+		return {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': "&quot;",
+			"'": "&#039;"
+		}[caracter];
+	});
+}
+
+function numeroDashboardFlujoFinanciero(valor){
+	if(typeof numeroComparativaVentasCobranzas == "function"){
+		return numeroComparativaVentasCobranzas(valor);
+	}
+	valor = parseInt(valor || 0, 10);
+	if(isNaN(valor)){
+		valor = 0;
+	}
+	var negativo = valor < 0;
+	var texto = Math.abs(valor).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+	return (negativo ? "-" : "") + texto;
+}
+
+function monedaDashboardFlujoFinanciero(valor){
+	return "Gs. " + numeroDashboardFlujoFinanciero(valor);
+}
+
+function monedaCompactaDashboardFlujoFinanciero(valor){
+	valor = parseInt(valor || 0, 10);
+	if(isNaN(valor)){
+		valor = 0;
+	}
+	var negativo = valor < 0;
+	var abs = Math.abs(valor);
+	var texto = "";
+	if(abs >= 1000000){
+		var millones = abs / 1000000;
+		texto = (millones >= 100 ? millones.toFixed(0) : millones.toFixed(1)).replace(".", ",") + " M";
+	}else if(abs >= 1000){
+		texto = Math.round(abs / 1000).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " mil";
+	}else{
+		texto = abs.toString();
+	}
+	return (negativo ? "-" : "") + "Gs. " + texto;
+}
+
+function numeroValorDashboardFlujoFinanciero(valor){
+	valor = parseFloat(valor || 0);
+	return isNaN(valor) ? 0 : valor;
+}
+
+function porcentajeDashboardFlujoFinanciero(valor, base){
+	valor = numeroValorDashboardFlujoFinanciero(valor);
+	base = numeroValorDashboardFlujoFinanciero(base);
+	if(base <= 0){
+		return 0;
+	}
+	return (valor * 100) / base;
+}
+
+function formatoPorcentajeDashboardFlujoFinanciero(valor){
+	valor = numeroValorDashboardFlujoFinanciero(valor);
+	if(!isFinite(valor)){
+		valor = 0;
+	}
+	var redondeado = Math.round(valor * 10) / 10;
+	var entero = Math.abs(redondeado - Math.round(redondeado)) < 0.05;
+	var texto = entero ? String(Math.round(redondeado)) : redondeado.toFixed(1);
+	return texto.replace(".", ",") + "%";
+}
+
+function nombreLocalDashboardFlujoFinanciero(nombre){
+	if(typeof nombreSucursalComparativaVentasCobranzas == "function"){
+		return nombreSucursalComparativaVentasCobranzas(nombre);
+	}
+	nombre = (nombre || "").toString();
+	nombre = nombre.replace(/^CLINIDENT\s+/i, "");
+	nombre = nombre.replace(/\s*\([^)]*\)\s*/g, " ");
+	nombre = nombre.replace(/\s+/g, " ").trim();
+	return nombre || "Sucursal";
+}
+
+function estiloPorcentajeDashboardFlujoFinanciero(valor){
+	valor = numeroValorDashboardFlujoFinanciero(valor);
+	if(valor < 0){
+		valor = 0;
+	}
+	if(valor > 100){
+		valor = 100;
+	}
+	return (Math.round(valor * 1000) / 1000).toString().replace(",", ".");
+}
+
+function htmlSegmentoDashboardFlujoFinanciero(clase, etiqueta, valor, escala, ingresos){
+	valor = Math.max(0, numeroValorDashboardFlujoFinanciero(valor));
+	escala = Math.max(1, numeroValorDashboardFlujoFinanciero(escala));
+	if(valor <= 0){
+		return "";
+	}
+	var alto = (valor * 100) / escala;
+	var porcentajeIngreso = porcentajeDashboardFlujoFinanciero(valor, ingresos);
+	var claseMini = alto < 8 ? " dashboard-flujo-segmento--mini" : "";
+	var titulo = etiqueta + ": " + monedaDashboardFlujoFinanciero(valor) + " | " + formatoPorcentajeDashboardFlujoFinanciero(porcentajeIngreso) + " sobre ingresos";
+	return "<span class='dashboard-flujo-segmento dashboard-flujo-segmento--" + clase + claseMini + "'"
+		+ " style='height:" + estiloPorcentajeDashboardFlujoFinanciero(alto) + "%'"
+		+ " title='" + escaparHtmlDashboardFlujoFinanciero(titulo) + "'>"
+		+ "<b>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeIngreso)) + "</b>"
+		+ "<small>" + escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(valor)) + "</small>"
+		+ "</span>";
+}
+
+function htmlItemDashboardFlujoFinanciero(etiqueta, valor, ingresos){
+	var porcentaje = porcentajeDashboardFlujoFinanciero(valor, ingresos);
+	return "<li><span>" + escaparHtmlDashboardFlujoFinanciero(etiqueta) + " "
+		+ escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentaje))
+		+ "</span><b title='" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(valor)) + "'>"
+		+ escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(valor))
+		+ "</b></li>";
+}
+
+function htmlLocalDashboardFlujoFinanciero(local, escala, indice){
+	local = local || {};
+	var codLocal = parseInt(local.sucursalId || local.cod_local || 0, 10);
+	var nombre = nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || local.nombre || "");
+	var ingresos = numeroValorDashboardFlujoFinanciero(local.ingresos);
+	var costosVariables = numeroValorDashboardFlujoFinanciero(local.costosVariables);
+	var gastosFijos = numeroValorDashboardFlujoFinanciero(local.gastosFijos);
+	var administracion = numeroValorDashboardFlujoFinanciero(local.administracion);
+	var sinCategorizar = numeroValorDashboardFlujoFinanciero(local.sinCategorizar);
+	var resultado = numeroValorDashboardFlujoFinanciero(local.resultado);
+	var deficit = resultado < 0;
+	var ingresoLine = porcentajeDashboardFlujoFinanciero(ingresos, escala);
+	var resultadoPositivo = Math.max(0, resultado);
+	var clase = "dashboard-flujo-local" + (deficit ? " dashboard-flujo-local--deficit" : "");
+	var titulo = "Ver analisis de flujo: " + nombre;
+	var html = "<article class='" + clase + "' role='button' tabindex='0'"
+		+ " onclick='abrirDashboardFlujoFinancieroLocal(" + codLocal + ")'"
+		+ " onkeydown='teclaDashboardFlujoFinancieroLocal(event," + codLocal + ")'"
+		+ " title='" + escaparHtmlDashboardFlujoFinanciero(titulo) + "'>";
+	html += "<div class='dashboard-flujo-local__head'>"
+		+ "<strong>" + (indice + 1) + ". " + escaparHtmlDashboardFlujoFinanciero(nombre) + "</strong>"
+		+ "<span title='" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(ingresos)) + "'>"
+		+ escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(ingresos))
+		+ "</span>"
+		+ "</div>";
+	html += "<div class='dashboard-flujo-chart' style='--flujo-ingreso-line:" + estiloPorcentajeDashboardFlujoFinanciero(ingresoLine) + "%'>"
+		+ "<span class='dashboard-flujo-income-line'></span>"
+		+ "<div class='dashboard-flujo-stack'>"
+		+ htmlSegmentoDashboardFlujoFinanciero("sin-categoria", "Sin categorizar", sinCategorizar, escala, ingresos)
+		+ htmlSegmentoDashboardFlujoFinanciero("administracion", "Administracion", administracion, escala, ingresos)
+		+ htmlSegmentoDashboardFlujoFinanciero("fijos", "Gastos fijos", gastosFijos, escala, ingresos)
+		+ htmlSegmentoDashboardFlujoFinanciero("variables", "Costos variables", costosVariables, escala, ingresos)
+		+ htmlSegmentoDashboardFlujoFinanciero("resultado", "Resultado", resultadoPositivo, escala, ingresos)
+		+ "</div>"
+		+ "</div>";
+	html += "<div class='dashboard-flujo-resultado" + (deficit ? " dashboard-flujo-resultado--deficit" : "") + "'>"
+		+ "<span>" + (deficit ? "Deficit" : "Resultado") + " " + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(resultado, ingresos))) + "</span>"
+		+ "<strong title='" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(resultado)) + "'>"
+		+ escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(resultado))
+		+ "</strong>"
+		+ "</div>";
+	html += "<ul class='dashboard-flujo-lista'>"
+		+ htmlItemDashboardFlujoFinanciero("Var.", costosVariables, ingresos)
+		+ htmlItemDashboardFlujoFinanciero("Fijos", gastosFijos, ingresos)
+		+ htmlItemDashboardFlujoFinanciero("Adm.", administracion, ingresos)
+		+ (sinCategorizar > 0 ? htmlItemDashboardFlujoFinanciero("Sin cat.", sinCategorizar, ingresos) : "")
+		+ "</ul>";
+	html += "</article>";
+	return html;
+}
+
+function renderDashboardFlujoFinanciero(datos){
+	var card = document.getElementById("dashboardFlujoFinanciero");
+	var body = document.getElementById("dashboardFlujoFinancieroBody");
+	var subtitulo = document.getElementById("dashboardFlujoFinancieroSubtitulo");
+	if(!card || !body){
+		return;
+	}
+	card.style.display = "";
+
+	var periodo = datos && datos.periodo ? datos.periodo : {};
+	if(subtitulo){
+		subtitulo.textContent = "Ultimo mes cerrado: " + (periodo.etiqueta || "-") + " | escala comun entre sucursales";
+	}
+
+	var locales = datos && datos.locales ? datos.locales : [];
+	if(!locales.length){
+		body.innerHTML = "<div class='dashboard-flujo-state'>"
+			+ "<strong>Sin sucursales autorizadas</strong>"
+			+ "<span>El card se muestra solo con permiso financiero y segun el local permitido.</span>"
+			+ "</div>";
+		return;
+	}
+
+	var escala = Math.max(1, numeroValorDashboardFlujoFinanciero(datos.escala));
+	var html = "<div class='dashboard-flujo-legend'>"
+		+ "<span><i class='dashboard-flujo-dot dashboard-flujo-dot--resultado'></i>Resultado</span>"
+		+ "<span><i class='dashboard-flujo-dot dashboard-flujo-dot--variables'></i>Costos variables</span>"
+		+ "<span><i class='dashboard-flujo-dot dashboard-flujo-dot--fijos'></i>Gastos fijos</span>"
+		+ "<span><i class='dashboard-flujo-dot dashboard-flujo-dot--administracion'></i>Administracion</span>"
+		+ "<span><i class='dashboard-flujo-dot dashboard-flujo-dot--sin-categoria'></i>Sin categorizar</span>"
+		+ "</div>";
+
+	html += "<div class='dashboard-flujo-grid'>";
+	for(var i = 0; i < locales.length; i++){
+		html += htmlLocalDashboardFlujoFinanciero(locales[i], escala, i);
+	}
+	html += "</div>";
+
+	if(datos && datos.sinMovimientos){
+		html += "<div class='dashboard-flujo-state' style='margin-top:10px;min-height:48px;'>"
+			+ "<strong>Sin movimientos en el periodo</strong>"
+			+ "<span>Las barras quedan listas para completarse al registrar ingresos o egresos.</span>"
+			+ "</div>";
+	}
+
+	body.innerHTML = html;
+}
+
+function renderCargandoDashboardFlujoFinancieroDetalle(){
+	var body = document.getElementById("dashboardFlujoDetalleBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-flujo-loading'>"
+		+ "<span></span><span></span><span></span>"
+		+ "</div>";
+}
+
+function renderErrorDashboardFlujoFinancieroDetalle(mensaje){
+	var body = document.getElementById("dashboardFlujoDetalleBody");
+	if(!body){
+		return;
+	}
+	body.innerHTML = "<div class='dashboard-flujo-state dashboard-flujo-state--error'>"
+		+ "<strong>No se pudo cargar el detalle</strong>"
+		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(mensaje || "Intenta nuevamente en unos segundos.") + "</span>"
+		+ "<button type='button' onclick='cargarDetalleDashboardFlujoFinanciero(" + (dashboardFlujoDetalleCodLocalActual || 0) + ", true)'>Reintentar</button>"
+		+ "</div>";
+}
+
+function ocultarBarraSuperiorDashboardFlujoDetalle(){
+	var contenedor = document.getElementById("principalMenub");
+	var topbar = contenedor ? contenedor.querySelector(".dashboard-topbar") : document.querySelector(".dashboard-topbar");
+	var resultadosBusqueda = document.getElementById("dashboardAccessSearchResults");
+	var menuPerfil = document.getElementById("menuPerfilUsuarioTopbar");
+	if(contenedor){
+		contenedor.classList.add("dashboard-flujo-detalle-expandido");
+	}
+	if(topbar){
+		if(!topbar.hasAttribute("data-flujo-aria-original")){
+			topbar.setAttribute("data-flujo-aria-original", topbar.getAttribute("aria-hidden") || "");
+		}
+		topbar.setAttribute("aria-hidden", "true");
+	}
+	if(resultadosBusqueda){
+		resultadosBusqueda.classList.remove("is-visible");
+		resultadosBusqueda.innerHTML = "";
+	}
+	if(menuPerfil){
+		menuPerfil.style.display = "none";
+	}
+}
+
+function restaurarBarraSuperiorDashboardFlujoDetalle(){
+	var contenedor = document.getElementById("principalMenub");
+	var topbar = contenedor ? contenedor.querySelector(".dashboard-topbar") : document.querySelector(".dashboard-topbar");
+	if(contenedor){
+		contenedor.classList.remove("dashboard-flujo-detalle-expandido");
+	}
+	if(topbar && topbar.hasAttribute("data-flujo-aria-original")){
+		var valorOriginal = topbar.getAttribute("data-flujo-aria-original");
+		if(valorOriginal === ""){
+			topbar.removeAttribute("aria-hidden");
+		}else{
+			topbar.setAttribute("aria-hidden", valorOriginal);
+		}
+		topbar.removeAttribute("data-flujo-aria-original");
+	}
+}
+
+function cerrarDashboardFlujoFinancieroDetalle(){
+	var modal = document.getElementById("modalDashboardFlujoFinancieroDetalle");
+	if(modal){
+		modal.style.display = "none";
+	}
+	restaurarBarraSuperiorDashboardFlujoDetalle();
+}
+
+function abrirDashboardFlujoFinancieroLocal(codLocal){
+	if(!dashboardFlujoFinancieroCache){
+		return;
+	}
+	if(!usuarioPuedeVerDashboardFlujoFinanciero()){
+		return;
+	}
+	var local = buscarLocalDashboardFlujoFinanciero(codLocal);
+	if(!local){
+		return;
+	}
+	var modal = document.getElementById("modalDashboardFlujoFinancieroDetalle");
+	if(!modal){
+		abrirResumenCompletoDashboardFlujoFinancieroLocal(codLocal);
+		return;
+	}
+	dashboardFlujoDetalleCodLocalActual = codLocal;
+	ocultarBarraSuperiorDashboardFlujoDetalle();
+	modal.style.display = "flex";
+	var titulo = document.getElementById("dashboardFlujoDetalleTitulo");
+	var subtitulo = document.getElementById("dashboardFlujoDetalleSubtitulo");
+	if(titulo){
+		titulo.textContent = "Analisis de flujo - " + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre);
+	}
+	if(subtitulo){
+		subtitulo.textContent = "Cargando detalle del ultimo mes cerrado";
+	}
+	if(dashboardFlujoDetalleCache[codLocal]){
+		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[codLocal]);
+		return;
+	}
+	renderCargandoDashboardFlujoFinancieroDetalle();
+	cargarDetalleDashboardFlujoFinanciero(codLocal, false);
+}
+
+function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
+	if(!codLocal || !usuarioPuedeVerDashboardFlujoFinanciero()){
+		return;
+	}
+	if(dashboardFlujoDetalleCargando){
+		return;
+	}
+	if(dashboardFlujoDetalleCache[codLocal] && !forzar){
+		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[codLocal]);
+		return;
+	}
+	dashboardFlujoDetalleCargando = true;
+	renderCargandoDashboardFlujoFinancieroDetalle();
+	obtener_datos_user();
+
+	$.ajax({
+		data: {
+			useru: userid,
+			passu: passuser,
+			navegador: navegador,
+			funt: "detalle",
+			cod_local: codLocal
+		},
+		url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
+		type: "post",
+		error: function (jqXHR, textstatus) {
+			dashboardFlujoDetalleCargando = false;
+			renderErrorDashboardFlujoFinancieroDetalle("No se pudo consultar el servidor.");
+			if(typeof manejadordeerroresjquery == "function"){
+				manejadordeerroresjquery(jqXHR.status, textstatus, "dashboard_flujo_financiero_detalle");
+			}
+		},
+		success: function (responseText) {
+			dashboardFlujoDetalleCargando = false;
+			try {
+				var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
+				var respuesta = datos["1"];
+				if(datos["1"] == "UI"){
+					if(typeof ir_a_login == "function"){
+						ir_a_login();
+					}
+					return;
+				}
+				if(datos["1"] == "NI"){
+					renderErrorDashboardFlujoFinancieroDetalle(datos["2"] || "No tienes permiso para ver este detalle.");
+					return;
+				}
+				if(typeof respuestaJqueryAjax == "function"){
+					respuesta = respuestaJqueryAjax(respuesta);
+				}
+				if(respuesta === true || datos["1"] == "exito"){
+					dashboardFlujoDetalleCache[codLocal] = datos;
+					renderDashboardFlujoFinancieroDetalle(datos);
+					return;
+				}
+				renderErrorDashboardFlujoFinancieroDetalle(datos["2"] || "Respuesta no reconocida.");
+			} catch (error) {
+				renderErrorDashboardFlujoFinancieroDetalle("La respuesta recibida no tiene el formato esperado.");
+				if(typeof GuardarArchivosLog == "function"){
+					GuardarArchivosLog("Error detalle dashboard flujo financiero: " + error + " \r\n Consola: " + responseText);
+				}
+			}
+		}
+	});
+}
+
+function cantidadMovimientosDashboardFlujoDetalle(conceptos){
+	var total = 0;
+	conceptos = conceptos || [];
+	for(var i = 0; i < conceptos.length; i++){
+		total += conceptos[i] && conceptos[i].movimientos ? conceptos[i].movimientos.length : 0;
+	}
+	return total;
+}
+
+function htmlSegmentoDashboardFlujoDetalle(clase, etiqueta, valor, escala, ingresos, color, categoriaCodigo){
+	valor = Math.max(0, numeroValorDashboardFlujoFinanciero(valor));
+	escala = Math.max(1, numeroValorDashboardFlujoFinanciero(escala));
+	if(valor <= 0){
+		return "";
+	}
+	categoriaCodigo = categoriaCodigo || clase;
+	var alto = (valor * 100) / escala;
+	var porcentajeIngreso = porcentajeDashboardFlujoFinanciero(valor, ingresos);
+	var mini = alto < 5 ? " dashboard-flujo-detalle-segmento--mini" : "";
+	var titulo = etiqueta + ": " + monedaDashboardFlujoFinanciero(valor) + " | " + formatoPorcentajeDashboardFlujoFinanciero(porcentajeIngreso) + " sobre ingresos";
+	return "<span class='dashboard-flujo-detalle-segmento " + clase + mini + "'"
+		+ " data-flujo-categoria='" + escaparHtmlDashboardFlujoFinanciero(categoriaCodigo) + "'"
+		+ " style='height:" + estiloPorcentajeDashboardFlujoFinanciero(alto) + "%;background:" + escaparHtmlDashboardFlujoFinanciero(color) + "'"
+		+ " title='" + escaparHtmlDashboardFlujoFinanciero(titulo) + "'>"
+		+ "<b>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeIngreso)) + "</b>"
+		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(valor)) + "</span>"
+		+ "</span>";
+}
+
+function obtenerCategoriaDashboardFlujoDetalle(datos, codigo){
+	var categorias = datos && datos.categorias ? datos.categorias : [];
+	for(var i = 0; i < categorias.length; i++){
+		if(categorias[i] && categorias[i].codigo == codigo){
+			return categorias[i];
+		}
+	}
+	return { codigo: codigo, total: 0, conceptos: [] };
+}
+
+function htmlGraficoGrandeDashboardFlujoDetalle(datos){
+	var totales = datos && datos.totales ? datos.totales : {};
+	var ingresos = numeroValorDashboardFlujoFinanciero(totales.ingresos);
+	var escala = Math.max(1, numeroValorDashboardFlujoFinanciero(datos.escala));
+	var resultado = numeroValorDashboardFlujoFinanciero(totales.resultado);
+	var ingresoLine = porcentajeDashboardFlujoFinanciero(ingresos, escala);
+	var catVariables = obtenerCategoriaDashboardFlujoDetalle(datos, "directo");
+	var catFijos = obtenerCategoriaDashboardFlujoDetalle(datos, "operativo");
+	var catAdmin = obtenerCategoriaDashboardFlujoDetalle(datos, "administracion");
+	var catSin = obtenerCategoriaDashboardFlujoDetalle(datos, "sinCategoria");
+	var catResultado = { color: "#168a68" };
+	var html = "<div class='dashboard-flujo-detalle-chart' style='--flujo-detalle-ingreso-line:" + estiloPorcentajeDashboardFlujoFinanciero(ingresoLine) + "%'>"
+		+ "<span class='dashboard-flujo-detalle-income-line' data-flujo-categoria='ingreso' title='Abrir ingresos'></span>"
+		+ "<div class='dashboard-flujo-detalle-stack'>"
+		+ htmlSegmentoDashboardFlujoDetalle("sin-categoria", "Sin categorizar", catSin.total, escala, ingresos, catSin.color || "#7b8794", "sinCategoria")
+		+ htmlSegmentoDashboardFlujoDetalle("administracion", "Administracion", catAdmin.total, escala, ingresos, catAdmin.color || "#3b6ea8", "administracion")
+		+ htmlSegmentoDashboardFlujoDetalle("fijos", "Gastos fijos", catFijos.total, escala, ingresos, catFijos.color || "#e33d3d", "operativo")
+		+ htmlSegmentoDashboardFlujoDetalle("variables", "Costos variables", catVariables.total, escala, ingresos, catVariables.color || "#e58a12", "directo")
+		+ htmlSegmentoDashboardFlujoDetalle("resultado", "Resultado", Math.max(0, resultado), escala, ingresos, catResultado.color, "resultado")
+		+ "</div>"
+		+ "</div>";
+	return html;
+}
+
+function htmlResumenDashboardFlujoDetalle(datos){
+	var totales = datos && datos.totales ? datos.totales : {};
+	var ingresos = numeroValorDashboardFlujoFinanciero(totales.ingresos);
+	var resultado = numeroValorDashboardFlujoFinanciero(totales.resultado);
+	var margen = porcentajeDashboardFlujoFinanciero(resultado, ingresos);
+	return "<div class='dashboard-flujo-detalle-resumen'>"
+		+ "<article><span>Ingresos</span><strong>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.ingresos)) + "</strong></article>"
+		+ "<article><span>Egresos</span><strong>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.egresos)) + "</strong></article>"
+		+ "<article><span>" + (resultado < 0 ? "Deficit" : "Resultado") + "</span><strong>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(resultado)) + "</strong></article>"
+		+ "<article><span>Margen</span><strong>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(margen)) + "</strong></article>"
+		+ "</div>";
+}
+
+function htmlMovimientoFilaDashboardFlujoDetalle(movimiento, mostrarAdmin){
+	movimiento = movimiento || {};
+	var monto = numeroValorDashboardFlujoFinanciero(movimiento.monto);
+	var original = numeroValorDashboardFlujoFinanciero(movimiento.montoOriginal);
+	var asignado = numeroValorDashboardFlujoFinanciero(movimiento.montoAsignado);
+	var html = "<tr>"
+		+ "<td>" + escaparHtmlDashboardFlujoFinanciero(formatoFechaHoraComparativaVentasCobranzas(movimiento.fecha || "")) + "</td>"
+		+ "<td><b>" + escaparHtmlDashboardFlujoFinanciero(movimiento.descripcion || movimiento.concepto || "") + "</b><br><span>" + escaparHtmlDashboardFlujoFinanciero(movimiento.localOrigen || "") + "</span></td>"
+		+ "<td>" + escaparHtmlDashboardFlujoFinanciero(movimiento.responsable || "-") + "</td>"
+		+ "<td>" + escaparHtmlDashboardFlujoFinanciero(movimiento.estado || "-") + "</td>";
+	if(mostrarAdmin){
+		html += "<td class='monto'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(original)) + "</td>"
+			+ "<td class='monto'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(asignado)) + "</td>";
+	}else{
+		html += "<td class='monto'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(monto)) + "</td>";
+	}
+	html += "</tr>";
+	return html;
+}
+
+function htmlTablaMovimientosDashboardFlujoDetalle(concepto, mostrarAdmin){
+	var movimientos = concepto && concepto.movimientos ? concepto.movimientos : [];
+	if(!movimientos.length){
+		return "<div class='dashboard-flujo-detalle-empty'>Sin movimientos en este concepto.</div>";
+	}
+	var html = "<div class='dashboard-flujo-detalle-movimientos'>"
+		+ "<table class='dashboard-flujo-detalle-tabla'>"
+		+ "<thead><tr>"
+		+ "<th style='width:12%'>Fecha</th>"
+		+ "<th>Detalle</th>"
+		+ "<th style='width:16%'>Responsable</th>"
+		+ "<th style='width:10%'>Estado</th>";
+	if(mostrarAdmin){
+		html += "<th style='width:14%;text-align:right'>Monto original</th>"
+			+ "<th style='width:14%;text-align:right'>Asignado</th>";
+	}else{
+		html += "<th style='width:14%;text-align:right'>Monto</th>";
+	}
+	html += "</tr></thead><tbody>";
+	for(var i = 0; i < movimientos.length; i++){
+		html += htmlMovimientoFilaDashboardFlujoDetalle(movimientos[i], mostrarAdmin);
+	}
+	html += "</tbody></table></div>";
+	return html;
+}
+
+function htmlConceptosDashboardFlujoDetalle(categoria, ingresos){
+	var conceptos = categoria && categoria.conceptos ? categoria.conceptos : [];
+	if(!conceptos.length){
+		return "<div class='dashboard-flujo-detalle-empty'>Sin movimientos registrados.</div>";
+	}
+	var html = "<div class='dashboard-flujo-detalle-conceptos'>";
+	for(var i = 0; i < conceptos.length; i++){
+		var concepto = conceptos[i] || {};
+		var totalConcepto = numeroValorDashboardFlujoFinanciero(concepto.total);
+		var porcentajeIngreso = porcentajeDashboardFlujoFinanciero(totalConcepto, ingresos);
+		var porcentajeCategoria = porcentajeDashboardFlujoFinanciero(totalConcepto, categoria.total);
+		var movimientos = concepto.movimientos ? concepto.movimientos.length : 0;
+		html += "<details class='dashboard-flujo-detalle-concepto' data-flujo-categoria='" + escaparHtmlDashboardFlujoFinanciero(categoria.codigo || "") + "'>"
+			+ "<summary>"
+			+ "<strong>" + escaparHtmlDashboardFlujoFinanciero(concepto.nombre || "Sin concepto") + "</strong>"
+			+ "<b>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totalConcepto)) + "</b>"
+			+ "<em>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeIngreso)) + " sobre ingresos | " + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeCategoria)) + " del bloque | " + movimientos + " mov.</em>"
+			+ "</summary>"
+			+ htmlTablaMovimientosDashboardFlujoDetalle(concepto, categoria.codigo == "administracion")
+			+ "</details>";
+	}
+	html += "</div>";
+	return html;
+}
+
+function htmlCategoriasDashboardFlujoDetalle(datos){
+	var categorias = datos && datos.categorias ? datos.categorias : [];
+	var ingresos = datos && datos.totales ? numeroValorDashboardFlujoFinanciero(datos.totales.ingresos) : 0;
+	var html = "";
+	for(var i = 0; i < categorias.length; i++){
+		var categoria = categorias[i] || {};
+		var total = numeroValorDashboardFlujoFinanciero(categoria.total);
+		var conceptos = categoria.conceptos || [];
+		var movimientos = cantidadMovimientosDashboardFlujoDetalle(conceptos);
+		html += "<details class='dashboard-flujo-detalle-categoria' data-flujo-categoria='" + escaparHtmlDashboardFlujoFinanciero(categoria.codigo || "") + "' style='--flujo-detalle-color:" + escaparHtmlDashboardFlujoFinanciero(categoria.color || "#7b8794") + "'>"
+			+ "<summary>"
+			+ "<strong>" + escaparHtmlDashboardFlujoFinanciero(categoria.titulo || categoria.codigo || "Categoria") + "</strong>"
+			+ "<b>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(total)) + "</b>"
+			+ "<em>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(total, ingresos))) + " sobre ingresos | " + conceptos.length + " conceptos | " + movimientos + " mov.</em>"
+			+ "</summary>"
+			+ htmlConceptosDashboardFlujoDetalle(categoria, ingresos)
+			+ "</details>";
+	}
+	return html || "<div class='dashboard-flujo-detalle-empty'>Sin categorias para mostrar.</div>";
+}
+
+function obtenerModalDashboardFlujoDetalle(){
+	return document.getElementById("modalDashboardFlujoFinancieroDetalle");
+}
+
+function limpiarResaltadoDashboardFlujoDetalle(){
+	var modal = obtenerModalDashboardFlujoDetalle();
+	if(!modal){
+		return;
+	}
+	modal.removeAttribute("data-flujo-activo");
+	var activos = modal.querySelectorAll(".is-active");
+	for(var i = 0; i < activos.length; i++){
+		activos[i].classList.remove("is-active");
+	}
+}
+
+function activarCategoriaDashboardFlujoDetalle(codigo){
+	var modal = obtenerModalDashboardFlujoDetalle();
+	if(!modal || !codigo){
+		limpiarResaltadoDashboardFlujoDetalle();
+		return;
+	}
+	modal.setAttribute("data-flujo-activo", codigo);
+	var activos = modal.querySelectorAll(".is-active");
+	for(var i = 0; i < activos.length; i++){
+		activos[i].classList.remove("is-active");
+	}
+	var nodos = modal.querySelectorAll(".dashboard-flujo-detalle-segmento[data-flujo-categoria], .dashboard-flujo-detalle-income-line[data-flujo-categoria], .dashboard-flujo-detalle-categoria[data-flujo-categoria]");
+	for(var n = 0; n < nodos.length; n++){
+		if(nodos[n].getAttribute("data-flujo-categoria") == codigo){
+			nodos[n].classList.add("is-active");
+		}
+	}
+}
+
+function buscarCategoriaAbiertaDashboardFlujoDetalle(){
+	var modal = obtenerModalDashboardFlujoDetalle();
+	if(!modal){
+		return "";
+	}
+	var abiertas = modal.querySelectorAll(".dashboard-flujo-detalle-categoria[open]");
+	if(abiertas.length > 0){
+		return abiertas[abiertas.length - 1].getAttribute("data-flujo-categoria") || "";
+	}
+	return "";
+}
+
+function restaurarResaltadoDashboardFlujoDetalle(){
+	if(dashboardFlujoDetalleCategoriaHover){
+		activarCategoriaDashboardFlujoDetalle(dashboardFlujoDetalleCategoriaHover);
+		return;
+	}
+	if(dashboardFlujoDetalleCategoriaFijada){
+		activarCategoriaDashboardFlujoDetalle(dashboardFlujoDetalleCategoriaFijada);
+		return;
+	}
+	var abierta = buscarCategoriaAbiertaDashboardFlujoDetalle();
+	if(abierta){
+		dashboardFlujoDetalleCategoriaFijada = abierta;
+		activarCategoriaDashboardFlujoDetalle(abierta);
+		return;
+	}
+	limpiarResaltadoDashboardFlujoDetalle();
+}
+
+function enfocarCategoriaDashboardFlujoDetalle(codigo){
+	dashboardFlujoDetalleCategoriaHover = codigo || "";
+	if(dashboardFlujoDetalleCategoriaHover){
+		activarCategoriaDashboardFlujoDetalle(dashboardFlujoDetalleCategoriaHover);
+	}else{
+		restaurarResaltadoDashboardFlujoDetalle();
+	}
+}
+
+function fijarCategoriaDashboardFlujoDetalle(codigo){
+	dashboardFlujoDetalleCategoriaFijada = codigo || "";
+	restaurarResaltadoDashboardFlujoDetalle();
+}
+
+function obtenerDetalleCategoriaDashboardFlujoDetalle(codigo){
+	var modal = obtenerModalDashboardFlujoDetalle();
+	if(!modal || !codigo){
+		return null;
+	}
+	var categorias = modal.querySelectorAll(".dashboard-flujo-detalle-categoria");
+	for(var i = 0; i < categorias.length; i++){
+		if(categorias[i].getAttribute("data-flujo-categoria") == codigo){
+			return categorias[i];
+		}
+	}
+	return null;
+}
+
+function abrirCategoriaDashboardFlujoDetalleDesdeGrafico(codigo){
+	if(!codigo){
+		return;
+	}
+	if(codigo == "resultado"){
+		fijarCategoriaDashboardFlujoDetalle("resultado");
+		return;
+	}
+	var detalle = obtenerDetalleCategoriaDashboardFlujoDetalle(codigo);
+	if(!detalle){
+		fijarCategoriaDashboardFlujoDetalle(codigo);
+		return;
+	}
+	if(detalle.open && dashboardFlujoDetalleCategoriaFijada == codigo){
+		detalle.open = false;
+		fijarCategoriaDashboardFlujoDetalle(buscarCategoriaAbiertaDashboardFlujoDetalle());
+		return;
+	}
+	detalle.open = true;
+	fijarCategoriaDashboardFlujoDetalle(codigo);
+	if(detalle.scrollIntoView){
+		detalle.scrollIntoView({ behavior: "smooth", block: "nearest" });
+	}
+}
+
+function prepararInteraccionesDashboardFlujoDetalle(){
+	var modal = obtenerModalDashboardFlujoDetalle();
+	if(!modal){
+		return;
+	}
+	dashboardFlujoDetalleCategoriaHover = "";
+	dashboardFlujoDetalleCategoriaFijada = buscarCategoriaAbiertaDashboardFlujoDetalle();
+	var items = modal.querySelectorAll(".dashboard-flujo-detalle-segmento, .dashboard-flujo-detalle-income-line");
+	for(var i = 0; i < items.length; i++){
+		(function(item){
+			var codigo = item.getAttribute("data-flujo-categoria") || "";
+			item.addEventListener("mouseenter", function(){
+				enfocarCategoriaDashboardFlujoDetalle(codigo);
+			});
+			item.addEventListener("mouseleave", function(){
+				enfocarCategoriaDashboardFlujoDetalle("");
+			});
+			item.addEventListener("focus", function(){
+				enfocarCategoriaDashboardFlujoDetalle(codigo);
+			});
+			item.addEventListener("blur", function(){
+				enfocarCategoriaDashboardFlujoDetalle("");
+			});
+			item.addEventListener("click", function(event){
+				event.preventDefault();
+				abrirCategoriaDashboardFlujoDetalleDesdeGrafico(codigo);
+			});
+			item.addEventListener("keydown", function(event){
+				if(event.key === "Enter" || event.key === " "){
+					event.preventDefault();
+					abrirCategoriaDashboardFlujoDetalleDesdeGrafico(codigo);
+				}
+			});
+			item.setAttribute("tabindex", "0");
+			item.setAttribute("role", "button");
+		})(items[i]);
+	}
+	var categorias = modal.querySelectorAll(".dashboard-flujo-detalle-categoria");
+	for(var c = 0; c < categorias.length; c++){
+		(function(detalle){
+			var codigo = detalle.getAttribute("data-flujo-categoria") || "";
+			detalle.addEventListener("mouseenter", function(){
+				enfocarCategoriaDashboardFlujoDetalle(codigo);
+			});
+			detalle.addEventListener("mouseleave", function(){
+				enfocarCategoriaDashboardFlujoDetalle("");
+			});
+			detalle.addEventListener("toggle", function(){
+				if(detalle.open){
+					dashboardFlujoDetalleCategoriaFijada = codigo;
+				}else if(dashboardFlujoDetalleCategoriaFijada == codigo){
+					dashboardFlujoDetalleCategoriaFijada = buscarCategoriaAbiertaDashboardFlujoDetalle();
+				}
+				restaurarResaltadoDashboardFlujoDetalle();
+			});
+		})(categorias[c]);
+	}
+	var conceptos = modal.querySelectorAll(".dashboard-flujo-detalle-concepto");
+	for(var k = 0; k < conceptos.length; k++){
+		(function(concepto){
+			var codigo = concepto.getAttribute("data-flujo-categoria") || "";
+			concepto.addEventListener("mouseenter", function(){
+				enfocarCategoriaDashboardFlujoDetalle(codigo);
+				concepto.classList.add("is-active");
+			});
+			concepto.addEventListener("mouseleave", function(){
+				concepto.classList.remove("is-active");
+				enfocarCategoriaDashboardFlujoDetalle("");
+			});
+		})(conceptos[k]);
+	}
+	restaurarResaltadoDashboardFlujoDetalle();
+}
+
+function renderDashboardFlujoFinancieroDetalle(datos){
+	dashboardFlujoDetalleActual = datos;
+	var modal = document.getElementById("modalDashboardFlujoFinancieroDetalle");
+	var body = document.getElementById("dashboardFlujoDetalleBody");
+	var titulo = document.getElementById("dashboardFlujoDetalleTitulo");
+	var subtitulo = document.getElementById("dashboardFlujoDetalleSubtitulo");
+	if(!body){
+		return;
+	}
+	var local = datos && datos.local ? datos.local : {};
+	var periodo = datos && datos.periodo ? datos.periodo : {};
+	if(modal){
+		ocultarBarraSuperiorDashboardFlujoDetalle();
+		modal.style.display = "flex";
+	}
+	if(titulo){
+		titulo.textContent = "Analisis de flujo - " + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "");
+	}
+	if(subtitulo){
+		subtitulo.textContent = "Ultimo mes cerrado: " + (periodo.etiqueta || "-") + " | solo lectura";
+	}
+	body.innerHTML = "<section class='dashboard-flujo-detalle-panel dashboard-flujo-detalle-panel--grafico'>"
+		+ "<div class='dashboard-flujo-detalle-title'><span>Composicion economica</span><strong>" + escaparHtmlDashboardFlujoFinanciero(nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "")) + "</strong></div>"
+		+ htmlGraficoGrandeDashboardFlujoDetalle(datos)
+		+ htmlResumenDashboardFlujoDetalle(datos)
+		+ "</section>"
+		+ "<section class='dashboard-flujo-detalle-panel dashboard-flujo-detalle-panel--detalle'>"
+		+ htmlCategoriasDashboardFlujoDetalle(datos)
+		+ "</section>";
+	prepararInteraccionesDashboardFlujoDetalle();
+}
+
+function obtenerDashboardFlujoDetalleActual(){
+	return dashboardFlujoDetalleActual;
+}
+
+function abrirResumenCompletoDashboardFlujoFinancieroActual(){
+	if(!dashboardFlujoDetalleCodLocalActual){
+		return;
+	}
+	cerrarDashboardFlujoFinancieroDetalle();
+	abrirResumenCompletoDashboardFlujoFinancieroLocal(dashboardFlujoDetalleCodLocalActual);
+}
+
+function htmlInformeFormalDashboardFlujoFinanciero(datos){
+	var local = datos && datos.local ? datos.local : {};
+	var periodo = datos && datos.periodo ? datos.periodo : {};
+	var totales = datos && datos.totales ? datos.totales : {};
+	var html = "<div style='font-family:Arial,sans-serif;color:#172033;padding:18px;'>"
+		+ "<h2 style='margin:0 0 4px;'>Analisis de flujo financiero</h2>"
+		+ "<p style='margin:0 0 12px;font-size:12px;'><b>Sucursal:</b> " + escaparHtmlDashboardFlujoFinanciero(local.sucursalNombre || "") + " | <b>Periodo:</b> " + escaparHtmlDashboardFlujoFinanciero(periodo.etiqueta || "") + "</p>"
+		+ "<table style='width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px;'>"
+		+ "<tr><th style='border:1px solid #ddd;padding:6px;text-align:left;'>Ingresos</th><th style='border:1px solid #ddd;padding:6px;text-align:left;'>Egresos</th><th style='border:1px solid #ddd;padding:6px;text-align:left;'>Resultado</th><th style='border:1px solid #ddd;padding:6px;text-align:left;'>Margen</th></tr>"
+		+ "<tr><td style='border:1px solid #ddd;padding:6px;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.ingresos)) + "</td>"
+		+ "<td style='border:1px solid #ddd;padding:6px;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.egresos)) + "</td>"
+		+ "<td style='border:1px solid #ddd;padding:6px;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.resultado)) + "</td>"
+		+ "<td style='border:1px solid #ddd;padding:6px;'>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(totales.resultado, totales.ingresos))) + "</td></tr>"
+		+ "</table>";
+	var categorias = datos && datos.categorias ? datos.categorias : [];
+	for(var i = 0; i < categorias.length; i++){
+		var categoria = categorias[i] || {};
+		html += "<h3 style='margin:14px 0 6px;font-size:15px;'>" + escaparHtmlDashboardFlujoFinanciero(categoria.titulo || "") + " - " + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(categoria.total)) + "</h3>";
+		var conceptos = categoria.conceptos || [];
+		for(var c = 0; c < conceptos.length; c++){
+			var concepto = conceptos[c] || {};
+			html += "<h4 style='margin:9px 0 4px;font-size:12px;'>" + escaparHtmlDashboardFlujoFinanciero(concepto.nombre || "") + " - " + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(concepto.total)) + "</h4>"
+				+ "<table style='width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px;'>"
+				+ "<tr><th style='border:1px solid #ddd;padding:4px;text-align:left;'>Fecha</th><th style='border:1px solid #ddd;padding:4px;text-align:left;'>Detalle</th><th style='border:1px solid #ddd;padding:4px;text-align:left;'>Responsable</th><th style='border:1px solid #ddd;padding:4px;text-align:left;'>Estado</th><th style='border:1px solid #ddd;padding:4px;text-align:right;'>Monto original</th><th style='border:1px solid #ddd;padding:4px;text-align:right;'>Asignado / monto</th></tr>";
+			var movimientos = concepto.movimientos || [];
+			for(var m = 0; m < movimientos.length; m++){
+				var mov = movimientos[m] || {};
+				html += "<tr><td style='border:1px solid #ddd;padding:4px;'>" + escaparHtmlDashboardFlujoFinanciero(formatoFechaHoraComparativaVentasCobranzas(mov.fecha || "")) + "</td>"
+					+ "<td style='border:1px solid #ddd;padding:4px;'>" + escaparHtmlDashboardFlujoFinanciero(mov.descripcion || "") + "</td>"
+					+ "<td style='border:1px solid #ddd;padding:4px;'>" + escaparHtmlDashboardFlujoFinanciero(mov.responsable || "") + "</td>"
+					+ "<td style='border:1px solid #ddd;padding:4px;'>" + escaparHtmlDashboardFlujoFinanciero(mov.estado || "") + "</td>"
+					+ "<td style='border:1px solid #ddd;padding:4px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(mov.montoOriginal || mov.monto)) + "</td>"
+					+ "<td style='border:1px solid #ddd;padding:4px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(mov.montoAsignado || mov.monto)) + "</td></tr>";
+			}
+			html += "</table>";
+		}
+	}
+	html += "</div>";
+	return html;
+}
+
+function imprimirVistaDashboardFlujoFinancieroDetalle(){
+	var panel = document.getElementById("dashboardFlujoDetallePanel");
+	if(!panel){
+		return;
+	}
+	var copia = panel.cloneNode(true);
+	var acciones = copia.querySelector ? copia.querySelector(".dashboard-flujo-detalle-modal__actions") : null;
+	if(acciones && acciones.parentNode){
+		acciones.parentNode.removeChild(acciones);
+	}
+	var estilosNodo = document.getElementById("dashboardFlujoFinancieroEstilos");
+	var estilos = estilosNodo ? estilosNodo.innerHTML : "";
+	var ajustesImpresion = ".dashboard-flujo-detalle-modal__panel{height:auto!important;width:100%!important;box-shadow:none!important;border:0!important}.dashboard-flujo-detalle-modal__body{height:auto!important;overflow:visible!important}.dashboard-flujo-detalle-panel--detalle{overflow:visible!important}.dashboard-flujo-detalle-chart{height:420px!important}.dashboard-flujo-detalle-concepto,.dashboard-flujo-detalle-categoria{break-inside:avoid!important;page-break-inside:avoid!important}";
+	localStorage.setItem("reporte", "<style>" + estilos + ajustesImpresion + "</style><div style='font-family:Arial,sans-serif'>" + copia.innerHTML + "</div>");
+	localStorage.setItem("tipo", "ticket");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
+}
+
+function imprimirInformeDashboardFlujoFinancieroDetalle(){
+	var datos = obtenerDashboardFlujoDetalleActual();
+	if(!datos){
+		return;
+	}
+	localStorage.setItem("reporte", htmlInformeFormalDashboardFlujoFinanciero(datos));
+	localStorage.setItem("tipo", "ticket");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
+}
+
+function csvValorDashboardFlujoFinanciero(valor){
+	valor = (valor === null || typeof valor === "undefined") ? "" : String(valor);
+	valor = valor.replace(/"/g, '""');
+	return '"' + valor + '"';
+}
+
+function exportarCsvDashboardFlujoFinancieroDetalle(){
+	var datos = obtenerDashboardFlujoDetalleActual();
+	if(!datos){
+		return;
+	}
+	var filas = [["Categoria","Concepto","Fecha","Detalle","Responsable","Estado","Local origen","Monto","Monto original","Monto asignado"]];
+	var categorias = datos.categorias || [];
+	for(var i = 0; i < categorias.length; i++){
+		var categoria = categorias[i] || {};
+		var conceptos = categoria.conceptos || [];
+		for(var c = 0; c < conceptos.length; c++){
+			var concepto = conceptos[c] || {};
+			var movimientos = concepto.movimientos || [];
+			for(var m = 0; m < movimientos.length; m++){
+				var mov = movimientos[m] || {};
+				filas.push([
+					categoria.titulo || "",
+					concepto.nombre || "",
+					mov.fecha || "",
+					mov.descripcion || "",
+					mov.responsable || "",
+					mov.estado || "",
+					mov.localOrigen || "",
+					mov.monto || 0,
+					mov.montoOriginal || mov.monto || 0,
+					mov.montoAsignado || mov.monto || 0
+				]);
+			}
+		}
+	}
+	var csv = filas.map(function(fila){
+		return fila.map(csvValorDashboardFlujoFinanciero).join(";");
+	}).join("\r\n");
+	var local = datos.local || {};
+	var periodo = datos.periodo || {};
+	var nombreArchivo = "flujo_" + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "sucursal").replace(/\s+/g, "_").toLowerCase() + "_" + (periodo.mes || "periodo") + ".csv";
+	var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+	var enlace = document.createElement("a");
+	enlace.href = window.URL.createObjectURL(blob);
+	enlace.download = nombreArchivo;
+	document.body.appendChild(enlace);
+	enlace.click();
+	document.body.removeChild(enlace);
+	window.URL.revokeObjectURL(enlace.href);
+}
+
+function teclaDashboardFlujoFinancieroLocal(event, codLocal){
+	if(!event){
+		return;
+	}
+	if(event.key === "Enter" || event.key === " "){
+		event.preventDefault();
+		abrirDashboardFlujoFinancieroLocal(codLocal);
+	}
+}
+
+function buscarLocalDashboardFlujoFinanciero(codLocal){
+	var locales = dashboardFlujoFinancieroCache && dashboardFlujoFinancieroCache.locales ? dashboardFlujoFinancieroCache.locales : [];
+	for(var i = 0; i < locales.length; i++){
+		if(String(locales[i].sucursalId) == String(codLocal)){
+			return locales[i];
+		}
+	}
+	return null;
+}
+
+function asegurarOpcionLocalDashboardFlujoFinanciero(select, codLocal, nombreLocal){
+	if(!select || !codLocal){
+		return;
+	}
+	for(var i = 0; i < select.options.length; i++){
+		if(String(select.options[i].value) == String(codLocal)){
+			return;
+		}
+	}
+	var opcion = document.createElement("option");
+	opcion.value = codLocal;
+	opcion.text = nombreLocal || codLocal;
+	opcion.setAttribute("data-dashboard-flujo-temporal", "true");
+	select.appendChild(opcion);
+}
+
+function abrirVentanaDashboardFlujoFinanciero(){
+	var contenedor = document.getElementById("divAbmGastos");
+	if(!contenedor){
+		if(typeof verCerrarAbmGasto == "function"){
+			verCerrarAbmGasto();
+			return true;
+		}
+		return false;
+	}
+	if(contenedor.style.display == ""){
+		return true;
+	}
+	if(typeof controlacceso == "function" && controlacceso("VERLISTADOEGRESOINGRESO", "accion") == false){
+		return false;
+	}
+	var segundoPlano = document.getElementById("divSegundoPlano");
+	if(segundoPlano){
+		segundoPlano.style.display = "none";
+	}
+	if(typeof conciliarEgresoUenoMostrarModal == "function"){
+		conciliarEgresoUenoMostrarModal(false);
+	}
+	contenedor.style.display = "";
+	var efecto = document.getElementById("tdEfectoAbmGasto");
+	if(efecto){
+		efecto.className = "magictime slideDownReturn";
+	}
+	if(typeof buscaroptionMotivoEgresoIngreso == "function"){
+		buscaroptionMotivoEgresoIngreso();
+	}
+	if(typeof buscarProyectosVistaSelecc == "function"){
+		buscarProyectosVistaSelecc();
+	}
+	return true;
+}
+
+function aplicarFiltrosDashboardFlujoFinanciero(codLocal){
+	var datos = dashboardFlujoFinancieroCache || {};
+	var periodo = datos.periodo || {};
+	var local = buscarLocalDashboardFlujoFinanciero(codLocal) || {};
+	var fechaInicio = document.getElementById("inptBuscarGastoF1");
+	var fechaFin = document.getElementById("inptBuscarGastoF2");
+	var rangoFechas = document.getElementById("inptCheckingresoegreso1");
+	var todos = document.getElementById("inptCheckingresoegreso2");
+	var ocultarInactivos = document.getElementById("inptSeleccEstadoBuscarGasto2");
+	var tipo = document.getElementById("inptSeleccTipoBuscarGasto");
+	var localSelect = document.getElementById("inptlocalMisGastosBusca");
+	var busquedaUsuario = document.getElementById("inptBuscarIngresoEgreso1");
+	var busquedaFecha = document.getElementById("inptBuscarIngresoEgreso2");
+	var busquedaMotivo = document.getElementById("inptBuscarIngresoEgreso3");
+	var busquedaInterconsulta = document.getElementById("inptBuscarIngresoEgreso4");
+
+	if(fechaInicio && periodo.desdeFecha){
+		fechaInicio.value = periodo.desdeFecha;
+	}
+	if(fechaFin && periodo.hastaFecha){
+		fechaFin.value = periodo.hastaFecha;
+	}
+	if(rangoFechas){
+		rangoFechas.checked = true;
+	}
+	if(todos){
+		todos.checked = false;
+	}
+	if(ocultarInactivos){
+		ocultarInactivos.checked = true;
+	}
+	if(tipo){
+		tipo.value = "";
+	}
+	if(busquedaUsuario){ busquedaUsuario.value = ""; }
+	if(busquedaFecha){ busquedaFecha.value = ""; }
+	if(busquedaMotivo){ busquedaMotivo.value = ""; }
+	if(busquedaInterconsulta){ busquedaInterconsulta.value = ""; }
+	if(localSelect){
+		asegurarOpcionLocalDashboardFlujoFinanciero(localSelect, codLocal, local.sucursalNombre);
+		localSelect.value = String(codLocal);
+	}
+	if(typeof actualizarEncabezadoFlujoGasto == "function"){
+		actualizarEncabezadoFlujoGasto();
+	}
+}
+
+function abrirResumenCompletoDashboardFlujoFinancieroLocal(codLocal){
+	if(!dashboardFlujoFinancieroCache){
+		return;
+	}
+	if(!usuarioPuedeVerDashboardFlujoFinanciero()){
+		return;
+	}
+	if(!buscarLocalDashboardFlujoFinanciero(codLocal)){
+		return;
+	}
+	if(!abrirVentanaDashboardFlujoFinanciero()){
+		return;
+	}
+	setTimeout(function(){
+		aplicarFiltrosDashboardFlujoFinanciero(codLocal);
+		if(typeof buscarabmGasto == "function"){
+			buscarabmGasto();
+		}
+		var contenedor = document.getElementById("divAbmGastos");
+		if(contenedor && contenedor.scrollIntoView){
+			contenedor.scrollIntoView({ behavior: "smooth", block: "start" });
+		}
+	}, 120);
 }
 
 /*
