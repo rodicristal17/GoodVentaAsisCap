@@ -708,9 +708,9 @@ function cc_buscar_movimiento_ueno($usuario)
 		$filas[] = $row;
 	}
 	$total = count($filas);
-	if ($total > 1) {
-		$html .= "<div class='cobrar-cuota__ueno-warning'><b>Hay varios movimientos disponibles</b><span>Selecciona la transferencia que corresponda a este cobro.</span></div>";
-		$html .= "<div class='cobrar-cuota__ueno-toolbar'><button type='button' class='cobrar-cuota__ueno-open-modal' onclick='cobrarCuotaAbrirModalUeno()' aria-haspopup='dialog'>Ver grande</button></div>";
+	if ($total > 0) {
+		$textoAvisoUeno = $total > 1 ? "Hay varios movimientos disponibles" : "Hay una transferencia disponible";
+		$html .= "<div class='cobrar-cuota__ueno-warning cobrar-cuota__ueno-warning--action'><div><b>" . cc_escape_texto($textoAvisoUeno) . "</b><span>Selecciona la transferencia que corresponda a este cobro.</span></div><button type='button' class='cobrar-cuota__ueno-open-modal cobrar-cuota__ueno-warning-action' onclick='cobrarCuotaAbrirModalUeno()' aria-haspopup='dialog'>Buscar transferencia en vista amplia</button></div>";
 		$html .= "<div class='cobrar-cuota__ueno-filter' role='search' aria-label='Filtrar transferencias Ueno'>"
 			. "<label><b>Comprobante</b><input type='search' id='inptCobrarCuotaFiltroUenoComprobante' class='js-cobrar-cuota-ueno-filtro-comprobante' placeholder='Numero de comprobante' autocomplete='off' aria-label='Filtrar por numero de comprobante' oninput='cobrarCuotaFiltrarMovimientosUeno(this)'></label>"
 			. "<label><b>Monto</b><input type='text' id='inptCobrarCuotaFiltroUenoMonto' class='js-cobrar-cuota-ueno-filtro-monto' placeholder='Monto' inputmode='numeric' autocomplete='off' aria-label='Filtrar por monto' oninput='cobrarCuotaFiltrarMovimientosUeno(this)'></label>"
@@ -719,6 +719,15 @@ function cc_buscar_movimiento_ueno($usuario)
 			. "</div>"
 			. "<div id='divCobrarCuotaFiltroUenoVacio' class='cobrar-cuota__ueno-filter-empty js-cobrar-cuota-ueno-filtro-vacio' style='display:none;'>No hay transferencias con ese comprobante o monto.</div>";
 	}
+	if ($total > 0) {
+		$limiteSugerencias = 5;
+		$textoSugerencias = $total > $limiteSugerencias
+			? "Mostrando " . $limiteSugerencias . " mejores de " . cc_numero($total) . " transferencias"
+			: cc_numero($total) . " transferencia" . ($total == 1 ? "" : "s") . " sugerida" . ($total == 1 ? "" : "s");
+		$html .= "<div class='cobrar-cuota__ueno-list-head'><b>Sugerencias principales</b><span>" . cc_escape_texto($textoSugerencias) . "</span></div>";
+		$html .= "<div class='cobrar-cuota__ueno-list cobrar-cuota__ueno-list--compact'>";
+	}
+	$indiceFila = 0;
 	foreach ($filas as $row) {
 		$comprobanteRealDb = cc_comprobante_normalizado($row["nro_comprobante"]);
 		$comprobanteReal = cc_comprobante_normalizado(cc_from_db($row["nro_comprobante"]));
@@ -774,6 +783,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		}
 		$datos_js = htmlspecialchars(json_encode($datos), ENT_QUOTES, 'UTF-8');
 		$comprobanteVisible = $comprobanteReal != "" ? $comprobanteReal : $comprobanteMasked;
+		$comprobanteTitulo = $comprobanteVisible != "" ? $comprobanteVisible : "Sin comprobante";
 		$badgeComprobante = $comprobante == ""
 			? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Seleccionable</span>"
 			: ($coincidenciaExacta
@@ -791,21 +801,24 @@ function cc_buscar_movimiento_ueno($usuario)
 			. " data-ueno-comprobante-mask='" . htmlspecialchars($comprobanteMasked, ENT_QUOTES, 'UTF-8') . "'"
 			. " data-ueno-importe='" . (int)$importe . "'"
 			. " data-ueno-disponible='" . (int)$disponible . "'"
-			. " data-ueno-saldo='" . (int)$saldoRestante . "'";
-		$html .= "<div class='cobrar-cuota__ueno-item'" . $atributosFiltro . ">"
-			. "<div class='cobrar-cuota__ueno-card-body'>"
-			. "<div class='cobrar-cuota__ueno-card-top'>"
-			. "<div class='cobrar-cuota__ueno-card-head'><b class='cobrar-cuota__ueno-date-main'>" . cc_escape_texto($fechaMovimientoVisual != "" ? $fechaMovimientoVisual : "Sin fecha") . "</b><span class='cobrar-cuota__ueno-comprobante'>Comprobante <strong>" . cc_escape_texto($comprobanteVisible) . "</strong></span><div class='cobrar-cuota__ueno-badges'>" . $badgeComprobante . $badgeFecha . "</div></div>"
-			. "<div class='cobrar-cuota__ueno-card-action'>" . $accion . "</div>"
+			. " data-ueno-saldo='" . (int)$saldoRestante . "'"
+			. " data-ueno-fecha='" . htmlspecialchars($fechaMovimiento, ENT_QUOTES, 'UTF-8') . "'"
+			. " data-ueno-fecha-visual='" . htmlspecialchars($fechaMovimientoVisual, ENT_QUOTES, 'UTF-8') . "'";
+		$claseExtra = $indiceFila >= 5 ? " cobrar-cuota__ueno-item--extra" : "";
+		$html .= "<div class='cobrar-cuota__ueno-item" . $claseExtra . "'" . $atributosFiltro . ">"
+			. "<div class='cobrar-cuota__ueno-row-main'><b class='cobrar-cuota__ueno-date-main'>" . cc_escape_texto($fechaMovimientoVisual != "" ? $fechaMovimientoVisual : "Sin fecha") . "</b><span class='cobrar-cuota__ueno-comprobante' title='" . htmlspecialchars($comprobanteTitulo, ENT_QUOTES, 'UTF-8') . "'>Comprobante <strong>" . cc_escape_texto($comprobanteVisible) . "</strong></span><div class='cobrar-cuota__ueno-badges'>" . $badgeComprobante . $badgeFecha . "</div></div>"
+			. "<div class='cobrar-cuota__ueno-row-meta'>"
+			. "<span class='cobrar-cuota__ueno-row-money'><small>Importe</small><strong>" . cc_numero($importe) . "</strong></span>"
+			. "<span class='cobrar-cuota__ueno-row-money'><small>Disponible</small><strong>" . cc_numero($disponible) . "</strong></span>"
+			. "<span class='cobrar-cuota__ueno-row-money'><small>Saldo restante</small><strong>" . cc_numero($saldoRestante) . "</strong></span>"
+			. "<span class='cobrar-cuota__ueno-row-status'><small>Estado</small><strong>" . cc_escape_texto($estado != "" ? $estado : "-") . "</strong></span>"
 			. "</div>"
-			. "<div class='cobrar-cuota__ueno-card-grid'>"
-			. "<span><small>Saldo restante</small><strong>" . cc_numero($saldoRestante) . "</strong></span>"
-			. "<span><small>Importe</small><strong>" . cc_numero($importe) . "</strong></span>"
-			. "<span><small>Disponible</small><strong>" . cc_numero($disponible) . "</strong></span>"
-			. "<span><small>Estado</small><strong>" . cc_escape_texto($estado != "" ? $estado : "-") . "</strong></span>"
-			. "</div>"
-			. "</div>"
+			. "<div class='cobrar-cuota__ueno-row-action'>" . $accion . "</div>"
 			. "</div>";
+		$indiceFila++;
+	}
+	if ($total > 0) {
+		$html .= "</div>";
 	}
 	if ($html == "") {
 		$html = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No encontramos una transferencia Ueno disponible. Ajusta el monto, comprobante o revisa los movimientos importados.</div>";

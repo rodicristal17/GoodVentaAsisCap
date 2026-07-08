@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=form-icons-polished-20260706" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=cobro-ueno-sugerida-20260708" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -50,7 +50,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-aplicacion-contable-20260708"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-saldo-calculado-20260706"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-sugerida-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-nueva-cita-limpia-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -14784,6 +14784,13 @@ title='Cerrar Ventana' onclick='verCerrarCobrarCuota("2")' />
 <div>
 <p id='tituloCobrarCuotaUenoModal'>Transferencias Ueno</p>
 <span>Vista ampliada para filtrar por comprobante o monto y elegir el movimiento correcto.</span>
+</div>
+<div class='cobrar-cuota-ueno-modal__datebar' id='divCobrarCuotaUenoFechaFiltro' aria-label='Filtrar transferencias por fecha'>
+<button type='button' onclick='cobrarCuotaCambiarFechaUeno(-1)' aria-label='Dia anterior'>&lsaquo;</button>
+<strong id='lblCobrarCuotaUenoFechaFiltro'>Hoy</strong>
+<button type='button' onclick='cobrarCuotaCambiarFechaUeno(1)' aria-label='Dia siguiente'>&rsaquo;</button>
+<button type='button' id='btnCobrarCuotaUenoFechaHoy' onclick='cobrarCuotaIrHoyUeno()'>Hoy</button>
+<button type='button' id='btnCobrarCuotaUenoFechaTodas' onclick='cobrarCuotaVerTodasFechasUeno()'>Todas</button>
 </div>
 <button type='button' class='cobrar-cuota-ueno-modal__close' onclick='cobrarCuotaCerrarModalUeno()' aria-label='Cerrar vista ampliada'>&times;</button>
 </div>

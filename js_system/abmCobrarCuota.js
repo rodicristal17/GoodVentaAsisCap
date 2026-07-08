@@ -17,6 +17,8 @@ var cobrarCuotaUenoResultadosTotal = 0;
 var cobrarCuotaUenoBusquedaActiva = false;
 var cobrarCuotaUenoTieneCoincidenciaExacta = false;
 var cobrarCuotaForzarPendienteUeno = false;
+var cobrarCuotaUenoModalFecha = "";
+var cobrarCuotaUenoModalModoFecha = "dia";
 
 function cobrarCuotaId(id) {
 	return document.getElementById(id);
@@ -163,6 +165,240 @@ function cobrarCuotaCoincideMontoUeno(item, filtroMonto) {
 	return false;
 }
 
+function cobrarCuotaFechaDosDigitos(valor) {
+	valor = Number(valor) || 0;
+	return valor < 10 ? "0" + valor : String(valor);
+}
+
+function cobrarCuotaFechaLocalAISO(fecha) {
+	return fecha.getFullYear() + "-" + cobrarCuotaFechaDosDigitos(fecha.getMonth() + 1) + "-" + cobrarCuotaFechaDosDigitos(fecha.getDate());
+}
+
+function cobrarCuotaFechaHoyISO() {
+	return cobrarCuotaFechaLocalAISO(new Date());
+}
+
+function cobrarCuotaFechaDesdeISO(valor) {
+	var partes = String(valor || "").split("-");
+	if (partes.length != 3) {
+		return null;
+	}
+	var anho = Number(partes[0]);
+	var mes = Number(partes[1]);
+	var dia = Number(partes[2]);
+	if (!anho || !mes || !dia) {
+		return null;
+	}
+	return new Date(anho, mes - 1, dia);
+}
+
+function cobrarCuotaFechaDiferenciaDiasISO(fechaBase, fechaComparar) {
+	var base = cobrarCuotaFechaDesdeISO(fechaBase);
+	var comparar = cobrarCuotaFechaDesdeISO(fechaComparar);
+	if (!base || !comparar) {
+		return null;
+	}
+	base.setHours(0, 0, 0, 0);
+	comparar.setHours(0, 0, 0, 0);
+	return Math.round((comparar.getTime() - base.getTime()) / 86400000);
+}
+
+function cobrarCuotaFechaSumarDiasISO(valor, dias) {
+	var fecha = cobrarCuotaFechaDesdeISO(valor) || new Date();
+	fecha.setDate(fecha.getDate() + (Number(dias) || 0));
+	return cobrarCuotaFechaLocalAISO(fecha);
+}
+
+function cobrarCuotaFechaVisualISO(valor) {
+	var fecha = cobrarCuotaFechaDesdeISO(valor);
+	if (!fecha) {
+		return "";
+	}
+	return cobrarCuotaFechaDosDigitos(fecha.getDate()) + "/" + cobrarCuotaFechaDosDigitos(fecha.getMonth() + 1) + "/" + fecha.getFullYear();
+}
+
+function cobrarCuotaFechaEtiquetaRelativa(valor) {
+	var hoy = cobrarCuotaFechaHoyISO();
+	if (valor == hoy) {
+		return "hoy";
+	}
+	if (valor == cobrarCuotaFechaSumarDiasISO(hoy, -1)) {
+		return "ayer";
+	}
+	return "";
+}
+
+function cobrarCuotaFechaMesEtiqueta(valor) {
+	var fecha = cobrarCuotaFechaDesdeISO(valor);
+	var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+	if (!fecha) {
+		return "Sin fecha";
+	}
+	return meses[fecha.getMonth()] + " " + fecha.getFullYear();
+}
+
+function cobrarCuotaFechaTituloGrupo(valor) {
+	var visual = cobrarCuotaFechaVisualISO(valor);
+	var relativa = cobrarCuotaFechaEtiquetaRelativa(valor);
+	if (visual == "") {
+		return "Sin fecha";
+	}
+	return relativa != "" ? visual + " - " + relativa : visual;
+}
+
+function cobrarCuotaActualizarFechaModalUeno() {
+	var etiqueta = cobrarCuotaId("lblCobrarCuotaUenoFechaFiltro");
+	var btnHoy = cobrarCuotaId("btnCobrarCuotaUenoFechaHoy");
+	var btnTodas = cobrarCuotaId("btnCobrarCuotaUenoFechaTodas");
+	if (!cobrarCuotaUenoModalFecha) {
+		cobrarCuotaUenoModalFecha = cobrarCuotaFechaHoyISO();
+	}
+	if (etiqueta) {
+		etiqueta.textContent = cobrarCuotaUenoModalModoFecha == "todas"
+			? "Todas las fechas"
+			: cobrarCuotaFechaTituloGrupo(cobrarCuotaUenoModalFecha);
+	}
+	if (btnHoy && btnHoy.classList) {
+		if (cobrarCuotaUenoModalModoFecha == "dia" && cobrarCuotaUenoModalFecha == cobrarCuotaFechaHoyISO()) {
+			btnHoy.classList.add("is-active");
+		} else {
+			btnHoy.classList.remove("is-active");
+		}
+	}
+	if (btnTodas && btnTodas.classList) {
+		if (cobrarCuotaUenoModalModoFecha == "todas") {
+			btnTodas.classList.add("is-active");
+		} else {
+			btnTodas.classList.remove("is-active");
+		}
+	}
+}
+
+function cobrarCuotaAplicarFiltroFechaModalUeno() {
+	var cuerpo = cobrarCuotaId("divCobrarCuotaUenoModalCuerpo");
+	cobrarCuotaActualizarFechaModalUeno();
+	if (cuerpo) {
+		cobrarCuotaFiltrarMovimientosUeno(cuerpo);
+	}
+}
+
+function cobrarCuotaCambiarFechaUeno(dias) {
+	if (!cobrarCuotaUenoModalFecha) {
+		cobrarCuotaUenoModalFecha = cobrarCuotaFechaHoyISO();
+	}
+	cobrarCuotaUenoModalModoFecha = "dia";
+	cobrarCuotaUenoModalFecha = cobrarCuotaFechaSumarDiasISO(cobrarCuotaUenoModalFecha, dias);
+	cobrarCuotaAplicarFiltroFechaModalUeno();
+}
+
+function cobrarCuotaIrHoyUeno() {
+	cobrarCuotaUenoModalModoFecha = "dia";
+	cobrarCuotaUenoModalFecha = cobrarCuotaFechaHoyISO();
+	cobrarCuotaAplicarFiltroFechaModalUeno();
+}
+
+function cobrarCuotaVerTodasFechasUeno() {
+	cobrarCuotaUenoModalModoFecha = "todas";
+	if (!cobrarCuotaUenoModalFecha) {
+		cobrarCuotaUenoModalFecha = cobrarCuotaFechaHoyISO();
+	}
+	cobrarCuotaAplicarFiltroFechaModalUeno();
+}
+
+function cobrarCuotaLimpiarGruposFechaUeno(contenedor) {
+	if (!contenedor || !contenedor.querySelectorAll) {
+		return;
+	}
+	var grupos = contenedor.querySelectorAll(".cobrar-cuota-ueno-modal__date-group");
+	for (var i = 0; i < grupos.length; i++) {
+		if (grupos[i].parentNode) {
+			grupos[i].parentNode.removeChild(grupos[i]);
+		}
+	}
+}
+
+function cobrarCuotaCrearGrupoFechaUeno(clase, texto) {
+	var grupo = document.createElement("div");
+	var etiqueta = document.createElement("span");
+	grupo.className = "cobrar-cuota-ueno-modal__date-group " + clase;
+	etiqueta.textContent = texto;
+	grupo.appendChild(etiqueta);
+	return grupo;
+}
+
+function cobrarCuotaAgruparTodasFechasUeno(contenedor) {
+	var lista = contenedor && contenedor.querySelector ? contenedor.querySelector(".cobrar-cuota-ueno-modal__list") : null;
+	if (!lista) {
+		return;
+	}
+	var items = Array.prototype.slice.call(lista.querySelectorAll(".cobrar-cuota__ueno-item"));
+	var ultimoMes = "";
+	var ultimoDia = "";
+	for (var i = 0; i < items.length; i++) {
+		var item = items[i];
+		if (item.style.display == "none") {
+			continue;
+		}
+		var fecha = item.getAttribute("data-ueno-fecha") || "";
+		var mes = fecha ? fecha.substring(0, 7) : "sin-fecha";
+		if (mes != ultimoMes) {
+			lista.insertBefore(cobrarCuotaCrearGrupoFechaUeno("cobrar-cuota-ueno-modal__date-group--month", cobrarCuotaFechaMesEtiqueta(fecha)), item);
+			ultimoMes = mes;
+			ultimoDia = "";
+		}
+		if (fecha != ultimoDia) {
+			lista.insertBefore(cobrarCuotaCrearGrupoFechaUeno("cobrar-cuota-ueno-modal__date-group--day", cobrarCuotaFechaTituloGrupo(fecha)), item);
+			ultimoDia = fecha;
+		}
+	}
+}
+
+function cobrarCuotaLimpiarSugerenciasUeno(contenedor) {
+	if (!contenedor || !contenedor.querySelectorAll) {
+		return;
+	}
+	var items = contenedor.querySelectorAll(".cobrar-cuota__ueno-item");
+	for (var i = 0; i < items.length; i++) {
+		items[i].classList.remove("cobrar-cuota__ueno-item--sugerida");
+	}
+	var badges = contenedor.querySelectorAll(".js-cobrar-cuota-ueno-sugerida");
+	for (i = 0; i < badges.length; i++) {
+		if (badges[i].parentNode) {
+			badges[i].parentNode.removeChild(badges[i]);
+		}
+	}
+}
+
+function cobrarCuotaMarcarSugerenciasUeno(contenedor) {
+	cobrarCuotaLimpiarSugerenciasUeno(contenedor);
+	if (!contenedor || !contenedor.querySelectorAll) {
+		return;
+	}
+	var montoBase = cobrarCuotaNumero(cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
+	var fechaBase = cobrarCuotaId("inptCobrarCuotaFechaPago") ? cobrarCuotaId("inptCobrarCuotaFechaPago").value : "";
+	if (montoBase <= 0 || fechaBase == "") {
+		return;
+	}
+	var toleranciaMonto = 1000;
+	var items = contenedor.querySelectorAll(".cobrar-cuota__ueno-item");
+	for (var i = 0; i < items.length; i++) {
+		var item = items[i];
+		var montoMovimiento = Number(item.getAttribute("data-ueno-disponible") || item.getAttribute("data-ueno-importe") || 0);
+		var diferenciaMonto = Math.abs(montoMovimiento - montoBase);
+		var diferenciaDias = cobrarCuotaFechaDiferenciaDiasISO(fechaBase, item.getAttribute("data-ueno-fecha") || "");
+		if (diferenciaMonto <= toleranciaMonto && diferenciaDias !== null && Math.abs(diferenciaDias) <= 2) {
+			item.classList.add("cobrar-cuota__ueno-item--sugerida");
+			var contenedorBadges = item.querySelector(".cobrar-cuota__ueno-badges");
+			if (contenedorBadges) {
+				var badge = document.createElement("span");
+				badge.className = "cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--suggest js-cobrar-cuota-ueno-sugerida";
+				badge.textContent = "Sugerida";
+				contenedorBadges.insertBefore(badge, contenedorBadges.firstChild);
+			}
+		}
+	}
+}
+
 function cobrarCuotaResolverContenedorFiltroUeno(origen) {
 	if (origen && origen.nodeType === 1) {
 		if (origen.id == "divCobrarCuotaUeno" || (origen.classList && origen.classList.contains("cobrar-cuota-ueno-modal__body"))) {
@@ -190,11 +426,17 @@ function cobrarCuotaFiltrarMovimientosUeno(origen) {
 	if (!contenedor) {
 		return;
 	}
+	var esModal = contenedor.classList && contenedor.classList.contains("cobrar-cuota-ueno-modal__body");
+	if (esModal) {
+		cobrarCuotaLimpiarGruposFechaUeno(contenedor);
+		cobrarCuotaActualizarFechaModalUeno();
+	}
 	var inputComprobante = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-comprobante", "inptCobrarCuotaFiltroUenoComprobante");
 	var inputMonto = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-monto", "inptCobrarCuotaFiltroUenoMonto");
 	var filtroComprobante = cobrarCuotaNormalizarFiltroUeno(inputComprobante ? inputComprobante.value : "");
 	var filtroMonto = cobrarCuotaNormalizarMontoFiltroUeno(inputMonto ? inputMonto.value : "");
 	var items = contenedor.querySelectorAll(".cobrar-cuota__ueno-item");
+	var filtroManualActivo = filtroComprobante != "" || filtroMonto != "";
 	var visibles = 0;
 	for (var i = 0; i < items.length; i++) {
 		var item = items[i];
@@ -204,7 +446,11 @@ function cobrarCuotaFiltrarMovimientosUeno(origen) {
 			|| comprobante.indexOf(filtroComprobante) !== -1
 			|| comprobanteMask.indexOf(filtroComprobante) !== -1;
 		var coincideMonto = cobrarCuotaCoincideMontoUeno(item, filtroMonto);
-		var visible = coincideComprobante && coincideMonto;
+		var coincideFecha = true;
+		if (esModal && cobrarCuotaUenoModalModoFecha == "dia") {
+			coincideFecha = (item.getAttribute("data-ueno-fecha") || "") == cobrarCuotaUenoModalFecha;
+		}
+		var visible = coincideComprobante && coincideMonto && coincideFecha;
 		item.style.display = visible ? "" : "none";
 		if (visible) {
 			visibles++;
@@ -219,7 +465,19 @@ function cobrarCuotaFiltrarMovimientosUeno(origen) {
 	}
 	var vacio = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-vacio", "divCobrarCuotaFiltroUenoVacio");
 	if (vacio) {
+		if (visibles == 0 && esModal && !filtroManualActivo && cobrarCuotaUenoModalModoFecha == "dia") {
+			vacio.textContent = cobrarCuotaUenoModalFecha == cobrarCuotaFechaHoyISO()
+				? "No hay transferencias el dia de hoy."
+				: "No hay transferencias para esta fecha.";
+		} else if (visibles == 0 && esModal && !filtroManualActivo && cobrarCuotaUenoModalModoFecha == "todas") {
+			vacio.textContent = "No hay transferencias disponibles.";
+		} else {
+			vacio.textContent = "No hay transferencias con ese comprobante o monto.";
+		}
 		vacio.style.display = visibles == 0 && items.length > 0 ? "block" : "none";
+	}
+	if (esModal && cobrarCuotaUenoModalModoFecha == "todas") {
+		cobrarCuotaAgruparTodasFechasUeno(contenedor);
 	}
 }
 
@@ -251,15 +509,39 @@ function cobrarCuotaPrepararModalUeno(cuerpo) {
 	if (herramientas && herramientas.parentNode) {
 		herramientas.parentNode.removeChild(herramientas);
 	}
+	var botonVistaAmplia = cuerpo.querySelector(".cobrar-cuota__ueno-warning-action");
+	if (botonVistaAmplia && botonVistaAmplia.parentNode) {
+		botonVistaAmplia.parentNode.removeChild(botonVistaAmplia);
+	}
+	var encabezadoLista = cuerpo.querySelector(".cobrar-cuota__ueno-list-head span");
+	if (encabezadoLista) {
+		encabezadoLista.textContent = "Listado completo de transferencias disponibles";
+	}
 	var items = Array.prototype.slice.call(cuerpo.querySelectorAll(".cobrar-cuota__ueno-item"));
 	if (items.length == 0) {
 		return;
 	}
-	var grilla = document.createElement("div");
-	grilla.className = "cobrar-cuota-ueno-modal__grid";
-	items[0].parentNode.insertBefore(grilla, items[0]);
+	var lista = cuerpo.querySelector(".cobrar-cuota__ueno-list");
+	if (!lista) {
+		lista = document.createElement("div");
+		items[0].parentNode.insertBefore(lista, items[0]);
+		for (i = 0; i < items.length; i++) {
+			lista.appendChild(items[i]);
+		}
+	}
+	lista.classList.remove("cobrar-cuota__ueno-list--compact");
+	lista.classList.add("cobrar-cuota-ueno-modal__list");
 	for (i = 0; i < items.length; i++) {
-		grilla.appendChild(items[i]);
+		items[i].classList.remove("cobrar-cuota__ueno-item--extra");
+	}
+	cobrarCuotaMarcarSugerenciasUeno(cuerpo);
+	var cabecera = document.createElement("div");
+	cabecera.className = "cobrar-cuota-ueno-modal__list-head";
+	cabecera.innerHTML = "<span>Fecha / Comprobante</span><span>Importe</span><span>Disponible</span><span>Saldo</span><span>Estado</span><span>Accion</span>";
+	lista.insertBefore(cabecera, lista.firstChild);
+	var aviso = cuerpo.querySelector(".cobrar-cuota__ueno-warning");
+	if (aviso) {
+		aviso.classList.add("cobrar-cuota__ueno-warning--modal");
 	}
 }
 
@@ -289,6 +571,9 @@ function cobrarCuotaAbrirModalUeno() {
 	if (modalMonto) {
 		modalMonto.value = valorMonto;
 	}
+	cobrarCuotaUenoModalModoFecha = "dia";
+	cobrarCuotaUenoModalFecha = cobrarCuotaFechaHoyISO();
+	cobrarCuotaActualizarFechaModalUeno();
 	modal.style.display = "";
 	cobrarCuotaFiltrarMovimientosUeno(cuerpo);
 	if (modalComprobante) {
