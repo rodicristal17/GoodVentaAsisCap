@@ -42130,6 +42130,12 @@ button.tratamiento-ubicacion-visual {
   color: #9a3412 !important;
 }
 
+#divCobrarCuota .cobrar-cuota__ueno-badge--suggest {
+  border: 1px solid #fde68a;
+  background: #fef08a;
+  color: #854d0e !important;
+}
+
 #divCobrarCuota .cobrar-cuota__ueno-item span,
 #divCobrarCuota .cobrar-cuota__ueno-selected span {
   display: block;
@@ -42179,6 +42185,156 @@ button.tratamiento-ubicacion-visual {
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
+}
+
+#divCobrarCuotaUeno > .cobrar-cuota__ueno-filter,
+#divCobrarCuotaUeno > .cobrar-cuota__ueno-filter-empty {
+  display: none;
+}
+
+#divCobrarCuotaUeno > .cobrar-cuota__ueno-list-head,
+#divCobrarCuotaUeno > .cobrar-cuota__ueno-list {
+  display: none;
+}
+
+#divCobrarCuotaUeno .cobrar-cuota__ueno-item--extra {
+  display: none;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-warning--action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-warning--action .cobrar-cuota__ueno-open-modal {
+  justify-self: stretch;
+  min-height: 34px;
+  border-radius: 8px;
+  background: #159947;
+  color: #ffffff;
+  border-color: #159947;
+  box-shadow: 0 6px 14px rgba(21, 153, 71, .16);
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-warning--action .cobrar-cuota__ueno-open-modal:hover {
+  background: #087c3e;
+  color: #ffffff;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 7px 0 6px;
+  color: #344054;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-list-head b,
+#divCobrarCuota .cobrar-cuota__ueno-list-head span {
+  display: block;
+  margin: 0;
+  line-height: 1.2;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-list-head b {
+  color: #172033;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-list-head span {
+  color: #667085;
+  font-size: 9.5px;
+  font-weight: 850;
+  text-align: right;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-list {
+  display: grid;
+  gap: 6px;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-list .cobrar-cuota__ueno-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 9px;
+  align-items: center;
+  padding: 7px 8px;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-main {
+  min-width: 0;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-main .cobrar-cuota__ueno-comprobante {
+  flex-basis: auto;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-meta {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-money,
+#divCobrarCuota .cobrar-cuota__ueno-row-status {
+  min-width: 0;
+  margin: 0 !important;
+  padding: 5px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #344054;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-money small,
+#divCobrarCuota .cobrar-cuota__ueno-row-money strong,
+#divCobrarCuota .cobrar-cuota__ueno-row-status small,
+#divCobrarCuota .cobrar-cuota__ueno-row-status strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-money small,
+#divCobrarCuota .cobrar-cuota__ueno-row-status small {
+  color: #64748b;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-money strong,
+#divCobrarCuota .cobrar-cuota__ueno-row-status strong {
+  margin-top: 1px;
+  color: #172033;
+  font-size: 10px;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-row-action input[type="button"] {
+  min-width: 102px;
+  min-height: 29px;
+  padding: 0 8px;
+  font-size: 9.5px !important;
+}
+
+#divCobrarCuota #divCobrarCuotaUeno > .cobrar-cuota__ueno-filter,
+#divCobrarCuota #divCobrarCuotaUeno > .cobrar-cuota__ueno-filter-empty,
+#divCobrarCuota #divCobrarCuotaUeno > .cobrar-cuota__ueno-list-head,
+#divCobrarCuota #divCobrarCuotaUeno > .cobrar-cuota__ueno-list {
+  display: none;
 }
 
 @media (max-width: 760px) {
@@ -43368,9 +43524,9 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divCobrarCuota .cobrar-cuota-ueno-modal__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 32px;
+  align-items: start;
   gap: 14px;
   padding: 16px 18px 13px;
   border-bottom: 1px solid #edf1f5;
@@ -43394,10 +43550,56 @@ button.tratamiento-ubicacion-visual {
   line-height: 1.35;
 }
 
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar button,
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f4f75;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar button {
+  min-width: 28px;
+  padding: 0 9px;
+  cursor: pointer;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar button:hover,
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar button.is-active {
+  border-color: #159947;
+  background: #e9f9ef;
+  color: #087c3e;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__datebar strong {
+  min-width: 124px;
+  padding: 0 10px;
+  background: #f8fbff;
+}
+
 #divCobrarCuota .cobrar-cuota-ueno-modal__close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  justify-self: end;
   width: 32px;
   height: 32px;
   flex: 0 0 auto;
@@ -43429,18 +43631,231 @@ button.tratamiento-ubicacion-visual {
   max-width: none;
 }
 
-#divCobrarCuota .cobrar-cuota-ueno-modal__grid {
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-warning {
+  display: none;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter {
+  grid-template-columns: minmax(150px, 1fr) minmax(105px, .65fr) auto auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 5px 6px;
+  border-radius: 7px;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter label {
+  gap: 0;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter label b {
+  display: none;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter input {
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter button {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter > span {
+  grid-column: auto;
+  align-self: center;
+  color: #667085;
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  min-width: 720px;
+  gap: 4px;
 }
 
-#divCobrarCuota .cobrar-cuota-ueno-modal__grid .cobrar-cuota__ueno-item {
+#divCobrarCuota .cobrar-cuota-ueno-modal__list-head,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-item {
+  display: grid;
+  grid-template-columns: minmax(250px, 1.6fr) minmax(78px, .5fr) minmax(86px, .55fr) minmax(72px, .45fr) minmax(76px, .5fr) minmax(104px, auto);
+  gap: 6px;
+  align-items: center;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #d9e5ef;
+  border-radius: 7px;
+  background: #eaf3ff;
+  color: #475569;
+  font-size: 9px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-item {
+  min-height: 32px;
   margin-top: 0;
+  padding: 4px 8px;
+  border-radius: 7px;
 }
 
-#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-card-grid {
-  gap: 8px;
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-item--sugerida {
+  border-color: #fde68a;
+  background: linear-gradient(90deg, rgba(254, 249, 195, .92), rgba(255, 255, 255, .96) 72%);
+  box-shadow: inset 4px 0 0 #facc15;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-main {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-date-main {
+  flex: 0 0 auto;
+  font-size: 10px !important;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-comprobante {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #475569;
+  font-size: 9.5px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-comprobante strong {
+  display: inline;
+  color: #172033;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-badges {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 3px;
+  overflow: hidden;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-badge {
+  min-height: 14px;
+  padding: 0 4px;
+  font-size: 7.5px !important;
+  line-height: 1;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__date-group {
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+  color: #667085;
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__date-group span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 17px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__date-group--month {
+  justify-content: center;
+  margin: 3px 0 0;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__date-group--month span {
+  padding: 0 9px;
+  border: 1px solid #dbeafe;
+  background: #eef6ff;
+  color: #1f4f75;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__date-group--day {
+  justify-content: flex-start;
+  margin: 1px 0 0;
+  border-top: 1px solid #e7eef7;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__date-group--day span {
+  padding: 0 6px 0 0;
+  background: #f8fbff;
+  color: #475569;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-meta {
+  display: contents;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-main,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-action {
+  grid-column: auto;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money small,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status small {
+  display: none;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money strong,
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status strong {
+  overflow: hidden;
+  font-size: 10.5px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status strong {
+  text-align: center;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-action input[type="button"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  padding: 0 6px;
+  font-size: 8.5px !important;
+}
+
+#divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-warning--modal {
+  grid-template-columns: 1fr;
 }
 
 @media (max-width: 1100px) {
@@ -43523,6 +43938,7 @@ button.tratamiento-ubicacion-visual {
   }
 
   #divCobrarCuota .cobrar-cuota-ueno-modal__header {
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 13px 14px 11px;
   }
 
@@ -43530,12 +43946,67 @@ button.tratamiento-ubicacion-visual {
     font-size: 18px;
   }
 
+  #divCobrarCuota .cobrar-cuota-ueno-modal__datebar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 1px;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__close {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__datebar strong {
+    min-width: 112px;
+  }
+
   #divCobrarCuota .cobrar-cuota-ueno-modal__body {
     padding: 10px;
   }
 
-  #divCobrarCuota .cobrar-cuota-ueno-modal__grid {
-    grid-template-columns: 1fr;
+  #divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter {
+    min-width: 520px;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list {
+    min-width: 700px;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list-head {
+    display: grid;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list-head,
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-item {
+    grid-template-columns: minmax(240px, 1.6fr) minmax(76px, .5fr) minmax(82px, .55fr) minmax(70px, .45fr) minmax(74px, .5fr) minmax(100px, auto);
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-meta {
+    display: contents;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money,
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money small,
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status small {
+    display: none;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-money strong,
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status strong {
+    text-align: right;
+  }
+
+  #divCobrarCuota .cobrar-cuota-ueno-modal__list .cobrar-cuota__ueno-row-status strong {
+    text-align: center;
   }
 
   #divCobrarCuota .cobrar-cuota__table-body {
