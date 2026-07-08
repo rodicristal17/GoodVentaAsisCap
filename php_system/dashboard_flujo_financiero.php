@@ -9,7 +9,7 @@ include("buscar_nivel.php");
 
 date_default_timezone_set('America/Asuncion');
 
-define('FLUJO_DASHBOARD_PERMISO', 'VERLISTADOEGRESOINGRESO');
+define('FLUJO_DASHBOARD_PERMISO', 'VERDASHBOARDFLUJOFINANCIERO');
 define('FLUJO_DASHBOARD_LOCAL_ADMIN', 1);
 
 function flujo_dashboard_json($datos)
@@ -76,10 +76,6 @@ function flujo_dashboard_autenticar_usuario()
 
 function flujo_dashboard_usuario_tiene_permiso($user)
 {
-    if ((string)$user === '2') {
-        return true;
-    }
-
     return controldeaccesoacasas($user, FLUJO_DASHBOARD_PERMISO, " u.accion='SI' ") == 1;
 }
 

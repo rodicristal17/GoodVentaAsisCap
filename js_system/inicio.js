@@ -4679,7 +4679,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.97";
+var codigodeactualizacion="X-GT-1-JMTG-V2.00";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -7581,6 +7581,37 @@ function actualizarEstadoAccesoFila(check) {
 	}
 }
 
+function actualizarPermisoSesionUsuarioActual(check, accion) {
+	if(!check || String(idAbmUsuario || "") != String(userid || "")){
+		return;
+	}
+	var codigo = check.getAttribute("data-acceso-codigo") || "";
+	codigo = codigo.toString().trim().toUpperCase();
+	if(codigo == ""){
+		return;
+	}
+	if(typeof accesosuser == "undefined" || !accesosuser){
+		accesosuser = {};
+	}
+	if(!accesosuser[codigo]){
+		accesosuser[codigo] = {};
+	}
+	accesosuser[codigo].accion = accion;
+	if(codigo == dashboardFlujoFinancieroPermiso){
+		dashboardFlujoFinancieroCache = null;
+		dashboardFlujoDetalleCache = {};
+		if(accion == "SI"){
+			inicializarDashboardFlujoFinanciero();
+		}else{
+			cerrarDashboardFlujoFinancieroDetalle();
+			var card = document.getElementById("dashboardFlujoFinanciero");
+			if(card){
+				card.style.display = "none";
+			}
+		}
+	}
+}
+
 function actualizarEstadosAccesosCargados() {
 	var checks=obtenerChecksAccesosVisibles();
 	for(var i=0;i<checks.length;i++){
@@ -7671,6 +7702,7 @@ function procesarAccesosVisiblesPendientes(pendientes,indice,accion) {
 			var Respuesta=respuestaJqueryAjax(datos["1"]);
 			if(Respuesta==true){
 				check.checked=objetivo;
+				actualizarPermisoSesionUsuarioActual(check, accion);
 				actualizarEstadoAccesoFila(check);
 				if(document.getElementById("inpt_nivel_selecc")){
 					document.getElementById("inpt_nivel_selecc").value=datos["2"];
@@ -7790,6 +7822,7 @@ function abmacceso(d) {
 					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")	
 					document.getElementById("inpt_nivel_selecc").value=datos["2"];
 					actualizarPorcentajeAccesosUsuario();
+					actualizarPermisoSesionUsuarioActual(d, accion);
 					actualizarEstadoAccesoFila(d);
 					actualizarContadorAccesosVisibles("");
 					}			
@@ -33683,15 +33716,13 @@ var dashboardFlujoDetalleCodLocalActual = null;
 var dashboardFlujoDetalleCargando = false;
 var dashboardFlujoDetalleCategoriaFijada = "";
 var dashboardFlujoDetalleCategoriaHover = "";
+var dashboardFlujoFinancieroPermiso = "VERDASHBOARDFLUJOFINANCIERO";
 
 function usuarioPuedeVerDashboardFlujoFinanciero(){
-	if(typeof userid !== "undefined" && String(userid) == "2"){
-		return true;
-	}
 	if(typeof permisoAccesoUser != "function"){
 		return false;
 	}
-	return permisoAccesoUser("VERLISTADOEGRESOINGRESO", "accion");
+	return permisoAccesoUser(dashboardFlujoFinancieroPermiso, "accion");
 }
 
 function inicializarDashboardFlujoFinanciero(){
@@ -34766,7 +34797,7 @@ function abrirVentanaDashboardFlujoFinanciero(){
 	if(contenedor.style.display == ""){
 		return true;
 	}
-	if(typeof controlacceso == "function" && controlacceso("VERLISTADOEGRESOINGRESO", "accion") == false){
+	if(typeof controlacceso == "function" && controlacceso(dashboardFlujoFinancieroPermiso, "accion") == false){
 		return false;
 	}
 	var segundoPlano = document.getElementById("divSegundoPlano");
@@ -34788,6 +34819,10 @@ function abrirVentanaDashboardFlujoFinanciero(){
 		buscarProyectosVistaSelecc();
 	}
 	return true;
+}
+
+function abrirVentanananciero(){
+	return abrirVentanaDashboardFlujoFinanciero();
 }
 
 function aplicarFiltrosDashboardFlujoFinanciero(codLocal){

@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-aplicacion-contable-20260708" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=form-icons-polished-20260706" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,7 +43,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=version-actualizacion-v198-flujo-detalle-topbar-20260708"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=version-actualizacion-v200-dashboard-flujo-permiso-usuario-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -2362,7 +2362,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     </section>
 
                     <section class="dashboard-card dashboard-card--flujo-financiero" id="dashboardFlujoFinanciero" style="display:none;">
-                      <div class="dashboard-card__header dashboard-flujo-header">
+                      <div class="dashboard-card__header dashboard-flujo-header"  >
                         <div>
                           <h2 class="dashboard-card__title">Composici&oacute;n econ&oacute;mica por sucursal</h2>
                           <p class="dashboard-card__subtitle" id="dashboardFlujoFinancieroSubtitulo">&Uacute;ltimo mes cerrado con escala com&uacute;n</p>
@@ -2372,7 +2372,7 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                           <button type="button" class="dashboard-flujo-refresh" onclick="cargarDashboardFlujoFinanciero(true)">Actualizar</button>
                         </div>
                       </div>
-                      <div class="dashboard-card__body dashboard-flujo-body" id="dashboardFlujoFinancieroBody">
+                      <div   class="dashboard-card__body dashboard-flujo-body" id="dashboardFlujoFinancieroBody">
                         <div class="dashboard-flujo-loading">
                           <span></span><span></span><span></span>
                         </div>
@@ -26986,8 +26986,8 @@ style='width:95%;' />
 <p class='pTituloB'>Conciliacion Ueno</p>
 </td>
 <td style='width:5%;text-align:center'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
-title='Cerrar Ventana' onclick='verCerrarConciliacionUeno()' />
+<button type='button' class='ueno-close-button' title='Cerrar Ventana'
+aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</button>
 </td>
 </tr>
 </table>

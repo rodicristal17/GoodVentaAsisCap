@@ -199,13 +199,13 @@ $styleName="tableRegistroSearch";
 				   $controltitulo=$formulario;
 			 }
 		  	 $inputcheck="<label class='accesos-switch'>
-		  	 <input id='".$idaccesosUser."' type='checkbox' onclick='abmacceso(this)' />
+		  	 <input id='".$idaccesosUser."' type='checkbox' data-acceso-codigo='".$codigoSeguro."' onclick='abmacceso(this)' />
 		  	 <span class='accesos-switch-track'></span>
 		  	 <span class='accesos-switch-text'>".$textoEstado."</span>
 		  	 </label>";
 			 if($accion=="SI"){
 			$inputcheck="<label class='accesos-switch'>
-			<input id='".$idaccesosUser."' type='checkbox'".$checked." onclick='abmacceso(this)' />
+			<input id='".$idaccesosUser."' type='checkbox'".$checked." data-acceso-codigo='".$codigoSeguro."' onclick='abmacceso(this)' />
 			<span class='accesos-switch-track'></span>
 			<span class='accesos-switch-text'>".$textoEstado."</span>
 			</label>";
