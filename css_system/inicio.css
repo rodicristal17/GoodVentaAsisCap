@@ -40948,6 +40948,14 @@ button.tratamiento-ubicacion-visual {
   background: #ffffff;
 }
 
+#divConciliacionUeno .ueno-detalle-importacion-toolbar {
+  grid-template-columns: minmax(170px, 1fr) minmax(140px, 0.8fr) 94px minmax(200px, auto);
+}
+
+#divConciliacionUeno .ueno-importaciones-toolbar--busqueda {
+  grid-template-columns: minmax(120px, .8fr) minmax(120px, .8fr) minmax(170px, 1fr) minmax(130px, .75fr) 94px 130px;
+}
+
 #divConciliacionUeno .ueno-importaciones-toolbar label,
 #divConciliacionUeno .ueno-importaciones-toolbar span {
   display: flex;
@@ -40959,7 +40967,8 @@ button.tratamiento-ubicacion-visual {
   font-weight: 900;
 }
 
-#divConciliacionUeno .ueno-importaciones-toolbar input[type="date"] {
+#divConciliacionUeno .ueno-importaciones-toolbar input[type="date"],
+#divConciliacionUeno .ueno-importaciones-toolbar input[type="text"] {
   width: 100% !important;
   height: 30px !important;
   padding: 0 9px !important;
@@ -40972,9 +40981,17 @@ button.tratamiento-ubicacion-visual {
   outline: none;
 }
 
-#divConciliacionUeno .ueno-importaciones-toolbar input[type="date"]:focus {
+#divConciliacionUeno .ueno-importaciones-toolbar input[type="date"]:focus,
+#divConciliacionUeno .ueno-importaciones-toolbar input[type="text"]:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+#divConciliacionUeno .ueno-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 #divConciliacionUeno .ueno-importaciones-toolbar span {
@@ -40990,6 +41007,16 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno .ueno-importaciones-toolbar strong {
   color: #0f172a;
   font-size: 13px;
+}
+
+#divConciliacionUeno .ueno-found-cell {
+  display: block;
+  max-height: 34px;
+  color: #075985;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow: hidden;
 }
 
 #divConciliacionUeno #table_ueno_importaciones_modal,
@@ -41292,6 +41319,10 @@ button.tratamiento-ubicacion-visual {
 
   #divConciliacionUeno .ueno-importaciones-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  #divConciliacionUeno .ueno-toolbar-actions {
+    flex-direction: column;
   }
 
   #divConciliacionUeno .ueno-detalle-importacion-resumen {
@@ -43692,7 +43723,7 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divCobrarCuota .cobrar-cuota-ueno-modal__body .cobrar-cuota__ueno-filter {
-  grid-template-columns: minmax(150px, 1fr) minmax(105px, .65fr) auto auto;
+  grid-template-columns: minmax(150px, 1fr) minmax(105px, .65fr) auto auto minmax(92px, auto);
   gap: 6px;
   align-items: center;
   margin-bottom: 6px;

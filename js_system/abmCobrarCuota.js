@@ -19,6 +19,7 @@ var cobrarCuotaUenoTieneCoincidenciaExacta = false;
 var cobrarCuotaForzarPendienteUeno = false;
 var cobrarCuotaUenoModalFecha = "";
 var cobrarCuotaUenoModalModoFecha = "dia";
+var cobrarCuotaUenoBusquedaServidorTimer = null;
 
 function cobrarCuotaId(id) {
 	return document.getElementById(id);
@@ -278,7 +279,7 @@ function cobrarCuotaAplicarFiltroFechaModalUeno() {
 	var cuerpo = cobrarCuotaId("divCobrarCuotaUenoModalCuerpo");
 	cobrarCuotaActualizarFechaModalUeno();
 	if (cuerpo) {
-		cobrarCuotaFiltrarMovimientosUeno(cuerpo);
+		cobrarCuotaBuscarFiltroServidorUeno(cuerpo);
 	}
 }
 
@@ -481,6 +482,28 @@ function cobrarCuotaFiltrarMovimientosUeno(origen) {
 	}
 }
 
+function cobrarCuotaFiltrarMovimientosUenoInteractivo(origen) {
+	var contenedor = cobrarCuotaResolverContenedorFiltroUeno(origen);
+	cobrarCuotaFiltrarMovimientosUeno(contenedor || origen);
+	if (!contenedor || !contenedor.classList || !contenedor.classList.contains("cobrar-cuota-ueno-modal__body")) {
+		return;
+	}
+	var inputComprobante = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-comprobante", "");
+	var inputMonto = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-monto", "");
+	var filtroComprobante = inputComprobante ? cobrarCuotaNormalizarFiltroUeno(inputComprobante.value) : "";
+	var filtroMonto = inputMonto ? cobrarCuotaNormalizarMontoFiltroUeno(inputMonto.value) : "";
+	if (cobrarCuotaUenoBusquedaServidorTimer) {
+		clearTimeout(cobrarCuotaUenoBusquedaServidorTimer);
+		cobrarCuotaUenoBusquedaServidorTimer = null;
+	}
+	if (filtroComprobante == "" && filtroMonto == "") {
+		return;
+	}
+	cobrarCuotaUenoBusquedaServidorTimer = setTimeout(function() {
+		cobrarCuotaBuscarFiltroServidorUeno(contenedor);
+	}, 450);
+}
+
 function cobrarCuotaLimpiarFiltroMovimientosUeno(origen) {
 	var contenedor = cobrarCuotaResolverContenedorFiltroUeno(origen);
 	var inputComprobante = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-comprobante", "inptCobrarCuotaFiltroUenoComprobante");
@@ -495,6 +518,80 @@ function cobrarCuotaLimpiarFiltroMovimientosUeno(origen) {
 	if (inputComprobante) {
 		inputComprobante.focus();
 	}
+}
+
+function cobrarCuotaBuscarFiltroServidorUeno(origen) {
+	var contenedor = cobrarCuotaResolverContenedorFiltroUeno(origen);
+	var cuerpoModal = cobrarCuotaId("divCobrarCuotaUenoModalCuerpo");
+	var esModal = contenedor && contenedor.classList && contenedor.classList.contains("cobrar-cuota-ueno-modal__body");
+	var inputComprobante = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-comprobante", "inptCobrarCuotaFiltroUenoComprobante");
+	var inputMonto = cobrarCuotaBuscarEnFiltroUeno(contenedor, ".js-cobrar-cuota-ueno-filtro-monto", "inptCobrarCuotaFiltroUenoMonto");
+	var filtroComprobante = inputComprobante ? inputComprobante.value : "";
+	var filtroMonto = inputMonto ? inputMonto.value : "";
+	if (!esModal || !cuerpoModal) {
+		cobrarCuotaFiltrarMovimientosUeno(contenedor);
+		return;
+	}
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "buscar_movimiento_ueno");
+	datos.append("comprobante", cobrarCuotaId("inptCobrarCuotaComprobante") ? cobrarCuotaId("inptCobrarCuotaComprobante").value : "");
+	datos.append("monto", cobrarCuotaId("inptCobrarCuotaMontoCobrar") ? cobrarCuotaId("inptCobrarCuotaMontoCobrar").value : "");
+	datos.append("fecha_pago", cobrarCuotaUenoModalModoFecha == "dia" ? cobrarCuotaUenoModalFecha : "");
+	datos.append("ver_todos", cobrarCuotaUenoModalModoFecha == "todas" ? "SI" : "NO");
+	datos.append("vista_amplia", "SI");
+	datos.append("comprobante_busqueda", filtroComprobante);
+	datos.append("monto_busqueda", filtroMonto);
+	cuerpoModal.innerHTML = "<div class='cobrar-cuota__ueno-empty'>Buscando transferencias Ueno...</div>";
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmCobrarCuota.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					cuerpoModal.innerHTML = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>" + cobrarCuotaEscape(respuesta["2"] || "No se pudo buscar transferencias Ueno.") + "</div>";
+					return;
+				}
+				cobrarCuotaUenoResultadosTotal = Number(respuesta["3"] || 0);
+				cuerpoModal.innerHTML = respuesta["2"] || "";
+				cobrarCuotaPrepararModalUeno(cuerpoModal);
+				var modalComprobante = cobrarCuotaBuscarEnFiltroUeno(cuerpoModal, ".js-cobrar-cuota-ueno-filtro-comprobante", "");
+				var modalMonto = cobrarCuotaBuscarEnFiltroUeno(cuerpoModal, ".js-cobrar-cuota-ueno-filtro-monto", "");
+				if (modalComprobante) {
+					modalComprobante.value = filtroComprobante;
+				}
+				if (modalMonto) {
+					modalMonto.value = filtroMonto;
+				}
+				if (respuesta["ver_todos"] == "SI") {
+					cobrarCuotaUenoModalModoFecha = "todas";
+				} else if (respuesta["fecha_pago"]) {
+					cobrarCuotaUenoModalModoFecha = "dia";
+					cobrarCuotaUenoModalFecha = respuesta["fecha_pago"];
+				}
+				cobrarCuotaActualizarFechaModalUeno();
+				cobrarCuotaFiltrarMovimientosUeno(cuerpoModal);
+				if (modalComprobante && filtroComprobante != "") {
+					modalComprobante.focus();
+				} else if (modalMonto) {
+					modalMonto.focus();
+				}
+			} catch (error) {
+				cuerpoModal.innerHTML = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No se pudo interpretar la busqueda Ueno.</div>";
+			}
+		},
+		error: function() {
+			cuerpoModal.innerHTML = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>Error de conexion al buscar transferencias Ueno.</div>";
+		}
+	});
 }
 
 function cobrarCuotaPrepararModalUeno(cuerpo) {
@@ -575,7 +672,7 @@ function cobrarCuotaAbrirModalUeno() {
 	cobrarCuotaUenoModalFecha = cobrarCuotaFechaHoyISO();
 	cobrarCuotaActualizarFechaModalUeno();
 	modal.style.display = "";
-	cobrarCuotaFiltrarMovimientosUeno(cuerpo);
+	cobrarCuotaBuscarFiltroServidorUeno(cuerpo);
 	if (modalComprobante) {
 		modalComprobante.focus();
 	}

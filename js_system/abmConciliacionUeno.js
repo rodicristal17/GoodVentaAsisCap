@@ -404,7 +404,7 @@ function uenoModernizarVista() {
 	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito", "Estado"], 7);
 	uenoModernizarTabla("table_ueno_resumen_tesoreria", ["Local", "Turno", "Caja", "Lote", "Apertura", "Cierre", "Caja", "Transf. GV", "Conc.", "Pend.", "Obs.", "S/C", "Estado"], 12);
 	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
-	uenoModernizarTabla("table_ueno_importaciones_modal", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
+	uenoModernizarTabla("table_ueno_importaciones_modal", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado", "Encontrado"], 8);
 	uenoModernizarTabla("table_ueno_detalle_importacion", ["Nro.", "F. conf.", "F. trans.", "Comprobante", "Detalle", "Deb.", "Cred.", "Disp.", "Duplicado", "Estado"], 9);
 	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Aplicacion contable", "Cliente / Venta", "Usuario", "Accion"], 9);
 	uenoAgregarSeparadoresFechaMovimientos();
@@ -1597,6 +1597,8 @@ function uenoOpcionesImportacionesModal() {
 		totalId: "lblUenoModalTotalImportaciones",
 		desdeId: "inptUenoModalBuscarDesde",
 		hastaId: "inptUenoModalBuscarHasta",
+		comprobanteId: "inptUenoModalBuscarComprobante",
+		montoId: "inptUenoModalBuscarMonto",
 		vista: "modal",
 		mostrarErrores: true
 	};
@@ -1635,6 +1637,20 @@ function uenoBuscarImportacionesModal() {
 	uenoBuscarImportaciones(uenoOpcionesImportacionesModal());
 }
 
+function uenoVerDetalleImportacionDesdeImportacion(idImportacion) {
+	var comprobanteOrigen = document.getElementById("inptUenoModalBuscarComprobante");
+	var montoOrigen = document.getElementById("inptUenoModalBuscarMonto");
+	var comprobanteDestino = document.getElementById("inptUenoDetalleFiltroComprobante");
+	var montoDestino = document.getElementById("inptUenoDetalleFiltroMonto");
+	if (comprobanteDestino && comprobanteOrigen) {
+		comprobanteDestino.value = comprobanteOrigen.value;
+	}
+	if (montoDestino && montoOrigen) {
+		montoDestino.value = montoOrigen.value;
+	}
+	uenoVerDetalleImportacion(idImportacion, true);
+}
+
 function uenoResumenDetalleImportacion(importacion) {
 	importacion = importacion || {};
 	var bloques = [
@@ -1661,22 +1677,59 @@ function uenoResumenDetalleImportacion(importacion) {
 	return html;
 }
 
-function uenoVerDetalleImportacion(idImportacion) {
+function uenoValorCampo(idCampo) {
+	var campo = document.getElementById(idCampo);
+	return campo ? campo.value : "";
+}
+
+function uenoLimpiarCamposDetalleImportacion() {
+	var campos = ["inptUenoDetalleFiltroComprobante", "inptUenoDetalleFiltroMonto"];
+	for (var i = 0; i < campos.length; i++) {
+		var campo = document.getElementById(campos[i]);
+		if (campo) {
+			campo.value = "";
+		}
+	}
+}
+
+function uenoBuscarDetalleImportacion() {
+	if (!uenoDetalleImportacionActual) {
+		ver_vetana_informativa("Primero selecciona un archivo migrado.", "", "error");
+		return;
+	}
+	uenoVerDetalleImportacion(uenoDetalleImportacionActual, true);
+}
+
+function uenoLimpiarFiltrosDetalleImportacion() {
+	uenoLimpiarCamposDetalleImportacion();
+	if (uenoDetalleImportacionActual) {
+		uenoBuscarDetalleImportacion();
+	}
+}
+
+function uenoVerDetalleImportacion(idImportacion, conservarFiltros) {
 	if (!idImportacion) {
 		ver_vetana_informativa("No se pudo identificar el archivo migrado.", "", "error");
 		return;
+	}
+	if (!conservarFiltros) {
+		uenoLimpiarCamposDetalleImportacion();
 	}
 	uenoDetalleImportacionActual = String(idImportacion);
 	uenoMarcarImportacionSeleccionada(idImportacion);
 	var popup = document.getElementById("divUenoDetalleImportacionPopup");
 	var resumen = document.getElementById("divUenoDetalleImportacionResumen");
 	var tabla = document.getElementById("table_ueno_detalle_importacion");
+	var totalFiltrado = document.getElementById("lblUenoDetalleTotalFiltrado");
 	if (!popup || !tabla) {
 		uenoSeleccionarImportacion(idImportacion);
 		return;
 	}
 	if (resumen) {
 		resumen.innerHTML = "<div class='ueno-loading-inline'>Cargando detalle del archivo...</div>";
+	}
+	if (totalFiltrado) {
+		totalFiltrado.textContent = "0";
 	}
 	tabla.innerHTML = "";
 	popup.style.display = "flex";
@@ -1688,6 +1741,8 @@ function uenoVerDetalleImportacion(idImportacion) {
 	datos.append("navegador", navegador);
 	datos.append("funt", "detalle_importacion");
 	datos.append("id_importacion", idImportacion);
+	datos.append("nro_comprobante", uenoValorCampo("inptUenoDetalleFiltroComprobante"));
+	datos.append("monto", uenoValorCampo("inptUenoDetalleFiltroMonto"));
 
 	$.ajax({
 		data: datos,
@@ -1711,6 +1766,9 @@ function uenoVerDetalleImportacion(idImportacion) {
 					resumen.innerHTML = uenoResumenDetalleImportacion(importacion);
 				}
 				tabla.innerHTML = respuesta["tabla"] || "";
+				if (totalFiltrado) {
+					totalFiltrado.textContent = respuesta["total_movimientos"] || "0";
+				}
 				var subtitulo = document.getElementById("lblUenoDetalleImportacionSubtitulo");
 				if (subtitulo) {
 					subtitulo.textContent = "Movimientos migrados: " + (respuesta["total_movimientos"] || "0");
@@ -1770,6 +1828,8 @@ function uenoBuscarImportaciones(opciones) {
 	datos.append("funt", "buscar_importaciones");
 	datos.append("fecha_desde", document.getElementById(desdeId) ? document.getElementById(desdeId).value : "");
 	datos.append("fecha_hasta", document.getElementById(hastaId) ? document.getElementById(hastaId).value : "");
+	datos.append("nro_comprobante", uenoValorCampo(opciones.comprobanteId || ""));
+	datos.append("monto", uenoValorCampo(opciones.montoId || ""));
 	datos.append("vista", opciones.vista || "");
 
 	$.ajax({
@@ -1787,7 +1847,10 @@ function uenoBuscarImportaciones(opciones) {
 						tabla.innerHTML = respuesta["2"] || "";
 					}
 					uenoSetValorAuditoria(totalId, respuesta["3"] || "0");
-					uenoModernizarTabla(tablaId, ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
+					var etiquetas = opciones.vista == "modal"
+						? ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado", "Encontrado"]
+						: ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"];
+					uenoModernizarTabla(tablaId, etiquetas, 8);
 					uenoMarcarImportacionSeleccionada(uenoIdImportacionSeleccionada);
 					return;
 				}
@@ -1837,6 +1900,7 @@ function uenoBuscarMovimientos(idImportacion) {
 	datos.append("fecha_desde", document.getElementById("inptUenoMovDesde") ? document.getElementById("inptUenoMovDesde").value : "");
 	datos.append("fecha_hasta", document.getElementById("inptUenoMovHasta") ? document.getElementById("inptUenoMovHasta").value : "");
 	datos.append("nro_comprobante", document.getElementById("inptUenoMovComprobante") ? document.getElementById("inptUenoMovComprobante").value : "");
+	datos.append("monto", uenoValorCampo("inptUenoMovMonto"));
 	datos.append("estado", document.getElementById("inptUenoMovEstado") ? document.getElementById("inptUenoMovEstado").value : "");
 	datos.append("filtro_rapido", uenoFiltroRapidoMovimientos || "todos");
 

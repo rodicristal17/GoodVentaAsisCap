@@ -658,8 +658,14 @@ function cc_buscar_movimiento_ueno($usuario)
 
 	$comprobante = cc_comprobante_normalizado(cc_post("comprobante"));
 	$monto = cc_monto(isset($_POST["monto"]) ? $_POST["monto"] : "");
+	$comprobante_busqueda = cc_comprobante_normalizado(cc_post("comprobante_busqueda"));
+	$monto_busqueda = cc_monto(isset($_POST["monto_busqueda"]) ? $_POST["monto_busqueda"] : "");
+	$comprobanteFiltro = $comprobante_busqueda != "" ? $comprobante_busqueda : $comprobante;
+	$montoOrden = $monto_busqueda > 0 ? $monto_busqueda : $monto;
 	$fecha_pago = cc_fecha(cc_post("fecha_pago"));
 	$id_movimiento = cc_post("id_movimiento");
+	$ver_todos = isset($_POST["ver_todos"]) && $_POST["ver_todos"] == "SI";
+	$vista_amplia = isset($_POST["vista_amplia"]) && $_POST["vista_amplia"] == "SI";
 	ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
 	$condicion = "tipo_movimiento='credito'
 		AND importe_credito>0
@@ -667,27 +673,36 @@ function cc_buscar_movimiento_ueno($usuario)
 	if ($id_movimiento != "") {
 		$condicion .= " AND id_movimiento='" . $mysqli->real_escape_string($id_movimiento) . "'";
 	}
-	if ($comprobante != "") {
-		$compSql = $mysqli->real_escape_string($comprobante);
+	if ($comprobanteFiltro != "") {
+		$compSql = $mysqli->real_escape_string($comprobanteFiltro);
 		$condicion .= " AND nro_comprobante LIKE '%$compSql%'";
 	}
+	if ($monto_busqueda > 0) {
+		$montoBusquedaSql = (int)$monto_busqueda;
+		$condicion .= " AND (importe_credito=$montoBusquedaSql OR monto_disponible=$montoBusquedaSql)";
+	}
 	$fechaSql = $mysqli->real_escape_string($fecha_pago);
+	if ($vista_amplia && $fecha_pago != "" && !$ver_todos) {
+		$condicion .= " AND (fecha_confirmacion='$fechaSql' OR fecha_transaccion='$fechaSql')";
+	}
 	$ordenFecha = $fecha_pago != ""
 		? "CASE WHEN fecha_confirmacion='$fechaSql' OR fecha_transaccion='$fechaSql' THEN 0 ELSE 1 END,"
 		: "";
+	$comprobanteFiltroSql = $mysqli->real_escape_string($comprobanteFiltro);
+	$limiteSql = ($vista_amplia || $ver_todos) ? "" : " LIMIT 80";
 	$sql = "SELECT id_movimiento, nro_comprobante, fecha_confirmacion, fecha_transaccion, descripcion, concepto,
 		importe_credito, monto_disponible, estado
 		FROM ueno_movimiento_bancario
 		WHERE $condicion
 		ORDER BY
-			CASE WHEN nro_comprobante='" . $mysqli->real_escape_string($comprobante) . "' THEN 0 ELSE 1 END,
-			CASE WHEN '" . $mysqli->real_escape_string($comprobante) . "'<>'' AND nro_comprobante LIKE '" . $mysqli->real_escape_string($comprobante) . "%' THEN 0 ELSE 1 END,
+			CASE WHEN nro_comprobante='" . $comprobanteFiltroSql . "' THEN 0 ELSE 1 END,
+			CASE WHEN '" . $comprobanteFiltroSql . "'<>'' AND nro_comprobante LIKE '" . $comprobanteFiltroSql . "%' THEN 0 ELSE 1 END,
 			$ordenFecha
-			CASE WHEN $monto>0 AND monto_disponible=$monto THEN 0 ELSE 1 END,
-			CASE WHEN $monto>0 AND monto_disponible>$monto THEN 0 ELSE 1 END,
+			CASE WHEN $montoOrden>0 AND monto_disponible=$montoOrden THEN 0 ELSE 1 END,
+			CASE WHEN $montoOrden>0 AND monto_disponible>$montoOrden THEN 0 ELSE 1 END,
 			fecha_confirmacion DESC,
 			id_movimiento DESC
-		LIMIT 80";
+		$limiteSql";
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt || !$stmt->execute()) {
 		$error = $stmt ? $stmt->error : $mysqli->error;
@@ -712,8 +727,9 @@ function cc_buscar_movimiento_ueno($usuario)
 		$textoAvisoUeno = $total > 1 ? "Hay varios movimientos disponibles" : "Hay una transferencia disponible";
 		$html .= "<div class='cobrar-cuota__ueno-warning cobrar-cuota__ueno-warning--action'><div><b>" . cc_escape_texto($textoAvisoUeno) . "</b><span>Selecciona la transferencia que corresponda a este cobro.</span></div><button type='button' class='cobrar-cuota__ueno-open-modal cobrar-cuota__ueno-warning-action' onclick='cobrarCuotaAbrirModalUeno()' aria-haspopup='dialog'>Buscar transferencia en vista amplia</button></div>";
 		$html .= "<div class='cobrar-cuota__ueno-filter' role='search' aria-label='Filtrar transferencias Ueno'>"
-			. "<label><b>Comprobante</b><input type='search' id='inptCobrarCuotaFiltroUenoComprobante' class='js-cobrar-cuota-ueno-filtro-comprobante' placeholder='Numero de comprobante' autocomplete='off' aria-label='Filtrar por numero de comprobante' oninput='cobrarCuotaFiltrarMovimientosUeno(this)'></label>"
-			. "<label><b>Monto</b><input type='text' id='inptCobrarCuotaFiltroUenoMonto' class='js-cobrar-cuota-ueno-filtro-monto' placeholder='Monto' inputmode='numeric' autocomplete='off' aria-label='Filtrar por monto' oninput='cobrarCuotaFiltrarMovimientosUeno(this)'></label>"
+			. "<label><b>Comprobante</b><input type='search' id='inptCobrarCuotaFiltroUenoComprobante' class='js-cobrar-cuota-ueno-filtro-comprobante' placeholder='Numero de comprobante' autocomplete='off' aria-label='Filtrar por numero de comprobante' onkeydown='if(event.keyCode==13){event.preventDefault();cobrarCuotaBuscarFiltroServidorUeno(this)}'></label>"
+			. "<label><b>Monto</b><input type='text' id='inptCobrarCuotaFiltroUenoMonto' class='js-cobrar-cuota-ueno-filtro-monto' placeholder='Monto' inputmode='numeric' autocomplete='off' aria-label='Filtrar por monto' onkeydown='if(event.keyCode==13){event.preventDefault();cobrarCuotaBuscarFiltroServidorUeno(this)}'></label>"
+			. "<button type='button' onclick='cobrarCuotaBuscarFiltroServidorUeno(this)'>Buscar</button>"
 			. "<button type='button' onclick='cobrarCuotaLimpiarFiltroMovimientosUeno(this)'>Limpiar</button>"
 			. "<span id='lblCobrarCuotaFiltroUenoResultado' class='js-cobrar-cuota-ueno-filtro-resultado'>" . cc_numero($total) . " transferencias</span>"
 			. "</div>"
@@ -732,7 +748,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		$comprobanteRealDb = cc_comprobante_normalizado($row["nro_comprobante"]);
 		$comprobanteReal = cc_comprobante_normalizado(cc_from_db($row["nro_comprobante"]));
 		$comprobanteMasked = cc_mask_comprobante($comprobanteReal);
-		$coincidenciaExacta = ($comprobante != "" && (string)$comprobanteRealDb === (string)$comprobante);
+		$coincidenciaExacta = ($comprobanteFiltro != "" && (string)$comprobanteRealDb === (string)$comprobanteFiltro);
 		if ($coincidenciaExacta) {
 			$tieneExacta = true;
 		}
@@ -784,7 +800,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		$datos_js = htmlspecialchars(json_encode($datos), ENT_QUOTES, 'UTF-8');
 		$comprobanteVisible = $comprobanteReal != "" ? $comprobanteReal : $comprobanteMasked;
 		$comprobanteTitulo = $comprobanteVisible != "" ? $comprobanteVisible : "Sin comprobante";
-		$badgeComprobante = $comprobante == ""
+		$badgeComprobante = $comprobanteFiltro == ""
 			? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Seleccionable</span>"
 			: ($coincidenciaExacta
 				? "<span class='cobrar-cuota__ueno-badge cobrar-cuota__ueno-badge--ok'>Coincidencia exacta</span>"
@@ -824,7 +840,15 @@ function cc_buscar_movimiento_ueno($usuario)
 		$html = "<div class='cobrar-cuota__ueno-empty cobrar-cuota__ueno-pending'>No encontramos una transferencia Ueno disponible. Ajusta el monto, comprobante o revisa los movimientos importados.</div>";
 	}
 	mysqli_close($mysqli);
-	cc_json(array("1" => "exito", "2" => $html, "3" => $total, "4" => $primer, "5" => $tieneExacta ? "SI" : "NO"));
+	cc_json(array(
+		"1" => "exito",
+		"2" => $html,
+		"3" => $total,
+		"4" => $primer,
+		"5" => $tieneExacta ? "SI" : "NO",
+		"fecha_pago" => $fecha_pago,
+		"ver_todos" => $ver_todos ? "SI" : "NO"
+	));
 }
 
 function cc_auditar_cobro($usuario)

@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=cobro-ueno-sugerida-20260708" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-importaciones-busqueda-20260708" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -49,8 +49,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-aplicacion-contable-20260708"></script>
-<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-sugerida-20260708"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-importaciones-busqueda-20260708"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-nueva-cita-limpia-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
@@ -27291,19 +27291,23 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </div>
 <table style='width:98%'>
 <tr>
-<td style='width:18%;text-align:left'>
+<td style='width:15%;text-align:left'>
 <p class='pTituloC'>Desde</p>
 <input class='inputText' type='date' id='inptUenoMovDesde' style='width:115px'>
 </td>
-<td style='width:18%;text-align:left'>
+<td style='width:15%;text-align:left'>
 <p class='pTituloC'>Hasta</p>
 <input class='inputText' type='date' id='inptUenoMovHasta' style='width:115px'>
 </td>
-<td style='width:22%;text-align:left'>
-<p class='pTituloC'>Comprobante</p>
-<input class='inputText' type='text' id='inptUenoMovComprobante' style='width:125px'>
-</td>
 <td style='width:18%;text-align:left'>
+<p class='pTituloC'>Comprobante</p>
+<input class='inputText' type='text' id='inptUenoMovComprobante' onkeyup='if(event.keyCode == 13){uenoBuscarMovimientos()}' style='width:130px'>
+</td>
+<td style='width:15%;text-align:left'>
+<p class='pTituloC'>Monto</p>
+<input class='inputText' type='text' id='inptUenoMovMonto' onkeyup='separadordemiles(this); if(event.keyCode == 13){uenoBuscarMovimientos()}' style='width:115px;text-align:right'>
+</td>
+<td style='width:17%;text-align:left'>
 <p class='pTituloC'>Estado</p>
 <select class='inputSelect' id='inptUenoMovEstado' style='width:115px'>
 <option value=''>TODOS</option>
@@ -27313,7 +27317,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <option value='asignado_total'>ASIGNADO TOTAL</option>
 </select>
 </td>
-<td style='width:24%;text-align:right'>
+<td style='width:20%;text-align:right'>
 <input type='button' value='Buscar movimientos' class='btn4 ueno-btn-secondary' onclick='uenoBuscarMovimientos()' style='width:150px'>
 </td>
 </tr>
@@ -27476,7 +27480,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar'
 title='Cerrar Ventana' onclick='uenoCerrarModalImportaciones()' />
 </div>
-<div class='ueno-importaciones-toolbar'>
+<div class='ueno-importaciones-toolbar ueno-importaciones-toolbar--busqueda'>
 <label>
 <b>Desde</b>
 <input class='inputText' type='date' id='inptUenoModalBuscarDesde'>
@@ -27484,6 +27488,14 @@ title='Cerrar Ventana' onclick='uenoCerrarModalImportaciones()' />
 <label>
 <b>Hasta</b>
 <input class='inputText' type='date' id='inptUenoModalBuscarHasta'>
+</label>
+<label>
+<b>Nro. comprobante</b>
+<input class='inputText' type='text' id='inptUenoModalBuscarComprobante' onkeyup='if(event.keyCode == 13){uenoBuscarImportacionesModal()}'>
+</label>
+<label>
+<b>Monto</b>
+<input class='inputText' type='text' id='inptUenoModalBuscarMonto' onkeyup='separadordemiles(this); if(event.keyCode == 13){uenoBuscarImportacionesModal()}' style='text-align:right'>
 </label>
 <span>
 <b>Archivos</b>
@@ -27494,15 +27506,16 @@ title='Cerrar Ventana' onclick='uenoCerrarModalImportaciones()' />
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:8%;">ID</td>
-<td class="td_registro" style="width:12%;">CUENTA</td>
-<td class="td_registro" style="width:10%;">FECHA</td>
-<td class="td_registro" style="width:24%;">ARCHIVO</td>
-<td class="td_registro" style="width:14%;">IMPORTADO</td>
-<td class="td_registro" style="width:8%;">MOV.</td>
-<td class="td_registro" style="width:8%;">CRED.</td>
-<td class="td_registro" style="width:8%;">DEB.</td>
+<td class="td_registro" style="width:6%;">ID</td>
+<td class="td_registro" style="width:10%;">CUENTA</td>
+<td class="td_registro" style="width:8%;">FECHA</td>
+<td class="td_registro" style="width:19%;">ARCHIVO</td>
+<td class="td_registro" style="width:12%;">IMPORTADO</td>
+<td class="td_registro" style="width:6%;">MOV.</td>
+<td class="td_registro" style="width:7%;">CRED.</td>
+<td class="td_registro" style="width:7%;">DEB.</td>
 <td class="td_registro" style="width:8%;">ESTADO</td>
+<td class="td_registro" style="width:17%;">ENCONTRADO</td>
 </tr>
 </tbody>
 </table>
@@ -27524,6 +27537,24 @@ title='Cerrar Ventana' onclick='uenoCerrarModalImportaciones()' />
 title='Cerrar Ventana' onclick='uenoCerrarDetalleImportacionPopup()' />
 </div>
 <div id='divUenoDetalleImportacionResumen' class='ueno-detalle-importacion-resumen'></div>
+<div class='ueno-importaciones-toolbar ueno-detalle-importacion-toolbar'>
+<label>
+<b>Nro. comprobante</b>
+<input class='inputText' type='text' id='inptUenoDetalleFiltroComprobante' onkeyup='if(event.keyCode == 13){uenoBuscarDetalleImportacion()}'>
+</label>
+<label>
+<b>Monto</b>
+<input class='inputText' type='text' id='inptUenoDetalleFiltroMonto' onkeyup='separadordemiles(this); if(event.keyCode == 13){uenoBuscarDetalleImportacion()}' style='text-align:right'>
+</label>
+<span>
+<b>Registros</b>
+<strong id='lblUenoDetalleTotalFiltrado'>0</strong>
+</span>
+<div class='ueno-toolbar-actions'>
+<input type='button' value='Buscar' class='btn4 ueno-btn-secondary' onclick='uenoBuscarDetalleImportacion()' style='width:95px'>
+<input type='button' value='Limpiar' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarFiltrosDetalleImportacion()' style='width:95px'>
+</div>
+</div>
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>

@@ -1522,11 +1522,12 @@ function ueno_insertar_importacion($usuario)
 	));
 }
 
-function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido = "todos")
+function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido = "todos", $monto = 0)
 {
 	$tieneConciliacionEgresos = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
 	$tieneConciliacionMigracion = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
 	$condicion = "";
+	$monto = (int)$monto;
 	if ($id_importacion != "") {
 		$condicion .= " AND mv.id_importacion='" . $mysqli->real_escape_string($id_importacion) . "'";
 	}
@@ -1541,6 +1542,12 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 	}
 	if ($estado != "") {
 		$condicion .= " AND mv.estado='" . $mysqli->real_escape_string($estado) . "'";
+	}
+	if ($monto > 0) {
+		$condicion .= " AND (mv.importe_debito=" . $monto
+			. " OR mv.importe_credito=" . $monto
+			. " OR mv.monto_disponible=" . $monto
+			. " OR (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)=" . $monto . ")";
 	}
 
 	$subqueryDebitoAplicado = $tieneConciliacionEgresos
@@ -1776,10 +1783,11 @@ function ueno_buscar_movimientos()
 	$fecha_desde = ueno_fecha(isset($_POST["fecha_desde"]) ? $_POST["fecha_desde"] : "");
 	$fecha_hasta = ueno_fecha(isset($_POST["fecha_hasta"]) ? $_POST["fecha_hasta"] : "");
 	$comprobante = ueno_post("nro_comprobante");
+	$monto = ueno_monto(ueno_post("monto"));
 	$estado = ueno_post("estado");
 	$filtro_rapido = ueno_post("filtro_rapido");
 
-	$tabla = ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido);
+	$tabla = ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido, $monto);
 	mysqli_close($mysqli);
 
 	ueno_json(array(
@@ -1921,19 +1929,41 @@ function ueno_buscar_importaciones()
 	$fecha_desde = ueno_fecha(isset($_POST["fecha_desde"]) ? $_POST["fecha_desde"] : "");
 	$fecha_hasta = ueno_fecha(isset($_POST["fecha_hasta"]) ? $_POST["fecha_hasta"] : "");
 	$vista = ueno_post("vista");
+	$comprobante = ueno_post("nro_comprobante");
+	$monto = ueno_monto(ueno_post("monto"));
 	$condicion = "";
 	if ($fecha_desde != "") {
-		$condicion .= " AND fecha_extracto>='" . $mysqli->real_escape_string($fecha_desde) . "'";
+		$condicion .= " AND imp.fecha_extracto>='" . $mysqli->real_escape_string($fecha_desde) . "'";
 	}
 	if ($fecha_hasta != "") {
-		$condicion .= " AND fecha_extracto<='" . $mysqli->real_escape_string($fecha_hasta) . "'";
+		$condicion .= " AND imp.fecha_extracto<='" . $mysqli->real_escape_string($fecha_hasta) . "'";
+	}
+	$condicionMovimiento = "";
+	$tieneFiltroMovimiento = ($comprobante != "" || $monto > 0);
+	if ($comprobante != "") {
+		$condicionMovimiento .= " AND mv.nro_comprobante LIKE '%" . $mysqli->real_escape_string($comprobante) . "%'";
+	}
+	if ($monto > 0) {
+		$monto = (int)$monto;
+		$condicionMovimiento .= " AND (mv.importe_debito=" . $monto
+			. " OR mv.importe_credito=" . $monto
+			. " OR mv.monto_disponible=" . $monto
+			. " OR (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)=" . $monto . ")";
+	}
+	if ($tieneFiltroMovimiento) {
+		$condicion .= " AND EXISTS (
+			SELECT 1
+			FROM ueno_movimiento_bancario mv
+			WHERE mv.id_importacion=imp.id_importacion
+			$condicionMovimiento
+		)";
 	}
 
-	$sql = "SELECT id_importacion, cuenta, fecha_extracto, nombre_archivo_original, fecha_hora_importacion,
+	$sql = "SELECT imp.id_importacion, imp.cuenta, imp.fecha_extracto, imp.nombre_archivo_original, imp.fecha_hora_importacion,
 		cantidad_movimientos, cantidad_creditos, cantidad_debitos, total_creditos, total_debitos, estado
-		FROM ueno_importacion_extracto
-		WHERE id_importacion!='0' $condicion
-		ORDER BY id_importacion DESC
+		FROM ueno_importacion_extracto imp
+		WHERE imp.id_importacion!='0' $condicion
+		ORDER BY imp.id_importacion DESC
 		LIMIT 80";
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt->execute()) {
@@ -1946,18 +1976,68 @@ function ueno_buscar_importaciones()
 	while ($row = mysqli_fetch_assoc($result)) {
 		$total++;
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
-		$accionFila = $vista == "modal" ? "uenoVerDetalleImportacion(" . (int)$row["id_importacion"] . ")" : "uenoSeleccionarImportacion(" . (int)$row["id_importacion"] . ")";
-		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' onclick='" . $accionFila . "'>"
-			. "<td style='width:8%'>" . $row["id_importacion"] . "</td>"
-			. "<td style='width:12%'>" . ueno_escape_html($row["cuenta"]) . "</td>"
-			. "<td style='width:10%'>" . ueno_escape_html($row["fecha_extracto"]) . "</td>"
-			. "<td style='width:24%'>" . ueno_escape_html($row["nombre_archivo_original"]) . "</td>"
-			. "<td style='width:14%'>" . ueno_escape_html($row["fecha_hora_importacion"]) . "</td>"
-			. "<td style='width:8%;text-align:right'>" . number_format($row["cantidad_movimientos"], 0, ",", ".") . "</td>"
-			. "<td style='width:8%;text-align:right'>" . number_format($row["total_creditos"], 0, ",", ".") . "</td>"
-			. "<td style='width:8%;text-align:right'>" . number_format($row["total_debitos"], 0, ",", ".") . "</td>"
-			. "<td style='width:8%'>" . ueno_escape_html($row["estado"]) . "</td>"
-			. "</tr></table>";
+		$esModal = $vista == "modal";
+		$accionFila = $esModal ? "uenoVerDetalleImportacionDesdeImportacion(" . (int)$row["id_importacion"] . ")" : "uenoSeleccionarImportacion(" . (int)$row["id_importacion"] . ")";
+		$coincidenciaHtml = "";
+		if ($esModal) {
+			$coincidenciaHtml = "<span class='ueno-row-note ueno-row-note--muted'>Sin filtro</span>";
+			if ($tieneFiltroMovimiento) {
+				$idImportacionSql = (int)$row["id_importacion"];
+				$sqlMatch = "SELECT mv.id_movimiento, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante,
+					mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado,
+					(SELECT COUNT(*) FROM ueno_movimiento_bancario mv WHERE mv.id_importacion=$idImportacionSql $condicionMovimiento) AS total_coincidencias
+					FROM ueno_movimiento_bancario mv
+					WHERE mv.id_importacion=$idImportacionSql $condicionMovimiento
+					ORDER BY
+						CASE WHEN mv.nro_comprobante REGEXP '^[0-9]+$' THEN 0 ELSE 1 END ASC,
+						CASE WHEN mv.nro_comprobante REGEXP '^[0-9]+$' THEN CAST(mv.nro_comprobante AS UNSIGNED) ELSE 0 END ASC,
+						mv.nro_comprobante ASC,
+						mv.id_movimiento ASC
+					LIMIT 1";
+				$resMatch = $mysqli->query($sqlMatch);
+				$match = $resMatch ? $resMatch->fetch_assoc() : null;
+				if ($match) {
+					$fechaMatch = trim((string)$match["fecha_confirmacion"]) != "" ? $match["fecha_confirmacion"] : $match["fecha_transaccion"];
+					$importeMatch = (int)$match["importe_credito"] > 0 ? (int)$match["importe_credito"] : (int)$match["importe_debito"];
+					$totalCoincidencias = (int)$match["total_coincidencias"];
+					$coincidenciaTexto = "Reg. #" . (int)$match["id_movimiento"]
+						. " | Comp. " . ueno_from_db($match["nro_comprobante"])
+						. " | " . number_format($importeMatch, 0, ",", ".")
+						. " | Disp. " . number_format($match["monto_disponible"], 0, ",", ".")
+						. " | " . $fechaMatch;
+					if ($totalCoincidencias > 1) {
+						$coincidenciaTexto .= " | +" . ($totalCoincidencias - 1);
+					}
+					$coincidenciaHtml = "<span class='ueno-found-cell' title='" . ueno_escape_html($coincidenciaTexto) . "'>" . ueno_escape_html($coincidenciaTexto) . "</span>";
+				}
+			}
+		}
+		if ($esModal) {
+			$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' onclick='" . $accionFila . "'>"
+				. "<td style='width:6%'>" . $row["id_importacion"] . "</td>"
+				. "<td style='width:10%'>" . ueno_escape_html($row["cuenta"]) . "</td>"
+				. "<td style='width:8%'>" . ueno_escape_html($row["fecha_extracto"]) . "</td>"
+				. "<td style='width:19%'>" . ueno_escape_html($row["nombre_archivo_original"]) . "</td>"
+				. "<td style='width:12%'>" . ueno_escape_html($row["fecha_hora_importacion"]) . "</td>"
+				. "<td style='width:6%;text-align:right'>" . number_format($row["cantidad_movimientos"], 0, ",", ".") . "</td>"
+				. "<td style='width:7%;text-align:right'>" . number_format($row["total_creditos"], 0, ",", ".") . "</td>"
+				. "<td style='width:7%;text-align:right'>" . number_format($row["total_debitos"], 0, ",", ".") . "</td>"
+				. "<td style='width:8%'>" . ueno_escape_html($row["estado"]) . "</td>"
+				. "<td style='width:17%'>" . $coincidenciaHtml . "</td>"
+				. "</tr></table>";
+		} else {
+			$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' onclick='" . $accionFila . "'>"
+				. "<td style='width:8%'>" . $row["id_importacion"] . "</td>"
+				. "<td style='width:12%'>" . ueno_escape_html($row["cuenta"]) . "</td>"
+				. "<td style='width:10%'>" . ueno_escape_html($row["fecha_extracto"]) . "</td>"
+				. "<td style='width:24%'>" . ueno_escape_html($row["nombre_archivo_original"]) . "</td>"
+				. "<td style='width:14%'>" . ueno_escape_html($row["fecha_hora_importacion"]) . "</td>"
+				. "<td style='width:8%;text-align:right'>" . number_format($row["cantidad_movimientos"], 0, ",", ".") . "</td>"
+				. "<td style='width:8%;text-align:right'>" . number_format($row["total_creditos"], 0, ",", ".") . "</td>"
+				. "<td style='width:8%;text-align:right'>" . number_format($row["total_debitos"], 0, ",", ".") . "</td>"
+				. "<td style='width:8%'>" . ueno_escape_html($row["estado"]) . "</td>"
+				. "</tr></table>";
+		}
 	}
 	mysqli_close($mysqli);
 	ueno_json(array("1" => "exito", "2" => $html, "3" => $total));
@@ -1975,6 +2055,19 @@ function ueno_detalle_importacion()
 	if ($id_importacion <= 0) {
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "camposvacio", "2" => "No se pudo identificar el archivo migrado"));
+	}
+	$comprobante = ueno_post("nro_comprobante");
+	$monto = ueno_monto(ueno_post("monto"));
+	$condicionMovimiento = "";
+	if ($comprobante != "") {
+		$condicionMovimiento .= " AND mv.nro_comprobante LIKE '%" . $mysqli->real_escape_string($comprobante) . "%'";
+	}
+	if ($monto > 0) {
+		$monto = (int)$monto;
+		$condicionMovimiento .= " AND (mv.importe_debito=" . $monto
+			. " OR mv.importe_credito=" . $monto
+			. " OR mv.monto_disponible=" . $monto
+			. " OR (CASE WHEN mv.importe_credito>0 THEN mv.importe_credito ELSE mv.importe_debito END)=" . $monto . ")";
 	}
 
 	$sqlImportacion = "SELECT id_importacion, cuenta, denominacion, fecha_extracto, periodo_desde, periodo_hasta,
@@ -2036,7 +2129,7 @@ function ueno_detalle_importacion()
 			LIMIT 5
 		) AS detalle_duplicados
 		FROM ueno_movimiento_bancario mv
-		WHERE mv.id_importacion=?
+		WHERE mv.id_importacion=? $condicionMovimiento
 		ORDER BY
 			CASE WHEN mv.nro_comprobante REGEXP '^[0-9]+$' THEN 0 ELSE 1 END ASC,
 			CASE WHEN mv.nro_comprobante REGEXP '^[0-9]+$' THEN CAST(mv.nro_comprobante AS UNSIGNED) ELSE 0 END ASC,
@@ -2101,6 +2194,9 @@ function ueno_detalle_importacion()
 			}
 		}
 		$html .= "</table>";
+	}
+	if ($html == "") {
+		$html = "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'><td style='width:100%;text-align:center'>No hay movimientos para este filtro.</td></tr></table>";
 	}
 	mysqli_close($mysqli);
 	ueno_json(array(
