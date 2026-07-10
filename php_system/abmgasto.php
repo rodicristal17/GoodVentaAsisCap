@@ -350,6 +350,11 @@ if ($operacion == "aprobarMovimiento") {
 	$decision= mb_convert_encoding((string)($decision), 'ISO-8859-1', 'UTF-8');
 	aprobarMovimiento($idgastos, $user, $decision);
 }
+if ($operacion == "darBajaCuotaProgramada") {
+	$idgastos= isset($_POST['idgastos']) ? intval($_POST['idgastos']) : 0;
+	$alcance= isset($_POST['alcance']) ? (string)$_POST['alcance'] : 'cuota';
+	darBajaCuotaProgramada($idgastos, $alcance, $user);
+}
 if ($operacion == "combinarmotivoingresoegreso") {
 	$cod_motivoIngresoEgreso= mb_convert_encoding((string)($_POST['cod_motivo_ingreso_egreso']), 'ISO-8859-1', 'UTF-8');
 	$cod_motivoIngresoEgreso_dest= mb_convert_encoding((string)($_POST['cod_motivo_ingreso_egreso_destino']), 'ISO-8859-1', 'UTF-8');
@@ -396,6 +401,9 @@ if ($operacion == "obtenerGastosAsociados") {
 				break;
 			case 'Rechazado':
 				$estado .= 'secondary">'.$gast['estado'].'</span>';
+				break;
+			case 'Baja':
+				$estado .= 'secondary">Dado de baja</span>';
 				break;
 			case 'pendiente':
 				$fechaActual = date('Y-m-d');
@@ -562,6 +570,73 @@ function obtenerGastosAsociados($idgastos) {
 
 	return array_merge($result, $gastos_asociados);
 }
+function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
+	$mysqli= conectar_al_servidor();
+	$idgastos= intval($idgastos);
+	$alcance= in_array($alcance, array('serie', 'hilo')) ? $alcance : 'cuota';
+	if ($idgastos <= 0) {
+		echo json_encode(array('1'=>'error', '2'=>'Cuota no valida.'));
+		exit;
+	}
+	$mysqli->begin_transaction();
+	$stmt= $mysqli->prepare("SELECT idgastos, fecha, estado, modalidad, cod_gasto_padre, cod_interConsultaFK FROM gastos WHERE idgastos=? FOR UPDATE");
+	$stmt->bind_param('i', $idgastos);
+	$stmt->execute();
+	$cuota= $stmt->get_result()->fetch_assoc();
+	$stmt->close();
+	$estadoActual= $cuota ? strtolower(trim((string)$cuota['estado'])) : '';
+	$esCuotaProgramada= $cuota && strtolower(trim((string)$cuota['modalidad'])) == 'credito';
+	$estadoPermiteBajaIndividual= ($estadoActual == 'pendiente' || $estadoActual == 'solicitado');
+	if (!$esCuotaProgramada || ($alcance != 'hilo' && !$estadoPermiteBajaIndividual)) {
+		$mysqli->rollback();
+		echo json_encode(array('1'=>'error', '2'=>'Solo se pueden dar de baja cuotas programadas pendientes.'));
+		exit;
+	}
+	$ids= array($idgastos);
+	if ($alcance == 'hilo') {
+		$codInterConsulta= intval($cuota['cod_interConsultaFK']);
+		if ($codInterConsulta <= 0) {
+			$mysqli->rollback();
+			echo json_encode(array('1'=>'error', '2'=>'La cuota no esta vinculada a un hilo.'));
+			exit;
+		}
+		$stmt= $mysqli->prepare("SELECT idgastos FROM gastos WHERE cod_interConsultaFK=? AND modalidad='credito' AND estado IN ('pendiente','solicitado') ORDER BY fecha,idgastos FOR UPDATE");
+		$stmt->bind_param('i', $codInterConsulta);
+		$stmt->execute();
+		$result= $stmt->get_result();
+		$ids= array();
+		while ($fila= $result->fetch_assoc()) { $ids[]= intval($fila['idgastos']); }
+		$stmt->close();
+	} else if ($alcance == 'serie') {
+		$idSerie= intval($cuota['cod_gasto_padre']);
+		if ($idSerie <= 0) { $idSerie= $idgastos; }
+		$fechaDesde= $cuota['fecha'];
+		$stmt= $mysqli->prepare("SELECT idgastos FROM gastos WHERE (idgastos=? OR cod_gasto_padre=?) AND fecha>=? AND estado IN ('pendiente','solicitado') ORDER BY fecha,idgastos FOR UPDATE");
+		$stmt->bind_param('iis', $idSerie, $idSerie, $fechaDesde);
+		$stmt->execute();
+		$result= $stmt->get_result();
+		$ids= array();
+		while ($fila= $result->fetch_assoc()) { $ids[]= intval($fila['idgastos']); }
+		$stmt->close();
+	}
+	if (count($ids) < 1) {
+		$mysqli->rollback();
+		echo json_encode(array('1'=>'error', '2'=>'No hay cuotas pendientes para dar de baja.'));
+		exit;
+	}
+	$listaIds= implode(',', array_map('intval', $ids));
+	$usuarioEditor= intval($codUsuario);
+	$ok= $mysqli->query("UPDATE gastos SET estado='Baja', cod_usuarioFK_edit=".$usuarioEditor." WHERE idgastos IN (".$listaIds.") AND estado IN ('pendiente','solicitado')");
+	if (!$ok) {
+		$mysqli->rollback();
+		echo json_encode(array('1'=>'error', '2'=>'No se pudo actualizar las cuotas.'));
+		exit;
+	}
+	$mysqli->query("UPDATE mensaje m INNER JOIN gastos g ON g.cod_mensajeFK=m.cod_mensaje SET m.estado='inactivo' WHERE g.idgastos IN (".$listaIds.")");
+	$mysqli->commit();
+	echo json_encode(array('1'=>'exito', '2'=>count($ids), '3'=>$alcance));
+	exit;
+}
 
 function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estadoFiltroPagoprogrtamado)
 {
@@ -587,7 +662,7 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
 	
 	$condicionestadoFiltroPagoprogrtamado="";
 	if($estadoFiltroPagoprogrtamado!="Todo"){
-		$condicionestadoFiltroPagoprogrtamado=" and g.estado!='Activo'";
+		$condicionestadoFiltroPagoprogrtamado=" and g.estado IN ('pendiente','solicitado')";
 	}
 	 
 
@@ -1587,10 +1662,11 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 
 	$cantidadCuotasSerie= 0;
 	foreach ($gastos_asociados as $value) {
-		if ($value['idgastos'] == $idgastos || $value['estado'] != 'Activo') {
+		$estadoCuotaSerie= strtolower(trim((string)$value['estado']));
+		if ($value['idgastos'] == $idgastos || $estadoCuotaSerie == 'pendiente' || $estadoCuotaSerie == 'solicitado') {
 			$cantidadCuotasSerie++;
 		}
-		if ($value['idgastos'] != $idgastos && ($value['estado'] != 'Activo')) {
+		if ($value['idgastos'] != $idgastos && ($estadoCuotaSerie == 'pendiente' || $estadoCuotaSerie == 'solicitado')) {
 			$sql = "UPDATE gastos SET estado='Inactivo', cod_usuarioFK_edit=? WHERE idgastos=?";
 			$stmtInactivarCuota = $mysqli->prepare($sql);
 			$idGastoCuota = $value['idgastos'];
@@ -2122,7 +2198,7 @@ function flujoGastoCalcularAdministracionCompartida($fecha1, $fecha2, $estado, $
 
 function flujoGastoEstaAnulado($gasto) {
 	$estado= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
-	return ($estado == 'rechazado' || $estado == 'inactivo');
+	return ($estado == 'rechazado' || $estado == 'inactivo' || $estado == 'baja');
 }
 
 function flujoGastoTablaExiste($mysqli, $tabla) {
@@ -2291,6 +2367,9 @@ function obtenerResumenCuotasProgramadas($gastosSerie) {
 
 function obtenerEtiquetaCuotaProgramada($gasto) {
 	$estado= strtolower(trim((string)$gasto['estado']));
+	if ($estado == 'baja') {
+		return array('tipo' => 'anulado', 'texto' => 'Dado de baja');
+	}
 	if (flujoGastoEstaAnulado($gasto)) {
 		return array('tipo' => 'anulado', 'texto' => 'Anulado');
 	}
@@ -2719,8 +2798,13 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 
 	// Obtenemos todos los motivos del sistema
 	$registrosMotivos= buscarabmmotivoingresoegreso('', 'activo')[4];
+	$motivosActivosPorCodigo= array();
+	foreach ($registrosMotivos as $motivoActivo) {
+		$codigoMotivoActivo= (string)$motivoActivo['cod_motivo_ingreso_egreso'];
+		$motivosActivosPorCodigo[$codigoMotivoActivo]= $motivoActivo;
+	}
 
-	// Recorremos los motivos y armamos la tabla base
+	// Preparamos las zonas de los motivos activos sin consultar gastos motivo por motivo.
 	foreach($registrosMotivos as $mot) {
 		// Se normaliza la categoria
 		$categoria= $mot['categoria'];
@@ -2738,42 +2822,46 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$registrosZona[$categoria][$mot['cod_motivo_ingreso_egreso']]= array();
 		}
 
-		$registros= buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$mot['cod_motivo_ingreso_egreso'], $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder);
-		$nroRegistro= count($registros);
-		$registroZona = array();
+	}
 
-		$styleName="tableRegistroSearch";
-		foreach ($registros as $valor) {
-			$monto=mb_convert_encoding((string)($valor['monto']), 'UTF-8', 'ISO-8859-1');
-			$categoria=mb_convert_encoding((string)($valor['categoria']), 'UTF-8', 'ISO-8859-1');
-			$cod_motivoIngresoEgresoFK= mb_convert_encoding((string)($valor['cod_motivoIngresoEgresoFK']), 'UTF-8', 'ISO-8859-1');
-			$cod_usuarioFK_edit= mb_convert_encoding((string)($valor['cod_usuarioFK_edit']), 'UTF-8', 'ISO-8859-1');
-			
-			if (empty($categoria)) {
-				$categoria= "sinCategoria";
-			}
-			
-			$registrosZona[$categoria][$cod_motivoIngresoEgresoFK][]= $valor;
-			if (flujoGastoEstadoComputableResumen($valor['estado'])) {
-				$totalGasto += $monto;
-			}
-
-			if (flujoGastoEstadoComputableResumen($valor['estado'])) {
-				switch ($categoria) {
-					case 'ingreso':
-						$totalZonaIngresos += $monto;
-						break;
-					case 'directo':
-						$totalZonaCostosDirectos += $monto;
-						break;
-					case 'operativo':
-						$totalZonaGastosOperativos += $monto;
-						break;
-					default:
-						$totalZonaSinCategorizar += $monto;
-						break;
-				}
-			}
+	// Una sola consulta trae los movimientos; luego se agrupan en memoria por motivo y categoria.
+	// Se conserva el comportamiento historico: el resumen solo muestra motivos activos.
+	$registros= buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,'', $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder);
+	$nroRegistro= count($registros);
+	foreach ($registros as $valor) {
+		$codMotivoRegistro= (string)$valor['cod_motivoIngresoEgresoFK'];
+		if (!isset($motivosActivosPorCodigo[$codMotivoRegistro])) {
+			continue;
+		}
+		if ($cod_motivoFK != '' && (string)$cod_motivoFK !== $codMotivoRegistro) {
+			continue;
+		}
+		$montoRegistro= intval($valor['monto']);
+		$categoriaRegistro= flujoGastoNormalizarCategoriaResumen($valor['categoria']);
+		if (!isset($registrosZona[$categoriaRegistro])) {
+			$registrosZona[$categoriaRegistro]= array();
+		}
+		if (!isset($registrosZona[$categoriaRegistro][$codMotivoRegistro])) {
+			$registrosZona[$categoriaRegistro][$codMotivoRegistro]= array();
+		}
+		$registrosZona[$categoriaRegistro][$codMotivoRegistro][]= $valor;
+		if (!flujoGastoEstadoComputableResumen($valor['estado'])) {
+			continue;
+		}
+		$totalGasto += $montoRegistro;
+		switch ($categoriaRegistro) {
+			case 'ingreso':
+				$totalZonaIngresos += $montoRegistro;
+				break;
+			case 'directo':
+				$totalZonaCostosDirectos += $montoRegistro;
+				break;
+			case 'operativo':
+				$totalZonaGastosOperativos += $montoRegistro;
+				break;
+			default:
+				$totalZonaSinCategorizar += $montoRegistro;
+				break;
 		}
 	}
 
@@ -2813,6 +2901,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	$registrosZona= $registrosZonaOrdenados;
 
  $seriesCuotasRenderizadas= array();
+ $styleName="tableRegistroSearch";
  foreach ($registrosZona as $zona => $cod_motivos) {
 	$titulo= "";
 	$totalZona= 0;
@@ -2874,7 +2963,9 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		} else if ($cod_motivo == 'sin_codigo') {
 			$titulo_motivo= "Sin concepto";
 		} else {
-			$titulo_motivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo)[4][0]["descripcion"];
+			$titulo_motivo= isset($motivosActivosPorCodigo[(string)$cod_motivo])
+				? $motivosActivosPorCodigo[(string)$cod_motivo]['descripcion']
+				: "Concepto #".$cod_motivo;
 		}
 		$idMotivoCollapse= preg_replace('/[^A-Za-z0-9_-]/', '_', 'zonaMotivos'.$idZona.'_'.$cod_motivo);
 		flujoGastoAsegurarConceptoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo);

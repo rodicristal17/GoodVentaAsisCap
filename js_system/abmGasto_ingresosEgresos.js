@@ -1305,6 +1305,65 @@ function aprobarMovimiento(opcion, elemento= null) {
 	});
 }
 
+function darBajaCuotaProgramada(evento, idgastos, alcance) {
+	if (evento) { evento.stopPropagation(); }
+	var esSerie = alcance == 'serie';
+	var esHilo = alcance == 'hilo';
+	var mensaje = esHilo
+		? 'Se daran de baja TODAS las cuotas pendientes de pago vinculadas a este hilo. Las cuotas pagadas y el hilo no se modificaran. ¿Continuar?'
+		: (esSerie ? 'Se daran de baja esta cuota y todas las siguientes de la misma serie. Las cuotas pagadas no se modificaran. ¿Continuar?'
+		: 'Se dara de baja esta cuota programada. No volvera a sumar como pendiente. ¿Continuar?');
+	if (!confirm(mensaje)) { return; }
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append('useru', userid);
+	datos.append('passu', passuser);
+	datos.append('navegador', navegador);
+	datos.append('funt', 'darBajaCuotaProgramada');
+	datos.append('idgastos', idgastos);
+	datos.append('alcance', esHilo ? 'hilo' : (esSerie ? 'serie' : 'cuota'));
+	verCerrarEfectoCargando('1');
+	$.ajax({
+		data: datos, url: '/GoodVentaAsisCap/php_system/abmgasto.php', type: 'post',
+		cache: false, contentType: false, processData: false,
+		error: function (jqXHR, textstatus) {
+			verCerrarEfectoCargando('');
+			manejadordeerroresjquery(jqXHR.status, textstatus, 'abmventana');
+		},
+		success: function (responseText) {
+			verCerrarEfectoCargando('');
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta['1'] != 'exito') {
+					ver_vetana_informativa(respuesta['2'] || 'No se pudo dar de baja la cuota.');
+					return;
+				}
+				ver_vetana_informativa((respuesta['2'] || 1) + ' cuota(s) dadas de baja.', '', 'info');
+				if (esHilo && extractoActual) {
+					var idExtractoRecargar = extractoActual;
+					extractoActual = null;
+					mostrarExtractoGasto(idExtractoRecargar);
+				}
+				if (typeof buscarInterConsultasYContenido == 'function' && typeof cod_interConsulta != 'undefined' && cod_interConsulta) {
+					buscarInterConsultasYContenido(cod_interConsulta);
+				}
+				if (typeof buscarabmGasto == 'function') { buscarabmGasto(); }
+			} catch (error) {
+				ver_vetana_informativa('La respuesta del servidor no es valida.');
+			}
+		}
+	});
+}
+
+function darBajaCuotasPendientesHilo(evento) {
+	if (evento) { evento.stopPropagation(); }
+	if (!extractoActual) {
+		ver_vetana_informativa('No hay un extracto seleccionado.');
+		return;
+	}
+	darBajaCuotaProgramada(evento, extractoActual, 'hilo');
+}
+
 function seleccionarGastosAsociados(element) {
 	obtenerdatosabmGasto(element);
 	
@@ -2000,6 +2059,8 @@ function mostrarExtractoGasto(id_gastos) {
 	document.getElementById('tableExtractoGastosInterConsulta').innerHTML= paginacargando;
 	document.getElementById('tituloExtractoGastosInterconsulta').innerHTML= "Cargando...";
 	document.getElementById('tableExtractoGastosInterConsultaTotal').innerHTML= "0";
+	var botonBajaHilo = document.getElementById('btnBajaCuotasPendientesHilo');
+	if (botonBajaHilo) { botonBajaHilo.style.display = 'none'; }
 
 	var datos = new FormData();
 	obtener_datos_user();
@@ -2059,6 +2120,11 @@ function mostrarExtractoGasto(id_gastos) {
 				   document.getElementById('tituloExtractoGastosInterconsulta').innerHTML= "Extracto de " + datos["4"];
 				   document.getElementById('tableExtractoGastosInterConsulta').innerHTML= datos["2"];
 				   document.getElementById('tableExtractoGastosInterConsultaTotal').innerHTML= datos["5"];
+				   var botonBajaHilo = document.getElementById('btnBajaCuotasPendientesHilo');
+				   if (botonBajaHilo) {
+					   var montoPendiente = parseInt(((datos["5"] || "0") + "").replace(/\./g, '').replace(/,/g, ''), 10) || 0;
+					   botonBajaHilo.style.display = montoPendiente > 0 ? 'inline-flex' : 'none';
+				   }
 				}
 			} catch (error) {
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")

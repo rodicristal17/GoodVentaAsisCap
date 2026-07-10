@@ -13100,6 +13100,7 @@ text-align: justify;
 
 #tituloExtractoGastosInterconsulta{
   min-width: 0;
+  margin-right: auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -13229,6 +13230,24 @@ text-align: justify;
   font-size: 10pt;
   line-height: 1;
 }
+
+#collapseExtracto .extracto-baja-cuotas-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,.65);
+  border-radius: 999px;
+  background: #9f1239;
+  color: #fff;
+  font-size: 9pt;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#collapseExtracto .extracto-baja-cuotas-btn:hover { background: #881337; }
 
 #collapseExtracto .flujo-ueno-status {
   display: block;
@@ -13432,8 +13451,8 @@ text-align: justify;
 #divAbmDetallesInterConsulta .interconsulta-detail-modal {
   width: 95vw !important;
   max-width: 1400px;
-  height: 90vh;
-  max-height: 90vh;
+  height: 96vh;
+  max-height: 96vh;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -14073,7 +14092,7 @@ text-align: justify;
   min-height: 0;
   max-height: none;
   border: none !important;
-  padding: 16px;
+  padding: 10px 14px;
   background: #f6f9fc;
   border-radius: 0 0 14px 14px;
   overflow-y: auto;

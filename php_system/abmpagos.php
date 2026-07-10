@@ -2943,7 +2943,13 @@ $mysqli=conectar_al_servidor();
 	 }
 	 if($local!=""){
 	   $localSql = $esc($local);
-	   $sqlFiltro .=" and (vt.cod_local='".$localSql."' or (Select Nombre from local l where l.cod_local=vt.cod_local limit 1) like '%".$localSql."%')";		
+	   if (ctype_digit((string)$local)) {
+		   // El selector envia el codigo numerico: esta forma permite usar fk_venta_local1.
+		   $sqlFiltro .=" and vt.cod_local='".$localSql."'";
+	   } else {
+		   // Se mantiene la busqueda historica por nombre para otros consumidores de Arqueo().
+		   $sqlFiltro .=" and (Select Nombre from local l where l.cod_local=vt.cod_local limit 1) like '%".$localSql."%'";
+	   }
 	 }
 	 if($cliente!=""){
 	   $sqlFiltro .=" and (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK limit 1) like '%".$esc($cliente)."%'";		

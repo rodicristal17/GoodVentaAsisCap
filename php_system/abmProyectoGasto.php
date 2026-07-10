@@ -109,6 +109,9 @@
                 case 'Rechazado':
                     $estado .= 'secondary">'.$gast['estado'].'</span>';
                     break;
+                case 'Baja':
+                    $estado .= 'secondary">Dado de baja</span>';
+                    break;
                 case 'pendiente':
                     $fechaActual = date('Y-m-d');
                     $fechaGasto = date('Y-m-d', strtotime($gast['fecha']));
