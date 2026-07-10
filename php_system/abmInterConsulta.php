@@ -7,10 +7,11 @@
     include_once("subir_foto_base64.php");
     include_once("abmgasto.php");
     require_once("abmDictamen.php");
+    require_once("interconsulta_seguimiento_paciente_helper.php");
 
     date_default_timezone_set('America/Asuncion');
 
-    function normalizarLimiteListadoInterConsulta($limite, $maximo=30) {
+    function normalizarLimiteListadoInterConsulta($limite, $maximo=60) {
         $limite = trim((string)$limite);
         if ($limite === "" || $limite === "0") {
             return (string)$maximo;
@@ -21,6 +22,82 @@
             return trim($cantidad.$offset);
         }
         return (string)$maximo;
+    }
+
+    function sanitizarAliasSqlInterConsulta($alias) {
+        return preg_replace('/[^a-zA-Z0-9_]/', '', (string)$alias);
+    }
+
+    function condicionCreditoPendienteHiloInterConsulta($aliasCredito) {
+        $aliasCredito = sanitizarAliasSqlInterConsulta($aliasCredito);
+        return "(
+            ((IFNULL(".$aliasCredito.".Monto,0)-IFNULL(".$aliasCredito.".descuento,0))-IFNULL((SELECT SUM(pg.Monto) FROM pago pg WHERE pg.cod_creditoFK=".$aliasCredito.".idcredito AND pg.tipo='Pago Cuota'),0)) > 0
+            OR
+            ((IFNULL(".$aliasCredito.".totalinteres,0)+IFNULL(".$aliasCredito.".deudaInteres,0))-IFNULL((SELECT SUM(pg.Monto) FROM pago pg WHERE pg.cod_creditoFK=".$aliasCredito.".idcredito AND pg.tipo='Interes'),0)) > 0
+        )";
+    }
+
+    function condicionCreditoActivoHiloInterConsulta($aliasCredito) {
+        $aliasCredito = sanitizarAliasSqlInterConsulta($aliasCredito);
+        return "UPPER(TRIM(IFNULL(".$aliasCredito.".Esado,''))) <> 'INACTIVO'";
+    }
+
+    function condicionCreditoVinculadoHiloInterConsulta($aliasCredito, $aliasInterConsulta= "ic") {
+        $aliasCredito = sanitizarAliasSqlInterConsulta($aliasCredito);
+        $aliasInterConsulta = sanitizarAliasSqlInterConsulta($aliasInterConsulta);
+        return "(".$aliasCredito.".cod_venta = ".$aliasInterConsulta.".cod_ventaFK
+            OR EXISTS (
+                SELECT 1
+                FROM interconsulta_paciente_venta ipv_credito
+                WHERE ipv_credito.cod_interConsultaFK = ".$aliasInterConsulta.".cod_interConsulta
+                    AND ipv_credito.estado = 'activo'
+                    AND ipv_credito.cod_ventaFK = ".$aliasCredito.".cod_venta
+                LIMIT 1
+            ))";
+    }
+
+    function saldoPendienteCreditoHiloInterConsulta($aliasCredito) {
+        $aliasCredito = sanitizarAliasSqlInterConsulta($aliasCredito);
+        return "(
+            GREATEST(((IFNULL(".$aliasCredito.".Monto,0)-IFNULL(".$aliasCredito.".descuento,0))-IFNULL((SELECT SUM(pg.Monto) FROM pago pg WHERE pg.cod_creditoFK=".$aliasCredito.".idcredito AND pg.tipo='Pago Cuota'),0)),0)
+            +
+            GREATEST(((IFNULL(".$aliasCredito.".totalinteres,0)+IFNULL(".$aliasCredito.".deudaInteres,0))-IFNULL((SELECT SUM(pg.Monto) FROM pago pg WHERE pg.cod_creditoFK=".$aliasCredito.".idcredito AND pg.tipo='Interes'),0)),0)
+        )";
+    }
+
+    function condicionAgendaVinculadaHiloInterConsulta($aliasAgenda, $aliasInterConsulta= "ic") {
+        $aliasAgenda = sanitizarAliasSqlInterConsulta($aliasAgenda);
+        $aliasInterConsulta = sanitizarAliasSqlInterConsulta($aliasInterConsulta);
+        return "((
+                ".$aliasAgenda.".cod_ventaFK IS NOT NULL
+                AND (
+                    ".$aliasAgenda.".cod_ventaFK = ".$aliasInterConsulta.".cod_ventaFK
+                    OR EXISTS (
+                        SELECT 1
+                        FROM interconsulta_paciente_venta ipv_agenda
+                        WHERE ipv_agenda.cod_interConsultaFK = ".$aliasInterConsulta.".cod_interConsulta
+                            AND ipv_agenda.estado = 'activo'
+                            AND ipv_agenda.cod_ventaFK = ".$aliasAgenda.".cod_ventaFK
+                        LIMIT 1
+                    )
+                )
+            )
+            OR (
+                ".$aliasAgenda.".id_paciente IS NOT NULL
+                AND (
+                    ".$aliasAgenda.".id_paciente = (SELECT vt_ag.cod_clienteFK FROM venta vt_ag WHERE vt_ag.cod_venta = ".$aliasInterConsulta.".cod_ventaFK LIMIT 1)
+                    OR ".$aliasAgenda.".id_paciente = (SELECT ip_ag.cod_clienteFK_principal FROM interconsulta_paciente ip_ag WHERE ip_ag.cod_interConsultaFK = ".$aliasInterConsulta.".cod_interConsulta AND ip_ag.estado = 'activo' LIMIT 1)
+                    OR EXISTS (
+                        SELECT 1
+                        FROM interconsulta_paciente_venta ipv_agpac
+                        INNER JOIN venta vt_agpac ON vt_agpac.cod_venta = ipv_agpac.cod_ventaFK
+                        WHERE ipv_agpac.cod_interConsultaFK = ".$aliasInterConsulta.".cod_interConsulta
+                            AND ipv_agpac.estado = 'activo'
+                            AND vt_agpac.cod_clienteFK = ".$aliasAgenda.".id_paciente
+                        LIMIT 1
+                    )
+                )
+            ))";
     }
 
     function normalizarTipoHiloInterConsulta($valor) {
@@ -191,16 +268,48 @@
                     'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
-                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 30;
-                $limite= normalizarLimiteListadoInterConsulta($limite, 30);
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 60;
+                $limite= normalizarLimiteListadoInterConsulta($limite, 60);
 
                 obtenerVistaInterConsulta($filtros, $limite);
+                break;
+            case 'crearHilosSeguimientoPacienteHistorico':
+                $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
+                $resultado= seguimientoPacienteCrearHilosHistoricos($user, $limite);
+                echo json_encode(array("1" => (!empty($resultado["ok"]) ? "exito" : "error"), "2" => $resultado));
+                break;
+            case 'previsualizarUnificacionSeguimientoPaciente':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $resultado= seguimientoPacientePrevisualizarUnificacionHilo($cod_interConsulta);
+                echo json_encode(array(
+                    "1" => (!empty($resultado["ok"]) ? "exito" : "error"),
+                    "2" => seguimientoPacienteValorSalidaJson($resultado)
+                ));
+                break;
+            case 'unificarSeguimientoPaciente':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $confirmar_conflicto= isset($_POST['confirmar_conflicto']) ? mb_convert_encoding((string)($_POST['confirmar_conflicto']), 'ISO-8859-1', 'UTF-8') : "0";
+                $resultado= seguimientoPacienteEjecutarUnificacionHilo($cod_interConsulta, $user, $confirmar_conflicto == "1");
+                echo json_encode(array(
+                    "1" => (!empty($resultado["ok"]) ? "exito" : "error"),
+                    "2" => seguimientoPacienteValorSalidaJson($resultado)
+                ));
                 break;
             case 'buscarInterConsultasYContenido':
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
                 $nombre_usuario= isset($_POST['nombre_usuario']) ? mb_convert_encoding((string)($_POST['nombre_usuario']), 'ISO-8859-1', 'UTF-8') : null;
                 
+                $normalizacion_seguimiento = array();
+                if (!empty($cod_interConsulta) && function_exists('seguimientoPacienteNormalizarHiloAutomatico')) {
+                    $normalizacion_seguimiento = seguimientoPacienteNormalizarHiloAutomatico($cod_interConsulta, $user);
+                    if (!empty($normalizacion_seguimiento["ok"])
+                        && empty($normalizacion_seguimiento["conflicto"])
+                        && !empty($normalizacion_seguimiento["cod_interConsulta_destino"])) {
+                        $cod_interConsulta = seguimientoPacienteEntero($normalizacion_seguimiento["cod_interConsulta_destino"]);
+                    }
+                }
+
                 $filtros= array(
                     "cod_ventaFK" => $cod_ventaFK,
                     "cod_interConsulta" => $cod_interConsulta,
@@ -209,10 +318,18 @@
 
                 $limite= isset($_POST['limite']) ? mb_convert_encoding((string)($_POST['limite']), 'ISO-8859-1', 'UTF-8') : 0;
 
-                obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario);
+                obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario, $normalizacion_seguimiento);
                 break;
             case 'buscarUsuariosMenciones':
                 echo json_encode(array("1" => "exito", "2" => buscarUsuarios()));
+                break;
+            case 'buscarVentasSeguimientoPaciente':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
+                $resultado= obtenerVentasSeguimientoPacienteInterConsulta($cod_interConsulta, $user);
+                echo json_encode(array(
+                    "1" => (!empty($resultado["ok"]) ? "exito" : "error"),
+                    "2" => $resultado
+                ));
                 break;
             case 'buscarFlujoGastosInterConsulta':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
@@ -236,6 +353,17 @@
                 $cod_ventaFK= isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= (isset($_POST['cod_localFK']) && is_numeric($_POST['cod_localFK'])) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $monto_limite= (isset($_POST['monto_limite']) ? mb_convert_encoding((string)($_POST['monto_limite']), 'ISO-8859-1', 'UTF-8') : null);
+
+                if (seguimientoPacienteEntero($cod_ventaFK) > 0) {
+                    echo json_encode(array(
+                        "1" => "error",
+                        "2" => array(
+                            "motivo" => "seguimiento_automatico_venta",
+                            "mensaje" => "El seguimiento por paciente se genera automaticamente desde la venta. Use el hilo maestro existente."
+                        )
+                    ));
+                    break;
+                }
 
                 $cod_interConsulta= abmInterConsulta($cod_interConsulta, $asunto, $observacion, $estado, $tipo, $cod_ventaFK, $user, $user, $cod_localFK, $monto_limite);
                 echo json_encode(array("1" => "exito", "2" => $cod_interConsulta));
@@ -758,7 +886,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         </div>';
     }
 
-    function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario) {
+    function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario, $normalizacion_seguimiento = array()) {
         $pagina = "";
         $limiteMensajes= 5;
         $totalCantMensaje= 0;
@@ -776,6 +904,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
 
         foreach ($registrosInterc as $valueInter) {
+            if (!empty($normalizacion_seguimiento["conflicto"])) {
+                $valueInter["seguimiento_conflicto"] = 1;
+                $valueInter["seguimiento_detalle_conflicto"] = isset($normalizacion_seguimiento["detalle_conflicto"]) ? $normalizacion_seguimiento["detalle_conflicto"] : "La cedula esta asociada a mas de un paciente.";
+            }
+            $valueInter["asunto"] = asuntoVistaSeguimientoPacienteInterConsulta($valueInter);
             // Se crea el encabezado
             $pagina.= '<div>';
             
@@ -958,7 +1091,152 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $totalCantMensaje += count($totalCantMensaje2);
         }   
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $filtros['cod_ventaFK'], "4" => $valueInter, "5" => $totalCantMensaje, "6" => $mencionesElemento, "7" => $paginaOpciones));
+        echo json_encode(array(
+            "1" => "exito",
+            "2" => $pagina,
+            "3" => $filtros['cod_ventaFK'],
+            "4" => $valueInter,
+            "5" => $totalCantMensaje,
+            "6" => $mencionesElemento,
+            "7" => $paginaOpciones,
+            "8" => seguimientoPacienteValorSalidaJson($normalizacion_seguimiento)
+        ));
+    }
+
+    function interConsultaFlujoGastoMonto($monto) {
+        $numero= intval(preg_replace('/[^\d-]/', '', (string)$monto));
+        return number_format($numero, 0, ',', '.')." Gs.";
+    }
+
+    function interConsultaFlujoGastoFecha($fecha) {
+        if (function_exists('flujoGastoFechaCorta')) {
+            return flujoGastoFechaCorta($fecha);
+        }
+        $fechaObj= DateTime::createFromFormat('!Y-m-d', substr((string)$fecha, 0, 10));
+        return ($fechaObj ? $fechaObj->format('d/m/Y') : flujoGastoTextoSeguro($fecha));
+    }
+
+    function interConsultaFlujoGastoEstadoPagoUnico($gasto) {
+        $estado= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+        $fechaObj= DateTime::createFromFormat('!Y-m-d', substr((string)(isset($gasto['fecha']) ? $gasto['fecha'] : ''), 0, 10));
+        $hoy= new DateTime('today');
+
+        if ($estado == 'activo') {
+            return array(
+                'tipo' => 'liquidado',
+                'texto' => 'Liquidado',
+                'detalle' => 'Pago unico',
+                'icono' => '&#10003;',
+            );
+        }
+        if ($estado == 'rechazado' || $estado == 'inactivo') {
+            return array(
+                'tipo' => 'observado',
+                'texto' => ucfirst($estado),
+                'detalle' => 'Pago unico',
+                'icono' => '!',
+            );
+        }
+        if ($estado == 'solicitado' || $estado == 'pendiente') {
+            return array(
+                'tipo' => ($fechaObj && $fechaObj <= $hoy ? 'vencido' : 'pendiente'),
+                'texto' => ($fechaObj && $fechaObj <= $hoy ? 'Vencido' : 'Pendiente'),
+                'detalle' => 'Pago unico',
+                'icono' => '&#9203;',
+            );
+        }
+
+        return array(
+            'tipo' => 'sin-datos',
+            'texto' => 'Sin datos',
+            'detalle' => 'Pago unico',
+            'icono' => '?',
+        );
+    }
+
+    function interConsultaFlujoGastoEstadoCuotas($gastosSerie) {
+        $resumen= obtenerResumenCuotasProgramadas($gastosSerie);
+        $avance= intval($resumen['pagadas'])."/".intval($resumen['total']);
+
+        if (intval($resumen['total']) <= 0) {
+            return array(
+                'tipo' => 'sin-datos',
+                'texto' => 'Sin cuotas',
+                'detalle' => '',
+                'icono' => '?',
+                'resumen' => $resumen,
+            );
+        }
+        if (intval($resumen['pagadas']) >= intval($resumen['total'])) {
+            return array(
+                'tipo' => 'liquidado',
+                'texto' => 'Liquidado',
+                'detalle' => $avance,
+                'icono' => '&#10003;',
+                'resumen' => $resumen,
+            );
+        }
+        if (intval($resumen['vencidas']) > 0) {
+            return array(
+                'tipo' => 'vencido',
+                'texto' => 'Cuota vencida',
+                'detalle' => $avance,
+                'icono' => '!',
+                'resumen' => $resumen,
+            );
+        }
+        return array(
+            'tipo' => 'en-cuotas',
+            'texto' => 'En cuotas',
+            'detalle' => $avance,
+            'icono' => '&#9203;',
+            'resumen' => $resumen,
+        );
+    }
+
+    function interConsultaFlujoGastoFicha($gasto, $estadoVisual, $gastosSerie= array()) {
+        $idGasto= isset($gasto['idgastos']) ? $gasto['idgastos'] : '';
+        $descripcion= trim((string)(isset($gasto['descripcion']) ? $gasto['descripcion'] : ''));
+        if ($descripcion == "" && isset($gasto['motivo'])) {
+            $descripcion= trim((string)$gasto['motivo']);
+        }
+        if ($descripcion == "") {
+            $descripcion= "Gasto #".$idGasto;
+        }
+
+        $total= intval(isset($gasto['monto']) ? $gasto['monto'] : 0);
+        if (count($gastosSerie) > 0) {
+            $total= 0;
+            foreach ($gastosSerie as $gastoSerie) {
+                $total += intval(isset($gastoSerie['monto']) ? $gastoSerie['monto'] : 0);
+            }
+        }
+
+        $detalleEstado= trim((string)(isset($estadoVisual['detalle']) ? $estadoVisual['detalle'] : ''));
+        $textoBadge= flujoGastoTextoSeguro($estadoVisual['texto']);
+        if ($detalleEstado != "") {
+            $textoBadge .= " <span>&middot;</span> ".flujoGastoTextoSeguro($detalleEstado);
+        }
+
+        $metaExtra= "";
+        if (isset($estadoVisual['resumen']) && !empty($estadoVisual['resumen']['proximo'])) {
+            $metaExtra= "<span>Prox. venc.: ".flujoGastoTextoSeguro($estadoVisual['resumen']['proximo'])."</span>";
+        } else if (!empty($gasto['fecha'])) {
+            $metaExtra= "<span>Fecha: ".interConsultaFlujoGastoFecha($gasto['fecha'])."</span>";
+        }
+
+        $titulo= flujoGastoTextoSeguro($estadoVisual['texto'].($detalleEstado != "" ? " - ".$detalleEstado : ""));
+
+        return '<button type="button" class="btn-menu-extracto interconsulta-flow-expense interconsulta-flow-expense--'.flujoGastoTextoSeguro($estadoVisual['tipo']).' w-100" data-id="'.flujoGastoTextoSeguro($idGasto).'" title="'.$titulo.'" onclick="mostrarExtractoGasto('.intval($idGasto).')">
+            <span class="interconsulta-flow-expense__top">
+                <span class="interconsulta-flow-expense__title">'.flujoGastoTextoSeguro($descripcion).'</span>
+                <span class="interconsulta-flow-expense__badge"><span class="interconsulta-flow-expense__icon">'.$estadoVisual['icono'].'</span>'.$textoBadge.'</span>
+            </span>
+            <span class="interconsulta-flow-expense__meta">
+                <span>Total: '.interConsultaFlujoGastoMonto($total).'</span>
+                '.$metaExtra.'
+            </span>
+        </button>';
     }
 
     function obtenerVistaFlujoGastosInterConsulta($cod_interConsulta) {
@@ -968,37 +1246,39 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
         $gastosElemento= "";
         $registrosGastos = buscarGasto("","","",'','','Egreso','','','true','', $cod_interConsulta, '', '','','');
-        $colorFondo= "";
         foreach ($registrosGastos as $key => $gast) {
             $gasto= $gast;
+            $gastosSerie= array();
             if (!empty($registrosGastos[$key]['mostrado'])) {continue;}
 
             $registrosGastos[$key]['mostrado'] = true;
 
-            if ($gasto['modalidad'] == 'credito') {
+            if (strtolower(trim((string)$gasto['modalidad'])) == 'credito') {
                 // Evita mostrar cuotas repetidas y conserva el gasto principal.
                 $gastos_asociados= obtenerGastosAsociados($gasto["idgastos"]);
                 if (empty($gastos_asociados)) {continue;}
-                
-                $colorFondo= "background-color: #6c757d";
+
+                $gastosSerie= function_exists('filtrarGastosCuotasProgramadas') ? filtrarGastosCuotasProgramadas($gastos_asociados) : $gastos_asociados;
+                if (count($gastosSerie) < 1) {
+                    $gastosSerie= $gastos_asociados;
+                }
+
                 foreach ($gastos_asociados as $value) {
                     foreach ($registrosGastos as &$value2) {
                         if ($value['idgastos'] == $value2['idgastos']) {
                             $value2['mostrado'] = true;
                         }
                     }
-                    if (($value['estado'] != 'Activo' && $value['estado'] != 'Rechazado')) {
-                        $colorFondo= '';
-                    }
                     unset($value2);
                 }
 
-                $gasto= $gastos_asociados[0];
+                $gasto= $gastosSerie[0];
+                $estadoVisual= interConsultaFlujoGastoEstadoCuotas($gastosSerie);
             } else {
-                $colorFondo= "background-color: #6c757d";
+                $estadoVisual= interConsultaFlujoGastoEstadoPagoUnico($gasto);
             }
 
-            $gastosElemento.= '<button class="btn-menu-extracto w-100" style="'.$colorFondo.'" data-id="'.$gasto['idgastos'].'" onclick="mostrarExtractoGasto('.$gasto['idgastos'].')">'.$gasto['descripcion'].'</button>';
+            $gastosElemento.= interConsultaFlujoGastoFicha($gasto, $estadoVisual, $gastosSerie);
         }
 
         if (empty($gastosElemento)) {
@@ -1278,12 +1558,441 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         </div>';
     }
 
+    function renderAtributosAccionSeguimientoInterConsulta($accion= "", $datos= array()) {
+        $accion = trim((string)$accion);
+        if ($accion == "") {
+            return "";
+        }
+
+        $atributos = ' data-hilo-action="'.htmlspecialchars($accion, ENT_QUOTES, 'UTF-8').'"';
+        foreach ($datos as $clave => $valor) {
+            $clave = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$clave);
+            if ($clave == "") {
+                continue;
+            }
+            $atributos .= ' data-'.$clave.'="'.htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8').'"';
+        }
+        return $atributos;
+    }
+
+    function renderResumenSeguimientoInterConsulta($clase, $principal, $detalle= "", $titulo= "", $accion= "", $datosAccion= array()) {
+        $tituloFinal = $titulo != "" ? $titulo : trim($principal." ".$detalle);
+        $tituloSeguro = htmlspecialchars($tituloFinal, ENT_QUOTES, 'UTF-8');
+        $principalSeguro = htmlspecialchars($principal, ENT_QUOTES, 'UTF-8');
+        $atributosInteraccion = 'title="'.$tituloSeguro.'" tabindex="0" role="button"';
+        if (trim((string)$accion) != "") {
+            $atributosInteraccion .= renderAtributosAccionSeguimientoInterConsulta($accion, $datosAccion);
+        } else {
+            $atributosInteraccion .= ' data-hilo-alert="1" data-hilo-alert-title="'.$principalSeguro.'" data-hilo-alert-detail="'.$tituloSeguro.'"';
+        }
+        return '<div class="interconsulta-status-pill interconsulta-status-pill--'.$clase.'" '.$atributosInteraccion.'>'
+            .'<strong>'.htmlspecialchars($principal, ENT_QUOTES, 'UTF-8').'</strong>'
+            .($detalle != "" ? '<span>'.htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8').'</span>' : '')
+            .'</div>';
+    }
+
+    function obtenerInicialesInterConsulta($nombre, $fallback= "AG") {
+        $texto = trim(preg_replace('/\s+/', ' ', strip_tags((string)$nombre)));
+        if ($texto == "") {
+            return $fallback;
+        }
+        $partes = preg_split('/\s+/', $texto);
+        $iniciales = "";
+        foreach ($partes as $parte) {
+            if ($parte == "") {
+                continue;
+            }
+            $iniciales .= mb_substr($parte, 0, 1, 'UTF-8');
+            if (mb_strlen($iniciales, 'UTF-8') >= 2) {
+                break;
+            }
+        }
+        return mb_strtoupper($iniciales != "" ? $iniciales : $fallback, 'UTF-8');
+    }
+
+    function renderResumenCitaSeguimientoInterConsulta($clase, $fechaHora, $estado, $usuarioAgenda= "", $urlUsuarioAgenda= "", $titulo= "", $idAgenda= "", $fechaAgenda= "") {
+        $fechaHora = trim((string)$fechaHora);
+        $estado = trim((string)$estado);
+        $usuarioAgenda = limitarTextoListadoInterConsulta($usuarioAgenda, 28);
+        $urlUsuarioAgenda = trim((string)$urlUsuarioAgenda);
+        $idAgenda = trim((string)$idAgenda);
+        $fechaAgenda = trim((string)$fechaAgenda);
+        $detalleLinea = $estado != "" ? $estado : "Agendado";
+        if ($usuarioAgenda != "") {
+            $detalleLinea .= " · ".$usuarioAgenda;
+        }
+        $tituloFinal = $titulo != "" ? $titulo : trim($fechaHora." ".$detalleLinea);
+        $tituloSeguro = htmlspecialchars($tituloFinal, ENT_QUOTES, 'UTF-8');
+        $fechaHoraSeguro = htmlspecialchars($fechaHora != "" ? $fechaHora : "Cita agendada", ENT_QUOTES, 'UTF-8');
+        $detalleSeguro = htmlspecialchars($detalleLinea, ENT_QUOTES, 'UTF-8');
+        $avatarTitulo = $usuarioAgenda != "" ? "Agendado por ".$usuarioAgenda : "Agendamiento";
+
+        $avatarHtml = "";
+        if ($urlUsuarioAgenda != "") {
+            $avatarHtml = '<img src="'.htmlspecialchars($urlUsuarioAgenda, ENT_QUOTES, 'UTF-8').'" alt="Foto de '.htmlspecialchars($avatarTitulo, ENT_QUOTES, 'UTF-8').'">';
+        } else {
+            $avatarHtml = '<span>'.htmlspecialchars(obtenerInicialesInterConsulta($usuarioAgenda, "AG"), ENT_QUOTES, 'UTF-8').'</span>';
+        }
+
+        $atributosInteraccion = 'title="'.$tituloSeguro.'" tabindex="0" role="button"';
+        if ($idAgenda != "") {
+            $atributosInteraccion .= renderAtributosAccionSeguimientoInterConsulta('abrir_cita', array(
+                'agenda-id' => $idAgenda,
+                'agenda-fecha' => $fechaAgenda
+            ));
+        } else {
+            $atributosInteraccion .= ' data-hilo-alert="1" data-hilo-alert-title="'.$fechaHoraSeguro.'" data-hilo-alert-detail="'.$tituloSeguro.'"';
+        }
+
+        return '<div class="interconsulta-appointment-summary interconsulta-appointment-summary--'.$clase.'" '.$atributosInteraccion.'>'
+            .'<span class="interconsulta-appointment-summary__avatar" title="'.htmlspecialchars($avatarTitulo, ENT_QUOTES, 'UTF-8').'">'
+                .$avatarHtml
+                .'<span class="interconsulta-appointment-summary__calendar"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>'
+            .'</span>'
+            .'<span class="interconsulta-appointment-summary__body">'
+                .'<strong>'.$fechaHoraSeguro.'</strong>'
+                .'<span>'.$detalleSeguro.'</span>'
+            .'</span>'
+            .'</div>';
+    }
+
+    function renderResumenNoAplicaInterConsulta($detalle= "Hilo administrativo") {
+        $titulo = "Este dato no aplica para hilos sin paciente vinculado.";
+        return '<div class="interconsulta-status-pill interconsulta-status-pill--not-applicable" title="'.htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8').'">'
+            .'<strong>-</strong>'
+            .'<span>'.htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8').'</span>'
+            .'</div>';
+    }
+
+    function obtenerVentasSeguimientoPacienteInterConsulta($cod_interConsulta, $cod_usuarioFK) {
+        $cod_interConsulta = seguimientoPacienteEntero($cod_interConsulta);
+        if ($cod_interConsulta <= 0) {
+            return array("ok" => false, "mensaje" => "No se recibio el hilo a consultar.");
+        }
+
+        $registrosInterc = obtenerInterConsulta(array(
+            "cod_interConsulta" => $cod_interConsulta,
+            "cod_usuarioFK" => $cod_usuarioFK
+        ), 1);
+
+        if (count($registrosInterc) == 0) {
+            return array("ok" => false, "mensaje" => "Usted no tiene acceso a esta conversacion.");
+        }
+
+        $hilo = $registrosInterc[0];
+        $codCliente = isset($hilo["cod_clienteFK"]) ? seguimientoPacienteEntero($hilo["cod_clienteFK"]) : 0;
+        $cedula = isset($hilo["cedula"]) ? trim((string)$hilo["cedula"]) : "";
+        $cedulaNormalizada = seguimientoPacienteNormalizarCedula($cedula);
+        $nombrePaciente = isset($hilo["nombre_persona"]) ? trim((string)$hilo["nombre_persona"]) : "";
+
+        if ($codCliente <= 0 && $cedulaNormalizada == "") {
+            return array(
+                "ok" => true,
+                "mensaje" => "El hilo no tiene paciente vinculado.",
+                "paciente" => array("cod_cliente" => "", "nombre" => "", "cedula" => ""),
+                "ventas" => array()
+            );
+        }
+
+        $mysqli = conectar_al_servidor();
+        $codInterConsultaSql = (int)$cod_interConsulta;
+        $cedulaSql = $mysqli->real_escape_string($cedulaNormalizada);
+        $exprCedulaVenta = seguimientoPacienteSqlNormalizar("cl_sel.ci_cliente");
+        $condicionCreditoActivo = condicionCreditoActivoHiloInterConsulta("cr_sel");
+        $saldoPendienteCredito = saldoPendienteCreditoHiloInterConsulta("cr_sel");
+        $condicionCreditoPendiente = "(".$saldoPendienteCredito." > 0)";
+        $subVentasVinculadas = "(SELECT ipv_sel.cod_ventaFK
+                FROM interconsulta_paciente_venta ipv_sel
+                WHERE ipv_sel.cod_interConsultaFK = ".$codInterConsultaSql."
+                    AND ipv_sel.estado = 'activo'
+            UNION
+            SELECT ic_sel.cod_ventaFK
+                FROM interconsulta ic_sel
+                WHERE ic_sel.cod_interConsulta = ".$codInterConsultaSql."
+                    AND IFNULL(ic_sel.cod_ventaFK,0) > 0)";
+
+        $filtroPaciente = "";
+        if ($cedulaNormalizada != "") {
+            $filtroPaciente = $exprCedulaVenta." = '".$cedulaSql."'";
+        } else if ($codCliente > 0) {
+            $filtroPaciente = "vt_sel.cod_clienteFK = ".(int)$codCliente;
+        }
+
+        $wherePaciente = "vt_sel.cod_venta IN ".$subVentasVinculadas;
+        if ($filtroPaciente != "") {
+            $wherePaciente .= " OR (".$filtroPaciente." AND EXISTS (
+                SELECT 1
+                FROM credito cr_pend
+                WHERE cr_pend.cod_venta = vt_sel.cod_venta
+                    AND ".condicionCreditoActivoHiloInterConsulta("cr_pend")."
+                    AND ".saldoPendienteCreditoHiloInterConsulta("cr_pend")." > 0
+                LIMIT 1
+            ))";
+        }
+
+        $sql = "SELECT vt_sel.cod_venta,
+                vt_sel.num_factura,
+                vt_sel.fecha_venta,
+                vt_sel.TipoVenta,
+                (IFNULL(vt_sel.total_venta,0)-IFNULL(vt_sel.descuento,0)) AS total_venta,
+                vt_sel.cod_clienteFK,
+                IFNULL(cl_sel.ci_cliente,'') AS ci_cliente,
+                IFNULL(p_sel.nombre_persona,'') AS nombre_paciente,
+                IFNULL(l_sel.Nombre,'') AS nombre_local,
+                CASE WHEN vt_sel.cod_venta IN ".$subVentasVinculadas." THEN 1 ELSE 0 END AS vinculada_hilo,
+                COUNT(DISTINCT CASE WHEN cr_sel.idcredito IS NOT NULL AND ".$condicionCreditoActivo." THEN cr_sel.idcredito ELSE NULL END) AS total_creditos,
+                SUM(CASE WHEN cr_sel.idcredito IS NOT NULL AND ".$condicionCreditoActivo." AND ".$condicionCreditoPendiente." THEN 1 ELSE 0 END) AS cuotas_pendientes,
+                SUM(CASE WHEN cr_sel.idcredito IS NOT NULL AND ".$condicionCreditoActivo." AND ".$condicionCreditoPendiente." AND cr_sel.fechapago < CURDATE() THEN 1 ELSE 0 END) AS cuotas_vencidas,
+                IFNULL(MIN(CASE WHEN cr_sel.idcredito IS NOT NULL AND ".$condicionCreditoActivo." AND ".$condicionCreditoPendiente." THEN cr_sel.fechapago ELSE NULL END),'') AS proxima_cuota,
+                IFNULL(SUM(CASE WHEN cr_sel.idcredito IS NOT NULL AND ".$condicionCreditoActivo." AND ".$condicionCreditoPendiente." THEN ".$saldoPendienteCredito." ELSE 0 END),0) AS saldo_pendiente
+            FROM venta vt_sel
+            INNER JOIN cliente cl_sel ON cl_sel.cod_cliente = vt_sel.cod_clienteFK
+            LEFT JOIN persona p_sel ON p_sel.cod_persona = vt_sel.cod_clienteFK
+            LEFT JOIN local l_sel ON l_sel.cod_local = vt_sel.cod_local
+            LEFT JOIN credito cr_sel ON cr_sel.cod_venta = vt_sel.cod_venta
+            WHERE vt_sel.cod_clienteFK <> 7
+                AND IFNULL((SELECT COUNT(fecha) FROM cancelaciones cn_sel WHERE cn_sel.cod_venta = vt_sel.cod_venta LIMIT 1),0) = 0
+                AND (".$wherePaciente.")
+            GROUP BY vt_sel.cod_venta, vt_sel.num_factura, vt_sel.fecha_venta, vt_sel.TipoVenta,
+                vt_sel.total_venta, vt_sel.descuento, vt_sel.cod_clienteFK, cl_sel.ci_cliente,
+                p_sel.nombre_persona, l_sel.Nombre
+            ORDER BY cuotas_vencidas DESC,
+                cuotas_pendientes DESC,
+                vinculada_hilo DESC,
+                proxima_cuota ASC,
+                vt_sel.fecha_venta DESC
+            LIMIT 30";
+
+        $result = $mysqli->query($sql);
+        if (!$result) {
+            return array("ok" => false, "mensaje" => "No se pudieron consultar las ventas del paciente.", "sql_error" => mysqli_error($mysqli));
+        }
+
+        $ventas = array();
+        while ($row = $result->fetch_assoc()) {
+            $cuotasPendientes = isset($row["cuotas_pendientes"]) ? (int)$row["cuotas_pendientes"] : 0;
+            $cuotasVencidas = isset($row["cuotas_vencidas"]) ? (int)$row["cuotas_vencidas"] : 0;
+            $saldoPendiente = isset($row["saldo_pendiente"]) ? (int)$row["saldo_pendiente"] : 0;
+            $estado = "Sin cuotas pendientes";
+            if ($cuotasVencidas > 0) {
+                $estado = $cuotasVencidas." vencida(s)";
+            } else if ($cuotasPendientes > 0) {
+                $estado = $cuotasPendientes." pendiente(s)";
+            }
+
+            $ventas[] = array(
+                "cod_venta" => mb_convert_encoding((string)$row["cod_venta"], 'UTF-8', 'ISO-8859-1'),
+                "num_factura" => mb_convert_encoding((string)$row["num_factura"], 'UTF-8', 'ISO-8859-1'),
+                "fecha_venta" => mb_convert_encoding((string)$row["fecha_venta"], 'UTF-8', 'ISO-8859-1'),
+                "tipo_venta" => mb_convert_encoding((string)$row["TipoVenta"], 'UTF-8', 'ISO-8859-1'),
+                "total_venta" => mb_convert_encoding((string)$row["total_venta"], 'UTF-8', 'ISO-8859-1'),
+                "total_venta_formato" => "Gs. ".number_format((int)$row["total_venta"], 0, ',', '.'),
+                "saldo_pendiente" => (string)$saldoPendiente,
+                "saldo_pendiente_formato" => "Gs. ".number_format($saldoPendiente, 0, ',', '.'),
+                "cuotas_pendientes" => (string)$cuotasPendientes,
+                "cuotas_vencidas" => (string)$cuotasVencidas,
+                "proxima_cuota" => mb_convert_encoding((string)$row["proxima_cuota"], 'UTF-8', 'ISO-8859-1'),
+                "estado" => mb_convert_encoding($estado, 'UTF-8', 'ISO-8859-1'),
+                "vinculada_hilo" => (string)((int)$row["vinculada_hilo"]),
+                "nombre_local" => mb_convert_encoding((string)$row["nombre_local"], 'UTF-8', 'ISO-8859-1')
+            );
+        }
+
+        return array(
+            "ok" => true,
+            "paciente" => array(
+                "cod_cliente" => (string)$codCliente,
+                "nombre" => $nombrePaciente,
+                "cedula" => $cedula
+            ),
+            "ventas" => $ventas
+        );
+    }
+
+    function renderBadgeSeguimientoInterConsulta($clase, $texto, $detalle= "") {
+        $textoSeguro = htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
+        $detalleFinal = trim((string)$detalle) != "" ? $detalle : $texto;
+        $detalleSeguro = htmlspecialchars($detalleFinal, ENT_QUOTES, 'UTF-8');
+        return '<span class="interconsulta-follow-badge interconsulta-follow-badge--'.$clase.'" title="'.$detalleSeguro.'" tabindex="0" role="button" data-hilo-alert="1" data-hilo-alert-title="'.$textoSeguro.'" data-hilo-alert-detail="'.$detalleSeguro.'">'.$textoSeguro.'</span>';
+    }
+
+    function limitarTextoListadoInterConsulta($texto, $limite= 70) {
+        $texto = trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode((string)$texto, ENT_QUOTES, 'UTF-8'))));
+        if ($texto == "") {
+            return "";
+        }
+        if (mb_strlen($texto, 'UTF-8') <= $limite) {
+            return $texto;
+        }
+        return rtrim(mb_substr($texto, 0, $limite - 3, 'UTF-8'))."...";
+    }
+
+    function renderGestionProgramadaInterConsulta($contenido= "", $usuario= "", $fecha= "", $urlUsuario= "") {
+        $contenidoSeguro = limitarTextoListadoInterConsulta($contenido, 64);
+        $usuarioSeguro = limitarTextoListadoInterConsulta($usuario, 42);
+        $urlUsuario = trim((string)$urlUsuario);
+        $fechaTexto = "";
+        if ($fecha != "" && strtotime($fecha)) {
+            $fechaTexto = date('d/m H:i', strtotime($fecha));
+        } else if ($fecha != "") {
+            $fechaTexto = $fecha;
+        }
+
+        if ($contenidoSeguro == "" && $usuarioSeguro == "" && $fechaTexto == "") {
+            return '<div class="interconsulta-management-pill interconsulta-management-pill--empty" title="Este hilo no tiene mensajes programados.">'
+                .'<strong>Sin gestion</strong>'
+                .'<span>Sin mensaje programado</span>'
+                .'</div>';
+        }
+
+        $tituloPartes = array();
+        if ($contenidoSeguro != "") {
+            $tituloPartes[] = $contenidoSeguro;
+        }
+        if ($usuarioSeguro != "") {
+            $tituloPartes[] = 'Usuario: '.$usuarioSeguro;
+        }
+        if ($fechaTexto != "") {
+            $tituloPartes[] = 'Programado: '.$fechaTexto;
+        }
+
+        $tituloSeguro = htmlspecialchars(implode('. ', $tituloPartes), ENT_QUOTES, 'UTF-8');
+        $usuarioFinal = $usuarioSeguro != "" ? $usuarioSeguro : "Sin usuario";
+        $usuarioTitulo = $usuarioSeguro != "" ? "Programado por ".$usuarioSeguro : "Seguimiento programado";
+        $avatarHtml = "";
+        if ($urlUsuario != "") {
+            $avatarHtml = '<img src="'.htmlspecialchars($urlUsuario, ENT_QUOTES, 'UTF-8').'" alt="Foto de '.htmlspecialchars($usuarioTitulo, ENT_QUOTES, 'UTF-8').'">';
+        } else {
+            $avatarHtml = '<span>'.htmlspecialchars(obtenerInicialesInterConsulta($usuarioSeguro, "GP"), ENT_QUOTES, 'UTF-8').'</span>';
+        }
+
+        return '<div class="interconsulta-management-summary" title="'.$tituloSeguro.'" tabindex="0">'
+            .'<span class="interconsulta-management-summary__avatar" title="'.htmlspecialchars($usuarioTitulo, ENT_QUOTES, 'UTF-8').'">'
+                .$avatarHtml
+                .'<span class="interconsulta-management-summary__clock"><i class="fa-solid fa-clock" aria-hidden="true"></i></span>'
+            .'</span>'
+            .'<span class="interconsulta-management-summary__body">'
+                .'<strong>'.htmlspecialchars($contenidoSeguro != "" ? $contenidoSeguro : "Mensaje programado", ENT_QUOTES, 'UTF-8').'</strong>'
+                .'<span>'.htmlspecialchars($usuarioFinal, ENT_QUOTES, 'UTF-8').'</span>'
+                .($fechaTexto != "" ? '<small>Programado: '.htmlspecialchars($fechaTexto, ENT_QUOTES, 'UTF-8').'</small>' : '')
+            .'</span>'
+            .'</div>';
+    }
+
+    function obtenerActividadDiariaSeguimientoInterConsulta($cod_localFK= "") {
+        $mysqli= conectar_al_servidor();
+        $codLocal= (is_numeric($cod_localFK) && intval($cod_localFK) > 0) ? intval($cod_localFK) : 0;
+        $condicionLocalMensajes= $codLocal > 0 ? " AND ic.cod_localFK = ".$codLocal." " : "";
+        $condicionLocalAgenda= $codLocal > 0 ? " AND u_ag.cod_localFK = ".$codLocal." " : "";
+
+        $sql= "SELECT u.cod_usuario, IFNULL(p.nombre_persona, CONCAT('Usuario ', u.cod_usuario)) AS nombre_persona,
+                IFNULL(u.url,'') AS url_usuario, SUM(actividad.total) AS total_gestiones
+            FROM (
+                SELECT m.cod_usuarioFK AS cod_usuario, COUNT(DISTINCT m.cod_mensaje) AS total
+                FROM mensaje m
+                INNER JOIN interconsulta ic ON ic.cod_interConsulta = m.cod_interConsultaFK
+                WHERE m.estado = 'activo'
+                    AND m.cod_usuarioFK IS NOT NULL
+                    AND m.cod_usuarioFK <> 0
+                    AND m.fecha_creacion >= CURDATE()
+                    AND m.fecha_creacion < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    ".$condicionLocalMensajes."
+                GROUP BY m.cod_usuarioFK
+                UNION ALL
+                SELECT CAST(ag.creado_por AS UNSIGNED) AS cod_usuario, COUNT(DISTINCT ag.id_agenda) AS total
+                FROM agenda ag
+                INNER JOIN usuario u_ag ON u_ag.cod_usuario = CAST(ag.creado_por AS UNSIGNED)
+                WHERE ag.creado_por REGEXP '^[0-9]+$'
+                    AND ag.creado_en >= CURDATE()
+                    AND ag.creado_en < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                    AND IFNULL(ag.estado,'') <> 'CANCELADO'
+                    ".$condicionLocalAgenda."
+                GROUP BY CAST(ag.creado_por AS UNSIGNED)
+            ) actividad
+            INNER JOIN usuario u ON u.cod_usuario = actividad.cod_usuario
+            LEFT JOIN persona p ON p.cod_persona = u.cod_usuario
+            WHERE u.estado = 'Activo'
+            GROUP BY u.cod_usuario, p.nombre_persona, u.url
+            HAVING total_gestiones > 0
+            ORDER BY total_gestiones DESC, p.nombre_persona ASC";
+
+        $registros= array();
+        $stmt= $mysqli->prepare($sql);
+        if (!$stmt || !$stmt->execute()) {
+            return $registros;
+        }
+        $result= $stmt->get_result();
+        while ($row= $result->fetch_assoc()) {
+            $registros[]= array(
+                "cod_usuario" => mb_convert_encoding((string)$row["cod_usuario"], 'UTF-8', 'ISO-8859-1'),
+                "nombre_persona" => mb_convert_encoding((string)$row["nombre_persona"], 'UTF-8', 'ISO-8859-1'),
+                "url_usuario" => mb_convert_encoding((string)$row["url_usuario"], 'UTF-8', 'ISO-8859-1'),
+                "total_gestiones" => intval($row["total_gestiones"])
+            );
+        }
+        $stmt->close();
+
+        return $registros;
+    }
+
+    function obtenerVistaActividadDiariaSeguimientoInterConsulta($cod_localFK= "") {
+        $registros= obtenerActividadDiariaSeguimientoInterConsulta($cod_localFK);
+        if (count($registros) == 0) {
+            return '<div class="interconsulta-daily-activity__empty">Sin gestiones hoy</div>';
+        }
+
+        $html= "";
+        foreach ($registros as $registro) {
+            $nombre= trim((string)$registro["nombre_persona"]);
+            $url= trim((string)$registro["url_usuario"]);
+            $total= intval($registro["total_gestiones"]);
+            $titulo= $nombre." - ".$total." gestion".($total == 1 ? "" : "es")." hoy";
+            $avatar= "";
+            if ($url != "") {
+                $avatar= '<img src="'.htmlspecialchars($url, ENT_QUOTES, 'UTF-8').'" alt="Foto de '.htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8').'">';
+            } else {
+                $avatar= '<span>'.htmlspecialchars(obtenerInicialesInterConsulta($nombre, "US"), ENT_QUOTES, 'UTF-8').'</span>';
+            }
+
+            $html .= '<span class="interconsulta-daily-activity__user" title="'.htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8').'" tabindex="0">'
+                .'<span class="interconsulta-daily-activity__avatar">'.$avatar.'</span>'
+                .'<strong>'.$total.'</strong>'
+                .'</span>';
+        }
+
+        return $html;
+    }
+
+    function asuntoVistaSeguimientoPacienteInterConsulta($registro) {
+        $asuntoActual = isset($registro['asunto']) ? trim((string)$registro['asunto']) : "";
+        $esSeguimientoPaciente = isset($registro['esSeguimientoPaciente']) ? intval($registro['esSeguimientoPaciente']) > 0 : false;
+        $codVenta = isset($registro['cod_ventaFK']) ? seguimientoPacienteEntero($registro['cod_ventaFK']) : 0;
+        if (!$esSeguimientoPaciente && $codVenta <= 0) {
+            return $asuntoActual;
+        }
+
+        $nombrePaciente = isset($registro['nombre_persona']) ? trim((string)$registro['nombre_persona']) : "";
+        $cedula = isset($registro['cedula']) ? seguimientoPacienteNormalizarCedula($registro['cedula']) : "";
+        if ($nombrePaciente == "" || $cedula == "") {
+            return $asuntoActual;
+        }
+
+        $nombrePaciente = trim(preg_replace('/\s+/', ' ', $nombrePaciente));
+        if ($nombrePaciente == "") {
+            $nombrePaciente = "Paciente sin nombre";
+        }
+        $asunto = $nombrePaciente." - CI ".$cedula;
+        return function_exists('mb_substr') ? mb_substr($asunto, 0, 100, 'UTF-8') : substr($asunto, 0, 100);
+    }
+
     function obtenerVistaInterConsulta($filtros= array(), $limite= 0) {
         $cantRegistros= obtenerCantidadInterConsulta($filtros);
-        $limite = normalizarLimiteListadoInterConsulta($limite, 30);
+        $limite = normalizarLimiteListadoInterConsulta($limite, 60);
         $registros= obtenerInterConsulta($filtros, $limite);
         $conteosCategorias = obtenerConteosCategoriasInterConsulta($filtros);
         $categoriaActiva = isset($filtros['categoria_principal']) ? $filtros['categoria_principal'] : 'pagos_egresos';
+        $mostrarColumnasSeguimiento = in_array($categoriaActiva, array('administrativo_clinico', 'judiciales'), true);
+        $mostrarGestionProgramada = $mostrarColumnasSeguimiento || $categoriaActiva == 'pagos_egresos';
 
         $pagina= '';
         $datalist= '';
@@ -1317,17 +2026,228 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $cantMensajesNoLeidosOtrosUsuarios= " (".$value['cantMensajesNoLeidosOtrosUsuarios'].")";
             }
 
-            $esHiloVinculado = intval($value['cantAsociadoGastos']) > 0;
+            $esSeguimientoPaciente = intval($value['esSeguimientoPaciente']) > 0;
+            $tieneConflictoPaciente = intval($value['seguimiento_conflicto']) > 0;
+            $tieneVentaPaciente = seguimientoPacienteEntero($value['cod_ventaFK']) > 0;
+            $esHiloSeguimientoVisual = $esSeguimientoPaciente || $tieneVentaPaciente;
+            $esHiloAdministrativoSinPaciente = !$esHiloSeguimientoVisual;
+            $asuntoVista = asuntoVistaSeguimientoPacienteInterConsulta($value);
+            $ventasSinPlanMadre = intval($value['ventas_sin_plan_madre']);
+            $totalPlanesMadre = intval($value['total_planes_madre']);
+            $totalLocalesSeguimiento = isset($value['seguimiento_total_locales']) ? intval($value['seguimiento_total_locales']) : 0;
+            $tieneConflictoLocalPaciente = $totalLocalesSeguimiento > 1;
+            $totalCreditosSeguimiento = isset($value['seguimiento_total_creditos']) ? intval($value['seguimiento_total_creditos']) : 0;
+            $cuotasPendientesSeguimiento = isset($value['seguimiento_cuotas_pendientes']) ? intval($value['seguimiento_cuotas_pendientes']) : 0;
+            $cuotasVencidasSeguimiento = isset($value['seguimiento_cuotas_vencidas']) ? intval($value['seguimiento_cuotas_vencidas']) : 0;
+            $diasMoraSeguimiento = isset($value['seguimiento_dias_mora']) ? intval($value['seguimiento_dias_mora']) : 0;
+            $saldoPendienteSeguimiento = isset($value['seguimiento_saldo_pendiente']) ? intval($value['seguimiento_saldo_pendiente']) : 0;
+            $proximaCuotaSeguimiento = isset($value['seguimiento_proxima_cuota_fecha']) ? trim((string)$value['seguimiento_proxima_cuota_fecha']) : "";
+            $citasFuturasSeguimiento = isset($value['seguimiento_citas_futuras']) ? intval($value['seguimiento_citas_futuras']) : 0;
+            $proximaCitaIdSeguimiento = isset($value['seguimiento_proxima_cita_id']) ? trim((string)$value['seguimiento_proxima_cita_id']) : "";
+            $proximaCitaSeguimiento = isset($value['seguimiento_proxima_cita_fecha']) ? trim((string)$value['seguimiento_proxima_cita_fecha']) : "";
+            $proximaCitaHoraSeguimiento = isset($value['seguimiento_proxima_cita_hora']) ? trim((string)$value['seguimiento_proxima_cita_hora']) : "";
+            $estadoCitaSeguimiento = isset($value['seguimiento_proxima_cita_estado']) ? trim((string)$value['seguimiento_proxima_cita_estado']) : "";
+            $motivoCitaSeguimiento = isset($value['seguimiento_proxima_cita_motivo']) ? trim((string)$value['seguimiento_proxima_cita_motivo']) : "";
+            $profesionalCitaSeguimiento = isset($value['seguimiento_proxima_cita_profesional']) ? trim((string)$value['seguimiento_proxima_cita_profesional']) : "";
+            $creadorCitaSeguimiento = isset($value['seguimiento_proxima_cita_creador']) ? trim((string)$value['seguimiento_proxima_cita_creador']) : "";
+            $urlCreadorCitaSeguimiento = isset($value['seguimiento_proxima_cita_creador_url']) ? trim((string)$value['seguimiento_proxima_cita_creador_url']) : "";
+            $ventasRecientesSeguimiento = isset($value['seguimiento_ventas_recientes']) ? intval($value['seguimiento_ventas_recientes']) : 0;
+            $ultimaVentaRecienteSeguimiento = isset($value['seguimiento_ultima_venta_reciente']) ? trim((string)$value['seguimiento_ultima_venta_reciente']) : "";
+            $celdaCitaSeguimiento = "";
+            $celdaPagoSeguimiento = "";
+            $datosPagoMoraSeguimiento = array(
+                'cod-interconsulta' => $value['cod_interConsulta'],
+                'cod-cliente' => isset($value['cod_clienteFK']) ? $value['cod_clienteFK'] : "",
+                'documento-paciente' => isset($value['cedula']) ? $value['cedula'] : "",
+                'nombre-paciente' => isset($value['nombre_persona']) ? $value['nombre_persona'] : ""
+            );
+            if ($mostrarColumnasSeguimiento) {
+                if ($esHiloAdministrativoSinPaciente) {
+                    $celdaCitaSeguimiento = renderResumenNoAplicaInterConsulta("Sin paciente");
+                    $celdaPagoSeguimiento = renderResumenNoAplicaInterConsulta("Sin paciente");
+                } else if ($proximaCitaSeguimiento != "") {
+                    $fechaCitaSeguimiento = strtotime($proximaCitaSeguimiento) ? date('d/m', strtotime($proximaCitaSeguimiento)) : $proximaCitaSeguimiento;
+                    $textoCitaSeguimiento = $fechaCitaSeguimiento.($proximaCitaHoraSeguimiento != "" ? ' '.$proximaCitaHoraSeguimiento : '');
+                    $detalleCitaPartes = array();
+                    if ($estadoCitaSeguimiento != "") {
+                        $detalleCitaPartes[] = $estadoCitaSeguimiento;
+                    }
+                    if ($citasFuturasSeguimiento > 1) {
+                        $detalleCitaPartes[] = '+'.($citasFuturasSeguimiento - 1).' mas';
+                    }
+                    $tituloCitaPartes = array('Proxima cita: '.$textoCitaSeguimiento);
+                    if ($estadoCitaSeguimiento != "") {
+                        $tituloCitaPartes[] = 'Estado: '.$estadoCitaSeguimiento;
+                    }
+                    if ($profesionalCitaSeguimiento != "") {
+                        $tituloCitaPartes[] = 'Profesional: '.$profesionalCitaSeguimiento;
+                    }
+                    if ($creadorCitaSeguimiento != "") {
+                        $tituloCitaPartes[] = 'Agendado por: '.$creadorCitaSeguimiento;
+                    }
+                    if ($motivoCitaSeguimiento != "") {
+                        $tituloCitaPartes[] = 'Motivo: '.$motivoCitaSeguimiento;
+                    }
+                    if ($citasFuturasSeguimiento > 1) {
+                        $tituloCitaPartes[] = 'Citas futuras: '.$citasFuturasSeguimiento;
+                    }
+                    $claseCitaSeguimiento = stripos($estadoCitaSeguimiento, 'DEUDA') !== false ? 'warning' : 'info';
+                    $celdaCitaSeguimiento = renderResumenCitaSeguimientoInterConsulta(
+                        $claseCitaSeguimiento,
+                        $textoCitaSeguimiento,
+                        implode(' - ', $detalleCitaPartes),
+                        $creadorCitaSeguimiento,
+                        $urlCreadorCitaSeguimiento,
+                        implode('. ', $tituloCitaPartes),
+                        $proximaCitaIdSeguimiento,
+                        $proximaCitaSeguimiento
+                    );
+                } else {
+                    $celdaCitaSeguimiento = renderResumenSeguimientoInterConsulta(
+                        'muted',
+                        'Sin cita',
+                        'Sin futura activa',
+                        'No se encontro una cita futura activa para este hilo.'
+                    );
+                }
+
+                if (!$esHiloAdministrativoSinPaciente) {
+                    if ($cuotasVencidasSeguimiento > 0) {
+                        $celdaPagoSeguimiento = renderResumenSeguimientoInterConsulta(
+                            'warning',
+                            'Alerta financiera',
+                            $cuotasVencidasSeguimiento.' venc. - Gs. '.number_format($saldoPendienteSeguimiento, 0, ',', '.'),
+                            'Alerta financiera: '.$cuotasVencidasSeguimiento.' cuota(s) vencida(s). Dias de mora: '.$diasMoraSeguimiento.'. Saldo pendiente: Gs. '.number_format($saldoPendienteSeguimiento, 0, ',', '.'),
+                            'abrir_pago_mora',
+                            $datosPagoMoraSeguimiento
+                        );
+                    } else if ($cuotasPendientesSeguimiento > 0) {
+                        $detallePago = 'Saldo Gs. '.number_format($saldoPendienteSeguimiento, 0, ',', '.');
+                        if ($proximaCuotaSeguimiento != "") {
+                            $fechaProximaCuota = strtotime($proximaCuotaSeguimiento) ? date('d/m', strtotime($proximaCuotaSeguimiento)) : $proximaCuotaSeguimiento;
+                            $detallePago .= ' - Prox. '.$fechaProximaCuota;
+                        }
+                        $celdaPagoSeguimiento = renderResumenSeguimientoInterConsulta(
+                            'warning',
+                            $cuotasPendientesSeguimiento.' cuotas',
+                            $detallePago,
+                            'Cuotas pendientes: '.$cuotasPendientesSeguimiento.'. '.$detallePago,
+                            'abrir_pago_mora',
+                            $datosPagoMoraSeguimiento
+                        );
+                    } else if ($totalCreditosSeguimiento > 0) {
+                        $celdaPagoSeguimiento = renderResumenSeguimientoInterConsulta(
+                            'success',
+                            'Cuenta saldada',
+                            'Sin saldo pendiente',
+                            'Tiene cuotas registradas y no registra saldo pendiente.',
+                            'abrir_pago_mora',
+                            $datosPagoMoraSeguimiento
+                        );
+                    } else {
+                        $celdaPagoSeguimiento = renderResumenSeguimientoInterConsulta(
+                            'muted',
+                            'Sin cuotas',
+                            'Sin datos de pago',
+                            'No se encontraron cuotas vinculadas a este hilo.'
+                        );
+                    }
+                }
+            }
+            $esHiloVinculado = intval($value['cantAsociadoGastos']) > 0 || !empty($value['cod_ventaFK']) || $esSeguimientoPaciente;
             $esHiloPendienteRespuesta = intval($value['cantMensajesNoLeidos']) > 0;
             $clasesTablaHilo = 'tableRegistroSearch2 interconsulta-thread-row'
                 .($esHiloPendienteRespuesta ? ' interconsulta-thread-row--pending' : '')
-                .($esHiloVinculado ? ' interconsulta-thread-row--linked' : '');
-            $claseHiloVinculado = ' class="interconsulta-subject-text'.($esHiloVinculado ? ' interconsulta-linked-subject' : '').'"';
+                .($esHiloVinculado ? ' interconsulta-thread-row--linked' : '')
+                .($esHiloAdministrativoSinPaciente ? ' interconsulta-thread-row--administrative' : '')
+                .($esSeguimientoPaciente ? ' interconsulta-thread-row--patient-master' : '')
+                .(($tieneConflictoPaciente || $tieneConflictoLocalPaciente) ? ' interconsulta-thread-row--patient-conflict' : '')
+                .($ventasSinPlanMadre > 0 ? ' interconsulta-thread-row--without-plan' : '')
+                .($cuotasVencidasSeguimiento > 0 ? ' interconsulta-thread-row--financial-warning' : '')
+                .(($totalCreditosSeguimiento > 0 && $cuotasPendientesSeguimiento == 0) ? ' interconsulta-thread-row--financial-ok' : '');
+            $claseHiloVinculado = ' class="interconsulta-subject-text interconsulta-subject-title'.($esHiloVinculado ? ' interconsulta-linked-subject' : '').'"';
             $tituloHiloVinculado = $esHiloVinculado ? ' title="Hilo vinculado. Haga clic para ver la referencia asociada."' : '';
             $iconoHiloVinculado = $esHiloVinculado ? ' <i class="fa-solid fa-link interconsulta-linked-icon" title="Hilo vinculado. Haga clic para ver la referencia asociada." aria-hidden="true"></i>' : '';
-            $contenidoAsunto = $value['asunto']
+            $badgesSeguimientoPaciente = "";
+            if ($esHiloAdministrativoSinPaciente) {
+                $tipoAdministrativo = trim((string)$value['tipo']) != "" ? ucfirst(strtolower(trim((string)$value['tipo']))) : "Administrativo";
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'operational',
+                    $tipoAdministrativo,
+                    'Hilo administrativo sin paciente vinculado.'
+                );
+            }
+            if ($esHiloSeguimientoVisual && $ventasRecientesSeguimiento > 0) {
+                $detallePacienteNuevo = 'Paciente con venta real registrada en los ultimos 30 dias.';
+                if ($ultimaVentaRecienteSeguimiento != "" && strtotime($ultimaVentaRecienteSeguimiento)) {
+                    $detallePacienteNuevo .= ' Ultima venta: '.date('d/m/Y', strtotime($ultimaVentaRecienteSeguimiento)).'.';
+                }
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'new-patient',
+                    'Paciente nuevo',
+                    $detallePacienteNuevo
+                );
+            }
+            if ($tieneConflictoPaciente) {
+                $detalleConflicto = trim((string)$value['seguimiento_detalle_conflicto']);
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'conflict',
+                    'Conflicto CI',
+                    $detalleConflicto != "" ? $detalleConflicto : 'La cedula esta asociada a mas de un paciente.'
+                );
+            }
+            if ($tieneConflictoLocalPaciente) {
+                $detalleLocales = trim((string)$value['seguimiento_locales']);
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'conflict',
+                    'Varios locales',
+                    'El paciente tiene ventas vinculadas en mas de un local'.($detalleLocales != "" ? ': '.$detalleLocales : '.')
+                );
+            }
+            if ($ventasSinPlanMadre > 0) {
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'warning',
+                    'Ventas sin plan: '.$ventasSinPlanMadre,
+                    $ventasSinPlanMadre.' venta(s) real(es) del paciente no estan vinculadas a un plan madre.'
+                );
+            }
+            if ($totalPlanesMadre > 1) {
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'info',
+                    $totalPlanesMadre.' planes madre',
+                    'Planes madre vinculados a esta cedula: '.$totalPlanesMadre.'.'
+                );
+            }
+            if (!$mostrarColumnasSeguimiento && !$esHiloAdministrativoSinPaciente) {
+                if ($cuotasVencidasSeguimiento > 0) {
+                    $detalleMora = 'Alerta financiera: '.$cuotasVencidasSeguimiento.' cuota(s) vencida(s). Dias de mora: '.$diasMoraSeguimiento.'. Saldo pendiente: Gs. '.number_format($saldoPendienteSeguimiento, 0, ',', '.');
+                    $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta('warning', 'Alerta financiera', $detalleMora);
+                } else if ($cuotasPendientesSeguimiento > 0) {
+                    $detalleCuotas = 'Cuotas pendientes: '.$cuotasPendientesSeguimiento.'. Saldo pendiente: Gs. '.number_format($saldoPendienteSeguimiento, 0, ',', '.');
+                    $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta('warning', 'Alerta financiera', $detalleCuotas);
+                } else if ($totalCreditosSeguimiento > 0) {
+                    $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta('success', 'Cuenta saldada', 'Tiene cuotas registradas sin saldo pendiente.');
+                }
+                if ($proximaCitaSeguimiento != "") {
+                    $textoCita = date('d/m', strtotime($proximaCitaSeguimiento)).($proximaCitaHoraSeguimiento != "" ? ' '.$proximaCitaHoraSeguimiento : '');
+                    $detalleCita = 'Proxima cita: '.$textoCita.($estadoCitaSeguimiento != "" ? ' - '.$estadoCitaSeguimiento : '');
+                    $claseCita = stripos($estadoCitaSeguimiento, 'DEUDA') !== false ? 'warning' : 'info';
+                    $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta($claseCita, 'Cita '.$textoCita, $detalleCita);
+                } else if ($esSeguimientoPaciente) {
+                    $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta('muted', 'Sin cita', 'No se encontro cita futura activa para este paciente.');
+                }
+            }
+            if ($esHiloAdministrativoSinPaciente) {
+                $styleInterno = "";
+                $colorText = "";
+                if (intval($value['cantGastosPendientes']) > 0) {
+                    $styleInterno= "color: white; background-color: #762424;";
+                }
+            }
+            $contenidoAsunto = $asuntoVista
                 .$iconoHiloVinculado
                 .$cantMensajesNoLeidosOtrosUsuarios;
+            $celdaGestionProgramada = $mostrarGestionProgramada ? renderGestionProgramadaInterConsulta() : "";
             if ($esHiloPendienteRespuesta) {
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
             }
@@ -1335,15 +2255,26 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             if ($value["cantMensajesProgramados"]) {
                 // Obtiene los mensajes programados
                 $registrosMens= obtenerMensaje(array(
+                    'estado' => 'activo',
                     'fecha_creacion' => "> '".(new DateTime())->format('Y-m-d H:i:s')."'",
+                    'orden_fecha' => 'ASC',
                     "cod_interConsultaFK" => $value["cod_interConsulta"],
                 ), 1);
                 foreach ($registrosMens as $valueMens) {
                     if ($valueMens['estado'] == 'activo') {
-                        $fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));
-                        $fechaActual = new DateTime();
-                        $diasRestantes = $fechaMensaje->diff($fechaActual->setTime(0, 0, 0));
-                        $contenidoAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').') ';
+                        if ($mostrarGestionProgramada) {
+                            $celdaGestionProgramada = renderGestionProgramadaInterConsulta(
+                                isset($valueMens['contenido']) ? $valueMens['contenido'] : "",
+                                isset($valueMens['nombre_persona']) ? $valueMens['nombre_persona'] : "",
+                                isset($valueMens['fecha_creacion']) ? $valueMens['fecha_creacion'] : "",
+                                isset($valueMens['url_usuario']) ? $valueMens['url_usuario'] : ""
+                            );
+                        } else {
+                            $fechaMensaje = new DateTime(substr($valueMens['fecha_creacion'], 0, 10));
+                            $fechaActual = new DateTime();
+                            $diasRestantes = $fechaMensaje->diff($fechaActual->setTime(0, 0, 0));
+                            $contenidoAsunto .= '<i class="fa-solid fa-business-time" style="padding-left: 5px;font-size: 9pt;"></i>('.$diasRestantes->format('%a').') ';
+                        }
                     }
                 }
             }
@@ -1351,29 +2282,52 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $contenidoAsuntoPendienteFin = $esHiloPendienteRespuesta ? '</b>' : '';
             $badgePendienteRespuesta = $esHiloPendienteRespuesta ? '<span class="interconsulta-pending-badge" title="Hilo pendiente de respuesta">Sin responder</span>' : '';
             $tooltipFila = $esHiloPendienteRespuesta ? ' title="Hilo pendiente de respuesta"' : '';
+            $lineaSeguimientoPaciente = ($badgePendienteRespuesta != "" || $badgesSeguimientoPaciente != "")
+                ? '<div class="interconsulta-follow-strip">'.$badgePendienteRespuesta.$badgesSeguimientoPaciente.'</div>'
+                : '';
             $formatAsunto= '<div class="interconsulta-subject-wrap">'
-                .'<p'.$claseHiloVinculado.$tituloHiloVinculado.' style="'.$colorText.'font-size: 9pt;">'
+                .'<div class="interconsulta-subject-line">'
+                .'<p'.$claseHiloVinculado.$tituloHiloVinculado.' style="'.$colorText.'">'
                 .$contenidoAsuntoPendienteInicio
                 .$contenidoAsunto
                 .$contenidoAsuntoPendienteFin
                 .'</p>'
-                .$badgePendienteRespuesta
+                .'</div>'
+                .$lineaSeguimientoPaciente
                 .'</div>';
+            $anchoAsunto = $mostrarColumnasSeguimiento ? '21%' : '25%';
+            $anchoCliente = $mostrarColumnasSeguimiento ? '13%' : '15%';
+            $anchoLocal = $mostrarColumnasSeguimiento ? '9%' : '10%';
+            $anchoEstado = $mostrarColumnasSeguimiento ? '8%' : '10%';
+            $anchoTipo = $mostrarColumnasSeguimiento ? '8%' : '10%';
+            $anchoFecha = $mostrarColumnasSeguimiento ? '7%' : '10%';
+            $anchoResponsable = $mostrarColumnasSeguimiento ? '8%' : '15%';
+            $celdaGestionOPaciente = $mostrarGestionProgramada
+                ? '<td class="interconsulta-management-cell" style="width: '.$anchoCliente.';'.$style.'">'.$celdaGestionProgramada.'</td>
+                    <td id="td_datos_5" style="display: none;'.$style.'">'.$value['nombre_persona'].'</td>'
+                : '<td id="td_datos_5" style="width: '.$anchoCliente.';'.$style.'">'.$value['nombre_persona'].'</td>';
+            $columnasSeguimiento = "";
+            if ($mostrarColumnasSeguimiento) {
+                $columnasSeguimiento = '
+                    <td class="hilos-follow-only interconsulta-follow-cell" style="width: 10%;'.$style.'">'.$celdaCitaSeguimiento.'</td>
+                    <td class="hilos-follow-only interconsulta-follow-cell" style="width: 11%;'.$style.'">'.$celdaPagoSeguimiento.'</td>';
+            }
             
             $pagina .= '<table class="'.$clasesTablaHilo.'" border="1" cellspacing="1" cellpadding="1">
                 <tr onclick="obtenerDatosInterConsulta(this)"'.$tooltipFila.'>
                     <td id="td_id" style="width: 5%;'.$styleInterno.'">'.$value['cod_interConsulta'].'</td>
-                    <td id="td_datos_1" style="width: 25%;'.$style.'"><div>'.$formatAsunto.'</div></td>
+                    <td id="td_datos_1" style="width: '.$anchoAsunto.';'.$style.'"><div>'.$formatAsunto.'</div></td>
                     <td id="td_datos_4" style="display: none;'.$style.'">'.$value['cod_ventaFK'].'</td>
-                    <td id="td_datos_5" style="width: 15%;'.$style.'">'.$value['nombre_persona'].'</td>
+                    '.$celdaGestionOPaciente.'
                     <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cod_localFK'].'</td>
-                    <td id="td_datos_12" style="width: 10%;'.$style.'">'.$value['nombre_local'].'</td>
-                    <td id="td_datos_2" style="width: 10%;'.$style.'">'.$value['estado'].'</td>
-                    <td id="td_datos_6" style="width: 10%;'.$style.'">'.$value['tipo'].'</td>
+                    <td id="td_datos_12" style="width: '.$anchoLocal.';'.$style.'">'.$value['nombre_local'].'</td>
+                    <td id="td_datos_2" style="width: '.$anchoEstado.';'.$style.'">'.$value['estado'].'</td>
+                    <td id="td_datos_6" style="width: '.$anchoTipo.';'.$style.'">'.$value['tipo'].'</td>
+                    '.$columnasSeguimiento.'
                     <td id="td_datos_7" style="display: none;'.$style.'">'.$value['cod_clienteFK'].'</td>
-                    <td id="td_datos_8" style="width: 10%;'.$style.'">'.$value['fecha_creacion'].'</td>
-                    <td id="td_datos_9" style="width: 15%;'.$style.'">'.$value['nombre_persona_creador'].'</td>
-                    <td id="td_datos_10" style="display: none;'.$style.'">'.$value['asunto'].'</td>
+                    <td id="td_datos_8" style="width: '.$anchoFecha.';'.$style.'">'.$value['fecha_creacion'].'</td>
+                    <td id="td_datos_9" style="width: '.$anchoResponsable.';'.$style.'">'.$value['nombre_persona_creador'].'</td>
+                    <td id="td_datos_10" style="display: none;'.$style.'">'.$asuntoVista.'</td>
                     <td id="td_datos_13" style="display: none;'.$style.'">'.$value['cantMensajes'].'</td>
                     <td id="td_datos_14" style="display: none;'.$style.'">'.$value['cantMensajesNoLeidos'].'</td>
                     <td id="td_datos_15" style="display: none;'.$style.'">'.$value['monto_limite'].'</td>
@@ -1381,14 +2335,16 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 </tr>
             </table>';
 
-            $datalist .= '<option data-id="'.$value['cod_interConsulta'].'" value="'.$value['asunto'].'">';
+            $datalist .= '<option data-id="'.$value['cod_interConsulta'].'" value="'.$asuntoVista.'">';
         }
 
         if ($pagina == "") {
             $pagina = obtenerVistaEstadoVacioHilosInterConsulta($categoriaActiva);
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist, "9" => $conteosCategorias));
+        $actividadDiariaSeguimiento= obtenerVistaActividadDiariaSeguimientoInterConsulta(isset($filtros['cod_localFK']) ? $filtros['cod_localFK'] : "");
+
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $registros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist, "9" => $conteosCategorias, "10" => $actividadDiariaSeguimiento));
     }
 
     function obtenerVistaMensaje($filtros= [], $limite= 0) {
@@ -1606,8 +2562,13 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
     function obtenerMensaje($filtros= array(), $limite= 0) {
         $sqlFiltro= "";
+        $ordenFechaMensaje = "DESC";
         foreach ($filtros as $key => $value) {
             if (empty($value)) {continue;}
+            if ($key == 'orden_fecha') {
+                $ordenFechaMensaje = strtoupper(trim((string)$value)) == "ASC" ? "ASC" : "DESC";
+                continue;
+            }
             if ($sqlFiltro == "") {
                 $sqlFiltro .= "WHERE ";
             } else {
@@ -1647,7 +2608,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 SELECT m.*, 
                 (SELECT url FROM usuario where cod_usuario = m.cod_usuarioFK) AS url_usuario,
                 (SELECT nombre_persona FROM persona where cod_persona = m.cod_usuarioFK) AS nombre_persona
-                FROM mensaje m $sqlFiltro ORDER BY m.fecha_creacion DESC $limite
+                FROM mensaje m $sqlFiltro ORDER BY m.fecha_creacion ".$ordenFechaMensaje." $limite
             ) AS subquery ORDER BY fecha_creacion ASC, cod_mensaje ASC";
 
         $mysqli=conectar_al_servidor();
@@ -1847,20 +2808,39 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             
             switch ($key) {
                 case 'cod_usuarioFK':
-                    $sqlFiltro .= "(ic.cod_usuarioFK_create = $value OR EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value))";
+                    $sqlFiltro .= "(ic.cod_usuarioFK_create = $value
+                        OR EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)
+                        OR EXISTS(SELECT 1 FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo'))";
                     $sqlFiltroMenciones = " AND mc.cod_usuarioFK = $value ";
                     break;
                 case 'cod_interConsulta':
                     $sqlFiltro .= "ic.cod_interConsulta = $value";
                     break;
                 case 'cod_localFK':
-                    $sqlFiltro .= "ic.cod_localFK = $value";
+                    $sqlFiltro .= "(ic.cod_localFK = $value
+                        OR EXISTS(
+                            SELECT 1
+                            FROM interconsulta_paciente ip
+                            INNER JOIN interconsulta_paciente_venta ipv
+                                ON ipv.cod_interConsultaFK = ip.cod_interConsultaFK
+                                AND ipv.estado = 'activo'
+                            INNER JOIN venta vt
+                                ON vt.cod_venta = ipv.cod_ventaFK
+                            WHERE ip.cod_interConsultaFK = ic.cod_interConsulta
+                                AND ip.estado = 'activo'
+                                AND vt.cod_local = $value
+                            LIMIT 1
+                        ))";
                     break;
                 case 'estado':
-                    if ($value == 'abiertos') {
+                    $estadoFiltro = strtolower(trim((string)$value));
+                    if ($estadoFiltro == 'abiertos'
+                        || (strpos($estadoFiltro, 'pendiente') !== false && strpos($estadoFiltro, 'proceso') !== false)) {
                         $sqlFiltro .= "(ic.estado = 'pendiente' OR ic.estado = 'proceso')";
+                    } else if (in_array($estadoFiltro, array('pendiente', 'proceso', 'finalizado', 'inactivo'), true)) {
+                        $sqlFiltro .= "ic.estado = '".$estadoFiltro."'";
                     } else {
-                        $sqlFiltro .= "ic.estado = '$value'";
+                        $sqlFiltro .= "1=1";
                     }
                     break;
                 case 'tipo':
@@ -1884,11 +2864,15 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     $sqlFiltro .= "CONCAT(
                         (SELECT nombre_persona from persona join venta vt where cod_persona = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
                         (SELECT ci_cliente from cliente join venta vt where cod_cliente = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
-                        (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK)
+                        (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK), ' ',
+                        IFNULL((SELECT ip.nombre_paciente_snapshot FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1), ''), ' ',
+                        IFNULL((SELECT ip.cedula FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1), ''), ' ',
+                        IFNULL((SELECT ip.cod_clienteFK_principal FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1), '')
                     ) LIKE '%$value%'";
                     break;
                 case 'cod_clienteFK':
-                    $sqlFiltro .= "(SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK) = $value";
+                    $sqlFiltro .= "((SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK) = $value
+                        OR EXISTS(SELECT 1 FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.cod_clienteFK_principal = $value AND ip.estado = 'activo'))";
                     break;
                 case 'usuario_vinculado':
                     $sqlFiltro .= "EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)";
@@ -1906,7 +2890,10 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                         CONCAT(
                             (SELECT nombre_persona from persona join venta vt where cod_persona = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
                             (SELECT ci_cliente from cliente join venta vt where cod_cliente = vt.cod_clienteFK AND vt.cod_venta= ic.cod_ventaFK), ' ',
-                            (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK)
+                            (SELECT cod_clienteFK FROM venta WHERE cod_venta = ic.cod_ventaFK), ' ',
+                            IFNULL((SELECT ip.nombre_paciente_snapshot FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1), ''), ' ',
+                            IFNULL((SELECT ip.cedula FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1), ''), ' ',
+                            IFNULL((SELECT ip.cod_clienteFK_principal FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1), '')
                         ) LIKE '%$valorBusqueda%'
                     )";
                     break;
@@ -1935,10 +2922,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
     }
 
     function obtenerCantidadInterConsulta($filtros= array()) {
+        $mysqli=conectar_al_servidor();
+        asegurarEstructuraSeguimientoPacienteInterConsulta($mysqli);
         list($sqlFiltro) = construirFiltrosInterConsulta($filtros);
         $sql= "SELECT COUNT(*) AS total FROM interconsulta ic $sqlFiltro";
 
-        $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
         if (!$stmt || !$stmt->execute()) {
             $mensajeError = $stmt ? $stmt->error : mysqli_error($mysqli);
@@ -1954,6 +2942,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
     }
 
     function obtenerInterConsulta($filtros= array(), $limite= 0) {
+        $mysqli=conectar_al_servidor();
+        asegurarEstructuraSeguimientoPacienteInterConsulta($mysqli);
         list($sqlFiltro, $sqlFiltroMenciones, $sqlFiltroMensaje, $sqlFiltroFechaLimite) = construirFiltrosInterConsulta($filtros);
 
         if ($limite === 0 || $limite === '0') {
@@ -1962,16 +2952,189 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $limite = "LIMIT $limite";
         }
 
+        $condicionCreditoActivoResumen = condicionCreditoActivoHiloInterConsulta("cr_sum");
+        $saldoCapitalCreditoResumen = "GREATEST(((IFNULL(cr_sum.Monto,0)-IFNULL(cr_sum.descuento,0))-IFNULL(pg_sum.pago_cuota,0)),0)";
+        $saldoInteresCreditoResumen = "GREATEST(((IFNULL(cr_sum.totalinteres,0)+IFNULL(cr_sum.deudaInteres,0))-IFNULL(pg_sum.pago_interes,0)),0)";
+        $saldoPendienteCreditoResumen = "(".$saldoCapitalCreditoResumen." + ".$saldoInteresCreditoResumen.")";
+        $condicionCreditoPendienteResumen = "(".$saldoPendienteCreditoResumen." > 0)";
+        $condicionAgendaActivaResumen = "ag_sum.fecha >= CURDATE()
+            AND UPPER(TRIM(IFNULL(ag_sum.estado,''))) NOT IN ('CANCELADO','ATENDIDO')";
+        $exprCedulaPlanResumen = seguimientoPacienteSqlNormalizar("pd_plan.cedula");
+        $exprCedulaClientePlanResumen = seguimientoPacienteSqlNormalizar("cl_plan.ci_cliente");
+        $exprCedulaClienteDirectaResumen = seguimientoPacienteSqlNormalizar("cl_ic.ci_cliente");
+        $exprCedulaClienteConflictoResumen = seguimientoPacienteSqlNormalizar("cl_conf.ci_cliente");
+        $sqlConflictoCedulaDirecta = "(IFNULL(cl_ic.ci_cliente,'') <> ''
+            AND (SELECT COUNT(DISTINCT cl_conf.cod_cliente)
+                FROM cliente cl_conf
+                WHERE ".$exprCedulaClienteConflictoResumen." = ".$exprCedulaClienteDirectaResumen.") > 1)";
+        $sqlDetalleConflictoCedulaDirecta = "(SELECT GROUP_CONCAT(CONCAT('Cliente ', cl_conf.cod_cliente, ' - ', IFNULL(p_conf.nombre_persona,'')) ORDER BY cl_conf.cod_cliente SEPARATOR '; ')
+            FROM cliente cl_conf
+            LEFT JOIN persona p_conf ON p_conf.cod_persona = cl_conf.cod_cliente
+            WHERE ".$exprCedulaClienteConflictoResumen." = ".$exprCedulaClienteDirectaResumen.")";
+
+        $sqlJoinResumenSeguimiento = "
+            LEFT JOIN (
+                SELECT ipv_loc.cod_interConsultaFK,
+                    COUNT(DISTINCT vt_loc.cod_local) AS seguimiento_total_locales,
+                    GROUP_CONCAT(DISTINCT l_loc.Nombre ORDER BY l_loc.Nombre SEPARATOR ' / ') AS seguimiento_locales
+                FROM interconsulta_paciente_venta ipv_loc
+                INNER JOIN venta vt_loc ON vt_loc.cod_venta = ipv_loc.cod_ventaFK
+                INNER JOIN local l_loc ON l_loc.cod_local = vt_loc.cod_local
+                WHERE ipv_loc.estado = 'activo'
+                GROUP BY ipv_loc.cod_interConsultaFK
+            ) seg_local ON seg_local.cod_interConsultaFK = ic.cod_interConsulta
+            LEFT JOIN (
+                SELECT hilo_venta.cod_interConsultaFK,
+                    COUNT(DISTINCT cr_sum.idcredito) AS seguimiento_total_creditos,
+                    SUM(CASE WHEN ".$condicionCreditoPendienteResumen." THEN 1 ELSE 0 END) AS seguimiento_cuotas_pendientes,
+                    SUM(CASE WHEN ".$condicionCreditoPendienteResumen." AND cr_sum.fechapago < CURDATE() THEN 1 ELSE 0 END) AS seguimiento_cuotas_vencidas,
+                    IFNULL(MAX(CASE WHEN ".$condicionCreditoPendienteResumen." AND cr_sum.fechapago < CURDATE() THEN DATEDIFF(CURDATE(), cr_sum.fechapago) ELSE 0 END),0) AS seguimiento_dias_mora,
+                    IFNULL(SUM(CASE WHEN ".$condicionCreditoPendienteResumen." THEN ".$saldoPendienteCreditoResumen." ELSE 0 END),0) AS seguimiento_saldo_pendiente,
+                    IFNULL(MIN(CASE WHEN ".$condicionCreditoPendienteResumen." AND cr_sum.fechapago >= CURDATE() THEN cr_sum.fechapago ELSE NULL END),'') AS seguimiento_proxima_cuota_fecha
+                FROM (
+                    SELECT ipv_cred.cod_interConsultaFK, ipv_cred.cod_ventaFK
+                    FROM interconsulta_paciente_venta ipv_cred
+                    WHERE ipv_cred.estado = 'activo'
+                    UNION
+                    SELECT ic_cred.cod_interConsulta AS cod_interConsultaFK, ic_cred.cod_ventaFK
+                    FROM interconsulta ic_cred
+                    WHERE IFNULL(ic_cred.cod_ventaFK,0) > 0
+                ) hilo_venta
+                INNER JOIN credito cr_sum ON cr_sum.cod_venta = hilo_venta.cod_ventaFK
+                LEFT JOIN (
+                    SELECT pg.cod_creditoFK,
+                        SUM(CASE WHEN pg.tipo = 'Pago Cuota' THEN IFNULL(pg.Monto,0) ELSE 0 END) AS pago_cuota,
+                        SUM(CASE WHEN pg.tipo = 'Interes' THEN IFNULL(pg.Monto,0) ELSE 0 END) AS pago_interes
+                    FROM pago pg
+                    WHERE pg.tipo IN ('Pago Cuota','Interes')
+                    GROUP BY pg.cod_creditoFK
+                ) pg_sum ON pg_sum.cod_creditoFK = cr_sum.idcredito
+                WHERE ".$condicionCreditoActivoResumen."
+                GROUP BY hilo_venta.cod_interConsultaFK
+            ) seg_credito ON seg_credito.cod_interConsultaFK = ic.cod_interConsulta
+            LEFT JOIN (
+                SELECT agenda_hilo.cod_interConsultaFK,
+                    COUNT(DISTINCT agenda_hilo.id_agenda) AS seguimiento_citas_futuras,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(agenda_hilo.id_agenda ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_id,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(agenda_hilo.fecha ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_fecha,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(TIME_FORMAT(agenda_hilo.hora_inicio, '%H:%i') ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_hora,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(IFNULL(agenda_hilo.estado,'') ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_estado,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(IFNULL(agenda_hilo.motivo,'') ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_motivo,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(IFNULL(p_prof.nombre_persona,'') ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_profesional,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(IFNULL(p_creador_ag.nombre_persona,'') ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_creador,
+                    IFNULL(SUBSTRING_INDEX(GROUP_CONCAT(IFNULL(u_creador_ag.url,'') ORDER BY agenda_hilo.fecha ASC, agenda_hilo.hora_inicio ASC SEPARATOR '|'), '|', 1),'') AS seguimiento_proxima_cita_creador_url
+                FROM (
+                    SELECT ipv_ag.cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
+                    FROM interconsulta_paciente_venta ipv_ag
+                    INNER JOIN agenda ag_sum ON ag_sum.cod_ventaFK = ipv_ag.cod_ventaFK
+                    WHERE ipv_ag.estado = 'activo' AND ".$condicionAgendaActivaResumen."
+                    UNION
+                    SELECT ip_ag.cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
+                    FROM interconsulta_paciente ip_ag
+                    INNER JOIN agenda ag_sum ON ag_sum.id_paciente = ip_ag.cod_clienteFK_principal
+                    WHERE ip_ag.estado = 'activo' AND ".$condicionAgendaActivaResumen."
+                    UNION
+                    SELECT ipv_ag.cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
+                    FROM interconsulta_paciente_venta ipv_ag
+                    INNER JOIN venta vt_ag ON vt_ag.cod_venta = ipv_ag.cod_ventaFK
+                    INNER JOIN agenda ag_sum ON ag_sum.id_paciente = vt_ag.cod_clienteFK
+                    WHERE ipv_ag.estado = 'activo' AND ".$condicionAgendaActivaResumen."
+                    UNION
+                    SELECT ic_ag.cod_interConsulta AS cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
+                    FROM interconsulta ic_ag
+                    INNER JOIN agenda ag_sum ON ag_sum.cod_ventaFK = ic_ag.cod_ventaFK
+                    WHERE IFNULL(ic_ag.cod_ventaFK,0) > 0 AND ".$condicionAgendaActivaResumen."
+                    UNION
+                    SELECT ic_ag.cod_interConsulta AS cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
+                    FROM interconsulta ic_ag
+                    INNER JOIN venta vt_ag ON vt_ag.cod_venta = ic_ag.cod_ventaFK
+                    INNER JOIN agenda ag_sum ON ag_sum.id_paciente = vt_ag.cod_clienteFK
+                    WHERE IFNULL(ic_ag.cod_ventaFK,0) > 0 AND ".$condicionAgendaActivaResumen."
+                ) agenda_hilo
+                LEFT JOIN persona p_prof ON p_prof.cod_persona = agenda_hilo.id_profesional
+                LEFT JOIN persona p_creador_ag ON p_creador_ag.cod_persona = agenda_hilo.creado_por
+                LEFT JOIN usuario u_creador_ag ON u_creador_ag.cod_usuario = agenda_hilo.creado_por
+                GROUP BY agenda_hilo.cod_interConsultaFK
+            ) seg_agenda ON seg_agenda.cod_interConsultaFK = ic.cod_interConsulta
+            LEFT JOIN (
+                SELECT ip_plan.cod_interConsultaFK,
+                    COUNT(DISTINCT pd_plan.id) AS seguimiento_planes_definitivos,
+                    GROUP_CONCAT(DISTINCT pd_plan.estado ORDER BY pd_plan.estado SEPARATOR ', ') AS seguimiento_estado_planes
+                FROM interconsulta_paciente ip_plan
+                INNER JOIN plan_definitivo_tratamiento pd_plan
+                LEFT JOIN cliente cl_plan ON cl_plan.cod_cliente = pd_plan.paciente_id
+                WHERE ip_plan.estado = 'activo'
+                    AND pd_plan.activo = 1
+                    AND (".$exprCedulaPlanResumen." = ip_plan.cedula_normalizada OR ".$exprCedulaClientePlanResumen." = ip_plan.cedula_normalizada)
+                GROUP BY ip_plan.cod_interConsultaFK
+            ) seg_plan ON seg_plan.cod_interConsultaFK = ic.cod_interConsulta
+            LEFT JOIN (
+                SELECT hilo_venta_reciente.cod_interConsultaFK,
+                    COUNT(DISTINCT CASE
+                        WHEN DATE(hilo_venta_reciente.fecha_venta) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                        THEN hilo_venta_reciente.cod_ventaFK
+                        ELSE NULL
+                    END) AS seguimiento_ventas_recientes,
+                    IFNULL(MAX(CASE
+                        WHEN DATE(hilo_venta_reciente.fecha_venta) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                        THEN hilo_venta_reciente.fecha_venta
+                        ELSE NULL
+                    END),'') AS seguimiento_ultima_venta_reciente
+                FROM (
+                    SELECT ipv_new.cod_interConsultaFK, ipv_new.cod_ventaFK, vt_new.fecha_venta
+                    FROM interconsulta_paciente_venta ipv_new
+                    INNER JOIN venta vt_new ON vt_new.cod_venta = ipv_new.cod_ventaFK
+                    WHERE ipv_new.estado = 'activo'
+                        AND IFNULL(vt_new.cod_clienteFK,0) <> 7
+                        AND IFNULL((SELECT COUNT(fecha) FROM cancelaciones cn_new WHERE cn_new.cod_venta = vt_new.cod_venta LIMIT 1),0) = 0
+                    UNION
+                    SELECT ic_new.cod_interConsulta AS cod_interConsultaFK, ic_new.cod_ventaFK, vt_new.fecha_venta
+                    FROM interconsulta ic_new
+                    INNER JOIN venta vt_new ON vt_new.cod_venta = ic_new.cod_ventaFK
+                    WHERE IFNULL(ic_new.cod_ventaFK,0) > 0
+                        AND IFNULL(vt_new.cod_clienteFK,0) <> 7
+                        AND IFNULL((SELECT COUNT(fecha) FROM cancelaciones cn_new WHERE cn_new.cod_venta = vt_new.cod_venta LIMIT 1),0) = 0
+                ) hilo_venta_reciente
+                GROUP BY hilo_venta_reciente.cod_interConsultaFK
+            ) seg_venta_reciente ON seg_venta_reciente.cod_interConsultaFK = ic.cod_interConsulta";
+
         // Se separa la tabla venta de la interconsulta ya que este es opcional
         $sql= "SELECT ic.*, 
             (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) AS nombre_local,
-            (SELECT vt.cod_clienteFK from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS cod_clienteFK,
-            (SELECT vt.num_factura from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS num_factura,
-            (SELECT vt.apodo from venta vt WHERE vt.cod_venta = ic.cod_ventaFK) AS apodo_venta,
+            COALESCE(ip_seg.cod_clienteFK_principal, vt_ic.cod_clienteFK) AS cod_clienteFK,
+            vt_ic.num_factura AS num_factura,
+            vt_ic.apodo AS apodo_venta,
             (SELECT SUM(monto) FROM gastos WHERE cod_interConsultaFK = ic.cod_interConsulta) AS total_gastos,
-            (SELECT p.nombre_persona from venta vt JOIN persona p where p.cod_persona = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as nombre_persona,
+            COALESCE(NULLIF(ip_seg.nombre_paciente_snapshot, ''), p_ic.nombre_persona) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
-            (SELECT c.ci_cliente from cliente c JOIN venta vt where c.cod_cliente = vt.cod_clienteFK AND vt.cod_venta = ic.cod_ventaFK) as cedula,
+            COALESCE(NULLIF(ip_seg.cedula, ''), cl_ic.ci_cliente) as cedula,
+            IF(ip_seg.id IS NULL,0,1) AS esSeguimientoPaciente,
+            IF(ip_seg.id IS NULL, IF(".$sqlConflictoCedulaDirecta.",1,0), IFNULL(ip_seg.estado_conflicto,0)) AS seguimiento_conflicto,
+            IF(ip_seg.id IS NULL, IF(".$sqlConflictoCedulaDirecta.", IFNULL(".$sqlDetalleConflictoCedulaDirecta.",''), ''), IFNULL(ip_seg.detalle_conflicto,'')) AS seguimiento_detalle_conflicto,
+            IFNULL(ip_seg.ventas_sin_plan_madre,0) AS ventas_sin_plan_madre,
+            IFNULL(ip_seg.total_ventas,0) AS total_ventas_paciente,
+            IFNULL(ip_seg.total_planes_madre,0) AS total_planes_madre,
+            IFNULL(seg_local.seguimiento_total_locales,0) AS seguimiento_total_locales,
+            IFNULL(seg_local.seguimiento_locales,'') AS seguimiento_locales,
+            IFNULL(seg_credito.seguimiento_total_creditos,0) AS seguimiento_total_creditos,
+            IFNULL(seg_credito.seguimiento_cuotas_pendientes,0) AS seguimiento_cuotas_pendientes,
+            IFNULL(seg_credito.seguimiento_cuotas_vencidas,0) AS seguimiento_cuotas_vencidas,
+            IFNULL(seg_credito.seguimiento_dias_mora,0) AS seguimiento_dias_mora,
+            IFNULL(seg_credito.seguimiento_saldo_pendiente,0) AS seguimiento_saldo_pendiente,
+            IFNULL(seg_credito.seguimiento_proxima_cuota_fecha,'') AS seguimiento_proxima_cuota_fecha,
+            IFNULL(seg_agenda.seguimiento_citas_futuras,0) AS seguimiento_citas_futuras,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_id,'') AS seguimiento_proxima_cita_id,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_fecha,'') AS seguimiento_proxima_cita_fecha,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_hora,'') AS seguimiento_proxima_cita_hora,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_estado,'') AS seguimiento_proxima_cita_estado,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_motivo,'') AS seguimiento_proxima_cita_motivo,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_profesional,'') AS seguimiento_proxima_cita_profesional,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_creador,'') AS seguimiento_proxima_cita_creador,
+            IFNULL(seg_agenda.seguimiento_proxima_cita_creador_url,'') AS seguimiento_proxima_cita_creador_url,
+            IFNULL(seg_plan.seguimiento_planes_definitivos,0) AS seguimiento_planes_definitivos,
+            IFNULL(seg_plan.seguimiento_estado_planes,'') AS seguimiento_estado_planes,
+            IFNULL(seg_venta_reciente.seguimiento_ventas_recientes,0) AS seguimiento_ventas_recientes,
+            IFNULL(seg_venta_reciente.seguimiento_ultima_venta_reciente,'') AS seguimiento_ultima_venta_reciente,
             (SELECT COUNT(*) FROM gastos WHERE estado IN ('solicitado','pendiente') AND fecha <= CURDATE() AND cod_interConsultaFK = ic.cod_interConsulta) AS cantGastosPendientes,
             (SELECT COUNT(idgastos) FROM gastos g WHERE g.cod_interConsultaFK = ic.cod_interConsulta) AS cantAsociadoGastos,
             (SELECT COUNT(cod_mensaje) FROM mensaje mj WHERE mj.cod_interConsultaFK = ic.cod_interConsulta) AS cantMensajes,
@@ -1993,7 +3156,15 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 FROM mensaje mj2
                 WHERE mj2.cod_interConsultaFK = ic.cod_interConsulta AND estado = 'activo' $sqlFiltroFechaLimite
             )) AS cantMensajesNoLeidos
-            from interconsulta ic $sqlFiltro
+            from interconsulta ic
+            LEFT JOIN interconsulta_paciente ip_seg
+                ON ip_seg.cod_interConsultaFK = ic.cod_interConsulta
+                AND ip_seg.estado = 'activo'
+            LEFT JOIN venta vt_ic ON vt_ic.cod_venta = ic.cod_ventaFK
+            LEFT JOIN cliente cl_ic ON cl_ic.cod_cliente = vt_ic.cod_clienteFK
+            LEFT JOIN persona p_ic ON p_ic.cod_persona = vt_ic.cod_clienteFK
+            ".$sqlJoinResumenSeguimiento."
+            $sqlFiltro
             ORDER BY 
             (SELECT COUNT(cod_mencion) from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mc.isLeido = 0 $sqlFiltroMenciones AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mj.fecha_creacion = (
                 SELECT MAX(mj2.fecha_creacion)
@@ -2007,11 +3178,14 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
         set_time_limit(2147483647);
 
-        $mysqli=conectar_al_servidor();
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
-            echo "$sql\n$limite\n";
-            echo "Error: ". mysqli_error($mysqli);
+            $informacion = array(
+                "1" => "error",
+                "mensaje" => "Error al preparar la consulta de hilos: " . mysqli_error($mysqli)
+            );
+            echo json_encode($informacion);
+            exit;
         }
         if ( !$stmt->execute()) {
             $informacion =array("1" => "error", "mensaje" => "Error: " . $stmt->error, "sql" => $sql);

@@ -797,6 +797,97 @@ font-family: 'Catamaran', sans-serif;
 			
 		
 	}
-	
-	
-	
+
+/* Seguimiento de pacientes en hilos */
+.interconsulta-subject-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.interconsulta-follow-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 18px;
+    padding: 1px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.interconsulta-follow-badge--master {
+    border-color: #9dd7bd;
+    background: #ecfdf3;
+    color: #146c43;
+}
+
+.interconsulta-follow-badge--warning {
+    border-color: #f6c56f;
+    background: #fff7e6;
+    color: #92400e;
+}
+
+.interconsulta-follow-badge--conflict {
+    border-color: #f4a3a3;
+    background: #fff1f2;
+    color: #9f1239;
+}
+
+.interconsulta-follow-badge--info {
+    border-color: #9cc7eb;
+    background: #eff6ff;
+    color: #1d4e89;
+}
+
+.interconsulta-thread-row--patient-conflict #td_id {
+    box-shadow: inset 4px 0 0 #dc2626;
+}
+
+.interconsulta-thread-row--without-plan #td_id {
+    box-shadow: inset 4px 0 0 #f59e0b;
+}
+
+.interconsulta-patient-alerts {
+    display: grid;
+    gap: 6px;
+    margin: 8px 0 12px;
+}
+
+.interconsulta-patient-alert {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid #dbe4ee;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #334155;
+    font-family: 'Merriweather Sans', Arial;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.interconsulta-patient-alert strong {
+    color: #172033;
+    font-size: 11px;
+}
+
+.interconsulta-patient-alert--info {
+    border-color: #a9d6f5;
+    background: #eff6ff;
+}
+
+.interconsulta-patient-alert--warning {
+    border-color: #f6c56f;
+    background: #fff7e6;
+}
+
+.interconsulta-patient-alert--conflict {
+    border-color: #f4a3a3;
+    background: #fff1f2;
+}

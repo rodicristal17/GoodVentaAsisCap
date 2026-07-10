@@ -1959,7 +1959,23 @@ function establecerBotonExtractoActivo(id_gastos) {
 }
 
 function inicializarEventosExtracto(panelExtracto) {
-	
+	if (!panelExtracto || panelExtracto.dataset.extractoEventosInicializados == "1") {
+		return;
+	}
+	panelExtracto.dataset.extractoEventosInicializados = "1";
+	panelExtracto.addEventListener("hidden.bs.collapse", function () {
+		limpiarBotonExtractoActivo();
+		extractoActual = null;
+	});
+}
+
+function cerrarExtractoGasto() {
+	const panelExtracto = document.getElementById("collapseExtracto");
+	if (!panelExtracto) {
+		return;
+	}
+	const instancia = bootstrap.Collapse.getOrCreateInstance(panelExtracto, { toggle: false });
+	instancia.hide();
 }
 
 function mostrarExtractoGasto(id_gastos) {
@@ -1968,10 +1984,7 @@ function mostrarExtractoGasto(id_gastos) {
 		return;
 	}
 
-	panelExtracto.addEventListener("hidden.bs.collapse", function () {
-		limpiarBotonExtractoActivo();
-		extractoActual = null;
-	});
+	inicializarEventosExtracto(panelExtracto);
 
 	bsExtracto = bootstrap.Collapse.getOrCreateInstance(panelExtracto, { toggle: false });
     const panelAbierto = panelExtracto.classList.contains("show");

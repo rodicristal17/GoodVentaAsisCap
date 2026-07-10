@@ -23736,7 +23736,7 @@ function limpiarFiltrosHistorialVenta() {
 	}
 	limpiarcamposhistorialventa();
 }
-function buscarhistorialventa() {    
+function buscarhistorialventa(callback) {
 	
 	var tipoComprobante = document.getElementById("inptBuscarHistorialcomprobante").value
 	var fechafiltro = document.getElementById('inptBuscarHistorialVenta1').value
@@ -23867,6 +23867,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 						 controldebusquedadHistorialVenta=false
 					 }
 					
+					}
+					if (Respuesta == true && typeof callback === "function") {
+						callback();
 					}
 			} catch (error) {
 				controldebusquedadHistorialVenta=false
