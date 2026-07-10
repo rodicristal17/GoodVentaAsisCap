@@ -9251,7 +9251,7 @@ textarea:focus, select:focus {
 }
 
 #divAbmInsumos .panel-title {
-  margin: 0 0 8px;
+  margin: 0 0 2px;
   color: #172033;
   font-size: 14px;
   font-weight: 900;
@@ -13451,13 +13451,13 @@ text-align: justify;
 #divAbmDetallesInterConsulta .interconsulta-detail-modal {
   width: 95vw !important;
   max-width: 1400px;
-  height: 96vh;
-  max-height: 96vh;
+  height: 100vh;
+  max-height: 100vh;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 16px;
+  padding: 6px 8px;
   box-sizing: border-box;
   border-radius: 18px;
   background: #f4f7fa;
@@ -13469,7 +13469,7 @@ text-align: justify;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding: 2px 2px 8px;
+  padding: 0 2px 4px;
   border-bottom: 1px solid #dbe5ee;
   flex: 0 0 auto;
   position: sticky;
@@ -13742,7 +13742,7 @@ text-align: justify;
 }
 
 #divAbmDetallesInterConsulta .divMenuf {
-  padding: 14px 0 0;
+  padding: 4px 0 0;
 }
 
 #divAbmDetallesInterConsulta .interconsulta-detail-modal > .divMenuf {
@@ -13754,7 +13754,7 @@ text-align: justify;
   align-content: stretch;
   overflow-y: hidden;
   overflow-x: hidden;
-  padding-right: 6px;
+  padding-right: 2px;
 }
 
 #divAbmDetallesInterConsulta .interconsulta-detail-top {
@@ -13764,19 +13764,19 @@ text-align: justify;
 #divAbmDetallesInterConsulta .interconsulta-thread-details {
   display: block;
   width: 100%;
-  margin: 0 0 8px;
+  margin: 0 0 2px;
 }
 
 #divAbmDetallesInterConsulta .interconsulta-thread-details__summary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 30px;
+  gap: 6px;
+  min-height: 24px;
   border: 1px solid #d7e2ec;
   border-radius: 999px;
   background: #ffffff;
   color: #37536b;
-  padding: 5px 12px;
+  padding: 2px 9px;
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
@@ -14009,7 +14009,7 @@ text-align: justify;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin-top: 8px;
+  margin-top: 2px;
   border: 1px solid #dbe5ee;
   border-radius: 14px;
   background: #ffffff;
@@ -14021,8 +14021,8 @@ text-align: justify;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 3px 8px;
   border-bottom: 1px solid #e5edf4;
   border-radius: 14px 14px 0 0;
   background: #ffffff;
@@ -14036,7 +14036,7 @@ text-align: justify;
 }
 
 #divAbmDetallesInterConsulta .interconsulta-jump-latest {
-  min-height: 32px;
+  min-height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -14045,7 +14045,7 @@ text-align: justify;
   border-radius: 999px;
   background: #eef9fc;
   color: #147d9a;
-  padding: 6px 11px;
+  padding: 3px 9px;
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
@@ -14077,9 +14077,9 @@ text-align: justify;
 }
 
 #divAbmDetallesInterConsulta .interconsulta-section-head h3 {
-  margin: 2px 0 0;
+  margin: 0;
   color: #21384f;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -14092,7 +14092,7 @@ text-align: justify;
   min-height: 0;
   max-height: none;
   border: none !important;
-  padding: 10px 14px;
+  padding: 4px 10px;
   background: #f6f9fc;
   border-radius: 0 0 14px 14px;
   overflow-y: auto;
@@ -14104,7 +14104,7 @@ text-align: justify;
   display: flex;
   justify-content: flex-start;
   width: 100%;
-  margin: 0 0 1rem;
+  margin: 0 0 0.35rem;
 }
 
 #table_abm_InterConsulta .interconsulta-message-row--own {
@@ -14117,7 +14117,7 @@ text-align: justify;
   border: 1px solid #dfe8f0;
   border-radius: 16px;
   background: #ffffff;
-  padding: 16px;
+  padding: 10px 12px;
   box-shadow: 0 8px 18px rgba(31, 56, 80, 0.08);
   overflow: hidden;
 }
@@ -14350,7 +14350,7 @@ text-align: justify;
   grid-template-columns: minmax(0, 1fr) minmax(420px, 1.15fr);
   gap: 12px;
   align-items: start;
-  margin-top: 8px;
+  margin-top: 3px;
 }
 
 #divListDetallesInterconsultasAsoc,
@@ -14377,8 +14377,8 @@ text-align: justify;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px 10px;
-  padding: 7px 10px;
+  gap: 4px 8px;
+  padding: 4px 8px;
   border-bottom: 1px solid #e5edf4;
 }
 
@@ -14510,7 +14510,11 @@ text-align: justify;
 }
 
 #panelMensajeInterConsulta > .card-body {
-  padding: 8px 10px;
+  padding: 4px 8px;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-section-head > div:first-child > span {
+  display: none;
 }
 
 #editorMensajeInterConsulta {
@@ -14564,13 +14568,13 @@ text-align: justify;
 
 #inptContenidoAbmMensaje {
   width: 100%;
-  min-height: 44px;
-  height: 44px;
+  min-height: 38px;
+  height: 38px;
   max-height: 112px;
   margin: 0;
   border: 1px solid #cdd9e4;
   border-radius: 12px;
-  padding: 9px 12px;
+  padding: 6px 10px;
   background: #fbfdff;
   color: #1f354c;
   font-size: 13px;
@@ -14588,7 +14592,7 @@ text-align: justify;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 38px;
 }
 
 #accionesMensajeInterConsulta > span {
