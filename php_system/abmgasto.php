@@ -1569,6 +1569,17 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 		$stmt->bind_param('ii', $codProyectoSerie, $idgastos);
 		$stmt->execute();
 
+		if ($cod_motivo != NULL && $cod_motivo != "") {
+			$sql = "UPDATE gastos SET cod_motivoIngresoEgresoFK = ?, cod_usuarioFK_edit = ? WHERE cod_proyecto_gastoFK = ?";
+			$stmtActualizarConceptoProyecto = $mysqli->prepare($sql);
+			$stmtActualizarConceptoProyecto->bind_param('iii', $cod_motivo, $cod_usuario, $codProyectoSerie);
+			if (!$stmtActualizarConceptoProyecto->execute()) {
+				echo trigger_error('The query execution failed; MySQL said ('.$stmtActualizarConceptoProyecto->errno.') '.$stmtActualizarConceptoProyecto->error, E_USER_ERROR);
+				exit;
+			}
+			$stmtActualizarConceptoProyecto->close();
+		}
+
 		$gastos_asociados= buscarGasto('','','','','','','','','false','','','','','', '', 'ASC', $codProyectoSerie);
 	} else {
 		$gastos_asociados= obtenerGastosAsociados($idgastos);
