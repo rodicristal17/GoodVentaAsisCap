@@ -1612,9 +1612,6 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
 }
 
 function crearHilosSeguimientoPacienteHistorico() {
-    if (controlacceso("CREARINTERCONSULTA", "accion") == false) {
-        return;
-    }
     if (!confirm("Se van a crear o actualizar hilos maestros por numero de cedula para todas las ventas reales historicas. No se duplican hilos existentes. Desea continuar?")) {
         return;
     }

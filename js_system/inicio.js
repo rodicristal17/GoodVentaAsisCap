@@ -416,7 +416,6 @@ window.onload = function () {
 
 			if (codigopc == "undefined" || codigopc == "" || codigopc == "Null" || codigopc == null) {
 				resgistrardispositivo()
-				vercerrarventanactualizacion("1")
 			} else {
 				controldeactualizacion(codigopc)
 			}
@@ -4619,7 +4618,6 @@ var codigopc=localStorage.getItem("codpc");
 
 if (codigopc == "undefined" || codigopc == "" || codigopc == "Null" || codigopc == null ) {	
    resgistrardispositivo()
-   vercerrarventanactualizacion("1")
 }else{
 	controldeactualizacion(codigopc)
 }
@@ -4679,7 +4677,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.87";
+var codigodeactualizacion="X-GT-1-JMTG-V1.97";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -4789,7 +4787,7 @@ function resgistrardispositivo(codigopc) {
 				Respuesta = datos["1"];			
 				if (Respuesta == "exito") {
 				localStorage.setItem("codpc",codigopc);
-				vercerrarventanactualizacion("1")
+				controldeactualizacion(codigopc)
 				}
 			} catch (error) {
            console.log(error)
