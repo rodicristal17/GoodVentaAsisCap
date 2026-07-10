@@ -24,7 +24,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-importaciones-busqueda-20260708" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-citas-notas-panel-fijo-20260709" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -52,7 +52,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-importaciones-busqueda-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-nueva-cita-limpia-20260706"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=detalle-turno-citas-notas-cierre-20260709"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-periodo-superior-20260707"></script>
@@ -28716,38 +28716,60 @@ function escaparHtmlInformeInsumosAgenda(valor){
                     <span>CI <b id='detAgendaCedula'></b></span>
                     <span id='detAgendaTipoCita' class='detalle-chip detalle-chip--tipo'>Turno</span>
                   </div>
+                  <div class='detalle-turno-resumen' aria-label='Resumen del turno'>
+                    <span><b>Fecha</b> <strong id='detAgendaFecha'></strong></span>
+                    <span><b>Horario</b> <strong id='detAgendaHorarioTexto'></strong></span>
+                    <span><b>Duracion</b> <strong id='detAgendaDuracion'></strong></span>
+                    <span><b>Doctor/a</b> <strong id='detAgendaPresupuesto'></strong></span>
+                    <span><b>Consultorio</b> <strong id='detAgendaConsultorio'></strong></span>
+                    <span><b>Sucursal</b> <strong id='detAgendaSucursal'></strong></span>
+                  </div>
                 </div>
                 <div class='detalle-paciente-actions'>
                   <div id='detAgendaEstado' class='detalle-estado-wrap'></div>
                   <button type='button' class='detalle-budget-action' onclick='cargarTratamientoDesdeAgenda();'>Generar nuevo presupuesto</button>
                   <button type='button' class='detalle-icon-action' onclick='toggleMasAccionesDetalleAgenda()' aria-label='Mas acciones'>...</button>
                   <div id='detAgendaMasAccionesMenu' class='detalle-actions-menu' style='display:none;'>
+                    <button type='button' onclick='toggleCitasNotasDetalleAgenda()'>Citas y notas</button>
                     <button type='button' onclick='verHistorialDesdeConsultorio(false)'>Ver historial clinico completo</button>
                     <button type='button' id='detAgendaMenuPrimeraConsulta' onclick='cambiarEstadoAgendaDesdeModal("PRIMERACONSULTA")'>Marcar como primera consulta</button>
                     <button type='button' id='detAgendaMenuCancelar' class='detalle-actions-menu__danger' onclick='confirmarCancelarCitaDetalleAgenda()'>Cancelar cita</button>
                   </div>
                 </div>
               </div>
+              <div class='detalle-agenda-extra-panel' id='detAgendaExtraPanel' style='display:none;'>
+                <div class='detalle-agenda-extra__body'>
+                  <div class='detalle-agenda-extra__head'>
+                    <strong>Citas y notas</strong>
+                    <button type='button' onclick='cerrarCitasNotasDetalleAgenda()' aria-label='Cerrar citas y notas'>&times;</button>
+                  </div>
+                  <section class="presupuesto-panel detalle-agenda-historial">
+                    <div class='detalle-card-head detalle-card-head--compact'>
+                      <div>
+                        <span class='detalle-section-kicker'>Ultimas citas</span>
+                        <h4>Actividad reciente</h4>
+                      </div>
+                      <button type='button' id='detAgendaVerHistorialCompleto' class='detalle-link-action' onclick='toggleHistorialCompletoDetalleAgenda()' style='display:none;'>Ver historial completo</button>
+                    </div>
+                    <div id="table_historial_paciente_agenda_detalle" class="div_cuerpo_table presupuesto-search-table detalle-agenda-tabla-historial"></div>
+                  </section>
+                  <section class="presupuesto-panel detalle-agenda-comentarios">
+                    <div class='detalle-card-head detalle-card-head--compact'>
+                      <div>
+                        <span class='detalle-section-kicker'>Notas del turno</span>
+                        <h4>Comentarios internos</h4>
+                      </div>
+                    </div>
+                    <div class='detalle-valor detalle-notas-list' id='detAgendaMotivo'></div>
+                    <div class="detalle-comentario-input">
+                      <textarea id="detAgendaMotivoInput" onkeydown="manejarTeclaComentarioAgendamiento(event)" placeholder="Escribir una nota..."></textarea>
+                      <button type='button' class='detalle-send-action' onclick="verificarComentarioAgendamiento()" aria-label='Enviar nota'><i class="fa-regular fa-paper-plane"></i></button>
+                    </div>
+                  </section>
+                </div>
+              </div>
               <div id='detAgendaDeudaAlerta' class='detalle-deuda-alerta' style='display:none;'></div>
               <div id='detAgendaDeudasPendientes' class='detalle-deuda-detalle' style='display:none;'></div>
-            </div>
-
-            <article class='detalle-card detalle-card-turno'>
-              <div class='detalle-card-head'>
-                <div>
-                  <span class='detalle-section-kicker'>Turno</span>
-                  <h4>Fecha y horario</h4>
-                </div>
-                <button type='button' id='detAgendaBtnReprogramar' class='detalle-secondary-action' onclick='abrirReprogramacionDetalleAgenda()'>Reprogramar</button>
-              </div>
-              <div class='detalle-turno-grid'>
-                <div class='detalle-data-row'><span>Fecha</span><strong id='detAgendaFecha'></strong></div>
-                <div class='detalle-data-row'><span>Horario</span><strong id='detAgendaHorarioTexto'></strong></div>
-                <div class='detalle-data-row'><span>Duracion</span><strong id='detAgendaDuracion'></strong></div>
-                <div class='detalle-data-row'><span>Doctor/a asignado</span><strong id='detAgendaPresupuesto'></strong></div>
-                <div class='detalle-data-row'><span>Consultorio</span><strong id='detAgendaConsultorio'></strong></div>
-                <div class='detalle-data-row'><span>Sucursal</span><strong id='detAgendaSucursal'></strong></div>
-              </div>
               <div id='detAgendaReprogramarPanel' class='detalle-reprogramar-panel' style='display:none;'>
                 <label>Fecha <input id='detAgendaFechaReprogramar' type='date' /></label>
                 <label>Inicio <input id='detAgendaHorarioInicio' type='time' /></label>
@@ -28755,13 +28777,13 @@ function escaparHtmlInformeInsumosAgenda(valor){
                 <button type='button' class='detalle-secondary-action' onclick='cerrarReprogramacionDetalleAgenda()'>Cancelar</button>
                 <button type='button' class='detalle-primary-action detalle-primary-action--small' onclick='confirmarReprogramacionDetalleAgenda()'>Reprogramar</button>
               </div>
-            </article>
+            </div>
 
             <article class='detalle-card detalle-card-preparacion'>
               <div class='detalle-card-head'>
                 <div>
                   <span class='detalle-section-kicker'>Preparacion de la atencion</span>
-                  <h4>Plan madre, tratamientos e insumos</h4>
+                  <h4>Plan madre y tratamientos</h4>
                 </div>
               </div>
               <div class='detalle-prep-block'>
@@ -28783,36 +28805,7 @@ function escaparHtmlInformeInsumosAgenda(valor){
                 </div>
                 <div id='contenedorAsignarTratamientoAgenda' class='agenda-asignar-tratamiento-anchor'></div>
               </div>
-              <div class='detalle-prep-block detalle-prep-block--insumos'>
-                <div>
-                  <span class='detalle-label'>Insumos previstos</span>
-                  <div class='detalle-valor' id='detAgendaInsumosPrevistos'></div>
-                </div>
-              </div>
             </article>
-          </section>
-          <section class="presupuesto-panel detalle-agenda-historial">
-            <div class='detalle-card-head detalle-card-head--compact'>
-              <div>
-                <span class='detalle-section-kicker'>Ultimas citas</span>
-                <h4>Actividad reciente</h4>
-              </div>
-              <button type='button' id='detAgendaVerHistorialCompleto' class='detalle-link-action' onclick='toggleHistorialCompletoDetalleAgenda()' style='display:none;'>Ver historial completo</button>
-            </div>
-            <div id="table_historial_paciente_agenda_detalle" class="div_cuerpo_table presupuesto-search-table detalle-agenda-tabla-historial"></div>
-          </section>
-          <section class="presupuesto-panel detalle-agenda-comentarios">
-            <div class='detalle-card-head detalle-card-head--compact'>
-              <div>
-                <span class='detalle-section-kicker'>Notas del turno</span>
-                <h4>Comentarios internos</h4>
-              </div>
-            </div>
-            <div class='detalle-valor detalle-notas-list' id='detAgendaMotivo'></div>
-            <div class="detalle-comentario-input">
-              <textarea id="detAgendaMotivoInput" onkeydown="manejarTeclaComentarioAgendamiento(event)" placeholder="Escribir una nota..."></textarea>
-              <button type='button' class='detalle-send-action' onclick="verificarComentarioAgendamiento()" aria-label='Enviar nota'><i class="fa-regular fa-paper-plane"></i></button>
-            </div>
           </section>
         </div>
 

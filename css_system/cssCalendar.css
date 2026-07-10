@@ -3229,17 +3229,132 @@
     margin-bottom:0;
 }
 
+/* Detalle de turno compacto */
+#modalDetalleAgenda .detalle-agenda-body{
+    grid-template-columns:minmax(0, 1fr);
+    grid-template-rows:auto;
+    grid-template-areas:
+        "datos"
+        "extra";
+    align-content:start;
+}
+
+#modalDetalleAgenda .detalle-paciente-main{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    align-items:start;
+    gap:12px;
+}
+
+#modalDetalleAgenda .detalle-paciente-actions{
+    grid-column:2;
+    grid-row:1;
+    align-self:start;
+}
+
+.detalle-turno-resumen{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px 12px;
+    margin-top:9px;
+    color:var(--text-main);
+    font-size:11px;
+    font-weight:850;
+    line-height:1.25;
+}
+
+.detalle-turno-resumen span{
+    display:inline-flex;
+    align-items:baseline;
+    gap:4px;
+    max-width:100%;
+}
+
+.detalle-turno-resumen b{
+    color:var(--text-muted);
+    font-size:10px;
+    font-weight:900;
+}
+
+.detalle-turno-resumen strong{
+    color:var(--text-title);
+    font-size:11px;
+    font-weight:950;
+    overflow-wrap:anywhere;
+}
+
+#modalDetalleAgenda .detalle-paciente-header .detalle-reprogramar-panel{
+    margin-top:0;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-card-head h4{
+    font-size:15px;
+}
+
+.detalle-agenda-extra{
+    grid-area:extra;
+    min-width:0;
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    background:var(--bg-panel-solid);
+    box-shadow:0 10px 24px rgba(15, 23, 42, 0.06);
+    overflow:hidden;
+}
+
+.detalle-agenda-extra > summary{
+    min-height:42px;
+    display:flex;
+    align-items:center;
+    padding:10px 14px;
+    color:var(--text-title);
+    font-size:13px;
+    font-weight:900;
+    cursor:pointer;
+    user-select:none;
+}
+
+.detalle-agenda-extra > summary::marker{
+    color:var(--text-muted);
+}
+
+.detalle-agenda-extra[open] > summary{
+    border-bottom:1px solid var(--border-soft);
+    background:var(--bg-soft);
+}
+
+.detalle-agenda-extra__body{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr);
+    gap:12px;
+    width:min(420px, 100%);
+    margin-left:auto;
+    padding:12px;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra .detalle-agenda-historial,
+#modalDetalleAgenda .detalle-agenda-extra .detalle-agenda-comentarios{
+    grid-area:auto;
+    min-height:0;
+    box-shadow:none;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra .detalle-agenda-tabla-historial,
+#modalDetalleAgenda .detalle-agenda-extra .detalle-notas-list{
+    max-height:240px;
+}
+
 @media only screen and (max-width: 1200px){
     #modalDetalleAgenda .modal-detalle-agenda-box{
         width:calc(100vw - 24px);
     }
 
     #modalDetalleAgenda .detalle-agenda-body{
-        grid-template-columns:minmax(0, 1fr) minmax(280px, 320px);
-        grid-template-rows:auto auto;
+        grid-template-columns:minmax(0, 1fr);
+        grid-template-rows:auto;
         grid-template-areas:
-            "datos historial"
-            "datos comentarios";
+            "datos"
+            "extra";
     }
 }
 
@@ -3255,14 +3370,14 @@
         grid-template-rows:auto;
         grid-template-areas:
             "datos"
-            "historial"
-            "comentarios";
+            "extra";
         padding:12px;
     }
 
-    .detalle-paciente-main,
+    #modalDetalleAgenda .detalle-paciente-main,
     .detalle-card-head,
     .detalle-prep-block{
+        display:flex;
         align-items:flex-start;
         flex-direction:column;
     }
@@ -3275,11 +3390,262 @@
         grid-template-columns:1fr;
     }
 
+    .detalle-agenda-extra__body{
+        grid-template-columns:1fr;
+        width:100%;
+    }
+
     #modalDetalleAgenda .modal-detalle-agenda-box .detalle-agenda-actions{
         align-items:stretch;
     }
 
     #modalDetalleAgenda .detalle-agenda-actions button{
         width:100%;
+    }
+}
+
+/* Pulido visual del detalle de agenda */
+#modalDetalleAgenda .modal-detalle-agenda-box{
+    width:min(94vw, 1080px);
+    max-width:1080px;
+    background:#f8fafc;
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header{
+    padding:14px 18px 12px;
+}
+
+#modalDetalleAgenda .detalle-agenda-body{
+    gap:10px;
+    padding:12px 16px 12px;
+    background:#f8fafc;
+}
+
+#modalDetalleAgenda .detalle-agenda-main{
+    gap:10px;
+}
+
+#modalDetalleAgenda .detalle-paciente-header{
+    gap:12px;
+    padding:14px 16px;
+    border-radius:8px;
+    position:relative;
+}
+
+#modalDetalleAgenda .detalle-paciente-main{
+    grid-template-columns:minmax(0, 1fr) auto;
+    gap:14px;
+}
+
+#modalDetalleAgenda .detalle-paciente-main h2{
+    margin:2px 0 5px;
+    font-size:22px;
+}
+
+#modalDetalleAgenda .detalle-paciente-meta{
+    gap:8px;
+}
+
+#modalDetalleAgenda .detalle-turno-resumen{
+    gap:5px 10px;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px solid var(--border-soft);
+}
+
+#modalDetalleAgenda .detalle-turno-resumen span{
+    position:relative;
+    padding-right:10px;
+}
+
+#modalDetalleAgenda .detalle-turno-resumen span:not(:last-child)::after{
+    content:"";
+    position:absolute;
+    right:0;
+    top:4px;
+    width:1px;
+    height:12px;
+    background:#d8e4ef;
+}
+
+#modalDetalleAgenda .detalle-paciente-actions{
+    max-width:100%;
+    gap:8px;
+}
+
+#modalDetalleAgenda .detalle-icon-action{
+    min-width:34px;
+    width:34px;
+}
+
+#modalDetalleAgenda .detalle-card{
+    border-radius:8px;
+    box-shadow:none;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion{
+    padding:14px 16px 12px;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-card-head{
+    margin-bottom:8px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--border-soft);
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block{
+    padding:12px 0;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block:last-child{
+    display:grid;
+    grid-template-columns:minmax(180px, 1fr) auto;
+    gap:12px;
+    align-items:end;
+}
+
+#modalDetalleAgenda .detalle-tratamientos-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel{
+    position:absolute;
+    top:64px;
+    right:16px;
+    z-index:20;
+    width:440px;
+    max-width:calc(100% - 32px);
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    background:var(--bg-panel-solid);
+    box-shadow:0 22px 48px rgba(15, 23, 42, 0.2);
+    overflow:hidden;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra__body{
+    position:static;
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:0;
+    background:var(--bg-panel-solid);
+    box-shadow:none;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra__head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:10px 12px;
+    border:0;
+    border-bottom:1px solid var(--border-soft);
+    border-radius:0;
+    background:var(--bg-panel-solid);
+}
+
+#modalDetalleAgenda .detalle-agenda-extra__head strong{
+    color:var(--text-title);
+    font-size:13px;
+    font-weight:900;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra__head button{
+    width:28px;
+    height:28px;
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    background:var(--bg-soft);
+    color:var(--text-main);
+    cursor:pointer;
+    font-size:17px;
+    font-weight:900;
+    line-height:1;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-historial,
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-comentarios{
+    padding:12px;
+    border:0;
+    border-bottom:1px solid var(--border-soft);
+    border-radius:0;
+    background:var(--bg-panel-solid);
+    box-shadow:none;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-comentarios{
+    border-bottom:0;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-tabla-historial,
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-notas-list{
+    max-height:210px;
+}
+
+#modalDetalleAgenda .detalle-comentario-input{
+    gap:8px;
+}
+
+#modalDetalleAgenda .modal-detalle-agenda-box .detalle-agenda-actions{
+    position:sticky;
+    bottom:0;
+    z-index:3;
+    gap:8px;
+    padding:10px 16px;
+    border-top:1px solid var(--border-soft);
+    background:rgba(248, 250, 252, 0.96);
+    backdrop-filter:blur(6px);
+}
+
+#modalDetalleAgenda .detalle-agenda-actions .detalle-secondary-action{
+    background:#ffffff;
+}
+
+#modalDetalleAgenda .detalle-agenda-actions > button:first-child{
+    display:none;
+}
+
+@media only screen and (max-width: 860px){
+    #modalDetalleAgenda .detalle-paciente-main{
+        grid-template-columns:1fr;
+    }
+
+    #modalDetalleAgenda .detalle-paciente-actions{
+        grid-column:auto;
+        grid-row:auto;
+        width:100%;
+    }
+
+    #modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block:last-child{
+        grid-template-columns:1fr;
+        align-items:start;
+    }
+
+    #modalDetalleAgenda .detalle-tratamientos-actions{
+        justify-content:flex-start;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-extra__body{
+        position:static;
+        width:100%;
+        margin-left:0;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-extra-panel{
+        position:static;
+        width:100%;
+        max-width:100%;
+        margin-top:8px;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-extra__body{
+        box-shadow:none;
     }
 }

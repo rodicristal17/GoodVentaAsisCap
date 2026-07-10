@@ -582,7 +582,7 @@ CREATE TABLE informacion_protocolo (
     fecha_create DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-UPDATE historialactualizacion SET codigo='X-GT-1-JMTG-V1.84', detalles='Calendario vinculado a consultas y tratamientos', fecha='2026-05-25' WHERE idhistorialactualizacion= 2;
+UPDATE historialactualizacion SET codigo=X-GT-1-JMTG-V1.87', detalles='Calendario vinculado a consultas y tratamientos', fecha='2026-05-25' WHERE idhistorialactualizacion= 2;
 
 ALTER TABLE agenda ADD COLUMN cod_detalle_ventaFK INT(11);
 ALTER TABLE evoluciontratamiento ADD COLUMN cod_agendaFK INT(11);

@@ -3433,6 +3433,9 @@ function verDetalleAgenda(id){
     idAbmAgenda = evento.id;
     agendaEventoDetalleActual = evento;
     var datosConsultorioDetalle = obtenerConsultorioDetalleAgenda(evento);
+    if(document.getElementById('detAgendaExtraPanel')){
+        document.getElementById('detAgendaExtraPanel').style.display = 'none';
+    }
     renderEstadoCargaDetalleAgenda();
     document.getElementById('detAgendaId').innerHTML = evento.id;
     if (document.getElementById('detAgendaPacienteId')) {
@@ -3776,9 +3779,22 @@ function cerrarMasAccionesDetalleAgenda(){
     if(menu){ menu.style.display = "none"; }
 }
 
+function toggleCitasNotasDetalleAgenda(){
+    var panel = document.getElementById("detAgendaExtraPanel");
+    if(!panel){ return; }
+    panel.style.display = panel.style.display == "none" ? "" : "none";
+    cerrarMasAccionesDetalleAgenda();
+}
+
+function cerrarCitasNotasDetalleAgenda(){
+    var panel = document.getElementById("detAgendaExtraPanel");
+    if(panel){ panel.style.display = "none"; }
+}
+
 function abrirReprogramacionDetalleAgenda(){
     var panel = document.getElementById("detAgendaReprogramarPanel");
     if(panel){ panel.style.display = ""; }
+    cerrarCitasNotasDetalleAgenda();
     cerrarMasAccionesDetalleAgenda();
 }
 
@@ -4575,6 +4591,7 @@ function cerrarDetalleAgenda(){
     }
     verCerrarAsignarTratamiento(false);
     cerrarMasAccionesDetalleAgenda();
+    cerrarCitasNotasDetalleAgenda();
     cerrarReprogramacionDetalleAgenda();
     setAccionesDetalleAgendaProcesando(false);
     document.getElementById('overlayDetalleAgenda').style.display = 'none';
