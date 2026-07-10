@@ -11,6 +11,7 @@ include("BuscarNroFactura.php");
 include("calcularintereses.php");
 // include("calcularInteresDirecto.php");
 include("classTable.php");
+require_once("interconsulta_seguimiento_paciente_helper.php");
 
 
 
@@ -653,8 +654,17 @@ actualizarTotal($cod_ventaFK,$subtotal);
 
 funcionCrearCredito($tipo,$fecha_venta,$cod_ventaFK,$subtotal,0,$nro_comprobante);
 
+$seguimientoPaciente = array("ok" => false, "motivo" => "no_ejecutado");
+if (function_exists("seguimientoPacienteAsegurarHiloPorVenta")) {
+	try {
+		$usuarioSeguimiento = isset($_POST['useru']) ? $_POST['useru'] : "";
+		$seguimientoPaciente = seguimientoPacienteAsegurarHiloPorVenta($cod_ventaFK, $usuarioSeguimiento, "detalle_venta");
+	} catch (Throwable $e) {
+		$seguimientoPaciente = array("ok" => false, "motivo" => "error_no_bloqueante", "mensaje" => $e->getMessage());
+	}
+}
 
-$informacion =array("1" => "exito","2" => number_format($subtotal,'0',',','.'),"3" => $cod_ventaFK,"4" => $num_factura);
+$informacion =array("1" => "exito","2" => number_format($subtotal,'0',',','.'),"3" => $cod_ventaFK,"4" => $num_factura, "seguimiento_paciente" => $seguimientoPaciente);
 echo json_encode($informacion);	
 exit;
 	

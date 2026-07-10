@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-importaciones-busqueda-20260708" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-ueno-merge-20260710" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-consultorios-liviana-20260704" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -43,7 +43,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=version-actualizacion-v200-dashboard-flujo-permiso-usuario-20260708"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=hilos-ueno-merge-20260710"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -55,13 +55,13 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-nueva-cita-limpia-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-periodo-superior-20260707"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=extracto-cierre-20260710"></script>
 <script src="../js_system/abmAsistencia.js?x=jornada-cargando-topbar-20260619"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=hilo-proyecto-flujo-20260624"></script>
+<script src="../js_system/abmInterConsulta.js?x=hilo-selector-ventas-20260710"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -7474,7 +7474,7 @@ style='background-color:#5bc572'>
 </div>
 
 <!-- InterConsulta -->
-<div id="divListadoInterConsulta" class="principal2" style="display: none;">
+<div id="divListadoInterConsulta" class="principal2" style="display: none;" data-hilos-category="pagos_egresos">
   <center>
     <div id="divAbmInterConsulta1" class="presupuesto-container presupuesto-search-modal">
       <header class="presupuesto-header presupuesto-search-header">
@@ -7589,15 +7589,27 @@ style='background-color:#5bc572'>
           </div>
           <div class="hilos-thread-table-wrap">
             <table class="tableCabeceraRegistro" id="tdTituloImpreArqueo">
-              <tr>
+              <tr class="hilos-head-standard">
                 <td class="td_registro" style="width:5%;">C&oacute;digo</td>
                 <td class="td_registro" style="width:25%;">Asunto</td>
-                <td class="td_registro" style="width:15%;">Cliente/CI</td>
+                <td class="td_registro" style="width:15%;">Gesti&oacute;n programada</td>
                 <td class="td_registro" style="width:10%;">Local</td>
                 <td class="td_registro" style="width:10%;">Estado</td>
                 <td class="td_registro" style="width:10%;">Tipo</td>
                 <td class="td_registro" style="width:10%;">Fecha creaci&oacute;n</td>
                 <td class="td_registro" style="width:15%;">Responsable</td>
+              </tr>
+              <tr class="hilos-head-follow">
+                <td class="td_registro" style="width:5%;">C&oacute;digo</td>
+                <td class="td_registro" style="width:21%;">Asunto</td>
+                <td class="td_registro" style="width:13%;">Gesti&oacute;n programada</td>
+                <td class="td_registro" style="width:9%;">Local</td>
+                <td class="td_registro" style="width:8%;">Estado</td>
+                <td class="td_registro" style="width:8%;">Tipo</td>
+                <td class="td_registro" style="width:10%;">Cita</td>
+                <td class="td_registro" style="width:11%;">Pago/Mora</td>
+                <td class="td_registro" style="width:7%;">Fecha</td>
+                <td class="td_registro" style="width:8%;">Responsable</td>
               </tr>
             </table>
             <table class="tableCabeceraRegistro" style="display:none;">
@@ -7675,22 +7687,31 @@ style='background-color:#5bc572'>
         <span class="interconsulta-legend__sample interconsulta-legend__sample--expenses"></span>
         <p class="interconsulta-legend__text">Gastos pendientes de aprobaci&oacute;n</p>
         <span class="interconsulta-legend__sample interconsulta-legend__sample--internal"></span>
-        <p class="interconsulta-legend__text">Tipo interno</p>
+        <p class="interconsulta-legend__text">Hilo administrativo sin paciente</p>
         </div>
       </section>
       <section class="presupuesto-panel presupuesto-search-results" style="padding:16px 20px;margin-bottom: 10px;">
         <div class="form-section" style="margin-bottom:0;">
           <div class="form-row" style="flex:0 0 170px;">
-            <label for="inptRegistoCargadoInterConsulta">Registros :</label>
+            <label for="inptRegistoCargadoInterConsulta">En pantalla :</label>
             <input class="inputTextDisable" type="text" disabled id="inptRegistoCargadoInterConsulta" style="text-align:center">
           </div>
           <div class="form-row" style="flex:0 0 190px;">
             <label for="inptRegistoInterConsultaAbierta">Hilos abiertos :</label>
             <input class="inputTextDisable" type="text" disabled id="inptRegistoInterConsultaAbierta" style="text-align:center">
           </div>
-          <div class="form-row" style="flex:0 0 220px;">
+          <div class="form-row hilos-pagination" style="flex:0 0 360px;">
             <label id="txtCargaHilosInterConsulta"></label>
-            <input type="button" value="Cargar 30 m&aacute;s" class="btn1" id="btnCargarMasHilosInterConsulta" onclick="cargarMasHilosInterConsulta()" style="display:none;width:150px;">
+            <div class="hilos-pagination__buttons">
+              <input type="button" value="&larr; Anterior" class="btn4 hilos-pagination__button" id="btnPaginaAnteriorHilosInterConsulta" onclick="cargarPaginaAnteriorHilosInterConsulta()" style="display:none;">
+              <input type="button" value="Siguiente &rarr;" class="btn1 hilos-pagination__button" id="btnCargarMasHilosInterConsulta" onclick="cargarMasHilosInterConsulta()" style="display:none;">
+            </div>
+          </div>
+          <div class="interconsulta-daily-activity">
+            <span class="interconsulta-daily-activity__label">Gestiones hoy</span>
+            <div class="interconsulta-daily-activity__users" id="panelActividadDiariaInterConsulta" aria-live="polite">
+              <div class="interconsulta-daily-activity__empty">Sin gestiones hoy</div>
+            </div>
           </div>
         </div>
       </section>
@@ -7987,6 +8008,10 @@ style='background-color:#5bc572'>
             </div>
           </div>
           <div class="interconsulta-detail-actions">
+            <button type="button" class="interconsulta-detail-action" id="btnUnificarSeguimientoPaciente" title="Unificar hilos vinculados a ventas de la misma cedula" onclick="previsualizarUnificacionSeguimientoPaciente()">
+              <i class="fa-solid fa-people-arrows" aria-hidden="true"></i>
+              <span>Unificar seguimiento</span>
+            </button>
             <button type="button" class="interconsulta-detail-close" title="Cerrar detalle del hilo" onclick="verCerrarVentanaDetalleInterConsulta(false)">
               <img src="/GoodVentaAsisCap/iconos/botonCerrar.png" alt="Cerrar">
             </button>
@@ -7995,10 +8020,15 @@ style='background-color:#5bc572'>
             <div class="divMenuf">
               <div class="collapse extracto-floating-panel" id="collapseExtracto">
                 <div class="card extracto-floating-card">
-                  <div class="card-header" id="tituloExtractoGastosInterconsulta"></div>
+                  <div class="card-header extracto-floating-header">
+                    <span id="tituloExtractoGastosInterconsulta">Extracto</span>
+                    <button type="button" class="extracto-floating-close" title="Cerrar extracto" aria-label="Cerrar extracto" onclick="cerrarExtractoGasto()">
+                      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                  </div>
                   <div class="card-body">
                     <div class="table-responsive">
-                      <table class="table align-middle mb-0"><thead>
+                      <table class="table align-middle mb-0 extracto-gasto-table"><thead>
                         <tr>
                           <th style="width: 10%;">Cuota</th>
                           <th style="width: 15%;">Vencimiento</th>
@@ -8061,7 +8091,7 @@ style='background-color:#5bc572'>
                       <span id="localDetalleInterConsulta" class="text-uppercase"></span>
                     </div>
                     <div>
-                      <span class="fw-bold">C&oacute;digo de venta:</span>
+                      <span class="fw-bold">Venta vinculada:</span>
                       <span class="text-uppercase" id="txtCodVenta"></span>
                     </div>
                     <div>
@@ -8192,8 +8222,8 @@ style='background-color:#5bc572'>
               <table><tr>
                 <td>
                 <p class="pTituloC">Cliente :</p>
-                <input class="inputTextDisable" type="text" placeholder="Seleccionar un cliente" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
-                <input type="button" value="Seleccionar" class="btn4" onclick="verCerrarAbmVistaConsulta('interConsulta')" style="background-color: #FF5722;">
+                <input class="inputTextDisable" type="text" placeholder="Seguimiento desde venta" id="inptNombreClienteAbmInterConsulta" disabled="" style="width: 200px;">
+                <input type="button" value="Autom&aacute;tico" class="btn4" id="btnSeleccionarClienteAbmInterConsulta" onclick="mostrarAvisoSeguimientoPacienteAutomatico()" title="El seguimiento por paciente se genera automaticamente desde la venta" style="background-color: #607D8B;">
                 </td></tr>
               </table>
               <p class="pTituloC" style="text-align: start;">Otros Hilos :</p>

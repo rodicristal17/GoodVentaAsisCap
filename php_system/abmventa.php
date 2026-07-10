@@ -13,6 +13,7 @@ include("BuscarNroFactura.php");
 include("calcularintereses.php");
 // include("calcularInteresDirecto.php");
 include("classTable.php");
+require_once("interconsulta_seguimiento_paciente_helper.php");
 function verificar($operacion)
 {
 	
@@ -842,7 +843,15 @@ if($operacion=="nuevo")
 $cod_venta=obtenerId($cod_clienteFK,$cod_usuarioFK,$num_factura,$cod_local);
 }
  mysqli_close($mysqli); 
-$informacion =array("1" => "exito","2" => $cod_venta );
+$seguimientoPaciente = array("ok" => false, "motivo" => "no_ejecutado");
+if (function_exists("seguimientoPacienteAsegurarHiloPorVenta")) {
+	try {
+		$seguimientoPaciente = seguimientoPacienteAsegurarHiloPorVenta($cod_venta, $cod_usuarioFK, "venta");
+	} catch (Throwable $e) {
+		$seguimientoPaciente = array("ok" => false, "motivo" => "error_no_bloqueante", "mensaje" => $e->getMessage());
+	}
+}
+$informacion =array("1" => "exito","2" => $cod_venta, "seguimiento_paciente" => $seguimientoPaciente );
 echo json_encode($informacion);	
 exit;
 	

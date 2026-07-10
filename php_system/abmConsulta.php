@@ -4,6 +4,7 @@ include("verificar_navegador.php");
 include("buscar_nivel.php");
 include("classTable.php");
 include_once("producto_riesgo_financiero_helper.php");
+require_once("interconsulta_seguimiento_paciente_helper.php");
 
 $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
@@ -1652,6 +1653,18 @@ function responderPlanDefinitivoConsulta($estado,$mensaje="",$extra=array())
 	}
 	echo json_encode($informacion);
 	exit;
+}
+
+function actualizarSeguimientoPacientePlanMadreConsulta($cod_venta,$user)
+{
+	if (!function_exists("seguimientoPacienteAsegurarHiloPorVenta")) {
+		return array("ok" => false, "motivo" => "helper_no_disponible");
+	}
+	try {
+		return seguimientoPacienteAsegurarHiloPorVenta($cod_venta, $user, "plan_madre");
+	} catch (Throwable $e) {
+		return array("ok" => false, "motivo" => "error_no_bloqueante", "mensaje" => $e->getMessage());
+	}
 }
 
 function planDefinitivoTablasDisponiblesConsulta($mysqli)
@@ -4747,7 +4760,8 @@ function asignarVentaPlanMadreConsulta($cod_venta,$plan_id,$modo,$apodo,$user)
 			responderPlanDefinitivoConsulta("error",$resultadoNuevo["mensaje"]);
 		}
 		$mysqli->commit();
-		responderPlanDefinitivoConsulta("exito","Nuevo plan madre creado. Tratamientos anexados: ".$resultadoNuevo["agregados"].".", array("plan_id" => $resultadoNuevo["plan_id"], "agregados" => $resultadoNuevo["agregados"]));
+		$seguimientoPaciente = actualizarSeguimientoPacientePlanMadreConsulta($cod_venta,$user);
+		responderPlanDefinitivoConsulta("exito","Nuevo plan madre creado. Tratamientos anexados: ".$resultadoNuevo["agregados"].".", array("plan_id" => $resultadoNuevo["plan_id"], "agregados" => $resultadoNuevo["agregados"], "seguimiento_paciente" => $seguimientoPaciente));
 	}
 	$plan = obtenerPlanDefinitivoPorIdConsulta($mysqli,$plan_id);
 	if (!$plan) {
@@ -4785,8 +4799,9 @@ function asignarVentaPlanMadreConsulta($cod_venta,$plan_id,$modo,$apodo,$user)
 	desactivarPlanesMadreVaciosConsulta($mysqli,$contexto["paciente_id"],$contexto["cedula"],$plan_id,$user);
 	registrarHistorialPlanDefinitivoConsulta($mysqli,$plan_id,$versionado["version"],"venta_asignada","Se anexaron tratamientos de la venta #".$cod_venta." al plan madre.","","".$resultado["agregados"]." tratamientos anexados",$motivo,$user,$rol);
 	$mysqli->commit();
+	$seguimientoPaciente = actualizarSeguimientoPacientePlanMadreConsulta($cod_venta,$user);
 	$mensajeAnexo = (int)$resultado["agregados"] > 0 ? "Tratamientos anexados al plan madre: ".$resultado["agregados"]."." : "Esta venta ya estaba anexada a ese plan madre.";
-	responderPlanDefinitivoConsulta("exito",$mensajeAnexo, array("plan_id" => $plan_id, "agregados" => (int)$resultado["agregados"]));
+	responderPlanDefinitivoConsulta("exito",$mensajeAnexo, array("plan_id" => $plan_id, "agregados" => (int)$resultado["agregados"], "seguimiento_paciente" => $seguimientoPaciente));
 }
 
 function etiquetaAccionHistorialPlanDefinitivoConsulta($accion)
