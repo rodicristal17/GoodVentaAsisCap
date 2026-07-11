@@ -22,7 +22,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=timeline-max-20260710" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-detalle-emergente-20260711" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-citas-notas-panel-fijo-20260709" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -49,7 +50,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-importaciones-busqueda-20260708"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-emergente-20260711"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=detalle-turno-citas-notas-cierre-20260709"></script>
@@ -2815,7 +2816,7 @@ src='/GoodVentaAsisCap/iconos/INSUMOS.png' />
 <td>
 <img class='imgIconoMenu'
 src='/GoodVentaAsisCap/iconos/transferir.png' />
-<p class='pTitulo4'>Migrar Caja</p>
+<p class='pTitulo4'>Historial de migraciones</p>
 <center>
 <div id='divMinimizadoMigrarCaja' style='display:none' class='divMinimizado'>
 </div>
@@ -21982,7 +21983,7 @@ id='inptTotalEntregaCobrador' style='width:150px;' />
 <table class='tableMenuZ'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Migrar <b style='font-size: 30px;' > Caja</b></p>
+<p class='pTituloB'>Historial de <b style='font-size: 30px;' > migraciones</b></p>
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn'
@@ -22067,7 +22068,7 @@ onclick='verificarcamposMigrarCaja()' id='btnAbmMigrarCaja' />
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/add.png' class='iconoBtn' title='Añadir registro'
-onclick='verCerrarVentanaAbmMigrarCaja("1","1")' />
+style='display:none' />
 </td>
 <td style='width:5%;text-align:center'>
 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn'
@@ -27319,6 +27320,39 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </div>
 <input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarMesaTrabajoPopup()' style='width:90px'>
 </div>
+<div id='divUenoDetalleMesaOverlay' class='ueno-workbench-detail-overlay' style='display:none'>
+<section class='ueno-workbench-detail-panel' role='dialog' aria-modal='true' aria-labelledby='lblUenoDetalleMesaTitulo'>
+<header class='ueno-workbench-detail-head'>
+<div>
+<p class='ueno-section-title' id='lblUenoDetalleMesaTitulo'>Detalle del movimiento Ueno</p>
+<p class='ueno-section-help'>Revisa el credito, sus posibles depositos y la trazabilidad sin salir de la mesa.</p>
+</div>
+<button type='button' class='ueno-workbench-detail-close' title='Cerrar detalle' onclick='uenoCerrarDetalleMesaTrabajo()' aria-label='Cerrar detalle'>&times;</button>
+</header>
+<div class='ueno-workbench-detail-tabs'>
+<button type='button' id='btnUenoDetalleMesaDatos' class='ueno-workbench-detail-tab ueno-workbench-detail-tab--active' onclick='uenoMostrarVistaDetalleMesa("detalle")'>Detalle</button>
+<button type='button' id='btnUenoDetalleMesaTraza' class='ueno-workbench-detail-tab' onclick='uenoMostrarVistaDetalleMesa("trazabilidad")'>Trazabilidad</button>
+</div>
+<div id='divUenoDetalleMesaDatos' class='ueno-workbench-detail-content'>
+<div id='divUenoMovimientoSeleccionadoPopup' class='ueno-selected-movement'></div>
+</div>
+<div id='divUenoDetalleMesaTrazabilidad' class='ueno-workbench-detail-content' style='display:none'>
+<div class='ueno-audit-dialog-summary'>
+<span><b>Movimiento</b><strong id='lblUenoDetalleMesaMovimiento'>-</strong></span>
+<span><b>Registros</b><strong id='lblUenoDetalleMesaTotal'>0</strong></span>
+</div>
+<table class='tableCabeceraRegistro ueno-table-head'><tbody><tr>
+<td class='td_registro' style='width:4%'>ID</td><td class='td_registro' style='width:10%'>FECHA</td>
+<td class='td_registro' style='width:11%'>ACCION</td><td class='td_registro' style='width:10%'>TABLA</td>
+<td class='td_registro' style='width:7%'>FACTURA</td><td class='td_registro' style='width:5%'>MOV.</td>
+<td class='td_registro' style='width:13%'>CLIENTE/CUOTA</td><td class='td_registro' style='width:8%'>ANTES</td>
+<td class='td_registro' style='width:8%'>AHORA</td><td class='td_registro' style='width:7%'>MONTO</td>
+<td class='td_registro' style='width:4%'>USER</td><td class='td_registro' style='width:13%'>OBS.</td>
+</tr></tbody></table>
+<div class='div_cuerpo_table ueno-table-body' id='table_ueno_auditoria_movimiento_mesa' style='height:360px'></div>
+</div>
+</section>
+</div>
 <div class='divMenuf ueno-card ueno-half-card ueno-main-card ueno-workbench-card' style='width:100%;float:none;margin-left:0'>
 <div class='ueno-section-head ueno-workbench-hidden-summary'>
 <div>
@@ -27359,6 +27393,15 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </td>
 </tr>
 </table>
+<div class='ueno-origin-filter'>
+<label for='inptUenoMovOrigen'>Origen probable</label>
+<select class='inputSelect' id='inptUenoMovOrigen' onchange='uenoBuscarMovimientos()'>
+<option value='todos'>TODOS</option>
+<option value='deposito'>DEPOSITOS</option>
+<option value='cuota'>POSIBLES CUOTAS</option>
+<option value='revisar'>REVISAR</option>
+</select>
+</div>
 <div class='ueno-quick-filters ueno-workbench-hidden-summary' id='divUenoMovFiltrosRapidos'>
 <button type='button' class='ueno-quick-filter ueno-quick-filter--active' data-ueno-mov-filter='todos' onclick='uenoCambiarFiltroRapidoMovimientos("todos")'>Todos <span id='lblUenoChipTodos'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='disponibles' onclick='uenoCambiarFiltroRapidoMovimientos("disponibles")'>Disponibles <span id='lblUenoChipDisponibles'>0</span></button>

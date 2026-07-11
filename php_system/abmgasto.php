@@ -85,6 +85,16 @@ $personales = "";
 $cod_motivo= $_POST['cod_motivoFK'];
 $cod_motivo= mb_convert_encoding((string)($cod_motivo), 'ISO-8859-1', 'UTF-8');
 
+// El destino empresarial se define por el concepto, no por una persona receptora.
+if (is_numeric($cod_motivo) && (int)$cod_motivo > 0) {
+	$motivoSeleccionado = buscarabmmotivoingresoegreso('', 'activo', (int)$cod_motivo);
+	if (isset($motivoSeleccionado[4][0]['descripcion'])
+		&& strtoupper(trim((string)$motivoSeleccionado[4][0]['descripcion'])) == 'DEPOSITO BANCARIO - FARAONE CAPITAL S.A.') {
+		$tipo = 'Egreso';
+		$motivo = 'Deposito bancario a Faraone Capital S.A.';
+	}
+}
+
 $cod_interConsultaFK= $_POST['cod_interConsultaFK'];
 $cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 

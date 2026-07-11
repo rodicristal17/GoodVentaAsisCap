@@ -433,7 +433,7 @@ function uenoMarcarImportacionSeleccionada(idImportacion) {
 }
 
 function uenoMostrarMovimientoTrabajo() {
-	var contenedor = document.getElementById("divUenoMovimientoSeleccionado");
+	var contenedor = document.getElementById("divUenoMovimientoSeleccionadoPopup");
 	if (!contenedor) {
 		return;
 	}
@@ -453,7 +453,7 @@ function uenoMostrarMovimientoTrabajo() {
 	var accion = "<input type='button' value='Ver trazabilidad' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" + Number(movimiento["id_movimiento"] || 0) + ")'>"
 		+ "<input type='button' value='Limpiar seleccion' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarMovimientoTrabajo(true)' style='width:145px'>";
 	var avisoMigracion = sugerenciasMigracion > 0
-		? "<div class='ueno-migration-hint'><b>Coincidencia sugerida</b><span>Hay " + sugerenciasMigracion + " monto/s migrado/s pendiente/s con este mismo importe exacto.</span></div>"
+		? "<div class='ueno-migration-hint'><b>Coincidencia sugerida</b><span>Hay " + sugerenciasMigracion + " deposito/s pendiente/s con este mismo importe exacto.</span></div>"
 		: "";
 
 	contenedor.innerHTML = "<div class='ueno-selected-card'>"
@@ -505,16 +505,53 @@ function uenoAbrirCobrarCuotaMovimiento() {
 function uenoSeleccionarMovimientoTrabajo(movimiento) {
 	uenoMovimientoTrabajo = movimiento || null;
 	uenoIdConciliacionManual = "";
+	if (!uenoMesaTrabajoEstaAbierta()) {
+		uenoAbrirMesaTrabajoPopup();
+	}
 	uenoMostrarMovimientoTrabajo();
 	uenoLimpiarAsignacionManual();
+	uenoAbrirDetalleMesaTrabajo();
 	uenoBuscarSugerenciasMigracion();
-	if (uenoMesaTrabajoModalAbierta) {
-		uenoCerrarMesaTrabajoPopup();
-	}
-	var panel = document.getElementById("divUenoMovimientoSeleccionado");
-	if (panel && panel.scrollIntoView) {
-		panel.scrollIntoView({ behavior: "smooth", block: "center" });
-	}
+}
+
+function uenoMesaTrabajoEstaAbierta() {
+	var popup = document.getElementById("divUenoMesaTrabajoPopup");
+	return !!(popup && popup.style.display != "none" && window.getComputedStyle(popup).display != "none");
+}
+
+function uenoAbrirDetalleMesaTrabajo() {
+	var overlay = document.getElementById("divUenoDetalleMesaOverlay");
+	if (!overlay) { return; }
+	var mesa = document.querySelector("#divUenoMesaTrabajoPopup .ueno-workbench-card");
+	var listado = document.getElementById("table_ueno_movimientos");
+	var scrollPagina = window.pageYOffset || document.documentElement.scrollTop || 0;
+	var scrollMesa = mesa ? mesa.scrollTop : 0;
+	var scrollListado = listado ? listado.scrollTop : 0;
+	overlay.style.display = "flex";
+	uenoMostrarVistaDetalleMesa("detalle");
+	window.requestAnimationFrame(function() {
+		if (mesa) { mesa.scrollTop = scrollMesa; }
+		if (listado) { listado.scrollTop = scrollListado; }
+		window.scrollTo(0, scrollPagina);
+	});
+}
+
+function uenoCerrarDetalleMesaTrabajo() {
+	var overlay = document.getElementById("divUenoDetalleMesaOverlay");
+	if (overlay) { overlay.style.display = "none"; }
+	uenoAuditoriaMovimientoActual = "";
+}
+
+function uenoMostrarVistaDetalleMesa(vista) {
+	var esTraza = vista == "trazabilidad";
+	var detalle = document.getElementById("divUenoDetalleMesaDatos");
+	var traza = document.getElementById("divUenoDetalleMesaTrazabilidad");
+	var btnDetalle = document.getElementById("btnUenoDetalleMesaDatos");
+	var btnTraza = document.getElementById("btnUenoDetalleMesaTraza");
+	if (detalle) { detalle.style.display = esTraza ? "none" : "block"; }
+	if (traza) { traza.style.display = esTraza ? "block" : "none"; }
+	if (btnDetalle) { btnDetalle.classList.toggle("ueno-workbench-detail-tab--active", !esTraza); }
+	if (btnTraza) { btnTraza.classList.toggle("ueno-workbench-detail-tab--active", esTraza); }
 }
 
 function uenoBuscarSugerenciasMigracion() {
@@ -528,7 +565,7 @@ function uenoBuscarSugerenciasMigracion() {
 		contenedor.innerHTML = "";
 		return;
 	}
-	contenedor.innerHTML = "<div class='ueno-loading-inline'>Buscando coincidencias con montos migrados...</div>";
+	contenedor.innerHTML = "<div class='ueno-loading-inline'>Buscando depositos pendientes...</div>";
 	obtener_datos_user();
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -548,7 +585,7 @@ function uenoBuscarSugerenciasMigracion() {
 			try {
 				var respuesta = $.parseJSON(responseText);
 				if (respuesta["1"] == "exito") {
-					contenedor.innerHTML = "<div class='ueno-migration-title'>Posibles conciliaciones internas</div>" + (respuesta["2"] || "");
+					contenedor.innerHTML = "<div class='ueno-migration-title'>Depositos a Faraone Capital S.A.</div>" + (respuesta["2"] || "");
 					uenoModernizarTabla("divUenoMigracionSugerida", ["ID", "Fecha", "Monto", "Envia", "Caja origen", "Control", "Accion"], 5);
 					return;
 				}
@@ -567,6 +604,56 @@ function uenoBuscarSugerenciasMigracion() {
 		},
 		error: function() {
 			contenedor.innerHTML = "<div class='ueno-migration-empty'>No se pudo conectar para buscar montos migrados.</div>";
+		}
+	});
+}
+
+function uenoConfirmarConciliacionDeposito(idMovimiento, origenTipo, origenId) {
+	if (!idMovimiento || !origenId || (origenTipo != "gasto" && origenTipo != "migrar_caja")) {
+		ver_vetana_informativa("No se pudo identificar el deposito seleccionado.", "", "error");
+		return;
+	}
+	var origenTexto = origenTipo == "gasto" ? "egreso" : "registro historico";
+	var mensaje = "Confirmar la conciliacion definitiva del credito Ueno con el " + origenTexto + " #" + origenId + "?\n\nEsta operacion no se puede revertir.";
+	if (!window.confirm(mensaje)) { return; }
+	verCerrarEfectoCargando("1");
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "conciliar_deposito_faraone");
+	datos.append("id_movimiento", idMovimiento);
+	datos.append("origen_tipo", origenTipo);
+	datos.append("origen_id", origenId);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		error: function(jqXHR, textstatus) {
+			verCerrarEfectoCargando("");
+			manejadordeerroresjquery(jqXHR.status, textstatus, "uenoConfirmarConciliacionDeposito");
+		},
+		success: function(responseText) {
+			verCerrarEfectoCargando("");
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo conciliar el deposito.", "", "error");
+					return;
+				}
+				ver_vetana_informativa(respuesta["2"], "", "exito");
+				uenoCerrarDetalleMesaTrabajo();
+				uenoLimpiarMovimientoTrabajo(false);
+				uenoBuscarMovimientos(uenoIdImportacionSeleccionada || "");
+				uenoBuscarResumenTesoreria();
+				uenoBuscarAuditoria();
+			} catch (error) {
+				ver_vetana_informativa("Error inesperado al conciliar el deposito.", String(error), "error");
+			}
 		}
 	});
 }
@@ -1366,6 +1453,7 @@ function uenoAbrirMesaTrabajoPopup() {
 }
 
 function uenoCerrarMesaTrabajoPopup() {
+	uenoCerrarDetalleMesaTrabajo();
 	var popup = document.getElementById("divUenoMesaTrabajoPopup");
 	if (popup) {
 		popup.style.display = "none";
@@ -1378,7 +1466,33 @@ function uenoVerAplicacionMovimiento(idMovimiento) {
 		ver_vetana_informativa("No se pudo identificar el movimiento seleccionado.", "", "error");
 		return;
 	}
+	var overlay = document.getElementById("divUenoDetalleMesaOverlay");
+	if (uenoMesaTrabajoEstaAbierta() && overlay) {
+		uenoAbrirDetalleMesaTrabajo();
+		uenoCargarTrazabilidadDetalleMesa(idMovimiento);
+		return;
+	}
 	uenoMostrarAuditoriaMovimientoPopup(idMovimiento);
+}
+
+function uenoCargarTrazabilidadDetalleMesa(idMovimiento) {
+	if (!uenoTienePermiso("VERAUDITORIAUENO")) {
+		ver_vetana_informativa("NO TIENES PERMISO PARA VER AUDITORIA UENO", "", "error");
+		return;
+	}
+	var tabla = document.getElementById("table_ueno_auditoria_movimiento_mesa");
+	if (!tabla) { return; }
+	uenoAuditoriaMovimientoActual = String(idMovimiento || "");
+	uenoSetTexto("lblUenoDetalleMesaMovimiento", uenoAuditoriaMovimientoActual);
+	uenoSetTexto("lblUenoDetalleMesaTotal", "0");
+	tabla.innerHTML = "<div class='ueno-loading-inline'>Cargando trazabilidad...</div>";
+	uenoMostrarVistaDetalleMesa("trazabilidad");
+	uenoCargarAuditoria({
+		tablaId: "table_ueno_auditoria_movimiento_mesa",
+		totalId: "lblUenoDetalleMesaTotal",
+		accion: uenoAuditoriaMovimientoActual,
+		mostrarErrores: true
+	});
 }
 
 function uenoMostrarAuditoriaMovimientoPopup(idMovimiento) {
@@ -1903,6 +2017,7 @@ function uenoBuscarMovimientos(idImportacion) {
 	datos.append("monto", uenoValorCampo("inptUenoMovMonto"));
 	datos.append("estado", document.getElementById("inptUenoMovEstado") ? document.getElementById("inptUenoMovEstado").value : "");
 	datos.append("filtro_rapido", uenoFiltroRapidoMovimientos || "todos");
+	datos.append("origen_probable", document.getElementById("inptUenoMovOrigen") ? document.getElementById("inptUenoMovOrigen").value : "todos");
 
 	$.ajax({
 		data: datos,

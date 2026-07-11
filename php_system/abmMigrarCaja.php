@@ -37,6 +37,12 @@ exit;
 	
 if($operacion=="nuevo" || $operacion=="editar")
 {
+	$informacion = array(
+		"1" => "bloqueado",
+		"2" => "Migrar caja quedo disponible solo como historial. Registre el movimiento como egreso con el concepto DEPOSITO BANCARIO - FARAONE CAPITAL S.A."
+	);
+	echo json_encode($informacion);
+	exit;
 	
 	$cod_MigrarCaja=$_POST['cod_MigrarCaja'];
 $cod_MigrarCaja = mb_convert_encoding((string)($cod_MigrarCaja), 'ISO-8859-1', 'UTF-8');
@@ -261,6 +267,13 @@ if ( ! $stmt->execute()) {
 			  
 			  $usuarioRecibe=mb_convert_encoding((string)($valor['usuarioRecibe']), 'UTF-8', 'ISO-8859-1');
 			  $usuarioEnvia=mb_convert_encoding((string)($valor['usuarioEnvia']), 'UTF-8', 'ISO-8859-1');
+			  if (substr((string)$fecha, 0, 10) >= '2026-06-19'
+				  && stripos($usuarioRecibe, 'Carlos') !== false
+				  && stripos($usuarioRecibe, 'Faraone') !== false) {
+				  $tipotrx = 'Deposito bancario';
+				  $usuarioRecibe = 'Faraone Capital S.A.';
+				  $obs = 'Reclasificado desde migracion historica. ' . $obs;
+			  }
    	 
 		 $totalMonto= $totalMonto + $monto; 
 		 
