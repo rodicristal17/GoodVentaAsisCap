@@ -3649,3 +3649,819 @@
         box-shadow:none;
     }
 }
+
+/* Detalle de turno horizontal: acabado minimalista tipo iOS */
+#modalDetalleAgenda{
+    padding:12px;
+}
+
+#modalDetalleAgenda .modal-detalle-agenda-box{
+    position:relative;
+    width:min(1180px, calc(100vw - 28px));
+    max-width:1180px;
+    height:calc(100vh - 28px);
+    height:min(560px, calc(100dvh - 28px));
+    max-height:none;
+    display:grid;
+    grid-template-rows:54px minmax(0, 1fr) 54px;
+    overflow:hidden;
+    border:1px solid rgba(199, 214, 228, .9);
+    border-radius:22px;
+    background:#f3f6fa;
+    box-shadow:0 28px 80px rgba(15, 40, 65, .24);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header{
+    position:static;
+    min-height:0;
+    padding:8px 14px 7px 16px;
+    border-bottom:1px solid #dce6f0;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(14px);
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header .modal-header-info{
+    flex:1 1 auto;
+    min-width:0;
+    gap:1px;
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header .modal-etiqueta{
+    color:#17865f;
+    font-size:9px;
+    letter-spacing:.9px;
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header h3{
+    width:auto;
+    max-width:none;
+    font-size:17px;
+    font-weight:780;
+    line-height:1.08;
+    letter-spacing:-.2px;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header .modal-header-info > span{
+    font-size:10px;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .detalle-turno-modal-header .btn-cerrar-modal{
+    width:34px;
+    height:34px;
+    border:1px solid #e1e8f0;
+    border-radius:50%;
+    background:#f7f9fc;
+    box-shadow:none;
+    font-size:20px;
+}
+
+#modalDetalleAgenda .detalle-agenda-body{
+    display:block;
+    min-height:0;
+    padding:10px 12px;
+    overflow:hidden;
+    background:#f3f6fa;
+}
+
+#modalDetalleAgenda .detalle-agenda-main.detalle-ios-layout{
+    display:grid;
+    grid-template-columns:minmax(0, 1.13fr) minmax(360px, .87fr);
+    gap:10px;
+    width:100%;
+    height:100%;
+    min-height:0;
+    align-content:stretch;
+}
+
+#modalDetalleAgenda .detalle-ios-card{
+    min-width:0;
+    min-height:0;
+    height:100%;
+    box-sizing:border-box;
+    border:1px solid #dce6f0;
+    border-radius:17px;
+    background:#fff;
+    box-shadow:0 4px 14px rgba(19, 58, 91, .055);
+}
+
+#modalDetalleAgenda .detalle-paciente-header{
+    position:static;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    padding:12px;
+    overflow:visible;
+}
+
+#modalDetalleAgenda .detalle-paciente-main{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    align-items:start;
+    gap:10px;
+}
+
+#modalDetalleAgenda .detalle-paciente-info{
+    display:contents;
+}
+
+#modalDetalleAgenda .detalle-identidad-paciente{
+    grid-column:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+}
+
+#modalDetalleAgenda .detalle-identidad-paciente > div{
+    min-width:0;
+}
+
+#modalDetalleAgenda .detalle-avatar-paciente{
+    flex:0 0 42px;
+    width:42px;
+    height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:linear-gradient(145deg, #e6f6ef, #d8eee5);
+    color:#137553;
+    font-size:14px;
+    font-weight:850;
+    letter-spacing:.4px;
+}
+
+#modalDetalleAgenda .detalle-paciente-main h2{
+    max-width:100%;
+    margin:1px 0 3px;
+    overflow:hidden;
+    color:#17324d;
+    font-size:18px;
+    font-weight:760;
+    line-height:1.12;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .detalle-paciente-meta{
+    gap:6px;
+    font-size:11px;
+}
+
+#modalDetalleAgenda .detalle-chip,
+#modalDetalleAgenda .badge-estado-detalle{
+    min-height:22px;
+    padding:4px 8px;
+    font-size:10px;
+}
+
+#modalDetalleAgenda .detalle-paciente-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:6px;
+    max-width:280px;
+}
+
+#modalDetalleAgenda .detalle-budget-action,
+#modalDetalleAgenda .detalle-icon-action{
+    min-height:31px;
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:11px;
+}
+
+#modalDetalleAgenda .detalle-budget-action{
+    border-color:#bfe3d3;
+    background:#eaf7f1;
+    color:#0d704e;
+    box-shadow:none;
+}
+
+#modalDetalleAgenda .detalle-budget-action:hover{
+    border-color:#9bd3bb;
+    background:#def2e9;
+    color:#095c40;
+}
+
+#modalDetalleAgenda .detalle-icon-action{
+    width:32px;
+    min-width:32px;
+    padding:0;
+    letter-spacing:-1px;
+}
+
+#modalDetalleAgenda .detalle-turno-resumen{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:7px;
+    margin-top:9px;
+    padding:0;
+    border:0;
+}
+
+#modalDetalleAgenda .detalle-turno-resumen > .detalle-turno-dato{
+    display:grid;
+    grid-template-columns:28px minmax(0, 1fr);
+    align-items:center;
+    gap:7px;
+    min-width:0;
+    min-height:48px;
+    box-sizing:border-box;
+    padding:7px 8px;
+    border:1px solid #e6edf4;
+    border-radius:12px;
+    background:#f7f9fc;
+}
+
+#modalDetalleAgenda .detalle-turno-resumen > .detalle-turno-dato::after{
+    display:none;
+}
+
+#modalDetalleAgenda .detalle-turno-dato > i{
+    width:28px;
+    height:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:9px;
+    background:#e8f2f9;
+    color:#32749f;
+    font-size:12px;
+}
+
+#modalDetalleAgenda .detalle-turno-dato > span{
+    display:grid;
+    gap:2px;
+    min-width:0;
+    padding:0;
+}
+
+#modalDetalleAgenda .detalle-turno-dato b,
+#modalDetalleAgenda .detalle-turno-dato strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .detalle-turno-dato b{
+    color:#718398;
+    font-size:9px;
+    font-weight:700;
+}
+
+#modalDetalleAgenda .detalle-turno-dato strong{
+    color:#17324d;
+    font-size:11px;
+    font-weight:760;
+}
+
+#modalDetalleAgenda .detalle-estado-paciente{
+    display:block;
+}
+
+#modalDetalleAgenda .detalle-estado-paciente__fila{
+    width:100%;
+    min-height:45px;
+    display:grid;
+    grid-template-columns:30px minmax(0, 1fr) auto;
+    align-items:center;
+    gap:8px;
+    box-sizing:border-box;
+    padding:7px 10px;
+    border:1px solid #cfe8db;
+    border-radius:12px;
+    background:#f0faf5;
+    color:#1b684e;
+    text-align:left;
+}
+
+#modalDetalleAgenda button.detalle-estado-paciente__fila{
+    cursor:pointer;
+}
+
+#modalDetalleAgenda .detalle-estado-paciente__fila--alerta{
+    border-color:#f0d393;
+    background:#fff8e8;
+    color:#845b0a;
+}
+
+#modalDetalleAgenda .detalle-estado-paciente__fila > i{
+    width:28px;
+    height:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:9px;
+    background:rgba(255,255,255,.75);
+}
+
+#modalDetalleAgenda .detalle-estado-paciente__fila span{
+    display:grid;
+    gap:1px;
+}
+
+#modalDetalleAgenda .detalle-estado-paciente__fila b{
+    font-size:11px;
+}
+
+#modalDetalleAgenda .detalle-estado-paciente__fila small{
+    font-size:9px;
+    font-weight:650;
+}
+
+#modalDetalleAgenda .detalle-deuda-alerta{
+    min-height:45px;
+    box-sizing:border-box;
+    padding:7px 10px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+#modalDetalleAgenda .detalle-deuda-alerta .detalle-link-action{
+    min-height:27px;
+    padding:4px 7px;
+    font-size:10px;
+}
+
+#modalDetalleAgenda .detalle-accesos-rapidos{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:7px;
+    margin-top:auto;
+}
+
+#modalDetalleAgenda .detalle-accesos-rapidos button{
+    min-height:39px;
+    display:grid;
+    grid-template-columns:27px minmax(0, 1fr) auto;
+    align-items:center;
+    gap:7px;
+    padding:6px 9px;
+    border:1px solid #e3eaf2;
+    border-radius:12px;
+    background:#f8fafc;
+    color:#29445f;
+    text-align:left;
+    cursor:pointer;
+}
+
+#modalDetalleAgenda .detalle-accesos-rapidos button i{
+    color:#367aa6;
+}
+
+#modalDetalleAgenda .detalle-accesos-rapidos button span{
+    overflow:hidden;
+    font-size:10px;
+    font-weight:720;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .detalle-accesos-rapidos button b{
+    color:#8a9bad;
+    font-size:18px;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    padding:12px;
+    overflow:visible;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-card-head{
+    flex:0 0 auto;
+    margin:0 0 5px;
+    padding:0 0 8px;
+}
+
+#modalDetalleAgenda .detalle-card-head h4{
+    font-size:14px;
+    font-weight:760;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block,
+#modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block:last-child{
+    display:block;
+    flex:0 0 auto;
+    padding:8px 0;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block:last-child{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    min-height:0;
+    flex:1 1 auto;
+    overflow:hidden;
+}
+
+#modalDetalleAgenda .detalle-card-preparacion .detalle-prep-block:last-child > div:first-child{
+    width:100%;
+}
+
+#modalDetalleAgenda .detalle-label{
+    display:block;
+    margin-bottom:4px;
+    font-size:9px;
+}
+
+#modalDetalleAgenda .detalle-label--secundaria{
+    margin-top:7px;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen--compacto{
+    min-height:54px;
+    display:grid;
+    grid-template-columns:32px minmax(0, 1fr) 26px;
+    align-items:center;
+    gap:8px;
+    box-sizing:border-box;
+    padding:7px 8px;
+    border-radius:12px;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen__icono{
+    width:30px;
+    height:30px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:rgba(255,255,255,.72);
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto{
+    display:grid;
+    gap:1px;
+    min-width:0;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto small,
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto strong,
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto em{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto small{
+    font-size:8px;
+    font-style:normal;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto strong{
+    font-size:11px;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen__texto em{
+    font-size:9px;
+}
+
+#modalDetalleAgenda .agenda-plan-madre-resumen--compacto > button{
+    width:26px;
+    height:26px;
+    border:0;
+    border-radius:9px;
+    background:rgba(255,255,255,.75);
+    color:inherit;
+    cursor:pointer;
+    font-size:19px;
+}
+
+#modalDetalleAgenda .detalle-venta-resumen--compacto{
+    min-height:32px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:5px 8px;
+    border:1px solid #e5ecf3;
+    border-radius:10px;
+    background:#f8fafc;
+}
+
+#modalDetalleAgenda .detalle-venta-resumen--compacto strong,
+#modalDetalleAgenda .detalle-venta-resumen--compacto span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+#modalDetalleAgenda .detalle-venta-resumen--compacto strong{
+    flex:0 0 auto;
+    font-size:10px;
+}
+
+#modalDetalleAgenda .detalle-venta-resumen--compacto span{
+    min-width:0;
+    font-size:9px;
+}
+
+#modalDetalleAgenda .detalle-tratamientos-lista{
+    gap:4px;
+    max-height:82px;
+    margin:4px 0 6px;
+    overflow:hidden;
+}
+
+#modalDetalleAgenda .detalle-tratamientos-lista li{
+    min-height:0;
+    padding:5px 7px;
+    font-size:10px;
+    line-height:1.2;
+}
+
+#modalDetalleAgenda .detalle-tratamientos-lista .detalle-tratamientos-mas{
+    background:#eef4f8;
+    color:#4f687f;
+    font-weight:700;
+}
+
+#modalDetalleAgenda .detalle-tratamientos-actions{
+    gap:6px;
+    margin-top:auto;
+}
+
+#modalDetalleAgenda .detalle-tratamientos-actions button{
+    min-height:31px;
+    padding:6px 9px;
+    border-radius:10px;
+    font-size:10px;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel,
+#modalDetalleAgenda .detalle-deuda-detalle,
+#modalDetalleAgenda .detalle-reprogramar-panel,
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel{
+    position:absolute;
+    inset:62px 10px 62px auto;
+    z-index:30;
+    width:min(470px, 45%);
+    max-width:calc(100% - 20px);
+    min-height:0;
+    box-sizing:border-box;
+    margin:0;
+    overflow:hidden;
+    border:1px solid #d5e1ec;
+    border-radius:18px;
+    background:rgba(255,255,255,.98);
+    box-shadow:0 24px 58px rgba(19, 47, 72, .23);
+    backdrop-filter:blur(15px);
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel{
+    top:62px;
+    right:10px;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra__body{
+    width:100%;
+    height:100%;
+    display:grid;
+    grid-template-rows:auto minmax(0, 1fr) minmax(0, 1fr);
+    padding:0;
+    overflow:hidden;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-historial,
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-comentarios{
+    min-height:0;
+    overflow:hidden;
+}
+
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-agenda-tabla-historial,
+#modalDetalleAgenda .detalle-agenda-extra-panel .detalle-notas-list{
+    max-height:none;
+    overflow:auto;
+}
+
+#modalDetalleAgenda .detalle-deuda-detalle{
+    display:flex;
+    flex-direction:column;
+    padding:0;
+}
+
+#modalDetalleAgenda .detalle-ios-drawer__head{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 14px;
+    border-bottom:1px solid #e1e9f1;
+}
+
+#modalDetalleAgenda .detalle-ios-drawer__head > div{
+    display:grid;
+    gap:2px;
+}
+
+#modalDetalleAgenda .detalle-ios-drawer__head span{
+    color:#718398;
+    font-size:9px;
+    font-weight:700;
+    text-transform:uppercase;
+}
+
+#modalDetalleAgenda .detalle-ios-drawer__head strong{
+    color:#17324d;
+    font-size:14px;
+}
+
+#modalDetalleAgenda .detalle-ios-drawer__head button{
+    width:30px;
+    height:30px;
+    border:1px solid #e1e8ef;
+    border-radius:50%;
+    background:#f6f8fb;
+    color:#39516a;
+    cursor:pointer;
+    font-size:19px;
+}
+
+#modalDetalleAgenda .detalle-ios-drawer__contenido{
+    min-height:0;
+    padding:12px;
+    overflow:auto;
+}
+
+#modalDetalleAgenda .detalle-reprogramar-panel{
+    inset:92px 18px auto auto;
+    width:min(420px, calc(100% - 36px));
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    align-items:end;
+    gap:9px;
+    padding:16px;
+}
+
+#modalDetalleAgenda .detalle-reprogramar-panel label{
+    display:grid;
+    gap:5px;
+}
+
+#modalDetalleAgenda .detalle-reprogramar-panel input{
+    width:100%;
+    box-sizing:border-box;
+}
+
+#modalDetalleAgenda .detalle-reprogramar-panel button{
+    min-height:34px;
+}
+
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel{
+    display:flex;
+    align-items:stretch;
+    justify-content:stretch;
+    width:min(650px, 62%);
+    padding:0;
+}
+
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-box{
+    height:100%;
+    display:grid;
+    grid-template-rows:auto minmax(0, 1fr) auto;
+    overflow:hidden;
+    border:0;
+    border-radius:18px;
+}
+
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-body,
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel #divTratamientosAgenda{
+    min-height:0;
+    max-height:none;
+    overflow:auto;
+}
+
+#modalDetalleAgenda .modal-detalle-agenda-box .detalle-agenda-actions{
+    position:static;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:7px;
+    padding:8px 12px;
+    border-top:1px solid #dce6f0;
+    background:rgba(255,255,255,.94);
+    backdrop-filter:blur(14px);
+}
+
+#modalDetalleAgenda .detalle-agenda-actions > button:first-child{
+    display:inline-flex;
+    margin-right:auto;
+}
+
+#modalDetalleAgenda .detalle-agenda-actions button{
+    min-height:34px;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    font-size:11px;
+}
+
+#modalDetalleAgenda .detalle-agenda-actions .detalle-primary-action{
+    min-width:172px;
+    border-color:#16835c;
+    background:#16835c;
+}
+
+#modalDetalleAgenda .detalle-agenda-actions .detalle-primary-action--warning{
+    border-color:#e19a22;
+    background:#e19a22;
+}
+
+#modalDetalleAgenda .detalle-agenda-actions .detalle-primary-action--disabled{
+    border-color:#d7dde6;
+    background:#eef2f6;
+}
+
+@media only screen and (max-width: 940px){
+    #modalDetalleAgenda{
+        padding:6px;
+    }
+
+    #modalDetalleAgenda .modal-detalle-agenda-box{
+        width:calc(100vw - 12px);
+        height:calc(100vh - 12px);
+        height:calc(100dvh - 12px);
+        border-radius:17px;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-main.detalle-ios-layout{
+        grid-template-columns:minmax(0, 1.04fr) minmax(300px, .96fr);
+        gap:8px;
+    }
+
+    #modalDetalleAgenda .detalle-paciente-header,
+    #modalDetalleAgenda .detalle-card-preparacion{
+        padding:9px;
+    }
+
+    #modalDetalleAgenda .detalle-turno-resumen{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:5px;
+    }
+
+    #modalDetalleAgenda .detalle-turno-resumen > .detalle-turno-dato{
+        min-height:42px;
+        padding:5px 6px;
+    }
+
+    #modalDetalleAgenda .detalle-budget-action{
+        max-width:112px;
+        white-space:normal;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-extra-panel,
+    #modalDetalleAgenda .detalle-deuda-detalle,
+    #modalDetalleAgenda .agenda-asignar-tratamiento-panel{
+        width:min(520px, 68%);
+    }
+}
+
+@media only screen and (max-height: 600px){
+    #modalDetalleAgenda .modal-detalle-agenda-box{
+        grid-template-rows:48px minmax(0, 1fr) 50px;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-body{
+        padding:7px 9px;
+    }
+
+    #modalDetalleAgenda .detalle-avatar-paciente{
+        flex-basis:36px;
+        width:36px;
+        height:36px;
+    }
+
+    #modalDetalleAgenda .detalle-paciente-main h2{
+        font-size:16px;
+    }
+
+    #modalDetalleAgenda .detalle-turno-resumen > .detalle-turno-dato{
+        min-height:42px;
+    }
+
+    #modalDetalleAgenda .detalle-estado-paciente__fila,
+    #modalDetalleAgenda .detalle-deuda-alerta{
+        min-height:39px;
+    }
+
+    #modalDetalleAgenda .detalle-accesos-rapidos button{
+        min-height:34px;
+    }
+
+    #modalDetalleAgenda .detalle-agenda-extra-panel,
+    #modalDetalleAgenda .detalle-deuda-detalle,
+    #modalDetalleAgenda .agenda-asignar-tratamiento-panel{
+        inset:54px 8px 56px auto;
+    }
+}

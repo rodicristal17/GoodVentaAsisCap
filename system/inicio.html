@@ -25,7 +25,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=agenda-carga-progresiva-20260713" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-citas-notas-panel-fijo-20260709" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -53,7 +53,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-emergente-20260711"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-carga-progresiva-20260713"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=detalle-turno-horizontal-ios-20260713"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=baja-hilo-20260710"></script>
@@ -28784,39 +28784,44 @@ function escaparHtmlInformeInsumosAgenda(valor){
     <div class='modal-filtros-box modal-detalle-agenda-box'>
         <div class='modal-filtros-header detalle-turno-modal-header'>
             <div class='modal-header-info'>
-                <p class='modal-etiqueta'>Calendario</p>
+                <p class='modal-etiqueta'>Agenda Clinident</p>
                 <h3 id="detAgendaTitulo">Detalle del turno</h3>
-                <span>Informacion clinica, financiera y operativa de la cita.</span>
+                <span>Resumen de la atencion</span>
             </div>
             <button type='button' class='btn-cerrar-modal' onclick='cerrarDetalleAgenda();limpiarFichaPacienteCalendario();ventanaAnterior.pop();'>×</button>
         </div>
 
         <div class='modal-filtros-body detalle-agenda-body'>
-          <section class='detalle-agenda-main'>
-            <div class='detalle-paciente-header'>
+          <section class='detalle-agenda-main detalle-ios-layout'>
+            <div class='detalle-paciente-header detalle-ios-card'>
               <div id='detAgendaId' style='display:none;'></div>
               <div id='detAgendaPacienteId' style='display:none;'></div>
               <div class='detalle-paciente-main'>
-                <div>
-                  <span class='detalle-section-kicker'>Paciente</span>
-                  <h2 id='detAgendaPaciente'>Paciente</h2>
-                  <div class='detalle-paciente-meta'>
-                    <span>CI <b id='detAgendaCedula'></b></span>
-                    <span id='detAgendaTipoCita' class='detalle-chip detalle-chip--tipo'>Turno</span>
+                <div class='detalle-paciente-info'>
+                  <div class='detalle-identidad-paciente'>
+                    <span id='detAgendaAvatarIniciales' class='detalle-avatar-paciente'>PA</span>
+                    <div>
+                      <span class='detalle-section-kicker'>Paciente</span>
+                      <h2 id='detAgendaPaciente'>Paciente</h2>
+                      <div class='detalle-paciente-meta'>
+                        <span>CI <b id='detAgendaCedula'></b></span>
+                        <span id='detAgendaTipoCita' class='detalle-chip detalle-chip--tipo'>Turno</span>
+                      </div>
+                    </div>
                   </div>
                   <div class='detalle-turno-resumen' aria-label='Resumen del turno'>
-                    <span><b>Fecha</b> <strong id='detAgendaFecha'></strong></span>
-                    <span><b>Horario</b> <strong id='detAgendaHorarioTexto'></strong></span>
-                    <span><b>Duracion</b> <strong id='detAgendaDuracion'></strong></span>
-                    <span><b>Doctor/a</b> <strong id='detAgendaPresupuesto'></strong></span>
-                    <span><b>Consultorio</b> <strong id='detAgendaConsultorio'></strong></span>
-                    <span><b>Sucursal</b> <strong id='detAgendaSucursal'></strong></span>
+                    <span class='detalle-turno-dato'><i class='fa-regular fa-calendar'></i><span><b>Fecha</b><strong id='detAgendaFecha'></strong></span></span>
+                    <span class='detalle-turno-dato'><i class='fa-regular fa-clock'></i><span><b>Horario</b><strong id='detAgendaHorarioTexto'></strong></span></span>
+                    <span class='detalle-turno-dato'><i class='fa-regular fa-hourglass-half'></i><span><b>Duracion</b><strong id='detAgendaDuracion'></strong></span></span>
+                    <span class='detalle-turno-dato'><i class='fa-solid fa-user-doctor'></i><span><b>Profesional</b><strong id='detAgendaPresupuesto'></strong></span></span>
+                    <span class='detalle-turno-dato'><i class='fa-solid fa-tooth'></i><span><b>Consultorio</b><strong id='detAgendaConsultorio'></strong></span></span>
+                    <span class='detalle-turno-dato'><i class='fa-solid fa-location-dot'></i><span><b>Sucursal</b><strong id='detAgendaSucursal'></strong></span></span>
                   </div>
                 </div>
                 <div class='detalle-paciente-actions'>
                   <div id='detAgendaEstado' class='detalle-estado-wrap'></div>
-                  <button type='button' class='detalle-budget-action' onclick='cargarTratamientoDesdeAgenda();'>Generar nuevo presupuesto</button>
-                  <button type='button' class='detalle-icon-action' onclick='toggleMasAccionesDetalleAgenda()' aria-label='Mas acciones'>...</button>
+                  <button type='button' class='detalle-budget-action' onclick='cargarTratamientoDesdeAgenda();'>Nuevo presupuesto</button>
+                  <button type='button' class='detalle-icon-action' onclick='toggleMasAccionesDetalleAgenda()' aria-label='Mas acciones'>&bull;&bull;&bull;</button>
                   <div id='detAgendaMasAccionesMenu' class='detalle-actions-menu' style='display:none;'>
                     <button type='button' onclick='toggleCitasNotasDetalleAgenda()'>Citas y notas</button>
                     <button type='button' onclick='verHistorialDesdeConsultorio(false)'>Ver historial clinico completo</button>
@@ -28825,6 +28830,7 @@ function escaparHtmlInformeInsumosAgenda(valor){
                   </div>
                 </div>
               </div>
+              <div id='detAgendaDatosPacienteEstado' class='detalle-estado-paciente'></div>
               <div class='detalle-agenda-extra-panel' id='detAgendaExtraPanel' style='display:none;'>
                 <div class='detalle-agenda-extra__body'>
                   <div class='detalle-agenda-extra__head'>
@@ -28858,6 +28864,10 @@ function escaparHtmlInformeInsumosAgenda(valor){
               </div>
               <div id='detAgendaDeudaAlerta' class='detalle-deuda-alerta' style='display:none;'></div>
               <div id='detAgendaDeudasPendientes' class='detalle-deuda-detalle' style='display:none;'></div>
+              <div class='detalle-accesos-rapidos'>
+                <button type='button' onclick='toggleCitasNotasDetalleAgenda()'><i class='fa-regular fa-note-sticky'></i><span>Citas y notas</span><b>&rsaquo;</b></button>
+                <button type='button' onclick='verHistorialDesdeConsultorio(false)'><i class='fa-solid fa-clock-rotate-left'></i><span>Historial clinico</span><b>&rsaquo;</b></button>
+              </div>
               <div id='detAgendaReprogramarPanel' class='detalle-reprogramar-panel' style='display:none;'>
                 <label>Fecha <input id='detAgendaFechaReprogramar' type='date' /></label>
                 <label>Inicio <input id='detAgendaHorarioInicio' type='time' /></label>
@@ -28867,16 +28877,16 @@ function escaparHtmlInformeInsumosAgenda(valor){
               </div>
             </div>
 
-            <article class='detalle-card detalle-card-preparacion'>
+            <article class='detalle-card detalle-card-preparacion detalle-ios-card'>
               <div class='detalle-card-head'>
                 <div>
-                  <span class='detalle-section-kicker'>Preparacion de la atencion</span>
-                  <h4>Plan madre y tratamientos</h4>
+                  <span class='detalle-section-kicker'>Atencion de hoy</span>
+                  <h4>Plan madre y tratamiento</h4>
                 </div>
               </div>
               <div class='detalle-prep-block'>
                 <div>
-                  <span class='detalle-label'>Planes madre del paciente</span>
+                  <span class='detalle-label'>Plan madre</span>
                   <div class='detalle-valor' id='detAgendaPlanMadreEstado'></div>
                   <span class='detalle-label detalle-label--secundaria'>Venta de referencia</span>
                   <div class='detalle-valor agenda-venta-texto-columnas' id='detAgendaVentaAsignada'>Sin venta seleccionada</div>
@@ -28898,7 +28908,6 @@ function escaparHtmlInformeInsumosAgenda(valor){
         </div>
 
         <div class='modal-filtros-footer detalle-agenda-actions'>
-            <button type='button' class='detalle-secondary-action' onclick='toggleMasAccionesDetalleAgenda()'>Mas acciones</button>
             <button type='button' id='detAgendaFooterReprogramar' class='detalle-secondary-action' onclick='abrirReprogramacionDetalleAgenda()'>Reprogramar</button>
             <button id="btnConfirmAgendamiento" class='detalle-primary-action' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADO")'>Confirmar asistencia</button>
             <button id="btnConfirmDeudaAgendamiento" class='detalle-primary-action detalle-primary-action--warning' style='display:none;' onclick='cambiarEstadoAgendaDesdeModal("CONFIRMADOCONDEUDA")'>Confirmar con deuda</button>

@@ -3685,12 +3685,11 @@ function verDetalleAgenda(id){
         }
     }
 
-    // Se evalua si los datos del cliente estan completos
-    let advertencia_datos_cliente_incompleto= '';
-    if (!evento.ci_cliente || (!evento.whapp && !evento.telefono) || !evento.direccion || !evento.idzonaFk || evento.idzonaFk == 0) {
-        advertencia_datos_cliente_incompleto= '<i class="fa-solid fa-triangle-exclamation" style="color: gold;padding-left: 5px;"></i>';
-        advertencia_datos_cliente_incompleto += '<br><input type="button" value="Cargar datos faltantes" class="btn4" onclick="controlseleccvistacliente= \'calendario\';verCerrarVentanaAbmCliente(true, true, false);cerrarDetalleAgenda();cerrarAgendaConsultorios()" style="width:fit-content;margin-top: 20px;padding: 6px 12px;background: #b40303;"/>';
-    }
+    var datosPacienteIncompletos = !evento.ci_cliente
+        || (!evento.whapp && !evento.telefono)
+        || !evento.direccion
+        || !evento.idzonaFk
+        || evento.idzonaFk == 0;
 
     idAbmAgenda = evento.id;
     agendaEventoDetalleActual = evento;
@@ -3703,8 +3702,16 @@ function verDetalleAgenda(id){
     if (document.getElementById('detAgendaPacienteId')) {
         document.getElementById('detAgendaPacienteId').innerHTML = evento.cod_cliente || evento.id_paciente || '';
     }
-    document.getElementById('detAgendaPaciente').innerHTML = escaparHtmlAgenda(evento.paciente || '') + advertencia_datos_cliente_incompleto;
+    document.getElementById('detAgendaPaciente').innerHTML = escaparHtmlAgenda(evento.paciente || '');
     document.getElementById('detAgendaPaciente').setAttribute('data-nombre-paciente', evento.paciente || '');
+    if(document.getElementById('detAgendaAvatarIniciales')){
+        document.getElementById('detAgendaAvatarIniciales').textContent = obtenerInicialesPacienteDetalleAgenda(evento.paciente || '');
+    }
+    if(document.getElementById('detAgendaDatosPacienteEstado')){
+        document.getElementById('detAgendaDatosPacienteEstado').innerHTML = datosPacienteIncompletos
+            ? "<button type='button' class='detalle-estado-paciente__fila detalle-estado-paciente__fila--alerta' onclick=\"controlseleccvistacliente='calendario';verCerrarVentanaAbmCliente(true,true,false);cerrarDetalleAgenda();cerrarAgendaConsultorios()\"><i class='fa-solid fa-triangle-exclamation'></i><span><b>Datos del paciente</b><small>Requieren revision</small></span><strong>&rsaquo;</strong></button>"
+            : "<div class='detalle-estado-paciente__fila detalle-estado-paciente__fila--ok'><i class='fa-solid fa-check'></i><span><b>Datos del paciente</b><small>Informacion completa</small></span></div>";
+    }
     document.getElementById('detAgendaCedula').setAttribute('data-documento-paciente', evento.ci_cliente || '');
     document.getElementById('detAgendaCedula').setAttribute('data-telefono-paciente', evento.telefono || '');
     document.getElementById('detAgendaCedula').setAttribute('data-whatsapp-paciente', evento.whapp || '');
@@ -3900,26 +3907,30 @@ function tipoCitaDetalleAgenda(evento){
     return "Control";
 }
 
+function obtenerInicialesPacienteDetalleAgenda(nombre){
+    var partes = String(nombre || '').trim().split(/\s+/).filter(function(parte){ return parte !== ''; });
+    if(partes.length === 0){ return 'PA'; }
+    if(partes.length === 1){ return partes[0].substring(0, 2).toUpperCase(); }
+    return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+}
+
 function renderVentaDetalleAgenda(evento){
     if(!evento || !evento.cod_ventaFK){
         return "<span class='detalle-vacio'>Sin venta seleccionada</span>";
     }
-    var html = "<div class='detalle-venta-resumen'>";
+    var referencia = [];
+    if(evento.venta_num_factura){ referencia.push("Factura " + escaparHtmlAgenda(evento.venta_num_factura)); }
+    if(evento.venta_apodo){ referencia.push(escaparHtmlAgenda(evento.venta_apodo)); }
+    var html = "<div class='detalle-venta-resumen detalle-venta-resumen--compacto'>";
     html += "<strong>Venta #" + escaparHtmlAgenda(evento.cod_ventaFK) + "</strong>";
-    if(evento.venta_num_factura){
-        html += "<span>Factura: " + escaparHtmlAgenda(evento.venta_num_factura) + "</span>";
-    }
-    if(evento.venta_apodo){
-        html += "<span>Alias: " + escaparHtmlAgenda(evento.venta_apodo) + "</span>";
-    }
-    html += "<span>Titular: " + escaparHtmlAgenda(evento.paciente || "") + "</span>";
+    if(referencia.length > 0){ html += "<span>" + referencia.join(" · ") + "</span>"; }
     html += "</div>";
     return html;
 }
 
 function renderTratamientosDetalleAgenda(textoTratamientos){
     var partes = String(textoTratamientos || "").split(/<br\s*\/?>/i);
-    var html = "";
+    var tratamientos = [];
 
     for(var i = 0; i < partes.length; i++){
         var parte = partes[i] || "";
@@ -3927,11 +3938,18 @@ function renderTratamientosDetalleAgenda(textoTratamientos){
         if(texto === ""){
             continue;
         }
-        html += "<li>" + escaparHtmlAgenda(texto) + "</li>";
+        tratamientos.push(texto);
     }
 
-    if(html === ""){
+    if(tratamientos.length === 0){
         return "<span class='detalle-vacio'>Ningun tratamiento seleccionado</span>";
+    }
+    var html = "";
+    for(var j = 0; j < tratamientos.length && j < 2; j++){
+        html += "<li>" + escaparHtmlAgenda(tratamientos[j]) + "</li>";
+    }
+    if(tratamientos.length > 2){
+        html += "<li class='detalle-tratamientos-mas'>+" + (tratamientos.length - 2) + " tratamiento" + (tratamientos.length - 2 == 1 ? "" : "s") + "</li>";
     }
     return "<ul class='detalle-tratamientos-lista'>" + html + "</ul>";
 }
@@ -3971,8 +3989,10 @@ function actualizarDeudaDetalleAgenda(cuotasAtrasadas, detalleHtml){
 
     detalle.setAttribute("data-tiene-deuda", cuotasAtrasadas > 0 ? "1" : "0");
     detalle.setAttribute("data-cuotas-atrasadas", String(cuotasAtrasadas));
-    detalle.innerHTML = detalleHtml || "";
-    detalle.style.display = cuotasAtrasadas > 0 ? "" : "none";
+    detalle.innerHTML = cuotasAtrasadas > 0
+        ? "<div class='detalle-ios-drawer__head'><div><span>Situacion financiera</span><strong>Cuotas atrasadas</strong></div><button type='button' onclick='cerrarDetalleDeudaAgenda()' aria-label='Cerrar detalle financiero'>&times;</button></div><div class='detalle-ios-drawer__contenido'>" + (detalleHtml || "") + "</div>"
+        : "";
+    detalle.style.display = "none";
 
     if(alerta){
         if(cuotasAtrasadas > 0){
@@ -3989,7 +4009,18 @@ function actualizarDeudaDetalleAgenda(cuotasAtrasadas, detalleHtml){
 function toggleDetalleDeudaAgenda(){
     var detalle = document.getElementById("detAgendaDeudasPendientes");
     if(!detalle || detalle.getAttribute("data-tiene-deuda") != "1"){ return; }
-    detalle.style.display = detalle.style.display == "none" ? "" : "none";
+    var abrir = detalle.style.display == "none";
+    if(abrir){
+        verCerrarAsignarTratamiento(false);
+        cerrarCitasNotasDetalleAgenda();
+        cerrarReprogramacionDetalleAgenda();
+    }
+    detalle.style.display = abrir ? "" : "none";
+}
+
+function cerrarDetalleDeudaAgenda(){
+    var detalle = document.getElementById("detAgendaDeudasPendientes");
+    if(detalle){ detalle.style.display = "none"; }
 }
 
 function actualizarAccionesDetalleAgenda(evento){
@@ -4052,7 +4083,7 @@ function actualizarAccionesDetalleAgenda(evento){
 
 function setAccionesDetalleAgendaProcesando(procesando){
     agendaDetalleAccionEnProceso = procesando === true;
-    var botones = document.querySelectorAll("#modalDetalleAgenda .detalle-primary-action, #modalDetalleAgenda .detalle-secondary-action, #modalDetalleAgenda .detalle-budget-action, #modalDetalleAgenda .detalle-actions-menu button");
+    var botones = document.querySelectorAll("#modalDetalleAgenda .detalle-primary-action, #modalDetalleAgenda .detalle-secondary-action, #modalDetalleAgenda .detalle-budget-action, #modalDetalleAgenda .detalle-icon-action, #modalDetalleAgenda .detalle-actions-menu button, #modalDetalleAgenda .detalle-accesos-rapidos button, #modalDetalleAgenda .detalle-estado-paciente button, #modalDetalleAgenda .agenda-plan-madre-resumen button");
     for(var i = 0; i < botones.length; i++){
         if(botones[i].id === "btnEstadoFinalAgendamiento"){
             continue;
@@ -4076,7 +4107,13 @@ function cerrarMasAccionesDetalleAgenda(){
 function toggleCitasNotasDetalleAgenda(){
     var panel = document.getElementById("detAgendaExtraPanel");
     if(!panel){ return; }
-    panel.style.display = panel.style.display == "none" ? "" : "none";
+    var abrir = panel.style.display == "none";
+    if(abrir){
+        verCerrarAsignarTratamiento(false);
+        cerrarDetalleDeudaAgenda();
+        cerrarReprogramacionDetalleAgenda();
+    }
+    panel.style.display = abrir ? "" : "none";
     cerrarMasAccionesDetalleAgenda();
 }
 
@@ -4088,6 +4125,8 @@ function cerrarCitasNotasDetalleAgenda(){
 function abrirReprogramacionDetalleAgenda(){
     var panel = document.getElementById("detAgendaReprogramarPanel");
     if(panel){ panel.style.display = ""; }
+    verCerrarAsignarTratamiento(false);
+    cerrarDetalleDeudaAgenda();
     cerrarCitasNotasDetalleAgenda();
     cerrarMasAccionesDetalleAgenda();
 }
@@ -4337,6 +4376,37 @@ function renderResumenPlanMadreAgenda(resp, idResumen){
     var resumen = idResumen ? document.getElementById(idResumen) : null;
     if(!resumen){ return; }
     var planes = resp && resp.planes ? resp.planes : [];
+    if(idResumen === 'detAgendaPlanMadreEstado'){
+        if(planes.length > 0){
+            var primerPlan = planes[0].plan || {};
+            var pendientesCompactos = 0;
+            for(var indicePlan = 0; indicePlan < planes.length; indicePlan++){
+                if(Number((planes[indicePlan].plan || {}).requiere_aprobacion || 0) === 1){ pendientesCompactos++; }
+            }
+            resumen.innerHTML = "<div class='agenda-plan-madre-resumen agenda-plan-madre-resumen--compacto " + (pendientesCompactos > 0 ? "agenda-plan-madre-resumen--pendiente" : "agenda-plan-madre-resumen--ok") + "'>"
+                + "<span class='agenda-plan-madre-resumen__icono'><i class='fa-solid fa-route'></i></span>"
+                + "<span class='agenda-plan-madre-resumen__texto'><small>Plan madre</small><strong>" + planes.length + " plan" + (planes.length == 1 ? " disponible" : "es disponibles") + "</strong><em>#" + escaparHtmlAgenda(primerPlan.numero || 1) + " - " + escaparHtmlAgenda((primerPlan.label || "Plan vigente").replace(/^Plan madre #[0-9]+ - /, "")) + "</em></span>"
+                + "<button type='button' onclick='verCerrarAsignarTratamiento(true)' aria-label='Ver plan madre'>&rsaquo;</button>"
+                + "</div>";
+            return;
+        }
+        var planCompacto = resp && resp.plan ? resp.plan : null;
+        if(planCompacto){
+            var requiereRevision = String(planCompacto.pendiente_validacion || '0') == '1' || String(planCompacto.estado || '').toLowerCase() == 'borrador';
+            resumen.innerHTML = "<div class='agenda-plan-madre-resumen agenda-plan-madre-resumen--compacto " + (requiereRevision ? "agenda-plan-madre-resumen--pendiente" : "agenda-plan-madre-resumen--ok") + "'>"
+                + "<span class='agenda-plan-madre-resumen__icono'><i class='fa-solid fa-route'></i></span>"
+                + "<span class='agenda-plan-madre-resumen__texto'><small>Plan madre</small><strong>" + escaparHtmlAgenda(planCompacto.label || 'Plan vigente') + "</strong><em>" + escaparHtmlAgenda(planCompacto.estado_texto || 'Vigente') + "</em></span>"
+                + "<button type='button' onclick='verCerrarAsignarTratamiento(true)' aria-label='Ver plan madre'>&rsaquo;</button>"
+                + "</div>";
+            return;
+        }
+        resumen.innerHTML = "<div class='agenda-plan-madre-resumen agenda-plan-madre-resumen--compacto agenda-plan-madre-resumen--sin-plan'>"
+            + "<span class='agenda-plan-madre-resumen__icono'><i class='fa-solid fa-route'></i></span>"
+            + "<span class='agenda-plan-madre-resumen__texto'><small>Plan madre</small><strong>Sin plan vigente</strong><em>Revise la preparacion clinica</em></span>"
+            + "<button type='button' onclick='verCerrarAsignarTratamiento(true)' aria-label='Revisar plan madre'>&rsaquo;</button>"
+            + "</div>";
+        return;
+    }
     if(planes.length > 0){
         var chips = "";
         var pendientes = 0;
@@ -4875,6 +4945,10 @@ function verCerrarAsignarTratamiento(mostrar){
     if(!modal){ return; }
 
     if(mostrar){
+        cerrarCitasNotasDetalleAgenda();
+        cerrarDetalleDeudaAgenda();
+        cerrarReprogramacionDetalleAgenda();
+        cerrarMasAccionesDetalleAgenda();
         var evento = obtenerEventoPorId(idAbmAgenda);
         if(contenedorInline && modal.parentNode !== contenedorInline){
             contenedorInline.appendChild(modal);
@@ -4906,6 +4980,7 @@ function cerrarDetalleAgenda(){
     verCerrarAsignarTratamiento(false);
     cerrarMasAccionesDetalleAgenda();
     cerrarCitasNotasDetalleAgenda();
+    cerrarDetalleDeudaAgenda();
     cerrarReprogramacionDetalleAgenda();
     setAccionesDetalleAgendaProcesando(false);
     document.getElementById('overlayDetalleAgenda').style.display = 'none';
